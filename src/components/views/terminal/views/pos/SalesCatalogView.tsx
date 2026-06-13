@@ -23,7 +23,7 @@ import {
 import { useIsMobile } from '@/hooks/ui/useMobile';
 import { useSalesCatalog } from './useSalesCatalog';
 import type { StockFilter } from './useSalesCatalog';
-import SalesCatalogTable from './SalesCatalogTable';
+import { SalesCatalogTable } from './SalesCatalogTable';
 import SalesCatalogCardGrid from './SalesCatalogCardGrid';
 import SalesCatalogTotals from './SalesCatalogTotals';
 import SalesCatalogCheckoutModal from './SalesCatalogCheckoutModal';
@@ -511,7 +511,7 @@ export default function SalesCatalogView() {
                 handlers={handlers}
                 hasDiscrepancy={catalog.hasDiscrepancy}
                 calcSubtotal={catalog.calcSubtotal}
-                onToggleVisible={!catalog.isReadOnly ? handleToggleVisible : undefined}
+                onToggleVisible={!catalog.isReadOnly ? (p) => handleToggleVisible(p.id, !p.visible_en_tienda) : undefined}
                 togglingVisibleId={togglingVisibleId}
                 isReadOnly={catalog.isReadOnly}
               />

@@ -54,12 +54,15 @@ export const ReportConfigPanel = ({ config, setConfig }: ReportConfigPanelProps)
   const isAdmin = user?.role === 'admin';
   const isEncargado = user?.role === 'encargado';
 
-  const { data: products = [], isLoading: isLoadingProducts } = useProducts(
+  const productsQuery = useProducts(
     config.store_id || user?.activeStoreId,
     productSearch
   );
+  const products = productsQuery?.data || [];
+  const isLoadingProducts = productsQuery?.isLoading || false;
 
-  const { data: stores = [] } = useStores(user?.id || '', isAdmin, isEncargado);
+  const storesQuery = useStores(user?.id || '', isAdmin, isEncargado);
+  const stores = storesQuery?.data || [];
 
   const handleTypeChange = (type: ReportType) => {
     setConfig({ ...config, type, columns: ALL_COLUMNS[type] || ['id', 'created_at'] });
@@ -91,7 +94,14 @@ export const ReportConfigPanel = ({ config, setConfig }: ReportConfigPanelProps)
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Tipo de Reporte</Label>
+            <div className="flex items-center justify-between">
+              <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Tipo de Reporte</Label>
+              {config.date_range?.from && config.date_range?.to && (
+                <span className="text-[10px] font-black text-primary/60 uppercase">
+                  {Math.ceil((new Date(config.date_range.to).getTime() - new Date(config.date_range.from).getTime()) / (1000 * 60 * 60 * 24)) + 1} días seleccionados
+                </span>
+              )}
+            </div>
             <Select value={config.type} onValueChange={(val) => handleTypeChange(val as ReportType)}>
               <SelectTrigger className="rounded-xl border-primary/10 bg-background/50 text-xs font-bold uppercase tracking-widest">
                 <SelectValue />
@@ -199,9 +209,29 @@ export const ReportConfigPanel = ({ config, setConfig }: ReportConfigPanelProps)
 
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-            <h3 className="text-xs font-black uppercase tracking-[0.2em] text-primary/60">Columnas</h3>
+            <div className="flex items-center gap-4">
+              <h3 className="text-xs font-black uppercase tracking-[0.2em] text-primary/60">Columnas</h3>
+              <div className="flex gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 text-[9px] font-black uppercase px-2 rounded-lg hover:bg-primary/10"
+                  onClick={() => setConfig({ ...config, columns: ALL_COLUMNS[config.type as ReportType] })}
+                >
+                  Todas
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 text-[9px] font-black uppercase px-2 rounded-lg hover:bg-red-500/10 text-red-500"
+                  onClick={() => setConfig({ ...config, columns: [] })}
+                >
+                  Deseleccionar
+                </Button>
+              </div>
+            </div>
             <span className="text-xs font-bold text-muted-foreground uppercase">
-                {config.columns?.length || 0} seleccionadas
+                {config.columns?.length || 0}/{(ALL_COLUMNS[config.type as ReportType] || []).length}
             </span>
         </div>
         <div className="grid grid-cols-2 gap-y-3 gap-x-4 p-4 rounded-2xl bg-background/50 border border-primary/5">

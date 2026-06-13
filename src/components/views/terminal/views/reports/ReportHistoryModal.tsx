@@ -24,11 +24,13 @@ import {
   Filter,
   ArrowUpDown,
   Timer,
+  RotateCcw,
 } from 'lucide-react';
 import { reportService } from '@/services/report-service';
 import { ReportRun, ReportType } from '@/types';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { cn } from '@/lib/utils';
 
 const TYPE_LABELS: Record<string, string> = {
   sales: 'Ventas',
@@ -50,34 +52,15 @@ interface ReportHistoryModalProps {
   storeId: string | null;
 }
 
-const HistorySkeleton = () => (
-  <div className="space-y-4">
-    {[...Array(5)].map((_, i) => (
-      <div key={i} className="flex items-center gap-4 p-4 rounded-2xl border">
-        <Skeleton className="w-10 h-10 rounded-full shrink-0" />
-        <div className="flex-1 space-y-2">
-          <Skeleton className="h-4 w-1/3" />
-          <Skeleton className="h-3 w-1/4" />
-        </div>
-        <Skeleton className="h-6 w-16 rounded-lg" />
-        <Skeleton className="h-6 w-20 rounded-lg" />
-      </div>
-    ))}
-  </div>
-);
-
-export const ReportHistoryModal = ({
-  isOpen,
-  onClose,
-  storeId,
-}: ReportHistoryModalProps) => {
+export function ReportHistoryModal({ isOpen, onClose, storeId }: ReportHistoryModalProps) {
   const [runs, setRuns] = useState<ReportRun[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [typeFilter, setTypeFilter] = useState<string>('all');
+  const [error, setError] = useState<Error | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'completed' | 'failed'>('all');
+  const [sortBy, setSortBy] = useState<'date' | 'name'>('date');
 
-  const fetchRuns = useCallback(async () => {
+  const fetchHistory = useCallback(async () => {
     if (!storeId) return;
     setIsLoading(true);
     setError(null);
@@ -85,108 +68,80 @@ export const ReportHistoryModal = ({
       const data = await reportService.getStoreRuns(storeId, 100);
       setRuns(data);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Error al cargar historial';
-      setError(msg);
+      setError(err instanceof Error ? err : new Error('Error al cargar historial'));
     } finally {
       setIsLoading(false);
     }
   }, [storeId]);
 
   useEffect(() => {
-    if (isOpen) fetchRuns();
-  }, [isOpen, fetchRuns]);
+    if (isOpen) fetchHistory();
+  }, [isOpen, fetchHistory]);
 
-  const filtered = runs.filter((run) => {
-    const snapshot = run.parameters_snapshot as Record<string, unknown> | null;
-    const runType = String(snapshot?.type || 'unknown');
-    if (statusFilter !== 'all' && run.status !== statusFilter) return false;
-    if (typeFilter !== 'all' && runType !== typeFilter) return false;
-    return true;
+  const filtered = runs.filter(run => {
+    const matchesSearch = run.parameters_snapshot?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         run.id.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === 'all' || run.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  }).sort((a, b) => {
+    if (sortBy === 'date') return new Date(b.executed_at).getTime() - new Date(a.executed_at).getTime();
+    return (a.parameters_snapshot?.name || '').localeCompare(b.parameters_snapshot?.name || '');
   });
-
-  // Stats
-  const totalRuns = runs.length;
-  const completedRuns = runs.filter((r) => r.status === 'completed').length;
-  const failedRuns = runs.filter((r) => r.status === 'failed').length;
-
-  // Unique types in history
-  const typesInHistory = [...new Set(
-    runs.map((r) => String((r.parameters_snapshot as Record<string, unknown> | null)?.type || 'unknown'))
-  )];
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent
-        className="max-w-4xl max-h-[85vh] overflow-hidden flex flex-col p-0 border-primary/20 bg-background/95 backdrop-blur-xl rounded-3xl"
-        aria-describedby="history-description"
-      >
-        <DialogHeader className="p-6 border-b border-primary/10">
-          <DialogTitle className="text-2xl font-black uppercase tracking-tight text-primary flex items-center gap-3">
-            <History className="w-7 h-7" />
-            Historial de Ejecuciones
-          </DialogTitle>
-          <p id="history-description" className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
-            Registro de todas las generaciones de reportes con estado y tiempos de ejecución.
-          </p>
-
-          {/* Stats bar */}
-          <div className="flex items-center gap-4 mt-4 flex-wrap">
-            <div className="flex items-center gap-2 text-xs">
-              <span className="font-bold text-muted-foreground">Total:</span>
-              <Badge variant="outline" className="font-black text-[10px] uppercase">{totalRuns}</Badge>
+      <DialogContent className="max-w-4xl max-h-[85vh] p-0 overflow-hidden flex flex-col gap-0 border-none bg-background/95 backdrop-blur-xl shadow-2xl">
+        <DialogHeader className="p-6 pb-4 border-b border-border/50">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-primary/10 text-primary">
+                <History className="w-5 h-5" />
+              </div>
+              <div>
+                <DialogTitle className="text-xl font-black uppercase tracking-tight">Historial de Ejecuciones</DialogTitle>
+                <p className="text-xs text-muted-foreground font-medium">Ultimos reportes generados en esta tienda</p>
+              </div>
             </div>
-            <div className="flex items-center gap-2 text-xs">
-              <span className="font-bold text-muted-foreground">Completados:</span>
-              <Badge className="bg-success/10 text-success border-success/20 font-black text-[10px] uppercase">
-                {completedRuns}
-              </Badge>
-            </div>
-            <div className="flex items-center gap-2 text-xs">
-              <span className="font-bold text-muted-foreground">Fallidos:</span>
-              <Badge className="bg-destructive/10 text-destructive border-destructive/20 font-black text-[10px] uppercase">
-                {failedRuns}
-              </Badge>
-            </div>
+            <Button variant="ghost" size="sm" onClick={fetchHistory} disabled={isLoading} className="rounded-xl">
+              <RotateCcw className="w-4 h-4 mr-2" />
+              Actualizar
+            </Button>
           </div>
         </DialogHeader>
 
-        {/* Filters */}
-        <div className="px-6 pt-4 flex items-center gap-3 flex-wrap">
-          <div className="flex items-center gap-2">
-            <Filter className="w-3.5 h-3.5 text-muted-foreground" />
-            <span className="text-[10px] font-bold uppercase text-muted-foreground tracking-widest">Filtros:</span>
+        <div className="bg-muted/30 p-4 border-b border-border/50 flex flex-wrap items-center gap-4">
+          <div className="relative flex-1 min-w-[240px]">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar por nombre o ID..."
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              className="pl-9 bg-background/50 border-border/50 rounded-xl"
+            />
           </div>
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="h-8 w-32 rounded-lg border-primary/10 text-[10px] font-bold uppercase" aria-label="Filtrar por estado">
-              <SelectValue />
+
+          <Select value={statusFilter} onValueChange={(v: any) => setStatusFilter(v)}>
+            <SelectTrigger className="w-[160px] bg-background/50 border-border/50 rounded-xl">
+              <Filter className="w-4 h-4 mr-2 opacity-50" />
+              <SelectValue placeholder="Estado" />
             </SelectTrigger>
-            <SelectContent className="rounded-xl border-primary/10">
-              <SelectItem value="all" className="text-[10px] font-bold uppercase">Todos</SelectItem>
-              <SelectItem value="completed" className="text-[10px] font-bold uppercase">Completados</SelectItem>
-              <SelectItem value="failed" className="text-[10px] font-bold uppercase">Fallidos</SelectItem>
+            <SelectContent>
+              <SelectItem value="all">Todos los estados</SelectItem>
+              <SelectItem value="completed">Completados</SelectItem>
+              <SelectItem value="failed">Fallidos</SelectItem>
             </SelectContent>
           </Select>
-          <Select value={typeFilter} onValueChange={setTypeFilter}>
-            <SelectTrigger className="h-8 w-40 rounded-lg border-primary/10 text-[10px] font-bold uppercase" aria-label="Filtrar por tipo">
-              <SelectValue />
+
+          <Select value={sortBy} onValueChange={(v: any) => setSortBy(v)}>
+            <SelectTrigger className="w-[160px] bg-background/50 border-border/50 rounded-xl">
+              <ArrowUpDown className="w-4 h-4 mr-2 opacity-50" />
+              <SelectValue placeholder="Ordenar por" />
             </SelectTrigger>
-            <SelectContent className="rounded-xl border-primary/10">
-              <SelectItem value="all" className="text-[10px] font-bold uppercase">Todos los tipos</SelectItem>
-              {typesInHistory.map((t) => (
-                <SelectItem key={t} value={t} className="text-[10px] font-bold uppercase">
-                  {TYPE_LABELS[t] || t}
-                </SelectItem>
-              ))}
+            <SelectContent>
+              <SelectItem value="date">Fecha (reciente)</SelectItem>
+              <SelectItem value="name">Nombre A-Z</SelectItem>
             </SelectContent>
           </Select>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => { setStatusFilter('all'); setTypeFilter('all'); }}
-            className="h-8 px-3 text-[10px] font-bold uppercase tracking-widest text-muted-foreground hover:bg-primary/5 rounded-lg"
-          >
-            Limpiar
-          </Button>
         </div>
 
         <div className="flex-1 overflow-y-auto p-6 pt-4 scrollbar-thin scrollbar-thumb-primary/20">
@@ -198,82 +153,62 @@ export const ReportHistoryModal = ({
             emptyComponent={
               <div className="flex flex-col items-center justify-center py-20 gap-4 text-center">
                 <History className="w-12 h-12 text-muted-foreground opacity-20" />
-                <p className="font-bold text-muted-foreground uppercase tracking-widest text-xs">
-                  {runs.length > 0 ? 'Sin coincidencias' : 'Sin ejecuciones registradas'}
-                </p>
-                <p className="text-[11px] text-muted-foreground/60">
-                  {runs.length > 0
-                    ? 'Ajusta los filtros para ver más resultados.'
-                    : 'Los reportes generados aparecerán aquí automáticamente.'}
-                </p>
+                <div>
+                  <h3 className="text-lg font-bold">Sin resultados</h3>
+                  <p className="text-sm text-muted-foreground">No se encontraron ejecuciones que coincidan con los filtros.</p>
+                </div>
               </div>
             }
           >
-            {(items: ReportRun[]) => (
-              <div className="space-y-3" role="list" aria-label="Historial de ejecuciones">
-                {items.map((run, idx) => {
-                  const snapshot = run.parameters_snapshot as Record<string, unknown> | null;
-                  const runType = String(snapshot?.type || 'Desconocido');
-                  const runName = String(snapshot?.name || `Reporte ${runType}`);
-                  const runDate = run.executed_at ? new Date(run.executed_at) : null;
-                  const isSuccess = run.status === 'completed';
+            {(data: ReportRun[]) => (
+              <div className="grid gap-3">
+                {data.map(run => (
+                  <Card key={run.id} className="p-4 hover:border-primary/30 transition-all group bg-background/50 border-border/50 rounded-2xl overflow-hidden relative">
+                    <div className="flex items-center gap-4">
+                      <div className={cn(
+                        "p-3 rounded-2xl",
+                        run.status === 'completed' ? "bg-emerald-500/10 text-emerald-600" : "bg-red-500/10 text-red-600"
+                      )}>
+                        {run.status === 'completed' ? <CheckCircle2 className="w-5 h-5" /> : <XCircle className="w-5 h-5" />}
+                      </div>
 
-                  return (
-                    <Card
-                      key={run.id}
-                      className="p-4 rounded-2xl border-primary/10 bg-card/50 hover:border-primary/20 transition-all duration-200"
-                      role="listitem"
-                    >
-                      <div className="flex items-center gap-4">
-                        {/* Status icon */}
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
-                          isSuccess ? 'bg-success/10' : 'bg-destructive/10'
-                        }`}>
-                          {isSuccess ? (
-                            <CheckCircle2 className="w-5 h-5 text-success" />
-                          ) : (
-                            <XCircle className="w-5 h-5 text-destructive" />
-                          )}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h4 className="font-bold text-sm truncate">{run.parameters_snapshot?.name || 'Reporte Sin Nombre'}</h4>
+                          <Badge variant="outline" className="text-[10px] uppercase font-black px-1.5 py-0">
+                            {TYPE_LABELS[run.parameters_snapshot?.type as string] || run.parameters_snapshot?.type}
+                          </Badge>
                         </div>
-
-                        {/* Info */}
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-black uppercase tracking-tight text-foreground truncate">
-                            {runName}
-                          </p>
-                          <div className="flex items-center gap-3 mt-1 flex-wrap">
-                            <Badge
-                              variant="outline"
-                              className="text-[10px] font-bold uppercase tracking-widest border-primary/20 text-primary"
-                            >
-                              {TYPE_LABELS[runType] || runType}
-                            </Badge>
-                            {runDate && (
-                              <span className="flex items-center gap-1 text-[10px] font-medium text-muted-foreground">
-                                <Clock className="w-3 h-3" />
-                                {format(runDate, "dd MMM yyyy, HH:mm:ss", { locale: es })}
-                              </span>
-                            )}
-                            <Badge
-                              className={`text-[10px] font-black uppercase tracking-widest ${
-                                isSuccess
-                                  ? 'bg-success/10 text-success border-success/20'
-                                  : 'bg-destructive/10 text-destructive border-destructive/20'
-                              }`}
-                            >
-                              {isSuccess ? 'Completado' : 'Fallido'}
-                            </Badge>
+                        <div className="flex items-center gap-4 text-[11px] text-muted-foreground font-medium">
+                          <div className="flex items-center gap-1.5 text-primary/70">
+                            <Clock className="w-3.5 h-3.5" />
+                            {format(new Date(run.executed_at), "d 'de' MMMM, HH:mm", { locale: es })}
                           </div>
-                          {run.error_message && (
-                            <p className="text-[10px] font-medium text-destructive/70 mt-1 truncate">
-                              Error: {run.error_message}
-                            </p>
-                          )}
+                          <div className="flex items-center gap-1.5">
+                            <Timer className="w-3.5 h-3.5" />
+                            ID: {run.id.split('-')[0]}...
+                          </div>
                         </div>
                       </div>
-                    </Card>
-                  );
-                })}
+
+                      <div className="flex items-center gap-2">
+                        {run.file_url && (
+                          <Button size="sm" variant="outline" className="rounded-xl border-emerald-500/20 text-emerald-600 hover:bg-emerald-500/10 h-8" asChild>
+                            <a href={run.file_url} target="_blank" rel="noopener noreferrer">
+                              <FileText className="w-3.5 h-3.5 mr-1.5" />
+                              Ver PDF
+                            </a>
+                          </Button>
+                        )}
+                        {!run.file_url && run.status === 'failed' && (
+                          <div className="text-[10px] font-bold text-red-500 uppercase bg-red-500/5 px-2 py-1 rounded-lg border border-red-500/10">
+                            Error de Generación
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </Card>
+                ))}
               </div>
             )}
           </StateRenderer>
@@ -281,4 +216,14 @@ export const ReportHistoryModal = ({
       </DialogContent>
     </Dialog>
   );
-};
+}
+
+function HistorySkeleton() {
+  return (
+    <div className="space-y-3">
+      {[1, 2, 3, 4, 5].map(i => (
+        <Skeleton key={i} className="h-20 w-full rounded-2xl" />
+      ))}
+    </div>
+  );
+}

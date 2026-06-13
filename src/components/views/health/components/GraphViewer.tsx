@@ -261,6 +261,8 @@ export const GraphViewer: React.FC<GraphViewerProps> = ({ data, title }) => {
 
     // Compute static layout
     const { nodes: layoutNodes, links: layoutLinks } = computeStaticLayout(graphData.nodes, graphData.links, width, height);
+
+    // eslint-disable-next-line react-hooks/immutability
     layoutCache.current = { nodes: layoutNodes, links: layoutLinks };
 
     // Apply filter if active

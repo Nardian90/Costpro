@@ -26,7 +26,7 @@ import {
   Trash2,
   FileText,
 } from 'lucide-react';
-import { reportService, ReportScheduleConfig } from '@/services/report-service';
+import { reportService, type ReportScheduleConfig } from '@/services/report-service';
 import { ReportDefinition } from '@/types';
 import { toast } from 'sonner';
 
@@ -44,48 +44,21 @@ const TYPE_LABELS: Record<string, string> = {
   cash: 'Arqueo de Caja',
 };
 
-const FREQUENCY_LABELS: Record<string, string> = {
-  daily: 'Cada día',
-  weekly: 'Cada semana',
-  monthly: 'Cada mes',
-};
-
-interface ScheduleEntry {
-  definition: ReportDefinition;
-  schedule: ReportScheduleConfig;
-}
-
 interface ReportScheduleModalProps {
   isOpen: boolean;
   onClose: () => void;
   storeId: string | null;
 }
 
-const ScheduleSkeleton = () => (
-  <div className="space-y-4">
-    {[...Array(2)].map((_, i) => (
-      <div key={i} className="p-4 rounded-2xl border">
-        <div className="flex items-center gap-4">
-          <Skeleton className="w-10 h-10 rounded-xl shrink-0" />
-          <div className="flex-1 space-y-2">
-            <Skeleton className="h-4 w-1/2" />
-            <Skeleton className="h-3 w-1/4" />
-          </div>
-          <Skeleton className="h-8 w-16 rounded-lg" />
-        </div>
-      </div>
-    ))}
-  </div>
-);
+interface ScheduleEntry {
+  definition: ReportDefinition;
+  schedule: ReportScheduleConfig;
+}
 
-export const ReportScheduleModal = ({
-  isOpen,
-  onClose,
-  storeId,
-}: ReportScheduleModalProps) => {
+export function ReportScheduleModal({ isOpen, onClose, storeId }: ReportScheduleModalProps) {
   const [schedules, setSchedules] = useState<ScheduleEntry[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<Error | null>(null);
   const [savingId, setSavingId] = useState<string | null>(null);
 
   const fetchSchedules = useCallback(async () => {
@@ -102,8 +75,7 @@ export const ReportScheduleModal = ({
         }));
       setSchedules(withSchedule);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Error al cargar programaciones';
-      setError(msg);
+      setError(err instanceof Error ? err : new Error('Error al cargar programaciones'));
     } finally {
       setIsLoading(false);
     }
@@ -125,14 +97,29 @@ export const ReportScheduleModal = ({
             : s
         )
       );
-      toast.success(
-        newSchedule.active
-          ? 'Programación activada'
-          : 'Programación pausada'
+      toast.success(`Programación ${newSchedule.active ? 'activada' : 'pausada'}`);
+    } catch (err) {
+      toast.error('Error al actualizar estado');
+    } finally {
+      setSavingId(null);
+    }
+  };
+
+  const updateSchedule = async (entry: ScheduleEntry, updates: Partial<ReportScheduleConfig>) => {
+    const newSchedule = { ...entry.schedule, ...updates };
+    setSavingId(entry.definition.id);
+    try {
+      await reportService.saveScheduleConfig(entry.definition.id, newSchedule);
+      setSchedules((prev) =>
+        prev.map((s) =>
+          s.definition.id === entry.definition.id
+            ? { ...s, schedule: newSchedule }
+            : s
+        )
       );
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Error al actualizar';
-      toast.error(msg);
+      toast.success('Configuración guardada');
+    } catch (err) {
+      toast.error('Error al guardar configuración');
     } finally {
       setSavingId(null);
     }
@@ -145,9 +132,8 @@ export const ReportScheduleModal = ({
       await reportService.saveScheduleConfig(entry.definition.id, newSchedule);
       setSchedules((prev) => prev.filter((s) => s.definition.id !== entry.definition.id));
       toast.success('Programación eliminada');
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Error al eliminar';
-      toast.error(msg);
+    } catch (err) {
+      toast.error('Error al eliminar programación');
     } finally {
       setSavingId(null);
     }
@@ -155,33 +141,26 @@ export const ReportScheduleModal = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent
-        className="max-w-2xl max-h-[85vh] overflow-hidden flex flex-col p-0 border-primary/20 bg-background/95 backdrop-blur-xl rounded-3xl"
-        aria-describedby="schedule-description"
-      >
-        <DialogHeader className="p-6 border-b border-primary/10">
-          <DialogTitle className="text-2xl font-black uppercase tracking-tight text-primary flex items-center gap-3">
-            <CalendarClock className="w-7 h-7" />
-            Programación Recurrente
-          </DialogTitle>
-          <p id="schedule-description" className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
-            Configura reportes que se generen automáticamente de forma recurrente.
-          </p>
+      <DialogContent className="max-w-4xl max-h-[85vh] p-0 overflow-hidden flex flex-col gap-0 border-none bg-background/95 backdrop-blur-xl shadow-2xl">
+        <DialogHeader className="p-6 pb-4 border-b border-border/50">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-xl bg-violet-500/10 text-violet-600">
+              <CalendarClock className="w-5 h-5" />
+            </div>
+            <div>
+              <DialogTitle className="text-xl font-black uppercase tracking-tight">Reportes Programados</DialogTitle>
+              <p className="text-xs text-muted-foreground font-medium">Automatiza la generación y envío de tus reportes</p>
+            </div>
+          </div>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto p-6 scrollbar-thin scrollbar-thumb-primary/20">
-          {/* Info banner */}
-          <div className="p-4 rounded-2xl bg-primary/5 border border-primary/10 flex gap-3 items-start mb-6">
-            <AlertCircle className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+        <div className="flex-1 overflow-y-auto p-6 pt-4 scrollbar-thin scrollbar-thumb-primary/20">
+          <div className="bg-amber-500/5 border border-amber-500/10 rounded-2xl p-4 mb-6 flex gap-3 items-start">
+            <AlertCircle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
             <div className="space-y-1">
-              <p className="text-[11px] font-bold text-primary uppercase tracking-widest">
-                Cómo funciona
-              </p>
-              <p className="text-[11px] font-medium text-muted-foreground leading-relaxed">
-                Para activar la programación recurrente de un reporte, primero guárdalo como
-                plantilla usando &quot;Guardar Plantilla&quot;. Luego, activa la programación desde esta
-                vista. La ejecución automática requiere un servidor de tareas programadas
-                (cron/edge function) configurado en la infraestructura de CostPro.
+              <h4 className="text-sm font-bold text-amber-900 dark:text-amber-400">Automatización Enterprise</h4>
+              <p className="text-xs text-amber-800/70 dark:text-amber-400/60 leading-relaxed">
+                Los reportes programados se ejecutan en la nube de CostPro y se envían automáticamente por correo electrónico a los destinatarios configurados.
               </p>
             </div>
           </div>
@@ -193,93 +172,159 @@ export const ReportScheduleModal = ({
             loadingComponent={<ScheduleSkeleton />}
             emptyComponent={
               <div className="flex flex-col items-center justify-center py-16 gap-4 text-center">
-                <CalendarClock className="w-12 h-12 text-muted-foreground opacity-20" />
-                <p className="font-bold text-muted-foreground uppercase tracking-widest text-xs">
-                  Sin programaciones activas
-                </p>
-                <p className="text-[11px] text-muted-foreground/60">
-                  Guarda una plantilla de reporte y activa su programación recurrente.
-                </p>
+                <Clock className="w-12 h-12 text-muted-foreground opacity-20" />
+                <div>
+                  <h3 className="text-lg font-bold text-muted-foreground/50">No hay programaciones</h3>
+                  <p className="text-sm text-muted-foreground/40 max-w-[280px]">
+                    Guarda una plantilla de reporte primero para poder programar su ejecución automática.
+                  </p>
+                </div>
               </div>
             }
           >
-            {(items: ScheduleEntry[]) => (
-              <div className="space-y-3" role="list" aria-label="Programaciones recurrentes">
-                {items.map((entry) => (
-                  <Card
-                    key={entry.definition.id}
-                    className={`p-4 rounded-2xl border transition-all duration-300 ${
-                      entry.schedule.active
-                        ? 'border-success/20 bg-success/5'
-                        : 'border-primary/10 bg-card/50'
-                    }`}
-                    role="listitem"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
-                        entry.schedule.active ? 'bg-success/10' : 'bg-primary/10'
-                      }`}>
-                        <FileText className={`w-5 h-5 ${entry.schedule.active ? 'text-success' : 'text-primary'}`} />
-                      </div>
-
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-black uppercase tracking-tight text-foreground truncate">
-                          {entry.definition.name}
-                        </p>
-                        <div className="flex items-center gap-3 mt-1 flex-wrap">
-                          <Badge
-                            variant="outline"
-                            className="text-[10px] font-bold uppercase tracking-widest border-primary/20 text-primary"
-                          >
+            {(data: ScheduleEntry[]) => (
+              <div className="grid gap-4">
+                {data.map((entry) => (
+                  <Card key={entry.definition.id} className="p-5 bg-background/50 border-border/50 rounded-2xl overflow-hidden relative group">
+                    <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
+                      <div className="flex items-center gap-4">
+                        <div className="p-3 rounded-2xl bg-muted/50 text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary transition-colors">
+                          <FileText className="w-6 h-6" />
+                        </div>
+                        <div>
+                          <h4 className="font-bold text-sm">{entry.definition.name || 'Reporte Sin Nombre'}</h4>
+                          <Badge variant="outline" className="text-[10px] uppercase font-black px-1.5 py-0 mt-1">
                             {TYPE_LABELS[entry.definition.type] || entry.definition.type}
                           </Badge>
-                          <span className="text-[10px] font-bold text-muted-foreground">
-                            <Clock className="w-3 h-3 inline mr-1" />
-                            {FREQUENCY_LABELS[entry.schedule.frequency]} a las {entry.schedule.time}
-                          </span>
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-2 shrink-0">
+                      <div className="flex items-center gap-3">
+                        <div className="flex flex-col items-end gap-1.5 mr-2">
+                          <span className="text-[10px] font-bold uppercase text-muted-foreground tracking-wider">
+                            {entry.schedule.active ? 'Activo' : 'Pausado'}
+                          </span>
+                          <Switch
+                            checked={entry.schedule.active}
+                            onCheckedChange={() => toggleActive(entry)}
+                            disabled={savingId === entry.definition.id}
+                          />
+                        </div>
                         <Button
                           variant="ghost"
-                          size="sm"
-                          onClick={() => toggleActive(entry)}
-                          disabled={savingId === entry.definition.id}
-                          className={`h-8 px-3 text-[10px] font-bold uppercase tracking-widest rounded-xl ${
-                            entry.schedule.active
-                              ? 'text-warning hover:bg-warning/10'
-                              : 'text-success hover:bg-success/10'
-                          }`}
-                          aria-label={entry.schedule.active ? 'Pausar programación' : 'Activar programación'}
-                        >
-                          {savingId === entry.definition.id ? (
-                            <Skeleton className="w-3.5 h-3.5 rounded" />
-                          ) : entry.schedule.active ? (
-                            <><Pause className="w-3.5 h-3.5 mr-1.5" />Pausar</>
-                          ) : (
-                            <><Play className="w-3.5 h-3.5 mr-1.5" />Activar</>
-                          )}
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
+                          size="icon"
+                          className="rounded-xl text-destructive hover:bg-destructive/10"
                           onClick={() => removeSchedule(entry)}
-                          disabled={savingId === entry.definition.id}
-                          className="h-8 px-3 text-[10px] font-bold uppercase tracking-widest text-destructive hover:bg-destructive/10 rounded-xl"
-                          aria-label="Eliminar programación"
                         >
-                          <Trash2 className="w-3.5 h-3.5" />
+                          <Trash2 className="w-4 h-4" />
                         </Button>
                       </div>
                     </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-muted/20 rounded-xl border border-border/30">
+                      <div className="space-y-1.5">
+                        <Label className="text-[10px] font-black uppercase text-muted-foreground ml-1">Frecuencia</Label>
+                        <Select
+                          value={entry.schedule.frequency}
+                          onValueChange={(v: any) => updateSchedule(entry, { frequency: v })}
+                        >
+                          <SelectTrigger className="bg-background/50 border-border/50 h-9 text-xs font-bold rounded-lg">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="daily">Diario</SelectItem>
+                            <SelectItem value="weekly">Semanal</SelectItem>
+                            <SelectItem value="monthly">Mensual</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <Label className="text-[10px] font-black uppercase text-muted-foreground ml-1">Hora de Ejecución</Label>
+                        <Input
+                          type="time"
+                          value={entry.schedule.time || '08:00'}
+                          onChange={(e) => updateSchedule(entry, { time: e.target.value })}
+                          className="bg-background/50 border-border/50 h-9 text-xs font-bold rounded-lg"
+                        />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <Label className="text-[10px] font-black uppercase text-muted-foreground ml-1">Destinatarios</Label>
+                        <div className="flex gap-2">
+                          <Input
+                            placeholder="email@ejemplo.com"
+                            className="bg-background/50 border-border/50 h-9 text-xs font-bold rounded-lg flex-1"
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                const email = (e.target as HTMLInputElement).value;
+                                if (email && !entry.schedule.recipients.includes(email)) {
+                                  updateSchedule(entry, { recipients: [...entry.schedule.recipients, email] });
+                                  (e.target as HTMLInputElement).value = '';
+                                }
+                              }
+                            }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 flex flex-wrap gap-1.5">
+                      {entry.schedule.recipients.map((email) => (
+                        <Badge
+                          key={email}
+                          variant="secondary"
+                          className="text-[9px] font-bold py-0 h-5 pl-2 pr-1 rounded-md"
+                        >
+                          {email}
+                          <button
+                            className="ml-1 hover:text-destructive transition-colors"
+                            onClick={() => updateSchedule(entry, { recipients: entry.schedule.recipients.filter(r => r !== email) })}
+                          >
+                            <Trash2 className="w-2.5 h-3.5 fill-current" />
+                          </button>
+                        </Badge>
+                      ))}
+                      {entry.schedule.recipients.length === 0 && (
+                        <span className="text-[10px] italic text-muted-foreground ml-1">Sin destinatarios configurados</span>
+                      )}
+                    </div>
+
+                    {entry.schedule.last_run && (
+                      <div className="mt-4 pt-3 border-t border-border/20 flex items-center justify-between">
+                        <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground font-medium">
+                          <Clock className="w-3 h-3" />
+                          Ultima ejecución: {new Date(entry.schedule.last_run).toLocaleString()}
+                        </div>
+                        <div className="text-[10px] font-bold text-primary flex items-center gap-1">
+                          <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                          Próxima: {entry.schedule.next_run ? new Date(entry.schedule.next_run).toLocaleDateString() : 'Pendiente'}
+                        </div>
+                      </div>
+                    )}
                   </Card>
                 ))}
               </div>
             )}
           </StateRenderer>
         </div>
+
+        <div className="p-6 border-t border-border/50 flex justify-end">
+          <Button onClick={onClose} variant="secondary" className="rounded-xl font-bold px-8">
+            Cerrar
+          </Button>
+        </div>
       </DialogContent>
     </Dialog>
   );
-};
+}
+
+function ScheduleSkeleton() {
+  return (
+    <div className="space-y-4">
+      {[1, 2].map((i) => (
+        <Skeleton key={i} className="h-48 w-full rounded-2xl" />
+      ))}
+    </div>
+  );
+}

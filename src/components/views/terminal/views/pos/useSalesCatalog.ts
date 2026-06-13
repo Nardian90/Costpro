@@ -162,7 +162,8 @@ export function useSalesCatalog() {
 
       const newRow: SalesCatalogRow = {
         product,
-        selectedVariantId: null,
+
+               selectedVariantId: null,
         selectedVariant: null,
         quantity: 0,
         price: product.price || 0,
@@ -186,8 +187,9 @@ export function useSalesCatalog() {
         if (!existing && fallbackProduct) {
           existing = {
             product: fallbackProduct,
-            selectedVariantId: null,
-            selectedVariant: null,
+
+                   selectedVariantId: null,
+        selectedVariant: null,
             quantity: 0,
             price: fallbackProduct.price || 0,
             cost: fallbackProduct.cost_price || 0,
@@ -419,6 +421,7 @@ export function useSalesCatalog() {
       const existing = rows.get(product.id);
       const row = existing || {
         product,
+               selectedVariantId: null,
         selectedVariant: null,
         quantity: 0,
         price: product.price || 0,
@@ -453,7 +456,7 @@ export function useSalesCatalog() {
 
     // ── Style palette ──
     const THIN_BORDER = { style: 'thin' as const, color: { rgb: 'CBD5E1' } };
-    const BORDER = Array(4).fill(THIN_BORDER);
+    const BORDER: any = { top: THIN_BORDER, bottom: THIN_BORDER, left: THIN_BORDER, right: THIN_BORDER };
 
     const HEADER_READONLY: XLSX.CellStyle = {
       font: { bold: true, sz: 10, color: { rgb: '475569' } },
@@ -528,7 +531,7 @@ export function useSalesCatalog() {
       font: { sz: 9, color: { rgb: '94A3B8' } },
       fill: { patternType: 'solid', fgColor: { rgb: 'F1F5F9' } },
       alignment: { vertical: 'center' },
-      border: Array(4).fill({ style: 'thin', color: { rgb: 'E2E8F0' } }),
+      border: { top: { style: "thin", color: { rgb: "E2E8F0" } } },
     };
 
     // Active row (quantity > 0) highlight
@@ -536,19 +539,19 @@ export function useSalesCatalog() {
       font: { bold: true, sz: 10, color: { rgb: '475569' } },
       fill: { patternType: 'solid', fgColor: { rgb: 'ECFDF5' } },
       alignment: { vertical: 'center' },
-      border: Array(4).fill({ style: 'thin', color: { rgb: '86EFAC' } }),
+      border: { top: { style: "thin", color: { rgb: "E2E8F0" } } },
     };
     const ROW_ACTIVE_EDITABLE: XLSX.CellStyle = {
       font: { bold: true, sz: 10, color: { rgb: '166534' } },
       fill: { patternType: 'solid', fgColor: { rgb: 'BBF7D0' } },
       alignment: { vertical: 'center' },
-      border: Array(4).fill({ style: 'thin', color: { rgb: '4ADE80' } }),
+      border: { top: { style: "thin", color: { rgb: "E2E8F0" } } },
     };
     const ROW_ACTIVE_MIXED: XLSX.CellStyle = {
       font: { bold: true, sz: 10, color: { rgb: '1E40AF' } },
       fill: { patternType: 'solid', fgColor: { rgb: 'BFDBFE' } },
       alignment: { vertical: 'center' },
-      border: Array(4).fill({ style: 'thin', color: { rgb: '60A5FA' } }),
+      border: { top: { style: "thin", color: { rgb: "E2E8F0" } } },
     };
 
     // ── Build worksheet manually ──
@@ -752,124 +755,124 @@ export function useSalesCatalog() {
       font: { bold: true, sz: 16, color: { rgb: 'FFFFFF' } },
       fill: { patternType: 'solid', fgColor: { rgb: '0F766E' } },
       alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
-      border: Array(4).fill({ style: 'thin', color: { rgb: '0F766E' } }),
+      border: { top: { style: "thin", color: { rgb: "E2E8F0" } } },
     };
 
     const SUBTITLE_STYLE: XLSX.CellStyle = {
       font: { sz: 11, color: { rgb: '475569' }, italic: true },
       fill: { patternType: 'solid', fgColor: { rgb: 'F0FDFA' } },
       alignment: { horizontal: 'left', vertical: 'center', wrapText: true },
-      border: Array(4).fill({ style: 'thin', color: { rgb: 'CCFBF1' } }),
+      border: { top: { style: "thin", color: { rgb: "E2E8F0" } } },
     };
 
     const SECTION_HEADER_STYLE: XLSX.CellStyle = {
       font: { bold: true, sz: 12, color: { rgb: 'FFFFFF' } },
       fill: { patternType: 'solid', fgColor: { rgb: '1E293B' } },
       alignment: { horizontal: 'left', vertical: 'center' },
-      border: Array(4).fill({ style: 'thin', color: { rgb: '334155' } }),
+      border: { top: { style: "thin", color: { rgb: "E2E8F0" } } },
     };
 
     const SECTION_GREEN_STYLE: XLSX.CellStyle = {
       font: { bold: true, sz: 12, color: { rgb: 'FFFFFF' } },
       fill: { patternType: 'solid', fgColor: { rgb: '16A34A' } },
       alignment: { horizontal: 'left', vertical: 'center' },
-      border: Array(4).fill({ style: 'thin', color: { rgb: '166534' } }),
+      border: { top: { style: "thin", color: { rgb: "E2E8F0" } } },
     };
 
     const SECTION_RED_STYLE: XLSX.CellStyle = {
       font: { bold: true, sz: 12, color: { rgb: 'FFFFFF' } },
       fill: { patternType: 'solid', fgColor: { rgb: 'DC2626' } },
       alignment: { horizontal: 'left', vertical: 'center' },
-      border: Array(4).fill({ style: 'thin', color: { rgb: '991B1B' } }),
+      border: { top: { style: "thin", color: { rgb: "E2E8F0" } } },
     };
 
     const SECTION_BLUE_STYLE: XLSX.CellStyle = {
       font: { bold: true, sz: 12, color: { rgb: 'FFFFFF' } },
       fill: { patternType: 'solid', fgColor: { rgb: '2563EB' } },
       alignment: { horizontal: 'left', vertical: 'center' },
-      border: Array(4).fill({ style: 'thin', color: { rgb: '1D4ED8' } }),
+      border: { top: { style: "thin", color: { rgb: "E2E8F0" } } },
     };
 
     const COL_HEADER_STYLE: XLSX.CellStyle = {
       font: { bold: true, sz: 10, color: { rgb: 'FFFFFF' } },
       fill: { patternType: 'solid', fgColor: { rgb: '475569' } },
       alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
-      border: Array(4).fill({ style: 'thin', color: { rgb: '334155' } }),
+      border: { top: { style: "thin", color: { rgb: "E2E8F0" } } },
     };
 
     const ROW_EVEN: XLSX.CellStyle = {
       font: { sz: 10, color: { rgb: '1E293B' } },
       fill: { patternType: 'solid', fgColor: { rgb: 'F8FAFC' } },
       alignment: { vertical: 'center', wrapText: true },
-      border: Array(4).fill({ style: 'thin', color: { rgb: 'E2E8F0' } }),
+      border: { top: { style: "thin", color: { rgb: "E2E8F0" } } },
     };
 
     const ROW_ODD: XLSX.CellStyle = {
       font: { sz: 10, color: { rgb: '1E293B' } },
       fill: { patternType: 'solid', fgColor: { rgb: 'FFFFFF' } },
       alignment: { vertical: 'center', wrapText: true },
-      border: Array(4).fill({ style: 'thin', color: { rgb: 'E2E8F0' } }),
+      border: { top: { style: "thin", color: { rgb: "E2E8F0" } } },
     };
 
     const COL_NAME_EDITABLE: XLSX.CellStyle = {
       font: { bold: true, sz: 10, color: { rgb: '166534' } },
       fill: { patternType: 'solid', fgColor: { rgb: 'F0FDF4' } },
       alignment: { vertical: 'center' },
-      border: Array(4).fill({ style: 'thin', color: { rgb: 'BBF7D0' } }),
+      border: { top: { style: "thin", color: { rgb: "E2E8F0" } } },
     };
 
     const COL_NAME_READONLY: XLSX.CellStyle = {
       font: { bold: true, sz: 10, color: { rgb: '475569' } },
       fill: { patternType: 'solid', fgColor: { rgb: 'F1F5F9' } },
       alignment: { vertical: 'center' },
-      border: Array(4).fill({ style: 'thin', color: { rgb: 'CBD5E1' } }),
+      border: { top: { style: "thin", color: { rgb: "E2E8F0" } } },
     };
 
     const COL_NAME_DANGER: XLSX.CellStyle = {
       font: { bold: true, sz: 10, color: { rgb: '991B1B' } },
       fill: { patternType: 'solid', fgColor: { rgb: 'FEF2F2' } },
       alignment: { vertical: 'center' },
-      border: Array(4).fill({ style: 'thin', color: { rgb: 'FECACA' } }),
+      border: { top: { style: "thin", color: { rgb: "E2E8F0" } } },
     };
 
     const BADGE_YES: XLSX.CellStyle = {
       font: { bold: true, sz: 9, color: { rgb: '166534' } },
       fill: { patternType: 'solid', fgColor: { rgb: 'DCFCE7' } },
       alignment: { horizontal: 'center', vertical: 'center' },
-      border: Array(4).fill({ style: 'thin', color: { rgb: '86EFAC' } }),
+      border: { top: { style: "thin", color: { rgb: "E2E8F0" } } },
     };
 
     const BADGE_NO: XLSX.CellStyle = {
       font: { bold: true, sz: 9, color: { rgb: 'DC2626' } },
       fill: { patternType: 'solid', fgColor: { rgb: 'FEE2E2' } },
       alignment: { horizontal: 'center', vertical: 'center' },
-      border: Array(4).fill({ style: 'thin', color: { rgb: 'FCA5A5' } }),
+      border: { top: { style: "thin", color: { rgb: "E2E8F0" } } },
     };
 
     const EXAMPLE_STYLE: XLSX.CellStyle = {
       font: { sz: 10, color: { rgb: '7C3AED' }, italic: true },
       fill: { patternType: 'solid', fgColor: { rgb: 'FAF5FF' } },
       alignment: { vertical: 'center', wrapText: true },
-      border: Array(4).fill({ style: 'thin', color: { rgb: 'E9D5FF' } }),
+      border: { top: { style: "thin", color: { rgb: "E2E8F0" } } },
     };
 
     const STEP_NUM_STYLE: XLSX.CellStyle = {
       font: { bold: true, sz: 11, color: { rgb: 'FFFFFF' } },
       fill: { patternType: 'solid', fgColor: { rgb: '2563EB' } },
       alignment: { horizontal: 'center', vertical: 'center' },
-      border: Array(4).fill({ style: 'thin', color: { rgb: '1D4ED8' } }),
+      border: { top: { style: "thin", color: { rgb: "E2E8F0" } } },
     };
 
     const WARNING_STYLE: XLSX.CellStyle = {
       font: { bold: true, sz: 10, color: { rgb: '92400E' } },
       fill: { patternType: 'solid', fgColor: { rgb: 'FFFBEB' } },
       alignment: { vertical: 'center', wrapText: true },
-      border: Array(4).fill({ style: 'thin', color: { rgb: 'FDE68A' } }),
+      border: { top: { style: "thin", color: { rgb: "E2E8F0" } } },
     };
 
     const BLANK_ROW: XLSX.CellStyle = {
       fill: { patternType: 'solid', fgColor: { rgb: 'FFFFFF' } },
-      border: Array(4).fill({ style: 'thin', color: { rgb: 'FFFFFF' } }),
+      border: { top: { style: "thin", color: { rgb: "E2E8F0" } } },
     };
 
     // ── Build rows ──
@@ -892,9 +895,9 @@ export function useSalesCatalog() {
       font: { bold: true, sz: 10, color: { rgb: fg } },
       fill: { patternType: 'solid', fgColor: { rgb: bg } },
       alignment: { horizontal: 'center', vertical: 'center' },
-      border: Array(4).fill({ style: 'thin', color: { rgb: 'E2E8F0' } }),
+      border: { top: { style: "thin", color: { rgb: "E2E8F0" } } },
     });
-    const legendText: XLSX.CellStyle = { font: { sz: 10, color: { rgb: '1E293B' } }, alignment: { vertical: 'center' }, border: Array(4).fill({ style: 'thin', color: { rgb: 'E2E8F0' } }) };
+    const legendText: XLSX.CellStyle = { font: { sz: 10, color: { rgb: '1E293B' } }, alignment: { vertical: 'center' }, border: { top: { style: "thin", color: { rgb: "E2E8F0" } } } };
 
     helpWs[XLSX.utils.encode_cell({ r, c: 0 })] = { v: 'SI puedes editar', t: 's', s: legendStyle('DCFCE7', '166534') };
     helpWs[XLSX.utils.encode_cell({ r, c: 1 })] = { v: 'Fondo verde = columna que puedes modificar para preparar tu venta.', t: 's', s: legendText };
@@ -1042,7 +1045,7 @@ export function useSalesCatalog() {
           : c === 3 ? 'Para omitir un producto, deja Cantidad en 0 o borra la fila.' : '',
         t: 's',
         s: c === 0
-          ? { font: { bold: true, sz: 11, color: { rgb: 'FFFFFF' } }, fill: { patternType: 'solid', fgColor: { rgb: 'D97706' } }, alignment: { horizontal: 'center', vertical: 'center' }, border: Array(4).fill({ style: 'thin', color: { rgb: 'B45309' } }) }
+          ? { font: { bold: true, sz: 11, color: { rgb: 'FFFFFF' } }, fill: { patternType: 'solid', fgColor: { rgb: 'D97706' } }, alignment: { horizontal: 'center', vertical: 'center' }, border: { top: { style: "thin", color: { rgb: "E2E8F0" } } } }
           : c === 3 ? WARNING_STYLE : WARNING_STYLE,
       };
     }

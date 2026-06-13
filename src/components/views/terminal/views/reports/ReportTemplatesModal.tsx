@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -12,16 +12,20 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { StateRenderer } from '@/components/ui/StateRenderer';
 import {
-  FileText,
+  Layout,
   Search,
+  Filter,
+  ArrowUpDown,
+  FileText,
+  Play,
+  Settings2,
   Trash2,
   Clock,
-  Download,
-  CalendarDays,
-  FolderOpen,
-  X,
+  CalendarClock,
+  LayoutTemplate,
 } from 'lucide-react';
 import { reportService } from '@/services/report-service';
 import { ReportDefinition, ReportType } from '@/types';
@@ -47,35 +51,16 @@ interface ReportTemplatesModalProps {
   isOpen: boolean;
   onClose: () => void;
   storeId: string | null;
-  onLoadTemplate: (template: ReportDefinition) => void;
+  onSelect: (template: ReportDefinition) => void;
 }
 
-const TemplateSkeleton = () => (
-  <div className="space-y-4">
-    {[...Array(4)].map((_, i) => (
-      <div key={i} className="flex items-center gap-4 p-4 rounded-2xl border">
-        <Skeleton className="w-10 h-10 rounded-xl shrink-0" />
-        <div className="flex-1 space-y-2">
-          <Skeleton className="h-4 w-2/3" />
-          <Skeleton className="h-3 w-1/3" />
-        </div>
-        <Skeleton className="h-8 w-20 rounded-lg" />
-      </div>
-    ))}
-  </div>
-);
-
-export const ReportTemplatesModal = ({
-  isOpen,
-  onClose,
-  storeId,
-  onLoadTemplate,
-}: ReportTemplatesModalProps) => {
+export function ReportTemplatesModal({ isOpen, onClose, storeId, onSelect }: ReportTemplatesModalProps) {
   const [templates, setTemplates] = useState<ReportDefinition[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [search, setSearch] = useState('');
-  const [deleting, setDeleting] = useState<string | null>(null);
+  const [error, setError] = useState<Error | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [typeFilter, setTypeFilter] = useState<string>('all');
+  const [sortBy, setSortBy] = useState<'date' | 'name'>('date');
 
   const fetchTemplates = useCallback(async () => {
     if (!storeId) return;
@@ -85,69 +70,87 @@ export const ReportTemplatesModal = ({
       const data = await reportService.getDefinitions(storeId);
       setTemplates(data);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Error al cargar plantillas';
-      setError(msg);
+      setError(err instanceof Error ? err : new Error('Error al cargar plantillas'));
     } finally {
       setIsLoading(false);
     }
   }, [storeId]);
 
   useEffect(() => {
-    if (isOpen) {
-      fetchTemplates();
-    }
+    if (isOpen) fetchTemplates();
   }, [isOpen, fetchTemplates]);
 
-  const handleDelete = async (id: string, name: string) => {
-    setDeleting(id);
+  const handleDelete = async (id: string) => {
+    if (!confirm('¿Estás seguro de eliminar esta plantilla?')) return;
     try {
       await reportService.deleteDefinition(id);
-      setTemplates((prev) => prev.filter((t) => t.id !== id));
-      toast.success(`Plantilla "${name}" eliminada`);
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Error al eliminar';
-      toast.error(msg);
-    } finally {
-      setDeleting(null);
+      setTemplates(prev => prev.filter(t => t.id !== id));
+      toast.success('Plantilla eliminada');
+    } catch (err) {
+      toast.error('Error al eliminar plantilla');
     }
   };
 
-  const filtered = search
-    ? templates.filter(
-        (t) =>
-          t.name.toLowerCase().includes(search.toLowerCase()) ||
-          t.type.toLowerCase().includes(search.toLowerCase())
-      )
-    : templates;
+  const filtered = templates.filter(t => {
+    const matchesSearch = t.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesType = typeFilter === 'all' || t.type === typeFilter;
+    return matchesSearch && matchesType;
+  }).sort((a, b) => {
+    if (sortBy === 'date') return new Date(b.updated_at || b.created_at).getTime() - new Date(a.updated_at || a.created_at).getTime();
+    return a.name.localeCompare(b.name);
+  });
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent
-        className="max-w-3xl max-h-[85vh] overflow-hidden flex flex-col p-0 border-primary/20 bg-background/95 backdrop-blur-xl rounded-3xl"
-        aria-describedby="templates-description"
-      >
-        <DialogHeader className="p-6 border-b border-primary/10">
-          <DialogTitle className="text-2xl font-black uppercase tracking-tight text-primary flex items-center gap-3">
-            <FolderOpen className="w-7 h-7" />
-            Plantillas Guardadas
-          </DialogTitle>
-          <p id="templates-description" className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
-            Carga una plantilla previamente guardada para reutilizar su configuración.
-          </p>
+      <DialogContent className="max-w-4xl max-h-[85vh] p-0 overflow-hidden flex flex-col gap-0 border-none bg-background/95 backdrop-blur-xl shadow-2xl">
+        <DialogHeader className="p-6 pb-4 border-b border-border/50">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-600">
+                <LayoutTemplate className="w-5 h-5" />
+              </div>
+              <div>
+                <DialogTitle className="text-xl font-black uppercase tracking-tight">Plantillas de Reportes</DialogTitle>
+                <p className="text-xs text-muted-foreground font-medium">Reutiliza tus configuraciones de reportes favoritas</p>
+              </div>
+            </div>
+          </div>
         </DialogHeader>
 
-        {/* Search bar */}
-        <div className="px-6 pt-4">
-          <div className="relative">
+        <div className="bg-muted/30 p-4 border-b border-border/50 flex flex-wrap items-center gap-4">
+          <div className="relative flex-1 min-w-[240px]">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Buscar por nombre o tipo..."
-              className="pl-10 rounded-xl border-primary/10 bg-background/50 text-xs font-bold"
-              aria-label="Buscar plantillas"
+              placeholder="Buscar por nombre..."
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              className="pl-9 bg-background/50 border-border/50 rounded-xl"
             />
           </div>
+
+          <Select value={typeFilter} onValueChange={setTypeFilter}>
+            <SelectTrigger className="w-[180px] bg-background/50 border-border/50 rounded-xl">
+              <Filter className="w-4 h-4 mr-2 opacity-50" />
+              <SelectValue placeholder="Tipo de Reporte" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos los tipos</SelectItem>
+              {Object.entries(TYPE_LABELS).map(([val, label]) => (
+                <SelectItem key={val} value={val}>{label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={sortBy} onValueChange={(v: any) => setSortBy(v)}>
+            <SelectTrigger className="w-[160px] bg-background/50 border-border/50 rounded-xl">
+              <ArrowUpDown className="w-4 h-4 mr-2 opacity-50" />
+              <SelectValue placeholder="Ordenar por" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="date">Última actualización</SelectItem>
+              <SelectItem value="name">Nombre A-Z</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="flex-1 overflow-y-auto p-6 pt-4 scrollbar-thin scrollbar-thumb-primary/20">
@@ -158,90 +161,80 @@ export const ReportTemplatesModal = ({
             loadingComponent={<TemplateSkeleton />}
             emptyComponent={
               <div className="flex flex-col items-center justify-center py-20 gap-4 text-center">
-                <FileText className="w-12 h-12 text-muted-foreground opacity-20" />
-                <p className="font-bold text-muted-foreground uppercase tracking-widest text-xs">
-                  {search ? 'Sin resultados' : 'Sin plantillas guardadas'}
-                </p>
-                <p className="text-[11px] text-muted-foreground/60">
-                  {search
-                    ? 'Intenta con otro término de búsqueda.'
-                    : 'Guarda tu configuración actual con el botón "Guardar Plantilla".'}
-                </p>
+                <Layout className="w-12 h-12 text-muted-foreground opacity-20" />
+                <div>
+                  <h3 className="text-lg font-bold">Sin plantillas</h3>
+                  <p className="text-sm text-muted-foreground">No se encontraron plantillas guardadas.</p>
+                </div>
               </div>
             }
           >
-            {(items: ReportDefinition[]) => (
-              <div className="space-y-3" role="list" aria-label="Lista de plantillas">
-                {items.map((template) => (
-                  <Card
-                    key={template.id}
-                    className="p-4 rounded-2xl border-primary/10 bg-card/50 hover:border-primary/30 hover:bg-primary/5 transition-all duration-300 group"
-                    role="listitem"
-                  >
-                    <div className="flex items-center gap-4">
-                      {/* Icon */}
-                      <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                        <FileText className="w-5 h-5 text-primary" />
-                      </div>
-
-                      {/* Info */}
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-black uppercase tracking-tight text-foreground truncate">
-                          {template.name}
-                        </p>
-                        <div className="flex items-center gap-3 mt-1 flex-wrap">
-                          <Badge
-                            variant="outline"
-                            className="text-[10px] font-bold uppercase tracking-widest border-primary/20 text-primary"
-                          >
+            {(data: ReportDefinition[]) => (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {data.map(template => (
+                  <Card key={template.id} className="p-4 hover:border-primary/30 transition-all group bg-background/50 border-border/50 rounded-2xl overflow-hidden relative">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2.5 rounded-xl bg-muted/50 text-muted-foreground group-hover:bg-primary/5 group-hover:text-primary transition-colors">
+                          <FileText className="w-5 h-5" />
+                        </div>
+                        <div className="min-w-0">
+                          <h4 className="font-bold text-sm truncate">{template.name}</h4>
+                          <Badge variant="outline" className="text-[10px] uppercase font-black px-1.5 py-0 mt-0.5">
                             {TYPE_LABELS[template.type] || template.type}
                           </Badge>
-                          <span className="flex items-center gap-1 text-[10px] font-medium text-muted-foreground">
-                            <Clock className="w-3 h-3" />
-                            {format(new Date(template.updated_at), "dd MMM yyyy, HH:mm", { locale: es })}
-                          </span>
-                          {template.date_range?.from && template.date_range?.to && (
-                            <span className="flex items-center gap-1 text-[10px] font-medium text-muted-foreground">
-                              <CalendarDays className="w-3 h-3" />
-                              {template.date_range.from} — {template.date_range.to}
-                            </span>
-                          )}
-                          <span className="text-[10px] font-medium text-muted-foreground">
-                            {template.columns?.length || 0} columnas
-                          </span>
                         </div>
                       </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 -mt-1 -mr-1 h-8 w-8"
+                        onClick={() => handleDelete(template.id)}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
 
-                      {/* Actions */}
-                      <div className="flex items-center gap-2 shrink-0">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            onLoadTemplate(template);
-                            onClose();
-                          }}
-                          className="h-8 px-3 text-[10px] font-bold uppercase tracking-widest text-primary hover:bg-primary/10 rounded-xl"
-                          aria-label={`Cargar plantilla ${template.name}`}
-                        >
-                          <Download className="w-3.5 h-3.5 mr-1.5" />
-                          Cargar
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDelete(template.id, template.name)}
-                          disabled={deleting === template.id}
-                          className="h-8 px-3 text-[10px] font-bold uppercase tracking-widest text-destructive hover:bg-destructive/10 rounded-xl"
-                          aria-label={`Eliminar plantilla ${template.name}`}
-                        >
-                          {deleting === template.id ? (
-                            <Skeleton className="w-3.5 h-3.5 rounded" />
-                          ) : (
-                            <Trash2 className="w-3.5 h-3.5" />
-                          )}
-                        </Button>
+                    <div className="space-y-2 mb-4">
+                      <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                        <Layout className="w-3.5 h-3.5 opacity-50" />
+                        <span>{template.columns.length} columnas configuradas</span>
                       </div>
+                      {template.layout?.schedule?.enabled && (
+                        <div className="flex items-center gap-2 text-[11px] text-violet-600 font-bold">
+                          <CalendarClock className="w-3.5 h-3.5" />
+                          <span>Ejecución automática activa</span>
+                        </div>
+                      )}
+                      <div className="flex items-center gap-2 text-[10px] text-muted-foreground/60">
+                        <Clock className="w-3 h-3" />
+                        <span>Editado {format(new Date(template.updated_at || template.created_at), "d MMM, yyyy", { locale: es })}</span>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-2 mt-auto">
+                      <Button
+                        className="flex-1 rounded-xl h-9 text-xs font-bold"
+                        onClick={() => {
+                          onSelect(template);
+                          onClose();
+                        }}
+                      >
+                        <Play className="w-3.5 h-3.5 mr-2" />
+                        Cargar
+                      </Button>
+                      <Button
+                        variant="outline"
+                        className="flex-1 rounded-xl h-9 text-xs font-bold bg-transparent border-border/50"
+                        onClick={() => {
+                          onSelect(template);
+                          onClose();
+                          // Additional action could be to open config directly
+                        }}
+                      >
+                        <Settings2 className="w-3.5 h-3.5 mr-2" />
+                        Configurar
+                      </Button>
                     </div>
                   </Card>
                 ))}
@@ -249,7 +242,23 @@ export const ReportTemplatesModal = ({
             )}
           </StateRenderer>
         </div>
+
+        <div className="p-6 border-t border-border/50 flex justify-end">
+          <Button onClick={onClose} variant="secondary" className="rounded-xl font-bold px-8">
+            Cerrar
+          </Button>
+        </div>
       </DialogContent>
     </Dialog>
   );
-};
+}
+
+function TemplateSkeleton() {
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {[1, 2, 3, 4].map(i => (
+        <Skeleton key={i} className="h-44 w-full rounded-2xl" />
+      ))}
+    </div>
+  );
+}

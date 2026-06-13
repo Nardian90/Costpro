@@ -28,13 +28,13 @@ export default function InventoryCountTableView({
     <div className="overflow-x-auto table-to-cards force-table rounded-2xl shadow-xl border border-white/5 overflow-hidden">
       <table className="w-full">
         <thead>
-          <tr className="bg-muted/50 text-muted-foreground font-black uppercase text-[10px] tracking-[0.2em] text-primary/70">
+          <tr className="bg-muted/50 text-muted-foreground font-black uppercase text-[10px] tracking-[0.2em] text-primary/70" aria-label="Cabecera de tabla">
             <th className="p-4 text-left">Producto / SKU</th>
             <th className="p-4 text-right">Stock Teórico</th>
             <th className="p-4 text-center">Stock Físico (Contado)</th>
             <th className="p-4 text-right">Desviación</th>
             <th className="p-4 text-center">% Muestra</th>
-            {showRemoveButton && <th className="p-4 text-center w-12"></th>}
+            {showRemoveButton && <th className="p-4 text-center w-12" aria-label="Acciones"></th>}
           </tr>
         </thead>
         <tbody className="bg-background/30 backdrop-blur-sm">
