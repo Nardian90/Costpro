@@ -468,12 +468,12 @@ export const BulkPriceIncrementModal: React.FC<BulkPriceIncrementModalProps> = (
           {/* Category filter dropdown */}
           {scope === 'category' && (
             <div className="mt-3">
-              <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2 block">
+              <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2 block" htmlFor="category-select">
                 Seleccionar Categoría
               </label>
               <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                <SelectTrigger className="w-full neu-input bg-muted/20 border-border">
-                  <SelectValue placeholder="Todas las categorías..." />
+                <SelectTrigger className="w-full neu-input bg-muted/20 border-border" id="category-select">
+                  <SelectValue placeholder="Todas las categorías..." aria-label="Categoría" />
                 </SelectTrigger>
                 <SelectContent>
                   {categories.map((cat) => (

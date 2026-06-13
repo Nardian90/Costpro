@@ -817,12 +817,12 @@ export default function ProductReceptionView({ onCancel, preselectedProduct }: P
                     {editingIndex === index ? (
                       <div className="flex items-center gap-2 ml-6 mt-1">
                         <div className="flex items-center gap-1">
-                          <label className="text-[10px] font-bold uppercase text-muted-foreground">Cant:</label>
-                          <input type="number" min="0.0001" step="0.01" value={editQuantity} onChange={e => setEditQuantity(Math.max(0.0001, parseFloat(e.target.value) || 1))} className="w-16 px-2 py-1 text-xs font-bold rounded-lg border border-border bg-background" autoFocus />
+                          <label htmlFor="edit-qty-input" className="text-[10px] font-bold uppercase text-muted-foreground">Cant:</label>
+                          <input id="edit-qty-input" type="number" min="0.0001" step="0.01" value={editQuantity} onChange={e => setEditQuantity(Math.max(0.0001, parseFloat(e.target.value) || 1))} className="w-16 px-2 py-1 text-xs font-bold rounded-lg border border-border bg-background" autoFocus aria-label="Cantidad" />
                         </div>
                         <div className="flex items-center gap-1">
-                          <label className="text-[10px] font-bold uppercase text-muted-foreground">Costo:</label>
-                          <input type="number" min="0" step="0.01" value={editCost || ''} onChange={e => setEditCost(parseFloat(e.target.value) || 0)} className="w-20 px-2 py-1 text-xs font-bold rounded-lg border border-border bg-background" />
+                          <label htmlFor="edit-cost-input" className="text-[10px] font-bold uppercase text-muted-foreground">Costo:</label>
+                          <input id="edit-cost-input" type="number" min="0" step="0.01" value={editCost || ''} onChange={e => setEditCost(parseFloat(e.target.value) || 0)} className="w-20 px-2 py-1 text-xs font-bold rounded-lg border border-border bg-background" aria-label="Costo" />
                         </div>
                         <button onClick={handleSaveEdit} className="px-2 py-1 text-[10px] font-black uppercase rounded-lg bg-primary/10 text-primary hover:bg-primary/20" type="button">OK</button>
                         <button onClick={() => setEditingIndex(null)} className="px-2 py-1 text-[10px] font-bold uppercase rounded-lg bg-muted text-muted-foreground hover:bg-muted/80" type="button">X</button>
@@ -955,7 +955,7 @@ export default function ProductReceptionView({ onCancel, preselectedProduct }: P
                   <p className={cn('font-black text-sm uppercase tracking-widest', isDragOver && 'text-primary')}>Seleccionar archivo Excel</p>
                   <p className="text-xs text-muted-foreground mt-1">.xlsx o .xls — Arrastra o haz clic</p>
                 </div>
-                <input id="reception-import-file" type="file" accept=".xlsx,.xls" onChange={handleImportFileSelect} className="hidden" disabled={isImporting} />
+                <input id="reception-import-file" type="file" aria-label="Archivo de recepción" accept=".xlsx,.xls" onChange={handleImportFileSelect} className="hidden" disabled={isImporting} />
               </label>
             )}
 
@@ -1163,11 +1163,11 @@ export default function ProductReceptionView({ onCancel, preselectedProduct }: P
             <div className="grid grid-cols-2 gap-4 pt-2 border-t border-border">
               <div className="space-y-1.5">
                 <label htmlFor="item-qty" className="text-xs font-black uppercase tracking-widest ml-1">Cantidad</label>
-                <input id="item-qty" type="number" min="0.0001" step="0.01" value={newQuantity} onChange={e => setNewQuantity(Math.max(0.0001, parseFloat(e.target.value) || 1))} className="neu-input w-full font-bold" />
+                <input id="item-qty" type="number" aria-label="Cantidad" min="0.0001" step="0.01" value={newQuantity} onChange={e => setNewQuantity(Math.max(0.0001, parseFloat(e.target.value) || 1))} className="neu-input w-full font-bold" />
               </div>
               <div className="space-y-1.5">
                 <label htmlFor="item-cost" className="text-xs font-black uppercase tracking-widest ml-1">Costo Unit.</label>
-                <input id="item-cost" type="number" min="0" step="0.01" value={newUnitCost || ''} onChange={e => setNewUnitCost(parseFloat(e.target.value) || 0)} className="neu-input w-full font-bold text-primary" placeholder="0.00" />
+                <input id="item-cost" type="number" aria-label="Costo unitario" min="0" step="0.01" value={newUnitCost || ''} onChange={e => setNewUnitCost(parseFloat(e.target.value) || 0)} className="neu-input w-full font-bold text-primary" placeholder="0.00" />
               </div>
             </div>
           )}

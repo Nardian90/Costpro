@@ -872,7 +872,7 @@ export function ChatBot() {
                           setTemperature(val);
                           debouncedSave(TEMP_STORAGE_KEY, val);
                         }}
-                        className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
+                        className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer accent-primary" aria-label="Ajustar temperatura"
                       />
                       <div className="flex justify-between text-[9px] text-muted-foreground/60 uppercase tracking-widest">
                         <span>Preciso</span>
@@ -1164,7 +1164,7 @@ export function ChatBot() {
                   <input
                     ref={fileInputRef}
                     type="file"
-                    accept="image/jpeg,image/png,image/webp,image/gif"
+                    accept="image/jpeg,image/png,image/webp,image/gif" aria-label="Adjuntar archivo"
                     className="hidden"
                     onChange={handleImageChange}
                   />

@@ -640,7 +640,7 @@ export default function ArenaFC() {
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <input
                 type="text"
-                placeholder="Buscar ficha de costo..."
+                placeholder="Buscar ficha de costo..." aria-label="Buscar ficha de costo"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full h-12 pl-11 pr-4 bg-muted/20 border-none rounded-2xl text-sm font-bold placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/20 transition-all"

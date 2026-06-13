@@ -320,10 +320,11 @@ export default function AhaMomentSection() {
                 className="space-y-4"
               >
                 <div>
-                  <label className="text-xs font-medium text-green-700 dark:text-green-400 uppercase tracking-wide block mb-2">
+                  <label className="text-xs font-medium text-green-700 dark:text-green-400 uppercase tracking-wide block mb-2" htmlFor="demo-product">
                     Producto
                   </label>
                   <div className="flex items-center bg-white dark:bg-white/[0.06] rounded-lg px-3 py-2 border border-green-200 dark:border-green-800">
+                    <input id="demo-product" type="text" readOnly className="sr-only" aria-label="Producto demo" />
                     <span className="text-sm text-green-800 dark:text-green-200 font-mono">
                       {DEMO_PRODUCT.slice(0, typedChars)}
                     </span>

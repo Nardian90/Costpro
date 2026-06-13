@@ -39,7 +39,7 @@ describe('UserFormModal', () => {
   });
 
   const defaultProps = {
-    mode: null as const,
+    mode: null as any,
     isOpen: false,
     onClose: vi.fn(),
     onSubmit: vi.fn().mockResolvedValue(true),

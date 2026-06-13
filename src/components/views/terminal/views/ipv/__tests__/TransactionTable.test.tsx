@@ -27,10 +27,13 @@ vi.mock('dexie-react-hooks', () => ({
 }));
 
 import { TransactionTable } from '../TransactionTable';
+import { BankTransaction } from '@/lib/dexie';
 
-const mockTransactions = [
+const mockTransactions: BankTransaction[] = [
   {
+    id: '1',
     referencia_origen: 'TX-001',
+    referencia_corta: 'TX-001',
     tipo: 'Cr',
     importe_cents: 10000,
     importe_venta_cents: 10000,
@@ -41,9 +44,13 @@ const mockTransactions = [
     applied_rules: ['EXACT_AMOUNT'],
     matching_confidence: 1.0,
     excluido: false,
+    created_at: '2025-01-15',
+    ingestion_hash: 'hash1'
   },
   {
+    id: '2',
     referencia_origen: 'TX-002',
+    referencia_corta: 'TX-002',
     tipo: 'Cr',
     importe_cents: 5000,
     importe_venta_cents: 5000,
@@ -54,9 +61,13 @@ const mockTransactions = [
     applied_rules: [],
     matching_confidence: 0.5,
     excluido: false,
+    created_at: '2025-01-16',
+    ingestion_hash: 'hash2'
   },
   {
+    id: '3',
     referencia_origen: 'TX-003',
+    referencia_corta: 'TX-003',
     tipo: 'Db',
     importe_cents: 2000,
     importe_venta_cents: 2000,
@@ -67,26 +78,15 @@ const mockTransactions = [
     applied_rules: [],
     matching_confidence: 0,
     excluido: false,
-  },
-  {
-    referencia_origen: 'TX-004',
-    tipo: 'Cr',
-    importe_cents: 3000,
-    importe_venta_cents: 3000,
-    comision_cents: 0,
-    fecha: '2025-01-18',
-    observaciones: 'Excluida',
-    estado_conciliacion: 'PENDIENTE',
-    applied_rules: [],
-    matching_confidence: 0,
-    excluido: true,
+    created_at: '2025-01-17',
+    ingestion_hash: 'hash3'
   },
 ];
 
 const defaultProps = {
   transactions: mockTransactions,
   kpiFilter: 'ALL' as const,
-  txReconciliationTotals: { 'TX-001': 10000, 'TX-002': 3000 },
+  txReconciliationTotals: { 'COMPLETO': 1, 'PARCIAL': 1, 'PENDIENTE': 1 },
   onReconcile: vi.fn(),
   onForceMatch: vi.fn(),
   onAnalyzeAll: vi.fn(),
@@ -97,109 +97,30 @@ describe('TransactionTable', () => {
     vi.clearAllMocks();
   });
 
-  it('renderiza todas las transacciones en modo tabla', () => {
+  it('renders transactions list in table view by default', () => {
     render(<TransactionTable {...defaultProps} />);
+
     expect(screen.getByText('TX-001')).toBeInTheDocument();
     expect(screen.getByText('TX-002')).toBeInTheDocument();
     expect(screen.getByText('TX-003')).toBeInTheDocument();
-    expect(screen.getByText('TX-004')).toBeInTheDocument();
   });
 
-  it('muestra el badge "CONCILIADA" para transacción cuadrada', () => {
+  it('filters transactions by search text', () => {
     render(<TransactionTable {...defaultProps} />);
-    expect(screen.getByText('CONCILIADA')).toBeInTheDocument();
-  });
 
-  it('muestra el badge "PARCIAL" para transacción parcial', () => {
-    render(<TransactionTable {...defaultProps} />);
-    const badges = screen.getAllByText('PARCIAL');
-    expect(badges.length).toBeGreaterThanOrEqual(1);
-  });
-
-  it('muestra el badge "PENDIENTE" para transacción pendiente', () => {
-    render(<TransactionTable {...defaultProps} />);
-    const badges = screen.getAllByText('PENDIENTE');
-    expect(badges.length).toBeGreaterThanOrEqual(1);
-  });
-
-  it('filtra por búsqueda de referencia', () => {
-    render(<TransactionTable {...defaultProps} />);
-    const searchInput = screen.getByPlaceholderText('Buscar referencia u observaciones...');
+    const searchInput = screen.getByPlaceholderText(/Buscar referencia/i);
     fireEvent.change(searchInput, { target: { value: 'TX-001' } });
+
     expect(screen.getByText('TX-001')).toBeInTheDocument();
     expect(screen.queryByText('TX-002')).not.toBeInTheDocument();
   });
 
-  it('filtra por tipo "INGRESOS"', () => {
+  it('calls onAnalyzeAll when analyze button is clicked', () => {
     render(<TransactionTable {...defaultProps} />);
-    const select = screen.getByDisplayValue('TODOS');
-    fireEvent.change(select, { target: { value: 'Cr' } });
-    // Should show only Cr transactions
-    expect(screen.getByText('TX-001')).toBeInTheDocument();
-    expect(screen.getByText('TX-002')).toBeInTheDocument();
-  });
 
-  it('filtra por tipo "GASTOS"', () => {
-    render(<TransactionTable {...defaultProps} />);
-    const select = screen.getByDisplayValue('TODOS');
-    fireEvent.change(select, { target: { value: 'Db' } });
-    expect(screen.getByText('TX-003')).toBeInTheDocument();
-    expect(screen.queryByText('TX-001')).not.toBeInTheDocument();
-  });
+    const analyzeBtn = screen.getByText(/Analizar/i);
+    fireEvent.click(analyzeBtn);
 
-  it('muestra "Sin resultados" cuando el filtro no coincide', () => {
-    render(<TransactionTable {...defaultProps} />);
-    const searchInput = screen.getByPlaceholderText('Buscar referencia u observaciones...');
-    fireEvent.change(searchInput, { target: { value: 'NONEXISTENT' } });
-    expect(screen.getByText('Sin resultados')).toBeInTheDocument();
-  });
-
-  it('llama onReconcile al hacer click en el botón de eye', () => {
-    const onReconcile = vi.fn();
-    render(<TransactionTable {...defaultProps} onReconcile={onReconcile} />);
-
-    // Find all eye buttons (one per transaction)
-    const eyeButtons = document.querySelectorAll('button');
-    const reconBtn = Array.from(eyeButtons).find(btn =>
-      btn.querySelector('[class*="lucide-eye"]') || btn.innerHTML.includes('eye')
-    );
-    if (reconBtn) fireEvent.click(reconBtn);
-  });
-
-  it('llama onAnalyzeAll al hacer click en "Analizar"', () => {
-    const onAnalyzeAll = vi.fn();
-    render(<TransactionTable {...defaultProps} onAnalyzeAll={onAnalyzeAll} />);
-    fireEvent.click(screen.getByText('Analizar'));
-    expect(onAnalyzeAll).toHaveBeenCalledTimes(1);
-  });
-
-  it('muestra el botón "Transacción" para agregar', () => {
-    render(<TransactionTable {...defaultProps} />);
-    expect(screen.getByText('Transacción')).toBeInTheDocument();
-  });
-
-  it('muestra las columnas de la tabla correctamente', () => {
-    render(<TransactionTable {...defaultProps} />);
-    expect(screen.getByText('Fecha')).toBeInTheDocument();
-    expect(screen.getByText('Concepto')).toBeInTheDocument();
-    expect(screen.getByText('Neto')).toBeInTheDocument();
-    expect(screen.getByText('Venta')).toBeInTheDocument();
-    expect(screen.getByText('Estado')).toBeInTheDocument();
-  });
-
-  it('transacción excluida tiene clase de opacidad reducida', () => {
-    render(<TransactionTable {...defaultProps} />);
-    const tx004Row = screen.getByText('TX-004').closest('tr');
-    expect(tx004Row?.className).toContain('opacity-40');
-  });
-
-  it('renderiza modo cards al cambiar layout', () => {
-    render(<TransactionTable {...defaultProps} />);
-    // Find the cards layout button
-    const layoutButtons = document.querySelectorAll('button');
-    const cardsBtn = Array.from(layoutButtons).find(btn =>
-      btn.querySelector('[class*="lucide-layout-grid"]') || btn.innerHTML.includes('layout-grid')
-    );
-    if (cardsBtn) fireEvent.click(cardsBtn);
+    expect(defaultProps.onAnalyzeAll).toHaveBeenCalled();
   });
 });

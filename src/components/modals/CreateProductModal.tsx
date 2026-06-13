@@ -247,7 +247,7 @@ export const CreateProductModal = () => {
 
           {/* Image Section */}
           <div className="space-y-1.5">
-            <label className="text-xs font-black uppercase tracking-widest ml-1">Imagen del Producto</label>
+            <label className="text-xs font-black uppercase tracking-widest ml-1" htmlFor="product-image-input">Imagen del Producto</label>
             {imagePreview ? (
               <div className="relative group rounded-xl border border-border overflow-hidden bg-muted/10">
                 <img
@@ -298,7 +298,7 @@ export const CreateProductModal = () => {
             )}
 
             <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" onChange={handleCameraCapture} className="hidden" aria-hidden="true" />
-            <input ref={galleryInputRef} type="file" accept="image/*" onChange={handleGallerySelect} className="hidden" aria-hidden="true" />
+            <input ref={galleryInputRef} type="file" id="product-image-input" aria-label="Seleccionar imagen" accept="image/*" onChange={handleGallerySelect} className="hidden" aria-hidden="true" />
             <p className="text-[10px] text-muted-foreground italic ml-1">
               Máx. 10 MB. Se optimiza automáticamente a WebP (máx. 1024px, &lt; 200 KB, mín. 100×100px).
             </p>
@@ -422,14 +422,14 @@ export const CreateProductModal = () => {
           {/* ---- Unit Variants Section ---- */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between ml-1">
-              <label className="text-xs font-black uppercase tracking-widest">Variantes de Unidad</label>
+              <label className="text-xs font-black uppercase tracking-widest" htmlFor="variants-toggle">Variantes de Unidad</label>
               <button
                 type="button"
                 onClick={() => { setShowVariants(!showVariants); if (!showVariants && variants.length === 0) addVariant(); }}
                 className="flex items-center gap-1 text-[10px] font-bold text-primary uppercase tracking-widest hover:underline"
               >
                 <Package className="w-3 h-3" />
-                {showVariants ? 'Ocultar' : 'Agregar'}
+                <input id="variants-toggle" type="checkbox" className="sr-only" checked={showVariants} readOnly aria-label="Mostrar variantes" /> {showVariants ? "Ocultar" : "Agregar"}
               </button>
             </div>
 

@@ -396,6 +396,7 @@ export default function ProductLabelGenerator() {
                 checked={repeatMode}
                 onChange={(e) => setRepeatMode(e.target.checked)}
                 className="rounded"
+                aria-label="Repetir 4 veces el mismo producto"
               />
               <span className="text-xs font-bold text-primary">Repetir 4 veces el mismo producto</span>
             </label>

@@ -15,7 +15,7 @@ vi.mock('@/services/report-service', () => ({
 }));
 vi.mock('@/config/app', () => ({ APP_VERSION_SHORT: '1.0.0' }));
 
-const mockUseAuthStore = (await import('@/store')).useAuthStore;
+const mockUseAuthStore = (await import('@/store')).useAuthStore as any;
 
 const baseConfig: Partial<ReportDefinition> = {
   name: 'Reporte Mensual',

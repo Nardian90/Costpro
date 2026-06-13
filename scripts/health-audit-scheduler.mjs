@@ -1,29 +1,25 @@
 #!/usr/bin/env node
 /**
  * Health Audit Scheduler - runs every 1 hour
- * Start with: node /home/z/my-project/scripts/health-audit-scheduler.mjs
  */
 import { spawn } from 'child_process';
 import fs from 'fs';
-import path from 'path';
 
-const LOG = '/home/z/my-project/logs/health-audit-scheduler.log';
-const SCRIPT = '/home/z/my-project/scripts/health-audit.mjs';
+const LOG = 'logs/health-audit-scheduler.log';
+const SCRIPT = 'scripts/health-audit.mjs';
 const INTERVAL = 60 * 60 * 1000; // 1 hour
 
 function log(msg) {
   const line = '[' + new Date().toISOString() + '] ' + msg;
   console.log(line);
-  try { fs.appendFileSync(LOG, line + '
-'); } catch {}
+  try { fs.appendFileSync(LOG, line + '\n'); } catch {}
 }
 
-log('Health Audit Scheduler started. Running every ' + (INTERVAL / 60000) + ' minutes.');
+log('Health Audit Scheduler started.');
 
 function runAudit() {
   log('Starting health audit...');
   const child = spawn(process.execPath, [SCRIPT], {
-    cwd: '/home/z/my-project',
     stdio: ['pipe', 'pipe', 'pipe'],
     env: { ...process.env }
   });
@@ -43,7 +39,6 @@ function runAudit() {
   });
 }
 
-// Run immediately, then every hour
 runAudit();
 setInterval(runAudit, INTERVAL);
 

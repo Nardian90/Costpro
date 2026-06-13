@@ -47,7 +47,7 @@ describe('CustomerCatalog', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     liveQueryQueue.length = 0;
-    liveQueryQueue.push(mockCustomers, 1);
+    liveQueryQueue.push(mockCustomers, [1]);
   });
 
   it('renderiza el título "CLIENTES"', () => {
