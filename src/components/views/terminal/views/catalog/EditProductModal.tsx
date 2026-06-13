@@ -101,7 +101,7 @@ export default function EditProductModal({
       <div className="space-y-5">
         {/* ── Image Section ────────────────────────────────────────── */}
         <div>
-          <label className="text-xs font-black uppercase tracking-widest ml-1">Imagen del Producto</label>
+          <label className="text-xs font-black uppercase tracking-widest ml-1" htmlFor="product-image">Imagen del Producto</label>
           <div className="mt-2 flex items-center gap-3">
             {editImagePreview ? (
               <div className="relative group">
@@ -161,12 +161,12 @@ export default function EditProductModal({
             ref={editCameraRef}
             type="file"
             accept="image/*"
-            capture="environment"
+            capture="environment" aria-label="Capturar foto"
             onChange={handleCameraCapture}
             className="hidden"
           />
           <input
-            ref={editGalleryRef}
+            ref={editGalleryRef} aria-label="Seleccionar de galería"
             type="file"
             accept="image/*"
             onChange={handleGallerySelect}
@@ -327,7 +327,7 @@ export default function EditProductModal({
                       type="number"
                       min="0.01"
                       step="0.01"
-                      value={variant.conversion_factor || ''}
+                      value={variant.conversion_factor || ""}
                       onChange={(e) => onUpdateVariant(index, 'conversion_factor', parseFloat(e.target.value) || 0)}
                       className="neu-input w-full text-xs"
                       placeholder="12"
@@ -339,7 +339,7 @@ export default function EditProductModal({
                       type="number"
                       min="0"
                       step="0.01"
-                      value={variant.price || ''}
+                      value={variant.price || ""}
                       onChange={(e) => onUpdateVariant(index, 'price', parseFloat(e.target.value) || 0)}
                       className="neu-input w-full text-xs font-bold"
                       placeholder="0.00"
@@ -347,12 +347,12 @@ export default function EditProductModal({
                   </div>
                   <div className="flex items-center gap-1">
                     <div className="space-y-1 flex-1">
-                      <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-0.5">P. Empresa</label>
+                      <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-0.5" htmlFor={`pe-${index}`}>P. Empresa</label>
                       <input
                         type="number"
                         min="0"
                         step="0.01"
-                        value={variant.precio_empresa || ''}
+                        value={variant.precio_empresa || ""}
                         onChange={(e) => onUpdateVariant(index, 'precio_empresa', parseFloat(e.target.value) || 0)}
                         className="neu-input w-full text-xs"
                         placeholder="0.00"

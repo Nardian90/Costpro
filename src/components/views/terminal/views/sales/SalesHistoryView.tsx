@@ -164,6 +164,7 @@ export default function SalesHistoryView() {
                                     "transition-all",
                                     selectedIds.has(txn.id) ? "text-primary scale-110" : "text-muted-foreground/30"
                                   )}
+                                  aria-label={`Seleccionar transacción ${txn.id}`}
                                 >
                                   {selectedIds.has(txn.id) ? <CheckSquare className="w-4 h-4" /> : <Square className="w-4 h-4" />}
                                 </button>

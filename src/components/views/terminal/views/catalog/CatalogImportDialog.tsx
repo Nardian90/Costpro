@@ -203,7 +203,7 @@ export default function CatalogImportDialog({ open, onOpenChange, onImportSucces
                 </p>
               </div>
               <input
-                id="catalog-import-file"
+                id="catalog-import-file" aria-label="Archivo de catálogo"
                 ref={fileInputRef}
                 type="file"
                 accept=".xlsx,.xls"

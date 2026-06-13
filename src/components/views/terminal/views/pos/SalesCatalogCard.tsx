@@ -1,15 +1,15 @@
 'use client';
 
 import React from 'react';
-import { Package, AlertTriangle, Percent, DollarSign } from 'lucide-react';
-import { cn, formatCurrency } from '@/lib/utils';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Minus, Plus, AlertCircle } from 'lucide-react';
 import { Product, ProductVariant, PaymentMethod } from '@/types';
-import type { SalesCatalogRow } from './useSalesCatalog';
-import { PAYMENT_METHODS } from './useSalesCatalog';
+import { formatCurrency, cn } from '@/lib/utils';
+import { SalesCatalogRow, PAYMENT_METHODS } from './useSalesCatalog';
 
-// ── Payment Badge ─────────────────────────────────────────────
-
-function PaymentBadge({ method }: { method: PaymentMethod }) {
+const MethodBadge = ({ method }: { method: PaymentMethod }) => {
   const config: Partial<Record<PaymentMethod, { label: string; cls: string }>> = {
     cash: { label: 'Efectivo', cls: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' },
     transfer: { label: 'Transf.', cls: 'bg-blue-500/10 text-blue-600 border-blue-500/20' },
@@ -20,13 +20,11 @@ function PaymentBadge({ method }: { method: PaymentMethod }) {
   };
   const c = config[method] || { label: method, cls: 'bg-muted text-muted-foreground border-border' };
   return (
-    <span className={cn('inline-flex items-center px-2 py-0.5 rounded-full text-xs font-black uppercase border', c.cls)}>
+    <div className={cn('text-[10px] font-black uppercase px-2 py-0.5 rounded-full border', c.cls)}>
       {c.label}
-    </span>
+    </div>
   );
-}
-
-// ── Props ─────────────────────────────────────────────────────
+};
 
 interface SalesCatalogCardProps {
   product: Product;
@@ -35,277 +33,176 @@ interface SalesCatalogCardProps {
   isActive: boolean;
   discrepancy: boolean;
   handlers: {
-    handleSetQuantity: (product: Product, qty: number) => void;
-    handleSelectVariant: (product: Product, variant: ProductVariant | null) => void;
-    handleSetDiscountType: (product: Product) => void;
-    handleSetDiscountValue: (product: Product, value: number) => void;
-    handleSetPaymentMethod: (product: Product, method: PaymentMethod) => void;
-    handleSetCashPaid: (product: Product, val: number) => void;
-    handleSetTransferPaid: (product: Product, val: number) => void;
-    updateRow: (productId: string, updater: (row: SalesCatalogRow) => SalesCatalogRow, fallbackProduct?: Product) => void;
+    handleSetQuantity: (p: Product, q: number) => void;
+    handleSelectVariant: (p: Product, v: ProductVariant | null) => void;
+    handleSetDiscountType: (p: Product) => void;
+    handleSetDiscountValue: (p: Product, v: number) => void;
+    handleSetPaymentMethod: (p: Product, m: PaymentMethod) => void;
+    handleSetCashPaid: (p: Product, v: number) => void;
+    handleSetTransferPaid: (p: Product, v: number) => void;
   };
   calcSubtotal: (row: SalesCatalogRow) => number;
   isReadOnly?: boolean;
 }
 
-// ── Component ─────────────────────────────────────────────────
-
-export default function SalesCatalogCard({
+export function SalesCatalogCard({
   product,
   row,
   subtotal,
   isActive,
   discrepancy,
   handlers,
-  calcSubtotal,
   isReadOnly = false,
 }: SalesCatalogCardProps) {
-  const {
-    handleSetQuantity,
-    handleSelectVariant,
-    handleSetDiscountType,
-    handleSetDiscountValue,
-    handleSetPaymentMethod,
-    handleSetCashPaid,
-    handleSetTransferPaid,
-    updateRow,
-  } = handlers;
-  const ro = isReadOnly;
+  const hasVariants = (product.product_variants?.length ?? 0) > 0;
 
   return (
-    <div
+    <Card
       className={cn(
-        'rounded-2xl border-2 transition-all p-4 flex flex-col gap-3 overflow-hidden min-w-0',
-        isActive
-          ? 'border-primary/30 bg-primary/5 shadow-lg shadow-primary/5'
-          : 'border-border bg-card hover:border-primary/20 hover:shadow-md',
-        discrepancy && 'border-destructive/40',
+        'group relative overflow-hidden flex flex-col p-4 transition-all duration-300 border-border/40 hover:border-primary/40',
+        isActive ? 'bg-primary/5 ring-1 ring-primary/20 border-primary/30' : 'bg-background hover:bg-muted/30'
       )}
     >
-      {/* Product header */}
-      <div className="flex items-start gap-3 min-w-0">
-        <div className="w-12 h-12 rounded-xl bg-muted/50 flex items-center justify-center shrink-0 overflow-hidden border border-border/50">
-          {product.public_image_url || product.image_url ? (
-            <img
-              src={(product.public_image_url || product.image_url) || undefined}
-              alt={product.name}
-              className="w-full h-full object-cover rounded-xl"
-              loading="lazy"
-            />
-          ) : (
-            <Package className="w-5 h-5 text-muted-foreground/50" />
-          )}
-        </div>
-        <div className="min-w-0 flex-1">
-          <p className="font-bold text-sm truncate">{product.name}</p>
-          <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-            {product.sku && (
-              <span className="text-xs text-muted-foreground font-mono">{product.sku}</span>
-            )}
-            <span
-              className={cn(
-                'inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-black',
-                (product.stock_current ?? 0) > 10
-                  ? 'bg-primary/10 text-primary'
-                  : (product.stock_current ?? 0) > 0
-                    ? 'bg-amber-500/10 text-amber-600'
-                    : 'bg-destructive/10 text-destructive',
-              )}
-            >
-              Stock: {product.stock_current ?? 0}
+      {/* Selection indicator */}
+      <div className={cn(
+        'absolute top-0 right-0 w-16 h-16 transition-all duration-500',
+        isActive ? 'opacity-100' : 'opacity-0'
+      )}>
+        <div className="absolute top-[-24px] right-[-24px] w-12 h-12 bg-primary rotate-45" />
+      </div>
+
+      {/* Header: Name & SKU */}
+      <div className="mb-4">
+        <h3 className="font-black text-sm uppercase tracking-tight line-clamp-2 leading-tight group-hover:text-primary transition-colors">
+          {product.name}
+        </h3>
+        <div className="flex items-center gap-2 mt-1">
+          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+            {product.sku || 'SIN SKU'}
+          </p>
+          <div className="w-1 h-1 rounded-full bg-border" />
+          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+            Stock: <span className={cn(
+              (product.stock_current ?? 0) <= (product.min_stock ?? 0) ? 'text-destructive' : 'text-foreground'
+            )}>
+              {product.stock_current ?? 0}
             </span>
+          </p>
+        </div>
+      </div>
+
+      {/* Pricing display */}
+      <div className="mb-5 flex items-baseline gap-2">
+        <span className="text-xl font-black text-primary tracking-tighter">
+          {formatCurrency(row.price)}
+        </span>
+        {hasVariants && !row.selectedVariant && (
+          <span className="text-[10px] font-bold text-muted-foreground uppercase">Desde</span>
+        )}
+        <span className="text-[10px] font-bold text-muted-foreground/60 uppercase ml-auto">
+          Costo: {formatCurrency(row.cost)}
+        </span>
+      </div>
+
+      <div className="space-y-4 flex-1">
+        {/* Unit selection */}
+        {hasVariants && (
+          <div className="space-y-1.5">
+            <label htmlFor={`variant-${product.id}`} className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Unidad / Variante</label>
+            <select
+              id={`variant-${product.id}`}
+              value={row.selectedVariantId || '__base__'}
+              onChange={(e) => {
+                if (e.target.value === '__base__') {
+                  handlers.handleSelectVariant(product, null);
+                } else {
+                  const variant = product.product_variants?.find((v) => v.id === e.target.value);
+                  handlers.handleSelectVariant(product, variant || null);
+                }
+              }}
+              disabled={isReadOnly}
+              className="w-full bg-muted/50 border border-border/40 rounded-xl px-3 py-2 text-xs font-bold focus:ring-1 focus:ring-primary/40 outline-none transition-all appearance-none disabled:opacity-50"
+              aria-label="Seleccionar variante"
+            >
+              <option value="__base__">{product.unit_of_measure || 'Unidad Base'}</option>
+              {product.product_variants?.map((v) => (
+                <option key={v.id} value={v.id}>{v.name} ({formatCurrency(v.price)})</option>
+              ))}
+            </select>
           </div>
-        </div>
-      </div>
+        )}
 
-      {/* Unit of measure */}
-      <div>
-        <label className="text-xs font-black uppercase text-muted-foreground tracking-widest block mb-1">Unidad</label>
-        <select
-          value={row.selectedVariantId || '__base__'}
-          onChange={(e) => {
-            if (e.target.value === '__base__') {
-              handleSelectVariant(product, null);
-            } else {
-              const variant = product.product_variants?.find((v) => v.id === e.target.value);
-              if (variant) handleSelectVariant(product, variant);
-            }
-          }}
-          className="w-full max-w-full min-w-0 px-3 py-2 min-h-[44px] rounded-lg border border-border/50 bg-background text-xs font-bold focus:ring-1 focus:ring-primary outline-none cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
-          disabled={ro}
-          aria-label={`Unidad de medida para ${product.name}`}
-        >
-          <option value="__base__">{product.unit_of_measure || 'ud'} (base)</option>
-          {product.product_variants?.map((v) => (
-            <option key={v.id} value={v.id}>{v.name} (x{v.conversion_factor || 1})</option>
-          ))}
-        </select>
-      </div>
-
-      {/* Price row */}
-      <div className="grid grid-cols-2 gap-2">
-        <div>
-          <label className="text-xs font-black uppercase text-muted-foreground tracking-widest block mb-1">Precio Venta</label>
-          <input
-            type="number"
-            min="0"
-            step="0.01"
-            value={row.price || ''}
-            onChange={(e) => {
-              const val = Number(e.target.value);
-              updateRow(product.id, (r) => ({
-                ...r,
-                price: val,
-                cashPaid: r.paymentMethod === 'cash' ? calcSubtotal({ ...r, price: val }) : r.cashPaid,
-                transferPaid: r.paymentMethod === 'transfer' ? calcSubtotal({ ...r, price: val }) : r.transferPaid,
-              }), product);
-            }}
-            className="w-full min-w-0 text-right px-2 py-2 min-h-[44px] rounded-lg border border-border/50 bg-background text-sm font-black text-primary focus:ring-1 focus:ring-primary outline-none disabled:opacity-70 disabled:cursor-not-allowed"
-            disabled={ro}
-            aria-label={`Precio de venta para ${product.name}`}
-            placeholder="0.00"
-          />
-        </div>
-        <div>
-          <label className="text-xs font-black uppercase text-muted-foreground tracking-widest block mb-1">Costo</label>
-          <div className="w-full min-w-0 text-right px-2 py-2 rounded-lg border border-border/50 bg-muted/30 text-sm font-mono text-muted-foreground overflow-hidden">
-            {formatCurrency(row.cost)}
-          </div>
-        </div>
-      </div>
-
-      {/* Quantity */}
-      <div>
-        <label className="text-xs font-black uppercase text-muted-foreground tracking-widest block mb-1">Cantidad</label>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => handleSetQuantity(product, row.quantity - 1)}
-            className="w-11 h-11 rounded-xl bg-muted/50 hover:bg-primary/10 flex items-center justify-center text-lg font-bold transition-all active:scale-90 border border-border/50 disabled:opacity-30 shrink-0"
-            disabled={ro || row.quantity <= 0}
-            aria-label={`Reducir cantidad de ${product.name}`}
-          >
-            -
-          </button>
-          <input
-            type="number"
-            min="0"
-            value={row.quantity || ''}
-            onChange={(e) => handleSetQuantity(product, Number(e.target.value))}
-            className="flex-1 min-w-0 text-center px-2 py-2 min-h-[44px] rounded-xl border border-border/50 bg-background text-lg font-black focus:ring-1 focus:ring-primary outline-none disabled:opacity-70 disabled:cursor-not-allowed"
-            disabled={ro}
-            aria-label={`Cantidad de ${product.name}`}
-          />
-          <button
-            type="button"
-            onClick={() => handleSetQuantity(product, row.quantity + 1)}
-            className="w-11 h-11 rounded-xl bg-primary/10 hover:bg-primary/20 flex items-center justify-center text-lg font-bold text-primary transition-all active:scale-90 border border-primary/20 shrink-0 disabled:opacity-30"
-            disabled={ro}
-            aria-label={`Aumentar cantidad de ${product.name}`}
-          >
-            +
-          </button>
-        </div>
-      </div>
-
-      {/* Discount */}
-      <div>
-        <label className="text-xs font-black uppercase text-muted-foreground tracking-widest block mb-1">Descuento</label>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => handleSetDiscountType(product)}
-            className={cn(
-              'w-11 h-11 rounded-xl flex items-center justify-center transition-all border shrink-0 disabled:opacity-30',
-              row.discountType === 'percentage'
-                ? 'bg-primary/10 border-primary/20 text-primary'
-                : 'bg-muted/50 border-border/50 text-muted-foreground',
-            )}
-            disabled={ro}
-            aria-label={`Cambiar tipo de descuento para ${product.name}`}
-            title={row.discountType === 'percentage' ? 'Porcentaje' : 'Monto fijo'}
-          >
-            {row.discountType === 'percentage' ? (
-              <Percent className="w-4 h-4" />
-            ) : (
-              <DollarSign className="w-4 h-4" />
-            )}
-          </button>
-          <input
-            type="number"
-            min="0"
-            step="0.01"
-            value={row.discountValue || ''}
-            onChange={(e) => handleSetDiscountValue(product, Number(e.target.value))}
-            className="flex-1 min-w-0 px-2 py-2 min-h-[44px] rounded-xl border border-border/50 bg-background text-xs font-bold focus:ring-1 focus:ring-primary outline-none disabled:opacity-70 disabled:cursor-not-allowed"
-            disabled={ro}
-            aria-label={`Valor de descuento para ${product.name}`}
-            placeholder="0"
-          />
-        </div>
-      </div>
-
-      {/* Payment method */}
-      <div>
-        <label className="text-xs font-black uppercase text-muted-foreground tracking-widest block mb-1">Forma de Pago</label>
-        <select
-          value={row.paymentMethod}
-          onChange={(e) => handleSetPaymentMethod(product, e.target.value as PaymentMethod)}
-          className="w-full max-w-full min-w-0 px-3 py-2 min-h-[44px] rounded-xl border border-border/50 bg-background text-xs font-bold focus:ring-1 focus:ring-primary outline-none cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
-          disabled={ro}
-          aria-label={`Forma de pago para ${product.name}`}
-        >
-          {PAYMENT_METHODS.map((pm) => (
-            <option key={pm.value} value={pm.value}>{pm.label}</option>
-          ))}
-        </select>
-      </div>
-
-      {/* Mixed payment inputs (only show when mixed + active) */}
-      {row.paymentMethod === 'mixed' && isActive && (
-        <div className="grid grid-cols-2 gap-2 p-2 rounded-xl bg-muted/20 border border-border/50">
-          <div>
-            <label className="text-xs font-black uppercase text-emerald-600 tracking-widest block mb-1">Efectivo</label>
-            <input
+        {/* Quantity control */}
+        <div className="space-y-1.5">
+          <label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Cantidad</label>
+          <div className={cn(
+            "flex items-center gap-2 bg-muted/40 p-1 rounded-2xl border transition-all",
+            discrepancy ? "border-red-500/50 bg-red-500/5" : "border-border/30"
+          )}>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 rounded-xl hover:bg-background"
+              onClick={() => handlers.handleSetQuantity(product, row.quantity - 1)}
+              disabled={isReadOnly || row.quantity <= 0}
+              aria-label="Restar uno"
+            >
+              <Minus className="w-3.5 h-3.5" />
+            </Button>
+            <Input
               type="number"
-              min="0"
-              step="0.01"
-              value={row.cashPaid || 0}
-              onChange={(e) => handleSetCashPaid(product, Number(e.target.value))}
-              className="w-full min-w-0 text-right px-2 py-2.5 min-h-[44px] rounded-lg border border-emerald-500/20 bg-background text-xs font-bold text-emerald-600 focus:ring-1 focus:ring-emerald-500 outline-none disabled:opacity-70 disabled:cursor-not-allowed"
-              disabled={ro}
-              aria-label={`Efectivo pagado para ${product.name}`}
+              value={row.quantity || ''}
+              onChange={(e) => handlers.handleSetQuantity(product, parseFloat(e.target.value) || 0)}
+              disabled={isReadOnly}
+              className="h-8 border-none bg-transparent text-center font-black text-sm p-0 focus-visible:ring-0 disabled:opacity-50"
+              placeholder="0"
+              aria-label="Cantidad"
             />
-          </div>
-          <div>
-            <label className="text-xs font-black uppercase text-blue-600 tracking-widest block mb-1">Transfer.</label>
-            <input
-              type="number"
-              min="0"
-              step="0.01"
-              value={row.transferPaid || 0}
-              onChange={(e) => handleSetTransferPaid(product, Number(e.target.value))}
-              className="w-full min-w-0 text-right px-2 py-2.5 min-h-[44px] rounded-lg border border-blue-500/20 bg-background text-xs font-bold text-blue-600 focus:ring-1 focus:ring-blue-500 outline-none disabled:opacity-70 disabled:cursor-not-allowed"
-              disabled={ro}
-              aria-label={`Transferencia pagada para ${product.name}`}
-            />
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 rounded-xl hover:bg-background"
+              onClick={() => handlers.handleSetQuantity(product, row.quantity + 1)}
+              disabled={isReadOnly}
+              aria-label="Sumar uno"
+            >
+              <Plus className="w-3.5 h-3.5" />
+            </Button>
           </div>
           {discrepancy && (
-            <div className="col-span-2 flex items-center gap-1 text-destructive text-xs font-bold">
-              <AlertTriangle className="w-3 h-3" />
-              Pago no coincide con subtotal
+            <div className="flex items-center gap-1 mt-1 text-[9px] font-bold text-red-500 uppercase ml-1 animate-pulse">
+              <AlertCircle className="w-2.5 h-2.5" />
+              Pago descuadrado
             </div>
           )}
         </div>
-      )}
 
-      {/* Footer: subtotal */}
-      <div className="flex items-center justify-between pt-2 border-t border-border/50">
-        <PaymentBadge method={row.paymentMethod} />
-        <span className={cn('font-black text-base', isActive ? 'text-primary' : 'text-muted-foreground')}>
-          {formatCurrency(subtotal)}
-        </span>
+        {/* Payment Method Selector (Simplified for Card) */}
+        {!isReadOnly && isActive && (
+          <div className="space-y-1.5 pt-2">
+            <label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Pago</label>
+            <select
+              value={row.paymentMethod}
+              onChange={(e) => handlers.handleSetPaymentMethod(product, e.target.value as PaymentMethod)}
+              className="w-full bg-background border border-border/40 rounded-xl px-3 py-2 text-[10px] font-black uppercase focus:ring-1 focus:ring-primary/40 outline-none transition-all appearance-none"
+              aria-label="Forma de pago"
+            >
+              {PAYMENT_METHODS.map(m => (
+                <option key={m.value} value={m.value}>{m.label}</option>
+              ))}
+            </select>
+          </div>
+        )}
       </div>
-    </div>
+
+      {/* Footer Info */}
+      <div className="mt-4 pt-4 border-t border-border/30 flex items-center justify-between">
+        <div className="flex flex-col">
+          <span className="text-[10px] font-bold text-muted-foreground/60 uppercase">Subtotal</span>
+          <span className="text-sm font-black tracking-tight">{formatCurrency(subtotal)}</span>
+        </div>
+        <MethodBadge method={row.paymentMethod} />
+      </div>
+    </Card>
   );
 }

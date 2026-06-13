@@ -42,7 +42,7 @@ describe('useUsersView — underlying logic', () => {
     it('non-admin should NOT see other admins', () => {
       const currentRole = 'manager';
       const filtered = users.filter(u => {
-        if (currentRole === 'admin') return true;
+        if ((currentRole as string) === 'admin') return true;
         return u.role !== 'admin';
       });
       expect(filtered.length).toBe(2);
@@ -87,8 +87,8 @@ describe('useUsersView — underlying logic', () => {
       const user3 = { role: 'clerk', memberships: [{ role: 'manager', status: 'active' }] } as any;
 
       const isEncargado1 = user1?.role === 'encargado' || user1?.role === 'manager';
-      const isEncargado2 = user2?.role === 'encargado' || user2?.role === 'manager' || user2?.memberships?.some(m => m.role === 'encargado');
-      const isEncargado3 = user3?.role === 'encargado' || user3?.role === 'manager' || user3?.memberships?.some(m => m.role === 'encargado');
+      const isEncargado2 = user2?.role === 'encargado' || user2?.role === 'manager' || user2?.memberships?.some((m: any) => m.role === 'encargado');
+      const isEncargado3 = user3?.role === 'encargado' || user3?.role === 'manager' || user3?.memberships?.some((m: any) => m.role === 'encargado');
 
       expect(isEncargado1).toBe(true);
       expect(isEncargado2).toBe(true);

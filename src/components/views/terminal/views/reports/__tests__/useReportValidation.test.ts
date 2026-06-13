@@ -11,10 +11,10 @@ const mockUseAuthStore = vi.hoisted(() => vi.fn());
 vi.mock('@/store', () => ({ useAuthStore: mockUseAuthStore }));
 
 import { useReportValidation } from '@/hooks/ui/useReportValidation';
-import type { ReportDefinition } from '@/types';
+import type { ReportDefinition, ReportType } from '@/types';
 
 const baseConfig: Partial<ReportDefinition> = {
-  name: 'Test', type: 'sales', filters: {},
+  name: 'Test', type: 'sales' as ReportType, filters: {},
   date_range: { from: '2025-01-01', to: '2025-12-31' },
   columns: ['id', 'created_at', 'total_amount'],
 };
@@ -47,14 +47,14 @@ describe('useReportValidation', () => {
   });
 
   it('detects missing kardex product', () => {
-    const cfg = { ...baseConfig, type: 'kardex', filters: {} };
+    const cfg = { ...baseConfig, type: 'kardex' as ReportType, filters: {} };
     const { result } = renderHook(() => useReportValidation(cfg));
     expect(result.current.validate('generate')).toContain('producto');
     expect(result.current.isMissingKardexProduct).toBe(true);
   });
 
   it('passes kardex with product_id', () => {
-    const cfg = { ...baseConfig, type: 'kardex', filters: { product_id: 'p1' } };
+    const cfg = { ...baseConfig, type: 'kardex' as ReportType, filters: { product_id: 'p1' } };
     const { result } = renderHook(() => useReportValidation(cfg));
     expect(result.current.validate('generate')).toBeNull();
   });

@@ -11,6 +11,8 @@ const makeProduct = (overrides: Partial<Product> = {}): Product => ({
   cod: 'TEST',
   descripcion: 'Producto Test',
   um: 'UNIDADES',
+  es_paquete: false,
+  contenido_paquete: 1,
   precio_cents: 10000,
   prioridad_algoritmo: 3,
   activo: true,

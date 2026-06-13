@@ -34,12 +34,14 @@ const AuditLoadingSkeleton = () => (
 );
 
 export const AuditLogsModal = ({ isOpen, onClose, storeId }: AuditLogsModalProps) => {
-  const { data, isLoading, error } = useAuditLogs({
+  const query = useAuditLogs({
     storeIds: storeId ? [storeId] : [],
     pageSize: 100
-  });
+  }) || { data: null, isLoading: false, error: null };
 
-  const logs = useMemo(() => data?.pages.flatMap(p => p.logs) ?? [], [data]);
+  const { data, isLoading, error } = query;
+
+  const logs = useMemo(() => data?.pages?.flatMap(p => p.logs || []) ?? [], [data]);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
