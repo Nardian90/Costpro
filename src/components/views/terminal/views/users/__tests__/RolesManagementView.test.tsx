@@ -17,7 +17,7 @@ vi.mock('@/hooks/api/useRoles', () => ({
 vi.mock('@/components/ui/SearchBar', () => ({
   default: ({ value, onChange, placeholder }: any) => (
     <input
-      data-testid="searchbar"
+      data-testid="searchbar" aria-label="Buscar"
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}

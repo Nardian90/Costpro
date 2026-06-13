@@ -201,7 +201,7 @@ export default function POSView() {
     items, removeItem, updateQuantity, getSubtotal, getDiscountAmount,
     getTotal, discount, setDiscount, updateItemDiscount, updateItemPayment,
     prorateGlobalPayment, isProcessingSale, startCheckout, handleCloseCart,
-    lastSale, isMobile, handleClearLastSale,
+    lastSale, isMobile, handleClearLastSale, clearCart,
   ]);
 
   // ── Render ─────────────────────────────────────────────────

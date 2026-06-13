@@ -3,7 +3,7 @@
 import React from 'react';
 import { Product, ProductVariant, PaymentMethod } from '@/types';
 import type { SalesCatalogRow } from './useSalesCatalog';
-import SalesCatalogCard from './SalesCatalogCard';
+import { SalesCatalogCard } from './SalesCatalogCard';
 
 interface SalesCatalogCardGridProps {
   products: Product[];

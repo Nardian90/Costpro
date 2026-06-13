@@ -301,8 +301,8 @@ export const KnowledgeTab: React.FC<KnowledgeTabProps> = ({ data }) => {
                                     <span className="text-[9px] font-bold tabular-nums text-muted-foreground w-6 text-right">{ls.count}</span>
                                   </div>
                                 </td>
-                                <td className="px-4 py-3 text-center text-[9px] font-bold tabular-nums text-muted-foreground">{ls.avgFanIn}</td>
-                                <td className="px-4 py-3 text-center text-[9px] font-bold tabular-nums text-muted-foreground">{ls.avgFanOut}</td>
+                                <td className="px-4 py-3 text-center text-[9px] font-bold tabular-nums text-muted-foreground" >{ls.avgFanIn}</td>
+                                <td className="px-4 py-3 text-center text-[9px] font-bold tabular-nums text-muted-foreground" >{ls.avgFanOut}</td>
                                 <td className="px-4 py-3 text-center">
                                   <span className={cn("text-[9px] font-bold tabular-nums", parseFloat(ls.avgCoupling) > 50 ? "text-red-400" : parseFloat(ls.avgCoupling) > 30 ? "text-amber-400" : "text-emerald-400")}>
                                     {ls.avgCoupling}%
