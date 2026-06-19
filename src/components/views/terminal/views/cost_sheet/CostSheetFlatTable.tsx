@@ -170,16 +170,16 @@ const SectionDividerRow: React.FC<{
   const bgColors = [
     'bg-primary/5',
     'bg-violet-500/5',
-    'bg-amber-500/5',
-    'bg-emerald-500/5',
+    'bg-warning/5',
+    'bg-success/5',
     'bg-rose-500/5',
     'bg-cyan-500/5',
   ];
   const borderColors = [
     'border-l-primary/40',
     'border-l-violet-500/40',
-    'border-l-amber-500/40',
-    'border-l-emerald-500/40',
+    'border-l-warning/40',
+    'border-l-success/40',
     'border-l-rose-500/40',
     'border-l-cyan-500/40',
   ];
@@ -300,7 +300,7 @@ const RowHealthIndicator: React.FC<{ health: RowHealthStatus; rowId: string }> =
 
   const config = {
     CRITICAL: { icon: ShieldAlert, color: 'text-destructive', bg: 'bg-destructive10', label: 'Con errores críticos' },
-    WARNING: { icon: AlertTriangle, color: 'text-amber-500', bg: 'bg-amber-500/10', label: 'Con advertencias' },
+    WARNING: { icon: AlertTriangle, color: 'text-warning', bg: 'bg-warning/10', label: 'Con advertencias' },
     INFO: { icon: Info, color: 'text-muted-foreground/60', bg: 'bg-muted/50', label: 'Informativo' },
   }[health.highestSeverity];
 
@@ -339,7 +339,7 @@ const RowHealthIndicator: React.FC<{ health: RowHealthStatus; rowId: string }> =
             'absolute -top-1 -right-1.5 min-w-[10px] h-[10px] rounded-full flex items-center justify-center',
             'text-[7px] font-black leading-none px-0.5 pointer-events-none',
             health.highestSeverity === 'CRITICAL' ? 'bg-destructive text-destructive-foreground' :
-            health.highestSeverity === 'WARNING' ? 'bg-amber-500 text-white' :
+            health.highestSeverity === 'WARNING' ? 'bg-warning text-white' :
             'bg-muted-foreground text-muted-foreground'
           )}>
             {totalCount}
@@ -416,7 +416,7 @@ const DataRow: React.FC<DataRowProps> = memo(({ item, calculatedValues, annexes,
         isResult && "bg-primary/[0.04] font-semibold",
         !isResult && globalIndex % 2 === 0 && "bg-muted/[0.15]",
         mergedHealth.highestSeverity === 'CRITICAL' && "bg-destructive/[0.03]",
-        mergedHealth.highestSeverity === 'WARNING' && !isResult && "bg-amber-500/[0.02]"
+        mergedHealth.highestSeverity === 'WARNING' && !isResult && "bg-warning/[0.02]"
       )}>
         {/* Numbering */}
         <TableCell className="w-[55px] px-1.5 py-0 text-center text-[10px] font-bold text-muted-foreground/80 tabular-nums border-r border-border/15">
@@ -430,10 +430,9 @@ const DataRow: React.FC<DataRowProps> = memo(({ item, calculatedValues, annexes,
         >
           <div className="flex items-center gap-1 min-w-0 group/row">
             {hasChildren ? (
-              <button
+              <button type="button"
                 onClick={(e) => { e.stopPropagation(); onToggleExpand(); }}
                 className="min-h-[24px] min-w-[24px] flex items-center justify-center rounded hover:bg-primary/10 shrink-0"
-                type="button"
                 aria-label={isExpanded ? `Contraer ${row.label}` : `Expandir ${row.label}`}
               >
                 <ChevronRight className={cn('w-3 h-3 transition-transform', isExpanded && 'rotate-90')} />
@@ -478,7 +477,7 @@ const DataRow: React.FC<DataRowProps> = memo(({ item, calculatedValues, annexes,
                 <button
                   type="button"
                   onClick={(e) => { e.stopPropagation(); onNavigateToAnnex(annexRef.id); }}
-                  className="min-h-[28px] min-w-[28px] flex items-center justify-center rounded-md hover:bg-amber-500/10 shrink-0 text-amber-600/70 hover:text-amber-600 transition-colors ml-1"
+                  className="min-h-[28px] min-w-[28px] flex items-center justify-center rounded-md hover:bg-warning/10 shrink-0 text-warning/70 hover:text-warning transition-colors ml-1"
                   aria-label={`Ir al Anexo ${annexRef.id}: ${annexRef.title}`}
                 >
                   <ExternalLink className="w-3.5 h-3.5" />

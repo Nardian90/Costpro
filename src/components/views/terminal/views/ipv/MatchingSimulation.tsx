@@ -268,8 +268,8 @@ export function MatchingSimulation({ products, rules }: MatchingSimulationProps)
                     {formatCurrencyCents(result.lines.reduce((sum, l) => sum + (l.total_amount_cents || l.importe_linea_cents || 0), 0))}
                   </p>
                 </Card>
-                <Card className="p-5 bg-orange-500/5 border-none shadow-sm flex flex-col justify-center">
-                  <p className="text-[10px] font-black text-orange-600 uppercase mb-1 tracking-widest">Diferencia</p>
+                <Card className="p-5 bg-warning/5 border-none shadow-sm flex flex-col justify-center">
+                  <p className="text-[10px] font-black text-warning uppercase mb-1 tracking-widest">Diferencia</p>
                   <p className="text-3xl font-black">
                     {formatCurrencyCents((target * 100) - result.lines.reduce((sum, l) => sum + (l.total_amount_cents || l.importe_linea_cents || 0), 0))}
                   </p>
@@ -277,30 +277,30 @@ export function MatchingSimulation({ products, rules }: MatchingSimulationProps)
               </div>
 
               {result.status !== 'COMPLETO' && result.failReason && (
-                  <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-center gap-4 animate-in slide-in-from-top-2">
-                      <AlertTriangle className="w-8 h-8 text-red-500" />
+                  <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-2xl flex items-center gap-4 animate-in slide-in-from-top-2">
+                      <AlertTriangle className="w-8 h-8 text-destructive" />
                       <div>
-                          <p className="text-[10px] font-black text-red-600 uppercase tracking-widest">Motivo de Descuadre</p>
-                          <p className="text-sm font-bold text-red-500">{result.failReason}</p>
+                          <p className="text-[10px] font-black text-destructive uppercase tracking-widest">Motivo de Descuadre</p>
+                          <p className="text-sm font-bold text-destructive">{result.failReason}</p>
                       </div>
                   </div>
               )}
 
               {result.movements && result.movements.length > 0 && (
                   <Card className="p-4 border-orange-200 bg-orange-50/30 shadow-sm">
-                      <h4 className="text-[10px] font-black uppercase text-orange-600 mb-3 flex items-center gap-2 tracking-widest">
+                      <h4 className="text-[10px] font-black uppercase text-warning mb-3 flex items-center gap-2 tracking-widest">
                           <Workflow className="w-4 h-4" />
                           Descomposiciones Automáticas Requeridas
                       </h4>
                       <div className="space-y-2">
                           {result.movements.map((m, i) => (
                               <div key={i} className="flex items-center gap-3 bg-white/60 p-2 rounded-xl border border-orange-100 shadow-sm">
-                                  <Badge variant="outline" className="font-black text-orange-600 border-orange-200 uppercase">{m.producto_origen_cod}</Badge>
+                                  <Badge variant="outline" className="font-black text-warning border-orange-200 uppercase">{m.producto_origen_cod}</Badge>
                                   <ArrowRight className="w-3 h-3 text-orange-400" />
                                   <span className="text-xs font-bold text-muted-foreground uppercase">-{m.cantidad_origen}</span>
-                                  <ArrowRight className="w-4 h-4 text-orange-500" />
-                                  <Badge className="bg-orange-500 text-foreground font-black uppercase">{m.producto_destino_cod}</Badge>
-                                  <span className="text-xs font-bold text-orange-600 uppercase">+{m.cantidad_destino}</span>
+                                  <ArrowRight className="w-4 h-4 text-warning" />
+                                  <Badge className="bg-warning text-foreground font-black uppercase">{m.producto_destino_cod}</Badge>
+                                  <span className="text-xs font-bold text-warning uppercase">+{m.cantidad_destino}</span>
                               </div>
                           ))}
                       </div>

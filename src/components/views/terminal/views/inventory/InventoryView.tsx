@@ -1,6 +1,24 @@
 'use client';
 
+/**
+ * InventoryView — Vista de Inventario (patrón TABS).
+ *
+ * ════════════════════════════════════════════════════════════════════════
+ * M-1 (IA Audit): Patrón unificado de navegación para vistas complejas.
+ * ════════════════════════════════════════════════════════════════════════
+ * Esta vista usa el patrón TABS: tabs internas (Stock | Catálogo | Trazabilidad)
+ * que cambian el contenido en sitio sin cambiar la vista activa del sidebar.
+ *
+ * Aplicable cuando hay 2-4 secciones homogéneas (vista de la misma entidad).
+ * Ver SalesHubView para el patrón HUB complementario.
+ *
+ * PROHIBIDO: mezclar ambos patrones en la misma vista. Ver SalesHubView para
+ * la especificación completa del patrón unificado.
+ * ════════════════════════════════════════════════════════════════════════
+ */
+
 import { useState, useEffect, useMemo, useTransition, useCallback, useRef } from 'react';
+import type { ProductFCStatus } from '@/types';
 import { useAuthStore } from '@/store';
 import { useInventory, useAdjustStock } from '@/hooks/api/useInventory';
 import { Download, Plus, X, LayoutList, Table as TableIcon, Package, BarChart3, FileSpreadsheet, Filter, Eye, EyeOff, Store, CheckCircle2 } from 'lucide-react';
@@ -27,6 +45,18 @@ import { QueryInspector } from '@/components/ui/QueryInspector';
 import { useStockAlerts } from '@/hooks/logic/useStockAlerts';
 import StockAlertsPanel from './StockAlertsPanel';
 import InventoryKPIs from './InventoryKPIs';
+import { AlertTriangle, ArrowUp } from 'lucide-react';
+import { useProductFCStatus, type FCCoverageData } from '@/hooks/ui/useProductFCStatus';
+import { FCStatusBadge, FCCoverageBar, FCCoverageAccordion } from '@/components/ui/FCStatusBadge';
+import { FCQuickIcon } from '@/components/ui/FCQuickIcon';
+import { FCPreviewModal } from '@/components/ui/FCPreviewModal';
+import { ProductFCSync } from '@/components/ui/ProductFCSync';
+import { getQuickPdfUrl } from '@/lib/integration/fc-automation';
+import type { FCResolutionResult } from '@/lib/integration/fc-automation';
+// Tabs: Catálogo y Trazabilidad (import dinámico para code-splitting)
+import dynamic from 'next/dynamic';
+const CatalogView = dynamic(() => import('@/components/views/terminal/views/catalog/CatalogView'), { ssr: false });
+const StockHistoryView = dynamic(() => import('@/components/views/terminal/views/stock_history/StockHistoryView'), { ssr: false });
 
 const PAGE_LIMIT = 20;
 
@@ -58,6 +88,7 @@ export default function InventoryView() {
     const queryClient = useQueryClient();
 
     const [currentView, setCurrentView] = useState<'inventory' | 'reception'>('inventory');
+    const [inventoryTab, setInventoryTab] = useState<'stock' | 'catalog' | 'trazabilidad'>('stock');
     const [layoutMode, setLayoutMode] = useState<'table' | 'card'>('table');
     const [searchTerm, setSearchTerm] = useState('');
     const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -73,10 +104,14 @@ export default function InventoryView() {
     }, [searchTerm]);
     const [selectedCategory, setSelectedCategory] = useState('');
     const [stockFilter, setStockFilter] = useState<'all' | 'normal' | 'low' | 'out'>('all');
+    const [fcFilter, setFcFilter] = useState<'all' | 'vigente' | 'pendiente' | 'sin_fc'>('all');
+    const [selectedFCProduct, setSelectedFCProduct] = useState<Product | null>(null);
     const [adjustingProduct, setAdjustingProduct] = useState<Product | null>(null);
     const [kardexProduct, setKardexProduct] = useState<Product | null>(null);
     const [showABC, setShowABC] = useState(false);
     const [preselectedProduct, setPreselectedProduct] = useState<Product | null>(null);
+    const [isAlertsPanelOpen, setIsAlertsPanelOpen] = useState(false);
+    const [showScrollTop, setShowScrollTop] = useState(false);
     const [togglingVisibleId, setTogglingVisibleId] = useState<string | null>(null);
     const [bulkToggling, setBulkToggling] = useState(false);
     // Local visibility overrides: survives React Query refetches that don't include visible_en_tienda
@@ -116,18 +151,82 @@ export default function InventoryView() {
             }));
     }, [data, visibilityOverrides]);
 
+    // ── FC Integration ──────────────────────────────────────────────
+    const {
+        fcInfoMap,
+        coverage: fcCoverage,
+        getFCStatus,
+        isLoading: isLoadingFC,
+        hasStoreTemplate,
+    } = useProductFCStatus(products);
+
+    // FC status map for passing to child views
+    const fcStatusMap = useMemo(() => {
+        const map = new Map<string, ProductFCStatus>();
+        for (const product of products) {
+            map.set(product.id, getFCStatus(product.id));
+        }
+        return map;
+    }, [products, getFCStatus]);
+
+    // FC resolution map for passing to child views
+    const fcResolutionMap = useMemo(() => {
+        const map = new Map<string, FCResolutionResult>();
+        for (const product of products) {
+            const info = fcInfoMap.get(product.id);
+            if (info) map.set(product.id, info.resolution);
+        }
+        return map;
+    }, [products, fcInfoMap]);
+
+    // FC counts for filter chips
+    const fcVigenteCount = useMemo(() => fcCoverage.vigente, [fcCoverage]);
+    const fcPendienteCount = useMemo(() => fcCoverage.pendiente, [fcCoverage]);
+    const fcSinFCCount = useMemo(() => fcCoverage.sin_fc, [fcCoverage]);
+
+    // ── View FC Handler ──────────────────────────────────────────────
+    const handleViewFC = useCallback((product: Product, resolution: FCResolutionResult) => {
+        setSelectedFCProduct(product);
+    }, []);
+
     const filteredProducts = useMemo(() => {
-        if (stockFilter === 'all') return products;
-        return products.filter(p => {
-            const stock = p.stock_current ?? 0;
-            const min = p.min_stock ?? 0;
-            if (stockFilter === 'out') return stock <= 0;
-            if (stockFilter === 'low') return stock > 0 && min > 0 && stock <= min;
-            return stock > 0 && (min <= 0 || stock > min);
-        });
-    }, [products, stockFilter]);
+        let filtered = products;
+        // Stock filter
+        if (stockFilter !== 'all') {
+            filtered = filtered.filter(p => {
+                const stock = p.stock_current ?? 0;
+                const min = p.min_stock ?? 0;
+                if (stockFilter === 'out') return stock <= 0;
+                if (stockFilter === 'low') return stock > 0 && min > 0 && stock <= min;
+                return stock > 0 && (min <= 0 || stock > min);
+            });
+        }
+        // FC status filter
+        if (fcFilter !== 'all') {
+            filtered = filtered.filter(p => getFCStatus(p.id) === fcFilter);
+        }
+        return filtered;
+    }, [products, stockFilter, fcFilter, getFCStatus]);
 
     const stockAlerts = useStockAlerts(products);
+
+    // Track scroll position on the terminal-content container (the actual scrollable parent)
+    useEffect(() => {
+        const scrollContainer = document.querySelector('.terminal-content') as HTMLElement | null;
+        if (!scrollContainer) return;
+        const handleScroll = () => {
+            setShowScrollTop(scrollContainer.scrollTop > 400);
+        };
+        scrollContainer.addEventListener('scroll', handleScroll, { passive: true });
+        return () => scrollContainer.removeEventListener('scroll', handleScroll);
+    }, []);
+
+    const handleScrollTop = useCallback(() => {
+        const scrollContainer = document.querySelector('.terminal-content') as HTMLElement | null;
+        if (scrollContainer) {
+            scrollContainer.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    }, []);
 
     const uniqueCategories = useMemo(() => {
         const categorySet = new Set(products.map(p => p.category).filter(Boolean));
@@ -207,6 +306,14 @@ export default function InventoryView() {
             variant: 'outline',
             className: currentView === 'inventory' ? 'flex' : 'hidden',
         },
+        ...(stockAlerts.length > 0 ? [{
+            id: 'stock-alerts',
+            label: `${stockAlerts.length} Alerta${stockAlerts.length !== 1 ? 's' : ''}`,
+            icon: AlertTriangle,
+            onClick: () => setIsAlertsPanelOpen(true),
+            variant: 'warning' as const,
+            className: currentView === 'inventory' ? 'flex' : 'hidden',
+        }] : []),
     ];
 
     const handleAdjustProduct = useCallback((product: Product) => {
@@ -241,8 +348,8 @@ export default function InventoryView() {
                 ? `${product.name} ahora es visible en la tienda pública`
                 : `${product.name} ya no se muestra en la tienda pública`
             );
-        } catch (err: any) {
-            toast.error('Error al actualizar visibilidad: ' + (err?.message || ''));
+        } catch (err: unknown) {
+            toast.error('Error al actualizar visibilidad: ' + (err instanceof Error ? err.message : String(err)));
         } finally {
             setTogglingVisibleId(null);
         }
@@ -288,8 +395,8 @@ export default function InventoryView() {
                     ? `${targets.length} producto(s) ahora visible(s) en la tienda pública`
                     : `${targets.length} producto(s) ocultado(s) de la tienda pública`
             );
-        } catch (err: any) {
-            toast.error('Error masivo al actualizar visibilidad: ' + (err?.message || ''));
+        } catch (err: unknown) {
+            toast.error('Error masivo al actualizar visibilidad: ' + (err instanceof Error ? err.message : String(err)));
         } finally {
             setBulkToggling(false);
         }
@@ -326,88 +433,68 @@ export default function InventoryView() {
     }
 
     return (
-        <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <h2 className="text-[clamp(1.25rem,4vw,1.5rem)] font-bold border-l-4 border-primary pl-4">
-                    Gestión de Inventario
-                </h2>
-                {!isMobile && (
-                    <ActionMenu
-                        actions={actions}
-                        position="top"
-                    />
-                )}
+        <div className="space-y-2">
+            {/* Tabs internas: Stock | Catálogo | Trazabilidad — actúan como header */}
+            <div className="flex border-b border-border bg-card rounded-t-xl overflow-hidden" role="tablist">
+                {([
+                  { id: 'stock', label: 'Stock Actual' },
+                  { id: 'catalog', label: 'Catálogo' },
+                  { id: 'trazabilidad', label: 'Trazabilidad' },
+                ] as const).map((tab) => (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    role="tab"
+                    aria-selected={inventoryTab === tab.id}
+                    onClick={() => setInventoryTab(tab.id)}
+                    className={cn(
+                      "flex-1 py-2.5 px-4 text-xs font-black uppercase tracking-widest transition-colors border-b-2 -mb-px",
+                      inventoryTab === tab.id
+                        ? "border-primary text-primary bg-primary/5"
+                        : "border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/30",
+                    )}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
             </div>
 
-            <QueryInspector />
+            {/* Render según tab seleccionada */}
+            {inventoryTab === 'catalog' ? (
+                <CatalogView />
+            ) : inventoryTab === 'trazabilidad' ? (
+                <StockHistoryView />
+            ) : (
+            <>
+            {/* Contenido de Stock Actual */}
 
-            {/* KPI Dashboard */}
-            {products.length > 0 && (
-              <InventoryKPIs products={products} />
-            )}
-
-            <div className="space-y-4 sticky top-[76px] z-40 bg-background/95 backdrop-blur-md pb-4 pt-2 -mx-4 px-4 shadow-md sm:relative sm:top-0 sm:bg-transparent sm:pb-0 sm:pt-0 sm:mx-0 sm:px-0 sm:shadow-none">
-                <SearchBar
-                    value={searchTerm}
-                    onChange={setSearchTerm}
-                    placeholder="Buscar por nombre o SKU en inventario..."
-                    showSettings={false}
-                    aria-label="Buscar productos en el inventario por nombre o código SKU"
-                />
-
-                <CategoryChips
-                    categories={uniqueCategories.filter((c): c is string => Boolean(c))}
-                    selectedCategory={selectedCategory}
-                    onCategoryChange={handleCategoryChange}
-                />
-
-                {/* Stock status filter */}
-                <div className="flex items-center gap-2 flex-wrap">
-                    <Filter className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-                    {/* Bulk store visibility actions */}
-                    <button
-                        type="button"
-                        onClick={() => handleBulkVisibility(true)}
-                        disabled={bulkToggling || filteredProducts.length === 0}
-                        className="ml-2 inline-flex items-center gap-1.5 px-3 py-2 min-h-[44px] rounded-full text-[11px] font-bold uppercase border transition-all active:scale-95 disabled:opacity-50 bg-emerald-500/10 border-emerald-500/20 text-emerald-600 hover:bg-emerald-500/20"
-                        title={`Mostrar ${filteredProducts.length} producto(s) en la tienda pública`}
-                    >
-                        {bulkToggling ? (
-                            <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                        ) : (
-                            <Eye className="w-3 h-3" />
-                        )}
-                        <span className="hidden sm:inline">Tienda</span>
-                        <CheckCircle2 className="w-3 h-3" />
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => handleBulkVisibility(false)}
-                        disabled={bulkToggling || filteredProducts.length === 0}
-                        className="inline-flex items-center gap-1.5 px-3 py-2 min-h-[44px] rounded-full text-[11px] font-bold uppercase border transition-all active:scale-95 disabled:opacity-50 bg-red-500/10 border-red-500/20 text-red-500 hover:bg-red-500/20"
-                        title={`Ocultar ${filteredProducts.length} producto(s) de la tienda pública`}
-                    >
-                        {bulkToggling ? (
-                            <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                        ) : (
-                            <EyeOff className="w-3 h-3" />
-                        )}
-                        <span className="hidden sm:inline">Tienda</span>
-                        <X className="w-3 h-3" />
-                    </button>
+            {/* Action menu + filtros en una sola fila compacta */}
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+                {/* Filtros + categorías en una sola fila con separadores */}
+                <div className="flex items-center gap-1 flex-wrap">
+                    {/* Category chips integrados en la fila de filtros */}
+                    <CategoryChips
+                        categories={uniqueCategories.filter((c): c is string => Boolean(c))}
+                        selectedCategory={selectedCategory}
+                        onCategoryChange={handleCategoryChange}
+                    />
+                    {/* Separador entre categorías y filtros de stock */}
                     <span className="w-px h-4 bg-border mx-1" />
+                    {/* Stock status filter pills */}
                     {([
-                        { key: 'all', label: 'Todos' },
-                        { key: 'normal', label: 'Normal' },
-                        { key: 'low', label: 'Stock Bajo' },
-                        { key: 'out', label: 'Agotados' },
+                        { key: 'all', label: 'Todos', title: 'Mostrar todos los productos' },
+                        { key: 'normal', label: 'Normal', title: 'Productos con stock normal' },
+                        { key: 'low', label: 'Bajo', title: 'Stock Bajo — productos por debajo del mínimo' },
+                        { key: 'out', label: 'Agotado', title: 'Agotados — productos sin existencias' },
                     ] as const).map(opt => (
                         <button
                             key={opt.key}
                             type="button"
                             onClick={() => setStockFilter(opt.key)}
+                            title={opt.title}
+                            aria-label={opt.title}
                             className={cn(
-                                'px-3 py-2.5 min-h-[44px] rounded-full text-[11px] font-bold uppercase border transition-all active:scale-95',
+                                'px-2.5 py-1 min-h-[28px] rounded-full text-[10px] font-bold uppercase border transition-all active:scale-95',
                                 stockFilter === opt.key
                                     ? 'bg-primary text-primary-foreground border-primary'
                                     : 'bg-muted/50 text-muted-foreground border-border hover:bg-muted'
@@ -416,8 +503,75 @@ export default function InventoryView() {
                             {opt.label}
                         </button>
                     ))}
+                    {/* Separador entre filtros de stock y visibilidad */}
+                    <span className="w-px h-4 bg-border mx-1" />
+                    {/* Bulk store visibility actions */}
+                    <button
+                        type="button"
+                        onClick={() => handleBulkVisibility(true)}
+                        disabled={bulkToggling || filteredProducts.length === 0}
+                        className="inline-flex items-center justify-center w-7 h-7 rounded-full border transition-all active:scale-95 disabled:opacity-50 bg-success/10 border-success/20 text-success hover:bg-success/20"
+                        title={`Mostrar ${filteredProducts.length} producto(s) en la tienda pública`}
+                    >
+                        {bulkToggling ? (
+                            <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                            <Eye className="w-3.5 h-3.5" />
+                        )}
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => handleBulkVisibility(false)}
+                        disabled={bulkToggling || filteredProducts.length === 0}
+                        className="inline-flex items-center justify-center w-7 h-7 rounded-full border transition-all active:scale-95 disabled:opacity-50 bg-destructive/10 border-destructive/20 text-destructive hover:bg-destructive/20"
+                        title={`Ocultar ${filteredProducts.length} producto(s) de la tienda pública`}
+                    >
+                        {bulkToggling ? (
+                            <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                            <EyeOff className="w-3.5 h-3.5" />
+                        )}
+                    </button>
                 </div>
+
+                {/* Action menu alineado a la derecha */}
+                {!isMobile && (
+                    <ActionMenu
+                        actions={actions}
+                        position="top"
+                    />
+                )}
             </div>
+
+            {/* Search Bar */}
+            <div className="relative">
+                <SearchBar
+                    value={searchTerm}
+                    onChange={setSearchTerm}
+                    placeholder="Buscar por nombre o SKU en inventario..."
+                    showSettings={false}
+                    aria-label="Buscar productos en el inventario por nombre o código SKU"
+                    className="[&_input]:!text-base [&_input]:!py-3 [&_input]:!pl-12 [&_input]:rounded-xl [&_input]:border-primary/20 [&_input]:bg-card [&_input]:shadow-sm [&_input]:focus:border-primary [&_input]:focus:ring-2 [&_input]:focus:ring-primary/15"
+                />
+            </div>
+
+            {/* FC Coverage Accordion — replaces separate FC bar + FC filter tabs */}
+            {fcCoverage.total > 0 && (
+              <FCCoverageAccordion
+                vigente={fcCoverage.vigente}
+                pendiente={fcCoverage.pendiente}
+                sin_fc={fcCoverage.sin_fc}
+                total={fcCoverage.total}
+                coverage={fcCoverage.coverage}
+                fcFilter={fcFilter}
+                onFcFilterChange={setFcFilter}
+              />
+            )}
+
+            {/* KPI Dashboard */}
+            {products.length > 0 && (
+              <InventoryKPIs products={products} fcCoverage={fcCoverage} />
+            )}
 
             <div className={cn(isPending && "opacity-50 transition-opacity")} role="list" aria-label="Lista de productos del inventario">
                 <StateRenderer
@@ -435,6 +589,8 @@ export default function InventoryView() {
                                 hasMore={hasNextPage}
                                 isLoading={isFetchingNextPage}
                                 onAdjust={handleAdjustProduct}
+                                fcStatusMap={fcStatusMap}
+                                onViewFC={handleViewFC}
                             />
                         ) : (
                             <InventoryTableView
@@ -446,6 +602,9 @@ export default function InventoryView() {
                                 onViewKardex={setKardexProduct}
                                 onToggleVisible={handleToggleVisible}
                                 isTogglingVisible={togglingVisibleId}
+                                fcStatusMap={fcStatusMap}
+                                fcResolutionMap={fcResolutionMap}
+                                onViewFC={handleViewFC}
                             />
                         )
                     )}
@@ -483,11 +642,33 @@ export default function InventoryView() {
             {stockAlerts.length > 0 && (
                 <StockAlertsPanel
                     alerts={stockAlerts}
+                    isOpen={isAlertsPanelOpen}
+                    onClose={() => setIsAlertsPanelOpen(false)}
                     onReceive={(product) => {
+                        setIsAlertsPanelOpen(false);
                         setPreselectedProduct(product);
                         setCurrentView('reception');
                     }}
                 />
+            )}
+
+            {/* FC Preview Modal */}
+            {selectedFCProduct && (
+                <FCPreviewModal
+                    open={!!selectedFCProduct}
+                    onClose={() => setSelectedFCProduct(null)}
+                    productId={selectedFCProduct.id}
+                    productName={selectedFCProduct.name}
+                    storeId={selectedFCProduct.store_id ?? user?.activeStoreId ?? ''}
+                    fcStatus={getFCStatus(selectedFCProduct.id)}
+                />
+            )}
+
+            {/* B4-FIX: botón scroll-to-top de InventoryView eliminado — ahora hay uno global
+                en TerminalShell (ScrollToTop) que escucha .terminal-content y funciona
+                en todas las vistas. Antes había duplicación: este botón + el global se veían
+                superpuestos en desktop, y este quedaba cortado por el tab bar en mobile. */}
+            </>
             )}
         </div>
     );

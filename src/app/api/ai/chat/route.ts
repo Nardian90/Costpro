@@ -182,10 +182,10 @@ async function chatHandler(req: NextRequest) {
       model,
       timestamp: new Date().toISOString(),
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[AI Chat] Unexpected error:', error);
     return NextResponse.json({
-      error: `Error interno: ${error.message || 'Desconocido'}`,
+      error: `Error interno: ${(error instanceof Error ? error.message : String(error)) || 'Desconocido'}`,
     }, { status: 500 });
   }
 }
@@ -193,6 +193,14 @@ async function chatHandler(req: NextRequest) {
 // Simple in-memory rate limiter
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
 function simpleRateLimit(clientId: string, maxRequests: number, windowMs: number): { allowed: boolean } {
+  // FIX-AUDIT-11: Lazy cleanup of stale entries
+  if (rateLimitMap.size > 500) {
+    const now = Date.now();
+    for (const [key, entry] of rateLimitMap) {
+      if (now > entry.resetAt) rateLimitMap.delete(key);
+    }
+  }
+
   const now = Date.now();
   const entry = rateLimitMap.get(clientId);
 
@@ -209,12 +217,7 @@ function simpleRateLimit(clientId: string, maxRequests: number, windowMs: number
   return { allowed: true };
 }
 
-// Clean up stale entries every 5 minutes
-setInterval(() => {
-  const now = Date.now();
-  for (const [key, entry] of rateLimitMap) {
-    if (now > entry.resetAt) rateLimitMap.delete(key);
-  }
-}, 300_000);
+// FIX-AUDIT-11: Removed setInterval leak — cleanup is now lazy inside simpleRateLimit()
+// This prevents timer leaks in serverless environments
 
 export const POST = chatHandler;

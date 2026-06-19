@@ -6,17 +6,18 @@ import { withAuth } from '@/lib/auth-middleware';
 import { rateLimit } from '@/lib/rate-limit';
 import { validateOrigin } from '@/lib/csrf';
 import { withTracing } from '@/lib/observability';
+import { createApiError } from '@/lib/api-errors';
 
 export const runtime = 'nodejs';
 
 const handler = withAuth(async (req, session) => {
   if (!validateOrigin(req)) {
-    return NextResponse.json({ error: 'Origen no permitido' }, { status: 403 });
+    return NextResponse.json(createApiError('INVALID_ORIGIN'), { status: 403 });
   }
 
   const clientId = req.headers.get('x-forwarded-for') || session.user.id;
   const { allowed } = await rateLimit(clientId);
-  if (!allowed) return new Response(JSON.stringify({ error: 'Too many requests' }), { status: 429 });
+  if (!allowed) return new Response(JSON.stringify(createApiError('RATE_LIMITED')), { status: 429 });
 
   try {
     // FIX-BUG-LOG-008: Removed redundant supabase.auth.getUser() call;
@@ -26,7 +27,38 @@ const handler = withAuth(async (req, session) => {
     const body = await req.json();
     const batch = syncBatchSchema.parse(body);
 
-    const results: any[] = [];
+    // FIX-SEC-H3: Validate store membership for each operation in the batch
+    const isAdmin = (session.user as any).role === 'admin';
+    const memberships = (session.user as any).memberships || [];
+    const accessibleStoreIds = new Set(
+      memberships
+        .filter((m: any) => m.status === 'active')
+        .map((m: any) => m.store_id)
+    );
+
+    if (!isAdmin) {
+      for (const op of batch.operations) {
+        const opStoreId = op.payload?.p_store_id || op.payload?.store_id;
+        if (opStoreId && !accessibleStoreIds.has(opStoreId)) {
+          return NextResponse.json(
+            { ...createApiError('STORE_ACCESS_DENIED'), operationKey: op.idempotencyKey },
+            { status: 403 }
+          );
+        }
+        // FIX-AUDIT-6: Validate destination_store_id for transfer operations
+        if (op.entity === 'transfer') {
+          const destStoreId = op.payload?.p_destination_store_id || op.payload?.destination_store_id;
+          if (destStoreId && !accessibleStoreIds.has(destStoreId)) {
+            return NextResponse.json(
+              { ...createApiError('STORE_ACCESS_DENIED'), operationKey: op.idempotencyKey, direction: 'destination' },
+              { status: 403 }
+            );
+          }
+        }
+      }
+    }
+
+    const results: unknown[] = [];
 
     for (const op of batch.operations) {
       // 1. Check idempotency
@@ -87,11 +119,12 @@ const handler = withAuth(async (req, session) => {
           status: 'ok',
           serverId: result.data,
         });
-      } catch (err: any) {
+      } catch (err: unknown) {
+        const errMsg = err instanceof Error ? err.message : String(err);
         console.error(`Error processing sync operation ${op.idempotencyKey}:`, err);
 
         // Check for conflicts (this is simplified, depends on error messages/codes)
-        const isConflict = err.message?.includes('Duplicate') || err.code === '23505';
+        const isConflict = errMsg.includes('Duplicate') || (err instanceof Error && (err as any).code === '23505');
         const status = isConflict ? 'conflict' : 'error';
 
         // Record failure/conflict in sync_log
@@ -102,7 +135,7 @@ const handler = withAuth(async (req, session) => {
           operation_type: op.operationType,
           status,
           // FIX-SEC-022: Hide internal error details in sync responses
-          response_data: { error: (process.env.NODE_ENV !== 'production' || !!process.env.VITEST) ? err.message : 'Error de sincronización' },
+          response_data: { error: (process.env.NODE_ENV !== 'production' || !!process.env.VITEST) ? errMsg : 'Error de sincronización' },
           store_id: op.payload.p_store_id || null,
         });
 
@@ -125,16 +158,17 @@ const handler = withAuth(async (req, session) => {
           idempotencyKey: op.idempotencyKey,
           status,
           // FIX-SEC-022: Hide internal error details in sync responses
-          error: (process.env.NODE_ENV !== 'production' || !!process.env.VITEST) ? err.message : 'Error de sincronización',
+          error: (process.env.NODE_ENV !== 'production' || !!process.env.VITEST) ? errMsg : 'Error de sincronización',
           serverData,
         });
       }
     }
 
     return NextResponse.json({ results });
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const errMsg = err instanceof Error ? err.message : String(err);
     console.error('Batch sync error:', err);
-    return NextResponse.json({ error: (process.env.NODE_ENV !== 'production' || !!process.env.VITEST) ? err.message : 'Error interno del servidor' }, { status: 500 });
+    return NextResponse.json(createApiError('INTERNAL_ERROR'), { status: 500 });
   }
 });
 

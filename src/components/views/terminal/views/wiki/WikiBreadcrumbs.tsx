@@ -13,7 +13,7 @@ interface WikiBreadcrumbsProps {
 export const WikiBreadcrumbs: React.FC<WikiBreadcrumbsProps> = ({ module, selectedId, onNavigate }) => {
   return (
     <nav aria-label="Navegación de migas de pan" className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 mb-6">
-      <button
+      <button type="button"
         onClick={() => onNavigate('asientos', null)}
         className="hover:text-primary transition-colors flex items-center gap-1"
       >
@@ -21,7 +21,7 @@ export const WikiBreadcrumbs: React.FC<WikiBreadcrumbsProps> = ({ module, select
         WIKI
       </button>
       <ChevronRight className="h-3 w-3 opacity-30" />
-      <button
+      <button type="button"
         onClick={() => onNavigate(module, null)}
         className="hover:text-primary transition-colors"
       >

@@ -118,7 +118,7 @@ export default function MatchingHistoryView() {
         <Card className="bg-primary/5 border-primary/20">
           <CardHeader className="pb-2">
             <CardTitle className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-              <CheckCircle2 className="w-3 h-3 text-green-500" />
+              <CheckCircle2 className="w-3 h-3 text-success" />
               Tasa de Éxito
             </CardTitle>
           </CardHeader>
@@ -128,10 +128,10 @@ export default function MatchingHistoryView() {
           </CardContent>
         </Card>
 
-        <Card className="bg-blue-500/5 border-blue-500/20">
+        <Card className="bg-primary/5 border-primary/20">
           <CardHeader className="pb-2">
             <CardTitle className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-              <Activity className="w-3 h-3 text-blue-500" />
+              <Activity className="w-3 h-3 text-primary" />
               Conciliación Parcial
             </CardTitle>
           </CardHeader>
@@ -141,17 +141,17 @@ export default function MatchingHistoryView() {
           </CardContent>
         </Card>
 
-        <Card className="bg-amber-500/5 border-amber-500/20">
+        <Card className="bg-warning/5 border-warning/20">
           <CardHeader className="pb-2">
             <CardTitle className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-              <Target className="w-3 h-3 text-amber-500" />
+              <Target className="w-3 h-3 text-warning" />
               Confianza Promedio
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-black">{stats.avgConfidence.toFixed(1)}%</div>
             <div className="w-full bg-muted h-1 rounded-full mt-2 overflow-hidden">
-                <div className="bg-amber-500 h-full" style={{ width: `${stats.avgConfidence}%` }} />
+                <div className="bg-warning h-full" style={{ width: `${stats.avgConfidence}%` }} />
             </div>
           </CardContent>
         </Card>
@@ -235,7 +235,7 @@ export default function MatchingHistoryView() {
           <Button
             variant="ghost"
             size="icon"
-            className="h-10 w-10 rounded-xl hover:bg-red-500/10 hover:text-red-500"
+            className="h-10 w-10 rounded-xl hover:bg-destructive/10 hover:text-destructive"
             onClick={() => {
               setSearchTerm('');
               setStatusFilter('ALL');
@@ -314,7 +314,7 @@ export default function MatchingHistoryView() {
                                 <div
                                     className={cn(
                                         "h-full",
-                                        (log.matching_confidence || 0) > 0.9 ? "bg-green-500" : (log.matching_confidence || 0) > 0.7 ? "bg-blue-500" : "bg-amber-500"
+                                        (log.matching_confidence || 0) > 0.9 ? "bg-success" : (log.matching_confidence || 0) > 0.7 ? "bg-primary" : "bg-warning"
                                     )}
                                     style={{ width: `${(log.matching_confidence || 0) * 100}%` }}
                                 />
@@ -364,11 +364,11 @@ export default function MatchingHistoryView() {
             </CardHeader>
             <CardContent className="flex-1 overflow-auto p-4 space-y-4">
                 {selectedLog.fail_reason && (
-                    <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl flex items-start gap-3">
-                        <AlertCircle className="w-4 h-4 text-red-500 mt-0.5" />
+                    <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-xl flex items-start gap-3">
+                        <AlertCircle className="w-4 h-4 text-destructive mt-0.5" />
                         <div>
-                            <div className="text-[10px] font-black text-red-500 uppercase tracking-widest">Fallo Crítico</div>
-                            <div className="text-xs font-medium text-red-700">{selectedLog.fail_reason}</div>
+                            <div className="text-[10px] font-black text-destructive uppercase tracking-widest">Fallo Crítico</div>
+                            <div className="text-xs font-medium text-destructive">{selectedLog.fail_reason}</div>
                         </div>
                     </div>
                 )}
@@ -380,7 +380,7 @@ export default function MatchingHistoryView() {
                             <div key={idx} className="relative pl-7 group">
                                 <div className={cn(
                                     "absolute left-0 top-1.5 w-6 h-6 rounded-full border-2 bg-background flex items-center justify-center z-10 transition-colors",
-                                    step.status === 'SUCCESS' ? "border-green-500" : step.status === 'FAIL' ? "border-red-500" : "border-muted"
+                                    step.status === 'SUCCESS' ? "border-success" : step.status === 'FAIL' ? "border-destructive" : "border-muted"
                                 )}>
                                     <span className="text-[8px] font-bold">{step.pass}</span>
                                 </div>
@@ -391,8 +391,8 @@ export default function MatchingHistoryView() {
                                             variant="outline"
                                             className={cn(
                                                 "text-[8px] h-3.5 px-1 font-black",
-                                                step.status === 'SUCCESS' ? "bg-green-500/10 text-green-600 border-green-500/20" :
-                                                step.status === 'FAIL' ? "bg-red-500/10 text-red-600 border-red-500/20" :
+                                                step.status === 'SUCCESS' ? "bg-success/10 text-success border-success/20" :
+                                                step.status === 'FAIL' ? "bg-destructive/10 text-destructive border-destructive/20" :
                                                 "bg-muted/50 text-muted-foreground"
                                             )}
                                         >
@@ -418,7 +418,7 @@ export default function MatchingHistoryView() {
                                                 <div className="text-[8px] font-black uppercase text-muted-foreground">Delta</div>
                                                 <div className={cn(
                                                     "text-[10px] font-mono font-bold",
-                                                    (step.metrics.delta || 0) > 0 ? "text-red-500" : "text-green-600"
+                                                    (step.metrics.delta || 0) > 0 ? "text-destructive" : "text-success"
                                                 )}>
                                                     {step.metrics.delta && step.metrics.delta > 0 ? '+' : ''}${step.metrics.delta?.toFixed(2)}
                                                 </div>

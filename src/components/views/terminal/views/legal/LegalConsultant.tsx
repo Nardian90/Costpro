@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import {
   FileText, BookOpen, ChevronRight, Sparkles,
   ExternalLink, Info, ClipboardList, Briefcase, Scale
@@ -16,6 +16,7 @@ interface LegalConsultantProps {
 }
 
 export default function LegalConsultant({ resolutions, loading, onSelectModel }: LegalConsultantProps) {
+  const prefersReducedMotion = useReducedMotion();
   const [activeResId, setActiveResId] = useState<string | null>(null);
 
   const formatResolutionText = (text: string) => {
@@ -58,7 +59,7 @@ export default function LegalConsultant({ resolutions, loading, onSelectModel }:
         <h2 className="text-xs font-black text-primary/60 uppercase tracking-[0.3em] px-4">Resoluciones Vigentes</h2>
         <div className="space-y-2">
           {resolutions.map(res => (
-            <button
+            <button type="button"
               key={res.id}
               onClick={() => setActiveResId(res.id === activeResId ? null : res.id)}
               aria-label={`Resolución: ${res.title}`}
@@ -108,8 +109,8 @@ export default function LegalConsultant({ resolutions, loading, onSelectModel }:
             <motion.div
               key={activeResId}
               initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
+              animate={prefersReducedMotion ? {} : { opacity: 1, x: 0 }}
+              exit={prefersReducedMotion ? {} : { opacity: 0, x: -20 }}
               className="space-y-8"
             >
               <div className="bg-background dark:bg-zinc-900 border-2 border-primary/10 rounded-3xl overflow-hidden shadow-sm">
@@ -131,7 +132,7 @@ export default function LegalConsultant({ resolutions, loading, onSelectModel }:
                 <h3 className="text-xs font-black text-primary/60 uppercase tracking-[0.3em] px-4">Modelos Disponibles para Emitir</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {resolutions.find(r => r.id === activeResId)?.legal_models.map((model: any) => (
-                    <button
+                    <button type="button"
                       key={model.id}
                       onClick={() => onSelectModel(model)}
                       className="group bg-background p-6 rounded-2xl border-2 border-primary/5 hover:border-primary/30 transition-all text-left flex items-center justify-between shadow-sm hover:shadow-md"

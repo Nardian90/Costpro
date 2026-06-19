@@ -75,12 +75,12 @@ export function PivotStatementView() {
                             return (
                                 <TableRow key={d.date}>
                                     <TableCell className="font-bold text-xs">{formatDate(d.date)}</TableCell>
-                                    <TableCell className="text-right text-xs font-bold text-blue-600">{formatCurrencyCents(d.bank_credits)}</TableCell>
+                                    <TableCell className="text-right text-xs font-bold text-primary">{formatCurrencyCents(d.bank_credits)}</TableCell>
                                     <TableCell className="text-right text-xs font-bold">{formatCurrencyCents(d.reconciled_transfer)}</TableCell>
-                                    <TableCell className={`text-right text-xs font-black ${Math.abs(diffT) < 1 ? 'text-green-500' : 'text-orange-500'}`}>
+                                    <TableCell className={`text-right text-xs font-black ${Math.abs(diffT) < 1 ? 'text-success' : 'text-warning'}`}>
                                         {formatCurrencyCents(diffT)}
                                     </TableCell>
-                                    <TableCell className="text-right text-xs font-bold text-green-600">{formatCurrencyCents(d.reconciled_cash)}</TableCell>
+                                    <TableCell className="text-right text-xs font-bold text-success">{formatCurrencyCents(d.reconciled_cash)}</TableCell>
                                     <TableCell className="text-right text-xs font-black text-primary">
                                         {formatCurrencyCents(d.reconciled_transfer + d.reconciled_cash)}
                                     </TableCell>

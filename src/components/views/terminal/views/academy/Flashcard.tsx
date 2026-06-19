@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -11,6 +11,7 @@ interface FlashcardProps {
 }
 
 export const Flashcard: React.FC<FlashcardProps> = ({ card, onScore }) => {
+  const prefersReducedMotion = useReducedMotion();
   const [isFlipped, setIsFlipped] = useState(false);
 
   return (
@@ -18,7 +19,7 @@ export const Flashcard: React.FC<FlashcardProps> = ({ card, onScore }) => {
       <motion.div
         className="relative w-full h-full cursor-pointer"
         style={{ transformStyle: 'preserve-3d' }}
-        animate={{ rotateY: isFlipped ? 180 : 0 }}
+        animate={prefersReducedMotion ? {} : { rotateY: isFlipped ? 180 : 0 }}
         transition={{ duration: 0.6, type: 'spring', stiffness: 260, damping: 20 }}
         onClick={() => setIsFlipped(!isFlipped)}
       >
@@ -33,9 +34,9 @@ export const Flashcard: React.FC<FlashcardProps> = ({ card, onScore }) => {
             <div className="absolute top-6 right-6">
               <span className={cn(
                 "px-3 py-1 text-xs font-bold rounded-full uppercase tracking-widest",
-                card.difficulty === 'Experto' ? "bg-red-500/10 text-red-500" :
-                card.difficulty === 'Operativo' ? "bg-amber-500/10 text-amber-500" :
-                "bg-green-500/10 text-green-500"
+                card.difficulty === 'Experto' ? "bg-destructive/10 text-destructive" :
+                card.difficulty === 'Operativo' ? "bg-warning/10 text-warning" :
+                "bg-success/10 text-success"
               )}>
                 {card.difficulty}
               </span>
@@ -84,9 +85,9 @@ export const Flashcard: React.FC<FlashcardProps> = ({ card, onScore }) => {
                     size="icon"
                     className={cn(
                       "size-11 sm:size-12 rounded-xl font-black transition-all text-lg",
-                      s <= 2 ? "hover:bg-red-500 hover:text-foreground border-red-500/30" :
-                      s === 3 ? "hover:bg-amber-500 hover:text-foreground border-amber-500/30" :
-                      "hover:bg-green-500 hover:text-foreground border-green-500/30"
+                      s <= 2 ? "hover:bg-destructive hover:text-foreground border-destructive/30" :
+                      s === 3 ? "hover:bg-warning hover:text-foreground border-warning/30" :
+                      "hover:bg-success hover:text-foreground border-success/30"
                     )}
                     onClick={(e) => {
                       e.stopPropagation();

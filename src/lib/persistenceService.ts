@@ -21,12 +21,12 @@ export class PersistenceService {
         for (let i = 0; i < maxRetries; i++) {
             try {
                 return await fn();
-            } catch (error: any) {
+            } catch (error: unknown) {
                 lastError = error;
                 const isRetryable =
-                    error.name === 'DatabaseClosedError' ||
-                    error.message?.includes('Database is closed') ||
-                    error.message?.includes('Transaction inactive');
+                    (error instanceof Error && error.name === 'DatabaseClosedError') ||
+                    (error instanceof Error && error.message?.includes('Database is closed')) ||
+                    (error instanceof Error && error.message?.includes('Transaction inactive'));
 
                 if (isRetryable && i < maxRetries - 1) {
                     const delay = Math.pow(2, i) * INITIAL_BACKOFF;

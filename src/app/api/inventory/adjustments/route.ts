@@ -1,21 +1,12 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getSupabaseAuthClient } from "@/lib/supabaseClient";
 import { inventoryAdjustmentsSchema, zodError } from '@/validation/api-schemas';
-import { getServerSession } from "@/lib/auth";
+import { withStoreAccess, AuthenticatedSession } from '@/lib/auth-middleware';
 import { rateLimit } from '@/lib/rate-limit';
 import { validateOrigin } from '@/lib/csrf';
 import { withTracing } from '@/lib/observability';
 
-async function postHandler(request: NextRequest) {
-  const session = await getServerSession(request);
-
-  if (!session || !session.token) {
-    return NextResponse.json(
-      { error: "Unauthorized", message: "No active session" },
-      { status: 401 }
-    );
-  }
-
+async function postHandler(request: NextRequest, session: AuthenticatedSession) {
   if (!validateOrigin(request)) {
     return NextResponse.json({ error: 'Origen no permitido' }, { status: 403 });
   }
@@ -83,4 +74,4 @@ async function postHandler(request: NextRequest) {
   }
 }
 
-export const POST = withTracing(postHandler, 'POST /api/inventory/adjustments');
+export const POST = withTracing(withStoreAccess(postHandler) as any, 'POST /api/inventory/adjustments');

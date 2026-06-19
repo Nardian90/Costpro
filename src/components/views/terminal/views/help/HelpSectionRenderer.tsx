@@ -31,19 +31,19 @@ interface HelpSectionRendererProps {
 function detectCallout(text: string): { type: string; label: string; icon: React.ElementType; color: string } | null {
   const lower = text.trimStart().toLowerCase();
   if (lower.startsWith('**tip:**') || lower.startsWith('**💡 tip:**') || lower.startsWith('**consejo:**')) {
-    return { type: 'tip', label: 'Consejo', icon: Lightbulb, color: 'text-amber-600 dark:text-amber-400 border-amber-500/30 bg-amber-500/5' };
+    return { type: 'tip', label: 'Consejo', icon: Lightbulb, color: 'text-warning dark:text-amber-400 border-warning/30 bg-warning/5' };
   }
   if (lower.startsWith('**importante:**') || lower.startsWith('**⚠️ importante:**') || lower.startsWith('**⚠ importante:**')) {
     return { type: 'important', label: 'Importante', icon: AlertTriangle, color: 'text-rose-600 dark:text-rose-400 border-rose-500/30 bg-rose-500/5' };
   }
   if (lower.startsWith('**nota:**') || lower.startsWith('**ℹ️ nota:**') || lower.startsWith('**note:**')) {
-    return { type: 'note', label: 'Nota', icon: Info, color: 'text-blue-600 dark:text-blue-400 border-blue-500/30 bg-blue-500/5' };
+    return { type: 'note', label: 'Nota', icon: Info, color: 'text-primary dark:text-blue-400 border-primary/30 bg-primary/5' };
   }
   if (lower.startsWith('**danger:**') || lower.startsWith('**❌ danger:**') || lower.startsWith('**🚫 danger:**')) {
-    return { type: 'danger', label: 'Peligro', icon: XCircle, color: 'text-red-600 dark:text-red-400 border-red-500/30 bg-red-500/5' };
+    return { type: 'danger', label: 'Peligro', icon: XCircle, color: 'text-destructive dark:text-red-400 border-destructive/30 bg-destructive/5' };
   }
   if (lower.startsWith('**success:**') || lower.startsWith('**✅ success:**') || lower.startsWith('**check:**') || lower.startsWith('**check:**')) {
-    return { type: 'success', label: 'Completado', icon: CheckCircle2, color: 'text-emerald-600 dark:text-emerald-400 border-emerald-500/30 bg-emerald-500/5' };
+    return { type: 'success', label: 'Completado', icon: CheckCircle2, color: 'text-success dark:text-emerald-400 border-success/30 bg-success/5' };
   }
   return null;
 }
@@ -625,7 +625,7 @@ export default function HelpSectionRenderer({ content, glossary }: HelpSectionRe
           pre: ({ node, children, ...props }) => (
             <div className="relative group my-8">
               <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                <button
+                <button type="button"
                   onClick={(e) => {
                     const container = (e.currentTarget as HTMLElement).closest('pre');
                     const codeEl = container?.querySelector('code');

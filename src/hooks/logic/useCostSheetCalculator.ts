@@ -107,7 +107,6 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
 
   const calculatedAnnexes = useMemo(
     () => calculateAnnexesPure(template, sharedParser),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [annexesKey, headerKey, sectionsKey],
   );
 

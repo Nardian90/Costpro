@@ -190,8 +190,9 @@ export function BankIngestion() {
                 } else if (rowErrors.length > 0) {
                     throw new Error(rowErrors[0].message);
                 }
-            } catch (error: any) {
-                validationErrors.push(`Fila: ${error.message}`);
+            } catch (error: unknown) {
+                const message = error instanceof Error ? error.message : String(error);
+                validationErrors.push(`Fila: ${message}`);
             }
         }
 
@@ -294,7 +295,8 @@ export function BankIngestion() {
         const finalTx = enriched[0];
         await db.bank_statements.add(finalTx);
         imported++;
-      } catch (error: any) {
+      } catch (error: unknown) {
+          const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
           console.error('Error banco:', error);
           try {
               await db.ingestion_errors.add({
@@ -305,7 +307,7 @@ export function BankIngestion() {
                   observaciones: 'Error durante el procesamiento',
                   importe_cents: 0,
                   tipo: 'Cr',
-                  error_note: error.message || 'Error desconocido',
+                  error_note: errorMessage,
                   raw_data: row,
                   created_at: new Date().toISOString()
               });
@@ -379,7 +381,7 @@ export function BankIngestion() {
                   <Button variant="outline" className="neu-btn w-full h-12 text-xs font-black uppercase" onClick={importDefaultProducts}>Cargar Demo</Button>
                   <Button variant="outline" className="neu-btn w-full h-12 text-xs font-black uppercase" onClick={loadDemoStatement}>Generar Demo</Button>
               </div>
-              <div className="p-6 bg-orange-500/5 border border-orange-500/20 rounded-3xl space-y-3">
+              <div className="p-6 bg-warning/5 border border-warning/20 rounded-3xl space-y-3">
                   <Button variant="outline" className="w-full h-9 text-xs font-bold" onClick={resetAllMatching}>Reset Conciliaciones</Button>
                   <Button variant="outline" className="w-full h-9 text-xs font-bold" onClick={resetBankData}>Limpiar Banco</Button>
               </div>
@@ -408,7 +410,7 @@ export function BankIngestion() {
                     </div>
                     <div className="text-center">
                         <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-2 opacity-60">Seguridad</p>
-                        <Badge variant="outline" className="font-black text-blue-500 border-blue-500/30 px-3 py-1 bg-blue-500/5">CIFRADO LOCAL</Badge>
+                        <Badge variant="outline" className="font-black text-primary border-primary/30 px-3 py-1 bg-primary/5">CIFRADO LOCAL</Badge>
                     </div>
                 </div>
 
@@ -425,7 +427,7 @@ export function BankIngestion() {
                     <Button
                         variant="outline"
                         onClick={() => fileBackupRef.current?.click()}
-                        className="h-12 px-6 text-[10px] font-black uppercase tracking-widest gap-2 bg-background/50 shadow-sm hover:bg-emerald-500 hover:text-foreground transition-all border-2 border-emerald-500/20 rounded-2xl"
+                        className="h-12 px-6 text-[10px] font-black uppercase tracking-widest gap-2 bg-background/50 shadow-sm hover:bg-success hover:text-foreground transition-all border-2 border-success/20 rounded-2xl"
                     >
                         <Upload className="w-4 h-4" />
                         Importar
@@ -443,7 +445,7 @@ export function BankIngestion() {
         </Card>
 
         <div className="p-6 bg-destructive/5 rounded-3xl border border-destructive/20 space-y-4">
-            <Button variant="destructive" className="w-full text-foreground font-black bg-red-600 hover:bg-red-700 shadow-lg" onClick={resetEverything}>REINICIO TOTAL</Button>
+            <Button variant="destructive" className="w-full text-foreground font-black bg-destructive hover:bg-destructive shadow-lg" onClick={resetEverything}>REINICIO TOTAL</Button>
             <Button variant="outline" className="w-full text-destructive" onClick={resetCatalog}>VACIAR CATÁLOGO</Button>
         </div>
       </div>

@@ -31,8 +31,9 @@ export function useCreateRole() {
       queryClient.invalidateQueries({ queryKey: ['roles'] });
       toast.success('Rol creado correctamente');
     },
-    onError: (error: any) => {
-      toast.error(`Error al crear rol: ${error.message}`);
+    onError: (error: unknown) => {
+      const message = error instanceof Error ? error.message : String(error);
+      toast.error(`Error al crear rol: ${message}`);
     }
   });
 }
@@ -50,8 +51,9 @@ export function useUpdateRole() {
       queryClient.invalidateQueries({ queryKey: ['users'] });
       toast.success('Rol actualizado correctamente');
     },
-    onError: (error: any) => {
-      toast.error(`Error al actualizar rol: ${error.message}`);
+    onError: (error: unknown) => {
+      const message = error instanceof Error ? error.message : String(error);
+      toast.error(`Error al actualizar rol: ${message}`);
     }
   });
 }
@@ -79,8 +81,9 @@ export function useDeleteRole() {
       queryClient.invalidateQueries({ queryKey: ['roles'] });
       toast.success('Rol eliminado correctamente');
     },
-    onError: (error: any) => {
-      toast.error(error.message);
+    onError: (error: unknown) => {
+      const message = error instanceof Error ? error.message : String(error);
+      toast.error(message);
     }
   });
 }

@@ -230,7 +230,7 @@ export function TransferQRReportView({ type }: Props) {
                                                     placeholder="NOMBRE"
                                                 />
                                                 {hasCompleteInfo ? (
-                                                    <UserCheck className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
+                                                    <UserCheck className="w-3.5 h-3.5 text-success flex-shrink-0" />
                                                 ) : (
                                                     <AlertCircle className="w-3.5 h-3.5 text-orange-400 flex-shrink-0" />
                                                 )}

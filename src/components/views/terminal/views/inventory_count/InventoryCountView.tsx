@@ -23,7 +23,7 @@ import { cn } from '@/lib/utils';
 import { SecurityScrollContainer } from '@/components/ui/SecurityScrollContainer';
 import { useIsMobile } from '@/hooks/ui/useMobile';
 import { useFocusTrap } from '@/hooks/ui/useFocusTrap';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 
 import InventoryCountCardView from './InventoryCountCardView';
 import InventoryCountTableView from './InventoryCountTableView';
@@ -31,6 +31,7 @@ import { useInventoryCount } from './useInventoryCount';
 
 export default function InventoryCountView() {
   const isMobile = useIsMobile();
+  const prefersReducedMotion = useReducedMotion();
   const [layoutMode, setLayoutMode] = useState<'table' | 'card'>('table');
 
   const {
@@ -149,7 +150,7 @@ export default function InventoryCountView() {
                 <span className="text-[10px] font-black uppercase tracking-widest text-primary">
                   Agregar al conteo ({productsNotInCount.length} disponibles)
                 </span>
-                <button onClick={() => setShowAddDropdown(false)} className="text-muted-foreground hover:text-foreground">
+                <button type="button" onClick={() => setShowAddDropdown(false)} className="text-muted-foreground hover:text-foreground">
                   <X className="w-3 h-3" />
                 </button>
               </div>
@@ -159,6 +160,7 @@ export default function InventoryCountView() {
                     <div
                       key={p.id}
                       role="option"
+                      aria-selected={false}
                       tabIndex={0}
                       aria-label={`Agregar ${p.name} al conteo`}
                       onClick={() => handleAddProduct(p.id)}
@@ -221,13 +223,14 @@ export default function InventoryCountView() {
             <div
               className={cn(
                 "h-full rounded-full transition-all duration-500",
-                samplePercentage >= 80 ? "bg-success" : samplePercentage >= 50 ? "bg-amber-500" : "bg-danger"
+                samplePercentage >= 80 ? "bg-success" : samplePercentage >= 50 ? "bg-warning" : "bg-danger"
               )}
               style={{ width: `${Math.min(100, samplePercentage)}%` }}
             />
           </div>
           {countedProductIds.size > 0 && (
             <button
+              type="button"
               onClick={resetCountToAll}
               className="text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors"
               title="Restablecer conteo a todos los productos"
@@ -243,9 +246,9 @@ export default function InventoryCountView() {
           {layoutMode === 'card' ? (
             <motion.div
               key="card-view"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
+              initial={prefersReducedMotion ? false : { opacity: 0, x: 20 }}
+              animate={prefersReducedMotion ? false : { opacity: 1, x: 0 }}
+              exit={prefersReducedMotion ? undefined : { opacity: 0, x: -20 }}
               transition={{ duration: 0.2 }}
             >
               <InventoryCountCardView
@@ -261,9 +264,9 @@ export default function InventoryCountView() {
           ) : (
             <motion.div
               key="table-view"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 20 }}
+              initial={prefersReducedMotion ? false : { opacity: 0, x: -20 }}
+              animate={prefersReducedMotion ? false : { opacity: 1, x: 0 }}
+              exit={prefersReducedMotion ? undefined : { opacity: 0, x: 20 }}
               transition={{ duration: 0.2 }}
             >
               <InventoryCountTableView
@@ -309,7 +312,7 @@ export default function InventoryCountView() {
                   Resumen
                 </h3>
               </div>
-              <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-danger/10 text-muted-foreground hover:text-danger rounded-full transition-colors">
+              <button type="button" onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-danger/10 text-muted-foreground hover:text-danger rounded-full transition-colors">
                 <X className="w-6 h-6 sm:w-8 sm:h-8" />
               </button>
             </div>
@@ -328,12 +331,12 @@ export default function InventoryCountView() {
                       <div className="flex justify-between items-start mb-6 gap-4">
                         <div className="flex-1 overflow-hidden">
                           <h4 className="font-black text-sm uppercase tracking-tight truncate pr-4">{d.name}</h4>
-                          <div className="text-xs font-bold text-muted-foreground uppercase mt-1 tracking-widest flex gap-4 whitespace-nowrap">
+                          <div className="text-xs font-bold text-muted-foreground uppercase mt-1 tracking-widest flex gap-4 whitespace-nowrap tabular-nums">
                             <span>Sistema: <strong className="text-foreground">{d.expected}</strong></span>
                             <span>Contado: <strong className="text-foreground">{d.counted}</strong></span>
                           </div>
                         </div>
-                        <div className={cn("text-2xl font-black tracking-tighter whitespace-nowrap", d.diff > 0 ? "text-success" : "text-danger")}>
+                        <div className={cn("text-2xl font-black tracking-tighter whitespace-nowrap tabular-nums", d.diff > 0 ? "text-success" : "text-danger")}>
                           {d.diff > 0 ? `+${d.diff}` : d.diff}
                         </div>
                       </div>
@@ -359,6 +362,7 @@ export default function InventoryCountView() {
 
             <div className="p-6 sm:p-8 border-t border-white/5 bg-muted/10 flex flex-col sm:flex-row gap-4">
               <button
+                type="button"
                 onClick={() => setIsModalOpen(false)}
                 className="neu-btn w-full sm:flex-1 !py-4 font-black uppercase text-xs sm:text-xs tracking-[0.2em]"
                 disabled={processing}
@@ -366,6 +370,7 @@ export default function InventoryCountView() {
                 Cancelar
               </button>
               <button
+                type="button"
                 onClick={handleFinalSubmit}
                 className="neu-btn-primary w-full sm:flex-1 flex items-center justify-center gap-3 font-black uppercase text-xs sm:text-xs tracking-[0.2em] shadow-xl shadow-primary/20"
                 disabled={processing || !isAdjustmentValid}

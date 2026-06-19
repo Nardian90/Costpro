@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { X as XIcon, HelpCircle, BookOpen, AlertCircle, Zap, Target } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { CostSheetFormulaGuide } from './CostSheetFormulaGuide';
@@ -19,6 +19,7 @@ export const CostSheetHelpPanel: React.FC<CostSheetHelpPanelProps> = ({
   onClose,
   contextId,
 }) => {
+  const prefersReducedMotion = useReducedMotion();
   const help = contextId ? getHelpContent(contextId) : null;
   const panelRef = useFocusTrap(isOpen);
 
@@ -29,8 +30,8 @@ export const CostSheetHelpPanel: React.FC<CostSheetHelpPanelProps> = ({
           {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            animate={prefersReducedMotion ? { opacity: 1 } : { opacity: 1 }}
+            exit={prefersReducedMotion ? {} : { opacity: 0 }}
             onClick={onClose}
             className="fixed inset-0 bg-black/20 backdrop-blur-sm z-[100] lg:hidden"
           />
@@ -39,8 +40,8 @@ export const CostSheetHelpPanel: React.FC<CostSheetHelpPanelProps> = ({
           <motion.aside
             ref={panelRef}
             initial={{ x: '100%' }}
-            animate={{ x: 0 }}
-            exit={{ x: '100%' }}
+            animate={prefersReducedMotion ? { x: 0 } : { x: 0 }}
+            exit={prefersReducedMotion ? {} : { x: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
             className={cn(
               "fixed right-0 top-0 h-screen w-80 sm:w-96 bg-sidebar/95 backdrop-blur-2xl border-l border-sidebar-border shadow-2xl z-[101] flex flex-col overflow-hidden"
@@ -59,7 +60,7 @@ export const CostSheetHelpPanel: React.FC<CostSheetHelpPanelProps> = ({
                   {help ? 'Ayuda Contextual' : 'Ayuda y Guía'}
                 </span>
               </div>
-              <button
+              <button type="button"
                 onClick={onClose}
                 className="p-2 rounded-xl hover:bg-primary/10 text-muted-foreground transition-colors active:scale-95"
               >
@@ -123,7 +124,7 @@ export const CostSheetHelpPanel: React.FC<CostSheetHelpPanelProps> = ({
                     </ul>
                   </section>
 
-                  <button
+                  <button type="button"
                     onClick={() => onClose()}
                     className="w-full mt-8 p-4 rounded-2xl bg-primary text-primary-foreground font-black uppercase tracking-[0.2em] text-[10px] hover:scale-[1.02] active:scale-95 transition-all shadow-lg shadow-primary/20"
                   >

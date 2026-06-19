@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import {
   Search,
@@ -26,6 +26,7 @@ import {
   LayoutGrid,
   List,
 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { cn, formatCurrency, getProductImageUrl } from '@/lib/utils';
 
 // ── Shared Types ─────────────────────────────────────────────────
@@ -36,18 +37,17 @@ export interface StorefrontProduct {
   description: string | null;
   sku: string | null;
   price: number;
-  precio_empresa: number | null;
   image_url: string | null;
   public_image_url: string | null;
   category: string | null;
   unit_of_measure: string | null;
-  stock_current: number;
+  /** Whether the product is in stock — only a boolean is exposed publicly (FIX-SEC-H6) */
+  inStock: boolean;
   product_variants: {
     id: string;
     name: string;
     sku: string | null;
     price: number;
-    precio_empresa: number | null;
     conversion_factor: number;
   }[] | null;
 }
@@ -72,10 +72,29 @@ export interface StorefrontPageProps {
 
 // ── Shared Hook: Search, Filter, Stats ─────────────────────────
 
+/** Debounce delay for search input — reduces re-renders while typing (PERF-003) */
+const SEARCH_DEBOUNCE_MS = 300;
+
 function useProductFilter(products: StorefrontProduct[]) {
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [showFilters, setShowFilters] = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Debounce the search term to avoid excessive filtering on every keystroke
+  const handleSearchChange = useCallback((value: string) => {
+    setSearchTerm(value);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => setDebouncedSearch(value), SEARCH_DEBOUNCE_MS);
+  }, []);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, []);
 
   const categories = useMemo(() => {
     const cats = new Set<string>();
@@ -83,19 +102,20 @@ function useProductFilter(products: StorefrontProduct[]) {
     return Array.from(cats).sort();
   }, [products]);
 
+  // Use debouncedSearch for filtering — reduces useMemo recalculations
   const filteredProducts = useMemo(() => {
     return products.filter((p) => {
-      const matchSearch = !searchTerm ||
-        p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (p.sku && p.sku.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (p.description && p.description.toLowerCase().includes(searchTerm.toLowerCase()));
+      const matchSearch = !debouncedSearch ||
+        p.name.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+        (p.sku && p.sku.toLowerCase().includes(debouncedSearch.toLowerCase())) ||
+        (p.description && p.description.toLowerCase().includes(debouncedSearch.toLowerCase()));
       const matchCategory = !selectedCategory || p.category === selectedCategory;
       return matchSearch && matchCategory;
     });
-  }, [products, searchTerm, selectedCategory]);
+  }, [products, debouncedSearch, selectedCategory]);
 
   const totalProducts = products.length;
-  const totalWithStock = products.filter((p) => (p.stock_current ?? 0) > 0).length;
+  const totalWithStock = products.filter((p) => p.inStock).length;
 
   const productImage = useCallback((p: StorefrontProduct) => {
     const raw = p.image_url || p.public_image_url;
@@ -104,17 +124,42 @@ function useProductFilter(products: StorefrontProduct[]) {
 
   const clearFilters = useCallback(() => {
     setSearchTerm('');
+    setDebouncedSearch('');
+    if (debounceRef.current) clearTimeout(debounceRef.current);
     setSelectedCategory(null);
   }, []);
 
   return {
-    searchTerm, setSearchTerm,
+    searchTerm, setSearchTerm: handleSearchChange,
     selectedCategory, setSelectedCategory,
     showFilters, setShowFilters,
     categories, filteredProducts,
     totalProducts, totalWithStock,
     productImage, clearFilters,
   };
+}
+
+// ── Product Image with Skeleton ────────────────────────────────
+
+function ProductImage({ src, alt, className, imgClassName }: {
+  src: string;
+  alt: string;
+  className?: string;
+  imgClassName?: string;
+}) {
+  const [loaded, setLoaded] = useState(false);
+  return (
+    <div className={`relative overflow-hidden bg-muted ${className || ''}`}>
+      {!loaded && <div className="absolute inset-0 animate-pulse bg-muted/50" />}
+      <img
+        src={src}
+        alt={alt}
+        className={`h-full w-full object-cover transition-[opacity,transform] duration-500 ${loaded ? 'opacity-100' : 'opacity-0'} ${imgClassName || ''}`}
+        onLoad={() => setLoaded(true)}
+        loading="lazy"
+      />
+    </div>
+  );
 }
 
 // ── Product Detail Modal ────────────────────────────────────────
@@ -128,12 +173,12 @@ function ProductDetailModal({
   onClose: () => void;
   storePhone?: string | null;
 }) {
+  const t = useTranslations('stores.storefront');
   const imageUrlRaw = product.image_url || product.public_image_url;
   const imageUrl = imageUrlRaw ? getProductImageUrl(imageUrlRaw) : null;
-  const stockQty = product.stock_current ?? 0;
-  const inStock = stockQty > 0;
+  const inStock = product.inStock;
   const productText = encodeURIComponent(
-    `Hola, estoy interesado/a en: ${product.name}${product.sku ? ` (SKU: ${product.sku})` : ''} — Precio: ${formatCurrency(product.price)}`
+    `${t('whatsappInquiryMessage', { name: product.name })}${product.sku ? t('whatsappInquirySku', { sku: product.sku }) : ''}${t('whatsappInquiryPrice', { price: formatCurrency(product.price) })}`
   );
   const whatsappUrl = storePhone
     ? `https://wa.me/${storePhone.replace(/[^0-9]/g, '')}?text=${productText}`
@@ -149,14 +194,12 @@ function ProductDetailModal({
         <button
           onClick={onClose}
           className="absolute top-3 left-3 z-10 w-8 h-8 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-black/70 transition-colors"
-          aria-label="Cerrar"
+          aria-label={t('close')}
         >
           <ChevronLeft className="w-5 h-5" />
         </button>
         {imageUrl ? (
-          <div className="aspect-[4/3] w-full overflow-hidden rounded-t-2xl">
-            <img src={imageUrl} alt={product.name} className="w-full h-full object-cover" />
-          </div>
+          <ProductImage src={imageUrl} alt={product.name} className="aspect-[4/3] w-full rounded-t-2xl" />
         ) : (
           <div className="aspect-[4/3] w-full bg-stone-100 rounded-t-2xl flex items-center justify-center">
             <Package className="w-16 h-16 text-stone-200" />
@@ -168,14 +211,14 @@ function ProductDetailModal({
               <span className="text-[10px] font-black uppercase tracking-widest text-stone-400">{product.category}</span>
             )}
             <h2 className="font-black text-xl uppercase tracking-tight">{product.name}</h2>
-            {product.sku && <p className="text-xs font-mono text-stone-400 mt-0.5">SKU: {product.sku}</p>}
+            {product.sku && <p className="text-xs font-mono text-stone-400 mt-0.5">{t('sku')}: {product.sku}</p>}
           </div>
           {product.description && (
             <p className="text-sm text-stone-600 leading-relaxed">{product.description}</p>
           )}
           {product.product_variants && product.product_variants.length > 0 && (
             <div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-stone-400 mb-2">Presentaciones</p>
+              <p className="text-[10px] font-black uppercase tracking-widest text-stone-400 mb-2">{t('variants')}</p>
               <div className="space-y-1.5">
                 {product.product_variants.map((v) => (
                   <div key={v.id} className="flex items-center justify-between px-3 py-2 rounded-lg bg-stone-50 border border-stone-100">
@@ -185,9 +228,7 @@ function ProductDetailModal({
                     </div>
                     <div className="text-right">
                       <span className="text-xs font-black text-stone-900">{formatCurrency(v.price)}</span>
-                      {v.precio_empresa != null && v.precio_empresa > 0 && (
-                        <span className="text-[10px] font-bold text-amber-600 ml-2">Emp: {formatCurrency(v.precio_empresa)}</span>
-                      )}
+                      {/* precio_empresa excluded from public storefront (FIX-SEC-H6) */}
                     </div>
                   </div>
                 ))}
@@ -196,21 +237,15 @@ function ProductDetailModal({
           )}
           <div className="flex items-end justify-between pt-4 border-t border-stone-100">
             <div>
-              <p className="text-[9px] font-black uppercase tracking-widest text-stone-400">Precio Minorista</p>
+              <p className="text-[9px] font-black uppercase tracking-widest text-stone-400">{t('retailPrice')}</p>
               <p className="text-2xl font-black text-stone-900">{formatCurrency(product.price)}</p>
-              {product.precio_empresa != null && product.precio_empresa > 0 && (
-                <div className="mt-1">
-                  <p className="text-[9px] font-black uppercase tracking-widest text-amber-600">Precio Empresa</p>
-                  <p className="text-lg font-black text-amber-700">{formatCurrency(product.precio_empresa)}</p>
-                </div>
-              )}
-              <span className="text-xs text-stone-400">{product.unit_of_measure || 'ud'}</span>
+              <span className="text-xs text-stone-400">{product.unit_of_measure || t('unit')}</span>
             </div>
             <span className={cn(
               'px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest',
               inStock ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-600'
             )}>
-              {inStock ? `Disponible (${stockQty})` : 'Agotado'}
+              {inStock ? t('inStock') : t('soldOut')}
             </span>
           </div>
           {whatsappUrl && (
@@ -221,7 +256,7 @@ function ProductDetailModal({
               className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-green-600 text-white text-sm font-black uppercase tracking-widest hover:bg-green-700 transition-colors"
             >
               <MessageCircle className="w-4 h-4" />
-              Consultar por WhatsApp
+              {t('whatsappInquiry')}
             </a>
           )}
         </div>
@@ -239,10 +274,11 @@ function StorefrontFooter({
   store: StorefrontStore;
   template?: string;
 }) {
+  const t = useTranslations('stores.storefront');
   const storeUrl = typeof window !== 'undefined'
     ? `${window.location.origin}/tienda/${(store.slug || '').toLowerCase().replace(/[\s-]+/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '')}`
     : '';
-  const shareText = encodeURIComponent(`Catálogo de productos — ${store.name}`);
+  const shareText = encodeURIComponent(t('catalogOf', { name: store.name }));
   const [showShare, setShowShare] = useState(false);
 
   const isConstruccion = template === 'construccion';
@@ -258,7 +294,7 @@ function StorefrontFooter({
               {store.name}
             </p>
             <p className="text-[10px] font-bold uppercase tracking-widest mt-1 text-stone-500">
-              Catálogo de productos — Solo visualización
+              {t('catalogViewOnly')}
             </p>
           </div>
           <div className="flex items-center gap-3 flex-wrap justify-center">
@@ -272,10 +308,10 @@ function StorefrontFooter({
                     ? 'border border-stone-700 hover:border-stone-500'
                     : 'border border-stone-200 hover:border-stone-400'
                 )}
-                title="Compartir tienda"
+                title={t('shareStore')}
               >
                 <Share2 className="w-4 h-4" />
-                Compartir
+                {t('share')}
               </button>
               {showShare && (
                 <div className="absolute bottom-full mb-2 right-0 bg-white rounded-xl shadow-xl border border-stone-200 p-2 flex items-center gap-1.5 z-50">
@@ -284,7 +320,7 @@ function StorefrontFooter({
                     target="_blank"
                     rel="noopener noreferrer"
                     className="w-9 h-9 rounded-lg bg-blue-600 text-white flex items-center justify-center hover:bg-blue-700 transition-colors"
-                    title="Compartir en Facebook"
+                    title={t('shareFacebook')}
                     onClick={() => setShowShare(false)}
                   >
                     <Facebook className="w-4 h-4" />
@@ -294,7 +330,7 @@ function StorefrontFooter({
                     target="_blank"
                     rel="noopener noreferrer"
                     className="w-9 h-9 rounded-lg bg-sky-500 text-white flex items-center justify-center hover:bg-sky-600 transition-colors"
-                    title="Compartir en Telegram"
+                    title={t('shareTelegram')}
                     onClick={() => setShowShare(false)}
                   >
                     <Send className="w-4 h-4" />
@@ -304,7 +340,7 @@ function StorefrontFooter({
                     target="_blank"
                     rel="noopener noreferrer"
                     className="w-9 h-9 rounded-lg bg-stone-800 text-white flex items-center justify-center hover:bg-stone-900 transition-colors"
-                    title="Compartir en X (Twitter)"
+                    title={t('shareTwitter')}
                     onClick={() => setShowShare(false)}
                   >
                     <Twitter className="w-4 h-4" />
@@ -316,7 +352,7 @@ function StorefrontFooter({
                       });
                     }}
                     className="w-9 h-9 rounded-lg bg-stone-100 text-stone-600 flex items-center justify-center hover:bg-stone-200 transition-colors"
-                    title="Copiar link"
+                    title={t('copyLink')}
                   >
                     <span className="text-xs font-black">URL</span>
                   </button>
@@ -331,7 +367,7 @@ function StorefrontFooter({
                 className="flex items-center gap-2 px-4 py-2 rounded-xl bg-green-600 text-white text-xs font-black uppercase tracking-widest hover:bg-green-700 transition-colors"
               >
                 <MessageCircle className="w-4 h-4" />
-                WhatsApp
+                {t('whatsapp')}
               </a>
             )}
             {store.phone && (
@@ -345,7 +381,7 @@ function StorefrontFooter({
                 )}
               >
                 <Phone className="w-4 h-4" />
-                Llamar
+                {t('call')}
               </a>
             )}
           </div>
@@ -380,6 +416,8 @@ function SearchToolbar({
   totalProducts: number;
   totalWithStock: number;
 }) {
+  const t = useTranslations('stores.storefront');
+
   return (
     <div className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-stone-200 shadow-sm">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3">
@@ -390,15 +428,15 @@ function SearchToolbar({
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Buscar productos..."
+              placeholder={t('searchPlaceholder')}
               className="w-full pl-10 pr-4 py-2.5 rounded-xl border-2 border-stone-200 bg-stone-50 text-sm font-bold focus:border-stone-400 focus:bg-white outline-none transition-all"
-              aria-label="Buscar productos"
+              aria-label={t('searchProducts')}
             />
             {searchTerm && (
               <button
                 onClick={() => setSearchTerm('')}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600"
-                aria-label="Limpiar búsqueda"
+                aria-label={t('clearSearch')}
               >
                 <X className="w-4 h-4" />
               </button>
@@ -406,6 +444,8 @@ function SearchToolbar({
           </div>
           <button
             onClick={() => setShowFilters(!showFilters)}
+            aria-expanded={showFilters}
+            aria-controls="minimalist-category-filters"
             className={cn(
               'flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 text-xs font-black uppercase tracking-widest transition-all',
               showFilters
@@ -414,11 +454,11 @@ function SearchToolbar({
             )}
           >
             <Filter className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Categorías</span>
+            <span className="hidden sm:inline">{t('categories')}</span>
           </button>
         </div>
         {showFilters && categories.length > 0 && (
-          <div className="mt-3 flex flex-wrap gap-2">
+          <div id="minimalist-category-filters" role="navigation" aria-label={t('filterByCategory')} className="mt-3 flex flex-wrap gap-2">
             <button
               onClick={() => setSelectedCategory(null)}
               className={cn(
@@ -428,7 +468,7 @@ function SearchToolbar({
                   : 'border-stone-200 bg-white text-stone-600 hover:border-stone-400'
               )}
             >
-              Todas
+              {t('allCategories')}
             </button>
             {categories.map((cat) => (
               <button
@@ -458,6 +498,7 @@ function SearchToolbar({
 type ViewMode = 'grid' | 'list';
 
 function ConstruccionTemplate({ store, products }: StorefrontPageProps) {
+  const t = useTranslations('stores.storefront');
   const filter = useProductFilter(products);
   const [detailProduct, setDetailProduct] = useState<StorefrontProduct | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
@@ -511,7 +552,7 @@ function ConstruccionTemplate({ store, products }: StorefrontPageProps) {
                       <Star key={i} className="w-3 h-3 text-amber-400 fill-amber-400" />
                     ))}
                   </div>
-                  <span className="text-[9px] font-bold uppercase tracking-widest text-amber-300/90">Catálogo Oficial</span>
+                  <span className="text-[9px] font-bold uppercase tracking-widest text-amber-300/90">{t('officialCatalog')}</span>
                 </div>
                 <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black uppercase tracking-tighter leading-[0.95] text-white drop-shadow-lg">
                   {store.name}
@@ -536,7 +577,7 @@ function ConstruccionTemplate({ store, products }: StorefrontPageProps) {
                 </div>
                 <div>
                   <p className="text-base sm:text-lg font-black text-white leading-none">{filter.totalProducts}</p>
-                  <p className="text-[8px] font-bold uppercase tracking-widest text-stone-400">Producto{filter.totalProducts !== 1 ? 's' : ''}</p>
+                  <p className="text-[8px] font-bold uppercase tracking-widest text-stone-400">{t('productsLabel', { count: filter.totalProducts })}</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -545,7 +586,7 @@ function ConstruccionTemplate({ store, products }: StorefrontPageProps) {
                 </div>
                 <div>
                   <p className="text-base sm:text-lg font-black text-white leading-none">{filter.totalWithStock}</p>
-                  <p className="text-[8px] font-bold uppercase tracking-widest text-stone-400">Disponible{filter.totalWithStock !== 1 ? 's' : ''}</p>
+                  <p className="text-[8px] font-bold uppercase tracking-widest text-stone-400">{t('availableLabel', { count: filter.totalWithStock })}</p>
                 </div>
               </div>
             </div>
@@ -557,7 +598,7 @@ function ConstruccionTemplate({ store, products }: StorefrontPageProps) {
                 className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-xl bg-green-600 hover:bg-green-500 text-white text-[11px] font-black uppercase tracking-widest transition-all hover:shadow-lg hover:shadow-green-600/20 active:scale-95"
               >
                 <MessageCircle className="w-3.5 h-3.5" />
-                Consultar Ahora
+                {t('inquireNow')}
               </a>
             )}
           </div>
@@ -570,15 +611,15 @@ function ConstruccionTemplate({ store, products }: StorefrontPageProps) {
           <div className="grid grid-cols-3 gap-3">
             <div className="flex items-center gap-1.5 justify-center">
               <Truck className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-              <span className="text-[9px] sm:text-[11px] font-bold uppercase tracking-wider text-stone-500">Entrega Disponible</span>
+              <span className="text-[9px] sm:text-[11px] font-bold uppercase tracking-wider text-stone-500">{t('deliveryAvailable')}</span>
             </div>
             <div className="flex items-center gap-1.5 justify-center">
               <Shield className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-              <span className="text-[9px] sm:text-[11px] font-bold uppercase tracking-wider text-stone-500">Productos Verificados</span>
+              <span className="text-[9px] sm:text-[11px] font-bold uppercase tracking-wider text-stone-500">{t('verifiedProducts')}</span>
             </div>
             <div className="flex items-center gap-1.5 justify-center">
               <Clock className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-              <span className="text-[9px] sm:text-[11px] font-bold uppercase tracking-wider text-stone-500">Actualizado Hoy</span>
+              <span className="text-[9px] sm:text-[11px] font-bold uppercase tracking-wider text-stone-500">{t('updatedToday')}</span>
             </div>
           </div>
         </div>
@@ -595,15 +636,15 @@ function ConstruccionTemplate({ store, products }: StorefrontPageProps) {
                 type="text"
                 value={filter.searchTerm}
                 onChange={(e) => filter.setSearchTerm(e.target.value)}
-                placeholder="Buscar productos..."
+                placeholder={t('searchPlaceholder')}
                 className="w-full pl-10 pr-4 py-2.5 rounded-xl border-2 border-stone-200 bg-stone-50 text-sm font-bold focus:border-amber-400 focus:bg-white outline-none transition-all"
-                aria-label="Buscar productos"
+                aria-label={t('searchProducts')}
               />
               {filter.searchTerm && (
                 <button
                   onClick={() => filter.setSearchTerm('')}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600"
-                  aria-label="Limpiar búsqueda"
+                  aria-label={t('clearSearch')}
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -612,6 +653,8 @@ function ConstruccionTemplate({ store, products }: StorefrontPageProps) {
             {/* Category filter button */}
             <button
               onClick={() => filter.setShowFilters(!filter.showFilters)}
+              aria-expanded={filter.showFilters}
+              aria-controls="construccion-category-filters"
               className={cn(
                 'flex items-center gap-1.5 px-3 py-2.5 rounded-xl border-2 text-[11px] font-black uppercase tracking-widest transition-all',
                 filter.showFilters
@@ -620,7 +663,7 @@ function ConstruccionTemplate({ store, products }: StorefrontPageProps) {
               )}
             >
               <Filter className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Categorías</span>
+              <span className="hidden sm:inline">{t('categories')}</span>
             </button>
             {/* View toggle */}
             <div className="flex rounded-xl border-2 border-stone-200 overflow-hidden">
@@ -630,8 +673,8 @@ function ConstruccionTemplate({ store, products }: StorefrontPageProps) {
                   'p-2.5 transition-colors',
                   viewMode === 'grid' ? 'bg-amber-600 text-white' : 'bg-stone-50 text-stone-400 hover:bg-stone-100'
                 )}
-                title="Vista tarjetas"
-                aria-label="Vista tarjetas"
+                title={t('gridView')}
+                aria-label={t('gridView')}
               >
                 <LayoutGrid className="w-4 h-4" />
               </button>
@@ -641,8 +684,8 @@ function ConstruccionTemplate({ store, products }: StorefrontPageProps) {
                   'p-2.5 transition-colors',
                   viewMode === 'list' ? 'bg-amber-600 text-white' : 'bg-stone-50 text-stone-400 hover:bg-stone-100'
                 )}
-                title="Vista tabla"
-                aria-label="Vista tabla"
+                title={t('listView')}
+                aria-label={t('listView')}
               >
                 <List className="w-4 h-4" />
               </button>
@@ -651,7 +694,7 @@ function ConstruccionTemplate({ store, products }: StorefrontPageProps) {
 
           {/* Category chips */}
           {filter.showFilters && filter.categories.length > 0 && (
-            <div className="mt-3 flex flex-wrap gap-2">
+            <div id="construccion-category-filters" role="navigation" aria-label={t('filterByCategory')} className="mt-3 flex flex-wrap gap-2">
               <button
                 onClick={() => filter.setSelectedCategory(null)}
                 className={cn(
@@ -661,7 +704,7 @@ function ConstruccionTemplate({ store, products }: StorefrontPageProps) {
                     : 'border-stone-200 bg-white text-stone-600 hover:border-amber-300'
                 )}
               >
-                Todas ({filter.totalProducts})
+                {t('allCategoriesCount', { count: filter.totalProducts })}
               </button>
               {filter.categories.map((cat) => {
                 const count = products.filter(p => p.category === cat).length;
@@ -692,12 +735,12 @@ function ConstruccionTemplate({ store, products }: StorefrontPageProps) {
             <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-stone-200/50 flex items-center justify-center">
               <Package className="w-10 h-10 text-stone-300" />
             </div>
-            <p className="font-black uppercase tracking-widest text-sm text-stone-400">No se encontraron productos</p>
-            <p className="text-xs text-stone-300 mt-2">Intenta con otra búsqueda o categoría</p>
+            <p className="font-black uppercase tracking-widest text-sm text-stone-400">{t('noProductsFound')}</p>
+            <p className="text-xs text-stone-300 mt-2">{t('tryOtherSearch')}</p>
             {(filter.searchTerm || filter.selectedCategory) && (
               <button onClick={filter.clearFilters} className="mt-6 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-amber-600 text-white text-xs font-black uppercase tracking-widest hover:bg-amber-500 transition-colors active:scale-95">
                 <X className="w-3.5 h-3.5" />
-                Limpiar Filtros
+                {t('clearFilters')}
               </button>
             )}
           </div>
@@ -706,7 +749,7 @@ function ConstruccionTemplate({ store, products }: StorefrontPageProps) {
           <>
             <div className="flex items-center gap-3 mb-6">
               <div className="h-px flex-1 bg-gradient-to-r from-amber-300 to-transparent" />
-              <h2 className="text-[11px] font-black uppercase tracking-[0.2em] text-amber-700">Nuestros Productos</h2>
+              <h2 className="text-[11px] font-black uppercase tracking-[0.2em] text-amber-700">{t('ourProducts')}</h2>
               <div className="h-px flex-1 bg-gradient-to-l from-amber-300 to-transparent" />
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
@@ -720,7 +763,7 @@ function ConstruccionTemplate({ store, products }: StorefrontPageProps) {
           <>
             <div className="flex items-center gap-3 mb-6">
               <div className="h-px flex-1 bg-gradient-to-r from-amber-300 to-transparent" />
-              <h2 className="text-[11px] font-black uppercase tracking-[0.2em] text-amber-700">Lista de Productos</h2>
+              <h2 className="text-[11px] font-black uppercase tracking-[0.2em] text-amber-700">{t('productList')}</h2>
               <div className="h-px flex-1 bg-gradient-to-l from-amber-300 to-transparent" />
             </div>
             <div className="space-y-3">
@@ -733,10 +776,10 @@ function ConstruccionTemplate({ store, products }: StorefrontPageProps) {
 
         {/* Product count footer */}
         {filter.filteredProducts.length > 0 && (
-          <div className="mt-10 flex items-center justify-center gap-3">
+          <div role="status" aria-live="polite" className="mt-10 flex items-center justify-center gap-3">
             <div className="h-px w-12 bg-stone-300" />
             <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">
-              Mostrando {filter.filteredProducts.length} de {filter.totalProducts} producto{filter.totalProducts !== 1 ? 's' : ''}
+              {t('showingCount', { count: filter.filteredProducts.length, total: filter.totalProducts })}
             </p>
             <div className="h-px w-12 bg-stone-300" />
           </div>
@@ -748,7 +791,7 @@ function ConstruccionTemplate({ store, products }: StorefrontPageProps) {
         <button
           onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
           className="fixed bottom-24 right-6 z-40 w-10 h-10 rounded-xl bg-amber-600 text-white shadow-lg shadow-amber-600/20 flex items-center justify-center hover:bg-amber-500 transition-all active:scale-90"
-          aria-label="Volver arriba"
+          aria-label={t('backToTop')}
         >
           <ArrowUp className="w-4 h-4" />
         </button>
@@ -762,36 +805,36 @@ function ConstruccionTemplate({ store, products }: StorefrontPageProps) {
 
 // ── Construccion Card (Grid view) ──────────────────────────────
 
-function StockBadge({ quantity }: { quantity: number }) {
-  const inStock = quantity > 0;
+function StockBadge({ inStock }: { inStock: boolean }) {
+  const t = useTranslations('stores.storefront');
   return (
     <span className={cn(
       'px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-widest backdrop-blur-md flex items-center gap-1.5',
       inStock ? 'bg-emerald-600/90 text-white' : 'bg-red-600/90 text-white'
     )}>
       <span className={cn('w-1.5 h-1.5 rounded-full', inStock ? 'bg-emerald-200' : 'bg-red-200')} />
-      {inStock ? `${quantity} disponibles` : 'Agotado'}
+      {inStock ? t('inStock') : t('soldOut')}
     </span>
   );
 }
 
-function StockPill({ quantity }: { quantity: number }) {
-  const inStock = quantity > 0;
+function StockPill({ inStock }: { inStock: boolean }) {
+  const t = useTranslations('stores.storefront');
   return (
     <div className={cn(
       'ml-auto flex items-center gap-1 text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md',
       inStock ? 'text-emerald-700 bg-emerald-50' : 'text-red-600 bg-red-50'
     )}>
       <span className={cn('w-1.5 h-1.5 rounded-full', inStock ? 'bg-emerald-500' : 'bg-red-500')} />
-      {inStock ? `${quantity} en stock` : 'Agotado'}
+      {inStock ? t('inStock') : t('soldOut')}
     </div>
   );
 }
 
 function ConstruccionCard({ product, image, onClick }: { product: StorefrontProduct; image: string | null; onClick: () => void }) {
+  const t = useTranslations('stores.storefront');
   const [expanded, setExpanded] = useState(false);
-  const stockQty = product.stock_current ?? 0;
-  const inStock = stockQty > 0;
+  const inStock = product.inStock;
 
   return (
     <div className={cn(
@@ -801,40 +844,40 @@ function ConstruccionCard({ product, image, onClick }: { product: StorefrontProd
         : 'opacity-60 border border-stone-200/40',
     )} onClick={onClick}>
       <div className="relative aspect-[4/3] bg-gradient-to-br from-stone-100 to-stone-50 overflow-hidden">
-        {/* Top-left corner accent */}
-        <div className="absolute top-0 left-0 w-10 h-10">
-          <div className="absolute top-0 left-0 w-full h-[3px] bg-amber-500" />
-          <div className="absolute top-0 left-0 w-[3px] h-full bg-amber-500" />
-        </div>
         {image ? (
-          <img src={image} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
+          <ProductImage src={image} alt={product.name} className="absolute inset-0" imgClassName="group-hover:scale-105" />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
             <div className="text-center">
               <Package className="w-10 h-10 text-stone-200 mx-auto" />
-              <p className="text-[9px] font-bold uppercase tracking-widest text-stone-300 mt-1">Sin imagen</p>
+              <p className="text-[9px] font-bold uppercase tracking-widest text-stone-300 mt-1">{t('noImage')}</p>
             </div>
           </div>
         )}
+        {/* Top-left corner accent */}
+        <div className="absolute top-0 left-0 w-10 h-10 z-10">
+          <div className="absolute top-0 left-0 w-full h-[3px] bg-amber-500" />
+          <div className="absolute top-0 left-0 w-[3px] h-full bg-amber-500" />
+        </div>
         {product.category && (
           <span className="absolute top-3 left-3 px-2 py-0.5 rounded-md bg-stone-900/80 text-[9px] font-black uppercase tracking-widest text-amber-400 backdrop-blur-md">
             {product.category}
           </span>
         )}
-        <StockBadge quantity={stockQty} />
+        <StockBadge inStock={inStock} />
         <div className="absolute inset-0 bg-gradient-to-t from-black/15 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
       </div>
       <div className="flex-1 p-4 flex flex-col gap-1.5">
         <div className="min-w-0">
           <h3 className="font-black text-sm uppercase tracking-tight truncate text-stone-900 group-hover:text-amber-800 transition-colors">{product.name}</h3>
-          {product.sku && <p className="text-[10px] font-mono text-stone-400 mt-0.5">SKU: {product.sku}</p>}
+          {product.sku && <p className="text-[10px] font-mono text-stone-400 mt-0.5">{t('sku')}: {product.sku}</p>}
         </div>
         {product.description && (
           <div>
             <p className={cn('text-xs text-stone-500 leading-relaxed', !expanded && 'line-clamp-2')}>{product.description}</p>
             {product.description.length > 80 && (
               <button onClick={(e) => { e.stopPropagation(); setExpanded(!expanded); }} className="text-[10px] font-black uppercase tracking-widest text-amber-600 hover:text-amber-700 mt-1 flex items-center gap-0.5">
-                {expanded ? <><span>Ver menos</span><ChevronLeft className="w-3 h-3" /></> : <><span>Ver más</span><ChevronRight className="w-3 h-3" /></>}
+                {expanded ? <><span>{t('showLess')}</span><ChevronLeft className="w-3 h-3" /></> : <><span>{t('showMore')}</span><ChevronRight className="w-3 h-3" /></>}
               </button>
             )}
           </div>
@@ -851,16 +894,11 @@ function ConstruccionCard({ product, image, onClick }: { product: StorefrontProd
         <div className="flex-1" />
         <div className="flex items-end justify-between pt-2.5 border-t border-stone-100">
           <div>
-            <p className="text-[8px] font-black uppercase tracking-[0.15em] text-stone-400 mb-0.5">Precio</p>
+            <p className="text-[8px] font-black uppercase tracking-[0.15em] text-stone-400 mb-0.5">{t('price')}</p>
             <p className="text-lg sm:text-xl font-black text-stone-900 tracking-tight">{formatCurrency(product.price)}</p>
-            {product.precio_empresa != null && product.precio_empresa > 0 && (
-              <div className="mt-0.5">
-                <span className="text-[8px] font-black uppercase tracking-widest text-amber-600">Emp</span>
-                <span className="text-xs font-bold text-amber-700 ml-1">{formatCurrency(product.precio_empresa)}</span>
-              </div>
-            )}
+            {/* precio_empresa excluded from public storefront (FIX-SEC-H6) */}
           </div>
-          <span className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">{product.unit_of_measure || 'ud'}</span>
+          <span className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">{product.unit_of_measure || t('unit')}</span>
         </div>
       </div>
     </div>
@@ -870,8 +908,8 @@ function ConstruccionCard({ product, image, onClick }: { product: StorefrontProd
 // ── Construccion List Item (Table/List view) ────────────────────
 
 function ConstruccionListItem({ product, image, onClick }: { product: StorefrontProduct; image: string | null; onClick: () => void }) {
-  const stockQty = product.stock_current ?? 0;
-  const inStock = stockQty > 0;
+  const t = useTranslations('stores.storefront');
+  const inStock = product.inStock;
 
   return (
     <div
@@ -886,7 +924,7 @@ function ConstruccionListItem({ product, image, onClick }: { product: Storefront
       {/* Thumbnail */}
       <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-lg bg-gradient-to-br from-stone-100 to-stone-50 overflow-hidden shrink-0">
         {image ? (
-          <img src={image} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />
+          <ProductImage src={image} alt={product.name} className="absolute inset-0" imgClassName="group-hover:scale-105" />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
             <Package className="w-8 h-8 text-stone-200" />
@@ -904,14 +942,12 @@ function ConstruccionListItem({ product, image, onClick }: { product: Storefront
               <span className="text-[9px] font-black uppercase tracking-widest text-amber-600">{product.category}</span>
             )}
             <h3 className="font-black text-sm uppercase tracking-tight truncate text-stone-900 group-hover:text-amber-800 transition-colors">{product.name}</h3>
-            {product.sku && <p className="text-[10px] font-mono text-stone-400 mt-0.5">SKU: {product.sku}</p>}
+            {product.sku && <p className="text-[10px] font-mono text-stone-400 mt-0.5">{t('sku')}: {product.sku}</p>}
           </div>
           <div className="text-right shrink-0">
             <p className="text-lg sm:text-xl font-black text-stone-900 tracking-tight">{formatCurrency(product.price)}</p>
-            {product.precio_empresa != null && product.precio_empresa > 0 && (
-              <p className="text-[10px] font-bold text-amber-600">Emp: {formatCurrency(product.precio_empresa)}</p>
-            )}
-            <span className="text-[9px] font-bold text-stone-400 uppercase tracking-widest">{product.unit_of_measure || 'ud'}</span>
+            {/* precio_empresa excluded from public storefront (FIX-SEC-H6) */}
+            <span className="text-[9px] font-bold text-stone-400 uppercase tracking-widest">{product.unit_of_measure || t('unit')}</span>
           </div>
         </div>
         {product.description && (
@@ -927,7 +963,7 @@ function ConstruccionListItem({ product, image, onClick }: { product: Storefront
               ))}
             </div>
           )}
-          <StockPill quantity={stockQty} />
+          <StockPill inStock={inStock} />
         </div>
       </div>
     </div>
@@ -939,6 +975,7 @@ function ConstruccionListItem({ product, image, onClick }: { product: Storefront
 // ══════════════════════════════════════════════════════════════════
 
 function MinimalistaTemplate({ store, products }: StorefrontPageProps) {
+  const t = useTranslations('stores.storefront');
   const filter = useProductFilter(products);
   const [detailProduct, setDetailProduct] = useState<StorefrontProduct | null>(null);
 
@@ -971,9 +1008,9 @@ function MinimalistaTemplate({ store, products }: StorefrontPageProps) {
       <main className="max-w-5xl mx-auto px-6 py-10">
         {filter.filteredProducts.length === 0 ? (
           <div className="py-24 text-center">
-            <p className="text-sm text-stone-400">No se encontraron productos</p>
+            <p className="text-sm text-stone-400">{t('noProductsFound')}</p>
             {(filter.searchTerm || filter.selectedCategory) && (
-              <button onClick={filter.clearFilters} className="mt-4 text-xs underline text-stone-500 hover:text-stone-700">Limpiar filtros</button>
+              <button onClick={filter.clearFilters} className="mt-4 text-xs underline text-stone-500 hover:text-stone-700">{t('clearFilters')}</button>
             )}
           </div>
         ) : (
@@ -982,14 +1019,14 @@ function MinimalistaTemplate({ store, products }: StorefrontPageProps) {
               <div key={p.id} className="group cursor-pointer" onClick={() => setDetailProduct(p)}>
                 <div className="aspect-square bg-stone-50 rounded-lg overflow-hidden mb-3">
                   {filter.productImage(p) ? (
-                    <img src={filter.productImage(p)!} alt={p.name} className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-500" loading="lazy" />
+                    <ProductImage src={filter.productImage(p)!} alt={p.name} className="h-full w-full" imgClassName="group-hover:scale-[1.02]" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center"><Package className="w-10 h-10 text-stone-200" /></div>
                   )}
                 </div>
                 <p className="text-[10px] font-medium uppercase tracking-widest text-stone-400">{p.category || ''}</p>
                 <h3 className="text-sm font-medium mt-0.5 truncate">{p.name}</h3>
-                <p className="text-sm text-stone-600 mt-1">{formatCurrency(p.price)} <span className="text-stone-300">/ {p.unit_of_measure || 'ud'}</span></p>
+                <p className="text-sm text-stone-600 mt-1">{formatCurrency(p.price)} <span className="text-stone-300">/ {p.unit_of_measure || t('unit')}</span></p>
               </div>
             ))}
           </div>
@@ -1007,6 +1044,7 @@ function MinimalistaTemplate({ store, products }: StorefrontPageProps) {
 // ══════════════════════════════════════════════════════════════════
 
 function ModernaTemplate({ store, products }: StorefrontPageProps) {
+  const t = useTranslations('stores.storefront');
   const filter = useProductFilter(products);
   const [detailProduct, setDetailProduct] = useState<StorefrontProduct | null>(null);
 
@@ -1032,14 +1070,14 @@ function ModernaTemplate({ store, products }: StorefrontPageProps) {
               </div>
             </div>
           </div>
-          <div className="mt-6 flex items-center gap-6 text-sm">
+          <div role="status" aria-live="polite" className="mt-6 flex items-center gap-6 text-sm">
             <div className="bg-white/15 backdrop-blur-sm rounded-xl px-4 py-2">
               <span className="font-bold">{filter.totalProducts}</span>
-              <span className="text-white/60 ml-1">productos</span>
+              <span className="text-white/60 ml-1">{t('productsLabel', { count: filter.totalProducts }).toLowerCase()}</span>
             </div>
             <div className="bg-white/15 backdrop-blur-sm rounded-xl px-4 py-2">
               <span className="font-bold">{filter.totalWithStock}</span>
-              <span className="text-white/60 ml-1">disponibles</span>
+              <span className="text-white/60 ml-1">{t('availableLabel', { count: filter.totalWithStock }).toLowerCase()}</span>
             </div>
           </div>
         </div>
@@ -1051,26 +1089,26 @@ function ModernaTemplate({ store, products }: StorefrontPageProps) {
         {filter.filteredProducts.length === 0 ? (
           <div className="py-24 text-center">
             <Package className="w-16 h-16 mx-auto mb-4 text-stone-200" />
-            <p className="font-semibold text-sm text-stone-400">No se encontraron productos</p>
+            <p className="font-semibold text-sm text-stone-400">{t('noProductsFound')}</p>
             {(filter.searchTerm || filter.selectedCategory) && (
-              <button onClick={filter.clearFilters} className="mt-4 px-5 py-2 rounded-full bg-violet-100 text-violet-600 text-xs font-semibold hover:bg-violet-200 transition-colors">Limpiar filtros</button>
+              <button onClick={filter.clearFilters} className="mt-4 px-5 py-2 rounded-full bg-violet-100 text-violet-600 text-xs font-semibold hover:bg-violet-200 transition-colors">{t('clearFilters')}</button>
             )}
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {filter.filteredProducts.map((p) => {
-              const inStock = (p.stock_current ?? 0) > 0;
+              const inStock = p.inStock;
               const img = filter.productImage(p);
               return (
                 <div key={p.id} className={cn('group rounded-2xl bg-white shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col cursor-pointer', !inStock && 'opacity-50')} onClick={() => setDetailProduct(p)}>
                   <div className="relative aspect-[4/3] bg-gradient-to-br from-violet-50 to-sky-50 overflow-hidden">
                     {img ? (
-                      <img src={img} alt={p.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
+                      <ProductImage src={img} alt={p.name} className="absolute inset-0" imgClassName="group-hover:scale-105" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center"><Package className="w-12 h-12 text-violet-200" /></div>
                     )}
                     <span className={cn('absolute top-3 right-3 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest', inStock ? 'bg-emerald-500 text-white' : 'bg-red-500 text-white')}>
-                      {inStock ? 'En stock' : 'Agotado'}
+                      {inStock ? t('inStock') : t('soldOut')}
                     </span>
                     {p.category && (
                       <span className="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-white/90 text-[10px] font-bold text-stone-600 backdrop-blur-sm">{p.category}</span>
@@ -1082,7 +1120,7 @@ function ModernaTemplate({ store, products }: StorefrontPageProps) {
                     <div className="flex-1" />
                     <div className="flex items-center justify-between pt-3 border-t border-stone-100">
                       <p className="text-lg font-bold bg-gradient-to-r from-violet-600 to-indigo-600 bg-clip-text text-transparent">{formatCurrency(p.price)}</p>
-                      <span className="text-[10px] text-stone-400 font-medium">{p.unit_of_measure || 'ud'}</span>
+                      <span className="text-[10px] text-stone-400 font-medium">{p.unit_of_measure || t('unit')}</span>
                     </div>
                   </div>
                 </div>
@@ -1103,6 +1141,7 @@ function ModernaTemplate({ store, products }: StorefrontPageProps) {
 // ══════════════════════════════════════════════════════════════════
 
 function ClasicaTemplate({ store, products }: StorefrontPageProps) {
+  const t = useTranslations('stores.storefront');
   const filter = useProductFilter(products);
   const [detailProduct, setDetailProduct] = useState<StorefrontProduct | null>(null);
 
@@ -1123,8 +1162,8 @@ function ClasicaTemplate({ store, products }: StorefrontPageProps) {
               {store.email && <span className="flex items-center gap-1"><Mail className="w-3 h-3" />{store.email}</span>}
             </div>
             <div className="mt-4 h-px w-24 mx-auto bg-amber-500/40" />
-            <p className="mt-3 text-xs font-medium uppercase tracking-widest text-amber-300">
-              {filter.totalProducts} producto{filter.totalProducts !== 1 ? 's' : ''} · {filter.totalWithStock} disponible{filter.totalWithStock !== 1 ? 's' : ''}
+            <p role="status" aria-live="polite" className="mt-3 text-xs font-medium uppercase tracking-widest text-amber-300">
+              {t('productAvailableCount', { products: filter.totalProducts, available: filter.totalWithStock })}
             </p>
           </div>
         </div>
@@ -1135,21 +1174,21 @@ function ClasicaTemplate({ store, products }: StorefrontPageProps) {
       <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
         {filter.filteredProducts.length === 0 ? (
           <div className="py-24 text-center">
-            <p className="font-medium text-sm text-stone-400">No se encontraron productos</p>
+            <p className="font-medium text-sm text-stone-400">{t('noProductsFound')}</p>
             {(filter.searchTerm || filter.selectedCategory) && (
-              <button onClick={filter.clearFilters} className="mt-4 text-xs underline text-amber-700">Limpiar filtros</button>
+              <button onClick={filter.clearFilters} className="mt-4 text-xs underline text-amber-700">{t('clearFilters')}</button>
             )}
           </div>
         ) : (
           <div className="space-y-3">
             {filter.filteredProducts.map((p) => {
-              const inStock = (p.stock_current ?? 0) > 0;
+              const inStock = p.inStock;
               const img = filter.productImage(p);
               return (
                 <div key={p.id} className={cn('flex gap-4 p-4 rounded-xl border border-amber-200/60 bg-white cursor-pointer hover:shadow-md transition-all', !inStock && 'opacity-50')} onClick={() => setDetailProduct(p)}>
                   <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-lg bg-amber-50 overflow-hidden shrink-0">
                     {img ? (
-                      <img src={img} alt={p.name} className="w-full h-full object-cover" loading="lazy" />
+                      <ProductImage src={img} alt={p.name} className="h-full w-full" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center"><Package className="w-8 h-8 text-amber-200" /></div>
                     )}
@@ -1159,17 +1198,17 @@ function ClasicaTemplate({ store, products }: StorefrontPageProps) {
                       <div className="min-w-0">
                         <p className="text-[10px] font-medium uppercase tracking-widest text-amber-600">{p.category || ''}</p>
                         <h3 className="font-bold text-sm truncate mt-0.5">{p.name}</h3>
-                        {p.sku && <p className="text-[10px] font-mono text-stone-400 mt-0.5">SKU: {p.sku}</p>}
+                        {p.sku && <p className="text-[10px] font-mono text-stone-400 mt-0.5">{t('sku')}: {p.sku}</p>}
                       </div>
                       <span className={cn('px-2 py-0.5 rounded text-[10px] font-bold uppercase shrink-0', inStock ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-600')}>
-                        {inStock ? 'Disponible' : 'Agotado'}
+                        {inStock ? t('available') : t('soldOut')}
                       </span>
                     </div>
                     {p.description && <p className="text-xs text-stone-500 line-clamp-2 mt-1">{p.description}</p>}
                     <div className="flex-1" />
                     <div className="flex items-center justify-between mt-2">
                       <p className="text-lg font-bold text-amber-800">{formatCurrency(p.price)}</p>
-                      <span className="text-[10px] text-stone-400">{p.unit_of_measure || 'ud'}</span>
+                      <span className="text-[10px] text-stone-400">{p.unit_of_measure || t('unit')}</span>
                     </div>
                   </div>
                 </div>
@@ -1178,8 +1217,8 @@ function ClasicaTemplate({ store, products }: StorefrontPageProps) {
           </div>
         )}
         {filter.filteredProducts.length > 0 && (
-          <div className="mt-8 text-center">
-            <p className="text-xs text-stone-400">Mostrando {filter.filteredProducts.length} de {filter.totalProducts} producto{filter.totalProducts !== 1 ? 's' : ''}</p>
+          <div role="status" aria-live="polite" className="mt-8 text-center">
+            <p className="text-xs text-stone-400">{t('showingCount', { count: filter.filteredProducts.length, total: filter.totalProducts })}</p>
           </div>
         )}
       </main>

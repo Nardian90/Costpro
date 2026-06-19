@@ -3,7 +3,7 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { Package, Minus, Plus, Trash2 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { ExtendedProduct } from './useInventoryCount';
 
 interface InventoryCountCardProps {
@@ -25,6 +25,8 @@ export default function InventoryCountCard({
   samplePercentage = 100,
   showRemoveButton = false,
 }: InventoryCountCardProps) {
+  const prefersReducedMotion = useReducedMotion();
+
   if (loading) {
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -54,10 +56,10 @@ export default function InventoryCountCard({
           return (
             <motion.div
               key={product.id}
-              layout
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
+              layout={prefersReducedMotion ? false : true}
+              initial={prefersReducedMotion ? false : { opacity: 0, scale: 0.95 }}
+              animate={prefersReducedMotion ? false : { opacity: 1, scale: 1 }}
+              exit={prefersReducedMotion ? undefined : { opacity: 0, scale: 0.95 }}
               className="neu-card group hover:border-primary/30 transition-all duration-300 flex flex-col justify-between overflow-hidden"
             >
               <div className="space-y-4">
@@ -72,7 +74,7 @@ export default function InventoryCountCard({
                   </div>
                   <div className="flex items-center gap-1.5 shrink-0 ml-2">
                     <span className={cn(
-                      "px-2 py-1 rounded-md text-xs font-black uppercase tracking-tighter",
+                      "px-2 py-1 rounded-md text-xs font-black uppercase tracking-tighter tabular-nums",
                       diff === 0 ? "bg-muted/10 text-muted-foreground/50" :
                       diff > 0 ? "bg-success/10 text-success" : "bg-danger/10 text-danger"
                     )}>
@@ -80,8 +82,9 @@ export default function InventoryCountCard({
                     </span>
                     {showRemoveButton && onRemoveProduct && (
                       <button
+                        type="button"
                         onClick={() => onRemoveProduct(product.id)}
-                        className="p-1.5 hover:bg-rose-500/10 text-rose-500 rounded-lg transition-colors"
+                        className="p-1.5 hover:bg-destructive/10 text-destructive rounded-lg transition-colors"
                         aria-label={`Quitar ${product.name} del conteo`}
                         title="Quitar del conteo"
                       >
@@ -94,11 +97,11 @@ export default function InventoryCountCard({
                 <div className="grid grid-cols-2 gap-4">
                   <div className="neu-inset-sm !p-3 bg-muted/5">
                     <p className="text-xs font-black uppercase text-muted-foreground tracking-widest mb-1">Stock Teórico</p>
-                    <p className="text-xl font-black text-foreground">{product.stock_current}</p>
+                    <p className="text-xl font-black text-foreground tabular-nums">{product.stock_current}</p>
                   </div>
                   <div className="neu-inset-sm !p-3 bg-primary/5 border-primary/10">
                     <p className="text-xs font-black uppercase text-primary tracking-widest mb-1">Stock Físico</p>
-                    <p className="text-xl font-black text-primary">{counted}</p>
+                    <p className="text-xl font-black text-primary tabular-nums">{counted}</p>
                   </div>
                 </div>
 
@@ -107,7 +110,7 @@ export default function InventoryCountCard({
                   <span className={cn(
                     "text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full",
                     samplePercentage >= 80 ? "bg-success/10 text-success" :
-                    samplePercentage >= 50 ? "bg-amber-500/10 text-amber-600" :
+                    samplePercentage >= 50 ? "bg-warning/10 text-warning" :
                     "bg-danger/10 text-danger"
                   )}>
                     Muestra: {samplePercentage}%
@@ -117,6 +120,7 @@ export default function InventoryCountCard({
 
               <div className="mt-6 flex items-center gap-2">
                 <button
+                  type="button"
                   onClick={() => onQuantityChange(product.id, Math.max(0, counted - 1))}
                   className="neu-btn h-12 w-12 !p-3 hover:bg-danger/10 hover:text-danger group-active:scale-90 transition-all"
                 >
@@ -134,6 +138,7 @@ export default function InventoryCountCard({
                 </div>
 
                 <button
+                  type="button"
                   onClick={() => onQuantityChange(product.id, counted + 1)}
                   className="neu-btn h-12 w-12 !p-3 hover:bg-success/10 hover:text-success group-active:scale-90 transition-all"
                 >

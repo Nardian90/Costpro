@@ -42,23 +42,23 @@ const PHASE_LABELS: Record<string, string> = {
 };
 
 const PHASE_COLORS: Record<string, string> = {
-  input: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20',
+  input: 'bg-success/10 text-success dark:text-emerald-400 border-success/20',
   process: 'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border-cyan-500/20',
   overhead: 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20',
-  finance: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20',
-  output: 'bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-500/20',
+  finance: 'bg-warning/10 text-warning dark:text-amber-400 border-warning/20',
+  output: 'bg-muted/10 text-slate-600 dark:text-muted-foreground border-muted/20',
 };
 
 // ── Error code display config (same as CostSheetAuditView) ──
 const ERROR_CODE_CONFIG: Record<string, { label: string; color: string }> = {
   CYCLE:                   { label: 'Ciclo', color: 'text-violet-500 bg-violet-500/10' },
-  MISSING_REF:             { label: 'Ref. Faltante', color: 'text-red-500 bg-red-500/10' },
-  SEMANTIC_DISCREPANCY:   { label: 'Discrepancia', color: 'text-orange-500 bg-orange-500/10' },
-  INVALID_FORMULA:         { label: 'Formula Invalida', color: 'text-red-600 bg-red-600/10' },
+  MISSING_REF:             { label: 'Ref. Faltante', color: 'text-destructive bg-destructive/10' },
+  SEMANTIC_DISCREPANCY:   { label: 'Discrepancia', color: 'text-warning bg-warning/10' },
+  INVALID_FORMULA:         { label: 'Formula Invalida', color: 'text-destructive bg-destructive/10' },
   HARD_RULE_VIOLATION:     { label: 'Regla Violada', color: 'text-rose-600 bg-rose-600/10' },
-  TRIVIAL_FORMULA:         { label: 'Formula Trivial', color: 'text-amber-500 bg-amber-500/10' },
+  TRIVIAL_FORMULA:         { label: 'Formula Trivial', color: 'text-warning bg-warning/10' },
   HIERARCHY:               { label: 'Jerarquia', color: 'text-sky-500 bg-sky-500/10' },
-  EXTERNAL_LINK:           { label: 'Enlace Externo', color: 'text-slate-400 bg-slate-400/10' },
+  EXTERNAL_LINK:           { label: 'Enlace Externo', color: 'text-muted-foreground bg-muted/10' },
 };
 
 interface SmartSidebarProps {
@@ -223,7 +223,7 @@ const SmartSidebar = React.memo(function SmartSidebar({
     if (count === 0) return null;
     const colors = {
       CRITICAL: 'bg-destructive/15 text-destructive border-destructive/25',
-      WARNING: 'bg-amber-500/15 text-amber-600 border-amber-500/25',
+      WARNING: 'bg-warning/15 text-warning border-warning/25',
       INFO: 'bg-muted/50 text-muted-foreground border-muted-foreground/25',
     };
     return (
@@ -237,7 +237,7 @@ const SmartSidebar = React.memo(function SmartSidebar({
     <div className="relative shrink-0 h-full">
       {/* Toggle button — always visible when collapsed */}
       {!isOpen && (
-        <button
+        <button type="button"
           onClick={onToggle}
           className="absolute top-3 left-3 z-30 w-8 h-8 rounded-lg bg-card border border-border/60 flex items-center justify-center hover:bg-primary/10 hover:border-primary/40 transition-all duration-200 shadow-sm hover:shadow-md"
           title="Abrir panel de navegacion"
@@ -289,7 +289,7 @@ const SmartSidebar = React.memo(function SmartSidebar({
 
           {/* Mode toggle: Flujo / Auditoria */}
           <div className="flex items-center gap-1 mt-2">
-            <button
+            <button type="button"
               onClick={() => setSidebarMode('flow')}
               className={cn(
                 'px-2 py-1 rounded text-[8px] font-bold uppercase tracking-wider transition-colors',
@@ -300,7 +300,7 @@ const SmartSidebar = React.memo(function SmartSidebar({
             >
               Flujo
             </button>
-            <button
+            <button type="button"
               onClick={() => setSidebarMode('audit')}
               className={cn(
                 'px-2 py-1 rounded text-[8px] font-bold uppercase tracking-wider transition-colors relative',
@@ -354,7 +354,7 @@ const SmartSidebar = React.memo(function SmartSidebar({
             {metrics.utilityPercent === null ? (
               <Skeleton className="inline-block w-10 h-3 rounded" />
             ) : (
-              <span className="text-[10px] font-black font-mono text-amber-600 dark:text-amber-400">
+              <span className="text-[10px] font-black font-mono text-warning dark:text-amber-400">
                 {metrics.utilityPercent}%
               </span>
             )}
@@ -371,7 +371,7 @@ const SmartSidebar = React.memo(function SmartSidebar({
               {/* ── 3 Status Cards (same as dashboard) ── */}
               <div className="space-y-1.5">
                 {/* Critical Errors */}
-                <button
+                <button type="button"
                   onClick={() => setActiveAuditFilter(prev => prev === 'CRITICAL' ? 'all' : 'CRITICAL')}
                   className={cn(
                     'w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-left transition-all',
@@ -408,30 +408,30 @@ const SmartSidebar = React.memo(function SmartSidebar({
                 </button>
 
                 {/* Warnings */}
-                <button
+                <button type="button"
                   onClick={() => setActiveAuditFilter(prev => prev === 'WARNING' ? 'all' : 'WARNING')}
                   className={cn(
                     'w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-left transition-all',
                     auditCounts.totalWarnings > 0
-                      ? 'bg-amber-500/5 border border-amber-500/15'
+                      ? 'bg-warning/5 border border-warning/15'
                       : 'bg-muted/30 border border-transparent',
-                    activeAuditFilter === 'WARNING' && 'ring-1 ring-amber-500/30',
+                    activeAuditFilter === 'WARNING' && 'ring-1 ring-warning/30',
                   )}
                 >
                   <div className={cn(
                     'w-7 h-7 rounded-lg flex items-center justify-center shrink-0',
-                    auditCounts.totalWarnings > 0 ? 'bg-amber-500/15' : 'bg-muted/50'
+                    auditCounts.totalWarnings > 0 ? 'bg-warning/15' : 'bg-muted/50'
                   )}>
-                    <AlertTriangle className={cn('w-3.5 h-3.5', auditCounts.totalWarnings > 0 ? 'text-amber-500' : 'text-muted-foreground/40')} />
+                    <AlertTriangle className={cn('w-3.5 h-3.5', auditCounts.totalWarnings > 0 ? 'text-warning' : 'text-muted-foreground/40')} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-black uppercase tracking-widest text-amber-500/80">
+                      <span className="text-[10px] font-black uppercase tracking-widest text-warning/80">
                         Advertencias
                       </span>
                     </div>
                     <div className="flex items-center gap-1.5 mt-0.5">
-                      <span className="text-lg font-black text-amber-500 leading-none">
+                      <span className="text-lg font-black text-warning leading-none">
                         {auditCounts.totalWarnings}
                       </span>
                       <span className="text-[8px] text-muted-foreground/60">
@@ -442,7 +442,7 @@ const SmartSidebar = React.memo(function SmartSidebar({
                 </button>
 
                 {/* Validations OK */}
-                <button
+                <button type="button"
                   onClick={() => setActiveAuditFilter(prev => prev === 'INFO_SUCCESS' ? 'all' : 'INFO_SUCCESS')}
                   className={cn(
                     'w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-left transition-all',
@@ -487,9 +487,9 @@ const SmartSidebar = React.memo(function SmartSidebar({
                     <div
                       className={cn(
                         'h-full rounded-full transition-all duration-500',
-                        healthPercent >= 80 ? 'bg-gradient-to-r from-emerald-500 to-cyan-500' :
-                        healthPercent >= 50 ? 'bg-gradient-to-r from-amber-500 to-orange-500' :
-                        'bg-gradient-to-r from-rose-500 to-red-500'
+                        healthPercent >= 80 ? 'bg-gradient-to-r from-success to-cyan-500' :
+                        healthPercent >= 50 ? 'bg-gradient-to-r from-warning to-warning' :
+                        'bg-gradient-to-r from-rose-500 to-destructive'
                       )}
                       style={{ width: `${healthPercent}%` }}
                     />
@@ -503,7 +503,7 @@ const SmartSidebar = React.memo(function SmartSidebar({
               {filteredFlags.length > 0 && (
                 <div className="space-y-1">
                   <div className="flex items-center gap-1.5 px-1 mb-1">
-                    <AlertTriangle className="w-3 h-3 text-amber-500" />
+                    <AlertTriangle className="w-3 h-3 text-warning" />
                     <span className="text-[8px] font-black uppercase tracking-widest text-muted-foreground/70">
                       Flags por Fila
                     </span>
@@ -517,7 +517,7 @@ const SmartSidebar = React.memo(function SmartSidebar({
                       className={cn(
                         'rounded-lg border-l-2 px-2 py-1.5',
                         group.highestSeverity === 'CRITICAL' ? 'border-l-destructive bg-destructive/3' :
-                        group.highestSeverity === 'WARNING' ? 'border-l-amber-500 bg-amber-500/3' :
+                        group.highestSeverity === 'WARNING' ? 'border-l-warning bg-warning/3' :
                         'border-l-blue-400 bg-muted/20'
                       )}
                     >
@@ -577,7 +577,7 @@ const SmartSidebar = React.memo(function SmartSidebar({
                       className={cn(
                         'rounded-lg px-2 py-1.5 border',
                         v.type === 'CRITICAL' ? 'border-destructive/20 bg-destructive/3' :
-                        v.type === 'WARNING' ? 'border-amber-500/20 bg-amber-500/3' :
+                        v.type === 'WARNING' ? 'border-warning/20 bg-warning/3' :
                         'border-primary/10 bg-primary/3'
                       )}
                     >
@@ -588,7 +588,7 @@ const SmartSidebar = React.memo(function SmartSidebar({
                         <Badge variant="outline" className={cn(
                           'text-[7px] font-bold px-1 py-0 rounded-full shrink-0',
                           v.type === 'CRITICAL' ? 'bg-destructive/15 text-destructive border-destructive/25' :
-                          v.type === 'WARNING' ? 'bg-amber-500/15 text-amber-600 border-amber-500/25' :
+                          v.type === 'WARNING' ? 'bg-warning/15 text-warning border-warning/25' :
                           'bg-primary/15 text-primary border-primary/25'
                         )}>
                           {v.type === 'CRITICAL' ? 'Err' : v.type === 'WARNING' ? 'Adv' : 'OK'}
@@ -642,7 +642,7 @@ const SmartSidebar = React.memo(function SmartSidebar({
                                   !isValid ? 'bg-rose-500/3' : ''
                                 )}>
                                   {isValid ? (
-                                    <CheckCircle2 className="w-3 h-3 text-emerald-500 shrink-0" />
+                                    <CheckCircle2 className="w-3 h-3 text-success shrink-0" />
                                   ) : (
                                     <AlertTriangle className="w-3 h-3 text-rose-500 shrink-0" />
                                   )}
@@ -715,7 +715,7 @@ const SmartSidebar = React.memo(function SmartSidebar({
                       const isDone = completedNodes.has(node.id);
 
                       return (
-                        <button
+                        <button type="button"
                           key={node.id}
                           onClick={() => handleSelect(node.id)}
                           className={cn(

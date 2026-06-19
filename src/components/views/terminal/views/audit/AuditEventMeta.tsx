@@ -53,7 +53,7 @@ export default function AuditEventMeta({ oldData, newData, metadata }: AuditEven
             <div className="flex items-center gap-1.5 overflow-hidden">
                 <span className="text-destructive line-through truncate">{formatValue(key, oldData[key])}</span>
                 <ArrowRight size={10} className="text-muted-foreground shrink-0" />
-                <span className="text-green-600 font-black truncate">{formatValue(key, newData[key])}</span>
+                <span className="text-success font-black truncate">{formatValue(key, newData[key])}</span>
             </div>
           </div>
         );
@@ -74,7 +74,7 @@ export default function AuditEventMeta({ oldData, newData, metadata }: AuditEven
 
   return (
     <div className="mt-2">
-      <button
+      <button type="button"
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center gap-1 text-xs font-black uppercase text-muted-foreground hover:text-primary transition-colors"
       >
@@ -104,8 +104,8 @@ export default function AuditEventMeta({ oldData, newData, metadata }: AuditEven
             )}
             {newData && (
               <div>
-                <div className="text-green-600 font-bold mb-1 opacity-70 uppercase">Nuevo (JSON)</div>
-                <pre className="whitespace-pre-wrap break-all p-2 bg-green-500/5 rounded border border-green-500/10">
+                <div className="text-success font-bold mb-1 opacity-70 uppercase">Nuevo (JSON)</div>
+                <pre className="whitespace-pre-wrap break-all p-2 bg-success/5 rounded border border-success/10">
                   {JSON.stringify(newData, null, 2)}
                 </pre>
               </div>

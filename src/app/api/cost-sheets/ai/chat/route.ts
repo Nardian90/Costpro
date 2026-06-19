@@ -1,17 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getLLMProviderWithUserKey } from '@/lib/ai/orchestrator';
-import { getServerSession } from "@/lib/auth";
 import { rateLimit } from '@/lib/rate-limit';
+import { validateOrigin } from '@/lib/csrf';
 import { aiChatSchema, zodError } from '@/validation/api-schemas';
 import { withTracing } from '@/lib/observability';
+import { withAuth, type AuthenticatedSession } from '@/lib/auth-middleware';
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
-async function postHandler(req: NextRequest) {
+// FIX-SEC-AICHAT: Use withAuth for membership-enriched session + rate limit by user ID
+async function aiChatHandler(req: NextRequest, session: AuthenticatedSession) {
   try {
-    // Rate limiting (stricter for AI chat)
-    const clientId = req.headers.get('x-forwarded-for') || 'anonymous';
+    // FIX-AUDIT-12: CSRF validation on cost sheet AI mutation
+    if (!validateOrigin(req)) {
+      return NextResponse.json({ error: 'Origen no permitido' }, { status: 403 });
+    }
+
+    // Rate limit by authenticated user ID (not IP — prevents bypass via header rotation)
+    const clientId = session.user.id;
     const { allowed, remaining, resetAt } = await rateLimit(clientId, { windowMs: 60_000, maxRequests: 10 });
 
     if (!allowed) {
@@ -25,9 +32,6 @@ async function postHandler(req: NextRequest) {
         },
       });
     }
-
-    const session = await getServerSession(req);
-    if (!session) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
 
     let body;
     try {
@@ -97,14 +101,14 @@ async function postHandler(req: NextRequest) {
       }
 
       return NextResponse.json({ text: response.text });
-    } catch (aiError: any) {
+    } catch (aiError: unknown) {
       console.error('[AIChat] LLM Error:', aiError);
       return NextResponse.json({
         error: 'Error de comunicación con la IA'
       }, { status: 502 });
     }
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[AIChat] Global Error:', error);
     return NextResponse.json({
       error: 'Error interno en Darian AI'
@@ -112,4 +116,7 @@ async function postHandler(req: NextRequest) {
   }
 }
 
-export const POST = withTracing(postHandler, 'POST /api/cost-sheets/ai/chat');
+export const POST = withTracing(
+  withAuth(aiChatHandler as any) as any,
+  'POST /api/cost-sheets/ai/chat'
+);

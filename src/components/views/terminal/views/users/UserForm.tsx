@@ -1,13 +1,16 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { z } from 'zod';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { cn } from '@/lib/utils';
 import { UserContract } from '@/contracts/user';
 import { Store, UserRole } from '@/types';
-import { Loader2, Save, Plus, Trash2, Building } from 'lucide-react';
+import { Loader2, Save, Plus, Trash2, Building, Users, ChevronRight } from 'lucide-react';
+import { useIsMobile } from '@/hooks/ui/useMobile';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { BulkStoreAssignModal } from './BulkStoreAssignModal';
 
 const userFormSchema = z.object({
   fullName: z.string().min(3, 'El nombre debe tener al menos 3 caracteres'),
@@ -105,6 +108,40 @@ export default function UserForm({
     name: "memberships"
   });
 
+  // F2-T04: estado del modal de asignación masiva de tiendas.
+  const [bulkAssignOpen, setBulkAssignOpen] = useState(false);
+  // F5-T05: sheet para memberships en mobile
+  const [membershipsSheetOpen, setMembershipsSheetOpen] = useState(false);
+  const isMobile = useIsMobile();
+
+  // F2-T04: handler que recibe las tiendas seleccionadas del modal bulk y sincroniza
+  // el useFieldArray. Las tiendas nuevas se agregan con rol 'clerk' por defecto;
+  // las que ya estaban se preservan con su rol actual; las deseleccionadas se remueven.
+  const handleBulkAssign = (selectedStoreIds: string[]) => {
+    const currentMembershipStoreIds = fields.map(f => (f as any).store_id);
+    // Identificar tiendas a remover (estaban en fields pero no en selectedStoreIds)
+    const toRemove: number[] = [];
+    currentMembershipStoreIds.forEach((sid, idx) => {
+      if (sid && !selectedStoreIds.includes(sid)) {
+        toRemove.push(idx);
+      }
+    });
+    // Remover de atrás hacia adelante para no romper índices
+    toRemove.reverse().forEach(idx => remove(idx));
+
+    // Identificar tiendas a agregar (en selectedStoreIds pero no en currentMembershipStoreIds)
+    const toAdd = selectedStoreIds.filter(sid => !currentMembershipStoreIds.includes(sid));
+    toAdd.forEach(sid => {
+      append({
+        store_id: sid,
+        role: 'clerk', // rol por defecto — editable en la tabla inferior
+        password: '',
+        status: 'active',
+      });
+    });
+    setBulkAssignOpen(false);
+  };
+
   // eslint-disable-next-line react-hooks/incompatible-library
   const selectedRole = watch('role');
   const maxStoresLimit = watch('maxStoresLimit');
@@ -113,6 +150,7 @@ export default function UserForm({
     : true;
 
   return (
+    <>
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 overflow-x-auto no-scrollbar">
       <div className="space-y-4">
         <div>
@@ -247,26 +285,46 @@ export default function UserForm({
 
       {/* Tiendas Asignadas */}
       <div className="pt-4 border-t border-border">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
           <span className="text-xs font-black uppercase text-primary tracking-widest block">
             Tiendas Asignadas (Multi-Tienda)
           </span>
-          <button
-            type="button"
-            disabled={!canAddMoreStores}
-            onClick={() => append({ store_id: '', role: 'clerk',
-      password: '', status: 'active' })}
-            className={cn(
-              "flex items-center gap-1 px-4 h-11 rounded-lg transition-all text-xs font-black uppercase",
-              canAddMoreStores
-                ? "bg-primary/10 text-primary hover:bg-primary/20"
-                : "bg-muted text-muted-foreground opacity-50 cursor-not-allowed"
-            )}
-            title={!canAddMoreStores ? `Límite de ${maxStoresLimit} tiendas alcanzado` : "Añadir Tienda"}
-          >
-            <Plus className="w-3 h-3" />
-            Añadir Tienda
-          </button>
+          <div className="flex items-center gap-2">
+            {/* F2-T04: botón de asignación masiva con checkboxes.
+                Reemplaza el flujo one-by-one para despliegues con múltiples tiendas. */}
+            <button
+              type="button"
+              onClick={() => setBulkAssignOpen(true)}
+              className={cn(
+                "flex items-center gap-1 px-4 h-11 rounded-lg transition-all text-xs font-black uppercase",
+                stores.length > 0
+                  ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                  : "bg-muted text-muted-foreground opacity-50 cursor-not-allowed"
+              )}
+              disabled={stores.length === 0}
+              title="Asignar múltiples tiendas con checkboxes"
+            >
+              <Users className="w-3 h-3" />
+              Asignar Tiendas
+            </button>
+            {/* Botón "Añadir Tienda" one-by-one (mantenido para edición granular) */}
+            <button
+              type="button"
+              disabled={!canAddMoreStores}
+              onClick={() => append({ store_id: '', role: 'clerk',
+        password: '', status: 'active' })}
+              className={cn(
+                "flex items-center gap-1 px-4 h-11 rounded-lg transition-all text-xs font-black uppercase",
+                canAddMoreStores
+                  ? "bg-primary/10 text-primary hover:bg-primary/20"
+                  : "bg-muted text-muted-foreground opacity-50 cursor-not-allowed"
+              )}
+              title={!canAddMoreStores ? `Límite de ${maxStoresLimit} tiendas alcanzado` : "Añadir Tienda individual"}
+            >
+              <Plus className="w-3 h-3" />
+              Añadir
+            </button>
+          </div>
         </div>
 
         <div className="space-y-3">
@@ -281,6 +339,95 @@ export default function UserForm({
             </p>
           )}
 
+          {/* F5-T05: En mobile, colapsar memberships en un botón que abre bottom sheet.
+              En desktop, mostrar las filas inline como antes. */}
+          {isMobile ? (
+            /* Mobile: botón "Ver N membresías" que abre sheet */
+            <>
+              <button
+                type="button"
+                onClick={() => setMembershipsSheetOpen(true)}
+                className="w-full flex items-center justify-between p-4 rounded-xl border border-border bg-muted/20 hover:border-primary/30 transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <Building className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-xs font-black uppercase tracking-widest text-muted-foreground">
+                    {fields.length === 0 ? 'Sin tiendas asignadas' : `${fields.length} tienda${fields.length === 1 ? '' : 's'} asignada${fields.length === 1 ? '' : 's'}`}
+                  </span>
+                </div>
+                <ChevronRight className="w-4 h-4 text-muted-foreground" />
+              </button>
+
+              {/* Bottom sheet con memberships scrollable — sin superposiciones */}
+              <Sheet open={membershipsSheetOpen} onOpenChange={setMembershipsSheetOpen}>
+                <SheetContent side="bottom" className="max-h-[80vh] overflow-y-auto">
+                  <SheetHeader>
+                    <SheetTitle className="text-sm font-black uppercase tracking-widest text-primary">
+                      Tiendas Asignadas ({fields.length})
+                    </SheetTitle>
+                  </SheetHeader>
+                  <div className="space-y-3 px-4 pb-6">
+                    {fields.length === 0 ? (
+                      <div className="text-center py-6">
+                        <Building className="w-8 h-8 text-muted-foreground/30 mx-auto mb-2" />
+                        <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Sin tiendas asignadas</p>
+                      </div>
+                    ) : (
+                      fields.map((field, index) => (
+                        <div key={field.id} className="flex flex-col gap-3 bg-muted/20 p-3 rounded-xl border border-border/50">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Tienda {index + 1}</span>
+                            <button
+                              type="button"
+                              onClick={() => remove(index)}
+                              className="w-9 h-9 flex items-center justify-center rounded-lg bg-destructive/10 text-destructive hover:bg-destructive hover:text-foreground transition-all"
+                              title="Eliminar tienda"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                          {/* Tienda selector — full width en mobile */}
+                          <select
+                            {...register(`memberships.${index}.store_id` as const)}
+                            className="w-full p-3 rounded-lg border bg-background font-bold text-xs outline-none"
+                          >
+                            <option value="">Seleccione tienda</option>
+                            {stores.map(s => (
+                              <option key={s.id} value={s.id}>{s.name}</option>
+                            ))}
+                          </select>
+                          {/* Rol + Status en grid 2 columnas */}
+                          <div className="grid grid-cols-2 gap-2">
+                            <select
+                              {...register(`memberships.${index}.role` as const)}
+                              className="w-full p-3 rounded-lg border border-border bg-background font-bold text-xs outline-none"
+                            >
+                              {(!allowedRoles || allowedRoles.includes('admin')) && <option value="admin">Admin</option>}
+                              {(!allowedRoles || allowedRoles.includes('encargado')) && <option value="encargado">Encargado</option>}
+                              {(!allowedRoles || allowedRoles.includes('manager')) && <option value="manager">Gestor</option>}
+                              {(!allowedRoles || allowedRoles.includes('clerk')) && <option value="clerk">Cajero</option>}
+                              {(!allowedRoles || allowedRoles.includes('warehouse')) && <option value="warehouse">Almacén</option>}
+                              {(!allowedRoles || allowedRoles.includes('usuario')) && <option value="usuario">Usuario</option>}
+                              {(!allowedRoles || allowedRoles.includes('costo')) && <option value="costo">Costo</option>}
+                            </select>
+                            <select
+                              {...register(`memberships.${index}.status` as const)}
+                              className="w-full p-3 rounded-lg border border-border bg-background font-bold text-xs outline-none"
+                            >
+                              <option value="active">Activo</option>
+                              <option value="revoked">Revocado</option>
+                            </select>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </SheetContent>
+              </Sheet>
+            </>
+          ) : (
+            /* Desktop: filas inline como antes */
+            <>
           {fields.map((field, index) => (
             <div key={field.id} className="flex flex-col sm:flex-row gap-4 sm:gap-2 items-stretch sm:items-end bg-muted/20 p-4 sm:p-3 rounded-xl border border-border/50 relative group">
               <div className="flex-1 space-y-2">
@@ -349,6 +496,8 @@ export default function UserForm({
                <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Sin tiendas asignadas</p>
             </div>
           )}
+            </>
+          )}
         </div>
       </div>
 
@@ -378,5 +527,17 @@ export default function UserForm({
         </button>
       </div>
     </form>
+
+    {/* F2-T04: Modal de asignación masiva de tiendas.
+        Reemplaza el flujo one-by-one para despliegues con múltiples tiendas.
+        Las tiendas ya asignadas aparecen pre-seleccionadas. */}
+    <BulkStoreAssignModal
+      isOpen={bulkAssignOpen}
+      onClose={() => setBulkAssignOpen(false)}
+      stores={stores}
+      selectedStoreIds={fields.map(f => (f as any).store_id).filter(Boolean)}
+      onConfirm={handleBulkAssign}
+    />
+    </>
   );
 }

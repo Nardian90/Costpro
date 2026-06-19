@@ -40,7 +40,7 @@ export default function HelpLayout({ sidebar, children, isReadingMode, scrollPro
           <div className="flex items-center gap-4">
             <div className="relative w-10 h-10 rounded-2xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-lg shadow-primary/20">
               <LifeBuoy className="w-5 h-5 text-primary-foreground" />
-              <div className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-emerald-500 rounded-full border-2 border-background" />
+              <div className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-success rounded-full border-2 border-background" />
             </div>
             <div>
               <div className="flex items-center gap-2.5">
@@ -63,7 +63,7 @@ export default function HelpLayout({ sidebar, children, isReadingMode, scrollPro
               </Badge>
             )}
             <Badge variant="outline" className="text-[9px] font-bold tracking-wider px-2.5 py-1 bg-muted/50 border-border/50 hidden md:inline-flex items-center gap-1.5">
-              <Sparkles className="w-3 h-3 text-amber-500" />
+              <Sparkles className="w-3 h-3 text-warning" />
               ISO/IEC 26514
             </Badge>
           </div>
@@ -116,7 +116,7 @@ export default function HelpLayout({ sidebar, children, isReadingMode, scrollPro
             <footer className="max-w-4xl xl:max-w-5xl mx-auto px-10 py-8 border-t border-border/30 mt-6">
               <div className="flex flex-col md:flex-row justify-between items-center gap-3">
                 <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/50">
-                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500/60" />
+                  <div className="w-1.5 h-1.5 rounded-full bg-success/60" />
                   <span>Sistema operativo</span>
                 </div>
                 <div className="flex items-center gap-4 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/40">
@@ -181,7 +181,7 @@ export default function HelpLayout({ sidebar, children, isReadingMode, scrollPro
           {!isReadingMode && (
             <footer className="max-w-3xl mx-auto px-6 py-8 border-t border-border/30 mt-6 flex flex-col items-center gap-3">
               <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/50">
-                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500/60" />
+                <div className="w-1.5 h-1.5 rounded-full bg-success/60" />
                 <span>Sistema operativo</span>
               </div>
               <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/40">© 2024–2026 CostPro · ISO/IEC 26514</span>

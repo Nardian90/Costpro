@@ -94,10 +94,10 @@ export const CostSheetComparisonTable = ({ sections, scenarios, scenarioConfig, 
                 </TableCell>
                 {sid !== baseId && (
                   <>
-                    <TableCell className={cn("text-right p-2 text-[10px] border-l border-border/10", diff < -0.01 ? "text-emerald-500" : diff > 0.01 ? "text-red-500" : "text-muted-foreground/40")}>
+                    <TableCell className={cn("text-right p-2 text-[10px] border-l border-border/10", diff < -0.01 ? "text-success" : diff > 0.01 ? "text-destructive" : "text-muted-foreground/40")}>
                       {diff > 0.01 ? '+' : ''}{diff.toFixed(2)}
                     </TableCell>
-                    <TableCell className={cn("text-right p-2 text-[10px] border-r border-border/10", diff < -0.01 ? "text-emerald-500 font-bold" : diff > 0.01 ? "text-red-500 font-bold" : "text-muted-foreground/40")}>
+                    <TableCell className={cn("text-right p-2 text-[10px] border-r border-border/10", diff < -0.01 ? "text-success font-bold" : diff > 0.01 ? "text-destructive font-bold" : "text-muted-foreground/40")}>
                       {baseTotal !== 0 ? ((diff/baseTotal)*100).toFixed(1) : 0}%
                     </TableCell>
                   </>
@@ -120,19 +120,19 @@ export const CostSheetComparisonTable = ({ sections, scenarios, scenarioConfig, 
         return (
           <div key={sid} className={cn(
             "rounded-[2rem] border p-6 space-y-4 shadow-sm transition-all",
-            isPrimary ? "bg-amber-500/5 border-amber-500/20 ring-1 ring-amber-500/10" : "bg-card"
+            isPrimary ? "bg-warning/5 border-warning/20 ring-1 ring-warning/10" : "bg-card"
           )}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className={cn("w-4 h-4 rounded-full",
-                    s?.color === 'blue' ? 'bg-blue-500' : s?.color === 'violet' ? 'bg-violet-500' : 'bg-amber-500'
+                    s?.color === 'blue' ? 'bg-primary' : s?.color === 'violet' ? 'bg-violet-500' : 'bg-warning'
                 )}/>
                 <Input
                    value={s?.label}
                    onChange={(e) => renameScenario(sid, e.target.value)}
                    className="h-6 bg-transparent border-none p-0 font-black uppercase tracking-widest text-xs focus-visible:ring-0 w-32"
                 />
-                {isPrimary && <Star className="w-4 h-4 fill-amber-500 text-amber-500"/>}
+                {isPrimary && <Star className="w-4 h-4 fill-warning text-warning"/>}
                 {isBase && <Badge variant="secondary" className="text-[9px]">Base Δ</Badge>}
               </div>
               <DropdownMenu>
@@ -180,7 +180,7 @@ export const CostSheetComparisonTable = ({ sections, scenarios, scenarioConfig, 
                 <SelectItem key={s.id} value={s.id}>
                     <div className="flex items-center gap-2">
                     <div className={cn("w-2 h-2 rounded-full",
-                        s.color === 'blue' ? 'bg-blue-500' : s.color === 'violet' ? 'bg-violet-500' : 'bg-amber-500'
+                        s.color === 'blue' ? 'bg-primary' : s.color === 'violet' ? 'bg-violet-500' : 'bg-warning'
                     )}/>
                     {s.label}
                     </div>
@@ -231,18 +231,18 @@ export const CostSheetComparisonTable = ({ sections, scenarios, scenarioConfig, 
                 const isBase = sid === baseId;
                 const isPrimary = sid === primaryId;
                 return (
-                  <TableHead key={sid} colSpan={isBase ? 2 : 4} className={cn("text-center border-l border-border/30 p-3", isPrimary && "bg-amber-500/5")}>
+                  <TableHead key={sid} colSpan={isBase ? 2 : 4} className={cn("text-center border-l border-border/30 p-3", isPrimary && "bg-warning/5")}>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <div className={cn("w-3 h-3 rounded-full shadow-sm",
-                          s?.color === 'blue' ? 'bg-blue-500' : s?.color === 'violet' ? 'bg-violet-500' : 'bg-amber-500'
+                          s?.color === 'blue' ? 'bg-primary' : s?.color === 'violet' ? 'bg-violet-500' : 'bg-warning'
                         )}/>
                         <Input
                           value={s?.label}
                           onChange={(e) => renameScenario(sid, e.target.value)}
                           className="h-6 bg-transparent border-none p-0 font-black uppercase tracking-widest text-[11px] focus-visible:ring-0 w-32 inline-block"
                         />
-                        {isPrimary && <Star className="w-3 h-3 fill-amber-500 text-amber-500 animate-pulse"/>}
+                        {isPrimary && <Star className="w-3 h-3 fill-warning text-warning animate-pulse"/>}
                         {isBase && <Badge variant="secondary" className="text-[9px] h-4 px-1 rounded-full uppercase tracking-tighter bg-primary/10 text-primary border-none">Base Δ</Badge>}
                       </div>
                       <DropdownMenu>
@@ -251,7 +251,7 @@ export const CostSheetComparisonTable = ({ sections, scenarios, scenarioConfig, 
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-56 rounded-2xl p-2 border-sidebar-border shadow-2xl">
                           <DropdownMenuItem onClick={() => onScenarioAction('setPrimary', sid)} className="text-[11px] font-bold rounded-xl px-3 py-2">
-                            <Star className="w-4 h-4 mr-3 text-amber-500"/> Establecer como Principal
+                            <Star className="w-4 h-4 mr-3 text-warning"/> Establecer como Principal
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => onScenarioAction('duplicate', sid)} className="text-[11px] font-bold rounded-xl px-3 py-2">
                             <LayoutGrid className="w-4 h-4 mr-3 text-primary"/> Duplicar Escenario

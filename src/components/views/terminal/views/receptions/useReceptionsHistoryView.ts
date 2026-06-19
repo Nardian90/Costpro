@@ -2,10 +2,11 @@
 
 import { useState, useMemo, useCallback } from 'react';
 import { useAuthStore } from '@/store';
-import { useReceptions, useReceptionDetails, useUpdateReception, useVoidReception } from '@/hooks/api/useReceptions';
+import { useReceptions, useReceptionDetails, useUpdateReception, useVoidReception, useConfirmPendingReception } from '@/hooks/api/useReceptions';
 import { Receipt, ReceiptItem } from '@/types';
 import { useInvertDocument, useDuplicateDocument } from '@/hooks/api/useDocumentActions';
 import { toast } from 'sonner';
+import { logger } from '@/lib/logger';
 
 export function useReceptionsHistoryView() {
   const { user } = useAuthStore();
@@ -18,9 +19,13 @@ export function useReceptionsHistoryView() {
   // FM-06 additions
   const [editingReceiptId, setEditingReceiptId] = useState<string | null>(null);
   const [voidConfirmInput, setVoidConfirmInput] = useState('');
+  // Reception-Flow-Fix: state para confirmar recepción pendiente.
+  const [confirmingReceiptId, setConfirmingReceiptId] = useState<string | null>(null);
 
   const updateReceptionMutation = useUpdateReception();
   const voidReceptionMutation = useVoidReception();
+  // Reception-Flow-Fix: hook para confirmar recepción pendiente.
+  const confirmPendingMutation = useConfirmPendingReception();
 
   // Document Actions Hooks
   const invertDocumentMutation = useInvertDocument();
@@ -87,9 +92,40 @@ export function useReceptionsHistoryView() {
       setSelectedReceiptId(null);
       toast.success('Recepción anulada correctamente');
     } catch (error) {
-      console.error('Error voiding reception:', error);
+      logger.error('DATABASE', 'RECEPTION_VOID_FAILED', { error });
       toast.error('Error al anular la recepción');
     }
+  };
+
+  // Reception-Flow-Fix: confirmar una recepción pendiente.
+  // Aplica los cambios de stock y marca la recepción como 'active' (no editable).
+  const handleConfirmPendingRequest = (receipt: Receipt) => {
+    setConfirmingReceiptId(receipt.id);
+    setSelectedReceiptId(receipt.id); // abre el modal de detalles
+  };
+
+  const handleConfirmPendingExecute = async (receipt: Receipt) => {
+    if (!user?.activeStoreId || !user?.id) {
+      toast.error('No hay tienda activa o sesión válida');
+      return;
+    }
+    try {
+      await confirmPendingMutation.mutateAsync({
+        receiptId: receipt.id,
+        storeId: user.activeStoreId,
+        userId: user.id,
+      });
+      setSelectedReceiptId(null);
+      setConfirmingReceiptId(null);
+      toast.success('Recepción confirmada correctamente. El inventario ha sido actualizado.');
+    } catch (error: any) {
+      logger.error('DATABASE', 'RECEPTION_CONFIRM_FAILED', { error });
+      toast.error(error?.message || 'Error al confirmar la recepción pendiente');
+    }
+  };
+
+  const handleConfirmPendingCancel = () => {
+    setConfirmingReceiptId(null);
   };
 
   const handleUpdateSubmit = async (receiptId: string, updates: {
@@ -102,7 +138,7 @@ export function useReceptionsHistoryView() {
       setEditingReceiptId(null);
       toast.success('Recepción actualizada');
     } catch (error) {
-      console.error('Error updating reception:', error);
+      logger.error('DATABASE', 'RECEPTION_UPDATE_FAILED', { error });
       toast.error('Error al actualizar la recepción');
     }
   };
@@ -127,7 +163,7 @@ export function useReceptionsHistoryView() {
         storeId: user?.activeStoreId || ''
       });
     } catch (error) {
-      console.error('Error inverting reception:', error);
+      logger.error('DATABASE', 'RECEPTION_INVERT_FAILED', { error });
     }
   };
 
@@ -164,7 +200,7 @@ export function useReceptionsHistoryView() {
       // Add receipt metadata sheet
       const meta = [
         { 'Campo': 'ID', 'Valor': receipt.id.split('-')[0] },
-        { 'Campo': 'Fecha', 'Valor': receipt.reception_date || receipt.created_at ? new Date(receipt.reception_date || receipt.created_at || '').toLocaleDateString('es-AR') : '' },
+        { 'Campo': 'Fecha', 'Valor': receipt.reception_date || receipt.created_at ? new Date(receipt.reception_date || receipt.created_at || '').toLocaleDateString('es-CU') : '' },
         { 'Campo': 'Proveedor', 'Valor': receipt.supplier || 'N/A' },
         { 'Campo': 'Factura', 'Valor': receipt.reference_doc || 'N/A' },
         { 'Campo': 'Estado', 'Valor': receipt.status === 'active' ? 'Confirmada' : receipt.status === 'voided' ? 'Anulada' : receipt.status === 'pending' ? 'Pendiente' : 'Parcial' },
@@ -177,7 +213,7 @@ export function useReceptionsHistoryView() {
       XLSX.writeFile(workbook, `recepcion_${receipt.id.split('-')[0]}.xlsx`);
       toast.success('Recepción exportada a Excel', { id: toastId });
     } catch (error) {
-      console.error('Error al exportar Excel:', error);
+      logger.error('SYSTEM', 'EXCEL_EXPORT_FAILED', { error });
       toast.error('Error al exportar a Excel');
     }
   };
@@ -193,7 +229,7 @@ export function useReceptionsHistoryView() {
       const XLSX = await import('xlsx');
       const data = receptions.map(r => ({
         'ID': r.id.split('-')[0],
-        'Fecha': r.reception_date || r.created_at ? new Date(r.reception_date || r.created_at || '').toLocaleDateString('es-AR') : '',
+        'Fecha': r.reception_date || r.created_at ? new Date(r.reception_date || r.created_at || '').toLocaleDateString('es-CU') : '',
         'Proveedor': r.supplier || '',
         'Factura': r.reference_doc || '',
         'Estado': r.status === 'active' ? 'Confirmada' : r.status === 'voided' ? 'Anulada' : r.status === 'pending' ? 'Pendiente' : 'Parcial',
@@ -206,7 +242,7 @@ export function useReceptionsHistoryView() {
       XLSX.writeFile(workbook, `recepciones-${Date.now()}.xlsx`);
       toast.success('Recepciones exportadas a Excel', { id: toastId });
     } catch (error) {
-      console.error('Error al exportar Excel:', error);
+      logger.error('SYSTEM', 'EXCEL_EXPORT_FAILED', { error });
       toast.error('Error al exportar a Excel');
     }
   }, [receptions]);
@@ -245,6 +281,13 @@ export function useReceptionsHistoryView() {
     handleUpdateSubmit,
     isUpdating: updateReceptionMutation.isPending,
     isVoiding: voidReceptionMutation.isPending,
+
+    // Reception-Flow-Fix: confirmar pendiente
+    confirmingReceiptId,
+    isConfirmingPending: confirmPendingMutation.isPending,
+    handleConfirmPendingRequest,
+    handleConfirmPendingExecute,
+    handleConfirmPendingCancel,
 
     // Actions
     handleInvert,

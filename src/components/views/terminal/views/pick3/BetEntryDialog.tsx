@@ -144,8 +144,8 @@ export function BetEntryDialog({ open, onOpenChange, userId, onSuccess, history 
           </div>
 
           {history.find(h => h.date === date && h.draw_time === time) && (
-            <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 flex gap-3 items-center">
-              <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0" />
+            <div className="p-3 rounded-xl bg-warning/10 border border-warning/20 flex gap-3 items-center">
+              <AlertTriangle className="w-5 h-5 text-warning shrink-0" />
               <p className="text-[9px] font-bold text-amber-700 uppercase leading-tight">
                 Ya existe un resultado oficial para esta fecha/turno. La apuesta se liquidará inmediatamente.
               </p>

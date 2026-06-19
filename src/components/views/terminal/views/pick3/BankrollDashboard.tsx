@@ -41,15 +41,15 @@ export function BankrollDashboard({ profile, ledger }: BankrollDashboardProps) {
         <Card className="rounded-[28px] border-border shadow-md">
           <CardHeader className="pb-2">
             <CardTitle className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-              {netProfit >= 0 ? <TrendingUp className="w-3 h-3 text-emerald-500" /> : <TrendingDown className="w-3 h-3 text-red-500" />}
+              {netProfit >= 0 ? <TrendingUp className="w-3 h-3 text-success" /> : <TrendingDown className="w-3 h-3 text-destructive" />}
               Ganancia Neta
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className={cn("text-3xl font-black italic", netProfit >= 0 ? "text-emerald-500" : "text-red-500")}>
+            <div className={cn("text-3xl font-black italic", netProfit >= 0 ? "text-success" : "text-destructive")}>
               {netProfit >= 0 ? "+" : ""}{formatMoney(netProfit)}
             </div>
-            <Badge variant="outline" className={cn("mt-2 font-black italic", netProfit >= 0 ? "bg-emerald-50 text-emerald-600 border-emerald-100" : "bg-red-50 text-red-600 border-red-100")}>
+            <Badge variant="outline" className={cn("mt-2 font-black italic", netProfit >= 0 ? "bg-emerald-50 text-success border-emerald-100" : "bg-red-50 text-destructive border-red-100")}>
               ROI: {roi.toFixed(2)}%
             </Badge>
           </CardContent>
@@ -58,7 +58,7 @@ export function BankrollDashboard({ profile, ledger }: BankrollDashboardProps) {
         <Card className="rounded-[28px] border-border shadow-md">
           <CardHeader className="pb-2">
             <CardTitle className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-              <History className="w-3 h-3 text-blue-500" /> Capital Inicial
+              <History className="w-3 h-3 text-primary" /> Capital Inicial
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -89,9 +89,9 @@ export function BankrollDashboard({ profile, ledger }: BankrollDashboardProps) {
                     <div className="flex items-center gap-4">
                       <div className={cn(
                         "w-10 h-10 rounded-full flex items-center justify-center border-2",
-                        entry.type === 'win' ? "bg-emerald-500/10 border-emerald-500 text-emerald-500" :
-                        entry.type === 'bet' ? "bg-orange-500/10 border-orange-500 text-orange-500" :
-                        "bg-blue-500/10 border-blue-500 text-blue-500"
+                        entry.type === 'win' ? "bg-success/10 border-success text-success" :
+                        entry.type === 'bet' ? "bg-warning/10 border-warning text-warning" :
+                        "bg-primary/10 border-primary text-primary"
                       )}>
                          {entry.type === 'win' ? <TrendingUp className="w-4 h-4" /> : entry.type === 'bet' ? <TrendingDown className="w-4 h-4" /> : <Wallet className="w-4 h-4" />}
                       </div>
@@ -109,7 +109,7 @@ export function BankrollDashboard({ profile, ledger }: BankrollDashboardProps) {
                     <div className="text-right">
                       <div className={cn(
                         "text-sm font-black italic",
-                        entry.type === 'win' || entry.type === 'initial_deposit' ? "text-emerald-500" : "text-red-500"
+                        entry.type === 'win' || entry.type === 'initial_deposit' ? "text-success" : "text-destructive"
                       )}>
                         {entry.type === 'win' || entry.type === 'initial_deposit' ? "+" : "-"}{formatMoney(Math.abs(entry.amount))}
                       </div>
@@ -126,11 +126,11 @@ export function BankrollDashboard({ profile, ledger }: BankrollDashboardProps) {
       </Card>
 
       {/* Risk Disclaimer Fixed */}
-      <div className="p-4 rounded-2xl bg-red-500/5 border border-red-500/20">
-         <p className="text-[10px] font-black text-red-600 uppercase flex items-center gap-2">
+      <div className="p-4 rounded-2xl bg-destructive/5 border border-destructive/20">
+         <p className="text-[10px] font-black text-destructive uppercase flex items-center gap-2">
             <ShieldAlert className="w-3 h-3" /> Advertencia Ética
          </p>
-         <p className="text-[9px] font-bold text-red-600/70 italic mt-1 leading-relaxed">
+         <p className="text-[9px] font-bold text-destructive/70 italic mt-1 leading-relaxed">
             Este sistema es una herramienta de simulación estadística. El juego conlleva riesgos financieros. No existe garantía de lucro.
          </p>
       </div>

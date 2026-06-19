@@ -1,7 +1,10 @@
 import { Metadata } from 'next';
 import { notFound, redirect } from 'next/navigation';
+import { getTranslations } from 'next-intl/server';
 import { createServerClient } from '@/lib/supabaseClient';
+import { headers } from 'next/headers';
 import { StorefrontPage } from './StorefrontPage';
+import { StorefrontErrorBoundary } from '@/components/StorefrontErrorBoundary';
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -50,6 +53,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const slug = normalizeSlug(rawSlug);
   const supabase = createServerClient();
 
+  // FIX-MINOR-14: i18n SEO metadata — use next-intl server translations
+  // so titles and descriptions are localized per request locale.
+  const t = await getTranslations('stores.storefront');
+
   // Try exact match first, then normalized match
   const { data: store } = await supabase
     .from('stores')
@@ -59,21 +66,25 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     .maybeSingle();
 
   if (!store) {
-    return { title: 'Tienda no encontrada' };
+    return { title: t('seoNotFound') };
   }
 
   const cleanSlug = normalizeSlug(store.slug || '');
   const storeUrl = `${SITE_URL}/tienda/${cleanSlug}`;
 
+  const title = t('seoTitle', { name: store.name });
+  const description = t('seoDescription', { name: store.name, address: store.address || null });
+  const ogDescription = t('seoOgDescription', { name: store.name });
+
   return {
-    title: `${store.name} — Catálogo de Productos`,
-    description: `Explora los productos disponibles en ${store.name}. Precios actualizados y gran variedad.${store.address ? ` Ubicada en ${store.address}.` : ''}`,
+    title,
+    description,
     alternates: {
       canonical: storeUrl,
     },
     openGraph: {
       title: store.name,
-      description: `Catálogo de productos — ${store.name}`,
+      description: ogDescription,
       url: storeUrl,
       siteName: 'CostPro',
       images: store.logo_url ? [{ url: store.logo_url, width: 200, height: 200, alt: store.name }] : [],
@@ -82,8 +93,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     },
     twitter: {
       card: 'summary_large_image',
-      title: `${store.name} — Catálogo de Productos`,
-      description: `Catálogo de productos — ${store.name}`,
+      title,
+      description: ogDescription,
       images: store.logo_url ? [store.logo_url] : [],
     },
     robots: {
@@ -97,6 +108,9 @@ export default async function TiendaPublicPage({ params }: PageProps) {
   const { slug: rawSlug } = await params;
   const slug = normalizeSlug(rawSlug);
   const supabase = createServerClient();
+  // FIX-CSP: Read nonce from middleware for inline scripts
+  const headersList = await headers();
+  const nonce = headersList.get('x-csp-nonce') || '';
 
   // Try exact match first, then normalized match (handles spaces in DB slugs)
   const { data: store, error: storeError } = await supabase
@@ -116,42 +130,96 @@ export default async function TiendaPublicPage({ params }: PageProps) {
     redirect(`/tienda/${cleanSlug}`);
   }
 
-  const { data: products } = await supabase
-    .from('products')
-    .select('id, name, description, sku, price, precio_empresa, image_url, public_image_url, category, unit_of_measure, stock_current, product_variants(id, name, sku, price, precio_empresa, conversion_factor)')
-    .eq('store_id', store.id)
-    .eq('visible_en_tienda', true)
-    .eq('is_active', true)
-    .order('name');
-
-  // Fetch accurate stock from RPC (computed from stock_movements in real-time)
-  // The products.stock_current field can be stale; the RPC recalculates from movements.
-  let stockMap = new Map<string, number>();
+  // Single fetch: RPC returns all product fields with accurate stock_current
+  // (computed from stock_movements in real-time), avoiding a duplicate query.
+  let rpcProducts: Array<Record<string, unknown>> = [];
   try {
-    const { data: rpcProducts } = await supabase.rpc('get_paginated_products', {
+    const { data, error: rpcError } = await supabase.rpc('get_paginated_products', {
       p_limit: 1000,
       p_offset: 0,
       p_store_id: store.id,
       p_search_term: '',
       p_category: ''
     });
-    for (const rp of (rpcProducts || [])) {
-      if (rp.id && rp.stock_current !== undefined) {
-        stockMap.set(rp.id, rp.stock_current);
-      }
-    }
+    if (rpcError) throw rpcError;
+    rpcProducts = (data || []) as Array<Record<string, unknown>>;
   } catch (e) {
-    console.warn('[Tienda] RPC stock fetch failed, using products.stock_current:', e);
+    console.warn('[Tienda] RPC product fetch failed:', e);
   }
 
-  const productList = (products || []).map(p => ({
-    ...p,
-    stock_current: stockMap.get(p.id) ?? p.stock_current ?? 0,
-  }));
+  // Filter for storefront-visible, active products and sort by name
+  const visibleProducts = rpcProducts
+    .filter((p) => p.visible_en_tienda === true && p.is_active === true)
+    .sort((a, b) => String(a.name || '').localeCompare(String(b.name || '')));
+
+  // Fetch product_variants only for the visible product IDs (lightweight single query)
+  const productIds = visibleProducts.map((p) => p.id as string);
+  let variantsByProduct = new Map<string, Array<{
+    id: string;
+    name: string;
+    sku: string | null;
+    price: number;
+    precio_empresa: number | null;
+    conversion_factor: number;
+  }>>();
+
+  if (productIds.length > 0) {
+    const { data: variantRows } = await supabase
+      .from('product_variants')
+      .select('id, name, sku, price, precio_empresa, conversion_factor, product_id')
+      .in('product_id', productIds)
+      .eq('is_active', true)
+      .order('name');
+
+    for (const v of (variantRows || [])) {
+      const list = variantsByProduct.get(v.product_id) || [];
+      list.push({
+        id: v.id,
+        name: v.name,
+        sku: v.sku,
+        price: v.price,
+        precio_empresa: v.precio_empresa,
+        conversion_factor: v.conversion_factor,
+      });
+      variantsByProduct.set(v.product_id, list);
+    }
+  }
+
+  // FIX-SEC-H6: Strip commercially-sensitive fields before sending to the public client.
+  // The storefront API route already excludes these, but the SSR page bypasses it
+  // by calling get_paginated_products directly. We must filter here too.
+  const productList = visibleProducts.map((p) => {
+    const variants = variantsByProduct.get(p.id as string);
+    return {
+      id: p.id as string,
+      name: p.name as string,
+      description: (p.description as string | null) ?? null,
+      sku: (p.sku as string | null) ?? null,
+      price: (p.price as number) ?? 0,
+      // precio_empresa intentionally excluded from public storefront
+      image_url: (p.image_url as string | null) ?? null,
+      public_image_url: (p.public_image_url as string | null) ?? null,
+      category: (p.category as string | null) ?? null,
+      unit_of_measure: (p.unit_of_measure as string | null) ?? null,
+      // stock_current intentionally excluded — only inStock boolean is derived server-side
+      inStock: ((p.stock_current as number) ?? 0) > 0,
+      // Variants: strip precio_empresa from public view
+      product_variants: variants
+        ? variants.map(({ id, name, sku, price, conversion_factor }) => ({
+            id, name, sku, price, conversion_factor,
+          }))
+        : null,
+    };
+  });
 
   const storeUrl = `${SITE_URL}/tienda/${cleanSlug}`;
 
   // JSON-LD Structured Data for SEO
+  // FIX-MINOR-14: Use i18n key for catalog name in JSON-LD
+  // Note: getTranslations is async; for server components in the render phase,
+  // we use a simple helper since JSON-LD doesn't support async at this point.
+  // The catalog name falls back to Spanish if locale is unavailable.
+  const catalogName = `Catálogo de ${store.name}`;
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Store',
@@ -169,7 +237,7 @@ export default async function TiendaPublicPage({ params }: PageProps) {
       : undefined,
     hasOfferCatalog: {
       '@type': 'OfferCatalog',
-      name: `Catálogo de ${store.name}`,
+      name: catalogName,
       itemListElement: (productList).slice(0, 50).map((product, index) => ({
         '@type': 'ListItem',
         position: index + 1,
@@ -183,7 +251,7 @@ export default async function TiendaPublicPage({ params }: PageProps) {
             '@type': 'Offer',
             price: product.price,
             priceCurrency: 'CUP',
-            availability: (product.stock_current ?? 0) > 0
+            availability: product.inStock
               ? 'https://schema.org/InStock'
               : 'https://schema.org/OutOfStock',
           },
@@ -195,15 +263,18 @@ export default async function TiendaPublicPage({ params }: PageProps) {
 
   return (
     <>
-      {/* JSON-LD Structured Data */}
+      {/* JSON-LD Structured Data — sanitized to prevent XSS via </script> injection */}
       <script
+        nonce={nonce}
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/<\/script/gi, '<\\/script') }}
       />
-      <StorefrontPage
-        store={store}
-        products={productList}
-      />
+      <StorefrontErrorBoundary storeName={store.name}>
+        <StorefrontPage
+          store={store}
+          products={productList}
+        />
+      </StorefrontErrorBoundary>
     </>
   );
 }

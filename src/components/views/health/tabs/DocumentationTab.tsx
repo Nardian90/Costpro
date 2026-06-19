@@ -74,14 +74,10 @@ export const DocumentationTab: React.FC<DocumentationTabProps> = ({ data }) => {
   useEffect(() => {
     if (selectedDoc && selectedDoc.endsWith('.md')) {
       let cancelled = false;
-
-      const timer = setTimeout(() => {
-        if (!cancelled) {
-          // eslint-disable-next-line react-hooks/set-state-in-effect
-      setLoading(true);
-          setFetchedContent(null);
-        }
-      }, 0);
+      queueMicrotask(() => {
+        setLoading(true);
+        setFetchedContent(null);
+      });
 
       fetch(`/api/help-docs?path=${encodeURIComponent(selectedDoc)}`)
         .then(res => {
@@ -102,10 +98,7 @@ export const DocumentationTab: React.FC<DocumentationTabProps> = ({ data }) => {
           }
         });
 
-      return () => {
-        cancelled = true;
-        clearTimeout(timer);
-      };
+      return () => { cancelled = true; };
     }
   }, [selectedDoc]);
 

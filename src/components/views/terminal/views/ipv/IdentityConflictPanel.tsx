@@ -63,7 +63,7 @@ export function IdentityConflictPanel() {
       <div className="flex justify-between items-center">
         <div>
           <h3 className="text-lg font-black tracking-tight flex items-center gap-2">
-            <AlertTriangle className="w-5 h-5 text-orange-500" />
+            <AlertTriangle className="w-5 h-5 text-warning" />
             Conflictos de Identidad
           </h3>
           <p className="text-muted-foreground text-xs font-medium uppercase tracking-wider">
@@ -104,8 +104,8 @@ export function IdentityConflictPanel() {
                   </TableCell>
                   <TableCell>
                     <div className="flex items-start gap-2">
-                      <div className="mt-0.5 p-1 rounded bg-orange-500/10 shrink-0">
-                        <AlertCircle className="w-3.5 h-3.5 text-orange-500" />
+                      <div className="mt-0.5 p-1 rounded bg-warning/10 shrink-0">
+                        <AlertCircle className="w-3.5 h-3.5 text-warning" />
                       </div>
                       <p className="text-xs font-medium leading-relaxed">
                         {conflict.detalle}
@@ -116,7 +116,7 @@ export function IdentityConflictPanel() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="neu-btn h-8 px-3 text-xs gap-2 hover:bg-green-500/10 hover:text-green-500"
+                      className="neu-btn h-8 px-3 text-xs gap-2 hover:bg-success/10 hover:text-success"
                       onClick={() => handleResolve(conflict.id)}
                     >
                       <CheckCircle className="w-3.5 h-3.5" />
@@ -129,7 +129,7 @@ export function IdentityConflictPanel() {
               <TableRow>
                 <TableCell colSpan={4} className="h-48 text-center">
                   <div className="flex flex-col items-center justify-center gap-2 opacity-40">
-                    <CheckCircle className="w-10 h-10 text-green-500" />
+                    <CheckCircle className="w-10 h-10 text-success" />
                     <p className="text-sm font-bold uppercase tracking-widest">Sin conflictos pendientes</p>
                   </div>
                 </TableCell>

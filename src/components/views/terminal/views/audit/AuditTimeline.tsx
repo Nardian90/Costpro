@@ -4,13 +4,14 @@ import AuditEventCard from './AuditEventCard';
 import { format, isToday, isYesterday } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { formatDate } from '@/lib/utils';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 
 interface AuditTimelineProps {
   logs: AuditLog[];
 }
 
 export default function AuditTimeline({ logs }: AuditTimelineProps) {
+  const prefersReducedMotion = useReducedMotion();
   const [visibleCount, setVisibleCount] = React.useState(50);
 
   const groupedLogs = useMemo(() => {
@@ -63,8 +64,8 @@ export default function AuditTimeline({ logs }: AuditTimelineProps) {
             <motion.div
               key={dateStr}
               initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95 }}
+              animate={prefersReducedMotion ? {} : { opacity: 1, y: 0 }}
+              exit={prefersReducedMotion ? {} : { opacity: 0, scale: 0.95 }}
               className="mb-12 last:mb-0"
             >
               <div className="sticky top-0 z-20 py-2 bg-background/80 backdrop-blur-md mb-6">
@@ -85,7 +86,7 @@ export default function AuditTimeline({ logs }: AuditTimelineProps) {
 
       {visibleCount < logs.length && (
         <div className="flex justify-center mt-8 pb-10">
-          <button
+          <button type="button"
             onClick={() => setVisibleCount(prev => prev + 50)}
             className="px-8 py-3 rounded-full bg-primary/10 text-primary border border-primary/20 font-black uppercase text-xs tracking-widest hover:bg-primary hover:text-foreground transition-all shadow-lg hover:shadow-primary/25"
           >

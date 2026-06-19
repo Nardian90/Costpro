@@ -2,6 +2,9 @@ import { type NextRequest } from "next/server";
 import { supabase } from "@/lib/supabaseClient";
 
 const isSupabaseConfigured = !!(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+// FIX-AUDIT-3: Dev bypass only works when explicitly enabled via env var AND NOT in production
+// SECURITY: Even if ENABLE_DEV_BYPASS=true is accidentally set in production, it's blocked
+const isDevBypassEnabled = process.env.ENABLE_DEV_BYPASS === 'true' && process.env.NODE_ENV !== 'production';
 
 /**
  * Helper to get the user session in API Route Handlers.
@@ -13,8 +16,9 @@ export async function getServerSession(request: NextRequest) {
     if (authHeader?.startsWith("Bearer ")) {
       const token = authHeader.substring(7);
 
-      // DEV BYPASS: Accept dev-token-bypass when Supabase is not configured
-      if (!isSupabaseConfigured && token === 'dev-token-bypass') {
+      // DEV BYPASS: Accept dev-token-bypass when explicitly enabled via ENABLE_DEV_BYPASS=true
+      // This allows development/testing even when Supabase is configured
+      if (isDevBypassEnabled && token === 'dev-token-bypass') {
         return {
           user: {
             id: 'dev-admin-001',
@@ -26,14 +30,17 @@ export async function getServerSession(request: NextRequest) {
         };
       }
 
-      const { data: { user }, error } = await supabase.auth.getUser(token);
+      // If Supabase is configured, validate the JWT token
+      if (isSupabaseConfigured) {
+        const { data: { user }, error } = await supabase.auth.getUser(token);
 
-      if (!error && user) {
-        return { user, token };
-      }
+        if (!error && user) {
+          return { user, token };
+        }
 
-      if (error) {
-        console.error('[getServerSession] getUser error:', error.message);
+        if (error) {
+          console.error('[getServerSession] getUser error:', error.message);
+        }
       }
     }
 

@@ -227,21 +227,21 @@ const InteractiveCostMap = React.memo(function InteractiveCostMap({
       {isSimulating && (
         <div className={cn(
           'absolute top-3 left-3 z-10 flex items-center gap-1.5 px-2 py-1 rounded-md border',
-          simPhase === 'running' ? 'bg-emerald-500/10 border-emerald-500/20' :
-          simPhase === 'paused' ? 'bg-amber-500/10 border-amber-500/20' :
+          simPhase === 'running' ? 'bg-success/10 border-success/20' :
+          simPhase === 'paused' ? 'bg-warning/10 border-warning/20' :
           simPhase === 'error' ? 'bg-rose-500/10 border-rose-500/20' :
           'bg-primary/10 border-primary/20',
         )}>
           <div className={cn(
             'w-1.5 h-1.5 rounded-full',
-            simPhase === 'running' ? 'bg-emerald-500 animate-pulse' :
-            simPhase === 'paused' ? 'bg-amber-500' :
+            simPhase === 'running' ? 'bg-success animate-pulse' :
+            simPhase === 'paused' ? 'bg-warning' :
             simPhase === 'error' ? 'bg-rose-500 animate-pulse' : 'bg-primary',
           )} />
           <span className={cn(
             'text-[9px] font-bold uppercase tracking-widest',
-            simPhase === 'running' ? 'text-emerald-600 dark:text-emerald-400' :
-            simPhase === 'paused' ? 'text-amber-600 dark:text-amber-400' :
+            simPhase === 'running' ? 'text-success dark:text-emerald-400' :
+            simPhase === 'paused' ? 'text-warning dark:text-amber-400' :
             simPhase === 'error' ? 'text-rose-600 dark:text-rose-400' : 'text-primary',
           )}>
             {simPhase === 'running' ? 'Auditando...' : simPhase === 'paused' ? 'Pausado' : simPhase === 'error' ? 'Error detectado' : 'Completado'}
@@ -376,8 +376,8 @@ const InteractiveCostMap = React.memo(function InteractiveCostMap({
           <div
             className={cn(
               'h-full rounded-full transition-all duration-500 ease-out',
-              simPhase === 'complete' ? 'bg-gradient-to-r from-emerald-500 via-cyan-500 to-primary' :
-              simPhase === 'error' ? 'bg-gradient-to-r from-rose-500 to-amber-500' :
+              simPhase === 'complete' ? 'bg-gradient-to-r from-success via-cyan-500 to-primary' :
+              simPhase === 'error' ? 'bg-gradient-to-r from-rose-500 to-warning' :
               'bg-primary',
             )}
             style={{ width: `${completionPercent}%` }}

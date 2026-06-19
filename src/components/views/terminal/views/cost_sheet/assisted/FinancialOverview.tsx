@@ -40,7 +40,7 @@ const FinancialOverview = React.memo(function FinancialOverview({ metrics }: Fin
     {
       label: 'Utilidad',
       value: metrics.utilityPercent !== null ? (
-        <span className="text-xs font-black font-mono text-amber-600 dark:text-amber-400">
+        <span className="text-xs font-black font-mono text-warning dark:text-amber-400">
           {metrics.utilityPercent}%
         </span>
       ) : (

@@ -16,10 +16,10 @@ const CostSheetHeader: React.FC<CostSheetHeaderProps> = ({ header }) => {
         <h2 className="text-sm font-black tracking-[0.25em] text-slate-900 dark:text-foreground uppercase">
           MINISTERIO DE FINANZAS Y PRECIOS
         </h2>
-        <h3 className="text-xs font-bold tracking-widest text-slate-500 dark:text-slate-400 uppercase">
+        <h3 className="text-xs font-bold tracking-widest text-muted-foreground dark:text-muted-foreground uppercase">
           FICHA DE COSTOS Y GASTOS DE PRODUCTOS Y SERVICIOS
         </h3>
-        <p className="text-xs font-medium tracking-widest text-slate-400 uppercase">
+        <p className="text-xs font-medium tracking-widest text-muted-foreground uppercase">
           PARA LA EVALUACIÓN DE PRECIOS Y TARIFAS
         </p>
       </div>
@@ -50,7 +50,7 @@ const CostSheetHeader: React.FC<CostSheetHeaderProps> = ({ header }) => {
               { label: 'Precio de Venta', value: header.sale_price, highlight: true },
             ].map((item, idx) => (
               <div key={idx} className={cn("space-y-1", item.highlight && "col-span-1 sm:col-span-2 lg:col-span-1")}>
-                <span className="text-xs font-bold uppercase tracking-widest text-slate-400 block">
+                <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground block">
                   {item.label}
                 </span>
                 <div className={cn(

@@ -32,14 +32,14 @@ export const AccessibilityStatement: React.FC = () => {
         <section>
           <h3 className="text-sm font-black uppercase tracking-wider text-foreground mb-2">Estado de conformidad</h3>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div className="p-4 rounded-xl bg-green-500/5 border border-green-500/20 text-center">
-              <Eye className="w-5 h-5 text-green-500 mx-auto mb-2" />
-              <p className="text-xs font-bold text-green-600 uppercase">WCAG 2.1 AA</p>
+            <div className="p-4 rounded-xl bg-success/5 border border-success/20 text-center">
+              <Eye className="w-5 h-5 text-success mx-auto mb-2" />
+              <p className="text-xs font-bold text-success uppercase">WCAG 2.1 AA</p>
               <p className="text-[10px] text-muted-foreground mt-1">Parcialmente conforme</p>
             </div>
-            <div className="p-4 rounded-xl bg-blue-500/5 border border-blue-500/20 text-center">
-              <Shield className="w-5 h-5 text-blue-500 mx-auto mb-2" />
-              <p className="text-xs font-bold text-blue-600 uppercase">EN 301 549</p>
+            <div className="p-4 rounded-xl bg-primary/5 border border-primary/20 text-center">
+              <Shield className="w-5 h-5 text-primary mx-auto mb-2" />
+              <p className="text-xs font-bold text-primary uppercase">EN 301 549</p>
               <p className="text-[10px] text-muted-foreground mt-1">En proceso</p>
             </div>
             <div className="p-4 rounded-xl bg-purple-500/5 border border-purple-500/20 text-center">

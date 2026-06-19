@@ -28,7 +28,9 @@ export default function BarcodeScanner({ isOpen, onClose, onScan, products = [] 
 
   // Live search results filtered by name or SKU
   const results = useMemo(() => {
-    if (!trimmed || trimmed.length < 2) return [];
+    // POS-3b audit P0.4: min 1 char (no 2). SKUs de 1 dígito son válidos.
+    // Antes: trimmed.length < 2 → no permitía buscar SKU "1", "9", etc.
+    if (!trimmed) return [];
     return products.filter(p => {
       const nameMatch = p.name.toLowerCase().includes(trimmed);
       const skuMatch = p.sku && p.sku.toLowerCase().includes(trimmed);
@@ -129,7 +131,7 @@ export default function BarcodeScanner({ isOpen, onClose, onScan, products = [] 
           </div>
 
           {/* Live Search Results (only in name mode) */}
-          {searchMode === 'name' && trimmed.length >= 2 && results.length > 0 && (
+          {searchMode === 'name' && trimmed.length >= 1 && results.length > 0 && (
             <div className="border border-border rounded-xl overflow-hidden max-h-60 overflow-y-auto" role="listbox" aria-label="Resultados de búsqueda">
               {results.map((product) => (
                 <button
@@ -138,6 +140,7 @@ export default function BarcodeScanner({ isOpen, onClose, onScan, products = [] 
                   onClick={() => handleSelectProduct(product)}
                   className="w-full flex items-center justify-between px-4 py-3 hover:bg-primary/5 transition-colors border-b border-border/50 last:border-b-0 text-left"
                   role="option"
+                  aria-selected={false}
                   aria-label={`${product.name} — ${formatCurrency(product.price)}`}
                 >
                   <div className="flex-1 min-w-0">
@@ -156,7 +159,7 @@ export default function BarcodeScanner({ isOpen, onClose, onScan, products = [] 
           )}
 
           {/* No results message */}
-          {searchMode === 'name' && trimmed.length >= 2 && results.length === 0 && (
+          {searchMode === 'name' && trimmed.length >= 1 && results.length === 0 && (
             <div className="p-4 text-center border border-border rounded-xl bg-muted/30">
               <p className="text-xs text-muted-foreground font-medium">
                 No se encontraron productos con "{trimmed}"

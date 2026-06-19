@@ -39,13 +39,13 @@ import { CostSheetRow } from '@/types/cost-sheet';
 /* ── Error code config (shared with audit view) ── */
 const ERROR_CODE_CONFIG: Record<string, { icon: React.ElementType; label: string; color: string }> = {
     CYCLE:                   { icon: RefreshCw, label: 'Ciclo', color: 'text-violet-500 bg-violet-500/10' },
-    MISSING_REF:             { icon: Unplug, label: 'Ref. Faltante', color: 'text-red-500 bg-red-500/10' },
-    SEMANTIC_DISCREPANCY:   { icon: GitBranch, label: 'Discrepancia', color: 'text-orange-500 bg-orange-500/10' },
-    INVALID_FORMULA:         { icon: AlertOctagon, label: 'Fórmula Inválida', color: 'text-red-600 bg-red-600/10' },
+    MISSING_REF:             { icon: Unplug, label: 'Ref. Faltante', color: 'text-destructive bg-destructive/10' },
+    SEMANTIC_DISCREPANCY:   { icon: GitBranch, label: 'Discrepancia', color: 'text-warning bg-warning/10' },
+    INVALID_FORMULA:         { icon: AlertOctagon, label: 'Fórmula Inválida', color: 'text-destructive bg-destructive/10' },
     HARD_RULE_VIOLATION:     { icon: ShieldAlert, label: 'Regla Violada', color: 'text-rose-600 bg-rose-600/10' },
-    TRIVIAL_FORMULA:         { icon: FileWarning, label: 'Fórmula Trivial', color: 'text-amber-500 bg-amber-500/10' },
+    TRIVIAL_FORMULA:         { icon: FileWarning, label: 'Fórmula Trivial', color: 'text-warning bg-warning/10' },
     HIERARCHY:               { icon: GitBranch, label: 'Jerarquía', color: 'text-sky-500 bg-sky-500/10' },
-    EXTERNAL_LINK:           { icon: ArrowLeftRight, label: 'Enlace Externo', color: 'text-slate-400 bg-slate-400/10' },
+    EXTERNAL_LINK:           { icon: ArrowLeftRight, label: 'Enlace Externo', color: 'text-muted-foreground bg-muted/10' },
 };
 
 /* ── Severity styling ── */
@@ -57,9 +57,9 @@ const SEVERITY_STYLES: Record<string, { badge: string; border: string; bg: strin
         icon: AlertTriangle,
     },
     WARNING: {
-        badge: 'bg-amber-500/20 text-amber-600 border-amber-500/30',
-        border: 'border-l-amber-500',
-        bg: 'bg-amber-500/5',
+        badge: 'bg-warning/20 text-warning border-warning/30',
+        border: 'border-l-warning',
+        bg: 'bg-warning/5',
         icon: AlertCircle,
     },
     INFO: {
@@ -74,7 +74,7 @@ const SEVERITY_STYLES: Record<string, { badge: string; border: string; bg: strin
 function FormulaMatchBadge({ matches }: { matches: boolean | null | undefined }) {
     if (!matches) return null;
     return (
-        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 text-[10px] font-bold shrink-0">
+        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-success/10 border border-success/20 text-success text-[10px] font-bold shrink-0">
             <Check className="w-3 h-3" />
             Correcta según estándar
         </div>
@@ -245,9 +245,9 @@ export const ErrorDetailModal: React.FC<ErrorDetailModalProps> = ({
                 {/* ── Error Information ── */}
                 <div className={cn('rounded-2xl border border-border/50 p-4 space-y-3', severity.bg)}>
                     <div className="flex items-start gap-2.5">
-                        <SeverityIcon className={cn('w-5 h-5 mt-0.5 shrink-0', severity.badge.includes('destructive') ? 'text-destructive' : severity.badge.includes('amber') ? 'text-amber-500' : 'text-muted-foreground')} />
+                        <SeverityIcon className={cn('w-5 h-5 mt-0.5 shrink-0', severity.badge.includes('destructive') ? 'text-destructive' : severity.badge.includes('amber') ? 'text-warning' : 'text-muted-foreground')} />
                         <div className="flex-1 min-w-0">
-                            <p className={cn('text-sm font-medium leading-relaxed', severity.badge.includes('destructive') ? 'text-destructive/90' : severity.badge.includes('amber') ? 'text-amber-600/90' : 'text-muted-foreground')}>
+                            <p className={cn('text-sm font-medium leading-relaxed', severity.badge.includes('destructive') ? 'text-destructive/90' : severity.badge.includes('amber') ? 'text-warning/90' : 'text-muted-foreground')}>
                                 {error.message}
                             </p>
                         </div>
@@ -269,7 +269,7 @@ export const ErrorDetailModal: React.FC<ErrorDetailModalProps> = ({
                     </div>
 
                     {error.code === 'MISSING_REF' && (
-                        <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-3 text-xs text-blue-600/80 leading-relaxed flex items-start gap-2">
+                        <div className="bg-primary/10 border border-primary/20 rounded-xl p-3 text-xs text-primary/80 leading-relaxed flex items-start gap-2">
                             <Info className="w-4 h-4 shrink-0 mt-0.5" />
                             <span>
                                 Una referencia en la fórmula apunta a una fila que no existe o fue eliminada.

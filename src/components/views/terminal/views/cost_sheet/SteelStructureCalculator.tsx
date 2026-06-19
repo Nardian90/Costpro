@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import {
   Calculator,
   Info,
@@ -52,6 +52,7 @@ interface CalculationInputs {
 }
 
 export const SteelStructureCalculator: React.FC = () => {
+  const prefersReducedMotion = useReducedMotion();
   const [inputs, setInputs] = useState<CalculationInputs>({
     largo: 30,
     ancho: 20,
@@ -341,8 +342,8 @@ export const SteelStructureCalculator: React.FC = () => {
                 <motion.div
                   key="help"
                   initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
+                  animate={prefersReducedMotion ? { opacity: 1 } : { opacity: 1, y: 0 }}
+                  exit={prefersReducedMotion ? {} : { opacity: 0, y: -20 }}
                   className="bg-primary/5 rounded-3xl border border-primary/20 p-8 space-y-6"
                 >
                   <div className="flex items-center gap-4 border-b border-primary/10 pb-4">
@@ -389,8 +390,8 @@ export const SteelStructureCalculator: React.FC = () => {
                 <motion.div
                   key="results"
                   initial={{ opacity: 0, scale: 0.98 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.98 }}
+                  animate={prefersReducedMotion ? { opacity: 1 } : { opacity: 1, scale: 1 }}
+                  exit={prefersReducedMotion ? {} : { opacity: 0, scale: 0.98 }}
                   className="space-y-8"
                 >
                   {/* KPIs Principales */}
@@ -441,11 +442,11 @@ export const SteelStructureCalculator: React.FC = () => {
                           </div>
                           <div className="flex justify-between text-[9px] font-black text-muted-foreground uppercase tracking-widest">
                             <div className="text-left">
-                              <p className="text-green-500">Mínimo (-10%)</p>
+                              <p className="text-success">Mínimo (-10%)</p>
                               <p className="text-foreground">{formatNumber(results.rangoTon[0])} Ton</p>
                             </div>
                             <div className="text-right">
-                              <p className="text-red-500">Máximo (+10%)</p>
+                              <p className="text-destructive">Máximo (+10%)</p>
                               <p className="text-foreground">{formatNumber(results.rangoTon[1])} Ton</p>
                             </div>
                           </div>
@@ -480,8 +481,8 @@ export const SteelStructureCalculator: React.FC = () => {
                           <BreakdownRow label="Costo Base Estructura" value={formatCurrency(results.costoBase)} />
 
                           {results.rawKgm2 !== results.kgm2 && (
-                            <div className="mt-4 p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl flex gap-3">
-                              <AlertCircle className="w-4 h-4 text-amber-500 shrink-0" />
+                            <div className="mt-4 p-3 bg-warning/10 border border-warning/20 rounded-xl flex gap-3">
+                              <AlertCircle className="w-4 h-4 text-warning shrink-0" />
                               <p className="text-[10px] text-amber-700 font-bold leading-relaxed">
                                 EL SISTEMA HA APLICADO UN LÍMITE DE SEGURIDAD (SANITY CHECK) YA QUE EL VALOR TEÓRICO ({formatNumber(results.rawKgm2, 1)}) ESTABA FUERA DEL RANGO DE DISEÑO ESTÁNDAR (25-65 KG).
                               </p>
@@ -513,9 +514,9 @@ interface ResultCardProps {
 const ResultCard: React.FC<ResultCardProps> = ({ label, value, unit, icon: Icon, description, variant }) => {
   const styles = {
     primary: "border-primary/20 bg-primary/5 text-primary",
-    success: "border-green-500/20 bg-green-500/5 text-green-500",
-    danger: "border-red-500/20 bg-red-500/5 text-red-500",
-    info: "border-blue-500/20 bg-blue-500/5 text-blue-500",
+    success: "border-success/20 bg-success/5 text-success",
+    danger: "border-destructive/20 bg-destructive/5 text-destructive",
+    info: "border-primary/20 bg-primary/5 text-primary",
   };
 
   return (
@@ -523,8 +524,8 @@ const ResultCard: React.FC<ResultCardProps> = ({ label, value, unit, icon: Icon,
       <CardContent className="p-6 flex flex-col items-center text-center space-y-2">
         <div className={cn("p-2 rounded-xl mb-1",
           variant === 'primary' ? "bg-primary/10" :
-          variant === 'success' ? "bg-green-500/10" :
-          variant === 'danger' ? "bg-red-500/10" : "bg-blue-500/10"
+          variant === 'success' ? "bg-success/10" :
+          variant === 'danger' ? "bg-destructive/10" : "bg-primary/10"
         )}>
           <Icon className="w-5 h-5" />
         </div>
@@ -542,7 +543,7 @@ const ResultCard: React.FC<ResultCardProps> = ({ label, value, unit, icon: Icon,
 const BreakdownRow: React.FC<{ label: string; value: string; warning?: boolean }> = ({ label, value, warning }) => (
   <div className="flex justify-between items-center py-2 border-b border-border/30 last:border-0">
     <span className="text-[10px] font-bold text-muted-foreground uppercase">{label}</span>
-    <span className={cn("text-xs font-black", warning ? "text-amber-500" : "text-foreground")}>{value}</span>
+    <span className={cn("text-xs font-black", warning ? "text-warning" : "text-foreground")}>{value}</span>
   </div>
 );
 

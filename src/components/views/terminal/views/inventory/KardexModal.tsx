@@ -117,15 +117,15 @@ export default function KardexModal({ product, isOpen, onClose }: KardexModalPro
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div className="p-3 rounded-xl bg-primary/5 border border-primary/10 text-center">
             <div className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Stock Actual</div>
-            <div className="text-2xl font-black text-primary">{product.stock_current || 0}</div>
+            <div className="text-2xl font-black text-primary tabular-nums">{product.stock_current || 0}</div>
           </div>
-          <div className="p-3 rounded-xl bg-green-500/5 border border-green-500/10 text-center">
+          <div className="p-3 rounded-xl bg-success/5 border border-success/10 text-center">
             <div className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Costo Prom.</div>
-            <div className="text-sm font-bold text-green-600">{formatCurrency(product.cost_average || product.cost_price || 0)}</div>
+            <div className="text-sm font-bold text-success tabular-nums">{formatCurrency(product.cost_average || product.cost_price || 0)}</div>
           </div>
           <div className="p-3 rounded-xl bg-muted/50 border border-border text-center">
             <div className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Valor Total</div>
-            <div className="text-sm font-bold">{formatCurrency((product.stock_current || 0) * (product.cost_average || product.cost_price || 0))}</div>
+            <div className="text-sm font-bold tabular-nums">{formatCurrency((product.stock_current || 0) * (product.cost_average || product.cost_price || 0))}</div>
           </div>
         </div>
 
@@ -170,19 +170,19 @@ export default function KardexModal({ product, isOpen, onClose }: KardexModalPro
                     <td className="px-3 py-2">
                       <span className={
                         entry.movement_type === 'sale' ? 'text-primary' :
-                        entry.movement_type === 'purchase' ? 'text-green-600' : 'text-amber-600'
+                        entry.movement_type === 'purchase' ? 'text-success' : 'text-warning'
                       }>
                         {entry.movement_type === 'sale' ? 'Venta' :
                          entry.movement_type === 'purchase' ? 'Compra' : 'Ajuste'}
                       </span>
                     </td>
-                    <td className="px-3 py-2 text-right font-bold text-green-600">
+                    <td className="px-3 py-2 text-right font-bold text-success tabular-nums">
                       {entry.entry > 0 ? `+${entry.entry}` : ''}
                     </td>
                     <td className="px-3 py-2 text-right font-bold text-destructive">
                       {entry.exit > 0 ? `-${entry.exit}` : ''}
                     </td>
-                    <td className="px-3 py-2 text-right font-black">{entry.running_balance}</td>
+                    <td className="px-3 py-2 text-right font-black tabular-nums">{entry.running_balance}</td>
                     <td className="px-3 py-2 text-[11px] text-muted-foreground truncate max-w-[120px]">
                       {entry.reference_doc || '—'}
                     </td>

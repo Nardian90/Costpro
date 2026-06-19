@@ -59,14 +59,14 @@ export function Pick3SimulationDashboard({ result, initialBankroll }: Pick3Simul
             <div className="flex flex-wrap gap-4">
               <div className="space-y-1">
                 <p className="text-[10px] font-black uppercase opacity-50">Profit/Loss Total</p>
-                <p className={cn("text-2xl font-black italic", result.netProfit >= 0 ? "text-emerald-500" : "text-red-500")}>
+                <p className={cn("text-2xl font-black italic", result.netProfit >= 0 ? "text-success" : "text-destructive")}>
                   {result.netProfit >= 0 ? "+" : ""}{formatMoney(result.netProfit)}
                 </p>
               </div>
               <div className="h-12 w-px bg-primary/10" />
               <div className="space-y-1">
                 <p className="text-[10px] font-black uppercase opacity-50">ROI Simulado</p>
-                <p className="text-2xl font-black italic text-blue-500">{result.roi.toFixed(1)}%</p>
+                <p className="text-2xl font-black italic text-primary">{result.roi.toFixed(1)}%</p>
               </div>
             </div>
 
@@ -120,11 +120,11 @@ export function Pick3SimulationDashboard({ result, initialBankroll }: Pick3Simul
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1">
                 <p className="text-[9px] font-black uppercase opacity-50">Drawdown Máximo</p>
-                <p className="text-lg font-black text-red-500 italic">{result.maxDrawdown.toFixed(1)}%</p>
+                <p className="text-lg font-black text-destructive italic">{result.maxDrawdown.toFixed(1)}%</p>
               </div>
               <div className="space-y-1">
                 <p className="text-[9px] font-black uppercase opacity-50">Aciertos Totales</p>
-                <p className="text-lg font-black text-emerald-500 italic">{result.totalWins} / {result.totalBets / 3}</p>
+                <p className="text-lg font-black text-success italic">{result.totalWins} / {result.totalBets / 3}</p>
               </div>
             </div>
           </div>
@@ -153,7 +153,7 @@ export function Pick3SimulationDashboard({ result, initialBankroll }: Pick3Simul
               </thead>
               <tbody className="divide-y border-t">
                 {result.dailyHistory.slice().reverse().map((day, i) => (
-                  <tr key={i} className={cn("group transition-colors", day.win ? "bg-emerald-500/5" : "hover:bg-muted/30")}>
+                  <tr key={i} className={cn("group transition-colors", day.win ? "bg-success/5" : "hover:bg-muted/30")}>
                     <td className="px-6 py-4">
                       <p className="text-[11px] font-black italic">{day.date}</p>
                       <p className="text-[9px] font-bold uppercase opacity-50">{day.draw_time}</p>
@@ -163,7 +163,7 @@ export function Pick3SimulationDashboard({ result, initialBankroll }: Pick3Simul
                         {day.bets.map((b, idx) => (
                           <Badge key={idx} variant="outline" className={cn(
                             "text-[9px] font-black italic rounded-lg px-2",
-                            day.win && (day.result.join('') === b.combination.join('') || [...day.result].sort().join('') === [...b.combination].sort().join('')) ? "bg-emerald-500 text-white border-none" : "bg-muted/50"
+                            day.win && (day.result.join('') === b.combination.join('') || [...day.result].sort().join('') === [...b.combination].sort().join('')) ? "bg-success text-white border-none" : "bg-muted/50"
                           )}>
                             {b.combination.join('')}
                           </Badge>
@@ -175,7 +175,7 @@ export function Pick3SimulationDashboard({ result, initialBankroll }: Pick3Simul
                         {day.result.map((n, idx) => (
                           <div key={idx} className={cn(
                             "w-6 h-6 rounded-lg flex items-center justify-center text-[11px] font-black italic",
-                            day.win ? "bg-emerald-500 text-white" : "bg-muted border border-border"
+                            day.win ? "bg-success text-white" : "bg-muted border border-border"
                           )}>
                             {n}
                           </div>
@@ -187,7 +187,7 @@ export function Pick3SimulationDashboard({ result, initialBankroll }: Pick3Simul
                         <div className="flex flex-col items-center gap-1">
                           <Badge className={cn(
                             "text-[9px] font-black uppercase italic",
-                            day.isStraight ? "bg-emerald-600" : "bg-blue-600"
+                            day.isStraight ? "bg-success" : "bg-primary"
                           )}>
                             {day.isStraight ? "Straight" : "Box"}
                           </Badge>
@@ -198,7 +198,7 @@ export function Pick3SimulationDashboard({ result, initialBankroll }: Pick3Simul
                       )}
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <p className={cn("text-xs font-black italic", day.profit >= 0 ? "text-emerald-600" : "text-red-500/60")}>
+                      <p className={cn("text-xs font-black italic", day.profit >= 0 ? "text-success" : "text-destructive/60")}>
                         {day.profit >= 0 ? "+" : ""}{day.profit.toFixed(0)}
                       </p>
                     </td>

@@ -20,7 +20,7 @@ export const CostSheetBanner = ({ viewMode, setViewMode, onOpenActions }: CostSh
       <div className="flex items-center justify-between w-full sm:w-auto gap-4">
         <div className="flex items-center gap-2">
             {onOpenActions && (
-                <button
+                <button type="button"
                     onClick={onOpenActions}
                     className="neu-raised-sm w-11 h-11 flex items-center justify-center shrink-0 active:scale-90 transition-transform"
                     aria-label="Abrir menú de acciones"

@@ -1,37 +1,32 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getSupabaseAuthClient } from "@/lib/supabaseClient";
-import { getServerSession } from "@/lib/auth";
 import { InventoryMovement } from "@/contracts/inventory";
-import { rateLimit } from '@/lib/rate-limit';
+import { withStoreAccess, type AuthenticatedSession } from '@/lib/auth-middleware';
 import { withTracing } from '@/lib/observability';
+import { createApiError } from '@/lib/api-errors';
 
 async function getHandler(
   request: NextRequest,
-  { params }: { params: Promise<{ productId: string }> }
+  session: AuthenticatedSession
 ) {
-  const session = await getServerSession(request);
-
-  if (!session || !session.token) {
-    return NextResponse.json(
-      { error: "Unauthorized", message: "No active session" },
-      { status: 401 }
-    );
-  }
-
-  const clientId = request.headers.get('x-forwarded-for') || session.user.id;
-  const { allowed } = await rateLimit(clientId);
-  if (!allowed) return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
-
-  const { productId } = await params;
   const { searchParams } = new URL(request.url);
-  // FIX-SEC-007/008: Clamp pagination parameters to prevent abuse
+  // FIX-SEC-H1: storeId is now mandatory (enforced by withStoreAccess)
+  const storeId = searchParams.get("storeId") || searchParams.get("store_id");
+
+  const { productId } = await (async () => {
+    // Extract productId from URL path
+    const parts = new URL(request.url).pathname.split('/');
+    const id = parts[parts.length - 2]; // /api/inventory/[productId]/history
+    return { productId: id };
+  })();
+
+  // FIX-SEC-H1: Clamp pagination parameters to prevent abuse
   const pageSize = Math.min(100, Math.max(1, parseInt(searchParams.get("pageSize") || "20", 10) || 20));
   const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10) || 1);
-  const storeId = searchParams.get("storeId");
 
   if (!productId) {
     return NextResponse.json(
-      { error: "Bad Request", message: "Missing productId." },
+      createApiError('MISSING_PRODUCT_ID'),
       { status: 400 }
     );
   }
@@ -52,7 +47,7 @@ async function getHandler(
     if (error) {
       return NextResponse.json(
         // FIX-SEC-019: Hide error details in production
-        { error: "Internal Server Error", message: (process.env.NODE_ENV !== 'production' || !!process.env.VITEST) ? error.message : undefined },
+        createApiError('INTERNAL_ERROR'),
         { status: 500 }
       );
     }
@@ -76,14 +71,18 @@ async function getHandler(
         totalPages,
       },
     });
-  } catch (err) {
+  } catch (err: unknown) {
     const errorMessage = err instanceof Error ? err.message : "Unknown error";
     return NextResponse.json(
       // FIX-SEC-019: Hide error details in production
-      { error: "Internal Server Error", message: (process.env.NODE_ENV !== 'production' || !!process.env.VITEST) ? errorMessage : undefined },
+      createApiError('INTERNAL_ERROR'),
       { status: 500 }
     );
   }
 }
 
-export const GET = withTracing(getHandler as any, 'GET /api/inventory/[productId]/history');
+// FIX-SEC-H1: Wrap with withStoreAccess to enforce store membership validation
+export const GET = withTracing(
+  withStoreAccess(getHandler as any) as any,
+  'GET /api/inventory/[productId]/history'
+);

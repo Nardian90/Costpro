@@ -63,10 +63,10 @@ export default function SalesCatalogCheckoutModal({
       <div className="py-4 space-y-4">
 
         {/* What will happen explanation */}
-        <div className="bg-amber-500/5 border border-amber-500/20 rounded-xl p-3 space-y-2">
+        <div className="bg-warning/5 border border-warning/20 rounded-xl p-3 space-y-2">
           <div className="flex items-center gap-2">
-            <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
-            <p className="text-xs font-bold text-amber-700 uppercase tracking-wider">Qué sucederá al confirmar</p>
+            <AlertTriangle className="w-4 h-4 text-warning shrink-0" />
+            <p className="text-xs font-bold text-warning uppercase tracking-wider">Qué sucederá al confirmar</p>
           </div>
           <ul className="space-y-1.5 text-xs text-muted-foreground">
             <li className="flex items-start gap-2">
@@ -78,7 +78,7 @@ export default function SalesCatalogCheckoutModal({
               <span>Se descontará el inventario (stock) correspondiente de cada producto de forma permanente.</span>
             </li>
             <li className="flex items-start gap-2">
-              <ShoppingCart className="w-3.5 h-3.5 text-blue-600 mt-0.5 shrink-0" />
+              <ShoppingCart className="w-3.5 h-3.5 text-primary mt-0.5 shrink-0" />
               <span>Se generará un registro de venta con número de transacción único en el sistema.</span>
             </li>
           </ul>
@@ -87,7 +87,7 @@ export default function SalesCatalogCheckoutModal({
         {/* Summary */}
         <div className="text-center space-y-2">
           <p className="font-bold">Total de la venta</p>
-          <p className="text-2xl font-black text-primary">
+          <p className="text-2xl font-black text-primary tabular-nums">
             {formatCurrency(subtotal)}
           </p>
         </div>
@@ -125,13 +125,13 @@ export default function SalesCatalogCheckoutModal({
 
         {showMixedColumns && (
           <div className="grid grid-cols-2 gap-3">
-            <div className="bg-emerald-500/5 rounded-xl p-3 border border-emerald-500/20 text-center">
-              <span className="text-[10px] font-black uppercase text-emerald-600 tracking-widest block">Efectivo</span>
-              <span className="text-lg font-black text-emerald-600">{formatCurrency(cashTotal)}</span>
+            <div className="bg-success/5 rounded-xl p-3 border border-success/20 text-center">
+              <span className="text-[10px] font-black uppercase text-success tracking-widest block">Efectivo</span>
+              <span className="text-lg font-black text-success">{formatCurrency(cashTotal)}</span>
             </div>
-            <div className="bg-blue-500/5 rounded-xl p-3 border border-blue-500/20 text-center">
-              <span className="text-[10px] font-black uppercase text-blue-600 tracking-widest block">Transferencia</span>
-              <span className="text-lg font-black text-blue-600">{formatCurrency(transferTotal)}</span>
+            <div className="bg-primary/5 rounded-xl p-3 border border-primary/20 text-center">
+              <span className="text-[10px] font-black uppercase text-primary tracking-widest block">Transferencia</span>
+              <span className="text-lg font-black text-primary">{formatCurrency(transferTotal)}</span>
             </div>
           </div>
         )}

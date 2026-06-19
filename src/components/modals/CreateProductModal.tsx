@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import { Camera, ImagePlus, X, Upload, Loader2, Package, Plus, Trash2, Info } from 'lucide-react';
 import { compressImage, validateImageFile } from '@/lib/image-compress';
 import { generateEAN13FromSKU } from '@/lib/barcode-utils';
+import { supabase } from '@/lib/supabaseClient';
 
 interface VariantForm {
   name: string;
@@ -38,6 +39,24 @@ export const CreateProductModal = () => {
   const [form, setForm] = useState(initialFormState);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+
+  // CM-2.1: Cargar categorías existentes para autocompletado (datalist)
+  const [existingCategories, setExistingCategories] = useState<string[]>([]);
+  useEffect(() => {
+    if (!isCreateProductModalOpen || !user?.activeStoreId) return;
+    supabase
+      .from('products')
+      .select('category')
+      .eq('store_id', user.activeStoreId)
+      .not('category', 'is', null)
+      .neq('category', '')
+      .then(({ data }) => {
+        if (data) {
+          const unique = Array.from(new Set(data.map(d => d.category).filter(Boolean))) as string[];
+          setExistingCategories(unique.sort());
+        }
+      });
+  }, [isCreateProductModalOpen, user?.activeStoreId]);
   const [compressedSize, setCompressedSize] = useState<number | null>(null);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [showVariants, setShowVariants] = useState(false);
@@ -96,10 +115,10 @@ export const CreateProductModal = () => {
       setSelectedImage(compressed);
       setCompressedSize(compressed.size);
       toast.success(`Imagen optimizada: ${(file.size / 1024).toFixed(0)} KB → ${(compressed.size / 1024).toFixed(0)} KB (${savings}% reducción)`);
-    } catch (err: any) {
+    } catch (err: unknown) {
       // Keep original if compression fails validation (e.g., too small dimensions)
       setSelectedImage(file);
-      toast.warning(err?.message || 'No se pudo optimizar la imagen. Se guardará tal cual.');
+      toast.warning((err instanceof Error ? err.message : '') || 'No se pudo optimizar la imagen. Se guardará tal cual.');
     }
   }, [imagePreview]);
 
@@ -209,7 +228,7 @@ export const CreateProductModal = () => {
           await catalogService.uploadProductImage(productId, selectedImage);
           const vCount = validVariants.length > 0 ? ` con ${validVariants.length} variante(s)` : '';
           toast.success(`Producto creado con imagen${vCount}`);
-        } catch (imgError: any) {
+        } catch (imgError: unknown) {
           console.error('Error uploading image:', imgError);
           toast.warning('Producto creado, pero la imagen no se pudo subir.');
         } finally {
@@ -220,8 +239,9 @@ export const CreateProductModal = () => {
         toast.success(`Producto creado con éxito${vCount}`);
       }
       handleClose();
-    } catch (error: any) {
-      toast.error(error.message || 'Error al crear producto');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Error al crear producto';
+      toast.error(message);
     }
   };
 
@@ -247,7 +267,7 @@ export const CreateProductModal = () => {
 
           {/* Image Section */}
           <div className="space-y-1.5">
-            <label className="text-xs font-black uppercase tracking-widest ml-1" htmlFor="product-image-input">Imagen del Producto</label>
+            <label className="text-xs font-black uppercase tracking-widest ml-1">Imagen del Producto</label>
             {imagePreview ? (
               <div className="relative group rounded-xl border border-border overflow-hidden bg-muted/10">
                 <img
@@ -268,7 +288,7 @@ export const CreateProductModal = () => {
                     Original: {((selectedImage as any).size / 1024).toFixed(0)} KB
                   </span>
                   {compressedSize && (
-                    <span className="px-2 py-1 bg-green-600/80 rounded-lg text-[10px] text-white font-semibold">
+                    <span className="px-2 py-1 bg-success/80 rounded-lg text-[10px] text-foreground font-semibold">
                       Optimizada: {(compressedSize / 1024).toFixed(0)} KB
                     </span>
                   )}
@@ -298,7 +318,7 @@ export const CreateProductModal = () => {
             )}
 
             <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" onChange={handleCameraCapture} className="hidden" aria-hidden="true" />
-            <input ref={galleryInputRef} type="file" id="product-image-input" aria-label="Seleccionar imagen" accept="image/*" onChange={handleGallerySelect} className="hidden" aria-hidden="true" />
+            <input ref={galleryInputRef} type="file" accept="image/*" onChange={handleGallerySelect} className="hidden" aria-hidden="true" />
             <p className="text-[10px] text-muted-foreground italic ml-1">
               Máx. 10 MB. Se optimiza automáticamente a WebP (máx. 1024px, &lt; 200 KB, mín. 100×100px).
             </p>
@@ -321,7 +341,30 @@ export const CreateProductModal = () => {
             <div className="space-y-1.5">
               <label htmlFor="product-sku" className="text-xs font-black uppercase tracking-widest ml-1 flex justify-between">
                 <span>SKU</span>
-                <span className="text-xs text-primary/70 italic">Único en tienda</span>
+                {/* CM-4.4: Botón para autogenerar SKU secuencial */}
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (!user?.activeStoreId) return;
+                    // Generar SKU secuencial: contar productos existentes + 1
+                    try {
+                      const { count } = await supabase
+                        .from('products')
+                        .select('id', { count: 'exact', head: true })
+                        .eq('store_id', user.activeStoreId);
+                      const nextNum = (count ?? 0) + 1;
+                      // Formato: PROD-0001, PROD-0002, etc.
+                      const generatedSku = `PROD-${String(nextNum).padStart(4, '0')}`;
+                      setForm({ ...form, sku: generatedSku });
+                      toast.success(`SKU generado: ${generatedSku}`);
+                    } catch {
+                      toast.error('No se pudo generar SKU');
+                    }
+                  }}
+                  className="text-xs text-primary hover:underline italic"
+                >
+                  ↻ Auto-generar
+                </button>
               </label>
               <input
                 id="product-sku"
@@ -330,7 +373,7 @@ export const CreateProductModal = () => {
                 value={form.sku}
                 onChange={(e) => setForm({ ...form, sku: e.target.value })}
                 className="neu-input w-full"
-                placeholder="SKU-001"
+                placeholder="SKU-001 o clic en Auto-generar"
               />
             </div>
             <div className="space-y-1.5">
@@ -353,15 +396,22 @@ export const CreateProductModal = () => {
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <label htmlFor="product-category" className="text-xs font-black uppercase tracking-widest ml-1">Categoría</label>
+              {/* CM-2.1: Autocompletado de categorías con datalist */}
               <input
                 id="product-category"
                 type="text"
+                list="product-categories-list"
                 aria-label="Categoría del producto"
                 value={form.category}
                 onChange={(e) => setForm({ ...form, category: e.target.value })}
                 className="neu-input w-full"
                 placeholder="Ropa"
               />
+              <datalist id="product-categories-list">
+                {existingCategories.map(cat => (
+                  <option key={cat} value={cat} />
+                ))}
+              </datalist>
             </div>
             <div className="space-y-1.5">
               <label htmlFor="product-unit" className="text-xs font-black uppercase tracking-widest ml-1">Unidad</label>
@@ -422,14 +472,14 @@ export const CreateProductModal = () => {
           {/* ---- Unit Variants Section ---- */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between ml-1">
-              <label className="text-xs font-black uppercase tracking-widest" htmlFor="variants-toggle">Variantes de Unidad</label>
+              <label className="text-xs font-black uppercase tracking-widest">Variantes de Unidad</label>
               <button
                 type="button"
                 onClick={() => { setShowVariants(!showVariants); if (!showVariants && variants.length === 0) addVariant(); }}
                 className="flex items-center gap-1 text-[10px] font-bold text-primary uppercase tracking-widest hover:underline"
               >
                 <Package className="w-3 h-3" />
-                <input id="variants-toggle" type="checkbox" className="sr-only" checked={showVariants} readOnly aria-label="Mostrar variantes" /> {showVariants ? "Ocultar" : "Agregar"}
+                {showVariants ? 'Ocultar' : 'Agregar'}
               </button>
             </div>
 

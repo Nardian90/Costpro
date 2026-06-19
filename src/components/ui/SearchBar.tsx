@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, Settings2, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn, isPerformanceTheme } from '@/lib/utils';
@@ -10,10 +10,16 @@ interface SearchBarProps {
   value: string;
   onChange: (value: string) => void;
   onClear?: () => void;
+  /** POS-2 MM-2: Se dispara al presionar Enter en el input. Si el handler
+   * retorna true, el SearchBar se limpia automáticamente (comportamiento
+   * típico de escáner: escaneas → se agrega → se limpia para el siguiente). */
+  onSubmit?: (value: string) => boolean | void;
   placeholder?: string;
   className?: string;
   children?: React.ReactNode; // Content for advanced filters
   showSettings?: boolean;
+  /** POS-2 MM-1/MM-2: ID explícito para foco programático desde atajos. */
+  inputId?: string;
   'aria-label'?: string;
   'aria-busy'?: boolean;
   'aria-controls'?: string;
@@ -26,10 +32,12 @@ const SearchBar: React.FC<SearchBarProps> = ({
   value: externalValue,
   onChange,
   onClear,
+  onSubmit,
   placeholder = 'Buscar...',
   className,
   children,
   showSettings = true,
+  inputId,
   'aria-label': ariaLabel,
   'aria-busy': ariaBusy,
   'aria-controls': ariaControls,
@@ -40,7 +48,13 @@ const SearchBar: React.FC<SearchBarProps> = ({
   const { theme } = useTheme();
   const [localValue, setLocalValue] = useState(externalValue);
   const [isExpanded, setIsExpanded] = useState(false);
-  const timeoutRef = useRef<any>(null);
+
+  // POS-3b audit P1.2: debounce movido a usePOSServerSearch (hook consumidor).
+  // Antes había doble debounce efectivo ~500ms: este setTimeout (300ms) +
+  // el de usePOSServerSearch (200ms). Ahora SearchBar solo actualiza el estado
+  // local y propaga inmediatamente al onChange. El consumidor decide si debouncing.
+  // Si un consumidor necesita debouncing, debe usar useDebounce de hooks/ui/useDebounce.ts
+  // en su lado (ver usePOSServerSearch.ts).
 
   // Sync local value with external value (e.g. if cleared by parent)
   useEffect(() => {
@@ -50,12 +64,9 @@ const SearchBar: React.FC<SearchBarProps> = ({
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
     setLocalValue(newValue);
-
-    // Manual debounce (300ms) for high performance
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    timeoutRef.current = setTimeout(() => {
-      onChange(newValue);
-    }, 300);
+    // Propagar inmediatamente (sin debounce local).
+    // Si el consumidor necesita debounce, lo implementa en su hook.
+    onChange(newValue);
   };
 
   const handleClear = () => {
@@ -64,12 +75,27 @@ const SearchBar: React.FC<SearchBarProps> = ({
     if (onClear) onClear();
   };
 
-  // Cleanup timeout on unmount
-  useEffect(() => {
-    return () => {
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    };
-  }, []);
+  // POS-2 MM-2: Enter en el input → onSubmit. Si retorna true, limpiar.
+  // Comportamiento de escáner: escaneas → Enter → se agrega → se limpia para el siguiente.
+  const handleSubmit = () => {
+    const trimmed = localValue.trim();
+    if (!trimmed || !onSubmit) return;
+    const shouldClear = onSubmit(trimmed);
+    if (shouldClear) {
+      // Limpiar inmediatamente
+      setLocalValue('');
+      onChange('');
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleSubmit();
+    }
+  };
+
+  // POS-3b audit P1.2: cleanup de timeout eliminado (ya no hay setTimeout local).
 
   return (
     <div className={cn('w-full space-y-3', className)}>
@@ -79,9 +105,11 @@ const SearchBar: React.FC<SearchBarProps> = ({
         </div>
 
         <input
+          id={inputId}
           type="text"
           value={localValue}
           onChange={handleChange}
+          onKeyDown={handleKeyDown}
           placeholder={placeholder}
           aria-label={ariaLabel}
           aria-busy={ariaBusy}
@@ -90,8 +118,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
           aria-expanded={ariaExpanded}
           role={role}
           className={cn(
-            "w-full !pl-12 !pr-24 !py-3.5 text-base sm:text-lg transition-all outline-none rounded-xl border border-border bg-background",
-            !isPerformanceTheme(theme) ? "neu-input" : "focus:border-primary focus:ring-1 focus:ring-primary/20 shadow-sm"
+            "w-full !pl-12 !pr-24 !py-3.5 text-base sm:text-lg transition-all outline-none rounded-xl border border-border bg-background focus:border-primary focus:ring-1 focus:ring-primary/20 shadow-sm"
           )}
         />
 

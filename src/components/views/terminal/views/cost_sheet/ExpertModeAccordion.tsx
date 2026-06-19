@@ -4,7 +4,7 @@ import React from 'react';
 import { HelpCircle, ChevronRight, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 
 interface ExpertModeAccordionProps {
   id: string;
@@ -31,6 +31,7 @@ export const ExpertModeAccordion: React.FC<ExpertModeAccordionProps> = ({
   completionPercent = 0,
   hasErrors = false
 }) => {
+  const prefersReducedMotion = useReducedMotion();
   const panelId = `panel-${id}`;
   const headerId = `header-${id}`;
 
@@ -63,8 +64,8 @@ export const ExpertModeAccordion: React.FC<ExpertModeAccordionProps> = ({
           <div className="flex flex-col items-start gap-1">
             <h3 className="text-sm font-black uppercase tracking-[0.2em] text-foreground flex items-center gap-2">
               {title}
-              {completionPercent === 100 && <CheckCircle2 className="w-4 h-4 text-green-500" />}
-              {hasErrors && <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />}
+              {completionPercent === 100 && <CheckCircle2 className="w-4 h-4 text-success" />}
+              {hasErrors && <div className="w-2 h-2 rounded-full bg-destructive animate-pulse" />}
             </h3>
           </div>
         </button>
@@ -104,11 +105,11 @@ export const ExpertModeAccordion: React.FC<ExpertModeAccordionProps> = ({
       <div className="h-1 w-full bg-muted/30 overflow-hidden">
         <motion.div
             initial={{ width: 0 }}
-            animate={{ width: `${completionPercent}%` }}
+            animate={prefersReducedMotion ? {} : { width: `${completionPercent}%` }}
             transition={{ duration: 0.5, ease: "easeOut" }}
             className={cn(
                 "h-full transition-colors duration-500",
-                completionPercent < 30 ? "bg-red-500" : completionPercent < 70 ? "bg-amber-500" : "bg-green-500"
+                completionPercent < 30 ? "bg-destructive" : completionPercent < 70 ? "bg-warning" : "bg-success"
             )}
         />
       </div>

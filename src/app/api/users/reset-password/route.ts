@@ -1,18 +1,10 @@
-import { createClient } from '@supabase/supabase-js';
+import { getSupabaseAdminSafe as getSupabaseAdmin } from '@/lib/supabase-admin';
 import { NextRequest, NextResponse } from 'next/server';
 import { withRole } from '@/lib/auth-middleware';
 import { rateLimit } from '@/lib/rate-limit';
 import { resetPasswordSchema, zodError } from '@/validation/api-schemas';
 import { validateOrigin } from '@/lib/csrf'; // FIX-SEC-023
 import { withTracing } from '@/lib/observability';
-
-
-function getSupabaseAdmin() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key) throw new Error('Configuración de Supabase incompleta');
-  return createClient(url, key, { auth: { autoRefreshToken: false, persistSession: false } });
-}
 
 
 const handler = withRole('admin', async (req, session) => {
@@ -25,8 +17,9 @@ const handler = withRole('admin', async (req, session) => {
 
   try {
     const supabaseAdmin = getSupabaseAdmin();
-
-
+    if (!supabaseAdmin) {
+      return NextResponse.json({ error: 'Error de configuración del servidor' }, { status: 500 });
+    }
 
     const { data: requesterProfile } = await supabaseAdmin
       .from('profiles')
@@ -80,8 +73,8 @@ const handler = withRole('admin', async (req, session) => {
       message: 'Se ha enviado un correo de recuperación al usuario.'
     });
 
-  } catch (error: any) {
-    return NextResponse.json({ error: (process.env.NODE_ENV !== 'production' || !!process.env.VITEST) ? error.message : 'Error interno del servidor' }, { status: 500 });
+  } catch (error: unknown) {
+    return NextResponse.json({ error: (process.env.NODE_ENV !== 'production' || !!process.env.VITEST) ? (error instanceof Error ? error.message : String(error)) : 'Error interno del servidor' }, { status: 500 });
   }
 });
 

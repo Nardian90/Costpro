@@ -39,15 +39,16 @@ export default function PriceSelectorModal({ isOpen, onClose, product, onSelect 
         <button
           type="button"
           onClick={() => onSelect(null)}
-          className="w-full flex items-center justify-between p-4 rounded-xl border-2 border-border hover:border-primary hover:bg-primary/5 active:scale-[0.99] transition-all text-left"
+          className="w-full flex items-center justify-between p-4 rounded-xl border-2 border-primary hover:border-primary hover:bg-primary/5 active:scale-[0.99] transition-all text-left"
           aria-label={`Unidad Base — ${formatCurrency(product.price)}`}
         >
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center">
-              <Tag className="w-5 h-5 text-muted-foreground" />
+            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+              <Tag className="w-5 h-5 text-primary" />
             </div>
             <div>
               <p className="font-black text-sm">Unidad Base</p>
+              <span className="text-[9px] font-black uppercase tracking-widest text-primary bg-primary/10 px-1.5 py-0.5 rounded-full">Recomendado</span>
               <p className="text-[10px] text-muted-foreground uppercase tracking-widest">
                 1 {product.unit_of_measure || 'ud'} — Precio estándar
               </p>

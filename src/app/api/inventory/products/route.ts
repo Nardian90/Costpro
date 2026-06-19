@@ -1,67 +1,32 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getSupabaseAuthClient } from "@/lib/supabaseClient";
-import { getServerSession } from "@/lib/auth";
+import { withStoreAccess, AuthenticatedSession } from '@/lib/auth-middleware';
 import { rateLimit } from '@/lib/rate-limit';
 import { withTracing } from '@/lib/observability';
 
-async function productsHandler(request: NextRequest) {
-  const session = await getServerSession(request);
-
-  if (!session || !session.token) {
-    return NextResponse.json(
-      { error: "Unauthorized", message: "No active session" },
-      { status: 401 }
-    );
-  }
-
-  // BUG-028/Pattern 1: Use session.user.id for rate limiting.
+async function productsHandler(request: NextRequest, session: AuthenticatedSession) {
   const clientId = session.user.id;
   const { allowed } = await rateLimit(clientId);
   if (!allowed) return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
 
   try {
-    const authClient = getSupabaseAuthClient(session.token);
+    // storeId is required and validated by withStoreAccess middleware
+    const { searchParams } = new URL(request.url);
+    const storeId = searchParams.get('storeId') || searchParams.get('store_id');
 
-    // Get storeId and role from user profile
-    const { data: profile, error: profileError } = await authClient
-      .from("profiles")
-      .select("store_id, active_store_id, role")
-      .eq("id", session.user.id)
-      .single();
-
-    if (profileError) {
-      console.error("Error fetching profile in /api/inventory/products:", profileError);
+    if (!storeId) {
       return NextResponse.json(
-        { error: "Internal Server Error", message: "Could not fetch user profile." },
-        { status: 500 }
+        { error: "Bad Request", message: "storeId es requerido" },
+        { status: 400 }
       );
     }
 
-    let effectiveStoreId = profile?.active_store_id || profile?.store_id;
-
-    // BUG-031: Handle admins with no assigned store.
-    if (!effectiveStoreId) {
-      if (profile?.role !== 'admin') {
-        return NextResponse.json(
-          { error: "Bad Request", message: "User is not assigned to a store." },
-          { status: 400 }
-        );
-      }
-
-      const requestedStoreId = request.nextUrl.searchParams.get('storeId');
-      if (!requestedStoreId) {
-        return NextResponse.json(
-          { error: "Bad Request", message: "Admin must specify ?storeId= to query inventory." },
-          { status: 400 }
-        );
-      }
-      effectiveStoreId = requestedStoreId;
-    }
+    const authClient = getSupabaseAuthClient(session.token);
 
     // Use the unified get_products_for_pos RPC to ensure consistent logic
     // for stock calculation and multi-store isolation across the entire app.
     const { data: mappedProducts, error } = await authClient.rpc('get_products_for_pos', {
-      p_store_id: effectiveStoreId
+      p_store_id: storeId
     });
 
     if (error) {
@@ -81,4 +46,4 @@ async function productsHandler(request: NextRequest) {
   }
 }
 
-export const GET = withTracing(productsHandler, 'GET /api/inventory/products');
+export const GET = withTracing(withStoreAccess(productsHandler) as any, 'GET /api/inventory/products');

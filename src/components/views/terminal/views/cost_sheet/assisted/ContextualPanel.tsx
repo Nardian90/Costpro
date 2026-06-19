@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useCallback, useMemo, useRef, useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import {
   X,
   GripVertical,
@@ -52,6 +52,7 @@ const ContextualPanel: React.FC<ContextualPanelProps> = ({
   calculatedHeader,
   calculatedAnnexes,
 }) => {
+  const prefersReducedMotion = useReducedMotion();
   const [panelWidth, setPanelWidth] = useState(420);
   const [isDragging, setIsDragging] = useState(false);
   const isResizing = useRef(false);
@@ -120,7 +121,7 @@ const ContextualPanel: React.FC<ContextualPanelProps> = ({
       const row13 = calculatedValues['13.1'];
       const row14 = calculatedValues['14.1'];
       if (row12?.total !== undefined) kpis.push({ label: 'Costo Total (F12)', value: formatCurrency(row12.total), color: 'text-primary' });
-      if (row13?.total !== undefined) kpis.push({ label: 'Utilidad (F13)', value: formatCurrency(row13.total), color: 'text-amber-600 dark:text-amber-400' });
+      if (row13?.total !== undefined) kpis.push({ label: 'Utilidad (F13)', value: formatCurrency(row13.total), color: 'text-warning dark:text-amber-400' });
       if (row14?.total !== undefined) kpis.push({ label: 'Precio (F14)', value: formatCurrency(row14.total), color: 'text-foreground' });
     }
 
@@ -203,8 +204,8 @@ const ContextualPanel: React.FC<ContextualPanelProps> = ({
       {isOpen && (
         <motion.div
           initial={{ width: 0, opacity: 0 }}
-          animate={{ width: panelWidth, opacity: 1 }}
-          exit={{ width: 0, opacity: 0 }}
+          animate={prefersReducedMotion ? { opacity: 1 } : { width: panelWidth, opacity: 1 }}
+          exit={prefersReducedMotion ? {} : { width: 0, opacity: 0 }}
           transition={{ type: 'spring', damping: 25, stiffness: 200 }}
           className="h-full border-l border-border/60 bg-card flex flex-col overflow-hidden shrink-0 relative"
         >
@@ -304,11 +305,11 @@ const ContextualPanel: React.FC<ContextualPanelProps> = ({
               {node.regulatoryTip && (
                 <motion.div
                   initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
+                  animate={prefersReducedMotion ? { opacity: 1 } : { opacity: 1, y: 0 }}
                   transition={{ delay: 0.1 }}
                   className="flex items-start gap-3 p-3 rounded-xl bg-amber-50 dark:bg-amber-950/20 border border-amber-200/50 dark:border-amber-800/30"
                 >
-                  <Sparkles className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                  <Sparkles className="w-4 h-4 text-warning shrink-0 mt-0.5" />
                   <div>
                     <p className="text-[11px] text-amber-900 dark:text-amber-200/80 leading-relaxed font-medium">
                       {node.regulatoryTip}
@@ -347,7 +348,7 @@ const ContextualPanel: React.FC<ContextualPanelProps> = ({
               <motion.div
                 key={node.id}
                 initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
+                animate={prefersReducedMotion ? { opacity: 1 } : { opacity: 1, y: 0 }}
                 transition={{ delay: 0.15 }}
               >
                 {renderEditor()}

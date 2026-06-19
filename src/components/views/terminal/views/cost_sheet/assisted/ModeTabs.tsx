@@ -26,7 +26,7 @@ const ModeTabs: React.FC<ModeTabsProps> = ({ activeMode, onModeChange }) => {
         const isActive = activeMode === mode;
         const info = MODE_LABELS[mode];
         return (
-          <button
+          <button type="button"
             key={mode}
             onClick={() => handleModeChange(mode)}
             className={cn(

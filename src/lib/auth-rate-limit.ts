@@ -12,8 +12,10 @@ const MAX_ATTEMPTS = 5;
 const WINDOW_MS = 15 * 60 * 1000; // 15 minutes
 const LOCKOUT_MS = 15 * 60 * 1000; // 15 minutes lockout
 
-// Cleanup old entries every 10 minutes
-setInterval(() => {
+// FIX-AUDIT-8: Removed setInterval leak — cleanup is now lazy inside checkAuthRateLimit()
+// This prevents timer leaks in serverless environments
+function lazyCleanup() {
+  if (attempts.size < 200) return; // Only cleanup when map grows
   const now = Date.now();
   for (const [key, attempt] of attempts) {
     if (!attempt.lockedUntil && now - attempt.firstAttemptAt > WINDOW_MS) {
@@ -22,9 +24,10 @@ setInterval(() => {
       attempts.delete(key);
     }
   }
-}, 10 * 60 * 1000);
+}
 
 export function checkAuthRateLimit(identifier: string): { allowed: boolean; retryAfterMs: number } {
+  lazyCleanup(); // FIX-AUDIT-8: Lazy cleanup on each call
   const now = Date.now();
   let attempt = attempts.get(identifier);
 

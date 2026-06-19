@@ -45,9 +45,9 @@ export default function CloseSessionPage() {
         if (!response.ok) throw new Error("Failed to fetch products");
         const data = await response.json();
         setProducts(data);
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error(error);
-        toast.error("Error al cargar productos: " + error.message)
+        toast.error("Error al cargar productos: " + (error instanceof Error ? error.message : String(error)))
       } finally {
         setIsLoading(false);
       }
@@ -135,9 +135,9 @@ export default function CloseSessionPage() {
       setCart(result.saleId, result.saleItems);
       router.push("/cashier");
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(error);
-      toast.error("Error al procesar el ajuste: " + error.message)
+      toast.error("Error al procesar el ajuste: " + (error instanceof Error ? error.message : String(error)))
     } finally {
       setIsSubmitting(false);
     }

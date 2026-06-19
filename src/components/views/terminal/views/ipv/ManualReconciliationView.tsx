@@ -124,8 +124,9 @@ export default function ManualReconciliationView({ transaction, onBack }: Manual
                 await db.bank_statements.update(transaction.referencia_origen, { estado_conciliacion: status });
 
                 toast.success("Línea revertida exitosamente");
-            } catch (error: any) {
-                toast.error(error.message || "Error al revertir la línea");
+            } catch (error: unknown) {
+                const message = error instanceof Error ? error.message : "Error al revertir la línea";
+                toast.error(message);
             }
         }
     };
@@ -191,7 +192,7 @@ export default function ManualReconciliationView({ transaction, onBack }: Manual
                     <ScrollArea className="flex-1">
                         <div className="p-4 space-y-3 pb-24">
                             {existingLines?.map(l => (
-                                <div key={l.id} className="p-4 border rounded-2xl flex flex-col gap-2 bg-background shadow-sm border-l-4 border-l-green-500">
+                                <div key={l.id} className="p-4 border rounded-2xl flex flex-col gap-2 bg-background shadow-sm border-l-4 border-l-success">
                                     <div className="flex justify-between items-start">
                                         <div>
                                             <p className="font-black text-xs text-foreground uppercase">{l.product_name}</p>
@@ -207,7 +208,7 @@ export default function ManualReconciliationView({ transaction, onBack }: Manual
                                                 {formatCurrencyCents(l.transfer_amount_cents)}T
                                             </Badge>
                                             {l.cash_amount_cents > 0 && (
-                                                <Badge variant="secondary" className="bg-green-50 text-green-700 text-[10px] font-black">
+                                                <Badge variant="secondary" className="bg-green-50 text-success text-[10px] font-black">
                                                     {formatCurrencyCents(l.cash_amount_cents)}E
                                                 </Badge>
                                             )}
@@ -232,12 +233,12 @@ export default function ManualReconciliationView({ transaction, onBack }: Manual
                                         <div className="flex flex-col gap-1">
                                             <div className="flex items-center gap-2">
                                                 <div className="flex items-center bg-background rounded-lg border px-2 py-1">
-                                                    <CreditCard className="w-3 h-3 text-blue-600 mr-2" />
+                                                    <CreditCard className="w-3 h-3 text-primary mr-2" />
                                                     <span className="text-[10px] font-black">{formatCurrencyCents(l.transfer_amount_cents || 0)}</span>
                                                 </div>
                                                 {l.cash_amount_cents! > 0 && (
                                                     <div className="flex items-center bg-background rounded-lg border px-2 py-1">
-                                                        <Banknote className="w-3 h-3 text-green-600 mr-2" />
+                                                        <Banknote className="w-3 h-3 text-success mr-2" />
                                                         <span className="text-[10px] font-black">{formatCurrencyCents(l.cash_amount_cents || 0)}</span>
                                                     </div>
                                                 )}
@@ -254,7 +255,7 @@ export default function ManualReconciliationView({ transaction, onBack }: Manual
                         <div className="flex items-center justify-between">
                             <div className="flex flex-col">
                                 <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Saldo T Pendiente</span>
-                                <span className={`text-lg font-black ${Math.abs(remainingTransfer) < 0.001 ? 'text-green-600' : 'text-orange-600'}`}>
+                                <span className={`text-lg font-black ${Math.abs(remainingTransfer) < 0.001 ? 'text-success' : 'text-warning'}`}>
                                     {formatCurrencyCents(remainingTransfer)}
                                 </span>
                             </div>

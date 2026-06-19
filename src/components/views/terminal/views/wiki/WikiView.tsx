@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import {
   Book, Search, ChevronLeft, ChevronRight,
   Home, Hash, List, Filter, ArrowRight,
@@ -31,6 +31,7 @@ import { WikiSearch } from './WikiSearch';
 import { WikiBreadcrumbs } from './WikiBreadcrumbs';
 
 export default function WikiView() {
+  const prefersReducedMotion = useReducedMotion();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<{
@@ -162,8 +163,8 @@ export default function WikiView() {
             <motion.div
               key={state.activeModule + (state.selectedId || '')}
               initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
+              animate={prefersReducedMotion ? {} : { opacity: 1, y: 0 }}
+              exit={prefersReducedMotion ? {} : { opacity: 0, y: -10 }}
               transition={{ duration: 0.2 }}
               className="mx-auto max-w-5xl"
             >

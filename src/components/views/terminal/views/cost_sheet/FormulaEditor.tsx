@@ -14,7 +14,7 @@ import {
   History,
   X
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { cn } from "@/lib/utils";
 import {
   Popover,
@@ -50,6 +50,7 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
   suggestions = [],
   onPendingChange
 }) => {
+  const prefersReducedMotion = useReducedMotion();
   const [value, setValue] = useState(initialValue);
   const [isFocused, setIsFocused] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -184,7 +185,7 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
 
         {/* C15: Inline warning for reserved name conflicts */}
         {reservedWarning && (
-          <div className="absolute -bottom-6 left-2 right-2 z-10 text-[10px] text-amber-600 dark:text-amber-400 font-medium truncate animate-in fade-in slide-in-from-top-1 duration-200" title={reservedWarning}>
+          <div className="absolute -bottom-6 left-2 right-2 z-10 text-[10px] text-warning dark:text-amber-400 font-medium truncate animate-in fade-in slide-in-from-top-1 duration-200" title={reservedWarning}>
             ⚠ {reservedWarning}
           </div>
         )}
@@ -193,7 +194,7 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
           <div className="flex items-center justify-end gap-0.5 pr-0.5 pb-0.5 sm:pb-0 animate-in fade-in slide-in-from-right-2 duration-200 shrink-0">
              <Popover>
                 <PopoverTrigger asChild>
-                  <button className="p-1 hover:bg-primary/20 text-primary rounded" title="Ayuda">
+                  <button type="button" className="p-1 hover:bg-primary/20 text-primary rounded" title="Ayuda">
                     <HelpCircle className="w-3 h-3.5" />
                   </button>
                 </PopoverTrigger>
@@ -229,7 +230,7 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
                 </PopoverContent>
              </Popover>
 
-             <button
+             <button type="button"
                onMouseDown={(e) => { e.preventDefault(); modalOpeningRef.current = true; setIsModalOpen(true); }}
                className="p-1 hover:bg-primary/20 text-primary rounded"
                title="Editor Avanzado"
@@ -237,16 +238,16 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
                 <Maximize2 className="w-3 h-3.5" />
              </button>
 
-             <button
+             <button type="button"
                onMouseDown={(e) => { e.preventDefault(); handleSave(value); }}
-               className="p-1 hover:bg-green-500/20 text-green-600 rounded"
+               className="p-1 hover:bg-success/20 text-success rounded"
                title="Guardar (Enter)"
              >
                 <Check className="w-3 h-3.5" />
              </button>
-             <button
+             <button type="button"
                onMouseDown={(e) => { e.preventDefault(); handleCancel(); }}
-               className="p-1 hover:bg-red-500/20 text-red-600 rounded"
+               className="p-1 hover:bg-destructive/20 text-destructive rounded"
                title="Cancelar (Esc)"
              >
                 <XIcon className="w-3 h-3.5" />
@@ -276,7 +277,7 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
               </div>
             </div>
 
-            <button
+            <button type="button"
               onClick={() => setIsModalOpen(false)}
               className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-muted dark:bg-muted/50 flex items-center justify-center hover:bg-muted-foreground/10 dark:hover:bg-accent transition-colors shrink-0 ml-2"
             >
@@ -287,7 +288,7 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
           {/* Subheader with Mode Switcher and Icons */}
           <div className="px-4 sm:px-6 py-2 flex items-center justify-between border-b border-border dark:border-white/5">
             <div className="flex items-center gap-3 sm:gap-4">
-              <button
+              <button type="button"
                 onClick={() => setMode('assisted')}
                 className={cn(
                   "flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-xs font-black uppercase tracking-widest transition-all",
@@ -299,7 +300,7 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
                 Asistido
               </button>
 
-              <button
+              <button type="button"
                 onClick={() => setMode('expert')}
                 className={cn(
                   "p-2 rounded-lg transition-all",
@@ -309,7 +310,7 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
                 <Code className="w-4 h-4" />
               </button>
 
-              <button className="p-2 rounded-lg text-muted-foreground dark:text-muted-foreground hover:text-foreground dark:hover:text-foreground transition-all">
+              <button type="button" className="p-2 rounded-lg text-muted-foreground dark:text-muted-foreground hover:text-foreground dark:hover:text-foreground transition-all">
                 <History className="w-4 h-4" />
               </button>
             </div>
@@ -367,13 +368,13 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
 
           {/* Footer based on Design */}
           <div className="px-4 sm:px-6 py-4 sm:py-6 bg-muted/20 dark:bg-muted/20 flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3 sm:gap-4 border-t border-border dark:border-white/5 shrink-0">
-            <button
+            <button type="button"
               onClick={() => setIsModalOpen(false)}
               className="px-4 sm:px-8 h-11 sm:h-12 rounded-2xl text-xs sm:text-xs font-black uppercase tracking-[0.2em] text-muted-foreground dark:text-muted-foreground hover:text-foreground dark:hover:text-foreground transition-all border border-border dark:border-border hover:border-muted-foreground/30 dark:hover:border-border"
             >
               Cancelar
             </button>
-            <button
+            <button type="button"
               onClick={() => { handleSave(value); setIsModalOpen(false); }}
               className="px-6 sm:px-10 h-11 sm:h-12 rounded-2xl text-xs sm:text-xs font-black uppercase tracking-[0.2em] bg-primary text-primary-foreground dark:text-foreground shadow-lg dark:shadow-lg  transition-all "
             >

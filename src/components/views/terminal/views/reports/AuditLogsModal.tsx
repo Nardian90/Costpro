@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { useAuditLogs } from '@/hooks/api/useAuditLogs';
 import AuditTimeline from '../audit/AuditTimeline';
+import type { AuditLog } from '@/types';
 import { StateRenderer } from '@/components/ui/StateRenderer';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Shield, X, History } from 'lucide-react';
@@ -34,24 +35,22 @@ const AuditLoadingSkeleton = () => (
 );
 
 export const AuditLogsModal = ({ isOpen, onClose, storeId }: AuditLogsModalProps) => {
-  const query = useAuditLogs({
+  const { data, isLoading, error } = useAuditLogs({
     storeIds: storeId ? [storeId] : [],
     pageSize: 100
-  }) || { data: null, isLoading: false, error: null };
+  });
 
-  const { data, isLoading, error } = query;
-
-  const logs = useMemo(() => data?.pages?.flatMap(p => p.logs || []) ?? [], [data]);
+  const logs = useMemo(() => data?.pages.flatMap(p => p.logs) ?? [], [data]);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[85vh] overflow-hidden flex flex-col p-0 border-primary/20 bg-background/95 backdrop-blur-xl rounded-3xl">
+      <DialogContent className="max-w-4xl max-h-[85vh] overflow-hidden flex flex-col p-0 border-primary/20 bg-background/95 backdrop-blur-xl rounded-3xl" aria-describedby="audit-description">
         <DialogHeader className="p-6 border-b border-primary/10">
           <DialogTitle className="text-2xl font-black uppercase tracking-tight text-primary flex items-center gap-3">
-            <History className="w-7 h-7" />
+            <History className="w-7 h-7" aria-hidden="true" />
             Bitácora de Auditoría Integra
           </DialogTitle>
-          <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
+          <p id="audit-description" className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
             Últimos 100 eventos del sistema para este contexto.
           </p>
         </DialogHeader>
@@ -69,7 +68,7 @@ export const AuditLogsModal = ({ isOpen, onClose, storeId }: AuditLogsModalProps
               </div>
             }
           >
-            {(data: any[]) => <AuditTimeline logs={data} />}
+            {(data: AuditLog[]) => <AuditTimeline logs={data} />}
           </StateRenderer>
         </div>
       </DialogContent>

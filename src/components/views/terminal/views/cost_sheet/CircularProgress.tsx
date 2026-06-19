@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
 interface CircularProgressProps {
@@ -19,6 +19,7 @@ const CircularProgress: React.FC<CircularProgressProps> = ({
     color = "text-primary",
     size = 'md'
 }) => {
+  const prefersReducedMotion = useReducedMotion();
   const radius = 32;
   const circumference = 2 * Math.PI * radius;
   const safeValue = isNaN(value) ? 0 : value;
@@ -49,7 +50,7 @@ const CircularProgress: React.FC<CircularProgressProps> = ({
             className={cn("fill-none", color)}
             strokeWidth="6"
             strokeDasharray={circumference}
-            initial={{ strokeDashoffset: circumference }}
+            initial={prefersReducedMotion ? { strokeDashoffset } : { strokeDashoffset: circumference }}
             animate={{ strokeDashoffset }}
             transition={{ duration: 1, ease: "easeOut" }}
             strokeLinecap="round"

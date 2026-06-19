@@ -95,10 +95,10 @@ export function MipymeTransactionsView() {
                       <TableCell className="font-bold text-xs">
                         {metadata.pd || formatDate(tx.fecha)}
                       </TableCell>
-                      <TableCell className="text-right font-bold text-red-500 text-sm">
+                      <TableCell className="text-right font-bold text-destructive text-sm">
                         {isDebit ? formatCurrency(metadata.valor) : '-'}
                       </TableCell>
-                      <TableCell className="text-right font-bold text-green-500 text-sm">
+                      <TableCell className="text-right font-bold text-success text-sm">
                         {isCredit ? formatCurrency(metadata.valor) : '-'}
                       </TableCell>
                       <TableCell className="max-w-[250px]">
@@ -122,11 +122,11 @@ export function MipymeTransactionsView() {
       </Card>
 
       {mipymeTransactions.some(t => t.metadata.inconsistencies.length > 0) && (
-          <div className="p-4 bg-orange-500/10 border border-orange-500/20 rounded-2xl flex gap-3 items-start">
-              <AlertCircle className="w-5 h-5 text-orange-600 shrink-0 mt-0.5" />
+          <div className="p-4 bg-warning/10 border border-warning/20 rounded-2xl flex gap-3 items-start">
+              <AlertCircle className="w-5 h-5 text-warning shrink-0 mt-0.5" />
               <div>
-                  <p className="text-xs font-black uppercase text-orange-600 mb-1">Inconsistencias Detectadas</p>
-                  <p className="text-[10px] text-orange-600/80 font-medium leading-relaxed">
+                  <p className="text-xs font-black uppercase text-warning mb-1">Inconsistencias Detectadas</p>
+                  <p className="text-[10px] text-warning/80 font-medium leading-relaxed">
                       Algunos registros tienen campos faltantes o formato inesperado en las observaciones. Revise las transacciones marcadas para asegurar integridad fiscal.
                   </p>
               </div>

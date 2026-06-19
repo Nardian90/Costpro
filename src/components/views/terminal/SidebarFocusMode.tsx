@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import { ChevronRight, Home } from 'lucide-react';
 import { NavModule } from '@/config/navigation/sidebar.structure';
 import { useUIStore } from '@/store';
@@ -18,6 +18,7 @@ export const SidebarFocusMode: React.FC<SidebarFocusModeProps> = ({
   renderModule,
   onBack
 }) => {
+  const prefersReducedMotion = useReducedMotion();
   const { setCurrentView } = useUIStore();
 
   const handleHomeClick = () => {
@@ -28,8 +29,8 @@ export const SidebarFocusMode: React.FC<SidebarFocusModeProps> = ({
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.95, filter: 'blur(10px)' }}
-      animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
-      exit={{ opacity: 0, scale: 1.05, filter: 'blur(10px)' }}
+      animate={prefersReducedMotion ? {} : { opacity: 1, scale: 1, filter: 'blur(0px)' }}
+      exit={prefersReducedMotion ? {} : { opacity: 0, scale: 1.05, filter: 'blur(10px)' }}
       transition={{
         duration: 0.4,
         ease: [0.22, 1, 0.36, 1] as any

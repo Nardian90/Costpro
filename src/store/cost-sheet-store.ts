@@ -413,6 +413,5 @@ export const useCostSheetHydrated = () =>
 // ── Dev helpers ──────────────────────────────────────────────────────
 
 if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (window as any).useCostSheetStore = useCostSheetStore;
 }

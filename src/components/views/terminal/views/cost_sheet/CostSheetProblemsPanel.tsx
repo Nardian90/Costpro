@@ -47,9 +47,9 @@ export const CostSheetProblemsPanel = ({
         isAuditView
           ? "bg-card/95 border-border/60"
           : critical > 0
-            ? "bg-card/90 border-red-500/20"
+            ? "bg-card/90 border-destructive/20"
             : actionableProblems.length > 0
-              ? "bg-card/90 border-amber-500/20"
+              ? "bg-card/90 border-warning/20"
               : "bg-card/90 border-border/60"
       )}
     >
@@ -58,7 +58,7 @@ export const CostSheetProblemsPanel = ({
 
         {/* Back button — only visible in Audit view */}
         {isAuditView && onGoBack && (
-          <button
+          <button type="button"
             onClick={onGoBack}
             className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-foreground/70 hover:text-primary hover:bg-primary/10 transition-colors shrink-0"
             aria-label="Volver a la vista anterior"
@@ -104,7 +104,7 @@ export const CostSheetProblemsPanel = ({
         <div className="flex items-center gap-1.5">
           <div className={cn(
             "p-1.5 rounded-md shrink-0",
-            kpis.pctUtilidad >= 20 ? "bg-emerald-500/10" : kpis.pctUtilidad >= 0 ? "bg-amber-500/10" : "bg-red-500/10"
+            kpis.pctUtilidad >= 20 ? "bg-success/10" : kpis.pctUtilidad >= 0 ? "bg-warning/10" : "bg-destructive/10"
           )}>
             <TrendingUp className={cn(
               "w-3.5 h-3.5",
@@ -129,13 +129,13 @@ export const CostSheetProblemsPanel = ({
 
         {/* Alert badge — navigates to audit */}
         {!isAuditView && actionableProblems.length > 0 && (
-          <button
+          <button type="button"
             onClick={onGoToAudit}
             className={cn(
               "flex items-center gap-1.5 px-3 py-2 rounded-lg transition-colors shrink-0",
               critical > 0
-                ? "bg-red-500/10 text-red-400 hover:bg-red-500/20"
-                : "bg-amber-500/10 text-amber-400 hover:bg-amber-500/20"
+                ? "bg-destructive/10 text-red-400 hover:bg-destructive/20"
+                : "bg-warning/10 text-amber-400 hover:bg-warning/20"
             )}
             aria-label={`${actionableProblems.length} problemas. Ir a Auditoría.`}
           >

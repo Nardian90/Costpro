@@ -66,9 +66,8 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
             label: 'Regresar',
             onClick: () => setCurrentView('dashboard'),
             component: (
-                <button
+                <button type="button"
                     onClick={() => setCurrentView('dashboard')}
-                    type="button"
                     className="neu-raised-sm w-11 h-11 flex items-center justify-center shrink-0 active:scale-95 transition-all text-foreground/70 hover:text-primary hover:bg-primary/10 rounded-xl border border-border/40"
                     aria-label="Regresar al tablero principal"
                 >
@@ -84,9 +83,8 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
             label: 'Exportar PDF',
             onClick: onExportPdf || (() => {}),
             component: (
-                <button
+                <button type="button"
                     onClick={onExportPdf || (() => {})}
-                    type="button"
                     className="neu-raised-sm px-4 h-11 flex items-center justify-center gap-2 shrink-0 active:scale-95 transition-all text-primary font-black uppercase tracking-widest text-[10px] hover:bg-primary/10 rounded-xl"
                     aria-label="Exportar ficha de costo a PDF"
                 >
@@ -119,9 +117,8 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
             label: 'Darian',
             onClick: () => setActiveSection('ai-chat'),
             component: (
-                <button
+                <button type="button"
                     onClick={() => setActiveSection('ai-chat')}
-                    type="button"
                     className="neu-raised-sm w-11 h-11 flex items-center justify-center shrink-0 active:scale-95 transition-all text-primary hover:bg-primary/10 rounded-xl"
                     aria-label="Abrir asistente Darian AI"
                 >
@@ -163,7 +160,7 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
                                     <div className="p-8 text-center text-xs text-muted-foreground font-medium">No hay versiones aún</div>
                                 ) : (
                                     versions.map((v, i) => (
-                                        <button
+                                        <button type="button"
                                             key={i}
                                             onClick={() => onRestoreVersion?.(v)}
                                             className="w-full text-left p-3 rounded-2xl hover:bg-muted/50 transition-colors flex items-center justify-between group"

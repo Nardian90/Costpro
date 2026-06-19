@@ -13,9 +13,9 @@ export function ActionBadges({ appliedRules, className }: ActionBadgesProps) {
   if (!appliedRules || appliedRules.length === 0) return null;
 
   const badges = [
-    { rule: 'HARD_REF', icon: <Target className="w-3 h-3" />, label: 'EXACT_MATCH', color: 'text-blue-600 bg-blue-50 border-blue-200' },
-    { rule: 'EXACT_SUM', icon: <Target className="w-3 h-3" />, label: 'EXACT_MATCH', color: 'text-green-600 bg-green-50 border-green-200' },
-    { rule: 'PRICE_FLEX', icon: <TrendingUp className="w-3 h-3" />, label: 'PRICE_FLEX', color: 'text-orange-600 bg-orange-50 border-orange-200' },
+    { rule: 'HARD_REF', icon: <Target className="w-3 h-3" />, label: 'EXACT_MATCH', color: 'text-primary bg-blue-50 border-blue-200' },
+    { rule: 'EXACT_SUM', icon: <Target className="w-3 h-3" />, label: 'EXACT_MATCH', color: 'text-success bg-green-50 border-green-200' },
+    { rule: 'PRICE_FLEX', icon: <TrendingUp className="w-3 h-3" />, label: 'PRICE_FLEX', color: 'text-warning bg-orange-50 border-orange-200' },
     { rule: 'WILDCARDS', icon: <Package className="w-3 h-3" />, label: 'WILDCARDS', color: 'text-purple-600 bg-purple-50 border-purple-200' },
     { rule: 'TOLERANCE', icon: <Info className="w-3 h-3" />, label: 'TOLERANCE_APPLIED', color: 'text-yellow-600 bg-yellow-50 border-yellow-200' },
     { rule: 'CASH_FILL', icon: <ChevronRight className="w-3 h-3" />, label: 'CASH_FILL', color: 'text-slate-600 bg-slate-50 border-slate-200' },

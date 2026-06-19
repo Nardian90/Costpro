@@ -1,20 +1,12 @@
 import { academyGenerateSchema, zodError } from '@/validation/api-schemas';
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { getSupabaseAdminSafe as getSupabaseAdmin } from '@/lib/supabase-admin';
 import { getLLMProvider } from '@/lib/ai/orchestrator';
 import { getServerSession } from "@/lib/auth";
 import { rateLimit } from '@/lib/rate-limit';
 import { withTracing } from '@/lib/observability';
 import fs, { readdirSync } from 'fs';
 import path from 'path';
-
-// Supabase Admin client for server-side operations
-function getSupabaseAdmin() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key) throw new Error('Configuración de Supabase incompleta');
-  return createClient(url, key, { auth: { autoRefreshToken: false, persistSession: false } });
-}
 
 export const runtime = 'nodejs';
 export const maxDuration = 120; // 2 minutes for processing PDFs and AI
@@ -134,12 +126,13 @@ async function postHandler(req: NextRequest) {
         if (Array.isArray(parsedQuestions)) {
           results.push(...parsedQuestions);
         }
-      } catch (e: any) {
-        console.error('Error in AI call or parsing:', e.message);
+      } catch (e: unknown) {
+        const eMsg = e instanceof Error ? e.message : String(e);
+        console.error('Error in AI call or parsing:', eMsg);
         // If it's a model/key error, we should probably stop and report it
-        if (e.message.includes('API Key') || e.message.includes('Modelo') || e.message.includes('Permisos')) {
+        if (eMsg.includes('API Key') || eMsg.includes('Modelo') || eMsg.includes('Permisos')) {
            // FIX-SEC-019: Hide error details in production
-           return NextResponse.json({ error: (process.env.NODE_ENV !== 'production' || !!process.env.VITEST) ? e.message : 'Error interno del servidor' }, { status: 500 });
+           return NextResponse.json({ error: (process.env.NODE_ENV !== 'production' || !!process.env.VITEST) ? eMsg : 'Error interno del servidor' }, { status: 500 });
         }
       }
     }
@@ -150,6 +143,9 @@ async function postHandler(req: NextRequest) {
 
     // Save to DB
     const supabaseAdmin = getSupabaseAdmin();
+    if (!supabaseAdmin) {
+      return NextResponse.json({ error: 'Error de configuración del servidor' }, { status: 500 });
+    }
     const { data: insertedData, error } = await supabaseAdmin
       .from('learning_cards')
       .insert(results.map(q => ({
@@ -168,10 +164,10 @@ async function postHandler(req: NextRequest) {
       count: insertedData?.length || 0
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Generation error:', error);
     // FIX-SEC-019: Hide error details in production
-    return NextResponse.json({ error: (process.env.NODE_ENV !== 'production' || !!process.env.VITEST) ? error.message : 'Error interno del servidor' }, { status: 500 });
+    return NextResponse.json({ error: (process.env.NODE_ENV !== 'production' || !!process.env.VITEST) ? (error instanceof Error ? error.message : String(error)) : 'Error interno del servidor' }, { status: 500 });
   }
 }
 

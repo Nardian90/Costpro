@@ -45,9 +45,9 @@ export function Pick3OnboardingWizard({ userId, onComplete }: Pick3OnboardingWiz
 
       toast.success("¡Configuración completada con éxito!");
       onComplete(amount);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error in onboarding:", error);
-      toast.error("Error al guardar la configuración: " + error.message);
+      toast.error("Error al guardar la configuración: " + (error instanceof Error ? error.message : String(error)));
     } finally {
       setLoading(false);
     }
@@ -66,8 +66,8 @@ export function Pick3OnboardingWizard({ userId, onComplete }: Pick3OnboardingWiz
         {step === 1 && (
           <>
             <CardHeader className="text-center pt-8">
-              <div className="mx-auto w-16 h-16 rounded-3xl bg-red-500/10 flex items-center justify-center mb-4">
-                <ShieldAlert className="w-8 h-8 text-red-500" />
+              <div className="mx-auto w-16 h-16 rounded-3xl bg-destructive/10 flex items-center justify-center mb-4">
+                <ShieldAlert className="w-8 h-8 text-destructive" />
               </div>
               <CardTitle className="text-2xl font-black italic uppercase tracking-tight">
                 Advertencia de Riesgo
@@ -79,7 +79,7 @@ export function Pick3OnboardingWizard({ userId, onComplete }: Pick3OnboardingWiz
             <CardContent className="space-y-4 text-center">
               <div className="p-6 rounded-2xl bg-muted/30 border border-border text-[13px] font-medium leading-relaxed italic">
                 "Este sistema es una herramienta de simulación estadística. El juego conlleva riesgos financieros.
-                <span className="text-red-500 font-black not-italic block mt-2">NO EXISTE GARANTÍA DE LUCRO.</span>
+                <span className="text-destructive font-black not-italic block mt-2">NO EXISTE GARANTÍA DE LUCRO.</span>
                 La probabilidad se usa para optimizar, no para predecir el futuro con certeza absoluta."
               </div>
             </CardContent>
@@ -140,8 +140,8 @@ export function Pick3OnboardingWizard({ userId, onComplete }: Pick3OnboardingWiz
         {step === 3 && (
           <>
             <CardHeader className="text-center pt-8">
-              <div className="mx-auto w-16 h-16 rounded-3xl bg-emerald-500/10 flex items-center justify-center mb-4">
-                <Target className="w-8 h-8 text-emerald-500" />
+              <div className="mx-auto w-16 h-16 rounded-3xl bg-success/10 flex items-center justify-center mb-4">
+                <Target className="w-8 h-8 text-success" />
               </div>
               <CardTitle className="text-2xl font-black italic uppercase tracking-tight">
                 Listos para el Análisis
@@ -153,22 +153,22 @@ export function Pick3OnboardingWizard({ userId, onComplete }: Pick3OnboardingWiz
             <CardContent className="space-y-6">
               <div className="space-y-4">
                 <div className="flex items-center gap-4 p-4 rounded-2xl bg-muted/20 border border-border/50">
-                  <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+                  <CheckCircle2 className="w-5 h-5 text-success" />
                   <div className="text-[11px] font-bold">Disclaimer Aceptado</div>
                 </div>
                 <div className="flex items-center gap-4 p-4 rounded-2xl bg-muted/20 border border-border/50">
-                  <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+                  <CheckCircle2 className="w-5 h-5 text-success" />
                   <div className="text-[11px] font-bold">Capital Inicial: <span className="text-primary italic">${bankroll}</span></div>
                 </div>
                 <div className="flex items-center gap-4 p-4 rounded-2xl bg-muted/20 border border-border/50">
-                  <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+                  <CheckCircle2 className="w-5 h-5 text-success" />
                   <div className="text-[11px] font-bold">Algoritmo Ley del Tercio Activado</div>
                 </div>
               </div>
             </CardContent>
             <CardFooter>
               <Button
-                className="w-full h-14 rounded-full font-black uppercase text-sm bg-emerald-600 hover:bg-emerald-700"
+                className="w-full h-14 rounded-full font-black uppercase text-sm bg-success hover:bg-emerald-700"
                 onClick={handleComplete}
                 disabled={loading}
               >

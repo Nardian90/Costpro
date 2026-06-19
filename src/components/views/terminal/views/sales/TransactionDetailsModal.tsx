@@ -5,6 +5,7 @@ import React from 'react';
 import { BaseModal } from '@/components/ui/BaseModal';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 import { cn, formatCurrency, formatDate } from '@/lib/utils';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -24,6 +25,20 @@ interface TransactionDetailsModalProps {
   isLoading: boolean;
 }
 
+// ── Skeleton rows for items loading ──
+const ItemsSkeleton = () => (
+  <>
+    {[...Array(3)].map((_, i) => (
+      <TableRow key={i}>
+        <TableCell><Skeleton className="h-4 w-32" /></TableCell>
+        <TableCell className="text-right"><Skeleton className="h-4 w-8 ml-auto" /></TableCell>
+        <TableCell className="text-right"><Skeleton className="h-4 w-16 ml-auto" /></TableCell>
+        <TableCell className="text-right"><Skeleton className="h-4 w-16 ml-auto" /></TableCell>
+      </TableRow>
+    ))}
+  </>
+);
+
 export function TransactionDetailsModal({ isOpen, onClose, transaction, items, isLoading }: TransactionDetailsModalProps) {
   const { user } = useAuthStore();
   const queryClient = useQueryClient();
@@ -33,6 +48,7 @@ export function TransactionDetailsModal({ isOpen, onClose, transaction, items, i
 
   const canManageTaxes = user?.role === 'admin' || user?.role === 'encargado' || user?.role === 'manager';
   const appliedTaxes: TaxConfiguration[] = Array.isArray(transaction.applied_taxes) ? transaction.applied_taxes : [];
+  const isVoided = transaction.status === 'voided';
 
   const handleToggleTax = async (tax: TaxConfiguration) => {
     if (!canManageTaxes) return;
@@ -74,8 +90,6 @@ export function TransactionDetailsModal({ isOpen, onClose, transaction, items, i
 
       toast.success('Impuestos actualizados correctamente', { id: toastId });
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
-      // We don't have a way to update the local 'transaction' prop directly if it came from parent state,
-      // but invalidating queries should refresh the list.
     } catch (err: any) {
       toast.error(err.message || 'Error al actualizar impuestos', { id: toastId });
     }
@@ -86,16 +100,25 @@ export function TransactionDetailsModal({ isOpen, onClose, transaction, items, i
       open={isOpen}
       onOpenChange={(open) => !open && onClose()}
       title="Detalles de la Venta"
-      description={`ID de Transacción: ${transaction.id}`}
+      description={`ID de Transaccion: ${transaction.id}`}
       maxWidth="sm:max-w-2xl"
     >
+        {/* Voided banner */}
+        {isVoided && (
+          <div className="mb-4 p-3 rounded-xl bg-destructive/5 border border-destructive/20 flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-destructive animate-pulse" />
+            <span className="text-xs font-black uppercase tracking-widest text-destructive">Venta Anulada</span>
+          </div>
+        )}
+
+        {/* Transaction metadata */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
           <div>
             <p className="font-semibold text-muted-foreground">Fecha</p>
             <p>{formatDate(transaction.created_at)}</p>
           </div>
           <div>
-            <p className="font-semibold text-muted-foreground">Método de Pago</p>
+            <p className="font-semibold text-muted-foreground">Metodo de Pago</p>
             <p className="capitalize">
               {transaction.payment_method === 'cash' ? 'Efectivo' : 'Transferencia'}
             </p>
@@ -108,8 +131,10 @@ export function TransactionDetailsModal({ isOpen, onClose, transaction, items, i
             </Badge>
           </div>
         </div>
+
+        {/* Items table with skeleton loading */}
         <div className="mt-4 overflow-x-auto">
-          <h3 className="font-semibold mb-2">Artículos</h3>
+          <h3 className="font-semibold mb-2">Articulos{items.length > 0 && !isLoading && <span className="text-muted-foreground font-normal ml-2">({items.length})</span>}</h3>
           <Table>
             <TableHeader>
               <TableRow>
@@ -121,24 +146,32 @@ export function TransactionDetailsModal({ isOpen, onClose, transaction, items, i
             </TableHeader>
             <TableBody>
               {isLoading ? (
-                <TableRow><TableCell colSpan={4}>Cargando artículos...</TableCell></TableRow>
+                <ItemsSkeleton />
+              ) : items.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center py-8 text-muted-foreground text-xs">
+                    No se encontraron articulos para esta venta.
+                  </TableCell>
+                </TableRow>
               ) : (
                 items.map(item => (
                   <TableRow key={item.id}>
-                    <TableCell>{item.products?.name || 'Producto no disponible'}</TableCell>
-                    <TableCell className="text-right">{item.quantity}</TableCell>
+                    <TableCell className="font-bold">{item.products?.name || 'Producto no disponible'}</TableCell>
+                    <TableCell className="text-right font-bold">{item.quantity}</TableCell>
                     <TableCell className="text-right">{formatCurrency(item.price_at_sale)}</TableCell>
-                    <TableCell className="text-right">{formatCurrency(item.price_at_sale * item.quantity)}</TableCell>
+                    <TableCell className="text-right font-bold">{formatCurrency(item.price_at_sale * item.quantity)}</TableCell>
                   </TableRow>
                 ))
               )}
             </TableBody>
           </Table>
         </div>
+
+        {/* Summary & Tax Management */}
         <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 border-t border-border">
-            {/* Gestión de Impuestos (Sólo Encargados) */}
+            {/* Tax management panel */}
             <div>
-              {canManageTaxes && (
+              {canManageTaxes && !isVoided && (
                 <div className="space-y-3">
                   <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
                     <ShieldAlert className="w-3 h-3" />
@@ -146,7 +179,7 @@ export function TransactionDetailsModal({ isOpen, onClose, transaction, items, i
                   </h3>
                   <div className="space-y-2">
                     {allTaxes.map(tax => (
-                      <button
+                      <button type="button"
                         key={tax.id}
                         onClick={() => handleToggleTax(tax)}
                         className={cn(
@@ -170,6 +203,7 @@ export function TransactionDetailsModal({ isOpen, onClose, transaction, items, i
               )}
             </div>
 
+            {/* Financial summary */}
             <div className="text-right space-y-1">
                 <div className="flex justify-between items-center text-xs text-muted-foreground uppercase font-bold tracking-tight">
                   <span>Subtotal:</span>
@@ -186,14 +220,17 @@ export function TransactionDetailsModal({ isOpen, onClose, transaction, items, i
                   <span>{formatCurrency(Math.max(0, (transaction.subtotal || 0) - (transaction.discount_value || 0)))}</span>
                 </div>
                 {transaction.tax_amount && transaction.tax_amount > 0 ? (
-                  <div className="flex justify-between items-center text-xs text-amber-600 uppercase font-bold tracking-tight">
+                  <div className="flex justify-between items-center text-xs text-warning uppercase font-bold tracking-tight">
                     <span>Impuestos:</span>
                     <span>+{formatCurrency(transaction.tax_amount)}</span>
                   </div>
                 ) : null}
                 <div className="flex justify-between items-center pt-2 mt-2 border-t-2 border-primary/20">
                   <span className="text-sm font-black uppercase text-foreground">Total:</span>
-                  <span className="text-2xl font-black text-primary">{formatCurrency(transaction.total_amount)}</span>
+                  <span className={cn(
+                    "text-2xl font-black",
+                    isVoided ? "line-through text-muted-foreground" : "text-primary"
+                  )}>{formatCurrency(transaction.total_amount)}</span>
                 </div>
             </div>
         </div>

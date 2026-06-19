@@ -8,7 +8,23 @@ export { useCostSheetStore } from './cost-sheet-store';
 export { useSessionStore } from './session-store';
 export { useAcademyStore } from './useAcademyStore';
 
-export type ViewType = 'occ' | 'dashboard' | 'wallet' | 'pos' | 'inventory' | 'recepcion' | 'reception_list' | 'transferencias' | 'sales' | 'inventory_count' | 'cost-sheets' | 'reports' | 'catalog' | 'history' | 'inventory_adjustments' | 'audit' | 'cash' | 'users' | 'roles' | 'stores' | 'settings' | 'help' | 'wiki' | 'news' | 'rss_management' | 'ipv' | 'academy' | 'legal' | 'health' | 'pick3-intelligence' | 'labels' | 'sales_catalog';
+// ViewType — todas las vistas navegables de la app.
+// E-SectionHub (IA Audit): añadidos submenu wrapper IDs como vistas válidas.
+// Ahora cada submenu (punto_venta, almacen_*, analitica) tiene su propia vista
+// "SectionHub" que muestra tarjetas con todos los hijos (patrón Odoo/Shopify).
+// El breadcrumb puede navegar a estos section hubs al hacer clic en un ancestro.
+export type ViewType = 'occ' | 'dashboard' | 'wallet' | 'pos' | 'inventory' | 'recepcion' | 'reception_list' | 'transferencias' | 'sales' | 'inventory_count' | 'cost-sheets' | 'reports' | 'catalog' | 'history' | 'inventory_adjustments' | 'audit' | 'cash' | 'users' | 'roles' | 'stores' | 'settings' | 'help' | 'wiki' | 'news' | 'rss_management' | 'ipv' | 'academy' | 'legal' | 'health' | 'pick3-intelligence' | 'labels' | 'sales_catalog' | 'ofertas' | 'purchase-orders' | 'sales-hub'
+// E-SectionHub: submenu wrapper IDs — renderizan SectionHubView
+| 'punto_venta' | 'almacen_gestion' | 'almacen_operaciones' | 'analitica'
+// Submenu wrappers IPV (todos redirigen al section hub de IPV con tab apropiado)
+| 'ipv_reporting' | 'ipv_operaciones' | 'ipv_datos' | 'ipv_procesamiento' | 'ipv_avanzado'
+// Submenu wrappers COSTOS (todos redirigen al section hub de Costos)
+| 'cost_views' | 'cost_gen' | 'cost_templates' | 'cost_tools'
+// E-GroupHub (IA Audit): group IDs como vistas válidas — renderizan GroupHubView.
+// Al hacer clic en un grupo raíz del breadcrumb (ej: "MULTI-TIENDA"), navega a
+// una vista overview con tarjetas de todos los submenus del grupo (patrón Odoo).
+// 'core' NO está aquí porque es la home (occ) y no necesita GroupHub.
+| 'costos' | 'tienda' | 'ipv_module' | 'otros' | 'administracion' | 'recursos';
 
 export type SidebarState = 'expanded' | 'rail' | 'closed';
 

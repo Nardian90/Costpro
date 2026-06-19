@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useEffect, useSyncExternalStore } from 'react'; // FIX-ACC-006
+import React, { useState, useRef, useEffect, useSyncExternalStore, useMemo } from 'react'; // FIX-ACC-006
 import { motion, AnimatePresence, Variants } from 'framer-motion';
 import {
   Calculator,
@@ -15,6 +15,7 @@ import {
 import { cn, isDarkTheme } from "@/lib/utils";
 import { useTheme } from 'next-themes';
 import { useUIStore } from '@/store';
+import { Parser } from 'expr-eval';
 
 export const FloatingCalculator: React.FC = () => {
   const { isCalculatorOpen, setIsCalculatorOpen } = useUIStore();
@@ -28,6 +29,8 @@ export const FloatingCalculator: React.FC = () => {
   );
   const { resolvedTheme } = useTheme();
   const constraintsRef = useRef(null);
+  // BF-01: expr-eval does NOT use Function constructor — CSP-safe
+  const parser = useMemo(() => new Parser(), []);
 
   // Calculator Logic
   const handleNumber = (num: string) => {
@@ -57,18 +60,18 @@ export const FloatingCalculator: React.FC = () => {
     try {
       if (!equation) return;
       const fullEquation = equation + display;
-      // Sanitize input
-      const sanitized = fullEquation.replace(/[^-0-9+*/.]/g, '');
-      // Use Function constructor instead of eval for slightly better practice
-      const result = new Function(`return ${sanitized}`)();
-      if (result === undefined || result === null || isNaN(result)) {
+      // Sanitize input — allow digits, operators, parentheses, dots, spaces
+      const sanitized = fullEquation.replace(/[^-0-9+*/.() ]/g, '').trim();
+      // BF-01: Replaced new Function() with expr-eval (CSP-safe)
+      const result = parser.evaluate(sanitized);
+      if (result === undefined || result === null || isNaN(result) || !isFinite(result)) {
         throw new Error('Invalid result');
       }
       const resultStr = String(Number(result.toFixed(8)));
       setDisplay(resultStr.length > 15 ? result.toExponential(4) : resultStr);
       setEquation('');
       setLastResult(result);
-    } catch (e) {
+    } catch {
       setDisplay('Error');
     }
   };

@@ -41,13 +41,15 @@ export function useKeyboardShortcuts() {
   } = useUIStore();
 
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    // Don't capture when user is typing in an input/textarea
     const tag = (e.target as HTMLElement).tagName;
-    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || (e.target as HTMLElement).isContentEditable) {
-      return;
-    }
+    const isInInput = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || (e.target as HTMLElement).isContentEditable;
 
+    // QW-7: Permitir Ctrl+/Cmd+ combinaciones incluso dentro de inputs
+    // (ej: Ctrl+2 para ir a POS mientras escribes en el buscador)
     const isMod = e.ctrlKey || e.metaKey;
+    if (isInInput && !isMod) {
+      return; // Solo bloquear atajos sin Ctrl/Cmd dentro de inputs
+    }
 
     // Ctrl+K — already handled by CommandPalette internally
     // Ctrl+/ — Open keyboard help modal (dispatches custom event)

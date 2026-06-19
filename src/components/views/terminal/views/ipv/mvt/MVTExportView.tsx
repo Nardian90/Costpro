@@ -274,7 +274,7 @@ export const MVTExportView = () => {
             <FileText className="w-8 h-8 text-indigo-600" />
             EXPORTACIÓN MVT / CYP
           </h2>
-          <p className="text-slate-500 text-sm font-medium">Generación de archivos contables para Versat ERP</p>
+          <p className="text-muted-foreground text-sm font-medium">Generación de archivos contables para Versat ERP</p>
         </div>
 
         <div className="flex items-center gap-2">
@@ -313,7 +313,7 @@ export const MVTExportView = () => {
                   <div className="space-y-2">
                     <Label className="text-xs font-medium text-slate-700">Fecha Inicio</Label>
                     <div className="relative">
-                      <Calendar className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400 pointer-events-none" />
+                      <Calendar className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground pointer-events-none" />
                       <Input
                         type="date"
                         className="pl-9 h-10 border-slate-200 focus:ring-indigo-500"
@@ -325,7 +325,7 @@ export const MVTExportView = () => {
                   <div className="space-y-2">
                     <Label className="text-xs font-medium text-slate-700">Fecha Fin</Label>
                     <div className="relative">
-                      <Calendar className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400 pointer-events-none" />
+                      <Calendar className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground pointer-events-none" />
                       <Input
                         type="date"
                         className="pl-9 h-10 border-slate-200 focus:ring-indigo-500"
@@ -378,7 +378,7 @@ export const MVTExportView = () => {
                 </div>
 
                 <div className="p-3 bg-amber-50/50 border border-amber-100 rounded-lg flex gap-3">
-                  <AlertCircle className="w-5 h-5 text-amber-500 shrink-0" />
+                  <AlertCircle className="w-5 h-5 text-warning shrink-0" />
                   <div className="space-y-1">
                     <p className="text-[11px] font-semibold text-amber-900 uppercase">Resumen de Datos</p>
                     <p className="text-xs text-amber-800/80 leading-relaxed">
@@ -400,7 +400,7 @@ export const MVTExportView = () => {
             </CardHeader>
             <CardContent className="p-5 space-y-4">
                <div className="space-y-1">
-                  <Label className="text-[10px] uppercase text-slate-400">Agrupación de Datos</Label>
+                  <Label className="text-[10px] uppercase text-muted-foreground">Agrupación de Datos</Label>
                   <select
                     className="w-full h-9 border border-slate-200 rounded-md bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
                     value={settings?.grouping || "range"}
@@ -419,7 +419,7 @@ export const MVTExportView = () => {
                </div>
 
                <div className="space-y-1">
-                  <Label className="text-[10px] uppercase text-slate-400">Estructura de Archivos</Label>
+                  <Label className="text-[10px] uppercase text-muted-foreground">Estructura de Archivos</Label>
                   <select
                     className="w-full h-9 border border-slate-200 rounded-md bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
                     value={settings?.fileStructure || "single"}
@@ -438,21 +438,21 @@ export const MVTExportView = () => {
 
                <div className="pt-2 border-t border-slate-100 mt-2">
                  <div className="flex items-center gap-2 mb-2">
-                   <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
-                   <span className="text-[10px] uppercase font-bold text-slate-500">Valores Globales</span>
+                   <CheckCircle2 className="w-3.5 h-3.5 text-success" />
+                   <span className="text-[10px] uppercase font-bold text-muted-foreground">Valores Globales</span>
                  </div>
                  <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1">
-                      <Label className="text-[10px] uppercase text-slate-400">Concepto</Label>
+                      <Label className="text-[10px] uppercase text-muted-foreground">Concepto</Label>
                       <Input className="h-9 bg-slate-50" value={settings?.concepto || "210"} readOnly />
                     </div>
                     <div className="space-y-1">
-                      <Label className="text-[10px] uppercase text-slate-400">Almacén</Label>
+                      <Label className="text-[10px] uppercase text-muted-foreground">Almacén</Label>
                       <Input className="h-9 bg-slate-50" value={settings?.almacen || "0109"} readOnly />
                     </div>
                  </div>
                  <div className="space-y-1 mt-2">
-                    <Label className="text-[10px] uppercase text-slate-400">Centro de Costo</Label>
+                    <Label className="text-[10px] uppercase text-muted-foreground">Centro de Costo</Label>
                     <Input className="h-9 bg-slate-50" value={settings?.centro || "0110200012611"} readOnly />
                  </div>
                </div>
@@ -508,11 +508,11 @@ export const MVTExportView = () => {
             <table className="w-full text-sm">
               <thead className="bg-slate-50 sticky top-0 border-b">
                 <tr>
-                  <th className="p-3 text-left font-medium text-slate-500">No.</th>
-                  <th className="p-3 text-left font-medium text-slate-500">Fecha Gen</th>
-                  <th className="p-3 text-left font-medium text-slate-500">Archivo</th>
-                  <th className="p-3 text-left font-medium text-slate-500">Rango</th>
-                  <th className="p-3 text-left font-medium text-slate-500">Estado</th>
+                  <th className="p-3 text-left font-medium text-muted-foreground">No.</th>
+                  <th className="p-3 text-left font-medium text-muted-foreground">Fecha Gen</th>
+                  <th className="p-3 text-left font-medium text-muted-foreground">Archivo</th>
+                  <th className="p-3 text-left font-medium text-muted-foreground">Rango</th>
+                  <th className="p-3 text-left font-medium text-muted-foreground">Estado</th>
                 </tr>
               </thead>
               <tbody className="divide-y">
@@ -523,7 +523,7 @@ export const MVTExportView = () => {
                     <td className="p-3 font-semibold text-indigo-600">#{log.exportNumber}</td>
                     <td className="p-3 text-slate-600">{format(parseISO(log.timestamp), 'dd/MM/yy HH:mm')}</td>
                     <td className="p-3 text-slate-900 font-medium truncate max-w-[150px]">{log.fileName}</td>
-                    <td className="p-3 text-slate-500 flex items-center gap-1">
+                    <td className="p-3 text-muted-foreground flex items-center gap-1">
                       {log.dateRange.start} <ArrowRight className="w-3 h-3" /> {log.dateRange.end}
                     </td>
                     <td className="p-3">

@@ -63,8 +63,9 @@ export class Pick3PdfService {
       }
 
       throw new Error('Sync finished but no audit report was generated.');
-    } catch (error: any) {
-      logger.error('PICK3', 'Failed robust sync from PDF', { error: error.message });
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      logger.error('PICK3', 'Failed robust sync from PDF', { error: message });
       throw error;
     }
   }

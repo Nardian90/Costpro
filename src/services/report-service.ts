@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabaseClient';
-import { ReportDefinition, ReportRun, ReportType } from '@/types';
+import { ReportDefinition, ReportRun } from '@/types';
+import { fetchReportData, fetchReportDataPaginated } from '@/lib/reports/data-fetcher';
 
 /** Interface for date range filter */
 export interface ReportDateRange {
@@ -26,15 +27,11 @@ export interface DailyAggregatedRow {
   total_expenses?: number;
 }
 
-/** Interface for report schedule configuration */
 export interface ReportScheduleConfig {
-  active: boolean;
   enabled: boolean;
   frequency: 'daily' | 'weekly' | 'monthly';
-  recipients: string[];
-  last_run?: string;
-  next_run?: string;
-  time?: string;
+  time: string; // HH:MM format
+  active: boolean;
 }
 
 export const reportService = {
@@ -46,10 +43,10 @@ export const reportService = {
       .from('report_definitions')
       .select('*')
       .eq('store_id', storeId)
-      .order('created_at', { ascending: false });
+      .order('updated_at', { ascending: false });
 
     if (error) throw error;
-    return data as ReportDefinition[];
+    return (data || []) as ReportDefinition[];
   },
 
   /**
@@ -67,14 +64,13 @@ export const reportService = {
   },
 
   /**
-   * Delete a report definition.
+   * Delete a report definition by ID.
    */
   async deleteDefinition(id: string): Promise<void> {
     const { error } = await supabase
       .from('report_definitions')
       .delete()
       .eq('id', id);
-
     if (error) throw error;
   },
 
@@ -93,43 +89,42 @@ export const reportService = {
   },
 
   /**
-   * Fetch recent runs for a store.
+   * Fetch all runs for a store (used by history dashboard).
    */
-  async getStoreRuns(storeId: string, limit: number = 50): Promise<ReportRun[]> {
+  async getStoreRuns(storeId: string, limit = 50): Promise<ReportRun[]> {
     const { data, error } = await supabase
       .from('report_runs')
-      .select('*, report_definitions!inner(store_id)')
-      .eq('report_definitions.store_id', storeId)
+      .select('*')
+      .eq('store_id', storeId)
       .order('executed_at', { ascending: false })
       .limit(limit);
-
     if (error) throw error;
-    return data as ReportRun[];
+    return (data || []) as ReportRun[];
   },
 
   /**
-   * Log a report execution.
+   * Log a report execution run.
    */
-  async logRun(run: Partial<ReportRun>): Promise<ReportRun> {
-    const { data, error } = await supabase
-      .from('report_runs')
-      .insert(run)
-      .select()
-      .single();
-
+  async logRun(params: {
+    store_id: string;
+    executed_by: string;
+    parameters_snapshot: any;
+    status: 'completed' | 'failed';
+    file_url?: string | null;
+    error_message?: string | null;
+  }): Promise<void> {
+    const { error } = await supabase.from('report_runs').insert(params);
     if (error) throw error;
-    return data as ReportRun;
   },
 
   /**
-   * Save schedule configuration for a report definition.
+   * Save schedule config embedded in a definition's layout field.
    */
-  async saveScheduleConfig(definitionId: string, schedule: ReportScheduleConfig): Promise<void> {
+  async saveScheduleConfig(definitionId: string, scheduleConfig: ReportScheduleConfig): Promise<void> {
     const { error } = await supabase
       .from('report_definitions')
-      .update({ layout: { schedule } })
+      .update({ layout: { schedule: scheduleConfig } })
       .eq('id', definitionId);
-
     if (error) throw error;
   },
 
@@ -141,191 +136,101 @@ export const reportService = {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
+        'Authorization': `Bearer ${token}`,
       },
-      body: JSON.stringify(params)
+      body: JSON.stringify(params),
     });
 
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Error al generar el reporte');
+      const errorData = await response.json().catch(() => ({ error: 'Error de conexión' }));
+      throw new Error(errorData.error || 'Error al generar el reporte');
     }
 
     return await response.json();
   },
 
   /**
-   * Fetch raw data for a report.
+   * Fetch raw data for a report (client-side).
+   * Delegates to the shared `fetchReportData` from `lib/reports/data-fetcher`.
    */
   async fetchReportData(
-    type: ReportType,
+    type: ReportDefinition['type'],
     filters: ReportFilters | undefined,
     date_range: ReportDateRange | undefined,
     store_id: string,
-    limit?: number
+    limit?: number,
   ): Promise<ReportRow[]> {
-    const data = await this.fetchReportDataPaginated(type, filters, date_range, store_id, limit || 10000, 0);
-    if (limit && data.length > limit) {
-        return data.slice(0, limit);
-    }
-    return data;
+    const data = await fetchReportData(supabase, {
+      type,
+      storeId: store_id,
+      from: date_range?.from,
+      to: date_range?.to,
+      filters,
+      limit,
+    });
+
+    return limit ? data.slice(0, limit) : data;
   },
 
   /**
-   * Fetch raw data for a report with pagination.
+   * Fetch aggregated daily data for chart previews (sales by day).
+   */
+  async fetchChartData(
+    type: ReportDefinition['type'],
+    store_id: string,
+    date_range: ReportDateRange | undefined,
+  ): Promise<{ label: string; value: number }[]> {
+    try {
+      const chartData = await this.fetchReportData(
+        type,
+        undefined,
+        date_range,
+        store_id,
+        30,
+      );
+
+      // Aggregate by date for chart display
+      const grouped: Record<string, number> = {};
+      const keys = type === 'sales' ? ['total_amount', 'amount']
+        : type === 'profit' ? ['profit', 'total_profit']
+        : type === 'daily_income' ? ['total_income']
+        : type === 'daily_expenses' ? ['total_expenses']
+        : ['total_amount'];
+
+      chartData.forEach((row: Record<string, unknown>) => {
+        const dateStr = String(row['date'] || row['created_at'] || 'Sin fecha').slice(0, 10);
+        const val = keys.reduce((acc: number, k) => acc + Number(row[k] || 0), 0);
+        grouped[dateStr] = (grouped[dateStr] || 0) + val;
+      });
+
+      return Object.entries(grouped)
+        .map(([label, value]) => ({ label, value }))
+        .sort((a, b) => a.label.localeCompare(b.label));
+    } catch {
+      return [];
+    }
+  },
+
+  /**
+   * Fetch all report data using paginated chunks (memory-efficient).
+   * Ideal for Excel exports with large datasets.
    */
   async fetchReportDataPaginated(
-    type: ReportType,
+    type: ReportDefinition['type'],
     filters: ReportFilters | undefined,
     date_range: ReportDateRange | undefined,
     store_id: string,
-    limit: number,
-    offset: number
+    options?: {
+      chunkSize?: number;
+      onProgress?: (fetched: number, totalEstimated: number) => void;
+    },
   ): Promise<ReportRow[]> {
-    let data: ReportRow[] = [];
-    const { from, to } = date_range || {};
-
-    const fromDate = from ? from + 'T00:00:00' : null;
-    const toDate = to ? to + 'T23:59:59' : null;
-
-    switch (type) {
-      case 'sales': {
-        const { data: salesData, error: salesError } = await supabase.rpc('get_transactions', {
-          p_store_id: store_id,
-          p_date_from: fromDate,
-          p_date_to: toDate,
-          p_limit: limit,
-          p_offset: offset
-        });
-        if (salesError) throw salesError;
-        data = (salesData || []) as ReportRow[];
-        break;
-      }
-
-      case 'inventory': {
-        const { data: invData, error: invError } = await supabase.rpc('get_paginated_products', {
-          p_store_id: store_id,
-          p_limit: limit,
-          p_offset: offset,
-          p_category: filters?.category || null
-        });
-        if (invError) throw invError;
-        data = (invData || []) as ReportRow[];
-        break;
-      }
-
-      case 'kardex': {
-        if (!filters?.product_id) throw new Error('Se requiere product_id para el reporte de Kardex');
-        const { data: kardexData, error: kardexError } = await supabase.rpc('get_product_stock_ledger_paginated', {
-          p_product_id: filters.product_id,
-          p_store_id: store_id,
-          p_limit: limit,
-          p_offset: offset
-        });
-        if (kardexError) throw kardexError;
-        data = (kardexData || []) as ReportRow[];
-        break;
-      }
-
-      case 'purchases': {
-        const query = supabase.from('receipts')
-          .select('*')
-          .eq('store_id', store_id)
-          .gte('created_at', from || '1970-01-01')
-          .lte('created_at', to || '2100-01-01')
-          .order('created_at', { ascending: false });
-
-        if (typeof query.range === 'function') {
-            const { data: purchaseData, error: purchaseError } = await query.range(offset, offset + limit - 1);
-            if (purchaseError) throw purchaseError;
-            data = (purchaseData || []) as ReportRow[];
-        } else {
-            const { data: purchaseData, error: purchaseError } = await query;
-            if (purchaseError) throw purchaseError;
-            data = (purchaseData || []) as ReportRow[];
-        }
-        break;
-      }
-
-      case 'audit': {
-        const { data: auditData, error: auditError } = await supabase.rpc('get_audit_logs', {
-          p_store_id: store_id,
-          p_date_from: fromDate,
-          p_date_to: toDate,
-          p_limit: limit,
-          p_offset: offset
-        });
-        if (auditError) throw auditError;
-        data = (auditData || []) as ReportRow[];
-        break;
-      }
-
-      case 'profit': {
-        const { data: profitData, error: profitError } = await supabase.rpc('get_profit_report', {
-          p_store_id: store_id,
-          p_date_from: fromDate,
-          p_date_to: toDate,
-          p_limit: limit,
-          p_offset: offset
-        });
-        if (profitError) throw profitError;
-        data = (profitData || []) as ReportRow[];
-        break;
-      }
-
-      case 'daily_income': {
-        const { data: incomeData, error: incomeError } = await supabase.rpc('get_daily_income_aggregated', {
-          p_store_id: store_id,
-          p_date_from: fromDate,
-          p_date_to: toDate
-        });
-        if (incomeError) throw incomeError;
-        data = (incomeData || []) as ReportRow[];
-        break;
-      }
-
-      case 'daily_expenses': {
-        const { data: expData, error: expError } = await supabase.rpc('get_daily_expenses_aggregated', {
-          p_store_id: store_id,
-          p_date_from: from || null,
-          p_date_to: to || null
-        });
-        if (expError) throw expError;
-        data = (expData || []) as ReportRow[];
-        break;
-      }
-
-      case 'transfer': {
-        const { data: transferData, error: transferError } = await supabase.rpc('get_transfers', {
-          p_store_id: store_id,
-          p_date_from: fromDate,
-          p_date_to: toDate,
-          p_status: null,
-          p_limit: limit,
-          p_offset: offset
-        });
-        if (transferError) throw transferError;
-        data = (transferData || []) as ReportRow[];
-        break;
-      }
-
-      case 'cash': {
-        const { data: cashData, error: cashError } = await supabase.rpc('get_cash_closures', {
-          p_store_id: store_id,
-          p_date_from: from || null,
-          p_date_to: to || null,
-          p_limit: limit,
-          p_offset: offset
-        });
-        if (cashError) throw cashError;
-        data = (cashData || []) as ReportRow[];
-        break;
-      }
-
-      default:
-        throw new Error(`Tipo de reporte no soportado: ${type}`);
-    }
-
-    return data;
-  }
+    return fetchReportDataPaginated(supabase, {
+      type,
+      storeId: store_id,
+      from: date_range?.from,
+      to: date_range?.to,
+      filters,
+    }, options);
+  },
 };

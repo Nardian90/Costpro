@@ -44,10 +44,10 @@ interface HelpContentProps {
 }
 
 const TYPE_CONFIG: Record<string, { icon: React.ElementType; label: string; color: string; bg: string }> = {
-  'getting-started': { icon: BookOpen, label: 'Para Empezar', color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-500/10 border-blue-500/20' },
-  iso: { icon: BookOpen, label: 'Manual de Usuario', color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-500/10 border-blue-500/20' },
-  tutorial: { icon: Play, label: 'Tutorial', color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20' },
-  'how-to': { icon: Wrench, label: 'Guía Práctica', color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-500/10 border-amber-500/20' },
+  'getting-started': { icon: BookOpen, label: 'Para Empezar', color: 'text-primary dark:text-blue-400', bg: 'bg-primary/10 border-primary/20' },
+  iso: { icon: BookOpen, label: 'Manual de Usuario', color: 'text-primary dark:text-blue-400', bg: 'bg-primary/10 border-primary/20' },
+  tutorial: { icon: Play, label: 'Tutorial', color: 'text-success dark:text-emerald-400', bg: 'bg-success/10 border-success/20' },
+  'how-to': { icon: Wrench, label: 'Guía Práctica', color: 'text-warning dark:text-amber-400', bg: 'bg-warning/10 border-warning/20' },
   reference: { icon: Terminal, label: 'Referencia Técnica', color: 'text-rose-600 dark:text-rose-400', bg: 'bg-rose-500/10 border-rose-500/20' },
   explanation: { icon: Info, label: 'Concepto Técnico', color: 'text-violet-600 dark:text-violet-400', bg: 'bg-violet-500/10 border-violet-500/20' },
 };
@@ -92,12 +92,12 @@ class HelpRenderBoundary extends Component<{ children: ReactNode }, { hasError: 
     if (this.state.hasError) {
       return (
         <div className="flex flex-col items-center justify-center py-16 px-6">
-          <div className="w-12 h-12 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center mb-4">
-            <AlertTriangle className="w-6 h-6 text-red-500" />
+          <div className="w-12 h-12 rounded-xl bg-destructive/10 border border-destructive/20 flex items-center justify-center mb-4">
+            <AlertTriangle className="w-6 h-6 text-destructive" />
           </div>
           <h3 className="text-sm font-bold mb-1">Error al renderizar documento</h3>
           <p className="text-xs text-muted-foreground/60 mb-4 max-w-md text-center">El documento contiene formato no compatible. Se mostrará como texto plano.</p>
-          <button
+          <button type="button"
             onClick={() => this.setState({ hasError: false, error: null })}
             className="px-4 py-2 rounded-lg bg-primary/10 border border-primary/20 text-xs font-bold text-primary hover:bg-primary/15 transition-colors"
           >Reintentar</button>
@@ -150,7 +150,7 @@ export default function HelpContent({
               <span className="text-primary font-bold">&ldquo;{searchQuery}&rdquo;</span>
             </p>
           </div>
-          <button
+          <button type="button"
             onClick={onClearSearch}
             className="w-10 h-10 rounded-xl bg-secondary/50 border border-border/50 flex items-center justify-center hover:bg-destructive/10 hover:text-destructive hover:border-destructive/20 transition-all shrink-0"
           >
@@ -172,7 +172,7 @@ export default function HelpContent({
           <div className="grid gap-3">
             {searchResults.map((result: any, idx) => {
               return (
-                <button
+                <button type="button"
                   key={`${result.path}-${idx}`}
                   onClick={() => {
                     onSelectResult(result.path);
@@ -211,7 +211,7 @@ export default function HelpContent({
           <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/15 flex items-center justify-center">
             <BookOpen className="w-12 h-12 text-primary/30" />
           </div>
-          <div className="absolute -top-2 -right-2 w-8 h-8 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg shadow-amber-500/20">
+          <div className="absolute -top-2 -right-2 w-8 h-8 rounded-xl bg-gradient-to-br from-amber-400 to-warning flex items-center justify-center shadow-lg shadow-warning/20">
             <Sparkles className="w-4 h-4 text-white" />
           </div>
         </div>
@@ -251,7 +251,7 @@ export default function HelpContent({
             <React.Fragment key={idx}>
               {idx > 0 && <ChevronRight className="w-3 h-3 text-muted-foreground/30 shrink-0" />}
               {crumb.path && idx < breadcrumbs.length - 1 ? (
-                <button
+                <button type="button"
                   onClick={() => onNavigate(crumb.path!)}
                   className="hover:text-primary transition-colors truncate max-w-[160px]"
                 >
@@ -306,7 +306,7 @@ export default function HelpContent({
 
           {/* Quick actions */}
           <div className="flex items-center gap-2 pt-2">
-            <button
+            <button type="button"
               aria-label="Volver al inicio del documento"
               onClick={() => {
                 (window as any).__helpScrollToTop?.();
@@ -324,7 +324,7 @@ export default function HelpContent({
       {(adjacentDocs.prev || adjacentDocs.next) && (
         <div className="flex items-center justify-between gap-4 pt-6 border-t border-border/20">
           {adjacentDocs.prev ? (
-            <button
+            <button type="button"
               onClick={() => onNavigate(adjacentDocs.prev!.path)}
               className="group flex-1 text-left p-4 rounded-xl bg-muted/20 border border-border/30 hover:border-primary/25 hover:bg-primary/5 transition-all"
             >
@@ -336,7 +336,7 @@ export default function HelpContent({
             </button>
           ) : <div />}
           {adjacentDocs.next ? (
-            <button
+            <button type="button"
               onClick={() => onNavigate(adjacentDocs.next!.path)}
               className="group flex-1 text-right p-4 rounded-xl bg-muted/20 border border-border/30 hover:border-primary/25 hover:bg-primary/5 transition-all"
             >
@@ -361,7 +361,7 @@ export default function HelpContent({
           <div className="w-1 h-1 rounded-full bg-muted-foreground/20" />
           CostPro · Documentation System · ISO/IEC 26514
         </div>
-        <button
+        <button type="button"
           aria-label="Volver arriba del documento"
           onClick={() => { (window as any).__helpScrollToTop?.(); }}
           className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-primary/70 hover:text-primary transition-colors"

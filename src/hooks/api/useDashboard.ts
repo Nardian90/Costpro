@@ -21,7 +21,7 @@ export async function prefetchDashboardData(
   const isValidUuid = cleanStoreId && isUuidRegex.test(cleanStoreId);
 
   const params = getDashboardKpisParamsSchema.parse({
-    p_store_id: isAdmin ? null : (isValidUuid ? cleanStoreId : null),
+    p_store_id: isValidUuid ? cleanStoreId : null,
     p_date_from: dateFrom || null,
     p_date_to: dateTo || null
   });
@@ -84,7 +84,7 @@ export function useSuspenseDashboardData(
 
       const rpcName = 'get_dashboard_kpis';
       const params = getDashboardKpisParamsSchema.parse({
-        p_store_id: isAdmin ? null : (isValidUuid ? cleanStoreId : null),
+        p_store_id: isValidUuid ? cleanStoreId : null,
         p_date_from: dateFrom || null,
         p_date_to: dateTo || null
       });
@@ -139,7 +139,7 @@ export function useDashboardData(
 
       const rpcName = 'get_dashboard_kpis';
       const params = getDashboardKpisParamsSchema.parse({
-        p_store_id: isAdmin ? null : (isValidUuid ? cleanStoreId : null),
+        p_store_id: isValidUuid ? cleanStoreId : null,
         p_date_from: dateFrom || null,
         p_date_to: dateTo || null
       });

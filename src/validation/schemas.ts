@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { STORE_TEMPLATES } from "@/config/app";
 
 // ============================================
 // Enums and Basics
@@ -73,11 +74,37 @@ export const storeSchema = z.object({
   email: z.string().nullable().optional(),
   logo_url: z.string().nullable().optional(),
   reeup: z.string().nullable().optional(),
+  nit: z.string().nullable().optional(),
   bank_account: z.string().nullable().optional(),
+  signature_url: z.string().nullable().optional(),
+  stamp_url: z.string().nullable().optional(),
+  latitude: z.number().nullable().optional(),
+  longitude: z.number().nullable().optional(),
   is_active: z.boolean().optional(),
   slug: z.string().nullable().optional(),
-  plantilla: z.enum(['construccion', 'minimalista', 'moderna', 'clasica']).nullable().optional(),
+  plantilla: z.enum(STORE_TEMPLATES).nullable().optional(),
   created_at: z.string().optional(),
+  // FIX-FC-PERSIST: Include cost_template from store_cost_templates join
+  // FIX-FC-PERSIST-V2: Include id, store_id — needed by normalizeCostTemplate
+  // Supabase returns this as an array from the relation, so we normalize it
+  store_cost_templates: z.union([
+    z.array(z.object({
+      id: z.string().optional(),
+      store_id: z.string().optional(),
+      template_id: z.string().optional(),
+      modalidad: z.string().optional(),
+      pdf_format: z.string().optional(),
+      is_active: z.boolean().optional(),
+    })),
+    z.object({
+      id: z.string().optional(),
+      store_id: z.string().optional(),
+      template_id: z.string().optional(),
+      modalidad: z.string().optional(),
+      pdf_format: z.string().optional(),
+      is_active: z.boolean().optional(),
+    }),
+  ]).nullable().optional(),
 });
 
 export const userStoreMembershipSchema = z.object({
@@ -174,6 +201,15 @@ export const productSchema = z.object({
       return val;
     }, z.boolean().optional())
     .default(false),
+  // FC Automatizada — Fase 1
+  cost_sheet_id: optionalResilientUuid.nullable().optional(),
+  fc_auto_enabled: z
+    .preprocess((val) => {
+      if (val === undefined || val === null) return undefined;
+      if (typeof val === "string") return val === "true";
+      return val;
+    }, z.boolean().optional())
+    .default(true),
 });
 
 export const productVariantSchema = z.object({
@@ -194,7 +230,11 @@ export const createProductInputSchema = productSchema.omit({
   updated_at: true,
   public_image_url: true,
   has_movements: true,
-});
+}).refine(
+  // Q6: prevenir precio < costo (margen negativo en creación)
+  (data) => !data.cost_price || !data.price || data.price >= data.cost_price,
+  { message: "El precio de venta no puede ser menor que el costo (margen negativo)", path: ["price"] }
+);
 
 export const updateProductInputSchema = productSchema.partial().omit({
   id: true,
@@ -202,7 +242,15 @@ export const updateProductInputSchema = productSchema.partial().omit({
   updated_at: true,
   public_image_url: true,
   has_movements: true,
-});
+}).refine(
+  // Q6: prevenir precio < costo (margen negativo en edición)
+  (data) => {
+    // Solo validar si ambos campos están presentes en el update
+    if (data.cost_price === undefined || data.price === undefined) return true;
+    return data.price >= data.cost_price;
+  },
+  { message: "El precio de venta no puede ser menor que el costo (margen negativo)", path: ["price"] }
+);
 
 export const createProductVariantInputSchema = productVariantSchema.omit({
   id: true,
@@ -375,6 +423,10 @@ export const dashboardKpiResponseSchema = z.object({
 export const createSaleParamsSchema = z.object({
   p_store_id: z.string().regex(uuidRegex), // Use string for required RPC params
   p_seller_id: z.string().regex(uuidRegex), // Use string for required RPC params
+  // POS-3b audit P0.1: Persistencia de cliente en la venta.
+  // Opcional para no romper llamadas existentes sin cliente.
+  p_customer_id: z.string().regex(uuidRegex).nullable().optional(),
+  p_customer_name: z.string().optional(),
   p_payment_method: z.string(),
   p_total_amount: z.number(),
   p_subtotal: z.number(),
@@ -403,7 +455,11 @@ export const createSaleParamsSchema = z.object({
 export const registerReceptionParamsSchema = z.object({
   p_store_id: z.string().regex(uuidRegex),
   p_supplier: z.string().min(1),
-  p_reception_date: z.string(),
+  // REC-1 QW-R9: validar que p_reception_date sea ISO datetime válido.
+  p_reception_date: z.string().regex(
+    /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z$/,
+    'p_reception_date debe ser ISO 8601 datetime válido (ej. 2026-06-17T15:30:00.000Z)'
+  ),
   p_invoice_number: z.string().min(1),
   p_items: z.array(
     z.object({
@@ -411,6 +467,10 @@ export const registerReceptionParamsSchema = z.object({
       sku: z.string().nullable().optional(),
       quantity: z.number().positive(),
       unit_cost: z.number().min(0),
+      // REC-2 MM-R11: ampliar schema con UM, sale_price y variant_id
+      unit_of_measure: z.string().optional(),
+      sale_price: z.number().min(0).optional(),
+      variant_id: z.string().regex(uuidRegex).nullable().optional(),
     }),
   ),
 });

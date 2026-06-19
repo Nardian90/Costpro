@@ -80,9 +80,9 @@ const PDF_FORMATS: Array<{
     label: 'Pro Corporativo',
     description: 'Con logo e identidad visual',
     icon: ImagePlus,
-    selectedBg: 'bg-amber-500/5',
-    selectedBorder: 'border-amber-500',
-    selectedIconBg: 'bg-amber-500',
+    selectedBg: 'bg-warning/5',
+    selectedBorder: 'border-warning',
+    selectedIconBg: 'bg-warning',
     selectedIconText: 'text-white',
   },
   {
@@ -90,9 +90,9 @@ const PDF_FORMATS: Array<{
     label: 'Res 148/2023',
     description: 'Formato oficial MINCIN',
     icon: Scale,
-    selectedBg: 'bg-blue-500/5',
-    selectedBorder: 'border-blue-500',
-    selectedIconBg: 'bg-blue-600',
+    selectedBg: 'bg-primary/5',
+    selectedBorder: 'border-primary',
+    selectedIconBg: 'bg-primary',
     selectedIconText: 'text-white',
   },
   {
@@ -120,9 +120,9 @@ const PDF_FORMATS: Array<{
     label: 'Auditoría',
     description: 'Trazabilidad y firmas',
     icon: ShieldCheck,
-    selectedBg: 'bg-orange-500/5',
-    selectedBorder: 'border-orange-500',
-    selectedIconBg: 'bg-orange-500',
+    selectedBg: 'bg-warning/5',
+    selectedBorder: 'border-warning',
+    selectedIconBg: 'bg-warning',
     selectedIconText: 'text-white',
   },
   {
@@ -160,9 +160,9 @@ const PDF_FORMATS: Array<{
     label: 'Exportación',
     description: 'CUP + USD, campos int\'l',
     icon: Ship,
-    selectedBg: 'bg-emerald-500/5',
-    selectedBorder: 'border-emerald-500',
-    selectedIconBg: 'bg-emerald-600',
+    selectedBg: 'bg-success/5',
+    selectedBorder: 'border-success',
+    selectedIconBg: 'bg-success',
     selectedIconText: 'text-white',
   },
 ];
@@ -325,8 +325,8 @@ export const CostSheetExportModal: React.FC<CostSheetExportModalProps> = ({
                     options.pdfFormat === 'pro' ? "max-h-40 opacity-100" : "max-h-0 opacity-0 pointer-events-none"
                 )}>
                     {options.pdfFormat === 'pro' && (
-                        <div className="p-5 rounded-3xl bg-amber-500/5 border border-amber-500/20">
-                            <Label className="text-[10px] font-black uppercase tracking-widest text-amber-600 dark:text-amber-400 mb-3 block">Identidad Visual</Label>
+                        <div className="p-5 rounded-3xl bg-warning/5 border border-warning/20">
+                            <Label className="text-[10px] font-black uppercase tracking-widest text-warning dark:text-amber-400 mb-3 block">Identidad Visual</Label>
                             <input
                                 type="file"
                                 ref={fileInputRef}
@@ -337,7 +337,7 @@ export const CostSheetExportModal: React.FC<CostSheetExportModalProps> = ({
                             />
                             {options.logo ? (
                                 <div className="flex items-center gap-4">
-                                    <div className="w-16 h-16 rounded-2xl border-2 border-amber-500/20 bg-white p-2 overflow-hidden">
+                                    <div className="w-16 h-16 rounded-2xl border-2 border-warning/20 bg-white p-2 overflow-hidden">
                                         <Image src={options.logo} alt="Logo corporativo de exportación" width={48} height={48} className="w-full h-full object-contain" unoptimized />
                                     </div>
                                     <div className="flex-1">
@@ -346,7 +346,7 @@ export const CostSheetExportModal: React.FC<CostSheetExportModalProps> = ({
                                             type="button"
                                             variant="ghost"
                                             size="sm"
-                                            className="h-7 mt-1 text-xs text-red-500 hover:text-red-600 hover:bg-red-500/10 px-2"
+                                            className="h-7 mt-1 text-xs text-destructive hover:text-destructive hover:bg-destructive/10 px-2"
                                             onClick={handleRemoveLogo}
                                         >
                                             <X className="w-3 h-3 mr-1" aria-hidden="true" />
@@ -359,7 +359,7 @@ export const CostSheetExportModal: React.FC<CostSheetExportModalProps> = ({
                                     type="button"
                                     variant="outline"
                                     size="sm"
-                                    className="w-full h-9 text-xs font-bold border-dashed border-amber-500/40 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 hover:text-amber-500"
+                                    className="w-full h-9 text-xs font-bold border-dashed border-warning/40 text-warning dark:text-amber-400 hover:bg-warning/10 hover:text-warning"
                                     onClick={() => fileInputRef.current?.click()}
                                 >
                                     <Upload className="w-3.5 h-3.5 mr-2" aria-hidden="true" />
@@ -484,14 +484,14 @@ export const CostSheetExportModal: React.FC<CostSheetExportModalProps> = ({
                                 className={cn(
                                     'flex items-center gap-2.5 p-3 rounded-2xl border-2 transition-all text-left',
                                     options.annexLayout === 'separate'
-                                        ? 'bg-blue-500/5 border-blue-500 shadow-sm'
+                                        ? 'bg-primary/5 border-primary shadow-sm'
                                         : 'bg-sidebar/40 border-transparent hover:border-sidebar-border/80'
                                 )}
                             >
                                 <div className={cn(
                                     'w-7 h-7 rounded-xl flex items-center justify-center shrink-0 transition-colors',
                                     options.annexLayout === 'separate'
-                                        ? 'bg-blue-600 text-white'
+                                        ? 'bg-primary text-white'
                                         : 'bg-sidebar text-muted-foreground'
                                 )}>
                                     <FileOutput className="w-3.5 h-3.5" aria-hidden="true" />

@@ -28,7 +28,7 @@ export const ClasificadorModule: React.FC<ClasificadorModuleProps> = ({ data, se
       return (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 pt-2">
           {node.map((codigo) => (
-            <button
+            <button type="button"
               key={codigo}
               onClick={() => onNavigate('cuentas', codigo)}
               className="flex items-center gap-2 p-3 rounded-2xl bg-background border hover:border-primary/30 hover:bg-primary/[0.02] transition-all group shadow-sm active:scale-95"

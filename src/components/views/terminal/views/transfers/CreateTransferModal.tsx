@@ -483,7 +483,7 @@ export default function CreateTransferModal({ isOpen, onClose }: CreateTransferM
                           />
                           <span
                             className={cn(
-                              'text-xs font-bold whitespace-nowrap',
+                              'text-xs font-bold whitespace-nowrap tabular-nums',
                               overStock ? 'text-destructive' : 'text-muted-foreground'
                             )}
                           >
@@ -495,7 +495,7 @@ export default function CreateTransferModal({ isOpen, onClose }: CreateTransferM
                         type="button"
                         onClick={() => setItemToDelete(product.id)}
                         aria-label={`Quitar ${product.name} de la transferencia`}
-                        className="min-w-[44px] min-h-[44px] p-2 hover:bg-rose-500/10 text-rose-500 rounded-xl transition-colors mt-4"
+                        className="min-w-[44px] min-h-[44px] p-2 hover:bg-destructive/10 text-destructive rounded-xl transition-colors mt-4"
                       >
                         <Trash2 className="w-4 h-4" aria-hidden="true" />
                       </button>

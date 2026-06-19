@@ -32,7 +32,7 @@ export const userService = {
       throw new Error('Tu membresía a esta tienda ha sido revocada.');
     }
 
-    const storeData = (membershipRecord as any).store;
+    const storeData = (membershipRecord.store as unknown as Array<{ id: string; is_active: boolean }> | null)?.[0];
     if (storeData && storeData.is_active === false) {
       logger.warn('DATABASE', 'SET_ACTIVE_STORE_INACTIVE', { userId, storeId });
       throw new Error('Esta tienda está desactivada. No se puede seleccionar.');
@@ -66,7 +66,7 @@ export const userService = {
     }
     logger.info('DATABASE', 'UPDATE_AI_SETTINGS', { userId, provider });
 
-    const updates: any = { ai_provider: provider };
+    const updates: { ai_provider: string; ai_api_key?: string } = { ai_provider: provider };
     if (apiKey && apiKey.trim().length > 0) {
       updates.ai_api_key = apiKey;
     }
@@ -136,7 +136,7 @@ export const userService = {
       if (!membershipsError && membershipsData) {
         // Also filter out memberships with inactive stores (defense in depth)
         memberships = membershipsData.filter(
-          (m: any) => !m.store || m.store.is_active !== false
+          (m: { store?: Array<{ is_active: boolean }>; [key: string]: unknown }) => !m.store || m.store[0]?.is_active !== false
         );
       }
     } catch (err) {
@@ -160,7 +160,7 @@ export const userService = {
     // FIX HIGH-006: AUTO-SELECT STORE - Only consider active memberships with active stores
     if (!effectiveActiveStoreId && profileData.memberships && profileData.memberships.length > 0) {
       const validMemberships = profileData.memberships.filter(
-        (m) => m.status === 'active' && (!m.store || (m.store as any)?.is_active !== false)
+        (m) => m.status === 'active' && (!m.store || (m.store as { is_active?: boolean })?.is_active !== false)
       );
       if (validMemberships.length > 0) {
         effectiveActiveStoreId = validMemberships[0].store_id ?? null;

@@ -50,10 +50,10 @@ const SEVERITY_CONFIG: Record<Exclude<SeverityFilter, 'all'>, SeverityConfig> & 
     WARNING: {
         label: 'Advertencias',
         icon: AlertTriangle,
-        countColor: 'text-amber-500',
-        cardBg: 'bg-amber-500/5',
-        cardBorder: 'border-amber-500/20',
-        ringClass: 'ring-2 ring-amber-500/40 shadow-lg shadow-amber-500/10',
+        countColor: 'text-warning',
+        cardBg: 'bg-warning/5',
+        cardBorder: 'border-warning/20',
+        ringClass: 'ring-2 ring-warning/40 shadow-lg shadow-warning/10',
         subtitle: 'Revisión sugerida',
     },
     INFO_SUCCESS: {
@@ -74,13 +74,13 @@ const SEVERITY_CONFIG: Record<Exclude<SeverityFilter, 'all'>, SeverityConfig> & 
 
 const ERROR_CODE_CONFIG: Record<string, { icon: React.ElementType; label: string; color: string }> = {
     CYCLE:                   { icon: RefreshCw, label: 'Ciclo', color: 'text-violet-500 bg-violet-500/10' },
-    MISSING_REF:             { icon: Unplug, label: 'Ref. Faltante', color: 'text-red-500 bg-red-500/10' },
-    SEMANTIC_DISCREPANCY:   { icon: GitBranch, label: 'Discrepancia', color: 'text-orange-500 bg-orange-500/10' },
-    INVALID_FORMULA:         { icon: AlertOctagon, label: 'Fórmula Inválida', color: 'text-red-600 bg-red-600/10' },
+    MISSING_REF:             { icon: Unplug, label: 'Ref. Faltante', color: 'text-destructive bg-destructive/10' },
+    SEMANTIC_DISCREPANCY:   { icon: GitBranch, label: 'Discrepancia', color: 'text-warning bg-warning/10' },
+    INVALID_FORMULA:         { icon: AlertOctagon, label: 'Fórmula Inválida', color: 'text-destructive bg-destructive/10' },
     HARD_RULE_VIOLATION:     { icon: ShieldAlert, label: 'Regla Violada', color: 'text-rose-600 bg-rose-600/10' },
-    TRIVIAL_FORMULA:         { icon: FileWarning, label: 'Fórmula Trivial', color: 'text-amber-500 bg-amber-500/10' },
+    TRIVIAL_FORMULA:         { icon: FileWarning, label: 'Fórmula Trivial', color: 'text-warning bg-warning/10' },
     HIERARCHY:               { icon: GitBranch, label: 'Jerarquía', color: 'text-sky-500 bg-sky-500/10' },
-    EXTERNAL_LINK:           { icon: ArrowRight, label: 'Enlace Externo', color: 'text-slate-400 bg-slate-400/10' },
+    EXTERNAL_LINK:           { icon: ArrowRight, label: 'Enlace Externo', color: 'text-muted-foreground bg-muted/10' },
 };
 
 const CATEGORY_ICONS: Record<string, React.ElementType> = {
@@ -316,7 +316,7 @@ export const CostSheetAuditView: React.FC<CostSheetAuditViewProps> = ({
         if (count === 0) return null;
         const colors = {
             CRITICAL: 'bg-destructive/15 text-destructive border-destructive/25',
-            WARNING: 'bg-amber-500/15 text-amber-600 border-amber-500/25',
+            WARNING: 'bg-warning/15 text-warning border-warning/25',
             INFO: 'bg-muted/50 text-muted-foreground border-muted-foreground/25',
         };
         return (
@@ -374,7 +374,7 @@ export const CostSheetAuditView: React.FC<CostSheetAuditViewProps> = ({
                         <Badge variant="outline" className="text-[10px] font-bold uppercase rounded-full border-primary/30 text-primary bg-primary/5 px-2.5">
                             {SEVERITY_CONFIG[activeFilter as keyof typeof SEVERITY_CONFIG]?.label || activeFilter}
                         </Badge>
-                        <button
+                        <button type="button"
                             onClick={() => { setActiveFilter('all'); if (sourceRowId) handleClearRowFilter(); }}
                             className="ml-auto flex items-center gap-1 text-[10px] font-bold text-muted-foreground hover:text-destructive uppercase tracking-widest transition-colors"
                             aria-label="Quitar filtro"
@@ -425,25 +425,25 @@ export const CostSheetAuditView: React.FC<CostSheetAuditViewProps> = ({
                         onClick={() => setActiveFilter(prev => prev === 'WARNING' ? 'all' : 'WARNING')}
                         className={cn(
                             "rounded-3xl overflow-hidden relative group transition-all text-left w-full",
-                            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/50",
-                            totalWarnings > 0 ? "bg-amber-500/5 border-amber-500/20" : "bg-muted/30 border-border/50",
+                            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-warning/50",
+                            totalWarnings > 0 ? "bg-warning/5 border-warning/20" : "bg-muted/30 border-border/50",
                             activeFilter === 'WARNING' && SEVERITY_CONFIG.WARNING.ringClass,
                         )}
                         aria-pressed={activeFilter === 'WARNING'}
                         aria-label={`Filtrar por advertencias. ${totalWarnings} advertencias encontradas.`}
                     >
                         <div className="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                            <AlertTriangle className="w-16 h-16 text-amber-500" />
+                            <AlertTriangle className="w-16 h-16 text-warning" />
                         </div>
                         <CardHeader className="pb-2">
-                            <CardTitle className="text-xs font-black uppercase tracking-widest text-amber-500/70 flex items-center gap-2">
+                            <CardTitle className="text-xs font-black uppercase tracking-widest text-warning/70 flex items-center gap-2">
                                 {activeFilter === 'WARNING' && <Eye className="w-3 h-3" />}
                                 Advertencias
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <div className="text-4xl font-black text-amber-500">{totalWarnings}</div>
-                            <p className="text-xs text-amber-500/60 font-bold uppercase mt-1">Revisión de Parámetros Sugerida</p>
+                            <div className="text-4xl font-black text-warning">{totalWarnings}</div>
+                            <p className="text-xs text-warning/60 font-bold uppercase mt-1">Revisión de Parámetros Sugerida</p>
                         </CardContent>
                     </button>
 
@@ -537,7 +537,7 @@ export const CostSheetAuditView: React.FC<CostSheetAuditViewProps> = ({
                                         </Badge>
                                     )}
                                     {isFilterActive && (
-                                        <button
+                                        <button type="button"
                                             onClick={() => { setActiveFilter('all'); if (sourceRowId) handleClearRowFilter(); }}
                                             className="flex items-center gap-1 text-[10px] font-bold text-muted-foreground hover:text-destructive uppercase tracking-widest transition-colors"
                                             aria-label="Quitar filtro"
@@ -558,7 +558,7 @@ export const CostSheetAuditView: React.FC<CostSheetAuditViewProps> = ({
                                 const highestBorder = group.highestSeverity === 'CRITICAL'
                                     ? 'border-l-destructive'
                                     : group.highestSeverity === 'WARNING'
-                                    ? 'border-l-amber-500'
+                                    ? 'border-l-warning'
                                     : 'border-l-blue-400';
 
                                 return (
@@ -679,7 +679,7 @@ export const CostSheetAuditView: React.FC<CostSheetAuditViewProps> = ({
                                                                         <Badge variant="outline" className={cn(
                                                                             "text-[9px] font-black uppercase tracking-wider px-2 py-0 rounded-full border",
                                                                             isCritical ? "border-destructive/30 text-destructive bg-destructive/5" :
-                                                                            isWarning ? "border-amber-500/30 text-amber-600 bg-amber-500/5" :
+                                                                            isWarning ? "border-warning/30 text-warning bg-warning/5" :
                                                                             "border-border text-muted-foreground bg-muted/50"
                                                                         )}>
                                                                             {config.label}
@@ -687,7 +687,7 @@ export const CostSheetAuditView: React.FC<CostSheetAuditViewProps> = ({
                                                                         <Badge variant="outline" className={cn(
                                                                             "text-[8px] font-bold uppercase px-1.5 py-0 rounded",
                                                                             isCritical ? "border-destructive/20 text-destructive/70" :
-                                                                            isWarning ? "border-amber-500/20 text-amber-500/70" :
+                                                                            isWarning ? "border-warning/20 text-warning/70" :
                                                                             "border-border text-muted-foreground"
                                                                         )}>
                                                                             {err.type}
@@ -696,7 +696,7 @@ export const CostSheetAuditView: React.FC<CostSheetAuditViewProps> = ({
                                                                     <p className={cn(
                                                                         "text-xs font-medium leading-relaxed",
                                                                         isCritical ? "text-destructive/80" :
-                                                                        isWarning ? "text-amber-600/80" :
+                                                                        isWarning ? "text-warning/80" :
                                                                         "text-muted-foreground"
                                                                     )}>
                                                                         {err.message}
@@ -729,7 +729,7 @@ export const CostSheetAuditView: React.FC<CostSheetAuditViewProps> = ({
                         <p className="text-xs text-muted-foreground mt-1">
                             No se encontraron hallazgos del tipo seleccionado.
                         </p>
-                        <button
+                        <button type="button"
                             onClick={() => setActiveFilter('all')}
                             className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-primary bg-primary/10 hover:bg-primary/20 transition-colors"
                         >
@@ -790,13 +790,13 @@ export const CostSheetAuditView: React.FC<CostSheetAuditViewProps> = ({
                                     <div key={i} className={cn(
                                         "p-6 hover:bg-muted/30 transition-all group",
                                         v.type === 'CRITICAL' && "border-l-2 border-l-destructive",
-                                        v.type === 'WARNING' && "border-l-2 border-l-amber-500",
+                                        v.type === 'WARNING' && "border-l-2 border-l-warning",
                                     )}>
                                         <div className="flex gap-4 items-start">
                                             <div className={cn(
                                                 "mt-1 p-2 rounded-xl shrink-0",
                                                 v.type === 'CRITICAL' ? "bg-destructive/10 text-destructive" :
-                                                v.type === 'WARNING' ? "bg-amber-500/10 text-amber-500" :
+                                                v.type === 'WARNING' ? "bg-warning/10 text-warning" :
                                                 "bg-primary/10 text-primary"
                                             )}>
                                                 <CategoryIcon className="w-4 h-4" />
@@ -806,7 +806,7 @@ export const CostSheetAuditView: React.FC<CostSheetAuditViewProps> = ({
                                                     <span className={cn(
                                                         "text-xs font-black uppercase tracking-widest px-2 py-0.5 rounded-full border",
                                                         v.type === 'CRITICAL' ? "border-destructive/20 text-destructive" :
-                                                        v.type === 'WARNING' ? "border-amber-500/20 text-amber-500" :
+                                                        v.type === 'WARNING' ? "border-warning/20 text-warning" :
                                                         "border-primary/20 text-primary"
                                                     )}>
                                                         {v.category}
@@ -822,7 +822,7 @@ export const CostSheetAuditView: React.FC<CostSheetAuditViewProps> = ({
                                             <div className={cn(
                                                 "shrink-0 w-2 h-2 rounded-full mt-2",
                                                 v.type === 'CRITICAL' ? "bg-destructive" :
-                                                v.type === 'WARNING' ? "bg-amber-500" :
+                                                v.type === 'WARNING' ? "bg-warning" :
                                                 "bg-primary"
                                             )} title={v.type} />
                                         </div>

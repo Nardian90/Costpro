@@ -276,8 +276,8 @@ export function IPVReportView() {
                 <TableRow key={r.id}>
                   <TableCell className="font-bold text-xs">{formatDate(r.fecha_reporte)}</TableCell>
                   <TableCell className="text-right font-black text-xs">{formatCurrencyCents(r.total_ventas_cents)}</TableCell>
-                  <TableCell className="text-right text-xs text-green-600 font-bold">{formatCurrencyCents(r.resumen_efectivo_cents)}</TableCell>
-                  <TableCell className="text-right text-xs text-blue-600 font-bold">{formatCurrencyCents(r.resumen_transferencia_cents)}</TableCell>
+                  <TableCell className="text-right text-xs text-success font-bold">{formatCurrencyCents(r.resumen_efectivo_cents)}</TableCell>
+                  <TableCell className="text-right text-xs text-primary font-bold">{formatCurrencyCents(r.resumen_transferencia_cents)}</TableCell>
                   <TableCell><Badge variant="outline" className="text-[10px] font-black">{r.estado}</Badge></TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-1">

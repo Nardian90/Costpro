@@ -83,6 +83,8 @@ const DIRECT_ROUTES: Record<string, DirectRoute> = {
   'inventory_adjustments': { type: 'direct', view: 'inventory_adjustments' },
   recepcion:             { type: 'direct', view: 'recepcion' },
   reception_list:        { type: 'direct', view: 'reception_list' },
+  'purchase-orders':     { type: 'direct', view: 'purchase-orders' },
+  'sales-hub':           { type: 'direct', view: 'sales-hub' },
   transferencias:        { type: 'direct', view: 'transferencias' },
   inventory_count:       { type: 'direct', view: 'inventory_count' },
   labels:                { type: 'direct', view: 'labels' },
@@ -101,6 +103,7 @@ const DIRECT_ROUTES: Record<string, DirectRoute> = {
   academy:               { type: 'direct', view: 'academy' },
   wallet:                { type: 'direct', view: 'wallet' },
   'pick3-intelligence':  { type: 'direct', view: 'pick3-intelligence' },
+  ofertas:               { type: 'direct', view: 'ofertas' },
 };
 
 // ────────────────────────────────────────────────────────────────
@@ -199,18 +202,34 @@ export interface BreadcrumbItem {
 
 /**
  * Find the sidebar path (group > submenu > item) for a given sidebar ID.
- * Returns an array of {label} objects representing the hierarchy.
+ * Returns an array of {label, view} objects representing the hierarchy.
+ *
+ * M-2 (IA Audit): ahora cada ancestro incluye `view` para ser navegable.
+ * Antes todos los ancestros tenían view=undefined (solo "Inicio" era clicleable).
+ * Ahora cada item apunta a su sidebar ID, permitiendo al usuario saltar a
+ * cualquier nivel del árbol de navegación desde el breadcrumb.
  */
-function findSidebarPath(sidebarId: string): { label: string }[] {
+function findSidebarPath(sidebarId: string): { label: string; view?: string }[] {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { SIDEBAR_STRUCTURE } = require('@/config/navigation/sidebar.structure');
-  
+
   for (const group of SIDEBAR_STRUCTURE) {
-    if (group.id === sidebarId) return [{ label: group.label }];
+    if (group.id === sidebarId) return [{ label: group.label, view: group.id }];
     for (const child of group.children || []) {
-      if (child.id === sidebarId) return [{ label: group.label }, { label: child.label }];
+      if (child.id === sidebarId) {
+        return [
+          { label: group.label, view: group.id },
+          { label: child.label, view: child.id },
+        ];
+      }
       for (const grandchild of child.children || []) {
-        if (grandchild.id === sidebarId) return [{ label: group.label }, { label: child.label }, { label: grandchild.label }];
+        if (grandchild.id === sidebarId) {
+          return [
+            { label: group.label, view: group.id },
+            { label: child.label, view: child.id },
+            { label: grandchild.label, view: grandchild.id },
+          ];
+        }
       }
     }
   }
@@ -218,7 +237,33 @@ function findSidebarPath(sidebarId: string): { label: string }[] {
 }
 
 /**
+ * M-2 (IA Audit): map de vistas "destino" (sub-vistas alcanzadas desde un hub)
+ * a su ancestro hub en el sidebar. Permite que el breadcrumb muestre el path
+ * lógico correcto cuando el usuario está en una sub-vista que no está
+ * directamente como item en el sidebar.
+ *
+ * Ej: cuando currentView === 'pos', el breadcrumb muestra
+ * "Inicio > MULTI-TIENDA > Punto de Venta > Venta > Terminal de Venta"
+ * en lugar de solo "Inicio > Terminal de Venta".
+ */
+const VIEW_TO_HUB_MAP: Record<string, { hubId: string; leafLabel: string }> = {
+  // Sub-vistas del hub de Venta (sales-hub)
+  pos: { hubId: 'sales-hub', leafLabel: 'Terminal de Venta' },
+  sales_catalog: { hubId: 'sales-hub', leafLabel: 'Tabla IPV' },
+  catalog: { hubId: 'sales-hub', leafLabel: 'Catálogo' },
+  history: { hubId: 'sales-hub', leafLabel: 'Historial' },
+  cash: { hubId: 'sales-hub', leafLabel: 'Arqueo de Caja' },
+  sales: { hubId: 'sales-hub', leafLabel: 'Ventas' },
+  inventory_count: { hubId: 'sales-hub', leafLabel: 'Venta por Conteo' },
+  // 'recepcion' es una vista de creación alcanzada desde reception_list
+  recepcion: { hubId: 'reception_list', leafLabel: 'Nueva Recepción' },
+};
+
+/**
  * Auto-generate breadcrumb items for the current view state.
+ *
+ * M-2 (IA Audit): ahora los ancestros son navegables (view definido) y las
+ * sub-vistas de hub muestran el path completo del hub.
  */
 export function getBreadcrumbForView(
   currentView: string,
@@ -226,19 +271,41 @@ export function getBreadcrumbForView(
   activeCostSection?: string
 ): BreadcrumbItem[] {
   const items: BreadcrumbItem[] = [];
-  
-  // Skip breadcrumb for dashboard (root)
-  if (currentView === 'dashboard' || currentView === 'occ') {
+
+  // E-Fix (IA Audit): 'dashboard' ya no se trata como raíz — ahora muestra
+  // breadcrumb completo "Inicio > MULTI-TIENDA > Dashboard KPI" para wayfinding
+  // consistente con las demás vistas. Solo 'occ' (Centro de Control) sigue
+  // siendo la home raíz sin ancestros.
+  if (currentView === 'occ') {
     items.push({ label: 'Centro de Control', isCurrent: true });
+    return items;
+  }
+
+  // M-2: si la vista es una sub-vista de hub, construir path completo
+  const hubMapping = VIEW_TO_HUB_MAP[currentView];
+  if (hubMapping) {
+    const hubPath = findSidebarPath(hubMapping.hubId);
+    for (let i = 0; i < hubPath.length; i++) {
+      items.push({
+        label: hubPath[i].label,
+        view: hubPath[i].view,
+        isCurrent: false,
+      });
+    }
+    // Añadir la sub-vista actual como hoja
+    items.push({
+      label: hubMapping.leafLabel,
+      isCurrent: true,
+    });
     return items;
   }
 
   // Find which sidebar ID maps to this view (for module routes)
   let activeSidebarId = currentView;
-  
+
   if (currentView === 'ipv' && ipvActiveTab) {
     // Find the sidebar ID that has tab === ipvActiveTab
-    const IPV_ROUTES = { 
+    const IPV_ROUTES = {
       analytics: { tab: 'dashboard' },
       reports_ipv: { tab: 'reports' },
       receipts: { tab: 'receipts' },
@@ -292,17 +359,30 @@ export function getBreadcrumbForView(
   }
 
   const path = findSidebarPath(activeSidebarId);
-  
+
+  // M-2: ahora cada ancestro es navegable (view = su sidebar ID).
+  // Antes: view='occ' para todos los ancestros (solo "Inicio" era clicleable,
+  // los ancestros intermedios no hacían nada al clic).
   for (let i = 0; i < path.length; i++) {
     const isLast = i === path.length - 1;
     items.push({
       label: path[i].label,
-      view: isLast ? undefined : 'occ', // Only "Inicio" is clickable for simplicity
+      view: isLast ? undefined : path[i].view,
       isCurrent: isLast,
     });
   }
 
-  return items.length > 0 ? items : [{ label: currentView.replace(/-/g, ' '), isCurrent: true }];
+  // E-Fix (IA Audit): si la vista no está en SIDEBAR_STRUCTURE (ej: vista
+  // eliminada, URL legacy, o submenu wrapper ID), mostramos un breadcrumb
+  // con label "Módulo No Disponible" para que el usuario entienda qué pasó.
+  // Antes mostraba el raw view ID (ej: "punto_venta") lo cual confundía.
+  if (items.length === 0) {
+    return [
+      { label: String(currentView).replace(/-/g, ' '), isCurrent: false },
+      { label: 'Módulo No Disponible', isCurrent: true },
+    ];
+  }
+  return items;
 }
 
 export default NAVIGATION_MAP;

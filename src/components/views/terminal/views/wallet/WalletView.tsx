@@ -103,8 +103,8 @@ export default function WalletView() {
                     <div className="px-6 md:px-8 pt-8 space-y-8">
                         {viewMode === 'list' && (
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                                <Card className="rounded-3xl border-none shadow-xl bg-green-500/10"><CardContent className="p-8"><p className="text-[10px] font-black uppercase tracking-widest opacity-50">Ingresos</p><h3 className="text-2xl font-black mt-2 text-green-500">{formatCurrency(analytics.summary.total_income)}</h3></CardContent></Card>
-                                <Card className="rounded-3xl border-none shadow-xl bg-red-500/10"><CardContent className="p-8"><p className="text-[10px] font-black uppercase tracking-widest opacity-50">Gastos</p><h3 className="text-2xl font-black mt-2 text-red-500">{formatCurrency(analytics.summary.total_expenses)}</h3></CardContent></Card>
+                                <Card className="rounded-3xl border-none shadow-xl bg-success/10"><CardContent className="p-8"><p className="text-[10px] font-black uppercase tracking-widest opacity-50">Ingresos</p><h3 className="text-2xl font-black mt-2 text-success">{formatCurrency(analytics.summary.total_income)}</h3></CardContent></Card>
+                                <Card className="rounded-3xl border-none shadow-xl bg-destructive/10"><CardContent className="p-8"><p className="text-[10px] font-black uppercase tracking-widest opacity-50">Gastos</p><h3 className="text-2xl font-black mt-2 text-destructive">{formatCurrency(analytics.summary.total_expenses)}</h3></CardContent></Card>
                                 <Card className="rounded-3xl border-none shadow-xl bg-primary text-primary-foreground"><CardContent className="p-8"><p className="text-[10px] font-black uppercase tracking-widest opacity-60">Balance</p><h3 className="text-2xl font-black mt-2">{formatCurrency(analytics.summary.balance)}</h3></CardContent></Card>
                             </div>
                         )}
@@ -182,7 +182,7 @@ export default function WalletView() {
                                                             </div>
                                                         </td>
                                                         <td className="px-6 py-4"><Badge className="text-[7px] font-black uppercase">{tx.category}</Badge></td>
-                                                        <td className={cn("px-6 py-4 text-right text-[10px] font-black", tx.nature === 'CR' ? "text-green-500" : "text-red-500")}>
+                                                        <td className={cn("px-6 py-4 text-right text-[10px] font-black", tx.nature === 'CR' ? "text-success" : "text-destructive")}>
                                                             {tx.nature === 'CR' ? '+' : '-'}{formatCurrency(tx.amount)}
                                                         </td>
                                                     </tr>

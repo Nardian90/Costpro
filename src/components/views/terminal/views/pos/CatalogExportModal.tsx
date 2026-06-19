@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useReducedMotion } from "@/hooks/ui/useReducedMotion";
 import {
   X,
   MessageCircle,
@@ -95,8 +96,8 @@ function TemplatePreviewCard({ template }: { template: TemplateConfig }) {
   const Icon = ICON_MAP[template.icon] || Sparkles;
   const formatColor =
     template.format === "pdf"
-      ? "bg-red-500/10 text-red-500"
-      : "bg-blue-500/10 text-blue-500";
+      ? "bg-destructive/10 text-destructive"
+      : "bg-primary/10 text-primary";
 
   return (
     <div className="relative aspect-[3/4] w-full rounded-xl border border-border bg-card overflow-hidden group">
@@ -155,6 +156,7 @@ export function CatalogExportModal({
   const [activeCategory, setActiveCategory] = useState<
     TemplateCategory | "all"
   >("all");
+  const prefersReducedMotion = useReducedMotion();
 
   const categories: (TemplateCategory | "all")[] = [
     "all",
@@ -315,6 +317,7 @@ export function CatalogExportModal({
           {categories.map((cat) => (
             <button
               key={cat}
+              type="button"
               onClick={() => {
                 setActiveCategory(cat);
                 setSelectedTemplate(null);
@@ -339,8 +342,8 @@ export function CatalogExportModal({
               <motion.button
                 key={template.id}
                 type="button"
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
+                whileHover={prefersReducedMotion ? undefined : { scale: 1.03 }}
+                whileTap={prefersReducedMotion ? undefined : { scale: 0.97 }}
                 onClick={() => setSelectedTemplate(template)}
                 className={cn(
                   "relative rounded-xl border-2 p-1 transition-all cursor-pointer",
@@ -372,9 +375,9 @@ export function CatalogExportModal({
         <AnimatePresence>
           {selectedTemplate && (
             <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
+              initial={prefersReducedMotion ? false : { height: 0, opacity: 0 }}
+              animate={prefersReducedMotion ? undefined : { height: "auto", opacity: 1 }}
+              exit={prefersReducedMotion ? undefined : { height: 0, opacity: 0 }}
               className="overflow-hidden"
             >
               <div className="flex items-center justify-between p-3 rounded-xl bg-primary/5 border border-primary/20">

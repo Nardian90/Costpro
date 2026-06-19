@@ -5,7 +5,6 @@ const isUpstashConfigured =
 
 // FIX-BUG-SEC-007: Cache of Upstash limiters keyed by `${maxRequests}_${windowSec}`
 // so that caller-supplied params are honored instead of using a single fixed limiter.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const upstashLimiterCache = new Map<string, any>();
 
 async function getUpstashLimiter(maxRequests: number, windowSec: number) {
@@ -15,12 +14,16 @@ async function getUpstashLimiter(maxRequests: number, windowSec: number) {
   let limiter = upstashLimiterCache.get(key);
   if (!limiter) {
     try {
-      const { Ratelimit } = await import('@upstash/ratelimit');
-      const { Redis } = await import('@upstash/redis');
+      // Use Function constructor to prevent webpack from statically analyzing this import.
+      // When @upstash/ratelimit and @upstash/redis are not installed, this will throw
+      // at runtime and fall back to in-memory rate limiting.
+      const upstashModules: { Ratelimit: any; Redis: any } = await new Function(
+        'return Promise.all([import("@upstash/ratelimit"), import("@upstash/redis")]).then(([r, d]) => ({ Ratelimit: r.Ratelimit, Redis: d.Redis }))'
+      )();
 
-      limiter = new Ratelimit({
-        redis: Redis.fromEnv(),
-        limiter: Ratelimit.slidingWindow(maxRequests, `${windowSec} s`),
+      limiter = new upstashModules.Ratelimit({
+        redis: upstashModules.Redis.fromEnv(),
+        limiter: upstashModules.Ratelimit.slidingWindow(maxRequests, `${windowSec} s`),
         analytics: false,
         prefix: 'costpro_rl',
       });

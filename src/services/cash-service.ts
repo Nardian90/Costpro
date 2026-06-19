@@ -40,15 +40,15 @@ export const cashService = {
     return data as CashClosure;
   },
 
-  async getClosures(storeId: string, isAdmin: boolean = false) {
-    let query = supabase
+  async getClosures(storeId: string, _isAdmin: boolean = false) {
+    // C2: Always scope by storeId — never return unscoped data
+    if (!storeId) return [];
+
+    const query = supabase
       .from('cash_closures')
       .select('*, profile:profiles(full_name)')
+      .eq('store_id', storeId)
       .order('created_at', { ascending: false });
-
-    if (!isAdmin) {
-      query = query.eq('store_id', storeId);
-    }
 
     const { data, error } = await query;
     if (error) throw error;

@@ -136,8 +136,8 @@ export default function MatchingAuditView() {
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     {[
                         { label: 'Tasa Éxito', value: `${((stats.completed / logs.length) * 100).toFixed(1)}%`, icon: TrendingUp, color: 'text-primary' },
-                        { label: 'Confianza Promedio', value: `${(stats.avgConfidence * 100).toFixed(0)}%`, icon: Activity, color: 'text-blue-500' },
-                        { label: 'Latencia Promedio', value: `${stats.avgDuration.toFixed(0)}ms`, icon: Zap, color: 'text-orange-500' },
+                        { label: 'Confianza Promedio', value: `${(stats.avgConfidence * 100).toFixed(0)}%`, icon: Activity, color: 'text-primary' },
+                        { label: 'Latencia Promedio', value: `${stats.avgDuration.toFixed(0)}ms`, icon: Zap, color: 'text-warning' },
                         { label: 'Total Ejecuciones', value: logs.length, icon: History, color: 'text-muted-foreground' }
                     ].map((s, idx) => (
                         <Card key={idx} className="p-4 flex items-center gap-4 border-muted/20">
@@ -294,7 +294,7 @@ export default function MatchingAuditView() {
                                 <p className="text-[9px] font-black uppercase text-muted-foreground mb-1">Reglas Ejecutadas</p>
                                 <div className="flex flex-wrap gap-1">
                                     {log.reglas_activas?.map(r => (
-                                        <span key={r} className={`px-1 rounded text-[9px] ${log.applied_rules?.includes(r) ? 'bg-green-500/20 text-green-700 font-bold' : 'bg-muted text-muted-foreground'}`}>
+                                        <span key={r} className={`px-1 rounded text-[9px] ${log.applied_rules?.includes(r) ? 'bg-success/20 text-success font-bold' : 'bg-muted text-muted-foreground'}`}>
                                             {r}
                                         </span>
                                     ))}
@@ -309,7 +309,7 @@ export default function MatchingAuditView() {
                         </div>
 
                         {log.fail_reason && (
-                            <div className="mt-2 p-2 bg-red-500/10 rounded border border-red-500/20 text-red-700 text-[10px]">
+                            <div className="mt-2 p-2 bg-destructive/10 rounded border border-destructive/20 text-destructive text-[10px]">
                                 <strong>Error:</strong> {log.fail_reason}
                             </div>
                         )}
@@ -322,7 +322,7 @@ export default function MatchingAuditView() {
                                         <div key={i} className="flex items-center gap-2 font-mono text-[9px]">
                                             <span className="w-4 text-center">{t.pass}</span>
                                             <span className="flex-1 truncate">{t.rule}</span>
-                                            <span className={t.status === 'SUCCESS' ? 'text-green-600 font-bold' : 'text-muted-foreground'}>{t.status}</span>
+                                            <span className={t.status === 'SUCCESS' ? 'text-success font-bold' : 'text-muted-foreground'}>{t.status}</span>
                                         </div>
                                     ))}
                                 </div>

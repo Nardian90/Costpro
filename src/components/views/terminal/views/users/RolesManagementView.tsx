@@ -118,20 +118,20 @@ export default function RolesManagementView() {
                 <td className="p-4 text-center hidden sm:table-cell">
                   {role.is_default && (
                     <div className="flex justify-center">
-                      <CheckCircle2 className="w-4 h-4 text-green-500" />
+                      <CheckCircle2 className="w-4 h-4 text-success" />
                     </div>
                   )}
                 </td>
                 <td className="p-4">
                   <div className="flex justify-center gap-2">
-                    <button
+                    <button type="button"
                       onClick={() => handleEdit(role)}
                       className="w-10 h-10 sm:w-8 sm:h-8 flex items-center justify-center rounded-lg border border-border hover:bg-primary hover:text-foreground transition-all active:scale-95"
                       aria-label="Editar rol"
                     >
                       <Edit className="w-4 h-4" />
                     </button>
-                    <button
+                    <button type="button"
                       onClick={() => handleDelete(role.id)}
                       className="w-10 h-10 sm:w-8 sm:h-8 flex items-center justify-center rounded-lg border border-border hover:bg-danger hover:text-foreground transition-all active:scale-95"
                       aria-label="Eliminar rol"

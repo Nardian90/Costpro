@@ -1,16 +1,20 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
-import { Package, TrendingDown, AlertTriangle, DollarSign, BarChart3, ArrowUpDown, ChevronDown, ChevronUp } from 'lucide-react';
+import { Package, TrendingDown, AlertTriangle, DollarSign, BarChart3, ArrowUpDown, ChevronDown, ChevronUp, FileText } from 'lucide-react';
 import { Product } from '@/types';
 import { formatCurrency, cn } from '@/lib/utils';
+import { FCCoverageBar } from '@/components/ui/FCStatusBadge';
+import type { FCCoverageData } from '@/hooks/ui/useProductFCStatus';
 
 interface InventoryKPIsProps {
   products: Product[];
+  /** FC coverage data for the FC Coverage metric card */
+  fcCoverage?: FCCoverageData;
   className?: string;
 }
 
-export default function InventoryKPIsPanel({ products, className }: InventoryKPIsProps) {
+export default function InventoryKPIsPanel({ products, fcCoverage, className }: InventoryKPIsProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   const kpis = useMemo(() => {
@@ -68,15 +72,15 @@ export default function InventoryKPIsPanel({ products, className }: InventoryKPI
       label: 'Unidades en Stock',
       value: kpis.totalStock.toLocaleString(),
       icon: BarChart3,
-      color: 'text-blue-600',
-      bg: 'bg-blue-500/10 border-blue-500/20',
+      color: 'text-info',
+      bg: 'bg-info/10 border-info/20',
     },
     {
       label: 'Valor del Inventario',
       value: formatCurrency(kpis.totalValue),
       icon: DollarSign,
-      color: 'text-green-600',
-      bg: 'bg-green-500/10 border-green-500/20',
+      color: 'text-success',
+      bg: 'bg-success/10 border-success/20',
     },
     {
       label: 'Agotados',
@@ -89,16 +93,24 @@ export default function InventoryKPIsPanel({ products, className }: InventoryKPI
       label: 'En Mínimo',
       value: kpis.atMinStock.toString(),
       icon: TrendingDown,
-      color: kpis.atMinStock > 0 ? 'text-amber-600' : 'text-muted-foreground',
-      bg: kpis.atMinStock > 0 ? 'bg-amber-500/10 border-amber-500/20' : 'bg-muted/30 border-border',
+      color: kpis.atMinStock > 0 ? 'text-warning' : 'text-muted-foreground',
+      bg: kpis.atMinStock > 0 ? 'bg-warning/10 border-warning/20' : 'bg-muted/30 border-border',
     },
     {
       label: 'Precio Promedio',
       value: formatCurrency(kpis.avgPrice),
       icon: ArrowUpDown,
-      color: 'text-violet-600',
-      bg: 'bg-violet-500/10 border-violet-500/20',
+      color: 'text-secondary',
+      bg: 'bg-secondary/10 border-secondary/20',
     },
+    // FC Coverage metric card
+    ...(fcCoverage && fcCoverage.total > 0 ? [{
+      label: 'Cobertura FC',
+      value: `${fcCoverage.coverage.toFixed(0)}%`,
+      icon: FileText,
+      color: fcCoverage.coverage >= 80 ? 'text-success' : fcCoverage.coverage >= 50 ? 'text-warning' : 'text-destructive',
+      bg: fcCoverage.coverage >= 80 ? 'bg-success/10 border-success/20' : fcCoverage.coverage >= 50 ? 'bg-warning/10 border-warning/20' : 'bg-destructive/10 border-destructive/20',
+    }] : []),
   ];
 
   return (
@@ -117,16 +129,16 @@ export default function InventoryKPIsPanel({ products, className }: InventoryKPI
             <div
               className={cn(
                 'h-full rounded-full transition-all',
-                kpis.healthPercent >= 80 ? 'bg-green-500' :
-                kpis.healthPercent >= 50 ? 'bg-amber-500' : 'bg-destructive'
+                kpis.healthPercent >= 80 ? 'bg-success' :
+                kpis.healthPercent >= 50 ? 'bg-warning' : 'bg-destructive'
               )}
               style={{ width: `${kpis.healthPercent}%` }}
             />
           </div>
           <span className={cn(
             'text-xs font-black shrink-0',
-            kpis.healthPercent >= 80 ? 'text-green-600' :
-            kpis.healthPercent >= 50 ? 'text-amber-600' : 'text-destructive'
+            kpis.healthPercent >= 80 ? 'text-success' :
+            kpis.healthPercent >= 50 ? 'text-warning' : 'text-destructive'
           )}>
             {kpis.healthPercent}%
           </span>
@@ -152,11 +164,11 @@ export default function InventoryKPIsPanel({ products, className }: InventoryKPI
         <div className="overflow-hidden">
           <div className="space-y-4 pt-2">
             {/* KPI Cards */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3">
               {cards.map(card => (
                 <div key={card.label} className={cn('p-3 rounded-xl border text-center', card.bg)}>
                   <card.icon className={cn('w-4 h-4 mx-auto mb-1.5', card.color)} />
-                  <div className={cn('text-lg sm:text-xl font-black', card.color)}>{card.value}</div>
+                  <div className={cn('text-lg sm:text-xl font-black tabular-nums', card.color)}>{card.value}</div>
                   <div className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mt-0.5">{card.label}</div>
                 </div>
               ))}
@@ -176,7 +188,7 @@ export default function InventoryKPIsPanel({ products, className }: InventoryKPI
                           <span className="text-muted-foreground font-mono mr-1">{i + 1}.</span>
                           {p.name}
                         </span>
-                        <span className="font-black text-green-600 shrink-0">
+                        <span className="font-black text-success tabular-nums shrink-0">
                           {formatCurrency((p.stock_current || 0) * (p.cost_average || p.cost_price || 0))}
                         </span>
                       </div>
@@ -194,7 +206,7 @@ export default function InventoryKPIsPanel({ products, className }: InventoryKPI
                           <span className="text-muted-foreground font-mono mr-1">{i + 1}.</span>
                           {p.name}
                         </span>
-                        <span className="font-black text-blue-600 shrink-0">
+                        <span className="font-black text-info tabular-nums shrink-0">
                           {(p.stock_current || 0).toLocaleString()} uds
                         </span>
                       </div>

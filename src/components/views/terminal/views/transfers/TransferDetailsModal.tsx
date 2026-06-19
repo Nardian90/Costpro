@@ -28,19 +28,19 @@ function StatusBadge({ status }: { status: TransferStatus }) {
   switch (status) {
     case 'PENDIENTE':
       return (
-        <span className="flex items-center gap-1 text-amber-500 bg-amber-500/10 px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest">
+        <span className="flex items-center gap-1 text-warning bg-warning/10 px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest">
           <Clock className="w-3 h-3" /> Pendiente
         </span>
       );
     case 'CONFIRMADA':
       return (
-        <span className="flex items-center gap-1 text-emerald-500 bg-emerald-500/10 px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest">
+        <span className="flex items-center gap-1 text-success bg-success/10 px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest">
           <CheckCircle2 className="w-3 h-3" /> Confirmada
         </span>
       );
     case 'CANCELADA':
       return (
-        <span className="flex items-center gap-1 text-rose-500 bg-rose-500/10 px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest">
+        <span className="flex items-center gap-1 text-destructive bg-destructive/10 px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest">
           <XCircle className="w-3 h-3" /> Cancelada
         </span>
       );
@@ -126,7 +126,7 @@ export default function TransferDetailsModal({ transferId, onClose }: TransferDe
                   type="button"
                   onClick={() => setShowCancelDialog(true)}
                   disabled={cancelMutation.isPending}
-                  className={`neu-btn px-4 py-2 text-xs font-black uppercase tracking-widest flex items-center gap-2 text-rose-500 ${!canCancel && 'opacity-50 cursor-not-allowed'}`}
+                  className={`neu-btn px-4 py-2 text-xs font-black uppercase tracking-widest flex items-center gap-2 text-destructive ${!canCancel && 'opacity-50 cursor-not-allowed'}`}
                   title={!canCancel ? "No tienes permisos para cancelar esta transferencia" : ""}
                 >
                   <XCircle className="w-4 h-4" />
@@ -225,7 +225,7 @@ export default function TransferDetailsModal({ transferId, onClose }: TransferDe
                       </div>
                       <div className="text-right">
                         <p className="text-xs font-black text-muted-foreground uppercase tracking-widest">Cantidad</p>
-                        <p className="text-lg font-black text-primary">{item.quantity}</p>
+                        <p className="text-lg font-black text-primary tabular-nums">{item.quantity}</p>
                       </div>
                     </div>
                   ))}
@@ -266,7 +266,7 @@ export default function TransferDetailsModal({ transferId, onClose }: TransferDe
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={cancelMutation.isPending}>Volver</AlertDialogCancel>
-            <AlertDialogAction onClick={handleCancel} disabled={cancelMutation.isPending} className="bg-rose-600 hover:bg-rose-700">
+            <AlertDialogAction onClick={handleCancel} disabled={cancelMutation.isPending} className="bg-destructive hover:bg-destructive/90">
               {cancelMutation.isPending ? 'Cancelando...' : 'Sí, cancelar transferencia'}
             </AlertDialogAction>
           </AlertDialogFooter>

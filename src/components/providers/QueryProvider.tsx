@@ -16,9 +16,12 @@ export default function QueryProvider({ children }: { children: React.ReactNode 
             refetchOnWindowFocus: false,
           },
           mutations: {
-            onError: (error: any, variables, context) => {
+            onError: (error: unknown, variables, context) => {
                // Log audit for failed mutations in production
                const { token } = useAuthStore.getState();
+               const errorDetails = error instanceof Error
+                 ? { message: error.message, stack: error.stack, variables }
+                 : { message: String(error), variables };
                fetch('/api/logs', {
                  method: 'POST',
                  headers: {
@@ -27,11 +30,7 @@ export default function QueryProvider({ children }: { children: React.ReactNode 
                  },
                  body: JSON.stringify({
                     context: 'MUTATION_ERROR',
-                    error: {
-                        message: error.message,
-                        stack: error.stack,
-                        variables
-                    }
+                    error: errorDetails
                  }),
                }).catch(() => { /* Silent ignore if logging fails */ });
             }

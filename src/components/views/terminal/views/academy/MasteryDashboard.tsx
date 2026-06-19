@@ -74,7 +74,7 @@ export const MasteryDashboard = () => {
         </Card>
 
         <Card className="p-8 bg-card rounded-3xl border border-border flex flex-col items-center justify-center text-center space-y-4 shadow-sm">
-            <div className="w-16 h-16 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-500 border border-blue-500/20">
+            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center text-primary border border-primary/20">
                 <Target className="w-10 h-10" />
             </div>
             <div>
@@ -84,7 +84,7 @@ export const MasteryDashboard = () => {
         </Card>
 
         <Card className="p-8 bg-card rounded-3xl border border-border flex flex-col items-center justify-center text-center space-y-4 shadow-sm">
-            <div className="w-16 h-16 rounded-full bg-amber-500/10 flex items-center justify-center text-amber-500 border border-amber-500/20">
+            <div className="w-16 h-16 rounded-full bg-warning/10 flex items-center justify-center text-warning border border-warning/20">
                 <Zap className="w-10 h-10" />
             </div>
             <div>

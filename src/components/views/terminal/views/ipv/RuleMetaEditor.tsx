@@ -182,7 +182,7 @@ export function RuleMetaEditor({ rule, onSave }: RuleMetaEditorProps) {
 
   return (
     <div className="space-y-2">
-      <button
+      <button type="button"
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center gap-2 w-full px-3 py-2 rounded-lg hover:bg-muted/50 transition-colors text-sm font-medium"
       >

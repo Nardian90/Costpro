@@ -184,9 +184,9 @@ export function CustomerCatalog() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'COMPLETO':
-        return <Badge className="bg-green-500/20 text-green-500 border-green-500/30 gap-1 rounded-full px-3 py-0.5 text-[10px] font-black"><ShieldCheck className="w-3 h-3" /> OK</Badge>;
+        return <Badge className="bg-success/20 text-success border-success/30 gap-1 rounded-full px-3 py-0.5 text-[10px] font-black"><ShieldCheck className="w-3 h-3" /> OK</Badge>;
       case 'PARCIAL':
-        return <Badge variant="outline" className="text-orange-500 border-orange-500/30 gap-1 rounded-full px-3 py-0.5 text-[10px] font-black"><Clock className="w-3 h-3" /> PARCIAL</Badge>;
+        return <Badge variant="outline" className="text-warning border-warning/30 gap-1 rounded-full px-3 py-0.5 text-[10px] font-black"><Clock className="w-3 h-3" /> PARCIAL</Badge>;
       default:
         return <Badge variant="outline" className="text-muted-foreground gap-1 rounded-full px-3 py-0.5 text-[10px] font-black"><AlertCircle className="w-3 h-3" /> PEND</Badge>;
     }
@@ -259,34 +259,34 @@ export function CustomerCatalog() {
           </CardHeader>
         </Card>
 
-        <Card className="neu-card border-none bg-green-500/5">
+        <Card className="neu-card border-none bg-success/5">
           <CardHeader className="p-4 md:p-6">
             <CardDescription className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
               <ShieldCheck className="w-3 h-3" /> Completos
             </CardDescription>
-            <CardTitle className="text-2xl md:text-3xl font-black text-green-500">
+            <CardTitle className="text-2xl md:text-3xl font-black text-success">
               {customers.filter(c => c.status === 'COMPLETO').length}
             </CardTitle>
           </CardHeader>
         </Card>
 
-        <Card className="neu-card border-none bg-blue-500/5">
+        <Card className="neu-card border-none bg-primary/5">
           <CardHeader className="p-4 md:p-6">
             <CardDescription className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
               <History className="w-3 h-3" /> Total Transacciones
             </CardDescription>
-            <CardTitle className="text-2xl md:text-3xl font-black text-blue-500">
+            <CardTitle className="text-2xl md:text-3xl font-black text-primary">
               {Object.values(stats).reduce((acc, curr) => acc + curr.totalTransactions, 0)}
             </CardTitle>
           </CardHeader>
         </Card>
 
-        <Card className="neu-card border-none bg-orange-500/5">
+        <Card className="neu-card border-none bg-warning/5">
           <CardHeader className="p-4 md:p-6">
-            <CardDescription className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2 text-orange-600">
+            <CardDescription className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2 text-warning">
               <AlertTriangle className="w-3 h-3" /> <span className="label-no-wrap">Conflictos</span>
             </CardDescription>
-            <CardTitle className="text-2xl md:text-3xl font-black text-orange-500">
+            <CardTitle className="text-2xl md:text-3xl font-black text-warning">
               {conflictCount}
             </CardTitle>
           </CardHeader>
@@ -299,11 +299,11 @@ export function CustomerCatalog() {
             <User className="w-4 h-4 mr-2" />
             Catálogo
           </TabsTrigger>
-          <TabsTrigger value="conflicts" className="rounded-xl px-4 md:px-6 data-[state=active]:bg-orange-500 data-[state=active]:text-white transition-all relative">
+          <TabsTrigger value="conflicts" className="rounded-xl px-4 md:px-6 data-[state=active]:bg-warning data-[state=active]:text-white transition-all relative">
             <AlertTriangle className="w-4 h-4 mr-2" />
             Conflictos
             {conflictCount > 0 && (
-                <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow-sm ring-2 ring-background">
+                <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-white shadow-sm ring-2 ring-background">
                     {conflictCount}
                 </span>
             )}
@@ -430,14 +430,14 @@ export function CustomerCatalog() {
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-8 w-8 hover:bg-blue-500/10 group-hover:opacity-100 opacity-70 transition-opacity shrink-0"
+                                className="h-8 w-8 hover:bg-primary/10 group-hover:opacity-100 opacity-70 transition-opacity shrink-0"
                                 onClick={() => {
                                   setSelectedCustomer(customer);
                                   setFormOpen(true);
                                 }}
                                 title="Editar Cliente"
                               >
-                                <Edit className="w-4 h-4 text-blue-500" />
+                                <Edit className="w-4 h-4 text-primary" />
                               </Button>
                               <Button
                                 variant="ghost"

@@ -41,10 +41,10 @@ async function getHandler(req: NextRequest) {
       due: dueCards || [],
       new: newCards || []
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Review fetch error:', error);
     // FIX-SEC-019: Hide error details in production
-    return NextResponse.json({ error: (process.env.NODE_ENV !== 'production' || !!process.env.VITEST) ? error.message : 'Error interno del servidor' }, { status: 500 });
+    return NextResponse.json({ error: (process.env.NODE_ENV !== 'production' || !!process.env.VITEST) ? (error instanceof Error ? error.message : String(error)) : 'Error interno del servidor' }, { status: 500 });
   }
 }
 

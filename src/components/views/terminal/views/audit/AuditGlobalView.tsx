@@ -16,9 +16,9 @@ function AuditRow({ entry }: { entry: AuditLogEntry }) {
   const severityColor = entry.action.includes('reset')
     ? 'text-destructive'
     : entry.action.includes('void') || entry.action.includes('cancelled')
-    ? 'text-amber-600'
+    ? 'text-warning'
     : entry.action.includes('confirmed')
-    ? 'text-green-600'
+    ? 'text-success'
     : 'text-muted-foreground';
 
   return (
@@ -40,7 +40,7 @@ function AuditRow({ entry }: { entry: AuditLogEntry }) {
           </code>
         </td>
         <td className="px-4 py-3">
-          <button
+          <button type="button"
             onClick={() => setExpanded(p => !p)}
             aria-label={expanded ? 'Colapsar detalles' : 'Ver detalles del evento'}
             aria-expanded={expanded}
@@ -151,7 +151,7 @@ export default function AuditGlobalView() {
             </p>
           </div>
         </div>
-        <button
+        <button type="button"
           onClick={handleExportCSV}
           disabled={filteredLogs.length === 0}
           aria-label="Exportar registros de auditoría como CSV"
@@ -282,7 +282,7 @@ export default function AuditGlobalView() {
 
       {hasNextPage && (
         <div className="flex justify-center pt-4">
-          <button
+          <button type="button"
             onClick={() => fetchNextPage()}
             disabled={isFetchingNextPage}
             aria-label="Cargar más registros de auditoría"

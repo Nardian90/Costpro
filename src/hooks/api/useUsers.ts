@@ -7,6 +7,7 @@ import { profileSchema, managedCreateUserParamsSchema, manageUserMembershipsPara
 import type { Profile } from '@/types';
 import { z } from 'zod';
 import { toast } from 'sonner';
+import { useAuthStore } from '@/store'; // F4-T02: para token en bulk assign
 
 export function useUsers(currentUserId: string, isAdmin: boolean, isEncargado: boolean, activeStoreId?: string | null) {
   return useQuery({
@@ -136,8 +137,9 @@ export function useCreateUser() {
       queryClient.invalidateQueries({ queryKey: ['users'] });
       toast.success('Usuario creado correctamente');
     },
-    onError: (error: any) => {
-      toast.error(`Error al crear usuario: ${error.message}`);
+    onError: (error: unknown) => {
+      const message = error instanceof Error ? error.message : String(error);
+      toast.error(`Error al crear usuario: ${message}`);
     }
   });
 }
@@ -158,9 +160,54 @@ export function useManageUserMemberships() {
       queryClient.invalidateQueries({ queryKey: ['users'] });
       toast.success('Accesos actualizados correctamente');
     },
-    onError: (error: any) => {
-      toast.error(`Error al actualizar accesos: ${error.message}`);
+    onError: (error: unknown) => {
+      const message = error instanceof Error ? error.message : String(error);
+      toast.error(`Error al actualizar accesos: ${message}`);
     }
+  });
+}
+
+/**
+ * F4-T02: Bulk assign memberships via HTTP endpoint (transaccional con upsert).
+ * Diferencia con useManageUserMemberships: este usa el endpoint dedicado
+ * /api/users/[id]/memberships/bulk que hace upsert (no replace) y reporta
+ * succeeded/failed counts. Útil cuando se asignan 10+ tiendas de una vez.
+ */
+export function useBulkAssignMemberships() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (params: {
+      userId: string;
+      assignments: Array<{ store_id: string; role: string; status?: 'active' | 'revoked' }>;
+    }) => {
+      const token = useAuthStore.getState().token;
+      const res = await fetch(`/api/users/${params.userId}/memberships/bulk`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ assignments: params.assignments }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: 'Error de conexión' }));
+        throw new Error(err.message || err.error || 'Error en asignación bulk');
+      }
+      return res.json();
+    },
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      queryClient.invalidateQueries({ queryKey: ['user-store-access'] });
+      queryClient.invalidateQueries({ queryKey: ['store-user-counts'] });
+      queryClient.invalidateQueries({ queryKey: ['store-team'] });
+      toast.success(`${result.affected} tienda(s) asignadas correctamente`);
+      if (result.failed > 0) {
+        toast.warning(`${result.failed} asignación(es) fallaron`);
+      }
+    },
+    onError: (error: unknown) => {
+      toast.error(error instanceof Error ? error.message : 'Error en asignación bulk');
+    },
   });
 }
 
@@ -195,8 +242,9 @@ export function useUpdateUser() {
       queryClient.invalidateQueries({ queryKey: ['users'] });
       toast.success('Usuario actualizado correctamente');
     },
-    onError: (error: any) => {
-      toast.error(`Error al actualizar usuario: ${error.message}`);
+    onError: (error: unknown) => {
+      const message = error instanceof Error ? error.message : String(error);
+      toast.error(`Error al actualizar usuario: ${message}`);
     }
   });
 }

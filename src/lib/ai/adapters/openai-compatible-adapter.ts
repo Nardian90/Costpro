@@ -47,8 +47,8 @@ export class OpenAICompatibleAdapter implements LLMProvider {
           provider: this.baseUrl,
         }
       };
-    } catch (error: any) {
-      console.error(`OpenAICompatibleAdapter (${this.model}) Error:`, error.message);
+    } catch (error: unknown) {
+      console.error(`OpenAICompatibleAdapter (${this.model}) Error:`, error instanceof Error ? error.message : String(error));
       throw error;
     }
   }

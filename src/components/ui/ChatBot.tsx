@@ -550,14 +550,14 @@ export function ChatBot() {
 
       setLatencyMs(Date.now() - requestStartTimeRef.current);
 
-    } catch (error: any) {
-      if (error.name === 'AbortError') {
+    } catch (error: unknown) {
+      if (error instanceof Error && error.name === 'AbortError') {
         logger.info('DATABASE', '[CHAT]_REQUEST_CANCELLED_BY_USER');
         addErrorMessage('Solicitud cancelada.', convoId);
         return;
       }
 
-      const errorMsg = error.message || '';
+      const errorMsg = error instanceof Error ? (error.message || '') : String(error);
 
       if (errorMsg.includes('Cuota') || errorMsg.includes('quota') || errorMsg.includes('429') || errorMsg.includes('RESOURCE_EXHAUSTED')) {
         addErrorMessage('**Cuota agotada.** Espera un momento o cambia tu API Key en los ajustes.', convoId);
@@ -872,7 +872,7 @@ export function ChatBot() {
                           setTemperature(val);
                           debouncedSave(TEMP_STORAGE_KEY, val);
                         }}
-                        className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer accent-primary" aria-label="Ajustar temperatura"
+                        className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
                       />
                       <div className="flex justify-between text-[9px] text-muted-foreground/60 uppercase tracking-widest">
                         <span>Preciso</span>
@@ -1009,7 +1009,6 @@ export function ChatBot() {
                         )}>
                           {msg.role === 'user' && msg.imageData && (
                             <div className="mb-2 -mt-1 -mx-1 rounded-lg overflow-hidden">
-                              {/* eslint-disable-next-line @next/next/no-img-element */}
                               <img
                                 src={`data:${msg.imageData.mimeType};base64,${msg.imageData.data}`}
                                 alt="Imagen adjunta"
@@ -1130,7 +1129,6 @@ export function ChatBot() {
                       exit={{ opacity: 0, height: 0 }}
                       className="mb-1.5 relative inline-block"
                     >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={attachedImage.preview}
                         alt="Vista previa"
@@ -1164,7 +1162,7 @@ export function ChatBot() {
                   <input
                     ref={fileInputRef}
                     type="file"
-                    accept="image/jpeg,image/png,image/webp,image/gif" aria-label="Adjuntar archivo"
+                    accept="image/jpeg,image/png,image/webp,image/gif"
                     className="hidden"
                     onChange={handleImageChange}
                   />

@@ -1,5 +1,0 @@
-<<<<<<< SEARCH
-    liveQueryQueue.push(mockCustomers, 1);
-=======
-    liveQueryQueue.push(mockCustomers, [1]);
->>>>>>> REPLACE

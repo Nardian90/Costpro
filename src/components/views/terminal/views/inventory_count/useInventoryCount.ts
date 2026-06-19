@@ -167,9 +167,9 @@ export function useInventoryCount() {
       });
       setCountedQuantities(initialCounted);
       setCountedProductIds(new Set());
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error fetching products:', error);
-      toast.error(error.message || 'Error al cargar productos');
+      toast.error((error instanceof Error ? error.message : String(error)) || 'Error al cargar productos');
     } finally {
       setLoading(false);
     }
@@ -436,9 +436,9 @@ export function useInventoryCount() {
         fetchProducts();
       }
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error in final submit:', error);
-      toast.error(error.message || 'Error al procesar el ajuste', { id: toastId });
+      toast.error((error instanceof Error ? error.message : String(error)) || 'Error al procesar el ajuste', { id: toastId });
     } finally {
       setProcessing(false);
     }

@@ -52,6 +52,9 @@ export interface LastSale {
   discount: { type: "fixed" | "percentage"; value: number } | null;
   total: number;
   paymentMethod: string;
+  // POS-3b audit P0.1: cliente asociado a la venta (si aplica).
+  customerName?: string;
+  customerId?: string | null;
 }
 
 // ── Main POSCart Props ─────────────────────────────────────
@@ -124,36 +127,9 @@ export interface POSCartItemProps {
   ) => void;
 }
 
-export interface POSCartSummaryProps {
-  items: CartItem[];
-  getSubtotal: () => number;
-  getDiscountAmount: () => number;
-  getTotal: () => number;
-  discount: CartDiscount;
-  prorateGlobalPayment?: (totalCash: number, totalTransfer: number) => void;
-  selectedPayment: PaymentMethod;
-  onSetSelectedPayment: (method: PaymentMethod) => void;
-  isMobile: boolean;
-}
-
-export interface POSCartActionsProps {
-  isProcessing: boolean;
-  itemCount: number;
-  selectedPayment: PaymentMethod;
-  onSetSelectedPayment: (method: PaymentMethod) => void;
-  onCheckout: (
-    paymentMethod: PaymentMethod,
-    discount?: CartDiscount,
-  ) => Promise<void>;
-  discount: CartDiscount;
-  setDiscount: (discount: CartDiscount) => void;
-  showClearConfirm: boolean;
-  onSetShowClearConfirm: (show: boolean) => void;
-  onClearCart: () => void;
-  onClose: () => void;
-  showOptions: boolean;
-  onSetShowOptions: (show: boolean) => void;
-}
+// POS-3b audit P1.1: POSCartSummaryProps y POSCartActionsProps eliminados.
+// Sus componentes (POSCartSummary.tsx, POSCartActions.tsx) fueron reemplazados
+// por POSCartCheckoutPanel.tsx y eliminados por ser huérfanos.
 
 export interface POSCartDiscountProps {
   discount: CartDiscount;

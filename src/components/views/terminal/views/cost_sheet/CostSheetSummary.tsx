@@ -333,17 +333,17 @@ export const CostSheetSummary: React.FC = () => {
         </Card>
         <Card className="bg-green-50/50 border-green-100 dark:bg-green-950/20 dark:border-green-900/30">
           <CardHeader className="pb-2">
-            <CardDescription className="text-[10px] uppercase font-bold tracking-widest text-green-600/60 dark:text-green-400/60">
+            <CardDescription className="text-[10px] uppercase font-bold tracking-widest text-success/60 dark:text-green-400/60">
               Utilidad Bruta
             </CardDescription>
-            <CardTitle className="text-2xl font-black font-mono text-green-700 dark:text-green-400">
+            <CardTitle className="text-2xl font-black font-mono text-success dark:text-green-400">
               {formatCurrency(calculatedValues[utilityRow?.id || '13.1']?.total || 0)}
             </CardTitle>
           </CardHeader>
         </Card>
         <Card className="bg-blue-50/50 border-blue-100 dark:bg-blue-950/20 dark:border-blue-900/30">
           <CardHeader className="pb-2">
-            <CardDescription className="text-[10px] uppercase font-bold tracking-widest text-blue-600/60 dark:text-blue-400/60">
+            <CardDescription className="text-[10px] uppercase font-bold tracking-widest text-primary/60 dark:text-blue-400/60">
               Precio Final (100%)
             </CardDescription>
             <CardTitle className="text-2xl font-black font-mono text-blue-700 dark:text-blue-400">
@@ -378,7 +378,7 @@ export const CostSheetSummary: React.FC = () => {
           {/* Info: current formula of variable row */}
           {variableRowInfo?.formula && (
             <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/40 rounded-xl p-3 flex items-start gap-3">
-              <Info className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+              <Info className="w-4 h-4 text-warning dark:text-amber-400 shrink-0 mt-0.5" />
               <div className="text-[10px] text-amber-800 dark:text-amber-200 leading-relaxed">
                 <span className="font-bold uppercase tracking-wider">Fórmula actual en {variableRowInfo.label} ({solverVariableRow}):</span>
                 <code className="block mt-1 bg-amber-100 dark:bg-amber-900/40 px-2 py-1 rounded font-mono text-[10px]">
@@ -421,7 +421,7 @@ export const CostSheetSummary: React.FC = () => {
                   </div>
                   <ScrollArea className="h-48">
                     {filteredTargetRows.map((r) => (
-                      <button
+                      <button type="button"
                         key={r.id}
                         className="w-full text-left p-2 hover:bg-muted text-xs flex flex-col transition-colors"
                         onClick={() => {
@@ -481,7 +481,7 @@ export const CostSheetSummary: React.FC = () => {
                 </div>
                 <ScrollArea className="h-48">
                   {filteredVariableRows.map((r) => (
-                    <button
+                    <button type="button"
                       key={r.id}
                       className="w-full text-left p-2 hover:bg-muted text-xs flex flex-col transition-colors"
                       onClick={() => {

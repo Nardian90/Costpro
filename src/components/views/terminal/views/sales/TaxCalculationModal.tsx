@@ -167,9 +167,9 @@ export const TaxCalculationModal = ({
                   </div>
                 ))
               ) : (
-                <div className="p-4 rounded-xl border border-amber-500/20 bg-amber-500/5 flex items-center gap-3">
-                  <AlertCircle className="w-5 h-5 text-amber-600" />
-                  <p className="text-xs font-bold text-amber-700 uppercase leading-tight">
+                <div className="p-4 rounded-xl border border-warning/20 bg-warning/5 flex items-center gap-3">
+                  <AlertCircle className="w-5 h-5 text-warning" />
+                  <p className="text-xs font-bold text-warning uppercase leading-tight">
                     No hay impuestos activos configurados para este cálculo.
                   </p>
                 </div>
@@ -192,7 +192,7 @@ export const TaxCalculationModal = ({
             </h4>
 
             <div className="space-y-3">
-              <button
+              <button type="button"
                 onClick={() => setIncludeAnnex(!includeAnnex)}
                 className="flex items-center gap-3 w-full text-left group"
               >
@@ -209,7 +209,7 @@ export const TaxCalculationModal = ({
               </button>
 
               <div className="pt-2 grid grid-cols-2 gap-2">
-                <button
+                <button type="button"
                   onClick={() => setExportMode('combined')}
                   className={cn(
                     "p-3 rounded-lg border text-center transition-all",
@@ -218,7 +218,7 @@ export const TaxCalculationModal = ({
                 >
                   <div className="text-xs font-black uppercase">Conjunto</div>
                 </button>
-                <button
+                <button type="button"
                   onClick={() => setExportMode('separate')}
                   className={cn(
                     "p-3 rounded-lg border text-center transition-all",
@@ -231,7 +231,7 @@ export const TaxCalculationModal = ({
             </div>
           </div>
 
-          <button
+          <button type="button"
             onClick={handleExportPDF}
             className="w-full py-4 bg-primary text-foreground rounded-xl font-black text-sm uppercase tracking-widest shadow-xl shadow-primary/20 flex items-center justify-center gap-3 hover:scale-[1.02] transition-all active:scale-95"
           >

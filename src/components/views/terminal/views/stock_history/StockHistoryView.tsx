@@ -102,20 +102,17 @@ export default function StockHistoryView() {
   const getMovementBadge = (type: string) => {
     switch (type) {
       case 'sale': return 'text-primary bg-primary/10 border-primary/20';
-      case 'purchase': return 'text-green-600 bg-green-500/10 border-green-500/20';
-      case 'adjustment': return 'text-amber-600 bg-amber-500/10 border-amber-500/20';
+      case 'purchase': return 'text-success bg-success/10 border-success/20';
+      case 'adjustment': return 'text-warning bg-warning/10 border-warning/20';
       default: return 'text-muted-foreground bg-muted/20 border-border';
     }
   };
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* Header — el título se omite cuando se usa dentro de tabs de InventoryView */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <h2 className="text-[clamp(1.5rem,5vw,2.25rem)] font-black text-foreground tracking-tighter uppercase text-primary">
-            Historial de Stock
-          </h2>
           {totalCount > 0 && (
             <span className="text-xs font-black bg-muted/50 text-muted-foreground px-2 py-0.5 rounded-full border border-border">
               {totalCount} registro{totalCount !== 1 ? 's' : ''}
@@ -203,7 +200,7 @@ export default function StockHistoryView() {
               </div>
             </div>
             <div className="text-left sm:text-right space-y-1">
-              <div className={cn("text-xl font-black", mov.quantity_change > 0 ? 'text-green-600' : 'text-destructive')}>
+              <div className={cn("text-xl font-black tabular-nums", mov.quantity_change > 0 ? 'text-success' : 'text-destructive')}>
                 {mov.quantity_change > 0 ? '+' : ''}{mov.quantity_change}
                 <span className="text-xs ml-1 font-bold">uds</span>
               </div>
@@ -212,7 +209,7 @@ export default function StockHistoryView() {
               </div>
               <div className="flex items-center gap-3 justify-end text-xs text-muted-foreground/60 font-mono">
                 {mov.balance_after !== null && mov.balance_after !== undefined && (
-                  <span className="italic">Saldo: <span className="font-bold text-foreground/70">{mov.balance_after}</span></span>
+                  <span className="italic">Saldo: <span className="font-bold tabular-nums text-foreground/70">{mov.balance_after}</span></span>
                 )}
                 <span>REF: {mov.reference_doc || 'N/A'}</span>
               </div>

@@ -14,20 +14,20 @@ const HealthBattery: React.FC<HealthBatteryProps> = ({ percent, className }) => 
   const isCritical = percent < 20;
 
   const colorClass = isCritical
-    ? "text-red-500"
+    ? "text-destructive"
     : isLow
-      ? "text-amber-500"
+      ? "text-warning"
       : "text-primary";
 
   const bgClass = isCritical
-    ? "bg-red-500/10"
+    ? "bg-destructive/10"
     : isLow
-      ? "bg-amber-500/10"
+      ? "bg-warning/10"
       : "bg-primary/10";
 
   return (
     <div className={cn("w-full p-8 rounded-[2.5rem] bg-sidebar/30 border border-border/40 backdrop-blur-xl relative overflow-hidden", className)}>
-        <div className={cn("absolute -right-10 -top-10 w-40 h-40 rounded-full blur-[80px] opacity-20", isCritical ? "bg-red-500" : isLow ? "bg-amber-500" : "bg-primary")} />
+        <div className={cn("absolute -right-10 -top-10 w-40 h-40 rounded-full blur-[80px] opacity-20", isCritical ? "bg-destructive" : isLow ? "bg-warning" : "bg-primary")} />
 
         <div className="flex items-center gap-10 relative z-10">
             <div className="relative group">
@@ -69,7 +69,7 @@ const HealthBattery: React.FC<HealthBatteryProps> = ({ percent, className }) => 
                     <div className={cn(
                         "inline-flex items-center gap-2 px-4 py-1.5 rounded-full border backdrop-blur-sm transition-all duration-500",
                         bgClass,
-                        isCritical ? "border-red-500/20" : isLow ? "border-amber-500/20" : "border-primary/20"
+                        isCritical ? "border-destructive/20" : isLow ? "border-warning/20" : "border-primary/20"
                     )}>
                         {percent === 100 ? <ShieldCheck className={cn("w-3.5 h-3.5", colorClass)} /> : <AlertTriangle className={cn("w-3.5 h-3.5", colorClass)} />}
                         <span className={cn("text-xs font-black uppercase tracking-widest", colorClass)}>

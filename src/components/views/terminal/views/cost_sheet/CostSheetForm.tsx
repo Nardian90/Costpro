@@ -55,7 +55,7 @@ const CostSheetForm: React.FC<CostSheetFormProps> = ({
             </Label>
             <Input
               id={`header-${field.id}`}
-              className="neu-input w-full"
+              className="w-full h-10 bg-background border border-border rounded-xl px-3 text-sm font-bold focus:ring-1 focus:ring-primary/20 outline-none"
               type={field.type}
               value={(data?.header)?.[field.id as keyof CostSheetHeader] ?? ''}
               onChange={(e) => handleInputChange(['header', field.id], e.target.value)}
@@ -77,7 +77,7 @@ const CostSheetForm: React.FC<CostSheetFormProps> = ({
             </Label>
             <Input
               id={`signature-${key}`}
-              className="neu-input w-full"
+              className="w-full h-10 bg-background border border-border rounded-xl px-3 text-sm font-bold focus:ring-1 focus:ring-primary/20 outline-none"
               type={'text'}
               value={value as string}
               onChange={(e) => handleInputChange(['signature', key], e.target.value)}
@@ -98,7 +98,7 @@ const CostSheetForm: React.FC<CostSheetFormProps> = ({
     return (
       <div className="space-y-4 sm:space-y-6">
         {rows.map((row: CostSheetRow, rowIndex: number) => (
-          <div key={row.id} className="neu-card !p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border border-white/5">
+          <div key={row.id} className="!p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border border-white/5 rounded-xl bg-card shadow-sm">
             <div className="flex-1">
                 <Label htmlFor={`section-${section.id}-${rowIndex}`} className="font-black text-sm sm:text-base block mb-1">
                     {row.label}
@@ -112,7 +112,7 @@ const CostSheetForm: React.FC<CostSheetFormProps> = ({
 
             <div className="w-full sm:w-56 shrink-0">
                 {row.formula ? (
-                   <div className="neu-inset-sm px-4 py-2.5 font-mono text-right text-lg font-black text-primary bg-background/50 border border-primary/10">
+                   <div className="px-4 py-2.5 font-mono text-right text-lg font-black text-primary bg-primary/5 rounded-lg border border-primary/10">
                         {formatCurrency(calculatedValues[row.id] || 0)}
                    </div>
                 ) : (
@@ -122,7 +122,7 @@ const CostSheetForm: React.FC<CostSheetFormProps> = ({
                             type="number"
                             value={row.value ?? 0}
                             onChange={(e) => handleInputChange(['sections', (data?.sections || []).indexOf(section), 'rows', rowIndex, 'value'], e.target.value)}
-                            className="neu-input !pr-10 text-right font-mono text-lg font-bold"
+                            className="bg-background border border-border rounded-lg px-3 py-2 text-right font-mono text-lg font-bold focus:ring-1 focus:ring-primary/20 outline-none"
                         />
                         <div className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary font-bold">
                             $
@@ -152,10 +152,9 @@ const CostSheetForm: React.FC<CostSheetFormProps> = ({
                 <h3 className="text-xl font-black text-primary">Anexo {annex.id}</h3>
                 <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">{annex.title}</p>
             </div>
-            <button
+            <button type="button"
               onClick={() => addRow(annex.id)}
-              className="neu-btn-primary h-11 !px-5 rounded-xl w-full sm:w-auto flex items-center justify-center gap-2 font-bold text-sm shadow-lg"
-              type="button"
+              className="bg-primary text-primary-foreground h-11 !px-5 rounded-xl w-full sm:w-auto flex items-center justify-center gap-2 font-bold text-sm shadow-lg shadow-primary/20"
               aria-label={`Añadir fila al anexo ${annex.id}`}
             >
                 <Plus className="w-4 h-4" aria-hidden="true" />
@@ -182,7 +181,7 @@ const CostSheetForm: React.FC<CostSheetFormProps> = ({
                               {(annex.columns ?? []).map((col: CostSheetColumn) => (
                                   <TableCell key={col?.key} data-label={col?.label} className="p-3 sm:p-4">
                                       {col?.formula ? (
-                                          <div className="neu-inset-sm px-3 py-2 font-mono text-right bg-primary/5 text-primary font-black min-w-[100px] border border-primary/10">
+                                          <div className="px-3 py-2 font-mono text-right bg-primary/5 text-primary font-black min-w-[100px] rounded-lg border border-primary/10">
                                               {formatCurrency(Number(row?.[col.key]) || 0).replace('$', '').trim()}
                                           </div>
                                       ) : (
@@ -190,16 +189,16 @@ const CostSheetForm: React.FC<CostSheetFormProps> = ({
                                               type={typeof row?.[col?.key] === 'number' ? 'number' : 'text'}
                                               value={data?.annexes?.[annexIndex]?.data?.[rowIndex]?.[col?.key] ?? ''}
                                               onChange={(e) => handleInputChange(['annexes', annexIndex, 'data', rowIndex, col?.key], e.target.value)}
-                                              className="neu-input !p-2 min-w-[120px] text-sm font-medium border-transparent hover:border-primary/20 focus:border-primary"
+                                              className="bg-background border border-border rounded-lg !p-2 min-w-[120px] text-sm font-medium hover:border-primary/20 focus:border-primary focus:ring-1 focus:ring-primary/20"
                                               aria-label={`${col?.label || col?.key} de la fila ${rowIndex + 1} del anexo ${annex.id}`}
                                           />
                                       )}
                                   </TableCell>
                               ))}
                               <TableCell data-label="Acciones" className="text-center p-3 sm:p-4">
-                                  <button
+                                  <button type="button"
                                       onClick={() => removeRow(annex.id, rowIndex)}
-                                      className="w-11 h-11 flex items-center justify-center text-danger hover:bg-danger/10 rounded-xl transition-all neu-raised-sm group-hover:scale-110 active:scale-95 mx-auto"
+                                      className="w-11 h-11 flex items-center justify-center text-danger hover:bg-danger/10 rounded-xl transition-all mx-auto"
                                       aria-label="Eliminar fila"
                                   >
                                       <Trash2 className="h-4 w-4" />
@@ -214,7 +213,7 @@ const CostSheetForm: React.FC<CostSheetFormProps> = ({
 
          {/* Annex Total */}
          <div className="flex justify-end mt-4">
-            <div className="neu-card !p-5 border-primary/20 bg-primary/5 shadow-xl min-w-[240px]">
+            <div className="!p-5 border-primary/20 bg-primary/5 shadow-xl min-w-[240px] rounded-xl">
                 <span className="text-xs text-primary/70 uppercase font-black tracking-[0.2em] block mb-2 text-right">Total {annex.id}</span>
                 <div className="flex items-center justify-end gap-2">
                     <span className="text-[clamp(1.5rem,5vw,1.875rem)] font-black font-mono text-primary drop-shadow-sm">
@@ -256,7 +255,7 @@ const CostSheetForm: React.FC<CostSheetFormProps> = ({
         </div>
       </div>
 
-      <div className="neu-card !p-4 sm:!p-8 bg-card/30 backdrop-blur-sm border-white/5 shadow-2xl rounded-3xl animate-in fade-in slide-in-from-bottom-4 duration-500 overflow-x-auto no-scrollbar">
+      <div className="!p-4 sm:!p-8 bg-card/30 backdrop-blur-sm border border-white/5 shadow-2xl rounded-3xl animate-in fade-in slide-in-from-bottom-4 duration-500 overflow-x-auto no-scrollbar">
         {getActiveContent()}
       </div>
     </div>
