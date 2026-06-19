@@ -22,41 +22,42 @@ datasource db {
 // ============================================
 
 model Store {
-  id          String   @id @default(uuid())
-  name        String
-  address     String?
-  phone       String?
-  email       String?
-  logo_url    String?
-  reeup       String?
-  nit         String?  // NIT — identificación tributaria
-  bank_account String?
+  id            String   @id @default(uuid())
+  name          String
+  address       String?
+  phone         String?
+  email         String?
+  logo_url      String?
+  reeup         String?
+  nit           String? // NIT — identificación tributaria
+  bank_account  String?
   signature_url String? // Firma digital para PDFs
-  stamp_url   String?  // Sello de empresa para PDFs
-  is_active   Boolean  @default(true)
-  slug        String?  @unique
-  plantilla   String?  // StoreTemplate: construccion | minimalista | moderna | clasica
-  latitude    Float?
-  longitude   Float?
-  created_at  DateTime @default(now())
+  stamp_url     String? // Sello de empresa para PDFs
+  is_active     Boolean  @default(true)
+  slug          String?  @unique
+  plantilla     String? // StoreTemplate: construccion | minimalista | moderna | clasica
+  latitude      Float?
+  longitude     Float?
+  created_at    DateTime @default(now())
 
-  memberships        UserStoreMembership[]
-  products           Product[]
-  inventory          Inventory[]
-  stock_movements    StockMovement[]
-  transactions       Transaction[]
-  receipts           Receipt[]
-  cash_closures      CashClosure[]
-  audit_logs         AuditLog[]
-  tax_configurations TaxConfiguration[]
-  report_definitions ReportDefinition[]
-  report_runs        ReportRun[]
-  ofertas            Oferta[]
-  cost_template      StoreCostTemplate?  // FC Automatizada: plantilla predeterminada
+  memberships         UserStoreMembership[]
+  products            Product[]
+  inventory           Inventory[]
+  stock_movements     StockMovement[]
+  transactions        Transaction[]
+  receipts            Receipt[]
+  cash_closures       CashClosure[]
+  audit_logs          AuditLog[]
+  tax_configurations  TaxConfiguration[]
+  report_definitions  ReportDefinition[]
+  report_runs         ReportRun[]
+  ofertas             Oferta[]
+  cost_template       StoreCostTemplate? // FC Automatizada: plantilla predeterminada
+  product_cost_sheets ProductCostSheet[]
 
   // Transfer relations
-  origin_transfers      Transfer[]      @relation("TransferOrigin")
-  destination_transfers Transfer[]     @relation("TransferDestination")
+  origin_transfers      Transfer[] @relation("TransferOrigin")
+  destination_transfers Transfer[] @relation("TransferDestination")
 }
 
 // ============================================
@@ -67,7 +68,7 @@ model Profile {
   id               String   @id // Same as auth.users.id
   full_name        String
   email            String
-  role             String   // UserRole: admin | encargado | usuario | manager | clerk | warehouse | costo
+  role             String // UserRole: admin | encargado | usuario | manager | clerk | warehouse | costo
   roles            String[] // Multiple roles support
   is_active        Boolean  @default(true)
   store_id         String?
@@ -81,16 +82,16 @@ model Profile {
   created_by       String?
   ai_provider      String?
   ai_api_key       String?
-  plan             String?  // free | pro
+  plan             String? // free | pro
   created_at       DateTime @default(now())
   updated_at       DateTime @updatedAt
 
-  memberships       UserStoreMembership[]
-  audit_logs        AuditLog[]
-  cash_closures     CashClosure[]
+  memberships        UserStoreMembership[]
+  audit_logs         AuditLog[]
+  cash_closures      CashClosure[]
   report_definitions ReportDefinition[]
-  report_runs       ReportRun[]
-  ofertas           Oferta[]
+  report_runs        ReportRun[]
+  ofertas            Oferta[]
 }
 
 // ============================================
@@ -101,13 +102,13 @@ model UserStoreMembership {
   id         String   @id @default(uuid())
   user_id    String
   store_id   String
-  role       String   // UserRole within the store
+  role       String // UserRole within the store
   status     String   @default("active") // active | revoked
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  user    Profile @relation(fields: [user_id], references: [id])
-  store   Store   @relation(fields: [store_id], references: [id])
+  user  Profile @relation(fields: [user_id], references: [id])
+  store Store   @relation(fields: [store_id], references: [id])
 
   @@unique([user_id, store_id])
 }
@@ -117,41 +118,42 @@ model UserStoreMembership {
 // ============================================
 
 model Product {
-  id               String   @id @default(uuid())
-  name             String
-  description      String?
-  sku              String?
-  barcode          String?
-  barcode_type     String?  // EAN13 | UPC | CODE128 | SKU | auto
-  price            Float
-  precio_empresa   Float?
-  cost_price       Float
-  image_url        String?
-  category         String?
-  unit_of_measure  String?
-  supplier         String?
-  stock_current    Int      @default(0)
-  cost_average     Float?
-  min_stock        Int?
-  store_id         String
-  public_image_url String?
-  is_active        Boolean  @default(true)
-  visible_en_tienda Boolean @default(false)
-  created_at       DateTime @default(now())
-  updated_at       DateTime @updatedAt
+  id                String   @id @default(uuid())
+  name              String
+  description       String?
+  sku               String?
+  barcode           String?
+  barcode_type      String? // EAN13 | UPC | CODE128 | SKU | auto
+  price             Float
+  precio_empresa    Float?
+  cost_price        Float
+  image_url         String?
+  category          String?
+  unit_of_measure   String?
+  supplier          String?
+  stock_current     Int      @default(0)
+  cost_average      Float?
+  min_stock         Int?
+  store_id          String
+  public_image_url  String?
+  is_active         Boolean  @default(true)
+  visible_en_tienda Boolean  @default(false)
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
 
   // FC Automatizada — Fase 1
-  cost_sheet_id    String?  // FK → ProductCostSheet.id
-  fc_auto_enabled  Boolean  @default(true) // Generación automática de FC
+  cost_sheet_id   String? // FK → ProductCostSheet.id
+  fc_auto_enabled Boolean @default(true) // Generación automática de FC
 
-  store        Store              @relation(fields: [store_id], references: [id])
-  cost_sheet   ProductCostSheet?  @relation(fields: [cost_sheet_id], references: [id])
-  variants     ProductVariant[]
-  inventory    Inventory[]
-  stock_movements StockMovement[]
+  store             Store                @relation(fields: [store_id], references: [id])
+  cost_sheet        ProductCostSheet?    @relation("ActiveCostSheet", fields: [cost_sheet_id], references: [id])
+  all_cost_sheets   ProductCostSheet[]   @relation("ProductOwner")
+  variants          ProductVariant[]
+  inventory         Inventory[]
+  stock_movements   StockMovement[]
   transaction_items TransactionItem[]
-  receipt_items    ReceiptItem[]
-  price_history    PriceChangeHistory[]
+  receipt_items     ReceiptItem[]
+  price_history     PriceChangeHistory[]
 
   @@index([store_id])
   @@index([sku])
@@ -185,15 +187,15 @@ model ProductVariant {
 // ============================================
 
 model Inventory {
-  id                   String   @id @default(uuid())
-  store_id             String
-  product_id           String
-  quantity             Int      @default(0)
-  low_stock_threshold  Int      @default(0)
-  updated_at           DateTime @updatedAt
+  id                  String   @id @default(uuid())
+  store_id            String
+  product_id          String
+  quantity            Int      @default(0)
+  low_stock_threshold Int      @default(0)
+  updated_at          DateTime @updatedAt
 
-  store    Store   @relation(fields: [store_id], references: [id])
-  product  Product @relation(fields: [product_id], references: [id])
+  store   Store   @relation(fields: [store_id], references: [id])
+  product Product @relation(fields: [product_id], references: [id])
 
   @@unique([store_id, product_id])
 }
@@ -203,26 +205,26 @@ model Inventory {
 // ============================================
 
 model Transaction {
-  id              String   @id @default(uuid())
+  id              String    @id @default(uuid())
   store_id        String
   seller_id       String?
   total_amount    Float
-  status          String   @default("pending") // pending | completed | failed | compensated | cancelled | refunded | voided
-  payment_method  String?  // cash | card | transfer | wallet | other | mixed
-  discount_type   String?  // fixed | percentage
+  status          String    @default("pending") // pending | completed | failed | compensated | cancelled | refunded | voided
+  payment_method  String? // cash | card | transfer | wallet | other | mixed
+  discount_type   String? // fixed | percentage
   discount_value  Float?
   subtotal        Float?
   tax_amount      Float?
   applied_taxes   Json?
-  idempotency_key String?  @unique
+  idempotency_key String?   @unique
   void_reason     String?
-  created_at      DateTime @default(now())
-  updated_at      DateTime @updatedAt
+  created_at      DateTime  @default(now())
+  updated_at      DateTime  @updatedAt
   completed_at    DateTime?
   cancelled_at    DateTime?
 
-  store   Store             @relation(fields: [store_id], references: [id])
-  items   TransactionItem[]
+  store Store             @relation(fields: [store_id], references: [id])
+  items TransactionItem[]
 
   @@index([store_id])
   @@index([status])
@@ -254,20 +256,20 @@ model TransactionItem {
 // ============================================
 
 model CashClosure {
-  id                   String    @id @default(uuid())
-  user_id              String
-  store_id             String
-  session_reference    String?
-  declared_cash        Float
-  declared_vouchers    Float     @default(0)
-  system_total         Float
-  declared_total       Float
+  id                    String    @id @default(uuid())
+  user_id               String
+  store_id              String
+  session_reference     String?
+  declared_cash         Float
+  declared_vouchers     Float     @default(0)
+  system_total          Float
+  declared_total        Float
   system_expected_total Float
-  difference           Float
-  notes                String?
-  status               String    @default("pendiente") // pendiente | cerrado
-  closed_at            DateTime?
-  created_at           DateTime  @default(now())
+  difference            Float
+  notes                 String?
+  status                String    @default("pendiente") // pendiente | cerrado
+  closed_at             DateTime?
+  created_at            DateTime  @default(now())
 
   store   Store   @relation(fields: [store_id], references: [id])
   profile Profile @relation(fields: [user_id], references: [id])
@@ -280,12 +282,12 @@ model CashClosure {
 // ============================================
 
 model StockMovement {
-  id              String   @id @default(uuid())
+  id              String    @id @default(uuid())
   store_id        String
   product_id      String?
   variant_id      String?
   quantity_change Int
-  movement_type   String   // sale | purchase | adjustment | return | initial | transfer | void
+  movement_type   String // sale | purchase | adjustment | return | initial | transfer | void
   reference_id    String?
   reference_doc   String?
   movement_date   DateTime?
@@ -293,9 +295,9 @@ model StockMovement {
   unit_price      Float?
   balance_after   Int?
   created_by      String?
-  created_at      DateTime @default(now())
+  created_at      DateTime  @default(now())
 
-  store   Store   @relation(fields: [store_id], references: [id])
+  store   Store    @relation(fields: [store_id], references: [id])
   product Product? @relation(fields: [product_id], references: [id])
 
   @@index([store_id])
@@ -308,20 +310,20 @@ model StockMovement {
 // ============================================
 
 model Receipt {
-  id              String   @id @default(uuid())
-  store_id        String
-  user_id         String?
-  status          String   @default("pending") // active | voided | pending | partial
-  total_cost      Float
-  reference_doc   String?
-  notes           String?
-  supplier        String?
-  reception_date  DateTime?
-  created_at      DateTime @default(now())
-  updated_at      DateTime @updatedAt
+  id             String    @id @default(uuid())
+  store_id       String
+  user_id        String?
+  status         String    @default("pending") // active | voided | pending | partial
+  total_cost     Float
+  reference_doc  String?
+  notes          String?
+  supplier       String?
+  reception_date DateTime?
+  created_at     DateTime  @default(now())
+  updated_at     DateTime  @updatedAt
 
-  store   Store         @relation(fields: [store_id], references: [id])
-  items   ReceiptItem[]
+  store Store         @relation(fields: [store_id], references: [id])
+  items ReceiptItem[]
 
   @@index([store_id])
 }
@@ -331,16 +333,16 @@ model Receipt {
 // ============================================
 
 model ReceiptItem {
-  id          String   @id @default(uuid())
-  receipt_id  String
-  product_id  String
-  quantity    Int
-  unit_cost   Float
-  created_at  DateTime @default(now())
-  updated_at  DateTime @updatedAt
+  id         String   @id @default(uuid())
+  receipt_id String
+  product_id String
+  quantity   Int
+  unit_cost  Float
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
 
-  receipt  Receipt @relation(fields: [receipt_id], references: [id])
-  product  Product @relation(fields: [product_id], references: [id])
+  receipt Receipt @relation(fields: [receipt_id], references: [id])
+  product Product @relation(fields: [product_id], references: [id])
 
   @@index([receipt_id])
 }
@@ -350,14 +352,14 @@ model ReceiptItem {
 // ============================================
 
 model Transfer {
-  id                  String   @id @default(uuid())
-  origin_store_id     String
+  id                   String   @id @default(uuid())
+  origin_store_id      String
   destination_store_id String
-  created_by          String
-  status              String   @default("PENDIENTE") // PENDIENTE | CONFIRMADA | CANCELADA
-  notes               String?
-  created_at          DateTime @default(now())
-  updated_at          DateTime @updatedAt
+  created_by           String
+  status               String   @default("PENDIENTE") // PENDIENTE | CONFIRMADA | CANCELADA
+  notes                String?
+  created_at           DateTime @default(now())
+  updated_at           DateTime @updatedAt
 
   origin_store      Store          @relation("TransferOrigin", fields: [origin_store_id], references: [id])
   destination_store Store          @relation("TransferDestination", fields: [destination_store_id], references: [id])
@@ -372,11 +374,11 @@ model Transfer {
 // ============================================
 
 model TransferItem {
-  id           String  @id @default(uuid())
-  transfer_id  String
-  product_id   String
-  quantity     Int
-  unit_cost    Float
+  id          String @id @default(uuid())
+  transfer_id String
+  product_id  String
+  quantity    Int
+  unit_cost   Float
 
   transfer Transfer @relation(fields: [transfer_id], references: [id])
 
@@ -413,15 +415,15 @@ model AuditLog {
 // ============================================
 
 model PriceChangeHistory {
-  id          String   @id @default(uuid())
-  product_id  String
-  changed_by  String
-  old_price   Float
-  new_price   Float
-  old_cost    Float?
-  new_cost    Float?
-  reason      String?
-  created_at  DateTime @default(now())
+  id         String   @id @default(uuid())
+  product_id String
+  changed_by String
+  old_price  Float
+  new_price  Float
+  old_cost   Float?
+  new_cost   Float?
+  reason     String?
+  created_at DateTime @default(now())
 
   product Product @relation(fields: [product_id], references: [id])
 
@@ -434,13 +436,13 @@ model PriceChangeHistory {
 // ============================================
 
 model TaxConfiguration {
-  id        String   @id @default(uuid())
-  name      String
-  type      String   // fixed | percentage
-  value     Float
+  id         String  @id @default(uuid())
+  name       String
+  type       String // fixed | percentage
+  value      Float
   min_exempt Float?
-  is_active Boolean  @default(true)
-  store_id  String
+  is_active  Boolean @default(true)
+  store_id   String
 
   store Store @relation(fields: [store_id], references: [id])
 
@@ -454,20 +456,20 @@ model TaxConfiguration {
 model ReportDefinition {
   id         String   @id @default(uuid())
   name       String
-  type       String   // sales | profit | inventory | kardex | purchases | audit | cost_sheet | daily_income | daily_expenses | transfer | cash
+  type       String // sales | profit | inventory | kardex | purchases | audit | cost_sheet | daily_income | daily_expenses | transfer | cash
   filters    Json
-  date_range Json     // { from, to }
-  columns    Json     // string[]
-  format     String?  // a4 | letter | legal
+  date_range Json // { from, to }
+  columns    Json // string[]
+  format     String? // a4 | letter | legal
   layout     Json
   created_by String
   store_id   String
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  store  Store       @relation(fields: [store_id], references: [id])
-  creator Profile    @relation(fields: [created_by], references: [id])
-  runs   ReportRun[]
+  store   Store       @relation(fields: [store_id], references: [id])
+  creator Profile     @relation(fields: [created_by], references: [id])
+  runs    ReportRun[]
 
   @@index([store_id])
 }
@@ -477,15 +479,15 @@ model ReportDefinition {
 // ============================================
 
 model ReportRun {
-  id                    String   @id @default(uuid())
-  report_definition_id  String
-  executed_by           String
-  executed_at           DateTime @default(now())
-  parameters_snapshot   Json
-  file_url              String?
-  status                String   @default("pending") // pending | completed | failed
-  error_message         String?
-  store_id              String
+  id                   String   @id @default(uuid())
+  report_definition_id String
+  executed_by          String
+  executed_at          DateTime @default(now())
+  parameters_snapshot  Json
+  file_url             String?
+  status               String   @default("pending") // pending | completed | failed
+  error_message        String?
+  store_id             String
 
   report_definition ReportDefinition @relation(fields: [report_definition_id], references: [id])
   executor          Profile          @relation(fields: [executed_by], references: [id])
@@ -500,31 +502,31 @@ model ReportRun {
 // ============================================
 
 model Oferta {
-  id              String   @id @default(uuid())
-  store_id        String
-  numero          String
-  fecha           String
-  objeto          String
-  suministrador   Json     // { empresa, codigo_reup, codigo_nit, direccion, telefono, cuenta_bancaria, email }
-  cliente         Json     // { empresa, codigo_reup, codigo_nit, direccion, telefono, email, contacto }
-  productos       Json     // [{ codigo, descripcion, um, cantidad, precio_unitario }]
-  status          String   @default("draft") // draft | sent | accepted | rejected | expired
-  stamp_url       String?
-  sign_url        String?
-  stamp_scale     Int      @default(100)
-  sign_scale      Int      @default(100)
-  subtotal        Float    @default(0)
-  descuento       Float    @default(0)
-  itbis           Float    @default(0)
-  total           Float    @default(0)
-  moneda          String   @default("CUP")
-  validez         String   @default("30 días")
-  condiciones_pago     String   @default("Pago en la fecha de entrega")
-  condiciones_entrega  String   @default("Según acuerdo entre las partes")
-  notas           String   @default("")
-  created_by      String
-  created_at      DateTime @default(now())
-  updated_at      DateTime @updatedAt
+  id                  String   @id @default(uuid())
+  store_id            String
+  numero              String
+  fecha               String
+  objeto              String
+  suministrador       Json // { empresa, codigo_reup, codigo_nit, direccion, telefono, cuenta_bancaria, email }
+  cliente             Json // { empresa, codigo_reup, codigo_nit, direccion, telefono, email, contacto }
+  productos           Json // [{ codigo, descripcion, um, cantidad, precio_unitario }]
+  status              String   @default("draft") // draft | sent | accepted | rejected | expired
+  stamp_url           String?
+  sign_url            String?
+  stamp_scale         Int      @default(100)
+  sign_scale          Int      @default(100)
+  subtotal            Float    @default(0)
+  descuento           Float    @default(0)
+  itbis               Float    @default(0)
+  total               Float    @default(0)
+  moneda              String   @default("CUP")
+  validez             String   @default("30 días")
+  condiciones_pago    String   @default("Pago en la fecha de entrega")
+  condiciones_entrega String   @default("Según acuerdo entre las partes")
+  notas               String   @default("")
+  created_by          String
+  created_at          DateTime @default(now())
+  updated_at          DateTime @updatedAt
 
   store   Store   @relation(fields: [store_id], references: [id])
   creator Profile @relation(fields: [created_by], references: [id])
@@ -540,12 +542,12 @@ model Oferta {
 model StoreCostTemplate {
   id            String   @id @default(uuid())
   store_id      String   @unique // Una plantilla activa por tienda
-  template_id   String   // e.g. 'template-pizza', 'template-shoes', 'costpro-reinicio'
-  template_data Json?    // Override personalizado de la plantilla (null = usar base)
-  modalidad     String   // produccion | servicios | comercializacion (Res. 148/2023)
+  template_id   String // e.g. 'template-pizza', 'template-shoes', 'costpro-reinicio'
+  template_data Json? // Override personalizado de la plantilla (null = usar base)
+  modalidad     String // produccion | servicios | comercializacion (Res. 148/2023)
   pdf_format    String   @default("res148") // Formato PDF para exportación
   is_active     Boolean  @default(true)
-  created_by    String?  // FK → auth.users.id
+  created_by    String? // FK → auth.users.id
   created_at    DateTime @default(now())
   updated_at    DateTime @updatedAt
 
@@ -561,21 +563,22 @@ model StoreCostTemplate {
 // ============================================
 
 model ProductCostSheet {
-  id                   String    @id @default(uuid())
-  product_id           String    // FK → products.id
-  store_id             String    // FK → stores.id
-  template_id          String    // Plantilla utilizada para el cálculo
-  modalidad            String    // produccion | servicios | comercializacion
-  calculated_data      Json      @default("{}") // CostSheetDataContract serializado
-  cost_price           Decimal   @default(0) @db.Decimal(12, 2) // Costo unitario calculado
+  id                    String    @id @default(uuid())
+  product_id            String // FK → products.id
+  store_id              String // FK → stores.id
+  template_id           String // Plantilla utilizada para el cálculo
+  modalidad             String // produccion | servicios | comercializacion
+  calculated_data       Json      @default("{}") // CostSheetDataContract serializado
+  cost_price            Decimal   @default(0) @db.Decimal(12, 2) // Costo unitario calculado
   cost_price_updated_at DateTime? // Última actualización del costo
-  sync_status          String    @default("synced") // pending | synced | conflict
-  created_at           DateTime  @default(now())
-  updated_at           DateTime  @updatedAt
-  deleted_at           DateTime? // Soft delete para registros financieros
+  sync_status           String    @default("synced") // pending | synced | conflict
+  created_at            DateTime  @default(now())
+  updated_at            DateTime  @updatedAt
+  deleted_at            DateTime? // Soft delete para registros financieros
 
-  product Product @relation(fields: [product_id], references: [id], onDelete: Cascade)
-  store   Store   @relation(fields: [store_id], references: [id], onDelete: Cascade)
+  product    Product   @relation("ProductOwner", fields: [product_id], references: [id], onDelete: Cascade)
+  active_for Product[] @relation("ActiveCostSheet")
+  store      Store     @relation(fields: [store_id], references: [id], onDelete: Cascade)
 
   @@index([product_id])
   @@index([store_id])
