@@ -1,7 +1,7 @@
 "use client";
 
-import React from "react";
-import { motion } from "framer-motion";
+import React, { useState, useEffect, useRef } from "react";
+import { motion, useReducedMotion } from "framer-motion";
 import {
   X,
   Minus,
@@ -25,22 +25,86 @@ export const POSCartItem = ({
   updateItemPayment,
 }: POSCartItemProps) => {
   const maxStock = item.product?.stock_current ?? 999;
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const prefersReducedMotion = useReducedMotion();
+
+  // POS-2 MM-4: Input directo de cantidad.
+  // El span del número es clicable. Al click entra en modo edición (input),
+  // con foco y select-all. Enter o blur confirma, Esc cancela.
+  // qty=10 en 2 clics vs 9 clics anteriores en +.
+  //
+  // Patrones:
+  // -_qtyDraft se inicializa en `String(item.quantity)` al montar el componente.
+  // -Cuando item.quantity cambia externamente (+/-), forzamos un reset del draft
+  //  via `key` prop en el componente, lo cual remonta limpio. Esta es la solución
+  //  idiomática de React 19 para evitar useEffect con setState.
+  const [isEditingQty, setIsEditingQty] = useState(false);
+  const [qtyDraft, setQtyDraft] = useState(String(item.quantity));
+  const qtyInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (isEditingQty && qtyInputRef.current) {
+      qtyInputRef.current.focus();
+      qtyInputRef.current.select();
+    }
+  }, [isEditingQty]);
+
+  // Reset del draft cuando la quantity externa cambia y NO estamos editando.
+  // Usamos el patrón "derived state" con comparación + setState condicional
+  // — solo se ejecuta cuando hay un cambio real, no en cada render.
+  if (!isEditingQty && qtyDraft !== String(item.quantity)) {
+    setQtyDraft(String(item.quantity));
+  }
+
+  const commitQty = () => {
+    const n = parseInt(qtyDraft, 10);
+    if (!isNaN(n) && n >= 1 && n <= maxStock) {
+      if (n !== item.quantity) {
+        onUpdateQuantity(item.product_id, item.variant_id, n);
+      }
+    } else if (!isNaN(n) && n <= 0) {
+      // 0 o negativo → eliminar item
+      onRemoveItem(item.product_id, item.variant_id);
+    } else {
+      // Inválido → revertir
+      setQtyDraft(String(item.quantity));
+    }
+    setIsEditingQty(false);
+  };
+
+  const cancelQtyEdit = () => {
+    setQtyDraft(String(item.quantity));
+    setIsEditingQty(false);
+  };
+
+  const handleQtyKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      commitQty();
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      cancelQtyEdit();
+    }
+  };
 
   return (
     <motion.div
       key={`${item.product_id}-${item.variant_id}`}
       layout="position"
       initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, x: -20 }}
+      animate={prefersReducedMotion ? {} : { opacity: 1, scale: 1 }}
+      exit={prefersReducedMotion ? {} : { opacity: 0, x: -20 }}
       className={cn(
-        "p-3 rounded-2xl border-2 transition-all group relative shadow-md",
+        "p-3 rounded-2xl border-2 transition-all group relative shadow-sm hover:shadow-md hover:border-primary/40",
         isEasyReading ? "p-6" : "p-3",
+        // POS-3a-6: bordes claros entre items del carrito.
+        // Antes solo sombra apenas visible → items se confundían entre sí.
+        // Ahora border-2 explícito + color según estado de stock.
         item.product.stock_current <= 0
-          ? "border-destructive/20 bg-destructive/5"
+          ? "border-destructive/40 bg-destructive/5"
           : item.product.stock_current < 5
-            ? "border-amber-500/20 bg-amber-500/10"
-            : "border-border bg-background",
+            ? "border-warning/40 bg-warning/10"
+            : "border-border bg-background hover:border-primary/40",
       )}
     >
       <div className="grid grid-cols-[auto_1fr_auto] items-center gap-3 sm:gap-4">
@@ -58,28 +122,52 @@ export const POSCartItem = ({
               }
               className={cn(
                 "flex items-center justify-center rounded-xl bg-background shadow-sm hover:bg-primary/10 hover:text-primary transition-all active:scale-90 border border-border/50",
-                isEasyReading ? "w-12 h-12" : "w-11 h-11 sm:w-8 sm:h-8",
+                isEasyReading ? "w-12 h-12" : "w-11 h-11 sm:w-11 sm:h-11",
               )}
               aria-label={`Reducir cantidad de ${item.product.name}`}
               disabled={item.quantity <= 1}
             >
               <Minus className="w-5 h-5 sm:w-4 sm:h-4" />
             </button>
-            <span
-              className={cn(
-                "text-center font-black px-2",
-                isEasyReading
-                  ? "min-w-[48px] text-xl"
-                  : "min-w-[32px] text-sm sm:text-base",
-              )}
-              role="spinbutton"
-              aria-label={`Cantidad de ${item.product.name}`}
-              aria-valuenow={item.quantity}
-              aria-valuemin={1}
-              aria-valuemax={maxStock}
-            >
-              {item.quantity}
-            </span>
+            {isEditingQty ? (
+              <input
+                ref={qtyInputRef}
+                type="number"
+                inputMode="numeric"
+                min={0}
+                max={maxStock}
+                value={qtyDraft}
+                onChange={(e) => setQtyDraft(e.target.value)}
+                onBlur={commitQty}
+                onKeyDown={handleQtyKeyDown}
+                className={cn(
+                  "text-center font-black px-1 bg-background border-2 border-primary rounded-md outline-none tabular-nums",
+                  isEasyReading
+                    ? "min-w-[48px] w-12 text-xl h-10"
+                    : "min-w-[40px] w-10 text-sm sm:text-base h-9",
+                )}
+                aria-label={`Editar cantidad de ${item.product.name}`}
+              />
+            ) : (
+              <button
+                type="button"
+                onClick={() => setIsEditingQty(true)}
+                className={cn(
+                  "text-center font-black px-2 tabular-nums cursor-text rounded-md hover:bg-primary/5 transition-colors",
+                  isEasyReading
+                    ? "min-w-[48px] text-xl py-1"
+                    : "min-w-[32px] text-sm sm:text-base py-0.5",
+                )}
+                role="spinbutton"
+                aria-label={`Cantidad de ${item.product.name}. Clic para editar.`}
+                aria-valuenow={item.quantity}
+                aria-valuemin={1}
+                aria-valuemax={maxStock}
+                title="Clic para editar la cantidad"
+              >
+                {item.quantity}
+              </button>
+            )}
             <button
               type="button"
               onClick={() =>
@@ -91,7 +179,7 @@ export const POSCartItem = ({
               }
               className={cn(
                 "flex items-center justify-center rounded-xl bg-background shadow-sm hover:bg-primary/10 hover:text-primary transition-all active:scale-90 border border-border/50",
-                isEasyReading ? "w-12 h-12" : "w-11 h-11 sm:w-8 sm:h-8",
+                isEasyReading ? "w-12 h-12" : "w-11 h-11 sm:w-11 sm:h-11",
               )}
               aria-label={`Aumentar cantidad de ${item.product.name}`}
               disabled={item.quantity >= maxStock}
@@ -105,7 +193,7 @@ export const POSCartItem = ({
               item.product.stock_current > 10
                 ? "bg-primary/10 text-primary border-primary/20"
                 : item.product.stock_current > 0
-                  ? "bg-amber-500/10 text-amber-500 border-amber-500/20"
+                  ? "bg-warning/10 text-warning border-warning/20"
                   : "bg-destructive/10 text-destructive border-destructive/20",
             )}
           >
@@ -149,7 +237,7 @@ export const POSCartItem = ({
           </div>
           <span
             className={cn(
-              "font-bold text-muted-foreground",
+              "font-bold text-muted-foreground tabular-nums",
               isEasyReading ? "text-base" : "text-[12px] sm:text-xs",
             )}
           >
@@ -170,7 +258,7 @@ export const POSCartItem = ({
           <div className="text-right">
             <div
               className={cn(
-                "font-black text-primary leading-none",
+                "font-black text-primary leading-none tabular-nums",
                 isEasyReading ? "text-2xl" : "text-xl sm:text-lg",
               )}
             >
@@ -181,6 +269,15 @@ export const POSCartItem = ({
       </div>
 
       {/* Opciones Avanzadas (Descuento y Pago Mixto) */}
+      <button
+        type="button"
+        onClick={() => setShowAdvanced(!showAdvanced)}
+        className="w-full mt-3 pt-2 border-t border-border/50 flex items-center justify-between text-xs font-black uppercase text-muted-foreground tracking-widest"
+      >
+        <span>Descuento / Pago Mixto</span>
+        <span className="text-primary">{showAdvanced ? '-' : '+'}</span>
+      </button>
+      {showAdvanced && (
       <div className="mt-3 grid grid-cols-2 gap-2 pt-2 border-t border-border/50">
         <div className="space-y-1">
           <span className="text-xs font-black uppercase text-muted-foreground">
@@ -231,7 +328,7 @@ export const POSCartItem = ({
           </span>
           <div className="flex gap-1">
             <div className="relative flex-1">
-              <DollarSign className="absolute left-1.5 top-1/2 -translate-y-1/2 w-3 h-3 text-emerald-500" aria-hidden="true" />
+              <DollarSign className="absolute left-1.5 top-1/2 -translate-y-1/2 w-3 h-3 text-success" aria-hidden="true" />
               <input
                 type="number"
                 value={item.cash_paid || 0}
@@ -249,7 +346,7 @@ export const POSCartItem = ({
               />
             </div>
             <div className="relative flex-1">
-              <Send className="absolute left-1.5 top-1/2 -translate-y-1/2 w-3 h-3 text-blue-500" aria-hidden="true" />
+              <Send className="absolute left-1.5 top-1/2 -translate-y-1/2 w-3 h-3 text-primary" aria-hidden="true" />
               <input
                 type="number"
                 value={item.transfer_paid || 0}
@@ -269,6 +366,7 @@ export const POSCartItem = ({
           </div>
         </div>
       </div>
+      )}
       {Math.abs(item.cash_paid + item.transfer_paid - item.subtotal) > 0.01 && (
         <div className="mt-1 text-[10px] font-bold text-destructive flex items-center gap-1" role="alert">
           <AlertTriangle className="w-3 h-3" aria-hidden="true" /> Error: Pago no coincide (

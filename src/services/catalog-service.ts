@@ -3,6 +3,7 @@ import { Product } from '@/types';
 import { supabase } from '@/lib/supabaseClient';
 import { createWorkbook } from '@/lib/export/lazy-excel';
 import { generateEAN13FromSKU, needsBarcodeAutogeneration } from '@/lib/barcode-utils';
+import Papa from 'papaparse'; // CM-3.7: CSV support
 
 // ============================================
 // Excel Catalog Export / Import
@@ -319,3 +320,172 @@ export const catalogService = {
     return fileName;
   },
 };
+
+// ============================================
+// CM-3.7: CSV Export / Import
+// ============================================
+
+const CSV_HEADERS = [
+  'SKU', 'Nombre', 'Categoría', 'Unidad de Medida', 'Costo',
+  'Precio Venta', 'Stock Mínimo', 'Código de Barras', 'Proveedor', 'Descripción',
+];
+
+/**
+ * CM-3.7: Exportar catálogo a CSV.
+ * Formato universal, más liviano que Excel, editable en cualquier editor.
+ */
+export function exportCatalogToCSV(products: Product[], storeName?: string) {
+  try {
+    const isEmpty = !products || products.length === 0;
+    const rows = isEmpty
+      ? [
+          // Plantilla con 3 filas de ejemplo
+          { SKU: 'PROD-001', Nombre: 'Coca Cola 500ml', Categoría: 'Bebidas', 'Unidad de Medida': 'unidad', Costo: 0.80, 'Precio Venta': 1.50, 'Stock Mínimo': 10, 'Código de Barras': '', Proveedor: '', Descripción: 'Ejemplo de producto' },
+          { SKU: 'PROD-002', Nombre: 'Pan Francés', Categoría: 'Panadería', 'Unidad de Medida': 'unidad', Costo: 0.05, 'Precio Venta': 0.15, 'Stock Mínimo': 50, 'Código de Barras': '', Proveedor: '', Descripción: '' },
+          { SKU: 'PROD-003', Nombre: 'Leche 1L', Categoría: 'Lácteos', 'Unidad de Medida': 'litro', Costo: 0.90, 'Precio Venta': 1.20, 'Stock Mínimo': 5, 'Código de Barras': '', Proveedor: '', Descripción: '' },
+        ]
+      : products.map(p => ({
+          SKU: p.sku || '',
+          Nombre: p.name || '',
+          Categoría: p.category || '',
+          'Unidad de Medida': p.unit_of_measure || 'unidad',
+          Costo: p.cost_price || 0,
+          'Precio Venta': p.price || 0,
+          'Stock Mínimo': p.min_stock || 0,
+          'Código de Barras': p.barcode || '',
+          Proveedor: p.supplier || '',
+          Descripción: p.description || '',
+        }));
+
+    const csv = Papa.unparse(rows, { columns: CSV_HEADERS, delimiter: ',' });
+    // BOM para que Excel reconozca UTF-8
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    const dateStr = new Date().toISOString().split('T')[0];
+    link.href = url;
+    link.download = isEmpty
+      ? `Plantilla_Catalogo_CSV_${dateStr}.csv`
+      : `Catalogo_${storeName || 'CostPro'}_${dateStr}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+    toast.success(isEmpty ? 'Plantilla CSV descargada' : `Catálogo CSV exportado (${products.length} productos)`);
+  } catch (err) {
+    console.error('Error exporting to CSV:', err);
+    toast.error('Error al exportar el catálogo a CSV');
+  }
+}
+
+/**
+ * CM-3.7: Importar catálogo desde CSV.
+ * Usa PapaParse para parsear el archivo. Mismo header mapping flexible que Excel.
+ */
+export async function importCatalogFromCSV(
+  file: File
+): Promise<{ rows: CatalogImportProduct[]; errors: ImportError[]; totalCount: number }> {
+  return new Promise((resolve, reject) => {
+    Papa.parse(file, {
+      header: true,
+      skipEmptyLines: true,
+      complete: (results) => {
+        try {
+          const rawData = results.data as Record<string, unknown>[];
+          if (rawData.length === 0) {
+            reject(new Error('El archivo CSV está vacío o no tiene datos.'));
+            return;
+          }
+
+          // Mismo header mapping que Excel
+          const headerMap: Record<string, string[]> = {
+            sku: ['sku', 'SKU', 'Sku', 'Identificador', 'Código', 'Codigo', 'ID', 'id'],
+            name: ['nombre', 'Nombre', 'name', 'Name', 'Nombre del Producto', 'Producto'],
+            category: ['categoría', 'categoria', 'Categoría', 'Categoria', 'category', 'Category'],
+            unit_of_measure: ['unidad de medida', 'Unidad de Medida', 'UM', 'um', 'Unidad', 'unidad'],
+            cost_price: ['costo', 'Costo', 'cost', 'Cost', 'Precio Costo'],
+            price: ['precio venta', 'Precio Venta', 'precio', 'Precio', 'price', 'Price'],
+            min_stock: ['stock mínimo', 'Stock Mínimo', 'Stock Minimo', 'min_stock', 'Min Stock'],
+            barcode: ['código de barras', 'Código de Barras', 'Codigo de Barras', 'barcode', 'Barcode', 'EAN', 'UPC'],
+            supplier: ['proveedor', 'Proveedor', 'supplier', 'Supplier'],
+            description: ['descripción', 'descripcion', 'Descripción', 'Descripcion', 'description', 'Description'],
+          };
+
+          const reverseMap = new Map<string, string>();
+          for (const [key, aliases] of Object.entries(headerMap)) {
+            for (const alias of aliases) {
+              reverseMap.set(alias.toLowerCase(), key);
+            }
+          }
+
+          const rows: CatalogImportProduct[] = [];
+          const errors: ImportError[] = [];
+          const seenSkus = new Set<string>();
+
+          rawData.forEach((rawRow, index) => {
+            const rowNumber = index + 2; // +1 for 0-indexed, +1 for header row
+            const normalized: Record<string, unknown> = {};
+            for (const [key, value] of Object.entries(rawRow)) {
+              const normalizedKey = reverseMap.get(key.toLowerCase().trim());
+              if (normalizedKey) {
+                normalized[normalizedKey] = value;
+              }
+            }
+
+            const sku = String(normalized.sku || '').trim();
+            const name = String(normalized.name || '').trim();
+
+            if (!sku) {
+              errors.push({ row: rowNumber, message: 'SKU es obligatorio' });
+              return;
+            }
+            if (!name) {
+              errors.push({ row: rowNumber, message: 'Nombre es obligatorio' });
+              return;
+            }
+            if (seenSkus.has(sku)) {
+              errors.push({ row: rowNumber, message: `SKU duplicado en el archivo: ${sku}` });
+              return;
+            }
+            seenSkus.add(sku);
+
+            const costPrice = parseFloat(String(normalized.cost_price || 0)) || 0;
+            const price = parseFloat(String(normalized.price || 0)) || 0;
+
+            if (costPrice < 0) {
+              errors.push({ row: rowNumber, message: 'Costo no puede ser negativo' });
+              return;
+            }
+            if (price < 0) {
+              errors.push({ row: rowNumber, message: 'Precio no puede ser negativo' });
+              return;
+            }
+
+            const rawBarcode = String(normalized.barcode || '').trim();
+            const barcode = needsBarcodeAutogeneration(rawBarcode)
+              ? generateEAN13FromSKU(sku)
+              : rawBarcode;
+
+            rows.push({
+              sku,
+              name,
+              category: String(normalized.category || '').trim() || null,
+              unit_of_measure: String(normalized.unit_of_measure || 'unidad').trim(),
+              cost_price: costPrice,
+              price,
+              min_stock: parseFloat(String(normalized.min_stock || 0)) || 0,
+              barcode,
+              supplier: String(normalized.supplier || '').trim() || null,
+              description: String(normalized.description || '').trim() || null,
+            });
+          });
+
+          resolve({ rows, errors, totalCount: rawData.length });
+        } catch (err) {
+          reject(new Error('Error al procesar el archivo CSV. Verifica que el formato sea correcto.'));
+        }
+      },
+      error: (err) => {
+        reject(new Error('Error al leer el archivo CSV: ' + err.message));
+      },
+    });
+  });
+}

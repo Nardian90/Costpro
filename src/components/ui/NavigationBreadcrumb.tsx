@@ -20,15 +20,18 @@ interface NavigationBreadcrumbProps {
 
 export const NavigationBreadcrumb: React.FC<NavigationBreadcrumbProps> = ({ className }) => {
   const { currentView, ipvActiveTab, activeCostSection, setCurrentView } = useUIStore();
-  
+
   const items: BreadcrumbItemType[] = getBreadcrumbForView(
     currentView,
     ipvActiveTab,
     activeCostSection
   );
 
-  // Don't show breadcrumb for dashboard/root
-  if (currentView === 'dashboard' || currentView === 'occ') return null;
+  // E-Fix (IA Audit): antes el breadcrumb se ocultaba en 'dashboard' y 'occ'.
+  // Ahora 'dashboard' muestra breadcrumb completo ("Inicio > MULTI-TIENDA > Dashboard KPI")
+  // para wayfinding consistente. Solo 'occ' (Centro de Control = home raíz) se oculta
+  // porque es la propia home y no tiene ancestros significativos.
+  if (currentView === 'occ') return null;
 
   const handleNavigate = (view?: string) => {
     if (view) {

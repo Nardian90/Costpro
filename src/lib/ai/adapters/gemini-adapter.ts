@@ -127,10 +127,11 @@ export class GeminiAdapter implements LLMProvider {
         tool_calls: tool_calls.length > 0 ? tool_calls : undefined,
         metadata: { model: this.modelName }
       };
-    } catch (error: any) {
-      console.error('GeminiAdapter Error:', error.message);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.error('GeminiAdapter Error:', message);
 
-      const msg = error.message?.toLowerCase() || "";
+      const msg = message?.toLowerCase() || "";
 
       if (msg.includes('401') || msg.includes('unauthorized') || msg.includes('invalid api key')) {
         throw new Error("Error de API Key: La clave proporcionada no es válida o ha expirado. Verifica tu configuración.");
@@ -152,7 +153,7 @@ export class GeminiAdapter implements LLMProvider {
         throw new Error("Error de Seguridad: El modelo bloqueó la respuesta por políticas de seguridad de contenido.");
       }
 
-      throw new Error(`Error de AI (${this.modelName}): ${error.message}`);
+      throw new Error(`Error de AI (${this.modelName}): ${message}`);
     }
   }
 }

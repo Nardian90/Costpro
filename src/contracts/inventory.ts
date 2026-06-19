@@ -5,6 +5,7 @@
  */
 export interface InventoryItem {
   productId: string;
+  storeId: string;
   sku: string;
   name: string;
   quantity: number;
@@ -19,6 +20,7 @@ export const InventoryItemFactory = {
     initialValues?: Partial<InventoryItem>
   ): InventoryItem => ({
     productId: '',
+    storeId: '',
     sku: '',
     name: '',
     quantity: 0,

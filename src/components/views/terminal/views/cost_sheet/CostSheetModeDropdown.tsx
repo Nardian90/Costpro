@@ -8,7 +8,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
 export type CostSheetViewMode = 'kpis' | 'expert' | 'assisted' | 'reading' | 'preview' | 'audit' | 'quick';
@@ -25,6 +25,7 @@ interface CostSheetModeDropdownProps {
 }
 
 export function CostSheetModeDropdown({ viewMode, setViewMode }: CostSheetModeDropdownProps) {
+  const prefersReducedMotion = useReducedMotion();
   const modes: ModeConfig[] = [
     { id: 'kpis', label: 'Tablero', icon: BarChart3 },
     { id: 'expert', label: 'Experto', icon: Zap },
@@ -50,8 +51,8 @@ export function CostSheetModeDropdown({ viewMode, setViewMode }: CostSheetModeDr
               <motion.div
                 key={viewMode}
                 initial={{ y: 10, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                exit={{ y: -10, opacity: 0 }}
+                animate={prefersReducedMotion ? { opacity: 1 } : { y: 0, opacity: 1 }}
+                exit={prefersReducedMotion ? {} : { y: -10, opacity: 0 }}
                 transition={{ duration: 0.15 }}
               >
                 <Icon className="w-3.5 h-3.5 text-primary" />

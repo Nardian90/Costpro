@@ -22,6 +22,9 @@ import {
 } from '@/components/ui/table';
 import {
   importCatalogFromExcel,
+  importCatalogFromCSV,
+  exportCatalogToExcel,
+  exportCatalogToCSV,
   type CatalogImportProduct,
   type ImportError,
 } from '@/services/catalog-service';
@@ -41,6 +44,8 @@ export default function CatalogImportDialog({ open, onOpenChange, onImportSucces
     errors: ImportError[];
     totalCount: number;
   } | null>(null);
+  // CM-4.5: Estado de dry-run — paso de revisión antes de insertar
+  const [dryRunDone, setDryRunDone] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Reset internal state when dialog closes
@@ -48,6 +53,7 @@ export default function CatalogImportDialog({ open, onOpenChange, onImportSucces
     if (!open) {
       setImportFile(null);
       setImportPreview(null);
+      setDryRunDone(false); // CM-4.5
     }
   }, [open]);
 
@@ -55,24 +61,28 @@ export default function CatalogImportDialog({ open, onOpenChange, onImportSucces
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate file type
+    // CM-3.7: Aceptar Excel y CSV
     const validTypes = [
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       'application/vnd.ms-excel',
+      'text/csv',
+      'application/csv',
     ];
-    const validExtensions = ['.xlsx', '.xls'];
+    const validExtensions = ['.xlsx', '.xls', '.csv'];
     const ext = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
 
     if (!validTypes.includes(file.type) && !validExtensions.includes(ext)) {
-      toast.error('Solo se permiten archivos Excel (.xlsx, .xls)');
+      toast.error('Solo se permiten archivos Excel (.xlsx, .xls) o CSV (.csv)');
       return;
     }
 
     setImportFile(file);
 
-    // Parse and preview
+    // CM-3.7: Parse según extensión
     try {
-      const result = await importCatalogFromExcel(file);
+      const result = ext === '.csv'
+        ? await importCatalogFromCSV(file)
+        : await importCatalogFromExcel(file);
       setImportPreview(result);
     } catch (err: any) {
       toast.error(err?.message || 'Error al procesar el archivo');
@@ -176,9 +186,38 @@ export default function CatalogImportDialog({ open, onOpenChange, onImportSucces
             Importar Catálogo desde Excel
           </DialogTitle>
           <DialogDescription>
-            Selecciona un archivo Excel (.xlsx) con los productos a importar. Si el catálogo está vacío, usa &quot;Exportar Excel&quot; primero para obtener una plantilla con los campos correctos.
+            Selecciona un archivo Excel (.xlsx) o CSV (.csv) con los productos a importar.
           </DialogDescription>
         </DialogHeader>
+
+        {/* CM-1.7: Botón dedicado para descargar plantilla limpia */}
+        <div className="flex items-center gap-2 p-3 rounded-xl bg-primary/5 border border-primary/10">
+          <Download className="w-4 h-4 text-primary shrink-0" />
+          <span className="text-xs text-muted-foreground flex-1">¿No tienes un archivo? Descarga la plantilla con campos de ejemplo.</span>
+          <button
+            type="button"
+            onClick={() => {
+              exportCatalogToExcel([], 'Plantilla_Catalogo').then(() => {
+                toast.success('Plantilla Excel descargada');
+              }).catch(() => {
+                toast.error('Error al descargar plantilla');
+              });
+            }}
+            className="text-xs font-black uppercase tracking-widest text-primary hover:underline shrink-0"
+          >
+            Excel
+          </button>
+          {/* CM-3.7: Plantilla CSV */}
+          <button
+            type="button"
+            onClick={() => {
+              exportCatalogToCSV([], 'Plantilla_Catalogo');
+            }}
+            className="text-xs font-black uppercase tracking-widest text-primary hover:underline shrink-0"
+          >
+            CSV
+          </button>
+        </div>
 
         {/* File Drop Zone */}
         <div className="space-y-4">
@@ -199,14 +238,14 @@ export default function CatalogImportDialog({ open, onOpenChange, onImportSucces
                   Seleccionar archivo Excel
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  .xlsx o .xls — Arrastra o haz clic para seleccionar
+                  .xlsx, .xls o .csv — Arrastra o haz clic para seleccionar
                 </p>
               </div>
               <input
-                id="catalog-import-file" aria-label="Archivo de catálogo"
+                id="catalog-import-file"
                 ref={fileInputRef}
                 type="file"
-                accept=".xlsx,.xls"
+                accept=".xlsx,.xls,.csv"
                 onChange={handleFileSelect}
                 className="hidden"
               />
@@ -224,8 +263,8 @@ export default function CatalogImportDialog({ open, onOpenChange, onImportSucces
                     Válidos
                   </div>
                 </div>
-                <div className="p-2 sm:p-3 rounded-xl bg-danger/5 border border-danger/10 text-center">
-                  <div className="text-2xl font-black text-danger">{importPreview.errors.length}</div>
+                <div className="p-2 sm:p-3 rounded-xl bg-destructive/5 border border-destructive/10 text-center">
+                  <div className="text-2xl font-black text-destructive">{importPreview.errors.length}</div>
                   <div className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mt-1">
                     Errores
                   </div>
@@ -240,10 +279,10 @@ export default function CatalogImportDialog({ open, onOpenChange, onImportSucces
 
               {/* Errors List */}
               {importPreview.errors.length > 0 && (
-                <div className="rounded-xl border border-danger/20 bg-danger/5 overflow-hidden">
-                  <div className="flex items-center gap-2 px-4 py-2 bg-danger/10 border-b border-danger/20">
-                    <AlertCircle className="w-4 h-4 text-danger" />
-                    <span className="text-xs font-black uppercase tracking-widest text-danger">
+                <div className="rounded-xl border border-destructive/20 bg-destructive/5 overflow-hidden">
+                  <div className="flex items-center gap-2 px-4 py-2 bg-destructive/10 border-b border-destructive/20">
+                    <AlertCircle className="w-4 h-4 text-destructive" />
+                    <span className="text-xs font-black uppercase tracking-widest text-destructive">
                       Advertencias ({importPreview.errors.length})
                     </span>
                   </div>
@@ -251,7 +290,7 @@ export default function CatalogImportDialog({ open, onOpenChange, onImportSucces
                     {importPreview.errors.map((err, idx) => (
                       <div key={idx} className="flex items-start gap-2 text-xs">
                         <span className="font-mono text-muted-foreground shrink-0">Fila {err.row}:</span>
-                        <span className="text-danger/80">{err.message}</span>
+                        <span className="text-destructive/80">{err.message}</span>
                       </div>
                     ))}
                   </div>
@@ -323,13 +362,43 @@ export default function CatalogImportDialog({ open, onOpenChange, onImportSucces
         {/* Footer */}
         <DialogFooter className="gap-2 sm:gap-2">
           <SecondaryButton onClick={handleClose} label="Cancelar" className="flex-1" />
-          <PrimaryButton
-            onClick={handleConfirmImport}
-            label={isImporting ? 'Importando...' : `Importar ${importPreview?.rows.length || 0} producto(s)`}
-            icon={isImporting ? Loader2 : Download}
-            disabled={!importPreview || importPreview.rows.length === 0 || isImporting}
-            className="flex-1"
-          />
+          {/* CM-4.5: Flujo dry-run — 2 pasos: Revisar → Confirmar */}
+          {!dryRunDone ? (
+            <PrimaryButton
+              onClick={() => setDryRunDone(true)}
+              label={`Revisar ${importPreview?.rows.length || 0} producto(s)`}
+              icon={Download}
+              disabled={!importPreview || importPreview.rows.length === 0}
+              className="flex-1"
+            />
+          ) : (
+            <div className="flex flex-col gap-2 flex-1">
+              {/* CM-4.5: Resumen dry-run antes de confirmar */}
+              <div className="flex items-center gap-2 p-2 rounded-xl bg-amber-50 border border-amber-300 dark:bg-amber-950/30 dark:border-amber-800">
+                <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
+                <span className="text-[10px] text-amber-800 dark:text-amber-300">
+                  Se insertarán/actualizarán <strong>{importPreview?.rows.length || 0} productos</strong>.
+                  {importPreview && importPreview.rows.length > 0 && (
+                    <> SkUs se actualizan si ya existen (upsert).</>
+                  )}
+                </span>
+              </div>
+              <div className="flex gap-2">
+                <SecondaryButton
+                  onClick={() => setDryRunDone(false)}
+                  label="Volver"
+                  className="flex-1"
+                />
+                <PrimaryButton
+                  onClick={handleConfirmImport}
+                  label={isImporting ? 'Importando...' : 'Confirmar e Importar'}
+                  icon={isImporting ? Loader2 : Download}
+                  disabled={isImporting}
+                  className="flex-1"
+                />
+              </div>
+            </div>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>

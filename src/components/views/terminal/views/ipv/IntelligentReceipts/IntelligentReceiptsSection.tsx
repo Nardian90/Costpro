@@ -103,8 +103,9 @@ export function IntelligentReceiptsSection() {
             } else {
                 toast.success("Costos calculados y validados");
             }
-        } catch (error: any) {
-            toast.error(error.message || "Error al calcular costos");
+        } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : "Error al calcular costos";
+            toast.error(message);
         } finally {
             setIsCalculatingCosts(false);
         }
@@ -216,7 +217,7 @@ export function IntelligentReceiptsSection() {
                             <Button
                                 variant="outline"
                                 disabled={!simulationResult || simulationResult.receipts.length === 0}
-                                className="h-12 px-6 rounded-2xl font-black uppercase tracking-widest text-xs gap-3 border-2 border-blue-500/50 text-blue-600 hover:bg-blue-50"
+                                className="h-12 px-6 rounded-2xl font-black uppercase tracking-widest text-xs gap-3 border-2 border-primary/50 text-primary hover:bg-blue-50"
                             >
                                 <Printer className="w-4 h-4" />
                                 Exportar SC-2-04
@@ -310,7 +311,7 @@ export function IntelligentReceiptsSection() {
                     <Button
                         onClick={handleApply}
                         disabled={!simulationResult || simulationResult.receipts.length === 0 || isApplying}
-                        className="h-12 px-8 rounded-2xl font-black uppercase tracking-widest text-xs gap-3 shadow-xl active:scale-95 transition-all bg-green-600 text-white hover:bg-green-700 disabled:bg-muted disabled:text-muted-foreground"
+                        className="h-12 px-8 rounded-2xl font-black uppercase tracking-widest text-xs gap-3 shadow-xl active:scale-95 transition-all bg-success text-white hover:bg-success disabled:bg-muted disabled:text-muted-foreground"
                     >
                         {isApplying ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                         3. Aplicar Cambios

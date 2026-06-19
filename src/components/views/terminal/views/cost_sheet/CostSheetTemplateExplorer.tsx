@@ -2,7 +2,7 @@
 import { logger } from '@/lib/logger';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import {
   Search,
   FolderOpen,
@@ -31,7 +31,8 @@ import { useCostSheetStore, useAuthStore, useUIStore } from '@/store';
 import { useScenarioStore } from '@/store/scenario-store';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabaseClient';
-import { storeService } from '@/services/store-service';
+// F3-T01: store-service.ts eliminado — usamos storeApiClient (cliente activo).
+import { storeApiClient } from '@/services/store-api-client';
 import { Store } from '@/types';
 import {
   Dialog,
@@ -89,6 +90,7 @@ interface Template {
 }
 
 export const CostSheetTemplateExplorer: React.FC = () => {
+  const prefersReducedMotion = useReducedMotion();
   const [activeCategory, setActiveCategory] = useState<TemplateCategory>('system');
   const [searchQuery, setSearchQuery] = useState('');
   const [publicTemplates, setPublicTemplates] = useState<Template[]>([]);
@@ -256,7 +258,10 @@ export const CostSheetTemplateExplorer: React.FC = () => {
 
   const fetchStores = useCallback(async () => {
     try {
-      const data = await storeService.getStores();
+      // F3-T01: usar storeApiClient.fetchStores() (mismo cliente que usa useStores).
+      // Antes usaba storeService.getStores() que estaba deprecado y devolvía
+      // solo tiendas activas sin respetar RLS del usuario autenticado.
+      const data = await storeApiClient.fetchStores();
       setStores(data);
     } catch (error) {
       console.error('Error fetching stores:', error);
@@ -533,7 +538,7 @@ export const CostSheetTemplateExplorer: React.FC = () => {
       <div className="flex flex-col items-center gap-6">
           <div className="flex gap-2 p-1.5 bg-sidebar/50 backdrop-blur-xl rounded-3xl border border-sidebar-border/50 w-fit">
             {(['system', 'private', 'public'] as const).map((cat) => (
-              <button
+              <button type="button"
                 key={cat}
                 onClick={() => setActiveCategory(cat)}
                 className={cn(
@@ -554,7 +559,7 @@ export const CostSheetTemplateExplorer: React.FC = () => {
           {activeCategory === 'public' && isAdmin && (
               <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
+                animate={prefersReducedMotion ? { opacity: 1 } : { opacity: 1, scale: 1 }}
               >
                   <Button
                     onClick={() => handleOpenPublishDialog(null)}
@@ -572,7 +577,7 @@ export const CostSheetTemplateExplorer: React.FC = () => {
         {activeCategory === 'private' && !localDirectory ? (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
+            animate={prefersReducedMotion ? { opacity: 1 } : { opacity: 1, y: 0 }}
             className="flex flex-col items-center justify-center h-[400px] border-2 border-dashed border-primary/20 rounded-[2.5rem] bg-primary/5"
           >
             <div className="p-6 rounded-full bg-primary/10 mb-6">
@@ -677,7 +682,7 @@ export const CostSheetTemplateExplorer: React.FC = () => {
                 <SelectContent className="rounded-2xl border-primary/10 bg-sidebar/95 backdrop-blur-2xl">
                   <SelectItem value="all" className="text-xs font-bold uppercase tracking-widest focus:bg-primary/10">
                     <div className="flex items-center gap-2">
-                      <Globe className="w-4 h-4 text-blue-500" />
+                      <Globe className="w-4 h-4 text-primary" />
                       Pública (Todas las tiendas)
                     </div>
                   </SelectItem>
@@ -740,19 +745,20 @@ const TemplateCard: React.FC<TemplateCardProps> = ({
   onChangeStore,
   stores
 }) => {
+  const prefersReducedMotion = useReducedMotion();
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.95 }}
-      whileHover={{ y: -2, scale: 1.01 }}
+      animate={prefersReducedMotion ? { opacity: 1 } : { opacity: 1, scale: 1 }}
+      exit={prefersReducedMotion ? {} : { opacity: 0, scale: 0.95 }}
+      whileHover={prefersReducedMotion ? {} : { y: -2, scale: 1.01 }}
       className="group relative bg-sidebar/40 backdrop-blur-xl border border-sidebar-border/50 rounded-[2rem] p-6 hover:border-primary/30 transition-all duration-300"
     >
       <div className="flex justify-between items-start mb-4">
         <div className={cn(
           "p-3 rounded-2xl bg-primary/10 text-primary",
-          template.id.startsWith('sys-') ? "bg-amber-500/10 text-amber-500" :
-          template.type === 'public' ? "bg-blue-500/10 text-blue-500" : ""
+          template.id.startsWith('sys-') ? "bg-warning/10 text-warning" :
+          template.type === 'public' ? "bg-primary/10 text-primary" : ""
         )}>
           <FileText className="w-6 h-6" />
         </div>
@@ -760,8 +766,8 @@ const TemplateCard: React.FC<TemplateCardProps> = ({
           <span className={cn(
             "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border",
             template.store_id
-              ? "bg-amber-500/10 text-amber-500 border-amber-500/20 shadow-lg shadow-amber-500/5"
-              : "bg-blue-500/10 text-blue-500 border-blue-500/20 shadow-lg shadow-blue-500/5"
+              ? "bg-warning/10 text-warning border-warning/20 shadow-lg shadow-warning/5"
+              : "bg-primary/10 text-primary border-primary/20 shadow-lg shadow-primary/5"
           )}>
             {template.store_id
               ? `Tienda: ${stores.find(s => s.id === template.store_id)?.name || "Específica"}`
@@ -833,7 +839,7 @@ const TemplateCard: React.FC<TemplateCardProps> = ({
                   <DropdownMenuSubContent className="rounded-[1.5rem] border-primary/10 bg-sidebar/95 backdrop-blur-2xl p-2 min-w-[200px]">
                     <DropdownMenuItem
                       onClick={() => onChangeStore?.(null)}
-                      className="rounded-xl font-bold uppercase tracking-widest text-[10px] focus:bg-blue-500/10 focus:text-blue-500"
+                      className="rounded-xl font-bold uppercase tracking-widest text-[10px] focus:bg-primary/10 focus:text-primary"
                     >
                       <Globe className="w-3.5 h-3.5 mr-2" />
                       Pública (General)

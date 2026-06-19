@@ -48,32 +48,32 @@ export default function AuditEventIcon({ tableName, action, className }: AuditEv
   const category = getAuditCategory(tableName, action);
 
   let Icon: LucideIcon = Package;
-  let colorClass = 'bg-slate-500/10 text-slate-600';
+  let colorClass = 'bg-muted text-muted-foreground';
 
   switch (category) {
     case 'inventory':
       Icon = Package;
-      colorClass = 'bg-green-500/10 text-green-600';
+      colorClass = 'bg-success/10 text-success';
       break;
     case 'sales':
       Icon = ShoppingCart;
-      colorClass = 'bg-green-500/10 text-green-700';
+      colorClass = 'bg-primary/10 text-primary';
       break;
     case 'users':
       Icon = Users;
-      colorClass = 'bg-purple-500/10 text-purple-600';
+      colorClass = 'bg-info/10 text-info';
       break;
     case 'stores':
       Icon = Store;
-      colorClass = 'bg-orange-500/10 text-orange-600';
+      colorClass = 'bg-warning/10 text-warning';
       break;
     case 'adjustments':
       Icon = AlertTriangle;
-      colorClass = 'bg-red-500/10 text-red-600';
+      colorClass = 'bg-destructive/10 text-destructive';
       break;
     default:
       Icon = RefreshCcw;
-      colorClass = 'bg-slate-500/10 text-slate-600';
+      colorClass = 'bg-muted text-muted-foreground';
   }
 
   // Override icon based on action if it's a basic one

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { Geist, Geist_Mono, Space_Grotesk, Inter } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "sonner";
@@ -86,6 +87,9 @@ export default async function RootLayout({
 }>) {
   const locale = await getLocale();
   const messages = await getMessages();
+  // FIX-CSP: Read the nonce injected by middleware.ts so inline scripts pass CSP
+  const headersList = await headers();
+  const nonce = headersList.get('x-csp-nonce') || '';
 
   return (
     <html lang={locale} suppressHydrationWarning className="h-full" style={{ minHeight: '100vh' }}>
@@ -100,8 +104,9 @@ export default async function RootLayout({
           dangerouslySetInnerHTML={{
           __html: `:root{--background:#f8fafc;--foreground:#0f172a;color-scheme:light}.dark{--background:#121212;--foreground:#e4e4e7;color-scheme:dark}`,
         }} />
-        {/* safe: static theme-detection script — nonce handled by preview proxy */}
+        {/* safe: static theme-detection script — nonce from middleware */}
         <script
+          nonce={nonce}
           suppressHydrationWarning
           dangerouslySetInnerHTML={{
             __html: `(function(){try{var t=localStorage.getItem('theme');if(t!=='light'){document.documentElement.classList.add('dark')}}catch(e){document.documentElement.classList.add('dark')}})()`,
@@ -111,8 +116,32 @@ export default async function RootLayout({
         {process.env.NEXT_PUBLIC_SUPABASE_URL && (
           <link rel="preconnect" href={process.env.NEXT_PUBLIC_SUPABASE_URL} />
         )}
-        {/* safe: static structured data — nonce handled by preview proxy */}
+        {/* DIAG: Client-side splash timing diagnostic */}
+        {process.env.NODE_ENV === 'development' && (
+          <script
+            nonce={nonce}
+            suppressHydrationWarning
+            dangerouslySetInnerHTML={{
+              __html: `
+window.__DIAG = { t0: performance.now(), phases: [] };
+window.__DIAG_LOG = function(phase) {
+  var e = { phase: phase, ms: Math.round(performance.now() - window.__DIAG.t0) };
+  window.__DIAG.phases.push(e);
+  console.log('[DIAG] ' + e.phase + ' @ ' + e.ms + 'ms');
+};
+window.__DIAG_LOG('script_exec');
+window.addEventListener('DOMContentLoaded', function() { window.__DIAG_LOG('DOMContentLoaded'); });
+window.addEventListener('load', function() { window.__DIAG_LOG('window_load'); });
+setTimeout(function() {
+  console.log('[DIAG] SUMMARY:', JSON.stringify(window.__DIAG.phases));
+}, 15000);
+`
+            }}
+          />
+        )}
+        {/* safe: static structured data — nonce from middleware */}
         <script
+          nonce={nonce}
           suppressHydrationWarning
           type="application/ld+json"
           dangerouslySetInnerHTML={{

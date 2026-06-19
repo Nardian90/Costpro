@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Menu,
   X,
@@ -11,7 +11,8 @@ import {
   Settings,
   LogOut,
   HelpCircle,
-  Layout
+  Layout,
+  Search
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -23,6 +24,8 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { SyncConflictModal } from '@/components/modals/SyncConflictModal';
+import { StoreSelectorSheet } from './StoreSelectorSheet';
+import { NotificationCenter } from './NotificationCenter';
 import { cn } from '@/lib/utils';
 import { UserContract } from '@/contracts/user';
 import { NavigationItem } from '@/hooks/ui/useTerminalNavigation';
@@ -59,6 +62,10 @@ export const Header = ({
   allStores = [],
   onLogout,
 }: HeaderProps) => {
+  // F1-T04: estado de búsqueda para el dropdown del selector de tienda.
+  // Permite filtrar tiendas por nombre cuando hay 10+ (antes era una lista plana sin filtro).
+  const [storeSearch, setStoreSearch] = useState('');
+
   // Determine which list of stores to show
   const storesToShow = user?.role === 'admin' && allStores.length > 0
     ? allStores.map(s => ({ id: s.id, name: s.name }))
@@ -66,6 +73,14 @@ export const Header = ({
         id: m.store_id || '',
         name: m.store?.name || (m.store_id ? `Sucursal ${m.store_id.slice(0, 4)}` : 'Desconocida')
       })) || [];
+
+  // F1-T04: lista filtrada por el texto de búsqueda. Si storeSearch está vacío,
+  // muestra todas. Case-insensitive sobre el nombre de la tienda.
+  const filteredStores = useMemo(() => {
+    if (!storeSearch.trim()) return storesToShow;
+    const q = storeSearch.toLowerCase().trim();
+    return storesToShow.filter(s => s.name.toLowerCase().includes(q));
+  }, [storesToShow, storeSearch]);
 
   const activeStore = storesToShow.find(s => s.id === user?.activeStoreId);
   const activeStoreName = activeStore?.name || 'Seleccionar Tienda';
@@ -91,7 +106,38 @@ export const Header = ({
 
             <div className="flex items-center gap-2 min-w-0 shrink-0">
               {storesToShow.length > 0 && (
-                <DropdownMenu>
+                <>
+                  {/* F5-T01: En mobile (<768px) usar bottom sheet en vez de dropdown.
+                      Nombres completos visibles, mejor UX táctil. */}
+                  <StoreSelectorSheet
+                    stores={storesToShow}
+                    activeStoreId={user?.activeStoreId}
+                    activeStoreName={activeStoreName}
+                    onSelect={handleSetActiveStore}
+                    trigger={
+                      <button
+                        className={cn(
+                          "group relative flex items-center gap-2 px-3 h-11 rounded-xl transition-all outline-none border min-w-0 max-w-none",
+                          storesToShow.length > 1
+                            ? "bg-primary text-foreground border-primary shadow-lg shadow-primary/20 hover:opacity-90"
+                            : "bg-muted/50 border-border/50 text-primary cursor-default"
+                        )}
+                        disabled={storesToShow.length <= 1}
+                      >
+                        <BuildingIcon aria-hidden="true" className={cn("w-4 h-4 shrink-0", storesToShow.length > 1 ? "text-foreground" : "text-primary")} />
+                        {/* A4-FIX: max-w-none en mobile (no truncar), sm:max-w-[130px] en desktop */}
+                        <span className="text-[10px] sm:text-xs font-black uppercase tracking-tight truncate">
+                          {activeStoreName}
+                        </span>
+                        {storesToShow.length > 1 && (
+                          <ChevronDown className="w-3.5 h-3.5 text-white/70 shrink-0" />
+                        )}
+                      </button>
+                    }
+                  />
+                  {/* DropdownMenu original — solo visible en desktop (sm:block) */}
+                  <div className="hidden sm:block">
+                  <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <button
                       className={cn(
@@ -120,33 +166,66 @@ export const Header = ({
                   </DropdownMenuTrigger>
 
                   {storesToShow.length > 1 && (
-                    <DropdownMenuContent align="start" className="w-[calc(100vw-32px)] sm:w-64 p-2 rounded-2xl bg-card border-border shadow-2xl z-40">
+                    <DropdownMenuContent
+                      align="start"
+                      className="w-[calc(100vw-32px)] sm:w-64 p-2 rounded-2xl bg-card border-border shadow-2xl z-40"
+                      // F1-T04: limpiar la búsqueda al cerrar el dropdown para que la próxima
+                      // apertura empiece con la lista completa.
+                      onCloseAutoFocus={() => setStoreSearch('')}
+                    >
                       <div className="px-2 py-1.5 text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">
                         Cambiar Sucursal
                       </div>
-                      <div className="max-h-[300px] overflow-y-auto no-scrollbar">
-                        {storesToShow.map((s) => (
-                          <DropdownMenuItem
-                            key={s.id}
-                            onClick={() => handleSetActiveStore(s.id)}
-                            className={cn(
-                              "flex items-center justify-between px-3 py-4 rounded-xl cursor-pointer transition-colors focus:bg-primary/10 focus:text-primary min-h-[44px]",
-                              user?.activeStoreId === s.id ? "bg-primary/10 text-primary font-bold" : "text-muted-foreground hover:bg-muted"
-                            )}
-                          >
-                            <div className="flex items-center gap-3 truncate">
-                              <BuildingIcon aria-hidden="true" className={cn("w-4 h-4 shrink-0", user?.activeStoreId === s.id ? "text-primary" : "text-muted-foreground/40")} />
-                              <span className="text-xs font-black uppercase tracking-tight truncate">{s.name}</span>
-                            </div>
-                            {user?.activeStoreId === s.id && (
-                              <Check aria-hidden="true" className="w-4 h-4 text-primary shrink-0" />
-                            )}
-                          </DropdownMenuItem>
-                        ))}
+                      {/* F1-T04: input de búsqueda para filtrar tiendas por nombre.
+                          Esencial cuando el usuario tiene 10+ tiendas — antes era una lista
+                          plana sin filtro que obligaba a escrollear.
+                          onKeyDown stopPropagation evita que las flechas del DropdownMenu
+                          interfieran con el typing. */}
+                      <div className="relative mb-2">
+                        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" aria-hidden="true" />
+                        <input
+                          type="text"
+                          value={storeSearch}
+                          onChange={(e) => setStoreSearch(e.target.value)}
+                          onKeyDown={(e) => e.stopPropagation()}
+                          placeholder="Buscar sucursal..."
+                          aria-label="Buscar sucursal por nombre"
+                          className="w-full pl-8 pr-3 py-2 h-9 rounded-lg bg-muted/40 border border-border/50 text-xs font-medium outline-none focus:ring-1 focus:ring-primary focus:border-primary/30 transition-all"
+                          autoComplete="off"
+                        />
+                      </div>
+                      <div className="max-h-[260px] overflow-y-auto no-scrollbar">
+                        {filteredStores.length > 0 ? (
+                          filteredStores.map((s) => (
+                            <DropdownMenuItem
+                              key={s.id}
+                              onClick={() => { handleSetActiveStore(s.id); setStoreSearch(''); }}
+                              className={cn(
+                                "flex items-center justify-between px-3 py-4 rounded-xl cursor-pointer transition-colors focus:bg-primary/10 focus:text-primary min-h-[44px]",
+                                user?.activeStoreId === s.id ? "bg-primary/10 text-primary font-bold" : "text-muted-foreground hover:bg-muted"
+                              )}
+                            >
+                              <div className="flex items-center gap-3 truncate">
+                                <BuildingIcon aria-hidden="true" className={cn("w-4 h-4 shrink-0", user?.activeStoreId === s.id ? "text-primary" : "text-muted-foreground/40")} />
+                                <span className="text-xs font-black uppercase tracking-tight truncate">{s.name}</span>
+                              </div>
+                              {user?.activeStoreId === s.id && (
+                                <Check aria-hidden="true" className="w-4 h-4 text-primary shrink-0" />
+                              )}
+                            </DropdownMenuItem>
+                          ))
+                        ) : (
+                          // F1-T04: estado vacío cuando la búsqueda no coincide con ninguna tienda
+                          <div className="px-3 py-6 text-center text-xs text-muted-foreground">
+                            No se encontraron sucursales con "<strong>{storeSearch}</strong>"
+                          </div>
+                        )}
                       </div>
                     </DropdownMenuContent>
                   )}
                 </DropdownMenu>
+                </div>
+                </>
               )}
 
               <p className="text-xs font-semibold text-muted-foreground truncate hidden lg:block ml-2">
@@ -157,6 +236,8 @@ export const Header = ({
         </div>
 
         <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+          {/* F6-T02: Centro de notificaciones por tienda (bell icon con badge) */}
+          <NotificationCenter />
           <ThemeToggle />
           <SyncConflictModal />
 

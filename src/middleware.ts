@@ -15,9 +15,16 @@ export function middleware(request: NextRequest) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
   const supabaseWs = supabaseUrl.replace('https://', 'wss://');
 
+  // CSP — en desarrollo permitimos unsafe-inline para scripts (los diagnósticos
+  // inline de CostProLoader lo necesitan). En producción, el nonce debería bastar
+  // pero lo mantenemos por compatibilidad con el entorno preview de Space-Z.
+  const isDev = process.env.NODE_ENV !== 'production';
+
   const cspHeader = [
     `default-src 'self'`,
-    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' https://vercel.live https://vercel.com https://storage.googleapis.com https://apis.google.com`,
+    isDev
+      ? `script-src 'self' 'unsafe-inline' 'unsafe-eval' 'nonce-${nonce}' 'strict-dynamic' https://vercel.live https://vercel.com https://storage.googleapis.com https://apis.google.com`
+      : `script-src 'self' 'unsafe-inline' 'nonce-${nonce}' 'strict-dynamic' https://vercel.live https://vercel.com https://storage.googleapis.com https://apis.google.com`,
     `worker-src 'self' blob:`,
     `style-src 'self' 'unsafe-inline'`,
     `img-src 'self' blob: data: ${supabaseUrl} https://vercel.com https://vercel.live https://*.googleusercontent.com`,
@@ -45,6 +52,6 @@ export function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|manifest.json|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 };

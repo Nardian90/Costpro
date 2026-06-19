@@ -103,10 +103,10 @@ export default function AuditEventCard({ log }: AuditEventCardProps) {
   const businessText = getBusinessText(log);
 
   const roleColors: Record<string, string> = {
-    'admin': 'text-red-600 bg-red-50 border-red-200',
-    'encargado': 'text-amber-600 bg-amber-50 border-amber-200',
-    'manager': 'text-green-700 bg-green-50 border-green-200',
-    'usuario': 'text-slate-600 bg-slate-50 border-slate-200'
+    'admin': 'text-destructive bg-destructive/5 border-destructive/20',
+    'encargado': 'text-warning bg-warning/5 border-warning/20',
+    'manager': 'text-success bg-success/5 border-success/20',
+    'usuario': 'text-muted-foreground bg-muted border-border'
   };
 
   const roleLabel = log.profile?.role || 'Sistema';
@@ -149,14 +149,14 @@ export default function AuditEventCard({ log }: AuditEventCardProps) {
         <div className="flex flex-wrap items-center gap-3 mt-auto pt-3 border-t border-border/50">
           {storeName && (
             <div className="flex items-center gap-1.5">
-              <div className="w-1.5 h-1.5 rounded-full bg-orange-500" />
+              <div className="w-1.5 h-1.5 rounded-full bg-warning" />
               <span className="text-xs font-black uppercase text-muted-foreground">
                 🏬 {storeName}
               </span>
             </div>
           )}
           <div className="flex items-center gap-1.5">
-            <div className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+            <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground" />
             <span className="text-xs font-mono text-muted-foreground uppercase">
               ID: {log.record_id?.slice(0, 8)}...
             </span>
@@ -164,12 +164,12 @@ export default function AuditEventCard({ log }: AuditEventCardProps) {
           <div className="flex items-center gap-1.5">
             <span className={cn(
               "px-1.5 py-0.5 rounded text-xs font-black uppercase tracking-tighter",
-              category === 'inventory' ? 'bg-green-500/10 text-green-600' :
-              category === 'sales' ? 'bg-green-500/10 text-green-700' :
-              category === 'users' ? 'bg-purple-500/10 text-purple-600' :
-              category === 'stores' ? 'bg-orange-500/10 text-orange-600' :
-              category === 'adjustments' ? 'bg-red-500/10 text-red-600' :
-              'bg-slate-500/10 text-slate-600'
+              category === 'inventory' ? 'bg-success/10 text-success' :
+              category === 'sales' ? 'bg-primary/10 text-primary' :
+              category === 'users' ? 'bg-info/10 text-info' :
+              category === 'stores' ? 'bg-warning/10 text-warning' :
+              category === 'adjustments' ? 'bg-destructive/10 text-destructive' :
+              'bg-muted text-muted-foreground'
             )}>
               {category}
             </span>

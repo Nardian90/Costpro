@@ -57,7 +57,7 @@ export const CostSheetSectionActionsPanel: React.FC<CostSheetSectionActionsPanel
               Operaciones de Datos
             </div>
 
-            <button
+            <button type="button"
               onClick={() => { onAddRow(); onClose(); }}
               className="w-full flex items-center gap-4 p-4 rounded-2xl transition-all group active:scale-95 text-left hover:bg-primary/5 text-sidebar-foreground/70"
             >
@@ -67,7 +67,7 @@ export const CostSheetSectionActionsPanel: React.FC<CostSheetSectionActionsPanel
               <span className="text-xs font-bold uppercase tracking-widest">Añadir Fila</span>
             </button>
 
-            <button
+            <button type="button"
               onClick={() => { onExport(); onClose(); }}
               className="w-full flex items-center gap-4 p-4 rounded-2xl transition-all group active:scale-95 text-left hover:bg-primary/5 text-sidebar-foreground/70"
             >
@@ -77,7 +77,7 @@ export const CostSheetSectionActionsPanel: React.FC<CostSheetSectionActionsPanel
               <span className="text-xs font-bold uppercase tracking-widest">Exportar a Excel</span>
             </button>
 
-            <button
+            <button type="button"
               onClick={() => { onImport(); onClose(); }}
               className="w-full flex items-center gap-4 p-4 rounded-2xl transition-all group active:scale-95 text-left hover:bg-primary/5 text-sidebar-foreground/70"
             >
@@ -93,7 +93,7 @@ export const CostSheetSectionActionsPanel: React.FC<CostSheetSectionActionsPanel
               Peligro
             </div>
 
-            <button
+            <button type="button"
               onClick={() => { onRemove(); onClose(); }}
               className="w-full flex items-center gap-4 p-4 rounded-2xl transition-all group active:scale-95 text-left hover:bg-destructive/5 text-destructive"
             >

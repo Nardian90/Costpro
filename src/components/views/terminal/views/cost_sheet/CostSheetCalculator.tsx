@@ -1,12 +1,13 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import { Delete, Divide, Plus, Minus, Equal, X } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { createSafeParser } from '@/lib/cost-engine/parser-factory';
 
 export const CostSheetCalculator: React.FC = () => {
+  const prefersReducedMotion = useReducedMotion();
   const [display, setDisplay] = useState('0');
   const [equation, setEquation] = useState('');
   const [lastResult, setLastResult] = useState<number | null>(null);
@@ -101,7 +102,7 @@ export const CostSheetCalculator: React.FC = () => {
         <motion.div
           key={display}
           initial={{ y: 5, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
+          animate={prefersReducedMotion ? { opacity: 1 } : { y: 0, opacity: 1 }}
           className={cn(
             "text-[clamp(2.25rem,12vw,3rem)] font-mono tracking-tighter w-full text-right font-black",
             "text-primary dark:text-[hsl(var(--primary))] dark:drop-shadow-[0_0_15px_rgba(22,163,74,0.5)]"
@@ -157,18 +158,20 @@ interface CalcButtonProps {
 }
 
 const CalcButton: React.FC<CalcButtonProps> = ({ label, icon, onClick, variant = 'number', className }) => {
+  const prefersReducedMotion = useReducedMotion();
   const variantStyles = {
     number: "bg-muted/30 hover:bg-muted/60 text-foreground border-border/40 shadow-sm dark:bg-white/5 dark:hover:bg-white/10 dark:border-white/5 dark:shadow-inner",
     operator: "bg-primary/5 hover:bg-primary/20 text-primary border-primary/10",
     primary: "bg-primary hover:bg-primary/90 text-foreground border-primary shadow-lg shadow-primary/20 dark:shadow-[hsl(var(--primary))]/30",
-    danger: "bg-red-500/10 hover:bg-red-500/20 text-red-500 border-red-500/20",
+    danger: "bg-destructive/10 hover:bg-destructive/20 text-destructive border-destructive/20",
     secondary: "bg-muted hover:bg-muted/80 text-muted-foreground border-border dark:bg-white/10 dark:hover:bg-white/20 dark:text-white/70 dark:border-white/10",
   };
 
   return (
     <motion.button
-      whileHover={{ scale: 1.02 }}
-      whileTap={{ scale: 0.95, transition: { type: "spring", stiffness: 400, damping: 10 } }}
+      type="button"
+      whileHover={prefersReducedMotion ? {} : { scale: 1.02 }}
+      whileTap={prefersReducedMotion ? {} : { scale: 0.95, transition: { type: "spring", stiffness: 400, damping: 10 } }}
       onClick={onClick}
       className={cn(
         "h-14 rounded-2xl flex items-center justify-center text-lg font-black border transition-all duration-200",

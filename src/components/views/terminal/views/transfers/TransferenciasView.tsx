@@ -117,7 +117,7 @@ export default function TransferenciasView() {
         'Estado': t.status,
         'Productos': t.items?.length || 0,
         'Notas': t.notes || '',
-        'Fecha': t.created_at ? new Date(t.created_at).toLocaleDateString('es-AR') : '',
+        'Fecha': t.created_at ? new Date(t.created_at).toLocaleDateString('es-CU') : '',
       }));
       const worksheet = XLSX.utils.json_to_sheet(data);
       worksheet['!cols'] = [
@@ -192,19 +192,19 @@ export default function TransferenciasView() {
     switch (status) {
       case 'PENDIENTE':
         return (
-          <span className="flex items-center gap-1 text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded-full text-xs font-black uppercase tracking-widest">
+          <span className="flex items-center gap-1 text-warning bg-warning/10 px-2 py-0.5 rounded-full text-xs font-black uppercase tracking-widest">
             <Clock className="w-3 h-3" /> Pendiente
           </span>
         );
       case 'CONFIRMADA':
         return (
-          <span className="flex items-center gap-1 text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-full text-xs font-black uppercase tracking-widest">
+          <span className="flex items-center gap-1 text-success bg-success/10 px-2 py-0.5 rounded-full text-xs font-black uppercase tracking-widest">
             <CheckCircle2 className="w-3 h-3" /> Confirmada
           </span>
         );
       case 'CANCELADA':
         return (
-          <span className="flex items-center gap-1 text-rose-500 bg-rose-500/10 px-2 py-0.5 rounded-full text-xs font-black uppercase tracking-widest">
+          <span className="flex items-center gap-1 text-destructive bg-destructive/10 px-2 py-0.5 rounded-full text-xs font-black uppercase tracking-widest">
             <XCircle className="w-3 h-3" /> Cancelada
           </span>
         );
@@ -365,13 +365,13 @@ export default function TransferenciasView() {
                       <div
                         className={cn(
                           'w-12 h-12 rounded-2xl flex items-center justify-center shrink-0',
-                          activeTab === 'outgoing' ? 'bg-amber-500/10' : 'bg-green-600/10'
+                          activeTab === 'outgoing' ? 'bg-warning/10' : 'bg-success/10'
                         )}
                       >
                         {activeTab === 'outgoing' ? (
-                          <ArrowUpRight className="w-6 h-6 text-amber-500" />
+                          <ArrowUpRight className="w-6 h-6 text-warning" />
                         ) : (
-                          <ArrowDownLeft className="w-6 h-6 text-green-600" />
+                          <ArrowDownLeft className="w-6 h-6 text-success" />
                         )}
                       </div>
                       <div>

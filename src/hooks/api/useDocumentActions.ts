@@ -7,6 +7,8 @@ import { useAuthStore } from '@/store';
 import { toast } from 'sonner';
 import { withTableLogging } from './base';
 import { useCartStore } from '@/store';
+// R2-M7: import para auditoría de anulación de ventas
+import { auditService } from '@/services/audit-service';
 
 interface DocumentActionProps {
   type: 'sale' | 'reception';
@@ -97,16 +99,30 @@ export function useInvertDocument() {
 
       return { success: true };
     },
-    onSuccess: () => {
+    onSuccess: async (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
       queryClient.invalidateQueries({ queryKey: ['receptions'] });
       queryClient.invalidateQueries({ queryKey: ['stock-movements'] });
       queryClient.invalidateQueries({ queryKey: ['inventory'] });
       toast.success('Documento invertido y existencias actualizadas correctamente.');
+
+      // R2-M7: auditar anulación de venta
+      if (variables.type === 'sale' && user?.id) {
+        try {
+          await auditService.logSaleVoided({
+            userId: user.id,
+            transactionId: variables.id,
+            storeId: variables.storeId || user.activeStoreId || '',
+            reason: 'Inversion de documento (venta anulada)',
+            oldStatus: 'completed',
+          });
+        } catch { /* non-blocking */ }
+      }
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       console.error('Error inverting document:', error);
-      toast.error(`Error al invertir documento: ${error.message || 'Error desconocido'}`);
+      const message = error instanceof Error ? error.message : 'Error desconocido';
+      toast.error(`Error al invertir documento: ${message}`);
     }
   });
 }
@@ -159,8 +175,9 @@ export function useDuplicateDocument() {
     onSuccess: () => {
       toast.success('Productos cargados en el carrito para duplicar la operación.');
     },
-    onError: (error: any) => {
-      toast.error(`Error al duplicar: ${error.message}`);
+    onError: (error: unknown) => {
+      const message = error instanceof Error ? error.message : String(error);
+      toast.error(`Error al duplicar: ${message}`);
     }
   });
 }

@@ -2,6 +2,7 @@
 'use client'
 
 import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/store';
 import { useUsers, useCreateUser, useUpdateUser, useManageUserMemberships } from '@/hooks/api/useUsers';
 import { useStores } from '@/hooks/api/useStores';
@@ -15,6 +16,8 @@ import { supabase } from '@/lib/supabaseClient';
 export function useUsersView() {
     const { user } = useAuthStore();
     const [searchTerm, setSearchTerm] = useState('');
+    // F1-T02: queryClient para invalidar cache tras toggle/delete (en lugar de window.location.reload)
+    const queryClient = useQueryClient();
 
     // Modal/Form State
     const [userFormMode, setUserFormMode] = useState<'create' | 'edit' | null>(null);
@@ -90,9 +93,9 @@ export function useUsersView() {
           setUserFormMode(null);
           setSelectedUserContract(null);
           return true;
-        } catch (error: any) {
+        } catch (error: unknown) {
           console.error('[useUsersView] Error submitting form:', error);
-          toast.error(error.message || 'Error al procesar la solicitud');
+          toast.error((error instanceof Error ? error.message : String(error)) || 'Error al procesar la solicitud');
           return false;
         }
     };
@@ -131,9 +134,13 @@ export function useUsersView() {
             }
 
             toast.success(isActive ? 'Usuario activado' : 'Usuario desactivado');
-            window.location.reload();
-        } catch (error: any) {
-            toast.error(error.message);
+            // F1-T02: invalidar cache de React Query en lugar de window.location.reload().
+            // Esto preserva el estado de la UI (formularios abiertos, scroll, filtros) y
+            // es consistente con el patrón que usan handleUserFormSubmit y handleUpdatePlan.
+            await queryClient.invalidateQueries({ queryKey: ['users'] });
+            await queryClient.invalidateQueries({ queryKey: ['user-store-access'] });
+        } catch (error: unknown) {
+            toast.error(error instanceof Error ? error.message : String(error));
         }
     };
 
@@ -166,9 +173,12 @@ export function useUsersView() {
             }
 
             toast.success('Usuario eliminado correctamente');
-            window.location.reload();
-        } catch (error: any) {
-            toast.error(error.message);
+            // F1-T02: invalidar cache de React Query en lugar de window.location.reload().
+            await queryClient.invalidateQueries({ queryKey: ['users'] });
+            await queryClient.invalidateQueries({ queryKey: ['user-store-access'] });
+            await queryClient.invalidateQueries({ queryKey: ['memberships'] });
+        } catch (error: unknown) {
+            toast.error(error instanceof Error ? error.message : String(error));
         }
     };
 
@@ -201,8 +211,8 @@ export function useUsersView() {
             }
 
             toast.success(data.message || 'Correo de recuperación enviado');
-        } catch (error: any) {
-            toast.error(error.message);
+        } catch (error: unknown) {
+            toast.error(error instanceof Error ? error.message : String(error));
         }
     };
 
@@ -214,8 +224,8 @@ export function useUsersView() {
                 plan: plan
             });
             toast.success(`Plan actualizado a ${plan.toUpperCase()}`);
-        } catch (error: any) {
-            toast.error(error.message || 'Error al actualizar el plan');
+        } catch (error: unknown) {
+            toast.error((error instanceof Error ? error.message : String(error)) || 'Error al actualizar el plan');
         }
     };
 

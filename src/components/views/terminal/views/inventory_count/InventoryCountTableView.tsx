@@ -28,13 +28,13 @@ export default function InventoryCountTableView({
     <div className="overflow-x-auto table-to-cards force-table rounded-2xl shadow-xl border border-white/5 overflow-hidden">
       <table className="w-full">
         <thead>
-          <tr className="bg-muted/50 text-muted-foreground font-black uppercase text-[10px] tracking-[0.2em] text-primary/70" aria-label="Cabecera de tabla">
+          <tr className="bg-muted/50 text-muted-foreground font-black uppercase text-[10px] tracking-[0.2em] text-primary/70">
             <th className="p-4 text-left">Producto / SKU</th>
             <th className="p-4 text-right">Stock Teórico</th>
             <th className="p-4 text-center">Stock Físico (Contado)</th>
             <th className="p-4 text-right">Desviación</th>
             <th className="p-4 text-center">% Muestra</th>
-            {showRemoveButton && <th className="p-4 text-center w-12" aria-label="Acciones"></th>}
+            {showRemoveButton && <th className="p-4 text-center w-12"></th>}
           </tr>
         </thead>
         <tbody className="bg-background/30 backdrop-blur-sm">
@@ -65,7 +65,7 @@ export default function InventoryCountTableView({
                     <div className="font-black text-sm uppercase tracking-tight">{product.name}</div>
                     <div className="text-xs font-mono text-muted-foreground mt-1">{product.sku || '-'} • {product.category || 'General'}</div>
                   </td>
-                  <td data-label="Teórico" className="p-4 text-right font-black text-lg text-muted-foreground">{product.stock_current}</td>
+                  <td data-label="Teórico" className="p-4 text-right font-black text-lg text-muted-foreground tabular-nums">{product.stock_current}</td>
                   <td data-label="Contado" className="p-4">
                     <div className="flex justify-center">
                       <input
@@ -79,7 +79,7 @@ export default function InventoryCountTableView({
                   </td>
                   <td data-label="Diferencia" className="p-4 text-right">
                     <span className={cn(
-                      "text-lg font-black",
+                      "text-lg font-black tabular-nums",
                       diff === 0 ? "text-muted-foreground/30" :
                       diff > 0 ? "text-success" : "text-danger"
                     )}>
@@ -90,7 +90,7 @@ export default function InventoryCountTableView({
                     <span className={cn(
                       "text-xs font-black uppercase tracking-widest px-2 py-1 rounded-full",
                       samplePercentage >= 80 ? "bg-success/10 text-success" :
-                      samplePercentage >= 50 ? "bg-amber-500/10 text-amber-600" :
+                      samplePercentage >= 50 ? "bg-warning/10 text-warning" :
                       "bg-danger/10 text-danger"
                     )}>
                       {samplePercentage}%
@@ -99,8 +99,9 @@ export default function InventoryCountTableView({
                   {showRemoveButton && onRemoveProduct && (
                     <td className="p-4 text-center">
                       <button
+                        type="button"
                         onClick={(e) => { e.stopPropagation(); onRemoveProduct(product.id); }}
-                        className="p-2 hover:bg-rose-500/10 text-rose-500 rounded-xl transition-colors"
+                        className="p-2 hover:bg-destructive/10 text-destructive rounded-xl transition-colors"
                         aria-label={`Quitar ${product.name} del conteo`}
                         title="Quitar del conteo"
                       >

@@ -17,7 +17,7 @@ const CostSheetSignatureEditor = () => {
   };
 
   return (
-    <div className="neu-card p-8 animate-in zoom-in-95 duration-500">
+    <div className="p-8 bg-card border border-border rounded-3xl shadow-sm animate-in zoom-in-95 duration-500">
       <div className="flex items-center gap-4 mb-8">
         <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
             <PenTool className="w-5 h-5 text-primary" />
@@ -37,7 +37,7 @@ const CostSheetSignatureEditor = () => {
             id="signature-prepared-by"
             value={signature?.prepared_by || ''}
             onChange={(e) => handleChange('prepared_by', e.target.value)}
-            className="neu-input h-12 text-lg font-bold"
+            className="w-full h-12 bg-background border border-border rounded-xl px-3 text-lg font-bold focus:ring-1 focus:ring-primary/20 outline-none"
             placeholder="Ej: Ing. Juan Pérez - Especialista B en Costos"
           />
         </div>
@@ -50,7 +50,7 @@ const CostSheetSignatureEditor = () => {
             id="signature-approved-by"
             value={signature?.approved_by || ''}
             onChange={(e) => handleChange('approved_by', e.target.value)}
-            className="neu-input h-12 text-lg font-bold"
+            className="w-full h-12 bg-background border border-border rounded-xl px-3 text-lg font-bold focus:ring-1 focus:ring-primary/20 outline-none"
             placeholder="Ej: Lic. Ana García - Directora Económica"
           />
         </div>

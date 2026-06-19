@@ -1,19 +1,11 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getSupabaseAuthClient } from "@/lib/supabaseClient";
-import { getServerSession } from "@/lib/auth";
 import { InventoryItem } from "@/contracts/inventory";
 import { rateLimit } from '@/lib/rate-limit';
 import { withTracing } from '@/lib/observability';
+import { withStoreAccess, AuthenticatedSession } from '@/lib/auth-middleware';
 
-async function getHandler(request: NextRequest) {
-  const session = await getServerSession(request);
-
-  if (!session || !session.token) {
-    return NextResponse.json(
-      { error: "Unauthorized", message: "No active session" },
-      { status: 401 }
-    );
-  }
+async function getHandler(request: NextRequest, session: AuthenticatedSession) {
 
   const clientId = request.headers.get('x-forwarded-for') || session.user.id;
   const { allowed } = await rateLimit(clientId);
@@ -26,6 +18,13 @@ async function getHandler(request: NextRequest) {
   const sku = searchParams.get("sku");
   const storeId = searchParams.get("storeId");
 
+  if (!storeId) {
+    return NextResponse.json(
+      { error: "Bad Request", message: "storeId es requerido" },
+      { status: 400 }
+    );
+  }
+
   const from = (page - 1) * pageSize;
   const to = from + pageSize - 1;
 
@@ -37,6 +36,7 @@ async function getHandler(request: NextRequest) {
       .select(
         `
         product_id,
+        store_id,
         quantity,
         version,
         products (
@@ -47,9 +47,8 @@ async function getHandler(request: NextRequest) {
         { count: "exact" }
       );
 
-    if (storeId) {
-      query.eq("store_id", storeId);
-    }
+    // storeId is always provided (required by withStoreAccess)
+    query.eq("store_id", storeId!);
     if (sku) {
       query.ilike("products.sku", `%${sku}%`);
     }
@@ -67,6 +66,7 @@ async function getHandler(request: NextRequest) {
 
     const formattedData: InventoryItem[] = (data || []).map((item: any) => ({
       productId: item.product_id,
+      storeId: item.store_id || storeId,
       sku: item.products?.sku ?? 'N/A',
       name: item.products?.name ?? 'Sin nombre',
       quantity: item.quantity,
@@ -91,4 +91,4 @@ async function getHandler(request: NextRequest) {
   }
 }
 
-export const GET = withTracing(getHandler, 'GET /api/inventory');
+export const GET = withTracing(withStoreAccess(getHandler) as any, 'GET /api/inventory');

@@ -57,7 +57,7 @@ export function Pick3HeroCard({ plays, config, bankroll }: Pick3HeroCardProps) {
                   ))}
                 </div>
 
-                <div className="flex items-center gap-2 justify-center lg:justify-start text-emerald-500 font-black italic text-sm">
+                <div className="flex items-center gap-2 justify-center lg:justify-start text-success font-black italic text-sm">
                   <TrendingUp className="w-5 h-5" />
                   Prob. Simulación: {(mainPlay as any).simProb?.toFixed(1) || mainPlay.confidence.toFixed(1)}%
                 </div>
@@ -81,15 +81,15 @@ export function Pick3HeroCard({ plays, config, bankroll }: Pick3HeroCardProps) {
                   <p className="text-[10px] font-bold opacity-40 italic">Inversión controlada</p>
                 </div>
 
-                <div className="p-6 rounded-[32px] bg-emerald-500/5 border border-emerald-500/10 space-y-2 hover:bg-emerald-500/10 transition-colors">
+                <div className="p-6 rounded-[32px] bg-success/5 border border-success/10 space-y-2 hover:bg-success/10 transition-colors">
                   <p className="text-[10px] font-black uppercase opacity-60">Retorno Potencial</p>
-                  <p className="text-4xl font-black italic text-emerald-600 tracking-tighter">${potentialWin}</p>
+                  <p className="text-4xl font-black italic text-success tracking-tighter">${potentialWin}</p>
                   <p className="text-[10px] font-bold opacity-40 italic">Basado en pago {config.mode === 'LAST2' ? '80x' : '500x'}</p>
                 </div>
 
                 <div className="sm:col-span-2 p-6 rounded-[32px] bg-muted/30 border border-border/50 space-y-2">
                   <div className="flex items-center gap-2 mb-1">
-                    <Zap className="w-4 h-4 text-orange-500 fill-orange-500" />
+                    <Zap className="w-4 h-4 text-warning fill-warning" />
                     <p className="text-[10px] font-black uppercase">Estrategia Aplicada</p>
                   </div>
                   <p className="text-sm font-black italic opacity-80">{mainPlay.strategyLabel || "Análisis Multivariante"}</p>
@@ -116,7 +116,7 @@ export function Pick3HeroCard({ plays, config, bankroll }: Pick3HeroCardProps) {
                     </div>
                     <div className="flex flex-col">
                       <span className="text-[8px] font-black uppercase opacity-40">Opción Alternativa {i + 2}</span>
-                      <span className="text-[10px] font-black italic text-emerald-500">{(alt as any).simProb?.toFixed(1) || alt.confidence.toFixed(1)}% Éxito</span>
+                      <span className="text-[10px] font-black italic text-success">{(alt as any).simProb?.toFixed(1) || alt.confidence.toFixed(1)}% Éxito</span>
                     </div>
                   </div>
                   <Badge variant="outline" className="text-[8px] font-black px-2 py-0 h-5 border-primary/20">{alt.strategyLabel}</Badge>

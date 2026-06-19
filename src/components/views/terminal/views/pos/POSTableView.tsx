@@ -1,7 +1,7 @@
 'use client';
 
 import type { Product } from '@/types';
-import { resolveProductImage, formatCurrency } from '@/lib/utils';
+import { cn, resolveProductImage, formatCurrency } from '@/lib/utils';
 import { ShoppingCart } from 'lucide-react';
 import ProductImage from '@/components/ui/ProductImage';
 
@@ -39,13 +39,21 @@ export default function POSTableView({ products, onAddToCart }: POSTableViewProp
                 </div>
               </td>
               <td className="p-4 font-mono text-xs text-muted-foreground priority-low">{product.sku || '-'}</td>
-              <td className="p-4 text-right font-bold text-foreground">{product.stock_current}</td>
+              <td className="p-4 text-right">
+                <span className={cn(
+                  "font-bold px-2 py-0.5 rounded-lg text-xs tabular-nums",
+                  product.stock_current <= 0 ? "bg-destructive/10 text-destructive" :
+                  product.stock_current <= 5 ? "bg-warning/10 text-warning" :
+                  "bg-success/10 text-success"
+                )}>{product.stock_current}</span>
+              </td>
               <td className="p-4 text-right font-black text-primary">{formatCurrency(product.price)}</td>
               <td className="p-4">
                 <div className="flex justify-center">
                   <button
+                    type="button"
                     onClick={() => onAddToCart(product)}
-                    className="neu-raised-sm w-11 h-11 flex items-center justify-center text-primary hover:bg-primary hover:text-primary-foreground transition-all active:scale-90"
+                    className="neu-raised-sm w-11 h-11 flex items-center justify-center text-primary hover:bg-primary hover:text-primary-foreground border border-border/50 transition-all active:scale-90"
                     aria-label={`Agregar ${product.name} al carrito`}
                   >
                     <ShoppingCart className="w-5 h-5" />

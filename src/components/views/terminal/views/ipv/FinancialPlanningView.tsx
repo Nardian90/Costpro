@@ -150,7 +150,7 @@ export const FinancialPlanningView: React.FC = () => {
                 <Card className="md:col-span-2 p-6 bg-muted/5 border-none rounded-2xl">
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                         {goals.map((g) => {
-                            const monthName = new Date(g.month + "-01").toLocaleDateString('es-ES', { month: 'long' });
+                            const monthName = new Date(g.month + "-01").toLocaleDateString('es-CU', { month: 'long' });
                             const isEditing = editingGoal?.month === g.month;
                             const monthReal = realData.get(g.month) || { total: 0, efectivo: 0, transferencia: 0 };
 
@@ -158,7 +158,7 @@ export const FinancialPlanningView: React.FC = () => {
                                 <Card key={g.month} className="p-4 hover:shadow-md transition-all group relative overflow-hidden flex flex-col gap-3 rounded-xl">
                                     <div className="flex justify-between items-start">
                                         <p className="text-[10px] font-black uppercase text-muted-foreground">{monthName}</p>
-                                        <Button variant="ghost" size="sm" className="h-5 px-1 hover:text-red-500" onClick={() => handleResetMonthSimulation(g.month)}>
+                                        <Button variant="ghost" size="sm" className="h-5 px-1 hover:text-destructive" onClick={() => handleResetMonthSimulation(g.month)}>
                                             <RotateCcw className="w-3 h-3" />
                                         </Button>
                                     </div>

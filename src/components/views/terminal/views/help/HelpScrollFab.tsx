@@ -55,7 +55,7 @@ export default function HelpScrollFab({ scrollProgress }: HelpScrollFabProps) {
   const pct = Math.round(smoothProgress);
 
   return (
-    <button
+    <button type="button"
       onClick={handleScrollTop}
       aria-label={`Volver arriba · ${pct}% leído`}
       className={cn(

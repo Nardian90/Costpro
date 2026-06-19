@@ -38,15 +38,15 @@ export function Pick3HelpSection() {
           <p className="text-xs font-medium opacity-60 leading-relaxed italic">Revisa la "Hero Card" en el dashboard o la pestaña de Predicciones. El sistema resalta las 3 combinaciones con mayor convergencia estadística hoy.</p>
         </div>
         <div className="p-6 rounded-[32px] bg-background border border-border/50 shadow-sm space-y-4">
-          <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center">
-             <Wallet className="w-6 h-6 text-emerald-600" />
+          <div className="w-12 h-12 rounded-2xl bg-success/10 flex items-center justify-center">
+             <Wallet className="w-6 h-6 text-success" />
           </div>
           <h3 className="font-black uppercase italic text-sm">2. Gestiona el Capital</h3>
           <p className="text-xs font-medium opacity-60 leading-relaxed italic">No apuestes al azar. Usa el "Monto Sugerido" calculado por nuestro Bankroll Manager basado en tu capital actual y el riesgo configurado.</p>
         </div>
         <div className="p-6 rounded-[32px] bg-background border border-border/50 shadow-sm space-y-4">
-          <div className="w-12 h-12 rounded-2xl bg-blue-500/10 flex items-center justify-center">
-             <PieChart className="w-6 h-6 text-blue-600" />
+          <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center">
+             <PieChart className="w-6 h-6 text-primary" />
           </div>
           <h3 className="font-black uppercase italic text-sm">3. Valida el Modelo</h3>
           <p className="text-xs font-medium opacity-60 leading-relaxed italic">¿Dudas de la IA? Ve a la pestaña de "Simulación". Verás qué habría pasado si hubieras seguido nuestras 3 sugerencias en los últimos 30 días.</p>
@@ -85,8 +85,8 @@ export function Pick3HelpSection() {
               <AccordionItem value="box" className="border-border">
                 <AccordionTrigger className="hover:no-underline py-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center border border-blue-500/20">
-                      <Zap className="w-5 h-5 text-blue-600" />
+                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20">
+                      <Zap className="w-5 h-5 text-primary" />
                     </div>
                     <div className="text-left">
                       <p className="text-sm font-black uppercase italic">Box (Combinado)</p>
@@ -96,15 +96,15 @@ export function Pick3HelpSection() {
                 </AccordionTrigger>
                 <AccordionContent className="text-xs font-medium leading-relaxed opacity-80 px-4 pb-4 italic space-y-2">
                   <p>Ganas si tus números salen en cualquier orden. La probabilidad de éxito es mucho mayor (aprox 1 de cada 167 sorteos para números de 3 dígitos distintos).</p>
-                  <p className="font-black text-blue-600">Ejemplo: Juegas 123 en Box y sale 321, 213, 132, etc.</p>
+                  <p className="font-black text-primary">Ejemplo: Juegas 123 en Box y sale 321, 213, 132, etc.</p>
                 </AccordionContent>
               </AccordionItem>
 
               <AccordionItem value="bankroll" className="border-border">
                 <AccordionTrigger className="hover:no-underline py-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
-                      <ShieldCheck className="w-5 h-5 text-emerald-600" />
+                    <div className="w-10 h-10 rounded-xl bg-success/10 flex items-center justify-center border border-success/20">
+                      <ShieldCheck className="w-5 h-5 text-success" />
                     </div>
                     <div className="text-left">
                       <p className="text-sm font-black uppercase italic">Gestión de Bankroll</p>
@@ -113,7 +113,7 @@ export function Pick3HelpSection() {
                   </div>
                 </AccordionTrigger>
                 <AccordionContent className="text-xs font-medium leading-relaxed opacity-80 px-4 pb-4 italic">
-                  El "Bankroll" es tu capital total destinado al juego. El sistema calcula automáticamente cuánto apostar basándose en tu capital actual y el nivel de confianza de la predicción para evitar que pierdas todo tu dinero en una mala racha. <span className="font-black text-emerald-600">Es el secreto de los apostadores profesionales.</span>
+                  El "Bankroll" es tu capital total destinado al juego. El sistema calcula automáticamente cuánto apostar basándose en tu capital actual y el nivel de confianza de la predicción para evitar que pierdas todo tu dinero en una mala racha. <span className="font-black text-success">Es el secreto de los apostadores profesionales.</span>
                 </AccordionContent>
               </AccordionItem>
             </Accordion>
@@ -140,7 +140,7 @@ export function Pick3HelpSection() {
             </div>
             <div className="space-y-2 group">
               <div className="flex items-center justify-between">
-                <Badge variant="outline" className="text-[9px] font-black uppercase border-blue-500/20 text-blue-600">Ley de Tercios</Badge>
+                <Badge variant="outline" className="text-[9px] font-black uppercase border-primary/20 text-primary">Ley de Tercios</Badge>
                 <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
               </div>
               <p className="text-[11px] font-bold italic opacity-70 leading-tight">
@@ -149,7 +149,7 @@ export function Pick3HelpSection() {
             </div>
             <div className="space-y-2 group">
               <div className="flex items-center justify-between">
-                <Badge variant="outline" className="text-[9px] font-black uppercase border-orange-500/20 text-orange-600">Cadenas de Markov</Badge>
+                <Badge variant="outline" className="text-[9px] font-black uppercase border-warning/20 text-warning">Cadenas de Markov</Badge>
                 <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
               </div>
               <p className="text-[11px] font-bold italic opacity-70 leading-tight">
@@ -158,7 +158,7 @@ export function Pick3HelpSection() {
             </div>
             <div className="space-y-2 group">
               <div className="flex items-center justify-between">
-                <Badge variant="outline" className="text-[9px] font-black uppercase border-emerald-500/20 text-emerald-600">Tic-Tac-Toe Grid</Badge>
+                <Badge variant="outline" className="text-[9px] font-black uppercase border-success/20 text-success">Tic-Tac-Toe Grid</Badge>
                 <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
               </div>
               <p className="text-[11px] font-bold italic opacity-70 leading-tight">

@@ -3,6 +3,8 @@ import { cashService } from '@/services/cash-service';
 import { CashClosure } from '@/types';
 import { toast } from 'sonner';
 import { getCleanStoreId } from './base';
+import { useAuthStore } from '@/store';
+import { auditService } from '@/services/audit-service';
 
 export function useCashClosures(storeId?: string | null, isAdmin = false) {
   const cleanStoreId = getCleanStoreId(storeId);
@@ -10,10 +12,10 @@ export function useCashClosures(storeId?: string | null, isAdmin = false) {
   return useQuery({
     queryKey: ['cash-closures', cleanStoreId, isAdmin],
     queryFn: () => {
-      if (!cleanStoreId && !isAdmin) return [];
+      if (!cleanStoreId) return [];
       return cashService.getClosures(cleanStoreId || '', isAdmin);
     },
-    enabled: isAdmin || !!cleanStoreId,
+    enabled: !!cleanStoreId,
   });
 }
 
@@ -39,24 +41,40 @@ export function useCreateCashClosure() {
       queryClient.invalidateQueries({ queryKey: ['sales-since-last-closure'] });
       toast.success('Declaración de fondos registrada correctamente');
     },
-    onError: (error: any) => {
-      toast.error(`Error al registrar declaración: ${error.message}`);
+    onError: (error: unknown) => {
+      const message = error instanceof Error ? error.message : String(error);
+      toast.error(`Error al registrar declaración: ${message}`);
     },
   });
 }
 
 export function useUpdateCashClosure() {
   const queryClient = useQueryClient();
+  const { user } = useAuthStore.getState();
   return useMutation({
     mutationFn: ({ id, closure }: { id: string; closure: Partial<CashClosure> }) =>
       cashService.updateClosure(id, closure),
-    onSuccess: () => {
+    onSuccess: async (_, variables) => {
+      // Q2 (Audit-Fix): log de auditoría al finalizar cierre de caja
+      if (user?.id && variables.closure.status === 'cerrado') {
+        await auditService.logCashClosureFinalized({
+          userId: user.id,
+          closureId: variables.id,
+          storeId: user.activeStoreId || '',
+          declaredCash: variables.closure.declared_cash || 0,
+          declaredVouchers: variables.closure.declared_vouchers || 0,
+          systemExpectedTotal: variables.closure.system_expected_total || 0,
+          difference: variables.closure.difference || 0,
+          status: variables.closure.status,
+        });
+      }
       queryClient.invalidateQueries({ queryKey: ['cash-closures'] });
       queryClient.invalidateQueries({ queryKey: ['sales-since-last-closure'] });
       toast.success('Cierre de caja finalizado correctamente');
     },
-    onError: (error: any) => {
-      toast.error(`Error al finalizar cierre: ${error.message}`);
+    onError: (error: unknown) => {
+      const message = error instanceof Error ? error.message : String(error);
+      toast.error(`Error al finalizar cierre: ${message}`);
     },
   });
 }

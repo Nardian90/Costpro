@@ -40,19 +40,19 @@ export default function SalesCatalogTotals({
         </div>
         {showMixedColumns && (
           <>
-            <div className="bg-emerald-500/5 rounded-xl p-3 border border-emerald-500/20">
-              <span className="text-xs font-black uppercase text-emerald-600 tracking-widest block">
+            <div className="bg-success/5 rounded-xl p-3 border border-success/20">
+              <span className="text-xs font-black uppercase text-success tracking-widest block">
                 Efectivo
               </span>
-              <span className="text-lg font-black text-emerald-600">
+              <span className="text-lg font-black text-success tabular-nums">
                 {formatCurrency(cashTotal)}
               </span>
             </div>
-            <div className="bg-blue-500/5 rounded-xl p-3 border border-blue-500/20">
-              <span className="text-xs font-black uppercase text-blue-600 tracking-widest block">
+            <div className="bg-primary/5 rounded-xl p-3 border border-primary/20">
+              <span className="text-xs font-black uppercase text-primary tracking-widest block">
                 Transferencia
               </span>
-              <span className="text-lg font-black text-blue-600">
+              <span className="text-lg font-black text-primary tabular-nums">
                 {formatCurrency(transferTotal)}
               </span>
             </div>
@@ -64,7 +64,7 @@ export default function SalesCatalogTotals({
         <span className="text-xs font-black uppercase text-foreground tracking-widest">
           Total Final
         </span>
-        <span className="text-[clamp(1.5rem,5vw,2rem)] font-black text-primary tracking-tighter">
+        <span className="text-[clamp(1.5rem,5vw,2rem)] font-black text-primary tracking-tighter tabular-nums">
           {formatCurrency(subtotal)}
         </span>
       </div>

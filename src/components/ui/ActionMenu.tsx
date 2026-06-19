@@ -102,14 +102,14 @@ const ActionMenu: React.FC<ActionMenuProps> = ({
   }, []);
 
   const getVariantClass = (variant?: string, active?: boolean) => {
-    if (active) return 'neu-inset-sm font-bold text-primary !scale-100 shadow-none';
+    if (active) return 'bg-primary/10 border border-primary/20 font-bold text-primary !scale-100 shadow-none';
     switch (variant) {
-      case 'primary': return 'neu-btn-primary';
-      case 'success': return 'neu-btn-success';
-      case 'danger': return 'neu-btn-danger';
-      case 'warning': return 'bg-warning text-foreground shadow-lg';
-      case 'outline': return 'neu-raised-sm border-primary/20 text-foreground';
-      default: return 'neu-btn text-foreground';
+      case 'primary': return 'bg-primary text-primary-foreground shadow-lg shadow-primary/20 hover:bg-primary/90';
+      case 'success': return 'bg-success text-success-foreground shadow-lg shadow-success/20 hover:bg-success/90';
+      case 'danger': return 'bg-destructive text-destructive-foreground shadow-lg shadow-destructive/20 hover:bg-destructive/90';
+      case 'warning': return 'bg-warning/15 text-warning border border-warning/30 shadow-sm hover:bg-warning/25';
+      case 'outline': return 'border border-primary/20 text-foreground hover:bg-primary/5';
+      default: return 'border border-border bg-background text-foreground hover:bg-muted';
     }
   };
 
@@ -124,7 +124,7 @@ const ActionMenu: React.FC<ActionMenuProps> = ({
         className
       )}
     >
-      <div className="neu-card !p-2 sm:!p-3 !rounded-2xl sm:!rounded-3xl shadow-2xl border-white/10 bg-background/95 backdrop-blur-md relative overflow-hidden group">
+      <div className="!p-2 sm:!p-3 !rounded-2xl sm:!rounded-3xl shadow-2xl border border-border bg-background/95 backdrop-blur-md relative overflow-hidden group">
         {/* Left Scroll Button */}
         <div className={cn(
           "absolute left-0 top-0 bottom-0 w-12 z-30 flex items-center justify-start pl-2 bg-gradient-to-r from-background to-transparent transition-opacity duration-300 pointer-events-none sm:hidden",
@@ -175,7 +175,7 @@ const ActionMenu: React.FC<ActionMenuProps> = ({
                         className={cn(
                           'flex items-center gap-2 px-4 py-3 min-h-[44px] text-sm sm:text-base rounded-xl transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shrink-0 whitespace-nowrap',
                           getVariantClass(action.variant, action.active),
-                          !action.active && !action.variant && 'hover:neu-raised-sm',
+                          !action.active && !action.variant && 'hover:bg-muted',
                           action.className
                         )}
                         aria-label={action.ariaLabel || action.label}

@@ -110,10 +110,10 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
   const getStatusBadge = (tx: BankTransaction, diffCents: number, matchedTotal: number) => {
     const status = tx.estado_conciliacion;
     const badge = (() => {
-      if (status === "NO_PROCESAR") return <Badge className="bg-slate-400/10 text-slate-500 border-slate-500/20 text-[10px] font-black uppercase tracking-tighter">NO PROCESAR</Badge>;
+      if (status === "NO_PROCESAR") return <Badge className="bg-muted/10 text-muted-foreground border-slate-500/20 text-[10px] font-black uppercase tracking-tighter">NO PROCESAR</Badge>;
       if (matchedTotal > 0 && diffCents <= 0.001) {
-          if (diffCents < -0.001) return <Badge className="bg-orange-500 text-foreground border-orange-600 shadow-sm text-[10px] font-black uppercase tracking-tighter">EXCEDENTE</Badge>;
-          return <Badge className="bg-green-500 text-foreground border-green-600 shadow-sm text-[10px] font-black uppercase tracking-tighter">CONCILIADA</Badge>;
+          if (diffCents < -0.001) return <Badge className="bg-warning text-foreground border-warning shadow-sm text-[10px] font-black uppercase tracking-tighter">EXCEDENTE</Badge>;
+          return <Badge className="bg-success text-foreground border-success shadow-sm text-[10px] font-black uppercase tracking-tighter">CONCILIADA</Badge>;
       }
       if (matchedTotal > 0 && diffCents > 0.001) return <Badge className="bg-yellow-500/10 text-yellow-600 border-yellow-500/20 text-[10px] font-black uppercase tracking-tighter">PARCIAL</Badge>;
       return <Badge className="bg-muted/10 text-muted-foreground border-gray-500/20 text-[10px] font-black uppercase tracking-tighter">PENDIENTE</Badge>;
@@ -197,19 +197,19 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
                             </div>
                           </TableCell>
                           <TableCell className="text-center hidden sm:table-cell">
-                              <Badge variant="outline" className={`text-[10px] font-black uppercase px-2 py-0 border-2 ${tx.tipo === "Cr" ? "text-emerald-500 border-emerald-500/20 bg-emerald-500/5" : "text-red-500 border-red-500/20 bg-red-500/5"}`}>
+                              <Badge variant="outline" className={`text-[10px] font-black uppercase px-2 py-0 border-2 ${tx.tipo === "Cr" ? "text-success border-success/20 bg-success/5" : "text-destructive border-destructive/20 bg-destructive/5"}`}>
                                   {tx.tipo}
                               </Badge>
                           </TableCell>
                           <TableCell className="text-right font-bold text-xs text-muted-foreground">{formatCurrencyCents(tx.importe_cents)}</TableCell>
-                          <TableCell className="text-right font-bold text-xs text-red-500 hidden lg:table-cell">{formatCurrencyCents(tx.comision_cents || 0)}</TableCell>
+                          <TableCell className="text-right font-bold text-xs text-destructive hidden lg:table-cell">{formatCurrencyCents(tx.comision_cents || 0)}</TableCell>
                           <TableCell className="text-right font-black text-xs text-primary">{formatCurrencyCents(tx.importe_venta_cents || tx.importe_cents)}</TableCell>
-                          <TableCell className={`text-right font-bold text-xs hidden md:table-cell ${Math.abs(diff) < 0.001 ? 'text-green-500' : (diff < -0.001 ? 'text-orange-500' : 'text-red-500')}`}>{formatCurrencyCents(diff)}</TableCell>
+                          <TableCell className={`text-right font-bold text-xs hidden md:table-cell ${Math.abs(diff) < 0.001 ? 'text-success' : (diff < -0.001 ? 'text-warning' : 'text-destructive')}`}>{formatCurrencyCents(diff)}</TableCell>
                           <TableCell>{getStatusBadge(tx, diff, matched)}</TableCell>
                           <TableCell className="text-right">
                             <div className="flex justify-end gap-1 items-center">
                                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onReconcile(tx)}><Eye className="w-4 h-4" /></Button>
-                                {matched > 0 && <Button variant="ghost" size="icon" className="h-8 w-8 text-orange-600" onClick={() => handleResetReconciliation(tx)}><RotateCcw className="w-4 h-4" /></Button>}
+                                {matched > 0 && <Button variant="ghost" size="icon" className="h-8 w-8 text-warning" onClick={() => handleResetReconciliation(tx)}><RotateCcw className="w-4 h-4" /></Button>}
                                 <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDelete(tx.referencia_origen)}><Trash2 className="w-4 h-4" /></Button>
                             </div>
                           </TableCell>
@@ -228,7 +228,7 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
                   const diff = target - matched;
                   return (
                       <Card key={tx.referencia_origen} className="p-4 space-y-4 border-none shadow-md bg-card/50 relative overflow-hidden">
-                          <div className={`absolute top-0 left-0 w-1 h-full ${tx.tipo === 'Cr' ? 'bg-green-500' : 'bg-red-500'}`} />
+                          <div className={`absolute top-0 left-0 w-1 h-full ${tx.tipo === 'Cr' ? 'bg-success' : 'bg-destructive'}`} />
                           <div className="flex justify-between items-start">
                               <div className="flex items-start gap-2">
                                 <Checkbox checked={!tx.excluido} onCheckedChange={(val: boolean) => toggleExclusion(tx, val)} className="mt-1" />
@@ -242,7 +242,7 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
                           <p className="text-xs text-muted-foreground line-clamp-2 italic">{tx.observaciones || "Sin concepto"}</p>
                           <div className="grid grid-cols-2 gap-2 pt-2 border-t text-[10px] font-black uppercase">
                               <div><p className="text-muted-foreground">Objetivo</p><p className="text-primary">{formatCurrencyCents(target)}</p></div>
-                              <div className="text-right"><p className="text-muted-foreground">Diferencia</p><p className={Math.abs(diff) < 0.001 ? 'text-green-500' : 'text-orange-500'}>{formatCurrencyCents(diff)}</p></div>
+                              <div className="text-right"><p className="text-muted-foreground">Diferencia</p><p className={Math.abs(diff) < 0.001 ? 'text-success' : 'text-warning'}>{formatCurrencyCents(diff)}</p></div>
                           </div>
                           <div className="flex justify-end gap-2 pt-2">
                               <Button variant="outline" size="sm" className="h-10 px-4 text-[10px] font-black uppercase gap-2" onClick={() => onReconcile(tx)}><Eye className="w-3 h-3" /> Ver</Button>

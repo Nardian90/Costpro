@@ -64,9 +64,9 @@ export class Pick3ScraperService {
           } else {
             throw new Error('No results found');
           }
-        } catch (error: any) {
+        } catch (error: unknown) {
           source.status = 'error';
-          source.error = error.message || 'Unknown error';
+          source.error = error instanceof Error ? error.message : 'Unknown error';
           logger.error('PICK3', `Failed sync with ${source.name}`, { error });
         }
       }
@@ -74,7 +74,7 @@ export class Pick3ScraperService {
       if (allResults.length > 0) {
         try {
           await Pick3Storage.saveHistory(allResults);
-        } catch (storageError: any) {
+        } catch (storageError: unknown) {
           logger.error('PICK3', 'Failed to save to Supabase, but keeping results', { error: storageError });
         }
       }

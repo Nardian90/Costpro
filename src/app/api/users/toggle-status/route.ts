@@ -1,27 +1,10 @@
-import { createClient } from '@supabase/supabase-js';
+import { getSupabaseAdminSafe as getSupabaseAdmin } from '@/lib/supabase-admin';
 import { NextRequest, NextResponse } from 'next/server';
 import { withRole } from '@/lib/auth-middleware';
 import { rateLimit } from '@/lib/rate-limit';
 import { toggleUserStatusSchema, zodError } from '@/validation/api-schemas';
 import { validateOrigin } from '@/lib/csrf'; // FIX-SEC-023
 import { withTracing } from '@/lib/observability';
-
-// Helper to get Supabase Admin client lazily to avoid build-time errors with missing env vars
-function getSupabaseAdmin() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-  if (!url || !key) {
-    throw new Error('Configuración de Supabase incompleta (URL o Service Role Key faltante)');
-  }
-
-  return createClient(url, key, {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    }
-  });
-}
 
 const handler = withRole('admin', async (req, session) => {
   // FIX-SEC-023: CSRF origin validation
@@ -33,6 +16,9 @@ const handler = withRole('admin', async (req, session) => {
 
   try {
     const supabaseAdmin = getSupabaseAdmin();
+    if (!supabaseAdmin) {
+      return NextResponse.json({ error: 'Error de configuración del servidor' }, { status: 500 });
+    }
 
     if (!session) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
@@ -104,8 +90,8 @@ const handler = withRole('admin', async (req, session) => {
 
     return NextResponse.json({ success: true });
 
-  } catch (error: any) {
-    return NextResponse.json({ error: (process.env.NODE_ENV !== 'production' || !!process.env.VITEST) ? error.message : 'Error interno del servidor' }, { status: 500 });
+  } catch (error: unknown) {
+    return NextResponse.json({ error: (process.env.NODE_ENV !== 'production' || !!process.env.VITEST) ? (error instanceof Error ? error.message : String(error)) : 'Error interno del servidor' }, { status: 500 });
   }
 });
 

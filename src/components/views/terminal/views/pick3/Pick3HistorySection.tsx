@@ -134,13 +134,13 @@ export function Pick3HistorySection({ history, onRefresh }: Pick3HistorySectionP
             <CalendarIcon className="w-3 h-3" />
             {format(new Date(item.date), 'dd MMM yyyy', { locale: es })}
             {item.sync_method === 'manual' && (
-              <Badge variant="secondary" className="bg-orange-500/10 text-orange-500 text-[8px] border-none px-1.5 h-4">MANUAL</Badge>
+              <Badge variant="secondary" className="bg-warning/10 text-warning text-[8px] border-none px-1.5 h-4">MANUAL</Badge>
             )}
           </div>
           <div className="flex items-center gap-2">
             <Badge variant="outline" className={cn(
               "text-[8px] font-black uppercase px-1.5 py-0 rounded-full",
-              item.draw_time === 'midday' ? "border-orange-500/30 text-orange-500" : "border-blue-500/30 text-blue-500"
+              item.draw_time === 'midday' ? "border-warning/30 text-warning" : "border-primary/30 text-primary"
             )}>
               <Clock className="w-2 h-2 mr-1" />
               {item.draw_time === 'midday' ? 'Mediodía' : 'Noche'}
@@ -160,7 +160,7 @@ export function Pick3HistorySection({ history, onRefresh }: Pick3HistorySectionP
               <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={() => openEdit(item)}>
                 <Edit2 className="w-3.5 h-3.5" />
               </Button>
-              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full text-red-500" onClick={() => handleDelete(item)}>
+              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full text-destructive" onClick={() => handleDelete(item)}>
                 <Trash2 className="w-3.5 h-3.5" />
               </Button>
             </div>
@@ -174,9 +174,9 @@ export function Pick3HistorySection({ history, onRefresh }: Pick3HistorySectionP
     <div className="space-y-4">
       {/* Gaps Alert */}
       {gaps.length > 0 && (
-        <Card className="border-orange-500/20 bg-orange-500/[0.03] rounded-2xl overflow-hidden">
-          <CardHeader className="py-3 px-4 flex-row items-center justify-between border-b border-orange-500/10">
-            <CardTitle className="text-[10px] font-black uppercase text-orange-500 flex items-center gap-2">
+        <Card className="border-warning/20 bg-warning/[0.03] rounded-2xl overflow-hidden">
+          <CardHeader className="py-3 px-4 flex-row items-center justify-between border-b border-warning/10">
+            <CardTitle className="text-[10px] font-black uppercase text-warning flex items-center gap-2">
               <AlertTriangle className="w-4 h-4" /> Días Faltantes Detectados ({gaps.length})
             </CardTitle>
           </CardHeader>
@@ -186,7 +186,7 @@ export function Pick3HistorySection({ history, onRefresh }: Pick3HistorySectionP
                 <Badge
                   key={i}
                   variant="outline"
-                  className="cursor-pointer hover:bg-orange-500/10 border-orange-500/20 text-orange-600 font-bold uppercase text-[9px] py-1 gap-2"
+                  className="cursor-pointer hover:bg-warning/10 border-warning/20 text-warning font-bold uppercase text-[9px] py-1 gap-2"
                   onClick={() => openAddGap(gap)}
                 >
                   {format(new Date(gap.date), 'dd/MM')} {gap.drawTime === 'midday' ? 'M' : 'N'}
@@ -269,14 +269,14 @@ export function Pick3HistorySection({ history, onRefresh }: Pick3HistorySectionP
                   <TableCell>
                     <Badge variant="outline" className={cn(
                       "text-[8px] font-black uppercase px-1.5 py-0",
-                      item.draw_time === 'midday' ? "text-orange-500 border-orange-500/20" : "text-blue-500 border-blue-500/20"
+                      item.draw_time === 'midday' ? "text-warning border-warning/20" : "text-primary border-primary/20"
                     )}>
                       {item.draw_time === 'midday' ? 'Mediodía' : 'Noche'}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-center">
                     {item.sync_method === 'manual' ? (
-                      <Badge className="bg-orange-500/10 text-orange-500 text-[8px] border-none">Manual</Badge>
+                      <Badge className="bg-warning/10 text-warning text-[8px] border-none">Manual</Badge>
                     ) : (
                       <Badge variant="outline" className="text-[8px] opacity-40 border-none">{item.sync_method || 'Web'}</Badge>
                     )}
@@ -289,7 +289,7 @@ export function Pick3HistorySection({ history, onRefresh }: Pick3HistorySectionP
                             <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => openEdit(item)}>
                                 <Edit2 className="w-3 h-3" />
                             </Button>
-                            <Button variant="ghost" size="icon" className="h-6 w-6 text-red-500" onClick={() => handleDelete(item)}>
+                            <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => handleDelete(item)}>
                                 <Trash2 className="w-3 h-3" />
                             </Button>
                          </div>

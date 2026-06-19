@@ -35,7 +35,7 @@ export function MatchingTracePopover({ trace, confidence, children }: MatchingTr
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'SUCCESS': return <CheckCircle2 className="w-4 h-4 text-green-500" />;
+      case 'SUCCESS': return <CheckCircle2 className="w-4 h-4 text-success" />;
       case 'FAIL': return <XCircle className="w-4 h-4 text-red-400" />;
       case 'SKIPPED': return <CircleDashed className="w-4 h-4 text-muted-foreground/40" />;
       default: return <Clock className="w-4 h-4 text-muted-foreground" />;
@@ -58,10 +58,10 @@ export function MatchingTracePopover({ trace, confidence, children }: MatchingTr
   const formatConfidence = (score?: number) => {
     if (score === undefined) return null;
     const percent = Math.round(score * 100);
-    let color = 'text-red-500 bg-red-50';
-    if (percent >= 90) color = 'text-green-600 bg-green-50';
-    else if (percent >= 70) color = 'text-blue-600 bg-blue-50';
-    else if (percent >= 50) color = 'text-orange-600 bg-orange-50';
+    let color = 'text-destructive bg-red-50';
+    if (percent >= 90) color = 'text-success bg-green-50';
+    else if (percent >= 70) color = 'text-primary bg-blue-50';
+    else if (percent >= 50) color = 'text-warning bg-orange-50';
 
     return (
         <Badge variant="outline" className={cn("text-[10px] font-black uppercase tracking-tighter px-1 h-4", color)}>
@@ -96,7 +96,7 @@ export function MatchingTracePopover({ trace, confidence, children }: MatchingTr
                 {/* Status Dot */}
                 <div className={cn(
                   "absolute left-[18px] top-1 -translate-x-1/2 w-3 h-3 rounded-full border-2 bg-background z-10 transition-transform group-hover:scale-125",
-                  item.status === 'SUCCESS' ? 'border-green-500' :
+                  item.status === 'SUCCESS' ? 'border-success' :
                   item.status === 'FAIL' ? 'border-red-400' : 'border-muted-foreground/30'
                 )} />
 

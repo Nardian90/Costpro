@@ -64,8 +64,8 @@ export default function ABCAnalysisModal({ products, isOpen, onClose }: ABCAnaly
   }, [products, sortBy]);
 
   const categoryColors: Record<ABCCategory, string> = {
-    A: 'bg-green-500/10 text-green-600 border-green-500/20',
-    B: 'bg-amber-500/10 text-amber-600 border-amber-500/20',
+    A: 'bg-success/10 text-success border-success/20',
+    B: 'bg-warning/10 text-warning border-warning/20',
     C: 'bg-muted/50 text-muted-foreground border-border',
   };
 
@@ -96,12 +96,12 @@ export default function ABCAnalysisModal({ products, isOpen, onClose }: ABCAnaly
       <div className="space-y-4">
         {/* Summary */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div className="p-3 rounded-xl bg-green-500/10 border border-green-500/20 text-center">
-            <div className="text-2xl font-black text-green-600">{analysis.summary.A}</div>
+          <div className="p-3 rounded-xl bg-success/10 border border-success/20 text-center">
+            <div className="text-2xl font-black text-success">{analysis.summary.A}</div>
             <div className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">A (80% valor)</div>
           </div>
-          <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-center">
-            <div className="text-2xl font-black text-amber-600">{analysis.summary.B}</div>
+          <div className="p-3 rounded-xl bg-warning/10 border border-warning/20 text-center">
+            <div className="text-2xl font-black text-warning">{analysis.summary.B}</div>
             <div className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">B (15% valor)</div>
           </div>
           <div className="p-3 rounded-xl bg-muted/50 border border-border text-center">
@@ -149,10 +149,10 @@ export default function ABCAnalysisModal({ products, isOpen, onClose }: ABCAnaly
                         </span>
                       </td>
                       <td className="px-3 py-2 font-bold max-w-[200px] truncate">{item.product.name}</td>
-                      <td className="px-3 py-2 text-right font-mono">{item.product.stock_current || 0}</td>
-                      <td className="px-3 py-2 text-right font-bold text-green-600">{formatCurrency(item.value)}</td>
-                      <td className="px-3 py-2 text-right">{item.percentage.toFixed(1)}%</td>
-                      <td className="px-3 py-2 text-right text-muted-foreground">{cumulativePct.toFixed(1)}%</td>
+                      <td className="px-3 py-2 text-right font-mono tabular-nums">{item.product.stock_current || 0}</td>
+                      <td className="px-3 py-2 text-right font-bold text-success tabular-nums">{formatCurrency(item.value)}</td>
+                      <td className="px-3 py-2 text-right tabular-nums">{item.percentage.toFixed(1)}%</td>
+                      <td className="px-3 py-2 text-right text-muted-foreground tabular-nums">{cumulativePct.toFixed(1)}%</td>
                     </tr>
                   );
                 })

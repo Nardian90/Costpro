@@ -35,8 +35,8 @@ async function postHandler(req: NextRequest) {
       success: true,
       data: results
     });
-  } catch (error: any) {
-    logger.error("PICK3", "Sync failed", { error: String(error?.message || error) } as Record<string, any>);
+  } catch (error: unknown) {
+    logger.error("PICK3", "Sync failed", { error: String((error instanceof Error ? error.message : null) || error) } as Record<string, any>);
 
     return NextResponse.json({
       success: false,

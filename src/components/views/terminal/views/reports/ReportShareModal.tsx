@@ -93,6 +93,7 @@ export const ReportShareModal = ({
               </div>
             </div>
             <Button
+              type="button"
               onClick={handleCopyLink}
               className="w-full rounded-xl text-[10px] font-bold uppercase tracking-widest"
               variant="outline"
@@ -128,6 +129,7 @@ export const ReportShareModal = ({
                 aria-label="Correo electrónico del destinatario"
               />
               <Button
+                type="button"
                 onClick={handleSendEmail}
                 className="w-full rounded-xl text-[10px] font-bold uppercase tracking-widest"
                 variant="outline"
@@ -158,6 +160,7 @@ export const ReportShareModal = ({
               <Lock className="w-4 h-4 text-muted-foreground" />
             </div>
             <Button
+              type="button"
               disabled
               className="w-full rounded-xl text-[10px] font-bold uppercase tracking-widest cursor-not-allowed"
               variant="outline"

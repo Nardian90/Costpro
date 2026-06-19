@@ -264,7 +264,7 @@ function SortableRuleItem({ rule, toggleRule, usageCount, updateRuleMeta, update
                                         'TOLERANCE': 'Tolerancia de Cuadre'
                                     }[rule.tipo.replace(/\s+/g, "_").toUpperCase()] || rule.tipo }
                                     </h4>                                    {info.logic.length > 0 && (
-                                        <Badge variant="outline" className="ml-2 border-emerald-500/30 text-emerald-600 bg-emerald-500/5 text-[8px] font-black uppercase py-0 px-1">
+                                        <Badge variant="outline" className="ml-2 border-success/30 text-success bg-success/5 text-[8px] font-black uppercase py-0 px-1">
                                             Documentado
                                         </Badge>
                                     )}
@@ -328,14 +328,14 @@ function SortableRuleItem({ rule, toggleRule, usageCount, updateRuleMeta, update
                                     </section>
 
                                     <section>
-                                        <div className="flex items-center gap-2 mb-3 text-amber-500">
+                                        <div className="flex items-center gap-2 mb-3 text-warning">
                                             <Settings2 className="w-4 h-4" />
                                             <h5 className="text-[10px] font-black uppercase tracking-widest">Configuración en Catálogo</h5>
                                         </div>
                                         <ul className="space-y-2 pl-6">
                                             {info.setup.map((s: string, i: number) => (
                                                 <li key={i} className="text-xs flex items-center gap-2 text-muted-foreground">
-                                                    <div className="w-1.5 h-1.5 rounded-full bg-amber-500/40" />
+                                                    <div className="w-1.5 h-1.5 rounded-full bg-warning/40" />
                                                     {s}
                                                 </li>
                                             ))}
@@ -343,11 +343,11 @@ function SortableRuleItem({ rule, toggleRule, usageCount, updateRuleMeta, update
                                     </section>
 
                                     <section>
-                                        <div className="flex items-center gap-2 mb-3 text-emerald-500">
+                                        <div className="flex items-center gap-2 mb-3 text-success">
                                             <Eye className="w-4 h-4" />
                                             <h5 className="text-[10px] font-black uppercase tracking-widest">Resultado Operativo</h5>
                                         </div>
-                                        <div className="pl-6 py-2 px-3 bg-emerald-500/5 rounded-lg border border-emerald-500/10">
+                                        <div className="pl-6 py-2 px-3 bg-success/5 rounded-lg border border-success/10">
                                             <p className="text-xs text-emerald-700 font-medium">
                                                 {info.result}
                                             </p>
@@ -358,14 +358,14 @@ function SortableRuleItem({ rule, toggleRule, usageCount, updateRuleMeta, update
                                 {/* Columna Derecha: Lógica e Interacción */}
                                 <div className="space-y-6">
                                     <section>
-                                        <div className="flex items-center gap-2 mb-3 text-blue-500">
+                                        <div className="flex items-center gap-2 mb-3 text-primary">
                                             <Workflow className="w-4 h-4" />
                                             <h5 className="text-[10px] font-black uppercase tracking-widest">Lógica del Sistema</h5>
                                         </div>
                                         <div className="space-y-3 pl-2">
                                             {info.logic.map((l: string, i: number) => (
                                                 <div key={i} className="flex gap-3">
-                                                    <span className="text-[10px] font-black text-blue-500/50 mt-0.5">{i+1}.</span>
+                                                    <span className="text-[10px] font-black text-primary/50 mt-0.5">{i+1}.</span>
                                                     <p className="text-xs leading-normal text-muted-foreground">{l}</p>
                                                 </div>
                                             ))}
@@ -388,7 +388,7 @@ function SortableRuleItem({ rule, toggleRule, usageCount, updateRuleMeta, update
 
                                     <div className="grid grid-cols-2 gap-4">
                                         <section>
-                                            <div className="flex items-center gap-2 mb-2 text-slate-500">
+                                            <div className="flex items-center gap-2 mb-2 text-muted-foreground">
                                                 <RefreshCcw className="w-3.5 h-3.5" />
                                                 <h5 className="text-[9px] font-black uppercase tracking-widest">Interacción</h5>
                                             </div>
@@ -397,7 +397,7 @@ function SortableRuleItem({ rule, toggleRule, usageCount, updateRuleMeta, update
                                             </p>
                                         </section>
                                         <section>
-                                            <div className="flex items-center gap-2 mb-2 text-red-500">
+                                            <div className="flex items-center gap-2 mb-2 text-destructive">
                                                 <AlertTriangle className="w-3.5 h-3.5" />
                                                 <h5 className="text-[9px] font-black uppercase tracking-widest">Errores Comunes</h5>
                                             </div>
@@ -551,26 +551,26 @@ export function MatchingRulesEditor() {
             </div>
             <HelpCircle className="w-8 h-8 text-primary/20" />
         </Card>
-        <Card className="p-4 border-2 border-emerald-500/10 bg-emerald-500/5 flex items-center justify-between">
+        <Card className="p-4 border-2 border-success/10 bg-success/5 flex items-center justify-between">
             <div className="space-y-1">
                 <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Cuadradas</p>
-                <h3 className="text-2xl font-black text-emerald-500">{stats?.completas || 0}</h3>
+                <h3 className="text-2xl font-black text-success">{stats?.completas || 0}</h3>
             </div>
-            <CheckCircle2 className="w-8 h-8 text-emerald-500/20" />
+            <CheckCircle2 className="w-8 h-8 text-success/20" />
         </Card>
-        <Card className="p-4 border-2 border-amber-500/10 bg-amber-500/5 flex items-center justify-between">
+        <Card className="p-4 border-2 border-warning/10 bg-warning/5 flex items-center justify-between">
             <div className="space-y-1">
                 <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">En Proceso (Parcial)</p>
-                <h3 className="text-2xl font-black text-amber-500">{stats?.parciales || 0}</h3>
+                <h3 className="text-2xl font-black text-warning">{stats?.parciales || 0}</h3>
             </div>
-            <AlertCircle className="w-8 h-8 text-amber-500/20" />
+            <AlertCircle className="w-8 h-8 text-warning/20" />
         </Card>
-        <Card className="p-4 border-2 border-red-500/10 bg-red-500/5 flex items-center justify-between">
+        <Card className="p-4 border-2 border-destructive/10 bg-destructive/5 flex items-center justify-between">
             <div className="space-y-1">
                 <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Pendientes</p>
-                <h3 className="text-2xl font-black text-red-500">{stats?.pendientes || 0}</h3>
+                <h3 className="text-2xl font-black text-destructive">{stats?.pendientes || 0}</h3>
             </div>
-            <AlertCircle className="w-8 h-8 text-red-500/20" />
+            <AlertCircle className="w-8 h-8 text-destructive/20" />
         </Card>
       </div>
       {/* Herramientas de Gestión */}

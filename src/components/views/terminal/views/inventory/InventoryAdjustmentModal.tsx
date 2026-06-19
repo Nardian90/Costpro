@@ -84,8 +84,8 @@ export default function InventoryAdjustmentModal({
         reason: reason
       });
       onClose();
-    } catch (error: any) {
-      toast.error(error.message || 'Error al procesar el ajuste');
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : 'Error al procesar el ajuste');
     } finally {
       setIsProcessing(false);
     }
@@ -174,16 +174,16 @@ export default function InventoryAdjustmentModal({
                 </div>
                 <div className="flex gap-1 shrink-0">
                   <button
+                    type="button"
                     onClick={() => setAjusteUnidades(prev => prev - 1)}
                     className="w-12 h-12 flex items-center justify-center rounded-xl bg-muted border border-border active:scale-90 transition-transform"
-                    type="button"
                   >
                     <Minus className="w-5 h-5" />
                   </button>
                   <button
+                    type="button"
                     onClick={() => setAjusteUnidades(prev => prev + 1)}
                     className="w-12 h-12 flex items-center justify-center rounded-xl bg-muted border border-border active:scale-90 transition-transform"
-                    type="button"
                   >
                     <Plus className="w-5 h-5" />
                   </button>
@@ -198,9 +198,9 @@ export default function InventoryAdjustmentModal({
                 </label>
                 {ajusteValorUnitario !== '' && (
                   <button
+                    type="button"
                     onClick={() => setAjusteValorUnitario('')}
                     className="text-xs font-bold text-primary hover:underline uppercase"
-                    type="button"
                     aria-label="Usar costo sugerido"
                   >
                     Usar sugerido

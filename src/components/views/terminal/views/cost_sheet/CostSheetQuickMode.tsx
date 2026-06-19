@@ -70,12 +70,12 @@ export const CostSheetQuickMode: React.FC<CostSheetQuickModeProps> = ({
   return (
     <div className="space-y-6 animate-in fade-in zoom-in-95 duration-500 max-w-5xl mx-auto">
       {/* Configuration Header */}
-      <div className="bg-amber-500/10 border border-amber-500/20 rounded-[2rem] p-6 flex flex-col md:flex-row items-center gap-6 shadow-sm">
-        <div className="p-4 bg-amber-500 rounded-2xl text-foreground shadow-lg shadow-amber-500/20">
+      <div className="bg-warning/10 border border-warning/20 rounded-[2rem] p-6 flex flex-col md:flex-row items-center gap-6 shadow-sm">
+        <div className="p-4 bg-warning rounded-2xl text-foreground shadow-lg shadow-warning/20">
             <Zap className="w-6 h-6" />
         </div>
         <div className="flex-1">
-            <h2 className="text-xl font-black tracking-tight text-amber-600 uppercase">Configuración de Generación</h2>
+            <h2 className="text-xl font-black tracking-tight text-warning uppercase">Configuración de Generación</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
               <div className="space-y-1.5">
                 <span className="text-[10px] font-black uppercase tracking-widest text-amber-700/70 ml-1">Columna Objetivo</span>
@@ -83,7 +83,7 @@ export const CostSheetQuickMode: React.FC<CostSheetQuickModeProps> = ({
                   value={mapping.targetColumn}
                   onValueChange={(val) => onMappingChange({ ...mapping, targetColumn: val as 'sale_price' | 'total_cost' })}
                 >
-                  <SelectTrigger className="h-10 rounded-xl border-amber-500/20 bg-background/50 text-xs font-bold">
+                  <SelectTrigger className="h-10 rounded-xl border-warning/20 bg-background/50 text-xs font-bold">
                     <SelectValue placeholder="Objetivo" />
                   </SelectTrigger>
                   <SelectContent>
@@ -95,10 +95,10 @@ export const CostSheetQuickMode: React.FC<CostSheetQuickModeProps> = ({
               <div className="space-y-1.5">
                 <label htmlFor="cost-modification-row" className="text-[10px] font-black uppercase tracking-widest text-amber-700/70 ml-1">Fila que Cambiará</label>
                 <div className="relative">
-                  <Target className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-amber-500" />
+                  <Target className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-warning" />
                   <Input
                     id="cost-modification-row"
-                    className="h-10 pl-9 rounded-xl border-amber-500/20 bg-background/50 text-xs font-bold"
+                    className="h-10 pl-9 rounded-xl border-warning/20 bg-background/50 text-xs font-bold"
                     placeholder="Ej. 13.1"
                     value={mapping.modificationRow}
                     onChange={(e) => onMappingChange({ ...mapping, modificationRow: e.target.value })}
@@ -109,7 +109,7 @@ export const CostSheetQuickMode: React.FC<CostSheetQuickModeProps> = ({
         </div>
         <Button
             onClick={handleGenerate}
-            className="rounded-2xl bg-amber-500 hover:bg-amber-600 text-foreground font-black uppercase tracking-widest px-8 py-6 h-auto shadow-xl shadow-amber-500/20 active:scale-95 transition-all mt-4 md:mt-0"
+            className="rounded-2xl bg-warning hover:bg-warning text-foreground font-black uppercase tracking-widest px-8 py-6 h-auto shadow-xl shadow-warning/20 active:scale-95 transition-all mt-4 md:mt-0"
         >
             Generar Ahora
             <ChevronRight className="ml-2 w-5 h-5" />
@@ -126,7 +126,7 @@ export const CostSheetQuickMode: React.FC<CostSheetQuickModeProps> = ({
                 <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground w-20">UM</th>
                 <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground w-24">Cantidad</th>
                 <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground w-32">Costo Unit.</th>
-                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground w-32 text-amber-600">Precio Venta</th>
+                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground w-32 text-warning">Precio Venta</th>
                 <th className="px-6 py-4 w-12">Acciones</th>
               </tr>
             </thead>
@@ -171,20 +171,20 @@ export const CostSheetQuickMode: React.FC<CostSheetQuickModeProps> = ({
                         />
                     </div>
                   </td>
-                  <td data-label="Precio Venta" className="px-6 py-3 bg-amber-500/5">
+                  <td data-label="Precio Venta" className="px-6 py-3 bg-warning/5">
                     <div className="relative">
-                        <span className="absolute left-0 top-1/2 -translate-y-1/2 text-[10px] font-black text-amber-500/50">$</span>
+                        <span className="absolute left-0 top-1/2 -translate-y-1/2 text-[10px] font-black text-warning/50">$</span>
                         <Input
                           type="number"
                           value={row.sale_price}
                           onChange={(e) => updateRow(idx, 'sale_price', parseFloat(e.target.value) || 0)}
-                          className="bg-transparent border-none focus-visible:ring-0 text-right font-black text-sm pl-4 h-8 text-amber-600"
+                          className="bg-transparent border-none focus-visible:ring-0 text-right font-black text-sm pl-4 h-8 text-warning"
                           placeholder="Opcional"
                         />
                     </div>
                   </td>
                   <td data-label="Acciones" className="px-6 py-3 text-center">
-                    <button
+                    <button type="button"
                       onClick={() => removeRow(idx)}
                       className="p-1.5 text-destructive/30 hover:text-destructive hover:bg-destructive/10 rounded-lg transition-all"
                     >
@@ -200,7 +200,7 @@ export const CostSheetQuickMode: React.FC<CostSheetQuickModeProps> = ({
           <Button
             variant="ghost"
             onClick={addRow}
-            className="w-full rounded-xl border-2 border-dashed border-border hover:border-amber-500/50 hover:bg-amber-500/5 text-muted-foreground hover:text-amber-600 font-bold py-6 transition-all"
+            className="w-full rounded-xl border-2 border-dashed border-border hover:border-warning/50 hover:bg-warning/5 text-muted-foreground hover:text-warning font-bold py-6 transition-all"
           >
             <Plus className="mr-2 w-4 h-4" />
             Añadir otro producto

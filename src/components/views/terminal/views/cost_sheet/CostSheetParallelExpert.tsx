@@ -82,7 +82,7 @@ const VarianceBadge = ({ diff, percent }: { diff: number; percent: number }) => 
   return (
     <span className={cn(
       "text-[10px] font-bold tabular-nums",
-      isPositive ? "text-red-500" : "text-emerald-500"
+      isPositive ? "text-destructive" : "text-success"
     )}>
       {isPositive ? '+' : ''}{diff.toFixed(2)}
       <span className="ml-1 opacity-70">({percent.toFixed(1)}%)</span>
@@ -140,10 +140,9 @@ const ParallelRow: React.FC<ParallelRowProps> = React.memo(({
         >
           <div className="flex items-center gap-1.5 min-w-0">
             {hasChildren ? (
-              <button
+              <button type="button"
                 onClick={() => setIsExpanded(!isExpanded)}
                 className="p-1 rounded-full hover:bg-primary/10 shrink-0"
-                type="button"
                 aria-label={isExpanded ? `Contraer ${row.label}` : `Expandir ${row.label}`}
               >
                 <ChevronRight className={cn('w-3.5 h-3.5 sm:w-4 sm:h-4 transition-transform', isExpanded && 'rotate-90')} />
@@ -168,7 +167,7 @@ const ParallelRow: React.FC<ParallelRowProps> = React.memo(({
           const isPrimary = sid === primaryId;
           const isBase = sid === baseId;
           const scenario = scenarios.find(s => s.id === sid);
-          const colorClass = scenario?.color === 'blue' ? 'bg-blue-500' : scenario?.color === 'violet' ? 'bg-violet-500' : 'bg-amber-500';
+          const colorClass = scenario?.color === 'blue' ? 'bg-primary' : scenario?.color === 'violet' ? 'bg-violet-500' : 'bg-warning';
 
           // Variance vs base
           const baseCalc = calcs[baseId]?.calculatedValues?.[row.id];
@@ -183,7 +182,7 @@ const ParallelRow: React.FC<ParallelRowProps> = React.memo(({
               <TableCell
                 className={cn(
                   "px-1.5 py-0.5 text-right border-l border-border/20 transition-colors min-w-[110px]",
-                  isPrimary && "bg-amber-500/5"
+                  isPrimary && "bg-warning/5"
                 )}
               >
                 <TTip term="Valor Histórico" description={`Costo base de entrada para este concepto en el escenario "${scenario?.label}".`}>
@@ -222,7 +221,7 @@ const ParallelRow: React.FC<ParallelRowProps> = React.memo(({
               <TableCell
                 className={cn(
                   "px-1.5 py-0.5 text-right font-bold tabular-nums text-primary text-xs border-r border-border/10 min-w-[100px]",
-                  isPrimary && "bg-amber-500/5"
+                  isPrimary && "bg-warning/5"
                 )}
               >
                 <span className={cn(
@@ -240,7 +239,7 @@ const ParallelRow: React.FC<ParallelRowProps> = React.memo(({
                 <TableCell
                   className={cn(
                     "px-1.5 py-0.5 text-right border-r border-border/10 min-w-[120px]",
-                    diff < -0.01 ? "bg-primary/5" : diff > 0.01 ? "bg-red-500/5" : ""
+                    diff < -0.01 ? "bg-primary/5" : diff > 0.01 ? "bg-destructive/5" : ""
                   )}
                 >
                   <VarianceBadge diff={diff} percent={pct} />
@@ -331,19 +330,19 @@ const MobileScenarioCards: React.FC<{
       const calc = calcs[sid];
       const isPrimary = sid === primaryId;
       const isBase = sid === baseId;
-      const colorClass = s?.color === 'blue' ? 'bg-blue-500' : s?.color === 'violet' ? 'bg-violet-500' : 'bg-amber-500';
+      const colorClass = s?.color === 'blue' ? 'bg-primary' : s?.color === 'violet' ? 'bg-violet-500' : 'bg-warning';
 
       return (
         <div key={sid} className={cn(
           "rounded-2xl border p-4 space-y-3 shadow-sm",
-          isPrimary ? "bg-amber-500/5 border-amber-500/20 ring-1 ring-amber-500/10" : "bg-card"
+          isPrimary ? "bg-warning/5 border-warning/20 ring-1 ring-warning/10" : "bg-card"
         )}>
           {/* Scenario Header */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className={cn("w-3 h-3 rounded-full", colorClass)} />
               <span className="text-xs font-black uppercase tracking-widest">{s?.label}</span>
-              {isPrimary && <Star className="w-3.5 h-3.5 fill-amber-500 text-amber-500" />}
+              {isPrimary && <Star className="w-3.5 h-3.5 fill-warning text-warning" />}
               {isBase && <Badge variant="secondary" className="text-[9px] h-4 px-1.5">Base</Badge>}
             </div>
           </div>
@@ -379,7 +378,7 @@ const MobileScenarioCards: React.FC<{
                       {!isBase && Math.abs(diff) >= 0.01 && (
                         <span className={cn(
                           "text-[9px] font-bold",
-                          diff < -0.01 ? "text-emerald-500" : "text-red-500"
+                          diff < -0.01 ? "text-success" : "text-destructive"
                         )}>
                           {diff > 0 ? '+' : ''}{diff.toFixed(1)}
                         </span>
@@ -445,16 +444,16 @@ export const CostSheetParallelExpert: React.FC<CostSheetParallelExpertProps> = (
           <div className="flex items-center gap-2">
             {activeScenarioIds.map(sid => {
               const s = scenarios.find(x => x.id === sid);
-              const colorClass = s?.color === 'blue' ? 'bg-blue-500' : s?.color === 'violet' ? 'bg-violet-500' : 'bg-amber-500';
+              const colorClass = s?.color === 'blue' ? 'bg-primary' : s?.color === 'violet' ? 'bg-violet-500' : 'bg-warning';
               const isPrimary = sid === primaryId;
               return (
                 <div key={sid} className={cn(
                   "flex items-center gap-1.5 px-2 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider",
-                  isPrimary ? "bg-amber-500/10 ring-1 ring-amber-500/20" : "bg-card border"
+                  isPrimary ? "bg-warning/10 ring-1 ring-warning/20" : "bg-card border"
                 )}>
                   <div className={cn("w-2.5 h-2.5 rounded-full", colorClass)} />
                   {s?.label}
-                  {isPrimary && <Star className="w-3 h-3 fill-amber-500 text-amber-500" />}
+                  {isPrimary && <Star className="w-3 h-3 fill-warning text-warning" />}
                 </div>
               );
             })}
@@ -505,15 +504,15 @@ export const CostSheetParallelExpert: React.FC<CostSheetParallelExpertProps> = (
         {/* Legend bar */}
         <div className="flex items-center gap-4 px-4 py-2 text-[10px] text-muted-foreground">
           <div className="flex items-center gap-1">
-            <div className="w-3 h-3 rounded bg-emerald-500/20 border border-emerald-500/30" />
+            <div className="w-3 h-3 rounded bg-success/20 border border-success/30" />
             <span>Ahorro (Δ &lt; 0)</span>
           </div>
           <div className="flex items-center gap-1">
-            <div className="w-3 h-3 rounded bg-red-500/20 border border-red-500/30" />
+            <div className="w-3 h-3 rounded bg-destructive/20 border border-destructive/30" />
             <span>Incremento (Δ &gt; 0)</span>
           </div>
           <div className="flex items-center gap-1">
-            <Star className="w-3 h-3 fill-amber-500 text-amber-500" />
+            <Star className="w-3 h-3 fill-warning text-warning" />
             <span>Escenario Principal</span>
           </div>
         </div>
@@ -547,7 +546,7 @@ export const CostSheetParallelExpert: React.FC<CostSheetParallelExpertProps> = (
                       </TableHead>
                       {activeScenarioIds.map(sid => {
                         const s = scenarios.find(x => x.id === sid);
-                        const colorClass = s?.color === 'blue' ? 'bg-blue-500' : s?.color === 'violet' ? 'bg-violet-500' : 'bg-amber-500';
+                        const colorClass = s?.color === 'blue' ? 'bg-primary' : s?.color === 'violet' ? 'bg-violet-500' : 'bg-warning';
                         const isPrimary = sid === primaryId;
                         const isBase = sid === baseId;
                         return (
@@ -556,13 +555,13 @@ export const CostSheetParallelExpert: React.FC<CostSheetParallelExpertProps> = (
                             colSpan={isBase ? 2 : 3}
                             className={cn(
                               "text-center py-2 px-3 border-l border-border/30",
-                              isPrimary && "bg-amber-500/5"
+                              isPrimary && "bg-warning/5"
                             )}
                           >
                             <div className="flex items-center justify-center gap-2">
                               <div className={cn("w-2.5 h-2.5 rounded-full shadow-sm", colorClass)} />
                               <span className="text-[10px] font-black uppercase tracking-widest">{s?.label}</span>
-                              {isPrimary && <Star className="w-3 h-3 fill-amber-500 text-amber-500 animate-pulse" />}
+                              {isPrimary && <Star className="w-3 h-3 fill-warning text-warning animate-pulse" />}
                             </div>
                           </TableHead>
                         );
@@ -579,12 +578,12 @@ export const CostSheetParallelExpert: React.FC<CostSheetParallelExpertProps> = (
                         const isPrimary = sid === primaryId;
                         return (
                           <React.Fragment key={sid}>
-                            <TableHead className={cn("px-1.5 py-1 text-right text-[9px] font-black tracking-widest text-muted-foreground border-l border-border/20", isPrimary && "bg-amber-500/5")}>
+                            <TableHead className={cn("px-1.5 py-1 text-right text-[9px] font-black tracking-widest text-muted-foreground border-l border-border/20", isPrimary && "bg-warning/5")}>
                               <TTip term="Valor Histórico (VH)" description="Costo base de entrada para este concepto.Editable inline en cada escenario.">
                                 <span className="opacity-60">VH</span>
                               </TTip>
                             </TableHead>
-                            <TableHead className={cn("px-1.5 py-1 text-right text-[9px] font-black tracking-widest text-muted-foreground border-r border-border/20", isPrimary && "bg-amber-500/5")}>
+                            <TableHead className={cn("px-1.5 py-1 text-right text-[9px] font-black tracking-widest text-muted-foreground border-r border-border/20", isPrimary && "bg-warning/5")}>
                               <TTip term="Total Calculado" description="Resultado tras procesar fórmulas, coeficientes y unidades de medida del concepto.">
                                 <span className="opacity-60">TOTAL</span>
                               </TTip>

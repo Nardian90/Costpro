@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { motion, AnimatePresence, Variants } from 'framer-motion';
+import { motion, AnimatePresence, Variants, useReducedMotion } from 'framer-motion';
 import { X as XIcon, Calculator, Bot, ChevronRight, Maximize2, Minimize2, LayoutGrid } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { DarianEditor } from './DarianEditor';
@@ -27,6 +27,7 @@ export const CostSheetSidePanel: React.FC<CostSheetSidePanelProps> = ({
   sheetData,
   onExpand
 }) => {
+  const prefersReducedMotion = useReducedMotion();
   const isMobile = useIsMobile();
   const [isFullView, setIsFullView] = useState(false);
   const [isTriggerExpanded, setIsTriggerExpanded] = useState(false);
@@ -123,8 +124,8 @@ export const CostSheetSidePanel: React.FC<CostSheetSidePanelProps> = ({
         {!isOpen && (
           <motion.div
             initial={{ x: -20, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            exit={{ x: -20, opacity: 0 }}
+            animate={prefersReducedMotion ? { opacity: 1 } : { x: 0, opacity: 1 }}
+            exit={prefersReducedMotion ? {} : { x: -20, opacity: 0 }}
             onMouseEnter={() => !isMobile && setIsTriggerExpanded(true)}
             onMouseLeave={() => !isMobile && setIsTriggerExpanded(false)}
             onClick={() => isMobile && setIsTriggerExpanded(!isTriggerExpanded)}
@@ -136,7 +137,7 @@ export const CostSheetSidePanel: React.FC<CostSheetSidePanelProps> = ({
             )}
           >
             <div className={cn("flex flex-col gap-4", isMobile ? "py-4 px-2" : "py-6 px-3")}>
-                <button
+                <button type="button"
                     onClick={() => onOpen('calculator')}
                     className={cn(
                         "group flex items-center gap-3 transition-all",
@@ -156,7 +157,7 @@ export const CostSheetSidePanel: React.FC<CostSheetSidePanelProps> = ({
                     )}
                 </button>
 
-                <button
+                <button type="button"
                     onClick={() => onOpen('ai')}
                     className={cn(
                         "group flex items-center gap-3 transition-all",
@@ -177,7 +178,7 @@ export const CostSheetSidePanel: React.FC<CostSheetSidePanelProps> = ({
                 </button>
 
                 {!isMobile && (
-                    <button
+                    <button type="button"
                         onClick={() => onOpen('both')}
                         className={cn(
                             "group flex items-center gap-3 transition-all",
@@ -214,8 +215,8 @@ export const CostSheetSidePanel: React.FC<CostSheetSidePanelProps> = ({
             {/* Backdrop */}
             <motion.div
               initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
+              animate={prefersReducedMotion ? { opacity: 1 } : { opacity: 1 }}
+              exit={prefersReducedMotion ? {} : { opacity: 0 }}
               onClick={onClose}
               className="fixed inset-0 bg-black/60 backdrop-blur-[4px] z-[90]"
             />
@@ -223,7 +224,7 @@ export const CostSheetSidePanel: React.FC<CostSheetSidePanelProps> = ({
             {/* Side Panel */}
             <motion.aside
               ref={panelRef}
-              variants={panelVariants}
+              variants={prefersReducedMotion ? {} : panelVariants}
               initial="closed"
               animate="open"
               exit="closed"
@@ -265,7 +266,7 @@ export const CostSheetSidePanel: React.FC<CostSheetSidePanelProps> = ({
 
                 <div className="flex items-center gap-2">
                     {!isMobile && (
-                        <button
+                        <button type="button"
                             onClick={onExpand ? onExpand : () => setIsFullView(!isFullView)}
                             className={cn(
                                 "p-2.5 rounded-2xl transition-all active:scale-90",
@@ -276,11 +277,11 @@ export const CostSheetSidePanel: React.FC<CostSheetSidePanelProps> = ({
                             {isFullView ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
                         </button>
                     )}
-                    <button
+                    <button type="button"
                         onClick={onClose}
                         className={cn(
                             "p-2.5 rounded-2xl transition-all active:scale-90",
-                            "hover:bg-red-500/10 text-red-500/50 hover:text-red-500"
+                            "hover:bg-destructive/10 text-destructive/50 hover:text-destructive"
                         )}
                     >
                         <XIcon className="w-5 h-5" />

@@ -17,11 +17,15 @@ import { exportCatalogToExcel } from '@/services/catalog-service';
 import CatalogImportDialog from '@/components/views/terminal/views/catalog/CatalogImportDialog';
 import CatalogHeader from '@/components/views/terminal/views/catalog/CatalogHeader';
 import CatalogSearchAndFilters from '@/components/views/terminal/views/catalog/CatalogSearchAndFilters';
+import type { FCFilterStatus } from '@/components/views/terminal/views/catalog/CatalogSearchAndFilters';
 import CatalogProductGrid from '@/components/views/terminal/views/catalog/CatalogProductGrid';
 import EditProductModal from '@/components/views/terminal/views/catalog/EditProductModal';
 import type { EditFormState, EditVariant } from '@/components/views/terminal/views/catalog/EditProductModal';
 import DeleteProductDialog from '@/components/views/terminal/views/catalog/DeleteProductDialog';
 import BulkSelectionBar from '@/components/views/terminal/views/catalog/BulkSelectionBar';
+import { useProductFCStatus } from '@/hooks/ui/useProductFCStatus';
+import { FCPreviewModal } from '@/components/ui/FCPreviewModal';
+import type { ProductFCStatus } from '@/contracts/product-cost-sheet';
 
 function getErrorMsg(err: unknown): string {
   return err instanceof Error ? err.message : 'Error desconocido';
@@ -30,11 +34,65 @@ function getErrorMsg(err: unknown): string {
 export default function CatalogView() {
   const { user } = useAuthStore();
   const { setIsCreateProductModalOpen } = useUIStore();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('');
-  const [layoutMode, setLayoutMode] = useState<'grid' | 'table'>('grid');
+
+  // CM-1.8: Persistir preferencias en localStorage (mismo patrón que ipv/CatalogTable)
+  const [searchTerm, setSearchTerm] = useState(() => {
+    if (typeof window === 'undefined') return '';
+    return localStorage.getItem('catalog_searchTerm') || '';
+  });
+  // CM-3.8: Multi-categoría con Set (antes era string single-select)
+  const [selectedCategories, setSelectedCategories] = useState<Set<string>>(() => {
+    if (typeof window === 'undefined') return new Set();
+    const saved = localStorage.getItem('catalog_selectedCategories');
+    if (saved) {
+      try { return new Set(JSON.parse(saved)); } catch { return new Set(); }
+    }
+    // Migrar del formato anterior (single string)
+    const old = localStorage.getItem('catalog_selectedCategory');
+    return old ? new Set([old]) : new Set();
+  });
+
+  // CM-3.8: Persistir multi-categoría
+  useEffect(() => {
+    localStorage.setItem('catalog_selectedCategories', JSON.stringify(Array.from(selectedCategories)));
+  }, [selectedCategories]);
+
+  // Helper: toggle categoría en el Set
+  const toggleCategory = useCallback((cat: string) => {
+    setSelectedCategories(prev => {
+      const next = new Set(prev);
+      if (next.has(cat)) next.delete(cat);
+      else next.add(cat);
+      return next;
+    });
+  }, []);
+
+  // Para el RPC: si hay 0 o 1 categorías, pasar esa categoría al RPC (server-side).
+  // Si hay 2+, pasar '' y filtrar client-side (el RPC no soporta multi-categoría).
+  const rpcCategory = selectedCategories.size === 1 ? Array.from(selectedCategories)[0] : '';
+  // CM-1.5: Default 'table' en desktop, 'grid' en mobile. Persistir preferencia.
+  const [layoutMode, setLayoutMode] = useState<'grid' | 'table'>(() => {
+    if (typeof window === 'undefined') return 'table';
+    const saved = localStorage.getItem('catalog_layoutMode');
+    if (saved === 'grid' || saved === 'table') return saved;
+    // Default: table en desktop, grid en mobile
+    return window.innerWidth >= 768 ? 'table' : 'grid';
+  });
   // UX-01: Filter for incomplete products
   const [showIncompleteOnly, setShowIncompleteOnly] = useState(false);
+  // FC Status Filter
+  const [fcFilter, setFcFilter] = useState<FCFilterStatus>('all');
+  // CM-2.4: Sort state
+  const [sortKey, setSortKey] = useState<string | null>(null);
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
+  // CM-2.5: Filtros combinables adicionales
+  const [stockFilter, setStockFilter] = useState<'all' | 'out' | 'low' | 'ok'>('all');
+  const [activeFilter, setActiveFilter] = useState<'all' | 'active' | 'inactive'>('all');
+  // CM-2.7: Page size selector
+  const [pageSize, setPageSize] = useState(() => {
+    if (typeof window === 'undefined') return 24;
+    return parseInt(localStorage.getItem('catalog_pageSize') || '24', 10);
+  });
 
   // Edit modal state
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -74,7 +132,28 @@ export default function CatalogView() {
   // Import dialog state
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
 
-  // Paginated inventory query (server-side, 24 per page)
+  // CM-1.8: Persistir cambios de preferencias en localStorage
+  useEffect(() => {
+    localStorage.setItem('catalog_searchTerm', searchTerm);
+  }, [searchTerm]);
+  // CM-1.8: Removed old selectedCategory persistence — replaced by selectedCategories Set
+  useEffect(() => {
+    localStorage.setItem('catalog_layoutMode', layoutMode);
+  }, [layoutMode]);
+  // CM-2.7: Persistir pageSize
+  useEffect(() => {
+    localStorage.setItem('catalog_pageSize', String(pageSize));
+  }, [pageSize]);
+
+  // CM-1.1: Debounce de searchTerm para búsqueda server-side (evita spam al RPC)
+  const [debouncedSearch, setDebouncedSearch] = useState(searchTerm);
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(searchTerm), 300);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  // CM-1.1: Cablear búsqueda server-side al RPC (antes pasaba '' hardcoded)
+  // CM-1.6: La búsqueda ahora también filtra por barcode en el RPC
   const {
     data: inventoryPages,
     isLoading,
@@ -83,7 +162,7 @@ export default function CatalogView() {
     hasNextPage,
     isFetchingNextPage,
     refetch: refetchInventory,
-  } = useInventory(user?.activeStoreId, '', '', 24);
+  } = useInventory(user?.activeStoreId, debouncedSearch, rpcCategory, pageSize);
 
   // Fetch all product_variants for loaded products (RPC doesn't include them)
   const productIds = useMemo(() => {
@@ -95,11 +174,17 @@ export default function CatalogView() {
     queryKey: ['product-variants-batch', productIds],
     queryFn: async () => {
       if (productIds.length === 0) return [];
-      const { data } = await supabase
+      // FIX-BUG: manejar error silenciosamente si la tabla no existe o RLS bloquea
+      const { data, error } = await supabase
         .from('product_variants')
         .select('*')
         .in('product_id', productIds)
         .eq('is_active', true);
+      if (error) {
+        // Tabla no existe o RLS bloquea — retornar vacío sin romper
+        console.warn('[CatalogView] product_variants query failed:', error.message);
+        return [];
+      }
       return (data || []) as ProductVariant[];
     },
     enabled: productIds.length > 0,
@@ -139,10 +224,27 @@ export default function CatalogView() {
     refetchInventory();
   };
 
-  const categories = useMemo(() => {
-    const cats = new Set(products.map(p => p.category).filter(Boolean));
-    return Array.from(cats) as string[];
-  }, [products]);
+  // CM-3.3: Cargar TODAS las categorías desde Supabase (no solo de productos cargados por paginación)
+  // Antes: const cats = new Set(products.map(p => p.category)) → solo 24 productos cargados
+  // Ahora: query dedicada que trae todas las categorías únicas del store
+  const { data: allCategories = [] } = useQuery({
+    queryKey: ['catalog-categories', user?.activeStoreId],
+    queryFn: async () => {
+      if (!user?.activeStoreId) return [];
+      const { data, error } = await supabase
+        .from('products')
+        .select('category')
+        .eq('store_id', user.activeStoreId)
+        .not('category', 'is', null)
+        .neq('category', '');
+      if (error) return [];
+      const unique = Array.from(new Set(data.map(d => d.category).filter(Boolean))) as string[];
+      return unique.sort();
+    },
+    enabled: !!user?.activeStoreId,
+    staleTime: 60_000,
+  });
+  const categories = allCategories;
 
   const loadMoreRef = useRef<HTMLDivElement>(null);
 
@@ -169,15 +271,130 @@ export default function CatalogView() {
     return products.filter(p => p.is_complete === false).length;
   }, [products]);
 
+  // ── FC Integration ──────────────────────────────────────────────
+  const {
+    fcInfoMap,
+    coverage: fcCoverage,
+    getFCStatus,
+    isLoading: isLoadingFC,
+  } = useProductFCStatus(products);
+
+  // FC status map for passing to grid
+  const fcStatusMap = useMemo(() => {
+    const map = new Map<string, import('@/types').ProductFCStatus>();
+    for (const product of products) {
+      map.set(product.id, getFCStatus(product.id));
+    }
+    return map;
+  }, [products, getFCStatus]);
+
+  // FC resolution map for passing to grid
+  const fcResolutionMap = useMemo(() => {
+    const map = new Map<string, import('@/lib/integration/fc-automation').FCResolutionResult>();
+    for (const product of products) {
+      const info = fcInfoMap.get(product.id);
+      if (info) map.set(product.id, info.resolution);
+    }
+    return map;
+  }, [products, fcInfoMap]);
+
+  // FC counts for filter chips
+  const fcVigenteCount = useMemo(() => fcCoverage.vigente, [fcCoverage]);
+  const fcPendienteCount = useMemo(() => fcCoverage.pendiente, [fcCoverage]);
+  const fcSinFCCount = useMemo(() => fcCoverage.sin_fc, [fcCoverage]);
+
+  // ── FC Preview Modal State ─────────────────────────────────────────
+  const [fcPreviewOpen, setFcPreviewOpen] = useState(false);
+  const [fcPreviewProduct, setFcPreviewProduct] = useState<Product | null>(null);
+  const [fcPreviewStatus, setFcPreviewStatus] = useState<ProductFCStatus>('sin_fc');
+
+  // ── View FC Handler ──────────────────────────────────────────────
+  // FIX-FC-PREVIEW: Open FCPreviewModal instead of window.open() for all cases.
+  // This gives the user a proper in-app preview with iframe + export button.
+  const handleViewFC = useCallback(async (product: Product, resolution: import('@/lib/integration/fc-automation').FCResolutionResult) => {
+    if (resolution.status === 'existing') {
+      // FC ya existe — abrir modal con vista previa
+      setFcPreviewProduct(product);
+      setFcPreviewStatus(resolution.fc_status);
+      setFcPreviewOpen(true);
+    } else if (resolution.status === 'needs_calculation') {
+      // FC necesita cálculo — abrir modal en modo "generar" (pendiente)
+      setFcPreviewProduct(product);
+      setFcPreviewStatus('pendiente');
+      setFcPreviewOpen(true);
+    } else {
+      // Sin plantilla — abrir modal en modo "sin plantilla"
+      setFcPreviewProduct(product);
+      setFcPreviewStatus('sin_fc');
+      setFcPreviewOpen(true);
+    }
+  }, []);
+
+  // After FCPreviewModal closes, refresh data
+  const handleFcPreviewClose = useCallback(() => {
+    setFcPreviewOpen(false);
+    // Invalidate to refresh FC status badges
+    queryClient.invalidateQueries({ queryKey: ['product-cost-sheets-batch'] });
+    queryClient.invalidateQueries({ queryKey: ['inventory'] });
+  }, [queryClient]);
+
+  // ── Filtering ──────────────────────────────────────────────────
+  // CM-1.1: La búsqueda por nombre/SKU/barcode y categoría ahora se hace server-side
+  // CM-2.5: Filtros combinables de stock, activo/inactivo
+  // CM-3.8: Multi-categoría con Set (client-side cuando hay 2+ categorías)
   const filteredProducts = useMemo(() => {
-    return products.filter(p => {
-      const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           (p.sku && p.sku.toLowerCase().includes(searchTerm.toLowerCase()));
-      const matchesCategory = !selectedCategory || p.category === selectedCategory;
+    let result = products.filter(p => {
       const matchesIncomplete = !showIncompleteOnly || p.is_complete === false;
-      return matchesSearch && matchesCategory && matchesIncomplete;
+      const matchesFC = fcFilter === 'all' || getFCStatus(p.id) === fcFilter;
+      // CM-2.5: Filtro de stock
+      const stock = p.stock_current ?? 0;
+      const minStock = p.min_stock ?? 0;
+      const matchesStock =
+        stockFilter === 'all' ||
+        (stockFilter === 'out' && stock <= 0) ||
+        (stockFilter === 'low' && stock > 0 && stock <= minStock) ||
+        (stockFilter === 'ok' && stock > minStock);
+      // CM-2.5: Filtro activo/inactivo
+      const matchesActive =
+        activeFilter === 'all' ||
+        (activeFilter === 'active' && p.is_active) ||
+        (activeFilter === 'inactive' && !p.is_active);
+      // CM-3.8: Multi-categoría (solo filtrar client-side si hay 2+ seleccionadas)
+      const matchesCategory =
+        selectedCategories.size === 0 ||
+        selectedCategories.size === 1 ||
+        selectedCategories.has(p.category || '');
+      return matchesIncomplete && matchesFC && matchesStock && matchesActive && matchesCategory;
     });
-  }, [products, searchTerm, selectedCategory, showIncompleteOnly]);
+
+    // CM-2.4: Sort client-side (el RPC no soporta sort dinámico)
+    if (sortKey) {
+      result = [...result].sort((a: any, b: any) => {
+        let valA = a[sortKey];
+        let valB = b[sortKey];
+        if (typeof valA === 'string') valA = valA.toLowerCase();
+        if (typeof valB === 'string') valB = valB.toLowerCase();
+        if (valA == null) valA = '';
+        if (valB == null) valB = '';
+        const cmp = valA < valB ? -1 : valA > valB ? 1 : 0;
+        return sortDir === 'asc' ? cmp : -cmp;
+      });
+    }
+
+    return result;
+  }, [products, showIncompleteOnly, fcFilter, stockFilter, activeFilter, sortKey, sortDir, getFCStatus]);
+
+  // CM-2.4: Handler de sort — toggle asc/desc
+  const handleSort = useCallback((key: string) => {
+    setSortKey(prev => {
+      if (prev === key) {
+        setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+        return key;
+      }
+      setSortDir('asc');
+      return key;
+    });
+  }, []);
 
   // --- Excel Export ---
   const handleExportExcel = useCallback(async () => {
@@ -267,6 +484,172 @@ export default function CatalogView() {
       setSelectedIds(new Set());
     }).catch(() => toast.error('Error al desactivar productos'));
   };
+
+  // --- Bulk Generate FC ---
+  const handleBulkGenerateFC = useCallback(async () => {
+    if (selectedIds.size === 0) return;
+    const ids = Array.from(selectedIds);
+    const pendienteIds = ids.filter(id => getFCStatus(id) === 'pendiente');
+    if (pendienteIds.length === 0) {
+      toast.info('Los productos seleccionados no requieren generación de FC (ya tienen FC vigente o sin plantilla).');
+      return;
+    }
+    let generatedCount = 0;
+    let errorCount = 0;
+    const toastId = toast.info(`Generando ${pendienteIds.length} FC(s)...`, { description: '0/' + pendienteIds.length });
+    // CM-2.9: Paralelizar en lotes de 5 con progress bar
+    const BATCH_SIZE = 5;
+    for (let i = 0; i < pendienteIds.length; i += BATCH_SIZE) {
+      const batch = pendienteIds.slice(i, i + BATCH_SIZE);
+      const results = await Promise.allSettled(
+        batch.map(productId =>
+          fetch('/api/product-cost-sheets/auto-generate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ product_id: productId, store_id: user?.activeStoreId }),
+          }).then(res => { if (!res.ok) throw new Error('Failed'); return productId; })
+        )
+      );
+      generatedCount += results.filter(r => r.status === 'fulfilled').length;
+      errorCount += results.filter(r => r.status === 'rejected').length;
+      // Actualizar progreso
+      toast.info(`Generando FC(s)...`, {
+        id: toastId,
+        description: `${Math.min(i + BATCH_SIZE, pendienteIds.length)}/${pendienteIds.length} procesados`,
+      });
+    }
+    toast.dismiss(toastId);
+    if (generatedCount > 0) {
+      toast.success(`${generatedCount} FC generada(s) correctamente`);
+      queryClient.invalidateQueries({ queryKey: ['product-cost-sheets-batch'] });
+      queryClient.invalidateQueries({ queryKey: ['inventory'] });
+      refetchInventory();
+    }
+    if (errorCount > 0) {
+      toast.warning(`${errorCount} FC no se pudieron generar`);
+    }
+    setSelectedIds(new Set());
+  }, [selectedIds, getFCStatus, user?.activeStoreId, queryClient, refetchInventory]);
+
+  // CM-2.8: Bulk activate (reactivar productos inactivos)
+  const handleBulkActivate = useCallback(async () => {
+    if (selectedIds.size === 0) return;
+    const ids = Array.from(selectedIds);
+    const productsToActivate = filteredProducts.filter(p => ids.includes(p.id) && !p.is_active);
+    if (productsToActivate.length === 0) {
+      toast.info('Los productos seleccionados ya están activos');
+      return;
+    }
+    // Audit-Fix #2d: toggleActiveMutation espera { productId, isActive }, no Product.
+    // Antes pasábamos `p` (Product completo) — type mismatch.
+    await Promise.all(
+      productsToActivate.map(p => toggleActiveMutation.mutateAsync({ productId: p.id, isActive: true }))
+    );
+    toast.success(`${productsToActivate.length} producto(s) reactivado(s)`);
+    setSelectedIds(new Set());
+  }, [selectedIds, filteredProducts, toggleActiveMutation]);
+
+  // CM-2.8: Bulk delete
+  const handleBulkDelete = useCallback(async () => {
+    if (selectedIds.size === 0) return;
+    const ids = Array.from(selectedIds);
+    const productsToDelete = filteredProducts.filter(p => ids.includes(p.id) && !p.has_movements);
+    if (productsToDelete.length === 0) {
+      toast.warning('Los productos seleccionados tienen movimientos y no se pueden eliminar');
+      return;
+    }
+    if (!confirm(`¿Eliminar ${productsToDelete.length} producto(s)? Esta acción es irreversible.`)) return;
+    await Promise.all(
+      productsToDelete.map(p => deleteProductMutation.mutateAsync(p.id))
+    );
+    toast.success(`${productsToDelete.length} producto(s) eliminado(s)`);
+    setSelectedIds(new Set());
+  }, [selectedIds, filteredProducts, deleteProductMutation]);
+
+  // CM-4.6: Bulk asignar categoría
+  const handleBulkAssignCategory = useCallback(async (category: string) => {
+    if (selectedIds.size === 0 || !category) return;
+    const ids = Array.from(selectedIds);
+    try {
+      const { error } = await supabase
+        .from('products')
+        .update({ category })
+        .in('id', ids);
+      if (error) throw error;
+      toast.success(`${ids.length} producto(s) asignados a "${category}"`);
+      invalidateAndRefetch();
+    } catch (err) {
+      toast.error('Error al asignar categoría: ' + getErrorMsg(err));
+    }
+    setSelectedIds(new Set());
+  }, [selectedIds, invalidateAndRefetch]);
+
+  // CM-4.7: Bulk toggle visibilidad tienda
+  const handleBulkToggleVisibility = useCallback(async (visible: boolean) => {
+    if (selectedIds.size === 0) return;
+    const ids = Array.from(selectedIds);
+    try {
+      const { error } = await supabase
+        .from('products')
+        .update({ visible_en_tienda: visible })
+        .in('id', ids);
+      if (error) throw error;
+      toast.success(`${ids.length} producto(s) ${visible ? 'visibles' : 'ocultos'} en tienda pública`);
+      invalidateAndRefetch();
+    } catch (err) {
+      toast.error('Error al cambiar visibilidad: ' + getErrorMsg(err));
+    }
+    setSelectedIds(new Set());
+  }, [selectedIds, invalidateAndRefetch]);
+
+  // CM-4.3: Sistema de filtros guardados (localStorage)
+  interface SavedFilter {
+    name: string;
+    searchTerm: string;
+    selectedCategories: string[];
+    stockFilter: 'all' | 'out' | 'low' | 'ok';
+    activeFilter: 'all' | 'active' | 'inactive';
+    showIncompleteOnly: boolean;
+    fcFilter: FCFilterStatus;
+  }
+  const [savedFilters, setSavedFilters] = useState<SavedFilter[]>(() => {
+    if (typeof window === 'undefined') return [];
+    try {
+      return JSON.parse(localStorage.getItem('catalog_savedFilters') || '[]');
+    } catch { return []; }
+  });
+
+  const saveCurrentFilter = useCallback((name: string) => {
+    const filter: SavedFilter = {
+      name,
+      searchTerm,
+      selectedCategories: Array.from(selectedCategories),
+      stockFilter,
+      activeFilter,
+      showIncompleteOnly,
+      fcFilter,
+    };
+    const next = [...savedFilters.filter(f => f.name !== name), filter];
+    setSavedFilters(next);
+    localStorage.setItem('catalog_savedFilters', JSON.stringify(next));
+    toast.success(`Filtro "${name}" guardado`);
+  }, [searchTerm, selectedCategories, stockFilter, activeFilter, showIncompleteOnly, fcFilter, savedFilters]);
+
+  const applySavedFilter = useCallback((filter: SavedFilter) => {
+    setSearchTerm(filter.searchTerm);
+    setSelectedCategories(new Set(filter.selectedCategories));
+    setStockFilter(filter.stockFilter);
+    setActiveFilter(filter.activeFilter);
+    setShowIncompleteOnly(filter.showIncompleteOnly);
+    setFcFilter(filter.fcFilter);
+    toast.info(`Filtro "${filter.name}" aplicado`);
+  }, []);
+
+  const deleteSavedFilter = useCallback((name: string) => {
+    const next = savedFilters.filter(f => f.name !== name);
+    setSavedFilters(next);
+    localStorage.setItem('catalog_savedFilters', JSON.stringify(next));
+  }, [savedFilters]);
 
   // --- Image Handlers for Edit Modal ---
   const handleEditImageSelect = useCallback(async (file: File) => {
@@ -468,19 +851,54 @@ export default function CatalogView() {
         layoutMode={layoutMode}
         onLayoutChange={setLayoutMode}
         onCreateProduct={handleOpenCreate}
+        // CM-2.7: Size selector
+        pageSize={pageSize}
+        onPageSizeChange={setPageSize}
+        // CM-2.5: Filtros combinables
+        stockFilter={stockFilter}
+        onStockFilterChange={setStockFilter}
+        activeFilter={activeFilter}
+        onActiveFilterChange={setActiveFilter}
+        // CM-4.3: Filtros guardados
+        savedFilters={savedFilters}
+        onSaveFilter={saveCurrentFilter}
+        onApplyFilter={(name) => {
+          const filter = savedFilters.find(f => f.name === name);
+          if (filter) applySavedFilter(filter);
+        }}
+        onDeleteFilter={deleteSavedFilter}
+        // Categorías (multi-select) — movidas al header
+        categories={categories}
+        selectedCategories={selectedCategories}
+        onCategoryToggle={toggleCategory}
+        onCategoryChange={(cat) => {
+          setSelectedCategories(cat ? new Set([cat]) : new Set());
+        }}
       />
 
-      {/* Search Bar + Category Chips + Incomplete Filter */}
+      {/* Search Bar + Category Chips + FC Filter */}
       <CatalogSearchAndFilters
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
         categories={categories}
-        selectedCategory={selectedCategory}
-        onCategoryChange={setSelectedCategory}
+        // CM-3.8: Multi-categoría — pasar Set y toggle handler
+        selectedCategory=""  // compat: pasar string vacío para el componente legacy
+        selectedCategories={selectedCategories}
+        onCategoryToggle={toggleCategory}
+        onCategoryChange={(cat) => {
+          // Single select: limpiar Set y poner solo esta
+          setSelectedCategories(cat ? new Set([cat]) : new Set());
+        }}
         showIncompleteOnly={showIncompleteOnly}
         incompleteCount={incompleteCount}
         filteredCount={filteredProducts.length}
         onClearIncomplete={() => setShowIncompleteOnly(false)}
+        fcFilter={fcFilter}
+        onFCFilterChange={setFcFilter}
+        fcVigenteCount={fcVigenteCount}
+        fcPendienteCount={fcPendienteCount}
+        fcSinFCCount={fcSinFCCount}
+        fcCoverage={fcCoverage.total > 0 ? fcCoverage : undefined}
       />
 
       {/* Product Grid / Table */}
@@ -497,6 +915,14 @@ export default function CatalogView() {
         onEdit={handleOpenEdit}
         onToggleActive={handleToggleActive}
         onDelete={handleOpenDelete}
+        fcStatusMap={fcStatusMap}
+        fcResolutionMap={fcResolutionMap}
+        onViewFC={handleViewFC}
+        storeId={user?.activeStoreId}
+        // CM-2.4: Sort props
+        sortKey={sortKey}
+        sortDir={sortDir}
+        onSort={handleSort}
       />
 
       {/* Bulk Selection Bar */}
@@ -505,6 +931,13 @@ export default function CatalogView() {
         onBulkPrice={() => setIsBulkPriceOpen(true)}
         onBulkDeactivate={handleBulkDeactivate}
         onCancel={() => setSelectedIds(new Set())}
+        onBulkGenerateFC={handleBulkGenerateFC}
+        onBulkDelete={handleBulkDelete}
+        onBulkActivate={handleBulkActivate}
+        // CM-4.6 + CM-4.7: Bulk asignar categoría + visibilidad
+        onBulkAssignCategory={handleBulkAssignCategory}
+        onBulkToggleVisibility={handleBulkToggleVisibility}
+        categories={categories}
       />
 
       {/* Load More Pagination */}
@@ -540,6 +973,12 @@ export default function CatalogView() {
         onRemoveVariant={removeEditVariant}
         onAddVariant={addEditVariant}
         onUpdateVariant={updateEditVariant}
+        fcStatus={editingProduct ? getFCStatus(editingProduct.id) : undefined}
+        storeId={user?.activeStoreId}
+        onViewFC={editingProduct ? () => {
+          const info = fcInfoMap.get(editingProduct.id);
+          if (info) handleViewFC(editingProduct, info.resolution);
+        } : undefined}
       />
 
       {/* Delete Confirmation Dialog */}
@@ -560,7 +999,27 @@ export default function CatalogView() {
         products={products}
         categories={categories}
         selectedIds={Array.from(selectedIds)}
+        // CM-3.4: Pasar totalCount y storeId para que el modal sepa cuántos productos hay realmente
+        totalProductCount={totalCount}
+        storeId={user?.activeStoreId}
       />
+
+      {/* FC Preview Modal */}
+      {fcPreviewProduct && (
+        <FCPreviewModal
+          open={fcPreviewOpen}
+          onClose={handleFcPreviewClose}
+          productId={fcPreviewProduct.id}
+          productName={fcPreviewProduct.name}
+          storeId={fcPreviewProduct.store_id ?? user?.activeStoreId ?? ''}
+          fcStatus={fcPreviewStatus}
+          costSheetId={(() => {
+            const info = fcInfoMap.get(fcPreviewProduct.id);
+            if (info?.resolution.status === 'existing') return info.resolution.costSheet.id;
+            return null;
+          })()}
+        />
+      )}
     </div>
   );
 }

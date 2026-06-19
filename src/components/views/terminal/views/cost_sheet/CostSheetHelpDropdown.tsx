@@ -23,7 +23,7 @@ export function CostSheetHelpDropdown({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button
+        <button type="button"
           className="group relative flex items-center gap-2 px-3 h-10 rounded-xl bg-muted/30 border border-border/50 hover:bg-muted hover:border-primary/20 transition-all outline-none shrink-0 whitespace-nowrap"
         >
           <HelpCircle className="w-3.5 h-3.5 text-muted-foreground group-hover:text-primary transition-colors" />

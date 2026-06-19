@@ -18,7 +18,7 @@ export default function PrivacyPage() {
           <div>
             <h1 className="text-3xl font-bold text-foreground">Política de Privacidad</h1>
             {/* FIX-BUG-LOG-010: Hardcoded date instead of dynamic new Date() */}
-            <p className="text-sm text-muted-foreground">Última actualización: {new Date('2025-01-15').toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+            <p className="text-sm text-muted-foreground">Última actualización: {new Date('2025-01-15').toLocaleDateString('es-CU', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
           </div>
         </div>
 

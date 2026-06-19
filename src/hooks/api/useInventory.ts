@@ -13,6 +13,9 @@ import {
 import { withLogging, getCleanStoreId } from './base';
 import { z } from 'zod';
 import { useSyncContext } from '@/components/providers/SyncProvider';
+// R2-4: imports para auditoría
+import { useAuthStore } from '@/store';
+import { auditService } from '@/services/audit-service';
 
 export function useSuspenseInventory(storeId?: string | null, searchTerm = '', category = '', limit = 20) {
   const cleanStoreId = getCleanStoreId(storeId);
@@ -110,6 +113,7 @@ export function useRegisterReception() {
 export function useAdjustStock() {
   const queryClient = useQueryClient();
   const { addToQueue } = useSyncContext();
+  const { user } = useAuthStore.getState();
 
   return useMutation({
     mutationFn: async (rawInput: z.input<typeof adjustStockInputSchema>) => {
@@ -131,10 +135,25 @@ export function useAdjustStock() {
       const data = await withLogging<any>(rpcName, params, () => supabase.rpc(rpcName, params));
       return await validateRPCResponse(data, inventoryAdjustmentResponseSchema, rpcName);
     },
-    onSuccess: () => {
+    onSuccess: async (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
       queryClient.invalidateQueries({ queryKey: ['inventory'] });
       queryClient.invalidateQueries({ queryKey: ['stock-movements'] });
+
+      // R2-4 (M7): log stock adjustment
+      if (user?.id) {
+        try {
+          const input = adjustStockInputSchema.parse(variables);
+          await auditService.logStockAdjustment({
+            userId: user.id,
+            productId: input.productId,
+            storeId: input.storeId,
+            oldStock: 0, // No tenemos el stock anterior en el cliente — la RPC lo maneja
+            newStock: 0, // Lo importante es el registro del evento + razón
+            reason: input.reason,
+          });
+        } catch { /* non-blocking */ }
+      }
     },
   });
 }

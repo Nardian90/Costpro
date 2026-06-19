@@ -21,7 +21,7 @@ export function CostSheetGenerateDropdown({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button
+        <button type="button"
           className="group relative flex items-center gap-2 px-3 h-10 rounded-xl bg-primary/10 border border-primary/20 hover:bg-primary/20 transition-all outline-none shrink-0 whitespace-nowrap"
         >
           <Sparkles className="w-3.5 h-3.5 text-primary" />
@@ -36,9 +36,9 @@ export function CostSheetGenerateDropdown({
           Motores de Generación
         </div>
         <DropdownMenuItem onClick={onQuickGenerate} className="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer">
-          <Zap className="w-4 h-4 text-amber-500" />
+          <Zap className="w-4 h-4 text-warning" />
           <div className="flex flex-col">
-            <span className="text-xs font-black uppercase tracking-widest text-amber-500">Generar Rápido</span>
+            <span className="text-xs font-black uppercase tracking-widest text-warning">Generar Rápido</span>
             <span className="text-[9px] text-muted-foreground uppercase font-medium">Preconfigurado</span>
           </div>
         </DropdownMenuItem>

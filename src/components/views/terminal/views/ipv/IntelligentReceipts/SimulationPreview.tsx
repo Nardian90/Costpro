@@ -15,7 +15,7 @@ interface SimulationPreviewProps {
 export function SimulationPreview({ receipts, stockImpact, correctedProducts }: SimulationPreviewProps) {
     const formatCurrency = (cents?: number) => {
         if (cents === undefined) return '-';
-        return (cents / 100).toLocaleString('es-ES', { style: 'currency', currency: 'CUP' });
+        return (cents / 100).toLocaleString('es-CU', { style: 'currency', currency: 'CUP' });
     };
 
     const totalCostoCents = receipts.reduce((sum, r) => sum + (r.costo_total_cents || 0), 0);
@@ -47,27 +47,27 @@ export function SimulationPreview({ receipts, stockImpact, correctedProducts }: 
                         <p className="text-[10px] text-muted-foreground font-bold uppercase">Negativos resueltos</p>
                     </CardContent>
                 </Card>
-                <Card className="bg-green-500/5 border-green-500/20">
+                <Card className="bg-success/5 border-success/20">
                     <CardHeader className="pb-2 px-4">
-                        <CardTitle className="text-xs font-black uppercase tracking-widest flex items-center gap-2 text-green-600">
+                        <CardTitle className="text-xs font-black uppercase tracking-widest flex items-center gap-2 text-success">
                             <CheckCircle2 className="w-3.5 h-3.5" />
                             Estado
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="px-4 pb-4">
-                        <div className="text-xl font-black text-green-600 uppercase">Consistente</div>
+                        <div className="text-xl font-black text-success uppercase">Consistente</div>
                         <p className="text-[10px] text-muted-foreground font-bold uppercase">Sin quiebres</p>
                     </CardContent>
                 </Card>
-                <Card className="bg-blue-500/5 border-blue-500/20 shadow-xl border-2">
+                <Card className="bg-primary/5 border-primary/20 shadow-xl border-2">
                     <CardHeader className="pb-2 px-4">
-                        <CardTitle className="text-xs font-black uppercase tracking-widest flex items-center gap-2 text-blue-600">
+                        <CardTitle className="text-xs font-black uppercase tracking-widest flex items-center gap-2 text-primary">
                             <DollarSign className="w-3.5 h-3.5" />
                             Costo Inversión
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="px-4 pb-4">
-                        <div className="text-xl font-black text-blue-600">{formatCurrency(totalCostoCents)}</div>
+                        <div className="text-xl font-black text-primary">{formatCurrency(totalCostoCents)}</div>
                         <p className="text-[10px] text-muted-foreground font-bold uppercase">Total Estimado</p>
                     </CardContent>
                 </Card>
@@ -99,7 +99,7 @@ export function SimulationPreview({ receipts, stockImpact, correctedProducts }: 
                                             <Badge variant="outline" className="text-[9px] font-black px-1.5 h-5">{r.level}</Badge>
                                         </TableCell>
                                         <TableCell className="text-right font-black text-xs">{r.quantity}</TableCell>
-                                        <TableCell className="text-right font-mono text-xs text-blue-600 font-bold">
+                                        <TableCell className="text-right font-mono text-xs text-primary font-bold">
                                             {formatCurrency(r.costo_unitario_cents)}
                                         </TableCell>
                                         <TableCell className="text-right font-mono text-xs text-blue-700 font-black">
@@ -138,7 +138,7 @@ export function SimulationPreview({ receipts, stockImpact, correctedProducts }: 
                                             <ArrowRight className="w-4 h-4 inline" />
                                         </TableCell>
                                         <TableCell className="text-right font-black text-primary text-xs">{impact.simulated}</TableCell>
-                                        <TableCell className="text-right font-mono text-green-600 font-bold text-xs">
+                                        <TableCell className="text-right font-mono text-success font-bold text-xs">
                                             +{impact.simulated - impact.current}
                                         </TableCell>
                                     </TableRow>

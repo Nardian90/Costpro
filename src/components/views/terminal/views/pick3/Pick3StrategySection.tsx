@@ -64,7 +64,7 @@ export function Pick3StrategySection({ analysis, plays }: Pick3StrategySectionPr
                         <TooltipContent className="text-[10px] font-bold max-w-[150px]">Puntuación de 0 a 100 basada en la convergencia de múltiples modelos.</TooltipContent>
                       </Tooltip>
                     </div>
-                    <div className="text-lg font-black text-emerald-600 tracking-tighter">{play.confidence.toFixed(1)}%</div>
+                    <div className="text-lg font-black text-success tracking-tighter">{play.confidence.toFixed(1)}%</div>
                   </div>
                 </div>
                 <div className="space-y-1">
@@ -85,7 +85,7 @@ export function Pick3StrategySection({ analysis, plays }: Pick3StrategySectionPr
       <Card className="bg-card border-border/50 shadow-xl rounded-[32px]">
         <CardHeader>
           <CardTitle className="text-sm font-black uppercase tracking-widest italic flex items-center gap-2">
-            <Activity className="w-4 h-4 text-orange-500" />
+            <Activity className="w-4 h-4 text-warning" />
             Rendimiento de Modelos
           </CardTitle>
           <CardDescription className="text-[10px] font-bold uppercase opacity-60">Backtest sobre resultados oficiales</CardDescription>
@@ -110,8 +110,8 @@ export function Pick3StrategySection({ analysis, plays }: Pick3StrategySectionPr
 
           <div className="pt-4 border-t border-border/50 space-y-4">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-xl bg-blue-500/10 flex items-center justify-center border border-blue-500/20">
-                <TrendingUp className="w-4 h-4 text-blue-600" />
+              <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20">
+                <TrendingUp className="w-4 h-4 text-primary" />
               </div>
               <div>
                 <div className="text-[9px] font-bold uppercase text-muted-foreground flex items-center gap-1">
@@ -127,12 +127,12 @@ export function Pick3StrategySection({ analysis, plays }: Pick3StrategySectionPr
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
-                <Shield className="w-4 h-4 text-emerald-600" />
+              <div className="w-8 h-8 rounded-xl bg-success/10 flex items-center justify-center border border-success/20">
+                <Shield className="w-4 h-4 text-success" />
               </div>
               <div>
                 <div className="text-[9px] font-bold uppercase text-muted-foreground">Varianza de Datos</div>
-                <div className="text-xs font-black italic text-emerald-600 uppercase">Estable v1.2</div>
+                <div className="text-xs font-black italic text-success uppercase">Estable v1.2</div>
               </div>
             </div>
           </div>

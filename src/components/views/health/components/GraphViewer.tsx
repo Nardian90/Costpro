@@ -203,16 +203,18 @@ export const GraphViewer: React.FC<GraphViewerProps> = ({ data, title }) => {
     setSelectedNode(null);
   }, []);
 
-  // Fit all nodes to view
+  // Fit all nodes to view – reads node positions directly from the rendered SVG
   const fitToView = useCallback(() => {
-    if (!svgRef.current || !layoutCache.current) return;
+    if (!svgRef.current) return;
     const svg = d3.select(svgRef.current);
     const width = svgRef.current.parentElement?.clientWidth || 800;
     const height = svgRef.current.parentElement?.clientHeight || 600;
-    const { nodes } = layoutCache.current;
+
+    const nodeData = svg.selectAll<SVGCircleElement, Node>('.graph-layer circle').data();
+    if (!nodeData.length) return;
 
     let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-    for (const n of nodes) {
+    for (const n of nodeData) {
       if (n.x < minX) minX = n.x;
       if (n.x > maxX) maxX = n.x;
       if (n.y < minY) minY = n.y;
@@ -231,9 +233,6 @@ export const GraphViewer: React.FC<GraphViewerProps> = ({ data, title }) => {
       d3.zoomIdentity.translate(width / 2, height / 2).scale(scale).translate(-cx, -cy)
     );
   }, []);
-
-  // ─── Static SVG Render ────────────────────────────────────────────────────
-  const layoutCache = useRef<{ nodes: Node[]; links: Link[] } | null>(null);
 
   useEffect(() => {
     if (!svgRef.current || graphData.nodes.length === 0) return;
@@ -261,9 +260,6 @@ export const GraphViewer: React.FC<GraphViewerProps> = ({ data, title }) => {
 
     // Compute static layout
     const { nodes: layoutNodes, links: layoutLinks } = computeStaticLayout(graphData.nodes, graphData.links, width, height);
-
-    // eslint-disable-next-line react-hooks/immutability
-    layoutCache.current = { nodes: layoutNodes, links: layoutLinks };
 
     // Apply filter if active
     const visibleNodes = activeFilter
@@ -442,10 +438,10 @@ export const GraphViewer: React.FC<GraphViewerProps> = ({ data, title }) => {
           <div className="px-2.5 py-1 rounded-md bg-white/[0.04] border border-white/[0.06] text-[8px] font-mono font-bold text-white/30 min-w-[40px] text-center">
             {Math.round(zoomLevel * 100)}%
           </div>
-          <button onClick={() => { svgRef.current && d3.select(svgRef.current).transition().duration(400).call((svgRef.current as any).__zoom.scaleBy, 1.8); }} className="w-8 h-8 rounded-lg bg-white/[0.04] border border-white/[0.06] flex items-center justify-center hover:bg-white/[0.08] transition-all" title="Zoom +">
+          <button onClick={() => { if (svgRef.current) { d3.select(svgRef.current).transition().duration(400).call((svgRef.current as any).__zoom.scaleBy, 1.8); } }} className="w-8 h-8 rounded-lg bg-white/[0.04] border border-white/[0.06] flex items-center justify-center hover:bg-white/[0.08] transition-all" title="Zoom +">
             <ZoomIn className="w-3 h-3 text-white/40" />
           </button>
-          <button onClick={() => { svgRef.current && d3.select(svgRef.current).transition().duration(400).call((svgRef.current as any).__zoom.scaleBy, 0.55); }} className="w-8 h-8 rounded-lg bg-white/[0.04] border border-white/[0.06] flex items-center justify-center hover:bg-white/[0.08] transition-all" title="Zoom -">
+          <button onClick={() => { if (svgRef.current) { d3.select(svgRef.current).transition().duration(400).call((svgRef.current as any).__zoom.scaleBy, 0.55); } }} className="w-8 h-8 rounded-lg bg-white/[0.04] border border-white/[0.06] flex items-center justify-center hover:bg-white/[0.08] transition-all" title="Zoom -">
             <ZoomOut className="w-3 h-3 text-white/40" />
           </button>
           <button onClick={fitToView} className="w-8 h-8 rounded-lg bg-white/[0.04] border border-white/[0.06] flex items-center justify-center hover:bg-white/[0.08] transition-all" title="Ajustar a vista">

@@ -131,7 +131,7 @@ export const CuentasModule: React.FC<CuentasModuleProps> = ({ data, selectedId, 
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {data.cuentas.map((cuenta) => (
-          <button
+          <button type="button"
             key={cuenta.codigo}
             onClick={() => onNavigate('cuentas', cuenta.codigo)}
             className="group flex flex-col items-start gap-4 p-6 rounded-3xl border bg-card hover:bg-primary/[0.02] hover:border-primary/30 transition-all text-left shadow-sm active:scale-[0.98]"

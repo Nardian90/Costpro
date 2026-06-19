@@ -103,7 +103,8 @@ export function AddTransactionModal({ open, onOpenChange }: AddTransactionModalP
 
       toast.success('Transacción agregada correctamente');
       onOpenChange(false);
-    } catch (error: any) {
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : 'Error de persistencia';
         console.error('Error adding transaction:', error);
         // If it still fails due to uniqueness, move to ingestion_errors as requested
         try {
@@ -115,7 +116,7 @@ export function AddTransactionModal({ open, onOpenChange }: AddTransactionModalP
                 observaciones: observaciones.trim(),
                 importe_cents: importeCents,
                 tipo,
-                error_note: error.message || 'Error de persistencia',
+                error_note: errorMessage,
                 raw_data: { fecha, referencia, importe, tipo, observaciones },
                 created_at: new Date().toISOString()
             });
@@ -147,7 +148,7 @@ export function AddTransactionModal({ open, onOpenChange }: AddTransactionModalP
               required
             />
             {lastTransaction && (
-              <p className="text-[10px] font-bold text-orange-500 uppercase italic">
+              <p className="text-[10px] font-bold text-warning uppercase italic">
                 Última registrada: {lastTransaction.fecha}
               </p>
             )}

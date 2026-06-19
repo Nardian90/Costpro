@@ -8,7 +8,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
 interface CostSheetFCDropdownProps {
@@ -24,6 +24,7 @@ export function CostSheetFCDropdown({
   onOpenSections,
   onOpenAnnexes,
 }: CostSheetFCDropdownProps) {
+  const prefersReducedMotion = useReducedMotion();
   const options = [
     { id: 'templates', label: 'Plantillas', icon: FolderOpen },
     { id: 'header', label: 'Encabezado', icon: Layout },
@@ -46,7 +47,7 @@ export function CostSheetFCDropdown({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button
+        <button type="button"
           className={cn(
             "group relative flex items-center gap-2 px-4 h-11 rounded-xl transition-all outline-none shrink-0 whitespace-nowrap",
             isAnyOptionActive

@@ -19,3 +19,15 @@ export * from './inventory';
 
 // CostSheet Contracts
 export * from './cost-sheet';
+
+// Oferta Contracts
+export * from './oferta';
+
+// Store Contracts
+export * from './store';
+
+// Store Cost Template Contracts (FC Automatizada)
+export * from './store-cost-template';
+
+// Product Cost Sheet Contracts (FC Automatizada)
+export * from './product-cost-sheet';

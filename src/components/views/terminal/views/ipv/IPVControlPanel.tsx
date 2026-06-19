@@ -280,7 +280,7 @@ export default function IPVControlPanel({ onSelect, onExportBackup, onImportBack
                         </div>
                         <div className="text-center">
                             <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-2 opacity-60">Seguridad</p>
-                            <Badge variant="outline" className="font-black text-blue-500 border-blue-500/30 px-3 py-1 bg-blue-500/5">CIFRADO LOCAL</Badge>
+                            <Badge variant="outline" className="font-black text-primary border-primary/30 px-3 py-1 bg-primary/5">CIFRADO LOCAL</Badge>
                         </div>
                     </div>
 
@@ -297,7 +297,7 @@ export default function IPVControlPanel({ onSelect, onExportBackup, onImportBack
                         <Button
                             variant="outline"
                             onClick={() => fileInputRef.current?.click()}
-                            className="h-12 px-6 text-[10px] font-black uppercase tracking-widest gap-2 bg-background/50 shadow-sm hover:bg-emerald-500 hover:text-foreground transition-all border-2 border-emerald-500/20 rounded-2xl"
+                            className="h-12 px-6 text-[10px] font-black uppercase tracking-widest gap-2 bg-background/50 shadow-sm hover:bg-success hover:text-foreground transition-all border-2 border-success/20 rounded-2xl"
                         >
                             <Upload className="w-4 h-4" />
                             Importar

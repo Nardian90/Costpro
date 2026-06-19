@@ -65,16 +65,16 @@ export function AnalyticsDashboard({ analytics }: Props) {
     <div className="space-y-8 p-4 md:p-8 animate-in fade-in duration-700">
       {/* Indicadores Principales */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="rounded-3xl border-none shadow-lg bg-green-500/10">
+        <Card className="rounded-3xl border-none shadow-lg bg-success/10">
           <CardContent className="p-6 flex justify-between items-center">
-            <div><p className="text-[9px] font-black uppercase opacity-60 tracking-widest">Ingresos</p><h4 className="text-xl font-black text-green-500">{formatCurrency(summary.total_income)}</h4></div>
-            <ArrowUpRight className="text-green-500" />
+            <div><p className="text-[9px] font-black uppercase opacity-60 tracking-widest">Ingresos</p><h4 className="text-xl font-black text-success">{formatCurrency(summary.total_income)}</h4></div>
+            <ArrowUpRight className="text-success" />
           </CardContent>
         </Card>
-        <Card className="rounded-3xl border-none shadow-lg bg-red-500/10">
+        <Card className="rounded-3xl border-none shadow-lg bg-destructive/10">
           <CardContent className="p-6 flex justify-between items-center">
-            <div><p className="text-[9px] font-black uppercase opacity-60 tracking-widest">Gastos</p><h4 className="text-xl font-black text-red-500">{formatCurrency(summary.total_expenses)}</h4></div>
-            <ArrowDownRight className="text-red-500" />
+            <div><p className="text-[9px] font-black uppercase opacity-60 tracking-widest">Gastos</p><h4 className="text-xl font-black text-destructive">{formatCurrency(summary.total_expenses)}</h4></div>
+            <ArrowDownRight className="text-destructive" />
           </CardContent>
         </Card>
         <Card className="rounded-3xl border-none shadow-lg bg-primary/10">
@@ -83,10 +83,10 @@ export function AnalyticsDashboard({ analytics }: Props) {
             <Wallet className="text-primary" />
           </CardContent>
         </Card>
-        <Card className="rounded-3xl border-none shadow-lg bg-blue-500/10">
+        <Card className="rounded-3xl border-none shadow-lg bg-primary/10">
           <CardContent className="p-6 flex justify-between items-center">
-            <div><p className="text-[9px] font-black uppercase opacity-60 tracking-widest">Ahorro</p><h4 className="text-xl font-black text-blue-500">{summary.total_income > 0 ? ((summary.balance / summary.total_income) * 100).toFixed(1) : 0}%</h4></div>
-            <ShieldCheck className="text-blue-500" />
+            <div><p className="text-[9px] font-black uppercase opacity-60 tracking-widest">Ahorro</p><h4 className="text-xl font-black text-primary">{summary.total_income > 0 ? ((summary.balance / summary.total_income) * 100).toFixed(1) : 0}%</h4></div>
+            <ShieldCheck className="text-primary" />
           </CardContent>
         </Card>
       </div>

@@ -3,7 +3,7 @@ import { LazyRender } from '@/components/ui/LazyRender';
 import { toast } from 'sonner';
 
 import React, { useState, memo, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import {
   ChevronRight,
   ChevronUp,
@@ -42,6 +42,7 @@ const RowCard: React.FC<CostSheetRowCardProps> = memo(({
   annexes,
   suggestions
 }) => {
+  const prefersReducedMotion = useReducedMotion();
   const [isExpanded, setIsExpanded] = useState(false);
   const [isEditingLabel, setIsEditingLabel] = useState(false);
   const [isEditingVH, setIsEditingVH] = useState(false);
@@ -98,7 +99,7 @@ const RowCard: React.FC<CostSheetRowCardProps> = memo(({
 
           <div className="flex items-center gap-1 shrink-0">
              {hasChildren && (
-                <button
+                <button type="button"
                   onClick={handleToggle}
                   className="p-2 rounded-xl bg-muted/50 text-muted-foreground active:scale-95 transition-all"
                 >
@@ -217,7 +218,7 @@ const RowCard: React.FC<CostSheetRowCardProps> = memo(({
               </div>
             ))}
             {warningErrors.map((e, idx) => (
-              <div key={idx} className="flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-[9px] font-bold text-amber-500 uppercase tracking-widest">
+              <div key={idx} className="flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-warning/10 border border-warning/20 text-[9px] font-bold text-warning uppercase tracking-widest">
                 <AlertTriangle className="w-2.5 h-2.5" />
                 {e.message}
               </div>
@@ -237,8 +238,8 @@ const RowCard: React.FC<CostSheetRowCardProps> = memo(({
         {isExpanded && hasChildren && (
           <motion.div
             initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
+            animate={prefersReducedMotion ? { opacity: 1 } : { height: 'auto', opacity: 1 }}
+            exit={prefersReducedMotion ? {} : { height: 0, opacity: 0 }}
             className="mt-4 space-y-4 pt-4 border-t border-border/30"
           >
             {row.children!.map((child, childIdx) => (
@@ -272,6 +273,7 @@ const CostSheetCardView: React.FC<CostSheetCardViewProps> = memo(({
   onOpenSections,
   hideHeader = false
 }) => {
+  const prefersReducedMotion = useReducedMotion();
   const { updateValue, addMainRow, addMainSection, removeMainSection } = useCostSheetStore();
   const [activeSectionForActions, setActiveSectionForActions] = useState<{ section: CostSheetSection, index: number } | null>(null);
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
@@ -333,7 +335,7 @@ const CostSheetCardView: React.FC<CostSheetCardViewProps> = memo(({
               {!hideHeader && (
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-3">
-                    <button
+                    <button type="button"
                       onClick={() => toggleSection(section.id)}
                       className="p-1.5 rounded-lg hover:bg-primary/10 transition-colors group"
                       aria-label={collapsedSections[section.id] ? `Expandir sección ${section.label}` : `Contraer sección ${section.label}`}
@@ -361,8 +363,8 @@ const CostSheetCardView: React.FC<CostSheetCardViewProps> = memo(({
                 {(!collapsedSections[section.id] || hideHeader) && (
                   <motion.div
                     initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: "auto", opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
+                    animate={prefersReducedMotion ? { opacity: 1 } : { height: "auto", opacity: 1 }}
+                    exit={prefersReducedMotion ? {} : { height: 0, opacity: 0 }}
                     transition={{ duration: 0.3, ease: "easeInOut" }}
                     className="overflow-hidden"
                   >

@@ -61,12 +61,12 @@ export function IPVHelpDialog({ open, onOpenChange, showTrigger = true }: Props)
           <div className="space-y-8 pb-4">
             {/* Business Rule Banner */}
             <div className="bg-red-50 border-2 border-red-100 p-4 rounded-2xl flex gap-4 items-start">
-              <div className="bg-red-500 p-2 rounded-lg shrink-0 shadow-lg shadow-red-200">
+              <div className="bg-destructive p-2 rounded-lg shrink-0 shadow-lg shadow-red-200">
                 <AlertTriangle className="w-5 h-5 text-foreground" />
               </div>
               <div className="space-y-1">
                 <p className="text-sm font-black text-red-900 uppercase">Regla de Oro (No Negativos)</p>
-                <p className="text-xs text-red-700 font-medium leading-relaxed">
+                <p className="text-xs text-destructive font-medium leading-relaxed">
                   Si la regla <Badge variant="outline" className="text-xs font-bold border-red-200">STOCK_LIMIT</Badge> está activa,
                   el sistema <strong>bloqueará automáticamente</strong> cualquier matching con productos cuya existencia sea cero.
                 </p>

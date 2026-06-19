@@ -22,7 +22,7 @@ export function useStockMovements(
       const columns = 'id, created_at, movement_type, quantity_change, balance_after, unit_cost, unit_price, reference_doc, created_by, product:products(name, sku)';
       let query = supabase.from('stock_movements').select(columns);
 
-      if (!isAdmin && cleanStoreId) {
+      if (cleanStoreId) {
         query = query.eq('store_id', cleanStoreId);
       }
       if (dateFrom) {
@@ -58,7 +58,7 @@ export function useStockMovements(
     },
     initialPageParam: 0,
     getNextPageParam: (lastPage) => lastPage.nextOffset,
-    enabled: isAdmin || !!storeId,
+    enabled: !!storeId,
     staleTime: 15 * 1000,
   });
 }

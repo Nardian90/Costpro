@@ -72,8 +72,8 @@ const handler = withAuth(async (req, session) => {
       },
       rows
     });
-  } catch (error: any) {
-    return NextResponse.json({ ok: false, error: (process.env.NODE_ENV !== 'production' || !!process.env.VITEST) ? error.message : 'Error interno del servidor' }, { status: 500 });
+  } catch (error: unknown) {
+    return NextResponse.json({ ok: false, error: (process.env.NODE_ENV !== 'production' || !!process.env.VITEST) ? (error instanceof Error ? error.message : String(error)) : 'Error interno del servidor' }, { status: 500 });
   }
 
 });

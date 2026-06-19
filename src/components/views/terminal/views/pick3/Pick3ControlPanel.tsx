@@ -23,8 +23,8 @@ interface Pick3ControlPanelProps {
 export function Pick3ControlPanel({ syncState, onSync }: Pick3ControlPanelProps) {
   const getStatusIcon = (status: Pick3Source['status']) => {
     switch (status) {
-      case 'success': return <CheckCircle2 className="w-4 h-4 text-emerald-500" />;
-      case 'error': return <XCircle className="w-4 h-4 text-red-500" />;
+      case 'success': return <CheckCircle2 className="w-4 h-4 text-success" />;
+      case 'error': return <XCircle className="w-4 h-4 text-destructive" />;
       case 'syncing': return <Loader2 className="w-4 h-4 text-primary animate-spin" />;
       default: return <AlertCircle className="w-4 h-4 text-muted-foreground opacity-50" />;
     }
@@ -32,8 +32,8 @@ export function Pick3ControlPanel({ syncState, onSync }: Pick3ControlPanelProps)
 
   const getStatusColor = (status: Pick3Source['status']) => {
     switch (status) {
-      case 'success': return "bg-emerald-500/10 text-emerald-500 border-emerald-500/20";
-      case 'error': return "bg-red-500/10 text-red-500 border-red-500/20";
+      case 'success': return "bg-success/10 text-success border-success/20";
+      case 'error': return "bg-destructive/10 text-destructive border-destructive/20";
       case 'syncing': return "bg-primary/10 text-primary border-primary/20";
       default: return "bg-muted text-muted-foreground border-transparent";
     }
@@ -66,7 +66,7 @@ export function Pick3ControlPanel({ syncState, onSync }: Pick3ControlPanelProps)
               className={cn(
                 "relative group flex flex-col p-4 rounded-2xl border transition-all duration-300",
                 source.status === 'syncing' ? "border-primary shadow-[0_0_15px_rgba(59,130,246,0.1)]" : "border-border hover:border-primary/50",
-                source.status === 'success' && "bg-emerald-500/[0.02]"
+                source.status === 'success' && "bg-success/[0.02]"
               )}
             >
               <div className="flex justify-between items-start mb-2">
@@ -98,8 +98,8 @@ export function Pick3ControlPanel({ syncState, onSync }: Pick3ControlPanelProps)
               )}
 
               {source.error && (
-                <div className="mt-2 p-1.5 rounded bg-red-500/5 border border-red-500/10">
-                  <p className="text-[8px] font-bold text-red-500 uppercase leading-tight line-clamp-2">
+                <div className="mt-2 p-1.5 rounded bg-destructive/5 border border-destructive/10">
+                  <p className="text-[8px] font-bold text-destructive uppercase leading-tight line-clamp-2">
                     {source.error}
                   </p>
                 </div>

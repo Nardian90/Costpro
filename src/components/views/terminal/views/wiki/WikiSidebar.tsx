@@ -30,7 +30,7 @@ export const WikiSidebar: React.FC<WikiSidebarProps> = ({ activeModule, onModule
           const Icon = item.icon;
           const isActive = activeModule === item.id;
           return (
-            <button
+            <button type="button"
               key={item.id}
               onClick={() => onModuleChange(item.id)}
               className={cn(
@@ -54,7 +54,7 @@ export const WikiSidebar: React.FC<WikiSidebarProps> = ({ activeModule, onModule
             const Icon = item.icon;
             const isActive = activeModule === item.id;
             return (
-              <button
+              <button type="button"
                 key={item.id}
                 onClick={() => onModuleChange(item.id)}
                 className={cn(

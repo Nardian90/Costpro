@@ -19,9 +19,14 @@ import {
   Package,
   LayoutGrid,
   List,
-  X
+  X,
+  FileText,
+  Copy,
+  AlertTriangle,
+  Info,
 } from 'lucide-react';
 import { cn, formatCurrency, getProductImageUrl, resolveProductImage as utilsResolveProductImage } from '@/lib/utils';
+import { isProductIncomplete, getIncompleteSummary } from '@/lib/product-completeness';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 // Helper component for horizontal scroll
@@ -59,6 +64,7 @@ export interface PrimaryButtonProps {
 
 export const PrimaryButton: React.FC<PrimaryButtonProps> = ({ label, icon: Icon, onClick, className, disabled, children }) => (
   <button
+    type="button"
     onClick={onClick}
     disabled={disabled}
     className={cn(
@@ -74,6 +80,7 @@ export const PrimaryButton: React.FC<PrimaryButtonProps> = ({ label, icon: Icon,
 
 export const SecondaryButton: React.FC<PrimaryButtonProps> = ({ label, icon: Icon, onClick, className, disabled, children }) => (
   <button
+    type="button"
     onClick={onClick}
     disabled={disabled}
     className={cn(
@@ -206,12 +213,24 @@ export const CategoryChips: React.FC<{
 };
 
 export const ProductCard: React.FC<any> = ({
-  product, onEdit, onViewPrices, onDelete, onToggleActive, onPrintLabel, onClick, className, variant = 'catalog'
+  product, onEdit, onViewPrices, onDelete, onToggleActive, onPrintLabel, onClick, className, variant = 'catalog',
+  fcStatus, onViewFC, onClone
 }) => {
   const isOutOfStock = product.stock_current <= 0;
   const isLowStock = product.stock_current <= (product.min_stock || 0);
   const hasImage = !!(product.public_image_url || product.image_url);
   const variantCount = product.product_variants?.length || 0;
+
+  // FC status badge colors
+  // Accessibility-Fix: en dark mode, los tokens --danger y --success cambian a tonos
+  // claros (#f87171 rojo claro, #34d399 verde claro). Texto blanco sobre estos tonos
+  // claros = bajo contraste. Solución: text-white en light mode, dark:text-black en dark mode.
+  // --warning siempre es amarillo claro en ambos temas → text-black siempre.
+  const fcBadgeColors: Record<string, { bg: string; text: string; dot: string }> = {
+    vigente: { bg: 'bg-success/90', text: 'text-white dark:text-black', dot: 'bg-white dark:bg-black/60' },
+    pendiente: { bg: 'bg-warning/90', text: 'text-black', dot: 'bg-black/60' },
+    sin_fc: { bg: 'bg-muted-foreground/50', text: 'text-white dark:text-black', dot: 'bg-white/80 dark:bg-black/60' },
+  };
 
   if (variant === 'pos') {
     return (
@@ -235,7 +254,7 @@ export const ProductCard: React.FC<any> = ({
             <div className={cn(
               "text-[10px] sm:text-xs font-black uppercase tracking-tighter px-1.5 py-0.5 rounded border shrink-0",
               isOutOfStock ? "bg-danger/10 text-danger border-danger/20" :
-              isLowStock ? "bg-amber-500/10 text-amber-600 border-amber-500/20" :
+              isLowStock ? "bg-warning/10 text-warning border-warning/20" :
               "bg-success/10 text-success border-success/20"
             )}>
               Stock: {product.stock_current}
@@ -253,7 +272,7 @@ export const ProductCard: React.FC<any> = ({
 
   return (
     <div className={cn(
-      "neu-card !p-4 border border-white/5 flex flex-col gap-4 w-full max-w-full overflow-hidden transition-all hover:shadow-lg relative elevation-1",
+      "!p-4 border border-white/5 flex flex-col gap-4 w-full max-w-full overflow-hidden transition-all hover:shadow-lg relative",
       !product.is_active && "opacity-75 grayscale-[0.3] bg-muted/20",
       className
     )}>
@@ -274,34 +293,87 @@ export const ProductCard: React.FC<any> = ({
           </div>
         )}
 
+        {/* Accessibility-Fix: FC badge solo si hay imagen (necesita posicionarse sobre ella). */}
         {hasImage && (
-          <div className="absolute top-2 right-2 flex flex-col gap-1 items-end">
-            {!product.is_active && (
-              <div className="bg-danger text-foreground text-xs font-black uppercase tracking-widest px-2 py-0.5 rounded-full shadow-lg">
-                Inactivo
-              </div>
-            )}
-            {/* UX-01: Incomplete product badge */}
-            {product.is_complete === false && (
-              <div className="bg-amber-500 text-foreground text-xs font-black uppercase tracking-widest px-2 py-0.5 rounded-full shadow-lg border border-white/20">
-                Incompleto
-              </div>
-            )}
-            {product.price < (product.cost_price || 0) && (
-              <div className="bg-danger text-foreground text-xs font-black uppercase tracking-widest px-2 py-0.5 rounded-full shadow-lg border border-white/20 animate-pulse">
-                ALERTA: Margen Negativo
-              </div>
-            )}
-            {variant === 'inventory' && (
-              <div
+          <div className="absolute top-2 left-2 flex flex-col gap-1 items-start z-10">
+            {fcStatus && variant === 'catalog' && (
+              <button
+                type="button"
+                onClick={(e: React.MouseEvent) => { e.stopPropagation(); onViewFC?.(); }}
                 className={cn(
-                  "text-xs font-black uppercase tracking-widest px-2 py-0.5 rounded-full border shadow-sm backdrop-blur-md",
-                  isLowStock ? "bg-danger/20 text-danger border-danger/30" : "bg-success/20 text-success border-success/30"
+                  "flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest shadow-lg backdrop-blur-sm border border-white/10 transition-all hover:scale-105 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1",
+                  fcBadgeColors[fcStatus]?.bg || 'bg-muted-foreground/40',
+                  fcBadgeColors[fcStatus]?.text || 'text-white'
                 )}
+                title={fcStatus === 'vigente' ? 'Ver Ficha de Costo' : fcStatus === 'pendiente' ? 'Generar Ficha de Costo' : 'Sin FC'}
+                aria-label={`FC: ${fcStatus}`}
               >
-                {isLowStock ? 'Stock Bajo' : 'En Stock'}
-              </div>
+                <span className={cn("w-1.5 h-1.5 rounded-full shrink-0", fcBadgeColors[fcStatus]?.dot || 'bg-white/80')} />
+                FC
+              </button>
             )}
+          </div>
+        )}
+      </div>
+
+      {/* ════════════════════════════════════════════════════════════════════
+          Visual Hierarchy Redesign:
+          ════════════════════════════════════════════════════════════════════
+          1. ALERTA: Margen Negativo (CRITICAL — losing money on every sale)
+             → Most prominent: solid red-600, white text, pulse, icon, larger
+          2. Inactivo (product disabled — can't sell)
+             → Medium: solid dark/gray bg, white text
+          3. Incompleto (missing data — NOT urgent, just informational)
+             → Least prominent: translucent/outline yellow, smaller, subtle
+          4. Stock badges (informational)
+             → Translucent, readable but not competing with alerts
+          ════════════════════════════════════════════════════════════════════ */}
+      <div className="absolute top-2 right-2 flex flex-col gap-1 items-end z-10 pointer-events-none">
+        {/* ── 1. CRITICAL: Margen Negativo (losing money) ──
+            Usamos bg-red-600 (Tailwind sólido) en vez de bg-danger porque
+            --danger en dark mode es #f87171 (coral suave) que no transmite
+            urgencia. bg-red-600 = #dc2626 siempre = rojo saturado = ALERTA.
+            Icono + pulse + texto más grande para máxima visibilidad. */}
+        {product.price < (product.cost_price || 0) && (
+          <div className="flex items-center gap-1 bg-red-600 text-white text-xs font-black uppercase tracking-widest px-2.5 py-1 rounded-full shadow-lg shadow-red-600/30 animate-pulse pointer-events-auto ring-2 ring-red-600/50">
+            <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+            <span>Margen Negativo</span>
+          </div>
+        )}
+        {/* ── 2. Inactivo (can't sell — medium priority) ──
+            Fondo gris oscuro sólido + texto blanco. No compite con la alerta roja. */}
+        {!product.is_active && (
+          <div className="bg-gray-800 dark:bg-gray-700 text-white text-xs font-black uppercase tracking-widest px-2 py-0.5 rounded-full shadow-md pointer-events-auto">
+            Inactivo
+          </div>
+        )}
+        {/* ── 3. Incompleto (missing data — LOW priority, just informational) ──
+            Antes: bg-warning sólido amarillo brillante → demasiado llamativo.
+            Ahora: bg-warning/15 translúcido + borde outline + text-warning.
+            Es sutil pero visible, no compite con alertas críticas.
+            Tooltip muestra qué campos faltan para completar el producto. */}
+        {isProductIncomplete(product) && (
+          <div
+            className="flex items-center gap-1 bg-warning/15 text-warning border border-warning/30 text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full shadow-sm pointer-events-auto cursor-help backdrop-blur-sm"
+            title={getIncompleteSummary(product)}
+            aria-label={`Producto incompleto. ${getIncompleteSummary(product)}`}
+          >
+            <Info className="w-3 h-3 shrink-0" />
+            <span>Incompleto</span>
+          </div>
+        )}
+        {/* ── 4. Stock badges (informational) ──
+            Translúcidos, legibles pero no compiten con alertas. */}
+        {variant === 'inventory' && (
+          <div
+            className={cn(
+              "text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border shadow-sm backdrop-blur-md pointer-events-auto",
+              isLowStock
+                ? "bg-red-600/20 text-red-400 dark:text-red-300 border-red-500/30"
+                : "bg-success/15 text-success border-success/30"
+            )}
+          >
+            {isLowStock ? 'Stock Bajo' : 'En Stock'}
           </div>
         )}
       </div>
@@ -354,7 +426,7 @@ export const ProductCard: React.FC<any> = ({
         </div>
 
         {variant === 'inventory' && (
-           <div className="neu-inset-sm !p-3 bg-background/50 border border-white/5 mb-4">
+           <div className="!p-3 bg-background/50 border border-white/5 mb-4">
               <div className="flex justify-between items-center">
                   <span className="text-xs font-black uppercase text-muted-foreground tracking-widest">Stock Disponible</span>
                   <span className={cn("font-black text-xl", isLowStock ? "text-danger" : "text-foreground")}>
@@ -380,46 +452,80 @@ export const ProductCard: React.FC<any> = ({
                   onClick={() => onEdit(product)}
                 />
               )}
-              <div className="grid grid-cols-2 gap-2">
-                {onViewPrices && (
-                  <SecondaryButton
-                    label="Precios"
-                    icon={DollarSign}
-                    onClick={() => onViewPrices(product)}
-                    className="w-full"
-                  />
-                )}
-                {variant === 'catalog' && (
-                  <>
-                    {onPrintLabel && (
-                      <SecondaryButton
-                        label="Etiqueta"
-                        icon={Printer}
-                        onClick={() => onPrintLabel(product)}
-                        className="w-full"
-                      />
-                    )}
-                    {product.has_movements ? (
-                      <SecondaryButton
-                        label={product.is_active ? "Desactivar" : "Reactivar"}
-                        icon={product.is_active ? Trash2 : RefreshCw}
-                        onClick={() => onToggleActive?.(product)}
-                        className={cn(
-                          "w-full",
-                          !product.is_active && "bg-success/10 text-success border-success/20 hover:bg-success/20"
-                        )}
-                      />
-                    ) : (
-                      <SecondaryButton
-                        label="Eliminar"
-                        icon={Trash2}
-                        onClick={() => onDelete?.(product)}
-                        className="w-full text-danger border-danger/20 hover:bg-danger/10"
-                      />
-                    )}
-                  </>
-                )}
-              </div>
+              {/* CM-2.10: Botón Clonar en Grid (antes solo en tabla) */}
+              {onClone && variant === 'catalog' && (
+                <SecondaryButton
+                  label="Duplicar"
+                  icon={Copy}
+                  onClick={() => onClone(product)}
+                  className="w-full"
+                />
+              )}
+              {/* Fila: Generar FC + Desactivar juntos */}
+              {variant === 'catalog' && (
+                <div className="grid grid-cols-2 gap-2">
+                  {fcStatus && onViewFC && (
+                    <SecondaryButton
+                      label={fcStatus === 'vigente' ? 'Ver FC' : fcStatus === 'pendiente' ? 'Generar FC' : 'FC'}
+                      icon={FileText}
+                      onClick={onViewFC}
+                      className={cn(
+                        'w-full',
+                        fcStatus === 'vigente' && 'text-success border-success/20',
+                        fcStatus === 'pendiente' && 'text-warning border-warning/20 animate-pulse',
+                      )}
+                    />
+                  )}
+                  {product.has_movements ? (
+                    <SecondaryButton
+                      label={product.is_active ? "Desactivar" : "Reactivar"}
+                      icon={product.is_active ? Trash2 : RefreshCw}
+                      onClick={() => onToggleActive?.(product)}
+                      className={cn(
+                        "w-full",
+                        !product.is_active && "bg-success/10 text-success border-success/20 hover:bg-success/20"
+                      )}
+                    />
+                  ) : (
+                    <SecondaryButton
+                      label="Eliminar"
+                      icon={Trash2}
+                      onClick={() => onDelete?.(product)}
+                      className="w-full text-danger border-danger/20 hover:bg-danger/10"
+                    />
+                  )}
+                </div>
+              )}
+              {/* Fila: Precios + Etiqueta (si aplica) */}
+              {variant === 'catalog' && (onViewPrices || onPrintLabel) && (
+                <div className="grid grid-cols-2 gap-2">
+                  {onViewPrices && (
+                    <SecondaryButton
+                      label="Precios"
+                      icon={DollarSign}
+                      onClick={() => onViewPrices(product)}
+                      className="w-full"
+                    />
+                  )}
+                  {onPrintLabel && (
+                    <SecondaryButton
+                      label="Etiqueta"
+                      icon={Printer}
+                      onClick={() => onPrintLabel(product)}
+                      className="w-full"
+                    />
+                  )}
+                </div>
+              )}
+              {/* Precios para variant no-catalog */}
+              {variant !== 'catalog' && onViewPrices && (
+                <SecondaryButton
+                  label="Precios"
+                  icon={DollarSign}
+                  onClick={() => onViewPrices(product)}
+                  className="w-full"
+                />
+              )}
             </>
           )}
         </div>
@@ -429,28 +535,30 @@ export const ProductCard: React.FC<any> = ({
 };
 
 export const ViewSwitcher: React.FC<{ currentView: 'grid' | 'table'; onViewChange: (view: 'grid' | 'table') => void }> = ({ currentView, onViewChange }) => (
-  <div className="flex p-1 bg-muted/50 rounded-xl border border-border">
+  <div className="flex p-1 bg-muted/50 rounded-xl border border-border shadow-sm" role="group" aria-label="Cambiar vista de productos">
     <button
+      type="button"
       onClick={() => onViewChange('grid')}
       className={cn(
-        "p-2 rounded-lg transition-all",
+        "p-2.5 min-h-[44px] min-w-[44px] rounded-lg transition-all flex items-center justify-center",
         currentView === 'grid' ? "bg-background text-primary shadow-sm" : "text-muted-foreground hover:text-foreground"
       )}
       aria-label="Vista de cuadrícula"
       aria-pressed={currentView === 'grid'}
     >
-      <LayoutGrid className="w-4 h-4" />
+      <LayoutGrid className="w-5 h-5" />
     </button>
     <button
+      type="button"
       onClick={() => onViewChange('table')}
       className={cn(
-        "p-2 rounded-lg transition-all",
+        "p-2.5 min-h-[44px] min-w-[44px] rounded-lg transition-all flex items-center justify-center",
         currentView === 'table' ? "bg-background text-primary shadow-sm" : "text-muted-foreground hover:text-foreground"
       )}
       aria-label="Vista de lista"
       aria-pressed={currentView === 'table'}
     >
-      <List className="w-4 h-4" />
+      <List className="w-5 h-5" />
     </button>
   </div>
 );

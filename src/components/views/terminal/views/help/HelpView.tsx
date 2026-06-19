@@ -152,7 +152,7 @@ export default function HelpView() {
                 aria-label="Buscar documentación"
               />
               {searchQuery && (
-                <button
+                <button type="button"
                   onClick={() => setSearchQuery('')}
                   className="absolute right-2.5 top-1/2 -translate-y-1/2 w-5 h-5 rounded-md hover:bg-muted flex items-center justify-center transition-colors"
                 >
@@ -162,7 +162,7 @@ export default function HelpView() {
             </div>
 
             {/* Reading mode toggle */}
-            <button
+            <button type="button"
               onClick={() => setIsReadingMode(!isReadingMode)}
               className={cn(
                 "flex items-center gap-1.5 px-3 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all border",

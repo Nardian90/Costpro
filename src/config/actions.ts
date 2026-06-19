@@ -74,6 +74,42 @@ export const SYSTEM_ACTIONS: Action[] = [
     route: 'pos',
     description: 'Registra ventas directas y genera comprobantes.'
   },
+  // M-5 (IA Audit): acciones faltantes añadidas para que CommandPalette (Ctrl+K)
+  // pueda buscar TODAS las vistas del módulo MULTI-TIENDA. Antes estas vistas
+  // solo eran accesibles vía sidebar, obligando al usuario a navegar manualmente.
+  // Ahora se pueden buscar y abrir con Cmd+K.
+  {
+    id: 'sales-hub',
+    label: 'Hub de Venta',
+    icon: ShoppingCart,
+    keywords: ['venta', 'hub', 'terminal', 'tabla ipv', 'catálogo', 'historial', 'arqueo', 'venta por conteo', 'ofertas'],
+    route: 'sales-hub',
+    description: 'Hub central de venta con accesos a Terminal, Tabla IPV, Catálogo, Historial, Arqueo y Venta por Conteo.'
+  },
+  {
+    id: 'ofertas',
+    label: 'Ofertas Comerciales',
+    icon: FileText,
+    keywords: ['ofertas', 'promociones', 'descuentos', 'combos', '2x1', 'rebajas'],
+    route: 'ofertas',
+    description: 'Gestiona ofertas y promociones comerciales activas.'
+  },
+  {
+    id: 'purchase-orders',
+    label: 'Órdenes de Compra',
+    icon: ClipboardList,
+    keywords: ['ordenes', 'compra', 'pedidos', 'proveedores', 'abastecimiento', 'oc', 'po'],
+    route: 'purchase-orders',
+    description: 'Crea y gestiona pedidos a proveedores.'
+  },
+  {
+    id: 'labels',
+    label: 'Etiquetas y Códigos',
+    icon: QrCode,
+    keywords: ['etiquetas', 'codigos', 'barras', 'qr', 'imprimir', 'etiqueta producto'],
+    route: 'labels',
+    description: 'Genera etiquetas y códigos de barras/QR para productos.'
+  },
   {
     id: 'sales',
     label: 'Historial de Ventas',

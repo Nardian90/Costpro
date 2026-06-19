@@ -156,7 +156,7 @@ export function usePOSCartExports({ lastSale }: UsePOSCartExportsOptions) {
     try {
       const canvas = await html2canvas(element, {
         scale: 2,
-        backgroundColor: "#ffffff",
+        backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--background').trim() || '#ffffff',
       });
       const imgData = canvas.toDataURL("image/jpeg", 0.9);
       const link = document.createElement("a");

@@ -5,8 +5,8 @@ import { cn } from "@/lib/utils";
 import type { POSCartDiscountProps } from "./POSCart.types";
 
 // FIX-BPOS-010: Contextual quick-select values per discount type
-const PERCENTAGE_PRESETS = [0, 5, 10, 15];
-const FIXED_PRESETS = [0, 5, 10, 20];
+const PERCENTAGE_PRESETS = [0, 5, 10, 15, 20];
+const FIXED_PRESETS = [0, 5, 10, 20, 50];
 
 export const POSCartDiscountModal = ({
   discount,
@@ -23,6 +23,7 @@ export const POSCartDiscountModal = ({
         </span>
         <div className="flex gap-1 bg-background p-0.5 rounded-lg border border-border">
           <button
+            type="button"
             onClick={() =>
               setDiscount({
                 type: "percentage",
@@ -40,6 +41,7 @@ export const POSCartDiscountModal = ({
             %
           </button>
           <button
+            type="button"
             onClick={() =>
               setDiscount({
                 type: "fixed",
@@ -71,6 +73,7 @@ export const POSCartDiscountModal = ({
           return (
             <button
               key={d}
+              type="button"
               onClick={() =>
                 setDiscount({
                   type: discount?.type || "percentage",
@@ -98,13 +101,15 @@ export const POSCartDiscountModal = ({
         <input
           type="number"
           min="0"
+          max={isPercentage ? "100" : undefined}
+          step={isPercentage ? "1" : "0.01"}
           value={discount?.value || ""}
-          onChange={(e) =>
-            setDiscount({
-              type: discount?.type || "percentage",
-              value: parseFloat(e.target.value) || 0,
-            })
-          }
+          onChange={(e) => {
+            let val = parseFloat(e.target.value) || 0;
+            if (isPercentage) val = Math.min(100, Math.max(0, val));
+            else val = Math.max(0, val);
+            setDiscount({ type: discount?.type || "percentage", value: val });
+          }}
           aria-label="Valor del descuento"
           className="w-full pl-7 p-2 min-h-[44px] rounded-xl border border-border bg-background text-xs font-bold focus:ring-1 focus:ring-primary outline-none"
           placeholder={isPercentage ? "Ej: 10" : "Ej: 50.00"}

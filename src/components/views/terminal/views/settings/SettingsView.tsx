@@ -53,7 +53,7 @@ export default function SettingsView() {
       // FIX-BUG-LOG-016: Explicit error check with toast and early return
       if (error) { toast.error('Error al cargar llaves de AI: ' + error.message); return; }
       setAiKeys(data || []);
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast.error('Error inesperado al cargar llaves de AI');
     } finally {
       setIsLoadingKeys(false);
@@ -79,7 +79,7 @@ export default function SettingsView() {
       setNewKey({ provider: 'gemini', label: '', api_key: '' });
       setIsAddingKey(false);
       toast.success('Llave agregada correctamente');
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast.error('Error inesperado al guardar la llave');
     }
   };
@@ -91,7 +91,7 @@ export default function SettingsView() {
       if (error) { toast.error('Error al eliminar la llave: ' + error.message); return; }
       setAiKeys(aiKeys.filter(k => k.id !== id));
       toast.success('Llave eliminada');
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast.error('Error inesperado al eliminar');
     }
   };
@@ -108,7 +108,7 @@ export default function SettingsView() {
       if (error) { toast.error('Error al actualizar estado: ' + error.message); return; }
       setAiKeys(aiKeys.map(k => k.id === key.id ? { ...k, is_active: !key.is_active } : k));
       toast.success('Estado actualizado');
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast.error('Error inesperado al actualizar estado');
     }
   };
@@ -126,7 +126,7 @@ export default function SettingsView() {
       setAiKeys(aiKeys.map(k => k.id === id ? { ...k, ...updatedFields } : k));
       setEditingKeyId(null);
       toast.success('Llave actualizada');
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast.error('Error inesperado al actualizar');
     }
   };
@@ -147,18 +147,18 @@ export default function SettingsView() {
             <div className="font-black text-sm uppercase tracking-tight">Tema del Sistema</div>
             <div className="grid grid-cols-2 gap-4">
               {/* Light Theme */}
-              <button
+              <button type="button"
                 onClick={() => { setThemePreference('light'); }}
                 className={cn(
                   "p-4 rounded-xl border flex flex-col items-center gap-2 transition-all active:scale-95",
                   themePreference === 'light' || theme === 'light' ? "border-primary bg-primary/5 shadow-lg shadow-primary/10" : "border-border hover:bg-muted"
                 )}
               >
-                <Sun className={cn("w-5 h-5", themePreference === 'light' || theme === 'light' ? "text-amber-500" : "text-muted-foreground")} />
+                <Sun className={cn("w-5 h-5", themePreference === 'light' || theme === 'light' ? "text-warning" : "text-muted-foreground")} />
                 <span className="text-[10px] font-black uppercase tracking-widest text-center">Claro</span>
               </button>
               {/* Dark Theme */}
-              <button
+              <button type="button"
                 onClick={() => { setThemePreference('dark'); }}
                 className={cn(
                   "p-4 rounded-xl border flex flex-col items-center gap-2 transition-all active:scale-95",
@@ -174,7 +174,7 @@ export default function SettingsView() {
             <div className="mt-6 pt-6 border-t border-border">
               <div className="font-black text-sm uppercase tracking-tight mb-3">Modo de Conectividad</div>
               <div className="grid grid-cols-2 gap-4">
-                <button
+                <button type="button"
                   onClick={() => setConnectivity('4g')}
                   className={cn(
                     "p-4 rounded-xl border flex flex-col items-center gap-2 transition-all active:scale-95",
@@ -185,14 +185,14 @@ export default function SettingsView() {
                   <span className="text-[10px] font-black uppercase tracking-widest text-center">4G Rápido</span>
                   <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">Animaciones completas</span>
                 </button>
-                <button
+                <button type="button"
                   onClick={() => setConnectivity('3g')}
                   className={cn(
                     "p-4 rounded-xl border flex flex-col items-center gap-2 transition-all active:scale-95",
-                    connectivity === '3g' ? "border-amber-500 bg-amber-500/5 shadow-lg shadow-amber-500/10" : "border-border hover:bg-muted"
+                    connectivity === '3g' ? "border-warning bg-warning/5 shadow-lg shadow-warning/10" : "border-border hover:bg-muted"
                   )}
                 >
-                  <WifiOff className={cn("w-5 h-5", connectivity === '3g' ? "text-amber-500" : "text-muted-foreground")} />
+                  <WifiOff className={cn("w-5 h-5", connectivity === '3g' ? "text-warning" : "text-muted-foreground")} />
                   <span className="text-[10px] font-black uppercase tracking-widest text-center">3G Ahorro</span>
                   <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">Animaciones reducidas</span>
                 </button>
@@ -213,7 +213,7 @@ export default function SettingsView() {
                   </div>
                 </div>
               </div>
-              <button
+              <button type="button"
                 onClick={() => setShowQueries(!showQueries)}
                 className={cn(
                   "px-4 py-2.5 min-h-[44px] rounded-lg font-black uppercase text-xs tracking-widest transition-all",
@@ -233,7 +233,7 @@ export default function SettingsView() {
               <Bot className="w-5 h-5" />
               Configuración de Darian AI
             </h3>
-            <button
+            <button type="button"
               onClick={() => setIsAddingKey(true)}
               className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-xl font-black uppercase text-xs tracking-widest hover:scale-105 active:scale-95 transition-all shadow-lg shadow-primary/20"
             >
@@ -289,8 +289,8 @@ export default function SettingsView() {
                   </div>
                 </div>
                 <div className="flex gap-2 justify-end">
-                  <button onClick={() => setIsAddingKey(false)} className="px-6 py-2.5 rounded-xl border border-border text-[10px] font-black uppercase tracking-widest hover:bg-muted transition-colors">Cancelar</button>
-                  <button onClick={handleAddKey} className="px-6 py-2.5 rounded-xl bg-primary text-primary-foreground text-[10px] font-black uppercase tracking-widest shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all">Guardar Llave</button>
+                  <button type="button" onClick={() => setIsAddingKey(false)} className="px-6 py-2.5 rounded-xl border border-border text-[10px] font-black uppercase tracking-widest hover:bg-muted transition-colors">Cancelar</button>
+                  <button type="button" onClick={handleAddKey} className="px-6 py-2.5 rounded-xl bg-primary text-primary-foreground text-[10px] font-black uppercase tracking-widest shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all">Guardar Llave</button>
                 </div>
               </div>
             )}
@@ -342,11 +342,11 @@ export default function SettingsView() {
                         </td>
                         <td className="px-6 py-4" aria-label="Estado">
                           <div className="flex justify-center">
-                            <button
+                            <button type="button"
                               onClick={() => handleToggleKeyStatus(key)}
                               className={cn(
                                 "px-3 py-2 min-h-[44px] rounded-full text-[9px] font-black uppercase tracking-widest transition-all",
-                                key.is_active ? "bg-green-500/10 text-green-600 border border-green-500/20" : "bg-muted text-muted-foreground border border-border"
+                                key.is_active ? "bg-success/10 text-success border border-success/20" : "bg-muted text-muted-foreground border border-border"
                               )}
                             >
                               {key.is_active ? 'Activa' : 'Inactiva'}
@@ -355,13 +355,13 @@ export default function SettingsView() {
                         </td>
                         <td className="px-6 py-4" aria-label="Acciones">
                           <div className="flex justify-end items-center gap-3">
-                            <button
+                            <button type="button"
                               onClick={() => setEditingKeyId(key.id)}
                               className="p-3 min-w-[44px] min-h-[44px] hover:bg-primary/10 rounded-xl text-muted-foreground hover:text-primary transition-colors"
                             >
                               <Edit2 className="w-3.5 h-3.5" />
                             </button>
-                            <button
+                            <button type="button"
                               onClick={() => handleDeleteKey(key.id)}
                               className="p-3 min-w-[44px] min-h-[44px] hover:bg-destructive/10 rounded-xl text-muted-foreground hover:text-destructive transition-colors"
                             >
@@ -406,7 +406,7 @@ export default function SettingsView() {
                       </div>
                     </div>
                   </div>
-                  <button
+                  <button type="button"
                     onClick={async () => {
                       const { error } = await supabase
                         .from('tax_configurations')
@@ -421,7 +421,7 @@ export default function SettingsView() {
                     }}
                     className={cn(
                       "px-4 py-2.5 min-h-[44px] rounded-lg font-black uppercase text-xs tracking-widest transition-all",
-                      tax.is_active ? "bg-green-500/10 text-green-600 border border-green-500/20" : "bg-muted text-muted-foreground border border-border"
+                      tax.is_active ? "bg-success/10 text-success border border-success/20" : "bg-muted text-muted-foreground border border-border"
                     )}
                   >
                     {tax.is_active ? 'Activo' : 'Inactivo'}
@@ -449,11 +449,11 @@ export default function SettingsView() {
                   <div className="font-black text-sm uppercase tracking-tight">{notif.label}</div>
                   <div className="text-xs font-bold text-muted-foreground uppercase mt-1 tracking-widest">{notif.desc}</div>
                 </div>
-                <button
+                <button type="button"
                   onClick={() => setNotifications({ ...notifications, [notif.id]: !notifications[notif.id as keyof typeof notifications] })}
                   className={cn(
                     "px-4 py-2.5 min-h-[44px] rounded-lg font-black uppercase text-xs tracking-widest transition-all",
-                    notif.active ? "bg-green-500/10 text-green-600 border border-green-500/20" : "bg-muted text-muted-foreground border border-border"
+                    notif.active ? "bg-success/10 text-success border border-success/20" : "bg-muted text-muted-foreground border border-border"
                   )}
                 >
                   {notif.active ? 'Activado' : 'Desactivado'}

@@ -73,8 +73,8 @@ export const CostSheetAuditLog: React.FC<CostSheetAuditLogProps> = memo(({ audit
 function StatusIcon({ type }: { type: AuditEntry['type'] }) {
     switch (type) {
         case 'ERROR': return <AlertTriangle className="w-4 h-4 text-destructive" />;
-        case 'WARNING': return <AlertTriangle className="w-4 h-4 text-amber-500" />;
-        case 'RULE_APPLIED': return <Zap className="w-4 h-4 text-green-500" />;
+        case 'WARNING': return <AlertTriangle className="w-4 h-4 text-warning" />;
+        case 'RULE_APPLIED': return <Zap className="w-4 h-4 text-success" />;
         case 'CYCLE_DETECTED': return <RefreshCw className="w-4 h-4 text-purple-500 animate-spin-slow" />;
         default: return <Info className="w-4 h-4 text-primary/50" />;
     }

@@ -630,10 +630,10 @@ function CostSheetNarrative({ data, calculatedValues = {}, calculatedHeader = {}
 
   // ── Render helpers ──
   const StatusBadge = ({ status, label }: { status: string; label: string }) => {
-    const cls = status === 'pass' ? 'bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/20'
-      : status === 'warning' ? 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20'
-      : status === 'fail' ? 'bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/20'
-      : 'bg-slate-500/10 text-slate-500 border-slate-500/20';
+    const cls = status === 'pass' ? 'bg-primary/10 text-blue-700 dark:text-blue-400 border-primary/20'
+      : status === 'warning' ? 'bg-warning/10 text-amber-700 dark:text-amber-400 border-warning/20'
+      : status === 'fail' ? 'bg-destructive/10 text-destructive dark:text-red-400 border-destructive/20'
+      : 'bg-muted/10 text-muted-foreground border-muted/20';
     const Icon = status === 'pass' ? CheckCircle2 : status === 'warning' ? AlertTriangle : status === 'fail' ? AlertTriangle : Minus;
     return (
       <span className={cn("inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border", cls)}>
@@ -645,10 +645,10 @@ function CostSheetNarrative({ data, calculatedValues = {}, calculatedHeader = {}
 
   const InsightCard = ({ icon: Icon, text, type }: { icon: any; text: string; type: string }) => {
     const colorMap: Record<string, string> = {
-      info: 'border-blue-500/20 bg-blue-500/5 text-blue-900 dark:text-blue-200',
-      warning: 'border-amber-500/20 bg-amber-500/5 text-amber-900 dark:text-amber-200',
-      success: 'border-blue-500/20 bg-blue-500/5 text-blue-900 dark:text-blue-200',
-      danger: 'border-red-500/20 bg-red-500/5 text-red-900 dark:text-red-200',
+      info: 'border-primary/20 bg-primary/5 text-blue-900 dark:text-blue-200',
+      warning: 'border-warning/20 bg-warning/5 text-amber-900 dark:text-amber-200',
+      success: 'border-primary/20 bg-primary/5 text-blue-900 dark:text-blue-200',
+      danger: 'border-destructive/20 bg-destructive/5 text-red-900 dark:text-red-200',
     };
     return (
       <div className={cn("flex items-start gap-3 p-3 rounded-xl border text-xs leading-relaxed", colorMap[type] || colorMap.info)}>
@@ -690,11 +690,11 @@ function CostSheetNarrative({ data, calculatedValues = {}, calculatedHeader = {}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 divide-x divide-border/20">
           {[
             { label: 'Costo Total', value: fmt(metrics.s5), color: 'text-primary' },
-            { label: 'Total Gastos', value: fmt(metrics.s11), color: 'text-blue-600 dark:text-blue-400' },
+            { label: 'Total Gastos', value: fmt(metrics.s11), color: 'text-primary dark:text-blue-400' },
             { label: 'Costo + Gastos', value: fmt(metrics.s12), color: 'text-foreground' },
             { label: 'Utilidad', value: `${metrics.margenPct.toFixed(1)}%`, color: 'text-foreground' },
             { label: 'Precio Final', value: fmt(metrics.precioFinal), color: 'text-violet-600 dark:text-violet-400' },
-            { label: 'Cumplimiento', value: `${compliancePct}%`, color: compliancePct >= 80 ? 'text-blue-600 dark:text-blue-400' : 'text-amber-600 dark:text-amber-400' },
+            { label: 'Cumplimiento', value: `${compliancePct}%`, color: compliancePct >= 80 ? 'text-primary dark:text-blue-400' : 'text-warning dark:text-amber-400' },
           ].map(kpi => (
             <div key={kpi.label} className="px-4 py-3 text-center">
               <div className="text-[8px] font-black uppercase tracking-widest text-muted-foreground/60 mb-0.5">{kpi.label}</div>
@@ -706,8 +706,8 @@ function CostSheetNarrative({ data, calculatedValues = {}, calculatedHeader = {}
 
       {/* ── Product Identification Card ── */}
       <div className="border border-border/60 rounded-2xl overflow-hidden shadow-sm bg-card">
-        <div className="flex items-center gap-2 px-4 sm:px-5 py-3 bg-slate-500/5 border-b border-border/20">
-          <Building2 className="w-4 h-4 text-slate-500" />
+        <div className="flex items-center gap-2 px-4 sm:px-5 py-3 bg-muted/5 border-b border-border/20">
+          <Building2 className="w-4 h-4 text-muted-foreground" />
           <h3 className="text-[11px] font-black uppercase tracking-[0.15em] text-foreground">Datos del Producto</h3>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 divide-x divide-y divide-border/10">
@@ -851,7 +851,7 @@ function CostSheetNarrative({ data, calculatedValues = {}, calculatedHeader = {}
         {/* Direct vs Indirect */}
         <div className="border border-border/60 rounded-2xl overflow-hidden shadow-sm bg-card">
           <div className="flex items-center gap-2 px-4 sm:px-5 py-3 border-b border-border/20">
-            <Activity className="w-4 h-4 text-amber-500" />
+            <Activity className="w-4 h-4 text-warning" />
             <h3 className="text-[11px] font-black uppercase tracking-[0.15em]">Costos Directos vs Gastos</h3>
           </div>
           <div className="p-4">
@@ -884,7 +884,7 @@ function CostSheetNarrative({ data, calculatedValues = {}, calculatedHeader = {}
                 <span className="font-bold text-muted-foreground">Costo Directo</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <div className="w-3 h-3 rounded bg-amber-500" />
+                <div className="w-3 h-3 rounded bg-warning" />
                 <span className="font-bold text-muted-foreground">Gastos</span>
               </div>
               <div className="flex items-center gap-1.5">
@@ -938,18 +938,18 @@ function CostSheetNarrative({ data, calculatedValues = {}, calculatedHeader = {}
             <div key={annex.id} className="px-4 py-3 text-center">
               <div className={cn(
                 "w-10 h-10 rounded-xl mx-auto mb-2 flex items-center justify-center",
-                annex.hasData ? "bg-emerald-500/10" : "bg-red-500/10"
+                annex.hasData ? "bg-success/10" : "bg-destructive/10"
               )}>
                 {annex.hasData
-                  ? <CheckCircle2 className="w-5 h-5 text-emerald-500" />
-                  : <AlertTriangle className="w-5 h-5 text-red-500" />}
+                  ? <CheckCircle2 className="w-5 h-5 text-success" />
+                  : <AlertTriangle className="w-5 h-5 text-destructive" />}
               </div>
               <div className="text-[11px] font-black text-foreground">Anexo {annex.id}</div>
               <div className="text-[9px] text-muted-foreground truncate mt-0.5">{annex.title}</div>
               <div className="text-[10px] font-bold mt-1">
                 {annex.hasData
                   ? <span className="text-foreground">{annex.rowCount} registros</span>
-                  : <span className="text-red-500">Sin datos</span>}
+                  : <span className="text-destructive">Sin datos</span>}
               </div>
             </div>
           ))}
@@ -965,9 +965,9 @@ function CostSheetNarrative({ data, calculatedValues = {}, calculatedHeader = {}
           </div>
           <div className={cn(
             "px-3 py-1 rounded-full text-[10px] font-black",
-            compliancePct >= 80 ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
-              : compliancePct >= 50 ? "bg-amber-500/10 text-amber-700 dark:text-amber-400"
-              : "bg-red-500/10 text-red-700 dark:text-red-400"
+            compliancePct >= 80 ? "bg-success/10 text-emerald-700 dark:text-emerald-400"
+              : compliancePct >= 50 ? "bg-warning/10 text-amber-700 dark:text-amber-400"
+              : "bg-destructive/10 text-destructive dark:text-red-400"
           )}>
             {compliancePct}% cumplimiento
           </div>
@@ -1001,7 +1001,7 @@ function CostSheetNarrative({ data, calculatedValues = {}, calculatedHeader = {}
               <div
                 className={cn(
                   "h-full rounded-full transition-all duration-700",
-                  compliancePct >= 80 ? "bg-primary" : compliancePct >= 50 ? "bg-amber-500" : "bg-red-500"
+                  compliancePct >= 80 ? "bg-primary" : compliancePct >= 50 ? "bg-warning" : "bg-destructive"
                 )}
                 style={{ width: `${compliancePct}%` }}
               />
@@ -1052,8 +1052,8 @@ function CostSheetNarrative({ data, calculatedValues = {}, calculatedHeader = {}
             {[
               { label: 'Costo Unitario', value: fmt(metrics.costoUnitario), icon: Calculator, color: 'text-primary' },
               { label: 'Precio Unitario', value: fmt(metrics.precioUnitario), icon: DollarSign, color: 'text-foreground' },
-              { label: 'Margen Bruto', value: fmt(metrics.precioUnitario - metrics.costoUnitario), icon: TrendingUp, color: metrics.precioUnitario > metrics.costoUnitario ? 'text-foreground' : 'text-red-600 dark:text-red-400' },
-              { label: '% Utilidad', value: `${metrics.margenPct.toFixed(1)}%`, icon: Target, color: metrics.margenPct >= 30 ? 'text-foreground' : 'text-amber-600 dark:text-amber-400' },
+              { label: 'Margen Bruto', value: fmt(metrics.precioUnitario - metrics.costoUnitario), icon: TrendingUp, color: metrics.precioUnitario > metrics.costoUnitario ? 'text-foreground' : 'text-destructive dark:text-red-400' },
+              { label: '% Utilidad', value: `${metrics.margenPct.toFixed(1)}%`, icon: Target, color: metrics.margenPct >= 30 ? 'text-foreground' : 'text-warning dark:text-amber-400' },
             ].map(m => (
               <div key={m.label} className="p-3 rounded-xl bg-muted/30 border border-border/20">
                 <div className="flex items-center gap-1.5 mb-1">
@@ -1069,8 +1069,8 @@ function CostSheetNarrative({ data, calculatedValues = {}, calculatedHeader = {}
 
       {/* ── Insights & Recommendations ── */}
       <div className="border border-border/60 rounded-2xl overflow-hidden shadow-sm bg-card">
-        <div className="flex items-center gap-2 px-4 sm:px-5 py-3 bg-amber-500/5 border-b border-border/20">
-          <Lightbulb className="w-4 h-4 text-amber-500" />
+        <div className="flex items-center gap-2 px-4 sm:px-5 py-3 bg-warning/5 border-b border-border/20">
+          <Lightbulb className="w-4 h-4 text-warning" />
           <h3 className="text-[11px] font-black uppercase tracking-[0.15em]">Hallazgos y Recomendaciones</h3>
         </div>
         <div className="p-4 space-y-2">
@@ -1091,12 +1091,12 @@ function CostSheetNarrative({ data, calculatedValues = {}, calculatedHeader = {}
         compliancePct >= 80
           ? "bg-primary/5 border-primary/20"
           : compliancePct >= 50
-            ? "bg-amber-500/5 border-amber-500/20"
-            : "bg-red-500/5 border-red-500/20"
+            ? "bg-warning/5 border-warning/20"
+            : "bg-destructive/5 border-destructive/20"
       )}>
         <div className={cn(
           "absolute top-0 right-0 p-4 opacity-10",
-          compliancePct >= 80 ? "text-primary" : "text-amber-500"
+          compliancePct >= 80 ? "text-primary" : "text-warning"
         )}>
           <FileCheck className="w-20 h-20" />
         </div>
@@ -1112,7 +1112,7 @@ function CostSheetNarrative({ data, calculatedValues = {}, calculatedHeader = {}
           <div className="flex items-center gap-6 pt-2">
             <div>
               <div className="text-[10px] font-black uppercase text-muted-foreground/60">Cumplimiento</div>
-              <div className={cn("text-xl font-black", compliancePct >= 80 ? "text-foreground" : "text-amber-600")}>{compliancePct}%</div>
+              <div className={cn("text-xl font-black", compliancePct >= 80 ? "text-foreground" : "text-warning")}>{compliancePct}%</div>
             </div>
             <div>
               <div className="text-[10px] font-black uppercase text-muted-foreground/60">Precio Final</div>
@@ -1120,7 +1120,7 @@ function CostSheetNarrative({ data, calculatedValues = {}, calculatedHeader = {}
             </div>
             <div>
               <div className="text-[10px] font-black uppercase text-muted-foreground/60">Margen</div>
-              <div className={cn("text-xl font-black", metrics.margenPct >= 30 ? "text-foreground" : "text-amber-600")}>{metrics.margenPct.toFixed(1)}%</div>
+              <div className={cn("text-xl font-black", metrics.margenPct >= 30 ? "text-foreground" : "text-warning")}>{metrics.margenPct.toFixed(1)}%</div>
             </div>
           </div>
         </div>

@@ -42,12 +42,12 @@ export const resolveProductImage = (product: Product | null | undefined): string
 };
 
 /**
- * Utility to format currency in Spanish (Argentina).
+ * Utility to format currency in Spanish (Cuba).
  */
 export const formatCurrency = (amount: number): string => {
-  return new Intl.NumberFormat('es-AR', {
+  return new Intl.NumberFormat('es-CU', {
     style: 'currency',
-    currency: 'ARS',
+    currency: 'CUP',
     minimumFractionDigits: 2,
   }).format(amount);
 };
@@ -61,7 +61,7 @@ export const formatCurrencyCents = (cents: number): string => {
 
 /**
  * Utility to strip formatting and return a raw number for exports or calculations.
- * Handles es-AR format (thousands: . decimal: ,)
+ * Handles es-CU format (thousands: . decimal: ,)
  */
 export function parseCurrency(value: string | number): number {
   if (typeof value === "number") return value;
@@ -102,7 +102,7 @@ export const formatAccounting = (amount: number): string => {
 };
 
 /**
- * Utility to format dates in Spanish (Argentina) format DD/MM/YYYY.
+ * Utility to format dates in Spanish (Cuba) format DD/MM/YYYY.
  */
 export const formatDate = (date: string | Date | null | undefined): string => {
   try {
@@ -113,7 +113,7 @@ export const formatDate = (date: string | Date | null | undefined): string => {
 
     if (isNaN(d.getTime())) return '—';
 
-    return new Intl.DateTimeFormat('es-AR', {
+    return new Intl.DateTimeFormat('es-CU', {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
@@ -125,7 +125,7 @@ export const formatDate = (date: string | Date | null | undefined): string => {
 };
 
 /**
- * Utility to format time in Spanish (Argentina) format HH:MM:SS.
+ * Utility to format time in Spanish (Cuba) format HH:MM:SS.
  */
 export const formatTime = (date: string | Date | null | undefined): string => {
   try {
@@ -133,7 +133,7 @@ export const formatTime = (date: string | Date | null | undefined): string => {
     const d = new Date(date);
     if (isNaN(d.getTime())) return '—';
 
-    return new Intl.DateTimeFormat('es-AR', {
+    return new Intl.DateTimeFormat('es-CU', {
       hour: '2-digit',
       minute: '2-digit',
       second: '2-digit',
@@ -150,7 +150,7 @@ export const formatTime = (date: string | Date | null | undefined): string => {
  */
 export function safeFormatDate(
   value: string | number | Date | null | undefined,
-  locale = "es-ES"
+  locale = "es-CU"
 ): string {
   if (value === null || value === undefined || value === "") return "—";
 

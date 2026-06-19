@@ -67,7 +67,7 @@ export const WikiSearch: React.FC<WikiSearchProps> = ({ data, onSelect }) => {
 
   return (
     <>
-      <button
+      <button type="button"
         onClick={() => setOpen(true)}
         className="flex items-center gap-2 h-10 w-48 lg:w-64 rounded-xl border bg-muted/50 px-3 text-xs font-black uppercase tracking-widest text-muted-foreground hover:bg-muted transition-all"
       >

@@ -1,17 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabaseClient';
 import { getProductImageUrl } from '@/lib/utils';
+import { rateLimit } from '@/lib/rate-limit';
+import { createApiError } from '@/lib/api-errors';
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
+    // FIX-AUDIT-4: Rate limit public storefront to prevent scraping/enumeration
+    const clientIp = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || request.headers.get('x-real-ip') || 'unknown';
+    const { allowed } = await rateLimit(`storefront:${clientIp}`, { windowMs: 60_000, maxRequests: 60 });
+    if (!allowed) {
+      return NextResponse.json(createApiError('RATE_LIMITED'), { status: 429 });
+    }
+
     const { slug } = await params;
 
     if (!slug || slug.length < 1) {
       return NextResponse.json(
-        { error: 'Slug de tienda es requerido' },
+        createApiError('MISSING_STORE_SLUG'),
         { status: 400 }
       );
     }
@@ -28,15 +37,16 @@ export async function GET(
 
     if (storeError || !store) {
       return NextResponse.json(
-        { error: 'Tienda no encontrada' },
+        createApiError('STORE_NOT_FOUND'),
         { status: 404 }
       );
     }
 
     // Fetch visible products for this store
+    // FIX-SEC-H6: Exclude sensitive fields (precio_empresa, conversion_factor) from public API
     const { data: products, error: productsError } = await supabase
       .from('products')
-      .select('id, name, description, sku, price, precio_empresa, image_url, public_image_url, category, unit_of_measure, stock_current, product_variants(id, name, sku, price, precio_empresa, conversion_factor)')
+      .select('id, name, description, sku, price, image_url, public_image_url, category, unit_of_measure, product_variants(id, name, sku, price)')
       .eq('store_id', store.id)
       .eq('visible_en_tienda', true)
       .eq('is_active', true)
@@ -47,29 +57,10 @@ export async function GET(
       return NextResponse.json({ store, products: [] });
     }
 
-    // Fetch accurate stock from RPC (computed from stock_movements in real-time)
-    let stockMap = new Map<string, number>();
-    try {
-      const { data: rpcProducts } = await supabase.rpc('get_paginated_products', {
-        p_limit: 1000,
-        p_offset: 0,
-        p_store_id: store.id,
-        p_search_term: '',
-        p_category: ''
-      });
-      for (const rp of (rpcProducts || [])) {
-        if (rp.id && rp.stock_current !== undefined) {
-          stockMap.set(rp.id, rp.stock_current);
-        }
-      }
-    } catch (e) {
-      console.warn('[Storefront API] RPC stock fetch failed, using products.stock_current:', e);
-    }
-
-    // Resolve image URLs to full Supabase public URLs and overlay accurate stock from RPC
+    // Resolve image URLs to full Supabase public URLs
+    // FIX-SEC-H6: Removed stock_current from public response (commercial sensitivity)
     const productList = (products || []).map(p => ({
       ...p,
-      stock_current: stockMap.get(p.id) ?? p.stock_current ?? 0,
       image_url: p.image_url ? getProductImageUrl(p.image_url) : null,
       public_image_url: p.public_image_url ? getProductImageUrl(p.public_image_url) : null,
     }));
@@ -81,7 +72,7 @@ export async function GET(
   } catch (error) {
     console.error('Storefront API error:', error);
     return NextResponse.json(
-      { error: 'Error interno del servidor' },
+      createApiError('INTERNAL_ERROR'),
       { status: 500 }
     );
   }

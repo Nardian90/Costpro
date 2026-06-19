@@ -77,7 +77,7 @@ export default function InventoryAdjustmentsView() {
               <div className="flex items-center gap-4">
                 <div className={cn(
                   "w-12 h-12 rounded-xl flex items-center justify-center border shadow-sm transition-transform group-hover:scale-110",
-                  mov.quantity_change > 0 ? "text-green-600 bg-green-500/10 border-green-500/20" : "text-destructive bg-destructive/10 border-destructive/20"
+                  mov.quantity_change > 0 ? "text-success bg-success/10 border-success/20" : "text-destructive bg-destructive/10 border-destructive/20"
                 )}>
                   {mov.quantity_change > 0 ? <ArrowUpRight className="w-6 h-6" /> : <ArrowDownRight className="w-6 h-6" />}
                 </div>
@@ -87,7 +87,7 @@ export default function InventoryAdjustmentsView() {
                     <span className="font-mono text-[10px] font-bold text-muted-foreground bg-muted/50 px-1.5 py-0.5 rounded">{mov.product?.sku || 'S/SKU'}</span>
                     <span className={cn(
                       "text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full",
-                      mov.quantity_change > 0 ? "text-green-600 bg-green-500/10" : "text-destructive bg-destructive/10"
+                      mov.quantity_change > 0 ? "text-success bg-success/10" : "text-destructive bg-destructive/10"
                     )}>
                       {mov.quantity_change > 0 ? 'Aumento (Venta Inv.)' : 'Disminución (Recep. Inv.)'}
                     </span>
@@ -96,7 +96,7 @@ export default function InventoryAdjustmentsView() {
               </div>
 
               <div className="flex flex-col sm:items-end gap-1">
-                <div className={cn("text-[clamp(1.25rem,5vw,1.5rem)] font-black", mov.quantity_change > 0 ? 'text-green-600' : 'text-destructive')}>
+                <div className={cn("text-[clamp(1.25rem,5vw,1.5rem)] font-black tabular-nums", mov.quantity_change > 0 ? 'text-success' : 'text-destructive')}>
                   {mov.quantity_change > 0 ? '+' : ''}{mov.quantity_change}
                   <span className="text-xs ml-1 font-bold">uds</span>
                 </div>

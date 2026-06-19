@@ -104,8 +104,9 @@ export default function TransactionBreakdown() {
         const snapshot = await StockService.takeSnapshot(line.product_cod);
         await StockService.revertReconciliationLine(line.id, snapshot);
         toast.success("Línea revertida exitosamente");
-    } catch (error: any) {
-        toast.error(error.message || "Error al revertir la línea");
+    } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : "Error al revertir la línea";
+        toast.error(message);
     }
   };
 
@@ -239,7 +240,7 @@ export default function TransactionBreakdown() {
                                     {formatCurrencyCents(l.transfer_amount_cents)}T{l.adjustment_type === "REBAJA" ? "R" : l.adjustment_type === "PROPINA" ? "P" : ""}
                                 </Badge>
                                 {l.cash_amount_cents > 0 && (
-                                    <Badge variant="secondary" className="bg-green-50 text-green-700 border-green-100 text-[10px] font-black h-5">
+                                    <Badge variant="secondary" className="bg-green-50 text-success border-green-100 text-[10px] font-black h-5">
                                         <Banknote className="w-3 h-3 mr-1" />
                                         {formatCurrencyCents(l.cash_amount_cents)}E
                                     </Badge>
@@ -252,9 +253,9 @@ export default function TransactionBreakdown() {
                     </TableCell>
                     <TableCell>
                         <Badge variant="outline" className={`text-[10px] font-black uppercase ${
-                            l.payment_status === 'MATCHED' ? 'border-green-200 text-green-600 bg-green-50' :
-                            l.payment_status === 'OVERPAYMENT' ? 'border-orange-200 text-orange-600 bg-orange-50' :
-                            'border-blue-200 text-blue-600'
+                            l.payment_status === 'MATCHED' ? 'border-green-200 text-success bg-green-50' :
+                            l.payment_status === 'OVERPAYMENT' ? 'border-orange-200 text-warning bg-orange-50' :
+                            'border-blue-200 text-primary'
                         }`}>
                             {l.payment_status}
                         </Badge>

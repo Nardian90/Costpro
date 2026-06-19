@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect, useState } from 'react';
 import {
   Search,
   TrendingUp,
@@ -11,7 +11,10 @@ import {
   Sparkles,
   Command,
   Plus,
-  BarChart3
+  BarChart3,
+  ShoppingCart,
+  DollarSign,
+  Percent,
 } from 'lucide-react';
 import { useUIStore, ViewType } from '@/store';
 import { useAuthStore } from '@/store';
@@ -19,8 +22,20 @@ import { getActionsForUser, Action } from '@/config/actions';
 import { getNavigationRoute } from '@/config/navigation/navigation-map';
 import { useDashboardView } from './useDashboardView';
 import { useProducts } from '@/hooks/api/useProducts';
-import { formatCurrency } from '@/lib/utils';
-import { cn } from '@/lib/utils';
+import { formatCurrency, cn } from '@/lib/utils';
+
+/** Format a timestamp to relative time in Spanish */
+function formatRelativeTime(timestamp: number): string {
+  const diff = Date.now() - timestamp;
+  const seconds = Math.floor(diff / 1000);
+  if (seconds < 60) return 'Justo ahora';
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `Hace ${minutes} min`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `Hace ${hours}h`;
+  const days = Math.floor(hours / 24);
+  return `Hace ${days}d`;
+}
 
 export default function OCCView() {
   const { setCurrentView, setActiveCostSection, setIpvActiveTab } = useUIStore();
@@ -34,17 +49,22 @@ export default function OCCView() {
 
   const quickActions = useMemo(() => userActions.slice(0, 8), [userActions]);
 
-  // Recent actions simulation (would come from localStorage in a real effect)
-  const [recentActions, setRecentActions] = React.useState<Action[]>([]);
+  // Recent actions with real timestamps from localStorage
+  const [recentActions, setRecentActions] = React.useState<{ action: Action; timestamp: number }[]>([]);
 
   React.useEffect(() => {
     try {
       const saved = JSON.parse(localStorage.getItem('recent_actions') || '[]');
-      const actions = saved
-        .map((id: string) => userActions.find(a => a.id === id))
-        .filter(Boolean)
+      // saved format: [{ id: string, ts: number }, ...]
+      const entries = (saved as Array<{ id: string; ts?: number }>)
+        .map((entry) => {
+          const action = userActions.find(a => a.id === entry.id);
+          if (!action) return null;
+          return { action, timestamp: entry.ts || Date.now() };
+        })
+        .filter((e): e is { action: Action; timestamp: number } => e !== null)
         .slice(0, 3);
-      setRecentActions(actions);
+      setRecentActions(entries);
     } catch {
       // localStorage may be unavailable in some environments
     }
@@ -56,25 +76,27 @@ export default function OCCView() {
 
   const stats = useMemo(() => {
     const sales = kpis?.gross_sales || 0;
+    const costs = kpis?.cost_of_goods || 0;
     const profit = kpis?.profit || 0;
     const margin = sales > 0 ? (profit / sales) * 100 : 0;
 
+    // FIX UX-006: Trends now show "Sin datos previos" instead of fake hardcoded percentages
     return [
       {
         label: 'Ingresos Totales',
         value: formatCurrency(sales),
-        trend: '+12.5%',
-        up: true,
+        trend: sales > 0 ? 'Operativo' : 'Sin actividad',
+        up: sales > 0,
         icon: TrendingUp,
         color: 'text-primary'
       },
       {
         label: 'Margen Operativo',
         value: `${margin.toFixed(1)}%`,
-        trend: '-0.4%',
-        up: false,
-        icon: TrendingDown,
-        color: 'text-primary'
+        trend: margin > 20 ? 'Saludable' : margin > 0 ? 'Bajo' : 'Sin margen',
+        up: margin > 20,
+        icon: Percent,
+        color: margin > 20 ? 'text-primary' : margin > 0 ? 'text-warning' : 'text-destructive'
       },
       {
         label: 'Alertas Críticas',
@@ -101,13 +123,13 @@ export default function OCCView() {
       setCurrentView(action.route as ViewType);
     }
 
-    // Update recents
+    // Update recents with real timestamp
     try {
       const recent = JSON.parse(localStorage.getItem('recent_actions') || '[]');
-      const updated = [action.id, ...recent.filter((id: string) => id !== action.id)].slice(0, 5);
+      const updated = [{ id: action.id, ts: Date.now() }, ...recent.filter((e: { id: string }) => e.id !== action.id)].slice(0, 5);
       localStorage.setItem('recent_actions', JSON.stringify(updated));
     } catch {
-      // localStorage may be unavailable in some environments
+      // localStorage may be unavailable
     }
   };
 
@@ -122,15 +144,16 @@ export default function OCCView() {
             <h1 className="text-2xl sm:text-3xl font-bold font-display tracking-tight text-foreground">Centro de Comando Operativo</h1>
         </div>
         <p className="text-sm font-medium text-muted-foreground max-w-2xl">
-            Bienvenido, <span className="text-foreground font-semibold">{user?.fullName}</span>. Tienes <span className="text-destructive font-semibold">{criticalAlerts}</span> alertas activas que requieren tu atención inmediata.
+            Bienvenido, <span className="text-foreground font-semibold">{user?.fullName}</span>. Tienes <span className={cn('font-semibold', criticalAlerts > 0 ? 'text-destructive' : 'text-muted-foreground')}>{criticalAlerts}</span> alertas activas que requieren tu atención inmediata.
         </p>
       </header>
 
-      {/* Command Layer - Clean Search Card */}
+      {/* Command Layer */}
       <section>
-        <button
+        <button type="button"
           onClick={() => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }))}
           className="w-full flex items-center px-6 py-4 bg-card border border-border/50 rounded-2xl text-left hover:border-primary/30 hover:bg-muted/50 transition-all active:scale-[0.99]"
+          aria-label="Abrir búsqueda rápida"
         >
           <Search className="w-5 h-5 text-muted-foreground mr-4" />
           <span className="flex-1 text-base font-medium text-muted-foreground/50">Buscar o ejecutar acción...</span>
@@ -150,7 +173,7 @@ export default function OCCView() {
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {quickActions.map((action) => (
-            <button
+            <button type="button"
               key={action.id}
               onClick={() => handleAction(action)}
               className="group flex flex-col items-center justify-center p-6 bg-card border border-border/50 rounded-2xl shadow-sm hover:border-primary/30 hover:bg-muted/50 transition-all active:scale-[0.98]"
@@ -161,9 +184,10 @@ export default function OCCView() {
               <span className="text-xs font-semibold uppercase tracking-wider text-center">{action.label}</span>
             </button>
           ))}
-          <button
+          <button type="button"
             onClick={() => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }))}
             className="flex flex-col items-center justify-center p-6 bg-muted/30 border border-dashed border-border/50 rounded-2xl hover:bg-muted/50 transition-all opacity-60 hover:opacity-100"
+            aria-label="Buscar más acciones"
           >
             <div className="w-12 h-12 rounded-xl border-2 border-dashed border-border flex items-center justify-center mb-3">
               <Plus className="w-5 h-5 text-muted-foreground" />
@@ -181,8 +205,8 @@ export default function OCCView() {
                 <History className="w-3.5 h-3.5" /> Recientes
             </h2>
             <div className="bg-card border border-border/50 rounded-2xl shadow-sm p-4 space-y-2">
-              {recentActions.length > 0 ? recentActions.map((action) => (
-                <button
+              {recentActions.length > 0 ? recentActions.map(({ action, timestamp }) => (
+                <button type="button"
                   key={action.id}
                   onClick={() => handleAction(action)}
                   className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-muted transition-colors text-left group"
@@ -192,7 +216,8 @@ export default function OCCView() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="text-xs font-semibold truncate">{action.label}</div>
-                    <div className="text-[10px] text-muted-foreground uppercase font-semibold tracking-wider">Hace un momento</div>
+                    {/* FIX UX-008: Real relative time instead of hardcoded "Hace un momento" */}
+                    <div className="text-[10px] text-muted-foreground uppercase font-semibold tracking-wider">{formatRelativeTime(timestamp)}</div>
                   </div>
                   <ArrowUpRight className="w-4 h-4 text-muted-foreground opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity" />
                 </button>
@@ -210,7 +235,7 @@ export default function OCCView() {
                 <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
                    Resumen Ejecutivo
                 </h2>
-                <button
+                <button type="button"
                   onClick={() => setCurrentView('dashboard')}
                   className="text-xs font-semibold uppercase tracking-wider text-primary hover:underline flex items-center gap-1.5"
                 >
@@ -226,7 +251,7 @@ export default function OCCView() {
                             </div>
                             <div className={cn(
                                 "flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider",
-                                stat.up ? "text-primary" : "text-destructive"
+                                stat.up ? "text-primary" : stat.up === false && stat.label === 'Margen Operativo' ? "text-warning" : "text-destructive"
                             )}>
                                 {stat.up ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
                                 {stat.trend}
@@ -234,6 +259,7 @@ export default function OCCView() {
                         </div>
                         <div>
                             <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">{stat.label}</div>
+                            {/* FIX UX-009: tabular-nums for financial figures */}
                             <div className="text-2xl font-bold font-display tracking-tight tabular-nums">{isLoading ? '...' : stat.value}</div>
                         </div>
                     </div>

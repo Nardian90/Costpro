@@ -331,7 +331,7 @@ export default function ProductLabelGenerator() {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Buscar por nombre, SKU o codigo..."
-                className="neu-input w-full !pl-9"
+                className="w-full !pl-9 p-2.5 rounded-xl border border-border bg-background text-xs font-bold outline-none focus:ring-1 focus:ring-primary"
                 aria-label="Buscar productos"
               />
             </div>
@@ -351,13 +351,14 @@ export default function ProductLabelGenerator() {
                   <div className="flex-1 min-w-0">
                     <div className="font-bold text-xs truncate">{sp.product.name}</div>
                     <div className="text-[10px] text-muted-foreground font-mono">{sp.product.sku}</div>
-                    <div className="text-xs font-black text-primary mt-0.5">
-                      ${sp.product.price?.toFixed(2) || '0.00'}
+                    <div className="text-xs font-black text-primary mt-0.5 tabular-nums">
+                      {sp.product.price != null ? `$${sp.product.price.toFixed(2)}` : '$0.00'}
                     </div>
                   </div>
                   {!repeatMode && (
                     <div className="flex items-center gap-1">
                       <button
+                        type="button"
                         onClick={() => updateQuantity(sp.product.id, -1)}
                         disabled={sp.quantity <= 1}
                         className="w-11 h-11 rounded-md border border-border flex items-center justify-center hover:bg-muted disabled:opacity-30"
@@ -367,6 +368,7 @@ export default function ProductLabelGenerator() {
                       </button>
                       <span className="w-6 text-center text-xs font-black">{sp.quantity}</span>
                       <button
+                        type="button"
                         onClick={() => updateQuantity(sp.product.id, 1)}
                         disabled={sp.quantity >= 4}
                         className="w-11 h-11 rounded-md border border-border flex items-center justify-center hover:bg-muted disabled:opacity-30"
@@ -377,6 +379,7 @@ export default function ProductLabelGenerator() {
                     </div>
                   )}
                   <button
+                    type="button"
                     onClick={() => removeProduct(sp.product.id)}
                     className="w-11 h-11 rounded-md flex items-center justify-center text-destructive hover:bg-destructive/10"
                     aria-label="Eliminar producto"
@@ -396,7 +399,6 @@ export default function ProductLabelGenerator() {
                 checked={repeatMode}
                 onChange={(e) => setRepeatMode(e.target.checked)}
                 className="rounded"
-                aria-label="Repetir 4 veces el mismo producto"
               />
               <span className="text-xs font-bold text-primary">Repetir 4 veces el mismo producto</span>
             </label>
@@ -407,6 +409,7 @@ export default function ProductLabelGenerator() {
             <div className="border border-border rounded-xl overflow-hidden max-h-48 overflow-y-auto">
               {availableProducts.slice(0, 10).map(product => (
                 <button
+                  type="button"
                   key={product.id}
                   onClick={() => addProduct(product)}
                   className="w-full flex items-center gap-3 px-3 py-2 hover:bg-muted/50 text-left transition-colors border-b border-border/50 last:border-0"
@@ -415,7 +418,7 @@ export default function ProductLabelGenerator() {
                     <div className="text-xs font-bold truncate">{product.name}</div>
                     <div className="text-[10px] text-muted-foreground font-mono">{product.sku}</div>
                   </div>
-                  <div className="text-xs font-black text-primary">
+                  <div className="text-xs font-black text-primary tabular-nums">
                     ${product.price?.toFixed(2) || '0.00'}
                   </div>
                   <Plus className="w-3 h-3 text-muted-foreground flex-shrink-0" />
@@ -432,7 +435,7 @@ export default function ProductLabelGenerator() {
         {/* Export Button */}
         <div className="flex flex-col items-center justify-center gap-4">
           <div className="text-center space-y-2">
-            <div className="text-4xl font-black text-primary">{totalLabelCount}</div>
+            <div className="text-4xl font-black text-primary tabular-nums">{totalLabelCount}</div>
             <div className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
               Etiquetas en Hoja Carta
             </div>
@@ -445,7 +448,8 @@ export default function ProductLabelGenerator() {
           <button
             onClick={handleExportPDF}
             disabled={totalLabelCount === 0 || isGeneratingPDF}
-            className="flex items-center gap-2 px-8 py-3 bg-primary text-primary-foreground font-black rounded-xl hover:opacity-90 transition-opacity text-xs uppercase tracking-widest disabled:opacity-40 disabled:cursor-not-allowed"
+            className="flex items-center gap-2 px-8 py-3 bg-primary text-primary-foreground font-black rounded-xl hover:opacity-90 transition-opacity text-xs uppercase tracking-widest disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/25 focus-visible:ring-offset-1 active:scale-95"
+            type="button"
           >
             {isGeneratingPDF ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -486,7 +490,7 @@ export default function ProductLabelGenerator() {
                   <div className="font-black text-xs uppercase leading-tight mt-1 line-clamp-2">{p.name}</div>
                   <div className="text-[9px] text-muted-foreground font-mono">{p.sku}</div>
                 </div>
-                <div className="font-black text-xl text-foreground text-center my-1">
+                <div className="font-black text-xl text-foreground text-center my-1 tabular-nums">
                   ${p.price?.toFixed(2) || '0.00'}
                 </div>
                 <div className="flex flex-col items-center">

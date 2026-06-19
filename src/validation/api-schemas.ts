@@ -1,4 +1,19 @@
 import { z } from 'zod';
+import { STORE_TEMPLATES } from '@/config/app';
+
+/**
+ * Lenient UUID validation: accepts any 8-4-4-4-12 hex pattern.
+ *
+ * Rationale: Supabase may generate non-RFC4122 UUIDs (missing variant/version bits).
+ * This regex validates the structural format (shape + hex chars) which is sufficient
+ * for input validation — the UUID must still exist in the DB for any operation to succeed.
+ *
+ * This is the SINGLE source of truth — import from here instead of re-declaring locally.
+ */
+export const uuidLoose = z.string().regex(
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
+  'UUID inválido'
+);
 
 // ─── Users ───────────────────────────────────────────────────────────────────
 export const managedCreateUserSchema = z.object({
@@ -6,31 +21,31 @@ export const managedCreateUserSchema = z.object({
   p_password: z.string().min(8, 'Mínimo 8 caracteres').optional(),
   p_full_name: z.string().min(1, 'Nombre requerido'),
   p_role: z.enum(['admin', 'encargado', 'usuario', 'manager', 'clerk', 'warehouse', 'costo', 'superadmin']),
-  p_store_id: z.string().uuid('store_id inválido').nullable().optional(),
+  p_store_id: uuidLoose.nullable().optional(),
   p_memberships: z.array(z.any()).optional(),
   p_max_stores: z.number().int().optional(),
   p_max_users: z.number().int().optional(),
 });
 
 export const toggleUserStatusSchema = z.object({
-  user_id: z.string().uuid('user_id inválido'),
+  user_id: uuidLoose,
   is_active: z.boolean(),
 });
 
 export const deleteUserSchema = z.object({
-  user_id: z.string().uuid('user_id inválido'),
+  user_id: uuidLoose,
 });
 
 export const resetPasswordSchema = z.object({
-  user_id: z.string().uuid('user_id inválido'),
+  user_id: uuidLoose,
   new_password: z.string().min(8, 'Mínimo 8 caracteres').optional(),
   send_reset_email: z.boolean().optional().default(true),
 });
 
 // ─── Inventory ────────────────────────────────────────────────────────────────
 export const inventoryAdjustSchema = z.object({
-  productId: z.string().uuid('productId inválido'),
-  storeId: z.string().uuid('storeId inválido'),
+  productId: uuidLoose,
+  storeId: uuidLoose,
   quantity: z.number().min(-9999).max(99999),
   movementType: z.enum(['add', 'subtract', 'set']),
   version: z.number().int().positive('version debe ser positivo'),
@@ -38,9 +53,9 @@ export const inventoryAdjustSchema = z.object({
 });
 
 export const inventoryAdjustmentsSchema = z.object({
-  storeId: z.string().uuid('storeId inválido'),
+  storeId: uuidLoose,
   items: z.array(z.object({
-    product_id: z.string().uuid(),
+    product_id: uuidLoose,
     quantity: z.number(),
     movement_type: z.enum(['add', 'subtract', 'set']).optional(),
     reason: z.string().max(500).optional(),
@@ -51,6 +66,9 @@ export const inventoryAdjustmentsSchema = z.object({
 export const costSheetSaveSchema = z.object({
   updateData: z.record(z.string(), z.unknown()),
   currentData: z.record(z.string(), z.unknown()).optional(),
+  // FIX-AUDIT-2: store_id is mandatory for multi-store data isolation
+  store_id: uuidLoose,
+  storeId: uuidLoose.optional(), // alias support
 });
 
 export const aiChatSchema = z.object({
@@ -71,10 +89,10 @@ export const reportsGenerateSchema = z.object({
   data: z.record(z.string(), z.unknown()).optional(),
   from: z.string().optional(),
   to: z.string().optional(),
-  store_id: z.string().uuid().optional().nullable(),
+  store_id: uuidLoose.optional().nullable(),
   columns: z.array(z.string()).optional(),
   name: z.string().optional(),
-  definition_id: z.string().uuid().optional(),
+  definition_id: uuidLoose.optional(),
   calculatedValues: z.record(z.string(), z.any()).optional(),
   calculatedAnnexes: z.array(z.any()).optional(),
   options: z.record(z.string(), z.unknown()).optional(),
@@ -118,7 +136,7 @@ export const botMessageSchema = z.object({
 export const botChatSchema = z.object({
   message: z.string().min(1).max(4000).optional(),
   messages: z.array(botMessageSchema).optional(),
-  conversationId: z.string().uuid().optional(),
+  conversationId: uuidLoose.optional(),
   context: z.record(z.string(), z.unknown()).optional(),
   aiProvider: z.string().optional(),
   aiApiKey: z.string().optional(),
@@ -127,6 +145,181 @@ export const botChatSchema = z.object({
   temperature: z.number().min(0).max(1).optional(),
   stream: z.boolean().optional().default(false),
 });
+
+// ─── Ofertas Comerciales ─────────────────────────────────────────────────────
+export const ofertaItemSchema = z.object({
+  codigo: z.string().max(50).optional().default(''),
+  descripcion: z.string().min(1, 'Descripción requerida').max(2000),
+  um: z.string().max(20).default('U'),
+  cantidad: z.number().positive('Cantidad debe ser > 0'),
+  precio_unitario: z.number().positive('Precio debe ser > 0'),
+});
+
+export const ofertaCreateSchema = z.object({
+  store_id: uuidLoose,
+  numero: z.string().min(1, 'Número de oferta requerido').max(50),
+  fecha: z.string().min(1, 'Fecha requerida'),
+  objeto: z.string().min(1, 'Objeto requerido').max(500),
+  suministrador: z.object({
+    empresa: z.string().min(1, 'Empresa requerida').max(200),
+    codigo_reup: z.string().max(50).optional().default(''),
+    codigo_nit: z.string().max(50).optional().default(''),
+    direccion: z.string().max(500).optional().default(''),
+    telefono: z.string().max(50).optional().default(''),
+    cuenta_bancaria: z.string().max(100).optional().default(''),
+    email: z.string().max(200).optional().default(''),
+  }),
+  cliente: z.object({
+    empresa: z.string().min(1, 'Empresa requerida').max(200),
+    codigo_reup: z.string().max(50).optional().default(''),
+    codigo_nit: z.string().max(50).optional().default(''),
+    direccion: z.string().max(500).optional().default(''),
+    telefono: z.string().max(50).optional().default(''),
+    email: z.string().max(200).optional().default(''),
+    contacto: z.string().max(200).optional().default(''),
+  }),
+  productos: z.array(ofertaItemSchema).min(1, 'Al menos un producto requerido'),
+  stamp_url: z.string().optional().nullable(),
+  sign_url: z.string().optional().nullable(),
+  stamp_scale: z.number().min(50).max(200).optional().default(100),
+  sign_scale: z.number().min(50).max(200).optional().default(100),
+  descuento: z.number().min(0).optional().default(0),
+  itbis: z.number().min(0).max(100).optional().default(0),
+  moneda: z.string().max(10).optional().default('CUP'),
+  validez: z.string().max(200).optional().default('30 días'),
+  condiciones_pago: z.string().max(500).optional().default('Pago en la fecha de entrega'),
+  condiciones_entrega: z.string().max(500).optional().default('Según acuerdo entre las partes'),
+  notas: z.string().max(2000).optional().default(''),
+});
+
+export const ofertaUpdateSchema = ofertaCreateSchema.partial().extend({
+  id: uuidLoose,
+  status: z.enum(['draft', 'sent', 'accepted', 'rejected', 'expired']).optional(),
+});
+
+export const ofertaPdfExportSchema = z.object({
+  ofertaId: uuidLoose.optional(),
+  store_id: uuidLoose.optional(),
+  oferta: z.record(z.string(), z.unknown()).optional(),
+});
+
+// ─── Stores ───────────────────────────────────────────────────────────────────
+export const createStoreSchema = z.object({
+  name: z.string().min(1, 'Nombre requerido').max(100),
+  address: z.string().min(1, 'Dirección requerida').max(200),
+  logo_url: z.string().url().optional().nullable(),
+  reeup: z.string().regex(/^\d{11}$/, 'REEUP debe tener 11 dígitos').optional().nullable(),
+  nit: z.string().regex(/^\d{1,15}$/, 'NIT debe contener solo dígitos').optional().nullable(),
+  bank_account: z.string().min(1).optional().nullable(),
+  phone: z.string().optional().nullable(),
+  email: z.string().email('Email inválido').optional().nullable(),
+  slug: z.string().min(1).max(100).optional().nullable(),
+  plantilla: z.enum(STORE_TEMPLATES).optional().nullable(),
+  signature_url: z.string().url().optional().nullable(),
+  stamp_url: z.string().url().optional().nullable(),
+  latitude: z.number().optional().nullable(),
+  longitude: z.number().optional().nullable(),
+});
+
+export const updateStoreSchema = z.object({
+  storeId: uuidLoose,
+  name: z.string().min(1).max(100).optional(),
+  address: z.string().min(1).max(200).optional(),
+  logo_url: z.string().url().optional().nullable(),
+  reeup: z.string().regex(/^\d{11}$/).optional().nullable(),
+  nit: z.string().regex(/^\d{1,15}$/, 'NIT debe contener solo dígitos').optional().nullable(),
+  bank_account: z.string().min(1).optional().nullable(),
+  phone: z.string().optional().nullable(),
+  email: z.string().email().optional().nullable(),
+  slug: z.string().min(1).max(100).optional().nullable(),
+  plantilla: z.enum(STORE_TEMPLATES).optional().nullable(),
+  signature_url: z.string().url().optional().nullable(),
+  stamp_url: z.string().url().optional().nullable(),
+  latitude: z.number().optional().nullable(),
+  longitude: z.number().optional().nullable(),
+  // F2-T03: is_active permitido en PATCH para implementar toggle activar/desactivar
+  // sin necesidad de pasar por el DELETE handler (que además revoca memberships).
+  // El toggle preserva memberships y configuración; el DELETE las revoca todas.
+  // Diferencia clave: toggle = pausa temporal; DELETE = baja permanente con cleanup.
+  is_active: z.boolean().optional(),
+});
+
+export const deleteStoreSchema = z.object({
+  storeId: uuidLoose,
+});
+
+// ─── Store Cost Templates (FC Automatizada) ──────────────────────────────────
+export const upsertStoreCostTemplateSchema = z.object({
+  store_id: uuidLoose,
+  template_id: z.string().min(1, 'ID de plantilla requerido').max(100),
+  template_data: z.record(z.string(), z.unknown())
+    .refine(val => JSON.stringify(val).length < 500_000, { message: 'Payload demasiado grande (máx 500KB)' })
+    .optional().nullable(),
+  modalidad: z.enum(['produccion', 'servicios', 'comercializacion'], {
+    message: 'Modalidad inválida. Debe ser: produccion, servicios o comercializacion',
+  }),
+  pdf_format: z.enum([
+    'standard', 'pro', 'res148', 'ejecutivo', 'contabilidad',
+    'auditoria', 'simplificado', 'bilingue', 'comparativo', 'exportacion',
+  ]).optional().default('res148'),
+});
+
+export const getStoreCostTemplateSchema = z.object({
+  store_id: uuidLoose,
+});
+
+// ─── Product Cost Sheets (FC Automatizada) ───────────────────────────────────
+export const getProductCostSheetSchema = z.object({
+  product_id: uuidLoose,
+  store_id: uuidLoose.optional(),
+});
+
+export const saveProductCostSheetSchema = z.object({
+  product_id: uuidLoose,
+  store_id: uuidLoose,
+  template_id: z.string().min(1, 'ID de plantilla requerido').max(100),
+  modalidad: z.enum(['produccion', 'servicios', 'comercializacion'], {
+    message: 'Modalidad inválida',
+  }),
+  calculated_data: z.record(z.string(), z.unknown())
+    .refine(val => JSON.stringify(val).length < 500_000, { message: 'Payload demasiado grande (máx 500KB)' }),
+  cost_price: z.number().min(0, 'El costo unitario no puede ser negativo'),
+});
+
+export const quickPdfSchema = z.object({
+  product_id: uuidLoose,
+  store_id: uuidLoose.optional(),
+  pdf_format: z.enum([
+    'standard', 'pro', 'res148', 'ejecutivo', 'contabilidad',
+    'auditoria', 'simplificado', 'bilingue', 'comparativo', 'exportacion',
+  ]).optional().default('res148'),
+});
+
+// ─── FC Recalculate ──────────────────────────────────────────────────────────
+const priceChangeRecordSchema = z.object({
+  productId: uuidLoose,
+  storeId: uuidLoose,
+  oldCostPrice: z.number().min(0, 'Precio anterior inválido'),
+  newCostPrice: z.number().min(0, 'Precio nuevo inválido'),
+  changedBy: z.string().optional(),
+  forceRecalculation: z.boolean().optional().default(false),
+});
+
+export const recalculateSchema = z.discriminatedUnion('mode', [
+  z.object({
+    mode: z.literal('single'),
+    productId: uuidLoose,
+    storeId: uuidLoose,
+    oldCostPrice: z.number().min(0, 'Precio anterior inválido'),
+    newCostPrice: z.number().min(0, 'Precio nuevo inválido'),
+    changedBy: z.string().optional(),
+    forceRecalculation: z.boolean().optional().default(false),
+  }),
+  z.object({
+    mode: z.literal('batch'),
+    changes: z.array(priceChangeRecordSchema).min(1, 'Al menos un cambio requerido').max(100, 'Máximo 100 cambios por lote'),
+  }),
+]);
 
 // ─── Helper para respuesta de error estandarizada ────────────────────────────
 export function zodError(errors: z.ZodError) {

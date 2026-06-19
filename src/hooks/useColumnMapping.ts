@@ -37,8 +37,9 @@ export function useColumnMapping(reportType: ReportType) {
       await (db as any).mapping_executions.add(execution);
 
       return { mappedData, stats };
-    } catch (error: any) {
-      toast.error('Error durante el mapeo de columnas: ' + error.message);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      toast.error('Error durante el mapeo de columnas: ' + message);
       return { mappedData: dataset, stats: null };
     } finally {
       setIsProcessing(false);

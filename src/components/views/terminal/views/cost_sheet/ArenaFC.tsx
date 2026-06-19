@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import {
   GitCompareArrows, ArrowRight, Download, CheckCircle2, XCircle,
   AlertTriangle, TrendingUp, TrendingDown, Minus, ChevronDown,
@@ -208,6 +208,7 @@ const ThemedTooltip = ({ active, payload, label, unit = "" }: any) => {
 // Main Component
 // ════════════════════════════════════════════════════════════
 export default function ArenaFC() {
+  const prefersReducedMotion = useReducedMotion();
   // Helper to resolve formulas in names
   const resolveFormulaicString = (str: string, data: CostSheetData) => {
     if (!str || !str.startsWith('=')) return str;
@@ -623,7 +624,7 @@ export default function ArenaFC() {
             Arena FC
           </h1>
           <div className="p-3 rounded-2xl bg-violet-500/10">
-            <Scale className="w-7 h-7 text-blue-500" />
+            <Scale className="w-7 h-7 text-primary" />
           </div>
         </div>
         <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest max-w-xl mx-auto">
@@ -640,7 +641,7 @@ export default function ArenaFC() {
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <input
                 type="text"
-                placeholder="Buscar ficha de costo..." aria-label="Buscar ficha de costo"
+                placeholder="Buscar ficha de costo..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full h-12 pl-11 pr-4 bg-muted/20 border-none rounded-2xl text-sm font-bold placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/20 transition-all"
@@ -650,7 +651,7 @@ export default function ArenaFC() {
               {categories.map(cat => {
                 const count = allOptions.filter(o => cat === 'all' || o.category === cat).length;
                 return (
-                  <button
+                  <button type="button"
                     key={cat}
                     onClick={() => setSelectedCategory(cat)}
                     className={cn(
@@ -695,10 +696,10 @@ export default function ArenaFC() {
                     layout
                     key={t.id}
                     initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.95 }}
-                    whileHover={{ y: -5, transition: { duration: 0.2 } }}
-                    whileTap={{ scale: 0.98 }}
+                    animate={prefersReducedMotion ? { opacity: 1 } : { opacity: 1, y: 0 }}
+                    exit={prefersReducedMotion ? {} : { opacity: 0, scale: 0.95 }}
+                    whileHover={prefersReducedMotion ? {} : { y: -5, transition: { duration: 0.2 } }}
+                    whileTap={prefersReducedMotion ? {} : { scale: 0.98 }}
                     onClick={() => handleSelect(t.id)}
                     className={cn(
                       "group relative p-5 rounded-[2rem] border-2 cursor-pointer transition-colors duration-300 flex flex-col h-full",
@@ -712,8 +713,8 @@ export default function ArenaFC() {
                       {isSelected && (
                         <motion.div
                           initial={{ scale: 0, rotate: -20 }}
-                          animate={{ scale: 1, rotate: 0 }}
-                          exit={{ scale: 0, rotate: 20 }}
+                          animate={prefersReducedMotion ? {} : { scale: 1, rotate: 0 }}
+                          exit={prefersReducedMotion ? {} : { scale: 0, rotate: 20 }}
                           className={cn(
                             "absolute -top-3 -right-3 w-10 h-10 rounded-2xl flex items-center justify-center text-white font-black italic text-lg shadow-2xl z-10",
                             isA ? "bg-primary" : "bg-violet-500"
@@ -761,9 +762,9 @@ export default function ArenaFC() {
                     <div className="flex items-center justify-between mt-4 pt-4 border-t border-border/10">
                       <div className="flex items-center gap-1.5">
                         {t.isSystem ? (
-                          <span className="px-1.5 py-0.5 rounded-md bg-blue-500/10 text-blue-500 text-[8px] font-black uppercase tracking-tighter">Sistema</span>
+                          <span className="px-1.5 py-0.5 rounded-md bg-primary/10 text-primary text-[8px] font-black uppercase tracking-tighter">Sistema</span>
                         ) : (
-                          <span className="px-1.5 py-0.5 rounded-md bg-amber-500/10 text-amber-500 text-[8px] font-black uppercase tracking-tighter">Usuario</span>
+                          <span className="px-1.5 py-0.5 rounded-md bg-warning/10 text-warning text-[8px] font-black uppercase tracking-tighter">Usuario</span>
                         )}
                       </div>
                       <div className="text-right">
@@ -782,7 +783,7 @@ export default function ArenaFC() {
           {/* Sticky Selection Feedback Bar */}
           <motion.div
             initial={{ y: 100 }}
-            animate={{ y: 0 }}
+            animate={prefersReducedMotion ? {} : { y: 0 }}
             className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 w-full max-w-4xl px-4 no-print"
           >
             <div className="bg-popover/80 backdrop-blur-2xl border border-border/60 rounded-[2.5rem] p-4 shadow-2xl shadow-black/20 flex flex-col sm:flex-row items-center gap-6">
@@ -832,7 +833,7 @@ export default function ArenaFC() {
                   className="flex-1 sm:flex-none h-14 px-10 bg-primary hover:bg-primary/90 text-primary-foreground font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-primary/20 gap-3 text-xs"
                 >
                   {isCalculating ? (
-                    <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }}>
+                    <motion.div animate={prefersReducedMotion ? {} : { rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }}>
                       <Zap className="w-4 h-4" />
                     </motion.div>
                   ) : (
@@ -853,7 +854,7 @@ export default function ArenaFC() {
         <AnimatePresence>
           <motion.div
             initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
+            animate={prefersReducedMotion ? { opacity: 1 } : { opacity: 1 }}
             className="space-y-6"
           >
             {/* Winner Banner */}
@@ -863,11 +864,11 @@ export default function ArenaFC() {
                 ? "border-primary/30 bg-primary/5"
                 : comparison.scoreB > comparison.scoreA
                 ? "border-violet-500/30 bg-violet-500/5"
-                : "border-amber-500/30 bg-amber-500/5"
+                : "border-warning/30 bg-warning/5"
             )}>
               <div className="flex items-center justify-center gap-3 mb-2">
                 <Trophy className={cn("w-8 h-8",
-                  comparison.scoreA > comparison.scoreB ? "text-primary" : comparison.scoreB > comparison.scoreA ? "text-violet-500" : "text-amber-500"
+                  comparison.scoreA > comparison.scoreB ? "text-primary" : comparison.scoreB > comparison.scoreA ? "text-violet-500" : "text-warning"
                 )} />
                 <h2 className="text-xl font-black uppercase tracking-tighter italic">
                   {comparison.scoreA > comparison.scoreB
@@ -877,7 +878,7 @@ export default function ArenaFC() {
                     : 'Empate Tecnico'}
                 </h2>
                 <Trophy className={cn("w-8 h-8",
-                  comparison.scoreA > comparison.scoreB ? "text-primary" : comparison.scoreB > comparison.scoreA ? "text-violet-500" : "text-amber-500"
+                  comparison.scoreA > comparison.scoreB ? "text-primary" : comparison.scoreB > comparison.scoreA ? "text-violet-500" : "text-warning"
                 )} />
               </div>
               <div className="flex items-center justify-center gap-6 text-xs">
@@ -920,7 +921,7 @@ export default function ArenaFC() {
                     <div className="text-[11px] font-black font-mono text-violet-500">{fmt(k.valB)}</div>
                     <div className="text-[9px] text-muted-foreground font-bold">{comparison.nameB}</div>
                     <div className={cn("text-[10px] font-black mt-1.5 pt-1.5 border-t border-border/30",
-                      k.deviationPct > 5 ? "text-red-500" : k.deviationPct < -5 ? "text-emerald-500" : "text-amber-500"
+                      k.deviationPct > 5 ? "text-destructive" : k.deviationPct < -5 ? "text-success" : "text-warning"
                     )}>
                       {k.deviationPct > 0 ? '+' : ''}{k.deviationPct.toFixed(1)}%
                     </div>
@@ -956,7 +957,7 @@ export default function ArenaFC() {
               {/* Cost Structure Comparison */}
               <div className="border border-border/60 rounded-2xl overflow-hidden bg-card">
                 <div className="flex items-center gap-2 px-5 py-3 border-b border-border/20">
-                  <BarChart3 className="w-4 h-4 text-amber-500" />
+                  <BarChart3 className="w-4 h-4 text-warning" />
                   <h3 className="text-[11px] font-black uppercase tracking-[0.15em]">Estructura de Costos</h3>
                 </div>
                 <div className="p-4">
@@ -1032,10 +1033,10 @@ export default function ArenaFC() {
                         <td className="px-4 py-2.5 font-bold text-foreground">{s.label}</td>
                         <td className="px-4 py-2.5 text-right font-mono font-black">{fmt(s.valA)}</td>
                         <td className="px-4 py-2.5 text-right font-mono font-black">{fmt(s.valB)}</td>
-                        <td className={cn("px-4 py-2.5 text-right font-mono font-bold", s.deviation > 0 ? "text-red-500" : s.deviation < 0 ? "text-emerald-500" : "text-muted-foreground")}>
+                        <td className={cn("px-4 py-2.5 text-right font-mono font-bold", s.deviation > 0 ? "text-destructive" : s.deviation < 0 ? "text-success" : "text-muted-foreground")}>
                           {s.deviation > 0 ? '+' : ''}{fmt(s.deviation)}
                         </td>
-                        <td className={cn("px-4 py-2.5 text-center font-mono font-bold", Math.abs(s.deviationPct) > 20 ? "text-red-500" : Math.abs(s.deviationPct) > 5 ? "text-amber-500" : "text-emerald-500")}>
+                        <td className={cn("px-4 py-2.5 text-center font-mono font-bold", Math.abs(s.deviationPct) > 20 ? "text-destructive" : Math.abs(s.deviationPct) > 5 ? "text-warning" : "text-success")}>
                           {s.deviationPct > 0 ? '+' : ''}{s.deviationPct.toFixed(1)}%
                         </td>
                         <td className="px-4 py-2.5 text-center">
@@ -1048,7 +1049,7 @@ export default function ArenaFC() {
                               <ArrowUpRight className="w-2.5 h-2.5" /> B
                             </span>
                           ) : (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-500 text-[9px] font-black">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-warning/10 text-warning text-[9px] font-black">
                               <Minus className="w-2.5 h-2.5" /> =
                             </span>
                           )}
@@ -1091,10 +1092,10 @@ export default function ArenaFC() {
                           </td>
                           <td className="px-4 py-2.5 text-right font-mono font-black text-primary">{fmt(k.valA)}</td>
                           <td className="px-4 py-2.5 text-right font-mono font-black text-violet-500">{fmt(k.valB)}</td>
-                          <td className={cn("px-4 py-2.5 text-right font-mono font-bold", k.deviation > 0 ? "text-red-500" : k.deviation < 0 ? "text-emerald-500" : "text-muted-foreground")}>
+                          <td className={cn("px-4 py-2.5 text-right font-mono font-bold", k.deviation > 0 ? "text-destructive" : k.deviation < 0 ? "text-success" : "text-muted-foreground")}>
                             {k.deviation > 0 ? '+' : ''}{fmt(k.deviation)}
                           </td>
-                          <td className={cn("px-4 py-2.5 text-right font-mono font-bold", Math.abs(k.deviationPct) > 20 ? "text-red-500" : "text-muted-foreground")}>
+                          <td className={cn("px-4 py-2.5 text-right font-mono font-bold", Math.abs(k.deviationPct) > 20 ? "text-destructive" : "text-muted-foreground")}>
                             {k.deviationPct > 0 ? '+' : ''}{k.deviationPct.toFixed(1)}%
                           </td>
                           <td className="px-4 py-2.5 text-[10px] text-muted-foreground">{k.interpretation}</td>
@@ -1132,7 +1133,7 @@ export default function ArenaFC() {
                         <td className="px-4 py-2.5 text-center font-mono">{a.rowsB}</td>
                         <td className="px-4 py-2.5 text-right font-mono font-black text-primary">{fmt(a.totalA)}</td>
                         <td className="px-4 py-2.5 text-right font-mono font-black text-violet-500">{fmt(a.totalB)}</td>
-                        <td className={cn("px-4 py-2.5 text-center font-mono font-bold", Math.abs(a.deviationPct) > 30 ? "text-red-500" : "text-muted-foreground")}>
+                        <td className={cn("px-4 py-2.5 text-center font-mono font-bold", Math.abs(a.deviationPct) > 30 ? "text-destructive" : "text-muted-foreground")}>
                           {a.deviationPct.toFixed(1)}%
                         </td>
                       </tr>

@@ -131,7 +131,7 @@ export default function UsersManagementView() {
                           <span className={cn(
                             "px-1.5 py-0.5 rounded text-xs font-black uppercase w-fit",
                             m.role === 'admin' ? 'bg-primary/20 text-primary' :
-                            (m.role === 'encargado' || m.role === 'manager') ? 'bg-green-600/20 text-green-700' : 'bg-background text-muted-foreground'
+                            (m.role === 'encargado' || m.role === 'manager') ? 'bg-success/20 text-success' : 'bg-background text-muted-foreground'
                           )}>
                             {getRoleLabel(m.role)}
                           </span>
@@ -179,7 +179,7 @@ export default function UsersManagementView() {
                       />
                       <span className={cn(
                         "text-xs font-black uppercase tracking-widest",
-                        u.is_active ? 'text-green-500' : 'text-destructive'
+                        u.is_active ? 'text-success' : 'text-destructive'
                       )}>
                         {u.is_active ? 'Activo' : 'Baneado'}
                       </span>
@@ -187,22 +187,22 @@ export default function UsersManagementView() {
                   </td>
                   <td className="p-4">
                     <div className="flex justify-center gap-2">
-                      <button
+                      <button type="button"
                         onClick={() => handleEditUser(u)}
                         className="w-10 h-10 sm:w-8 sm:h-8 flex items-center justify-center rounded-lg border border-border hover:bg-primary hover:text-foreground transition-all active:scale-95"
                         aria-label="Editar usuario"
                       >
                         <Edit className="w-4 h-4" />
                       </button>
-                      <button
+                      <button type="button"
                         onClick={() => handleResetPassword(u.id)}
-                        className="w-10 h-10 sm:w-8 sm:h-8 flex items-center justify-center rounded-lg border border-border hover:bg-amber-500 hover:text-foreground transition-all active:scale-95"
+                        className="w-10 h-10 sm:w-8 sm:h-8 flex items-center justify-center rounded-lg border border-border hover:bg-warning hover:text-foreground transition-all active:scale-95"
                         aria-label="Reiniciar contraseña"
                         title="Reiniciar contraseña"
                       >
                         <Key className="w-4 h-4" />
                       </button>
-                      <button
+                      <button type="button"
                         onClick={() => handleDeleteUser(u.id)}
                         disabled={u.id === user?.id}
                         className="w-10 h-10 sm:w-8 sm:h-8 flex items-center justify-center rounded-lg border border-border hover:bg-destructive hover:text-foreground transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed"

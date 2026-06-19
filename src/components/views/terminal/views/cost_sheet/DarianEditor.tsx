@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Bot, SendHorizontal, Loader2, Sparkles, ExternalLink, RefreshCw } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { cn, isDarkTheme } from '@/lib/utils';
 import ReactMarkdown from 'react-markdown';
 import { sanitizeHtml } from '@/lib/sanitize';
@@ -60,6 +60,7 @@ const AnnexPreview = ({ data, isDark }: { data: Record<string, unknown>; isDark:
 };
 
 export const DarianEditor: React.FC<DarianEditorProps> = ({ sheetData, isFullView, onSectionChange }) => {
+    const prefersReducedMotion = useReducedMotion();
     const [messages, setMessages] = useState<Message[]>([]);
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -195,7 +196,7 @@ export const DarianEditor: React.FC<DarianEditorProps> = ({ sheetData, isFullVie
                     </div>
                 </div>
                 {messages.length > 0 && (
-                    <button
+                    <button type="button"
                         onClick={() => setMessages([])}
                         className="p-2 hover:bg-primary/10 rounded-xl transition-colors text-muted-foreground hover:text-primary"
                         title="Limpiar chat"
@@ -222,7 +223,7 @@ export const DarianEditor: React.FC<DarianEditorProps> = ({ sheetData, isFullVie
                         messages.map((msg, i) => (
                             <motion.div
                                 initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
+                                animate={prefersReducedMotion ? { opacity: 1 } : { opacity: 1, y: 0 }}
                                 key={i}
                                 className={cn("flex flex-col gap-2", msg.role === 'user' ? "items-end" : "items-start")}
                             >
@@ -242,11 +243,11 @@ export const DarianEditor: React.FC<DarianEditorProps> = ({ sheetData, isFullVie
                                     <div className={cn("mt-2 w-full p-4 border rounded-2xl space-y-3 bg-primary/5", isDark ? "border-primary/20" : "border-primary/10")}>
                                         <p className="text-[10px] font-bold text-primary uppercase">{msg.hasSaved ? "¡Ficha persistida!" : "Propuesta Lista"}</p>
                                         {!msg.hasSaved ? (
-                                            <button onClick={() => handleApplyUpdate(msg.updateData!, i)} disabled={isSaving} className="w-full py-3 bg-primary text-primary-foreground font-black uppercase text-[10px] rounded-xl shadow-lg active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50">
+                                            <button type="button" onClick={() => handleApplyUpdate(msg.updateData!, i)} disabled={isSaving} className="w-full py-3 bg-primary text-primary-foreground font-black uppercase text-[10px] rounded-xl shadow-lg active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50">
                                                 {isSaving ? <Loader2 className="w-3 h-3 animate-spin" /> : "Aplicar y Guardar"}
                                             </button>
                                         ) : (
-                                            <button onClick={() => onSectionChange?.('all-content')} className="w-full py-3 bg-primary/20 text-primary font-black uppercase text-[10px] rounded-xl border border-primary/30 active:scale-95 flex items-center justify-center gap-2">
+                                            <button type="button" onClick={() => onSectionChange?.('all-content')} className="w-full py-3 bg-primary/20 text-primary font-black uppercase text-[10px] rounded-xl border border-primary/30 active:scale-95 flex items-center justify-center gap-2">
                                                 <ExternalLink className="w-3.5 h-3.5" /> Ver Ficha Completa
                                             </button>
                                         )}
@@ -276,7 +277,7 @@ export const DarianEditor: React.FC<DarianEditorProps> = ({ sheetData, isFullVie
                             )}
                             placeholder="Ej: Generar ficha para 1kg de azúcar blanca..."
                         />
-                        <button
+                        <button type="button"
                             onClick={() => handleSend()}
                             disabled={!input.trim() || isLoading}
                             className="bg-primary text-primary-foreground w-14 h-14 rounded-2xl flex items-center justify-center active:scale-90 transition-transform disabled:opacity-50 disabled:scale-100 shadow-lg shadow-primary/20"

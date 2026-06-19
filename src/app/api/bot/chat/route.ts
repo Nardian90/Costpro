@@ -2,12 +2,15 @@ import { botChatSchema, zodError } from '@/validation/api-schemas';
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from '@/lib/auth';
 import { rateLimit } from '@/lib/rate-limit';
+import { validateOrigin } from '@/lib/csrf';
 import { withTracing } from '@/lib/observability';
 import { executeTool } from '@/lib/ai/tools/registry';
 import { TOOLS } from '@/lib/ai/tools/definitions';
 import { createServerClient } from '@/lib/supabaseClient';
 import { buildSystemPrompt } from '@/lib/ai/prompts/system-prompt-builder';
 import { callAI, callAIStream, type AIMessage, type AIProviderName } from '@/lib/ai/provider';
+import { createClient } from '@supabase/supabase-js';
+import { createApiError } from '@/lib/api-errors';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -158,16 +161,21 @@ async function botChatHandler(req: NextRequest) {
   try {
     const session = await getServerSession(req);
     if (!session?.user) {
-      return NextResponse.json({ error: 'Autenticación requerida. Inicia sesión para usar el chat.' }, { status: 401 });
+      return NextResponse.json(createApiError('UNAUTHORIZED'), { status: 401 });
+    }
+
+    // FIX-AUDIT-5: CSRF validation on mutation route
+    if (!validateOrigin(req)) {
+      return NextResponse.json(createApiError('INVALID_ORIGIN'), { status: 403 });
     }
 
     const clientId = session.user?.id || req.headers.get('x-forwarded-for') || 'anonymous';
     const { allowed } = await rateLimit(clientId, { windowMs: 60_000, maxRequests: 15 });
-    if (!allowed) return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+    if (!allowed) return NextResponse.json(createApiError('RATE_LIMITED'), { status: 429 });
 
     let body;
     try { body = await req.json(); } catch {
-      return NextResponse.json({ error: 'JSON inválido' }, { status: 400 });
+      return NextResponse.json(createApiError('INVALID_JSON'), { status: 400 });
     }
 
     const parsed = botChatSchema.safeParse(body);
@@ -184,8 +192,44 @@ async function botChatHandler(req: NextRequest) {
 
     const { messages, storeId, context: botContext } = parsed.data;
 
+    // FIX-SEC-H5: Fetch user memberships for store validation
+    let userMemberships: any[] = [];
+    let userRole = 'user';
+    try {
+      const adminUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      const adminKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+      if (adminUrl && adminKey) {
+        const adminClient = createClient(adminUrl, adminKey, { auth: { autoRefreshToken: false, persistSession: false } });
+        const { data: profile } = await adminClient
+          .from('profiles')
+          .select('role, memberships:user_store_memberships(store_id,role,status)')
+          .eq('id', session.user.id)
+          .single();
+        if (profile) {
+          userRole = (profile as any).role || 'user';
+          userMemberships = ((profile as any).memberships || []).filter((m: any) => m.status === 'active');
+        }
+      }
+    } catch (profileErr) {
+      console.warn('[BotChat] Could not fetch memberships:', profileErr);
+    }
+
+    // FIX-SEC-H5: Validate that storeId matches user's active memberships
+    if (storeId) {
+      const isAdmin = userRole === 'admin';
+      const hasStoreAccess = isAdmin || userMemberships.some(
+        (m: any) => m.store_id === storeId && m.status === 'active'
+      );
+      if (!hasStoreAccess) {
+        return NextResponse.json(
+          createApiError('FORBIDDEN'),
+          { status: 403 }
+        );
+      }
+    }
+
     if (!Array.isArray(messages) || messages.length === 0) {
-      return NextResponse.json({ error: 'Messages vacío' }, { status: 400 });
+      return NextResponse.json(createApiError('EMPTY_MESSAGES'), { status: 400 });
     }
 
     try {
@@ -217,7 +261,8 @@ async function botChatHandler(req: NextRequest) {
           imageData: m.imageData || null,
         }));
 
-      const userRole = session?.user ? ((session.user as any).role || 'user') : 'user';
+      // FIX-SEC-BOTCHAT: Use the already-resolved userRole from profile fetch (L190-208),
+      // not a re-declaration from the un-enriched session (which would shadow the correct value)
       const userId = session.user?.id || 'anonymous';
       const toolContext = { supabase: supabaseClient, userId, userRole, storeId: storeId || '' };
 
@@ -368,11 +413,7 @@ async function botChatHandler(req: NextRequest) {
       const message = aiError instanceof Error ? aiError.message : 'Error en el servicio AI';
       console.error('[BotChat] callAI failed:', message);
       return NextResponse.json(
-        {
-          error: 'El servicio AI no está disponible',
-          detail: message,
-          hint: 'Verifica las variables de entorno (ZAI_API_KEY, GOOGLE_API_KEY) o que /etc/.z-ai-config exista',
-        },
+        createApiError('AI_UNAVAILABLE'),
         { status: 503 }
       );
     }
@@ -380,10 +421,10 @@ async function botChatHandler(req: NextRequest) {
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : String(error);
     console.error('[BotChat] Global Error:', error);
-    return NextResponse.json({
-      error: 'Error interno del servidor',
-      details: process.env.NODE_ENV !== 'production' ? msg : undefined
-    }, { status: 500 });
+    return NextResponse.json(
+      createApiError('INTERNAL_ERROR'),
+      { status: 500 }
+    );
   }
 }
 

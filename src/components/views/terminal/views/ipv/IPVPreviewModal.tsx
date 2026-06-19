@@ -68,13 +68,13 @@ export function IPVPreviewModal({ report, open, onOpenChange, onExportPDF }: Pro
                             <p className="text-xs font-black uppercase text-muted-foreground tracking-widest mb-1">Total Ventas</p>
                             <p className="text-xl font-black text-primary">{formatCurrencyCents(report.total_ventas_cents)}</p>
                         </div>
-                        <div className="p-4 bg-green-500/5 rounded-2xl border border-green-500/10">
+                        <div className="p-4 bg-success/5 rounded-2xl border border-success/10">
                             <p className="text-xs font-black uppercase text-muted-foreground tracking-widest mb-1">Efectivo</p>
-                            <p className="text-xl font-black text-green-600">{formatCurrencyCents(report.resumen_efectivo_cents)}</p>
+                            <p className="text-xl font-black text-success">{formatCurrencyCents(report.resumen_efectivo_cents)}</p>
                         </div>
-                        <div className="p-4 bg-blue-500/5 rounded-2xl border border-blue-500/10">
+                        <div className="p-4 bg-primary/5 rounded-2xl border border-primary/10">
                             <p className="text-xs font-black uppercase text-muted-foreground tracking-widest mb-1">Transferencia</p>
-                            <p className="text-xl font-black text-blue-600">{formatCurrencyCents(report.resumen_transferencia_cents)}</p>
+                            <p className="text-xl font-black text-primary">{formatCurrencyCents(report.resumen_transferencia_cents)}</p>
                         </div>
                     </div>
                 </DialogHeader>
@@ -142,7 +142,7 @@ export function IPVPreviewModal({ report, open, onOpenChange, onExportPDF }: Pro
 
                 <div className="p-4 border-t bg-muted/20 flex justify-between items-center shrink-0">
                     <div className="flex items-center gap-2 text-muted-foreground">
-                        <CheckCircle2 className="w-4 h-4 text-green-500" />
+                        <CheckCircle2 className="w-4 h-4 text-success" />
                         <span className="text-xs font-bold uppercase tracking-widest">Estado: {report.estado}</span>
                     </div>
                     <Button variant="ghost" onClick={() => onOpenChange(false)} className="text-xs font-black uppercase">Cerrar</Button>

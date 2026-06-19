@@ -5,15 +5,22 @@
  * of the admin's theme preference. Also isolates the storefront from
  * unnecessary app providers (SyncProvider, CookieConsent, etc.).
  */
-export default function StorefrontLayout({
+import { headers } from 'next/headers';
+
+export default async function StorefrontLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  // FIX-CSP: Read the nonce injected by middleware.ts so inline scripts pass CSP
+  const headersList = await headers();
+  const nonce = headersList.get('x-csp-nonce') || '';
+
   return (
     <>
       {/* Force light theme: remove 'dark' class and suppress dark variants */}
       <script
+        nonce={nonce}
         dangerouslySetInnerHTML={{
           __html: `
             (function(){

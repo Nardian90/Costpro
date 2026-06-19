@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { useAcademyStore } from '@/store/useAcademyStore';
 import { useAuthStore } from '@/store';
 import { Flashcard } from './Flashcard';
@@ -15,6 +15,7 @@ const MasteryDashboard = dynamic(() => import('./MasteryDashboard').then(m => ({
 });
 
 export default function AcademyView() {
+  const prefersReducedMotion = useReducedMotion();
   const { user } = useAuthStore();
   const {
     dueCards, newCards, loading, error,
@@ -107,14 +108,14 @@ export default function AcademyView() {
           <motion.div
             key="study"
             initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
+            animate={prefersReducedMotion ? {} : { opacity: 1, y: 0 }}
+            exit={prefersReducedMotion ? {} : { opacity: 0, y: -20 }}
             className="flex flex-col items-center"
           >
             {showSuccess ? (
               <div className="text-center py-20 space-y-8 bg-card border border-border rounded-[3rem] w-full max-w-2xl shadow-xl px-12">
-                <div className="w-24 h-24 rounded-full bg-green-500/10 flex items-center justify-center mx-auto border-2 border-green-500/20 animate-bounce">
-                    <Zap className="w-12 h-12 text-green-500" />
+                <div className="w-24 h-24 rounded-full bg-success/10 flex items-center justify-center mx-auto border-2 border-success/20 animate-bounce">
+                    <Zap className="w-12 h-12 text-success" />
                 </div>
                 <div className="space-y-2">
                     <h2 className="text-[clamp(1.5rem,6vw,2.25rem)] font-black uppercase tracking-tight italic">¡Sesión Completada!</h2>
@@ -137,7 +138,7 @@ export default function AcademyView() {
                         <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mt-1">Repasar</p>
                     </div>
                     <div className="text-center">
-                        <span className="text-[clamp(1.5rem,6vw,2.25rem)] font-black text-blue-500 tracking-tighter italic">{newCards.length}</span>
+                        <span className="text-[clamp(1.5rem,6vw,2.25rem)] font-black text-primary tracking-tighter italic">{newCards.length}</span>
                         <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mt-1">Aprender</p>
                     </div>
                 </div>
@@ -156,7 +157,7 @@ export default function AcademyView() {
                         <motion.div
                             className="h-full bg-primary"
                             initial={{ width: 0 }}
-                            animate={{ width: `${((currentIndex + 1) / allCards.length) * 100}%` }}
+                            animate={prefersReducedMotion ? {} : { width: `${((currentIndex + 1) / allCards.length) * 100}%` }}
                         />
                    </div>
                 </div>
@@ -182,8 +183,8 @@ export default function AcademyView() {
           <motion.div
             key="dashboard"
             initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
+            animate={prefersReducedMotion ? {} : { opacity: 1, x: 0 }}
+            exit={prefersReducedMotion ? {} : { opacity: 0, x: -20 }}
           >
             <MasteryDashboard />
           </motion.div>
@@ -193,8 +194,8 @@ export default function AcademyView() {
             <motion.div
               key="generate"
               initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 20 }}
+              animate={prefersReducedMotion ? {} : { opacity: 1, x: 0 }}
+              exit={prefersReducedMotion ? {} : { opacity: 0, x: 20 }}
               className="max-w-3xl mx-auto w-full"
             >
                <ManualsList onSelect={handleGenerate} />
@@ -246,7 +247,7 @@ function ManualsList({ onSelect }: { onSelect: (filename: string) => Promise<voi
                 {manuals.map(file => (
                     <div key={file} className="flex flex-col sm:flex-row sm:items-center justify-between p-8 bg-card border border-border rounded-[2rem] hover:border-primary/40 transition-all hover:shadow-lg group">
                         <div className="flex items-center gap-6 mb-4 sm:mb-0">
-                            <div className="w-14 h-14 rounded-2xl bg-red-500/5 flex items-center justify-center text-red-500 border border-red-500/10 group-hover:bg-red-500/10 transition-colors shadow-inner">
+                            <div className="w-14 h-14 rounded-2xl bg-destructive/5 flex items-center justify-center text-destructive border border-destructive/10 group-hover:bg-destructive/10 transition-colors shadow-inner">
                                 <span className="font-black text-[10px] tracking-tighter">PDF</span>
                             </div>
                             <div>

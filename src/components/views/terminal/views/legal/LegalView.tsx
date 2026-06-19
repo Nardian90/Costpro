@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import {
   Scale, Search, FileText, Download,
   ChevronRight, BookOpen, Calculator,
@@ -15,6 +15,7 @@ import LegalConsultant from './LegalConsultant';
 import LegalModelForm from './LegalModelForm';
 
 export default function LegalView() {
+  const prefersReducedMotion = useReducedMotion();
   const [resolutions, setResolutions] = useState<any[]>([]);
   const [selectedResolution, setSelectedResolution] = useState<any>(null);
   const [selectedModel, setSelectedModel] = useState<any>(null);
@@ -51,7 +52,7 @@ export default function LegalView() {
   if (selectedModel) {
     return (
       <div className="space-y-6">
-        <button
+        <button type="button"
           onClick={() => setSelectedModel(null)}
           className="flex items-center gap-2 text-primary hover:opacity-80 transition-opacity font-bold uppercase text-xs tracking-widest"
         >

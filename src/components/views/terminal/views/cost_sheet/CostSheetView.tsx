@@ -69,8 +69,8 @@ const ArenaFC = dynamic(() => import('./ArenaFC'), {
 
 // ── All-Content Consolidated View ──────────────────────────────────
 // Section divider colors (matching FlatTable pattern)
-const SECTION_BG = ['bg-primary/5', 'bg-violet-500/5', 'bg-amber-500/5', 'bg-emerald-500/5', 'bg-rose-500/5', 'bg-cyan-500/5'];
-const SECTION_BORDER = ['border-l-primary/40', 'border-l-violet-500/40', 'border-l-amber-500/40', 'border-l-emerald-500/40', 'border-l-rose-500/40', 'border-l-cyan-500/40'];
+const SECTION_BG = ['bg-primary/5', 'bg-violet-500/5', 'bg-warning/5', 'bg-success/5', 'bg-rose-500/5', 'bg-cyan-500/5'];
+const SECTION_BORDER = ['border-l-primary/40', 'border-l-violet-500/40', 'border-l-warning/40', 'border-l-success/40', 'border-l-rose-500/40', 'border-l-cyan-500/40'];
 
 function SectionDivider({ label, sectionColorIdx, rowCount, isCollapsed, onToggle, annexTotal, annexPercent }: {
   label: string;
@@ -516,7 +516,7 @@ const CostSheetView = () => {
         <div className={cn(
           "mx-2 mt-2 px-3 py-2 rounded-xl border text-xs font-mono space-y-0.5",
           calcError
-            ? "bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-800/50 text-red-700 dark:text-red-300"
+            ? "bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-800/50 text-destructive dark:text-red-300"
             : "bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800/50 text-amber-700 dark:text-amber-300"
         )}>
           <div className="font-bold uppercase tracking-widest text-[10px]">

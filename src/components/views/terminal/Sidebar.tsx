@@ -8,15 +8,17 @@ import {
   LogOut,
   Zap,
   Calculator,
-  ChevronRight
+  Pin,
+  PinOff,
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { useAuthStore, useUIStore, ViewType } from '@/store';
 import { NavModule, SIDEBAR_STRUCTURE } from '@/config/navigation/sidebar.structure';
 import { isSidebarItemActive } from '@/config/navigation/navigation-map';
 import { useFilteredNavigation } from '@/hooks/ui/useFilteredNavigation';
+import { useAdaptiveNav } from '@/hooks/ui/useAdaptiveNav';
+import { usePinnedNav } from '@/hooks/ui/usePinnedNav';
 import { cn } from '@/lib/utils';
-import SidebarFocusMode from './SidebarFocusMode';
 import OnlineStatusDot from '@/components/shared/OnlineStatusDot';
 import { useIsMobile } from '@/hooks/ui/useMobile';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -28,7 +30,13 @@ interface SidebarProps {
   onPrefetchView: (view: ViewType) => void;
 }
 
+// Root module IDs (depth=0) — these trigger focus mode
+const ROOT_MODULE_IDS = new Set(SIDEBAR_STRUCTURE.map(m => m.id));
+// "core" is Escritorio — special behavior
+const CORE_MODULE_ID = 'core';
+
 const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }: SidebarProps) => {
+  const prefersReducedMotion = useReducedMotion();
   const { user } = useAuthStore();
   const {
     currentView,
@@ -39,13 +47,46 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
     activeCostSection,
     ipvActiveTab,
     setIpvActiveTab,
-    setActiveCostSection
+    setActiveCostSection,
+    setCurrentView,
   } = useUIStore();
   const isMobile = useIsMobile();
   const [sidebarSearch, setSidebarSearch] = useState('');
   const [expandedModules, setExpandedModules] = useState<string[]>([]);
-  const [focusedModuleId, setFocusedModuleId] = useState<string | null>(null);
+  const [focusModuleId, setFocusModuleId] = useState<string | null>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // E-1 (IA Audit): IA adaptativa — reordena items del sidebar por frecuencia de uso.
+  // Solo reordena hijos dentro de submenus expandidos; el orden de grupos raíz se preserva.
+  const { getReorderedChildren } = useAdaptiveNav(user?.id, currentView);
+
+  // E-2 (IA Audit): personalización — usuarios pueden fijar accesos rápidos.
+  // Los items fijados aparecen en una sección "FIJADOS" al inicio del nav.
+  const { pinned, togglePin, isPinned } = usePinnedNav(user?.id);
+
+  // E-2: construir lista de items fijados con sus metadatos del sidebar.
+  // Busca cada view fijado en SIDEBAR_STRUCTURE para obtener label + icon.
+  const pinnedItems = useMemo<NavModule[]>(() => {
+    if (pinned.length === 0) return [];
+    const found: NavModule[] = [];
+    for (const viewId of pinned) {
+      for (const group of SIDEBAR_STRUCTURE) {
+        for (const child of group.children || []) {
+          if (child.id === viewId) {
+            found.push(child);
+            break;
+          }
+          for (const grandchild of child.children || []) {
+            if (grandchild.id === viewId) {
+              found.push(grandchild);
+              break;
+            }
+          }
+        }
+      }
+    }
+    return found;
+  }, [pinned]);
 
   const allNavigation = useFilteredNavigation();
   const filteredNavigation = useMemo(() => {
@@ -57,21 +98,71 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
     );
   }, [allNavigation, sidebarSearch]);
 
-  const toggleModule = useCallback((moduleId: string, isSubmenu: boolean) => {
-    if (sidebarState === 'rail') {
-       setSidebarState('expanded');
-       setExpandedModules([moduleId]);
-       return;
+  // ── Focus mode: enter ──
+  const enterFocusMode = useCallback((moduleId: string) => {
+    setSidebarState('expanded');
+    setFocusModuleId(moduleId);
+    // Auto-expand all children inside the focused module
+    const mod = SIDEBAR_STRUCTURE.find(m => m.id === moduleId);
+    if (mod) {
+      const childIds = (mod.children || []).map(c => c.id);
+      setExpandedModules(childIds);
     }
-    setExpandedModules(prev =>
-      prev.includes(moduleId) ? prev.filter(id => id !== moduleId) : [...prev, moduleId]
-    );
-  }, [sidebarState, setSidebarState]);
+    // Close sidebar on mobile after entering focus
+    if (isMobile) onClose();
+  }, [setSidebarState, isMobile, onClose]);
 
+  // ── Focus mode: exit ──
+  const exitFocusMode = useCallback(() => {
+    setFocusModuleId(null);
+    setExpandedModules([]);
+  }, []);
+
+  // ── Toggle a submenu (inside focus mode or normal) — does NOT affect focus ──
+  const toggleSubmenu = useCallback((id: string) => {
+    setExpandedModules(prev =>
+      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    );
+  }, []);
+
+  // ── Click on a root module header ──
+  const handleRootModuleClick = useCallback((mod: NavModule) => {
+    if (mod.id === CORE_MODULE_ID) {
+      // Escritorio → exit focus + navigate to home
+      exitFocusMode();
+      setCurrentView('occ');
+      onViewChange('occ');
+      if (isMobile) onClose();
+      return;
+    }
+    // If already in focus for this module → exit focus
+    if (focusModuleId === mod.id) {
+      exitFocusMode();
+      return;
+    }
+    // Enter focus mode for this module
+    enterFocusMode(mod.id);
+  }, [exitFocusMode, enterFocusMode, focusModuleId, setCurrentView, onViewChange, isMobile, onClose]);
+
+  // ── Click on a nav item (leaf) ──
   const handleNavClick = useCallback((view: ViewType) => {
     onViewChange(view);
-  }, [onViewChange]);
+    if (isMobile) onClose();
+  }, [onViewChange, isMobile, onClose]);
 
+  // ── In rail mode, expand sidebar on module click ──
+  const handleRailModuleClick = useCallback((mod: NavModule) => {
+    setSidebarState('expanded');
+    if (mod.id === CORE_MODULE_ID) {
+      exitFocusMode();
+      setCurrentView('occ');
+      onViewChange('occ');
+    } else {
+      enterFocusMode(mod.id);
+    }
+  }, [setSidebarState, exitFocusMode, enterFocusMode, setCurrentView, onViewChange]);
+
+  // ── Render a leaf nav item ──
   const renderNavItem = useCallback((item: any, depth = 0) => {
     const isActive = isSidebarItemActive(item.id, currentView, ipvActiveTab, activeCostSection);
     const isRail = sidebarState === 'rail';
@@ -102,43 +193,75 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
     }
 
     return (
-      <button
-        key={item.id}
-        onClick={() => handleNavClick(item.id as ViewType)}
-        onMouseEnter={() => onPrefetchView(item.id as ViewType)}
-        aria-current={isActive ? 'page' : undefined}
-        className={cn(
-          "w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all group active:scale-95 outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
-          isActive ? "bg-primary/10 text-primary font-bold shadow-sm" : "text-sidebar-foreground/60 hover:bg-primary/5 hover:text-sidebar-foreground"
+      <div key={item.id} className="relative group/nav-item">
+        <button
+          onClick={() => handleNavClick(item.id as ViewType)}
+          onMouseEnter={() => onPrefetchView(item.id as ViewType)}
+          aria-current={isActive ? 'page' : undefined}
+          className={cn(
+            "w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all group active:scale-95 outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
+            isActive ? "bg-primary/10 text-primary font-bold shadow-sm" : "text-sidebar-foreground/60 hover:bg-primary/5 hover:text-sidebar-foreground"
+          )}
+        >
+          {item.icon && <item.icon className={cn("w-4 h-4 transition-transform group-hover:scale-110", isActive ? "text-primary" : "opacity-50")} />}
+          <span className="text-xs uppercase tracking-wider truncate flex-1 text-left">{item.label}</span>
+          {isActive && (
+            <motion.div layoutId="active-nav-indicator" className="ml-auto w-1.5 h-1.5 rounded-full bg-primary" />
+          )}
+        </button>
+        {/* E-2 (IA Audit): botón pin/desfijar visible al hover.
+            Permite al usuario fijar accesos rápidos en la sección "FIJADOS"
+            al inicio del sidebar. Máximo 5 items fijados. */}
+        {!isRail && sidebarState === 'expanded' && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              togglePin(item.id as ViewType);
+            }}
+            aria-label={isPinned(item.id as ViewType) ? `Desfijar ${item.label}` : `Fijar ${item.label}`}
+            title={isPinned(item.id as ViewType) ? 'Desfijar acceso rápido' : 'Fijar como acceso rápido'}
+            className={cn(
+              "absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6 rounded-md flex items-center justify-center transition-all opacity-0 group-hover/nav-item:opacity-100 hover:bg-primary/10 outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
+              isPinned(item.id as ViewType) && "opacity-100 text-primary",
+            )}
+          >
+            {isPinned(item.id as ViewType) ? (
+              <PinOff className="w-3 h-3" aria-hidden="true" />
+            ) : (
+              <Pin className="w-3 h-3" aria-hidden="true" />
+            )}
+          </button>
         )}
-      >
-        {item.icon && <item.icon className={cn("w-4 h-4 transition-transform group-hover:scale-110", isActive ? "text-primary" : "opacity-50")} />}
-        <span className="text-xs uppercase tracking-wider truncate">{item.label}</span>
-        {isActive && (
-          <motion.div layoutId="active-nav-indicator" className="ml-auto w-1.5 h-1.5 rounded-full bg-primary" />
-        )}
-      </button>
+      </div>
     );
-  }, [currentView, ipvActiveTab, onViewChange, onPrefetchView, setIpvActiveTab, activeCostSection, setActiveCostSection, sidebarState, handleNavClick]);
+  }, [currentView, ipvActiveTab, activeCostSection, sidebarState, handleNavClick, onPrefetchView, isPinned, togglePin]);
 
+  // ── Render a module (group or submenu) ──
   function renderModule(mod: NavModule, depth = 0): React.ReactNode {
     const isExpanded = expandedModules.includes(mod.id);
     const isRail = sidebarState === 'rail';
+    const isRoot = depth === 0 && ROOT_MODULE_IDS.has(mod.id);
 
+    // Leaf item
     if (mod.type === 'item') {
       return renderNavItem(mod, depth);
     }
 
-    if (isRail && depth === 0) {
+    // Rail mode: icon button for root modules
+    if (isRail && isRoot) {
       return (
         <TooltipProvider key={mod.id} delayDuration={0}>
           <Tooltip>
             <TooltipTrigger asChild>
               <button
-                onClick={() => toggleModule(mod.id, true)}
-                aria-label={mod.label} /* FIX-ACC-010 */
-                aria-expanded={isExpanded} /* FIX-ACC-010 */
-                className="w-12 h-12 flex items-center justify-center rounded-xl transition-all active:scale-95 mx-auto mb-2 text-sidebar-foreground/60 hover:bg-primary/10 hover:text-primary"
+                onClick={() => handleRailModuleClick(mod)}
+                aria-label={mod.label}
+                aria-expanded={isExpanded}
+                className={cn(
+                  "w-12 h-12 flex items-center justify-center rounded-xl transition-all active:scale-95 mx-auto mb-2",
+                  focusModuleId === mod.id ? "bg-primary/10 text-primary" : "text-sidebar-foreground/60 hover:bg-primary/10 hover:text-primary"
+                )}
               >
                 {mod.icon && <mod.icon className="w-5 h-5" />}
               </button>
@@ -151,23 +274,54 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
       );
     }
 
+    // Root module in expanded mode → triggers focus mode on click
+    if (isRoot) {
+      const isCore = mod.id === CORE_MODULE_ID;
+      const isFocused = focusModuleId === mod.id;
+      return (
+        <div key={mod.id} className="relative">
+          <button
+            onClick={() => handleRootModuleClick(mod)}
+            className={cn(
+              "w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all outline-none focus-visible:ring-2 focus-visible:ring-primary/50 active:scale-[0.98]",
+              depth === 0 && "sm:mt-3",
+              isFocused
+                ? "bg-primary/10 text-primary"
+                : isCore
+                  ? "text-sidebar-foreground hover:bg-primary/5 hover:text-sidebar-foreground"
+                  : "text-sidebar-foreground/60 hover:bg-primary/5 hover:text-sidebar-foreground"
+            )}
+          >
+            <div className="flex items-center gap-3">
+              {mod.icon && <mod.icon className={cn("w-4 h-4", isCore ? "opacity-70" : "opacity-50")} />}
+              <span className={cn(
+                "font-black tracking-[0.2em] uppercase",
+                depth === 0 ? "text-xs" : "text-[11px] opacity-80"
+              )}>{mod.label}</span>
+            </div>
+            {isFocused && (
+              <span className="text-[9px] font-bold uppercase tracking-widest text-primary/60 bg-primary/10 px-2 py-0.5 rounded-full">Activo</span>
+            )}
+          </button>
+        </div>
+      );
+    }
+
+    // Submenu (inside a focused module) → toggle expand/collapse only
     return (
       <div key={mod.id} className="relative">
         <button
           aria-expanded={isExpanded}
-          onClick={() => toggleModule(mod.id, mod.type === 'submenu')}
+          onClick={() => toggleSubmenu(mod.id)}
           className={cn(
             "w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
-            depth === 0 ? "sm:mt-3" : "sm:mt-0.5",
+            "sm:mt-0.5",
             isExpanded ? "bg-primary/5 text-primary" : "text-sidebar-foreground/60 hover:text-sidebar-foreground"
           )}
         >
           <div className="flex items-center gap-3">
-             {mod.icon && <mod.icon className="w-4 h-4 opacity-50" />}
-             <span className={cn(
-                "font-black tracking-[0.2em] uppercase",
-                depth === 0 ? "text-xs" : "text-[11px] opacity-80"
-             )}>{mod.label}</span>
+            {mod.icon && <mod.icon className="w-4 h-4 opacity-50" />}
+            <span className="text-[11px] font-black tracking-[0.2em] uppercase opacity-80">{mod.label}</span>
           </div>
           <ChevronDown className={cn("w-3.5 h-3.5 transition-transform duration-300", isExpanded && "rotate-180")} />
         </button>
@@ -176,14 +330,18 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
           {isExpanded && (
             <motion.div
               initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
+              animate={prefersReducedMotion ? {} : { height: 'auto', opacity: 1 }}
+              exit={prefersReducedMotion ? {} : { height: 0, opacity: 0 }}
               transition={{ duration: 0.25, ease: 'easeOut' }}
-              className={cn("overflow-hidden", depth === 0 ? "pl-2" : "pl-4")}
+              className="overflow-hidden pl-4"
               role="menu"
             >
               <div className="pt-1 pb-2 space-y-0.5">
-                {mod.children?.map(child => renderModule(child, depth + 1))}
+                {/* E-1 (IA Audit): hijos reordenados por frecuencia de uso del rol.
+                    El reordenamiento es estable: items con misma frecuencia conservan
+                    su orden declarativo. Solo aplica si el usuario ya tiene historial
+                    de navegación; para usuarios nuevos, el orden es el declarativo. */}
+                {getReorderedChildren(mod.id, mod.children || []).map(child => renderModule(child, depth + 1))}
               </div>
             </motion.div>
           )}
@@ -192,9 +350,22 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
     );
   }
 
+  // ── Get the focused module object ──
   const focusedModule = useMemo(() =>
-    SIDEBAR_STRUCTURE.find(m => m.id === focusedModuleId),
-  [focusedModuleId]);
+    SIDEBAR_STRUCTURE.find(m => m.id === focusModuleId),
+  [focusModuleId]);
+
+  // ── Check if current view belongs to a root module (for auto-focus) ──
+  useEffect(() => {
+    if (focusModuleId) return; // Don't override manual focus
+    for (const mod of SIDEBAR_STRUCTURE) {
+      if (mod.id === CORE_MODULE_ID) continue;
+      if (hasViewInModule(mod, currentView)) {
+        queueMicrotask(() => enterFocusMode(mod.id));
+        return;
+      }
+    }
+  }, []); // Only on mount
 
   const sidebarWidthClass = useMemo(() => {
     switch (sidebarState) {
@@ -204,7 +375,7 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
     }
   }, [sidebarState]);
 
-  // FIX-UX-002: Focus first interactive element when sidebar opens on mobile
+  // Focus first interactive element when sidebar opens on mobile
   useEffect(() => {
     if (sidebarState === 'expanded' && isMobile) {
       const timer = setTimeout(() => {
@@ -248,11 +419,30 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
             )}
           >
             {sidebarState !== 'rail' ? (
-              <h2 className="text-foreground font-black text-lg uppercase tracking-tighter leading-none">
+              // QW-5 (IA Audit): clic en el logo lleva al hub de Venta (sales-hub)
+              // en lugar de ser decorativo. Es el acceso 1-clic más universal al
+              // workflow principal del usuario (vender). Mismo patrón que Shopify
+              // admin (clic en logo → home del admin). El usuario ya tiene el
+              // sidebar abierto; el logo es el target más predecible.
+              <button
+                type="button"
+                onClick={() => setCurrentView('sales-hub')}
+                className="text-foreground font-black text-lg uppercase tracking-tighter leading-none hover:opacity-80 active:scale-95 transition-all outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded px-1 -mx-1"
+                aria-label="Ir al hub de Venta"
+                title="Volver a Venta"
+              >
                 COST<span className="text-green-500 dark:text-green-400">PRO</span>
-              </h2>
+              </button>
             ) : (
-              <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-black text-xs">CP</div>
+              <button
+                type="button"
+                onClick={() => setCurrentView('sales-hub')}
+                className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-black text-xs hover:opacity-80 active:scale-95 transition-all outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                aria-label="Ir al hub de Venta"
+                title="Volver a Venta"
+              >
+                CP
+              </button>
             )}
 
             {isMobile && (
@@ -295,20 +485,60 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
           className="flex-1 overflow-y-auto pt-0 px-3 pb-4 sm:pb-4 no-scrollbar overscroll-contain scroll-smooth"
         >
           <AnimatePresence mode="wait">
-            {focusedModuleId && focusedModule && sidebarState === 'expanded' ? (
-              <SidebarFocusMode onBack={() => setFocusedModuleId(null)}
+            {focusModuleId && focusedModule && sidebarState === 'expanded' ? (
+              <motion.div
                 key="focus-mode"
-                module={focusedModule}
-                renderModule={renderModule}
-              />
+                initial={{ opacity: 0, x: 20 }}
+                animate={prefersReducedMotion ? {} : { opacity: 1, x: 0 }}
+                exit={prefersReducedMotion ? {} : { opacity: 0, x: -20 }}
+                transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+                className="flex flex-col w-full"
+              >
+                {/* Focus breadcrumb: INICIO > MODULE NAME */}
+                <div className="px-4 py-2 mb-4 flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.3em] ml-4 border-l-2 border-primary/20">
+                  <button
+                    onClick={() => {
+                      exitFocusMode();
+                      setCurrentView('occ');
+                      onViewChange('occ');
+                    }}
+                    className="flex items-center gap-1.5 text-muted-foreground/40 hover:text-primary transition-colors group outline-none"
+                    aria-label="Volver al inicio"
+                  >
+                    <span className="opacity-50 text-xs">/</span>
+                    <span>INICIO</span>
+                  </button>
+                  <span className="opacity-20 text-xs">/</span>
+                  <span className="text-primary/60 truncate">{focusedModule.label}</span>
+                </div>
+
+                {/* Focused module children */}
+                <div className="space-y-1">
+                  {focusedModule.children?.map(child => renderModule(child, 0))}
+                </div>
+              </motion.div>
             ) : (
               <motion.div
                 key="normal-mode"
                 initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
+                animate={prefersReducedMotion ? {} : { opacity: 1 }}
+                exit={prefersReducedMotion ? {} : { opacity: 0 }}
                 className={cn("space-y-1 sm:space-y-4", sidebarState === 'rail' && "space-y-2")}
               >
+                {/* E-2 (IA Audit): sección "FIJADOS" — accesos rápidos personalizados.
+                    Solo se muestra si el usuario ha fijado al menos 1 item y el sidebar
+                    está expandido (no en rail mode). Máximo 5 items. */}
+                {pinnedItems.length > 0 && sidebarState === 'expanded' && !sidebarSearch && (
+                  <div className="space-y-1 mb-2">
+                    <div className="px-4 py-1 flex items-center justify-between">
+                      <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60">
+                        Fijados
+                      </span>
+                      <Pin className="w-3 h-3 text-muted-foreground/40" aria-hidden="true" />
+                    </div>
+                    {pinnedItems.map(item => renderNavItem(item, 0))}
+                  </div>
+                )}
                 {filteredNavigation.map(module => renderModule(module))}
               </motion.div>
             )}
@@ -398,5 +628,14 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
 });
 
 Sidebar.displayName = 'Sidebar';
+
+// ── Helper: check if a view ID exists anywhere in a module tree ──
+function hasViewInModule(mod: NavModule, viewId: string): boolean {
+  if (mod.id === viewId) return true;
+  if (mod.children) {
+    return mod.children.some(child => hasViewInModule(child, viewId));
+  }
+  return false;
+}
 
 export default Sidebar;

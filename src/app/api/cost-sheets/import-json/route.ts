@@ -44,8 +44,8 @@ const handler = withAuth(async (req, session) => {
     }
 
     return NextResponse.json({ ok: true, ficha: validation.data });
-  } catch (error: any) {
-    return NextResponse.json({ ok: false, errors: [(process.env.NODE_ENV !== 'production' || !!process.env.VITEST) ? error.message : 'Error interno del servidor'] }, { status: 500 });
+  } catch (error: unknown) {
+    return NextResponse.json({ ok: false, errors: [(process.env.NODE_ENV !== 'production' || !!process.env.VITEST) ? (error instanceof Error ? error.message : String(error)) : 'Error interno del servidor'] }, { status: 500 });
   }
 
 });

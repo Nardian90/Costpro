@@ -13,6 +13,9 @@ import {
 import { getSupabaseUrl } from '@/lib/utils';
 import { withLogging, withTableLogging, getCleanStoreId } from './base';
 import { z } from 'zod';
+// R2-4: imports para auditoría
+import { useAuthStore } from '@/store';
+import { auditService } from '@/services/audit-service';
 import { offlineStorage } from '@/lib/sync/offline-storage';
 
 export function useSuspenseProducts(storeId?: string | null, searchTerm = '', category = '') {
@@ -133,15 +136,50 @@ export function useCreateProduct() {
         .from('products')
         .insert([newProduct]));
     },
-    onSuccess: () => {
+    onSuccess: async (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
       queryClient.invalidateQueries({ queryKey: ['inventory'] });
+
+      // FC Automatizada: auto-generate cost sheet for new product
+      // Only if fc_auto_enabled is not explicitly false and product has store_id
+      const storeId = variables.store_id;
+      if (storeId && variables.fc_auto_enabled !== false) {
+        try {
+          // Fetch the newly created product to get its ID
+          const { data: newProducts } = await supabase
+            .from('products')
+            .select('id')
+            .eq('store_id', storeId)
+            .eq('name', variables.name)
+            .order('created_at', { ascending: false })
+            .limit(1);
+
+          const newProductId = newProducts?.[0]?.id;
+          if (newProductId) {
+            // Fire-and-forget: auto-generate FC in background
+            fetch('/api/product-cost-sheets/auto-generate', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                product_id: newProductId,
+                store_id: storeId,
+              }),
+            }).catch((err) => {
+              // Silent fail — FC generation is best-effort, not blocking
+              console.warn('[FC Auto] Background generation failed:', err);
+            });
+          }
+        } catch {
+          // Non-blocking: product creation succeeds even if FC generation fails
+        }
+      }
     },
   });
 }
 
 export function useUpdateProduct() {
   const queryClient = useQueryClient();
+  const { user } = useAuthStore.getState();
   return useMutation({
     mutationFn: async ({ id, ...rawUpdates }: { id: string } & z.input<typeof updateProductInputSchema>) => {
       const updates = updateProductInputSchema.parse(rawUpdates);
@@ -150,9 +188,66 @@ export function useUpdateProduct() {
         .update(updates)
         .eq('id', id));
     },
-    onSuccess: () => {
+    onSuccess: async (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
       queryClient.invalidateQueries({ queryKey: ['inventory'] });
+      queryClient.invalidateQueries({ queryKey: ['product-cost-sheets'] });
+
+      // R2-4 (M7): log price change if price or cost changed
+      if (user?.id && (variables.price !== undefined || variables.cost_price !== undefined)) {
+        try {
+          const { data: product } = await supabase
+            .from('products')
+            .select('store_id, price, cost_price')
+            .eq('id', variables.id)
+            .single();
+
+          if (product) {
+            await auditService.logPriceChange({
+              userId: user.id,
+              productId: variables.id,
+              storeId: product.store_id || '',
+              oldPrice: product.price || 0,
+              newPrice: (variables.price ?? product.price) || 0,
+              oldCost: product.cost_price || 0,
+              newCost: (variables.cost_price ?? product.cost_price) || 0,
+            });
+          }
+        } catch { /* non-blocking */ }
+      }
+
+      // FC Automatizada: if cost_price changed, trigger FC recalculation
+      // via the dedicated recalculate-on-price-change service
+      if (variables.cost_price !== undefined && variables.id) {
+        try {
+          // Fetch product to get store_id and fc_auto_enabled
+          const { data: product } = await supabase
+            .from('products')
+            .select('store_id, fc_auto_enabled, cost_price')
+            .eq('id', variables.id)
+            .single();
+
+          if (product?.store_id && product.fc_auto_enabled !== false) {
+            // Fire-and-forget: recalculate FC via dedicated service endpoint
+            // forceRecalculation=true because we already know cost_price changed
+            fetch('/api/product-cost-sheets/recalculate', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                productId: variables.id,
+                storeId: product.store_id,
+                oldCostPrice: product.cost_price,
+                newCostPrice: variables.cost_price ?? product.cost_price,
+                forceRecalculation: true,
+              }),
+            }).catch((err) => {
+              console.warn('[FC Auto] Background recalculation failed:', err);
+            });
+          }
+        } catch {
+          // Non-blocking: update succeeds even if FC recalculation fails
+        }
+      }
     },
   });
 }
@@ -308,10 +403,12 @@ export function useBulkPriceUpdate() {
       const { productIds, variantIds, storeId, field, method, value, logEntry } = params;
 
       // Fetch current prices and calculate new values client-side
+      // FIX I9: Add store_id filter to prevent modifying products from other stores
       const { data: currentProducts } = await supabase
         .from('products')
-        .select('id, price, precio_empresa')
-        .in('id', productIds);
+        .select('id, price, precio_empresa, store_id')
+        .in('id', productIds)
+        .eq('store_id', storeId);
 
       if (!currentProducts || currentProducts.length === 0) {
         throw new Error('No se encontraron productos');
@@ -341,12 +438,13 @@ export function useBulkPriceUpdate() {
 
       if (error) throw error;
 
-      // Update variants too
+      // Update variants too — only variants whose products belong to the current store
       if (variantIds && variantIds.length > 0) {
         const { data: currentVariants } = await supabase
           .from('product_variants')
-          .select('id, price, precio_empresa')
-          .in('id', variantIds);
+          .select('id, price, precio_empresa, products!inner(store_id)')
+          .in('id', variantIds)
+          .eq('products.store_id', storeId);
 
         if (currentVariants && currentVariants.length > 0) {
           const variantUpdates = currentVariants.map(v => {

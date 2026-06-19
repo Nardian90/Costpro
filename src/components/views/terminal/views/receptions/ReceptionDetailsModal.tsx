@@ -3,7 +3,7 @@
 import React from 'react';
 import Image from 'next/image';
 import { BaseModal } from "@/components/ui/BaseModal";
-import { Package, Hash, User, Calendar, FileText, Building2, Download } from 'lucide-react';
+import { Package, Hash, User, Calendar, FileText, Building2, Download, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { type Receipt, type ReceiptItem } from '@/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { resolveProductImage, getProductImageUrl, formatCurrency, formatDate } from '@/lib/utils';
@@ -22,6 +22,11 @@ interface ReceptionDetailsModalProps {
   onVoidRequest?: () => void;
   isUpdating?: boolean;
   isVoiding?: boolean;
+  // Reception-Flow-Fix: confirmar recepción pendiente desde el modal.
+  isConfirmPendingMode?: boolean;
+  onConfirmPending?: () => void;
+  onConfirmPendingCancel?: () => void;
+  isConfirmingPending?: boolean;
 }
 
 export function ReceptionDetailsModal({
@@ -35,7 +40,12 @@ export function ReceptionDetailsModal({
   onUpdateSubmit,
   onVoidRequest,
   isUpdating = false,
-  isVoiding = false
+  isVoiding = false,
+  // Reception-Flow-Fix
+  isConfirmPendingMode = false,
+  onConfirmPending,
+  onConfirmPendingCancel,
+  isConfirmingPending = false,
 }: ReceptionDetailsModalProps) {
   if (!receipt && !isLoading) return null;
 
@@ -61,7 +71,20 @@ export function ReceptionDetailsModal({
       footer={
         <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center w-full">
           <div className="flex items-center gap-4">
-            {!isEditMode && receipt?.status !== 'voided' && onVoidRequest && (
+            {/* Reception-Flow-Fix: botón "Confirmar" visible solo en modo confirmar-pendiente. */}
+            {isConfirmPendingMode && (
+              <button
+                onClick={onConfirmPending}
+                disabled={isConfirmingPending}
+                className="flex items-center gap-2 px-4 py-3 bg-success text-success-foreground border border-success rounded-xl text-xs font-black uppercase tracking-widest hover:bg-success/90 transition-all active:scale-95 disabled:opacity-50"
+                type="button"
+                aria-label="Confirmar recepción pendiente"
+              >
+                <CheckCircle2 className="w-4 h-4" aria-hidden="true" />
+                {isConfirmingPending ? 'Confirmando...' : 'Confirmar Recepción'}
+              </button>
+            )}
+            {!isEditMode && !isConfirmPendingMode && receipt?.status === 'pending' && onVoidRequest && (
               <button
                 onClick={onVoidRequest}
                 disabled={isVoiding}
@@ -72,7 +95,15 @@ export function ReceptionDetailsModal({
                 {isVoiding ? 'Anulando...' : 'Anular recepción'}
               </button>
             )}
-            {!isEditMode && (
+            {/* Reception-Flow-Restriction: para confirmadas (active) NO se muestra Anular.
+                El usuario debe usar "Invertir" desde el historial, que crea un documento
+                de disminución manteniendo trazabilidad. Mostramos una nota explicativa. */}
+            {!isEditMode && !isConfirmPendingMode && receipt?.status === 'active' && (
+              <p className="text-[10px] font-medium text-muted-foreground italic max-w-[200px] leading-tight">
+                Recepción confirmada. Para revertir, use <strong>Invertir</strong> desde el historial (mantiene trazabilidad).
+              </p>
+            )}
+            {!isEditMode && !isConfirmPendingMode && (
               <button
                 onClick={onExport}
                 className="flex items-center gap-2 px-4 py-3 bg-background border border-border rounded-xl text-xs font-black uppercase tracking-widest hover:bg-primary hover:text-foreground transition-all active:scale-95"
@@ -87,22 +118,21 @@ export function ReceptionDetailsModal({
 
           <div className="flex gap-2">
             <button
-              onClick={onClose}
+              onClick={isConfirmPendingMode ? (onConfirmPendingCancel || onClose) : onClose}
               className="px-8 py-3 bg-background border border-border rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-muted transition-all active:scale-95"
               type="button"
-              aria-label={isEditMode ? 'Cancelar edición de recepción' : 'Cerrar detalle de recepción'}
+              aria-label={isEditMode ? 'Cancelar edición de recepción' : isConfirmPendingMode ? 'Cancelar confirmación' : 'Cerrar detalle de recepción'}
             >
-              {isEditMode ? 'Cancelar' : 'Cerrar'}
+              {isEditMode ? 'Cancelar' : isConfirmPendingMode ? 'Cancelar' : 'Cerrar'}
             </button>
             {isEditMode && (
-              <button
+              <button type="button"
                 onClick={() => onUpdateSubmit?.({
                   supplier: (document.getElementById('edit-supplier') as HTMLInputElement)?.value,
                   referenceDoc: (document.getElementById('edit-reference-doc') as HTMLInputElement)?.value
                 })}
                 disabled={isUpdating}
                 className="px-8 py-3 bg-primary text-white border border-primary rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-primary/90 transition-all active:scale-95 disabled:opacity-50"
-                type="button"
                 aria-label="Guardar cambios de la recepción"
               >
                 {isUpdating ? 'Guardando...' : 'Guardar cambios'}
@@ -113,6 +143,22 @@ export function ReceptionDetailsModal({
       }
     >
         <div className="space-y-6">
+          {/* Reception-Flow-Fix: banner de advertencia cuando se va a confirmar
+              una recepción pendiente. Aclara que la acción aplicará cambios al
+              inventario y volverá la recepción no editable. */}
+          {isConfirmPendingMode && (
+            <div className="p-4 rounded-xl bg-success/10 border border-success/30 flex gap-3 items-start" role="alert">
+              <AlertTriangle className="w-5 h-5 text-success shrink-0 mt-0.5" aria-hidden="true" />
+              <div className="space-y-1">
+                <p className="text-xs font-black uppercase text-success tracking-widest">Confirmar Recepción</p>
+                <p className="text-xs font-medium text-success/80 leading-relaxed">
+                  Al confirmar, se aplicarán los cambios de stock al inventario y la recepción
+                  pasará a estado <strong>Confirmada</strong> (no editable). Esta acción
+                  <strong> no se puede deshacer</strong> — solo se puede anular o invertir después.
+                </p>
+              </div>
+            </div>
+          )}
           {isEditMode ? (
             <div className="space-y-4">
               <div className="space-y-1.5">
@@ -198,7 +244,7 @@ export function ReceptionDetailsModal({
                   {receipt?.status === 'voided' ? 'Anulada' : 'Total Costo'}
                 </div>
                 <div className={cn(
-                  "font-black text-lg",
+                  "font-black text-lg tabular-nums",
                   receipt?.status === 'voided' ? "text-destructive" : "text-primary"
                 )}>
                   {formatCurrency(receipt?.total_cost || 0)}
@@ -250,9 +296,9 @@ export function ReceptionDetailsModal({
                               <div className="font-bold">{item.products?.name}</div>
                               <div className="text-xs font-mono text-muted-foreground">{item.products?.sku}</div>
                             </td>
-                            <td className="p-3 text-center font-black">{item.quantity}</td>
-                            <td className="p-3 text-right font-bold text-muted-foreground">{formatCurrency(item.unit_cost)}</td>
-                            <td className="p-3 text-right font-black text-primary">{formatCurrency(item.quantity * item.unit_cost)}</td>
+                            <td className="p-3 text-center font-black tabular-nums">{item.quantity}</td>
+                            <td className="p-3 text-right font-bold text-muted-foreground tabular-nums">{formatCurrency(item.unit_cost)}</td>
+                            <td className="p-3 text-right font-black text-primary tabular-nums">{formatCurrency(item.quantity * item.unit_cost)}</td>
                           </tr>
                         );
                       })
@@ -266,15 +312,15 @@ export function ReceptionDetailsModal({
         {/* Financial Summary */}
         <div className="mt-6 pt-4 border-t border-white/5">
            <div className="flex flex-col items-end gap-1">
-              <div className="flex justify-between w-full max-w-[200px] text-xs font-bold text-muted-foreground uppercase">
+              <div className="flex justify-between w-full max-w-[200px] text-xs font-bold text-muted-foreground uppercase tabular-nums">
                 <span>Subtotal:</span>
                 <span>{formatCurrency(subtotal)}</span>
               </div>
-              <div className="flex justify-between w-full max-w-[200px] text-xs font-bold text-muted-foreground uppercase">
+              <div className="flex justify-between w-full max-w-[200px] text-xs font-bold text-muted-foreground uppercase tabular-nums">
                 <span>Impuestos (0%):</span>
                 <span>{formatCurrency(taxes)}</span>
               </div>
-              <div className="flex justify-between w-full max-w-[200px] text-sm font-black text-primary uppercase border-t border-primary/20 pt-1 mt-1">
+              <div className="flex justify-between w-full max-w-[200px] text-sm font-black text-primary uppercase border-t border-primary/20 pt-1 mt-1 tabular-nums">
                 <span>Total:</span>
                 <span>{formatCurrency(total)}</span>
               </div>

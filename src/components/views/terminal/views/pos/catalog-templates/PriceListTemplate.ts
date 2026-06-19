@@ -260,7 +260,6 @@ export const renderPriceListTemplate: TemplateRenderer = async (
 
     // ── Draw images into table cells ────────────────────────
     if (hasImages) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const at = (doc as any).__autoTable__;
       if (at?.pages) {
         Object.values(at.pages).forEach((pageData: any) => {

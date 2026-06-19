@@ -81,7 +81,7 @@ export function ResetMatchingModal({ open, onOpenChange, rules }: ResetMatchingM
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
-                        <RotateCcw className="w-5 h-5 text-red-500" />
+                        <RotateCcw className="w-5 h-5 text-destructive" />
                         Reset de Matching
                     </DialogTitle>
                     <DialogDescription>
@@ -129,9 +129,9 @@ export function ResetMatchingModal({ open, onOpenChange, rules }: ResetMatchingM
                         </Select>
                     </div>
 
-                    <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg flex gap-3">
-                        <AlertCircle className="w-5 h-5 text-red-500 shrink-0" />
-                        <p className="text-[10px] text-red-700 font-medium leading-relaxed">
+                    <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg flex gap-3">
+                        <AlertCircle className="w-5 h-5 text-destructive shrink-0" />
+                        <p className="text-[10px] text-destructive font-medium leading-relaxed">
                             Al confirmar, se borrarán los logs de ejecución y las líneas generadas para las transacciones que coincidan con el filtro. El stock virtual se recalculará automáticamente.
                         </p>
                     </div>
@@ -141,7 +141,7 @@ export function ResetMatchingModal({ open, onOpenChange, rules }: ResetMatchingM
                     <Button
                         variant="ghost"
                         onClick={handleResetAll}
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50 text-xs font-black uppercase"
+                        className="text-destructive hover:text-destructive hover:bg-red-50 text-xs font-black uppercase"
                         disabled={isResetting}
                     >
                         Resetear Todo
@@ -157,7 +157,7 @@ export function ResetMatchingModal({ open, onOpenChange, rules }: ResetMatchingM
                     <Button
                         onClick={handleReset}
                         disabled={isResetting}
-                        className="bg-red-600 hover:bg-red-700 text-white text-xs font-black uppercase px-6"
+                        className="bg-destructive hover:bg-destructive text-white text-xs font-black uppercase px-6"
                     >
                         {isResetting ? "Procesando..." : "Confirmar Reset"}
                     </Button>

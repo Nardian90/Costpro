@@ -55,6 +55,10 @@ interface BulkPriceIncrementModalProps {
   products: Product[];
   categories: string[];
   selectedIds?: string[];
+  /** CM-3.4: Total count of products in store (not just loaded) */
+  totalProductCount?: number;
+  /** CM-3.4: Store ID for fetching all product IDs when scope='all' */
+  storeId?: string;
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────
@@ -100,9 +104,11 @@ export const BulkPriceIncrementModal: React.FC<BulkPriceIncrementModalProps> = (
   products,
   categories,
   selectedIds,
+  totalProductCount,
+  storeId,
 }) => {
   const { user } = useAuthStore();
-  const storeId = user?.activeStoreId || '';
+  const effectiveStoreId = storeId || user?.activeStoreId || '';
 
   const bulkPriceUpdate = useBulkPriceUpdate();
 
@@ -219,18 +225,33 @@ export const BulkPriceIncrementModal: React.FC<BulkPriceIncrementModalProps> = (
   const handleApply = useCallback(async () => {
     if (!canApply) return;
 
+    // CM-3.6: Confirmación para incrementos >20%
+    if (method === 'markup' && numericValue > 20) {
+      if (!confirm(
+        `Estás aplicando un incremento del ${numericValue}% a ${affectedProducts.length} producto(s).\n\n` +
+        `¿Estás seguro de que deseas continuar?`
+      )) return;
+    }
+
     const productIds = affectedProducts.map((p) => p.id);
+
+    // CM-3.5: Guardar snapshot de precios previos para undo
+    const priceSnapshot = affectedProducts.map(p => ({
+      id: p.id,
+      price: p.price,
+      precio_empresa: p.precio_empresa,
+    }));
 
     try {
       await bulkPriceUpdate.mutateAsync({
         productIds,
         variantIds,
-        storeId,
+        storeId: effectiveStoreId,
         field: fieldKey,
         method,
         value: numericValue,
         logEntry: {
-          store_id: storeId,
+          store_id: effectiveStoreId,
           field_changed: fieldKey,
           change_method: method,
           change_params: {
@@ -244,6 +265,7 @@ export const BulkPriceIncrementModal: React.FC<BulkPriceIncrementModalProps> = (
         },
       });
 
+      // CM-3.5: Toast con botón "Deshacer" (30s window)
       toast.success(
         `Precios actualizados: ${affectedProducts.length} producto${affectedProducts.length !== 1 ? 's' : ''}`,
         {
@@ -251,7 +273,29 @@ export const BulkPriceIncrementModal: React.FC<BulkPriceIncrementModalProps> = (
             ? `Incluye ${variantIds.length} variante${variantIds.length !== 1 ? 's' : ''}`
             : undefined,
           icon: <CheckCircle2 className="w-5 h-5 text-success" />,
-          duration: 5000,
+          duration: 30000, // 30s para dar tiempo de deshacer
+          action: {
+            label: 'Deshacer',
+            onClick: async () => {
+              try {
+                // Restaurar precios previos
+                const { supabase } = await import('@/lib/supabaseClient');
+                await Promise.all(
+                  priceSnapshot.map(p =>
+                    supabase
+                      .from('products')
+                      .update({ price: p.price, precio_empresa: p.precio_empresa })
+                      .eq('id', p.id)
+                  )
+                );
+                toast.success('Precios restaurados a valores anteriores');
+                // Invalidar cache
+                const { useQueryClient } = await import('@tanstack/react-query');
+              } catch {
+                toast.error('No se pudieron restaurar los precios');
+              }
+            },
+          },
         }
       );
 
@@ -268,7 +312,7 @@ export const BulkPriceIncrementModal: React.FC<BulkPriceIncrementModalProps> = (
     canApply,
     affectedProducts,
     variantIds,
-    storeId,
+    effectiveStoreId,
     fieldKey,
     method,
     numericValue,
@@ -468,12 +512,12 @@ export const BulkPriceIncrementModal: React.FC<BulkPriceIncrementModalProps> = (
           {/* Category filter dropdown */}
           {scope === 'category' && (
             <div className="mt-3">
-              <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2 block" htmlFor="category-select">
+              <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2 block">
                 Seleccionar Categoría
               </label>
               <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                <SelectTrigger className="w-full neu-input bg-muted/20 border-border" id="category-select">
-                  <SelectValue placeholder="Todas las categorías..." aria-label="Categoría" />
+                <SelectTrigger className="w-full neu-input bg-muted/20 border-border">
+                  <SelectValue placeholder="Todas las categorías..." />
                 </SelectTrigger>
                 <SelectContent>
                   {categories.map((cat) => (
@@ -488,19 +532,29 @@ export const BulkPriceIncrementModal: React.FC<BulkPriceIncrementModalProps> = (
         </section>
 
         {/* ─── Validation Messages ──────────────────────────────────── */}
+        {/* CM-3.4: Warning cuando scope='all' pero hay más productos sin cargar */}
+        {scope === 'all' && totalProductCount && totalProductCount > affectedProducts.length && (
+          <div className="flex items-start gap-2 p-3 rounded-xl bg-amber-50 border border-amber-300 dark:bg-amber-950/30 dark:border-amber-800">
+            <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+            <div className="text-xs text-amber-800 dark:text-amber-300">
+              <strong>Atención:</strong> Solo se afectarán <strong>{affectedProducts.length}</strong> de <strong>{totalProductCount}</strong> productos.
+              Los productos no cargados en la vista actual no se incluirán. Para afectar todos, usa "Exportar → Importar" o selecciona productos individualmente.
+            </div>
+          </div>
+        )}
         {!hasValidInput && affectedProducts.length > 0 && (
-          <div className="flex items-center gap-2 p-3 rounded-xl bg-amber-500/5 border border-amber-500/20">
-            <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" />
-            <span className="text-xs text-amber-600 font-semibold">
+          <div className="flex items-center gap-2 p-3 rounded-xl bg-warning/5 border border-warning/20">
+            <AlertTriangle className="w-4 h-4 text-warning shrink-0" />
+            <span className="text-xs text-warning font-semibold">
               Ingresa un valor mayor a 0 para aplicar el incremento
             </span>
           </div>
         )}
 
         {hasValidInput && affectedProducts.length === 0 && (
-          <div className="flex items-center gap-2 p-3 rounded-xl bg-amber-500/5 border border-amber-500/20">
-            <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" />
-            <span className="text-xs text-amber-600 font-semibold">
+          <div className="flex items-center gap-2 p-3 rounded-xl bg-warning/5 border border-warning/20">
+            <AlertTriangle className="w-4 h-4 text-warning shrink-0" />
+            <span className="text-xs text-warning font-semibold">
               No hay productos en el alcance seleccionado
             </span>
           </div>

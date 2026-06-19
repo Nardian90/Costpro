@@ -48,7 +48,7 @@ const handler = withAuth(async (req, session) => {
     const result = calculateFicha(ficha, { actor: 'api-user' });
 
     return NextResponse.json({ ok: true, ...result });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Calculation API Error:', error);
     return NextResponse.json({ ok: false, errors: ["Error interno en el motor de cálculo"] }, { status: 500 });
   }

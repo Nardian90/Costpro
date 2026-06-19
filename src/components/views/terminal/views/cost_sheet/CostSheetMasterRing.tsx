@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import { cn, formatCurrency } from '@/lib/utils';
 import { TrendingUp, Package, Users, Settings, Zap, Plus, Minus } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
@@ -31,6 +31,7 @@ export const CostSheetMasterRing: React.FC<CostSheetMasterRingProps> = ({
   onPriceChange,
   onPriceAdjust
 }) => {
+  const prefersReducedMotion = useReducedMotion();
   const utilityPercent = totalPrice > 0 ? (utility / totalPrice) * 100 : 0;
   const costPercent = totalPrice > 0 ? (totalCost / totalPrice) * 100 : 0;
   const markupPercent = totalCost > 0 ? (utility / totalCost) * 100 : 0;
@@ -83,7 +84,7 @@ export const CostSheetMasterRing: React.FC<CostSheetMasterRingProps> = ({
             stroke="currentColor"
             strokeWidth={strokeWidth}
             strokeDasharray={circumference}
-            initial={{ strokeDashoffset: circumference }}
+            initial={prefersReducedMotion ? { strokeDashoffset: circumference - (Math.min(costPercent, 100) / 100) * circumference } : { strokeDashoffset: circumference }}
             animate={{ strokeDashoffset: circumference - (Math.min(costPercent, 100) / 100) * circumference }}
             transition={{ duration: 1.5, ease: "circOut" }}
             strokeLinecap="round"
@@ -100,7 +101,7 @@ export const CostSheetMasterRing: React.FC<CostSheetMasterRingProps> = ({
             strokeWidth={strokeWidth}
             className={cn(brandGreen, "[filter:drop-shadow(0_0_8px_var(--primary))] dark:[filter:drop-shadow(0_0_12px_var(--primary))]")}
             strokeDasharray={circumference}
-            initial={{ strokeDashoffset: circumference }}
+            initial={prefersReducedMotion ? { strokeDashoffset: circumference - (Math.min(utilityPercent, 100) / 100) * circumference } : { strokeDashoffset: circumference }}
             animate={{ strokeDashoffset: circumference - (Math.min(utilityPercent, 100) / 100) * circumference }}
             transition={{ duration: 1.5, delay: 0.3, ease: "circOut" }}
             strokeLinecap="round"
@@ -124,7 +125,7 @@ export const CostSheetMasterRing: React.FC<CostSheetMasterRingProps> = ({
       {/* Price Control Slider */}
       {onPriceChange && (
         <div className="flex items-center gap-3 w-full px-4 sm:px-8 -mt-4 mb-2">
-          <button
+          <button type="button"
             onClick={(e) => {
               e.stopPropagation();
               onPriceAdjust?.(-1);
@@ -145,7 +146,7 @@ export const CostSheetMasterRing: React.FC<CostSheetMasterRingProps> = ({
             />
           </div>
 
-          <button
+          <button type="button"
             onClick={(e) => {
               e.stopPropagation();
               onPriceAdjust?.(1);

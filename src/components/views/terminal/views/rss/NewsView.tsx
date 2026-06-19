@@ -17,9 +17,10 @@ import { cn, formatDate, formatTime, safeFormatDate } from '@/lib/utils';
 import { useRSSNews } from '@/hooks/api/useRSS';
 import { StateRenderer } from '@/components/ui/StateRenderer';
 import { RSSNewsItem } from '@/types';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 
 export default function NewsView() {
+  const prefersReducedMotion = useReducedMotion();
   const { data: news, isLoading, error, refetch, isRefetching } = useRSSNews();
   const [searchTerm, setSearchTerm] = React.useState('');
   const [filterPriority, setFilterPriority] = React.useState(true);
@@ -51,7 +52,7 @@ export default function NewsView() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <button
+          <button type="button"
             onClick={() => refetch()}
             disabled={isRefetching}
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-border bg-card hover:bg-accent transition-all text-xs font-black uppercase tracking-widest disabled:opacity-50"
@@ -66,7 +67,7 @@ export default function NewsView() {
       {exchangeRateNews && (
         <motion.div
           initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
+          animate={prefersReducedMotion ? {} : { opacity: 1, y: 0 }}
           className="relative overflow-hidden p-6 rounded-3xl border-2 border-primary/20 bg-primary/5 shadow-xl shadow-primary/5"
         >
           <div className="absolute top-0 right-0 p-8 opacity-10">
@@ -123,12 +124,12 @@ export default function NewsView() {
           />
         </div>
         <div className="md:col-span-1">
-          <button
+          <button type="button"
             onClick={() => setFilterPriority(!filterPriority)}
             className={cn(
               "w-full h-full flex items-center justify-center gap-2 rounded-2xl border-2 transition-all text-xs font-black uppercase tracking-widest",
               filterPriority
-                ? "bg-amber-500/10 border-amber-500 text-amber-600 shadow-lg shadow-amber-500/10"
+                ? "bg-warning/10 border-warning text-warning shadow-lg shadow-warning/10"
                 : "bg-card border-border text-muted-foreground hover:bg-accent"
             )}
           >
@@ -170,22 +171,23 @@ export default function NewsView() {
 }
 
 function NewsCard({ item }: { item: RSSNewsItem }) {
+  const prefersReducedMotion = useReducedMotion();
   return (
     <motion.div
       layout
       initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.95 }}
+      animate={prefersReducedMotion ? {} : { opacity: 1, scale: 1 }}
+      exit={prefersReducedMotion ? {} : { opacity: 0, scale: 0.95 }}
       className={cn(
         "group p-6 rounded-3xl border transition-all hover:shadow-2xl hover:-translate-y-1 flex flex-col justify-between h-full relative overflow-hidden",
         item.isPriority
-          ? "border-amber-500/30 bg-amber-500/[0.02] shadow-amber-500/5 hover:border-amber-500/50"
+          ? "border-warning/30 bg-warning/[0.02] shadow-warning/5 hover:border-warning/50"
           : "border-border bg-card shadow-sm hover:border-primary/30"
       )}
     >
       {item.isPriority && (
         <div className="absolute top-0 right-0">
-          <div className="bg-amber-500 text-foreground text-xs font-black uppercase tracking-widest px-3 py-1 rounded-bl-xl shadow-lg">
+          <div className="bg-warning text-foreground text-xs font-black uppercase tracking-widest px-3 py-1 rounded-bl-xl shadow-lg">
             Prioritario
           </div>
         </div>
@@ -196,7 +198,7 @@ function NewsCard({ item }: { item: RSSNewsItem }) {
           <div className="flex items-center gap-2">
             <div className={cn(
               "p-2 rounded-xl",
-              item.isPriority ? "bg-amber-500/10 text-amber-600" : "bg-primary/10 text-primary"
+              item.isPriority ? "bg-warning/10 text-warning" : "bg-primary/10 text-primary"
             )}>
               <Newspaper className="w-4 h-4" />
             </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import {
   Check,
   FileText,
@@ -9,7 +9,9 @@ import {
   RefreshCw,
   ExternalLink,
   Image as ImageIcon,
+  ShoppingCart,
 } from "lucide-react";
+import { formatCurrency } from "@/lib/utils";
 import { PrimaryButton } from "@/components/ui/atomic";
 import { SaleQRCode } from "./SaleQRCode";
 import type { LastSale, POSCartSuccessViewProps } from "./POSCart.types";
@@ -24,22 +26,34 @@ export const POSCartSuccessView = ({
   onExportAsImage,
   onClearLastSale,
   lastSale,
-}: EnhancedSuccessViewProps) => (
+}: EnhancedSuccessViewProps) => {
+  const prefersReducedMotion = useReducedMotion();
+
+  return (
   <motion.div
     initial={{ opacity: 0, y: 20 }}
-    animate={{ opacity: 1, y: 0 }}
+    animate={prefersReducedMotion ? {} : { opacity: 1, y: 0 }}
     className="flex-1 flex flex-col items-center justify-start pt-12 sm:pt-20 p-6 text-center space-y-8 max-w-2xl mx-auto w-full overflow-y-auto no-scrollbar"
     id="sale-success-content"
   >
-    <div className="w-24 h-24 bg-green-500 rounded-full flex items-center justify-center shadow-xl shadow-green-500/20 relative">
+    <div className="w-24 h-24 bg-success rounded-full flex items-center justify-center shadow-xl shadow-success/20 relative">
       <Check className="w-12 h-12 text-primary-foreground" strokeWidth={3} />
       <motion.div
         initial={{ scale: 0.8, opacity: 0 }}
-        animate={{ scale: 1.5, opacity: 0 }}
+        animate={prefersReducedMotion ? {} : { scale: 1.5, opacity: 0 }}
         transition={{ repeat: Infinity, duration: 2 }}
-        className="absolute inset-0 bg-green-500 rounded-full"
+        className="absolute inset-0 bg-success rounded-full"
       />
     </div>
+
+    {lastSale && (
+      <div className="flex items-center gap-3 bg-primary/10 border border-primary/20 px-4 py-2 rounded-full">
+        <ShoppingCart className="w-4 h-4 text-primary" />
+        <span className="text-sm font-black text-primary">{formatCurrency(lastSale.total || 0)}</span>
+        <span className="text-xs text-muted-foreground">·</span>
+        <span className="text-xs font-bold text-muted-foreground">{lastSale.items?.length || 0} producto{lastSale.items?.length !== 1 ? 's' : ''}</span>
+      </div>
+    )}
 
     <div className="space-y-2">
       <h2 className="text-[clamp(2rem,8vw,2.5rem)] font-black text-foreground tracking-tighter uppercase">
@@ -78,6 +92,7 @@ export const POSCartSuccessView = ({
 
     <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-4">
       <button
+        type="button"
         onClick={onGeneratePDF}
         className="flex items-center justify-between p-6 rounded-2xl bg-primary text-primary-foreground shadow-xl shadow-primary/20 hover:scale-[1.02] transition-transform group"
       >
@@ -91,6 +106,7 @@ export const POSCartSuccessView = ({
       </button>
 
       <button
+        type="button"
         onClick={onShareWhatsApp}
         className="flex items-center justify-between p-6 rounded-2xl bg-primary text-primary-foreground shadow-xl shadow-primary/20 hover:scale-[1.02] transition-transform group"
       >
@@ -104,6 +120,7 @@ export const POSCartSuccessView = ({
       </button>
 
       <button
+        type="button"
         onClick={onExportAsImage}
         className="flex items-center justify-between p-6 rounded-2xl bg-card text-primary-foreground shadow-xl shadow-border/20 hover:scale-[1.02] transition-transform group sm:col-span-2"
       >
@@ -129,4 +146,5 @@ export const POSCartSuccessView = ({
       className="w-full max-w-sm h-16 text-xl rounded-2xl shadow-2xl"
     />
   </motion.div>
-);
+  );
+};

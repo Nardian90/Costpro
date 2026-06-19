@@ -39,8 +39,9 @@ export default function MovementsView() {
       const snapshot = await StockService.takeSnapshot(m.producto_destino_cod);
       await StockService.revertMovement(m.id, snapshot);
       toast.success("Movimiento revertido mediante compensación");
-    } catch (error: any) {
-      toast.error(error.message || "Error al revertir el movimiento");
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Error al revertir el movimiento";
+      toast.error(message);
     }
   };
 
@@ -94,7 +95,7 @@ export default function MovementsView() {
           />
         </div>
         <div className="flex gap-2">
-           <Button variant="outline" size="sm" onClick={exportToExcel} className="text-green-600 border-green-200 hover:bg-green-50">
+           <Button variant="outline" size="sm" onClick={exportToExcel} className="text-success border-green-200 hover:bg-green-50">
               <FileSpreadsheet className="w-4 h-4 mr-2" /> Exportar Excel
            </Button>
         </div>
@@ -130,11 +131,11 @@ export default function MovementsView() {
                         {format(new Date(m.fecha), "dd/MM HH:mm:ss", { locale: es })}
                       </TableCell>
                       <TableCell>
-                        <Badge variant="outline" className={m.tipo === 'DECOMPOSITION' ? 'bg-orange-500/10 text-orange-600 border-orange-200' : 'bg-blue-500/10 text-blue-600 border-blue-200'}>
+                        <Badge variant="outline" className={m.tipo === 'DECOMPOSITION' ? 'bg-warning/10 text-warning border-orange-200' : 'bg-primary/10 text-primary border-blue-200'}>
                           {m.tipo === 'DECOMPOSITION' ? 'DESCOMPOSICIÓN' : 'MANUAL'}
                         </Badge>
                         {isReversion && (
-                          <Badge variant="secondary" className="ml-2 bg-red-100 text-red-600 border-red-200 text-[10px]">REVERTIDO</Badge>
+                          <Badge variant="secondary" className="ml-2 bg-red-100 text-destructive border-red-200 text-[10px]">REVERTIDO</Badge>
                         )}
                       </TableCell>
                       <TableCell>

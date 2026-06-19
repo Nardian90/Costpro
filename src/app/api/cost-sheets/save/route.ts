@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase as anonSupabase, getSupabaseAuthClient } from '@/lib/supabaseClient';
-import { getServerSession } from "@/lib/auth";
 import { rateLimit } from '@/lib/rate-limit';
 import { validateOrigin } from '@/lib/csrf';
 import { calculateFicha } from '@/lib/cost-engine';
@@ -9,19 +8,16 @@ import reinicioTemplate from '@/lib/data/costpro-reinicio';
 import { CostSheetDataContract } from '@/contracts/cost-sheet';
 import { costSheetSaveSchema, zodError } from '@/validation/api-schemas';
 import { withTracing } from '@/lib/observability';
+import { withStoreAccess, type AuthenticatedSession } from '@/lib/auth-middleware';
+import { createApiError } from '@/lib/api-errors';
 
 export const runtime = 'nodejs';
 
-async function saveCostSheetHandler(req: NextRequest) {
+async function saveCostSheetHandler(req: NextRequest, session: AuthenticatedSession) {
   try {
-    const session = await getServerSession(req);
-    if (!session) {
-      console.error('[SaveCostSheet] No session found');
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
-    }
-
+    // FIX-SEC-H4: Auth handled by withAuth middleware
     if (!validateOrigin(req)) {
-      return NextResponse.json({ error: 'Origen no permitido' }, { status: 403 });
+      return NextResponse.json(createApiError('INVALID_ORIGIN'), { status: 403 });
     }
 
     // Rate limiting after auth — use authenticated user ID instead of IP
@@ -29,7 +25,7 @@ async function saveCostSheetHandler(req: NextRequest) {
     const { allowed, remaining, resetAt } = await rateLimit(clientId, { windowMs: 60_000, maxRequests: 30 });
 
     if (!allowed) {
-      return new Response(JSON.stringify({ error: 'Too many requests. Please try again later.' }), {
+      return new Response(JSON.stringify(createApiError('RATE_LIMITED')), {
         status: 429,
         headers: {
           'Content-Type': 'application/json',
@@ -45,7 +41,19 @@ async function saveCostSheetHandler(req: NextRequest) {
     if (!parsed.success) {
       return NextResponse.json(zodError(parsed.error), { status: 400 });
     }
-    const { updateData, currentData } = parsed.data as any;
+    const { updateData, currentData, store_id, storeId } = parsed.data as any;
+    const activeStoreId = store_id || storeId;
+
+    // FIX-AUDIT-2: withStoreAccess already validated membership for this store_id,
+    // but we verify again as defense-in-depth
+    const isAdmin = (session.user as any).role === 'admin';
+    const memberships = (session.user as any).memberships || [];
+    if (!isAdmin && !memberships.some((m: any) => m.store_id === activeStoreId && m.status === 'active')) {
+      return NextResponse.json(
+        createApiError('FORBIDDEN'),
+        { status: 403 }
+      );
+    }
 
     // Use authenticated client for database operations
     const supabase = getSupabaseAuthClient(session.token);
@@ -197,7 +205,9 @@ async function saveCostSheetHandler(req: NextRequest) {
         description: baseData.metadata?.description || 'Generado por Darian AI',
         category: baseData.header.category || 'General',
         data: exportData as any,
-        created_by: session.user.id
+        created_by: session.user.id,
+        // FIX-AUDIT-2: store_id is now mandatory — cost sheets are always store-scoped
+        store_id: activeStoreId,
       })
       .select()
       .single();
@@ -217,8 +227,11 @@ async function saveCostSheetHandler(req: NextRequest) {
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : String(error);
     console.error('[SaveCostSheet] Error:', error);
-    return NextResponse.json({ error: "Error interno al guardar la ficha de costo" }, { status: 500 });
+    return NextResponse.json(createApiError('INTERNAL_ERROR'), { status: 500 });
   }
 }
 
-export const POST = withTracing(saveCostSheetHandler, 'POST /api/cost-sheets/save');
+export const POST = withTracing(
+  withStoreAccess(saveCostSheetHandler as any) as any,
+  'POST /api/cost-sheets/save'
+);

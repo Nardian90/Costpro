@@ -54,26 +54,26 @@ export function AccountingIntegrityReport() {
 
             {report && (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <Card className="p-6 border-2 border-green-500/20 bg-green-500/5">
+                    <Card className="p-6 border-2 border-success/20 bg-success/5">
                         <div className="flex justify-between items-start">
-                            <CheckCircle2 className="w-8 h-8 text-green-500" />
+                            <CheckCircle2 className="w-8 h-8 text-success" />
                             <span className="text-2xl font-black">{report.summary.passed}</span>
                         </div>
-                        <p className="text-[10px] font-black uppercase text-green-600 mt-2 tracking-widest">Validaciones Exitosas</p>
+                        <p className="text-[10px] font-black uppercase text-success mt-2 tracking-widest">Validaciones Exitosas</p>
                     </Card>
-                    <Card className="p-6 border-2 border-orange-500/20 bg-orange-500/5">
+                    <Card className="p-6 border-2 border-warning/20 bg-warning/5">
                         <div className="flex justify-between items-start">
-                            <AlertTriangle className="w-8 h-8 text-orange-500" />
+                            <AlertTriangle className="w-8 h-8 text-warning" />
                             <span className="text-2xl font-black">{report.summary.warnings}</span>
                         </div>
-                        <p className="text-[10px] font-black uppercase text-orange-600 mt-2 tracking-widest">Advertencias / Pendientes</p>
+                        <p className="text-[10px] font-black uppercase text-warning mt-2 tracking-widest">Advertencias / Pendientes</p>
                     </Card>
-                    <Card className="p-6 border-2 border-red-500/20 bg-red-500/5">
+                    <Card className="p-6 border-2 border-destructive/20 bg-destructive/5">
                         <div className="flex justify-between items-start">
-                            <AlertCircle className="w-8 h-8 text-red-500" />
+                            <AlertCircle className="w-8 h-8 text-destructive" />
                             <span className="text-2xl font-black">{report.summary.failed}</span>
                         </div>
-                        <p className="text-[10px] font-black uppercase text-red-600 mt-2 tracking-widest">Errores de Integridad</p>
+                        <p className="text-[10px] font-black uppercase text-destructive mt-2 tracking-widest">Errores de Integridad</p>
                     </Card>
                 </div>
             )}
@@ -83,9 +83,9 @@ export function AccountingIntegrityReport() {
                     <Card key={check.id} className="p-6 hover:border-primary/30 transition-all">
                         <div className="flex flex-col md:flex-row gap-6 items-start md:items-center">
                             <div className={`p-4 rounded-2xl ${
-                                check.status === 'OK' ? 'bg-green-500/10 text-green-600' :
-                                check.status === 'WARNING' ? 'bg-orange-500/10 text-orange-600' :
-                                'bg-red-500/10 text-red-600'
+                                check.status === 'OK' ? 'bg-success/10 text-success' :
+                                check.status === 'WARNING' ? 'bg-warning/10 text-warning' :
+                                'bg-destructive/10 text-destructive'
                             }`}>
                                 {check.id === 'cash-integrity' && <Banknote className="w-6 h-6" />}
                                 {check.id === 'bank-truth' && <CreditCard className="w-6 h-6" />}
@@ -97,9 +97,9 @@ export function AccountingIntegrityReport() {
                                 <div className="flex items-center gap-3">
                                     <h3 className="font-black uppercase text-sm tracking-widest">{check.name}</h3>
                                     <Badge variant="outline" className={`text-[9px] font-black ${
-                                        check.status === 'OK' ? 'border-green-200 text-green-600 bg-green-50' :
-                                        check.status === 'WARNING' ? 'border-orange-200 text-orange-600 bg-orange-50' :
-                                        'border-red-200 text-red-600 bg-red-50'
+                                        check.status === 'OK' ? 'border-green-200 text-success bg-green-50' :
+                                        check.status === 'WARNING' ? 'border-orange-200 text-warning bg-orange-50' :
+                                        'border-red-200 text-destructive bg-red-50'
                                     }`}>
                                         {check.status}
                                     </Badge>
@@ -110,8 +110,8 @@ export function AccountingIntegrityReport() {
                             <div className="text-right min-w-[150px]">
                                 <p className="text-[10px] font-black text-muted-foreground uppercase mb-1">Diferencia</p>
                                 <p className={`text-lg font-black tabular-nums ${
-                                    check.status === 'OK' ? 'text-green-600' :
-                                    check.status === 'WARNING' ? 'text-orange-600' : 'text-red-600'
+                                    check.status === 'OK' ? 'text-success' :
+                                    check.status === 'WARNING' ? 'text-warning' : 'text-destructive'
                                 }`}>
                                     {check.id === 'structural-invariants' ? check.discrepancy : formatCurrencyCents(check.discrepancy)}
                                 </p>

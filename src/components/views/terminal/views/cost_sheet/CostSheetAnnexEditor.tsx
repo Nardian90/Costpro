@@ -416,15 +416,15 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
 
        {/* Referencing sections — back-links */}
        {referencingSections.length > 0 && onNavigateToSection && (
-         <div className="flex items-center gap-2 px-2 py-1 bg-amber-500/5 border-b border-border/20">
-            <ArrowLeft className="w-3 h-3 text-amber-600/70 shrink-0" />
-            <span className="text-[8px] font-black uppercase tracking-widest text-amber-600/70">Usado en:</span>
+         <div className="flex items-center gap-2 px-2 py-1 bg-warning/5 border-b border-border/20">
+            <ArrowLeft className="w-3 h-3 text-warning/70 shrink-0" />
+            <span className="text-[8px] font-black uppercase tracking-widest text-warning/70">Usado en:</span>
             {referencingSections.map((ref, idx) => (
               <button
                 key={`${ref.sectionId}-${ref.rowId}-${idx}`}
                 type="button"
                 onClick={() => onNavigateToSection(ref.rowId)}
-                className="text-[9px] font-bold text-amber-600 hover:text-amber-700 hover:bg-amber-500/10 px-1.5 py-0.5 rounded transition-colors truncate max-w-[200px]"
+                className="text-[9px] font-bold text-warning hover:text-warning/80 hover:bg-warning/10 px-1.5 py-0.5 rounded transition-colors truncate max-w-[200px]"
                 title={`${ref.sectionLabel} → ${ref.rowLabel}`}
               >
                 {ref.sectionLabel}: {ref.rowLabel}
@@ -619,7 +619,7 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
                     <TableCell colSpan={annex.columns.length + 1} className="px-1.5 py-0">
                       <div className="flex justify-end items-center gap-3">
                         <span className="text-[9px] text-primary/70 uppercase font-black tracking-[0.15em]">Total {annex.id}</span>
-                        <span className="text-sm font-black font-mono text-white tabular-nums">
+                        <span className="text-sm font-black font-mono tabular-nums">
                             {formatCurrency(totalValue)}
                         </span>
                       </div>
@@ -653,16 +653,16 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
        {/* Annex Total for Grid Mode (Mobile Cards) */}
        {layoutMode === 'grid' && (
          <div className="flex justify-end mt-4 sm:hidden">
-            <div className="neu-card !p-5 border-primary/20 bg-primary/5 shadow-xl min-w-[240px] w-full">
+            <div className="!p-5 border-primary/20 bg-primary/5 shadow-xl min-w-[240px] w-full rounded-xl">
                 <span className="text-xs text-primary/70 uppercase font-black tracking-[0.2em] block mb-2 text-right">Total {annex.id}</span>
                 <div className="flex items-center justify-end gap-2">
-                    <span className="text-4xl font-black font-mono text-white drop-shadow-sm">
+                    <span className="text-4xl font-black font-mono tabular-nums">
                         {formatCurrency(totalValue)}
                     </span>
                     {annex.coefficient && annex.coefficient !== 1 && (
-                        <div className="px-2 py-0.5 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center gap-1.5 print:hidden">
-                            <RefreshCw className="w-2.5 h-2.5 text-amber-500" />
-                            <span className="text-[10px] font-black font-mono text-amber-500">x{annex.coefficient.toFixed(4)}</span>
+                <div className="px-2 py-0.5 rounded-lg bg-warning/10 border border-warning/20 flex items-center gap-1.5 print:hidden">
+                            <RefreshCw className="w-2.5 h-2.5 text-warning" />
+                            <span className="text-[10px] font-black font-mono text-warning">x{annex.coefficient.toFixed(4)}</span>
                         </div>
                     )}
                 </div>

@@ -14,9 +14,10 @@ export class FallbackAdapter implements LLMProvider {
     for (const provider of this.providers) {
       try {
         return await provider.getResponse(messages, options);
-      } catch (error: any) {
-        logger.warn('DATABASE', 'AI_FALLBACK_TRIGGER:', { data: error.message })
-        errors.push(error);
+      } catch (error: unknown) {
+        const err = error instanceof Error ? error : new Error(String(error));
+        logger.warn('DATABASE', 'AI_FALLBACK_TRIGGER:', { data: err.message });
+        errors.push(err);
         continue;
       }
     }

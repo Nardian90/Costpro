@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import { produce } from "immer";
-import type { Product, ProductVariant, TaxConfiguration } from "@/types";
+import type { Product, ProductVariant, TaxConfiguration, PaymentMethod } from "@/types";
 
 // ── Notification callback (injected by UI layer) ────────────────
 let _onCartNotification: ((type: "warning" | "error", message: string) => void) | null = null;
@@ -37,7 +37,14 @@ interface CartState {
   discount: { type: "percentage" | "fixed"; value: number } | null;
   appliedTaxes: TaxConfiguration[];
   sessionUserId: string | null;
+  storeId: string | null;
   lastUpdated: number;
+  // POS-2 MM-10: Moved from POSCart.tsx local state to global store to fix race condition
+  // where the "Confirmar" button could fire with a stale selectedPayment value.
+  selectedPayment: PaymentMethod;
+  // POS-2 MM-7: Customer attached to the sale (null = walk-in)
+  customerId: string | null;
+  customerName: string | null;
 
   addItem: (productInput: Product | Partial<CartItem>, variant?: ProductVariant) => void;
   removeItem: (productId: string, variantId: string | null) => void;
@@ -65,6 +72,10 @@ interface CartState {
   getItemCount: () => number;
   setCart: (saleId: string, items: CartItem[]) => void;
   setSessionUserId: (userId: string | null) => void;
+  setStoreId: (storeId: string | null) => void;
+  clearCartOnStoreSwitch: (newStoreId: string | null) => void;
+  setSelectedPayment: (method: PaymentMethod) => void;
+  setCustomer: (customerId: string | null, customerName: string | null) => void;
 }
 
 const calculateItemSubtotal = (item: CartItem) => {
@@ -84,9 +95,38 @@ export const useCartStore = create<CartState>()(
       discount: null,
       appliedTaxes: [],
       sessionUserId: null,
+      storeId: null,
       lastUpdated: Date.now(),
+      selectedPayment: "cash" as PaymentMethod,
+      customerId: null,
+      customerName: null,
 
       setSessionUserId: (sessionUserId) => set({ sessionUserId, lastUpdated: Date.now() }),
+
+      setStoreId: (storeId) => set({ storeId, lastUpdated: Date.now() }),
+
+      // POS-2 MM-10: setSelectedPayment mutates the global store so that POSCartActions
+      // (selector buttons), POSCartSummary (mixed-payment accordion) and POSCart
+      // (confirm button) all share a single source of truth.
+      setSelectedPayment: (method) => set({ selectedPayment: method, lastUpdated: Date.now() }),
+
+      // POS-2 MM-7: Attach / detach a customer from the current cart.
+      setCustomer: (customerId, customerName) =>
+        set({ customerId, customerName, lastUpdated: Date.now() }),
+
+      /**
+       * Clears the cart when switching stores if the new store differs from the cart's store.
+       * This prevents selling Store A products under Store B context.
+       */
+      clearCartOnStoreSwitch: (newStoreId) => {
+        const currentStoreId = get().storeId;
+        if (currentStoreId && newStoreId && currentStoreId !== newStoreId && get().items.length > 0) {
+          set({ items: [], discount: null, appliedTaxes: [], storeId: newStoreId, lastUpdated: Date.now() });
+          notify("warning", "Carrito limpiado automáticamente al cambiar de tienda");
+        } else if (!currentStoreId && newStoreId) {
+          set({ storeId: newStoreId, lastUpdated: Date.now() });
+        }
+      },
 
       addItem: (productInput, variant) =>
         set(
@@ -96,6 +136,14 @@ export const useCartStore = create<CartState>()(
             const incomingQuantity = (productInput as any).quantity || 1;
 
             if (!productId) return;
+
+            // Prevent adding products from a different store
+            const productStoreId = product?.store_id || (productInput as any).store_id;
+            const cartStoreId = state.storeId;
+            if (cartStoreId && productStoreId && productStoreId !== cartStoreId) {
+              notify("error", "No puedes agregar productos de otra tienda al carrito actual");
+              return;
+            }
 
             const existing = state.items.find(
               (i) => i.product_id === productId && (i.variant_id === (variant?.id || null) || (!i.variant_id && !variant?.id)),
@@ -199,8 +247,8 @@ export const useCartStore = create<CartState>()(
               (i) => i.product_id === productId && (i.variant_id === (variantId || null) || (!i.variant_id && !variantId)),
             );
             if (item) {
-              (item as any).discount_type = type;
-              (item as any).discount_value = value;
+              item.discount_type = type;
+              item.discount_value = value;
               item.subtotal = calculateItemSubtotal(item);
               item.cash_paid = item.subtotal;
               item.transfer_paid = 0;
@@ -216,6 +264,16 @@ export const useCartStore = create<CartState>()(
               (i) => i.product_id === productId && (i.variant_id === (variantId || null) || (!i.variant_id && !variantId)),
             );
             if (item) {
+              const subtotal = item.subtotal || 0;
+              // Clamp: never negative, never exceed subtotal
+              cashPaid = Math.max(0, Math.min(cashPaid, subtotal));
+              transferPaid = Math.max(0, Math.min(transferPaid, subtotal));
+              // If combined exceeds subtotal, redistribute proportionally
+              if (cashPaid + transferPaid > subtotal) {
+                const total = cashPaid + transferPaid;
+                cashPaid = Number((cashPaid / total * subtotal).toFixed(2));
+                transferPaid = Number((subtotal - cashPaid).toFixed(2));
+              }
               item.cash_paid = cashPaid;
               item.transfer_paid = transferPaid;
               state.lastUpdated = Date.now();
@@ -226,27 +284,61 @@ export const useCartStore = create<CartState>()(
       prorateGlobalPayment: (totalCash, totalTransfer) =>
         set(
           produce((state: CartState) => {
-            const subtotal = state.items.reduce((acc, item) => acc + item.subtotal, 0);
-            if (subtotal <= 0) return;
+            // POS-3b audit P0.2: Fix bug con descuento global + pago mixto.
+            // ANTES: proration usaba suma de subtotales de items como base.
+            //   Si había descuento global activo, getTotal() < suma de subtotales,
+            //   y la validación en usePOSCheckout fallaba porque
+            //   item.cash_paid + item.transfer_paid > item.subtotal.
+            // AHORA: usamos el subtotal ajustado por el descuento global prorrateado
+            //   por peso de cada item. Así item.cash+transfer = item.subtotal_adjusted.
+            const grossSubtotal = state.items.reduce((acc, item) => acc + item.subtotal, 0);
+            if (grossSubtotal <= 0) return;
 
-            let remainingCash = totalCash;
-            let remainingTransfer = totalTransfer;
+            // Calcular descuento global proporcional por item
+            const globalDiscountAmount = state.discount && state.discount.value > 0
+              ? (state.discount.type === "percentage"
+                ? (grossSubtotal * state.discount.value) / 100
+                : Math.min(state.discount.value, grossSubtotal))
+              : 0;
+
+            // Subtotal ajustado total (post-descuento)
+            const adjustedSubtotal = Math.max(0, grossSubtotal - globalDiscountAmount);
+            if (adjustedSubtotal <= 0) return;
+
+            // Clamp de los totales recibidos al adjustedSubtotal (no pagar más del total real)
+            const clampedCash = Math.min(totalCash, adjustedSubtotal);
+            const clampedTransfer = Math.min(totalTransfer, adjustedSubtotal - clampedCash);
+
+            let remainingCash = clampedCash;
+            let remainingTransfer = clampedTransfer;
             const itemCount = state.items.length;
 
             state.items.forEach((item, index) => {
+              // Peso del item sobre el subtotal bruto (proporcionalidad)
+              const weight = item.subtotal / grossSubtotal;
+              // Subtotal ajustado de este item = bruto - porción del descuento global
+              const itemAdjustedSubtotal = Math.max(
+                0,
+                item.subtotal - globalDiscountAmount * weight,
+              );
+
               if (index === itemCount - 1) {
+                // Último item absorbe el remainder para evitar drift por redondeo
                 item.cash_paid = Number(remainingCash.toFixed(2));
                 item.transfer_paid = Number(remainingTransfer.toFixed(2));
               } else {
-                const weight = item.subtotal / subtotal;
-                const itemCash = Number((totalCash * weight).toFixed(2));
-                const itemTransfer = Number((totalTransfer * weight).toFixed(2));
+                const itemCash = Number((clampedCash * weight).toFixed(2));
+                const itemTransfer = Number((clampedTransfer * weight).toFixed(2));
 
-                item.cash_paid = itemCash;
-                item.transfer_paid = itemTransfer;
+                // Clamp: no pagar más del subtotal ajustado del item
+                item.cash_paid = Math.min(itemCash, itemAdjustedSubtotal);
+                item.transfer_paid = Math.min(
+                  itemTransfer,
+                  Math.max(0, itemAdjustedSubtotal - item.cash_paid),
+                );
 
-                remainingCash -= itemCash;
-                remainingTransfer -= itemTransfer;
+                remainingCash -= item.cash_paid;
+                remainingTransfer -= item.transfer_paid;
               }
             });
             state.lastUpdated = Date.now();
@@ -310,7 +402,16 @@ export const useCartStore = create<CartState>()(
         return Number(Math.max(0, subtotal - discountAmount + taxAmount).toFixed(2));
       },
 
-      clearCart: () => set({ items: [], discount: null, appliedTaxes: [], lastUpdated: Date.now() }),
+      clearCart: () => set({
+        items: [],
+        discount: null,
+        appliedTaxes: [],
+        // POS-2 MM-10/MM-7: preserve selectedPayment on clearCart (default UX: most cashiers
+        // repeatedly sell with the same method) but drop the customer.
+        customerId: null,
+        customerName: null,
+        lastUpdated: Date.now(),
+      }),
 
       getItemCount: () => {
         return get().items.reduce((acc, item) => acc + (item.quantity || 0), 0);
@@ -321,11 +422,26 @@ export const useCartStore = create<CartState>()(
     {
       name: "pos-cart-storage",
       storage: createJSONStorage(() => localStorage),
+      partialize: (state) => ({
+        items: state.items,
+        discount: state.discount,
+        appliedTaxes: state.appliedTaxes,
+        sessionUserId: state.sessionUserId,
+        storeId: state.storeId,
+        lastUpdated: state.lastUpdated,
+        // POS-2 MM-10: persist selectedPayment so reloads during a sale keep the method.
+        selectedPayment: state.selectedPayment,
+        // POS-2 MM-7: deliberately NOT persisting customerId — a stale customer on a
+        // fresh session is worse than re-selecting.
+      }),
       onRehydrateStorage: () => (state) => {
         if (state && state.lastUpdated && Date.now() - state.lastUpdated > 8 * 60 * 60 * 1000) {
           state.items = [];
           state.discount = null;
           state.appliedTaxes = [];
+          state.selectedPayment = "cash";
+          state.customerId = null;
+          state.customerName = null;
           state.lastUpdated = Date.now();
         }
       }

@@ -89,8 +89,8 @@ const FIELD_GROUPS: FieldGroup[] = [
 
 // ── Color Palette (matching FlatTable) ──────────────────────────────
 
-const BG_COLORS = ['bg-primary/5', 'bg-violet-500/5', 'bg-amber-500/5', 'bg-emerald-500/5', 'bg-rose-500/5', 'bg-cyan-500/5'];
-const BORDER_COLORS = ['border-l-primary/40', 'border-l-violet-500/40', 'border-l-amber-500/40', 'border-l-emerald-500/40', 'border-l-rose-500/40', 'border-l-cyan-500/40'];
+const BG_COLORS = ['bg-primary/5', 'bg-violet-500/5', 'bg-warning/5', 'bg-success/5', 'bg-rose-500/5', 'bg-cyan-500/5'];
+const BORDER_COLORS = ['border-l-primary/40', 'border-l-violet-500/40', 'border-l-warning/40', 'border-l-success/40', 'border-l-rose-500/40', 'border-l-cyan-500/40'];
 
 // ── Group Divider Row ───────────────────────────────────────────────
 

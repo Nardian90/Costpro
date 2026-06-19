@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import {
   X as XIcon, Search, FileText, Trash2, Upload, Save, FileSpreadsheet,
   Download, Settings, Table2, LayoutGrid, ChevronDown,
@@ -62,11 +62,12 @@ const AccordionGroup = ({
   isOpen: boolean;
   onToggle: () => void;
 }) => {
+  const prefersReducedMotion = useReducedMotion();
   if (!isVisible) return null;
 
   return (
     <div className="border-b border-sidebar-border/50 last:border-0">
-      <button
+      <button type="button"
         onClick={onToggle}
         className={cn(
           "w-full flex items-center justify-between p-4 transition-colors",
@@ -79,7 +80,7 @@ const AccordionGroup = ({
           <span className="text-[10px] font-black uppercase tracking-[0.2em]">{title}</span>
         </div>
         <motion.div
-          animate={{ rotate: isOpen ? 180 : 0 }}
+          animate={prefersReducedMotion ? {} : { rotate: isOpen ? 180 : 0 }}
           transition={{ duration: 0.2 }}
         >
           <ChevronDown className="w-4 h-4 opacity-50" />
@@ -89,8 +90,8 @@ const AccordionGroup = ({
         {(isOpen || isSearchActive) && (
           <motion.div
             initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
+            animate={prefersReducedMotion ? { opacity: 1 } : { height: 'auto', opacity: 1 }}
+            exit={prefersReducedMotion ? {} : { height: 0, opacity: 0 }}
             transition={{ duration: 0.3, ease: 'easeInOut' }}
             className="overflow-hidden"
           >
@@ -122,6 +123,7 @@ export const CostSheetActionsPanel: React.FC<CostSheetActionsPanelProps> = ({
   onQuickGenerate,
   onExpertGenerate
 }) => {
+  const prefersReducedMotion = useReducedMotion();
   const [searchTerm, setSearchTerm] = useState('');
   const panelRef = useFocusTrap(isOpen);
 
@@ -159,7 +161,7 @@ export const CostSheetActionsPanel: React.FC<CostSheetActionsPanelProps> = ({
     const finalVariant = variant || (action ? action.variant : 'outline');
 
     return (
-      <button
+      <button type="button"
         key={id}
         onClick={() => handleAction(finalOnClick)}
         className={cn(
@@ -184,8 +186,8 @@ export const CostSheetActionsPanel: React.FC<CostSheetActionsPanelProps> = ({
           {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            animate={prefersReducedMotion ? { opacity: 1 } : { opacity: 1 }}
+            exit={prefersReducedMotion ? {} : { opacity: 0 }}
             onClick={onClose}
             className="fixed inset-0 bg-black/20 backdrop-blur-sm z-[90] lg:hidden"
           />
@@ -194,8 +196,8 @@ export const CostSheetActionsPanel: React.FC<CostSheetActionsPanelProps> = ({
           <motion.aside
             ref={panelRef}
             initial={{ x: '100%' }}
-            animate={{ x: 0 }}
-            exit={{ x: '100%' }}
+            animate={prefersReducedMotion ? { x: 0 } : { x: 0 }}
+            exit={prefersReducedMotion ? {} : { x: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
             className={cn(
               "fixed right-0 top-0 h-screen w-80 bg-sidebar/90 backdrop-blur-2xl border-l border-sidebar-border shadow-2xl z-[100] flex flex-col overflow-hidden"
@@ -215,7 +217,7 @@ export const CostSheetActionsPanel: React.FC<CostSheetActionsPanelProps> = ({
                     <span className="text-[8px] font-bold uppercase tracking-[0.4em] text-sidebar-foreground/50">{APP_DISPLAY_VERSION}</span>
                 </div>
               </div>
-              <button
+              <button type="button"
                 onClick={onClose}
                 className="p-2 rounded-xl hover:bg-primary/10 text-primary transition-colors active:scale-95"
                 aria-label="Cerrar panel de control"

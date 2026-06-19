@@ -1,5 +1,5 @@
 import { logger } from '@/lib/logger';
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useRef } from 'react';
 import { useAuthStore } from '@/store';
 import { useSessionStore } from '@/store/session-store';
 import { supabase } from '@/lib/supabaseClient';
@@ -16,11 +16,17 @@ const PROFILE_FETCH_TIMEOUT = 12 * 1000; // 12 seconds
 
 export function useSessionManager() {
     const { login, logout, setLoading, setStatus: setAuthStatus } = useAuthStore();
-    const { isOnline, isCheckingSession, lastChecked, setOnlineStatus, setSessionStatus, setStatus } = useSessionStore();
+    const { setOnlineStatus, setSessionStatus, setStatus } = useSessionStore();
+    const checkingRef = useRef(false);
 
     const checkSession = useCallback(async (force = false) => {
+        // Prevent re-entrant async calls from effect re-fires
+        if (checkingRef.current) return;
+
         const now = Date.now();
         const { isMocked, user: currentUser, token: currentToken } = useAuthStore.getState();
+        // Read volatile session state at call-time to avoid circular callback deps
+        const sessionState = useSessionStore.getState();
 
         // Dev mode without Supabase: keep existing session
         if (!isSupabaseConfigured) {
@@ -36,11 +42,12 @@ export function useSessionManager() {
             return;
         }
 
-        if (!isOnline || isCheckingSession || (!force && now - lastChecked < SESSION_CHECK_THROTTLE)) {
-            if (!isCheckingSession) setLoading(false);
+        if (!sessionState.isOnline || sessionState.isCheckingSession || (!force && now - sessionState.lastChecked < SESSION_CHECK_THROTTLE)) {
+            if (!sessionState.isCheckingSession) setLoading(false);
             return;
         }
 
+        checkingRef.current = true;
         setSessionStatus(true);
 
         try {
@@ -71,8 +78,8 @@ export function useSessionManager() {
                     userService.getUserProfile(user.id),
                     new Promise((_, reject) => setTimeout(() => reject(new Error('Profile fetch timeout')), PROFILE_FETCH_TIMEOUT))
                 ]) as Profile | null;
-            } catch (err: any) {
-                logger.warn('DATABASE', '[SESSIONMANAGER]_PROFILE_FETCH_FAILED', { data: err.message });
+            } catch (err: unknown) {
+                logger.warn('DATABASE', '[SESSIONMANAGER]_PROFILE_FETCH_FAILED', { data: err instanceof Error ? err.message : String(err) });
                 // BUG-039: Fallback with stale marker and retry
                 if (currentUser) {
                     login(currentUser, session.access_token, 'authenticated_stale_profile' as any);
@@ -99,15 +106,18 @@ export function useSessionManager() {
                 logout();
                 setLoading(false);
             }
-        } catch (error: any) {
-            logger.warn('DATABASE', 'SESSION_CHECK_FAILED', { message: error.message });
+        } catch (error: unknown) {
+            logger.warn('DATABASE', 'SESSION_CHECK_FAILED', { message: error instanceof Error ? error.message : String(error) });
             setAuthStatus(useAuthStore.getState().user ? 'authenticated_valid' : 'unauthenticated');
             setLoading(false);
             setStatus('error');
         } finally {
+            checkingRef.current = false;
             setSessionStatus(false);
         }
-    }, [isOnline, isCheckingSession, lastChecked, login, logout, setAuthStatus, setSessionStatus, setStatus, setLoading]);
+    // Removed volatile state (isOnline, isCheckingSession, lastChecked) from deps — read via getState() instead
+    // This breaks the infinite loop: checkSession changing session state -> callback recreated -> effect re-fires
+    }, [login, logout, setAuthStatus, setSessionStatus, setStatus, setLoading]);
 
     useEffect(() => {
         const handleOnline = () => { setOnlineStatus(true); checkSession(true); };

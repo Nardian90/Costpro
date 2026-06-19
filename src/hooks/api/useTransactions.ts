@@ -20,7 +20,7 @@ export function useTransactions(storeId?: string | null, isAdmin = false) {
   return useQuery({
     queryKey: ['transactions', cleanStoreId, isAdmin],
     queryFn: async () => {
-      if (!isAdmin && !cleanStoreId) return [];
+      if (!cleanStoreId) return [];
 
       const rpcName = 'get_transactions';
       const params = getTransactionsParamsSchema.parse({
@@ -35,28 +35,28 @@ export function useTransactions(storeId?: string | null, isAdmin = false) {
         logger.warn('DATABASE', '[TRANSACTIONS]_RPC_FAILED,_FALLING_BACK_TO_TABLE_Q', { data: err })
         const columns = 'id, created_at, updated_at, total_amount, status, payment_method, subtotal, discount_value, discount_type, store_id, seller_id, completed_at, cancelled_at, void_reason';
         let query = supabase.from('transactions').select(columns);
-        if (!isAdmin && cleanStoreId) {
+        if (cleanStoreId) {
           query = query.eq('store_id', cleanStoreId);
         }
         const data = await withTableLogging('select', 'transactions', () => query.order('created_at', { ascending: false }));
         return await validateRPCArrayResponse(data, transactionSchema, 'transactions_fallback');
       }
     },
-    enabled: isAdmin || (storeId !== undefined && storeId !== null),
+    enabled: storeId !== undefined && storeId !== null,
     staleTime: 30 * 1000,
   });
 }
 
 export async function prefetchTransactions(queryClient: QueryClient, storeId: string, isAdmin = false) {
   const cleanStoreId = getCleanStoreId(storeId);
-  if (!isAdmin && !cleanStoreId) return;
+  if (!cleanStoreId) return;
 
   return queryClient.prefetchQuery({
     queryKey: ['transactions', cleanStoreId, isAdmin],
     queryFn: async () => {
       const columns = 'id, created_at, updated_at, total_amount, status, payment_method, subtotal, discount_value, discount_type, store_id, seller_id, completed_at, cancelled_at, void_reason';
       let query = supabase.from('transactions').select(columns);
-      if (!isAdmin && cleanStoreId) {
+      if (cleanStoreId) {
         query = query.eq('store_id', cleanStoreId);
       }
       const data = await withTableLogging('select', 'transactions', () => query.order('created_at', { ascending: false }));

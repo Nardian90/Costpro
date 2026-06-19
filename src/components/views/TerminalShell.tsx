@@ -20,7 +20,13 @@ import { userService } from '@/services/user-service';
 import { toast } from 'sonner';
 import { AnimatePresence, motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { BuildingIcon } from 'lucide-react';
+import { NoStoreGuard } from '@/components/ui/NoStoreGuard';
+import { useStoreDeletedMonitor } from '@/hooks/ui/useStoreDeletedMonitor';
+import { useStoreInactivityMonitor } from '@/hooks/ui/useStoreInactivityMonitor'; // F3-T06
+import { useRecentStores } from '@/hooks/ui/useRecentStores'; // F5-T03
+import { useSwipeNavigation } from '@/hooks/ui/useSwipeNavigation'; // F5-T03
+import { MobileTabBar } from '@/components/views/terminal/MobileTabBar'; // F5-T02
+import ScrollToTop from '@/components/ui/ScrollToTop'; // B4
 import { CostProLoader } from '@/components/ui/CostProLoader';
 import { ViewLoadingSplash } from '@/components/ui/ViewLoadingSplash';
 import { getNavigationRoute } from '@/config/navigation/navigation-map';
@@ -87,6 +93,13 @@ const HealthView = dynamic(() => import('@/components/views/health/HealthView'),
 const ReceptionsHistoryView = dynamic(() => import('@/components/views/terminal/views/receptions/ReceptionsHistoryView'), { ssr: false });
 const ProductLabelGenerator = dynamic(() => import('@/components/views/terminal/views/labels/ProductLabelGenerator'), { ssr: false });
 const SalesCatalogView = dynamic(() => import('@/components/views/terminal/views/pos/SalesCatalogView'), { ssr: false });
+const OfertasView = dynamic(() => import('@/components/views/terminal/views/ofertas/OfertasView'), { ssr: false });
+const PurchaseOrdersView = dynamic(() => import('@/components/views/terminal/views/purchase_orders/PurchaseOrdersView'), { ssr: false });
+const SalesHubView = dynamic(() => import('@/components/views/terminal/views/sales_hub/SalesHubView'), { ssr: false });
+// E-SectionHub (IA Audit): SectionHubView para breadcrumbs que navegan a section hubs.
+const SectionHubView = dynamic(() => import('@/components/views/terminal/views/section_hub/SectionHubView'), { ssr: false });
+// E-GroupHub (IA Audit): GroupHubView para breadcrumbs que navegan a group hubs (raíz).
+const GroupHubView = dynamic(() => import('@/components/views/terminal/views/section_hub/GroupHubView'), { ssr: false });
 
 const FloatingCalculator = dynamic(() => import('@/components/ui/FloatingCalculator').then(m => m.FloatingCalculator), { ssr: false });
 const ChatBot = dynamic(() => import('@/components/ui/ChatBot').then(m => m.ChatBot), { ssr: false });
@@ -109,6 +122,34 @@ export default function TerminalShell() {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const isMobile = useIsMobile();
+
+  // Monitor if active store is deleted by another admin
+  useStoreDeletedMonitor();
+  // F3-T06: detectar tiendas inactivas operativamente (sin ventas/recepciones/movimientos en 30+ días)
+  // Solo lo ejecuta el admin; emite notificación proactiva para sugerir pausar tiendas inactivas.
+  useStoreInactivityMonitor();
+  // F5-T03: trackear tiendas recientes para swipe horizontal en mobile
+  const { getNextStore, getPrevStore } = useRecentStores();
+  // F5-T03: swipe horizontal para cambiar entre tiendas recientes
+  // Solo en mobile y en rutas operativas (no en config/admin)
+  const isOperationalRoute = !['stores', 'users', 'roles', 'health', 'audit', 'settings', 'help', 'wiki', 'academy', 'legal'].includes(currentView);
+  useSwipeNavigation({
+    onSwipeLeft: async () => {
+      const nextId = getNextStore(user?.activeStoreId);
+      if (nextId && nextId !== user?.activeStoreId) {
+        await switchStore(nextId);
+        toast.info('Cambiando a siguiente tienda reciente');
+      }
+    },
+    onSwipeRight: async () => {
+      const prevId = getPrevStore(user?.activeStoreId);
+      if (prevId && prevId !== user?.activeStoreId) {
+        await switchStore(prevId);
+        toast.info('Cambiando a tienda anterior');
+      }
+    },
+    enabled: isMobile && isOperationalRoute,
+  });
   const [sidebarSearch, setSidebarSearch] = useState('');
   const [showKeyboardHelp, setShowKeyboardHelp] = useState(false);
   const nav = useTerminalNavigation(user as any, sidebarSearch);
@@ -136,7 +177,7 @@ export default function TerminalShell() {
   const handleLogout = async () => {
     try {
       await userService.logout();
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.warn('DATABASE', '[TERMINALSHELL]_LOGOUT_ERROR_(SILENT):', { data: error })
     } finally {
       logout();
@@ -172,8 +213,6 @@ export default function TerminalShell() {
   }
 
   if (!user) return null;
-
-  const isBlockingRequired = user.role !== 'admin' && user.role !== 'costo' && !user.activeStoreId;
 
   const handleViewChange = (view: ViewType) => {
     const route = getNavigationRoute(view as string);
@@ -254,53 +293,75 @@ export default function TerminalShell() {
         case 'health': return <ViewErrorBoundary viewName="Salud del Sistema"><HealthView /></ViewErrorBoundary>;
         case 'reception_list': return <ViewErrorBoundary viewName="Historial de Recepciones"><ReceptionsHistoryView /></ViewErrorBoundary>;
         case 'labels': return <ViewErrorBoundary viewName="Etiquetas"><ProductLabelGenerator /></ViewErrorBoundary>;
+        case 'ofertas': return <ViewErrorBoundary viewName="Ofertas"><OfertasView /></ViewErrorBoundary>;
+        case 'purchase-orders': return <ViewErrorBoundary viewName="Órdenes de Compra"><PurchaseOrdersView /></ViewErrorBoundary>;
+        case 'sales-hub': return <ViewErrorBoundary viewName="Venta"><SalesHubView /></ViewErrorBoundary>;
+        // E-GroupHub (IA Audit): group IDs como vistas válidas — renderizan GroupHubView.
+        // Al hacer clic en un grupo raíz del breadcrumb (ej: "MULTI-TIENDA"), navega
+        // a una vista overview con tarjetas de todos los submenus/items del grupo.
+        // 'core' no está aquí porque es la home (occ).
+        case 'costos':
+        case 'tienda':
+        case 'ipv_module':
+        case 'otros':
+        case 'administracion':
+        case 'recursos':
+          return <ViewErrorBoundary viewName="Módulo"><GroupHubView groupId={view} /></ViewErrorBoundary>;
+        // E-SectionHub (IA Audit): submenu wrapper IDs ahora renderizan SectionHubView.
+        // Antes: redirigían al primer hijo (confuso — el usuario perdía contexto).
+        // Ahora: muestran vista overview estilo Odoo con tarjetas de todas las opciones.
+        // El breadcrumb puede navegar a estos section hubs al hacer clic en un ancestro.
+        // IPV y Costos submenus redirigen internamente desde SectionHubView (porque ya
+        // tienen tabs internas y duplicar tarjetas sería redundante).
+        case 'punto_venta':
+        case 'almacen_gestion':
+        case 'almacen_operaciones':
+        case 'analitica':
+        case 'ipv_reporting':
+        case 'ipv_operaciones':
+        case 'ipv_datos':
+        case 'ipv_procesamiento':
+        case 'ipv_avanzado':
+        case 'cost_views':
+        case 'cost_gen':
+        case 'cost_templates':
+        case 'cost_tools':
+          return <ViewErrorBoundary viewName="Sección"><SectionHubView submenuId={view} /></ViewErrorBoundary>;
         case 'occ': return <ViewErrorBoundary viewName="Centro de Control"><OCCView /></ViewErrorBoundary>;
-        default: return (
-          <div className="flex flex-col items-center justify-center py-24 text-center gap-6">
-            <div className="w-16 h-16 rounded-full bg-muted/50 flex items-center justify-center">
-              <span className="text-2xl font-black text-muted-foreground">?</span>
+        default: {
+          // E-Fix (IA Audit): default "Módulo No Disponible".
+          // El breadcrumb muestra el path completo hasta la vista inexistente
+          // (ej: "Inicio > ? > Módulo No Disponible") para que el usuario tenga
+          // contexto de dónde está y pueda volver con el botón "Ir al Dashboard"
+          // o usando el breadcrumb.
+          return (
+            <div className="flex flex-col items-center justify-center py-24 text-center gap-6">
+              <div className="w-16 h-16 rounded-full bg-muted/50 flex items-center justify-center">
+                <span className="text-2xl font-black text-muted-foreground">?</span>
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-xl font-black uppercase tracking-tight">Módulo No Disponible</h3>
+                <p className="text-muted-foreground text-sm max-w-md mx-auto">
+                  La vista <code className="px-1.5 py-0.5 bg-muted rounded text-xs font-mono">{String(view)}</code> no está implementada aún.
+                </p>
+                <p className="text-muted-foreground/70 text-xs max-w-md mx-auto">
+                  Si llegaste aquí desde un enlace externo, es posible que la vista haya sido renombrada o eliminada. Vuelve al Dashboard para continuar.
+                </p>
+              </div>
+              <button
+                onClick={() => setCurrentView('dashboard')}
+                className="px-6 py-2.5 bg-primary text-primary-foreground font-bold rounded-xl hover:opacity-90 transition-opacity text-xs uppercase tracking-widest"
+              >
+                Ir al Dashboard
+              </button>
             </div>
-            <div className="space-y-2">
-              <h3 className="text-xl font-black uppercase tracking-tight">Módulo No Disponible</h3>
-              <p className="text-muted-foreground text-sm max-w-md mx-auto">
-                La vista <code className="px-1.5 py-0.5 bg-muted rounded text-xs font-mono">{String(view)}</code> no está implementada aún.
-              </p>
-            </div>
-            <button
-              onClick={() => setCurrentView('dashboard')}
-              className="px-6 py-2.5 bg-primary text-primary-foreground font-bold rounded-xl hover:opacity-90 transition-opacity text-xs uppercase tracking-widest"
-            >
-              Ir al Dashboard
-            </button>
-          </div>
-        );
+          );
+        }
     }
   };
 
   const renderActiveView = () => {
-    if (isBlockingRequired) {
-      return (
-        <div className="flex flex-col items-center justify-center p-12 text-center bg-destructive/5 rounded-3xl border-2 border-dashed border-destructive/20 gap-6">
-          <div className="w-20 h-20 rounded-full bg-destructive/10 flex items-center justify-center">
-             <BuildingIcon className="w-10 h-10 text-destructive" />
-          </div>
-          <div className="space-y-2">
-            <h3 className="text-2xl font-black uppercase tracking-tight text-destructive">Sin Tienda Activa</h3>
-            <p className="text-muted-foreground text-sm max-w-md mx-auto font-medium">
-              Tu cuenta no tiene una tienda asignada o activa actualmente. Por favor, contacta al administrador para que te asigne una sucursal.
-            </p>
-          </div>
-          <button
-            onClick={handleLogout}
-            className="px-8 py-3 bg-destructive text-foreground font-black rounded-xl hover:opacity-90 transition-opacity uppercase text-xs tracking-widest"
-          >
-            Cerrar Sesión
-          </button>
-        </div>
-      );
-    }
-
-    return renderView(currentView);
+    return <NoStoreGuard>{renderView(currentView)}</NoStoreGuard>;
   };
 
   const sidebarWidths = {
@@ -345,7 +406,8 @@ export default function TerminalShell() {
 
         <div className={cn(
           "relative flex-1 overflow-y-auto overflow-x-hidden terminal-content scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent",
-          currentView === 'help' ? "p-0" : "px-3 sm:px-4 pt-0 pb-24 lg:pb-28"
+          // F5-T02: padding inferior extra en mobile para que el tab bar no tape contenido
+          currentView === 'help' ? "p-0" : "px-3 sm:px-4 pt-0 pb-24 sm:pb-24 lg:pb-28"
         )}>
           <ParticleBackground />
           <Suspense fallback={
@@ -363,7 +425,9 @@ export default function TerminalShell() {
                 transition={{ duration: 0.15, ease: [0.25, 0.1, 0.25, 1] as any }}
                 className={cn(
                   "mx-auto w-full",
-                  (currentView === 'cost-sheets' || currentView === 'ipv') ? "max-w-none" : "max-w-7xl"
+                  // POS-3a: POS necesita full-width porque ahora tiene un sidebar derecha
+                  // fixed (carrito). max-w-7xl dejaría demasiado espacio muerto a la derecha.
+                  (currentView === 'cost-sheets' || currentView === 'ipv' || currentView === 'pos') ? "max-w-none" : "max-w-7xl"
                 )}
               >
                 <ChunkErrorBoundary chunkName={String(currentView)}>
@@ -394,8 +458,19 @@ export default function TerminalShell() {
       <CreateProductModal />
       <CommandPalette />
       <KeyboardShortcutsModal open={showKeyboardHelp} onOpenChange={setShowKeyboardHelp} />
-      {currentView !== 'pos' && currentView !== 'help' && <ChatBot />}
-      {currentView !== "pos" && <FloatingCalculator />}
+      {/* F5-T02: ChatBot y FloatingCalculator solo en desktop — en mobile están integrados en el tab bar / sheet "Más" */}
+      {currentView !== 'pos' && currentView !== 'help' && !isMobile && <ChatBot />}
+      {currentView !== "pos" && !isMobile && <FloatingCalculator />}
+
+      {/* B4: ScrollToTop montado en el shell — escucha .terminal-content scroll */}
+      <ScrollToTop />
+
+      {/* F5-T02: Tab bar inferior fija para mobile — reemplaza el sidebar en <768px */}
+      <MobileTabBar
+        navigationItems={nav.navigationItems}
+        currentView={currentView}
+        onViewChange={handleViewChange}
+      />
     </div>
   );
 }

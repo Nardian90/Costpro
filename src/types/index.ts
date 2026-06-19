@@ -26,7 +26,7 @@ export type MovementType =
   | 'transfer'
   | 'void';
 
-export type PurchaseStatus = 'draft' | 'received' | 'cancelled';
+export type PurchaseStatus = PurchaseOrderStatus;
 
 export type CashSessionStatus = 'open' | 'closed';
 
@@ -141,10 +141,16 @@ export interface Store {
   email?: string | null;
   logo_url?: string | null;
   reeup?: string | null;
+  nit?: string | null;
   bank_account?: string | null;
+  signature_url?: string | null;
+  stamp_url?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
   is_active?: boolean;
   slug?: string | null;
   plantilla?: StoreTemplate | null;
+  cost_template?: StoreCostTemplate | null;
   created_at?: string;
 }
 
@@ -173,6 +179,7 @@ export interface Product {
   stock_current: number;
   cost_average?: number | null;
   min_stock?: number | null;
+  /** @description ID de la tienda a la que pertenece este producto. Siempre debería tener valor, pero las RPCs de Supabase pueden devolver null/undefined durante la hidratación. */
   store_id?: string | null;
   public_image_url?: string | null;
   is_active?: boolean;
@@ -180,6 +187,8 @@ export interface Product {
   has_movements?: boolean;
   visible_en_tienda?: boolean;
   product_variants?: ProductVariant[] | null;
+  cost_sheet_id?: string | null;
+  fc_auto_enabled?: boolean;
 }
 
 export interface ProductVariant {
@@ -230,6 +239,7 @@ export interface InventoryBatch {
 
 export interface StockMovement {
   id: string;
+  /** @description ID de la tienda. Puede ser null en datos heredados. */
   store_id?: string | null;
   product_id?: string | null;
   variant_id?: string | null;
@@ -276,6 +286,7 @@ export interface TaxConfiguration {
 
 export interface Transaction {
   id: string;
+  /** @description ID de la tienda. Puede ser null en datos heredados. */
   store_id?: string | null;
   seller_id?: string | null;
   total_amount: number;
@@ -360,6 +371,40 @@ export interface ReceiptItem {
 }
 
 // ============================================
+// EM-R5: Orden de Compra
+// ============================================
+
+export type PurchaseOrderStatus = 'draft' | 'sent' | 'partial' | 'received' | 'cancelled';
+
+export interface PurchaseOrder {
+  id: string;
+  store_id: string;
+  supplier_id?: string | null;
+  supplier_name: string;
+  po_number?: string | null;
+  status: PurchaseOrderStatus;
+  total_amount: number;
+  notes?: string | null;
+  expected_date?: string | null;
+  created_by?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PurchaseOrderItem {
+  id: string;
+  po_id: string;
+  product_id?: string | null;
+  product_name: string;
+  sku?: string | null;
+  quantity_ordered: number;
+  quantity_received: number;
+  unit_cost: number;
+  unit_of_measure: string;
+  created_at: string;
+}
+
+// ============================================
 // Transferencias
 // ============================================
 
@@ -387,16 +432,6 @@ export interface TransferItem {
   quantity: number;
   unit_cost: number;
   product?: Product | null;
-}
-
-export interface PurchaseOrder {
-  id: string;
-  store_id: string;
-  supplier: string;
-  status: PurchaseStatus;
-  received_at: string | null;
-  created_by: string | null;
-  created_at: string;
 }
 
 export interface PurchaseItem {
@@ -829,4 +864,46 @@ export interface UserAcademyProgress {
   last_review: string | null;
   mastery_score: number;
   learning_cards?: AcademyCard;
+}
+
+// ============================================
+// FC Automatizada por Tienda (Fase 1)
+// ============================================
+
+export type FCModalidad = 'produccion' | 'servicios' | 'comercializacion';
+
+export type FCPdfFormat =
+  | 'standard' | 'pro' | 'res148' | 'ejecutivo' | 'contabilidad'
+  | 'auditoria' | 'simplificado' | 'bilingue' | 'comparativo' | 'exportacion';
+
+export type CostSheetSyncStatus = 'pending' | 'synced' | 'conflict';
+
+export type ProductFCStatus = 'vigente' | 'pendiente' | 'sin_fc';
+
+export interface StoreCostTemplate {
+  id: string;
+  store_id: string;
+  template_id?: string | null;
+  template_data?: Record<string, unknown> | null;
+  modalidad?: FCModalidad | null;
+  pdf_format?: FCPdfFormat | null;
+  is_active?: boolean | null;
+  created_by?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+}
+
+export interface ProductCostSheet {
+  id: string;
+  product_id: string;
+  store_id?: string | null;
+  template_id?: string | null;
+  modalidad?: FCModalidad | null;
+  calculated_data?: Record<string, unknown> | null;
+  cost_price?: number | string | null;
+  cost_price_updated_at?: string | null;
+  sync_status?: CostSheetSyncStatus | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+  deleted_at?: string | null;
 }

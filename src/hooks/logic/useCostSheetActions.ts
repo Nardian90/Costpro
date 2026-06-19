@@ -172,9 +172,10 @@ export const useCostSheetActions = ({
 
         toast.success('PDF generado con éxito', { id: toastId });
         if (user) await usageService.trackUsage(user.id, 'fc_export', user.plan, user.role);
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('PDF export error:', error);
-        toast.error(`Error al generar el PDF: ${error.message}`, { id: toastId });
+        const message = error instanceof Error ? error.message : String(error);
+        toast.error(`Error al generar el PDF: ${message}`, { id: toastId });
       } finally {
         setIsPdfGenerating(false);
       }

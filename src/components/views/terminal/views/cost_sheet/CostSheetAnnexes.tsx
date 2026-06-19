@@ -65,7 +65,7 @@ const CostSheetAnnexes: React.FC<CostSheetAnnexesProps> = ({ annexes, forceTable
                             )}>
                             <span className={cn(col.formula ? "text-primary font-black" : "font-medium text-foreground/80", isZero(row[col.key]) && "text-muted-foreground opacity-60 font-medium")}>
                                 {typeof row[col.key] === 'number'
-                                ? row[col.key].toLocaleString('es-ES', { minimumFractionDigits: 2 })
+                                ? row[col.key].toLocaleString('es-CU', { minimumFractionDigits: 2 })
                                 : (row[col.key] !== undefined && row[col.key] !== null && row[col.key] !== '' ? row[col.key] : '--')
                                 }
                             </span>

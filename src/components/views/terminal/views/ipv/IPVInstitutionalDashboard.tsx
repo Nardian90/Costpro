@@ -260,9 +260,9 @@ export function IPVInstitutionalDashboard({ transactions, reconciliationLines, o
 
 function KPICard({ title, value, icon, onClick, color, highlight }: any) {
     const colorMap: any = {
-        blue: "text-blue-500 bg-blue-500/10",
-        emerald: "text-emerald-500 bg-emerald-500/10",
-        amber: "text-amber-500 bg-amber-500/10",
+        blue: "text-primary bg-primary/10",
+        emerald: "text-success bg-success/10",
+        amber: "text-warning bg-warning/10",
         rose: "text-rose-500 bg-rose-500/10",
     };
 
@@ -469,8 +469,8 @@ function D3DonutChart({ data }: { data: any[] }) {
             .attr('fill', d => d.data.color)
             .attr('d', arcGenerator as any)
             .attr('opacity', 0.8)
-            .on('mouseover', function() { d3.select(this).transition().duration(200).attr('opacity', 1); })
-            .on('mouseout', function() { d3.select(this).transition().duration(200).attr('opacity', 0.8); });
+            .on('mouseover', (event) => { d3.select(event.currentTarget as SVGPathElement).transition().duration(200).attr('opacity', 1); })
+            .on('mouseout', (event) => { d3.select(event.currentTarget as SVGPathElement).transition().duration(200).attr('opacity', 0.8); });
 
         const center = svg.append('g').attr('text-anchor', 'middle');
         center.append('text').attr('dy', '-0.5em').attr('class', 'fill-muted-foreground').attr('style', 'font-size: 10px; font-weight: 900;').text('TOTAL');

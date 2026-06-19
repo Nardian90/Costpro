@@ -11,7 +11,7 @@ import { useAuthStore } from '@/store';
 import { supabase } from '@/lib/supabaseClient';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import { generateLegalPdf } from './LegalPdfExporter';
 import { numeroALetras } from '@/lib/utils/number-to-words-es';
 
@@ -21,6 +21,7 @@ interface LegalModelFormProps {
 }
 
 export default function LegalModelForm({ model, onCancel }: LegalModelFormProps) {
+  const prefersReducedMotion = useReducedMotion();
   const { user } = useAuthStore();
 
   const { register, handleSubmit, setValue, control, formState: { errors } } = useForm<any>({
@@ -225,7 +226,7 @@ export default function LegalModelForm({ model, onCancel }: LegalModelFormProps)
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
+      animate={prefersReducedMotion ? {} : { opacity: 1, y: 0 }}
       className="bg-background border-2 border-primary/10 rounded-2xl md:rounded-3xl overflow-hidden shadow-2xl"
     >
       <div className="p-6 md:p-8 border-b border-primary/5 bg-primary/5 flex items-center justify-between">
@@ -238,7 +239,7 @@ export default function LegalModelForm({ model, onCancel }: LegalModelFormProps)
             <h2 className="text-xl font-black uppercase tracking-tight">{model.name}</h2>
           </div>
         </div>
-        <button
+        <button type="button"
           onClick={onCancel}
           className="w-10 h-10 rounded-full hover:bg-primary/10 flex items-center justify-center transition-colors"
         >

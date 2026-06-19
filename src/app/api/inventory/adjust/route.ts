@@ -2,18 +2,15 @@ import { NextResponse, type NextRequest } from "next/server";
 import { getSupabaseAuthClient } from "@/lib/supabaseClient";
 import { inventoryAdjustSchema, zodError } from '@/validation/api-schemas';
 import { AdjustInventoryResponse } from "@/contracts/inventory";
-import { getServerSession } from "@/lib/auth";
+import { withStoreAccess, AuthenticatedSession } from '@/lib/auth-middleware';
 import { rateLimit } from '@/lib/rate-limit';
+import { validateOrigin } from '@/lib/csrf';
 import { withTracing } from '@/lib/observability';
 
-async function postHandler(request: NextRequest) {
-  const session = await getServerSession(request);
-
-  if (!session || !session.token) {
-    return NextResponse.json(
-      { error: "Unauthorized", message: "No active session" },
-      { status: 401 }
-    );
+async function postHandler(request: NextRequest, session: AuthenticatedSession) {
+  // FIX-AUDIT-12: CSRF validation on inventory mutation
+  if (!validateOrigin(request)) {
+    return NextResponse.json({ error: 'Origen no permitido' }, { status: 403 });
   }
 
   const clientId = session.user.id;
@@ -93,4 +90,4 @@ async function postHandler(request: NextRequest) {
   }
 }
 
-export const POST = withTracing(postHandler, 'POST /api/inventory/adjust');
+export const POST = withTracing(withStoreAccess(postHandler) as any, 'POST /api/inventory/adjust');

@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabaseClient';
+import type { PostgrestError } from '@supabase/supabase-js';
 import { logger } from '@/lib/logger';
 import { useUIStore } from '@/store';
 import { formatPostgrestUrlToSql, formatRpcToSql } from '@/lib/query-inspector-utils';
@@ -16,7 +17,7 @@ export const getCleanStoreId = (storeId?: string | null) => {
 export async function withLogging<T>(
   rpcName: string,
   params: Record<string, unknown>,
-  rpcCall: () => PromiseLike<{ data: T | null; error: any }>,
+  rpcCall: () => PromiseLike<{ data: T | null; error: PostgrestError | null }>,
   view?: string
 ): Promise<T | null> {
   logger.info('DATABASE', `RPC_CALL_START: ${rpcName}`, params);
@@ -37,11 +38,24 @@ export async function withLogging<T>(
     logger.info('DATABASE', `RPC_CALL_SUCCESS: ${rpcName}`, params);
     return data;
   } catch (error) {
+    // Properly serialize Supabase RPC errors (which are objects, not Error instances)
+    const errorDetails = (() => {
+      if (!error) return 'Unknown error';
+      if (error instanceof Error) return error.message;
+      // Supabase PostgREST error shape: { message, code, details, hint }
+      const obj = error as Record<string, unknown>;
+      const parts: string[] = [];
+      if (obj.message) parts.push(String(obj.message));
+      if (obj.code) parts.push(`(code: ${obj.code})`);
+      if (obj.details) parts.push(String(obj.details));
+      if (obj.hint) parts.push(String(obj.hint));
+      return parts.length > 0 ? parts.join(' — ') : JSON.stringify(error);
+    })();
     logger.error('DATABASE', `RPC_CALL_FAILED: ${rpcName}`, {
       ...params,
-      error: error instanceof Error ? error.message : String(error),
+      error: errorDetails,
     });
-    throw error;
+    throw new Error(errorDetails);
   }
 }
 
@@ -49,7 +63,7 @@ export async function withLogging<T>(
 export async function withTableLogging<T>(
   operation: 'select' | 'insert' | 'update' | 'delete',
   tableName: string,
-  query: () => PromiseLike<{ data: T | null; error: any }>,
+  query: () => PromiseLike<{ data: T | null; error: PostgrestError | null }>,
   view?: string
 ): Promise<T | null> {
   const params = { operation, tableName };

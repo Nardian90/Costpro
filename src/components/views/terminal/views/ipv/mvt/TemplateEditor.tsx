@@ -86,7 +86,7 @@ const SortableItem = ({ id, children }: SortableItemProps) => {
       <div
         {...attributes}
         {...listeners}
-        className="absolute left-[-24px] top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 cursor-grab active:cursor-grabbing p-1 text-slate-400 hover:text-slate-600 transition-opacity z-10"
+        className="absolute left-[-24px] top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 cursor-grab active:cursor-grabbing p-1 text-muted-foreground hover:text-slate-600 transition-opacity z-10"
       >
         <GripVertical className="w-4 h-4" />
       </div>
@@ -300,7 +300,7 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({ template, onSave
                 <Button variant="outline" size="sm" onClick={() => setIsSectionDialogOpen(true)} className="h-9">
                   <PlusCircle className="w-4 h-4 mr-2" /> Grupo
                 </Button>
-                <Button size="sm" onClick={() => onSave(editedTemplate)} disabled={!isModified} className="bg-emerald-600 hover:bg-emerald-700 h-9">
+                <Button size="sm" onClick={() => onSave(editedTemplate)} disabled={!isModified} className="bg-success hover:bg-emerald-700 h-9">
                   <Check className="w-4 h-4 mr-2" /> Guardar
                 </Button>
               </>
@@ -351,7 +351,7 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({ template, onSave
                         {!isReadOnly && (
                            <div className="grid grid-cols-2 gap-4 pb-4 border-b border-dashed">
                               <div className="space-y-2">
-                                <Label className="text-[10px] font-bold uppercase text-slate-400">Título del Grupo</Label>
+                                <Label className="text-[10px] font-bold uppercase text-muted-foreground">Título del Grupo</Label>
                                 <Input
                                   value={section.title}
                                   className="h-9 text-sm font-semibold"
@@ -364,7 +364,7 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({ template, onSave
                                 />
                               </div>
                               <div className="space-y-2">
-                                <Label className="text-[10px] font-bold uppercase text-slate-400">Tipo de Datos</Label>
+                                <Label className="text-[10px] font-bold uppercase text-muted-foreground">Tipo de Datos</Label>
                                 <Select
                                   value={section.type}
                                   onValueChange={(val) => {
@@ -391,7 +391,7 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({ template, onSave
                                 <SortableItem key={field._id} id={field._id!}>
                                   <div className="grid grid-cols-12 gap-3 items-end p-3 rounded-lg border bg-slate-50/30 relative">
                                     <div className="col-span-3">
-                                      <Label className="text-[10px] font-bold uppercase text-slate-400">Key</Label>
+                                      <Label className="text-[10px] font-bold uppercase text-muted-foreground">Key</Label>
                                       <Input
                                         value={field.key}
                                         className="h-8 text-xs font-mono"
@@ -400,7 +400,7 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({ template, onSave
                                       />
                                     </div>
                                     <div className="col-span-3">
-                                      <Label className="text-[10px] font-bold uppercase text-slate-400">Origen</Label>
+                                      <Label className="text-[10px] font-bold uppercase text-muted-foreground">Origen</Label>
                                       <Select
                                         value={field.source}
                                         disabled={isReadOnly}
@@ -416,7 +416,7 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({ template, onSave
                                       </Select>
                                     </div>
                                     <div className="col-span-4 md:col-span-3">
-                                      <Label className="text-[10px] font-bold uppercase text-slate-400">Valor</Label>
+                                      <Label className="text-[10px] font-bold uppercase text-muted-foreground">Valor</Label>
                                       <Input
                                         value={field.value}
                                         className="h-8 text-xs font-mono"
@@ -442,7 +442,7 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({ template, onSave
                           </SortableContext>
                         </DndContext>
                         {!isReadOnly && (
-                          <Button variant="outline" size="sm" className="w-full border-dashed border-slate-300 text-slate-500 hover:text-indigo-600 hover:border-indigo-200" onClick={() => { setCurrentSectionIndex(sIdx); setIsFieldDialogOpen(true); }}>
+                          <Button variant="outline" size="sm" className="w-full border-dashed border-slate-300 text-muted-foreground hover:text-indigo-600 hover:border-indigo-200" onClick={() => { setCurrentSectionIndex(sIdx); setIsFieldDialogOpen(true); }}>
                             <Plus className="w-3.5 h-3.5 mr-2" /> Añadir Campo
                           </Button>
                         )}

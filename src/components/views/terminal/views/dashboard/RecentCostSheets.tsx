@@ -6,10 +6,11 @@ import { FileText, Plus, ArrowRight, Sparkles } from 'lucide-react';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { useUIStore } from '@/store';
 import { useCostSheetStore } from '@/store/cost-sheet-store';
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 
 export const RecentCostSheets = () => {
     const { data: costSheets, isLoading } = useCostSheets();
+    const prefersReducedMotion = useReducedMotion();
     const { setCurrentView } = useUIStore();
     const { setSheet } = useCostSheetStore();
 
@@ -24,8 +25,8 @@ export const RecentCostSheets = () => {
     return (
         <section className="space-y-4">
             <div className="flex justify-between items-end px-1">
-                <h2 className="text-sm font-bold tracking-widest uppercase text-slate-400 dark:text-slate-300">Fichas de Costo Recientes</h2>
-                <button
+                <h2 className="text-sm font-bold tracking-widest uppercase text-muted-foreground">Fichas de Costo Recientes</h2>
+                <button type="button"
                     onClick={() => setCurrentView('cost-sheets')}
                     className="text-[10px] font-black uppercase tracking-widest text-primary hover:underline flex items-center gap-1 min-h-[44px] px-2"
                 >
@@ -41,8 +42,8 @@ export const RecentCostSheets = () => {
                     return (
                         <motion.div
                             key={sheet.id}
-                            whileHover={{ y: -2 }}
-                            whileTap={{ scale: 0.98 }}
+                            whileHover={prefersReducedMotion ? undefined : { y: -2 }}
+                            whileTap={prefersReducedMotion ? undefined : { scale: 0.98 }}
                             onClick={() => handleSelect(sheet)}
                             className="p-5 rounded-[2rem] bg-card/50 border border-border/50 hover:border-primary/30 transition-all cursor-pointer group"
                         >
@@ -65,11 +66,11 @@ export const RecentCostSheets = () => {
                             <div className="flex justify-between items-end pt-4 border-t border-border/10">
                                 <div>
                                     <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Costo Total</p>
-                                    <p className="text-xs font-black">{formatCurrency(totalCost)}</p>
+                                    <p className="text-xs font-black tabular-nums">{formatCurrency(totalCost)}</p>
                                 </div>
                                 <div className="text-right">
                                     <p className="text-[10px] font-black text-primary uppercase tracking-widest">Precio Venta</p>
-                                    <p className="text-sm font-black text-primary">{formatCurrency(salePrice)}</p>
+                                    <p className="text-sm font-black text-primary tabular-nums">{formatCurrency(salePrice)}</p>
                                 </div>
                             </div>
                         </motion.div>

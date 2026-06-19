@@ -69,7 +69,7 @@ export const CostSheetSidebarNav: React.FC<CostSheetSidebarNavProps> = ({
 
         <div className="flex-1 overflow-y-auto p-4 space-y-2 no-scrollbar">
           {/* Option "Todos" */}
-          <button
+          <button type="button"
             onClick={() => {
               onSelect(allOptionId);
               onClose();
@@ -104,7 +104,7 @@ export const CostSheetSidebarNav: React.FC<CostSheetSidebarNavProps> = ({
             const hasData = type === 'annexes' && item.data && item.data.length > 0;
 
             return (
-              <button
+              <button type="button"
                 key={item.id}
                 onClick={() => {
                   onSelect(item.id);

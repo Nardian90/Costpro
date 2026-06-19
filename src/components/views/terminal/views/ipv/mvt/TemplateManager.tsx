@@ -136,7 +136,7 @@ export const TemplateManager: React.FC<TemplateManagerProps> = ({
       <div className="flex items-center justify-between">
         <div className="space-y-1">
           <h3 className="text-sm font-semibold text-slate-900">Gestión de Plantillas MVT</h3>
-          <p className="text-xs text-slate-500">Administra tus estructuras de exportación personalizadas.</p>
+          <p className="text-xs text-muted-foreground">Administra tus estructuras de exportación personalizadas.</p>
         </div>
         <div className="flex gap-2">
           <input
@@ -183,7 +183,7 @@ export const TemplateManager: React.FC<TemplateManagerProps> = ({
                 <TableCell>
                   <div className="flex flex-col">
                     <span className="font-medium text-slate-900">{t.name}</span>
-                    <span className="text-[10px] text-slate-500 truncate max-w-[200px]">{t.description || 'Sin descripción'}</span>
+                    <span className="text-[10px] text-muted-foreground truncate max-w-[200px]">{t.description || 'Sin descripción'}</span>
                   </div>
                 </TableCell>
                 <TableCell>
@@ -198,7 +198,7 @@ export const TemplateManager: React.FC<TemplateManagerProps> = ({
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-8 w-8 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50"
+                      className="h-8 w-8 text-muted-foreground hover:text-indigo-600 hover:bg-indigo-50"
                       title="Duplicar"
                       onClick={() => handleDuplicate(t)}
                     >
@@ -208,7 +208,7 @@ export const TemplateManager: React.FC<TemplateManagerProps> = ({
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 text-slate-500 hover:text-destructive hover:bg-destructive/10"
+                        className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
                         title="Eliminar"
                         onClick={() => handleDelete(t.id)}
                       >
@@ -233,7 +233,7 @@ export const TemplateManager: React.FC<TemplateManagerProps> = ({
       </div>
 
       <div className="p-4 bg-amber-50 border border-amber-100 rounded-lg flex gap-3">
-        <AlertCircle className="w-5 h-5 text-amber-500 shrink-0" />
+        <AlertCircle className="w-5 h-5 text-warning shrink-0" />
         <div className="space-y-1">
           <p className="text-xs font-semibold text-amber-900">Nota sobre la Plantilla Estándar</p>
           <p className="text-[11px] text-amber-800/80 leading-relaxed">
