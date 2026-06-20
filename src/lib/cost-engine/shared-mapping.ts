@@ -442,7 +442,7 @@ export function buildVHSums(sections: CostSheetSection[]): Record<string, number
     });
   };
 
-  (sections || []).forEach(s => {
+   (sections || []).forEach(s => { if (!s) return;
     calculateVH(s?.rows);
     vhSums[s.id] = (s.rows || []).reduce((sum: number, r: CostSheetRow) => sum + (vhSums[r.id] || 0), 0);
   });
