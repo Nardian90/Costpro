@@ -30,7 +30,7 @@ describe('usageService', () => {
   });
 
   it('trackUsage works', async () => {
-      vi.mocked(supabase.rpc).mockResolvedValue({ error: null });
+      vi.mocked(supabase.rpc).mockResolvedValue({ data: null, error: null } as any);
       await usageService.trackUsage('u1', 'fc_create');
       expect(supabase.rpc).toHaveBeenCalled();
   });
