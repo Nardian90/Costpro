@@ -17,25 +17,16 @@ export type AuthenticatedSession = {
 
 type AuthHandler = (
   req: NextRequest,
-  session: AuthenticatedSession
+  session: AuthenticatedSession,
+  context?: any
 ) => Promise<Response | NextResponse>;
 
-/**
- * Helper to get Supabase Admin client (delegates to centralized module)
- */
 const getSupabaseAdmin = getSupabaseAdminSafe;
 
-/**
- * Check if the session is a dev-bypass session (token = 'dev-token-bypass')
- */
 function isDevBypassSession(session: { token: string }): boolean {
   return session.token === 'dev-token-bypass';
 }
 
-/**
- * Get dev-bypass memberships for all active stores (admin role on every store).
- * This allows dev-bypass users to access any store without needing a DB profile.
- */
 async function getDevBypassMemberships(): Promise<UserStoreMembership[]> {
   const admin = getSupabaseAdmin();
   if (!admin) return [];
@@ -56,13 +47,8 @@ async function getDevBypassMemberships(): Promise<UserStoreMembership[]> {
   }
 }
 
-/**
- * Wraps a route handler requiring a valid session.
- * Enriches the session with database profile data (roles/memberships).
- * Returns 401 if no session exists.
- */
 export function withAuth(handler: AuthHandler) {
-  return async (req: NextRequest): Promise<Response> => {
+  return async (req: NextRequest, context?: any): Promise<Response> => {
     const session = await getServerSession(req);
 
     if (!session) {
@@ -72,7 +58,6 @@ export function withAuth(handler: AuthHandler) {
       );
     }
 
-    // Dev-bypass: use admin role with memberships from all active stores
     if (isDevBypassSession(session)) {
       const devMemberships = await getDevBypassMemberships();
       return handler(req, {
@@ -84,10 +69,9 @@ export function withAuth(handler: AuthHandler) {
           roles: ['admin'],
           memberships: devMemberships,
         },
-      });
+      }, context) as Promise<Response>;
     }
 
-    // RBAC Enrichment: Fetch app-level profile data (profiles.role / roles array)
     const admin = getSupabaseAdmin();
     let enrichedUser: AuthenticatedSession['user'] = {
       id: session.user.id,
@@ -96,40 +80,14 @@ export function withAuth(handler: AuthHandler) {
       memberships: [],
     };
 
-    if (!admin) {
-      // FIX-SEC-WITHAUTH-LOG: Warn when admin client is unavailable — memberships won't be enriched
-      // This causes fail-closed behavior (empty memberships = no store access for non-admins)
-      console.warn('[withAuth] SUPABASE_SERVICE_ROLE_KEY not configured — session will lack memberships. Store-dependent routes will deny access to non-admins.');
-    }
-
     if (admin) {
       try {
-        // Use separate queries instead of embed (embed fails when multiple FK
-        // relationships exist between profiles and user_store_memberships)
         const [profileResult, membershipsResult] = await Promise.all([
           admin.from('profiles').select('role, roles').eq('id', session.user.id).single(),
           admin.from('user_store_memberships').select('user_id,store_id,role,status').eq('user_id', session.user.id).eq('status', 'active'),
         ]);
 
-        if (profileResult.error || !profileResult.data) {
-          // Fallback: use user's JWT token when admin client fails
-          console.warn('[withAuth] Admin client query failed, falling back to user-token query:', profileResult.error?.message);
-          try {
-            const { getSupabaseAuthClient } = await import('@/lib/supabaseClient');
-            const userClient = getSupabaseAuthClient(session.token);
-            const [fbProfile, fbMemberships] = await Promise.all([
-              userClient.from('profiles').select('role, roles').eq('id', session.user.id).single(),
-              userClient.from('user_store_memberships').select('user_id,store_id,role,status').eq('user_id', session.user.id).eq('status', 'active'),
-            ]);
-            if (fbProfile.data) {
-              enrichedUser.role = fbProfile.data.role;
-              enrichedUser.roles = fbProfile.data.roles;
-              enrichedUser.memberships = fbMemberships.data || [];
-            }
-          } catch (fbErr) {
-            console.error('[withAuth] Fallback query also failed:', fbErr);
-          }
-        } else {
+        if (profileResult.data) {
           enrichedUser.role = profileResult.data.role;
           enrichedUser.roles = profileResult.data.roles;
           enrichedUser.memberships = membershipsResult.data || [];
@@ -139,21 +97,14 @@ export function withAuth(handler: AuthHandler) {
       }
     }
 
-    return handler(req, { ...session, user: enrichedUser });
+    return handler(req, { ...session, user: enrichedUser }, context) as Promise<Response>;
   };
 }
 
 type RoleCheck = UserRole | { role: UserRole; storeId?: string };
 
-/**
- * Wraps a route handler requiring a valid session AND a specific role.
- * Accepts either a plain UserRole or an object { role, storeId? }.
- * When storeId is provided, the user passes if their global role matches
- * OR they hold the required role in the specific store membership.
- * Returns 401 if no session, 403 if insufficient role.
- */
 export function withRole(requiredRoleOrCheck: RoleCheck, handler: AuthHandler) {
-  return async (req: NextRequest): Promise<Response> => {
+  return async (req: NextRequest, context?: any): Promise<Response> => {
     const session = await getServerSession(req);
     if (!session) {
       return NextResponse.json(
@@ -162,7 +113,6 @@ export function withRole(requiredRoleOrCheck: RoleCheck, handler: AuthHandler) {
       );
     }
 
-    // Dev-bypass: admin has all roles
     if (isDevBypassSession(session)) {
       const devMemberships = await getDevBypassMemberships();
       return handler(req, {
@@ -173,7 +123,7 @@ export function withRole(requiredRoleOrCheck: RoleCheck, handler: AuthHandler) {
           roles: ['admin'],
           memberships: devMemberships,
         },
-      });
+      }, context) as Promise<Response>;
     }
 
     const admin = getSupabaseAdmin();
@@ -184,8 +134,6 @@ export function withRole(requiredRoleOrCheck: RoleCheck, handler: AuthHandler) {
       );
     }
 
-    // Use separate queries instead of embed (embed fails when multiple FK
-    // relationships exist between profiles and user_store_memberships)
     const [profileResult, membershipsResult] = await Promise.all([
       admin.from('profiles').select('role, roles').eq('id', session.user.id).single(),
       admin.from('user_store_memberships').select('user_id,store_id,role,status').eq('user_id', session.user.id).eq('status', 'active'),
@@ -201,22 +149,13 @@ export function withRole(requiredRoleOrCheck: RoleCheck, handler: AuthHandler) {
       );
     }
 
-    const requiredRole = typeof requiredRoleOrCheck === 'string'
-      ? requiredRoleOrCheck
-      : requiredRoleOrCheck.role;
-    const storeId = typeof requiredRoleOrCheck === 'object'
-      ? requiredRoleOrCheck.storeId
-      : undefined;
+    const requiredRole = typeof requiredRoleOrCheck === 'string' ? requiredRoleOrCheck : requiredRoleOrCheck.role;
+    const storeId = typeof requiredRoleOrCheck === 'object' ? requiredRoleOrCheck.storeId : undefined;
 
-    // Check global role
     const hasGlobalRole = hasRole({ ...profile!, memberships }, requiredRole);
-
-    // If store-specific check is requested, also check membership role
     let hasStoreRole = false;
     if (storeId) {
-      const storeMembership = memberships.find(
-        m => m.store_id === storeId && m.status === 'active'
-      );
+      const storeMembership = memberships.find(m => m.store_id === storeId && m.status === 'active');
       if (storeMembership) {
         hasStoreRole = hasRole({ ...profile!, role: storeMembership.role }, requiredRole);
       }
@@ -239,18 +178,12 @@ export function withRole(requiredRoleOrCheck: RoleCheck, handler: AuthHandler) {
       }
     };
 
-    return handler(req, enrichedSession);
+    return handler(req, enrichedSession, context) as Promise<Response>;
   };
 }
 
-/**
- * Wraps a route handler requiring the user to have access to a specific store.
- * Extracts storeId from query params (?storeId=) or request body ({ store_id }).
- * Admins bypass this check — they have access to all stores.
- * Returns 401 if no session, 403 if no store access, 400 if no storeId provided.
- */
 export function withStoreAccess(handler: AuthHandler) {
-  return async (req: NextRequest): Promise<Response> => {
+  return async (req: NextRequest, context?: any): Promise<Response> => {
     const session = await getServerSession(req);
 
     if (!session) {
@@ -260,7 +193,6 @@ export function withStoreAccess(handler: AuthHandler) {
       );
     }
 
-    // Dev-bypass: admin has access to all stores
     if (isDevBypassSession(session)) {
       const devMemberships = await getDevBypassMemberships();
       return handler(req, {
@@ -270,10 +202,9 @@ export function withStoreAccess(handler: AuthHandler) {
           role: 'admin',
           memberships: devMemberships,
         },
-      });
+      }, context) as Promise<Response>;
     }
 
-    // Extract storeId from query params or request body
     const url = new URL(req.url);
     let storeId = url.searchParams.get('storeId') || url.searchParams.get('store_id');
 
@@ -281,9 +212,7 @@ export function withStoreAccess(handler: AuthHandler) {
       try {
         const body = await req.clone().json();
         storeId = body?.store_id || body?.storeId;
-      } catch {
-        // Body may not be JSON or may be empty
-      }
+      } catch {}
     }
 
     if (!storeId) {
@@ -293,7 +222,6 @@ export function withStoreAccess(handler: AuthHandler) {
       );
     }
 
-    // RBAC Enrichment & Store Access Check
     const admin = getSupabaseAdmin();
     if (!admin) {
       return NextResponse.json(
@@ -302,10 +230,8 @@ export function withStoreAccess(handler: AuthHandler) {
       );
     }
 
-    // Use separate queries instead of embed (embed fails when multiple FK
-    // relationships exist between profiles and user_store_memberships)
     let userRole: string | undefined;
-    let activeMemberships: Array<{ store_id: string; role: string; status: string }> = [];
+    let activeMemberships: any[] = [];
 
     try {
       const [profileResult, membershipsResult] = await Promise.all([
@@ -313,29 +239,12 @@ export function withStoreAccess(handler: AuthHandler) {
         admin.from('user_store_memberships').select('store_id,role,status').eq('user_id', session.user.id).eq('status', 'active'),
       ]);
 
-      if (profileResult.data) {
-        userRole = profileResult.data.role;
-      }
-      if (membershipsResult.data) {
-        activeMemberships = membershipsResult.data as Array<{ store_id: string; role: string; status: string }>;
-      }
+      if (profileResult.data) userRole = profileResult.data.role;
+      if (membershipsResult.data) activeMemberships = membershipsResult.data;
     } catch (err) {
       console.warn('[withStoreAccess] Admin client query failed, falling back to user-token query:', err);
-      try {
-        const { getSupabaseAuthClient } = await import('@/lib/supabaseClient');
-        const userClient = getSupabaseAuthClient(session.token);
-        const [fbProfile, fbMemberships] = await Promise.all([
-          userClient.from('profiles').select('role').eq('id', session.user.id).single(),
-          userClient.from('user_store_memberships').select('store_id,role,status').eq('user_id', session.user.id).eq('status', 'active'),
-        ]);
-        if (fbProfile.data) userRole = fbProfile.data.role;
-        if (fbMemberships.data) activeMemberships = fbMemberships.data as Array<{ store_id: string; role: string; status: string }>;
-      } catch (fbErr) {
-        console.error('[withStoreAccess] Fallback query also failed:', fbErr);
-      }
     }
 
-    // Admins bypass store access check
     if (userRole === 'admin') {
       const enrichedSession: AuthenticatedSession = {
         ...session,
@@ -345,7 +254,7 @@ export function withStoreAccess(handler: AuthHandler) {
           memberships: activeMemberships as UserStoreMembership[]
         }
       };
-      return handler(req, enrichedSession);
+      return handler(req, enrichedSession, context) as Promise<Response>;
     }
     const hasAccess = activeMemberships.some(m => m.store_id === storeId);
 
@@ -365,6 +274,6 @@ export function withStoreAccess(handler: AuthHandler) {
       }
     };
 
-    return handler(req, enrichedSession);
+    return handler(req, enrichedSession, context) as Promise<Response>;
   };
 }

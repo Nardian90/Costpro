@@ -142,7 +142,7 @@ model Product {
   updated_at        DateTime @updatedAt
 
   // FC Automatizada — Fase 1
-  cost_sheet_id   String? // FK → ProductCostSheet.id
+  cost_sheet_id   String? @unique // FK → ProductCostSheet.id
   fc_auto_enabled Boolean @default(true) // Generación automática de FC
 
   store             Store                @relation(fields: [store_id], references: [id])
@@ -577,7 +577,7 @@ model ProductCostSheet {
   deleted_at            DateTime? // Soft delete para registros financieros
 
   product    Product   @relation("ProductOwner", fields: [product_id], references: [id], onDelete: Cascade)
-  active_for Product[] @relation("ActiveCostSheet")
+  active_for Product? @relation("ActiveCostSheet")
   store      Store     @relation(fields: [store_id], references: [id], onDelete: Cascade)
 
   @@index([product_id])
