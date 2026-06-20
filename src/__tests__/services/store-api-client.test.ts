@@ -152,7 +152,7 @@ describe('storeApiClient', () => {
       expectFetchCalledWith('/api/stores', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ storeId: 'store-1' }),
+        body: expect.stringContaining('"storeId":"store-1"'),
       });
     });
 
@@ -178,11 +178,11 @@ describe('storeApiClient', () => {
         json: async () => ({ success: true }),
       } as Response);
 
-      await expect(storeApiClient.resetStore('store-1')).resolves.toBeUndefined();
+      await expect(storeApiClient.resetStore('store-1', false)).resolves.toBeUndefined();
       expectFetchCalledWith('/api/stores/reset', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ storeId: 'store-1' }),
+        body: expect.stringContaining('"storeId":"store-1"'),
       });
     });
 

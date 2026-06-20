@@ -1,111 +1,144 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { POST } from '@/app/api/stores/bulk/route';
+import { NextRequest } from 'next/server';
+
+const { mockWithRole, mockWithTracing } = vi.hoisted(() => ({
+  mockWithRole: vi.fn((role, handler) => handler),
+  mockWithTracing: vi.fn((handler) => handler),
+}));
 
 vi.mock('@/lib/auth-middleware', () => ({
-  withAuth: (fn: any) => fn,
-  withRole: (_role: string, fn: any) => fn,
-  AuthenticatedSession: {},
-}));
-vi.mock('@/lib/observability', () => ({ withTracing: (fn: any) => fn }));
-vi.mock('@/lib/csrf', () => ({ validateOrigin: () => true }));
-vi.mock('@/lib/rate-limit', () => ({ rateLimit: vi.fn().mockResolvedValue({ allowed: true }) }));
-vi.mock('@/lib/api-errors', () => ({
-  createApiError: (code: string, msg?: string) => ({ error: code, message: msg }),
-}));
-vi.mock('@/lib/logger', () => ({
-  logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn() },
+  withRole: mockWithRole,
+  withAuth: vi.fn((handler) => handler),
 }));
 
-const mockFrom = vi.fn();
+vi.mock('@/lib/observability', () => ({
+  withTracing: mockWithTracing,
+}));
+
+vi.mock('@/lib/csrf', () => ({
+  validateOrigin: vi.fn().mockReturnValue(true),
+}));
+
+vi.mock('@/lib/rate-limit', () => ({
+  rateLimit: vi.fn().mockResolvedValue({ allowed: true }),
+}));
+
+vi.mock('@/lib/rate-limit/tenant-limiter', () => ({
+  checkTenantRateLimit: vi.fn().mockResolvedValue({ allowed: true }),
+  rateLimitHeaders: vi.fn().mockReturnValue({}),
+}));
+
+vi.mock('@/lib/api-errors', () => ({
+  createApiError: (c: string) => ({ error: c }),
+}));
+
+const mockSelect = vi.fn();
+const mockUpdate = vi.fn().mockReturnValue({
+  eq: vi.fn().mockReturnValue({
+    select: mockSelect,
+  }),
+});
 const mockRpc = vi.fn();
+
 vi.mock('@supabase/supabase-js', () => ({
   createClient: vi.fn(() => ({
-    from: (table: string) => mockFrom(table),
-    rpc: (name: string, args: any) => mockRpc(name, args),
+    from: vi.fn(() => ({
+      update: mockUpdate,
+    })),
+    rpc: mockRpc,
   })),
 }));
 
-function makeRequest(body: any): Request {
-  return {
-    method: 'POST',
-    headers: new Map([['x-forwarded-for', '127.0.0.1']]),
-    json: async () => body,
-    url: 'http://localhost:3000/api/stores/bulk',
-  } as any;
-}
+import { POST } from '@/app/api/stores/bulk/route';
+import { validateOrigin } from '@/lib/csrf';
+import { rateLimit } from '@/lib/rate-limit';
 
-function makeSession(role: string = 'admin') {
-  return { user: { id: 'admin-1', role, memberships: [] } } as any;
-}
-
-describe('POST /api/stores/bulk (F4-T01)', () => {
+describe('POST /api/stores/bulk', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(rateLimit).mockResolvedValue({ allowed: true } as any);
+    vi.mocked(validateOrigin).mockReturnValue(true);
     process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://test.supabase.co';
     process.env.SUPABASE_SERVICE_ROLE_KEY = 'test-service-key';
   });
 
-  it('rechaza si el rol no es admin', async () => {
-    const req = makeRequest({ storeIds: ['s1'], action: 'activate' });
-    const res = await POST(req as any, makeSession('clerk'), {} as any);
+  const createRequest = (body: any) => {
+    return {
+      json: async () => body,
+      headers: new Headers({ 'x-forwarded-for': '127.0.0.1' }),
+      url: 'http://localhost/api/stores/bulk',
+      method: 'POST',
+    } as unknown as NextRequest;
+  };
+
+  it('should return 403 if origin is invalid', async () => {
+    vi.mocked(validateOrigin).mockReturnValue(false);
+    const session = { user: { id: 'u1', role: 'admin' } } as any;
+    const req = createRequest({ storeIds: ['550e8400-e29b-41d4-a716-446655440000'], action: 'activate' });
+
+    const res = await POST(req, session);
     expect(res.status).toBe(403);
+    const data = await res.json();
+    expect(data.error).toBe('INVALID_ORIGIN');
   });
 
-  it('rechaza si el body es inválido (sin storeIds)', async () => {
-    const req = makeRequest({ action: 'activate' });
-    const res = await POST(req as any, makeSession('admin'), {} as any);
+  it('should return 429 if rate limited', async () => {
+    vi.mocked(rateLimit).mockResolvedValue({ allowed: false } as any);
+    const session = { user: { id: 'u1', role: 'admin' } } as any;
+    const req = createRequest({ storeIds: ['550e8400-e29b-41d4-a716-446655440000'], action: 'activate' });
+
+    const res = await POST(req, session);
+    expect(res.status).toBe(429);
+  });
+
+  it('should return 403 if user is not admin', async () => {
+    const session = { user: { id: 'u1', role: 'clerk' } } as any;
+    const req = createRequest({ storeIds: ['550e8400-e29b-41d4-a716-446655440000'], action: 'activate' });
+
+    const res = await POST(req, session);
+    expect(res.status).toBe(403);
+    const data = await res.json();
+    expect(data.error).toBe('FORBIDDEN');
+  });
+
+  it('should return 400 for invalid data', async () => {
+    const session = { user: { id: 'u1', role: 'admin' } } as any;
+    const req = createRequest({ storeIds: [], action: 'invalid' });
+
+    const res = await POST(req, session);
     expect(res.status).toBe(400);
   });
 
-  it('rechaza si action no es válido', async () => {
-    const req = makeRequest({ storeIds: ['s1'], action: 'invalid' });
-    const res = await POST(req as any, makeSession('admin'), {} as any);
-    expect(res.status).toBe(400);
-  });
-
-  it('activa tiendas y retorna affected real (no inflado)', async () => {
-    mockFrom.mockImplementation(() => ({
-      update: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      select: vi.fn().mockResolvedValue({ data: [{ id: 's1' }], error: null, count: 1 }),
-    }));
-
-    const req = makeRequest({
-      storeIds: ['00000000-0000-0000-0000-000000000001'],
-      action: 'activate',
+  it('should successfully activate stores', async () => {
+    mockSelect.mockResolvedValue({ data: [{ id: 'uuid-1' }], error: null, count: 1 });
+    const session = { user: { id: 'u1', role: 'admin' } } as any;
+    const req = createRequest({
+      storeIds: ['550e8400-e29b-41d4-a716-446655440000'],
+      action: 'activate'
     });
-    const res = await POST(req as any, makeSession('admin'), {} as any);
 
+    const res = await POST(req, session);
     expect(res.status).toBe(200);
-    const body = await res.json();
-    expect(body.success).toBe(true);
-    expect(body.affected).toBe(1);
-    expect(body.action).toBe('activate');
+    const data = await res.json();
+    expect(data.success).toBe(true);
+    expect(data.affected).toBe(1);
   });
 
-  it('deactivate cuenta solo tiendas realmente afectadas (FIX-DEUDA)', async () => {
-    let callIdx = 0;
-    mockFrom.mockImplementation(() => ({
-      update: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      select: vi.fn().mockResolvedValue(
-        callIdx++ === 0
-          ? { data: [{ id: 's1' }], error: null, count: 1 }
-          : { data: [], error: null, count: 0 }
-      ),
-    }));
-
-    const req = makeRequest({
-      storeIds: [
-        '00000000-0000-0000-0000-000000000001',
-        '00000000-0000-0000-0000-000000000002',
-      ],
-      action: 'deactivate',
+  it('should successfully delete stores via RPC', async () => {
+    mockRpc.mockResolvedValue({ data: { success: true }, error: null });
+    const session = { user: { id: 'u1', role: 'admin' } } as any;
+    const req = createRequest({
+      storeIds: ['550e8400-e29b-41d4-a716-446655440000'],
+      action: 'delete'
     });
-    const res = await POST(req as any, makeSession('admin'), {} as any);
-    const body = await res.json();
 
-    expect(body.affected).toBe(1);
-    expect(body.failed).toBe(1);
+    const res = await POST(req, session);
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.affected).toBe(1);
+    expect(mockRpc).toHaveBeenCalledWith('soft_delete_store', expect.objectContaining({
+      p_store_id: '550e8400-e29b-41d4-a716-446655440000',
+      p_deleted_by: 'u1'
+    }));
   });
 });

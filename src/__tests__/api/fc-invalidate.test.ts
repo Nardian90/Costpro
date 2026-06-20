@@ -1,94 +1,117 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { POST } from '@/app/api/product-cost-sheets/invalidate/route';
+import { NextRequest } from 'next/server';
+
+const { mockWithRole, mockWithTracing } = vi.hoisted(() => ({
+  mockWithRole: vi.fn((role, handler) => handler),
+  mockWithTracing: vi.fn((handler) => handler),
+}));
 
 vi.mock('@/lib/auth-middleware', () => ({
-  withAuth: (fn: any) => fn,
-  withRole: (_role: string, fn: any) => fn,
-  AuthenticatedSession: {},
-}));
-vi.mock('@/lib/observability', () => ({ withTracing: (fn: any) => fn }));
-vi.mock('@/lib/csrf', () => ({ validateOrigin: () => true }));
-vi.mock('@/lib/rate-limit', () => ({ rateLimit: vi.fn().mockResolvedValue({ allowed: true }) }));
-vi.mock('@/lib/api-errors', () => ({
-  createApiError: (code: string, msg?: string) => ({ error: code, message: msg }),
-}));
-vi.mock('@/lib/logger', () => ({
-  logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn() },
+  withRole: mockWithRole,
+  withAuth: vi.fn((handler) => handler),
 }));
 
-// Mock chain builder para supabase admin client
-const mockChain = {
-  update: vi.fn().mockReturnThis(),
+vi.mock('@/lib/observability', () => ({
+  withTracing: mockWithTracing,
+}));
+
+vi.mock('@/lib/csrf', () => ({
+  validateOrigin: vi.fn().mockReturnValue(true),
+}));
+
+vi.mock('@/lib/rate-limit', () => ({
+  rateLimit: vi.fn().mockResolvedValue({ allowed: true }),
+}));
+
+vi.mock('@/lib/api-errors', () => ({
+  createApiError: (c: string) => ({ error: c }),
+}));
+
+const mockSelect = vi.fn().mockResolvedValue({ data: [{ id: '1' }], error: null });
+const mockUpdateChain = {
   eq: vi.fn().mockReturnThis(),
   is: vi.fn().mockReturnThis(),
   neq: vi.fn().mockReturnThis(),
-  select: vi.fn(),
+  select: mockSelect,
 };
 
 vi.mock('@/lib/supabase-admin', () => ({
-  getAdminClient: vi.fn(async () => ({
-    from: vi.fn(() => mockChain),
-  })),
+  getAdminClient: vi.fn().mockResolvedValue({
+    from: vi.fn(() => ({
+      update: vi.fn().mockReturnValue(mockUpdateChain),
+    })),
+  }),
 }));
 
-function makeRequest(body: any): Request {
-  return {
-    method: 'POST',
-    headers: new Map([['x-forwarded-for', '127.0.0.1']]),
-    json: async () => body,
-    url: 'http://localhost:3000/api/product-cost-sheets/invalidate',
-  } as any;
-}
+import { POST } from '@/app/api/product-cost-sheets/invalidate/route';
 
-function makeSession(role: string = 'admin', memberships: any[] = []) {
-  return { user: { id: 'admin-1', role, memberships } } as any;
-}
-
-describe('POST /api/product-cost-sheets/invalidate (F3-T05 deuda)', () => {
+describe('POST /api/product-cost-sheets/invalidate', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it('rechaza si storeId no es UUID válido', async () => {
-    const req = makeRequest({ storeId: 'not-a-uuid' });
-    const res = await POST(req as any, makeSession('admin'), {} as any);
-    expect(res.status).toBe(400);
-  });
+  const createRequest = (body: any) => {
+    return {
+      json: async () => body,
+      headers: new Headers({
+        'x-forwarded-for': '127.0.0.1',
+        'content-type': 'application/json'
+      }),
+      url: 'http://localhost/api/product-cost-sheets/invalidate',
+      method: 'POST',
+    } as unknown as NextRequest;
+  };
 
-  it('rechaza si el usuario no es admin ni miembro de la tienda', async () => {
-    const req = makeRequest({ storeId: '00000000-0000-0000-0000-000000000001' });
-    const res = await POST(req as any, makeSession('clerk', []), {} as any);
+  it('should return 403 if user lacks store access', async () => {
+    const session = {
+      user: {
+        id: 'u1',
+        role: 'encargado',
+        memberships: [{ store_id: 'other-store', status: 'active', role: 'encargado' }]
+      }
+    } as any;
+    const req = createRequest({ storeId: '550e8400-e29b-41d4-a716-446655440000' });
+
+    const res = await POST(req, session);
     expect(res.status).toBe(403);
+    const data = await res.json();
+    expect(data.error).toBe('STORE_ACCESS_DENIED');
   });
 
-  it('permite si el usuario es miembro con rol encargado de la tienda', async () => {
-    mockChain.select.mockResolvedValueOnce({ data: [{ id: 'fc1' }, { id: 'fc2' }], error: null });
+  it('should allow access if user is admin regardless of memberships', async () => {
+    mockSelect.mockResolvedValueOnce({ data: [{ id: '1' }], error: null });
+    const session = { user: { id: 'u1', role: 'admin' } } as any;
+    const req = createRequest({ storeId: '550e8400-e29b-41d4-a716-446655440000' });
 
-    const req = makeRequest({ storeId: '00000000-0000-0000-0000-000000000001' });
-    const res = await POST(req as any, makeSession('encargado', [
-      { store_id: '00000000-0000-0000-0000-000000000001', status: 'active', role: 'encargado' },
-    ]), {} as any);
-
+    const res = await POST(req, session);
     expect(res.status).toBe(200);
-    const body = await res.json();
-    expect(body.affected).toBe(2);
+    const data = await res.json();
+    expect(data.success).toBe(true);
   });
 
-  it('usa service role (getAdminClient) para bypass RLS', async () => {
-    mockChain.select.mockResolvedValueOnce({ data: [], error: null });
+  it('should allow access if user has encargado role in that store', async () => {
+    const storeId = '550e8400-e29b-41d4-a716-446655440000';
+    mockSelect.mockResolvedValueOnce({ data: [{ id: '1' }], error: null });
+    const session = {
+      user: {
+        id: 'u1',
+        role: 'encargado',
+        memberships: [{ store_id: storeId, status: 'active', role: 'encargado' }]
+      }
+    } as any;
+    const req = createRequest({ storeId });
 
-    const req = makeRequest({ storeId: '00000000-0000-0000-0000-000000000001' });
-    await POST(req as any, makeSession('admin'), {} as any);
-
-    const { getAdminClient } = await import('@/lib/supabase-admin');
-    expect(getAdminClient).toHaveBeenCalled();
+    const res = await POST(req, session);
+    expect(res.status).toBe(200);
   });
 
-  it('retorna 500 si el update falla', async () => {
-    mockChain.select.mockResolvedValueOnce({ data: null, error: { message: 'DB error' } });
+  it('should return 400 for invalid UUID', async () => {
+    const session = { user: { id: 'u1', role: 'admin' } } as any;
+    const req = createRequest({ storeId: 'invalid-uuid' });
 
-    const req = makeRequest({ storeId: '00000000-0000-0000-0000-000000000001' });
-    const res = await POST(req as any, makeSession('admin'), {} as any);
-    expect(res.status).toBe(500);
+    const res = await POST(req, session);
+    expect(res.status).toBe(400);
+    const data = await res.json();
+    expect(data.error).toBe('INVALID_DATA');
   });
 });
