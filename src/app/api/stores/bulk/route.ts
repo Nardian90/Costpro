@@ -85,11 +85,11 @@ async function bulkHandler(req: NextRequest, session: AuthenticatedSession) {
       // por tienda para contar solo las que realmente se actualizaron.
       const results = await Promise.allSettled(
         storeIds.map(async (storeId) => {
-          const { error, count } = await admin
+          const { error, count } = await (admin as any)
             .from('stores')
             .update({ is_active: isActive })
             .eq('id', storeId)
-            .select('id', { count: 'exact', head: true });
+            .select('*', { count: 'exact', head: true });
           if (error) throw error;
           return count ?? 0;
         })
