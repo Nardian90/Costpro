@@ -442,7 +442,7 @@ export function buildVHSums(sections: CostSheetSection[]): Record<string, number
     });
   };
 
-  (sections || []).forEach(s => {
+   (sections || []).forEach(s => { if (!s) return;
     calculateVH(s?.rows);
     vhSums[s.id] = (s.rows || []).reduce((sum: number, r: CostSheetRow) => sum + (vhSums[r.id] || 0), 0);
   });
@@ -508,7 +508,7 @@ export function buildEngineRows(
       // When solver/external code pins a value (calculationMethod = ValorFijo/FIJO/MANUAL),
       // do NOT auto-assign sum(children) — respect the cleared formula and fixed value.
       const isFixedValue = ['ValorFijo', 'FIJO', 'MANUAL'].includes(r.calculationMethod || '');
-      if (isParent && (!formula || formula === 'VH')) {
+      if (isParent && !isFixedValue && (!formula || formula === 'VH')) {
           formula = 'sum(children)';
       }
 

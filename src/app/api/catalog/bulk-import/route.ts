@@ -27,7 +27,6 @@ async function bulkImportHandler(req: NextRequest, session: AuthenticatedSession
     }
 
     // ── Step 1: Authenticate (handled by withAuth) ────────────
-    console.log(`[${route}] Authenticated user: ${session.user.id}`);
 
     // ── Step 2: Parse body ────────────────────────────────────
     let body: { products: any[] };
@@ -94,7 +93,6 @@ async function bulkImportHandler(req: NextRequest, session: AuthenticatedSession
         auth: { autoRefreshToken: false, persistSession: false },
       });
       usingServiceRole = true;
-      console.log(`[${route}] Using service_role client`);
     } else {
       // Strategy 2: user-token client (respects RLS)
       client = createClient(supabaseUrl, supabaseAnonKey, {
@@ -102,7 +100,6 @@ async function bulkImportHandler(req: NextRequest, session: AuthenticatedSession
         auth: { autoRefreshToken: false, persistSession: false },
       });
       usingServiceRole = false;
-      console.log(`[${route}] Using user-token client (RLS applies)`);
     }
 
     // ── FIX-SEC-H2: Validate store membership ────────────────
@@ -123,7 +120,6 @@ async function bulkImportHandler(req: NextRequest, session: AuthenticatedSession
     }
 
     // ── Step 5: Upsert products ───────────────────────────────
-    console.log(`[${route}] Upserting ${products.length} products...`);
 
     // FIX-SEC-H2: When using service_role, add store_id filter to ensure RLS-equivalent isolation
     // Filter products to only those stores the user has access to (defense in depth)
@@ -141,7 +137,6 @@ async function bulkImportHandler(req: NextRequest, session: AuthenticatedSession
       console.warn(`[${route}] First upsert attempt failed:`, { code: errCode, message: errMsg });
 
       if (errCode === 'PGRST204' || errMsg.toLowerCase().includes('column')) {
-        console.log(`[${route}] Retrying without barcode/min_stock/supplier columns`);
         const minimalProducts = authorizedProducts.map(
           ({ barcode, barcode_type, min_stock, supplier, ...rest }: any) => rest
         );
@@ -186,7 +181,6 @@ async function bulkImportHandler(req: NextRequest, session: AuthenticatedSession
 
     // ── Step 7: Success ───────────────────────────────────────
     const duration = Date.now() - startTime;
-    console.log(`[${route}] Success: ${authorizedProducts.length} products upserted in ${duration}ms`);
     logInfo(route, `Import completed: ${authorizedProducts.length} products (${duration}ms)`, { count: authorizedProducts.length, duration });
 
     return NextResponse.json({
