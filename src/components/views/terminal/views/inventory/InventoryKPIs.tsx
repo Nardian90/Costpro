@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
-import { Package, TrendingDown, AlertTriangle, DollarSign, BarChart3, ArrowUpDown, ChevronDown, ChevronUp, FileText } from 'lucide-react';
+import { Package, TrendingDown, AlertTriangle, AlertCircle, CheckCircle2, DollarSign, BarChart3, ArrowUpDown, ChevronDown, ChevronUp, FileText } from 'lucide-react';
 import { Product } from '@/types';
 import { formatCurrency, cn } from '@/lib/utils';
 import { FCCoverageBar } from '@/components/ui/FCStatusBadge';
@@ -18,22 +18,35 @@ export default function InventoryKPIsPanel({ products, fcCoverage, className }: 
   const [isOpen, setIsOpen] = useState(false);
 
   const kpis = useMemo(() => {
-    const total = products.length;
-    const totalStock = products.reduce((s, p) => s + (p.stock_current || 0), 0);
-    const outOfStock = products.filter(p => (p.stock_current || 0) <= 0).length;
-    const atMinStock = products.filter(p =>
+    // Solo contar productos que realmente existen (con ID válido)
+    const validProducts = products.filter(p => p.id && p.id.length > 0);
+    const total = validProducts.length;
+    const totalStock = validProducts.reduce((s, p) => s + (p.stock_current || 0), 0);
+
+    // Agotados: stock = 0 (sin stock físico)
+    const outOfStock = validProducts.filter(p => (p.stock_current || 0) <= 0).length;
+
+    // En mínimo: stock > 0 pero <= min_stock (tiene stock pero poco)
+    const atMinStock = validProducts.filter(p =>
       (p.stock_current || 0) > 0 &&
       (p.stock_current || 0) <= (p.min_stock || 0)
     ).length;
-    const totalValue = products.reduce((s, p) =>
+
+    // Con stock: stock > 0 (tienen inventario)
+    const withStock = validProducts.filter(p => (p.stock_current || 0) > 0).length;
+
+    // Incompletos: is_complete = false (faltan datos del producto)
+    const incomplete = validProducts.filter(p => p.is_complete === false).length;
+
+    const totalValue = validProducts.reduce((s, p) =>
       s + (p.stock_current || 0) * (p.cost_average || p.cost_price || 0), 0
     );
     const avgPrice = total > 0
-      ? products.reduce((s, p) => s + (p.price || 0), 0) / total
+      ? validProducts.reduce((s, p) => s + (p.price || 0), 0) / total
       : 0;
 
     // Top 3 products by value
-    const topByValue = [...products]
+    const topByValue = [...validProducts]
       .sort((a, b) =>
         (b.stock_current || 0) * (b.cost_average || b.cost_price || 0) -
         (a.stock_current || 0) * (a.cost_average || a.cost_price || 0)
@@ -41,21 +54,30 @@ export default function InventoryKPIsPanel({ products, fcCoverage, className }: 
       .slice(0, 3);
 
     // Top 3 products by stock volume
-    const topByVolume = [...products]
+    const topByVolume = [...validProducts]
       .sort((a, b) => (b.stock_current || 0) - (a.stock_current || 0))
       .slice(0, 3);
+
+    // Health: mide qué porcentaje de productos tiene stock saludable.
+    // Si TODOS están agotados (post-reset), health = 0% — correcto pero informativo.
+    // Productos con stock > min_stock = saludables.
+    const healthy = validProducts.filter(p =>
+      (p.stock_current || 0) > (p.min_stock || 0)
+    ).length;
 
     return {
       total,
       totalStock,
       outOfStock,
       atMinStock,
+      withStock,
+      incomplete,
       totalValue,
       avgPrice,
       topByValue,
       topByVolume,
       healthPercent: total > 0
-        ? Math.round(((total - outOfStock - atMinStock) / total) * 100)
+        ? Math.round((healthy / total) * 100)
         : 100,
     };
   }, [products]);
@@ -88,6 +110,20 @@ export default function InventoryKPIsPanel({ products, fcCoverage, className }: 
       icon: AlertTriangle,
       color: kpis.outOfStock > 0 ? 'text-destructive' : 'text-muted-foreground',
       bg: kpis.outOfStock > 0 ? 'bg-destructive/10 border-destructive/20' : 'bg-muted/30 border-border',
+    },
+    {
+      label: 'Con Stock',
+      value: kpis.withStock.toString(),
+      icon: CheckCircle2,
+      color: kpis.withStock > 0 ? 'text-success' : 'text-muted-foreground',
+      bg: kpis.withStock > 0 ? 'bg-success/10 border-success/20' : 'bg-muted/30 border-border',
+    },
+    {
+      label: 'Incompletos',
+      value: kpis.incomplete.toString(),
+      icon: AlertCircle,
+      color: kpis.incomplete > 0 ? 'text-warning' : 'text-muted-foreground',
+      bg: kpis.incomplete > 0 ? 'bg-warning/10 border-warning/20' : 'bg-muted/30 border-border',
     },
     {
       label: 'En Mínimo',

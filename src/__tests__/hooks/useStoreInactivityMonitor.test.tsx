@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
+// Mock supabase antes de importar el hook
 const mockFrom = vi.fn();
 vi.mock('@/lib/supabaseClient', () => ({
   supabase: {
@@ -10,6 +11,7 @@ vi.mock('@/lib/logger', () => ({
   logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn() },
 }));
 
+// Mock react hooks — usar import dinámico en vez de require
 vi.mock('react', async () => {
   const actual = await vi.importActual('react');
   return {
@@ -20,17 +22,15 @@ vi.mock('react', async () => {
   };
 });
 
+// Mock useAuthStore — debe ser mutable para cambiar el rol entre tests
 const mockUser = { value: { id: 'user-1', role: 'admin', activeStoreId: 'store-1' } };
 vi.mock('@/store', () => ({
-  useAuthStore: () => ({ user: mockUser.value }),
+  useAuthStore: () => mockUser.value,
 }));
 
 vi.mock('sonner', () => ({
   toast: { warning: vi.fn(), error: vi.fn(), info: vi.fn(), success: vi.fn() },
 }));
-
-// Stub setTimeout to run immediately
-vi.stubGlobal('setTimeout', (fn: any) => { fn(); return 0; });
 
 import { useStoreInactivityMonitor } from '@/hooks/ui/useStoreInactivityMonitor';
 
@@ -69,16 +69,24 @@ describe('useStoreInactivityMonitor (F3-T06) — BUG-1 fix', () => {
     });
 
     useStoreInactivityMonitor();
-    await new Promise(r => process.nextTick(r));
 
+    // Esperar a que las queries async se completen
+    await new Promise(r => setTimeout(r, 100));
+
+    // FIX-BUG-1: debe consultar 'transactions' (no 'sales') y 'receipts' (no 'receptions')
     expect(calledTables).toContain('transactions');
     expect(calledTables).toContain('receipts');
     expect(calledTables).toContain('stock_movements');
+    expect(calledTables).not.toContain('sales');
+    expect(calledTables).not.toContain('receptions');
   });
 
   it('no se ejecuta si el usuario no es admin', () => {
     mockUser.value = { id: 'user-1', role: 'clerk', activeStoreId: 'store-1' };
+
     useStoreInactivityMonitor();
+
+    // No debería llamar a supabase.from (el useEffect retorna early)
     expect(mockFrom).not.toHaveBeenCalled();
   });
 });

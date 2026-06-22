@@ -1037,11 +1037,7 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
         invoiceNumber: invoiceNumber.trim(),
         receptionDate: receptionDateIso,
         items: items.map(item => ({
-          // Reception-Flow-Fix: PendingReceptionItem requiere product_id no-null.
-          // Si el item es nuevo y no tiene product_id aún, lo saltamos (no se puede
-          // guardar como pendiente sin product_id válido — el usuario debe confirmar
-          // la creación primero o usar el flujo normal "Registrar Recepción").
-          product_id: item.product_id || '',
+          product_id: item.product_id || '', // hook creará productos para los que no tengan product_id
           sku: item.sku,
           quantity: item.quantity,
           unit_cost: item.unit_cost,
@@ -1050,7 +1046,7 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
           variant_id: item.variant_id,
           is_new: item.is_new,
           update_price: item.update_price,
-        })).filter(it => it.product_id), // Solo items con product_id válido
+        })),
         notes,
       });
 

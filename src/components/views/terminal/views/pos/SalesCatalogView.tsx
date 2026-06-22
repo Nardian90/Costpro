@@ -6,6 +6,7 @@ import {
   PlusCircle, BadgeCheck, FileCheck, LayoutGrid, Upload,
   Undo2, Loader2, AlertTriangle, MoreHorizontal,
   TableProperties, ChevronUp, ChevronDown, X, ChevronRight, FileSpreadsheet,
+  RotateCcw,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 import { useQueryClient } from '@tanstack/react-query';
@@ -53,6 +54,7 @@ export default function SalesCatalogView() {
   const [togglingVisibleId, setTogglingVisibleId] = useState<string | null>(null);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [showWarningsExpanded, setShowWarningsExpanded] = useState(true);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
 
   const handleToggleVisible = useCallback(async (productId: string, visible: boolean) => {
     setTogglingVisibleId(productId);
@@ -109,6 +111,22 @@ export default function SalesCatalogView() {
   };
 
   const hasActiveItems = catalog.totals.itemCount > 0;
+
+  // ── Reset vista (Reiniciar) ──
+  // Envuelve `handleNewIPV` con un modal de confirmación cuando hay items activos,
+  // para prevenir pérdida accidental. Si no hay items, ejecuta directo.
+  const handleResetView = useCallback(() => {
+    if (hasActiveItems) {
+      setShowResetConfirm(true);
+    } else {
+      catalog.handleNewIPV();
+    }
+  }, [hasActiveItems, catalog]);
+
+  const confirmResetView = useCallback(() => {
+    catalog.handleNewIPV();
+    setShowResetConfirm(false);
+  }, [catalog]);
 
   // ── Render ──
   return (
@@ -175,7 +193,8 @@ export default function SalesCatalogView() {
         <div className={cn(
           'bg-card/95 backdrop-blur-xl border border-border rounded-2xl shadow-lg shadow-black/5',
           'p-2 flex items-center gap-2',
-          catalog.isReadOnly && 'opacity-60 pointer-events-none',
+          // No bloquear pointer-events en read-only — el botón "Nuevo" debe ser clickeable
+          catalog.isReadOnly && 'opacity-80',
         )}>
           {/* ── Search (desktop: ~50%, mobile: hidden by default) ── */}
           {!isMobile && (
@@ -319,7 +338,7 @@ export default function SalesCatalogView() {
               <button
                 type="button"
                 onClick={catalog.handleNewIPV}
-                className="shrink-0 flex items-center gap-1.5 h-10 px-4 rounded-xl bg-success/10 border border-success/20 text-xs font-bold text-success hover:bg-success/20 transition-colors"
+                className="shrink-0 flex items-center gap-1.5 h-10 px-4 rounded-xl bg-success/90 border border-success/30 text-xs font-bold text-white dark:text-black hover:bg-success transition-colors"
               >
                 <PlusCircle className="w-4 h-4" />
                 <span className="hidden sm:inline">Nuevo</span>
@@ -344,7 +363,7 @@ export default function SalesCatalogView() {
             </>
           )}
 
-          {/* ── Edit mode: Vender + Kebab ── */}
+          {/* ── Edit mode: Vender + Reiniciar + Kebab ── */}
           {!catalog.isReadOnly && (
             <>
               {/* Primary: Vender */}
@@ -373,6 +392,21 @@ export default function SalesCatalogView() {
                     {catalog.totals.itemCount}
                   </span>
                 )}
+              </button>
+
+              {/* Reiniciar Vista — visible junto a Vender.
+                  Ejecuta handleNewIPV (mismo efecto que "Nuevo" en modo lectura):
+                  limpia filas + filtros + búsqueda + orden. Con confirmación si hay items. */}
+              <button
+                type="button"
+                onClick={handleResetView}
+                disabled={catalog.isProcessing}
+                className="shrink-0 flex items-center gap-1.5 h-10 px-3 rounded-xl bg-muted/50 border border-border/30 text-xs font-bold text-muted-foreground hover:text-foreground hover:bg-muted transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                title="Reiniciar vista (limpia filas, filtros, búsqueda y orden)"
+                aria-label="Reiniciar vista"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Reiniciar</span>
               </button>
 
               {/* Kebab: secondary actions */}
@@ -448,12 +482,28 @@ export default function SalesCatalogView() {
                     )}
                   </DropdownMenuItem>
                   <DropdownMenuSeparator className="my-1" />
+                  <DropdownMenuLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground px-2 py-1.5">
+                    Reiniciar
+                  </DropdownMenuLabel>
+                  <DropdownMenuItem
+                    onClick={handleResetView}
+                    className="cursor-pointer rounded-lg"
+                  >
+                    <RotateCcw className="w-4 h-4 mr-2 text-warning" />
+                    <div className="flex flex-col">
+                      <span className="font-medium">Reiniciar Vista</span>
+                      <span className="text-[10px] text-muted-foreground">Limpia filas + filtros + búsqueda + orden</span>
+                    </div>
+                  </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={catalog.handleClearAll}
                     className="cursor-pointer rounded-lg text-destructive focus:text-destructive focus:bg-destructive/10"
                   >
                     <Trash2 className="w-4 h-4 mr-2" />
-                    <span className="font-medium">Limpiar Todo</span>
+                    <div className="flex flex-col">
+                      <span className="font-medium">Limpiar Todo</span>
+                      <span className="text-[10px] text-muted-foreground/70">Solo borra cantidades (mantiene filtros)</span>
+                    </div>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -780,6 +830,57 @@ export default function SalesCatalogView() {
         transferTotal={catalog.totals.transferTotal}
         showMixedColumns={catalog.showMixedColumns}
       />
+
+      {/* ── Reset View Confirmation Modal ──
+          Previene pérdida accidental cuando hay items con cantidad.
+          Si no hay items, el botón ejecuta directo sin mostrar este modal. */}
+      {showResetConfirm && (
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-card rounded-2xl p-6 shadow-2xl border border-border max-w-sm w-full space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-warning/10 flex items-center justify-center shrink-0">
+                <RotateCcw className="w-5 h-5 text-warning" />
+              </div>
+              <div>
+                <p className="font-bold text-sm text-foreground">Reiniciar Vista</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Se perderán las cantidades, descuentos y formas de pago actuales.
+                </p>
+              </div>
+            </div>
+            <div className="bg-muted/50 rounded-xl p-3 space-y-1.5 text-xs text-muted-foreground">
+              <p className="font-bold text-foreground uppercase tracking-wider text-[10px]">Se reiniciará:</p>
+              <ul className="space-y-1 pl-3">
+                <li>• {catalog.activeRows.length} producto(s) con cantidad</li>
+                <li>• {catalog.totals.itemCount} unidad(es) en total</li>
+                <li>• Filtros, búsqueda y orden aplicados</li>
+              </ul>
+              <p className="text-[10px] text-muted-foreground/70 pt-1">
+                Total actual: <strong className="text-foreground">{formatCurrency(catalog.totals.subtotal)}</strong>
+              </p>
+            </div>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setShowResetConfirm(false)}
+                className="flex-1 px-4 py-2.5 rounded-xl border border-border text-sm font-bold text-muted-foreground hover:bg-muted/50 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={confirmResetView}
+                className="flex-1 px-4 py-2.5 rounded-xl bg-warning text-warning-foreground text-sm font-bold hover:bg-warning/90 transition-colors"
+              >
+                <span className="flex items-center justify-center gap-1.5">
+                  <RotateCcw className="w-4 h-4" />
+                  Reiniciar
+                </span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

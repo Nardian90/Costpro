@@ -510,7 +510,7 @@ export default function InventoryView() {
                         type="button"
                         onClick={() => handleBulkVisibility(true)}
                         disabled={bulkToggling || filteredProducts.length === 0}
-                        className="inline-flex items-center justify-center w-7 h-7 rounded-full border transition-all active:scale-95 disabled:opacity-50 bg-success/10 border-success/20 text-success hover:bg-success/20"
+                        className="inline-flex items-center justify-center w-7 h-7 rounded-full border transition-all active:scale-95 disabled:opacity-50 bg-success/90 border-success/30 text-white dark:text-black hover:bg-success"
                         title={`Mostrar ${filteredProducts.length} producto(s) en la tienda pública`}
                     >
                         {bulkToggling ? (

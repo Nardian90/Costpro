@@ -119,18 +119,18 @@ export const Header = ({
                         className={cn(
                           "group relative flex items-center gap-2 px-3 h-11 rounded-xl transition-all outline-none border min-w-0 max-w-none",
                           storesToShow.length > 1
-                            ? "bg-primary text-foreground border-primary shadow-lg shadow-primary/20 hover:opacity-90"
+                            ? "bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/20 hover:opacity-90"
                             : "bg-muted/50 border-border/50 text-primary cursor-default"
                         )}
                         disabled={storesToShow.length <= 1}
                       >
-                        <BuildingIcon aria-hidden="true" className={cn("w-4 h-4 shrink-0", storesToShow.length > 1 ? "text-foreground" : "text-primary")} />
+                        <BuildingIcon aria-hidden="true" className={cn("w-4 h-4 shrink-0", storesToShow.length > 1 ? "text-primary-foreground" : "text-primary")} />
                         {/* A4-FIX: max-w-none en mobile (no truncar), sm:max-w-[130px] en desktop */}
-                        <span className="text-[10px] sm:text-xs font-black uppercase tracking-tight truncate">
+                        <span className="text-[10px] sm:text-xs font-black uppercase tracking-tight truncate text-primary-foreground">
                           {activeStoreName}
                         </span>
                         {storesToShow.length > 1 && (
-                          <ChevronDown className="w-3.5 h-3.5 text-white/70 shrink-0" />
+                          <ChevronDown className="w-3.5 h-3.5 text-primary-foreground/70 shrink-0" />
                         )}
                       </button>
                     }
@@ -143,24 +143,24 @@ export const Header = ({
                       className={cn(
                         "group relative flex items-center gap-2 px-3 h-11 rounded-xl transition-all outline-none border min-w-0 max-w-[130px] sm:max-w-none",
                         storesToShow.length > 1
-                          ? "bg-primary text-foreground border-primary shadow-lg shadow-primary/20 hover:opacity-90"
+                          ? "bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/20 hover:opacity-90"
                           : "bg-muted/50 border-border/50 text-primary cursor-default"
                       )}
                       disabled={storesToShow.length <= 1}
                     >
-                      <BuildingIcon aria-hidden="true" className={cn("w-4 h-4 shrink-0", storesToShow.length > 1 ? "text-foreground" : "text-primary")} />
+                      <BuildingIcon aria-hidden="true" className={cn("w-4 h-4 shrink-0", storesToShow.length > 1 ? "text-primary-foreground" : "text-primary")} />
 
-                      <span className="text-[10px] sm:text-xs font-black uppercase truncate tracking-tight">
+                      <span className="text-[10px] sm:text-xs font-black uppercase truncate tracking-tight text-primary-foreground">
                         {activeStoreName}
                       </span>
 
                       {storesToShow.length > 1 && (
-                        <ChevronDown className="w-3.5 h-3.5 text-white/70 shrink-0" />
+                        <ChevronDown className="w-3.5 h-3.5 text-primary-foreground/70 shrink-0" />
                       )}
 
                       {/* Micro-interaction highlight for trigger */}
                       {storesToShow.length > 1 && (
-                        <div className="absolute inset-0 rounded-xl bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <div className="absolute inset-0 rounded-xl bg-primary-foreground/5 opacity-0 group-hover:opacity-100 transition-opacity" />
                       )}
                     </button>
                   </DropdownMenuTrigger>

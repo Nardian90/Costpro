@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { withRole, AuthenticatedSession } from '@/lib/auth-middleware';
+import { withAuth, withRole, AuthenticatedSession } from '@/lib/auth-middleware';
 import { withTracing } from '@/lib/observability';
 import { validateOrigin } from '@/lib/csrf';
 import { rateLimit } from '@/lib/rate-limit';
@@ -7,6 +7,17 @@ import { createApiError } from '@/lib/api-errors';
 import { z } from 'zod';
 import { logger } from '@/lib/logger';
 import { getAdminClient } from '@/lib/supabase-admin';
+
+/**
+ * F3-T05 (deuda resuelta): Endpoint para invalidar FCs de una tienda.
+ *
+ * Antes esta lógica estaba en useStoreEdit.invalidateFCsForStore usando el
+ * cliente Supabase regular (sujeto a RLS). Si el hook se invocaba desde un
+ * contexto no-admin, RLS bloqueaba el UPDATE y las FCs no se invalidaban.
+ *
+ * Ahora este endpoint usa service role (bypass RLS) y valida que el caller
+ * sea admin/manager/encargado/costo de la tienda.
+ */
 
 const invalidateSchema = z.object({
   storeId: z.string().uuid(),
@@ -36,6 +47,7 @@ async function invalidateHandler(req: NextRequest, session: AuthenticatedSession
 
     const { storeId } = validated.data;
 
+    // Validar membership del caller (excepto admin global)
     if (session.user.role !== 'admin') {
       const memberships = session.user.memberships || [];
       const hasAccess = memberships.some(
@@ -63,7 +75,7 @@ async function invalidateHandler(req: NextRequest, session: AuthenticatedSession
     if (error) {
       logger.error('FC', 'FC_INVALIDATE_ENDPOINT_FAILED', { storeId, error: error.message });
       return NextResponse.json(
-        createApiError("FC_INVALIDATE_FAILED", error.message),
+        createApiError('FC_INVALIDATE_FAILED', error.message),
         { status: 500 }
       );
     }
@@ -75,12 +87,12 @@ async function invalidateHandler(req: NextRequest, session: AuthenticatedSession
 
     return NextResponse.json({ success: true, affected, storeId });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : String(error);
+    const message = error instanceof Error ? error.message : createApiError('UNKNOWN_ERROR').error;
     return NextResponse.json({ ...createApiError('UNKNOWN_ERROR'), error: message }, { status: 500 });
   }
 }
 
 export const POST = withTracing(
-  withRole('encargado', invalidateHandler),
+  withRole('encargado', invalidateHandler as Parameters<typeof withRole>[1]) as Parameters<typeof withTracing>[0],
   'POST /api/product-cost-sheets/invalidate'
 );

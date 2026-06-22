@@ -48,6 +48,10 @@ interface UIState {
   ipvActiveTab: string;
   activeCostSection: string;
  pendingAuditFilter: PendingAuditFilter | null;
+  // NoShiftBanner dismiss: timestamp ISO hasta el cual el banner NO debe mostrarse.
+  // null = nunca silenciado (comportamiento por defecto).
+  // Se persiste para que sobreviva recargas y reinicios de sesión del mismo usuario.
+  noShiftBannerDismissUntil: string | null;
   setCurrentView: (view: ViewType) => void;
   setSidebarState: (state: SidebarState) => void;
   toggleSidebar: () => void;
@@ -62,6 +66,9 @@ interface UIState {
   setIpvActiveTab: (tab: string) => void;
   setActiveCostSection: (section: string) => void;
   setPendingAuditFilter: (filter: PendingAuditFilter | null) => void;
+  // Silencia el banner N horas (1, 4, 24) o indefinidamente (null = silenciar indefinido).
+  // Pasar hours = undefined o null limpia el dismiss y vuelve a mostrar.
+  dismissNoShiftBanner: (hours: number | null) => void;
 }
 
 export const useUIStore = create<UIState>()(
@@ -81,6 +88,7 @@ export const useUIStore = create<UIState>()(
       ipvActiveTab: 'dashboard',
       activeCostSection: 'main',
       pendingAuditFilter: null,
+      noShiftBannerDismissUntil: null,
       setCurrentView: (view: ViewType) => set((state: UIState) => ({
         previousView: state.currentView,
         currentView: view
@@ -107,6 +115,15 @@ export const useUIStore = create<UIState>()(
       setIpvActiveTab: (ipvActiveTab: string) => set({ ipvActiveTab }),
       setActiveCostSection: (activeCostSection: string) => set({ activeCostSection }),
       setPendingAuditFilter: (pendingAuditFilter) => set({ pendingAuditFilter }),
+      // NoShiftBanner dismiss: hours = null → silenciar indefinidamente.
+      // hours > 0 → silenciar hasta dentro de N horas.
+      // Si se llama con un valor pero ya hay un dismiss activo más largo, se respeta el más restrictivo.
+      dismissNoShiftBanner: (hours: number | null) => {
+        const until = hours === null
+          ? '9999-12-31T23:59:59.000Z' // indefinido
+          : new Date(Date.now() + hours * 3600 * 1000).toISOString();
+        set({ noShiftBannerDismissUntil: until });
+      },
     }),
     {
       name: 'costpro-ui-storage',

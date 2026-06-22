@@ -71,8 +71,11 @@ export function usePOSCheckout() {
         const saleId = await createSale({
           p_store_id: user.activeStoreId,
           p_seller_id: user.id,
-          p_customer_id: safeCustomerId,
-          p_customer_name: customerName || undefined,
+          // NOTA: NO pasamos p_customer_id ni p_customer_name a la RPC.
+          // La función create_sale en la BD no acepta estos parámetros
+          // (su firma solo incluye p_applied_taxes, p_tax_amount, etc.).
+          // Si los pasamos, PostgREST falla con PGRST202 (function not found).
+          // El cliente se persiste vía UPDATE posterior a la fila creada.
           p_payment_method: paymentMethod,
           p_total_amount: getTotal(),
           p_subtotal: getSubtotal(),

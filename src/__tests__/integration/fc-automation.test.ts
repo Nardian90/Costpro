@@ -214,7 +214,7 @@ describe('createInvalidationEvent', () => {
 describe('getQuickPdfUrl', () => {
   it('generates correct URL with default format', () => {
     const url = getQuickPdfUrl('prod-001', 'store-001');
-    expect(url).toBe('/api/product-cost-sheets/quick-pdf?product_id=prod-001&store_id=store-001&pdf_format=res148');
+    expect(url).toBe('/api/cost-sheets/export-pdf?product_id=prod-001&store_id=store-001&pdf_format=res148');
   });
 
   it('generates correct URL with custom format', () => {

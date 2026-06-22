@@ -1,14 +1,61 @@
+/**
+ * Dual-mode PDF cache for generated FC PDFs.
+ *
+ * Production: Redis-backed (persistent across server restarts, shared across instances)
+ * Development/Fallback: In-memory LRU (no external dependencies)
+ *
+ * Keys: `fc-pdf:${storeId}:${productId}:${pdfFormat}`
+ * Invalidated when FCInvalidationEvent is received.
+ * Also fixes the wildcard invalidation bug (uses startsWith instead of exact match).
+ */
 
 import { Redis } from 'ioredis';
-import { logger } from './logger';
 
 // ── Configuration ──────────────────────────────────────────────────────────
 
-const REDIS_URL = process.env.UPSTASH_REDIS_REST_URL;
-const CACHE_TTL_SECONDS = 3600; // 1 hour
-const MAX_CACHE_SIZE = 100;    // max PDFs in memory (per instance)
+const MAX_CACHE_SIZE = 100;
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+const REDIS_KEY_PREFIX = 'fc-pdf:';
+const REDIS_TTL_SECONDS = 5 * 60; // 5 minutes
 
-// ── Types ──────────────────────────────────────────────────────────────────
+// ── Redis Client (lazy singleton) ──────────────────────────────────────────
+
+let redis: Redis | null = null;
+let redisAvailable = false;
+
+async function getRedis(): Promise<Redis | null> {
+  if (redis) return redisAvailable ? redis : null;
+
+  const redisUrl = process.env.REDIS_URL || process.env.KV_REST_API_URL;
+  if (!redisUrl) {
+    redisAvailable = false;
+    return null;
+  }
+
+  try {
+    // Use REST API URL format (Upstash) or direct Redis URL
+    const connectionUrl = redisUrl.includes('.upstash.io')
+      ? redisUrl.replace(/^https?:\/\//, 'rediss://')
+      : redisUrl;
+
+    redis = new Redis(connectionUrl, {
+      maxRetriesPerRequest: 2,
+      connectTimeout: 2000,
+      lazyConnect: true,
+      enableOfflineQueue: false,
+    });
+
+    await redis.ping();
+    redisAvailable = true;
+    return redis;
+  } catch {
+    redisAvailable = false;
+    console.warn('[FC-PDF-Cache] Redis unavailable, falling back to in-memory cache');
+    return null;
+  }
+}
+
+// ── In-memory LRU fallback ─────────────────────────────────────────────────
 
 interface CacheEntry {
   pdfBuffer: Buffer;
@@ -17,31 +64,26 @@ interface CacheEntry {
   lastAccessed: number;
 }
 
-// ── Memory Cache (L1) ──────────────────────────────────────────────────────
-
 const memoryCache = new Map<string, CacheEntry>();
 
-function getMemoryCachedPdf(key: string): { pdfBuffer: Buffer; contentType: string } | null {
+function getMemoryCachedPdf(key: string): Buffer | null {
   const entry = memoryCache.get(key);
   if (!entry) return null;
-
-  // Cleanup if too old
-  if (Date.now() - entry.createdAt > CACHE_TTL_SECONDS * 1000) {
+  if (Date.now() - entry.createdAt > CACHE_TTL_MS) {
     memoryCache.delete(key);
     return null;
   }
-
   entry.lastAccessed = Date.now();
-  return { pdfBuffer: entry.pdfBuffer, contentType: entry.contentType };
+  return entry.pdfBuffer;
 }
 
 function setMemoryCachedPdf(key: string, pdfBuffer: Buffer, contentType: string): void {
   if (memoryCache.size >= MAX_CACHE_SIZE) {
     let oldestKey = '';
     let oldestTime = Infinity;
-    Array.from(memoryCache.entries()).forEach(([k, v]) => {
+    for (const [k, v] of memoryCache) {
       if (v.lastAccessed < oldestTime) { oldestTime = v.lastAccessed; oldestKey = k; }
-    });
+    }
     if (oldestKey) memoryCache.delete(oldestKey);
   }
   memoryCache.set(key, { pdfBuffer, contentType, createdAt: Date.now(), lastAccessed: Date.now() });
@@ -50,78 +92,100 @@ function setMemoryCachedPdf(key: string, pdfBuffer: Buffer, contentType: string)
 function invalidateMemoryCache(storeId: string, productId?: string): number {
   let count = 0;
   const prefix = productId ? `${storeId}:${productId}:` : `${storeId}:`;
-  Array.from(memoryCache.keys()).forEach(key => {
+  for (const key of memoryCache.keys()) {
     if (key.startsWith(prefix)) {
       memoryCache.delete(key);
       count++;
     }
-  });
-  return count;
-}
-
-// ── Redis Cache (L2) ───────────────────────────────────────────────────────
-
-let redis: Redis | null = null;
-if (REDIS_URL) {
-  try {
-    redis = new Redis(REDIS_URL);
-  } catch (err) {
-    console.error('[Redis] Connection failed:', err);
   }
+  return count;
 }
 
 // ── Public API (dual-mode) ─────────────────────────────────────────────────
 
-export const fcPdfCache = {
-  async get(storeId: string, productId: string, format: string): Promise<{ pdfBuffer: Buffer; contentType: string } | null> {
-    const key = `${storeId}:${productId}:${format}`;
+export async function getCachedPdf(key: string): Promise<Buffer | null> {
+  const redisClient = await getRedis();
+  const fullKey = `${REDIS_KEY_PREFIX}${key}`;
 
-    // 1. Try memory
-    const mem = getMemoryCachedPdf(key);
-    if (mem) return mem;
-
-    // 2. Try Redis
-    if (redis) {
-      try {
-        const data = await redis.getBuffer(key);
-        if (data) {
-          const contentType = await redis.get(`${key}:type`) || 'application/pdf';
-          // Populate memory cache
-          setMemoryCachedPdf(key, data, contentType);
-          return { pdfBuffer: data, contentType };
-        }
-      } catch (err) {
-        logger.warn('SYSTEM', 'REDIS_GET_FAILED', { key, error: (err as any).message });
-      }
+  // Try Redis first
+  if (redisClient) {
+    try {
+      const cached = await redisClient.getBuffer(fullKey);
+      if (cached) return cached;
+    } catch {
+      // Fall through to memory cache
     }
-
-    return null;
-  },
-
-  async set(storeId: string, productId: string, format: string, pdfBuffer: Buffer, contentType: string = 'application/pdf'): Promise<void> {
-    const key = `${storeId}:${productId}:${format}`;
-
-    // 1. Set memory
-    setMemoryCachedPdf(key, pdfBuffer, contentType);
-
-    // 2. Set Redis
-    if (redis) {
-      try {
-        await redis.setex(key, CACHE_TTL_SECONDS, pdfBuffer);
-        await redis.setex(`${key}:type`, CACHE_TTL_SECONDS, contentType);
-      } catch (err) {
-        logger.warn('SYSTEM', 'REDIS_SET_FAILED', { key, error: (err as any).message });
-      }
-    }
-  },
-
-  async invalidate(storeId: string, productId?: string): Promise<number> {
-    // 1. Invalidate memory
-    const count = invalidateMemoryCache(storeId, productId);
-
-    // 2. Invalidate Redis (harder to prefix-match, usually we just wait for TTL or handle specifically)
-    // For now we rely on TTL in Redis and proactive invalidation in memory.
-
-    return count;
   }
-};
+
+  // Fallback to in-memory
+  return getMemoryCachedPdf(key);
+}
+
+export async function setCachedPdf(key: string, pdfBuffer: Buffer, contentType: string): Promise<void> {
+  const fullKey = `${REDIS_KEY_PREFIX}${key}`;
+
+  // Set in Redis (primary)
+  const redisClient = await getRedis();
+  if (redisClient) {
+    try {
+      await redisClient.set(fullKey, pdfBuffer, 'PX', REDIS_TTL_SECONDS * 1000);
+      return; // Don't double-cache in memory when Redis is available
+    } catch {
+      // Fall through to memory cache
+    }
+  }
+
+  // Fallback to in-memory
+  setMemoryCachedPdf(key, pdfBuffer, contentType);
+}
+
+export async function invalidateCache(storeId: string, productId?: string): Promise<number> {
+  let totalInvalidated = 0;
+
+  // Invalidate Redis entries
+  const redisClient = await getRedis();
+  if (redisClient) {
+    try {
+      const pattern = productId
+        ? `${REDIS_KEY_PREFIX}${storeId}:${productId}:*`
+        : `${REDIS_KEY_PREFIX}${storeId}:*`;
+      const keys = await redisClient.keys(pattern);
+      if (keys.length > 0) {
+        totalInvalidated += await redisClient.del(...keys);
+      }
+    } catch {
+      // Continue with memory invalidation
+    }
+  }
+
+  // Invalidate in-memory entries (always, as fallback may have data)
+  totalInvalidated += invalidateMemoryCache(storeId, productId);
+
+  return totalInvalidated;
+}
+
+export function buildCacheKey(storeId: string, productId: string, pdfFormat: string): string {
+  return `${storeId}:${productId}:${pdfFormat}`;
+}
+
+export async function getCacheStats() {
+  const redisClient = await getRedis();
+  let redisKeys = 0;
+
+  if (redisClient) {
+    try {
+      const keys = await redisClient.keys(`${REDIS_KEY_PREFIX}*`);
+      redisKeys = keys.length;
+    } catch {
+      // Ignore
+    }
+  }
+
+  return {
+    mode: redisClient ? 'redis' : 'memory',
+    redisKeys,
+    memorySize: memoryCache.size,
+    maxSize: MAX_CACHE_SIZE,
+    ttlMs: CACHE_TTL_MS,
+  };
+}

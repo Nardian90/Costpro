@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useCallback } from 'react';
-import { Building2, TrendingUp, ShoppingCart, AlertTriangle, RefreshCcw, ExternalLink, Settings } from 'lucide-react';
+import { Building2, TrendingUp, ShoppingCart, AlertTriangle, RefreshCcw, ExternalLink, Settings, BarChart3 } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
 import { useAuthStore } from '@/store';
 import { useStores } from '@/hooks/api/useStores';
@@ -18,6 +18,8 @@ import { toast } from 'sonner';
 import { logger } from '@/lib/logger';
 import { useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
+// Dashboard 10/10 — vista avanzada de analytics por tienda
+import StoreDashboardView from './StoreDashboardView';
 
 // Props de cada métrica mini dentro de la tarjeta
 interface MetricMiniProps {
@@ -46,10 +48,11 @@ interface StoreKPICardProps {
   kpi: StoreKPI;
   onActivate: (storeId: string) => void;
   onConfig?: (storeId: string) => void;
+  onOpenDashboard?: (storeId: string, storeName: string) => void;
   store?: Store;
 }
 
-function StoreKPICard({ kpi, onActivate, onConfig, store }: StoreKPICardProps) {
+function StoreKPICard({ kpi, onActivate, onConfig, onOpenDashboard, store }: StoreKPICardProps) {
   const t = useTranslations('stores.dashboard');
 
   return (
@@ -82,6 +85,17 @@ function StoreKPICard({ kpi, onActivate, onConfig, store }: StoreKPICardProps) {
           </div>
         </div>
         <div className="flex items-center gap-1.5 flex-shrink-0">
+          {onOpenDashboard && (
+            <button
+              type="button"
+              onClick={() => onOpenDashboard(kpi.storeId, kpi.storeName)}
+              aria-label={`Dashboard avanzado de ${kpi.storeName}`}
+              title="Dashboard 10/10"
+              className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-primary/10 transition-colors group"
+            >
+              <BarChart3 className="w-3.5 h-3.5 text-muted-foreground group-hover:text-primary transition-colors" />
+            </button>
+          )}
           {onConfig && (
             <button
               type="button"
@@ -187,6 +201,17 @@ export default function MultiStoreDashboardView() {
   const [storeFormMode, setStoreFormMode] = useState<StoreFormMode>(null);
   const [selectedStore, setSelectedStore] = useState<Store | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Dashboard 10/10 — estado del panel avanzado por tienda
+  const [dashboardStore, setDashboardStore] = useState<{ id: string; name: string } | null>(null);
+
+  const handleOpenDashboard = useCallback((storeId: string, storeName: string) => {
+    setDashboardStore({ id: storeId, name: storeName });
+  }, []);
+
+  const handleCloseDashboard = useCallback(() => {
+    setDashboardStore(null);
+  }, []);
 
   const isLoading = loadingStores || loadingKPIs;
   const totalSalesToday = kpis.reduce((s, k) => s + k.todaySales, 0);
@@ -301,6 +326,7 @@ export default function MultiStoreDashboardView() {
                 kpi={kpi}
                 onActivate={handleActivateStore}
                 onConfig={handleConfigStore}
+                onOpenDashboard={handleOpenDashboard}
                 store={storeMap.get(kpi.storeId)}
               />
             ))}
@@ -317,6 +343,17 @@ export default function MultiStoreDashboardView() {
         selectedStore={selectedStore}
         isSubmitting={isSubmitting}
       />
+
+      {/* Dashboard 10/10 — vista avanzada de analytics por tienda.
+          Se renderiza como overlay full-screen cuando el usuario hace clic
+          en el botón BarChart3 de una tarjeta de tienda. */}
+      {dashboardStore && (
+        <StoreDashboardView
+          storeId={dashboardStore.id}
+          storeName={dashboardStore.name}
+          onClose={handleCloseDashboard}
+        />
+      )}
     </div>
   );
 }

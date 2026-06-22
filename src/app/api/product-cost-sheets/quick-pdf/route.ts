@@ -7,7 +7,7 @@ import { quickPdfSchema } from '@/validation/api-schemas';
 import { getAdminClient } from '@/lib/supabase-admin';
 import { mapProductCostSheetToContract } from '@/contracts/product-cost-sheet';
 import { auditService } from '@/services/audit-service';
-import { fcPdfCache } from '@/lib/fc-pdf-cache';
+import { getCachedPdf, setCachedPdf, buildCacheKey } from '@/lib/fc-pdf-cache';
 import { generateFCPdf } from '@/lib/export/generate-fc-pdf';
 
 export const runtime = 'nodejs';
@@ -91,9 +91,8 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
     }
 
     // 3.5 Check cache before generating
-
-    const cached = await fcPdfCache.get(resolvedStoreId, product_id, pdf_format || 'res148');
-    const cachedPdf = cached?.pdfBuffer;
+    const cacheKey = buildCacheKey(resolvedStoreId, product_id, pdf_format || 'res148');
+    const cachedPdf = await getCachedPdf(cacheKey);
     if (cachedPdf) {
       // Audit log for cached response
       await auditService.logFCPdfExported({
@@ -143,7 +142,7 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
 
     // 6. Cache the PDF
     const pdfBuffer = Buffer.from(pdfUint8Array);
-    await fcPdfCache.set(resolvedStoreId, product_id, pdf_format || 'res148', pdfBuffer, 'application/pdf');
+    await setCachedPdf(cacheKey, pdfBuffer, 'application/pdf');
 
     const productSlug = product.name?.replace(/[^a-zA-Z0-9]/g, '_').substring(0, 30) || product_id;
     const fileName = `FC_${productSlug}.pdf`;

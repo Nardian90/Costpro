@@ -102,13 +102,12 @@ export function useUpdateReception() {
 
 /**
  * Q1 (Audit-Fix): Anula una recepción CON reversión de inventario.
- * Antes: solo hacía status='voided' sin revertir stock → stock inflado, costo alterado.
- * Ahora: llama a la RPC void_reception_with_reversal que:
- *   1. Descuenta el stock de cada producto (stock_current -= quantity)
- *   2. Recalcula el costo promedio (PMP) removiendo la entrada
- *   3. Registra un stock_movement de tipo 'reception_void'
- *   4. Marca la recepción como 'voided'
- * Todo en una transacción atómica.
+ *
+ * Para recepciones 'active' (confirmadas): llama a void_reception_with_reversal
+ * que revierte stock + recalcula PMP + registra stock_movement.
+ *
+ * Para recepciones 'pending' (no confirmadas): simplemente marca como 'voided'
+ * y elimina los items. No hay stock que revertir porque nunca se aplicó.
  */
 export function useVoidReception() {
   const queryClient = useQueryClient();
@@ -119,13 +118,45 @@ export function useVoidReception() {
       storeId: string;
       reason?: string;
     }) => {
-      const { error } = await supabase.rpc('void_reception_with_reversal', {
-        p_receipt_id: params.receiptId,
-        p_user_id: user?.id || '',
-        p_reason: params.reason || 'Anulacion con reversion de inventario',
-      });
+      // Verificar el estado actual de la recepción
+      const { data: receipt, error: fetchErr } = await supabase
+        .from('receipts')
+        .select('status')
+        .eq('id', params.receiptId)
+        .single();
 
-      if (error) throw error;
+      if (fetchErr) throw new Error(`Error al obtener recepción: ${fetchErr.message}`);
+      if (!receipt) throw new Error('Recepción no encontrada');
+
+      if (receipt.status === 'pending') {
+        // Recepción pendiente: no hay stock que revertir.
+        // Solo marcar como voided y eliminar items.
+        const { error: itemsErr } = await supabase
+          .from('receipt_items')
+          .delete()
+          .eq('receipt_id', params.receiptId);
+
+        if (itemsErr) throw new Error(`Error al eliminar items: ${itemsErr.message}`);
+
+        const { error: statusErr } = await supabase
+          .from('receipts')
+          .update({ status: 'voided', updated_at: new Date().toISOString() })
+          .eq('id', params.receiptId)
+          .eq('status', 'pending');
+
+        if (statusErr) throw new Error(`Error al anular: ${statusErr.message}`);
+      } else if (receipt.status === 'active') {
+        // Recepción confirmada: revertir stock via RPC
+        const { error } = await supabase.rpc('void_reception_with_reversal', {
+          p_receipt_id: params.receiptId,
+          p_user_id: user?.id || '',
+          p_reason: params.reason || 'Anulacion con reversion de inventario',
+        });
+
+        if (error) throw error;
+      } else {
+        throw new Error(`No se puede anular una recepción con status '${receipt.status}'`);
+      }
     },
     onSuccess: async (_, variables) => {
       if (user?.id) {
@@ -200,7 +231,51 @@ export function useSavePendingReception() {
       items: PendingReceptionItem[];
       notes?: string;
     }) => {
-      const totalCost = params.items.reduce((s, i) => s + i.quantity * i.unit_cost, 0);
+      // 0. Crear productos nuevos (is_new=true sin product_id) antes de insertar items
+      const newItems = params.items.filter(i => i.is_new && !i.product_id);
+      const existingItems = params.items.filter(i => i.product_id);
+
+      const createdProductIds: Record<string, string> = {}; // sku -> new product_id
+
+      if (newItems.length > 0) {
+        const productsData = newItems.map(item => ({
+          store_id: params.storeId,
+          sku: item.sku || `SKU-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+          name: item.sku || `Producto ${Date.now()}`, // Se usará temporalmente — el nombre real se setea al confirmar
+          cost_price: item.unit_cost,
+          price: item.sale_price || 0,
+          unit_of_measure: item.unit_of_measure || 'unidad',
+          is_active: true,
+          is_complete: false,
+          stock_current: 0,
+        }));
+
+        const { data: createdProducts, error: createErr } = await supabase
+          .from('products')
+          .insert(productsData)
+          .select('id, sku');
+
+        if (createErr) throw new Error(`Error al crear productos nuevos: ${createErr.message}`);
+
+        for (const p of createdProducts || []) {
+          if (p.sku) createdProductIds[p.sku] = p.id;
+        }
+      }
+
+      // Combinar items existentes + nuevos con product_id asignado
+      const allItems = [
+        ...existingItems,
+        ...newItems.map(item => ({
+          ...item,
+          product_id: createdProductIds[item.sku || ''] || '',
+        })),
+      ].filter(i => i.product_id); // Solo items con product_id válido
+
+      if (allItems.length === 0) {
+        throw new Error('No hay items válidos para guardar');
+      }
+
+      const totalCost = allItems.reduce((s, i) => s + i.quantity * i.unit_cost, 0);
 
       // 1. Insertar la recepción con status='pending'
       const { data: receipt, error: receiptErr } = await supabase
@@ -222,13 +297,11 @@ export function useSavePendingReception() {
       if (!receipt) throw new Error('No se pudo crear la recepción pendiente');
 
       // 2. Insertar los items
-      const itemsToInsert = params.items.map(item => ({
+      const itemsToInsert = allItems.map(item => ({
         receipt_id: receipt.id,
         product_id: item.product_id,
         quantity: item.quantity,
         unit_cost: item.unit_cost,
-        // Nota: no guardamos sale_price/update_price en receipt_items porque
-        // esos campos se aplican al confirmar (actualizar el producto).
       }));
 
       if (itemsToInsert.length > 0) {
@@ -237,7 +310,6 @@ export function useSavePendingReception() {
           .insert(itemsToInsert);
 
         if (itemsErr) {
-          // Rollback: eliminar la recepción si fallan los items
           await supabase.from('receipts').delete().eq('id', receipt.id);
           throw new Error(`Error al guardar items: ${itemsErr.message}`);
         }
@@ -247,6 +319,7 @@ export function useSavePendingReception() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['receptions'] });
+      queryClient.invalidateQueries({ queryKey: ['products'] });
     },
   });
 }

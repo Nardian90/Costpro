@@ -1,4 +1,5 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/store';
 import { useProducts } from '@/hooks/api/useProducts';
 import { useCreateSale } from '@/hooks/api/useTransactions';
@@ -35,6 +36,7 @@ import { readSheetNames, parseImportFile } from './salesCatalogImport';
 
 export function useSalesCatalog() {
   const { user } = useAuthStore();
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [stockFilter, setStockFilter] = useState<StockFilter>('all');
   const [viewMode, setViewMode] = useState<ViewMode>('table');
@@ -59,6 +61,41 @@ export function useSalesCatalog() {
 
   // After sale confirmation, only show rows with movements
   const isReadOnly = confirmedSaleId !== null;
+
+  // ── Sync rows when product catalog data changes (price/cost updates) ──
+  // Bug fix: si el usuario cambia el precio en el catálogo y vuelve a IPV,
+  // los rows ya existentes seguían mostrando el precio viejo porque se crearon
+  // en una sesión anterior con `getOrCreateRow`. Este effect sincroniza
+  // silenciosamente el precio/costo de rows con quantity=0 (sin actividad)
+  // para que reflejen el último valor del backend. Si el usuario ya editó
+  // manualmente el precio (quantity > 0 o precio difiere del producto original),
+  // preservamos su edición.
+  useEffect(() => {
+    if (products.length === 0) return;
+    setRows((prev) => {
+      let changed = false;
+      const next = new Map(prev);
+      for (const product of products) {
+        const existing = next.get(product.id);
+        if (!existing) continue;
+        // Solo sincronizar si el row está "inactivo" (sin cantidad)
+        // — así no pisamos ediciones manuales en ventas en curso.
+        if (existing.quantity > 0) continue;
+        const newPrice = product.price || 0;
+        const newCost = product.cost_price || 0;
+        // Si ni precio ni costo cambiaron, skip
+        if (existing.price === newPrice && existing.cost === newCost) continue;
+        next.set(product.id, {
+          ...existing,
+          product, // refresca también la referencia del producto (imagen, sku, etc.)
+          price: newPrice,
+          cost: newCost,
+        });
+        changed = true;
+      }
+      return changed ? next : prev;
+    });
+  }, [products]);
 
   // ── Filtered & sorted products ──
   const filteredProducts = useMemo(() => {
@@ -457,6 +494,10 @@ export function useSalesCatalog() {
   }, []);
 
   // ── New IPV (reset after confirmed sale) ──
+  // También invalida la query de productos para forzar refetch del backend,
+  // por si el usuario cambió precios en el catálogo y la caché de React Query
+  // (staleTime: 30s) aún no se había refrescado. Así el row nuevo se creará
+  // con el precio actualizado.
   const handleNewIPV = useCallback(() => {
     setRows(new Map());
     setConfirmedSaleId(null);
@@ -464,8 +505,10 @@ export function useSalesCatalog() {
     setStockFilter('all');
     setSortConfig(null);
     setImportWarnings([]);
+    // Forzar refetch de productos para traer precios/stock actualizados
+    queryClient.invalidateQueries({ queryKey: ['products'] });
     toast.success('Nueva IPV iniciada');
-  }, []);
+  }, [queryClient]);
 
   return {
     // State

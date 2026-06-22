@@ -3,7 +3,7 @@
 import React from 'react';
 import Image from 'next/image';
 import { BaseModal } from "@/components/ui/BaseModal";
-import { Package, Hash, User, Calendar, FileText, Building2, Download, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { Package, Hash, User, Calendar, FileText, Building2, Download, CheckCircle2, AlertTriangle, Trash2 } from 'lucide-react';
 import { type Receipt, type ReceiptItem } from '@/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { resolveProductImage, getProductImageUrl, formatCurrency, formatDate } from '@/lib/utils';
@@ -18,7 +18,7 @@ interface ReceptionDetailsModalProps {
   onExport?: () => void;
   // Nuevas props para edición y anulación:
   isEditMode?: boolean;
-  onUpdateSubmit?: (updates: { supplier?: string; referenceDoc?: string }) => void;
+  onUpdateSubmit?: (updates: { supplier?: string; referenceDoc?: string; itemUpdates?: Array<{ id: string; quantity: number; unit_cost: number; deleted: boolean }> }) => void;
   onVoidRequest?: () => void;
   isUpdating?: boolean;
   isVoiding?: boolean;
@@ -76,7 +76,7 @@ export function ReceptionDetailsModal({
               <button
                 onClick={onConfirmPending}
                 disabled={isConfirmingPending}
-                className="flex items-center gap-2 px-4 py-3 bg-success text-success-foreground border border-success rounded-xl text-xs font-black uppercase tracking-widest hover:bg-success/90 transition-all active:scale-95 disabled:opacity-50"
+                className="flex items-center gap-2 px-4 py-3 bg-success text-white dark:text-black border border-success rounded-xl text-xs font-black uppercase tracking-widest hover:bg-success/90 transition-all active:scale-95 disabled:opacity-50"
                 type="button"
                 aria-label="Confirmar recepción pendiente"
               >
@@ -127,10 +127,34 @@ export function ReceptionDetailsModal({
             </button>
             {isEditMode && (
               <button type="button"
-                onClick={() => onUpdateSubmit?.({
-                  supplier: (document.getElementById('edit-supplier') as HTMLInputElement)?.value,
-                  referenceDoc: (document.getElementById('edit-reference-doc') as HTMLInputElement)?.value
-                })}
+                onClick={() => {
+                  const supplier = (document.getElementById('edit-supplier') as HTMLInputElement)?.value;
+                  const referenceDoc = (document.getElementById('edit-reference-doc') as HTMLInputElement)?.value;
+                  // R2: recolectar cambios de items si la recepción está pendiente
+                  const itemUpdates: Array<{ id: string; quantity: number; unit_cost: number; deleted: boolean }> = [];
+                  if (receipt?.status === 'pending') {
+                    document.querySelectorAll('input[data-item-id]').forEach(input => {
+                      const el = input as HTMLInputElement;
+                      const itemId = el.dataset.itemId;
+                      const field = el.dataset.field;
+                      if (itemId && field) {
+                        let existing = itemUpdates.find(i => i.id === itemId);
+                        if (!existing) {
+                          existing = { id: itemId, quantity: 0, unit_cost: 0, deleted: false };
+                          itemUpdates.push(existing);
+                        }
+                        if (field === 'quantity') {
+                          existing.quantity = parseFloat(el.value) || 0;
+                          existing.deleted = el.dataset.deleted === 'true' || existing.quantity === 0;
+                        }
+                        if (field === 'unit_cost') {
+                          existing.unit_cost = parseFloat(el.value) || 0;
+                        }
+                      }
+                    });
+                  }
+                  onUpdateSubmit?.({ supplier, referenceDoc, itemUpdates });
+                }}
                 disabled={isUpdating}
                 className="px-8 py-3 bg-primary text-white border border-primary rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-primary/90 transition-all active:scale-95 disabled:opacity-50"
                 aria-label="Guardar cambios de la recepción"
@@ -147,11 +171,11 @@ export function ReceptionDetailsModal({
               una recepción pendiente. Aclara que la acción aplicará cambios al
               inventario y volverá la recepción no editable. */}
           {isConfirmPendingMode && (
-            <div className="p-4 rounded-xl bg-success/10 border border-success/30 flex gap-3 items-start" role="alert">
+            <div className="p-4 rounded-xl bg-success/15 border border-success/30 flex gap-3 items-start" role="alert">
               <AlertTriangle className="w-5 h-5 text-success shrink-0 mt-0.5" aria-hidden="true" />
               <div className="space-y-1">
-                <p className="text-xs font-black uppercase text-success tracking-widest">Confirmar Recepción</p>
-                <p className="text-xs font-medium text-success/80 leading-relaxed">
+                <p className="text-xs font-black uppercase text-foreground tracking-widest">Confirmar Recepción</p>
+                <p className="text-xs font-medium text-muted-foreground leading-relaxed">
                   Al confirmar, se aplicarán los cambios de stock al inventario y la recepción
                   pasará a estado <strong>Confirmada</strong> (no editable). Esta acción
                   <strong> no se puede deshacer</strong> — solo se puede anular o invertir después.
@@ -188,7 +212,9 @@ export function ReceptionDetailsModal({
                 />
               </div>
               <p className="text-[10px] text-muted-foreground italic px-1">
-                Nota: Los ítems no pueden editarse porque el inventario ya fue afectado al momento de la recepción original.
+                {receipt?.status === 'pending'
+                  ? 'Los ítems son editables porque la recepción está pendiente (no ha afectado inventario).'
+                  : 'Nota: Los ítems no pueden editarse porque el inventario ya fue afectado al momento de la recepción original.'}
               </p>
             </div>
           ) : (
@@ -265,6 +291,7 @@ export function ReceptionDetailsModal({
                       <th className="p-3 text-center">Cant.</th>
                       <th className="p-3 text-right">Costo U.</th>
                       <th className="p-3 text-right">Subtotal</th>
+                      {isEditMode && receipt?.status === 'pending' && <th className="p-3 text-center">Acción</th>}
                     </tr>
                   </thead>
                   <tbody>
@@ -281,6 +308,7 @@ export function ReceptionDetailsModal({
                     ) : (
                       items.map((item) => {
                         const imageUrl = item.products ? getProductImageUrl(resolveProductImage(item.products as any)) : null;
+                        const isItemEditable = isEditMode && receipt?.status === 'pending';
                         return (
                           <tr key={item.id} className="border-t border-white/5 hover:bg-white/5 transition-colors">
                             <td className="p-3">
@@ -296,9 +324,63 @@ export function ReceptionDetailsModal({
                               <div className="font-bold">{item.products?.name}</div>
                               <div className="text-xs font-mono text-muted-foreground">{item.products?.sku}</div>
                             </td>
-                            <td className="p-3 text-center font-black tabular-nums">{item.quantity}</td>
-                            <td className="p-3 text-right font-bold text-muted-foreground tabular-nums">{formatCurrency(item.unit_cost)}</td>
-                            <td className="p-3 text-right font-black text-primary tabular-nums">{formatCurrency(item.quantity * item.unit_cost)}</td>
+                            <td className="p-3 text-center font-black tabular-nums">
+                              {isItemEditable ? (
+                                <input
+                                  type="number"
+                                  min="0"
+                                  step="any"
+                                  defaultValue={item.quantity}
+                                  data-item-id={item.id}
+                                  data-field="quantity"
+                                  className="w-16 px-2 py-1 text-center rounded-lg border border-border bg-background text-xs font-black tabular-nums focus:ring-2 focus:ring-primary/20 outline-none"
+                                  aria-label={`Cantidad de ${item.products?.name}`}
+                                />
+                              ) : (
+                                item.quantity
+                              )}
+                            </td>
+                            <td className="p-3 text-right font-bold text-muted-foreground tabular-nums">
+                              {isItemEditable ? (
+                                <input
+                                  type="number"
+                                  min="0"
+                                  step="any"
+                                  defaultValue={item.unit_cost}
+                                  data-item-id={item.id}
+                                  data-field="unit_cost"
+                                  className="w-20 px-2 py-1 text-right rounded-lg border border-border bg-background text-xs font-bold tabular-nums focus:ring-2 focus:ring-primary/20 outline-none"
+                                  aria-label={`Costo unitario de ${item.products?.name}`}
+                                />
+                              ) : (
+                                formatCurrency(item.unit_cost)
+                              )}
+                            </td>
+                            <td className="p-3 text-right font-black text-primary tabular-nums">
+                              {formatCurrency(item.quantity * item.unit_cost)}
+                            </td>
+                            {isItemEditable && (
+                              <td className="p-3 text-center">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    if (confirm(`¿Eliminar ${item.products?.name} de la recepción?`)) {
+                                      const row = document.querySelector(`tr[key="${item.id}"]`);
+                                      // Mark for deletion
+                                      const input = document.querySelector(`input[data-item-id="${item.id}"][data-field="quantity"]`) as HTMLInputElement;
+                                      if (input) { input.value = '0'; input.dataset.deleted = 'true'; }
+                                      const row2 = (event?.target as HTMLElement)?.closest('tr');
+                                      if (row2) { row2.style.opacity = '0.3'; row2.style.textDecoration = 'line-through'; }
+                                    }
+                                  }}
+                                  className="text-destructive hover:bg-destructive/10 p-1.5 rounded-lg transition-colors"
+                                  aria-label={`Eliminar ${item.products?.name}`}
+                                  title="Eliminar item"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </td>
+                            )}
                           </tr>
                         );
                       })

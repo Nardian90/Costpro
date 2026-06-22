@@ -21,6 +21,7 @@ import SearchBar from '@/components/ui/SearchBar';
 import { QueryInspector } from '@/components/ui/QueryInspector';
 import { StateRenderer } from '@/components/ui/StateRenderer';
 import { Skeleton } from '@/components/ui/skeleton';
+import { DestructiveConfirmModal } from '@/components/ui/DestructiveConfirmModal';
 import { useUIStore } from '@/store';
 import { useReceptionsHistoryView } from './useReceptionsHistoryView';
 import { ReceptionDetailsModal } from './ReceptionDetailsModal';
@@ -51,7 +52,6 @@ export default function ReceptionsHistoryView() {
     handleCloseDetails,
     handleInvert,
     handleDuplicate,
-    isInverting,
     handleExportCSV,
     handleExportAllExcel,
     receiptItems,
@@ -70,6 +70,11 @@ export default function ReceptionsHistoryView() {
     handleConfirmPendingRequest,
     handleConfirmPendingExecute,
     handleConfirmPendingCancel,
+    // R2: modal de inversión estilado
+    invertConfirmReceipt,
+    handleInvertConfirm,
+    setInvertConfirmReceipt,
+    isInverting,
   } = useReceptionsHistoryView();
 
   return (
@@ -252,7 +257,7 @@ export default function ReceptionsHistoryView() {
                           {rec.status === 'pending' && (
                             <button type="button"
                               onClick={() => handleConfirmPendingRequest(rec)}
-                              className="w-11 h-11 inline-flex items-center justify-center rounded-lg border-2 border-success/30 bg-success/10 text-success hover:bg-success/20 transition-all active:scale-95"
+                              className="w-11 h-11 inline-flex items-center justify-center rounded-lg border-2 border-success/40 bg-success/90 text-white dark:text-black hover:bg-success transition-all active:scale-95"
                               title="Confirmar recepción (aplicar al inventario)"
                               disabled={isConfirmingPending}
                             >
@@ -266,10 +271,7 @@ export default function ReceptionsHistoryView() {
                           {rec.status === 'active' && (
                             <>
                               <button type="button"
-                                onClick={() => {
-                                    handleViewDetails(rec);
-                                    setTimeout(() => handleInvert(rec), 500);
-                                }}
+                                onClick={() => handleInvert(rec)}
                                 className="w-11 h-11 inline-flex items-center justify-center rounded-lg border border-border hover:bg-destructive hover:text-foreground transition-all active:scale-95"
                                 title="Invertir Recepción — Crea un documento de disminución que revierte el stock manteniendo trazabilidad (equivalente a anular con auditoría)"
                                 disabled={isInverting}
@@ -277,10 +279,7 @@ export default function ReceptionsHistoryView() {
                                 <RefreshCcw className={cn("w-4 h-4", isInverting && "animate-spin")} />
                               </button>
                               <button type="button"
-                                onClick={() => {
-                                    handleViewDetails(rec);
-                                    setTimeout(() => handleDuplicate(rec), 500);
-                                }}
+                                onClick={() => handleDuplicate(rec)}
                                 className="w-11 h-11 inline-flex items-center justify-center rounded-lg border border-border hover:bg-info hover:text-foreground transition-all active:scale-95"
                                 title="Duplicar Recepción"
                               >
@@ -337,6 +336,33 @@ export default function ReceptionsHistoryView() {
         onConfirmPending={() => selectedReceipt && handleConfirmPendingExecute(selectedReceipt)}
         onConfirmPendingCancel={handleConfirmPendingCancel}
         isConfirmingPending={isConfirmingPending}
+      />
+
+      {/* R2: Modal estilado para invertir/anular recepción (reemplaza confirm() nativo) */}
+      <DestructiveConfirmModal
+        key={`invert-${invertConfirmReceipt?.id ?? 'none'}`}
+        isOpen={!!invertConfirmReceipt}
+        onClose={() => !isInverting && setInvertConfirmReceipt(null)}
+        title="Invertir Recepción"
+        description="Crea un documento de disminución que revierte el stock manteniendo trazabilidad"
+        confirmName={invertConfirmReceipt?.id.split('-')[0] || ''}
+        confirmNameLabel="ID de la recepción"
+        warningText={
+          <>
+            Vas a invertir la recepción <strong>{invertConfirmReceipt?.id.split('-')[0]}</strong>.
+            Esto anulará el documento y restará los productos del inventario manteniendo
+            trazabilidad contable. La acción <strong>no se puede deshacer</strong>.
+          </>
+        }
+        itemsList={[
+          'El documento se marca como anulado (voided)',
+          'El stock de cada producto se reduce',
+          'El costo promedio se recalcula',
+          'Se registra un movimiento de tipo return',
+        ]}
+        confirmLabel="Invertir Recepción"
+        onConfirm={handleInvertConfirm}
+        isSubmitting={isInverting}
       />
     </>
   );
