@@ -169,11 +169,28 @@ export const CategoryChips: React.FC<{
   onCategoryChange: (category: string) => void;
   className?: string;
 }> = ({ categories, selectedCategory, onCategoryChange, className }) => {
+  // Shorten long category names for display
+  const shortenCategory = (cat: string): string => {
+    const short: Record<string, string> = {
+      'Materiales de Construcción': 'Materiales',
+      'Revestimientos y Pisos': 'Pisos',
+      'Pinturas e Impermeabilizantes': 'Pinturas',
+      'Baño y Sanitarios': 'Baño',
+      'Jardinería y Exterior': 'Jardinería',
+    };
+    return short[cat] || cat;
+  };
+
   return (
     <div
       role="radiogroup"
       aria-label="Filtrar inventario por categoría"
-      className={cn("flex overflow-x-auto no-scrollbar gap-2 py-2", className)}
+      className={cn(
+        "flex overflow-x-auto gap-1.5 py-1 scroll-smooth",
+        "scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent",
+        className
+      )}
+      style={{ scrollbarWidth: 'thin' }}
     >
       <button
         type="button"
@@ -181,11 +198,12 @@ export const CategoryChips: React.FC<{
         aria-checked={selectedCategory === ''}
         onClick={() => onCategoryChange('')}
         aria-label="Mostrar todos los productos"
+        title="Todas las categorías"
         className={cn(
-          "px-5 py-3 min-h-[44px] rounded-full text-xs font-black uppercase tracking-widest whitespace-nowrap transition-all border shrink-0 flex items-center justify-center",
+          "px-3 py-1.5 min-h-[32px] rounded-lg text-[10px] font-black uppercase tracking-wider whitespace-nowrap transition-all border shrink-0 flex items-center justify-center",
           selectedCategory === ''
-            ? "bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/20"
-            : "bg-background text-muted-foreground border-border hover:bg-muted"
+            ? "bg-primary text-primary-foreground border-primary shadow-md shadow-primary/20"
+            : "bg-background text-muted-foreground border-border hover:bg-muted hover:text-foreground"
         )}
       >
         Todas
@@ -198,14 +216,15 @@ export const CategoryChips: React.FC<{
           aria-checked={selectedCategory === cat}
           onClick={() => onCategoryChange(cat)}
           aria-label={`Filtrar por ${cat}`}
+          title={cat}
           className={cn(
-            "px-5 py-3 min-h-[44px] rounded-full text-xs font-black uppercase tracking-widest whitespace-nowrap transition-all border shrink-0 flex items-center justify-center",
+            "px-3 py-1.5 min-h-[32px] rounded-lg text-[10px] font-black uppercase tracking-wider whitespace-nowrap transition-all border shrink-0 flex items-center justify-center",
             selectedCategory === cat
-              ? "bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/20"
-              : "bg-background text-muted-foreground border-border hover:bg-muted"
+              ? "bg-primary text-primary-foreground border-primary shadow-md shadow-primary/20"
+              : "bg-background text-muted-foreground border-border hover:bg-muted hover:text-foreground"
           )}
         >
-          {cat}
+          {shortenCategory(cat)}
         </button>
       ))}
     </div>

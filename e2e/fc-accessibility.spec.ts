@@ -1,5 +1,4 @@
 import { test, expect } from './fixtures';
-// @ts-ignore
 import AxeBuilder from '@axe-core/playwright';
 
 /**

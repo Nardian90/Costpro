@@ -212,7 +212,7 @@ export function POSCartCheckoutPanel({
                 key={preset}
                 type="button"
                 onClick={() => setCashReceived(String(preset))}
-                className="flex-1 min-h-[44px] rounded-lg bg-success/10 text-success text-xs font-black border border-success/20 hover:bg-success/20 transition-colors focus:outline-none focus:ring-2 focus:ring-success/30"
+                className="flex-1 min-h-[44px] rounded-lg bg-success/90 text-white dark:text-black text-xs font-black border border-success/30 hover:bg-success transition-colors focus:outline-none focus:ring-2 focus:ring-success/30"
               >
                 ${preset}
               </button>

@@ -49,6 +49,7 @@ export const formatCurrency = (amount: number): string => {
     style: 'currency',
     currency: 'CUP',
     minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
   }).format(amount);
 };
 

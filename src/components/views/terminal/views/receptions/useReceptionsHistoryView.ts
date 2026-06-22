@@ -132,9 +132,30 @@ export function useReceptionsHistoryView() {
     supplier?: string;
     referenceDoc?: string;
     notes?: string;
+    itemUpdates?: Array<{ id: string; quantity: number; unit_cost: number; deleted: boolean }>;
   }) => {
     try {
       await updateReceptionMutation.mutateAsync({ receiptId, ...updates });
+      
+      // R2: si hay itemUpdates (recepción pendiente), actualizar items
+      if (updates.itemUpdates && updates.itemUpdates.length > 0) {
+        const { supabase } = await import('@/lib/supabaseClient');
+        for (const item of updates.itemUpdates) {
+          if (item.deleted) {
+            await supabase.from('receipt_items').delete().eq('id', item.id);
+          } else {
+            await supabase.from('receipt_items')
+              .update({ quantity: item.quantity, unit_cost: item.unit_cost })
+              .eq('id', item.id);
+          }
+        }
+        // Recalcular total_cost de la recepción
+        const { data: items } = await supabase.from('receipt_items')
+          .select('quantity, unit_cost').eq('receipt_id', receiptId);
+        const newTotal = (items || []).reduce((s: number, i: any) => s + i.quantity * i.unit_cost, 0);
+        await supabase.from('receipts').update({ total_cost: newTotal }).eq('id', receiptId);
+      }
+      
       setEditingReceiptId(null);
       toast.success('Recepción actualizada');
     } catch (error) {
@@ -143,27 +164,32 @@ export function useReceptionsHistoryView() {
     }
   };
 
-  const handleInvert = async (receipt: Receipt) => {
+  // R2: state para modal de inversión estilado (reemplaza confirm() nativo)
+  const [invertConfirmReceipt, setInvertConfirmReceipt] = useState<Receipt | null>(null);
+
+  const handleInvert = (receipt: Receipt) => {
     if (receipt.status === 'voided') {
       toast.error('Esta recepción ya ha sido anulada.');
       return;
     }
+    // Abrir modal estilado en vez de confirm() nativo
+    setInvertConfirmReceipt(receipt);
+  };
 
-    if (!confirm(`¿Estás seguro de que deseas invertir la recepción ${receipt.id.split('-')[0]}? Esto anulará el documento y restará los productos del inventario.`)) {
-      return;
-    }
-
+  const handleInvertConfirm = async () => {
+    if (!invertConfirmReceipt) return;
     if (!user?.activeStoreId) { toast.error('No hay tienda activa'); return; }
 
     try {
       await invertDocumentMutation.mutateAsync({
         type: 'reception',
-        id: receipt.id,
-        items: items.length > 0 && selectedReceiptId === receipt.id ? items : undefined,
+        id: invertConfirmReceipt.id,
         storeId: user?.activeStoreId || ''
       });
+      setInvertConfirmReceipt(null);
     } catch (error) {
       logger.error('DATABASE', 'RECEPTION_INVERT_FAILED', { error });
+      setInvertConfirmReceipt(null);
     }
   };
 
@@ -294,6 +320,11 @@ export function useReceptionsHistoryView() {
     handleDuplicate,
     handleExportCSV,
     handleExportAllExcel,
-    isInverting: invertDocumentMutation.isPending
+    isInverting: invertDocumentMutation.isPending,
+
+    // R2: modal de inversión estilado
+    invertConfirmReceipt,
+    handleInvertConfirm,
+    setInvertConfirmReceipt
   };
 }

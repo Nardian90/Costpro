@@ -1,10 +1,10 @@
 'use client';
 
-import React from 'react';
-import { Check, ShoppingCart, PackageMinus, Receipt, AlertTriangle } from 'lucide-react';
+import React, { useState } from 'react';
+import { Check, ShoppingCart, PackageMinus, Receipt, AlertTriangle, StickyNote } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import { BaseModal } from '@/components/ui/BaseModal';
-import { PrimaryButton, SecondaryButton } from '@/components/ui/atomic';
+import { SecondaryButton } from '@/components/ui/atomic';
 import type { SalesCatalogRow } from './useSalesCatalog';
 import { calcSubtotal } from './useSalesCatalog';
 
@@ -13,7 +13,7 @@ interface SalesCatalogCheckoutModalProps {
   onOpenChange: (open: boolean) => void;
   activeRows: SalesCatalogRow[];
   isProcessing: boolean;
-  onConfirm: () => void;
+  onConfirm: (notes?: string) => void;
   subtotal: number;
   cashTotal: number;
   transferTotal: number;
@@ -32,6 +32,12 @@ export default function SalesCatalogCheckoutModal({
   showMixedColumns,
 }: SalesCatalogCheckoutModalProps) {
   const totalUnits = activeRows.reduce((acc, r) => acc + r.quantity, 0);
+  const [notes, setNotes] = useState('');
+
+  // Reset notes when modal closes
+  React.useEffect(() => {
+    if (!open) setNotes('');
+  }, [open]);
 
   return (
     <BaseModal
@@ -51,12 +57,14 @@ export default function SalesCatalogCheckoutModal({
             onClick={() => onOpenChange(false)}
             className="flex-1"
           />
-          <PrimaryButton
-            label={isProcessing ? 'Procesando...' : 'Sí, Confirmar Venta'}
-            onClick={onConfirm}
-            className="flex-1"
+          <button
+            type="button"
+            onClick={() => onConfirm(notes.trim() || undefined)}
             disabled={isProcessing}
-          />
+            className="flex-1 px-6 py-2.5 rounded-xl bg-primary text-primary-foreground font-black text-[10px] uppercase tracking-widest hover:bg-primary/90 transition-all active:scale-95 disabled:opacity-50 whitespace-nowrap"
+          >
+            {isProcessing ? 'Procesando...' : 'Sí, Confirmar Venta'}
+          </button>
         </>
       }
     >
@@ -121,6 +129,23 @@ export default function SalesCatalogCheckoutModal({
               ))}
             </tbody>
           </table>
+        </div>
+
+        {/* Notes field */}
+        <div className="space-y-1.5">
+          <label htmlFor="sale-notes" className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+            <StickyNote className="w-3.5 h-3.5" />
+            Nota de la venta (opcional)
+          </label>
+          <textarea
+            id="sale-notes"
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            placeholder="Ej: Cliente pide factura, entrega parcial, observaciones..."
+            rows={2}
+            className="w-full px-3 py-2 rounded-xl border border-border bg-background text-xs font-medium outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/30 transition-all resize-none"
+            maxLength={500}
+          />
         </div>
 
         {showMixedColumns && (
