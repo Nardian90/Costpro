@@ -64,7 +64,7 @@ export function useDeleteRole() {
     mutationFn: async (id: string) => {
       // FIX-BUG-LOG-015: Destructure error from count query and check before proceeding;
       // a failed query returns null count, which would bypass the guard.
-      const { count, error: countError } = await supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('role_id', id);
+      const { count, error: countError } = await supabase.from('profiles').select(undefined, { count: 'exact', head: true }).eq('role_id', id);
       if (countError) {
         logger.error('DATABASE', 'CHECK_ROLE_USAGE_FAILED', { error: countError, roleId: id });
         throw new Error('Error al verificar si el rol está en uso. Inténtalo de nuevo.');
