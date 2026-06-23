@@ -1,10 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-// First mock withTracing BEFORE importing POST
-vi.mock('@/lib/observability', () => ({ withTracing: (fn: any) => fn }));
+const mockSession = { value: { user: { id: "admin-1", role: "admin", memberships: [] } } as any };
+const mockContext = { params: Promise.resolve({ id: 'u1' }) };
 vi.mock('@/lib/auth-middleware', () => ({
-  withAuth: (handler: any) => (req: any, context: any) => handler(req, context?.session || { user: { role: 'admin', id: 'admin-1' } }, context),
+  withAuth: (fn: any) => async (req: any) => fn(req, mockSession.value, mockContext),
   AuthenticatedSession: {},
+  getServerSession: async () => mockSession.value,
+  isDevBypassSession: () => false,
 }));
 vi.mock('@/lib/auth', () => ({
   getServerSession: vi.fn(),
@@ -42,47 +44,53 @@ const VALID_UUID = '550e8400-e29b-41d4-a716-446655440000';
 describe('POST /api/users/[id]/memberships/bulk (F4-T02)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Reset mocks after clearAllMocks
+    mockSession.value = { user: { id: 'admin-1', role: 'admin', memberships: [] } };
+    mockRpc.mockResolvedValue({ data: { affected: 0, failed: 0 }, error: null });
     process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://test.supabase.co';
     process.env.SUPABASE_SERVICE_ROLE_KEY = 'test-service-key';
     (getServerSession as any).mockResolvedValue({ user: { id: 'admin-1', role: 'admin' }, token: 'token' });
   });
 
   it('rechaza si el rol no es admin ni manager', async () => {
-    (getServerSession as any).mockResolvedValue({ user: { id: 'clerk-1', role: 'clerk' }, token: 'token' });
-    const req = makeRequest({ assignments: [{ store_id: VALID_UUID, role: 'clerk' }] });
-    const res = await POST(req as any, { params: Promise.resolve({ id: 'u1' }), session: { user: { role: 'clerk', id: 'clerk-1' } } } as any);
+    mockSession.value = { user: { id: 'clerk-1', role: 'clerk', memberships: [] } };
+    const req = makeRequest({ assignments: [{ store_id: 'a1111111-1111-4111-8111-111111111111', role: 'clerk' }] });
+    const res = await POST(req as any);
     expect(res.status).toBe(403);
   });
 
   it('rechaza si assignments está vacío', async () => {
+    mockSession.value = { user: { id: 'admin-1', role: 'admin', memberships: [] } };
     const req = makeRequest({ assignments: [] });
-    const res = await POST(req as any, { params: Promise.resolve({ id: 'u1' }), session: { user: { role: 'admin', id: 'admin-1' } } } as any);
+    const res = await POST(req as any);
     expect(res.status).toBe(400);
   });
 
   it('rechaza si role en assignment es inválido', async () => {
-    const req = makeRequest({ assignments: [{ store_id: VALID_UUID, role: 'invalid' }] });
-    const res = await POST(req as any, { params: Promise.resolve({ id: 'u1' }), session: { user: { role: 'admin', id: 'admin-1' } } } as any);
+    mockSession.value = { user: { id: 'admin-1', role: 'admin', memberships: [] } };
+    const req = makeRequest({ assignments: [{ store_id: 's1', role: 'invalid' }] });
+    const res = await POST(req as any);
     expect(res.status).toBe(400);
   });
 
   it('invoca RPC bulk_assign_memberships (transaccional)', async () => {
+    mockSession.value = { user: { id: 'admin-1', role: 'admin', memberships: [] } };
     mockRpc.mockResolvedValueOnce({ data: { affected: 3, failed: 0 }, error: null });
 
     const req = makeRequest({
       assignments: [
-        { store_id: VALID_UUID, role: 'clerk' },
-        { store_id: '550e8400-e29b-41d4-a716-446655440001', role: 'clerk' },
-        { store_id: '550e8400-e29b-41d4-a716-446655440002', role: 'clerk' },
+        { store_id: 'a1111111-1111-4111-8111-111111111111', role: 'clerk' },
+        { store_id: 'b2222222-2222-4222-8222-222222222222', role: 'clerk' },
+        { store_id: 'c3333333-3333-4333-8333-333333333333', role: 'clerk' },
       ],
     });
-    const res = await POST(req as any, { params: Promise.resolve({ id: 'u1' }), session: { user: { role: 'admin', id: 'admin-1' } } } as any);
+    const res = await POST(req as any);
 
     expect(res.status).toBe(200);
     expect(mockRpc).toHaveBeenCalledWith('bulk_assign_memberships', {
       p_user_id: 'u1',
       p_assignments: expect.arrayContaining([
-        expect.objectContaining({ store_id: VALID_UUID, role: 'clerk' }),
+        expect.objectContaining({ store_id: 'a1111111-1111-4111-8111-111111111111', role: 'clerk' }),
       ]),
     });
     const body = await res.json();
@@ -93,9 +101,9 @@ describe('POST /api/users/[id]/memberships/bulk (F4-T02)', () => {
     mockRpc.mockResolvedValueOnce({ data: null, error: { message: 'DB ERROR' } });
 
     const req = makeRequest({
-      assignments: [{ store_id: VALID_UUID, role: 'clerk' }],
+      assignments: [{ store_id: 'a1111111-1111-4111-8111-111111111111', role: 'clerk' }],
     });
-    const res = await POST(req as any, { params: Promise.resolve({ id: 'u1' }), session: { user: { role: 'admin', id: 'admin-1' } } } as any);
+    const res = await POST(req as any);
     expect(res.status).toBe(500);
   });
 });

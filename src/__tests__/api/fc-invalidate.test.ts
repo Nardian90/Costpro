@@ -1,11 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-// First mock withTracing BEFORE importing POST
-vi.mock('@/lib/observability', () => ({ withTracing: (fn: any) => fn }));
+// Mutable session — tests pueden cambiar el rol/memberships antes de cada test
+const mockSession = { value: { user: { id: 'admin-1', role: 'admin', memberships: [{ store_id: 'a1111111-1111-4111-8111-111111111111', role: 'admin' }] } } as any };
+
 vi.mock('@/lib/auth-middleware', () => ({
-  withAuth: (handler: any) => (req: any, context: any) => handler(req, context?.session || { user: { role: 'admin', id: 'admin-1' } }, context),
-  withRole: (role: any, handler: any) => (req: any, context: any) => handler(req, context?.session || { user: { role: 'admin', id: 'admin-1' } }, context),
+  withAuth: (fn: any) => async (req: any) => fn(req, mockSession.value),
+  withRole: (_role: string, fn: any) => async (req: any) => fn(req, mockSession.value),
   AuthenticatedSession: {},
+  getServerSession: async () => mockSession.value,
+  isDevBypassSession: () => false,
 }));
 vi.mock('@/lib/auth', () => ({
   getServerSession: vi.fn(),
@@ -38,41 +41,39 @@ function makeRequest(body: any): Request {
   } as any;
 }
 
-const VALID_UUID = '550e8400-e29b-41d4-a716-446655440000';
+const STORE_ID = 'a1111111-1111-4111-8111-111111111111';
 
 describe('POST /api/product-cost-sheets/invalidate (F3-T05)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://test.supabase.co';
-    process.env.SUPABASE_SERVICE_ROLE_KEY = 'test-service-key';
-    (getServerSession as any).mockResolvedValue({ user: { id: 'admin-1', role: 'admin' }, token: 'token' });
+    // Reset to admin session by default
+    mockSession.value = { user: { id: 'admin-1', role: 'admin', memberships: [{ store_id: STORE_ID, role: 'admin', status: 'active' }] } };
+    // Reset mockChain.select to default success
+    mockChain.select.mockResolvedValue({ data: [], error: null });
   });
 
   it('rechaza si storeId no es UUID válido', async () => {
-    const req = makeRequest({ storeId: 'invalid-uuid' });
-    const res = await POST(req as any, {} as any);
+    const req = makeRequest({ storeId: 'not-a-uuid' });
+    const res = await POST(req as any);
     expect(res.status).toBe(400);
   });
 
   it('rechaza si el usuario no es admin ni miembro de la tienda', async () => {
-    (getServerSession as any).mockResolvedValue({ user: { id: 'u1', role: 'encargado', memberships: [] }, token: 'token' });
-    const req = makeRequest({ storeId: VALID_UUID });
-    const res = await POST(req as any, { session: { user: { id: 'u1', role: 'encargado', memberships: [] } } } as any);
+    // Cambiar sesión a clerk sin memberships
+    mockSession.value = { user: { id: 'clerk-1', role: 'clerk', memberships: [] } };
+
+    const req = makeRequest({ storeId: STORE_ID });
+    const res = await POST(req as any);
     expect(res.status).toBe(403);
   });
 
   it('permite si el usuario es miembro con rol encargado de la tienda', async () => {
-    (getServerSession as any).mockResolvedValue({ user: { id: 'u1', role: 'encargado', memberships: [{ store_id: VALID_UUID, status: 'active', role: 'encargado' }] }, token: 'token' });
-    mockFrom.mockImplementation(() => ({
-      update: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      is: vi.fn().mockReturnThis(),
-      neq: vi.fn().mockReturnThis(),
-      select: vi.fn().mockResolvedValue({ data: [{ id: 'f1' }], error: null }),
-    }));
+    // Sesión encargado con membership activa en la tienda
+    mockSession.value = { user: { id: 'enc-1', role: 'encargado', memberships: [{ store_id: STORE_ID, role: 'encargado', status: 'active' }] } };
+    mockChain.select.mockResolvedValueOnce({ data: [{ id: 'fc1' }, { id: 'fc2' }], error: null });
 
-    const req = makeRequest({ storeId: VALID_UUID });
-    const res = await POST(req as any, { session: { user: { id: 'u1', role: 'encargado', memberships: [{ store_id: VALID_UUID, status: 'active', role: 'encargado' }] } } } as any);
+    const req = makeRequest({ storeId: STORE_ID });
+    const res = await POST(req as any);
 
     expect(res.status).toBe(200);
     const body = await res.json();
@@ -81,36 +82,20 @@ describe('POST /api/product-cost-sheets/invalidate (F3-T05)', () => {
   });
 
   it('usa service role (getAdminClient) para bypass RLS', async () => {
-    mockFrom.mockImplementation(() => ({
-      update: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      is: vi.fn().mockReturnThis(),
-      neq: vi.fn().mockReturnThis(),
-      select: vi.fn().mockResolvedValue({ data: [], error: null }),
-    }));
+    mockChain.select.mockResolvedValueOnce({ data: [], error: null });
 
-    const req = makeRequest({ storeId: VALID_UUID });
-    await POST(req as any, { session: { user: { id: 'admin-1', role: 'admin' } } } as any);
+    const req = makeRequest({ storeId: STORE_ID });
+    await POST(req as any);
 
-    const { createClient } = await import('@supabase/supabase-js');
-    expect(createClient).toHaveBeenCalledWith(
-      expect.any(String),
-      'test-service-key',
-      expect.any(Object)
-    );
+    const { getAdminClient } = await import('@/lib/supabase-admin');
+    expect(getAdminClient).toHaveBeenCalled();
   });
 
   it('retorna 500 si el update falla', async () => {
-    mockFrom.mockImplementation(() => ({
-      update: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      is: vi.fn().mockReturnThis(),
-      neq: vi.fn().mockReturnThis(),
-      select: vi.fn().mockResolvedValue({ data: null, error: { message: 'DB Error' } }),
-    }));
+    mockChain.select.mockResolvedValueOnce({ data: null, error: { message: 'DB error' } });
 
-    const req = makeRequest({ storeId: VALID_UUID });
-    const res = await POST(req as any, { session: { user: { id: 'admin-1', role: 'admin' } } } as any);
+    const req = makeRequest({ storeId: STORE_ID });
+    const res = await POST(req as any);
     expect(res.status).toBe(500);
   });
 });
