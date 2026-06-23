@@ -107,7 +107,8 @@ export default function ProductReceptionView({ onCancel, preselectedProduct }: P
             <input id="rec-invoice" type="text" value={s.invoiceNumber} onChange={e => s.setInvoiceNumber(e.target.value)} className="neu-input w-full font-bold" placeholder="FAC-001" aria-label="Numero de factura" />
           </div>
         </div>
-        {/* REC-1 QW-R4: Date picker para fecha de recepción */}
+        {/* REC-1 QW-R4: Date picker para fecha de recepción.
+            Política forward-only: min = fecha MAX global, max = hoy. */}
         <div className="space-y-1.5">
           <label htmlFor="rec-date" className="text-xs font-black uppercase tracking-widest ml-1">
             Fecha de Recepción
@@ -118,10 +119,17 @@ export default function ProductReceptionView({ onCancel, preselectedProduct }: P
             type="date"
             value={s.receptionDate}
             onChange={e => s.setReceptionDate(e.target.value)}
+            min={s.globalMinDate}
             max={s.todayStr}
             className="neu-input w-full sm:w-auto font-bold"
             aria-label="Fecha de recepción"
           />
+          {s.globalMinDate && (
+            <p className="text-[10px] text-muted-foreground ml-1">
+              Fecha mínima permitida: <strong className="text-foreground">{s.globalMinDate}</strong>
+              {' '}· Política de secuencia global (forward-only)
+            </p>
+          )}
         </div>
         <div className="space-y-1.5">
           <label htmlFor="rec-notes" className="text-xs font-black uppercase tracking-widest ml-1">Notas <span className="text-muted-foreground font-normal">(opcional)</span></label>

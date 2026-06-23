@@ -10,6 +10,7 @@ import ActionMenu from '@/components/ui/ActionMenu';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useStoresView } from './useStoresView';
 import { useBulkStoreAction } from '@/hooks/api/useStores';
+import { useIsMobile } from '@/hooks/ui/useMobile';
 import { StoreModals } from './StoreModals';
 import { CreateStoreQuickModal } from './CreateStoreQuickModal';
 import { StoreTeamModal } from './StoreTeamModal';
@@ -31,6 +32,7 @@ export default function StoresManagementView() {
   const t = useTranslations('stores');
   const tc = useTranslations('common');
   const { user } = useAuthStore();
+  const isMobile = useIsMobile();
   // F1-T05: conteo de usuarios por tienda para mostrar badge "N usuarios" en cada tarjeta.
   const { data: userCounts } = useStoreUserCounts();
   const {
@@ -146,7 +148,9 @@ export default function StoresManagementView() {
         <SearchBar value={searchTerm} onChange={setSearchTerm} placeholder={t('filterByLocation')} aria-label={t('search')} />
 
         {/* B3: VirtualizedStoreGrid disponible para >20 tiendas.
-            Requiere extraer StoreCard a componente separado — deuda técnica. */}
+            TODO: requiere extraer StoreCard a componente separado para poder
+            usarlo con el patrón renderItem del virtualizer. Deuda técnica.
+            Por ahora, el grid simple maneja bien hasta ~50 tiendas. */}
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           {/* UX-001: Loading state BEFORE map so it shows while fetching */}
           {isLoading && (
@@ -268,7 +272,7 @@ export default function StoresManagementView() {
                         toast.error(t('copyError'));
                       });
                     }}
-                    className="shrink-0 p-1.5 rounded-lg hover:bg-primary/10 transition-colors text-primary"
+                    className="shrink-0 p-2.5 min-h-[44px] min-w-[44px] rounded-lg hover:bg-primary/10 transition-colors text-primary"
                     aria-label={`${t('copyLink')} ${store.name}`}
                     title={t('copyLink')}
                   >
@@ -278,7 +282,7 @@ export default function StoresManagementView() {
                     href={`/tienda/${cleanSlug}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="shrink-0 p-1.5 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors flex items-center justify-center"
+                    className="shrink-0 p-2.5 min-h-[44px] min-w-[44px] rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors flex items-center justify-center"
                     aria-label={`${t('visitStorefront')} ${store.name}`}
                     title={t('publicStorefront')}
                   >
@@ -324,7 +328,7 @@ export default function StoresManagementView() {
                     aria-label={`${t('selectStore')} ${store.name}`}
                     aria-pressed={false}
                     aria-describedby={`store-desc-${store.id}`}
-                    className="w-full py-2.5 rounded-xl bg-primary text-foreground font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-transform"
+                    className="w-full min-h-[44px] py-2.5 rounded-xl bg-primary text-foreground font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-transform"
                   >
                     <Target className="w-3.5 h-3.5" />
                     {t('selectStore')}
@@ -349,7 +353,7 @@ export default function StoresManagementView() {
                     onClick={() => setConfigModalStore(store)}
                     aria-label={`Configurar tienda ${store.name}`}
                     title="Configuración centralizada con checklist de completitud"
-                    className="py-2 rounded-xl border border-border hover:bg-primary/10 hover:text-primary font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-colors"
+                    className="min-h-[44px] py-2.5 rounded-xl border border-border hover:bg-primary/10 hover:text-primary font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-colors"
                   >
                     <Settings className="w-3 h-3" />
                     Configurar
@@ -359,7 +363,7 @@ export default function StoresManagementView() {
                     onClick={() => handleEditStore(store)}
                     aria-label={`${tc('edit')} ${store.name}`}
                     title="Formulario avanzado de edición (datos completos)"
-                    className="py-2 rounded-xl border border-border hover:bg-muted font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-colors"
+                    className="min-h-[44px] py-2.5 rounded-xl border border-border hover:bg-muted font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-colors"
                   >
                     <Edit className="w-3 h-3" />
                     {t('info')}
@@ -372,7 +376,7 @@ export default function StoresManagementView() {
                       onClick={() => setTeamModalStore(store)}
                       aria-label={`Ver equipo de ${store.name}`}
                       title="Ver y administrar usuarios asignados a esta tienda"
-                      className="py-2 rounded-xl border border-border hover:bg-primary/10 hover:text-primary font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-colors"
+                      className="min-h-[44px] py-2.5 rounded-xl border border-border hover:bg-primary/10 hover:text-primary font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-colors"
                     >
                       <UserCog className="w-3 h-3" />
                       Equipo
@@ -383,7 +387,7 @@ export default function StoresManagementView() {
                       type="button"
                       onClick={() => handleResetStore(store)}
                       aria-label={`${t('resetStore')} ${store.name}`}
-                      className="py-2 rounded-xl border border-border hover:bg-warning/10 hover:text-warning font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-colors"
+                      className="min-h-[44px] py-2.5 rounded-xl border border-border hover:bg-warning/10 hover:text-warning font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-colors"
                     >
                       <RotateCcw className="w-3 h-3" />
                       {t('reset')}
@@ -397,7 +401,7 @@ export default function StoresManagementView() {
                       aria-label={`${store.is_active ? 'Desactivar' : 'Activar'} tienda ${store.name}`}
                       title={store.is_active ? 'Desactivar tienda (pausa temporal, preserva configuración y usuarios)' : 'Reactivar tienda (vuelve a estar operativa)'}
                       className={cn(
-                        "py-2 rounded-xl border font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed",
+                        "min-h-[44px] py-2.5 rounded-xl border font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed",
                         store.is_active
                           ? "border-border hover:bg-amber-100 hover:text-amber-700 hover:border-amber-300 dark:hover:bg-amber-950/40"
                           : "border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800"
@@ -413,7 +417,7 @@ export default function StoresManagementView() {
                       onClick={() => handleDeleteStore(store)}
                       aria-label={`${t('deleteStore')} ${store.name}`}
                       aria-describedby={`store-desc-${store.id}`}
-                      className="col-span-2 py-2 rounded-xl border border-border hover:bg-destructive/10 hover:text-destructive font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-colors"
+                      className="col-span-2 min-h-[44px] py-2.5 rounded-xl border border-border hover:bg-destructive/10 hover:text-destructive font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-colors"
                     >
                       <Trash2 className="w-3 h-3" />
                       {t('erase')}
@@ -436,7 +440,10 @@ export default function StoresManagementView() {
         {/* F4-T01: Barra de acciones bulk — aparece cuando hay ≥1 tienda seleccionada.
             Permite activar/desactivar/eliminar múltiples tiendas en una sola operación. */}
         {isAdmin && selectedCount > 0 && (
-          <div className="sticky bottom-4 z-30 mx-auto max-w-2xl">
+          <div className={cn(
+            'sticky z-30 mx-auto max-w-2xl',
+            isMobile ? 'bottom-0 pb-[env(safe-area-inset-bottom)]' : 'bottom-4',
+          )}>
             <div className="flex items-center gap-2 p-3 rounded-2xl bg-card border-2 border-primary shadow-2xl">
               <span className="text-xs font-black uppercase tracking-widest text-primary pl-2">
                 {selectedCount} selec.
@@ -446,7 +453,7 @@ export default function StoresManagementView() {
                 type="button"
                 onClick={() => handleBulkAction('activate')}
                 disabled={bulkAction.isPending}
-                className="px-3 py-2 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-400 text-xs font-black uppercase tracking-widest transition-colors disabled:opacity-50"
+                className="min-h-[44px] px-3 py-2.5 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-400 text-xs font-black uppercase tracking-widest transition-colors disabled:opacity-50"
               >
                 Activar
               </button>
@@ -454,7 +461,7 @@ export default function StoresManagementView() {
                 type="button"
                 onClick={() => handleBulkAction('deactivate')}
                 disabled={bulkAction.isPending}
-                className="px-3 py-2 rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-100 dark:bg-amber-950/40 dark:text-amber-400 text-xs font-black uppercase tracking-widest transition-colors disabled:opacity-50"
+                className="min-h-[44px] px-3 py-2.5 rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-100 dark:bg-amber-950/40 dark:text-amber-400 text-xs font-black uppercase tracking-widest transition-colors disabled:opacity-50"
               >
                 Pausar
               </button>
@@ -463,7 +470,7 @@ export default function StoresManagementView() {
                 type="button"
                 onClick={() => setBulkTemplateOpen(true)}
                 disabled={bulkAction.isPending}
-                className="px-3 py-2 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 text-xs font-black uppercase tracking-widest transition-colors disabled:opacity-50"
+                className="min-h-[44px] px-3 py-2.5 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 text-xs font-black uppercase tracking-widest transition-colors disabled:opacity-50"
               >
                 Aplicar FC
               </button>
@@ -471,7 +478,7 @@ export default function StoresManagementView() {
                 type="button"
                 onClick={() => handleBulkAction('delete')}
                 disabled={bulkAction.isPending}
-                className="px-3 py-2 rounded-lg bg-destructive/10 text-destructive hover:bg-destructive hover:text-foreground text-xs font-black uppercase tracking-widest transition-colors disabled:opacity-50"
+                className="min-h-[44px] px-3 py-2.5 rounded-lg bg-destructive/10 text-destructive hover:bg-destructive hover:text-foreground text-xs font-black uppercase tracking-widest transition-colors disabled:opacity-50"
               >
                 Eliminar
               </button>

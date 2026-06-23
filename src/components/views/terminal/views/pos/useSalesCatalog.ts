@@ -6,6 +6,7 @@ import { useCreateSale } from '@/hooks/api/useTransactions';
 import { useCartStore } from '@/store/cart';
 import { Product, ProductVariant, PaymentMethod } from '@/types';
 import { toast } from 'sonner';
+import { useHaptics } from '@/hooks/ui/useHaptics';
 
 // ── Re-exports for backward compatibility ────────────────────
 // Components that import these from './useSalesCatalog' keep working.
@@ -37,6 +38,7 @@ import { readSheetNames, parseImportFile } from './salesCatalogImport';
 export function useSalesCatalog() {
   const { user } = useAuthStore();
   const queryClient = useQueryClient();
+  const haptics = useHaptics();
   const [searchTerm, setSearchTerm] = useState('');
   const [stockFilter, setStockFilter] = useState<StockFilter>('all');
   const [viewMode, setViewMode] = useState<ViewMode>('table');
@@ -326,7 +328,7 @@ export function useSalesCatalog() {
     setShowCheckoutConfirm(true);
   }, [isReadOnly, activeRows.length, hasAnyDiscrepancy]);
 
-  const confirmCheckout = useCallback(async () => {
+  const confirmCheckout = useCallback(async (notes?: string, operationDate?: string) => {
     if (!user?.activeStoreId || !user?.id) return;
     setIsProcessing(true);
     try {
@@ -367,17 +369,29 @@ export function useSalesCatalog() {
           cash_paid: r.cashPaid,
           transfer_paid: r.transferPaid,
         })),
+        // Política de secuencia global: pasar la fecha de operación elegida.
+        // Si es NULL, el backend usará NOW() (comportamiento legacy).
+        // El backend valida que no sea anterior al MAX global (forward-only locking).
+        p_operation_date: operationDate || undefined,
       });
 
       clearCart();
       setConfirmedSaleId(saleId as string);
       setShowCheckoutConfirm(false);
       toast.success(`Venta completada — ${saleId}`);
+      haptics.success();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       if (msg.includes('ERR_INSUFFICIENT_STOCK')) {
+        haptics.error();
         toast.error(
           'Stock insuficiente en inventario. La tabla de productos muestra stock, pero el inventario interno no coincide. Ejecuta el script fix-insufficient-stock.sql en Supabase SQL Editor para sincronizar.',
+          { duration: 8000 }
+        );
+      } else if (msg.includes('ERR_BACKDATED_DOCUMENT')) {
+        // Error de política forward-only: la fecha elegida es anterior al MAX global
+        toast.error(
+          'No se puede retroceder en el tiempo operativo. Revisa la "Fecha de Operación" en el dashboard MULTI-TIENDA para ver la fecha mínima permitida.',
           { duration: 8000 }
         );
       } else {

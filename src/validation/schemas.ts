@@ -450,6 +450,10 @@ export const createSaleParamsSchema = z.object({
   p_cash_amount: z.number().optional(),
   p_transfer_amount: z.number().optional(),
   p_transaction_id: z.string().regex(uuidRegex).optional(),
+  // Política de secuencia global (forward-only locking):
+  // fecha de operación elegida por el usuario. Si se omite, el backend usa NOW().
+  // El backend valida que no sea anterior al MAX global (lanza ERR_BACKDATED_DOCUMENT).
+  p_operation_date: z.string().datetime().optional(),
 });
 
 export const registerReceptionParamsSchema = z.object({
@@ -482,6 +486,8 @@ export const adjustStockInputSchema = z.object({
   quantityDelta: z.number(),
   unitCostAdjustment: z.number().nullable(),
   reason: z.string().min(1),
+  // Política forward-only locking: fecha opcional
+  operationDate: z.string().datetime().optional(),
 });
 
 export const inventoryAdjustmentResponseSchema = z.object({
@@ -499,6 +505,8 @@ export const performInventoryAdjustmentParamsSchema = z.object({
   p_quantity_delta: z.number(),
   p_unit_cost_adjustment: z.number().nullable(),
   p_reason: z.string().min(1),
+  // Política forward-only locking: fecha opcional
+  p_operation_date: z.string().datetime().optional(),
 });
 
 export const getPaginatedProductsParamsSchema = z.object({
@@ -891,11 +899,15 @@ export const createTransferParamsSchema = z.object({
     }),
   ),
   p_notes: z.string().nullable(),
+  // Política forward-only locking: fecha de operación opcional.
+  p_operation_date: z.string().datetime().optional(),
 });
 
 export const confirmTransferParamsSchema = z.object({
   p_transfer_id: z.string().regex(uuidRegex),
   p_user_id: z.string().regex(uuidRegex),
+  // Política forward-only locking: fecha de operación opcional.
+  p_operation_date: z.string().datetime().optional(),
 });
 
 export const getSalesSinceLastClosureParamsSchema = z.object({

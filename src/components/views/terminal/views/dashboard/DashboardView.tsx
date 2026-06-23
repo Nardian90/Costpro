@@ -112,7 +112,7 @@ function DashboardViewImpl() {
 
             <Popover>
               <PopoverTrigger asChild>
-                <button type="button" aria-label={t('selectDate')} className="flex items-center gap-2 py-2 px-4 rounded-xl border border-border/50 bg-card text-xs font-semibold uppercase tracking-wider text-muted-foreground min-w-[140px] justify-center hover:bg-muted/50 hover:text-foreground transition-colors w-full sm:w-auto">
+                <button type="button" aria-label={t('selectDate')} className="flex items-center gap-2 min-h-[44px] py-2.5 px-4 rounded-xl border border-border/50 bg-card text-xs font-semibold uppercase tracking-wider text-muted-foreground min-w-[140px] justify-center hover:bg-muted/50 hover:text-foreground transition-colors w-full sm:w-auto">
                   <CalendarIcon className="w-3.5 h-3.5" />
                   {timeRange === 'day'
                     ? formatDate(selectedDate)

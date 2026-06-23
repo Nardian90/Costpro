@@ -117,6 +117,8 @@ export function useVoidReception() {
       receiptId: string;
       storeId: string;
       reason?: string;
+      /** Política forward-only locking: fecha efectiva (ISO). Default = NOW(). */
+      operationDate?: string;
     }) => {
       // Verificar el estado actual de la recepción
       const { data: receipt, error: fetchErr } = await supabase
@@ -127,6 +129,8 @@ export function useVoidReception() {
 
       if (fetchErr) throw new Error(`Error al obtener recepción: ${fetchErr.message}`);
       if (!receipt) throw new Error('Recepción no encontrada');
+
+      const effectiveDate = params.operationDate || new Date().toISOString();
 
       if (receipt.status === 'pending') {
         // Recepción pendiente: no hay stock que revertir.
@@ -140,17 +144,19 @@ export function useVoidReception() {
 
         const { error: statusErr } = await supabase
           .from('receipts')
-          .update({ status: 'voided', updated_at: new Date().toISOString() })
+          .update({ status: 'voided', updated_at: effectiveDate })
           .eq('id', params.receiptId)
           .eq('status', 'pending');
 
         if (statusErr) throw new Error(`Error al anular: ${statusErr.message}`);
       } else if (receipt.status === 'active') {
-        // Recepción confirmada: revertir stock via RPC
+        // Recepción confirmada: revertir stock via RPC con p_operation_date
         const { error } = await supabase.rpc('void_reception_with_reversal', {
           p_receipt_id: params.receiptId,
           p_user_id: user?.id || '',
           p_reason: params.reason || 'Anulacion con reversion de inventario',
+          // Política forward-only: el RPC valida contra MAX global
+          p_operation_date: params.operationDate,
         });
 
         if (error) throw error;
@@ -171,6 +177,13 @@ export function useVoidReception() {
       queryClient.invalidateQueries({ queryKey: ['products'] });
       queryClient.invalidateQueries({ queryKey: ['inventory'] });
       queryClient.invalidateQueries({ queryKey: ['stock-movements'] });
+    },
+    onError: (error: unknown) => {
+      const msg = error instanceof Error ? error.message : String(error);
+      if (msg.includes('ERR_BACKDATED_DOCUMENT')) {
+        // Toast claro para política forward-only
+        // (sonner se maneja en el caller; aquí solo propagamos)
+      }
     }
   });
 }
