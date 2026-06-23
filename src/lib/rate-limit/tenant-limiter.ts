@@ -39,7 +39,7 @@ export async function checkStoreQuota(userId: string, plan: Plan): Promise<Quota
   if (limits.maxStores === Infinity) return { allowed: true, remaining: Infinity, limit: Infinity };
 
   const { count, error } = await supabase
-    .from('stores').select(undefined, { count: 'exact', head: true }).eq('is_active', true);
+    .from('stores').select({ count: 'exact', head: true }).eq('is_active', true);
 
   if (error) {
     logger.warn('QUOTA', 'STORE_QUOTA_CHECK_FAILED', { userId, error: error.message });

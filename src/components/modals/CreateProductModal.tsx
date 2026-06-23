@@ -350,7 +350,7 @@ export const CreateProductModal = () => {
                     try {
                       const { count } = await supabase
                         .from('products')
-                        .select(undefined, { count: 'exact', head: true })
+                        .select({ count: 'exact', head: true })
                         .eq('store_id', user.activeStoreId);
                       const nextNum = (count ?? 0) + 1;
                       // Formato: PROD-0001, PROD-0002, etc.
