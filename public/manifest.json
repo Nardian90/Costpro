@@ -2,6 +2,7 @@
   "name": "CostPro - Sistema de Gestión Integral",
   "short_name": "CostPro",
   "description": "Plataforma completa para gestión de inventario, ventas y administración de tiendas.",
+  "id": "/",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#121212",
@@ -37,6 +38,22 @@
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "CostPro - Pantalla principal"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "CostPro - Pantalla principal"
     }
   ]
 }
