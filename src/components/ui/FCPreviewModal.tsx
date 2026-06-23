@@ -125,7 +125,7 @@ export function FCPreviewModal({
       setPdfBlobUrl(null);
       fetchInProgressRef.current = false;
     }
-  }, [open, effectiveStatus, pdfUrl]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [open, effectiveStatus, pdfUrl]);  
 
   // Cleanup on unmount
   useEffect(() => {
@@ -134,7 +134,7 @@ export function FCPreviewModal({
         URL.revokeObjectURL(pdfBlobUrl);
       }
     };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);  
 
   // Helper: revoke and reset PDF blob
   const resetPdfBlob = useCallback(() => {

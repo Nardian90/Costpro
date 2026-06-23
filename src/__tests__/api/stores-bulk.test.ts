@@ -1,10 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { POST } from '@/app/api/stores/bulk/route';
 
+const mockSession = { value: { user: { id: "admin-1", role: "admin", memberships: [] } } as any };
 vi.mock('@/lib/auth-middleware', () => ({
-  withAuth: (fn: any) => fn,
-  withRole: (_role: string, fn: any) => fn,
+  withAuth: (fn: any) => async (req: any) => fn(req, mockSession.value),
+  withRole: (_role: string, fn: any) => async (req: any) => fn(req, mockSession.value),
   AuthenticatedSession: {},
+  getServerSession: async () => mockSession.value,
+  isDevBypassSession: () => false,
 }));
 vi.mock('@/lib/observability', () => ({ withTracing: (fn: any) => fn }));
 vi.mock('@/lib/csrf', () => ({ validateOrigin: () => true }));
@@ -14,6 +17,10 @@ vi.mock('@/lib/api-errors', () => ({
 }));
 vi.mock('@/lib/logger', () => ({
   logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn() },
+}));
+vi.mock('@/lib/rate-limit/tenant-limiter', () => ({
+  checkTenantRateLimit: vi.fn().mockResolvedValue({ allowed: true }),
+  rateLimitHeaders: () => ({}),
 }));
 
 const mockFrom = vi.fn();
@@ -41,25 +48,33 @@ function makeSession(role: string = 'admin') {
 describe('POST /api/stores/bulk (F4-T01)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockSession.value = { user: { id: 'admin-1', role: 'admin', memberships: [] } };
+    mockFrom.mockReset();
+    mockFrom.mockImplementation(() => ({
+      update: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      select: vi.fn().mockResolvedValue({ data: [], error: null, count: 0 }),
+    }));
     process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://test.supabase.co';
     process.env.SUPABASE_SERVICE_ROLE_KEY = 'test-service-key';
   });
 
   it('rechaza si el rol no es admin', async () => {
-    const req = makeRequest({ storeIds: ['s1'], action: 'activate' });
-    const res = await POST(req as any, makeSession('clerk'), {} as any);
+    mockSession.value = { user: { id: 'clerk-1', role: 'clerk', memberships: [] } };
+    const req = makeRequest({ storeIds: ['a1111111-1111-4111-8111-111111111111'], action: 'activate' });
+    const res = await POST(req as any);
     expect(res.status).toBe(403);
   });
 
   it('rechaza si el body es inválido (sin storeIds)', async () => {
     const req = makeRequest({ action: 'activate' });
-    const res = await POST(req as any, makeSession('admin'), {} as any);
+    const res = await POST(req as any);
     expect(res.status).toBe(400);
   });
 
   it('rechaza si action no es válido', async () => {
-    const req = makeRequest({ storeIds: ['s1'], action: 'invalid' });
-    const res = await POST(req as any, makeSession('admin'), {} as any);
+    const req = makeRequest({ storeIds: ['a1111111-1111-4111-8111-111111111111'], action: 'invalid' });
+    const res = await POST(req as any);
     expect(res.status).toBe(400);
   });
 
@@ -71,10 +86,10 @@ describe('POST /api/stores/bulk (F4-T01)', () => {
     }));
 
     const req = makeRequest({
-      storeIds: ['00000000-0000-0000-0000-000000000001'],
+      storeIds: ['a1111111-1111-4111-8111-111111111111'],
       action: 'activate',
     });
-    const res = await POST(req as any, makeSession('admin'), {} as any);
+    const res = await POST(req as any);
 
     expect(res.status).toBe(200);
     const body = await res.json();
@@ -84,25 +99,29 @@ describe('POST /api/stores/bulk (F4-T01)', () => {
   });
 
   it('deactivate cuenta solo tiendas realmente afectadas (FIX-DEUDA)', async () => {
+    mockSession.value = { user: { id: 'admin-1', role: 'admin', memberships: [] } };
     let callIdx = 0;
-    mockFrom.mockImplementation(() => ({
-      update: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      select: vi.fn().mockResolvedValue(
-        callIdx++ === 0
-          ? { data: [{ id: 's1' }], error: null, count: 1 }
-          : { data: [], error: null, count: 0 }
-      ),
-    }));
+    mockFrom.mockImplementation(() => {
+      callIdx++;
+      const chain: any = {
+        update: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockResolvedValue(
+          callIdx === 1
+            ? { error: null }           // primera tienda: éxito
+            : { error: { message: 'RLS blocked' } }  // segunda: falla
+        ),
+      };
+      return chain;
+    });
 
     const req = makeRequest({
       storeIds: [
-        '00000000-0000-0000-0000-000000000001',
-        '00000000-0000-0000-0000-000000000002',
+        'a1111111-1111-4111-8111-111111111111',
+        'b2222222-2222-4222-8222-222222222222',
       ],
       action: 'deactivate',
     });
-    const res = await POST(req as any, makeSession('admin'), {} as any);
+    const res = await POST(req as any);
     const body = await res.json();
 
     expect(body.affected).toBe(1);
