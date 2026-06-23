@@ -38,10 +38,9 @@ export function OperationDatePicker({
   const { data: globalDateInfo, isLoading } = useGlobalOperationDate(storeId);
   const [touched, setTouched] = useState(false);
 
-  const minAllowedDate = useMemo(() => {
-    if (!globalDateInfo?.minAllowedDate) return undefined;
-    return format(new Date(globalDateInfo.minAllowedDate), 'yyyy-MM-dd');
-  }, [globalDateInfo?.minAllowedDate]);
+  const minAllowedDate = globalDateInfo?.minAllowedDate
+    ? format(new Date(globalDateInfo.minAllowedDate), 'yyyy-MM-dd')
+    : undefined;
 
   const validation = useMemo(
     () => validateOperationDate(value, globalDateInfo?.minAllowedDate || null),

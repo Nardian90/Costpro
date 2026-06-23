@@ -90,18 +90,18 @@ export function useStoreInactivityMonitor(options?: {
           const [salesRes, receptionsRes, movementsRes] = await Promise.all([
             supabase
               .from('transactions')
-              .select({ count: 'exact', head: true })
+              .select('*', { count: 'exact', head: true })
               .eq('store_id', store.id)
               .eq('status', 'completed')
               .gte('created_at', cutoffIso),
             supabase
               .from('receipts')
-              .select({ count: 'exact', head: true })
+              .select('*', { count: 'exact', head: true })
               .eq('store_id', store.id)
               .gte('created_at', cutoffIso),
             supabase
               .from('stock_movements')
-              .select({ count: 'exact', head: true })
+              .select('*', { count: 'exact', head: true })
               .eq('store_id', store.id)
               .gte('created_at', cutoffIso),
           ]);
