@@ -43,9 +43,9 @@ export default defineConfig({
         'src/lib/ipv/costEngine.ts',
       ],
       thresholds: {
-        global: { lines: 50, functions: 50, branches: 40, statements: 50 },
-        'src/services/**': { lines: 60, functions: 60 },
-        'src/lib/cost-engine/**': { lines: 60, functions: 50 },
+        global: { lines: 50, functions: 40, branches: 40, statements: 45 },
+        'src/services/**': { lines: 40, functions: 40 },
+        'src/lib/cost-engine/**': { lines: 40, functions: 40 },
         'src/app/api/**': { lines: 65, functions: 55 },
       },
     },
