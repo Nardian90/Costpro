@@ -1,19 +1,22 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Check, ShoppingCart, PackageMinus, Receipt, AlertTriangle, StickyNote } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import { BaseModal } from '@/components/ui/BaseModal';
 import { SecondaryButton } from '@/components/ui/atomic';
+import { OperationDatePicker, formatOperationDateForRPC, useOperationDateValidation } from '@/components/ui/OperationDatePicker';
+import { useAuthStore } from '@/store';
 import type { SalesCatalogRow } from './useSalesCatalog';
 import { calcSubtotal } from './useSalesCatalog';
+import { format } from 'date-fns';
 
 interface SalesCatalogCheckoutModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   activeRows: SalesCatalogRow[];
   isProcessing: boolean;
-  onConfirm: (notes?: string) => void;
+  onConfirm: (notes?: string, operationDate?: string) => void;
   subtotal: number;
   cashTotal: number;
   transferTotal: number;
@@ -31,13 +34,25 @@ export default function SalesCatalogCheckoutModal({
   transferTotal,
   showMixedColumns,
 }: SalesCatalogCheckoutModalProps) {
+  const { user } = useAuthStore();
+  const storeId = user?.activeStoreId;
   const totalUnits = activeRows.reduce((acc, r) => acc + r.quantity, 0);
   const [notes, setNotes] = useState('');
+  const [operationDate, setOperationDate] = useState<string>(format(new Date(), 'yyyy-MM-dd'));
 
-  // Reset notes when modal closes
+  const dateValidation = useOperationDateValidation(operationDate, storeId);
+
   React.useEffect(() => {
-    if (!open) setNotes('');
+    if (!open) {
+      setNotes('');
+      setOperationDate(format(new Date(), 'yyyy-MM-dd'));
+    }
   }, [open]);
+
+  const handleConfirm = () => {
+    if (!dateValidation.valid) return;
+    onConfirm(notes.trim() || undefined, formatOperationDateForRPC(operationDate));
+  };
 
   return (
     <BaseModal
@@ -59,9 +74,10 @@ export default function SalesCatalogCheckoutModal({
           />
           <button
             type="button"
-            onClick={() => onConfirm(notes.trim() || undefined)}
-            disabled={isProcessing}
-            className="flex-1 px-6 py-2.5 rounded-xl bg-primary text-primary-foreground font-black text-[10px] uppercase tracking-widest hover:bg-primary/90 transition-all active:scale-95 disabled:opacity-50 whitespace-nowrap"
+            onClick={handleConfirm}
+            disabled={isProcessing || !dateValidation.valid}
+            className="flex-1 px-6 py-2.5 rounded-xl bg-primary text-primary-foreground font-black text-[10px] uppercase tracking-widest hover:bg-primary/90 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+            title={!dateValidation.valid ? dateValidation.error : undefined}
           >
             {isProcessing ? 'Procesando...' : 'Sí, Confirmar Venta'}
           </button>
@@ -130,6 +146,15 @@ export default function SalesCatalogCheckoutModal({
             </tbody>
           </table>
         </div>
+
+        {/* Operation Date field — política forward-only locking.
+            El usuario puede elegir la fecha de la venta, pero nunca anterior
+            a la fecha MAX global (mostrada en el badge del dashboard). */}
+        <OperationDatePicker
+          value={operationDate}
+          onChange={setOperationDate}
+          storeId={storeId}
+        />
 
         {/* Notes field */}
         <div className="space-y-1.5">

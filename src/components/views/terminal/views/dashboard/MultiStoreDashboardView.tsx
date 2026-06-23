@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
-import { Building2, TrendingUp, ShoppingCart, AlertTriangle, RefreshCcw, ExternalLink, Settings, BarChart3 } from 'lucide-react';
+import React, { useState, useCallback, memo } from 'react';
+import { Building2, TrendingUp, ShoppingCart, AlertTriangle, RefreshCcw, ExternalLink, Settings, BarChart3, CalendarClock } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
 import { useAuthStore } from '@/store';
 import { useStores } from '@/hooks/api/useStores';
@@ -20,6 +20,12 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 // Dashboard 10/10 — vista avanzada de analytics por tienda
 import StoreDashboardView from './StoreDashboardView';
+// Política de secuencia global: badge "Fecha de Operación Actual"
+import { useGlobalOperationDate } from '@/hooks/api/useGlobalOperationDate';
+// Mobile-first: hook para responsive rendering
+import { useIsMobile } from '@/hooks/ui/useMobile';
+// Pull-to-refresh: gesto nativo mobile para refrescar datos
+import { usePullToRefresh } from '@/hooks/ui/usePullToRefresh';
 
 // Props de cada métrica mini dentro de la tarjeta
 interface MetricMiniProps {
@@ -52,7 +58,9 @@ interface StoreKPICardProps {
   store?: Store;
 }
 
-function StoreKPICard({ kpi, onActivate, onConfig, onOpenDashboard, store }: StoreKPICardProps) {
+// Tarjeta KPI por tienda — memoizada para evitar re-renders innecesarios
+// cuando otras cards cambian (ej: al activar una tienda, solo esa card debe re-renderizar)
+const StoreKPICard = memo(function StoreKPICard({ kpi, onActivate, onConfig, onOpenDashboard, store }: StoreKPICardProps) {
   const t = useTranslations('stores.dashboard');
 
   return (
@@ -171,7 +179,7 @@ function StoreKPICard({ kpi, onActivate, onConfig, onOpenDashboard, store }: Sto
       </div>
     </div>
   );
-}
+});
 
 // Vista principal
 export default function MultiStoreDashboardView() {
@@ -180,6 +188,12 @@ export default function MultiStoreDashboardView() {
   const isEncargado = user?.role === 'encargado' || user?.role === 'manager';
   const queryClient = useQueryClient();
   const t = useTranslations('stores.dashboard');
+  const isMobile = useIsMobile();
+  // Pull-to-refresh: gesto nativo mobile para refrescar KPIs
+  const { pullDistance, isRefreshing, bind: pullToRefreshBind } = usePullToRefresh(async () => {
+    await refetch();
+    await queryClient.invalidateQueries({ queryKey: ['global-max-operation-date'] });
+  });
   // F3-T02: hook compartido para edición de stores + plantilla FC.
   // Elimina la duplicación con useStoresView.ts.
   const storeEdit = useStoreEdit();
@@ -267,27 +281,43 @@ export default function MultiStoreDashboardView() {
   const storeMap = new Map(stores.map(s => [s.id, s]));
 
   return (
-    <div className="p-4 sm:p-6 space-y-6">
+    <div
+      className="p-4 sm:p-6 space-y-6"
+      {...(isMobile ? pullToRefreshBind : {})}
+      style={isMobile && pullDistance > 0 ? { transform: `translateY(${pullDistance * 0.3}px)`, transition: 'transform 0.2s ease' } : undefined}
+    >
+      {/* Pull-to-refresh indicator (mobile only) */}
+      {isMobile && (pullDistance > 5 || isRefreshing) && (
+        <div className="flex items-center justify-center py-2" style={{ height: `${pullDistance}px` }}>
+          <RefreshCcw className={cn('w-5 h-5 text-muted-foreground', isRefreshing && 'animate-spin')} />
+        </div>
+      )}
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-3 flex-wrap">
         <div>
           <h2 className="font-black text-sm uppercase tracking-tight">{t('consolidatedBoard')}</h2>
           <p className="text-xs text-muted-foreground mt-0.5">
             {t('storeCount', { count: stores.length, s: stores.length !== 1 ? 's' : '' })}
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => refetch()}
-          aria-label={t('refreshData')}
-          className="w-11 h-11 rounded-lg flex items-center justify-center hover:bg-muted transition-colors"
-        >
-          <RefreshCcw className="w-4 h-4 text-muted-foreground" />
-        </button>
+
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Badge: Fecha de Operación Actual (política forward-only locking) */}
+          <GlobalOperationDateBadge />
+
+          <button
+            type="button"
+            onClick={() => refetch()}
+            aria-label={t('refreshData')}
+            className="w-11 h-11 rounded-lg flex items-center justify-center hover:bg-muted transition-colors"
+          >
+            <RefreshCcw className="w-4 h-4 text-muted-foreground" />
+          </button>
+        </div>
       </div>
 
       {/* KPIs globales */}
-      <div className="grid grid-cols-3 gap-2 sm:gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
         {[
           { label: t('totalSalesToday'), value: formatCurrency(totalSalesToday), icon: TrendingUp },
           { label: t('transactions'), value: totalTransactions, icon: ShoppingCart },
@@ -354,6 +384,62 @@ export default function MultiStoreDashboardView() {
           onClose={handleCloseDashboard}
         />
       )}
+    </div>
+  );
+}
+
+// ── Badge: Fecha de Operación Actual ──────────────────────────
+// Política de secuencia global (forward-only locking).
+// Muestra la fecha MAX de todos los documentos del sistema.
+// Sirve como "termómetro" para que el usuario sepa cuál es la fecha
+// mínima permitida antes de intentar generar un nuevo documento.
+
+function GlobalOperationDateBadge() {
+  // Per-store: muestra la fecha MAX de la tienda activa del usuario.
+  // Si no hay tienda activa, muestra el MAX global.
+  const { user } = useAuthStore();
+  const { data, isLoading } = useGlobalOperationDate(user?.activeStoreId);
+
+  if (isLoading) {
+    return (
+      <div className="h-11 px-3 rounded-lg border border-border/50 bg-card/50 animate-pulse flex items-center gap-2">
+        <CalendarClock className="w-4 h-4 text-muted-foreground" />
+        <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+          Cargando...
+        </span>
+      </div>
+    );
+  }
+
+  const hasDate = !!data?.maxDate;
+  const formatted = data?.maxDateFormatted || '—';
+
+  return (
+    <div
+      className={cn(
+        'h-11 px-3 rounded-lg border flex items-center gap-2 transition-colors',
+        hasDate
+          ? 'border-primary/30 bg-primary/5'
+          : 'border-border/50 bg-muted/30',
+      )}
+      title={hasDate
+        ? `Fecha mínima para nuevos documentos: ${formatted}`
+        : 'Sin documentos previos — cualquier fecha es válida'}
+      role="status"
+      aria-label={`Fecha de operación actual: ${formatted}`}
+    >
+      <CalendarClock className={cn('w-4 h-4 shrink-0', hasDate ? 'text-primary' : 'text-muted-foreground')} />
+      <div className="flex flex-col leading-tight">
+        <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">
+          Fecha Operación
+        </span>
+        <span className={cn(
+          'text-[11px] font-black tabular-nums',
+          hasDate ? 'text-primary' : 'text-muted-foreground',
+        )}>
+          {formatted}
+        </span>
+      </div>
     </div>
   );
 }

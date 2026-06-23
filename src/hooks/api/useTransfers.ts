@@ -76,6 +76,7 @@ export function useCreateTransfer() {
       destination_store_id: string;
       items: { product_id: string; quantity: number; unit_cost: number }[];
       notes?: string;
+      operationDate?: string;
     }) => {
       if (!navigator.onLine) {
         return await addToQueue('transfer', 'CREATE', params);
@@ -106,8 +107,8 @@ export function useCreateTransfer() {
 export function useConfirmTransfer() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ transferId, userId }: { transferId: string; userId: string }) =>
-      transferService.confirmTransfer(transferId, userId),
+    mutationFn: ({ transferId, userId, operationDate }: { transferId: string; userId: string; operationDate?: string }) =>
+      transferService.confirmTransfer(transferId, userId, operationDate),
     onSuccess: async (_data, variables) => {
       const { user } = useAuthStore.getState();
       const transfer = queryClient.getQueryData<Transfer>(

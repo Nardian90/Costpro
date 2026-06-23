@@ -15,6 +15,8 @@ interface DocumentActionProps {
   id: string;
   items?: any[];
   storeId?: string;
+  /** Política forward-only locking: fecha de operación efectiva (ISO). Si se omite, usa NOW(). */
+  operationDate?: string;
 }
 
 export function useInvertDocument() {
@@ -23,7 +25,7 @@ export function useInvertDocument() {
 
   return useMutation({
     mutationFn: async (props: DocumentActionProps) => {
-      const { type, id, items: providedItems } = props;
+      const { type, id, items: providedItems, operationDate } = props;
       let storeId = props.storeId;
 
       logger.info('DATABASE', `[Invert] Starting inversion for ${type} ${id} in store ${storeId}`);
@@ -66,6 +68,7 @@ export function useInvertDocument() {
       logger.info('DATABASE', `[Invert] Inverting ${items.length} items`);
 
       // 2. Perform adjustments for each item
+      // Pasar operationDate para que el stock_movement tenga la misma fecha efectiva.
       const reason = `INVERSION - ${type === 'sale' ? 'Anulación Venta' : 'Anulación Recepción'} ${id.split('-')[0]}`;
 
       for (const item of items) {
@@ -79,15 +82,25 @@ export function useInvertDocument() {
           p_user_id: user?.id,
           p_quantity_delta: quantityDelta,
           p_unit_cost_adjustment: item.unit_cost || item.cost_at_sale || null,
-          p_reason: reason
+          p_reason: reason,
+          // Política forward-only: pasar fecha efectiva (si viene) para que
+          // validate_operation_date se ejecute en el backend y el stock_movement
+          // tenga la misma fecha que el documento.
+          p_operation_date: operationDate,
         });
 
         if (adjError) throw adjError;
       }
 
-      // 3. Update document status
+      // 3. Update document status con la fecha efectiva
       const table = type === 'sale' ? 'transactions' : 'receipts';
-      const updateData = { status: 'voided', updated_at: new Date().toISOString() };
+      const effectiveDate = operationDate || new Date().toISOString();
+      const updateData = {
+        status: 'voided',
+        updated_at: effectiveDate,
+        // transactions tiene cancelled_at; receipts no, pero updated_at basta
+        ...(type === 'sale' ? { cancelled_at: effectiveDate } : {}),
+      };
 
       logger.info('DATABASE', `[Invert] Updating ${table} ${id} status to voided`);
 
@@ -122,7 +135,11 @@ export function useInvertDocument() {
     onError: (error: unknown) => {
       console.error('Error inverting document:', error);
       const message = error instanceof Error ? error.message : 'Error desconocido';
-      toast.error(`Error al invertir documento: ${message}`);
+      if (message.includes('ERR_BACKDATED_DOCUMENT')) {
+        toast.error('No se puede retroceder en el tiempo operativo. Revisa la "Fecha de Operación" en el dashboard MULTI-TIENDA.', { duration: 8000 });
+      } else {
+        toast.error(`Error al invertir documento: ${message}`);
+      }
     }
   });
 }

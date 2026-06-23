@@ -88,12 +88,19 @@ export function useReceptionsHistoryView() {
         receiptId: receipt.id,
         storeId: user?.activeStoreId || '',
         reason: 'Anulada por encargado'
+        // operationDate se omite intencionalmente: las anulaciones usan NOW()
+        // (que siempre pasa la validación forward-only).
       });
       setSelectedReceiptId(null);
       toast.success('Recepción anulada correctamente');
     } catch (error) {
       logger.error('DATABASE', 'RECEPTION_VOID_FAILED', { error });
-      toast.error('Error al anular la recepción');
+      const msg = error instanceof Error ? error.message : String(error);
+      if (msg.includes('ERR_BACKDATED_DOCUMENT')) {
+        toast.error('No se puede retroceder en el tiempo operativo. Revisa la "Fecha de Operación" en el dashboard MULTI-TIENDA.', { duration: 8000 });
+      } else {
+        toast.error('Error al anular la recepción: ' + msg);
+      }
     }
   };
 
