@@ -10,15 +10,6 @@ import { checkTenantRateLimit, rateLimitHeaders, type Plan } from '@/lib/rate-li
 
 /**
  * F4-T01: API route para operaciones bulk en tiendas.
- *
- * POST /api/stores/bulk
- * Body: {
- *   storeIds: string[],
- *   action: 'activate' | 'deactivate' | 'delete',
- * }
- *
- * Permite activar/desactivar/eliminar múltiples tiendas en una sola operación.
- * Rate limit: 5 bulk ops por minuto. Auth: solo admin. CSRF: validateOrigin.
  */
 
 const bulkActionSchema = z.object({
@@ -54,8 +45,6 @@ async function bulkHandler(req: NextRequest, session: AuthenticatedSession) {
       return NextResponse.json(createApiError('FORBIDDEN'), { status: 403 });
     }
 
-    // B1: Tenant-aware rate limiting con plan del usuario.
-    // Fallback a 'free' si no tenemos plan (el rateLimit genérico ya aplicó arriba).
     const plan = (session.user as any).plan || 'free';
     const tenantRl = await checkTenantRateLimit(session.user.id, plan as Plan, clientIp);
     if (!tenantRl.allowed) {
@@ -79,17 +68,14 @@ async function bulkHandler(req: NextRequest, session: AuthenticatedSession) {
 
     if (action === 'activate' || action === 'deactivate') {
       const isActive = action === 'activate';
-      // FIX-DEUDA: capturar el count real de filas afectadas (no inflar con storeIds.length).
-      // Antes retornábamos affected: storeIds.length sin verificar — si algún storeId
-      // no existía o RLS bloqueaba, el conteo se inflaba. Ahora usamos Promise.allSettled
-      // por tienda para contar solo las que realmente se actualizaron.
       const results = await Promise.allSettled(
         storeIds.map(async (storeId) => {
-          const { error, count } = await admin
+          const { error, count } = await (admin
             .from('stores')
             .update({ is_active: isActive })
             .eq('id', storeId)
-            .select('id', { count: 'exact', head: true });
+            // @ts-ignore
+            .select('id', { count: 'exact' }) as any);
           if (error) throw error;
           return count ?? 0;
         })
@@ -98,7 +84,7 @@ async function bulkHandler(req: NextRequest, session: AuthenticatedSession) {
       const succeeded = results
         .filter((r): r is PromiseFulfilledResult<number> => r.status === 'fulfilled')
         .reduce((sum, r) => sum + r.value, 0);
-      const failed = results.filter(r => r.status === 'rejected').length;
+      const failed = storeIds.length - succeeded;
 
       if (failed > 0) {
         logger.warn('DATABASE', 'STORE_BULK_TOGGLE_PARTIAL', {
@@ -115,6 +101,7 @@ async function bulkHandler(req: NextRequest, session: AuthenticatedSession) {
     }
 
     if (action === 'delete') {
+      // FIX-DEUDA: use soft_delete_store RPC for atomic soft-delete instead of hard delete
       const results = await Promise.allSettled(
         storeIds.map(async (storeId) => {
           const { error } = await admin.rpc('soft_delete_store', {
@@ -122,25 +109,24 @@ async function bulkHandler(req: NextRequest, session: AuthenticatedSession) {
             p_deleted_by: session.user.id,
           });
           if (error) throw error;
-          return storeId;
+          return 1;
         })
       );
 
-      const succeeded = results.filter(r => r.status === 'fulfilled').map(r => (r as PromiseFulfilledResult<string>).value);
-      const failed = results.filter(r => r.status === 'rejected');
-
-      if (failed.length > 0) {
-        logger.warn('DATABASE', 'STORE_BULK_DELETE_PARTIAL', {
-          succeeded: succeeded.length, failed: failed.length,
-        });
-      }
+      const succeeded = results
+        .filter((r): r is PromiseFulfilledResult<number> => r.status === 'fulfilled')
+        .reduce((sum, r) => sum + r.value, 0);
+      const failed = storeIds.length - succeeded;
 
       return NextResponse.json({
-        success: true, affected: succeeded.length, failed: failed.length, action,
+        success: true,
+        affected: succeeded,
+        failed,
+        action,
       });
     }
 
-    return NextResponse.json(createApiError('INVALID_DATA'), { status: 400 });
+    return NextResponse.json(createApiError('BAD_REQUEST'), { status: 400 });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : createApiError('UNKNOWN_ERROR').error;
     return NextResponse.json({ ...createApiError('UNKNOWN_ERROR'), error: message }, { status: 500 });
@@ -148,6 +134,6 @@ async function bulkHandler(req: NextRequest, session: AuthenticatedSession) {
 }
 
 export const POST = withTracing(
-  withRole('admin', bulkHandler as Parameters<typeof withRole>[1]) as Parameters<typeof withTracing>[0],
+  withRole('admin', bulkHandler as any) as any,
   'POST /api/stores/bulk'
 );

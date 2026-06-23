@@ -56,6 +56,9 @@ export const API_ERRORS = {
   // System
   CONFIG_ERROR: { key: 'apiErrors.configError', status: 500, defaultMessage: 'Error de configuración' },
   RATE_LIMITED: { key: 'apiErrors.rateLimited', status: 429, defaultMessage: 'Demasiadas solicitudes' },
+  FC_INVALIDATE_FAILED: { key: 'apiErrors.fcInvalidateFailed', status: 500, defaultMessage: 'Error al invalidar fichas de costo' },
+  MEMBERSHIP_BULK_FAILED: { key: 'apiErrors.membershipBulkFailed', status: 500, defaultMessage: 'Error en asignación masiva de miembros' },
+  AUDIT_QUERY_FAILED: { key: 'apiErrors.auditQueryFailed', status: 500, defaultMessage: 'Error al consultar auditoría' },
   UNKNOWN_ERROR: { key: 'apiErrors.unknownError', status: 500, defaultMessage: 'Error desconocido' },
 } as const;
 

@@ -25,7 +25,7 @@ vi.mock('react', async () => {
 // Mock useAuthStore — debe ser mutable para cambiar el rol entre tests
 const mockUser = { value: { id: 'user-1', role: 'admin', activeStoreId: 'store-1' } };
 vi.mock('@/store', () => ({
-  useAuthStore: () => mockUser.value,
+  useAuthStore: () => ({ user: mockUser.value }),
 }));
 
 vi.mock('sonner', () => ({
@@ -50,6 +50,14 @@ describe('useStoreInactivityMonitor (F3-T06) — BUG-1 fix', () => {
     vi.clearAllMocks();
     mockFrom.mockReset();
     mockUser.value = { id: 'user-1', role: 'admin', activeStoreId: 'store-1' };
+
+    // Mock setTimeout to execute immediately
+    vi.spyOn(globalThis, 'setTimeout').mockImplementation((fn: any) => {
+        if (typeof fn === 'function') {
+            fn();
+        }
+        return 0 as any;
+    });
   });
 
   it('consulta transactions (no sales) y receipts (no receptions)', async () => {
@@ -68,10 +76,12 @@ describe('useStoreInactivityMonitor (F3-T06) — BUG-1 fix', () => {
       return createCountChain(0, null);
     });
 
+    // We need to wait for the internal promises in checkInactiveStores
     useStoreInactivityMonitor();
 
-    // Esperar a que las queries async se completen
-    await new Promise(r => setTimeout(r, 100));
+    // The checkInactiveStores is async and triggered by setTimeout (which we mocked to be immediate)
+    // but it has nested awaits.
+    await vi.waitFor(() => expect(calledTables.length).toBeGreaterThan(1), { timeout: 1000 });
 
     // FIX-BUG-1: debe consultar 'transactions' (no 'sales') y 'receipts' (no 'receptions')
     expect(calledTables).toContain('transactions');

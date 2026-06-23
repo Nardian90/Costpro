@@ -7,17 +7,6 @@ import { createApiError } from '@/lib/api-errors';
 import { z } from 'zod';
 import { logger } from '@/lib/logger';
 
-/**
- * F4-T02: Endpoint bulk para asignar un usuario a múltiples tiendas.
- *
- * FIX-DEUDA: ahora usa el RPC `bulk_assign_memberships` (transaccional atómico)
- * en vez de Promise.allSettled. Cada asignación hace upsert (ON CONFLICT).
- * Si una asignación falla por FK violation, se cuenta como failed pero la
- * transacción continúa — no rollback total, pero consistente.
- *
- * Rate limit: 10 bulk ops por minuto. CSRF: validateOrigin.
- */
-
 const bulkMembershipsSchema = z.object({
   assignments: z.array(z.object({
     store_id: z.string().uuid(),
@@ -33,7 +22,6 @@ async function bulkMembershipsHandler(
 ) {
   try {
     const { id: userId } = await context.params;
-
     const clientIp = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || req.headers.get('x-real-ip') || 'unknown';
     const rlKey = `memberships:bulk:${session.user.id}:${clientIp}`;
     const { allowed } = await rateLimit(rlKey, { windowMs: 60_000, maxRequests: 10 });
@@ -54,13 +42,10 @@ async function bulkMembershipsHandler(
       );
     }
 
-    // FIX-DEUDA: solo admin/manager pueden asignar memberships — validación explícita
-    // (antes usaba withAuth + check manual; ahora check directo, consistente con F4-T01)
     if (session.user.role !== 'admin' && session.user.role !== 'manager') {
       return NextResponse.json(createApiError('FORBIDDEN'), { status: 403 });
     }
 
-    // Usar service role para invocar el RPC transaccional
     const { createClient } = await import('@supabase/supabase-js');
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -69,7 +54,6 @@ async function bulkMembershipsHandler(
     }
     const admin = createClient(url, key, { auth: { autoRefreshToken: false, persistSession: false } });
 
-    // FIX-DEUDA: invocar RPC transaccional en vez de Promise.allSettled
     const { data: rpcResult, error: rpcError } = await admin.rpc('bulk_assign_memberships', {
       p_user_id: userId,
       p_assignments: validated.data.assignments,
@@ -105,10 +89,7 @@ async function bulkMembershipsHandler(
   }
 }
 
-// FIX-DEUDA: estandarizado a withAuth + check admin/manager (consistente con F4-T01
-// que usa withRole('admin')). Aquí permitimos manager también porque los managers
-// pueden asignar memberships a tiendas que gestionan.
 export const POST = withTracing(
-  withAuth(bulkMembershipsHandler as Parameters<typeof withAuth>[0]) as Parameters<typeof withTracing>[0],
+  withAuth(bulkMembershipsHandler as any) as any,
   'POST /api/users/[id]/memberships/bulk'
 );

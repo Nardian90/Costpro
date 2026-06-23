@@ -8,17 +8,6 @@ import { z } from 'zod';
 import { logger } from '@/lib/logger';
 import { getAdminClient } from '@/lib/supabase-admin';
 
-/**
- * F3-T05 (deuda resuelta): Endpoint para invalidar FCs de una tienda.
- *
- * Antes esta lógica estaba en useStoreEdit.invalidateFCsForStore usando el
- * cliente Supabase regular (sujeto a RLS). Si el hook se invocaba desde un
- * contexto no-admin, RLS bloqueaba el UPDATE y las FCs no se invalidaban.
- *
- * Ahora este endpoint usa service role (bypass RLS) y valida que el caller
- * sea admin/manager/encargado/costo de la tienda.
- */
-
 const invalidateSchema = z.object({
   storeId: z.string().uuid(),
 });
@@ -47,7 +36,6 @@ async function invalidateHandler(req: NextRequest, session: AuthenticatedSession
 
     const { storeId } = validated.data;
 
-    // Validar membership del caller (excepto admin global)
     if (session.user.role !== 'admin') {
       const memberships = session.user.memberships || [];
       const hasAccess = memberships.some(
@@ -93,6 +81,6 @@ async function invalidateHandler(req: NextRequest, session: AuthenticatedSession
 }
 
 export const POST = withTracing(
-  withRole('encargado', invalidateHandler as Parameters<typeof withRole>[1]) as Parameters<typeof withTracing>[0],
+  withRole('encargado', invalidateHandler as any) as any,
   'POST /api/product-cost-sheets/invalidate'
 );

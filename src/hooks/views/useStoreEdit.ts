@@ -200,6 +200,6 @@ export function useStoreEdit() {
     saveFCTemplate,
     deleteFCTemplate,
     editStoreWithFC,
-    invalidateStoreQueries,
+    invalidateStoreQueries, invalidateFCsForStore,
   };
 }

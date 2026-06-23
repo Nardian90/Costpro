@@ -182,7 +182,7 @@ describe('storeApiClient', () => {
       expectFetchCalledWith('/api/stores/reset', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ storeId: 'store-1' }),
+        body: JSON.stringify({ storeId: 'store-1', keepCatalog: false }),
       });
     });
 

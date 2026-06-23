@@ -12728,11 +12728,6 @@
       "type": "depends_on"
     },
     {
-      "source": "src/lib/db.ts",
-      "target": "@prisma/client",
-      "type": "depends_on"
-    },
-    {
       "source": "src/lib/dexie.ts",
       "target": "dexie",
       "type": "depends_on"
