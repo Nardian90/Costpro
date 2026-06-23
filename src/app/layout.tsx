@@ -116,6 +116,10 @@ export default async function RootLayout({
         {process.env.NEXT_PUBLIC_SUPABASE_URL && (
           <link rel="preconnect" href={process.env.NEXT_PUBLIC_SUPABASE_URL} />
         )}
+        {/* PWA: declarative service worker hint (W3C spec).
+            Lets PWABuilder & crawlers discover /sw.js via HTML parsing,
+            without waiting for the async Workbox registration in ServiceWorkerRegister. */}
+        <link rel="serviceworker" href="/sw.js" scope="/" />
         {/* DIAG: Client-side splash timing diagnostic */}
         {process.env.NODE_ENV === 'development' && (
           <script
