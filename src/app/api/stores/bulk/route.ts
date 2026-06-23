@@ -89,7 +89,7 @@ async function bulkHandler(req: NextRequest, session: AuthenticatedSession) {
             .from('stores')
             .update({ is_active: isActive })
             .eq('id', storeId)
-            .select('id', { count: 'exact', head: true });
+            .select(undefined, { count: 'exact', head: true });
           if (error) throw error;
           return count ?? 0;
         })

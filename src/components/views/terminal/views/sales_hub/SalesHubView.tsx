@@ -159,7 +159,7 @@ export default function SalesHubView() {
       if (!storeId) return 0;
       const { count, error } = await supabase
         .from('products')
-        .select('id', { count: 'exact', head: true })
+        .select(undefined, { count: 'exact', head: true })
         .eq('store_id', storeId)
         .eq('is_active', true)
         .filter('stock', 'lte', 'min_stock')
