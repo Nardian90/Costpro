@@ -76,7 +76,7 @@ export function useStoreNotifications() {
         try {
           const { count: lowStockCount } = await supabase
             .from('products')
-            .select('*', { count: 'exact', head: true })
+            .select('id', { count: 'exact', head: true })
             .eq('store_id', store.id)
             .eq('is_active', true)
             .gt('stock_current', 0)
@@ -102,7 +102,7 @@ export function useStoreNotifications() {
         try {
           const { count: fcsPending } = await supabase
             .from('product_cost_sheets')
-            .select('*', { count: 'exact', head: true })
+            .select('id', { count: 'exact', head: true })
             .eq('store_id', store.id)
             .eq('sync_status', 'pending')
             .is('deleted_at', null);

@@ -84,7 +84,7 @@ export function useStores(userId: string, isAdmin: boolean, isEncargado: boolean
               const storeObj = result.data as unknown as Record<string, unknown>;
               const costTemplate = normalizeCostTemplate(s as unknown as Record<string, unknown>);
               const finalStore = { ...storeObj, cost_template: costTemplate } as unknown as Store;
-               
+              // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
               delete (finalStore as unknown as Record<string, unknown>).store_cost_templates;
               validatedStores.push(finalStore);
             } else {

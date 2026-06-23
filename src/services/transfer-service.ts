@@ -111,25 +111,22 @@ export const transferService = {
     destination_store_id: string;
     items: Partial<TransferItem>[];
     notes?: string;
-    operationDate?: string;
   }) {
     const params = createTransferParamsSchema.parse({
       p_origin_store_id: rawParams.origin_store_id,
       p_destination_store_id: rawParams.destination_store_id,
       p_items: rawParams.items,
-      p_notes: rawParams.notes || null,
-      p_operation_date: rawParams.operationDate,
+      p_notes: rawParams.notes || null
     });
     const { data, error } = await supabase.rpc('create_transfer', params);
     if (error) throw error;
     return data;
   },
 
-  async confirmTransfer(transferId: string, userId: string, operationDate?: string) {
+  async confirmTransfer(transferId: string, userId: string) {
     const params = confirmTransferParamsSchema.parse({
       p_transfer_id: transferId,
-      p_user_id: userId,
-      p_operation_date: operationDate,
+      p_user_id: userId
     });
     const { data, error } = await supabase.rpc('confirm_transfer', params);
     if (error) throw error;

@@ -17,11 +17,9 @@ export const API_ERRORS = {
   STORE_UPDATE_FAILED: { key: 'apiErrors.storeUpdateFailed', status: 500, defaultMessage: 'Error al actualizar tienda' },
   STORE_DELETE_FAILED: { key: 'apiErrors.storeDeleteFailed', status: 500, defaultMessage: 'Error al eliminar tienda' },
   STORE_RESET_FAILED: { key: 'apiErrors.storeResetFailed', status: 500, defaultMessage: 'Error al reiniciar tienda' },
-  AUDIT_QUERY_FAILED: { key: 'apiErrors.auditQueryFailed', status: 500, defaultMessage: 'Error al consultar el log de auditoría' },
   STORE_PLAN_REQUIRED: { key: 'apiErrors.storePlanRequired', status: 400, defaultMessage: 'User plan is required to manage stores' },
   STORE_MEMBERSHIP_REQUIRED: { key: 'apiErrors.storeMembershipRequired', status: 403, defaultMessage: 'Active membership is required for this store' },
   STORE_MUTATION_FORBIDDEN: { key: 'apiErrors.storeMutationForbidden', status: 403, defaultMessage: 'Insufficient role to modify stores' },
-  MEMBERSHIP_BULK_FAILED: { key: 'apiErrors.membershipBulkFailed', status: 500, defaultMessage: 'Error al actualizar membresías en lote' },
   STORE_RESET_WARNING: { key: 'apiErrors.storeResetWarning', status: 200, defaultMessage: 'Store Reset Scheduled' },
   STORE_RESET_WARNING_MESSAGE: { key: 'apiErrors.storeResetWarningMessage', status: 200, defaultMessage: 'The store is being reset. All sales, inventory, and movement data will be deleted. Please save your work and reload the page.' },
 
@@ -48,7 +46,6 @@ export const API_ERRORS = {
   STORE_COST_TEMPLATE_FETCH_FAILED: { key: 'apiErrors.storeCostTemplateFetchFailed', status: 500, defaultMessage: 'Error al cargar plantilla de FC de la tienda' },
   STORE_COST_TEMPLATE_UPSERT_FAILED: { key: 'apiErrors.storeCostTemplateUpsertFailed', status: 500, defaultMessage: 'Error al guardar plantilla de FC de la tienda' },
   PRODUCT_COST_SHEET_SAVE_FAILED: { key: 'apiErrors.productCostSheetSaveFailed', status: 500, defaultMessage: 'Error al guardar ficha de costo del producto' },
-  FC_INVALIDATE_FAILED: { key: 'apiErrors.fcInvalidateFailed', status: 500, defaultMessage: 'Error al invalidar fichas de costo' },
   PDF_EXPORT_FAILED: { key: 'apiErrors.pdfExportFailed', status: 500, defaultMessage: 'Error al exportar PDF' },
 
   // AI / Bot

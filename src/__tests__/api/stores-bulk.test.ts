@@ -1,12 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-const mockSession = { value: { user: { id: "admin-1", role: "admin", memberships: [] } } as any };
+// First mock withTracing BEFORE importing POST
+vi.mock('@/lib/observability', () => ({ withTracing: (fn: any) => fn }));
 vi.mock('@/lib/auth-middleware', () => ({
-  withAuth: (fn: any) => async (req: any) => fn(req, mockSession.value),
-  withRole: (_role: string, fn: any) => async (req: any) => fn(req, mockSession.value),
+  withAuth: (handler: any) => (req: any, context: any) => handler(req, context?.session || { user: { role: 'admin', id: 'u1' } }, context),
+  withRole: (role: any, handler: any) => (req: any, context: any) => handler(req, context?.session || { user: { role: 'admin', id: 'u1' } }, context),
   AuthenticatedSession: {},
-  getServerSession: async () => mockSession.value,
-  isDevBypassSession: () => false,
 }));
 vi.mock('@/lib/auth', () => ({
   getServerSession: vi.fn(),
@@ -22,10 +21,6 @@ vi.mock('@/lib/api-errors', () => ({
 }));
 vi.mock('@/lib/logger', () => ({
   logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn() },
-}));
-vi.mock('@/lib/rate-limit/tenant-limiter', () => ({
-  checkTenantRateLimit: vi.fn().mockResolvedValue({ allowed: true }),
-  rateLimitHeaders: () => ({}),
 }));
 
 const mockFrom = vi.fn();
@@ -54,34 +49,26 @@ const VALID_UUID = '550e8400-e29b-41d4-a716-446655440000';
 describe('POST /api/stores/bulk (F4-T01)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockSession.value = { user: { id: 'admin-1', role: 'admin', memberships: [] } };
-    mockFrom.mockReset();
-    mockFrom.mockImplementation(() => ({
-      update: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      select: vi.fn().mockResolvedValue({ data: [], error: null, count: 0 }),
-    }));
     process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://test.supabase.co';
     process.env.SUPABASE_SERVICE_ROLE_KEY = 'test-service-key';
     (getServerSession as any).mockResolvedValue({ user: { id: 'u1', role: 'admin' }, token: 'token' });
   });
 
   it('rechaza si el rol no es admin', async () => {
-    mockSession.value = { user: { id: 'clerk-1', role: 'clerk', memberships: [] } };
-    const req = makeRequest({ storeIds: ['a1111111-1111-4111-8111-111111111111'], action: 'activate' });
-    const res = await POST(req as any);
+    const req = makeRequest({ storeIds: [VALID_UUID], action: 'activate' });
+    const res = await POST(req as any, { session: { user: { role: 'clerk', id: 'u1' } } } as any);
     expect(res.status).toBe(403);
   });
 
   it('rechaza si el body es inválido (sin storeIds)', async () => {
     const req = makeRequest({ action: 'activate' });
-    const res = await POST(req as any);
+    const res = await POST(req as any, { session: { user: { role: 'admin', id: 'u1' } } } as any);
     expect(res.status).toBe(400);
   });
 
   it('rechaza si action no es válido', async () => {
-    const req = makeRequest({ storeIds: ['a1111111-1111-4111-8111-111111111111'], action: 'invalid' });
-    const res = await POST(req as any);
+    const req = makeRequest({ storeIds: [VALID_UUID], action: 'invalid' });
+    const res = await POST(req as any, { session: { user: { role: 'admin', id: 'u1' } } } as any);
     expect(res.status).toBe(400);
   });
 
@@ -93,10 +80,10 @@ describe('POST /api/stores/bulk (F4-T01)', () => {
     }));
 
     const req = makeRequest({
-      storeIds: ['a1111111-1111-4111-8111-111111111111'],
+      storeIds: [VALID_UUID],
       action: 'activate',
     });
-    const res = await POST(req as any);
+    const res = await POST(req as any, { session: { user: { role: 'admin', id: 'u1' } } } as any);
 
     expect(res.status).toBe(200);
     const body = await res.json();
@@ -106,29 +93,25 @@ describe('POST /api/stores/bulk (F4-T01)', () => {
   });
 
   it('deactivate cuenta solo tiendas realmente afectadas (FIX-DEUDA)', async () => {
-    mockSession.value = { user: { id: 'admin-1', role: 'admin', memberships: [] } };
     let callIdx = 0;
-    mockFrom.mockImplementation(() => {
-      callIdx++;
-      const chain: any = {
-        update: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockResolvedValue(
-          callIdx === 1
-            ? { error: null }           // primera tienda: éxito
-            : { error: { message: 'RLS blocked' } }  // segunda: falla
-        ),
-      };
-      return chain;
-    });
+    mockFrom.mockImplementation(() => ({
+      update: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      select: vi.fn().mockResolvedValue(
+        callIdx++ === 0
+          ? { data: [{ id: VALID_UUID }], error: null, count: 1 }
+          : { data: [], error: null, count: 0 }
+      ),
+    }));
 
     const req = makeRequest({
       storeIds: [
-        'a1111111-1111-4111-8111-111111111111',
-        'b2222222-2222-4222-8222-222222222222',
+        VALID_UUID,
+        '550e8400-e29b-41d4-a716-446655440001',
       ],
       action: 'deactivate',
     });
-    const res = await POST(req as any);
+    const res = await POST(req as any, { session: { user: { role: 'admin', id: 'u1' } } } as any);
     const body = await res.json();
 
     expect(body.affected).toBe(1);

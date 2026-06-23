@@ -3,7 +3,6 @@
 import { useState, useMemo, useRef, useCallback } from 'react';
 import { useAuthStore } from '@/store';
 import { BaseModal } from '@/components/ui/BaseModal';
-import { OperationDatePicker, formatOperationDateForRPC, useOperationDateValidation } from '@/components/ui/OperationDatePicker';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,7 +19,6 @@ import { useTransferableStores, useCreateTransfer } from '@/hooks/api/useTransfe
 import { useDebounce } from '@/hooks/ui/useDebounce';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
-import { format } from 'date-fns';
 import type { Product, Store } from '@/types';
 
 interface SelectedItem {
@@ -47,17 +45,13 @@ interface CreateTransferModalProps {
 
 export default function CreateTransferModal({ isOpen, onClose }: CreateTransferModalProps) {
   const { user } = useAuthStore();
-  const storeId = user?.activeStoreId;
   const [destinationStoreId, setDestinationStoreId] = useState('');
   const [notes, setNotes] = useState('');
-  const [operationDate, setOperationDate] = useState<string>(format(new Date(), 'yyyy-MM-dd'));
   const [selectedItems, setSelectedItems] = useState<Map<string, SelectedItem>>(new Map());
   const [searchTerm, setSearchTerm] = useState('');
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
   const isSubmittingRef = useRef(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const dateValidation = useOperationDateValidation(operationDate, storeId);
 
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
@@ -125,10 +119,6 @@ export default function CreateTransferModal({ isOpen, onClose }: CreateTransferM
       toast.error('Agrega al menos un producto');
       return;
     }
-    if (!dateValidation.valid) {
-      toast.error(dateValidation.error || 'Fecha de operación inválida');
-      return;
-    }
 
     // Validación de stock suficiente
     const stockErrors: string[] = [];
@@ -167,22 +157,16 @@ export default function CreateTransferModal({ isOpen, onClose }: CreateTransferM
         destination_store_id: destinationStoreId,
         items,
         notes,
-        operationDate: formatOperationDateForRPC(operationDate),
       });
       toast.success('Solicitud de transferencia creada');
       onClose();
       // Reset state
       setDestinationStoreId('');
       setNotes('');
-      setOperationDate(format(new Date(), 'yyyy-MM-dd'));
       setSelectedItems(new Map());
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Error al crear la transferencia';
-      if (message.includes('ERR_BACKDATED_DOCUMENT')) {
-        toast.error('No se puede retroceder en el tiempo operativo. Revisa la "Fecha de Operación" en el dashboard MULTI-TIENDA.', { duration: 8000 });
-      } else {
-        toast.error(message);
-      }
+      toast.error(message);
     } finally {
       isSubmittingRef.current = false;
     }
@@ -308,9 +292,9 @@ export default function CreateTransferModal({ isOpen, onClose }: CreateTransferM
             <button
               type="button"
               onClick={handleCreate}
-              disabled={hasStockErrors || createTransferMutation.isPending || !dateValidation.valid}
+              disabled={hasStockErrors || createTransferMutation.isPending}
               aria-label="Enviar solicitud de transferencia"
-              className="neu-btn-primary px-8 py-2.5 text-xs font-black uppercase tracking-widest flex items-center gap-2 justify-center w-full sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed"
+              className="neu-btn-primary px-8 py-2.5 text-xs font-black uppercase tracking-widest flex items-center gap-2 justify-center w-full sm:w-auto"
             >
               <Save className="w-4 h-4" aria-hidden="true" />
               {createTransferMutation.isPending ? 'Guardando...' : 'Enviar Solicitud'}
@@ -319,8 +303,8 @@ export default function CreateTransferModal({ isOpen, onClose }: CreateTransferM
         }
       >
         <div className="space-y-6">
-          {/* Destino + Notas + Fecha operación */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Destino + Notas */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label
                 htmlFor="transfer-destination"
@@ -360,12 +344,6 @@ export default function CreateTransferModal({ isOpen, onClose }: CreateTransferM
                 className="neu-input w-full text-sm"
               />
             </div>
-            {/* Política de secuencia global: selector de fecha forward-only */}
-            <OperationDatePicker
-              value={operationDate}
-              onChange={setOperationDate}
-              storeId={storeId}
-            />
           </div>
 
           {/* Búsqueda de productos */}

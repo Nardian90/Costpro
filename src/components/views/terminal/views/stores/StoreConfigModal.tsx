@@ -310,7 +310,7 @@ export function StoreConfigModal({ isOpen, onClose, store }: StoreConfigModalPro
                 type="button"
                 onClick={() => setActiveSection(section.id)}
                 className={cn(
-                  "flex items-center gap-2 min-h-[44px] px-3 py-2.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all whitespace-nowrap",
+                  "flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all whitespace-nowrap",
                   isActive
                     ? "bg-primary text-primary-foreground shadow-sm"
                     : "text-muted-foreground hover:text-foreground hover:bg-muted"
@@ -360,7 +360,7 @@ export function StoreConfigModal({ isOpen, onClose, store }: StoreConfigModalPro
                         className="sr-only"
                       />
                       <span className={cn(
-                        "inline-flex items-center gap-1 min-h-[44px] px-3 py-2.5 rounded-lg text-xs font-black uppercase tracking-widest transition-colors",
+                        "inline-flex items-center gap-1 px-3 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-colors",
                         uploading.logo
                           ? "bg-muted text-muted-foreground opacity-60"
                           : "bg-primary/10 text-primary hover:bg-primary/20"
@@ -373,7 +373,7 @@ export function StoreConfigModal({ isOpen, onClose, store }: StoreConfigModalPro
                       <button
                         type="button"
                         onClick={() => clearImage('logo_url')}
-                        className="p-2.5 min-h-[44px] min-w-[44px] rounded-lg bg-destructive/10 text-destructive hover:bg-destructive hover:text-foreground transition-all"
+                        className="p-2 rounded-lg bg-destructive/10 text-destructive hover:bg-destructive hover:text-foreground transition-all"
                         aria-label="Quitar logo"
                         title="Quitar logo"
                       >
@@ -466,7 +466,7 @@ export function StoreConfigModal({ isOpen, onClose, store }: StoreConfigModalPro
                           className="sr-only"
                         />
                         <span className={cn(
-                          "inline-flex items-center gap-1 h-11 px-3 rounded-lg text-[10px] font-black uppercase tracking-widest transition-colors",
+                          "inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-colors",
                           uploading.signature
                             ? "bg-muted text-muted-foreground opacity-60"
                             : "bg-primary/10 text-primary hover:bg-primary/20"
@@ -511,7 +511,7 @@ export function StoreConfigModal({ isOpen, onClose, store }: StoreConfigModalPro
                           className="sr-only"
                         />
                         <span className={cn(
-                          "inline-flex items-center gap-1 h-11 px-3 rounded-lg text-[10px] font-black uppercase tracking-widest transition-colors",
+                          "inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-colors",
                           uploading.stamp
                             ? "bg-muted text-muted-foreground opacity-60"
                             : "bg-primary/10 text-primary hover:bg-primary/20"

@@ -70,12 +70,14 @@ async function bulkHandler(req: NextRequest, session: AuthenticatedSession) {
       const isActive = action === 'activate';
       const results = await Promise.allSettled(
         storeIds.map(async (storeId) => {
-          const { error } = await admin
+          const { error, count } = await (admin
             .from('stores')
             .update({ is_active: isActive })
-            .eq('id', storeId);
+            .eq('id', storeId)
+            // @ts-ignore
+            .select('id', { count: 'exact' }) as any);
           if (error) throw error;
-          return 1; // 1 store actualizada
+          return count ?? 0;
         })
       );
 

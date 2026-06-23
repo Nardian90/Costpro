@@ -76,8 +76,8 @@ function resolveBreadcrumbPath(view: ViewType): BreadcrumbItem[] {
   const targetView = hubView || view;
   const items: BreadcrumbItem[] = [];
 
-  for (const navModule of SIDEBAR_STRUCTURE) {
-    const found = findInView(navModule, targetView, []);
+  for (const module of SIDEBAR_STRUCTURE) {
+    const found = findInView(module, targetView, []);
     if (found.length > 0) {
       items.push(...found);
       // Si la vista original es diferente al target (porque usamos el hub),

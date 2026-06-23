@@ -134,7 +134,7 @@ export function useStoreHealth(stores: StoreHealthInput[]) {
         try {
           const { count, error } = await supabase
             .from('products')
-            .select('*', { count: 'exact', head: true })
+            .select('id', { count: 'exact', head: true })
             .eq('store_id', store.id)
             .eq('is_active', true);
           if (!error) {
@@ -161,7 +161,7 @@ export function useStoreHealth(stores: StoreHealthInput[]) {
         try {
           const { count, error } = await supabase
             .from('transactions')
-            .select('*', { count: 'exact', head: true })
+            .select('id', { count: 'exact', head: true })
             .eq('store_id', store.id)
             .eq('status', 'completed')
             .gte('created_at', cutoffIso);

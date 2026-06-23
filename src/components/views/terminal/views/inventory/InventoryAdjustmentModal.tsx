@@ -5,12 +5,9 @@ import { X, Save, AlertTriangle, Calculator, Package, TrendingDown, TrendingUp, 
 import { Product } from '@/types';
 import { calcularAjusteInventario } from '@/lib/inventory-logic';
 import { cn, formatCurrency } from '@/lib/utils';
-import { OperationDatePicker, formatOperationDateForRPC, useOperationDateValidation } from '@/components/ui/OperationDatePicker';
 import { toast } from 'sonner';
 import { useIsMobile } from '@/hooks/ui/useMobile';
 import { useFocusTrap } from '@/hooks/ui/useFocusTrap';
-import { format } from 'date-fns';
-import { useAuthStore } from '@/store';
 import {
   Drawer,
   DrawerContent,
@@ -24,7 +21,6 @@ interface InventoryAdjustmentModalProps {
     quantityDelta: number;
     unitCostAdjustment: number | null;
     reason: string;
-    operationDate?: string;
   }) => Promise<void>;
 }
 
@@ -34,22 +30,16 @@ export default function InventoryAdjustmentModal({
   onClose,
   onConfirm
 }: InventoryAdjustmentModalProps) {
-  const { user } = useAuthStore();
-  const storeId = user?.activeStoreId;
   const [ajusteUnidades, setAjusteUnidades] = useState<number>(0);
   const [ajusteValorUnitario, setAjusteValorUnitario] = useState<number | ''>('');
   const [reason, setReason] = useState<string>('');
-  const [operationDate, setOperationDate] = useState<string>(format(new Date(), 'yyyy-MM-dd'));
   const [isProcessing, setIsProcessing] = useState(false);
-
-  const dateValidation = useOperationDateValidation(operationDate, storeId);
 
   // Reset state when product changes
   useEffect(() => {
     setAjusteUnidades(0);
     setAjusteValorUnitario('');
     setReason('');
-    setOperationDate(format(new Date(), 'yyyy-MM-dd'));
     setIsProcessing(false);
   }, [product.id]);
 
@@ -85,27 +75,17 @@ export default function InventoryAdjustmentModal({
         toast.error('Debe ingresar un motivo para el ajuste');
         return;
     }
-    if (!dateValidation.valid) {
-      toast.error(dateValidation.error || 'Fecha de operación inválida');
-      return;
-    }
 
     setIsProcessing(true);
     try {
       await onConfirm({
         quantityDelta: ajusteUnidades,
         unitCostAdjustment: ajusteValorUnitario === '' ? null : ajusteValorUnitario,
-        reason: reason,
-        operationDate: formatOperationDateForRPC(operationDate),
+        reason: reason
       });
       onClose();
     } catch (error: unknown) {
-      const msg = error instanceof Error ? error.message : 'Error al procesar el ajuste';
-      if (msg.includes('ERR_BACKDATED_DOCUMENT')) {
-        toast.error('No se puede retroceder en el tiempo operativo. Revisa la "Fecha de Operación" en el dashboard MULTI-TIENDA.', { duration: 8000 });
-      } else {
-        toast.error(msg);
-      }
+      toast.error(error instanceof Error ? error.message : 'Error al procesar el ajuste');
     } finally {
       setIsProcessing(false);
     }
@@ -285,13 +265,6 @@ export default function InventoryAdjustmentModal({
                   aria-label="Motivo del ajuste"
               />
           </div>
-
-          {/* Política forward-only locking: selector de fecha */}
-          <OperationDatePicker
-            value={operationDate}
-            onChange={setOperationDate}
-            storeId={storeId}
-          />
         </div>
 
         {/* Results Summary */}
@@ -352,7 +325,7 @@ export default function InventoryAdjustmentModal({
         <button
           onClick={handleConfirm}
           className="neu-btn-primary flex-1 flex items-center justify-center gap-2 !py-3 min-h-[44px] font-black uppercase text-xs tracking-widest"
-          disabled={isProcessing || !dateValidation.valid}
+          disabled={isProcessing}
           type="button"
           aria-label="Confirmar ajuste de inventario"
         >

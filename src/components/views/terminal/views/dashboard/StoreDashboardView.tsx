@@ -4,7 +4,6 @@ import React, { useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
 import ReactECharts from 'echarts-for-react';
 import type { DateRange } from 'react-day-picker';
-import { useIsMobile } from '@/hooks/ui/useMobile';
 import {
   X, ArrowLeft, TrendingUp, TrendingDown, ShoppingCart, Banknote,
   AlertTriangle, AlertCircle, Lightbulb, Sparkles, Package,
@@ -69,13 +68,6 @@ export default function StoreDashboardView({ storeId, storeName, onClose }: Stor
   const [days, setDays] = useState(30);
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
   const [selectedInsight, setSelectedInsight] = useState<Insight | null>(null);
-  // Pestañas: progressive disclosure — Resumen / Productos / Comportamiento
-  // Pregunta que responde cada una:
-  //   - resumen: "¿Cómo va la tienda?" (KPIs + insights + tendencia + alertas críticas)
-  //   - productos: "¿Qué comprar/descontinuar?" (top + ranking + drill-down + márgenes)
-  //   - comportamiento: "¿Cuándo y cómo se vende?" (pagos + weekday + hora + todos los insights)
-  type TabId = 'resumen' | 'productos' | 'comportamiento';
-  const [activeTab, setActiveTab] = useState<TabId>('resumen');
 
   // Construir parámetros para el hook
   const analyticsParams = useMemo(() => {
@@ -128,7 +120,7 @@ export default function StoreDashboardView({ storeId, storeName, onClose }: Stor
             <button
               type="button"
               onClick={toggleSidebar}
-              className="shrink-0 w-11 h-11 rounded-xl border border-border/50 bg-card hover:bg-muted transition-colors flex items-center justify-center text-muted-foreground hover:text-foreground"
+              className="shrink-0 w-9 h-9 rounded-xl border border-border/50 bg-card hover:bg-muted transition-colors flex items-center justify-center text-muted-foreground hover:text-foreground"
               aria-label={sidebarState === 'expanded' ? 'Contraer menú lateral' : 'Expandir menú lateral'}
               title={sidebarState === 'expanded' ? 'Contraer menú' : sidebarState === 'rail' ? 'Cerrar menú' : 'Abrir menú'}
             >
@@ -157,7 +149,7 @@ export default function StoreDashboardView({ storeId, storeName, onClose }: Stor
               type="button"
               onClick={() => refetch()}
               disabled={isFetching}
-              className="w-11 h-11 rounded-xl border border-border/50 bg-card hover:bg-muted transition-colors flex items-center justify-center disabled:opacity-50"
+              className="w-9 h-9 rounded-xl border border-border/50 bg-card hover:bg-muted transition-colors flex items-center justify-center disabled:opacity-50"
               aria-label="Refrescar datos"
               title="Refrescar"
             >
@@ -172,13 +164,13 @@ export default function StoreDashboardView({ storeId, storeName, onClose }: Stor
                 onValueChange={(v) => { if (v) { setDays(Number(v)); setDateRange(undefined); } }}
                 className="bg-muted rounded-xl p-1"
               >
-                <ToggleGroupItem value="7" className="text-xs font-bold px-3 py-2.5 rounded-lg data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
+                <ToggleGroupItem value="7" className="text-xs font-bold px-2.5 py-1.5 rounded-lg data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
                   7d
                 </ToggleGroupItem>
-                <ToggleGroupItem value="30" className="text-xs font-bold px-3 py-2.5 rounded-lg data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
+                <ToggleGroupItem value="30" className="text-xs font-bold px-2.5 py-1.5 rounded-lg data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
                   30d
                 </ToggleGroupItem>
-                <ToggleGroupItem value="90" className="text-xs font-bold px-3 py-2.5 rounded-lg data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
+                <ToggleGroupItem value="90" className="text-xs font-bold px-2.5 py-1.5 rounded-lg data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
                   90d
                 </ToggleGroupItem>
               </ToggleGroup>
@@ -190,7 +182,7 @@ export default function StoreDashboardView({ storeId, storeName, onClose }: Stor
                 <button
                   type="button"
                   className={cn(
-                    'h-11 px-3 rounded-xl border flex items-center gap-1.5 text-xs font-bold transition-colors',
+                    'h-9 px-3 rounded-xl border flex items-center gap-1.5 text-xs font-bold transition-colors',
                     dateRange?.from
                       ? 'border-primary/40 bg-primary/10 text-primary'
                       : 'border-border/50 bg-card text-muted-foreground hover:bg-muted hover:text-foreground',
@@ -270,7 +262,7 @@ export default function StoreDashboardView({ storeId, storeName, onClose }: Stor
             <button
               type="button"
               onClick={onClose}
-              className="w-11 h-11 rounded-xl border border-border/50 bg-card hover:bg-muted transition-colors flex items-center justify-center"
+              className="w-9 h-9 rounded-xl border border-border/50 bg-card hover:bg-muted transition-colors flex items-center justify-center"
               aria-label="Cerrar dashboard"
               title="Cerrar"
             >
@@ -307,200 +299,143 @@ export default function StoreDashboardView({ storeId, storeName, onClose }: Stor
           </div>
         ) : (
           <>
-            {/* ─── Tabs: progressive disclosure ───
-                Patrón idéntico a InventarioView para consistencia.
-                Cada tab responde una pregunta distinta para evitar ruido cognitivo. */}
-            <div
-              className="sticky top-[60px] z-10 flex border-b border-border bg-card/95 backdrop-blur rounded-t-xl overflow-hidden -mx-1"
-              role="tablist"
-              aria-label="Secciones del dashboard"
+            {/* SECCIÓN 1: KPIs Hero Row con tendencias */}
+            <KpiHeroRow analytics={analytics} days={days} />
+
+            {/* SECCIÓN 2: Insights prioritarios (compacto, máximo 4 destacados) */}
+            <InsightsPriorityPanel insights={insights} />
+
+            {/* SECCIÓN 3: Gráfico principal de ventas temporales */}
+            <ChartCard
+              title="Tendencia de ventas"
+              subtitle={`Últimos ${days} días — comparativa con promedio móvil 7 días`}
+              icon={<TrendingUp className="w-4 h-4 text-primary" />}
+              action={
+                <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest">
+                  <span className="flex items-center gap-1">
+                    <span className="w-2 h-2 rounded-full bg-primary" /> Ventas diarias
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <span className="w-2 h-2 rounded-full bg-muted-foreground/50" /> Promedio 7d
+                  </span>
+                </div>
+              }
             >
-              {([
-                { id: 'resumen', label: 'Resumen', icon: BarChart3, hint: 'KPIs + insights + alertas' },
-                { id: 'productos', label: 'Productos', icon: Package, hint: 'Análisis por producto y categoría' },
-                { id: 'comportamiento', label: 'Comportamiento', icon: Activity, hint: 'Patrones de venta y pago' },
-              ] as const).map((tab) => {
-                const Icon = tab.icon;
-                const isActive = activeTab === tab.id;
-                return (
-                  <button
-                    key={tab.id}
-                    type="button"
-                    role="tab"
-                    aria-selected={isActive}
-                    onClick={() => setActiveTab(tab.id)}
-                    className={cn(
-                      'flex-1 min-h-[44px] py-3 px-2 sm:px-4 text-[11px] sm:text-xs font-black uppercase tracking-widest transition-colors border-b-2 -mb-px flex items-center justify-center gap-1.5 sm:gap-2',
-                      isActive
-                        ? 'border-primary text-primary bg-primary/5'
-                        : 'border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/30',
-                    )}
-                  >
-                    <Icon className="w-3.5 h-3.5 shrink-0" />
-                    <span className="truncate">{tab.label}</span>
-                  </button>
-                );
-              })}
+              <SalesTimeSeriesChart analytics={analytics} />
+            </ChartCard>
+
+            {/* SECCIÓN 4: Top productos + Distribución de pagos */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+              <ChartCard
+                title="Top 10 productos por ingreso"
+                subtitle="Rentabilidad y volumen"
+                icon={<Target className="w-4 h-4 text-success" />}
+              >
+                <TopProductsChart analytics={analytics} />
+              </ChartCard>
+              <ChartCard
+                title="Distribución de pagos"
+                subtitle="Métodos utilizados por clientes"
+                icon={<Banknote className="w-4 h-4 text-warning" />}
+              >
+                <PaymentDistributionChart analytics={analytics} />
+              </ChartCard>
             </div>
 
-            {/* ────────── TAB 1: RESUMEN ──────────
-                Audiencia: decisor / dueño
-                Pregunta: "¿cómo va la tienda?" */}
-            {activeTab === 'resumen' && (
-              <div className="space-y-5">
-                {/* KPIs Hero Row */}
-                <KpiHeroRow analytics={analytics} days={days} />
+            {/* SECCIÓN 5: Margen por categoría + Ventas por día de semana */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+              <ChartCard
+                title="Margen por categoría"
+                subtitle="Rentabilidad (rojo <15%, ámbar <25%, púrpura ≥25%)"
+                icon={<Zap className="w-4 h-4 text-purple-500" />}
+              >
+                <CategoryMarginsChart analytics={analytics} />
+              </ChartCard>
+              <ChartCard
+                title="Ventas por día de semana"
+                subtitle="Cuándo vendes más"
+                icon={<Calendar className="w-4 h-4 text-cyan-500" />}
+              >
+                <WeekdayChart analytics={analytics} />
+              </ChartCard>
+            </div>
 
-                {/* Insights prioritarios (top 4, clickeables para ver detalle) */}
-                <InsightsPriorityPanel insights={insights} onSelectInsight={setSelectedInsight} />
+            {/* SECCIÓN 6: Ventas por hora del día */}
+            <ChartCard
+              title="Ventas por hora del día"
+              subtitle="Identifica tus horas pico (resaltadas en azul)"
+              icon={<Clock className="w-4 h-4 text-primary" />}
+            >
+              <HourDistributionChart analytics={analytics} />
+            </ChartCard>
 
-                {/* Tendencia de ventas */}
-                <ChartCard
-                  title="Tendencia de ventas"
-                  subtitle={`Últimos ${days} días — comparativa con promedio móvil 7 días`}
-                  icon={<TrendingUp className="w-4 h-4 text-primary" />}
-                  action={
-                    <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest">
-                      <span className="flex items-center gap-1">
-                        <span className="w-2 h-2 rounded-full bg-primary" /> Ventas diarias
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <span className="w-2 h-2 rounded-full bg-muted-foreground/50" /> Promedio 7d
-                      </span>
-                    </div>
-                  }
-                >
-                  <SalesTimeSeriesChart analytics={analytics} />
-                </ChartCard>
+            {/* SECCIÓN 7: Alertas operativas (3 columnas) */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+              <StockAlertCard
+                title="Stock crítico"
+                subtitle="Reposición urgente requerida"
+                items={analytics.low_stock.map((p) => ({
+                  id: p.product_id,
+                  name: p.name,
+                  metric: `${p.stock_current}/${p.min_stock}`,
+                  detail: `Déficit: ${p.deficit} uds`,
+                  severity: 'critical' as const,
+                }))}
+                emptyText="Todo el stock está saludable"
+                icon={<AlertTriangle className="w-4 h-4 text-destructive" />}
+                actionLabel="Ir a inventario"
+                onAction={() => { setCurrentView('inventory'); onClose(); }}
+              />
+              <StockAlertCard
+                title="Movimiento lento"
+                subtitle="Sin ventas en 30+ días"
+                items={analytics.slow_movers.slice(0, 8).map((p) => ({
+                  id: p.product_id,
+                  name: p.name,
+                  metric: `${p.days_without_sales}d`,
+                  detail: `Stock: ${p.stock_current} uds`,
+                  severity: 'warning' as const,
+                }))}
+                emptyText="Todos los productos rotan bien"
+                icon={<Clock className="w-4 h-4 text-warning" />}
+                actionLabel="Crear oferta"
+                onAction={() => { setCurrentView('ofertas'); onClose(); }}
+              />
+              <StockAlertCard
+                title="Exceso de inventario"
+                subtitle="Capital inmovilizado"
+                items={analytics.overstock.slice(0, 8).map((p) => ({
+                  id: p.product_id,
+                  name: p.name,
+                  metric: p.days_of_stock ? `${p.days_of_stock}d` : '∞',
+                  detail: formatCurrency(p.overstock_value),
+                  severity: 'opportunity' as const,
+                }))}
+                emptyText="Sin exceso de inventario"
+                icon={<Package className="w-4 h-4 text-cyan-500" />}
+                actionLabel="Ver catálogo"
+                onAction={() => { setCurrentView('catalog'); onClose(); }}
+              />
+            </div>
 
-                {/* Alertas operativas (3 columnas) */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-                  <StockAlertCard
-                    title="Stock crítico"
-                    subtitle="Reposición urgente requerida"
-                    items={analytics.low_stock.map((p) => ({
-                      id: p.product_id,
-                      name: p.name,
-                      metric: `${p.stock_current}/${p.min_stock}`,
-                      detail: `Déficit: ${p.deficit} uds`,
-                      severity: 'critical' as const,
-                    }))}
-                    emptyText="Todo el stock está saludable"
-                    icon={<AlertTriangle className="w-4 h-4 text-destructive" />}
-                    actionLabel="Ir a inventario"
-                    onAction={() => { setCurrentView('inventory'); onClose(); }}
-                  />
-                  <StockAlertCard
-                    title="Movimiento lento"
-                    subtitle="Sin ventas en 30+ días"
-                    items={analytics.slow_movers.slice(0, 8).map((p) => ({
-                      id: p.product_id,
-                      name: p.name,
-                      metric: `${p.days_without_sales}d`,
-                      detail: `Stock: ${p.stock_current} uds`,
-                      severity: 'warning' as const,
-                    }))}
-                    emptyText="Todos los productos rotan bien"
-                    icon={<Clock className="w-4 h-4 text-warning" />}
-                    actionLabel="Crear oferta"
-                    onAction={() => { setCurrentView('ofertas'); onClose(); }}
-                  />
-                  <StockAlertCard
-                    title="Exceso de inventario"
-                    subtitle="Capital inmovilizado"
-                    items={analytics.overstock.slice(0, 8).map((p) => ({
-                      id: p.product_id,
-                      name: p.name,
-                      metric: p.days_of_stock ? `${p.days_of_stock}d` : '∞',
-                      detail: formatCurrency(p.overstock_value),
-                      severity: 'opportunity' as const,
-                    }))}
-                    emptyText="Sin exceso de inventario"
-                    icon={<Package className="w-4 h-4 text-cyan-500" />}
-                    actionLabel="Ver catálogo"
-                    onAction={() => { setCurrentView('catalog'); onClose(); }}
-                  />
-                </div>
-              </div>
-            )}
+            {/* SECCIÓN 8: Top productos por cantidad (tabla) */}
+            <ChartCard
+              title="Ranking por unidades vendidas"
+              subtitle="Los productos más populares"
+              icon={<ShoppingBag className="w-4 h-4 text-success" />}
+            >
+              <TopProductsQuantityTable analytics={analytics} />
+            </ChartCard>
 
-            {/* ────────── TAB 2: PRODUCTOS ──────────
-                Audiencia: comprador / analista de inventario
-                Pregunta: "¿qué comprar, qué descontinuar?" */}
-            {activeTab === 'productos' && (
-              <div className="space-y-5">
-                {/* Top 10 productos por ingreso */}
-                <ChartCard
-                  title="Top 10 productos por ingreso"
-                  subtitle="Rentabilidad y volumen"
-                  icon={<Target className="w-4 h-4 text-success" />}
-                >
-                  <TopProductsChart analytics={analytics} />
-                </ChartCard>
+            {/* SECCIÓN 9: Análisis específico por categoría (drill-down) */}
+            <CategoryDrillDownPanel analytics={analytics} />
 
-                {/* Ranking por unidades vendidas (tabla) */}
-                <ChartCard
-                  title="Ranking por unidades vendidas"
-                  subtitle="Los productos más populares"
-                  icon={<ShoppingBag className="w-4 h-4 text-success" />}
-                >
-                  <TopProductsQuantityTable analytics={analytics} />
-                </ChartCard>
+            {/* SECCIÓN 10: Análisis específico por producto (drill-down) */}
+            <ProductDrillDownPanel analytics={analytics} onGoToCatalog={() => { setCurrentView('catalog'); onClose(); }} />
 
-                {/* Margen por categoría */}
-                <ChartCard
-                  title="Margen por categoría"
-                  subtitle="Rentabilidad (rojo <15%, ámbar <25%, púrpura ≥25%)"
-                  icon={<Zap className="w-4 h-4 text-purple-500" />}
-                >
-                  <CategoryMarginsChart analytics={analytics} />
-                </ChartCard>
-
-                {/* Drill-down por categoría */}
-                <CategoryDrillDownPanel analytics={analytics} />
-
-                {/* Drill-down por producto */}
-                <ProductDrillDownPanel analytics={analytics} onGoToCatalog={() => { setCurrentView('catalog'); onClose(); }} />
-              </div>
-            )}
-
-            {/* ────────── TAB 3: COMPORTAMIENTO ──────────
-                Audiencia: operador / vendedor / marketing
-                Pregunta: "¿cuándo y cómo se vende?" */}
-            {activeTab === 'comportamiento' && (
-              <div className="space-y-5">
-                {/* Distribución de pagos */}
-                <ChartCard
-                  title="Distribución de pagos"
-                  subtitle="Métodos utilizados por clientes"
-                  icon={<Banknote className="w-4 h-4 text-warning" />}
-                >
-                  <PaymentDistributionChart analytics={analytics} />
-                </ChartCard>
-
-                {/* Ventas por día de semana + hora (grid 2 col en desktop) */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-                  <ChartCard
-                    title="Ventas por día de semana"
-                    subtitle="Cuándo vendes más"
-                    icon={<CalendarIcon className="w-4 h-4 text-cyan-500" />}
-                  >
-                    <WeekdayChart analytics={analytics} />
-                  </ChartCard>
-                  <ChartCard
-                    title="Ventas por hora del día"
-                    subtitle="Horas pico (resaltadas)"
-                    icon={<Clock className="w-4 h-4 text-primary" />}
-                  >
-                    <HourDistributionChart analytics={analytics} />
-                  </ChartCard>
-                </div>
-
-                {/* Todos los insights en lista expandible */}
-                {insights.length > 0 && (
-                  <AllInsightsPanel insights={insights} onSelectInsight={setSelectedInsight} />
-                )}
-              </div>
+            {/* SECCIÓN 11: Todos los insights en lista expandible */}
+            {insights.length > 4 && (
+              <AllInsightsPanel insights={insights} onSelectInsight={setSelectedInsight} />
             )}
           </>
         )}
@@ -603,7 +538,7 @@ function KpiHeroRow({ analytics, days }: { analytics: NonNullable<ReturnType<typ
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
       {cards.map((card, i) => (
         <div
           key={i}
@@ -923,7 +858,7 @@ function TopProductsChart({ analytics }: { analytics: NonNullable<ReturnType<typ
   const option = useMemo(() => {
     const products = [...analytics.top_products_revenue].reverse();
     return {
-      grid: { left: 130, right: 70, top: 12, bottom: 24, containLabel: false },
+      grid: { left: 140, right: 50, top: 10, bottom: 20 },
       tooltip: {
         trigger: 'item',
         backgroundColor: 'rgba(15, 23, 42, 0.95)',
@@ -943,7 +878,7 @@ function TopProductsChart({ analytics }: { analytics: NonNullable<ReturnType<typ
         type: 'value',
         axisLine: { show: false },
         axisLabel: {
-          color: '#475569', fontSize: 11, fontWeight: 500,
+          color: '#64748B', fontSize: 10,
           formatter: (val: number) => moneyShort(val),
         },
         splitLine: { lineStyle: { color: '#F1F5F9' } },
@@ -951,14 +886,14 @@ function TopProductsChart({ analytics }: { analytics: NonNullable<ReturnType<typ
       yAxis: {
         type: 'category',
         data: products.map((p) => {
-          const name = p.name.length > 28 ? p.name.slice(0, 28) + '…' : p.name;
+          const name = p.name.length > 22 ? p.name.slice(0, 22) + '…' : p.name;
           return name;
         }),
         axisLine: { show: false },
         axisTick: { show: false },
         axisLabel: {
-          color: '#1E293B', fontSize: 12, fontWeight: 600,
-          width: 140, overflow: 'truncate',
+          color: '#1E293B', fontSize: 11, fontWeight: 600,
+          width: 130, overflow: 'truncate',
         },
       },
       series: [
@@ -1015,7 +950,7 @@ function PaymentDistributionChart({ analytics }: { analytics: NonNullable<Return
         top: 'center',
         textAlign: 'center',
         textStyle: { color: '#1E293B', fontSize: 22, fontWeight: 'bold' },
-        subtextStyle: { color: '#475569', fontSize: 12, fontWeight: 'bold' },
+        subtextStyle: { color: '#64748B', fontSize: 11, fontWeight: 'bold' },
       },
       tooltip: {
         trigger: 'item',
@@ -1055,13 +990,13 @@ function PaymentDistributionChart({ analytics }: { analytics: NonNullable<Return
 
   return (
     <div className="space-y-4">
-      {/* Donut centrado — altura responsive para mobile */}
+      {/* Donut centrado */}
       <div className="flex justify-center">
-        <ECharts option={option} style={{ height: 'clamp(200px, 40vw, 280px)', width: '100%' }} />
+        <ECharts option={option} style={{ height: 240, width: '100%' }} />
       </div>
 
       {/* Lista detallada con barras de progreso */}
-      <div className="space-y-3">
+      <div className="space-y-2.5">
         {data.map((p, i) => {
           const label = PAYMENT_METHOD_LABELS[p.method] || p.method;
           const color = CHART_PALETTE[i % CHART_PALETTE.length];
@@ -1086,15 +1021,8 @@ function PaymentDistributionChart({ analytics }: { analytics: NonNullable<Return
                   </span>
                 </div>
               </div>
-              {/* Barra de progreso visual — h-2 para mejor visibilidad */}
-              <div
-                className="relative h-2 w-full bg-muted rounded-full overflow-hidden"
-                role="progressbar"
-                aria-valuenow={p.pct}
-                aria-valuemin={0}
-                aria-valuemax={100}
-                aria-label={`${label}: ${p.pct}% del total`}
-              >
+              {/* Barra de progreso visual */}
+              <div className="relative h-1.5 w-full bg-muted rounded-full overflow-hidden">
                 <div
                   className="absolute inset-y-0 left-0 rounded-full transition-all duration-500"
                   style={{
@@ -1125,7 +1053,7 @@ function CategoryMarginsChart({ analytics }: { analytics: NonNullable<ReturnType
   const option = useMemo(() => {
     const cats = analytics.category_margins.slice(0, 8);
     return {
-      grid: { left: 130, right: 70, top: 20, bottom: 30, containLabel: false },
+      grid: { left: 140, right: 50, top: 20, bottom: 30 },
       tooltip: {
         trigger: 'item',
         backgroundColor: 'rgba(15, 23, 42, 0.95)',
@@ -1144,7 +1072,7 @@ function CategoryMarginsChart({ analytics }: { analytics: NonNullable<ReturnType
         type: 'value',
         axisLine: { show: false },
         axisLabel: {
-          color: '#475569', fontSize: 11, fontWeight: 500,
+          color: '#64748B', fontSize: 10,
           formatter: (val: number) => `${val}%`,
         },
         splitLine: { lineStyle: { color: '#F1F5F9' } },
@@ -1157,7 +1085,7 @@ function CategoryMarginsChart({ analytics }: { analytics: NonNullable<ReturnType
         }),
         axisLine: { show: false },
         axisTick: { show: false },
-        axisLabel: { color: '#1E293B', fontSize: 12, fontWeight: 600 },
+        axisLabel: { color: '#1E293B', fontSize: 11, fontWeight: 600 },
       },
       series: [
         {
@@ -1173,7 +1101,7 @@ function CategoryMarginsChart({ analytics }: { analytics: NonNullable<ReturnType
           label: {
             show: true, position: 'right',
             formatter: '{c}%',
-            color: '#475569', fontSize: 11, fontWeight: 700,
+            color: '#64748B', fontSize: 10, fontWeight: 700,
           },
           markLine: {
             symbol: 'none',
@@ -1224,7 +1152,7 @@ function WeekdayChart({ analytics }: { analytics: NonNullable<ReturnType<typeof 
         type: 'value',
         axisLine: { show: false },
         axisLabel: {
-          color: '#475569', fontSize: 11, fontWeight: 500,
+          color: '#64748B', fontSize: 10,
           formatter: (val: number) => moneyShort(val),
         },
         splitLine: { lineStyle: { color: '#F1F5F9' } },
@@ -1289,13 +1217,13 @@ function HourDistributionChart({ analytics }: { analytics: NonNullable<ReturnTyp
         type: 'category',
         data: data.map((d) => `${d.hour}h`),
         axisLine: { lineStyle: { color: '#E2E8F0' } },
-        axisLabel: { color: '#475569', fontSize: 11, interval: 1, fontWeight: 500 },
+        axisLabel: { color: '#64748B', fontSize: 10, interval: 1 },
       },
       yAxis: {
         type: 'value',
         axisLine: { show: false },
         axisLabel: {
-          color: '#475569', fontSize: 11, fontWeight: 500,
+          color: '#64748B', fontSize: 10,
           formatter: (val: number) => moneyShort(val),
         },
         splitLine: { lineStyle: { color: '#F1F5F9' } },
@@ -1432,7 +1360,7 @@ function StockAlertCard({
           <button
             type="button"
             onClick={onAction}
-            className="w-full min-h-[44px] py-2.5 rounded-lg bg-muted/40 hover:bg-muted text-[10px] font-black uppercase tracking-widest text-foreground transition-colors flex items-center justify-center gap-1.5"
+            className="w-full py-2 rounded-lg bg-muted/40 hover:bg-muted text-[10px] font-black uppercase tracking-widest text-foreground transition-colors flex items-center justify-center gap-1.5"
           >
             {actionLabel}
             <ChevronRight className="w-3 h-3" />
@@ -1492,7 +1420,7 @@ function CategoryDrillDownPanel({ analytics }: { analytics: NonNullable<ReturnTy
         </div>
 
         {/* Detalle de la categoría seleccionada */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 p-4 rounded-xl bg-muted/30 border border-border/30">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 p-4 rounded-xl bg-muted/30 border border-border/30">
           <div className="space-y-1">
             <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Ingresos</p>
             <p className="text-base font-black tabular-nums text-foreground">{formatCurrency(selected.revenue)}</p>
@@ -1651,7 +1579,7 @@ function ProductDrillDownPanel({
         </div>
 
         {/* Detalle del producto seleccionado */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 p-4 rounded-xl bg-muted/30 border border-border/30">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 p-4 rounded-xl bg-muted/30 border border-border/30">
           <div className="space-y-1">
             <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Ingresos</p>
             <p className="text-base font-black tabular-nums text-foreground">{formatCurrency(selected.revenue)}</p>
@@ -1711,7 +1639,6 @@ function ProductDrillDownPanel({
 function InsightDetailModal({ insight, onClose }: { insight: Insight; onClose: () => void }) {
   const config = SEVERITY_CONFIG[insight.severity];
   const Icon = config.icon;
-  const isMobile = useIsMobile();
 
   // Construir la configuración del chart según el tipo de detail
   const chartOption = useMemo(() => {
@@ -1823,7 +1750,7 @@ function InsightDetailModal({ insight, onClose }: { insight: Insight; onClose: (
           yAxis: {
             type: 'category',
             data: insight.detail.chartData.map((p) => p.name),
-            axisLabel: { color: '#1E293B', fontSize: 12, fontWeight: 600 },
+            axisLabel: { color: '#1E293B', fontSize: 11, fontWeight: 600 },
           },
           series: [{
             type: 'bar',
@@ -1850,20 +1777,10 @@ function InsightDetailModal({ insight, onClose }: { insight: Insight; onClose: (
   }, [insight.detail]);
 
   return (
-    <div className={cn(
-      'fixed inset-0 z-50 bg-black/50 backdrop-blur-sm overflow-y-auto',
-      isMobile
-        ? 'flex items-end p-0' // mobile: bottom sheet
-        : 'flex items-center justify-center p-4', // desktop: centered dialog
-    )}>
-      <div className={cn(
-        'bg-card border-border shadow-2xl overflow-y-auto',
-        isMobile
-          ? 'rounded-t-2xl border-t w-full max-h-[90vh] pb-[env(safe-area-inset-bottom)]' // mobile: bottom sheet
-          : 'rounded-2xl border max-w-2xl w-full max-h-[90vh]', // desktop: centered
-      )}>
+    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+      <div className="bg-card rounded-2xl border border-border shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className={cn('px-5 py-4 border-b border-border/50 flex items-start justify-between gap-3 sticky top-0 z-10', config.bg)}>
+        <div className={cn('px-5 py-4 border-b border-border/50 flex items-start justify-between gap-3', config.bg)}>
           <div className="flex items-start gap-3 min-w-0">
             <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-background/70', config.color)}>
               <Icon className="w-5 h-5" />
@@ -1878,7 +1795,7 @@ function InsightDetailModal({ insight, onClose }: { insight: Insight; onClose: (
           <button
             type="button"
             onClick={onClose}
-            className="shrink-0 w-11 h-11 rounded-lg hover:bg-muted/60 transition-colors flex items-center justify-center"
+            className="shrink-0 w-8 h-8 rounded-lg hover:bg-muted/60 transition-colors flex items-center justify-center"
             aria-label="Cerrar detalle"
           >
             <X className="w-4 h-4" />
@@ -1935,7 +1852,7 @@ function DetailMetrics({ detail }: { detail: InsightDetail }) {
   switch (detail.type) {
     case 'stock':
       return (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           <MetricBox label="Stock actual" value={`${detail.stockCurrent} uds`} />
           <MetricBox label="Stock mínimo" value={`${detail.minStock} uds`} />
           <MetricBox label="Déficit" value={`${detail.deficit} uds`} highlight="warning" />
@@ -1983,7 +1900,7 @@ function DetailMetrics({ detail }: { detail: InsightDetail }) {
       );
     case 'margin':
       return (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           <MetricBox label="Categoría" value={detail.category} />
           <MetricBox label="Ingresos" value={formatCurrency(detail.revenue)} />
           <MetricBox label="Costo" value={formatCurrency(detail.cost)} />
@@ -1998,7 +1915,7 @@ function DetailMetrics({ detail }: { detail: InsightDetail }) {
       );
     case 'top':
       return (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           <MetricBox label="Producto" value={detail.productName} />
           <MetricBox label="Ingresos" value={formatCurrency(detail.revenue)} highlight="success" />
           <MetricBox label="Unidades vendidas" value={`${detail.quantity}`} />
@@ -2050,7 +1967,7 @@ function DetailMetrics({ detail }: { detail: InsightDetail }) {
     case 'payment':
       return (
         <div className="space-y-3">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             <MetricBox label="Método dominante" value={detail.dominantMethod} />
             <MetricBox label="% concentración" value={`${detail.pct}%`} highlight="warning" />
             <MetricBox label="Transacciones" value={`${detail.count}`} />
@@ -2163,59 +2080,14 @@ function Fundamentation({ detail }: { detail: InsightDetail }) {
 function DashboardSkeleton() {
   return (
     <div className="space-y-5">
-      {/* Skeleton de tabs */}
-      <div className="flex border-b border-border bg-card rounded-t-xl overflow-hidden">
-        {[...Array(3)].map((_, i) => (
-          <div key={i} className="flex-1 py-3 px-4 flex items-center justify-center gap-2">
-            <Skeleton className="w-3.5 h-3.5 rounded" />
-            <Skeleton className="h-3 w-16 rounded" />
-          </div>
-        ))}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-24 rounded-2xl" />)}
       </div>
-      {/* Skeleton de KPIs Hero */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-        {[...Array(4)].map((_, i) => (
-          <div key={i} className="rounded-2xl border border-border/50 p-5 space-y-3">
-            <div className="flex items-center justify-between">
-              <Skeleton className="h-3 w-20 rounded" />
-              <Skeleton className="w-4 h-4 rounded" />
-            </div>
-            <Skeleton className="h-7 w-28 rounded" />
-            <Skeleton className="h-2 w-32 rounded" />
-          </div>
-        ))}
-      </div>
-      {/* Skeleton de insights */}
-      <div className="rounded-2xl border border-border/50 bg-card overflow-hidden">
-        <div className="px-5 py-3.5 border-b border-border/50 flex items-center gap-2">
-          <Skeleton className="w-7 h-7 rounded-lg" />
-          <Skeleton className="h-3 w-32 rounded" />
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 p-4">
-          {[...Array(4)].map((_, i) => (
-            <div key={i} className="rounded-xl border p-3.5 flex gap-3">
-              <Skeleton className="w-9 h-9 rounded-lg shrink-0" />
-              <div className="flex-1 space-y-2">
-                <Skeleton className="h-3 w-3/4 rounded" />
-                <Skeleton className="h-2 w-full rounded" />
-                <Skeleton className="h-2 w-5/6 rounded" />
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-      {/* Skeleton de chart principal */}
-      <div className="rounded-2xl border border-border/50 bg-card overflow-hidden">
-        <div className="px-5 py-3.5 border-b border-border/50 flex items-center gap-2">
-          <Skeleton className="w-8 h-8 rounded-lg" />
-          <div className="space-y-1">
-            <Skeleton className="h-3 w-32 rounded" />
-            <Skeleton className="h-2 w-24 rounded" />
-          </div>
-        </div>
-        <div className="p-5">
-          <Skeleton className="h-[280px] w-full rounded-xl" />
-        </div>
+      <Skeleton className="h-48 rounded-2xl" />
+      <Skeleton className="h-[300px] rounded-2xl" />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <Skeleton className="h-[320px] rounded-2xl" />
+        <Skeleton className="h-[280px] rounded-2xl" />
       </div>
     </div>
   );

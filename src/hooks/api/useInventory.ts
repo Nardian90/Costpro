@@ -125,9 +125,7 @@ export function useAdjustStock() {
         p_user_id: input.userId,
         p_quantity_delta: input.quantityDelta,
         p_unit_cost_adjustment: input.unitCostAdjustment,
-        p_reason: input.reason,
-        // Política forward-only locking: pasar fecha si el frontend la provee
-        p_operation_date: input.operationDate,
+        p_reason: input.reason
       });
 
       if (!navigator.onLine) {

@@ -91,7 +91,7 @@ export default function POSView() {
       }
     }
     // Solo al montar
-     
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // / keyboard shortcut to focus search

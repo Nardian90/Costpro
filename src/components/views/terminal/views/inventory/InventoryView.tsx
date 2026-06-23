@@ -406,7 +406,6 @@ export default function InventoryView() {
         quantityDelta: number;
         unitCostAdjustment: number | null;
         reason: string;
-        operationDate?: string;
     }) => {
         if (!adjustingProduct) return;
 

@@ -1,9 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import { BaseModal } from '@/components/ui/BaseModal';
 import { Button } from '@/components/ui/button';
-import { DestructiveConfirmModal } from '@/components/ui/DestructiveConfirmModal';
 import { Store } from '@/types';
 import { useStoreTeam, type StoreTeamMember } from '@/hooks/api/useStoreTeam';
 import { Users, Loader2, UserX, Mail, Crown, Shield, User, Briefcase, Package, Calculator, AlertCircle } from 'lucide-react';
@@ -55,23 +54,20 @@ export function StoreTeamModal({ isOpen, onClose, store }: StoreTeamModalProps) 
     isOpen && store ? store.id : null
   );
 
-  // Estado para el modal de confirmación de remoción (reemplaza confirm() nativo)
-  const [memberToRemove, setMemberToRemove] = useState<StoreTeamMember | null>(null);
-
-  const handleRemoveClick = (member: StoreTeamMember) => {
-    setMemberToRemove(member);
-  };
-
-  const handleRemoveConfirm = async () => {
-    if (!memberToRemove) return;
+  const handleRemove = async (member: StoreTeamMember) => {
+    if (!confirm(
+      `¿Quitar a "${member.full_name}" de la tienda "${store?.name}"?\n\n` +
+      `El usuario NO será eliminado, solo perderá acceso a esta tienda. ` +
+      `Sus otras membresías y su cuenta se conservan.`
+    )) {
+      return;
+    }
     try {
-      await removeMember(memberToRemove.membership_id);
-      toast.success(`${memberToRemove.full_name} removido de ${store?.name}`);
+      await removeMember(member.membership_id);
+      toast.success(`${member.full_name} removido de ${store?.name}`);
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : 'Error al remover miembro';
       toast.error(msg);
-    } finally {
-      setMemberToRemove(null);
     }
   };
 
@@ -183,7 +179,7 @@ export function StoreTeamModal({ isOpen, onClose, store }: StoreTeamModalProps) 
 
                   {/* Selector de rol inline */}
                   <div className="flex items-center gap-1.5 shrink-0">
-                    <div className="flex items-center gap-1 h-11 px-3 rounded-lg bg-muted/40">
+                    <div className="flex items-center gap-1 px-2 py-1.5 rounded-lg bg-muted/40">
                       <RoleIcon className="w-3 h-3 text-primary" />
                       <select
                         value={member.role}
@@ -202,14 +198,14 @@ export function StoreTeamModal({ isOpen, onClose, store }: StoreTeamModalProps) 
                       </select>
                     </div>
 
-                    {/* Botón remover — touch target ≥ 44px */}
+                    {/* Botón remover */}
                     <button
                       type="button"
-                      onClick={() => handleRemoveClick(member)}
+                      onClick={() => handleRemove(member)}
                       disabled={isRemoving}
                       aria-label={`Remover ${member.full_name} de la tienda`}
                       title="Remover de la tienda (no elimina al usuario)"
-                      className="w-11 h-11 flex items-center justify-center rounded-lg bg-destructive/10 text-destructive hover:bg-destructive hover:text-foreground transition-all disabled:opacity-50"
+                      className="w-9 h-9 flex items-center justify-center rounded-lg bg-destructive/10 text-destructive hover:bg-destructive hover:text-foreground transition-all disabled:opacity-50"
                     >
                       {isRemoving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <UserX className="w-3.5 h-3.5" />}
                     </button>
@@ -229,26 +225,6 @@ export function StoreTeamModal({ isOpen, onClose, store }: StoreTeamModalProps) 
           </div>
         )}
       </div>
-
-      {/* Modal de confirmación para remover miembro (reemplaza confirm() nativo) */}
-      <DestructiveConfirmModal
-        key={memberToRemove?.membership_id}
-        isOpen={!!memberToRemove}
-        onClose={() => setMemberToRemove(null)}
-        title="Remover usuario de la tienda"
-        description={`Esta acción revoca la membresía del usuario en esta tienda.`}
-        confirmName={memberToRemove?.full_name || ''}
-        confirmNameLabel="Nombre del usuario"
-        warningText={
-          <>
-            Vas a remover a <strong>{memberToRemove?.full_name}</strong> de la tienda <strong>{store?.name}</strong>.
-            El usuario NO será eliminado, solo perderá acceso a esta tienda. Sus otras membresías y su cuenta se conservan.
-          </>
-        }
-        confirmLabel="Remover"
-        onConfirm={handleRemoveConfirm}
-        isSubmitting={isRemoving}
-      />
     </BaseModal>
   );
 }

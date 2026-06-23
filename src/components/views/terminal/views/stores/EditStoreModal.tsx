@@ -329,7 +329,7 @@ export function EditStoreModal({
             footer={null}
         >
             <form onSubmit={handleSubmit} className="grid gap-6 py-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 items-center gap-2 sm:gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-2 sm:gap-4">
                     <Label htmlFor="edit-name" className="text-left sm:text-right font-black uppercase text-[10px] tracking-widest text-primary/70">
                         {t('name')}
                     </Label>
@@ -343,7 +343,7 @@ export function EditStoreModal({
                         maxLength={100}
                     />
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 items-center gap-2 sm:gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-2 sm:gap-4">
                     <Label htmlFor="edit-address" className="text-left sm:text-right font-black uppercase text-[10px] tracking-widest text-primary/70">
                         {t('address')}
                     </Label>
@@ -356,7 +356,7 @@ export function EditStoreModal({
                         maxLength={200}
                     />
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 items-center gap-2 sm:gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-2 sm:gap-4">
                     <Label htmlFor="edit-phone" className="text-left sm:text-right font-black uppercase text-[10px] tracking-widest text-primary/70">
                         {t('phone')}
                     </Label>
@@ -370,7 +370,7 @@ export function EditStoreModal({
                         maxLength={20}
                     />
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 items-center gap-2 sm:gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-2 sm:gap-4">
                     <Label htmlFor="edit-email" className="text-left sm:text-right font-black uppercase text-[10px] tracking-widest text-primary/70">
                         {t('email')}
                     </Label>
@@ -384,7 +384,7 @@ export function EditStoreModal({
                         maxLength={150}
                     />
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 items-center gap-2 sm:gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-2 sm:gap-4">
                     <Label htmlFor="edit-reeup" className="text-left sm:text-right font-black uppercase text-[10px] tracking-widest text-primary/70">
                         {t('reeup')}
                     </Label>
@@ -397,7 +397,7 @@ export function EditStoreModal({
                         maxLength={11}
                     />
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 items-center gap-2 sm:gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-2 sm:gap-4">
                     <Label htmlFor="edit-bank" className="text-left sm:text-right font-black uppercase text-[10px] tracking-widest text-primary/70">
                         {t('bankAccount')}
                     </Label>
@@ -410,7 +410,7 @@ export function EditStoreModal({
                         maxLength={30}
                     />
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 items-center gap-2 sm:gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-2 sm:gap-4">
                     <Label htmlFor="edit-nit" className="text-left sm:text-right font-black uppercase text-[10px] tracking-widest text-primary/70">
                         {t('nit')}
                     </Label>
@@ -423,7 +423,7 @@ export function EditStoreModal({
                         maxLength={20}
                     />
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 items-center gap-2 sm:gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-2 sm:gap-4">
                     <Label htmlFor="edit-slug" className="text-left sm:text-right font-black uppercase text-[10px] tracking-widest text-primary/70">
                         {t('slug')}
                     </Label>
@@ -441,7 +441,7 @@ export function EditStoreModal({
                         {slugAvailable === false && <p className="text-xs text-destructive">{t('slugInUse')}</p>}
                     </div>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 items-center gap-2 sm:gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-2 sm:gap-4">
                     <Label htmlFor="edit-plantilla" className="text-left sm:text-right font-black uppercase text-[10px] tracking-widest text-primary/70">
                         {t('plantilla')}
                     </Label>
@@ -470,7 +470,7 @@ export function EditStoreModal({
                     <h4 className="text-xs font-black uppercase tracking-widest text-primary/70 mb-3">
                         {t('fcTemplate')}
                     </h4>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 items-center gap-2 sm:gap-4 mb-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-2 sm:gap-4 mb-3">
                         <Label htmlFor="edit-fc-template" className="text-left sm:text-right font-black uppercase text-[10px] tracking-widest text-primary/70">
                             {t('fcTemplateId')}
                         </Label>
@@ -482,7 +482,7 @@ export function EditStoreModal({
                             maxLength={100}
                         />
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 items-center gap-2 sm:gap-4 mb-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-2 sm:gap-4 mb-3">
                         <Label htmlFor="edit-fc-modalidad" className="text-left sm:text-right font-black uppercase text-[10px] tracking-widest text-primary/70">
                             {t('fcModalidad')}
                         </Label>
@@ -497,7 +497,7 @@ export function EditStoreModal({
                             <option value="comercializacion">Comercialización</option>
                         </select>
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 items-center gap-2 sm:gap-4 mb-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-2 sm:gap-4 mb-3">
                         <Label htmlFor="edit-fc-pdf" className="text-left sm:text-right font-black uppercase text-[10px] tracking-widest text-primary/70">
                             {t('fcPdfFormat')}
                         </Label>
@@ -511,7 +511,7 @@ export function EditStoreModal({
                             <option value="res190">Res. 190/2021</option>
                         </select>
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 items-center gap-2 sm:gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-2 sm:gap-4">
                         <Label htmlFor="edit-fc-active" className="text-left sm:text-right font-black uppercase text-[10px] tracking-widest text-primary/70">
                             {t('fcActive')}
                         </Label>
@@ -553,7 +553,7 @@ export function EditStoreModal({
                                     className="sr-only"
                                 />
                                 <span className={cn(
-                                    "inline-flex items-center gap-1 min-h-[44px] px-3 py-2.5 rounded-lg text-xs font-black uppercase tracking-widest transition-colors",
+                                    "inline-flex items-center gap-1 px-3 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-colors",
                                     isUploading ? "bg-muted text-muted-foreground opacity-60" : "bg-primary/10 text-primary hover:bg-primary/20"
                                 )}>
                                     <Upload className="w-3 h-3" />
@@ -583,7 +583,7 @@ export function EditStoreModal({
                                     className="sr-only"
                                 />
                                 <span className={cn(
-                                    "inline-flex items-center gap-1 min-h-[44px] px-3 py-2.5 rounded-lg text-xs font-black uppercase tracking-widest transition-colors",
+                                    "inline-flex items-center gap-1 px-3 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-colors",
                                     isUploading ? "bg-muted text-muted-foreground opacity-60" : "bg-primary/10 text-primary hover:bg-primary/20"
                                 )}>
                                     <Upload className="w-3 h-3" />
@@ -613,7 +613,7 @@ export function EditStoreModal({
                                     className="sr-only"
                                 />
                                 <span className={cn(
-                                    "inline-flex items-center gap-1 min-h-[44px] px-3 py-2.5 rounded-lg text-xs font-black uppercase tracking-widest transition-colors",
+                                    "inline-flex items-center gap-1 px-3 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-colors",
                                     isUploading ? "bg-muted text-muted-foreground opacity-60" : "bg-primary/10 text-primary hover:bg-primary/20"
                                 )}>
                                     <Upload className="w-3 h-3" />
@@ -624,7 +624,7 @@ export function EditStoreModal({
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 items-center gap-2 sm:gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-2 sm:gap-4">
                     <Label htmlFor="edit-lat" className="text-left sm:text-right font-black uppercase text-[10px] tracking-widest text-primary/70">
                         {t('latitude')}
                     </Label>

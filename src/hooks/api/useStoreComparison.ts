@@ -60,7 +60,7 @@ export function useStoreComparison(stores: Store[], selectedStoreIds: string[]) 
               .eq('is_active', true),
             supabase
               .from('product_cost_sheets')
-              .select('*', { count: 'exact', head: true })
+              .select('id', { count: 'exact', head: true })
               .eq('store_id', storeId)
               .eq('sync_status', 'pending')
               .is('deleted_at', null),

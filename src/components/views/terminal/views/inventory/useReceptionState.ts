@@ -6,8 +6,6 @@ import { useAuthStore, useUIStore } from '@/store';
 import { useInventory, useRegisterReception } from '@/hooks/api/useInventory';
 // Reception-Flow-Fix: hooks para guardar/confirmar recepciones pendientes.
 import { useSavePendingReception, useConfirmPendingReception } from '@/hooks/api/useReceptions';
-// Política de secuencia global (forward-only locking)
-import { useGlobalOperationDate, validateOperationDate } from '@/hooks/api/useGlobalOperationDate';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabaseClient';
 import { auditService } from '@/services/audit-service';
@@ -90,8 +88,6 @@ interface UseReceptionStateOptions {
 export function useReceptionState({ preselectedProduct, onCancel }: UseReceptionStateOptions) {
   const { user } = useAuthStore();
   const { setCurrentView } = useUIStore();
-  // Política de secuencia global per-store: fecha MAX para validación forward-only
-  const { data: globalDateInfo } = useGlobalOperationDate(user?.activeStoreId);
 
   // EM-R1: Modo Recepción Express.
   // Si viene del botón Express del historial, activar automáticamente.
@@ -117,11 +113,6 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
   // REC-1 QW-R4: Fecha de recepción editable (default hoy).
   const todayStr = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
   const [receptionDate, setReceptionDate] = useState(todayStr);
-  // Política forward-only: min attribute para el input type="date".
-  // Convierte el ISO timestamp del RPC a formato YYYY-MM-DD.
-  const globalMinDate = globalDateInfo?.minAllowedDate
-    ? new Date(globalDateInfo.minAllowedDate).toISOString().slice(0, 10)
-    : undefined;
 
   // ── Inline edit ───────────────────────────────────────────
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
@@ -906,16 +897,6 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
       const receptionDateIso = receptionDate === todayStr
         ? new Date().toISOString()
         : new Date(`${receptionDate}T23:59:59`).toISOString();
-
-      // Política de secuencia global: validar forward-only antes del envío.
-      // El backend también valida, pero esto da feedback inmediato al usuario.
-      const dateValidation = validateOperationDate(receptionDateIso, globalDateInfo?.minAllowedDate || null);
-      if (!dateValidation.valid) {
-        toast.error(dateValidation.error || 'La fecha de recepción es anterior a la fecha mínima permitida.', { duration: 8000 });
-        setIsSubmitting(false);
-        return;
-      }
-
       const receiptId = await registerReception.mutateAsync({
         p_store_id: user!.activeStoreId,
         p_supplier: supplier.trim(),
@@ -930,13 +911,6 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
           sale_price: item.sale_price ?? undefined,
           variant_id: item.variant_id,
         })),
-      }).catch((err: unknown) => {
-        // Política forward-only: detectar error de backdated y mostrar mensaje claro
-        const msg = err instanceof Error ? err.message : String(err);
-        if (msg.includes('ERR_BACKDATED_DOCUMENT')) {
-          toast.error('No se puede retroceder en el tiempo operativo. Revisa la "Fecha de Operación" en el dashboard MULTI-TIENDA.', { duration: 8000 });
-        }
-        throw err;
       });
 
       // FIX-04: Update sale_price for products where user confirmed update
@@ -1234,8 +1208,6 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
     todayStr,
     receptionDate,
     setReceptionDate,
-    // Política forward-only locking: min attribute para el date input
-    globalMinDate,
     editingIndex,
     setEditingIndex,
     editQuantity,

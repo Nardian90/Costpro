@@ -1,41 +1,39 @@
 'use client';
 
-import React, { useState, useId } from 'react';
+import React from 'react';
 import { useStoreHealth, type StoreHealth } from '@/hooks/api/useStoreHealth';
 import { Heart, CheckCircle2, XCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
 
 /**
  * F4-T05: Badge de Health Score por tienda.
  *
  * Muestra un círculo coloreado con el score (0-100) y un icono de corazón.
- * Al hacer clic (tap) o hover, abre un popover con el breakdown por categoría.
- *
- * Mobile-first: usa Popover en vez de hover-only tooltip. Funciona con tap
- * en touch devices y hover en desktop.
+ * Al hacer hover, abre un tooltip con el breakdown por categoría:
+ *  - ✓ Configuración general (20/20)
+ *  - ✗ Datos fiscales (0/20) — "Agrega REEUP, NIT..."
  *
  * Colores:
- *  - Rojo: 0-39 (crítico)
- *  - Ámbar: 40-79 (parcial)
- *  - Verde: 80-100 (saludable)
+ *  - Rojo: 0-39 (crítico — tienda barely operativa)
+ *  - Ámbar: 40-79 (parcial — le faltan piezas)
+ *  - Verde: 80-100 (saludable — lista para operar)
+ *
+ * Consumo:
+ *   const { data: health } = useStoreHealth(stores);
+ *   <StoreHealthBadge storeId={store.id} health={health} />
  */
 
 interface StoreHealthBadgeProps {
   storeId: string;
   health?: Record<string, StoreHealth>;
-  compact?: boolean;
+  compact?: boolean; // versión mini para tarjetas pequeñas
 }
 
 export function StoreHealthBadge({ storeId, health, compact = false }: StoreHealthBadgeProps) {
-  const [open, setOpen] = useState(false);
   const data = health?.[storeId];
 
   if (!data) {
+    // Skeleton mientras carga
     return (
       <span className={cn(
         "inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded border bg-muted/50 border-border text-muted-foreground/40",
@@ -55,27 +53,21 @@ export function StoreHealthBadge({ storeId, health, compact = false }: StoreHeal
       : 'bg-destructive/10 text-destructive border-destructive/20';
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <button
-          type="button"
-          className={cn(
-            "inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded border cursor-help min-h-[28px] focus:outline-none focus:ring-2 focus:ring-primary/30",
-            colorClass,
-            compact && "px-1"
-          )}
-          aria-label={`Health score: ${score} de 100. ${data.categories.filter(c => !c.achieved).length} categorías pendientes. Toca para ver detalle.`}
-          onClick={() => setOpen(!open)}
-        >
-          <Heart className="w-3 h-3" fill="currentColor" />
-          {score}%
-        </button>
-      </PopoverTrigger>
-      <PopoverContent
-        className="w-64 p-3 rounded-xl bg-card border border-border shadow-xl"
-        side="top"
-        align="start"
+    <div className="relative group inline-block">
+      <span
+        className={cn(
+          "inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded border cursor-help",
+          colorClass,
+          compact && "px-1"
+        )}
+        aria-label={`Health score: ${score} de 100. ${data.categories.filter(c => !c.achieved).length} categorías pendientes.`}
       >
+        <Heart className="w-3 h-3" fill="currentColor" />
+        {score}%
+      </span>
+
+      {/* Tooltip con breakdown — aparece en hover */}
+      <div className="absolute z-50 bottom-full left-0 mb-2 w-64 p-3 rounded-xl bg-card border border-border shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
         <div className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2">
           Salud de la tienda · {score}/100
         </div>
@@ -116,7 +108,7 @@ export function StoreHealthBadge({ storeId, health, compact = false }: StoreHeal
             </li>
           ))}
         </ul>
-      </PopoverContent>
-    </Popover>
+      </div>
+    </div>
   );
 }

@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { BaseModal } from '@/components/ui/BaseModal';
 import { StateRenderer } from '@/components/ui/StateRenderer';
-import { OperationDatePicker, formatOperationDateForRPC, useOperationDateValidation } from '@/components/ui/OperationDatePicker';
 import { useTransferDetails, useConfirmTransfer, useCancelTransfer } from '@/hooks/api/useTransfers';
 import { useAuthStore } from '@/store';
 import {
@@ -17,7 +16,6 @@ import {
 import { CheckCircle2, Clock, Package, Building, User, Calendar, XCircle, FileDown } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 import { toast } from 'sonner';
-import { format } from 'date-fns';
 import type { Transfer, TransferItem, TransferStatus } from '@/types';
 
 interface TransferDetailsModalProps {
@@ -53,41 +51,25 @@ function StatusBadge({ status }: { status: TransferStatus }) {
 
 export default function TransferDetailsModal({ transferId, onClose }: TransferDetailsModalProps) {
   const { user } = useAuthStore();
-  const storeId = user?.activeStoreId;
   const { data: transfer, isLoading, error } = useTransferDetails(transferId);
   const confirmMutation = useConfirmTransfer();
   const cancelMutation = useCancelTransfer();
 
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
-  // Fecha de operación para confirmar recepción de transferencia (forward-only locking)
-  const [operationDate, setOperationDate] = useState<string>(format(new Date(), 'yyyy-MM-dd'));
-  const dateValidation = useOperationDateValidation(operationDate, storeId);
 
   const handleConfirm = async () => {
     if (!transferId || !user) return;
-    if (!dateValidation.valid) {
-      toast.error(dateValidation.error || 'Fecha de operación inválida');
-      return;
-    }
 
     setShowConfirmDialog(false);
     const toastId = toast.loading('Confirmando transferencia y actualizando stock...');
     try {
-      await confirmMutation.mutateAsync({
-        transferId,
-        userId: user.id,
-        operationDate: formatOperationDateForRPC(operationDate),
-      });
+      await confirmMutation.mutateAsync({ transferId, userId: user.id });
       toast.success('Transferencia confirmada con éxito', { id: toastId });
       onClose();
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Error al confirmar la transferencia';
-      if (message.includes('ERR_BACKDATED_DOCUMENT')) {
-        toast.error('No se puede retroceder en el tiempo operativo. Revisa la "Fecha de Operación" en el dashboard MULTI-TIENDA.', { id: toastId, duration: 8000 });
-      } else {
-        toast.error(message, { id: toastId });
-      }
+      toast.error(message, { id: toastId });
     }
   };
 
@@ -261,24 +243,12 @@ export default function TransferDetailsModal({ transferId, onClose }: TransferDe
             <AlertDialogTitle>Confirmar recepción de transferencia</AlertDialogTitle>
             <AlertDialogDescription>
               Esta acción actualizará el stock del almacén destino con los productos de la transferencia.
-              La operación no se puede deshacer.
+              La operación no se puede deshacer. ¿Deseas continuar?
             </AlertDialogDescription>
           </AlertDialogHeader>
-          {/* Selector de fecha de operación (forward-only locking) */}
-          <div className="py-2">
-            <OperationDatePicker
-              value={operationDate}
-              onChange={setOperationDate}
-              label="Fecha de recepción"
-              storeId={storeId}
-            />
-          </div>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={confirmMutation.isPending}>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleConfirm}
-              disabled={confirmMutation.isPending || !dateValidation.valid}
-            >
+            <AlertDialogAction onClick={handleConfirm} disabled={confirmMutation.isPending}>
               {confirmMutation.isPending ? 'Procesando...' : 'Sí, confirmar'}
             </AlertDialogAction>
           </AlertDialogFooter>
