@@ -76,12 +76,12 @@
       "url": "https://costpro4.vercel.app/manifest.json"
     }
   ],
-  "iarc_rating_id": "e-everyone",
-  "display_override": ["window-controls-overlay", "standalone"],
+  "iarc_rating_id": "e84b072d-71b3-4d3e-86ae-31a8ce4e53b7",
+  "display_override": ["tabbed", "window-controls-overlay", "standalone"],
   "scope": "/",
   "scope_extensions": [
     {
-      "origin": "*.vercel.app"
+      "origin": "https://*.vercel.app"
     }
   ],
   "file_handlers": [
@@ -116,22 +116,10 @@
       "short_name": "Summary",
       "description": "View daily summary",
       "tag": "costpro-summary",
-      "ms_ac_template": "/widgets/summary.json",
-      "data": "/api/widgets",
+      "template": "https://costpro4.vercel.app/widgets/summary.json",
+      "ms_ac_template": "https://costpro4.vercel.app/widgets/summary.json",
+      "data": "https://costpro4.vercel.app/api/widgets",
       "type": "application/json",
-      "screenshots": [
-        {
-          "src": "/icons/icon-192.png",
-          "sizes": "192x192",
-          "label": "Widget"
-        }
-      ],
-      "icons": [
-        {
-          "src": "/icons/icon-192.png",
-          "sizes": "192x192"
-        }
-      ],
       "auth": false,
       "update": 86400
     }
