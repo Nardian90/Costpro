@@ -4,11 +4,31 @@ importScripts('https://storage.googleapis.com/workbox-cdn/releases/7.0.0/workbox
 if (workbox) {
   console.log('Workbox is loaded');
 
+  // Precache offline page
+  workbox.precaching.precacheAndRoute([
+    { url: '/offline.html', revision: '1' }
+  ]);
+
   // Cache strategy for static assets
   workbox.routing.registerRoute(
-    ({request}) => request.destination === 'script' || request.destination === 'style',
+    ({request}) => request.destination === 'script' || request.destination === 'style' || request.destination === 'image',
     new workbox.strategies.StaleWhileRevalidate()
   );
+
+  // Offline fallback
+  const networkOnly = new workbox.strategies.NetworkOnly();
+  workbox.routing.setDefaultHandler(new workbox.strategies.NetworkFirst({
+    networkTimeoutSeconds: 3,
+  }));
+  
+  workbox.routing.setCatchHandler(({event}) => {
+    switch (event.request.destination) {
+      case 'document':
+        return workbox.precaching.matchPrecache('/offline.html');
+      default:
+        return Response.error();
+    }
+  });
 
   // Background Sync for the batch sync endpoint
   const bgSyncPlugin = new workbox.backgroundSync.BackgroundSyncPlugin('syncQueue', {
