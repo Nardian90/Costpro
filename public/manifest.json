@@ -8,6 +8,9 @@
   "background_color": "#121212",
   "theme_color": "#16a34a",
   "orientation": "any",
+  "dir": "ltr",
+  "lang": "es",
+  "categories": ["business", "finance", "productivity"],
   "icons": [
     {
       "src": "/icons/icon-192.png",
@@ -36,18 +39,35 @@
   ],
   "screenshots": [
     {
-      "src": "/icons/icon-512.png",
-      "sizes": "512x512",
+      "src": "/storefront-construccion-banner.png",
+      "sizes": "1200x630",
       "type": "image/png",
       "form_factor": "wide",
-      "label": "CostPro - Pantalla principal"
+      "label": "CostPro - Vista de escritorio"
     },
     {
-      "src": "/icons/icon-512.png",
-      "sizes": "512x512",
+      "src": "/storefront-construccion-banner.png",
+      "sizes": "1200x630",
       "type": "image/png",
       "form_factor": "narrow",
-      "label": "CostPro - Pantalla principal"
+      "label": "CostPro - Vista móvil"
     }
-  ]
+  ],
+  "shortcuts": [
+    {
+      "name": "Nueva Venta",
+      "short_name": "Venta",
+      "description": "Iniciar una nueva venta en el POS",
+      "url": "/pos",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Inventario",
+      "short_name": "Inventario",
+      "description": "Ver estado del inventario",
+      "url": "/dashboard/inventory",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    }
+  ],
+  "related_applications": []
 }

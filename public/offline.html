@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CostPro - Sin Conexión</title>
+  <style>
+    body { font-family: system-ui, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; background-color: #121212; color: #fff; text-align: center; padding: 20px; }
+    h1 { color: #16a34a; }
+    p { max-width: 400px; color: #a1a1aa; }
+    button { background-color: #16a34a; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M1 1l22 22M16.72 11.06A10.94 10.94 0 0 1 19 12.55M5 12.55a10.94 10.94 0 0 1 5.17-2.39M10.71 5.05A16 16 0 0 1 22.58 9M1.42 9a15.91 15.91 0 0 1 4.7-2.88M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01"/>
+  </svg>
+  <h1>Estás sin conexión</h1>
+  <p>Parece que has perdido la conexión a internet. Algunas funciones de CostPro podrían no estar disponibles hasta que te conectes de nuevo.</p>
+  <button onclick="window.location.reload()">Reintentar conexión</button>
+</body>
+</html>

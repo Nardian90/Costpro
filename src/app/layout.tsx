@@ -54,7 +54,7 @@ export const metadata: Metadata = {
   manifest: "/manifest.json",
   icons: {
     icon: '/logo.svg',
-    apple: '/logo.svg',
+    apple: '/icons/icon-192.png',
   },
   openGraph: {
     title: "Costpro Enterprise",
