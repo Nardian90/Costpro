@@ -40,14 +40,14 @@
   "screenshots": [
     {
       "src": "/storefront-construccion-banner.png",
-      "sizes": "1200x630",
-      "type": "image/png",
+      "sizes": "1344x768",
+      "type": "image/jpeg",
       "form_factor": "wide",
       "label": "CostPro - Vista de escritorio"
     },
     {
-      "src": "/storefront-construccion-banner.png",
-      "sizes": "1200x630",
+      "src": "/mobile-screenshot.png",
+      "sizes": "720x1280",
       "type": "image/png",
       "form_factor": "narrow",
       "label": "CostPro - Vista móvil"
@@ -69,5 +69,27 @@
       "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
     }
   ],
-  "related_applications": []
+  "prefer_related_applications": false,
+  "related_applications": [],
+  "iarc_rating_id": "e",
+  "display_override": ["window-controls-overlay", "standalone"],
+  "scope": "/",
+  "scope_extensions": [],
+  "file_handlers": [],
+  "launch_handler": {
+    "client_mode": "auto"
+  },
+  "protocol_handlers": [],
+  "share_target": {
+    "action": "/share-target",
+    "method": "GET",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  },
+  "widgets": [],
+  "edge_side_panel": {},
+  "note_taking": {}
 }
