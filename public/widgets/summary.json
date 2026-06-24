@@ -1,0 +1,17 @@
+{
+  "type": "AdaptiveCard",
+  "version": "1.5",
+  "body": [
+    {
+      "type": "TextBlock",
+      "text": "CostPro Summary",
+      "weight": "Bolder",
+      "size": "Medium"
+    },
+    {
+      "type": "TextBlock",
+      "text": "Daily sales and inventory stats will appear here.",
+      "wrap": true
+    }
+  ]
+}
