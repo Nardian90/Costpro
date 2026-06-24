@@ -116,11 +116,16 @@ export default async function RootLayout({
         {process.env.NEXT_PUBLIC_SUPABASE_URL && (
           <link rel="preconnect" href={process.env.NEXT_PUBLIC_SUPABASE_URL} />
         )}
-        {/* PWA: declarative service worker hint (W3C spec).
-            Lets PWABuilder & crawlers discover /sw.js via HTML parsing,
-            without waiting for the async Workbox registration in ServiceWorkerRegister.
-            Scope defaults to '/' (derived from /sw.js location). */}
-        <link rel="serviceworker" href="/sw.js" />
+        {/* PWA: explicit vanilla JS service worker registration.
+            Lets PWABuilder & crawlers discover /sw.js immediately via HTML parsing or early execution,
+            without waiting for the async Workbox registration in the client component. */}
+        <script
+          nonce={nonce}
+          suppressHydrationWarning
+          dangerouslySetInnerHTML={{
+            __html: `if('serviceWorker' in navigator) { navigator.serviceWorker.register('/sw.js'); }`
+          }}
+        />
         {/* DIAG: Client-side splash timing diagnostic */}
         {process.env.NODE_ENV === 'development' && (
           <script
