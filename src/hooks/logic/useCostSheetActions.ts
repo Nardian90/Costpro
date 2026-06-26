@@ -96,8 +96,9 @@ export const useCostSheetActions = ({
   // handleSetViewMode bridges sidebar-driven activeCostSection changes
   // to the actual viewMode managed by useCostSheetViewState.
   // It handles both mode switching AND section navigation.
+  // B2-FIX: Acepta optionalSectionOverride para evitar race conditions con activeSectionRef.
   const handleSetViewMode = useCallback(
-    (mode: CostSheetViewMode) => {
+    (mode: CostSheetViewMode, optionalSectionOverride?: string) => {
       // Ensure editing is active when switching to any editable mode
       if (externalSetViewMode) {
         externalSetViewMode(mode);
@@ -106,9 +107,16 @@ export const useCostSheetActions = ({
       if (mode === 'audit') { handleSetActiveSection('audit'); }
       else if (mode === 'kpis') { handleSetActiveSection('kpis'); }
       else if (mode === 'expert') {
-        // Don't override section if user navigated to a specific section like 'templates'
-        const sec = activeSectionRef.current;
-        if (sec !== 'templates' && sec !== 'header' && sec !== 'signature') {
+        // Don't override section if user navigated to a specific section like 'templates'.
+        // B2-FIX: Se agregaron 'gen-easy', 'arena-fc', 'massive-gen', 'steel-calculator',
+        // 'ai-chat', 'audit' a la lista de excepciones. Sin esto, handleSetViewMode('expert')
+        // sobreescribe 'gen-easy' con 'main', haciendo que GenEasyView nunca cargue.
+        const sec = optionalSectionOverride ?? activeSectionRef.current;
+        const preservedSections = [
+          'templates', 'header', 'signature',
+          'gen-easy', 'arena-fc', 'massive-gen', 'steel-calculator', 'ai-chat', 'audit',
+        ];
+        if (!preservedSections.includes(sec)) {
           handleSetActiveSection('main');
         }
       }
@@ -240,18 +248,22 @@ export const useCostSheetActions = ({
   // FIX-RCT-140: This useEffect is now stable because all callbacks use refs
   // for unstable data deps, preventing re-runs on every data/calculation change.
   useEffect(() => {
-    if (activeSection === 'main') { handleSetViewMode('expert'); }
+    if (activeSection === 'main') { handleSetViewMode('expert', activeSection); }
     else if (activeSection === 'view-kpis') { handleSetViewMode('kpis'); }
-    else if (activeSection === 'view-expert') { handleSetViewMode('expert'); }
+    else if (activeSection === 'view-expert') { handleSetViewMode('expert', activeSection); }
     else if (activeSection === 'view-assisted') { handleSetViewMode('assisted'); }
     else if (activeSection === 'view-reading') { handleSetViewMode('reading'); }
     else if (activeSection === 'gen-quick') { handleSetViewMode('quick'); }
     else if (activeSection === 'gen-expert') { handleSetViewMode('quick'); setIsQuickModeGenerating(true); }
+    // B4: 'gen-easy' reemplaza a gen-quick + gen-expert — abre GenEasyView
+    // con 2 tabs internos (Rápida / Experta). El componente maneja su propio state.
+    // B2-FIX: Pasamos activeSection explícitamente para evitar race condition con activeSectionRef.
+    else if (activeSection === 'gen-easy') { handleSetViewMode('expert', activeSection); }
     else if (activeSection === 'tool-import') { handleImportJSON(); handleSetActiveSection('main'); }
     else if (activeSection === 'tool-save') { handleExportJSON(); handleSetActiveSection('main'); }
     else if (activeSection === 'tool-export-excel') { handleExportExcel(); handleSetActiveSection('main'); }
     else if (activeSection === 'tool-export-pdf') { setIsExportModalOpen(true); handleSetActiveSection('main'); }
-    else if (activeSection === 'templates') { handleSetViewMode('expert'); }
+    else if (activeSection === 'templates') { handleSetViewMode('expert', activeSection); }
     else if (activeSection === 'res-help') { setIsHelpPanelOpen(true); handleSetActiveSection('main'); }
     else if (activeSection === 'res-system-help') { setCurrentView('help'); handleSetActiveSection('main'); }
     else if (activeSection === 'res-academy') { setCurrentView('academy'); handleSetActiveSection('main'); }

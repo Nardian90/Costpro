@@ -5,6 +5,6 @@
  * Eliminates ~240KB from the initial client bundle.
  */
 export async function createWorkbook() {
-  const XLSX = await import('xlsx');
+  const XLSX = await import('@e965/xlsx');
   return XLSX;
 }

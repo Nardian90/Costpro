@@ -154,9 +154,13 @@ export default function LoginForm({ onBack, defaultTab }: LoginFormProps) {
         throw new Error('Por favor completa todos los campos');
       }
 
-      // DEV BYPASS: When Supabase is not configured, allow local login with any credentials
+      // DEV BYPASS: solo cuando Supabase NO está configurado (no hay URL/key).
+      // Si Supabase SÍ está configurado, SIEMPRE intentar login real primero.
+      // El dev-bypass con ENABLE_DEV_BYPASS=true queda como fallback solo si el login real falla
+      // Y solo cuando no hay credenciales reales que probar.
       if (!isSupabaseConfigured) {
-        logger.warn('AUTH', 'DEV_BYPASS_LOGIN', { email: maskedEmail });
+        logger.warn('AUTH', 'DEV_BYPASS_LOGIN', { email: maskedEmail, reason: 'no-supabase-config' });
+
         const devUser = UserFactory.create({
           id: 'dev-admin-001',
           email: email.toLowerCase().trim(),
@@ -176,6 +180,7 @@ export default function LoginForm({ onBack, defaultTab }: LoginFormProps) {
         return;
       }
 
+      // LOGIN REAL con Supabase Auth
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email: email.toLowerCase().trim(),
         password: password,

@@ -43,6 +43,7 @@ import { useUIStore, ViewType } from '@/store';
 import { SIDEBAR_STRUCTURE, NavModule } from '@/config/navigation/sidebar.structure';
 import { useAuthStore } from '@/store';
 import { BackToVentaButton } from '@/components/ui/BackToVentaButton';
+import { useTranslations } from 'next-intl';
 
 // Submenus que redirigen a una vista con tabs (no muestran tarjetas)
 const REDIRECT_SUBMENUS: Partial<Record<ViewType, ViewType>> = {
@@ -65,6 +66,7 @@ interface SectionHubViewProps {
 }
 
 export default function SectionHubView({ submenuId }: SectionHubViewProps) {
+  const t = useTranslations('dashboard.storeDashboard');
   const { setCurrentView } = useUIStore();
   const { user } = useAuthStore();
 
@@ -98,15 +100,15 @@ export default function SectionHubView({ submenuId }: SectionHubViewProps) {
   if (!submenu) {
     return (
       <div className="flex flex-col items-center justify-center py-24 text-center gap-4">
-        <h3 className="text-xl font-black uppercase tracking-tight">Sección no encontrada</h3>
+        <h3 className="text-xl font-black uppercase tracking-tight">{t('sectionHub.notFound')}</h3>
         <p className="text-muted-foreground text-sm max-w-md">
-          No se encontró la sección <code className="px-1.5 py-0.5 bg-muted rounded text-xs font-mono">{submenuId}</code>.
+          No se encontró la sección <code className="px-1.5 py-0.5 bg-muted rounded text-sm font-mono">{submenuId}</code>.
         </p>
         <button
           onClick={() => setCurrentView('dashboard')}
-          className="px-6 py-2.5 bg-primary text-primary-foreground font-bold rounded-xl hover:opacity-90 transition-opacity text-xs uppercase tracking-widest"
+          className="px-6 min-h-[44px] py-2.5 bg-primary text-primary-foreground font-bold rounded-xl hover:opacity-90 transition-opacity text-sm uppercase tracking-widest"
         >
-          Ir al Dashboard
+          {t('sectionHub.goDashboard')}
         </button>
       </div>
     );
@@ -142,7 +144,7 @@ export default function SectionHubView({ submenuId }: SectionHubViewProps) {
               </h2>
             </div>
             {description && (
-              <p className="text-xs text-muted-foreground mt-1 max-w-2xl leading-relaxed">
+              <p className="text-sm text-muted-foreground mt-1 max-w-2xl leading-relaxed">
                 {description}
               </p>
             )}
@@ -151,8 +153,8 @@ export default function SectionHubView({ submenuId }: SectionHubViewProps) {
         <div className="flex items-center gap-2 px-3 py-2 rounded-xl border-2 border-primary/20 bg-primary/5 shrink-0">
           <Sparkles className="w-4 h-4 text-primary" aria-hidden="true" />
           <div>
-            <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Sección</p>
-            <p className="text-xs font-black text-primary tabular-nums">{visibleChildren.length} {visibleChildren.length === 1 ? 'opción' : 'opciones'}</p>
+            <p className="text-sm font-black uppercase tracking-widest text-muted-foreground">Sección</p>
+            <p className="text-sm font-black text-primary tabular-nums">{visibleChildren.length} {visibleChildren.length === 1 ? 'opción' : 'opciones'}</p>
           </div>
         </div>
       </div>
@@ -177,12 +179,12 @@ export default function SectionHubView({ submenuId }: SectionHubViewProps) {
                 {(child.isNew || child.isBeta) && (
                   <div className="absolute top-3 right-3 flex gap-1">
                     {child.isNew && (
-                      <span className="text-[9px] font-black uppercase tracking-widest bg-success/15 text-success px-2 py-0.5 rounded-full border border-success/30">
+                      <span className="text-sm font-black uppercase tracking-widest bg-success/15 text-success px-2 py-0.5 rounded-full border border-success/30">
                         Nuevo
                       </span>
                     )}
                     {child.isBeta && (
-                      <span className="text-[9px] font-black uppercase tracking-widest bg-warning/15 text-warning px-2 py-0.5 rounded-full border border-warning/30">
+                      <span className="text-sm font-black uppercase tracking-widest bg-warning/15 text-warning px-2 py-0.5 rounded-full border border-warning/30">
                         Beta
                       </span>
                     )}
@@ -196,11 +198,11 @@ export default function SectionHubView({ submenuId }: SectionHubViewProps) {
                 <h3 className="text-base font-black uppercase tracking-tight text-foreground mb-2">
                   {child.label}
                 </h3>
-                <p className="text-xs text-muted-foreground leading-relaxed mb-4 line-clamp-3">
+                <p className="text-sm text-muted-foreground leading-relaxed mb-4 line-clamp-3">
                   {childDesc}
                 </p>
 
-                <div className="inline-flex items-center gap-1.5 text-xs font-black uppercase tracking-widest text-primary">
+                <div className="inline-flex items-center gap-1.5 text-sm font-black uppercase tracking-widest text-primary">
                   Acceder
                   <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" aria-hidden="true" />
                 </div>
@@ -213,14 +215,14 @@ export default function SectionHubView({ submenuId }: SectionHubViewProps) {
           <p className="text-sm text-muted-foreground">
             No tienes permisos para acceder a ninguna opción de esta sección.
           </p>
-          <p className="text-xs text-muted-foreground/70">
+          <p className="text-sm text-muted-foreground/70">
             Contacta a un administrador si crees que es un error.
           </p>
         </div>
       )}
 
       {/* Footer con ayuda contextual */}
-      <div className="text-center text-[10px] text-muted-foreground/60 uppercase tracking-widest font-bold pt-4">
+      <div className="text-center text-sm text-muted-foreground/60 uppercase tracking-widest font-bold pt-4">
         Sección {submenu.label} · {visibleChildren.length} {visibleChildren.length === 1 ? 'vista disponible' : 'vistas disponibles'}
       </div>
     </div>

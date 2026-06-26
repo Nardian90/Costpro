@@ -16,6 +16,7 @@ import ViewSwitcher, { ViewMode as LayoutViewMode } from '@/components/ui/ViewSw
 import { CostSheetViewMode } from './CostSheetModeDropdown';
 import { useFocusTrap } from '@/hooks/ui/useFocusTrap';
 
+import { useTranslations } from 'next-intl';
 interface ActionItem {
   id: string;
   label: string;
@@ -77,7 +78,7 @@ const AccordionGroup = ({
       >
         <div className="flex items-center gap-3">
           <Icon className="w-4 h-4" />
-          <span className="text-[10px] font-black uppercase tracking-[0.2em]">{title}</span>
+          <span className="text-xs font-black uppercase tracking-[0.2em]">{title}</span>
         </div>
         <motion.div
           animate={prefersReducedMotion ? {} : { rotate: isOpen ? 180 : 0 }}
@@ -174,7 +175,7 @@ export const CostSheetActionsPanel: React.FC<CostSheetActionsPanelProps> = ({
         )}
       >
         <Icon className={cn("w-4.5 h-4.5", isActive ? "text-foreground" : "group-hover:text-sidebar-foreground transition-colors")} />
-        <span className="text-[10px] font-bold uppercase tracking-widest">{label}</span>
+        <span className="text-xs font-bold uppercase tracking-widest">{label}</span>
       </button>
     );
   };
@@ -213,8 +214,8 @@ export const CostSheetActionsPanel: React.FC<CostSheetActionsPanelProps> = ({
                   <Settings className="w-5 h-5 text-primary" />
                 </div>
                 <div>
-                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-sidebar-foreground block">Panel de Control</span>
-                    <span className="text-[8px] font-bold uppercase tracking-[0.4em] text-sidebar-foreground/50">{APP_DISPLAY_VERSION}</span>
+                    <span className="text-xs font-black uppercase tracking-[0.2em] text-sidebar-foreground block">Panel de Control</span>
+                    <span className="text-xs font-bold uppercase tracking-[0.4em] text-sidebar-foreground/50">{APP_DISPLAY_VERSION}</span>
                 </div>
               </div>
               <button type="button"
@@ -236,7 +237,7 @@ export const CostSheetActionsPanel: React.FC<CostSheetActionsPanelProps> = ({
                   onChange={(e) => setSearchTerm(e.target.value)}
                   placeholder="BUSCAR ACCIÓN..."
                   aria-label="Buscar acción"
-                  className="w-full h-11 bg-background/50 border border-primary/10 rounded-xl pl-9 pr-4 text-xs font-black focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all uppercase tracking-[0.2em] placeholder:text-muted-foreground/30"
+                  className="w-full h-11 bg-background/50 border border-primary/10 rounded-xl pl-9 pr-4 text-xs font-black focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all uppercase tracking-[0.2em] placeholder:text-muted-foreground/70"
                 />
               </div>
             </div>
@@ -248,7 +249,7 @@ export const CostSheetActionsPanel: React.FC<CostSheetActionsPanelProps> = ({
                 <div className="space-y-3">
                   <div className="flex items-center gap-2 px-1">
                     <LayoutGrid className="w-3.5 h-3.5 text-primary" />
-                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-sidebar-foreground/70">
+                    <span className="text-xs font-black uppercase tracking-[0.2em] text-sidebar-foreground/70">
                       Modo de Diseño
                     </span>
                   </div>
@@ -351,7 +352,7 @@ export const CostSheetActionsPanel: React.FC<CostSheetActionsPanelProps> = ({
 
             {/* Footer */}
             <div className="p-6 border-t border-sidebar-border/50 bg-sidebar/5">
-               <p className="text-[9px] font-black uppercase tracking-[0.3em] text-sidebar-foreground/50 text-center">
+               <p className="text-xs font-black uppercase tracking-[0.3em] text-sidebar-foreground/50 text-center">
                   Soporte: info@costpro.app
                </p>
             </div>

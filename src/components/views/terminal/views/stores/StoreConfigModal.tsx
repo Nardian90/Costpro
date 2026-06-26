@@ -16,6 +16,7 @@ import {
   Upload, X, ImageIcon
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useTranslations } from 'next-intl';
 
 /**
  * F2-T02: Modal de Configuración de Tienda con secciones y checklist de completitud.
@@ -64,6 +65,7 @@ export function StoreConfigModal({ isOpen, onClose, store }: StoreConfigModalPro
   const [activeSection, setActiveSection] = useState<Section>('general');
   const [saving, setSaving] = useState(false);
   // F2.5-4: estado de upload por campo (logo, signature, stamp)
+  const t = useTranslations('stores');
   const [uploading, setUploading] = useState<{ logo: boolean; signature: boolean; stamp: boolean }>({
     logo: false, signature: false, stamp: false,
   });
@@ -220,7 +222,7 @@ export function StoreConfigModal({ isOpen, onClose, store }: StoreConfigModalPro
         </span>
       }
       description={
-        <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground/70">
+        <span className="text-sm font-bold uppercase tracking-widest text-muted-foreground/70">
           Centraliza todos los ajustes de la tienda en un solo lugar
         </span>
       }
@@ -233,7 +235,7 @@ export function StoreConfigModal({ isOpen, onClose, store }: StoreConfigModalPro
             type="button"
             onClick={handleSave}
             disabled={saving}
-            className="flex-1 sm:flex-none h-11 font-bold uppercase tracking-widest text-xs"
+            className="flex-1 sm:flex-none h-11 font-bold uppercase tracking-widest text-sm"
           >
             {saving ? (
               <>
@@ -256,11 +258,11 @@ export function StoreConfigModal({ isOpen, onClose, store }: StoreConfigModalPro
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
               <CheckCircle2 className="w-4 h-4 text-primary" />
-              <span className="text-xs font-black uppercase tracking-widest text-primary">
+              <span className="text-sm font-black uppercase tracking-widest text-primary">
                 Tienda al {completion.percent}% configurada
               </span>
             </div>
-            <span className="text-xs text-muted-foreground">
+            <span className="text-sm text-muted-foreground">
               {completion.pending.length === 0 ? 'Completa' : `${4 - completion.pending.length}/4 secciones`}
             </span>
           </div>
@@ -275,7 +277,7 @@ export function StoreConfigModal({ isOpen, onClose, store }: StoreConfigModalPro
           {completion.pending.length > 0 && (
             <div className="mt-3 flex items-start gap-2">
               <AlertCircle className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0 mt-0.5" />
-              <p className="text-xs text-muted-foreground">
+              <p className="text-sm text-muted-foreground">
                 Pendiente: {completion.pending.map(p => (
                   <button
                     key={p}
@@ -339,7 +341,7 @@ export function StoreConfigModal({ isOpen, onClose, store }: StoreConfigModalPro
               </h3>
               {/* F2.5-4: Logo de la tienda con upload integrado */}
               <div className="space-y-2">
-                <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground">
+                <Label className="text-sm font-black uppercase tracking-widest text-muted-foreground">
                   Logo de la tienda
                 </Label>
                 <div className="flex items-center gap-3">
@@ -347,7 +349,7 @@ export function StoreConfigModal({ isOpen, onClose, store }: StoreConfigModalPro
                     {form.logo_url ? (
                       <img src={form.logo_url} alt="Logo" className="w-full h-full object-cover" />
                     ) : (
-                      <ImageIcon className="w-6 h-6 text-muted-foreground/40" />
+                      <ImageIcon className="w-6 h-6 text-muted-foreground/70" />
                     )}
                   </div>
                   <div className="flex-1 flex items-center gap-2">
@@ -374,39 +376,39 @@ export function StoreConfigModal({ isOpen, onClose, store }: StoreConfigModalPro
                         type="button"
                         onClick={() => clearImage('logo_url')}
                         className="p-2.5 min-h-[44px] min-w-[44px] rounded-lg bg-destructive/10 text-destructive hover:bg-destructive hover:text-foreground transition-all"
-                        aria-label="Quitar logo"
-                        title="Quitar logo"
+                        aria-label={t('removeLogo')}
+                        title={t('removeLogo')}
                       >
                         <X className="w-3.5 h-3.5" />
                       </button>
                     )}
                   </div>
                 </div>
-                <p className="text-[10px] text-muted-foreground/60">
+                <p className="text-sm text-muted-foreground/60">
                   JPG, PNG, WebP o GIF · máx 1MB · se muestra en tarjetas y facturas.
                 </p>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1.5 sm:col-span-2">
-                  <Label htmlFor="cfg-name" className="text-xs font-black uppercase tracking-widest text-muted-foreground">
+                  <Label htmlFor="cfg-name" className="text-sm font-black uppercase tracking-widest text-muted-foreground">
                     Nombre *
                   </Label>
                   <Input id="cfg-name" value={form.name} onChange={e => updateField('name', e.target.value)} maxLength={100} />
                 </div>
                 <div className="space-y-1.5 sm:col-span-2">
-                  <Label htmlFor="cfg-address" className="text-xs font-black uppercase tracking-widest text-muted-foreground">
+                  <Label htmlFor="cfg-address" className="text-sm font-black uppercase tracking-widest text-muted-foreground">
                     Dirección
                   </Label>
                   <Input id="cfg-address" value={form.address} onChange={e => updateField('address', e.target.value)} maxLength={200} placeholder="Calle, número, ciudad" />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="cfg-phone" className="text-xs font-black uppercase tracking-widest text-muted-foreground">
+                  <Label htmlFor="cfg-phone" className="text-sm font-black uppercase tracking-widest text-muted-foreground">
                     Teléfono
                   </Label>
                   <Input id="cfg-phone" value={form.phone} onChange={e => updateField('phone', e.target.value)} maxLength={20} placeholder="+53 5XXX XXXX" />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="cfg-email" className="text-xs font-black uppercase tracking-widest text-muted-foreground">
+                  <Label htmlFor="cfg-email" className="text-sm font-black uppercase tracking-widest text-muted-foreground">
                     Email
                   </Label>
                   <Input id="cfg-email" type="email" value={form.email} onChange={e => updateField('email', e.target.value)} maxLength={150} placeholder="tienda@dominio.com" />
@@ -423,19 +425,19 @@ export function StoreConfigModal({ isOpen, onClose, store }: StoreConfigModalPro
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <Label htmlFor="cfg-reeup" className="text-xs font-black uppercase tracking-widest text-muted-foreground">
+                  <Label htmlFor="cfg-reeup" className="text-sm font-black uppercase tracking-widest text-muted-foreground">
                     REEUP (11 dígitos)
                   </Label>
                   <Input id="cfg-reeup" value={form.reeup} onChange={e => updateField('reeup', e.target.value.replace(/\D/g, '').slice(0, 11))} maxLength={11} placeholder="12345678901" />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="cfg-nit" className="text-xs font-black uppercase tracking-widest text-muted-foreground">
+                  <Label htmlFor="cfg-nit" className="text-sm font-black uppercase tracking-widest text-muted-foreground">
                     NIT
                   </Label>
                   <Input id="cfg-nit" value={form.nit} onChange={e => updateField('nit', e.target.value)} maxLength={20} placeholder="N° identificación tributaria" />
                 </div>
                 <div className="space-y-1.5 sm:col-span-2">
-                  <Label htmlFor="cfg-bank" className="text-xs font-black uppercase tracking-widest text-muted-foreground">
+                  <Label htmlFor="cfg-bank" className="text-sm font-black uppercase tracking-widest text-muted-foreground">
                     Cuenta Bancaria
                   </Label>
                   <Input id="cfg-bank" value={form.bank_account} onChange={e => updateField('bank_account', e.target.value)} maxLength={30} placeholder="Banco y n° de cuenta" />
@@ -445,7 +447,7 @@ export function StoreConfigModal({ isOpen, onClose, store }: StoreConfigModalPro
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-border">
                 {/* Firma */}
                 <div className="space-y-2">
-                  <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground">
+                  <Label className="text-sm font-black uppercase tracking-widest text-muted-foreground">
                     Firma (escaneada)
                   </Label>
                   <div className="flex items-center gap-2">
@@ -453,7 +455,7 @@ export function StoreConfigModal({ isOpen, onClose, store }: StoreConfigModalPro
                       {form.signature_url ? (
                         <img src={form.signature_url} alt="Firma" className="w-full h-full object-contain" />
                       ) : (
-                        <ImageIcon className="w-5 h-5 text-muted-foreground/40" />
+                        <ImageIcon className="w-5 h-5 text-muted-foreground/70" />
                       )}
                     </div>
                     <div className="flex items-center gap-1.5">
@@ -466,7 +468,7 @@ export function StoreConfigModal({ isOpen, onClose, store }: StoreConfigModalPro
                           className="sr-only"
                         />
                         <span className={cn(
-                          "inline-flex items-center gap-1 h-11 px-3 rounded-lg text-[10px] font-black uppercase tracking-widest transition-colors",
+                          "inline-flex items-center gap-1 h-11 px-3 rounded-lg text-xs font-black uppercase tracking-widest transition-colors",
                           uploading.signature
                             ? "bg-muted text-muted-foreground opacity-60"
                             : "bg-primary/10 text-primary hover:bg-primary/20"
@@ -480,7 +482,7 @@ export function StoreConfigModal({ isOpen, onClose, store }: StoreConfigModalPro
                           type="button"
                           onClick={() => clearImage('signature_url')}
                           className="p-1.5 rounded-lg bg-destructive/10 text-destructive hover:bg-destructive hover:text-foreground transition-all"
-                          aria-label="Quitar firma"
+                          aria-label={t('removeSignature')}
                         >
                           <X className="w-3 h-3" />
                         </button>
@@ -490,7 +492,7 @@ export function StoreConfigModal({ isOpen, onClose, store }: StoreConfigModalPro
                 </div>
                 {/* Sello */}
                 <div className="space-y-2">
-                  <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground">
+                  <Label className="text-sm font-black uppercase tracking-widest text-muted-foreground">
                     Sello (escaneado)
                   </Label>
                   <div className="flex items-center gap-2">
@@ -498,7 +500,7 @@ export function StoreConfigModal({ isOpen, onClose, store }: StoreConfigModalPro
                       {form.stamp_url ? (
                         <img src={form.stamp_url} alt="Sello" className="w-full h-full object-contain" />
                       ) : (
-                        <ImageIcon className="w-5 h-5 text-muted-foreground/40" />
+                        <ImageIcon className="w-5 h-5 text-muted-foreground/70" />
                       )}
                     </div>
                     <div className="flex items-center gap-1.5">
@@ -511,7 +513,7 @@ export function StoreConfigModal({ isOpen, onClose, store }: StoreConfigModalPro
                           className="sr-only"
                         />
                         <span className={cn(
-                          "inline-flex items-center gap-1 h-11 px-3 rounded-lg text-[10px] font-black uppercase tracking-widest transition-colors",
+                          "inline-flex items-center gap-1 h-11 px-3 rounded-lg text-xs font-black uppercase tracking-widest transition-colors",
                           uploading.stamp
                             ? "bg-muted text-muted-foreground opacity-60"
                             : "bg-primary/10 text-primary hover:bg-primary/20"
@@ -525,7 +527,7 @@ export function StoreConfigModal({ isOpen, onClose, store }: StoreConfigModalPro
                           type="button"
                           onClick={() => clearImage('stamp_url')}
                           className="p-1.5 rounded-lg bg-destructive/10 text-destructive hover:bg-destructive hover:text-foreground transition-all"
-                          aria-label="Quitar sello"
+                          aria-label={t('removeStamp')}
                         >
                           <X className="w-3 h-3" />
                         </button>
@@ -534,7 +536,7 @@ export function StoreConfigModal({ isOpen, onClose, store }: StoreConfigModalPro
                   </div>
                 </div>
               </div>
-              <p className="text-[10px] text-muted-foreground/60">
+              <p className="text-sm text-muted-foreground/60">
                 Firma y sello aparecen en las fichas de costo oficiales (Res. 148/2023).
                 JPG, PNG, WebP o GIF · máx 1MB cada uno.
               </p>
@@ -551,9 +553,9 @@ export function StoreConfigModal({ isOpen, onClose, store }: StoreConfigModalPro
                 <div className="p-4 rounded-xl bg-success/5 border border-success/20">
                   <div className="flex items-center gap-2 mb-2">
                     <CheckCircle2 className="w-4 h-4 text-success" />
-                    <span className="text-sm font-bold text-success">Plantilla FC activa</span>
+                    <span className="text-sm font-bold text-success">{t('plantillaFcActiva')}</span>
                   </div>
-                  <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div className="grid grid-cols-2 gap-2 text-sm">
                     <div>
                       <span className="text-muted-foreground uppercase tracking-widest font-black">Modalidad:</span>
                       <p className="font-bold">{store.cost_template.modalidad || 'N/A'}</p>
@@ -563,18 +565,18 @@ export function StoreConfigModal({ isOpen, onClose, store }: StoreConfigModalPro
                       <p className="font-bold">{store.cost_template.pdf_format || 'N/A'}</p>
                     </div>
                   </div>
-                  <p className="text-xs text-muted-foreground mt-3">
+                  <p className="text-sm text-muted-foreground mt-3">
                     Para cambiar la plantilla, usa el botón "Info" en la tarjeta de tienda
                     y edita la sección FC. Se unificará aquí en F3-T05.
                   </p>
                 </div>
               ) : (
                 <div className="p-4 rounded-xl bg-muted/30 border border-border text-center">
-                  <Settings className="w-10 h-10 text-muted-foreground/30 mx-auto mb-2" />
+                  <Settings className="w-10 h-10 text-muted-foreground/70 mx-auto mb-2" />
                   <p className="text-sm font-bold uppercase tracking-widest text-muted-foreground mb-1">
                     Sin plantilla FC configurada
                   </p>
-                  <p className="text-xs text-muted-foreground/70">
+                  <p className="text-sm text-muted-foreground/70">
                     Cierra este modal y usa "Info" en la tarjeta para configurar la plantilla FC.
                   </p>
                 </div>
@@ -590,11 +592,11 @@ export function StoreConfigModal({ isOpen, onClose, store }: StoreConfigModalPro
               </h3>
               <div className="space-y-3">
                 <div className="space-y-1.5">
-                  <Label htmlFor="cfg-slug" className="text-xs font-black uppercase tracking-widest text-muted-foreground">
+                  <Label htmlFor="cfg-slug" className="text-sm font-black uppercase tracking-widest text-muted-foreground">
                     URL pública (slug)
                   </Label>
                   <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-mono text-muted-foreground pointer-events-none">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-mono text-muted-foreground pointer-events-none">
                       /tienda/
                     </span>
                     <Input
@@ -607,13 +609,13 @@ export function StoreConfigModal({ isOpen, onClose, store }: StoreConfigModalPro
                     />
                   </div>
                   {form.slug && (
-                    <p className="text-xs text-muted-foreground font-mono break-all">
+                    <p className="text-sm text-muted-foreground font-mono break-all">
                       {typeof window !== 'undefined' ? window.location.origin : ''}/tienda/{form.slug}
                     </p>
                   )}
                 </div>
                 <div className="p-3 rounded-xl bg-primary/5 border border-primary/10">
-                  <p className="text-xs text-muted-foreground leading-relaxed">
+                  <p className="text-sm text-muted-foreground leading-relaxed">
                     La tienda pública es accesible por cualquier persona con la URL.
                     Los productos visibles se gestionan individualmente desde el inventario
                     (toggle "Visible en tienda pública").

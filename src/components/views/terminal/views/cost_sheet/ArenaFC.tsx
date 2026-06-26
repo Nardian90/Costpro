@@ -44,6 +44,7 @@ import shoesTemplate from '@/lib/data/template-shoes';
 import logisticsTemplate from '@/lib/data/template-logistics';
 import lavarTemplate from "@/lib/data/template-lavar";
 
+import { useTranslations } from 'next-intl';
 // ── Types ──
 interface TemplateOption {
   id: string;
@@ -192,7 +193,7 @@ const ThemedTooltip = ({ active, payload, label, unit = "" }: any) => {
   if (!active || !payload?.length) return null;
   return (
     <div className="rounded-xl border border-border bg-popover/95 backdrop-blur-xl p-3 shadow-xl">
-      {label && <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1.5">{label}</p>}
+      {label && <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1.5">{label}</p>}
       {payload.map((entry: any, i: number) => (
         <div key={i} className="flex items-center gap-2 text-xs">
           <span className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }} />
@@ -208,6 +209,7 @@ const ThemedTooltip = ({ active, payload, label, unit = "" }: any) => {
 // Main Component
 // ════════════════════════════════════════════════════════════
 export default function ArenaFC() {
+  const t = useTranslations('costSheet');
   const prefersReducedMotion = useReducedMotion();
   // Helper to resolve formulas in names
   const resolveFormulaicString = (str: string, data: CostSheetData) => {
@@ -655,7 +657,7 @@ export default function ArenaFC() {
                     key={cat}
                     onClick={() => setSelectedCategory(cat)}
                     className={cn(
-                      "px-4 h-10 rounded-xl text-[10px] font-black uppercase tracking-widest whitespace-nowrap transition-all border flex items-center gap-2",
+                      "px-4 h-10 rounded-xl text-xs font-black uppercase tracking-widest whitespace-nowrap transition-all border flex items-center gap-2",
                       selectedCategory === cat
                         ? "bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/20"
                         : "bg-muted/30 text-muted-foreground border-transparent hover:border-border/60"
@@ -663,7 +665,7 @@ export default function ArenaFC() {
                   >
                     {cat === 'all' ? 'Todos' : cat}
                     <span className={cn(
-                      "px-1.5 py-0.5 rounded-md text-[8px] font-bold",
+                      "px-1.5 py-0.5 rounded-md text-xs font-bold",
                       selectedCategory === cat ? "bg-white/20 text-white" : "bg-muted-foreground/20 text-muted-foreground"
                     )}>
                       {count}
@@ -676,7 +678,7 @@ export default function ArenaFC() {
               <Button
                 variant="ghost"
                 onClick={() => { setSearchQuery(''); setSelectedCategory('all'); }}
-                className="h-10 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-foreground"
+                className="h-10 px-4 rounded-xl text-xs font-black uppercase tracking-widest text-muted-foreground hover:text-foreground"
               >
                 Limpiar Filtros
               </Button>
@@ -732,7 +734,7 @@ export default function ArenaFC() {
                       )}>
                         <FileText className="w-6 h-6" />
                       </div>
-                      <span className="text-[8px] font-black uppercase tracking-widest px-2.5 py-1 rounded-lg bg-muted/50 text-muted-foreground">
+                      <span className="text-xs font-black uppercase tracking-widest px-2.5 py-1 rounded-lg bg-muted/50 text-muted-foreground">
                         {t.category}
                       </span>
                     </div>
@@ -747,14 +749,14 @@ export default function ArenaFC() {
                         </h3>
                         {isSelected && (
                           <span className={cn(
-                            "text-[8px] font-black px-2 py-0.5 rounded-full border",
+                            "text-xs font-black px-2 py-0.5 rounded-full border",
                             isA ? "bg-primary/10 border-primary/20 text-primary" : "bg-violet-500/10 border-violet-500/20 text-violet-500"
                           )}>
                             SELECCIONADO
                           </span>
                         )}
                       </div>
-                      <p className="text-[10px] text-muted-foreground font-medium line-clamp-2">
+                      <p className="text-xs text-muted-foreground font-medium line-clamp-2">
                         {t.description}
                       </p>
                     </div>
@@ -762,14 +764,14 @@ export default function ArenaFC() {
                     <div className="flex items-center justify-between mt-4 pt-4 border-t border-border/10">
                       <div className="flex items-center gap-1.5">
                         {t.isSystem ? (
-                          <span className="px-1.5 py-0.5 rounded-md bg-primary/10 text-primary text-[8px] font-black uppercase tracking-tighter">Sistema</span>
+                          <span className="px-1.5 py-0.5 rounded-md bg-primary/10 text-primary text-xs font-black uppercase tracking-tighter">Sistema</span>
                         ) : (
-                          <span className="px-1.5 py-0.5 rounded-md bg-warning/10 text-warning text-[8px] font-black uppercase tracking-tighter">Usuario</span>
+                          <span className="px-1.5 py-0.5 rounded-md bg-warning/10 text-warning text-xs font-black uppercase tracking-tighter">Usuario</span>
                         )}
                       </div>
                       <div className="text-right">
-                        <span className="block text-[8px] font-black text-muted-foreground uppercase tracking-widest">Costo Total</span>
-                        <span className="text-[11px] font-mono font-black text-primary">
+                        <span className="block text-xs font-black text-muted-foreground uppercase tracking-widest">Costo Total</span>
+                        <span className="text-xs font-mono font-black text-primary">
                           ${t.totalCost?.toLocaleString('es-CU', { minimumFractionDigits: 2 }) || '0.00'}
                         </span>
                       </div>
@@ -797,8 +799,8 @@ export default function ArenaFC() {
                     {templateA ? 'A' : '?'}
                   </div>
                   <div className="flex flex-col">
-                    <span className="text-[8px] font-black uppercase tracking-widest text-primary">Competidor A</span>
-                    <span className="text-[11px] font-bold truncate max-w-[120px]">{templateA?.name || 'Seleccionar...'}</span>
+                    <span className="text-xs font-black uppercase tracking-widest text-primary">Competidor A</span>
+                    <span className="text-xs font-bold truncate max-w-[120px]">{templateA?.name || 'Seleccionar...'}</span>
                   </div>
                 </div>
 
@@ -813,8 +815,8 @@ export default function ArenaFC() {
                     {templateB ? 'B' : '?'}
                   </div>
                   <div className="flex flex-col">
-                    <span className="text-[8px] font-black uppercase tracking-widest text-violet-500">Competidor B</span>
-                    <span className="text-[11px] font-bold truncate max-w-[120px]">{templateB?.name || 'Seleccionar...'}</span>
+                    <span className="text-xs font-black uppercase tracking-widest text-violet-500">Competidor B</span>
+                    <span className="text-xs font-bold truncate max-w-[120px]">{templateB?.name || 'Seleccionar...'}</span>
                   </div>
                 </div>
               </div>
@@ -823,7 +825,7 @@ export default function ArenaFC() {
                 <Button
                   onClick={handleReset}
                   variant="ghost"
-                  className="rounded-2xl px-6 font-black uppercase tracking-widest text-[9px] text-muted-foreground hover:text-foreground"
+                  className="rounded-2xl px-6 font-black uppercase tracking-widest text-xs text-muted-foreground hover:text-foreground"
                 >
                   Limpiar
                 </Button>
@@ -886,7 +888,7 @@ export default function ArenaFC() {
                 <span className="text-muted-foreground font-bold">—</span>
                 <span className="px-4 py-2 rounded-xl bg-violet-500/10 text-violet-500 font-black">{comparison.nameB}: {comparison.scoreB} pts</span>
               </div>
-              <div className="flex items-center justify-center gap-8 mt-3 text-[10px]">
+              <div className="flex items-center justify-center gap-8 mt-3 text-xs">
                 <span className="text-primary font-black uppercase tracking-widest">
                   Margen A: {comparison.margenA.toFixed(1)}%
                 </span>
@@ -894,7 +896,7 @@ export default function ArenaFC() {
                   Margen B: {comparison.margenB.toFixed(1)}%
                 </span>
               </div>
-              <details className="text-[9px] text-muted-foreground mt-4 cursor-pointer hover:text-foreground transition-colors border-t border-border/10 pt-2">
+              <details className="text-xs text-muted-foreground mt-4 cursor-pointer hover:text-foreground transition-colors border-t border-border/10 pt-2">
                 <summary className="font-bold uppercase tracking-widest list-none flex items-center justify-center gap-1">
                   <Activity className="w-2.5 h-2.5" /> ¿Como se calcula el score?
                 </summary>
@@ -914,13 +916,13 @@ export default function ArenaFC() {
                   <div key={k.key} className="border border-border/60 rounded-2xl p-3 bg-card">
                     <div className="flex items-center gap-1.5 mb-2">
                       <Icon className="w-3 h-3 text-muted-foreground" />
-                      <span className="text-[8px] font-black uppercase tracking-widest text-muted-foreground">{k.label}</span>
+                      <span className="text-xs font-black uppercase tracking-widest text-muted-foreground">{k.label}</span>
                     </div>
-                    <div className="text-[11px] font-black font-mono text-primary">{fmt(k.valA)}</div>
-                    <div className="text-[9px] text-muted-foreground font-bold mb-1">{comparison.nameA}</div>
-                    <div className="text-[11px] font-black font-mono text-violet-500">{fmt(k.valB)}</div>
-                    <div className="text-[9px] text-muted-foreground font-bold">{comparison.nameB}</div>
-                    <div className={cn("text-[10px] font-black mt-1.5 pt-1.5 border-t border-border/30",
+                    <div className="text-xs font-black font-mono text-primary">{fmt(k.valA)}</div>
+                    <div className="text-xs text-muted-foreground font-bold mb-1">{comparison.nameA}</div>
+                    <div className="text-xs font-black font-mono text-violet-500">{fmt(k.valB)}</div>
+                    <div className="text-xs text-muted-foreground font-bold">{comparison.nameB}</div>
+                    <div className={cn("text-xs font-black mt-1.5 pt-1.5 border-t border-border/30",
                       k.deviationPct > 5 ? "text-destructive" : k.deviationPct < -5 ? "text-success" : "text-warning"
                     )}>
                       {k.deviationPct > 0 ? '+' : ''}{k.deviationPct.toFixed(1)}%
@@ -936,7 +938,7 @@ export default function ArenaFC() {
               <div className="border border-border/60 rounded-2xl overflow-hidden bg-card">
                 <div className="flex items-center gap-2 px-5 py-3 border-b border-border/20">
                   <Target className="w-4 h-4 text-violet-500" />
-                  <h3 className="text-[11px] font-black uppercase tracking-[0.15em]">Perfil de Estructura</h3>
+                  <h3 className="text-xs font-black uppercase tracking-[0.15em]">Perfil de Estructura</h3>
                 </div>
                 <div className="p-4">
                   <div className="h-[300px]">
@@ -958,7 +960,7 @@ export default function ArenaFC() {
               <div className="border border-border/60 rounded-2xl overflow-hidden bg-card">
                 <div className="flex items-center gap-2 px-5 py-3 border-b border-border/20">
                   <BarChart3 className="w-4 h-4 text-warning" />
-                  <h3 className="text-[11px] font-black uppercase tracking-[0.15em]">Estructura de Costos</h3>
+                  <h3 className="text-xs font-black uppercase tracking-[0.15em]">Estructura de Costos</h3>
                 </div>
                 <div className="p-4">
                   <div className="h-[300px]">
@@ -986,7 +988,7 @@ export default function ArenaFC() {
               <div className="border border-border/60 rounded-2xl overflow-hidden bg-card">
                 <div className="flex items-center gap-2 px-5 py-3 border-b border-border/20">
                   <Activity className="w-4 h-4 text-rose-500" />
-                  <h3 className="text-[11px] font-black uppercase tracking-[0.15em]">Mapa de Desviaciones</h3>
+                  <h3 className="text-xs font-black uppercase tracking-[0.15em]">Mapa de Desviaciones</h3>
                 </div>
                 <div className="p-4">
                   <div className="h-[250px]">
@@ -1013,18 +1015,18 @@ export default function ArenaFC() {
             <div className="border border-border/60 rounded-2xl overflow-hidden bg-card">
               <div className="flex items-center gap-2 px-5 py-3 border-b border-border/20">
                 <Layers className="w-4 h-4 text-primary" />
-                <h3 className="text-[11px] font-black uppercase tracking-[0.15em]">Desglose por Secciones</h3>
+                <h3 className="text-xs font-black uppercase tracking-[0.15em]">Desglose por Secciones</h3>
               </div>
               <div className="overflow-x-auto">
-                <table className="w-full text-[11px]">
+                <table className="w-full text-xs">
                   <thead>
                     <tr className="bg-muted/50">
-                      <th className="text-left px-4 py-2.5 font-black uppercase text-[9px] tracking-widest text-muted-foreground">Seccion</th>
-                      <th className="text-right px-4 py-2.5 font-black uppercase text-[9px] tracking-widest text-primary">{comparison.nameA}</th>
-                      <th className="text-right px-4 py-2.5 font-black uppercase text-[9px] tracking-widest text-violet-500">{comparison.nameB}</th>
-                      <th className="text-right px-4 py-2.5 font-black uppercase text-[9px] tracking-widest text-muted-foreground">Desviacion</th>
-                      <th className="text-center px-4 py-2.5 font-black uppercase text-[9px] tracking-widest text-muted-foreground">%</th>
-                      <th className="text-center px-4 py-2.5 font-black uppercase text-[9px] tracking-widest text-muted-foreground w-20">Ventaja</th>
+                      <th className="text-left px-4 py-2.5 font-black uppercase text-xs tracking-widest text-muted-foreground">Seccion</th>
+                      <th className="text-right px-4 py-2.5 font-black uppercase text-xs tracking-widest text-primary">{comparison.nameA}</th>
+                      <th className="text-right px-4 py-2.5 font-black uppercase text-xs tracking-widest text-violet-500">{comparison.nameB}</th>
+                      <th className="text-right px-4 py-2.5 font-black uppercase text-xs tracking-widest text-muted-foreground">Desviacion</th>
+                      <th className="text-center px-4 py-2.5 font-black uppercase text-xs tracking-widest text-muted-foreground">%</th>
+                      <th className="text-center px-4 py-2.5 font-black uppercase text-xs tracking-widest text-muted-foreground w-20">Ventaja</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1041,15 +1043,15 @@ export default function ArenaFC() {
                         </td>
                         <td className="px-4 py-2.5 text-center">
                           {s.winner === 'A' ? (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[9px] font-black">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-black">
                               <ArrowUpRight className="w-2.5 h-2.5" /> A
                             </span>
                           ) : s.winner === 'B' ? (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-violet-500/10 text-violet-500 text-[9px] font-black">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-violet-500/10 text-violet-500 text-xs font-black">
                               <ArrowUpRight className="w-2.5 h-2.5" /> B
                             </span>
                           ) : (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-warning/10 text-warning text-[9px] font-black">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-warning/10 text-warning text-xs font-black">
                               <Minus className="w-2.5 h-2.5" /> =
                             </span>
                           )}
@@ -1065,18 +1067,18 @@ export default function ArenaFC() {
             <div className="border border-border/60 rounded-2xl overflow-hidden bg-card">
               <div className="flex items-center gap-2 px-5 py-3 border-b border-border/20">
                 <BarChart3 className="w-4 h-4 text-violet-500" />
-                <h3 className="text-[11px] font-black uppercase tracking-[0.15em]">Indicadores Clave de Rendimiento</h3>
+                <h3 className="text-xs font-black uppercase tracking-[0.15em]">Indicadores Clave de Rendimiento</h3>
               </div>
               <div className="overflow-x-auto">
-                <table className="w-full text-[11px]">
+                <table className="w-full text-xs">
                   <thead>
                     <tr className="bg-muted/50">
-                      <th className="text-left px-4 py-2.5 font-black uppercase text-[9px] tracking-widest text-muted-foreground">Indicador</th>
-                      <th className="text-right px-4 py-2.5 font-black uppercase text-[9px] tracking-widest text-primary">{comparison.nameA}</th>
-                      <th className="text-right px-4 py-2.5 font-black uppercase text-[9px] tracking-widest text-violet-500">{comparison.nameB}</th>
-                      <th className="text-right px-4 py-2.5 font-black uppercase text-[9px] tracking-widest text-muted-foreground">Desviacion</th>
-                      <th className="text-right px-4 py-2.5 font-black uppercase text-[9px] tracking-widest text-muted-foreground">%</th>
-                      <th className="text-left px-4 py-2.5 font-black uppercase text-[9px] tracking-widest text-muted-foreground">Interpretacion</th>
+                      <th className="text-left px-4 py-2.5 font-black uppercase text-xs tracking-widest text-muted-foreground">Indicador</th>
+                      <th className="text-right px-4 py-2.5 font-black uppercase text-xs tracking-widest text-primary">{comparison.nameA}</th>
+                      <th className="text-right px-4 py-2.5 font-black uppercase text-xs tracking-widest text-violet-500">{comparison.nameB}</th>
+                      <th className="text-right px-4 py-2.5 font-black uppercase text-xs tracking-widest text-muted-foreground">Desviacion</th>
+                      <th className="text-right px-4 py-2.5 font-black uppercase text-xs tracking-widest text-muted-foreground">%</th>
+                      <th className="text-left px-4 py-2.5 font-black uppercase text-xs tracking-widest text-muted-foreground">Interpretacion</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1098,7 +1100,7 @@ export default function ArenaFC() {
                           <td className={cn("px-4 py-2.5 text-right font-mono font-bold", Math.abs(k.deviationPct) > 20 ? "text-destructive" : "text-muted-foreground")}>
                             {k.deviationPct > 0 ? '+' : ''}{k.deviationPct.toFixed(1)}%
                           </td>
-                          <td className="px-4 py-2.5 text-[10px] text-muted-foreground">{k.interpretation}</td>
+                          <td className="px-4 py-2.5 text-xs text-muted-foreground">{k.interpretation}</td>
                         </tr>
                       );
                     })}
@@ -1111,18 +1113,18 @@ export default function ArenaFC() {
             <div className="border border-border/60 rounded-2xl overflow-hidden bg-card">
               <div className="flex items-center gap-2 px-5 py-3 border-b border-border/20">
                 <FileText className="w-4 h-4 text-cyan-500" />
-                <h3 className="text-[11px] font-black uppercase tracking-[0.15em]">Comparacion de Anexos</h3>
+                <h3 className="text-xs font-black uppercase tracking-[0.15em]">Comparacion de Anexos</h3>
               </div>
               <div className="overflow-x-auto">
-                <table className="w-full text-[11px]">
+                <table className="w-full text-xs">
                   <thead>
                     <tr className="bg-muted/50">
-                      <th className="text-left px-4 py-2.5 font-black uppercase text-[9px] tracking-widest text-muted-foreground">Anexo</th>
-                      <th className="text-center px-4 py-2.5 font-black uppercase text-[9px] tracking-widest text-primary">Reg. A</th>
-                      <th className="text-center px-4 py-2.5 font-black uppercase text-[9px] tracking-widest text-violet-500">Reg. B</th>
-                      <th className="text-right px-4 py-2.5 font-black uppercase text-[9px] tracking-widest text-primary">Total A</th>
-                      <th className="text-right px-4 py-2.5 font-black uppercase text-[9px] tracking-widest text-violet-500">Total B</th>
-                      <th className="text-center px-4 py-2.5 font-black uppercase text-[9px] tracking-widest text-muted-foreground">Desv. %</th>
+                      <th className="text-left px-4 py-2.5 font-black uppercase text-xs tracking-widest text-muted-foreground">Anexo</th>
+                      <th className="text-center px-4 py-2.5 font-black uppercase text-xs tracking-widest text-primary">Reg. A</th>
+                      <th className="text-center px-4 py-2.5 font-black uppercase text-xs tracking-widest text-violet-500">Reg. B</th>
+                      <th className="text-right px-4 py-2.5 font-black uppercase text-xs tracking-widest text-primary">Total A</th>
+                      <th className="text-right px-4 py-2.5 font-black uppercase text-xs tracking-widest text-violet-500">Total B</th>
+                      <th className="text-center px-4 py-2.5 font-black uppercase text-xs tracking-widest text-muted-foreground">Desv. %</th>
                     </tr>
                   </thead>
                   <tbody>

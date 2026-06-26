@@ -72,9 +72,10 @@ function CategoryCombobox({
           type="button"
           role="combobox"
           aria-expanded={open}
+          aria-controls="catalog-category-list"
           aria-label={`Categoría de ${productName}`}
           className={cn(
-            "flex items-center justify-between gap-1 w-full min-w-[150px] px-2.5 py-1.5 rounded-lg text-[11px] font-bold outline-none focus:ring-2 focus:ring-primary/40 cursor-pointer transition-all border",
+            "flex items-center justify-between gap-1 w-full min-w-[150px] px-2.5 py-1.5 rounded-lg text-xs font-bold outline-none focus:ring-2 focus:ring-primary/40 cursor-pointer transition-all border",
             value
               ? "bg-primary/10 text-primary border-primary/25 hover:bg-primary/15"
               : "bg-destructive/10 text-destructive border-destructive/30 hover:bg-destructive/15"
@@ -86,7 +87,7 @@ function CategoryCombobox({
           <ChevronDown className="w-3 h-3 shrink-0 opacity-60" />
         </button>
       </PopoverTrigger>
-      <PopoverContent className="w-[220px] p-0" align="start">
+      <PopoverContent id="catalog-category-list" className="w-[220px] p-0" align="start">
         <Command>
           <CommandInput placeholder="Buscar categoría..." className="h-8 text-xs" />
           <CommandList className="max-h-[200px]">
@@ -144,14 +145,15 @@ function UnitCombobox({
           type="button"
           role="combobox"
           aria-expanded={open}
+          aria-controls="catalog-unit-list"
           aria-label={`Unidad de medida de ${productName}`}
-          className="flex items-center justify-between gap-1 w-full min-w-[90px] px-2.5 py-1.5 rounded-lg text-[11px] font-bold bg-muted/30 text-foreground border border-border/50 hover:bg-muted/50 outline-none focus:ring-2 focus:ring-primary/40 cursor-pointer transition-all"
+          className="flex items-center justify-between gap-1 w-full min-w-[90px] px-2.5 py-1.5 rounded-lg text-xs font-bold bg-muted/30 text-foreground border border-border/50 hover:bg-muted/50 outline-none focus:ring-2 focus:ring-primary/40 cursor-pointer transition-all"
         >
           <span className="truncate flex-1 text-left">{value}</span>
           <ChevronDown className="w-3 h-3 shrink-0 opacity-60" />
         </button>
       </PopoverTrigger>
-      <PopoverContent className="w-[160px] p-0" align="start">
+      <PopoverContent id="catalog-unit-list" className="w-[160px] p-0" align="start">
         <Command>
           <CommandInput placeholder="Buscar unidad..." className="h-8 text-xs" />
           <CommandList className="max-h-[200px]">

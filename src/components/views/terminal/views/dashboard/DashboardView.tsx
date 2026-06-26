@@ -27,7 +27,7 @@ import MultiStoreDashboardView from './MultiStoreDashboardView';
 
 // Lazy load heavy dashboard components to improve TBT and LCP
 const ConcentricDashboardRing = dynamic(() => import('./ConcentricDashboardRing').then(mod => mod.ConcentricDashboardRing), {
-  loading: () => <div className="h-[280px] w-[280px] rounded-2xl bg-muted/20 animate-pulse flex items-center justify-center text-xs text-muted-foreground uppercase font-bold font-display">...</div>,
+  loading: () => <div className="h-[280px] w-[280px] rounded-2xl bg-muted/20 animate-pulse flex items-center justify-center text-sm text-muted-foreground uppercase font-bold font-display">...</div>,
   ssr: false
 });
 
@@ -90,7 +90,7 @@ function DashboardViewImpl() {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-3xl font-bold font-display text-foreground tracking-tight">{t('title')}</h2>
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mt-1">{t('subtitle')}</p>
+          <p className="text-sm font-semibold text-muted-foreground uppercase tracking-widest mt-1">{t('subtitle')}</p>
         </div>
         <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
             <ToggleGroup
@@ -99,13 +99,13 @@ function DashboardViewImpl() {
               onValueChange={(v) => { if (v) setTimeRange(v as 'day' | 'month' | 'year') }}
               className="bg-muted rounded-xl p-1 w-full sm:w-auto"
             >
-              <ToggleGroupItem value="day" className="flex-1 sm:flex-none text-xs font-semibold uppercase tracking-wider px-4 py-3 min-h-[44px] rounded-lg data-[state=on]:bg-primary data-[state=on]:text-primary-foreground transition-all">
+              <ToggleGroupItem value="day" className="flex-1 sm:flex-none text-sm font-semibold uppercase tracking-wider px-4 py-3 min-h-[44px] rounded-lg data-[state=on]:bg-primary data-[state=on]:text-primary-foreground transition-all">
                 {t('day')}
               </ToggleGroupItem>
-              <ToggleGroupItem value="month" className="flex-1 sm:flex-none text-xs font-semibold uppercase tracking-wider px-4 py-3 min-h-[44px] rounded-lg data-[state=on]:bg-primary data-[state=on]:text-primary-foreground transition-all">
+              <ToggleGroupItem value="month" className="flex-1 sm:flex-none text-sm font-semibold uppercase tracking-wider px-4 py-3 min-h-[44px] rounded-lg data-[state=on]:bg-primary data-[state=on]:text-primary-foreground transition-all">
                 {t('month')}
               </ToggleGroupItem>
-              <ToggleGroupItem value="year" className="flex-1 sm:flex-none text-xs font-semibold uppercase tracking-wider px-4 py-3 min-h-[44px] rounded-lg data-[state=on]:bg-primary data-[state=on]:text-primary-foreground transition-all">
+              <ToggleGroupItem value="year" className="flex-1 sm:flex-none text-sm font-semibold uppercase tracking-wider px-4 py-3 min-h-[44px] rounded-lg data-[state=on]:bg-primary data-[state=on]:text-primary-foreground transition-all">
                 {t('year')}
               </ToggleGroupItem>
             </ToggleGroup>
@@ -165,18 +165,18 @@ function DashboardViewImpl() {
                 <div className="grid grid-cols-3 gap-4 sm:gap-8 w-full max-w-sm mt-4">
                   <div className="flex flex-col items-center">
                     <div className="w-2 h-2 rounded-full bg-primary mb-2"></div>
-                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t('sales')}</span>
+                    <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">{t('sales')}</span>
                     <span className="text-sm font-bold font-display text-foreground tabular-nums">{formatCurrency(sales)}</span>
                   </div>
                   <div className="flex flex-col items-center">
                     <div className="w-2 h-2 rounded-full bg-muted-foreground/50 mb-2"></div>
-                    <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">{t('costs')}</span>
+                    <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">{t('costs')}</span>
                     <span className="text-sm font-bold font-display text-foreground tabular-nums">{formatCurrency(costs)}</span>
                   </div>
                   <div className="flex flex-col items-center">
                     {/* FIX UX-001: was bg-[#00E0FF], now uses semantic success token */}
                     <div className="w-2 h-2 rounded-full bg-success mb-2"></div>
-                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t('profit')}</span>
+                    <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">{t('profit')}</span>
                     <span className="text-sm font-bold font-display text-foreground tabular-nums">{formatCurrency(profit)}</span>
                   </div>
                 </div>
@@ -186,7 +186,7 @@ function DashboardViewImpl() {
               <section className="space-y-4">
                 <div className="flex justify-between items-end px-1">
                   <h2 className="text-sm font-semibold tracking-wider uppercase text-muted-foreground">{t('salesSummary')}</h2>
-                  <span className="text-xs font-mono text-primary animate-pulse uppercase font-semibold">{t('liveUpdates')}</span>
+                  <span className="text-sm font-mono text-primary animate-pulse uppercase font-semibold">{t('liveUpdates')}</span>
                 </div>
                 <ExecutiveKpiCards
                   sales={sales}
@@ -226,7 +226,7 @@ function DashboardViewImpl() {
                   className="flex items-center justify-center gap-3 py-3 px-4 rounded-2xl border border-border/50 bg-card shadow-sm hover:bg-muted/50 active:scale-[0.98] transition-all"
                 >
                   <Settings2 className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t('settings')}</span>
+                  <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">{t('settings')}</span>
                 </button>
               </div>
 
@@ -250,7 +250,7 @@ function SummaryPill({ icon, label, value }: { icon: React.ReactNode; label: str
     <div className="flex items-center gap-2 p-3 rounded-xl bg-card border border-border/50">
       <div className="text-muted-foreground">{icon}</div>
       <div className="min-w-0">
-        <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider truncate">{label}</p>
+        <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wider truncate">{label}</p>
         <p className="text-sm font-bold font-display text-foreground tabular-nums">{value}</p>
       </div>
     </div>
@@ -273,8 +273,8 @@ function DashboardAlertsSection({ products, onViewInventory, onGoToCatalog }: { 
           <div key={product.id} className="p-4 rounded-xl bg-destructive/5 border border-destructive/10 hover:bg-destructive/10 transition-colors">
             <div className="flex justify-between items-center">
               <div className="overflow-hidden">
-                <div className="font-semibold text-xs text-foreground truncate">{product.name}</div>
-                <div className="text-xs font-mono text-muted-foreground uppercase">{product.sku}</div>
+                <div className="font-semibold text-sm text-foreground truncate">{product.name}</div>
+                <div className="text-sm font-mono text-muted-foreground uppercase">{product.sku}</div>
               </div>
               <div className="text-destructive font-bold text-sm whitespace-nowrap ml-2 tabular-nums">{product.stock_current} {t('units')}</div>
             </div>
@@ -283,7 +283,7 @@ function DashboardAlertsSection({ products, onViewInventory, onGoToCatalog }: { 
         {criticalProducts.length > 4 && (
           <button type="button"
             onClick={onViewInventory}
-            className="w-full py-3 min-h-[44px] text-xs font-semibold uppercase text-primary hover:underline mt-2"
+            className="w-full py-3 min-h-[44px] text-sm font-semibold uppercase text-primary hover:underline mt-2"
           >
             {t('viewAllAlerts')} ({criticalProducts.length})
           </button>

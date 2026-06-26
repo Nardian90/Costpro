@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
 
+import { useTranslations } from 'next-intl';
 type StructureType = 'simple' | 'industrial' | 'crane' | 'mezzanine' | 'heavy';
 type PrecisionMode = 'fast' | 'standard' | 'conservative';
 
@@ -175,7 +176,7 @@ export const SteelStructureCalculator: React.FC = () => {
             <Calculator className="w-8 h-8 text-primary" />
             Calculadora de Estructura Metálica (PEMB)
           </h2>
-          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-1">
+          <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mt-1">
             Estimación Paramétrica de Acero Basada en Lógica Determinística v1.0
           </p>
         </div>
@@ -183,7 +184,7 @@ export const SteelStructureCalculator: React.FC = () => {
           variant={showHelp ? "default" : "outline"}
           size="sm"
           onClick={() => setShowHelp(!showHelp)}
-          className="rounded-xl font-black uppercase text-[10px] tracking-widest h-9"
+          className="rounded-xl font-black uppercase text-xs tracking-widest h-9"
         >
           {showHelp ? <X className="w-4 h-4 mr-2" /> : <HelpCircle className="w-4 h-4 mr-2" />}
           {showHelp ? "Cerrar Ayuda" : "¿Cómo se calcula?"}
@@ -201,7 +202,7 @@ export const SteelStructureCalculator: React.FC = () => {
               </h3>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label className="text-[10px] uppercase font-bold text-muted-foreground">Largo (m)</Label>
+                  <Label className="text-xs uppercase font-bold text-muted-foreground">Largo (m)</Label>
                   <Input
                     type="number"
                     value={inputs.largo}
@@ -210,7 +211,7 @@ export const SteelStructureCalculator: React.FC = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-[10px] uppercase font-bold text-muted-foreground">Ancho (m)</Label>
+                  <Label className="text-xs uppercase font-bold text-muted-foreground">Ancho (m)</Label>
                   <Input
                     type="number"
                     value={inputs.ancho}
@@ -219,7 +220,7 @@ export const SteelStructureCalculator: React.FC = () => {
                   />
                 </div>
                 <div className="space-y-2 col-span-2">
-                  <Label className="text-[10px] uppercase font-bold text-muted-foreground">Altura a Hombro (m)</Label>
+                  <Label className="text-xs uppercase font-bold text-muted-foreground">Altura a Hombro (m)</Label>
                   <Input
                     type="number"
                     value={inputs.altura}
@@ -236,7 +237,7 @@ export const SteelStructureCalculator: React.FC = () => {
               </h3>
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label className="text-[10px] uppercase font-bold text-muted-foreground">Tipo de Estructura</Label>
+                  <Label className="text-xs uppercase font-bold text-muted-foreground">Tipo de Estructura</Label>
                   <Select
                     value={inputs.tipoEstructura}
                     onValueChange={(v: StructureType) => setInputs({...inputs, tipoEstructura: v})}
@@ -254,7 +255,7 @@ export const SteelStructureCalculator: React.FC = () => {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-[10px] uppercase font-bold text-muted-foreground">Modo de Precisión</Label>
+                  <Label className="text-xs uppercase font-bold text-muted-foreground">Modo de Precisión</Label>
                   <Select
                     value={inputs.modoPrecision}
                     onValueChange={(v: PrecisionMode) => setInputs({...inputs, modoPrecision: v})}
@@ -278,28 +279,28 @@ export const SteelStructureCalculator: React.FC = () => {
               </h3>
               <div className="grid grid-cols-1 gap-3 bg-muted/30 p-4 rounded-2xl border border-border/50">
                 <div className="flex items-center justify-between">
-                  <Label className="text-[11px] font-bold">Cerramientos Metálicos (+2)</Label>
+                  <Label className="text-xs font-bold">Cerramientos Metálicos (+2)</Label>
                   <Switch
                     checked={inputs.extras.cerramientos}
                     onCheckedChange={(v) => setInputs({...inputs, extras: {...inputs.extras, cerramientos: v}})}
                   />
                 </div>
                 <div className="flex items-center justify-between">
-                  <Label className="text-[11px] font-bold">Aislamiento Térmico (+1.5)</Label>
+                  <Label className="text-xs font-bold">Aislamiento Térmico (+1.5)</Label>
                   <Switch
                     checked={inputs.extras.aislamiento}
                     onCheckedChange={(v) => setInputs({...inputs, extras: {...inputs.extras, aislamiento: v}})}
                   />
                 </div>
                 <div className="flex items-center justify-between">
-                  <Label className="text-[11px] font-bold">Puertas Industriales (+1)</Label>
+                  <Label className="text-xs font-bold">Puertas Industriales (+1)</Label>
                   <Switch
                     checked={inputs.extras.puertas}
                     onCheckedChange={(v) => setInputs({...inputs, extras: {...inputs.extras, puertas: v}})}
                   />
                 </div>
                 <div className="flex items-center justify-between">
-                  <Label className="text-[11px] font-bold">Lucernarios (+0.5)</Label>
+                  <Label className="text-xs font-bold">Lucernarios (+0.5)</Label>
                   <Switch
                     checked={inputs.extras.lucernarios}
                     onCheckedChange={(v) => setInputs({...inputs, extras: {...inputs.extras, lucernarios: v}})}
@@ -314,7 +315,7 @@ export const SteelStructureCalculator: React.FC = () => {
               </h3>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label className="text-[10px] uppercase font-bold text-muted-foreground">Precio / Ton</Label>
+                  <Label className="text-xs uppercase font-bold text-muted-foreground">Precio / Ton</Label>
                   <Input
                     type="number"
                     value={inputs.precioTonelada}
@@ -323,7 +324,7 @@ export const SteelStructureCalculator: React.FC = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-[10px] uppercase font-bold text-muted-foreground">Contingencia (%)</Label>
+                  <Label className="text-xs uppercase font-bold text-muted-foreground">Contingencia (%)</Label>
                   <Input
                     type="number"
                     value={inputs.contingencia}
@@ -352,7 +353,7 @@ export const SteelStructureCalculator: React.FC = () => {
                     </div>
                     <div>
                       <h4 className="text-lg font-black uppercase tracking-tighter italic">Metodología de Cálculo</h4>
-                      <p className="text-[10px] font-bold text-primary/70 uppercase tracking-widest">Transparencia Total en Estimación</p>
+                      <p className="text-xs font-bold text-primary/70 uppercase tracking-widest">Transparencia Total en Estimación</p>
                     </div>
                   </div>
 
@@ -381,7 +382,7 @@ export const SteelStructureCalculator: React.FC = () => {
                   </div>
 
                   <div className="bg-background/50 rounded-2xl p-6 border border-primary/10">
-                    <code className="text-[11px] font-mono block whitespace-pre text-primary/80">
+                    <code className="text-xs font-mono block whitespace-pre text-primary/80">
                       Kg_m2 = (Base_Altura + Ajuste_Ancho + Ajuste_Esbeltez + Extras) × Factor_Tipo_Estructura
                     </code>
                   </div>
@@ -426,21 +427,21 @@ export const SteelStructureCalculator: React.FC = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <Card className="rounded-3xl border-border/40 shadow-xl shadow-black/5 overflow-hidden">
                       <div className="px-6 py-4 border-b border-border/40 bg-muted/20 flex justify-between items-center">
-                        <h4 className="text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-2">
+                        <h4 className="text-xs font-black uppercase tracking-[0.2em] flex items-center gap-2">
                           <TrendingDown className="w-3.5 h-3.5" /> Simulación de Escenarios
                         </h4>
                       </div>
                       <CardContent className="p-6 space-y-6">
                         <div className="space-y-4">
                           <div className="flex justify-between items-end">
-                            <span className="text-[10px] font-bold text-muted-foreground uppercase">Escenario Base</span>
+                            <span className="text-xs font-bold text-muted-foreground uppercase">Escenario Base</span>
                             <span className="text-xl font-black">{formatNumber(results.toneladas)} Ton</span>
                           </div>
                           <div className="relative h-2 bg-muted rounded-full overflow-hidden">
                             <div className="absolute top-0 bottom-0 left-[10%] right-[10%] bg-primary/20" />
                             <div className="absolute top-0 bottom-0 left-[50%] w-1 bg-primary -translate-x-1/2 z-10" />
                           </div>
-                          <div className="flex justify-between text-[9px] font-black text-muted-foreground uppercase tracking-widest">
+                          <div className="flex justify-between text-xs font-black text-muted-foreground uppercase tracking-widest">
                             <div className="text-left">
                               <p className="text-success">Mínimo (-10%)</p>
                               <p className="text-foreground">{formatNumber(results.rangoTon[0])} Ton</p>
@@ -454,7 +455,7 @@ export const SteelStructureCalculator: React.FC = () => {
 
                         <div className="pt-4 border-t border-border/40 space-y-4">
                            <div className="flex justify-between items-center">
-                              <span className="text-[10px] font-bold text-muted-foreground uppercase">Rango de Inversión</span>
+                              <span className="text-xs font-bold text-muted-foreground uppercase">Rango de Inversión</span>
                               <span className="text-sm font-black text-primary">
                                 {formatCurrency(results.rangoCosto[0])} - {formatCurrency(results.rangoCosto[1])}
                               </span>
@@ -465,7 +466,7 @@ export const SteelStructureCalculator: React.FC = () => {
 
                     <Card className="rounded-3xl border-border/40 shadow-xl shadow-black/5 overflow-hidden">
                       <div className="px-6 py-4 border-b border-border/40 bg-muted/20">
-                        <h4 className="text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-2">
+                        <h4 className="text-xs font-black uppercase tracking-[0.2em] flex items-center gap-2">
                           <Info className="w-3.5 h-3.5" /> Desglose del Motor
                         </h4>
                       </div>
@@ -483,7 +484,7 @@ export const SteelStructureCalculator: React.FC = () => {
                           {results.rawKgm2 !== results.kgm2 && (
                             <div className="mt-4 p-3 bg-warning/10 border border-warning/20 rounded-xl flex gap-3">
                               <AlertCircle className="w-4 h-4 text-warning shrink-0" />
-                              <p className="text-[10px] text-amber-700 font-bold leading-relaxed">
+                              <p className="text-xs text-amber-700 font-bold leading-relaxed">
                                 EL SISTEMA HA APLICADO UN LÍMITE DE SEGURIDAD (SANITY CHECK) YA QUE EL VALOR TEÓRICO ({formatNumber(results.rawKgm2, 1)}) ESTABA FUERA DEL RANGO DE DISEÑO ESTÁNDAR (25-65 KG).
                               </p>
                             </div>
@@ -529,12 +530,12 @@ const ResultCard: React.FC<ResultCardProps> = ({ label, value, unit, icon: Icon,
         )}>
           <Icon className="w-5 h-5" />
         </div>
-        <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-70">{label}</p>
+        <p className="text-xs font-black uppercase tracking-[0.2em] opacity-70">{label}</p>
         <div className="flex items-baseline gap-1">
           <span className="text-3xl font-black tracking-tighter italic">{value}</span>
-          {unit && <span className="text-[10px] font-bold uppercase">{unit}</span>}
+          {unit && <span className="text-xs font-bold uppercase">{unit}</span>}
         </div>
-        <p className="text-[9px] font-bold uppercase tracking-widest opacity-60 mt-2">{description}</p>
+        <p className="text-xs font-bold uppercase tracking-widest opacity-60 mt-2">{description}</p>
       </CardContent>
     </Card>
   );
@@ -542,7 +543,7 @@ const ResultCard: React.FC<ResultCardProps> = ({ label, value, unit, icon: Icon,
 
 const BreakdownRow: React.FC<{ label: string; value: string; warning?: boolean }> = ({ label, value, warning }) => (
   <div className="flex justify-between items-center py-2 border-b border-border/30 last:border-0">
-    <span className="text-[10px] font-bold text-muted-foreground uppercase">{label}</span>
+    <span className="text-xs font-bold text-muted-foreground uppercase">{label}</span>
     <span className={cn("text-xs font-black", warning ? "text-warning" : "text-foreground")}>{value}</span>
   </div>
 );

@@ -130,7 +130,7 @@ export function CreateStoreQuickModal({
     <BaseModal
       open={isOpen}
       onOpenChange={(open) => !open && onClose()}
-      aria-label="Crear nueva tienda rápidamente"
+      aria-label={t('createQuick.ariaLabel')}
       title={
         <span className="text-[clamp(1.25rem,4vw,1.5rem)] font-black uppercase tracking-tighter text-primary flex items-center gap-2">
           <Rocket className="w-5 h-5" />
@@ -138,7 +138,7 @@ export function CreateStoreQuickModal({
         </span>
       }
       description={
-        <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground/70">
+        <span className="text-sm font-bold uppercase tracking-widest text-muted-foreground/70">
           Crea tu tienda en segundos · configura los detalles después
         </span>
       }
@@ -151,7 +151,7 @@ export function CreateStoreQuickModal({
             type="submit"
             form="create-store-quick-form"
             disabled={!canSubmit}
-            className="flex-1 sm:flex-none h-11 font-bold uppercase tracking-widest text-xs"
+            className="flex-1 sm:flex-none h-11 font-bold uppercase tracking-widest text-sm"
           >
             {isSubmitting ? (
               <>
@@ -171,7 +171,7 @@ export function CreateStoreQuickModal({
       <form id="create-store-quick-form" onSubmit={handleSubmit} className="space-y-5 py-4">
         {/* Mensaje explicativo */}
         <div className="p-3 rounded-xl bg-primary/5 border border-primary/10">
-          <p className="text-xs text-muted-foreground leading-relaxed">
+          <p className="text-sm text-muted-foreground leading-relaxed">
             Solo necesitas un <strong className="text-primary">nombre</strong> para empezar.
             Los datos fiscales (REEUP, NIT, cuenta bancaria), logo y configuración de FC
             los completas después desde la página de Configuración de Tienda.
@@ -180,7 +180,7 @@ export function CreateStoreQuickModal({
 
         {/* Campo: Nombre */}
         <div className="space-y-2">
-          <Label htmlFor="quick-name" className="text-xs font-black uppercase tracking-widest text-primary/70">
+          <Label htmlFor="quick-name" className="text-sm font-black uppercase tracking-widest text-primary/70">
             Nombre de la Tienda <span className="text-destructive">*</span>
           </Label>
           <Input
@@ -194,18 +194,18 @@ export function CreateStoreQuickModal({
             required
             disabled={isSubmitting}
           />
-          <p className="text-[10px] text-muted-foreground/60 font-medium">
+          <p className="text-sm text-muted-foreground/60 font-medium">
             Cómo se mostrará la tienda en el sistema y en facturas.
           </p>
         </div>
 
         {/* Campo: Slug auto-generado */}
         <div className="space-y-2">
-          <Label htmlFor="quick-slug" className="text-xs font-black uppercase tracking-widest text-primary/70">
+          <Label htmlFor="quick-slug" className="text-sm font-black uppercase tracking-widest text-primary/70">
             URL pública (slug)
           </Label>
           <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-mono text-muted-foreground pointer-events-none">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-mono text-muted-foreground pointer-events-none">
               /tienda/
             </span>
             <Input
@@ -226,12 +226,12 @@ export function CreateStoreQuickModal({
                 {slugChecking ? (
                   <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
                 ) : slugAvailable === true ? (
-                  <span className="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-success">
+                  <span className="flex items-center gap-1 text-sm font-black uppercase tracking-widest text-success">
                     <Check className="w-3.5 h-3.5" />
                     Disponible
                   </span>
                 ) : slugAvailable === false ? (
-                  <span className="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-destructive">
+                  <span className="flex items-center gap-1 text-sm font-black uppercase tracking-widest text-destructive">
                     <X className="w-3.5 h-3.5" />
                     Tomado
                   </span>
@@ -239,7 +239,7 @@ export function CreateStoreQuickModal({
               </div>
             )}
           </div>
-          <p className="text-[10px] text-muted-foreground/60 font-medium">
+          <p className="text-sm text-muted-foreground/60 font-medium">
             Se autogenera desde el nombre. Edítalo si quieres una URL personalizada.
           </p>
         </div>
@@ -247,10 +247,10 @@ export function CreateStoreQuickModal({
         {/* Preview de URL completa */}
         {slug.length >= 2 && (
           <div className="p-3 rounded-xl bg-muted/30 border border-border">
-            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">
+            <p className="text-sm font-black uppercase tracking-widest text-muted-foreground mb-1">
               Vista previa de URL pública
             </p>
-            <p className="text-xs font-mono text-foreground break-all">
+            <p className="text-sm font-mono text-foreground break-all">
               {typeof window !== 'undefined' ? window.location.origin : 'https://tu-dominio.com'}/tienda/{slug}
             </p>
           </div>
@@ -260,7 +260,7 @@ export function CreateStoreQuickModal({
         {slugAvailable === false && (
           <div className="flex items-start gap-2 p-3 rounded-xl bg-destructive/5 border border-destructive/20">
             <AlertCircle className="w-4 h-4 text-destructive flex-shrink-0 mt-0.5" />
-            <p className="text-xs text-destructive">
+            <p className="text-sm text-destructive">
               Este slug ya está en uso por otra tienda. Prueba con una variante
               (ej: agrega un número o tu ciudad).
             </p>

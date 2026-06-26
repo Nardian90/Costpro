@@ -13,7 +13,7 @@ export { useAcademyStore } from './useAcademyStore';
 // Ahora cada submenu (punto_venta, almacen_*, analitica) tiene su propia vista
 // "SectionHub" que muestra tarjetas con todos los hijos (patrón Odoo/Shopify).
 // El breadcrumb puede navegar a estos section hubs al hacer clic en un ancestro.
-export type ViewType = 'occ' | 'dashboard' | 'wallet' | 'pos' | 'inventory' | 'recepcion' | 'reception_list' | 'transferencias' | 'sales' | 'inventory_count' | 'cost-sheets' | 'reports' | 'catalog' | 'history' | 'inventory_adjustments' | 'audit' | 'cash' | 'users' | 'roles' | 'stores' | 'settings' | 'help' | 'wiki' | 'news' | 'rss_management' | 'ipv' | 'academy' | 'legal' | 'health' | 'pick3-intelligence' | 'labels' | 'sales_catalog' | 'ofertas' | 'purchase-orders' | 'sales-hub'
+export type ViewType = 'occ' | 'dashboard' | 'wallet' | 'pos' | 'inventory' | 'recepcion' | 'reception_list' | 'transferencias' | 'sales' | 'inventory_count' | 'cost-sheets' | 'reports' | 'catalog' | 'history' | 'inventory_adjustments' | 'audit' | 'cash' | 'users' | 'roles' | 'stores' | 'settings' | 'help' | 'wiki' | 'news' | 'rss_management' | 'ipv' | 'academy' | 'legal' | 'health' | 'pick3-intelligence' | 'labels' | 'sales_catalog' | 'ofertas' | 'purchase-orders' | 'sales-hub' | 'exchange-intelligence' | 'received-services' | 'usage-monitoring' | 'workers'
 // E-SectionHub: submenu wrapper IDs — renderizan SectionHubView
 | 'punto_venta' | 'almacen_gestion' | 'almacen_operaciones' | 'analitica'
 // Submenu wrappers IPV (todos redirigen al section hub de IPV con tab apropiado)
@@ -48,6 +48,9 @@ interface UIState {
   ipvActiveTab: string;
   activeCostSection: string;
  pendingAuditFilter: PendingAuditFilter | null;
+  // Help reading mode: cuando es true, oculta el Header global y el Sidebar global
+  // para que el usuario pueda leer la ayuda sin distracciones.
+  isHelpReadingMode: boolean;
   // NoShiftBanner dismiss: timestamp ISO hasta el cual el banner NO debe mostrarse.
   // null = nunca silenciado (comportamiento por defecto).
   // Se persiste para que sobreviva recargas y reinicios de sesión del mismo usuario.
@@ -66,6 +69,7 @@ interface UIState {
   setIpvActiveTab: (tab: string) => void;
   setActiveCostSection: (section: string) => void;
   setPendingAuditFilter: (filter: PendingAuditFilter | null) => void;
+  setIsHelpReadingMode: (open: boolean) => void;
   // Silencia el banner N horas (1, 4, 24) o indefinidamente (null = silenciar indefinido).
   // Pasar hours = undefined o null limpia el dismiss y vuelve a mostrar.
   dismissNoShiftBanner: (hours: number | null) => void;
@@ -89,9 +93,12 @@ export const useUIStore = create<UIState>()(
       activeCostSection: 'main',
       pendingAuditFilter: null,
       noShiftBannerDismissUntil: null,
+      isHelpReadingMode: false,
       setCurrentView: (view: ViewType) => set((state: UIState) => ({
         previousView: state.currentView,
-        currentView: view
+        currentView: view,
+        // Al cambiar de vista, salir automáticamente del modo lectura de ayuda.
+        isHelpReadingMode: view === 'help' ? state.isHelpReadingMode : false,
       })),
       setSidebarState: (sidebarState: SidebarState) => set({ sidebarState }),
       toggleSidebar: () => set((state: UIState) => {
@@ -115,6 +122,7 @@ export const useUIStore = create<UIState>()(
       setIpvActiveTab: (ipvActiveTab: string) => set({ ipvActiveTab }),
       setActiveCostSection: (activeCostSection: string) => set({ activeCostSection }),
       setPendingAuditFilter: (pendingAuditFilter) => set({ pendingAuditFilter }),
+      setIsHelpReadingMode: (isHelpReadingMode) => set({ isHelpReadingMode }),
       // NoShiftBanner dismiss: hours = null → silenciar indefinidamente.
       // hours > 0 → silenciar hasta dentro de N horas.
       // Si se llama con un valor pero ya hay un dismiss activo más largo, se respeta el más restrictivo.

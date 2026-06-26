@@ -8,6 +8,7 @@ import { ChevronRight } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
 
+import { useTranslations } from 'next-intl';
 // ── Types ───────────────────────────────────────────────────────────
 
 interface CostSheetHeaderEditorProps {
@@ -23,6 +24,10 @@ interface FieldDef {
   options?: string[];
   helpText?: string;
   helpExample?: string;
+  /** P2: Marca el campo como obligatorio — muestra * visual + aria-required + validación inline */
+  required?: boolean;
+  /** P2: Función de validación inline — retorna mensaje de error o null si es válido */
+  validate?: (value: string) => string | null;
 }
 
 interface FieldGroup {
@@ -38,17 +43,47 @@ const FIELD_GROUPS: FieldGroup[] = [
     title: 'Identificación del Producto',
     colorIdx: 0,
     fields: [
-      { id: 'resolution', label: 'Resolución', type: 'select', options: ['Res 148/2023', 'Otra'], helpText: 'Normativa que regula la ficha de costos', helpExample: 'Res 148/2023' },
-      { id: 'code', label: 'Código', helpText: 'Código único del producto o servicio en el sistema de la empresa', helpExample: 'MP-001, SVC-045' },
-      { id: 'name', label: 'Nombre Comercial', helpText: 'Denominación oficial del producto o servicio que se está costeando', helpExample: 'Hamburguesa Doble Queso, Servicio de Mantenimiento Industrial' },
+      {
+        id: 'resolution', label: 'Resolución', type: 'select', options: ['Res 148/2023', 'Otra'],
+        helpText: 'Normativa que regula la ficha de costos', helpExample: 'Res 148/2023',
+        required: true,
+        validate: (v) => !v ? 'La resolución es obligatoria' : null,
+      },
+      {
+        id: 'code', label: 'Código',
+        helpText: 'Código único del producto o servicio en el sistema de la empresa', helpExample: 'MP-001, SVC-045',
+        required: true,
+        validate: (v) => !v?.trim() ? 'El código es obligatorio' : null,
+      },
+      {
+        id: 'name', label: 'Nombre Comercial',
+        helpText: 'Denominación oficial del producto o servicio que se está costeando', helpExample: 'Hamburguesa Doble Queso, Servicio de Mantenimiento Industrial',
+        required: true,
+        validate: (v) => !v?.trim() ? 'El nombre es obligatorio' : null,
+      },
     ],
   },
   {
     title: 'Parámetros de Operación',
     colorIdx: 1,
     fields: [
-      { id: 'unit', label: 'Unidad de Medida', helpText: 'Unidad en que se expresa la producción (unidad, kg, litro, etc.)', helpExample: 'u, kg, L, m2, m3, pza, docena' },
-      { id: 'quantity', label: 'Cantidad Base', helpText: 'Cantidad de referencia para el cálculo del costo unitario', helpExample: '1, 100, 1000' },
+      {
+        id: 'unit', label: 'Unidad de Medida',
+        helpText: 'Unidad en que se expresa la producción (unidad, kg, litro, etc.)', helpExample: 'u, kg, L, m2, m3, pza, docena',
+        required: true,
+        validate: (v) => !v?.trim() ? 'La unidad es obligatoria' : null,
+      },
+      {
+        id: 'quantity', label: 'Cantidad Base', type: 'number',
+        helpText: 'Cantidad de referencia para el cálculo del costo unitario', helpExample: '1, 100, 1000',
+        required: true,
+        validate: (v) => {
+          if (!v || v === '') return 'La cantidad es obligatoria';
+          const n = Number(v);
+          if (isNaN(n) || n <= 0) return 'Debe ser un número mayor a 0';
+          return null;
+        },
+      },
       { id: 'production_level', label: 'Nivel de Producción', helpText: 'Volumen de producción mensual o anual utilizado como base de prorrateo', helpExample: '500, 10000' },
       { id: 'capacity_utilization', label: '% Capacidad Instalada', readonly: true, helpText: 'Porcentaje de capacidad utilizada (calculado automáticamente: cantidad/nivel de producción)', helpExample: '85%' },
     ],
@@ -58,7 +93,16 @@ const FIELD_GROUPS: FieldGroup[] = [
     colorIdx: 5,
     fields: [
       { id: 'currency', label: 'Moneda', type: 'select', options: ['CUP', 'USD', 'EUR', 'MLC'], helpText: 'Moneda en que se expresan los costos', helpExample: 'CUP, USD, EUR, MLC' },
-      { id: 'exchangeRate', label: 'Tasa de Cambio', type: 'number', helpText: 'Tasa para convertir la ficha a otra moneda. 1 USD = N CUP. Dejar vacio para desactivar conversion', helpExample: '540' },
+      {
+        id: 'exchangeRate', label: 'Tasa de Cambio', type: 'number',
+        helpText: 'Tasa para convertir la ficha a otra moneda. 1 USD = N CUP. Dejar vacio para desactivar conversion', helpExample: '540',
+        validate: (v) => {
+          if (!v) return null;  // Opcional
+          const n = Number(v);
+          if (isNaN(n) || n <= 0) return 'La tasa debe ser un número mayor a 0';
+          return null;
+        },
+      },
       { id: 'targetCurrency', label: 'Moneda Destino', type: 'select', options: ['USD', 'EUR', 'GBP', 'CUP', 'MLC', 'CAD', 'CHF', 'MXN', 'CNY', 'JPY', 'BRL', 'ARS'], helpText: 'Moneda a la que se convierte la ficha (codigo ISO 4217)', helpExample: 'USD' },
       { id: 'rateType', label: 'Tipo de Tasa', type: 'select', options: ['Cierre', 'Spot', 'Promedio'], helpText: 'Tipo de tasa de cambio segun IAS 21.22', helpExample: 'Cierre' },
       { id: 'rateDate', label: 'Fecha de la Tasa', type: 'date', helpText: 'Fecha de la tasa de cambio (para disclosure IAS 21.22)', helpExample: '2025-05-25' },
@@ -119,10 +163,10 @@ const GroupDividerRow: React.FC<{ group: FieldGroup; isCollapsed: boolean; onTog
             )}
           />
           <div className={cn('w-0.5 h-4 rounded-full border-l-2', borderColor)} />
-          <span className="text-[11px] font-black uppercase tracking-[0.15em] text-foreground">
+          <span className="text-xs font-black uppercase tracking-[0.15em] text-foreground">
             {group.title}
           </span>
-          <span className="text-[9px] text-muted-foreground/60 font-mono ml-2">
+          <span className="text-xs text-muted-foreground/70 font-mono ml-2">
             ({group.fields.length} campos)
           </span>
         </div>
@@ -140,6 +184,11 @@ const CostSheetHeaderEditor: React.FC<CostSheetHeaderEditorProps> = ({
   const { updateValue } = useCostSheetStore();
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
   const [editingField, setEditingField] = useState<string | null>(null);
+  // P2: Estado de errores de validación inline por fieldId.
+  // Solo se muestra el error después del blur, no mientras el usuario escribe.
+  const [errors, setErrors] = useState<Record<string, string | null>>({});
+  // P2: Track de campos "touched" — solo validamos después del primer blur.
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
 
   const toggleGroup = (groupTitle: string) => {
     setCollapsedGroups((prev) => ({ ...prev, [groupTitle]: !prev[groupTitle] }));
@@ -149,8 +198,14 @@ const CostSheetHeaderEditor: React.FC<CostSheetHeaderEditorProps> = ({
     updateValue(['header', fieldId], value);
   };
 
-  const handleBlur = (fieldId: string, value: string, type?: string) => {
+  const handleBlur = (fieldId: string, value: string, type?: string, validate?: (v: string) => string | null) => {
     setEditingField(null);
+    // P2: Marcar como touched y validar
+    setTouched(prev => ({ ...prev, [fieldId]: true }));
+    if (validate) {
+      const error = validate(value);
+      setErrors(prev => ({ ...prev, [fieldId]: error }));
+    }
     // Convert number fields
     if (type === 'number' && value !== '') {
       const num = Number(value);
@@ -160,8 +215,14 @@ const CostSheetHeaderEditor: React.FC<CostSheetHeaderEditorProps> = ({
     }
   };
 
-  const handleSelectChange = (fieldId: string, value: string) => {
+  const handleSelectChange = (fieldId: string, value: string, validate?: (v: string) => string | null) => {
     updateValue(['header', fieldId], value);
+    // P2: Validar selects inmediatamente al cambiar
+    setTouched(prev => ({ ...prev, [fieldId]: true }));
+    if (validate) {
+      const error = validate(value);
+      setErrors(prev => ({ ...prev, [fieldId]: error }));
+    }
   };
 
   let globalRowIndex = 0;
@@ -172,17 +233,17 @@ const CostSheetHeaderEditor: React.FC<CostSheetHeaderEditorProps> = ({
         <Table className="w-full" style={{ borderSpacing: 0 }}>
           {/* Column Header */}
           <TableHeader className="sticky top-0 z-20">
-            <TableRow className="bg-muted/80 hover:bg-transparent border-b border-border/40 h-7">
-              <TableHead className="w-[40px] px-1.5 py-0 text-center text-[8px] font-black tracking-widest text-muted-foreground/50 border-r border-border/20">
+            <TableRow className="bg-muted/80 hover:bg-transparent border-b border-border/40 h-9">
+              <TableHead className="w-[40px] px-1.5 py-0 text-center text-xs font-black tracking-widest text-muted-foreground/70 border-r border-border/20">
                 #
               </TableHead>
-              <TableHead className="px-2 py-0 text-left text-[8px] font-black tracking-widest text-muted-foreground/50 border-r border-border/20">
+              <TableHead className="px-2 py-0 text-left text-xs font-black tracking-widest text-muted-foreground/70 border-r border-border/20">
                 CAMPO
               </TableHead>
-              <TableHead className="px-2 py-0 text-left text-[8px] font-black tracking-widest text-muted-foreground/50 border-r border-border/20">
+              <TableHead className="px-2 py-0 text-left text-xs font-black tracking-widest text-muted-foreground/70 border-r border-border/20">
                 VALOR
               </TableHead>
-              <TableHead className="px-2 py-0 text-left text-[8px] font-black tracking-widest text-muted-foreground/50">
+              <TableHead className="px-2 py-0 text-left text-xs font-black tracking-widest text-muted-foreground/70">
                 AYUDA
               </TableHead>
             </TableRow>
@@ -233,39 +294,57 @@ const CostSheetHeaderEditor: React.FC<CostSheetHeaderEditorProps> = ({
                     <TableRow
                       key={field.id}
                       className={cn(
-                        'h-7 text-[11px] transition-colors group border-b border-border/15',
+                        'h-9 text-xs transition-colors group border-b border-border/15',
                         'hover:bg-primary/[0.03]',
                         globalRowIndex % 2 === 0 && 'bg-muted/[0.15]'
                       )}
                     >
                       {/* Row number */}
-                      <TableCell className="w-[40px] px-1.5 py-0 text-center text-[10px] font-mono text-muted-foreground/40 tabular-nums border-r border-border/15">
+                      <TableCell className="w-[40px] px-1.5 py-0 text-center text-xs font-mono text-muted-foreground/70 tabular-nums border-r border-border/15">
                         {globalRowIndex}
                       </TableCell>
 
-                      {/* Field label */}
-                      <TableCell className="px-1.5 py-0 font-bold uppercase tracking-wider text-muted-foreground text-[10px] border-r border-border/15 min-w-[180px]">
+                      {/* Field label — P2: muestra * rojo si required */}
+                      <TableCell className="px-1.5 py-0 font-bold uppercase tracking-wider text-muted-foreground text-xs border-r border-border/15 min-w-[180px]">
                         {field.label}
+                        {field.required && (
+                          <span className="text-destructive ml-0.5 font-black" aria-hidden="true">*</span>
+                        )}
                       </TableCell>
 
                       {/* Value */}
-                      <TableCell className="px-1.5 py-0 border-r border-border/15 font-medium text-foreground text-[11px] min-w-[120px]">
+                      <TableCell className="px-1.5 py-0 border-r border-border/15 font-medium text-foreground text-xs min-w-[120px]">
                         {isReadonly ? (
                           <span className="text-muted-foreground tabular-nums">{displayValue}</span>
                         ) : isSelect ? (
-                          <select
-                            value={displayValue}
-                            onChange={(e) => handleSelectChange(field.id, e.target.value)}
-                            className="h-6 text-[11px] px-1.5 py-0 bg-transparent border border-transparent hover:border-border/30 focus:border-primary/40 focus:outline-none rounded transition-colors appearance-none cursor-pointer text-foreground font-medium"
-                            aria-label={field.label}
-                          >
-                            <option value="">Seleccionar...</option>
-                            {(field.options || []).map((opt) => (
-                              <option key={opt} value={opt}>
-                                {opt.charAt(0).toUpperCase() + opt.slice(1)}
-                              </option>
-                            ))}
-                          </select>
+                          <div className="space-y-0.5">
+                            <select
+                              value={displayValue}
+                              onChange={(e) => handleSelectChange(field.id, e.target.value, field.validate)}
+                              className={cn(
+                                "h-9 text-xs px-1.5 py-0 bg-transparent border focus:outline-none rounded transition-colors appearance-none cursor-pointer text-foreground font-medium",
+                                touched[field.id] && errors[field.id]
+                                  ? "border-destructive/60 focus:border-destructive"
+                                  : "border-transparent hover:border-border/30 focus:border-primary/40"
+                              )}
+                              aria-label={field.label}
+                              aria-required={field.required || undefined}
+                              aria-invalid={touched[field.id] && !!errors[field.id] || undefined}
+                            >
+                              <option value="">Seleccionar...</option>
+                              {(field.options || []).map((opt) => (
+                                <option key={opt} value={opt}>
+                                  {opt.charAt(0).toUpperCase() + opt.slice(1)}
+                                </option>
+                              ))}
+                            </select>
+                            {/* P2: Error inline bajo el campo */}
+                            {touched[field.id] && errors[field.id] && (
+                              <p role="alert" className="text-destructive text-xs font-bold flex items-center gap-1">
+                                <span aria-hidden="true">⚠</span> {errors[field.id]}
+                              </p>
+                            )}
+                          </div>
                         ) : isDate ? (
                           <input
                             type="date"
@@ -274,32 +353,48 @@ const CostSheetHeaderEditor: React.FC<CostSheetHeaderEditorProps> = ({
                               handleChange(field.id, e.target.value);
                               updateValue(['header', field.id], e.target.value);
                             }}
-                            className="h-6 text-[11px] px-1.5 py-0 bg-transparent border border-transparent hover:border-border/30 focus:border-primary/40 focus:outline-none rounded transition-colors cursor-pointer text-foreground font-medium"
+                            className="h-9 text-xs px-1.5 py-0 bg-transparent border border-transparent hover:border-border/30 focus:border-primary/40 focus:outline-none rounded transition-colors cursor-pointer text-foreground font-medium"
                             aria-label={field.label}
+                            aria-required={field.required || undefined}
                           />
                         ) : isEditing ? (
-                          <Input
-                            autoFocus
-                            className={cn(
-                              'h-6 text-[11px] px-1.5 py-0 border-primary/40 bg-background',
-                              isFormula && 'text-primary'
+                          <div className="space-y-0.5">
+                            <Input
+                              autoFocus
+                              className={cn(
+                                'h-9 text-xs px-1.5 py-0 bg-background',
+                                isFormula && 'text-primary',
+                                touched[field.id] && errors[field.id]
+                                  ? 'border-destructive/60 focus-visible:ring-destructive/30'
+                                  : 'border-primary/40'
+                              )}
+                              value={editRawValue}
+                              onChange={(e) => handleChange(field.id, e.target.value)}
+                              onBlur={(e) => handleBlur(field.id, e.target.value, field.type, field.validate)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') handleBlur(field.id, editRawValue, field.type, field.validate);
+                                if (e.key === 'Escape') setEditingField(null);
+                              }}
+                              aria-label={field.label}
+                              aria-required={field.required || undefined}
+                              aria-invalid={touched[field.id] && !!errors[field.id] || undefined}
+                            />
+                            {/* P2: Error inline bajo el campo */}
+                            {touched[field.id] && errors[field.id] && (
+                              <p role="alert" className="text-destructive text-xs font-bold flex items-center gap-1">
+                                <span aria-hidden="true">⚠</span> {errors[field.id]}
+                              </p>
                             )}
-                            value={editRawValue}
-                            onChange={(e) => handleChange(field.id, e.target.value)}
-                            onBlur={(e) => handleBlur(field.id, e.target.value, field.type)}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') handleBlur(field.id, editRawValue, field.type);
-                              if (e.key === 'Escape') setEditingField(null);
-                            }}
-                            aria-label={field.label}
-                          />
+                          </div>
                         ) : (
                           <div
                             role="button"
                             tabIndex={0}
                             className={cn(
                               'truncate cursor-text hover:text-primary transition-colors flex items-center gap-1',
-                              isFormula && 'text-primary'
+                              isFormula && 'text-primary',
+                              // P2: Resaltar campos requeridos vacíos con borde sutil
+                              field.required && !displayValue && 'border border-dashed border-warning/40 rounded px-1'
                             )}
                             onClick={() => !isReadonly && setEditingField(field.id)}
                             onKeyDown={(e) => {
@@ -308,12 +403,13 @@ const CostSheetHeaderEditor: React.FC<CostSheetHeaderEditorProps> = ({
                                 if (!isReadonly) setEditingField(field.id);
                               }
                             }}
+                            aria-label={field.label + (field.required ? ' (obligatorio)' : '')}
                           >
                             {displayValue || (
-                              <span className="text-muted-foreground/30 italic">—</span>
+                              <span className="text-muted-foreground/70 italic">—</span>
                             )}
                             {isFormula && (
-                              <span className="shrink-0 text-[8px] font-black text-primary bg-primary/10 px-1.5 py-0 rounded uppercase tracking-wider animate-pulse">
+                              <span className="shrink-0 text-xs font-black text-primary bg-primary/10 px-1.5 py-0 rounded uppercase tracking-wider animate-pulse">
                                 FX
                               </span>
                             )}
@@ -326,16 +422,16 @@ const CostSheetHeaderEditor: React.FC<CostSheetHeaderEditorProps> = ({
                         {(field.helpText || field.helpExample) ? (
                           <div className="space-y-0.5">
                             {field.helpText && (
-                              <p className="text-[9px] text-muted-foreground/70 leading-tight">{field.helpText}</p>
+                              <p className="text-xs text-muted-foreground/70 leading-tight">{field.helpText}</p>
                             )}
                             {field.helpExample && (
-                              <p className="text-[8px] text-primary/50 italic leading-tight">
+                              <p className="text-xs text-primary/70 italic leading-tight">
                                 <span className="font-bold not-italic text-primary/70">Ej:</span> {field.helpExample}
                               </p>
                             )}
                           </div>
                         ) : (
-                          <span className="text-muted-foreground/20 italic text-[9px]">—</span>
+                          <span className="text-muted-foreground/70 italic text-xs">—</span>
                         )}
                       </TableCell>
                     </TableRow>

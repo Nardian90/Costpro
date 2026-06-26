@@ -1,5 +1,5 @@
 import { logger } from '@/lib/logger';
-import { Parser, type Expression } from 'expr-eval';
+import { Parser, type Expression } from './safe-parser';
 import Decimal from 'decimal.js';
 
 type ExprValue = string | number | boolean | null | undefined;

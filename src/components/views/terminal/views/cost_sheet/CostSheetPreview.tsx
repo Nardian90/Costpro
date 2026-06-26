@@ -9,6 +9,7 @@ import CostSheetAnnexes from './CostSheetAnnexes';
 import CostSheetSignature from './CostSheetSignature';
 import { SecurityScrollContainer } from '@/components/ui/SecurityScrollContainer';
 
+import { useTranslations } from 'next-intl';
 interface CostSheetPreviewProps {
   data: CostSheetData;
   calculatedValues: Record<string, CalculatedRowValue>;
@@ -17,6 +18,7 @@ interface CostSheetPreviewProps {
 }
 
 const CostSheetPreview = React.forwardRef<HTMLDivElement, CostSheetPreviewProps>(({ data, calculatedValues, calculatedAnnexes, calculatedHeader }, ref) => {
+  const t = useTranslations('costSheet');
   return (
     <div ref={ref} className="max-w-5xl mx-auto">
       <div className="!p-0 overflow-hidden border-none shadow-2xl bg-card dark:bg-background text-foreground dark:text-foreground rounded-3xl">

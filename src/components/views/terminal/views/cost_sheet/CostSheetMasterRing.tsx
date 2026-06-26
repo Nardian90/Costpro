@@ -6,6 +6,7 @@ import { cn, formatCurrency } from '@/lib/utils';
 import { TrendingUp, Package, Users, Settings, Zap, Plus, Minus } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 
+import { useTranslations } from 'next-intl';
 interface TelemetryItem {
   label: string;
   value: number;
@@ -88,7 +89,7 @@ export const CostSheetMasterRing: React.FC<CostSheetMasterRingProps> = ({
             animate={{ strokeDashoffset: circumference - (Math.min(costPercent, 100) / 100) * circumference }}
             transition={{ duration: 1.5, ease: "circOut" }}
             strokeLinecap="round"
-            className="text-primary/20"
+            className="text-primary/70"
           />
 
           {/* Utility Ring (Main Neon/Primary) */}

@@ -4,6 +4,7 @@ import React from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
+import { useTranslations } from 'next-intl';
 interface CircularProgressProps {
   value: number;
   label: string;
@@ -19,6 +20,7 @@ const CircularProgress: React.FC<CircularProgressProps> = ({
     color = "text-primary",
     size = 'md'
 }) => {
+  const t = useTranslations('costSheet');
   const prefersReducedMotion = useReducedMotion();
   const radius = 32;
   const circumference = 2 * Math.PI * radius;

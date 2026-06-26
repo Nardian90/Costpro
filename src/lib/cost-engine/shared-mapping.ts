@@ -11,7 +11,7 @@
 import Decimal from 'decimal.js';
 import { produce } from 'immer';
 import { createSafeParser } from './parser-factory';
-import type { Parser } from 'expr-eval';
+import type { Parser } from './safe-parser';
 import { isSimpleAnnexRef } from './formula-classifier';
 import {
   CostSheetData,

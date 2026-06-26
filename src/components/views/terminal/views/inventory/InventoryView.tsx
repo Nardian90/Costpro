@@ -21,7 +21,7 @@ import { useState, useEffect, useMemo, useTransition, useCallback, useRef } from
 import type { ProductFCStatus } from '@/types';
 import { useAuthStore } from '@/store';
 import { useInventory, useAdjustStock } from '@/hooks/api/useInventory';
-import { Download, Plus, X, LayoutList, Table as TableIcon, Package, BarChart3, FileSpreadsheet, Filter, Eye, EyeOff, Store, CheckCircle2 } from 'lucide-react';
+import { Download, Plus, X, LayoutList, Table as TableIcon, Package, BarChart3, FileSpreadsheet, Filter, Eye, EyeOff, Store, CheckCircle2, Calculator } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabaseClient';
 import { useQueryClient } from '@tanstack/react-query';
@@ -32,6 +32,7 @@ import ProductReceptionView from './ProductReceptionView';
 import InventoryAdjustmentModal from './InventoryAdjustmentModal';
 import KardexModal from './KardexModal';
 import ABCAnalysisModal from './ABCAnalysisModal';
+import { ProductCostAnalysisModal } from './ProductCostAnalysisModal';
 import { Product } from '@/types';
 import { uuidRegex } from '@/validation/schemas';
 import ActionMenu, { Action } from '@/components/ui/ActionMenu';
@@ -109,6 +110,7 @@ export default function InventoryView() {
     const [adjustingProduct, setAdjustingProduct] = useState<Product | null>(null);
     const [kardexProduct, setKardexProduct] = useState<Product | null>(null);
     const [showABC, setShowABC] = useState(false);
+    const [costAnalysisProduct, setCostAnalysisProduct] = useState<Product | null>(null);
     const [preselectedProduct, setPreselectedProduct] = useState<Product | null>(null);
     const [isAlertsPanelOpen, setIsAlertsPanelOpen] = useState(false);
     const [showScrollTop, setShowScrollTop] = useState(false);
@@ -253,7 +255,7 @@ export default function InventoryView() {
         }
         try {
             const toastId = toast.loading('Preparando Excel...');
-            const XLSX = await import('xlsx');
+            const XLSX = await import('@e965/xlsx');
             const data = products.map(p => ({
                 'SKU': p.sku || '',
                 'Nombre': p.name || '',
@@ -306,6 +308,23 @@ export default function InventoryView() {
             variant: 'outline',
             className: currentView === 'inventory' ? 'flex' : 'hidden',
         },
+        {
+            id: 'cost-analysis',
+            label: 'Análisis de Costos',
+            icon: Calculator,
+            onClick: () => {
+                // GAP-4: toast en lugar de alert
+                if (products.length === 0) {
+                    toast.error('No hay productos para analizar');
+                    return;
+                }
+                // GAP-3: Si solo hay 1 producto, abrir directamente; si hay varios, abrir el primero
+                // (el usuario puede cambiar de producto desde el selector dentro del modal)
+                setCostAnalysisProduct(products[0]);
+            },
+            variant: 'outline',
+            className: currentView === 'inventory' ? 'flex' : 'hidden',
+        },
         ...(stockAlerts.length > 0 ? [{
             id: 'stock-alerts',
             label: `${stockAlerts.length} Alerta${stockAlerts.length !== 1 ? 's' : ''}`,
@@ -340,9 +359,29 @@ export default function InventoryView() {
                 throw error;
             }
 
-            // Do NOT invalidate inventory query — the RPC doesn't return visible_en_tienda
-            // and would overwrite our optimistic state with .default(false)
+            // FIX: invalidar queries para mantener coherencia al navegar
             queryClient.invalidateQueries({ queryKey: ['products'] });
+            queryClient.invalidateQueries({ queryKey: ['inventory'] });
+
+            // FIX: auditoría fire-and-forget (no bloquea UI)
+            import('@/lib/supabase-admin').then(({ getSupabaseAdminSafe }) => {
+              const admin = getSupabaseAdminSafe();
+              if (!admin) {
+                console.warn('[INVENTORY] Audit skipped: SUPABASE_SERVICE_ROLE_KEY not configured');
+                return;
+              }
+              const { user } = useAuthStore.getState();
+              admin.from('audit_logs').insert({
+                user_id: user?.id || null,
+                store_id: product.store_id,
+                action: visible ? 'product_visibility_on' : 'product_visibility_off',
+                table_name: 'products',
+                record_id: product.id,
+                metadata: { product_name: product.name, visible },
+              }).then(({ error }) => {
+                if (error) console.warn('[INVENTORY] Audit insert failed:', error.message);
+              });
+            }).catch(() => {});
 
             toast.success(visible
                 ? `${product.name} ahora es visible en la tienda pública`
@@ -631,6 +670,17 @@ export default function InventoryView() {
                 products={products}
                 isOpen={showABC}
                 onClose={() => setShowABC(false)}
+            />
+
+            {/* F4: Product Cost Analysis Modal */}
+            <ProductCostAnalysisModal
+                isOpen={!!costAnalysisProduct}
+                onClose={() => setCostAnalysisProduct(null)}
+                productId={costAnalysisProduct?.id || ''}
+                productName={costAnalysisProduct?.name || ''}
+                storeId={user?.activeStoreId}
+                products={products.map(p => ({ id: p.id, name: p.name }))}
+                onProductChange={(p) => setCostAnalysisProduct(p as any)}
             />
 
             {isMobile && (

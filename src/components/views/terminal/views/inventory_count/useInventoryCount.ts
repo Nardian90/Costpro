@@ -231,7 +231,7 @@ export function useInventoryCount() {
 
     try {
       const toastId = toast.loading('Preparando Excel...');
-      const XLSX = await import('xlsx');
+      const XLSX = await import('@e965/xlsx');
 
       const worksheet = XLSX.utils.json_to_sheet(exportData);
       worksheet['!cols'] = [
@@ -285,7 +285,7 @@ export function useInventoryCount() {
 
     try {
       const toastId = toast.loading('Importando conteo desde Excel...');
-      const XLSX = await import('xlsx');
+      const XLSX = await import('@e965/xlsx');
       const arrayBuffer = await file.arrayBuffer();
       const workbook = XLSX.read(arrayBuffer, { type: 'array' });
 

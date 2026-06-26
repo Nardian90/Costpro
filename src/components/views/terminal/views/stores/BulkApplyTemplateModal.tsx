@@ -7,6 +7,7 @@ import { Store } from '@/types';
 import { useStoreEdit } from '@/hooks/views/useStoreEdit';
 import { Loader2, FileText, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import { useTranslations } from 'next-intl';
 
 /**
  * F4-T03: Modal para aplicar una plantilla FC a múltiples tiendas seleccionadas.
@@ -31,6 +32,7 @@ export function BulkApplyTemplateModal({
   onClose,
   selectedStores,
 }: BulkApplyTemplateModalProps) {
+  const t = useTranslations('stores');
   const storeEdit = useStoreEdit();
   const [modalidad, setModalidad] = useState<'produccion' | 'servicios' | 'comercializacion'>('produccion');
   const [pdfFormat, setPdfFormat] = useState<'res148' | 'res190'>('res148');
@@ -87,7 +89,7 @@ export function BulkApplyTemplateModal({
         </span>
       }
       description={
-        <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground/70">
+        <span className="text-sm font-bold uppercase tracking-widest text-muted-foreground/70">
           {selectedStores.length} tienda{selectedStores.length === 1 ? '' : 's'} seleccionada{selectedStores.length === 1 ? '' : 's'}
         </span>
       }
@@ -106,7 +108,7 @@ export function BulkApplyTemplateModal({
             type="button"
             onClick={handleApply}
             disabled={applying || selectedStores.length === 0}
-            className="flex-1 sm:flex-none h-11 font-bold uppercase tracking-widest text-xs"
+            className="flex-1 sm:flex-none h-11 font-bold uppercase tracking-widest text-sm"
           >
             {applying ? (
               <>
@@ -127,7 +129,7 @@ export function BulkApplyTemplateModal({
         {/* Advertencia sobre invalidación de FCs */}
         <div className="flex items-start gap-2 p-3 rounded-xl bg-amber-50 border border-amber-200 dark:bg-amber-950/30 dark:border-amber-800">
           <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
-          <p className="text-xs text-amber-800 dark:text-amber-300 leading-relaxed">
+          <p className="text-sm text-amber-800 dark:text-amber-300 leading-relaxed">
             Al aplicar esta plantilla, las fichas de costo existentes de las tiendas
             seleccionadas se marcarán como <strong>pendientes de regeneración</strong>.
             Deberás regenerarlas desde el tablero de costos.
@@ -137,11 +139,11 @@ export function BulkApplyTemplateModal({
         {/* Lista de tiendas afectadas */}
         <div className="max-h-32 overflow-y-auto rounded-xl border border-border divide-y divide-border">
           {selectedStores.map(store => (
-            <div key={store.id} className="flex items-center gap-2 p-2 text-xs">
+            <div key={store.id} className="flex items-center gap-2 p-2 text-sm">
               <FileText className="w-3 h-3 text-muted-foreground shrink-0" />
               <span className="font-bold truncate">{store.name}</span>
               {store.cost_template?.is_active && (
-                <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded bg-success/10 text-success">
+                <span className="text-sm font-black uppercase px-1.5 py-0.5 rounded bg-success/10 text-success">
                   FC actual
                 </span>
               )}
@@ -152,7 +154,7 @@ export function BulkApplyTemplateModal({
         {/* Configuración de la plantilla */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div className="space-y-1.5">
-            <label className="text-xs font-black uppercase tracking-widest text-muted-foreground">
+            <label className="text-sm font-black uppercase tracking-widest text-muted-foreground">
               Template ID
             </label>
             <input
@@ -165,22 +167,22 @@ export function BulkApplyTemplateModal({
             />
           </div>
           <div className="space-y-1.5">
-            <label className="text-xs font-black uppercase tracking-widest text-muted-foreground">
-              Modalidad
+            <label className="text-sm font-black uppercase tracking-widest text-muted-foreground">
+              {t('modalidadLabel')}
             </label>
             <select
               value={modalidad}
               onChange={(e) => setModalidad(e.target.value as typeof modalidad)}
               className="w-full px-3 py-2 h-11 rounded-lg border border-border bg-background text-sm font-bold outline-none focus:ring-1 focus:ring-primary"
             >
-              <option value="produccion">Producción</option>
-              <option value="servicios">Servicios</option>
-              <option value="comercializacion">Comercialización</option>
+              <option value="produccion">{t('modalidadProduccion')}</option>
+              <option value="servicios">{t('modalidadServicios')}</option>
+              <option value="comercializacion">{t('modalidadComercializacion')}</option>
             </select>
           </div>
           <div className="space-y-1.5 sm:col-span-2">
-            <label className="text-xs font-black uppercase tracking-widest text-muted-foreground">
-              Formato PDF
+            <label className="text-sm font-black uppercase tracking-widest text-muted-foreground">
+              {t('formatoPdfLabel')}
             </label>
             <select
               value={pdfFormat}

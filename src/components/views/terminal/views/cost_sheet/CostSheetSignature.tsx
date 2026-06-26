@@ -1,12 +1,15 @@
+'use client';
 // src/components/cost-sheets/CostSheetSignature.tsx
 import React from 'react';
 
+import { useTranslations } from 'next-intl';
 type CostSheetSignatureProps = {
   prepared_by: string;
   approved_by: string;
 };
 
 const CostSheetSignature: React.FC<CostSheetSignatureProps> = ({ prepared_by, approved_by }) => {
+  const t = useTranslations('costSheet');
   return (
     <div className="mt-12 pt-8 border-t">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">

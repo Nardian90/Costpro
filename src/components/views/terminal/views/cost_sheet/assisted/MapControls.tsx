@@ -5,6 +5,7 @@ import { ZoomIn, ZoomOut, Maximize2, Rows3, Columns3, Play, Pause, Square } from
 import { cn } from '@/lib/utils';
 import type { SimPhase } from './useSimulation';
 
+import { useTranslations } from 'next-intl';
 interface MapControlsProps {
   zoom: number;
   isZoomActive: boolean;
@@ -24,6 +25,7 @@ const MapControls: React.FC<MapControlsProps> = ({
   onZoomIn, onZoomOut, onReset, onOrientationChange,
   onSimPlay, onSimPause, onSimStop,
 }) => {
+  const t = useTranslations('costSheet');
   const btnCls = 'w-7 h-7 rounded-lg bg-card border border-border/60 flex items-center justify-center hover:bg-primary/10 hover:border-primary/40 transition-colors';
 
   const isSimulating = simPhase !== 'idle';
@@ -67,7 +69,7 @@ const MapControls: React.FC<MapControlsProps> = ({
       <button type="button" onClick={onZoomIn} className={btnCls} title="Acercar">
         <ZoomIn className="w-3.5 h-3.5 text-muted-foreground" />
       </button>
-      <span className="text-[10px] font-mono font-bold text-muted-foreground w-10 text-center">
+      <span className="text-xs font-mono font-bold text-muted-foreground w-10 text-center">
         {Math.round(zoom * 100)}%
       </span>
       <button type="button" onClick={onZoomOut} className={btnCls} title="Alejar">

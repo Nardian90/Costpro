@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { motion, useReducedMotion } from 'framer-motion';
 
+import { useTranslations } from 'next-intl';
 interface ExpertModeAccordionProps {
   id: string;
   title: string;
@@ -31,6 +32,7 @@ export const ExpertModeAccordion: React.FC<ExpertModeAccordionProps> = ({
   completionPercent = 0,
   hasErrors = false
 }) => {
+  const t = useTranslations('costSheet');
   const prefersReducedMotion = useReducedMotion();
   const panelId = `panel-${id}`;
   const headerId = `header-${id}`;
@@ -71,7 +73,7 @@ export const ExpertModeAccordion: React.FC<ExpertModeAccordionProps> = ({
         </button>
 
         <div className="flex items-center gap-2">
-          <div className="text-[10px] font-black tracking-widest text-muted-foreground/60 mr-2">
+          <div className="text-xs font-black tracking-widest text-muted-foreground/70 mr-2">
             {completionPercent}%
           </div>
           <Button
@@ -95,7 +97,7 @@ export const ExpertModeAccordion: React.FC<ExpertModeAccordionProps> = ({
               className="p-1 rounded-lg hover:bg-primary/10 transition-colors"
               onClick={onToggle}
             >
-              <ChevronRight className={cn("w-5 h-5 text-muted-foreground/30 transition-transform duration-300", isExpanded && "rotate-90")} />
+              <ChevronRight className={cn("w-5 h-5 text-muted-foreground/70 transition-transform duration-300", isExpanded && "rotate-90")} />
             </button>
           )}
         </div>

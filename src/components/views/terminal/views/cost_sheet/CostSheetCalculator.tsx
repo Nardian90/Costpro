@@ -6,6 +6,7 @@ import { Delete, Divide, Plus, Minus, Equal, X } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { createSafeParser } from '@/lib/cost-engine/parser-factory';
 
+import { useTranslations } from 'next-intl';
 export const CostSheetCalculator: React.FC = () => {
   const prefersReducedMotion = useReducedMotion();
   const [display, setDisplay] = useState('0');
@@ -94,8 +95,8 @@ export const CostSheetCalculator: React.FC = () => {
         )} />
 
         <motion.div className={cn(
-            "text-[10px] font-mono h-4 uppercase tracking-[0.2em] font-black",
-            "text-muted-foreground/40 dark:text-[hsl(var(--primary))]/40"
+            "text-xs font-mono h-4 uppercase tracking-[0.2em] font-black",
+            "text-muted-foreground/70 dark:text-[hsl(var(--primary))]/40"
         )}>
           {equation || '\u00A0'}
         </motion.div>

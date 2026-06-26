@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/tabs";
 import { HorizontalScroll } from '@/components/ui/HorizontalScroll';
 
+import { useTranslations } from 'next-intl';
 interface Token {
   id: string;
   type: 'function' | 'reference' | 'operator' | 'literal' | 'variable' | 'punctuation';

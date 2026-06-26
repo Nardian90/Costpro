@@ -2,8 +2,10 @@ import { type NextRequest } from "next/server";
 import { supabase } from "@/lib/supabaseClient";
 
 const isSupabaseConfigured = !!(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
-// FIX-AUDIT-3: Dev bypass only works when explicitly enabled via env var AND NOT in production
-// SECURITY: Even if ENABLE_DEV_BYPASS=true is accidentally set in production, it's blocked
+// FIX-AUDIT-3: Dev bypass solo funciona cuando está explícitamente habilitado
+// Y cuando no estamos en producción (doble seguro).
+// next start fuerza NODE_ENV=production, lo que bloquea el dev-bypass automáticamente.
+// En Vercel, NODE_ENV=production siempre, así que el dev-bypass nunca se activa en producción.
 const isDevBypassEnabled = process.env.ENABLE_DEV_BYPASS === 'true' && process.env.NODE_ENV !== 'production';
 
 /**

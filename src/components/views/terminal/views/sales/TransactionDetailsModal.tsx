@@ -120,7 +120,16 @@ export function TransactionDetailsModal({ isOpen, onClose, transaction, items, i
           <div>
             <p className="font-semibold text-muted-foreground">Metodo de Pago</p>
             <p className="capitalize">
-              {transaction.payment_method === 'cash' ? 'Efectivo' : 'Transferencia'}
+              {(() => {
+                const m = (transaction.payment_method || '').toLowerCase();
+                if (m === 'cash') return 'Efectivo';
+                if (m === 'card') return 'Tarjeta';
+                if (m === 'transfer') return 'Transferencia';
+                if (m === 'mixed') return 'Mixto';
+                if (m === 'wallet') return 'Billetera';
+                if (m === 'other') return 'Otro';
+                return 'Sin especificar';
+              })()}
             </p>
           </div>
           <div>

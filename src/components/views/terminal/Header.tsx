@@ -10,7 +10,6 @@ import {
   User,
   Settings,
   LogOut,
-  HelpCircle,
   Layout,
   Search
 } from 'lucide-react';
@@ -30,6 +29,7 @@ import { cn } from '@/lib/utils';
 import { UserContract } from '@/contracts/user';
 import { NavigationItem } from '@/hooks/ui/useTerminalNavigation';
 import { ViewType, SidebarState } from '@/store';
+import { HelpLauncher } from './views/help/HelpLauncher';
 
 interface HeaderProps {
   sidebarState: SidebarState;
@@ -294,16 +294,11 @@ export const Header = ({
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <button
-            onClick={() => onViewChange('help')}
-            className={cn(
-              "w-11 h-11 flex items-center justify-center relative rounded-xl border border-border/50 bg-muted/50 hover:bg-muted active:scale-90 transition-all",
-              currentView === 'help' && "bg-primary text-foreground border-primary shadow-lg shadow-primary/20 hover:opacity-90"
-            )}
-            aria-label="Ayuda"
-          >
-            <HelpCircle className="w-5 h-5" />
-          </button>
+          <HelpLauncher
+            view={currentView}
+            variant={currentView === 'help' ? 'solid' : 'outline'}
+            className={currentView === 'help' ? '' : 'bg-muted/50 hover:bg-muted border-border/50'}
+          />
 
         </div>
       </div>

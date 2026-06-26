@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/select";
 import { toast } from 'sonner';
 
+import { useTranslations } from 'next-intl';
 interface QuickRow {
   id: string;
   product: string;
@@ -58,6 +59,24 @@ export const CostSheetQuickMode: React.FC<CostSheetQuickModeProps> = ({
     setRows(newRows);
   };
 
+  // P2: Reemplaza parseFloat(x) || 0 con validación explícita.
+  // Antes: input inválido (ej: "abc") se coercía silenciosamente a 0, ocultando errores.
+  // Ahora: si el input es inválido, se conserva el valor anterior y se muestra toast.
+  const updateNumericRow = (index: number, field: 'quantity' | 'cost' | 'sale_price', rawValue: string) => {
+    if (rawValue === '') {
+      // Campo vacío es válido — representa 0 temporalmente hasta que el usuario escriba
+      updateRow(index, field, 0);
+      return;
+    }
+    const parsed = parseFloat(rawValue);
+    if (isNaN(parsed) || parsed < 0) {
+      // No sobrescribir con valor inválido — conservar el anterior y notificar
+      toast.error('Número inválido', { description: `El valor "${rawValue}" no es válido para ${field}.` });
+      return;
+    }
+    updateRow(index, field, parsed);
+  };
+
   const handleGenerate = () => {
     const validRows = rows.filter(r => r.product.trim() !== '');
     if (validRows.length === 0) {
@@ -78,7 +97,7 @@ export const CostSheetQuickMode: React.FC<CostSheetQuickModeProps> = ({
             <h2 className="text-xl font-black tracking-tight text-warning uppercase">Configuración de Generación</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
               <div className="space-y-1.5">
-                <span className="text-[10px] font-black uppercase tracking-widest text-amber-700/70 ml-1">Columna Objetivo</span>
+                <span className="text-xs font-black uppercase tracking-widest text-amber-700/70 ml-1">Columna Objetivo</span>
                 <Select
                   value={mapping.targetColumn}
                   onValueChange={(val) => onMappingChange({ ...mapping, targetColumn: val as 'sale_price' | 'total_cost' })}
@@ -93,7 +112,7 @@ export const CostSheetQuickMode: React.FC<CostSheetQuickModeProps> = ({
                 </Select>
               </div>
               <div className="space-y-1.5">
-                <label htmlFor="cost-modification-row" className="text-[10px] font-black uppercase tracking-widest text-amber-700/70 ml-1">Fila que Cambiará</label>
+                <label htmlFor="cost-modification-row" className="text-xs font-black uppercase tracking-widest text-amber-700/70 ml-1">Fila que Cambiará</label>
                 <div className="relative">
                   <Target className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-warning" />
                   <Input
@@ -121,19 +140,19 @@ export const CostSheetQuickMode: React.FC<CostSheetQuickModeProps> = ({
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-muted/50 border-b border-border">
-                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground w-12">No.</th>
-                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Producto / Item</th>
-                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground w-20">UM</th>
-                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground w-24">Cantidad</th>
-                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground w-32">Costo Unit.</th>
-                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground w-32 text-warning">Precio Venta</th>
+                <th className="px-6 py-4 text-xs font-black uppercase tracking-widest text-muted-foreground w-12">No.</th>
+                <th className="px-6 py-4 text-xs font-black uppercase tracking-widest text-muted-foreground">Producto / Item</th>
+                <th className="px-6 py-4 text-xs font-black uppercase tracking-widest text-muted-foreground w-20">UM</th>
+                <th className="px-6 py-4 text-xs font-black uppercase tracking-widest text-muted-foreground w-24">Cantidad</th>
+                <th className="px-6 py-4 text-xs font-black uppercase tracking-widest text-muted-foreground w-32">Costo Unit.</th>
+                <th className="px-6 py-4 text-xs font-black uppercase tracking-widest text-muted-foreground w-32 text-warning">Precio Venta</th>
                 <th className="px-6 py-4 w-12">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border/50">
               {rows.map((row, idx) => (
                 <tr key={row.id} className="group hover:bg-primary/5 transition-colors h-auto sm:h-12">
-                  <td data-label="No." className="px-6 py-3 font-black text-muted-foreground text-[10px]">
+                  <td data-label="No." className="px-6 py-3 font-black text-muted-foreground text-xs">
                     {idx + 1}
                   </td>
                   <td data-label="Producto" className="px-6 py-3">
@@ -156,37 +175,40 @@ export const CostSheetQuickMode: React.FC<CostSheetQuickModeProps> = ({
                     <Input
                       type="number"
                       value={row.quantity}
-                      onChange={(e) => updateRow(idx, 'quantity', parseFloat(e.target.value) || 0)}
+                      onChange={(e) => updateNumericRow(idx, 'quantity', e.target.value)}
                       className="bg-transparent border-none focus-visible:ring-0 text-right font-black text-sm h-8"
+                      aria-label={`Cantidad de ${row.product || `fila ${idx + 1}`}`}
                     />
                   </td>
                   <td data-label="Costo" className="px-6 py-3">
                     <div className="relative">
-                        <span className="absolute left-0 top-1/2 -translate-y-1/2 text-[10px] font-black text-muted-foreground">$</span>
+                        <span className="absolute left-0 top-1/2 -translate-y-1/2 text-xs font-black text-muted-foreground">$</span>
                         <Input
                           type="number"
                           value={row.cost}
-                          onChange={(e) => updateRow(idx, 'cost', parseFloat(e.target.value) || 0)}
+                          onChange={(e) => updateNumericRow(idx, 'cost', e.target.value)}
                           className="bg-transparent border-none focus-visible:ring-0 text-right font-black text-sm pl-4 h-8"
+                          aria-label={`Costo de ${row.product || `fila ${idx + 1}`}`}
                         />
                     </div>
                   </td>
                   <td data-label="Precio Venta" className="px-6 py-3 bg-warning/5">
                     <div className="relative">
-                        <span className="absolute left-0 top-1/2 -translate-y-1/2 text-[10px] font-black text-warning/50">$</span>
+                        <span className="absolute left-0 top-1/2 -translate-y-1/2 text-xs font-black text-warning/70">$</span>
                         <Input
                           type="number"
                           value={row.sale_price}
-                          onChange={(e) => updateRow(idx, 'sale_price', parseFloat(e.target.value) || 0)}
+                          onChange={(e) => updateNumericRow(idx, 'sale_price', e.target.value)}
                           className="bg-transparent border-none focus-visible:ring-0 text-right font-black text-sm pl-4 h-8 text-warning"
                           placeholder="Opcional"
+                          aria-label={`Precio de venta de ${row.product || `fila ${idx + 1}`}`}
                         />
                     </div>
                   </td>
                   <td data-label="Acciones" className="px-6 py-3 text-center">
                     <button type="button"
                       onClick={() => removeRow(idx)}
-                      className="p-1.5 text-destructive/30 hover:text-destructive hover:bg-destructive/10 rounded-lg transition-all"
+                      className="p-1.5 text-destructive/70 hover:text-destructive hover:bg-destructive/10 rounded-lg transition-all"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
@@ -209,7 +231,7 @@ export const CostSheetQuickMode: React.FC<CostSheetQuickModeProps> = ({
       </div>
 
       <div className="flex justify-center py-4">
-         <p className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground flex items-center gap-2 opacity-50">
+         <p className="text-xs font-black uppercase tracking-[0.4em] text-muted-foreground flex items-center gap-2 opacity-50">
             <Settings2 className="w-3 h-3" />
             Smart Engine Quick Config
          </p>

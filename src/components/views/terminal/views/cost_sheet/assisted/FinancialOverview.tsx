@@ -5,11 +5,13 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { cn, formatCurrency } from '@/lib/utils';
 import type { SidebarMetrics } from './types';
 
+import { useTranslations } from 'next-intl';
 interface FinancialOverviewProps {
   metrics: SidebarMetrics;
 }
 
 const FinancialOverview = React.memo(function FinancialOverview({ metrics }: FinancialOverviewProps) {
+  const t = useTranslations('costSheet');
   const items = [
     {
       label: 'Producto',
@@ -53,7 +55,7 @@ const FinancialOverview = React.memo(function FinancialOverview({ metrics }: Fin
     <div className="flex items-center gap-3 sm:gap-6 px-3 sm:px-4 py-2">
       {items.map((item) => (
         <div key={item.label} className="flex items-center gap-2 sm:gap-3">
-          <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-widest text-muted-foreground/50 whitespace-nowrap">
+          <span className="text-xs sm:text-xs font-black uppercase tracking-widest text-muted-foreground/70 whitespace-nowrap">
             {item.label}
           </span>
           {item.value}

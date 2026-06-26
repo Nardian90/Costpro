@@ -9,7 +9,9 @@ import {
 } from "@/components/ui/accordion";
 import { BookOpen, Calculator, Info, Lightbulb } from 'lucide-react';
 
+import { useTranslations } from 'next-intl';
 export const CostSheetFormulaGuide = () => {
+  const t = useTranslations('costSheet');
   return (
     <div className="mt-12 animate-in fade-in slide-in-from-bottom-8 duration-1000">
       <div className="flex items-center gap-3 mb-6">

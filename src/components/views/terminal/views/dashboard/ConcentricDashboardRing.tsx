@@ -3,6 +3,7 @@
 import React from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { useTranslations } from 'next-intl';
 
 interface ConcentricDashboardRingProps {
   sales: number;
@@ -17,6 +18,7 @@ export const ConcentricDashboardRing: React.FC<ConcentricDashboardRingProps> = (
   profit,
   className
 }) => {
+  const t = useTranslations('dashboard.storeDashboard');
   const shouldReduceMotion = useReducedMotion();
   const profitPercent = sales > 0 ? (profit / sales) * 100 : 0;
   const costsPercent = sales > 0 ? (costs / sales) * 100 : 0;
@@ -90,7 +92,7 @@ export const ConcentricDashboardRing: React.FC<ConcentricDashboardRingProps> = (
       </svg>
 
       <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-        <span className="text-xs font-medium tracking-wide text-muted-foreground">Margen</span>
+        <span className="text-sm font-medium tracking-wide text-muted-foreground">{t('ring.margin')}</span>
         <span className="text-3xl sm:text-4xl font-bold tracking-tight text-foreground font-display tabular-nums">
           {profitPercent.toFixed(0)}<span className="text-success">%</span>
         </span>

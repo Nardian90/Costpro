@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useCallback } from 'react';
 
+import { useTranslations } from 'next-intl';
 // ── Enterprise-grade confetti celebration ──
 // Uses canvas-confetti library for realistic particle physics
 interface ConfettiProps {

@@ -1,3 +1,4 @@
+'use client';
 import React, { useState, useRef, useEffect } from 'react';
 import { Bot, SendHorizontal, Loader2, Sparkles, ExternalLink, RefreshCw } from 'lucide-react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
@@ -9,6 +10,7 @@ import type { CostSheetData } from '@/types/cost-sheet';
 import { useTheme } from 'next-themes';
 import { toast } from 'sonner';
 
+import { useTranslations } from 'next-intl';
 interface AnnexPreviewItem {
     id?: string;
     title?: string;
@@ -41,14 +43,14 @@ const AnnexPreview = ({ data, isDark }: { data: Record<string, unknown>; isDark:
                     return (
                         <div key={idx} className={cn("p-3 rounded-xl border flex flex-col gap-2", isDark ? "bg-white/5 border-white/10" : "bg-slate-50 border-slate-200")}>
                             <div className="flex items-center gap-2">
-                                <div className="w-5 h-5 bg-primary/20 rounded-md flex items-center justify-center text-[10px] font-bold text-primary">
+                                <div className="w-5 h-5 bg-primary/20 rounded-md flex items-center justify-center text-xs font-bold text-primary">
                                     {annex.id}
                                 </div>
-                                <p className="text-[10px] font-black uppercase tracking-tight opacity-80 truncate">
+                                <p className="text-xs font-black uppercase tracking-tight opacity-80 truncate">
                                     {annex.title || 'Desglose'}
                                 </p>
                             </div>
-                            <p className="text-[10px] font-bold text-primary">
+                            <p className="text-xs font-bold text-primary">
                                 {items.length} ítems propuestos
                             </p>
                         </div>
@@ -60,6 +62,7 @@ const AnnexPreview = ({ data, isDark }: { data: Record<string, unknown>; isDark:
 };
 
 export const DarianEditor: React.FC<DarianEditorProps> = ({ sheetData, isFullView, onSectionChange }) => {
+  const t = useTranslations('costSheet');
     const prefersReducedMotion = useReducedMotion();
     const [messages, setMessages] = useState<Message[]>([]);
     const [input, setInput] = useState('');
@@ -191,7 +194,7 @@ export const DarianEditor: React.FC<DarianEditorProps> = ({ sheetData, isFullVie
                         <h2 className="text-sm font-black uppercase tracking-widest text-primary">Darian AI</h2>
                         <div className="flex items-center gap-2 text-primary/70">
                             <span className="w-1.5 h-1.5 bg-primary rounded-full animate-pulse"></span>
-                            <span className="text-[10px] font-bold uppercase tracking-tight">Experto en Costos</span>
+                            <span className="text-xs font-bold uppercase tracking-tight">Experto en Costos</span>
                         </div>
                     </div>
                 </div>
@@ -216,7 +219,7 @@ export const DarianEditor: React.FC<DarianEditorProps> = ({ sheetData, isFullVie
                             </div>
                             <div className="space-y-2">
                                 <p className="text-lg font-black uppercase tracking-tighter">¿Qué vamos a calcular hoy?</p>
-                                <p className="text-[10px] uppercase font-bold tracking-widest opacity-70">Describe el producto o servicio para generar una propuesta</p>
+                                <p className="text-xs uppercase font-bold tracking-widest opacity-70">Describe el producto o servicio para generar una propuesta</p>
                             </div>
                         </div>
                     ) : (
@@ -241,13 +244,13 @@ export const DarianEditor: React.FC<DarianEditorProps> = ({ sheetData, isFullVie
                                 </div>
                                 {msg.updateData && (
                                     <div className={cn("mt-2 w-full p-4 border rounded-2xl space-y-3 bg-primary/5", isDark ? "border-primary/20" : "border-primary/10")}>
-                                        <p className="text-[10px] font-bold text-primary uppercase">{msg.hasSaved ? "¡Ficha persistida!" : "Propuesta Lista"}</p>
+                                        <p className="text-xs font-bold text-primary uppercase">{msg.hasSaved ? "¡Ficha persistida!" : "Propuesta Lista"}</p>
                                         {!msg.hasSaved ? (
-                                            <button type="button" onClick={() => handleApplyUpdate(msg.updateData!, i)} disabled={isSaving} className="w-full py-3 bg-primary text-primary-foreground font-black uppercase text-[10px] rounded-xl shadow-lg active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50">
+                                            <button type="button" onClick={() => handleApplyUpdate(msg.updateData!, i)} disabled={isSaving} className="w-full py-3 bg-primary text-primary-foreground font-black uppercase text-xs rounded-xl shadow-lg active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50">
                                                 {isSaving ? <Loader2 className="w-3 h-3 animate-spin" /> : "Aplicar y Guardar"}
                                             </button>
                                         ) : (
-                                            <button type="button" onClick={() => onSectionChange?.('all-content')} className="w-full py-3 bg-primary/20 text-primary font-black uppercase text-[10px] rounded-xl border border-primary/30 active:scale-95 flex items-center justify-center gap-2">
+                                            <button type="button" onClick={() => onSectionChange?.('all-content')} className="w-full py-3 bg-primary/20 text-primary font-black uppercase text-xs rounded-xl border border-primary/30 active:scale-95 flex items-center justify-center gap-2">
                                                 <ExternalLink className="w-3.5 h-3.5" /> Ver Ficha Completa
                                             </button>
                                         )}
@@ -259,7 +262,7 @@ export const DarianEditor: React.FC<DarianEditorProps> = ({ sheetData, isFullVie
                     {isLoading && (
                         <div className="flex items-center gap-3 p-4 rounded-2xl bg-primary/5 border border-primary/10 w-fit">
                             <Loader2 className="w-4 h-4 animate-spin text-primary" />
-                            <span className="text-[10px] font-black uppercase tracking-widest text-primary">Darian está pensando...</span>
+                            <span className="text-xs font-black uppercase tracking-widest text-primary">Darian está pensando...</span>
                         </div>
                     )}
                 </div>

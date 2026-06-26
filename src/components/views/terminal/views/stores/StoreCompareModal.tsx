@@ -10,6 +10,7 @@ import { ResponsiveTable, type ResponsiveColumn } from '@/components/ui/Responsi
 import { Loader2, GitCompare, TrendingUp, Package, FileText, Heart, DollarSign, Search, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { useTranslations } from 'next-intl';
 
 /**
  * F6-T01: Vista comparativa entre tiendas (dashboard side-by-side).
@@ -39,6 +40,7 @@ function formatCurrency(n: number): string {
 }
 
 export function StoreCompareModal({ isOpen, onClose, stores, preselectedIds = [] }: StoreCompareModalProps) {
+  const t = useTranslations('stores');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set(preselectedIds));
   const [search, setSearch] = useState('');
 
@@ -85,7 +87,7 @@ export function StoreCompareModal({ isOpen, onClose, stores, preselectedIds = []
     <BaseModal
       open={isOpen}
       onOpenChange={(open) => !open && onClose()}
-      aria-label="Comparar tiendas"
+      aria-label={t('compare.ariaLabel')}
       title={
         <span className="text-[clamp(1.25rem,4vw,1.5rem)] font-black uppercase tracking-tighter text-primary flex items-center gap-2">
           <GitCompare className="w-5 h-5" />
@@ -93,7 +95,7 @@ export function StoreCompareModal({ isOpen, onClose, stores, preselectedIds = []
         </span>
       }
       description={
-        <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground/70">
+        <span className="text-sm font-bold uppercase tracking-widest text-muted-foreground/70">
           Selecciona 2-4 tiendas para comparar KPIs
         </span>
       }
@@ -130,16 +132,16 @@ export function StoreCompareModal({ isOpen, onClose, stores, preselectedIds = []
                   onCheckedChange={() => toggleStore(store.id)}
                   disabled={!selectedIds.has(store.id) && selectedIds.size >= 4}
                 />
-                <span className="font-bold text-xs truncate">{store.name}</span>
+                <span className="font-bold text-sm truncate">{store.name}</span>
                 {selectedIds.has(store.id) && (
-                  <span className="ml-auto text-[9px] font-black uppercase text-primary">
+                  <span className="ml-auto text-sm font-black uppercase text-primary">
                     {Array.from(selectedIds).indexOf(store.id) + 1}
                   </span>
                 )}
               </label>
             ))}
           </div>
-          <p className="text-[10px] text-muted-foreground/60">
+          <p className="text-sm text-muted-foreground/60">
             {selectedIds.size}/4 tiendas seleccionadas · mínimo 2 para comparar
           </p>
         </div>
@@ -148,7 +150,7 @@ export function StoreCompareModal({ isOpen, onClose, stores, preselectedIds = []
         {isLoading && (
           <div className="py-12 flex flex-col items-center gap-3">
             <Loader2 className="w-8 h-8 animate-spin text-primary/40" />
-            <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Comparando...</p>
+            <p className="text-sm font-black uppercase tracking-widest text-muted-foreground">Comparando...</p>
           </div>
         )}
 
@@ -156,12 +158,12 @@ export function StoreCompareModal({ isOpen, onClose, stores, preselectedIds = []
           <div className="space-y-4">
             {/* Tabla de KPIs comparativa — responsive con overflow-x-auto */}
             <div className="overflow-x-auto">
-              <table className="w-full text-xs">
+              <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-border">
-                    <th className="text-left px-2 py-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground">KPI</th>
+                    <th className="text-left px-2 py-2 text-sm font-black uppercase tracking-widest text-muted-foreground">KPI</th>
                     {comparison!.map(c => (
-                      <th key={c.storeId} className="text-right px-2 py-2 text-[10px] font-black uppercase tracking-widest text-primary">
+                      <th key={c.storeId} className="text-right px-2 py-2 text-sm font-black uppercase tracking-widest text-primary">
                         {c.storeName.length > 15 ? c.storeName.slice(0, 13) + '...' : c.storeName}
                       </th>
                     ))}
@@ -182,7 +184,7 @@ export function StoreCompareModal({ isOpen, onClose, stores, preselectedIds = []
                   />
                   <ComparisonRow
                     icon={TrendingUp}
-                    label="Productos"
+                    label={t('compare.productsLabel')}
                     values={comparison!.map(c => String(c.productsCount))}
                     highlight={comparison!.map(c => c.productsCount === maxProducts)}
                   />
@@ -195,7 +197,7 @@ export function StoreCompareModal({ isOpen, onClose, stores, preselectedIds = []
                   />
                   <ComparisonRow
                     icon={Heart}
-                    label="Health"
+                    label={t('compare.healthLabel')}
                     values={comparison!.map(c => `${c.healthScore}%`)}
                     highlight={comparison!.map(c => c.healthScore === Math.max(...comparison!.map(x => x.healthScore)))}
                   />
@@ -205,10 +207,10 @@ export function StoreCompareModal({ isOpen, onClose, stores, preselectedIds = []
 
             {/* B2: ResponsiveTable con detalle por tienda — en mobile colapsa columnas low priority */}
             <div className="pt-2 border-t border-border">
-              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2">Detalle por tienda</p>
+              <p className="text-sm font-black uppercase tracking-widest text-muted-foreground mb-2">Detalle por tienda</p>
               <ResponsiveTable
                 columns={[
-                  { key: 'name', header: 'Tienda', priority: 'high', render: (row) => <strong className="text-xs">{row.storeName}</strong> },
+                  { key: 'name', header: 'Tienda', priority: 'high', render: (row) => <strong className="text-sm">{row.storeName}</strong> },
                   { key: 'sales', header: 'Ventas', priority: 'high', render: (row) => formatCurrency(row.sales) },
                   { key: 'stock', header: 'Stock', priority: 'medium', render: (row) => formatCurrency(row.stockValue) },
                   { key: 'products', header: 'Productos', priority: 'medium', render: (row) => String(row.productsCount) },
@@ -217,24 +219,24 @@ export function StoreCompareModal({ isOpen, onClose, stores, preselectedIds = []
                 ] as ResponsiveColumn<typeof comparison[number]>[]}
                 data={comparison!}
                 rowKey={(row) => row.storeId}
-                emptyMessage="Sin datos"
+                emptyMessage={t('compare.emptyMessage')}
               />
             </div>
 
             {/* Gráfico de barras: Ventas */}
             <div className="space-y-2">
-              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-1">
+              <p className="text-sm font-black uppercase tracking-widest text-muted-foreground flex items-center gap-1">
                 <DollarSign className="w-3 h-3" /> Ventas (30 días)
               </p>
               {comparison!.map(c => (
                 <div key={c.storeId} className="flex items-center gap-2">
-                  <span className="text-[10px] font-bold w-20 truncate">{c.storeName}</span>
+                  <span className="text-sm font-bold w-20 truncate">{c.storeName}</span>
                   <div className="flex-1 h-6 rounded-full bg-muted overflow-hidden">
                     <div
                       className="h-full bg-primary transition-all duration-500 flex items-center justify-end pr-2"
                       style={{ width: `${(c.sales / maxSales) * 100}%` }}
                     >
-                      <span className="text-[9px] font-black text-primary-foreground">{formatCurrency(c.sales)}</span>
+                      <span className="text-sm font-black text-primary-foreground">{formatCurrency(c.sales)}</span>
                     </div>
                   </div>
                 </div>
@@ -243,12 +245,12 @@ export function StoreCompareModal({ isOpen, onClose, stores, preselectedIds = []
 
             {/* Gráfico de barras: Health Score */}
             <div className="space-y-2">
-              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-1">
+              <p className="text-sm font-black uppercase tracking-widest text-muted-foreground flex items-center gap-1">
                 <Heart className="w-3 h-3" /> Health Score
               </p>
               {comparison!.map(c => (
                 <div key={c.storeId} className="flex items-center gap-2">
-                  <span className="text-[10px] font-bold w-20 truncate">{c.storeName}</span>
+                  <span className="text-sm font-bold w-20 truncate">{c.storeName}</span>
                   <div className="flex-1 h-6 rounded-full bg-muted overflow-hidden">
                     <div
                       className={cn(
@@ -257,7 +259,7 @@ export function StoreCompareModal({ isOpen, onClose, stores, preselectedIds = []
                       )}
                       style={{ width: `${c.healthScore}%` }}
                     >
-                      <span className="text-[9px] font-black text-white">{c.healthScore}%</span>
+                      <span className="text-sm font-black text-white">{c.healthScore}%</span>
                     </div>
                   </div>
                 </div>
@@ -268,8 +270,8 @@ export function StoreCompareModal({ isOpen, onClose, stores, preselectedIds = []
 
         {!canCompare && !isLoading && (
           <div className="py-8 text-center border-2 border-dashed border-border rounded-xl">
-            <GitCompare className="w-10 h-10 text-muted-foreground/20 mx-auto mb-2" />
-            <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+            <GitCompare className="w-10 h-10 text-muted-foreground/70 mx-auto mb-2" />
+            <p className="text-sm font-bold uppercase tracking-widest text-muted-foreground">
               Selecciona al menos 2 tiendas
             </p>
           </div>
@@ -296,7 +298,7 @@ function ComparisonRow({
     <tr>
       <td className="px-2 py-2.5 flex items-center gap-1.5 text-muted-foreground">
         <Icon className="w-3 h-3 shrink-0" />
-        <span className="text-[10px] font-black uppercase tracking-widest">{label}</span>
+        <span className="text-sm font-black uppercase tracking-widest">{label}</span>
       </td>
       {values.map((v, i) => (
         <td

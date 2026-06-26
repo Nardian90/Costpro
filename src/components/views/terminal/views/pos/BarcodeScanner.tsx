@@ -1,10 +1,14 @@
 'use client';
 
-import React, { useState, useMemo, useRef } from 'react';
-import { QrCode, ShoppingCart, Search } from 'lucide-react';
+import React, { useState, useMemo, useRef, useCallback } from 'react';
+import { QrCode, ShoppingCart, Search, Camera } from 'lucide-react';
 import { BaseModal } from '@/components/ui/BaseModal';
 import { formatCurrency } from '@/lib/utils';
 import type { Product } from '@/types';
+import dynamic from 'next/dynamic';
+
+// Lazy load camera scanner (heavy ZXing dependency)
+const CameraBarcodeScanner = dynamic(() => import('./CameraBarcodeScanner'), { ssr: false });
 
 interface BarcodeScannerProps {
   isOpen: boolean;
@@ -22,7 +26,16 @@ interface BarcodeScannerProps {
 export default function BarcodeScanner({ isOpen, onClose, onScan, products = [] }: BarcodeScannerProps) {
   const [inputValue, setInputValue] = useState('');
   const [searchMode, setSearchMode] = useState<'sku' | 'name'>('sku');
+  const [cameraOpen, setCameraOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Handle camera scan result — feed into existing onScan handler
+  const handleCameraScan = useCallback((code: string) => {
+    onScan(code);
+    setCameraOpen(false);
+    setInputValue('');
+    onClose();
+  }, [onScan, onClose]);
 
   const trimmed = inputValue.trim().toLowerCase();
 
@@ -185,7 +198,26 @@ export default function BarcodeScanner({ isOpen, onClose, onScan, products = [] 
               : 'Buscar Producto'}
           </button>
         </form>
+
+        {/* ── Camera Scanner Button ── */}
+        <div className="pt-2 border-t border-border">
+          <button
+            type="button"
+            onClick={() => setCameraOpen(true)}
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-green-500/10 border border-green-500/30 text-green-600 dark:text-green-400 font-black text-xs uppercase tracking-widest hover:bg-green-500/20 transition-colors min-h-[44px]"
+          >
+            <Camera className="w-4 h-4" />
+            Escanear con Cámara
+          </button>
+        </div>
       </div>
+
+      {/* ── Camera Scanner Modal ── */}
+      <CameraBarcodeScanner
+        isOpen={cameraOpen}
+        onScan={handleCameraScan}
+        onClose={() => setCameraOpen(false)}
+      />
     </BaseModal>
   );
 }

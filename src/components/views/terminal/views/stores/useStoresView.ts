@@ -111,7 +111,11 @@ export function useStoresView() {
                 // FIX-F2.5-1: invalidar caches para que la nueva tienda aparezca en la lista
                 queryClient.invalidateQueries({ queryKey: ['stores'] });
                 queryClient.invalidateQueries({ queryKey: ['store-user-counts'] });
-                // Audit-Fix #2c: ya no retornamos newStore — el caller espera Promise<void>.
+                // F4-FIX: Cerrar modal y limpiar estado después de crear.
+                // Antes esto faltaba (return prematuro) y el modal nunca se cerraba,
+                // dando la impresión de que la tienda no se creó.
+                setStoreFormMode(null);
+                setSelectedStore(null);
                 return;
             }
 

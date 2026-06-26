@@ -12,7 +12,8 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+// P3-6: Radix Tabs eliminado — reemplazado por <UnifiedTabs> unificado.
+import { UnifiedTabs } from './UnifiedTabs';
 import {
     AlertTriangle,
     AlertCircle,
@@ -36,6 +37,7 @@ import { useCostSheetStore } from '@/store/cost-sheet-store';
 import { ValidationError } from '@/lib/cost-engine/types';
 import { CostSheetRow } from '@/types/cost-sheet';
 
+import { useTranslations } from 'next-intl';
 /* ── Error code config (shared with audit view) ── */
 const ERROR_CODE_CONFIG: Record<string, { icon: React.ElementType; label: string; color: string }> = {
     CYCLE:                   { icon: RefreshCw, label: 'Ciclo', color: 'text-violet-500 bg-violet-500/10' },
@@ -72,9 +74,10 @@ const SEVERITY_STYLES: Record<string, { badge: string; border: string; bg: strin
 
 /* Inline component: badge shown when current formula matches the standard */
 function FormulaMatchBadge({ matches }: { matches: boolean | null | undefined }) {
+  const t = useTranslations('costSheet');
     if (!matches) return null;
     return (
-        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-success/10 border border-success/20 text-success text-[10px] font-bold shrink-0">
+        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-success/10 border border-success/20 text-success text-xs font-bold shrink-0">
             <Check className="w-3 h-3" />
             Correcta según estándar
         </div>
@@ -180,7 +183,7 @@ export const ErrorDetailModal: React.FC<ErrorDetailModalProps> = ({
                         <DialogDescription>Seleccione un elemento de la lista de auditoría para ver sus detalles.</DialogDescription>
                     </DialogHeader>
                     <DialogFooter>
-                        <Button variant="outline" onClick={onClose} className="rounded-xl text-xs font-bold h-9 px-4">
+                        <Button variant="outline" onClick={onClose} className="rounded-xl text-xs font-bold h-11 px-4">
                             <X className="w-3.5 h-3.5 mr-1.5" />
                             Cerrar
                         </Button>
@@ -222,7 +225,7 @@ export const ErrorDetailModal: React.FC<ErrorDetailModalProps> = ({
                 <DialogHeader className="pb-2">
                     <div className="flex items-center gap-3 flex-wrap">
                         <Badge variant="outline" className={cn(
-                            'text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full border',
+                            'text-xs font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full border',
                             severity.badge,
                         )}>
                             {error.type}
@@ -255,15 +258,15 @@ export const ErrorDetailModal: React.FC<ErrorDetailModalProps> = ({
 
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
                         <div className="bg-background/60 rounded-xl px-3 py-2">
-                            <span className="text-muted-foreground font-semibold uppercase tracking-wider block text-[10px]">Fila ID</span>
+                            <span className="text-muted-foreground font-semibold uppercase tracking-wider block text-xs">Fila ID</span>
                             <span className="font-mono font-bold text-foreground">{error.rowId}</span>
                         </div>
                         <div className="bg-background/60 rounded-xl px-3 py-2">
-                            <span className="text-muted-foreground font-semibold uppercase tracking-wider block text-[10px]">Etiqueta</span>
+                            <span className="text-muted-foreground font-semibold uppercase tracking-wider block text-xs">Etiqueta</span>
                             <span className="font-medium text-foreground truncate block">{currentRow?.label || '—'}</span>
                         </div>
                         <div className="bg-background/60 rounded-xl px-3 py-2 col-span-2 sm:col-span-1">
-                            <span className="text-muted-foreground font-semibold uppercase tracking-wider block text-[10px]">Sección</span>
+                            <span className="text-muted-foreground font-semibold uppercase tracking-wider block text-xs">Sección</span>
                             <span className="font-medium text-foreground truncate block">{currentSectionLabel || '—'}</span>
                         </div>
                     </div>
@@ -280,23 +283,27 @@ export const ErrorDetailModal: React.FC<ErrorDetailModalProps> = ({
                 </div>
 
                 {/* ── Formula Panel ── */}
+                {/* P3-6: Migrado de Radix Tabs a <UnifiedTabs variant="pills">. */}
                 <div className="rounded-2xl border border-border/50 overflow-hidden">
-                    <Tabs value={activeTab} onValueChange={setActiveTab}>
+                    <div>
                         <div className="px-4 pt-3 pb-0 border-b border-border/30">
-                            <TabsList className="bg-muted/50 h-9 p-0.5 rounded-xl w-full">
-                                <TabsTrigger value="total" className="rounded-lg text-xs font-bold h-7 data-[state=active]:bg-background data-[state=active]:shadow-sm flex-1">
-                                    Fórmula Total
-                                </TabsTrigger>
-                                <TabsTrigger value="vh" className="rounded-lg text-xs font-bold h-7 data-[state=active]:bg-background data-[state=active]:shadow-sm flex-1">
-                                    Fórmula VH
-                                </TabsTrigger>
-                            </TabsList>
+                            <UnifiedTabs
+                                tabs={[
+                                  { id: 'total', label: 'Fórmula Total' },
+                                  { id: 'vh', label: 'Fórmula VH' },
+                                ]}
+                                activeTab={activeTab}
+                                onTabChange={setActiveTab}
+                                variant="pills"
+                                ariaLabel="Tipo de fórmula"
+                            />
                         </div>
 
                         {/* Total Formula Tab */}
-                        <TabsContent value="total" className="p-4 space-y-3 mt-0">
+                        {activeTab === 'total' && (
+                        <div className="p-4 space-y-3 mt-0">
                             <div className="space-y-1.5">
-                                <label htmlFor="error-total-formula" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                                <label htmlFor="error-total-formula" className="text-xs font-black uppercase tracking-widest text-muted-foreground">
                                     Fórmula Actual (editable)
                                 </label>
                                 <Textarea
@@ -312,7 +319,7 @@ export const ErrorDetailModal: React.FC<ErrorDetailModalProps> = ({
                                 />
                             </div>
 
-                            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-muted-foreground">
                                 <ArrowLeftRight className="w-3 h-3" />
                                 Comparación con NUEVA FICHA
                             </div>
@@ -321,7 +328,7 @@ export const ErrorDetailModal: React.FC<ErrorDetailModalProps> = ({
                                 {hasSuggestedTotal ? (
                                     <>
                                         <div className="flex items-center justify-between mb-2">
-                                            <span className="text-[10px] font-bold uppercase tracking-widest text-primary/70">
+                                            <span className="text-xs font-bold uppercase tracking-widest text-primary/70">
                                                 Fórmula Sugerida
                                             </span>
                                             <div className="flex items-center gap-2">
@@ -330,7 +337,7 @@ export const ErrorDetailModal: React.FC<ErrorDetailModalProps> = ({
                                                     variant="ghost"
                                                     size="sm"
                                                     onClick={handleApplySuggestedTotal}
-                                                    className="h-6 px-2 text-[10px] font-bold text-primary hover:text-primary hover:bg-primary/10 rounded-lg"
+                                                    className="h-6 px-2 text-xs font-bold text-primary hover:text-primary hover:bg-primary/10 rounded-lg"
                                                 >
                                                     <Copy className="w-3 h-3 mr-1" />
                                                     Copiar al editor
@@ -348,12 +355,14 @@ export const ErrorDetailModal: React.FC<ErrorDetailModalProps> = ({
                                     </p>
                                 )}
                             </div>
-                        </TabsContent>
+                        </div>
+                        )}
 
                         {/* VH Formula Tab */}
-                        <TabsContent value="vh" className="p-4 space-y-3 mt-0">
+                        {activeTab === 'vh' && (
+                        <div className="p-4 space-y-3 mt-0">
                             <div className="space-y-1.5">
-                                <label htmlFor="error-vh-formula" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                                <label htmlFor="error-vh-formula" className="text-xs font-black uppercase tracking-widest text-muted-foreground">
                                     Fórmula VH Actual (editable)
                                 </label>
                                 <Textarea
@@ -369,7 +378,7 @@ export const ErrorDetailModal: React.FC<ErrorDetailModalProps> = ({
                                 />
                             </div>
 
-                            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-muted-foreground">
                                 <ArrowLeftRight className="w-3 h-3" />
                                 Comparación con NUEVA FICHA
                             </div>
@@ -378,7 +387,7 @@ export const ErrorDetailModal: React.FC<ErrorDetailModalProps> = ({
                                 {hasSuggestedVh ? (
                                     <>
                                         <div className="flex items-center justify-between mb-2">
-                                            <span className="text-[10px] font-bold uppercase tracking-widest text-primary/70">
+                                            <span className="text-xs font-bold uppercase tracking-widest text-primary/70">
                                                 Fórmula VH Sugerida
                                             </span>
                                             <div className="flex items-center gap-2">
@@ -387,7 +396,7 @@ export const ErrorDetailModal: React.FC<ErrorDetailModalProps> = ({
                                                     variant="ghost"
                                                     size="sm"
                                                     onClick={handleApplySuggestedVh}
-                                                    className="h-6 px-2 text-[10px] font-bold text-primary hover:text-primary hover:bg-primary/10 rounded-lg"
+                                                    className="h-6 px-2 text-xs font-bold text-primary hover:text-primary hover:bg-primary/10 rounded-lg"
                                                 >
                                                     <Copy className="w-3 h-3 mr-1" />
                                                     Copiar al editor
@@ -405,8 +414,9 @@ export const ErrorDetailModal: React.FC<ErrorDetailModalProps> = ({
                                     </p>
                                 )}
                             </div>
-                        </TabsContent>
-                    </Tabs>
+                        </div>
+                        )}
+                    </div>
                 </div>
 
                 {/* ── Footer ── */}
@@ -414,7 +424,7 @@ export const ErrorDetailModal: React.FC<ErrorDetailModalProps> = ({
                     <Button
                         variant="outline"
                         onClick={onClose}
-                        className="rounded-xl text-xs font-bold h-9 px-4"
+                        className="rounded-xl text-xs font-bold h-11 px-4"
                     >
                         <X className="w-3.5 h-3.5 mr-1.5" />
                         Cancelar
@@ -424,7 +434,7 @@ export const ErrorDetailModal: React.FC<ErrorDetailModalProps> = ({
                         <Button
                             variant="outline"
                             onClick={handleApplyAllSuggested}
-                            className="rounded-xl text-xs font-bold h-9 px-4 border-primary/30 text-primary hover:bg-primary/10 hover:text-primary"
+                            className="rounded-xl text-xs font-bold h-11 px-4 border-primary/30 text-primary hover:bg-primary/10 hover:text-primary"
                         >
                             <Wand2 className="w-3.5 h-3.5 mr-1.5" />
                             Aplicar Fórmula Sugerida
@@ -434,7 +444,7 @@ export const ErrorDetailModal: React.FC<ErrorDetailModalProps> = ({
                     <Button
                         onClick={handleSave}
                         disabled={!hasChanges}
-                        className="rounded-xl text-xs font-bold h-9 px-4 bg-gradient-to-r from-primary to-primary/90 hover:opacity-90 disabled:opacity-50"
+                        className="rounded-xl text-xs font-bold h-11 px-4 bg-gradient-to-r from-primary to-primary/90 hover:opacity-90 disabled:opacity-50"
                     >
                         <Save className="w-3.5 h-3.5 mr-1.5" />
                         Guardar Cambios

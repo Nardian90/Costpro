@@ -13,6 +13,7 @@ import { Download, Upload, Plus, Trash2, Settings, FileSpreadsheet } from 'lucid
 import { Button } from '@/components/ui/button';
 import type { CostSheetSection } from '@/types/cost-sheet';
 
+import { useTranslations } from 'next-intl';
 interface CostSheetSectionActionsPanelProps {
   isOpen: boolean;
   onClose: () => void;
@@ -32,6 +33,7 @@ export const CostSheetSectionActionsPanel: React.FC<CostSheetSectionActionsPanel
   onAddRow,
   onRemove
 }) => {
+  const t = useTranslations('costSheet');
   return (
     <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <SheetContent side="right" className="w-[300px] sm:w-[400px] bg-sidebar/95 backdrop-blur-xl border-l border-sidebar-border shadow-2xl p-0 flex flex-col">
@@ -106,7 +108,7 @@ export const CostSheetSectionActionsPanel: React.FC<CostSheetSectionActionsPanel
         </div>
 
         <div className="p-6 border-t border-sidebar-border/50 bg-sidebar/5">
-            <p className="text-xs font-black uppercase tracking-[0.3em] text-muted-foreground/50 text-center">
+            <p className="text-xs font-black uppercase tracking-[0.3em] text-muted-foreground/70 text-center">
                 Gestión de Sección de Ficha
             </p>
         </div>

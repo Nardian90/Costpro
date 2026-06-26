@@ -192,7 +192,7 @@ export default function CreateTransferModal({ isOpen, onClose }: CreateTransferM
   const handleExportTemplate = useCallback(async () => {
     try {
       const toastId = toast.loading('Generando plantilla...');
-      const XLSX = await import('xlsx');
+      const XLSX = await import('@e965/xlsx');
       const templateData = [
         { 'SKU': 'EJEMPLO-001', 'Nombre': 'Producto Ejemplo', 'Cantidad': 5 },
         { 'SKU': '', 'Nombre': '', 'Cantidad': '' },
@@ -222,7 +222,7 @@ export default function CreateTransferModal({ isOpen, onClose }: CreateTransferM
 
     try {
       const toastId = toast.loading('Importando productos desde Excel...');
-      const XLSX = await import('xlsx');
+      const XLSX = await import('@e965/xlsx');
       const arrayBuffer = await file.arrayBuffer();
       const workbook = XLSX.read(arrayBuffer, { type: 'array' });
 

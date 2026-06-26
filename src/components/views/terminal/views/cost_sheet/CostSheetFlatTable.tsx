@@ -55,6 +55,7 @@ import type {
 import { useCellEditor, useFormulaSuggestions, getRowDiagnostics } from '@/hooks/logic/useCellEditor';
 import type { CostSheetFlatTableProps, StorePath } from './cost-sheet-view-shared';
 import { handleImportSectionExcel } from './cost-sheet-view-shared';
+import { useTranslations } from 'next-intl';
 
 // ── Types (extended locally) ─────────────────────────────────────────
 
@@ -149,8 +150,8 @@ const TTip = ({ term, description, children }: { term: string; description: stri
         <div className="cursor-help flex items-center gap-0.5 justify-center">{children}</div>
       </TooltipTrigger>
       <TooltipContent className="max-w-[220px] p-2.5 rounded-xl border-border bg-popover shadow-xl z-50">
-        <p className="font-black uppercase tracking-widest text-[9px] border-b border-border/50 pb-1.5 mb-1.5 text-primary">{term}</p>
-        <p className="text-[10px] leading-relaxed text-muted-foreground">{description}</p>
+        <p className="font-black uppercase tracking-widest text-xs border-b border-border/50 pb-1.5 mb-1.5 text-primary">{term}</p>
+        <p className="text-xs leading-relaxed text-muted-foreground">{description}</p>
       </TooltipContent>
     </Tooltip>
   </TooltipProvider>
@@ -227,12 +228,12 @@ const SectionDividerRow: React.FC<{
             !isCollapsed && "rotate-90"
           )} />
           <div className={cn("w-0.5 h-4 rounded-full border-l-2", borderColors[sectionColorIdx % borderColors.length])} />
-          <span className="text-[11px] font-black uppercase tracking-[0.15em] text-foreground">
+          <span className="text-xs font-black uppercase tracking-[0.15em] text-foreground">
             {divider.label}
           </span>
-          <span className="text-[9px] text-muted-foreground/70 font-mono ml-1">
+          <span className="text-xs text-muted-foreground/70 font-mono ml-1">
             ({divider.rowCount} conceptos
-            {activeItems > 0 && <span className="text-foreground/50"> · {activeItems} activos</span>})
+            {activeItems > 0 && <span className="text-foreground/70"> · {activeItems} activos</span>})
           </span>
           {pctTotal !== null && (
             <div className="flex items-center gap-1.5 ml-1">
@@ -248,7 +249,7 @@ const SectionDividerRow: React.FC<{
                 />
               </div>
               <span className={cn(
-                "text-[9px] font-mono px-1.5 py-0 rounded-full",
+                "text-xs font-mono px-1.5 py-0 rounded-full",
                 parseFloat(pctTotal) > 20
                   ? "bg-primary/10 text-primary font-bold"
                   : "bg-muted/50 text-muted-foreground/70"
@@ -259,10 +260,10 @@ const SectionDividerRow: React.FC<{
           )}
           {helpText && (
             <TTip term="Ayuda de sección" description={helpText}>
-              <HelpCircle className="w-3 h-3 text-primary/40 ml-1 shrink-0 cursor-help" />
+              <HelpCircle className="w-3 h-3 text-primary/70 ml-1 shrink-0 cursor-help" />
             </TTip>
           )}
-          <Settings2 className="w-3 h-3 text-muted-foreground/40 ml-auto opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer hover:text-primary" onClick={(e) => { e.stopPropagation(); onOpenActions?.(); }} />
+          <Settings2 className="w-3 h-3 text-muted-foreground/70 ml-auto opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer hover:text-primary" onClick={(e) => { e.stopPropagation(); onOpenActions?.(); }} />
         </div>
       </TableCell>
     </TableRow>
@@ -301,7 +302,7 @@ const RowHealthIndicator: React.FC<{ health: RowHealthStatus; rowId: string }> =
   const config = {
     CRITICAL: { icon: ShieldAlert, color: 'text-destructive', bg: 'bg-destructive10', label: 'Con errores críticos' },
     WARNING: { icon: AlertTriangle, color: 'text-warning', bg: 'bg-warning/10', label: 'Con advertencias' },
-    INFO: { icon: Info, color: 'text-muted-foreground/60', bg: 'bg-muted/50', label: 'Informativo' },
+    INFO: { icon: Info, color: 'text-muted-foreground/70', bg: 'bg-muted/50', label: 'Informativo' },
   }[health.highestSeverity];
 
   const IconComp = config.icon;
@@ -337,7 +338,7 @@ const RowHealthIndicator: React.FC<{ health: RowHealthStatus; rowId: string }> =
         {totalCount > 1 && (
           <span className={cn(
             'absolute -top-1 -right-1.5 min-w-[10px] h-[10px] rounded-full flex items-center justify-center',
-            'text-[7px] font-black leading-none px-0.5 pointer-events-none',
+            'text-xs font-black leading-none px-0.5 pointer-events-none',
             health.highestSeverity === 'CRITICAL' ? 'bg-destructive text-destructive-foreground' :
             health.highestSeverity === 'WARNING' ? 'bg-warning text-white' :
             'bg-muted-foreground text-muted-foreground'
@@ -411,7 +412,7 @@ const DataRow: React.FC<DataRowProps> = memo(({ item, calculatedValues, annexes,
   return (
     <>
       <TableRow className={cn(
-        "h-7 text-[11px] transition-colors group border-b border-border/15",
+        "h-7 text-xs transition-colors group border-b border-border/15",
         "hover:bg-primary/[0.03]",
         isResult && "bg-primary/[0.04] font-semibold",
         !isResult && globalIndex % 2 === 0 && "bg-muted/[0.15]",
@@ -419,7 +420,7 @@ const DataRow: React.FC<DataRowProps> = memo(({ item, calculatedValues, annexes,
         mergedHealth.highestSeverity === 'WARNING' && !isResult && "bg-warning/[0.02]"
       )}>
         {/* Numbering */}
-        <TableCell className="w-[55px] px-1.5 py-0 text-center text-[10px] font-bold text-muted-foreground/80 tabular-nums border-r border-border/15">
+        <TableCell className="w-[55px] px-1.5 py-0 text-center text-xs font-bold text-muted-foreground/80 tabular-nums border-r border-border/15">
           {numbering}
         </TableCell>
 
@@ -438,13 +439,13 @@ const DataRow: React.FC<DataRowProps> = memo(({ item, calculatedValues, annexes,
                 <ChevronRight className={cn('w-3 h-3 transition-transform', isExpanded && 'rotate-90')} />
               </button>
             ) : (
-              <CornerDownRight className="w-3 h-3 text-muted-foreground/40 shrink-0 ml-0.5" />
+              <CornerDownRight className="w-3 h-3 text-muted-foreground/70 shrink-0 ml-0.5" />
             )}
 
             {isEditingLabel ? (
               <Input
                 autoFocus
-                className="h-6 text-[11px] py-0 border-primary/40"
+                className="h-6 text-xs py-0 border-primary/40"
                 defaultValue={row.label}
                 aria-label={`Nombre del concepto ${row.label}`}
                 onBlur={(e) => {
@@ -513,13 +514,13 @@ const DataRow: React.FC<DataRowProps> = memo(({ item, calculatedValues, annexes,
 
         {/* UM */}
         <TableCell
-          className="px-1.5 py-0 text-center w-[65px] border-r border-border/15 italic text-muted-foreground/80 font-mono text-[9px] cursor-pointer hover:bg-primary/5"
+          className="px-1.5 py-0 text-center w-[65px] border-r border-border/15 italic text-muted-foreground/80 font-mono text-xs cursor-pointer hover:bg-primary/5"
           onClick={() => setIsEditingUM(true)}
         >
           {isEditingUM ? (
             <Input
               autoFocus
-              className="h-5 text-[9px] px-0.5 py-0 text-center font-mono"
+              className="h-5 text-xs px-0.5 py-0 text-center font-mono"
               defaultValue={row.um || row.unit || "Pesos"}
               onBlur={(e) => { setField(path, "um", e.target.value); setIsEditingUM(false); }}
               onKeyDown={(e) => { if (e.key === "Enter") { setField(path, "um", (e.target as HTMLInputElement).value); setIsEditingUM(false); } if (e.key === "Escape") setIsEditingUM(false); }}
@@ -530,7 +531,7 @@ const DataRow: React.FC<DataRowProps> = memo(({ item, calculatedValues, annexes,
         </TableCell>
 
         {/* Valor Histórico — SUBDUED: reference input value */}
-        <TableCell className={cn("px-1.5 py-0 text-right border-r border-border/15 text-muted-foreground/80 text-[9px]", !hasChildren ? "cursor-pointer hover:bg-muted/30" : "cursor-default opacity-60")} onClick={() => !hasChildren && setIsEditingVH(true)}>
+        <TableCell className={cn("px-1.5 py-0 text-right border-r border-border/15 text-muted-foreground/80 text-xs", !hasChildren ? "cursor-pointer hover:bg-muted/30" : "cursor-default opacity-60")} onClick={() => !hasChildren && setIsEditingVH(true)}>
           {isEditingVH ? (
             <FormulaEditor
               initialValue={row.vhFormula || String(row.valorHistorico || 0)}
@@ -543,7 +544,7 @@ const DataRow: React.FC<DataRowProps> = memo(({ item, calculatedValues, annexes,
               <Input
                 type="text"
                 className={cn(
-                  "h-6 text-right text-[10px] px-1 cursor-pointer flex-1 tabular-nums text-muted-foreground/90",
+                  "h-6 text-right text-xs px-1 cursor-pointer flex-1 tabular-nums text-muted-foreground/90",
                   "bg-transparent border-transparent hover:border-border/50 focus-visible:ring-0",
                   (hasChildren || row.vhFormula) && "bg-muted/20 border-border/30 border-dashed"
                 )}
@@ -555,8 +556,8 @@ const DataRow: React.FC<DataRowProps> = memo(({ item, calculatedValues, annexes,
                 readOnly={true}
                 aria-label={`VH de ${row.label}`}
               />
-              {row.vhFormula && <FunctionSquare className="w-2.5 h-2.5 text-primary/30 shrink-0" />}
-              {isRowPercent && <span className="text-[9px] font-bold text-muted-foreground/80">%</span>}
+              {row.vhFormula && <FunctionSquare className="w-2.5 h-2.5 text-primary/70 shrink-0" />}
+              {isRowPercent && <span className="text-xs font-bold text-muted-foreground/80">%</span>}
             </div>
           )}
         </TableCell>
@@ -579,7 +580,7 @@ const DataRow: React.FC<DataRowProps> = memo(({ item, calculatedValues, annexes,
                 {formatAccounting(safeCalculated.total)}
               </span>
               {criticalErrors.length > 0 && <XCircle className="w-2.5 h-2.5 text-destructive shrink-0" />}
-              {hasEngineWarnings && <Sparkles className="w-2.5 h-2.5 text-primary/30 animate-pulse shrink-0" />}
+              {hasEngineWarnings && <Sparkles className="w-2.5 h-2.5 text-primary/70 animate-pulse shrink-0" />}
             </div>
           )}
         </TableCell>
@@ -615,6 +616,7 @@ const CostSheetFlatTable: React.FC<CostSheetFlatTableProps> = ({
   deepValidationErrors = [],
   onNavigateToAnnex
 }) => {
+  const t = useTranslations('costSheet');
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
   const [collapsedRows, setCollapsedRows] = useState<Record<string, boolean>>({});
   const [activeSectionForActions, setActiveSectionForActions] = useState<{ section: CostSheetSection; index: number } | null>(null);
@@ -693,19 +695,19 @@ const CostSheetFlatTable: React.FC<CostSheetFlatTableProps> = ({
   return (
     <div className="space-y-3 animate-in fade-in slide-in-from-bottom-4 duration-500">
       {/* Stats bar */}
-      <div className="flex items-center justify-between px-3 py-1.5 text-[10px] text-muted-foreground">
+      <div className="flex items-center justify-between px-3 py-1.5 text-xs text-muted-foreground">
         <div className="flex items-center gap-3">
           <span className="font-mono">{sections.length} secciones</span>
           <span className="font-mono">{totalRows} filas</span>
         </div>
-        <div className="flex items-center gap-1 text-muted-foreground/50">
+        <div className="flex items-center gap-1 text-muted-foreground/70">
           <span>Modo Hoja</span>
         </div>
       </div>
 
       {/* Precio de Venta — always visible above table */}
       <div className="sticky top-[48px] z-20 bg-primary/5 backdrop-blur-xl border border-primary/20 rounded-xl px-4 py-2 flex items-center justify-between">
-        <span className="font-black text-[10px] uppercase tracking-[0.15em] text-primary">Precio de Venta Sugerido</span>
+        <span className="font-black text-xs uppercase tracking-[0.15em] text-primary">Precio de Venta Sugerido</span>
         <span className="font-black text-base tabular-nums text-primary bg-primary/10 px-3 py-1 rounded-lg border border-primary/20">
           ${formatAccounting(calculatedValues?.['14.1']?.total ?? 0)}
         </span>
@@ -718,19 +720,19 @@ const CostSheetFlatTable: React.FC<CostSheetFlatTableProps> = ({
             {/* Frozen Header */}
             <TableHeader className="sticky top-0 z-20">
               <TableRow className="bg-muted/80 hover:bg-transparent border-b border-border/40 h-7">
-                <TableHead className="w-[55px] px-1.5 py-0 text-center text-[8px] font-black tracking-widest text-muted-foreground/70 border-r border-border/20">No.</TableHead>
-                <TableHead className="px-2 py-0 text-left text-[8px] font-black tracking-widest text-muted-foreground/70 border-r border-border/20">CONCEPTO</TableHead>
-                <TableHead className="w-[65px] px-1.5 py-0 text-center text-[8px] font-black tracking-widest text-muted-foreground/70 border-r border-border/20">
+                <TableHead className="w-[55px] px-1.5 py-0 text-center text-xs font-black tracking-widest text-muted-foreground/70 border-r border-border/20">No.</TableHead>
+                <TableHead className="px-2 py-0 text-left text-xs font-black tracking-widest text-muted-foreground/70 border-r border-border/20">CONCEPTO</TableHead>
+                <TableHead className="w-[65px] px-1.5 py-0 text-center text-xs font-black tracking-widest text-muted-foreground/70 border-r border-border/20">
                   <TTip term="Unidad de Medida" description="Unidad en que se expresa el concepto (Pesos, kg, m³, etc.)">
                     <span className="opacity-70">UM</span>
                   </TTip>
                 </TableHead>
-                <TableHead className="w-[120px] px-1.5 py-0 text-right text-[8px] font-medium tracking-widest text-muted-foreground/60 bg-muted/10 border-r border-border/15">
+                <TableHead className="w-[120px] px-1.5 py-0 text-right text-xs font-medium tracking-widest text-muted-foreground/70 bg-muted/10 border-r border-border/15">
                   <TTip term="Valor Histórico" description="Costo base unitario de entrada. Clic para editar o usar fórmulas con =">
                     <span className="text-muted-foreground/80">VALOR HISTÓRICO</span>
                   </TTip>
                 </TableHead>
-                <TableHead className="w-[130px] px-1.5 py-0 text-right text-[8px] font-black tracking-widest text-primary bg-primary/10 border-r-2 border-primary/30 shadow-sm">
+                <TableHead className="w-[130px] px-1.5 py-0 text-right text-xs font-black tracking-widest text-primary bg-primary/10 border-r-2 border-primary/30 shadow-sm">
                   <TTip term="Total" description="Resultado calculado. Clic para editar fórmula con =">
                     <span className="text-primary">TOTAL</span>
                   </TTip>

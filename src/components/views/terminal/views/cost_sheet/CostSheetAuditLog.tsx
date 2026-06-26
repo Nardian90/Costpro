@@ -8,6 +8,7 @@ import { AuditEntry } from '@/lib/cost-engine/types';
 import { Clock, Info, AlertTriangle, Zap, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
+import { useTranslations } from 'next-intl';
 interface CostSheetAuditLogProps {
   audits: AuditEntry[];
 }
@@ -56,7 +57,7 @@ export const CostSheetAuditLog: React.FC<CostSheetAuditLogProps> = memo(({ audit
                       </div>
                    )}
                  </div>
-                 <div className="text-xs font-bold text-muted-foreground/50 tabular-nums">
+                 <div className="text-xs font-bold text-muted-foreground/70 tabular-nums">
                    {(() => {
                       const d = new Date(audit.ts);
                       return isNaN(d.getTime()) ? '--:--:--' : d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
@@ -71,11 +72,12 @@ export const CostSheetAuditLog: React.FC<CostSheetAuditLogProps> = memo(({ audit
 });
 
 function StatusIcon({ type }: { type: AuditEntry['type'] }) {
+  const t = useTranslations('costSheet');
     switch (type) {
         case 'ERROR': return <AlertTriangle className="w-4 h-4 text-destructive" />;
         case 'WARNING': return <AlertTriangle className="w-4 h-4 text-warning" />;
         case 'RULE_APPLIED': return <Zap className="w-4 h-4 text-success" />;
         case 'CYCLE_DETECTED': return <RefreshCw className="w-4 h-4 text-purple-500 animate-spin-slow" />;
-        default: return <Info className="w-4 h-4 text-primary/50" />;
+        default: return <Info className="w-4 h-4 text-primary/70" />;
     }
 }

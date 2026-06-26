@@ -15,6 +15,7 @@ import { NextIntlClientProvider } from 'next-intl';
 import { getMessages, getLocale } from 'next-intl/server';
 import { LocaleProvider } from '@/components/providers/LocaleProvider';
 import { MotionPreferencesProvider } from '@/lib/motion-config';
+import { PWAUpdateBanner } from '@/components/ui/PWAUpdateBanner';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -190,6 +191,7 @@ setTimeout(function() {
                       <div id="root" suppressHydrationWarning>{children}</div>
                       <Toaster position="top-right" richColors />
                       <ServiceWorkerRegister />
+                      <PWAUpdateBanner />
                       <CookieConsent />
                     </SyncProvider>
                   </MotionPreferencesProvider>

@@ -4,6 +4,7 @@ import { ArrowLeft, AlertCircle, ArrowRight, TrendingUp, DollarSign, BarChart3 }
 import { cn, formatAccounting } from '@/lib/utils';
 import type { ValidationError } from '@/lib/cost-engine/types';
 
+import { useTranslations } from 'next-intl';
 interface CostSheetProblemsPanelProps {
   problems: ValidationError[];
   calculatedValues?: Record<string, { total?: number }>;
@@ -25,6 +26,7 @@ export const CostSheetProblemsPanel = ({
   onGoToAudit,
   onGoBack,
 }: CostSheetProblemsPanelProps) => {
+  const t = useTranslations('costSheet');
   // Only show CRITICAL and WARNING — INFO messages are noise
   const actionableProblems = problems?.filter((p) => p.type !== 'INFO') ?? [];
   const critical = actionableProblems.filter((p) => p.type === 'CRITICAL').length;
@@ -64,7 +66,7 @@ export const CostSheetProblemsPanel = ({
             aria-label="Volver a la vista anterior"
           >
             <ArrowLeft className="w-4 h-4" />
-            <span className="text-[10px] font-bold uppercase tracking-widest hidden sm:inline">Volver</span>
+            <span className="text-xs font-bold uppercase tracking-widest hidden sm:inline">Volver</span>
           </button>
         )}
 
@@ -76,7 +78,7 @@ export const CostSheetProblemsPanel = ({
             <DollarSign className="w-3.5 h-3.5 text-primary" />
           </div>
           <div className="min-w-0">
-            <p className="text-[8px] font-bold uppercase tracking-[0.15em] text-muted-foreground/60 leading-none mb-0.5">
+            <p className="text-xs font-bold uppercase tracking-[0.15em] text-muted-foreground/70 leading-none mb-0.5">
               Precio Venta
             </p>
             <p className="text-xs font-black font-mono text-primary tabular-nums leading-none">
@@ -91,7 +93,7 @@ export const CostSheetProblemsPanel = ({
             <BarChart3 className="w-3.5 h-3.5 text-violet-400" />
           </div>
           <div className="min-w-0">
-            <p className="text-[8px] font-bold uppercase tracking-[0.15em] text-muted-foreground/60 leading-none mb-0.5">
+            <p className="text-xs font-bold uppercase tracking-[0.15em] text-muted-foreground/70 leading-none mb-0.5">
               Unitario
             </p>
             <p className="text-xs font-black font-mono text-violet-400 tabular-nums leading-none">
@@ -112,7 +114,7 @@ export const CostSheetProblemsPanel = ({
             )} />
           </div>
           <div className="min-w-0">
-            <p className="text-[8px] font-bold uppercase tracking-[0.15em] text-muted-foreground/60 leading-none mb-0.5">
+            <p className="text-xs font-bold uppercase tracking-[0.15em] text-muted-foreground/70 leading-none mb-0.5">
               % Utilidad
             </p>
             <p className={cn(
@@ -140,7 +142,7 @@ export const CostSheetProblemsPanel = ({
             aria-label={`${actionableProblems.length} problemas. Ir a Auditoría.`}
           >
             <AlertCircle className="w-4 h-4" />
-            <span className="text-[10px] font-bold uppercase tracking-widest">
+            <span className="text-xs font-bold uppercase tracking-widest">
               {critical > 0 ? critical : warnings}
             </span>
             <ArrowRight className="w-3.5 h-3.5 opacity-50" />

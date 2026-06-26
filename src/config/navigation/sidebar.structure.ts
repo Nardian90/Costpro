@@ -3,6 +3,7 @@ import {
   ListFilter,
   Home,
   FileText,
+  Truck,
   Package,
   ShoppingCart,
   Users,
@@ -47,12 +48,13 @@ import {
   Wand2,
   Sparkles,
   BookOpen,
-  FolderOpen,
   Save,
   Download,
   FileSpreadsheet,
   Upload,
-  GitCompareArrows
+  GitCompareArrows,
+  Gauge,
+  UserCog
 } from 'lucide-react';
 
 export type NavItemType = 'item' | 'submenu' | 'group';
@@ -93,7 +95,7 @@ export const SIDEBAR_STRUCTURE: NavModule[] = [
     type: 'group',
     icon: FileText,
     ariaLabel: 'Módulo de Gestión de Costos',
-    description: 'Gestión de costos: vistas de trabajo (tablero, modo asistido, informe), generación (rápida, experta), plantillas (explorador, Arena FC, importar JSON) y herramientas (guardar, exportar Excel/PDF).',
+    description: 'Gestión de costos: vistas de trabajo (generar fácil, tablero, modo asistido, informe, Arena FC) y herramientas (guardar, exportar Excel/PDF, importar JSON).',
     children: [
       {
         id: 'cost_views',
@@ -101,32 +103,23 @@ export const SIDEBAR_STRUCTURE: NavModule[] = [
         type: 'submenu',
         icon: LayoutGrid,
         children: [
+          // B2-B3: "Generar fácil" como PRIMERA opción — reemplaza al grupo
+          // "Generación" eliminado. Al hacer clic abre una vista con 2 tabs
+          // internos: "Generación Rápida" y "Generación Experta".
+          { id: 'gen-easy', label: 'Generar fácil', type: 'item', icon: Zap, ariaLabel: 'Generación rápida y experta de fichas de costo' },
           { id: 'cost-sheets', label: 'Tablero Principal', type: 'item', icon: Table2 },
           { id: 'view-assisted', label: 'Modo Asistido', type: 'item', icon: Sparkles },
-          { id: 'view-reading', label: 'Informe', type: 'item', icon: ClipboardList }
+          { id: 'view-reading', label: 'Informe', type: 'item', icon: ClipboardList },
+          // C3+G2: "Arena FC" movido aquí desde el grupo Plantillas (eliminado).
+          // Ahora vive en Vistas de Trabajo, debajo de Informe.
+          { id: 'arena-fc', label: 'Arena FC', type: 'item', icon: GitCompareArrows, isBeta: true }
         ]
       },
-      {
-        id: 'cost_gen',
-        label: 'Generación',
-        type: 'submenu',
-        icon: Wand2,
-        children: [
-          { id: 'gen-quick', label: 'Generación Rápida', type: 'item', icon: Zap },
-          { id: 'gen-expert', label: 'Generación Experta', type: 'item', icon: Wand2 }
-        ]
-      },
-      {
-        id: 'cost_templates',
-        label: 'Plantillas',
-        type: 'submenu',
-        icon: FolderOpen,
-        children: [
-          { id: 'templates', label: 'Explorador Plantillas', type: 'item', icon: FolderOpen },
-          { id: 'arena-fc', label: 'Arena FC', type: 'item', icon: GitCompareArrows, isBeta: true },
-          { id: 'tool-import', label: 'Importar JSON', type: 'item', icon: Upload }
-        ]
-      },
+      // B2: Grupo "Generación" eliminado — ahora es "Generar fácil" como primera
+      // opción dentro de Vistas de Trabajo, con 2 tabs internos.
+      // C3+G2: Grupo "Plantillas" eliminado — "Explorador Plantillas" ya es Tab 1
+      // dentro de Tablero Principal, "Arena FC" se movió a Vistas de Trabajo,
+      // e "Importar JSON" se movió a Herramientas.
       {
         id: 'cost_tools',
         label: 'Herramientas',
@@ -135,7 +128,10 @@ export const SIDEBAR_STRUCTURE: NavModule[] = [
         children: [
           { id: 'tool-save', label: 'Guardar Ficha', type: 'item', icon: Save },
           { id: 'tool-export-excel', label: 'Exportar Excel', type: 'item', icon: FileSpreadsheet },
-          { id: 'tool-export-pdf', label: 'Exportar PDF', type: 'item', icon: Download }
+          { id: 'tool-export-pdf', label: 'Exportar PDF', type: 'item', icon: Download },
+          // C3+G2: "Importar JSON" movido aquí desde el grupo Plantillas (eliminado).
+          // Ahora vive en Herramientas, debajo de Exportar PDF.
+          { id: 'tool-import', label: 'Importar JSON', type: 'item', icon: Upload }
         ]
       }
     ]
@@ -153,6 +149,7 @@ export const SIDEBAR_STRUCTURE: NavModule[] = [
       // para que sea accesible con 1 clic desde el grupo MULTI-TIENDA (donde el admin
       // naturalmente la busca), en lugar de estar a 3 niveles de profundidad.
       { id: 'stores', label: 'Gestión Tiendas', type: 'item', icon: Building, ariaLabel: 'Administrar tiendas del tenant', allowedRoles: ['admin'] },
+      { id: 'workers', label: 'Trabajadores y Comisiones', type: 'item', icon: UserCog, ariaLabel: 'Gestión de trabajadores y cálculo de comisiones', description: 'CRUD de trabajadores por tienda, reglas de comisión versionables, cálculo por periodo y registro de pagos con auditoría completa.', allowedRoles: ['admin', 'manager', 'encargado'] },
       // QW-4 (IA Audit): "Dashboard KPI" y "Generador de Reportes" agrupados en
       // un submenú "Analítica". Antes eran 2 ítems sueltos a nivel raíz del grupo
       // MULTI-TIENDA, lo que rompía la cohesión (mezclaba operación con análisis).
@@ -167,6 +164,7 @@ export const SIDEBAR_STRUCTURE: NavModule[] = [
         allowedRoles: ['admin', 'manager', 'encargado'],
         children: [
           { id: 'dashboard', label: 'Dashboard KPI', type: 'item', icon: TrendingUp, ariaLabel: 'Indicadores clave de desempeño', description: 'Indicadores clave de desempeño en tiempo real: ventas, stock, recepciones, rentabilidad.', allowedRoles: ['admin', 'manager', 'encargado'] },
+          { id: 'exchange-intelligence', label: 'Inteligencia Cambiaria', type: 'item', icon: DollarSign, ariaLabel: 'Inteligencia cambiaria y devaluación monetaria', description: 'Centro de inteligencia económica: tasas oficiales vs informales, impacto en precios, alertas estratégicas y simulador de escenarios.', allowedRoles: ['admin', 'manager', 'encargado'] },
           { id: 'reports', label: 'Generador de Reportes', type: 'item', icon: BarChart4, ariaLabel: 'Diseñar y generar reportes profesionales', description: 'Diseña y genera reportes profesionales en PDF/Excel con filtros y agrupaciones personalizadas.', allowedRoles: ['admin', 'manager'] }
         ]
       },
@@ -200,6 +198,7 @@ export const SIDEBAR_STRUCTURE: NavModule[] = [
         description: 'Gestión de existencias: consulta de stock, ajustes documentales y generación de etiquetas.',
         children: [
           { id: 'inventory', label: 'Inventario', type: 'item', icon: Package, ariaLabel: 'Stock actual, catálogo y trazabilidad', description: 'Stock actual por producto, catálogo maestro y trazabilidad de movimientos. Tabs: Stock | Catálogo | Trazabilidad.', allowedRoles: ['admin', 'manager', 'encargado', 'warehouse'] },
+          { id: 'received-services', label: 'Servicios Recibidos', type: 'item', icon: Truck, ariaLabel: 'Servicios recibidos y costos asociados', description: 'Registro y distribución de costos asociados a recepciones: transporte, manipulación, seguro, aduana y otros servicios.', allowedRoles: ['admin', 'manager', 'encargado', 'warehouse'] },
           { id: 'inventory_adjustments', label: 'Ajustes Documentales', type: 'item', icon: RefreshCcw, ariaLabel: 'Corregir inventario', description: 'Registra ajustes de inventario con justificación documental (mermas, sobrantes, correcciones).', allowedRoles: ['admin', 'manager', 'encargado'] },
           { id: 'labels', label: 'Etiquetas y Codigos', type: 'item', icon: QrCode, ariaLabel: 'Generar etiquetas de producto', description: 'Genera etiquetas con código de barras y QR para imprimir en productos y estantes.', allowedRoles: ['admin', 'manager', 'encargado'] }
         ]
@@ -322,6 +321,7 @@ export const SIDEBAR_STRUCTURE: NavModule[] = [
       { id: 'roles', label: 'Seguridad Roles', type: 'item', icon: ShieldCheck, description: 'Configura roles y permisos de acceso al sistema. Define qué puede hacer cada rol en cada módulo.' },
       // F3-T04: items de sistema (antes bajo submenu 'sistema')
       { id: 'health', label: 'Salud Plataforma', type: 'item', icon: HeartPulse, description: 'Monitorea el estado de servicios, latencia de API, conexión a BD y servicios externos en tiempo real.' },
+      { id: 'usage-monitoring', label: 'Monitoreo de Uso', type: 'item', icon: Gauge, description: 'Estima consumo de Vercel + Supabase en plan gratuito. Alertas antes de llegar a límites (60/80/90%). Forecast mensual con promedio 7 días.' },
       { id: 'audit', label: 'Auditoría Global', type: 'item', icon: Shield, description: 'Registro completo de acciones de usuarios: quién hizo qué, cuándo y desde dónde. Filtrado por usuario, fecha y acción.' },
       // F3-T04: items de comunicación (antes bajo submenu 'comunicación')
       { id: 'news', label: 'Tablón Noticias', type: 'item', icon: Newspaper, description: 'Publica anuncios internos para el equipo. Notificaciones push a usuarios conectados.' },

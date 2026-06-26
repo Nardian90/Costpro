@@ -67,12 +67,27 @@ export function useInvertDocument() {
 
       logger.info('DATABASE', `[Invert] Inverting ${items.length} items`);
 
-      // 2. Perform adjustments for each item
-      // Pasar operationDate para que el stock_movement tenga la misma fecha efectiva.
-      const reason = `INVERSION - ${type === 'sale' ? 'Anulación Venta' : 'Anulación Recepción'} ${id.split('-')[0]}`;
+      // FIX F2-06: Para ventas, usar void_transaction RPC que restaura stock + audita server-side
+      if (type === 'sale') {
+        const reason = `Anulación de venta ${id.split('-')[0]}`;
+        logger.info('DATABASE', `[Invert] Calling void_transaction RPC for sale ${id}`);
+
+        const { data: voidResult, error: voidError } = await supabase.rpc('void_transaction', {
+          p_transaction_id: id,
+          p_reason: reason,
+          p_operation_date: operationDate,
+        });
+
+        if (voidError) throw voidError;
+        logger.info('DATABASE', `[Invert] void_transaction result: ${JSON.stringify(voidResult)}`);
+        return { success: true, result: voidResult };
+      }
+
+      // Para recepciones, usar el flujo existente (perform_inventory_adjustment)
+      const reason = `INVERSION - Anulación Recepción ${id.split('-')[0]}`;
 
       for (const item of items) {
-        const quantityDelta = type === 'sale' ? Math.abs(item.quantity) : -Math.abs(item.quantity);
+        const quantityDelta = -Math.abs(item.quantity);
 
         logger.info('DATABASE', `[Invert] Adjusting product ${item.product_id} with delta ${quantityDelta}`);
 
@@ -83,23 +98,18 @@ export function useInvertDocument() {
           p_quantity_delta: quantityDelta,
           p_unit_cost_adjustment: item.unit_cost || item.cost_at_sale || null,
           p_reason: reason,
-          // Política forward-only: pasar fecha efectiva (si viene) para que
-          // validate_operation_date se ejecute en el backend y el stock_movement
-          // tenga la misma fecha que el documento.
           p_operation_date: operationDate,
         });
 
         if (adjError) throw adjError;
       }
 
-      // 3. Update document status con la fecha efectiva
-      const table = type === 'sale' ? 'transactions' : 'receipts';
+      // 3. Update document status
+      const table = 'receipts';
       const effectiveDate = operationDate || new Date().toISOString();
       const updateData = {
         status: 'voided',
         updated_at: effectiveDate,
-        // transactions tiene cancelled_at; receipts no, pero updated_at basta
-        ...(type === 'sale' ? { cancelled_at: effectiveDate } : {}),
       };
 
       logger.info('DATABASE', `[Invert] Updating ${table} ${id} status to voided`);

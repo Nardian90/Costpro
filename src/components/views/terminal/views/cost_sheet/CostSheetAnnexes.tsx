@@ -4,6 +4,7 @@ import React from 'react';
 import { cn, formatCurrency } from '@/lib/utils';
 import { CostSheetAnnex, CostSheetColumn } from '@/types/cost-sheet';
 
+import { useTranslations } from 'next-intl';
 type CostSheetAnnexesProps = {
   forceTable?: boolean;
   annexes: CostSheetAnnex[];

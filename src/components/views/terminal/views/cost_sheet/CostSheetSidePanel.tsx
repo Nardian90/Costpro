@@ -10,6 +10,7 @@ import { useIsMobile } from '@/hooks/ui/useMobile';
 import { useFocusTrap } from '@/hooks/ui/useFocusTrap';
 import type { CostSheetData } from '@/types/cost-sheet';
 
+import { useTranslations } from 'next-intl';
 interface CostSheetSidePanelProps {
   isOpen: boolean;
   onOpen: (mode: 'calculator' | 'ai' | 'both') => void;
@@ -153,7 +154,7 @@ export const CostSheetSidePanel: React.FC<CostSheetSidePanelProps> = ({
                         <Calculator className={isMobile ? "w-3.5 h-3.5" : "w-4 h-4"} />
                     </div>
                     {isTriggerExpanded && (
-                        <span className="text-[9px] font-black uppercase tracking-widest opacity-80 whitespace-nowrap">Calc</span>
+                        <span className="text-xs font-black uppercase tracking-widest opacity-80 whitespace-nowrap">Calc</span>
                     )}
                 </button>
 
@@ -173,7 +174,7 @@ export const CostSheetSidePanel: React.FC<CostSheetSidePanelProps> = ({
                         <Bot className={isMobile ? "w-3.5 h-3.5" : "w-4 h-4"} />
                     </div>
                     {isTriggerExpanded && (
-                        <span className="text-[9px] font-black uppercase tracking-widest opacity-80 whitespace-nowrap">Darian</span>
+                        <span className="text-xs font-black uppercase tracking-widest opacity-80 whitespace-nowrap">Darian</span>
                     )}
                 </button>
 
@@ -193,7 +194,7 @@ export const CostSheetSidePanel: React.FC<CostSheetSidePanelProps> = ({
                             <LayoutGrid className="w-4 h-4" />
                         </div>
                         {isTriggerExpanded && (
-                            <span className="text-[9px] font-black uppercase tracking-widest opacity-80 whitespace-nowrap">Dual</span>
+                            <span className="text-xs font-black uppercase tracking-widest opacity-80 whitespace-nowrap">Dual</span>
                         )}
                     </button>
                 )}
@@ -255,7 +256,7 @@ export const CostSheetSidePanel: React.FC<CostSheetSidePanelProps> = ({
                     {mode === 'both' && <LayoutGrid className="w-5 h-5" />}
                   </div>
                   <div>
-                    <h3 className="text-[10px] font-black uppercase tracking-[0.3em] opacity-40 leading-none mb-1">
+                    <h3 className="text-xs font-black uppercase tracking-[0.3em] opacity-40 leading-none mb-1">
                         {mode === 'both' ? 'Multitarea' : (mode === 'calculator' ? 'Herramienta' : 'Asistente')}
                     </h3>
                     <p className="text-sm font-black uppercase tracking-widest italic">
@@ -270,7 +271,7 @@ export const CostSheetSidePanel: React.FC<CostSheetSidePanelProps> = ({
                             onClick={onExpand ? onExpand : () => setIsFullView(!isFullView)}
                             className={cn(
                                 "p-2.5 rounded-2xl transition-all active:scale-90",
-                                "hover:bg-primary/10 dark:hover:bg-white/10 text-primary/50 dark:text-[hsl(var(--primary))]/50"
+                                "hover:bg-primary/10 dark:hover:bg-white/10 text-primary/70 dark:text-[hsl(var(--primary))]/50"
                             )}
                             title={onExpand ? "Ampliar a vista completa" : (isFullView ? "Reducir" : "Ampliar")}
                         >
@@ -281,7 +282,7 @@ export const CostSheetSidePanel: React.FC<CostSheetSidePanelProps> = ({
                         onClick={onClose}
                         className={cn(
                             "p-2.5 rounded-2xl transition-all active:scale-90",
-                            "hover:bg-destructive/10 text-destructive/50 hover:text-destructive"
+                            "hover:bg-destructive/10 text-destructive/70 hover:text-destructive"
                         )}
                     >
                         <XIcon className="w-5 h-5" />
@@ -300,7 +301,7 @@ export const CostSheetSidePanel: React.FC<CostSheetSidePanelProps> = ({
                     "p-4 border-t text-center shrink-0",
                     "bg-muted/20 dark:bg-black/20 border-border/50 dark:border-white/5"
                 )}>
-                    <p className="text-[9px] font-bold uppercase tracking-[0.4em] opacity-30">
+                    <p className="text-xs font-bold uppercase tracking-[0.4em] opacity-30">
                         {mode === 'both' ? 'Productividad Máxima' : (mode === 'calculator' ? 'Teclado Numérico Soportado' : 'Ref: Resolución 148/2023')}
                     </p>
                 </div>

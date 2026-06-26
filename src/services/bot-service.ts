@@ -1,4 +1,5 @@
 import { SupabaseClient } from '@supabase/supabase-js';
+import { getSupabaseAdminSafe as getAdminClientSync } from '@/lib/supabase-admin';
 import * as fs from 'fs';
 import * as path from 'path';
 import { getLLMProvider } from '@/lib/ai/orchestrator';
@@ -206,7 +207,7 @@ Reglas: ${lightQuery ? 'Eres un asistente amable. No uses tools para saludos.' :
     }
 
     try {
-      await supabase.from('audit_logs').insert({
+      await (getAdminClientSync() ?? supabase).from('audit_logs').insert({
         user_id: userId,
         action: 'AI_CONTROLLER_QUERY',
         table_name: 'bot_interactions',

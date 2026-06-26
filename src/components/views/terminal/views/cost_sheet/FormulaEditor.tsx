@@ -33,6 +33,7 @@ import { FormulaBuilder } from './FormulaBuilder';
 import { RESERVED_FORMULA_NAMES } from '@/lib/cost-engine/formula-utils';
 import { APP_DISPLAY_VERSION } from '@/config/app';
 
+import { useTranslations } from 'next-intl';
 interface FormulaEditorProps {
   initialValue: string;
   onSave: (value: string) => void;
@@ -185,7 +186,7 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
 
         {/* C15: Inline warning for reserved name conflicts */}
         {reservedWarning && (
-          <div className="absolute -bottom-6 left-2 right-2 z-10 text-[10px] text-warning dark:text-amber-400 font-medium truncate animate-in fade-in slide-in-from-top-1 duration-200" title={reservedWarning}>
+          <div className="absolute -bottom-6 left-2 right-2 z-10 text-xs text-warning dark:text-amber-400 font-medium truncate animate-in fade-in slide-in-from-top-1 duration-200" title={reservedWarning}>
             ⚠ {reservedWarning}
           </div>
         )}

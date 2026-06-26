@@ -129,7 +129,7 @@ export default function AuditGlobalView() {
 
   // Virtual scrolling
   const parentRef = useRef<HTMLDivElement>(null);
-  // eslint-disable-next-line react-hooks/incompatible-library
+   
   const rowVirtualizer = useVirtualizer({
     count: filteredLogs.length,
     getScrollElement: () => parentRef.current,

@@ -67,7 +67,7 @@ export default function RoleForm({
     },
   });
 
-  // eslint-disable-next-line react-hooks/incompatible-library
+   
   const allSelected = watch('permissions.all');
   const selectedViews = watch('permissions.views');
 

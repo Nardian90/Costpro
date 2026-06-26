@@ -126,6 +126,17 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
   }, []);
 
   // ── Click on a root module header ──
+  // F3 + GAP-3: Al clickear un módulo raíz, navegar a la vista por defecto.
+  // Mapeo completo de todos los grupos del sidebar.
+  const MODULE_DEFAULT_VIEW: Record<string, ViewType> = {
+    'core': 'occ',
+    'costos': 'cost-sheets',
+    'tienda': 'stores',
+    'ipv_module': 'ipv',
+    'otros': 'pick3-intelligence',
+    'administracion': 'users',
+    'recursos': 'settings',
+  };
   const handleRootModuleClick = useCallback((mod: NavModule) => {
     if (mod.id === CORE_MODULE_ID) {
       // Escritorio → exit focus + navigate to home
@@ -142,6 +153,12 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
     }
     // Enter focus mode for this module
     enterFocusMode(mod.id);
+    // F3: Navegar a la vista por defecto del módulo si existe.
+    // Esto asegura que el usuario vea contenido del módulo, no "Centro de Comando".
+    const defaultView = MODULE_DEFAULT_VIEW[mod.id];
+    if (defaultView) {
+      onViewChange(defaultView);
+    }
   }, [exitFocusMode, enterFocusMode, focusModuleId, setCurrentView, onViewChange, isMobile, onClose]);
 
   // ── Click on a nav item (leaf) ──
@@ -159,6 +176,11 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
       onViewChange('occ');
     } else {
       enterFocusMode(mod.id);
+      // F3: Navegar a vista por defecto del módulo también en rail mode.
+      const defaultView = MODULE_DEFAULT_VIEW[mod.id];
+      if (defaultView) {
+        onViewChange(defaultView);
+      }
     }
   }, [setSidebarState, exitFocusMode, enterFocusMode, setCurrentView, onViewChange]);
 

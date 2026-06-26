@@ -81,7 +81,7 @@ export default function MatchingHistoryView() {
 
   // Virtualizer setup
   const parentRef = useRef<HTMLDivElement>(null);
-  // eslint-disable-next-line react-hooks/incompatible-library
+   
   const rowVirtualizer = useVirtualizer({
     count: logs?.length || 0,
     getScrollElement: () => parentRef.current,

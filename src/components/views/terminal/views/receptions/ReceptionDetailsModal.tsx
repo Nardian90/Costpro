@@ -1,13 +1,15 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import { BaseModal } from "@/components/ui/BaseModal";
-import { Package, Hash, User, Calendar, FileText, Building2, Download, CheckCircle2, AlertTriangle, Trash2 } from 'lucide-react';
+import { Package, Hash, User, Calendar, FileText, Building2, Download, CheckCircle2, AlertTriangle, Trash2, Truck, Link2, Plus, RefreshCw, Eye, X } from 'lucide-react';
 import { type Receipt, type ReceiptItem } from '@/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { resolveProductImage, getProductImageUrl, formatCurrency, formatDate } from '@/lib/utils';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/lib/supabaseClient';
+import { toast } from 'sonner';
 
 interface ReceptionDetailsModalProps {
   receipt: Receipt | null;
@@ -47,10 +49,14 @@ export function ReceptionDetailsModal({
   onConfirmPendingCancel,
   isConfirmingPending = false,
 }: ReceptionDetailsModalProps) {
+  // F3: Tab state for "Costos Asociados" — debe ir ANTES de cualquier early return
+  // para cumplir con las reglas de hooks de React.
+  const [activeTab, setActiveTab] = useState<'items' | 'costs'>('items');
+
   if (!receipt && !isLoading) return null;
 
   const subtotal = receipt?.total_cost || 0;
-  const taxes = subtotal * 0; // Assuming 0 for now as it's not in DB, or we can assume it's included
+  const taxes = subtotal * 0;
   const total = subtotal + taxes;
 
   return (
@@ -71,7 +77,6 @@ export function ReceptionDetailsModal({
       footer={
         <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center w-full">
           <div className="flex items-center gap-4">
-            {/* Reception-Flow-Fix: botón "Confirmar" visible solo en modo confirmar-pendiente. */}
             {isConfirmPendingMode && (
               <button
                 onClick={onConfirmPending}
@@ -167,6 +172,41 @@ export function ReceptionDetailsModal({
       }
     >
         <div className="space-y-6">
+          {/* F3: Tab system — Productos | Costos Asociados */}
+          {!isEditMode && (
+            <div className="flex border-b border-border">
+              <button
+                type="button"
+                onClick={() => setActiveTab('items')}
+                className={cn("flex-1 py-3 text-xs font-black uppercase tracking-widest border-b-2 -mb-px transition-colors min-h-[44px]",
+                  activeTab === 'items' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground')}
+                aria-selected={activeTab === 'items'}
+                role="tab"
+              >
+                Productos
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('costs')}
+                className={cn("flex-1 py-3 text-xs font-black uppercase tracking-widest border-b-2 -mb-px transition-colors min-h-[44px] flex items-center justify-center gap-2",
+                  activeTab === 'costs' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground')}
+                aria-selected={activeTab === 'costs'}
+                role="tab"
+              >
+                <Truck className="w-4 h-4" />
+                Costos Asociados
+              </button>
+            </div>
+          )}
+
+          {/* TAB: Costos Asociados */}
+          {activeTab === 'costs' && !isEditMode && receipt && (
+            <CostsAssociatedTab receiptId={receipt.id} />
+          )}
+
+          {/* TAB: Productos (contenido original) */}
+          {(activeTab === 'items' || isEditMode) && (
+            <>
           {/* Reception-Flow-Fix: banner de advertencia cuando se va a confirmar
               una recepción pendiente. Aclara que la acción aplicará cambios al
               inventario y volverá la recepción no editable. */}
@@ -389,7 +429,8 @@ export function ReceptionDetailsModal({
                 </table>
              </div>
           </div>
-        </div>
+            </>
+          )}
 
         {/* Financial Summary */}
         <div className="mt-6 pt-4 border-t border-white/5">
@@ -408,6 +449,356 @@ export function ReceptionDetailsModal({
               </div>
            </div>
         </div>
+        </div>
     </BaseModal>
+  );
+}
+
+// ════════════════════════════════════════════════════════════════════
+// F3: CostsAssociatedTab — Tab de Costos Asociados en Recepciones
+// ════════════════════════════════════════════════════════════════════
+function CostsAssociatedTab({ receiptId }: { receiptId: string }) {
+  const [services, setServices] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showCreate, setShowCreate] = useState(false);
+
+  const fetchServices = useCallback(async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('service_reception_links')
+        .select(`
+          *,
+          received_services!inner(*)
+        `)
+        .eq('receipt_id', receiptId);
+      if (error) throw error;
+      setServices(data || []);
+    } catch (e: any) {
+      // Tabla puede no existir todavía en algunos entornos
+      console.warn('[CostsAssociatedTab] Error:', e.message);
+    } finally {
+      setLoading(false);
+    }
+  }, [receiptId]);
+
+  useEffect(() => { fetchServices(); }, [fetchServices]);
+
+  const handleQuickCreate = async (type: string, amount: string) => {
+    if (!amount || parseFloat(amount) <= 0) {
+      toast.error('El importe debe ser mayor a 0');
+      return;
+    }
+    try {
+      const res = await fetch('/api/received-services', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          service_type_name: type,
+          total_amount: parseFloat(amount),
+          receipt_ids: [receiptId],
+          distribution_method: 'amount',
+        }),
+      });
+      if (!res.ok) throw new Error('Error al crear servicio');
+      toast.success(`${type} creado y vinculado`);
+      setShowCreate(false);
+      fetchServices();
+    } catch (e: any) {
+      toast.error(e.message);
+    }
+  };
+
+  const handleRecalculate = async (serviceId: string) => {
+    try {
+      const res = await fetch('/api/received-services/distribute', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ service_id: serviceId }),
+      });
+      if (!res.ok) throw new Error('Error al recalcular');
+      toast.success('Distribución recalculada');
+    } catch (e: any) {
+      toast.error(e.message);
+    }
+  };
+
+  const totalServices = services.reduce((sum, s) => sum + (s.allocated_amount || 0), 0);
+
+  // GAP-1: Vincular servicio existente
+  const [showLinkExisting, setShowLinkExisting] = useState(false);
+  const [availableServices, setAvailableServices] = useState<any[]>([]);
+  const [selectedServiceId, setSelectedServiceId] = useState('');
+  const [linking, setLinking] = useState(false);
+
+  // GAP-2: Ver distribución detallada
+  const [distributionData, setDistributionData] = useState<any[]>([]);
+  const [showDistribution, setShowDistribution] = useState<string | null>(null);
+
+  const fetchAvailableServices = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('received_services')
+        .select('id, service_number, service_type_name, total_amount, supplier, service_date')
+        .eq('status', 'active')
+        .order('created_at', { ascending: false })
+        .limit(20);
+      if (error) throw error;
+      // Filter out already linked
+      const linkedIds = services.map(s => s.service_id);
+      setAvailableServices((data || []).filter((s: any) => !linkedIds.includes(s.id)));
+    } catch (e: any) {
+      console.warn('[LinkExisting] Error:', e.message);
+    }
+  }, [services]);
+
+  const handleLinkExisting = async () => {
+    if (!selectedServiceId) return;
+    setLinking(true);
+    try {
+      const svc = availableServices.find(s => s.id === selectedServiceId);
+      if (!svc) return;
+      const { error } = await supabase.from('service_reception_links').insert({
+        service_id: selectedServiceId,
+        receipt_id: receiptId,
+        allocation_percentage: 100,
+        allocated_amount: svc.total_amount,
+      });
+      if (error) throw error;
+      toast.success('Servicio vinculado correctamente');
+      setShowLinkExisting(false);
+      setSelectedServiceId('');
+      fetchServices();
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally {
+      setLinking(false);
+    }
+  };
+
+  const handleViewDistribution = async (serviceId: string) => {
+    if (showDistribution === serviceId) {
+      setShowDistribution(null);
+      return;
+    }
+    try {
+      const { data, error } = await supabase
+        .from('service_cost_distributions')
+        .select(`
+          distribution_amount,
+          distribution_percentage,
+          receipt_items!inner(quantity, unit_cost, product_id, products!inner(name))
+        `)
+        .eq('service_id', serviceId)
+        .eq('receipt_id', receiptId);
+      if (error) throw error;
+      setDistributionData(data || []);
+      setShowDistribution(serviceId);
+    } catch (e: any) {
+      toast.error('Error al cargar distribución: ' + e.message);
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* Header */}
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <h3 className="text-sm font-black uppercase tracking-widest text-muted-foreground">
+          Servicios Vinculados ({services.length})
+        </h3>
+        <div className="flex gap-2">
+          {/* GAP-1: Vincular existente */}
+          <button
+            onClick={() => { setShowLinkExisting(!showLinkExisting); if (!showLinkExisting) fetchAvailableServices(); }}
+            className="flex items-center gap-2 px-3 py-2 rounded-xl bg-muted text-muted-foreground font-black text-xs uppercase tracking-widest hover:bg-muted/70 transition-colors min-h-[44px]"
+          >
+            <Link2 className="w-4 h-4" />
+            Vincular Existente
+          </button>
+          <button
+            onClick={() => setShowCreate(!showCreate)}
+            className="flex items-center gap-2 px-3 py-2 rounded-xl bg-primary/10 text-primary font-black text-xs uppercase tracking-widest hover:bg-primary/20 transition-colors min-h-[44px]"
+          >
+            <Plus className="w-4 h-4" />
+            Nuevo
+          </button>
+        </div>
+      </div>
+
+      {/* GAP-1: Link existing service */}
+      {showLinkExisting && (
+        <div className="p-4 rounded-xl bg-muted/30 border border-border space-y-3">
+          <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Vincular servicio existente</p>
+          {availableServices.length === 0 ? (
+            <p className="text-xs text-muted-foreground">No hay servicios disponibles para vincular.</p>
+          ) : (
+            <div className="flex gap-2">
+              <select
+                value={selectedServiceId}
+                onChange={e => setSelectedServiceId(e.target.value)}
+                className="flex-1 h-11 px-3 rounded-xl border border-border bg-background text-sm font-bold min-h-[44px]"
+              >
+                <option value="">Seleccionar servicio...</option>
+                {availableServices.map(s => (
+                  <option key={s.id} value={s.id}>
+                    {s.service_number} — {s.service_type_name} — {formatCurrency(s.total_amount)} — {s.supplier || 'Sin proveedor'}
+                  </option>
+                ))}
+              </select>
+              <button
+                onClick={handleLinkExisting}
+                disabled={!selectedServiceId || linking}
+                className="px-4 py-2 rounded-xl bg-primary text-primary-foreground font-black text-xs uppercase tracking-widest hover:bg-primary/90 transition-colors disabled:opacity-40 min-h-[44px]"
+              >
+                {linking ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Link2 className="w-4 h-4" />}
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Quick create */}
+      {showCreate && (
+        <div className="p-4 rounded-xl bg-muted/30 border border-border space-y-3">
+          <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Creación rápida</p>
+          <div className="grid grid-cols-2 gap-3">
+            {['Transporte', 'Manipulación', 'Seguro', 'Estiba'].map(type => (
+              <QuickCreateRow key={type} type={type} onCreate={handleQuickCreate} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Services table */}
+      {loading ? (
+        <div className="p-8 text-center">
+          <RefreshCw className="w-6 h-6 animate-spin text-primary mx-auto" />
+        </div>
+      ) : services.length === 0 ? (
+        <div className="p-8 text-center border border-dashed border-border rounded-xl">
+          <Truck className="w-10 h-10 text-muted-foreground/20 mx-auto mb-3" />
+          <p className="text-xs font-bold text-muted-foreground">No hay servicios vinculados a esta recepción</p>
+          <p className="text-xs text-muted-foreground/70 mt-1">Crea un servicio o vincula uno existente</p>
+        </div>
+      ) : (
+        <div className="overflow-x-auto rounded-xl border border-border">
+          <table className="w-full text-xs">
+            <thead className="bg-muted/50 border-b border-border">
+              <tr>
+                <th className="px-3 py-2 text-left font-black uppercase tracking-widest text-muted-foreground">Tipo</th>
+                <th className="px-3 py-2 text-left font-black uppercase tracking-widest text-muted-foreground">Número</th>
+                <th className="px-3 py-2 text-right font-black uppercase tracking-widest text-muted-foreground">Importe</th>
+                <th className="px-3 py-2 text-center font-black uppercase tracking-widest text-muted-foreground">Acción</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border/50">
+              {services.map((link) => {
+                const svc = link.received_services;
+                if (!svc) return null;
+                return (
+                  <tr key={link.id} className="hover:bg-primary/5">
+                    <td className="px-3 py-2 font-bold">{svc.service_type_name}</td>
+                    <td className="px-3 py-2 font-mono text-muted-foreground">{svc.service_number}</td>
+                    <td className="px-3 py-2 text-right font-mono font-bold">{formatCurrency(link.allocated_amount)} {svc.currency}</td>
+                    <td className="px-3 py-2 text-center">
+                      <div className="flex items-center justify-center gap-1">
+                        {/* GAP-2: Ver Distribución */}
+                        <button
+                          onClick={() => handleViewDistribution(svc.id)}
+                          className={cn("p-2 rounded-lg transition-colors min-h-[44px] min-w-[44px]", showDistribution === svc.id ? "bg-primary/20 text-primary" : "hover:bg-primary/10 text-primary")}
+                          aria-label="Ver distribución"
+                          title="Ver distribución por línea"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleRecalculate(svc.id)}
+                          className="p-2 rounded-lg hover:bg-primary/10 text-primary transition-colors min-h-[44px] min-w-[44px]"
+                          aria-label="Recalcular"
+                          title="Recalcular distribución"
+                        >
+                          <RefreshCw className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* Total */}
+      {services.length > 0 && (
+        <div className="flex justify-between items-center pt-3 border-t border-border">
+          <span className="text-xs font-black uppercase tracking-widest text-muted-foreground">Total Costos Asociados:</span>
+          <span className="text-sm font-black font-mono text-primary">{formatCurrency(totalServices)} CUP</span>
+        </div>
+      )}
+
+      {/* GAP-2: Distribution detail panel */}
+      {showDistribution && distributionData.length > 0 && (
+        <div className="p-4 rounded-xl bg-muted/30 border border-border space-y-3">
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Distribución por Línea</p>
+            <button onClick={() => setShowDistribution(null)} className="p-1 rounded-lg hover:bg-muted text-muted-foreground">
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="border-b border-border">
+                  <th className="px-2 py-1.5 text-left font-black uppercase tracking-widest text-muted-foreground">Producto</th>
+                  <th className="px-2 py-1.5 text-right font-black uppercase tracking-widest text-muted-foreground">Cant.</th>
+                  <th className="px-2 py-1.5 text-right font-black uppercase tracking-widest text-muted-foreground">Costo Unit.</th>
+                  <th className="px-2 py-1.5 text-right font-black uppercase tracking-widest text-muted-foreground">Monto Dist.</th>
+                  <th className="px-2 py-1.5 text-right font-black uppercase tracking-widest text-muted-foreground">%</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border/30">
+                {distributionData.map((dist, i) => {
+                  const item = dist.receipt_items;
+                  const productName = item?.products?.name || 'N/A';
+                  return (
+                    <tr key={i}>
+                      <td className="px-2 py-1.5 font-bold truncate max-w-[150px]">{productName}</td>
+                      <td className="px-2 py-1.5 text-right font-mono">{item?.quantity || 0}</td>
+                      <td className="px-2 py-1.5 text-right font-mono">{formatCurrency(item?.unit_cost || 0)}</td>
+                      <td className="px-2 py-1.5 text-right font-mono font-bold text-primary">{formatCurrency(dist.distribution_amount)}</td>
+                      <td className="px-2 py-1.5 text-right font-mono text-muted-foreground">{dist.distribution_percentage.toFixed(1)}%</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function QuickCreateRow({ type, onCreate }: { type: string; onCreate: (type: string, amount: string) => void }) {
+  const [amount, setAmount] = useState('');
+  return (
+    <div className="flex items-center gap-2">
+      <span className="text-xs font-bold text-muted-foreground flex-1">{type}</span>
+      <input
+        type="number"
+        step="0.01"
+        value={amount}
+        onChange={e => setAmount(e.target.value)}
+        placeholder="0.00"
+        className="w-20 px-2 py-1.5 rounded-lg border border-border bg-background text-xs font-bold text-right min-h-[44px]"
+      />
+      <button
+        onClick={() => onCreate(type, amount)}
+        className="px-2 py-1.5 rounded-lg bg-primary/10 text-primary text-xs font-black uppercase hover:bg-primary/20 transition-colors min-h-[44px] min-w-[44px]"
+      >
+        <Plus className="w-3.5 h-3.5" />
+      </button>
+    </div>
   );
 }

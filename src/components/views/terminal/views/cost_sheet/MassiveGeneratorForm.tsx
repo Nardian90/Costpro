@@ -11,6 +11,7 @@ import { ExportOptions } from './CostSheetExportModal';
 import { exportMassiveTemplate } from '@/services/excel-service';
 import { MassiveResult, MappingConfig, ProductItem } from './MassiveGenerator.types';
 
+import { useTranslations } from 'next-intl';
 interface MassiveGeneratorFormProps {
   importedProducts: ProductItem[];
   isProcessing: boolean;
@@ -48,6 +49,7 @@ export const MassiveGeneratorForm: React.FC<MassiveGeneratorFormProps> = ({
   results,
   initialProducts,
 }) => {
+  const t = useTranslations('costSheet');
   const hasImported = importedProducts.length > 0;
 
   return (
@@ -338,7 +340,7 @@ export const MassiveGeneratorForm: React.FC<MassiveGeneratorFormProps> = ({
                   }
                   aria-label="Fila a Ajustar (ID)"
                 />
-                <div className="flex items-center text-[10px] text-muted-foreground uppercase font-black bg-sidebar/50 px-2 rounded-lg">
+                <div className="flex items-center text-xs text-muted-foreground uppercase font-black bg-sidebar/50 px-2 rounded-lg">
                   Default: 13.1 (Utilidad)
                 </div>
               </div>

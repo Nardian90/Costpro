@@ -7,9 +7,12 @@ import { syncEngine } from '@/lib/sync/sync-engine';
 interface SyncContextType {
   status: SyncStatus;
   queueSize: number;
+  failedCount: number;
   lastSync: Date | null;
   addToQueue: (entity: string, operationType: 'CREATE' | 'UPDATE' | 'DELETE', payload: any) => Promise<any>;
   processQueue: () => Promise<void>;
+  retryFailed: () => Promise<void>;
+  discardFailed: () => Promise<void>;
 }
 
 const SyncContext = createContext<SyncContextType | undefined>(undefined);
