@@ -250,14 +250,14 @@ export function WorkersView() {
             onDateFromChange={setDateFrom}
             onDateToChange={setDateTo}
             onRefresh={fetchWorkers}
-            onPayCommission={(w) => setPayModalWorker(w)}
+            onPayCommission={(w: any) => setPayModalWorker(w)}
           />
         )}
         {activeTab === 'rules' && (
           <RulesTab
             rules={rules}
             onRefresh={fetchRules}
-            onEdit={(r) => { setEditingRule(r); setShowRuleModal(true); }}
+            onEdit={(r: any) => { setEditingRule(r); setShowRuleModal(true); }}
             onNew={() => { setEditingRule(null); setShowRuleModal(true); }}
           />
         )}
