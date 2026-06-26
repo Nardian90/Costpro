@@ -140,6 +140,40 @@ export class SyncEngine {
     }
   }
 
+  /**
+   * FIX: Reintenta operaciones que fallaron tras MAX_RETRIES.
+   * Resetea el contador de attempts a 0 y las marca como 'pending'.
+   */
+  async retryFailed(): Promise<number> {
+    const failed = await offlineStorage.getFailedOperations();
+    let retried = 0;
+    for (const op of failed) {
+      await offlineStorage.updateOperation(op.idempotencyKey, {
+        status: 'pending',
+        attempts: 0,
+        lastError: null,
+      });
+      retried++;
+    }
+    if (retried > 0) {
+      logger.info('SYNC', 'RETRY_FAILED_TRIGGERED', { count: retried });
+      this.processQueue();
+    }
+    return retried;
+  }
+
+  /**
+   * Descarta operaciones fallidas (el usuario decide no reintentar).
+   */
+  async discardFailed(): Promise<number> {
+    const failed = await offlineStorage.getFailedOperations();
+    for (const op of failed) {
+      await offlineStorage.updateOperationStatus(op.idempotencyKey, 'discarded');
+    }
+    logger.info('SYNC', 'DISCARD_FAILED', { count: failed.length });
+    return failed.length;
+  }
+
   private getEndpointForType(type: string): string | null {
     const endpoints: Record<string, string> = {
       'sale':              '/api/pos/checkout',

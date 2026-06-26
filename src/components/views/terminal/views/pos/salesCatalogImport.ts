@@ -1,4 +1,4 @@
-import * as XLSX from 'xlsx-js-style';
+import * as XLSX from "@e965/xlsx";
 import { Product, PaymentMethod } from '@/types';
 import { SalesCatalogRow, calcSubtotal } from './salesCatalogHelpers';
 
@@ -16,7 +16,7 @@ export interface ImportResult {
 // the workbook has a single sheet or when the file cannot be parsed.
 // Stateless: takes a File, returns a Promise<string[]>.
 
-export function readSheetNames(file: File): Promise<string[]> {
+export async function readSheetNames(file: File): Promise<string[]> {
   return new Promise((resolve) => {
     const reader = new FileReader();
     reader.onload = (e) => {

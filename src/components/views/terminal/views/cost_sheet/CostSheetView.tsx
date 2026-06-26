@@ -21,6 +21,9 @@ import { useIsMobile } from '@/hooks/ui/useMobile';
 
 import CostSheetNav from './CostSheetNav';
 import CostSheetHeaderEditor from './CostSheetHeaderEditor';
+import { CostSheetMainTabs, type CostMainTab } from './CostSheetMainTabs';
+import { GenEasyView } from './GenEasyView';
+import { ConfirmDialog } from './ConfirmDialog';
 import { ExpertModeAccordion } from './ExpertModeAccordion';
 import CostSheetInteractiveTable from './CostSheetInteractiveTable';
 import CostSheetCardView from './CostSheetCardView';
@@ -55,6 +58,7 @@ import { useScenarioStore } from '@/store/scenario-store';
 import type { CostSheetSection, CostSheetAnnex, CostSheetRow } from '@/types/cost-sheet';
 import type { ValidationError as EngineValidationError } from '@/lib/cost-engine/types';
 
+import { useTranslations } from 'next-intl';
 const DarianEditor = dynamic(() => import('./DarianEditor').then(m => ({ default: m.DarianEditor })), { ssr: false });
 
 const CostSheetNarrative = dynamic(() => import('./CostSheetNarrative'), {
@@ -94,13 +98,13 @@ function SectionDivider({ label, sectionColorIdx, rowCount, isCollapsed, onToggl
     >
       <ChevronRight className={cn('w-3.5 h-3.5 text-muted-foreground transition-transform duration-200', !isCollapsed && 'rotate-90')} />
       <div className={cn('w-0.5 h-4 rounded-full border-l-2', SECTION_BORDER[sectionColorIdx % SECTION_BORDER.length])} />
-      <span className="text-[11px] font-black uppercase tracking-[0.15em] text-foreground">{label}</span>
-      {rowCount !== undefined && <span className="text-[9px] text-muted-foreground/60 font-mono ml-2">({rowCount} filas)</span>}
+      <span className="text-xs font-black uppercase tracking-[0.15em] text-foreground">{label}</span>
+      {rowCount !== undefined && <span className="text-xs text-muted-foreground/70 font-mono ml-2">({rowCount} filas)</span>}
       {annexTotal !== undefined && annexTotal > 0 && (
         <span className="ml-auto flex items-center gap-2">
-          <span className="text-[9px] text-muted-foreground/50 font-mono">Total: <span className="text-primary font-black">{formatCurrency(annexTotal)}</span></span>
+          <span className="text-xs text-muted-foreground/70 font-mono">Total: <span className="text-primary font-black">{formatCurrency(annexTotal)}</span></span>
           {annexPercent !== undefined && annexPercent > 0 && (
-            <span className="text-[8px] font-black text-primary/60 bg-primary/10 px-1.5 py-0 rounded font-mono">{annexPercent.toFixed(1)}%</span>
+            <span className="text-xs font-black text-primary/70 bg-primary/10 px-1.5 py-0 rounded font-mono">{annexPercent.toFixed(1)}%</span>
           )}
         </span>
       )}
@@ -139,6 +143,7 @@ function AllContentConsolidated({
   annexToSectionsMap = {},
   deepValidationErrors = []
 }: AllContentProps) {
+  const t = useTranslations('costSheet');
   const annexes: CostSheetAnnex[] = data?.annexes || [];
 
   // Build initial collapsed state — Estructura de Costos expanded, rest collapsed
@@ -193,27 +198,15 @@ function AllContentConsolidated({
       {/* Compact Title Bar (matching section divider style) */}
       <div className="h-8 border-y border-border/30 flex items-center gap-2 px-3 bg-primary/5 rounded-xl">
         <ZapIcon className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
-        <span className="text-[11px] font-black uppercase tracking-[0.15em] text-foreground">Ficha: Vista Consolidada</span>
-        <span className="text-[9px] text-muted-foreground/60 font-mono ml-1">Exploración Progresiva Asistida</span>
+        <span className="text-xs font-black uppercase tracking-[0.15em] text-foreground">Ficha: Vista Consolidada</span>
+        <span className="text-xs text-muted-foreground/70 font-mono ml-1">Exploración Progresiva Asistida</span>
       </div>
 
-      {/* Unified section list with collapsible dividers */}
+      {/* B3: Solo Estructura de Costos — Datos Generales, Anexos y Firma
+          se removieron de aquí porque ahora son tabs separados en CostSheetMainTabs.
+          Antes esta vista consolidada mostraba todo junto, pero con el sistema
+          de tabs (Fase C2) cada sección tiene su propio tab. */}
       <div className="space-y-3">
-        {/* DATOS GENERALES */}
-        <div className="border border-border/60 rounded-xl overflow-hidden shadow-sm bg-card">
-          <SectionDivider
-            label="DATOS GENERALES"
-            sectionColorIdx={0}
-            isCollapsed={collapsed['consolidated-header']}
-            onToggle={() => toggle('consolidated-header')}
-          />
-          {!collapsed['consolidated-header'] && (
-            <div className="animate-in fade-in slide-in-from-top-2 duration-300">
-              <CostSheetHeaderEditor header={data?.header || {}} calculatedHeader={calculatedHeader} />
-            </div>
-          )}
-        </div>
-
         {/* ESTRUCTURA DE COSTOS */}
         <div className="border border-border/60 rounded-xl overflow-hidden shadow-sm bg-card">
           <SectionDivider
@@ -246,68 +239,6 @@ function AllContentConsolidated({
             </div>
           )}
         </div>
-
-        {/* ANEXOS — grouped inside a single collapsible container */}
-        <div className="border border-border/60 rounded-xl overflow-hidden shadow-sm bg-card">
-          <SectionDivider
-            label={`ANEXOS`}
-            sectionColorIdx={2}
-            rowCount={annexes.length}
-            isCollapsed={collapsed['consolidated-annexes']}
-            onToggle={() => toggle('consolidated-annexes')}
-            annexTotal={annexTotals.grandTotal}
-          />
-          {!collapsed['consolidated-annexes'] && (
-            <div className="animate-in fade-in slide-in-from-top-2 duration-300">
-              <div className="flex items-center justify-between px-3 py-1 bg-muted/20 border-b border-border/10">
-                <span className="text-[9px] text-muted-foreground/50 font-mono">{annexTotals.totalRows} filas en total</span>
-                <span className="text-[9px] text-muted-foreground/50 font-mono">Total General: <span className="text-primary font-black">{formatCurrency(annexTotals.grandTotal ?? 0)}</span></span>
-              </div>
-              {annexes.map((annex, idx) => (
-                <div key={annex.id}>
-                  <SectionDivider
-                    label={`ANEXO ${annex.id}: ${annex.title}`}
-                    sectionColorIdx={2 + idx}
-                    rowCount={annex.data?.length || 0}
-                    isCollapsed={collapsed[`consolidated-annex-${annex.id}`]}
-                    onToggle={() => toggle(`consolidated-annex-${annex.id}`)}
-                    annexTotal={annexTotals.totals?.[annex.id]}
-                    annexPercent={annexTotals.percentages?.[annex.id]}
-                  />
-                  {!collapsed[`consolidated-annex-${annex.id}`] && (
-                    <div className="animate-in fade-in slide-in-from-top-2 duration-300">
-                      <LazyRender>
-                        <CostSheetAnnexEditor
-                          activeAnnexId={annex.id}
-                          layoutMode={layoutMode}
-                          calculatedAnnexes={calculatedAnnexes}
-                          hideBorder={true}
-                          onNavigateToSection={onNavigateToSection}
-                          referencingSections={annexToSectionsMap[annex.id] || []}
-                        />
-                      </LazyRender>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* FIRMA */}
-        <div className="border border-border/60 rounded-xl overflow-hidden shadow-sm bg-card">
-          <SectionDivider
-            label="PIE DE FIRMA"
-            sectionColorIdx={2 + annexes.length}
-            isCollapsed={collapsed['consolidated-signature']}
-            onToggle={() => toggle('consolidated-signature')}
-          />
-          {!collapsed['consolidated-signature'] && (
-            <div className="animate-in fade-in slide-in-from-top-2 duration-300">
-              <CostSheetSignatureEditor />
-            </div>
-          )}
-        </div>
       </div>
     </div>
   );
@@ -317,6 +248,18 @@ const CostSheetView = () => {
   const isMobile = useIsMobile();
   const hasHydrated = useCostSheetStore((s) => s._hasHydrated);
   const { activeCostSection: activeSection } = useUIStore();
+
+  // C2-C6: Tab principal del Tablero de Costos.
+  // Cuando activeSection es 'main' (Tablero Principal) y viewMode es 'expert',
+  // se muestran 4 tabs internos: Plantillas / Datos Generales / Estructura / Anexos.
+  // El tab activo se sincroniza con activeCostSection para que MobileTabBar también
+  // pueda controlarlo (Fase C1).
+  const mainTab: CostMainTab = React.useMemo(() => {
+    if (activeSection === 'templates') return 'templates';
+    if (activeSection === 'header') return 'general';
+    if (activeSection === 'annexes' || activeSection === 'all-annexes' || activeSection === 'signature') return 'annexes';
+    return 'structure';  // default: 'main', 'all-content', 'expert-content', otros
+  }, [activeSection]);
 
   // Track previous section for "back" navigation from audit
   const [previousSection, setPreviousSection] = React.useState<string>('main');
@@ -401,6 +344,18 @@ const CostSheetView = () => {
     activeSection,
     setViewMode
   });
+
+  // C2-C6: Handler para cambio de tab principal del Tablero de Costos.
+  // Se define aquí (después de handleSetActiveSection) para evitar TDZ.
+  const handleMainTabChange = React.useCallback((tab: CostMainTab) => {
+    switch (tab) {
+      case 'templates': handleSetActiveSection('templates'); break;
+      case 'general':   handleSetActiveSection('header'); break;
+      case 'annexes':   handleSetActiveSection('all-annexes'); break;
+      case 'structure':
+      default:          handleSetActiveSection('main'); break;
+    }
+  }, [handleSetActiveSection]);
 
   const {
     viewMode,
@@ -487,7 +442,7 @@ const CostSheetView = () => {
     showShortcuts: () => {
       toast.info('Atajos de Teclado', {
         description: (
-          <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-[10px] font-mono">
+          <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs font-mono">
             <span>Alt+E</span><span>Expandir Todo</span>
             <span>Alt+P</span><span>Problemas</span>
             <span>Alt+H</span><span>Ayuda</span>
@@ -519,7 +474,7 @@ const CostSheetView = () => {
             ? "bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-800/50 text-destructive dark:text-red-300"
             : "bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800/50 text-amber-700 dark:text-amber-300"
         )}>
-          <div className="font-bold uppercase tracking-widest text-[10px]">
+          <div className="font-bold uppercase tracking-widest text-xs">
             {calcError ? "Error de Cálculo" : "Cálculo Pendiente"}
           </div>
           <div>Store: hydrated={String(hasHydrated)} | Secciones={totalSections} | Filas={totalRows}</div>
@@ -528,27 +483,25 @@ const CostSheetView = () => {
         </div>
       )}
 
-      {/* Horizontal cost menu — only shown on main Tablero (expert + main section) */}
-      {viewMode === 'expert' && (activeSection === 'main' || activeSection === 'all-content' || activeSection === 'expert-content') && (
-        <CostSheetNav
-            navItems={[]}
-            annexes={data?.annexes || []}
-            activeSection={activeSection}
-            setActiveSection={handleSetActiveSection}
-            viewMode={viewMode}
-            setViewMode={handleSetViewMode}
-            layoutMode={layoutMode}
-            setLayoutMode={setLayoutMode}
-            onOpenActions={() => setIsActionsPanelOpen(true)}
-            onImport={handleImportJSON}
-            onSave={handleExportJSON}
-            onExportExcel={handleExportExcel}
-            onExportPdf={() => setIsExportModalOpen(true)}
-            lastSavedAt={lastSavedAt}
-            isSaving={isSaving}
-            versions={versions}
-            onRestoreVersion={restoreVersion}
-        />
+      {/* C2-C6: Sistema de tabs del Tablero Principal de Costos.
+          Reemplaza la navegación dispersa anterior por 4 tabs claros:
+            1. Explorador de Plantillas (mover aquí desde menú izquierdo)
+            2. Datos Generales (antes sección 'header')
+            3. Estructura de Costos (antes 'main')
+            4. Anexos (combina 'all-annexes' + 'signature' — firmas aquí también)
+          Solo se muestra en modo experto + isEditing.
+          B2: NO se muestra cuando activeSection === 'gen-easy' (esa es una vista separada).
+          B3: NO se muestra para 'arena-fc', 'massive-gen', 'steel-calculator', 'ai-chat' (vistas separadas). */}
+      {viewMode === 'expert' && isEditing && !['gen-easy', 'arena-fc', 'massive-gen', 'steel-calculator', 'ai-chat', 'audit'].includes(activeSection) && (
+        <div className="mt-4 w-full flex justify-center">
+          <div className="w-full max-w-6xl">
+            <CostSheetMainTabs
+              activeTab={mainTab}
+              onTabChange={handleMainTabChange}
+              annexCount={(data?.annexes || []).length}
+            />
+          </div>
+        </div>
       )}
 
       {isEditing ? (
@@ -571,42 +524,80 @@ const CostSheetView = () => {
                     )}
 
                     {(activeSection === 'all-content' || activeSection === 'expert-content' || activeSection === 'main') && (
-                        <AllContentConsolidated
-                            data={data}
-                            calculatedHeader={calculatedHeader}
-                            calculatedValues={calculatedValues}
-                            calculatedAnnexes={calculatedAnnexes}
-                            layoutMode={layoutMode}
-                            effectiveLayoutMode={effectiveLayoutMode}
-                            groupedSections={groupedSections}
-                            activeSubSectionId={activeSubSectionId}
-                            setActiveSubSectionId={setActiveSubSectionId}
-                            onNavigateToAnnex={handleNavigateToAnnex}
-                            onNavigateToSection={handleNavigateToSection}
-                            annexToSectionsMap={annexToSectionsMap}
-                            deepValidationErrors={deepValidationErrors}
-                        />
+                        <div className="space-y-4">
+                            {/* B4: CostSheetNav (Exportar PDF / Opciones / Tarjeta / Tabla)
+                                movido DENTRO del tab Estructura de Costos.
+                                Antes estaba afuera (encima de los tabs), lo que era confuso.
+                                Ahora pertenece al contenido del tab activo. */}
+                            <CostSheetNav
+                                navItems={[]}
+                                annexes={data?.annexes || []}
+                                activeSection={activeSection}
+                                setActiveSection={handleSetActiveSection}
+                                viewMode={viewMode}
+                                setViewMode={handleSetViewMode}
+                                layoutMode={layoutMode}
+                                setLayoutMode={setLayoutMode}
+                                onOpenActions={() => setIsActionsPanelOpen(true)}
+                                onImport={handleImportJSON}
+                                onSave={handleExportJSON}
+                                onExportExcel={handleExportExcel}
+                                onExportPdf={() => setIsExportModalOpen(true)}
+                                lastSavedAt={lastSavedAt}
+                                isSaving={isSaving}
+                                versions={versions}
+                                onRestoreVersion={restoreVersion}
+                            />
+                            <AllContentConsolidated
+                                data={data}
+                                calculatedHeader={calculatedHeader}
+                                calculatedValues={calculatedValues}
+                                calculatedAnnexes={calculatedAnnexes}
+                                layoutMode={layoutMode}
+                                effectiveLayoutMode={effectiveLayoutMode}
+                                groupedSections={groupedSections}
+                                activeSubSectionId={activeSubSectionId}
+                                setActiveSubSectionId={setActiveSubSectionId}
+                                onNavigateToAnnex={handleNavigateToAnnex}
+                                onNavigateToSection={handleNavigateToSection}
+                                annexToSectionsMap={annexToSectionsMap}
+                                deepValidationErrors={deepValidationErrors}
+                            />
+                        </div>
                     )}
 
                     {isAnnexActive && (activeSection !== 'all-content' && activeSection !== 'expert-content' && activeSection !== 'main') && (
-                        <div className="space-y-12">
+                        <div className="space-y-24">
                             {activeSection === 'all-annexes' ? (
-                                (data?.annexes || []).map((annex: CostSheetAnnex) => (
-                                    <LazyRender key={annex.id}>
-                                        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                                            <div className="flex items-center gap-4 px-6 py-4 bg-card rounded-2xl border border-border shadow-sm border-l-4 border-l-primary">
-                                                <h3 className="text-xl font-black uppercase tracking-tighter italic text-foreground">Anexo {annex.id}: {annex.title}</h3>
-                                            </div>
-                                            <CostSheetAnnexEditor
-                                                activeAnnexId={annex.id}
-                                                layoutMode={layoutMode}
-                                                calculatedAnnexes={calculatedAnnexes}
-                                                onNavigateToSection={handleNavigateToSection}
-                                                referencingSections={annexToSectionsMap[annex.id] || []}
-                                            />
-                                        </div>
-                                    </LazyRender>
-                                ))
+                                <>
+                                  {/* C6: Anexos expandidos con más espacio entre ellos (space-y-24 era space-y-12).
+                                      El usuario reportó que "se ven muy pegados". */}
+                                  {(data?.annexes || []).map((annex: CostSheetAnnex) => (
+                                      <LazyRender key={annex.id}>
+                                          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                              <div className="flex items-center gap-4 px-6 py-5 bg-card rounded-2xl border border-border shadow-sm border-l-4 border-l-primary">
+                                                  <h3 className="text-xl font-black uppercase tracking-tighter italic text-foreground">Anexo {annex.id}: {annex.title}</h3>
+                                              </div>
+                                              <CostSheetAnnexEditor
+                                                  activeAnnexId={annex.id}
+                                                  layoutMode={layoutMode}
+                                                  calculatedAnnexes={calculatedAnnexes}
+                                                  onNavigateToSection={handleNavigateToSection}
+                                                  referencingSections={annexToSectionsMap[annex.id] || []}
+                                              />
+                                          </div>
+                                      </LazyRender>
+                                  ))}
+                                  {/* C6: Firmas también en tab Anexos — el usuario pidió
+                                      "aquí en anexos deja las Firmas también" para centralizar
+                                      la documentación de la ficha. */}
+                                  <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pt-12 border-t-2 border-dashed border-border">
+                                      <div className="flex items-center gap-4 px-6 py-5 bg-primary/5 rounded-2xl border border-primary/20 border-l-4 border-l-primary">
+                                          <h3 className="text-xl font-black uppercase tracking-tighter italic text-primary">Firmas y Sellos</h3>
+                                      </div>
+                                      <CostSheetSignatureEditor />
+                                  </div>
+                                </>
                             ) : (
                                 <CostSheetAnnexEditor
                                     activeAnnexId={activeSection}
@@ -619,6 +610,8 @@ const CostSheetView = () => {
                         </div>
                     )}
 
+                    {/* C6: signature section sigue disponible individualmente por si
+                        el sidebar u otra vista lo referencia directamente. */}
                     {activeSection === 'signature' && <CostSheetSignatureEditor />}
                     {activeSection === 'audit' && (
                         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -654,6 +647,18 @@ const CostSheetView = () => {
                              <CostSheetMassiveGenerator isSection={true} initialProducts={quickModeProducts || undefined} initialMapping={quickModeMapping} />
                         </div>
                     )}
+                    {/* B4: "Generar fácil" — vista con 2 tabs (Rápida / Experta).
+                        Reemplaza al grupo "Generación" del sidebar. */}
+                    {activeSection === 'gen-easy' && (
+                        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                            <GenEasyView
+                                quickModeProducts={quickModeProducts || undefined}
+                                quickModeMapping={quickModeMapping}
+                                onGenerate={handleQuickGenerate}
+                                onMappingChange={setQuickModeMapping}
+                            />
+                        </div>
+                    )}
                     {activeSection === 'steel-calculator' && (
                         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                             <SteelStructureCalculator />
@@ -684,7 +689,7 @@ const CostSheetView = () => {
                />
           )}
 
-          {viewMode === 'quick' && ( isQuickModeGenerating ? ( <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-5xl mx-auto"> <div className="mb-4 flex justify-start"> <Button variant="ghost" size="sm" onClick={() => setIsQuickModeGenerating(false)} className="rounded-xl font-bold uppercase tracking-widest text-[10px] text-muted-foreground hover:text-primary"> <ArrowLeft className="w-3.5 h-3.5 mr-2" /> Volver a Lista </Button> </div> <CostSheetMassiveGenerator isSection={true} initialProducts={quickModeProducts || undefined} initialMapping={quickModeMapping} onClose={() => setIsQuickModeGenerating(false)} autoStart={true} isQuickAction={true} /> </div> ) : (
+          {viewMode === 'quick' && ( isQuickModeGenerating ? ( <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-5xl mx-auto"> <div className="mb-4 flex justify-start"> <Button variant="ghost" size="sm" onClick={() => setIsQuickModeGenerating(false)} className="rounded-xl font-bold uppercase tracking-widest text-xs text-muted-foreground hover:text-primary"> <ArrowLeft className="w-3.5 h-3.5 mr-2" /> Volver a Lista </Button> </div> <CostSheetMassiveGenerator isSection={true} initialProducts={quickModeProducts || undefined} initialMapping={quickModeMapping} onClose={() => setIsQuickModeGenerating(false)} autoStart={true} isQuickAction={true} /> </div> ) : (
               <CostSheetQuickMode onGenerate={handleQuickGenerate} mapping={quickModeMapping} onMappingChange={setQuickModeMapping} /> )
           )}
         </div>
@@ -701,7 +706,7 @@ const CostSheetView = () => {
                     type="button"
                     onClick={() => { setIsEditing(true); setViewMode('expert'); handleSetViewMode('expert'); }}
                     aria-label="Ir al Editor de ficha en Modo Experto"
-                    className="w-full sm:w-auto text-primary hover:bg-primary/10 font-bold uppercase tracking-widest text-xs h-9 px-4 rounded-xl"
+                    className="w-full sm:w-auto text-primary hover:bg-primary/10 font-bold uppercase tracking-widest text-xs h-11 px-4 rounded-xl"
                 >
                     <Edit className="w-3.5 h-3.5 mr-2" aria-hidden="true" />
                     Ir al Editor (Modo Todo)
@@ -728,36 +733,21 @@ const CostSheetView = () => {
       />
       <PdfExportOverlay isVisible={isPdfGenerating} />
       <UpgradeModal isOpen={isUpgradeModalOpen} onClose={() => setIsUpgradeModalOpen(false)} action="exportar" />
-      <BaseModal
+      {/* P3-3: Migrado de <BaseModal> manual a <ConfirmDialog> unificado.
+          Mismo state `confirmation` pero menos JSX y mejor consistencia visual. */}
+      <ConfirmDialog
         open={confirmation.isOpen}
-        onOpenChange={(open) => setConfirmation({ ...confirmation, isOpen: open })}
         title={confirmation.title}
-        footer={
-          <div className="flex gap-2 w-full sm:w-auto">
-            <Button
-              variant="outline"
-              type="button"
-              onClick={() => setConfirmation({ ...confirmation, isOpen: false })}
-              className="flex-1 sm:flex-none"
-            >
-              Cancelar
-            </Button>
-            <Button
-              type="button"
-              variant={confirmation.variant === 'destructive' ? 'destructive' : 'default'}
-              onClick={() => {
-                confirmation.onConfirm();
-                setConfirmation({ ...confirmation, isOpen: false });
-              }}
-              className="flex-1 sm:flex-none"
-            >
-              Confirmar
-            </Button>
-          </div>
-        }
-      >
-        <p className="text-sm text-muted-foreground">{confirmation.message}</p>
-      </BaseModal>
+        message={confirmation.message}
+        variant={confirmation.variant === 'destructive' ? 'destructive' : 'default'}
+        confirmLabel="Confirmar"
+        cancelLabel="Cancelar"
+        onConfirm={() => {
+          confirmation.onConfirm();
+          setConfirmation({ ...confirmation, isOpen: false });
+        }}
+        onCancel={() => setConfirmation({ ...confirmation, isOpen: false })}
+      />
 
       <CostSheetProblemsPanel
         problems={deepValidationErrors.map((e: EngineValidationError) => ({ ...e, sectionLabel: (data.sections as CostSheetSection[]).find(s => s.rows.some((r: CostSheetRow) => r.id === e.rowId || (r.children && r.children.some((c: CostSheetRow) => c.id === e.rowId))))?.label }))}

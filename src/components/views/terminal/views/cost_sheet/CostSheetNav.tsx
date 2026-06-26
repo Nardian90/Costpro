@@ -13,6 +13,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useUIStore } from '@/store';
 
+import { useTranslations } from 'next-intl';
 interface AutoSaveVersion {
   timestamp: number;
   data: CostSheetData;
@@ -56,6 +57,7 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
   versions = [],
   onRestoreVersion
 }) => {
+  const t = useTranslations('costSheet');
   const { setCurrentView } = useUIStore();
 
   const navActions: Action[] = React.useMemo(() => {
@@ -85,7 +87,7 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
             component: (
                 <button type="button"
                     onClick={onExportPdf || (() => {})}
-                    className="neu-raised-sm px-4 h-11 flex items-center justify-center gap-2 shrink-0 active:scale-95 transition-all text-primary font-black uppercase tracking-widest text-[10px] hover:bg-primary/10 rounded-xl"
+                    className="neu-raised-sm px-4 h-11 flex items-center justify-center gap-2 shrink-0 active:scale-95 transition-all text-primary font-black uppercase tracking-widest text-xs hover:bg-primary/10 rounded-xl"
                     aria-label="Exportar ficha de costo a PDF"
                 >
                     <FileText className="w-4 h-4" aria-hidden="true" />
@@ -136,7 +138,7 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
             component: (
                 <div className="flex items-center gap-2">
                     {lastSavedAt && (
-                        <span className="hidden lg:block text-[9px] font-black uppercase tracking-widest text-foreground/40">
+                        <span className="hidden lg:block text-xs font-black uppercase tracking-widest text-foreground/70">
                             Guardado {formatDistanceToNow(lastSavedAt, { addSuffix: true, locale: es })}
                         </span>
                     )}
@@ -153,7 +155,7 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
                         <PopoverContent className="w-80 p-0 rounded-3xl border-sidebar-border overflow-hidden bg-card" align="end">
                             <div className="p-4 border-b border-sidebar-border/50 bg-sidebar/30">
                                 <h4 className="text-xs font-black uppercase tracking-widest">Historial de Autoguardado</h4>
-                                <p className="text-[10px] text-muted-foreground font-medium">Últimas 15 capturas automáticas</p>
+                                <p className="text-xs text-muted-foreground font-medium">Últimas 15 capturas automáticas</p>
                             </div>
                             <div className="max-h-64 overflow-y-auto p-2">
                                 {versions.length === 0 ? (
@@ -168,12 +170,12 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
                                         >
                                             <div className="flex flex-col gap-1">
                                                 <span className="text-xs font-bold">{v.label || 'Captura automática'}</span>
-                                                <span className="text-[10px] text-muted-foreground font-medium">
+                                                <span className="text-xs text-muted-foreground font-medium">
                                                     {formatDistanceToNow(v.timestamp, { addSuffix: true, locale: es })}
                                                 </span>
                                             </div>
                                             <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <Button variant="ghost" size="sm" className="h-7 text-[10px] font-black uppercase tracking-widest rounded-lg">Restaurar</Button>
+                                                <Button variant="ghost" size="sm" className="h-7 text-xs font-black uppercase tracking-widest rounded-lg">Restaurar</Button>
                                             </div>
                                         </button>
                                     ))

@@ -31,7 +31,13 @@ export default function HelpScrollFab({ scrollProgress }: HelpScrollFabProps) {
   }, [scrollProgress]);
 
   const handleScrollTop = useCallback(() => {
-    // Find the currently visible help scroll container
+    // Llamar a la función global __helpScrollToTop (definida en HelpView.tsx)
+    // que tiene lógica robusta para subir TODOS los contenedores scrollables padres.
+    if (typeof window !== 'undefined' && (window as any).__helpScrollToTop) {
+      (window as any).__helpScrollToTop();
+      return;
+    }
+    // Fallback directo si la función global no está disponible
     const mains = document.querySelectorAll<HTMLElement>('main[data-help-scroll]');
     for (const main of mains) {
       if (main.offsetHeight > 0) {
@@ -39,7 +45,6 @@ export default function HelpScrollFab({ scrollProgress }: HelpScrollFabProps) {
         return;
       }
     }
-    // Fallback
     const fallback = document.querySelector<HTMLElement>('main.overflow-y-auto');
     if (fallback) {
       fallback.scrollTo({ top: 0, behavior: 'smooth' });

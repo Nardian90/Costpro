@@ -31,6 +31,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { CostSheetSectionActionsPanel } from './CostSheetSectionActionsPanel';
 import type { CostSheetCardViewProps, CostSheetRowCardProps } from './cost-sheet-view-shared';
 
+import { useTranslations } from 'next-intl';
 const RowCard: React.FC<CostSheetRowCardProps> = memo(({
   row,
   level,
@@ -77,7 +78,7 @@ const RowCard: React.FC<CostSheetRowCardProps> = memo(({
       <div className="relative z-10">
         <div className="flex items-center justify-between gap-3 mb-2">
           <div className="flex items-center gap-3 flex-1 min-w-0">
-            <span className="text-[10px] font-black font-mono text-muted-foreground/60 shrink-0">
+            <span className="text-xs font-black font-mono text-muted-foreground/70 shrink-0">
               {numbering}
             </span>
             <div className="flex-1 min-w-0">
@@ -138,7 +139,7 @@ const RowCard: React.FC<CostSheetRowCardProps> = memo(({
 
         <div className="mt-4 grid grid-cols-2 gap-4">
           <div className="space-y-1">
-            <p className="text-xs font-black uppercase tracking-[0.15em] text-foreground/50">Histórico / %</p>
+            <p className="text-xs font-black uppercase tracking-[0.15em] text-foreground/70">Histórico / %</p>
             <div
               role="button"
               tabIndex={0}
@@ -160,7 +161,7 @@ const RowCard: React.FC<CostSheetRowCardProps> = memo(({
               ) : (
                 <div className="flex items-baseline gap-1">
                   <span className={cn(
-                    "text-base font-black font-mono tracking-tighter transition-colors text-muted-foreground/60",
+                    "text-base font-black font-mono tracking-tighter transition-colors text-muted-foreground/70",
                     (row.vhFormula || hasChildren) ? "text-primary/70" : "text-foreground"
                   )}>
                     {hasChildren
@@ -169,15 +170,15 @@ const RowCard: React.FC<CostSheetRowCardProps> = memo(({
                           ? formatAccounting(safeCalculated.calculatedVH ?? safeCalculated.valorHistorico ?? 0)
                           : (isRowPercent ? ((row.value ?? 0) * 100).toFixed(3) : formatAccounting(row.valorHistorico ?? 0)))}
                   </span>
-                  {row.vhFormula && <FunctionSquare className="w-3 h-3 text-primary/30" />}
-                  {isRowPercent && <span className="text-[10px] font-bold text-muted-foreground">%</span>}
+                  {row.vhFormula && <FunctionSquare className="w-3 h-3 text-primary/70" />}
+                  {isRowPercent && <span className="text-xs font-bold text-muted-foreground">%</span>}
                 </div>
               )}
             </div>
           </div>
 
           <div className="space-y-1 text-right">
-            <p className="text-xs font-black uppercase tracking-[0.15em] text-primary/60">Total {row.um || row.unit || "CUP"}</p>
+            <p className="text-xs font-black uppercase tracking-[0.15em] text-primary/70">Total {row.um || row.unit || "CUP"}</p>
             <div
               role="button"
               tabIndex={0}
@@ -201,7 +202,7 @@ const RowCard: React.FC<CostSheetRowCardProps> = memo(({
                   <span className="text-2xl font-black font-mono tracking-tighter text-primary drop-shadow-sm">
                     {formatAccounting(safeCalculated.total)}
                   </span>
-                  {(row.formula || row.totalFormula) && <FunctionSquare className="w-3 h-3 text-primary/40" />}
+                  {(row.formula || row.totalFormula) && <FunctionSquare className="w-3 h-3 text-primary/70" />}
                 </div>
               )}
             </div>
@@ -212,19 +213,19 @@ const RowCard: React.FC<CostSheetRowCardProps> = memo(({
         {(criticalErrors.length > 0 || warningErrors.length > 0 || hasEngineWarnings) && (
           <div className="mt-3 flex flex-wrap gap-2">
             {criticalErrors.map((e, idx) => (
-              <div key={idx} className="flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-destructive/10 border border-destructive/20 text-[9px] font-bold text-destructive uppercase tracking-widest">
+              <div key={idx} className="flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-destructive/10 border border-destructive/20 text-xs font-bold text-destructive uppercase tracking-widest">
                 <XCircle className="w-2.5 h-2.5" />
                 {e.message}
               </div>
             ))}
             {warningErrors.map((e, idx) => (
-              <div key={idx} className="flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-warning/10 border border-warning/20 text-[9px] font-bold text-warning uppercase tracking-widest">
+              <div key={idx} className="flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-warning/10 border border-warning/20 text-xs font-bold text-warning uppercase tracking-widest">
                 <AlertTriangle className="w-2.5 h-2.5" />
                 {e.message}
               </div>
             ))}
             {hasEngineWarnings && (
-              <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-primary/10 border border-primary/20 text-[9px] font-bold text-primary uppercase tracking-widest">
+              <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-primary/10 border border-primary/20 text-xs font-bold text-primary uppercase tracking-widest">
                 <Sparkles className="w-2.5 h-2.5" />
                 Calculado
               </div>
@@ -319,9 +320,9 @@ const CostSheetCardView: React.FC<CostSheetCardViewProps> = memo(({
         <div className="flex items-center justify-between bg-primary/5 border border-primary/10 rounded-2xl p-3 mb-8">
           <div className="flex items-center gap-3">
              <LayoutGrid className="w-4 h-4 text-primary" />
-             <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary/70">Modo Tarjeta Activo</span>
+             <span className="text-xs font-black uppercase tracking-[0.3em] text-primary/70">Modo Tarjeta Activo</span>
           </div>
-          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/50">
+          <span className="text-xs font-black uppercase tracking-[0.2em] text-muted-foreground/70">
             {annexes?.[0]?.data?.[0]?.um || 'UND'} / TOTAL
           </span>
         </div>

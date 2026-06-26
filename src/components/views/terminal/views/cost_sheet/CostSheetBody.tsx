@@ -3,6 +3,7 @@
 import React from 'react';
 import { cn, formatCurrency } from '@/lib/utils';
 
+import { useTranslations } from 'next-intl';
 // Define the richer structure for a single calculated value
 type CalculatedRowValue = {
   valorHistorico: number;
@@ -77,12 +78,12 @@ const CostSheetBody: React.FC<CostSheetBodyProps> = ({ sections, calculatedValue
                 </td>
 
                 {/* UM */}
-                <td data-label="UM" className="py-0.5 px-2 text-center font-mono text-muted-foreground text-[10px] w-[80px] whitespace-nowrap italic">
+                <td data-label="UM" className="py-0.5 px-2 text-center font-mono text-muted-foreground text-xs w-[80px] whitespace-nowrap italic">
                     {row.um || row.unit || '-'}
                 </td>
 
                 {/* Valor Histórico */}
-                <td data-label="Valor Histórico" className="py-0.5 px-2 text-right font-mono text-muted-foreground/60 text-[9px] w-[140px] whitespace-nowrap">
+                <td data-label="Valor Histórico" className="py-0.5 px-2 text-right font-mono text-muted-foreground/70 text-xs w-[140px] whitespace-nowrap">
                     {(calc.calculatedVH ?? calc.valorHistorico ?? 0).toLocaleString('es-CU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </td>
 

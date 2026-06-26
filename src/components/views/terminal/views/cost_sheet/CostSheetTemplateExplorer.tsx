@@ -76,6 +76,10 @@ import shoesTemplate from '@/lib/data/template-shoes';
 import logisticsTemplate from '@/lib/data/template-logistics';
 import lavarTemplate from "@/lib/data/template-lavar";
 
+import { useTranslations } from 'next-intl';
+import { ConfirmDialog } from './ConfirmDialog';
+import { UnifiedTabs } from './UnifiedTabs';
+import { useDebounce } from '@/hooks/ui/useDebounce';
 type TemplateCategory = 'system' | 'private' | 'public';
 
 interface Template {
@@ -99,6 +103,15 @@ export const CostSheetTemplateExplorer: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [stores, setStores] = useState<Store[]>([]);
   const [isPublishDialogOpen, setIsPublishDialogOpen] = useState(false);
+  // G2-fix: Reemplazar confirm() nativo con diálogo accesible.
+  // El confirm() nativo bloquea el hilo, no es estilizable, no atrapa foco,
+  // no respeta dark mode. Usamos state + BaseModal en su lugar.
+  const [confirmDialog, setConfirmDialog] = useState<{
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    variant?: 'default' | 'destructive';
+  } | null>(null);
 
   // Naming state for new templates
   const [publishName, setPublishName] = useState('');
@@ -394,7 +407,11 @@ export const CostSheetTemplateExplorer: React.FC = () => {
       if (activeCategory === 'public') fetchPublicTemplates();
     } catch (error) {
       console.error('Error publishing template:', error);
-      toast.error('Error al publicar la plantilla');
+      // P5-1: Toast con recovery action — el usuario puede reintentar la publicación.
+      toast.error('Error al publicar la plantilla', {
+        description: 'No se pudo guardar en Supabase. Verifica tu conexión.',
+        action: { label: 'Reintentar', onClick: () => handlePublish() },
+      });
     } finally {
       setIsLoading(false);
     }
@@ -408,10 +425,19 @@ export const CostSheetTemplateExplorer: React.FC = () => {
       return;
     }
 
-    if (!confirm(`¿Estás seguro de que deseas sobrescribir la plantilla \"${template.name}\" con los datos actuales del editor?`)) {
-      return;
-    }
+    // G2-fix: confirm() nativo reemplazado por diálogo accesible.
+    setConfirmDialog({
+      title: 'Sobrescribir plantilla',
+      message: `¿Estás seguro de que deseas sobrescribir la plantilla "${template.name}" con los datos actuales del editor?`,
+      variant: 'default',
+      onConfirm: () => {
+        setConfirmDialog(null);
+        void doUpdateTemplate(template);
+      },
+    });
+  };
 
+  const doUpdateTemplate = async (template: Template) => {
     setIsLoading(true);
     try {
       const { error } = await supabase
@@ -424,7 +450,10 @@ export const CostSheetTemplateExplorer: React.FC = () => {
       fetchPublicTemplates();
     } catch (error) {
       console.error("Error updating template:", error);
-      toast.error("Error al actualizar la plantilla");
+      toast.error("Error al actualizar la plantilla", {
+        description: 'No se pudo sobrescribir en Supabase. Verifica tu conexión.',
+        action: { label: 'Reintentar', onClick: () => doUpdateTemplate(template) },
+      });
     } finally {
       setIsLoading(false);
     }
@@ -432,10 +461,19 @@ export const CostSheetTemplateExplorer: React.FC = () => {
 
   const handleDeleteTemplate = async (template: Template) => {
     if (!isAdmin) return;
-    if (!confirm(`¿Estás seguro de que deseas eliminar la plantilla \"${template.name}\"? Esta acción no se puede deshacer.`)) {
-      return;
-    }
+    // G2-fix: confirm() nativo reemplazado por diálogo accesible (destructive).
+    setConfirmDialog({
+      title: 'Eliminar plantilla',
+      message: `¿Estás seguro de que deseas eliminar la plantilla "${template.name}"? Esta acción no se puede deshacer.`,
+      variant: 'destructive',
+      onConfirm: () => {
+        setConfirmDialog(null);
+        void doDeleteTemplate(template);
+      },
+    });
+  };
 
+  const doDeleteTemplate = async (template: Template) => {
     setIsLoading(true);
     try {
       const { error } = await supabase
@@ -448,7 +486,10 @@ export const CostSheetTemplateExplorer: React.FC = () => {
       fetchPublicTemplates();
     } catch (error) {
       console.error("Error deleting template:", error);
-      toast.error("Error al eliminar la plantilla");
+      toast.error("Error al eliminar la plantilla", {
+        description: 'No se pudo eliminar de Supabase. Verifica tu conexión.',
+        action: { label: 'Reintentar', onClick: () => doDeleteTemplate(template) },
+      });
     } finally {
       setIsLoading(false);
     }
@@ -501,17 +542,20 @@ export const CostSheetTemplateExplorer: React.FC = () => {
       setIsLoading(false);
     }
   };
+  // P4-2: Debounce de 300ms en búsqueda para evitar re-filtrar en cada keystroke.
+  // Con catálogos grandes de plantillas, esto reduce significativamente el lag.
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const filteredTemplates = (
     activeCategory === 'system' ? systemTemplates :
     activeCategory === 'private' ? privateTemplates :
     publicTemplates
   ).filter(t =>
-    t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    t.description?.toLowerCase().includes(searchQuery.toLowerCase()) || (t.store_id ? (stores || []).find(s => s.id === t.store_id)?.name?.toLowerCase().includes(searchQuery.toLowerCase()) : "pública general".includes(searchQuery.toLowerCase()))
+    t.name.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) ||
+    t.description?.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) || (t.store_id ? (stores || []).find(s => s.id === t.store_id)?.name?.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) : "pública general".includes(debouncedSearchQuery.toLowerCase()))
   );
 
   return (
-    <div className="w-full max-w-6xl mx-auto space-y-8 p-4">
+    <div className="w-full max-w-6xl mx-auto space-y-8 p-4" aria-busy={isLoading}>
       {/* Header & Search */}
       <div className="flex flex-col md:flex-row justify-between items-center gap-6">
         <div>
@@ -534,27 +578,20 @@ export const CostSheetTemplateExplorer: React.FC = () => {
         </div>
       </div>
 
-      {/* Categories Tabs & Admin Action */}
+      {/* P3-7: Categories Tabs — migrado de pills manuales a <UnifiedTabs variant="pills">.
+          Mismo state `activeCategory`, pero con role="tab" + aria-selected + touch targets ≥44px. */}
       <div className="flex flex-col items-center gap-6">
-          <div className="flex gap-2 p-1.5 bg-sidebar/50 backdrop-blur-xl rounded-3xl border border-sidebar-border/50 w-fit">
-            {(['system', 'private', 'public'] as const).map((cat) => (
-              <button type="button"
-                key={cat}
-                onClick={() => setActiveCategory(cat)}
-                className={cn(
-                  "px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2",
-                  activeCategory === cat
-                    ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
-                    : "text-muted-foreground hover:bg-primary/10 hover:text-primary"
-                )}
-              >
-                {cat === 'system' && <Settings className="w-4 h-4" />}
-                {cat === 'private' && <LockIcon className="w-4 h-4" />}
-                {cat === 'public' && <Globe className="w-4 h-4" />}
-                {cat === 'system' ? 'Sistema' : cat === 'private' ? 'Privadas' : 'Públicas'}
-              </button>
-            ))}
-          </div>
+          <UnifiedTabs
+            tabs={[
+              { id: 'system', label: 'Sistema', icon: Settings },
+              { id: 'private', label: 'Privadas', icon: LockIcon },
+              { id: 'public', label: 'Públicas', icon: Globe },
+            ]}
+            activeTab={activeCategory}
+            onTabChange={(id) => setActiveCategory(id as TemplateCategory)}
+            variant="pills"
+            ariaLabel="Categorías de plantillas"
+          />
 
           {activeCategory === 'public' && isAdmin && (
               <motion.div
@@ -643,7 +680,7 @@ export const CostSheetTemplateExplorer: React.FC = () => {
 
           <div className="grid gap-6 py-4">
             <div className="space-y-3">
-                <label htmlFor="publish-name" className="text-[10px] font-black uppercase tracking-widest text-primary ml-1">
+                <label htmlFor="publish-name" className="text-xs font-black uppercase tracking-widest text-primary ml-1">
                     Nombre de la Plantilla
                 </label>
                 <Input
@@ -656,7 +693,7 @@ export const CostSheetTemplateExplorer: React.FC = () => {
             </div>
 
             <div className="space-y-3">
-                <label htmlFor="publish-description" className="text-[10px] font-black uppercase tracking-widest text-primary ml-1">
+                <label htmlFor="publish-description" className="text-xs font-black uppercase tracking-widest text-primary ml-1">
                     Descripción (Opcional)
                 </label>
                 <Textarea
@@ -670,7 +707,7 @@ export const CostSheetTemplateExplorer: React.FC = () => {
 
             <div className="space-y-3">
               <div className="flex items-center gap-2 mb-1">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-primary ml-1">
+                  <span className="text-xs font-black uppercase tracking-widest text-primary ml-1">
                     Destino de Publicación
                   </span>
                   <Info className="w-3 h-3 text-muted-foreground cursor-help" />
@@ -703,14 +740,14 @@ export const CostSheetTemplateExplorer: React.FC = () => {
             <Button
               variant="ghost"
               onClick={() => setIsPublishDialogOpen(false)}
-              className="flex-1 rounded-2xl h-12 font-black uppercase tracking-widest text-[10px]"
+              className="flex-1 rounded-2xl h-12 font-black uppercase tracking-widest text-xs"
             >
               Cancelar
             </Button>
             <Button
               onClick={handlePublish}
               disabled={isLoading || !publishName.trim()}
-              className="flex-1 rounded-2xl h-12 bg-primary text-primary-foreground font-black uppercase tracking-widest text-[10px] shadow-xl shadow-primary/20"
+              className="flex-1 rounded-2xl h-12 bg-primary text-primary-foreground font-black uppercase tracking-widest text-xs shadow-xl shadow-primary/20"
             >
               {isLoading ? <RefreshCw className="w-4 h-4 animate-spin mr-2" /> : <Upload className="w-4 h-4 mr-2" />}
               Guardar en Supabase
@@ -718,6 +755,19 @@ export const CostSheetTemplateExplorer: React.FC = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* P3-4: Migrado de custom div-based dialog a <ConfirmDialog> unificado.
+          Mismo state `confirmDialog`, menos JSX manual y focus trap heredado de BaseModal. */}
+      <ConfirmDialog
+        open={!!confirmDialog}
+        title={confirmDialog?.title || ''}
+        message={confirmDialog?.message || ''}
+        variant={confirmDialog?.variant === 'destructive' ? 'destructive' : 'default'}
+        confirmLabel="Confirmar"
+        cancelLabel="Cancelar"
+        onConfirm={() => confirmDialog?.onConfirm()}
+        onCancel={() => setConfirmDialog(null)}
+      />
     </div>
   );
 };
@@ -764,7 +814,7 @@ const TemplateCard: React.FC<TemplateCardProps> = ({
         </div>
         <div className="flex flex-col items-end gap-1">
           <span className={cn(
-            "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border",
+            "px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest border",
             template.store_id
               ? "bg-warning/10 text-warning border-warning/20 shadow-lg shadow-warning/5"
               : "bg-primary/10 text-primary border-primary/20 shadow-lg shadow-primary/5"
@@ -773,7 +823,7 @@ const TemplateCard: React.FC<TemplateCardProps> = ({
               ? `Tienda: ${stores.find(s => s.id === template.store_id)?.name || "Específica"}`
               : "Pública (General)"}
           </span>
-          <span className="px-3 py-1 rounded-full bg-primary/5 text-[8px] font-black uppercase tracking-widest text-primary border border-primary/10">
+          <span className="px-3 py-1 rounded-full bg-primary/5 text-xs font-black uppercase tracking-widest text-primary border border-primary/10">
             {template.category || "General"}
           </span>
         </div>
@@ -787,7 +837,7 @@ const TemplateCard: React.FC<TemplateCardProps> = ({
       <div className="flex items-center gap-2 pt-4 border-t border-sidebar-border/30">
         <Button
           onClick={onImport}
-          className="flex-1 rounded-xl h-10 bg-primary/10 hover:bg-primary text-primary hover:text-primary-foreground font-black uppercase tracking-widest text-[10px] transition-all"
+          className="flex-1 rounded-xl h-10 bg-primary/10 hover:bg-primary text-primary hover:text-primary-foreground font-black uppercase tracking-widest text-xs transition-all"
         >
           <Download className="w-3.5 h-3.5 mr-2" />
           Cargar
@@ -796,7 +846,7 @@ const TemplateCard: React.FC<TemplateCardProps> = ({
           <Button
             onClick={onPublish}
             variant="outline"
-            className="rounded-xl h-10 border-sidebar-border hover:bg-primary/10 hover:text-primary hover:border-primary/30 font-black uppercase tracking-widest text-[10px]"
+            className="rounded-xl h-10 border-sidebar-border hover:bg-primary/10 hover:text-primary hover:border-primary/30 font-black uppercase tracking-widest text-xs"
           >
             <Globe className="w-3.5 h-3.5 mr-2" />
             Publicar
@@ -815,14 +865,14 @@ const TemplateCard: React.FC<TemplateCardProps> = ({
             <DropdownMenuContent align="end" className="rounded-[1.5rem] border-primary/10 bg-sidebar/95 backdrop-blur-2xl p-2 min-w-[200px]">
               <DropdownMenuItem
                 onClick={onUpdate}
-                className="rounded-xl font-bold uppercase tracking-widest text-[10px] focus:bg-primary/10 focus:text-primary"
+                className="rounded-xl font-bold uppercase tracking-widest text-xs focus:bg-primary/10 focus:text-primary"
               >
                 <Save className="w-3.5 h-3.5 mr-2" />
                 Guardar Cambios (Sobrescribir)
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={onDuplicate}
-                className="rounded-xl font-bold uppercase tracking-widest text-[10px] focus:bg-primary/10 focus:text-primary"
+                className="rounded-xl font-bold uppercase tracking-widest text-xs focus:bg-primary/10 focus:text-primary"
               >
                 <Copy className="w-3.5 h-3.5 mr-2" />
                 Duplicar
@@ -831,7 +881,7 @@ const TemplateCard: React.FC<TemplateCardProps> = ({
               <DropdownMenuSeparator className="bg-primary/5" />
 
               <DropdownMenuSub>
-                <DropdownMenuSubTrigger className="rounded-xl font-bold uppercase tracking-widest text-[10px] focus:bg-primary/10 focus:text-primary">
+                <DropdownMenuSubTrigger className="rounded-xl font-bold uppercase tracking-widest text-xs focus:bg-primary/10 focus:text-primary">
                   <StoreIcon className="w-3.5 h-3.5 mr-2" />
                   Cambiar Tienda
                 </DropdownMenuSubTrigger>
@@ -839,7 +889,7 @@ const TemplateCard: React.FC<TemplateCardProps> = ({
                   <DropdownMenuSubContent className="rounded-[1.5rem] border-primary/10 bg-sidebar/95 backdrop-blur-2xl p-2 min-w-[200px]">
                     <DropdownMenuItem
                       onClick={() => onChangeStore?.(null)}
-                      className="rounded-xl font-bold uppercase tracking-widest text-[10px] focus:bg-primary/10 focus:text-primary"
+                      className="rounded-xl font-bold uppercase tracking-widest text-xs focus:bg-primary/10 focus:text-primary"
                     >
                       <Globe className="w-3.5 h-3.5 mr-2" />
                       Pública (General)
@@ -848,7 +898,7 @@ const TemplateCard: React.FC<TemplateCardProps> = ({
                       <DropdownMenuItem
                         key={store.id}
                         onClick={() => onChangeStore?.(store.id)}
-                        className="rounded-xl font-bold uppercase tracking-widest text-[10px] focus:bg-primary/10 focus:text-primary"
+                        className="rounded-xl font-bold uppercase tracking-widest text-xs focus:bg-primary/10 focus:text-primary"
                       >
                         <StoreIcon className="w-3.5 h-3.5 mr-2" />
                         Solo: {store.name}
@@ -862,7 +912,7 @@ const TemplateCard: React.FC<TemplateCardProps> = ({
 
               <DropdownMenuItem
                 onClick={onDelete}
-                className="rounded-xl font-bold uppercase tracking-widest text-[10px] focus:bg-destructive/10 focus:text-destructive"
+                className="rounded-xl font-bold uppercase tracking-widest text-xs focus:bg-destructive/10 focus:text-destructive"
               >
                 <Trash className="w-3.5 h-3.5 mr-2" />
                 Eliminar
@@ -881,7 +931,7 @@ const TemplateCard: React.FC<TemplateCardProps> = ({
       {template.updated_at && (
         <div className="absolute -bottom-4 left-6 right-6 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0 z-20">
           <div className="bg-primary/95 text-primary-foreground px-4 py-2 rounded-xl shadow-xl shadow-primary/20 backdrop-blur-xl border border-primary/20 text-center">
-            <p className="text-[8px] font-black uppercase tracking-[0.2em] flex items-center justify-center gap-2">
+            <p className="text-xs font-black uppercase tracking-[0.2em] flex items-center justify-center gap-2">
               <RefreshCw className="w-3 h-3 animate-spin" />
               Actualizado: {new Date(template.updated_at).toLocaleDateString()}
             </p>

@@ -21,6 +21,7 @@ import {
 } from './assisted/constants';
 import type { ActiveMode, SidebarMetrics, NodeValidationResult } from './assisted/types';
 
+import { useTranslations } from 'next-intl';
 // ── Public interface (kept identical for backward compatibility) ──
 interface CostSheetWizardProps {
   data: CostSheetData;
@@ -43,6 +44,7 @@ const CostSheetWizard: React.FC<CostSheetWizardProps> = ({
   healthPercent,
   onFinish,
 }) => {
+  const t = useTranslations('costSheet');
   // ── Mode state ──
   const [activeMode, setActiveMode] = useState<ActiveMode>('prod');
 
@@ -200,7 +202,7 @@ const CostSheetWizard: React.FC<CostSheetWizardProps> = ({
               <h2 className="text-sm font-black uppercase tracking-tight text-foreground">
                 Modo Asistido
               </h2>
-              <p className="text-[9px] text-muted-foreground uppercase font-bold tracking-[0.2em]">
+              <p className="text-xs text-muted-foreground uppercase font-bold tracking-[0.2em]">
                 Sistema de Orquestación Contextual
               </p>
             </div>
@@ -280,14 +282,14 @@ const CostSheetWizard: React.FC<CostSheetWizardProps> = ({
       {selectedNodeId?.endsWith('-firma') && effectiveFinishState !== 'success' && (
         <div className="mt-4 flex justify-end">
           {effectiveFinishState === 'saving' ? (
-            <Button disabled className="text-xs font-bold uppercase tracking-widest bg-primary text-primary-foreground px-6 h-9 gap-2">
+            <Button disabled className="text-xs font-bold uppercase tracking-widest bg-primary text-primary-foreground px-6 h-11 gap-2">
               <Loader2 className="w-4 h-4 animate-spin" />
               Guardando...
             </Button>
           ) : (
             <Button
               onClick={handleFinish}
-              className="text-xs font-bold uppercase tracking-widest bg-primary text-primary-foreground hover:bg-primary/90 px-6 h-9 gap-2"
+              className="text-xs font-bold uppercase tracking-widest bg-primary text-primary-foreground hover:bg-primary/90 px-6 h-11 gap-2"
             >
               Guardar y Finalizar
               <CheckCircle2 className="w-4 h-4" />

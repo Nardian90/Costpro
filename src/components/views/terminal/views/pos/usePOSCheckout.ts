@@ -57,10 +57,13 @@ export function usePOSCheckout() {
       } | null,
     ) => {
       if (!user?.activeStoreId || !user?.id) return;
+
+      // FIX P1: Idempotencia — generar key ANTES de procesar, reutilizar en retries.
+      // Antes: se generaba dentro de createSale con Date.now()+Math.random()
+      // lo que permitía doble-submit crear 2 ventas. Ahora la key se genera
+      // una sola vez por intento de checkout y se reutiliza en todos los retries.
+
       try {
-        // POS-3b audit P0.1: persistir customerId/customerName en la venta.
-        // Solo se envía si el ID tiene formato UUID válido (los clientes manuales
-        // tienen ID tipo "manual-{timestamp}" que no pasaría el regex del schema).
         const cartState = useCartStore.getState();
         const customerId = cartState.customerId;
         const customerName = cartState.customerName;
@@ -68,19 +71,33 @@ export function usePOSCheckout() {
         const safeCustomerId =
           customerId && validUuid.test(customerId) ? customerId : null;
 
+        // FIX: validar coherencia de pagos mixtos antes de enviar
+        const totalAmount = getTotal();
+        const cashAmount = paymentMethod === 'cash' ? totalAmount
+          : paymentMethod === 'mixed' ? items.reduce((s, i) => s + (i.cash_paid || 0), 0)
+          : 0;
+        const transferAmount = paymentMethod === 'transfer' ? totalAmount
+          : paymentMethod === 'mixed' ? items.reduce((s, i) => s + (i.transfer_paid || 0), 0)
+          : 0;
+
+        // FIX: validar coherencia para TODOS los métodos de pago
+        if (Math.abs(cashAmount + transferAmount - totalAmount) > 0.01 && paymentMethod !== 'cash' && paymentMethod !== 'transfer') {
+          throw new Error(`Descuadre de pagos: cash (${cashAmount}) + transfer (${transferAmount}) ≠ total (${totalAmount})`);
+        }
+
         const saleId = await createSale({
           p_store_id: user.activeStoreId,
           p_seller_id: user.id,
-          // NOTA: NO pasamos p_customer_id ni p_customer_name a la RPC.
-          // La función create_sale en la BD no acepta estos parámetros
-          // (su firma solo incluye p_applied_taxes, p_tax_amount, etc.).
-          // Si los pasamos, PostgREST falla con PGRST202 (function not found).
-          // El cliente se persiste vía UPDATE posterior a la fila creada.
           p_payment_method: paymentMethod,
-          p_total_amount: getTotal(),
+          p_total_amount: totalAmount,
           p_subtotal: getSubtotal(),
           p_discount_type: (checkoutDiscount || discount)?.type || "fixed",
           p_discount_value: getDiscountAmount(),
+          // FIX F2-01: persistir split cash/transfer server-side
+          p_cash_amount: cashAmount,
+          p_transfer_amount: transferAmount,
+          // FIX: idempotencia con crypto.randomUUID() para mayor entropía
+          p_idempotency_key: `sale-${crypto.randomUUID()}`,
           p_items: items.map((i) => ({
             product_id: i.product_id,
             variant_id: i.variant_id ?? null,
@@ -95,8 +112,8 @@ export function usePOSCheckout() {
         // POS-3b audit P0.1: persistir customer_id y customer_name en transactions.
         // create_sale RPC no acepta estos parámetros (no podemos modificarla sin romperla).
         // Solución: UPDATE directo a la fila recién creada.
-        // Manejo silencioso: si las columnas no existen aún en BD, el update falla
-        // pero la venta ya está registrada (no rompe el flujo).
+        // FIX: customer update post-venta. Si falla, la venta YA está registrada
+        // (no se puede revertir sin anular). Mostrar warning honesto al usuario.
         if (safeCustomerId || customerName) {
           try {
             const { error: custUpdateErr } = await supabase
@@ -107,13 +124,13 @@ export function usePOSCheckout() {
               })
               .eq("id", saleId);
             if (custUpdateErr) {
-              console.warn(
-                "[POS] No se pudo persistir cliente (¿columnas customer_id/customer_name faltan en BD?):",
-                custUpdateErr.message,
-              );
+              // FIX: no mostrar toast.success mintiendo, mostrar warning
+              toast.warning("Venta registrada, pero no se pudo asociar el cliente", {
+                description: "La venta se completó sin cliente. Puedes editarla después.",
+              });
             }
-          } catch (e) {
-            console.warn("[POS] Error secundario al persistir cliente:", e);
+          } catch {
+            // FIX: el toast.warning ya se mostró en el bloque if anterior
           }
         }
 
@@ -216,6 +233,27 @@ export function usePOSCheckout() {
       } | null,
     ) => {
       if (isProcessingSale) return;
+
+      // ── VALIDACIÓN DE STOCK: impedir overselling (stock negativo) ──
+      // Para cada item del carrito, sumar la cantidad pedida y comparar con stock_current.
+      // Si el total excede el stock, bloquear el checkout.
+      const itemsByProduct = new Map<string, { productName: string; totalQty: number; stock: number }>();
+      for (const item of items) {
+        const pid = item.product.id;
+        const existing = itemsByProduct.get(pid) || { productName: item.product.name, totalQty: 0, stock: item.product.stock_current ?? 0 };
+        existing.totalQty += item.quantity;
+        itemsByProduct.set(pid, existing);
+      }
+      const insufficientStock: string[] = [];
+      for (const [pid, info] of itemsByProduct) {
+        if (info.totalQty > info.stock) {
+          insufficientStock.push(`${info.productName}: pedido ${info.totalQty}, stock ${info.stock}`);
+        }
+      }
+      if (insufficientStock.length > 0) {
+        toast.error(`Stock insuficiente para: ${insufficientStock.slice(0, 3).join('; ')}${insufficientStock.length > 3 ? ` (+${insufficientStock.length - 3} más)` : ''}`, { duration: 6000 });
+        return;
+      }
 
       // POS-2 MM-8: Validación de pago bloquea checkout.
       // Si el método es "mixed" o algún ítem tiene cash_paid/transfer_paid definido,

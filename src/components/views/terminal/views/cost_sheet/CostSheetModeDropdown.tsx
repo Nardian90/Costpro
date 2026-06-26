@@ -11,6 +11,7 @@ import {
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
+import { useTranslations } from 'next-intl';
 export type CostSheetViewMode = 'kpis' | 'expert' | 'assisted' | 'reading' | 'preview' | 'audit' | 'quick';
 
 interface ModeConfig {
@@ -25,6 +26,7 @@ interface CostSheetModeDropdownProps {
 }
 
 export function CostSheetModeDropdown({ viewMode, setViewMode }: CostSheetModeDropdownProps) {
+  const t = useTranslations('costSheet');
   const prefersReducedMotion = useReducedMotion();
   const modes: ModeConfig[] = [
     { id: 'kpis', label: 'Tablero', icon: BarChart3 },
@@ -42,7 +44,7 @@ export function CostSheetModeDropdown({ viewMode, setViewMode }: CostSheetModeDr
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button
-          className="group relative flex items-center gap-2 px-3 h-10 rounded-xl bg-background/50 border border-border/50 hover:bg-muted hover:border-primary/20 transition-all outline-none shrink-0 whitespace-nowrap"
+          className="group relative flex items-center gap-2 px-3 h-11 min-h-[44px] rounded-xl bg-background/50 border border-border/50 hover:bg-muted hover:border-primary/20 transition-all outline-none shrink-0 whitespace-nowrap"
           aria-label="Seleccionar modo de visualización de la ficha"
           type="button"
         >
@@ -60,7 +62,7 @@ export function CostSheetModeDropdown({ viewMode, setViewMode }: CostSheetModeDr
             </AnimatePresence>
           </div>
 
-          <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground group-hover:text-foreground transition-colors">
+          <span className="text-xs font-black uppercase tracking-widest text-muted-foreground group-hover:text-foreground transition-colors">
             Modo: {currentMode.label}
           </span>
 
@@ -68,7 +70,7 @@ export function CostSheetModeDropdown({ viewMode, setViewMode }: CostSheetModeDr
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-48 p-2 rounded-2xl bg-card border-border shadow-2xl">
-        <div className="px-2 py-1.5 text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1 border-b border-border/50 pb-2">
+        <div className="px-2 py-1.5 text-xs font-black uppercase tracking-widest text-muted-foreground mb-1 border-b border-border/50 pb-2">
           Visualización
         </div>
         {modes.map((m) => (

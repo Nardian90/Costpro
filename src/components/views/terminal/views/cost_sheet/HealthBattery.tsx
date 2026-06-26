@@ -4,12 +4,14 @@ import React from 'react';
 import { cn } from '@/lib/utils';
 import { Activity, ShieldCheck, AlertTriangle } from 'lucide-react';
 
+import { useTranslations } from 'next-intl';
 interface HealthBatteryProps {
   percent: number;
   className?: string;
 }
 
 const HealthBattery: React.FC<HealthBatteryProps> = ({ percent, className }) => {
+  const t = useTranslations('costSheet');
   const isLow = percent < 50;
   const isCritical = percent < 20;
 
@@ -76,7 +78,7 @@ const HealthBattery: React.FC<HealthBatteryProps> = ({ percent, className }) => 
                             {percent === 100 ? 'Integridad Total' : percent > 80 ? 'Nivel Excelente' : percent > 50 ? 'Nivel Aceptable' : 'Riesgo Estructural'}
                         </span>
                     </div>
-                    <p className="text-xs font-bold text-primary/60 leading-relaxed uppercase">
+                    <p className="text-xs font-bold text-primary/70 leading-relaxed uppercase">
                         Basado en validaciones estructurales, rentabilidad y coeficientes indirectos.
                     </p>
                 </div>

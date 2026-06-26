@@ -481,6 +481,8 @@ export interface CashClosure {
   declared_total: number;
   system_expected_total: number;
   difference: number;
+  opening_balance?: number; // FIX F3-01: fondo inicial preservado al cerrar
+  cash_movements_total?: number; // FIX F3-03: total de movimientos (entradas/salidas)
   profile?: {
     full_name: string;
   };

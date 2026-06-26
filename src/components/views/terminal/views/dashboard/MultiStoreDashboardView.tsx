@@ -18,8 +18,15 @@ import { toast } from 'sonner';
 import { logger } from '@/lib/logger';
 import { useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
-// Dashboard 10/10 — vista avanzada de analytics por tienda
-import StoreDashboardView from './StoreDashboardView';
+// Dashboard 10/10 — vista avanzada de analytics por tienda.
+// G3-PERF + G3-HARDEN: lazy-loaded because it's 2.2k LOC with ECharts; only
+// needed when the user opens the per-store dashboard overlay. withChunkRetry
+// wraps it in ChunkErrorBoundary for production resilience.
+import { withChunkRetry } from '@/components/ui/ChunkErrorBoundary';
+const StoreDashboardView = withChunkRetry(
+  React.lazy(() => import('./StoreDashboardView')),
+  'StoreDashboardView'
+);
 // Política de secuencia global: badge "Fecha de Operación Actual"
 import { useGlobalOperationDate } from '@/hooks/api/useGlobalOperationDate';
 // Mobile-first: hook para responsive rendering
@@ -38,7 +45,7 @@ interface MetricMiniProps {
 function MetricMini({ label, value, alert = false, isNA = false }: MetricMiniProps) {
   return (
     <div className="space-y-0.5">
-      <p className="text-[10px] font-black uppercase text-muted-foreground">{label}</p>
+      <p className="text-sm font-black uppercase text-muted-foreground">{label}</p>
       <p className={cn(
         'text-sm font-black tabular-nums',
         isNA ? 'text-muted-foreground' : alert ? 'text-destructive' : 'text-foreground'
@@ -84,11 +91,11 @@ const StoreKPICard = memo(function StoreKPICard({ kpi, onActivate, onConfig, onO
             )}
           </div>
           <div>
-            <h3 className="font-black text-xs uppercase tracking-tight leading-tight line-clamp-1">
+            <h3 className="font-black text-sm uppercase tracking-tight leading-tight line-clamp-1">
               {kpi.storeName}
             </h3>
             {kpi.storeAddress && (
-              <p className="text-[10px] text-muted-foreground line-clamp-1">{kpi.storeAddress}</p>
+              <p className="text-sm text-muted-foreground line-clamp-1">{kpi.storeAddress}</p>
             )}
           </div>
         </div>
@@ -116,7 +123,7 @@ const StoreKPICard = memo(function StoreKPICard({ kpi, onActivate, onConfig, onO
             </button>
           )}
           {kpi.isActive && (
-            <span className="text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded bg-primary/10 text-primary">
+            <span className="text-sm font-black uppercase tracking-widest px-2 py-0.5 rounded bg-primary/10 text-primary">
               {t('active')}
             </span>
           )}
@@ -155,7 +162,7 @@ const StoreKPICard = memo(function StoreKPICard({ kpi, onActivate, onConfig, onO
             href={`/tienda/${cleanSlug}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex-1 py-3 min-h-[44px] rounded-xl bg-primary text-primary-foreground text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-1.5 hover:bg-primary/90 active:scale-95 transition-all"
+            className="flex-1 py-3 min-h-[44px] rounded-xl bg-primary text-primary-foreground text-sm font-black uppercase tracking-widest flex items-center justify-center gap-1.5 hover:bg-primary/90 active:scale-95 transition-all"
             aria-label={t('visitPublicStore', { name: kpi.storeName })}
             title={t('visit')}
           >
@@ -169,7 +176,7 @@ const StoreKPICard = memo(function StoreKPICard({ kpi, onActivate, onConfig, onO
             onClick={() => onActivate(kpi.storeId)}
             aria-label={t('activateAsWorkStore', { name: kpi.storeName })}
             className={cn(
-              'flex-1 py-3 min-h-[44px] rounded-xl border border-border text-[10px] font-black uppercase tracking-widest hover:bg-muted transition-colors',
+              'flex-1 py-3 min-h-[44px] rounded-xl border border-border text-xs font-black uppercase tracking-widest hover:bg-muted transition-colors',
               kpi.storeSlug && 'flex-initial'
             )}
           >
@@ -296,7 +303,7 @@ export default function MultiStoreDashboardView() {
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div>
           <h2 className="font-black text-sm uppercase tracking-tight">{t('consolidatedBoard')}</h2>
-          <p className="text-xs text-muted-foreground mt-0.5">
+          <p className="text-sm text-muted-foreground mt-0.5">
             {t('storeCount', { count: stores.length, s: stores.length !== 1 ? 's' : '' })}
           </p>
         </div>
@@ -326,7 +333,7 @@ export default function MultiStoreDashboardView() {
           <div key={label} className="p-4 rounded-xl bg-card border border-border">
             <div className="flex items-center gap-2 mb-1">
               <Icon className={cn('w-3.5 h-3.5', alert ? 'text-destructive' : 'text-muted-foreground')} />
-              <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+              <span className="text-sm font-black uppercase tracking-widest text-muted-foreground">
                 {label}
               </span>
             </div>
@@ -404,7 +411,7 @@ function GlobalOperationDateBadge() {
     return (
       <div className="h-11 px-3 rounded-lg border border-border/50 bg-card/50 animate-pulse flex items-center gap-2">
         <CalendarClock className="w-4 h-4 text-muted-foreground" />
-        <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+        <span className="text-sm font-bold uppercase tracking-widest text-muted-foreground">
           Cargando...
         </span>
       </div>
@@ -430,11 +437,11 @@ function GlobalOperationDateBadge() {
     >
       <CalendarClock className={cn('w-4 h-4 shrink-0', hasDate ? 'text-primary' : 'text-muted-foreground')} />
       <div className="flex flex-col leading-tight">
-        <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">
+        <span className="text-sm font-black uppercase tracking-widest text-muted-foreground">
           Fecha Operación
         </span>
         <span className={cn(
-          'text-[11px] font-black tabular-nums',
+          'text-xs font-black tabular-nums',
           hasDate ? 'text-primary' : 'text-muted-foreground',
         )}>
           {formatted}

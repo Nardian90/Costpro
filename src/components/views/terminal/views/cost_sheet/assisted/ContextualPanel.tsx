@@ -22,6 +22,7 @@ import type { CostMapNode } from './types';
 import type { CostSheetData, CalculatedRowValue, CostSheetHeader, CostSheetAnnex } from '@/types/cost-sheet';
 import { cn, formatCurrency } from '@/lib/utils';
 
+import { useTranslations } from 'next-intl';
 // ── Icon component (declared outside render to satisfy static-components rule) ──
 const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
   Building2, Warehouse, Users, Wrench, Truck,
@@ -29,6 +30,7 @@ const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
 };
 
 function NodeIcon({ name, className }: { name: string; className?: string }) {
+  const t = useTranslations('costSheet');
   const Comp = ICON_MAP[name] || Building2;
   return <Comp className={className} />;
 }
@@ -234,7 +236,7 @@ const ContextualPanel: React.FC<ContextualPanelProps> = ({
             )}>
               <GripVertical className={cn(
                 'w-3.5 h-3.5 transition-colors duration-150',
-                isDragging ? 'text-primary' : 'text-muted-foreground/60'
+                isDragging ? 'text-primary' : 'text-muted-foreground/70'
               )} />
             </div>
             {/* Expanded hover zone for easier grab (invisible hit area) */}
@@ -254,14 +256,14 @@ const ContextualPanel: React.FC<ContextualPanelProps> = ({
                 <Badge
                   variant="outline"
                   className={cn(
-                    'text-[8px] font-bold uppercase tracking-widest px-1.5 py-0 border',
+                    'text-xs font-bold uppercase tracking-widest px-1.5 py-0 border',
                     node.borderColor, node.tailwindColor
                   )}
                 >
                   {phaseLabels[node.phase] || node.phase}
                 </Badge>
                 {node.articleRef && (
-                  <span className="text-[8px] font-mono text-muted-foreground/50">
+                  <span className="text-xs font-mono text-muted-foreground/70">
                     {node.articleRef}
                   </span>
                 )}
@@ -291,7 +293,7 @@ const ContextualPanel: React.FC<ContextualPanelProps> = ({
                     <div className="flex items-start gap-3 p-3 rounded-xl bg-rose-50 dark:bg-rose-950/20 border border-rose-200/50 dark:border-rose-800/30">
                       <AlertTriangle className="w-4 h-4 text-rose-500 shrink-0 mt-0.5" />
                       <div>
-                        <p className="text-[11px] text-rose-900 dark:text-rose-200/80 leading-relaxed font-medium">
+                        <p className="text-xs text-rose-900 dark:text-rose-200/80 leading-relaxed font-medium">
                           {validation.reason}
                         </p>
                       </div>
@@ -311,11 +313,11 @@ const ContextualPanel: React.FC<ContextualPanelProps> = ({
                 >
                   <Sparkles className="w-4 h-4 text-warning shrink-0 mt-0.5" />
                   <div>
-                    <p className="text-[11px] text-amber-900 dark:text-amber-200/80 leading-relaxed font-medium">
+                    <p className="text-xs text-amber-900 dark:text-amber-200/80 leading-relaxed font-medium">
                       {node.regulatoryTip}
                     </p>
                     {node.articleRef && (
-                      <p className="text-[9px] text-amber-700/60 dark:text-amber-400/50 font-mono mt-1.5">
+                      <p className="text-xs text-amber-700/60 dark:text-amber-400/50 font-mono mt-1.5">
                         {node.articleRef}
                       </p>
                     )}
@@ -331,7 +333,7 @@ const ContextualPanel: React.FC<ContextualPanelProps> = ({
                       key={i}
                       className="flex items-center justify-between px-3 py-2 rounded-lg bg-muted/40 border border-border/30"
                     >
-                      <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                      <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
                         {kpi.label}
                       </span>
                       <span className={cn('text-xs font-black font-mono', kpi.color)}>

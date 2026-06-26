@@ -5,12 +5,14 @@ import { cn } from '@/lib/utils';
 import type { ActiveMode } from './types';
 import { MODE_LABELS } from './constants';
 
+import { useTranslations } from 'next-intl';
 interface ModeTabsProps {
   activeMode: ActiveMode;
   onModeChange: (mode: ActiveMode) => void;
 }
 
 const ModeTabs: React.FC<ModeTabsProps> = ({ activeMode, onModeChange }) => {
+  const t = useTranslations('costSheet');
   const modes: ActiveMode[] = ['prod', 'serv', 'com'];
 
   const handleModeChange = useCallback(
@@ -30,10 +32,10 @@ const ModeTabs: React.FC<ModeTabsProps> = ({ activeMode, onModeChange }) => {
             key={mode}
             onClick={() => handleModeChange(mode)}
             className={cn(
-              'flex items-center gap-1.5 px-3 sm:px-4 py-1.5 rounded-lg text-[10px] sm:text-xs font-bold uppercase tracking-wider transition-all duration-200 whitespace-nowrap',
+              'flex items-center gap-1.5 px-3 sm:px-4 py-1.5 rounded-lg text-xs sm:text-xs font-bold uppercase tracking-wider transition-all duration-200 whitespace-nowrap',
               isActive
                 ? 'bg-primary/10 text-primary border border-primary/30 shadow-sm'
-                : 'text-muted-foreground/60 hover:text-muted-foreground hover:bg-muted/50 border border-transparent'
+                : 'text-muted-foreground/70 hover:text-muted-foreground hover:bg-muted/50 border border-transparent'
             )}
           >
             <span className={cn(

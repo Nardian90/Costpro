@@ -5,6 +5,7 @@ import { Progress } from '@/components/ui/progress';
 import { ViewLoadingSplash } from '@/components/ui/ViewLoadingSplash';
 import { MassiveResult } from './MassiveGenerator.types';
 
+import { useTranslations } from 'next-intl';
 interface MassiveGeneratorProgressProps {
   mode: 'overlay' | 'inline';
   isProcessing: boolean;
@@ -24,6 +25,7 @@ export const MassiveGeneratorProgress: React.FC<MassiveGeneratorProgressProps> =
   productsLength,
   results,
 }) => {
+  const t = useTranslations('costSheet');
   const completedCount = results.filter((r) => r.status === 'completed').length;
   const errorCount = results.filter((r) => r.status === 'error').length;
 
@@ -33,7 +35,7 @@ export const MassiveGeneratorProgress: React.FC<MassiveGeneratorProgressProps> =
         <ViewLoadingSplash label="PROCESANDO" showTips={false} />
         <div className="w-64 -mt-8 space-y-2">
           <Progress value={progress} className="h-2 bg-primary/10" />
-          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-center text-primary/60">
+          <p className="text-xs font-black uppercase tracking-[0.3em] text-center text-primary/70">
             Ficha {currentIndex + 1} de {selectedIdsSize}
           </p>
         </div>

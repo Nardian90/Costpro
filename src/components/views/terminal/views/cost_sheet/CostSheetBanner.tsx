@@ -7,6 +7,7 @@ import { ArrowLeft, ShieldCheck, Menu } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { CostSheetModeDropdown, CostSheetViewMode } from "./CostSheetModeDropdown";
 
+import { useTranslations } from 'next-intl';
 interface CostSheetBannerProps {
   viewMode: CostSheetViewMode;
   setViewMode: (mode: CostSheetViewMode) => void;
@@ -14,6 +15,7 @@ interface CostSheetBannerProps {
 }
 
 export const CostSheetBanner = ({ viewMode, setViewMode, onOpenActions }: CostSheetBannerProps) => {
+  const t = useTranslations('costSheet');
   const { setCurrentView } = useUIStore();
   return (
     <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-6 sm:mb-8 px-2 sticky top-0 z-[40] bg-background/80 backdrop-blur-xl py-3 sm:py-0 sm:bg-transparent sm:backdrop-blur-none sm:relative border-b border-white/5 sm:border-none -mx-4 sm:mx-0 px-4 sm:px-2">
@@ -31,7 +33,7 @@ export const CostSheetBanner = ({ viewMode, setViewMode, onOpenActions }: CostSh
             <Button
               variant="outline"
               size="sm"
-              className="rounded-xl border-primary/20 text-primary hover:bg-primary/10 font-black uppercase tracking-widest text-[10px] h-11 px-4"
+              className="rounded-xl border-primary/20 text-primary hover:bg-primary/10 font-black uppercase tracking-widest text-xs h-11 px-4"
               onClick={() => setCurrentView('dashboard')}
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
@@ -47,7 +49,7 @@ export const CostSheetBanner = ({ viewMode, setViewMode, onOpenActions }: CostSh
               <h1 className="text-[clamp(1.25rem,6vw,1.875rem)] font-black text-foreground tracking-tight leading-tight truncate">
                 FC
               </h1>
-              <p className="text-[clamp(0.6rem,3vw,0.75rem)] font-black uppercase tracking-[0.2em] text-primary/60 truncate">
+              <p className="text-[clamp(0.6rem,3vw,0.75rem)] font-black uppercase tracking-[0.2em] text-primary/70 truncate">
                 COSTPRO
               </p>
             </div>

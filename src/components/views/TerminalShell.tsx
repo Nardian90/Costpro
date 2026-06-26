@@ -27,6 +27,7 @@ import { useRecentStores } from '@/hooks/ui/useRecentStores'; // F5-T03
 import { useSwipeNavigation } from '@/hooks/ui/useSwipeNavigation'; // F5-T03
 import { MobileTabBar } from '@/components/views/terminal/MobileTabBar'; // F5-T02
 import ScrollToTop from '@/components/ui/ScrollToTop'; // B4
+import { HelpFloatingButton } from '@/components/views/terminal/views/help/HelpFloatingButton';
 import { CostProLoader } from '@/components/ui/CostProLoader';
 import { ViewLoadingSplash } from '@/components/ui/ViewLoadingSplash';
 import { getNavigationRoute } from '@/config/navigation/navigation-map';
@@ -75,6 +76,8 @@ const InventoryView = dynamic(() => import('@/components/views/terminal/views/in
 const CatalogView = dynamic(() => import('@/components/views/terminal/views/catalog/CatalogView'), { ssr: false });
 const CostSheetView = dynamic(() => import('@/components/views/terminal/views/cost_sheet/CostSheetView'), { ssr: false });
 const ReportsView = dynamic(() => import('@/components/views/terminal/views/reports/ReportsView'), { ssr: false });
+const ExchangeIntelligenceView = dynamic(() => import('@/components/views/terminal/views/exchange_intelligence/ExchangeIntelligenceView'), { ssr: false });
+const ReceivedServicesView = dynamic(() => import('@/components/views/terminal/views/received_services/ReceivedServicesView'), { ssr: false });
 const IPVView = dynamic(() => import('@/components/views/terminal/views/ipv/IPVView'), { ssr: false });
 const AcademyView = dynamic(() => import('@/components/views/terminal/views/academy/AcademyView'), { ssr: false });
 const InventoryAdjustmentsView = dynamic(() => import('@/components/views/terminal/views/inventory/InventoryAdjustmentsView'), { ssr: false });
@@ -90,6 +93,8 @@ const NewsView = dynamic(() => import('@/components/views/terminal/views/rss/New
 const RSSManagementView = dynamic(() => import('@/components/views/terminal/views/rss/RSSManagementView'), { ssr: false });
 const WikiView = dynamic(() => import('@/components/views/terminal/views/wiki/WikiView'), { ssr: false });
 const HealthView = dynamic(() => import('@/components/views/health/HealthView'), { ssr: false });
+const UsageMonitoringView = dynamic(() => import('@/components/views/terminal/views/usage_monitoring/UsageMonitoringView'), { ssr: false });
+const WorkersView = dynamic(() => import('@/components/views/terminal/views/workers/WorkersView'), { ssr: false });
 const ReceptionsHistoryView = dynamic(() => import('@/components/views/terminal/views/receptions/ReceptionsHistoryView'), { ssr: false });
 const ProductLabelGenerator = dynamic(() => import('@/components/views/terminal/views/labels/ProductLabelGenerator'), { ssr: false });
 const SalesCatalogView = dynamic(() => import('@/components/views/terminal/views/pos/SalesCatalogView'), { ssr: false });
@@ -116,7 +121,8 @@ export default function TerminalShell() {
     setIpvActiveTab,
     sidebarState,
     setSidebarState,
-    toggleSidebar: globalToggleSidebar
+    toggleSidebar: globalToggleSidebar,
+    isHelpReadingMode
   } = useUIStore();
   const queryClient = useQueryClient();
   const router = useRouter();
@@ -276,6 +282,8 @@ export default function TerminalShell() {
         case 'catalog': return <ViewErrorBoundary viewName="Catálogo"><CatalogView /></ViewErrorBoundary>;
         case 'cost-sheets': return <ViewErrorBoundary viewName="Hojas de Costo"><CostSheetView /></ViewErrorBoundary>;
         case 'reports': return <ViewErrorBoundary viewName="Reportes"><ReportsView /></ViewErrorBoundary>;
+        case 'exchange-intelligence': return <ViewErrorBoundary viewName="Inteligencia Cambiaria"><ExchangeIntelligenceView /></ViewErrorBoundary>;
+        case 'received-services': return <ViewErrorBoundary viewName="Servicios Recibidos"><ReceivedServicesView /></ViewErrorBoundary>;
         case 'ipv': return <ViewErrorBoundary viewName="IPV"><IPVView /></ViewErrorBoundary>;
         case 'academy': return <ViewErrorBoundary viewName="Academia"><AcademyView /></ViewErrorBoundary>;
         case 'inventory_adjustments': return <ViewErrorBoundary viewName="Ajustes de Inventario"><InventoryAdjustmentsView /></ViewErrorBoundary>;
@@ -291,6 +299,8 @@ export default function TerminalShell() {
         case 'rss_management': return <ViewErrorBoundary viewName="Gestión RSS"><RSSManagementView /></ViewErrorBoundary>;
         case 'wiki': return <ViewErrorBoundary viewName="Wiki"><WikiView /></ViewErrorBoundary>;
         case 'health': return <ViewErrorBoundary viewName="Salud del Sistema"><HealthView /></ViewErrorBoundary>;
+        case 'usage-monitoring': return <ViewErrorBoundary viewName="Monitoreo de Uso"><UsageMonitoringView /></ViewErrorBoundary>;
+        case 'workers': return <ViewErrorBoundary viewName="Trabajadores y Comisiones"><WorkersView /></ViewErrorBoundary>;
         case 'reception_list': return <ViewErrorBoundary viewName="Historial de Recepciones"><ReceptionsHistoryView /></ViewErrorBoundary>;
         case 'labels': return <ViewErrorBoundary viewName="Etiquetas"><ProductLabelGenerator /></ViewErrorBoundary>;
         case 'ofertas': return <ViewErrorBoundary viewName="Ofertas"><OfertasView /></ViewErrorBoundary>;
@@ -379,30 +389,38 @@ export default function TerminalShell() {
       >
         Saltar al contenido
       </a>
-      <Sidebar
-        onViewChange={handleViewChange}
-        onLogout={handleLogout}
-        onClose={() => setSidebarState('closed')}
-        onPrefetchView={handlePrefetchView}
-      />
+      {/* En modo lectura de ayuda, ocultamos el Sidebar global para tener pantalla completa. */}
+      {!isHelpReadingMode && (
+        <Sidebar
+          onViewChange={handleViewChange}
+          onLogout={handleLogout}
+          onClose={() => setSidebarState('closed')}
+          onPrefetchView={handlePrefetchView}
+        />
+      )}
 
       <main id="main-content" className={cn(
         "flex-1 h-full flex flex-col z-10 min-w-0 transition-[padding-left,padding-right] duration-300 cubic-bezier(0.4,0,0.2,1) overflow-x-hidden overflow-y-hidden",
         !isMobile && sidebarWidths[sidebarState]
       )} role="main">
-        <Header
-          sidebarState={sidebarState}
-          toggleSidebar={globalToggleSidebar}
-          currentView={currentView}
-          navigationItems={nav.navigationItems}
-          onViewChange={handleViewChange}
-          user={user as any}
-          allStores={allStores}
-          handleSetActiveStore={switchStore}
-          onLogout={handleLogout}
-        />
+        {/* En modo lectura de ayuda, ocultamos el Header global para tener pantalla limpia. */}
+        {!isHelpReadingMode && (
+          <Header
+            sidebarState={sidebarState}
+            toggleSidebar={globalToggleSidebar}
+            currentView={currentView}
+            navigationItems={nav.navigationItems}
+            onViewChange={handleViewChange}
+            user={user as any}
+            allStores={allStores}
+            handleSetActiveStore={switchStore}
+            onLogout={handleLogout}
+          />
+        )}
 
-        <NavigationBreadcrumb className="px-3 sm:px-4 pt-3 pb-0" />
+        {!isHelpReadingMode && (
+          <NavigationBreadcrumb className="px-3 sm:px-4 pt-3 pb-0" />
+        )}
 
         <div className={cn(
           "relative flex-1 overflow-y-auto overflow-x-hidden terminal-content scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent",
@@ -471,6 +489,11 @@ export default function TerminalShell() {
         currentView={currentView}
         onViewChange={handleViewChange}
       />
+
+      {/* Botón flotante de ayuda contextual — visible en todas las vistas operativas */}
+      {currentView !== 'help' && currentView !== 'wiki' && (
+        <HelpFloatingButton view={currentView} />
+      )}
     </div>
   );
 }

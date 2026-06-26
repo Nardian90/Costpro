@@ -12,6 +12,8 @@ import Confetti from './Confetti';
 import { SvgDefs, SvgGrid, SvgPhaseLabels, SvgConveyor, SvgConnections } from './SvgLayer';
 import { useSimulation } from './useSimulation';
 
+import { useTranslations } from 'next-intl';
+import { Progress } from '@/components/ui/progress';
 interface InteractiveCostMapProps {
   nodes: CostMapNode[];
   phases: WorkflowPhase[];
@@ -36,6 +38,7 @@ const InteractiveCostMap = React.memo(function InteractiveCostMap({
   zoom, onZoomChange, onPanReset, orientation, onOrientationChange,
   data, calculatedValues, calculatedAnnexes, onSimulationResult,
 }: InteractiveCostMapProps) {
+  const t = useTranslations('costSheet');
   const containerRef = useRef<HTMLDivElement>(null);
   const [isPanning, setIsPanning] = useState(false);
   const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
@@ -217,7 +220,7 @@ const InteractiveCostMap = React.memo(function InteractiveCostMap({
       {isZoomActive && !isSimulating && (
         <div className="absolute top-3 left-3 z-10 flex items-center gap-1.5 px-2 py-1 rounded-md bg-primary/10 border border-primary/20">
           <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-          <span className="text-[9px] font-bold text-primary uppercase tracking-widest">
+          <span className="text-xs font-bold text-primary uppercase tracking-widest">
             Zoom activo
           </span>
         </div>
@@ -239,7 +242,7 @@ const InteractiveCostMap = React.memo(function InteractiveCostMap({
             simPhase === 'error' ? 'bg-rose-500 animate-pulse' : 'bg-primary',
           )} />
           <span className={cn(
-            'text-[9px] font-bold uppercase tracking-widest',
+            'text-xs font-bold uppercase tracking-widest',
             simPhase === 'running' ? 'text-success dark:text-emerald-400' :
             simPhase === 'paused' ? 'text-warning dark:text-amber-400' :
             simPhase === 'error' ? 'text-rose-600 dark:text-rose-400' : 'text-primary',
@@ -253,7 +256,7 @@ const InteractiveCostMap = React.memo(function InteractiveCostMap({
       {isSimulating && simProductName && (
         <div className="absolute bottom-14 left-1/2 -translate-x-1/2 z-10 flex items-center gap-2 px-4 py-1.5 rounded-full bg-card border border-border/60 shadow-lg">
           <Factory className="w-3.5 h-3.5 text-primary" />
-          <span className="text-[10px] font-black uppercase tracking-widest text-foreground">
+          <span className="text-xs font-black uppercase tracking-widest text-foreground">
             {simProductName}
           </span>
         </div>
@@ -342,7 +345,7 @@ const InteractiveCostMap = React.memo(function InteractiveCostMap({
               <p className="text-sm font-black uppercase tracking-widest text-primary">
                 Auditoria Completada
               </p>
-              <p className="text-[10px] text-muted-foreground mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 {validCount}/{nodes.length} nodos validados sin errores
               </p>
             </div>
@@ -359,10 +362,10 @@ const InteractiveCostMap = React.memo(function InteractiveCostMap({
               <p className="text-sm font-black uppercase tracking-widest text-rose-600 dark:text-rose-400">
                 Error Detectado
               </p>
-              <p className="text-[11px] text-muted-foreground mt-1 max-w-[260px]">
+              <p className="text-xs text-muted-foreground mt-1 max-w-[260px]">
                 {simErrorReason}
               </p>
-              <p className="text-[9px] text-muted-foreground/60 mt-2">
+              <p className="text-xs text-muted-foreground/70 mt-2">
                 {validCount} ok / {errorCount} error — revise en el panel izquierdo
               </p>
             </div>
@@ -372,18 +375,13 @@ const InteractiveCostMap = React.memo(function InteractiveCostMap({
 
       {/* Bottom progress bar */}
       <div className="flex items-center gap-3 px-4 py-2 border-t border-border/30 bg-card/50">
-        <div className="flex-1 h-1.5 rounded-full bg-muted/50 overflow-hidden">
-          <div
-            className={cn(
-              'h-full rounded-full transition-all duration-500 ease-out',
-              simPhase === 'complete' ? 'bg-gradient-to-r from-success via-cyan-500 to-primary' :
-              simPhase === 'error' ? 'bg-gradient-to-r from-rose-500 to-warning' :
-              'bg-primary',
-            )}
-            style={{ width: `${completionPercent}%` }}
-          />
-        </div>
-        <span className="text-[10px] font-mono font-bold text-muted-foreground whitespace-nowrap">
+        {/* G2-P1: Migrado a <Progress> shadcn — role="progressbar" + aria-valuenow built-in. */}
+        <Progress
+          value={completionPercent}
+          className="flex-1 h-1.5"
+          aria-label="Progreso de completitud del mapa de costos"
+        />
+        <span className="text-xs font-mono font-bold text-muted-foreground whitespace-nowrap">
           {completedNodes.size}/{nodes.length} completados ({completionPercent}%)
         </span>
       </div>

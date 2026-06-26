@@ -7,13 +7,12 @@ export const dynamic = 'force-dynamic';
 
 const KNOWLEDGE_BASE = path.join(/*turbopackIgnore: true*/process.cwd(), 'knowledge');
 
-// Section metadata mapping
+// Section metadata mapping — Diataxis framework
 const SECTION_META: Record<string, { label: string; icon: string }> = {
-  '01-empezar': { label: 'Para Empezar', icon: 'Rocket' },
-  '02-gestion': { label: 'Gestión', icon: 'Calculator' },
-  '03-inventario': { label: 'Inventario', icon: 'Package' },
-  '04-configuracion': { label: 'Configuración', icon: 'Settings' },
-  '05-referencia': { label: 'Referencia', icon: 'Terminal' },
+  '01-tutoriales': { label: 'Tutoriales', icon: 'GraduationCap' },
+  '02-como-hacer': { label: 'Cómo Hacer', icon: 'Wrench' },
+  '03-referencia': { label: 'Referencia', icon: 'BookOpen' },
+  '04-explicacion': { label: 'Explicación', icon: 'Lightbulb' },
 };
 
 interface SearchResult {
@@ -144,11 +143,10 @@ async function getHandler(request: NextRequest) {
               const excerpt = (start > 0 ? '...' : '') + content.substring(start, end).replace(/\n/g, ' ') + (end < content.length ? '...' : '');
 
               let type = 'getting-started';
-              if (relativePath.includes('02-gestion')) type = 'tutorial';
-              else if (relativePath.includes('03-inventario')) type = 'how-to';
-              else if (relativePath.includes('04-configuracion')) type = 'how-to';
-              else if (relativePath.includes('05-referencia')) type = 'reference';
-              else if (relativePath.includes('compliance')) type = 'reference';
+              if (relativePath.includes('01-tutoriales')) type = 'tutorial';
+              else if (relativePath.includes('02-como-hacer')) type = 'how-to';
+              else if (relativePath.includes('03-referencia')) type = 'reference';
+              else if (relativePath.includes('04-explicacion')) type = 'reference';
 
               results.push({ path: relativePath, title, excerpt, type });
             }

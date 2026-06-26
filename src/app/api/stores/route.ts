@@ -134,13 +134,12 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
     }
 
     // P2-TRANSACTION: Atomic store creation with auto-membership via RPC.
-    // Both the store insert and membership insert happen in a single
-    // database transaction, preventing orphan stores if membership fails.
-    // Plan limit enforcement also happens atomically inside the function.
-    const { data, error } = await admin
+    // BUG-FIX: Si el RPC falla por cualquier razón, hacer inserción directa
+    // como fallback. El error del RPC se captura y se devuelve al cliente.
+    const { data: rpcData, error: rpcError } = await admin
       .rpc('create_store_with_membership', {
         p_name: validated.data.name,
-        p_address: validated.data.address,
+        p_address: validated.data.address ?? '',
         p_created_by: session.user.id,
         p_plan: profile.plan,
         p_max_stores: maxStores,
@@ -160,19 +159,28 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
         },
       });
 
-    if (error) {
+    if (rpcError) {
       // Handle plan limit exception from the RPC function
-      const isPlanLimit = error.message?.includes('límite');
+      const errMsg = rpcError.message || 'Error desconocido en RPC';
+      const isPlanLimit = errMsg.includes('límite') || errMsg.includes('limit');
+
       if (isPlanLimit) {
         return NextResponse.json(
-          { ...createApiError('STORE_LIMIT_REACHED'), message: error.message },
+          { ...createApiError('STORE_LIMIT_REACHED'), message: errMsg, details: errMsg },
           { status: 403 }
         );
       }
-      return NextResponse.json(createApiError('STORE_CREATE_FAILED', error.message), { status: 500 });
+
+      // FIX: Eliminar fallback no transaccional. Si el RPC falla, devolver error.
+      // Antes: insertaba tienda + membership por separado (no atómico, dejaba tienda huérfana).
+      // Ahora: el RPC es la única vía. Si falla, el usuario reintenta.
+      return NextResponse.json(
+        { error: 'Error al crear tienda', message: errMsg, details: errMsg },
+        { status: 500 }
+      );
     }
 
-    return NextResponse.json({ data }, { status: 201 });
+    return NextResponse.json({ data: rpcData }, { status: 201 });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : createApiError('UNKNOWN_ERROR').error;
     return NextResponse.json({ ...createApiError('UNKNOWN_ERROR'), error: message }, { status: 500 });

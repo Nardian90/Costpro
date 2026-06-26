@@ -10,13 +10,25 @@ import { toast } from 'sonner';
 import { formatCurrency, formatDate } from '@/lib/utils';
 
 // ── CSV Export Utility ──
+function formatPaymentMethod(method: string | null | undefined): string {
+    switch ((method || '').toLowerCase()) {
+        case 'cash': return 'Efectivo';
+        case 'card': return 'Tarjeta';
+        case 'transfer': return 'Transferencia';
+        case 'mixed': return 'Mixto';
+        case 'wallet': return 'Billetera';
+        case 'other': return 'Otro';
+        default: return 'Sin especificar';
+    }
+}
+
 function generateCSV(transactions: Transaction[]): string {
     const headers = ['Ref', 'Fecha', 'Hora', 'Metodo', 'Total', 'Subtotal', 'Descuento', 'Impuestos', 'Estado'];
     const rows = transactions.map(t => [
         t.id.split('-')[0],
         formatDate(t.created_at),
         new Date(t.created_at).toLocaleTimeString('es-CU', { hour: '2-digit', minute: '2-digit' }),
-        t.payment_method === 'cash' ? 'Efectivo' : 'Transferencia',
+        formatPaymentMethod(t.payment_method),
         (t.total_amount || 0).toFixed(2),
         (t.subtotal || 0).toFixed(2),
         (t.discount_value || 0).toFixed(2),

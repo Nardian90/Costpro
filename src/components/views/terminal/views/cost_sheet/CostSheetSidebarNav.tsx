@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button';
 import { useCostSheetStore } from '@/store/cost-sheet-store';
 import type { CostSheetSection, CostSheetAnnex } from '@/types/cost-sheet';
 
+import { useTranslations } from 'next-intl';
 interface SidebarNavItem {
   id: string;
   label?: string;
@@ -42,6 +43,7 @@ export const CostSheetSidebarNav: React.FC<CostSheetSidebarNavProps> = ({
   onSelect,
   type
 }) => {
+  const t = useTranslations('costSheet');
   const addMainSection = useCostSheetStore(state => state.addMainSection);
   const setIsCalculatorOpen = useUIStore(state => state.setIsCalculatorOpen);
 
@@ -91,7 +93,7 @@ export const CostSheetSidebarNav: React.FC<CostSheetSidebarNavProps> = ({
                 <span className="text-xs font-black uppercase tracking-widest leading-none mb-1">
                     Todos
                 </span>
-                <span className={cn("text-[10px] font-bold uppercase tracking-tight truncate", isAllActive ? "text-white/70" : "text-sidebar-foreground/50")}>
+                <span className={cn("text-xs font-bold uppercase tracking-tight truncate", isAllActive ? "text-white/70" : "text-sidebar-foreground/50")}>
                     Ver todas las {type === 'sections' ? 'secciones' : 'anexos'} juntas
                 </span>
             </div>
@@ -150,7 +152,7 @@ export const CostSheetSidebarNav: React.FC<CostSheetSidebarNavProps> = ({
                           addMainSection();
                           onClose();
                       }}
-                      className="w-full h-12 rounded-2xl bg-primary hover:bg-primary/90 text-foreground font-black uppercase tracking-widest text-[10px] shadow-lg shadow-primary/20 gap-2 px-2"
+                      className="w-full h-12 rounded-2xl bg-primary hover:bg-primary/90 text-foreground font-black uppercase tracking-widest text-xs shadow-lg shadow-primary/20 gap-2 px-2"
                   >
                       <Plus className="w-4 h-4" />
                       Nueva Sección
@@ -161,7 +163,7 @@ export const CostSheetSidebarNav: React.FC<CostSheetSidebarNavProps> = ({
                           onClose();
                       }}
                       variant="outline"
-                      className="w-full h-12 rounded-2xl border-primary/20 hover:bg-primary/10 text-primary font-black uppercase tracking-widest text-[10px] gap-2 px-2"
+                      className="w-full h-12 rounded-2xl border-primary/20 hover:bg-primary/10 text-primary font-black uppercase tracking-widest text-xs gap-2 px-2"
                   >
                       <Calculator className="w-4 h-4" />
                       Calculadora

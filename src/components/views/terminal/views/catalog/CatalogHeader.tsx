@@ -139,10 +139,10 @@ export default function CatalogHeader({
           <div className="flex items-center gap-1 flex-wrap">
             <button
               type="button"
-              aria-checked={selectedCategories.size === 0}
+              aria-pressed={selectedCategories.size === 0}
               onClick={() => onCategoryChange?.('')}
               className={cn(
-                "px-2 py-1 min-h-[28px] rounded-full text-[10px] font-bold uppercase border transition-all active:scale-95 whitespace-nowrap",
+                "px-2 py-1 min-h-[28px] rounded-full text-xs font-bold uppercase border transition-all active:scale-95 whitespace-nowrap",
                 selectedCategories.size === 0
                   ? "bg-primary text-primary-foreground border-primary"
                   : "bg-muted/50 text-muted-foreground border-border hover:bg-muted"

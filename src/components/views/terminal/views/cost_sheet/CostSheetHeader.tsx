@@ -4,11 +4,13 @@ import React from 'react';
 import { cn, formatDate } from '@/lib/utils';
 import type { CostSheetHeader as CostSheetHeaderType } from '@/types/cost-sheet';
 
+import { useTranslations } from 'next-intl';
 type CostSheetHeaderProps = {
   header: Partial<CostSheetHeaderType>;
 };
 
 const CostSheetHeader: React.FC<CostSheetHeaderProps> = ({ header }) => {
+  const t = useTranslations('costSheet');
   return (
     <div className="space-y-6">
       {/* Formal Government Headers */}

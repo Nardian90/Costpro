@@ -15,6 +15,7 @@ import { CheckCircle2, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { MassiveResult } from './MassiveGenerator.types';
 
+import { useTranslations } from 'next-intl';
 interface MassiveGeneratorPreviewProps {
   results: MassiveResult[];
   isProcessing: boolean;
@@ -36,6 +37,7 @@ export const MassiveGeneratorPreview: React.FC<MassiveGeneratorPreviewProps> = (
   onToggleSelect,
   onUpdateResultField,
 }) => {
+  const t = useTranslations('costSheet');
   return (
     <div className="rounded-2xl border border-sidebar-border/50 overflow-hidden bg-background/50 backdrop-blur-md">
       <Table>

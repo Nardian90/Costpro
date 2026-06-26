@@ -38,7 +38,7 @@ export function StoreHealthBadge({ storeId, health, compact = false }: StoreHeal
   if (!data) {
     return (
       <span className={cn(
-        "inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded border bg-muted/50 border-border text-muted-foreground/40",
+        "inline-flex items-center gap-1 text-xs font-bold px-1.5 py-0.5 rounded border bg-muted/50 border-border text-muted-foreground/70",
         compact && "px-1"
       )}>
         <Heart className="w-3 h-3" />
@@ -60,7 +60,7 @@ export function StoreHealthBadge({ storeId, health, compact = false }: StoreHeal
         <button
           type="button"
           className={cn(
-            "inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded border cursor-help min-h-[28px] focus:outline-none focus:ring-2 focus:ring-primary/30",
+            "inline-flex items-center gap-1 text-xs font-bold px-1.5 py-0.5 rounded border cursor-help min-h-[44px] focus:outline-none focus:ring-2 focus:ring-primary/30",
             colorClass,
             compact && "px-1"
           )}
@@ -76,7 +76,7 @@ export function StoreHealthBadge({ storeId, health, compact = false }: StoreHeal
         side="top"
         align="start"
       >
-        <div className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2">
+        <div className="text-sm font-black uppercase tracking-widest text-muted-foreground mb-2">
           Salud de la tienda · {score}/100
         </div>
         {/* Barra de progreso visual */}
@@ -92,23 +92,23 @@ export function StoreHealthBadge({ storeId, health, compact = false }: StoreHeal
         {/* Lista de categorías */}
         <ul className="space-y-1.5">
           {data.categories.map((cat) => (
-            <li key={cat.key} className="flex items-start gap-2 text-xs">
+            <li key={cat.key} className="flex items-start gap-2 text-sm">
               {cat.achieved ? (
                 <CheckCircle2 className="w-3.5 h-3.5 text-success flex-shrink-0 mt-0.5" />
               ) : (
-                <XCircle className="w-3.5 h-3.5 text-muted-foreground/50 flex-shrink-0 mt-0.5" />
+                <XCircle className="w-3.5 h-3.5 text-muted-foreground/70 flex-shrink-0 mt-0.5" />
               )}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between">
                   <span className={cn("font-bold", cat.achieved ? "text-foreground" : "text-muted-foreground")}>
                     {cat.label}
                   </span>
-                  <span className={cn("font-mono text-[10px]", cat.achieved ? "text-success" : "text-muted-foreground")}>
+                  <span className={cn("font-mono text-sm", cat.achieved ? "text-success" : "text-muted-foreground")}>
                     {cat.score}/20
                   </span>
                 </div>
                 {!cat.achieved && (
-                  <p className="text-[10px] text-muted-foreground/70 mt-0.5 leading-tight">
+                  <p className="text-sm text-muted-foreground/70 mt-0.5 leading-tight">
                     {cat.hint}
                   </p>
                 )}

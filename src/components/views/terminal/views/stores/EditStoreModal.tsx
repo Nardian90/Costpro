@@ -322,7 +322,7 @@ export function EditStoreModal({
                 </span>
             }
             description={
-                <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground/70">
+                <span className="text-sm font-bold uppercase tracking-widest text-muted-foreground/70">
                     {t('completeData')}
                 </span>
             }
@@ -330,7 +330,7 @@ export function EditStoreModal({
         >
             <form onSubmit={handleSubmit} className="grid gap-6 py-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 items-center gap-2 sm:gap-4">
-                    <Label htmlFor="edit-name" className="text-left sm:text-right font-black uppercase text-[10px] tracking-widest text-primary/70">
+                    <Label htmlFor="edit-name" className="text-left sm:text-right font-black uppercase text-sm tracking-widest text-primary/70">
                         {t('name')}
                     </Label>
                     <Input
@@ -344,7 +344,7 @@ export function EditStoreModal({
                     />
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 items-center gap-2 sm:gap-4">
-                    <Label htmlFor="edit-address" className="text-left sm:text-right font-black uppercase text-[10px] tracking-widest text-primary/70">
+                    <Label htmlFor="edit-address" className="text-left sm:text-right font-black uppercase text-sm tracking-widest text-primary/70">
                         {t('address')}
                     </Label>
                     <Input
@@ -357,7 +357,7 @@ export function EditStoreModal({
                     />
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 items-center gap-2 sm:gap-4">
-                    <Label htmlFor="edit-phone" className="text-left sm:text-right font-black uppercase text-[10px] tracking-widest text-primary/70">
+                    <Label htmlFor="edit-phone" className="text-left sm:text-right font-black uppercase text-sm tracking-widest text-primary/70">
                         {t('phone')}
                     </Label>
                     <Input
@@ -371,7 +371,7 @@ export function EditStoreModal({
                     />
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 items-center gap-2 sm:gap-4">
-                    <Label htmlFor="edit-email" className="text-left sm:text-right font-black uppercase text-[10px] tracking-widest text-primary/70">
+                    <Label htmlFor="edit-email" className="text-left sm:text-right font-black uppercase text-sm tracking-widest text-primary/70">
                         {t('email')}
                     </Label>
                     <Input
@@ -385,7 +385,7 @@ export function EditStoreModal({
                     />
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 items-center gap-2 sm:gap-4">
-                    <Label htmlFor="edit-reeup" className="text-left sm:text-right font-black uppercase text-[10px] tracking-widest text-primary/70">
+                    <Label htmlFor="edit-reeup" className="text-left sm:text-right font-black uppercase text-sm tracking-widest text-primary/70">
                         {t('reeup')}
                     </Label>
                     <Input
@@ -398,7 +398,7 @@ export function EditStoreModal({
                     />
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 items-center gap-2 sm:gap-4">
-                    <Label htmlFor="edit-bank" className="text-left sm:text-right font-black uppercase text-[10px] tracking-widest text-primary/70">
+                    <Label htmlFor="edit-bank" className="text-left sm:text-right font-black uppercase text-sm tracking-widest text-primary/70">
                         {t('bankAccount')}
                     </Label>
                     <Input
@@ -411,7 +411,7 @@ export function EditStoreModal({
                     />
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 items-center gap-2 sm:gap-4">
-                    <Label htmlFor="edit-nit" className="text-left sm:text-right font-black uppercase text-[10px] tracking-widest text-primary/70">
+                    <Label htmlFor="edit-nit" className="text-left sm:text-right font-black uppercase text-sm tracking-widest text-primary/70">
                         {t('nit')}
                     </Label>
                     <Input
@@ -424,7 +424,7 @@ export function EditStoreModal({
                     />
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 items-center gap-2 sm:gap-4">
-                    <Label htmlFor="edit-slug" className="text-left sm:text-right font-black uppercase text-[10px] tracking-widest text-primary/70">
+                    <Label htmlFor="edit-slug" className="text-left sm:text-right font-black uppercase text-sm tracking-widest text-primary/70">
                         {t('slug')}
                     </Label>
                     <div className="sm:col-span-3 space-y-1">
@@ -436,13 +436,13 @@ export function EditStoreModal({
                             placeholder={t('slugPlaceholder')}
                             maxLength={100}
                         />
-                        {slugChecking && <p className="text-xs text-muted-foreground">{t('checking')}</p>}
-                        {slugAvailable === true && <p className="text-xs text-success">{t('slugAvailable')}</p>}
-                        {slugAvailable === false && <p className="text-xs text-destructive">{t('slugInUse')}</p>}
+                        {slugChecking && <p className="text-sm text-muted-foreground">{t('checking')}</p>}
+                        {slugAvailable === true && <p className="text-sm text-success">{t('slugAvailable')}</p>}
+                        {slugAvailable === false && <p className="text-sm text-destructive">{t('slugInUse')}</p>}
                     </div>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 items-center gap-2 sm:gap-4">
-                    <Label htmlFor="edit-plantilla" className="text-left sm:text-right font-black uppercase text-[10px] tracking-widest text-primary/70">
+                    <Label htmlFor="edit-plantilla" className="text-left sm:text-right font-black uppercase text-sm tracking-widest text-primary/70">
                         {t('plantilla')}
                     </Label>
                     <div className="sm:col-span-3">
@@ -467,11 +467,11 @@ export function EditStoreModal({
 
                 {/* FC Template Section */}
                 <div className="col-span-full border-t border-border pt-4 mt-2">
-                    <h4 className="text-xs font-black uppercase tracking-widest text-primary/70 mb-3">
+                    <h4 className="text-sm font-black uppercase tracking-widest text-primary/70 mb-3">
                         {t('fcTemplate')}
                     </h4>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 items-center gap-2 sm:gap-4 mb-3">
-                        <Label htmlFor="edit-fc-template" className="text-left sm:text-right font-black uppercase text-[10px] tracking-widest text-primary/70">
+                        <Label htmlFor="edit-fc-template" className="text-left sm:text-right font-black uppercase text-sm tracking-widest text-primary/70">
                             {t('fcTemplateId')}
                         </Label>
                         <Input
@@ -483,7 +483,7 @@ export function EditStoreModal({
                         />
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 items-center gap-2 sm:gap-4 mb-3">
-                        <Label htmlFor="edit-fc-modalidad" className="text-left sm:text-right font-black uppercase text-[10px] tracking-widest text-primary/70">
+                        <Label htmlFor="edit-fc-modalidad" className="text-left sm:text-right font-black uppercase text-sm tracking-widest text-primary/70">
                             {t('fcModalidad')}
                         </Label>
                         <select
@@ -492,13 +492,13 @@ export function EditStoreModal({
                             onChange={(e) => dispatch({ type: 'SET_FIELD', field: 'fcModalidad', value: e.target.value })}
                             className="sm:col-span-3 h-11 bg-muted/20 border-primary/10 focus:border-primary/30 transition-all font-bold rounded-lg px-3"
                         >
-                            <option value="produccion">Producción</option>
-                            <option value="servicios">Servicios</option>
-                            <option value="comercializacion">Comercialización</option>
+                            <option value="produccion">{t('modalidadProduccion')}</option>
+                            <option value="servicios">{t('modalidadServicios')}</option>
+                            <option value="comercializacion">{t('modalidadComercializacion')}</option>
                         </select>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 items-center gap-2 sm:gap-4 mb-3">
-                        <Label htmlFor="edit-fc-pdf" className="text-left sm:text-right font-black uppercase text-[10px] tracking-widest text-primary/70">
+                        <Label htmlFor="edit-fc-pdf" className="text-left sm:text-right font-black uppercase text-sm tracking-widest text-primary/70">
                             {t('fcPdfFormat')}
                         </Label>
                         <select
@@ -512,7 +512,7 @@ export function EditStoreModal({
                         </select>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 items-center gap-2 sm:gap-4">
-                        <Label htmlFor="edit-fc-active" className="text-left sm:text-right font-black uppercase text-[10px] tracking-widest text-primary/70">
+                        <Label htmlFor="edit-fc-active" className="text-left sm:text-right font-black uppercase text-sm tracking-widest text-primary/70">
                             {t('fcActive')}
                         </Label>
                         <label className="sm:col-span-3 flex items-center gap-2 cursor-pointer">
@@ -523,7 +523,7 @@ export function EditStoreModal({
                                 onChange={(e) => dispatch({ type: 'SET_FIELD', field: 'fcTemplateActive', value: e.target.checked })}
                                 className="w-5 h-5 rounded border-border"
                             />
-                            <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                            <span className="text-sm font-bold uppercase tracking-widest text-muted-foreground">
                                 {t('fcActiveLabel')}
                             </span>
                         </label>
@@ -533,7 +533,7 @@ export function EditStoreModal({
                 {/* Logo + Signature + Stamp uploads */}
                 <div className="col-span-full border-t border-border pt-4 mt-2 grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div className="space-y-1.5">
-                        <Label className="text-xs font-black uppercase text-muted-foreground tracking-widest block">
+                        <Label className="text-sm font-black uppercase text-muted-foreground tracking-widest block">
                             {t('logo')}
                         </Label>
                         <div className="flex items-center gap-2">
@@ -541,7 +541,7 @@ export function EditStoreModal({
                                 {logoUrl ? (
                                     <img src={logoUrl} alt="Logo" className="w-full h-full object-cover" />
                                 ) : (
-                                    <ImageIcon className="w-5 h-5 text-muted-foreground/40" />
+                                    <ImageIcon className="w-5 h-5 text-muted-foreground/70" />
                                 )}
                             </div>
                             <label className="cursor-pointer">
@@ -563,7 +563,7 @@ export function EditStoreModal({
                         </div>
                     </div>
                     <div className="space-y-1.5">
-                        <Label className="text-xs font-black uppercase text-muted-foreground tracking-widest block">
+                        <Label className="text-sm font-black uppercase text-muted-foreground tracking-widest block">
                             {t('signature')}
                         </Label>
                         <div className="flex items-center gap-2">
@@ -571,7 +571,7 @@ export function EditStoreModal({
                                 {signatureUrl ? (
                                     <img src={signatureUrl} alt="Firma" className="w-full h-full object-contain" />
                                 ) : (
-                                    <ImageIcon className="w-5 h-5 text-muted-foreground/40" />
+                                    <ImageIcon className="w-5 h-5 text-muted-foreground/70" />
                                 )}
                             </div>
                             <label className="cursor-pointer">
@@ -593,7 +593,7 @@ export function EditStoreModal({
                         </div>
                     </div>
                     <div className="space-y-1.5">
-                        <Label className="text-xs font-black uppercase text-muted-foreground tracking-widest block">
+                        <Label className="text-sm font-black uppercase text-muted-foreground tracking-widest block">
                             {t('stamp')}
                         </Label>
                         <div className="flex items-center gap-2">
@@ -601,7 +601,7 @@ export function EditStoreModal({
                                 {stampUrl ? (
                                     <img src={stampUrl} alt="Sello" className="w-full h-full object-contain" />
                                 ) : (
-                                    <ImageIcon className="w-5 h-5 text-muted-foreground/40" />
+                                    <ImageIcon className="w-5 h-5 text-muted-foreground/70" />
                                 )}
                             </div>
                             <label className="cursor-pointer">
@@ -625,7 +625,7 @@ export function EditStoreModal({
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 items-center gap-2 sm:gap-4">
-                    <Label htmlFor="edit-lat" className="text-left sm:text-right font-black uppercase text-[10px] tracking-widest text-primary/70">
+                    <Label htmlFor="edit-lat" className="text-left sm:text-right font-black uppercase text-sm tracking-widest text-primary/70">
                         {t('latitude')}
                     </Label>
                     <Input
@@ -635,7 +635,7 @@ export function EditStoreModal({
                         className="sm:col-span-1 h-11 bg-muted/20 border-primary/10 focus:border-primary/30 transition-all font-bold"
                         placeholder="23.1136"
                     />
-                    <Label htmlFor="edit-lng" className="text-left sm:text-right font-black uppercase text-[10px] tracking-widest text-primary/70">
+                    <Label htmlFor="edit-lng" className="text-left sm:text-right font-black uppercase text-sm tracking-widest text-primary/70">
                         {t('longitude')}
                     </Label>
                     <Input
@@ -653,14 +653,14 @@ export function EditStoreModal({
                         variant="outline"
                         onClick={onClose}
                         disabled={isSubmitting}
-                        className="flex-1 h-11 font-black uppercase tracking-widest text-xs"
+                        className="flex-1 h-11 font-black uppercase tracking-widest text-sm"
                     >
                         {t('cancel')}
                     </Button>
                     <Button
                         type="submit"
                         disabled={isSubmitting}
-                        className="flex-1 h-11 font-black uppercase tracking-widest text-xs"
+                        className="flex-1 h-11 font-black uppercase tracking-widest text-sm"
                     >
                         {isSubmitting ? t('saving') : t('saveChanges')}
                     </Button>

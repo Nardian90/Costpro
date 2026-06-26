@@ -14,15 +14,40 @@ import { Badge } from '@/components/ui/badge';
 import HelpScrollFab from './HelpScrollFab';
 
 // ── Scroll to top utility (finds the visible help scroll container) ──
+// Versión robusta: busca múltiples contenedores scrollables padres y los sube todos.
 function scrollToHelpTop() {
+  // 1. Encuentra el main[data-help-scroll] visible
   const mains = document.querySelectorAll<HTMLElement>('main[data-help-scroll]');
+  let scrolledAny = false;
   for (const main of mains) {
     if (main.offsetHeight > 0) {
       main.scrollTo({ top: 0, behavior: 'smooth' });
-      return;
+      scrolledAny = true;
+      // No return — seguimos para hacer scroll también en los padres.
     }
   }
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  // 2. También sube el contenedor padre .terminal-content (que tiene overflow-y-auto)
+  const terminalContent = document.querySelector<HTMLElement>('.terminal-content');
+  if (terminalContent && terminalContent.offsetHeight > 0) {
+    terminalContent.scrollTo({ top: 0, behavior: 'smooth' });
+    scrolledAny = true;
+  }
+
+  // 3. Y sube el window como fallback final
+  if (!scrolledAny) {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // 4. Forzar un re-scroll del main después de 100ms (a veces el primer scroll no pega)
+  setTimeout(() => {
+    for (const main of mains) {
+      if (main.offsetHeight > 0) {
+        main.scrollTo({ top: 0, behavior: 'smooth' });
+        break;
+      }
+    }
+  }, 100);
 }
 
 export default function HelpView() {
@@ -47,13 +72,27 @@ export default function HelpView() {
     adjacentDocs,
   } = useHelpContent();
 
-  // Pre-load document from ?doc= query param (e.g., from legal page links)
+  // Load document from ?doc= query param — reacts to changes (deep-linking from HelpLauncher)
   useEffect(() => {
     const docParam = searchParams.get('doc');
-    if (docParam && !currentDoc) {
+    if (docParam && docParam !== currentDoc?.path) {
       loadDocument(docParam);
     }
-  }, [searchParams]);
+  }, [searchParams, currentDoc?.path, loadDocument]);
+
+  // Escuchar popstate para forzar re-lectura del ?doc= cuando HelpLauncher hace pushState.
+  // useSearchParams solo se actualiza en navegación de Next.js, no en pushState manual.
+  useEffect(() => {
+    const handlePopState = () => {
+      const url = new URL(window.location.href);
+      const docParam = url.searchParams.get('doc');
+      if (docParam && docParam !== currentDoc?.path) {
+        loadDocument(docParam);
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [currentDoc?.path, loadDocument]);
 
   // Auto-load intro document when no query param
   useEffect(() => {
@@ -61,10 +100,10 @@ export default function HelpView() {
     if (docParam) return;
     if (!structure?.sections) return;
 
-    const empezarSection = structure.sections.find(s => s.id === 'empezar');
-    const introFile = empezarSection?.files.find(f => f.filename === 'introduccion.md');
+    const tutorialesSection = structure.sections.find(s => s.id === 'tutoriales');
+    const introFile = tutorialesSection?.files.find(f => f.filename === '01-primer-inicio.md');
     if (!currentDoc && introFile) {
-      loadDocument(`help/01-empezar/${introFile.filename}`);
+      loadDocument(`help/01-tutoriales/${introFile.filename}`);
     }
   }, [structure, currentDoc, loadDocument, searchParams]);
 
@@ -107,6 +146,11 @@ export default function HelpView() {
       setActiveHeadingId('');
       const mains = document.querySelectorAll<HTMLElement>('main[data-help-scroll]');
       mains.forEach(m => { if (m.offsetHeight > 0) m.scrollTo({ top: 0 }); });
+      // También resetear el .terminal-content padre (contiene el scroll global de la app)
+      const terminalContent = document.querySelector<HTMLElement>('.terminal-content');
+      if (terminalContent) {
+        terminalContent.scrollTo({ top: 0 });
+      }
     });
   }, [currentDoc?.path]);
 
@@ -202,6 +246,20 @@ export default function HelpView() {
 
       {/* ── Floating Scroll FAB (outside scroll container, always fixed to viewport) ── */}
       <HelpScrollFab scrollProgress={scrollProgress} />
+
+      {/* ── Botón flotante "Salir Lectura" — visible solo en modo lectura ── */}
+      {isReadingMode && (
+        <button
+          type="button"
+          onClick={() => setIsReadingMode(false)}
+          className="fixed top-4 right-4 z-[110] flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary text-primary-foreground shadow-xl shadow-primary/30 hover:bg-primary/90 active:scale-95 transition-all min-h-[44px] text-xs font-bold uppercase tracking-wider"
+          title="Salir del modo lectura"
+          aria-label="Salir del modo lectura"
+        >
+          <EyeOff className="w-4 h-4" />
+          <span>Salir Lectura</span>
+        </button>
+      )}
     </>
   );
 }

@@ -3,6 +3,7 @@
 import React, { useRef } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { cn } from '@/lib/utils';
+import { useTranslations } from 'next-intl';
 
 /**
  * B3: Grid virtualizada para StoresManagementView cuando hay >20 tiendas.
@@ -36,6 +37,7 @@ export function VirtualizedStoreGrid<T>({
   columns = 3,
   className,
 }: VirtualizedStoreGridProps<T>) {
+  const t = useTranslations('stores');
   const parentRef = useRef<HTMLDivElement>(null);
 
   // Calcular filas basadas en columnas

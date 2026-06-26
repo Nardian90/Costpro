@@ -3,6 +3,10 @@ import { getServerSession } from '@/lib/auth';
 import { hasRole } from '@/lib/roles';
 import { UserRole, UserStoreMembership } from '@/types';
 import { getSupabaseAdminSafe } from '@/lib/supabase-admin';
+// FIX UM-C1: import tracking para que TODAS las rutas autenticadas se trackeen
+import { usage, maybeFlush } from '@/lib/usage-tracker';
+// FIX R2: waitUntil de @vercel/functions mantiene la instancia viva hasta que el flush termine
+import { waitUntil } from '@vercel/functions';
 
 export type AuthenticatedSession = {
   user: {
@@ -18,7 +22,36 @@ export type AuthenticatedSession = {
 type AuthHandler = (
   req: NextRequest,
   session: AuthenticatedSession
-) => Promise<Response | NextResponse>;
+) => Promise<Response | NextResponse> | Response | NextResponse;
+
+/**
+ * FIX UM-C1: Wraps any handler with automatic usage tracking.
+ * Captures endpoint, latency, and error status. Calls maybeFlush() after.
+ *
+ * Invoked by withAuth/withRole/withStoreAccess so EVERY authenticated
+ * API route is tracked automatically without manual wrapping.
+ */
+function withAutoTracking(handler: AuthHandler): AuthHandler {
+  return async (req, session) => {
+    const start = Date.now();
+    const endpoint = req.nextUrl?.pathname || req.url || 'unknown';
+    try {
+      const response = await handler(req, session);
+      const latency = Date.now() - start;
+      const status = (response as Response).status ?? 200;
+      const isError = status >= 500;
+      usage.apiRequest(endpoint, latency, isError);
+      // FIX R2: pasar waitUntil para que el flush sobreviva al fin de la request
+      maybeFlush(waitUntil);
+      return response;
+    } catch (error) {
+      const latency = Date.now() - start;
+      usage.apiRequest(endpoint, latency, true);
+      maybeFlush(waitUntil);
+      throw error;
+    }
+  };
+}
 
 /**
  * Helper to get Supabase Admin client (delegates to centralized module)
@@ -60,6 +93,8 @@ async function getDevBypassMemberships(): Promise<UserStoreMembership[]> {
  * Wraps a route handler requiring a valid session.
  * Enriches the session with database profile data (roles/memberships).
  * Returns 401 if no session exists.
+ *
+ * FIX UM-C1: wraps handler with withAutoTracking for automatic usage tracking.
  */
 export function withAuth(handler: AuthHandler) {
   return async (req: NextRequest): Promise<Response> => {
@@ -75,7 +110,7 @@ export function withAuth(handler: AuthHandler) {
     // Dev-bypass: use admin role with memberships from all active stores
     if (isDevBypassSession(session)) {
       const devMemberships = await getDevBypassMemberships();
-      return handler(req, {
+      return withAutoTracking(handler)(req, {
         ...session,
         user: {
           id: session.user.id,
@@ -139,7 +174,7 @@ export function withAuth(handler: AuthHandler) {
       }
     }
 
-    return handler(req, { ...session, user: enrichedUser });
+    return withAutoTracking(handler)(req, { ...session, user: enrichedUser });
   };
 }
 
@@ -165,7 +200,7 @@ export function withRole(requiredRoleOrCheck: RoleCheck, handler: AuthHandler) {
     // Dev-bypass: admin has all roles
     if (isDevBypassSession(session)) {
       const devMemberships = await getDevBypassMemberships();
-      return handler(req, {
+      return withAutoTracking(handler)(req, {
         ...session,
         user: {
           ...session.user,
@@ -239,7 +274,7 @@ export function withRole(requiredRoleOrCheck: RoleCheck, handler: AuthHandler) {
       }
     };
 
-    return handler(req, enrichedSession);
+    return withAutoTracking(handler)(req, enrichedSession);
   };
 }
 
@@ -263,7 +298,7 @@ export function withStoreAccess(handler: AuthHandler) {
     // Dev-bypass: admin has access to all stores
     if (isDevBypassSession(session)) {
       const devMemberships = await getDevBypassMemberships();
-      return handler(req, {
+      return withAutoTracking(handler)(req, {
         ...session,
         user: {
           ...session.user,
@@ -345,7 +380,7 @@ export function withStoreAccess(handler: AuthHandler) {
           memberships: activeMemberships as UserStoreMembership[]
         }
       };
-      return handler(req, enrichedSession);
+      return withAutoTracking(handler)(req, enrichedSession);
     }
     const hasAccess = activeMemberships.some(m => m.store_id === storeId);
 
@@ -365,6 +400,6 @@ export function withStoreAccess(handler: AuthHandler) {
       }
     };
 
-    return handler(req, enrichedSession);
+    return withAutoTracking(handler)(req, enrichedSession);
   };
 }

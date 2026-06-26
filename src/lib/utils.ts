@@ -108,9 +108,17 @@ export const formatAccounting = (amount: number): string => {
 export const formatDate = (date: string | Date | null | undefined): string => {
   try {
     if (!date) return '—';
-    const d = typeof date === 'string' && date.includes('-')
-      ? new Date(date + 'T12:00:00') // Force mid-day to avoid TZ shifts
-      : new Date(date);
+    // Si la fecha es solo YYYY-MM-DD (10 chars, sin tiempo), añadir T12:00:00 para evitar TZ shifts.
+    // Si ya incluye tiempo (ej: 2026-05-02T12:00:00+00:00), usar tal cual.
+    let d: Date;
+    if (typeof date === 'string') {
+      // Trim y check: si tiene 'T' o timestamp completo, usar new Date directo.
+      const trimmed = date.trim();
+      const isDateOnly = /^\d{4}-\d{2}-\d{2}$/.test(trimmed);
+      d = isDateOnly ? new Date(trimmed + 'T12:00:00') : new Date(trimmed);
+    } else {
+      d = new Date(date);
+    }
 
     if (isNaN(d.getTime())) return '—';
 

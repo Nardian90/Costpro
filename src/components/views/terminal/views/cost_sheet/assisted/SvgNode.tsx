@@ -4,6 +4,7 @@ import React from 'react';
 import type { CostMapNode } from './types';
 import { getNodeInitial } from './map-layout';
 
+import { useTranslations } from 'next-intl';
 interface SvgNodeProps {
   node: CostMapNode;
   pos: { x: number; y: number };
@@ -28,6 +29,7 @@ const SvgNode: React.FC<SvgNodeProps> = ({
   onSelect, onHoverStart, onHoverEnd,
   simActiveNodeId, simVisitedNodes, simSkippedNodes, simDisplayValue, isSimulating, simValidation,
 }) => {
+  const t = useTranslations('costSheet');
   const initial = getNodeInitial(node.icon);
 
   // ── Simulation state ──
@@ -50,7 +52,21 @@ const SvgNode: React.FC<SvgNodeProps> = ({
     <g
       className="svg-node-clickable"
       style={{ cursor: 'pointer', opacity: simOpacity, transition: 'opacity 0.4s ease' }}
+      // P6-1: Keyboard navigation — SVG nodes ahora son focusables y activables
+      // con Enter/Space. Antes solo respondían a click del mouse, lo que los
+      // hacía inaccesibles para usuarios de teclado y lectores de pantalla.
+      tabIndex={0}
+      role="button"
+      aria-label={`Paso ${index + 1}: ${node.label}. ${node.description}. ${isCompleted ? 'Completado.' : isSelected ? 'Seleccionado.' : 'Pendiente.'}`}
+      aria-pressed={isSelected}
       onClick={(e) => { e.stopPropagation(); onSelect(node.id); }}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          e.stopPropagation();
+          onSelect(node.id);
+        }
+      }}
       onMouseEnter={() => onHoverStart(node.id)}
       onMouseLeave={onHoverEnd}
     >

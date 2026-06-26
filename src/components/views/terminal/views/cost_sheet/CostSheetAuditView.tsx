@@ -3,7 +3,8 @@
 import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+// P3-6: Radix Tabs eliminado — reemplazado por <UnifiedTabs> unificado.
+import { UnifiedTabs } from './UnifiedTabs';
 import { AlertTriangle, CheckCircle2, Zap, Calculator, Activity, Target, ShieldAlert, ArrowRight, RefreshCw, Unplug, GitBranch, AlertOctagon, FileWarning, ChevronRight, ChevronDown, Filter, FilterX, Eye, EyeOff, FileSearch, Layers, Flag } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { CostSheetAuditLog } from './CostSheetAuditLog';
@@ -15,6 +16,7 @@ import { ValidationError, AuditEntry } from '@/lib/cost-engine/types';
 import { CostSheetRow, CostSheetData, CostSheetHeader, CostSheetSection, CalculatedRowValue } from '@/types/cost-sheet';
 import reinicioTemplate from '@/lib/data/costpro-reinicio';
 
+import { useTranslations } from 'next-intl';
 interface CostSheetAuditViewProps {
     data: CostSheetData;
     calculatedValues: Record<string, CalculatedRowValue>;
@@ -320,7 +322,7 @@ export const CostSheetAuditView: React.FC<CostSheetAuditViewProps> = ({
             INFO: 'bg-muted/50 text-muted-foreground border-muted-foreground/25',
         };
         return (
-            <Badge variant="outline" className={cn('text-[9px] font-bold px-1.5 py-0 rounded-full leading-none', colors[type])}>
+            <Badge variant="outline" className={cn('text-xs font-bold px-1.5 py-0 rounded-full leading-none', colors[type])}>
                 {count} {type === 'CRITICAL' ? 'Err' : type === 'WARNING' ? 'Adv' : 'Info'}
             </Badge>
         );
@@ -334,29 +336,29 @@ export const CostSheetAuditView: React.FC<CostSheetAuditViewProps> = ({
                     <button
                         type="button"
                         onClick={handleBackToSheet}
-                        className="flex items-center gap-1.5 text-[10px] font-bold text-muted-foreground hover:text-foreground uppercase tracking-widest transition-colors"
+                        className="flex items-center gap-1.5 text-xs font-bold text-muted-foreground hover:text-foreground uppercase tracking-widest transition-colors"
                         aria-label="Volver a ficha de costo"
                     >
                         <ArrowRight className="w-3 h-3 rotate-180" />
                         Volver a Ficha
                     </button>
-                    <span className="text-muted-foreground/30">|</span>
+                    <span className="text-muted-foreground/70">|</span>
                     <button
                         type="button"
                         onClick={handleClearRowFilter}
-                        className="flex items-center gap-1 text-[10px] font-bold text-primary/70 hover:text-primary uppercase tracking-widest transition-colors"
+                        className="flex items-center gap-1 text-xs font-bold text-primary/70 hover:text-primary uppercase tracking-widest transition-colors"
                         aria-label="Ver todas las filas en auditoría"
                     >
                         <Layers className="w-3 h-3" />
                         Ver todas las filas
                     </button>
-                    <span className="text-muted-foreground/30">|</span>
-                    <Badge variant="outline" className="text-[10px] font-bold rounded-full border-primary/30 text-primary bg-primary/5 px-2.5 gap-1">
+                    <span className="text-muted-foreground/70">|</span>
+                    <Badge variant="outline" className="text-xs font-bold rounded-full border-primary/30 text-primary bg-primary/5 px-2.5 gap-1">
                         <Eye className="w-2.5 h-2.5" />
                         {sourceRowGroup.rowLabel}
-                        <span className="text-muted-foreground/60 font-mono ml-0.5">{sourceRowId}</span>
+                        <span className="text-muted-foreground/70 font-mono ml-0.5">{sourceRowId}</span>
                     </Badge>
-                    <span className="ml-auto text-[9px] text-muted-foreground/50 font-mono">
+                    <span className="ml-auto text-xs text-muted-foreground/70 font-mono">
                         {sourceRowGroup.criticals + sourceRowGroup.warnings + sourceRowGroup.infos} hallazgo{sourceRowGroup.criticals + sourceRowGroup.warnings + sourceRowGroup.infos !== 1 ? 's' : ''}
                     </span>
                 </div>
@@ -371,12 +373,12 @@ export const CostSheetAuditView: React.FC<CostSheetAuditViewProps> = ({
                         <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
                             Filtro activo:
                         </span>
-                        <Badge variant="outline" className="text-[10px] font-bold uppercase rounded-full border-primary/30 text-primary bg-primary/5 px-2.5">
+                        <Badge variant="outline" className="text-xs font-bold uppercase rounded-full border-primary/30 text-primary bg-primary/5 px-2.5">
                             {SEVERITY_CONFIG[activeFilter as keyof typeof SEVERITY_CONFIG]?.label || activeFilter}
                         </Badge>
                         <button type="button"
                             onClick={() => { setActiveFilter('all'); if (sourceRowId) handleClearRowFilter(); }}
-                            className="ml-auto flex items-center gap-1 text-[10px] font-bold text-muted-foreground hover:text-destructive uppercase tracking-widest transition-colors"
+                            className="ml-auto flex items-center gap-1 text-xs font-bold text-muted-foreground hover:text-destructive uppercase tracking-widest transition-colors"
                             aria-label="Quitar filtro"
                         >
                             <FilterX className="w-3 h-3" />
@@ -410,7 +412,7 @@ export const CostSheetAuditView: React.FC<CostSheetAuditViewProps> = ({
                         </CardHeader>
                         <CardContent>
                             <div className="text-4xl font-black text-destructive">{totalCriticals}</div>
-                            <p className="text-xs text-destructive/60 font-bold uppercase mt-1">
+                            <p className="text-xs text-destructive/70 font-bold uppercase mt-1">
                                 {engineCriticals.length > 0 && `${engineCriticals.length} motor`}
                                 {engineCriticals.length > 0 && healthCriticals.length > 0 && ' + '}
                                 {healthCriticals.length > 0 && `${healthCriticals.length} salud`}
@@ -443,7 +445,7 @@ export const CostSheetAuditView: React.FC<CostSheetAuditViewProps> = ({
                         </CardHeader>
                         <CardContent>
                             <div className="text-4xl font-black text-warning">{totalWarnings}</div>
-                            <p className="text-xs text-warning/60 font-bold uppercase mt-1">Revisión de Parámetros Sugerida</p>
+                            <p className="text-xs text-warning/70 font-bold uppercase mt-1">Revisión de Parámetros Sugerida</p>
                         </CardContent>
                     </button>
 
@@ -471,49 +473,35 @@ export const CostSheetAuditView: React.FC<CostSheetAuditViewProps> = ({
                         </CardHeader>
                         <CardContent>
                             <div className="text-4xl font-black text-primary">{totalOk}</div>
-                            <p className="text-xs text-primary/60 font-bold uppercase mt-1">Integridad de Datos Confirmada</p>
+                            <p className="text-xs text-primary/70 font-bold uppercase mt-1">Integridad de Datos Confirmada</p>
                         </CardContent>
                     </button>
                 </div>
             </div>
 
-            {/* ── Tabbed Audit Sections ── */}
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+            {/* P3-6: Tabbed Audit Sections — migrado de Radix Tabs a <UnifiedTabs variant="pills">.
+                Mismo state `activeTab`, pero ahora con touch targets ≥44px y consistencia visual. */}
+            <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                    <TabsList className="rounded-xl bg-muted/50 border border-border/40 p-1">
-                        <TabsTrigger value="flags" className="rounded-lg text-[10px] font-bold uppercase tracking-widest gap-1.5 data-[state=active]:bg-background data-[state=active]:shadow-sm px-3 py-1.5">
-                            <Flag className="w-3 h-3" />
-                            Tabla de Flags por Fila
-                            {totalErrors > 0 && (
-                                <Badge className="text-[8px] font-black px-1 py-0 rounded-full bg-destructive/15 text-destructive border border-destructive/25 ml-1">
-                                    {totalErrors}
-                                </Badge>
-                            )}
-                        </TabsTrigger>
-                        <TabsTrigger value="compliance" className="rounded-lg text-[10px] font-bold uppercase tracking-widest gap-1.5 data-[state=active]:bg-background data-[state=active]:shadow-sm px-3 py-1.5">
-                            <Activity className="w-3 h-3" />
-                            Cumplimiento y Normativas
-                            {isFilterActive && (
-                                <Badge className="text-[8px] font-black px-1 py-0 rounded-full bg-primary/15 text-primary border border-primary/25 ml-1">
-                                    {filteredValidations.length}
-                                </Badge>
-                            )}
-                        </TabsTrigger>
-                        <TabsTrigger value="auditlog" className="rounded-lg text-[10px] font-bold uppercase tracking-widest gap-1.5 data-[state=active]:bg-background data-[state=active]:shadow-sm px-3 py-1.5">
-                            <RefreshCw className="w-3 h-3" />
-                            Bitácora de Auditoría
-                            <Badge className="text-[8px] font-black px-1 py-0 rounded-full bg-muted/80 text-muted-foreground border border-border/50 ml-1">
-                                {audits.length}
-                            </Badge>
-                        </TabsTrigger>
-                    </TabsList>
-                    <Badge variant="outline" className="text-[9px] font-bold uppercase tracking-wider px-3 h-6 rounded-full border-border/40 text-muted-foreground/60">
+                    <UnifiedTabs
+                        tabs={[
+                          { id: 'flags', label: 'Tabla de Flags', icon: Flag, badge: totalErrors > 0 ? totalErrors : undefined },
+                          { id: 'compliance', label: 'Cumplimiento', icon: Activity, badge: isFilterActive ? filteredValidations.length : undefined },
+                          { id: 'auditlog', label: 'Bitácora', icon: RefreshCw, badge: audits.length },
+                        ]}
+                        activeTab={activeTab}
+                        onTabChange={setActiveTab}
+                        variant="pills"
+                        ariaLabel="Secciones de auditoría"
+                    />
+                    <Badge variant="outline" className="text-xs font-bold uppercase tracking-wider px-3 h-6 rounded-full border-border/40 text-muted-foreground/70 hidden sm:inline-flex">
                         Protocolo v5.7
                     </Badge>
                 </div>
 
                 {/* ── Tab 1: Flag Table ── */}
-                <TabsContent value="flags" className="mt-0 space-y-4">
+                {activeTab === 'flags' && (
+                <div className="mt-0 space-y-4">
                     <div ref={flagTableRef}>
                     {filteredRowGroups.length > 0 && (
                     <Card className={cn(
@@ -532,14 +520,14 @@ export const CostSheetAuditView: React.FC<CostSheetAuditViewProps> = ({
                                 </CardTitle>
                                 <div className="flex items-center gap-2">
                                     {isFilterActive && (
-                                        <Badge variant="outline" className="text-[9px] font-bold uppercase text-muted-foreground">
+                                        <Badge variant="outline" className="text-xs font-bold uppercase text-muted-foreground">
                                             {filteredRowGroups.length} de {rowFlagGroups.length} filas
                                         </Badge>
                                     )}
                                     {isFilterActive && (
                                         <button type="button"
                                             onClick={() => { setActiveFilter('all'); if (sourceRowId) handleClearRowFilter(); }}
-                                            className="flex items-center gap-1 text-[10px] font-bold text-muted-foreground hover:text-destructive uppercase tracking-widest transition-colors"
+                                            className="flex items-center gap-1 text-xs font-bold text-muted-foreground hover:text-destructive uppercase tracking-widest transition-colors"
                                             aria-label="Quitar filtro"
                                         >
                                             <FilterX className="w-3.5 h-3.5" />
@@ -598,7 +586,7 @@ export const CostSheetAuditView: React.FC<CostSheetAuditViewProps> = ({
                                                             {group.rowLabel}
                                                         </span>
                                                         {sourceRowId === group.rowId && (
-                                                            <Badge className="text-[9px] font-bold px-1.5 py-0 rounded-full bg-primary/15 text-primary border border-primary/25 animate-in fade-in duration-500">
+                                                            <Badge className="text-xs font-bold px-1.5 py-0 rounded-full bg-primary/15 text-primary border border-primary/25 animate-in fade-in duration-500">
                                                                 <Eye className="w-2.5 h-2.5 mr-0.5" />
                                                                 Origen
                                                             </Badge>
@@ -607,7 +595,7 @@ export const CostSheetAuditView: React.FC<CostSheetAuditViewProps> = ({
                                                             {group.rowId}
                                                         </span>
                                                         {group.sectionLabel && (
-                                                            <span className="text-[10px] text-muted-foreground/60 uppercase tracking-wider truncate max-w-[150px]">
+                                                            <span className="text-xs text-muted-foreground/70 uppercase tracking-wider truncate max-w-[150px]">
                                                                 {group.sectionLabel}
                                                             </span>
                                                         )}
@@ -618,7 +606,7 @@ export const CostSheetAuditView: React.FC<CostSheetAuditViewProps> = ({
                                                         <SeverityBadge count={group.warnings} type="WARNING" />
                                                         <SeverityBadge count={group.infos} type="INFO" />
                                                         {!isExpanded && (
-                                                            <span className="text-[10px] text-muted-foreground/50 ml-1">
+                                                            <span className="text-xs text-muted-foreground/70 ml-1">
                                                                 {totalIssues} hallazgo{totalIssues !== 1 ? 's' : ''}
                                                             </span>
                                                         )}
@@ -677,7 +665,7 @@ export const CostSheetAuditView: React.FC<CostSheetAuditViewProps> = ({
                                                                 <div className="flex-1 min-w-0">
                                                                     <div className="flex flex-wrap items-center gap-2 mb-0.5">
                                                                         <Badge variant="outline" className={cn(
-                                                                            "text-[9px] font-black uppercase tracking-wider px-2 py-0 rounded-full border",
+                                                                            "text-xs font-black uppercase tracking-wider px-2 py-0 rounded-full border",
                                                                             isCritical ? "border-destructive/30 text-destructive bg-destructive/5" :
                                                                             isWarning ? "border-warning/30 text-warning bg-warning/5" :
                                                                             "border-border text-muted-foreground bg-muted/50"
@@ -685,7 +673,7 @@ export const CostSheetAuditView: React.FC<CostSheetAuditViewProps> = ({
                                                                             {config.label}
                                                                         </Badge>
                                                                         <Badge variant="outline" className={cn(
-                                                                            "text-[8px] font-bold uppercase px-1.5 py-0 rounded",
+                                                                            "text-xs font-bold uppercase px-1.5 py-0 rounded",
                                                                             isCritical ? "border-destructive/20 text-destructive/70" :
                                                                             isWarning ? "border-warning/20 text-warning/70" :
                                                                             "border-border text-muted-foreground"
@@ -702,7 +690,7 @@ export const CostSheetAuditView: React.FC<CostSheetAuditViewProps> = ({
                                                                         {err.message}
                                                                     </p>
                                                                 </div>
-                                                                <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/40 group-hover/err:text-muted-foreground shrink-0 mt-0.5 group-hover/err:translate-x-0.5 transition-transform" />
+                                                                <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/70 group-hover/err:text-muted-foreground shrink-0 mt-0.5 group-hover/err:translate-x-0.5 transition-transform" />
                                                             </div>
                                                         </button>
                                                     );
@@ -740,10 +728,12 @@ export const CostSheetAuditView: React.FC<CostSheetAuditViewProps> = ({
                 </Card>
             )}
                     </div>
-                </TabsContent>
+                </div>
+                )}
 
                 {/* ── Tab 2: Compliance Audit List ── */}
-                <TabsContent value="compliance" className="mt-0">
+                {activeTab === 'compliance' && (
+                <div className="mt-0">
                     <Card className="border-border/50 dark:border-white/5 bg-background/50 backdrop-blur-sm rounded-[2rem]">
                         <CardHeader className="border-b border-border/50 dark:border-white/5 pb-4">
                             <div className="flex items-center justify-between">
@@ -753,7 +743,7 @@ export const CostSheetAuditView: React.FC<CostSheetAuditViewProps> = ({
                                 </CardTitle>
                                 <div className="flex items-center gap-2">
                                     {isFilterActive && (
-                                <Badge variant="outline" className="text-[9px] font-bold uppercase text-muted-foreground">
+                                <Badge variant="outline" className="text-xs font-bold uppercase text-muted-foreground">
                                     {filteredValidations.length} de {validations.length}
                                 </Badge>
                             )}
@@ -833,13 +823,14 @@ export const CostSheetAuditView: React.FC<CostSheetAuditViewProps> = ({
                     </div>
                 </CardContent>
                     </Card>
-                </TabsContent>
+                </div>
+                )}
 
                 {/* ── Tab 3: Audit Log (Declarative Engine) ── */}
-                <TabsContent value="auditlog" className="mt-0">
+                {activeTab === 'auditlog' && (
                     <CostSheetAuditLog audits={audits} />
-                </TabsContent>
-            </Tabs>
+                )}
+            </div>
 
             {/* Error Detail Modal — key forces remount so form state resets on error change */}
             <ErrorDetailModal

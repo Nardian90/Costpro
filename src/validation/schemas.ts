@@ -450,6 +450,7 @@ export const createSaleParamsSchema = z.object({
   p_cash_amount: z.number().optional(),
   p_transfer_amount: z.number().optional(),
   p_transaction_id: z.string().regex(uuidRegex).optional(),
+  p_idempotency_key: z.string().optional(),
   // Política de secuencia global (forward-only locking):
   // fecha de operación elegida por el usuario. Si se omite, el backend usa NOW().
   // El backend valida que no sea anterior al MAX global (lanza ERR_BACKDATED_DOCUMENT).
@@ -805,7 +806,7 @@ export const syncOperationSchema = z.object({
   createdAt: z.string(),
   clientClock: z.number(),
   status: z
-    .enum(["pending", "in-flight", "failed", "synced"])
+    .enum(["pending", "in-flight", "failed", "synced", "discarded"])
     .default("pending"),
   attempts: z.number().default(0),
   lastError: z.string().nullable().optional(),

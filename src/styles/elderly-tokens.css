@@ -1,0 +1,47 @@
+/* ============================================
+   ELDERLY TOKENS — Design tokens para adultos mayores
+   ============================================ */
+
+@layer utilities {
+  .text-elderly-body {
+    font-size: 1rem;
+    line-height: 1.5;
+    font-weight: 500;
+  }
+
+  .text-elderly-label {
+    font-size: 0.875rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    line-height: 1.4;
+  }
+
+  .text-elderly-amount {
+    font-size: 1.125rem;
+    font-weight: 800;
+    font-family: var(--font-mono, ui-monospace, monospace);
+    line-height: 1.3;
+  }
+
+  .text-elderly-micro {
+    font-size: 0.8125rem;
+    line-height: 1.4;
+  }
+
+  .td-elderly {
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+    line-height: 1.4;
+  }
+
+  .th-elderly {
+    padding: 0.75rem 1rem;
+    font-size: 0.75rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: hsl(var(--muted-foreground));
+    text-align: left;
+  }
+}

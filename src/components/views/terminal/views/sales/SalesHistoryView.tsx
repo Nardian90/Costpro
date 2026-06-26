@@ -2,7 +2,7 @@
 
 import React, { useRef } from 'react';
 import { useIsMobile } from '@/hooks/ui/useMobile';
-import { DollarSign, CreditCard, Eye, RefreshCcw, Copy, Calculator, CheckSquare, Square, AlertTriangle, ShoppingCart, Download, ChevronLeft, ChevronRight, X, Filter } from 'lucide-react';
+import { DollarSign, CreditCard, Eye, RefreshCcw, Copy, Calculator, CheckSquare, Square, AlertTriangle, ShoppingCart, Download, ChevronLeft, ChevronRight, X, Filter, Wallet, ArrowLeftRight } from 'lucide-react';
 import { cn, formatCurrency, formatDate, formatTime } from '@/lib/utils';
 import SearchBar from '@/components/ui/SearchBar';
 import { StateRenderer } from '@/components/ui/StateRenderer';
@@ -12,6 +12,19 @@ import { PrimaryButton, SecondaryButton } from '@/components/ui/atomic';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useSalesHistoryView } from './useSalesHistoryView';
 import { TransactionDetailsModal } from './TransactionDetailsModal';
+
+// Helper para icono y etiqueta del método de pago
+function getPaymentMethodInfo(method: string | null | undefined): { icon: React.ElementType; label: string; color: string } {
+    switch ((method || '').toLowerCase()) {
+        case 'cash': return { icon: DollarSign, label: 'Efectivo', color: 'text-success' };
+        case 'card': return { icon: CreditCard, label: 'Tarjeta', color: 'text-primary' };
+        case 'transfer': return { icon: ArrowLeftRight, label: 'Transferencia', color: 'text-primary' };
+        case 'mixed': return { icon: Wallet, label: 'Mixto', color: 'text-warning' };
+        case 'wallet': return { icon: Wallet, label: 'Billetera', color: 'text-warning' };
+        case 'other': return { icon: CreditCard, label: 'Otro', color: 'text-muted-foreground' };
+        default: return { icon: CreditCard, label: 'Sin especificar', color: 'text-muted-foreground' };
+    }
+}
 import { TaxCalculationModal } from './TaxCalculationModal';
 
 const SalesLoadingSkeleton = () => (
@@ -159,7 +172,7 @@ export default function SalesHistoryView() {
 
   // Virtual scrolling
   const parentRef = useRef<HTMLDivElement>(null);
-  // eslint-disable-next-line react-hooks/incompatible-library
+   
   const rowVirtualizer = useVirtualizer({
     count: transactions.length,
     getScrollElement: () => parentRef.current,
@@ -371,9 +384,13 @@ export default function SalesHistoryView() {
                               </td>
                               <td className="p-4 priority-low hidden sm:table-cell">
                                 <div className="flex items-center gap-2">
-                                  {txn.payment_method === 'cash' ? <DollarSign className="w-3 h-3 text-success" /> : <CreditCard className="w-3 h-3 text-primary" />}
+                                  {(() => {
+                                    const pm = getPaymentMethodInfo(txn.payment_method);
+                                    const PmIcon = pm.icon;
+                                    return <PmIcon className={cn("w-3 h-3", pm.color)} />;
+                                  })()}
                                   <span className="text-xs font-bold uppercase">
-                                    {txn.payment_method === 'cash' ? 'Efectivo' : 'Transferencia'}
+                                    {getPaymentMethodInfo(txn.payment_method).label}
                                   </span>
                                 </div>
                               </td>
@@ -510,7 +527,7 @@ export default function SalesHistoryView() {
               <div className="flex justify-between items-center">
                 <span className="text-xs font-bold text-muted-foreground uppercase">Metodo</span>
                 <span className="text-xs font-black uppercase">
-                  {voidTarget.payment_method === 'cash' ? 'Efectivo' : 'Transferencia'}
+                  {getPaymentMethodInfo(voidTarget.payment_method).label}
                 </span>
               </div>
               <div className="flex justify-between items-center pt-2 border-t border-border">

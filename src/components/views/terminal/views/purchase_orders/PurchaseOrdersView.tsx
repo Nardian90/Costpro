@@ -160,7 +160,7 @@ export default function PurchaseOrdersView() {
               type="button"
               onClick={() => setStatusFilter(f.value)}
               className={cn(
-                'px-4 py-2 min-h-[40px] rounded-full text-xs font-black uppercase tracking-widest border transition-all',
+                'px-4 py-2 min-h-[44px] rounded-full text-xs font-black uppercase tracking-widest border transition-all',
                 statusFilter === f.value
                   ? 'bg-primary text-primary-foreground border-primary shadow-sm'
                   : 'bg-background text-muted-foreground border-border hover:bg-muted',
@@ -310,7 +310,7 @@ function OrderRow({ order, onView }: { order: PurchaseOrder; onView: () => void 
         <button
           type="button"
           onClick={onView}
-          className="p-2 min-w-[40px] min-h-[40px] rounded-lg hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors"
+          className="p-2 min-w-[44px] min-h-[44px] rounded-lg hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors"
           aria-label={`Ver detalle de OC ${order.po_number || order.id.slice(0, 8)}`}
           title="Ver detalle"
         >
@@ -321,7 +321,7 @@ function OrderRow({ order, onView }: { order: PurchaseOrder; onView: () => void 
             type="button"
             onClick={handleCancel}
             disabled={updateStatus.isPending}
-            className="p-2 min-w-[40px] min-h-[40px] rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors disabled:opacity-50"
+            className="p-2 min-w-[44px] min-h-[44px] rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors disabled:opacity-50"
             aria-label={`Cancelar OC ${order.po_number || order.id.slice(0, 8)}`}
             title="Cancelar OC"
           >

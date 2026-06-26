@@ -19,6 +19,7 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { useCostSheetStore } from '@/store/cost-sheet-store';
 
+import { useTranslations } from 'next-intl';
 export type PDFFormat =
   | 'standard'
   | 'pro'
@@ -304,12 +305,12 @@ export const CostSheetExportModal: React.FC<CostSheetExportModalProps> = ({
           </div>
           <div className="min-w-0">
             <div className={cn(
-              'font-black uppercase tracking-widest text-[9px] truncate',
+              'font-black uppercase tracking-widest text-xs truncate',
               isSelected ? 'text-foreground' : 'text-muted-foreground'
             )}>
               {fmt.label}
             </div>
-            <div className="text-[10px] text-muted-foreground leading-tight mt-0.5 line-clamp-1">
+            <div className="text-xs text-muted-foreground leading-tight mt-0.5 line-clamp-1">
               {fmt.description}
             </div>
           </div>
@@ -326,7 +327,7 @@ export const CostSheetExportModal: React.FC<CostSheetExportModalProps> = ({
                 )}>
                     {options.pdfFormat === 'pro' && (
                         <div className="p-5 rounded-3xl bg-warning/5 border border-warning/20">
-                            <Label className="text-[10px] font-black uppercase tracking-widest text-warning dark:text-amber-400 mb-3 block">Identidad Visual</Label>
+                            <Label className="text-xs font-black uppercase tracking-widest text-warning dark:text-amber-400 mb-3 block">Identidad Visual</Label>
                             <input
                                 type="file"
                                 ref={fileInputRef}
@@ -438,7 +439,7 @@ export const CostSheetExportModal: React.FC<CostSheetExportModalProps> = ({
 
                     {/* Annex Layout: Together vs Separate */}
                     <div className="space-y-2">
-                        <div className="text-[10px] font-black uppercase tracking-widest text-muted-foreground px-1">
+                        <div className="text-xs font-black uppercase tracking-widest text-muted-foreground px-1">
                             Disposición de Anexos
                         </div>
                         <div className="grid grid-cols-2 gap-2">
@@ -465,12 +466,12 @@ export const CostSheetExportModal: React.FC<CostSheetExportModalProps> = ({
                                 </div>
                                 <div className="min-w-0">
                                     <div className={cn(
-                                        'font-black uppercase tracking-widest text-[8px]',
+                                        'font-black uppercase tracking-widest text-xs',
                                         options.annexLayout === 'together' ? 'text-foreground' : 'text-muted-foreground'
                                     )}>
                                         Juntos
                                     </div>
-                                    <div className="text-[9px] text-muted-foreground leading-tight mt-0.5 line-clamp-1">
+                                    <div className="text-xs text-muted-foreground leading-tight mt-0.5 line-clamp-1">
                                         Consecutivos en una o varias hojas
                                     </div>
                                 </div>
@@ -498,12 +499,12 @@ export const CostSheetExportModal: React.FC<CostSheetExportModalProps> = ({
                                 </div>
                                 <div className="min-w-0">
                                     <div className={cn(
-                                        'font-black uppercase tracking-widest text-[8px]',
+                                        'font-black uppercase tracking-widest text-xs',
                                         options.annexLayout === 'separate' ? 'text-foreground' : 'text-muted-foreground'
                                     )}>
                                         Separados
                                     </div>
-                                    <div className="text-[9px] text-muted-foreground leading-tight mt-0.5 line-clamp-1">
+                                    <div className="text-xs text-muted-foreground leading-tight mt-0.5 line-clamp-1">
                                         Un anexo por hoja
                                     </div>
                                 </div>

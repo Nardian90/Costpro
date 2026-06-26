@@ -1,6 +1,7 @@
 import { logger } from '@/lib/logger';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { offlineStorage } from '@/lib/sync/offline-storage';
+import { syncEngine } from '@/lib/sync/sync-engine';
 import { syncBatchSchema, syncBatchResponseSchema } from '@/validation/schemas';
 import { useAuthStore } from '@/store';
 import { v4 as uuidv4 } from 'uuid';
@@ -12,14 +13,16 @@ export function useSync() {
   const { user } = useAuthStore();
   const [status, setStatus] = useState<SyncStatus>('online');
   const [queueSize, setQueueSize] = useState(0);
+  const [failedCount, setFailedCount] = useState(0);
   const [lastSync, setLastSync] = useState<Date | null>(null);
   const [retryAttempt, setRetryAttempt] = useState(0);
-  // FIX-RCT-110: Store timeout ID to clear on unmount
   const retryTimerRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
   const updateQueueSize = useCallback(async () => {
     const pending = await offlineStorage.getPendingOperations();
     setQueueSize(pending.length);
+    const failed = await offlineStorage.getFailedCount();
+    setFailedCount(failed);
   }, []);
 
   useEffect(() => {
@@ -163,8 +166,25 @@ export function useSync() {
   return {
     status,
     queueSize,
+    failedCount,
     lastSync,
     addToQueue,
     processQueue,
+    retryFailed: async () => {
+      const count = await syncEngine.retryFailed();
+      if (count > 0) {
+        toast.success(`${count} operaciones reintentrándose`);
+        await updateQueueSize();
+      } else {
+        toast.info('No hay operaciones fallidas para reintentar');
+      }
+    },
+    discardFailed: async () => {
+      const count = await syncEngine.discardFailed();
+      if (count > 0) {
+        toast.info(`${count} operaciones descartadas`);
+        await updateQueueSize();
+      }
+    },
   };
 }

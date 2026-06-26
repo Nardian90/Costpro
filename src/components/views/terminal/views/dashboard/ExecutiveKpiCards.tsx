@@ -5,6 +5,7 @@ import { TrendingUp, DollarSign, Activity } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
 import { useTheme } from 'next-themes';
 import { isDarkTheme } from '@/lib/utils';
+import { useTranslations } from 'next-intl';
 
 // Sparkline: SVG con color de token semántico (no hex hardcoded)
 const Sparkline = ({ path, colorClass }: { path: string; colorClass: string }) => {
@@ -44,12 +45,13 @@ export const ExecutiveKpiCards = ({
   costs: number;
   profit: number;
 }) => {
+  const t = useTranslations('dashboard.storeDashboard');
   const { resolvedTheme } = useTheme();
   const isDark = isDarkTheme(resolvedTheme);
 
   const cards: KpiCardData[] = [
     {
-      title: 'Ingresos Totales',
+      title: t('executiveKpis.totalSales'),
       value: sales,
       icon: <TrendingUp className="w-5 h-5" />,
       iconBg: 'bg-primary/10 text-primary',
@@ -57,7 +59,7 @@ export const ExecutiveKpiCards = ({
       lineColorClass: 'stroke-primary',
     },
     {
-      title: 'Costo de Ventas',
+      title: t('executiveKpis.costOfSales'),
       value: costs,
       icon: <DollarSign className="w-5 h-5" />,
       iconBg: 'bg-muted text-muted-foreground',
@@ -66,7 +68,7 @@ export const ExecutiveKpiCards = ({
       lineColorClass: isDark ? 'stroke-muted-foreground' : 'stroke-secondary',
     },
     {
-      title: 'Utilidad Neta',
+      title: t('executiveKpis.netProfit'),
       value: profit,
       icon: <Activity className="w-5 h-5" />,
       // Uses semantic success token instead of hardcoded emerald
@@ -89,7 +91,7 @@ export const ExecutiveKpiCards = ({
               {card.icon}
             </div>
             <div className="min-w-0">
-              <p className="text-xs font-medium text-muted-foreground truncate">
+              <p className="text-sm font-medium text-muted-foreground truncate">
                 {card.title}
               </p>
               <h3 className="text-lg sm:text-xl font-bold font-display text-foreground tracking-tight tabular-nums">

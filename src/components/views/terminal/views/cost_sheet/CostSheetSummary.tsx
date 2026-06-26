@@ -1,3 +1,4 @@
+'use client';
 import { logger } from '@/lib/logger';
 import React, { useMemo, useRef, useState } from 'react';
 import {
@@ -34,6 +35,7 @@ import { BaseModal } from "@/components/ui/BaseModal";
 import { Badge } from "@/components/ui/badge";
 import { produce } from 'immer';
 
+import { useTranslations } from 'next-intl';
 interface SolverResultData {
   found: boolean;
   value: number;
@@ -50,6 +52,7 @@ interface SolverResultData {
 }
 
 export const CostSheetSummary: React.FC = () => {
+  const t = useTranslations('costSheet');
   const { data, updateValues } = useCostSheetStore();
   const { calculatedValues } = useCostSheetCalculator(data);
 
@@ -323,7 +326,7 @@ export const CostSheetSummary: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="bg-primary/5 border-primary/20">
           <CardHeader className="pb-2">
-            <CardDescription className="text-[10px] uppercase font-bold tracking-widest text-primary/60">
+            <CardDescription className="text-xs uppercase font-bold tracking-widest text-primary/70">
               Costo Directo
             </CardDescription>
             <CardTitle className="text-2xl font-black font-mono">
@@ -333,7 +336,7 @@ export const CostSheetSummary: React.FC = () => {
         </Card>
         <Card className="bg-green-50/50 border-green-100 dark:bg-green-950/20 dark:border-green-900/30">
           <CardHeader className="pb-2">
-            <CardDescription className="text-[10px] uppercase font-bold tracking-widest text-success/60 dark:text-green-400/60">
+            <CardDescription className="text-xs uppercase font-bold tracking-widest text-success/70 dark:text-green-400/60">
               Utilidad Bruta
             </CardDescription>
             <CardTitle className="text-2xl font-black font-mono text-success dark:text-green-400">
@@ -343,7 +346,7 @@ export const CostSheetSummary: React.FC = () => {
         </Card>
         <Card className="bg-blue-50/50 border-blue-100 dark:bg-blue-950/20 dark:border-blue-900/30">
           <CardHeader className="pb-2">
-            <CardDescription className="text-[10px] uppercase font-bold tracking-widest text-primary/60 dark:text-blue-400/60">
+            <CardDescription className="text-xs uppercase font-bold tracking-widest text-primary/70 dark:text-blue-400/60">
               Precio Final (100%)
             </CardDescription>
             <CardTitle className="text-2xl font-black font-mono text-blue-700 dark:text-blue-400">
@@ -363,13 +366,13 @@ export const CostSheetSummary: React.FC = () => {
               </div>
               <div>
                 <CardTitle className="text-base">Solver Avanzado</CardTitle>
-                <CardDescription className="text-[10px]">
+                <CardDescription className="text-xs">
                   Defina un objetivo y la variable a ajustar. El solver encontrará el valor
                   (positivo o negativo) que hace la fila objetivo igual al valor deseado.
                 </CardDescription>
               </div>
             </div>
-            <Badge variant="outline" className="text-[9px] uppercase tracking-wider font-bold hidden sm:flex">
+            <Badge variant="outline" className="text-xs uppercase tracking-wider font-bold hidden sm:flex">
               Goal Seek
             </Badge>
           </div>
@@ -379,9 +382,9 @@ export const CostSheetSummary: React.FC = () => {
           {variableRowInfo?.formula && (
             <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/40 rounded-xl p-3 flex items-start gap-3">
               <Info className="w-4 h-4 text-warning dark:text-amber-400 shrink-0 mt-0.5" />
-              <div className="text-[10px] text-amber-800 dark:text-amber-200 leading-relaxed">
+              <div className="text-xs text-amber-800 dark:text-amber-200 leading-relaxed">
                 <span className="font-bold uppercase tracking-wider">Fórmula actual en {variableRowInfo.label} ({solverVariableRow}):</span>
-                <code className="block mt-1 bg-amber-100 dark:bg-amber-900/40 px-2 py-1 rounded font-mono text-[10px]">
+                <code className="block mt-1 bg-amber-100 dark:bg-amber-900/40 px-2 py-1 rounded font-mono text-xs">
                   {variableRowInfo.formula}
                 </code>
                 <span className="block mt-1 opacity-75">
@@ -394,7 +397,7 @@ export const CostSheetSummary: React.FC = () => {
           {/* Target Row + Desired Value */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label className="text-[10px] uppercase text-muted-foreground font-bold tracking-wider">
+              <Label className="text-xs uppercase text-muted-foreground font-bold tracking-wider">
                 Fila Objetivo
               </Label>
               <Popover>
@@ -429,8 +432,8 @@ export const CostSheetSummary: React.FC = () => {
                           setTargetSearch('');
                         }}
                       >
-                        <span className="font-bold font-mono text-[10px]">{r.cls}</span>
-                        <span className="text-muted-foreground truncate text-[11px]">{r.label}</span>
+                        <span className="font-bold font-mono text-xs">{r.cls}</span>
+                        <span className="text-muted-foreground truncate text-xs">{r.label}</span>
                       </button>
                     ))}
                   </ScrollArea>
@@ -439,7 +442,7 @@ export const CostSheetSummary: React.FC = () => {
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-[10px] uppercase text-muted-foreground font-bold tracking-wider">
+              <Label className="text-xs uppercase text-muted-foreground font-bold tracking-wider">
                 Valor Objetivo Deseado
               </Label>
               <Input
@@ -454,7 +457,7 @@ export const CostSheetSummary: React.FC = () => {
 
           {/* Variable to Adjust */}
           <div className="space-y-1.5">
-            <Label className="text-[10px] uppercase text-muted-foreground font-bold tracking-wider">
+            <Label className="text-xs uppercase text-muted-foreground font-bold tracking-wider">
               Variable a Ajustar (se eliminará su fórmula)
             </Label>
             <Popover>
@@ -489,8 +492,8 @@ export const CostSheetSummary: React.FC = () => {
                         setVariableSearch('');
                       }}
                     >
-                      <span className="font-bold font-mono text-[10px]">{r.cls}</span>
-                      <span className="text-muted-foreground truncate text-[11px]">{r.label}</span>
+                      <span className="font-bold font-mono text-xs">{r.cls}</span>
+                      <span className="text-muted-foreground truncate text-xs">{r.label}</span>
                     </button>
                   ))}
                 </ScrollArea>
@@ -499,7 +502,7 @@ export const CostSheetSummary: React.FC = () => {
           </div>
 
           {/* Visual flow indicator */}
-          <div className="flex items-center justify-center gap-2 py-1 text-[10px] text-muted-foreground">
+          <div className="flex items-center justify-center gap-2 py-1 text-xs text-muted-foreground">
             <span className="font-mono bg-muted px-2 py-0.5 rounded">{solverVariableRow}</span>
             <ArrowRight className="w-3 h-3" />
             <span className="font-mono bg-primary/10 text-primary px-2 py-0.5 rounded font-bold">
@@ -599,7 +602,7 @@ export const CostSheetSummary: React.FC = () => {
                 </div>
                 {Math.abs(solverResult.simulatedTargetTotal - solverResult.targetValue) > 0.01 && (
                   <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/40 rounded-lg p-2">
-                    <span className="text-[10px] text-amber-700 dark:text-amber-300 font-medium">
+                    <span className="text-xs text-amber-700 dark:text-amber-300 font-medium">
                       Aproximación: diferencia de {formatCurrency(Math.abs(solverResult.simulatedTargetTotal - solverResult.targetValue))} con el objetivo exacto.
                     </span>
                   </div>
@@ -610,7 +613,7 @@ export const CostSheetSummary: React.FC = () => {
             {/* Original Formula Info */}
             {solverResult.originalFormula && (
               <div className="bg-muted/30 border border-border/50 rounded-xl p-4 space-y-2">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                   Fórmula Original (se eliminará si guarda)
                 </span>
                 <code className="block bg-background px-3 py-2 rounded-lg border font-mono text-xs text-foreground">
@@ -620,7 +623,7 @@ export const CostSheetSummary: React.FC = () => {
             )}
 
             {/* Warning text */}
-            <p className="text-[10px] text-muted-foreground leading-relaxed">
+            <p className="text-xs text-muted-foreground leading-relaxed">
               <strong>Guardar:</strong> La fórmula será reemplazada permanentemente por el valor fijo{' '}
               <code className="bg-muted px-1 py-0.5 rounded font-mono">
                 {solverResult.value.toFixed(4)}

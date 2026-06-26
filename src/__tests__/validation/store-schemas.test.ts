@@ -41,13 +41,10 @@ describe('createStoreSchema', () => {
     }
   });
 
-  it('fails when address is missing', () => {
+  it('accepts missing address (create-quick flow)', () => {
+    // F4-FIX: address es opcional para soportar create-quick donde solo se envía name + slug
     const result = createStoreSchema.safeParse({ name: 'Tienda' });
-    expect(result.success).toBe(false);
-    if (!result.success) {
-      const addressIssue = result.error.issues.find(i => i.path.includes('address'));
-      expect(addressIssue).toBeDefined();
-    }
+    expect(result.success).toBe(true);
   });
 
   it('fails with invalid email', () => {

@@ -1,12 +1,20 @@
+'use client';
+
 import { useState, useEffect } from 'react';
 
 /**
- * A custom hook that returns a debounced version of the provided value.
- * Useful for delaying search queries or other performance-intensive operations.
+ * P4-1: useDebounce — hook para debounce de valores (típicamente inputs de búsqueda).
  *
- * @param value The value to debounce
- * @param delay The delay in milliseconds (default: 300)
- * @returns The debounced value
+ * Evita re-renderizar/filtrar en cada keystroke. Espera `delay` ms sin cambios
+ * antes de actualizar el valor devuelto.
+ *
+ * Uso:
+ *   const [search, setSearch] = useState('');
+ *   const debouncedSearch = useDebounce(search, 300);
+ *   useEffect(() => { filtrarCon(debouncedSearch); }, [debouncedSearch]);
+ *
+ * Mobile-first: en dispositivos lentos, 300ms es el sweet spot entre
+ * responsividad y performance.
  */
 export function useDebounce<T>(value: T, delay: number = 300): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
@@ -15,9 +23,6 @@ export function useDebounce<T>(value: T, delay: number = 300): T {
     const handler = setTimeout(() => {
       setDebouncedValue(value);
     }, delay);
-
-    // Cancel the timeout if value changes (also on delay change or unmount)
-    // This is how we prevent debouncedValue from updating if value is still changing
     return () => {
       clearTimeout(handler);
     };
@@ -25,3 +30,5 @@ export function useDebounce<T>(value: T, delay: number = 300): T {
 
   return debouncedValue;
 }
+
+export default useDebounce;

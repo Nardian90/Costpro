@@ -11,6 +11,7 @@ import {
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
+import { useTranslations } from 'next-intl';
 interface CostSheetFCDropdownProps {
   activeSection: string;
   setActiveSection: (id: string) => void;
@@ -24,6 +25,7 @@ export function CostSheetFCDropdown({
   onOpenSections,
   onOpenAnnexes,
 }: CostSheetFCDropdownProps) {
+  const t = useTranslations('costSheet');
   const prefersReducedMotion = useReducedMotion();
   const options = [
     { id: 'templates', label: 'Plantillas', icon: FolderOpen },
@@ -61,7 +63,7 @@ export function CostSheetFCDropdown({
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-56 p-2 rounded-2xl bg-card border-border shadow-2xl z-[110]">
-        <div className="px-2 py-1.5 text-[10px] font-black uppercase tracking-widest text-primary/50 mb-1 border-b border-border/50 pb-2">
+        <div className="px-2 py-1.5 text-xs font-black uppercase tracking-widest text-primary/70 mb-1 border-b border-border/50 pb-2">
           Componentes de la Ficha
         </div>
         {options.map((opt) => (

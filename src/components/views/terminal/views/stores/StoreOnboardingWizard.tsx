@@ -19,6 +19,7 @@ import {
 import { cn } from '@/lib/utils';
 import { useUsers } from '@/hooks/api/useUsers';
 import { useAuthStore } from '@/store';
+import { useTranslations } from 'next-intl';
 
 /**
  * F4-T04: Onboarding wizard de 3 pasos para crear una tienda completa.
@@ -79,6 +80,7 @@ const STEPS = [
 export function StoreOnboardingWizard({ isOpen, onClose, onCompleted }: StoreOnboardingWizardProps) {
   const queryClient = useQueryClient();
   const storeEdit = useStoreEdit();
+  const t = useTranslations('stores');
   const { user } = useAuthStore();
   const isAdmin = user?.role === 'admin';
   const isEncargado = user?.role === 'encargado' || user?.role === 'manager';
@@ -238,7 +240,7 @@ export function StoreOnboardingWizard({ isOpen, onClose, onCompleted }: StoreOnb
     <BaseModal
       open={isOpen}
       onOpenChange={(open) => !open && !submitting && onClose()}
-      aria-label="Asistente de creación de tienda"
+      aria-label={t('onboarding.ariaLabel')}
       title={
         <span className="text-[clamp(1.25rem,4vw,1.5rem)] font-black uppercase tracking-tighter text-primary flex items-center gap-2">
           <Rocket className="w-5 h-5" />
@@ -246,7 +248,7 @@ export function StoreOnboardingWizard({ isOpen, onClose, onCompleted }: StoreOnb
         </span>
       }
       description={
-        <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground/70">
+        <span className="text-sm font-bold uppercase tracking-widest text-muted-foreground/70">
           3 pasos · tienda operativa al {estimatedHealth}% al finalizar
         </span>
       }
@@ -270,7 +272,7 @@ export function StoreOnboardingWizard({ isOpen, onClose, onCompleted }: StoreOnb
               type="button"
               onClick={handleNext}
               disabled={!isCurrentStepValid || submitting}
-              className="flex-1 sm:flex-none h-11 font-bold uppercase tracking-widest text-xs"
+              className="flex-1 sm:flex-none h-11 font-bold uppercase tracking-widest text-sm"
             >
               Siguiente
               <ChevronRight className="w-4 h-4 ml-1" />
@@ -280,7 +282,7 @@ export function StoreOnboardingWizard({ isOpen, onClose, onCompleted }: StoreOnb
               type="button"
               onClick={handleFinish}
               disabled={submitting}
-              className="flex-1 sm:flex-none h-11 font-bold uppercase tracking-widest text-xs"
+              className="flex-1 sm:flex-none h-11 font-bold uppercase tracking-widest text-sm"
             >
               {submitting ? (
                 <>
@@ -316,7 +318,7 @@ export function StoreOnboardingWizard({ isOpen, onClose, onCompleted }: StoreOnb
                     {isCompleted ? <Check className="w-5 h-5" /> : <Icon className="w-5 h-5" />}
                   </div>
                   <span className={cn(
-                    "text-[9px] font-black uppercase tracking-widest text-center",
+                    "text-xs font-black uppercase tracking-widest text-center",
                     isActive ? "text-primary" : "text-muted-foreground"
                   )}>
                     {s.label}
@@ -337,7 +339,7 @@ export function StoreOnboardingWizard({ isOpen, onClose, onCompleted }: StoreOnb
         {step === 1 && (
           <div className="space-y-3">
             <div className="space-y-1.5">
-              <Label htmlFor="wiz-name" className="text-xs font-black uppercase tracking-widest text-muted-foreground">
+              <Label htmlFor="wiz-name" className="text-sm font-black uppercase tracking-widest text-muted-foreground">
                 Nombre de la tienda *
               </Label>
               <Input
@@ -351,11 +353,11 @@ export function StoreOnboardingWizard({ isOpen, onClose, onCompleted }: StoreOnb
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="wiz-slug" className="text-xs font-black uppercase tracking-widest text-muted-foreground">
+              <Label htmlFor="wiz-slug" className="text-sm font-black uppercase tracking-widest text-muted-foreground">
                 URL pública (slug)
               </Label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-mono text-muted-foreground pointer-events-none">/tienda/</span>
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-mono text-muted-foreground pointer-events-none">/tienda/</span>
                 <Input
                   id="wiz-slug"
                   value={data.slug}
@@ -366,7 +368,7 @@ export function StoreOnboardingWizard({ isOpen, onClose, onCompleted }: StoreOnb
               </div>
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="wiz-address" className="text-xs font-black uppercase tracking-widest text-muted-foreground">
+              <Label htmlFor="wiz-address" className="text-sm font-black uppercase tracking-widest text-muted-foreground">
                 Dirección
               </Label>
               <Input
@@ -379,7 +381,7 @@ export function StoreOnboardingWizard({ isOpen, onClose, onCompleted }: StoreOnb
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="wiz-phone" className="text-xs font-black uppercase tracking-widest text-muted-foreground">
+              <Label htmlFor="wiz-phone" className="text-sm font-black uppercase tracking-widest text-muted-foreground">
                 Teléfono
               </Label>
               <Input
@@ -399,7 +401,7 @@ export function StoreOnboardingWizard({ isOpen, onClose, onCompleted }: StoreOnb
           <div className="space-y-3">
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label htmlFor="wiz-reeup" className="text-xs font-black uppercase tracking-widest text-muted-foreground">
+                <Label htmlFor="wiz-reeup" className="text-sm font-black uppercase tracking-widest text-muted-foreground">
                   REEUP (11 dígitos)
                 </Label>
                 <Input
@@ -412,7 +414,7 @@ export function StoreOnboardingWizard({ isOpen, onClose, onCompleted }: StoreOnb
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="wiz-nit" className="text-xs font-black uppercase tracking-widest text-muted-foreground">
+                <Label htmlFor="wiz-nit" className="text-sm font-black uppercase tracking-widest text-muted-foreground">
                   NIT
                 </Label>
                 <Input
@@ -426,7 +428,7 @@ export function StoreOnboardingWizard({ isOpen, onClose, onCompleted }: StoreOnb
               </div>
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="wiz-bank" className="text-xs font-black uppercase tracking-widest text-muted-foreground">
+              <Label htmlFor="wiz-bank" className="text-sm font-black uppercase tracking-widest text-muted-foreground">
                 Cuenta bancaria
               </Label>
               <Input
@@ -440,7 +442,7 @@ export function StoreOnboardingWizard({ isOpen, onClose, onCompleted }: StoreOnb
             </div>
 
             <div className="pt-3 border-t border-border">
-              <h4 className="text-xs font-black uppercase tracking-widest text-primary/70 mb-3">
+              <h4 className="text-sm font-black uppercase tracking-widest text-primary/70 mb-3">
                 Plantilla de Ficha de Costo
               </h4>
               <label className="flex items-center gap-2 cursor-pointer mb-3">
@@ -450,26 +452,26 @@ export function StoreOnboardingWizard({ isOpen, onClose, onCompleted }: StoreOnb
                   onChange={(e) => update('fcActive', e.target.checked)}
                   className="w-4 h-4 rounded border-border"
                 />
-                <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                <span className="text-sm font-bold uppercase tracking-widest text-muted-foreground">
                   Activar plantilla FC para esta tienda
                 </span>
               </label>
               {data.fcActive && (
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground">Modalidad</Label>
+                    <Label className="text-sm font-black uppercase tracking-widest text-muted-foreground">{t('modalidadLabel')}</Label>
                     <select
                       value={data.fcModalidad}
                       onChange={(e) => update('fcModalidad', e.target.value as WizardData['fcModalidad'])}
                       className="w-full h-11 px-3 rounded-lg border border-border bg-background text-sm font-bold outline-none focus:ring-1 focus:ring-primary"
                     >
-                      <option value="produccion">Producción</option>
-                      <option value="servicios">Servicios</option>
-                      <option value="comercializacion">Comercialización</option>
+                      <option value="produccion">{t('modalidadProduccion')}</option>
+                      <option value="servicios">{t('modalidadServicios')}</option>
+                      <option value="comercializacion">{t('modalidadComercializacion')}</option>
                     </select>
                   </div>
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground">Formato PDF</Label>
+                    <Label className="text-sm font-black uppercase tracking-widest text-muted-foreground">{t('formatoPdfLabel')}</Label>
                     <select
                       value={data.fcPdfFormat}
                       onChange={(e) => update('fcPdfFormat', e.target.value as WizardData['fcPdfFormat'])}
@@ -490,7 +492,7 @@ export function StoreOnboardingWizard({ isOpen, onClose, onCompleted }: StoreOnb
           <div className="space-y-4">
             {/* Selector de rol por defecto */}
             <div className="space-y-1.5">
-              <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground">
+              <Label className="text-sm font-black uppercase tracking-widest text-muted-foreground">
                 Rol para los usuarios asignados
               </Label>
               <select
@@ -506,7 +508,7 @@ export function StoreOnboardingWizard({ isOpen, onClose, onCompleted }: StoreOnb
                 <option value="usuario">Usuario</option>
                 <option value="costo">Costo</option>
               </select>
-              <p className="text-[10px] text-muted-foreground/70">
+              <p className="text-sm text-muted-foreground/70">
                 Todos los usuarios seleccionados se asignarán con este rol. Puedes cambiarlo individualmente después.
               </p>
             </div>
@@ -526,8 +528,8 @@ export function StoreOnboardingWizard({ isOpen, onClose, onCompleted }: StoreOnb
             <div className="max-h-64 overflow-y-auto rounded-xl border border-border divide-y divide-border">
               {filteredUsers.length === 0 ? (
                 <div className="py-8 text-center">
-                  <UsersIcon className="w-8 h-8 text-muted-foreground/30 mx-auto mb-2" />
-                  <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest">
+                  <UsersIcon className="w-8 h-8 text-muted-foreground/70 mx-auto mb-2" />
+                  <p className="text-sm text-muted-foreground font-bold uppercase tracking-widest">
                     {existingUsers.length === 0 ? 'No hay usuarios disponibles' : 'Sin coincidencias'}
                   </p>
                 </div>
@@ -547,15 +549,15 @@ export function StoreOnboardingWizard({ isOpen, onClose, onCompleted }: StoreOnb
                     />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="font-bold text-xs truncate">{u.full_name || 'Sin nombre'}</span>
+                        <span className="font-bold text-sm truncate">{u.full_name || 'Sin nombre'}</span>
                         {u.role && (
-                          <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
+                          <span className="text-sm font-black uppercase px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
                             {u.role}
                           </span>
                         )}
                       </div>
                       {u.email && (
-                        <div className="flex items-center gap-1 text-[10px] text-muted-foreground truncate">
+                        <div className="flex items-center gap-1 text-sm text-muted-foreground truncate">
                           <Mail className="w-2.5 h-2.5 shrink-0" />
                           <span className="truncate">{u.email}</span>
                         </div>
@@ -570,25 +572,25 @@ export function StoreOnboardingWizard({ isOpen, onClose, onCompleted }: StoreOnb
             <div className="p-4 rounded-xl bg-primary/5 border border-primary/10">
               <div className="flex items-center gap-2 mb-2">
                 <CheckCircle2 className="w-4 h-4 text-primary" />
-                <span className="text-xs font-black uppercase tracking-widest text-primary">
+                <span className="text-sm font-black uppercase tracking-widest text-primary">
                   Resumen de la nueva tienda
                 </span>
               </div>
-              <div className="space-y-1 text-xs">
+              <div className="space-y-1 text-sm">
                 <div className="flex justify-between"><span className="text-muted-foreground">Nombre:</span> <strong>{data.name}</strong></div>
                 <div className="flex justify-between"><span className="text-muted-foreground">URL:</span> <span className="font-mono">/tienda/{data.slug}</span></div>
                 <div className="flex justify-between"><span className="text-muted-foreground">Plantilla FC:</span> <span>{data.fcActive ? `${data.fcModalidad} · ${data.fcPdfFormat}` : 'No activa'}</span></div>
                 <div className="flex justify-between"><span className="text-muted-foreground">Usuarios a asignar:</span> <strong>{data.selectedUserIds.size}</strong></div>
               </div>
               <div className="mt-3 pt-3 border-t border-primary/20">
-                <div className="flex items-center justify-between text-xs">
+                <div className="flex items-center justify-between text-sm">
                   <span className="font-black uppercase tracking-widest text-primary">Health score estimado</span>
                   <span className="font-bold text-primary">{estimatedHealth}/100</span>
                 </div>
                 <div className="h-1.5 rounded-full bg-muted overflow-hidden mt-1.5">
                   <div className="h-full bg-primary transition-all" style={{ width: `${estimatedHealth}%` }} />
                 </div>
-                <p className="text-[10px] text-muted-foreground/70 mt-1.5">
+                <p className="text-sm text-muted-foreground/70 mt-1.5">
                   Los 40% restantes se completan agregando productos y registrando ventas.
                 </p>
               </div>

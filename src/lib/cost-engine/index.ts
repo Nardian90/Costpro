@@ -12,7 +12,7 @@ import {
 } from './types';
 import { translateFormulaFromSpanish, smartTranslate, getFormulaReferenceIssue } from './formula-utils';
 import { ROMAN_MAP } from './constants';
-import type { Values } from 'expr-eval';
+import type { Values } from './safe-parser';
 
 interface FormulaContext {
   VH: number;
@@ -797,12 +797,13 @@ const ruleOverride = activeRules[0];
             }
 
             const result = expr.evaluate(context as Values);
-            if (isNaN(result) || !isFinite(result)) {
+            const numResult = typeof result === 'number' ? result : (typeof result === 'string' ? parseFloat(result) || 0 : Number(result) || 0);
+            if (isNaN(numResult) || !isFinite(numResult)) {
                 total = new Decimal(0);
-                note += `Evaluation result was ${result} (NaN/Infinity). Forcing to 0. `;
+                note += `Evaluation result was ${numResult} (NaN/Infinity). Forcing to 0. `;
                 type = 'WARNING';
             } else {
-                total = new Decimal(result);
+                total = new Decimal(numResult);
                 note += `Evaluated: ${formulaToUse}. `;
             }
         } catch (e: unknown) {
@@ -867,7 +868,7 @@ const ruleOverride = activeRules[0];
             });
 
             const vhRaw = vhExpr.evaluate(vhContext as Values);
-            const vhSafeNum = typeof vhRaw === 'string' ? parseFloat(vhRaw) || 0 : (vhRaw || 0);
+            const vhSafeNum = typeof vhRaw === 'string' ? parseFloat(vhRaw) || 0 : (typeof vhRaw === 'number' ? vhRaw : Number(vhRaw) || 0);
             const vhResult = new Decimal(vhSafeNum).toDecimalPlaces(decimals).toNumber();
             if (vhResult !== current.calculatedVH) {
                 current.calculatedVH = vhResult;

@@ -22,6 +22,7 @@ import { cn, formatCurrency } from '@/lib/utils';
 import type { ValidationResult } from '@/lib/cost-engine/validations';
 import type { ValidationError } from '@/lib/cost-engine/types';
 
+import { useTranslations } from 'next-intl';
 // ── Icon component mapper ──
 const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
   Building2, Warehouse, Users, Wrench, Truck,
@@ -227,19 +228,19 @@ const SmartSidebar = React.memo(function SmartSidebar({
       INFO: 'bg-muted/50 text-muted-foreground border-muted-foreground/25',
     };
     return (
-      <Badge variant="outline" className={cn('text-[8px] font-bold px-1 py-0 rounded-full leading-none', colors[type])}>
+      <Badge variant="outline" className={cn('text-xs font-bold px-1 py-0 rounded-full leading-none', colors[type])}>
         {count} {type === 'CRITICAL' ? 'Err' : type === 'WARNING' ? 'Adv' : 'Info'}
       </Badge>
     );
   };
 
   return (
-    <div className="relative shrink-0 h-full">
+    <div className="relative shrink-0 h-full" aria-busy={overallProgress < 100}>
       {/* Toggle button — always visible when collapsed */}
       {!isOpen && (
         <button type="button"
           onClick={onToggle}
-          className="absolute top-3 left-3 z-30 w-8 h-8 rounded-lg bg-card border border-border/60 flex items-center justify-center hover:bg-primary/10 hover:border-primary/40 transition-all duration-200 shadow-sm hover:shadow-md"
+          className="absolute top-3 left-3 z-30 w-11 h-11 min-h-[44px] min-w-[44px] rounded-lg bg-card border border-border/60 flex items-center justify-center hover:bg-primary/10 hover:border-primary/40 transition-all duration-200 shadow-sm hover:shadow-md"
           title="Abrir panel de navegacion"
         >
           <PanelLeftOpen className="w-4 h-4 text-muted-foreground" />
@@ -257,10 +258,10 @@ const SmartSidebar = React.memo(function SmartSidebar({
         <div className="px-3 py-3 border-b border-border/30 shrink-0">
           <div className="flex items-center justify-between mb-3">
             <div>
-              <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground">
+              <h4 className="text-xs font-black uppercase tracking-[0.2em] text-foreground">
                 {sidebarMode === 'audit' ? 'Auditoria' : 'Flujo de Costeo'}
               </h4>
-              <p className="text-[9px] text-muted-foreground font-mono mt-0.5">
+              <p className="text-xs text-muted-foreground font-mono mt-0.5">
                 {completedNodes.size}/{nodes.length} nodos
               </p>
             </div>
@@ -279,8 +280,8 @@ const SmartSidebar = React.memo(function SmartSidebar({
             <div className="space-y-1.5">
               <Progress value={overallProgress} className="h-1.5" />
               <div className="flex justify-between items-center">
-                <span className="text-[9px] text-muted-foreground font-mono">Progreso</span>
-                <span className="text-[10px] font-black font-mono text-primary">
+                <span className="text-xs text-muted-foreground font-mono">Progreso</span>
+                <span className="text-xs font-black font-mono text-primary">
                   {overallProgress}%
                 </span>
               </div>
@@ -292,10 +293,10 @@ const SmartSidebar = React.memo(function SmartSidebar({
             <button type="button"
               onClick={() => setSidebarMode('flow')}
               className={cn(
-                'px-2 py-1 rounded text-[8px] font-bold uppercase tracking-wider transition-colors',
+                'px-2 py-1 rounded text-xs font-bold uppercase tracking-wider transition-colors',
                 sidebarMode === 'flow'
                   ? 'bg-primary/15 text-primary'
-                  : 'text-muted-foreground/50 hover:text-muted-foreground'
+                  : 'text-muted-foreground/70 hover:text-muted-foreground'
               )}
             >
               Flujo
@@ -303,15 +304,15 @@ const SmartSidebar = React.memo(function SmartSidebar({
             <button type="button"
               onClick={() => setSidebarMode('audit')}
               className={cn(
-                'px-2 py-1 rounded text-[8px] font-bold uppercase tracking-wider transition-colors relative',
+                'px-2 py-1 rounded text-xs font-bold uppercase tracking-wider transition-colors relative',
                 sidebarMode === 'audit'
                   ? 'bg-rose-500/15 text-rose-600 dark:text-rose-400'
-                  : 'text-muted-foreground/50 hover:text-muted-foreground'
+                  : 'text-muted-foreground/70 hover:text-muted-foreground'
               )}
             >
               Auditoria
               {auditCounts.totalCriticals > 0 && (
-                <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-destructive text-[7px] text-white font-black flex items-center justify-center">
+                <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-destructive text-xs text-white font-black flex items-center justify-center">
                   {auditCounts.totalCriticals}
                 </span>
               )}
@@ -322,39 +323,39 @@ const SmartSidebar = React.memo(function SmartSidebar({
         {/* KPI strip */}
         <div className="px-3 py-3 border-b border-border/20 space-y-2 shrink-0">
           <div className="flex items-center justify-between">
-            <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/50">Producto</span>
-            <span className="text-[10px] font-bold text-foreground truncate ml-2 max-w-[140px]">
+            <span className="text-xs font-black uppercase tracking-widest text-muted-foreground/70">Producto</span>
+            <span className="text-xs font-bold text-foreground truncate ml-2 max-w-[140px]">
               {metrics.productName || (
                 <Skeleton className="inline-block w-16 h-3 rounded" />
               )}
             </span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/50">Costo</span>
+            <span className="text-xs font-black uppercase tracking-widest text-muted-foreground/70">Costo</span>
             {metrics.totalCost === undefined ? (
               <Skeleton className="inline-block w-16 h-3 rounded" />
             ) : (
-              <span className="text-[10px] font-black font-mono text-primary">
+              <span className="text-xs font-black font-mono text-primary">
                 {formatCurrency(metrics.totalCost)}
               </span>
             )}
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/50">Precio</span>
+            <span className="text-xs font-black uppercase tracking-widest text-muted-foreground/70">Precio</span>
             {metrics.salePrice === undefined ? (
               <Skeleton className="inline-block w-16 h-3 rounded" />
             ) : (
-              <span className="text-[10px] font-black font-mono text-foreground">
+              <span className="text-xs font-black font-mono text-foreground">
                 {formatCurrency(metrics.salePrice)}
               </span>
             )}
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/50">Utilidad</span>
+            <span className="text-xs font-black uppercase tracking-widest text-muted-foreground/70">Utilidad</span>
             {metrics.utilityPercent === null ? (
               <Skeleton className="inline-block w-10 h-3 rounded" />
             ) : (
-              <span className="text-[10px] font-black font-mono text-warning dark:text-amber-400">
+              <span className="text-xs font-black font-mono text-warning dark:text-amber-400">
                 {metrics.utilityPercent}%
               </span>
             )}
@@ -373,6 +374,9 @@ const SmartSidebar = React.memo(function SmartSidebar({
                 {/* Critical Errors */}
                 <button type="button"
                   onClick={() => setActiveAuditFilter(prev => prev === 'CRITICAL' ? 'all' : 'CRITICAL')}
+                  // P6-2: aria-pressed para que lectores de pantalla anuncien el estado del filtro.
+                  aria-pressed={activeAuditFilter === 'CRITICAL'}
+                  aria-label={`Filtrar por errores críticos. ${auditCounts.totalCriticals} encontrados.`}
                   className={cn(
                     'w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-left transition-all',
                     auditCounts.totalCriticals > 0
@@ -385,11 +389,11 @@ const SmartSidebar = React.memo(function SmartSidebar({
                     'w-7 h-7 rounded-lg flex items-center justify-center shrink-0',
                     auditCounts.totalCriticals > 0 ? 'bg-destructive/15' : 'bg-muted/50'
                   )}>
-                    <AlertOctagon className={cn('w-3.5 h-3.5', auditCounts.totalCriticals > 0 ? 'text-destructive' : 'text-muted-foreground/40')} />
+                    <AlertOctagon className={cn('w-3.5 h-3.5', auditCounts.totalCriticals > 0 ? 'text-destructive' : 'text-muted-foreground/70')} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-black uppercase tracking-widest text-destructive/80">
+                      <span className="text-xs font-black uppercase tracking-widest text-destructive/80">
                         Errores Criticos
                       </span>
                     </div>
@@ -397,7 +401,7 @@ const SmartSidebar = React.memo(function SmartSidebar({
                       <span className="text-lg font-black text-destructive leading-none">
                         {auditCounts.totalCriticals}
                       </span>
-                      <span className="text-[8px] text-muted-foreground/60">
+                      <span className="text-xs text-muted-foreground/70">
                         {auditCounts.engineCriticals > 0 && `${auditCounts.engineCriticals} motor`}
                         {auditCounts.engineCriticals > 0 && auditCounts.healthCriticals > 0 && ' + '}
                         {auditCounts.healthCriticals > 0 && `${auditCounts.healthCriticals} salud`}
@@ -410,6 +414,8 @@ const SmartSidebar = React.memo(function SmartSidebar({
                 {/* Warnings */}
                 <button type="button"
                   onClick={() => setActiveAuditFilter(prev => prev === 'WARNING' ? 'all' : 'WARNING')}
+                  aria-pressed={activeAuditFilter === 'WARNING'}
+                  aria-label={`Filtrar por advertencias. ${auditCounts.totalWarnings} encontradas.`}
                   className={cn(
                     'w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-left transition-all',
                     auditCounts.totalWarnings > 0
@@ -422,11 +428,11 @@ const SmartSidebar = React.memo(function SmartSidebar({
                     'w-7 h-7 rounded-lg flex items-center justify-center shrink-0',
                     auditCounts.totalWarnings > 0 ? 'bg-warning/15' : 'bg-muted/50'
                   )}>
-                    <AlertTriangle className={cn('w-3.5 h-3.5', auditCounts.totalWarnings > 0 ? 'text-warning' : 'text-muted-foreground/40')} />
+                    <AlertTriangle className={cn('w-3.5 h-3.5', auditCounts.totalWarnings > 0 ? 'text-warning' : 'text-muted-foreground/70')} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-black uppercase tracking-widest text-warning/80">
+                      <span className="text-xs font-black uppercase tracking-widest text-warning/80">
                         Advertencias
                       </span>
                     </div>
@@ -434,7 +440,7 @@ const SmartSidebar = React.memo(function SmartSidebar({
                       <span className="text-lg font-black text-warning leading-none">
                         {auditCounts.totalWarnings}
                       </span>
-                      <span className="text-[8px] text-muted-foreground/60">
+                      <span className="text-xs text-muted-foreground/70">
                         Revision de parametros sugerida
                       </span>
                     </div>
@@ -444,6 +450,8 @@ const SmartSidebar = React.memo(function SmartSidebar({
                 {/* Validations OK */}
                 <button type="button"
                   onClick={() => setActiveAuditFilter(prev => prev === 'INFO_SUCCESS' ? 'all' : 'INFO_SUCCESS')}
+                  aria-pressed={activeAuditFilter === 'INFO_SUCCESS'}
+                  aria-label={`Filtrar por validaciones correctas. ${auditCounts.totalOk} encontradas.`}
                   className={cn(
                     'w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-left transition-all',
                     auditCounts.totalOk > 0
@@ -456,11 +464,11 @@ const SmartSidebar = React.memo(function SmartSidebar({
                     'w-7 h-7 rounded-lg flex items-center justify-center shrink-0',
                     auditCounts.totalOk > 0 ? 'bg-primary/15' : 'bg-muted/50'
                   )}>
-                    <CheckCircle2 className={cn('w-3.5 h-3.5', auditCounts.totalOk > 0 ? 'text-primary' : 'text-muted-foreground/40')} />
+                    <CheckCircle2 className={cn('w-3.5 h-3.5', auditCounts.totalOk > 0 ? 'text-primary' : 'text-muted-foreground/70')} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-black uppercase tracking-widest text-primary/80">
+                      <span className="text-xs font-black uppercase tracking-widest text-primary/80">
                         Validaciones OK
                       </span>
                     </div>
@@ -468,7 +476,7 @@ const SmartSidebar = React.memo(function SmartSidebar({
                       <span className="text-lg font-black text-primary leading-none">
                         {auditCounts.totalOk}
                       </span>
-                      <span className="text-[8px] text-muted-foreground/60">
+                      <span className="text-xs text-muted-foreground/70">
                         Integridad confirmada
                       </span>
                     </div>
@@ -480,20 +488,15 @@ const SmartSidebar = React.memo(function SmartSidebar({
               {healthPercent !== undefined && (
                 <div className="px-1">
                   <div className="flex justify-between items-center mb-1">
-                    <span className="text-[8px] font-bold uppercase tracking-widest text-muted-foreground/50">Salud</span>
-                    <span className="text-[9px] font-black font-mono text-primary">{healthPercent}%</span>
+                    <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground/70">Salud</span>
+                    <span className="text-xs font-black font-mono text-primary">{healthPercent}%</span>
                   </div>
-                  <div className="h-1.5 rounded-full bg-muted/50 overflow-hidden">
-                    <div
-                      className={cn(
-                        'h-full rounded-full transition-all duration-500',
-                        healthPercent >= 80 ? 'bg-gradient-to-r from-success to-cyan-500' :
-                        healthPercent >= 50 ? 'bg-gradient-to-r from-warning to-warning' :
-                        'bg-gradient-to-r from-rose-500 to-destructive'
-                      )}
-                      style={{ width: `${healthPercent}%` }}
-                    />
-                  </div>
+                  {/* G2-P1: Migrado a <Progress> shadcn — role="progressbar" + aria-valuenow built-in. */}
+                  <Progress
+                    value={healthPercent}
+                    className="h-1.5"
+                    aria-label="Porcentaje de salud de la ficha"
+                  />
                 </div>
               )}
 
@@ -504,10 +507,10 @@ const SmartSidebar = React.memo(function SmartSidebar({
                 <div className="space-y-1">
                   <div className="flex items-center gap-1.5 px-1 mb-1">
                     <AlertTriangle className="w-3 h-3 text-warning" />
-                    <span className="text-[8px] font-black uppercase tracking-widest text-muted-foreground/70">
+                    <span className="text-xs font-black uppercase tracking-widest text-muted-foreground/70">
                       Flags por Fila
                     </span>
-                    <Badge variant="outline" className="text-[7px] font-bold px-1 py-0 rounded-full bg-destructive/10 text-destructive border-destructive/20 ml-auto">
+                    <Badge variant="outline" className="text-xs font-bold px-1 py-0 rounded-full bg-destructive/10 text-destructive border-destructive/20 ml-auto">
                       {filteredFlags.length}
                     </Badge>
                   </div>
@@ -522,7 +525,7 @@ const SmartSidebar = React.memo(function SmartSidebar({
                       )}
                     >
                       <div className="flex items-center justify-between gap-1">
-                        <span className="text-[10px] font-bold text-foreground/80 truncate">
+                        <span className="text-xs font-bold text-foreground/80 truncate">
                           {group.rowId}
                         </span>
                         <div className="flex items-center gap-1 shrink-0">
@@ -534,8 +537,8 @@ const SmartSidebar = React.memo(function SmartSidebar({
                       {/* Show first error message */}
                       {group.errors[0] && (
                         <p className={cn(
-                          'text-[8px] mt-0.5 leading-tight truncate',
-                          group.highestSeverity === 'CRITICAL' ? 'text-destructive/60' : 'text-muted-foreground/50'
+                          'text-xs mt-0.5 leading-tight truncate',
+                          group.highestSeverity === 'CRITICAL' ? 'text-destructive/70' : 'text-muted-foreground/70'
                         )}>
                           {group.errors[0].message}
                         </p>
@@ -547,7 +550,7 @@ const SmartSidebar = React.memo(function SmartSidebar({
                             const config = ERROR_CODE_CONFIG[code];
                             if (!config) return null;
                             return (
-                              <Badge key={code} className={cn('text-[7px] font-bold px-1 py-0 rounded border', config.color)}>
+                              <Badge key={code} className={cn('text-xs font-bold px-1 py-0 rounded border', config.color)}>
                                 {config.label}
                               </Badge>
                             );
@@ -564,10 +567,10 @@ const SmartSidebar = React.memo(function SmartSidebar({
                 <div className="space-y-1">
                   <div className="flex items-center gap-1.5 px-1 mb-1">
                     <ShieldCheck className="w-3 h-3 text-primary" />
-                    <span className="text-[8px] font-black uppercase tracking-widest text-muted-foreground/70">
+                    <span className="text-xs font-black uppercase tracking-widest text-muted-foreground/70">
                       Cumplimiento
                     </span>
-                    <Badge variant="outline" className="text-[7px] font-bold px-1 py-0 rounded-full bg-primary/10 text-primary border-primary/20 ml-auto">
+                    <Badge variant="outline" className="text-xs font-bold px-1 py-0 rounded-full bg-primary/10 text-primary border-primary/20 ml-auto">
                       {filteredHealth.length}
                     </Badge>
                   </div>
@@ -582,11 +585,11 @@ const SmartSidebar = React.memo(function SmartSidebar({
                       )}
                     >
                       <div className="flex items-center justify-between gap-1">
-                        <span className="text-[9px] font-bold text-foreground/80 truncate">
+                        <span className="text-xs font-bold text-foreground/80 truncate">
                           {v.title}
                         </span>
                         <Badge variant="outline" className={cn(
-                          'text-[7px] font-bold px-1 py-0 rounded-full shrink-0',
+                          'text-xs font-bold px-1 py-0 rounded-full shrink-0',
                           v.type === 'CRITICAL' ? 'bg-destructive/15 text-destructive border-destructive/25' :
                           v.type === 'WARNING' ? 'bg-warning/15 text-warning border-warning/25' :
                           'bg-primary/15 text-primary border-primary/25'
@@ -594,11 +597,11 @@ const SmartSidebar = React.memo(function SmartSidebar({
                           {v.type === 'CRITICAL' ? 'Err' : v.type === 'WARNING' ? 'Adv' : 'OK'}
                         </Badge>
                       </div>
-                      <p className="text-[8px] text-muted-foreground/50 mt-0.5 leading-tight line-clamp-2">
+                      <p className="text-xs text-muted-foreground/70 mt-0.5 leading-tight line-clamp-2">
                         {v.message}
                       </p>
                       {v.category && (
-                        <Badge variant="outline" className="text-[7px] font-bold px-1 py-0 rounded mt-1 bg-muted/30 text-muted-foreground/60 border-muted/30">
+                        <Badge variant="outline" className="text-xs font-bold px-1 py-0 rounded mt-1 bg-muted/30 text-muted-foreground/70 border-muted/30">
                           {v.category}
                         </Badge>
                       )}
@@ -614,7 +617,7 @@ const SmartSidebar = React.memo(function SmartSidebar({
                   <div className="space-y-1">
                     <div className="flex items-center gap-1.5 px-1 mb-1">
                       <Factory className="w-3 h-3 text-muted-foreground" />
-                      <span className="text-[8px] font-black uppercase tracking-widest text-muted-foreground/70">
+                      <span className="text-xs font-black uppercase tracking-widest text-muted-foreground/70">
                         Simulacion SVG
                       </span>
                     </div>
@@ -626,8 +629,8 @@ const SmartSidebar = React.memo(function SmartSidebar({
                       return (
                         <div key={phase.id}>
                           <div className={cn(
-                            'px-1.5 py-0.5 rounded text-[7px] font-bold uppercase tracking-widest',
-                            phaseHasErrors ? 'text-rose-600 bg-rose-500/5' : 'text-muted-foreground/40'
+                            'px-1.5 py-0.5 rounded text-xs font-bold uppercase tracking-widest',
+                            phaseHasErrors ? 'text-rose-600 bg-rose-500/5' : 'text-muted-foreground/70'
                           )}>
                             {PHASE_LABELS[phase.id] || phase.id}
                           </div>
@@ -647,13 +650,13 @@ const SmartSidebar = React.memo(function SmartSidebar({
                                     <AlertTriangle className="w-3 h-3 text-rose-500 shrink-0" />
                                   )}
                                   <span className={cn(
-                                    'text-[9px] font-semibold truncate',
-                                    !isValid ? 'text-rose-700 dark:text-rose-300' : 'text-foreground/50'
+                                    'text-xs font-semibold truncate',
+                                    !isValid ? 'text-rose-700 dark:text-rose-300' : 'text-foreground/70'
                                   )}>
                                     {node.shortLabel}
                                   </span>
                                   {!isValid && result.reason && (
-                                    <span className="text-[7px] text-rose-500/50 truncate ml-auto">
+                                    <span className="text-xs text-rose-500/50 truncate ml-auto">
                                       {result.reason}
                                     </span>
                                   )}
@@ -671,8 +674,8 @@ const SmartSidebar = React.memo(function SmartSidebar({
               {/* Empty state when no data */}
               {!hasRealAudit && !auditResults && (
                 <div className="px-2 py-6 text-center">
-                  <ShieldCheck className="w-8 h-8 mx-auto text-muted-foreground/20 mb-2" />
-                  <p className="text-[9px] text-muted-foreground/40 font-semibold">
+                  <ShieldCheck className="w-8 h-8 mx-auto text-muted-foreground/70 mb-2" />
+                  <p className="text-xs text-muted-foreground/70 font-semibold">
                     Ejecute el motor de calculo o la simulacion para ver resultados de auditoria
                   </p>
                 </div>
@@ -694,14 +697,14 @@ const SmartSidebar = React.memo(function SmartSidebar({
                     <Badge
                       variant="outline"
                       className={cn(
-                        'text-[7px] font-black uppercase tracking-widest px-1.5 py-0 border',
+                        'text-xs font-black uppercase tracking-widest px-1.5 py-0 border',
                         PHASE_COLORS[phaseId] || PHASE_COLORS.input
                       )}
                     >
                       {PHASE_LABELS[phaseId] || phaseId}
                     </Badge>
                     {completion && (
-                      <span className="text-[8px] font-mono text-muted-foreground/50">
+                      <span className="text-xs font-mono text-muted-foreground/70">
                         {completion.done}/{completion.total}
                       </span>
                     )}
@@ -732,15 +735,15 @@ const SmartSidebar = React.memo(function SmartSidebar({
                           )}>
                             <IconComp className={cn(
                               'w-3.5 h-3.5',
-                              isDone ? 'text-primary' : isActive ? node.tailwindColor : 'text-muted-foreground/50'
+                              isDone ? 'text-primary' : isActive ? node.tailwindColor : 'text-muted-foreground/70'
                             )} />
                           </div>
                           <div className="flex-1 min-w-0">
                             <span className={cn(
-                              'text-[11px] font-bold leading-tight block truncate',
+                              'text-xs font-bold leading-tight block truncate',
                               isActive && 'text-foreground',
                               !isActive && isDone && 'text-foreground/70',
-                              !isActive && !isDone && 'text-muted-foreground/60'
+                              !isActive && !isDone && 'text-muted-foreground/70'
                             )}>
                               {node.shortLabel}
                             </span>

@@ -24,11 +24,12 @@ import {
 } from 'recharts';
 import { cn } from '@/lib/utils';
 
+import { useTranslations } from 'next-intl';
 const ThemedTooltip = ({ active, payload, label }: any) => {
   if (!active || !payload?.length) return null;
   return (
     <div className="rounded-xl border border-border/50 bg-popover/95 backdrop-blur-xl p-3 shadow-xl">
-      {label && <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1.5">{label}</p>}
+      {label && <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1.5">{label}</p>}
       {payload.map((entry: any, i: number) => (
         <div key={i} className="flex items-center gap-2 text-xs">
           <span className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }} />
@@ -636,7 +637,7 @@ function CostSheetNarrative({ data, calculatedValues = {}, calculatedHeader = {}
       : 'bg-muted/10 text-muted-foreground border-muted/20';
     const Icon = status === 'pass' ? CheckCircle2 : status === 'warning' ? AlertTriangle : status === 'fail' ? AlertTriangle : Minus;
     return (
-      <span className={cn("inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border", cls)}>
+      <span className={cn("inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider border", cls)}>
         <Icon className="w-3 h-3" />
         {label}
       </span>
@@ -669,7 +670,7 @@ function CostSheetNarrative({ data, calculatedValues = {}, calculatedHeader = {}
             </div>
             <div>
               <h2 className="text-sm font-black uppercase tracking-tight text-foreground">Informe de Costo</h2>
-              <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-[0.2em]">
+              <p className="text-xs text-muted-foreground uppercase font-bold tracking-[0.2em]">
                 Analisis Integral &bull; {hdr('resolution', 'Res 148/2023')} &bull; {hdr('name', 'Sin producto')}
               </p>
             </div>
@@ -678,7 +679,7 @@ function CostSheetNarrative({ data, calculatedValues = {}, calculatedHeader = {}
             <Button
               size="sm"
               onClick={exportToWord}
-              className="h-9 px-4 text-[10px] font-bold uppercase tracking-widest gap-2 bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl"
+              className="h-11 px-4 text-xs font-bold uppercase tracking-widest gap-2 bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl"
             >
               <Download className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Exportar Word (.docx)</span>
@@ -697,7 +698,7 @@ function CostSheetNarrative({ data, calculatedValues = {}, calculatedHeader = {}
             { label: 'Cumplimiento', value: `${compliancePct}%`, color: compliancePct >= 80 ? 'text-primary dark:text-blue-400' : 'text-warning dark:text-amber-400' },
           ].map(kpi => (
             <div key={kpi.label} className="px-4 py-3 text-center">
-              <div className="text-[8px] font-black uppercase tracking-widest text-muted-foreground/60 mb-0.5">{kpi.label}</div>
+              <div className="text-xs font-black uppercase tracking-widest text-muted-foreground/70 mb-0.5">{kpi.label}</div>
               <div className={cn("text-xs font-black font-mono", kpi.color)}>{kpi.value}</div>
             </div>
           ))}
@@ -708,7 +709,7 @@ function CostSheetNarrative({ data, calculatedValues = {}, calculatedHeader = {}
       <div className="border border-border/60 rounded-2xl overflow-hidden shadow-sm bg-card">
         <div className="flex items-center gap-2 px-4 sm:px-5 py-3 bg-muted/5 border-b border-border/20">
           <Building2 className="w-4 h-4 text-muted-foreground" />
-          <h3 className="text-[11px] font-black uppercase tracking-[0.15em] text-foreground">Datos del Producto</h3>
+          <h3 className="text-xs font-black uppercase tracking-[0.15em] text-foreground">Datos del Producto</h3>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 divide-x divide-y divide-border/10">
           {[
@@ -720,8 +721,8 @@ function CostSheetNarrative({ data, calculatedValues = {}, calculatedHeader = {}
             { l: 'Fecha', v: hdr('date', '—') },
           ].map(item => (
             <div key={item.l} className="px-4 py-2.5">
-              <div className="text-[8px] font-black uppercase tracking-widest text-muted-foreground/50">{item.l}</div>
-              <div className="text-[11px] font-bold text-foreground truncate">{item.v}</div>
+              <div className="text-xs font-black uppercase tracking-widest text-muted-foreground/70">{item.l}</div>
+              <div className="text-xs font-bold text-foreground truncate">{item.v}</div>
             </div>
           ))}
         </div>
@@ -733,7 +734,7 @@ function CostSheetNarrative({ data, calculatedValues = {}, calculatedHeader = {}
         <div className="border border-border/60 rounded-2xl overflow-hidden shadow-sm bg-card">
           <div className="flex items-center gap-2 px-4 sm:px-5 py-3 border-b border-border/20">
             <PieIcon className="w-4 h-4 text-primary" />
-            <h3 className="text-[11px] font-black uppercase tracking-[0.15em]">Estructura de Costos Directos</h3>
+            <h3 className="text-xs font-black uppercase tracking-[0.15em]">Estructura de Costos Directos</h3>
           </div>
           <div className="p-4">
             {costBreakdown.length > 0 ? (
@@ -741,14 +742,14 @@ function CostSheetNarrative({ data, calculatedValues = {}, calculatedHeader = {}
                 <SafePieChart data={costBreakdown} colors={costBreakdown.map(d => d.color)} height={200} innerRadius={45} outerRadius={75} />
                 <div className="space-y-2 mt-4">
                   {costBreakdown.map((item, idx) => (
-                    <div key={idx} className="flex items-center justify-between text-[11px]">
+                    <div key={idx} className="flex items-center justify-between text-xs">
                       <div className="flex items-center gap-2">
                         <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.color }} />
                         <span className="font-bold text-muted-foreground">{item.name}</span>
                       </div>
                       <div className="flex items-center gap-3">
                         <span className="font-black font-mono">{fmt(item.value)}</span>
-                        <span className="text-muted-foreground/60 w-12 text-right">{pct(item.value, metrics.s5)}%</span>
+                        <span className="text-muted-foreground/70 w-12 text-right">{pct(item.value, metrics.s5)}%</span>
                       </div>
                     </div>
                   ))}
@@ -767,7 +768,7 @@ function CostSheetNarrative({ data, calculatedValues = {}, calculatedHeader = {}
         <div className="border border-border/60 rounded-2xl overflow-hidden shadow-sm bg-card">
           <div className="flex items-center gap-2 px-4 sm:px-5 py-3 border-b border-border/20">
             <BarChart3 className="w-4 h-4 text-primary" />
-            <h3 className="text-[11px] font-black uppercase tracking-[0.15em]">Acumulacion de Costos y Gastos</h3>
+            <h3 className="text-xs font-black uppercase tracking-[0.15em]">Acumulacion de Costos y Gastos</h3>
           </div>
           <div className="p-4">
             {waterfallData.length > 1 ? (
@@ -784,7 +785,7 @@ function CostSheetNarrative({ data, calculatedValues = {}, calculatedHeader = {}
                     </ComposedChart>
                   </ResponsiveContainer>
                 </div>
-                <p className="text-[10px] text-muted-foreground italic mt-3 leading-relaxed">
+                <p className="text-xs text-muted-foreground italic mt-3 leading-relaxed">
                   La curva muestra como se acumulan los costos desde la materia prima hasta el precio final de venta.
                   {metrics.utilidad > 0 && ` La utilidad de ${fmt(metrics.utilidad)} representa el ${metrics.margenPct.toFixed(1)}% sobre el costo total.`}
                 </p>
@@ -803,12 +804,12 @@ function CostSheetNarrative({ data, calculatedValues = {}, calculatedHeader = {}
       <div className="border border-border/60 rounded-2xl overflow-hidden shadow-sm bg-card">
         <div className="flex items-center gap-2 px-4 sm:px-5 py-3 bg-violet-500/5 border-b border-border/20">
           <Layers className="w-4 h-4 text-violet-500" />
-          <h3 className="text-[11px] font-black uppercase tracking-[0.15em]">Analisis por Secciones</h3>
+          <h3 className="text-xs font-black uppercase tracking-[0.15em]">Analisis por Secciones</h3>
         </div>
         <div className="overflow-x-auto">
           <div className="min-w-[700px]">
             {/* Header */}
-            <div className="grid grid-cols-12 gap-0 px-4 py-2 bg-muted/50 text-[8px] font-black uppercase tracking-widest text-muted-foreground border-b border-border/20">
+            <div className="grid grid-cols-12 gap-0 px-4 py-2 bg-muted/50 text-xs font-black uppercase tracking-widest text-muted-foreground border-b border-border/20">
               <div className="col-span-1 text-center">No.</div>
               <div className="col-span-4">Seccion</div>
               <div className="col-span-2 text-right">Total</div>
@@ -824,18 +825,18 @@ function CostSheetNarrative({ data, calculatedValues = {}, calculatedHeader = {}
                   "grid grid-cols-12 gap-0 px-4 py-2.5 items-center border-b border-border/10 hover:bg-primary/3 transition-colors",
                   idx % 2 === 0 && "bg-muted/20"
                 )}>
-                  <div className="col-span-1 text-center text-[11px] font-black text-muted-foreground/50">{idx + 1}</div>
-                  <div className="col-span-4 text-[11px] font-bold text-foreground truncate">{sec.label}</div>
-                  <div className="col-span-2 text-right text-[11px] font-black font-mono text-foreground">{fmt(sec.total)}</div>
+                  <div className="col-span-1 text-center text-xs font-black text-muted-foreground/70">{idx + 1}</div>
+                  <div className="col-span-4 text-xs font-bold text-foreground truncate">{sec.label}</div>
+                  <div className="col-span-2 text-right text-xs font-black font-mono text-foreground">{fmt(sec.total)}</div>
                   <div className="col-span-2">
                     <div className="flex items-center gap-2">
                       <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
                         <div className="h-full rounded-full" style={{ width: `${barWidth}%`, backgroundColor: SECTION_COLORS[idx % SECTION_COLORS.length] }} />
                       </div>
-                      <span className="text-[10px] font-bold text-muted-foreground w-10 text-right">{sec.percentOfCosto.toFixed(1)}%</span>
+                      <span className="text-xs font-bold text-muted-foreground w-10 text-right">{sec.percentOfCosto.toFixed(1)}%</span>
                     </div>
                   </div>
-                  <div className="col-span-1 text-center text-[10px] text-muted-foreground font-mono">{sec.rows}</div>
+                  <div className="col-span-1 text-center text-xs text-muted-foreground font-mono">{sec.rows}</div>
                   <div className="col-span-2 flex justify-center">
                     <StatusBadge status={sec.status} label={sec.status === 'complete' ? 'OK' : sec.status === 'partial' ? 'Parcial' : 'Vacio'} />
                   </div>
@@ -852,7 +853,7 @@ function CostSheetNarrative({ data, calculatedValues = {}, calculatedHeader = {}
         <div className="border border-border/60 rounded-2xl overflow-hidden shadow-sm bg-card">
           <div className="flex items-center gap-2 px-4 sm:px-5 py-3 border-b border-border/20">
             <Activity className="w-4 h-4 text-warning" />
-            <h3 className="text-[11px] font-black uppercase tracking-[0.15em]">Costos Directos vs Gastos</h3>
+            <h3 className="text-xs font-black uppercase tracking-[0.15em]">Costos Directos vs Gastos</h3>
           </div>
           <div className="p-4">
             <div className="h-[220px]">
@@ -878,7 +879,7 @@ function CostSheetNarrative({ data, calculatedValues = {}, calculatedHeader = {}
                 </BarChart>
               </ResponsiveContainer>
             </div>
-            <div className="flex items-center justify-center gap-6 mt-3 text-[10px]">
+            <div className="flex items-center justify-center gap-6 mt-3 text-xs">
               <div className="flex items-center gap-1.5">
                 <div className="w-3 h-3 rounded bg-indigo-500" />
                 <span className="font-bold text-muted-foreground">Costo Directo</span>
@@ -899,7 +900,7 @@ function CostSheetNarrative({ data, calculatedValues = {}, calculatedHeader = {}
         <div className="border border-border/60 rounded-2xl overflow-hidden shadow-sm bg-card">
           <div className="flex items-center gap-2 px-4 sm:px-5 py-3 border-b border-border/20">
             <Target className="w-4 h-4 text-rose-500" />
-            <h3 className="text-[11px] font-black uppercase tracking-[0.15em]">Desglose de Gastos (S6-S10)</h3>
+            <h3 className="text-xs font-black uppercase tracking-[0.15em]">Desglose de Gastos (S6-S10)</h3>
           </div>
           <div className="p-4">
             {expensesBreakdown.length > 0 ? (
@@ -907,7 +908,7 @@ function CostSheetNarrative({ data, calculatedValues = {}, calculatedHeader = {}
                 <SafePieChart data={expensesBreakdown} colors={expensesBreakdown.map(d => d.color)} height={180} innerRadius={40} outerRadius={70} />
                 <div className="grid grid-cols-1 gap-1.5 mt-3">
                   {expensesBreakdown.map((item, idx) => (
-                    <div key={idx} className="flex items-center justify-between text-[10px] px-1">
+                    <div key={idx} className="flex items-center justify-between text-xs px-1">
                       <div className="flex items-center gap-2">
                         <div className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color }} />
                         <span className="font-bold text-muted-foreground truncate">{item.name}</span>
@@ -931,7 +932,7 @@ function CostSheetNarrative({ data, calculatedValues = {}, calculatedHeader = {}
       <div className="border border-border/60 rounded-2xl overflow-hidden shadow-sm bg-card">
         <div className="flex items-center gap-2 px-4 sm:px-5 py-3 bg-cyan-500/5 border-b border-border/20">
           <Package className="w-4 h-4 text-cyan-500" />
-          <h3 className="text-[11px] font-black uppercase tracking-[0.15em]">Estado de Anexos</h3>
+          <h3 className="text-xs font-black uppercase tracking-[0.15em]">Estado de Anexos</h3>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 divide-y sm:divide-y-0 sm:divide-x divide-border/20">
           {annexStatus.map((annex, idx) => (
@@ -944,9 +945,9 @@ function CostSheetNarrative({ data, calculatedValues = {}, calculatedHeader = {}
                   ? <CheckCircle2 className="w-5 h-5 text-success" />
                   : <AlertTriangle className="w-5 h-5 text-destructive" />}
               </div>
-              <div className="text-[11px] font-black text-foreground">Anexo {annex.id}</div>
-              <div className="text-[9px] text-muted-foreground truncate mt-0.5">{annex.title}</div>
-              <div className="text-[10px] font-bold mt-1">
+              <div className="text-xs font-black text-foreground">Anexo {annex.id}</div>
+              <div className="text-xs text-muted-foreground truncate mt-0.5">{annex.title}</div>
+              <div className="text-xs font-bold mt-1">
                 {annex.hasData
                   ? <span className="text-foreground">{annex.rowCount} registros</span>
                   : <span className="text-destructive">Sin datos</span>}
@@ -961,10 +962,10 @@ function CostSheetNarrative({ data, calculatedValues = {}, calculatedHeader = {}
         <div className="flex items-center justify-between px-4 sm:px-5 py-3 bg-primary/5 border-b border-border/20">
           <div className="flex items-center gap-2">
             <Shield className="w-4 h-4 text-primary" />
-            <h3 className="text-[11px] font-black uppercase tracking-[0.15em]">Comprobacion Res 148/2023</h3>
+            <h3 className="text-xs font-black uppercase tracking-[0.15em]">Comprobacion Res 148/2023</h3>
           </div>
           <div className={cn(
-            "px-3 py-1 rounded-full text-[10px] font-black",
+            "px-3 py-1 rounded-full text-xs font-black",
             compliancePct >= 80 ? "bg-success/10 text-emerald-700 dark:text-emerald-400"
               : compliancePct >= 50 ? "bg-warning/10 text-amber-700 dark:text-amber-400"
               : "bg-destructive/10 text-destructive dark:text-red-400"
@@ -980,16 +981,16 @@ function CostSheetNarrative({ data, calculatedValues = {}, calculatedHeader = {}
                 idx % 2 === 0 && "bg-muted/20"
               )}>
                 <div className="col-span-2">
-                  <span className="text-[9px] font-mono font-bold text-muted-foreground/60 bg-muted px-1.5 py-0.5 rounded">{item.rule}</span>
+                  <span className="text-xs font-mono font-bold text-muted-foreground/70 bg-muted px-1.5 py-0.5 rounded">{item.rule}</span>
                 </div>
-                <div className="col-span-4 text-[11px] font-bold text-foreground">{item.description}</div>
+                <div className="col-span-4 text-xs font-bold text-foreground">{item.description}</div>
                 <div className="col-span-2 flex justify-center pt-0.5">
                   <StatusBadge
                     status={item.status}
                     label={item.status === 'pass' ? 'OK' : item.status === 'warning' ? 'Parcial' : item.status === 'fail' ? 'No' : 'N/A'}
                   />
                 </div>
-                <div className="col-span-4 text-[10px] text-muted-foreground leading-relaxed">{item.detail}</div>
+                <div className="col-span-4 text-xs text-muted-foreground leading-relaxed">{item.detail}</div>
               </div>
             ))}
           </div>
@@ -1006,7 +1007,7 @@ function CostSheetNarrative({ data, calculatedValues = {}, calculatedHeader = {}
                 style={{ width: `${compliancePct}%` }}
               />
             </div>
-            <span className="text-[10px] font-black text-muted-foreground">{complianceScore}/{complianceTotal} requisitos</span>
+            <span className="text-xs font-black text-muted-foreground">{complianceScore}/{complianceTotal} requisitos</span>
           </div>
         </div>
       </div>
@@ -1015,7 +1016,7 @@ function CostSheetNarrative({ data, calculatedValues = {}, calculatedHeader = {}
       <div className="border border-border/60 rounded-2xl overflow-hidden shadow-sm bg-card">
         <div className="flex items-center gap-2 px-4 sm:px-5 py-3 bg-primary/5 border-b border-border/20">
           <DollarSign className="w-4 h-4 text-primary" />
-          <h3 className="text-[11px] font-black uppercase tracking-[0.15em]">Analisis de Precio y Margen</h3>
+          <h3 className="text-xs font-black uppercase tracking-[0.15em]">Analisis de Precio y Margen</h3>
         </div>
         <div className="p-4">
           {/* Price decomposition chart */}
@@ -1057,8 +1058,8 @@ function CostSheetNarrative({ data, calculatedValues = {}, calculatedHeader = {}
             ].map(m => (
               <div key={m.label} className="p-3 rounded-xl bg-muted/30 border border-border/20">
                 <div className="flex items-center gap-1.5 mb-1">
-                  <m.icon className="w-3.5 h-3.5 text-muted-foreground/50" />
-                  <span className="text-[8px] font-black uppercase tracking-widest text-muted-foreground/60">{m.label}</span>
+                  <m.icon className="w-3.5 h-3.5 text-muted-foreground/70" />
+                  <span className="text-xs font-black uppercase tracking-widest text-muted-foreground/70">{m.label}</span>
                 </div>
                 <div className={cn("text-sm font-black font-mono", m.color)}>{m.value}</div>
               </div>
@@ -1071,7 +1072,7 @@ function CostSheetNarrative({ data, calculatedValues = {}, calculatedHeader = {}
       <div className="border border-border/60 rounded-2xl overflow-hidden shadow-sm bg-card">
         <div className="flex items-center gap-2 px-4 sm:px-5 py-3 bg-warning/5 border-b border-border/20">
           <Lightbulb className="w-4 h-4 text-warning" />
-          <h3 className="text-[11px] font-black uppercase tracking-[0.15em]">Hallazgos y Recomendaciones</h3>
+          <h3 className="text-xs font-black uppercase tracking-[0.15em]">Hallazgos y Recomendaciones</h3>
         </div>
         <div className="p-4 space-y-2">
           {insights.length > 0 ? insights.map((ins, idx) => (
@@ -1111,15 +1112,15 @@ function CostSheetNarrative({ data, calculatedValues = {}, calculatedHeader = {}
           </p>
           <div className="flex items-center gap-6 pt-2">
             <div>
-              <div className="text-[10px] font-black uppercase text-muted-foreground/60">Cumplimiento</div>
+              <div className="text-xs font-black uppercase text-muted-foreground/70">Cumplimiento</div>
               <div className={cn("text-xl font-black", compliancePct >= 80 ? "text-foreground" : "text-warning")}>{compliancePct}%</div>
             </div>
             <div>
-              <div className="text-[10px] font-black uppercase text-muted-foreground/60">Precio Final</div>
+              <div className="text-xs font-black uppercase text-muted-foreground/70">Precio Final</div>
               <div className="text-xl font-black">{fmt(metrics.precioFinal)}</div>
             </div>
             <div>
-              <div className="text-[10px] font-black uppercase text-muted-foreground/60">Margen</div>
+              <div className="text-xs font-black uppercase text-muted-foreground/70">Margen</div>
               <div className={cn("text-xl font-black", metrics.margenPct >= 30 ? "text-foreground" : "text-warning")}>{metrics.margenPct.toFixed(1)}%</div>
             </div>
           </div>

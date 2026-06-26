@@ -44,8 +44,8 @@ export async function prefetchDashboardData(
         return {
           kpis: {
             gross_sales: kpis.total_sales || 0,
-            cost_of_goods: kpis.total_cost,
-            profit: kpis.total_profit,
+            cost_of_goods: kpis.total_cost || 0,
+            profit: kpis.total_profit || 0,
           } as DashboardKPIs,
           summary: {
             total_billed: kpis.total_sales || 0,
@@ -77,7 +77,7 @@ export function useSuspenseDashboardData(
 
       if (!isAdmin && !isValidUuid) {
         return {
-          kpis: { gross_sales: 0, cost_of_goods: null, profit: null } as DashboardKPIs,
+          kpis: { gross_sales: 0, cost_of_goods: 0, profit: 0 } as DashboardKPIs,
           summary: { total_billed: 0, transaction_count: 0, average_ticket: 0, total_cash: 0, total_transfer: 0 } as SalesSummary
         };
       }
@@ -102,8 +102,8 @@ export function useSuspenseDashboardData(
         return {
           kpis: {
             gross_sales: kpis.total_sales || 0,
-            cost_of_goods: kpis.total_cost,
-            profit: kpis.total_profit,
+            cost_of_goods: kpis.total_cost || 0,
+            profit: kpis.total_profit || 0,
           } as DashboardKPIs,
           summary: {
             total_billed: kpis.total_sales || 0,
@@ -115,10 +115,12 @@ export function useSuspenseDashboardData(
         };
       }
       return {
-        kpis: { gross_sales: 0, cost_of_goods: null, profit: null } as DashboardKPIs,
+        kpis: { gross_sales: 0, cost_of_goods: 0, profit: 0 } as DashboardKPIs,
         summary: { total_billed: 0, transaction_count: 0, average_ticket: 0, total_cash: 0, total_transfer: 0 } as SalesSummary
       };
     },
+    // FIX: añadir staleTime para consistencia con useDashboardData
+    staleTime: 60 * 1000,
   });
 }
 
@@ -157,8 +159,8 @@ export function useDashboardData(
         return {
           kpis: {
             gross_sales: kpis.total_sales || 0,
-            cost_of_goods: kpis.total_cost,
-            profit: kpis.total_profit,
+            cost_of_goods: kpis.total_cost || 0,
+            profit: kpis.total_profit || 0,
           } as DashboardKPIs,
           summary: {
             total_billed: kpis.total_sales || 0,
@@ -172,5 +174,6 @@ export function useDashboardData(
       return null;
     },
     enabled: isAdmin || !!storeId,
+    staleTime: 60 * 1000,
   });
 }

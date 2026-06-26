@@ -574,6 +574,53 @@
       "seoOgDescription": "Catálogo de productos — {name}",
       "seoNotFound": "Tienda no encontrada",
       "seoCatalogOf": "Catálogo de {name}"
+    },
+    "modalidadProduccion": "Producción",
+    "modalidadServicios": "Servicios",
+    "modalidadComercializacion": "Comercialización",
+    "modalidadLabel": "Modalidad",
+    "formatoPdfLabel": "Formato PDF",
+    "plantillaFcActiva": "Plantilla FC activa",
+    "confirmTitleDeactivate": "Desactivar Tienda",
+    "confirmTitleDelete": "Eliminar Tienda",
+    "confirmTitleReset": "Reiniciar Tienda",
+    "confirmDescDeactivate": "Pausa temporal — preserva configuración y usuarios",
+    "confirmDescDelete": "Baja permanente con cleanup de memberships",
+    "confirmDescReset": "Borra todos los datos operativos — preserva configuración y usuarios",
+    "confirmNameLabel": "Nombre de la tienda",
+    "confirmLabelDeactivate": "Desactivar Tienda",
+    "confirmLabelDelete": "Eliminar Definitivamente",
+    "confirmLabelReset": "Reiniciar Tienda",
+    "selectAll": "Todas",
+    "selectAllTitle": "Seleccionar todas",
+    "clearSelection": "Limpiar selección",
+    "bulkDeleteTitle": "Eliminar {count} tiendas",
+    "bulkDeactivateTitle": "Desactivar {count} tiendas",
+    "bulkConfirmNameLabel": "Escribe BULK para confirmar",
+    "bulkConfirmLabelDelete": "Eliminar Definitivamente",
+    "bulkConfirmLabelDeactivate": "Desactivar Tiendas",
+    "keepCatalogTitle": "Mantener catálogo de productos",
+    "removeLogo": "Quitar logo",
+    "removeSignature": "Quitar firma",
+    "removeStamp": "Quitar sello",
+    "compare": {
+      "ariaLabel": "Comparar tiendas",
+      "productsLabel": "Productos",
+      "healthLabel": "Health",
+      "emptyMessage": "Sin datos"
+    },
+    "onboarding": {
+      "ariaLabel": "Asistente de creación de tienda"
+    },
+    "createQuick": {
+      "ariaLabel": "Crear nueva tienda rápidamente"
+    },
+    "team": {
+      "removeTitle": "Remover usuario de la tienda",
+      "removeConfirmLabel": "Remover",
+      "removeConfirmNameLabel": "Nombre del usuario",
+      "removeWarningPrefix": "Remover",
+      "removeWarningBody": "de esta tienda no elimina al usuario"
     }
   },
   "dashboard": {
@@ -599,6 +646,46 @@
       "units": "uds",
       "viewAllAlerts": "Ver todas las alertas",
       "loadingVisualization": "Cargando Visualización..."
+    },
+    "storeDashboard": {
+      "occ": {
+        "title": "Centro de Comando Operativo",
+        "subtitle": "Monitoreo en tiempo real de operaciones",
+        "noActivity": "Sin actividad reciente",
+        "quickActions": "Acciones rápidas",
+        "lastUpdate": "Última actualización",
+        "live": "En vivo"
+      },
+      "recentCostSheets": {
+        "title": "Fichas de Costo Recientes",
+        "empty": "No hay fichas de costo",
+        "viewAll": "Ver todas",
+        "costTotal": "Costo Total",
+        "priceSale": "Precio Venta"
+      },
+      "executiveKpis": {
+        "totalSales": "Ingresos Totales",
+        "costOfSales": "Costo de Ventas",
+        "netProfit": "Utilidad Neta",
+        "kpiLabel": "Indicadores clave de rendimiento"
+      },
+      "ring": {
+        "margin": "Margen",
+        "sales": "Ventas",
+        "costs": "Costos",
+        "profit": "Ganancia"
+      },
+      "groupHub": {
+        "notFound": "Grupo no encontrado",
+        "goDashboard": "Ir al Dashboard",
+        "directAccess": "Accesos directos",
+        "categories": "Categorías"
+      },
+      "sectionHub": {
+        "notFound": "Sección no encontrada",
+        "goDashboard": "Ir al Dashboard"
+      },
+      "noData": "Sin datos"
     }
   },
   "apiErrors": {
@@ -623,7 +710,7 @@
     "storeCreateEmptyResponse": "Error al crear tienda: respuesta vacía",
     "storeUpdateEmptyResponse": "Error al actualizar tienda: respuesta vacía",
     "storePlanRequired": "El plan del usuario es requerido para gestionar tiendas",
-    "storeAccessDenied": "No tienes permisos para acceder a esta tienda",
+    "storeAccessDenied": "Sin acceso a la tienda especificada",
     "storeResetWarning": "Reinicio de Tienda Programado",
     "storeResetWarningMessage": "La tienda está siendo reiniciada. Todos los datos de ventas, inventario y movimientos serán eliminados. Por favor guarda tu trabajo y recarga la página.",
     "storefrontUpdateEmptyResponse": "Error al actualizar vitrina: respuesta vacía",
@@ -637,11 +724,201 @@
     "bulkImportRlsDenied": "Sin permisos para insertar/actualizar productos",
     "bulkImportConflict": "Conflicto de datos: SKU duplicado",
     "bulkImportFailed": "Error al importar productos",
-    "storeAccessDenied": "Sin acceso a la tienda especificada",
     "transferNotFound": "Transferencia no encontrada o sin acceso",
     "internalError": "Error interno del servidor",
     "aiUnavailable": "El servicio AI no está disponible",
     "invalidJson": "JSON inválido",
     "emptyMessages": "Messages vacío"
+  },
+  "costSheet": {
+    "tabs": {
+      "templates": "Plantillas",
+      "general": "Datos Generales",
+      "structure": "Estructura de Costos",
+      "annexes": "Anexos"
+    },
+    "nav": {
+      "back": "Regresar",
+      "backAria": "Regresar al tablero principal",
+      "exportPdf": "Exportar PDF",
+      "exporting": "Exportando...",
+      "exportPdfAria": "Exportar ficha de costo a PDF",
+      "darian": "Darian",
+      "darianAria": "Abrir asistente Darian AI",
+      "darianTooltip": "Darian AI Expert",
+      "history": "Historial",
+      "historyAria": "Historial de versiones autoguardadas",
+      "historyTitle": "Historial de Autoguardado",
+      "historySubtitle": "Últimas 15 capturas automáticas",
+      "noVersions": "No hay versiones aún",
+      "restore": "Restaurar",
+      "autoCapture": "Captura automática",
+      "view": "Vista",
+      "saved": "Guardado"
+    },
+    "view": {
+      "loadingTablero": "Tablero Principal",
+      "calcError": "Error de Cálculo",
+      "calcPending": "Cálculo Pendiente",
+      "preview": "Vista de Previsualización",
+      "goToEditor": "Ir al Editor (Modo Todo)",
+      "cancelar": "Cancelar",
+      "confirmar": "Confirmar",
+      "annexBadge": "Anexo",
+      "signaturesTitle": "Firmas y Sellos",
+      "backToList": "Volver a Lista"
+    },
+    "header": {
+      "title": "Datos Generales de la Ficha",
+      "productName": "Nombre del Producto",
+      "productNamePlaceholder": "Ej: Pan de agua tradicional",
+      "unit": "Unidad de Medida",
+      "unitPlaceholder": "kg, L, unidad",
+      "resolution": "Resolución",
+      "code": "Código",
+      "amount": "Cantidad",
+      "date": "Fecha",
+      "validity": "Vigencia",
+      "producer": "Productor",
+      "required": "Campo obligatorio",
+      "identification": "Identificación del Producto",
+      "operation": "Parámetros de Operación",
+      "financial": "Financiera",
+      "organization": "Entorno Organizativo",
+      "commercial": "Comercialización",
+      "fields": "campos"
+    },
+    "templates": {
+      "title": "Explorador de Plantillas",
+      "search": "Buscar plantilla...",
+      "empty": "No se encontraron plantillas",
+      "emptyHint": "Intenta ajustar la búsqueda o crea una nueva",
+      "use": "Usar",
+      "preview": "Vista previa",
+      "duplicate": "Duplicar",
+      "delete": "Eliminar",
+      "publish": "Publicar",
+      "confirmDelete": "¿Eliminar esta plantilla?",
+      "confirmDeleteMsg": "Esta acción no se puede deshacer.",
+      "confirmOverwrite": "¿Sobrescribir plantilla existente?",
+      "confirmOverwriteMsg": "Ya existe una plantilla con ese nombre. ¿Deseas reemplazarla?",
+      "deleteSuccess": "Plantilla eliminada",
+      "publishSuccess": "Plantilla publicada",
+      "publishNameLabel": "Nombre de la plantilla",
+      "publishNamePlaceholder": "Mi plantilla personalizada"
+    },
+    "annex": {
+      "title": "Anexo",
+      "addRow": "Agregar fila",
+      "deleteRow": "Eliminar fila",
+      "confirmDeleteRow": "¿Eliminar esta fila?",
+      "empty": "No hay datos en este anexo",
+      "emptyHint": "Agrega una fila para comenzar",
+      "total": "TOTAL",
+      "notFound": "Anexo no encontrado",
+      "notFoundHint": "Volver a la lista de anexos"
+    },
+    "signature": {
+      "title": "Firmas y Sellos",
+      "preparedBy": "Elaborado por",
+      "approvedBy": "Aprobado por",
+      "preparedByName": "Nombre del elaborador",
+      "approvedByName": "Nombre del aprobador",
+      "preparedByPlaceholder": "Nombre y apellidos",
+      "approvedByPlaceholder": "Nombre y apellidos",
+      "uploadSignature": "Subir firma",
+      "uploadStamp": "Subir sello",
+      "removeSignature": "Quitar firma",
+      "removeStamp": "Quitar sello"
+    },
+    "export": {
+      "title": "Exportar Ficha de Costo",
+      "format": "Formato",
+      "resolution148": "Res. 148/2023 (Oficial)",
+      "resolution190": "Res. 190/2021 (Estándar)",
+      "includeAnnexes": "Incluir anexos",
+      "includeSignatures": "Incluir firmas",
+      "cancel": "Cancelar",
+      "confirm": "Exportar",
+      "generating": "Generando PDF..."
+    },
+    "audit": {
+      "title": "Auditoría de Ficha",
+      "health": "Salud de la Ficha",
+      "perfect": "Ficha Impecable",
+      "perfectMsg": "No se encontraron problemas. La ficha está lista para exportar.",
+      "problems": "Problemas encontrados",
+      "critical": "Crítico",
+      "warning": "Advertencia",
+      "info": "Información",
+      "filterAll": "Todos",
+      "empty": "Sin resultados para este filtro"
+    },
+    "quick": {
+      "title": "Generación Rápida",
+      "subtitle": "Calcula precios en segundos",
+      "cost": "Costo",
+      "margin": "Margen (%)",
+      "price": "Precio",
+      "calculate": "Calcular",
+      "invalidNumber": "Valor inválido",
+      "placeholderUm": "kg",
+      "placeholderQuantity": "0",
+      "placeholderCost": "0.00",
+      "placeholderPrice": "Opcional",
+      "emptyRows": "Agrega al menos una fila para comenzar",
+      "rowsCount": "{count} filas"
+    },
+    "massive": {
+      "title": "Generación Masiva",
+      "import": "Importar Excel",
+      "importError": "No se pudo importar el archivo Excel. Verifica el formato.",
+      "progress": "Procesando {current} de {total}",
+      "complete": "Generación completada",
+      "completeMsg": "{count} fichas generadas exitosamente",
+      "cancel": "Cancelar"
+    },
+    "wizard": {
+      "title": "Modo Asistido",
+      "step": "Paso",
+      "of": "de",
+      "next": "Siguiente",
+      "previous": "Anterior",
+      "finish": "Finalizar"
+    },
+    "problems": {
+      "title": "Problemas detectados",
+      "empty": "Sin problemas",
+      "goTo": "Ir al problema",
+      "goToAudit": "Ver en auditoría"
+    },
+    "common": {
+      "save": "Guardar",
+      "cancel": "Cancelar",
+      "delete": "Eliminar",
+      "edit": "Editar",
+      "close": "Cerrar",
+      "confirm": "Confirmar",
+      "loading": "Cargando...",
+      "retry": "Reintentar",
+      "noData": "Sin datos",
+      "error": "Error"
+    },
+    "validation": {
+      "required": "Campo obligatorio",
+      "requiredMark": "*",
+      "optional": "(opcional)",
+      "nameRequired": "El nombre es obligatorio",
+      "codeRequired": "El código es obligatorio",
+      "unitRequired": "La unidad es obligatoria",
+      "quantityRequired": "La cantidad es obligatoria",
+      "quantityInvalid": "Debe ser un número mayor a 0",
+      "costInvalid": "El costo debe ser un número válido",
+      "priceInvalid": "El precio debe ser un número válido",
+      "exchangeRateInvalid": "La tasa debe ser un número mayor a 0",
+      "preparedByRequired": "El elaborador es obligatorio",
+      "approvedByRequired": "El aprobador es obligatorio",
+      "invalidNumber": "Número inválido"
+    }
   }
 }

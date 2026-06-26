@@ -302,7 +302,22 @@ export default function HelpSidebar({ structure, toc, onSelect, activePath, isAc
                           e.preventDefault();
                           const el = document.getElementById(item.id);
                           if (el) {
-                            el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            // Buscar el contenedor scrollable más cercano (main[data-help-scroll]).
+                            // CRÍTICO: si usamos scrollIntoView nativo, el navegador puede hacer scroll
+                            // del documento HTML entero y sacar el Header global del viewport.
+                            // Por eso hacemos scrollTo manual con offset para respetar el sticky header.
+                            const scrollMain = el.closest('main[data-help-scroll]') as HTMLElement | null;
+                            if (scrollMain) {
+                              const mainRect = scrollMain.getBoundingClientRect();
+                              const elRect = el.getBoundingClientRect();
+                              // 100px de offset para que el heading no quede pegado al borde superior
+                              // y para dejar espacio para el sticky header del HelpLayout.
+                              const offset = elRect.top - mainRect.top + scrollMain.scrollTop - 100;
+                              scrollMain.scrollTo({ top: Math.max(0, offset), behavior: 'smooth' });
+                            } else {
+                              // Fallback: scrollIntoView pero solo si no encontramos el contenedor adecuado.
+                              el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            }
                           }
                         }}
                         className={cn(

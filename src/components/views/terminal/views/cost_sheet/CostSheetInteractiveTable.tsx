@@ -36,6 +36,7 @@ import {
 import type { CostSheetInteractiveTableProps, CostSheetRowTableProps } from './cost-sheet-view-shared';
 import { handleImportSectionExcel } from './cost-sheet-view-shared';
 
+import { useTranslations } from 'next-intl';
 /**
  * Renders a single, potentially recursive, row in the cost sheet table.
  */
@@ -65,7 +66,7 @@ const CostSheetRow: React.FC<CostSheetRowTableProps> = memo(({ row, level, index
         isResult && "bg-primary/5 font-bold"
       )}>
         {/* No. */}
-        <TableCell data-label="No." className="w-[60px] px-2 py-0.5 text-center text-xs font-black text-muted-foreground/60 tabular-nums border-r border-border/10">
+        <TableCell data-label="No." className="w-[60px] px-2 py-0.5 text-center text-xs font-black text-muted-foreground/70 tabular-nums border-r border-border/10">
             {numbering}
         </TableCell>
 
@@ -167,13 +168,13 @@ const CostSheetRow: React.FC<CostSheetRowTableProps> = memo(({ row, level, index
         {/* UM */}
         <TableCell
             data-label="UM"
-            className="px-2 py-0.5 text-center w-[80px] border-r border-border/10 italic text-muted-foreground/80 font-mono text-[10px] cursor-pointer hover:bg-primary/5"
+            className="px-2 py-0.5 text-center w-[80px] border-r border-border/10 italic text-muted-foreground/80 font-mono text-xs cursor-pointer hover:bg-primary/5"
             onClick={() => setIsEditingUM(true)}
         >
             {isEditingUM ? (
                 <Input
                     autoFocus
-                    className="h-6 text-[10px] px-1 py-0 text-center font-mono"
+                    className="h-6 text-xs px-1 py-0 text-center font-mono"
                     defaultValue={row.um || row.unit || "Pesos"}
                     aria-label={`Unidad de medida de ${row.label}`}
                     onBlur={(e) => {
@@ -196,7 +197,7 @@ const CostSheetRow: React.FC<CostSheetRowTableProps> = memo(({ row, level, index
         </TableCell>
 
         {/* Valor Histórico / % — SUBDUED: reference input value */}
-        <TableCell data-label="Valor Histórico" className={cn("px-2 py-0.5 text-right text-muted-foreground/60 tabular-nums transition-colors text-[10px] border-r border-border/10", !hasChildren ? "cursor-pointer hover:bg-muted/30" : "cursor-default opacity-60", isEditingVH && "w-auto min-w-[180px]")} onClick={() => !hasChildren && setIsEditingVH(true)}>
+        <TableCell data-label="Valor Histórico" className={cn("px-2 py-0.5 text-right text-muted-foreground/70 tabular-nums transition-colors text-xs border-r border-border/10", !hasChildren ? "cursor-pointer hover:bg-muted/30" : "cursor-default opacity-60", isEditingVH && "w-auto min-w-[180px]")} onClick={() => !hasChildren && setIsEditingVH(true)}>
             <div className="relative">
                 {isEditingVH ? (
                     <FormulaEditor
@@ -225,7 +226,7 @@ const CostSheetRow: React.FC<CostSheetRowTableProps> = memo(({ row, level, index
                         readOnly={true}
                         aria-label={`Valor histórico de ${row.label}${isRowPercent ? ' en porcentaje' : ''}`}
                         />
-                        {row.vhFormula && <FunctionSquare className="w-3 h-3 text-primary/40 absolute left-2" aria-hidden="true" />}
+                        {row.vhFormula && <FunctionSquare className="w-3 h-3 text-primary/70 absolute left-2" aria-hidden="true" />}
                         {isRowPercent && <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-bold text-muted-foreground" aria-hidden="true">%</span>}
                     </div>
                 )}
@@ -254,7 +255,7 @@ const CostSheetRow: React.FC<CostSheetRowTableProps> = memo(({ row, level, index
                  </span>
                  {criticalErrors.length > 0 && <XCircle className="w-3 h-3 text-destructive shrink-0" aria-hidden="true" />}
                  {warningErrors.length > 0 && <AlertTriangle className="w-3 h-3 text-warning shrink-0" aria-hidden="true" />}
-                 {hasEngineWarnings && <Sparkles className="w-3 h-3 text-primary/40 animate-pulse shrink-0" aria-hidden="true" />}
+                 {hasEngineWarnings && <Sparkles className="w-3 h-3 text-primary/70 animate-pulse shrink-0" aria-hidden="true" />}
              </div>
           )}
         </TableCell>
@@ -554,7 +555,7 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo
                                     <TableHead className="w-[60px] px-2 py-0.5 text-center font-black uppercase tracking-widest border-r border-border/10">No.</TableHead>
                                     <TableHead className="px-2 py-0.5 text-left font-black uppercase tracking-widest border-r border-border/10">Concepto</TableHead>
                                     <TableHead className="w-[80px] px-2 py-0.5 text-center font-black uppercase tracking-widest border-r border-border/10">UM</TableHead>
-                                    <TableHead className="w-[140px] px-2 py-0.5 text-right font-medium uppercase tracking-widest text-muted-foreground/40 bg-muted/10 border-r border-border/10">Valor Histórico</TableHead>
+                                    <TableHead className="w-[140px] px-2 py-0.5 text-right font-medium uppercase tracking-widest text-muted-foreground/70 bg-muted/10 border-r border-border/10">Valor Histórico</TableHead>
                                     <TableHead className="w-[120px] px-2 py-0.5 text-right font-black uppercase tracking-widest text-primary bg-primary/10 border-r border-primary/30 shadow-sm">Total</TableHead>
                                     <TableHead className="w-[100px] px-2 py-0.5 text-center font-black uppercase tracking-widest hidden sm:table-cell">Acciones</TableHead>
                                 </TableRow>
@@ -625,22 +626,22 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo
             <div className="sticky bottom-0 z-30 mt-4 -mx-1">
               <div className="bg-card/95 backdrop-blur-xl border-2 border-t border-primary/30 rounded-t-2xl shadow-[0_-4px_24px_rgba(0,0,0,0.15)] px-4 py-3">
                 <div className="flex items-center gap-3 flex-wrap">
-                  <span className="text-[9px] font-black uppercase tracking-widest text-primary bg-primary/5 px-2 py-0.5 rounded-lg">Precio de Venta</span>
+                  <span className="text-xs font-black uppercase tracking-widest text-primary bg-primary/5 px-2 py-0.5 rounded-lg">Precio de Venta</span>
                   {costoYGastoCalc && (
                     <div className="flex items-center gap-1.5">
-                      <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">C+G:</span>
+                      <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">C+G:</span>
                       <span className="text-xs font-bold tabular-nums text-foreground">{formatAccounting(costoYGastoCalc.total ?? 0)}</span>
                     </div>
                   )}
                   {utilidadCalc && (
                     <div className="flex items-center gap-1.5">
-                      <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Utilidad:</span>
+                      <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Utilidad:</span>
                       <span className="text-xs font-bold tabular-nums text-foreground">{formatAccounting(utilidadCalc.total ?? 0)}</span>
                     </div>
                   )}
                   {precioCalc && (
                     <div className="flex items-center gap-1.5 ml-auto">
-                      <span className="text-[9px] font-black uppercase tracking-widest text-primary">Precio Final:</span>
+                      <span className="text-xs font-black uppercase tracking-widest text-primary">Precio Final:</span>
                       <span className="text-base font-black tabular-nums text-primary">{formatAccounting(precioCalc.total ?? 0)}</span>
                     </div>
                   )}

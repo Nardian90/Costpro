@@ -26,6 +26,7 @@ import type {
   ScenarioConfig
 } from '@/types/cost-sheet';
 
+import { useTranslations } from 'next-intl';
 // ── Types ────────────────────────────────────────────────────────────
 
 interface ScenarioCalcResult {
@@ -65,8 +66,8 @@ const TTip = ({ term, description, children }: { term: string; description: stri
         <div className="cursor-help flex items-center gap-0.5 justify-center">{children}</div>
       </TooltipTrigger>
       <TooltipContent className="max-w-xs p-3 rounded-2xl border-border bg-popover shadow-xl z-50">
-        <p className="font-black uppercase tracking-widest text-[10px] border-b border-border/50 pb-2 mb-2 text-primary">{term}</p>
-        <p className="text-[11px] leading-relaxed text-muted-foreground">{description}</p>
+        <p className="font-black uppercase tracking-widest text-xs border-b border-border/50 pb-2 mb-2 text-primary">{term}</p>
+        <p className="text-xs leading-relaxed text-muted-foreground">{description}</p>
       </TooltipContent>
     </Tooltip>
   </TooltipProvider>
@@ -75,13 +76,14 @@ const TTip = ({ term, description, children }: { term: string; description: stri
 // ── Variance Badge ───────────────────────────────────────────────────
 
 const VarianceBadge = ({ diff, percent }: { diff: number; percent: number }) => {
+  const t = useTranslations('costSheet');
   if (Math.abs(diff) < 0.01) {
-    return <span className="text-[10px] text-muted-foreground/40">—</span>;
+    return <span className="text-xs text-muted-foreground/70">—</span>;
   }
   const isPositive = diff > 0;
   return (
     <span className={cn(
-      "text-[10px] font-bold tabular-nums",
+      "text-xs font-bold tabular-nums",
       isPositive ? "text-destructive" : "text-success"
     )}>
       {isPositive ? '+' : ''}{diff.toFixed(2)}
@@ -129,7 +131,7 @@ const ParallelRow: React.FC<ParallelRowProps> = React.memo(({
         isResult && "bg-primary/5 font-bold"
       )}>
         {/* No. */}
-        <TableCell className="w-[60px] px-2 py-0.5 text-center text-xs font-black text-muted-foreground/60 tabular-nums border-r border-border/10">
+        <TableCell className="w-[60px] px-2 py-0.5 text-center text-xs font-black text-muted-foreground/70 tabular-nums border-r border-border/10">
           {numbering}
         </TableCell>
 
@@ -148,15 +150,15 @@ const ParallelRow: React.FC<ParallelRowProps> = React.memo(({
                 <ChevronRight className={cn('w-3.5 h-3.5 sm:w-4 sm:h-4 transition-transform', isExpanded && 'rotate-90')} />
               </button>
             ) : (
-              <CornerDownRight className="w-3.5 h-3.5 sm:w-4 h-4 text-muted-foreground/50 shrink-0 ml-1" />
+              <CornerDownRight className="w-3.5 h-3.5 sm:w-4 h-4 text-muted-foreground/70 shrink-0 ml-1" />
             )}
             <span className="truncate">{row.label}</span>
-            {isRowPercent && <span className="text-[9px] font-bold text-muted-foreground ml-1">%</span>}
+            {isRowPercent && <span className="text-xs font-bold text-muted-foreground ml-1">%</span>}
           </div>
         </TableCell>
 
         {/* UM */}
-        <TableCell className="px-2 py-0.5 text-center w-[70px] border-r border-border/10 italic text-muted-foreground/80 font-mono text-[10px]">
+        <TableCell className="px-2 py-0.5 text-center w-[70px] border-r border-border/10 italic text-muted-foreground/80 font-mono text-xs">
           {row.um || row.unit || "Pesos"}
         </TableCell>
 
@@ -343,14 +345,14 @@ const MobileScenarioCards: React.FC<{
               <div className={cn("w-3 h-3 rounded-full", colorClass)} />
               <span className="text-xs font-black uppercase tracking-widest">{s?.label}</span>
               {isPrimary && <Star className="w-3.5 h-3.5 fill-warning text-warning" />}
-              {isBase && <Badge variant="secondary" className="text-[9px] h-4 px-1.5">Base</Badge>}
+              {isBase && <Badge variant="secondary" className="text-xs h-4 px-1.5">Base</Badge>}
             </div>
           </div>
 
           {/* Sections */}
           {sections.map((section) => (
             <div key={section.id} className="space-y-1">
-              <div className="text-[10px] font-black text-muted-foreground uppercase py-1.5 border-b border-border/50">
+              <div className="text-xs font-black text-muted-foreground uppercase py-1.5 border-b border-border/50">
                 {section.label}
               </div>
               {(section.rows || []).map((row: CostSheetRow) => {
@@ -366,10 +368,10 @@ const MobileScenarioCards: React.FC<{
 
                 return (
                   <div key={row.id} className="flex justify-between items-center py-1 px-1 rounded-lg hover:bg-muted/30 transition-colors">
-                    <span className="text-[11px] text-muted-foreground truncate mr-2">{row.label}</span>
+                    <span className="text-xs text-muted-foreground truncate mr-2">{row.label}</span>
                     <div className="flex items-center gap-2 shrink-0">
                       <Input
-                        className="h-6 w-16 text-right text-[10px] p-0 bg-transparent border-transparent hover:border-border"
+                        className="h-6 w-16 text-right text-xs p-0 bg-transparent border-transparent hover:border-border"
                         defaultValue={vh}
                         onBlur={(e) => onUpdateRowValue(sid, row.id, 'valorHistorico', parseFloat(e.target.value) || 0)}
                         aria-label={`VH de ${row.label}`}
@@ -377,7 +379,7 @@ const MobileScenarioCards: React.FC<{
                       <span className="text-xs font-bold tabular-nums w-20 text-right">{formatAccounting(total)}</span>
                       {!isBase && Math.abs(diff) >= 0.01 && (
                         <span className={cn(
-                          "text-[9px] font-bold",
+                          "text-xs font-bold",
                           diff < -0.01 ? "text-success" : "text-destructive"
                         )}>
                           {diff > 0 ? '+' : ''}{diff.toFixed(1)}
@@ -435,8 +437,8 @@ export const CostSheetParallelExpert: React.FC<CostSheetParallelExpertProps> = (
         <div className="flex items-center gap-3 flex-wrap">
           <TTip term="Base Delta" description="Escenario de referencia para calcular las diferencias (Δ) y variaciones porcentuales.">
             <div className="flex items-center gap-1.5">
-              <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Base:</span>
-              <HelpCircle className="w-3 h-3 text-muted-foreground/50" />
+              <span className="text-xs font-black uppercase tracking-widest text-muted-foreground">Base:</span>
+              <HelpCircle className="w-3 h-3 text-muted-foreground/70" />
             </div>
           </TTip>
 
@@ -448,7 +450,7 @@ export const CostSheetParallelExpert: React.FC<CostSheetParallelExpertProps> = (
               const isPrimary = sid === primaryId;
               return (
                 <div key={sid} className={cn(
-                  "flex items-center gap-1.5 px-2 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider",
+                  "flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-bold uppercase tracking-wider",
                   isPrimary ? "bg-warning/10 ring-1 ring-warning/20" : "bg-card border"
                 )}>
                   <div className={cn("w-2.5 h-2.5 rounded-full", colorClass)} />
@@ -464,7 +466,7 @@ export const CostSheetParallelExpert: React.FC<CostSheetParallelExpertProps> = (
           <Button
             size="sm"
             variant="outline"
-            className="h-7 text-[10px] bg-card rounded-xl hover:bg-primary hover:text-primary-foreground transition-all shadow-sm"
+            className="h-7 text-xs bg-card rounded-xl hover:bg-primary hover:text-primary-foreground transition-all shadow-sm"
             onClick={() => createScenario(primaryId, "Nuevo Escenario")}
             disabled={scenarios.length >= 3}
           >
@@ -480,10 +482,10 @@ export const CostSheetParallelExpert: React.FC<CostSheetParallelExpertProps> = (
               onCheckedChange={setHideNoDiff}
               className="data-[state=checked]:bg-primary"
             />
-            <Label htmlFor="parallel-hide-no-diff" className="text-[10px] font-black uppercase cursor-pointer select-none">
+            <Label htmlFor="parallel-hide-no-diff" className="text-xs font-black uppercase cursor-pointer select-none">
               Sin cambios
             </Label>
-            <EyeOff className="w-3 h-3 text-muted-foreground/50" />
+            <EyeOff className="w-3 h-3 text-muted-foreground/70" />
           </div>
         </div>
       </div>
@@ -502,7 +504,7 @@ export const CostSheetParallelExpert: React.FC<CostSheetParallelExpertProps> = (
       {/* ── Desktop Parallel Table ──────────────────────────────────── */}
       <div className="hidden md:block space-y-4">
         {/* Legend bar */}
-        <div className="flex items-center gap-4 px-4 py-2 text-[10px] text-muted-foreground">
+        <div className="flex items-center gap-4 px-4 py-2 text-xs text-muted-foreground">
           <div className="flex items-center gap-1">
             <div className="w-3 h-3 rounded bg-success/20 border border-success/30" />
             <span>Ahorro (Δ &lt; 0)</span>
@@ -530,7 +532,7 @@ export const CostSheetParallelExpert: React.FC<CostSheetParallelExpertProps> = (
                 <h3 className="text-sm font-black uppercase tracking-[0.15em] text-foreground">
                   {section.label || `Sección ${section.id}`}
                 </h3>
-                <Badge variant="secondary" className="text-[9px] h-5 px-2 ml-auto">
+                <Badge variant="secondary" className="text-xs h-5 px-2 ml-auto">
                   {sectionRows.length} conceptos
                 </Badge>
               </div>
@@ -541,7 +543,7 @@ export const CostSheetParallelExpert: React.FC<CostSheetParallelExpertProps> = (
                   <TableHeader className="bg-muted/30">
                     {/* Scenario name row */}
                     <TableRow className="border-b border-border/20">
-                      <TableHead colSpan={3} className="text-left text-[10px] font-black tracking-widest text-muted-foreground border-r border-border/30 py-2 px-2">
+                      <TableHead colSpan={3} className="text-left text-xs font-black tracking-widest text-muted-foreground border-r border-border/30 py-2 px-2">
                         ESTRUCTURA
                       </TableHead>
                       {activeScenarioIds.map(sid => {
@@ -560,7 +562,7 @@ export const CostSheetParallelExpert: React.FC<CostSheetParallelExpertProps> = (
                           >
                             <div className="flex items-center justify-center gap-2">
                               <div className={cn("w-2.5 h-2.5 rounded-full shadow-sm", colorClass)} />
-                              <span className="text-[10px] font-black uppercase tracking-widest">{s?.label}</span>
+                              <span className="text-xs font-black uppercase tracking-widest">{s?.label}</span>
                               {isPrimary && <Star className="w-3 h-3 fill-warning text-warning animate-pulse" />}
                             </div>
                           </TableHead>
@@ -570,26 +572,26 @@ export const CostSheetParallelExpert: React.FC<CostSheetParallelExpertProps> = (
 
                     {/* Column headers row */}
                     <TableRow className="border-b border-border/30">
-                      <TableHead className="w-[60px] px-2 py-1 text-center text-[9px] font-black tracking-widest text-muted-foreground border-r border-border/20">No.</TableHead>
-                      <TableHead className="px-2 py-1 text-left text-[9px] font-black tracking-widest text-muted-foreground border-r border-border/20">CONCEPTO</TableHead>
-                      <TableHead className="w-[70px] px-2 py-1 text-center text-[9px] font-black tracking-widest text-muted-foreground border-r border-border/20">UM</TableHead>
+                      <TableHead className="w-[60px] px-2 py-1 text-center text-xs font-black tracking-widest text-muted-foreground border-r border-border/20">No.</TableHead>
+                      <TableHead className="px-2 py-1 text-left text-xs font-black tracking-widest text-muted-foreground border-r border-border/20">CONCEPTO</TableHead>
+                      <TableHead className="w-[70px] px-2 py-1 text-center text-xs font-black tracking-widest text-muted-foreground border-r border-border/20">UM</TableHead>
                       {activeScenarioIds.map(sid => {
                         const isBase = sid === baseId;
                         const isPrimary = sid === primaryId;
                         return (
                           <React.Fragment key={sid}>
-                            <TableHead className={cn("px-1.5 py-1 text-right text-[9px] font-black tracking-widest text-muted-foreground border-l border-border/20", isPrimary && "bg-warning/5")}>
+                            <TableHead className={cn("px-1.5 py-1 text-right text-xs font-black tracking-widest text-muted-foreground border-l border-border/20", isPrimary && "bg-warning/5")}>
                               <TTip term="Valor Histórico (VH)" description="Costo base de entrada para este concepto.Editable inline en cada escenario.">
                                 <span className="opacity-60">VH</span>
                               </TTip>
                             </TableHead>
-                            <TableHead className={cn("px-1.5 py-1 text-right text-[9px] font-black tracking-widest text-muted-foreground border-r border-border/20", isPrimary && "bg-warning/5")}>
+                            <TableHead className={cn("px-1.5 py-1 text-right text-xs font-black tracking-widest text-muted-foreground border-r border-border/20", isPrimary && "bg-warning/5")}>
                               <TTip term="Total Calculado" description="Resultado tras procesar fórmulas, coeficientes y unidades de medida del concepto.">
                                 <span className="opacity-60">TOTAL</span>
                               </TTip>
                             </TableHead>
                             {!isBase && (
-                              <TableHead className="px-1.5 py-1 text-center text-[9px] font-black tracking-widest text-muted-foreground border-r border-border/20 bg-primary/5">
+                              <TableHead className="px-1.5 py-1 text-center text-xs font-black tracking-widest text-muted-foreground border-r border-border/20 bg-primary/5">
                                 <TTip term="Variación (Δ %)" description="Diferencia absoluta y porcentual respecto al escenario Base. Verde=ahorro, Rojo=incremento.">
                                   <span className="text-primary/70">Δ %</span>
                                 </TTip>

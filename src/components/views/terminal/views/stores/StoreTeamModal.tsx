@@ -10,6 +10,7 @@ import { Users, Loader2, UserX, Mail, Crown, Shield, User, Briefcase, Package, C
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import Image from 'next/image';
+import { useTranslations } from 'next-intl';
 
 /**
  * F2-T05: Modal que muestra el equipo de usuarios asignados a una tienda.
@@ -57,6 +58,7 @@ export function StoreTeamModal({ isOpen, onClose, store }: StoreTeamModalProps) 
 
   // Estado para el modal de confirmación de remoción (reemplaza confirm() nativo)
   const [memberToRemove, setMemberToRemove] = useState<StoreTeamMember | null>(null);
+  const t = useTranslations('stores');
 
   const handleRemoveClick = (member: StoreTeamMember) => {
     setMemberToRemove(member);
@@ -98,7 +100,7 @@ export function StoreTeamModal({ isOpen, onClose, store }: StoreTeamModalProps) 
         </span>
       }
       description={
-        <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground/70">
+        <span className="text-sm font-bold uppercase tracking-widest text-muted-foreground/70">
           {members.length} {members.length === 1 ? 'usuario asignado' : 'usuarios asignados'} a esta tienda
         </span>
       }
@@ -112,15 +114,15 @@ export function StoreTeamModal({ isOpen, onClose, store }: StoreTeamModalProps) 
         {isLoading ? (
           <div className="py-12 flex flex-col items-center justify-center gap-3">
             <Loader2 className="w-8 h-8 animate-spin text-primary/40" />
-            <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Cargando equipo...</p>
+            <p className="text-sm font-black uppercase tracking-widest text-muted-foreground">Cargando equipo...</p>
           </div>
         ) : members.length === 0 ? (
           <div className="py-12 text-center border-2 border-dashed border-border rounded-xl">
-            <Users className="w-12 h-12 text-muted-foreground/20 mx-auto mb-3" />
-            <p className="font-black uppercase tracking-widest text-xs text-muted-foreground mb-1">
+            <Users className="w-12 h-12 text-muted-foreground/70 mx-auto mb-3" />
+            <p className="font-black uppercase tracking-widest text-sm text-muted-foreground mb-1">
               Sin usuarios asignados
             </p>
-            <p className="text-xs text-muted-foreground/60">
+            <p className="text-sm text-muted-foreground/60">
               Asigna usuarios a esta tienda desde Control de Usuarios.
             </p>
           </div>
@@ -152,7 +154,7 @@ export function StoreTeamModal({ isOpen, onClose, store }: StoreTeamModalProps) 
                         unoptimized
                       />
                     ) : (
-                      <span className="text-xs font-black uppercase text-muted-foreground">
+                      <span className="text-sm font-black uppercase text-muted-foreground">
                         {member.full_name.charAt(0)}
                       </span>
                     )}
@@ -163,18 +165,18 @@ export function StoreTeamModal({ isOpen, onClose, store }: StoreTeamModalProps) 
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="font-bold text-sm truncate">{member.full_name}</span>
                       {isUserInactive && (
-                        <span className="text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded bg-destructive/10 text-destructive">
+                        <span className="text-sm font-black uppercase tracking-widest px-1.5 py-0.5 rounded bg-destructive/10 text-destructive">
                           Inactivo
                         </span>
                       )}
                       {isMembershipRevoked && (
-                        <span className="text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
+                        <span className="text-sm font-black uppercase tracking-widest px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
                           Revocado
                         </span>
                       )}
                     </div>
                     {member.email && (
-                      <div className="flex items-center gap-1 text-xs text-muted-foreground truncate">
+                      <div className="flex items-center gap-1 text-sm text-muted-foreground truncate">
                         <Mail className="w-3 h-3 shrink-0" />
                         <span className="truncate">{member.email}</span>
                       </div>
@@ -190,7 +192,7 @@ export function StoreTeamModal({ isOpen, onClose, store }: StoreTeamModalProps) 
                         onChange={(e) => handleRoleChange(member, e.target.value as StoreTeamMember['role'])}
                         disabled={isUpdatingRole}
                         aria-label={`Cambiar rol de ${member.full_name}`}
-                        className="bg-transparent text-xs font-bold uppercase tracking-widest outline-none cursor-pointer pr-1"
+                        className="bg-transparent text-sm font-bold uppercase tracking-widest outline-none cursor-pointer pr-1"
                       >
                         <option value="admin">Admin</option>
                         <option value="encargado">Encargado</option>
@@ -221,8 +223,8 @@ export function StoreTeamModal({ isOpen, onClose, store }: StoreTeamModalProps) 
             {/* Info al final */}
             <div className="flex items-start gap-2 p-3 rounded-xl bg-primary/5 border border-primary/10 mt-3">
               <AlertCircle className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                <strong className="text-primary">Remover</strong> de esta tienda no elimina al usuario
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                <strong className="text-primary">{t('team.removeWarningPrefix')}</strong> {t('team.removeWarningBody')}
                 ni sus otros accesos. Para eliminar un usuario completamente, usa Control de Usuarios.
               </p>
             </div>
@@ -235,17 +237,17 @@ export function StoreTeamModal({ isOpen, onClose, store }: StoreTeamModalProps) 
         key={memberToRemove?.membership_id}
         isOpen={!!memberToRemove}
         onClose={() => setMemberToRemove(null)}
-        title="Remover usuario de la tienda"
+        title={t('team.removeTitle')}
         description={`Esta acción revoca la membresía del usuario en esta tienda.`}
         confirmName={memberToRemove?.full_name || ''}
-        confirmNameLabel="Nombre del usuario"
+        confirmNameLabel={t('team.removeConfirmNameLabel')}
         warningText={
           <>
             Vas a remover a <strong>{memberToRemove?.full_name}</strong> de la tienda <strong>{store?.name}</strong>.
             El usuario NO será eliminado, solo perderá acceso a esta tienda. Sus otras membresías y su cuenta se conservan.
           </>
         }
-        confirmLabel="Remover"
+        confirmLabel={t('team.removeConfirmLabel')}
         onConfirm={handleRemoveConfirm}
         isSubmitting={isRemoving}
       />

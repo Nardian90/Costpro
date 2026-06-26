@@ -574,6 +574,53 @@
       "seoOgDescription": "Product catalog — {name}",
       "seoNotFound": "Store not found",
       "seoCatalogOf": "Catalog of {name}"
+    },
+    "modalidadProduccion": "Production",
+    "modalidadServicios": "Services",
+    "modalidadComercializacion": "Commercialization",
+    "modalidadLabel": "Modality",
+    "formatoPdfLabel": "PDF Format",
+    "plantillaFcActiva": "Active FC Template",
+    "confirmTitleDeactivate": "Deactivate Store",
+    "confirmTitleDelete": "Delete Store",
+    "confirmTitleReset": "Reset Store",
+    "confirmDescDeactivate": "Temporary pause — preserves configuration and users",
+    "confirmDescDelete": "Permanent removal with memberships cleanup",
+    "confirmDescReset": "Erases all operational data — preserves configuration and users",
+    "confirmNameLabel": "Store name",
+    "confirmLabelDeactivate": "Deactivate Store",
+    "confirmLabelDelete": "Delete Permanently",
+    "confirmLabelReset": "Reset Store",
+    "selectAll": "All",
+    "selectAllTitle": "Select all",
+    "clearSelection": "Clear selection",
+    "bulkDeleteTitle": "Delete {count} stores",
+    "bulkDeactivateTitle": "Deactivate {count} stores",
+    "bulkConfirmNameLabel": "Type BULK to confirm",
+    "bulkConfirmLabelDelete": "Delete Permanently",
+    "bulkConfirmLabelDeactivate": "Deactivate Stores",
+    "keepCatalogTitle": "Keep product catalog",
+    "removeLogo": "Remove logo",
+    "removeSignature": "Remove signature",
+    "removeStamp": "Remove stamp",
+    "compare": {
+      "ariaLabel": "Compare stores",
+      "productsLabel": "Products",
+      "healthLabel": "Health",
+      "emptyMessage": "No data"
+    },
+    "onboarding": {
+      "ariaLabel": "Store creation wizard"
+    },
+    "createQuick": {
+      "ariaLabel": "Quickly create a new store"
+    },
+    "team": {
+      "removeTitle": "Remove user from store",
+      "removeConfirmLabel": "Remove",
+      "removeConfirmNameLabel": "User name",
+      "removeWarningPrefix": "Remove",
+      "removeWarningBody": "from this store does not delete the user"
     }
   },
   "dashboard": {
@@ -599,6 +646,46 @@
       "units": "units",
       "viewAllAlerts": "View all alerts",
       "loadingVisualization": "Loading Visualization..."
+    },
+    "storeDashboard": {
+      "occ": {
+        "title": "Operations Command Center",
+        "subtitle": "Real-time operations monitoring",
+        "noActivity": "No recent activity",
+        "quickActions": "Quick actions",
+        "lastUpdate": "Last update",
+        "live": "Live"
+      },
+      "recentCostSheets": {
+        "title": "Recent Cost Sheets",
+        "empty": "No cost sheets",
+        "viewAll": "View all",
+        "costTotal": "Total Cost",
+        "priceSale": "Sale Price"
+      },
+      "executiveKpis": {
+        "totalSales": "Total Revenue",
+        "costOfSales": "Cost of Sales",
+        "netProfit": "Net Profit",
+        "kpiLabel": "Key performance indicators"
+      },
+      "ring": {
+        "margin": "Margin",
+        "sales": "Sales",
+        "costs": "Costs",
+        "profit": "Profit"
+      },
+      "groupHub": {
+        "notFound": "Group not found",
+        "goDashboard": "Go to Dashboard",
+        "directAccess": "Direct access",
+        "categories": "Categories"
+      },
+      "sectionHub": {
+        "notFound": "Section not found",
+        "goDashboard": "Go to Dashboard"
+      },
+      "noData": "No data"
     }
   },
   "apiErrors": {
@@ -623,7 +710,7 @@
     "storeCreateEmptyResponse": "Error creating store: empty response",
     "storeUpdateEmptyResponse": "Error updating store: empty response",
     "storePlanRequired": "User plan is required to manage stores",
-    "storeAccessDenied": "You do not have permission to access this store",
+    "storeAccessDenied": "Access denied to the specified store",
     "storeResetWarning": "Store Reset Scheduled",
     "storeResetWarningMessage": "The store is being reset. All sales, inventory, and movement data will be deleted. Please save your work and reload the page.",
     "storefrontUpdateEmptyResponse": "Error updating storefront: empty response",
@@ -637,11 +724,201 @@
     "bulkImportRlsDenied": "No permission to insert/update products (RLS)",
     "bulkImportConflict": "Data conflict: duplicate SKU",
     "bulkImportFailed": "Error importing products",
-    "storeAccessDenied": "Access denied to the specified store",
     "transferNotFound": "Transfer not found or access denied",
     "internalError": "Internal server error",
     "aiUnavailable": "AI service is unavailable",
     "invalidJson": "Invalid JSON",
     "emptyMessages": "Empty messages"
+  },
+  "costSheet": {
+    "tabs": {
+      "templates": "Templates",
+      "general": "General Data",
+      "structure": "Cost Structure",
+      "annexes": "Annexes"
+    },
+    "nav": {
+      "back": "Back",
+      "backAria": "Back to main dashboard",
+      "exportPdf": "Export PDF",
+      "exporting": "Exporting...",
+      "exportPdfAria": "Export cost sheet to PDF",
+      "darian": "Darian",
+      "darianAria": "Open Darian AI assistant",
+      "darianTooltip": "Darian AI Expert",
+      "history": "History",
+      "historyAria": "Auto-save version history",
+      "historyTitle": "Auto-save History",
+      "historySubtitle": "Last 15 automatic snapshots",
+      "noVersions": "No versions yet",
+      "restore": "Restore",
+      "autoCapture": "Automatic snapshot",
+      "view": "View",
+      "saved": "Saved"
+    },
+    "view": {
+      "loadingTablero": "Main Dashboard",
+      "calcError": "Calculation Error",
+      "calcPending": "Pending Calculation",
+      "preview": "Preview View",
+      "goToEditor": "Go to Editor (All Mode)",
+      "cancelar": "Cancel",
+      "confirmar": "Confirm",
+      "annexBadge": "Annex",
+      "signaturesTitle": "Signatures and Stamps",
+      "backToList": "Back to List"
+    },
+    "header": {
+      "title": "Sheet General Data",
+      "productName": "Product Name",
+      "productNamePlaceholder": "Eg: Traditional water bread",
+      "unit": "Unit of Measure",
+      "unitPlaceholder": "kg, L, unit",
+      "resolution": "Resolution",
+      "code": "Code",
+      "amount": "Quantity",
+      "date": "Date",
+      "validity": "Validity",
+      "producer": "Producer",
+      "required": "Required field",
+      "identification": "Product Identification",
+      "operation": "Operation Parameters",
+      "financial": "Financial",
+      "organization": "Organizational Environment",
+      "commercial": "Commercialization",
+      "fields": "fields"
+    },
+    "templates": {
+      "title": "Template Explorer",
+      "search": "Search template...",
+      "empty": "No templates found",
+      "emptyHint": "Try adjusting the search or create a new one",
+      "use": "Use",
+      "preview": "Preview",
+      "duplicate": "Duplicate",
+      "delete": "Delete",
+      "publish": "Publish",
+      "confirmDelete": "Delete this template?",
+      "confirmDeleteMsg": "This action cannot be undone.",
+      "confirmOverwrite": "Overwrite existing template?",
+      "confirmOverwriteMsg": "A template with that name already exists. Do you want to replace it?",
+      "deleteSuccess": "Template deleted",
+      "publishSuccess": "Template published",
+      "publishNameLabel": "Template name",
+      "publishNamePlaceholder": "My custom template"
+    },
+    "annex": {
+      "title": "Annex",
+      "addRow": "Add row",
+      "deleteRow": "Delete row",
+      "confirmDeleteRow": "Delete this row?",
+      "empty": "No data in this annex",
+      "emptyHint": "Add a row to start",
+      "total": "TOTAL",
+      "notFound": "Annex not found",
+      "notFoundHint": "Back to annex list"
+    },
+    "signature": {
+      "title": "Signatures and Stamps",
+      "preparedBy": "Prepared by",
+      "approvedBy": "Approved by",
+      "preparedByName": "Preparer name",
+      "approvedByName": "Approver name",
+      "preparedByPlaceholder": "Full name",
+      "approvedByPlaceholder": "Full name",
+      "uploadSignature": "Upload signature",
+      "uploadStamp": "Upload stamp",
+      "removeSignature": "Remove signature",
+      "removeStamp": "Remove stamp"
+    },
+    "export": {
+      "title": "Export Cost Sheet",
+      "format": "Format",
+      "resolution148": "Res. 148/2023 (Official)",
+      "resolution190": "Res. 190/2021 (Standard)",
+      "includeAnnexes": "Include annexes",
+      "includeSignatures": "Include signatures",
+      "cancel": "Cancel",
+      "confirm": "Export",
+      "generating": "Generating PDF..."
+    },
+    "audit": {
+      "title": "Sheet Audit",
+      "health": "Sheet Health",
+      "perfect": "Perfect Sheet",
+      "perfectMsg": "No issues found. The sheet is ready to export.",
+      "problems": "Issues found",
+      "critical": "Critical",
+      "warning": "Warning",
+      "info": "Info",
+      "filterAll": "All",
+      "empty": "No results for this filter"
+    },
+    "quick": {
+      "title": "Quick Generation",
+      "subtitle": "Calculate prices in seconds",
+      "cost": "Cost",
+      "margin": "Margin (%)",
+      "price": "Price",
+      "calculate": "Calculate",
+      "invalidNumber": "Invalid value",
+      "placeholderUm": "kg",
+      "placeholderQuantity": "0",
+      "placeholderCost": "0.00",
+      "placeholderPrice": "Optional",
+      "emptyRows": "Add at least one row to start",
+      "rowsCount": "{count} rows"
+    },
+    "massive": {
+      "title": "Massive Generation",
+      "import": "Import Excel",
+      "importError": "Could not import the Excel file. Check the format.",
+      "progress": "Processing {current} of {total}",
+      "complete": "Generation completed",
+      "completeMsg": "{count} sheets generated successfully",
+      "cancel": "Cancel"
+    },
+    "wizard": {
+      "title": "Assisted Mode",
+      "step": "Step",
+      "of": "of",
+      "next": "Next",
+      "previous": "Previous",
+      "finish": "Finish"
+    },
+    "problems": {
+      "title": "Detected issues",
+      "empty": "No issues",
+      "goTo": "Go to issue",
+      "goToAudit": "View in audit"
+    },
+    "common": {
+      "save": "Save",
+      "cancel": "Cancel",
+      "delete": "Delete",
+      "edit": "Edit",
+      "close": "Close",
+      "confirm": "Confirm",
+      "loading": "Loading...",
+      "retry": "Retry",
+      "noData": "No data",
+      "error": "Error"
+    },
+    "validation": {
+      "required": "Required field",
+      "requiredMark": "*",
+      "optional": "(optional)",
+      "nameRequired": "Name is required",
+      "codeRequired": "Code is required",
+      "unitRequired": "Unit is required",
+      "quantityRequired": "Quantity is required",
+      "quantityInvalid": "Must be a number greater than 0",
+      "costInvalid": "Cost must be a valid number",
+      "priceInvalid": "Price must be a valid number",
+      "exchangeRateInvalid": "Rate must be a number greater than 0",
+      "preparedByRequired": "Preparer is required",
+      "approvedByRequired": "Approver is required",
+      "invalidNumber": "Invalid number"
+    }
   }
 }

@@ -71,11 +71,9 @@ export default function CashClosureView() {
   const pendingClosure = cashClosures.find(c => c.status === 'pendiente');
   const finalizedClosures = cashClosures.filter(c => c.status === 'cerrado');
 
-  const summaryItems = [
-    { label: 'Ventas Totales del Turno', value: salesData?.total_sales || 0, color: 'text-foreground' },
-    { label: 'Efectivo Esperado (Sistema)', value: salesData?.total_cash || 0, color: 'text-success' },
-    { label: 'Transferencias (Sistema)', value: salesData?.total_transfer || 0, color: 'text-primary' },
-  ];
+  // FIX F3-01: Al cerrar, el efectivo declarado se compara con (fondo inicial + ventas cash - salidas)
+  // NO con solo ventas cash. El fondo inicial se guarda en opening_balance al abrir.
+  const openingBalance = Number(pendingClosure?.opening_balance) || 0;
 
   const summary = {
     total_billed: salesData?.total_sales || 0,
@@ -83,10 +81,30 @@ export default function CashClosureView() {
     total_transfer: salesData?.total_transfer || 0,
   };
 
-  // Restore pending closure state — no requestAnimationFrame needed
+  // FIX F3-04: system_expected_total = fondo inicial + ventas cash
+  // Antes: systemCash = solo ventas cash (ignoraba fondo inicial)
+  // Ahora: systemCash = opening_balance + ventas cash
+  const salesCash = summary.total_cash || 0;
+  const salesTransfer = summary.total_transfer || 0;
+  const systemCash = openingBalance + salesCash; // FIX F3-04: incluir fondo inicial
+  const systemVouchers = salesTransfer;
+
+  // FIX F3-04: mostrar fondo inicial + ventas cash = efectivo esperado total
+  const summaryItems = [
+    { label: 'Fondo Inicial', value: openingBalance, color: 'text-muted-foreground' },
+    { label: 'Ventas en Efectivo', value: salesCash, color: 'text-foreground' },
+    { label: 'Efectivo Esperado (Fondo + Ventas)', value: systemCash, color: 'text-success' },
+    { label: 'Transferencias (Sistema)', value: salesTransfer, color: 'text-primary' },
+  ];
+
+  // Restore pending closure state
   useEffect(() => {
     queueMicrotask(() => {
       if (pendingClosure) {
+        // FIX F3-01: al reabrir un turno pendiente, restaurar declared_cash
+        // Si el turno está pendiente (no cerrado), declared_cash puede ser:
+        //   - El fondo inicial (si se acaba de abrir y no se ha editado)
+        //   - El efectivo contado (si el cajero lo actualizó)
         setDeclaredCash(Number(pendingClosure.declared_cash) || 0);
         setDeclaredVouchers(Number(pendingClosure.declared_vouchers) || 0);
         setNotes(pendingClosure.notes || '');
@@ -100,16 +118,9 @@ export default function CashClosureView() {
 
   const totalDeclared = declaredCash + declaredVouchers;
 
-  // Q7: Reconciliación por método de pago (no total vs total).
-  // Antes: difference = totalDeclared - summary.total_billed (comparaba efectivo+vouchers
-  //   con TODAS las ventas incluyendo tarjeta/transferencia → diferencias falsas).
-  // Ahora: comparamos efectivo declarado vs efectivo esperado del sistema,
-  //   y vouchers declarados vs transferencias del sistema.
-  const systemCash = summary.total_cash || 0;
-  const systemVouchers = summary.total_transfer || 0;
+  // FIX F3-04: diferencia = efectivo declarado - (fondo inicial + ventas cash)
   const cashDiff = pendingClosure ? declaredCash - systemCash : 0;
   const voucherDiff = pendingClosure ? declaredVouchers - systemVouchers : 0;
-  // Diferencia total sigue siendo la suma para compatibilidad con BD
   const difference = pendingClosure ? cashDiff + voucherDiff : 0;
 
   const canClose = useMemo(
@@ -125,6 +136,7 @@ export default function CashClosureView() {
     if (!user?.activeStoreId) return;
 
     if (pendingClosure) {
+      // FIX F3-01: Al cerrar, NO sobreescribir opening_balance. Solo actualizar declared_cash.
       const shouldFinalize = canClose;
       updateClosure.mutate({
         id: pendingClosure.id,
@@ -134,20 +146,24 @@ export default function CashClosureView() {
           declared_cash: declaredCash,
           declared_vouchers: declaredVouchers,
           declared_total: totalDeclared,
-          // Q7: usar system_cash + system_vouchers (no total_billed que incluye todo)
+          // FIX F3-04: system_expected_total = fondo inicial + ventas cash + transferencias
           system_expected_total: systemCash + systemVouchers,
-          difference: difference, // cashDiff + voucherDiff
+          difference: difference,
           notes: notes
+          // FIX F3-01: NO incluir opening_balance aquí — se preserva del INSERT inicial
         }
       });
     } else {
+      // FIX F3-01: Al abrir, guardar fondo inicial en opening_balance Y en declared_cash
+      // (declared_cash se sobreescriirá al cerrar, opening_balance se preserva)
       createClosure.mutate({
         store_id: user.activeStoreId,
         user_id: user.id,
-        declared_cash: declaredCash,
+        declared_cash: declaredCash, // fondo inicial (se sobreescribe al cerrar)
+        opening_balance: declaredCash, // FIX F3-01: preservar fondo inicial
         declared_vouchers: declaredVouchers,
         declared_total: totalDeclared,
-        system_expected_total: 0, // Al abrir, no hay ventas todavía
+        system_expected_total: 0,
         difference: 0,
         notes: notes,
         status: 'pendiente'

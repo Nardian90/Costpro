@@ -107,7 +107,7 @@ export default function TransferenciasView() {
     }
     try {
       const toastId = toast.loading('Preparando Excel de transferencias...');
-      const XLSX = await import('xlsx');
+      const XLSX = await import('@e965/xlsx');
       const data = filteredTransfers.map(t => ({
         'ID': t.id.split('-')[0],
         'Dirección': activeTab === 'outgoing' ? 'Saliente' : 'Entrante',

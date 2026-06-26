@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
+import { useUIStore } from '@/store';
 
 export interface HelpDoc {
   path: string;
@@ -55,7 +56,20 @@ export const useHelpContent = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [glossary, setGlossary] = useState<Record<string, string>>({});
-  const [isReadingMode, setIsReadingMode] = useState(false);
+  const [isReadingMode, setIsReadingModeLocal] = useState(false);
+  // Sincronizar con el store global para que TerminalShell oculte Header y Sidebar.
+  const isHelpReadingMode = useUIStore(s => s.isHelpReadingMode);
+  const setIsHelpReadingMode = useUIStore(s => s.setIsHelpReadingMode);
+  const setIsReadingMode = useCallback((open: boolean) => {
+    setIsReadingModeLocal(open);
+    setIsHelpReadingMode(open);
+  }, [setIsHelpReadingMode]);
+  // Si el store global dice que no estamos en modo lectura (ej: cambió de vista), sincronizar local.
+  useEffect(() => {
+    if (!isHelpReadingMode && isReadingMode) {
+      setIsReadingModeLocal(false);
+    }
+  }, [isHelpReadingMode, isReadingMode]);
   const [breadcrumbs, setBreadcrumbs] = useState<{ label: string; path: string | null }[]>([]);
   const [adjacentDocs, setAdjacentDocs] = useState<{ prev: AdjacentDoc | null; next: AdjacentDoc | null }>({
     prev: null,
@@ -76,7 +90,7 @@ export const useHelpContent = () => {
 
   const fetchGlossary = useCallback(async () => {
     try {
-      const res = await fetch('/api/help-docs?path=help/01-empezar/glosario.md');
+      const res = await fetch('/api/help-docs?path=help/03-referencia/01-glosario.md');
       if (!res.ok) return;
       const data = await res.json();
       const content = data.content || '';
@@ -159,6 +173,20 @@ export const useHelpContent = () => {
   const loadDocument = useCallback(async (path: string) => {
     setLoading(true);
     try {
+      // Sincronizar la URL con el documento que se va a cargar.
+      // CRÍTICO: si no sincronizamos, el useEffect de HelpView que observa ?doc= 
+      // detectará que la URL tiene un path viejo y re-cargará el documento anterior,
+      // pisando el que el usuario acaba de pedir desde el sidebar interno.
+      if (typeof window !== 'undefined') {
+        const url = new URL(window.location.href);
+        const currentDocParam = url.searchParams.get('doc');
+        if (currentDocParam !== path) {
+          url.searchParams.set('doc', path);
+          // replaceState (no pushState) para no llenar el historial de pasos intermedios.
+          window.history.replaceState({}, '', url.toString());
+        }
+      }
+
       const res = await fetch(`/api/help-docs?path=${path}`);
       if (!res.ok) throw new Error('Document not found');
       const data = await res.json();
@@ -166,11 +194,10 @@ export const useHelpContent = () => {
       if (!data.content) throw new Error('Document content is empty');
 
       let type: HelpDoc['type'] = 'getting-started';
-      if (path.includes('02-gestion')) type = 'tutorial';
-      else if (path.includes('03-inventario')) type = 'how-to';
-      else if (path.includes('04-configuracion')) type = 'how-to';
-      else if (path.includes('05-referencia')) type = 'reference';
-      else if (path.includes('compliance')) type = 'reference';
+      if (path.includes('01-tutoriales')) type = 'tutorial';
+      else if (path.includes('02-como-hacer')) type = 'how-to';
+      else if (path.includes('03-referencia')) type = 'reference';
+      else if (path.includes('04-explicacion')) type = 'reference';
 
       const title = data.content.split('\n')[0].replace(/^#+\s+/, '') || path;
 

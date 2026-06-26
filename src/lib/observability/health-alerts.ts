@@ -1,10 +1,11 @@
-import { supabase } from '@/lib/supabaseClient';
+import { supabase } from '@/lib/supabaseClient'
+import { getSupabaseAdminSafe as getAdminClientSync } from '@/lib/supabase-admin';
 import { SHIResult } from './health-engine';
 
 export async function processHealthAlerts(shi: SHIResult, userId: string) {
   if (shi.score < 85) {
     // Log critical health event to AuditLogs
-    const { error } = await supabase.from('audit_logs').insert({
+    const { error } = await (getAdminClientSync() ?? supabase).from('audit_logs').insert({
       user_id: userId,
       action: shi.score < 60 ? 'system_health_critical' : 'system_health_degraded',
       table_name: 'system_metrics',

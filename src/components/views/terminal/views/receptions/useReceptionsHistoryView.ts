@@ -142,32 +142,20 @@ export function useReceptionsHistoryView() {
     itemUpdates?: Array<{ id: string; quantity: number; unit_cost: number; deleted: boolean }>;
   }) => {
     try {
-      await updateReceptionMutation.mutateAsync({ receiptId, ...updates });
-      
-      // R2: si hay itemUpdates (recepción pendiente), actualizar items
-      if (updates.itemUpdates && updates.itemUpdates.length > 0) {
-        const { supabase } = await import('@/lib/supabaseClient');
-        for (const item of updates.itemUpdates) {
-          if (item.deleted) {
-            await supabase.from('receipt_items').delete().eq('id', item.id);
-          } else {
-            await supabase.from('receipt_items')
-              .update({ quantity: item.quantity, unit_cost: item.unit_cost })
-              .eq('id', item.id);
-          }
-        }
-        // Recalcular total_cost de la recepción
-        const { data: items } = await supabase.from('receipt_items')
-          .select('quantity, unit_cost').eq('receipt_id', receiptId);
-        const newTotal = (items || []).reduce((s: number, i: any) => s + i.quantity * i.unit_cost, 0);
-        await supabase.from('receipts').update({ total_cost: newTotal }).eq('id', receiptId);
-      }
-      
+      // FIX R-1+R-2: Una sola llamada API route que hace header + items atómicamente en una transacción.
+      // Antes: 2 llamadas separadas (mutation header + RPC items) → estado parcial si la 2ª fallaba.
+      // Ahora: la API route /api/inventory/receptions/[id] PATCH actualiza header + items en una transacción.
+      const { apiFetch } = await import('@/lib/api-fetch');
+      await apiFetch(`/api/inventory/receptions/${receiptId}`, {
+        method: 'PATCH',
+        body: JSON.stringify(updates),
+      });
+
       setEditingReceiptId(null);
       toast.success('Recepción actualizada');
     } catch (error) {
       logger.error('DATABASE', 'RECEPTION_UPDATE_FAILED', { error });
-      toast.error('Error al actualizar la recepción');
+      toast.error(error instanceof Error ? error.message : 'Error al actualizar la recepción');
     }
   };
 
@@ -216,7 +204,7 @@ export function useReceptionsHistoryView() {
     }
     try {
       const toastId = toast.loading('Preparando Excel...');
-      const XLSX = await import('xlsx');
+      const XLSX = await import('@e965/xlsx');
       const data = items.map(item => ({
         'Producto': item.products?.name || '',
         'SKU': item.products?.sku || '',
@@ -259,7 +247,7 @@ export function useReceptionsHistoryView() {
     }
     try {
       const toastId = toast.loading('Preparando Excel de recepciones...');
-      const XLSX = await import('xlsx');
+      const XLSX = await import('@e965/xlsx');
       const data = receptions.map(r => ({
         'ID': r.id.split('-')[0],
         'Fecha': r.reception_date || r.created_at ? new Date(r.reception_date || r.created_at || '').toLocaleDateString('es-CU') : '',

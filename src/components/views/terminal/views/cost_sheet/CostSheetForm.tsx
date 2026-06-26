@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Trash2, Plus, Edit } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
 
+import { useTranslations } from 'next-intl';
 interface CostSheetFormProps {
   activeSection: string;
   calculatedAnnexes?: CostSheetAnnex[];

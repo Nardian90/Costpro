@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
-import { Parser } from 'expr-eval';
+import { Parser } from '@/lib/cost-engine/safe-parser';
 
 /* ─────────────────────────────────────────────────────
  *  formatResult — limita decimales a 8 y longitud a 15

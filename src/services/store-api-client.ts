@@ -56,7 +56,9 @@ export const storeApiClient = {
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({ error: 'Error de conexión' }));
-      throw new Error(err.message || err.error || 'Error al crear tienda');
+      // BUG-FIX: Capturar TODOS los campos de error posibles del API
+      const errMsg = err.message || err.error || err.details || err.rpcError || 'Error al crear tienda';
+      throw new Error(errMsg);
     }
     const result = await res.json();
     return result.data as Store;

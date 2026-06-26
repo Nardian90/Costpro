@@ -12,14 +12,38 @@ import { useStoresView } from './useStoresView';
 import { useBulkStoreAction } from '@/hooks/api/useStores';
 import { useIsMobile } from '@/hooks/ui/useMobile';
 import { StoreModals } from './StoreModals';
-import { CreateStoreQuickModal } from './CreateStoreQuickModal';
-import { StoreTeamModal } from './StoreTeamModal';
-import { StoreConfigModal } from './StoreConfigModal';
+// G3-PERF + G3-HARDEN: Heavy modals are dynamically imported to keep the
+// StoresManagementView initial bundle lean. They only load when the user
+// actually opens them. withChunkRetry wraps each in ChunkErrorBoundary so
+// chunk-load failures (network blip, deploy mismatch) show a recoverable
+// retry UI instead of a blank screen.
+import { withChunkRetry } from '@/components/ui/ChunkErrorBoundary';
+const CreateStoreQuickModal = withChunkRetry(
+  React.lazy(() => import('./CreateStoreQuickModal').then(m => ({ default: m.CreateStoreQuickModal }))),
+  'CreateStoreQuickModal'
+);
+const StoreTeamModal = withChunkRetry(
+  React.lazy(() => import('./StoreTeamModal').then(m => ({ default: m.StoreTeamModal }))),
+  'StoreTeamModal'
+);
+const StoreConfigModal = withChunkRetry(
+  React.lazy(() => import('./StoreConfigModal').then(m => ({ default: m.StoreConfigModal }))),
+  'StoreConfigModal'
+);
+const BulkApplyTemplateModal = withChunkRetry(
+  React.lazy(() => import('./BulkApplyTemplateModal').then(m => ({ default: m.BulkApplyTemplateModal }))),
+  'BulkApplyTemplateModal'
+);
+const StoreOnboardingWizard = withChunkRetry(
+  React.lazy(() => import('./StoreOnboardingWizard').then(m => ({ default: m.StoreOnboardingWizard }))),
+  'StoreOnboardingWizard'
+);
+const StoreCompareModal = withChunkRetry(
+  React.lazy(() => import('./StoreCompareModal').then(m => ({ default: m.StoreCompareModal }))),
+  'StoreCompareModal'
+);
 import { StoreHealthBadge } from './StoreHealthBadge';
 import { useStoreHealth } from '@/hooks/api/useStoreHealth';
-import { BulkApplyTemplateModal } from './BulkApplyTemplateModal';
-import { StoreOnboardingWizard } from './StoreOnboardingWizard';
-import { StoreCompareModal } from './StoreCompareModal';
 import { VirtualizedStoreGrid } from './VirtualizedStoreGrid'; // B3
 import { DestructiveConfirmModal } from '@/components/ui/DestructiveConfirmModal';
 import { useAuthStore } from '@/store';
@@ -156,7 +180,7 @@ export default function StoresManagementView() {
           {isLoading && (
             <div className="col-span-full py-24 flex flex-col items-center justify-center gap-3">
               <Loader2 className="w-8 h-8 animate-spin text-primary/40" aria-hidden="true" />
-              <p className="text-xs font-black uppercase tracking-widest text-muted-foreground" role="status">{t('loadingStores')}</p>
+              <p className="text-sm font-black uppercase tracking-widest text-muted-foreground" role="status">{t('loadingStores')}</p>
             </div>
           )}
 
@@ -189,7 +213,7 @@ export default function StoresManagementView() {
                   {store.logo_url && getStoreLogoUrl(store.logo_url) ? (
                     <Image src={getStoreLogoUrl(store.logo_url) || ''} alt={`${t('logo')} ${store.name}`} width={56} height={56} className="w-full h-full object-cover" unoptimized />
                   ) : (
-                    <Building className="w-6 h-6 text-muted-foreground opacity-40" />
+                    <Building className="w-6 h-6 text-muted-foreground opacity-70" />
                   )}
                 </div>
                 <span className={cn(
@@ -201,18 +225,18 @@ export default function StoresManagementView() {
               </div>
 
               <h3 className="font-black text-lg uppercase tracking-tight mb-1">{store.name}</h3>
-              <p className="text-xs font-bold text-muted-foreground leading-relaxed mb-1">{store.address || t('addressNotSpecified')}</p>
+              <p className="text-sm font-bold text-muted-foreground leading-relaxed mb-1">{store.address || t('addressNotSpecified')}</p>
 
               {/* FC Template Indicator */}
               <div className="flex items-center gap-1.5 mb-1">
                 {store.cost_template?.is_active ? (
-                  <span className="inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded bg-success/10 text-success border border-success/20">
+                  <span className="inline-flex items-center gap-1 text-sm font-bold px-1.5 py-0.5 rounded bg-success/10 text-success border border-success/20">
                     <FileText className="w-3 h-3" />
                     FC: {store.cost_template.modalidad || 'Plantilla configurada'}
                   </span>
                 ) : (
-                  <span className="inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded bg-muted/50 text-muted-foreground border border-border">
-                    <FileText className="w-3 h-3 opacity-40" />
+                  <span className="inline-flex items-center gap-1 text-sm font-bold px-1.5 py-0.5 rounded bg-muted/50 text-muted-foreground border border-border">
+                    <FileText className="w-3 h-3 opacity-70" />
                     Sin plantilla FC
                   </span>
                 )}
@@ -234,7 +258,7 @@ export default function StoresManagementView() {
                   <div className="flex items-center gap-1.5 mb-1">
                     <span
                       className={cn(
-                        "inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded border",
+                        "inline-flex items-center gap-1 text-xs font-bold px-1.5 py-0.5 rounded border",
                         total > 0
                           ? 'bg-primary/5 text-primary border-primary/20'
                           : 'bg-muted/50 text-muted-foreground/60 border-border'
@@ -257,8 +281,8 @@ export default function StoresManagementView() {
                 return (
                 <div className="flex items-center gap-2 p-2 rounded-xl bg-primary/5 border border-primary/10">
                   <div className="flex-1 min-w-0">
-                    <p className="text-[9px] font-black uppercase tracking-widest text-primary/60 mb-0.5">{t('publicLink')}</p>
-                    <p className="text-[10px] font-mono text-foreground truncate" title={`${window.location.origin}/tienda/${cleanSlug}`}>
+                    <p className="text-sm font-black uppercase tracking-widest text-primary/60 mb-0.5">{t('publicLink')}</p>
+                    <p className="text-sm font-mono text-foreground truncate" title={`${window.location.origin}/tienda/${cleanSlug}`}>
                       {window.location.origin}/tienda/{cleanSlug}
                     </p>
                   </div>
@@ -296,22 +320,22 @@ export default function StoresManagementView() {
               {(store.reeup || store.bank_account || store.phone || store.email) && (
                 <div className="flex flex-col gap-0.5 mb-4">
                   {store.phone && (
-                    <p className="text-[10px] font-bold text-muted-foreground/60 tracking-wider">
+                    <p className="text-sm font-bold text-muted-foreground/60 tracking-wider">
                       {t('phone')}: {store.phone}
                     </p>
                   )}
                   {store.email && (
-                    <p className="text-[10px] font-bold text-muted-foreground/60 tracking-wider">
+                    <p className="text-sm font-bold text-muted-foreground/60 tracking-wider">
                       {store.email}
                     </p>
                   )}
                   {store.reeup && (
-                    <p className="text-[10px] font-bold text-muted-foreground/60 tracking-wider">
+                    <p className="text-sm font-bold text-muted-foreground/60 tracking-wider">
                       {t('reeup')}: {store.reeup}
                     </p>
                   )}
                   {store.bank_account && (
-                    <p className="text-[10px] font-bold text-muted-foreground/60 tracking-wider">
+                    <p className="text-sm font-bold text-muted-foreground/60 tracking-wider">
                       {t('bankAccount')}: {store.bank_account}
                     </p>
                   )}
@@ -328,7 +352,7 @@ export default function StoresManagementView() {
                     aria-label={`${t('selectStore')} ${store.name}`}
                     aria-pressed={false}
                     aria-describedby={`store-desc-${store.id}`}
-                    className="w-full min-h-[44px] py-2.5 rounded-xl bg-primary text-foreground font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-transform"
+                    className="w-full min-h-[44px] py-2.5 rounded-xl bg-primary text-foreground font-black text-sm uppercase tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-transform"
                   >
                     <Target className="w-3.5 h-3.5" />
                     {t('selectStore')}
@@ -338,7 +362,7 @@ export default function StoresManagementView() {
                     role="status"
                     aria-label={`${t('currentStore')}: ${store.name}`}
                     aria-current="true"
-                    className="w-full py-2.5 rounded-xl bg-primary/5 border border-primary/20 text-primary font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2"
+                    className="w-full py-2.5 rounded-xl bg-primary/5 border border-primary/20 text-primary font-black text-sm uppercase tracking-widest flex items-center justify-center gap-2"
                   >
                     <Check className="w-3.5 h-3.5" />
                     {t('currentStore')}
@@ -353,7 +377,7 @@ export default function StoresManagementView() {
                     onClick={() => setConfigModalStore(store)}
                     aria-label={`Configurar tienda ${store.name}`}
                     title="Configuración centralizada con checklist de completitud"
-                    className="min-h-[44px] py-2.5 rounded-xl border border-border hover:bg-primary/10 hover:text-primary font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-colors"
+                    className="min-h-[44px] py-2.5 rounded-xl border border-border hover:bg-primary/10 hover:text-primary font-black text-sm uppercase tracking-widest flex items-center justify-center gap-2 transition-colors"
                   >
                     <Settings className="w-3 h-3" />
                     Configurar
@@ -363,7 +387,7 @@ export default function StoresManagementView() {
                     onClick={() => handleEditStore(store)}
                     aria-label={`${tc('edit')} ${store.name}`}
                     title="Formulario avanzado de edición (datos completos)"
-                    className="min-h-[44px] py-2.5 rounded-xl border border-border hover:bg-muted font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-colors"
+                    className="min-h-[44px] py-2.5 rounded-xl border border-border hover:bg-muted font-black text-sm uppercase tracking-widest flex items-center justify-center gap-2 transition-colors"
                   >
                     <Edit className="w-3 h-3" />
                     {t('info')}
@@ -376,7 +400,7 @@ export default function StoresManagementView() {
                       onClick={() => setTeamModalStore(store)}
                       aria-label={`Ver equipo de ${store.name}`}
                       title="Ver y administrar usuarios asignados a esta tienda"
-                      className="min-h-[44px] py-2.5 rounded-xl border border-border hover:bg-primary/10 hover:text-primary font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-colors"
+                      className="min-h-[44px] py-2.5 rounded-xl border border-border hover:bg-primary/10 hover:text-primary font-black text-sm uppercase tracking-widest flex items-center justify-center gap-2 transition-colors"
                     >
                       <UserCog className="w-3 h-3" />
                       Equipo
@@ -387,7 +411,7 @@ export default function StoresManagementView() {
                       type="button"
                       onClick={() => handleResetStore(store)}
                       aria-label={`${t('resetStore')} ${store.name}`}
-                      className="min-h-[44px] py-2.5 rounded-xl border border-border hover:bg-warning/10 hover:text-warning font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-colors"
+                      className="min-h-[44px] py-2.5 rounded-xl border border-border hover:bg-warning/10 hover:text-warning font-black text-sm uppercase tracking-widest flex items-center justify-center gap-2 transition-colors"
                     >
                       <RotateCcw className="w-3 h-3" />
                       {t('reset')}
@@ -417,7 +441,7 @@ export default function StoresManagementView() {
                       onClick={() => handleDeleteStore(store)}
                       aria-label={`${t('deleteStore')} ${store.name}`}
                       aria-describedby={`store-desc-${store.id}`}
-                      className="col-span-2 min-h-[44px] py-2.5 rounded-xl border border-border hover:bg-destructive/10 hover:text-destructive font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-colors"
+                      className="col-span-2 min-h-[44px] py-2.5 rounded-xl border border-border hover:bg-destructive/10 hover:text-destructive font-black text-sm uppercase tracking-widest flex items-center justify-center gap-2 transition-colors"
                     >
                       <Trash2 className="w-3 h-3" />
                       {t('erase')}
@@ -431,8 +455,8 @@ export default function StoresManagementView() {
           {!isLoading && stores.length === 0 && (
             <div className="col-span-full py-24 text-center border-2 border-dashed border-border rounded-xl bg-muted/10">
                <Building className="w-16 h-16 mx-auto mb-4 opacity-5" />
-               <p className="font-black uppercase tracking-widest text-xs text-muted-foreground mb-2">{t('noStores')}</p>
-               <p className="text-xs text-muted-foreground/50 font-bold uppercase tracking-wider">{t('noAccessOrNoRecords')}</p>
+               <p className="font-black uppercase tracking-widest text-sm text-muted-foreground mb-2">{t('noStores')}</p>
+               <p className="text-sm text-muted-foreground/70 font-bold uppercase tracking-wider">{t('noAccessOrNoRecords')}</p>
             </div>
           )}
         </div>
@@ -445,7 +469,7 @@ export default function StoresManagementView() {
             isMobile ? 'bottom-0 pb-[env(safe-area-inset-bottom)]' : 'bottom-4',
           )}>
             <div className="flex items-center gap-2 p-3 rounded-2xl bg-card border-2 border-primary shadow-2xl">
-              <span className="text-xs font-black uppercase tracking-widest text-primary pl-2">
+              <span className="text-sm font-black uppercase tracking-widest text-primary pl-2">
                 {selectedCount} selec.
               </span>
               <div className="h-4 w-px bg-border" />
@@ -453,7 +477,7 @@ export default function StoresManagementView() {
                 type="button"
                 onClick={() => handleBulkAction('activate')}
                 disabled={bulkAction.isPending}
-                className="min-h-[44px] px-3 py-2.5 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-400 text-xs font-black uppercase tracking-widest transition-colors disabled:opacity-50"
+                className="min-h-[44px] px-3 py-2.5 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-400 text-sm font-black uppercase tracking-widest transition-colors disabled:opacity-50"
               >
                 Activar
               </button>
@@ -461,7 +485,7 @@ export default function StoresManagementView() {
                 type="button"
                 onClick={() => handleBulkAction('deactivate')}
                 disabled={bulkAction.isPending}
-                className="min-h-[44px] px-3 py-2.5 rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-100 dark:bg-amber-950/40 dark:text-amber-400 text-xs font-black uppercase tracking-widest transition-colors disabled:opacity-50"
+                className="min-h-[44px] px-3 py-2.5 rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-100 dark:bg-amber-950/40 dark:text-amber-400 text-sm font-black uppercase tracking-widest transition-colors disabled:opacity-50"
               >
                 Pausar
               </button>
@@ -470,7 +494,7 @@ export default function StoresManagementView() {
                 type="button"
                 onClick={() => setBulkTemplateOpen(true)}
                 disabled={bulkAction.isPending}
-                className="min-h-[44px] px-3 py-2.5 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 text-xs font-black uppercase tracking-widest transition-colors disabled:opacity-50"
+                className="min-h-[44px] px-3 py-2.5 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 text-sm font-black uppercase tracking-widest transition-colors disabled:opacity-50"
               >
                 Aplicar FC
               </button>
@@ -478,7 +502,7 @@ export default function StoresManagementView() {
                 type="button"
                 onClick={() => handleBulkAction('delete')}
                 disabled={bulkAction.isPending}
-                className="min-h-[44px] px-3 py-2.5 rounded-lg bg-destructive/10 text-destructive hover:bg-destructive hover:text-foreground text-xs font-black uppercase tracking-widest transition-colors disabled:opacity-50"
+                className="min-h-[44px] px-3 py-2.5 rounded-lg bg-destructive/10 text-destructive hover:bg-destructive hover:text-foreground text-sm font-black uppercase tracking-widest transition-colors disabled:opacity-50"
               >
                 Eliminar
               </button>
@@ -486,16 +510,16 @@ export default function StoresManagementView() {
               <button
                 type="button"
                 onClick={selectAll}
-                className="px-2 py-1.5 text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-foreground"
-                title="Seleccionar todas"
+                className="px-2 py-1.5 text-sm font-black uppercase tracking-widest text-muted-foreground hover:text-foreground"
+                title={t('selectAllTitle')}
               >
-                Todas
+                {t('selectAll')}
               </button>
               <button
                 type="button"
                 onClick={clearSelection}
                 className="p-2 rounded-lg hover:bg-muted text-muted-foreground"
-                aria-label="Limpiar selección"
+                aria-label={t('clearSelection')}
               >
                 <X className="w-4 h-4" />
               </button>
@@ -509,11 +533,11 @@ export default function StoresManagementView() {
           F2.5-1: handleCreateStore ahora setea mode='create-quick' (no 'create')
           para que handleStoreFormSubmit sepa que solo vienen name+slug. */}
       <CreateStoreQuickModal
-        isOpen={storeFormMode === 'create-quick' || storeFormMode === 'create'}
-        onClose={handleCloseModal}
-        onSubmit={handleStoreFormSubmit}
-        isSubmitting={isSubmitting}
-      />
+          isOpen={storeFormMode === 'create-quick' || storeFormMode === 'create'}
+          onClose={handleCloseModal}
+          onSubmit={handleStoreFormSubmit}
+          isSubmitting={isSubmitting}
+        />
       {/* StoreModals maneja SOLO edit. Los modos create/create-quick se manejan
           en CreateStoreQuickModal arriba. Los modos delete/reset se manejan en
           DestructiveConfirmModal más abajo (F2.5-2). */}
@@ -528,17 +552,17 @@ export default function StoresManagementView() {
       {/* F2-T05: Modal de equipo de la tienda.
           Muestra los usuarios asignados con cambio de rol inline y remoción. */}
       <StoreTeamModal
-        isOpen={!!teamModalStore}
-        onClose={() => setTeamModalStore(null)}
-        store={teamModalStore}
-      />
+          isOpen={!!teamModalStore}
+          onClose={() => setTeamModalStore(null)}
+          store={teamModalStore}
+        />
       {/* F2-T02: Modal de configuración de tienda.
           Centraliza General, Fiscal, FC y Tienda Pública con checklist de completitud. */}
       <StoreConfigModal
-        isOpen={!!configModalStore}
-        onClose={() => setConfigModalStore(null)}
-        store={configModalStore}
-      />
+          isOpen={!!configModalStore}
+          onClose={() => setConfigModalStore(null)}
+          store={configModalStore}
+        />
       {/* F2.5-3: Modal de confirmación destructiva para desactivar tienda (F2-T03).
           Reemplaza el confirm() nativo por DestructiveConfirmModal estandarizado.
           Solo se muestra al desactivar (reactivar es seguro, no requiere confirmación). */}
@@ -546,10 +570,10 @@ export default function StoresManagementView() {
         key={`toggle-${storeToToggle?.id ?? 'none'}`}
         isOpen={!!storeToToggle}
         onClose={cancelToggle}
-        title="Desactivar Tienda"
-        description="Pausa temporal — preserva configuración y usuarios"
+        title={t('confirmTitleDeactivate')}
+        description={t('confirmDescDeactivate')}
         confirmName={storeToToggle?.name || ''}
-        confirmNameLabel="Nombre de la tienda"
+        confirmNameLabel={t('confirmNameLabel')}
         warningText={
           <>
             Vas a desactivar la tienda <strong>{storeToToggle?.name}</strong>. Los usuarios
@@ -563,7 +587,7 @@ export default function StoresManagementView() {
           'Membresías se mantienen (no se revocan)',
           'Puedes reactivar la tienda en cualquier momento con 1 clic',
         ]}
-        confirmLabel="Desactivar Tienda"
+        confirmLabel={t('confirmLabelDeactivate')}
         onConfirm={() => { if (storeToToggle) { void executeToggle(storeToToggle); } }}
         isSubmitting={togglePending}
       />
@@ -572,10 +596,10 @@ export default function StoresManagementView() {
         key={`delete-${selectedStore?.id ?? 'none'}`}
         isOpen={storeFormMode === 'delete'}
         onClose={handleCloseModal}
-        title="Eliminar Tienda"
-        description="Baja permanente con cleanup de memberships"
+        title={t('confirmTitleDelete')}
+        description={t('confirmDescDelete')}
         confirmName={selectedStore?.name || ''}
-        confirmNameLabel="Nombre de la tienda"
+        confirmNameLabel={t('confirmNameLabel')}
         warningText={
           <>
             Vas a eliminar la tienda <strong>{selectedStore?.name}</strong>. Esta acción es
@@ -590,7 +614,7 @@ export default function StoresManagementView() {
           'active_store_id limpiado de perfiles afectados',
           'Datos históricos (ventas, recepciones) preservados',
         ]}
-        confirmLabel="Eliminar Definitivamente"
+        confirmLabel={t('confirmLabelDelete')}
         onConfirm={() => handleStoreFormSubmit('delete', {})}
         isSubmitting={isSubmitting}
       />
@@ -599,10 +623,10 @@ export default function StoresManagementView() {
         key={`reset-${selectedStore?.id ?? 'none'}`}
         isOpen={storeFormMode === 'reset'}
         onClose={() => { handleCloseModal(); setResetKeepCatalog(false); }}
-        title="Reiniciar Tienda"
-        description="Borra todos los datos operativos — preserva configuración y usuarios"
+        title={t('confirmTitleReset')}
+        description={t('confirmDescReset')}
         confirmName={selectedStore?.name || ''}
-        confirmNameLabel="Nombre de la tienda"
+        confirmNameLabel={t('confirmNameLabel')}
         warningText={
           <>
             Vas a reiniciar la tienda <strong>{selectedStore?.name}</strong>. Se borrarán todos
@@ -623,7 +647,7 @@ export default function StoresManagementView() {
             ? 'Stock de productos reseteado a 0 (catálogo preservado)'
             : 'Catálogo de productos eliminado',
         ]}
-        confirmLabel="Reiniciar Tienda"
+        confirmLabel={t('confirmLabelReset')}
         onConfirm={() => handleStoreFormSubmit('reset', { keepCatalog: resetKeepCatalog } as Partial<Store> & { keepCatalog?: boolean })}
         isSubmitting={isSubmitting}
         // Reset-Flow-Fix: toggle para mantener catálogo de productos.
@@ -636,10 +660,10 @@ export default function StoresManagementView() {
               className="w-5 h-5 mt-0.5 rounded border-border text-primary focus:ring-primary/30 shrink-0"
             />
             <div className="flex-1">
-              <span className="text-xs font-black uppercase tracking-widest text-foreground block">
-                Mantener catálogo de productos
+              <span className="text-sm font-black uppercase tracking-widest text-foreground block">
+                {t('keepCatalogTitle')}
               </span>
-              <span className="text-[11px] text-muted-foreground block mt-0.5 leading-relaxed">
+              <span className="text-sm text-muted-foreground block mt-0.5 leading-relaxed">
                 Si activas esta opción, los productos y variantes se conservan pero el stock
                 se resetea a 0. Útil para reiniciar operaciones sin perder el catálogo.
               </span>
@@ -656,23 +680,23 @@ export default function StoresManagementView() {
           onClose={() => !bulkAction.isPending && setBulkConfirm(null)}
           title={
             bulkConfirm.action === 'delete'
-              ? `Eliminar ${bulkConfirm.storeIds.length} tiendas`
-              : `Desactivar ${bulkConfirm.storeIds.length} tiendas`
+              ? t('bulkDeleteTitle', { count: bulkConfirm.storeIds.length })
+              : t('bulkDeactivateTitle', { count: bulkConfirm.storeIds.length })
           }
           description={
             bulkConfirm.action === 'delete'
-              ? 'Baja permanente con cleanup de memberships'
-              : 'Pausa temporal — preserva configuración y usuarios'
+              ? t('confirmDescDelete')
+              : t('confirmDescDeactivate')
           }
           confirmName="BULK"
-          confirmNameLabel="Escribe BULK para confirmar"
+          confirmNameLabel={t('bulkConfirmNameLabel')}
           warningText={
             <>
               Vas a {bulkConfirm.action === 'delete' ? 'eliminar' : 'desactivar'}{' '}
               <strong>{bulkConfirm.storeIds.length} tiendas</strong>:
               <div className="mt-2 max-h-32 overflow-y-auto">
                 {bulkConfirm.storeNames.map((name, i) => (
-                  <div key={i} className="text-xs">• {name}</div>
+                  <div key={i} className="text-sm">• {name}</div>
                 ))}
               </div>
             </>
@@ -683,7 +707,7 @@ export default function StoresManagementView() {
               : ['Usuarios pierden acceso', 'Configuración preservada', 'Reactivable en cualquier momento']
           }
           confirmLabel={
-            bulkConfirm.action === 'delete' ? 'Eliminar Definitivamente' : 'Desactivar Tiendas'
+            bulkConfirm.action === 'delete' ? t('bulkConfirmLabelDelete') : t('bulkConfirmLabelDeactivate')
           }
           onConfirm={() => executeBulk(bulkConfirm.action, bulkConfirm.storeIds)}
           isSubmitting={bulkAction.isPending}
@@ -691,10 +715,10 @@ export default function StoresManagementView() {
       )}
       {/* F4-T03: Modal para aplicar plantilla FC a múltiples tiendas seleccionadas. */}
       <BulkApplyTemplateModal
-        isOpen={bulkTemplateOpen}
-        onClose={() => setBulkTemplateOpen(false)}
-        selectedStores={selectedStores}
-      />
+          isOpen={bulkTemplateOpen}
+          onClose={() => setBulkTemplateOpen(false)}
+          selectedStores={selectedStores}
+        />
       {/* F4-T04: Onboarding wizard de 3 pasos para crear tienda completa. */}
       <StoreOnboardingWizard
         isOpen={wizardOpen}

@@ -15,7 +15,20 @@
 @import "tailwindcss";
 @import "./mobile-ipv-hardening.css";
 @import "./fc-mobile-hardening.css";
+@import "../styles/elderly-tokens.css";
 @import "tw-animate-css";
+
+/* ── Scroll padding global — para que los anchors (#heading-id) y scrollIntoView
+   respeten el Header sticky de la aplicación (~80px de altura con safe-area). ── */
+html {
+  scroll-padding-top: 100px;
+  scroll-behavior: smooth;
+}
+/* En el contexto del Help Center, el scroll ocurre dentro de main[data-help-scroll],
+   no en el document. Aseguramos que ese contenedor también tenga scroll-padding. */
+main[data-help-scroll] {
+  scroll-padding-top: 100px;
+}
 
 /* ── Modular Style Layers ── */
 @import "../styles/tokens.css";

@@ -1,13 +1,14 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Home, Package, ShoppingCart, Building, MoreHorizontal, Search, Check, X, Warehouse, DollarSign } from 'lucide-react';
+import { Home, Package, ShoppingCart, Building, MoreHorizontal, Search, Check, X, Warehouse, DollarSign, FolderOpen, FileText, LayoutGrid, Paperclip, PenTool } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { type ViewType } from '@/store';
+import { type ViewType, useUIStore } from '@/store';
 import { useAuthStore } from '@/store';
 import { useStoreSwitcher } from '@/hooks/ui/useStoreSwitcher';
 import { useStores } from '@/hooks/api/useStores';
+import { useDebounce } from '@/hooks/ui/useDebounce';
 import type { NavigationItem } from '@/hooks/ui/useTerminalNavigation';
 
 /**
@@ -37,6 +38,7 @@ interface MobileTabBarProps {
 export function MobileTabBar({ navigationItems, currentView, onViewChange }: MobileTabBarProps) {
   const { user } = useAuthStore();
   const { switchStore } = useStoreSwitcher();
+  const { setActiveCostSection, activeCostSection } = useUIStore();
   const [moreSheetOpen, setMoreSheetOpen] = useState(false);
   const [storeSheetOpen, setStoreSheetOpen] = useState(false);
   const [storeSearch, setStoreSearch] = useState('');
@@ -46,12 +48,40 @@ export function MobileTabBar({ navigationItems, currentView, onViewChange }: Mob
   const { data: stores = [] } = useStores(user?.id || '', isAdmin, isEncargado);
 
   const storesToShow = stores.map(s => ({ id: s.id, name: s.name }));
-  const filteredStores = storeSearch.trim()
-    ? storesToShow.filter(s => s.name.toLowerCase().includes(storeSearch.toLowerCase().trim()))
+  // P4-2: Debounce 200ms en búsqueda de sucursales (menos delay que templates
+  // porque el usuario espera feedback inmediato al buscar su tienda).
+  const debouncedStoreSearch = useDebounce(storeSearch, 200);
+  const filteredStores = debouncedStoreSearch.trim()
+    ? storesToShow.filter(s => s.name.toLowerCase().includes(debouncedStoreSearch.toLowerCase().trim()))
     : storesToShow;
 
   const handleTabClick = (view: ViewType) => {
     onViewChange(view);
+  };
+
+  // C1-PERF: Tabs contextuales por módulo. Cuando el usuario está en cost-sheets,
+  // los tabs inferiores deben ser secciones del módulo COSTOS (Plantillas, Generales,
+  // Estructura, Anexos) — NO operaciones de inventario (Vender/Recibir/Caja).
+  // Esto corrige el bug reportado: "al acceder al módulo costo se ven opciones
+  // abajo en modo móvil de inventario cuando deberían ser funciones de este módulo".
+  type CostSection = 'templates' | 'general' | 'structure' | 'annexes' | '__more__';
+  // F2: Labels cortos para mobile — "Plantillas" → "Plant.", "Estructura" → "Estruct."
+  // Evita superposición de texto en pantallas <375px. El aria-label mantiene el nombre
+  // completo para lectores de pantalla.
+  const costTabs: { label: string; ariaLabel: string; icon: React.ComponentType<{ className?: string }>; section: CostSection }[] = [
+    { label: 'Plant.', ariaLabel: 'Plantillas', icon: FolderOpen, section: 'templates' },
+    { label: 'Datos', ariaLabel: 'Datos Generales', icon: FileText, section: 'general' },
+    { label: 'Estruct.', ariaLabel: 'Estructura de Costos', icon: LayoutGrid, section: 'structure' },
+    { label: 'Anexos', ariaLabel: 'Anexos', icon: Paperclip, section: 'annexes' },
+    { label: 'Más', ariaLabel: 'Más opciones', icon: MoreHorizontal, section: '__more__' },
+  ];
+  const isCostModule = currentView === 'cost-sheets';
+  const handleCostTabClick = (section: CostSection) => {
+    if (section === '__more__') {
+      setMoreSheetOpen(true);
+    } else {
+      setActiveCostSection(section);
+    }
   };
 
   // M-4 (IA Audit): items para el sheet "Más" — todos excepto los 4 accesos
@@ -76,17 +106,29 @@ export function MobileTabBar({ navigationItems, currentView, onViewChange }: Mob
         style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
         aria-label="Navegación principal mobile"
       >
-        {/* M-4 (IA Audit): 4 accesos operativos + Más.
-            "Vender" usa icon ShoppingCart (mismo del sidebar) para consistencia.
-            "Recibir" usa Warehouse (mismo del sidebar Logística > Recepciones).
-            "Inventario" usa Package (mismo del sidebar Almacén > Inventario).
-            "Caja" usa DollarSign (arqueo/cierre de caja).
-            "Más" abre Sheet con todas las demás vistas (Inicio, Tiendas, Reportes, etc.). */}
-        <TabButton label="Vender" icon={ShoppingCart} isActive={currentView === 'pos' || currentView === 'sales-hub' || currentView === 'sales_catalog' || currentView === 'catalog' || currentView === 'history'} onClick={() => handleTabClick('pos')} />
-        <TabButton label="Recibir" icon={Warehouse} isActive={currentView === 'reception_list' || currentView === 'recepcion'} onClick={() => handleTabClick('reception_list')} />
-        <TabButton label="Inventario" icon={Package} isActive={currentView === 'inventory'} onClick={() => handleTabClick('inventory')} />
-        <TabButton label="Caja" icon={DollarSign} isActive={currentView === 'cash'} onClick={() => handleTabClick('cash')} />
-        <TabButton label="Más" icon={MoreHorizontal} isActive={moreSheetOpen} onClick={() => setMoreSheetOpen(true)} />
+        {isCostModule ? (
+          // C1: Tabs contextuales del módulo COSTOS — reemplazan los operativos
+          // de inventario cuando el usuario está en cost-sheets.
+          // F2: Labels cortos + aria-label completo para accesibilidad.
+          costTabs.map(tab => (
+            <TabButton
+              key={tab.section}
+              label={tab.label}
+              ariaLabel={tab.ariaLabel}
+              icon={tab.icon}
+              isActive={tab.section === '__more__' ? moreSheetOpen : activeCostSection === tab.section}
+              onClick={() => handleCostTabClick(tab.section)}
+            />
+          ))
+        ) : (
+          // M-4 (IA Audit): 4 accesos operativos + Más (default para resto de módulos).
+          <DefaultTabs
+            currentView={currentView}
+            handleTabClick={handleTabClick}
+            moreSheetOpen={moreSheetOpen}
+            setMoreSheetOpen={setMoreSheetOpen}
+          />
+        )}
       </nav>
 
       {/* Sheet: Selector de tienda — controlado directamente por state local */}
@@ -197,7 +239,7 @@ export function MobileTabBar({ navigationItems, currentView, onViewChange }: Mob
                   )}
                 >
                   <Icon className="w-5 h-5" />
-                  <span className="text-[10px] font-black uppercase tracking-widest text-center leading-tight">
+                  <span className="text-xs font-black uppercase tracking-widest text-center leading-tight">
                     {item.label}
                   </span>
                 </button>
@@ -212,11 +254,13 @@ export function MobileTabBar({ navigationItems, currentView, onViewChange }: Mob
 
 function TabButton({
   label,
+  ariaLabel,
   icon: Icon,
   isActive,
   onClick,
 }: {
   label: string;
+  ariaLabel?: string;
   icon: React.ComponentType<{ className?: string }>;
   isActive: boolean;
   onClick: () => void;
@@ -226,20 +270,69 @@ function TabButton({
       type="button"
       onClick={onClick}
       className={cn(
-        "flex flex-col items-center justify-center gap-0.5 py-1.5 px-3 min-h-[48px] min-w-[48px] rounded-lg transition-colors",
+        "flex flex-col items-center justify-center gap-0.5 py-1.5 px-2 min-h-[48px] min-w-[44px] rounded-lg transition-colors flex-1",
         isActive ? "text-primary" : "text-muted-foreground"
       )}
-      aria-label={label}
+      aria-label={ariaLabel || label}
       aria-pressed={isActive}
     >
       <Icon className={cn("w-5 h-5", isActive && "text-primary")} />
       <span className={cn(
-        "text-[9px] font-black uppercase tracking-widest",
+        "text-xs font-black uppercase tracking-tight truncate max-w-full",
         isActive && "text-primary"
       )}>
         {label}
       </span>
     </button>
+  );
+}
+
+// C1: Sub-componente para los tabs operativos default (Vender/Recibir/Inventario/Caja/Más).
+// Extraído para mantener legibilidad del componente principal.
+function DefaultTabs({
+  currentView,
+  handleTabClick,
+  moreSheetOpen,
+  setMoreSheetOpen,
+}: {
+  currentView: string;
+  handleTabClick: (view: ViewType) => void;
+  moreSheetOpen: boolean;
+  setMoreSheetOpen: (open: boolean) => void;
+}) {
+  return (
+    <>
+      <TabButton
+        label="Vender"
+        icon={ShoppingCart}
+        isActive={currentView === 'pos' || currentView === 'sales-hub' || currentView === 'sales_catalog' || currentView === 'catalog' || currentView === 'history'}
+        onClick={() => handleTabClick('pos')}
+      />
+      <TabButton
+        label="Recibir"
+        icon={Warehouse}
+        isActive={currentView === 'reception_list' || currentView === 'recepcion'}
+        onClick={() => handleTabClick('reception_list')}
+      />
+      <TabButton
+        label="Inventario"
+        icon={Package}
+        isActive={currentView === 'inventory'}
+        onClick={() => handleTabClick('inventory')}
+      />
+      <TabButton
+        label="Caja"
+        icon={DollarSign}
+        isActive={currentView === 'cash'}
+        onClick={() => handleTabClick('cash')}
+      />
+      <TabButton
+        label="Más"
+        icon={MoreHorizontal}
+        isActive={moreSheetOpen}
+        onClick={() => setMoreSheetOpen(true)}
+      />
+    </>
   );
 }
 

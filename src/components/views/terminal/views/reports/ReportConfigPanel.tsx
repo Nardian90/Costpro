@@ -58,7 +58,7 @@ function ProductVirtualList({
   onSelect: (product: { id: string; name: string; sku: string }) => void;
 }) {
   const parentRef = useRef<HTMLDivElement>(null);
-  // eslint-disable-next-line react-hooks/incompatible-library
+   
   const virtualizer = useVirtualizer({
     count: products.length,
     getScrollElement: () => parentRef.current,

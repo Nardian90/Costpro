@@ -80,6 +80,22 @@ export const offlineStorage = {
   },
 
   /**
+   * FIX: Obtiene operaciones que fallaron tras MAX_RETRIES.
+   */
+  async getFailedOperations(): Promise<SyncOperationType[]> {
+    const queue = await this.getQueue();
+    return queue.filter(op => op.status === 'failed' && op.attempts >= 3);
+  },
+
+  /**
+   * FIX: Cuenta operaciones fallidas para mostrar en UI.
+   */
+  async getFailedCount(): Promise<number> {
+    const failed = await this.getFailedOperations();
+    return failed.length;
+  },
+
+  /**
    * Update an operation status
    */
   async updateOperationStatus(idempotencyKey: string, status: SyncOperationType['status'], lastError?: string): Promise<void> {

@@ -206,7 +206,10 @@ export const ofertaPdfExportSchema = z.object({
 // ─── Stores ───────────────────────────────────────────────────────────────────
 export const createStoreSchema = z.object({
   name: z.string().min(1, 'Nombre requerido').max(100),
-  address: z.string().min(1, 'Dirección requerida').max(200),
+  // F4-FIX: address es opcional para soportar el flujo 'create-quick' donde
+  // solo se envía name + slug. El admin completa la dirección después desde
+  // StoreConfigModal. Antes era min(1) lo que causaba 400 "Datos inválidos".
+  address: z.string().max(200).optional().default(''),
   logo_url: z.string().url().optional().nullable(),
   reeup: z.string().regex(/^\d{11}$/, 'REEUP debe tener 11 dígitos').optional().nullable(),
   nit: z.string().regex(/^\d{1,15}$/, 'NIT debe contener solo dígitos').optional().nullable(),

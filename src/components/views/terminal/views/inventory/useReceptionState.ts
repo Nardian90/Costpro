@@ -569,7 +569,7 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
 
     setIsImporting(true);
     try {
-      const XLSX = await import('xlsx');
+      const XLSX = await import('@e965/xlsx');
       const arrayBuffer = await file.arrayBuffer();
       const workbook = XLSX.read(arrayBuffer, { type: 'array' });
 
@@ -769,7 +769,7 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
   const handleExportExcel = async () => {
     try {
       const toastId = toast.loading('Preparando Excel...');
-      const XLSX = await import('xlsx');
+      const XLSX = await import('@e965/xlsx');
       const workbook = XLSX.utils.book_new();
 
       if (items.length === 0) {

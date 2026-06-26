@@ -25,7 +25,13 @@ export const cashService = {
       .insert(closure)
       .select()
       .single();
-    if (error) throw error;
+    if (error) {
+      // FIX F3-02: traducir error de UNIQUE constraint a mensaje amigable
+      if (error.code === '23505') {
+        throw new Error('Ya existe un turno pendiente para esta tienda. Cierra el turno actual antes de abrir uno nuevo.');
+      }
+      throw error;
+    }
     return data as CashClosure;
   },
 

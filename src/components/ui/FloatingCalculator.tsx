@@ -15,7 +15,7 @@ import {
 import { cn, isDarkTheme } from "@/lib/utils";
 import { useTheme } from 'next-themes';
 import { useUIStore } from '@/store';
-import { Parser } from 'expr-eval';
+import { Parser } from '@/lib/cost-engine/safe-parser';
 
 export const FloatingCalculator: React.FC = () => {
   const { isCalculatorOpen, setIsCalculatorOpen } = useUIStore();

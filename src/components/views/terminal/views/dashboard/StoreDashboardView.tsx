@@ -22,6 +22,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { useUIStore } from '@/store';
 import { toast } from 'sonner';
 import { format, subDays } from 'date-fns';
+import { useTranslations } from 'next-intl';
 
 // ECharts cargado dinámicamente
 const ECharts = dynamic(() => import('echarts-for-react'), {
@@ -65,6 +66,7 @@ function moneyShort(n: number): string {
 // ── Componente principal ───────────────────────────────────────
 
 export default function StoreDashboardView({ storeId, storeName, onClose }: StoreDashboardViewProps) {
+  const t = useTranslations('dashboard.storeDashboard');
   // Estado: o bien "days" (7/30/90) o rango personalizado
   const [days, setDays] = useState(30);
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
@@ -146,7 +148,7 @@ export default function StoreDashboardView({ storeId, storeName, onClose }: Stor
               <h2 className="font-black text-sm sm:text-base text-foreground tracking-tight truncate flex items-center gap-2">
                 Dashboard · {storeName}
               </h2>
-              <p className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-widest hidden sm:block">
+              <p className="text-xs sm:text-xs text-muted-foreground uppercase tracking-widest hidden sm:block">
                 {rangeLabel} · Análisis ejecutivo para toma de decisiones
               </p>
             </div>
@@ -172,13 +174,13 @@ export default function StoreDashboardView({ storeId, storeName, onClose }: Stor
                 onValueChange={(v) => { if (v) { setDays(Number(v)); setDateRange(undefined); } }}
                 className="bg-muted rounded-xl p-1"
               >
-                <ToggleGroupItem value="7" className="text-xs font-bold px-3 py-2.5 rounded-lg data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
+                <ToggleGroupItem value="7" className="text-sm font-bold px-3 py-2.5 rounded-lg data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
                   7d
                 </ToggleGroupItem>
-                <ToggleGroupItem value="30" className="text-xs font-bold px-3 py-2.5 rounded-lg data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
+                <ToggleGroupItem value="30" className="text-sm font-bold px-3 py-2.5 rounded-lg data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
                   30d
                 </ToggleGroupItem>
-                <ToggleGroupItem value="90" className="text-xs font-bold px-3 py-2.5 rounded-lg data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
+                <ToggleGroupItem value="90" className="text-sm font-bold px-3 py-2.5 rounded-lg data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
                   90d
                 </ToggleGroupItem>
               </ToggleGroup>
@@ -207,21 +209,21 @@ export default function StoreDashboardView({ storeId, storeName, onClose }: Stor
                   <button
                     type="button"
                     onClick={() => applyPreset(7)}
-                    className="flex-1 px-2 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider hover:bg-muted text-muted-foreground"
+                    className="flex-1 px-2 py-1.5 rounded-lg text-sm font-black uppercase tracking-wider hover:bg-muted text-muted-foreground"
                   >
                     7d
                   </button>
                   <button
                     type="button"
                     onClick={() => applyPreset(30)}
-                    className="flex-1 px-2 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider hover:bg-muted text-muted-foreground"
+                    className="flex-1 px-2 py-1.5 rounded-lg text-sm font-black uppercase tracking-wider hover:bg-muted text-muted-foreground"
                   >
                     30d
                   </button>
                   <button
                     type="button"
                     onClick={() => applyPreset(90)}
-                    className="flex-1 px-2 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider hover:bg-muted text-muted-foreground"
+                    className="flex-1 px-2 py-1.5 rounded-lg text-sm font-black uppercase tracking-wider hover:bg-muted text-muted-foreground"
                   >
                     90d
                   </button>
@@ -252,13 +254,13 @@ export default function StoreDashboardView({ storeId, storeName, onClose }: Stor
                 />
                 {dateRange?.from && dateRange?.to && (
                   <div className="p-2 border-t border-border/30 flex items-center justify-between gap-2">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                    <span className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
                       {format(dateRange.from, 'dd/MM/yy')} → {format(dateRange.to, 'dd/MM/yy')}
                     </span>
                     <button
                       type="button"
                       onClick={() => setDateRange(undefined)}
-                      className="text-[10px] font-black uppercase tracking-wider text-destructive hover:underline"
+                      className="text-sm font-black uppercase tracking-wider text-destructive hover:underline"
                     >
                       Limpiar
                     </button>
@@ -280,7 +282,7 @@ export default function StoreDashboardView({ storeId, storeName, onClose }: Stor
         </div>
 
         {/* Breadcrumb */}
-        <div className="px-4 sm:px-6 lg:px-8 pb-2 flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+        <div className="px-4 sm:px-6 lg:px-8 pb-2 flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-muted-foreground">
           <button
             type="button"
             onClick={onClose}
@@ -302,8 +304,8 @@ export default function StoreDashboardView({ storeId, storeName, onClose }: Stor
           <DashboardError error={error} />
         ) : !analytics ? (
           <div className="text-center py-16 text-muted-foreground">
-            <AlertCircle className="w-10 h-10 mx-auto mb-3 opacity-30" />
-            <p className="text-sm font-bold uppercase tracking-wider">Sin datos</p>
+            <AlertCircle className="w-10 h-10 mx-auto mb-3 opacity-70" />
+            <p className="text-sm font-bold uppercase tracking-wider">{t('noData')}</p>
           </div>
         ) : (
           <>
@@ -330,7 +332,7 @@ export default function StoreDashboardView({ storeId, storeName, onClose }: Stor
                     aria-selected={isActive}
                     onClick={() => setActiveTab(tab.id)}
                     className={cn(
-                      'flex-1 min-h-[44px] py-3 px-2 sm:px-4 text-[11px] sm:text-xs font-black uppercase tracking-widest transition-colors border-b-2 -mb-px flex items-center justify-center gap-1.5 sm:gap-2',
+                      'flex-1 min-h-[44px] py-3 px-2 sm:px-4 text-xs sm:text-xs font-black uppercase tracking-widest transition-colors border-b-2 -mb-px flex items-center justify-center gap-1.5 sm:gap-2',
                       isActive
                         ? 'border-primary text-primary bg-primary/5'
                         : 'border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/30',
@@ -360,7 +362,7 @@ export default function StoreDashboardView({ storeId, storeName, onClose }: Stor
                   subtitle={`Últimos ${days} días — comparativa con promedio móvil 7 días`}
                   icon={<TrendingUp className="w-4 h-4 text-primary" />}
                   action={
-                    <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest">
+                    <div className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest">
                       <span className="flex items-center gap-1">
                         <span className="w-2 h-2 rounded-full bg-primary" /> Ventas diarias
                       </span>
@@ -520,6 +522,7 @@ export default function StoreDashboardView({ storeId, storeName, onClose }: Stor
 // ── KPIs Hero Row con tendencia ────────────────────────────────
 
 function KpiHeroRow({ analytics, days }: { analytics: NonNullable<ReturnType<typeof useStoreAnalytics>['data']>; days: number }) {
+  const t = useTranslations('dashboard.storeDashboard');
   const k = analytics.kpis;
   const profit = k.period_sales - k.period_cost;
   const marginPct = k.period_sales > 0 ? (profit / k.period_sales) * 100 : 0;
@@ -542,7 +545,7 @@ function KpiHeroRow({ analytics, days }: { analytics: NonNullable<ReturnType<typ
       iconColor: 'text-primary',
       accent: 'border-primary/20',
       sub: (
-        <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider">
+        <span className="flex items-center gap-1.5 text-sm font-bold uppercase tracking-wider">
           <span className="text-muted-foreground">Hoy:</span>
           <span className="text-foreground">{formatCurrency(k.today_sales)}</span>
           <span className="text-muted-foreground">·</span>
@@ -559,7 +562,7 @@ function KpiHeroRow({ analytics, days }: { analytics: NonNullable<ReturnType<typ
       iconColor: 'text-muted-foreground',
       accent: 'border-border/40',
       sub: (
-        <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+        <span className="flex items-center gap-1.5 text-sm font-bold uppercase tracking-wider text-muted-foreground">
           <span>{k.period_items_sold.toFixed(0)} unidades vendidas</span>
         </span>
       ),
@@ -574,7 +577,7 @@ function KpiHeroRow({ analytics, days }: { analytics: NonNullable<ReturnType<typ
       accent: 'border-success/20',
       sub: (
         <span className={cn(
-          'flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider',
+          'flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider',
           marginPct >= 25 ? 'text-success' : marginPct >= 15 ? 'text-warning' : 'text-destructive',
         )}>
           <Percent className="w-3 h-3" />
@@ -593,7 +596,7 @@ function KpiHeroRow({ analytics, days }: { analytics: NonNullable<ReturnType<typ
       iconColor: 'text-purple-500',
       accent: 'border-purple-500/20',
       sub: (
-        <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+        <span className="flex items-center gap-1.5 text-sm font-bold uppercase tracking-wider text-muted-foreground">
           <Activity className="w-3 h-3" />
           <span>{k.avg_items_per_sale.toFixed(1)} uds/venta · {k.period_transactions} transacciones</span>
         </span>
@@ -614,7 +617,7 @@ function KpiHeroRow({ analytics, days }: { analytics: NonNullable<ReturnType<typ
           )}
         >
           <div className="flex items-start justify-between mb-2">
-            <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+            <span className="text-sm font-black uppercase tracking-widest text-muted-foreground">
               {card.label}
             </span>
             <card.icon className={cn('w-4 h-4', card.iconColor)} />
@@ -626,7 +629,7 @@ function KpiHeroRow({ analytics, days }: { analytics: NonNullable<ReturnType<typ
             {card.sub}
             {card.trend !== null && card.trend !== undefined && (
               <span className={cn(
-                'ml-2 inline-flex items-center gap-0.5 text-[10px] font-black px-1.5 py-0.5 rounded',
+                'ml-2 inline-flex items-center gap-0.5 text-xs font-black px-1.5 py-0.5 rounded',
                 card.trend > 0 ? 'text-success bg-success/10' : 'text-destructive bg-destructive/10',
               )}>
                 {card.trend > 0 ? <ArrowUpRight className="w-2.5 h-2.5" /> : <ArrowDownRight className="w-2.5 h-2.5" />}
@@ -657,6 +660,7 @@ const SEVERITY_ORDER: Record<Insight['severity'], number> = {
 };
 
 function InsightsPriorityPanel({ insights, onSelectInsight }: { insights: Insight[]; onSelectInsight?: (i: Insight) => void }) {
+  const t = useTranslations('dashboard.storeDashboard');
   // Ordenar por severidad y mostrar top 4
   const sorted = [...insights].sort((a, b) => SEVERITY_ORDER[a.severity] - SEVERITY_ORDER[b.severity]);
   const top = sorted.slice(0, 4);
@@ -666,7 +670,7 @@ function InsightsPriorityPanel({ insights, onSelectInsight }: { insights: Insigh
       <div className="rounded-2xl border border-success/30 bg-success/5 p-6 text-center">
         <Sparkles className="w-8 h-8 mx-auto mb-2 text-success" />
         <p className="text-sm font-bold text-success uppercase tracking-wider">Todo en orden</p>
-        <p className="text-xs text-muted-foreground mt-1">No hay alertas ni oportunidades pendientes</p>
+        <p className="text-sm text-muted-foreground mt-1">No hay alertas ni oportunidades pendientes</p>
       </div>
     );
   }
@@ -680,10 +684,10 @@ function InsightsPriorityPanel({ insights, onSelectInsight }: { insights: Insigh
           </div>
           <div>
             <h3 className="font-black text-sm uppercase tracking-tight">Insights prioritarios</h3>
-            <p className="text-[10px] text-muted-foreground uppercase tracking-widest">Clic en cada insight para ver detalle y respaldo histórico</p>
+            <p className="text-sm text-muted-foreground uppercase tracking-widest">Clic en cada insight para ver detalle y respaldo histórico</p>
           </div>
         </div>
-        <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest bg-muted/40 px-2 py-1 rounded-full">
+        <span className="text-sm font-bold text-muted-foreground uppercase tracking-widest bg-muted/40 px-2 py-1 rounded-full">
           {insights.length} total
         </span>
       </div>
@@ -706,17 +710,17 @@ function InsightsPriorityPanel({ insights, onSelectInsight }: { insights: Insigh
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex items-start justify-between gap-2 mb-1">
-                  <p className={cn('font-bold text-xs uppercase tracking-tight leading-tight', config.color)}>
+                  <p className={cn('font-bold text-sm uppercase tracking-tight leading-tight', config.color)}>
                     {insight.title}
                   </p>
                   {insight.metric && (
-                    <span className={cn('text-[10px] font-black tabular-nums px-1.5 py-0.5 rounded bg-background/70 shrink-0', config.color)}>
+                    <span className={cn('text-sm font-black tabular-nums px-1.5 py-0.5 rounded bg-background/70 shrink-0', config.color)}>
                       {insight.metric}
                     </span>
                   )}
                 </div>
-                <p className="text-[11px] text-muted-foreground leading-relaxed mb-1.5 line-clamp-2">{insight.message}</p>
-                <p className="text-[11px] font-medium text-foreground/80 leading-relaxed flex items-start gap-1">
+                <p className="text-sm text-muted-foreground leading-relaxed mb-1.5 line-clamp-2">{insight.message}</p>
+                <p className="text-sm font-medium text-foreground/80 leading-relaxed flex items-start gap-1">
                   <ChevronRight className="w-3 h-3 mt-0.5 shrink-0 opacity-50" />
                   <span className="line-clamp-2">{insight.recommendation}</span>
                 </p>
@@ -732,6 +736,7 @@ function InsightsPriorityPanel({ insights, onSelectInsight }: { insights: Insigh
 // ── All Insights Panel (lista completa, expandible) ────────────
 
 function AllInsightsPanel({ insights, onSelectInsight }: { insights: Insight[]; onSelectInsight?: (i: Insight) => void }) {
+  const t = useTranslations('dashboard.storeDashboard');
   const [expanded, setExpanded] = useState(false);
   const sorted = [...insights].sort((a, b) => SEVERITY_ORDER[a.severity] - SEVERITY_ORDER[b.severity]);
   const visible = expanded ? sorted : sorted.slice(0, 8);
@@ -745,14 +750,14 @@ function AllInsightsPanel({ insights, onSelectInsight }: { insights: Insight[]; 
           </div>
           <div>
             <h3 className="font-black text-sm uppercase tracking-tight">Todos los insights</h3>
-            <p className="text-[10px] text-muted-foreground uppercase tracking-widest">{insights.length} avisos · clic para ver detalle</p>
+            <p className="text-sm text-muted-foreground uppercase tracking-widest">{insights.length} avisos · clic para ver detalle</p>
           </div>
         </div>
         {insights.length > 8 && (
           <button
             type="button"
             onClick={() => setExpanded(!expanded)}
-            className="text-[10px] font-bold uppercase tracking-widest text-primary hover:underline"
+            className="text-sm font-bold uppercase tracking-widest text-primary hover:underline"
           >
             {expanded ? 'Ver menos' : `Ver ${insights.length - 8} más`}
           </button>
@@ -774,15 +779,15 @@ function AllInsightsPanel({ insights, onSelectInsight }: { insights: Insight[]; 
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex items-start justify-between gap-2">
-                  <p className={cn('font-bold text-xs uppercase tracking-tight', config.color)}>{insight.title}</p>
+                  <p className={cn('font-bold text-sm uppercase tracking-tight', config.color)}>{insight.title}</p>
                   {insight.metric && (
-                    <span className={cn('text-[10px] font-black tabular-nums px-1.5 py-0.5 rounded bg-background/70 shrink-0', config.color)}>
+                    <span className={cn('text-sm font-black tabular-nums px-1.5 py-0.5 rounded bg-background/70 shrink-0', config.color)}>
                       {insight.metric}
                     </span>
                   )}
                 </div>
-                <p className="text-[11px] text-muted-foreground leading-relaxed mt-0.5">{insight.message}</p>
-                <p className="text-[11px] font-medium text-foreground/70 leading-relaxed mt-1 flex items-start gap-1">
+                <p className="text-sm text-muted-foreground leading-relaxed mt-0.5">{insight.message}</p>
+                <p className="text-sm font-medium text-foreground/70 leading-relaxed mt-1 flex items-start gap-1">
                   <ChevronRight className="w-3 h-3 mt-0.5 shrink-0 opacity-50" />
                   <span>{insight.recommendation}</span>
                 </p>
@@ -806,6 +811,7 @@ function ChartCard({
   children: React.ReactNode;
   action?: React.ReactNode;
 }) {
+  const t = useTranslations('dashboard.storeDashboard');
   return (
     <div className="rounded-2xl border border-border/50 bg-card overflow-hidden">
       <div className="px-5 py-3.5 border-b border-border/50 flex items-center justify-between gap-3">
@@ -815,7 +821,7 @@ function ChartCard({
           </div>
           <div className="min-w-0">
             <h3 className="font-black text-sm uppercase tracking-tight text-foreground truncate">{title}</h3>
-            <p className="text-[10px] text-muted-foreground uppercase tracking-widest truncate">{subtitle}</p>
+            <p className="text-sm text-muted-foreground uppercase tracking-widest truncate">{subtitle}</p>
           </div>
         </div>
         {action}
@@ -828,6 +834,7 @@ function ChartCard({
 // ── Sales Time Series Chart con promedio móvil ─────────────────
 
 function SalesTimeSeriesChart({ analytics }: { analytics: NonNullable<ReturnType<typeof useStoreAnalytics>['data']> }) {
+  const t = useTranslations('dashboard.storeDashboard');
   const option = useMemo(() => {
     const series = analytics.sales_series;
     // Promedio móvil 7 días
@@ -920,6 +927,7 @@ function SalesTimeSeriesChart({ analytics }: { analytics: NonNullable<ReturnType
 // ── Top Products Chart (Horizontal Bar) ────────────────────────
 
 function TopProductsChart({ analytics }: { analytics: NonNullable<ReturnType<typeof useStoreAnalytics>['data']> }) {
+  const t = useTranslations('dashboard.storeDashboard');
   const option = useMemo(() => {
     const products = [...analytics.top_products_revenue].reverse();
     return {
@@ -994,6 +1002,7 @@ function TopProductsChart({ analytics }: { analytics: NonNullable<ReturnType<typ
 // ── Payment Distribution (Donut + Lista detallada) ─────────────
 
 function PaymentDistributionChart({ analytics }: { analytics: NonNullable<ReturnType<typeof useStoreAnalytics>['data']> }) {
+  const t = useTranslations('dashboard.storeDashboard');
   // Vista mejorada: donut + lista lateral con barras de progreso y detalle
   const data = analytics.payment_distribution;
   const total = data.reduce((s, d) => s + d.total, 0);
@@ -1047,7 +1056,7 @@ function PaymentDistributionChart({ analytics }: { analytics: NonNullable<Return
 
   if (data.length === 0) {
     return (
-      <div className="py-12 text-center text-xs text-muted-foreground uppercase tracking-wider">
+      <div className="py-12 text-center text-sm text-muted-foreground uppercase tracking-wider">
         Sin transacciones en el período
       </div>
     );
@@ -1067,19 +1076,19 @@ function PaymentDistributionChart({ analytics }: { analytics: NonNullable<Return
           const color = CHART_PALETTE[i % CHART_PALETTE.length];
           return (
             <div key={p.method} className="space-y-1">
-              <div className="flex items-center justify-between gap-2 text-xs">
+              <div className="flex items-center justify-between gap-2 text-sm">
                 <div className="flex items-center gap-2 min-w-0">
                   <span
                     className="w-2.5 h-2.5 rounded-full shrink-0"
                     style={{ backgroundColor: color }}
                   />
                   <span className="font-bold text-foreground truncate">{label}</span>
-                  <span className="text-muted-foreground text-[10px] font-mono">({p.count} tx)</span>
+                  <span className="text-muted-foreground text-sm font-mono">({p.count} tx)</span>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   <span className="font-black tabular-nums text-foreground">{formatCurrency(p.total)}</span>
                   <span
-                    className="text-[10px] font-black tabular-nums px-1.5 py-0.5 rounded"
+                    className="text-sm font-black tabular-nums px-1.5 py-0.5 rounded"
                     style={{ backgroundColor: `${color}20`, color }}
                   >
                     {p.pct}%
@@ -1109,8 +1118,8 @@ function PaymentDistributionChart({ analytics }: { analytics: NonNullable<Return
       </div>
 
       {/* Total footer */}
-      <div className="flex items-center justify-between gap-2 pt-3 border-t border-border/50 text-xs">
-        <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+      <div className="flex items-center justify-between gap-2 pt-3 border-t border-border/50 text-sm">
+        <span className="text-sm font-black uppercase tracking-widest text-muted-foreground">
           Total {totalTx} transacciones
         </span>
         <span className="font-black tabular-nums text-foreground">{formatCurrency(total)}</span>
@@ -1122,6 +1131,7 @@ function PaymentDistributionChart({ analytics }: { analytics: NonNullable<Return
 // ── Category Margins Chart ─────────────────────────────────────
 
 function CategoryMarginsChart({ analytics }: { analytics: NonNullable<ReturnType<typeof useStoreAnalytics>['data']> }) {
+  const t = useTranslations('dashboard.storeDashboard');
   const option = useMemo(() => {
     const cats = analytics.category_margins.slice(0, 8);
     return {
@@ -1193,6 +1203,7 @@ function CategoryMarginsChart({ analytics }: { analytics: NonNullable<ReturnType
 // ── Weekday Distribution Chart ─────────────────────────────────
 
 function WeekdayChart({ analytics }: { analytics: NonNullable<ReturnType<typeof useStoreAnalytics>['data']> }) {
+  const t = useTranslations('dashboard.storeDashboard');
   const option = useMemo(() => {
     const weekdayMap = new Map(analytics.weekday_distribution.map((w) => [w.weekday, w]));
     const data = Array.from({ length: 7 }, (_, i) => ({
@@ -1264,6 +1275,7 @@ function WeekdayChart({ analytics }: { analytics: NonNullable<ReturnType<typeof 
 // ── Hour Distribution Chart ────────────────────────────────────
 
 function HourDistributionChart({ analytics }: { analytics: NonNullable<ReturnType<typeof useStoreAnalytics>['data']> }) {
+  const t = useTranslations('dashboard.storeDashboard');
   const option = useMemo(() => {
     const hourMap = new Map(analytics.hour_distribution.map((h) => [h.hour, h]));
     const data = Array.from({ length: 24 }, (_, h) => ({
@@ -1330,9 +1342,10 @@ function HourDistributionChart({ analytics }: { analytics: NonNullable<ReturnTyp
 // ── Top Products by Quantity Table ─────────────────────────────
 
 function TopProductsQuantityTable({ analytics }: { analytics: NonNullable<ReturnType<typeof useStoreAnalytics>['data']> }) {
+  const t = useTranslations('dashboard.storeDashboard');
   if (analytics.top_products_quantity.length === 0) {
     return (
-      <div className="py-8 text-center text-xs text-muted-foreground uppercase tracking-wider">
+      <div className="py-8 text-center text-sm text-muted-foreground uppercase tracking-wider">
         Sin productos vendidos en el período
       </div>
     );
@@ -1342,7 +1355,7 @@ function TopProductsQuantityTable({ analytics }: { analytics: NonNullable<Return
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
         <thead>
-          <tr className="text-[10px] uppercase tracking-widest text-muted-foreground border-b border-border/50">
+          <tr className="text-sm uppercase tracking-widest text-muted-foreground border-b border-border/50">
             <th className="text-left py-2 px-2 font-black w-10">#</th>
             <th className="text-left py-2 px-2 font-black">Producto</th>
             <th className="text-left py-2 px-2 font-black hidden sm:table-cell">SKU</th>
@@ -1356,7 +1369,7 @@ function TopProductsQuantityTable({ analytics }: { analytics: NonNullable<Return
             <tr key={p.product_id} className="border-b border-border/30 hover:bg-muted/30 transition-colors">
               <td className="py-2.5 px-2 font-black text-muted-foreground tabular-nums">{i + 1}</td>
               <td className="py-2.5 px-2 font-bold text-foreground truncate max-w-[200px]">{p.name}</td>
-              <td className="py-2.5 px-2 text-muted-foreground font-mono text-xs hidden sm:table-cell">{p.sku || '—'}</td>
+              <td className="py-2.5 px-2 text-muted-foreground font-mono text-sm hidden sm:table-cell">{p.sku || '—'}</td>
               <td className="py-2.5 px-2 text-right font-black tabular-nums text-success">{p.quantity}</td>
               <td className="py-2.5 px-2 text-right font-bold tabular-nums text-primary hidden md:table-cell">{formatCurrency(p.revenue)}</td>
               <td className="py-2.5 px-2 hidden lg:table-cell">
@@ -1388,6 +1401,7 @@ function StockAlertCard({
   actionLabel: string;
   onAction: () => void;
 }) {
+  const t = useTranslations('dashboard.storeDashboard');
   const severityColor = {
     critical: 'text-destructive',
     warning: 'text-warning',
@@ -1398,11 +1412,11 @@ function StockAlertCard({
       <div className="px-4 py-3 border-b border-border/50 flex items-center gap-2">
         {icon}
         <div className="min-w-0 flex-1">
-          <h4 className="font-black text-xs uppercase tracking-tight text-foreground">{title}</h4>
-          <p className="text-[10px] text-muted-foreground uppercase tracking-widest">{subtitle}</p>
+          <h4 className="font-black text-sm uppercase tracking-tight text-foreground">{title}</h4>
+          <p className="text-sm text-muted-foreground uppercase tracking-widest">{subtitle}</p>
         </div>
         <span className={cn(
-          'text-[10px] font-black tabular-nums px-2 py-0.5 rounded-full',
+          'text-xs font-black tabular-nums px-2 py-0.5 rounded-full',
           items.length > 0 ? 'bg-destructive/10 text-destructive' : 'bg-success/10 text-success',
         )}>
           {items.length}
@@ -1410,19 +1424,19 @@ function StockAlertCard({
       </div>
       <div className="flex-1 max-h-[280px] overflow-y-auto">
         {items.length === 0 ? (
-          <div className="py-6 text-center text-xs text-muted-foreground uppercase tracking-wider">
+          <div className="py-6 text-center text-sm text-muted-foreground uppercase tracking-wider">
             {emptyText}
           </div>
         ) : (
           items.map((item) => (
             <div key={item.id} className="px-4 py-2 border-b border-border/20 last:border-b-0 hover:bg-muted/30 transition-colors">
               <div className="flex items-center justify-between gap-2">
-                <p className="font-bold text-xs text-foreground truncate flex-1" title={item.name}>{item.name}</p>
-                <span className={cn('font-black text-xs tabular-nums shrink-0', severityColor[item.severity])}>
+                <p className="font-bold text-sm text-foreground truncate flex-1" title={item.name}>{item.name}</p>
+                <span className={cn('font-black text-sm tabular-nums shrink-0', severityColor[item.severity])}>
                   {item.metric}
                 </span>
               </div>
-              <p className="text-[10px] text-muted-foreground mt-0.5">{item.detail}</p>
+              <p className="text-sm text-muted-foreground mt-0.5">{item.detail}</p>
             </div>
           ))
         )}
@@ -1432,7 +1446,7 @@ function StockAlertCard({
           <button
             type="button"
             onClick={onAction}
-            className="w-full min-h-[44px] py-2.5 rounded-lg bg-muted/40 hover:bg-muted text-[10px] font-black uppercase tracking-widest text-foreground transition-colors flex items-center justify-center gap-1.5"
+            className="w-full min-h-[44px] py-2.5 rounded-lg bg-muted/40 hover:bg-muted text-sm font-black uppercase tracking-widest text-foreground transition-colors flex items-center justify-center gap-1.5"
           >
             {actionLabel}
             <ChevronRight className="w-3 h-3" />
@@ -1446,6 +1460,7 @@ function StockAlertCard({
 // ── Categoría Drill-Down Panel ─────────────────────────────────
 
 function CategoryDrillDownPanel({ analytics }: { analytics: NonNullable<ReturnType<typeof useStoreAnalytics>['data']> }) {
+  const t = useTranslations('dashboard.storeDashboard');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const categories = analytics.category_margins;
 
@@ -1456,7 +1471,7 @@ function CategoryDrillDownPanel({ analytics }: { analytics: NonNullable<ReturnTy
         subtitle="Rentabilidad detallada por grupo de productos"
         icon={<Tag className="w-4 h-4 text-primary" />}
       >
-        <div className="py-8 text-center text-xs text-muted-foreground uppercase tracking-wider">
+        <div className="py-8 text-center text-sm text-muted-foreground uppercase tracking-wider">
           Sin datos de categorías en el período
         </div>
       </ChartCard>
@@ -1480,7 +1495,7 @@ function CategoryDrillDownPanel({ analytics }: { analytics: NonNullable<ReturnTy
               type="button"
               onClick={() => setSelectedCategory(c.category)}
               className={cn(
-                'px-3 py-1.5 rounded-lg text-[11px] font-black uppercase tracking-wider transition-all',
+                'px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-wider transition-all',
                 selected.category === c.category
                   ? 'bg-primary text-primary-foreground shadow-sm'
                   : 'bg-muted/40 text-muted-foreground hover:bg-muted hover:text-foreground',
@@ -1494,19 +1509,19 @@ function CategoryDrillDownPanel({ analytics }: { analytics: NonNullable<ReturnTy
         {/* Detalle de la categoría seleccionada */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 p-4 rounded-xl bg-muted/30 border border-border/30">
           <div className="space-y-1">
-            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Ingresos</p>
+            <p className="text-sm font-black uppercase tracking-widest text-muted-foreground">Ingresos</p>
             <p className="text-base font-black tabular-nums text-foreground">{formatCurrency(selected.revenue)}</p>
           </div>
           <div className="space-y-1">
-            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Costo</p>
+            <p className="text-sm font-black uppercase tracking-widest text-muted-foreground">Costo</p>
             <p className="text-base font-black tabular-nums text-foreground">{formatCurrency(selected.cost)}</p>
           </div>
           <div className="space-y-1">
-            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Ganancia</p>
+            <p className="text-sm font-black uppercase tracking-widest text-muted-foreground">Ganancia</p>
             <p className="text-base font-black tabular-nums text-success">{formatCurrency(selected.margin)}</p>
           </div>
           <div className="space-y-1">
-            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Margen</p>
+            <p className="text-sm font-black uppercase tracking-widest text-muted-foreground">Margen</p>
             <p className={cn(
               'text-base font-black tabular-nums',
               selected.margin_pct < 15 ? 'text-destructive' : selected.margin_pct < 25 ? 'text-warning' : 'text-success',
@@ -1518,7 +1533,7 @@ function CategoryDrillDownPanel({ analytics }: { analytics: NonNullable<ReturnTy
 
         {/* Barra de margen visual */}
         <div className="space-y-1">
-          <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+          <div className="flex items-center justify-between text-sm font-bold uppercase tracking-widest text-muted-foreground">
             <span>Margen real</span>
             <span>Benchmark: 25% saludable, 15% mínimo</span>
           </div>
@@ -1535,12 +1550,12 @@ function CategoryDrillDownPanel({ analytics }: { analytics: NonNullable<ReturnTy
               style={{ left: `${Math.min(selected.margin_pct, 100)}%` }}
             />
           </div>
-          <div className="flex justify-between text-[9px] text-muted-foreground font-mono">
+          <div className="flex justify-between text-sm text-muted-foreground font-mono">
             <span>0%</span><span>15%</span><span>25%</span><span>50%</span><span>100%</span>
           </div>
         </div>
 
-        <p className="text-[11px] text-muted-foreground leading-relaxed">
+        <p className="text-sm text-muted-foreground leading-relaxed">
           <strong className="text-foreground">Interpretación:</strong> Esta categoría vendió{' '}
           <strong className="text-foreground">{selected.items_sold.toFixed(0)} unidades</strong>, generando{' '}
           <strong className="text-foreground">{formatCurrency(selected.revenue)}</strong> en ingresos.{' '}
@@ -1564,6 +1579,7 @@ function ProductDrillDownPanel({
   analytics: NonNullable<ReturnType<typeof useStoreAnalytics>['data']>;
   onGoToCatalog: () => void;
 }) {
+  const t = useTranslations('dashboard.storeDashboard');
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const products = analytics.top_products_revenue;
@@ -1575,7 +1591,7 @@ function ProductDrillDownPanel({
         subtitle="Detalle individual de cada producto vendido"
         icon={<Package className="w-4 h-4 text-purple-500" />}
       >
-        <div className="py-8 text-center text-xs text-muted-foreground uppercase tracking-wider">
+        <div className="py-8 text-center text-sm text-muted-foreground uppercase tracking-wider">
           Sin productos vendidos en el período
         </div>
       </ChartCard>
@@ -1597,7 +1613,7 @@ function ProductDrillDownPanel({
         <button
           type="button"
           onClick={onGoToCatalog}
-          className="text-[10px] font-bold uppercase tracking-widest text-primary hover:underline flex items-center gap-1"
+          className="text-sm font-bold uppercase tracking-widest text-primary hover:underline flex items-center gap-1"
         >
           Ver catálogo
           <ChevronRight className="w-3 h-3" />
@@ -1607,13 +1623,13 @@ function ProductDrillDownPanel({
       <div className="space-y-4">
         {/* Buscador */}
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground/50" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground/70" />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Buscar producto por nombre o SKU..."
-            className="w-full h-9 pl-9 pr-3 rounded-xl bg-muted/40 border border-border/30 text-xs font-medium text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/20"
+            className="w-full h-9 pl-9 pr-3 rounded-xl bg-muted/40 border border-border/30 text-sm font-medium text-foreground placeholder:text-muted-foreground/70 focus:outline-none focus:ring-2 focus:ring-primary/20"
           />
         </div>
 
@@ -1632,19 +1648,19 @@ function ProductDrillDownPanel({
               )}
             >
               <div className="min-w-0 flex-1">
-                <p className="font-bold text-xs text-foreground truncate">{p.name}</p>
-                <p className="text-[10px] text-muted-foreground font-mono">
+                <p className="font-bold text-sm text-foreground truncate">{p.name}</p>
+                <p className="text-sm text-muted-foreground font-mono">
                   {p.sku || 'Sin SKU'} · {p.category || 'Sin categoría'}
                 </p>
               </div>
               <div className="text-right shrink-0">
-                <p className="font-black text-xs tabular-nums text-foreground">{formatCurrency(p.revenue)}</p>
-                <p className="text-[10px] text-muted-foreground">{p.quantity} uds</p>
+                <p className="font-black text-sm tabular-nums text-foreground">{formatCurrency(p.revenue)}</p>
+                <p className="text-sm text-muted-foreground">{p.quantity} uds</p>
               </div>
             </button>
           ))}
           {filtered.length === 0 && (
-            <div className="px-3 py-6 text-center text-xs text-muted-foreground uppercase tracking-wider">
+            <div className="px-3 py-6 text-center text-sm text-muted-foreground uppercase tracking-wider">
               Sin resultados
             </div>
           )}
@@ -1653,19 +1669,19 @@ function ProductDrillDownPanel({
         {/* Detalle del producto seleccionado */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 p-4 rounded-xl bg-muted/30 border border-border/30">
           <div className="space-y-1">
-            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Ingresos</p>
+            <p className="text-sm font-black uppercase tracking-widest text-muted-foreground">Ingresos</p>
             <p className="text-base font-black tabular-nums text-foreground">{formatCurrency(selected.revenue)}</p>
           </div>
           <div className="space-y-1">
-            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Costo total</p>
+            <p className="text-sm font-black uppercase tracking-widest text-muted-foreground">Costo total</p>
             <p className="text-base font-black tabular-nums text-foreground">{formatCurrency(selected.cost)}</p>
           </div>
           <div className="space-y-1">
-            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Unidades</p>
+            <p className="text-sm font-black uppercase tracking-widest text-muted-foreground">Unidades</p>
             <p className="text-base font-black tabular-nums text-foreground">{selected.quantity}</p>
           </div>
           <div className="space-y-1">
-            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Margen</p>
+            <p className="text-sm font-black uppercase tracking-widest text-muted-foreground">Margen</p>
             <p className={cn(
               'text-base font-black tabular-nums',
               selected.margin_pct < 15 ? 'text-destructive' : selected.margin_pct < 25 ? 'text-warning' : 'text-success',
@@ -1678,20 +1694,20 @@ function ProductDrillDownPanel({
         {/* Precio promedio calculado */}
         <div className="grid grid-cols-2 gap-3">
           <div className="p-3 rounded-lg bg-muted/30 border border-border/30">
-            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Precio prom. venta</p>
+            <p className="text-sm font-black uppercase tracking-widest text-muted-foreground">Precio prom. venta</p>
             <p className="text-sm font-black tabular-nums text-primary">
               {selected.quantity > 0 ? formatCurrency(selected.revenue / selected.quantity) : '—'}
             </p>
           </div>
           <div className="p-3 rounded-lg bg-muted/30 border border-border/30">
-            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Costo unitario</p>
+            <p className="text-sm font-black uppercase tracking-widest text-muted-foreground">Costo unitario</p>
             <p className="text-sm font-black tabular-nums text-muted-foreground">
               {selected.quantity > 0 ? formatCurrency(selected.cost / selected.quantity) : '—'}
             </p>
           </div>
         </div>
 
-        <p className="text-[11px] text-muted-foreground leading-relaxed">
+        <p className="text-sm text-muted-foreground leading-relaxed">
           <strong className="text-foreground">Interpretación:</strong> {selected.name} generó{' '}
           <strong className="text-foreground">{formatCurrency(selected.revenue)}</strong> en ingresos con{' '}
           <strong className="text-foreground">{selected.quantity} unidades</strong> vendidas.{' '}
@@ -1709,6 +1725,7 @@ function ProductDrillDownPanel({
 // ── Insight Detail Modal ───────────────────────────────────────
 
 function InsightDetailModal({ insight, onClose }: { insight: Insight; onClose: () => void }) {
+  const t = useTranslations('dashboard.storeDashboard');
   const config = SEVERITY_CONFIG[insight.severity];
   const Icon = config.icon;
   const isMobile = useIsMobile();
@@ -1870,7 +1887,7 @@ function InsightDetailModal({ insight, onClose }: { insight: Insight; onClose: (
             </div>
             <div className="min-w-0">
               <p className={cn('font-black text-sm uppercase tracking-tight', config.color)}>{insight.title}</p>
-              <p className="text-[10px] text-muted-foreground uppercase tracking-widest mt-0.5">
+              <p className="text-sm text-muted-foreground uppercase tracking-widest mt-0.5">
                 Categoría: {insight.category} · Severidad: {insight.severity}
               </p>
             </div>
@@ -1888,7 +1905,7 @@ function InsightDetailModal({ insight, onClose }: { insight: Insight; onClose: (
         <div className="p-5 space-y-5">
           {/* Mensaje principal */}
           <div className="space-y-1.5">
-            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Mensaje</p>
+            <p className="text-sm font-black uppercase tracking-widest text-muted-foreground">Mensaje</p>
             <p className="text-sm text-foreground leading-relaxed">{insight.message}</p>
           </div>
 
@@ -1898,7 +1915,7 @@ function InsightDetailModal({ insight, onClose }: { insight: Insight; onClose: (
           {/* Gráfico de respaldo */}
           {chartOption && (
             <div className="space-y-2">
-              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+              <p className="text-sm font-black uppercase tracking-widest text-muted-foreground">
                 {insight.detail?.type === 'stock' && 'Ventas diarias del período (respaldo del cálculo)'}
                 {insight.detail?.type === 'trend' && 'Evolución de ventas en el período'}
                 {insight.detail?.type === 'top' && 'Top productos por ingreso'}
@@ -1915,7 +1932,7 @@ function InsightDetailModal({ insight, onClose }: { insight: Insight; onClose: (
 
           {/* Recomendación */}
           <div className={cn('rounded-xl border p-4', config.bg, config.border)}>
-            <p className={cn('text-[10px] font-black uppercase tracking-widest mb-1.5', config.color)}>
+            <p className={cn('text-sm font-black uppercase tracking-widest mb-1.5', config.color)}>
               Recomendación accionable
             </p>
             <p className="text-sm text-foreground leading-relaxed">{insight.recommendation}</p>
@@ -1932,6 +1949,7 @@ function InsightDetailModal({ insight, onClose }: { insight: Insight; onClose: (
 // ── Detail Metrics (cards con números de respaldo) ─────────────
 
 function DetailMetrics({ detail }: { detail: InsightDetail }) {
+  const t = useTranslations('dashboard.storeDashboard');
   switch (detail.type) {
     case 'stock':
       return (
@@ -2023,10 +2041,10 @@ function DetailMetrics({ detail }: { detail: InsightDetail }) {
             />
           </div>
           <div className="space-y-1.5">
-            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Top 5 productos y su participación</p>
+            <p className="text-sm font-black uppercase tracking-widest text-muted-foreground">Top 5 productos y su participación</p>
             <div className="space-y-1">
               {detail.topProducts.map((p, i) => (
-                <div key={i} className="flex items-center justify-between gap-2 text-xs px-3 py-1.5 rounded-lg bg-muted/30">
+                <div key={i} className="flex items-center justify-between gap-2 text-sm px-3 py-1.5 rounded-lg bg-muted/30">
                   <span className="font-bold truncate">{p.name}</span>
                   <span className="font-black tabular-nums shrink-0">{p.pct.toFixed(1)}%</span>
                 </div>
@@ -2057,10 +2075,10 @@ function DetailMetrics({ detail }: { detail: InsightDetail }) {
             <MetricBox label="Total" value={formatCurrency(detail.total)} />
           </div>
           <div className="space-y-1.5">
-            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Todos los métodos</p>
+            <p className="text-sm font-black uppercase tracking-widest text-muted-foreground">Todos los métodos</p>
             <div className="space-y-1">
               {detail.allMethods.map((m, i) => (
-                <div key={i} className="flex items-center justify-between gap-2 text-xs px-3 py-1.5 rounded-lg bg-muted/30">
+                <div key={i} className="flex items-center justify-between gap-2 text-sm px-3 py-1.5 rounded-lg bg-muted/30">
                   <span className="font-bold">{m.name}</span>
                   <span className="font-black tabular-nums shrink-0">{m.pct}% · {formatCurrency(m.value)} ({m.count} tx)</span>
                 </div>
@@ -2078,10 +2096,10 @@ function DetailMetrics({ detail }: { detail: InsightDetail }) {
             <MetricBox label="Transacciones" value={`${detail.bestDayTransactions}`} />
           </div>
           <div className="space-y-1.5">
-            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Todos los días</p>
+            <p className="text-sm font-black uppercase tracking-widest text-muted-foreground">Todos los días</p>
             <div className="space-y-1">
               {detail.allDays.map((d, i) => (
-                <div key={i} className="flex items-center justify-between gap-2 text-xs px-3 py-1.5 rounded-lg bg-muted/30">
+                <div key={i} className="flex items-center justify-between gap-2 text-sm px-3 py-1.5 rounded-lg bg-muted/30">
                   <span className="font-bold">{d.name}</span>
                   <span className="font-black tabular-nums shrink-0">{formatCurrency(d.sales)} · {d.transactions} tx</span>
                 </div>
@@ -2100,6 +2118,7 @@ function MetricBox({
 }: {
   label: string; value: string; highlight?: 'success' | 'warning' | 'critical' | 'muted';
 }) {
+  const t = useTranslations('dashboard.storeDashboard');
   const color = {
     success: 'text-success',
     warning: 'text-warning',
@@ -2108,7 +2127,7 @@ function MetricBox({
   };
   return (
     <div className="p-2.5 rounded-lg bg-muted/30 border border-border/30">
-      <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground truncate" title={label}>{label}</p>
+      <p className="text-sm font-black uppercase tracking-widest text-muted-foreground truncate" title={label}>{label}</p>
       <p className={cn('text-sm font-black tabular-nums truncate', highlight ? color[highlight] : 'text-foreground')} title={value}>
         {value}
       </p>
@@ -2119,6 +2138,7 @@ function MetricBox({
 // ── Fundamentación (cómo se calculó el insight) ────────────────
 
 function Fundamentation({ detail }: { detail: InsightDetail }) {
+  const t = useTranslations('dashboard.storeDashboard');
   const text = useMemo(() => {
     switch (detail.type) {
       case 'stock':
@@ -2149,11 +2169,11 @@ function Fundamentation({ detail }: { detail: InsightDetail }) {
 
   return (
     <div className="rounded-xl border border-border/30 bg-muted/10 p-4 space-y-1">
-      <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
+      <p className="text-sm font-black uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
         <Lightbulb className="w-3 h-3" />
         Fundamentación del análisis
       </p>
-      <p className="text-xs text-muted-foreground leading-relaxed">{text}</p>
+      <p className="text-sm text-muted-foreground leading-relaxed">{text}</p>
     </div>
   );
 }
@@ -2161,6 +2181,7 @@ function Fundamentation({ detail }: { detail: InsightDetail }) {
 // ── Skeleton ───────────────────────────────────────────────────
 
 function DashboardSkeleton() {
+  const t = useTranslations('dashboard.storeDashboard');
   return (
     <div className="space-y-5">
       {/* Skeleton de tabs */}
@@ -2222,12 +2243,13 @@ function DashboardSkeleton() {
 }
 
 function DashboardError({ error }: { error: unknown }) {
+  const t = useTranslations('dashboard.storeDashboard');
   const msg = error instanceof Error ? error.message : String(error);
   return (
     <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-6 text-center">
       <AlertCircle className="w-10 h-10 mx-auto mb-3 text-destructive" />
       <p className="text-sm font-bold text-destructive uppercase tracking-wider">Error al cargar dashboard</p>
-      <p className="text-xs text-muted-foreground mt-2 font-mono">{msg}</p>
+      <p className="text-sm text-muted-foreground mt-2 font-mono">{msg}</p>
     </div>
   );
 }

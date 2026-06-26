@@ -4,8 +4,10 @@ import React from 'react';
 import type { CostMapNode, WorkflowPhase } from './types';
 import type { MapLayout, ConnectionLine } from './map-layout';
 
+import { useTranslations } from 'next-intl';
 // ── SVG defs (filters + gradients) ──
 export function SvgDefs({ orientation }: { orientation: 'horizontal' | 'vertical' }) {
+  const t = useTranslations('costSheet');
   return (
     <defs>
       <filter id="node-glow" x="-50%" y="-50%" width="200%" height="200%">

@@ -16,10 +16,13 @@ import { runMassiveGeneration } from './MassiveGenerator.utils';
 import { MassiveGeneratorForm } from './MassiveGeneratorForm';
 import { MassiveGeneratorPreview } from './MassiveGeneratorPreview';
 import { MassiveGeneratorProgress } from './MassiveGeneratorProgress';
+import { useTranslations } from 'next-intl';
+import { toast } from 'sonner';
 export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps> = ({
   isOpen = false, onClose = () => {}, isSection = false,
   initialProducts, initialMapping, autoStart = false, isQuickAction = false,
 }) => {
+  const t = useTranslations('costSheet');
   const { data: currentSheet } = useCostSheetStore();
   const { user } = useAuthStore();
 
@@ -66,7 +69,15 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
       setResults(init);
       setSelectedIds(new Set(init.map((r) => r.sku)));
       setShowMapping(true);
-    } catch (err) { console.error(err); }
+    } catch (err) {
+      // G2-fix + P5: Antes el error era silencioso. Ahora el usuario recibe feedback
+      // con recovery action para re-seleccionar el archivo.
+      console.error(err);
+      toast.error('No se pudo importar el archivo Excel', {
+        description: 'Verifica que el formato sea .xlsx o .xls válido.',
+        action: { label: 'Reintentar', onClick: () => fileInputRef.current?.click() },
+      });
+    }
     e.target.value = '';
   };
 
@@ -123,7 +134,9 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
       {isQuickProcessing ? (
         <MassiveGeneratorProgress mode="overlay" {...progressProps} />
       ) : (
-        <div className={cn(
+        <div
+          aria-busy={isProcessing}
+          className={cn(
           'flex flex-col overflow-hidden',
           isSection ? 'w-full bg-card rounded-3xl border border-border shadow-sm'
             : 'max-w-4xl max-h-[90vh] bg-sidebar/95 backdrop-blur-2xl border-sidebar-border shadow-2xl rounded-3xl',

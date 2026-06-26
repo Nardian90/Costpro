@@ -14,6 +14,7 @@ import { cn } from '@/lib/utils';
 import { useScenarioStore } from '@/store/scenario-store';
 import type { ScenarioId, CostSheetSection, CostSheetRow, CostSheetScenario, ScenarioConfig, CalculatedRowValue } from '@/types/cost-sheet';
 
+import { useTranslations } from 'next-intl';
 interface ScenarioCalcResult {
   calculatedValues: Record<string, CalculatedRowValue>;
 }
@@ -38,14 +39,15 @@ const TechnicalTooltip = ({ term, description, children }: { term: string, descr
         </div>
       </TooltipTrigger>
       <TooltipContent className="max-w-xs p-3 rounded-2xl border-sidebar-border bg-popover shadow-xl">
-        <p className="font-black uppercase tracking-widest text-[10px] border-b border-border/50 pb-2 mb-2 text-primary">{term}</p>
-        <p className="text-[11px] leading-relaxed text-muted-foreground">{description}</p>
+        <p className="font-black uppercase tracking-widest text-xs border-b border-border/50 pb-2 mb-2 text-primary">{term}</p>
+        <p className="text-xs leading-relaxed text-muted-foreground">{description}</p>
       </TooltipContent>
     </Tooltip>
   </TooltipProvider>
 );
 
 export const CostSheetComparisonTable = ({ sections, scenarios, scenarioConfig, calcV1, calcV2, calcV3, onUpdateRowValue, onScenarioAction }: CostSheetComparisonTableProps) => {
+  const t = useTranslations('costSheet');
   const { activeScenarioIds, setComparisonBase, createScenario, renameScenario } = useScenarioStore();
   const [hideNoDiff, setHideNoDiff] = useState(false);
 
@@ -68,11 +70,11 @@ export const CostSheetComparisonTable = ({ sections, scenarios, scenarioConfig, 
     return (
       <React.Fragment key={row.id}>
         <TableRow id={row.id} className="group hover:bg-muted/50 transition-colors">
-          <TableCell className="sticky left-0 bg-card group-hover:bg-muted/50 z-10 w-[60px] text-center font-bold text-[10px] border-r border-border/50">{row.id}</TableCell>
+          <TableCell className="sticky left-0 bg-card group-hover:bg-muted/50 z-10 w-[60px] text-center font-bold text-xs border-r border-border/50">{row.id}</TableCell>
           <TableCell className="sticky left-[60px] bg-card group-hover:bg-muted/50 z-10 min-w-[200px] border-r border-border/50" style={{ paddingLeft: level * 16 + 8 }}>
              <span className="text-xs font-medium tracking-tight">{row.label}</span>
           </TableCell>
-          <TableCell className="sticky left-[260px] bg-card group-hover:bg-muted/50 z-10 w-[60px] text-center text-[10px] border-r border-border/50 text-muted-foreground font-bold">{row.um || row.unit || '-'}</TableCell>
+          <TableCell className="sticky left-[260px] bg-card group-hover:bg-muted/50 z-10 w-[60px] text-center text-xs border-r border-border/50 text-muted-foreground font-bold">{row.um || row.unit || '-'}</TableCell>
           {activeScenarioIds.map(sid => {
             const scenario = scenarios.find((s: CostSheetScenario) => s.id === sid);
             const calculated = calcs[sid]?.calculatedValues?.[row.id] || { total: 0, valorHistorico: 0 };
@@ -94,10 +96,10 @@ export const CostSheetComparisonTable = ({ sections, scenarios, scenarioConfig, 
                 </TableCell>
                 {sid !== baseId && (
                   <>
-                    <TableCell className={cn("text-right p-2 text-[10px] border-l border-border/10", diff < -0.01 ? "text-success" : diff > 0.01 ? "text-destructive" : "text-muted-foreground/40")}>
+                    <TableCell className={cn("text-right p-2 text-xs border-l border-border/10", diff < -0.01 ? "text-success" : diff > 0.01 ? "text-destructive" : "text-muted-foreground/70")}>
                       {diff > 0.01 ? '+' : ''}{diff.toFixed(2)}
                     </TableCell>
-                    <TableCell className={cn("text-right p-2 text-[10px] border-r border-border/10", diff < -0.01 ? "text-success font-bold" : diff > 0.01 ? "text-destructive font-bold" : "text-muted-foreground/40")}>
+                    <TableCell className={cn("text-right p-2 text-xs border-r border-border/10", diff < -0.01 ? "text-success font-bold" : diff > 0.01 ? "text-destructive font-bold" : "text-muted-foreground/70")}>
                       {baseTotal !== 0 ? ((diff/baseTotal)*100).toFixed(1) : 0}%
                     </TableCell>
                   </>
@@ -133,7 +135,7 @@ export const CostSheetComparisonTable = ({ sections, scenarios, scenarioConfig, 
                    className="h-6 bg-transparent border-none p-0 font-black uppercase tracking-widest text-xs focus-visible:ring-0 w-32"
                 />
                 {isPrimary && <Star className="w-4 h-4 fill-warning text-warning"/>}
-                {isBase && <Badge variant="secondary" className="text-[9px]">Base Δ</Badge>}
+                {isBase && <Badge variant="secondary" className="text-xs">Base Δ</Badge>}
               </div>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreVertical className="w-4 h-4"/></Button></DropdownMenuTrigger>
@@ -148,10 +150,10 @@ export const CostSheetComparisonTable = ({ sections, scenarios, scenarioConfig, 
             <div className="space-y-2">
               {sections.map((section: CostSheetSection) => (
                 <div key={section.id} className="space-y-1">
-                  <div className="text-[10px] font-black text-muted-foreground uppercase py-2 border-b border-border/50">{section.label}</div>
+                  <div className="text-xs font-black text-muted-foreground uppercase py-2 border-b border-border/50">{section.label}</div>
                   {section.rows.map((row: CostSheetRow) => (
                     <div key={row.id} className="flex justify-between items-center py-1">
-                      <span className="text-[11px] text-muted-foreground">{row.label}</span>
+                      <span className="text-xs text-muted-foreground">{row.label}</span>
                       <span className="text-xs font-bold">{(calcs[sid]?.calculatedValues?.[row.id]?.total ?? 0).toFixed(2)}</span>
                     </div>
                   ))}
@@ -169,8 +171,8 @@ export const CostSheetComparisonTable = ({ sections, scenarios, scenarioConfig, 
       <div className="flex flex-wrap items-center justify-between gap-4 p-4 bg-muted/30 rounded-2xl border shadow-sm backdrop-blur-sm">
         <div className="flex items-center gap-4">
             <TechnicalTooltip term="Base Delta" description="Escenario de referencia utilizado para calcular las diferencias (Δ) y porcentajes de variación en los otros escenarios.">
-                <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Base Delta:</span>
-                <HelpCircle className="w-3 h-3 text-muted-foreground/50"/>
+                <span className="text-xs font-black uppercase tracking-widest text-muted-foreground">Base Delta:</span>
+                <HelpCircle className="w-3 h-3 text-muted-foreground/70"/>
             </TechnicalTooltip>
 
             <Select value={baseId} onValueChange={(v) => setComparisonBase(v as ScenarioId)}>
@@ -211,8 +213,8 @@ export const CostSheetComparisonTable = ({ sections, scenarios, scenarioConfig, 
                     onCheckedChange={setHideNoDiff}
                     className="data-[state=checked]:bg-primary"
                 />
-                <Label htmlFor="hide-no-diff" className="text-[10px] font-black uppercase cursor-pointer select-none">Ocultar sin cambios</Label>
-                <EyeOff className="w-3 h-3 text-muted-foreground/50" />
+                <Label htmlFor="hide-no-diff" className="text-xs font-black uppercase cursor-pointer select-none">Ocultar sin cambios</Label>
+                <EyeOff className="w-3 h-3 text-muted-foreground/70" />
             </div>
         </div>
       </div>
@@ -240,28 +242,28 @@ export const CostSheetComparisonTable = ({ sections, scenarios, scenarioConfig, 
                         <Input
                           value={s?.label}
                           onChange={(e) => renameScenario(sid, e.target.value)}
-                          className="h-6 bg-transparent border-none p-0 font-black uppercase tracking-widest text-[11px] focus-visible:ring-0 w-32 inline-block"
+                          className="h-6 bg-transparent border-none p-0 font-black uppercase tracking-widest text-xs focus-visible:ring-0 w-32 inline-block"
                         />
                         {isPrimary && <Star className="w-3 h-3 fill-warning text-warning animate-pulse"/>}
-                        {isBase && <Badge variant="secondary" className="text-[9px] h-4 px-1 rounded-full uppercase tracking-tighter bg-primary/10 text-primary border-none">Base Δ</Badge>}
+                        {isBase && <Badge variant="secondary" className="text-xs h-4 px-1 rounded-full uppercase tracking-tighter bg-primary/10 text-primary border-none">Base Δ</Badge>}
                       </div>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="ghost" size="icon" className="h-7 w-7 rounded-full hover:bg-muted-foreground/10 transition-colors"><MoreVertical className="w-3.5 h-3.5"/></Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-56 rounded-2xl p-2 border-sidebar-border shadow-2xl">
-                          <DropdownMenuItem onClick={() => onScenarioAction('setPrimary', sid)} className="text-[11px] font-bold rounded-xl px-3 py-2">
+                          <DropdownMenuItem onClick={() => onScenarioAction('setPrimary', sid)} className="text-xs font-bold rounded-xl px-3 py-2">
                             <Star className="w-4 h-4 mr-3 text-warning"/> Establecer como Principal
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => onScenarioAction('duplicate', sid)} className="text-[11px] font-bold rounded-xl px-3 py-2">
+                          <DropdownMenuItem onClick={() => onScenarioAction('duplicate', sid)} className="text-xs font-bold rounded-xl px-3 py-2">
                             <LayoutGrid className="w-4 h-4 mr-3 text-primary"/> Duplicar Escenario
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => onScenarioAction('exportPdf', sid)} className="text-[11px] font-bold rounded-xl px-3 py-2">
+                          <DropdownMenuItem onClick={() => onScenarioAction('exportPdf', sid)} className="text-xs font-bold rounded-xl px-3 py-2">
                             <FileDown className="w-4 h-4 mr-3 text-primary"/> Exportar este escenario (PDF)
                           </DropdownMenuItem>
                           <DropdownMenuSeparator className="my-2 opacity-50" />
                           <DropdownMenuItem
-                            className="text-destructive text-[11px] font-bold rounded-xl px-3 py-2 focus:bg-destructive/10"
+                            className="text-destructive text-xs font-bold rounded-xl px-3 py-2 focus:bg-destructive/10"
                             onClick={() => onScenarioAction('delete', sid)}
                             disabled={isPrimary || activeScenarioIds.length <= 1}
                           >
@@ -275,31 +277,31 @@ export const CostSheetComparisonTable = ({ sections, scenarios, scenarioConfig, 
               })}
             </TableRow>
             <TableRow className="bg-muted/40 backdrop-blur-sm">
-              <TableHead className="sticky left-0 bg-muted z-40 w-[60px] text-center text-[10px] font-black border-r border-border/30 tracking-tighter">ID</TableHead>
-              <TableHead className="sticky left-[60px] bg-muted z-40 min-w-[200px] text-[10px] font-black border-r border-border/30 tracking-widest">CONCEPTO</TableHead>
-              <TableHead className="sticky left-[260px] bg-muted z-40 w-[60px] text-center text-[10px] font-black border-r border-border/30">UM</TableHead>
+              <TableHead className="sticky left-0 bg-muted z-40 w-[60px] text-center text-xs font-black border-r border-border/30 tracking-tighter">ID</TableHead>
+              <TableHead className="sticky left-[60px] bg-muted z-40 min-w-[200px] text-xs font-black border-r border-border/30 tracking-widest">CONCEPTO</TableHead>
+              <TableHead className="sticky left-[260px] bg-muted z-40 w-[60px] text-center text-xs font-black border-r border-border/30">UM</TableHead>
               {activeScenarioIds.map(sid => (
                 <React.Fragment key={sid}>
                   <TableHead className={cn("text-center border-l border-border/20 bg-muted/10 p-2", sid === primaryId && "bg-muted/20")}>
                     <TechnicalTooltip term="Valor Histórico (VH)" description="Costo unitario o valor base de entrada para esta fila. Es el dato crudo antes de aplicar fórmulas de costo total.">
-                      <span className="text-[9px] font-bold tracking-widest text-muted-foreground/60">VH</span>
+                      <span className="text-xs font-bold tracking-widest text-muted-foreground/70">VH</span>
                     </TechnicalTooltip>
                   </TableHead>
                   <TableHead className={cn("text-center bg-primary/5 p-2", sid === primaryId && "bg-primary/10")}>
                     <TechnicalTooltip term="Total Calculado" description="Resultado final tras procesar la fórmula, unidad de medida y coeficientes técnicos asociados a este concepto.">
-                      <span className="text-[9px] font-black tracking-widest text-primary">TOTAL</span>
+                      <span className="text-xs font-black tracking-widest text-primary">TOTAL</span>
                     </TechnicalTooltip>
                   </TableHead>
                   {sid !== baseId && (
                     <>
                       <TableHead className="text-center border-l border-border/10 bg-primary/5 p-2">
                         <TechnicalTooltip term="Diferencia (Δ)" description="Valor absoluto de la variación respecto al Escenario Base. El color verde indica ahorro y el rojo incremento de costo.">
-                          <span className="text-[9px] font-black tracking-widest text-primary/70">Δ</span>
+                          <span className="text-xs font-black tracking-widest text-primary/70">Δ</span>
                         </TechnicalTooltip>
                       </TableHead>
                       <TableHead className="text-center bg-primary/5 p-2">
                         <TechnicalTooltip term="Variación (%)" description="Porcentaje relativo de aumento o disminución comparado con el valor de referencia de la Base Delta.">
-                          <span className="text-[9px] font-black tracking-widest text-primary/70">%</span>
+                          <span className="text-xs font-black tracking-widest text-primary/70">%</span>
                         </TechnicalTooltip>
                       </TableHead>
                     </>
@@ -311,7 +313,7 @@ export const CostSheetComparisonTable = ({ sections, scenarios, scenarioConfig, 
           {/* Sticky Precio de Venta — always visible during scroll */}
           <thead className="sticky top-[84px] z-20">
             <tr className="bg-primary/5 backdrop-blur-xl border-b-2 border-primary/20">
-              <th colSpan={3} className="sticky left-0 z-30 bg-primary/5 backdrop-blur-xl font-black text-[10px] uppercase text-primary py-2 px-6 tracking-widest border-r border-border/30 text-left">
+              <th colSpan={3} className="sticky left-0 z-30 bg-primary/5 backdrop-blur-xl font-black text-xs uppercase text-primary py-2 px-6 tracking-widest border-r border-border/30 text-left">
                 Precio de Venta
               </th>
               {activeScenarioIds.map(sid => {
@@ -326,8 +328,8 @@ export const CostSheetComparisonTable = ({ sections, scenarios, scenarioConfig, 
                     </th>
                     {sid !== baseId && (
                       <>
-                        <th className="text-right p-2 text-[10px] text-muted-foreground border-l border-border/10">—</th>
-                        <th className="text-right p-2 text-[10px] text-muted-foreground border-r border-border/10">—</th>
+                        <th className="text-right p-2 text-xs text-muted-foreground border-l border-border/10">—</th>
+                        <th className="text-right p-2 text-xs text-muted-foreground border-r border-border/10">—</th>
                       </>
                     )}
                   </React.Fragment>
@@ -339,7 +341,7 @@ export const CostSheetComparisonTable = ({ sections, scenarios, scenarioConfig, 
             {sections.filter((s) => s.id !== 's14' && s.id !== 's15' && s.id !== 's16').map((s: CostSheetSection) => (
               <React.Fragment key={s.id}>
                 <TableRow className="bg-muted/40 backdrop-blur-sm border-y border-border/20 hover:bg-muted/60 transition-colors">
-                  <TableCell colSpan={20} className="font-black text-[10px] uppercase text-primary/80 py-1.5 px-6 tracking-widest">
+                  <TableCell colSpan={20} className="font-black text-xs uppercase text-primary/80 py-1.5 px-6 tracking-widest">
                     {s.label}
                   </TableCell>
                 </TableRow>
@@ -352,7 +354,7 @@ export const CostSheetComparisonTable = ({ sections, scenarios, scenarioConfig, 
             {sections.filter((s) => s.id === 's13' || s.id === 's14' || s.id === 's15' || s.id === 's16').map((s: CostSheetSection) => (
               <React.Fragment key={s.id}>
                 <TableRow className="bg-primary/5 hover:bg-primary/10 transition-colors">
-                  <TableCell colSpan={20} className="font-black text-[10px] uppercase text-primary py-1 px-6 tracking-widest">
+                  <TableCell colSpan={20} className="font-black text-xs uppercase text-primary py-1 px-6 tracking-widest">
                     {s.label}
                   </TableCell>
                 </TableRow>
