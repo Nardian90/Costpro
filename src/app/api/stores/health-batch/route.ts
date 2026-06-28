@@ -20,8 +20,19 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
     return NextResponse.json({});
   }
 
-  const { getSupabaseAuthClient } = await import('@/lib/supabaseClient');
-  const supabase = getSupabaseAuthClient(session.token);
+  // FIX-AUDIT-NEW-3: Use service-role client instead of getSupabaseAuthClient(session.token).
+  // When an admin requests health for 10 stores, the query with their personal JWT
+  // may be filtered by RLS to only stores where they have active membership.
+  // Stores owned by other managers wouldn't appear in the result — the MultiStoreDashboard
+  // health score would be incomplete with NO visible error.
+  // Service-role client bypasses RLS so the admin sees ALL stores they requested.
+  const { createClient } = await import('@supabase/supabase-js');
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) {
+    return NextResponse.json({ error: 'Server misconfigured' }, { status: 500 });
+  }
+  const supabase = createClient(url, key, { auth: { autoRefreshToken: false, persistSession: false } });
 
   const cutoff = new Date();
   cutoff.setDate(cutoff.getDate() - 30);

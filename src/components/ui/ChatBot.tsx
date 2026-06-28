@@ -3,7 +3,7 @@ import { logger } from '@/lib/logger';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MessageSquare, Send, X, Bot, Loader2, Sparkles, Settings, Key, Check, Trash2, Lightbulb, RefreshCw, ChevronDown, AlertTriangle, ImagePlus, Plus, Clock, MessageCircle } from 'lucide-react';
+import { MessageSquare, Send, X, Bot, Loader2, Sparkles, Settings, Key, Check, Trash2, Lightbulb, RefreshCw, ChevronDown, AlertTriangle, ImagePlus, Plus, Clock, MessageCircle, Copy, Download, Maximize2, Minimize2, PanelLeft } from 'lucide-react';
 import { useAuthStore, useUIStore } from '@/store';
 import { cn } from '@/lib/utils';
 import { userService } from '@/services/user-service';
@@ -92,9 +92,14 @@ function createConversation(title?: string, firstMessage?: string): Conversation
 }
 
 // ─── CHATBOT COMPONENT ───────────────────────────────────────────────────────
-export function ChatBot() {
+export function ChatBot({ embedded = false }: { embedded?: boolean } = {}) {
   const router = useRouter();
   const { isChatBotOpen: isOpen, setIsChatBotOpen: setIsOpen, currentView } = useUIStore();
+  // FEATURE-CHATBOT-VIEW: When embedded=true, the chat is rendered as a
+  // first-class view (ChatBotView) instead of a floating window. This ignores
+  // the isOpen state from the store and always renders the chat panel,
+  // filling its parent container.
+  const effectivelyOpen = embedded ? true : isOpen;
 
   // Multi-conversation state (F1-04)
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -107,6 +112,8 @@ export function ChatBot() {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isModelOpen, setIsModelOpen] = useState(false);
+  // FEATURE: maximize chat as a full view for better concentration
+  const [isMaximized, setIsMaximized] = useState(false);
 
   // Attached image state (F1-01)
   const [attachedImage, setAttachedImage] = useState<{ mimeType: string; data: string; preview: string } | null>(null);
@@ -287,6 +294,61 @@ export function ChatBot() {
     );
     toast.success('Conversación eliminada');
   }, [activeConversationId]);
+
+  // ─── FEATURE: Copy conversation to clipboard ────────────────────────────
+  const handleCopyConversation = useCallback(() => {
+    const convo = conversations.find(c => c.id === activeConversationId);
+    if (!convo || convo.messages.length === 0) {
+      toast.warning('La conversación está vacía');
+      return;
+    }
+    const text = convo.messages
+      .map(m => {
+        const role = m.role === 'user' ? '🧑 Usuario' : m.role === 'assistant' ? '🤖 Darian' : m.role;
+        const time = m.timestamp ? new Date(m.timestamp).toLocaleString() : '';
+        return `### ${role} — ${time}\n\n${m.content}`;
+      })
+      .join('\n\n---\n\n');
+    const header = `# Conversación con Darian\n**Título:** ${convo.title}\n**Fecha de exportación:** ${new Date().toLocaleString()}\n**Mensajes:** ${convo.messages.length}\n\n---\n\n`;
+    navigator.clipboard.writeText(header + text)
+      .then(() => toast.success(`Conversación copiada (${convo.messages.length} mensajes)`))
+      .catch(() => toast.error('No se pudo copiar al portapapeles'));
+  }, [conversations, activeConversationId]);
+
+  // ─── FEATURE: Export conversation as Markdown file ──────────────────────
+  const handleExportConversation = useCallback(() => {
+    const convo = conversations.find(c => c.id === activeConversationId);
+    if (!convo || convo.messages.length === 0) {
+      toast.warning('La conversación está vacía');
+      return;
+    }
+    const text = convo.messages
+      .map(m => {
+        const role = m.role === 'user' ? '🧑 Usuario' : m.role === 'assistant' ? '🤖 Darian' : m.role;
+        const time = m.timestamp ? new Date(m.timestamp).toLocaleString() : '';
+        return `### ${role} — ${time}\n\n${m.content}`;
+      })
+      .join('\n\n---\n\n');
+    const header = `# Conversación con Darian\n\n**Título:** ${convo.title}\n**Fecha de exportación:** ${new Date().toLocaleString()}\n**Mensajes:** ${convo.messages.length}\n\n---\n\n`;
+    const fullText = header + text;
+    const blob = new Blob([fullText], { type: 'text/markdown;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    const safeTitle = convo.title.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 50) || 'conversacion';
+    const dateStr = new Date().toISOString().slice(0, 10);
+    a.download = `chat-darian-${safeTitle}-${dateStr}.md`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast.success(`Conversación exportada como Markdown`);
+  }, [conversations, activeConversationId]);
+
+  // ─── FEATURE: Toggle maximize/restore chat view ─────────────────────────
+  const handleToggleMaximize = useCallback(() => {
+    setIsMaximized(prev => !prev);
+  }, []);
 
   // ─── IMAGE HANDLING (F1-01) ─────────────────────────────────────────────
   const handleImageAttach = useCallback(() => {
@@ -666,10 +728,14 @@ export function ChatBot() {
   }
 
   // ─── RENDER ──────────────────────────────────────────────────────────────
+  // FEATURE-CHATBOT-VIEW: When embedded, render without the floating FAB
+  // and without fixed positioning — the parent ChatBotView handles layout.
   return (
-    <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 flex flex-col items-end gap-3">
+    <div className={cn(
+      embedded ? "w-full h-full flex flex-col" : "fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 flex flex-col items-end gap-3"
+    )}>
       <AnimatePresence>
-        {!isOpen && (
+        {!effectivelyOpen && !embedded && (
           <motion.button
             initial={{ scale: 0, opacity: 0, y: 20 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
@@ -686,7 +752,7 @@ export function ChatBot() {
       </AnimatePresence>
 
       <AnimatePresence>
-        {isOpen && (
+        {effectivelyOpen && (
           <motion.div
             initial={{ opacity: 0, y: 20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -694,9 +760,65 @@ export function ChatBot() {
             role="dialog"
             aria-label="Chat con Darian"
             aria-modal="true"
-            className="fixed top-3 right-3 bottom-3 left-3 sm:left-auto sm:w-[460px] bg-background border border-border shadow-2xl rounded-2xl sm:rounded-[28px] flex flex-col overflow-hidden z-50"
+            className={cn(
+              "bg-background border border-border shadow-2xl rounded-2xl sm:rounded-[28px] flex flex-col overflow-hidden transition-all duration-300",
+              embedded
+                ? "w-full h-full rounded-none border-0 shadow-none"
+                : "fixed top-3 right-3 bottom-3 left-3 sm:left-auto sm:w-[460px] z-50",
+              !embedded && isMaximized && "!left-3 !right-3 !top-3 !bottom-3 sm:!w-auto sm:!max-w-[1400px] sm:!mx-auto"
+            )}
           >
             {/* ─── HEADER ─── */}
+            {/* FEATURE-CHATBOT-VIEW: When embedded, render a minimal toolbar
+                instead of the green Darian header (the ChatBotView already
+                provides a premium header with avatar, 3D building, role badge). */}
+            {embedded ? (
+              <div className="h-11 bg-muted/30 border-b border-border/50 flex items-center justify-between px-2 shrink-0">
+                {/* Left: conversations toggle */}
+                <button
+                  onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                  aria-label="Lista de conversaciones"
+                  className="w-9 h-9 flex items-center justify-center hover:bg-muted rounded-lg transition-colors active:scale-95 text-muted-foreground"
+                  title="Conversaciones"
+                  type="button"
+                >
+                  <MessageCircle className="w-4 h-4" />
+                </button>
+
+                {/* Center: settings (model selector) */}
+                <button
+                  onClick={() => setIsSettingsOpen(!isSettingsOpen)}
+                  className="flex items-center gap-1.5 px-2.5 h-8 rounded-lg hover:bg-muted transition-colors text-xs font-medium text-muted-foreground"
+                  type="button"
+                  aria-label="Configuración de IA"
+                >
+                  <Settings className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Configuración</span>
+                </button>
+
+                {/* Right: action buttons (no close/maximize — those are floating-only) */}
+                <div className="flex items-center gap-0.5">
+                  <button
+                    onClick={handleCopyConversation}
+                    className="w-9 h-9 flex items-center justify-center hover:bg-muted rounded-lg transition-colors active:scale-95 text-muted-foreground"
+                    title="Copiar conversación"
+                    type="button"
+                    aria-label="Copiar conversación"
+                  >
+                    <Copy className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={handleExportConversation}
+                    className="w-9 h-9 flex items-center justify-center hover:bg-muted rounded-lg transition-colors active:scale-95 text-muted-foreground"
+                    title="Exportar como Markdown"
+                    type="button"
+                    aria-label="Exportar conversación"
+                  >
+                    <Download className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            ) : (
             <div className="h-14 bg-primary text-primary-foreground flex items-center justify-between px-3 relative overflow-hidden shrink-0">
               <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-3xl" />
 
@@ -730,17 +852,47 @@ export function ChatBot() {
                 </div>
               </button>
 
-              {/* Close button */}
-              <button
-                onClick={handleCloseChat}
-                className="w-10 h-10 flex items-center justify-center hover:bg-white/20 rounded-xl transition-colors active:scale-95 relative z-50"
-                title="Cerrar chat (ESC)"
-                type="button"
-                aria-label="Cerrar chat"
-              >
-                <X className="w-5 h-5" />
-              </button>
+              {/* Action buttons: copy, export, maximize, close */}
+              <div className="flex items-center gap-0.5 relative z-50">
+                <button
+                  onClick={handleCopyConversation}
+                  className="w-9 h-9 flex items-center justify-center hover:bg-white/20 rounded-lg transition-colors active:scale-95"
+                  title="Copiar conversación"
+                  type="button"
+                  aria-label="Copiar conversación"
+                >
+                  <Copy className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={handleExportConversation}
+                  className="w-9 h-9 flex items-center justify-center hover:bg-white/20 rounded-lg transition-colors active:scale-95"
+                  title="Exportar como Markdown"
+                  type="button"
+                  aria-label="Exportar conversación"
+                >
+                  <Download className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={handleToggleMaximize}
+                  className="w-9 h-9 flex items-center justify-center hover:bg-white/20 rounded-lg transition-colors active:scale-95"
+                  title={isMaximized ? "Restaurar vista" : "Maximizar vista"}
+                  type="button"
+                  aria-label={isMaximized ? "Restaurar vista" : "Maximizar vista"}
+                >
+                  {isMaximized ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+                </button>
+                <button
+                  onClick={handleCloseChat}
+                  className="w-9 h-9 flex items-center justify-center hover:bg-white/20 rounded-lg transition-colors active:scale-95"
+                  title="Cerrar chat (ESC)"
+                  type="button"
+                  aria-label="Cerrar chat"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
             </div>
+            )}
 
             {/* ─── CONVERSATIONS SIDEBAR (F1-04) ─── */}
             <AnimatePresence>
@@ -961,44 +1113,155 @@ export function ChatBot() {
                     animate={{ opacity: 1 }}
                     className="space-y-4"
                   >
-                    {/* ─── EMPTY STATE ─── */}
-                    {messages.length === 0 && (
-                      <div className="h-full flex flex-col items-center justify-center text-center p-3 space-y-3 py-8">
-                        <div className="w-14 h-14 rounded-full bg-primary/5 flex items-center justify-center border-2 border-dashed border-primary/20">
-                          <Sparkles className="w-7 h-7 text-primary opacity-30" />
-                        </div>
-                        <div className="space-y-1.5">
-                          <p className="text-sm font-black uppercase text-primary tracking-widest">
-                            Hola, {user?.fullName?.split(' ')[0] || 'Usuario'}
-                          </p>
-                          <p className="text-xs text-muted-foreground font-medium leading-relaxed">
-                            Soy Darian, tu Controller AI. Puedo analizar imágenes, navegar, buscar, explicar vistas y ayudarte con CostPro.
-                          </p>
-                          <div className="flex items-center gap-1.5 justify-center mt-1">
-                            <Lightbulb className="w-3 h-3 text-primary/50" />
-                            <span className="text-[10px] text-muted-foreground/70 uppercase tracking-widest font-bold">Prueba una sugerencia</span>
+                    {/* ─── EMPTY STATE — minimalist Z.ai style ─── */}
+                    {messages.length === 0 ? (
+                      <div className="h-full flex flex-col items-center justify-center text-center px-4 sm:px-8 py-8 max-w-2xl mx-auto w-full">
+                        {/* Hero heading */}
+                        <h2 className="text-2xl sm:text-4xl font-bold tracking-tight mb-3 sm:mb-4 text-foreground">
+                          ¿En qué puedo ayudarte?
+                        </h2>
+                        <p className="text-xs sm:text-sm text-muted-foreground max-w-md leading-relaxed mb-6 sm:mb-8">
+                          Soy Darian, tu asistente de CostPro. Puedo consultar costos, ventas, buscar productos y ejecutar acciones.
+                        </p>
+
+                        {/* Embedded input — Z.ai style (centered, no border-t) */}
+                        <div className="w-full max-w-2xl mb-4">
+                          {/* Top bar: model selector */}
+                          <div className="flex items-center justify-between mb-1.5 px-1">
+                            <button
+                              onClick={(e) => { e.stopPropagation(); setIsModelOpen(!isModelOpen); }}
+                              className="flex items-center gap-1.5 text-[10px] text-muted-foreground/60 hover:text-foreground transition-colors uppercase tracking-widest font-bold"
+                              type="button"
+                            >
+                              {currentModelLabel}
+                              <ChevronDown className={cn('w-3 h-3 transition-transform', isModelOpen && 'rotate-180')} />
+                            </button>
                           </div>
+
+                          {/* Model dropdown */}
+                          <AnimatePresence>
+                            {isModelOpen && (
+                              <motion.div
+                                initial={{ opacity: 0, y: 4, scaleY: 0.95 }}
+                                animate={{ opacity: 1, y: 0, scaleY: 1 }}
+                                exit={{ opacity: 0, y: 4, scaleY: 0.95 }}
+                                className="origin-top mb-1.5 p-1.5 bg-popover border border-border rounded-xl shadow-lg space-y-0.5"
+                              >
+                                {MODEL_OPTIONS.map((m) => (
+                                  <button
+                                    key={m.id}
+                                    onClick={(e) => { e.stopPropagation(); handleModelSelect(m.id); }}
+                                    className={cn(
+                                      'w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-colors flex items-center justify-between',
+                                      selectedModel === m.id
+                                        ? 'bg-primary/10 text-primary'
+                                        : 'hover:bg-muted text-muted-foreground'
+                                    )}
+                                    type="button"
+                                  >
+                                    <span>{m.label}</span>
+                                    {m.badge && (
+                                      <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-muted font-bold">{m.badge}</span>
+                                    )}
+                                  </button>
+                                ))}
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+
+                          {/* Attached image preview */}
+                          <AnimatePresence>
+                            {attachedImage && (
+                              <motion.div
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: 'auto' }}
+                                exit={{ opacity: 0, height: 0 }}
+                                className="mb-1.5 relative inline-block"
+                              >
+                                <img
+                                  src={attachedImage.preview}
+                                  alt="Vista previa"
+                                  className="max-h-24 max-w-48 rounded-lg border border-border object-contain"
+                                />
+                                <button
+                                  onClick={removeAttachedImage}
+                                  className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center shadow-sm hover:scale-110 transition-transform"
+                                  type="button"
+                                  aria-label="Quitar imagen"
+                                >
+                                  <X className="w-3 h-3" />
+                                </button>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+
+                          {/* Input row */}
+                          <div className="flex gap-2 bg-muted/40 p-1.5 rounded-2xl border border-border focus-within:border-primary/30 transition-colors items-end">
+                            <button
+                              onClick={handleImageAttach}
+                              disabled={isLoading}
+                              className="w-10 h-10 rounded-xl flex items-center justify-center hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors disabled:opacity-50 shrink-0"
+                              type="button"
+                              title="Adjuntar imagen"
+                              aria-label="Adjuntar imagen"
+                            >
+                              <ImagePlus className="w-4 h-4" />
+                            </button>
+                            <input
+                              ref={fileInputRef}
+                              type="file"
+                              accept="image/jpeg,image/png,image/webp,image/gif"
+                              className="hidden"
+                              onChange={handleImageChange}
+                            />
+                            <textarea
+                              ref={inputRef}
+                              value={input}
+                              onChange={(e) => setInput(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter' && !e.shiftKey) {
+                                  e.preventDefault();
+                                  handleSend();
+                                }
+                              }}
+                              disabled={isLoading}
+                              aria-label="Escribir mensaje al asistente"
+                              placeholder="Pregunta algo a Darian..."
+                              rows={1}
+                              className="flex-1 bg-transparent border-none px-1 py-1.5 text-xs font-medium focus:outline-none placeholder:text-muted-foreground/50 resize-none disabled:cursor-not-allowed min-h-[40px] max-h-[120px] leading-5"
+                            />
+                            <button
+                              disabled={(!input.trim() && !attachedImage) || isLoading}
+                              onClick={() => handleSend()}
+                              className="w-10 h-10 rounded-xl bg-primary text-primary-foreground flex items-center justify-center hover:opacity-90 disabled:opacity-50 transition-all shadow-md active:scale-95 shrink-0"
+                              type="button"
+                              aria-label="Enviar mensaje"
+                            >
+                              {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                            </button>
+                          </div>
+                          <p className="text-center text-[9px] text-muted-foreground/30 mt-1 uppercase tracking-widest">
+                            Darian AI · {currentModelLabel} · T:{temperature.toFixed(1)}
+                          </p>
                         </div>
 
-                        <div className="grid grid-cols-1 gap-1.5 mt-1 w-full">
+                        {/* Minimal suggestions — below input */}
+                        <div className="flex flex-wrap gap-2 justify-center max-w-lg">
                           {QUICK_PROMPTS.map((prompt, i) => (
                             <button
                               key={i}
                               onClick={() => handleSend(prompt.text)}
                               disabled={isLoading}
-                              className="flex items-center gap-2.5 p-2.5 rounded-xl border border-border bg-background hover:bg-primary/5 hover:border-primary/20 transition-all text-left disabled:opacity-50 group"
+                              className="px-3 py-1.5 rounded-full border border-border bg-background/50 hover:bg-muted hover:border-primary/30 transition-all text-[11px] sm:text-xs text-muted-foreground hover:text-foreground disabled:opacity-50"
                               type="button"
                             >
-                              <span className="text-sm">{prompt.icon}</span>
-                              <span className="text-[11px] font-medium text-muted-foreground group-hover:text-foreground transition-colors">
-                                {prompt.text}
-                              </span>
+                              {prompt.text}
                             </button>
                           ))}
                         </div>
                       </div>
-                    )}
-
+                    ) : (
+                      <>
                     {/* ─── MESSAGE LIST ─── */}
                     {messages.map((msg, i) => (
                       <div key={msg.id || i} className={cn('flex w-full', msg.role === 'user' ? 'justify-end' : 'justify-start')}>
@@ -1047,13 +1310,18 @@ export function ChatBot() {
                         </div>
                       </div>
                     )}
+                      </>
+                    )}
                   </motion.div>
                 )}
               </AnimatePresence>
             </div>
 
-            {/* ─── INPUT AREA ─── */}
-            {!isSettingsOpen && !isSidebarOpen && (
+            {/* ─── INPUT AREA (only when conversation has started) ─── */}
+            {/* FEATURE-ZAI-STYLE: When messages.length === 0, the input is
+                rendered inline in the empty state (centered, Z.ai style).
+                Once the conversation starts, the input moves to the bottom. */}
+            {!isSettingsOpen && !isSidebarOpen && messages.length > 0 && (
               <div className="p-3 bg-background border-t border-border shrink-0">
                 {/* Top bar: model selector + clear + latency */}
                 <div className="flex items-center justify-between mb-1.5">

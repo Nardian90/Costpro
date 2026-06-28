@@ -13,6 +13,8 @@
 import html2canvas from "html2canvas";
 import QRCode from "qrcode";
 import { toast } from "sonner";
+// FIX-AUDIT-NEW-1: Use shared slugify from /lib/slugify.ts instead of inline copy
+import { slugify } from "@/lib/slugify";
 import type { CatalogProduct, BrandConfig, TemplateRenderer } from "./types";
 import {
   organizeProducts,
@@ -30,15 +32,7 @@ const SW = 1080; // slide width
 const SH = 1350; // slide height (4:5)
 
 // ── Helpers ──────────────────────────────────────────────────
-
-function slugify(text: string): string {
-  return text
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "");
-}
+// FIX-AUDIT-NEW-1: slugify is now imported from /lib/slugify.ts (single source of truth)
 
 function downloadDataUrl(dataUrl: string, filename: string) {
   const a = document.createElement("a");

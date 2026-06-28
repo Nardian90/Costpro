@@ -18,8 +18,15 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
     return NextResponse.json({ error: 'Forbidden — requiere rol admin o manager' }, { status: 403 });
   }
 
-  const { getSupabaseAuthClient } = await import('@/lib/supabaseClient');
-  const supabase = getSupabaseAuthClient(session.token);
+  // FIX-AUDIT-NEW-2: Use service-role client (same fix as archive route).
+  // See archive/route.ts for full rationale.
+  const { createClient } = await import('@supabase/supabase-js');
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) {
+    return NextResponse.json({ error: 'Server misconfigured' }, { status: 500 });
+  }
+  const supabase = createClient(url, key, { auth: { autoRefreshToken: false, persistSession: false } });
 
   const { error } = await supabase
     .from('stores')

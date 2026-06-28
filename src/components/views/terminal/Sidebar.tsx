@@ -10,6 +10,7 @@ import {
   Calculator,
   Pin,
   PinOff,
+  Bot,
 } from 'lucide-react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { useAuthStore, useUIStore, ViewType } from '@/store';
@@ -129,6 +130,7 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
   // F3 + GAP-3: Al clickear un módulo raíz, navegar a la vista por defecto.
   // Mapeo completo de todos los grupos del sidebar.
   const MODULE_DEFAULT_VIEW: Record<string, ViewType> = {
+    'core_chat': 'chat',
     'core': 'occ',
     'costos': 'cost-sheets',
     'tienda': 'stores',
@@ -143,6 +145,17 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
       exitFocusMode();
       setCurrentView('occ');
       onViewChange('occ');
+      if (isMobile) onClose();
+      return;
+    }
+    // FEATURE-CHATBOT-VIEW: ASISTENTE (core_chat) is a DIRECT ACCESS to the
+    // chat view — it does NOT enter or exit focus mode. The sidebar state
+    // (including any active focus module like Multi-Tienda) is preserved,
+    // so the user can return to where they were by clicking the focused
+    // module again. Only currentView changes.
+    if (mod.id === 'core_chat') {
+      setCurrentView('chat');
+      onViewChange('chat');
       if (isMobile) onClose();
       return;
     }
@@ -299,7 +312,43 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
     // Root module in expanded mode → triggers focus mode on click
     if (isRoot) {
       const isCore = mod.id === CORE_MODULE_ID;
+      const isChatModule = mod.id === 'core_chat';
       const isFocused = focusModuleId === mod.id;
+      const isChatActive = isChatModule && currentView === 'chat';
+
+      // FEATURE-CHATBOT-VIEW: ASISTENTE module is a DIRECT ACCESS item.
+      // It has NO children rendered in the sidebar (no "Chat con Darian" leaf).
+      // Clicking it navigates directly to the chat view without entering or
+      // exiting focus mode — the user stays wherever they are in the sidebar.
+      if (isChatModule) {
+        return (
+          <div key={mod.id} className="relative">
+            <button
+              onClick={() => handleRootModuleClick(mod)}
+              className={cn(
+                "w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all outline-none focus-visible:ring-2 focus-visible:ring-primary/50 active:scale-[0.98]",
+                depth === 0 && "sm:mt-3",
+                isChatActive
+                  ? "bg-primary/10 text-primary"
+                  : "text-sidebar-foreground/60 hover:bg-primary/5 hover:text-sidebar-foreground"
+              )}
+            >
+              <div className="flex items-center gap-3">
+                {mod.icon && <mod.icon className={cn("w-4 h-4", isChatActive ? "opacity-100" : "opacity-50")} />}
+                <span className={cn(
+                  "font-black tracking-[0.2em] uppercase",
+                  depth === 0 ? "text-xs" : "text-[11px] opacity-80",
+                  isChatActive && "text-primary"
+                )}>{mod.label}</span>
+              </div>
+              {isChatActive && (
+                <span className="text-[9px] font-bold uppercase tracking-widest text-primary/60 bg-primary/10 px-2 py-0.5 rounded-full">Activo</span>
+              )}
+            </button>
+          </div>
+        );
+      }
+
       return (
         <div key={mod.id} className="relative">
           <button
@@ -532,6 +581,33 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
                   </button>
                   <span className="opacity-20 text-xs">/</span>
                   <span className="text-primary/60 truncate">{focusedModule.label}</span>
+                </div>
+
+                {/* FEATURE-CHATBOT-VIEW: Pinned chat access at the top of focus mode.
+                    This ensures the AI assistant is ALWAYS accessible, even when
+                    the user is focused on a specific module (Multi-Tienda, Costos, etc.). */}
+                <div className="px-2 mb-3">
+                  <button
+                    onClick={() => {
+                      exitFocusMode();
+                      setCurrentView('chat');
+                      onViewChange('chat');
+                      if (isMobile) onClose();
+                    }}
+                    className={cn(
+                      "w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-medium transition-all active:scale-[0.98]",
+                      currentView === 'chat'
+                        ? "bg-primary text-primary-foreground shadow-md shadow-primary/20"
+                        : "bg-primary/5 text-primary hover:bg-primary/10 border border-primary/20"
+                    )}
+                    aria-label="Volver al chat con Darian"
+                    title="Chat con Darian (siempre disponible)"
+                    type="button"
+                  >
+                    <Bot className="w-4 h-4 shrink-0" />
+                    <span className="flex-1 text-left">Chat con Darian</span>
+                    <span className="text-[9px] font-bold uppercase tracking-wider opacity-60">AI</span>
+                  </button>
                 </div>
 
                 {/* Focused module children */}

@@ -42,11 +42,16 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
 
     let stores;
     if (session.user.role === 'admin') {
-      // Admin sees all active stores
+      // Admin sees all active, non-archived stores
+      // FIX-AUDIT-3: Filter is_archived=false — without this, archived stores with
+      // is_active=true (e.g. archived via /api/stores/[id]/archive which sets both
+      // is_active=false AND is_archived=true, but legacy data may only have is_active)
+      // would still appear in the dashboard.
       const { data, error } = await admin
         .from('stores')
         .select(storeColumns)
         .eq('is_active', true)
+        .eq('is_archived', false)
         .order('name');
       if (error) return NextResponse.json(createApiError('STORE_FETCH_FAILED', error.message), { status: 500 });
       stores = data;
@@ -66,6 +71,7 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
         .select(storeColumns)
         .in('id', storeIds)
         .eq('is_active', true)
+        .eq('is_archived', false)
         .order('name');
       if (error) return NextResponse.json(createApiError('STORE_FETCH_FAILED', error.message), { status: 500 });
       stores = data;
