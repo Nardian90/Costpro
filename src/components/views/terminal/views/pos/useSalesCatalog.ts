@@ -40,7 +40,9 @@ export function useSalesCatalog() {
   const queryClient = useQueryClient();
   const haptics = useHaptics();
   const [searchTerm, setSearchTerm] = useState('');
-  const [stockFilter, setStockFilter] = useState<StockFilter>('all');
+  // Default 'in_stock' para ocultar productos agotados (no hacer ruido visual).
+  // El usuario puede cambiar a 'all' si quiere ver todo.
+  const [stockFilter, setStockFilter] = useState<StockFilter>('in_stock');
   const [viewMode, setViewMode] = useState<ViewMode>('table');
   const [rows, setRows] = useState<Map<string, SalesCatalogRow>>(new Map());
   const [showCheckoutConfirm, setShowCheckoutConfirm] = useState(false);

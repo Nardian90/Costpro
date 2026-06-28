@@ -2,6 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabaseClient';
+import { apiFetch } from '@/lib/api-fetch';
 import { logger } from '@/lib/logger';
 import type { Store } from '@/types';
 
@@ -91,7 +92,17 @@ export function useStoreHealth(stores: StoreHealthInput[]) {
       cutoff.setDate(cutoff.getDate() - 30);
       const cutoffIso = cutoff.toISOString();
 
-      // Procesar tiendas en paralelo (Promise.all)
+      // BATCH: una sola peticion para todas las tiendas
+      let batchData: Record<string, { has_products: boolean; has_sales: boolean }> | null = null;
+      try {
+        batchData = await apiFetch<Record<string, { has_products: boolean; has_sales: boolean }>>(
+          `/api/stores/health-batch?store_ids=${stores.map(s => s.id).join(',')}`
+        );
+      } catch (e) {
+        logger.warn('HEALTH', 'BATCH_FETCH_FAILED', { error: e });
+      }
+
+      // Procesar tiendas en paralelo (solo config/fiscal/fc que no necesitan query)
       await Promise.all(stores.map(async (store) => {
         const categories: HealthCategory[] = [];
 
@@ -131,17 +142,8 @@ export function useStoreHealth(stores: StoreHealthInput[]) {
         // en la tabla products (es de product_cost_sheets). Ahora filtramos por is_active=true
         // que es el campo correcto según las migraciones y useProducts.ts.
         let hasProducts = false;
-        try {
-          const { count, error } = await supabase
-            .from('products')
-            .select('*', { count: 'exact', head: true })
-            .eq('store_id', store.id)
-            .eq('is_active', true);
-          if (!error) {
-            hasProducts = (count ?? 0) > 0;
-          }
-        } catch (e) {
-          logger.warn('HEALTH', 'PRODUCTS_COUNT_FAILED', { storeId: store.id, error: e });
+        if (batchData?.[store.id]) {
+          hasProducts = batchData[store.id].has_products;
         }
         categories.push({
           key: 'products',
@@ -158,18 +160,8 @@ export function useStoreHealth(stores: StoreHealthInput[]) {
         // y por los últimos 30 días.
         // Antes consultábamos `sales` que no es la tabla activa — siempre devolvía 0.
         let hasRecentSales = false;
-        try {
-          const { count, error } = await supabase
-            .from('transactions')
-            .select('*', { count: 'exact', head: true })
-            .eq('store_id', store.id)
-            .eq('status', 'completed')
-            .gte('created_at', cutoffIso);
-          if (!error) {
-            hasRecentSales = (count ?? 0) > 0;
-          }
-        } catch (e) {
-          logger.warn('HEALTH', 'SALES_COUNT_FAILED', { storeId: store.id, error: e });
+        if (batchData?.[store.id]) {
+          hasRecentSales = batchData[store.id].has_sales;
         }
         categories.push({
           key: 'sales',

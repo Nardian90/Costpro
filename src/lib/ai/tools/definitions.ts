@@ -114,5 +114,16 @@ export const TOOLS: ToolDefinition[] = [
         viewIds: { type: "array", items: { type: "string" }, description: "Lista opcional de IDs de vistas a revisar. Si se omite, se revisan todas." }
       }
     }
+  },
+  {
+    name: "get_cost_summary",
+    allowedRoles: ['admin', 'manager', 'vendedor', 'costo'],
+    description: "Obtiene un resumen agregado de costos para la tienda actual: número de fichas de costo, costo unitario promedio, costo total del inventario, productos con y sin ficha. Útil cuando el usuario pregunta 'muéstrame el resumen de costos', 'cuánto me costó el inventario', 'resumen de fichas de costo'.",
+    parameters: {
+      type: "object",
+      properties: {
+        storeId: { type: "string", description: "ID de la tienda. Si se omite, se usa el storeId del contexto de la conversación." }
+      }
+    }
   }
 ];

@@ -8,6 +8,7 @@ import { executeTool } from '@/lib/ai/tools/registry';
 import { TOOLS } from '@/lib/ai/tools/definitions';
 import { createServerClient } from '@/lib/supabaseClient';
 import { buildSystemPrompt } from '@/lib/ai/prompts/system-prompt-builder';
+import { logger } from '@/lib/logger';
 import { callAI, callAIStream, type AIMessage, type AIProviderName } from '@/lib/ai/provider';
 import { createClient } from '@supabase/supabase-js';
 import { createApiError } from '@/lib/api-errors';
@@ -93,7 +94,7 @@ async function runAgentLoop(
 
     // Execute each tool call
     for (const toolCall of toolCalls) {
-      console.log(`[Agent] Iteration ${iteration + 1}: Executing tool "${toolCall.name}"`, toolCall.args);
+      logger.info('AI', 'AGENT_TOOL_EXEC', { iteration: iteration + 1, tool: toolCall.name, args: toolCall.args });
       const toolResult = await executeTool(toolCall.name, toolCall.args, toolContext);
 
       allActions.push({
@@ -180,7 +181,7 @@ async function botChatHandler(req: NextRequest) {
 
     const parsed = botChatSchema.safeParse(body);
     if (!parsed.success) {
-      console.error('[BotChat] Zod validation failed:', {
+      logger.warn('VALIDATION', 'BOTCHAT_ZOD_FAILED', {
         errors: parsed.error.issues.map(e => ({
           field: e.path.join('.'),
           message: e.message,
@@ -200,18 +201,25 @@ async function botChatHandler(req: NextRequest) {
       const adminKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
       if (adminUrl && adminKey) {
         const adminClient = createClient(adminUrl, adminKey, { auth: { autoRefreshToken: false, persistSession: false } });
-        const { data: profile } = await adminClient
+        // FIX-BOTCHAT-FK: Specify the FK explicitly because there are 2 relationships
+        // between profiles and user_store_memberships (profiles_memberships_fkey and
+        // user_store_memberships_user_id_fkey) and PostgREST refuses to pick one.
+        // Without this hint, the query silently fails and userRole stays as 'user'.
+        const { data: profile, error: profileErr } = await adminClient
           .from('profiles')
-          .select('role, memberships:user_store_memberships(store_id,role,status)')
+          .select('role, memberships:user_store_memberships!profiles_memberships_fkey(store_id,role,status)')
           .eq('id', session.user.id)
           .single();
+        if (profileErr) {
+          logger.warn('DATABASE', 'BOTCHAT_PROFILE_QUERY_ERROR', { error: profileErr.message, userId: session.user.id });
+        }
         if (profile) {
           userRole = (profile as any).role || 'user';
           userMemberships = ((profile as any).memberships || []).filter((m: any) => m.status === 'active');
         }
       }
-    } catch (profileErr) {
-      console.warn('[BotChat] Could not fetch memberships:', profileErr);
+    } catch (profileErr: any) {
+      logger.warn('DATABASE', 'BOTCHAT_MEMBERSHIPS_FETCH_FAILED', { error: profileErr?.message || String(profileErr) });
     }
 
     // FIX-SEC-H5: Validate that storeId matches user's active memberships
@@ -315,7 +323,7 @@ async function botChatHandler(req: NextRequest) {
                   let followMessages = [...chatMessages, { role: 'assistant' as const, content: fullText }];
 
                   for (const toolCall of toolCalls) {
-                    console.log(`[BotChat] Streaming+Tools: Executing "${toolCall.name}"`);
+                    logger.info('AI', 'BOTCHAT_STREAMING_TOOL_EXEC', { tool: toolCall.name });
                     const toolResult = await executeTool(toolCall.name, toolCall.args, toolContext);
                     allActions.push({ type: 'tool_call', name: toolCall.name, args: toolCall.args, result: toolResult });
 
@@ -361,7 +369,7 @@ async function botChatHandler(req: NextRequest) {
           });
         } catch (streamError: any) {
           // If streaming fails, fall back to non-streaming
-          console.warn('[BotChat] Streaming failed, falling back to non-streaming:', streamError.message);
+          logger.warn('AI', 'BOTCHAT_STREAMING_FALLBACK', { error: streamError.message });
         }
       }
 
@@ -411,7 +419,7 @@ async function botChatHandler(req: NextRequest) {
 
     } catch (aiError: any) {
       const message = aiError instanceof Error ? aiError.message : 'Error en el servicio AI';
-      console.error('[BotChat] callAI failed:', message);
+      logger.error('AI', 'BOTCHAT_CALLAI_FAILED', { message });
       return NextResponse.json(
         createApiError('AI_UNAVAILABLE'),
         { status: 503 }
@@ -420,7 +428,7 @@ async function botChatHandler(req: NextRequest) {
 
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : String(error);
-    console.error('[BotChat] Global Error:', error);
+    logger.error('AI', 'BOTCHAT_GLOBAL_ERROR', { message: msg, stack: error instanceof Error ? error.stack : undefined });
     return NextResponse.json(
       createApiError('INTERNAL_ERROR'),
       { status: 500 }

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useCallback, memo } from 'react';
-import { Building2, TrendingUp, ShoppingCart, AlertTriangle, RefreshCcw, ExternalLink, Settings, BarChart3, CalendarClock } from 'lucide-react';
+import { Building2, TrendingUp, ShoppingCart, AlertTriangle, RefreshCcw, ExternalLink, Settings, BarChart3, CalendarClock, Crown } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
 import { useAuthStore } from '@/store';
 import { useStores } from '@/hooks/api/useStores';
@@ -154,33 +154,50 @@ const StoreKPICard = memo(function StoreKPICard({ kpi, onActivate, onConfig, onO
       </div>
 
       {/* Acción */}
-      <div className="flex items-center gap-2">
-        {kpi.storeSlug && (() => {
-          const cleanSlug = kpi.storeSlug.toLowerCase().replace(/[\s-]+/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '');
-          return (
-          <a
-            href={`/tienda/${cleanSlug}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex-1 py-3 min-h-[44px] rounded-xl bg-primary text-primary-foreground text-sm font-black uppercase tracking-widest flex items-center justify-center gap-1.5 hover:bg-primary/90 active:scale-95 transition-all"
-            aria-label={t('visitPublicStore', { name: kpi.storeName })}
-            title={t('visit')}
+      <div className="flex flex-col gap-2">
+        <div className="flex items-center gap-2">
+          {kpi.storeSlug && (() => {
+            const cleanSlug = kpi.storeSlug.toLowerCase().replace(/[\s-]+/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '');
+            return (
+            <a
+              href={`/tienda/${cleanSlug}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1 py-3 min-h-[44px] rounded-xl bg-primary text-primary-foreground text-sm font-black uppercase tracking-widest flex items-center justify-center gap-1.5 hover:bg-primary/90 active:scale-95 transition-all"
+              aria-label={t('visitPublicStore', { name: kpi.storeName })}
+              title={t('visit')}
+            >
+              <ExternalLink className="w-3 h-3" />
+              {t('visit')}
+            </a>
+            );
+          })()}
+          {!kpi.isActive && (
+            <button type="button"
+              onClick={() => onActivate(kpi.storeId)}
+              aria-label={t('activateAsWorkStore', { name: kpi.storeName })}
+              className={cn(
+                'flex-1 py-3 min-h-[44px] rounded-xl border border-border text-xs font-black uppercase tracking-widest hover:bg-muted transition-colors',
+                kpi.storeSlug && 'flex-initial'
+              )}
+            >
+              {t('activate')}
+            </button>
+          )}
+        </div>
+        {/* Botón premium "Dashboard" — acceso rápido al dashboard KPI avanzado de la tienda.
+            Visible solo si onOpenDashboard está disponible (admin/manager). */}
+        {onOpenDashboard && (
+          <button
+            type="button"
+            onClick={() => onOpenDashboard(kpi.storeId, kpi.storeName)}
+            className="w-full py-2.5 min-h-[44px] rounded-xl font-black text-sm uppercase tracking-widest transition-all active:scale-[0.98] flex items-center justify-center gap-2 border-2 border-primary/30 bg-gradient-to-r from-primary/10 to-primary/5 text-primary hover:from-primary/20 hover:to-primary/10 hover:border-primary/50 hover:shadow-md hover:shadow-primary/10"
+            aria-label={`Dashboard KPI avanzado de ${kpi.storeName}`}
+            title="Dashboard KPI con analítica, insights y trazabilidad"
           >
-            <ExternalLink className="w-3 h-3" />
-            {t('visit')}
-          </a>
-          );
-        })()}
-        {!kpi.isActive && (
-          <button type="button"
-            onClick={() => onActivate(kpi.storeId)}
-            aria-label={t('activateAsWorkStore', { name: kpi.storeName })}
-            className={cn(
-              'flex-1 py-3 min-h-[44px] rounded-xl border border-border text-xs font-black uppercase tracking-widest hover:bg-muted transition-colors',
-              kpi.storeSlug && 'flex-initial'
-            )}
-          >
-            {t('activate')}
+            <Crown className="w-3.5 h-3.5" />
+            <BarChart3 className="w-3.5 h-3.5" />
+            Dashboard
           </button>
         )}
       </div>

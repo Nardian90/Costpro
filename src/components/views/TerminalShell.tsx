@@ -490,10 +490,8 @@ export default function TerminalShell() {
         onViewChange={handleViewChange}
       />
 
-      {/* Botón flotante de ayuda contextual — visible en todas las vistas operativas */}
-      {currentView !== 'help' && currentView !== 'wiki' && (
-        <HelpFloatingButton view={currentView} />
-      )}
+      {/* NOTA: HelpFloatingButton removido — se superponía con ChatBot (ambos en bottom-right).
+          El acceso a ayuda ya está disponible desde el botón "?" del Header global. */}
     </div>
   );
 }

@@ -10,6 +10,7 @@ import { Upload, ImageIcon } from 'lucide-react';
 // Audit-Fix #2b: removed StoreTemplateSelector import — was used with wrong props
 // (value/onChange don't exist on its interface). Replaced with inline <select>.
 import { supabase } from '@/lib/supabaseClient';
+import { apiFetch } from '@/lib/api-fetch';
 import { toast } from 'sonner';
 import { useTranslations } from 'next-intl';
 import { cn } from '@/lib/utils';
@@ -290,13 +291,9 @@ export function EditStoreModal({
         }
         dispatch({ type: 'SET_SLUG_STATUS', available: null, checking: true });
         try {
-            const { data, error } = await supabase
-                .from('stores')
-                .select('id')
-                .eq('slug', value)
-                .limit(1);
-            if (error) throw error;
-            dispatch({ type: 'SET_SLUG_STATUS', available: !data || data.length === 0, checking: false });
+            const excludeParam = selectedStore?.id ? `&exclude_store_id=${selectedStore.id}` : '';
+            const data = await apiFetch<{ available: boolean }>(`/api/stores/check-slug?slug=${encodeURIComponent(value)}${excludeParam}`);
+            dispatch({ type: 'SET_SLUG_STATUS', available: data.available, checking: false });
         } catch {
             dispatch({ type: 'SET_SLUG_STATUS', available: null, checking: false });
         }

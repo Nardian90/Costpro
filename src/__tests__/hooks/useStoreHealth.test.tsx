@@ -3,32 +3,18 @@ import { renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
 
-// Mock supabaseClient antes de importar el hook
-const mockFrom = vi.fn();
+const mockApiFetch = vi.fn();
+vi.mock('@/lib/api-fetch', () => ({
+  apiFetch: (...args: any[]) => mockApiFetch(...args),
+}));
 vi.mock('@/lib/supabaseClient', () => ({
-  supabase: {
-    from: (table: string) => mockFrom(table),
-  },
+  supabase: { from: vi.fn() },
 }));
 vi.mock('@/lib/logger', () => ({
   logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn() },
 }));
 
 import { useStoreHealth } from '@/hooks/api/useStoreHealth';
-
-// Helper para crear query chain de Supabase
-function createCountChain(count: number | null = 0, error: unknown = null) {
-  const proxy: any = {
-    select: vi.fn().mockReturnThis(),
-    eq: vi.fn().mockReturnThis(),
-    gte: vi.fn().mockReturnThis(),
-    is: vi.fn().mockReturnThis(),
-    limit: vi.fn().mockReturnThis(),
-  };
-  // Hacer que el proxy sea thenable (resuelve como { count, error })
-  proxy.then = (resolve: (v: any) => void) => resolve({ data: null, error, count });
-  return proxy;
-}
 
 function makeWrapper() {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -40,7 +26,7 @@ function makeWrapper() {
 describe('useStoreHealth (F4-T05)', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
-    mockFrom.mockReset();
+    mockApiFetch.mockReset();
   });
 
   it('calcula score 100 cuando todas las categorías están logradas', async () => {
@@ -51,12 +37,8 @@ describe('useStoreHealth (F4-T05)', () => {
       cost_template: { is_active: true },
     }];
 
-    // Mock: products count > 0, transactions count > 0
-    mockFrom.mockImplementation((table: string) => {
-      if (table === 'products' || table === 'transactions') {
-        return createCountChain(5, null);
-      }
-      return createCountChain(0, null);
+    mockApiFetch.mockResolvedValue({
+      'store-1': { has_products: true, has_sales: true },
     });
 
     const { result } = renderHook(() => useStoreHealth(stores), { wrapper: makeWrapper() });
@@ -79,7 +61,9 @@ describe('useStoreHealth (F4-T05)', () => {
       cost_template: null,
     }];
 
-    mockFrom.mockImplementation(() => createCountChain(0, null));
+    mockApiFetch.mockResolvedValue({
+      'store-2': { has_products: false, has_sales: false },
+    });
 
     const { result } = renderHook(() => useStoreHealth(stores), { wrapper: makeWrapper() });
 
@@ -100,7 +84,9 @@ describe('useStoreHealth (F4-T05)', () => {
       cost_template: null,
     }];
 
-    mockFrom.mockImplementation(() => createCountChain(0, null));
+    mockApiFetch.mockResolvedValue({
+      'store-3': { has_products: false, has_sales: false },
+    });
 
     const { result } = renderHook(() => useStoreHealth(stores), { wrapper: makeWrapper() });
 
@@ -109,13 +95,13 @@ describe('useStoreHealth (F4-T05)', () => {
     });
 
     const health = result.current.data?.['store-3'];
-    expect(health!.total).toBe(40); // 20 config + 20 fiscal
+    expect(health!.total).toBe(40);
     expect(health!.categories.find(c => c.key === 'config')!.achieved).toBe(true);
     expect(health!.categories.find(c => c.key === 'fiscal')!.achieved).toBe(true);
     expect(health!.categories.find(c => c.key === 'fc')!.achieved).toBe(false);
   });
 
-  it('consulta transactions (no sales) con status=completed', async () => {
+  it('usa batch endpoint (apiFetch) en vez de queries individuales', async () => {
     const stores = [{
       id: 'store-4', name: 'T',
       address: 'a', phone: 'p', email: 'e@e.com',
@@ -123,21 +109,8 @@ describe('useStoreHealth (F4-T05)', () => {
       cost_template: { is_active: true },
     }];
 
-    const transactionsChain = createCountChain(3, null);
-    const productsChain = createCountChain(2, null);
-    const spyTransactions = vi.fn().mockReturnValue(transactionsChain);
-    const spyProducts = vi.fn().mockReturnValue(productsChain);
-
-    mockFrom.mockImplementation((table: string) => {
-      if (table === 'transactions') {
-        const chain = createCountChain(3, null);
-        // Verificar que se llama con eq('status', 'completed')
-        return chain;
-      }
-      if (table === 'products') {
-        return createCountChain(2, null);
-      }
-      return createCountChain(0, null);
+    mockApiFetch.mockResolvedValue({
+      'store-4': { has_products: true, has_sales: true },
     });
 
     const { result } = renderHook(() => useStoreHealth(stores), { wrapper: makeWrapper() });
@@ -146,9 +119,9 @@ describe('useStoreHealth (F4-T05)', () => {
       expect(result.current.data).toBeDefined();
     });
 
-    // Verificar que se consultó 'transactions' (no 'sales')
-    const calledTables = mockFrom.mock.calls.map(c => c[0]);
-    expect(calledTables).toContain('transactions');
-    expect(calledTables).not.toContain('sales');
+    expect(mockApiFetch).toHaveBeenCalledTimes(1);
+    const url = mockApiFetch.mock.calls[0][0] as string;
+    expect(url).toContain('/api/stores/health-batch');
+    expect(url).toContain('store_ids=store-4');
   });
 });

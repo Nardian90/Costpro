@@ -100,22 +100,22 @@ export function useStoresView() {
             // (evita enviar 12 campos undefined que rompen la validación o crean tienda con basura).
             // El admin completa los demás campos después desde StoreConfigModal (F2-T02).
             if (mode === 'create-quick') {
-                await storeApiClient.createStore({
+                const newStore = await storeApiClient.createStore({
                     name: data.name || '',
                     address: data.address || '',
                     slug: data.slug,
-                    // Los demás campos quedan undefined — el backend los acepta como opcionales.
-                    // No enviamos reeup/nit/bank_account/phone/email/logo/signature/stamp/coords/plantilla.
                 });
                 toast.success(t('createSuccess'));
-                // FIX-F2.5-1: invalidar caches para que la nueva tienda aparezca en la lista
                 queryClient.invalidateQueries({ queryKey: ['stores'] });
                 queryClient.invalidateQueries({ queryKey: ['store-user-counts'] });
-                // F4-FIX: Cerrar modal y limpiar estado después de crear.
-                // Antes esto faltaba (return prematuro) y el modal nunca se cerraba,
-                // dando la impresión de que la tienda no se creó.
                 setStoreFormMode(null);
                 setSelectedStore(null);
+                if (newStore?.id) {
+                    try {
+                        await switchStore(newStore.id);
+                        toast.info(`Tienda activa cambiada a "${newStore.name}"`);
+                    } catch {}
+                }
                 return;
             }
 
