@@ -54,7 +54,9 @@ import {
   Upload,
   GitCompareArrows,
   Gauge,
-  UserCog
+  UserCog,
+  Bot,
+  FlaskConical
 } from 'lucide-react';
 
 export type NavItemType = 'item' | 'submenu' | 'group';
@@ -78,6 +80,23 @@ export interface NavModule {
 }
 
 export const SIDEBAR_STRUCTURE: NavModule[] = [
+  // FEATURE-CHATBOT-VIEW: ChatBot as a first-class view (not floating window).
+  // This is the FIRST item in the sidebar so it's always visible and accessible
+  // from any module (Costo, Multi-Tienda, etc.). Default landing view after login.
+  // Note: 'core_chat' is a new group id (not 'core') to avoid collision with the
+  // existing ESCRITORIO group which keeps id='core' for MODULE_DEFAULT_VIEW mapping.
+  {
+    id: 'core_chat',
+    label: 'ASISTENTE',
+    type: 'group',
+    icon: Bot,
+    ariaLabel: 'Asistente Darian',
+    description: 'Chat con Darian, el asistente inteligente de CostPro. Disponible desde cualquier módulo.',
+    allowedRoles: ['admin', 'manager', 'encargado', 'costo', 'clerk', 'usuario', 'warehouse'],
+    children: [
+      { id: 'chat', label: 'Chat con Darian', type: 'item', icon: Bot, ariaLabel: 'Abrir chat con Darian', description: 'Conversación con el asistente IA. Puede consultar costos, ventas, buscar productos, navegar vistas y ejecutar acciones.' },
+    ]
+  },
   {
     id: 'core',
     label: 'ESCRITORIO',
@@ -217,88 +236,92 @@ export const SIDEBAR_STRUCTURE: NavModule[] = [
       },
     ]
   },
-  {
-    id: 'ipv_module',
-    label: 'IPV',
-    type: 'group',
-    icon: Layers,
-    ariaLabel: 'Módulo IPV',
-    description: 'Módulo IPV: reportes y extractos (dashboard, reportes, recibos, transferencias, QR, extracto bancario, consolidado), operaciones (panel de control, transacciones), catálogos (productos, clientes), procesamiento IA (reglas, simulación, recepciones IA) y auditoría avanzada.',
-    allowedRoles: ['admin', 'manager', 'encargado', 'clerk', 'usuario', 'warehouse'],
-    children: [
-      {
-        id: 'ipv_reporting',
-        label: 'Reportes y Extractos',
-        type: 'submenu',
-        ariaLabel: 'Informes de IPV',
-        children: [
-          { id: 'analytics', label: 'Dashboard Institucional', type: 'item', icon: TrendingUp },
-          { id: 'reports_ipv', label: 'Reportes IPV', type: 'item', icon: ClipboardList },
-          { id: 'receipts', label: 'Recibos SC-3-01', type: 'item', icon: Receipt },
-          { id: 'transfers', label: 'Transferencias', type: 'item', icon: ArrowRightLeft },
-          { id: 'qr', label: 'Pagos QR', type: 'item', icon: QrCode },
-          { id: 'ingestion', label: 'Extracto Bancario', type: 'item', icon: Database },
-          { id: 'pivot', label: 'Consolidado Datos', type: 'item', icon: FileSearch }
-        ]
-      },
-      {
-        id: 'ipv_operaciones',
-        label: 'Operaciones IPV',
-        type: 'submenu',
-        ariaLabel: 'Operaciones del motor IPV',
-        children: [
-          { id: 'dashboard_ipv', label: 'Panel de Control', type: 'item', icon: Workflow },
-          { id: 'transactions', label: 'Gestión Transacciones', type: 'item', icon: Table2 }
-        ]
-      },
-      {
-        id: 'ipv_datos',
-        label: 'Catálogos IPV',
-        type: 'submenu',
-        ariaLabel: 'Datos maestros de IPV',
-        children: [
-          { id: 'catalog_ipv', label: 'Catálogo Productos', type: 'item', icon: PackageSearch },
-          { id: 'customers', label: 'Directorio Clientes', type: 'item', icon: Users }
-        ]
-      },
-      {
-        id: 'ipv_procesamiento',
-        label: 'Procesamiento IA',
-        type: 'submenu',
-        ariaLabel: 'Reglas y simulación inteligente',
-        children: [
-          { id: 'rules', label: 'Reglas Negocio', type: 'item', icon: Cpu },
-          { id: 'sim', label: 'Simulación Escenarios', type: 'item', icon: Zap },
-          { id: 'intelligent-receipts', label: 'Recepciones IA', type: 'item', icon: Wand2 },
-          { id: 'breakdown', label: 'Desglose Operativo', type: 'item', icon: BarChart4 }
-        ]
-      },
-      {
-        id: 'ipv_avanzado',
-        label: 'Avanzado y Auditoría',
-        type: 'submenu',
-        ariaLabel: 'Funciones avanzadas IPV',
-        children: [
-          { id: 'audit_ipv', label: 'Registro Auditoría', type: 'item', icon: History },
-          { id: 'movements', label: 'Trazabilidad Flujo', type: 'item', icon: Workflow },
-          { id: 'planning', label: 'Planeación Fiscal', type: 'item', icon: Target },
-          { id: 'errors', label: 'Centro Errores', type: 'item', icon: AlertCircle },
-          { id: 'mapping-rules', label: 'Mapeo Dinámico', type: 'item', icon: ListFilter },
-          { id: 'mvt', label: 'Exportación Datos', type: 'item', icon: FileText },
-          { id: 'mipyme', label: 'Transacciones Mipyme', type: 'item', icon: Users }
-        ]
-      }
-    ]
-  },
+  // FEATURE-IPV-RELOCATE: IPV moved from a top-level group to a submenu inside
+  // "EN DESARROLLO" (formerly "Otros"). The group is renamed to reflect that
+  // these are experimental/in-development features. The 'otros' id is kept for
+  // backwards compatibility (persisted Zustand state, MODULE_DEFAULT_VIEW).
   {
     id: 'otros',
-    label: 'OTROS',
+    label: 'EN DESARROLLO',
     type: 'group',
-    icon: LayoutGrid,
-    ariaLabel: 'Otros Recursos',
-    description: 'Recursos adicionales: inteligencia de picking (Pick 3) y billetera digital.',
+    icon: FlaskConical,
+    ariaLabel: 'Funcionalidades en desarrollo',
+    description: 'Funcionalidades experimentales y en desarrollo: IPV (Índice de Precios de Venta), inteligencia de picking (Pick 3) y billetera digital.',
     allowedRoles: ['admin', 'manager', 'encargado', 'clerk', 'usuario', 'warehouse'],
     children: [
+      // IPV moved here as a submenu (was a top-level group 'ipv_module')
+      {
+        id: 'ipv_module',
+        label: 'IPV',
+        type: 'submenu',
+        icon: Layers,
+        ariaLabel: 'Módulo IPV',
+        description: 'Módulo IPV: reportes y extractos, operaciones, catálogos, procesamiento IA y auditoría avanzada.',
+        children: [
+          {
+            id: 'ipv_reporting',
+            label: 'Reportes y Extractos',
+            type: 'submenu',
+            ariaLabel: 'Informes de IPV',
+            children: [
+              { id: 'analytics', label: 'Dashboard Institucional', type: 'item', icon: TrendingUp },
+              { id: 'reports_ipv', label: 'Reportes IPV', type: 'item', icon: ClipboardList },
+              { id: 'receipts', label: 'Recibos SC-3-01', type: 'item', icon: Receipt },
+              { id: 'transfers', label: 'Transferencias', type: 'item', icon: ArrowRightLeft },
+              { id: 'qr', label: 'Pagos QR', type: 'item', icon: QrCode },
+              { id: 'ingestion', label: 'Extracto Bancario', type: 'item', icon: Database },
+              { id: 'pivot', label: 'Consolidado Datos', type: 'item', icon: FileSearch }
+            ]
+          },
+          {
+            id: 'ipv_operaciones',
+            label: 'Operaciones IPV',
+            type: 'submenu',
+            ariaLabel: 'Operaciones del motor IPV',
+            children: [
+              { id: 'dashboard_ipv', label: 'Panel de Control', type: 'item', icon: Workflow },
+              { id: 'transactions', label: 'Gestión Transacciones', type: 'item', icon: Table2 }
+            ]
+          },
+          {
+            id: 'ipv_datos',
+            label: 'Catálogos IPV',
+            type: 'submenu',
+            ariaLabel: 'Datos maestros de IPV',
+            children: [
+              { id: 'catalog_ipv', label: 'Catálogo Productos', type: 'item', icon: PackageSearch },
+              { id: 'customers', label: 'Directorio Clientes', type: 'item', icon: Users }
+            ]
+          },
+          {
+            id: 'ipv_procesamiento',
+            label: 'Procesamiento IA',
+            type: 'submenu',
+            ariaLabel: 'Reglas y simulación inteligente',
+            children: [
+              { id: 'rules', label: 'Reglas Negocio', type: 'item', icon: Cpu },
+              { id: 'sim', label: 'Simulación Escenarios', type: 'item', icon: Zap },
+              { id: 'intelligent-receipts', label: 'Recepciones IA', type: 'item', icon: Wand2 },
+              { id: 'breakdown', label: 'Desglose Operativo', type: 'item', icon: BarChart4 }
+            ]
+          },
+          {
+            id: 'ipv_avanzado',
+            label: 'Avanzado y Auditoría',
+            type: 'submenu',
+            ariaLabel: 'Funciones avanzadas IPV',
+            children: [
+              { id: 'audit_ipv', label: 'Registro Auditoría', type: 'item', icon: History },
+              { id: 'movements', label: 'Trazabilidad Flujo', type: 'item', icon: Workflow },
+              { id: 'planning', label: 'Planeación Fiscal', type: 'item', icon: Target },
+              { id: 'errors', label: 'Centro Errores', type: 'item', icon: AlertCircle },
+              { id: 'mapping-rules', label: 'Mapeo Dinámico', type: 'item', icon: ListFilter },
+              { id: 'mvt', label: 'Exportación Datos', type: 'item', icon: FileText },
+              { id: 'mipyme', label: 'Transacciones Mipyme', type: 'item', icon: Users }
+            ]
+          }
+        ]
+      },
       { id: 'pick3-intelligence', label: 'Pick 3 Intelligence', type: 'item', icon: BarChart3, ariaLabel: 'Inteligencia de picking', description: 'Análisis inteligente de picking: identifica los 3 productos más vendidos por categoría y optimiza el reabastecimiento.' },
       { id: 'wallet', label: 'Billetera Digital', type: 'item', icon: Wallet, ariaLabel: 'Gestión de billetera', description: 'Monitorea ingresos por transferencias, pagos digitales y notificaciones SMS en tiempo real.' }
     ]

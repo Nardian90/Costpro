@@ -18,10 +18,16 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
+  Loader2,
+  UserPlus,
 } from 'lucide-react';
 import { useAuthStore } from '@/store';
 import { toast } from 'sonner';
 import { apiFetch } from '@/lib/api-fetch';
+import { BaseModal } from '@/components/ui/BaseModal';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
 
 /**
  * WorkersView — Gestión de Trabajadores y Comisiones.
@@ -133,6 +139,54 @@ export function WorkersView() {
   // Modal de pago
   const [payModalWorker, setPayModalWorker] = useState<WorkerSummary | null>(null);
 
+  // FIX-REGRESSION: Modal de creación de trabajador (UI perdida, API existe)
+  const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [creatingWorker, setCreatingWorker] = useState(false);
+  const [workerForm, setWorkerForm] = useState({
+    first_name: '',
+    last_name: '',
+    ci: '',
+    gender: '',
+    address: '',
+    province: '',
+    municipality: '',
+  });
+
+  const handleCreateWorker = async () => {
+    if (!storeId) {
+      toast.error('No hay tienda activa');
+      return;
+    }
+    if (!workerForm.first_name.trim() || !workerForm.last_name.trim() || !workerForm.ci.trim()) {
+      toast.error('Nombre, apellidos y CI son obligatorios');
+      return;
+    }
+    setCreatingWorker(true);
+    try {
+      await apiFetch('/api/workers', {
+        method: 'POST',
+        body: JSON.stringify({
+          store_id: storeId,
+          first_name: workerForm.first_name.trim(),
+          last_name: workerForm.last_name.trim(),
+          ci: workerForm.ci.trim(),
+          gender: workerForm.gender || undefined,
+          address: workerForm.address || undefined,
+          province: workerForm.province || undefined,
+          municipality: workerForm.municipality || undefined,
+        }),
+      });
+      toast.success(`Trabajador "${workerForm.first_name} ${workerForm.last_name}" creado`);
+      setCreateModalOpen(false);
+      setWorkerForm({ first_name: '', last_name: '', ci: '', gender: '', address: '', province: '', municipality: '' });
+      fetchWorkers();
+    } catch (e: any) {
+      toast.error('Error al crear trabajador: ' + e.message);
+    } finally {
+      setCreatingWorker(false);
+    }
+  };
+
   // Rules
   const [rules, setRules] = useState<CommissionRule[]>([]);
   const [showRuleModal, setShowRuleModal] = useState(false);
@@ -219,14 +273,27 @@ export function WorkersView() {
             </p>
           </div>
         </div>
-        <button
-          onClick={fetchWorkers}
-          disabled={loading}
-          className="p-2.5 min-h-[44px] min-w-[44px] rounded-xl bg-muted hover:bg-primary/15 text-muted-foreground hover:text-primary transition-colors border border-border"
-          aria-label="Refrescar"
-        >
-          <RefreshCw className={cn('w-5 h-5', loading && 'animate-spin')} />
-        </button>
+        <div className="flex items-center gap-2">
+          {/* FIX-REGRESSION: Botón "Nuevo trabajador" — UI perdida en regresión, API existe */}
+          <Button
+            onClick={() => setCreateModalOpen(true)}
+            disabled={!storeId || loading}
+            className="h-11 px-4 bg-primary text-primary-foreground hover:bg-primary/90 font-black text-xs uppercase tracking-widest flex items-center gap-2"
+            aria-label="Crear nuevo trabajador"
+          >
+            <UserPlus className="w-4 h-4" />
+            <span className="hidden sm:inline">Nuevo trabajador</span>
+            <span className="sm:hidden">Nuevo</span>
+          </Button>
+          <button
+            onClick={fetchWorkers}
+            disabled={loading}
+            className="p-2.5 min-h-[44px] min-w-[44px] rounded-xl bg-muted hover:bg-primary/15 text-muted-foreground hover:text-primary transition-colors border border-border"
+            aria-label="Refrescar"
+          >
+            <RefreshCw className={cn('w-5 h-5', loading && 'animate-spin')} />
+          </button>
+        </div>
       </div>
 
       {/* Tabs */}
@@ -281,6 +348,128 @@ export function WorkersView() {
           }}
         />
       )}
+
+      {/* FIX-REGRESSION: Modal de creación de trabajador */}
+      <BaseModal
+        open={createModalOpen}
+        onOpenChange={setCreateModalOpen}
+        title="Nuevo trabajador"
+        description={`Tienda: ${storeId || 'N/A'} · El CI deriva la fecha de nacimiento automáticamente`}
+        maxWidth="sm:max-w-lg"
+      >
+        <div className="space-y-4 p-1">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="worker_first_name" className="text-xs font-bold uppercase tracking-widest">Nombre *</Label>
+              <Input
+                id="worker_first_name"
+                value={workerForm.first_name}
+                onChange={(e) => setWorkerForm({ ...workerForm, first_name: e.target.value })}
+                placeholder="Juan"
+                className="h-11"
+                disabled={creatingWorker}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="worker_last_name" className="text-xs font-bold uppercase tracking-widest">Apellidos *</Label>
+              <Input
+                id="worker_last_name"
+                value={workerForm.last_name}
+                onChange={(e) => setWorkerForm({ ...workerForm, last_name: e.target.value })}
+                placeholder="Pérez García"
+                className="h-11"
+                disabled={creatingWorker}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="worker_ci" className="text-xs font-bold uppercase tracking-widest">Carnet de Identidad *</Label>
+              <Input
+                id="worker_ci"
+                value={workerForm.ci}
+                onChange={(e) => setWorkerForm({ ...workerForm, ci: e.target.value })}
+                placeholder="85010112345"
+                className="h-11 font-mono"
+                disabled={creatingWorker}
+                maxLength={11}
+              />
+              <p className="text-[10px] text-muted-foreground">Formato cubano: 11 dígitos (YYMMDD#####)</p>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="worker_gender" className="text-xs font-bold uppercase tracking-widest">Género</Label>
+              <select
+                id="worker_gender"
+                value={workerForm.gender}
+                onChange={(e) => setWorkerForm({ ...workerForm, gender: e.target.value })}
+                className="h-11 w-full rounded-md border border-input bg-background px-3 text-sm"
+                disabled={creatingWorker}
+              >
+                <option value="">No especificar</option>
+                <option value="M">Masculino</option>
+                <option value="F">Femenino</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="worker_address" className="text-xs font-bold uppercase tracking-widest">Dirección</Label>
+            <Input
+              id="worker_address"
+              value={workerForm.address}
+              onChange={(e) => setWorkerForm({ ...workerForm, address: e.target.value })}
+              placeholder="Calle 10 #25 e/ 3ra y 5ta"
+              className="h-11"
+              disabled={creatingWorker}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="worker_province" className="text-xs font-bold uppercase tracking-widest">Provincia</Label>
+              <Input
+                id="worker_province"
+                value={workerForm.province}
+                onChange={(e) => setWorkerForm({ ...workerForm, province: e.target.value })}
+                placeholder="Las Tunas"
+                className="h-11"
+                disabled={creatingWorker}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="worker_municipality" className="text-xs font-bold uppercase tracking-widest">Municipio</Label>
+              <Input
+                id="worker_municipality"
+                value={workerForm.municipality}
+                onChange={(e) => setWorkerForm({ ...workerForm, municipality: e.target.value })}
+                placeholder="Puerto Padre"
+                className="h-11"
+                disabled={creatingWorker}
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center justify-end gap-2 pt-2">
+            <Button
+              variant="outline"
+              onClick={() => setCreateModalOpen(false)}
+              disabled={creatingWorker}
+              className="h-11 px-4"
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleCreateWorker}
+              disabled={creatingWorker || !workerForm.first_name.trim() || !workerForm.last_name.trim() || !workerForm.ci.trim()}
+              className="h-11 px-4 bg-primary text-primary-foreground hover:bg-primary/90 font-black text-xs uppercase tracking-widest flex items-center gap-2"
+            >
+              {creatingWorker ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserPlus className="w-4 h-4" />}
+              {creatingWorker ? 'Creando...' : 'Crear trabajador'}
+            </Button>
+          </div>
+        </div>
+      </BaseModal>
     </div>
   );
 }
@@ -405,6 +594,7 @@ function WorkersTab({
           </table>
         </div>
       </div>
+
     </div>
   );
 }

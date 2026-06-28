@@ -22,8 +22,19 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
   const body = await req.json().catch(() => ({}));
   const { reason } = body;
 
-  const { getSupabaseAuthClient } = await import('@/lib/supabaseClient');
-  const supabase = getSupabaseAuthClient(session.token);
+  // FIX-AUDIT-NEW-2: Use service-role client instead of getSupabaseAuthClient(session.token).
+  // The columns is_archived, archived_at, archived_by are NEW (from migration 20260628000001)
+  // and existing RLS policies on stores likely don't cover UPDATE on these columns for
+  // manager role. With the user's JWT, the UPDATE could silently fail with 500.
+  // The other write routes (/api/stores/route.ts POST/PATCH/DELETE) already use the
+  // service-role client — this route should do the same for consistency and reliability.
+  const { createClient } = await import('@supabase/supabase-js');
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) {
+    return NextResponse.json({ error: 'Server misconfigured' }, { status: 500 });
+  }
+  const supabase = createClient(url, key, { auth: { autoRefreshToken: false, persistSession: false } });
 
   const userId = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(session.user.id || '')
     ? session.user.id : null;

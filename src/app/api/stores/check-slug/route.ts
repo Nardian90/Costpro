@@ -25,10 +25,20 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
     return NextResponse.json({ available: false, reason: 'invalid_format' });
   }
 
-  const { getSupabaseAuthClient } = await import('@/lib/supabaseClient');
-  const supabase = getSupabaseAuthClient(session.token);
+  // FIX-AUDIT-4: Use service-role client for GLOBAL slug uniqueness.
+  // Previously used getSupabaseAuthClient(session.token) which is subject to RLS —
+  // if RLS filters stores by tenant, a user from tenant A couldn't see tenant B's
+  // slug, leading to silent collisions (both register same slug, storefront URL conflicts).
+  // The storefront is public, so slugs must be globally unique across all tenants.
+  const { createClient } = await import('@supabase/supabase-js');
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) {
+    return NextResponse.json({ error: 'Server misconfigured' }, { status: 500 });
+  }
+  const admin = createClient(url, key, { auth: { autoRefreshToken: false, persistSession: false } });
 
-  let query = supabase.from('stores').select('id').eq('slug', slug).limit(1);
+  let query = admin.from('stores').select('id').eq('slug', slug).limit(1);
 
   if (excludeStoreId) {
     query = query.neq('id', excludeStoreId);

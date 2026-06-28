@@ -8,6 +8,8 @@
  */
 
 import html2canvas from "html2canvas";
+// FIX-AUDIT-NEW-1: Use shared slugify from /lib/slugify.ts instead of inline copy
+import { slugify } from "@/lib/slugify";
 import { toast } from "sonner";
 import type { CatalogProduct, BrandConfig, TemplateRenderer } from "./types";
 import {
@@ -47,16 +49,7 @@ function downloadDataUrl(dataUrl: string, filename: string) {
   document.body.removeChild(a);
 }
 
-// ── Helper: slugify a string for filename ──────────────────
-
-function slugify(text: string): string {
-  return text
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "");
-}
+// FIX-AUDIT-NEW-1: slugify is now imported from /lib/slugify.ts (single source of truth)
 
 // ── Build a product image URL or placeholder ────────────────
 

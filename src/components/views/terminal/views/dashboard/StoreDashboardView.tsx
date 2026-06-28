@@ -4,10 +4,11 @@ import React, { useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
 import ReactECharts from 'echarts-for-react';
 import type { DateRange } from 'react-day-picker';
+import { useTheme } from 'next-themes';
 import { useIsMobile } from '@/hooks/ui/useMobile';
 import {
   X, ArrowLeft, TrendingUp, TrendingDown, ShoppingCart, Banknote,
-  AlertTriangle, AlertCircle, Lightbulb, Sparkles, Package,
+  AlertTriangle, AlertCircle, Lightbulb, Sparkles, Package, HelpCircle,
   Clock, Calendar as CalendarIcon, Target, Zap, RefreshCw, ChevronRight,
   ShoppingBag, Tag, BarChart3, Activity, Percent, DollarSign,
   ArrowUpRight, ArrowDownRight, ExternalLink, PanelLeftClose,
@@ -46,6 +47,27 @@ const CHART_PALETTE = [
   '#3B82F6', '#8B5CF6', '#06B6D4', '#10B981',
   '#F59E0B', '#EF4444', '#EC4899', '#14B8A6',
 ];
+
+/**
+ * FIX-DARK-THEME: Chart text colors that adapt to light/dark mode.
+ * Previously hardcoded to '#0F172A' (dark text) which was invisible in dark theme.
+ * Now uses a hook that returns the right palette based on resolvedTheme.
+ *
+ * Usage: const colors = useChartColors();
+ *        axisLabel: { color: colors.text, ... }
+ *        splitLine: { lineStyle: { color: colors.splitLine } }
+ */
+function useChartColors() {
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === 'dark';
+  return {
+    text: isDark ? '#F1F5F9' : '#0F172A',        // primary text (axis labels, values)
+    textMuted: isDark ? '#94A3B8' : '#475569',    // secondary text (x-axis numbers)
+    splitLine: isDark ? '#1E293B' : '#F1F5F9',   // grid lines
+    tooltipBg: 'rgba(15, 23, 42, 0.95)',          // tooltip always dark (good contrast)
+    tooltipText: '#F1F5F9',                       // tooltip text always light
+  };
+}
 
 const PAYMENT_METHOD_LABELS: Record<string, string> = {
   cash: 'Efectivo',
@@ -1338,15 +1360,16 @@ function SalesTimeSeriesChart({ analytics }: { analytics: NonNullable<ReturnType
 
 function TopProductsChart({ analytics }: { analytics: NonNullable<ReturnType<typeof useStoreAnalytics>['data']> }) {
   const t = useTranslations('dashboard.storeDashboard');
+  const colors = useChartColors();
   const option = useMemo(() => {
     const products = [...analytics.top_products_revenue].reverse();
     return {
       grid: { left: 130, right: 70, top: 12, bottom: 24, containLabel: false },
       tooltip: {
         trigger: 'item',
-        backgroundColor: 'rgba(15, 23, 42, 0.95)',
+        backgroundColor: colors.tooltipBg,
         borderColor: 'rgba(16, 185, 129, 0.3)',
-        textStyle: { color: '#F1F5F9', fontSize: 12 },
+        textStyle: { color: colors.tooltipText, fontSize: 12 },
         formatter: (p: any) => {
           const item = products[p.dataIndex];
           return `<div style="font-weight:700;margin-bottom:4px;max-width:240px">${item.name}</div>
@@ -1361,10 +1384,10 @@ function TopProductsChart({ analytics }: { analytics: NonNullable<ReturnType<typ
         type: 'value',
         axisLine: { show: false },
         axisLabel: {
-          color: '#475569', fontSize: 11, fontWeight: 500,
+          color: colors.textMuted, fontSize: 11, fontWeight: 500,
           formatter: (val: number) => moneyShort(val),
         },
-        splitLine: { lineStyle: { color: '#F1F5F9' } },
+        splitLine: { lineStyle: { color: colors.splitLine } },
       },
       yAxis: {
         type: 'category',
@@ -1375,7 +1398,7 @@ function TopProductsChart({ analytics }: { analytics: NonNullable<ReturnType<typ
         axisLine: { show: false },
         axisTick: { show: false },
         axisLabel: {
-          color: '#0F172A', fontSize: 13, fontWeight: 700,
+          color: colors.text, fontSize: 13, fontWeight: 700,
           width: 140, overflow: 'truncate',
         },
       },
@@ -1399,12 +1422,12 @@ function TopProductsChart({ analytics }: { analytics: NonNullable<ReturnType<typ
           label: {
             show: true, position: 'right',
             formatter: (p: any) => moneyShort(p.value),
-            color: '#10B981', fontSize: 10, fontWeight: 700,
+            color: colors.text, fontSize: 10, fontWeight: 700,
           },
         },
       ],
     };
-  }, [analytics]);
+  }, [analytics, colors]);
 
   return <ECharts option={option} style={{ height: 320 }} />;
 }
@@ -1542,14 +1565,15 @@ function PaymentDistributionChart({ analytics }: { analytics: NonNullable<Return
 
 function CategoryMarginsChart({ analytics }: { analytics: NonNullable<ReturnType<typeof useStoreAnalytics>['data']> }) {
   const t = useTranslations('dashboard.storeDashboard');
+  const colors = useChartColors();
   const option = useMemo(() => {
     const cats = analytics.category_margins.slice(0, 8);
     return {
       grid: { left: 140, right: 80, top: 20, bottom: 30, containLabel: false },
       tooltip: {
         trigger: 'item',
-        backgroundColor: 'rgba(15, 23, 42, 0.95)',
-        textStyle: { color: '#F1F5F9', fontSize: 13 },
+        backgroundColor: colors.tooltipBg,
+        textStyle: { color: colors.tooltipText, fontSize: 13 },
         formatter: (p: any) => {
           const item = cats[p.dataIndex];
           const health = item.margin_pct < 15 ? '🔴 Pérdida operativa' : item.margin_pct < 25 ? '🟡 Aceptable' : '🟢 Saludable';
@@ -1566,10 +1590,10 @@ function CategoryMarginsChart({ analytics }: { analytics: NonNullable<ReturnType
         type: 'value',
         axisLine: { show: false },
         axisLabel: {
-          color: '#0F172A', fontSize: 12, fontWeight: 600,
+          color: colors.textMuted, fontSize: 12, fontWeight: 600,
           formatter: (val: number) => `${val}%`,
         },
-        splitLine: { lineStyle: { color: '#E2E8F0' } },
+        splitLine: { lineStyle: { color: colors.splitLine } },
       },
       yAxis: {
         type: 'category',
@@ -1579,7 +1603,7 @@ function CategoryMarginsChart({ analytics }: { analytics: NonNullable<ReturnType
         }),
         axisLine: { show: false },
         axisTick: { show: false },
-        axisLabel: { color: '#0F172A', fontSize: 13, fontWeight: 700 },
+        axisLabel: { color: colors.text, fontSize: 13, fontWeight: 700 },
       },
       series: [
         {
@@ -1600,7 +1624,7 @@ function CategoryMarginsChart({ analytics }: { analytics: NonNullable<ReturnType
               const tag = item.margin_pct < 15 ? ' ⚠️' : item.margin_pct < 25 ? '' : ' ✓';
               return `${p.value}%${tag}`;
             },
-            color: '#0F172A', fontSize: 12, fontWeight: 700,
+            color: colors.text, fontSize: 12, fontWeight: 700,
           },
           markLine: {
             symbol: 'none',
@@ -1609,12 +1633,12 @@ function CategoryMarginsChart({ analytics }: { analytics: NonNullable<ReturnType
               { xAxis: 15, label: { show: true, formatter: 'Mín 15%', color: '#EF4444', fontSize: 10, fontWeight: 700, position: 'insideStartTop' } },
               { xAxis: 25, label: { show: true, formatter: 'Saludable 25%', color: '#10B981', fontSize: 10, fontWeight: 700, position: 'insideStartTop' } },
             ],
-            lineStyle: { color: '#94A3B8', type: 'dashed', width: 1.5 },
+            lineStyle: { color: colors.textMuted, type: 'dashed', width: 1.5 },
           },
         },
       ],
     };
-  }, [analytics]);
+  }, [analytics, colors]);
 
   // Recomendación accionable basada en el análisis de márgenes
   const recommendations = useMemo(() => {
@@ -1951,8 +1975,24 @@ function StockAlertCard({
           <h4 className="font-black text-sm uppercase tracking-tight text-foreground">{title}</h4>
           <p className="text-sm text-muted-foreground uppercase tracking-widest">{subtitle}</p>
         </div>
+        {/* FIX-AUDIT: HelpCircle con tooltip explicando la metodología del card */}
+        <div className="relative group shrink-0">
+          <HelpCircle className="w-4 h-4 text-muted-foreground/50 hover:text-primary cursor-help transition-colors" aria-label={`Ayuda sobre ${title}`} />
+          <div className="absolute right-0 top-6 z-20 w-64 p-3 rounded-lg bg-popover border border-border shadow-lg text-xs text-popover-foreground opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all pointer-events-none">
+            {alertType === 'stock' && (
+              <p><strong>Stock crítico:</strong> Productos con ritmo de venta actual que requieren reposición en ≤14 días. Se calcula promedio diario de ventas × 14, comparado con stock real. No usa el mínimo definido por el usuario.</p>
+            )}
+            {alertType === 'slow' && (
+              <p><strong>Movimiento lento:</strong> Productos en stock con más de 30 días sin ventas. Causa capital inmovilizado. Clic en cada producto para ver fundamentación y recomendación.</p>
+            )}
+            {alertType === 'overstock' && (
+              <p><strong>Exceso de inventario:</strong> Productos con cobertura superior a 45 días al ritmo actual de ventas. Benchmark óptimo: 15–30 días. Clic para ver detalle.</p>
+            )}
+            {!alertType && <p>Clic en un producto para ver fundamentación del análisis.</p>}
+          </div>
+        </div>
         <span className={cn(
-          'text-xs font-black tabular-nums px-2 py-0.5 rounded-full',
+          'text-xs font-black tabular-nums px-2 py-0.5 rounded-full shrink-0',
           items.length > 0 ? 'bg-destructive/10 text-destructive' : 'bg-success/10 text-success',
         )}>
           {items.length}

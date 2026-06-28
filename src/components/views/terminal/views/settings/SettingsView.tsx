@@ -245,10 +245,15 @@ export default function SettingsView() {
 
       {/* ─── Sección: Conectividad ─── */}
       <div className="p-4 sm:p-6 rounded-3xl border border-border bg-card shadow-sm">
-        <h3 className="text-sm font-black uppercase tracking-widest text-primary flex items-center gap-2 mb-5">
+        <h3 className="text-sm font-black uppercase tracking-widest text-primary flex items-center gap-2 mb-2">
           <Wifi className="w-4 h-4" />
           Modo de Conectividad
         </h3>
+        <p className="text-[11px] text-muted-foreground mb-4">
+          Controla la carga de animaciones y assets según tu conexión.
+          Para activar efectos visuales completos (3D, partículas), usa el
+          <span className="font-bold text-primary"> Modo Enhanced</span> en la barra superior.
+        </p>
 
         <div className="grid grid-cols-2 gap-3">
           <button type="button"

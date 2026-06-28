@@ -66,6 +66,11 @@ export function StoreConfigModal({ isOpen, onClose, store }: StoreConfigModalPro
   const queryClient = useQueryClient();
   const [activeSection, setActiveSection] = useState<Section>('general');
   const [saving, setSaving] = useState(false);
+  // FIX-AUDIT-5: Local FC active state so completion % updates immediately when
+  // the user configures the FC section inside the modal (previously the percent
+  // stayed stale until the modal was closed and reopened because it read from
+  // the original `store.cost_template?.is_active` prop).
+  const [fcActive, setFcActive] = useState<boolean>(false);
   // F2.5-4: estado de upload por campo (logo, signature, stamp)
   const t = useTranslations('stores');
   const [uploading, setUploading] = useState<{ logo: boolean; signature: boolean; stamp: boolean }>({
@@ -122,6 +127,8 @@ export function StoreConfigModal({ isOpen, onClose, store }: StoreConfigModalPro
         slug: store.slug || '',
         plantilla: store.plantilla || '',
       });
+      // FIX-AUDIT-5: Sync local FC state from prop on open
+      setFcActive(!!store.cost_template?.is_active);
       setActiveSection('general');
     }
   }, [isOpen, store]);
@@ -142,8 +149,9 @@ export function StoreConfigModal({ isOpen, onClose, store }: StoreConfigModalPro
     if (hasFiscal) percent += 25;
     else pending.push('Fiscal');
 
-    // 25% FC: plantilla activa
-    const hasFC = !!(store.cost_template?.is_active);
+    // 25% FC: plantilla activa — uses local fcActive state so completion updates
+    // immediately when the user toggles FC inside the modal (FIX-AUDIT-5).
+    const hasFC = fcActive;
     if (hasFC) percent += 25;
     else pending.push('Ficha de Costo');
 
@@ -153,7 +161,7 @@ export function StoreConfigModal({ isOpen, onClose, store }: StoreConfigModalPro
     else pending.push('Tienda Pública');
 
     return { percent, pending };
-  }, [store, form]);
+  }, [store, form, fcActive]);
 
   const updateField = (field: keyof typeof form, value: string) => {
     setForm(prev => ({ ...prev, [field]: value }));
@@ -332,7 +340,7 @@ export function StoreConfigModal({ isOpen, onClose, store }: StoreConfigModalPro
             const isSectionComplete = (() => {
               if (section.id === 'general') return !!(form.address && form.phone);
               if (section.id === 'fiscal') return !!(form.reeup && form.nit && form.bank_account);
-              if (section.id === 'fc') return !!(store.cost_template?.is_active);
+              if (section.id === 'fc') return fcActive;
               if (section.id === 'publica') return !!form.slug;
               return false;
             })();

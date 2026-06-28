@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { slugify } from '@/lib/slugify';
 import { BaseModal } from '@/components/ui/BaseModal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -66,10 +67,7 @@ const INITIAL_DATA: WizardData = {
   userSearch: '',
 };
 
-function slugify(text: string): string {
-  return text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9\s-]/g, '').trim().replace(/[\s-]+/g, '-').replace(/^-+|-+$/g, '');
-}
+// FIX-AUDIT-NEW-1: slugify is now imported from /lib/slugify.ts (single source of truth)
 
 const STEPS = [
   { num: 1 as Step, label: 'Datos Básicos', icon: Building },

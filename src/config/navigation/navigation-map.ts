@@ -77,6 +77,7 @@ const COSTOS_ROUTES: Record<string, ModuleRoute> = {
 const DIRECT_ROUTES: Record<string, DirectRoute> = {
   occ:                   { type: 'direct', view: 'dashboard' },
   dashboard:             { type: 'direct', view: 'dashboard' },
+  chat:                  { type: 'direct', view: 'chat' },
   pos:                   { type: 'direct', view: 'pos' },
   sales_catalog:         { type: 'direct', view: 'sales_catalog' },
   sales:                 { type: 'direct', view: 'sales' },
