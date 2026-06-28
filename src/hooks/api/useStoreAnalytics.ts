@@ -227,7 +227,7 @@ export interface StoreAnalyticsParams {
 // ── Hook ────────────────────────────────────────────────────────
 
 /** Versión compacta de moneda: $4.5k, $1.2M, $890 */
-function formatCurrencyShort(amount: number): string {
+export function formatCurrencyShort(amount: number): string {
   if (amount >= 1_000_000) return `$${(amount / 1_000_000).toFixed(2)}M`;
   if (amount >= 1_000) return `$${(amount / 1_000).toFixed(1)}k`;
   return `$${amount.toFixed(0)}`;
@@ -268,7 +268,7 @@ export function useStoreAnalytics(
 // - detail: datos de respaldo para el modal expandido (chart, métricas)
 // El objetivo es enseñar al usuario a leer sus métricas, no solo alertar.
 
-const PAYMENT_LABELS_ES: Record<string, string> = {
+export const PAYMENT_LABELS_ES: Record<string, string> = {
   cash: 'efectivo',
   transfer: 'transferencia',
   card: 'tarjeta',
@@ -309,26 +309,58 @@ export function useStoreInsights(analytics: StoreAnalytics | undefined): Insight
     const velocityMap = buildProductVelocityMap(analytics);
     const periodDays = Math.max(1, analytics.period_days);
 
-    // ─── STOCK CRÍTICO INTELIGENTE ───────────────────────────
-    // Ordena por urgencia real: combina déficit + ritmo de venta histórico.
-    // Solo recomienda "comprar más" si el producto tiene rotación real;
-    // si no se vende, mejor recomienda "revisar política de stock".
-    const lowStockWithVelocity = analytics.low_stock.map((item) => {
-      const v = velocityMap.get(item.product_id);
+    // ─── STOCK CRÍTICO INTELIGENTE (calculado por ritmo de venta, no por min_stock del producto) ─
+    // El campo min_stock del producto es un valor estático definido por el usuario y a menudo
+    // desactualizado o arbitrario (ej: todos en 1). En su lugar, calculamos el stock mínimo
+    // NECESARIO basado en el ritmo de venta real:
+    //   stock_minimo_necesario = avgDailySales × 14 días (cobertura 2 semanas)
+    // Un producto es "crítico" si stock_current < stock_minimo_necesario Y tiene ventas reales.
+    // Productos sin ventas NO son críticos (no hay demanda que cubrir) → van a "movimiento lento".
+
+    // Construir lista de TODOS los productos con stock y su velocidad de venta.
+    // Cruzamos top_products_revenue (tiene quantity/volume) con low_stock (tiene stock_current).
+    // Para productos en low_stock que NO están en top_products_revenue, asumimos ventas = 0.
+    const stockByProductId = new Map<string, number>();
+    for (const ls of analytics.low_stock) {
+      stockByProductId.set(ls.product_id, ls.stock_current);
+    }
+    // También incluir productos de slow_movers y overstock para tener stock_current completo
+    for (const sm of analytics.slow_movers) {
+      if (!stockByProductId.has(sm.product_id)) stockByProductId.set(sm.product_id, sm.stock_current);
+    }
+    for (const os of analytics.overstock) {
+      if (!stockByProductId.has(os.product_id)) stockByProductId.set(os.product_id, os.stock_current);
+    }
+
+    const allProductsForStockCheck = analytics.top_products_revenue.map((p) => {
+      const v = velocityMap.get(p.product_id);
       const avgDaily = v?.avgDaily || 0;
-      const daysUntilOut = calcDaysUntilOut(item.stock_current, avgDaily);
-      return { ...item, avgDaily, daysUntilOut, hasSales: avgDaily > 0 };
+      const stockCurrent = stockByProductId.get(p.product_id) ?? 0;
+      // Stock mínimo necesario = 14 días de venta (cobertura 2 semanas, benchmark retail)
+      const stockMinNeeded = Math.ceil(avgDaily * 14);
+      const deficit = Math.max(0, stockMinNeeded - stockCurrent);
+      const daysUntilOut = calcDaysUntilOut(stockCurrent, avgDaily);
+      return {
+        product_id: p.product_id,
+        name: p.name,
+        sku: p.sku,
+        stock_current: stockCurrent,
+        min_stock: stockMinNeeded, // Override: usamos el calculado, no el del producto
+        deficit,
+        avgDaily,
+        daysUntilOut,
+        hasSales: avgDaily > 0,
+        isCritical: avgDaily > 0 && stockCurrent < stockMinNeeded,
+      };
     });
 
+    // Filtrar solo los críticos reales (tienen ventas + stock < mínimo necesario)
+    const criticalStockItems = allProductsForStockCheck
+      .filter((p) => p.isCritical)
+      .sort((a, b) => (a.daysUntilOut ?? 999) - (b.daysUntilOut ?? 999));
+
     // Ordenar: primero los que sí se venden (más urgente), luego los que no
-    lowStockWithVelocity.sort((a, b) => {
-      if (a.hasSales && !b.hasSales) return -1;
-      if (!a.hasSales && b.hasSales) return 1;
-      if (a.hasSales && b.hasSales) {
-        return (a.daysUntilOut ?? 999) - (b.daysUntilOut ?? 999);
-      }
-      return b.deficit - a.deficit;
-    });
+    const lowStockWithVelocity = criticalStockItems;
 
     for (const item of lowStockWithVelocity.slice(0, 4)) {
       if (item.hasSales && item.daysUntilOut !== null) {
@@ -343,7 +375,7 @@ export function useStoreInsights(analytics: StoreAnalytics | undefined): Insight
           severity: urgency,
           category: 'stock',
           title: `Reponer ${item.name} (se agota en ${item.daysUntilOut}d)`,
-          message: `Stock ${item.stock_current} uds, mínimo ${item.min_stock}. Vende ${item.avgDaily.toFixed(1)} uds/día. Déficit: ${item.deficit} uds.`,
+          message: `Stock ${item.stock_current} uds, mínimo necesario ${item.min_stock} uds (calculado por ritmo de venta: ${item.avgDaily.toFixed(1)}/día × 14 días). Vende ${item.avgDaily.toFixed(1)} uds/día. Déficit: ${item.deficit} uds.`,
           recommendation,
           metric: `${item.daysUntilOut}d`,
           // Datos para el modal de detalle
@@ -361,33 +393,18 @@ export function useStoreInsights(analytics: StoreAnalytics | undefined): Insight
               .map((p) => ({ date: p.date, value: p.sales })),
           },
         });
-      } else {
-        // Producto sin rotación: no recomendar "comprar más"
-        insights.push({
-          id: `low-stock-${item.product_id}`,
-          severity: 'opportunity',
-          category: 'stock',
-          title: `Revisar política de ${item.name}`,
-          message: `Stock ${item.stock_current} uds bajo mínimo ${item.min_stock}, pero sin ventas en los últimos ${periodDays} días.`,
-          recommendation: 'No repongas: el producto no rota. Revisa si el mínimo es necesario o si debes descontinuarlo. Libera el capital invertido.',
-          metric: '0/d',
-          detail: {
-            type: 'stock' as const,
-            stockCurrent: item.stock_current,
-            minStock: item.min_stock,
-            deficit: item.deficit,
-            avgDailySales: 0,
-            daysUntilOut: null,
-            totalSold: 0,
-            periodDays,
-            chartData: [],
-          },
-        });
       }
     }
 
     // ─── MOVIMIENTO LENTO ────────────────────────────────────
-    for (const item of analytics.slow_movers.slice(0, 3)) {
+    // Filtro logístico: solo mostrar productos que tengan stock (>0) Y
+    // que tengan días sin ventas > 0. Si days_without_sales=0 no es
+    // "lento movimiento", es "sin actividad histórica" (caso diferente).
+    // Si stock=0, no hay capital inmovilizado, no aplica alerta.
+    const meaningfulSlowMovers = analytics.slow_movers.filter(
+      (item) => item.stock_current > 0 && item.days_without_sales > 0,
+    );
+    for (const item of meaningfulSlowMovers.slice(0, 3)) {
       const days = item.days_without_sales;
       insights.push({
         id: `slow-${item.product_id}`,

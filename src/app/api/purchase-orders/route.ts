@@ -84,6 +84,19 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
     return NextResponse.json({ error: rpcErr.message }, { status: 500 });
   }
 
+  // Forzar estado 'draft' — la OC se crea en edición para que el usuario decida
+  // si confirmarla (enviar), editarla o anularla. El RPC puede crearla como 'sent'
+  // por defecto, así que la sobreescribimos aquí.
+  const { error: statusErr } = await supabase
+    .from('purchase_orders')
+    .update({ status: 'draft' })
+    .eq('id', rpcResult.po_id);
+
+  if (statusErr) {
+    // No es crítico — la OC ya fue creada, solo el estado no se actualizó
+    console.warn('No se pudo actualizar estado a draft:', statusErr.message);
+  }
+
   return NextResponse.json({ order_id: rpcResult.po_id, total_amount: rpcResult.total_amount }, { status: 201 });
 }
 

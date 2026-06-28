@@ -44,13 +44,13 @@ BEGIN
     v_item_count := v_item_count + 1;
   END LOOP;
 
-  -- Insertar OC
+  -- Insertar OC — estado 'draft' para que el usuario decida si confirmarla, editarla o anularla
   INSERT INTO public.purchase_orders (
     store_id, supplier_name, supplier_id, po_number,
     status, total_amount, notes, expected_date, created_by
   ) VALUES (
     p_store_id, p_supplier_name, p_supplier_id, p_po_number,
-    'sent', v_total, p_notes, p_expected_date, p_created_by
+    'draft', v_total, p_notes, p_expected_date, p_created_by
   ) RETURNING id INTO v_po_id;
 
   -- Insertar items

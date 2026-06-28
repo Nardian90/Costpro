@@ -10,6 +10,8 @@ import { Rocket, Loader2, Check, X, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTranslations } from 'next-intl';
 import { cn } from '@/lib/utils';
+import { slugify } from '@/lib/slugify';
+import { apiFetch } from '@/lib/api-fetch';
 import { supabase } from '@/lib/supabaseClient';
 
 /**
@@ -36,18 +38,6 @@ interface CreateStoreQuickModalProps {
   // sepa que solo vienen name + slug y no intente leer 12 campos undefined.
   onSubmit: (mode: 'create-quick', data: Partial<Store>) => Promise<void>;
   isSubmitting: boolean;
-}
-
-// Slugify simple: lowercase, guiones en lugar de espacios, sin acentos ni caracteres especiales
-function slugify(text: string): string {
-  return text
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '') // quitar acentos
-    .replace(/[^a-z0-9\s-]/g, '')     // solo alfanuméricos, espacios y guiones
-    .trim()
-    .replace(/[\s-]+/g, '-')          // espacios y guiones múltiples → un guion
-    .replace(/^-+|-+$/g, '');         // sin guiones al inicio/final
 }
 
 export function CreateStoreQuickModal({
@@ -90,16 +80,8 @@ export function CreateStoreQuickModal({
     setSlugChecking(true);
     const debounceTimer = setTimeout(async () => {
       try {
-        const { data, error } = await supabase
-          .from('stores')
-          .select('id')
-          .eq('slug', slug)
-          .maybeSingle();
-        if (error) {
-          setSlugAvailable(null);
-        } else {
-          setSlugAvailable(!data); // true si no existe (disponible)
-        }
+        const data = await apiFetch<{ available: boolean }>(`/api/stores/check-slug?slug=${encodeURIComponent(slug)}`);
+        setSlugAvailable(data.available);
       } catch {
         setSlugAvailable(null);
       } finally {

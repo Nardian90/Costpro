@@ -104,7 +104,7 @@ export default function InventoryView() {
         return () => { if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current); };
     }, [searchTerm]);
     const [selectedCategory, setSelectedCategory] = useState('');
-    const [stockFilter, setStockFilter] = useState<'all' | 'normal' | 'low' | 'out'>('all');
+    const [stockFilter, setStockFilter] = useState<'with_stock' | 'all' | 'normal' | 'low' | 'out'>('with_stock');
     const [fcFilter, setFcFilter] = useState<'all' | 'vigente' | 'pendiente' | 'sin_fc'>('all');
     const [selectedFCProduct, setSelectedFCProduct] = useState<Product | null>(null);
     const [adjustingProduct, setAdjustingProduct] = useState<Product | null>(null);
@@ -193,11 +193,12 @@ export default function InventoryView() {
 
     const filteredProducts = useMemo(() => {
         let filtered = products;
-        // Stock filter
+        // Stock filter — default 'with_stock' (oculta sin stock para no hacer ruido visual)
         if (stockFilter !== 'all') {
             filtered = filtered.filter(p => {
                 const stock = p.stock_current ?? 0;
                 const min = p.min_stock ?? 0;
+                if (stockFilter === 'with_stock') return stock > 0;
                 if (stockFilter === 'out') return stock <= 0;
                 if (stockFilter === 'low') return stock > 0 && min > 0 && stock <= min;
                 return stock > 0 && (min <= 0 || stock > min);
@@ -522,7 +523,8 @@ export default function InventoryView() {
                     <span className="w-px h-4 bg-border mx-1" />
                     {/* Stock status filter pills */}
                     {([
-                        { key: 'all', label: 'Todos', title: 'Mostrar todos los productos' },
+                        { key: 'with_stock', label: 'Con stock', title: 'Mostrar solo productos con stock (default — oculta agotados para no hacer ruido visual)' },
+                        { key: 'all', label: 'Todos', title: 'Mostrar todos los productos (incluye agotados)' },
                         { key: 'normal', label: 'Normal', title: 'Productos con stock normal' },
                         { key: 'low', label: 'Bajo', title: 'Stock Bajo — productos por debajo del mínimo' },
                         { key: 'out', label: 'Agotado', title: 'Agotados — productos sin existencias' },

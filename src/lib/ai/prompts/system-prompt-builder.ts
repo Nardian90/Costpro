@@ -31,6 +31,15 @@ export async function buildSystemPrompt(options: SystemPromptOptions): Promise<s
     '[TOOL_CALL] {"tool": "nombre_herramienta", "args": {"parametro": "valor"}}',
   ].join('\n');
 
+  const availableToolNames = availableTools.map(t => t.name).join(', ');
+  const antiHallucinationRules = [
+    '## Restricciones críticas sobre herramientas',
+    `1. **SOLO puedes invocar las siguientes herramientas**: ${availableToolNames}`,
+    '2. **NUNCA inventes nombres de herramientas**. Si ninguna herramienta de la lista anterior satisface la solicitud del usuario, responde directamente con tu conocimiento sin invocar ninguna tool.',
+    '3. **Si el usuario pide información específica del sistema** (costos, inventario, ventas, etc.) y existe una herramienta adecuada en la lista anterior, úsala. Si NO existe, NO inventes un nombre — explica qué datos podrías obtener si la herramienta estuviera disponible.',
+    '4. Antes de emitir un [TOOL_CALL], verifica mentalmente que el nombre coincide EXACTAMENTE con uno de los listados arriba.',
+  ].join('\n');
+
   return `Eres **Darian**, el asistente inteligente de CostPro — un sistema ERP integral para la gestión de costos, inventarios, ventas y finanzas empresariales.
 
 ## Contexto del usuario
@@ -54,6 +63,8 @@ Puedes ejecutar las siguientes herramientas para ayudar al usuario:
 ${toolDescriptions}
 
 ${toolCallFormat}
+
+${antiHallucinationRules}
 
 ## Reglas de respuesta
 1. **Responde en español** de manera natural, cálida y profesional.

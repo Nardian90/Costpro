@@ -16,6 +16,8 @@ import {
   Upload, X, ImageIcon
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { slugify } from '@/lib/slugify';
+import { apiFetch } from '@/lib/api-fetch';
 import { useTranslations } from 'next-intl';
 
 /**
@@ -74,6 +76,34 @@ export function StoreConfigModal({ isOpen, onClose, store }: StoreConfigModalPro
     reeup: '', nit: '', bank_account: '', signature_url: '', stamp_url: '',
     slug: '', plantilla: '',
   });
+  const [slugChecking, setSlugChecking] = useState(false);
+  const [slugAvailable, setSlugAvailable] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    if (!form.slug || form.slug.length < 2) {
+      setSlugAvailable(null);
+      setSlugChecking(false);
+      return;
+    }
+    if (store?.slug === form.slug) {
+      setSlugAvailable(true);
+      setSlugChecking(false);
+      return;
+    }
+    setSlugChecking(true);
+    const timer = setTimeout(async () => {
+      try {
+        const excludeParam = store?.id ? `&exclude_store_id=${store.id}` : '';
+        const data = await apiFetch<{ available: boolean }>(`/api/stores/check-slug?slug=${encodeURIComponent(form.slug)}${excludeParam}`);
+        setSlugAvailable(data.available);
+      } catch {
+        setSlugAvailable(null);
+      } finally {
+        setSlugChecking(false);
+      }
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [form.slug, store?.slug, store?.id]);
 
   // Cargar datos del store cuando se abre
   useEffect(() => {
@@ -393,7 +423,7 @@ export function StoreConfigModal({ isOpen, onClose, store }: StoreConfigModalPro
                   <Label htmlFor="cfg-name" className="text-sm font-black uppercase tracking-widest text-muted-foreground">
                     Nombre *
                   </Label>
-                  <Input id="cfg-name" value={form.name} onChange={e => updateField('name', e.target.value)} maxLength={100} />
+                  <Input id="cfg-name" value={form.name} onChange={e => updateField('name', e.target.value)} maxLength={60} />
                 </div>
                 <div className="space-y-1.5 sm:col-span-2">
                   <Label htmlFor="cfg-address" className="text-sm font-black uppercase tracking-widest text-muted-foreground">
@@ -602,9 +632,9 @@ export function StoreConfigModal({ isOpen, onClose, store }: StoreConfigModalPro
                     <Input
                       id="cfg-slug"
                       value={form.slug}
-                      onChange={e => updateField('slug', e.target.value.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9\s-]/g, '').trim().replace(/[\s-]+/g, '-').replace(/^-+|-+$/g, ''))}
+                      onChange={e => updateField('slug', slugify(e.target.value))}
                       className="pl-[68px] font-mono"
-                      maxLength={100}
+                      maxLength={60}
                       placeholder="mi-tienda"
                     />
                   </div>

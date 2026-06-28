@@ -5,6 +5,8 @@ import {
   ShoppingCart,
   Trash2,
   QrCode,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
 import { useShallow } from 'zustand/react/shallow';
@@ -133,6 +135,8 @@ export default function POSView() {
     hasMore,
     remainingCount,
     loadMore,
+    hideOutOfStock,
+    setHideOutOfStock,
   } = usePOSServerSearch({ products });
 
   // ── Local UI state ─────────────────────────────────────────
@@ -523,6 +527,32 @@ export default function POSView() {
               selectedCategory={selectedCategory}
               onCategoryChange={handleCategoryChange}
             />
+
+            {/* Toggle: ocultar/mostrar productos agotados. Default oculto para no hacer ruido visual.
+                El cajero solo debe ver lo que puede vender AHORA. Si necesita ver agotados
+                (para verificar catalogación, reponer, etc.), activa el toggle. */}
+            <div className="flex items-center justify-between gap-2 px-2 py-1.5">
+              <button
+                type="button"
+                onClick={() => setHideOutOfStock(!hideOutOfStock)}
+                className={cn(
+                  'flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border transition-all active:scale-95',
+                  hideOutOfStock
+                    ? 'bg-success/10 text-success border-success/30'
+                    : 'bg-muted/50 text-muted-foreground border-border hover:bg-muted',
+                )}
+                title={hideOutOfStock
+                  ? 'Productos agotados ocultos (recomendado para venta rápida). Clic para mostrar todos.'
+                  : 'Mostrando todos los productos incluyendo agotados. Clic para ocultar agotados.'}
+                aria-label="Alternar visibilidad de productos agotados"
+              >
+                {hideOutOfStock ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
+                {hideOutOfStock ? 'Solo con stock' : 'Ver todo (incl. agotados)'}
+              </button>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                {filteredProducts.length} productos
+              </p>
+            </div>
           </div>
 
           {/* POS-2 MM-5: Productos frecuentes del turno actual.

@@ -82,7 +82,7 @@ export function useCreatePurchaseOrder() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["purchase-orders"] });
-      toast.success("Orden de compra creada");
+      toast.success("Orden de compra creada como borrador — revísala y confírmala cuando esté lista");
     },
     onError: (err: unknown) => {
       toast.error("Error al crear OC: " + (err instanceof Error ? err.message : "desconocido"));

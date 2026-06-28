@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Image from 'next/image';
-import { Plus, Edit, Trash2, Building, Target, Check, RotateCcw, Loader2, Copy, ExternalLink, FileText, Users, Power, UserCog, Settings, X, CheckSquare, Rocket, GitCompare } from 'lucide-react';
+import { Plus, Edit, Trash2, Building, Target, Check, RotateCcw, Loader2, Copy, ExternalLink, FileText, Users, Power, UserCog, Settings, X, CheckSquare, Rocket, GitCompare, Archive, ArchiveRestore } from 'lucide-react';
 import { cn, getStoreLogoUrl } from '@/lib/utils';
 import type { Store } from '@/types';
 import SearchBar from '@/components/ui/SearchBar';
@@ -49,6 +49,7 @@ import { DestructiveConfirmModal } from '@/components/ui/DestructiveConfirmModal
 import { useAuthStore } from '@/store';
 import { useStoreUserCounts } from '@/hooks/api/useStoreUserCounts';
 import { toast } from 'sonner';
+import { apiFetch } from '@/lib/api-fetch';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 
@@ -87,6 +88,41 @@ export default function StoresManagementView() {
   // FIX-F4-T05: debe ir DESPUÉS de desestructurar `stores` de useStoresView,
   // no antes (era ReferenceError: Cannot access 'stores' before initialization).
   const { data: health } = useStoreHealth(stores);
+
+  // Archivar/Restaurar tienda
+  const [archivingStoreId, setArchivingStoreId] = useState<string | null>(null);
+
+  const handleArchiveStore = async (store: Store) => {
+    setArchivingStoreId(store.id);
+    try {
+      await apiFetch(`/api/stores/${store.id}/archive`, {
+        method: 'POST',
+        body: JSON.stringify({ reason: 'Archivado desde gestión de tiendas' }),
+      });
+      toast.success(`Tienda "${store.name}" archivada. Datos conservados.`);
+      // Invalidar queries para refrescar la lista
+      window.location.reload();
+    } catch (e: any) {
+      toast.error('Error al archivar: ' + e.message);
+    } finally {
+      setArchivingStoreId(null);
+    }
+  };
+
+  const handleRestoreStore = async (store: Store) => {
+    setArchivingStoreId(store.id);
+    try {
+      await apiFetch(`/api/stores/${store.id}/restore`, {
+        method: 'POST',
+      });
+      toast.success(`Tienda "${store.name}" restaurada y activa.`);
+      window.location.reload();
+    } catch (e: any) {
+      toast.error('Error al restaurar: ' + e.message);
+    } finally {
+      setArchivingStoreId(null);
+    }
+  };
 
   // F2-T05: state para el modal de equipo de la tienda.
   const [teamModalStore, setTeamModalStore] = useState<import('@/types').Store | null>(null);
@@ -433,6 +469,34 @@ export default function StoresManagementView() {
                     >
                       {isTogglingStatus ? <Loader2 className="w-3 h-3 animate-spin" /> : <Power className="w-3 h-3" />}
                       {store.is_active ? 'Pausar' : 'Activar'}
+                    </button>
+                  )}
+                  {/* Archivar / Restaurar — diferente de Pausar: archivar es para cierre temporal
+                      prolongado (MiPYME que cierra por temporada). Preserva todos los datos. */}
+                  {isAdmin && store.is_active && (
+                    <button
+                      type="button"
+                      onClick={() => handleArchiveStore(store)}
+                      disabled={archivingStoreId === store.id}
+                      aria-label={`Archivar tienda ${store.name}`}
+                      title="Archivar (cierre temporal prolongado). Preserva ventas, inventario y configuración. Puede restaurarla cuando quiera."
+                      className="min-h-[44px] py-2.5 rounded-xl border border-border font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-colors hover:bg-violet-100 hover:text-violet-700 hover:border-violet-300 dark:hover:bg-violet-950/40 disabled:opacity-50"
+                    >
+                      {archivingStoreId === store.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Archive className="w-3 h-3" />}
+                      Archivar
+                    </button>
+                  )}
+                  {isAdmin && !store.is_active && (
+                    <button
+                      type="button"
+                      onClick={() => handleRestoreStore(store)}
+                      disabled={archivingStoreId === store.id}
+                      aria-label={`Restaurar tienda ${store.name}`}
+                      title="Restaurar tienda archivada. Vuelve a estar activa y operativa."
+                      className="min-h-[44px] py-2.5 rounded-xl border border-violet-300 bg-violet-50 font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-colors hover:bg-violet-100 dark:bg-violet-950/40 dark:text-violet-400 dark:border-violet-800 disabled:opacity-50"
+                    >
+                      {archivingStoreId === store.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <ArchiveRestore className="w-3 h-3" />}
+                      Restaurar
                     </button>
                   )}
                   {isAdmin && (

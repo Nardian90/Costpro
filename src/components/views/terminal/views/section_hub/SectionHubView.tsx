@@ -38,12 +38,22 @@
 
 import React, { useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowRight, Sparkles } from 'lucide-react';
+import { ArrowRight, Sparkles, Crown, Zap, LayoutGrid } from 'lucide-react';
 import { useUIStore, ViewType } from '@/store';
 import { SIDEBAR_STRUCTURE, NavModule } from '@/config/navigation/sidebar.structure';
 import { useAuthStore } from '@/store';
 import { BackToVentaButton } from '@/components/ui/BackToVentaButton';
 import { useTranslations } from 'next-intl';
+import { cn } from '@/lib/utils';
+
+// Vistas que se consideran "premium" (análisis avanzado, inteligencia)
+const PREMIUM_VIEWS: Set<ViewType> = new Set([
+  'dashboard',
+  'exchange-intelligence',
+  'usage-monitoring',
+  'workers',
+  'ipv',
+]);
 
 // Submenus que redirigen a una vista con tabs (no muestran tarjetas)
 const REDIRECT_SUBMENUS: Partial<Record<ViewType, ViewType>> = {
@@ -165,48 +175,85 @@ export default function SectionHubView({ submenuId }: SectionHubViewProps) {
           {visibleChildren.map((child, idx) => {
             const ChildIcon = child.icon;
             const childDesc = child.description || child.ariaLabel || '';
+            const isPremium = PREMIUM_VIEWS.has(child.id as ViewType);
             return (
-              <motion.button
+              <motion.div
                 key={child.id}
-                type="button"
-                onClick={() => setCurrentView(child.id as ViewType)}
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: idx * 0.08 }}
-                className="group relative p-6 rounded-2xl border-2 border-border/60 bg-card hover:border-primary/30 hover:shadow-xl transition-all active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-primary/30 text-left"
-              >
-                {/* Badges Nuevo/Beta en esquina superior derecha */}
-                {(child.isNew || child.isBeta) && (
-                  <div className="absolute top-3 right-3 flex gap-1">
-                    {child.isNew && (
-                      <span className="text-sm font-black uppercase tracking-widest bg-success/15 text-success px-2 py-0.5 rounded-full border border-success/30">
-                        Nuevo
-                      </span>
-                    )}
-                    {child.isBeta && (
-                      <span className="text-sm font-black uppercase tracking-widest bg-warning/15 text-warning px-2 py-0.5 rounded-full border border-warning/30">
-                        Beta
-                      </span>
-                    )}
-                  </div>
+                className={cn(
+                  'group relative p-6 rounded-2xl border-2 bg-card transition-all hover:shadow-xl',
+                  isPremium
+                    ? 'border-primary/40 hover:border-primary/60 ring-1 ring-primary/10'
+                    : 'border-border/60 hover:border-primary/30',
                 )}
-
-                <div className="p-3 rounded-xl inline-flex mb-4 bg-primary/5 group-hover:bg-primary/10 transition-colors">
-                  {ChildIcon && <ChildIcon className="w-8 h-8 text-primary" aria-hidden="true" />}
+              >
+                {/* Badges Nuevo/Beta/Premium en esquina superior derecha */}
+                <div className="absolute top-3 right-3 flex gap-1">
+                  {isPremium && (
+                    <span className="text-[10px] font-black uppercase tracking-widest bg-gradient-to-r from-primary to-primary/70 text-primary-foreground px-2 py-0.5 rounded-full border border-primary/50 flex items-center gap-1 shadow-sm">
+                      <Crown className="w-2.5 h-2.5" />
+                      Premium
+                    </span>
+                  )}
+                  {child.isNew && (
+                    <span className="text-[10px] font-black uppercase tracking-widest bg-success/15 text-success px-2 py-0.5 rounded-full border border-success/30">
+                      Nuevo
+                    </span>
+                  )}
+                  {child.isBeta && (
+                    <span className="text-[10px] font-black uppercase tracking-widest bg-warning/15 text-warning px-2 py-0.5 rounded-full border border-warning/30">
+                      Beta
+                    </span>
+                  )}
                 </div>
 
-                <h3 className="text-base font-black uppercase tracking-tight text-foreground mb-2">
+                <div className={cn(
+                  'p-3 rounded-xl inline-flex mb-4 transition-colors',
+                  isPremium ? 'bg-primary/10 group-hover:bg-primary/15' : 'bg-primary/5 group-hover:bg-primary/10',
+                )}>
+                  {ChildIcon && <ChildIcon className={cn('w-8 h-8', isPremium ? 'text-primary' : 'text-primary')} aria-hidden="true" />}
+                </div>
+
+                <h3 className="text-base font-black uppercase tracking-tight text-foreground mb-2 flex items-center gap-2">
                   {child.label}
+                  {isPremium && <Zap className="w-3.5 h-3.5 text-primary fill-primary/20" />}
                 </h3>
                 <p className="text-sm text-muted-foreground leading-relaxed mb-4 line-clamp-3">
                   {childDesc}
                 </p>
 
-                <div className="inline-flex items-center gap-1.5 text-sm font-black uppercase tracking-widest text-primary">
-                  Acceder
-                  <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" aria-hidden="true" />
-                </div>
-              </motion.button>
+                {/* Botón principal explícito (no solo icono) */}
+                <button
+                  type="button"
+                  onClick={() => setCurrentView(child.id as ViewType)}
+                  className={cn(
+                    'w-full min-h-[44px] py-2.5 px-4 rounded-xl font-black text-sm uppercase tracking-widest transition-all active:scale-[0.98] flex items-center justify-center gap-2',
+                    isPremium
+                      ? 'bg-gradient-to-r from-primary to-primary/80 text-primary-foreground hover:shadow-lg hover:shadow-primary/25'
+                      : 'bg-primary text-primary-foreground hover:bg-primary/90 hover:shadow-md',
+                  )}
+                  aria-label={`Acceder a ${child.label}`}
+                >
+                  {isPremium ? 'Acceder al Dashboard' : 'Acceder'}
+                  <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" aria-hidden="true" />
+                </button>
+
+                {/* Botón secundario "Dashboard" — acceso rápido al dashboard KPI
+                    de la tienda activa (solo para vistas premium de analítica) */}
+                {isPremium && child.id === 'dashboard' && (
+                  <button
+                    type="button"
+                    onClick={() => setCurrentView('dashboard' as ViewType)}
+                    className="w-full min-h-[40px] py-2 px-4 rounded-xl font-bold text-xs uppercase tracking-widest transition-all active:scale-[0.98] flex items-center justify-center gap-1.5 border-2 border-primary/30 bg-primary/5 text-primary hover:bg-primary/10 hover:border-primary/50"
+                    aria-label="Ir al Dashboard KPI de la tienda activa"
+                  >
+                    <LayoutGrid className="w-3.5 h-3.5" />
+                    Dashboard
+                  </button>
+                )}
+              </motion.div>
             );
           })}
         </div>

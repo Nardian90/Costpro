@@ -13,12 +13,17 @@ import {
   Trash2,
   Search,
   X,
+  Sparkles,
+  Crown,
+  Zap,
+  Wallet,
 } from 'lucide-react';
 import { BaseModal } from '@/components/ui/BaseModal';
 import { PrimaryButton, SecondaryButton } from '@/components/ui/atomic';
 import { Badge } from '@/components/ui/badge';
 import { useAuthStore } from '@/store';
 import { useSuppliers } from '@/hooks/api/useSuppliers';
+import { useStoreAnalytics } from '@/hooks/api/useStoreAnalytics';
 import {
   usePurchaseOrders,
   usePurchaseOrderDetails,
@@ -344,6 +349,8 @@ interface CreatePOModalProps {
 
 function CreatePOModal({ suppliers, onClose }: CreatePOModalProps) {
   const createPO = useCreatePurchaseOrder();
+  const { user } = useAuthStore();
+  const { data: analytics } = useStoreAnalytics(user?.activeStoreId, 30);
 
   const [supplierName, setSupplierName] = useState('');
   const [supplierId, setSupplierId] = useState<string | null>(null);
@@ -351,11 +358,148 @@ function CreatePOModal({ suppliers, onClose }: CreatePOModalProps) {
   const [expectedDate, setExpectedDate] = useState('');
   const [notes, setNotes] = useState('');
   const [items, setItems] = useState<FormItem[]>([emptyItem()]);
+  // Presupuesto de compra (opcional) — si se define, las sugerencias se ajustan
+  const [budget, setBudget] = useState<string>('');
+  const [isSuggesting, setIsSuggesting] = useState(false);
+
+  const budgetNum = parseFloat(budget) || 0;
 
   const total = useMemo(
     () => items.reduce((s, i) => s + (i.quantity_ordered || 0) * (i.unit_cost || 0), 0),
     [items],
   );
+
+  // Sugerir OC inteligente: analiza productos con alta rotación + stock bajo
+  const handleSuggest = () => {
+    if (!analytics) {
+      toast.error('No hay datos de analítica disponibles para sugerir');
+      return;
+    }
+    setIsSuggesting(true);
+    try {
+      const periodDays = Math.max(1, analytics.period_days);
+      // Cruzar top_products_revenue (ventas) con low_stock/slow_movers/overstock (stock_current)
+      const stockMap = new Map<string, number>();
+      const costMap = new Map<string, number>();
+      for (const ls of analytics.low_stock) {
+        stockMap.set(ls.product_id, ls.stock_current);
+      }
+      for (const sm of analytics.slow_movers) {
+        if (!stockMap.has(sm.product_id)) stockMap.set(sm.product_id, sm.stock_current);
+      }
+      for (const os of analytics.overstock) {
+        if (!stockMap.has(os.product_id)) stockMap.set(os.product_id, os.stock_current);
+      }
+
+      // Construir sugerencias
+      interface Suggestion {
+        product_id: string;
+        name: string;
+        sku: string | null;
+        avg_daily: number;
+        stock_current: number;
+        stock_needed_30d: number;
+        recommended_qty: number;
+        unit_cost: number;
+        total_cost: number;
+        days_until_out: number | null;
+        urgency: 'critical' | 'warning' | 'normal';
+      }
+      const allSuggestions: Suggestion[] = analytics.top_products_revenue
+        .map((p) => {
+          const avgDaily = p.quantity / periodDays;
+          const stockCurrent = stockMap.get(p.product_id) ?? 0;
+          const stockNeeded30d = Math.ceil(avgDaily * 30);
+          const recommendedQty = Math.max(0, stockNeeded30d - stockCurrent);
+          const daysUntilOut = avgDaily > 0 ? Math.round(stockCurrent / avgDaily) : null;
+          const unitCost = p.cost > 0 ? p.cost / p.quantity : 0; // costo unitario aproximado
+          const totalCost = recommendedQty * unitCost;
+          let urgency: 'critical' | 'warning' | 'normal' = 'normal';
+          if (daysUntilOut !== null && daysUntilOut <= 7) urgency = 'critical';
+          else if (daysUntilOut !== null && daysUntilOut <= 14) urgency = 'warning';
+          return {
+            product_id: p.product_id,
+            name: p.name,
+            sku: p.sku,
+            avg_daily: avgDaily,
+            stock_current: stockCurrent,
+            stock_needed_30d: stockNeeded30d,
+            recommended_qty: recommendedQty,
+            unit_cost: unitCost,
+            total_cost: totalCost,
+            days_until_out: daysUntilOut,
+            urgency,
+          };
+        })
+        .filter((s) => s.avg_daily > 0 && s.recommended_qty > 0)
+        .sort((a, b) => {
+          const urgencyOrder = { critical: 0, warning: 1, normal: 2 };
+          if (urgencyOrder[a.urgency] !== urgencyOrder[b.urgency]) {
+            return urgencyOrder[a.urgency] - urgencyOrder[b.urgency];
+          }
+          return b.total_cost - a.total_cost;
+        });
+
+      if (allSuggestions.length === 0) {
+        toast.info('No hay productos que requieran reposición. Todo el stock cubre 30+ días.');
+        setIsSuggesting(false);
+        return;
+      }
+
+      // Si hay presupuesto, ajustar cantidades para no excederlo
+      let finalSuggestions = allSuggestions;
+      let budgetNote = '';
+      if (budgetNum > 0) {
+        let accumulated = 0;
+        const adjusted: Suggestion[] = [];
+        for (const s of allSuggestions) {
+          if (accumulated + s.total_cost <= budgetNum) {
+            // Cabe completo
+            adjusted.push(s);
+            accumulated += s.total_cost;
+          } else {
+            // Cabe parcialmente — reducir cantidad proporcionalmente
+            const remaining = budgetNum - accumulated;
+            if (remaining > 0 && s.unit_cost > 0) {
+              const partialQty = Math.floor(remaining / s.unit_cost);
+              if (partialQty > 0) {
+                adjusted.push({
+                  ...s,
+                  recommended_qty: partialQty,
+                  total_cost: partialQty * s.unit_cost,
+                });
+                accumulated += partialQty * s.unit_cost;
+              }
+            }
+            break; // presupuest agotado
+          }
+        }
+        finalSuggestions = adjusted;
+        budgetNote = ` (ajustado a presupuesto $${budgetNum.toLocaleString()})`;
+        if (finalSuggestions.length === 0) {
+          toast.warning(`El presupuesto ($${budgetNum.toLocaleString()}) es insuficiente para cualquier producto crítico.`);
+          setIsSuggesting(false);
+          return;
+        }
+      }
+
+      // Convertir sugerencias a items del formulario
+      const newItems: FormItem[] = finalSuggestions.map((s) => ({
+        product_name: s.name,
+        sku: s.sku || '',
+        quantity_ordered: s.recommended_qty,
+        unit_cost: s.unit_cost,
+        unit_of_measure: 'unidad',
+      }));
+
+      setItems(newItems);
+      toast.success(`${newItems.length} productos sugeridos${budgetNote}. Revisa y ajusta antes de crear la OC.`);
+    } catch {
+      toast.error('Error al generar sugerencias');
+    } finally {
+      setIsSuggesting(false);
+    }
+  };
 
   const handleSupplierChange = (name: string) => {
     setSupplierName(name);
@@ -421,7 +565,7 @@ function CreatePOModal({ suppliers, onClose }: CreatePOModalProps) {
           <div className="flex gap-2">
             <SecondaryButton label="Cancelar" onClick={onClose} />
             <PrimaryButton
-              label={createPO.isPending ? 'Guardando...' : 'Crear OC'}
+              label={createPO.isPending ? 'Guardando...' : 'Crear OC (Borrador)'}
               onClick={handleSubmit}
               disabled={createPO.isPending}
               icon={createPO.isPending ? Loader2 : undefined}
@@ -494,6 +638,61 @@ function CreatePOModal({ suppliers, onClose }: CreatePOModalProps) {
               aria-label="Notas"
             />
           </div>
+        </div>
+
+        {/* Sugerir OC Inteligente + Presupuesto */}
+        <div className="rounded-2xl border-2 border-primary/20 bg-gradient-to-r from-primary/5 via-primary/3 to-transparent p-4 space-y-3">
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <div className="flex items-center gap-2 min-w-0 flex-1">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shrink-0">
+                <Sparkles className="w-4 h-4 text-primary-foreground" />
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <h3 className="font-black text-sm uppercase tracking-tight text-foreground">Sugerir OC Inteligente</h3>
+                  <span className="text-[9px] font-black uppercase tracking-widest bg-gradient-to-r from-primary to-primary/70 text-primary-foreground px-1.5 py-0.5 rounded-full border border-primary/50 flex items-center gap-0.5">
+                    <Crown className="w-2 h-2" />
+                    Premium
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground">Analiza rotación + stock y sugiere qué comprar para 30 días</p>
+              </div>
+            </div>
+            {/* Presupuesto opcional */}
+            <div className="flex items-center gap-2 shrink-0">
+              <div className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-border bg-background">
+                <Wallet className="w-3.5 h-3.5 text-muted-foreground" />
+                <input
+                  type="number"
+                  inputMode="decimal"
+                  min="0"
+                  step="0.01"
+                  value={budget}
+                  onChange={(e) => setBudget(e.target.value)}
+                  placeholder="Presupuesto (opcional)"
+                  className="w-32 text-sm font-bold bg-transparent outline-none placeholder:text-muted-foreground/50"
+                  aria-label="Presupuesto máximo de compra"
+                />
+              </div>
+              <button
+                type="button"
+                onClick={handleSuggest}
+                disabled={isSuggesting || !analytics}
+                className="px-4 py-2.5 min-h-[44px] rounded-xl bg-gradient-to-r from-primary to-primary/80 text-primary-foreground font-black text-xs uppercase tracking-widest hover:shadow-lg hover:shadow-primary/25 active:scale-95 transition-all flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                aria-label="Generar sugerencia inteligente de OC"
+                title={analytics ? 'Generar sugerencia basada en análisis de ventas' : 'Cargando datos de analítica...'}
+              >
+                {isSuggesting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Zap className="w-3.5 h-3.5" />}
+                Sugerir
+              </button>
+            </div>
+          </div>
+          {budgetNum > 0 && (
+            <p className="text-[10px] font-bold uppercase tracking-widest text-primary/70 flex items-center gap-1">
+              <Wallet className="w-2.5 h-2.5" />
+              Presupuesto: {formatCurrency(budgetNum)} — las cantidades se ajustarán para no excederlo
+            </p>
+          )}
         </div>
 
         {/* Items */}

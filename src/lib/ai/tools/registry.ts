@@ -16,6 +16,9 @@ const schemas = {
   run_system_health_check: z.object({
     viewIds: z.array(z.string()).optional()
   }),
+  get_cost_summary: z.object({
+    storeId: z.string().min(1).optional()
+  }),
   open_view: z.object({
     viewId: z.string().min(1),
     params: z.record(z.string(), z.any()).optional()
@@ -47,6 +50,59 @@ const schemas = {
 };
 
 export const toolHandlers: Record<string, (args: any, context: ToolHandlerContext) => Promise<any>> = {
+  get_cost_summary: async ({ storeId }, { supabase, storeId: ctxStoreId }) => {
+    // FIX-BOTCHAT-COST: Real implementation of get_cost_summary tool.
+    // Previously the AI hallucinated this tool name; now it actually exists.
+    // Uses storeId from args or falls back to context storeId.
+    const targetStoreId = storeId || ctxStoreId;
+    if (!targetStoreId) {
+      return { error: 'No se pudo determinar la tienda. Especifica storeId o usa el chat desde una tienda activa.' };
+    }
+
+    // 1. Count products and those with a cost sheet
+    const { count: totalProducts, error: productsErr } = await supabase
+      .from('products')
+      .select('id', { count: 'exact', head: true })
+      .eq('store_id', targetStoreId)
+      .is('deleted_at', null);
+
+    if (productsErr) {
+      return { error: `Error al contar productos: ${productsErr.message}` };
+    }
+
+    // 2. Aggregate cost sheets: count, average cost_price, sum of cost_price
+    const { data: costAgg, error: costErr } = await supabase
+      .from('product_cost_sheets')
+      .select('cost_price')
+      .eq('store_id', targetStoreId)
+      .is('deleted_at', null);
+
+    if (costErr) {
+      return { error: `Error al leer fichas de costo: ${costErr.message}` };
+    }
+
+    const costSheets = costAgg || [];
+    const costSheetCount = costSheets.length;
+    const totalCost = costSheets.reduce((sum, cs: any) => sum + Number(cs.cost_price || 0), 0);
+    const avgCost = costSheetCount > 0 ? totalCost / costSheetCount : 0;
+
+    return {
+      success: true,
+      storeId: targetStoreId,
+      summary: {
+        total_products: totalProducts ?? 0,
+        products_with_cost_sheet: costSheetCount,
+        products_without_cost_sheet: Math.max(0, (totalProducts ?? 0) - costSheetCount),
+        avg_cost_price: Math.round(avgCost * 100) / 100,
+        total_inventory_cost: Math.round(totalCost * 100) / 100,
+        coverage_pct: totalProducts && totalProducts > 0
+          ? Math.round((costSheetCount / totalProducts) * 10000) / 100
+          : 0,
+      },
+      message: `Resumen de costos: ${costSheetCount} fichas activas de ${totalProducts ?? 0} productos (${totalProducts && totalProducts > 0 ? Math.round((costSheetCount / totalProducts) * 100) : 0}% cobertura). Costo unitario promedio: $${avgCost.toFixed(2)}. Costo total del inventario: $${totalCost.toFixed(2)}.`,
+    };
+  },
+
   run_system_health_check: async ({ viewIds }, context) => {
     // Note: In a real environment, we would trigger a background job or use an edge function.
     // For this demonstration, we'll simulate the health check logic or provide instructions.

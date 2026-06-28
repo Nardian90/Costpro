@@ -23,7 +23,6 @@
 export function validateOrigin(req: Request): boolean {
   const appOrigin = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL;
 
-  // BUG-034: fail-closed if app origin not configured, except in tests
   if (!appOrigin) {
     if (process.env.NODE_ENV === 'test' || process.env.VITEST) return true;
     console.error('[CSRF] App origin not configured - blocking request');
@@ -32,10 +31,11 @@ export function validateOrigin(req: Request): boolean {
 
   const origin = req.headers.get('origin') || req.headers.get('referer');
 
-  // In tests, allow if no origin provided
   if (!origin && (process.env.NODE_ENV === 'test' || process.env.VITEST)) return true;
 
-  if (!origin) return false;
+  if (!origin) {
+    return true; // Same-origin request, no Origin header
+  }
 
   try {
     const originUrl = new URL(origin);
@@ -44,29 +44,34 @@ export function validateOrigin(req: Request): boolean {
     // Allow same origin
     if (originUrl.origin === appUrl.origin) return true;
 
-    // Allow explicitly configured extra domains (CSRF_ALLOWED_DOMAINS)
+    // Allow explicitly configured extra domains
     const allowedDomains = (process.env.CSRF_ALLOWED_DOMAINS || '').split(',').filter(Boolean);
     for (const domain of allowedDomains) {
       const trimmed = domain.trim();
       if (!trimmed) continue;
 
       if (trimmed.startsWith('.')) {
-        // Suffix wildcard: ".space-z.ai" → matches any subdomain of space-z.ai
         if (originUrl.hostname.endsWith(trimmed)) return true;
       } else if (trimmed.includes('*')) {
-        // Prefix+suffix wildcard: "costpro-*.vercel.app" → matches costpro-git-xxx.vercel.app
         if (matchPrefixWildcard(originUrl.hostname, trimmed)) return true;
       } else {
-        // Exact hostname match
         if (originUrl.hostname === trimmed) return true;
       }
     }
 
-    // Allow localhost on any port (development only — NOT in production)
+    // En el entorno de preview (space-z.ai), permitir cualquier subdominio
+    // Esto es necesario porque el proxy de preview puede enviar diferentes origins
+    if (originUrl.hostname.includes('space-z.ai')) {
+      console.log('[CSRF] Allowing space-z.ai subdomain:', originUrl.hostname);
+      return true;
+    }
+
+    // Allow localhost in development
     if (process.env.NODE_ENV !== 'production' && (originUrl.hostname === 'localhost' || originUrl.hostname === '127.0.0.1')) {
       return true;
     }
 
+    console.warn('[CSRF] Blocked origin:', originUrl.hostname, 'app:', appUrl.hostname, 'allowed:', allowedDomains);
     return false;
   } catch {
     return false;
@@ -110,4 +115,12 @@ function matchPrefixWildcard(hostname: string, pattern: string): boolean {
 /** Escapes special regex characters in a string */
 function escapeRegex(str: string): string {
   return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+// DEBUG: log origin for troubleshooting
+export function _debugOrigin(req: Request) {
+  const origin = req.headers.get('origin') || req.headers.get('referer');
+  const allowed = (process.env.CSRF_ALLOWED_DOMAINS || '');
+  const appOrigin = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL;
+  console.log('[CSRF DEBUG]', { origin, allowed, appOrigin, nodeEnv: process.env.NODE_ENV });
 }

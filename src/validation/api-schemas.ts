@@ -135,7 +135,10 @@ export const botMessageSchema = z.object({
 
 export const botChatSchema = z.object({
   message: z.string().min(1).max(4000).optional(),
-  messages: z.array(botMessageSchema).optional(),
+  // FIX-BOTCHAT-LIMIT: Cap messages array at 50 to prevent context-window abuse.
+  // The frontend already slices to last 30, but defense in depth at API boundary.
+  // A malicious client could send 1000 messages of 32K each = 32MB payload → OOM.
+  messages: z.array(botMessageSchema).max(50, 'Too many messages (max 50)').optional(),
   conversationId: uuidLoose.optional(),
   context: z.record(z.string(), z.unknown()).optional(),
   aiProvider: z.string().optional(),

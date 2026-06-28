@@ -96,13 +96,13 @@ export function useStores(userId: string, isAdmin: boolean, isEncargado: boolean
           }
 
           // Save to offline cache (already filtered per user by the API)
-          await offlineStorage.saveSnapshot(`all_stores`, validatedStores);
+          await offlineStorage.saveSnapshot(`all_stores_${userId}`, validatedStores);
 
           return validatedStores;
       } catch (err) {
           if (!navigator.onLine) {
               // Offline: return the pre-filtered cached stores directly
-              const offlineStores = await offlineStorage.getSnapshot<Store[]>(`all_stores`) || [];
+              const offlineStores = await offlineStorage.getSnapshot<Store[]>(`all_stores_${userId}`) || [];
               return offlineStores;
           }
           throw err;

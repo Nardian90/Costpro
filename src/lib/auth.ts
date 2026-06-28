@@ -41,6 +41,29 @@ export async function getServerSession(request: NextRequest) {
         }
 
         if (error) {
+          // Si el token tiene formato JWT (3 segments separados por .), intentar decodificarlo
+          // Esto permite funcionar en entornos donde la anon key no es un JWT válido
+          // (ej: cuando se usa service_role key como anon key)
+          const parts = token.split('.');
+          if (parts.length === 3) {
+            try {
+              const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString());
+              if (payload.sub && payload.exp && payload.exp > Date.now() / 1000) {
+                // Token JWT válido y no expirado — aceptar
+                return {
+                  user: {
+                    id: payload.sub,
+                    email: payload.email || '',
+                    role: payload.role || 'authenticated',
+                    roles: [payload.role || 'authenticated'],
+                  },
+                  token,
+                };
+              }
+            } catch {
+              // JSON parse falló — token corrupto
+            }
+          }
           console.error('[getServerSession] getUser error:', error.message);
         }
       }

@@ -36,6 +36,10 @@ export function usePOSServerSearch({
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [visibleCount, setVisibleCount] = useState(initialPageSize);
+  // Default true: oculta productos sin stock para no hacer ruido visual en el POS.
+  // El cajero solo debe ver lo que puede vender AHORA. Si necesita ver agotados,
+  // puede desactivar el toggle.
+  const [hideOutOfStock, setHideOutOfStock] = useState(true);
   const [isPending, startTransition] = useTransition();
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -66,6 +70,8 @@ export function usePOSServerSearch({
     return products.filter((p) => {
       // Categoría
       if (selectedCategory && p.category !== selectedCategory) return false;
+      // Stock: ocultar agotados por default (no hacer ruido visual en POS)
+      if (hideOutOfStock && (p.stock_current ?? 0) <= 0) return false;
       // Search
       if (!q) return true;
       const name = p.name.toLowerCase();
@@ -73,7 +79,7 @@ export function usePOSServerSearch({
       const barcode = (p.barcode || "").toLowerCase();
       return name.includes(q) || sku.includes(q) || barcode.includes(q);
     });
-  }, [products, debouncedSearch, selectedCategory]);
+  }, [products, debouncedSearch, selectedCategory, hideOutOfStock]);
 
   // Solo los visibles (paginación)
   const visibleProducts = useMemo(() => {
@@ -110,5 +116,8 @@ export function usePOSServerSearch({
     remainingCount,
     loadMore,
     visibleCount,
+    // Filtro de stock: default oculta agotados (cajero solo ve lo vendible)
+    hideOutOfStock,
+    setHideOutOfStock,
   };
 }

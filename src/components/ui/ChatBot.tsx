@@ -38,6 +38,7 @@ interface ModelOption {
 }
 
 const MODEL_OPTIONS: ModelOption[] = [
+  { id: 'glm-4-flash', label: 'GLM-4 Flash (z.ai)', badge: 'Default' },
   { id: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash', badge: 'Rápido' },
   { id: 'gemini-2.5-pro', label: 'Gemini 2.5 Pro', badge: 'Preciso' },
   { id: 'gemini-2.0-flash', label: 'Gemini 2.0 Flash', badge: 'Estable' },
@@ -112,7 +113,7 @@ export function ChatBot() {
 
   // Settings state
   const { user, token, updateUser } = useAuthStore();
-  const [tempProvider, setTempProvider] = useState(user?.aiProvider || 'gemini');
+  const [tempProvider, setTempProvider] = useState(user?.aiProvider || 'glm');
   const [tempApiKey, setTempApiKey] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
@@ -132,7 +133,7 @@ export function ChatBot() {
 
   // Persisted selected model
   const [selectedModel, setSelectedModel] = useState<string>(() =>
-    loadFromStorage(MODEL_STORAGE_KEY, 'gemini-2.5-flash')
+    loadFromStorage(MODEL_STORAGE_KEY, 'glm-4-flash')
   );
 
   // ─── DERIVED STATE ────────────────────────────────────────────────────────
@@ -455,7 +456,9 @@ export function ChatBot() {
         body: JSON.stringify({
           messages: apiMessages,
           storeId: user?.activeStoreId || undefined,
-          aiProvider: user?.aiProvider || 'gemini',
+          // Default: usar el provider del usuario, o 'glm' (z.ai) que tiene key default en el server
+          aiProvider: user?.aiProvider || 'glm',
+          // Si el usuario tiene su propia key, la enviamos. Si no, el server usa la default.
           aiApiKey: user?.aiApiKey || undefined,
           model: selectedModel,
           temperature,
@@ -590,7 +593,7 @@ export function ChatBot() {
         body: JSON.stringify({
           messages: [{ role: 'user', content: 'ping', id: 'test' }],
           aiApiKey: keyToTest,
-          aiProvider: 'gemini',
+          aiProvider: tempProvider || 'glm',
         }),
       });
       setTestResult(res.ok ? 'success' : 'error');
@@ -884,7 +887,7 @@ export function ChatBot() {
                     <div className="space-y-2">
                       <span className="text-xs font-black uppercase tracking-widest text-muted-foreground">Proveedor</span>
                       <div className="grid grid-cols-3 gap-2">
-                        {['gemini', 'gpt', 'qwen'].map((p) => (
+                        {['glm', 'gemini', 'gpt', 'qwen'].map((p) => (
                           <button
                             key={p}
                             onClick={() => setTempProvider(p)}
