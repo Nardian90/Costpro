@@ -182,21 +182,27 @@ export function StoreCard({
       {/* Public Storefront Link + Visit Button */}
       {store.slug && (() => {
         // FIX-AUDIT-1: Use store.slug directly (DB stores slug with hyphens via slugify)
+        // FIX-SSR: Guard window.location.origin for SSR/prerender safety
         const slug = store.slug;
+        const origin = typeof window !== 'undefined' ? window.location.origin : '';
+        const fullUrl = origin ? `${origin}/tienda/${slug}` : `/tienda/${slug}`;
         return (
           <div className="flex items-center gap-2 p-2 rounded-xl bg-primary/5 border border-primary/10">
             <div className="flex-1 min-w-0">
               <p className="text-sm font-black uppercase tracking-widest text-primary/60 mb-0.5">{t('publicLink')}</p>
-              <p className="text-sm font-mono text-foreground truncate" title={`${window.location.origin}/tienda/${slug}`}>
-                {window.location.origin}/tienda/{slug}
+              <p className="text-sm font-mono text-foreground truncate" title={fullUrl}>
+                {fullUrl}
               </p>
             </div>
             <button
               type="button"
               onClick={() => {
-                const fullUrl = `${window.location.origin}/tienda/${slug}`;
-                navigator.clipboard.writeText(fullUrl).then(() => {
-                  toast.success(t('linkCopied') + ': ' + fullUrl);
+                // FIX-SSR: Use computed fullUrl (already guarded for SSR)
+                const url = typeof window !== 'undefined'
+                  ? `${window.location.origin}/tienda/${slug}`
+                  : `/tienda/${slug}`;
+                navigator.clipboard.writeText(url).then(() => {
+                  toast.success(t('linkCopied') + ': ' + url);
                 }).catch(() => {
                   toast.error(t('copyError'));
                 });

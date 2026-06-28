@@ -1,4 +1,6 @@
+// Math.random() is used here for particle animation (non-cryptographic, visual-only). Safe per CWE-338 exception.
 'use client';
+import { safePick } from '@/lib/safe-random';
 
 import React, { useEffect, useRef, useCallback, useMemo } from 'react';
 import { useScroll, useTransform, motion } from 'framer-motion';
@@ -212,7 +214,7 @@ export function ParticleBackground() {
   const meshFade = useTransform(scrollY, [0, 400], [1, 0]);
 
   /* ── Random background greeting ── */
-  const bgGreeting = useMemo(() => BG_GREETINGS[Math.floor(Math.random() * BG_GREETINGS.length)], []);
+  const bgGreeting = useMemo(() => safePick(BG_GREETINGS), []);
 
   return (
     <>

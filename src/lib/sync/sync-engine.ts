@@ -11,7 +11,7 @@ export class SyncEngine {
   private sessionToken: string | null = null;
 
   constructor() {
-    this.onlineHandler = () => this.processQueue();
+    this.onlineHandler = () => { void this.processQueue(); };
   }
 
   /**

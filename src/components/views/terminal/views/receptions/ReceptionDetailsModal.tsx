@@ -3,12 +3,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import { BaseModal } from "@/components/ui/BaseModal";
-import { Package, Hash, User, Calendar, FileText, Building2, Download, CheckCircle2, AlertTriangle, Trash2, Truck, Link2, Plus, RefreshCw, Eye, X } from 'lucide-react';
+import { Package, Hash, User, Calendar, FileText, Building2, Download, CheckCircle2, AlertTriangle, Trash2, Truck, Link2, Plus, RefreshCw, Eye, X, DollarSign } from 'lucide-react';
 import { type Receipt, type ReceiptItem } from '@/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { resolveProductImage, getProductImageUrl, formatCurrency, formatDate } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/lib/supabaseClient';
+import { apiFetch } from '@/lib/api-fetch';
 import { toast } from 'sonner';
 
 interface ReceptionDetailsModalProps {
@@ -51,7 +52,67 @@ export function ReceptionDetailsModal({
 }: ReceptionDetailsModalProps) {
   // F3: Tab state for "Costos Asociados" — debe ir ANTES de cualquier early return
   // para cumplir con las reglas de hooks de React.
-  const [activeTab, setActiveTab] = useState<'items' | 'costs'>('items');
+  const [activeTab, setActiveTab] = useState<'items' | 'costs' | 'tasa'>('items');
+  const [tasaUpdateLoading, setTasaUpdateLoading] = useState<string | null>(null);
+
+  // FIX-BATCH: Estado para asignación global de tasa a toda la recepción
+  const [batchMoneda, setBatchMoneda] = useState('CUP');
+  const [batchTasa, setBatchTasa] = useState(1);
+  const [batchLoading, setBatchLoading] = useState(false);
+
+  // FIX-BACKFILL: Función para actualizar moneda/tasa de un item individual
+  // Funciona incluso en recepciones confirmadas (active) — solo requiere admin/manager
+  const updateItemTasa = async (itemId: string, moneda: string, tasa: number) => {
+    if (!receipt) return;
+    setTasaUpdateLoading(itemId);
+    try {
+      await apiFetch(`/api/inventory/receptions/${receipt.id}/items/${itemId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          moneda_recepcion: moneda,
+          tasa_cambio_recepcion: tasa,
+          motivo: 'Actualización desde detalle de recepción',
+        }),
+      });
+    } catch (e: any) {
+      console.error('[ReceptionDetail] Error updating tasa:', e);
+    } finally {
+      setTasaUpdateLoading(null);
+    }
+  };
+
+  // FIX-BATCH: Aplicar moneda+tasa a TODOS los items de la recepción
+  const handleBatchApply = async () => {
+    if (!receipt || !items || items.length === 0) return;
+    setBatchLoading(true);
+    let updated = 0;
+    for (const item of items) {
+      try {
+        await updateItemTasa(item.id, batchMoneda, batchTasa);
+        updated++;
+      } catch {}
+    }
+    setBatchLoading(false);
+    toast.success(`${updated} de ${items.length} productos actualizados a ${batchMoneda} ${batchTasa}`);
+    // Switch to items tab to see the result
+    setActiveTab('items');
+  };
+
+  // FIX-BATCH: Auto-fill tasa cuando se cambia la moneda en el batch
+  const handleBatchMonedaChange = async (moneda: string) => {
+    setBatchMoneda(moneda);
+    if (moneda === 'CUP') {
+      setBatchTasa(1);
+    } else {
+      try {
+        const res = await fetch(`/api/exchange-rates?currency=${moneda}&source=BCC&segment=3&days=1`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.length > 0) setBatchTasa(data[0].rate);
+        }
+      } catch {}
+    }
+  };
 
   if (!receipt && !isLoading) return null;
 
@@ -196,6 +257,90 @@ export function ReceptionDetailsModal({
                 <Truck className="w-4 h-4" />
                 Costos Asociados
               </button>
+              {/* FIX-BATCH: Tab de Tasa de Cambio global */}
+              <button
+                type="button"
+                onClick={() => setActiveTab('tasa')}
+                className={cn("flex-1 py-3 text-xs font-black uppercase tracking-widest border-b-2 -mb-px transition-colors min-h-[44px] flex items-center justify-center gap-2",
+                  activeTab === 'tasa' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground')}
+                aria-selected={activeTab === 'tasa'}
+                role="tab"
+              >
+                <DollarSign className="w-4 h-4" />
+                Tasa de Cambio
+              </button>
+            </div>
+          )}
+
+          {/* TAB: Tasa de Cambio (batch global) */}
+          {activeTab === 'tasa' && receipt && (
+            <div className="p-6 space-y-5">
+              <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 space-y-1">
+                <p className="text-sm font-black uppercase tracking-widest text-primary">Asignación global de tasa</p>
+                <p className="text-xs text-muted-foreground">
+                  Aplica la misma moneda y tasa de cambio a TODOS los productos de esta recepción.
+                  Esto sobrescribe cualquier valor anterior. Genera auditoría por cada item.
+                </p>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-xs font-black uppercase tracking-widest text-muted-foreground">Moneda de compra</label>
+                  <select
+                    value={batchMoneda}
+                    onChange={e => handleBatchMonedaChange(e.target.value)}
+                    className="w-full h-12 px-3 rounded-xl border border-border bg-background text-sm font-bold"
+                  >
+                    <option value="CUP">CUP (Peso Cubano)</option>
+                    <option value="USD">USD (Dólar)</option>
+                    <option value="EUR">EUR (Euro)</option>
+                    <option value="MLC">MLC</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-black uppercase tracking-widest text-muted-foreground">
+                    Tasa de cambio (CUP por unidad)
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={batchTasa}
+                    onChange={e => setBatchTasa(parseFloat(e.target.value) || 1)}
+                    disabled={batchMoneda === 'CUP'}
+                    className="w-full h-12 px-3 rounded-xl border border-border bg-background text-sm font-bold tabular-nums disabled:opacity-50"
+                    placeholder="500"
+                  />
+                  {batchMoneda !== 'CUP' && (
+                    <p className="text-[10px] text-muted-foreground">
+                      Tasa auto-obtenida del BCC seg 3. Puedes ajustar manualmente.
+                    </p>
+                  )}
+                </div>
+              </div>
+              <div className="flex items-center justify-between gap-4 p-4 rounded-xl bg-muted/30 border border-border">
+                <div>
+                  <p className="text-xs text-muted-foreground">Se actualizarán</p>
+                  <p className="text-lg font-black">{items?.length || 0} productos</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs text-muted-foreground">Costo total en CUP</p>
+                  <p className="text-lg font-black tabular-nums">
+                    {formatCurrency((items || []).reduce((sum, i) => sum + (i.unit_cost * i.quantity * (batchMoneda === 'CUP' ? 1 : batchTasa)), 0))}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={handleBatchApply}
+                disabled={batchLoading || !items || items.length === 0}
+                className="w-full h-12 rounded-xl bg-primary text-primary-foreground font-black text-xs uppercase tracking-widest hover:bg-primary/90 disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {batchLoading ? (
+                  <><RefreshCw className="w-4 h-4 animate-spin" /> Aplicando...</>
+                ) : (
+                  <><CheckCircle2 className="w-4 h-4" /> Aplicar a {items?.length || 0} productos</>
+                )}
+              </button>
             </div>
           )}
 
@@ -330,6 +475,8 @@ export function ReceptionDetailsModal({
                       <th className="p-3">Producto</th>
                       <th className="p-3 text-center">Cant.</th>
                       <th className="p-3 text-right">Costo U.</th>
+                      <th className="p-3 text-center">Moneda</th>
+                      <th className="p-3 text-center">Tasa</th>
                       <th className="p-3 text-right">Subtotal</th>
                       {isEditMode && receipt?.status === 'pending' && <th className="p-3 text-center">Acción</th>}
                     </tr>
@@ -395,6 +542,60 @@ export function ReceptionDetailsModal({
                               ) : (
                                 formatCurrency(item.unit_cost)
                               )}
+                            </td>
+                            <td className="p-3 text-center">
+                              <select
+                                defaultValue={item.moneda_recepcion || 'CUP'}
+                                data-item-id={item.id}
+                                data-field="moneda_recepcion"
+                                onChange={async (e) => {
+                                  const moneda = e.target.value;
+                                  const tasaInput = document.querySelector(`input[data-item-id="${item.id}"][data-field="tasa_cambio_recepcion"]`) as HTMLInputElement;
+                                  if (moneda === 'CUP') {
+                                    if (tasaInput) { tasaInput.value = '1'; tasaInput.disabled = true; }
+                                    await updateItemTasa(item.id, 'CUP', 1);
+                                  } else {
+                                    if (tasaInput) tasaInput.disabled = false;
+                                    // Auto-fill from exchange_rates
+                                    try {
+                                      const res = await fetch(`/api/exchange-rates?currency=${moneda}&source=BCC&segment=3&days=1`);
+                                      if (res.ok) {
+                                        const data = await res.json();
+                                        if (data && data.length > 0) {
+                                          if (tasaInput) tasaInput.value = String(data[0].rate);
+                                          await updateItemTasa(item.id, moneda, data[0].rate);
+                                        }
+                                      }
+                                    } catch {}
+                                  }
+                                }}
+                                className="w-16 px-1 py-1 text-center rounded-lg border border-border bg-background text-xs font-bold focus:ring-2 focus:ring-primary/20 outline-none"
+                                aria-label={`Moneda de ${item.products?.name}`}
+                              >
+                                <option value="CUP">CUP</option>
+                                <option value="USD">USD</option>
+                                <option value="EUR">EUR</option>
+                                <option value="MLC">MLC</option>
+                              </select>
+                            </td>
+                            <td className="p-3 text-center">
+                              <input
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                defaultValue={item.tasa_cambio_recepcion || 1}
+                                data-item-id={item.id}
+                                data-field="tasa_cambio_recepcion"
+                                disabled={(item.moneda_recepcion || 'CUP') === 'CUP'}
+                                onBlur={async (e) => {
+                                  const val = parseFloat(e.target.value) || 1;
+                                  const monedaSelect = document.querySelector(`select[data-item-id="${item.id}"][data-field="moneda_recepcion"]`) as HTMLSelectElement;
+                                  const moneda = monedaSelect?.value || 'CUP';
+                                  await updateItemTasa(item.id, moneda, val);
+                                }}
+                                className="w-20 px-2 py-1 text-center rounded-lg border border-border bg-background text-xs font-bold tabular-nums focus:ring-2 focus:ring-primary/20 outline-none disabled:opacity-50"
+                                aria-label={`Tasa de cambio de ${item.products?.name}`}
+                              />
                             </td>
                             <td className="p-3 text-right font-black text-primary tabular-nums">
                               {formatCurrency(item.quantity * item.unit_cost)}

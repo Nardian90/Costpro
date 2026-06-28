@@ -628,6 +628,61 @@ export default function ProductReceptionView({ onCancel, preselectedProduct }: P
                 />
               </div>
 
+              {/* FIX-GAP2: Moneda y tasa de cambio para costeo dinámico */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label htmlFor="item-moneda" className="text-xs font-black uppercase tracking-widest ml-1">
+                    Moneda <span className="text-muted-foreground font-normal normal-case tracking-normal">(compra)</span>
+                  </label>
+                  <select
+                    id="item-moneda"
+                    value={s.newMoneda}
+                    onChange={async (e) => {
+                      s.setNewMoneda(e.target.value);
+                      if (e.target.value === 'CUP') {
+                        s.setNewTasa(1.0);
+                      } else {
+                        // F4-GAP3: Auto-fill tasa from exchange_rates when currency changes
+                        try {
+                          const res = await fetch(`/api/exchange-rates?currency=${e.target.value}&source=BCC&segment=3&days=1`);
+                          if (res.ok) {
+                            const data = await res.json();
+                            if (data && data.length > 0) {
+                              s.setNewTasa(data[0].rate);
+                            }
+                          }
+                        } catch {
+                          // Silent fail — user can type tasa manually
+                        }
+                      }
+                    }}
+                    className="neu-input w-full font-bold"
+                  >
+                    <option value="CUP">CUP</option>
+                    <option value="USD">USD</option>
+                    <option value="EUR">EUR</option>
+                    <option value="MLC">MLC</option>
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <label htmlFor="item-tasa" className="text-xs font-black uppercase tracking-widest ml-1">
+                    Tasa <span className="text-muted-foreground font-normal normal-case tracking-normal">(CUP por unidad)</span>
+                  </label>
+                  <input
+                    id="item-tasa"
+                    type="number"
+                    inputMode="decimal"
+                    min="0"
+                    step="0.01"
+                    value={s.newTasa || ''}
+                    onChange={e => s.setNewTasa(parseFloat(e.target.value) || 1.0)}
+                    className="neu-input w-full font-bold"
+                    placeholder="1.0"
+                    disabled={s.newMoneda === 'CUP'}
+                  />
+                </div>
+              </div>
+
               {/* REC-2 MM-R4: Selector de variante si el producto las tiene */}
               {(() => {
                 const selected = s.products.find(p => p.id === s.selectedProductId) as Product | undefined;

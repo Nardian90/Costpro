@@ -1,4 +1,5 @@
 'use client';
+import { safeRandom } from '@/lib/safe-random';
 
 import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import * as d3 from 'd3';
@@ -98,7 +99,7 @@ function computeStaticLayout(
     layers[l].push(n);
   }
 
-  const layerNames = Object.keys(layers).sort();
+  const layerNames = Object.keys(layers).sort((a, b) => a.localeCompare(b));
   const numLayers = layerNames.length;
   const layerSpacing = width / (numLayers + 1);
   const padding = 50;
@@ -114,7 +115,7 @@ function computeStaticLayout(
     const startY = (height - totalH) / 2;
 
     for (let ni = 0; ni < layerNodes.length; ni++) {
-      layerNodes[ni].x = cx + (Math.random() - 0.5) * 12;
+      layerNodes[ni].x = cx + (safeRandom(-6, 6));
       layerNodes[ni].y = startY + ni * nodeSpacing;
     }
   }

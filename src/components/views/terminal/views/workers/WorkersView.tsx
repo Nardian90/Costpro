@@ -28,6 +28,7 @@ import { BaseModal } from '@/components/ui/BaseModal';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
+import { CUBAN_PROVINCES, validateCubanCI, getMunicipalitiesForProvince } from './worker-helpers';
 
 /**
  * WorkersView — Gestión de Trabajadores y Comisiones.
@@ -150,15 +151,25 @@ export function WorkersView() {
     address: '',
     province: '',
     municipality: '',
+    shirt_size: '',
+    shoe_size: '',
+    waist_size: '',
   });
+  const [ciError, setCiError] = useState<string>('');
 
   const handleCreateWorker = async () => {
     if (!storeId) {
       toast.error('No hay tienda activa');
       return;
     }
-    if (!workerForm.first_name.trim() || !workerForm.last_name.trim() || !workerForm.ci.trim()) {
-      toast.error('Nombre, apellidos y CI son obligatorios');
+    if (!workerForm.first_name.trim() || !workerForm.last_name.trim()) {
+      toast.error('Nombre y apellidos son obligatorios');
+      return;
+    }
+    const ciErr = validateCubanCI(workerForm.ci);
+    if (ciErr) {
+      setCiError(ciErr);
+      toast.error(ciErr);
       return;
     }
     setCreatingWorker(true);
@@ -174,14 +185,26 @@ export function WorkersView() {
           address: workerForm.address || undefined,
           province: workerForm.province || undefined,
           municipality: workerForm.municipality || undefined,
+          shirt_size: workerForm.shirt_size || undefined,
+          shoe_size: workerForm.shoe_size || undefined,
+          waist_size: workerForm.waist_size || undefined,
         }),
       });
       toast.success(`Trabajador "${workerForm.first_name} ${workerForm.last_name}" creado`);
       setCreateModalOpen(false);
-      setWorkerForm({ first_name: '', last_name: '', ci: '', gender: '', address: '', province: '', municipality: '' });
+      setWorkerForm({
+        first_name: '', last_name: '', ci: '', gender: '', address: '',
+        province: '', municipality: '', shirt_size: '', shoe_size: '', waist_size: '',
+      });
+      setCiError('');
       fetchWorkers();
     } catch (e: any) {
-      toast.error('Error al crear trabajador: ' + e.message);
+      // FIX-AUDIT: Manejar 409 (CI duplicado) con mensaje específico
+      if (e.message?.includes('duplicate') || e.message?.includes('unique') || e.message?.includes('ya existe')) {
+        toast.error('Ya existe un trabajador con ese CI en esta tienda');
+      } else {
+        toast.error('Error al crear trabajador: ' + e.message);
+      }
     } finally {
       setCreatingWorker(false);
     }
@@ -352,50 +375,67 @@ export function WorkersView() {
       {/* FIX-REGRESSION: Modal de creación de trabajador */}
       <BaseModal
         open={createModalOpen}
-        onOpenChange={setCreateModalOpen}
+        onOpenChange={(open) => {
+          setCreateModalOpen(open);
+          if (!open) setCiError('');
+        }}
         title="Nuevo trabajador"
         description={`Tienda: ${storeId || 'N/A'} · El CI deriva la fecha de nacimiento automáticamente`}
-        maxWidth="sm:max-w-lg"
+        maxWidth="sm:max-w-2xl"
       >
-        <div className="space-y-4 p-1">
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label htmlFor="worker_first_name" className="text-xs font-bold uppercase tracking-widest">Nombre *</Label>
-              <Input
-                id="worker_first_name"
-                value={workerForm.first_name}
-                onChange={(e) => setWorkerForm({ ...workerForm, first_name: e.target.value })}
-                placeholder="Juan"
-                className="h-11"
-                disabled={creatingWorker}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="worker_last_name" className="text-xs font-bold uppercase tracking-widest">Apellidos *</Label>
-              <Input
-                id="worker_last_name"
-                value={workerForm.last_name}
-                onChange={(e) => setWorkerForm({ ...workerForm, last_name: e.target.value })}
-                placeholder="Pérez García"
-                className="h-11"
-                disabled={creatingWorker}
-              />
+        <div className="space-y-4 p-1 max-h-[70vh] overflow-y-auto">
+          {/* Sección: Datos personales */}
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2">Datos personales</p>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="worker_first_name" className="text-xs font-bold uppercase tracking-widest">Nombre *</Label>
+                <Input
+                  id="worker_first_name"
+                  value={workerForm.first_name}
+                  onChange={(e) => setWorkerForm({ ...workerForm, first_name: e.target.value })}
+                  placeholder="Juan"
+                  className="h-11"
+                  disabled={creatingWorker}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="worker_last_name" className="text-xs font-bold uppercase tracking-widest">Apellidos *</Label>
+                <Input
+                  id="worker_last_name"
+                  value={workerForm.last_name}
+                  onChange={(e) => setWorkerForm({ ...workerForm, last_name: e.target.value })}
+                  placeholder="Pérez García"
+                  className="h-11"
+                  disabled={creatingWorker}
+                />
+              </div>
             </div>
           </div>
 
+          {/* CI con validación en vivo */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label htmlFor="worker_ci" className="text-xs font-bold uppercase tracking-widest">Carnet de Identidad *</Label>
               <Input
                 id="worker_ci"
                 value={workerForm.ci}
-                onChange={(e) => setWorkerForm({ ...workerForm, ci: e.target.value })}
+                onChange={(e) => {
+                  const clean = e.target.value.replace(/\D/g, '').slice(0, 11);
+                  setWorkerForm({ ...workerForm, ci: clean });
+                  setCiError(clean ? validateCubanCI(clean) : '');
+                }}
                 placeholder="85010112345"
-                className="h-11 font-mono"
+                className={cn('h-11 font-mono', ciError && 'border-destructive focus-visible:ring-destructive')}
                 disabled={creatingWorker}
                 maxLength={11}
+                inputMode="numeric"
               />
-              <p className="text-[10px] text-muted-foreground">Formato cubano: 11 dígitos (YYMMDD#####)</p>
+              {ciError ? (
+                <p className="text-[10px] text-destructive font-bold">{ciError}</p>
+              ) : (
+                <p className="text-[10px] text-muted-foreground">11 dígitos (YYMMDD#####)</p>
+              )}
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="worker_gender" className="text-xs font-bold uppercase tracking-widest">Género</Label>
@@ -413,44 +453,111 @@ export function WorkersView() {
             </div>
           </div>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="worker_address" className="text-xs font-bold uppercase tracking-widest">Dirección</Label>
-            <Input
-              id="worker_address"
-              value={workerForm.address}
-              onChange={(e) => setWorkerForm({ ...workerForm, address: e.target.value })}
-              placeholder="Calle 10 #25 e/ 3ra y 5ta"
-              className="h-11"
-              disabled={creatingWorker}
-            />
+          {/* Sección: Ubicación */}
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2">Ubicación</p>
+            <div className="space-y-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="worker_address" className="text-xs font-bold uppercase tracking-widest">Dirección</Label>
+                <Input
+                  id="worker_address"
+                  value={workerForm.address}
+                  onChange={(e) => setWorkerForm({ ...workerForm, address: e.target.value })}
+                  placeholder="Calle 10 #25 e/ 3ra y 5ta"
+                  className="h-11"
+                  disabled={creatingWorker}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="worker_province" className="text-xs font-bold uppercase tracking-widest">Provincia</Label>
+                  <select
+                    id="worker_province"
+                    value={workerForm.province}
+                    onChange={(e) => {
+                      // FIX-AUDIT: Reset municipality when province changes (cascada dropdown)
+                      setWorkerForm({ ...workerForm, province: e.target.value, municipality: '' });
+                    }}
+                    className="h-11 w-full rounded-md border border-input bg-background px-3 text-sm"
+                    disabled={creatingWorker}
+                  >
+                    <option value="">Seleccionar...</option>
+                    {CUBAN_PROVINCES.map(p => <option key={p} value={p}>{p}</option>)}
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="worker_municipality" className="text-xs font-bold uppercase tracking-widest">Municipio</Label>
+                  <select
+                    id="worker_municipality"
+                    value={workerForm.municipality}
+                    onChange={(e) => setWorkerForm({ ...workerForm, municipality: e.target.value })}
+                    className="h-11 w-full rounded-md border border-input bg-background px-3 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={creatingWorker || !workerForm.province}
+                  >
+                    <option value="">
+                      {workerForm.province ? 'Seleccionar...' : 'Primero elige provincia'}
+                    </option>
+                    {workerForm.province && getMunicipalitiesForProvince(workerForm.province).map(m => (
+                      <option key={m} value={m}>{m}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label htmlFor="worker_province" className="text-xs font-bold uppercase tracking-widest">Provincia</Label>
-              <Input
-                id="worker_province"
-                value={workerForm.province}
-                onChange={(e) => setWorkerForm({ ...workerForm, province: e.target.value })}
-                placeholder="Las Tunas"
-                className="h-11"
-                disabled={creatingWorker}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="worker_municipality" className="text-xs font-bold uppercase tracking-widest">Municipio</Label>
-              <Input
-                id="worker_municipality"
-                value={workerForm.municipality}
-                onChange={(e) => setWorkerForm({ ...workerForm, municipality: e.target.value })}
-                placeholder="Puerto Padre"
-                className="h-11"
-                disabled={creatingWorker}
-              />
+          {/* Sección: Tallas (uniformidad) */}
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2">Tallas (opcional)</p>
+            <div className="grid grid-cols-3 gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="worker_shirt_size" className="text-xs font-bold uppercase tracking-widest">Camisa</Label>
+                <select
+                  id="worker_shirt_size"
+                  value={workerForm.shirt_size}
+                  onChange={(e) => setWorkerForm({ ...workerForm, shirt_size: e.target.value })}
+                  className="h-11 w-full rounded-md border border-input bg-background px-3 text-sm"
+                  disabled={creatingWorker}
+                >
+                  <option value="">N/A</option>
+                  <option value="XS">XS</option>
+                  <option value="S">S</option>
+                  <option value="M">M</option>
+                  <option value="L">L</option>
+                  <option value="XL">XL</option>
+                  <option value="XXL">XXL</option>
+                </select>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="worker_shoe_size" className="text-xs font-bold uppercase tracking-widest">Calzado</Label>
+                <Input
+                  id="worker_shoe_size"
+                  value={workerForm.shoe_size}
+                  onChange={(e) => setWorkerForm({ ...workerForm, shoe_size: e.target.value })}
+                  placeholder="42"
+                  className="h-11"
+                  disabled={creatingWorker}
+                  inputMode="numeric"
+                  maxLength={3}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="worker_waist_size" className="text-xs font-bold uppercase tracking-widest">Cintura</Label>
+                <Input
+                  id="worker_waist_size"
+                  value={workerForm.waist_size}
+                  onChange={(e) => setWorkerForm({ ...workerForm, waist_size: e.target.value })}
+                  placeholder="32"
+                  className="h-11"
+                  disabled={creatingWorker}
+                  inputMode="numeric"
+                  maxLength={3}
+                />
+              </div>
             </div>
           </div>
 
-          <div className="flex items-center justify-end gap-2 pt-2">
+          <div className="flex items-center justify-end gap-2 pt-2 border-t border-border/30">
             <Button
               variant="outline"
               onClick={() => setCreateModalOpen(false)}
@@ -461,7 +568,7 @@ export function WorkersView() {
             </Button>
             <Button
               onClick={handleCreateWorker}
-              disabled={creatingWorker || !workerForm.first_name.trim() || !workerForm.last_name.trim() || !workerForm.ci.trim()}
+              disabled={creatingWorker || !workerForm.first_name.trim() || !workerForm.last_name.trim() || !!ciError || workerForm.ci.length !== 11}
               className="h-11 px-4 bg-primary text-primary-foreground hover:bg-primary/90 font-black text-xs uppercase tracking-widest flex items-center gap-2"
             >
               {creatingWorker ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserPlus className="w-4 h-4" />}

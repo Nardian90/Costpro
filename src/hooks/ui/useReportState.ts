@@ -1,3 +1,4 @@
+import { safeRandom } from "@/lib/safe-random";
 /**
  * useReportState — Centralized state management for the Generador de Reportes module.
  *
@@ -265,7 +266,7 @@ export function useReportState(): UseReportStateReturn {
       // Simulated progress stages for UX feedback
       const progressTimer = setInterval(() => {
         if (progressRef.value >= 85) return;
-        progressRef.value += Math.random() * 12;
+        progressRef.value += safeRandom(0, 12);
         dispatch({ type: 'SET_GENERATE_PROGRESS', payload: { percentage: progressRef.value, stage: '' } });
       }, 400);
 

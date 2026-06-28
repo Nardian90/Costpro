@@ -562,7 +562,7 @@ export async function drawCover(
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(9);
   doc.setFont("helvetica", "bold");
-  const slogan = MARKETING_BANNERS[Math.floor(Math.random() * MARKETING_BANNERS.length)];
+  const slogan = safePick(MARKETING_BANNERS);
   doc.text(slogan, PAGE_W / 2, bannerY + 4.5, { align: "center" });
   doc.setFontSize(6);
   doc.setFont("helvetica", "normal");

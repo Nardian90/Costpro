@@ -1,4 +1,5 @@
 'use client';
+import { safePick } from '@/lib/safe-random';
 
 import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
@@ -30,7 +31,7 @@ const GREETINGS = [
 
 function useRandomGreeting(): string {
   return useMemo(() => {
-    return GREETINGS[Math.floor(Math.random() * GREETINGS.length)];
+    return safePick(GREETINGS);
   }, []);
 }
 

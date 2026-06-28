@@ -26,13 +26,12 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
   // Stores owned by other managers wouldn't appear in the result — the MultiStoreDashboard
   // health score would be incomplete with NO visible error.
   // Service-role client bypasses RLS so the admin sees ALL stores they requested.
-  const { createClient } = await import('@supabase/supabase-js');
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key) {
+  // FIX-DRY: Use the shared getSupabaseAdminSafe() factory instead of inline createClient.
+  const { getSupabaseAdminSafe } = await import('@/lib/supabase-admin');
+  const supabase = getSupabaseAdminSafe();
+  if (!supabase) {
     return NextResponse.json({ error: 'Server misconfigured' }, { status: 500 });
   }
-  const supabase = createClient(url, key, { auth: { autoRefreshToken: false, persistSession: false } });
 
   const cutoff = new Date();
   cutoff.setDate(cutoff.getDate() - 30);

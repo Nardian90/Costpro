@@ -13,7 +13,7 @@ export { useAcademyStore } from './useAcademyStore';
 // Ahora cada submenu (punto_venta, almacen_*, analitica) tiene su propia vista
 // "SectionHub" que muestra tarjetas con todos los hijos (patrón Odoo/Shopify).
 // El breadcrumb puede navegar a estos section hubs al hacer clic en un ancestro.
-export type ViewType = 'occ' | 'dashboard' | 'wallet' | 'pos' | 'inventory' | 'recepcion' | 'reception_list' | 'transferencias' | 'sales' | 'inventory_count' | 'cost-sheets' | 'reports' | 'catalog' | 'history' | 'inventory_adjustments' | 'audit' | 'cash' | 'users' | 'roles' | 'stores' | 'settings' | 'help' | 'wiki' | 'news' | 'rss_management' | 'ipv' | 'academy' | 'legal' | 'health' | 'pick3-intelligence' | 'labels' | 'sales_catalog' | 'ofertas' | 'purchase-orders' | 'sales-hub' | 'exchange-intelligence' | 'received-services' | 'usage-monitoring' | 'workers' | 'chat'
+export type ViewType = 'occ' | 'dashboard' | 'wallet' | 'pos' | 'inventory' | 'recepcion' | 'reception_list' | 'transferencias' | 'sales' | 'inventory_count' | 'cost-sheets' | 'reports' | 'catalog' | 'history' | 'inventory_adjustments' | 'audit' | 'cash' | 'users' | 'roles' | 'stores' | 'settings' | 'help' | 'wiki' | 'news' | 'rss_management' | 'ipv' | 'academy' | 'legal' | 'health' | 'pick3-intelligence' | 'labels' | 'sales_catalog' | 'ofertas' | 'purchase-orders' | 'sales-hub' | 'exchange-intelligence' | 'received-services' | 'usage-monitoring' | 'workers' | 'chat' | 'costeo-dinamico' | 'estructura-costo'
 // E-SectionHub: submenu wrapper IDs — renderizan SectionHubView
 | 'punto_venta' | 'almacen_gestion' | 'almacen_operaciones' | 'analitica'
 // Submenu wrappers IPV (todos redirigen al section hub de IPV con tab apropiado)

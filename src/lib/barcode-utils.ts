@@ -76,7 +76,7 @@ export function generateEAN13FromSKU(sku: string): string {
   let hash = 0;
   for (let i = 0; i < sku.length; i++) {
     const char = sku.charCodeAt(i);
-    hash = ((hash << 5) - hash + char) | 0; // Hash mixing
+    hash = Math.trunc((hash << 5) - hash + char); // Hash mixing
     hash = hash & 0x7fffffff; // Keep positive
   }
 
@@ -126,7 +126,7 @@ export function generateUniqueEAN13Batch(count: number, prefix: string = '0'): s
 function hashCode(str: string): number {
   let hash = 5381;
   for (let i = 0; i < str.length; i++) {
-    hash = ((hash << 5) + hash + str.charCodeAt(i)) | 0;
+    hash = Math.trunc((hash << 5) + hash + str.charCodeAt(i));
   }
   return hash;
 }

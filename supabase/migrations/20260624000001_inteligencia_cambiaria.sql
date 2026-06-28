@@ -100,14 +100,14 @@ LANGUAGE sql STABLE AS $$
     ORDER BY rate_date DESC LIMIT 1
   )
   SELECT
-    sv.rate AS start_rate,
-    ev.rate AS end_rate,
-    (ev.rate - sv.rate) AS absolute_change,
-    CASE WHEN sv.rate > 0 THEN ((ev.rate - sv.rate) / sv.rate * 100) ELSE 0 END AS percent_change,
-    CASE WHEN sv.rate > 0 AND ev.rate > 0 AND p_end_date > p_start_date
+    COALESCE(sv.rate, 0) AS start_rate,
+    COALESCE(ev.rate, 0) AS end_rate,
+    (COALESCE(ev.rate, 0) - COALESCE(sv.rate, 0)) AS absolute_change,
+    CASE WHEN sv.rate IS NOT NULL AND sv.rate > 0 THEN ((ev.rate - sv.rate) / sv.rate * 100) ELSE 0 END AS percent_change,
+    CASE WHEN sv.rate IS NOT NULL AND sv.rate > 0 AND ev.rate IS NOT NULL AND ev.rate > 0 AND p_end_date > p_start_date
       THEN (POWER(ev.rate::FLOAT / sv.rate::FLOAT, 1.0 / EXTRACT(EPOCH FROM (p_end_date - p_start_date)) * 86400) - 1) * 100
       ELSE 0 END AS daily_avg_growth,
-    CASE WHEN sv.rate > 0 AND ev.rate > 0 AND p_end_date > p_start_date
+    CASE WHEN sv.rate IS NOT NULL AND sv.rate > 0 AND ev.rate IS NOT NULL AND ev.rate > 0 AND p_end_date > p_start_date
       THEN (POWER(ev.rate::FLOAT / sv.rate::FLOAT, 30.44 / EXTRACT(EPOCH FROM (p_end_date - p_start_date)) * 86400) - 1) * 100
       ELSE 0 END AS monthly_avg_growth
   FROM start_val sv, end_val ev;

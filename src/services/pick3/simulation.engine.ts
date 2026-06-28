@@ -1,3 +1,4 @@
+import { safeRandomShortId, safeRandom, safeRandomInt } from "@/lib/safe-random";
 import { SimulationResult, StrategyConfig, BettingConfig, BacktestResult, Pick3Result } from '@/types/pick3';
 import { PredictionEngine } from './prediction.engine';
 import { AnalysisEngine } from './analysis.engine';
@@ -34,7 +35,7 @@ export class SimulationEngine {
     // BUG-011 FIX: Guard against empty/insufficient equityCurve data
     if (!dailyReturns || dailyReturns.length < 2) {
       return {
-        id: `MC-${Math.random().toString(36).substring(7)}`,
+        id: `MC-${safeRandomShortId()}`,
         timestamp: Date.now(),
         config,
         equityCurve: [],
@@ -57,6 +58,7 @@ export class SimulationEngine {
       let drawdownStartDay = 0;
 
       for (let day = 0; day < config.horizonDays; day++) {
+        // Math.random() is correct for Monte Carlo simulation (non-cryptographic)
         const randomIndex = Math.floor(Math.random() * dailyReturns.length);
         const dailyReturnFactor = dailyReturns[randomIndex];
 
@@ -98,7 +100,7 @@ export class SimulationEngine {
     const probOfRuin = (ruinCounts.length / SCENARIOS) * 100;
 
     return {
-      id: `MC-${Math.random().toString(36).substring(7)}`,
+      id: `MC-${safeRandomShortId()}`,
       timestamp: Date.now(),
       config,
       equityCurve: finalCapitals.slice(0, 100),
@@ -159,7 +161,8 @@ export class SimulationEngine {
 
     for (let i = 0; i < count; i++) {
         const totalConfidence = tempPool.reduce((sum, p) => sum + p.confidence, 0);
-        let random = Math.random() * totalConfidence;
+        // Math.random() is correct for weighted random selection (non-cryptographic)
+      let random = Math.random() * totalConfidence;
 
         for (let j = 0; j < tempPool.length; j++) {
             random -= tempPool[j].confidence;

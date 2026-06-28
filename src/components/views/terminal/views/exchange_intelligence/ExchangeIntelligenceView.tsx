@@ -145,7 +145,7 @@ export function ExchangeIntelligenceView() {
 
   // Construir datos históricos para gráficos
   const historyData: HistoryPoint[] = useCallback(() => {
-    const dates = [...new Set(rates.map(r => r.rate_date))].sort();
+    const dates = [...new Set(rates.map(r => r.rate_date))].sort((a, b) => a.localeCompare(b));
     return dates.map(date => {
       const oficial = rates.find(r => r.rate_date === date && r.source === 'BCC' && r.currency === 'USD' && r.segment === bccSegment)?.rate ?? null;
       const informal = rates.find(r => r.rate_date === date && r.source === 'elToque' && r.currency === 'USD')?.rate ?? null;

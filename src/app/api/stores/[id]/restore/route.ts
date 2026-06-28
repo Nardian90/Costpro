@@ -20,13 +20,12 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
 
   // FIX-AUDIT-NEW-2: Use service-role client (same fix as archive route).
   // See archive/route.ts for full rationale.
-  const { createClient } = await import('@supabase/supabase-js');
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key) {
+  // FIX-DRY: Use the shared getSupabaseAdminSafe() factory instead of inline createClient.
+  const { getSupabaseAdminSafe } = await import('@/lib/supabase-admin');
+  const supabase = getSupabaseAdminSafe();
+  if (!supabase) {
     return NextResponse.json({ error: 'Server misconfigured' }, { status: 500 });
   }
-  const supabase = createClient(url, key, { auth: { autoRefreshToken: false, persistSession: false } });
 
   const { error } = await supabase
     .from('stores')
