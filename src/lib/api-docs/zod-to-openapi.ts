@@ -28,7 +28,7 @@ export function zodToOpenApi(schema: z.ZodType): JsonSchema {
     case 'string': {
       const result: JsonSchema = { type: 'string' };
       const s = schema as z.ZodString;
-      if (s.format) result.format = s.format;
+      if ((s as any).format) result.format = (s as any).format;
       if (s.minLength != null) result.minLength = s.minLength;
       if (s.maxLength != null) result.maxLength = s.maxLength;
       return result;

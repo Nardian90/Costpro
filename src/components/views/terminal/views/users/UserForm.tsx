@@ -77,7 +77,7 @@ export default function UserForm({
     watch,
     formState: { errors, isSubmitted },
   } = useForm<UserFormData>({
-    resolver: zodResolver(userFormSchema),
+    resolver: zodResolver(userFormSchema) as any,
     defaultValues: initialData ? {
       fullName: initialData.fullName,
       email: initialData.email,

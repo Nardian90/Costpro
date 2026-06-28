@@ -206,7 +206,7 @@ export default function CatalogView() {
     const rawProducts = (inventoryPages?.pages || []).flatMap(p => p.products);
     return rawProducts.map(p => ({
       ...p,
-      product_variants: variantsByProduct.get(p.id) || [],
+      product_variants: variantsByProduct.get(p.id as any) || [],
     }));
   }, [inventoryPages, variantsByProduct]);
   const totalCount = inventoryPages?.pages?.[0]?.total ?? 0;
@@ -277,13 +277,13 @@ export default function CatalogView() {
     coverage: fcCoverage,
     getFCStatus,
     isLoading: isLoadingFC,
-  } = useProductFCStatus(products);
+  } = useProductFCStatus(products as any);
 
   // FC status map for passing to grid
   const fcStatusMap = useMemo(() => {
     const map = new Map<string, import('@/types').ProductFCStatus>();
     for (const product of products) {
-      map.set(product.id, getFCStatus(product.id));
+      map.set(product.id as string, getFCStatus(product.id as string));
     }
     return map;
   }, [products, getFCStatus]);
@@ -292,8 +292,8 @@ export default function CatalogView() {
   const fcResolutionMap = useMemo(() => {
     const map = new Map<string, import('@/lib/integration/fc-automation').FCResolutionResult>();
     for (const product of products) {
-      const info = fcInfoMap.get(product.id);
-      if (info) map.set(product.id, info.resolution);
+      const info = fcInfoMap.get(product.id as string);
+      if (info) map.set(product.id as string, info.resolution);
     }
     return map;
   }, [products, fcInfoMap]);
@@ -345,7 +345,7 @@ export default function CatalogView() {
   const filteredProducts = useMemo(() => {
     let result = products.filter(p => {
       const matchesIncomplete = !showIncompleteOnly || p.is_complete === false;
-      const matchesFC = fcFilter === 'all' || getFCStatus(p.id) === fcFilter;
+      const matchesFC = fcFilter === 'all' || getFCStatus(p.id as string) === fcFilter;
       // CM-2.5: Filtro de stock
       const stock = p.stock_current ?? 0;
       const minStock = p.min_stock ?? 0;
@@ -402,7 +402,7 @@ export default function CatalogView() {
     const storeName = user?.activeStoreId
       ? user.memberships?.find((m: UserStoreMembership) => m.store_id === user.activeStoreId)?.store?.name || 'Productos'
       : 'Productos';
-    await exportCatalogToExcel(filteredProducts.length > 0 ? filteredProducts : [], storeName);
+    await exportCatalogToExcel(filteredProducts.length > 0 ? (filteredProducts as any) : [], storeName);
   }, [filteredProducts, user]);
 
   // --- Excel Import ---
@@ -437,7 +437,7 @@ export default function CatalogView() {
       barcode_type: null,
       image_url: null,
     };
-    createProductMutation.mutate(cloned, {
+    createProductMutation.mutate(cloned as any, {
       onSuccess: () => toast.success(`Producto clonado: ${cloned.name}`),
       onError: (err: unknown) => toast.error(getErrorMsg(err)),
     });
@@ -457,7 +457,7 @@ export default function CatalogView() {
 
   // --- Bulk Selection ---
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const isAllSelected = filteredProducts.length > 0 && filteredProducts.every(p => selectedIds.has(p.id));
+  const isAllSelected = filteredProducts.length > 0 && filteredProducts.every(p => selectedIds.has(p.id as string));
   const toggleSelect = (id: string) => {
     setSelectedIds(prev => {
       const next = new Set(prev);
@@ -469,7 +469,7 @@ export default function CatalogView() {
     if (isAllSelected) {
       setSelectedIds(new Set());
     } else {
-      setSelectedIds(new Set(filteredProducts.map(p => p.id)));
+      setSelectedIds(new Set(filteredProducts.map(p => p.id as string)));
     }
   };
   const handleBulkDeactivate = () => {
@@ -535,7 +535,7 @@ export default function CatalogView() {
   const handleBulkActivate = useCallback(async () => {
     if (selectedIds.size === 0) return;
     const ids = Array.from(selectedIds);
-    const productsToActivate = filteredProducts.filter(p => ids.includes(p.id) && !p.is_active);
+    const productsToActivate = filteredProducts.filter(p => ids.includes(p.id as string) && !p.is_active);
     if (productsToActivate.length === 0) {
       toast.info('Los productos seleccionados ya están activos');
       return;
@@ -543,7 +543,7 @@ export default function CatalogView() {
     // Audit-Fix #2d: toggleActiveMutation espera { productId, isActive }, no Product.
     // Antes pasábamos `p` (Product completo) — type mismatch.
     await Promise.all(
-      productsToActivate.map(p => toggleActiveMutation.mutateAsync({ productId: p.id, isActive: true }))
+      productsToActivate.map(p => toggleActiveMutation.mutateAsync({ productId: p.id as string, isActive: true }))
     );
     toast.success(`${productsToActivate.length} producto(s) reactivado(s)`);
     setSelectedIds(new Set());
@@ -553,14 +553,14 @@ export default function CatalogView() {
   const handleBulkDelete = useCallback(async () => {
     if (selectedIds.size === 0) return;
     const ids = Array.from(selectedIds);
-    const productsToDelete = filteredProducts.filter(p => ids.includes(p.id) && !p.has_movements);
+    const productsToDelete = filteredProducts.filter(p => ids.includes(p.id as string) && !p.has_movements);
     if (productsToDelete.length === 0) {
       toast.warning('Los productos seleccionados tienen movimientos y no se pueden eliminar');
       return;
     }
     if (!confirm(`¿Eliminar ${productsToDelete.length} producto(s)? Esta acción es irreversible.`)) return;
     await Promise.all(
-      productsToDelete.map(p => deleteProductMutation.mutateAsync(p.id))
+      productsToDelete.map(p => deleteProductMutation.mutateAsync(p.id as string))
     );
     toast.success(`${productsToDelete.length} producto(s) eliminado(s)`);
     setSelectedIds(new Set());
@@ -904,7 +904,7 @@ export default function CatalogView() {
       {/* Product Grid / Table */}
       <CatalogProductGrid
         layoutMode={layoutMode}
-        products={filteredProducts}
+        products={filteredProducts as any}
         isLoading={isLoading}
         error={error as Error | null}
         selectedIds={selectedIds}
@@ -996,7 +996,7 @@ export default function CatalogView() {
       <BulkPriceIncrementModal
         open={isBulkPriceOpen}
         onOpenChange={setIsBulkPriceOpen}
-        products={products}
+        products={products as any}
         categories={categories}
         selectedIds={Array.from(selectedIds)}
         // CM-3.4: Pasar totalCount y storeId para que el modal sepa cuántos productos hay realmente

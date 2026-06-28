@@ -377,20 +377,20 @@ export default function SalesHistoryView() {
                                 </button>
                                 </div>
                               </td>
-                              <td className="p-4 font-bold text-xs text-primary">{txn.id.split('-')[0]}</td>
+                              <td className="p-4 font-bold text-xs text-primary">{(txn.id as string).split('-')[0]}</td>
                               <td className="p-4">
-                                <div className="font-bold text-xs">{formatDate(txn.created_at)}</div>
-                                <div className="text-xs text-muted-foreground">{formatTime(txn.created_at)}</div>
+                                <div className="font-bold text-xs">{formatDate(txn.created_at as any)}</div>
+                                <div className="text-xs text-muted-foreground">{formatTime(txn.created_at as any)}</div>
                               </td>
                               <td className="p-4 priority-low hidden sm:table-cell">
                                 <div className="flex items-center gap-2">
                                   {(() => {
-                                    const pm = getPaymentMethodInfo(txn.payment_method);
+                                    const pm = getPaymentMethodInfo(txn.payment_method as any);
                                     const PmIcon = pm.icon;
                                     return <PmIcon className={cn("w-3 h-3", pm.color)} />;
                                   })()}
                                   <span className="text-xs font-bold uppercase">
-                                    {getPaymentMethodInfo(txn.payment_method).label}
+                                    {getPaymentMethodInfo(txn.payment_method as any).label}
                                   </span>
                                 </div>
                               </td>
@@ -398,7 +398,7 @@ export default function SalesHistoryView() {
                                 <span className={cn(
                                   "text-base font-black tabular-nums",
                                   isVoided ? "line-through text-muted-foreground" : ""
-                                )}>{formatCurrency(txn.total_amount)}</span>
+                                )}>{formatCurrency(txn.total_amount as any)}</span>
                               </td>
                               <td className="p-4 text-center priority-low hidden sm:table-cell">
                                 <span className={cn(
@@ -413,7 +413,7 @@ export default function SalesHistoryView() {
                               <td className="p-4 text-center" aria-label="Acciones de la venta">
                                 <div className="flex items-center justify-center gap-1.5">
                                   <button type="button"
-                                    onClick={() => handleViewDetails(txn)}
+                                    onClick={() => handleViewDetails(txn as any)}
                                     className="w-11 h-11 inline-flex items-center justify-center rounded-lg border border-border hover:bg-primary hover:text-foreground transition-all active:scale-95"
                                     title="Ver detalles"
                                     aria-label="Ver detalles de la venta"
@@ -423,7 +423,7 @@ export default function SalesHistoryView() {
 
                                   {canVoid && (
                                     <button type="button"
-                                      onClick={() => handleRequestVoid(txn)}
+                                      onClick={() => handleRequestVoid(txn as any)}
                                       disabled={isVoided || isInverting}
                                       className={cn(
                                         "w-11 h-11 inline-flex items-center justify-center rounded-lg border transition-all active:scale-95",
@@ -439,7 +439,7 @@ export default function SalesHistoryView() {
                                   )}
 
                                   <button type="button"
-                                    onClick={() => handleDuplicate(txn)}
+                                    onClick={() => handleDuplicate(txn as any)}
                                     className="w-11 h-11 inline-flex items-center justify-center rounded-lg border border-border hover:bg-warning hover:text-foreground transition-all active:scale-95"
                                     title="Duplicar Venta"
                                     aria-label="Duplicar venta"
@@ -472,10 +472,10 @@ export default function SalesHistoryView() {
 
       {/* Transaction Details Modal */}
       <TransactionDetailsModal
-        transaction={selectedTransaction}
+        transaction={selectedTransaction as any}
         isOpen={!!selectedTransaction}
         onClose={handleCloseDetails}
-        items={transactionItems}
+        items={transactionItems as any}
         isLoading={loadingDetails}
       />
 
@@ -543,7 +543,7 @@ export default function SalesHistoryView() {
       <TaxCalculationModal
         isOpen={isTaxModalOpen}
         onClose={() => setIsTaxModalOpen(false)}
-        selectedTransactions={selectedTransactions}
+        selectedTransactions={selectedTransactions as any}
       />
     </>
   );

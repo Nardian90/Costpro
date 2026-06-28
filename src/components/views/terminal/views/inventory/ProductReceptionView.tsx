@@ -578,13 +578,13 @@ export default function ProductReceptionView({ onCancel, preselectedProduct }: P
               <div className="py-4 text-center text-sm text-muted-foreground">Sin resultados</div>
             ) : (
               s.filteredFormProducts.slice(0, 50).map(product => (
-                <button type="button" key={product.id} onClick={() => s.setSelectedProductId(product.id)} className={cn(
+                <button type="button" key={product.id as any} onClick={() => s.setSelectedProductId(product.id as any)} className={cn(
                   'w-full text-left px-4 py-2.5 text-sm transition-colors hover:bg-muted/50',
                   s.selectedProductId === product.id && 'bg-primary/10 ring-1 ring-primary/30'
                 )}>
                   <span className="font-bold">{product.name}</span>
                   <span className="ml-2 text-xs text-muted-foreground font-mono">{product.sku}</span>
-                  {product.cost_price > 0 && <span className="ml-2 text-xs text-primary font-mono">{formatCurrency(product.cost_price)}</span>}
+                  {(product.cost_price ?? 0) > 0 && <span className="ml-2 text-xs text-primary font-mono">{formatCurrency(product.cost_price ?? 0)}</span>}
                 </button>
               ))
             )}

@@ -180,9 +180,9 @@ export default function StockHistoryView() {
       {/* Movements List */}
       <div className="space-y-3">
         {filteredMovements.map(mov => (
-          <div key={mov.id} className="p-4 rounded-xl border border-border bg-card flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:border-primary/30 transition-all group">
+          <div key={mov.id as any} className="p-4 rounded-xl border border-border bg-card flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:border-primary/30 transition-all group">
             <div className="flex items-center gap-4">
-              <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center border shadow-sm group-hover:scale-105 transition-transform", getMovementBadge(mov.movement_type))}>
+              <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center border shadow-sm group-hover:scale-105 transition-transform", getMovementBadge(mov.movement_type as any))}>
                 {mov.movement_type === 'sale' ? <ArrowUpRight className="w-6 h-6" /> :
                  mov.movement_type === 'purchase' ? <ArrowDownRight className="w-6 h-6" /> :
                  <ArrowUpDown className="w-6 h-6" />}

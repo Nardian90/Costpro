@@ -190,7 +190,7 @@ export function TransactionDetailsModal({ isOpen, onClose, transaction, items, i
                     {allTaxes.map(tax => (
                       <button type="button"
                         key={tax.id}
-                        onClick={() => handleToggleTax(tax)}
+                        onClick={() => handleToggleTax(tax as any)}
                         className={cn(
                           "w-full flex items-center justify-between p-3 rounded-lg border text-xs transition-all",
                           appliedTaxes.some(t => t.id === tax.id)

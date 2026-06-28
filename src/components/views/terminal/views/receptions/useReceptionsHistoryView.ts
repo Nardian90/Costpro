@@ -36,7 +36,7 @@ export function useReceptionsHistoryView() {
 
   const filteredReceipts = useMemo(() => {
     return receptions.filter(r => {
-      const matchesSearch = (r.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      const matchesSearch = ((r.id as string).toLowerCase().includes(searchTerm.toLowerCase()) ||
                              r.supplier?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                              r.reference_doc?.toLowerCase().includes(searchTerm.toLowerCase()));
 
@@ -44,7 +44,7 @@ export function useReceptionsHistoryView() {
 
       let matchesDate = true;
       if (dateFrom || dateTo) {
-        const date = new Date(r.reception_date || r.created_at || '');
+        const date = new Date((r.reception_date as any) || (r.created_at as any) || '');
         if (dateFrom && date < new Date(dateFrom)) matchesDate = false;
         if (dateTo && date > new Date(dateTo)) matchesDate = false;
       }
@@ -249,12 +249,12 @@ export function useReceptionsHistoryView() {
       const toastId = toast.loading('Preparando Excel de recepciones...');
       const XLSX = await import('@e965/xlsx');
       const data = receptions.map(r => ({
-        'ID': r.id.split('-')[0],
-        'Fecha': r.reception_date || r.created_at ? new Date(r.reception_date || r.created_at || '').toLocaleDateString('es-CU') : '',
+        'ID': (r.id as string).split('-')[0],
+        'Fecha': r.reception_date || r.created_at ? new Date((r.reception_date as any) || (r.created_at as any) || '').toLocaleDateString('es-CU') : '',
         'Proveedor': r.supplier || '',
         'Factura': r.reference_doc || '',
         'Estado': r.status === 'active' ? 'Confirmada' : r.status === 'voided' ? 'Anulada' : r.status === 'pending' ? 'Pendiente' : 'Parcial',
-        'Total Costo': Number(r.total_cost.toFixed(2)),
+        'Total Costo': Number((r.total_cost as any).toFixed(2)),
       }));
       const worksheet = XLSX.utils.json_to_sheet(data);
       worksheet['!cols'] = [{ wch: 12 }, { wch: 16 }, { wch: 25 }, { wch: 18 }, { wch: 14 }, { wch: 16 }];

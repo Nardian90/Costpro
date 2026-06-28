@@ -355,7 +355,7 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
     const shouldUpdatePrice = newSalePrice !== null && newSalePrice !== (selected.price || null) && newSalePrice > 0;
 
     setItems(prev => [...prev, {
-      product_id: selected.id,
+      product_id: selected.id as any,
       sku: selected.sku || '',
       name: selected.name,
       quantity: newQuantity,
@@ -472,7 +472,7 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
           );
         }
         return [...prev, {
-          product_id: skuMatch.id,
+          product_id: skuMatch.id as any,
           sku: skuMatch.sku || '',
           name: skuMatch.name,
           quantity: 1,
@@ -505,7 +505,7 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
           );
         }
         return [...prev, {
-          product_id: barcodeMatch.id,
+          product_id: barcodeMatch.id as any,
           sku: barcodeMatch.sku || '',
           name: barcodeMatch.name,
           quantity: 1,
@@ -530,7 +530,7 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
       p.name.toLowerCase().includes(q) || p.sku?.toLowerCase().includes(q)
     );
     if (fuzzy.length === 1) {
-      setSelectedProductId(fuzzy[0].id);
+      setSelectedProductId(fuzzy[0].id as any);
       toast.info(`"${fuzzy[0].name}" seleccionado — confirma cantidad y costo`);
       return;
     }

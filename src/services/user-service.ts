@@ -191,6 +191,6 @@ export const userService = {
       store_id: effectiveActiveStoreId || profileData.store_id,
     };
 
-    return await validateResponse(userData, profileSchema, 'getUserProfile');
+    return (await validateResponse(userData as any, profileSchema, 'getUserProfile')) as any;
   }
 };

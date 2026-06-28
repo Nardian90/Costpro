@@ -97,25 +97,25 @@ export default function UsersManagementView() {
             </thead>
             <tbody>
               {users.map((u) => (
-                <tr key={u.id} className="border-b border-border/50 hover:bg-muted/20 transition-colors" aria-label={`Usuario: ${u.full_name}`}>
+                <tr key={u.id} className="border-b border-border/50 hover:bg-muted/20 transition-colors" aria-label={`Usuario: ${(u.full_name as any)}`}>
                   <td className="p-4" aria-label="Datos del usuario">
                      <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-lg bg-primary text-foreground flex items-center justify-center font-black text-xs">
-                          {u.full_name?.charAt(0)}
+                          {(u.full_name as any)?.charAt(0)}
                         </div>
-                        <div className="font-bold text-sm uppercase">{u.full_name}</div>
+                        <div className="font-bold text-sm uppercase">{(u.full_name as any)}</div>
                      </div>
                   </td>
-                  <td className="p-4 font-mono text-xs text-muted-foreground">{u.email}</td>
+                  <td className="p-4 font-mono text-xs text-muted-foreground">{(u.email as any)}</td>
                   <td className="p-4 font-mono text-xs text-muted-foreground whitespace-nowrap hidden sm:table-cell">
-                    {u.created_at ? new Date(u.created_at).toLocaleDateString() : '-'}
+                    {u.created_at ? new Date(u.created_at as any).toLocaleDateString() : '-'}
                   </td>
                   <td className="p-4 text-center hidden sm:table-cell" aria-label="Días activos">
                     <div className="flex flex-col items-center">
                       <span className="text-xs font-black text-primary">
                         {(() => {
                           // FIX-BUG-UX-001: Guard against invalid Date from created_at
-                          const created = new Date(u.created_at);
+                          const created = new Date(u.created_at as any);
                           return u.created_at && !isNaN(created.getTime())
                             ? Math.floor((Date.now() - created.getTime()) / 86400000)
                             : 0;
@@ -126,7 +126,7 @@ export default function UsersManagementView() {
                   </td>
                   <td className="p-4 hidden sm:table-cell">
                     <div className="flex flex-wrap gap-2">
-                      {u.memberships?.map((m, idx) => (
+                      {(u.memberships as any)?.map((m: any, idx: number) => (
                         <div key={idx} className="flex flex-col bg-muted/30 p-1.5 rounded-lg border border-border/50 min-w-[80px]">
                           <span className={cn(
                             "px-1.5 py-0.5 rounded text-xs font-black uppercase w-fit",
@@ -140,7 +140,7 @@ export default function UsersManagementView() {
                           </span>
                         </div>
                       ))}
-                      {(!u.memberships || u.memberships.length === 0) && (
+                      {(!u.memberships || (u.memberships as any).length === 0) && (
                         <span className="text-xs text-muted-foreground uppercase font-bold italic opacity-50">Sin asignaciones</span>
                       )}
                     </div>
@@ -149,8 +149,8 @@ export default function UsersManagementView() {
                   <td className="p-4 text-center">
                     {isAdmin ? (
                       <Select
-                        defaultValue={u.plan || 'free'}
-                        onValueChange={(val) => handleUpdatePlan(u.id, val)}
+                        defaultValue={(u.plan as any) || 'free'}
+                        onValueChange={(val) => handleUpdatePlan(u.id as any, val)}
                       >
                         <SelectTrigger className="w-[100px] h-10 text-[10px] font-black uppercase">
                           <SelectValue />
@@ -166,15 +166,15 @@ export default function UsersManagementView() {
                         "px-2 py-1 rounded text-[10px] font-black uppercase tracking-widest",
                         u.plan === 'pro' ? 'bg-primary/20 text-primary' : 'bg-muted text-muted-foreground'
                       )}>
-                        {u.plan || 'free'}
+                        {(u.plan as any) || 'free'}
                       </span>
                     )}
                   </td>
                   <td className="p-4 text-center">
                     <div className="flex flex-col items-center gap-2">
                       <Switch
-                        checked={u.is_active}
-                        onCheckedChange={(checked) => handleToggleUserStatus(u.id, checked)}
+                        checked={u.is_active as any}
+                        onCheckedChange={(checked) => handleToggleUserStatus(u.id as any, checked)}
                         disabled={u.id === user?.id} // Don't allow self-ban
                       />
                       <span className={cn(
@@ -188,14 +188,14 @@ export default function UsersManagementView() {
                   <td className="p-4">
                     <div className="flex justify-center gap-2">
                       <button type="button"
-                        onClick={() => handleEditUser(u)}
+                        onClick={() => handleEditUser(u as any)}
                         className="w-10 h-10 sm:w-8 sm:h-8 flex items-center justify-center rounded-lg border border-border hover:bg-primary hover:text-foreground transition-all active:scale-95"
                         aria-label="Editar usuario"
                       >
                         <Edit className="w-4 h-4" />
                       </button>
                       <button type="button"
-                        onClick={() => handleResetPassword(u.id)}
+                        onClick={() => handleResetPassword(u.id as any)}
                         className="w-10 h-10 sm:w-8 sm:h-8 flex items-center justify-center rounded-lg border border-border hover:bg-warning hover:text-foreground transition-all active:scale-95"
                         aria-label="Reiniciar contraseña"
                         title="Reiniciar contraseña"
@@ -203,7 +203,7 @@ export default function UsersManagementView() {
                         <Key className="w-4 h-4" />
                       </button>
                       <button type="button"
-                        onClick={() => handleDeleteUser(u.id)}
+                        onClick={() => handleDeleteUser(u.id as any)}
                         disabled={u.id === user?.id}
                         className="w-10 h-10 sm:w-8 sm:h-8 flex items-center justify-center rounded-lg border border-border hover:bg-destructive hover:text-foreground transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed"
                         aria-label="Eliminar usuario"

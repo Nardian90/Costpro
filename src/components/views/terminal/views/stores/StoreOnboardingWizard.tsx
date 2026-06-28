@@ -124,8 +124,8 @@ export function StoreOnboardingWizard({ isOpen, onClose, onCompleted }: StoreOnb
   const filteredUsers = existingUsers.filter(u => {
     if (!data.userSearch.trim()) return true;
     const q = data.userSearch.toLowerCase().trim();
-    return (u.full_name || '').toLowerCase().includes(q) ||
-           (u.email || '').toLowerCase().includes(q);
+    return ((u.full_name as any) || '').toLowerCase().includes(q) ||
+           ((u.email as any) || '').toLowerCase().includes(q);
   });
 
   // Validación por paso
@@ -547,17 +547,17 @@ export function StoreOnboardingWizard({ isOpen, onClose, onCompleted }: StoreOnb
                     />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="font-bold text-sm truncate">{u.full_name || 'Sin nombre'}</span>
-                        {u.role && (
+                        <span className="font-bold text-sm truncate">{(u.full_name as any) || 'Sin nombre'}</span>
+                        { (u.role as any) && (
                           <span className="text-sm font-black uppercase px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
-                            {u.role}
+                            {(u.role as any)}
                           </span>
                         )}
                       </div>
-                      {u.email && (
+                      { (u.email as any) && (
                         <div className="flex items-center gap-1 text-sm text-muted-foreground truncate">
                           <Mail className="w-2.5 h-2.5 shrink-0" />
-                          <span className="truncate">{u.email}</span>
+                          <span className="truncate">{(u.email as any)}</span>
                         </div>
                       )}
                     </div>

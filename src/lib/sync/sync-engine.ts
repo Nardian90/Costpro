@@ -64,7 +64,7 @@ export class SyncEngine {
       logger.info('SYNC', 'PENDING_OPERATIONS', { count: pending.length });
 
       for (const operation of pending) {
-        await this.processOperation(operation);
+        await this.processOperation(operation as any);
       }
     } catch (error) {
       logger.error('SYNC', 'QUEUE_PROCESSING_FAILED', { error: String(error) });

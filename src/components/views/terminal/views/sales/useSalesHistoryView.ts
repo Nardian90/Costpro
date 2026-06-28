@@ -27,9 +27,9 @@ function generateCSV(transactions: Transaction[]): string {
     const rows = transactions.map(t => [
         t.id.split('-')[0],
         formatDate(t.created_at),
-        new Date(t.created_at).toLocaleTimeString('es-CU', { hour: '2-digit', minute: '2-digit' }),
+        new Date(t.created_at as any).toLocaleTimeString('es-CU', { hour: '2-digit', minute: '2-digit' }),
         formatPaymentMethod(t.payment_method),
-        (t.total_amount || 0).toFixed(2),
+        ((t.total_amount as any) || 0).toFixed(2),
         (t.subtotal || 0).toFixed(2),
         (t.discount_value || 0).toFixed(2),
         (t.tax_amount || 0).toFixed(2),
@@ -92,11 +92,11 @@ export function useSalesHistoryView() {
 
             // Date range filter
             if (dateFrom) {
-                const txnDate = toLocalDateString(new Date(t.created_at));
+                const txnDate = toLocalDateString(new Date(t.created_at as any));
                 if (txnDate < dateFrom) return false;
             }
             if (dateTo) {
-                const txnDate = toLocalDateString(new Date(t.created_at));
+                const txnDate = toLocalDateString(new Date(t.created_at as any));
                 if (txnDate > dateTo) return false;
             }
 
@@ -104,9 +104,9 @@ export function useSalesHistoryView() {
             if (!searchTerm) return true;
             const lower = searchTerm.toLowerCase();
             return (
-                t.id.toLowerCase().includes(lower) ||
-                t.total_amount.toString().includes(lower) ||
-                (t.payment_method || '').toLowerCase().includes(lower)
+                (t.id as string).toLowerCase().includes(lower) ||
+                (t.total_amount as any).toString().includes(lower) ||
+                ((t.payment_method as any) || '').toLowerCase().includes(lower)
             );
         });
     }, [transactionsData, searchTerm, selectedStatus, dateFrom, dateTo]);
@@ -200,7 +200,7 @@ export function useSalesHistoryView() {
             return;
         }
         try {
-            const csv = generateCSV(filteredTransactions);
+            const csv = generateCSV(filteredTransactions as any);
             const dateStr = new Date().toISOString().split('T')[0];
             downloadCSV(csv, `ventas_${dateStr}.csv`);
             toast.success(`${filteredTransactions.length} ventas exportadas a CSV.`);
@@ -231,7 +231,7 @@ export function useSalesHistoryView() {
     const stats = useMemo(() => {
         const all = transactionsData;
         const completed = all.filter(t => t.status === 'completed');
-        const totalSales = completed.reduce((sum, t) => sum + (t.total_amount || 0), 0);
+        const totalSales = completed.reduce((sum, t) => sum + ((t.total_amount as any) || 0), 0);
         return {
             total: all.length,
             completed: completed.length,

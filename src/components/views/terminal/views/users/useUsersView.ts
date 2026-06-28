@@ -39,7 +39,7 @@ export function useUsersView() {
     );
 
     const filteredUsers = usersData
-        .filter(u => (u.full_name || '').toLowerCase().includes(searchTerm.toLowerCase()))
+        .filter(u => ((u.full_name as any) || '').toLowerCase().includes(searchTerm.toLowerCase()))
         .filter(u => {
             // RBAC Guard: Only admins can see other admins
             if (user?.role === 'admin') return true;

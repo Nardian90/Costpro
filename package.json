@@ -78,6 +78,8 @@
     "@upstash/ratelimit": "^2.0.8",
     "@upstash/redis": "^1.37.0",
     "@vercel/functions": "^3.7.4",
+    "ai": "^4.1.21",
+    "@ai-sdk/openai-compatible": "^0.1.9",
     "@zxing/browser": "^0.2.0",
     "@zxing/library": "^0.22.0",
     "canvas-confetti": "^1.9.4",
@@ -144,7 +146,7 @@
     "xlsx": "^0.18.5",
     "xlsx-js-style": "^1.2.0",
     "z-ai-web-dev-sdk": "^0.0.17",
-    "zod": "^4.0.2",
+    "zod": "^3.23.8",
     "zustand": "^5.0.6"
   },
   "devDependencies": {

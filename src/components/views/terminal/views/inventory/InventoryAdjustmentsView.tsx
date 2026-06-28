@@ -73,7 +73,7 @@ export default function InventoryAdjustmentsView() {
           </div>
         ) : adjustments.length > 0 ? (
           adjustments.map(mov => (
-            <div key={mov.id} className="p-4 rounded-2xl border border-border bg-card flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:border-primary/40 transition-all group relative overflow-hidden">
+            <div key={mov.id as any} className="p-4 rounded-2xl border border-border bg-card flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:border-primary/40 transition-all group relative overflow-hidden">
               <div className="flex items-center gap-4">
                 <div className={cn(
                   "w-12 h-12 rounded-xl flex items-center justify-center border shadow-sm transition-transform group-hover:scale-110",

@@ -206,14 +206,14 @@ export default function ReceptionsHistoryView() {
                 </thead>
                 <tbody>
                   {data.map(rec => (
-                    <tr key={rec.id} className="border-b border-border/50 hover:bg-muted/20 transition-colors">
-                      <td className="p-4 font-bold text-xs text-primary">{rec.id.split('-')[0]}</td>
+                    <tr key={rec.id as any} className="border-b border-border/50 hover:bg-muted/20 transition-colors">
+                      <td className="p-4 font-bold text-xs text-primary">{(rec.id as string).split('-')[0]}</td>
                       <td className="p-4">
                         <div className="flex items-center gap-2">
                            <Calendar className="w-3 h-3 text-muted-foreground" />
-                           <div className="font-bold text-xs">{formatDate(rec.reception_date)}</div>
+                           <div className="font-bold text-xs">{formatDate(rec.reception_date as any)}</div>
                         </div>
-                        <div className="text-xs text-muted-foreground ml-5">{formatTime(rec.created_at)}</div>
+                        <div className="text-xs text-muted-foreground ml-5">{formatTime(rec.created_at as any)}</div>
                       </td>
                       <td className="p-4 hidden sm:table-cell">
                         <div className="flex items-center gap-2">
@@ -241,12 +241,12 @@ export default function ReceptionsHistoryView() {
                         </span>
                       </td>
                       <td className="p-4 text-right">
-                        <span className="text-base font-black text-primary tabular-nums">{formatCurrency(rec.total_cost)}</span>
+                        <span className="text-base font-black text-primary tabular-nums">{formatCurrency(rec.total_cost as any)}</span>
                       </td>
                       <td className="p-4 text-center">
                         <div className="flex items-center justify-center gap-2">
                           <button type="button"
-                            onClick={() => handleViewDetails(rec)}
+                            onClick={() => handleViewDetails(rec as any)}
                             className="w-11 h-11 inline-flex items-center justify-center rounded-lg border border-border hover:bg-primary hover:text-foreground transition-all active:scale-95"
                             title="Ver productos"
                           >
@@ -256,7 +256,7 @@ export default function ReceptionsHistoryView() {
                               Aplica los cambios de stock y vuelve la recepción no editable. */}
                           {rec.status === 'pending' && (
                             <button type="button"
-                              onClick={() => handleConfirmPendingRequest(rec)}
+                              onClick={() => handleConfirmPendingRequest(rec as any)}
                               className="w-11 h-11 inline-flex items-center justify-center rounded-lg border-2 border-success/40 bg-success/90 text-white dark:text-black hover:bg-success transition-all active:scale-95"
                               title="Confirmar recepción (aplicar al inventario)"
                               disabled={isConfirmingPending}
@@ -271,7 +271,7 @@ export default function ReceptionsHistoryView() {
                           {rec.status === 'active' && (
                             <>
                               <button type="button"
-                                onClick={() => handleInvert(rec)}
+                                onClick={() => handleInvert(rec as any)}
                                 className="w-11 h-11 inline-flex items-center justify-center rounded-lg border border-border hover:bg-destructive hover:text-foreground transition-all active:scale-95"
                                 title="Invertir Recepción — Crea un documento de disminución que revierte el stock manteniendo trazabilidad (equivalente a anular con auditoría)"
                                 disabled={isInverting}
@@ -279,7 +279,7 @@ export default function ReceptionsHistoryView() {
                                 <RefreshCcw className={cn("w-4 h-4", isInverting && "animate-spin")} />
                               </button>
                               <button type="button"
-                                onClick={() => handleDuplicate(rec)}
+                                onClick={() => handleDuplicate(rec as any)}
                                 className="w-11 h-11 inline-flex items-center justify-center rounded-lg border border-border hover:bg-info hover:text-foreground transition-all active:scale-95"
                                 title="Duplicar Recepción"
                               >
@@ -291,7 +291,7 @@ export default function ReceptionsHistoryView() {
                               (requiere Invertir + nueva recepción para corregir). */}
                           {rec.status === 'pending' && (
                             <button type="button"
-                              onClick={() => handleEdit(rec)}
+                              onClick={() => handleEdit(rec as any)}
                               className="w-11 h-11 inline-flex items-center justify-center rounded-lg border border-border hover:bg-warning hover:text-foreground transition-all active:scale-95"
                               title="Editar"
                             >
@@ -302,7 +302,7 @@ export default function ReceptionsHistoryView() {
                               (no se anulan directamente) para mantener trazabilidad. */}
                           {rec.status === 'pending' && (
                             <button type="button"
-                              onClick={() => handleVoidRequest(rec)}
+                              onClick={() => handleVoidRequest(rec as any)}
                               className="w-11 h-11 inline-flex items-center justify-center rounded-lg border border-border hover:bg-destructive hover:text-foreground transition-all active:scale-95"
                               title="Anular"
                             >
@@ -320,20 +320,20 @@ export default function ReceptionsHistoryView() {
         </div>
       </div>
       <ReceptionDetailsModal
-        receipt={selectedReceipt}
+        receipt={selectedReceipt as any}
         isOpen={!!selectedReceipt}
         onClose={handleCloseDetails}
-        items={receiptItems}
+        items={receiptItems as any}
         isLoading={loadingDetails}
-        onExport={() => selectedReceipt && handleExportCSV(selectedReceipt, receiptItems)}
+        onExport={() => selectedReceipt && handleExportCSV(selectedReceipt as any, receiptItems as any)}
         isEditMode={isEditMode}
-        onUpdateSubmit={(updates) => selectedReceipt && handleUpdateSubmit(selectedReceipt.id, updates)}
-        onVoidRequest={() => selectedReceipt && handleVoidConfirm(selectedReceipt!)}
+        onUpdateSubmit={(updates) => selectedReceipt && handleUpdateSubmit(selectedReceipt.id as any, updates)}
+        onVoidRequest={() => selectedReceipt && handleVoidConfirm(selectedReceipt as any)}
         isUpdating={isUpdating}
         isVoiding={isVoiding}
         // Reception-Flow-Fix: pasar props para confirmar pendiente.
         isConfirmPendingMode={!!confirmingReceiptId && !!selectedReceipt && selectedReceipt.id === confirmingReceiptId}
-        onConfirmPending={() => selectedReceipt && handleConfirmPendingExecute(selectedReceipt)}
+        onConfirmPending={() => selectedReceipt && handleConfirmPendingExecute(selectedReceipt as any)}
         onConfirmPendingCancel={handleConfirmPendingCancel}
         isConfirmingPending={isConfirmingPending}
       />

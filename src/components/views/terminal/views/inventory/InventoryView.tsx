@@ -141,14 +141,14 @@ export default function InventoryView() {
         return rawProducts
             .filter(p =>
                 p.id &&
-                uuidRegex.test(p.id) &&
-                (!p.store_id || uuidRegex.test(p.store_id))
+                uuidRegex.test(p.id as any) &&
+                (!p.store_id || uuidRegex.test(p.store_id as any))
             )
             .map(p => ({
                 ...p,
                 // Merge local override so toggles survive RPC refetches
-                visible_en_tienda: p.id in visibilityOverrides
-                    ? visibilityOverrides[p.id]
+                visible_en_tienda: (p.id as any) in visibilityOverrides
+                    ? visibilityOverrides[p.id as any]
                     : p.visible_en_tienda,
             }));
     }, [data, visibilityOverrides]);
@@ -160,13 +160,13 @@ export default function InventoryView() {
         getFCStatus,
         isLoading: isLoadingFC,
         hasStoreTemplate,
-    } = useProductFCStatus(products);
+    } = useProductFCStatus(products as any);
 
     // FC status map for passing to child views
     const fcStatusMap = useMemo(() => {
         const map = new Map<string, ProductFCStatus>();
         for (const product of products) {
-            map.set(product.id, getFCStatus(product.id));
+            map.set(product.id as string, getFCStatus(product.id as string));
         }
         return map;
     }, [products, getFCStatus]);
@@ -175,8 +175,8 @@ export default function InventoryView() {
     const fcResolutionMap = useMemo(() => {
         const map = new Map<string, FCResolutionResult>();
         for (const product of products) {
-            const info = fcInfoMap.get(product.id);
-            if (info) map.set(product.id, info.resolution);
+            const info = fcInfoMap.get(product.id as string);
+            if (info) map.set(product.id as string, info.resolution);
         }
         return map;
     }, [products, fcInfoMap]);
@@ -206,12 +206,12 @@ export default function InventoryView() {
         }
         // FC status filter
         if (fcFilter !== 'all') {
-            filtered = filtered.filter(p => getFCStatus(p.id) === fcFilter);
+            filtered = filtered.filter(p => getFCStatus(p.id as string) === fcFilter);
         }
         return filtered;
     }, [products, stockFilter, fcFilter, getFCStatus]);
 
-    const stockAlerts = useStockAlerts(products);
+    const stockAlerts = useStockAlerts(products as any);
 
     // Track scroll position on the terminal-content container (the actual scrollable parent)
     useEffect(() => {
@@ -321,7 +321,7 @@ export default function InventoryView() {
                 }
                 // GAP-3: Si solo hay 1 producto, abrir directamente; si hay varios, abrir el primero
                 // (el usuario puede cambiar de producto desde el selector dentro del modal)
-                setCostAnalysisProduct(products[0]);
+                setCostAnalysisProduct(products[0] as any);
             },
             variant: 'outline',
             className: currentView === 'inventory' ? 'flex' : 'hidden',
@@ -408,7 +408,7 @@ export default function InventoryView() {
 
         // Optimistic: apply to all filtered products via local state
         const newOverrides: Record<string, boolean> = {};
-        targetIds.forEach(id => { newOverrides[id] = visible; });
+        targetIds.forEach(id => { newOverrides[id as string] = visible; });
         setVisibilityOverrides(prev => ({ ...prev, ...newOverrides }));
 
         try {
@@ -421,7 +421,7 @@ export default function InventoryView() {
                 // Revert all on error
                 setVisibilityOverrides(prev => {
                     const next = { ...prev };
-                    targetIds.forEach(id => delete next[id]);
+                    targetIds.forEach(id => delete next[id as string]);
                     return next;
                 });
                 throw error;
@@ -612,7 +612,7 @@ export default function InventoryView() {
 
             {/* KPI Dashboard */}
             {products.length > 0 && (
-              <InventoryKPIs products={products} fcCoverage={fcCoverage} />
+              <InventoryKPIs products={products as any} fcCoverage={fcCoverage} />
             )}
 
             <div className={cn(isPending && "opacity-50 transition-opacity")} role="list" aria-label="Lista de productos del inventario">
@@ -626,7 +626,7 @@ export default function InventoryView() {
                     {(loadedProducts) => (
                         layoutMode === 'card' ? (
                             <InventoryCardView
-                                products={loadedProducts}
+                                products={loadedProducts as any}
                                 loadMore={fetchMoreProducts}
                                 hasMore={hasNextPage}
                                 isLoading={isFetchingNextPage}
@@ -636,7 +636,7 @@ export default function InventoryView() {
                             />
                         ) : (
                             <InventoryTableView
-                                products={loadedProducts}
+                                products={loadedProducts as any}
                                 loadMore={fetchMoreProducts}
                                 hasMore={hasNextPage}
                                 isLoading={isFetchingNextPage}
@@ -669,7 +669,7 @@ export default function InventoryView() {
             />
 
             <ABCAnalysisModal
-                products={products}
+                products={products as any}
                 isOpen={showABC}
                 onClose={() => setShowABC(false)}
             />
@@ -681,7 +681,7 @@ export default function InventoryView() {
                 productId={costAnalysisProduct?.id || ''}
                 productName={costAnalysisProduct?.name || ''}
                 storeId={user?.activeStoreId}
-                products={products.map(p => ({ id: p.id, name: p.name }))}
+                products={products.map(p => ({ id: p.id as any, name: p.name }))}
                 onProductChange={(p) => setCostAnalysisProduct(p as any)}
             />
 
