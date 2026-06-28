@@ -1,0 +1,120 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { withAuth, type AuthenticatedSession } from '@/lib/auth-middleware';
+import { withTracing } from '@/lib/observability';
+import { getSupabaseAdminSafe } from '@/lib/supabase-admin';
+import { calculateProductCost, calculateDashboard } from '@/lib/costeo-dinamico/engine';
+import type { ProductCostInput, CostEngineConfig, CurrentRate } from '@/lib/costeo-dinamico/types';
+import { logger } from '@/lib/logger';
+
+export const runtime = 'nodejs';
+export const maxDuration = 60;
+
+/**
+ * POST /api/inventory/costeo-dinamico/simulate
+ *
+ * Simula el costeo dinámico con una tasa de cambio diferente.
+ * No modifica datos — es puramente analítico.
+ *
+ * Body:
+ *   store_id, currency, simulated_rate, source, min_margin, target_margin, rounding
+ */
+
+async function postHandler(req: NextRequest, session: AuthenticatedSession) {
+  const body = await req.json().catch(() => ({}));
+  const { store_id, currency, simulated_rate, source, min_margin, target_margin, rounding } = body;
+
+  if (!store_id || !simulated_rate) {
+    return NextResponse.json({ error: 'store_id y simulated_rate son requeridos' }, { status: 400 });
+  }
+
+  const supabase = getSupabaseAdminSafe();
+  if (!supabase) return NextResponse.json({ error: 'Server misconfigured' }, { status: 500 });
+
+  const currentRate: CurrentRate = {
+    currency: currency || 'USD',
+    rate: parseFloat(simulated_rate),
+    source: source || 'Manual',
+    date: new Date().toISOString(),
+  };
+
+  const config: CostEngineConfig = {
+    min_margin: parseFloat(min_margin) || 0.15,
+    target_margin: parseFloat(target_margin) || 0.30,
+    rounding_rule: rounding || 'multiple_10',
+    rounding_direction: 'nearest',
+    rate_source: 'Manual',
+    manual_rate: currentRate,
+  };
+
+  // Reuse same data fetching as GET route
+  const { data: products } = await supabase
+    .from('products')
+    .select('id, name, stock_current, cost_average, price, is_active')
+    .eq('store_id', store_id)
+    .eq('is_active', true);
+
+  if (!products || products.length === 0) {
+    return NextResponse.json({ data: [], dashboard: calculateDashboard([]), currentRate, config });
+  }
+
+  const productIds = products.map(p => p.id);
+  const { data: receiptItems } = await supabase
+    .from('receipt_items')
+    .select('id, product_id, quantity, unit_cost, moneda_recepcion, tasa_cambio_recepcion, receipt_id')
+    .in('product_id', productIds);
+
+  const { data: serviceDistributions } = await supabase
+    .from('service_cost_distributions')
+    .select('product_id, distribution_amount, received_services(service_type_name)')
+    .in('product_id', productIds);
+
+  const { data: commissionLinks } = await supabase
+    .from('commission_reception_links')
+    .select('product_id, allocated_amount, distribution_method, receipt_id')
+    .in('receipt_id', (receiptItems || []).map(r => r.receipt_id));
+
+  const results = products.map(product => {
+    const prodReceipts = (receiptItems || []).filter(r => r.product_id === product.id);
+    const prodServices = (serviceDistributions || [])
+      .filter(s => s.product_id === product.id)
+      .map(s => ({
+        service_id: '',
+        total_amount: s.distribution_amount || 0,
+        distribution_method: 'cost_value' as const,
+        service_type_name: (s as any).received_services?.service_type_name || 'Otros',
+      }));
+    const prodCommissions = (commissionLinks || [])
+      .filter(c => c.product_id === product.id)
+      .map(c => ({
+        payment_id: c.receipt_id,
+        amount: c.allocated_amount,
+        distribution_method: c.distribution_method as 'cost_value',
+      }));
+
+    const input: ProductCostInput = {
+      product_id: product.id,
+      product_name: product.name,
+      store_id,
+      stock_current: product.stock_current || 0,
+      cost_average: product.cost_average || 0,
+      current_price: product.price || 0,
+      receipts: prodReceipts.map(r => ({
+        product_id: r.product_id,
+        quantity: r.quantity,
+        unit_cost: r.unit_cost,
+        moneda_recepcion: r.moneda_recepcion || 'CUP',
+        tasa_cambio_recepcion: r.tasa_cambio_recepcion || 1.0,
+      })),
+      services: prodServices,
+      commissions: prodCommissions,
+    };
+
+    return calculateProductCost(input, config, currentRate);
+  });
+
+  const dashboard = calculateDashboard(results);
+
+  return NextResponse.json({ data: results, dashboard, currentRate, config });
+}
+
+export const POST = withTracing(withAuth(postHandler) as any, 'POST /api/inventory/costeo-dinamico/simulate');

@@ -99,7 +99,7 @@ function useProductFilter(products: StorefrontProduct[]) {
   const categories = useMemo(() => {
     const cats = new Set<string>();
     products.forEach((p) => { if (p.category) cats.add(p.category); });
-    return Array.from(cats).sort();
+    return Array.from(cats).sort((a, b) => a.localeCompare(b));
   }, [products]);
 
   // Use debouncedSearch for filtering — reduces useMemo recalculations

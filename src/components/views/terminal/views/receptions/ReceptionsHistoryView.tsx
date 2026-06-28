@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Calendar,
   Building2,
@@ -15,6 +15,8 @@ import {
   Zap,
   CheckCircle2,
   Clock,
+  DollarSign,
+  Loader2,
 } from 'lucide-react';
 import { cn, formatCurrency, formatDate, formatTime } from '@/lib/utils';
 import SearchBar from '@/components/ui/SearchBar';
@@ -22,6 +24,10 @@ import { QueryInspector } from '@/components/ui/QueryInspector';
 import { StateRenderer } from '@/components/ui/StateRenderer';
 import { Skeleton } from '@/components/ui/skeleton';
 import { DestructiveConfirmModal } from '@/components/ui/DestructiveConfirmModal';
+import { BaseModal } from '@/components/ui/BaseModal';
+import { apiFetch } from '@/lib/api-fetch';
+import { toast } from 'sonner';
+import { useAuthStore } from '@/store';
 import { useUIStore } from '@/store';
 import { useReceptionsHistoryView } from './useReceptionsHistoryView';
 import { ReceptionDetailsModal } from './ReceptionDetailsModal';
@@ -77,6 +83,60 @@ export default function ReceptionsHistoryView() {
     isInverting,
   } = useReceptionsHistoryView();
 
+  // FIX-WIZARD: Estado del wizard de backfill masivo
+  const user = useAuthStore((s) => s.user);
+  const storeId = (user as any)?.activeStoreId;
+  const isAdmin = (user as any)?.role === 'admin' || (user as any)?.role === 'manager';
+  const [showBackfillWizard, setShowBackfillWizard] = useState(false);
+  const [backfillLoading, setBackfillLoading] = useState(false);
+  const [backfillForm, setBackfillForm] = useState({
+    date_from: '',
+    date_to: '',
+    moneda: 'USD',
+    tasa: 0,
+  });
+
+  const handleBackfillMonedaChange = async (moneda: string) => {
+    setBackfillForm(prev => ({ ...prev, moneda, tasa: moneda === 'CUP' ? 1 : prev.tasa }));
+    if (moneda !== 'CUP') {
+      try {
+        const res = await fetch(`/api/exchange-rates?currency=${moneda}&source=BCC&segment=3&days=1`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.length > 0) setBackfillForm(prev => ({ ...prev, tasa: data[0].rate }));
+        }
+      } catch {}
+    }
+  };
+
+  const handleBackfillApply = async () => {
+    if (!storeId || !backfillForm.tasa || backfillForm.tasa <= 0) {
+      toast.error('Debes especificar una tasa válida');
+      return;
+    }
+    setBackfillLoading(true);
+    try {
+      const data = await apiFetch('/api/inventory/receptions/backfill-tasas', {
+        method: 'POST',
+        body: JSON.stringify({
+          store_id: storeId,
+          date_from: backfillForm.date_from || undefined,
+          date_to: backfillForm.date_to || undefined,
+          moneda: backfillForm.moneda,
+          tasa: backfillForm.tasa,
+          motivo: 'Backfill masivo desde wizard',
+        }),
+      });
+      toast.success(data.message || `${data.updated} items actualizados`);
+      setShowBackfillWizard(false);
+      setBackfillForm({ date_from: '', date_to: '', moneda: 'USD', tasa: 0 });
+    } catch (e: any) {
+      toast.error('Error: ' + e.message);
+    } finally {
+      setBackfillLoading(false);
+    }
+  };
+
   return (
     <>
       <div className="space-y-6">
@@ -107,6 +167,18 @@ export default function ReceptionsHistoryView() {
               <Zap className="w-4 h-4" />
               <span className="hidden sm:inline">Express</span>
             </button>
+            {/* FIX-WIZARD: Botón de wizard de backfill masivo */}
+            {isAdmin && (
+              <button
+                type="button"
+                onClick={() => setShowBackfillWizard(true)}
+                className="inline-flex items-center gap-2 px-4 py-2.5 min-h-[44px] rounded-xl border-2 border-amber-400/40 bg-amber-400/10 text-amber-600 dark:text-amber-400 font-black text-xs uppercase tracking-widest hover:bg-amber-400/20 hover:border-amber-400/60 transition-all active:scale-95 focus:outline-none focus:ring-2 focus:ring-amber-400/30"
+                title="Asignar tasas históricas a múltiples recepciones"
+              >
+                <DollarSign className="w-4 h-4" />
+                <span className="hidden sm:inline">Tasas históricas</span>
+              </button>
+            )}
             <button
               type="button"
               onClick={handleExportAllExcel}
@@ -364,6 +436,120 @@ export default function ReceptionsHistoryView() {
         onConfirm={handleInvertConfirm}
         isSubmitting={isInverting}
       />
+
+      {/* FIX-WIZARD: Modal de backfill masivo de tasas históricas */}
+      <BaseModal
+        open={showBackfillWizard}
+        onOpenChange={setShowBackfillWizard}
+        title="Asignar Tasas Históricas"
+        maxWidth="sm:max-w-lg"
+      >
+        <div className="p-6 space-y-5">
+          <div className="rounded-xl border border-amber-400/30 bg-amber-400/10 p-4 space-y-1">
+            <p className="text-sm font-black uppercase tracking-widest text-amber-600 dark:text-amber-400">
+              Wizard de Backfill Masivo
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Asigna una moneda y tasa de cambio a TODAS las recepciones que todavía tienen
+              el valor default (CUP / 1.0) en el rango de fecha especificado.
+              Las recepciones que ya tienen una tasa asignada NO se modifican.
+            </p>
+          </div>
+
+          {/* Rango de fecha */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <label className="text-xs font-black uppercase tracking-widest text-muted-foreground">
+                Desde (opcional)
+              </label>
+              <input
+                type="date"
+                value={backfillForm.date_from}
+                onChange={e => setBackfillForm(prev => ({ ...prev, date_from: e.target.value }))}
+                className="w-full h-11 px-3 rounded-xl border border-border bg-background text-sm font-bold"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-black uppercase tracking-widest text-muted-foreground">
+                Hasta (opcional)
+              </label>
+              <input
+                type="date"
+                value={backfillForm.date_to}
+                onChange={e => setBackfillForm(prev => ({ ...prev, date_to: e.target.value }))}
+                className="w-full h-11 px-3 rounded-xl border border-border bg-background text-sm font-bold"
+              />
+            </div>
+          </div>
+
+          {/* Moneda + Tasa */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <label className="text-xs font-black uppercase tracking-widest text-muted-foreground">Moneda</label>
+              <select
+                value={backfillForm.moneda}
+                onChange={e => handleBackfillMonedaChange(e.target.value)}
+                className="w-full h-11 px-3 rounded-xl border border-border bg-background text-sm font-bold"
+              >
+                <option value="CUP">CUP</option>
+                <option value="USD">USD</option>
+                <option value="EUR">EUR</option>
+                <option value="MLC">MLC</option>
+              </select>
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-black uppercase tracking-widest text-muted-foreground">
+                Tasa (CUP por unidad)
+              </label>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={backfillForm.tasa || ''}
+                onChange={e => setBackfillForm(prev => ({ ...prev, tasa: parseFloat(e.target.value) || 0 }))}
+                disabled={backfillForm.moneda === 'CUP'}
+                className="w-full h-11 px-3 rounded-xl border border-border bg-background text-sm font-bold tabular-nums disabled:opacity-50"
+                placeholder="500"
+              />
+            </div>
+          </div>
+
+          {backfillForm.moneda !== 'CUP' && backfillForm.tasa > 0 && (
+            <div className="p-3 rounded-xl bg-muted/30 border border-border">
+              <p className="text-xs text-muted-foreground mb-1">Vista previa del impacto:</p>
+              <p className="text-sm font-bold">
+                Cada producto comprado a ${backfillForm.tasa} {backfillForm.moneda}/CUP
+                {backfillForm.date_from && ` entre ${backfillForm.date_from}`}
+                {backfillForm.date_to && ` y ${backfillForm.date_to}`}
+                {" "}será actualizado.
+              </p>
+            </div>
+          )}
+
+          <div className="flex items-center justify-end gap-2 pt-2 border-t border-border/30">
+            <button
+              type="button"
+              onClick={() => setShowBackfillWizard(false)}
+              disabled={backfillLoading}
+              className="px-4 h-11 rounded-xl border border-border hover:bg-muted font-bold text-xs uppercase tracking-widest"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={handleBackfillApply}
+              disabled={backfillLoading || !backfillForm.tasa || backfillForm.tasa <= 0}
+              className="px-4 h-11 rounded-xl bg-amber-500 text-white font-black text-xs uppercase tracking-widest hover:bg-amber-600 disabled:opacity-50 flex items-center gap-2"
+            >
+              {backfillLoading ? (
+                <><Loader2 className="w-4 h-4 animate-spin" /> Aplicando...</>
+              ) : (
+                <><DollarSign className="w-4 h-4" /> Aplicar backfill</>
+              )}
+            </button>
+          </div>
+        </div>
+      </BaseModal>
     </>
   );
 }

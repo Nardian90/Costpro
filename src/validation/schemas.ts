@@ -340,6 +340,8 @@ export const receiptItemSchema = z.object({
   product_id: z.string().regex(uuidRegex),
   quantity: z.coerce.number().catch(0),
   unit_cost: z.coerce.number().catch(0),
+  moneda_recepcion: z.string().optional().default('CUP'),
+  tasa_cambio_recepcion: z.coerce.number().optional().default(1.0),
   created_at: z.string().optional(),
   updated_at: z.string().optional(),
   products: z.preprocess(
@@ -476,6 +478,9 @@ export const registerReceptionParamsSchema = z.object({
       unit_of_measure: z.string().optional(),
       sale_price: z.number().min(0).optional(),
       variant_id: z.string().regex(uuidRegex).nullable().optional(),
+      // FIX-COSTEO-DINAMICO: moneda y tasa de cambio por item
+      moneda_recepcion: z.string().optional().default('CUP'),
+      tasa_cambio_recepcion: z.number().min(0).optional().default(1.0),
     }),
   ),
 });

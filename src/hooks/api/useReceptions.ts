@@ -1,3 +1,4 @@
+import { safeRandomShortId } from "@/lib/safe-random";
 import { useQuery, type QueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabaseClient';
 import { validateRPCArrayResponse } from '@/lib/rpc-validator';
@@ -48,7 +49,7 @@ export function useReceptionDetails(receiptId?: string) {
     queryKey: ['receipt-items', receiptId],
     queryFn: async () => {
       if (!receiptId) return [];
-      const columns = 'id, receipt_id, product_id, quantity, unit_cost, created_at, products(name, sku, image_url, public_image_url)';
+      const columns = 'id, receipt_id, product_id, quantity, unit_cost, moneda_recepcion, tasa_cambio_recepcion, created_at, products(name, sku, image_url, public_image_url)';
       const data = await withTableLogging('select', 'receipt_items', () => supabase.from('receipt_items')
         .select(columns)
         .eq('receipt_id', receiptId));
@@ -253,7 +254,7 @@ export function useSavePendingReception() {
       if (newItems.length > 0) {
         const productsData = newItems.map(item => ({
           store_id: params.storeId,
-          sku: item.sku || `SKU-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+          sku: item.sku || `SKU-${Date.now()}-${safeRandomShortId()}`,
           name: item.sku || `Producto ${Date.now()}`, // Se usará temporalmente — el nombre real se setea al confirmar
           cost_price: item.unit_cost,
           price: item.sale_price || 0,

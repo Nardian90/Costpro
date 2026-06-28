@@ -56,7 +56,8 @@ import {
   Gauge,
   UserCog,
   Bot,
-  FlaskConical
+  FlaskConical,
+  Calculator
 } from 'lucide-react';
 
 export type NavItemType = 'item' | 'submenu' | 'group';
@@ -232,6 +233,19 @@ export const SIDEBAR_STRUCTURE: NavModule[] = [
           { id: 'reception_list', label: 'Recepciones', type: 'item', icon: Warehouse, ariaLabel: 'Historial de recepciones y crear nueva', description: 'Historial de recepciones de mercancía. Crea nuevas recepciones con OCR, escaneo y validación contra OC.', allowedRoles: ['admin', 'manager', 'encargado', 'warehouse'] },
           { id: 'purchase-orders', label: 'Órdenes de Compra', type: 'item', icon: ClipboardList, ariaLabel: 'Gestionar pedidos a proveedores', description: 'Crea pedidos a proveedores, haz seguimiento de OCs enviadas y recibe mercancía contra OC.', allowedRoles: ['admin', 'manager', 'encargado', 'warehouse'] },
           { id: 'transferencias', label: 'Transferencia Stock', type: 'item', icon: ArrowLeftRight, ariaLabel: 'Mover entre almacenes', description: 'Transfiere productos entre tiendas con tracking de envío, tránsito y recepción.', allowedRoles: ['admin', 'manager', 'encargado', 'warehouse'] }
+        ]
+      },
+      // FIX: COSTO como último submenu dentro de MULTI-TIENDA (sin icono en el padre)
+      {
+        id: 'costo',
+        label: 'Costo',
+        type: 'submenu',
+        ariaLabel: 'Análisis de costo',
+        description: 'Estructura de costo del producto y costeo dinámico por absorción.',
+        allowedRoles: ['admin', 'manager', 'costo'],
+        children: [
+          { id: 'estructura-costo', label: 'Estructura de Costo', type: 'item', icon: Calculator, ariaLabel: 'Ver estructura de costo', description: 'Visualiza la composición del costo de cada producto: base, transportación, manipulación, comisiones, servicios, variación cambiaria.' },
+          { id: 'costeo-dinamico', label: 'Costeo Dinámico', type: 'item', icon: DollarSign, ariaLabel: 'Ver costeo dinámico', description: 'Calcula el costo real de reposición del inventario absorbiendo servicios, comisiones e impacto cambiario.' },
         ]
       },
     ]

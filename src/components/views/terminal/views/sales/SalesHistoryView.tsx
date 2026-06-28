@@ -313,7 +313,7 @@ export default function SalesHistoryView() {
             <div className="overflow-x-auto rounded-xl border border-border bg-card shadow-sm">
               <div className="table-scroll-wrapper">
               {/* Sticky header table */}
-              <table className="data-table sticky-column-1 w-full text-sm">
+              <table className="data-table sticky-column-1 w-full text-sm"><thead className="sr-only"><tr><th>Columnas</th></tr></thead>
                 <thead className="sticky top-0 z-10 bg-background">
                   <tr className="bg-muted/30 text-muted-foreground font-black uppercase text-xs tracking-widest border-b border-border">
                     <th className="p-4 text-center w-10">
@@ -356,7 +356,7 @@ export default function SalesHistoryView() {
                           transform: `translateY(${virtualRow.start}px)`,
                         }}
                       >
-                        <table className="data-table sticky-column-1 w-full text-sm">
+                        <table className="data-table sticky-column-1 w-full text-sm"><thead className="sr-only"><tr><th>Columnas</th></tr></thead>
                           <tbody>
                             <tr className={cn(
                                 "border-b border-border/50 hover:bg-muted/20 transition-colors",

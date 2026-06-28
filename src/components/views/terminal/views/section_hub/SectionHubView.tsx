@@ -213,7 +213,7 @@ export default function SectionHubView({ submenuId }: SectionHubViewProps) {
                   'p-3 rounded-xl inline-flex mb-4 transition-colors',
                   isPremium ? 'bg-primary/10 group-hover:bg-primary/15' : 'bg-primary/5 group-hover:bg-primary/10',
                 )}>
-                  {ChildIcon && <ChildIcon className={cn('w-8 h-8', isPremium ? 'text-primary' : 'text-primary')} aria-hidden="true" />}
+                  {ChildIcon && <ChildIcon className={cn('w-8 h-8', isPremium ? 'text-primary' : 'text-muted-foreground')} aria-hidden="true" />}
                 </div>
 
                 <h3 className="text-base font-black uppercase tracking-tight text-foreground mb-2 flex items-center gap-2">

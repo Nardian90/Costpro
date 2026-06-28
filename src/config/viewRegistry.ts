@@ -7,6 +7,18 @@ export interface ViewRegistryItem {
 
 export const VIEW_REGISTRY: ViewRegistryItem[] = [
   {
+    id: "estructura-costo",
+    route: "/terminal?view=estructura-costo",
+    description: "Estructura de costo del producto: base, transportación, manipulación, comisiones, servicios, variación cambiaria.",
+    actions: ["filter_date", "export"],
+  },
+  {
+    id: "costeo-dinamico",
+    route: "/terminal?view=costeo-dinamico",
+    description: "Costeo dinámico por absorción. Calcula el costo real de reposición del inventario.",
+    actions: ["simulate_rate", "commit_prices", "rollback_prices"],
+  },
+  {
     id: "chat",
     route: "/terminal?view=chat",
     description: "Chat con Darian, el asistente IA de CostPro. Consulta costos, ventas, busca productos, navega vistas y ejecuta acciones.",

@@ -1,3 +1,4 @@
+import { safeRandomShortId } from "@/lib/safe-random";
 /**
  * @file Contrato de datos estricto para la Ficha de Costo (CostSheet).
  * @description Define la estructura de datos que el frontend DEBE esperar
@@ -142,7 +143,7 @@ export const CostSheetRowFactory = {
   create: (
     initialValues?: Partial<CostSheetRowContract>
   ): CostSheetRowContract => ({
-    id: `row-${Math.random().toString(36).substring(2, 11)}`,
+    id: `row-${safeRandomShortId()}`,
     label: '',
     valorHistorico: 0,
     value: 0,
@@ -162,7 +163,7 @@ export const CostSheetSectionFactory = {
   create: (
     initialValues?: Partial<CostSheetSectionContract>
   ): CostSheetSectionContract => ({
-    id: `section-${Math.random().toString(36).substring(2, 11)}`,
+    id: `section-${safeRandomShortId()}`,
     label: '',
     rows: [],
     ...initialValues,
@@ -208,7 +209,7 @@ export const CostSheetAnnexFactory = {
   create: (
     initialValues?: Partial<CostSheetAnnexContract>
   ): CostSheetAnnexContract => ({
-    id: `annex-${Math.random().toString(36).substring(2, 11)}`,
+    id: `annex-${safeRandomShortId()}`,
     title: '',
     columns: [],
     data: [],

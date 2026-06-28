@@ -28,13 +28,12 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
   // manager role. With the user's JWT, the UPDATE could silently fail with 500.
   // The other write routes (/api/stores/route.ts POST/PATCH/DELETE) already use the
   // service-role client — this route should do the same for consistency and reliability.
-  const { createClient } = await import('@supabase/supabase-js');
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key) {
+  // FIX-DRY: Use the shared getSupabaseAdminSafe() factory instead of inline createClient.
+  const { getSupabaseAdminSafe } = await import('@/lib/supabase-admin');
+  const supabase = getSupabaseAdminSafe();
+  if (!supabase) {
     return NextResponse.json({ error: 'Server misconfigured' }, { status: 500 });
   }
-  const supabase = createClient(url, key, { auth: { autoRefreshToken: false, persistSession: false } });
 
   const userId = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(session.user.id || '')
     ? session.user.id : null;

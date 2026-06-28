@@ -1,4 +1,5 @@
 'use client';
+import { safeRandom } from '@/lib/safe-random';
 
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -109,7 +110,7 @@ export const ViewLoadingSplash: React.FC<ViewLoadingSplashProps> = ({
     const interval = setInterval(() => {
       setProgress(prev => {
         if (prev >= 90) return 90;
-        return prev + Math.random() * 8 + 2;
+        return prev + safeRandom(2, 10);
       });
     }, 600);
     return () => clearInterval(interval);

@@ -103,12 +103,8 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
   const enterFocusMode = useCallback((moduleId: string) => {
     setSidebarState('expanded');
     setFocusModuleId(moduleId);
-    // Auto-expand all children inside the focused module
-    const mod = SIDEBAR_STRUCTURE.find(m => m.id === moduleId);
-    if (mod) {
-      const childIds = (mod.children || []).map(c => c.id);
-      setExpandedModules(childIds);
-    }
+    // FIX: Do NOT auto-expand children — let the user expand manually
+    setExpandedModules([]);
     // Close sidebar on mobile after entering focus
     if (isMobile) onClose();
   }, [setSidebarState, isMobile, onClose]);
@@ -295,7 +291,7 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
                 aria-expanded={isExpanded}
                 className={cn(
                   "w-12 h-12 flex items-center justify-center rounded-xl transition-all active:scale-95 mx-auto mb-2",
-                  focusModuleId === mod.id ? "bg-primary/10 text-primary" : "text-sidebar-foreground/60 hover:bg-primary/10 hover:text-primary"
+                  "text-sidebar-foreground/60 hover:bg-primary/10 hover:text-primary"
                 )}
               >
                 {mod.icon && <mod.icon className="w-5 h-5" />}
@@ -328,22 +324,16 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
               className={cn(
                 "w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all outline-none focus-visible:ring-2 focus-visible:ring-primary/50 active:scale-[0.98]",
                 depth === 0 && "sm:mt-3",
-                isChatActive
-                  ? "bg-primary/10 text-primary"
-                  : "text-sidebar-foreground/60 hover:bg-primary/5 hover:text-sidebar-foreground"
+                "text-sidebar-foreground/60 hover:bg-primary/5 hover:text-sidebar-foreground"
               )}
             >
               <div className="flex items-center gap-3">
-                {mod.icon && <mod.icon className={cn("w-4 h-4", isChatActive ? "opacity-100" : "opacity-50")} />}
+                {mod.icon && <mod.icon className="w-4 h-4 opacity-50" />}
                 <span className={cn(
                   "font-black tracking-[0.2em] uppercase",
-                  depth === 0 ? "text-xs" : "text-[11px] opacity-80",
-                  isChatActive && "text-primary"
+                  depth === 0 ? "text-xs" : "text-[11px] opacity-80"
                 )}>{mod.label}</span>
               </div>
-              {isChatActive && (
-                <span className="text-[9px] font-bold uppercase tracking-widest text-primary/60 bg-primary/10 px-2 py-0.5 rounded-full">Activo</span>
-              )}
             </button>
           </div>
         );
@@ -356,23 +346,16 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
             className={cn(
               "w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all outline-none focus-visible:ring-2 focus-visible:ring-primary/50 active:scale-[0.98]",
               depth === 0 && "sm:mt-3",
-              isFocused
-                ? "bg-primary/10 text-primary"
-                : isCore
-                  ? "text-sidebar-foreground hover:bg-primary/5 hover:text-sidebar-foreground"
-                  : "text-sidebar-foreground/60 hover:bg-primary/5 hover:text-sidebar-foreground"
+              "text-sidebar-foreground/60 hover:bg-primary/5 hover:text-sidebar-foreground"
             )}
           >
             <div className="flex items-center gap-3">
-              {mod.icon && <mod.icon className={cn("w-4 h-4", isCore ? "opacity-70" : "opacity-50")} />}
+              {mod.icon && <mod.icon className="w-4 h-4 opacity-50" />}
               <span className={cn(
                 "font-black tracking-[0.2em] uppercase",
                 depth === 0 ? "text-xs" : "text-[11px] opacity-80"
               )}>{mod.label}</span>
             </div>
-            {isFocused && (
-              <span className="text-[9px] font-bold uppercase tracking-widest text-primary/60 bg-primary/10 px-2 py-0.5 rounded-full">Activo</span>
-            )}
           </button>
         </div>
       );
@@ -387,7 +370,7 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
           className={cn(
             "w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
             "sm:mt-0.5",
-            isExpanded ? "bg-primary/5 text-primary" : "text-sidebar-foreground/60 hover:text-sidebar-foreground"
+            isExpanded ? "text-sidebar-foreground" : "text-sidebar-foreground/60 hover:text-sidebar-foreground"
           )}
         >
           <div className="flex items-center gap-3">

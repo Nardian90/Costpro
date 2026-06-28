@@ -360,6 +360,8 @@ export interface ReceiptItem {
   product_id: string;
   quantity: number;
   unit_cost: number;
+  moneda_recepcion?: string;
+  tasa_cambio_recepcion?: number;
   created_at?: string;
   updated_at?: string;
   products?: {

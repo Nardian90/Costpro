@@ -34,6 +34,9 @@ export interface ReceptionItem {
   variant_id: string | null;
   variant_name: string | null;
   conversion_factor: number | null;
+  // FIX-GAP2: Moneda y tasa de cambio por item para costeo dinámico
+  moneda_recepcion: string;
+  tasa_cambio_recepcion: number;
 }
 
 export type ImportWizardStep = 'upload' | 'preview' | 'confirm';
@@ -157,6 +160,9 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
   const [manualUnitOfMeasure, setManualUnitOfMeasure] = useState<string>('unidad');
   // REC-2 MM-R9: Precio de venta editable en modal
   const [newSalePrice, setNewSalePrice] = useState<number | null>(null);
+  // FIX-GAP2: Moneda y tasa de cambio para el formulario de nuevo item
+  const [newMoneda, setNewMoneda] = useState<string>('CUP');
+  const [newTasa, setNewTasa] = useState<number>(1.0);
 
   // FIX-07: Search with pagination
   const [searchLimit, setSearchLimit] = useState(20);
@@ -333,6 +339,8 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
     setManualName('');
     setManualSku('');
     setManualUnitOfMeasure('unidad');
+    setNewMoneda('CUP');
+    setNewTasa(1.0);
     setNewSalePrice(null);
   };
 
@@ -368,6 +376,8 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
       variant_id: selectedVariant?.id || null,
       variant_name: selectedVariant?.name || null,
       conversion_factor: selectedVariant?.conversion_factor || null,
+      moneda_recepcion: newMoneda,
+      tasa_cambio_recepcion: newTasa,
     }]);
     handleCloseForm();
     toast.success(`"${selected.name}"${selectedVariant ? ` (${selectedVariant.name})` : ''} agregado a la recepcion`);
@@ -399,6 +409,8 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
       variant_id: null,
       variant_name: null,
       conversion_factor: null,
+      moneda_recepcion: newMoneda,
+      tasa_cambio_recepcion: newTasa,
     }]);
     handleCloseForm();
     toast.success(`"${name}" agregado como producto nuevo (se creara al registrar)`);
@@ -929,6 +941,8 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
           unit_of_measure: item.unit_of_measure,
           sale_price: item.sale_price ?? undefined,
           variant_id: item.variant_id,
+          moneda_recepcion: item.moneda_recepcion || 'CUP',
+          tasa_cambio_recepcion: item.tasa_cambio_recepcion || 1.0,
         })),
       }).catch((err: unknown) => {
         // Política forward-only: detectar error de backdated y mostrar mensaje claro
@@ -1267,6 +1281,10 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
     setManualUnitOfMeasure,
     newSalePrice,
     setNewSalePrice,
+    newMoneda,
+    setNewMoneda,
+    newTasa,
+    setNewTasa,
     isImportOpen,
     importStep,
     setImportStep,

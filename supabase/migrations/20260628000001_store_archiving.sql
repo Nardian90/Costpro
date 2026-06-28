@@ -26,13 +26,36 @@ BEGIN
 END $$;
 
 -- 3. Añadir columna archived_by para registrar quién archivó
+-- FIX-AUDIT-7: Added REFERENCES auth.users(id) ON DELETE SET NULL directly in the
+-- column definition. Previously the column was created without FK, requiring a
+-- separate migration (20260628120000) to add the constraint. Now this migration
+-- is self-contained and idempotent — the FK is added if it doesn't exist.
 DO $$
 BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM information_schema.columns
     WHERE table_name = 'stores' AND column_name = 'archived_by'
   ) THEN
-    ALTER TABLE public.stores ADD COLUMN archived_by UUID;
+    ALTER TABLE public.stores
+      ADD COLUMN archived_by UUID REFERENCES auth.users(id) ON DELETE SET NULL;
+  END IF;
+END $$;
+
+-- 3b. Ensure FK exists even if column was already created without it (legacy deployments)
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'stores_archived_by_fkey'
+  ) THEN
+    -- Clean orphaned archived_by values before adding FK
+    UPDATE public.stores
+    SET archived_by = NULL
+    WHERE archived_by IS NOT NULL
+      AND NOT EXISTS (SELECT 1 FROM auth.users WHERE id = stores.archived_by::uuid);
+
+    ALTER TABLE public.stores
+      ADD CONSTRAINT stores_archived_by_fkey
+      FOREIGN KEY (archived_by) REFERENCES auth.users(id) ON DELETE SET NULL;
   END IF;
 END $$;
 

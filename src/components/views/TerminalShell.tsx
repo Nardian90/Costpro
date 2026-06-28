@@ -65,6 +65,8 @@ function ViewErrorBoundary({ children, viewName }: { children: React.ReactNode; 
 const DashboardView = dynamic(() => import('@/components/views/terminal/views/dashboard/DashboardView'), { ssr: false });
 const OCCView = dynamic(() => import('@/components/views/terminal/views/dashboard/OCCView'), { ssr: false });
 const ChatBotView = dynamic(() => import('@/components/views/terminal/views/chat/ChatBotView'), { ssr: false });
+const CosteoDinamicoView = dynamic(() => import('@/components/views/terminal/views/costeo_dinamico/CosteoDinamicoView'), { ssr: false });
+const EstructuraCostoView = dynamic(() => import('@/components/views/terminal/views/costeo_dinamico/EstructuraCostoView'), { ssr: false });
 const Pick3IntelligenceView = dynamic(() => import('@/components/views/terminal/views/pick3/Pick3IntelligenceView'), { ssr: false });
 const WalletView = dynamic(() => import('@/components/views/terminal/views/wallet/WalletView'), { ssr: false });
 const POSView = dynamic(() => import('@/components/views/terminal/views/pos/POSView'), { ssr: false });
@@ -339,6 +341,8 @@ export default function TerminalShell() {
         case 'cost_tools':
           return <ViewErrorBoundary viewName="Sección"><SectionHubView submenuId={view} /></ViewErrorBoundary>;
         case 'chat': return <ViewErrorBoundary viewName="Chat con Darian"><ChatBotView /></ViewErrorBoundary>;
+        case 'costeo-dinamico': return <ViewErrorBoundary viewName="Costeo Dinámico"><CosteoDinamicoView /></ViewErrorBoundary>;
+        case 'estructura-costo': return <ViewErrorBoundary viewName="Estructura de Costo"><EstructuraCostoView /></ViewErrorBoundary>;
         case 'occ': return <ViewErrorBoundary viewName="Centro de Control"><OCCView /></ViewErrorBoundary>;
         default: {
           // E-Fix (IA Audit): default "Módulo No Disponible".

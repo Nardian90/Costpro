@@ -120,7 +120,9 @@ async function chatHandler(req: NextRequest) {
 
     // Rate limit: simple IP-based
     const clientId = req.headers.get('x-forwarded-for') || 'unknown';
-    const { allowed } = await simpleRateLimit(clientId, 15, 60_000);
+    // FIX-BUG: simpleRateLimit returns a synchronous object, not a Promise.
+    // Removed unnecessary `await` (CodeQL: Unexpected await of non-Promise).
+    const { allowed } = simpleRateLimit(clientId, 15, 60_000);
     if (!allowed) {
       return NextResponse.json({ error: 'Demasiadas solicitudes. Espera un momento.' }, { status: 429 });
     }

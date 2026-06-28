@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import type { CostSheetHeader } from '@/types/cost-sheet';
 import { useCostSheetStore } from '@/store/cost-sheet-store';
 import { cn } from '@/lib/utils';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, RefreshCw, Loader2 } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
+import { toast } from 'sonner';
 
 import { useTranslations } from 'next-intl';
 // ── Types ───────────────────────────────────────────────────────────
@@ -189,6 +190,39 @@ const CostSheetHeaderEditor: React.FC<CostSheetHeaderEditorProps> = ({
   const [errors, setErrors] = useState<Record<string, string | null>>({});
   // P2: Track de campos "touched" — solo validamos después del primer blur.
   const [touched, setTouched] = useState<Record<string, boolean>>({});
+  // F4.1: Auto-fetch exchange rate from exchange_rates table
+  const [fetchingRate, setFetchingRate] = useState(false);
+
+  const fetchLatestRate = useCallback(async () => {
+    setFetchingRate(true);
+    try {
+      const res = await fetch('/api/exchange-rates?currency=USD&source=BCC&segment=3&days=1');
+      if (!res.ok) throw new Error('API error');
+      const data = await res.json();
+      if (data && data.length > 0) {
+        const latest = data[0];
+        updateValue(['header', 'exchangeRate'], latest.rate);
+        updateValue(['header', 'rateSource'], `BCC MIPYMES (seg 3)`);
+        updateValue(['header', 'rateDate'], latest.rate_date);
+        updateValue(['header', 'rateType'], 'Cierre');
+        toast.success(`Tasa actualizada: ${latest.rate} CUP/USD (${latest.rate_date})`);
+      } else {
+        toast.warning('No hay tasas disponibles. Ejecute "Actualizar BD" en Inteligencia Cambiaria.');
+      }
+    } catch (e: any) {
+      toast.error('Error al obtener tasa: ' + e.message);
+    } finally {
+      setFetchingRate(false);
+    }
+  }, [updateValue]);
+
+  // Auto-fetch on mount if exchangeRate is empty
+  useEffect(() => {
+    if (!header.exchangeRate && !fetchingRate) {
+      fetchLatestRate();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const toggleGroup = (groupTitle: string) => {
     setCollapsedGroups((prev) => ({ ...prev, [groupTitle]: !prev[groupTitle] }));
@@ -412,6 +446,19 @@ const CostSheetHeaderEditor: React.FC<CostSheetHeaderEditorProps> = ({
                               <span className="shrink-0 text-xs font-black text-primary bg-primary/10 px-1.5 py-0 rounded uppercase tracking-wider animate-pulse">
                                 FX
                               </span>
+                            )}
+                            {/* F4.1: Auto-fetch rate button */}
+                            {field.id === 'exchangeRate' && !isEditing && (
+                              <button
+                                type="button"
+                                onClick={(e) => { e.stopPropagation(); fetchLatestRate(); }}
+                                disabled={fetchingRate}
+                                className="shrink-0 ml-1 p-1 rounded hover:bg-primary/10 text-primary transition-colors"
+                                title="Obtener tasa actual del BCC"
+                                aria-label="Obtener tasa actual"
+                              >
+                                {fetchingRate ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
+                              </button>
                             )}
                           </div>
                         )}

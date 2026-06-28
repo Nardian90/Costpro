@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useRef, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import ReactECharts from 'echarts-for-react';
 import type { DateRange } from 'react-day-picker';
@@ -1975,22 +1975,8 @@ function StockAlertCard({
           <h4 className="font-black text-sm uppercase tracking-tight text-foreground">{title}</h4>
           <p className="text-sm text-muted-foreground uppercase tracking-widest">{subtitle}</p>
         </div>
-        {/* FIX-AUDIT: HelpCircle con tooltip explicando la metodología del card */}
-        <div className="relative group shrink-0">
-          <HelpCircle className="w-4 h-4 text-muted-foreground/50 hover:text-primary cursor-help transition-colors" aria-label={`Ayuda sobre ${title}`} />
-          <div className="absolute right-0 top-6 z-20 w-64 p-3 rounded-lg bg-popover border border-border shadow-lg text-xs text-popover-foreground opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all pointer-events-none">
-            {alertType === 'stock' && (
-              <p><strong>Stock crítico:</strong> Productos con ritmo de venta actual que requieren reposición en ≤14 días. Se calcula promedio diario de ventas × 14, comparado con stock real. No usa el mínimo definido por el usuario.</p>
-            )}
-            {alertType === 'slow' && (
-              <p><strong>Movimiento lento:</strong> Productos en stock con más de 30 días sin ventas. Causa capital inmovilizado. Clic en cada producto para ver fundamentación y recomendación.</p>
-            )}
-            {alertType === 'overstock' && (
-              <p><strong>Exceso de inventario:</strong> Productos con cobertura superior a 45 días al ritmo actual de ventas. Benchmark óptimo: 15–30 días. Clic para ver detalle.</p>
-            )}
-            {!alertType && <p>Clic en un producto para ver fundamentación del análisis.</p>}
-          </div>
-        </div>
+        {/* FIX-AUDIT: HelpCircle con tooltip mobile-friendly (click + keyboard) */}
+        <HelpTooltip alertType={alertType} title={title} />
         <span className={cn(
           'text-xs font-black tabular-nums px-2 py-0.5 rounded-full shrink-0',
           items.length > 0 ? 'bg-destructive/10 text-destructive' : 'bg-success/10 text-success',
@@ -3106,6 +3092,69 @@ function DashboardError({ error }: { error: unknown }) {
       <AlertCircle className="w-10 h-10 mx-auto mb-3 text-destructive" />
       <p className="text-sm font-bold text-destructive uppercase tracking-wider">Error al cargar dashboard</p>
       <p className="text-sm text-muted-foreground mt-2 font-mono">{msg}</p>
+    </div>
+  );
+}
+
+// ── HelpTooltip: mobile-friendly + keyboard-accessible tooltip ─────────────
+// FIX-AUDIT: Previously CSS-only `group-hover` which didn't work on touch devices
+// or with keyboard navigation. Now uses state + click toggle + focus management.
+function HelpTooltip({ alertType, title }: { alertType?: 'stock' | 'slow' | 'overstock'; title: string }) {
+  const [open, setOpen] = useState(false);
+  const helpRef = useRef<HTMLButtonElement>(null);
+
+  // Close on outside click
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (helpRef.current && !helpRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [open]);
+
+  // Close on Escape
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [open]);
+
+  const helpText = alertType === 'stock'
+    ? 'Productos con ritmo de venta actual que requieren reposición en 14 días o menos. Se calcula promedio diario de ventas × 14, comparado con stock real. No usa el mínimo definido por el usuario.'
+    : alertType === 'slow'
+    ? 'Productos en stock con más de 30 días sin ventas. Causa capital inmovilizado. Clic en cada producto para ver fundamentación y recomendación.'
+    : alertType === 'overstock'
+    ? 'Productos con cobertura superior a 45 días al ritmo actual de ventas. Benchmark óptimo: 15–30 días. Clic para ver detalle.'
+    : 'Clic en un producto para ver fundamentación del análisis.';
+
+  return (
+    <div className="relative shrink-0">
+      <button
+        ref={helpRef}
+        type="button"
+        onClick={() => setOpen(!open)}
+        onFocus={() => setOpen(true)}
+        onBlur={() => setOpen(false)}
+        aria-label={`Ayuda sobre ${title}`}
+        aria-expanded={open}
+        className="p-1 rounded-md hover:bg-muted text-muted-foreground/50 hover:text-primary cursor-help transition-colors focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 outline-none"
+      >
+        <HelpCircle className="w-4 h-4" />
+      </button>
+      {open && (
+        <div
+          role="tooltip"
+          className="absolute right-0 top-7 z-30 w-64 p-3 rounded-lg bg-popover border border-border shadow-lg text-xs text-popover-foreground"
+        >
+          <p>{helpText}</p>
+        </div>
+      )}
     </div>
   );
 }

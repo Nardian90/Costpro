@@ -69,7 +69,8 @@ export default function IntelligentThemeHandler() {
     try {
       const stored = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
       const connectivity = stored?.state?.connectivity || '4g';
-      document.documentElement.setAttribute('data-connectivity', connectivity);
+      // FIX-BUG: Use .dataset instead of setAttribute (CodeQL recommendation)
+      document.documentElement.dataset.connectivity = connectivity;
     } catch {}
 
     // 2. Initialize mode

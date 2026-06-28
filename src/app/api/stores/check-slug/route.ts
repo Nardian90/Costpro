@@ -25,23 +25,31 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
     return NextResponse.json({ available: false, reason: 'invalid_format' });
   }
 
+  // FIX-AUDIT: Validate excludeStoreId is a proper UUID before using it in the query.
+  // Without this, an attacker could send an arbitrary string and provoke a SQL error
+  // in Supabase (PostgREST returns 500 with internal details).
+  const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  const safeExcludeStoreId = excludeStoreId && UUID_REGEX.test(excludeStoreId) ? excludeStoreId : null;
+  if (excludeStoreId && !safeExcludeStoreId) {
+    return NextResponse.json({ error: 'exclude_store_id must be a valid UUID' }, { status: 400 });
+  }
+
   // FIX-AUDIT-4: Use service-role client for GLOBAL slug uniqueness.
   // Previously used getSupabaseAuthClient(session.token) which is subject to RLS —
   // if RLS filters stores by tenant, a user from tenant A couldn't see tenant B's
   // slug, leading to silent collisions (both register same slug, storefront URL conflicts).
   // The storefront is public, so slugs must be globally unique across all tenants.
-  const { createClient } = await import('@supabase/supabase-js');
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key) {
+  // FIX-DRY: Use the shared getSupabaseAdminSafe() factory instead of inline createClient.
+  const { getSupabaseAdminSafe } = await import('@/lib/supabase-admin');
+  const admin = getSupabaseAdminSafe();
+  if (!admin) {
     return NextResponse.json({ error: 'Server misconfigured' }, { status: 500 });
   }
-  const admin = createClient(url, key, { auth: { autoRefreshToken: false, persistSession: false } });
 
   let query = admin.from('stores').select('id').eq('slug', slug).limit(1);
 
-  if (excludeStoreId) {
-    query = query.neq('id', excludeStoreId);
+  if (safeExcludeStoreId) {
+    query = query.neq('id', safeExcludeStoreId);
   }
 
   const { data, error } = await query;

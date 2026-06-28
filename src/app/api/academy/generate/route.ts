@@ -1,12 +1,19 @@
 import { academyGenerateSchema, zodError } from '@/validation/api-schemas';
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdminSafe as getSupabaseAdmin } from '@/lib/supabase-admin';
-import { getLLMProvider } from '@/lib/ai/orchestrator';
+import { generateText } from 'ai';
 import { getServerSession } from "@/lib/auth";
 import { rateLimit } from '@/lib/rate-limit';
 import { withTracing } from '@/lib/observability';
 import fs, { readdirSync } from 'fs';
 import path from 'path';
+// FIX-DEBT: resolveModel extracted to testable helper
+import { resolveModel } from '@/lib/ai/resolve-model';
+
+/**
+ * MIGRATED to Vercel AI SDK (FIX-DEBT: removed dependency on deprecated orchestrator.ts).
+ * Replaces getLLMProvider + provider.getResponse with generateText + provider factories.
+ */
 
 export const runtime = 'nodejs';
 export const maxDuration = 120; // 2 minutes for processing PDFs and AI
@@ -66,8 +73,8 @@ async function postHandler(req: NextRequest) {
         return NextResponse.json({ error: 'Could not extract text from PDF' }, { status: 400 });
     }
 
-    // Initialize AI Provider
-    const provider = getLLMProvider(aiProvider, aiApiKey);
+    // FIX-DEBT: Resolve Vercel AI SDK model (replaces deprecated getLLMProvider)
+    const { model: aiModel, name: providerName } = resolveModel(aiProvider, aiApiKey);
 
     // Chunking: approx 4000 chars
     const chunkSize = 4000;
@@ -113,7 +120,13 @@ async function postHandler(req: NextRequest) {
       ];
 
       try {
-        const aiResponse = await provider.getResponse(messages, { temperature: 0.3 });
+        // FIX-DEBT: Use generateText from Vercel AI SDK instead of provider.getResponse
+        const aiResponse = await generateText({
+          model: aiModel,
+          system: 'Eres experto en sistemas de gestión de costos empresariales y la plataforma Costpro. Tu objetivo es generar material educativo preciso y técnico.',
+          messages: [{ role: 'user' as const, content: messages[1].content }],
+          temperature: 0.3,
+        });
         let text = aiResponse.text;
 
         // Clean up JSON

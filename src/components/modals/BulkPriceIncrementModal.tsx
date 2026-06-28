@@ -396,7 +396,7 @@ export const BulkPriceIncrementModal: React.FC<BulkPriceIncrementModalProps> = (
             <input
               type="number"
               min="0"
-              step={method === 'markup' ? '0.01' : '0.01'}
+              step="0.01"
               value={value}
               onChange={(e) => setValue(e.target.value)}
               placeholder="0.00"
@@ -656,7 +656,7 @@ export const BulkPriceIncrementModal: React.FC<BulkPriceIncrementModalProps> = (
                       )}
                       {fields.price && (
                         <TableCell
-                          colSpan={fields.precio_empresa ? 1 : 1}
+                          colSpan={1}
                           className="text-right"
                         >
                           <span className="inline-flex items-center gap-1 text-primary font-black text-xs">

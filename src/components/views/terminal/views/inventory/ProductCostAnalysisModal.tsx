@@ -2,10 +2,12 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { Calculator, Truck, Package, Shield, FileText, TrendingUp, X, RefreshCw } from 'lucide-react';
+import { Calculator, Truck, Package, Shield, FileText, TrendingUp, X, RefreshCw, DollarSign, AlertTriangle } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
 import { BaseModal } from '@/components/ui/BaseModal';
 import { toast } from 'sonner';
+import { getRiskColor, getRiskLabel } from '@/lib/costeo-dinamico/risk.classifier';
+import type { ProductCostResult } from '@/lib/costeo-dinamico/types';
 
 /**
  * F4: ProductCostAnalysisModal — Análisis de formación de costo por producto.
@@ -41,6 +43,27 @@ export function ProductCostAnalysisModal({
 }: ProductCostAnalysisModalProps) {
   const [data, setData] = useState<AnalysisEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  // F4.2: Tab de costeo dinámico
+  const [activeTab, setActiveTab] = useState<'recepciones' | 'costeo-dinamico'>('recepciones');
+  const [costeoData, setCosteoData] = useState<ProductCostResult | null>(null);
+  const [costeoLoading, setCosteoLoading] = useState(false);
+
+  const fetchCosteoDinamico = useCallback(async () => {
+    if (!productId || !storeId) return;
+    setCosteoLoading(true);
+    try {
+      // F4-GAP2: Use product_id filter to fetch only this product (not all store products)
+      const res = await fetch(`/api/inventory/costeo-dinamico?store_id=${storeId}&product_id=${productId}`);
+      if (!res.ok) throw new Error('Error al cargar costeo');
+      const result = await res.json();
+      const found = (result.data || []).find((r: ProductCostResult) => r.product_id === productId);
+      setCosteoData(found || null);
+    } catch {
+      setCosteoData(null);
+    } finally {
+      setCosteoLoading(false);
+    }
+  }, [productId, storeId]);
 
   const fetchAnalysis = useCallback(async () => {
     if (!productId) return;
@@ -63,6 +86,13 @@ export function ProductCostAnalysisModal({
   useEffect(() => {
     if (isOpen) fetchAnalysis();
   }, [isOpen, fetchAnalysis]);
+
+  // F4.2: Fetch costeo dinámico cuando se activa la tab
+  useEffect(() => {
+    if (isOpen && activeTab === 'costeo-dinamico' && !costeoData && !costeoLoading) {
+      fetchCosteoDinamico();
+    }
+  }, [isOpen, activeTab, fetchCosteoDinamico, costeoData, costeoLoading]);
 
   // Aggregate totals
   const totals = data.reduce((acc, entry) => {
@@ -97,6 +127,109 @@ export function ProductCostAnalysisModal({
       maxWidth="sm:max-w-3xl"
     >
       <div className="space-y-6">
+        {/* F4.2: Tab selector */}
+        <div className="flex gap-1 border-b border-border">
+          <button
+            onClick={() => setActiveTab('recepciones')}
+            className={cn('px-4 py-2 text-xs font-black uppercase tracking-widest border-b-2 transition-colors',
+              activeTab === 'recepciones' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground')}
+          >
+            Recepciones
+          </button>
+          <button
+            onClick={() => setActiveTab('costeo-dinamico')}
+            className={cn('px-4 py-2 text-xs font-black uppercase tracking-widest border-b-2 transition-colors flex items-center gap-1.5',
+              activeTab === 'costeo-dinamico' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground')}
+          >
+            <DollarSign className="w-3.5 h-3.5" />
+            Impacto Cambiario
+          </button>
+        </div>
+
+        {/* F4.2: Tab content — Costeo Dinámico */}
+        {activeTab === 'costeo-dinamico' ? (
+          costeoLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <RefreshCw className="w-6 h-6 animate-spin text-primary/40" />
+            </div>
+          ) : costeoData ? (
+            <div className="space-y-4">
+              {/* Cost breakdown */}
+              <div className="grid grid-cols-2 gap-3">
+                <CostCard label="Costo Base" value={costeoData.breakdown.base_cost} muted />
+                <CostCard label="Costo Histórico" value={costeoData.historical_cost} muted />
+                <CostCard label="+ Transportación" value={costeoData.breakdown.transport_cost} muted />
+                <CostCard label="+ Manipulación" value={costeoData.breakdown.manipulation_cost} muted />
+                <CostCard label="+ Comisiones" value={costeoData.breakdown.commission_cost} muted />
+                <CostCard label="+ Otros Servicios" value={costeoData.breakdown.other_services_cost} muted />
+                <CostCard
+                  label="+ Impacto Cambiario"
+                  value={costeoData.breakdown.exchange_rate_impact}
+                  highlight={costeoData.breakdown.exchange_rate_impact > 0 ? 'warn' : undefined}
+                />
+                <CostCard label="Costo Real Total" value={costeoData.breakdown.total_real_cost} bold />
+              </div>
+
+              {/* FPR + Riesgo */}
+              <div className="flex items-center gap-4 p-3 rounded-xl bg-muted/30 border border-border">
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">FPR</p>
+                  <p className="text-xl font-black tabular-nums">{costeoData.fpr.toFixed(2)}</p>
+                </div>
+                <div className="flex-1">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Riesgo</p>
+                  <span className={cn('inline-block px-2 py-0.5 rounded-full text-xs font-bold border', getRiskColor(costeoData.risk))}>
+                    {getRiskLabel(costeoData.risk)}
+                  </span>
+                </div>
+                {costeoData.current_margin_pct < 0 && (
+                  <div className="flex items-center gap-1 text-red-600">
+                    <AlertTriangle className="w-4 h-4" />
+                    <span className="text-xs font-bold">Margen negativo</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Margen y precio */}
+              <div className="grid grid-cols-3 gap-3">
+                <div className="p-3 rounded-xl border border-border">
+                  <p className="text-[10px] font-black uppercase text-muted-foreground">Precio Actual</p>
+                  <p className="text-lg font-black tabular-nums">{formatCurrency(costeoData.current_price)}</p>
+                </div>
+                <div className="p-3 rounded-xl border border-border">
+                  <p className="text-[10px] font-black uppercase text-muted-foreground">Margen Actual</p>
+                  <p className={cn('text-lg font-black tabular-nums', costeoData.current_margin_pct < 0 ? 'text-red-600' : costeoData.current_margin_pct < 0.15 ? 'text-amber-600' : 'text-emerald-600')}>
+                    {(costeoData.current_margin_pct * 100).toFixed(1)}%
+                  </p>
+                </div>
+                <div className="p-3 rounded-xl border border-primary/30 bg-primary/5">
+                  <p className="text-[10px] font-black uppercase text-primary">Precio Sugerido</p>
+                  <p className="text-lg font-black tabular-nums text-primary">{formatCurrency(costeoData.suggested_price)}</p>
+                </div>
+              </div>
+
+              {/* Pérdida potencial */}
+              {costeoData.potential_loss > 0 && (
+                <div className="p-3 rounded-xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900">
+                  <div className="flex items-center gap-2">
+                    <AlertTriangle className="w-4 h-4 text-red-600" />
+                    <p className="text-xs font-bold text-red-600">
+                      Pérdida potencial: {formatCurrency(costeoData.potential_loss)} ({costeoData.stock_current} unidades × {(costeoData.breakdown.total_real_cost - costeoData.current_price).toFixed(2)} CUP/u)
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="text-center py-12 text-muted-foreground">
+              <DollarSign className="w-10 h-10 mx-auto mb-3 opacity-30" />
+              <p className="text-sm font-bold">No hay datos de costeo dinámico para este producto</p>
+              <p className="text-xs mt-1">Asegúrate de que el producto tenga recepciones registradas con moneda y tasa de cambio.</p>
+            </div>
+          )
+        ) : (
+        /* Tab content — Recepciones (original) */
+        <>
         {/* GAP-3: Selector de producto */}
         {products && products.length > 1 && (
           <div>
@@ -197,8 +330,22 @@ export function ProductCostAnalysisModal({
             </div>
           </>
         )}
+        </>
+      )}
       </div>
     </BaseModal>
+  );
+}
+
+// F4.2: Helper component for cost cards
+function CostCard({ label, value, muted, bold, highlight }: { label: string; value: number; muted?: boolean; bold?: boolean; highlight?: 'warn' }) {
+  return (
+    <div className={cn('p-3 rounded-xl border', highlight === 'warn' ? 'border-amber-200 bg-amber-50/50' : 'border-border')}>
+      <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">{label}</p>
+      <p className={cn('text-sm tabular-nums', bold ? 'font-black text-primary' : muted ? 'text-muted-foreground' : 'font-bold')}>
+        {value > 0 ? formatCurrency(value) : '—'}
+      </p>
+    </div>
   );
 }
 
