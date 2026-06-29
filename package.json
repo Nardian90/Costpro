@@ -6,6 +6,9 @@
     "dev": "next dev -p 3000",
     "build": "next build",
     "start": "next start",
+    "typecheck": "tsc --noEmit",
+
+
     "audit": "npm audit --audit-level=high",
     "lint": "eslint .",
     "lint:a11y": "eslint src/ --ext .tsx,.ts --rule 'jsx-a11y/alt-text: error' --max-warnings 999",

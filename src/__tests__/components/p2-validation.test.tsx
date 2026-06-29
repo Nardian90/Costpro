@@ -10,7 +10,8 @@
  */
 
 import { describe, it, expect, vi } from 'vitest';
-import { render, fireEvent, waitFor } from '@testing-library/react';
+import * as RTL from '@testing-library/react';
+const { render, fireEvent, waitFor } = RTL as any;
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
@@ -182,7 +183,7 @@ describe('P2 — CostSheetQuickMode validación numérica', () => {
     const numberInputs = container.querySelectorAll('input[type="number"][aria-label]');
     expect(numberInputs.length).toBeGreaterThan(0);
     // Cada aria-label debe contener "fila" o nombre del producto
-    numberInputs.forEach(input => {
+    numberInputs.forEach((input: any) => {
       const label = input.getAttribute('aria-label') || '';
       expect(label.length).toBeGreaterThan(0);
     });

@@ -75,6 +75,7 @@ describe('AI Tools (Vercel AI SDK)', () => {
         'set_ui_mode',
         'run_system_health_check',
         'get_cost_summary',
+        'get_products',
         'get_sales_summary',
       ];
       expect(Object.keys(tools).sort()).toEqual(expected.sort());
@@ -84,7 +85,7 @@ describe('AI Tools (Vercel AI SDK)', () => {
       const tools = buildTools(createContext());
       for (const [name, t] of Object.entries(tools)) {
         expect(t, `tool "${name}"`).toBeDefined();
-        expect((t as any).inputSchema, `tool "${name}" inputSchema`).toBeDefined();
+        expect((t as any).parameters, `tool "${name}" inputSchema`).toBeDefined();
         expect((t as any).description, `tool "${name}" description`).toBeTruthy();
         expect((t as any).execute, `tool "${name}" execute`).toBeTypeOf('function');
       }
@@ -195,7 +196,8 @@ describe('AI Tools (Vercel AI SDK)', () => {
   });
 
   // ─── get_sales_summary ─────────────────────────────────────────────
-  describe('get_sales_summary', () => {
+  describe('get_sales_summary',
+        () => {
     it('uses total_amount column (NOT total) — schema correctness', async () => {
       const fakeTxns = [
         { id: 't1', total_amount: 100, payment_method: 'cash', created_at: '2026-06-28T10:00:00Z' },

@@ -3,7 +3,8 @@
  */
 
 import { describe, it, expect, vi } from 'vitest';
-import { render, fireEvent } from '@testing-library/react';
+import * as RTL from '@testing-library/react';
+const { render, fireEvent } = RTL as any;
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
@@ -157,7 +158,7 @@ describe('P3-8 — UnifiedTabs', () => {
       { wrapper: Wrapper }
     );
     const tabs = container.querySelectorAll('[role="tab"]');
-    tabs.forEach(tab => {
+    tabs.forEach((tab: any) => {
       expect(tab.className).toMatch(/min-h-\[44px\]/);
     });
   });

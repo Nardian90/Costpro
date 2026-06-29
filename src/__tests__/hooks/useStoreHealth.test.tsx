@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { renderHook, waitFor } from '@testing-library/react';
+import * as RTL from '@testing-library/react';
+const { renderHook, waitFor } = RTL as any;
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
 
@@ -50,7 +51,7 @@ describe('useStoreHealth (F4-T05)', () => {
     const health = result.current.data?.['store-1'];
     expect(health).toBeDefined();
     expect(health!.total).toBe(100);
-    expect(health!.categories.every(c => c.achieved)).toBe(true);
+    expect(health!.categories.every((c: any) => c.achieved)).toBe(true);
   });
 
   it('calcula score 0 cuando nada está logrado', async () => {
@@ -73,7 +74,7 @@ describe('useStoreHealth (F4-T05)', () => {
 
     const health = result.current.data?.['store-2'];
     expect(health!.total).toBe(0);
-    expect(health!.categories.every(c => !c.achieved)).toBe(true);
+    expect(health!.categories.every((c: any) => !c.achieved)).toBe(true);
   });
 
   it('calcula score 40 con config + fiscal pero sin FC/productos/ventas', async () => {
@@ -96,9 +97,9 @@ describe('useStoreHealth (F4-T05)', () => {
 
     const health = result.current.data?.['store-3'];
     expect(health!.total).toBe(40);
-    expect(health!.categories.find(c => c.key === 'config')!.achieved).toBe(true);
-    expect(health!.categories.find(c => c.key === 'fiscal')!.achieved).toBe(true);
-    expect(health!.categories.find(c => c.key === 'fc')!.achieved).toBe(false);
+    expect(((health as any).categories as any).find((c: any) => c.key === 'config')!.achieved).toBe(true);
+    expect(((health as any).categories as any).find((c: any) => c.key === 'fiscal')!.achieved).toBe(true);
+    expect(((health as any).categories as any).find((c: any) => c.key === 'fc')!.achieved).toBe(false);
   });
 
   it('usa batch endpoint (apiFetch) en vez de queries individuales', async () => {

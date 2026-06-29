@@ -3,7 +3,8 @@
  */
 
 import { describe, it, expect, vi } from 'vitest';
-import { render, fireEvent, screen } from '@testing-library/react';
+import * as RTL from '@testing-library/react';
+const { render, fireEvent, screen } = RTL as any;
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 

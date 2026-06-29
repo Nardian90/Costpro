@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import * as RTL from '@testing-library/react';
+const { render, screen, fireEvent } = RTL as any;
 import { StoreCard, type StoreCardProps } from '@/components/views/terminal/views/stores/StoreCard';
 import type { Store } from '@/types';
 

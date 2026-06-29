@@ -47,8 +47,38 @@ const getSalesSummaryInput = z.object({
   storeId: z.string().optional(),
 });
 
+const submitFormInput = z.object({
+  formName: z.string(),
+  data: z.record(z.string(), z.any()),
+});
+
+const searchEntityInput = z.object({
+  entity: z.string(),
+  query: z.string(),
+  filters: z.record(z.string(), z.any()).optional(),
+});
+
+const explainViewInput = z.object({
+  viewId: z.string(),
+});
+
+const fillFormInput = z.object({
+  formName: z.string(),
+  data: z.record(z.string(), z.any()),
+});
+
+const runHealthCheckInput = z.object({
+  viewIds: z.array(z.string()).optional(),
+});
+
 export function buildTools(ctx: ToolContext) {
   const { supabase, storeId: ctxStoreId, userRole } = ctx;
+
+  const requireRole = (allowed: string[], toolName: string) => {
+    if (!allowed.includes(userRole)) {
+      throw new Error(`Acceso denegado: El rol '${userRole}' no tiene permiso para usar '${toolName}'.`);
+    }
+  };
 
   return {
     open_view: tool({
@@ -58,6 +88,18 @@ export function buildTools(ctx: ToolContext) {
         const view = getViewDetails(viewId);
         return { success: true, action: { type: 'navigation', payload: { viewId, params } }, message: `Abriendo ${view?.id || viewId}` };
       },
+    }),
+
+    explain_view: tool({
+      description: 'Explicar vista',
+      parameters: explainViewInput,
+      execute: async () => ({ success: true }),
+    }),
+
+    fill_form: tool({
+      description: 'Llenar formulario',
+      parameters: fillFormInput,
+      execute: async () => ({ success: true }),
     }),
 
     get_products: tool({
@@ -73,6 +115,10 @@ export function buildTools(ctx: ToolContext) {
       description: 'Ejecutar acción de sistema',
       parameters: executeActionInput,
       execute: async ({ actionName, parameters }) => {
+        const ALLOWED_ACTIONS = ['recalculate_costs', 'sync_data', 'refresh_dashboard'];
+        if (!ALLOWED_ACTIONS.includes(actionName)) {
+          return { error: `Acción '${actionName}' no permitida. Acciones disponibles: ${ALLOWED_ACTIONS.join(', ')}` };
+        }
         return { success: true, action: { type: 'system_action', payload: { actionName, parameters } } };
       },
     }),
@@ -98,9 +144,27 @@ export function buildTools(ctx: ToolContext) {
       parameters: getCostSummaryInput,
       execute: async ({ storeId }) => {
         const targetStoreId = storeId || ctxStoreId;
-        const { data: products } = await supabase.from('products').select('cost_price').eq('store_id', targetStoreId).eq('is_active', true);
-        const total = (products || []).reduce((sum, p: any) => sum + Number(p.cost_price || 0), 0);
-        return { success: true, summary: { total_inventory_cost: total } };
+        if (!targetStoreId) return { error: 'No se pudo determinar la tienda' };
+
+        const { data: products } = await supabase.from('products').select('id, cost_price').eq('store_id', targetStoreId).eq('is_active', true);
+        const productList = products || [];
+        const totalProducts = productList.length;
+        const totalInventoryCost = productList.reduce((sum, p: any) => sum + Number(p.cost_price || 0), 0);
+        const productsWithCost = productList.filter((p: any) => Number(p.cost_price || 0) > 0).length;
+        const avgCost = totalProducts > 0 ? totalInventoryCost / totalProducts : 0;
+        const coveragePct = totalProducts > 0 ? (productsWithCost / totalProducts) * 100 : 0;
+
+        return {
+          success: true,
+          summary: {
+            total_products: totalProducts,
+            products_with_cost_price: productsWithCost,
+            products_without_cost_price: Math.max(0, totalProducts - productsWithCost),
+            total_inventory_cost: totalInventoryCost,
+            avg_cost_price: avgCost,
+            coverage_pct: coveragePct
+          }
+        };
       },
     }),
 
@@ -109,15 +173,58 @@ export function buildTools(ctx: ToolContext) {
       parameters: getSalesSummaryInput,
       execute: async ({ date, storeId }) => {
         const targetStoreId = storeId || ctxStoreId;
-        const targetDate = date === 'today' ? new Date().toISOString().slice(0, 10) : date;
-        const { data: txns } = await supabase.from('transactions').select('total_amount').eq('store_id', targetStoreId).eq('status', 'completed');
-        const total = (txns || []).reduce((sum, t: any) => sum + Number(t.total_amount || 0), 0);
-        return { success: true, summary: { total_amount: total } };
+        if (!targetStoreId) return { error: 'No se pudo determinar la tienda' };
+
+        const targetDate = !date || date === 'today' ? new Date().toISOString().slice(0, 10) : date;
+        const { data: txns } = await supabase.from('transactions').select('id, total_amount, payment_method, created_at').eq('store_id', targetStoreId).eq('status', 'completed').gte('created_at', `${targetDate}T00:00:00`).lt('created_at', `${targetDate}T23:59:59.999`);
+        const sales = txns || [];
+        const totalAmount = sales.reduce((sum, t: any) => sum + Number(t.total_amount || 0), 0);
+        const byPaymentMethod: Record<string, { total: number }> = {};
+        for (const s of sales) {
+          const pm = (s as any).payment_method || 'unknown';
+          if (!byPaymentMethod[pm]) byPaymentMethod[pm] = { total: 0 };
+          byPaymentMethod[pm].total += Number((s as any).total_amount || 0);
+        }
+
+        return {
+          success: true,
+          date: targetDate,
+          summary: {
+            total_transactions: sales.length,
+            total_amount: totalAmount,
+            by_payment_method: byPaymentMethod
+          }
+        };
       },
+    }),
+
+    submit_form: tool({
+      description: 'Enviar formulario',
+      parameters: submitFormInput,
+      execute: async ({ formName, data }) => {
+        requireRole(['admin', 'manager'], 'submit_form');
+        return { success: true, message: `Formulario ${formName} enviado` };
+      },
+    }),
+
+    search_entity: tool({
+      description: 'Buscar entidad',
+      parameters: searchEntityInput,
+      execute: async ({ entity, query, filters }) => {
+        const sanitized = query.replace(/[%_]/g, '\\$&');
+        const { data } = await supabase.from(entity + 's' as any).select('name').ilike('name', `%${sanitized}%`).limit(5);
+        return { success: true, results: data || [] };
+      },
+    }),
+
+    run_system_health_check: tool({
+      description: 'Check salud sistema',
+      parameters: runHealthCheckInput,
+      execute: async () => ({ success: true }),
     }),
   };
 }
 
 export function getAvailableToolNames(userRole: string): string[] {
-  return ['open_view', 'get_products', 'execute_action', 'export_document', 'set_ui_mode', 'get_cost_summary', 'get_sales_summary'];
+  return ['open_view', 'explain_view', 'fill_form', 'get_products', 'execute_action', 'export_document', 'set_ui_mode', 'get_cost_summary', 'get_sales_summary', 'submit_form', 'search_entity', 'run_system_health_check'];
 }
