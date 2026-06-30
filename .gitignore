@@ -82,3 +82,5 @@ download/
 # Local DB (SQLite — never commit)
 db/*.db
 db/*.db-journal
+# Tool output directory (local only)
+tool-results/
