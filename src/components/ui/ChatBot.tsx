@@ -38,7 +38,7 @@ interface ModelOption {
 }
 
 const MODEL_OPTIONS: ModelOption[] = [
-  { id: 'glm-4-flash', label: 'GLM-4 Flash (z.ai)', badge: 'Default' },
+  { id: 'glm-4.5-flash', label: 'GLM-4.5 Flash (z.ai)', badge: 'Default' },
   { id: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash', badge: 'Rápido' },
   { id: 'gemini-2.5-pro', label: 'Gemini 2.5 Pro', badge: 'Preciso' },
   { id: 'gemini-2.0-flash', label: 'Gemini 2.0 Flash', badge: 'Estable' },
@@ -140,7 +140,7 @@ export function ChatBot({ embedded = false }: { embedded?: boolean } = {}) {
 
   // Persisted selected model
   const [selectedModel, setSelectedModel] = useState<string>(() =>
-    loadFromStorage(MODEL_STORAGE_KEY, 'glm-4-flash')
+    loadFromStorage(MODEL_STORAGE_KEY, 'glm-4.5-flash')
   );
 
   // ─── DERIVED STATE ────────────────────────────────────────────────────────

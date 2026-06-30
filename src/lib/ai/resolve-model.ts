@@ -43,5 +43,5 @@ export function resolveModel(aiProvider?: string, aiApiKey?: string): ResolvedMo
   const baseURL = process.env.ZAI_BASE_URL || 'https://open.bigmodel.cn/api/paas/v4';
   if (!apiKey) throw new Error('No GLM API key available');
   const glm = createOpenAICompatible({ name: 'glm', baseURL, apiKey });
-  return { model: glm('glm-4.5-air'), name: 'glm' };
+  return { model: glm('glm-4.5-flash'), name: 'glm' };
 }

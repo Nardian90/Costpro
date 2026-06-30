@@ -4,6 +4,7 @@
  * Provides authenticated page context (admin + manager roles),
  * reusable store helpers, and API response validation utilities.
  */
+/* eslint-disable react-hooks/rules-of-hooks -- Playwright's `use()` fixture function is not a React hook */
 import { test as base, expect, type Page } from '@playwright/test';
 
 // ── Types ──────────────────────────────────────────────────────────

@@ -19,12 +19,13 @@
  */
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
 import * as fs from 'fs';
+import * as os from 'os';
 import * as path from 'path';
 import type { LanguageModel } from 'ai';
 
 export type AIProviderName = 'glm' | 'gemini';
 
-const DEFAULT_GLM_MODEL = 'glm-4.5-air';
+const DEFAULT_GLM_MODEL = 'glm-4.5-flash';
 
 interface ZaiConfig {
   baseUrl: string;
@@ -45,7 +46,7 @@ function loadZaiConfig(): ZaiConfig | null {
 
   const configPaths = [
     path.join(process.cwd(), '.z-ai-config'),
-    path.join(require('os').homedir(), '.z-ai-config'),
+    path.join(os.homedir(), '.z-ai-config'),
     '/etc/.z-ai-config',
   ];
 

@@ -39,7 +39,7 @@ export interface AIOptions {
 // Helpers
 // ---------------------------------------------------------------------------
 
-const DEFAULT_GLM_MODEL = 'glm-4-flash';
+const DEFAULT_GLM_MODEL = 'glm-4.5-flash';
 const DEFAULT_GEMINI_MODEL = 'gemini-2.5-flash';
 const FALLBACK_GLM_BASE_URL = 'https://open.bigmodel.cn/api/paas/v4';
 

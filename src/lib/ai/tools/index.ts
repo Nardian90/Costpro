@@ -104,7 +104,7 @@ export function buildTools(ctx: ToolContext) {
   };
 
   return {
-    open_view: tool<OpenViewInput, { success?: boolean; error?: string; action?: any; message?: string }, {}>({
+    open_view: tool<OpenViewInput, { success?: boolean; error?: string; action?: any; message?: string }, Record<string, never>>({
       description: 'Navega a una vista específica del sistema. Ejemplos de viewId: dashboard, cost-sheets, inventory, pos, reports.',
       inputSchema: zodSchema(openViewInput),
       execute: async ({ viewId, params }) => {
@@ -119,7 +119,7 @@ export function buildTools(ctx: ToolContext) {
       },
     }),
 
-    explain_view: tool<ExplainViewInput, { success?: boolean; error?: string; description?: string; availableActions?: string[] }, {}>({
+    explain_view: tool<ExplainViewInput, { success?: boolean; error?: string; description?: string; availableActions?: string[] }, Record<string, never>>({
       description: 'Explica el propósito y las acciones disponibles en la vista actual o una específica.',
       inputSchema: zodSchema(explainViewInput),
       execute: async ({ viewId }) => {
@@ -134,7 +134,7 @@ export function buildTools(ctx: ToolContext) {
       },
     }),
 
-    fill_form: tool<FillFormInput, { success: boolean; action: any }, {}>({
+    fill_form: tool<FillFormInput, { success: boolean; action: any }, Record<string, never>>({
       description: 'Completa los campos de un formulario sin enviarlo. Útil para que el usuario revise antes de guardar.',
       inputSchema: zodSchema(fillFormInput),
       execute: async ({ formName, data }) => {
@@ -143,7 +143,7 @@ export function buildTools(ctx: ToolContext) {
       },
     }),
 
-    submit_form: tool<SubmitFormInput, { success?: boolean; error?: string; action?: any }, {}>({
+    submit_form: tool<SubmitFormInput, { success?: boolean; error?: string; action?: any }, Record<string, never>>({
       description: 'Completa y envía un formulario directamente. Solo admin/manager pueden usar esta tool.',
       inputSchema: zodSchema(submitFormInput),
       execute: async ({ formName, data }) => {
@@ -165,7 +165,7 @@ export function buildTools(ctx: ToolContext) {
       },
     }),
 
-    search_entity: tool<SearchEntityInput, { success?: boolean; error?: string; results?: any; count?: number }, {}>({
+    search_entity: tool<SearchEntityInput, { success?: boolean; error?: string; results?: any; count?: number }, Record<string, never>>({
       description: 'Busca registros en el sistema: productos, fichas de costo, transacciones o suministros. Devuelve hasta 5 resultados.',
       inputSchema: zodSchema(searchEntityInput),
       execute: async ({ entity, query }) => {
@@ -194,7 +194,7 @@ export function buildTools(ctx: ToolContext) {
       },
     }),
 
-    execute_action: tool<ExecuteActionInput, { success?: boolean; error?: string; action?: any; message?: string }, {}>({
+    execute_action: tool<ExecuteActionInput, { success?: boolean; error?: string; action?: any; message?: string }, Record<string, never>>({
       description: 'Ejecuta una acción específica del sistema (ej: recalculate_costs, sync_data). Solo admin/manager.',
       inputSchema: zodSchema(executeActionInput),
       execute: async ({ actionName, parameters }) => {
@@ -211,7 +211,7 @@ export function buildTools(ctx: ToolContext) {
       },
     }),
 
-    export_document: tool<ExportDocumentInput, { success: boolean; action: any; message: string }, {}>({
+    export_document: tool<ExportDocumentInput, { success: boolean; action: any; message: string }, Record<string, never>>({
       description: 'Genera y descarga un documento PDF o Excel de una entidad específica.',
       inputSchema: zodSchema(exportDocumentInput),
       execute: async ({ type, entityType, entityId }) => {
@@ -224,7 +224,7 @@ export function buildTools(ctx: ToolContext) {
       },
     }),
 
-    set_ui_mode: tool<SetUiModeInput, { success: boolean; action: any }, {}>({
+    set_ui_mode: tool<SetUiModeInput, { success: boolean; action: any }, Record<string, never>>({
       description: 'Cambia el modo de la interfaz de usuario: standard o expert.',
       inputSchema: zodSchema(setUiModeInput),
       execute: async ({ mode }) => {
@@ -233,7 +233,7 @@ export function buildTools(ctx: ToolContext) {
       },
     }),
 
-    run_system_health_check: tool<RunHealthCheckInput, { success: boolean; message: string; action: any }, {}>({
+    run_system_health_check: tool<RunHealthCheckInput, { success: boolean; message: string; action: any }, Record<string, never>>({
       description: 'Inicia un recorrido automático de todas las vistas del sistema para detectar errores de UI y funcionalidad.',
       inputSchema: zodSchema(runHealthCheckInput),
       execute: async ({ viewIds }) => {
@@ -246,7 +246,7 @@ export function buildTools(ctx: ToolContext) {
       },
     }),
 
-    get_cost_summary: tool<GetCostSummaryInput, { success?: boolean; error?: string; storeId?: string; summary?: any; message?: string }, {}>({
+    get_cost_summary: tool<GetCostSummaryInput, { success?: boolean; error?: string; storeId?: string; summary?: any; message?: string }, Record<string, never>>({
       description: 'Obtiene un resumen agregado de costos para la tienda actual: número de productos activos, costo unitario promedio (cost_price en products + cost_price en product_cost_sheets), costo total del inventario, productos con y sin ficha. Útil cuando el usuario pregunta "muéstrame el resumen de costos", "cuánto me costó el inventario".',
       inputSchema: zodSchema(getCostSummaryInput),
       execute: async ({ storeId }) => {
@@ -310,7 +310,7 @@ export function buildTools(ctx: ToolContext) {
       },
     }),
 
-    get_sales_summary: tool<GetSalesSummaryInput, { success?: boolean; error?: string; date?: string; storeId?: string; summary?: any; message?: string }, {}>({
+    get_sales_summary: tool<GetSalesSummaryInput, { success?: boolean; error?: string; date?: string; storeId?: string; summary?: any; message?: string }, Record<string, never>>({
       description: 'Obtiene un resumen de ventas para una fecha específica (o "today" para hoy). Devuelve número de transacciones, total vendido, y desglose por forma de pago. Útil cuando el usuario pregunta "qué ventas se hicieron hoy", "resumen de ventas".',
       inputSchema: zodSchema(getSalesSummaryInput),
       execute: async ({ date, storeId }) => {

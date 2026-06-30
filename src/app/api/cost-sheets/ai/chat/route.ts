@@ -129,7 +129,7 @@ async function aiChatHandler(req: NextRequest, session: AuthenticatedSession) {
           baseURL,
           apiKey,
         });
-        model = glm('glm-4.5-air');
+        model = glm('glm-4.5-flash');
         usedProvider = 'glm';
       }
 
