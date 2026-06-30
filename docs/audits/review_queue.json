@@ -17,13 +17,16 @@
       "metaPath": null,
       "confidenceScore": 100,
       "createdAt": "2026-03-26T05:30:00Z",
-      "status": "open",
+      "status": "resolved",
       "priority": "high",
       "description": "Detected 23 orphan views and 29 undocumented components during Phase 15 validation.",
       "findings": {
         "orphan_views_count": 23,
         "undocumented_components_count": 29
-      }
+      },
+      "resolvedAt": "2026-06-30T05:00:00Z",
+      "resolvedBy": "R5 audit round",
+      "resolution": "Documented all 56 views in docs/architecture/view-registry.json. See docs/architecture/VIEW_REGISTRY.md for details."
     },
     {
       "id": "rq-phase-16-consistency-20260328023500",

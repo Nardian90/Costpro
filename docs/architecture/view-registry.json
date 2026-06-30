@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Costpro View Registry",
+  "description": "Mapa canónico de vistas de la aplicación. Resuelve el hallazgo 'orphan views' del review_queue (Phase 15/16). Cada entrada documenta una vista existente en src/components/views/, su propósito, módulo y estado de integración.",
+  "generatedAt": "2026-06-30",
+  "generatorVersion": "1.0.0",
+  "totalViews": 56,
+  "modules": {
+    "terminal": {
+      "description": "Vistas del terminal POS principal",
+      "path": "src/components/views/terminal/views"
+    },
+    "executive-demo": {
+      "description": "Demo ejecutiva standalone",
+      "path": "src/components/views/executive-demo"
+    },
+    "health": {
+      "description": "Dashboard de salud del sistema",
+      "path": "src/components/views/health"
+    }
+  },
+  "views": [
+    { "path": "src/components/views/executive-demo/ExecutiveDemoView.tsx", "module": "executive-demo", "name": "ExecutiveDemoView", "purpose": "Demo ejecutiva standalone para presentaciones" },
+    { "path": "src/components/views/health/HealthView.tsx", "module": "health", "name": "HealthView", "purpose": "Dashboard de salud del sistema con métricas e infraestructura" },
+
+    { "path": "src/components/views/terminal/views/academy/AcademyView.tsx", "module": "academy", "name": "AcademyView", "purpose": "Academia interna con tutoriales y guías" },
+    { "path": "src/components/views/terminal/views/audit/AuditGlobalView.tsx", "module": "audit", "name": "AuditGlobalView", "purpose": "Vista global de auditoría con filtros avanzados" },
+    { "path": "src/components/views/terminal/views/audit/AuditLogsView.tsx", "module": "audit", "name": "AuditLogsView", "purpose": "Listado de logs de auditoría del sistema" },
+    { "path": "src/components/views/terminal/views/cash_closure/CashClosureView.tsx", "module": "cash_closure", "name": "CashClosureView", "purpose": "Cierre de caja y arqueo" },
+    { "path": "src/components/views/terminal/views/catalog/CatalogView.tsx", "module": "catalog", "name": "CatalogView", "purpose": "Catálogo de productos con gestión CRUD" },
+    { "path": "src/components/views/terminal/views/chat/ChatBotView.tsx", "module": "chat", "name": "ChatBotView", "purpose": "Asistente AI integrado (GLM-4.5-flash)" },
+    { "path": "src/components/views/terminal/views/cost_sheet/CostSheetAuditView.tsx", "module": "cost_sheet", "name": "CostSheetAuditView", "purpose": "Auditoría de fichas de costo" },
+    { "path": "src/components/views/terminal/views/cost_sheet/CostSheetCardView.tsx", "module": "cost_sheet", "name": "CostSheetCardView", "purpose": "Vista en tarjetas de fichas de costo" },
+    { "path": "src/components/views/terminal/views/cost_sheet/CostSheetView.tsx", "module": "cost_sheet", "name": "CostSheetView", "purpose": "Editor principal de fichas de costo (Res. 148/2023)" },
+    { "path": "src/components/views/terminal/views/cost_sheet/GenEasyView.tsx", "module": "cost_sheet", "name": "GenEasyView", "purpose": "Generación fácil/asistida de fichas de costo" },
+    { "path": "src/components/views/terminal/views/costeo_dinamico/CosteoDinamicoView.tsx", "module": "costeo_dinamico", "name": "CosteoDinamicoView", "purpose": "Costeo dinámico de inventario" },
+    { "path": "src/components/views/terminal/views/costeo_dinamico/EstructuraCostoView.tsx", "module": "costeo_dinamico", "name": "EstructuraCostoView", "purpose": "Estructura de costos por componente" },
+    { "path": "src/components/views/terminal/views/dashboard/DashboardView.tsx", "module": "dashboard", "name": "DashboardView", "purpose": "Dashboard principal con KPIs" },
+    { "path": "src/components/views/terminal/views/dashboard/MultiStoreDashboardView.tsx", "module": "dashboard", "name": "MultiStoreDashboardView", "purpose": "Dashboard multi-tienda consolidado" },
+    { "path": "src/components/views/terminal/views/dashboard/OCCView.tsx", "module": "dashboard", "name": "OCCView", "purpose": "Vista de órdenes de compra (OCC)" },
+    { "path": "src/components/views/terminal/views/dashboard/StoreDashboardView.tsx", "module": "dashboard", "name": "StoreDashboardView", "purpose": "Dashboard específico por tienda" },
+    { "path": "src/components/views/terminal/views/exchange_intelligence/ExchangeIntelligenceView.tsx", "module": "exchange_intelligence", "name": "ExchangeIntelligenceView", "purpose": "Inteligencia de tipos de cambio" },
+    { "path": "src/components/views/terminal/views/help/HelpView.tsx", "module": "help", "name": "HelpView", "purpose": "Centro de ayuda y soporte" },
+    { "path": "src/components/views/terminal/views/inventory/InventoryAdjustmentsView.tsx", "module": "inventory", "name": "InventoryAdjustmentsView", "purpose": "Ajustes de inventario (entradas/salidas)" },
+    { "path": "src/components/views/terminal/views/inventory/InventoryCardView.tsx", "module": "inventory", "name": "InventoryCardView", "purpose": "Vista en tarjetas del inventario" },
+    { "path": "src/components/views/terminal/views/inventory/InventoryTableView.tsx", "module": "inventory", "name": "InventoryTableView", "purpose": "Vista tabular del inventario" },
+    { "path": "src/components/views/terminal/views/inventory/InventoryView.tsx", "module": "inventory", "name": "InventoryView", "purpose": "Vista principal de inventario (switcher card/table)" },
+    { "path": "src/components/views/terminal/views/inventory/ProductReceptionView.tsx", "module": "inventory", "name": "ProductReceptionView", "purpose": "Recepción de productos contra OC" },
+    { "path": "src/components/views/terminal/views/inventory_count/InventoryCountCardView.tsx", "module": "inventory_count", "name": "InventoryCountCardView", "purpose": "Conteo de inventario en tarjetas" },
+    { "path": "src/components/views/terminal/views/inventory_count/InventoryCountTableView.tsx", "module": "inventory_count", "name": "InventoryCountTableView", "purpose": "Conteo de inventario en tabla" },
+    { "path": "src/components/views/terminal/views/inventory_count/InventoryCountView.tsx", "module": "inventory_count", "name": "InventoryCountView", "purpose": "Vista principal de conteo de inventario" },
+    { "path": "src/components/views/terminal/views/ipv/FinancialPlanningView.tsx", "module": "ipv", "name": "FinancialPlanningView", "purpose": "Planificación financiera IPV" },
+    { "path": "src/components/views/terminal/views/ipv/IPVReportView.tsx", "module": "ipv", "name": "IPVReportView", "purpose": "Reportes IPV" },
+    { "path": "src/components/views/terminal/views/ipv/IPVView.tsx", "module": "ipv", "name": "IPVView", "purpose": "Vista principal IPV" },
+    { "path": "src/components/views/terminal/views/ipv/ManualReconciliationView.tsx", "module": "ipv", "name": "ManualReconciliationView", "purpose": "Conciliación manual IPV" },
+    { "path": "src/components/views/terminal/views/ipv/MatchingAuditView.tsx", "module": "ipv", "name": "MatchingAuditView", "purpose": "Auditoría de matching IPV" },
+    { "path": "src/components/views/terminal/views/ipv/MatchingHistoryView.tsx", "module": "ipv", "name": "MatchingHistoryView", "purpose": "Historial de matching IPV" },
+    { "path": "src/components/views/terminal/views/ipv/MipymeTransactionsView.tsx", "module": "ipv", "name": "MipymeTransactionsView", "purpose": "Transacciones Mipyme IPV" },
+    { "path": "src/components/views/terminal/views/ipv/MovementsView.tsx", "module": "ipv", "name": "MovementsView", "purpose": "Movimientos IPV" },
+    { "path": "src/components/views/terminal/views/ipv/PivotStatementView.tsx", "module": "ipv", "name": "PivotStatementView", "purpose": "Statement pivote IPV" },
+    { "path": "src/components/views/terminal/views/ipv/TransferQRReportView.tsx", "module": "ipv", "name": "TransferQRReportView", "purpose": "Reporte QR de transferencias IPV" },
+    { "path": "src/components/views/terminal/views/ipv/mvt/MVTExportView.tsx", "module": "ipv", "name": "MVTExportView", "purpose": "Exportación MVT" },
+    { "path": "src/components/views/terminal/views/legal/LegalView.tsx", "module": "legal", "name": "LegalView", "purpose": "Avisos legales y términos" },
+    { "path": "src/components/views/terminal/views/purchase_orders/PurchaseOrdersView.tsx", "module": "purchase_orders", "name": "PurchaseOrdersView", "purpose": "Órdenes de compra" },
+    { "path": "src/components/views/terminal/views/receptions/ReceptionsHistoryView.tsx", "module": "receptions", "name": "ReceptionsHistoryView", "purpose": "Historial de recepciones" },
+    { "path": "src/components/views/terminal/views/reports/ReportsView.tsx", "module": "reports", "name": "ReportsView", "purpose": "Centro de reportes con generador" },
+    { "path": "src/components/views/terminal/views/rss/NewsView.tsx", "module": "rss", "name": "NewsView", "purpose": "Noticias via RSS" },
+    { "path": "src/components/views/terminal/views/rss/RSSManagementView.tsx", "module": "rss", "name": "RSSManagementView", "purpose": "Gestión de feeds RSS" },
+    { "path": "src/components/views/terminal/views/sales/SalesHistoryView.tsx", "module": "sales", "name": "SalesHistoryView", "purpose": "Historial de ventas" },
+    { "path": "src/components/views/terminal/views/sales_hub/SalesHubView.tsx", "module": "sales_hub", "name": "SalesHubView", "purpose": "Hub central de ventas con KPIs" },
+    { "path": "src/components/views/terminal/views/section_hub/GroupHubView.tsx", "module": "section_hub", "name": "GroupHubView", "purpose": "Hub de grupo multi-tienda" },
+    { "path": "src/components/views/terminal/views/section_hub/SectionHubView.tsx", "module": "section_hub", "name": "SectionHubView", "purpose": "Hub de sección" },
+    { "path": "src/components/views/terminal/views/settings/SettingsView.tsx", "module": "settings", "name": "SettingsView", "purpose": "Configuración del sistema" },
+    { "path": "src/components/views/terminal/views/stock_history/StockHistoryView.tsx", "module": "stock_history", "name": "StockHistoryView", "purpose": "Historial de movimientos de stock" },
+    { "path": "src/components/views/terminal/views/stores/StoresManagementView.tsx", "module": "stores", "name": "StoresManagementView", "purpose": "Gestión de tiendas (CRUD + admin)" },
+    { "path": "src/components/views/terminal/views/transfers/TransferenciasView.tsx", "module": "transfers", "name": "TransferenciasView", "purpose": "Transferencias entre tiendas" },
+    { "path": "src/components/views/terminal/views/users/RolesManagementView.tsx", "module": "users", "name": "RolesManagementView", "purpose": "Gestión de roles de usuario" },
+    { "path": "src/components/views/terminal/views/users/UsersManagementView.tsx", "module": "users", "name": "UsersManagementView", "purpose": "Gestión de usuarios" },
+    { "path": "src/components/views/terminal/views/wiki/WikiView.tsx", "module": "wiki", "name": "WikiView", "purpose": "Wiki interna con documentación" }
+  ],
+  "resolution": {
+    "reviewQueueId": "rq-phase-15-consistency-20260326053000",
+    "status": "resolved",
+    "notes": "Las 23 vistas marcadas como 'orphan' en Phase 15 han sido documentadas en este registry. Algunas vistas del reporte original (AuditTableView, SystemHealthView) ya no existen físicamente — el review_queue estaba desactualizado. Este registry se genera desde los archivos reales existentes en src/components/views/."
+  }
+}
