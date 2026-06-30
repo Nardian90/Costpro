@@ -17,6 +17,7 @@ export function useSync() {
   const [lastSync, setLastSync] = useState<Date | null>(null);
   const [retryAttempt, setRetryAttempt] = useState(0);
   const retryTimerRef = useRef<NodeJS.Timeout | undefined>(undefined);
+  const processQueueRef = useRef<() => Promise<void>>(async () => {});
 
   const updateQueueSize = useCallback(async () => {
     const pending = await offlineStorage.getPendingOperations();
@@ -24,26 +25,6 @@ export function useSync() {
     const failed = await offlineStorage.getFailedCount();
     setFailedCount(failed);
   }, []);
-
-  useEffect(() => {
-    updateQueueSize();
-
-    const handleOnline = () => {
-      setStatus('online');
-      processQueue();
-    };
-    const handleOffline = () => setStatus('offline');
-
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-
-    if (!navigator.onLine) setStatus('offline');
-
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    };
-  }, [updateQueueSize]);
 
   const processQueue = useCallback(async () => {
     if (!navigator.onLine || queueSize === 0 || status === 'syncing') return;
@@ -116,15 +97,13 @@ export function useSync() {
 
       // Continue if there are more items
       if (pending.length > batchSize) {
-        // FIX-RCT-110: Clear previous timer before scheduling
         if (retryTimerRef.current) clearTimeout(retryTimerRef.current);
-        retryTimerRef.current = setTimeout(processQueue, 1000);
+        retryTimerRef.current = setTimeout(() => processQueueRef.current?.(), 1000);
       }
     } catch (err) {
       console.error('Sync error:', err);
       setStatus('error');
 
-      // Exponential Backoff with Jitter
       const baseDelay = 2000;
       const maxDelay = 30000;
       const nextAttempt = retryAttempt + 1;
@@ -135,13 +114,37 @@ export function useSync() {
       const finalDelay = delay + jitter;
 
       logger.info('DATABASE', `Retrying sync in ${Math.round(finalDelay)}ms (attempt ${nextAttempt})`);
-      // FIX-RCT-110: Clear previous timer before scheduling
       if (retryTimerRef.current) clearTimeout(retryTimerRef.current);
-      retryTimerRef.current = setTimeout(processQueue, finalDelay);
+      retryTimerRef.current = setTimeout(() => processQueueRef.current?.(), finalDelay);
     }
-  }, [queueSize, status, user?.id, updateQueueSize, retryAttempt]);
+    }, [queueSize, status, user, updateQueueSize, retryAttempt]);
 
-  // FIX-RCT-110: Cleanup timeout on unmount
+
+
+  useEffect(() => {
+    processQueueRef.current = processQueue;
+  }, [processQueue]);
+
+  useEffect(() => {
+    updateQueueSize();
+
+    const handleOnline = () => {
+      setStatus('online');
+      processQueue();
+    };
+    const handleOffline = () => setStatus('offline');
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    if (!navigator.onLine) setStatus('offline');
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, [updateQueueSize, processQueue]);
+
   useEffect(() => () => { if (retryTimerRef.current) clearTimeout(retryTimerRef.current); }, []);
 
   const addToQueue = useCallback(async (entity: string, operationType: 'CREATE' | 'UPDATE' | 'DELETE', payload: any) => {

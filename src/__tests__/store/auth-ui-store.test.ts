@@ -35,9 +35,9 @@ describe('useAuthStore', () => {
   });
 
   it('setUser updates user', () => {
-    useAuthStore.getState().login({ id: 'u1', name: 'Old' } as any, 'token', 'authenticated_valid');
-    useAuthStore.getState().setUser({ id: 'u1', name: 'New' } as any);
-    expect(useAuthStore.getState().user?.name).toBe('New');
+    useAuthStore.getState().login({ id: 'u1', fullName: 'Old' } as any, 'token', 'authenticated_valid');
+    useAuthStore.getState().setUser({ id: 'u1', fullName: 'New' } as any);
+    expect(useAuthStore.getState().user?.fullName).toBe('New');
   });
 
   it('setToken updates token', () => {
@@ -56,15 +56,15 @@ describe('useAuthStore', () => {
   });
 
   it('updateUser merges partial data', () => {
-    useAuthStore.getState().login({ id: 'u1', name: 'Test', email: 't@t.com' } as any, 'token', 'authenticated_valid');
-    useAuthStore.getState().updateUser({ name: 'Updated' });
+    useAuthStore.getState().login({ id: 'u1', fullName: 'Test', email: 't@t.com' } as any, 'token', 'authenticated_valid');
+    useAuthStore.getState().updateUser({ fullName: 'Updated' });
     const s = useAuthStore.getState();
-    expect(s.user?.name).toBe('Updated');
+    expect(s.user?.fullName).toBe('Updated');
     expect(s.user?.email).toBe('t@t.com'); // preserved
   });
 
   it('updateUser does nothing when user is null', () => {
-    useAuthStore.getState().updateUser({ name: 'Test' });
+    useAuthStore.getState().updateUser({ fullName: 'Test' });
     expect(useAuthStore.getState().user).toBeNull();
   });
 });

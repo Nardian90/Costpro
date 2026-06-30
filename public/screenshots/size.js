@@ -1,4 +1,5 @@
-const fs = require('fs');
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+import fs from 'fs';
 function getSize(f) {
   const buf = fs.readFileSync(f);
   const w = buf.readUInt16BE(buf.indexOf(Buffer.from('c000', 'hex')) + 5);
