@@ -11,6 +11,8 @@ import {
   Pin,
   PinOff,
   Bot,
+  User,
+  Settings,
 } from 'lucide-react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { useAuthStore, useUIStore, ViewType } from '@/store';
@@ -674,16 +676,31 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
             </button>
           )}
           <div className={cn("flex items-center justify-between gap-2", sidebarState === 'rail' && "flex-col")}>
+            {/* FIX-AUDIT-MOBILE: "Mi Perfil" y "Configuración" movidos aquí desde el dropdown
+                del avatar en el Header. Libera el header móvil de un icono y centraliza
+                las opciones de cuenta en el sidebar (patrón estándar: GitHub, Slack, Discord). */}
             <button
-              onClick={onLogout}
-              aria-label="Cerrar sesión"
+              onClick={() => onViewChange('settings')}
+              aria-label="Mi perfil"
               className={cn(
-                "flex items-center gap-4 p-3.5 rounded-xl transition-all group active:scale-95 hover:bg-danger/10 text-danger font-bold outline-none focus-visible:ring-2 focus-visible:ring-danger/50",
+                "flex items-center gap-4 p-3.5 rounded-xl transition-all group active:scale-95 hover:bg-primary/10 text-sidebar-foreground font-bold outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
                 sidebarState === 'expanded' ? "flex-1" : "w-12 h-12 justify-center"
               )}
             >
-              <LogOut className="w-4.5 h-4.5" />
-              {sidebarState === 'expanded' && <span className="text-xs uppercase tracking-wider">Salir</span>}
+              <User className="w-4.5 h-4.5" />
+              {sidebarState === 'expanded' && <span className="text-xs uppercase tracking-wider">Mi Perfil</span>}
+            </button>
+
+            <button
+              onClick={() => onViewChange('settings')}
+              aria-label="Configuración"
+              className={cn(
+                "rounded-xl transition-all group active:scale-95 font-bold outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
+                sidebarState === 'expanded' ? "p-3.5" : "w-12 h-12 flex items-center justify-center",
+                "hover:bg-primary/5 text-sidebar-foreground/60"
+              )}
+            >
+              <Settings className="w-4.5 h-4.5" />
             </button>
 
             <button
@@ -701,6 +718,19 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
               <Calculator className="w-4.5 h-4.5" />
             </button>
           </div>
+
+          {/* Salir — en su propia fila para evitar mezclar acción destructiva con utilidades */}
+          <button
+            onClick={onLogout}
+            aria-label="Cerrar sesión"
+            className={cn(
+              "flex items-center gap-4 p-3.5 rounded-xl transition-all group active:scale-95 hover:bg-danger/10 text-danger font-bold outline-none focus-visible:ring-2 focus-visible:ring-danger/50",
+              sidebarState === 'expanded' ? "w-full" : "w-12 h-12 justify-center"
+            )}
+          >
+            <LogOut className="w-4.5 h-4.5" />
+            {sidebarState === 'expanded' && <span className="text-xs uppercase tracking-wider">Salir</span>}
+          </button>
         </div>
       </div>
       </div>

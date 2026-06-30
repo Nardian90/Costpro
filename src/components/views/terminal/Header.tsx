@@ -246,7 +246,11 @@ export const Header = ({
           <ThemeToggle />
           <SyncConflictModal />
 
-          {/* User Avatar Dropdown */}
+          {/* FIX-AUDIT-MOBILE: Avatar dropdown oculto en móvil (<640px).
+              Las opciones (Mi Perfil, Configuración, Salir) se movieron al sidebar
+              inferior para liberar el header móvil de un icono.
+              En desktop (sm+) se mantiene el dropdown completo. */}
+          <div className="hidden sm:block">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
@@ -298,6 +302,7 @@ export const Header = ({
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+          </div>
 
           <HelpLauncher
             view={currentView}
