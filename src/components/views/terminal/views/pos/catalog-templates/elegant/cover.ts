@@ -1,4 +1,3 @@
-import { safePick } from '@/lib/safe-random';
 /**
  * Cover page renderer for the Elegant Catalog — Professional Magazine Layout.
  *

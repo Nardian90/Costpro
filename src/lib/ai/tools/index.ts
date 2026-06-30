@@ -104,10 +104,10 @@ export function buildTools(ctx: ToolContext) {
   };
 
   return {
-    open_view: tool<OpenViewInput, { success?: boolean; error?: string; action?: any; message?: string }, Record<string, never>>({
+    open_view: tool<OpenViewInput, { success?: boolean; error?: string; action?: any; message?: string }, {}>({
       description: 'Navega a una vista específica del sistema. Ejemplos de viewId: dashboard, cost-sheets, inventory, pos, reports.',
       inputSchema: zodSchema(openViewInput),
-      execute: async ({ viewId, params }: any) => {
+      execute: async ({ viewId, params }) => {
         requireRole(['admin', 'manager', 'vendedor', 'costo'], 'open_view');
         const view = getViewDetails(viewId);
         if (!view) return { error: `Vista '${viewId}' no encontrada.` };
@@ -119,10 +119,10 @@ export function buildTools(ctx: ToolContext) {
       },
     }),
 
-    explain_view: tool<ExplainViewInput, { success?: boolean; error?: string; description?: string; availableActions?: string[] }, Record<string, never>>({
+    explain_view: tool<ExplainViewInput, { success?: boolean; error?: string; description?: string; availableActions?: string[] }, {}>({
       description: 'Explica el propósito y las acciones disponibles en la vista actual o una específica.',
       inputSchema: zodSchema(explainViewInput),
-      execute: async ({ viewId }: any) => {
+      execute: async ({ viewId }) => {
         requireRole(['admin', 'manager', 'vendedor', 'costo'], 'explain_view');
         const view = getViewDetails(viewId || '');
         if (!view) return { error: `Vista '${viewId}' no encontrada.` };
@@ -134,19 +134,19 @@ export function buildTools(ctx: ToolContext) {
       },
     }),
 
-    fill_form: tool<FillFormInput, { success: boolean; action: any }, Record<string, never>>({
+    fill_form: tool<FillFormInput, { success: boolean; action: any }, {}>({
       description: 'Completa los campos de un formulario sin enviarlo. Útil para que el usuario revise antes de guardar.',
       inputSchema: zodSchema(fillFormInput),
-      execute: async ({ formName, data }: any) => {
+      execute: async ({ formName, data }) => {
         requireRole(['admin', 'manager', 'vendedor', 'costo'], 'fill_form');
         return { success: true, action: { type: 'form_fill', payload: { formName, data } } };
       },
     }),
 
-    submit_form: tool<SubmitFormInput, { success?: boolean; error?: string; action?: any }, Record<string, never>>({
+    submit_form: tool<SubmitFormInput, { success?: boolean; error?: string; action?: any }, {}>({
       description: 'Completa y envía un formulario directamente. Solo admin/manager pueden usar esta tool.',
       inputSchema: zodSchema(submitFormInput),
-      execute: async ({ formName, data }: any) => {
+      execute: async ({ formName, data }) => {
         requireRole(['admin', 'manager'], 'submit_form');
         // Idempotency check: 30s window for same data
         const { data: recent } = await supabase
@@ -165,10 +165,10 @@ export function buildTools(ctx: ToolContext) {
       },
     }),
 
-    search_entity: tool<SearchEntityInput, { success?: boolean; error?: string; results?: any; count?: number }, Record<string, never>>({
+    search_entity: tool<SearchEntityInput, { success?: boolean; error?: string; results?: any; count?: number }, {}>({
       description: 'Busca registros en el sistema: productos, fichas de costo, transacciones o suministros. Devuelve hasta 5 resultados.',
       inputSchema: zodSchema(searchEntityInput),
-      execute: async ({ entity, query }: any) => {
+      execute: async ({ entity, query }) => {
         requireRole(['admin', 'manager', 'vendedor', 'costo'], 'search_entity');
         const tableMap: Record<string, string> = {
           product: 'products',
@@ -194,10 +194,10 @@ export function buildTools(ctx: ToolContext) {
       },
     }),
 
-    execute_action: tool<ExecuteActionInput, { success?: boolean; error?: string; action?: any; message?: string }, Record<string, never>>({
+    execute_action: tool<ExecuteActionInput, { success?: boolean; error?: string; action?: any; message?: string }, {}>({
       description: 'Ejecuta una acción específica del sistema (ej: recalculate_costs, sync_data). Solo admin/manager.',
       inputSchema: zodSchema(executeActionInput),
-      execute: async ({ actionName, parameters }: any) => {
+      execute: async ({ actionName, parameters }) => {
         requireRole(['admin', 'manager'], 'execute_action');
         const ALLOWED_ACTIONS = ['recalculate_costs', 'sync_data', 'refresh_dashboard'];
         if (!ALLOWED_ACTIONS.includes(actionName)) {
@@ -211,10 +211,10 @@ export function buildTools(ctx: ToolContext) {
       },
     }),
 
-    export_document: tool<ExportDocumentInput, { success: boolean; action: any; message: string }, Record<string, never>>({
+    export_document: tool<ExportDocumentInput, { success: boolean; action: any; message: string }, {}>({
       description: 'Genera y descarga un documento PDF o Excel de una entidad específica.',
       inputSchema: zodSchema(exportDocumentInput),
-      execute: async ({ type, entityType, entityId }: any) => {
+      execute: async ({ type, entityType, entityId }) => {
         requireRole(['admin', 'manager'], 'export_document');
         return {
           success: true,
@@ -224,19 +224,19 @@ export function buildTools(ctx: ToolContext) {
       },
     }),
 
-    set_ui_mode: tool<SetUiModeInput, { success: boolean; action: any }, Record<string, never>>({
+    set_ui_mode: tool<SetUiModeInput, { success: boolean; action: any }, {}>({
       description: 'Cambia el modo de la interfaz de usuario: standard o expert.',
       inputSchema: zodSchema(setUiModeInput),
-      execute: async ({ mode }: any) => {
+      execute: async ({ mode }) => {
         requireRole(['admin', 'manager', 'costo'], 'set_ui_mode');
         return { success: true, action: { type: 'ui_mode', payload: { mode } } };
       },
     }),
 
-    run_system_health_check: tool<RunHealthCheckInput, { success: boolean; message: string; action: any }, Record<string, never>>({
+    run_system_health_check: tool<RunHealthCheckInput, { success: boolean; message: string; action: any }, {}>({
       description: 'Inicia un recorrido automático de todas las vistas del sistema para detectar errores de UI y funcionalidad.',
       inputSchema: zodSchema(runHealthCheckInput),
-      execute: async ({ viewIds }: any) => {
+      execute: async ({ viewIds }) => {
         requireRole(['admin', 'manager'], 'run_system_health_check');
         return {
           success: true,
@@ -246,10 +246,10 @@ export function buildTools(ctx: ToolContext) {
       },
     }),
 
-    get_cost_summary: tool<GetCostSummaryInput, { success?: boolean; error?: string; storeId?: string; summary?: any; message?: string }, Record<string, never>>({
+    get_cost_summary: tool<GetCostSummaryInput, { success?: boolean; error?: string; storeId?: string; summary?: any; message?: string }, {}>({
       description: 'Obtiene un resumen agregado de costos para la tienda actual: número de productos activos, costo unitario promedio (cost_price en products + cost_price en product_cost_sheets), costo total del inventario, productos con y sin ficha. Útil cuando el usuario pregunta "muéstrame el resumen de costos", "cuánto me costó el inventario".',
       inputSchema: zodSchema(getCostSummaryInput),
-      execute: async ({ storeId }: any) => {
+      execute: async ({ storeId }) => {
         requireRole(['admin', 'manager', 'vendedor', 'costo'], 'get_cost_summary');
         const targetStoreId = storeId || ctxStoreId;
         if (!targetStoreId) {
@@ -310,10 +310,10 @@ export function buildTools(ctx: ToolContext) {
       },
     }),
 
-    get_sales_summary: tool<GetSalesSummaryInput, { success?: boolean; error?: string; date?: string; storeId?: string; summary?: any; message?: string }, Record<string, never>>({
+    get_sales_summary: tool<GetSalesSummaryInput, { success?: boolean; error?: string; date?: string; storeId?: string; summary?: any; message?: string }, {}>({
       description: 'Obtiene un resumen de ventas para una fecha específica (o "today" para hoy). Devuelve número de transacciones, total vendido, y desglose por forma de pago. Útil cuando el usuario pregunta "qué ventas se hicieron hoy", "resumen de ventas".',
       inputSchema: zodSchema(getSalesSummaryInput),
-      execute: async ({ date, storeId }: any) => {
+      execute: async ({ date, storeId }) => {
         requireRole(['admin', 'manager', 'vendedor', 'costo'], 'get_sales_summary');
         const targetStoreId = storeId || ctxStoreId;
         if (!targetStoreId) {

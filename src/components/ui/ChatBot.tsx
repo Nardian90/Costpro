@@ -139,23 +139,9 @@ export function ChatBot({ embedded = false }: { embedded?: boolean } = {}) {
   const [abortController, setAbortController] = useState<AbortController | null>(null);
 
   // Persisted selected model
-  const [selectedModel, setSelectedModel] = useState<string>(() => loadFromStorage(MODEL_STORAGE_KEY, "glm-4-flash"));
-  const handleCloseChat = useCallback((e?: React.MouseEvent) => {
-    if (e) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-    if (abortController) {
-      abortController.abort();
-    }
-    setIsSettingsOpen(false);
-    setIsModelOpen(false);
-    setIsSidebarOpen(false);
-    setInput('');
-    setIsLoading(false);
-    setAttachedImage(null);
-    setIsOpen(false);
-  }, [abortController, setIsOpen]);
+  const [selectedModel, setSelectedModel] = useState<string>(() =>
+    loadFromStorage(MODEL_STORAGE_KEY, 'glm-4-flash')
+  );
 
   // ─── DERIVED STATE ────────────────────────────────────────────────────────
   const activeConversation = conversations.find(c => c.id === activeConversationId) || null;
@@ -707,6 +693,22 @@ export function ChatBot({ embedded = false }: { embedded?: boolean } = {}) {
     }
   };
 
+  const handleCloseChat = useCallback((e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    if (abortController) {
+      abortController.abort();
+    }
+    setIsSettingsOpen(false);
+    setIsModelOpen(false);
+    setIsSidebarOpen(false);
+    setInput('');
+    setIsLoading(false);
+    setAttachedImage(null);
+    setIsOpen(false);
+  }, [abortController, setIsOpen]);
 
   const handleModelSelect = (modelId: string) => {
     setSelectedModel(modelId);

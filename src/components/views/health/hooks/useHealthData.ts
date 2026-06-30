@@ -78,6 +78,7 @@ export function useHealthData() {
   const retryCount = useRef(0);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const mountedRef = useRef(true);
+
   const fetchData = useCallback(async (isRetry = false) => {
     const { token } = useAuthStore.getState();
     try {
@@ -123,14 +124,13 @@ export function useHealthData() {
       }
     }
   }, []);
+
+  // Manual refresh (resets retry counter)
   const refetch = useCallback(() => {
     retryCount.current = 0;
     setLoading(true);
     fetchData();
   }, [fetchData]);
-
-
-  // Manual refresh (resets retry counter)
 
   // Initial fetch + auto-refresh interval
   useEffect(() => {

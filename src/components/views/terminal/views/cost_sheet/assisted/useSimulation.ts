@@ -132,33 +132,6 @@ export function useSimulation(
   }, []);
 
   // ── Advance to next node (with validation) ──
-
-  // ── Play ──
-
-  // ── Pause ──
-  const pause = useCallback(() => {
-    cancelledRef.current = true;
-    clearTimer();
-    setState(prev => ({ ...prev, phase: 'paused' }));
-  }, [clearTimer]);
-
-  // ── Resume ──
-
-  // ── Stop / Reset ──
-  const stop = useCallback(() => {
-    cancelledRef.current = true;
-    clearTimer();
-    setState(INITIAL_STATE);
-    nodeIndexRef.current = 0;
-  }, [clearTimer]);
-
-  useEffect(() => {
-    return () => {
-      cancelledRef.current = true;
-      clearTimer();
-    };
-  }, [clearTimer]);
-
   const advanceToNext = useCallback(() => {
     if (cancelledRef.current) return;
 
@@ -272,11 +245,8 @@ export function useSimulation(
       activeNodeId: null,
     }));
   }, [nodes, completedNodes, getNodeDisplayValue, getRunningTotal, data, calculatedValues]);
-  const resume = useCallback(() => {
-    cancelledRef.current = false;
-    setState(prev => ({ ...prev, phase: 'running' }));
-    advanceToNext();
-  }, [advanceToNext]);
+
+  // ── Play ──
   const play = useCallback(() => {
     cancelledRef.current = false;
     clearTimer();
@@ -288,6 +258,36 @@ export function useSimulation(
     });
     timerRef.current = setTimeout(() => advanceToNext(), 400);
   }, [data, clearTimer, advanceToNext]);
+
+  // ── Pause ──
+  const pause = useCallback(() => {
+    cancelledRef.current = true;
+    clearTimer();
+    setState(prev => ({ ...prev, phase: 'paused' }));
+  }, [clearTimer]);
+
+  // ── Resume ──
+  const resume = useCallback(() => {
+    cancelledRef.current = false;
+    setState(prev => ({ ...prev, phase: 'running' }));
+    advanceToNext();
+  }, [advanceToNext]);
+
+  // ── Stop / Reset ──
+  const stop = useCallback(() => {
+    cancelledRef.current = true;
+    clearTimer();
+    setState(INITIAL_STATE);
+    nodeIndexRef.current = 0;
+  }, [clearTimer]);
+
+  useEffect(() => {
+    return () => {
+      cancelledRef.current = true;
+      clearTimer();
+    };
+  }, [clearTimer]);
+
   return {
     ...state,
     play,

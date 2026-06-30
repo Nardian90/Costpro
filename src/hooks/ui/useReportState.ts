@@ -235,7 +235,7 @@ export function useReportState(): UseReportStateReturn {
     } finally {
       dispatch({ type: 'SET_SAVING', payload: false });
     }
-  }, [validateConfig, state.config, user]);
+  }, [validateConfig, state.config, user?.activeStoreId, user?.id]);
 
   const handleGenerate = useCallback(async () => {
     const err = validateConfig('generate');
@@ -332,7 +332,7 @@ export function useReportState(): UseReportStateReturn {
     } finally {
       setTimeout(() => dispatch({ type: 'RESET_GENERATE' }), 1200);
     }
-  }, [validateConfig, isPlaceholderType, placeholderMessage, state.config, user]);
+  }, [validateConfig, isPlaceholderType, placeholderMessage, state.config, user?.activeStoreId]);
 
   const handleExportExcel = useCallback(async () => {
     const err = validateConfig('export');
@@ -376,7 +376,7 @@ export function useReportState(): UseReportStateReturn {
     } finally {
       dispatch({ type: 'RESET_EXPORT' });
     }
-  }, [validateConfig, state.config, user]);
+  }, [validateConfig, state.config, user?.activeStoreId]);
 
   const loadTemplate = useCallback((template: ReportDefinition) => {
     dispatch({

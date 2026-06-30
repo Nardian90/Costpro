@@ -41,7 +41,9 @@ const SERVICE_ROLE_KEY = envVars.SUPABASE_SERVICE_ROLE_KEY || '';
 // Skip all tests if no service role key (e.g., in CI without env)
 const shouldRun = !!SERVICE_ROLE_KEY;
 
-let admin: any;
+const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
+  auth: { autoRefreshToken: false, persistSession: false },
+});
 
 describe.skipIf(!shouldRun)('DB Integration — Real Supabase queries', () => {
 
