@@ -153,19 +153,24 @@ export default function SalesHubView() {
   );
 
   // 2. Stock bajo — productos bajo mínimo (query directa, cache 60s)
+  // FIX-400: PostgREST no soporta comparar dos columnas con lte/gte.
+  // Traemos productos con stock_current > 0 y min_stock > 0, filtramos en cliente.
   const { data: lowStockCount = 0 } = useQuery({
     queryKey: ['low-stock-count', storeId],
     queryFn: async () => {
       if (!storeId) return 0;
-      const { count, error } = await supabase
+      const { data, error } = await supabase
         .from('products')
-        .select('*', { count: 'exact', head: true })
+        .select('stock_current, min_stock')
         .eq('store_id', storeId)
         .eq('is_active', true)
-        .filter('stock', 'lte', 'min_stock')
-        .gt('min_stock', 0);
+        .gt('stock_current', 0)
+        .gt('min_stock', 0)
+        .limit(500);
       if (error) return 0;
-      return count || 0;
+      return (data ?? []).filter(
+        p => (p.stock_current ?? 0) <= (p.min_stock ?? 0)
+      ).length;
     },
     enabled: !!storeId,
     staleTime: 60_000,

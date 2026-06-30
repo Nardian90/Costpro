@@ -70,19 +70,26 @@ export function useStoreNotifications() {
       // 2. Por cada tienda, generar notificaciones dinámicas
       await Promise.all(stores.slice(0, 20).map(async (store) => {
         // Stock bajo
-        // POS-2 FIX: PostgREST no soporta comparar dos columnas directamente con .filter().
-        // Solución: usar .or() con sintaxis de comparación de columnas "col1.lte.col2"
-        // y combinar con el filtro stock_current > 0 en el mismo OR.
+        // FIX-400: PostgREST NO soporta comparar dos columnas con operadores de orden
+        // (lte, gte, etc.) — solo eq/neq. La query anterior generaba:
+        //   or=(stock_current.lte.min_stock) → HTTP 400 "Could not find foreign key"
+        // Solución: traer los productos con stock_current > 0 y min_stock > 0,
+        // luego filtrar en cliente donde stock_current <= min_stock.
         try {
-          const { count: lowStockCount } = await supabase
+          const { data: lowStockProducts } = await supabase
             .from('products')
-            .select('*', { count: 'exact', head: true })
+            .select('stock_current, min_stock')
             .eq('store_id', store.id)
             .eq('is_active', true)
             .gt('stock_current', 0)
-            .or('stock_current.lte.min_stock');
+            .gt('min_stock', 0)
+            .limit(200);
 
-          if ((lowStockCount ?? 0) > 0) {
+          const lowStockCount = (lowStockProducts ?? []).filter(
+            p => (p.stock_current ?? 0) <= (p.min_stock ?? 0)
+          ).length;
+
+          if (lowStockCount > 0) {
             const notifId = `stock_low_${store.id}`;
             notifications.push({
               id: notifId,

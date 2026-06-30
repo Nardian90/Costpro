@@ -81,9 +81,13 @@ jobs:
     env:
       NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || 'https://test.supabase.co' }}
       NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'test-anon-key' }}
+      NEXT_PUBLIC_APP_URL: 'http://localhost:3000'
+      NEXTAUTH_URL: 'http://localhost:3000'
       E2E_TEST_ADMIN_TOKEN: ${{ secrets.E2E_TEST_ADMIN_TOKEN || '' }}
       E2E_TEST_USER_TOKEN: ${{ secrets.E2E_TEST_USER_TOKEN || '' }}
       E2E_TEST_STORE_ID: ${{ secrets.E2E_TEST_STORE_ID || 'test-store-00000000' }}
+      E2E_TEST_USER_ID: ${{ secrets.E2E_TEST_USER_ID || '' }}
+      E2E_BASE_URL: 'http://localhost:3000'
 
     steps:
       - name: Checkout

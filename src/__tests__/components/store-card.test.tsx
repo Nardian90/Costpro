@@ -376,5 +376,157 @@ describe('StoreCard', () => {
       })} />);
       expect(screen.getByText(/3 usuarios/)).toBeInTheDocument();
     });
+
+    it('shows role breakdown in title attribute (tooltip) when users exist', () => {
+      render(<StoreCard {...makeProps({
+        userCounts: {
+          'store-001': { total: 2, byRole: { admin: 1, encargado: 1 } },
+        },
+      })} />);
+      // El badge tiene title con el breakdown
+      const badge = screen.getByText(/2 usuarios/);
+      const container = badge.closest('[title]');
+      expect(container?.getAttribute('title')).toContain('1 admin');
+      expect(container?.getAttribute('title')).toContain('1 encargado');
+    });
+
+    it('shows "Sin usuarios asignados" tooltip when total=0', () => {
+      render(<StoreCard {...makeProps({ userCounts: {} })} />);
+      const badge = screen.getByText(/0 usuarios/);
+      const container = badge.closest('[title]');
+      expect(container?.getAttribute('title')).toBe('Sin usuarios asignados');
+    });
+  });
+
+  // ─── Callbacks exhaustivos (cierre de gap de auditoría) ─────────
+  describe('callbacks exhaustivos', () => {
+    it('calls onResetStore when "Reiniciar" is clicked', () => {
+      const onResetStore = vi.fn();
+      render(<StoreCard {...makeProps({ onResetStore })} />);
+      // El botón Reset tiene aria-label "Reiniciar tienda <name>"
+      // getAllByRole devuelve todos los botones; filtramos por texto
+      const allButtons = screen.getAllByRole('button');
+      const resetBtn = allButtons.find(b => /Reiniciar/i.test(b.getAttribute('aria-label') || ''));
+      expect(resetBtn).toBeDefined();
+      fireEvent.click(resetBtn!);
+      expect(onResetStore).toHaveBeenCalledWith(expect.objectContaining({ id: 'store-001' }));
+    });
+
+    it('calls onToggleStatus when "Pausar" is clicked (active store)', () => {
+      const onToggleStatus = vi.fn();
+      render(<StoreCard {...makeProps({ onToggleStatus, store: makeStore({ is_active: true }) })} />);
+      fireEvent.click(screen.getByText('Pausar'));
+      expect(onToggleStatus).toHaveBeenCalledWith(expect.objectContaining({ id: 'store-001' }));
+    });
+
+    it('calls onToggleStatus when "Activar" is clicked (inactive store)', () => {
+      const onToggleStatus = vi.fn();
+      render(<StoreCard {...makeProps({
+        onToggleStatus,
+        store: makeStore({ is_active: false }),
+      })} />);
+      fireEvent.click(screen.getByText('Activar'));
+      expect(onToggleStatus).toHaveBeenCalledWith(expect.objectContaining({ id: 'store-001' }));
+    });
+
+    it('calls onRestoreStore when "Restaurar" is clicked', () => {
+      const onRestoreStore = vi.fn();
+      render(<StoreCard {...makeProps({
+        onRestoreStore,
+        store: makeStore({ is_active: false }),
+      })} />);
+      fireEvent.click(screen.getByText('Restaurar'));
+      expect(onRestoreStore).toHaveBeenCalledWith(expect.objectContaining({ id: 'store-001' }));
+    });
+  });
+
+  // ─── Clipboard copy ──────────────────────────────────────────────
+  describe('clipboard copy', () => {
+    it('calls navigator.clipboard.writeText when copy button is clicked', async () => {
+      const writeText = vi.fn().mockResolvedValue(undefined);
+      Object.assign(navigator, { clipboard: { writeText } });
+
+      render(<StoreCard {...makeProps()} />);
+      const copyBtn = screen.getByRole('button', { name: /Copiar link Tienda Centro/i });
+      fireEvent.click(copyBtn);
+      // Esperar a que la promesa resuelva
+      await new Promise(r => setTimeout(r, 0));
+      expect(writeText).toHaveBeenCalled();
+      expect(writeText.mock.calls[0][0]).toContain('/tienda/tienda-centro');
+    });
+  });
+
+  // ─── Logo con URL real ───────────────────────────────────────────
+  describe('logo rendering', () => {
+    it('renders <img> when store.logo_url is set', () => {
+      render(<StoreCard {...makeProps({
+        store: makeStore({ logo_url: 'https://example.com/logo.png' }),
+      })} />);
+      const img = screen.getByAltText('Logo Tienda Centro');
+      expect(img).toHaveAttribute('src', 'https://example.com/logo.png');
+    });
+
+    it('renders Building icon fallback when logo_url is null', () => {
+      const { container } = render(<StoreCard {...makeProps({ store: makeStore({ logo_url: null }) })} />);
+      // lucide Building se renderiza como svg dentro del contenedor del logo
+      const svgs = container.querySelectorAll('svg');
+      expect(svgs.length).toBeGreaterThan(0);
+    });
+  });
+
+  // ─── Keyboard navigation edge cases ──────────────────────────────
+  describe('keyboard navigation edge cases', () => {
+    it('does NOT call onSetActiveStore on Enter when store IS already active', () => {
+      const onSetActiveStore = vi.fn();
+      render(<StoreCard {...makeProps({
+        onSetActiveStore,
+        activeStoreId: 'store-001',
+      })} />);
+      const article = screen.getByRole('article');
+      fireEvent.keyDown(article, { key: 'Enter' });
+      expect(onSetActiveStore).not.toHaveBeenCalled();
+    });
+
+    it('does NOT call onSetActiveStore on Space when store IS already active', () => {
+      const onSetActiveStore = vi.fn();
+      render(<StoreCard {...makeProps({
+        onSetActiveStore,
+        activeStoreId: 'store-001',
+      })} />);
+      const article = screen.getByRole('article');
+      fireEvent.keyDown(article, { key: ' ' });
+      expect(onSetActiveStore).not.toHaveBeenCalled();
+    });
+
+    it('does NOT call onSetActiveStore on other keys (e.g. Tab)', () => {
+      const onSetActiveStore = vi.fn();
+      render(<StoreCard {...makeProps({ onSetActiveStore })} />);
+      const article = screen.getByRole('article');
+      fireEvent.keyDown(article, { key: 'Tab' });
+      expect(onSetActiveStore).not.toHaveBeenCalled();
+    });
+  });
+
+  // ─── Current store indicator ─────────────────────────────────────
+  describe('current store indicator (userActiveStoreId)', () => {
+    it('marks store as current in sr-only desc when userActiveStoreId matches', () => {
+      render(<StoreCard {...makeProps({
+        store: makeStore({ id: 'store-001' }),
+        userActiveStoreId: 'store-001',
+      })} />);
+      const desc = document.getElementById('store-desc-store-001');
+      expect(desc?.textContent).toContain('Tienda actual');
+    });
+
+    it('does NOT mark as current in sr-only when userActiveStoreId does not match', () => {
+      render(<StoreCard {...makeProps({
+        store: makeStore({ id: 'store-001' }),
+        userActiveStoreId: 'other-store',
+      })} />);
+      const desc = document.getElementById('store-desc-store-001');
+      // "Tienda actual" solo aparece en el badge de active store (activeStoreId), no en el sr-only
+      // Aquí activeStoreId=null así que no aparece el badge, y el sr-only no debe tener "Tienda actual"
+      expect(desc?.textContent).not.toContain('Tienda actual');
+    });
   });
 });
