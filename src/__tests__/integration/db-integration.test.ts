@@ -41,9 +41,15 @@ const SERVICE_ROLE_KEY = envVars.SUPABASE_SERVICE_ROLE_KEY || '';
 // Skip all tests if no service role key (e.g., in CI without env)
 const shouldRun = !!SERVICE_ROLE_KEY;
 
-const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
-  auth: { autoRefreshToken: false, persistSession: false },
-});
+// FIX-CI: Solo crear el cliente si hay una key válida.
+// createClient con key vacía lanza un error al cargar el módulo,
+// lo que hace fallar toda la suite incluso cuando shouldRun=false
+// y los tests se skippearían. Usamos un proxy perezoso para evitarlo.
+const admin = shouldRun
+  ? createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    })
+  : (null as unknown as ReturnType<typeof createClient>);
 
 describe.skipIf(!shouldRun)('DB Integration — Real Supabase queries', () => {
 
