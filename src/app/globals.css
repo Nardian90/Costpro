@@ -23,6 +23,18 @@
 html {
   scroll-padding-top: 100px;
   scroll-behavior: smooth;
+  /* FIX-AUDIT-MOBILE-B2: eliminar flash gris al tap en Android Chrome */
+  -webkit-tap-highlight-color: transparent;
+  /* FIX-AUDIT-MOBILE-B1: prevenir bounce scroll en iOS que causa confusión */
+  overscroll-behavior-y: none;
+}
+
+/* FIX-AUDIT-MOBILE-M1: prevenir selección accidental de texto al tap rápido en botones.
+   Solo aplica a elementos interactivos para no romper copy-paste de contenido. */
+button, [role="button"], a.btn, .btn {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none; /* iOS: suprime el menú contextual al long-press */
 }
 /* En el contexto del Help Center, el scroll ocurre dentro de main[data-help-scroll],
    no en el document. Aseguramos que ese contenedor también tenga scroll-padding. */

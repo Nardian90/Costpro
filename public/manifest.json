@@ -77,7 +77,7 @@
     }
   ],
   "iarc_rating_id": "e84b072d-71b3-4d3e-86ae-31a8ce4e53b7",
-  "display_override": ["tabbed", "window-controls-overlay", "standalone"],
+  "display_override": ["standalone", "fullscreen", "window-controls-overlay"],
   "scope": "/",
   "scope_extensions": [
     {

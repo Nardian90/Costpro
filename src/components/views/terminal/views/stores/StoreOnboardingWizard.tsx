@@ -384,6 +384,9 @@ export function StoreOnboardingWizard({ isOpen, onClose, onCompleted }: StoreOnb
               </Label>
               <Input
                 id="wiz-phone"
+                type="tel"
+                inputMode="tel"
+                autoComplete="tel"
                 value={data.phone}
                 onChange={(e) => update('phone', e.target.value)}
                 placeholder="+53 5XXX XXXX"
@@ -404,6 +407,9 @@ export function StoreOnboardingWizard({ isOpen, onClose, onCompleted }: StoreOnb
                 </Label>
                 <Input
                   id="wiz-reeup"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  autoComplete="off"
                   value={data.reeup}
                   onChange={(e) => update('reeup', e.target.value.replace(/\D/g, '').slice(0, 11))}
                   placeholder="12345678901"
@@ -417,6 +423,8 @@ export function StoreOnboardingWizard({ isOpen, onClose, onCompleted }: StoreOnb
                 </Label>
                 <Input
                   id="wiz-nit"
+                  inputMode="numeric"
+                  autoComplete="off"
                   value={data.nit}
                   onChange={(e) => update('nit', e.target.value)}
                   placeholder="N° identificación tributaria"
@@ -431,6 +439,7 @@ export function StoreOnboardingWizard({ isOpen, onClose, onCompleted }: StoreOnb
               </Label>
               <Input
                 id="wiz-bank"
+                autoComplete="off"
                 value={data.bankAccount}
                 onChange={(e) => update('bankAccount', e.target.value)}
                 placeholder="Banco y n° de cuenta"
@@ -519,6 +528,8 @@ export function StoreOnboardingWizard({ isOpen, onClose, onCompleted }: StoreOnb
                 onChange={(e) => update('userSearch', e.target.value)}
                 placeholder="Buscar usuario por nombre o email..."
                 className="pl-10 h-11"
+                inputMode="search"
+                autoComplete="off"
               />
             </div>
 

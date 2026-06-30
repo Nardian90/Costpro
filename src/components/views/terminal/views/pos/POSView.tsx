@@ -7,6 +7,7 @@ import {
   QrCode,
   Eye,
   EyeOff,
+  Camera,
 } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
 import { useShallow } from 'zustand/react/shallow';
@@ -521,6 +522,19 @@ export default function POSView() {
                   disabled={isLoadingProducts}
                 />
               </div>
+              {/* FIX-AUDIT-MOBILE-A2: Botón directo de cámara visible SIEMPRE.
+                  Antes el escáner estaba oculto en el SpeedDial (4 taps para llegar).
+                  Ahora es un botón de 44px al lado del search, accesible en 1 tap.
+                  Icono Camera + label "Escanear" en sm+ para claridad. */}
+              <button
+                type="button"
+                onClick={() => setShowScanner(true)}
+                className="shrink-0 flex items-center justify-center gap-2 h-11 px-3 sm:px-4 rounded-xl bg-green-500/10 border border-green-500/30 text-green-600 dark:text-green-400 font-black text-xs uppercase tracking-widest hover:bg-green-500/20 active:scale-95 transition-all min-w-[44px]"
+                aria-label="Escanear código de barras con cámara"
+              >
+                <Camera className="w-5 h-5" />
+                <span className="hidden sm:inline">Escanear</span>
+              </button>
             </div>
             <CategoryChips
               categories={categories}

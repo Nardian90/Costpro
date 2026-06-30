@@ -245,7 +245,7 @@ export const Header = ({
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
-                className="w-10 h-10 sm:w-11 sm:h-11 flex items-center justify-center rounded-full bg-primary text-primary-foreground text-xs sm:text-sm font-bold uppercase tracking-tight hover:ring-2 hover:ring-primary/30 hover:ring-offset-2 hover:ring-offset-background active:scale-90 transition-all shrink-0"
+                className="w-11 h-11 flex items-center justify-center rounded-full bg-primary text-primary-foreground text-xs sm:text-sm font-bold uppercase tracking-tight hover:ring-2 hover:ring-primary/30 hover:ring-offset-2 hover:ring-offset-background active:scale-90 transition-all shrink-0"
                 aria-label="Menú de usuario"
               >
                 {user?.fullName ? user.fullName.split(' ').map(n => n[0]).slice(0, 2).join('') : '?'}

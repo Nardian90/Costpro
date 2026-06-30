@@ -79,6 +79,11 @@ export const viewport = {
   themeColor: "#16a34a",
   width: "device-width",
   initialScale: 1,
+  // FIX-AUDIT-MOBILE-C2: viewport-fit=cover es REQUIRED para que env(safe-area-inset-*)
+  // funcione en iOS notch y Android gesture bar. Sin esto, las safe areas del
+  // MobileTabBar, Header, POSCart y StickyCartSummary devuelven 0 y el contenido
+  // queda bajo la barra del sistema.
+  viewportFit: 'cover' as const,
 };
 
 export default async function RootLayout({
@@ -95,6 +100,15 @@ export default async function RootLayout({
   return (
     <html lang={locale} suppressHydrationWarning className="h-full" style={{ minHeight: '100vh' }}>
       <head>
+        {/* ── FIX-AUDIT-MOBILE-C3: PWA meta tags para iOS ──
+             apple-mobile-web-app-capable=yes → iOS Safari abre fullscreen al añadir a home
+             apple-mobile-web-app-status-bar-style=black-translucent → status bar integrada
+             mobile-web-app-capable=yes → Android Chrome standalone */}
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        {/* FIX-AUDIT-MOBILE-B2: eliminar flash gris al tap en Android */}
+        <meta name="theme-color" content="#16a34a" />
         {/* ── Theme flash prevention: inline style block (NOT inline style attributes) ──
              This ensures CSS vars are controlled by class selectors, so next-themes
              can toggle them by adding/removing 'dark' class. Inline style attributes
@@ -189,7 +203,7 @@ setTimeout(function() {
                     <SyncProvider>
                       <GlobalSessionManager />
                       <div id="root" suppressHydrationWarning>{children}</div>
-                      <Toaster position="top-right" richColors />
+                      <Toaster position="top-center" richColors />
                       <ServiceWorkerRegister />
                       <PWAUpdateBanner />
                       <CookieConsent />

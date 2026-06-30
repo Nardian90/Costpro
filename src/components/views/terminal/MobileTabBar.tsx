@@ -102,7 +102,7 @@ export function MobileTabBar({ navigationItems, currentView, onViewChange }: Mob
     <>
       {/* Tab bar fija inferior — solo mobile */}
       <nav
-        className="sm:hidden fixed bottom-0 left-0 right-0 z-30 bg-card border-t border-border flex items-center justify-around px-2 py-1"
+        className="sm:hidden fixed bottom-0 left-0 right-0 z-30 bg-card/95 backdrop-blur-md border-t border-border flex items-center justify-around px-2 py-1"
         style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
         aria-label="Navegación principal mobile"
       >
