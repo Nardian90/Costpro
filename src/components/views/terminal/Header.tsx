@@ -117,16 +117,21 @@ export const Header = ({
                     trigger={
                       <button
                         className={cn(
-                          "group relative flex items-center gap-2 px-3 h-11 rounded-xl transition-all outline-none border min-w-0 max-w-none",
+                          "group relative flex items-center justify-center gap-1.5 px-2.5 h-11 rounded-xl transition-all outline-none border shrink-0 w-11 sm:w-auto sm:px-3 sm:gap-2 sm:min-w-0 sm:max-w-none",
                           storesToShow.length > 1
                             ? "bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/20 hover:opacity-90"
                             : "bg-muted/50 border-border/50 text-primary cursor-default"
                         )}
                         disabled={storesToShow.length <= 1}
+                        aria-label={`Tienda actual: ${activeStoreName}${storesToShow.length > 1 ? '. Toca para cambiar.' : ''}`}
                       >
                         <BuildingIcon aria-hidden="true" className={cn("w-4 h-4 shrink-0", storesToShow.length > 1 ? "text-primary-foreground" : "text-primary")} />
-                        {/* A4-FIX: max-w-none en mobile (no truncar), sm:max-w-[130px] en desktop */}
-                        <span className="text-[10px] sm:text-xs font-black uppercase tracking-tight truncate text-primary-foreground">
+                        {/* FIX-AUDIT-MOBILE-A: En móvil (<640px) NO mostrar el nombre de la tienda
+                            porque no cabe en el header. Solo icono + chevron (44px total).
+                            El nombre se muestra dentro del bottom sheet al abrirlo.
+                            En desktop (sm+) se muestra el nombre completo como antes.
+                            Screen readers reciben el nombre via aria-label. */}
+                        <span className="sr-only sm:not-sr-only sm:text-[10px] sm:font-black sm:uppercase sm:tracking-tight sm:truncate sm:text-primary-foreground">
                           {activeStoreName}
                         </span>
                         {storesToShow.length > 1 && (
