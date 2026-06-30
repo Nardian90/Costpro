@@ -29,10 +29,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820029
+        uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
@@ -61,7 +61,7 @@ jobs:
 
       - name: Upload coverage report
         if: always()
-        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcfcef843b2290cbd5cda
+        uses: actions/upload-artifact@v4
         with:
           name: coverage-report
           path: coverage/
@@ -87,10 +87,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820029
+        uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
@@ -125,7 +125,7 @@ jobs:
 
       - name: Upload E2E test results
         if: always()
-        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcfcef843b2290cbd5cda
+        uses: actions/upload-artifact@v4
         with:
           name: e2e-results
           path: test-results/
@@ -138,10 +138,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820029
+        uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
