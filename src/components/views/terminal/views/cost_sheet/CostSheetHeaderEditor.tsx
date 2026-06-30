@@ -221,7 +221,6 @@ const CostSheetHeaderEditor: React.FC<CostSheetHeaderEditorProps> = ({
     if (!header.exchangeRate && !fetchingRate) {
       fetchLatestRate();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const toggleGroup = (groupTitle: string) => {

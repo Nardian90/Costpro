@@ -41,7 +41,7 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
   const [layoutMode, setLayoutMode] = useState<'table' | 'cards'>('table');
   const [typeFilter, setTypeFilter] = useState<'ALL' | 'Cr' | 'Db'>('ALL');
   // FIX-BUG-UX-002: Reset typeFilter when kpiFilter changes from parent to prevent filter state desync
-  useEffect(() => { setTypeFilter('ALL'); }, [kpiFilter]); // eslint-disable-line react-hooks/set-state-in-effect -- Legitimate: must reset local filter when parent-driven filter changes
+  useEffect(() => { setTypeFilter('ALL'); }, [kpiFilter]);
   const [showExcluded, setShowExcluded] = useState(true);
   const [isAddTxOpen, setIsAddTxOpen] = useState(false);
   const [expandedCards, setExpandedCards] = useState<Record<string, boolean>>({});

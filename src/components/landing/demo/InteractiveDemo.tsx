@@ -46,7 +46,7 @@ export default function InteractiveDemo() {
   // FIX-RCT-126: Sync muted state from localStorage after mount to avoid hydration mismatch
   useEffect(() => {
     const stored = localStorage.getItem('costpro-demo-muted');
-    if (stored === 'true') setIsMuted(true); // eslint-disable-line react-hooks/set-state-in-effect
+    if (stored === 'true') setIsMuted(true);
   }, []);
 
   const rafRef = useRef<number>(0);

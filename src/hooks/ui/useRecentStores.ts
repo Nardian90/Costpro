@@ -82,12 +82,10 @@ export function useRecentStores() {
   }, [recentStores]);
 
   // Trackear la tienda activa como reciente.
-  // FIX-LINT: este es un patrón legítimo de "suscripción a sistema externo" (el auth store).
-  // El eslint-disable es necesario porque React 19 es estricto con setState en effects,
-  // pero aquí solo actualizamos cuando el ID realmente cambia.
+  // Patrón legítimo de "suscripción a sistema externo" (el auth store):
+  // solo actualizamos cuando el ID realmente cambia.
   useEffect(() => {
     if (user?.activeStoreId) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       addRecentStore(user.activeStoreId);
     }
   }, [user?.activeStoreId, addRecentStore]);

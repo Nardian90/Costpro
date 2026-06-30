@@ -1,9 +1,5 @@
 'use client';
 
-/* eslint-disable react-hooks/set-state-in-effect -- Tarea-4: este hook sincroniza
-   localStorage con estado React. El patrón setState-in-effect es legítimo aquí
-   porque es una sincronización con un sistema externo (localStorage), no una
-   actualización derivada de props/state. */
 
 /**
  * useAdaptiveNav — IA adaptativa para el sidebar.

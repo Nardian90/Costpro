@@ -1,4 +1,3 @@
-// eslint-disable-next-line @typescript-eslint/no-require-imports
 import fs from 'fs';
 function getSize(f) {
   const buf = fs.readFileSync(f);

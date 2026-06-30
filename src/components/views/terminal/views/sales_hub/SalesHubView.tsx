@@ -154,11 +154,20 @@ export default function SalesHubView() {
 
   // 2. Stock bajo — productos bajo mínimo (query directa, cache 60s)
   // FIX-400: PostgREST no soporta comparar dos columnas con lte/gte.
-  // Traemos productos con stock_current > 0 y min_stock > 0, filtramos en cliente.
+  // Estrategia con fallback:
+  //  1. RPC get_low_stock_count (óptima, server-side) si está disponible
+  //  2. Fallback: fetch + filter en cliente
   const { data: lowStockCount = 0 } = useQuery({
     queryKey: ['low-stock-count', storeId],
     queryFn: async () => {
       if (!storeId) return 0;
+      // Intentar RPC primero
+      const { data: rpcResult, error: rpcError } = await supabase
+        .rpc('get_low_stock_count', { p_store_id: storeId });
+      if (!rpcError && typeof rpcResult === 'number') {
+        return rpcResult;
+      }
+      // Fallback: fetch + filter en cliente
       const { data, error } = await supabase
         .from('products')
         .select('stock_current, min_stock')

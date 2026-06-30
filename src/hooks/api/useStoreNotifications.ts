@@ -71,23 +71,35 @@ export function useStoreNotifications() {
       await Promise.all(stores.slice(0, 20).map(async (store) => {
         // Stock bajo
         // FIX-400: PostgREST NO soporta comparar dos columnas con operadores de orden
-        // (lte, gte, etc.) — solo eq/neq. La query anterior generaba:
-        //   or=(stock_current.lte.min_stock) → HTTP 400 "Could not find foreign key"
-        // Solución: traer los productos con stock_current > 0 y min_stock > 0,
-        // luego filtrar en cliente donde stock_current <= min_stock.
+        // (lte, gte, etc.) — solo eq/neq.
+        //
+        // Estrategia con fallback:
+        //  1. Intentar la RPC get_low_stock_count (server-side, óptima).
+        //     Requiere que la migration 20260630120000 esté aplicada en Supabase.
+        //  2. Si la RPC no existe (todavía), hacer fetch + filter en cliente.
         try {
-          const { data: lowStockProducts } = await supabase
-            .from('products')
-            .select('stock_current, min_stock')
-            .eq('store_id', store.id)
-            .eq('is_active', true)
-            .gt('stock_current', 0)
-            .gt('min_stock', 0)
-            .limit(200);
+          let lowStockCount = 0;
+          const { data: rpcResult, error: rpcError } = await supabase
+            .rpc('get_low_stock_count', { p_store_id: store.id });
 
-          const lowStockCount = (lowStockProducts ?? []).filter(
-            p => (p.stock_current ?? 0) <= (p.min_stock ?? 0)
-          ).length;
+          if (!rpcError && typeof rpcResult === 'number') {
+            // RPC disponible → usar resultado server-side
+            lowStockCount = rpcResult;
+          } else {
+            // Fallback: fetch + filter en cliente (sin RPC)
+            const { data: lowStockProducts } = await supabase
+              .from('products')
+              .select('stock_current, min_stock')
+              .eq('store_id', store.id)
+              .eq('is_active', true)
+              .gt('stock_current', 0)
+              .gt('min_stock', 0)
+              .limit(200);
+
+            lowStockCount = (lowStockProducts ?? []).filter(
+              p => (p.stock_current ?? 0) <= (p.min_stock ?? 0)
+            ).length;
+          }
 
           if (lowStockCount > 0) {
             const notifId = `stock_low_${store.id}`;

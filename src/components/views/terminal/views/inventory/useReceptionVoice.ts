@@ -1,6 +1,5 @@
 "use client";
 
-/* eslint-disable react-hooks/set-state-in-effect -- Tarea-5: detecta capability del browser */
 
 import { useState, useEffect, useCallback, useRef } from "react";
 
