@@ -163,7 +163,7 @@ async function rollbackHandler(req: NextRequest, session: AuthenticatedSession) 
     })
     .eq('id', commit_id);
 
-  logger.info('DATABASE', 'PRICES_ROLLBACK', { commitId, userId: session.user.id });
+  logger.info('DATABASE', 'PRICES_ROLLBACK', { commit_id, userId: session.user.id });
 
   // F4-GAP1: Invalidate cache after rollback
   invalidateCacheForStore(commitLog.store_id);

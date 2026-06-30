@@ -210,7 +210,7 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
       local_id: `item-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       variant_id: null,
       variant_name: null,
-      conversion_factor: null,
+      conversion_factor: null, moneda_recepcion: "CUP", tasa_cambio_recepcion: 1.0,
     }]);
     toast.info(`"${preselectedProduct.name}" agregado desde alerta de stock`);
   }, [preselectedProduct]);
@@ -496,7 +496,7 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
           local_id: `item-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
           variant_id: null,
           variant_name: null,
-          conversion_factor: null,
+          conversion_factor: null, moneda_recepcion: "CUP", tasa_cambio_recepcion: 1.0,
         }];
       });
       setAddItemSearch('');
@@ -529,7 +529,7 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
           local_id: `item-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
           variant_id: null,
           variant_name: null,
-          conversion_factor: null,
+          conversion_factor: null, moneda_recepcion: "CUP", tasa_cambio_recepcion: 1.0,
         }];
       });
       setAddItemSearch('');
@@ -701,7 +701,7 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
         local_id: `item-${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${r.sku}`,
         variant_id: null,
         variant_name: null,
-        conversion_factor: null,
+        conversion_factor: null, moneda_recepcion: "CUP", tasa_cambio_recepcion: 1.0,
       }));
 
     // Merge with existing items (avoid duplicates by SKU)
@@ -1211,7 +1211,7 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
       local_id: `item-ocr-${Date.now()}-${idx}-${Math.random().toString(36).slice(2, 6)}`,
       variant_id: null,
       variant_name: null,
-      conversion_factor: null,
+      conversion_factor: null, moneda_recepcion: "CUP", tasa_cambio_recepcion: 1.0,
     }));
 
     // Evitar duplicados por SKU

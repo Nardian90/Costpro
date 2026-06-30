@@ -80,22 +80,22 @@ describe('auditService', () => {
   it('logCashClosureFinalized inserts closure data', async () => {
     await auditService.logCashClosureFinalized({
       userId: 'u', storeId: 's', closureId: 'c1',
-      expectedTotal: 100, actualTotal: 90, difference: -10,
+      declaredCash: 100, declaredVouchers: 0, systemExpectedTotal: 110, difference: -10, status: "completed",
     });
     expect(mockChain.chain.insert).toHaveBeenCalledWith(expect.objectContaining({ action: 'cash_closure_finalized' }));
   });
 
   it('logStockAdjustment inserts adjustment', async () => {
     await auditService.logStockAdjustment({
-      userId: 'u', storeId: 's', productId: 'p', productName: 'Test',
-      previousStock: 100, newStock: 90, reason: 'damaged',
+      userId: 'u', storeId: 's', productId: 'p',
+      oldStock: 100, newStock: 90, reason: 'damaged',
     });
     expect(mockChain.chain.insert).toHaveBeenCalledWith(expect.objectContaining({ action: 'stock_adjustment' }));
   });
 
   it('logPriceChange inserts price change', async () => {
     await auditService.logPriceChange({
-      userId: 'u', storeId: 's', productId: 'p', productName: 'Test',
+      userId: 'u', storeId: 's', productId: 'p',
       oldPrice: 100, newPrice: 120,
     });
     expect(mockChain.chain.insert).toHaveBeenCalledWith(expect.objectContaining({ action: 'price_change' }));
