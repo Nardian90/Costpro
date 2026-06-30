@@ -189,14 +189,14 @@ export default function UsersManagementView() {
                     <div className="flex justify-center gap-2">
                       <button type="button"
                         onClick={() => handleEditUser(u)}
-                        className="w-10 h-10 sm:w-8 sm:h-8 flex items-center justify-center rounded-lg border border-border hover:bg-primary hover:text-foreground transition-all active:scale-95"
+                        className="w-11 h-11 sm:w-9 sm:h-9 flex items-center justify-center rounded-lg border border-border hover:bg-primary hover:text-foreground transition-all active:scale-95"
                         aria-label="Editar usuario"
                       >
                         <Edit className="w-4 h-4" />
                       </button>
                       <button type="button"
                         onClick={() => handleResetPassword(u.id)}
-                        className="w-10 h-10 sm:w-8 sm:h-8 flex items-center justify-center rounded-lg border border-border hover:bg-warning hover:text-foreground transition-all active:scale-95"
+                        className="w-11 h-11 sm:w-9 sm:h-9 flex items-center justify-center rounded-lg border border-border hover:bg-warning hover:text-foreground transition-all active:scale-95"
                         aria-label="Reiniciar contraseña"
                         title="Reiniciar contraseña"
                       >
@@ -205,7 +205,7 @@ export default function UsersManagementView() {
                       <button type="button"
                         onClick={() => handleDeleteUser(u.id)}
                         disabled={u.id === user?.id}
-                        className="w-10 h-10 sm:w-8 sm:h-8 flex items-center justify-center rounded-lg border border-border hover:bg-destructive hover:text-foreground transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed"
+                        className="w-11 h-11 sm:w-9 sm:h-9 flex items-center justify-center rounded-lg border border-border hover:bg-destructive hover:text-foreground transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed"
                         aria-label="Eliminar usuario"
                       >
                         <Trash2 className="w-4 h-4" />

@@ -254,6 +254,7 @@ export default function UserForm({
                 id="user-max-stores"
                 {...register('maxStoresLimit', { valueAsNumber: true })}
                 type="number"
+                inputMode="numeric"
                 min="1"
                 className="w-full p-3 rounded-xl border border-border bg-background font-bold text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all"
               />
@@ -269,6 +270,7 @@ export default function UserForm({
                 id="user-max-users"
                 {...register('maxUsersLimit', { valueAsNumber: true })}
                 type="number"
+                inputMode="numeric"
                 min="0"
                 className="w-full p-3 rounded-xl border border-border bg-background font-bold text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all"
               />
