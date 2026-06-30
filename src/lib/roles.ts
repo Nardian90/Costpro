@@ -1,6 +1,40 @@
 
 import { UserRole, UserStoreMembership } from '@/types';
 
+// ─────────────────────────────────────────────────────────────────────
+// MODELO DE ROLES — Costpro
+// ─────────────────────────────────────────────────────────────────────
+// Costpro distingue entre ROL GLOBAL (en profiles.role) y MEMBERSHIP por
+// tienda (en user_store_memberships.role). La diferencia es crítica para
+// no mezclar autorización:
+//
+//   ROL GLOBAL 'admin'
+//     - Asignado SOLO a cuentas internas de operación/soporte de Costpro.
+//     - Ve y gestiona TODAS las tiendas de TODOS los tenants (by design).
+//     - Validado por store-rls-isolation.test.ts:
+//         it('admin can see all stores regardless of membership')
+//     - NUNCA se asigna a clientes finales (Reinaldo, Yunia, etc.).
+//
+//   ROL GLOBAL 'manager'
+//     - NO existe como rol global operacional en el modelo actual.
+//     - 'manager' es un rol de MEMBERSHIP (por tienda), no global.
+//     - Si aparece como rol global en profiles, debe tratarse con cautela:
+//       NO implica acceso a todas las tiendas. El acceso a una tienda
+//       concreta SIEMPRE se valida con canManageStore(user, storeId),
+//       que chequea membership activa en esa tienda.
+//
+//   ROLES DE MEMBERSHIP (por tienda): admin, manager, encargado, clerk,
+//   warehouse, usuario, costo
+//     - Definen qué puede hacer el usuario EN ESA TIENDA.
+//     - canManageStore() valida que el usuario tenga membership activa con
+//       rol admin/manager/encargado en la tienda específica.
+//
+// REGLA DE ORO para cualquier ruta que escriba en stores o recursos
+// scoped por tienda: usar canManageStore(session.user, storeId), NO
+// chequear solo session.user.role global. Ver fix FIX-AUDIT-R5 en
+// archive/route.ts, restore/route.ts y bulk/route.ts.
+// ─────────────────────────────────────────────────────────────────────
+
 const ROLES_HIERARCHY: Record<UserRole, UserRole[]> = {
   admin: ['admin', 'manager', 'encargado', 'clerk', 'warehouse', 'usuario', 'costo'],
   manager: ['manager', 'encargado', 'clerk', 'warehouse', 'usuario', 'costo'],
@@ -42,6 +76,17 @@ export const hasRole = (user: { role: UserRole; roles?: UserRole[]; memberships?
 
 /**
  * Checks if a user can manage a specific store.
+ *
+ * Esta es la función canónica para autorizar operaciones sobre una tienda
+ * concreta. Debe usarse en TODAS las rutas que escriban en stores o en
+ * recursos scoped por tienda (archive, restore, bulk, PATCH, DELETE, etc.).
+ *
+ * - admin global → true (por diseño, ve todas las tiendas)
+ * - resto de roles → true solo si tiene membership activa con rol
+ *   admin/manager/encargado en la tienda específica
+ *
+ * No confundir con hasRole() (que chequea roles globales). canManageStore
+ * siempre acota por storeId, que es lo correcto para autorización por tienda.
  */
 export const canManageStore = (user: { role: UserRole; memberships?: UserStoreMembership[] } | null, storeId: string): boolean => {
   if (!user) return false;

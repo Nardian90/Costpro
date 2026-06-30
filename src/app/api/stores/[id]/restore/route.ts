@@ -1,10 +1,15 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { withAuth, type AuthenticatedSession } from '@/lib/auth-middleware';
 import { withTracing } from '@/lib/observability';
+import { canManageStore } from '@/lib/roles';
 
 /**
  * POST /api/stores/[id]/restore
  * Restaura una tienda archivada: is_archived=false + is_active=true.
+ *
+ * AUTORIZACIÓN (FIX-AUDIT-R5):
+ *   Mismo fix que archive/route.ts — usar canManageStore(session.user, storeId)
+ *   en vez de chequear solo el rol global. Ver archive/route.ts para detalles.
  */
 async function postHandler(req: NextRequest, session: AuthenticatedSession) {
   const pathParts = new URL(req.url).pathname.split('/');
@@ -14,8 +19,8 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
     return NextResponse.json({ error: 'Store ID requerido' }, { status: 400 });
   }
 
-  if (session.user.role !== 'admin' && session.user.role !== 'manager') {
-    return NextResponse.json({ error: 'Forbidden — requiere rol admin o manager' }, { status: 403 });
+  if (!canManageStore(session.user as any, storeId)) {
+    return NextResponse.json({ error: 'Forbidden — sin acceso a esta tienda' }, { status: 403 });
   }
 
   // FIX-AUDIT-NEW-2: Use service-role client (same fix as archive route).

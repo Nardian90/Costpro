@@ -1,11 +1,21 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { withAuth, type AuthenticatedSession } from '@/lib/auth-middleware';
 import { withTracing } from '@/lib/observability';
+import { canManageStore } from '@/lib/roles';
 
 /**
  * POST /api/stores/[id]/archive
  * Archiva una tienda: is_archived=true + is_active=false.
  * Preserva todos los datos (ventas, inventario, configuración).
+ *
+ * AUTORIZACIÓN (FIX-AUDIT-R5):
+ *   Antes se chequeaba solo `session.user.role` global (admin | manager), lo que
+ *   permitía a un manager archivar CUALQUIER tienda de cualquier tenant conociendo
+ *   el UUID. Ahora se usa `canManageStore(session.user, storeId)` que valida
+ *   membership activa en la tienda específica (o admin global). Consistente con
+ *   PATCH/DELETE de /api/stores/route.ts y con el contrato documentado en
+ *   store-rls-isolation.test.ts ('manager can manage stores where they have
+ *   active manager membership').
  */
 async function postHandler(req: NextRequest, session: AuthenticatedSession) {
   const pathParts = new URL(req.url).pathname.split('/');
@@ -15,8 +25,8 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
     return NextResponse.json({ error: 'Store ID requerido' }, { status: 400 });
   }
 
-  if (session.user.role !== 'admin' && session.user.role !== 'manager') {
-    return NextResponse.json({ error: 'Forbidden — requiere rol admin o manager' }, { status: 403 });
+  if (!canManageStore(session.user as any, storeId)) {
+    return NextResponse.json({ error: 'Forbidden — sin acceso a esta tienda' }, { status: 403 });
   }
 
   const body = await req.json().catch(() => ({}));

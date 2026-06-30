@@ -7,6 +7,7 @@ import { createApiError } from '@/lib/api-errors';
 import { z } from 'zod';
 import { logger } from '@/lib/logger';
 import { checkTenantRateLimit, rateLimitHeaders, type Plan } from '@/lib/rate-limit/tenant-limiter'; // B1
+import { canManageStore } from '@/lib/roles';
 
 /**
  * F4-T01: API route para operaciones bulk en tiendas.
@@ -19,6 +20,14 @@ import { checkTenantRateLimit, rateLimitHeaders, type Plan } from '@/lib/rate-li
  *
  * Permite activar/desactivar/eliminar múltiples tiendas en una sola operación.
  * Rate limit: 5 bulk ops por minuto. Auth: solo admin. CSRF: validateOrigin.
+ *
+ * AUTORIZACIÓN (FIX-AUDIT-R5):
+ *   Además del chequeo global `withRole('admin')`, se filtra cada storeId del
+ *   array con `canManageStore(session.user, storeId)`. Para admin global esto
+ *   es siempre true (por diseño), pero el filtro defensivo asegura que si en
+ *   el futuro se relaja el rol a manager, los storeIds de tiendas sin
+ *   membership se rechacen individualmente en vez de operar sobre todos.
+ *   Los storeIds no autorizados se reportan en `denied` sin abortar la op.
  */
 
 const bulkActionSchema = z.object({
@@ -54,6 +63,26 @@ async function bulkHandler(req: NextRequest, session: AuthenticatedSession) {
       return NextResponse.json(createApiError('FORBIDDEN'), { status: 403 });
     }
 
+    // FIX-AUDIT-R5: Filtrar storeIds por membership (defensivo, consistente con archive/restore).
+    // Para admin global canManageStore siempre retorna true, pero esto protege si el rol
+    // se relaja a manager en el futuro y mantiene consistencia con el resto del módulo.
+    const allowedIds = storeIds.filter(id => canManageStore(session.user as any, id));
+    const deniedIds = storeIds.filter(id => !canManageStore(session.user as any, id));
+
+    if (deniedIds.length > 0) {
+      logger.warn('DATABASE', 'STORE_BULK_DENIED_IDS', {
+        action, deniedCount: deniedIds.length, userId: session.user.id,
+      });
+    }
+
+    if (allowedIds.length === 0) {
+      return NextResponse.json({
+        ...createApiError('FORBIDDEN'),
+        message: 'Ninguno de los storeIds pertenece a tiendas que el usuario puede gestionar',
+        denied: deniedIds.length,
+      }, { status: 403 });
+    }
+
     // B1: Tenant-aware rate limiting con plan del usuario.
     // Fallback a 'free' si no tenemos plan (el rateLimit genérico ya aplicó arriba).
     const plan = (session.user as any).plan || 'free';
@@ -74,7 +103,7 @@ async function bulkHandler(req: NextRequest, session: AuthenticatedSession) {
     const admin = createClient(url, key, { auth: { autoRefreshToken: false, persistSession: false } });
 
     logger.info('DATABASE', 'STORE_BULK_ACTION', {
-      action, count: storeIds.length, userId: session.user.id,
+      action, count: allowedIds.length, denied: deniedIds.length, userId: session.user.id,
     });
 
     if (action === 'activate' || action === 'deactivate') {
@@ -84,7 +113,7 @@ async function bulkHandler(req: NextRequest, session: AuthenticatedSession) {
       // no existía o RLS bloqueaba, el conteo se inflaba. Ahora usamos Promise.allSettled
       // por tienda para contar solo las que realmente se actualizaron.
       const results = await Promise.allSettled(
-        storeIds.map(async (storeId) => {
+        allowedIds.map(async (storeId) => {
           const { error } = await admin
             .from('stores')
             .update({ is_active: isActive })
@@ -109,13 +138,14 @@ async function bulkHandler(req: NextRequest, session: AuthenticatedSession) {
         success: true,
         affected: succeeded,
         failed,
+        denied: deniedIds.length,
         action,
       });
     }
 
     if (action === 'delete') {
       const results = await Promise.allSettled(
-        storeIds.map(async (storeId) => {
+        allowedIds.map(async (storeId) => {
           const { error } = await admin.rpc('soft_delete_store', {
             p_store_id: storeId,
             p_deleted_by: session.user.id,
@@ -135,7 +165,7 @@ async function bulkHandler(req: NextRequest, session: AuthenticatedSession) {
       }
 
       return NextResponse.json({
-        success: true, affected: succeeded.length, failed: failed.length, action,
+        success: true, affected: succeeded.length, failed: failed.length, denied: deniedIds.length, action,
       });
     }
 
