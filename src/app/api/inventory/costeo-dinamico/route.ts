@@ -181,12 +181,16 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
     const prodReceipts = (receiptItems || []).filter(r => r.product_id === product.id);
     const prodServices = (serviceDistributions || [])
       .filter(s => s.product_id === product.id)
-      .map(s => ({
-        service_id: s.received_services?.id || '',
-        total_amount: s.distribution_amount || 0,
-        distribution_method: 'cost_value' as const,
-        service_type_name: s.received_services?.service_type_name || 'Otros',
-      }));
+      .map(s => {
+        const rs = (s as any).received_services;
+        const receivedService = Array.isArray(rs) ? rs[0] : rs;
+        return {
+          service_id: receivedService?.id || '',
+          total_amount: s.distribution_amount || 0,
+          distribution_method: 'cost_value' as const,
+          service_type_name: receivedService?.service_type_name || 'Otros',
+        };
+      });
     const prodCommissions = (commissionLinks || [])
       .filter(c => c.product_id === product.id)
       .map(c => ({

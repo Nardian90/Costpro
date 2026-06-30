@@ -211,6 +211,8 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
       variant_id: null,
       variant_name: null,
       conversion_factor: null,
+      moneda_recepcion: newMoneda,
+      tasa_cambio_recepcion: newTasa,
     }]);
     toast.info(`"${preselectedProduct.name}" agregado desde alerta de stock`);
   }, [preselectedProduct]);
@@ -497,6 +499,8 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
           variant_id: null,
           variant_name: null,
           conversion_factor: null,
+          moneda_recepcion: newMoneda,
+          tasa_cambio_recepcion: newTasa,
         }];
       });
       setAddItemSearch('');
@@ -530,6 +534,8 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
           variant_id: null,
           variant_name: null,
           conversion_factor: null,
+          moneda_recepcion: newMoneda,
+          tasa_cambio_recepcion: newTasa,
         }];
       });
       setAddItemSearch('');
@@ -702,6 +708,8 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
         variant_id: null,
         variant_name: null,
         conversion_factor: null,
+        moneda_recepcion: 'CUP',
+        tasa_cambio_recepcion: 1.0,
       }));
 
     // Merge with existing items (avoid duplicates by SKU)
@@ -1212,6 +1220,8 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
       variant_id: null,
       variant_name: null,
       conversion_factor: null,
+      moneda_recepcion: 'CUP',
+      tasa_cambio_recepcion: 1.0,
     }));
 
     // Evitar duplicados por SKU

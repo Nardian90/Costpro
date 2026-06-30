@@ -69,3 +69,16 @@ lpt4
 
 # Build/type-check artifacts
 tsc_errors.txt
+tsconfig.tsbuildinfo
+
+# PM2 + dev logs (generated locally)
+logs/*.log
+logs/costpro-*.log
+dev.log
+
+# Local downloads (screenshots, generated assets)
+download/
+
+# Local DB (SQLite — never commit)
+db/*.db
+db/*.db-journal

@@ -13,6 +13,7 @@
 import type { jsPDF } from "jspdf";
 import type { CatalogProduct, BrandConfig } from "../types";
 import type { RGB } from "./types";
+import { safePick } from "@/lib/safe-random";
 import {
   PAGE_W, PAGE_H, MARGIN_L, MARGIN_R,
   COVER_ACCENT_H, COVER_BAND_H, COVER_BOTTOM_H,
