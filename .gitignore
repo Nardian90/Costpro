@@ -82,5 +82,9 @@ download/
 # Local DB (SQLite — never commit)
 db/*.db
 db/*.db-journal
+
 # Tool output directory (local only)
 tool-results/
+
+# Supabase backups (local only — backups van a Supabase Storage, no al repo)
+supabase/salva/
