@@ -46,6 +46,17 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
 
     const { storeId, keepCatalog } = validated.data;
 
+    // FIX-AUDIT-9.0: mover canManageStore ANTES de getSupabaseAdminSafe().
+    // Autorización primero (fail fast), luego instanciar cliente admin.
+    // Antes el orden era: admin client → store lookup → canManageStore.
+    // Si el cliente admin fallaba (null), devolvía 500 antes del 403.
+    if (!canManageStore(session.user, storeId)) {
+      return NextResponse.json(
+        { ...createApiError('FORBIDDEN'), message: 'No tienes permisos para reiniciar esta tienda' },
+        { status: 403 }
+      );
+    }
+
     // FIX-AUDIT-SEC (#5): usar getSupabaseAdminSafe() en vez de createClient inline
     const admin = getSupabaseAdminSafe();
     if (!admin) {
@@ -67,14 +78,6 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
       return NextResponse.json(
         { ...createApiError('STORE_ALREADY_INACTIVE'), message: 'La tienda está desactivada y no puede ser reiniciada' },
         { status: 400 }
-      );
-    }
-
-    // FIX-AUDIT-SEC (#4): usar canManageStore() (DRY) en vez de .some() inline
-    if (!canManageStore(session.user, storeId)) {
-      return NextResponse.json(
-        { ...createApiError('FORBIDDEN'), message: 'No tienes permisos para reiniciar esta tienda' },
-        { status: 403 }
       );
     }
 

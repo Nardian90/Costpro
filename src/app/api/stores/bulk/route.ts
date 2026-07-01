@@ -83,9 +83,25 @@ async function bulkHandler(req: NextRequest, session: AuthenticatedSession) {
       }, { status: 403 });
     }
 
-    // B1: Tenant-aware rate limiting con plan del usuario.
-    // Fallback a 'free' si no tenemos plan (el rateLimit genérico ya aplicó arriba).
-    const plan = (session.user as any).plan || 'free';
+    // FIX-AUDIT-RESIDUE: 'plan' no se enriquece en auth-middleware.
+    // ANTES: const plan = (session.user as any).plan || 'free' — siempre 'free',
+    //        usuarios Pro quedaban throttleados como free en operaciones bulk.
+    // DESPUÉS: query a profiles para obtener el plan real (mismo patrón que
+    //          route.ts:123 en el handler de create store).
+    const { getSupabaseAdminSafe } = await import('@/lib/supabase-admin');
+    const adminClient = getSupabaseAdminSafe();
+    if (!adminClient) {
+      return NextResponse.json(createApiError('CONFIG_ERROR'), { status: 500 });
+    }
+
+    const { data: profileData } = await adminClient
+      .from('profiles')
+      .select('plan')
+      .eq('id', session.user.id)
+      .single();
+    const plan = (profileData as { plan?: string } | null)?.plan || 'free';
+
+    // B1: Tenant-aware rate limiting con plan REAL del usuario.
     const tenantRl = await checkTenantRateLimit(session.user.id, plan as Plan, clientIp);
     if (!tenantRl.allowed) {
       return NextResponse.json(
@@ -94,12 +110,7 @@ async function bulkHandler(req: NextRequest, session: AuthenticatedSession) {
       );
     }
 
-    // FIX-AUDIT-SEC (#5): usar getSupabaseAdminSafe() en vez de createClient inline
-    const { getSupabaseAdminSafe } = await import('@/lib/supabase-admin');
-    const admin = getSupabaseAdminSafe();
-    if (!admin) {
-      return NextResponse.json(createApiError('CONFIG_ERROR'), { status: 500 });
-    }
+    const admin = adminClient;
 
     logger.info('DATABASE', 'STORE_BULK_ACTION', {
       action, count: allowedIds.length, denied: deniedIds.length, userId: session.user.id,
