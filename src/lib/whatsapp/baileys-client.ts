@@ -9,6 +9,7 @@ import { makeWASocket, useMultiFileAuthState, fetchLatestBaileysVersion, Disconn
 import { Boom } from '@hapi/boom';
 import { logger } from '@/lib/logger';
 import { getSupabaseAdminSafe } from '@/lib/supabase-admin';
+import { handleIncomingMessage, handleGroupParticipantUpdate } from './handlers';
 
 // Map<storeId, WASocket> — una conexión activa por tienda
 const sessions = new Map<string, WASocket>();
@@ -103,10 +104,25 @@ export async function connectStore(storeId: string): Promise<void> {
     }
   });
 
-  // Manejar mensajes entrantes (se implementará en Fase 2)
+  // Manejar mensajes entrantes — Fase 2: handlers reales con GLM
   sock.ev.on('messages.upsert', async (m) => {
-    logger.info('DATABASE', 'MESSAGE_RECEIVED', { storeId, count: m.messages.length });
-    // TODO Fase 2: procesar mensaje con GLM
+    if (m.type !== 'notify') return; // Solo procesar mensajes nuevos
+    for (const message of m.messages) {
+      await handleIncomingMessage({ storeId, sock }, message).catch(err =>
+        logger.error('DATABASE', 'WHATSAPP_HANDLER_ERROR', { storeId, error: err.message })
+      );
+    }
+  });
+
+  // Manejar entradas/salidas del grupo
+  sock.ev.on('group-participants.update', async (event) => {
+    await handleGroupParticipantUpdate({ storeId, sock }, {
+      jid: event.id,
+      participants: event.participants.map((p: any) => typeof p === 'string' ? p : p.id),
+      action: event.action as 'add' | 'remove' | 'promote' | 'demote',
+    }).catch(err =>
+      logger.error('DATABASE', 'WHATSAPP_GROUP_HANDLER_ERROR', { storeId, error: err.message })
+    );
   });
 }
 

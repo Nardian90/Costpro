@@ -58,7 +58,8 @@ import {
   Bot,
   FlaskConical,
   Calculator,
-  Smartphone
+  Smartphone,
+  MessageCircle
 } from 'lucide-react';
 
 export type NavItemType = 'item' | 'submenu' | 'group';
@@ -260,6 +261,7 @@ export const SIDEBAR_STRUCTURE: NavModule[] = [
         allowedRoles: ['admin', 'manager', 'encargado'],
         children: [
           { id: 'whatsapp-config', label: 'Conexión y Config', type: 'item', icon: Smartphone, ariaLabel: 'Configurar conexión WhatsApp', description: 'Conectar número, escanear QR, configurar bot GLM y grupo de ventas.' },
+          { id: 'whatsapp-conversations', label: 'Conversaciones', type: 'item', icon: MessageCircle, ariaLabel: 'Ver conversaciones de WhatsApp', description: 'Chats de WhatsApp con historial, respuesta manual y estado del bot.' },
         ]
       },
     ]
