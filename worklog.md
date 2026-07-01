@@ -160,6 +160,55 @@ Work Log:
 - Tests: 48 archivos, 701 tests pasan, 8 skipped, 0 fallan
 - Dev server: levanta correctamente, /api/health y / responden 200
 
+### POST-FASE 5 — Validación Docker + migración dev script
+
+- **Validación custom server en runtime real (equivalente Docker)**
+  - Docker no disponible en este entorno, pero el Dockerfile usa `bun server.ts`
+    que es exactamente lo que se ejecutó en local con `NODE_ENV=development`.
+  - Smoke test completo del custom server:
+    - `[server] Socket.io attached to /api/whatsapp/socket.io` ✓
+    - `[server] Ready on http://0.0.0.0:3000` ✓
+    - `GET /api/health` → HTTP 200 en 0.5s ✓
+    - `GET /` → HTTP 200 en 10s (compile-on-demand dev) ✓
+    - `GET /api/whatsapp/socket.io/?EIO=4&transport=polling` → HTTP 200 con
+      payload `{"sid":"...","upgrades":["websocket"],"pingInterval":25000,
+      "pingTimeout":10000,"maxPayload":1000000}` ✓
+    - `GET /api/whatsapp/socket.io/` sin query → HTTP 400 (esperado, Socket.io
+      requiere EIO+transport params) ✓
+  - Socket.io handshake Engine.io responde correctamente — el endpoint está
+    siendo interceptado por Socket.io y no por Next.js routing.
+
+- **Migración dev script principal a custom server con realtime**
+  - `package.json`:
+    - `dev` ahora usa `bun server.ts` (custom server + Socket.io). Realtime
+      disponible por defecto en desarrollo.
+    - `dev:turbo` (nuevo): `next dev --turbopack` para hot reload rápido sin
+      realtime. Útil para iteración de UI pura cuando no se necesita probar
+      WebSocket events.
+    - `dev:ws` alias explícito (mismo que `dev`).
+    - `start:ws` ya existía para producción con bun.
+  - `scripts/start.sh` (PM2 wrapper):
+    - Cambiado de `exec next dev -p $PORT` a `exec bun server.ts`.
+    - `kill_orphans()` ahora también mata `bun server.ts` huérfanos.
+    - Comentario FASE 5 documentando el cambio y la alternativa `dev:turbo`.
+  - PM2 reiniciado con nueva config:
+    - `REALTIME_SERVER_ATTACHED` log ✓
+    - `[server] Socket.io attached to /api/whatsapp/socket.io` ✓
+    - `REALTIME_CLIENT_CONNECTED` con storeId+userId reales ✓ — un cliente
+      del navegador se conectó automáticamente, validando el flujo
+      end-to-end: frontend → hook useWhatsAppSocket → socket.io-client →
+      custom server → auth middleware → room `store:{storeId}`.
+
+- **Arquitectura final de scripts npm**
+  | Script | Usa | Realtime | Hot reload | Uso |
+  |--------|-----|----------|------------|-----|
+  | `dev` | `bun server.ts` | ✓ Socket.io | ✓ webpack | Default — desarrollo completo |
+  | `dev:turbo` | `next dev --turbopack` | ✗ | ✓✓ Turbopack | Iteración UI rápida |
+  | `dev:ws` | `bun server.ts` | ✓ Socket.io | ✓ webpack | Alias explícito de `dev` |
+  | `start` | `next start` | ✗ | n/a (prod) | Producción sin realtime |
+  | `start:ws` | `bun server.ts` | ✓ Socket.io | n/a (prod) | Producción con realtime |
+  | PM2 (`start.sh`) | `bun server.ts` | ✓ Socket.io | ✓ webpack | Deploy Docker/servidor |
+
 Stage Summary:
 
 - **3 hallazgos críticos cerrados** (auth bypass, contact_id cross-tenant,
