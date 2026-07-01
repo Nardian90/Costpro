@@ -89,3 +89,5 @@ tool-results/
 
 # Supabase backups (local only — backups van a Supabase Storage, no al repo)
 supabase/salva/
+# Baileys WhatsApp sessions (per-store, never commit)
+baileys-sessions/
