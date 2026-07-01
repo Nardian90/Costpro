@@ -25,11 +25,15 @@ vi.mock('@/lib/rate-limit/tenant-limiter', () => ({
 
 const mockFrom = vi.fn();
 const mockRpc = vi.fn();
-vi.mock('@supabase/supabase-js', () => ({
-  createClient: vi.fn(() => ({
-    from: (table: string) => mockFrom(table),
-    rpc: (name: string, args: any) => mockRpc(name, args),
-  })),
+const mockAdminClient = {
+  from: (table: string) => mockFrom(table),
+  rpc: (name: string, args: any) => mockRpc(name, args),
+};
+
+// FIX-AUDIT-9.0: bulk/route.ts ahora usa getSupabaseAdminSafe() en vez de
+// createClient inline. Mockear el factory en vez de @supabase/supabase-js.
+vi.mock('@/lib/supabase-admin', () => ({
+  getSupabaseAdminSafe: vi.fn(() => mockAdminClient),
 }));
 
 function makeRequest(body: any): Request {
@@ -50,11 +54,23 @@ describe('POST /api/stores/bulk (F4-T01)', () => {
     vi.clearAllMocks();
     mockSession.value = { user: { id: 'admin-1', role: 'admin', memberships: [] } };
     mockFrom.mockReset();
-    mockFrom.mockImplementation(() => ({
-      update: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      select: vi.fn().mockResolvedValue({ data: [], error: null, count: 0 }),
-    }));
+    // FIX-AUDIT-9.0: el handler ahora hace query a profiles para obtener plan.
+    // Mock diferenciado por tabla: profiles devuelve plan, otras tablas devuelven
+    // el mock genérico de update/select.
+    mockFrom.mockImplementation((table: string) => {
+      if (table === 'profiles') {
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          single: vi.fn().mockResolvedValue({ data: { plan: 'pro' }, error: null }),
+        };
+      }
+      return {
+        update: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        select: vi.fn().mockResolvedValue({ data: [], error: null, count: 0 }),
+      };
+    });
     process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://test.supabase.co';
     process.env.SUPABASE_SERVICE_ROLE_KEY = 'test-service-key';
   });
@@ -79,11 +95,20 @@ describe('POST /api/stores/bulk (F4-T01)', () => {
   });
 
   it('activa tiendas y retorna affected real (no inflado)', async () => {
-    mockFrom.mockImplementation(() => ({
-      update: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      select: vi.fn().mockResolvedValue({ data: [{ id: 's1' }], error: null, count: 1 }),
-    }));
+    // FIX-AUDIT-9.0: mock diferenciado para profiles (query de plan) vs stores (update)
+    mockFrom.mockImplementation((table: string) => {
+      if (table === 'profiles') {
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          single: vi.fn().mockResolvedValue({ data: { plan: 'pro' }, error: null }),
+        };
+      }
+      return {
+        update: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockResolvedValue({ error: null }),
+      };
+    });
 
     const req = makeRequest({
       storeIds: ['a1111111-1111-4111-8111-111111111111'],
@@ -101,7 +126,15 @@ describe('POST /api/stores/bulk (F4-T01)', () => {
   it('deactivate cuenta solo tiendas realmente afectadas (FIX-DEUDA)', async () => {
     mockSession.value = { user: { id: 'admin-1', role: 'admin', memberships: [] } };
     let callIdx = 0;
-    mockFrom.mockImplementation(() => {
+    // FIX-AUDIT-9.0: mock diferenciado para profiles vs stores
+    mockFrom.mockImplementation((table: string) => {
+      if (table === 'profiles') {
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          single: vi.fn().mockResolvedValue({ data: { plan: 'pro' }, error: null }),
+        };
+      }
       callIdx++;
       const chain: any = {
         update: vi.fn().mockReturnThis(),
