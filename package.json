@@ -3,8 +3,9 @@
   "version": "0.2.0",
   "private": true,
   "scripts": {
-    "dev": "next dev -p 3000",
-    "dev:ws": "tsx server.ts",
+    "dev": "bun server.ts",
+    "dev:turbo": "next dev -p 3000 --turbopack",
+    "dev:ws": "bun server.ts",
     "build": "next build",
     "start": "next start",
     "start:ws": "bun server.ts",
@@ -176,6 +177,7 @@
     "fake-indexeddb": "^6.2.5",
     "jsdom": "^29.1.1",
     "tailwindcss": "^4",
+    "tsx": "^4.22.4",
     "tw-animate-css": "^1.3.5",
     "typescript": "^5",
     "vitest": "^4.1.5"
