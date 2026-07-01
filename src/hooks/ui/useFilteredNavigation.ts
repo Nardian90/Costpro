@@ -26,12 +26,11 @@ export function useFilteredNavigation(): NavModule[] {
 
   return useMemo(
     () => {
-      // FIX: Cuando user es null (auth aún cargando al primer acceso),
-      // devolver TODOS los módulos sin filtrar. Antes hacía fallback a
-      // 'usuario' que filtraba COSTOS, MULTI-TIENDA, etc. — causaba que
-      // el sidebar solo mostrara "Chat con Darian" al primer acceso.
-      // Mejor mostrar todo optimistamente y filtrar cuando user cargue.
-      if (!user) return SIDEBAR_STRUCTURE;
+      // FIX: Cuando user es null o user.role es undefined/falsy (auth cargando),
+      // devolver TODOS los módulos sin filtrar (optimistic UI).
+      // Antes hacía fallback a 'usuario' que filtraba COSTOS, MULTI-TIENDA, etc.
+      // — causaba que el sidebar solo mostrara "Chat con Darian" al primer acceso.
+      if (!user || !user.role) return SIDEBAR_STRUCTURE;
       return filterModulesByRole(SIDEBAR_STRUCTURE, user.role);
     },
     [user]
