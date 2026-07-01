@@ -7,6 +7,8 @@ import { createApiError } from '@/lib/api-errors';
 import { createStoreSchema, updateStoreSchema, deleteStoreSchema } from '@/validation/api-schemas';
 import { PLAN_STORE_LIMITS } from '@/config/app';
 import { checkStoreQuota, rateLimitHeaders, type Plan } from '@/lib/rate-limit/tenant-limiter'; // B1
+import { canManageStore } from '@/lib/roles';
+import { getSupabaseAdminSafe } from '@/lib/supabase-admin';
 
 async function getHandler(req: NextRequest, session: AuthenticatedSession) {
   try {
@@ -25,13 +27,11 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
       });
     }
 
-    const { createClient } = await import('@supabase/supabase-js');
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    if (!url || !key) {
+    // FIX-AUDIT-SEC (#5): usar getSupabaseAdminSafe() en vez de createClient inline
+    const admin = getSupabaseAdminSafe();
+    if (!admin) {
       return NextResponse.json(createApiError('CONFIG_ERROR'), { status: 500 });
     }
-    const admin = createClient(url, key, { auth: { autoRefreshToken: false, persistSession: false } });
 
     // Same column list used in useStores hook for consistency
     // FIX-FC-PERSIST: Include store_cost_templates relation so the UI can show FC status
@@ -111,13 +111,11 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
       );
     }
 
-    const { createClient } = await import('@supabase/supabase-js');
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    if (!url || !key) {
+    // FIX-AUDIT-SEC (#5): usar getSupabaseAdminSafe() en vez de createClient inline
+    const admin = getSupabaseAdminSafe();
+    if (!admin) {
       return NextResponse.json(createApiError('CONFIG_ERROR'), { status: 500 });
     }
-    const admin = createClient(url, key, { auth: { autoRefreshToken: false, persistSession: false } });
 
     // Enforce max stores limit — plan limit is also enforced inside the RPC
     // for atomicity, but we need the profile plan to pass the limit parameter.
@@ -219,22 +217,16 @@ async function patchHandler(req: NextRequest, session: AuthenticatedSession) {
 
     const { storeId, ...updates } = validated.data;
 
-    // Validate store membership (admins bypass)
-    if (session.user.role !== 'admin') {
-      const memberships = session.user.memberships || [];
-      const hasAccess = memberships.some(m => m.store_id === storeId && m.status === 'active' && ['admin', 'manager', 'encargado'].includes(m.role));
-      if (!hasAccess) {
-        return NextResponse.json(createApiError('STORE_ACCESS_DENIED'), { status: 403 });
-      }
+    // Validate store membership — FIX-AUDIT-SEC (#4): usar canManageStore() (DRY)
+    if (!canManageStore(session.user as any, storeId)) {
+      return NextResponse.json(createApiError('STORE_ACCESS_DENIED'), { status: 403 });
     }
 
-    const { createClient } = await import('@supabase/supabase-js');
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    if (!url || !key) {
+    // FIX-AUDIT-SEC (#5): usar getSupabaseAdminSafe() en vez de createClient inline
+    const admin = getSupabaseAdminSafe();
+    if (!admin) {
       return NextResponse.json(createApiError('CONFIG_ERROR'), { status: 500 });
     }
-    const admin = createClient(url, key, { auth: { autoRefreshToken: false, persistSession: false } });
 
     const { data, error } = await admin
       .from('stores')
@@ -280,28 +272,19 @@ async function deleteHandler(req: NextRequest, session: AuthenticatedSession) {
 
     const { storeId } = validated.data;
 
-    // FIX-SEC-DELETE-1: Validate membership before deleting a store
-    // Only superadmins (global role) or store admins/managers can delete their own store
-    const isAdmin = session.user.role === 'admin';
-    const memberships = session.user.memberships || [];
-    const hasStoreMembership = memberships.some(
-      m => m.store_id === storeId && m.status === 'active' && ['admin', 'manager', 'encargado'].includes(m.role)
-    );
-
-    if (!isAdmin && !hasStoreMembership) {
+    // FIX-SEC-DELETE-1 + FIX-AUDIT-SEC (#4): usar canManageStore() (DRY)
+    if (!canManageStore(session.user as any, storeId)) {
       return NextResponse.json(
         createApiError('STORE_ACCESS_DENIED'),
         { status: 403 }
       );
     }
 
-    const { createClient } = await import('@supabase/supabase-js');
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    if (!url || !key) {
+    // FIX-AUDIT-SEC (#5): usar getSupabaseAdminSafe() en vez de createClient inline
+    const admin = getSupabaseAdminSafe();
+    if (!admin) {
       return NextResponse.json(createApiError('CONFIG_ERROR'), { status: 500 });
     }
-    const admin = createClient(url, key, { auth: { autoRefreshToken: false, persistSession: false } });
 
     // Verify the store actually exists before soft-deleting
     const { data: storeData, error: storeLookupError } = await admin

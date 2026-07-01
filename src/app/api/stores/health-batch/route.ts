@@ -1,12 +1,24 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { withTracing } from '@/lib/observability';
 import { withAuth, type AuthenticatedSession } from '@/lib/auth-middleware';
+import { canManageStore } from '@/lib/roles';
 
 /**
  * GET /api/stores/health-batch?store_ids=id1,id2,id3
  *
  * Batch health: 2 queries total (products + transactions) en vez de 2N.
+ *
+ * FIX-AUDIT-SEC (#3): antes no validaba UUID ni membership de los storeIds
+ * recibidos. Cualquier usuario autenticado podía pasar store_ids de tiendas
+ * ajenas y obtener {has_products, has_sales} de ellas (cross-tenant).
+ * Ahora:
+ *   1. Valida formato UUID de cada storeId
+ *   2. Filtra por canManageStore() — solo tiendas donde el usuario tiene acceso
+ *   3. Los storeIds no autorizados se ignoran silenciosamente (no se reportan)
  */
+
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 async function getHandler(req: NextRequest, session: AuthenticatedSession) {
   const { searchParams } = new URL(req.url);
   const storeIdsParam = searchParams.get('store_ids');
@@ -15,18 +27,19 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
     return NextResponse.json({ error: 'store_ids es requerido' }, { status: 400 });
   }
 
-  const storeIds = storeIdsParam.split(',').filter(Boolean);
-  if (storeIds.length === 0) {
-    return NextResponse.json({});
+  // FIX-AUDIT-SEC (#3a): validar formato UUID de cada storeId
+  const rawIds = storeIdsParam.split(',').filter(Boolean).filter(id => UUID_REGEX.test(id));
+  if (rawIds.length === 0) {
+    return NextResponse.json({ error: 'store_ids debe contener UUIDs válidos' }, { status: 400 });
   }
 
-  // FIX-AUDIT-NEW-3: Use service-role client instead of getSupabaseAuthClient(session.token).
-  // When an admin requests health for 10 stores, the query with their personal JWT
-  // may be filtered by RLS to only stores where they have active membership.
-  // Stores owned by other managers wouldn't appear in the result — the MultiStoreDashboard
-  // health score would be incomplete with NO visible error.
-  // Service-role client bypasses RLS so the admin sees ALL stores they requested.
-  // FIX-DRY: Use the shared getSupabaseAdminSafe() factory instead of inline createClient.
+  // FIX-AUDIT-SEC (#3b): filtrar por membership — solo tiendas donde el usuario tiene acceso
+  const allowedIds = rawIds.filter(id => canManageStore(session.user as any, id));
+  if (allowedIds.length === 0) {
+    // El usuario no tiene acceso a NINGUNA de las tiendas solicitadas
+    return NextResponse.json({}, { status: 200 });
+  }
+
   const { getSupabaseAdminSafe } = await import('@/lib/supabase-admin');
   const supabase = getSupabaseAdminSafe();
   if (!supabase) {
@@ -37,18 +50,18 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
   cutoff.setDate(cutoff.getDate() - 30);
   const cutoffIso = cutoff.toISOString();
 
-  // Query 1: productos activos
+  // Query 1: productos activos (solo de tiendas autorizadas)
   const { data: productsData } = await supabase
     .from('products')
     .select('store_id')
-    .in('store_id', storeIds)
+    .in('store_id', allowedIds)
     .eq('is_active', true);
 
-  // Query 2: ventas recientes
+  // Query 2: ventas recientes (solo de tiendas autorizadas)
   const { data: salesData } = await supabase
     .from('transactions')
     .select('store_id')
-    .in('store_id', storeIds)
+    .in('store_id', allowedIds)
     .eq('status', 'completed')
     .gte('created_at', cutoffIso);
 
@@ -62,8 +75,9 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
     for (const s of salesData) storesWithSales.add(s.store_id);
   }
 
+  // FIX-AUDIT-SEC (#3c): solo reportar tiendas autorizadas (no las denegadas)
   const result: Record<string, { has_products: boolean; has_sales: boolean }> = {};
-  for (const id of storeIds) {
+  for (const id of allowedIds) {
     result[id] = {
       has_products: storesWithProducts.has(id),
       has_sales: storesWithSales.has(id),

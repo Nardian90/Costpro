@@ -5,12 +5,18 @@ import { rateLimit } from '@/lib/rate-limit';
 import { createApiError } from '@/lib/api-errors';
 import { z } from 'zod';
 import { logger } from '@/lib/logger';
-import { supabase } from '@/lib/supabaseClient';
+import { canManageStore } from '@/lib/roles';
 
 /**
  * F6-T03: Endpoint para obtener logs de auditoría de una tienda específica.
  * GET /api/stores/[id]/audit?page=1&limit=20&action=CREATE&userId=xxx
- * RLS filtra automáticamente por membership del caller.
+ *
+ * FIX-AUDIT-SEC (#2): antes usaba el singleton anónimo (sin JWT del usuario),
+ * lo que hacía que RLS bloqueara silenciosamente todos los logs. Ahora usa
+ * getSupabaseAdminSafe() que bypassa RLS, y valida membership con
+ * canManageStore() antes de la query.
+ *
+ * FIX-AUDIT-SEC (#6): añadido rate limiting como el resto de endpoints.
  */
 
 const querySchema = z.object({
@@ -29,6 +35,20 @@ async function auditHandler(
 ) {
   try {
     const { id: storeId } = await context.params;
+
+    // FIX-AUDIT-SEC (#6): rate limiting como el resto de endpoints
+    const clientIp = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || req.headers.get('x-real-ip') || 'unknown';
+    const rlKey = `stores:audit:${session.user.id}:${clientIp}`;
+    const { allowed } = await rateLimit(rlKey, { windowMs: 60_000, maxRequests: 30 });
+    if (!allowed) {
+      return NextResponse.json(createApiError('RATE_LIMITED'), { status: 429 });
+    }
+
+    // FIX-AUDIT-SEC (#2): validar membership antes de la query
+    if (!canManageStore(session.user as any, storeId)) {
+      return NextResponse.json({ error: 'Forbidden — sin acceso a esta tienda' }, { status: 403 });
+    }
+
     const { searchParams } = new URL(req.url);
     const validated = querySchema.safeParse({
       page: searchParams.get('page') || 1,
@@ -48,6 +68,14 @@ async function auditHandler(
 
     const { page, limit, action, userId, from, to } = validated.data;
     const offset = (page - 1) * limit;
+
+    // FIX-AUDIT-SEC (#2): usar admin client (service-role) en vez del singleton anon.
+    // canManageStore() ya validó membership, así que es seguro bypassar RLS aquí.
+    const { getSupabaseAdminSafe } = await import('@/lib/supabase-admin');
+    const supabase = getSupabaseAdminSafe();
+    if (!supabase) {
+      return NextResponse.json({ error: 'Server misconfigured' }, { status: 500 });
+    }
 
     let query = supabase
       .from('audit_logs')
