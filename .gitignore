@@ -91,3 +91,8 @@ tool-results/
 supabase/salva/
 # Baileys WhatsApp sessions (per-store, never commit)
 baileys-sessions/
+
+# Screenshots uploaded by user (VLM debugging)
+upload/
+# VLM debug scripts
+scripts/analyze-screenshot*.ts
