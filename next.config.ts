@@ -17,6 +17,8 @@ const nextConfig: NextConfig = {
     '@opentelemetry/exporter-trace-otlp-http',
     '@google/generative-ai',
     'z-ai-web-dev-sdk',
+    '@whiskeysockets/baileys',
+    '@hapi/boom',
   ],
   images: {
     remotePatterns: [
