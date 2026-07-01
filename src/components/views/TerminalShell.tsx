@@ -70,6 +70,8 @@ const EstructuraCostoView = dynamic(() => import('@/components/views/terminal/vi
 const WhatsAppConfigView = dynamic(() => import('@/components/views/terminal/views/whatsapp/WhatsAppConfigView'), { ssr: false });
 const WhatsAppConversationsView = dynamic(() => import('@/components/views/terminal/views/whatsapp/WhatsAppConversationsView'), { ssr: false });
 const WhatsAppInvitationsView = dynamic(() => import('@/components/views/terminal/views/whatsapp/WhatsAppInvitationsView'), { ssr: false });
+const WhatsAppDashboardView = dynamic(() => import('@/components/views/terminal/views/whatsapp/WhatsAppDashboardView'), { ssr: false });
+const WhatsAppGroupView = dynamic(() => import('@/components/views/terminal/views/whatsapp/WhatsAppGroupView'), { ssr: false });
 const Pick3IntelligenceView = dynamic(() => import('@/components/views/terminal/views/pick3/Pick3IntelligenceView'), { ssr: false });
 const WalletView = dynamic(() => import('@/components/views/terminal/views/wallet/WalletView'), { ssr: false });
 const POSView = dynamic(() => import('@/components/views/terminal/views/pos/POSView'), { ssr: false });
@@ -349,6 +351,8 @@ export default function TerminalShell() {
         case 'whatsapp-config': return <ViewErrorBoundary viewName="WhatsApp Config"><WhatsAppConfigView /></ViewErrorBoundary>;
         case 'whatsapp-conversations': return <ViewErrorBoundary viewName="WhatsApp Conversaciones"><WhatsAppConversationsView /></ViewErrorBoundary>;
         case 'whatsapp-invitations': return <ViewErrorBoundary viewName="WhatsApp Invitaciones"><WhatsAppInvitationsView /></ViewErrorBoundary>;
+        case 'whatsapp-dashboard': return <ViewErrorBoundary viewName="WhatsApp Dashboard"><WhatsAppDashboardView /></ViewErrorBoundary>;
+        case 'whatsapp-group': return <ViewErrorBoundary viewName="WhatsApp Grupo"><WhatsAppGroupView /></ViewErrorBoundary>;
         case 'occ': return <ViewErrorBoundary viewName="Centro de Control"><OCCView /></ViewErrorBoundary>;
         default: {
           // E-Fix (IA Audit): default "Módulo No Disponible".

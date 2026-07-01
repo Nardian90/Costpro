@@ -260,8 +260,10 @@ export const SIDEBAR_STRUCTURE: NavModule[] = [
         description: 'Conecta WhatsApp por tienda, responde consultas con IA y gestiona grupo de ventas.',
         allowedRoles: ['admin', 'manager', 'encargado'],
         children: [
+          { id: 'whatsapp-dashboard', label: 'Dashboard', type: 'item', icon: Activity, ariaLabel: 'Métricas y simulador de WhatsApp', description: 'Estadísticas en tiempo real, gráficos y simulador de bot.' },
           { id: 'whatsapp-config', label: 'Conexión y Config', type: 'item', icon: Smartphone, ariaLabel: 'Configurar conexión WhatsApp', description: 'Conectar número, escanear QR, configurar bot GLM y grupo de ventas.' },
           { id: 'whatsapp-conversations', label: 'Conversaciones', type: 'item', icon: MessageCircle, ariaLabel: 'Ver conversaciones de WhatsApp', description: 'Chats de WhatsApp con historial, respuesta manual y estado del bot.' },
+          { id: 'whatsapp-group', label: 'Grupo de Ventas', type: 'item', icon: Users, ariaLabel: 'Gestión del grupo de WhatsApp', description: 'Ver participantes, admins y estado del grupo de ventas.' },
           { id: 'whatsapp-invitations', label: 'Invitaciones', type: 'item', icon: Upload, ariaLabel: 'Cola de invitaciones con anti-ban', description: 'Invita contactos al grupo de ventas con sistema anti-banneo automático.' },
         ]
       },
