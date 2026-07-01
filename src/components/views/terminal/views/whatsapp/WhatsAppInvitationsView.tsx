@@ -144,7 +144,7 @@ export default function WhatsAppInvitationsView() {
                     'text-red-600 dark:text-red-400';
 
   return (
-    <div className="space-y-4 p-4 max-w-5xl mx-auto">
+    <div className="space-y-4 p-4 max-w-5xl w-full mx-auto overflow-y-auto h-full pb-[env(safe-area-inset-bottom)]">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -206,11 +206,11 @@ export default function WhatsAppInvitationsView() {
             <div className="grid grid-cols-2 gap-2">
               <div>
                 <Label className="text-xs">Teléfono</Label>
-                <Input value={newPhone} onChange={e => setNewPhone(e.target.value)} placeholder="5312345678" className="h-8" />
+                <Input value={newPhone} onChange={e => setNewPhone(e.target.value)} placeholder="5312345678" className="h-11" />
               </div>
               <div>
                 <Label className="text-xs">Nombre (opcional)</Label>
-                <Input value={newName} onChange={e => setNewName(e.target.value)} placeholder="Juan Pérez" className="h-8" />
+                <Input value={newName} onChange={e => setNewName(e.target.value)} placeholder="Juan Pérez" className="h-11" />
               </div>
             </div>
             <Button onClick={handleAdd} size="sm" className="w-full">Agregar a cola</Button>
@@ -219,7 +219,7 @@ export default function WhatsAppInvitationsView() {
       )}
 
       {/* Filter */}
-      <div className="flex gap-1 flex-wrap">
+      <div className="flex gap-1 flex-wrap overflow-x-auto no-scrollbar">
         {['all', 'pending', 'pre_message_sent', 'waiting_response', 'invited', 'rejected', 'expired', 'blocked'].map(s => (
           <button
             key={s}
@@ -249,7 +249,7 @@ export default function WhatsAppInvitationsView() {
           {invitations.map(inv => (
             <div
               key={inv.id}
-              className="flex items-center gap-3 p-2.5 rounded-lg border border-border/50 hover:bg-muted/30"
+              className="flex items-center gap-2 sm:gap-3 p-2 sm:p-2.5 rounded-lg border border-border/50 hover:bg-muted/30"
             >
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-bold truncate">{inv.name || inv.phone_number}</p>

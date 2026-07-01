@@ -112,7 +112,7 @@ export default function WhatsAppConfigView() {
   const isConnecting = sessionInfo?.status === 'connecting';
 
   return (
-    <div className="space-y-6 p-4 max-w-4xl mx-auto">
+    <div className="space-y-6 p-4 max-w-4xl w-full mx-auto overflow-y-auto h-full pb-[env(safe-area-inset-bottom)]">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -159,7 +159,7 @@ export default function WhatsAppConfigView() {
           {isConnecting && sessionInfo?.qrCode && (
             <div className="flex flex-col items-center gap-3 py-4">
               <div className="p-4 bg-white rounded-2xl">
-                <img src={sessionInfo.qrCode} alt="QR Code" className="w-64 h-64" />
+                <img src={sessionInfo.qrCode} alt="QR Code" className="w-56 h-56 sm:w-64 sm:h-64" />
               </div>
               <p className="text-xs text-muted-foreground">Escanea con WhatsApp → Dispositivos vinculados</p>
               <Button variant="outline" size="sm" onClick={loadStatus}>
@@ -211,7 +211,7 @@ export default function WhatsAppConfigView() {
               value={config?.group_jid || ''}
               onChange={(e) => update('group_jid', e.target.value)}
               placeholder="123456789-1234567890@g.us"
-              className="mt-1"
+              className="mt-1 h-11"
             />
             <p className="text-[10px] text-muted-foreground mt-1">
               Se obtiene al añadir el bot al grupo. Formato: número@g.us
@@ -224,7 +224,7 @@ export default function WhatsAppConfigView() {
               value={config?.group_name || ''}
               onChange={(e) => update('group_name', e.target.value)}
               placeholder="Grupo de Ventas - Mi Tienda"
-              className="mt-1"
+              className="mt-1 h-11"
             />
           </div>
           <div className="flex items-center justify-between">
@@ -243,8 +243,8 @@ export default function WhatsAppConfigView() {
               id="welcome-msg"
               value={config?.welcome_message || ''}
               onChange={(e) => update('welcome_message', e.target.value)}
-              rows={2}
-              className="mt-1"
+              rows={3}
+              className="mt-1 h-11"
             />
           </div>
         </CardContent>
@@ -264,15 +264,15 @@ export default function WhatsAppConfigView() {
               id="system-prompt"
               value={config?.system_prompt || ''}
               onChange={(e) => update('system_prompt', e.target.value)}
-              rows={4}
-              className="mt-1 font-mono text-xs"
+              rows={5}
+              className="mt-1 h-11 font-mono text-xs"
             />
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
             <div>
               <Label className="text-xs font-bold uppercase">Modelo</Label>
               <Select value={config?.model_name || 'glm-4.5-flash'} onValueChange={(v) => update('model_name', v)}>
-                <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="mt-1 h-11"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="glm-4.5-flash">GLM-4.5 Flash (Gratis)</SelectItem>
                   <SelectItem value="glm-4.5">GLM-4.5</SelectItem>
@@ -285,7 +285,7 @@ export default function WhatsAppConfigView() {
             <div>
               <Label className="text-xs font-bold uppercase">Modo de Activación</Label>
               <Select value={config?.trigger_mode || 'mention'} onValueChange={(v) => update('trigger_mode', v)}>
-                <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="mt-1 h-11"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="mention">Mención (@bot)</SelectItem>
                   <SelectItem value="always">Siempre responder</SelectItem>
@@ -294,7 +294,7 @@ export default function WhatsAppConfigView() {
               </Select>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
             <div>
               <Label className="text-xs font-bold uppercase">Temperatura: {config?.temperature ?? 0.7}</Label>
               <Slider

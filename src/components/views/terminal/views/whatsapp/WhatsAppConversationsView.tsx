@@ -182,12 +182,12 @@ export default function WhatsAppConversationsView() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Buscar…"
-              className="h-8 pl-8 text-xs"
+              className="h-11 pl-8 text-xs"
             />
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto pb-[env(safe-area-inset-bottom)]">
           {filteredConversations.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full gap-2 text-muted-foreground">
               <MessageCircle className="w-8 h-8 opacity-20" />
@@ -199,7 +199,7 @@ export default function WhatsAppConversationsView() {
                 key={conv.id}
                 onClick={() => setSelectedContact(conv)}
                 className={cn(
-                  'w-full flex items-center gap-3 p-3 border-b border-border/50 hover:bg-muted/30 transition-colors text-left',
+                  'w-full flex items-center gap-3 p-3.5 border-b border-border/50 hover:bg-muted/30 transition-colors text-left',
                   selectedContact?.id === conv.id && 'bg-primary/5'
                 )}
               >
@@ -241,8 +241,8 @@ export default function WhatsAppConversationsView() {
         ) : (
           <>
             {/* Header del chat */}
-            <div className="flex items-center gap-3 p-3 border-b border-border bg-card/50">
-              <Button variant="ghost" size="icon" className="sm:hidden" onClick={() => setSelectedContact(null)}>
+            <div className="flex items-center gap-2 sm:gap-3 p-2.5 sm:p-3 border-b border-border bg-card/50">
+              <Button variant="ghost" size="sm" className="sm:hidden" onClick={() => setSelectedContact(null)}>
                 <ArrowLeft className="w-4 h-4" />
               </Button>
               <div className="w-8 h-8 rounded-full bg-green-500/10 flex items-center justify-center">
@@ -291,20 +291,20 @@ export default function WhatsAppConversationsView() {
             </div>
 
             {/* Input */}
-            <div className="p-3 border-t border-border flex gap-2">
+            <div className="p-3 border-t border-border pb-[calc(0.75rem+env(safe-area-inset-bottom))] flex gap-2">
               <Input
                 value={inputMessage}
                 onChange={(e) => setInputMessage(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleSend())}
                 placeholder="Escribe un mensaje…"
-                className="flex-1 text-xs"
+                className="flex-1 text-xs h-11"
                 disabled={sending}
               />
               <Button
                 onClick={handleSend}
                 disabled={sending || !inputMessage.trim()}
-                size="icon"
-                className="bg-green-600 hover:bg-green-700 text-white shrink-0"
+                size="sm"
+                className="bg-green-600 hover:bg-green-700 text-white shrink-0 min-h-[44px] min-w-[44px]"
               >
                 {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
               </Button>

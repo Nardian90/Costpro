@@ -61,7 +61,7 @@ export default function WhatsAppGroupView() {
   }
 
   return (
-    <div className="space-y-4 p-4 max-w-4xl mx-auto">
+    <div className="space-y-4 p-4 max-w-4xl w-full mx-auto overflow-y-auto h-full pb-[env(safe-area-inset-bottom)]">
       {/* Header */}
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-xl bg-green-500/10 flex items-center justify-center">
@@ -125,7 +125,7 @@ export default function WhatsAppGroupView() {
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Buscar participante…"
-              className="w-full h-9 pl-8 pr-3 rounded-lg border border-border bg-background text-xs"
+              className="w-full h-11 pl-8 pr-3 rounded-lg border border-border bg-background text-xs"
             />
           </div>
 
@@ -143,7 +143,7 @@ export default function WhatsAppGroupView() {
               filteredParticipants.map(p => (
                 <div
                   key={p.id}
-                  className="flex items-center gap-3 p-2.5 rounded-lg border border-border/50 hover:bg-muted/30"
+                  className="flex items-center gap-2 sm:gap-3 p-2 sm:p-2.5 rounded-lg border border-border/50 hover:bg-muted/30"
                 >
                   <div className="w-8 h-8 rounded-full bg-green-500/10 flex items-center justify-center shrink-0">
                     <span className="text-xs font-bold text-green-600">

@@ -92,7 +92,7 @@ export default function WhatsAppDashboardView() {
   const isConnected = metrics?.connectionStatus === 'connected';
 
   return (
-    <div className="space-y-4 p-4 max-w-4xl mx-auto">
+    <div className="space-y-4 p-4 max-w-4xl w-full mx-auto overflow-y-auto h-full pb-[env(safe-area-inset-bottom)]">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -110,14 +110,14 @@ export default function WhatsAppDashboardView() {
       </div>
 
       {/* Stats cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3">
         <Card>
-          <CardContent className="p-3">
+          <CardContent className="p-2.5 sm:p-3">
             <div className="flex items-center gap-2 mb-1">
               <MessageCircle className="w-3.5 h-3.5 text-blue-500" />
               <span className="text-[10px] uppercase font-bold text-muted-foreground">Mensajes Hoy</span>
             </div>
-            <p className="text-xl font-black">{metrics?.messagesToday || 0}</p>
+            <p className="text-lg sm:text-xl font-black">{metrics?.messagesToday || 0}</p>
             <p className="text-[9px] text-muted-foreground">
               ↓{metrics?.incomingToday || 0} entrantes · ↑{metrics?.outgoingToday || 0} salientes
             </p>
@@ -125,34 +125,34 @@ export default function WhatsAppDashboardView() {
         </Card>
 
         <Card>
-          <CardContent className="p-3">
+          <CardContent className="p-2.5 sm:p-3">
             <div className="flex items-center gap-2 mb-1">
               <Users className="w-3.5 h-3.5 text-purple-500" />
               <span className="text-[10px] uppercase font-bold text-muted-foreground">Conversaciones</span>
             </div>
-            <p className="text-xl font-black">{metrics?.activeConversations || 0}</p>
+            <p className="text-lg sm:text-xl font-black">{metrics?.activeConversations || 0}</p>
             <p className="text-[9px] text-muted-foreground">{metrics?.totalContacts || 0} contactos totales</p>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-3">
+          <CardContent className="p-2.5 sm:p-3">
             <div className="flex items-center gap-2 mb-1">
               <Send className="w-3.5 h-3.5 text-amber-500" />
               <span className="text-[10px] uppercase font-bold text-muted-foreground">Invitaciones</span>
             </div>
-            <p className="text-xl font-black">{metrics?.invitationsToday || 0}/20</p>
+            <p className="text-lg sm:text-xl font-black">{metrics?.invitationsToday || 0}/20</p>
             <p className="text-[9px] text-muted-foreground">hoy</p>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-3">
+          <CardContent className="p-2.5 sm:p-3">
             <div className="flex items-center gap-2 mb-1">
               {riskIcon}
               <span className="text-[10px] uppercase font-bold text-muted-foreground">Riesgo</span>
             </div>
-            <p className="text-xl font-black capitalize">{metrics?.riskLevel || 'safe'}</p>
+            <p className="text-lg sm:text-xl font-black capitalize">{metrics?.riskLevel || 'safe'}</p>
             {metrics?.cooldownUntil && (
               <p className="text-[9px] text-amber-600">Pausa hasta {new Date(metrics.cooldownUntil).toLocaleDateString('es-CU')}</p>
             )}
@@ -168,7 +168,7 @@ export default function WhatsAppDashboardView() {
               <TrendingUp className="w-4 h-4 text-green-600" />
               <h3 className="text-xs font-black uppercase">Mensajes últimos 7 días</h3>
             </div>
-            <div className="flex items-end gap-2 h-32">
+            <div className="flex items-end gap-2 h-28 sm:h-32">
               {metrics.dailyStats.map(day => {
                 const total = day.incoming + day.outgoing;
                 const maxTotal = Math.max(...metrics.dailyStats.map(d => d.incoming + d.outgoing), 1);
@@ -224,10 +224,10 @@ export default function WhatsAppDashboardView() {
               onChange={e => setTestMessage(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && handleTestBot()}
               placeholder="Escribe un mensaje de prueba…"
-              className="text-xs"
+              className="text-xs h-11"
               disabled={testing}
             />
-            <Button onClick={handleTestBot} disabled={testing || !testMessage.trim()} size="sm" className="bg-green-600 hover:bg-green-700 text-white">
+            <Button onClick={handleTestBot} disabled={testing || !testMessage.trim()} size="sm" className="bg-green-600 hover:bg-green-700 text-white min-h-[44px]">
               {testing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
             </Button>
           </div>
