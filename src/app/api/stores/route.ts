@@ -218,7 +218,7 @@ async function patchHandler(req: NextRequest, session: AuthenticatedSession) {
     const { storeId, ...updates } = validated.data;
 
     // Validate store membership — FIX-AUDIT-SEC (#4): usar canManageStore() (DRY)
-    if (!canManageStore(session.user as any, storeId)) {
+    if (!canManageStore(session.user, storeId)) {
       return NextResponse.json(createApiError('STORE_ACCESS_DENIED'), { status: 403 });
     }
 
@@ -273,7 +273,7 @@ async function deleteHandler(req: NextRequest, session: AuthenticatedSession) {
     const { storeId } = validated.data;
 
     // FIX-SEC-DELETE-1 + FIX-AUDIT-SEC (#4): usar canManageStore() (DRY)
-    if (!canManageStore(session.user as any, storeId)) {
+    if (!canManageStore(session.user, storeId)) {
       return NextResponse.json(
         createApiError('STORE_ACCESS_DENIED'),
         { status: 403 }

@@ -19,7 +19,7 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
     return NextResponse.json({ error: 'Store ID requerido' }, { status: 400 });
   }
 
-  if (!canManageStore(session.user as any, storeId)) {
+  if (!canManageStore(session.user, storeId)) {
     return NextResponse.json({ error: 'Forbidden — sin acceso a esta tienda' }, { status: 403 });
   }
 

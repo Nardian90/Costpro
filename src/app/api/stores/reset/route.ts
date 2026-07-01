@@ -7,6 +7,8 @@ import { createApiError } from '@/lib/api-errors';
 import { uuidLoose } from '@/validation/api-schemas';
 import { z } from 'zod';
 import { logger } from '@/lib/logger';
+import { canManageStore } from '@/lib/roles';
+import { getSupabaseAdminSafe } from '@/lib/supabase-admin';
 
 const resetStoreSchema = z.object({
   storeId: uuidLoose,
@@ -44,14 +46,11 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
 
     const { storeId, keepCatalog } = validated.data;
 
-    // Create admin Supabase client
-    const { createClient } = await import('@supabase/supabase-js');
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    if (!url || !key) {
+    // FIX-AUDIT-SEC (#5): usar getSupabaseAdminSafe() en vez de createClient inline
+    const admin = getSupabaseAdminSafe();
+    if (!admin) {
       return NextResponse.json(createApiError('CONFIG_ERROR'), { status: 500 });
     }
-    const admin = createClient(url, key, { auth: { autoRefreshToken: false, persistSession: false } });
 
     // Verify the store exists and is active before resetting
     const { data: storeData, error: storeLookupError } = await admin
@@ -71,19 +70,12 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
       );
     }
 
-    // Check that the user is an active member of the store (unless global admin)
-    const isAdmin = session.user.role === 'admin';
-    if (!isAdmin) {
-      const memberships = session.user.memberships || [];
-      const hasStoreMembership = memberships.some(
-        m => m.store_id === storeId && m.status === 'active' && ['admin', 'manager', 'encargado'].includes(m.role)
+    // FIX-AUDIT-SEC (#4): usar canManageStore() (DRY) en vez de .some() inline
+    if (!canManageStore(session.user, storeId)) {
+      return NextResponse.json(
+        { ...createApiError('FORBIDDEN'), message: 'No tienes permisos para reiniciar esta tienda' },
+        { status: 403 }
       );
-      if (!hasStoreMembership) {
-        return NextResponse.json(
-          { ...createApiError('FORBIDDEN'), message: 'No tienes permisos para reiniciar esta tienda' },
-          { status: 403 }
-        );
-      }
     }
 
     logger.info('DATABASE', 'RESET_STORE_INITIATED', { storeId, userId: session.user.id, keepCatalog });

@@ -45,7 +45,7 @@ async function auditHandler(
     }
 
     // FIX-AUDIT-SEC (#2): validar membership antes de la query
-    if (!canManageStore(session.user as any, storeId)) {
+    if (!canManageStore(session.user, storeId)) {
       return NextResponse.json({ error: 'Forbidden — sin acceso a esta tienda' }, { status: 403 });
     }
 

@@ -75,6 +75,12 @@ export const hasRole = (user: { role: UserRole; roles?: UserRole[]; memberships?
 };
 
 /**
+ * Tipo canónico para el parámetro `user` de canManageStore.
+ * Compatible estructuralmente con AuthenticatedSession['user'].
+ */
+export type StoreAccessUser = { role: UserRole; memberships?: UserStoreMembership[] };
+
+/**
  * Checks if a user can manage a specific store.
  *
  * Esta es la función canónica para autorizar operaciones sobre una tienda
@@ -88,7 +94,7 @@ export const hasRole = (user: { role: UserRole; roles?: UserRole[]; memberships?
  * No confundir con hasRole() (que chequea roles globales). canManageStore
  * siempre acota por storeId, que es lo correcto para autorización por tienda.
  */
-export const canManageStore = (user: { role: UserRole; memberships?: UserStoreMembership[] } | null, storeId: string): boolean => {
+export const canManageStore = (user: StoreAccessUser | null, storeId: string): boolean => {
   if (!user) return false;
   if (user.role === 'admin') return true;
 

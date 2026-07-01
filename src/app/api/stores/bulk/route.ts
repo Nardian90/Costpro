@@ -66,8 +66,8 @@ async function bulkHandler(req: NextRequest, session: AuthenticatedSession) {
     // FIX-AUDIT-R5: Filtrar storeIds por membership (defensivo, consistente con archive/restore).
     // Para admin global canManageStore siempre retorna true, pero esto protege si el rol
     // se relaja a manager en el futuro y mantiene consistencia con el resto del módulo.
-    const allowedIds = storeIds.filter(id => canManageStore(session.user as any, id));
-    const deniedIds = storeIds.filter(id => !canManageStore(session.user as any, id));
+    const allowedIds = storeIds.filter(id => canManageStore(session.user, id));
+    const deniedIds = storeIds.filter(id => !canManageStore(session.user, id));
 
     if (deniedIds.length > 0) {
       logger.warn('DATABASE', 'STORE_BULK_DENIED_IDS', {
@@ -94,13 +94,12 @@ async function bulkHandler(req: NextRequest, session: AuthenticatedSession) {
       );
     }
 
-    const { createClient } = await import('@supabase/supabase-js');
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    if (!url || !key) {
+    // FIX-AUDIT-SEC (#5): usar getSupabaseAdminSafe() en vez de createClient inline
+    const { getSupabaseAdminSafe } = await import('@/lib/supabase-admin');
+    const admin = getSupabaseAdminSafe();
+    if (!admin) {
       return NextResponse.json(createApiError('CONFIG_ERROR'), { status: 500 });
     }
-    const admin = createClient(url, key, { auth: { autoRefreshToken: false, persistSession: false } });
 
     logger.info('DATABASE', 'STORE_BULK_ACTION', {
       action, count: allowedIds.length, denied: deniedIds.length, userId: session.user.id,

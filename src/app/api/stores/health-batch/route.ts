@@ -34,7 +34,7 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
   }
 
   // FIX-AUDIT-SEC (#3b): filtrar por membership — solo tiendas donde el usuario tiene acceso
-  const allowedIds = rawIds.filter(id => canManageStore(session.user as any, id));
+  const allowedIds = rawIds.filter(id => canManageStore(session.user, id));
   if (allowedIds.length === 0) {
     // El usuario no tiene acceso a NINGUNA de las tiendas solicitadas
     return NextResponse.json({}, { status: 200 });
