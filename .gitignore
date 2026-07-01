@@ -50,8 +50,9 @@ test
 prompt
 
 server.log
-# Skills directory
-/skills/
+# Skills directory (built-in skills are local, but CostPro custom skills ARE tracked)
+/skills/*
+!/skills/costpro-*/
 
 # Windows reserved device names (nul, con, prn, aux, etc.) — cannot be tracked by git
 nul
