@@ -132,8 +132,7 @@ export const SIDEBAR_STRUCTURE: NavModule[] = [
           { id: 'view-reading', label: 'Informe', type: 'item', icon: ClipboardList },
           // C3+G2: "Arena FC" movido aquí desde el grupo Plantillas (eliminado).
           // Ahora vive en Vistas de Trabajo, debajo de Informe.
-          { id: 'arena-fc', label: 'Arena FC', type: 'item', icon: GitCompareArrows, isBeta: true },
-          { id: 'cost-analytics', label: 'Centro de Análisis', type: 'item', icon: BarChart3, isBeta: true }
+          { id: 'arena-fc', label: 'Arena FC', type: 'item', icon: GitCompareArrows, isBeta: true }
         ]
       },
       // B2: Grupo "Generación" eliminado — ahora es "Generar fácil" como primera
@@ -247,6 +246,7 @@ export const SIDEBAR_STRUCTURE: NavModule[] = [
         children: [
           { id: 'estructura-costo', label: 'Estructura de Costo', type: 'item', icon: Calculator, ariaLabel: 'Ver estructura de costo', description: 'Visualiza la composición del costo de cada producto: base, transportación, manipulación, comisiones, servicios, variación cambiaria.' },
           { id: 'costeo-dinamico', label: 'Costeo Dinámico', type: 'item', icon: DollarSign, ariaLabel: 'Ver costeo dinámico', description: 'Calcula el costo real de reposición del inventario absorbiendo servicios, comisiones e impacto cambiario.' },
+          { id: 'cost-analytics', label: 'Centro de Análisis', type: 'item', icon: BarChart3, isBeta: true, ariaLabel: 'Centro de Análisis Dinámico de Costos', description: 'Tabla dinámica tipo Power BI para analizar costos, márgenes y rentabilidad con drag & drop, agrupaciones y exportación.' },
         ]
       },
     ]
