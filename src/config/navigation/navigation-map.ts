@@ -65,6 +65,7 @@ const COSTOS_ROUTES: Record<string, ModuleRoute> = {
   'gen-expert':       { type: 'module', view: 'cost-sheets', tab: 'gen-easy' },
   'templates':        { type: 'module', view: 'cost-sheets', tab: 'templates' },
   'arena-fc':         { type: 'module', view: 'cost-sheets', tab: 'arena-fc' },
+  'cost-analytics':   { type: 'module', view: 'cost-sheets', tab: 'cost-analytics' },
   'tool-import':      { type: 'module', view: 'cost-sheets', tab: 'tool-import' },
   'tool-save':        { type: 'module', view: 'cost-sheets', tab: 'tool-save' },
   'tool-export-excel':{ type: 'module', view: 'cost-sheets', tab: 'tool-export-excel' },

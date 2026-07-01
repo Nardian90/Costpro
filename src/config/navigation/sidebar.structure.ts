@@ -132,7 +132,8 @@ export const SIDEBAR_STRUCTURE: NavModule[] = [
           { id: 'view-reading', label: 'Informe', type: 'item', icon: ClipboardList },
           // C3+G2: "Arena FC" movido aquí desde el grupo Plantillas (eliminado).
           // Ahora vive en Vistas de Trabajo, debajo de Informe.
-          { id: 'arena-fc', label: 'Arena FC', type: 'item', icon: GitCompareArrows, isBeta: true }
+          { id: 'arena-fc', label: 'Arena FC', type: 'item', icon: GitCompareArrows, isBeta: true },
+          { id: 'cost-analytics', label: 'Centro de Análisis', type: 'item', icon: BarChart3, isBeta: true }
         ]
       },
       // B2: Grupo "Generación" eliminado — ahora es "Generar fácil" como primera

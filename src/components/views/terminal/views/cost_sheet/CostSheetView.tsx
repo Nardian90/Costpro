@@ -70,6 +70,10 @@ const ArenaFC = dynamic(() => import('./ArenaFC'), {
   ssr: false,
   loading: () => <div className="animate-pulse bg-muted rounded h-64" />,
 });
+const CostAnalyticsView = dynamic(() => import('./CostAnalyticsView'), {
+  ssr: false,
+  loading: () => <div className="flex items-center justify-center h-64"><div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>,
+});
 
 // ── All-Content Consolidated View ──────────────────────────────────
 // Section divider colors (matching FlatTable pattern)
@@ -640,6 +644,11 @@ const CostSheetView = () => {
                     {activeSection === "arena-fc" && (
                         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                             <ArenaFC />
+                        </div>
+                    )}
+                    {activeSection === "cost-analytics" && (
+                        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 h-[calc(100vh-200px)]">
+                            <CostAnalyticsView />
                         </div>
                     )}
                     {activeSection === 'massive-gen' && (
