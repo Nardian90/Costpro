@@ -21,7 +21,8 @@ import { generateResponse, saveMessage } from './glm-orchestrator';
 import { sendMessage, sendChatAction, answerCallbackQuery, editMessageText, addChatMember } from './bot-client';
 import { emitMessage, emitTyping, emitTypingStop, emitGroupParticipant } from './realtime';
 import { rateLimitByTelegramUser, isFlooding } from './security';
-import type { TelegramUpdate, TelegramConfig } from '@/types/telegram';
+import type { TelegramUpdate, TelegramConfig, TelegramMediaType } from '@/types/telegram';
+import { extractMediaFromMessage } from '@/types/telegram';
 
 /**
  * Procesa un mensaje entrante de Telegram.
@@ -53,9 +54,15 @@ export async function handleMessageIncoming(
   // Ignorar mensajes del propio bot
   if (fromUser.is_bot) return;
 
-  // Solo procesar mensajes de texto (Fase T9: multimedia)
-  const text = msg.text;
-  if (!text || !text.trim()) return;
+  // Fase T9: extraer texto Y multimedia
+  // - msg.text: mensaje de texto plano
+  // - msg.caption: caption de fotos/documentos/videos
+  // - msg.photo/document/voice/etc: multimedia
+  const text = msg.text || '';
+  const media = extractMediaFromMessage(msg);
+
+  // Si no hay texto ni multimedia, ignorar (mensajes del sistema, etc.)
+  if (!text.trim() && !media) return;
 
   const storeId = config.store_id;
   const botToken = config.bot_token;
@@ -65,7 +72,10 @@ export async function handleMessageIncoming(
   const senderName = [fromUser.first_name, fromUser.last_name].filter(Boolean).join(' ') || fromUser.username || String(telegramUserId);
 
   logger.info('DATABASE', 'TELEGRAM_MESSAGE_INCOMING', {
-    storeId, telegramUserId, isGroup, textPreview: text.substring(0, 50),
+    storeId, telegramUserId, isGroup,
+    textPreview: text.substring(0, 50),
+    mediaType: media?.type || null,
+    hasCaption: !!media?.caption,
   });
 
   // 3. Buscar/crear contacto
@@ -102,10 +112,19 @@ export async function handleMessageIncoming(
   }
 
   // 4. Guardar mensaje entrante
-  await saveMessage(storeId, contactId, telegramUserId, 'incoming', text, {
+  // Fase T9: si hay multimedia, guardar media_type + file_id + caption
+  // El "content" del mensaje es: texto si existe, sino caption, sino descripción del tipo
+  const messageContent = text || media?.caption || (media ? `[${media.type}]` : '');
+  await saveMessage(storeId, contactId, telegramUserId, 'incoming', messageContent, {
     telegramMessageId: msg.message_id,
     telegramChatId: chat.id,
     raw: update as unknown as Record<string, unknown>,
+    // Fase T9: campos multimedia
+    mediaType: media?.type,
+    fileId: media?.info.file_id || undefined,
+    fileSize: media?.info.file_size,
+    mimeType: media?.info.mime_type,
+    caption: media?.caption || undefined,
   });
 
   // Fase T6: Emitir evento realtime 'message_incoming'
@@ -113,7 +132,7 @@ export async function handleMessageIncoming(
     contact_id: contactId,
     telegram_user_id: telegramUserId,
     chat_id: chat.id,
-    content: text,
+    content: messageContent,
     sender_name: senderName,
   });
 
@@ -168,12 +187,19 @@ export async function handleMessageIncoming(
   await emitTyping(storeId, contactId, telegramUserId);
 
   // 8. Generar respuesta con GLM
+  // Fase T9: pasar contexto multimedia para enriquecer system prompt
   const response = await generateResponse(
     storeId,
     contactId,
     telegramUserId,
-    text,
-    senderName
+    text || media?.caption || '',
+    senderName,
+    media ? {
+      type: media.type,
+      caption: media.caption,
+      fileName: media.info.file_name,
+      duration: media.info.duration,
+    } : undefined
   );
 
   // Fase T6: Emitir 'typing_stop' cuando GLM terminó

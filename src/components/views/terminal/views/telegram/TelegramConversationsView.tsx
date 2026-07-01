@@ -4,11 +4,46 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Send, ArrowLeft, Search, Loader2, MessageCircle, Ban } from 'lucide-react';
+import {
+  Send, ArrowLeft, Search, Loader2, MessageCircle, Ban,
+  Image as ImageIcon, FileText, Mic, Music, Video, Sticker,
+  MapPin, Contact, Dice5, Film
+} from 'lucide-react';
 import { useAuthStore } from '@/store';
 import { supabase } from '@/lib/supabaseClient';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+
+// Fase T9: iconos por tipo multimedia
+const MEDIA_ICONS: Record<string, React.ReactNode> = {
+  photo: <ImageIcon className="w-3 h-3 inline mr-1 text-blue-500" />,
+  document: <FileText className="w-3 h-3 inline mr-1 text-blue-500" />,
+  voice: <Mic className="w-3 h-3 inline mr-1 text-blue-500" />,
+  audio: <Music className="w-3 h-3 inline mr-1 text-blue-500" />,
+  video: <Video className="w-3 h-3 inline mr-1 text-blue-500" />,
+  video_note: <Video className="w-3 h-3 inline mr-1 text-blue-500" />,
+  sticker: <Sticker className="w-3 h-3 inline mr-1 text-blue-500" />,
+  animation: <Film className="w-3 h-3 inline mr-1 text-blue-500" />,
+  contact: <Contact className="w-3 h-3 inline mr-1 text-blue-500" />,
+  location: <MapPin className="w-3 h-3 inline mr-1 text-blue-500" />,
+  venue: <MapPin className="w-3 h-3 inline mr-1 text-blue-500" />,
+  dice: <Dice5 className="w-3 h-3 inline mr-1 text-blue-500" />,
+};
+
+const MEDIA_LABELS: Record<string, string> = {
+  photo: 'Foto',
+  document: 'Documento',
+  voice: 'Mensaje de voz',
+  audio: 'Audio',
+  video: 'Video',
+  video_note: 'Video circular',
+  sticker: 'Sticker',
+  animation: 'GIF',
+  contact: 'Contacto',
+  location: 'Ubicación',
+  venue: 'Lugar',
+  dice: 'Dado',
+};
 
 function timeAgo(dateStr: string | null): string {
   if (!dateStr) return '';
@@ -43,6 +78,10 @@ interface ChatMessage {
   content: string;
   created_at: string;
   tokens_used: number | null;
+  // Fase T9: campos multimedia
+  media_type: string | null;
+  caption: string | null;
+  file_name: string | null;
 }
 
 function displayName(c: Conversation): string {
@@ -85,7 +124,8 @@ export default function TelegramConversationsView() {
     setLoadingMessages(true);
     const { data, error } = await supabase
       .from('telegram_messages')
-      .select('id, direction, content, created_at, tokens_used')
+      // Fase T9: incluir campos multimedia
+      .select('id, direction, content, created_at, tokens_used, media_type, caption, file_name')
       .eq('contact_id', contactId)
       .order('created_at', { ascending: true })
       .limit(200);
@@ -280,7 +320,22 @@ export default function TelegramConversationsView() {
                         : 'mr-auto bg-muted text-foreground rounded-bl-sm'
                     )}
                   >
-                    <p className="whitespace-pre-wrap break-words">{msg.content}</p>
+                    {/* Fase T9: mostrar icono + caption si es multimedia */}
+                    {msg.media_type && (
+                      <div className="flex items-center gap-1 mb-1 opacity-80">
+                        {MEDIA_ICONS[msg.media_type] || '📎'}
+                        <span className="text-[10px] font-medium">
+                          {MEDIA_LABELS[msg.media_type] || 'Archivo'}
+                          {msg.file_name && `: ${msg.file_name}`}
+                        </span>
+                      </div>
+                    )}
+                    <p className="whitespace-pre-wrap break-words">
+                      {msg.content}
+                      {msg.media_type && msg.caption && (
+                        <span className="opacity-70 italic ml-1">— {msg.caption}</span>
+                      )}
+                    </p>
                     <p className={cn('text-[9px] mt-1 opacity-60', msg.direction === 'outgoing' ? 'text-white' : 'text-muted-foreground')}>
                       {new Date(msg.created_at).toLocaleTimeString('es-CU', { hour: '2-digit', minute: '2-digit' })}
                       {msg.tokens_used && ` · ${msg.tokens_used} tokens`}

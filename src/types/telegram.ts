@@ -241,6 +241,7 @@ export interface TelegramMessageUpdate {
   };
   date: number;
   text?: string;
+  caption?: string;
   entities?: Array<{
     type: 'mention' | 'bot_command' | 'url' | 'email' | 'text_mention';
     offset: number;
@@ -249,6 +250,286 @@ export interface TelegramMessageUpdate {
   }>;
   // Para detectar menciones del bot
   reply_to_message?: TelegramMessageUpdate;
+
+  // ── Multimedia (Fase T9) ──────────────────────────────────────────
+  // Telegram envía arrays de photos en 3 tamaños (thumbnail, medium, large)
+  photo?: Array<{
+    file_id: string;
+    file_unique_id: string;
+    width: number;
+    height: number;
+    file_size?: number;
+  }>;
+  document?: {
+    file_id: string;
+    file_unique_id: string;
+    file_name?: string;
+    mime_type?: string;
+    file_size?: number;
+    thumb?: { file_id: string; file_unique_id: string; width: number; height: number };
+  };
+  voice?: {
+    file_id: string;
+    file_unique_id: string;
+    duration: number;
+    waveform?: string;
+    mime_type?: string;
+    file_size?: number;
+  };
+  audio?: {
+    file_id: string;
+    file_unique_id: string;
+    duration: number;
+    performer?: string;
+    title?: string;
+    file_name?: string;
+    mime_type?: string;
+    file_size?: number;
+  };
+  video?: {
+    file_id: string;
+    file_unique_id: string;
+    width: number;
+    height: number;
+    duration: number;
+    mime_type?: string;
+    file_size?: number;
+  };
+  video_note?: {
+    file_id: string;
+    file_unique_id: string;
+    length: number;
+    duration: number;
+    file_size?: number;
+  };
+  sticker?: {
+    file_id: string;
+    file_unique_id: string;
+    type: 'regular' | 'mask' | 'custom_emoji';
+    width: number;
+    height: number;
+    is_animated: boolean;
+    is_video: boolean;
+    emoji?: string;
+    set_name?: string;
+    file_size?: number;
+  };
+  animation?: {
+    file_id: string;
+    file_unique_id: string;
+    width: number;
+    height: number;
+    duration: number;
+    file_name?: string;
+    mime_type?: string;
+    file_size?: number;
+  };
+  contact?: {
+    phone_number: string;
+    first_name: string;
+    last_name?: string;
+    user_id?: number;
+    vcard?: string;
+  };
+  location?: {
+    longitude: number;
+    latitude: number;
+  };
+  venue?: {
+    location: { longitude: number; latitude: number };
+    title: string;
+    address: string;
+    foursquare_id?: string;
+  };
+  dice?: {
+    emoji: string;
+    value: number;
+  };
+}
+
+// ── Fase T9: Tipos multimedia para BD ──────────────────────────────────
+
+export type TelegramMediaType =
+  | 'photo'
+  | 'document'
+  | 'voice'
+  | 'audio'
+  | 'video'
+  | 'video_note'
+  | 'sticker'
+  | 'animation'
+  | 'contact'
+  | 'location'
+  | 'venue'
+  | 'dice';
+
+export interface TelegramFileInfo {
+  file_id: string;
+  file_unique_id?: string;
+  file_size?: number;
+  file_name?: string;
+  mime_type?: string;
+  duration?: number;
+  width?: number;
+  height?: number;
+}
+
+/**
+ * Extrae info multimedia de un TelegramMessageUpdate.
+ * Retorna null si el mensaje no tiene multimedia.
+ */
+export function extractMediaFromMessage(
+  msg: TelegramMessageUpdate
+): { type: TelegramMediaType; info: TelegramFileInfo; caption: string | null } | null {
+  if (msg.photo && msg.photo.length > 0) {
+    // Tomar el tamaño más grande (último del array)
+    const largest = msg.photo[msg.photo.length - 1];
+    return {
+      type: 'photo',
+      info: {
+        file_id: largest.file_id,
+        file_unique_id: largest.file_unique_id,
+        file_size: largest.file_size,
+        width: largest.width,
+        height: largest.height,
+      },
+      caption: msg.caption || null,
+    };
+  }
+  if (msg.document) {
+    return {
+      type: 'document',
+      info: {
+        file_id: msg.document.file_id,
+        file_unique_id: msg.document.file_unique_id,
+        file_size: msg.document.file_size,
+        file_name: msg.document.file_name,
+        mime_type: msg.document.mime_type,
+      },
+      caption: msg.caption || null,
+    };
+  }
+  if (msg.voice) {
+    return {
+      type: 'voice',
+      info: {
+        file_id: msg.voice.file_id,
+        file_unique_id: msg.voice.file_unique_id,
+        file_size: msg.voice.file_size,
+        duration: msg.voice.duration,
+        mime_type: msg.voice.mime_type || 'audio/ogg',
+      },
+      caption: null,
+    };
+  }
+  if (msg.audio) {
+    return {
+      type: 'audio',
+      info: {
+        file_id: msg.audio.file_id,
+        file_unique_id: msg.audio.file_unique_id,
+        file_size: msg.audio.file_size,
+        duration: msg.audio.duration,
+        file_name: msg.audio.file_name,
+        mime_type: msg.audio.mime_type,
+      },
+      caption: msg.caption || null,
+    };
+  }
+  if (msg.video) {
+    return {
+      type: 'video',
+      info: {
+        file_id: msg.video.file_id,
+        file_unique_id: msg.video.file_unique_id,
+        file_size: msg.video.file_size,
+        duration: msg.video.duration,
+        width: msg.video.width,
+        height: msg.video.height,
+        mime_type: msg.video.mime_type,
+      },
+      caption: msg.caption || null,
+    };
+  }
+  if (msg.video_note) {
+    return {
+      type: 'video_note',
+      info: {
+        file_id: msg.video_note.file_id,
+        file_unique_id: msg.video_note.file_unique_id,
+        file_size: msg.video_note.file_size,
+        duration: msg.video_note.duration,
+      },
+      caption: null,
+    };
+  }
+  if (msg.sticker) {
+    return {
+      type: 'sticker',
+      info: {
+        file_id: msg.sticker.file_id,
+        file_unique_id: msg.sticker.file_unique_id,
+        file_size: msg.sticker.file_size,
+        width: msg.sticker.width,
+        height: msg.sticker.height,
+      },
+      caption: msg.sticker.emoji ? `Sticker: ${msg.sticker.emoji}` : null,
+    };
+  }
+  if (msg.animation) {
+    return {
+      type: 'animation',
+      info: {
+        file_id: msg.animation.file_id,
+        file_unique_id: msg.animation.file_unique_id,
+        file_size: msg.animation.file_size,
+        duration: msg.animation.duration,
+        width: msg.animation.width,
+        height: msg.animation.height,
+        mime_type: msg.animation.mime_type,
+        file_name: msg.animation.file_name,
+      },
+      caption: msg.caption || null,
+    };
+  }
+  if (msg.contact) {
+    return {
+      type: 'contact',
+      info: { file_id: '' }, // los contactos no tienen file_id
+      caption: `${msg.contact.first_name}${msg.contact.last_name ? ' ' + msg.contact.last_name : ''} (${msg.contact.phone_number})`,
+    };
+  }
+  if (msg.location) {
+    return {
+      type: 'location',
+      info: { file_id: '' },
+      caption: `Lat: ${msg.location.latitude}, Lng: ${msg.location.longitude}`,
+    };
+  }
+  if (msg.venue) {
+    return {
+      type: 'venue',
+      info: { file_id: '' },
+      caption: `${msg.venue.title} — ${msg.venue.address}`,
+    };
+  }
+  if (msg.dice) {
+    return {
+      type: 'dice',
+      info: { file_id: '' },
+      caption: `${msg.dice.emoji}: ${msg.dice.value}`,
+    };
+  }
+  return null;
+}
+
+// ── Fase T9: getInfo de getFile API ────────────────────────────────────
+
+export interface TelegramFile {
+  file_id: string;
+  file_unique_id: string;
+  file_size?: number;
+  file_path: string;  // ruta relativa para descargar
 }
 
 export interface TelegramCallbackQuery {

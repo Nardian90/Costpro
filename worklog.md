@@ -369,3 +369,102 @@ Stage Summary:
 - **Anti-spam (no anti-ban)**: rate-limit por usuario + flood detection — apropiado para Telegram donde los bots no se bannean
 - **27 tests de regresión** cubren webhook, API, cross-tenant, seguridad, realtime, schema
 - **0 regresiones**: 701 tests pre-existentes siguen pasando
+
+---
+Task ID: FASE-T9-TELEGRAM-MULTIMEDIA
+Agent: Main Agent (Super Z)
+Task: Implementar Fase T9 — soporte multimedia en módulo Telegram (11 tipos: photo, document, voice, audio, video, video_note, sticker, animation, contact, location, venue, dice)
+
+Work Log:
+
+### Decisiones de scope
+- MVP T9: detectar multimedia, guardar media_type+file_id+caption, enriquecer GLM con contexto, UI con iconos
+- No en T9: VLM (describir imagen con IA) → T10, ASR (transcribir voz) → T11
+- Bot puede enviar fotos y documentos via API (sendPhoto/sendDocument con file_id o URL)
+
+### T9.1 — Migración
+- `supabase/migrations/20260703000002_telegram_multimedia.sql`:
+  - ALTER TABLE telegram_messages con 6 columnas: media_type, file_id, file_path, file_size, mime_type, caption
+  - Índice idx_telegram_messages_media para filtrar por media_type
+  - COMMENTs documentando cada columna
+
+### T9.5 — Tipos TS (antes para que compile)
+- `src/types/telegram.ts`:
+  - TelegramMessageUpdate extendido con 11 campos multimedia (photo[], document, voice, audio, video, video_note, sticker, animation, contact, location, venue, dice)
+  - caption field en mensaje
+  - Nuevos tipos: TelegramMediaType (12 valores), TelegramFileInfo, TelegramFile
+  - `extractMediaFromMessage()` — función pura que extrae multimedia de un Update, retorna {type, info, caption} o null
+
+### T9.2 — bot-client multimedia
+- `src/lib/telegram/bot-client.ts` agrega 6 métodos:
+  - `getFile(botToken, fileId)` → TelegramFile con file_path
+  - `downloadFile(botToken, filePath)` → Blob (para VLM T10, ASR T11)
+  - `downloadFileAsBase64(botToken, filePath)` → string base64 (para VLM T10)
+  - `getFileUrl(botToken, filePath)` → URL pública de descarga
+  - `sendPhoto(botToken, chatId, photo, caption?)` — photo puede ser file_id, URL, o Blob (multipart)
+  - `sendDocument(botToken, chatId, document, caption?)` — mismo patrón
+  - `sendVoice(botToken, chatId, voice, duration?, caption?)` — para respuestas de voz (T11)
+
+### T9.4 — GLM orchestrator con contexto multimedia
+- `src/lib/telegram/glm-orchestrator.ts`:
+  - `generateResponse()` acepta parámetro opcional `mediaContext` con {type, caption, fileName, duration}
+  - System prompt se enriquece: "el usuario envió 📷 Foto. Caption: 'X'. Archivo: factura.pdf. Duración: 15s. Nota: como bot de texto, no puedes ver el contenido. Responde basándote en el caption."
+  - `saveMessage()` acepta campos multimedia en options: mediaType, fileId, filePath, fileSize, mimeType, caption
+  - Constante MEDIA_DESCRIPTIONS mapea los 12 tipos a etiquetas legibles (📷 Foto, 📄 Documento, 🎤 Mensaje de voz, etc.)
+
+### T9.3 — Handlers con detección multimedia
+- `src/lib/telegram/handlers.ts`:
+  - `handleMessageIncoming()` ahora usa `extractMediaFromMessage(msg)` para detectar multimedia
+  - Acepta mensajes con texto, multimedia, o ambos (caption + foto)
+  - Guarda media_type + file_id + caption en BD
+  - Pasa `mediaContext` a `generateResponse()` para enriquecer GLM
+  - El "content" del mensaje en BD es: texto si existe, sino caption, sino `[tipo]`
+
+### T9.6 — UI Conversations con iconos multimedia
+- `src/components/views/terminal/views/telegram/TelegramConversationsView.tsx`:
+  - MEDIA_ICONS: mapeo de 12 tipos a iconos lucide-react (ImageIcon, FileText, Mic, Music, Video, Sticker, MapPin, Contact, Dice5, Film)
+  - MEDIA_LABELS: etiquetas legibles en español ("Foto", "Documento", "Mensaje de voz", etc.)
+  - ChatMessage interface extendida con media_type, caption, file_name
+  - Query de mensajes ahora trae campos multimedia
+  - Render: si msg.media_type, muestra icono + label + file_name antes del content, y caption en cursiva
+  - Los iconos lucide son del mismo color que el tema (azul Telegram)
+
+### T9.7 — API messages/send con multimedia
+- `src/app/api/telegram/messages/send/route.ts`:
+  - Schema Zod ampliado: media_type ('photo'|'document'), media_input (file_id o URL), caption
+  - `.refine()` valida que haya message o media_input
+  - Dispatch según media_type:
+    - photo → tgSendPhoto(botToken, chatId, media_input, caption)
+    - document → tgSendDocument(botToken, chatId, media_input, caption)
+    - texto → tgSendMessage (comportamiento anterior)
+  - Guarda en BD con mediaType + caption
+
+### T9.8 — Tests
+- `src/__tests__/integration/telegram-multimedia.test.ts` — 19 tests:
+  - 11 tests de `extractMediaFromMessage` (uno por cada tipo multimedia)
+  - 1 test de schema migration (verifica columnas + índice)
+  - 3 tests de API messages/send (photo, document, sin input)
+  - 4 tests de bot-client (getFile, getFileUrl, sendPhoto, etc.)
+- Verificación: TypeScript 0 errores, suite completa 50 archivos / 747 tests pasan / 0 fallan
+
+### Archivos creados/modificados (7)
+Creados:
+1. supabase/migrations/20260703000002_telegram_multimedia.sql
+2. src/__tests__/integration/telegram-multimedia.test.ts
+
+Modificados:
+1. src/types/telegram.ts — 11 campos multimedia + extractMediaFromMessage + tipos
+2. src/lib/telegram/bot-client.ts — 6 métodos multimedia (getFile, downloadFile, sendPhoto, sendDocument, sendVoice, getFileUrl)
+3. src/lib/telegram/glm-orchestrator.ts — generateResponse con mediaContext, saveMessage con campos multimedia
+4. src/lib/telegram/handlers.ts — detección multimedia en handleMessageIncoming
+5. src/components/views/terminal/views/telegram/TelegramConversationsView.tsx — iconos + render multimedia
+6. src/app/api/telegram/messages/send/route.ts — schema con media_type + dispatch
+
+Stage Summary:
+- **Multimedia completo en Telegram** — 11 tipos soportados end-to-end
+- **Bot responde con texto** pero con contexto multimedia enriquecido ("el usuario envió 📷 Foto con caption X")
+- **UI muestra iconos** por tipo + caption en cursiva + file_name cuando aplica
+- **API soporta envío de fotos y documentos** via file_id o URL HTTP
+- **No procesa contenido del archivo** (eso es VLM T10 para imágenes, ASR T11 para voz) — pero guarda file_id para descarga on-demand
+- **19 tests nuevos** cubren extracción de los 12 tipos, API multimedia, bot-client, schema
+- **0 regresiones**: 728 tests pre-existentes siguen pasando

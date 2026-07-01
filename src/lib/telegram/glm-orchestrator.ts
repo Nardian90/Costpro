@@ -18,12 +18,29 @@
 import ZAI from 'z-ai-web-dev-sdk';
 import { logger } from '@/lib/logger';
 import { getSupabaseAdminSafe } from '@/lib/supabase-admin';
+import type { TelegramMediaType } from '@/types/telegram';
 
 export interface GLMResponse {
   text: string;
   tokensUsed: number;
   responseTimeMs: number;
 }
+
+// ── Fase T9: Mapeo de tipos multimedia a descripción legible ───────────
+const MEDIA_DESCRIPTIONS: Record<TelegramMediaType, string> = {
+  photo: '📷 Foto',
+  document: '📄 Documento',
+  voice: '🎤 Mensaje de voz',
+  audio: '🎵 Audio',
+  video: '🎬 Video',
+  video_note: '⭕ Video circular',
+  sticker: '😀 Sticker',
+  animation: '🎞️ GIF',
+  contact: '👤 Contacto',
+  location: '📍 Ubicación',
+  venue: '🏪 Lugar',
+  dice: '🎲 Dado',
+};
 
 interface BotConfig {
   system_prompt: string;
@@ -53,13 +70,24 @@ async function getZAIClient() {
  * FIX-AUDIT-WA-3 (aplicado desde el inicio): la query de historial filtra
  * por store_id + contact_id, no solo contact_id. Previene cross-tenant
  * poisoning del contexto del bot.
+ *
+ * Fase T9: si el mensaje entrante incluye multimedia, el system prompt se
+ * enriquece con contexto ("el usuario envió una foto con caption: X").
+ * El bot responde con texto — no procesa el contenido del archivo (eso es
+ * VLM en T10 y ASR en T11).
  */
 export async function generateResponse(
   storeId: string,
   contactId: string | null,
   telegramUserId: number,
   incomingMessage: string,
-  contactName?: string
+  contactName?: string,
+  mediaContext?: {
+    type: TelegramMediaType;
+    caption: string | null;
+    fileName?: string;
+    duration?: number;
+  }
 ): Promise<GLMResponse> {
   const startTime = Date.now();
   const admin = getSupabaseAdminSafe();
@@ -96,9 +124,34 @@ export async function generateResponse(
   }
 
   // 3. Construir messages array para GLM
-  const systemContent = config.system_prompt
+  // Fase T9: enriquecer system prompt con contexto multimedia
+  let systemContent = config.system_prompt
     .replace('{negocio_name}', contactName || 'la tienda')
     .replace('{contacto_name}', contactName || 'cliente');
+
+  let userContent = incomingMessage;
+
+  if (mediaContext) {
+    const mediaDesc = MEDIA_DESCRIPTIONS[mediaContext.type] || '📎 Archivo';
+    const mediaInfo: string[] = [`\n\n[Contexto multimedia: el usuario envió ${mediaDesc}`];
+    if (mediaContext.fileName) mediaInfo.push(`Archivo: ${mediaContext.fileName}`);
+    if (mediaContext.duration) mediaInfo.push(`Duración: ${mediaContext.duration}s`);
+    if (mediaContext.caption) {
+      mediaInfo.push(`Caption del usuario: "${mediaContext.caption}"`);
+    } else if (mediaContext.type === 'photo' || mediaContext.type === 'document') {
+      mediaInfo.push('Sin caption — el usuario envió el archivo sin texto adicional.');
+    }
+    mediaInfo.push('Nota: como bot de texto, no puedes ver el contenido del archivo. Responde basándote en el caption si existe, o pide al usuario que describa lo que necesita.]');
+
+    systemContent += mediaInfo.join('. ');
+
+    // Si no hay texto pero sí caption, usar caption como user content
+    if (!userContent && mediaContext.caption) {
+      userContent = `[${mediaDesc}] ${mediaContext.caption}`;
+    } else if (!userContent) {
+      userContent = `[${mediaDesc}] (sin texto adicional)`;
+    }
+  }
 
   const messages: Array<{ role: string; content: string }> = [
     { role: 'system', content: systemContent },
@@ -106,7 +159,7 @@ export async function generateResponse(
       role: m.direction === 'incoming' ? 'user' : 'assistant',
       content: m.content,
     })),
-    { role: 'user', content: incomingMessage },
+    { role: 'user', content: userContent },
   ];
 
   // 4. Llamar a GLM
@@ -179,6 +232,13 @@ export async function saveMessage(
     tokensUsed?: number;
     responseTimeMs?: number;
     raw?: Record<string, unknown>;
+    // Fase T9: campos multimedia
+    mediaType?: TelegramMediaType;
+    fileId?: string;
+    filePath?: string;
+    fileSize?: number;
+    mimeType?: string;
+    caption?: string;
   }
 ): Promise<string | null> {
   const admin = getSupabaseAdminSafe();
@@ -228,6 +288,13 @@ export async function saveMessage(
       raw: options?.raw || null,
       tokens_used: options?.tokensUsed || null,
       response_time_ms: options?.responseTimeMs || null,
+      // Fase T9: campos multimedia
+      media_type: options?.mediaType || null,
+      file_id: options?.fileId || null,
+      file_path: options?.filePath || null,
+      file_size: options?.fileSize || null,
+      mime_type: options?.mimeType || null,
+      caption: options?.caption || null,
     })
     .select('id')
     .single();

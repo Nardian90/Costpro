@@ -23,6 +23,7 @@ import type {
   TelegramChatInfo,
   TelegramChatMember,
   TelegramMessageUpdate,
+  TelegramFile,
 } from '@/types/telegram';
 
 const TELEGRAM_API_BASE = 'https://api.telegram.org';
@@ -275,4 +276,165 @@ export async function createChatInviteLink(
     chat_id: chatId,
     ...options,
   });
+}
+
+// ── Fase T9: Métodos multimedia ────────────────────────────────────────
+
+/**
+ * Obtiene info de un archivo de Telegram via file_id.
+ * Retorna file_path (relativo) que se usa para construir la URL de descarga:
+ *   https://api.telegram.org/file/bot{token}/{file_path}
+ *
+ * Límites:
+ *   - El bot solo puede descargar archivos <20MB (gratis)
+ *   - Para archivos más grandes, requiere Telegram Premium del bot
+ */
+export async function getFile(botToken: string, fileId: string): Promise<TelegramFile> {
+  return callTelegramApi<TelegramFile>(botToken, 'getFile', { file_id: fileId });
+}
+
+/**
+ * Descarga un archivo de Telegram como Blob.
+ * Útil para procesamiento posterior (VLM en T10, ASR en T11, etc.).
+ *
+ * @param botToken Token del bot
+ * @param filePath file_path obtenido de getFile()
+ * @returns Blob con el contenido del archivo
+ */
+export async function downloadFile(botToken: string, filePath: string): Promise<Blob> {
+  const url = `${TELEGRAM_API_BASE}/file/bot${botToken}/${filePath}`;
+  const res = await fetch(url);
+  if (!res.ok) {
+    throw new Error(`Download failed: HTTP ${res.status}`);
+  }
+  return res.blob();
+}
+
+/**
+ * Descarga un archivo y lo retorna como base64 (para VLM en T10).
+ */
+export async function downloadFileAsBase64(botToken: string, filePath: string): Promise<string> {
+  const blob = await downloadFile(botToken, filePath);
+  const buffer = Buffer.from(await blob.arrayBuffer());
+  return buffer.toString('base64');
+}
+
+/**
+ * Construye la URL pública de descarga de un archivo.
+ * Útil para mostrar enlaces en la UI sin descargar el archivo.
+ */
+export function getFileUrl(botToken: string, filePath: string): string {
+  return `${TELEGRAM_API_BASE}/file/bot${botToken}/${filePath}`;
+}
+
+/**
+ * Envía una foto a un chat.
+ *
+ * @param photo Puede ser:
+ *   - file_id de una foto ya subida a Telegram
+ *   - URL HTTP de una foto (Telegram la descargará)
+ *   - Blob/File con el contenido (multipart/form-data)
+ */
+export async function sendPhoto(
+  botToken: string,
+  chatId: number,
+  photo: string | Blob,
+  caption?: string,
+  options?: {
+    parse_mode?: 'HTML' | 'MarkdownV2';
+    reply_markup?: Record<string, unknown>;
+  }
+): Promise<TelegramMessageUpdate> {
+  // Si photo es string (file_id o URL), usamos JSON API
+  if (typeof photo === 'string') {
+    return callTelegramApi(botToken, 'sendPhoto', {
+      chat_id: chatId,
+      photo,
+      caption,
+      ...options,
+    });
+  }
+  // Si photo es Blob, usamos multipart/form-data
+  const formData = new FormData();
+  formData.append('chat_id', String(chatId));
+  formData.append('photo', photo);
+  if (caption) formData.append('caption', caption);
+  if (options?.parse_mode) formData.append('parse_mode', options.parse_mode);
+
+  const url = `${TELEGRAM_API_BASE}/bot${botToken}/sendPhoto`;
+  const res = await fetch(url, { method: 'POST', body: formData });
+  const json = (await res.json()) as TelegramApiResponse<TelegramMessageUpdate>;
+  if (!json.ok) {
+    throw new Error(`Telegram API error: ${json.description}`);
+  }
+  return json.result as TelegramMessageUpdate;
+}
+
+/**
+ * Envía un documento a un chat.
+ * Mismo comportamiento que sendPhoto pero para documentos.
+ */
+export async function sendDocument(
+  botToken: string,
+  chatId: number,
+  document: string | Blob,
+  caption?: string,
+  options?: {
+    parse_mode?: 'HTML' | 'MarkdownV2';
+    reply_markup?: Record<string, unknown>;
+  }
+): Promise<TelegramMessageUpdate> {
+  if (typeof document === 'string') {
+    return callTelegramApi(botToken, 'sendDocument', {
+      chat_id: chatId,
+      document,
+      caption,
+      ...options,
+    });
+  }
+  const formData = new FormData();
+  formData.append('chat_id', String(chatId));
+  formData.append('document', document);
+  if (caption) formData.append('caption', caption);
+
+  const url = `${TELEGRAM_API_BASE}/bot${botToken}/sendDocument`;
+  const res = await fetch(url, { method: 'POST', body: formData });
+  const json = (await res.json()) as TelegramApiResponse<TelegramMessageUpdate>;
+  if (!json.ok) {
+    throw new Error(`Telegram API error: ${json.description}`);
+  }
+  return json.result as TelegramMessageUpdate;
+}
+
+/**
+ * Envía un mensaje de voz (audio .ogg).
+ */
+export async function sendVoice(
+  botToken: string,
+  chatId: number,
+  voice: string | Blob,
+  duration?: number,
+  caption?: string
+): Promise<TelegramMessageUpdate> {
+  if (typeof voice === 'string') {
+    return callTelegramApi(botToken, 'sendVoice', {
+      chat_id: chatId,
+      voice,
+      duration,
+      caption,
+    });
+  }
+  const formData = new FormData();
+  formData.append('chat_id', String(chatId));
+  formData.append('voice', voice);
+  if (duration) formData.append('duration', String(duration));
+  if (caption) formData.append('caption', caption);
+
+  const url = `${TELEGRAM_API_BASE}/bot${botToken}/sendVoice`;
+  const res = await fetch(url, { method: 'POST', body: formData });
+  const json = (await res.json()) as TelegramApiResponse<TelegramMessageUpdate>;
+  if (!json.ok) {
+    throw new Error(`Telegram API error: ${json.description}`);
+  }
+  return json.result as TelegramMessageUpdate;
 }
