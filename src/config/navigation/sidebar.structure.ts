@@ -262,6 +262,7 @@ export const SIDEBAR_STRUCTURE: NavModule[] = [
         children: [
           { id: 'whatsapp-config', label: 'Conexión y Config', type: 'item', icon: Smartphone, ariaLabel: 'Configurar conexión WhatsApp', description: 'Conectar número, escanear QR, configurar bot GLM y grupo de ventas.' },
           { id: 'whatsapp-conversations', label: 'Conversaciones', type: 'item', icon: MessageCircle, ariaLabel: 'Ver conversaciones de WhatsApp', description: 'Chats de WhatsApp con historial, respuesta manual y estado del bot.' },
+          { id: 'whatsapp-invitations', label: 'Invitaciones', type: 'item', icon: Upload, ariaLabel: 'Cola de invitaciones con anti-ban', description: 'Invita contactos al grupo de ventas con sistema anti-banneo automático.' },
         ]
       },
     ]
