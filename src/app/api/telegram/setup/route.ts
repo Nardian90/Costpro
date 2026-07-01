@@ -155,6 +155,22 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
     const url = `${baseUrl}/api/telegram/webhook?bot_id=${botUserId}`;
     const webhookUrl = new URL(url).toString(); // normaliza
 
+    // DEBUG: log todos los headers candidatos para diagnosticar qué URL se construye
+    logger.info('DATABASE', 'TELEGRAM_WEBHOOK_URL_DEBUG', {
+      store_id, botUserId, webhookUrl,
+      candidateUrls,
+      headers: {
+        host: req.headers.get('host'),
+        'x-forwarded-host': req.headers.get('x-forwarded-host'),
+        origin: req.headers.get('origin'),
+        'x-forwarded-proto': req.headers.get('x-forwarded-proto'),
+      },
+      env: {
+        NEXTAUTH_URL: process.env.NEXTAUTH_URL,
+        VERCEL_URL: process.env.VERCEL_URL,
+      },
+    });
+
     // Registrar en Telegram
     try {
       const result = await setWebhook(config.bot_token, webhookUrl, secret);
