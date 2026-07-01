@@ -105,7 +105,7 @@ export default function WhatsAppDashboardView() {
           </div>
         </div>
         <Badge className={cn('text-xs', isConnected ? 'bg-green-500/10 text-green-600' : 'bg-muted text-muted-foreground')}>
-          {isConnected ? '● Conectado' : '○ Desconectado'}
+          {isConnected ? `● ${metrics?.phoneNumber || "Conectado"}` : "○ Desconectado"}
         </Badge>
       </div>
 
@@ -161,7 +161,7 @@ export default function WhatsAppDashboardView() {
       </div>
 
       {/* Daily chart (simple bars) */}
-      {metrics?.dailyStats && metrics.dailyStats.length > 0 && (
+      {metrics?.dailyStats && metrics.dailyStats.length > 0 && metrics.dailyStats.some(d => d.incoming + d.outgoing > 0) && (
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-3">
@@ -209,6 +209,14 @@ export default function WhatsAppDashboardView() {
       )}
 
       {/* Bot simulator */}
+      {metrics?.messagesToday === 0 && (
+        <Card>
+          <CardContent className="p-4 text-center text-muted-foreground">
+            <MessageCircle className="w-8 h-8 opacity-20 mx-auto mb-2" />
+            <p className="text-xs">Sin mensajes aún. Conecta WhatsApp y recibe tu primer mensaje.</p>
+          </CardContent>
+        </Card>
+      )}
       <Card>
         <CardContent className="p-4 space-y-3">
           <div className="flex items-center gap-2">
@@ -227,7 +235,7 @@ export default function WhatsAppDashboardView() {
               className="text-xs h-11"
               disabled={testing}
             />
-            <Button onClick={handleTestBot} disabled={testing || !testMessage.trim()} size="sm" className="bg-green-600 hover:bg-green-700 text-white min-h-[44px]">
+            <Button onClick={handleTestBot} disabled={testing || !testMessage.trim()} size="sm" className="bg-green-600 hover:bg-green-700 active:scale-95 text-white min-h-[44px]">
               {testing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
             </Button>
           </div>

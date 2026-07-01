@@ -10,6 +10,21 @@ import { supabase } from '@/lib/supabaseClient';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
+function timeAgo(dateStr: string | null): string {
+  if (!dateStr) return '';
+  const date = new Date(dateStr);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMin = Math.floor(diffMs / 60000);
+  const diffHour = Math.floor(diffMin / 60);
+  const diffDay = Math.floor(diffHour / 24);
+  if (diffMin < 1) return 'ahora';
+  if (diffMin < 60) return `hace ${diffMin}min`;
+  if (diffHour < 24) return `hace ${diffHour}h`;
+  if (diffDay < 7) return `hace ${diffDay}d`;
+  return date.toLocaleDateString('es-CU', { day: '2-digit', month: '2-digit' });
+}
+
 interface Conversation {
   id: string;
   phone_number: string;
@@ -104,6 +119,13 @@ export default function WhatsAppConversationsView() {
       toast.error('Error al cargar mensajes');
     } else {
       setMessages(data || []);
+      // Marcar mensajes entrantes como leídos
+      await supabase
+        .from('whatsapp_messages')
+        .update({ read_receipt: true })
+        .eq('contact_id', contactId)
+        .eq('direction', 'incoming')
+        .eq('read_receipt', false);
     }
     setLoadingMessages(false);
   }, []);
@@ -213,11 +235,18 @@ export default function WhatsAppConversationsView() {
                     <p className="text-xs font-bold truncate">
                       {conv.name || conv.push_name || conv.phone_number}
                     </p>
-                    {conv.unread_count > 0 && (
-                      <Badge className="bg-green-500 text-white text-[9px] h-4 min-w-4 flex items-center justify-center">
-                        {conv.unread_count}
-                      </Badge>
-                    )}
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      {conv.last_message_at && (
+                        <span className="text-[9px] text-muted-foreground">
+                          {timeAgo(conv.last_message_at)}
+                        </span>
+                      )}
+                      {conv.unread_count > 0 && (
+                        <Badge className="bg-green-500 text-white text-[9px] h-4 min-w-4 flex items-center justify-center">
+                          {conv.unread_count}
+                        </Badge>
+                      )}
+                    </div>
                   </div>
                   <p className="text-[10px] text-muted-foreground truncate">
                     {conv.last_message_direction === 'outgoing' && 'Tú: '}
@@ -296,7 +325,7 @@ export default function WhatsAppConversationsView() {
                 value={inputMessage}
                 onChange={(e) => setInputMessage(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleSend())}
-                placeholder="Escribe un mensaje…"
+                placeholder={`Mensaje a ${selectedContact?.name || selectedContact?.push_name || selectedContact?.phone_number}…`}
                 className="flex-1 text-xs h-11"
                 disabled={sending}
               />
@@ -304,7 +333,7 @@ export default function WhatsAppConversationsView() {
                 onClick={handleSend}
                 disabled={sending || !inputMessage.trim()}
                 size="sm"
-                className="bg-green-600 hover:bg-green-700 text-white shrink-0 min-h-[44px] min-w-[44px]"
+                className="bg-green-600 hover:bg-green-700 active:scale-95 text-white shrink-0 min-h-[44px] min-w-[44px]"
               >
                 {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
               </Button>

@@ -122,6 +122,7 @@ export default function WhatsAppInvitationsView() {
   };
 
   const handleDelete = async (id: string) => {
+    if (!confirm('¿Cancelar esta invitación?')) return;
     if (!storeId) return;
     await fetch(`/api/whatsapp/invitations?id=${id}&store_id=${storeId}`, { method: 'DELETE' });
     setInvitations(prev => prev.filter(i => i.id !== id));
@@ -206,7 +207,7 @@ export default function WhatsAppInvitationsView() {
             <div className="grid grid-cols-2 gap-2">
               <div>
                 <Label className="text-xs">Teléfono</Label>
-                <Input value={newPhone} onChange={e => setNewPhone(e.target.value)} placeholder="5312345678" className="h-11" />
+                <Input value={newPhone} onChange={e => setNewPhone(e.target.value)} placeholder="5312345678" pattern="[0-9]{5,15}" className="h-11" />
               </div>
               <div>
                 <Label className="text-xs">Nombre (opcional)</Label>

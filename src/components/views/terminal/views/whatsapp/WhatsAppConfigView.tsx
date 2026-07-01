@@ -149,7 +149,7 @@ export default function WhatsAppConfigView() {
               <p className="text-sm text-muted-foreground text-center">
                 Escanea el código QR con tu WhatsApp para conectar el número de la tienda.
               </p>
-              <Button onClick={handleConnect} disabled={connecting} className="bg-green-600 hover:bg-green-700 text-white">
+              <Button onClick={handleConnect} disabled={connecting} className="bg-green-600 hover:bg-green-700 active:scale-95 text-white">
                 {connecting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <QrCode className="w-4 h-4 mr-2" />}
                 Conectar WhatsApp
               </Button>
@@ -317,7 +317,7 @@ export default function WhatsAppConfigView() {
           <div className="flex items-center justify-between pt-2">
             <div>
               <Label className="text-xs font-bold uppercase">Bot Activo</Label>
-              <p className="text-[10px] text-muted-foreground">Responder mensajes automáticamente</p>
+              <p className="text-[10px] text-muted-foreground">Responder mensajes automáticamente {config?.is_active ? "(activo)" : "(pausado)"}</p>
             </div>
             <Switch
               checked={config?.is_active ?? false}
