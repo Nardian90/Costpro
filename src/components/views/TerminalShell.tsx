@@ -72,6 +72,12 @@ const WhatsAppConversationsView = dynamic(() => import('@/components/views/termi
 const WhatsAppInvitationsView = dynamic(() => import('@/components/views/terminal/views/whatsapp/WhatsAppInvitationsView'), { ssr: false });
 const WhatsAppDashboardView = dynamic(() => import('@/components/views/terminal/views/whatsapp/WhatsAppDashboardView'), { ssr: false });
 const WhatsAppGroupView = dynamic(() => import('@/components/views/terminal/views/whatsapp/WhatsAppGroupView'), { ssr: false });
+// Fase T5: Telegram Bot — serverless-native, Vercel-compatible
+const TelegramConfigView = dynamic(() => import('@/components/views/terminal/views/telegram/TelegramConfigView'), { ssr: false });
+const TelegramConversationsView = dynamic(() => import('@/components/views/terminal/views/telegram/TelegramConversationsView'), { ssr: false });
+const TelegramInvitationsView = dynamic(() => import('@/components/views/terminal/views/telegram/TelegramInvitationsView'), { ssr: false });
+const TelegramDashboardView = dynamic(() => import('@/components/views/terminal/views/telegram/TelegramDashboardView'), { ssr: false });
+const TelegramGroupView = dynamic(() => import('@/components/views/terminal/views/telegram/TelegramGroupView'), { ssr: false });
 const Pick3IntelligenceView = dynamic(() => import('@/components/views/terminal/views/pick3/Pick3IntelligenceView'), { ssr: false });
 const WalletView = dynamic(() => import('@/components/views/terminal/views/wallet/WalletView'), { ssr: false });
 const POSView = dynamic(() => import('@/components/views/terminal/views/pos/POSView'), { ssr: false });
@@ -353,6 +359,12 @@ export default function TerminalShell() {
         case 'whatsapp-invitations': return <ViewErrorBoundary viewName="WhatsApp Invitaciones"><WhatsAppInvitationsView /></ViewErrorBoundary>;
         case 'whatsapp-dashboard': return <ViewErrorBoundary viewName="WhatsApp Dashboard"><WhatsAppDashboardView /></ViewErrorBoundary>;
         case 'whatsapp-group': return <ViewErrorBoundary viewName="WhatsApp Grupo"><WhatsAppGroupView /></ViewErrorBoundary>;
+        // Fase T5: Telegram Bot
+        case 'telegram-config': return <ViewErrorBoundary viewName="Telegram Config"><TelegramConfigView /></ViewErrorBoundary>;
+        case 'telegram-conversations': return <ViewErrorBoundary viewName="Telegram Conversaciones"><TelegramConversationsView /></ViewErrorBoundary>;
+        case 'telegram-invitations': return <ViewErrorBoundary viewName="Telegram Invitaciones"><TelegramInvitationsView /></ViewErrorBoundary>;
+        case 'telegram-dashboard': return <ViewErrorBoundary viewName="Telegram Dashboard"><TelegramDashboardView /></ViewErrorBoundary>;
+        case 'telegram-group': return <ViewErrorBoundary viewName="Telegram Grupo"><TelegramGroupView /></ViewErrorBoundary>;
         case 'occ': return <ViewErrorBoundary viewName="Centro de Control"><OCCView /></ViewErrorBoundary>;
         default: {
           // E-Fix (IA Audit): default "Módulo No Disponible".

@@ -59,7 +59,8 @@ import {
   FlaskConical,
   Calculator,
   Smartphone,
-  MessageCircle
+  MessageCircle,
+  Send
 } from 'lucide-react';
 
 export type NavItemType = 'item' | 'submenu' | 'group';
@@ -265,6 +266,24 @@ export const SIDEBAR_STRUCTURE: NavModule[] = [
           { id: 'whatsapp-conversations', label: 'Conversaciones', type: 'item', icon: MessageCircle, ariaLabel: 'Ver conversaciones de WhatsApp', description: 'Chats de WhatsApp con historial, respuesta manual y estado del bot.' },
           { id: 'whatsapp-group', label: 'Grupo de Ventas', type: 'item', icon: Users, ariaLabel: 'Gestión del grupo de WhatsApp', description: 'Ver participantes, admins y estado del grupo de ventas.' },
           { id: 'whatsapp-invitations', label: 'Invitaciones', type: 'item', icon: Upload, ariaLabel: 'Cola de invitaciones con anti-ban', description: 'Invita contactos al grupo de ventas con sistema anti-banneo automático.' },
+        ]
+      },
+      // Telegram Bot — Fase T1: canal serverless-native (Vercel-compatible)
+      // Diferencias con WhatsApp: webhook-based (sin Baileys/socket persistente),
+      // sin anti-ban (bots oficiales), invitations con botones inline (callback_query).
+      {
+        id: 'telegram',
+        label: 'Telegram',
+        type: 'submenu',
+        ariaLabel: 'Bot de Telegram con GLM',
+        description: 'Bot de Telegram por tienda, serverless-native, responde consultas con IA y gestiona grupo de ventas. Funciona en Vercel sin conexión persistente.',
+        allowedRoles: ['admin', 'manager', 'encargado'],
+        children: [
+          { id: 'telegram-dashboard', label: 'Dashboard', type: 'item', icon: Activity, ariaLabel: 'Métricas y simulador de Telegram', description: 'Estadísticas en tiempo real, gráficos y simulador de bot.' },
+          { id: 'telegram-config', label: 'Bot y Config', type: 'item', icon: Send, ariaLabel: 'Configurar bot de Telegram', description: 'Registrar bot de BotFather, configurar webhook, GLM y grupo de ventas.' },
+          { id: 'telegram-conversations', label: 'Conversaciones', type: 'item', icon: MessageCircle, ariaLabel: 'Ver conversaciones de Telegram', description: 'Chats de Telegram con historial, respuesta manual y estado del bot.' },
+          { id: 'telegram-group', label: 'Grupo de Ventas', type: 'item', icon: Users, ariaLabel: 'Gestión del grupo de Telegram', description: 'Ver participantes, admins y estado del grupo de ventas.' },
+          { id: 'telegram-invitations', label: 'Invitaciones', type: 'item', icon: Upload, ariaLabel: 'Cola de invitaciones con botones inline', description: 'Invita contactos al grupo de ventas. Confirmación via botones Sí/No (callback_query).' },
         ]
       },
     ]

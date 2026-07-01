@@ -226,3 +226,146 @@ Stage Summary:
 - **Compatibilidad hacia atrás**: si Socket.io no está inicializado (Vercel,
   tests, dev sin custom server), todos los emisores son no-op. El frontend
   sigue funcionando con polling reducido (60s) como fallback.
+
+---
+Task ID: FASE-T1-TO-T8-TELEGRAM
+Agent: Main Agent (Super Z)
+Task: Implementar módulo Telegram completo profesional (8 fases) — serverless-native, Vercel-compatible, espejo de WhatsApp
+
+Work Log:
+
+### Decisiones confirmadas con el usuario
+- R1: 1 bot por tienda (cada tienda crea su bot en @BotFather)
+- R2: Invitations con botones inline (callback_query "Sí/No")
+- R3: Fase T3 solo texto — multimedia postergada a Fase T9 opcional
+
+### FASE T1 — Setup + DB Schema + Tipos + Nav
+- `supabase/migrations/20260703000001_create_telegram_module.sql`:
+  - 4 tablas: telegram_configs, telegram_contacts, telegram_messages, telegram_invitations
+  - telegram_user_id es BIGINT (IDs de 64 bits de Telegram)
+  - RLS idéntica a WhatsApp (SELECT para memberships, write para admin/manager/encargado)
+  - NO se crea telegram_risk_state (Telegram no banea bots oficiales)
+- `src/types/telegram.ts` — tipos TS completos (config, contact, message, invitation, métricas, eventos, Bot API tipos, Update webhook)
+- `src/store/index.ts` — ViewType extendido con 5 vistas: telegram-config/conversations/invitations/dashboard/group
+- `src/config/navigation/sidebar.structure.ts` — nuevo bloque Telegram debajo de WhatsApp, mismo patrón (5 items)
+- `src/config/navigation/navigation-map.ts` — 5 entradas direct mappings
+
+### FASE T2 — Bot Client + Webhook Handler
+- `src/lib/telegram/bot-client.ts` (300 líneas) — wrapper HTTP a api.telegram.org:
+  - getBotInfo, setWebhook, deleteWebhook, getWebhookInfo
+  - sendMessage, editMessageText, answerCallbackQuery
+  - getChat, getChatMember, getChatMemberCount, addChatMember
+  - sendChatAction (typing indicator), createChatInviteLink
+  - Sin estado, sin conexión persistente — 100% serverless
+- `src/lib/telegram/webhook-handler.ts` — router que despacha Updates a handlers, recibe config ya resuelta como parámetro
+- `src/app/api/telegram/webhook/route.ts` — POST endpoint con:
+  - IP allowlist de rangos oficiales de Telegram (149.154.160.0/20, 91.108.4.0/22, etc.)
+  - Validación de X-Telegram-Bot-Api-Secret-Token
+  - waitUntil para procesar async y responder 200 inmediatamente
+  - Identificación de tienda por bot_id en query param (1 bot = 1 tienda)
+- `src/app/api/telegram/setup/route.ts` — POST interno para registrar/eliminar webhook en Telegram
+
+### FASE T3 — GLM Orchestrator + Handlers
+- `src/lib/telegram/glm-orchestrator.ts` — espejo de WhatsApp con fixes desde el inicio:
+  - FIX-AUDIT-WA-2: validateContactBelongsToStore antes de usar contact_id
+  - FIX-AUDIT-WA-3: historial filtra por store_id + contact_id (no solo contact_id)
+  - generateResponse, saveMessage, validateContactBelongsToStore
+- `src/lib/telegram/handlers.ts` (340 líneas):
+  - handleMessageIncoming: texto → contacto → guardar → trigger check → typing action → GLM → guardar → responder
+  - handleCallbackQuery: botones inline 'accept'/'reject' para invitations (addChatMember o marcar rechazado)
+  - handleMyChatMember: bot añadido/expulsado de grupo → actualizar config
+  - Solo texto (Fase T9: multimedia)
+
+### FASE T4 — API REST (11 rutas)
+- config (GET/PUT), status (GET), setup (POST), conversations (GET)
+- messages/send (POST), metrics (GET), test-bot (POST), group (GET)
+- invitations (GET/POST/DELETE), invitations/import (POST)
+- Todas con: withAuth + canManageStore + withTracing + rateLimit + Zod + validateOrigin
+- FIX-AUDIT-WA-2 y WA-4 aplicados desde el inicio
+
+### FASE T5 — UI espejo WhatsApp (5 vistas)
+- `TelegramConfigView.tsx` (340 líneas) — alta de bot: token → validar → registrar webhook → grupo → config GLM
+- `TelegramConversationsView.tsx` (300 líneas) — lista contactos + visor mensajes + indicador "escribiendo..."
+- `TelegramDashboardView.tsx` (280 líneas) — stats cards + gráfico 7 días + simulador bot
+- `TelegramGroupView.tsx` (170 líneas) — info grupo + último mensaje + nota sobre limitación de Telegram API
+- `TelegramInvitationsView.tsx` (240 líneas) — cola con 8 estados + import CSV + filtros
+- Registro en TerminalShell.tsx (5 dynamic imports + 5 cases en switch)
+- Color azul (vs verde de WhatsApp) para distinguir canales
+
+### FASE T6 — Realtime con Supabase Realtime
+- `src/lib/telegram/realtime.ts` — helpers que publican a channels de Supabase:
+  - emitToStore, emitMessage, emitTyping, emitTypingStop, emitGroupParticipant, emitBotStatus
+  - Usa admin client (service-role) para bypass de RLS en publicación
+  - Non-op seguro si Supabase no está configurado
+- `src/hooks/telegram/useTelegramRealtime.ts` — hook cliente:
+  - supabase.channel(`telegram:store:${storeId}`).on('broadcast', ...)
+  - RLS automático: cliente solo recibe eventos si tiene membership en la tienda
+  - 7 eventos: message_incoming/outgoing, typing/typing_stop, group_participant, bot_status, metrics_update
+- Integración en handlers.ts y messages/send/route.ts (mismos puntos que WhatsApp Fase 5)
+- **Diferencia vs WhatsApp**: funciona en Vercel serverless (no necesita custom server ni Socket.io)
+
+### FASE T7 — Seguridad
+- `src/lib/telegram/security.ts`:
+  - rateLimitByTelegramUser: 20 msg/min por usuario (memoria local, fallback a Upstash en prod)
+  - isFlooding: 50 msg en 5 min = flood → auto-ban temporal con mensaje
+  - TELEGRAM_IP_RANGES + isIpInCidr + isTelegramIp (allowlist oficial)
+  - validateWebhookSecret: timing-safe comparison (anti timing attack)
+- Integración en handleMessageIncoming (rate-limit + flood antes de GLM)
+- IP allowlist + HMAC ya en webhook/route.ts (Fase T2)
+- **Diferencia vs WhatsApp**: sin anti-ban (Telegram no banea), en su lugar anti-spam
+
+### FASE T8 — Tests + Documentación
+- `src/__tests__/integration/telegram-module.test.ts` — 27 tests cubriendo:
+  - Fase T2: webhook (health check, sin bot_id, sin secret)
+  - Fase T4: 13 tests de API REST (400/403 en casos edge)
+  - Cross-tenant security (manager no access a otra store, admin sí)
+  - Fase T7: rate-limit, IP allowlist, validateWebhookSecret (timing-safe)
+  - Fase T6: emitToStore/emitMessage non-op sin admin
+  - Fase T8: verificación de migración SQL (4 tablas, RLS, sin risk_state)
+- Documentación en comentarios `FASE T*:` en cada archivo
+
+### Verificación final
+- TypeScript: 0 errores (`npx tsc --noEmit`)
+- Tests: 49 archivos, 728 tests pasan, 8 skipped, 0 fallan
+- 27 tests nuevos específicos de Telegram
+- 701 tests pre-existentes siguen pasando (0 regresiones)
+
+### Archivos creados (22)
+1. supabase/migrations/20260703000001_create_telegram_module.sql
+2. src/types/telegram.ts
+3. src/lib/telegram/bot-client.ts
+4. src/lib/telegram/webhook-handler.ts
+5. src/lib/telegram/handlers.ts
+6. src/lib/telegram/glm-orchestrator.ts
+7. src/lib/telegram/realtime.ts
+8. src/lib/telegram/security.ts
+9. src/app/api/telegram/webhook/route.ts
+10. src/app/api/telegram/setup/route.ts
+11. src/app/api/telegram/config/route.ts
+12. src/app/api/telegram/status/route.ts
+13. src/app/api/telegram/conversations/route.ts
+14. src/app/api/telegram/messages/send/route.ts
+15. src/app/api/telegram/metrics/route.ts
+16. src/app/api/telegram/test-bot/route.ts
+17. src/app/api/telegram/group/route.ts
+18. src/app/api/telegram/invitations/route.ts
+19. src/app/api/telegram/invitations/import/route.ts
+20. src/hooks/telegram/useTelegramRealtime.ts
+21. src/components/views/terminal/views/telegram/ (5 vistas .tsx)
+22. src/__tests__/integration/telegram-module.test.ts
+
+### Archivos modificados (4)
+1. src/store/index.ts — ViewType + 5 vistas telegram
+2. src/config/navigation/sidebar.structure.ts — bloque Telegram + icono Send
+3. src/config/navigation/navigation-map.ts — 5 entradas
+4. src/components/views/TerminalShell.tsx — 5 dynamic imports + 5 cases
+
+Stage Summary:
+- **Módulo Telegram completo y funcional** — 8 fases entregadas en 1 sesión
+- **100% Vercel-compatible**: webhook-based, sin Socket.io, sin conexión persistente
+- **Espejo profesional de WhatsApp**: mismas convenciones, mismo UX, mismo nivel de seguridad
+- **Seguridad desde el inicio**: fixes WA-2 (contact_id cross-tenant), WA-3 (historial store_id), WA-4 (rate-limit en send) aplicados desde T3, no como fixes posteriores
+- **Realtime funcional en Vercel**: Supabase Realtime channels reemplazan Socket.io
+- **Anti-spam (no anti-ban)**: rate-limit por usuario + flood detection — apropiado para Telegram donde los bots no se bannean
+- **27 tests de regresión** cubren webhook, API, cross-tenant, seguridad, realtime, schema
+- **0 regresiones**: 701 tests pre-existentes siguen pasando

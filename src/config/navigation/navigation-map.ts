@@ -86,6 +86,12 @@ const DIRECT_ROUTES: Record<string, DirectRoute> = {
   'whatsapp-invitations': { type: 'direct', view: 'whatsapp-invitations' },
   'whatsapp-dashboard':  { type: 'direct', view: 'whatsapp-dashboard' },
   'whatsapp-group':      { type: 'direct', view: 'whatsapp-group' },
+  // Fase T1: Telegram Bot — serverless-native, Vercel-compatible
+  'telegram-config':     { type: 'direct', view: 'telegram-config' },
+  'telegram-conversations': { type: 'direct', view: 'telegram-conversations' },
+  'telegram-invitations': { type: 'direct', view: 'telegram-invitations' },
+  'telegram-dashboard':  { type: 'direct', view: 'telegram-dashboard' },
+  'telegram-group':      { type: 'direct', view: 'telegram-group' },
   pos:                   { type: 'direct', view: 'pos' },
   sales_catalog:         { type: 'direct', view: 'sales_catalog' },
   sales:                 { type: 'direct', view: 'sales' },
