@@ -57,7 +57,8 @@ import {
   UserCog,
   Bot,
   FlaskConical,
-  Calculator
+  Calculator,
+  Smartphone
 } from 'lucide-react';
 
 export type NavItemType = 'item' | 'submenu' | 'group';
@@ -249,9 +250,20 @@ export const SIDEBAR_STRUCTURE: NavModule[] = [
           { id: 'cost-analytics', label: 'Centro de Análisis', type: 'item', icon: BarChart3, isBeta: true, ariaLabel: 'Centro de Análisis Dinámico de Costos', description: 'Tabla dinámica tipo Power BI para analizar costos, márgenes y rentabilidad con drag & drop, agrupaciones y exportación.' },
         ]
       },
+      // WhatsApp Bot — canal de comunicación operacional por tienda
+      {
+        id: 'whatsapp',
+        label: 'WhatsApp',
+        type: 'submenu',
+        ariaLabel: 'Bot de WhatsApp con GLM',
+        description: 'Conecta WhatsApp por tienda, responde consultas con IA y gestiona grupo de ventas.',
+        allowedRoles: ['admin', 'manager', 'encargado'],
+        children: [
+          { id: 'whatsapp-config', label: 'Conexión y Config', type: 'item', icon: Smartphone, ariaLabel: 'Configurar conexión WhatsApp', description: 'Conectar número, escanear QR, configurar bot GLM y grupo de ventas.' },
+        ]
+      },
     ]
   },
-  // FEATURE-IPV-RELOCATE: IPV moved from a top-level group to a submenu inside
   // "EN DESARROLLO" (formerly "Otros"). The group is renamed to reflect that
   // these are experimental/in-development features. The 'otros' id is kept for
   // backwards compatibility (persisted Zustand state, MODULE_DEFAULT_VIEW).

@@ -81,6 +81,7 @@ const DIRECT_ROUTES: Record<string, DirectRoute> = {
   chat:                  { type: 'direct', view: 'chat' },
   'costeo-dinamico':     { type: 'direct', view: 'costeo-dinamico' },
   'estructura-costo':    { type: 'direct', view: 'estructura-costo' },
+  'whatsapp-config':     { type: 'direct', view: 'whatsapp-config' },
   pos:                   { type: 'direct', view: 'pos' },
   sales_catalog:         { type: 'direct', view: 'sales_catalog' },
   sales:                 { type: 'direct', view: 'sales' },
