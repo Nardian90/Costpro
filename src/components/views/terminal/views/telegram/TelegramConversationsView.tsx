@@ -94,7 +94,7 @@ function displayInitial(c: Conversation): string {
 }
 
 export default function TelegramConversationsView() {
-  const { user } = useAuthStore();
+  const { user, token: authToken } = useAuthStore();
   const storeId = user?.activeStoreId;
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedContact, setSelectedContact] = useState<Conversation | null>(null);
@@ -111,7 +111,9 @@ export default function TelegramConversationsView() {
   const loadConversations = useCallback(async () => {
     if (!storeId) return;
     try {
-      const res = await fetch(`/api/telegram/conversations?store_id=${storeId}`);
+      const res = await fetch(`/api/telegram/conversations?store_id=${storeId}`, {
+        headers: authToken ? { Authorization: `Bearer ${authToken}` } : {},
+      });
       const json = await res.json();
       if (json.data) setConversations(json.data);
     } catch {
@@ -169,7 +171,7 @@ export default function TelegramConversationsView() {
     try {
       const res = await fetch('/api/telegram/messages/send', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}) },
         body: JSON.stringify({
           store_id: storeId,
           telegram_user_id: selectedContact.telegram_user_id,

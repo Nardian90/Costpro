@@ -34,7 +34,7 @@ const STATUS_CONFIG: Record<string, { color: string; icon: any; label: string }>
 };
 
 export default function TelegramInvitationsView() {
-  const { user } = useAuthStore();
+  const { user, token: authToken } = useAuthStore();
   const storeId = user?.activeStoreId;
   const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [loading, setLoading] = useState(true);
@@ -48,7 +48,9 @@ export default function TelegramInvitationsView() {
     try {
       const params = new URLSearchParams({ store_id: storeId });
       if (filterStatus) params.set('status', filterStatus);
-      const res = await fetch(`/api/telegram/invitations?${params}`);
+      const res = await fetch(`/api/telegram/invitations?${params}`, {
+        headers: authToken ? { Authorization: `Bearer ${authToken}` } : {},
+      });
       const json = await res.json();
       if (json.data) setInvitations(json.data);
     } catch {
@@ -72,7 +74,7 @@ export default function TelegramInvitationsView() {
     try {
       const res = await fetch('/api/telegram/invitations', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}) },
         body: JSON.stringify({ store_id: storeId, telegram_user_id: tgId }),
       });
       if (res.ok) {
@@ -107,7 +109,7 @@ export default function TelegramInvitationsView() {
 
       const res = await fetch('/api/telegram/invitations/import', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}) },
         body: JSON.stringify({ store_id: storeId, invitations: invs }),
       });
       const json = await res.json();
@@ -128,7 +130,10 @@ export default function TelegramInvitationsView() {
   const handleDelete = async (id: string) => {
     if (!storeId) return;
     try {
-      await fetch(`/api/telegram/invitations?id=${id}&store_id=${storeId}`, { method: 'DELETE' });
+      await fetch(`/api/telegram/invitations?id=${id}&store_id=${storeId}`, {
+        method: 'DELETE',
+        headers: authToken ? { Authorization: `Bearer ${authToken}` } : {},
+      });
       setInvitations(prev => prev.filter(i => i.id !== id));
       toast.success('Invitación eliminada');
     } catch {

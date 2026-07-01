@@ -19,7 +19,7 @@ interface GroupInfo {
 }
 
 export default function TelegramGroupView() {
-  const { user } = useAuthStore();
+  const { user, token: authToken } = useAuthStore();
   const storeId = user?.activeStoreId;
   const [group, setGroup] = useState<GroupInfo | null>(null);
   const [loading, setLoading] = useState(true);
@@ -28,7 +28,9 @@ export default function TelegramGroupView() {
   const loadGroup = useCallback(async () => {
     if (!storeId) return;
     try {
-      const res = await fetch(`/api/telegram/group?store_id=${storeId}`);
+      const res = await fetch(`/api/telegram/group?store_id=${storeId}`, {
+        headers: authToken ? { Authorization: `Bearer ${authToken}` } : {},
+      });
       const json = await res.json();
       if (json.data) setGroup(json.data);
     } catch {

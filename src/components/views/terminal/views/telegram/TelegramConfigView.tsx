@@ -57,11 +57,11 @@ interface Config {
 }
 
 export default function TelegramConfigView() {
-  const { user } = useAuthStore();
+  const { user, token: authToken } = useAuthStore();
   const storeId = user?.activeStoreId;
   const [config, setConfig] = useState<Config | null>(null);
   const [loading, setLoading] = useState(true);
-  const [token, setToken] = useState('');
+  const [botToken, setBotToken] = useState('');
   const [saving, setSaving] = useState(false);
   const [registering, setRegistering] = useState(false);
   const [showToken, setShowToken] = useState(false);
@@ -81,11 +81,13 @@ export default function TelegramConfigView() {
   const loadConfig = useCallback(async () => {
     if (!storeId) return;
     try {
-      const res = await fetch(`/api/telegram/config?store_id=${storeId}`);
+      const res = await fetch(`/api/telegram/config?store_id=${storeId}`, {
+        headers: authToken ? { Authorization: `Bearer ${authToken}` } : {},
+      });
       const json = await res.json();
       if (json.data) {
         setConfig(json.data);
-        setToken(json.data.bot_token || '');
+        setBotToken(json.data.bot_token || '');
         setSystemPrompt(json.data.system_prompt || '');
         setModelName(json.data.model_name || 'glm-4.5-flash');
         setTemperature(json.data.temperature ?? 0.7);
@@ -112,10 +114,10 @@ export default function TelegramConfigView() {
       const keywords = triggerKeywords.split(',').map(k => k.trim()).filter(Boolean);
       const res = await fetch('/api/telegram/config', {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}) },
         body: JSON.stringify({
           store_id: storeId,
-          bot_token: token !== config?.bot_token ? token : undefined,
+          bot_token: botToken !== config?.bot_token ? botToken : undefined,
           system_prompt: systemPrompt,
           model_name: modelName,
           temperature,
@@ -147,7 +149,7 @@ export default function TelegramConfigView() {
     try {
       const res = await fetch('/api/telegram/setup', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}) },
         body: JSON.stringify({ store_id: storeId, action: 'register' }),
       });
       const json = await res.json();
@@ -169,7 +171,7 @@ export default function TelegramConfigView() {
     try {
       const res = await fetch('/api/telegram/setup', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}) },
         body: JSON.stringify({ store_id: storeId, action: 'remove' }),
       });
       if (res.ok) {
@@ -189,7 +191,7 @@ export default function TelegramConfigView() {
     try {
       const res = await fetch('/api/telegram/config', {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}) },
         body: JSON.stringify({
           store_id: storeId,
           is_active: !config.is_active,
@@ -268,8 +270,8 @@ export default function TelegramConfigView() {
           <div className="flex gap-2">
             <Input
               type={showToken ? 'text' : 'password'}
-              value={token}
-              onChange={e => setToken(e.target.value)}
+              value={botToken}
+              onChange={e => setBotToken(e.target.value)}
               placeholder="123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11"
               className="text-xs h-11 font-mono"
             />
@@ -318,7 +320,7 @@ export default function TelegramConfigView() {
               </Button>
             </div>
           ) : (
-            <Button onClick={handleRegisterWebhook} disabled={registering || !token} size="sm" className="text-xs h-9 bg-blue-600 hover:bg-blue-700 text-white">
+            <Button onClick={handleRegisterWebhook} disabled={registering || !botToken} size="sm" className="text-xs h-9 bg-blue-600 hover:bg-blue-700 text-white">
               {registering ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Webhook className="w-3.5 h-3.5" />}
               Registrar webhook
             </Button>

@@ -23,7 +23,7 @@ interface Metrics {
 }
 
 export default function TelegramDashboardView() {
-  const { user } = useAuthStore();
+  const { user, token: authToken } = useAuthStore();
   const storeId = user?.activeStoreId;
   const [metrics, setMetrics] = useState<Metrics | null>(null);
   const [loading, setLoading] = useState(true);
@@ -34,7 +34,9 @@ export default function TelegramDashboardView() {
   const loadMetrics = useCallback(async () => {
     if (!storeId) return;
     try {
-      const res = await fetch(`/api/telegram/metrics?store_id=${storeId}`);
+      const res = await fetch(`/api/telegram/metrics?store_id=${storeId}`, {
+        headers: authToken ? { Authorization: `Bearer ${authToken}` } : {},
+      });
       const json = await res.json();
       if (json.data) setMetrics(json.data);
     } catch {}
@@ -54,7 +56,7 @@ export default function TelegramDashboardView() {
     try {
       const res = await fetch('/api/telegram/test-bot', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}) },
         body: JSON.stringify({ store_id: storeId, message: testMessage }),
       });
       const json = await res.json();
