@@ -31,6 +31,15 @@ RUN addgroup --system --gid 1001 nodejs && \
 COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+# FASE 5: Copy custom server (enables Socket.io for WhatsApp realtime)
+COPY --from=builder --chown=nextjs:nodejs /app/server.ts ./server.ts
+# FASE 5: socket.io + socket.io-client need to be in production node_modules
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/socket.io ./node_modules/socket.io
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/socket.io-parser ./node_modules/socket.io-parser
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/socket.io-adapter ./node_modules/socket.io-adapter
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/engine.io ./node_modules/engine.io
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@types/socket.io ./node_modules/@types/socket.io
+COPY --from=builder --chown=nextjs:nodejs /app/package.json ./package.json
 
 USER nextjs
 
@@ -40,4 +49,6 @@ EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1
 
-CMD ["bun", "server.js"]
+# FASE 5: Custom server attaches Socket.io for WhatsApp realtime.
+# Falls back gracefully if Socket.io fails to attach (app still serves HTTP).
+CMD ["bun", "server.ts"]

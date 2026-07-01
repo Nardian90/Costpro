@@ -48,6 +48,8 @@ vi.mock('@/lib/whatsapp/glm-orchestrator', () => ({
     responseTimeMs: 1200,
   }),
   saveMessage: vi.fn().mockResolvedValue(undefined),
+  // FIX-AUDIT-WA-2: mockeamos validateContactBelongsToStore para tests de cross-tenant
+  validateContactBelongsToStore: vi.fn().mockResolvedValue(true),
 }));
 
 vi.mock('@/lib/whatsapp/anti-ban', () => ({
@@ -91,9 +93,12 @@ vi.mock('@/lib/supabaseClient', () => ({
 }));
 
 // ── Test Data ──────────────────────────────────────────────────────────
+// FIX-AUDIT-WA-2: UUIDs válidos v4 (Zod v4 valida estrictamente, los UUIDs
+// nil-style con todos-dígitos-iguales fallan la validación). Mantenemos
+// STORE_A/STORE_B como constantes para que todos los tests usen los mismos.
 
-const STORE_A = '11111111-1111-1111-1111-111111111111';
-const STORE_B = '22222222-2222-2222-2222-222222222222';
+const STORE_A = 'a1111111-1111-4111-8111-111111111111';
+const STORE_B = 'b2222222-2222-4222-9222-222222222222';
 
 function makeSession(role: string = 'admin', memberships: any[] = []) {
   return {
@@ -313,6 +318,102 @@ describe('WhatsApp Module — 4 Fases', () => {
     it('admin global puede acceder a cualquier store', async () => {
       const res = await (statusGET as any)(makeRequest(`/api/whatsapp/status?store_id=${STORE_B}`), makeSession('admin'));
       expect(res.status).toBe(200);
+    });
+  });
+
+  // ── FIX-AUDIT-WA-2: contact_id cross-tenant injection ────────────
+
+  describe('FIX-AUDIT-WA-2: contact_id cross-tenant injection', () => {
+    it('POST /api/whatsapp/messages/send — contact_id de otra tienda → 403', async () => {
+      const { validateContactBelongsToStore } = await import('@/lib/whatsapp/glm-orchestrator');
+      vi.mocked(validateContactBelongsToStore).mockResolvedValueOnce(false);
+      const FOREIGN_CONTACT = '99999999-9999-4999-9999-999999999999';
+      const res = await (sendPOST as any)(
+        makeRequest('/api/whatsapp/messages/send', 'POST', {
+          store_id: STORE_A,
+          phone_number: '5312345678',
+          message: 'hola',
+          contact_id: FOREIGN_CONTACT,
+        }),
+        makeSession('manager', [{ store_id: STORE_A, role: 'manager', status: 'active' }])
+      );
+      expect(res.status).toBe(403);
+      // Confirmar que el guard fue invocado con los parámetros esperados
+      expect(validateContactBelongsToStore).toHaveBeenCalledWith(STORE_A, FOREIGN_CONTACT);
+    });
+
+    it('POST /api/whatsapp/messages/send — contact_id propio → pasa el guard', async () => {
+      const { validateContactBelongsToStore } = await import('@/lib/whatsapp/glm-orchestrator');
+      vi.mocked(validateContactBelongsToStore).mockResolvedValueOnce(true);
+      const OWN_CONTACT = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+      const res = await (sendPOST as any)(
+        makeRequest('/api/whatsapp/messages/send', 'POST', {
+          store_id: STORE_A,
+          phone_number: '5312345678',
+          message: 'hola',
+          contact_id: OWN_CONTACT,
+        }),
+        makeSession('manager', [{ store_id: STORE_A, role: 'manager', status: 'active' }])
+      );
+      // Si pasa el guard, no debe dar 403 por contact_id mismatch.
+      // Puede ser 200 (sin socket) o 500 (socket error) — pero no 403.
+      expect(res.status).not.toBe(403);
+    });
+  });
+
+  // ── FIX-AUDIT-WA-4: anti-ban guard en envío directo ──────────────
+
+  describe('FIX-AUDIT-WA-4: anti-ban guard en messages/send', () => {
+    it('rechaza 429 cuando canInviteNow devuelve allowed=false', async () => {
+      const { canInviteNow } = await import('@/lib/whatsapp/anti-ban');
+      vi.mocked(canInviteNow).mockReturnValueOnce({
+        allowed: false,
+        reason: 'Pausa anti-banneo activa',
+        nextAllowedAt: new Date(Date.now() + 3600_000),
+      });
+      // Sin socket activo, el handler ahora invoca getRiskState+canInviteNow solo
+      // cuando hay socket. Para forzar el test, mockeamos getSocket con uno truthy.
+      const { getSocket } = await import('@/lib/whatsapp/baileys-client');
+      vi.mocked(getSocket).mockReturnValueOnce({
+        sendMessage: vi.fn(),
+      } as any);
+
+      const res = await (sendPOST as any)(
+        makeRequest('/api/whatsapp/messages/send', 'POST', {
+          store_id: STORE_A,
+          phone_number: '5312345678',
+          message: 'hola',
+        }),
+        makeSession('manager', [{ store_id: STORE_A, role: 'manager', status: 'active' }])
+      );
+      expect(res.status).toBe(429);
+      const body = await res.json();
+      expect(body.blocked_by_anti_ban).toBe(true);
+      expect(body.reason).toContain('anti-ban');
+    });
+  });
+
+  // ── FIX-AUDIT-WA-3: historial con filtro store_id ────────────────
+
+  describe('FIX-AUDIT-WA-3: generateResponse historial filtra por store_id', () => {
+    it('la query de historial incluye ambos filtros (store_id+contact_id)', async () => {
+      // Test unitario directo del módulo real — no la ruta.
+      // Como el módulo está mockeado, verificamos el contrato: el módulo real
+      // (en src/lib/whatsapp/glm-orchestrator.ts) aplica .eq('store_id', storeId)
+      // .eq('contact_id', contactId). Este test documenta el requisito.
+      // Para una verificación estática, leemos el source.
+      const fs = await import('fs');
+      const path = await import('path');
+      const src = fs.readFileSync(
+        path.resolve(process.cwd(), 'src/lib/whatsapp/glm-orchestrator.ts'),
+        'utf-8'
+      );
+      // Buscar el bloque de carga de historial
+      const historyBlockMatch = src.match(/2\. Cargar historial[\s\S]+?\.reverse\(\);/);
+      expect(historyBlockMatch).toBeTruthy();
+      const historyBlock = historyBlockMatch![0];
+      expect(historyBlock).toContain(".eq('store_id', storeId)");
+      expect(historyBlock).toContain(".eq('contact_id', contactId)");
     });
   });
 });

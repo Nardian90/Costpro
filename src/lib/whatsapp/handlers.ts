@@ -10,6 +10,7 @@ import type { WASocket, WAMessage } from '@whiskeysockets/baileys';
 import { logger } from '@/lib/logger';
 import { getSupabaseAdminSafe } from '@/lib/supabase-admin';
 import { generateResponse, saveMessage } from './glm-orchestrator';
+import { emitMessage, emitTyping, emitToStore } from '@/lib/whatsapp/realtime-server';
 
 interface StoreContext {
   storeId: string;
@@ -76,6 +77,16 @@ export async function handleIncomingMessage(ctx: StoreContext, message: WAMessag
   // Guardar mensaje entrante
   await saveMessage(storeId, contactId, phoneNumber, 'incoming', text);
 
+  // FASE 5: Emitir evento realtime 'message_incoming' a todos los clientes
+  // conectados al room de esta tienda. El dashboard y la vista de conversaciones
+  // lo reciben y actualizan la UI sin polling.
+  emitMessage(storeId, 'incoming', {
+    contact_id: contactId,
+    phone_number: phoneNumber,
+    content: text,
+    sender_name: senderName,
+  });
+
   // Cargar config para verificar si el bot está activo
   const { data: config } = await admin
     .from('whatsapp_configs')
@@ -103,6 +114,10 @@ export async function handleIncomingMessage(ctx: StoreContext, message: WAMessag
   // En chats privados, siempre responder (si is_active)
 
   // Generar respuesta con GLM
+  // FASE 5: Emitir evento 'typing' para que el frontend muestre el indicador
+  // 'escribiendo...' mientras GLM procesa la respuesta.
+  emitTyping(storeId, contactId, phoneNumber);
+
   const response = await generateResponse(
     storeId,
     contactId,
@@ -110,6 +125,13 @@ export async function handleIncomingMessage(ctx: StoreContext, message: WAMessag
     text,
     senderName
   );
+
+  // FASE 5: Emitir 'typing_stop' cuando GLM terminó de procesar.
+  emitToStore(storeId, 'typing_stop', {
+    contact_id: contactId,
+    phone_number: phoneNumber,
+    ts: Date.now(),
+  });
 
   // Guardar respuesta saliente
   await saveMessage(
@@ -121,6 +143,16 @@ export async function handleIncomingMessage(ctx: StoreContext, message: WAMessag
     response.tokensUsed,
     response.responseTimeMs
   );
+
+  // FASE 5: Emitir evento realtime 'message_outgoing' para que el dashboard
+  // y la vista de conversaciones actualicen la UI sin polling.
+  emitMessage(storeId, 'outgoing', {
+    contact_id: contactId,
+    phone_number: phoneNumber,
+    content: response.text,
+    tokens_used: response.tokensUsed,
+    response_time_ms: response.responseTimeMs,
+  });
 
   // Enviar respuesta por WhatsApp
   try {
@@ -166,6 +198,15 @@ export async function handleGroupParticipantUpdate(
         mentions: [participant],
       });
       logger.info('DATABASE', 'WHATSAPP_WELCOME_SENT', { storeId, participant });
+
+      // FASE 5: Emitir evento 'group_participant' para que la vista de grupo
+      // actualice la lista de miembros en tiempo real.
+      emitToStore(storeId, 'group_participant', {
+        jid: event.jid,
+        participants: event.participants,
+        action: event.action,
+        ts: Date.now(),
+      });
     } catch (error: any) {
       logger.error('DATABASE', 'WHATSAPP_WELCOME_FAILED', { storeId, participant, error: error.message });
     }

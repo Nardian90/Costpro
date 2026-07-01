@@ -68,11 +68,19 @@ export async function generateResponse(
   };
 
   // 2. Cargar historial de mensajes (últimos N)
+  // FIX-AUDIT-WA-3: Filtrar SIEMPRE por store_id además de contact_id.
+  // Antes solo se filtraba por contact_id, lo que permitía cross-tenant poisoning:
+  // si un contacto de la Tienda A tenía el mismo UUID que otro (imposible por FK,
+  // pero defensivo), o si un mensaje se insertaba con contact_id de otra tienda
+  // (ver FIX-AUDIT-WA-2 en saveMessage/send route), ese mensaje contaminaba el
+  // contexto del bot. Ahora el filtro compuesto store_id+contact_id garantiza
+  // aislamiento incluso ante un bug upstream.
   let history: ChatMessage[] = [];
   if (contactId) {
     const { data: messages } = await admin
       .from('whatsapp_messages')
       .select('direction, content')
+      .eq('store_id', storeId)
       .eq('contact_id', contactId)
       .order('created_at', { ascending: false })
       .limit(config.context_window);
@@ -127,8 +135,33 @@ export async function generateResponse(
 }
 
 /**
- * Guarda un mensaje en la BD.
+ * Verifica que un contact_id pertenece a un store_id específico.
+ * FIX-AUDIT-WA-2: previene inyección cross-tenant — un manager de la Tienda A
+ * no puede insertar mensajes contra el contact_id de la Tienda B simplemente
+ * enviando el UUID en el body. Esta función se invoca antes de cualquier
+ * inserción que use service-role (que bypassa RLS).
+ *
+ * Retorna true si el contacto existe Y pertenece a la tienda indicada,
+ * o si contactId es null (caso en el que se crea un contacto nuevo).
  */
+export async function validateContactBelongsToStore(
+  storeId: string,
+  contactId: string | null
+): Promise<boolean> {
+  if (!contactId) return true; // sin contact_id → se creará después
+  const admin = getSupabaseAdminSafe();
+  if (!admin) return false;
+
+  const { data } = await admin
+    .from('whatsapp_contacts')
+    .select('id')
+    .eq('id', contactId)
+    .eq('store_id', storeId)
+    .maybeSingle();
+
+  return !!data;
+}
+
 export async function saveMessage(
   storeId: string,
   contactId: string | null,
@@ -141,6 +174,20 @@ export async function saveMessage(
   const admin = getSupabaseAdminSafe();
   if (!admin) return;
 
+  // FIX-AUDIT-WA-2: Validar que contact_id (si viene) pertenece a storeId.
+  // Si no pertenece, no usarlo — se crea/usa contacto por phone_number+storeId.
+  // Esto evita que un caller malicioso inyecte mensajes en el historial de
+  // otra tienda pasando un UUID foráneo.
+  if (contactId) {
+    const belongs = await validateContactBelongsToStore(storeId, contactId);
+    if (!belongs) {
+      logger.warn('DATABASE', 'WHATSAPP_CONTACT_TENANT_MISMATCH', {
+        storeId, contactId, phoneNumber,
+      });
+      contactId = null; // descartar — se reasigna abajo por phone_number
+    }
+  }
+
   // Crear contacto si no existe
   if (!contactId) {
     const { data: existing } = await admin
@@ -148,7 +195,7 @@ export async function saveMessage(
       .select('id')
       .eq('store_id', storeId)
       .eq('phone_number', phoneNumber)
-      .single();
+      .maybeSingle();
 
     if (existing) {
       contactId = existing.id;

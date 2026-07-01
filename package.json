@@ -4,8 +4,10 @@
   "private": true,
   "scripts": {
     "dev": "next dev -p 3000",
+    "dev:ws": "tsx server.ts",
     "build": "next build",
     "start": "next start",
+    "start:ws": "bun server.ts",
     "audit": "npm audit --audit-level=high",
     "lint": "eslint .",
     "lint:a11y": "eslint src/ --ext .tsx,.ts --rule 'jsx-a11y/alt-text: error' --max-warnings 999",
@@ -141,6 +143,7 @@
     "rss-parser": "^3.13.0",
     "sharp": "^0.34.5",
     "socket.io": "^4.8.3",
+    "socket.io-client": "^4.8.3",
     "sonner": "^2.0.6",
     "tailwind-merge": "^3.3.1",
     "tailwindcss-animate": "^1.0.7",

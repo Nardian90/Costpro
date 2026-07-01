@@ -10,6 +10,19 @@ const isDevBypassEnabled = process.env.ENABLE_DEV_BYPASS === 'true' && process.e
 
 /**
  * Helper to get the user session in API Route Handlers.
+ *
+ * FIX-AUDIT-AUTH-1 (crítico — bypass de autenticación):
+ * Antes, cuando `supabase.auth.getUser(token)` fallaba (token inválido, firma
+ * incorrecta, etc.), el código caía a un fallback que decodificaba el JWT
+ * manualmente SIN VERIFICAR LA FIRMA. Solo chequeaba que tuviera 3 segmentos,
+ * que el JSON parsee y que `exp` no hubiera vencido. Esto permitía a un
+ * atacante fabricar un JWT arbitrario con `sub: <uuid-de-otro-usuario>` y
+ * ser aceptado como sesión válida — incluido un admin si conocía su UUID.
+ * No estaba gateado por NODE_ENV ni flag alguno.
+ *
+ * Fix: FAIL CLOSED. Si `getUser()` falla, se retorna `null` (no hay sesión).
+ * Cualquier token debe pasar por Supabase para validar firma + exp + revocación.
+ * No hay atajos de decodificación local sin verificación criptográfica.
  */
 export async function getServerSession(request: NextRequest) {
   try {
@@ -32,7 +45,9 @@ export async function getServerSession(request: NextRequest) {
         };
       }
 
-      // If Supabase is configured, validate the JWT token
+      // If Supabase is configured, validate the JWT token via Supabase.
+      // This is the ONLY accepted path: Supabase validates signature, exp,
+      // and revocation status. No local decode-without-verify fallback.
       if (isSupabaseConfigured) {
         const { data: { user }, error } = await supabase.auth.getUser(token);
 
@@ -40,31 +55,11 @@ export async function getServerSession(request: NextRequest) {
           return { user, token };
         }
 
+        // FIX-AUDIT-AUTH-1: FAIL CLOSED on any error.
+        // No decodificación manual del JWT sin verificar firma.
+        // El anterior fallback era un bypass de autenticación explotable.
         if (error) {
-          // Si el token tiene formato JWT (3 segments separados por .), intentar decodificarlo
-          // Esto permite funcionar en entornos donde la anon key no es un JWT válido
-          // (ej: cuando se usa service_role key como anon key)
-          const parts = token.split('.');
-          if (parts.length === 3) {
-            try {
-              const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString());
-              if (payload.sub && payload.exp && payload.exp > Date.now() / 1000) {
-                // Token JWT válido y no expirado — aceptar
-                return {
-                  user: {
-                    id: payload.sub,
-                    email: payload.email || '',
-                    role: payload.role || 'authenticated',
-                    roles: [payload.role || 'authenticated'],
-                  },
-                  token,
-                };
-              }
-            } catch {
-              // JSON parse falló — token corrupto
-            }
-          }
-          console.error('[getServerSession] getUser error:', error.message);
+          console.error('[getServerSession] getUser error (fail closed):', error.message);
         }
       }
     }

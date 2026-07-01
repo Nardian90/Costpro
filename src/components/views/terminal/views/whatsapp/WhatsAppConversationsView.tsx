@@ -9,6 +9,7 @@ import { useAuthStore } from '@/store';
 import { supabase } from '@/lib/supabaseClient';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { useWhatsAppSocket, type WhatsAppMessageEvent, type WhatsAppTypingEvent } from '@/hooks/whatsapp/useWhatsAppSocket';
 
 function timeAgo(dateStr: string | null): string {
   if (!dateStr) return '';
@@ -47,7 +48,7 @@ interface ChatMessage {
 }
 
 export default function WhatsAppConversationsView() {
-  const { user } = useAuthStore();
+  const { user, token } = useAuthStore();
   const storeId = user?.activeStoreId;
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedContact, setSelectedContact] = useState<Conversation | null>(null);
@@ -57,7 +58,13 @@ export default function WhatsAppConversationsView() {
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [sending, setSending] = useState(false);
   const [search, setSearch] = useState('');
+  // FASE 5: estado para indicador 'escribiendo...' — phone_number del contacto
+  // que está siendo procesado por GLM, o null si ninguno.
+  const [typingFrom, setTypingFrom] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // FASE 5: suscripción a eventos realtime
+  const { connected: socketConnected, on } = useWhatsAppSocket({ storeId });
 
   const loadConversations = useCallback(async () => {
     if (!storeId) return;
@@ -132,17 +139,76 @@ export default function WhatsAppConversationsView() {
 
   useEffect(() => {
     loadConversations();
-    const interval = setInterval(loadConversations, 10000);
-    return () => clearInterval(interval);
+    // FASE 5: el polling cada 10s se elimina — los mensajes nuevos llegan via
+    // socket event 'message_incoming'. El refresh manual sigue disponible via
+    // toast action o pull-to-refresh en móvil.
+    // Solo mantenemos un refresh inicial + cuando el socket se reconecta.
   }, [loadConversations]);
 
   useEffect(() => {
     if (selectedContact) {
       loadMessages(selectedContact.id);
-      const interval = setInterval(() => loadMessages(selectedContact.id), 5000);
-      return () => clearInterval(interval);
+      // FASE 5: eliminado el polling cada 5s. Los mensajes nuevos llegan via
+      // socket event 'message_incoming'/'message_outgoing' y se agregan al estado
+      // local sin necesidad de recargar.
     }
   }, [selectedContact, loadMessages]);
+
+  // FASE 5: Suscripción a eventos realtime del socket.
+  // message_incoming: nuevo mensaje entrante → agregar a messages si está
+  //   seleccionado el contacto, sino actualizar last_message en la lista.
+  // message_outgoing: nuevo mensaje saliente → mismo pero para salientes.
+  // typing: GLM está procesando → mostrar 'escribiendo...' en el chat activo.
+  // typing_stop: GLM terminó → ocultar indicador.
+  useEffect(() => {
+    const offs: Array<() => void> = [];
+
+    offs.push(on('message_incoming', (ev: WhatsAppMessageEvent) => {
+      // Si el mensaje es del contacto seleccionado, agregar a messages
+      if (selectedContact && ev.phone_number === selectedContact.phone_number) {
+        setMessages(prev => [...prev, {
+          id: `realtime-${ev.ts}-${Math.random()}`,
+          direction: 'incoming',
+          content: ev.content,
+          created_at: new Date(ev.ts).toISOString(),
+          tokens_used: null,
+        }]);
+      }
+      // Actualizar last_message en la lista de conversaciones
+      setConversations(prev => prev.map(c =>
+        c.phone_number === ev.phone_number
+          ? { ...c, last_message: ev.content, last_message_direction: 'incoming', last_message_at: new Date(ev.ts).toISOString(), unread_count: selectedContact?.phone_number === ev.phone_number ? 0 : c.unread_count + 1 }
+          : c
+      ));
+    }));
+
+    offs.push(on('message_outgoing', (ev: WhatsAppMessageEvent) => {
+      if (selectedContact && ev.phone_number === selectedContact.phone_number) {
+        setMessages(prev => [...prev, {
+          id: `realtime-${ev.ts}-${Math.random()}`,
+          direction: 'outgoing',
+          content: ev.content,
+          created_at: new Date(ev.ts).toISOString(),
+          tokens_used: ev.tokens_used || null,
+        }]);
+      }
+      setConversations(prev => prev.map(c =>
+        c.phone_number === ev.phone_number
+          ? { ...c, last_message: ev.content, last_message_direction: 'outgoing', last_message_at: new Date(ev.ts).toISOString() }
+          : c
+      ));
+    }));
+
+    offs.push(on('typing', (ev: WhatsAppTypingEvent) => {
+      setTypingFrom(ev.phone_number);
+    }));
+
+    offs.push(on('typing_stop', () => {
+      setTypingFrom(null);
+    }));
+
+    return () => { offs.forEach(off => off()); };
+  }, [on, selectedContact]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -248,10 +314,18 @@ export default function WhatsAppConversationsView() {
                       )}
                     </div>
                   </div>
-                  <p className="text-[10px] text-muted-foreground truncate">
-                    {conv.last_message_direction === 'outgoing' && 'Tú: '}
-                    {conv.last_message || 'Sin mensajes'}
-                  </p>
+                  {/* FASE 5: indicador 'escribiendo...' cuando GLM procesa para este contacto */}
+                  {typingFrom === conv.phone_number ? (
+                    <p className="text-[10px] text-green-600 dark:text-green-400 italic flex items-center gap-1">
+                      <Loader2 className="w-2.5 h-2.5 animate-spin" />
+                      escribiendo...
+                    </p>
+                  ) : (
+                    <p className="text-[10px] text-muted-foreground truncate">
+                      {conv.last_message_direction === 'outgoing' && 'Tú: '}
+                      {conv.last_message || 'Sin mensajes'}
+                    </p>
+                  )}
                 </div>
                 {conv.is_banned && <Ban className="w-3 h-3 text-destructive shrink-0" />}
               </button>
@@ -283,7 +357,17 @@ export default function WhatsAppConversationsView() {
                 <p className="text-xs font-bold truncate">
                   {selectedContact.name || selectedContact.push_name || selectedContact.phone_number}
                 </p>
-                <p className="text-[10px] text-muted-foreground">{selectedContact.phone_number}</p>
+                {/* FASE 5: mostrar estado 'en línea' / 'escribiendo...' / número */}
+                {typingFrom === selectedContact.phone_number ? (
+                  <p className="text-[10px] text-green-600 dark:text-green-400 italic flex items-center gap-1">
+                    <Loader2 className="w-2.5 h-2.5 animate-spin" />
+                    escribiendo...
+                  </p>
+                ) : socketConnected ? (
+                  <p className="text-[10px] text-green-600 dark:text-green-400">● en línea · {selectedContact.phone_number}</p>
+                ) : (
+                  <p className="text-[10px] text-muted-foreground">{selectedContact.phone_number}</p>
+                )}
               </div>
             </div>
 

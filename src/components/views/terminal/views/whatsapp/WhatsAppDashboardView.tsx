@@ -9,6 +9,7 @@ import { Loader2, MessageCircle, Users, Send, ShieldAlert, ShieldCheck, ShieldX,
 import { useAuthStore } from '@/store';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { useWhatsAppSocket, type WhatsAppMessageEvent, type WhatsAppConnectionStatusEvent } from '@/hooks/whatsapp/useWhatsAppSocket';
 
 interface Metrics {
   messagesToday: number;
@@ -34,6 +35,9 @@ export default function WhatsAppDashboardView() {
   const [testResponse, setTestResponse] = useState<{ text: string; tokens: number; time: number } | null>(null);
   const [testing, setTesting] = useState(false);
 
+  // FASE 5: suscripción a eventos realtime
+  const { connected: socketConnected, on } = useWhatsAppSocket({ storeId });
+
   const loadMetrics = useCallback(async () => {
     if (!storeId) return;
     try {
@@ -46,9 +50,43 @@ export default function WhatsAppDashboardView() {
 
   useEffect(() => {
     loadMetrics();
-    const interval = setInterval(loadMetrics, 15000);
+    // FASE 5: polling cada 15s → cada 60s. Los contadores individuales se
+    // actualizan en tiempo real via socket events (message_incoming/outgoing).
+    // El polling queda como fallback por si el socket se desconecta.
+    const interval = setInterval(loadMetrics, 60000);
     return () => clearInterval(interval);
   }, [loadMetrics]);
+
+  // FASE 5: actualizar contadores en tiempo real via socket events
+  useEffect(() => {
+    const offs: Array<() => void> = [];
+
+    offs.push(on('message_incoming', () => {
+      setMetrics(prev => prev ? {
+        ...prev,
+        messagesToday: prev.messagesToday + 1,
+        incomingToday: prev.incomingToday + 1,
+      } : prev);
+    }));
+
+    offs.push(on('message_outgoing', () => {
+      setMetrics(prev => prev ? {
+        ...prev,
+        messagesToday: prev.messagesToday + 1,
+        outgoingToday: prev.outgoingToday + 1,
+      } : prev);
+    }));
+
+    offs.push(on('connection_status', (ev: WhatsAppConnectionStatusEvent) => {
+      setMetrics(prev => prev ? {
+        ...prev,
+        connectionStatus: ev.status,
+        phoneNumber: ev.phone_number || prev.phoneNumber,
+      } : prev);
+    }));
+
+    return () => { offs.forEach(off => off()); };
+  }, [on]);
 
   const handleTestBot = async () => {
     if (!testMessage.trim() || !storeId) return;
