@@ -23,10 +23,17 @@ function filterModulesByRole(modules: NavModule[], role: string): NavModule[] {
 
 export function useFilteredNavigation(): NavModule[] {
   const { user } = useAuthStore();
-  const role = user?.role ?? 'usuario';
 
   return useMemo(
-    () => filterModulesByRole(SIDEBAR_STRUCTURE, role),
-    [role]
+    () => {
+      // FIX: Cuando user es null (auth aún cargando al primer acceso),
+      // devolver TODOS los módulos sin filtrar. Antes hacía fallback a
+      // 'usuario' que filtraba COSTOS, MULTI-TIENDA, etc. — causaba que
+      // el sidebar solo mostrara "Chat con Darian" al primer acceso.
+      // Mejor mostrar todo optimistamente y filtrar cuando user cargue.
+      if (!user) return SIDEBAR_STRUCTURE;
+      return filterModulesByRole(SIDEBAR_STRUCTURE, user.role);
+    },
+    [user]
   );
 }
