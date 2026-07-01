@@ -103,11 +103,52 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
     const secret = crypto.randomUUID().replace(/-/g, '') + crypto.randomUUID().replace(/-/g, '');
 
     // Construir URL del webhook
-    // NEXTAUTH_URL debe estar configurado con la URL pública de la app
-    const baseUrl = process.env.NEXTAUTH_URL || process.env.VERCEL_URL;
+    // Telegram EXIGE HTTPS. Detectamos la URL pública en este orden:
+    //   1. NEXTAUTH_URL (si es https y no localhost)
+    //   2. VERCEL_URL (Vercel auto-inyecta, formato: project-xxx.vercel.app)
+    //   3. Header Host o x-forwarded-host (para previews, Docker, etc.)
+    //   4. Header origin (fallback)
+    // NEXTAUTH_URL=http://localhost:3000 se ignora porque no sirve para Telegram.
+    const candidateUrls = [
+      process.env.NEXTAUTH_URL,
+      process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null,
+      req.headers.get('x-forwarded-host'),
+      req.headers.get('host'),
+      req.headers.get('origin'),
+    ].filter(Boolean) as string[];
+
+    let baseUrl: string | null = null;
+    for (const candidate of candidateUrls) {
+      // Normalizar: si no tiene protocolo, asumir https
+      let url = candidate.trim();
+      if (!url.startsWith('http://') && !url.startsWith('https://')) {
+        url = `https://${url}`;
+      }
+      // Rechazar localhost y HTTP (Telegram exige HTTPS público)
+      if (url.startsWith('http://localhost') || url.startsWith('http://127.0.0.1')) {
+        continue;
+      }
+      if (url.startsWith('http://') && !url.includes('localhost')) {
+        // Convertir http:// a https:// si es una URL pública
+        url = url.replace('http://', 'https://');
+      }
+      try {
+        new URL(url); // validar formato
+        baseUrl = url;
+        break;
+      } catch {
+        continue;
+      }
+    }
+
     if (!baseUrl) {
       return NextResponse.json(
-        { error: 'NEXTAUTH_URL o VERCEL_URL no configurado' },
+        {
+          error:
+            'No se pudo determinar una URL pública HTTPS para el webhook. ' +
+            'Configura NEXTAUTH_URL con tu URL pública (ej: https://mi-app.vercel.app) ' +
+            'o accede a la app desde una URL pública.',
+        },
         { status: 500 }
       );
     }
