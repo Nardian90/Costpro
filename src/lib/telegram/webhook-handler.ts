@@ -98,26 +98,6 @@ export async function handleTelegramUpdate(
   }
 
   try {
-    // DEBUG T9: log detallado del tipo de update recibido
-    const updateType = update.message ? 'message'
-      : update.callback_query ? 'callback_query'
-      : update.my_chat_member ? 'my_chat_member'
-      : update.edited_message ? 'edited_message'
-      : 'unknown';
-    logger.info('DATABASE', 'TELEGRAM_UPDATE_DEBUG', {
-      update_id: update.update_id,
-      type: updateType,
-      has_text: !!update.message?.text,
-      has_caption: !!update.message?.caption,
-      has_photo: !!update.message?.photo,
-      has_document: !!update.message?.document,
-      chat_type: update.message?.chat?.type,
-      chat_id: update.message?.chat?.id,
-      from_id: update.message?.from?.id,
-      is_bot: update.message?.from?.is_bot,
-      text_preview: update.message?.text?.substring(0, 80),
-    });
-
     if (update.message) {
       await handleMessageUpdate(update, config);
     } else if (update.callback_query) {
