@@ -30,6 +30,8 @@ export interface CartItem {
   discount_value: number;
   cash_paid: number;
   transfer_paid: number;
+  // FIX-MULTI-MONEDA: moneda del precio de venta del item
+  currency: string;
 }
 
 interface CartState {
@@ -38,6 +40,9 @@ interface CartState {
   appliedTaxes: TaxConfiguration[];
   sessionUserId: string | null;
   storeId: string | null;
+  // FIX-MULTI-MONEDA: moneda de la venta y tasa de cambio
+  saleCurrency: string;
+  saleExchangeRate: number;
   lastUpdated: number;
   // POS-2 MM-10: Moved from POSCart.tsx local state to global store to fix race condition
   // where the "Confirmar" button could fire with a stale selectedPayment value.
@@ -76,6 +81,9 @@ interface CartState {
   clearCartOnStoreSwitch: (newStoreId: string | null) => void;
   setSelectedPayment: (method: PaymentMethod) => void;
   setCustomer: (customerId: string | null, customerName: string | null) => void;
+  // FIX-MULTI-MONEDA
+  setSaleCurrency: (currency: string, exchangeRate: number) => void;
+  getTotalCup: () => number;
 }
 
 const calculateItemSubtotal = (item: CartItem) => {
@@ -96,6 +104,9 @@ export const useCartStore = create<CartState>()(
       appliedTaxes: [],
       sessionUserId: null,
       storeId: null,
+      // FIX-MULTI-MONEDA: defaults CUP/1.0
+      saleCurrency: 'CUP',
+      saleExchangeRate: 1.0,
       lastUpdated: Date.now(),
       selectedPayment: "cash" as PaymentMethod,
       customerId: null,
@@ -113,6 +124,17 @@ export const useCartStore = create<CartState>()(
       // POS-2 MM-7: Attach / detach a customer from the current cart.
       setCustomer: (customerId, customerName) =>
         set({ customerId, customerName, lastUpdated: Date.now() }),
+
+      // FIX-MULTI-MONEDA: cambiar moneda de venta + tasa
+      setSaleCurrency: (currency, exchangeRate) =>
+        set({ saleCurrency: currency, saleExchangeRate: exchangeRate, lastUpdated: Date.now() }),
+
+      // FIX-MULTI-MONEDA: total convertido a CUP para cálculos internos
+      getTotalCup: () => {
+        const total = get().getTotal();
+        const rate = get().saleExchangeRate || 1.0;
+        return total * rate;
+      },
 
       /**
        * Clears the cart when switching stores if the new store differs from the cart's store.
@@ -190,6 +212,8 @@ export const useCartStore = create<CartState>()(
                 discount_value: (productInput as any).discount_value || 0,
                 cash_paid: 0,
                 transfer_paid: 0,
+                // FIX-MULTI-MONEDA: heredar moneda de venta del carrito
+                currency: (productInput as any).currency || (product as any)?.price_currency || 'CUP',
               };
               newItem.subtotal = calculateItemSubtotal(newItem);
               newItem.cash_paid = newItem.subtotal;
@@ -410,6 +434,9 @@ export const useCartStore = create<CartState>()(
         // repeatedly sell with the same method) but drop the customer.
         customerId: null,
         customerName: null,
+        // FIX-MULTI-MONEDA: resetear moneda de venta a CUP al limpiar
+        saleCurrency: 'CUP',
+        saleExchangeRate: 1.0,
         lastUpdated: Date.now(),
       }),
 

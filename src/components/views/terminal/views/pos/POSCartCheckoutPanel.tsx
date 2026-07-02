@@ -13,6 +13,7 @@ import {
   Tag,
 } from "lucide-react";
 import { cn, formatCurrency } from "@/lib/utils";
+import { useCartStore } from "@/store/cart";
 import { POSCartDiscountModal } from "./POSCartDiscountModal";
 import { POSPortalModal } from "./POSPortalModal";
 import type { PaymentMethod } from "@/types";
@@ -134,9 +135,63 @@ export function POSCartCheckoutPanel({
 
       {/* ── TOTAL (lo primero, gigante) ────────────────────────────── */}
       <div className="px-4 sm:px-6 pt-4 sm:pt-5 pb-3 sm:pb-4 bg-gradient-to-br from-primary/5 to-transparent border-b border-border/50">
+        {/* FIX-MULTI-MONEDA: selector de moneda de venta */}
+        <div className="flex items-center gap-2 mb-2">
+          <span className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Moneda:</span>
+          <select
+            value={useCartStore.getState().saleCurrency}
+            onChange={async (e) => {
+              const currency = e.target.value;
+              if (currency === 'CUP') {
+                useCartStore.getState().setSaleCurrency('CUP', 1.0);
+              } else {
+                useCartStore.getState().setSaleCurrency(currency, useCartStore.getState().saleExchangeRate);
+                try {
+                  const res = await fetch(`/api/exchange-rates?currency=${currency}&source=BCC&segment=3&days=1`);
+                  if (res.ok) {
+                    const data = await res.json();
+                    const rates = Array.isArray(data) ? data : (data?.rates || data?.data || []);
+                    if (Array.isArray(rates) && rates.length > 0) {
+                      const sorted = rates.sort((a: any, b: any) =>
+                        new Date(b.rate_date || 0).getTime() - new Date(a.rate_date || 0).getTime()
+                      );
+                      if (sorted[0]?.rate > 0) {
+                        useCartStore.getState().setSaleCurrency(currency, sorted[0].rate);
+                      }
+                    }
+                  }
+                } catch {}
+              }
+            }}
+            className="text-[10px] font-bold rounded border border-border bg-background px-1 py-0.5"
+          >
+            <option value="CUP">CUP</option>
+            <option value="USD">USD</option>
+            <option value="EUR">EUR</option>
+            <option value="MLC">MLC</option>
+          </select>
+          {useCartStore.getState().saleCurrency !== 'CUP' && (
+            <>
+              <span className="text-[10px] text-muted-foreground">Tasa:</span>
+              <input
+                type="number"
+                step="0.01"
+                value={useCartStore.getState().saleExchangeRate}
+                onChange={(e) => {
+                  const rate = parseFloat(e.target.value) || 1.0;
+                  useCartStore.getState().setSaleCurrency(useCartStore.getState().saleCurrency, rate);
+                }}
+                className="text-[10px] font-bold rounded border border-border bg-background px-1 py-0.5 w-16"
+              />
+              <span className="text-[10px] text-muted-foreground">
+                ≈ {formatCurrency(total * (useCartStore.getState().saleExchangeRate || 1))} CUP
+              </span>
+            </>
+          )}
+        </div>
         <div className="flex items-baseline justify-between gap-2">
           <span className="text-[10px] sm:text-xs font-black uppercase text-muted-foreground tracking-widest">
-            Total a cobrar
+            Total a cobrar {useCartStore.getState().saleCurrency !== 'CUP' && `(${useCartStore.getState().saleCurrency})`}
           </span>
           <span className="text-[clamp(1.75rem,7vw,2.5rem)] font-black text-primary tracking-tighter leading-none tabular-nums">
             {formatCurrency(total)}
