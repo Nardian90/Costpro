@@ -17,6 +17,10 @@
  *   pm2 delete costpro
  *   pm2 save           # guarda la lista de procesos (para auto-arranque)
  */
+
+// Cargar .env con dotenv para que las variables estén disponibles en el proceso
+require('dotenv').config({ path: './.env' });
+
 module.exports = {
   apps: [
     {
@@ -45,10 +49,26 @@ module.exports = {
       watch: false,
       // Tiempo de gracia antes de forzar el kill al reiniciar (deja que cleanup() actúe)
       kill_timeout: 5000,
-      // Variables de entorno (PM2 cargará también el .env del proyecto)
+      // Variables de entorno — pasar TODAS las del .env explícitamente
+      // para que bun las herede al arrancar server.ts
       env: {
         NODE_ENV: 'development',
         PORT: 3000,
+        NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+        SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
+        NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
+        NEXTAUTH_URL: process.env.NEXTAUTH_URL,
+        ZAI_API_KEY: process.env.ZAI_API_KEY,
+        ZAI_BASE_URL: process.env.ZAI_BASE_URL,
+        GOOGLE_API_KEY: process.env.GOOGLE_API_KEY,
+        UPSTASH_REDIS_REST_URL: process.env.UPSTASH_REDIS_REST_URL,
+        UPSTASH_REDIS_REST_TOKEN: process.env.UPSTASH_REDIS_REST_TOKEN,
+        DEEPSEEK_API_KEY: process.env.DEEPSEEK_API_KEY,
+        OTEL_ENABLED: process.env.OTEL_ENABLED,
+        ENABLE_DEV_BYPASS: process.env.ENABLE_DEV_BYPASS,
+        SENTRY_DSN: process.env.SENTRY_DSN,
+        TELEGRAM_WEBHOOK_SECRET: process.env.TELEGRAM_WEBHOOK_SECRET,
       },
       // Logs centralizados por PM2
       out_file: './logs/costpro-out.log',
