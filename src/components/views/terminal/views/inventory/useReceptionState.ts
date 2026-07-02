@@ -37,6 +37,8 @@ export interface ReceptionItem {
   // FIX-GAP2: Moneda y tasa de cambio por item para costeo dinámico
   moneda_recepcion: string;
   tasa_cambio_recepcion: number;
+  // FIX-MULTI-MONEDA: Moneda del precio de venta (puede diferir de la moneda de compra)
+  price_currency: string;
 }
 
 export type ImportWizardStep = 'upload' | 'preview' | 'confirm';
@@ -133,6 +135,11 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editQuantity, setEditQuantity] = useState(1);
   const [editCost, setEditCost] = useState(0);
+  // FIX-MULTI-MONEDA: estados de edición para moneda, tasa, precio de venta y moneda de venta
+  const [editMoneda, setEditMoneda] = useState('CUP');
+  const [editTasa, setEditTasa] = useState(1.0);
+  const [editSalePrice, setEditSalePrice] = useState<number | null>(null);
+  const [editPriceCurrency, setEditPriceCurrency] = useState('CUP');
 
   // ── Delete confirmation ───────────────────────────────────
   // REC-1 QW-R1: pendingDelete ahora guarda el local_id (string) en vez del index.
@@ -166,6 +173,8 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
   // FIX-GAP2: Moneda y tasa de cambio para el formulario de nuevo item
   const [newMoneda, setNewMoneda] = useState<string>('CUP');
   const [newTasa, setNewTasa] = useState<number>(1.0);
+  // FIX-MULTI-MONEDA: moneda del precio de venta (puede diferir de la compra)
+  const [newPriceCurrency, setNewPriceCurrency] = useState<string>('CUP');
 
   // FIX-07: Search with pagination
   const [searchLimit, setSearchLimit] = useState(20);
@@ -215,6 +224,7 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
       variant_name: null,
       conversion_factor: null,
       moneda_recepcion: newMoneda,
+      price_currency: newPriceCurrency,
       tasa_cambio_recepcion: newTasa,
     }]);
     toast.info(`"${preselectedProduct.name}" agregado desde alerta de stock`);
@@ -346,6 +356,7 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
     setManualUnitOfMeasure('unidad');
     setNewMoneda('CUP');
     setNewTasa(1.0);
+    setNewPriceCurrency('CUP');
     setNewSalePrice(null);
   };
 
@@ -382,6 +393,7 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
       variant_name: selectedVariant?.name || null,
       conversion_factor: selectedVariant?.conversion_factor || null,
       moneda_recepcion: newMoneda,
+      price_currency: newPriceCurrency,
       tasa_cambio_recepcion: newTasa,
     }]);
     handleCloseForm();
@@ -415,6 +427,7 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
       variant_name: null,
       conversion_factor: null,
       moneda_recepcion: newMoneda,
+      price_currency: newPriceCurrency,
       tasa_cambio_recepcion: newTasa,
     }]);
     handleCloseForm();
@@ -454,6 +467,11 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
     setEditingIndex(index);
     setEditQuantity(item.quantity);
     setEditCost(item.unit_cost);
+    // FIX-MULTI-MONEDA: cargar todos los campos editables
+    setEditMoneda(item.moneda_recepcion || 'CUP');
+    setEditTasa(item.tasa_cambio_recepcion || 1.0);
+    setEditSalePrice(item.sale_price);
+    setEditPriceCurrency(item.price_currency || 'CUP');
   };
 
   const handleSaveEdit = () => {
@@ -462,7 +480,17 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
     if (editCost < 0) { toast.error('El costo no puede ser negativo'); return; }
     setItems(prev => prev.map((item, i) =>
       i === editingIndex
-        ? { ...item, quantity: editQuantity, unit_cost: Number(editCost.toFixed(2)) }
+        ? {
+            ...item,
+            quantity: editQuantity,
+            unit_cost: Number(editCost.toFixed(2)),
+            // FIX-MULTI-MONEDA: guardar todos los campos editables
+            moneda_recepcion: editMoneda,
+            price_currency: editPriceCurrency,
+            tasa_cambio_recepcion: editTasa,
+            sale_price: editSalePrice,
+            update_price: editSalePrice !== null && editSalePrice !== item.sale_price,
+          }
         : item
     ));
     setEditingIndex(null);
@@ -503,6 +531,7 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
           variant_name: null,
           conversion_factor: null,
           moneda_recepcion: newMoneda,
+      price_currency: newPriceCurrency,
           tasa_cambio_recepcion: newTasa,
         }];
       });
@@ -538,6 +567,7 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
           variant_name: null,
           conversion_factor: null,
           moneda_recepcion: newMoneda,
+      price_currency: newPriceCurrency,
           tasa_cambio_recepcion: newTasa,
         }];
       });
@@ -716,6 +746,7 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
         conversion_factor: null,
         // FIX-P1.2: usar moneda/tasa del Excel si existe, sino fallback al global
         moneda_recepcion: r.moneda || newMoneda,
+        price_currency: newPriceCurrency,
         tasa_cambio_recepcion: r.tasa || newTasa,
       }));
 
@@ -957,6 +988,7 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
           sale_price: item.sale_price ?? undefined,
           variant_id: item.variant_id,
           moneda_recepcion: item.moneda_recepcion || 'CUP',
+          price_currency: item.price_currency || 'CUP',
           tasa_cambio_recepcion: item.tasa_cambio_recepcion || 1.0,
         })),
       }).catch((err: unknown) => {
@@ -1229,6 +1261,7 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
       conversion_factor: null,
       // FIX-P1.2: heredar moneda/tasa global del formulario de recepción
       moneda_recepcion: newMoneda,
+      price_currency: newPriceCurrency,
       tasa_cambio_recepcion: newTasa,
     }));
 
@@ -1274,6 +1307,15 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
     setEditQuantity,
     editCost,
     setEditCost,
+    // FIX-MULTI-MONEDA: exportar nuevos estados de edición
+    editMoneda,
+    setEditMoneda,
+    editTasa,
+    setEditTasa,
+    editSalePrice,
+    setEditSalePrice,
+    editPriceCurrency,
+    setEditPriceCurrency,
     pendingDelete,
     showSubmitConfirm,
     setShowSubmitConfirm,
@@ -1303,6 +1345,9 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
     setNewMoneda,
     newTasa,
     setNewTasa,
+    // FIX-MULTI-MONEDA: exportar estado de moneda de venta
+    newPriceCurrency,
+    setNewPriceCurrency,
     isImportOpen,
     importStep,
     setImportStep,

@@ -229,21 +229,51 @@ export default function ProductReceptionView({ onCancel, preselectedProduct }: P
                       )}
                     </div>
                     {s.editingIndex === index ? (
-                      <div className="flex items-center gap-2 ml-6 mt-1">
+                      <div className="flex flex-wrap items-center gap-2 ml-6 mt-1">
+                        {/* FIX-MULTI-MONEDA: editor completo con moneda, tasa, costo, venta */}
                         <div className="flex items-center gap-1">
                           <label className="text-[10px] font-bold uppercase text-muted-foreground">Cant:</label>
                           <input type="number" inputMode="decimal" min="0.0001" step="0.01" value={s.editQuantity} onChange={e => s.setEditQuantity(Math.max(0.0001, parseFloat(e.target.value) || 1))} className="w-16 px-2 py-1 text-xs font-bold rounded-lg border border-border bg-background" autoFocus />
                         </div>
                         <div className="flex items-center gap-1">
-                          <label className="text-[10px] font-bold uppercase text-muted-foreground">Costo:</label>
+                          <label className="text-[10px] font-bold uppercase text-muted-foreground">Moneda:</label>
+                          <select value={s.editMoneda} onChange={e => { s.setEditMoneda(e.target.value); if (e.target.value === 'CUP') s.setEditTasa(1.0); }} className="w-16 px-1 py-1 text-xs font-bold rounded-lg border border-border bg-background">
+                            <option value="CUP">CUP</option>
+                            <option value="USD">USD</option>
+                            <option value="EUR">EUR</option>
+                            <option value="MLC">MLC</option>
+                          </select>
+                        </div>
+                        {s.editMoneda !== 'CUP' && (
+                          <div className="flex items-center gap-1">
+                            <label className="text-[10px] font-bold uppercase text-muted-foreground">Tasa:</label>
+                            <input type="number" inputMode="decimal" min="0" step="0.01" value={s.editTasa || ''} onChange={e => s.setEditTasa(parseFloat(e.target.value) || 1.0)} className="w-20 px-2 py-1 text-xs font-bold rounded-lg border border-border bg-background" />
+                          </div>
+                        )}
+                        <div className="flex items-center gap-1">
+                          <label className="text-[10px] font-bold uppercase text-muted-foreground">Costo ({s.editMoneda}):</label>
                           <input type="number" inputMode="decimal" min="0" step="0.01" value={s.editCost || ''} onChange={e => s.setEditCost(parseFloat(e.target.value) || 0)} className="w-20 px-2 py-1 text-xs font-bold rounded-lg border border-border bg-background" />
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <label className="text-[10px] font-bold uppercase text-muted-foreground">Venta:</label>
+                          <input type="number" inputMode="decimal" min="0" step="0.01" value={s.editSalePrice ?? ''} onChange={e => s.setEditSalePrice(e.target.value ? parseFloat(e.target.value) : null)} className="w-20 px-2 py-1 text-xs font-bold rounded-lg border border-border bg-background" placeholder="—" />
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <label className="text-[10px] font-bold uppercase text-muted-foreground">Mon. Venta:</label>
+                          <select value={s.editPriceCurrency} onChange={e => s.setEditPriceCurrency(e.target.value)} className="w-16 px-1 py-1 text-xs font-bold rounded-lg border border-border bg-background">
+                            <option value="CUP">CUP</option>
+                            <option value="USD">USD</option>
+                            <option value="EUR">EUR</option>
+                            <option value="MLC">MLC</option>
+                          </select>
                         </div>
                         <button onClick={s.handleSaveEdit} className="px-2 py-1 text-[10px] font-black uppercase rounded-lg bg-primary/10 text-primary hover:bg-primary/20" type="button">OK</button>
                         <button type="button" onClick={() => s.setEditingIndex(null)} className="px-2 py-1 text-[10px] font-bold uppercase rounded-lg bg-muted text-muted-foreground hover:bg-muted/80">X</button>
                       </div>
                     ) : (
                       <p className="text-xs text-muted-foreground ml-6">
-                        SKU: {item.sku || '--'} · UM: {item.unit_of_measure} · Cant: {item.quantity} · Costo: {formatCurrency(item.unit_cost)}
+                        SKU: {item.sku || '--'} · UM: {item.unit_of_measure} · Cant: {item.quantity} · Costo: {formatCurrency(item.unit_cost)} {item.moneda_recepcion !== 'CUP' && `(${item.moneda_recepcion} × ${item.tasa_cambio_recepcion})`}
+                        {item.sale_price != null && ` · Venta: ${formatCurrency(item.sale_price)} ${item.price_currency || 'CUP'}`}
                         {item.variant_name && <span className="ml-2 text-info font-bold"> · Var: {item.variant_name}</span>}
                       </p>
                     )}
@@ -611,6 +641,8 @@ export default function ProductReceptionView({ onCancel, preselectedProduct }: P
                     value={s.newMoneda}
                     onChange={async (e) => {
                       s.setNewMoneda(e.target.value);
+                      // FIX-MULTI-MONEDA: al cambiar moneda de compra, actualizar moneda de venta por defecto
+                      s.setNewPriceCurrency(e.target.value);
                       if (e.target.value === 'CUP') {
                         s.setNewTasa(1.0);
                       } else {
@@ -676,22 +708,40 @@ export default function ProductReceptionView({ onCancel, preselectedProduct }: P
                 </div>
               </div>
 
-              {/* REC-2 MM-R9: Precio de venta editable en modal */}
-              <div className="space-y-1.5">
-                <label htmlFor="item-sale-price" className="text-xs font-black uppercase tracking-widest ml-1">
-                  Precio Venta <span className="text-muted-foreground font-normal normal-case tracking-normal">(CUP, opcional)</span>
-                </label>
-                <input
-                  id="item-sale-price"
-                  type="number"
-                  inputMode="decimal"
-                  min="0"
-                  step="0.01"
-                  value={s.newSalePrice ?? ''}
-                  onChange={e => s.setNewSalePrice(e.target.value ? parseFloat(e.target.value) : null)}
-                  className="neu-input w-full font-bold text-success"
-                  placeholder="0.00 (dejar vacío para no cambiar)"
-                />
+              {/* REC-2 MM-R9: Precio de venta editable con selector de moneda */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label htmlFor="item-sale-price" className="text-xs font-black uppercase tracking-widest ml-1">
+                    Precio Venta <span className="text-muted-foreground font-normal normal-case tracking-normal">(opcional)</span>
+                  </label>
+                  <input
+                    id="item-sale-price"
+                    type="number"
+                    inputMode="decimal"
+                    min="0"
+                    step="0.01"
+                    value={s.newSalePrice ?? ''}
+                    onChange={e => s.setNewSalePrice(e.target.value ? parseFloat(e.target.value) : null)}
+                    className="neu-input w-full font-bold text-success"
+                    placeholder="0.00 (dejar vacío)"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label htmlFor="item-price-currency" className="text-xs font-black uppercase tracking-widest ml-1">
+                    Mon. Venta
+                  </label>
+                  <select
+                    id="item-price-currency"
+                    value={s.newPriceCurrency}
+                    onChange={e => s.setNewPriceCurrency(e.target.value)}
+                    className="neu-input w-full font-bold"
+                  >
+                    <option value="CUP">CUP</option>
+                    <option value="USD">USD</option>
+                    <option value="EUR">EUR</option>
+                    <option value="MLC">MLC</option>
+                  </select>
+                </div>
               </div>
 
               {/* REC-2 MM-R4: Selector de variante si el producto las tiene */}
