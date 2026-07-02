@@ -599,36 +599,8 @@ export default function ProductReceptionView({ onCancel, preselectedProduct }: P
 
           {s.selectedProductId && (
             <div className="space-y-3 pt-2 border-t border-border">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label htmlFor="item-qty" className="text-xs font-black uppercase tracking-widest ml-1">Cantidad</label>
-                  <input id="item-qty" type="number" inputMode="decimal" min="0.0001" step="0.01" value={s.newQuantity} onChange={e => s.setNewQuantity(Math.max(0.0001, parseFloat(e.target.value) || 1))} className="neu-input w-full font-bold" />
-                </div>
-                <div className="space-y-1.5">
-                  <label htmlFor="item-cost" className="text-xs font-black uppercase tracking-widest ml-1">Costo Unit.</label>
-                  <input id="item-cost" type="number" inputMode="decimal" min="0" step="0.01" value={s.newUnitCost || ''} onChange={e => s.setNewUnitCost(parseFloat(e.target.value) || 0)} className="neu-input w-full font-bold text-primary" placeholder="0.00" />
-                </div>
-              </div>
-
-              {/* REC-2 MM-R9: Precio de venta editable en modal */}
-              <div className="space-y-1.5">
-                <label htmlFor="item-sale-price" className="text-xs font-black uppercase tracking-widest ml-1">
-                  Precio Venta <span className="text-muted-foreground font-normal normal-case tracking-normal">(opcional, actualizará el producto)</span>
-                </label>
-                <input
-                  id="item-sale-price"
-                  type="number"
-                  inputMode="decimal"
-                  min="0"
-                  step="0.01"
-                  value={s.newSalePrice ?? ''}
-                  onChange={e => s.setNewSalePrice(e.target.value ? parseFloat(e.target.value) : null)}
-                  className="neu-input w-full font-bold text-success"
-                  placeholder="0.00 (dejar vacío para no cambiar)"
-                />
-              </div>
-
-              {/* FIX-GAP2: Moneda y tasa de cambio para costeo dinámico */}
+              {/* FIX-UX: Moneda y tasa PRIMERO (lo más visible) — el usuario necesita
+                  saber en qué moneda está comprando antes de poner el costo */}
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                   <label htmlFor="item-moneda" className="text-xs font-black uppercase tracking-widest ml-1">
@@ -644,15 +616,12 @@ export default function ProductReceptionView({ onCancel, preselectedProduct }: P
                       } else {
                         // F4-GAP3: Auto-fill tasa from exchange_rates when currency changes
                         // FIX-P1.5: la API devuelve { rates: [...] } no un array directo.
-                        // También intentamos múltiples sources (BCC → elToque) con fallback.
                         try {
                           const res = await fetch(`/api/exchange-rates?currency=${e.target.value}&source=BCC&segment=3&days=1`);
                           if (res.ok) {
                             const data = await res.json();
-                            // FIX-P1.5: soportar ambos formatos: { rates: [...] } y [...]
                             const rates = Array.isArray(data) ? data : (data?.rates || data?.data || []);
                             if (Array.isArray(rates) && rates.length > 0) {
-                              // Ordenar por fecha descendente y tomar la más reciente
                               const sorted = rates.sort((a: any, b: any) =>
                                 new Date(b.rate_date || b.date || 0).getTime() - new Date(a.rate_date || a.date || 0).getTime()
                               );
@@ -692,6 +661,37 @@ export default function ProductReceptionView({ onCancel, preselectedProduct }: P
                     disabled={s.newMoneda === 'CUP'}
                   />
                 </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label htmlFor="item-qty" className="text-xs font-black uppercase tracking-widest ml-1">Cantidad</label>
+                  <input id="item-qty" type="number" inputMode="decimal" min="0.0001" step="0.01" value={s.newQuantity} onChange={e => s.setNewQuantity(Math.max(0.0001, parseFloat(e.target.value) || 1))} className="neu-input w-full font-bold" />
+                </div>
+                <div className="space-y-1.5">
+                  <label htmlFor="item-cost" className="text-xs font-black uppercase tracking-widest ml-1">
+                    Costo Unit. {s.newMoneda !== 'CUP' && <span className="text-primary font-normal normal-case tracking-normal">({s.newMoneda})</span>}
+                  </label>
+                  <input id="item-cost" type="number" inputMode="decimal" min="0" step="0.01" value={s.newUnitCost || ''} onChange={e => s.setNewUnitCost(parseFloat(e.target.value) || 0)} className="neu-input w-full font-bold text-primary" placeholder="0.00" />
+                </div>
+              </div>
+
+              {/* REC-2 MM-R9: Precio de venta editable en modal */}
+              <div className="space-y-1.5">
+                <label htmlFor="item-sale-price" className="text-xs font-black uppercase tracking-widest ml-1">
+                  Precio Venta <span className="text-muted-foreground font-normal normal-case tracking-normal">(CUP, opcional)</span>
+                </label>
+                <input
+                  id="item-sale-price"
+                  type="number"
+                  inputMode="decimal"
+                  min="0"
+                  step="0.01"
+                  value={s.newSalePrice ?? ''}
+                  onChange={e => s.setNewSalePrice(e.target.value ? parseFloat(e.target.value) : null)}
+                  className="neu-input w-full font-bold text-success"
+                  placeholder="0.00 (dejar vacío para no cambiar)"
+                />
               </div>
 
               {/* REC-2 MM-R4: Selector de variante si el producto las tiene */}
