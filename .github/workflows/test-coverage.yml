@@ -10,6 +10,15 @@ jobs:
   unit-tests:
     name: Unit & Integration Tests
     runs-on: ubuntu-latest
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || 'https://test.supabase.co' }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'test-anon-key' }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY || 'test-service-key' }}
+      DATABASE_URL: ${{ secrets.DATABASE_URL || 'postgresql://test:test@localhost:5432/test' }}
+      NEXT_PUBLIC_APP_URL: ${{ secrets.NEXT_PUBLIC_APP_URL || 'http://localhost:3000' }}
+      ZAI_API_KEY: ${{ secrets.ZAI_API_KEY || 'test-key' }}
+      ZAI_BASE_URL: ${{ secrets.ZAI_BASE_URL || 'https://open.bigmodel.cn/api/paas/v4' }}
+      GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY || 'test-key' }}
     steps:
       - uses: actions/checkout@v4
 
