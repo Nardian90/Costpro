@@ -103,18 +103,27 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
     const secret = crypto.randomUUID().replace(/-/g, '') + crypto.randomUUID().replace(/-/g, '');
 
     // Construir URL del webhook
-    // Telegram EXIGE HTTPS. Detectamos la URL pública en este orden:
-    //   1. NEXTAUTH_URL (si es https y no localhost)
-    //   2. VERCEL_URL (Vercel auto-inyecta, formato: project-xxx.vercel.app)
-    //   3. Header Host o x-forwarded-host (para previews, Docker, etc.)
-    //   4. Header origin (fallback)
-    // NEXTAUTH_URL=http://localhost:3000 se ignora porque no sirve para Telegram.
+    // Telegram EXIGE HTTPS y una IP pública (rechaza IPs reservadas/CGNAT).
+    //
+    // Orden de prioridad para detectar la URL pública:
+    //   1. NEXTAUTH_URL (si es https y no localhost) — configuración explícita
+    //   2. VERCEL_URL (Vercel auto-inyecta en producción)
+    //   3. Header 'origin' — el navegador lo envía con la URL pública desde
+    //      donde se cargó la página. Es el MÁS confiable en previews/proxies.
+    //   4. Header 'x-forwarded-host' — puede ser interno (ej: fcapp.run)
+    //   5. Header 'host' — último recurso, suele ser interno
+    //
+    // IMPORTANTE: en entornos con reverse proxy (Alibaba FC, Cloudflare, etc.),
+    // 'host' y 'x-forwarded-host' pueden ser hosts internos que resuelven a
+    // IPs reservadas. Telegram rechaza esas URLs con:
+    //   "bad webhook: IP address X.X.X.X is reserved"
+    // Por eso 'origin' tiene prioridad sobre 'host'.
     const candidateUrls = [
       process.env.NEXTAUTH_URL,
       process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null,
+      req.headers.get('origin'),        // ← prioridad alta (URL pública real)
       req.headers.get('x-forwarded-host'),
       req.headers.get('host'),
-      req.headers.get('origin'),
     ].filter(Boolean) as string[];
 
     let baseUrl: string | null = null;
