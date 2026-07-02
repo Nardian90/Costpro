@@ -143,8 +143,16 @@ function VariationsTab({ data }: any) {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <StatBox label="Valor Inicial" value={`${startRate.toFixed(0)} CUP`} color="text-foreground" />
           <StatBox label="Valor Final" value={`${endRate.toFixed(0)} CUP`} color={rateSourceMeta.color} />
-          <StatBox label="Incremento" value={`${absChange >= 0 ? '+' : ''}${absChange.toFixed(0)} CUP`} color={absChange >= 0 ? 'text-destructive' : 'text-success'} />
-          <StatBox label="Incremento %" value={`${pctChange}%`} color={parseFloat(pctChange) >= 0 ? 'text-destructive' : 'text-success'} />
+          <StatBox
+            label={absChange >= 0 ? 'Incremento' : 'Disminución'}
+            value={`${absChange >= 0 ? '+' : ''}${absChange.toFixed(0)} CUP`}
+            color={absChange >= 0 ? 'text-destructive' : 'text-success'}
+          />
+          <StatBox
+            label={parseFloat(pctChange) >= 0 ? 'Incremento %' : 'Disminución %'}
+            value={`${pctChange}%`}
+            color={parseFloat(pctChange) >= 0 ? 'text-destructive' : 'text-success'}
+          />
           <StatBox label="Días" value={`${daysBetween}`} color="text-foreground" />
           <StatBox label="Crecimiento diario" value={`${dailyGrowth.toFixed(0)}%`} color="text-warning" />
           <StatBox label="Crecimiento mensual" value={`${(dailyGrowth * 30).toFixed(0)}%`} color="text-warning" />

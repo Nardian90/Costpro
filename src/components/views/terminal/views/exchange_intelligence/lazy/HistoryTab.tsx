@@ -43,6 +43,15 @@ const CHART_COLOR_FORECAST_INFORMAL = '#c2410c';
 const CHART_COLOR_VARIATION_POS = '#22c55e';
 const CHART_COLOR_VARIATION_NEG = '#ef4444';
 
+// ─── Colores de ejes (visibles en light y dark theme) ───
+// FIX: hsl(var(--foreground)) no se resuelve en SVG fill de recharts en dark theme.
+// Usamos grises explícitos que funcionan en ambos temas.
+const AXIS_TICK_FILL = '#94a3b8';   // slate-400 — texto de ejes
+const AXIS_STROKE = '#64748b';      // slate-500 — línea de ejes
+const AXIS_GRID_STROKE = '#475569'; // slate-600 — grid lines
+const AXIS_GRID_OPACITY = 0.4;
+const REFERENCE_LINE_STROKE = '#94a3b8';
+
 // ─── Tipos de tendencia disponibles (métodos científicos) ───
 type TrendMethod = 'none' | 'sma7' | 'sma30' | 'linear' | 'poly2';
 const TREND_METHODS: { id: TrendMethod; label: string; description: string }[] = [
@@ -263,24 +272,31 @@ function HistoryTab({ data }: any) {
     }
 
     // Puntos históricos
+    // FIX: El último punto histórico también lleva los valores forecastOficial/forecastInformal
+    //      = valores reales, para que la línea punteada de proyección arranque desde
+    //      el mismo punto donde termina la línea sólida histórica (sin salto visual).
     const lastHistorical = filtered[filtered.length - 1];
     const lastInformalReal = lastHistorical?.informal != null ? Number(lastHistorical.informal) : null;
     const lastOficialReal = lastHistorical?.oficial != null ? Number(lastHistorical.oficial) : null;
 
-    const historical = (filtered as any[]).map((d: any, i: number) => ({
-      date: d.date,
-      oficial: d.oficial != null ? Number(d.oficial) : null,
-      informal: d.informal != null ? Number(d.informal) : null,
-      trend: trendValues[i],
-      forecastOficial: null as number | null,
-      forecastInformal: null as number | null,
-      isForecast: false,
-    }));
+    const historical = (filtered as any[]).map((d: any, i: number) => {
+      const isLast = i === filtered.length - 1;
+      return {
+        date: d.date,
+        oficial: d.oficial != null ? Number(d.oficial) : null,
+        informal: d.informal != null ? Number(d.informal) : null,
+        trend: trendValues[i],
+        // En el último punto histórico, sembrar los valores de proyección = valor real
+        // para que la línea de proyección conecte visualmente con la línea histórica.
+        forecastOficial: isLast ? lastOficialReal : null,
+        forecastInformal: isLast ? lastInformalReal : null,
+        isForecast: false,
+      };
+    });
 
-    // Puntos futuros proyectados
-    // FIX: El primer punto proyectado (d=0 conceptualmente, día "hoy") replica
-    //      el último valor real, así la línea punteada conecta visualmente con
-    //      la línea sólida sin salto. Luego los días +1, +2, ... extrapolan.
+    // Puntos futuros proyectados (d=1, 2, ..., forecastDays)
+    // Ya NO agregamos un punto de conexión separado — el último punto histórico
+    // ya tiene los valores forecast sembrados, así la línea punteada arranca de ahí.
     const lastDateStr = lastHistorical?.date;
     const forecastPoints: any[] = [];
     if (lastDateStr && forecastDays > 0) {
@@ -290,18 +306,6 @@ function HistoryTab({ data }: any) {
       } catch {
         lastDate = new Date();
       }
-
-      // Punto inicial de la proyección = último valor real (conecta con el histórico)
-      forecastPoints.push({
-        date: lastDateStr,
-        oficial: null,
-        informal: null,
-        trend: null,
-        forecastOficial: lastOficialReal,
-        forecastInformal: lastInformalReal,
-        isForecast: true,
-        isConnectionPoint: true,
-      });
 
       for (let d = 1; d <= forecastDays; d++) {
         const projDate = addDays(lastDate, d);
@@ -721,17 +725,17 @@ function HistoryTab({ data }: any) {
                 <stop offset="95%" stopColor={CHART_COLOR_INFORMAL} stopOpacity={0.05} />
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.5} />
-            {/* FIX: ejes en color foreground para que sean visibles en dark theme */}
+            <CartesianGrid strokeDasharray="3 3" stroke={AXIS_GRID_STROKE} opacity={AXIS_GRID_OPACITY} />
+            {/* FIX: ejes con color explícito para visibilidad en dark theme */}
             <XAxis
               dataKey="date"
-              tick={{ fontSize: 12, fontWeight: 600, fill: 'hsl(var(--foreground))' }}
-              stroke="hsl(var(--foreground))"
+              tick={{ fontSize: 12, fontWeight: 600, fill: AXIS_TICK_FILL }}
+              stroke={AXIS_STROKE}
               strokeWidth={1.5}
             />
             <YAxis
-              tick={{ fontSize: 14, fontWeight: 600, fill: 'hsl(var(--foreground))' }}
-              stroke="hsl(var(--foreground))"
+              tick={{ fontSize: 14, fontWeight: 600, fill: AXIS_TICK_FILL }}
+              stroke={AXIS_STROKE}
               strokeWidth={1.5}
               domain={['auto', 'auto']}
             />
@@ -751,13 +755,13 @@ function HistoryTab({ data }: any) {
             {forecastDays > 0 && filtered.length > 0 && (
               <ReferenceLine
                 x={filtered[filtered.length - 1]?.date}
-                stroke="hsl(var(--muted-foreground))"
+                stroke={REFERENCE_LINE_STROKE}
                 strokeDasharray="4 4"
                 strokeWidth={1.5}
                 label={{
                   value: 'Hoy',
                   position: 'top',
-                  fill: 'hsl(var(--muted-foreground))',
+                  fill: REFERENCE_LINE_STROKE,
                   fontSize: 11,
                   fontWeight: 700,
                 }}
@@ -939,17 +943,17 @@ function HistoryTab({ data }: any) {
 
         <ResponsiveContainer width="100%" height={260}>
           <ComposedChart data={variationData} margin={{ top: 10, right: 30, left: 0, bottom: 10 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.5} />
-            {/* FIX: ejes en foreground para visibilidad en dark theme */}
+            <CartesianGrid strokeDasharray="3 3" stroke={AXIS_GRID_STROKE} opacity={AXIS_GRID_OPACITY} />
+            {/* FIX: ejes con color explícito para visibilidad en dark theme */}
             <XAxis
               dataKey="date"
-              tick={{ fontSize: 11, fontWeight: 600, fill: 'hsl(var(--foreground))' }}
-              stroke="hsl(var(--foreground))"
+              tick={{ fontSize: 11, fontWeight: 600, fill: AXIS_TICK_FILL }}
+              stroke={AXIS_STROKE}
               strokeWidth={1.5}
             />
             <YAxis
-              tick={{ fontSize: 12, fontWeight: 600, fill: 'hsl(var(--foreground))' }}
-              stroke="hsl(var(--foreground))"
+              tick={{ fontSize: 12, fontWeight: 600, fill: AXIS_TICK_FILL }}
+              stroke={AXIS_STROKE}
               strokeWidth={1.5}
               tickFormatter={(v: number) => `${v > 0 ? '+' : ''}${v.toFixed(0)}%`}
             />
@@ -971,7 +975,7 @@ function HistoryTab({ data }: any) {
                 return [`${sign}${num.toFixed(0)}%`, name];
               }}
             />
-            <ReferenceLine y={0} stroke="hsl(var(--muted-foreground))" strokeWidth={1.5} />
+            <ReferenceLine y={0} stroke={REFERENCE_LINE_STROKE} strokeWidth={1.5} />
             {/* Variación elToque — barras coloreadas según signo (verde +/rojo -) */}
             {(variationSource === 'both' || variationSource === 'informal') && (
               <Bar
