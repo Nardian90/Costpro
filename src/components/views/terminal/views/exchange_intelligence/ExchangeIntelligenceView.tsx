@@ -24,6 +24,7 @@ import {
 // Se cargan con lazy solo cuando el usuario abre esas tabs
 const HistoryTab = lazy(() => import('./lazy/HistoryTab'));
 const VariationsTab = lazy(() => import('./lazy/VariationsTab'));
+const MiProductoTab = lazy(() => import('./lazy/MiProductoTab'));
 import { supabase } from '@/lib/supabaseClient';
 import { toast } from 'sonner';
 import { useIntervalWhenVisible } from '@/hooks/ui/use-interval-when-visible';
@@ -66,8 +67,9 @@ const TABS = [
   { id: 'history', label: 'Histórico', icon: TrendingUp },
   { id: 'variations', label: 'Variaciones', icon: Activity },
   { id: 'impact', label: 'Impacto Precios', icon: Calculator },
+  { id: 'mi-producto', label: 'Mi Producto', icon: DollarSign },
   { id: 'alerts', label: 'Alertas', icon: Bell },
-  { id: 'simulator', label: 'Simulador', icon: DollarSign },
+  { id: 'simulator', label: 'Simulador', icon: Target },
 ];
 
 // Fallback si Supabase no tiene datos aún
@@ -305,6 +307,11 @@ export function ExchangeIntelligenceView() {
             {activeTab === 'history' && <Suspense fallback={<div className="flex items-center justify-center py-24"><RefreshCw className="w-8 h-8 animate-spin text-primary" /></div>}><HistoryTab data={historyData} /></Suspense>}
             {activeTab === 'variations' && <Suspense fallback={<div className="flex items-center justify-center py-24"><RefreshCw className="w-8 h-8 animate-spin text-primary" /></div>}><VariationsTab data={historyData} /></Suspense>}
             {activeTab === 'impact' && <ImpactTab officialUsd={usdOfficial} informalUsd={usdInformal} historyData={historyData} />}
+            {activeTab === 'mi-producto' && (
+              <Suspense fallback={<div className="flex items-center justify-center py-24"><RefreshCw className="w-8 h-8 animate-spin text-primary" /></div>}>
+                <MiProductoTab historyData={historyData} informalUsd={usdInformal} officialUsd={usdOfficial} />
+              </Suspense>
+            )}
             {activeTab === 'alerts' && <AlertsTab diffPct={parseFloat(diffPct)} historyData={historyData} />}
             {activeTab === 'simulator' && <SimulatorTab informalUsd={usdInformal} officialUsd={usdOfficial} historyData={historyData} />}
           </>
@@ -1892,8 +1899,7 @@ function SimulatorTab({ informalUsd, officialUsd, historyData }: any) {
             <strong>{costNow.toFixed(0)} CUP</strong> — {changeToNow >= 0 ? '+' : ''}{changeToNowPct.toFixed(0)}% ({changeToNow >= 0 ? '+' : ''}{changeToNow.toFixed(0)} CUP).{' '}
             <span className="text-purple-600 dark:text-purple-400">
               Según el modelo <strong>{TREND_MODELS.find(m => m.id === selectedModel)?.label}</strong> (R² = {projR2.toFixed(2)}),
-              en <strong>7 días</strong> la tasa proyectada es <strong>{proj7d.toFixed(0)} CUP/USD</strong>, lo que elevaría el costo a{' '}
-              <strong>{costIn7d.toFixed(0)} CUP</strong> — {changeTo7d >= 0 ? '+' : ''}{changeTo7dPct.toFixed(0)}% ({changeTo7d >= 0 ? '+' : ''}{changeTo7d.toFixed(0)} CUP) respecto a hoy.
+              en <strong>7 días</strong> la tasa proyectada es <strong>{proj7d.toFixed(0)} CUP/USD</strong> — {changeTo7d >= 0 ? '+' : ''}{changeTo7dPct.toFixed(0)}% ({changeTo7d >= 0 ? '+' : ''}{changeTo7d.toFixed(0)} CUP) respecto a hoy.
             </span>
             {projR2 < 0.4 && (
               <span className="block mt-2 text-warning">⚠ R² bajo ({projR2.toFixed(2)}) — la proyección de este modelo no es confiable. Considera otro modelo.</span>
