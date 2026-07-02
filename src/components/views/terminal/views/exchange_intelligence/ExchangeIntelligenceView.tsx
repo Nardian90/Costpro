@@ -580,6 +580,28 @@ function DashboardTab({
   // Días reales en la ventana (en caso de que haya menos de 30 muestras)
   const monthWindowDays = last30.length;
 
+  // ─── Variación diaria (vs día anterior) para ambas tarjetas ───
+  // elToque: últimos 2 registros informales
+  const informalToday = usdInformalRates[usdInformalRates.length - 1]?.rate;
+  const informalYesterday = usdInformalRates[usdInformalRates.length - 2]?.rate;
+  const informalDailyChange = (informalToday != null && informalYesterday != null)
+    ? informalToday - informalYesterday
+    : 0;
+  const informalDailyChangePct = (informalYesterday != null && informalYesterday > 0)
+    ? (informalDailyChange / informalYesterday) * 100
+    : 0;
+
+  // BCC: últimos 2 registros oficiales para el segmento seleccionado
+  const usdOfficialRates = rates.filter((r: ExchangeRate) => r.source === 'BCC' && r.currency === 'USD' && r.segment === bccSegment);
+  const officialToday = usdOfficialRates[usdOfficialRates.length - 1]?.rate;
+  const officialYesterday = usdOfficialRates[usdOfficialRates.length - 2]?.rate;
+  const officialDailyChange = (officialToday != null && officialYesterday != null)
+    ? officialToday - officialYesterday
+    : 0;
+  const officialDailyChangePct = (officialYesterday != null && officialYesterday > 0)
+    ? (officialDailyChange / officialYesterday) * 100
+    : 0;
+
   // KPIs secundarios (no duplican Card 2):
   // 1) Volatilidad 7 días del USD informal (std-dev de cambios diarios)
   const last7Informal = usdInformalRates.slice(-8).map((r: ExchangeRate) => r.rate);
@@ -678,12 +700,16 @@ function DashboardTab({
               <span className="text-4xl font-black font-mono text-foreground">{officialUsd.toFixed(0)}</span>
               <span className="text-sm font-bold text-muted-foreground">CUP / USD</span>
             </div>
-            <div className="flex items-center gap-4 text-sm">
-              <span className="text-muted-foreground">
-                Tasa oficial para segmento <strong className="text-primary">{segmentShortLabel}</strong>
+            <div className="flex items-center gap-2 text-sm flex-wrap">
+              <span className={cn('flex items-center gap-1 font-bold', officialDailyChange >= 0 ? 'text-destructive' : 'text-success')}>
+                {officialDailyChange >= 0 ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
+                {officialDailyChange >= 0 ? '+' : ''}{officialDailyChange.toFixed(0)} CUP
+                ({officialDailyChangePct >= 0 ? '+' : ''}{officialDailyChangePct.toFixed(0)}%) vs ayer
               </span>
             </div>
-            <p className="text-xs text-muted-foreground mt-2 leading-relaxed">{segmentDescription}</p>
+            <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
+              Tasa oficial para segmento <strong className="text-primary">{segmentShortLabel}</strong>. {segmentDescription}
+            </p>
           </div>
         </div>
 
@@ -733,9 +759,16 @@ function DashboardTab({
               <span className="text-4xl font-black font-mono text-foreground">{informalUsd.toFixed(0)}</span>
               <span className="text-sm font-bold text-muted-foreground">CUP / USD</span>
             </div>
-            <div className="flex items-center gap-2 text-sm">
-              <span className={cn('flex items-center gap-1 font-bold', monthChange >= 0 ? 'text-destructive' : 'text-success')}>
-                {monthChange >= 0 ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
+            <div className="flex flex-col gap-1 text-sm">
+              {/* Variación diaria (vs ayer) */}
+              <span className={cn('flex items-center gap-1 font-bold', informalDailyChange >= 0 ? 'text-destructive' : 'text-success')}>
+                {informalDailyChange >= 0 ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
+                {informalDailyChange >= 0 ? '+' : ''}{informalDailyChange.toFixed(0)} CUP
+                ({informalDailyChangePct >= 0 ? '+' : ''}{informalDailyChangePct.toFixed(0)}%) vs ayer
+              </span>
+              {/* Variación mensual (vs {monthWindowDays} días) */}
+              <span className={cn('flex items-center gap-1 font-bold text-xs', monthChange >= 0 ? 'text-destructive/80' : 'text-success/80')}>
+                {monthChange >= 0 ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
                 {monthChange >= 0 ? '+' : ''}{monthChange.toFixed(0)}% ({monthWindowDays} días)
               </span>
             </div>
