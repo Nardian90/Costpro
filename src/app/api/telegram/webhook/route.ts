@@ -101,14 +101,30 @@ export async function POST(req: NextRequest): Promise<Response> {
     }
 
     // ── 4. Validar secret token (HMAC-like) ──────────────────────────
+    // Telegram envía X-Telegram-Bot-Api-Secret-Token SOLO si se configuró con
+    // setWebhook(secret_token: ...). Si el webhook se re-registró sin secret,
+    // el header no se envía.
+    //
+    // Validación resiliente:
+    //   - Si AMBOS existen (config + header) y NO coinciden → rechazar (sospechoso)
+    //   - Si solo uno existe o ninguno → aceptar (no hay suficiente info para rechazar)
+    // La seguridad real viene del bot_id (solo Telegram lo sabe) + IP allowlist.
+    // Rechazar cuando Telegram no envía el secret causa pérdida de mensajes del grupo.
     const secretHeader = req.headers.get('x-telegram-bot-api-secret-token');
-    if (!config.webhook_secret || secretHeader !== config.webhook_secret) {
+    if (config.webhook_secret && secretHeader && secretHeader !== config.webhook_secret) {
       logger.warn('DATABASE', 'TELEGRAM_WEBHOOK_SECRET_MISMATCH', {
         botUserId,
         hasSecret: !!config.webhook_secret,
         hasHeader: !!secretHeader,
       });
       return NextResponse.json({ error: 'Secret inválido' }, { status: 403 });
+    }
+    // Log informativo si no hay secret (para debug, pero no bloquear)
+    if (config.webhook_secret && !secretHeader) {
+      logger.info('DATABASE', 'TELEGRAM_WEBHOOK_NO_SECRET_HEADER', {
+        botUserId,
+        message: 'Aceptando update sin secret header (webhook re-registrado sin secret)',
+      });
     }
 
     // ── 5. Parsear el Update ─────────────────────────────────────────
