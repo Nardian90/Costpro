@@ -170,6 +170,7 @@ export interface Product {
   price: number;
   precio_empresa?: number | null;
   cost_price: number;
+  price_currency?: string;
   image_url?: string | null;
   category?: string | null;
   unit_of_measure?: string | null;

@@ -105,6 +105,7 @@ export default function CatalogView() {
     cost_price: 0,
     unit_of_measure: 'unidad',
     description: '',
+    price_currency: 'CUP',
   });
 
   // Image state for edit modal
@@ -678,6 +679,7 @@ export default function CatalogView() {
       cost_price: product.cost_price || 0,
       unit_of_measure: product.unit_of_measure || 'unidad',
       description: product.description || '',
+      price_currency: (product as any).price_currency || 'CUP',
     });
     setEditImage(null);
     setEditImagePreview(product.public_image_url || product.image_url || null);
@@ -738,6 +740,7 @@ export default function CatalogView() {
         cost_price: editForm.cost_price,
         unit_of_measure: editForm.unit_of_measure,
         description: editForm.description || null,
+        price_currency: editForm.price_currency || 'CUP',
       });
 
       // Upload image if selected

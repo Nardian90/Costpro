@@ -173,6 +173,7 @@ export const productSchema = z.object({
   price: z.coerce.number().min(0).optional().default(0),
   precio_empresa: z.coerce.number().nullable().optional().default(null),
   cost_price: z.coerce.number().min(0).optional().default(0),
+  price_currency: z.string().optional().default('CUP'),
   image_url: z.string().nullable().optional(),
   category: z.string().nullable().optional(),
   unit_of_measure: z.string().nullable().optional(),

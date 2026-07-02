@@ -33,7 +33,8 @@ export const CreateProductModal = () => {
     cost_price: 0,
     barcode: '',
     unit_of_measure: 'unidad',
-    description: ''
+    description: '',
+    price_currency: 'CUP' as string,
   };
 
   const [form, setForm] = useState(initialFormState);
@@ -457,15 +458,28 @@ export const CreateProductModal = () => {
               <label htmlFor="product-price" className="text-xs font-black uppercase tracking-widest ml-1">
                 Precio <span className="text-xs opacity-50 lowercase font-normal">(venta unidad)</span>
               </label>
-              <input
-                id="product-price"
-                type="number"
-                aria-label="Precio de venta por unidad base"
-                value={form.price || ''}
-                onChange={(e) => setForm({ ...form, price: parseFloat(e.target.value) || 0 })}
-                className="neu-input w-full font-bold"
-                placeholder="0.00"
-              />
+              <div className="flex gap-2">
+                <input
+                  id="product-price"
+                  type="number"
+                  aria-label="Precio de venta por unidad base"
+                  value={form.price || ''}
+                  onChange={(e) => setForm({ ...form, price: parseFloat(e.target.value) || 0 })}
+                  className="neu-input flex-1 font-bold"
+                  placeholder="0.00"
+                />
+                <select
+                  value={form.price_currency}
+                  onChange={(e) => setForm({ ...form, price_currency: e.target.value })}
+                  className="neu-input w-20 font-bold"
+                  aria-label="Moneda del precio de venta"
+                >
+                  <option value="CUP">CUP</option>
+                  <option value="USD">USD</option>
+                  <option value="EUR">EUR</option>
+                  <option value="MLC">MLC</option>
+                </select>
+              </div>
             </div>
           </div>
 

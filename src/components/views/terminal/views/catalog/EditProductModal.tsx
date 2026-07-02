@@ -25,6 +25,7 @@ export interface EditFormState {
   cost_price: number;
   unit_of_measure: string;
   description: string;
+  price_currency: string;
 }
 
 export type EditVariant = ProductVariant & { _isNew?: boolean };
@@ -321,15 +322,28 @@ export default function EditProductModal({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-1.5">
             <label htmlFor="edit-product-price" className="text-xs font-black uppercase tracking-widest ml-1">Precio Minorista</label>
-            <input
-              id="edit-product-price"
-              type="number"
-              aria-label="Precio de venta minorista"
-              value={editForm.price || ''}
-              onChange={(e) => onFormChange({ ...editForm, price: parseFloat(e.target.value) || 0 })}
-              className="neu-input w-full font-bold"
-              placeholder="0.00"
-            />
+            <div className="flex gap-2">
+              <input
+                id="edit-product-price"
+                type="number"
+                aria-label="Precio de venta minorista"
+                value={editForm.price || ''}
+                onChange={(e) => onFormChange({ ...editForm, price: parseFloat(e.target.value) || 0 })}
+                className="neu-input flex-1 font-bold"
+                placeholder="0.00"
+              />
+              <select
+                value={editForm.price_currency || 'CUP'}
+                onChange={(e) => onFormChange({ ...editForm, price_currency: e.target.value })}
+                className="neu-input w-20 font-bold"
+                aria-label="Moneda del precio de venta"
+              >
+                <option value="CUP">CUP</option>
+                <option value="USD">USD</option>
+                <option value="EUR">EUR</option>
+                <option value="MLC">MLC</option>
+              </select>
+            </div>
           </div>
           <div className="space-y-1.5">
             <label htmlFor="edit-product-precio-empresa" className="text-xs font-black uppercase tracking-widest ml-1">
@@ -499,6 +513,7 @@ function ProductCompletenessChecklist({
     cost_price: editForm.cost_price,
     unit_of_measure: editForm.unit_of_measure,
     description: editForm.description,
+    price_currency: editForm.price_currency || 'CUP',
   };
 
   const reasons = getIncompleteReasons(combinedProduct);

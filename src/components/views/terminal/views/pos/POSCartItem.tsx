@@ -13,8 +13,18 @@ import {
   Image as ImageIcon,
 } from "lucide-react";
 import { cn, formatCurrency } from "@/lib/utils";
-import { useCartStore } from "@/store/cart";
+import { useCartStore, type CartItem } from "@/store/cart";
 import type { POSCartItemProps } from "./POSCart.types";
+
+// FIX-G5: helper local para recalcular subtotal al cambiar variante
+function recalcSubtotal(item: CartItem): number {
+  const price = item.price ?? 0;
+  const quantity = item.quantity ?? 0;
+  const base = price * quantity;
+  if (!item.discount_type || item.discount_value <= 0) return base;
+  if (item.discount_type === "percentage") return base * (1 - item.discount_value / 100);
+  return Math.max(0, (price - item.discount_value) * quantity);
+}
 
 export const POSCartItem = ({
   item,
@@ -295,23 +305,24 @@ export const POSCartItem = ({
                   const conversionFactor = selectedVariant.conversion_factor || 1;
                   const newPrice = selectedVariant.price || 0;
                   const newCost = (item.product.cost_price || 0) * conversionFactor;
-                  // Actualizar el item con la nueva variante, precio y costo
+                  // FIX-G5: actualizar item Y recalcular subtotal + cash_paid
                   useCartStore.getState().items.forEach((it, idx) => {
-                    if (it.product_id === item.product_id) {
+                    if (it.product_id === item.product_id && it.variant_id === item.variant_id) {
+                      const updatedItem = {
+                        ...it,
+                        variant_id: selectedVariant.id,
+                        variant: selectedVariant,
+                        price: newPrice,
+                        cost: newCost,
+                        currency: it.currency,
+                        exchange_rate: it.exchange_rate,
+                      };
+                      // Recalcular subtotal con el nuevo precio
+                      updatedItem.subtotal = recalcSubtotal(updatedItem);
+                      updatedItem.cash_paid = updatedItem.subtotal;
+                      updatedItem.transfer_paid = 0;
                       useCartStore.setState((state) => ({
-                        items: state.items.map((it2, i2) =>
-                          i2 === idx
-                            ? {
-                                ...it2,
-                                variant_id: selectedVariant.id,
-                                variant: selectedVariant,
-                                price: newPrice,
-                                cost: newCost,
-                                currency: it2.currency,
-                                exchange_rate: it2.exchange_rate,
-                              }
-                            : it2
-                        ),
+                        items: state.items.map((it2, i2) => i2 === idx ? updatedItem : it2),
                         lastUpdated: Date.now(),
                       }));
                     }
@@ -319,19 +330,20 @@ export const POSCartItem = ({
                 } else {
                   // Selección "unidad base" — sin variante
                   useCartStore.getState().items.forEach((it, idx) => {
-                    if (it.product_id === item.product_id) {
+                    if (it.product_id === item.product_id && it.variant_id === item.variant_id) {
+                      const updatedItem = {
+                        ...it,
+                        variant_id: null,
+                        variant: null,
+                        price: item.product.price,
+                        cost: item.product.cost_price || 0,
+                      };
+                      // FIX-G5: recalcular subtotal
+                      updatedItem.subtotal = recalcSubtotal(updatedItem);
+                      updatedItem.cash_paid = updatedItem.subtotal;
+                      updatedItem.transfer_paid = 0;
                       useCartStore.setState((state) => ({
-                        items: state.items.map((it2, i2) =>
-                          i2 === idx
-                            ? {
-                                ...it2,
-                                variant_id: null,
-                                variant: null,
-                                price: item.product.price,
-                                cost: item.product.cost_price || 0,
-                              }
-                            : it2
-                        ),
+                        items: state.items.map((it2, i2) => i2 === idx ? updatedItem : it2),
                         lastUpdated: Date.now(),
                       }));
                     }
