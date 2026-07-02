@@ -86,7 +86,7 @@ export const Header = ({
   const activeStoreName = activeStore?.name || 'Seleccionar Tienda';
 
   return (
-    <header className="bg-background/80 backdrop-blur-xl p-1.5 sm:px-4 sm:py-2 sticky top-0 z-30 w-full pt-[env(safe-area-inset-top)]">
+    <header className="bg-background/80 backdrop-blur-xl p-1.5 sm:px-4 sm:py-2 sticky top-0 z-30 w-full pt-[env(safe-area-inset-top)] shrink-0">
       <div className="flex items-center justify-between gap-2 sm:gap-4">
         <div className="flex items-center gap-2 sm:gap-4 flex-1 overflow-hidden">
           <button
