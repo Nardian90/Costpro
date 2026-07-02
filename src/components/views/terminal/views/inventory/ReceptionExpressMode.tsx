@@ -96,8 +96,9 @@ export function ReceptionExpressMode({ onExit }: ReceptionExpressModeProps) {
     };
   }, [setSidebarState]);
 
+  // FIX-G6: totalCost en CUP convirtiendo cada item con su tasa de cambio
   const totalCost = useMemo(
-    () => items.reduce((s, i) => s + i.quantity * i.unit_cost, 0),
+    () => items.reduce((s, i) => s + i.quantity * i.unit_cost * (i.tasa_cambio_recepcion || 1.0), 0),
     [items],
   );
 

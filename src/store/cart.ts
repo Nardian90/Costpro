@@ -404,21 +404,25 @@ export const useCartStore = create<CartState>()(
         return Number(subtotal.toFixed(2));
       },
 
+      // FIX-G4: getDiscountAmount usa getSubtotalCup() para que el descuento
+      // se calcule sobre el total en CUP, no sobre la suma mixta de monedas.
       getDiscountAmount: () => {
-        const subtotal = get().getSubtotal();
+        const subtotalCup = get().getSubtotalCup();
         const { discount } = get();
         if (!discount || discount.value <= 0) return 0;
 
         if (discount.type === "percentage") {
-          return Number(((subtotal * discount.value) / 100).toFixed(2));
+          return Number(((subtotalCup * discount.value) / 100).toFixed(2));
         }
         return discount.value;
       },
 
+      // FIX-G4: getTaxAmount usa getSubtotalCup() y getDiscountAmount() (que ya
+      // retorna en CUP) para que el impuesto se calcule sobre la base en CUP.
       getTaxAmount: () => {
-        const subtotal = get().getSubtotal();
+        const subtotalCup = get().getSubtotalCup();
         const discountAmount = get().getDiscountAmount();
-        const baseAmount = Math.max(0, subtotal - discountAmount);
+        const baseAmount = Math.max(0, subtotalCup - discountAmount);
         const { appliedTaxes } = get();
 
         const tax = appliedTaxes.reduce((totalTax, tax) => {

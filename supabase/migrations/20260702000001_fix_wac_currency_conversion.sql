@@ -239,6 +239,15 @@ BEGIN
 
     -- FIX-P0: v_total_cost en CUP
     v_total_cost := v_total_cost + (v_quantity * v_unit_cost_cup);
+
+    -- FIX-G8: actualizar products.price y price_currency si sale_price viene en el JSON
+    IF v_item ? 'sale_price' AND (v_item->>'sale_price') IS NOT NULL THEN
+      UPDATE products
+      SET price = (v_item->>'sale_price')::NUMERIC,
+          price_currency = COALESCE(v_item->>'price_currency', v_moneda, 'CUP'),
+          updated_at = v_effective_date
+      WHERE id = v_product_id;
+    END IF;
   END LOOP;
 
   UPDATE public.receipts SET total_cost = v_total_cost WHERE id = v_receipt_id;

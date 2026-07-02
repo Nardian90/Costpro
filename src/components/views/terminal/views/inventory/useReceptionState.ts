@@ -1124,7 +1124,7 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
         invoiceNumber: invoiceNumber.trim(),
         receptionDate: receptionDateIso,
         items: items.map(item => ({
-          product_id: item.product_id || '', // hook creará productos para los que no tengan product_id
+          product_id: item.product_id || '',
           sku: item.sku,
           quantity: item.quantity,
           unit_cost: item.unit_cost,
@@ -1133,6 +1133,10 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
           variant_id: item.variant_id,
           is_new: item.is_new,
           update_price: item.update_price,
+          // FIX-G7: incluir moneda, tasa y price_currency en recepciones pendientes
+          moneda_recepcion: item.moneda_recepcion || 'CUP',
+          tasa_cambio_recepcion: item.tasa_cambio_recepcion || 1.0,
+          price_currency: item.price_currency || 'CUP',
         })),
         notes,
       });
