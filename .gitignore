@@ -96,3 +96,4 @@ baileys-sessions/
 upload/
 # VLM debug scripts
 scripts/analyze-screenshot*.ts
+prisma/

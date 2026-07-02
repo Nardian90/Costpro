@@ -212,6 +212,8 @@ export function ReceptionExpressMode({ onExit }: ReceptionExpressModeProps) {
           // FIX-P1.1: enviar moneda y tasa al RPC
           moneda_recepcion: i.moneda_recepcion,
           tasa_cambio_recepcion: i.tasa_cambio_recepcion,
+          // FIX-G11: enviar price_currency
+          price_currency: i.moneda_recepcion,
         })),
       });
 

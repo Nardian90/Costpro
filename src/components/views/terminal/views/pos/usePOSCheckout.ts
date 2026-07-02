@@ -240,13 +240,15 @@ export function usePOSCheckout() {
       if (isProcessingSale) return;
 
       // ── VALIDACIÓN DE STOCK: impedir overselling (stock negativo) ──
-      // Para cada item del carrito, sumar la cantidad pedida y comparar con stock_current.
-      // Si el total excede el stock, bloquear el checkout.
+      // FIX-G10: multiplicar cantidad por conversion_factor de la variante
+      // antes de comparar con stock_current. Vender 1 docena = 12 unidades.
       const itemsByProduct = new Map<string, { productName: string; totalQty: number; stock: number }>();
       for (const item of items) {
         const pid = item.product.id;
         const existing = itemsByProduct.get(pid) || { productName: item.product.name, totalQty: 0, stock: item.product.stock_current ?? 0 };
-        existing.totalQty += item.quantity;
+        // FIX-G10: convertir cantidad a unidades base usando conversion_factor
+        const conversionFactor = item.variant?.conversion_factor || 1;
+        existing.totalQty += item.quantity * conversionFactor;
         itemsByProduct.set(pid, existing);
       }
       const insufficientStock: string[] = [];
