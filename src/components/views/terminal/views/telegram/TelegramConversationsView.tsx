@@ -105,7 +105,6 @@ export default function TelegramConversationsView() {
   const [search, setSearch] = useState('');
   // Fase T6: typingFrom se actualizará via Supabase Realtime
   const [typingFrom, setTypingFrom] = useState<number | null>(null);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const loadConversations = useCallback(async () => {
     if (!storeId) return;
@@ -166,11 +165,17 @@ export default function TelegramConversationsView() {
     }
   }, [selectedContact, loadMessages]);
 
+  // Fix header: NO usar scrollIntoView porque puede causar scroll en ancestors
+  // y empujar el header fuera del viewport. En su lugar, usamos scrollTop
+  // manualmente sobre el contenedor de mensajes (messagesContainerRef).
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
-    // Fix header: usar block: 'nearest' para que scrollIntoView solo mueva
-    // el contenedor de mensajes, no toda la página. Sin esto, scrollIntoView
-    // sube por todos los ancestors hasta el viewport, llevándose el header.
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    // Scroll al final del contenedor de mensajes sin afectar el resto de la página
+    const container = messagesContainerRef.current;
+    if (container) {
+      container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+    }
   }, [messages]);
 
   const handleSend = async () => {
@@ -322,7 +327,7 @@ export default function TelegramConversationsView() {
               </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto min-h-0 p-4 space-y-2">
+            <div ref={messagesContainerRef} className="flex-1 overflow-y-auto min-h-0 p-4 space-y-2">
               {loadingMessages ? (
                 <div className="flex items-center justify-center h-full">
                   <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
@@ -364,7 +369,6 @@ export default function TelegramConversationsView() {
                   </div>
                 ))
               )}
-              <div ref={messagesEndRef} />
             </div>
 
             <div className="p-3 border-t border-border pb-[calc(0.75rem+env(safe-area-inset-bottom))] flex gap-2">
