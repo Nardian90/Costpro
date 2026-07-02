@@ -13,6 +13,7 @@ import {
   Image as ImageIcon,
 } from "lucide-react";
 import { cn, formatCurrency } from "@/lib/utils";
+import { useCartStore } from "@/store/cart";
 import type { POSCartItemProps } from "./POSCart.types";
 
 export const POSCartItem = ({
@@ -241,7 +242,7 @@ export const POSCartItem = ({
               isEasyReading ? "text-base" : "text-[12px] sm:text-xs",
             )}
           >
-            {formatCurrency(item.price)}
+            {formatCurrency(item.price)} {item.currency !== 'CUP' && item.currency}
           </span>
         </div>
 
@@ -268,17 +269,90 @@ export const POSCartItem = ({
         </div>
       </div>
 
-      {/* Opciones Avanzadas (Descuento y Pago Mixto) */}
+      {/* Opciones Avanzadas (Descuento, Pago Mixto y Moneda) */}
       <button
         type="button"
         onClick={() => setShowAdvanced(!showAdvanced)}
         className="w-full mt-3 pt-2 border-t border-border/50 flex items-center justify-between text-xs font-black uppercase text-muted-foreground tracking-widest"
       >
-        <span>Descuento / Pago Mixto</span>
+        <span>Descuento / Pago Mixto / Moneda</span>
         <span className="text-primary">{showAdvanced ? '-' : '+'}</span>
       </button>
       {showAdvanced && (
-      <div className="mt-3 grid grid-cols-2 gap-2 pt-2 border-t border-border/50">
+      <div className="mt-3 space-y-2 pt-2 border-t border-border/50">
+      {/* FIX-MULTI-MONEDA: selector de moneda y tasa por item */}
+      <div className="grid grid-cols-2 gap-2 pb-2 border-b border-border/30">
+        <div className="space-y-1">
+          <span className="text-xs font-black uppercase text-muted-foreground">Moneda Venta</span>
+          <select
+            value={item.currency || 'CUP'}
+            onChange={async (e) => {
+              const currency = e.target.value;
+              let rate = 1.0;
+              if (currency !== 'CUP') {
+                try {
+                  const res = await fetch(`/api/exchange-rates?currency=${currency}&source=BCC&segment=3&days=1`);
+                  if (res.ok) {
+                    const data = await res.json();
+                    const rates = Array.isArray(data) ? data : (data?.rates || data?.data || []);
+                    if (Array.isArray(rates) && rates.length > 0) {
+                      const sorted = rates.sort((a: any, b: any) =>
+                        new Date(b.rate_date || 0).getTime() - new Date(a.rate_date || 0).getTime()
+                      );
+                      if (sorted[0]?.rate > 0) rate = sorted[0].rate;
+                    }
+                  }
+                } catch {}
+              }
+              // Actualizar el item en el store con la nueva moneda y tasa
+              useCartStore.getState().items.forEach((it, idx) => {
+                if (it.product_id === item.product_id && it.variant_id === item.variant_id) {
+                  useCartStore.setState((state) => ({
+                    items: state.items.map((it2, i2) =>
+                      i2 === idx ? { ...it2, currency, exchange_rate: rate } : it2
+                    ),
+                    lastUpdated: Date.now(),
+                  }));
+                }
+              });
+            }}
+            className="w-full bg-background border border-border/50 rounded-lg px-2 py-2.5 min-h-[44px] text-xs font-bold"
+            aria-label={`Moneda de venta para ${item.product.name}`}
+          >
+            <option value="CUP">CUP</option>
+            <option value="USD">USD</option>
+            <option value="EUR">EUR</option>
+            <option value="MLC">MLC</option>
+          </select>
+        </div>
+        <div className="space-y-1">
+          <span className="text-xs font-black uppercase text-muted-foreground">
+            Tasa {item.currency !== 'CUP' && `(≈ ${formatCurrency((item.subtotal || 0) * (item.exchange_rate || 1))} CUP)`}
+          </span>
+          <input
+            type="number"
+            step="0.01"
+            value={item.exchange_rate || 1.0}
+            disabled={item.currency === 'CUP'}
+            onChange={(e) => {
+              const rate = parseFloat(e.target.value) || 1.0;
+              useCartStore.getState().items.forEach((it, idx) => {
+                if (it.product_id === item.product_id && it.variant_id === item.variant_id) {
+                  useCartStore.setState((state) => ({
+                    items: state.items.map((it2, i2) =>
+                      i2 === idx ? { ...it2, exchange_rate: rate } : it2
+                    ),
+                    lastUpdated: Date.now(),
+                  }));
+                }
+              });
+            }}
+            className="w-full bg-background border border-border/50 rounded-lg px-2 py-2.5 min-h-[44px] text-xs font-bold disabled:opacity-50"
+            aria-label={`Tasa de cambio para ${item.product.name}`}
+          />
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-2">
         <div className="space-y-1">
           <span className="text-xs font-black uppercase text-muted-foreground">
             Descuento
@@ -365,6 +439,7 @@ export const POSCartItem = ({
             </div>
           </div>
         </div>
+      </div>
       </div>
       )}
       {Math.abs(item.cash_paid + item.transfer_paid - item.subtotal) > 0.01 && (
