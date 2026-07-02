@@ -81,7 +81,6 @@ interface ChatMessage {
   // Fase T9: campos multimedia
   media_type: string | null;
   caption: string | null;
-  file_name: string | null;
 }
 
 function displayName(c: Conversation): string {
@@ -126,8 +125,11 @@ export default function TelegramConversationsView() {
     setLoadingMessages(true);
     const { data, error } = await supabase
       .from('telegram_messages')
-      // Fase T9: incluir campos multimedia
-      .select('id, direction, content, created_at, tokens_used, media_type, caption, file_name')
+      // Fase T9: incluir campos multimedia.
+      // NOTA: file_name NO existe como columna en la BD (el nombre del archivo
+      // se guarda dentro de raw JSONB si se necesita). Si se pide file_name,
+      // Supabase devuelve 400. Por eso no se incluye aquí.
+      .select('id, direction, content, created_at, tokens_used, media_type, caption')
       .eq('contact_id', contactId)
       .order('created_at', { ascending: true })
       .limit(200);
@@ -328,7 +330,6 @@ export default function TelegramConversationsView() {
                         {MEDIA_ICONS[msg.media_type] || '📎'}
                         <span className="text-[10px] font-medium">
                           {MEDIA_LABELS[msg.media_type] || 'Archivo'}
-                          {msg.file_name && `: ${msg.file_name}`}
                         </span>
                       </div>
                     )}
