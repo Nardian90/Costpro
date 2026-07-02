@@ -280,8 +280,76 @@ export const POSCartItem = ({
       </button>
       {showAdvanced && (
       <div className="mt-3 space-y-2 pt-2 border-t border-border/50">
-      {/* FIX-MULTI-MONEDA: selector de moneda y tasa por item */}
+      {/* FIX-MULTI-MONEDA: selector de moneda y tasa por item + unidad de medida */}
       <div className="grid grid-cols-2 gap-2 pb-2 border-b border-border/30">
+        {/* Selector de unidad de medida / variante si el producto las tiene */}
+        {item.product.product_variants && item.product.product_variants.length > 0 && (
+          <div className="space-y-1 col-span-2">
+            <span className="text-xs font-black uppercase text-muted-foreground">Unidad de Venta</span>
+            <select
+              value={item.variant_id || ''}
+              onChange={(e) => {
+                const variantId = e.target.value;
+                const selectedVariant = item.product.product_variants?.find(v => v.id === variantId) || null;
+                if (selectedVariant) {
+                  const conversionFactor = selectedVariant.conversion_factor || 1;
+                  const newPrice = selectedVariant.price || 0;
+                  const newCost = (item.product.cost_price || 0) * conversionFactor;
+                  // Actualizar el item con la nueva variante, precio y costo
+                  useCartStore.getState().items.forEach((it, idx) => {
+                    if (it.product_id === item.product_id) {
+                      useCartStore.setState((state) => ({
+                        items: state.items.map((it2, i2) =>
+                          i2 === idx
+                            ? {
+                                ...it2,
+                                variant_id: selectedVariant.id,
+                                variant: selectedVariant,
+                                price: newPrice,
+                                cost: newCost,
+                                currency: it2.currency,
+                                exchange_rate: it2.exchange_rate,
+                              }
+                            : it2
+                        ),
+                        lastUpdated: Date.now(),
+                      }));
+                    }
+                  });
+                } else {
+                  // Selección "unidad base" — sin variante
+                  useCartStore.getState().items.forEach((it, idx) => {
+                    if (it.product_id === item.product_id) {
+                      useCartStore.setState((state) => ({
+                        items: state.items.map((it2, i2) =>
+                          i2 === idx
+                            ? {
+                                ...it2,
+                                variant_id: null,
+                                variant: null,
+                                price: item.product.price,
+                                cost: item.product.cost_price || 0,
+                              }
+                            : it2
+                        ),
+                        lastUpdated: Date.now(),
+                      }));
+                    }
+                  });
+                }
+              }}
+              className="w-full bg-background border border-border/50 rounded-lg px-2 py-2.5 min-h-[44px] text-xs font-bold"
+              aria-label={`Unidad de venta para ${item.product.name}`}
+            >
+              <option value="">Unidad base ({item.product.unit_of_measure || 'unidad'})</option>
+              {item.product.product_variants.map(v => (
+                <option key={v.id} value={v.id}>
+                  {v.name} — {formatCurrency(v.price)} (x{v.conversion_factor})
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
         <div className="space-y-1">
           <span className="text-xs font-black uppercase text-muted-foreground">Moneda Venta</span>
           <select
