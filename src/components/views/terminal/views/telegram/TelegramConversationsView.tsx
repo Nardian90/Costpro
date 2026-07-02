@@ -381,6 +381,16 @@ export default function TelegramConversationsView() {
                 disabled={sending}
               />
               <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => { loadConversations(); if (selectedContact) loadMessages(selectedContact.id); }}
+                className="text-muted-foreground hover:text-foreground shrink-0 min-h-[44px] min-w-[44px]"
+                title="Actualizar conversación"
+                aria-label="Actualizar conversación"
+              >
+                <RefreshCw className="w-4 h-4" />
+              </Button>
+              <Button
                 onClick={handleSend}
                 disabled={sending || !inputMessage.trim()}
                 size="sm"
