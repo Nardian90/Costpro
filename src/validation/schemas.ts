@@ -445,6 +445,9 @@ export const createSaleParamsSchema = z.object({
       cash_paid: z.number().optional(),
       transfer_paid: z.number().optional(),
       cost: z.number().min(0),
+      // FIX-MULTI-MONEDA: moneda y tasa por item
+      currency: z.string().optional().default('CUP'),
+      exchange_rate: z.number().optional().default(1.0),
     }),
   ),
   p_applied_taxes: z.array(z.any()).optional(),

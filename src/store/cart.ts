@@ -30,8 +30,9 @@ export interface CartItem {
   discount_value: number;
   cash_paid: number;
   transfer_paid: number;
-  // FIX-MULTI-MONEDA: moneda del precio de venta del item
+  // FIX-MULTI-MONEDA: moneda y tasa de cambio POR ITEM (no global)
   currency: string;
+  exchange_rate: number;
 }
 
 interface CartState {
@@ -70,6 +71,7 @@ interface CartState {
   setDiscount: (discount: { type: "percentage" | "fixed"; value: number } | null) => void;
   toggleTax: (tax: TaxConfiguration) => void;
   getSubtotal: () => number;
+  getSubtotalCup: () => number;
   getDiscountAmount: () => number;
   getTaxAmount: () => number;
   getTotal: () => number;
@@ -129,11 +131,12 @@ export const useCartStore = create<CartState>()(
       setSaleCurrency: (currency, exchangeRate) =>
         set({ saleCurrency: currency, saleExchangeRate: exchangeRate, lastUpdated: Date.now() }),
 
-      // FIX-MULTI-MONEDA: total convertido a CUP para cálculos internos
+      // FIX-MULTI-MONEDA: total convertido a CUP sumando cada item con su propia tasa
       getTotalCup: () => {
-        const total = get().getTotal();
-        const rate = get().saleExchangeRate || 1.0;
-        return total * rate;
+        const subtotalCup = get().getSubtotalCup();
+        const discountAmount = get().getDiscountAmount();
+        const taxAmount = get().getTaxAmount();
+        return Number(Math.max(0, subtotalCup - discountAmount + taxAmount).toFixed(2));
       },
 
       /**
@@ -212,8 +215,9 @@ export const useCartStore = create<CartState>()(
                 discount_value: (productInput as any).discount_value || 0,
                 cash_paid: 0,
                 transfer_paid: 0,
-                // FIX-MULTI-MONEDA: heredar moneda de venta del carrito
+                // FIX-MULTI-MONEDA: heredar moneda y tasa del producto (POR ITEM, no global)
                 currency: (productInput as any).currency || (product as any)?.price_currency || 'CUP',
+                exchange_rate: (productInput as any).exchange_rate || 1.0,
               };
               newItem.subtotal = calculateItemSubtotal(newItem);
               newItem.cash_paid = newItem.subtotal;
@@ -385,7 +389,18 @@ export const useCartStore = create<CartState>()(
         ),
 
       getSubtotal: () => {
+        // FIX-MULTI-MONEDA: el subtotal es la suma directa (en monedas mixtas)
+        // Para comparar, usar getSubtotalCup()
         const subtotal = get().items.reduce((acc, item) => acc + (item.subtotal || 0), 0);
+        return Number(subtotal.toFixed(2));
+      },
+
+      // FIX-MULTI-MONEDA: subtotal convertido a CUP sumando cada item con su tasa
+      getSubtotalCup: () => {
+        const subtotal = get().items.reduce((acc, item) => {
+          const itemCup = (item.subtotal || 0) * (item.exchange_rate || 1.0);
+          return acc + itemCup;
+        }, 0);
         return Number(subtotal.toFixed(2));
       },
 

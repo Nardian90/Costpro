@@ -89,7 +89,7 @@ export function usePOSCheckout() {
           p_store_id: user.activeStoreId,
           p_seller_id: user.id,
           p_payment_method: paymentMethod,
-          p_total_amount: totalAmount,
+          p_total_amount: useCartStore.getState().getTotalCup(),
           p_subtotal: getSubtotal(),
           p_discount_type: (checkoutDiscount || discount)?.type || "fixed",
           p_discount_value: getDiscountAmount(),
@@ -98,9 +98,9 @@ export function usePOSCheckout() {
           p_transfer_amount: transferAmount,
           // FIX: idempotencia con crypto.randomUUID() para mayor entropía
           p_idempotency_key: `sale-${crypto.randomUUID()}`,
-          // FIX-MULTI-MONEDA: enviar moneda de venta y tasa al RPC
-          p_sale_currency: useCartStore.getState().saleCurrency,
-          p_sale_exchange_rate: useCartStore.getState().saleExchangeRate,
+          // FIX-MULTI-MONEDA: cada item lleva su propia moneda y tasa
+          p_sale_currency: 'MIXED',
+          p_sale_exchange_rate: 1.0,
           p_items: items.map((i) => ({
             product_id: i.product_id,
             variant_id: i.variant_id ?? null,
@@ -109,6 +109,8 @@ export function usePOSCheckout() {
             cost: i.cost,
             cash_paid: i.cash_paid,
             transfer_paid: i.transfer_paid,
+            currency: i.currency || 'CUP',
+            exchange_rate: i.exchange_rate || 1.0,
           })),
         });
 
