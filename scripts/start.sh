@@ -47,6 +47,13 @@ trap cleanup EXIT INT TERM
 
 cd "$PROJECT_DIR"
 
+# Cargar .env explícitamente (bun no lo carga automáticamente)
+if [ -f .env ]; then
+  set -a
+  source .env
+  set +a
+fi
+
 # Limpiar huérfanos antes de arrancar (por si quedó algo de un reinicio anterior)
 kill_orphans
 
