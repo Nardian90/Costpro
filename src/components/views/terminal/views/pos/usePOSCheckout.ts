@@ -98,6 +98,9 @@ export function usePOSCheckout() {
           p_transfer_amount: transferAmount,
           // FIX: idempotencia con crypto.randomUUID() para mayor entropía
           p_idempotency_key: `sale-${crypto.randomUUID()}`,
+          // FIX-MULTI-MONEDA: enviar moneda de venta y tasa al RPC
+          p_sale_currency: useCartStore.getState().saleCurrency,
+          p_sale_exchange_rate: useCartStore.getState().saleExchangeRate,
           p_items: items.map((i) => ({
             product_id: i.product_id,
             variant_id: i.variant_id ?? null,

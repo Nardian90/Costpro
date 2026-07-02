@@ -122,14 +122,14 @@ export function IPVInstitutionalDashboard({ transactions, reconciliationLines, o
             {/* Financial KPIs */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 <KPICard
-                    title="Total Créditos (Ingresos)"
+                    title="Total Créditos (Ingresos) — CUP"
                     value={formatCurrencyCents(metrics.totalCredits)}
                     icon={<ArrowUpRight className="w-5 h-5" />}
                     color="emerald"
                     onClick={() => onNavigate?.('transactions', 'ALL')}
                 />
                 <KPICard
-                    title="Total Débitos (Egresos)"
+                    title="Total Débitos (Egresos) — CUP"
                     value={formatCurrencyCents(metrics.totalDebits)}
                     icon={<ArrowDownRight className="w-5 h-5" />}
                     color="rose"

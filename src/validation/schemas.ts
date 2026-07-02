@@ -457,6 +457,9 @@ export const createSaleParamsSchema = z.object({
   // fecha de operación elegida por el usuario. Si se omite, el backend usa NOW().
   // El backend valida que no sea anterior al MAX global (lanza ERR_BACKDATED_DOCUMENT).
   p_operation_date: z.string().datetime().optional(),
+  // FIX-MULTI-MONEDA: moneda de venta y tasa de cambio
+  p_sale_currency: z.string().optional().default('CUP'),
+  p_sale_exchange_rate: z.number().optional().default(1.0),
 });
 
 export const registerReceptionParamsSchema = z.object({
