@@ -176,7 +176,18 @@ export const useCartStore = create<CartState>()(
 
             if (existing) {
               const conversionFactor = variant?.conversion_factor || 1;
-              const maxVariantQty = Math.floor((product?.stock_current ?? 999999) / conversionFactor);
+              // FIX-P2-8: guardar contra conversion_factor=0
+              const safeFactor = conversionFactor > 0 ? conversionFactor : 1;
+              const maxVariantQty = Math.floor((product?.stock_current ?? 999999) / safeFactor);
+              // FIX-P1-4: validar stock AGREGADO de todos los items del mismo producto
+              const totalBaseUnits = state.items
+                .filter(i => i.product_id === productId)
+                .reduce((sum, i) => sum + (i.quantity * (i.variant?.conversion_factor || 1)), 0);
+              const newBaseUnits = totalBaseUnits + (incomingQuantity * safeFactor);
+              if (newBaseUnits > (product?.stock_current ?? 999999)) {
+                notify("warning", `Stock insuficiente para ${product?.name || "producto"}. Disponible: ${product?.stock_current ?? 0} uds base`);
+                return;
+              }
               if (existing.quantity + incomingQuantity > maxVariantQty) {
                 notify("warning", `Stock insuficiente para ${product?.name || "producto"}. Máx: ${maxVariantQty} ${variant?.name || "uds"}`);
                 return;

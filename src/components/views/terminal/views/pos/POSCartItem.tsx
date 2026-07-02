@@ -35,7 +35,11 @@ export const POSCartItem = ({
   updateItemDiscount,
   updateItemPayment,
 }: POSCartItemProps) => {
-  const maxStock = item.product?.stock_current ?? 999;
+  // FIX-P2-7: maxStock convertido a la unidad de la variante seleccionada
+  const conversionFactor = item.variant?.conversion_factor || 1;
+  // FIX-P2-8: guardar contra conversion_factor=0 (división por cero)
+  const safeFactor = conversionFactor > 0 ? conversionFactor : 1;
+  const maxStock = Math.floor((item.product?.stock_current ?? 999) / safeFactor);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const prefersReducedMotion = useReducedMotion();
 
@@ -177,6 +181,7 @@ export const POSCartItem = ({
                 title="Clic para editar la cantidad"
               >
                 {item.quantity}
+                {item.variant && <span className="text-[9px] opacity-60 ml-0.5">{item.variant.name.substring(0, 3)}</span>}
               </button>
             )}
             <button
@@ -301,53 +306,72 @@ export const POSCartItem = ({
               onChange={(e) => {
                 const variantId = e.target.value;
                 const selectedVariant = item.product.product_variants?.find(v => v.id === variantId) || null;
+
+                // FIX-P1-3: fusionar con item existente si ya hay uno con la misma variante
+                const state = useCartStore.getState();
+                const currentIdx = state.items.findIndex(
+                  it => it.product_id === item.product_id && (it.variant_id || null) === (item.variant_id || null)
+                );
+                if (currentIdx === -1) return;
+
+                const currentItem = state.items[currentIdx];
+                let newPrice: number;
+                let newCost: number;
+                let newVariantId: string | null;
+                let newVariant: any;
+
                 if (selectedVariant) {
-                  const conversionFactor = selectedVariant.conversion_factor || 1;
-                  const newPrice = selectedVariant.price || 0;
-                  const newCost = (item.product.cost_price || 0) * conversionFactor;
-                  // FIX-G5: actualizar item Y recalcular subtotal + cash_paid
-                  useCartStore.getState().items.forEach((it, idx) => {
-                    if (it.product_id === item.product_id && it.variant_id === item.variant_id) {
-                      const updatedItem = {
-                        ...it,
-                        variant_id: selectedVariant.id,
-                        variant: selectedVariant,
-                        price: newPrice,
-                        cost: newCost,
-                        currency: it.currency,
-                        exchange_rate: it.exchange_rate,
-                      };
-                      // Recalcular subtotal con el nuevo precio
-                      updatedItem.subtotal = recalcSubtotal(updatedItem);
-                      updatedItem.cash_paid = updatedItem.subtotal;
-                      updatedItem.transfer_paid = 0;
-                      useCartStore.setState((state) => ({
-                        items: state.items.map((it2, i2) => i2 === idx ? updatedItem : it2),
-                        lastUpdated: Date.now(),
-                      }));
-                    }
-                  });
+                  const cf = selectedVariant.conversion_factor || 1;
+                  newPrice = selectedVariant.price || 0;
+                  newCost = (item.product.cost_price || 0) * cf;
+                  newVariantId = selectedVariant.id;
+                  newVariant = selectedVariant;
                 } else {
-                  // Selección "unidad base" — sin variante
-                  useCartStore.getState().items.forEach((it, idx) => {
-                    if (it.product_id === item.product_id && it.variant_id === item.variant_id) {
-                      const updatedItem = {
-                        ...it,
-                        variant_id: null,
-                        variant: null,
-                        price: item.product.price,
-                        cost: item.product.cost_price || 0,
-                      };
-                      // FIX-G5: recalcular subtotal
-                      updatedItem.subtotal = recalcSubtotal(updatedItem);
-                      updatedItem.cash_paid = updatedItem.subtotal;
-                      updatedItem.transfer_paid = 0;
-                      useCartStore.setState((state) => ({
-                        items: state.items.map((it2, i2) => i2 === idx ? updatedItem : it2),
-                        lastUpdated: Date.now(),
-                      }));
-                    }
-                  });
+                  newPrice = item.product.price;
+                  newCost = item.product.cost_price || 0;
+                  newVariantId = null;
+                  newVariant = null;
+                }
+
+                // Verificar si ya existe un item con la variante destino
+                const existingDestIdx = state.items.findIndex(
+                  it => it.product_id === item.product_id && (it.variant_id || null) === newVariantId
+                );
+
+                if (existingDestIdx !== -1 && existingDestIdx !== currentIdx) {
+                  // FIX-P1-3: fusionar — sumar cantidad al item existente, remover el actual
+                  const destItem = state.items[existingDestIdx];
+                  const mergedItem = {
+                    ...destItem,
+                    quantity: destItem.quantity + currentItem.quantity,
+                  };
+                  mergedItem.subtotal = recalcSubtotal(mergedItem);
+                  mergedItem.cash_paid = mergedItem.subtotal;
+                  mergedItem.transfer_paid = 0;
+
+                  // Remover item actual y actualizar destino
+                  const newItems = state.items.filter((_, i) => i !== currentIdx);
+                  const adjustIdx = existingDestIdx > currentIdx ? existingDestIdx - 1 : existingDestIdx;
+                  newItems[adjustIdx] = mergedItem;
+                  useCartStore.setState({ items: newItems, lastUpdated: Date.now() });
+                } else {
+                  // No hay duplicado — simplemente actualizar el item actual
+                  const updatedItem = {
+                    ...currentItem,
+                    variant_id: newVariantId,
+                    variant: newVariant,
+                    price: newPrice,
+                    cost: newCost,
+                    currency: currentItem.currency,
+                    exchange_rate: currentItem.exchange_rate,
+                  };
+                  updatedItem.subtotal = recalcSubtotal(updatedItem);
+                  updatedItem.cash_paid = updatedItem.subtotal;
+                  updatedItem.transfer_paid = 0;
+                  useCartStore.setState((s) => ({
+                    items: s.items.map((it2, i2) => i2 === currentIdx ? updatedItem : it2),
+                    lastUpdated: Date.now(),
+                  }));
                 }
               }}
               className="w-full bg-background border border-border/50 rounded-lg px-2 py-2.5 min-h-[44px] text-xs font-bold"
