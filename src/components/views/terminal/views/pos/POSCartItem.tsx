@@ -384,13 +384,35 @@ export const POSCartItem = ({
                   }
                 } catch {}
               }
-              // Actualizar el item en el store con la nueva moneda y tasa
+              // FIX-P2-A: convertir precio al cambiar moneda
+              // Si era CUP y pasa a USD: newPrice = oldPrice / rate
+              // Si era USD y pasa a CUP: newPrice = oldPrice * oldRate
+              // Si era USD y pasa a EUR: newPrice = (oldPrice * oldRate) / newRate
+              const oldRate = item.exchange_rate || 1.0;
+              const isOldCup = (item.currency || 'CUP') === 'CUP';
+              const isNewCup = currency === 'CUP';
+              let newPrice = item.price;
+              if (isOldCup && !isNewCup) {
+                newPrice = item.price / rate; // CUP → USD
+              } else if (!isOldCup && isNewCup) {
+                newPrice = item.price * oldRate; // USD → CUP
+              } else if (!isOldCup && !isNewCup) {
+                newPrice = (item.price * oldRate) / rate; // USD → EUR
+              }
+              // Actualizar el item con moneda, tasa, precio convertido Y subtotal recalculado
               useCartStore.getState().items.forEach((it, idx) => {
                 if (it.product_id === item.product_id && it.variant_id === item.variant_id) {
+                  const updatedItem = {
+                    ...it,
+                    price: newPrice,
+                    currency,
+                    exchange_rate: rate,
+                  };
+                  updatedItem.subtotal = recalcSubtotal(updatedItem);
+                  updatedItem.cash_paid = updatedItem.subtotal;
+                  updatedItem.transfer_paid = 0;
                   useCartStore.setState((state) => ({
-                    items: state.items.map((it2, i2) =>
-                      i2 === idx ? { ...it2, currency, exchange_rate: rate } : it2
-                    ),
+                    items: state.items.map((it2, i2) => i2 === idx ? updatedItem : it2),
                     lastUpdated: Date.now(),
                   }));
                 }

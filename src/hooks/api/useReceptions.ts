@@ -222,6 +222,10 @@ export interface PendingReceptionItem {
   variant_id?: string | null;
   is_new?: boolean;
   update_price?: boolean;
+  // FIX-P1-B: campos multi-moneda que se perdían
+  moneda_recepcion?: string;
+  tasa_cambio_recepcion?: number;
+  price_currency?: string;
 }
 
 /**
@@ -314,8 +318,12 @@ export function useSavePendingReception() {
       const itemsToInsert = allItems.map(item => ({
         receipt_id: receipt.id,
         product_id: item.product_id,
+        variant_id: item.variant_id || null,
         quantity: item.quantity,
         unit_cost: item.unit_cost,
+        // FIX-P1-B: persistir campos multi-moneda
+        moneda_recepcion: item.moneda_recepcion || 'CUP',
+        tasa_cambio_recepcion: item.tasa_cambio_recepcion || 1.0,
       }));
 
       if (itemsToInsert.length > 0) {

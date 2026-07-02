@@ -7,4 +7,4 @@ Checklist de validación (auditoría)
 5) Confirmar que usuarios sin permisos no pueden escribir directamente en tablas protegidas (403 desde frontend).
 6) Verificar `audit_logs` para entradas correspondientes a las operaciones importantes.
 7) Rotar `anon key` y actualizar entorno; verificar que la app sigue funcionando.
-8) Actualizar `prisma/schema.prisma` o documentar desuso si Prisma no se usa en producción.
+8) (OBSOLETO — Prisma removido, Supabase es la fuente de verdad)

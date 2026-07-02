@@ -158,7 +158,6 @@ Structured following the **Diátaxis Framework**:
 ```
 .
 ├── src/                    # Application source (App Router, components, services)
-├── prisma/                 # Prisma schema (documentation-only — real DB is Supabase)
 ├── supabase/               # Supabase migrations and config
 ├── public/                 # Static assets
 ├── e2e/                    # Playwright end-to-end tests

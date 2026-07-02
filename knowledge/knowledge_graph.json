@@ -12729,7 +12729,7 @@
     },
     {
       "source": "src/lib/db.ts",
-      "target": "@prisma/client",
+
       "type": "depends_on"
     },
     {
