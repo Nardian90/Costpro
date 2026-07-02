@@ -210,9 +210,9 @@ export default function TelegramConversationsView() {
   }
 
   return (
-    <div className="flex h-full bg-background">
+    <div className="flex h-full min-h-0 overflow-hidden bg-background">
       {/* Lista de conversaciones */}
-      <div className={cn('w-full sm:w-80 border-r border-border flex flex-col', selectedContact && 'hidden sm:flex')}>
+      <div className={cn('w-full sm:w-80 border-r border-border flex flex-col min-h-0', selectedContact && 'hidden sm:flex')}>
         <div className="p-3 border-b border-border">
           <h2 className="text-sm font-black uppercase tracking-tight mb-2">Conversaciones</h2>
           <div className="relative">
@@ -281,7 +281,7 @@ export default function TelegramConversationsView() {
       </div>
 
       {/* Visor de mensajes */}
-      <div className={cn('flex-1 flex flex-col', !selectedContact && 'hidden sm:flex')}>
+      <div className={cn('flex-1 flex flex-col min-h-0', !selectedContact && 'hidden sm:flex')}>
         {!selectedContact ? (
           <div className="flex flex-col items-center justify-center h-full gap-2 text-muted-foreground">
             <MessageCircle className="w-12 h-12 opacity-20" />
@@ -304,7 +304,7 @@ export default function TelegramConversationsView() {
               </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-4 space-y-2">
+            <div className="flex-1 overflow-y-auto min-h-0 p-4 space-y-2">
               {loadingMessages ? (
                 <div className="flex items-center justify-center h-full">
                   <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
