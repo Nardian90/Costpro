@@ -409,7 +409,7 @@ export default function TerminalShell() {
   };
 
   return (
-    <div className="h-screen flex bg-background text-foreground max-w-full overflow-hidden">
+    <div className="h-screen h-dvh flex bg-background text-foreground max-w-full overflow-hidden">
       {/* Skip Navigation — WCAG 2.4.1 */}
       <a
         href="#main-content"
