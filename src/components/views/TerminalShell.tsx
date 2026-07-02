@@ -516,7 +516,10 @@ export default function TerminalShell() {
       <CommandPalette />
       <KeyboardShortcutsModal open={showKeyboardHelp} onOpenChange={setShowKeyboardHelp} />
       {/* F5-T02: ChatBot y FloatingCalculator solo en desktop — en mobile están integrados en el tab bar / sheet "Más" */}
-      {currentView !== 'pos' && currentView !== 'help' && !isMobile && <ChatBot />}
+      {/* Fix: ocultar ChatBot en vistas de chat (Telegram/WhatsApp Conversations) porque estorba el input de mensajes */}
+      {currentView !== 'pos' && currentView !== 'help' &&
+       currentView !== 'telegram-conversations' && currentView !== 'whatsapp-conversations' &&
+       !isMobile && <ChatBot />}
       {currentView !== "pos" && !isMobile && <FloatingCalculator />}
 
       {/* B4: ScrollToTop montado en el shell — escucha .terminal-content scroll */}

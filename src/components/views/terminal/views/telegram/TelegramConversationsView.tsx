@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import {
   Send, ArrowLeft, Search, Loader2, MessageCircle, Ban,
   Image as ImageIcon, FileText, Mic, Music, Video, Sticker,
-  MapPin, Contact, Dice5, Film
+  MapPin, Contact, Dice5, Film, RefreshCw
 } from 'lucide-react';
 import { useAuthStore } from '@/store';
 import { supabase } from '@/lib/supabaseClient';
@@ -150,7 +150,8 @@ export default function TelegramConversationsView() {
 
   useEffect(() => {
     loadConversations();
-    // Fase T6: polling reducido a 30s — se reemplazará por Supabase Realtime
+    // Polling cada 30s — evita el efecto incomodo de refresh constante.
+    // El usuario puede forzar refresh con el botón de la lista.
     const interval = setInterval(loadConversations, 30000);
     return () => clearInterval(interval);
   }, [loadConversations]);
@@ -158,7 +159,9 @@ export default function TelegramConversationsView() {
   useEffect(() => {
     if (selectedContact) {
       loadMessages(selectedContact.id);
-      const interval = setInterval(() => loadMessages(selectedContact.id), 10000);
+      // Polling cada 30s (mismo que conversaciones) — antes era 10s y causaba
+      // efecto incomodo de refresh constante.
+      const interval = setInterval(() => loadMessages(selectedContact.id), 30000);
       return () => clearInterval(interval);
     }
   }, [selectedContact, loadMessages]);
@@ -217,7 +220,19 @@ export default function TelegramConversationsView() {
       {/* Lista de conversaciones */}
       <div className={cn('w-full sm:w-80 border-r border-border flex flex-col min-h-0', selectedContact && 'hidden sm:flex')}>
         <div className="p-3 border-b border-border">
-          <h2 className="text-sm font-black uppercase tracking-tight mb-2">Conversaciones</h2>
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-sm font-black uppercase tracking-tight">Conversaciones</h2>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => { loadConversations(); if (selectedContact) loadMessages(selectedContact.id); }}
+              className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+              title="Actualizar conversaciones"
+              aria-label="Actualizar conversaciones"
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+            </Button>
+          </div>
           <div className="relative">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
             <Input
