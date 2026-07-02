@@ -255,25 +255,7 @@ export function ExchangeIntelligenceView() {
         </div>
       </div>
 
-      {/* IC-AUDIT: Selector de segmento BCC */}
-      <div className="flex items-center gap-3 flex-wrap p-3 rounded-xl bg-muted/30 border border-border">
-        <span className="text-sm font-black uppercase tracking-widest text-foreground">Segmento BCC:</span>
-        {Object.entries(segmentLabels).map(([seg, label]) => (
-          <button
-            key={seg}
-            onClick={() => setBccSegment(seg)}
-            className={cn(
-              'px-4 py-2 rounded-xl text-sm font-black uppercase tracking-widest transition-all min-h-[44px] border',
-              bccSegment === seg
-                ? 'bg-primary text-primary-foreground shadow-lg border-primary'
-                : 'bg-background text-muted-foreground hover:bg-primary/10 hover:text-primary border-border',
-            )}
-            aria-pressed={bccSegment === seg}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
+      {/* IC-AUDIT: Selector de segmento BCC — ahora dentro del tab Dashboard */}
 
       {/* Tabs */}
       <UnifiedTabs
@@ -314,6 +296,8 @@ export function ExchangeIntelligenceView() {
                 diffPct={diffPct}
                 rates={rates}
                 bccSegment={bccSegment}
+                setBccSegment={setBccSegment}
+                segmentLabels={segmentLabels}
                 segmentShortLabels={segmentShortLabels}
                 segmentDescriptions={segmentDescriptions}
               />
@@ -575,6 +559,8 @@ function DashboardTab({
   diffPct,
   rates,
   bccSegment,
+  setBccSegment,
+  segmentLabels,
   segmentShortLabels,
   segmentDescriptions,
 }: any) {
@@ -631,6 +617,26 @@ function DashboardTab({
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      {/* ─── Selector de segmento BCC (dentro del tab Dashboard) ─── */}
+      <div className="flex items-center gap-3 flex-wrap p-3 rounded-xl bg-muted/30 border border-border">
+        <span className="text-sm font-black uppercase tracking-widest text-foreground">Segmento BCC:</span>
+        {(Object.entries(segmentLabels) as [string, string][]).map(([seg, label]) => (
+          <button
+            key={seg}
+            onClick={() => setBccSegment(seg)}
+            className={cn(
+              'px-4 py-2 rounded-xl text-sm font-black uppercase tracking-widest transition-all min-h-[44px] border',
+              bccSegment === seg
+                ? 'bg-primary text-primary-foreground shadow-lg border-primary'
+                : 'bg-background text-muted-foreground hover:bg-primary/10 hover:text-primary border-border',
+            )}
+            aria-pressed={bccSegment === seg}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
       {/* ── Tarjetas premium diferenciadas BCC vs elToque ── */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         {/* Tarjeta BCC — verde gubernamental con bordes más visibles */}

@@ -7,28 +7,39 @@ import { Button } from '@/components/ui/button';
 import {
   Area,
   Line,
+  Bar,
+  Cell,
   CartesianGrid,
   XAxis,
   YAxis,
   Tooltip,
   ResponsiveContainer,
   ComposedChart,
+  ReferenceLine,
 } from 'recharts';
 import {
   Calendar as CalendarIcon,
   Info,
   Target,
   DollarSign,
+  LineChart as LineChartIcon,
+  AreaChart as AreaChartIcon,
+  BarChart3 as BarChartIcon,
+  CandlestickChart,
 } from 'lucide-react';
-import { format, parseISO, differenceInCalendarDays } from 'date-fns';
+import { format, parseISO, differenceInCalendarDays, addDays } from 'date-fns';
 import { es as esLocale } from 'date-fns/locale';
 
 // ═══ Paleta de colores coordinada con el primer tab ═══
-// BCC (oficial) → verde (success #22c55e) — coincide con border-primary del tab Dashboard
-// elToque (informal) → naranja (#f97316) — coincide con amber-500 del tab Dashboard
-const CHART_COLOR_OFICIAL = '#22c55e'; // verde success — mismo que bg-primary del Dashboard
-const CHART_COLOR_INFORMAL = '#f97316'; // naranja — mismo que amber-500 del Dashboard
-const CHART_COLOR_TREND = '#a855f7'; // morado para línea de tendencia
+// BCC (oficial) → verde (success #22c55e)
+// elToque (informal) → naranja (#f97316)
+const CHART_COLOR_OFICIAL = '#22c55e';
+const CHART_COLOR_INFORMAL = '#f97316';
+const CHART_COLOR_TREND = '#a855f7';
+const CHART_COLOR_FORECAST_OFICIAL = '#16a34a'; // verde más oscuro para proyección BCC
+const CHART_COLOR_FORECAST_INFORMAL = '#c2410c'; // naranja más oscuro para proyección elToque
+const CHART_COLOR_VARIATION_POS = '#22c55e'; // subidas en verde (estilo cripto)
+const CHART_COLOR_VARIATION_NEG = '#ef4444'; // bajadas en rojo
 
 // ─── Tipos de tendencia disponibles (métodos científicos) ───
 type TrendMethod = 'none' | 'sma7' | 'sma30' | 'linear' | 'poly2';
@@ -38,6 +49,21 @@ const TREND_METHODS: { id: TrendMethod; label: string; description: string }[] =
   { id: 'sma30', label: 'Media móvil 30d', description: 'Media móvil simple (SMA) de ventana 30 días. Revela tendencia mensual.' },
   { id: 'linear', label: 'Regresión lineal', description: 'Ajuste por mínimos cuadrados y = m·x + b. Útil para detectar tendencia direccional.' },
   { id: 'poly2', label: 'Regresión polinomial (grado 2)', description: 'Ajuste cuadrático y = a·x² + b·x + c. Captura aceleración/desaceleración.' },
+];
+
+// ─── Tipos de modo de gráfico ───
+type ChartMode = 'area' | 'line' | 'bar';
+const CHART_MODES: { id: ChartMode; label: string; icon: any }[] = [
+  { id: 'area', label: 'Área', icon: AreaChartIcon },
+  { id: 'line', label: 'Línea', icon: LineChartIcon },
+  { id: 'bar', label: 'Barras', icon: BarChartIcon },
+];
+
+// ─── Tipos de tasa para la calculadora de impacto ───
+type RateSource = 'informal' | 'oficial';
+const RATE_SOURCES: { id: RateSource; label: string; description: string }[] = [
+  { id: 'informal', label: 'elToque (informal)', description: 'Tasa del mercado informal — relevante si compras USD en el mercado paralelo.' },
+  { id: 'oficial', label: 'BCC (oficial)', description: 'Tasa del Banco Central de Cuba — relevante si importas vía sector formal.' },
 ];
 
 // ─── Helpers de análisis estadístico ───
@@ -85,9 +111,6 @@ function linearRegression(values: number[]): { slope: number; intercept: number;
 function polyRegression2(values: number[]): { a: number; b: number; c: number } | null {
   if (values.length < 4) return null;
   const n = values.length;
-  // Sistema normal para grado 2: [Σx⁴, Σx³, Σx²] [a] = [Σx²y]
-  //                                  [Σx³, Σx², Σx ] [b] = [Σxy]
-  //                                  [Σx², Σx , n  ] [c] = [Σy]
   let S4 = 0, S3 = 0, S2 = 0, S1 = 0, S0 = n;
   let Sxy = 0, Sx2y = 0, Sy = 0;
   for (let i = 0; i < n; i++) {
@@ -101,7 +124,6 @@ function polyRegression2(values: number[]): { a: number; b: number; c: number } 
     Sx2y += x * x * y;
     Sy += y;
   }
-  // Resolver sistema 3x3 por regla de Cramer
   const det = S4 * (S2 * S0 - S1 * S1) - S3 * (S3 * S0 - S1 * S2) + S2 * (S3 * S1 - S2 * S2);
   if (Math.abs(det) < 1e-9) return null;
   const a = (Sx2y * (S2 * S0 - S1 * S1) - Sxy * (S3 * S0 - S1 * S2) + Sy * (S3 * S1 - S2 * S2)) / det;
@@ -136,7 +158,7 @@ function InfoTooltip({ title, children }: { title: string; children: React.React
 }
 
 // ════════════════════════════════════════════════════════════════════
-// TAB 2: Histórico — con selectores de fecha, tendencia y explicación Diátaxis
+// TAB 2: Histórico — con proyección a futuro, modo de gráfico y variación cripto
 // ════════════════════════════════════════════════════════════════════
 function HistoryTab({ data }: any) {
   // ─── Rango: presets + fecha inicio/fin custom ───
@@ -156,6 +178,12 @@ function HistoryTab({ data }: any) {
   // ─── Método de tendencia ───
   const [trendMethod, setTrendMethod] = useState<TrendMethod>('none');
 
+  // ─── Modo de gráfico (área / línea / barras) ───
+  const [chartMode, setChartMode] = useState<ChartMode>('area');
+
+  // ─── Días a proyectar al futuro (default 7) ───
+  const [forecastDays, setForecastDays] = useState(7);
+
   // ─── Filtrado de datos ───
   const filtered = useMemo(() => {
     if (useCustomRange && startDate && endDate) {
@@ -171,12 +199,30 @@ function HistoryTab({ data }: any) {
     return data.slice(-preset);
   }, [data, preset, useCustomRange, startDate, endDate]);
 
-  // ─── Cálculo de líneas de tendencia ───
+  // ─── Regresión lineal sobre ambas tasas para proyección ───
+  const forecastModel = useMemo(() => {
+    const informalValues: number[] = (filtered as any[])
+      .map((d: any) => (d.informal != null ? Number(d.informal) : null))
+      .filter((v: number | null): v is number => v != null);
+    const oficialValues: number[] = (filtered as any[])
+      .map((d: any) => (d.oficial != null ? Number(d.oficial) : null))
+      .filter((v: number | null): v is number => v != null);
+    return {
+      informal: linearRegression(informalValues),
+      oficial: linearRegression(oficialValues),
+      informalCount: informalValues.length,
+      oficialCount: oficialValues.length,
+    };
+  }, [filtered]);
+
+  // ─── Datos del gráfico: históricos + días futuros proyectados ───
   const chartData = useMemo(() => {
     if (!filtered.length) return [];
-    const informalValues: (number | null)[] = filtered.map((d: any) => (d.informal != null ? d.informal : null));
+    const informalValues: (number | null)[] = (filtered as any[]).map((d: any) =>
+      d.informal != null ? Number(d.informal) : null,
+    );
 
-    // Serie de tendencia solo para informal (es la más relevante para el usuario)
+    // Serie de tendencia solo para informal
     let trendValues: (number | null)[] = informalValues.map(() => null);
 
     if (trendMethod === 'sma7') {
@@ -210,63 +256,155 @@ function HistoryTab({ data }: any) {
       }
     }
 
-    return filtered.map((d: any, i: number) => ({
+    // Puntos históricos
+    const historical = (filtered as any[]).map((d: any, i: number) => ({
       date: d.date,
-      oficial: d.oficial,
-      informal: d.informal,
+      oficial: d.oficial != null ? Number(d.oficial) : null,
+      informal: d.informal != null ? Number(d.informal) : null,
       trend: trendValues[i],
+      forecastOficial: null as number | null,
+      forecastInformal: null as number | null,
+      isForecast: false,
     }));
-  }, [filtered, trendMethod]);
 
-  // ─── Forecast para la card Diátaxis abajo del gráfico ───
+    // Puntos futuros proyectados (regresión lineal sobre ambas tasas)
+    const lastDateStr = filtered[filtered.length - 1]?.date;
+    const forecastPoints: any[] = [];
+    if (lastDateStr && forecastDays > 0) {
+      let lastDate: Date;
+      try {
+        lastDate = parseISO(lastDateStr);
+      } catch {
+        lastDate = new Date();
+      }
+
+      for (let d = 1; d <= forecastDays; d++) {
+        const projDate = addDays(lastDate, d);
+        const dateStr = format(projDate, 'yyyy-MM-dd');
+
+        // Proyección informal
+        let projInformal: number | null = null;
+        if (forecastModel.informal && forecastModel.informalCount >= 5) {
+          projInformal =
+            forecastModel.informal.slope * (forecastModel.informalCount - 1 + d) +
+            forecastModel.informal.intercept;
+        }
+
+        // Proyección oficial (BCC)
+        let projOficial: number | null = null;
+        if (forecastModel.oficial && forecastModel.oficialCount >= 5) {
+          projOficial =
+            forecastModel.oficial.slope * (forecastModel.oficialCount - 1 + d) +
+            forecastModel.oficial.intercept;
+        }
+
+        forecastPoints.push({
+          date: dateStr,
+          oficial: null,
+          informal: null,
+          trend: null,
+          forecastOficial: projOficial,
+          forecastInformal: projInformal,
+          isForecast: true,
+        });
+      }
+    }
+
+    return [...historical, ...forecastPoints];
+  }, [filtered, trendMethod, forecastDays, forecastModel]);
+
+  // ─── Datos de variación diaria (estilo cripto/bolsa) ───
+  const variationData = useMemo(() => {
+    return (filtered as any[]).map((d: any, i: number) => {
+      const prev = filtered[i - 1];
+      let informalChange: number | null = null;
+      let oficialChange: number | null = null;
+      if (i > 0 && prev) {
+        if (prev.informal != null && d.informal != null && prev.informal > 0) {
+          informalChange = ((d.informal - prev.informal) / prev.informal) * 100;
+        }
+        if (prev.oficial != null && d.oficial != null && prev.oficial > 0) {
+          oficialChange = ((d.oficial - prev.oficial) / prev.oficial) * 100;
+        }
+      }
+      return {
+        date: d.date,
+        informalChange,
+        oficialChange,
+      };
+    });
+  }, [filtered]);
+
+  // ═══════════════════════════════════════════════════════════════
+  // CALCULADORA DE IMPACTO (Diátaxis) — con toggle elToque/BCC
+  // ═══════════════════════════════════════════════════════════════
+  const [rateSource, setRateSource] = useState<RateSource>('informal');
   const [purchaseDateIdx, setPurchaseDateIdx] = useState(0);
   const [costUsd, setCostUsd] = useState('100');
 
-  // Reset purchaseDateIdx si se va de rango
   const safePurchaseIdx = Math.min(Math.max(0, purchaseDateIdx), Math.max(0, filtered.length - 1));
-  const informalForForecast: number[] = (filtered as any[])
-    .map((d: any): number | null => (d.informal != null ? Number(d.informal) : null))
-    .filter((v: number | null): v is number => v != null);
-  const forecastDays = 10;
+
+  // Valores para la tasa seleccionada
+  const valuesForCalc = (filtered as any[]).map((d: any) =>
+    rateSource === 'informal' ? d.informal : d.oficial,
+  );
+  const valuesForForecast: number[] = (valuesForCalc as (number | null)[])
+    .filter((v): v is number => v != null);
   const forecast = useMemo(() => {
-    const reg = linearRegression(informalForForecast);
-    if (!reg || informalForForecast.length < 5) return null;
-    const n = informalForForecast.length;
+    const reg = linearRegression(valuesForForecast);
+    if (!reg || valuesForForecast.length < 5) return null;
+    const n = valuesForForecast.length;
     const projected = reg.slope * (n - 1 + forecastDays) + reg.intercept;
     return { slope: reg.slope, intercept: reg.intercept, r2: reg.r2, projected };
-  }, [informalForForecast]);
+  }, [valuesForForecast, forecastDays]);
 
-  // Cálculos para la card Diátaxis
   const purchasePoint = filtered[safePurchaseIdx];
-  const purchaseRate = purchasePoint?.informal ?? 0;
+  const purchaseRate = (rateSource === 'informal'
+    ? purchasePoint?.informal
+    : purchasePoint?.oficial) ?? 0;
   const purchaseDate = purchasePoint?.date ?? '';
   const currentPoint = filtered[filtered.length - 1];
-  const currentRate = currentPoint?.informal ?? 0;
+  const currentRate = (rateSource === 'informal'
+    ? currentPoint?.informal
+    : currentPoint?.oficial) ?? 0;
   const currentDate = currentPoint?.date ?? '';
 
   const usd = parseFloat(costUsd) || 0;
   const costAtPurchase = usd * purchaseRate;
   const costNow = usd * currentRate;
   const forecastRate = forecast?.projected ?? currentRate;
-  const costIn10Days = usd * forecastRate;
+  const costInFuture = usd * forecastRate;
   const changeToDate = costNow - costAtPurchase;
   const changeToDatePct = costAtPurchase > 0 ? (changeToDate / costAtPurchase) * 100 : 0;
-  const changeToForecast = costIn10Days - costNow;
+  const changeToForecast = costInFuture - costNow;
   const changeToForecastPct = costNow > 0 ? (changeToForecast / costNow) * 100 : 0;
 
-  // Días transcurridos y proyectados
   let daysElapsed = 0;
   try {
     if (purchaseDate && currentDate) {
       daysElapsed = differenceInCalendarDays(parseISO(currentDate), parseISO(purchaseDate));
     }
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
 
   const trendMethodMeta = TREND_METHODS.find(m => m.id === trendMethod);
+  const rateSourceMeta = RATE_SOURCES.find(r => r.id === rateSource)!;
+
+  // Fecha límite de proyección (para mostrar al usuario)
+  const lastHistDate = filtered[filtered.length - 1]?.date;
+  let forecastEndDateStr = '';
+  try {
+    if (lastHistDate) {
+      forecastEndDateStr = format(addDays(parseISO(lastHistDate), forecastDays), 'dd MMM yyyy', { locale: esLocale });
+    }
+  } catch {
+    /* ignore */
+  }
 
   return (
     <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      {/* ─── Controles: presets + custom range + tendencia ─── */}
+      {/* ─── Controles: presets + custom range + tendencia + modo + días futuros ─── */}
       <div className="bg-card rounded-2xl border-2 border-border p-4 space-y-3">
         {/* Fila 1: presets + toggle custom range */}
         <div className="flex flex-wrap items-center gap-2">
@@ -309,10 +447,7 @@ function HistoryTab({ data }: any) {
               <span className="text-xs font-black uppercase tracking-widest text-muted-foreground shrink-0">Desde:</span>
               <Popover open={startPickerOpen} onOpenChange={setStartPickerOpen}>
                 <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className="h-9 flex-1 justify-start text-left font-mono text-xs border-border"
-                  >
+                  <Button variant="outline" className="h-9 flex-1 justify-start text-left font-mono text-xs border-border">
                     <CalendarIcon className="w-3.5 h-3.5 mr-1.5" />
                     {startDate ? format(startDate, 'dd MMM yyyy', { locale: esLocale }) : 'Seleccionar…'}
                   </Button>
@@ -336,10 +471,7 @@ function HistoryTab({ data }: any) {
               <span className="text-xs font-black uppercase tracking-widest text-muted-foreground shrink-0">Hasta:</span>
               <Popover open={endPickerOpen} onOpenChange={setEndPickerOpen}>
                 <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className="h-9 flex-1 justify-start text-left font-mono text-xs border-border"
-                  >
+                  <Button variant="outline" className="h-9 flex-1 justify-start text-left font-mono text-xs border-border">
                     <CalendarIcon className="w-3.5 h-3.5 mr-1.5" />
                     {endDate ? format(endDate, 'dd MMM yyyy', { locale: esLocale }) : 'Seleccionar…'}
                   </Button>
@@ -362,8 +494,35 @@ function HistoryTab({ data }: any) {
           </div>
         )}
 
-        {/* Fila 3: selector de tendencia */}
+        {/* Fila 3: modo de gráfico + tendencia + días a proyectar */}
         <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-border/50">
+          {/* Modo de gráfico */}
+          <div className="flex items-center gap-1">
+            <span className="text-xs font-black uppercase tracking-widest text-muted-foreground mr-1">Modo:</span>
+            {CHART_MODES.map(m => {
+              const Icon = m.icon;
+              return (
+                <button
+                  key={m.id}
+                  onClick={() => setChartMode(m.id)}
+                  title={`Modo ${m.label}`}
+                  className={cn(
+                    'px-2.5 py-1.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all min-h-[36px] border flex items-center gap-1',
+                    chartMode === m.id
+                      ? 'bg-blue-600 text-white shadow-md border-blue-600'
+                      : 'bg-background text-muted-foreground hover:bg-blue-600/10 hover:text-blue-600 border-border',
+                  )}
+                >
+                  <Icon className="w-3.5 h-3.5" />
+                  {m.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Selector de tendencia */}
           <div className="flex items-center gap-1">
             <span className="text-xs font-black uppercase tracking-widest text-muted-foreground mr-1">Tendencia:</span>
             <InfoTooltip title="Métodos de tendencia — explicación">
@@ -379,70 +538,139 @@ function HistoryTab({ data }: any) {
                 <strong>Cuándo usar cada uno:</strong> SMA para ver tendencia suavizada; lineal para proyección simple; polinomial para detectar cambio de régimen.
               </p>
             </InfoTooltip>
+            {TREND_METHODS.map(m => (
+              <button
+                key={m.id}
+                onClick={() => setTrendMethod(m.id)}
+                title={m.description}
+                className={cn(
+                  'px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all min-h-[36px] border',
+                  trendMethod === m.id
+                    ? 'bg-purple-600 text-white shadow-md border-purple-600'
+                    : 'bg-background text-muted-foreground hover:bg-purple-600/10 hover:text-purple-600 border-border',
+                )}
+              >
+                {m.label}
+              </button>
+            ))}
           </div>
-          {TREND_METHODS.map(m => (
-            <button
-              key={m.id}
-              onClick={() => setTrendMethod(m.id)}
-              title={m.description}
-              className={cn(
-                'px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all min-h-[36px] border',
-                trendMethod === m.id
-                  ? 'bg-purple-600 text-white shadow-md border-purple-600'
-                  : 'bg-background text-muted-foreground hover:bg-purple-600/10 hover:text-purple-600 border-border',
-              )}
-            >
-              {m.label}
-            </button>
-          ))}
         </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Días a proyectar al futuro */}
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-black uppercase tracking-widest text-muted-foreground mr-1">
+              Proyectar al futuro:
+            </span>
+            <InfoTooltip title="Proyección a futuro — cómo se calcula">
+              <p className="mb-2">
+                Se proyectan <strong>ambas tasas</strong> (elToque informal y BCC oficial) al futuro usando <strong>regresión lineal por mínimos cuadrados</strong> sobre los datos visibles:
+              </p>
+              <code className="block bg-muted/60 rounded-md p-2 text-xs font-mono">
+                tasa(t) = m·t + b
+              </code>
+              <p className="mt-2">Se requieren al menos 5 muestras válidas para cada tasa. Las proyecciones se muestran como líneas punteadas en el gráfico principal.</p>
+              <p className="mt-2 pt-2 border-t border-border/50 text-xs">
+                <strong>Limitación:</strong> la regresión lineal asume que la tendencia reciente continúa. No modela quiebres de régimen ni eventos imprevistos.
+              </p>
+            </InfoTooltip>
+            {[0, 3, 7, 14, 30].map(d => (
+              <button
+                key={d}
+                onClick={() => setForecastDays(d)}
+                className={cn(
+                  'px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all min-h-[36px] border',
+                  forecastDays === d
+                    ? 'bg-blue-600 text-white shadow-md border-blue-600'
+                    : 'bg-background text-muted-foreground hover:bg-blue-600/10 hover:text-blue-600 border-border',
+                )}
+              >
+                {d === 0 ? 'Sin proy.' : `+${d}d`}
+              </button>
+            ))}
+            <input
+              type="number"
+              value={forecastDays}
+              onChange={e => {
+                const v = parseInt(e.target.value, 10);
+                setForecastDays(Number.isFinite(v) && v >= 0 ? Math.min(v, 90) : 0);
+              }}
+              min={0}
+              max={90}
+              className="w-16 h-9 px-2 rounded-lg border-2 border-border bg-background text-xs font-bold text-foreground text-center"
+              title="Días personalizados a proyectar (0-90)"
+            />
+            <span className="text-xs text-muted-foreground">días</span>
+            {forecastEndDateStr && forecastDays > 0 && (
+              <span className="text-xs text-muted-foreground font-mono">
+                → hasta {forecastEndDateStr}
+              </span>
+            )}
+          </div>
+        </div>
+
         {trendMethod !== 'none' && trendMethodMeta && (
           <p className="text-xs text-muted-foreground italic">{trendMethodMeta.description}</p>
         )}
       </div>
 
-      {/* ─── Gráfico principal ─── */}
+      {/* ─── Gráfico principal (histórico + proyección) ─── */}
       <div className="bg-card rounded-2xl border-2 border-border p-6">
         <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
           <h3 className="text-base font-black uppercase tracking-widest text-foreground">
-            USD — Oficial vs Informal ({filtered.length} días)
+            USD — Oficial vs Informal ({filtered.length} días{forecastDays > 0 ? ` + ${forecastDays}d proy.` : ''})
           </h3>
-          {forecast && (
-            <div className="flex items-center gap-2 text-xs font-bold">
-              <Target className="w-3.5 h-3.5 text-blue-500" />
-              <span className="text-muted-foreground">Pendiente informal:</span>
-              <span className={cn('font-mono', forecast.slope >= 0 ? 'text-destructive' : 'text-success')}>
-                {forecast.slope >= 0 ? '+' : ''}{forecast.slope.toFixed(3)} CUP/día
-              </span>
-              <span className="text-muted-foreground">·</span>
-              <span className="text-muted-foreground">R²:</span>
-              <span className="font-mono text-foreground">{forecast.r2.toFixed(3)}</span>
+          {forecastModel.informal && (
+            <div className="flex items-center gap-3 text-xs font-bold flex-wrap">
+              <div className="flex items-center gap-1.5">
+                <Target className="w-3.5 h-3.5 text-orange-500" />
+                <span className="text-muted-foreground">Pendiente elToque:</span>
+                <span className={cn('font-mono', forecastModel.informal.slope >= 0 ? 'text-destructive' : 'text-success')}>
+                  {forecastModel.informal.slope >= 0 ? '+' : ''}{forecastModel.informal.slope.toFixed(3)} CUP/día
+                </span>
+                <span className="text-muted-foreground">· R²={forecastModel.informal.r2.toFixed(2)}</span>
+              </div>
+              {forecastModel.oficial && (
+                <div className="flex items-center gap-1.5">
+                  <Target className="w-3.5 h-3.5 text-green-500" />
+                  <span className="text-muted-foreground">Pendiente BCC:</span>
+                  <span className={cn('font-mono', forecastModel.oficial.slope >= 0 ? 'text-destructive' : 'text-success')}>
+                    {forecastModel.oficial.slope >= 0 ? '+' : ''}{forecastModel.oficial.slope.toFixed(3)} CUP/día
+                  </span>
+                  <span className="text-muted-foreground">· R²={forecastModel.oficial.r2.toFixed(2)}</span>
+                </div>
+              )}
             </div>
           )}
         </div>
 
-        {/* ─── Leyenda accesible — orden: elToque primero (mayor valor), BCC después ─── */}
-        {/* Coincide con el orden visual del gráfico (informal arriba, oficial abajo) */}
+        {/* ─── Leyenda accesible — elToque primero (mayor valor), BCC después ─── */}
         <div className="flex flex-wrap gap-4 mb-4 text-sm font-bold">
           <div className="flex items-center gap-2">
             <span className="inline-block w-6 h-1.5 rounded-full" style={{ backgroundColor: CHART_COLOR_INFORMAL }} />
             <span className="text-foreground">USD Informal (elToque)</span>
-            <span className="text-xs text-muted-foreground font-mono">
-              · {currentRate > 0 ? `${currentRate.toFixed(2)} CUP` : '—'}
-            </span>
           </div>
           <div className="flex items-center gap-2">
             <span className="inline-block w-6 h-1.5 rounded-full" style={{ backgroundColor: CHART_COLOR_OFICIAL }} />
             <span className="text-foreground">USD Oficial (BCC)</span>
-            <span className="text-xs text-muted-foreground font-mono">
-              · {filtered[filtered.length - 1]?.oficial != null ? `${filtered[filtered.length - 1].oficial.toFixed(2)} CUP` : '—'}
-            </span>
           </div>
           {trendMethod !== 'none' && (
             <div className="flex items-center gap-2">
               <span className="inline-block w-6 h-1.5 rounded-full" style={{ backgroundColor: CHART_COLOR_TREND }} />
               <span className="text-foreground">Tendencia ({TREND_METHODS.find(m => m.id === trendMethod)?.label})</span>
             </div>
+          )}
+          {forecastDays > 0 && (
+            <>
+              <div className="flex items-center gap-2">
+                <span className="inline-block w-6 h-1.5 rounded-full border-t-2 border-dashed" style={{ borderColor: CHART_COLOR_FORECAST_INFORMAL }} />
+                <span className="text-foreground">Proy. elToque (+{forecastDays}d)</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="inline-block w-6 h-1.5 rounded-full border-t-2 border-dashed" style={{ borderColor: CHART_COLOR_FORECAST_OFICIAL }} />
+                <span className="text-foreground">Proy. BCC (+{forecastDays}d)</span>
+              </div>
+            </>
           )}
         </div>
 
@@ -483,31 +711,98 @@ function HistoryTab({ data }: any) {
               labelStyle={{ color: 'hsl(var(--foreground))', fontWeight: 700, marginBottom: '4px' }}
               itemStyle={{ color: 'hsl(var(--foreground))', padding: '2px 0' }}
             />
-            {/* Área informal primero (se renderiza al fondo, pero aparece arriba por valores mayores) */}
-            <Area
-              type="monotone"
-              dataKey="informal"
-              stroke={CHART_COLOR_INFORMAL}
-              strokeWidth={3}
-              fillOpacity={1}
-              fill="url(#colorInformal)"
-              name="USD Informal (elToque)"
-              dot={{ r: 3, fill: CHART_COLOR_INFORMAL, strokeWidth: 0 }}
-              activeDot={{ r: 6, fill: CHART_COLOR_INFORMAL, stroke: 'hsl(var(--card))', strokeWidth: 2 }}
-            />
-            {/* Área oficial (verde) — se renderiza encima pero con valores menores aparece abajo */}
-            <Area
-              type="monotone"
-              dataKey="oficial"
-              stroke={CHART_COLOR_OFICIAL}
-              strokeWidth={3}
-              fillOpacity={1}
-              fill="url(#colorOficial)"
-              name="USD Oficial (BCC)"
-              dot={{ r: 3, fill: CHART_COLOR_OFICIAL, strokeWidth: 0 }}
-              activeDot={{ r: 6, fill: CHART_COLOR_OFICIAL, stroke: 'hsl(var(--card))', strokeWidth: 2 }}
-            />
-            {/* Línea de tendencia — solo si el método no es 'none' */}
+
+            {/* Línea divisoria entre histórico y proyección */}
+            {forecastDays > 0 && filtered.length > 0 && (
+              <ReferenceLine
+                x={filtered[filtered.length - 1]?.date}
+                stroke="hsl(var(--muted-foreground))"
+                strokeDasharray="4 4"
+                strokeWidth={1.5}
+                label={{
+                  value: 'Hoy',
+                  position: 'top',
+                  fill: 'hsl(var(--muted-foreground))',
+                  fontSize: 11,
+                  fontWeight: 700,
+                }}
+              />
+            )}
+
+            {/* ─── Datos históricos — modo área/línea/barras ─── */}
+            {/* elToque (informal) — naranja */}
+            {chartMode === 'area' && (
+              <Area
+                type="monotone"
+                dataKey="informal"
+                stroke={CHART_COLOR_INFORMAL}
+                strokeWidth={3}
+                fillOpacity={1}
+                fill="url(#colorInformal)"
+                name="USD Informal (elToque)"
+                dot={false}
+                activeDot={{ r: 6, fill: CHART_COLOR_INFORMAL, stroke: 'hsl(var(--card))', strokeWidth: 2 }}
+                connectNulls
+              />
+            )}
+            {chartMode === 'line' && (
+              <Line
+                type="monotone"
+                dataKey="informal"
+                stroke={CHART_COLOR_INFORMAL}
+                strokeWidth={3}
+                dot={false}
+                activeDot={{ r: 6, fill: CHART_COLOR_INFORMAL, stroke: 'hsl(var(--card))', strokeWidth: 2 }}
+                name="USD Informal (elToque)"
+                connectNulls
+              />
+            )}
+            {chartMode === 'bar' && (
+              <Bar
+                dataKey="informal"
+                fill={CHART_COLOR_INFORMAL}
+                name="USD Informal (elToque)"
+                radius={[4, 4, 0, 0]}
+              />
+            )}
+
+            {/* BCC (oficial) — verde */}
+            {chartMode === 'area' && (
+              <Area
+                type="monotone"
+                dataKey="oficial"
+                stroke={CHART_COLOR_OFICIAL}
+                strokeWidth={3}
+                fillOpacity={1}
+                fill="url(#colorOficial)"
+                name="USD Oficial (BCC)"
+                dot={false}
+                activeDot={{ r: 6, fill: CHART_COLOR_OFICIAL, stroke: 'hsl(var(--card))', strokeWidth: 2 }}
+                connectNulls
+              />
+            )}
+            {chartMode === 'line' && (
+              <Line
+                type="monotone"
+                dataKey="oficial"
+                stroke={CHART_COLOR_OFICIAL}
+                strokeWidth={3}
+                dot={false}
+                activeDot={{ r: 6, fill: CHART_COLOR_OFICIAL, stroke: 'hsl(var(--card))', strokeWidth: 2 }}
+                name="USD Oficial (BCC)"
+                connectNulls
+              />
+            )}
+            {chartMode === 'bar' && (
+              <Bar
+                dataKey="oficial"
+                fill={CHART_COLOR_OFICIAL}
+                name="USD Oficial (BCC)"
+                radius={[4, 4, 0, 0]}
+              />
+            )}
+
+            {/* ─── Línea de tendencia (morado punteada) ─── */}
             {trendMethod !== 'none' && (
               <Line
                 type="monotone"
@@ -520,36 +815,180 @@ function HistoryTab({ data }: any) {
                 connectNulls
               />
             )}
+
+            {/* ─── Proyección al futuro — elToque (naranja oscuro punteada) ─── */}
+            {forecastDays > 0 && (
+              <Line
+                type="monotone"
+                dataKey="forecastInformal"
+                stroke={CHART_COLOR_FORECAST_INFORMAL}
+                strokeWidth={2}
+                strokeDasharray="5 3"
+                dot={{ r: 2, fill: CHART_COLOR_FORECAST_INFORMAL }}
+                name={`Proy. elToque (+${forecastDays}d)`}
+                connectNulls
+              />
+            )}
+
+            {/* ─── Proyección al futuro — BCC (verde oscuro punteada) ─── */}
+            {forecastDays > 0 && (
+              <Line
+                type="monotone"
+                dataKey="forecastOficial"
+                stroke={CHART_COLOR_FORECAST_OFICIAL}
+                strokeWidth={2}
+                strokeDasharray="5 3"
+                dot={{ r: 2, fill: CHART_COLOR_FORECAST_OFICIAL }}
+                name={`Proy. BCC (+${forecastDays}d)`}
+                connectNulls
+              />
+            )}
           </ComposedChart>
         </ResponsiveContainer>
-
-        {/* Nota explicativa de colores debajo del gráfico */}
-        <p className="text-xs text-muted-foreground mt-3 italic">
-          <strong>Colores coordinados con el tab Dashboard:</strong>{' '}
-          <span style={{ color: CHART_COLOR_OFICIAL }} className="font-bold">verde</span> = BCC Oficial (mismo que la tarjeta BCC),{' '}
-          <span style={{ color: CHART_COLOR_INFORMAL }} className="font-bold">naranja</span> = elToque informal (mismo que la tarjeta elToque),{' '}
-          <span style={{ color: CHART_COLOR_TREND }} className="font-bold">morado punteado</span> = línea de tendencia.
-        </p>
       </div>
 
       {/* ═══════════════════════════════════════════════════════════════
-          EXPLICACIÓN DIÁTAXIS — "Si compraste el día X, hoy cuesta Y, en 10 días Z"
-          Marco pedagógico Diátaxis: explicación (understanding) + cómo usar (how-to)
+          GRÁFICO DE VARIACIÓN DIARIA (estilo cripto/bolsa)
+          ═══════════════════════════════════════════════════════════════ */}
+      <div className="bg-card rounded-2xl border-2 border-border p-6">
+        <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+          <div className="flex items-center gap-2">
+            <CandlestickChart className="w-5 h-5 text-purple-600" />
+            <h3 className="text-base font-black uppercase tracking-widest text-foreground">
+              Variación diaria (%)
+            </h3>
+            <InfoTooltip title="Variación diaria — estilo cripto/bolsa">
+              <p className="mb-2">
+                Muestra el <strong>cambio porcentual día a día</strong> de cada tasa, como en los gráficos de criptomonedas o bolsa de valores:
+              </p>
+              <code className="block bg-muted/60 rounded-md p-2 text-xs font-mono">
+                variación% = ((tasaHoy − tasaAyer) / tasaAyer) × 100
+              </code>
+              <p className="mt-2 text-xs">
+                <strong>Verde (+)</strong> = la tasa subió (CUP se devaluó). <strong>Rojo (−)</strong> = la tasa bajó (CUP se apreció).
+              </p>
+              <p className="mt-1 text-xs">Las barras grandes indican días de alta volatilidad.</p>
+            </InfoTooltip>
+          </div>
+          <span className="text-xs text-muted-foreground italic">
+            Calculado sobre {filtered.length} días
+          </span>
+        </div>
+
+        <div className="flex flex-wrap gap-4 mb-4 text-sm font-bold">
+          <div className="flex items-center gap-2">
+            <span className="inline-block w-6 h-1.5 rounded-full" style={{ backgroundColor: CHART_COLOR_INFORMAL }} />
+            <span className="text-foreground">Variación elToque</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="inline-block w-6 h-1.5 rounded-full" style={{ backgroundColor: CHART_COLOR_OFICIAL }} />
+            <span className="text-foreground">Variación BCC</span>
+          </div>
+        </div>
+
+        <ResponsiveContainer width="100%" height={260}>
+          <ComposedChart data={variationData} margin={{ top: 10, right: 30, left: 0, bottom: 10 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.5} />
+            <XAxis
+              dataKey="date"
+              tick={{ fontSize: 11, fontWeight: 600, fill: 'hsl(var(--foreground))' }}
+              stroke="hsl(var(--border))"
+              strokeWidth={1.5}
+            />
+            <YAxis
+              tick={{ fontSize: 12, fontWeight: 600, fill: 'hsl(var(--foreground))' }}
+              stroke="hsl(var(--border))"
+              strokeWidth={1.5}
+              tickFormatter={(v: number) => `${v > 0 ? '+' : ''}${v.toFixed(1)}%`}
+            />
+            <Tooltip
+              contentStyle={{
+                background: 'hsl(var(--card))',
+                border: '2px solid hsl(var(--border))',
+                borderRadius: '12px',
+                fontSize: '13px',
+                color: 'hsl(var(--foreground))',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+              }}
+              labelStyle={{ color: 'hsl(var(--foreground))', fontWeight: 700, marginBottom: '4px' }}
+              itemStyle={{ color: 'hsl(var(--foreground))', padding: '2px 0' }}
+              formatter={(value: any, name: string) => {
+                if (value == null) return ['—', name];
+                const num = Number(value);
+                const sign = num >= 0 ? '+' : '';
+                return [`${sign}${num.toFixed(2)}%`, name];
+              }}
+            />
+            <ReferenceLine y={0} stroke="hsl(var(--muted-foreground))" strokeWidth={1.5} />
+            {/* Variación elToque */}
+            <Bar
+              dataKey="informalChange"
+              name="Variación elToque"
+              radius={[3, 3, 0, 0]}
+            >
+              {variationData.map((entry: any, i: number) => {
+                const v = entry.informalChange;
+                const color = v == null ? 'transparent' : v >= 0 ? CHART_COLOR_VARIATION_POS : CHART_COLOR_VARIATION_NEG;
+                return <Cell key={`inf-${i}`} fill={color} />;
+              })}
+            </Bar>
+            {/* Variación BCC */}
+            <Bar
+              dataKey="oficialChange"
+              name="Variación BCC"
+              radius={[3, 3, 0, 0]}
+            >
+              {variationData.map((entry: any, i: number) => {
+                const v = entry.oficialChange;
+                const color = v == null ? 'transparent' : v >= 0 ? CHART_COLOR_VARIATION_POS : CHART_COLOR_VARIATION_NEG;
+                return <Cell key={`ofi-${i}`} fill={color} fillOpacity={0.5} />;
+              })}
+            </Bar>
+          </ComposedChart>
+        </ResponsiveContainer>
+      </div>
+
+      {/* ═══════════════════════════════════════════════════════════════
+          CALCULADORA DE IMPACTO (Diátaxis) — con toggle elToque/BCC
           ═══════════════════════════════════════════════════════════════ */}
       <div className="bg-card rounded-2xl border-2 border-border p-6 space-y-5">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <div className="w-9 h-9 rounded-xl bg-blue-500/15 flex items-center justify-center border border-blue-500/30">
             <DollarSign className="w-5 h-5 text-blue-500" />
           </div>
-          <div>
+          <div className="flex-1 min-w-0">
             <h3 className="text-base font-black uppercase tracking-widest text-foreground">
               Calculadora de impacto en precios
             </h3>
             <p className="text-xs text-muted-foreground">
-              Estima cómo un producto comprado en una fecha pasada habría cambiado de valor hasta hoy, y cómo se proyecta a 10 días.
+              Estima cómo un producto comprado en una fecha pasada habría cambiado de valor hasta hoy, y cómo se proyecta a {forecastDays} días.
             </p>
           </div>
+          {/* ─── Toggle elToque / BCC ─── */}
+          <div className="flex items-center gap-1 p-1 rounded-xl bg-muted/50 border border-border">
+            {RATE_SOURCES.map(r => (
+              <button
+                key={r.id}
+                onClick={() => setRateSource(r.id)}
+                title={r.description}
+                className={cn(
+                  'px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all min-h-[32px]',
+                  rateSource === r.id
+                    ? r.id === 'informal'
+                      ? 'bg-orange-500 text-white shadow-md'
+                      : 'bg-green-500 text-white shadow-md'
+                    : 'text-muted-foreground hover:text-foreground',
+                )}
+              >
+                {r.label}
+              </button>
+            ))}
+          </div>
         </div>
+
+        <p className="text-xs text-muted-foreground italic">
+          {rateSourceMeta.description} · Proyección a {forecastDays} día(s) basada en regresión lineal.
+        </p>
 
         {/* Inputs */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -562,14 +1001,20 @@ function HistoryTab({ data }: any) {
               onChange={e => setPurchaseDateIdx(Number(e.target.value))}
               className="w-full h-10 px-3 rounded-xl border-2 border-border bg-background text-sm font-bold min-h-[40px] text-foreground font-mono"
             >
-              {filtered.map((d: any, i: number) => (
-                <option key={i} value={i}>
-                  {d.date} — 1 USD = {d.informal?.toFixed(2) ?? 'N/A'} CUP
-                </option>
-              ))}
+              {(filtered as any[]).map((d: any, i: number) => {
+                const rate = rateSource === 'informal' ? d.informal : d.oficial;
+                return (
+                  <option key={i} value={i}>
+                    {d.date} — 1 USD = {rate != null ? rate.toFixed(2) : 'N/A'} CUP
+                  </option>
+                );
+              })}
             </select>
             <p className="text-xs text-muted-foreground mt-1">
-              Tasa al comprar: <strong className="text-primary">{purchaseRate.toFixed(2)} CUP/USD</strong>
+              Tasa al comprar ({rateSourceMeta.label}):{' '}
+              <strong className={rateSource === 'informal' ? 'text-orange-500' : 'text-green-500'}>
+                {purchaseRate.toFixed(2)} CUP/USD
+              </strong>
             </p>
           </div>
           <div>
@@ -608,7 +1053,9 @@ function HistoryTab({ data }: any) {
             <div className="space-y-1 text-sm">
               <div className="flex justify-between">
                 <span className="text-xs text-muted-foreground">Tasa:</span>
-                <span className="font-black font-mono text-blue-500">{purchaseRate.toFixed(2)} CUP</span>
+                <span className={cn('font-black font-mono', rateSource === 'informal' ? 'text-orange-500' : 'text-green-500')}>
+                  {purchaseRate.toFixed(2)} CUP
+                </span>
               </div>
               <div className="flex justify-between border-t border-border/50 pt-1">
                 <span className="text-xs font-black text-muted-foreground">Costo total:</span>
@@ -631,7 +1078,9 @@ function HistoryTab({ data }: any) {
             <div className="space-y-1 text-sm">
               <div className="flex justify-between">
                 <span className="text-xs text-muted-foreground">Tasa:</span>
-                <span className="font-black font-mono text-amber-600 dark:text-amber-400">{currentRate.toFixed(2)} CUP</span>
+                <span className={cn('font-black font-mono', rateSource === 'informal' ? 'text-orange-500' : 'text-green-500')}>
+                  {currentRate.toFixed(2)} CUP
+                </span>
               </div>
               <div className="flex justify-between border-t border-border/50 pt-1">
                 <span className="text-xs font-black text-muted-foreground">Costo actual:</span>
@@ -646,18 +1095,18 @@ function HistoryTab({ data }: any) {
             </div>
           </div>
 
-          {/* Etapa 3: proyección 10 días */}
+          {/* Etapa 3: proyección */}
           <div className={cn('rounded-xl p-4 border-2', forecast && forecast.r2 >= 0.4 ? 'bg-purple-500/10 border-purple-500/30' : 'bg-muted/30 border-border')}>
             <div className="flex items-center gap-2 mb-2">
               <div className={cn('w-7 h-7 rounded-lg flex items-center justify-center border', forecast && forecast.r2 >= 0.4 ? 'bg-purple-500/20 border-purple-500/40' : 'bg-muted/50 border-border')}>
                 <span className={cn('text-xs font-black', forecast && forecast.r2 >= 0.4 ? 'text-purple-600 dark:text-purple-400' : 'text-muted-foreground')}>3</span>
               </div>
               <span className={cn('text-xs font-black uppercase tracking-widest', forecast && forecast.r2 >= 0.4 ? 'text-purple-600 dark:text-purple-400' : 'text-muted-foreground')}>
-                +10 días
+                +{forecastDays} días
               </span>
-              <InfoTooltip title="Proyección a 10 días — cómo se calcula">
+              <InfoTooltip title={`Proyección a ${forecastDays} días — cómo se calcula`}>
                 <p className="mb-2">
-                  Se usa <strong>regresión lineal por mínimos cuadrados</strong> sobre todos los datos visibles del gráfico:
+                  Se usa <strong>regresión lineal por mínimos cuadrados</strong> sobre todos los datos visibles del gráfico para la tasa <strong>{rateSourceMeta.label}</strong>:
                 </p>
                 <code className="block bg-muted/60 rounded-md p-2 text-xs font-mono">
                   tasa(t) = m·t + b
@@ -667,7 +1116,7 @@ function HistoryTab({ data }: any) {
                   <li>Pendiente (m): <strong>{forecast?.slope.toFixed(3) ?? '—'} CUP/día</strong></li>
                   <li>R²: <strong>{forecast?.r2.toFixed(3) ?? '—'}</strong></li>
                   <li>Tasa actual: <strong>{currentRate.toFixed(2)} CUP</strong></li>
-                  <li>Tasa proyectada +10d: <strong>{forecastRate.toFixed(2)} CUP</strong></li>
+                  <li>Tasa proyectada +{forecastDays}d: <strong>{forecastRate.toFixed(2)} CUP</strong></li>
                 </ul>
                 <p className="mt-2 pt-2 border-t border-border/50 text-xs">
                   <strong>Confianza:</strong> R² ≥ 0.7 alta · 0.4-0.7 media · &lt;0.4 baja (no usar para decisiones).
@@ -678,7 +1127,7 @@ function HistoryTab({ data }: any) {
               </InfoTooltip>
             </div>
             <p className="text-xs text-muted-foreground mb-2 font-mono">
-              +10 días · pendiente {forecast?.slope.toFixed(3) ?? '—'} CUP/día
+              +{forecastDays} días · pendiente {forecast?.slope.toFixed(3) ?? '—'} CUP/día
             </p>
             <div className="space-y-1 text-sm">
               <div className="flex justify-between">
@@ -690,7 +1139,7 @@ function HistoryTab({ data }: any) {
               <div className="flex justify-between border-t border-border/50 pt-1">
                 <span className="text-xs font-black text-muted-foreground">Costo proy.:</span>
                 <span className={cn('font-black font-mono', forecast && forecast.r2 >= 0.4 ? 'text-foreground' : 'text-muted-foreground')}>
-                  {costIn10Days.toFixed(2)} CUP
+                  {costInFuture.toFixed(2)} CUP
                 </span>
               </div>
               <div className="flex justify-between">
@@ -721,19 +1170,19 @@ function HistoryTab({ data }: any) {
             ) : (
               <>
                 Si compraste <strong className="text-foreground">{usd.toFixed(2)} USD</strong> de mercancía el{' '}
-                <strong className="text-blue-500">{purchaseDate}</strong> a <strong className="text-blue-500">{purchaseRate.toFixed(2)} CUP/USD</strong>,
+                <strong className="text-blue-500">{purchaseDate}</strong> a <strong className={rateSource === 'informal' ? 'text-orange-500' : 'text-green-500'}>{purchaseRate.toFixed(2)} CUP/USD</strong> ({rateSourceMeta.label}),
                 el costo total fue <strong className="text-foreground">{costAtPurchase.toFixed(2)} CUP</strong>.{' '}
-                Hoy ({currentDate}, {daysElapsed} días después) la tasa informal es{' '}
-                <strong className="text-amber-600 dark:text-amber-400">{currentRate.toFixed(2)} CUP/USD</strong>, por lo que reponer la misma mercancía costaría{' '}
+                Hoy ({currentDate}, {daysElapsed} días después) la tasa {rateSourceMeta.label} es{' '}
+                <strong className={rateSource === 'informal' ? 'text-orange-500' : 'text-green-500'}>{currentRate.toFixed(2)} CUP/USD</strong>, por lo que reponer la misma mercancía costaría{' '}
                 <strong className="text-foreground">{costNow.toFixed(2)} CUP</strong> — un{' '}
                 <strong className={changeToDate >= 0 ? 'text-destructive' : 'text-success'}>
                   {changeToDate >= 0 ? '+' : ''}{changeToDatePct.toFixed(1)}%
                 </strong>{' '}
                 ({changeToDate >= 0 ? '+' : ''}{changeToDate.toFixed(2)} CUP) {changeToDate >= 0 ? 'más caro' : 'más barato'} que cuando compraste.{' '}
                 <span className="text-purple-600 dark:text-purple-400">
-                  Según la regresión lineal (R² = {forecast.r2.toFixed(2)}), en <strong>10 días más</strong> la tasa proyectada es{' '}
+                  Según la regresión lineal (R² = {forecast.r2.toFixed(2)}), en <strong>{forecastDays} días más</strong> la tasa proyectada es{' '}
                   <strong>{forecastRate.toFixed(2)} CUP/USD</strong>, lo que elevaría el costo de reposición a{' '}
-                  <strong>{costIn10Days.toFixed(2)} CUP</strong> — {changeToForecast >= 0 ? '+' : ''}{changeToForecast.toFixed(2)} CUP ({changeToForecastPct >= 0 ? '+' : ''}{changeToForecastPct.toFixed(1)}%) respecto a hoy.
+                  <strong>{costInFuture.toFixed(2)} CUP</strong> — {changeToForecast >= 0 ? '+' : ''}{changeToForecast.toFixed(2)} CUP ({changeToForecastPct >= 0 ? '+' : ''}{changeToForecastPct.toFixed(1)}%) respecto a hoy.
                 </span>
               </>
             )}
@@ -745,18 +1194,18 @@ function HistoryTab({ data }: any) {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-xs font-mono text-muted-foreground">
               <div className="bg-muted/40 rounded p-2">
                 <p className="text-foreground font-bold mb-1">Costo en fecha X:</p>
-                <p>costoX = USD × tasa(X)</p>
+                <p>costoX = USD × tasa({rateSourceMeta.label}, X)</p>
                 <p className="text-foreground">= {usd.toFixed(2)} × {purchaseRate.toFixed(2)} = {costAtPurchase.toFixed(2)} CUP</p>
               </div>
               <div className="bg-muted/40 rounded p-2">
                 <p className="text-foreground font-bold mb-1">Costo hoy:</p>
-                <p>costoHoy = USD × tasa(hoy)</p>
+                <p>costoHoy = USD × tasa({rateSourceMeta.label}, hoy)</p>
                 <p className="text-foreground">= {usd.toFixed(2)} × {currentRate.toFixed(2)} = {costNow.toFixed(2)} CUP</p>
               </div>
               <div className="bg-muted/40 rounded p-2">
-                <p className="text-foreground font-bold mb-1">Costo en +10 días:</p>
-                <p>costo+10d = USD × tasa_proy(+10d)</p>
-                <p className="text-foreground">= {usd.toFixed(2)} × {forecastRate.toFixed(2)} = {costIn10Days.toFixed(2)} CUP</p>
+                <p className="text-foreground font-bold mb-1">Costo en +{forecastDays} días:</p>
+                <p>costo+{forecastDays}d = USD × tasa_proy({rateSourceMeta.label}, +{forecastDays}d)</p>
+                <p className="text-foreground">= {usd.toFixed(2)} × {forecastRate.toFixed(2)} = {costInFuture.toFixed(2)} CUP</p>
               </div>
             </div>
             {forecast && (
