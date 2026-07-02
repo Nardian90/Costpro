@@ -164,7 +164,10 @@ export default function TelegramConversationsView() {
   }, [selectedContact, loadMessages]);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    // Fix header: usar block: 'nearest' para que scrollIntoView solo mueva
+    // el contenedor de mensajes, no toda la página. Sin esto, scrollIntoView
+    // sube por todos los ancestors hasta el viewport, llevándose el header.
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }, [messages]);
 
   const handleSend = async () => {

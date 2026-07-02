@@ -211,7 +211,9 @@ export default function WhatsAppConversationsView() {
   }, [on, selectedContact]);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    // Fix header: usar block: 'nearest' para que scrollIntoView solo mueva
+    // el contenedor de mensajes, no toda la página.
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }, [messages]);
 
   const handleSend = async () => {

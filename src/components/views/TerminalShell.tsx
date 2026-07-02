@@ -428,9 +428,9 @@ export default function TerminalShell() {
       )}
 
       <main id="main-content" className={cn(
-        "flex-1 flex flex-col z-10 min-w-0 transition-[padding-left,padding-right] duration-300 cubic-bezier(0.4,0,0.2,1) overflow-x-hidden",
+        "flex-1 h-full flex flex-col z-10 min-w-0 transition-[padding-left,padding-right] duration-300 cubic-bezier(0.4,0,0.2,1) overflow-x-hidden overflow-y-hidden",
         !isMobile && sidebarWidths[sidebarState]
-      )} role="main" style={{ height: '100vh', maxHeight: '100vh', overflowY: 'hidden' }}>
+      )} role="main">
         {/* En modo lectura de ayuda, ocultamos el Header global para tener pantalla limpia. */}
         {!isHelpReadingMode && (
           <Header
@@ -460,7 +460,7 @@ export default function TerminalShell() {
             : currentView === 'help'
               ? "overflow-y-auto p-0"
               : "overflow-y-auto px-3 sm:px-4 pt-0 pb-24 sm:pb-24 lg:pb-28"
-        )} style={{ minHeight: 0, overflowY: (currentView === 'telegram-conversations' || currentView === 'whatsapp-conversations') ? 'hidden' : 'auto' }}>
+        )}>
           <ParticleBackground />
           <Suspense fallback={
             <ViewLoadingSplash
@@ -486,7 +486,6 @@ export default function TerminalShell() {
                   // fixed (carrito). max-w-7xl dejaría demasiado espacio muerto a la derecha.
                   (currentView === 'cost-sheets' || currentView === 'ipv' || currentView === 'pos') ? "max-w-none" : "max-w-7xl"
                 )}
-                style={(currentView === 'telegram-conversations' || currentView === 'whatsapp-conversations') ? { height: '100%', overflow: 'hidden' } : undefined}
               >
                 <ChunkErrorBoundary chunkName={String(currentView)}>
                   <MobileSafeContainer>
