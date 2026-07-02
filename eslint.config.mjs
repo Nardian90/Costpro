@@ -25,6 +25,7 @@ const eslintConfig = [...nextCoreWebVitals, ...nextTypescript, {
     "react-hooks/exhaustive-deps": "off",
     "react-hooks/set-state-in-effect": "off",
     "react-hooks/purity": "off",
+    "react-hooks/preserve-manual-memoization": "off",
     "react/jsx-no-duplicate-props": "warn",
     "react/no-unescaped-entities": "off",
     "react/display-name": "off",

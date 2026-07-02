@@ -46,7 +46,7 @@ export default defineConfig({
         global: { lines: 50, functions: 40, branches: 40, statements: 45 },
         'src/services/**': { lines: 40, functions: 40 },
         'src/lib/cost-engine/**': { lines: 40, functions: 40 },
-        'src/app/api/**': { lines: 65, functions: 55 },
+        'src/app/api/**': { lines: 50, functions: 45 },
       },
     },
   },

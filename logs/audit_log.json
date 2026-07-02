@@ -1,0 +1,24 @@
+[
+  {
+    "timestamp": "2026-07-02T04:01:59.376055+00:00",
+    "git": {
+      "last_commit": "c6555e8cc fix(telegram): bot\u00f3n refresh junto a enviar + polling 30s + ocultar ChatBot en conversaciones",
+      "commit_hash": "c6555e8cc8a89dc61099617261457527d03489d9",
+      "commit_date": "2026-07-02 03:52:52 +0000",
+      "branch": "main",
+      "total_commits": "3152"
+    },
+    "code_stats": {
+      "ts_files": 1040,
+      "total_lines": 219943
+    },
+    "components": {
+      "tsx_files": 526,
+      "ts_files": 514,
+      "api_routes": 109,
+      "tests": 50,
+      "migrations": 154
+    },
+    "status": "healthy"
+  }
+]

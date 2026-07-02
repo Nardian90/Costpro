@@ -1,0 +1,24 @@
+{
+  "timestamp": "2026-07-02T04:01:59.376055+00:00",
+  "status": "healthy",
+  "score": 100,
+  "checks": {
+    "codebase_size": {
+      "status": "ok",
+      "files": 1040,
+      "lines": 219943
+    },
+    "tests": {
+      "status": "ok",
+      "count": 50
+    },
+    "api_routes": {
+      "status": "ok",
+      "count": 109
+    },
+    "git": {
+      "status": "ok",
+      "last_commit": "c6555e8cc fix(telegram): bot\u00f3n refresh junto a enviar + polling 30s + ocultar ChatBot en conversaciones"
+    }
+  }
+}
