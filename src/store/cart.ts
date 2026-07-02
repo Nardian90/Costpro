@@ -438,11 +438,12 @@ export const useCartStore = create<CartState>()(
         return Number(tax.toFixed(2));
       },
 
+      // FIX-P1-C: getTotal usa getSubtotalCup() para consistencia con descuentos/impuestos
       getTotal: () => {
-        const subtotal = get().getSubtotal();
+        const subtotalCup = get().getSubtotalCup();
         const discountAmount = get().getDiscountAmount();
         const taxAmount = get().getTaxAmount();
-        return Number(Math.max(0, subtotal - discountAmount + taxAmount).toFixed(2));
+        return Number(Math.max(0, subtotalCup - discountAmount + taxAmount).toFixed(2));
       },
 
       clearCart: () => set({

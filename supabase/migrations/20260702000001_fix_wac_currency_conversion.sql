@@ -214,12 +214,14 @@ BEGIN
     END IF;
 
     -- receipt_items guarda unit_cost en moneda original (correcto)
+    -- FIX-P1-A: insertar variant_id si viene en el JSON
     INSERT INTO public.receipt_items (
-      receipt_id, product_id, quantity, unit_cost,
+      receipt_id, product_id, variant_id, quantity, unit_cost,
       moneda_recepcion, tasa_cambio_recepcion,
       created_at, updated_at
     ) VALUES (
-      v_receipt_id, v_product_id, v_quantity, v_unit_cost,
+      v_receipt_id, v_product_id, NULLIF(v_item->>'variant_id', '')::uuid,
+      v_quantity, v_unit_cost,
       v_moneda, v_tasa,
       v_effective_date, v_effective_date
     );
