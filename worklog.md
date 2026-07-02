@@ -468,3 +468,98 @@ Stage Summary:
 - **No procesa contenido del archivo** (eso es VLM T10 para imágenes, ASR T11 para voz) — pero guarda file_id para descarga on-demand
 - **19 tests nuevos** cubren extracción de los 12 tipos, API multimedia, bot-client, schema
 - **0 regresiones**: 728 tests pre-existentes siguen pasando
+
+---
+Task ID: IC-UIUX-REDESIGN
+Agent: Main Agent (Super Z)
+Task: Mejorar UI/UX del módulo Inteligencia Cambiaria (tab Dashboard y tab Histórico) según feedback del usuario
+
+Work Log:
+
+### Problemas reportados por el usuario
+**Tab Dashboard:**
+1. Tarjeta BCC siempre decía "Segmento 3" sin importar el segmento seleccionado
+2. Tarjeta elToque mostraba % de variación 30 días sin icono informativo
+3. Tarjeta Brecha Cambiaria decía "niveles normales" para 15% sin base científica
+4. KPIs secundarios repetían info: "Variación 30 días" y "Tasa actual USD" ya estaban en Card 2
+5. Análisis Ejecutivo repetía "niveles normales" sin justificación
+
+**Tab Histórico:**
+6. Leyenda mostraba BCC primero, luego elToque (confunde con gráfico)
+7. BCC era azul en el gráfico pero verde en el tab Dashboard (inconsistencia)
+8. Solo presets (7/30/90/Todo), sin fecha inicio/fin personalizadas
+9. Sin métodos de tendencia científicos
+10. Sin explicación pedagógica del impacto de la tasa en costos
+
+### Soluciones implementadas
+
+**Helpers nuevos (en ExchangeIntelligenceView.tsx):**
+- `calcBrechaStats(rates, segment, window=90)` — calcula avg, std, z-score, delta7d, dailyChangeStd, isAbruptChange (detección de anomalía 2σ)
+- `getBrechaStatus(stats)` — clasifica según umbrales FMI/Reinhart-Rogoff (<5% Estable, 5-15% Presión leve, 15-30% Desalineación moderada, 30-50% seria, >50% crisis) + override por anomalía estadística
+- `forecastTrend(values, steps)` — regresión lineal por mínimos cuadrados con R² y clasificación de confianza (alta ≥0.7, media 0.4-0.7, baja <0.4)
+- `calcVolatility(values)` — desviación estándar de cambios diarios (%)
+- `InfoTooltip` — componente reutilizable (Popover de Radix) con icono ℹ️
+
+**Tab Dashboard (reescritura completa de DashboardTab):**
+- Card 1 (BCC): badge ahora muestra "Estatal"/"CADECA"/"MIPYMES" según segmento seleccionado + descripción del segmento + InfoTooltip explicando los 3 segmentos
+- Card 2 (elToque): % variación ahora muestra ventana real de días (no siempre "30 días") + InfoTooltip con fórmula matemática y valores usados
+- Card 3 (Brecha): reemplazado "niveles normales" por análisis científico dual:
+  - Clasificación internacional FMI (con label visible: "Estable (<5%)", "Presión leve (5-15%)", etc.)
+  - Métricas estadísticas: promedio 90d, σ, z-score, Δ7d, volatilidad diaria
+  - Detección de cambio abrupto (Δ7d > 2σ) → "Cambio abrupto detectado" + explicación
+- KPIs secundarios: reemplazados por:
+  1. Volatilidad 7 días (σ de cambios diarios)
+  2. Cambio semanal (% últimos 7 días)
+  3. Proyección 10 días (regresión lineal con R² y confianza alta/media/baja)
+- Cada KPI tiene InfoTooltip explicando método de cálculo
+- Análisis Ejecutivo ahora dinámico: usa brechaStatus.explanation + grid de 4 métricas (brecha actual, vs promedio 90d, z-score, proyección 10d)
+
+**Tab Histórico (reescritura completa de HistoryTab.tsx):**
+- Leyenda reordenada: elToque PRIMERO (mayor valor), BCC después — coincide con orden visual del gráfico
+- BCC cambiado de azul #3b82f6 a verde #22c55e (success) — coincide con border-primary del tab Dashboard
+- elToque sigue naranja #f97316 — coincide con amber-500 del Dashboard
+- Nota visible debajo del gráfico explica la coordinación de colores
+- Selectores de fecha:
+  - Presets existentes (7/30/90/Todo) preservados
+  - Botón "Personalizado" activa dos date pickers (Calendar de react-day-picker en Popover)
+  - Los date pickers respetan el rango (no se puede seleccionar end < start)
+- Selector de método de tendencia (5 opciones):
+  - Ninguna, Media móvil 7d (SMA), Media móvil 30d (SMA), Regresión lineal, Regresión polinomial grado 2
+  - Cada método implementado: sma(), linearRegression(), polyRegression2() (sistema 3x3 por regla de Cramer)
+  - Línea morada punteada se renderiza sobre el gráfico cuando se selecciona un método
+  - InfoTooltip explica cada método y cuándo usarlo
+- Card "Calculadora de impacto en precios" abajo del gráfico (estilo Diátaxis — explicación + cómo usar):
+  - Input: fecha de compra (select con todas las fechas del rango) + costo en USD
+  - Timeline visual de 3 etapas: Compra (azul), Hoy (ámbar), +10 días (morado si R² ≥ 0.4)
+  - Para cada etapa: tasa, costo total, Δ desde etapa anterior
+  - Veredicto narrativo dinámico: si R² < 0.4 advierte "proyección no confiable"; si no, narra el escenario completo
+  - Bloque "Cálculo" muestra las 3 fórmulas (costoX, costoHoy, costo+10d) con valores reales sustituidos
+  - Indicador de confianza al final: ✓ R² alto, ⚠ R² medio, ⚠ R² bajo
+
+### Validación
+- TypeScript: 0 errores en archivos modificados (npx tsc --noEmit)
+- ESLint: 6 errores restantes, todos pre-existentes (officialUsd, lossPerUnit, StatBox en ImpactTab — no tocados en este task)
+- Reducción de 33 → 8 errores de unused-vars en el archivo principal
+
+### Archivos modificados
+1. `src/components/views/terminal/views/exchange_intelligence/ExchangeIntelligenceView.tsx`
+   - Imports: añadidos Popover, Info, Sigma, Target; eliminados useTranslations, recharts (no usados aquí), Calendar, Zap
+   - Helpers nuevos: calcBrechaStats, getBrechaStatus, forecastTrend, calcVolatility, InfoTooltip
+   - segmentShortLabels + segmentDescriptions nuevos mapas
+   - DashboardTab: reescrita completamente con análisis científico
+   - KpiCard: añadido prop `tooltip`
+
+2. `src/components/views/terminal/views/exchange_intelligence/lazy/HistoryTab.tsx`
+   - Reescrito completamente
+   - Imports: Popover, Calendar, Button, ComposedChart (Combina Area + Line), date-fns (format, parseISO, differenceInCalendarDays)
+   - Helpers locales: sma, linearRegression, polyRegression2, InfoTooltip
+   - Colores: BCC verde #22c55e, elToque naranja #f97316, tendencia morado #a855f7
+   - Estado: preset + useCustomRange + startDate/endDate + trendMethod + purchaseDateIdx + costUsd
+   - UI: 3 bloques (controles + gráfico + calculadora Diátaxis)
+
+Stage Summary:
+- **Tab Dashboard** ahora muestra análisis científico real: clasificación FMI + z-score + detección de anomalías 2σ en lugar de "niveles normales" arbitrarios
+- **Tab Histórico** con fecha personalizada, 5 métodos de tendencia científicos, y calculadora de impacto con veredicto narrativo estilo Diátaxis
+- **Coordinación visual** entre tabs: BCC verde y elToque naranja en ambos
+- **InfoTooltips** en todas las tarjetas y KPIs explican cálculo, umbrales y limitaciones
+- **0 errores TS**, **6 lint errors pre-existentes** (no tocados), reducción de 33→8 unused-vars
