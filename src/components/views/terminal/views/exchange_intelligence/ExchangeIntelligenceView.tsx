@@ -148,7 +148,7 @@ export function ExchangeIntelligenceView() {
   const usdOfficial = latestOfficial.find(r => r.currency === 'USD')?.rate ?? FALLBACK_OFFICIAL.USD;
   const usdInformal = latestInformal.find(r => r.currency === 'USD')?.rate ?? FALLBACK_INFORMAL.USD;
   const diff = usdInformal - usdOfficial;
-  const diffPct = usdOfficial > 0 ? ((diff / usdOfficial) * 100).toFixed(1) : '0';
+  const diffPct = usdOfficial > 0 ? ((diff / usdOfficial) * 100).toFixed(0) : '0';
 
   // Construir datos históricos para gráficos
   const historyData: HistoryPoint[] = useCallback(() => {
@@ -306,7 +306,7 @@ export function ExchangeIntelligenceView() {
             {activeTab === 'variations' && <Suspense fallback={<div className="flex items-center justify-center py-24"><RefreshCw className="w-8 h-8 animate-spin text-primary" /></div>}><VariationsTab data={historyData} /></Suspense>}
             {activeTab === 'impact' && <ImpactTab officialUsd={usdOfficial} informalUsd={usdInformal} historyData={historyData} />}
             {activeTab === 'alerts' && <AlertsTab diffPct={parseFloat(diffPct)} historyData={historyData} />}
-            {activeTab === 'simulator' && <SimulatorTab informalUsd={usdInformal} />}
+            {activeTab === 'simulator' && <SimulatorTab informalUsd={usdInformal} officialUsd={usdOfficial} historyData={historyData} />}
           </>
         )}
       </div>
@@ -675,7 +675,7 @@ function DashboardTab({
               </div>
             </div>
             <div className="flex items-baseline gap-2 mb-2">
-              <span className="text-4xl font-black font-mono text-foreground">{officialUsd.toFixed(2)}</span>
+              <span className="text-4xl font-black font-mono text-foreground">{officialUsd.toFixed(0)}</span>
               <span className="text-sm font-bold text-muted-foreground">CUP / USD</span>
             </div>
             <div className="flex items-center gap-4 text-sm">
@@ -715,9 +715,9 @@ function DashboardTab({
                     Valores usados en este cálculo:
                   </p>
                   <ul className="list-disc pl-4 mt-1 space-y-0.5">
-                    <li>Tasa hace {monthWindowDays} días: <strong>{monthStart.toFixed(2)} CUP/USD</strong></li>
-                    <li>Tasa actual: <strong>{monthEnd.toFixed(2)} CUP/USD</strong></li>
-                    <li>Variación: <strong>{monthChange >= 0 ? '+' : ''}{monthChange.toFixed(2)}%</strong></li>
+                    <li>Tasa hace {monthWindowDays} días: <strong>{monthStart.toFixed(0)} CUP/USD</strong></li>
+                    <li>Tasa actual: <strong>{monthEnd.toFixed(0)} CUP/USD</strong></li>
+                    <li>Variación: <strong>{monthChange >= 0 ? '+' : ''}{monthChange.toFixed(0)}%</strong></li>
                     <li>Ventana: <strong>{monthWindowDays} días</strong> {monthWindowDays < 30 && '(menos de 30 días de histórico disponible)'}</li>
                   </ul>
                   <p className="mt-2 pt-2 border-t border-border/50 text-xs">
@@ -730,13 +730,13 @@ function DashboardTab({
               </div>
             </div>
             <div className="flex items-baseline gap-2 mb-2">
-              <span className="text-4xl font-black font-mono text-foreground">{informalUsd.toFixed(2)}</span>
+              <span className="text-4xl font-black font-mono text-foreground">{informalUsd.toFixed(0)}</span>
               <span className="text-sm font-bold text-muted-foreground">CUP / USD</span>
             </div>
             <div className="flex items-center gap-2 text-sm">
               <span className={cn('flex items-center gap-1 font-bold', monthChange >= 0 ? 'text-destructive' : 'text-success')}>
                 {monthChange >= 0 ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
-                {monthChange >= 0 ? '+' : ''}{monthChange.toFixed(1)}% ({monthWindowDays} días)
+                {monthChange >= 0 ? '+' : ''}{monthChange.toFixed(0)}% ({monthWindowDays} días)
               </span>
             </div>
           </div>
@@ -802,7 +802,7 @@ function DashboardTab({
           </div>
           <div className="text-right shrink-0">
             <p className={cn('text-3xl font-black font-mono', trendColor)}>+{diffPct}%</p>
-            <p className="text-sm text-muted-foreground">+{diff.toFixed(2)} CUP</p>
+            <p className="text-sm text-muted-foreground">+{diff.toFixed(0)} CUP</p>
           </div>
         </div>
 
@@ -811,11 +811,11 @@ function DashboardTab({
           <div className="grid grid-cols-2 md:grid-cols-5 gap-2 mb-4">
             <div className="bg-background/60 rounded-lg p-2 border border-border/50 text-center">
               <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Promedio 90d</p>
-              <p className="text-sm font-black font-mono text-foreground">{brechaStats.avg.toFixed(1)}%</p>
+              <p className="text-sm font-black font-mono text-foreground">{brechaStats.avg.toFixed(0)}%</p>
             </div>
             <div className="bg-background/60 rounded-lg p-2 border border-border/50 text-center">
               <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Desv. estándar</p>
-              <p className="text-sm font-black font-mono text-foreground">{brechaStats.std.toFixed(1)}%</p>
+              <p className="text-sm font-black font-mono text-foreground">{brechaStats.std.toFixed(0)}%</p>
             </div>
             <div className="bg-background/60 rounded-lg p-2 border border-border/50 text-center">
               <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Z-score</p>
@@ -826,7 +826,7 @@ function DashboardTab({
             <div className="bg-background/60 rounded-lg p-2 border border-border/50 text-center">
               <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Δ 7 días</p>
               <p className={cn('text-sm font-black font-mono', brechaStats.isAbruptChange ? 'text-destructive' : 'text-foreground')}>
-                {brechaStats.delta7d >= 0 ? '+' : ''}{brechaStats.delta7d.toFixed(1)}pp
+                {brechaStats.delta7d >= 0 ? '+' : ''}{brechaStats.delta7d.toFixed(0)}pp
               </p>
             </div>
             <div className="bg-background/60 rounded-lg p-2 border border-border/50 text-center">
@@ -860,7 +860,7 @@ function DashboardTab({
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <KpiCard
           label="Volatilidad 7 días"
-          value={`${volatility7d.toFixed(2)}%`}
+          value={`${volatility7d.toFixed(0)}%`}
           icon={Sigma}
           color={volatility7d > 5 ? 'risk' : volatility7d > 2 ? 'warning' : 'success'}
           subtitle="σ de cambios diarios del USD informal"
@@ -883,7 +883,7 @@ function DashboardTab({
         />
         <KpiCard
           label="Cambio semanal"
-          value={`${weeklyChange >= 0 ? '+' : ''}${weeklyChange.toFixed(2)}%`}
+          value={`${weeklyChange >= 0 ? '+' : ''}${weeklyChange.toFixed(0)}%`}
           icon={weeklyChange >= 0 ? TrendingUp : TrendingDown}
           color={weeklyChange > 5 ? 'risk' : weeklyChange > 2 ? 'warning' : 'success'}
           subtitle="USD informal últimos 7 días"
@@ -896,16 +896,16 @@ function DashboardTab({
                 var% = ((tasaHoy − tasaHace7d) / tasaHace7d) × 100
               </code>
               <ul className="list-disc pl-4 mt-2 text-xs space-y-0.5">
-                <li>Tasa hace 7 días: <strong>{weekStart.toFixed(2)} CUP</strong></li>
-                <li>Tasa actual: <strong>{weekEnd.toFixed(2)} CUP</strong></li>
-                <li>Variación: <strong>{weeklyChange >= 0 ? '+' : ''}{weeklyChange.toFixed(2)}%</strong></li>
+                <li>Tasa hace 7 días: <strong>{weekStart.toFixed(0)} CUP</strong></li>
+                <li>Tasa actual: <strong>{weekEnd.toFixed(0)} CUP</strong></li>
+                <li>Variación: <strong>{weeklyChange >= 0 ? '+' : ''}{weeklyChange.toFixed(0)}%</strong></li>
               </ul>
             </InfoTooltip>
           }
         />
         <KpiCard
           label="Proyección 10 días"
-          value={`${forecastProjection.toFixed(2)} CUP`}
+          value={`${forecastProjection.toFixed(0)} CUP`}
           icon={Target}
           color={forecastConfidence === 'high' ? 'success' : forecastConfidence === 'medium' ? 'warning' : 'risk'}
           subtitle={`Regresión lineal · R²=${forecastR2.toFixed(2)} · conf.${forecastConfidence === 'high' ? 'alta' : forecastConfidence === 'medium' ? 'media' : 'baja'}`}
@@ -920,8 +920,8 @@ function DashboardTab({
               <ul className="list-disc pl-4 mt-2 text-xs space-y-0.5">
                 <li>Pendiente (m): <strong>{forecast10d?.slope.toFixed(3) ?? '—'} CUP/día</strong></li>
                 <li>R² (bondad de ajuste): <strong>{forecastR2.toFixed(3)}</strong></li>
-                <li>Tasa actual: <strong>{informalUsd.toFixed(2)} CUP</strong></li>
-                <li>Proyección +10 días: <strong>{forecastProjection.toFixed(2)} CUP</strong></li>
+                <li>Tasa actual: <strong>{informalUsd.toFixed(0)} CUP</strong></li>
+                <li>Proyección +10 días: <strong>{forecastProjection.toFixed(0)} CUP</strong></li>
               </ul>
               <p className="mt-2 text-xs pt-2 border-t border-border/50">
                 <strong>Confianza:</strong> R² ≥ 0.7 alta · 0.4-0.7 media · &lt;0.4 baja (no usar para decisiones).
@@ -946,7 +946,7 @@ function DashboardTab({
           <h3 className="text-lg font-black uppercase tracking-tight text-foreground">Análisis Ejecutivo</h3>
         </div>
         <p className="text-sm text-foreground leading-relaxed mb-3">
-          La brecha entre la tasa oficial ({officialUsd.toFixed(2)} CUP) y la informal ({informalUsd.toFixed(2)} CUP) es de <strong className={trendColor}>{diffPct}%</strong>.{' '}
+          La brecha entre la tasa oficial ({officialUsd.toFixed(0)} CUP) y la informal ({informalUsd.toFixed(0)} CUP) es de <strong className={trendColor}>{diffPct}%</strong>.{' '}
           {brechaStatus
             ? brechaStatus.explanation
             : 'No hay suficientes datos históricos para análisis estadístico. Se requieren al menos 5 muestras de la brecha.'}
@@ -955,12 +955,12 @@ function DashboardTab({
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-4">
             <div className="bg-background/60 rounded-lg p-2 border border-border/50">
               <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Brecha actual</p>
-              <p className={cn('text-sm font-black font-mono', trendColor)}>{brechaStats.current.toFixed(2)}%</p>
+              <p className={cn('text-sm font-black font-mono', trendColor)}>{brechaStats.current.toFixed(0)}%</p>
             </div>
             <div className="bg-background/60 rounded-lg p-2 border border-border/50">
               <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">vs Promedio 90d</p>
               <p className="text-sm font-black font-mono text-foreground">
-                {brechaStats.current >= brechaStats.avg ? '+' : ''}{(brechaStats.current - brechaStats.avg).toFixed(2)}pp
+                {brechaStats.current >= brechaStats.avg ? '+' : ''}{(brechaStats.current - brechaStats.avg).toFixed(0)}pp
               </p>
             </div>
             <div className="bg-background/60 rounded-lg p-2 border border-border/50">
@@ -992,17 +992,35 @@ function DashboardTab({
 // TAB 4: Impacto sobre Precios — Rediseño completo con accesibilidad mejorada
 // ════════════════════════════════════════════════════════════════════
 function ImpactTab({ officialUsd, informalUsd, historyData }: any) {
-  const informalData = historyData.filter((d: any) => d.informal != null && d.informal > 0);
+  // ─── Toggle tasa formal/informal ───
+  const [rateSource, setRateSource] = useState<'informal' | 'oficial'>('informal');
+  const rateSourceMeta = {
+    informal: { label: 'elToque (informal)', color: 'text-orange-500', current: informalUsd },
+    oficial: { label: 'BCC (oficial)', color: 'text-green-500', current: officialUsd },
+  }[rateSource];
 
-  const defaultIdx = Math.max(0, informalData.length - 16);
+  // ─── Datos: filtrar por la tasa seleccionada ───
+  const dataForRate = historyData.filter((d: any) =>
+    rateSource === 'informal' ? d.informal != null && d.informal > 0 : d.oficial != null && d.oficial > 0
+  );
+
+  const defaultIdx = Math.max(0, dataForRate.length - 16);
   const [purchaseDateIdx, setPurchaseDateIdx] = useState(defaultIdx);
   const [costUsd, setCostUsd] = useState('1');
   const [marginPct, setMarginPct] = useState('30');
 
-  const purchaseDate = informalData[purchaseDateIdx]?.date ?? '';
-  const purchaseRate = informalData[purchaseDateIdx]?.informal ?? informalUsd;
-  const currentDate = informalData[informalData.length - 1]?.date ?? '';
-  const currentRate = informalUsd;
+  // Reset purchaseDateIdx cuando cambia la tasa (para evitar índices fuera de rango)
+  React.useEffect(() => {
+    setPurchaseDateIdx(Math.max(0, dataForRate.length - 16));
+  }, [rateSource]);
+
+  const safePurchaseIdx = Math.min(purchaseDateIdx, Math.max(0, dataForRate.length - 1));
+  const purchaseDate = dataForRate[safePurchaseIdx]?.date ?? '';
+  const purchaseRate = (rateSource === 'informal'
+    ? dataForRate[safePurchaseIdx]?.informal
+    : dataForRate[safePurchaseIdx]?.oficial) ?? rateSourceMeta.current;
+  const currentDate = dataForRate[dataForRate.length - 1]?.date ?? '';
+  const currentRate = rateSourceMeta.current;
 
   const usd = parseFloat(costUsd) || 0;
   const margin = parseFloat(marginPct) || 0;
@@ -1015,19 +1033,51 @@ function ImpactTab({ officialUsd, informalUsd, historyData }: any) {
   const recommendedPrice = costCupNow * (1 + margin / 100);
   const priceIncrease = recommendedPrice - salePrice;
   const priceIncreasePct = salePrice > 0 ? (priceIncrease / salePrice) * 100 : 0;
-  const lossPerUnit = salePrice - costCupNow;
   const isLosing = realUtility < 0;
+
+  // ─── Label dinámico: "Aumento" o "Disminución" según el signo de priceIncrease ───
+  const isIncrease = priceIncrease >= 0;
+  const priceChangeLabel = isIncrease ? 'Aumento necesario' : 'Disminución necesaria';
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       {/* ── Sección 1: Configuración ── */}
       <div className="bg-card rounded-2xl border-2 border-border p-6">
-        <h3 className="text-base font-black uppercase tracking-widest text-foreground mb-2">
-          Calculadora de Impacto Cambiario
-        </h3>
-        <p className="text-sm text-muted-foreground mb-6">
-          Descubre cuánto dinero estás perdiendo al no actualizar tus precios según la devaluación del CUP.
-        </p>
+        <div className="flex items-center justify-between mb-2 flex-wrap gap-3">
+          <div>
+            <h3 className="text-base font-black uppercase tracking-widest text-foreground">
+              Calculadora de Impacto Cambiario
+            </h3>
+            <p className="text-sm text-muted-foreground mt-1">
+              Descubre cuánto dinero estás perdiendo al no actualizar tus precios según la devaluación del CUP.
+            </p>
+          </div>
+          {/* ─── Toggle elToque / BCC ─── */}
+          <div className="flex items-center gap-1 p-1 rounded-xl bg-muted/50 border border-border">
+            <button
+              onClick={() => setRateSource('informal')}
+              className={cn(
+                'px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all min-h-[32px]',
+                rateSource === 'informal'
+                  ? 'bg-orange-500 text-white shadow-md'
+                  : 'text-muted-foreground hover:text-foreground',
+              )}
+            >
+              elToque (informal)
+            </button>
+            <button
+              onClick={() => setRateSource('oficial')}
+              className={cn(
+                'px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all min-h-[32px]',
+                rateSource === 'oficial'
+                  ? 'bg-green-500 text-white shadow-md'
+                  : 'text-muted-foreground hover:text-foreground',
+              )}
+            >
+              BCC (oficial)
+            </button>
+          </div>
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <div>
@@ -1053,18 +1103,22 @@ function ImpactTab({ officialUsd, informalUsd, historyData }: any) {
               Fecha de compra
             </label>
             <select
-              value={purchaseDateIdx}
+              value={safePurchaseIdx}
               onChange={e => setPurchaseDateIdx(Number(e.target.value))}
               className="w-full h-12 px-3 rounded-xl border-2 border-border bg-background text-sm font-bold min-h-[44px] text-foreground"
             >
-              {informalData.map((d: any, i: number) => (
-                <option key={i} value={i}>
-                  {d.date} — 1 USD = {d.informal?.toFixed(0)} CUP
-                </option>
-              ))}
+              {dataForRate.map((d: any, i: number) => {
+                const v = rateSource === 'informal' ? d.informal : d.oficial;
+                return (
+                  <option key={i} value={i}>
+                    {d.date} — 1 USD = {v?.toFixed(0)} CUP
+                  </option>
+                );
+              })}
             </select>
             <p className="text-xs text-muted-foreground mt-1">
-              Tasa al comprar: <strong className="text-primary">{purchaseRate.toFixed(2)} CUP/USD</strong>
+              Tasa al comprar ({rateSourceMeta.label}):{' '}
+              <strong className={rateSourceMeta.color}>{purchaseRate.toFixed(0)} CUP/USD</strong>
             </p>
           </div>
 
@@ -1107,15 +1161,15 @@ function ImpactTab({ officialUsd, informalUsd, historyData }: any) {
             <div className="space-y-1">
               <div className="flex justify-between">
                 <span className="text-sm text-muted-foreground">Costo USD:</span>
-                <span className="text-sm font-black font-mono text-foreground">${usd.toFixed(2)}</span>
+                <span className="text-sm font-black font-mono text-foreground">${usd.toFixed(0)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-sm text-muted-foreground">Tasa:</span>
-                <span className="text-sm font-black font-mono text-primary">{purchaseRate.toFixed(2)} CUP</span>
+                <span className={cn('text-sm font-black font-mono', rateSourceMeta.color)}>{purchaseRate.toFixed(0)} CUP</span>
               </div>
               <div className="flex justify-between border-t border-border/50 pt-1 mt-1">
                 <span className="text-sm font-black text-muted-foreground">Costo CUP:</span>
-                <span className="text-base font-black font-mono text-foreground">{costCupAtPurchase.toFixed(2)} CUP</span>
+                <span className="text-base font-black font-mono text-foreground">{costCupAtPurchase.toFixed(0)} CUP</span>
               </div>
             </div>
           </div>
@@ -1132,15 +1186,15 @@ function ImpactTab({ officialUsd, informalUsd, historyData }: any) {
             <div className="space-y-1">
               <div className="flex justify-between">
                 <span className="text-sm text-muted-foreground">Costo:</span>
-                <span className="text-sm font-black font-mono text-foreground">{costCupAtPurchase.toFixed(2)} CUP</span>
+                <span className="text-sm font-black font-mono text-foreground">{costCupAtPurchase.toFixed(0)} CUP</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-sm text-muted-foreground">Margen:</span>
-                <span className="text-sm font-black font-mono text-success">+{(costCupAtPurchase * margin / 100).toFixed(2)} CUP</span>
+                <span className="text-sm font-black font-mono text-success">+{(costCupAtPurchase * margin / 100).toFixed(0)} CUP</span>
               </div>
               <div className="flex justify-between border-t border-border/50 pt-1 mt-1">
                 <span className="text-sm font-black text-muted-foreground">Precio venta:</span>
-                <span className="text-base font-black font-mono text-foreground">{salePrice.toFixed(2)} CUP</span>
+                <span className="text-base font-black font-mono text-foreground">{salePrice.toFixed(0)} CUP</span>
               </div>
             </div>
           </div>
@@ -1159,15 +1213,15 @@ function ImpactTab({ officialUsd, informalUsd, historyData }: any) {
             <div className="space-y-1">
               <div className="flex justify-between">
                 <span className="text-sm text-muted-foreground">Costo USD:</span>
-                <span className="text-sm font-black font-mono text-foreground">${usd.toFixed(2)}</span>
+                <span className="text-sm font-black font-mono text-foreground">${usd.toFixed(0)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-sm text-muted-foreground">Tasa actual:</span>
-                <span className={cn('text-sm font-black font-mono', isLosing ? 'text-destructive' : 'text-warning')}>{currentRate.toFixed(2)} CUP</span>
+                <span className={cn('text-sm font-black font-mono', isLosing ? 'text-destructive' : 'text-warning')}>{currentRate.toFixed(0)} CUP</span>
               </div>
               <div className="flex justify-between border-t border-border/50 pt-1 mt-1">
                 <span className="text-sm font-black text-muted-foreground">Reposición CUP:</span>
-                <span className={cn('text-base font-black font-mono', isLosing ? 'text-destructive' : 'text-foreground')}>{costCupNow.toFixed(2)} CUP</span>
+                <span className={cn('text-base font-black font-mono', isLosing ? 'text-destructive' : 'text-foreground')}>{costCupNow.toFixed(0)} CUP</span>
               </div>
             </div>
           </div>
@@ -1195,10 +1249,10 @@ function ImpactTab({ officialUsd, informalUsd, historyData }: any) {
               </h4>
               <p className="text-sm text-foreground leading-relaxed">
                 {isLosing
-                  ? `Compraste a ${costCupAtPurchase.toFixed(2)} CUP, vendes a ${salePrice.toFixed(2)} CUP, pero reponer te cuesta ${costCupNow.toFixed(2)} CUP. Estás perdiendo ${Math.abs(realUtility).toFixed(2)} CUP por unidad.`
+                  ? `Compraste a ${costCupAtPurchase.toFixed(0)} CUP, vendes a ${salePrice.toFixed(0)} CUP, pero reponer te cuesta ${costCupNow.toFixed(0)} CUP. Estás perdiendo ${Math.abs(realUtility).toFixed(0)} CUP por unidad.`
                   : realMarginPct < margin
-                  ? `Tu margen real bajó de ${margin}% a ${realMarginPct.toFixed(1)}% por la devaluación del CUP. Para mantener el ${margin}%, debes vender a ${recommendedPrice.toFixed(2)} CUP.`
-                  : `Tu margen se mantiene en ${realMarginPct.toFixed(1)}%. No necesitas ajustar precios aún.`}
+                  ? `Tu margen real bajó de ${margin}% a ${realMarginPct.toFixed(0)}% por la devaluación del CUP. Para mantener el ${margin}%, debes vender a ${recommendedPrice.toFixed(0)} CUP.`
+                  : `Tu margen se mantiene en ${realMarginPct.toFixed(0)}%. No necesitas ajustar precios aún.`}
               </p>
             </div>
           </div>
@@ -1208,23 +1262,23 @@ function ImpactTab({ officialUsd, informalUsd, historyData }: any) {
             <div className="bg-background/70 rounded-lg p-3 text-center border border-border/50">
               <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1">Utilidad real</p>
               <p className={cn('text-lg font-black font-mono', isLosing ? 'text-destructive' : 'text-success')}>
-                {realUtility >= 0 ? '+' : ''}{realUtility.toFixed(2)} CUP
+                {realUtility >= 0 ? '+' : ''}{realUtility.toFixed(0)} CUP
               </p>
             </div>
             <div className="bg-background/70 rounded-lg p-3 text-center border border-border/50">
               <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1">Margen real</p>
               <p className={cn('text-lg font-black font-mono', isLosing ? 'text-destructive' : realMarginPct < margin ? 'text-warning' : 'text-success')}>
-                {realMarginPct.toFixed(1)}%
+                {realMarginPct.toFixed(0)}%
               </p>
             </div>
             <div className="bg-background/70 rounded-lg p-3 text-center border border-border/50">
               <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1">Precio recomendado</p>
-              <p className="text-lg font-black font-mono text-primary">{recommendedPrice.toFixed(2)} CUP</p>
+              <p className="text-lg font-black font-mono text-primary">{recommendedPrice.toFixed(0)} CUP</p>
             </div>
             <div className="bg-background/70 rounded-lg p-3 text-center border border-border/50">
-              <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1">Aumento necesario</p>
-              <p className={cn('text-lg font-black font-mono', priceIncrease > 0 ? 'text-warning' : 'text-success')}>
-                {priceIncrease >= 0 ? '+' : ''}{priceIncrease.toFixed(2)} CUP ({priceIncreasePct.toFixed(1)}%)
+              <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1">{priceChangeLabel}</p>
+              <p className={cn('text-lg font-black font-mono', isIncrease ? 'text-warning' : 'text-success')}>
+                {isIncrease ? '+' : ''}{priceIncrease.toFixed(0)} CUP ({priceIncreasePct >= 0 ? '+' : ''}{priceIncreasePct.toFixed(0)}%)
               </p>
             </div>
           </div>
@@ -1238,10 +1292,10 @@ function ImpactTab({ officialUsd, informalUsd, historyData }: any) {
               <div>
                 <p className="text-sm font-black text-destructive uppercase tracking-widest mb-1">Acción inmediata requerida</p>
                 <p className="text-sm text-foreground leading-relaxed">
-                  Si vendes <strong>{salePrice.toFixed(2)} CUP</strong> pero reponer te cuesta <strong className="text-destructive">{costCupNow.toFixed(2)} CUP</strong>,
-                  pierdes <strong className="text-destructive">{Math.abs(realUtility).toFixed(2)} CUP</strong> por cada unidad vendida.
-                  Para recuperar tu margen del {margin}%, actualiza el precio a <strong className="text-primary">{recommendedPrice.toFixed(2)} CUP</strong>
-                  ({priceIncreasePct.toFixed(1)}% más). Si vendes 100 unidades/mes, pierdes <strong className="text-destructive">{(Math.abs(realUtility) * 100).toFixed(2)} CUP/mes</strong>.
+                  Si vendes <strong>{salePrice.toFixed(0)} CUP</strong> pero reponer te cuesta <strong className="text-destructive">{costCupNow.toFixed(0)} CUP</strong>,
+                  pierdes <strong className="text-destructive">{Math.abs(realUtility).toFixed(0)} CUP</strong> por cada unidad vendida.
+                  Para recuperar tu margen del {margin}%, {isIncrease ? 'aumenta' : 'disminuye'} el precio a <strong className="text-primary">{recommendedPrice.toFixed(0)} CUP</strong>
+                  ({priceIncreasePct >= 0 ? '+' : ''}{priceIncreasePct.toFixed(0)}% {isIncrease ? 'más' : 'menos'}). Si vendes 100 unidades/mes, pierdes <strong className="text-destructive">{(Math.abs(realUtility) * 100).toFixed(0)} CUP/mes</strong>.
                 </p>
               </div>
             </div>
@@ -1277,25 +1331,25 @@ function AlertsTab({ diffPct, historyData }: any) {
     {
       level: monthlyChange > 15 ? 'critical' : monthlyChange > 8 ? 'high' : monthlyChange > 3 ? 'medium' : 'low',
       title: 'Variación mensual del USD informal',
-      message: `El USD informal ha ${monthlyChange >= 0 ? 'crecido' : 'decrecido'} ${Math.abs(monthlyChange).toFixed(1)}% en los últimos 30 días (de ${startRate.toFixed(2)} a ${endRate.toFixed(2)} CUP).`,
+      message: `El USD informal ha ${monthlyChange >= 0 ? 'crecido' : 'decrecido'} ${Math.abs(monthlyChange).toFixed(0)}% en los últimos 30 días (de ${startRate.toFixed(0)} a ${endRate.toFixed(0)} CUP).`,
       recommendation: monthlyChange > 10 ? 'Revisar precios de venta urgentemente' : monthlyChange > 5 ? 'Monitorear de cerca semanalmente' : 'Sin acción requerida',
     },
     {
       level: diffPct > 400 ? 'high' : diffPct > 300 ? 'medium' : 'low',
       title: 'Brecha cambiaria',
-      message: `La brecha entre tasa oficial e informal es del ${diffPct.toFixed(1)}%.`,
+      message: `La brecha entre tasa oficial e informal es del ${diffPct.toFixed(0)}%.`,
       recommendation: diffPct > 400 ? 'Riesgo de pérdida de margen — revisar estrategia de precios' : 'Niveles normales',
     },
     {
       level: weeklyChange > 5 ? 'high' : weeklyChange > 2 ? 'medium' : 'low',
       title: 'Cambio semanal',
-      message: `El USD informal ha variado ${weeklyChange >= 0 ? '+' : ''}${weeklyChange.toFixed(1)}% en los últimos 7 días.`,
+      message: `El USD informal ha variado ${weeklyChange >= 0 ? '+' : ''}${weeklyChange.toFixed(0)}% en los últimos 7 días.`,
       recommendation: weeklyChange > 5 ? 'Volatilidad alta — considerar ajustes preventivos' : 'Variación normal',
     },
     {
       level: 'low',
       title: 'Rango histórico',
-      message: `Máximo: ${maxRate.toFixed(2)} CUP (${maxDate}) · Mínimo: ${minRate.toFixed(2)} CUP (${minDate}).`,
+      message: `Máximo: ${maxRate.toFixed(0)} CUP (${maxDate}) · Mínimo: ${minRate.toFixed(0)} CUP (${minDate}).`,
       recommendation: 'Usar como referencia para análisis de tendencias',
     },
   ];
@@ -1338,60 +1392,480 @@ function AlertsTab({ diffPct, historyData }: any) {
 }
 
 // ════════════════════════════════════════════════════════════════════
-// TAB 6: Simulador Empresarial
+// TAB 6: Simulador Empresarial — basado en modelos de tendencia
 // ════════════════════════════════════════════════════════════════════
-function SimulatorTab({ informalUsd }: any) {
-  const [currentPrice, setCurrentPrice] = useState('650');
-  const price = parseFloat(currentPrice) || 0;
-  const scenarios = [
-    { name: 'Conservador', change: 0.10, color: 'success', desc: 'USD sube 10%' },
-    { name: 'Probable', change: 0.20, color: 'warning', desc: 'USD sube 20%' },
-    { name: 'Agresivo', change: 0.50, color: 'destructive', desc: 'USD sube 50%' },
-  ];
+
+// ─── Modelos de tendencia disponibles para el simulador ───
+type TrendModelId = 'linear' | 'sma7' | 'sma30' | 'poly2';
+const TREND_MODELS: { id: TrendModelId; label: string; description: string }[] = [
+  { id: 'linear', label: 'Regresión lineal', description: 'Ajuste y = m·x + b. Tendencia direccional simple. Útil para escenarios donde la tasa sube/baja de forma constante.' },
+  { id: 'sma7', label: 'Media móvil 7d', description: 'Continúa la SMA de 7 días asumiendo que los próximos 7 días serán como el promedio de la última semana.' },
+  { id: 'sma30', label: 'Media móvil 30d', description: 'Continúa la SMA de 30 días asumiendo que los próximos 7 días serán como el promedio del último mes.' },
+  { id: 'poly2', label: 'Regresión polinomial (grado 2)', description: 'Ajuste cuadrático y = a·x² + b·x + c. Captura aceleración/desaceleración. Mejor para tendencias no lineales.' },
+];
+
+function SimulatorTab({ informalUsd, officialUsd, historyData }: any) {
+  // ─── Tasa: formal o informal ───
+  const [rateSource, setRateSource] = useState<'informal' | 'oficial'>('informal');
+  const rateSourceMeta = {
+    informal: { label: 'elToque (informal)', color: 'text-orange-500', current: informalUsd, colorClass: 'bg-orange-500' },
+    oficial: { label: 'BCC (oficial)', color: 'text-green-500', current: officialUsd, colorClass: 'bg-green-500' },
+  }[rateSource];
+
+  // ─── Datos de la tasa seleccionada ───
+  const dataForRate = (historyData as any[]).filter(d =>
+    rateSource === 'informal' ? d.informal != null : d.oficial != null
+  );
+  const valuesForRate: number[] = (dataForRate as any[])
+    .map(d => (rateSource === 'informal' ? d.informal : d.oficial))
+    .filter((v): v is number => v != null);
+
+  // ─── Tipo de inicio: fecha o valor manual ───
+  const [startMode, setStartMode] = useState<'date' | 'manual'>('manual');
+  const [manualStartRate, setManualStartRate] = useState(String(rateSourceMeta.current.toFixed(0)));
+  const [startIdx, setStartIdx] = useState(Math.max(0, dataForRate.length - 8));
+  const [costUsd, setCostUsd] = useState('100');
+
+  // Reset cuando cambia la tasa
+  React.useEffect(() => {
+    setManualStartRate(String((rateSource === 'informal' ? informalUsd : officialUsd).toFixed(0)));
+    setStartIdx(Math.max(0, dataForRate.length - 8));
+  }, [rateSource]);
+
+  // ─── Helpers: regresión lineal y polinomial grado 2 (locales para no depender del exterior) ───
+  function linearReg(values: number[]): { slope: number; intercept: number; r2: number } | null {
+    if (values.length < 2) return null;
+    const n = values.length;
+    const xs = values.map((_, i) => i);
+    const sumX = xs.reduce((a, b) => a + b, 0);
+    const sumY = values.reduce((a, b) => a + b, 0);
+    const sumXY = xs.reduce((s, x, i) => s + x * values[i], 0);
+    const sumXX = xs.reduce((s, x) => s + x * x, 0);
+    const denom = n * sumXX - sumX * sumX;
+    if (denom === 0) return null;
+    const slope = (n * sumXY - sumX * sumY) / denom;
+    const intercept = (sumY - slope * sumX) / n;
+    const meanY = sumY / n;
+    const ssTot = values.reduce((s, y) => s + (y - meanY) ** 2, 0);
+    const ssRes = values.reduce((s, y, i) => s + (y - (slope * i + intercept)) ** 2, 0);
+    const r2 = ssTot > 0 ? 1 - ssRes / ssTot : 0;
+    return { slope, intercept, r2 };
+  }
+
+  function polyReg2(values: number[]): { a: number; b: number; c: number; r2: number } | null {
+    if (values.length < 4) return null;
+    const n = values.length;
+    let S4 = 0, S3 = 0, S2 = 0, S1 = 0, S0 = n;
+    let Sxy = 0, Sx2y = 0, Sy = 0;
+    for (let i = 0; i < n; i++) {
+      const x = i, y = values[i];
+      S4 += x ** 4; S3 += x ** 3; S2 += x ** 2; S1 += x;
+      Sxy += x * y; Sx2y += x * x * y; Sy += y;
+    }
+    const det = S4 * (S2 * S0 - S1 * S1) - S3 * (S3 * S0 - S1 * S2) + S2 * (S3 * S1 - S2 * S2);
+    if (Math.abs(det) < 1e-9) return null;
+    const a = (Sx2y * (S2 * S0 - S1 * S1) - Sxy * (S3 * S0 - S1 * S2) + Sy * (S3 * S1 - S2 * S2)) / det;
+    const b = (S4 * (Sxy * S0 - Sy * S1) - S3 * (Sx2y * S0 - Sy * S2) + S2 * (Sx2y * S1 - Sxy * S2)) / det;
+    const c = (S4 * (S2 * Sy - S1 * Sxy) - S3 * (S3 * Sy - S1 * Sx2y) + S2 * (S3 * Sxy - S2 * Sx2y)) / det;
+    // R²
+    const meanY = Sy / n;
+    const ssTot = values.reduce((s, y) => s + (y - meanY) ** 2, 0);
+    const ssRes = values.reduce((s, y, i) => s + (y - (a * i * i + b * i + c)) ** 2, 0);
+    const r2 = ssTot > 0 ? 1 - ssRes / ssTot : 0;
+    return { a, b, c, r2 };
+  }
+
+  function smaLast(values: number[], window: number): number | null {
+    if (values.length === 0) return null;
+    const slice = values.slice(-window).filter(v => v != null);
+    if (slice.length === 0) return null;
+    return slice.reduce((a, b) => a + b, 0) / slice.length;
+  }
+
+  // ─── Calcular proyección a 7 días para cada modelo ───
+  const horizon = 7; // siempre +7 días
+  const projections = useMemo(() => {
+    if (valuesForRate.length < 5) return null;
+
+    const results: Record<TrendModelId, { rate7d: number | null; r2: number; model: any }> = {
+      linear: { rate7d: null, r2: 0, model: null },
+      sma7: { rate7d: null, r2: 0, model: null },
+      sma30: { rate7d: null, r2: 0, model: null },
+      poly2: { rate7d: null, r2: 0, model: null },
+    };
+
+    // Lineal
+    const lin = linearReg(valuesForRate);
+    if (lin) {
+      const n = valuesForRate.length;
+      results.linear = {
+        rate7d: lin.slope * (n - 1 + horizon) + lin.intercept,
+        r2: lin.r2,
+        model: lin,
+      };
+    }
+
+    // Polinomial grado 2
+    const poly = polyReg2(valuesForRate);
+    if (poly) {
+      const n = valuesForRate.length;
+      const x = n - 1 + horizon;
+      results.poly2 = {
+        rate7d: poly.a * x * x + poly.b * x + poly.c,
+        r2: poly.r2,
+        model: poly,
+      };
+    }
+
+    // SMA 7d — R² simulado contra la SMA misma (no es un verdadero R² pero damos un indicador)
+    const sma7Last = smaLast(valuesForRate, 7);
+    if (sma7Last != null) {
+      // R² aproximado: 1 - varianza(residuos contra SMA) / varianza(total)
+      const sma7Series = valuesForRate.map((_, i) => {
+        const slice = valuesForRate.slice(Math.max(0, i - 6), i + 1);
+        return slice.reduce((a, b) => a + b, 0) / slice.length;
+      });
+      const mean = valuesForRate.reduce((a, b) => a + b, 0) / valuesForRate.length;
+      const ssTot = valuesForRate.reduce((s, y) => s + (y - mean) ** 2, 0);
+      const ssRes = valuesForRate.reduce((s, y, i) => s + (y - sma7Series[i]) ** 2, 0);
+      const r2 = ssTot > 0 ? 1 - ssRes / ssTot : 0;
+      results.sma7 = { rate7d: sma7Last, r2, model: { avg: sma7Last } };
+    }
+
+    // SMA 30d — similar
+    const sma30Last = smaLast(valuesForRate, 30);
+    if (sma30Last != null) {
+      const sma30Series = valuesForRate.map((_, i) => {
+        const slice = valuesForRate.slice(Math.max(0, i - 29), i + 1);
+        return slice.reduce((a, b) => a + b, 0) / slice.length;
+      });
+      const mean = valuesForRate.reduce((a, b) => a + b, 0) / valuesForRate.length;
+      const ssTot = valuesForRate.reduce((s, y) => s + (y - mean) ** 2, 0);
+      const ssRes = valuesForRate.reduce((s, y, i) => s + (y - sma30Series[i]) ** 2, 0);
+      const r2 = ssTot > 0 ? 1 - ssRes / ssTot : 0;
+      results.sma30 = { rate7d: sma30Last, r2, model: { avg: sma30Last } };
+    }
+
+    return results;
+  }, [valuesForRate]);
+
+  // ─── Seleccionar el modelo con MAYOR R² como default ───
+  // (El usuario pidió "el de menos r2 supongo verdad" — interpretamos como pregunta retórica
+  //  y usamos el de MAYOR R² que es el más confiable científicamente.)
+  const defaultModelId = useMemo(() => {
+    if (!projections) return 'linear' as TrendModelId;
+    let best: TrendModelId = 'linear';
+    let bestR2 = -Infinity;
+    (Object.keys(projections) as TrendModelId[]).forEach(id => {
+      const r2 = projections[id].r2;
+      if (r2 > bestR2) {
+        bestR2 = r2;
+        best = id;
+      }
+    });
+    return best;
+  }, [projections]);
+
+  const [selectedModel, setSelectedModel] = useState<TrendModelId>('linear');
+  React.useEffect(() => {
+    setSelectedModel(defaultModelId);
+  }, [defaultModelId]);
+
+  // ─── Valores base para la simulación ───
+  const startRate = startMode === 'manual'
+    ? (parseFloat(manualStartRate) || rateSourceMeta.current)
+    : ((rateSource === 'informal' ? dataForRate[startIdx]?.informal : dataForRate[startIdx]?.oficial) ?? rateSourceMeta.current);
+  const currentRate = rateSourceMeta.current;
+  const proj7d = projections?.[selectedModel]?.rate7d ?? currentRate;
+  const projR2 = projections?.[selectedModel]?.r2 ?? 0;
+
+  const usd = parseFloat(costUsd) || 0;
+  const costAtStart = usd * startRate;
+  const costNow = usd * currentRate;
+  const costIn7d = usd * proj7d;
+  const changeToNow = costNow - costAtStart;
+  const changeToNowPct = costAtStart > 0 ? (changeToNow / costAtStart) * 100 : 0;
+  const changeTo7d = costIn7d - costNow;
+  const changeTo7dPct = costNow > 0 ? (changeTo7d / costNow) * 100 : 0;
 
   return (
     <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="bg-card rounded-2xl border-2 border-border p-6">
-        <h3 className="text-base font-black uppercase tracking-widest text-foreground mb-4">Simulador de Escenarios</h3>
+        <div className="flex items-center justify-between mb-2 flex-wrap gap-3">
+          <div>
+            <h3 className="text-base font-black uppercase tracking-widest text-foreground">Simulador de Escenarios</h3>
+            <p className="text-sm text-muted-foreground mt-1">
+              Compara el costo de un producto en una tasa inicial vs. la tasa actual y la proyección a 7 días según el modelo de tendencia seleccionado.
+            </p>
+          </div>
+          {/* Toggle elToque / BCC */}
+          <div className="flex items-center gap-1 p-1 rounded-xl bg-muted/50 border border-border">
+            <button
+              onClick={() => setRateSource('informal')}
+              className={cn(
+                'px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all min-h-[32px]',
+                rateSource === 'informal'
+                  ? 'bg-orange-500 text-white shadow-md'
+                  : 'text-muted-foreground hover:text-foreground',
+              )}
+            >
+              elToque (informal)
+            </button>
+            <button
+              onClick={() => setRateSource('oficial')}
+              className={cn(
+                'px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all min-h-[32px]',
+                rateSource === 'oficial'
+                  ? 'bg-green-500 text-white shadow-md'
+                  : 'text-muted-foreground hover:text-foreground',
+              )}
+            >
+              BCC (oficial)
+            </button>
+          </div>
+        </div>
+
+        <p className="text-xs text-muted-foreground italic mb-4">
+          Modelo por defecto: <strong className="text-purple-600 dark:text-purple-400">{TREND_MODELS.find(m => m.id === defaultModelId)?.label}</strong> (mayor R² = {projR2.toFixed(2)}). Puedes cambiarlo abajo.
+        </p>
+
+        {/* ─── Configuración: modo de inicio, valor inicial, costo ─── */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <div>
+            <label className="text-sm font-black uppercase tracking-widest text-foreground block mb-2">
+              Tipo de tasa inicial
+            </label>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setStartMode('manual')}
+                className={cn(
+                  'flex-1 px-3 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all min-h-[40px] border',
+                  startMode === 'manual' ? 'bg-primary text-primary-foreground border-primary' : 'bg-background text-muted-foreground border-border hover:bg-primary/10',
+                )}
+              >
+                Valor manual
+              </button>
+              <button
+                onClick={() => setStartMode('date')}
+                className={cn(
+                  'flex-1 px-3 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all min-h-[40px] border',
+                  startMode === 'date' ? 'bg-primary text-primary-foreground border-primary' : 'bg-background text-muted-foreground border-border hover:bg-primary/10',
+                )}
+              >
+                Fecha histórica
+              </button>
+            </div>
+          </div>
+
+          {startMode === 'manual' ? (
+            <div>
+              <label className="text-sm font-black uppercase tracking-widest text-foreground block mb-2">
+                Tasa inicial (CUP/USD)
+              </label>
+              <input
+                type="number"
+                value={manualStartRate}
+                onChange={e => setManualStartRate(e.target.value)}
+                className="w-full h-12 px-3 rounded-xl border-2 border-border bg-background text-sm font-bold min-h-[44px] text-foreground font-mono"
+                step="1"
+                min="0"
+              />
+              <p className="text-xs text-muted-foreground mt-1">Valor de referencia desde el que comparar</p>
+            </div>
+          ) : (
+            <div>
+              <label className="text-sm font-black uppercase tracking-widest text-foreground block mb-2">
+                Fecha inicial
+              </label>
+              <select
+                value={startIdx}
+                onChange={e => setStartIdx(Number(e.target.value))}
+                className="w-full h-12 px-3 rounded-xl border-2 border-border bg-background text-sm font-bold min-h-[44px] text-foreground"
+              >
+                {dataForRate.map((d: any, i: number) => {
+                  const v = rateSource === 'informal' ? d.informal : d.oficial;
+                  return (
+                    <option key={i} value={i}>
+                      {d.date} — {v?.toFixed(0)} CUP
+                    </option>
+                  );
+                })}
+              </select>
+              <p className="text-xs text-muted-foreground mt-1">Tasa en esa fecha: <strong>{startRate.toFixed(0)} CUP/USD</strong></p>
+            </div>
+          )}
+
+          <div>
+            <label className="text-sm font-black uppercase tracking-widest text-foreground block mb-2">
+              Costo del producto (USD)
+            </label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-black text-muted-foreground">$</span>
+              <input
+                type="number"
+                value={costUsd}
+                onChange={e => setCostUsd(e.target.value)}
+                className="w-full h-12 pl-7 pr-3 rounded-xl border-2 border-border bg-background text-sm font-bold min-h-[44px] text-foreground font-mono"
+                step="0.01"
+                min="0"
+              />
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">Costo base para la simulación</p>
+          </div>
+        </div>
+
+        {/* ─── Selector de modelo de tendencia ─── */}
         <div className="mb-6">
           <label className="text-sm font-black uppercase tracking-widest text-foreground block mb-2">
-            Precio actual del producto (CUP)
+            Modelo de tendencia para proyección a 7 días
           </label>
-          <input
-            type="number"
-            value={currentPrice}
-            onChange={e => setCurrentPrice(e.target.value)}
-            className="w-full max-w-xs h-12 px-3 rounded-xl border-2 border-border bg-background text-sm font-bold min-h-[44px] text-foreground"
-          />
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+            {TREND_MODELS.map(m => {
+              const proj = projections?.[m.id];
+              const r2 = proj?.r2 ?? 0;
+              const isDefault = m.id === defaultModelId;
+              const isSelected = m.id === selectedModel;
+              return (
+                <button
+                  key={m.id}
+                  onClick={() => setSelectedModel(m.id)}
+                  title={m.description}
+                  className={cn(
+                    'p-3 rounded-xl text-left border-2 transition-all',
+                    isSelected
+                      ? 'bg-purple-600 text-white border-purple-600 shadow-md'
+                      : 'bg-background text-foreground border-border hover:bg-purple-600/10 hover:border-purple-600/50',
+                  )}
+                >
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs font-black uppercase tracking-widest">{m.label}</span>
+                    {isDefault && (
+                      <span className={cn(
+                        'text-[10px] font-black px-1.5 py-0.5 rounded',
+                        isSelected ? 'bg-white/20 text-white' : 'bg-purple-600/15 text-purple-600 dark:text-purple-400'
+                      )}>
+                        DEFAULT
+                      </span>
+                    )}
+                  </div>
+                  <p className={cn('text-xs font-mono', isSelected ? 'text-white/80' : 'text-muted-foreground')}>
+                    R² = {r2.toFixed(2)}
+                  </p>
+                  <p className={cn('text-xs font-mono mt-0.5', isSelected ? 'text-white' : 'text-foreground')}>
+                    Proy. +7d: {proj?.rate7d != null ? proj.rate7d.toFixed(0) : '—'} CUP
+                  </p>
+                </button>
+              );
+            })}
+          </div>
+          <p className="text-xs text-muted-foreground italic mt-2">
+            {TREND_MODELS.find(m => m.id === selectedModel)?.description}
+          </p>
         </div>
+
+        {/* ─── Resultados: 3 etapas ─── */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {scenarios.map(s => {
-            const newRate = informalUsd * (1 + s.change);
-            const newPrice = price * (1 + s.change);
-            const increase = newPrice - price;
-            const colorClass = s.color === 'success' ? 'text-success' : s.color === 'warning' ? 'text-warning' : 'text-destructive';
-            const bgClass = s.color === 'success' ? 'bg-success/15 border-success/40' : s.color === 'warning' ? 'bg-warning/15 border-warning/40' : 'bg-destructive/15 border-destructive/40';
-            return (
-              <div key={s.name} className={cn('rounded-2xl p-5 border-2', bgClass)}>
-                <h4 className={cn('text-base font-black uppercase tracking-widest mb-3', colorClass)}>{s.name}</h4>
-                <p className="text-sm text-muted-foreground mb-4">{s.desc}</p>
-                <div className="space-y-3">
-                  <div>
-                    <span className="text-sm text-muted-foreground block">Nueva tasa USD</span>
-                    <span className="text-lg font-black font-mono text-foreground">{newRate.toFixed(2)} CUP</span>
-                  </div>
-                  <div>
-                    <span className="text-sm text-muted-foreground block">Precio recomendado</span>
-                    <span className="text-lg font-black font-mono text-foreground">{newPrice.toFixed(2)} CUP</span>
-                  </div>
-                  <div>
-                    <span className="text-sm text-muted-foreground block">Incremento</span>
-                    <span className={cn('text-lg font-black font-mono', colorClass)}>+{increase.toFixed(2)} CUP (+{(s.change * 100).toFixed(0)}%)</span>
-                  </div>
-                </div>
+          {/* Etapa 1: Tasa inicial */}
+          <div className="rounded-xl p-4 bg-blue-500/10 border-2 border-blue-500/30">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-7 h-7 rounded-lg bg-blue-500/20 flex items-center justify-center border border-blue-500/40">
+                <span className="text-xs font-black text-blue-500">1</span>
               </div>
-            );
-          })}
+              <span className="text-xs font-black uppercase tracking-widest text-blue-500">Tasa inicial</span>
+            </div>
+            <p className="text-xs text-muted-foreground mb-2">
+              {startMode === 'manual' ? 'Valor manual' : dataForRate[startIdx]?.date ?? '—'}
+            </p>
+            <div className="space-y-1 text-sm">
+              <div className="flex justify-between">
+                <span className="text-xs text-muted-foreground">Tasa:</span>
+                <span className={cn('font-black font-mono', rateSourceMeta.color)}>{startRate.toFixed(0)} CUP</span>
+              </div>
+              <div className="flex justify-between border-t border-border/50 pt-1">
+                <span className="text-xs font-black text-muted-foreground">Costo:</span>
+                <span className="font-black font-mono text-foreground">{costAtStart.toFixed(0)} CUP</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Etapa 2: Hoy */}
+          <div className="rounded-xl p-4 bg-amber-500/10 border-2 border-amber-500/30">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-7 h-7 rounded-lg bg-amber-500/20 flex items-center justify-center border border-amber-500/40">
+                <span className="text-xs font-black text-amber-600 dark:text-amber-400">2</span>
+              </div>
+              <span className="text-xs font-black uppercase tracking-widest text-amber-600 dark:text-amber-400">Hoy</span>
+            </div>
+            <p className="text-xs text-muted-foreground mb-2">Tasa actual ({rateSourceMeta.label})</p>
+            <div className="space-y-1 text-sm">
+              <div className="flex justify-between">
+                <span className="text-xs text-muted-foreground">Tasa:</span>
+                <span className={cn('font-black font-mono', rateSourceMeta.color)}>{currentRate.toFixed(0)} CUP</span>
+              </div>
+              <div className="flex justify-between border-t border-border/50 pt-1">
+                <span className="text-xs font-black text-muted-foreground">Costo:</span>
+                <span className="font-black font-mono text-foreground">{costNow.toFixed(0)} CUP</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-xs text-muted-foreground">Δ vs inicial:</span>
+                <span className={cn('font-black font-mono', changeToNow >= 0 ? 'text-destructive' : 'text-success')}>
+                  {changeToNow >= 0 ? '+' : ''}{changeToNow.toFixed(0)} CUP ({changeToNowPct >= 0 ? '+' : ''}{changeToNowPct.toFixed(0)}%)
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Etapa 3: +7 días proyectado */}
+          <div className="rounded-xl p-4 bg-purple-500/10 border-2 border-purple-500/30">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-7 h-7 rounded-lg bg-purple-500/20 flex items-center justify-center border border-purple-500/40">
+                <span className="text-xs font-black text-purple-600 dark:text-purple-400">3</span>
+              </div>
+              <span className="text-xs font-black uppercase tracking-widest text-purple-600 dark:text-purple-400">+7 días (proy.)</span>
+            </div>
+            <p className="text-xs text-muted-foreground mb-2">
+              Modelo: {TREND_MODELS.find(m => m.id === selectedModel)?.label} · R² = {projR2.toFixed(2)}
+            </p>
+            <div className="space-y-1 text-sm">
+              <div className="flex justify-between">
+                <span className="text-xs text-muted-foreground">Tasa proy.:</span>
+                <span className="font-black font-mono text-purple-600 dark:text-purple-400">{proj7d.toFixed(0)} CUP</span>
+              </div>
+              <div className="flex justify-between border-t border-border/50 pt-1">
+                <span className="text-xs font-black text-muted-foreground">Costo proy.:</span>
+                <span className="font-black font-mono text-foreground">{costIn7d.toFixed(0)} CUP</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-xs text-muted-foreground">Δ vs hoy:</span>
+                <span className={cn('font-black font-mono', changeTo7d >= 0 ? 'text-destructive' : 'text-success')}>
+                  {changeTo7d >= 0 ? '+' : ''}{changeTo7d.toFixed(0)} CUP ({changeTo7dPct >= 0 ? '+' : ''}{changeTo7dPct.toFixed(0)}%)
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ─── Veredicto narrativo ─── */}
+        <div className={cn('mt-4 rounded-xl p-4 border-2',
+          changeToNow >= 0 && changeTo7d >= 0 ? 'bg-destructive/10 border-destructive/30' :
+          changeToNow < 0 && changeTo7d < 0 ? 'bg-success/10 border-success/30' :
+          'bg-warning/10 border-warning/30'
+        )}>
+          <p className="text-sm text-foreground leading-relaxed">
+            Para <strong>{usd.toFixed(0)} USD</strong> de mercancía con tasa inicial de{' '}
+            <strong className="text-blue-500">{startRate.toFixed(0)} CUP/USD</strong> ({rateSourceMeta.label}),
+            el costo era <strong>{costAtStart.toFixed(0)} CUP</strong>. Hoy la tasa es{' '}
+            <strong className={rateSourceMeta.color}>{currentRate.toFixed(0)} CUP/USD</strong>, por lo que el costo actual es{' '}
+            <strong>{costNow.toFixed(0)} CUP</strong> — {changeToNow >= 0 ? '+' : ''}{changeToNowPct.toFixed(0)}% ({changeToNow >= 0 ? '+' : ''}{changeToNow.toFixed(0)} CUP).{' '}
+            <span className="text-purple-600 dark:text-purple-400">
+              Según el modelo <strong>{TREND_MODELS.find(m => m.id === selectedModel)?.label}</strong> (R² = {projR2.toFixed(2)}),
+              en <strong>7 días</strong> la tasa proyectada es <strong>{proj7d.toFixed(0)} CUP/USD</strong>, lo que elevaría el costo a{' '}
+              <strong>{costIn7d.toFixed(0)} CUP</strong> — {changeTo7d >= 0 ? '+' : ''}{changeTo7dPct.toFixed(0)}% ({changeTo7d >= 0 ? '+' : ''}{changeTo7d.toFixed(0)} CUP) respecto a hoy.
+            </span>
+            {projR2 < 0.4 && (
+              <span className="block mt-2 text-warning">⚠ R² bajo ({projR2.toFixed(2)}) — la proyección de este modelo no es confiable. Considera otro modelo.</span>
+            )}
+          </p>
         </div>
       </div>
     </div>
