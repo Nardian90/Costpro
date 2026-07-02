@@ -25,14 +25,15 @@ export default function CostAnalyticsView() {
     { key: 'category', label: 'Categoría', type: 'string', groupable: true, aggregatable: false },
     { key: 'unit_of_measure', label: 'UM', type: 'string', groupable: true, aggregatable: false },
     { key: 'is_active', label: 'Activo', type: 'boolean', groupable: true, aggregatable: false },
-    { key: 'cost_price', label: 'Costo Unit.', type: 'number', groupable: false, aggregatable: true, format: 'currency', currency: 'CUP' },
-    { key: 'price', label: 'Precio Venta', type: 'number', groupable: false, aggregatable: true, format: 'currency', currency: 'CUP' },
-    { key: 'cost_average', label: 'Costo Prom.', type: 'number', groupable: false, aggregatable: true, format: 'currency', currency: 'CUP' },
+    // FIX-P1.6: currency sin hardcodear — el formateador usa CUP por defecto
+    { key: 'cost_price', label: 'Costo Manual', type: 'number', groupable: false, aggregatable: true, format: 'currency' },
+    { key: 'price', label: 'Precio Venta', type: 'number', groupable: false, aggregatable: true, format: 'currency' },
+    { key: 'cost_average', label: 'Costo Prom. (WAC)', type: 'number', groupable: false, aggregatable: true, format: 'currency' },
     { key: 'stock_current', label: 'Stock', type: 'number', groupable: false, aggregatable: true, format: 'number' },
     { key: 'min_stock', label: 'Stock Mín.', type: 'number', groupable: false, aggregatable: true, format: 'number' },
-    { key: 'margin', label: 'Margen', type: 'number', groupable: false, aggregatable: true, format: 'currency', currency: 'CUP' },
+    { key: 'margin', label: 'Margen', type: 'number', groupable: false, aggregatable: true, format: 'currency' },
     { key: 'margin_pct', label: 'Margen %', type: 'number', groupable: false, aggregatable: true, format: 'percent' },
-    { key: 'stock_value', label: 'Valor Inventario', type: 'number', groupable: false, aggregatable: true, format: 'currency', currency: 'CUP' },
+    { key: 'stock_value', label: 'Valor Inventario', type: 'number', groupable: false, aggregatable: true, format: 'currency' },
     { key: 'created_at', label: 'Creado', type: 'date', groupable: true, aggregatable: false, format: 'date' },
   ], []);
 
@@ -50,13 +51,17 @@ export default function CostAnalyticsView() {
           toast.error('Error al cargar datos de costos');
           setDataSet({ fields, data: [], totalRecords: 0 });
         } else {
-          // Compute derived fields
-          const enriched = (data || []).map(p => ({
-            ...p,
-            margin: (p.price || 0) - (p.cost_price || 0),
-            margin_pct: p.cost_price > 0 ? ((p.price || 0) - (p.cost_price || 0)) / (p.cost_price || 1) * 100 : 0,
-            stock_value: (p.stock_current || 0) * (p.cost_price || 0),
-          }));
+          // FIX-P1.6: usar cost_average (WAC) para cálculos de margen y valor
+          // — consistente con el motor de costeo dinámico post-fix P0
+          const enriched = (data || []).map(p => {
+            const effectiveCost = p.cost_average ?? p.cost_price ?? 0;
+            return {
+              ...p,
+              margin: (p.price || 0) - effectiveCost,
+              margin_pct: effectiveCost > 0 ? ((p.price || 0) - effectiveCost) / effectiveCost * 100 : 0,
+              stock_value: (p.stock_current || 0) * effectiveCost,
+            };
+          });
           setDataSet({ fields, data: enriched, totalRecords: enriched.length });
         }
         setLoading(false);

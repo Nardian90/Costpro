@@ -51,6 +51,9 @@ export interface ClassifiedRow {
   status: 'new' | 'existing' | 'price_changed' | 'error';
   existingProduct: Product | null;
   errors: string[];
+  // FIX-P1.2: moneda y tasa leídas del Excel (o fallback al global)
+  moneda?: string;
+  tasa?: number;
 }
 
 // REC-2 MM-R10: Unidades de medida estructuradas (en vez de string libre).
@@ -578,8 +581,8 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
   const handleImportFileSelect = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (!file.name.match(/\.xlsx?$/i)) {
-      toast.error('Solo se permiten archivos Excel (.xlsx o .xls)');
+    if (!file.name.match(/\.(xlsx?|csv)$/i)) {
+      toast.error('Solo se permiten archivos Excel (.xlsx, .xls) o CSV (.csv)');
       e.target.value = '';
       return;
     }
@@ -640,6 +643,9 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
         const unitOfMeasure = String(row['Unidad de Medida'] || row['unidad'] || row['UM'] || 'unidad').trim();
         const salePriceRaw = row['Precio Venta'] || row['precio_venta'] || row['Precio'] || row['precio'] || null;
         const salePrice = salePriceRaw !== null ? Number(salePriceRaw) : null;
+        // FIX-P1.2: leer columnas Moneda y Tasa del Excel (opcional, con fallback al global)
+        const rowMoneda = String(row['Moneda'] || row['moneda'] || row['Currency'] || '').trim().toUpperCase() || undefined;
+        const rowTasa = Number(row['Tasa'] || row['tasa'] || row['Tasa de Cambio'] || row['exchange_rate'] || 0) || undefined;
 
         const errors: string[] = [];
         if (!name && !sku) continue; // skip empty rows
@@ -651,7 +657,7 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
         seenSkus.add(sku.toLowerCase());
 
         if (errors.length > 0) {
-          classified.push({ sku, name, quantity, unitCost, unitOfMeasure, salePrice, status: 'error', existingProduct: null, errors });
+          classified.push({ sku, name, quantity, unitCost, unitOfMeasure, salePrice, status: 'error', existingProduct: null, errors, moneda: rowMoneda, tasa: rowTasa });
           continue;
         }
 
@@ -708,8 +714,9 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
         variant_id: null,
         variant_name: null,
         conversion_factor: null,
-        moneda_recepcion: 'CUP',
-        tasa_cambio_recepcion: 1.0,
+        // FIX-P1.2: usar moneda/tasa del Excel si existe, sino fallback al global
+        moneda_recepcion: r.moneda || newMoneda,
+        tasa_cambio_recepcion: r.tasa || newTasa,
       }));
 
     // Merge with existing items (avoid duplicates by SKU)
@@ -762,8 +769,8 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
   }, []);
 
   const handleDropProcessFile = useCallback(async (file: File) => {
-    if (!file.name.match(/\.xlsx?$/i)) {
-      toast.error('Solo se permiten archivos Excel (.xlsx o .xls)');
+    if (!file.name.match(/\.(xlsx?|csv)$/i)) {
+      toast.error('Solo se permiten archivos Excel (.xlsx, .xls) o CSV (.csv)');
       return;
     }
     setIsImportOpen(true);
@@ -1220,8 +1227,9 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
       variant_id: null,
       variant_name: null,
       conversion_factor: null,
-      moneda_recepcion: 'CUP',
-      tasa_cambio_recepcion: 1.0,
+      // FIX-P1.2: heredar moneda/tasa global del formulario de recepción
+      moneda_recepcion: newMoneda,
+      tasa_cambio_recepcion: newTasa,
     }));
 
     // Evitar duplicados por SKU

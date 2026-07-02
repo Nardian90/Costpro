@@ -8,8 +8,13 @@
  * que el producto absorbe.
  *
  * Puro, determinístico, sin side effects.
+ *
+ * FIX-P2.1: Migrado a Decimal.js para precisión monetaria estricta.
+ * Antes usaba Math.round(n * 100) / 100 que acumula error de coma flotante
+ * en operaciones encadenadas (ej: sumHistoricalCup += result en loops).
  */
 
+import Decimal from 'decimal.js';
 import type { CurrentRate, Currency } from './types';
 
 export interface ExchangeRateResult {
@@ -53,12 +58,16 @@ export function calculateExchangeRateImpact(
   receiptRate: number,
   currentRate: CurrentRate | null
 ): ExchangeRateResult {
-  const totalUnits = unitCost * quantity;
+  // FIX-P2.1: usar Decimal para precisión monetaria
+  const dUnitCost = new Decimal(unitCost);
+  const dQuantity = new Decimal(quantity);
+  const dReceiptRate = new Decimal(receiptRate);
+  const totalUnits = dUnitCost.times(dQuantity);
 
   // Si la moneda es CUP, no hay impacto cambiario
   if (receiptCurrency === 'CUP') {
     return {
-      cost_in_original_currency: totalUnits,
+      cost_in_original_currency: totalUnits.toNumber(),
       historical_cost_cup: round2(totalUnits),
       replacement_cost_cup: round2(totalUnits),
       exchange_rate_impact: 0,
@@ -69,7 +78,7 @@ export function calculateExchangeRateImpact(
 
   // Si no hay tasa actual disponible, usar la tasa de la recepción (sin impacto)
   if (!currentRate || currentRate.rate <= 0) {
-    const historicalCup = totalUnits * receiptRate;
+    const historicalCup = totalUnits.times(dReceiptRate);
     return {
       cost_in_original_currency: round2(totalUnits),
       historical_cost_cup: round2(historicalCup),
@@ -84,22 +93,25 @@ export function calculateExchangeRateImpact(
   const costInOriginalCurrency = totalUnits;
 
   // Costo histórico en CUP (lo que costó cuando se compró)
-  const historicalCostCup = costInOriginalCurrency * receiptRate;
+  const historicalCostCup = costInOriginalCurrency.times(dReceiptRate);
 
   // Costo de reposición en CUP (lo que costaría hoy a la tasa actual)
-  const replacementCostCup = costInOriginalCurrency * currentRate.rate;
+  const dCurrentRate = new Decimal(currentRate.rate);
+  const replacementCostCup = costInOriginalCurrency.times(dCurrentRate);
 
   // Impacto cambiario = reposición - histórico
-  const exchangeRateImpact = replacementCostCup - historicalCostCup;
+  const exchangeRateImpact = replacementCostCup.minus(historicalCostCup);
 
   // Impacto inflacionario en gastos financieros:
   // Si el producto tiene gastos financieros (ej: préstamo en USD),
   // el impacto es la diferencia de tasa × monto financiero.
   // Por ahora, esto es 0 hasta que se implemente el componente financiero.
-  const inflationImpact = 0;
+  const inflationImpact = new Decimal(0);
 
   // FPR = factor de revalorización
-  const fpr = historicalCostCup > 0 ? replacementCostCup / historicalCostCup : 1.0;
+  const fpr = historicalCostCup.gt(0)
+    ? replacementCostCup.div(historicalCostCup)
+    : new Decimal(1.0);
 
   return {
     cost_in_original_currency: round2(costInOriginalCurrency),
@@ -129,9 +141,10 @@ export function calculateWeightedReplacementCost(
     return { weighted_historical: 0, weighted_replacement: 0, weighted_fpr: 1.0 };
   }
 
-  let totalQty = 0;
-  let sumHistoricalCup = 0;
-  let sumReplacementCup = 0;
+  // FIX-P2.1: acumular con Decimal para evitar error de coma flotante
+  let dTotalQty = new Decimal(0);
+  let dSumHistorical = new Decimal(0);
+  let dSumReplacement = new Decimal(0);
 
   for (const r of receipts) {
     const result = calculateExchangeRateImpact(
@@ -141,30 +154,35 @@ export function calculateWeightedReplacementCost(
       r.tasa_cambio_recepcion,
       currentRate
     );
-    totalQty += r.quantity;
-    sumHistoricalCup += result.historical_cost_cup;
-    sumReplacementCup += result.replacement_cost_cup;
+    dTotalQty = dTotalQty.plus(r.quantity);
+    dSumHistorical = dSumHistorical.plus(result.historical_cost_cup);
+    dSumReplacement = dSumReplacement.plus(result.replacement_cost_cup);
   }
 
-  if (totalQty === 0) {
+  if (dTotalQty.eq(0)) {
     return { weighted_historical: 0, weighted_replacement: 0, weighted_fpr: 1.0 };
   }
 
-  const weightedHistorical = sumHistoricalCup / totalQty;
-  const weightedReplacement = sumReplacementCup / totalQty;
-  const weightedFpr = weightedHistorical > 0 ? weightedReplacement / weightedHistorical : 1.0;
+  const dWeightedHistorical = dSumHistorical.div(dTotalQty);
+  const dWeightedReplacement = dSumReplacement.div(dTotalQty);
+  const dWeightedFpr = dWeightedHistorical.gt(0)
+    ? dWeightedReplacement.div(dWeightedHistorical)
+    : new Decimal(1.0);
 
   return {
-    weighted_historical: round2(weightedHistorical),
-    weighted_replacement: round2(weightedReplacement),
-    weighted_fpr: round4(weightedFpr),
+    weighted_historical: round2(dWeightedHistorical),
+    weighted_replacement: round2(dWeightedReplacement),
+    weighted_fpr: round4(dWeightedFpr),
   };
 }
 
-function round2(n: number): number {
-  return Math.round(n * 100) / 100;
+// FIX-P2.1: round2/round4 ahora aceptan Decimal o number
+function round2(n: Decimal | number): number {
+  const d = n instanceof Decimal ? n : new Decimal(n);
+  return d.toDecimalPlaces(2).toNumber();
 }
 
-function round4(n: number): number {
-  return Math.round(n * 10000) / 10000;
+function round4(n: Decimal | number): number {
+  const d = n instanceof Decimal ? n : new Decimal(n);
+  return d.toDecimalPlaces(4).toNumber();
 }

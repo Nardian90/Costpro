@@ -35,6 +35,9 @@ interface ReceptionExpressItem {
   variant_id: string | null;
   variant_name: string | null;
   conversion_factor: number | null;
+  // FIX-P1.1: moneda y tasa para costeo multi-moneda
+  moneda_recepcion: string;
+  tasa_cambio_recepcion: number;
 }
 
 interface ReceptionExpressModeProps {
@@ -66,6 +69,9 @@ export function ReceptionExpressMode({ onExit }: ReceptionExpressModeProps) {
   const [items, setItems] = useState<ReceptionExpressItem[]>([]);
   const [supplier, setSupplier] = useState("");
   const [invoiceNumber, setInvoiceNumber] = useState("");
+  // FIX-P1.1: moneda global para toda la recepción express
+  const [moneda, setMoneda] = useState('CUP');
+  const [tasa, setTasa] = useState(1.0);
   const [showConfirm, setShowConfirm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -119,6 +125,9 @@ export function ReceptionExpressMode({ onExit }: ReceptionExpressModeProps) {
         variant_id: null,
         variant_name: null,
         conversion_factor: null,
+        // FIX-P1.1: heredar moneda/tasa global
+        moneda_recepcion: moneda,
+        tasa_cambio_recepcion: tasa,
       }];
     });
   }, []);
@@ -199,6 +208,9 @@ export function ReceptionExpressMode({ onExit }: ReceptionExpressModeProps) {
           unit_of_measure: i.unit_of_measure,
           sale_price: i.sale_price ?? undefined,
           variant_id: i.variant_id,
+          // FIX-P1.1: enviar moneda y tasa al RPC
+          moneda_recepcion: i.moneda_recepcion,
+          tasa_cambio_recepcion: i.tasa_cambio_recepcion,
         })),
       });
 
@@ -269,6 +281,54 @@ export function ReceptionExpressMode({ onExit }: ReceptionExpressModeProps) {
             className="neu-input w-24 sm:w-32 text-xs"
             aria-label="Número de factura"
           />
+          {/* FIX-P1.1: selector de moneda + tasa para recepción multi-moneda */}
+          <select
+            value={moneda}
+            onChange={async (e) => {
+              setMoneda(e.target.value);
+              if (e.target.value === 'CUP') {
+                setTasa(1.0);
+              } else {
+                try {
+                  const res = await fetch(`/api/exchange-rates?currency=${e.target.value}&source=BCC&segment=3&days=1`);
+                  if (res.ok) {
+                    const data = await res.json();
+                    const rates = Array.isArray(data) ? data : (data?.rates || []);
+                    if (Array.isArray(rates) && rates.length > 0) {
+                      const sorted = rates.sort((a: any, b: any) =>
+                        new Date(b.rate_date || 0).getTime() - new Date(a.rate_date || 0).getTime()
+                      );
+                      if (sorted[0]?.rate > 0) setTasa(sorted[0].rate);
+                    }
+                  }
+                } catch {}
+              }
+              // Actualizar items existentes con la nueva moneda/tasa
+              setItems(prev => prev.map(it => ({ ...it, moneda_recepcion: e.target.value, tasa_cambio_recepcion: e.target.value === 'CUP' ? 1.0 : tasa })));
+            }}
+            className="neu-input w-16 text-xs"
+            aria-label="Moneda"
+          >
+            <option value="CUP">CUP</option>
+            <option value="USD">USD</option>
+            <option value="EUR">EUR</option>
+            <option value="MLC">MLC</option>
+          </select>
+          {moneda !== 'CUP' && (
+            <input
+              type="number"
+              step="0.01"
+              value={tasa}
+              onChange={(e) => {
+                const v = parseFloat(e.target.value) || 1.0;
+                setTasa(v);
+                setItems(prev => prev.map(it => ({ ...it, tasa_cambio_recepcion: v })));
+              }}
+              className="neu-input w-20 text-xs"
+              aria-label="Tasa de cambio"
+              placeholder="Tasa"
+            />
+          )}
         </div>
       </header>
 

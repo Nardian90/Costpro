@@ -643,12 +643,23 @@ export default function ProductReceptionView({ onCancel, preselectedProduct }: P
                         s.setNewTasa(1.0);
                       } else {
                         // F4-GAP3: Auto-fill tasa from exchange_rates when currency changes
+                        // FIX-P1.5: la API devuelve { rates: [...] } no un array directo.
+                        // También intentamos múltiples sources (BCC → elToque) con fallback.
                         try {
                           const res = await fetch(`/api/exchange-rates?currency=${e.target.value}&source=BCC&segment=3&days=1`);
                           if (res.ok) {
                             const data = await res.json();
-                            if (data && data.length > 0) {
-                              s.setNewTasa(data[0].rate);
+                            // FIX-P1.5: soportar ambos formatos: { rates: [...] } y [...]
+                            const rates = Array.isArray(data) ? data : (data?.rates || data?.data || []);
+                            if (Array.isArray(rates) && rates.length > 0) {
+                              // Ordenar por fecha descendente y tomar la más reciente
+                              const sorted = rates.sort((a: any, b: any) =>
+                                new Date(b.rate_date || b.date || 0).getTime() - new Date(a.rate_date || a.date || 0).getTime()
+                              );
+                              const latestRate = sorted[0]?.rate;
+                              if (latestRate && typeof latestRate === 'number' && latestRate > 0) {
+                                s.setNewTasa(latestRate);
+                              }
                             }
                           }
                         } catch {
