@@ -27,7 +27,10 @@ export const MobileSafeContainer: React.FC<MobileSafeContainerProps> = ({ childr
       )}
       style={{
         WebkitOverflowScrolling: 'touch',
-        minHeight: '100%'
+        height: '100%',
+        maxHeight: '100%',
+        minHeight: 0,
+        overflowY: 'hidden'
       }}
     >
       {children}

@@ -428,9 +428,9 @@ export default function TerminalShell() {
       )}
 
       <main id="main-content" className={cn(
-        "flex-1 h-full flex flex-col z-10 min-w-0 transition-[padding-left,padding-right] duration-300 cubic-bezier(0.4,0,0.2,1) overflow-x-hidden overflow-y-hidden",
+        "flex-1 flex flex-col z-10 min-w-0 transition-[padding-left,padding-right] duration-300 cubic-bezier(0.4,0,0.2,1) overflow-x-hidden",
         !isMobile && sidebarWidths[sidebarState]
-      )} role="main">
+      )} role="main" style={{ height: '100vh', maxHeight: '100vh', overflowY: 'hidden' }}>
         {/* En modo lectura de ayuda, ocultamos el Header global para tener pantalla limpia. */}
         {!isHelpReadingMode && (
           <Header
@@ -453,16 +453,14 @@ export default function TerminalShell() {
         <div className={cn(
           "relative flex-1 min-h-0 overflow-x-hidden terminal-content scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent",
           // Fix header: las vistas de chat (conversaciones) gestionan su propio scroll
-          // interno y necesitan ocupar todo el espacio disponible. Si el content div
-          // tiene overflow-y-auto + padding, la vista crece más del viewport y empuja
-          // el header fuera de la pantalla.
+          // interno y necesitan ocupar todo el espacio disponible.
           (currentView === 'telegram-conversations' ||
            currentView === 'whatsapp-conversations')
             ? "overflow-y-hidden p-0"
             : currentView === 'help'
               ? "overflow-y-auto p-0"
               : "overflow-y-auto px-3 sm:px-4 pt-0 pb-24 sm:pb-24 lg:pb-28"
-        )}>
+        )} style={{ minHeight: 0, overflowY: (currentView === 'telegram-conversations' || currentView === 'whatsapp-conversations') ? 'hidden' : 'auto' }}>
           <ParticleBackground />
           <Suspense fallback={
             <ViewLoadingSplash
@@ -481,14 +479,14 @@ export default function TerminalShell() {
                   "mx-auto w-full",
                   // Fix header: las vistas de chat (conversaciones) usan h-full y necesitan
                   // que el wrapper también tenga h-full para que la cadena de alturas
-                  // conecte hasta el main. Sin esto, la vista crece más del viewport
-                  // y el header se pierde al seleccionar una conversación.
+                  // conecte hasta el main.
                   (currentView === 'telegram-conversations' ||
                    currentView === 'whatsapp-conversations') ? "h-full max-w-none" : "",
                   // POS-3a: POS necesita full-width porque ahora tiene un sidebar derecha
                   // fixed (carrito). max-w-7xl dejaría demasiado espacio muerto a la derecha.
                   (currentView === 'cost-sheets' || currentView === 'ipv' || currentView === 'pos') ? "max-w-none" : "max-w-7xl"
                 )}
+                style={(currentView === 'telegram-conversations' || currentView === 'whatsapp-conversations') ? { height: '100%', overflow: 'hidden' } : undefined}
               >
                 <ChunkErrorBoundary chunkName={String(currentView)}>
                   <MobileSafeContainer>
