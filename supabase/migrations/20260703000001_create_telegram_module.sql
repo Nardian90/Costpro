@@ -16,8 +16,9 @@
 CREATE TABLE IF NOT EXISTS public.telegram_configs (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   store_id UUID NOT NULL REFERENCES public.stores(id) ON DELETE CASCADE,
-  -- Credenciales del bot (de BotFather)
-  bot_token TEXT NOT NULL,
+  -- Credenciales del bot (de BotFather). Nullable para permitir guardar
+  -- config parcial antes de pegar el token.
+  bot_token TEXT,
   bot_username TEXT,           -- @username del bot (sin @), cacheado de getMe()
   bot_user_id BIGINT,          -- ID numérico del bot, cacheado de getMe()
   -- Config del grupo de ventas
