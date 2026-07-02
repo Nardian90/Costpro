@@ -36,7 +36,7 @@ jobs:
           retention-days: 30
 
       - name: Check coverage thresholds
-        run: npm run test:coverage -- --coverage.thresholdAutoUpdate=false
+        run: npm run test:coverage
 
   e2e-tests:
     name: E2E Tests (Playwright)
