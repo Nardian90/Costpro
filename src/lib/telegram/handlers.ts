@@ -51,8 +51,13 @@ export async function handleMessageIncoming(
   const chat = msg.chat;
   if (!fromUser || !chat) return;
 
-  // Ignorar mensajes del propio bot
-  if (fromUser.is_bot) return;
+  // Ignorar mensajes del propio bot (para evitar loops infinitos).
+  // PERO aceptar mensajes de @GroupAnonymousBot (ID 1087968824) — es el bot
+  // oficial de Telegram que se usa como remitente "anónimo" en grupos cuando
+  // un admin envía mensajes anónimamente. Los mensajes que llegan con este
+  // from son mensajes REALES de usuarios del grupo, no del bot mismo.
+  const GROUP_ANONYMOUS_BOT_ID = 1087968824;
+  if (fromUser.is_bot && fromUser.id !== GROUP_ANONYMOUS_BOT_ID) return;
 
   // Fase T9: extraer texto Y multimedia
   // - msg.text: mensaje de texto plano
