@@ -53,22 +53,43 @@ async function postHandler(req: NextRequest, _session: AuthenticatedSession) {
     }
     const admin = createClient(url, key, { auth: { autoRefreshToken: false, persistSession: false } });
 
-    const { data, error } = await admin
+    // FIX: capturar si la columna capture_method no existe aún (migración pendiente).
+    // En ese caso, hacer el upsert SIN capture_method (la fila se guardará con NULL
+    // o con el default de la BD, y la UI la mostrará como 'estimated' por defecto).
+    // Cuando el usuario aplique la migración 20260703000004, las nuevas filas
+    // tendrán capture_method='real' correctamente.
+    const payload: Record<string, unknown> = {
+      rate_date: today,
+      captured_at: now,
+      currency,
+      source: 'elToque',
+      segment: '3',
+      rate,
+      capture_method: 'real',
+    };
+
+    let { data, error } = await admin
       .from('exchange_rates')
-      .upsert(
-        {
-          rate_date: today,
-          captured_at: now,
-          currency,
-          source: 'elToque',
-          segment: '3',
-          rate,
-          capture_method: 'real',
-        },
-        { onConflict: 'rate_date,source,currency,segment' }
-      )
+      .upsert(payload, { onConflict: 'rate_date,source,currency,segment' })
       .select()
       .single();
+
+    // Si el error es por la columna capture_method inexistente, reintentar sin ella
+    if (error && /capture_method/.test(error.message)) {
+      logger.warn('DATABASE', 'EXCHANGE_RATES_CAPTURE_METHOD_MISSING', {
+        error: error.message,
+        hint: 'Aplica la migración 20260703000004_exchange_rates_capture_method.sql en Supabase Dashboard',
+      });
+      const { capture_method, ...payloadWithoutMethod } = payload;
+      void capture_method;
+      const retry = await admin
+        .from('exchange_rates')
+        .upsert(payloadWithoutMethod, { onConflict: 'rate_date,source,currency,segment' })
+        .select()
+        .single();
+      data = retry.data;
+      error = retry.error;
+    }
 
     if (error) {
       logger.error('DATABASE', 'EXCHANGE_RATES_MANUAL_UPSERT_ERROR', { error: error.message });
