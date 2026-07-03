@@ -54,6 +54,10 @@ interface ExchangeRate {
   variation_weekly: number;
   variation_monthly: number;
   variation_yearly: number;
+  // F-01c: método de captura. 'real' = scraping eltoque.com (cuando funcione) o
+  // API directa BCC; 'estimated' = BCC seg3 × 1.15 (fallback actual). Solo
+  // aplica a source='elToque'; las filas source='BCC' siempre son 'real'.
+  capture_method?: 'real' | 'estimated';
 }
 
 interface HistoryPoint {
@@ -153,6 +157,12 @@ export function ExchangeIntelligenceView() {
   const usdInformalRates = rates.filter(r => r.source === 'elToque' && r.currency === 'USD');
   const usdOfficial = usdOfficialRates[usdOfficialRates.length - 1]?.rate ?? FALLBACK_OFFICIAL.USD;
   const usdInformal = usdInformalRates[usdInformalRates.length - 1]?.rate ?? FALLBACK_INFORMAL.USD;
+  // F-01c: detecta el método de captura del último registro informal para
+  // mostrar badge 'Real' vs 'Estimada' en el Dashboard. Si la columna no
+  // existe aún en BD (NULL) o no hay registros, cae a 'estimated' para no
+  // mentir al usuario — el fallback siempre es la estimación BCC×1.15.
+  const lastInformalRecord = usdInformalRates[usdInformalRates.length - 1];
+  const informalCaptureMethod = lastInformalRecord?.capture_method ?? 'estimated';
   const diff = usdInformal - usdOfficial;
   const diffPct = usdOfficial > 0 ? ((diff / usdOfficial) * 100).toFixed(0) : '0';
 
@@ -306,6 +316,7 @@ export function ExchangeIntelligenceView() {
                 segmentLabels={segmentLabels}
                 segmentShortLabels={segmentShortLabels}
                 segmentDescriptions={segmentDescriptions}
+                informalCaptureMethod={informalCaptureMethod}
               />
             )}
             {activeTab === 'history' && <Suspense fallback={<div className="flex items-center justify-center py-24"><RefreshCw className="w-8 h-8 animate-spin text-primary" /></div>}><HistoryTab data={historyData} /></Suspense>}
@@ -574,7 +585,20 @@ function DashboardTab({
   segmentLabels,
   segmentShortLabels,
   segmentDescriptions,
-}: any) {
+  informalCaptureMethod,
+}: {
+  officialUsd: number;
+  informalUsd: number;
+  diff: number;
+  diffPct: string;
+  rates: ExchangeRate[];
+  bccSegment: string;
+  setBccSegment: (s: string) => void;
+  segmentLabels: Record<string, string>;
+  segmentShortLabels: Record<string, string>;
+  segmentDescriptions: Record<string, string>;
+  informalCaptureMethod?: 'real' | 'estimated';
+}) {
   // ─── Cálculos científicos de brecha y forecast ───
   const brechaStats = useMemo(
     () => calcBrechaStats(rates, bccSegment, 90),
@@ -734,8 +758,30 @@ function DashboardTab({
                   <TrendingUp className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-base font-black uppercase tracking-widest text-amber-600 dark:text-amber-400">
+                  <h3 className="text-base font-black uppercase tracking-widest text-amber-600 dark:text-amber-400 flex items-center flex-wrap">
                     Informal estimada
+                    {/* F-01c: badge Real vs Estimada según capture_method de la BD.
+                        Verde cuando el scraping de eltoque.com funcionó (real),
+                        ámbar cuando es la estimación BCC×1.15 (estimated). */}
+                    <InfoTooltip
+                      title={informalCaptureMethod === 'real' ? 'Tasa real capturada' : 'Tasa estimada'}
+                    >
+                      <p className="mb-1">
+                        {informalCaptureMethod === 'real'
+                          ? 'Tasa capturada directamente de eltoque.com mediante scraping. Es el valor real del mercado informal cubano.'
+                          : 'Tasa estimada como BCC segmento 3 × 1.15. No es captura real de eltoque.com (Cloudflare bloquea el scraping). El factor 1.15 es un promedio histórico de la brecha informal/oficial y puede desviarse del valor real del mercado.'}
+                      </p>
+                    </InfoTooltip>
+                    <span
+                      className={cn(
+                        'ml-2 px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-widest border',
+                        informalCaptureMethod === 'real'
+                          ? 'bg-green-500/15 text-green-600 dark:text-green-400 border-green-500/30'
+                          : 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30',
+                      )}
+                    >
+                      {informalCaptureMethod === 'real' ? '✓ Real' : '⚠ Estimada'}
+                    </span>
                   </h3>
                   <p className="text-sm text-muted-foreground">Estimación basada en BCC × 1.15</p>
                 </div>

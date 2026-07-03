@@ -130,6 +130,65 @@ export function useUserPreferences<T>(key: string, defaultValue: T) {
     };
   }, [userId, key]);
 
+  // Suscripción Realtime: si la preferencia cambia en otro dispositivo,
+  // actualizar automáticamente sin necesidad de refresh.
+  //
+  // F-02d: supabase.channel() abre un WebSocket que recibe eventos
+  // `postgres_changes` de la tabla `user_preferences` filtrados por
+  // `user_id`. RLS de Realtime garantiza que el cliente solo reciba
+  // eventos de filas que puede ver (sus propias preferencias).
+  //
+  // El callback filtra por `preference_key` porque el canal recibe
+  // TODAS las preferencias del usuario (no solo la de este hook), y
+  // cada instancia del hook solo se preocupa por su `key`.
+  //
+  // On DELETE → revertir a `defaultValue` (la preferencia fue borrada
+  // en otro dispositivo, probablemente por un "reset" del usuario).
+  // On INSERT/UPDATE → aplicar el nuevo valor y mirror a localStorage
+  // para mantener la capa offline consistente.
+  useEffect(() => {
+    if (!userId) return;
+
+    const channel = supabase
+      .channel(`user_preferences:${userId}:${key}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // INSERT, UPDATE, DELETE
+          schema: 'public',
+          table: 'user_preferences',
+          filter: `user_id=eq.${userId}`,
+        },
+        (payload: any) => {
+          // Solo nos interesa si el cambio es para nuestra key
+          const newRow = payload.new;
+          const oldRow = payload.old;
+          const changedKey = newRow?.preference_key || oldRow?.preference_key;
+          if (changedKey !== key) return;
+
+          if (payload.eventType === 'DELETE' || !newRow) {
+            // Preferencia eliminada → volver a default
+            setValue(defaultValue);
+          } else {
+            // INSERT o UPDATE → usar el nuevo valor
+            const newValue = newRow.preference_value;
+            setValue(newValue as T);
+            // Actualizar también localStorage para mantener consistencia offline
+            if (typeof window !== 'undefined') {
+              try {
+                localStorage.setItem(`costpro:${key}`, JSON.stringify(newValue));
+              } catch {}
+            }
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [userId, key, defaultValue]);
+
   // Guardar preferencia (async pero el caller no necesita await)
   const update = useCallback(async (newValue: T) => {
     // Actualizar estado local inmediatamente (optimístico)

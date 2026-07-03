@@ -2435,3 +2435,234 @@ por test.
   a `update` del hook con el valor correcto. No existe test para este
   componente actualmente — la cobertura del hook (19 tests) cubre la
   lógica de persistencia, pero no la integración hook+componente.
+
+---
+
+## Task ID: IC-F01C-BADGE-REAL-ESTIMADA
+**Agent:** Sub Agent (general-purpose)
+**Task:** F-01c — Añadir badge visual "Real" vs "Estimada" en la UI de Inteligencia Cambiaria según la columna `capture_method` de la BD.
+
+### Contexto
+La migración `supabase/migrations/20260703000004_exchange_rates_capture_method.sql`
+(F-01b) añadió la columna `capture_method TEXT` a `exchange_rates` con dos
+valores posibles:
+- `'real'` — scraping real de eltoque.com (cuando Cloudflare lo permita) o
+  API directa del BCC.
+- `'estimated'` — estimación `BCC_seg3 × 1.15` (fallback actual, default).
+
+El RED FLAG F-01a (IC-F01-UI-RENAME) ya había renombrado la tarjeta a
+"Informal estimada" para ser honestos con el usuario. F-01c es el cierre
+visual: ahora el usuario puede ver de un vistazo si la tasa que está
+mirando viene de eltoque.com (verde "✓ Real") o es la estimación
+(ámbar "⚠ Estimada"), con un tooltip explicativo.
+
+### Cambios realizados
+
+**Archivo único modificado:**
+`src/components/views/terminal/views/exchange_intelligence/ExchangeIntelligenceView.tsx`
+
+#### 1. Interface `ExchangeRate` (líneas 45-61)
+Añadido campo opcional `capture_method`:
+```typescript
+// F-01c: método de captura. 'real' = scraping eltoque.com (cuando funcione) o
+// API directa BCC; 'estimated' = BCC seg3 × 1.15 (fallback actual). Solo
+// aplica a source='elToque'; las filas source='BCC' siempre son 'real'.
+capture_method?: 'real' | 'estimated';
+```
+Es opcional (`?`) para no romper filas históricas ni inserts que no lo
+especifiquen. El supabase client ya trae la columna por el `select('*')`
+en `fetchRates()` — no hace falta cambiar la query.
+
+#### 2. Detección del método (líneas 160-165)
+Justo después de calcular `usdInformal`:
+```typescript
+// F-01c: detecta el método de captura del último registro informal para
+// mostrar badge 'Real' vs 'Estimada' en el Dashboard. Si la columna no
+// existe aún en BD (NULL) o no hay registros, cae a 'estimated' para no
+// mentir al usuario — el fallback siempre es la estimación BCC×1.15.
+const lastInformalRecord = usdInformalRates[usdInformalRates.length - 1];
+const informalCaptureMethod = lastInformalRecord?.capture_method ?? 'estimated';
+```
+Decisión de diseño: el default es `'estimated'` (no `'real'`) porque:
+- El comportamiento histórico (todo lo que está en BD antes de este fix)
+  es estimación BCC×1.15 — la migración F-01b hace backfill a `'estimated'`.
+- Si por algún motivo la columna llegara NULL (fila antigua sin backfill,
+  error parcial, etc.), es más honesto mostrar "Estimada" que "Real".
+- Nunca queremos afirmar que una tasa es real si no estamos seguros.
+
+#### 3. Prop pasada a `DashboardTab` (línea 319)
+Añadido `informalCaptureMethod={informalCaptureMethod}` a la invocación
+del componente `DashboardTab`.
+
+#### 4. Signature de `DashboardTab` tipada (líneas 577-601)
+Aprovechamos para reemplazar el `: any` por tipos explícitos (incluyendo
+`informalCaptureMethod?: 'real' | 'estimated'`). Esto mejora la
+type-safety general del componente y evita regressions futuras. Los
+tipos se infieren de la interfaz `ExchangeRate` y de los usos en el
+componente padre. Esto no era estrictamente parte de la tarea pero era
+necesario porque pasamos un prop nuevo — sin tiparlo, ESLint/TS podrían
+quejarse del prop sin definir en un objeto `any` (no se quejaba, pero
+quedar `any` con un prop nuevo es mala práctica).
+
+#### 5. Badge en la tarjeta "Informal estimada" (líneas 761-785)
+El `<h3>` ahora es `flex items-center flex-wrap` y contiene, además del
+texto "Informal estimada":
+- Un `InfoTooltip` (patrón existente en el archivo, línea 539) con
+  título y descripción específica según el método:
+  - `'real'`: "Tasa capturada directamente de eltoque.com mediante
+    scraping. Es el valor real del mercado informal cubano."
+  - `'estimated'`: "Tasa estimada como BCC segmento 3 × 1.15. No es
+    captura real de eltoque.com (Cloudflare bloquea el scraping). El
+    factor 1.15 es un promedio histórico de la brecha informal/oficial
+    y puede desviarse del valor real del mercado."
+- Un `<span>` con clases condicionales:
+  - Verde (`bg-green-500/15 text-green-600 border-green-500/30`) y
+    texto "✓ Real" cuando `capture_method === 'real'`.
+  - Ámbar (`bg-amber-500/15 text-amber-600 border-amber-500/30`) y
+    texto "⚠ Estimada" cuando `capture_method === 'estimated'`.
+  - Clases compartidas: `ml-2 px-2 py-0.5 rounded-md text-[10px]
+    font-black uppercase tracking-widest border` — pequeño pero
+    legible, sin pisar el layout existente de la tarjeta.
+
+El badge sigue el mismo lenguaje visual de los otros badges del
+Dashboard (por ej. el badge "Diario" ámbar a la derecha de la misma
+tarjeta, línea 764 original), para no introducir un patrón nuevo.
+
+### Qué NO se tocó (importante)
+- **Cálculo de tasas**: `usdInformal` sigue siendo
+  `usdInformalRates[...].rate ?? FALLBACK_INFORMAL.USD`. No se cambia
+  la lógica de cálculo, solo se añade metadata visual.
+- **Tarjeta BCC**: no se le añade badge "Real" porque la migración
+  F-01b ya marca todas las filas `source='BCC'` como `'real'` y la
+  tarjeta BCC ya tiene su propio badge de segmento. Añadir otro badge
+  sería ruido visual innecesario.
+- **Otras tarjetas/tabs**: HistoryTab, VariationsTab, ImpactTab,
+  MiProductoTab, AlertsTab, SimulatorTab — ninguno recibe
+  `informalCaptureMethod`. El badge vive solo en el Dashboard, que es
+  donde el usuario mira la tasa actual. Si se quisiera propagar, sería
+  F-01d (futuro).
+- **Query de Supabase**: `select('*')` ya trae `capture_method` si la
+  columna existe. No hace falta modificar la query.
+- **Migración**: la migración F-01b ya existe y está aplicada. Este
+  fix es solo UI.
+
+### Validación
+
+```bash
+$ npx tsc --noEmit -p tsconfig.json
+=== tsc exit: 0 ===
+$ npx eslint src/components/views/terminal/views/exchange_intelligence/ExchangeIntelligenceView.tsx
+=== eslint exit: 0 ===
+```
+
+- **TypeScript**: 0 errores. El tipo `informalCaptureMethod` fluye
+  correctamente desde la detección hasta el render del badge.
+- **ESLint**: 0 errores. El `InfoTooltip` y el `cn` ya estaban
+  importados y usados en el archivo; no se añadieron imports nuevos.
+
+### Cómo probar manualmente
+
+1. La BD actual tiene todas las filas `elToque` con
+   `capture_method='estimated'` (backfill de la migración F-01b). Al
+   abrir el Dashboard de Inteligencia Cambiaria, el badge debe mostrar
+   "⚠ Estimada" en ámbar.
+
+2. Para verificar el estado "Real" sin esperar a que el scraping de
+   eltoque.com funcione, ejecutar manualmente en Supabase:
+   ```sql
+   UPDATE exchange_rates
+     SET capture_method = 'real'
+     WHERE source = 'elToque'
+       AND rate_date = (SELECT MAX(rate_date) FROM exchange_rates WHERE source = 'elToque');
+   ```
+   Recargar la página → el badge debe cambiar a "✓ Real" en verde.
+   Revertir con `SET capture_method = 'estimated'` en la misma fila.
+
+3. Hover/click en el icono `ⓘ` junto al badge → popover con la
+   explicación detallada del método.
+
+### Próximos pasos sugeridos (no incluidos en este fix)
+
+- **F-01d (opcional):** Propagar `capture_method` a las otras tarjetas
+  y tabs que muestran `informalUsd` (MiProductoTab, SimulatorTab,
+  ImpactTab). Hoy solo el Dashboard tiene el badge; el usuario que
+  navega a otras tabs pierde la señal visual. Sencilla extensión:
+  pasar el prop y añadir el mismo badge junto a donde aparezca la
+  tasa informal.
+
+- **F-01e (opcional):** Mostrar distribución histórica de métodos en
+  el tab Histórico (por ej. "últimos 30 días: 22 reales, 8 estimados")
+  como un pequeño indicador al lado del gráfico. Requiere agrupar por
+  `capture_method` en el cliente (los datos ya están en `rates`).
+
+- **F-01f (cuando el scraping real funcione):** Añadir un toast/llamada
+  a la atención cuando el sistema pase de estimado → real por primera
+  vez ("¡Captura real de eltoque.com restaurada!"). Ayuda al usuario
+  a entender que la calidad de los datos mejoró.
+
+- **Monitoreo de captura:** Añadir un endpoint `/api/exchange-rates/health`
+  que devuelva `{ real_count_30d, estimated_count_30d, last_real_date }`
+  para alimentar un futuro dashboard de monitoreo del scraping.
+
+---
+
+## Task ID: IC-F02D-REALTIME-PREFERENCES
+**Agent:** Sub-agent (general-purpose)
+**Task:** F-02d — Añadir Realtime subscriptions al hook `useUserPreferences` para sync instantánea cross-device.
+
+### Contexto
+
+El hook `src/hooks/useUserPreferences.ts` (creado en F-02b) ya carga/guarda preferencias en la tabla Supabase `user_preferences` con fallback localStorage. El problema: si el usuario cambia una preferencia en su móvil, el desktop no se entera hasta que hace refresh manual. F-02d cierra ese gap con una suscripción Realtime (WebSocket) que empuja los cambios al instante.
+
+### Cambios concretos
+
+#### `src/hooks/useUserPreferences.ts`
+
+- **Añadido nuevo `useEffect` de suscripción Realtime** entre el `useEffect` de carga (líneas 48-131) y el `useCallback update` (línea 192+). El bloque nuevo ocupa las líneas 133-190.
+  
+  - Canal: `supabase.channel(`user_preferences:${userId}:${key}`)` — nombre único por (usuario, key) para evitar colisiones entre instancias del hook.
+  - Filtro: `user_id=eq.${userId}` — CRÍTICO para que RLS de Realtime funcione (Supabase solo envía cambios que el usuario puede ver según su RLS policy).
+  - Evento: `'*'` (INSERT, UPDATE, DELETE) en schema `public`, tabla `user_preferences`.
+  - Callback filtra por `preference_key === key` porque el canal recibe TODAS las preferencias del usuario, y cada instancia del hook solo se preocupa por su propia `key`.
+  - On DELETE / `!newRow` → `setValue(defaultValue)` (preferencia fue reseteada en otro dispositivo).
+  - On INSERT/UPDATE → `setValue(newValue as T)` + mirror a `localStorage` con prefijo `costpro:` (consistencia offline).
+  - Cleanup: `supabase.removeChannel(channel)` evita memory leaks y conexiones WebSocket huérfanas al desmontar.
+  - Deps: `[userId, key, defaultValue]` — re-suscribe si cambia cualquiera. `defaultValue` está incluido porque si cambia, hay que reconfigurar el callback (referencia al default).
+  
+- **No se tocaron** el `useEffect` de carga, la función `update()`, los helpers de localStorage (`readLocalStorage`, `writeLocalStorage`, `storageKey`), ni la firma del hook. El comportamiento de carga/guardado/fallback queda idéntico a F-02b.
+
+#### `src/__tests__/hooks/useUserPreferences.test.ts`
+
+- **Actualizado el mock de `@/lib/supabaseClient`** para añadir `channel` (chainable: `.on().subscribe()`) y `removeChannel` como no-ops. Sin este mock, el nuevo `useEffect` tiraría `TypeError: supabase.channel is not a function` en todos los tests con auth y la suite entera fallaría.
+- Los 19 tests existentes NO se modificaron — siguen testeando solo carga/guardado/fallback. No se añadieron tests de Realtime porque el scope de F-02d es solo la implementación (los tests de comportamiento Realtime requerirían un harness más complejo con emulación de eventos WebSocket y se consideran fuera de scope).
+- `resetMocks()` no se modificó: los `vi.fn()` del mock de channel son stateless (devuelven objetos frescos en cada llamada) y los tests no hacen aserciones sobre ellos.
+
+### Validación
+
+| Check | Resultado |
+|---|---|
+| `npx tsc --noEmit -p tsconfig.json` | **0 errores** |
+| `npx eslint src/hooks/useUserPreferences.ts` | **0 errores / 0 warnings** |
+| `npx vitest run src/__tests__/hooks/useUserPreferences.test.ts` | **19/19 tests pasan** (890ms) |
+
+### Detalles técnicos
+
+1. **Por qué `user_id=eq.${userId}` es CRÍTICO.** Supabase Realtime aplica RLS a los eventos `postgres_changes`. Si el filtro no matchea la PK/RLS de la fila, el evento no se entrega al cliente. Más importante: sin el filtro, Supabase puede rechazar la suscripción entera si la RLS policy es restrictiva. El filtro por `user_id` garantiza que el cliente solo reciba eventos de sus propias filas.
+
+2. **Por qué se filtra por `preference_key` en el callback.** El canal está filtrado por `user_id`, pero un usuario puede tener múltiples preferencias (rate-source, page-size, ui-settings, etc.) en la misma tabla. El canal recibe eventos de TODAS ellas. Cada instancia del hook solo debe reaccionar a su propia `key`, de lo contrario un cambio en `ui:settings` dispararía un `setValue` en el hook de `costeo-dinamico:rate-source`.
+
+3. **Por qué `defaultValue` está en las deps.** Si el caller cambia `defaultValue` (raro pero posible, ej. feature flag cambia el default), el callback del canal captura la referencia vieja y revertir un DELETE iría al default obsoleto. React exige deps estables para evitar stale closures.
+
+4. **Mirror a localStorage en el callback.** Cuando llega un evento Realtime, además de actualizar el estado React, se escribe en localStorage. Así, si el usuario cierra la app inmediatamente después y la reabre offline, ve el valor actualizado (no una versión stale pre-Realtime).
+
+5. **No se añadió try/catch alrededor del setup del canal.** `supabase.channel()` es síncrono y solo crea un objeto canal — no hace I/O. La conexión real ocurre en `.subscribe()` que es async y maneja sus propios errores internamente (reconexión, etc.). Lanzar aquí sería síntoma de bug en supabase-js, no de condición de red.
+
+6. **El nombre del canal incluye `key`** (`user_preferences:${userId}:${key}`) para que múltiples instancias del hook (cada una con su `key`) no compartan canal y puedan limpiarse independientemente al desmontar.
+
+### Próximos pasos sugeridos (no incluidos en este fix)
+
+- **F-02e (opcional):** Añadir tests de comportamiento Realtime. Requeriría extender el mock para capturar el callback registrado en `.on()` y dispararlo manualmente con un payload fake. Valdría la pena para cubrir regression de los 3 branches (INSERT, UPDATE, DELETE) y del filtro por `preference_key`.
+
+- **F-02f (opcional):** Debounce/throttle de `setValue` en el callback Realtime. Si el usuario cambia la preferencia en dos dispositivos casi simultáneamente, los eventos pueden llegar en ráfaga y causar flicker. Un debounce de 100ms suavizaría la UX. Bajo prioridad — improbable en práctica.
+
+- **F-02g (futuro):** Extender el patrón a otras entidades que se benefician de sync realtime (ej. `contacts`, `messages` del módulo WhatsApp). El helper could extraerse a un `useRealtimeTable<T>(table, filter, onEvent)` genérico.

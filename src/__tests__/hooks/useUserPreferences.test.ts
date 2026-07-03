@@ -24,6 +24,17 @@ const mockFrom = vi.fn();
 vi.mock('@/lib/supabaseClient', () => ({
   supabase: {
     from: (table: string) => mockFrom(table),
+    // Mock mínimo de Realtime (F-02d): los tests no verifican suscripción,
+    // pero el hook ahora llama a `supabase.channel(...).on(...).subscribe()`
+    // en un useEffect. Sin este mock, el effect tiraría TypeError y todos
+    // los tests con auth fallarían. El mock es no-op: devuelve chainable
+    // objects cuyos métodos devuelven `this`/`undefined` según corresponda.
+    channel: vi.fn(() => ({
+      on: vi.fn(() => ({
+        subscribe: vi.fn(() => ({})),
+      })),
+    })),
+    removeChannel: vi.fn(),
   },
 }));
 
