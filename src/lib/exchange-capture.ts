@@ -12,7 +12,21 @@
  *   - Constantes extraídas (no más magic numbers)
  *   - Validación de shape BCC explícita
  *   - Sin duplicación de fetch /activas (era llamada 2 veces)
+ *
+ * RED FLAG F-01b (2026-07-03):
+ *   - Antes: las tasas source='elToque' SIEMPRE se calculaban como
+ *     `BCC_seg3 × 1.15` (estimación), sin distinguirlas en BD.
+ *   - Ahora: se intenta primero scraping real de eltoque.com vía
+ *     `fetchElToqueRatesReal()` (ver `./eltoque-scraper.ts`). Si funciona,
+ *     se persisten con `capture_method='real'`. Si falla (Cloudflare,
+ *     timeout, parse error), se cae al cálculo `BCC × 1.15` con
+ *     `capture_method='estimated'`.
+ *   - Las filas source='BCC' siempre se marcan `capture_method='real'`
+ *     (la API del BCC es pública y se captura directamente).
+ *   - Migración: `20260703000004_exchange_rates_capture_method.sql`.
  */
+
+import { fetchElToqueRatesReal } from './eltoque-scraper';
 
 // Constantes (antes magic numbers esparcidos)
 export const BCC_API_BASE = 'https://api.bc.gob.cu/v1/tasas-de-cambio';
@@ -20,6 +34,13 @@ export const CURRENCIES = ['USD', 'EUR'] as const;
 export const DEFAULT_USD_ESPECIAL = 574;
 export const DEFAULT_EUR_ESPECIAL = 653;
 export const EL_TOQUE_SPREAD = 1.15; // El informal suele estar ~15% por encima del segmento 3
+
+/**
+ * Método de captura — RED FLAG F-01b.
+ * - 'real': scraping de eltoque.com exitoso, o API directa del BCC.
+ * - 'estimated': fallback BCC_seg3 × 1.15 (cuando el scraping falla).
+ */
+export type CaptureMethod = 'real' | 'estimated';
 
 // Mapeo BCC segmento → campo en la API
 export const BCC_SEGMENTS = [
@@ -42,6 +63,11 @@ export interface CaptureResult {
   source: 'BCC' | 'elToque';
   segment: string;
   rate: number;
+  /**
+   * Método de captura (F-01b): 'real' (scraping eltoque.com / API BCC)
+   * o 'estimated' (BCC×1.15 fallback).
+   */
+  capture_method: CaptureMethod;
 }
 
 export interface CaptureForDateResult {
@@ -63,6 +89,8 @@ async function upsertToSupabase(
     source: string;
     segment: string;
     rate: number;
+    /** F-01b: siempre se envía. Default 'estimated' si se omite. */
+    capture_method?: CaptureMethod;
   },
 ): Promise<boolean> {
   const res = await fetch(`${supabaseUrl}/rest/v1/exchange_rates`, {
@@ -73,7 +101,10 @@ async function upsertToSupabase(
       'Content-Type': 'application/json',
       Prefer: 'resolution=ignore-duplicates',
     },
-    body: JSON.stringify(payload),
+    body: JSON.stringify({
+      capture_method: 'estimated',
+      ...payload,
+    }),
   });
   return res.ok;
 }
@@ -166,6 +197,7 @@ export async function captureForDate(
     }
 
     // 1. BCC: 3 segmentos por moneda
+    // F-01b: BCC siempre es captura 'real' (API pública, fetch directo).
     for (const tasa of bccRates) {
       if (!CURRENCIES.includes(tasa.codigoMoneda as typeof CURRENCIES[number])) continue;
 
@@ -179,6 +211,7 @@ export async function captureForDate(
             source: 'BCC',
             segment: seg.segment,
             rate: Math.round(rate * 100) / 100,
+            capture_method: 'real',
           });
           if (ok) {
             captured.push({
@@ -187,6 +220,7 @@ export async function captureForDate(
               source: 'BCC',
               segment: seg.segment,
               rate,
+              capture_method: 'real',
             });
           } else {
             errors.push(`BCC upsert failed: ${tasa.codigoMoneda} seg${seg.segment} ${targetDate}`);
@@ -195,15 +229,57 @@ export async function captureForDate(
       }
     }
 
-    // 2. elToque: estimar desde BCC segmento 3 + spread
-    const usdEspecial = bccRates.find(t => t.codigoMoneda === 'USD')?.tasaEspecial ?? DEFAULT_USD_ESPECIAL;
-    const eurEspecial = bccRates.find(t => t.codigoMoneda === 'EUR')?.tasaEspecial ?? DEFAULT_EUR_ESPECIAL;
+    // 2. elToque: PRIMERO intentar scraping real (F-01b).
+    //    Si `fetchElToqueRatesReal()` devuelve tasas, se persisten con
+    //    capture_method='real'. Si retorna null (Cloudflare, timeout,
+    //    parse error), se cae al cálculo BCC×1.15 con capture_method='estimated'.
+    let elToqueRates: Array<{ currency: string; rate: number; capture_method: CaptureMethod }>;
+    let elToqueCaptureMethod: CaptureMethod;
 
-    const elToqueRates: Array<{ currency: string; rate: number }> = [
-      { currency: 'USD', rate: Math.round(usdEspecial * EL_TOQUE_SPREAD * 100) / 100 },
-      { currency: 'EUR', rate: Math.round(eurEspecial * EL_TOQUE_SPREAD * 100) / 100 },
-      { currency: 'MLC', rate: Math.round(usdEspecial * EL_TOQUE_SPREAD * 100) / 100 },
-    ];
+    const realRates = await fetchElToqueRatesReal();
+
+    if (realRates) {
+      // Scraping exitoso — usar tasas reales de eltoque.com
+      elToqueCaptureMethod = 'real';
+      elToqueRates = [
+        { currency: 'USD', rate: Math.round(realRates.usd * 100) / 100, capture_method: 'real' },
+        { currency: 'EUR', rate: Math.round(realRates.eur * 100) / 100, capture_method: 'real' },
+        { currency: 'MLC', rate: Math.round(realRates.mlc * 100) / 100, capture_method: 'real' },
+      ];
+      console.info(
+        `[exchange-capture] elToque REAL capturado (${realRates.strategy}) ` +
+          `para ${targetDate}: USD=${realRates.usd} EUR=${realRates.eur} MLC=${realRates.mlc}`,
+      );
+    } else {
+      // Fallback: estimar desde BCC segmento 3 + spread (BCC × 1.15)
+      elToqueCaptureMethod = 'estimated';
+      const usdEspecial =
+        bccRates.find(t => t.codigoMoneda === 'USD')?.tasaEspecial ?? DEFAULT_USD_ESPECIAL;
+      const eurEspecial =
+        bccRates.find(t => t.codigoMoneda === 'EUR')?.tasaEspecial ?? DEFAULT_EUR_ESPECIAL;
+
+      elToqueRates = [
+        {
+          currency: 'USD',
+          rate: Math.round(usdEspecial * EL_TOQUE_SPREAD * 100) / 100,
+          capture_method: 'estimated',
+        },
+        {
+          currency: 'EUR',
+          rate: Math.round(eurEspecial * EL_TOQUE_SPREAD * 100) / 100,
+          capture_method: 'estimated',
+        },
+        {
+          currency: 'MLC',
+          rate: Math.round(usdEspecial * EL_TOQUE_SPREAD * 100) / 100,
+          capture_method: 'estimated',
+        },
+      ];
+      console.warn(
+        `[exchange-capture] elToque scraping falló para ${targetDate} — ` +
+          `usando estimación BCC×1.15 (capture_method=estimated)`,
+      );
+    }
 
     for (const r of elToqueRates) {
       const ok = await upsertToSupabase(supabaseUrl, serviceKey, {
@@ -213,6 +289,7 @@ export async function captureForDate(
         source: 'elToque',
         segment: '3',
         rate: r.rate,
+        capture_method: elToqueCaptureMethod,
       });
       if (ok) {
         captured.push({
@@ -221,6 +298,7 @@ export async function captureForDate(
           source: 'elToque',
           segment: '3',
           rate: r.rate,
+          capture_method: elToqueCaptureMethod,
         });
       } else {
         errors.push(`elToque upsert failed: ${r.currency} ${targetDate}`);

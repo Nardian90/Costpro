@@ -15,18 +15,23 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import { useUserPreferences } from '@/hooks/useUserPreferences';
 
-// ─── F-02: Selector cross-módulo de fuente de tasa ────────────────────────────
-// Persiste la preferencia del usuario en localStorage para que el motor de
-// costeo use la misma fuente que se muestra en Inteligencia Cambiaria, en vez
-// de hardcodear siempre BCC_seg3. Los valores deben coincidir con `RateSource`
+// ─── F-02 / F-02b: Selector cross-módulo de fuente de tasa ──────────────────
+// Persiste la preferencia del usuario cross-device (Supabase + localStorage
+// fallback) vía `useUserPreferences`, para que el motor de costeo use la
+// misma fuente que se muestra en Inteligencia Cambiaria, en vez de
+// hardcodear siempre BCC_seg3. Los valores deben coincidir con `RateSource`
 // en `src/lib/costeo-dinamico/types.ts` (excluyendo 'Manual' que es solo para
 // simulación manual).
 // IMPORTANTE: 'elToque' se mapea en el backend (route.ts línea 102) a
 // `source='elToque', segment='3'` en la tabla `exchange_rates`, que es donde
 // se persiste la estimación informal (BCC seg3 × 1.15). Ver worklog
 // IC-F01-RENAME-ELTOQUE-INFORMAL para el contexto del renombramiento UI.
-const RATE_SOURCE_STORAGE_KEY = 'costpro:costeo-dinamico:rate-source';
+// F-02b: la preferencia ahora se sincroniza móvil ↔ desktop vía la tabla
+// `user_preferences` (Supabase). localStorage sigue siendo la capa de
+// fallback offline. Ver worklog IC-F02B-PREFERENCES-SUPABASE.
+const RATE_SOURCE_PREFERENCE_KEY = 'costeo-dinamico:rate-source';
 const RATE_SOURCE_OPTIONS: { value: RateSource; shortLabel: string; description: string }[] = [
   { value: 'BCC_seg1', shortLabel: 'BCC seg1', description: 'BCC segmento 1 — Estatal (empresas estatales).' },
   { value: 'BCC_seg2', shortLabel: 'BCC seg2', description: 'BCC segmento 2 — CADECA (cajero minorista).' },
@@ -61,23 +66,39 @@ export default function CosteoDinamicoView() {
   const [sortBy, setSortBy] = useState<string>('risk');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
 
-  // F-02: Preferencia de fuente de tasa persistida en localStorage.
-  // El usuario puede elegir entre las 4 fuentes que muestra Inteligencia
-  // Cambiaria (BCC seg1/2/3 + Informal estimada) para que el motor de costeo
-  // use la misma tasa que ve en el otro módulo.
-  const [rateSource, setRateSource] = useState<RateSource>(() => {
-    if (typeof window !== 'undefined') {
-      const stored = window.localStorage.getItem(RATE_SOURCE_STORAGE_KEY);
-      if (isValidRateSource(stored)) return stored;
-    }
-    return 'BCC_seg3';
-  });
+  // F-02b: Preferencia de fuente de tasa persistida cross-device vía el hook
+  // `useUserPreferences` (Supabase + localStorage fallback). El usuario puede
+  // elegir entre las 4 fuentes que muestra Inteligencia Cambiaria (BCC seg1/2/3
+  // + Informal estimada) para que el motor de costeo use la misma tasa que ve
+  // en el otro módulo.
+  //
+  // El hook devuelve `value` (raw, podría ser string inválido si la BD o
+  // localStorage están corruptos), `update` (async, guarda en ambos lados) y
+  // `loading` (true mientras carga desde Supabase/localStorage).
+  //
+  // Defense-in-depth: `isValidRateSource` valida el valor antes de usarlo. Si
+  // el valor persistido es inválido, cae a `'BCC_seg3'` (default). El valor
+  // corrupto permanece en el almacenamiento hasta que el usuario cambie el
+  // selector, momento en el que se sobreescribe con un valor válido.
+  const {
+    value: storedRateSource,
+    update: updateRateSource,
+    loading: prefLoading,
+  } = useUserPreferences<RateSource>(RATE_SOURCE_PREFERENCE_KEY, 'BCC_seg3');
 
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      window.localStorage.setItem(RATE_SOURCE_STORAGE_KEY, rateSource);
-    }
-  }, [rateSource]);
+  const rateSource: RateSource = isValidRateSource(storedRateSource)
+    ? storedRateSource
+    : 'BCC_seg3';
+
+  // Wrapper sync sobre `updateRateSource` (async) para mantener la firma
+  // `setRateSource(value: RateSource): void` que usan los onClick del selector.
+  // No se hace `await` porque el update es optimista (estado local se actualiza
+  // inmediatamente dentro del hook) y la persistencia en Supabase es
+  // fire-and-forget. Si Supabase falla, localStorage ya tiene el valor.
+  const setRateSource = useCallback(
+    (v: RateSource) => { void updateRateSource(v); },
+    [updateRateSource],
+  );
 
   // Simulación
   const [simulating, setSimulating] = useState(false);
@@ -89,19 +110,18 @@ export default function CosteoDinamicoView() {
   const [showCommitModal, setShowCommitModal] = useState(false);
   const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
 
-  // Config — rate_source se sincroniza con la preferencia persistida (F-02).
+  // Config — `rate_source` se inicializa con el default `'BCC_seg3'` y se
+  // sincroniza con la preferencia persistida vía el efecto de abajo. El
+  // primer render usa el default; el efecto lo corrige una vez que el hook
+  // termina de cargar. El `useEffect[fetchData]` no dispara fetch mientras
+  // `prefLoading` sea true (ver abajo), evitando un fetch inicial con el
+  // valor default incorrecto.
   const [config, setConfig] = useState<CostEngineConfig>(() => ({
     min_margin: 0.15,
     target_margin: 0.30,
     rounding_rule: 'multiple_10',
     rounding_direction: 'nearest',
-    rate_source: (() => {
-      if (typeof window !== 'undefined') {
-        const stored = window.localStorage.getItem(RATE_SOURCE_STORAGE_KEY);
-        if (isValidRateSource(stored)) return stored;
-      }
-      return 'BCC_seg3';
-    })(),
+    rate_source: 'BCC_seg3',
     manual_rate: null,
   }));
 
@@ -138,9 +158,15 @@ export default function CosteoDinamicoView() {
     }
   }, [storeId, config.min_margin, config.target_margin, config.rounding_rule, rateSource]);
 
+  // F-02b: no disparar fetch hasta que la preferencia esté cargada. Sin este
+  // guard, el primer render usaría el default `'BCC_seg3'` incluso si el
+  // usuario tiene `'elToque'` persistido, causando un fetch incorrecto seguido
+  // del fetch correcto cuando la preferencia cargue. Con el guard, solo se
+  // hace un fetch (con el valor correcto) una vez que `prefLoading` sea false.
   useEffect(() => {
+    if (prefLoading) return;
     fetchData();
-  }, [fetchData]);
+  }, [fetchData, prefLoading]);
 
   const handleSimulate = async () => {
     if (!simRate || !storeId) return;

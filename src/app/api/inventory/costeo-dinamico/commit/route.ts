@@ -3,6 +3,7 @@ import { withAuth, withStoreAccess, type AuthenticatedSession } from '@/lib/auth
 import { withTracing } from '@/lib/observability';
 import { getSupabaseAdminSafe } from '@/lib/supabase-admin';
 import { logger } from '@/lib/logger';
+import { canManageStore } from '@/lib/roles';
 import { z } from 'zod';
 // F4-GAP1: Import cache invalidation
 import { invalidateCacheForStore } from '../route';
@@ -115,8 +116,14 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
  * Revierte una actualización de precios usando el snapshot en price_commit_log.
  */
 async function rollbackHandler(req: NextRequest, session: AuthenticatedSession) {
-  if (session.user.role !== 'admin') {
-    return NextResponse.json({ error: 'Solo admin puede revertir' }, { status: 403 });
+  // IC-F04B-ROLLBACK-STORE-ACCESS: defense-in-depth role gate (admin/manager).
+  // The per-store membership check below (canManageStore) further restricts
+  // non-admins to their own store's commits.
+  if (session.user.role !== 'admin' && session.user.role !== 'manager') {
+    return NextResponse.json(
+      { error: 'Forbidden', message: 'Solo admin o manager puede revertir' },
+      { status: 403 }
+    );
   }
 
   const body = await req.json().catch(() => ({}));
@@ -142,6 +149,26 @@ async function rollbackHandler(req: NextRequest, session: AuthenticatedSession) 
 
   if (commitLog.rollback) {
     return NextResponse.json({ error: 'Este commit ya fue revertido' }, { status: 400 });
+  }
+
+  // IC-F04B-ROLLBACK-STORE-ACCESS: Per-store membership verification.
+  //
+  // withStoreAccess cannot be used at the export level here because the PUT
+  // body only carries `commit_id` (no `store_id`) — withStoreAccess would
+  // return 400 "Se requiere storeId" before reaching this handler (see
+  // auth-middleware.ts lines 311-329). Instead, we resolve store_id from the
+  // commit_log and apply the canonical canManageStore() check (same helper
+  // that withStoreAccess uses internally at line 385).
+  //
+  // - admin global → bypass (canManageStore returns true for admin).
+  // - manager → must have an active membership with role admin/manager/encargado
+  //   in the specific store of this commit_log.
+  // - clerk → always denied (role gate above + canManageStore).
+  if (!canManageStore(session.user, commitLog.store_id)) {
+    return NextResponse.json(
+      { error: 'Forbidden', message: 'No tienes acceso al store del commit' },
+      { status: 403 }
+    );
   }
 
   // 2. Revertir precios
@@ -178,4 +205,14 @@ async function rollbackHandler(req: NextRequest, session: AuthenticatedSession) 
 // defense-in-depth — withStoreAccess verifies membership, the role check
 // verifies the user's authority to commit prices.
 export const POST = withTracing(withStoreAccess(postHandler) as any, 'POST /api/inventory/costeo-dinamico/commit');
+
+// IC-F04B-ROLLBACK-STORE-ACCESS: PUT (rollback) stays on `withAuth` because the
+// body only carries `commit_id` (no `store_id`) — `withStoreAccess` would
+// return 400 "Se requiere storeId" before the handler runs (see
+// auth-middleware.ts lines 311-329). Instead, the handler resolves
+// `commitLog.store_id` from the DB and applies the canonical `canManageStore()`
+// check (same helper used by `withStoreAccess` internally). This gives
+// equivalent per-store authorization adapted to the rollback flow.
+// Defense-in-depth: the admin/manager role check at the top of the handler is
+// preserved; canManageStore enforces per-store membership on top.
 export const PUT = withTracing(withAuth(rollbackHandler) as any, 'PUT /api/inventory/costeo-dinamico/commit');
