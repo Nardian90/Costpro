@@ -20,7 +20,7 @@ type RateSource = 'informal' | 'oficial';
 const RATE_SOURCES: { id: RateSource; label: string; color: string; bgClass: string; textClass: string }[] = [
   {
     id: 'informal',
-    label: 'Informal estimada',
+    label: 'Informal',
     color: COLOR_ELTOQUE,
     bgClass: 'bg-orange-500',
     textClass: 'text-orange-500',
@@ -197,7 +197,7 @@ function MiProductoTab({ historyData, informalUsd, officialUsd }: any) {
 
         <p className="text-xs text-muted-foreground italic">
           {rateSource === 'informal'
-            ? 'Usa una estimación de la tasa informal (= BCC segmento 3 × 1.15). Aproxima el mercado paralelo; no proviene de eltoque.com.'
+            ? 'Usa la tasa real capturada de solucionescuba.com (mercado informal cubano).'
             : 'Usa la tasa oficial del BCC. Recomendado si importas vía sector formal.'}
         </p>
 
@@ -364,7 +364,7 @@ function MiProductoTab({ historyData, informalUsd, officialUsd }: any) {
               <p className="mt-2">Valores del modelo:</p>
               <ul className="list-disc pl-4 mt-1 text-xs space-y-0.5">
                 <li>Pendiente (m): <strong>{forecast?.slope.toFixed(0) ?? '—'} CUP/día</strong></li>
-                <li>R² (bondad): <strong>{forecast?.r2.toFixed(0) ?? '—'}</strong></li>
+                <li>R² (bondad): <strong>{forecast?.r2.toFixed(4) ?? '—'}</strong></li>
                 <li>Tasa actual: <strong>{currentRate.toFixed(0)} CUP</strong></li>
                 <li>Tasa proyectada +{forecastDays}d: <strong>{(forecast?.rateInFuture ?? currentRate).toFixed(0)} CUP</strong></li>
               </ul>
@@ -376,7 +376,7 @@ function MiProductoTab({ historyData, informalUsd, officialUsd }: any) {
               </p>
             </InfoTooltip>
             <span className="text-xs text-muted-foreground font-mono ml-auto">
-              R² = {forecast?.r2.toFixed(0) ?? '—'}
+              R² = {forecast?.r2.toFixed(4) ?? '—'}
             </span>
           </div>
           {forecast && forecast.r2 >= 0.4 ? (

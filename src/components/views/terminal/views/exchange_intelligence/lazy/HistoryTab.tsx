@@ -81,7 +81,7 @@ const VARIATION_SOURCES: { id: VariationSource; label: string }[] = [
 // ─── Tasa para la calculadora de impacto ───
 type RateSource = 'informal' | 'oficial';
 const RATE_SOURCES: { id: RateSource; label: string; description: string }[] = [
-  { id: 'informal', label: 'Informal estimada', description: 'Estimación = BCC segmento 3 × 1.15. Aproxima el mercado paralelo; no es captura de eltoque.com.' },
+  { id: 'informal', label: 'Informal', description: 'Tasa real capturada de solucionescuba.com (USD, EUR, MLC).' },
   { id: 'oficial', label: 'BCC (oficial)', description: 'Tasa del Banco Central de Cuba — relevante si importas vía sector formal.' },
 ];
 
@@ -601,7 +601,7 @@ function HistoryTab({ data }: any) {
                 </span>
                 <InfoTooltip title="Proyección a futuro — cómo se calcula">
                   <p className="mb-2">
-                    Se proyectan <strong>ambas tasas</strong> (informal estimada y BCC oficial) al futuro usando <strong>regresión lineal por mínimos cuadrados</strong> sobre los datos visibles:
+                    Se proyectan <strong>ambas tasas</strong> (informal y BCC oficial) al futuro usando <strong>regresión lineal por mínimos cuadrados</strong> sobre los datos visibles:
                   </p>
                   <code className="block bg-muted/60 rounded-md p-2 text-xs font-mono">
                     tasa(t) = m·t + b
@@ -667,7 +667,7 @@ function HistoryTab({ data }: any) {
                 <span className={cn('font-mono', forecastModel.informal.slope >= 0 ? 'text-destructive' : 'text-success')}>
                   {forecastModel.informal.slope >= 0 ? '+' : ''}{forecastModel.informal.slope.toFixed(0)} CUP/día
                 </span>
-                <span className="text-muted-foreground">· R²={forecastModel.informal.r2.toFixed(0)}</span>
+                <span className="text-muted-foreground">· R²={forecastModel.informal.r2.toFixed(4)}</span>
               </div>
               {forecastModel.oficial && (
                 <div className="flex items-center gap-1.5">
@@ -676,7 +676,7 @@ function HistoryTab({ data }: any) {
                   <span className={cn('font-mono', forecastModel.oficial.slope >= 0 ? 'text-destructive' : 'text-success')}>
                     {forecastModel.oficial.slope >= 0 ? '+' : ''}{forecastModel.oficial.slope.toFixed(0)} CUP/día
                   </span>
-                  <span className="text-muted-foreground">· R²={forecastModel.oficial.r2.toFixed(0)}</span>
+                  <span className="text-muted-foreground">· R²={forecastModel.oficial.r2.toFixed(4)}</span>
                 </div>
               )}
             </div>
@@ -687,7 +687,7 @@ function HistoryTab({ data }: any) {
         <div className="flex flex-wrap gap-4 mb-4 text-sm font-bold">
           <div className="flex items-center gap-2">
             <span className="inline-block w-6 h-1.5 rounded-full" style={{ backgroundColor: CHART_COLOR_INFORMAL }} />
-            <span className="text-foreground">USD Informal (estimada)</span>
+            <span className="text-foreground">USD Informal</span>
           </div>
           <div className="flex items-center gap-2">
             <span className="inline-block w-6 h-1.5 rounded-full" style={{ backgroundColor: CHART_COLOR_OFICIAL }} />
@@ -738,6 +738,7 @@ function HistoryTab({ data }: any) {
               stroke={AXIS_STROKE}
               strokeWidth={1.5}
               domain={['auto', 'auto']}
+              tickFormatter={(v: number) => Number.isFinite(v) ? v.toFixed(0) : ''}
             />
             <Tooltip
               contentStyle={{
@@ -750,6 +751,14 @@ function HistoryTab({ data }: any) {
               }}
               labelStyle={{ color: 'hsl(var(--foreground))', fontWeight: 700, marginBottom: '4px' }}
               itemStyle={{ color: 'hsl(var(--foreground))', padding: '2px 0' }}
+              formatter={(value: any, name: string) => {
+                if (value == null) return ['—', name];
+                const num = Number(value);
+                if (Number.isFinite(num)) {
+                  return [num.toFixed(0), name];
+                }
+                return [String(value), name];
+              }}
             />
 
             {forecastDays > 0 && filtered.length > 0 && (
@@ -777,7 +786,7 @@ function HistoryTab({ data }: any) {
                 strokeWidth={3}
                 fillOpacity={1}
                 fill="url(#colorInformal)"
-                name="USD Informal (estimada)"
+                name="USD Informal"
                 dot={false}
                 activeDot={{ r: 6, fill: CHART_COLOR_INFORMAL, stroke: 'hsl(var(--card))', strokeWidth: 2 }}
                 connectNulls
@@ -791,7 +800,7 @@ function HistoryTab({ data }: any) {
                 strokeWidth={3}
                 dot={false}
                 activeDot={{ r: 6, fill: CHART_COLOR_INFORMAL, stroke: 'hsl(var(--card))', strokeWidth: 2 }}
-                name="USD Informal (estimada)"
+                name="USD Informal"
                 connectNulls
               />
             )}
@@ -799,7 +808,7 @@ function HistoryTab({ data }: any) {
               <Bar
                 dataKey="informal"
                 fill={CHART_COLOR_INFORMAL}
-                name="USD Informal (estimada)"
+                name="USD Informal"
                 radius={[4, 4, 0, 0]}
               />
             )}
@@ -1172,7 +1181,7 @@ function HistoryTab({ data }: any) {
                 <p className="mt-2">Valores del modelo:</p>
                 <ul className="list-disc pl-4 mt-1 text-xs space-y-0.5">
                   <li>Pendiente (m): <strong>{forecast?.slope.toFixed(0) ?? '—'} CUP/día</strong></li>
-                  <li>R²: <strong>{forecast?.r2.toFixed(0) ?? '—'}</strong></li>
+                  <li>R²: <strong>{forecast?.r2.toFixed(4) ?? '—'}</strong></li>
                   <li>Tasa actual: <strong>{currentRate.toFixed(0)} CUP</strong></li>
                   <li>Tasa proyectada +{forecastDays}d: <strong>{forecastRate.toFixed(0)} CUP</strong></li>
                 </ul>
@@ -1223,7 +1232,7 @@ function HistoryTab({ data }: any) {
           <p className="text-sm text-foreground leading-relaxed">
             {!forecast || forecast.r2 < 0.4 ? (
               <>
-                <strong className="text-muted-foreground">Proyección no confiable.</strong> La regresión lineal sobre los datos visibles tiene R² = {forecast?.r2.toFixed(0) ?? '—'}, lo que indica que no hay tendencia lineal clara. Esto puede deberse a alta volatilidad o a un cambio de régimen reciente. No se recomienda usar esta proyección para decisiones de pricing.
+                <strong className="text-muted-foreground">Proyección no confiable.</strong> La regresión lineal sobre los datos visibles tiene R² = {forecast?.r2.toFixed(4) ?? '—'}, lo que indica que no hay tendencia lineal clara. Esto puede deberse a alta volatilidad o a un cambio de régimen reciente. No se recomienda usar esta proyección para decisiones de pricing.
               </>
             ) : (
               <>
@@ -1238,7 +1247,7 @@ function HistoryTab({ data }: any) {
                 </strong>{' '}
                 ({changeToDate >= 0 ? '+' : ''}{changeToDate.toFixed(0)} CUP) {changeToDate >= 0 ? 'más caro' : 'más barato'} que cuando compraste.{' '}
                 <span className="text-purple-600 dark:text-purple-400">
-                  Según la regresión lineal (R² = {forecast.r2.toFixed(0)}), en <strong>{forecastDays} días más</strong> la tasa proyectada es{' '}
+                  Según la regresión lineal (R² = {forecast.r2.toFixed(4)}), en <strong>{forecastDays} días más</strong> la tasa proyectada es{' '}
                   <strong>{forecastRate.toFixed(0)} CUP/USD</strong>, lo que elevaría el costo de reposición a{' '}
                   <strong>{costInFuture.toFixed(0)} CUP</strong> — {changeToForecast >= 0 ? '+' : ''}{changeToForecast.toFixed(0)} CUP ({changeToForecastPct >= 0 ? '+' : ''}{changeToForecastPct.toFixed(0)}%) respecto a hoy.
                 </span>
@@ -1267,7 +1276,7 @@ function HistoryTab({ data }: any) {
             </div>
             {forecast && (
               <p className="text-xs text-muted-foreground mt-2 italic">
-                Tasa proyectada calculada con regresión lineal y = m·x + b donde m = {forecast.slope.toFixed(0)} CUP/día, R² = {forecast.r2.toFixed(0)}.
+                Tasa proyectada calculada con regresión lineal y = m·x + b donde m = {forecast.slope.toFixed(0)} CUP/día, R² = {forecast.r2.toFixed(4)}.
                 {' '}{forecast.r2 < 0.4 && '⚠ R² bajo — baja confianza.'}
                 {forecast.r2 >= 0.4 && forecast.r2 < 0.7 && '⚠ R² medio — confianza limitada.'}
                 {forecast.r2 >= 0.7 && '✓ R² alto — proyección confiable.'}

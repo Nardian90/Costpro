@@ -6,7 +6,7 @@ import { parseISO, differenceInCalendarDays } from 'date-fns';
 type RateSource = 'informal' | 'oficial';
 
 const RATE_SOURCES: { id: RateSource; label: string; color: string }[] = [
-  { id: 'informal', label: 'Informal estimada', color: 'text-orange-500' },
+  { id: 'informal', label: 'Informal', color: 'text-orange-500' },
   { id: 'oficial', label: 'BCC (oficial)', color: 'text-green-500' },
 ];
 

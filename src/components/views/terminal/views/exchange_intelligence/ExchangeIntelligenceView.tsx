@@ -62,8 +62,8 @@ interface ExchangeRate {
   variation_monthly: number;
   variation_yearly: number;
   // F-01c: método de captura. 'real' = scraping eltoque.com (cuando funcione) o
-  // API directa BCC; 'estimated' = BCC seg3 × 1.15 (fallback actual). Solo
-  // aplica a source='elToque'; las filas source='BCC' siempre son 'real'.
+  // API directa BCC. Las tasas informales vienen de solucionescuba.com (scraper real).
+  //
   capture_method?: 'real' | 'estimated';
 }
 
@@ -194,9 +194,9 @@ export function ExchangeIntelligenceView() {
   const usdOfficial = usdOfficialRates[0]?.rate ?? FALLBACK_OFFICIAL.USD;
   const usdInformal = usdInformalRates[0]?.rate ?? FALLBACK_INFORMAL.USD;
   // F-01c: detecta el método de captura del último registro informal para
-  // mostrar badge 'Real' vs 'Estimada' en el Dashboard. Si la columna no
+  // mostrar badge 'Real' vs 'Real' en el Dashboard. Si la columna no
   // existe aún en BD (NULL) o no hay registros, cae a 'estimated' para no
-  // mentir al usuario — el fallback siempre es la estimación BCC×1.15.
+  // mentir al usuario — el fallback siempre es la carry-forward del último valor real.
   const lastInformalRecord = usdInformalRates[0];
   const informalCaptureMethod = lastInformalRecord?.capture_method ?? 'estimated';
 
@@ -1534,7 +1534,7 @@ function DashboardTab({
           value={`${forecastProjection.toFixed(0)} CUP`}
           icon={Target}
           color={forecastConfidence === 'high' ? 'success' : forecastConfidence === 'medium' ? 'warning' : 'risk'}
-          subtitle={`Regresión lineal · R²=${forecastR2.toFixed(0)} · conf.${forecastConfidence === 'high' ? 'alta' : forecastConfidence === 'medium' ? 'media' : 'baja'}`}
+          subtitle={`Regresión lineal · R²=${forecastR2.toFixed(4)} · conf.${forecastConfidence === 'high' ? 'alta' : forecastConfidence === 'medium' ? 'media' : 'baja'}`}
           tooltip={
             <InfoTooltip title="Proyección 10 días — regresión lineal">
               <p className="mb-2">
@@ -1545,7 +1545,7 @@ function DashboardTab({
               </code>
               <ul className="list-disc pl-4 mt-2 text-xs space-y-0.5">
                 <li>Pendiente (m): <strong>{forecast10d?.slope.toFixed(0) ?? '—'} CUP/día</strong></li>
-                <li>R² (bondad de ajuste): <strong>{forecastR2.toFixed(0)}</strong></li>
+                <li>R² (bondad de ajuste): <strong>{forecastR2.toFixed(4)}</strong></li>
                 <li>Tasa actual: <strong>{informalUsd.toFixed(0)} CUP</strong></li>
                 <li>Proyección +10 días: <strong>{forecastProjection.toFixed(0)} CUP</strong></li>
               </ul>
@@ -1621,7 +1621,7 @@ function ImpactTab({ officialUsd, informalUsd, historyData }: any) {
   // ─── Toggle tasa formal/informal ───
   const [rateSource, setRateSource] = useState<'informal' | 'oficial'>('informal');
   const rateSourceMeta = {
-    informal: { label: 'Informal estimada', color: 'text-orange-500', current: informalUsd },
+    informal: { label: 'Informal', color: 'text-orange-500', current: informalUsd },
     oficial: { label: 'BCC (oficial)', color: 'text-green-500', current: officialUsd },
   }[rateSource];
 
@@ -1689,7 +1689,7 @@ function ImpactTab({ officialUsd, informalUsd, historyData }: any) {
                   : 'text-muted-foreground hover:text-foreground',
               )}
             >
-              Informal estimada
+              Informal
             </button>
             <button
               onClick={() => setRateSource('oficial')}
@@ -2034,7 +2034,7 @@ function SimulatorTab({ informalUsd, officialUsd, historyData }: any) {
   // ─── Tasa: formal o informal ───
   const [rateSource, setRateSource] = useState<'informal' | 'oficial'>('informal');
   const rateSourceMeta = {
-    informal: { label: 'Informal estimada', color: 'text-orange-500', current: informalUsd, colorClass: 'bg-orange-500' },
+    informal: { label: 'Informal', color: 'text-orange-500', current: informalUsd, colorClass: 'bg-orange-500' },
     oficial: { label: 'BCC (oficial)', color: 'text-green-500', current: officialUsd, colorClass: 'bg-green-500' },
   }[rateSource];
 
@@ -2235,7 +2235,7 @@ function SimulatorTab({ informalUsd, officialUsd, historyData }: any) {
                   : 'text-muted-foreground hover:text-foreground',
               )}
             >
-              Informal estimada
+              Informal
             </button>
             <button
               onClick={() => setRateSource('oficial')}
@@ -2252,7 +2252,7 @@ function SimulatorTab({ informalUsd, officialUsd, historyData }: any) {
         </div>
 
         <p className="text-xs text-muted-foreground italic mb-4">
-          Modelo por defecto: <strong className="text-purple-600 dark:text-purple-400">{TREND_MODELS.find(m => m.id === defaultModelId)?.label}</strong> (mayor R² = {projR2.toFixed(0)}). Puedes cambiarlo abajo.
+          Modelo por defecto: <strong className="text-purple-600 dark:text-purple-400">{TREND_MODELS.find(m => m.id === defaultModelId)?.label}</strong> (mayor R² = {projR2.toFixed(4)}). Puedes cambiarlo abajo.
         </p>
 
         {/* ─── Configuración: modo de inicio, valor inicial, costo ─── */}
@@ -2375,7 +2375,7 @@ function SimulatorTab({ informalUsd, officialUsd, historyData }: any) {
                     )}
                   </div>
                   <p className={cn('text-xs font-mono', isSelected ? 'text-white/80' : 'text-muted-foreground')}>
-                    R² = {r2.toFixed(0)}
+                    R² = {r2.toFixed(4)}
                   </p>
                   <p className={cn('text-xs font-mono mt-0.5', isSelected ? 'text-white' : 'text-foreground')}>
                     Proy. +7d: {proj?.rate7d != null ? proj.rate7d.toFixed(0) : '—'} CUP
@@ -2450,7 +2450,7 @@ function SimulatorTab({ informalUsd, officialUsd, historyData }: any) {
               <span className="text-xs font-black uppercase tracking-widest text-purple-600 dark:text-purple-400">+7 días (proy.)</span>
             </div>
             <p className="text-xs text-muted-foreground mb-2">
-              Modelo: {TREND_MODELS.find(m => m.id === selectedModel)?.label} · R² = {projR2.toFixed(0)}
+              Modelo: {TREND_MODELS.find(m => m.id === selectedModel)?.label} · R² = {projR2.toFixed(4)}
             </p>
             <div className="space-y-1 text-sm">
               <div className="flex justify-between">
@@ -2484,11 +2484,11 @@ function SimulatorTab({ informalUsd, officialUsd, historyData }: any) {
             <strong className={rateSourceMeta.color}>{currentRate.toFixed(0)} CUP/USD</strong>, por lo que el costo actual es{' '}
             <strong>{costNow.toFixed(0)} CUP</strong> — {changeToNow >= 0 ? '+' : ''}{changeToNowPct.toFixed(0)}% ({changeToNow >= 0 ? '+' : ''}{changeToNow.toFixed(0)} CUP).{' '}
             <span className="text-purple-600 dark:text-purple-400">
-              Según el modelo <strong>{TREND_MODELS.find(m => m.id === selectedModel)?.label}</strong> (R² = {projR2.toFixed(0)}),
+              Según el modelo <strong>{TREND_MODELS.find(m => m.id === selectedModel)?.label}</strong> (R² = {projR2.toFixed(4)}),
               en <strong>7 días</strong> la tasa proyectada es <strong>{proj7d.toFixed(0)} CUP/USD</strong> — {changeTo7d >= 0 ? '+' : ''}{changeTo7dPct.toFixed(0)}% ({changeTo7d >= 0 ? '+' : ''}{changeTo7d.toFixed(0)} CUP) respecto a hoy.
             </span>
             {projR2 < 0.4 && (
-              <span className="block mt-2 text-warning">⚠ R² bajo ({projR2.toFixed(0)}) — la proyección de este modelo no es confiable. Considera otro modelo.</span>
+              <span className="block mt-2 text-warning">⚠ R² bajo ({projR2.toFixed(4)}) — la proyección de este modelo no es confiable. Considera otro modelo.</span>
             )}
           </p>
         </div>
