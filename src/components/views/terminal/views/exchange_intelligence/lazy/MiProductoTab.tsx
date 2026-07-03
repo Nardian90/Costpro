@@ -89,7 +89,7 @@ function linearRegression(values: number[]): LinearRegResult | null {
 // ════════════════════════════════════════════════════════════════════
 function MiProductoTab({ historyData, informalUsd, officialUsd }: any) {
   // ─── Estado ───
-  const [productName, setProductName] = useState('Tomate');
+  const [productName, setProductName] = useState('Pomo de aceite');
   const [rateSource, setRateSource] = useState<RateSource>('informal');
   const [purchaseDateIdx, setPurchaseDateIdx] = useState(0);
   const [costUsd, setCostUsd] = useState('1');
@@ -212,7 +212,7 @@ function MiProductoTab({ historyData, informalUsd, officialUsd }: any) {
               value={productName}
               onChange={e => setProductName(e.target.value)}
               className="w-full h-10 px-3 rounded-xl border-2 border-border bg-background text-sm font-bold min-h-[40px] text-foreground"
-              placeholder="Tomate"
+              placeholder="Pomo de aceite"
             />
           </div>
           <div>
@@ -500,6 +500,182 @@ function MiProductoTab({ historyData, informalUsd, officialUsd }: any) {
           </p>
         </div>
       </div>
+
+      {/* ═══ INFOGRAFÍA SVG: línea de tiempo del producto ═══ */}
+      <div className="bg-card rounded-2xl border-2 border-border p-6 space-y-4">
+        <div className="flex items-center gap-2">
+          <h3 className="text-base font-black uppercase tracking-widest text-foreground">
+            ¿Cómo varía el precio de tu producto?
+          </h3>
+          <InfoTooltip title="Infografía explicativa">
+            <p>Esta línea de tiempo muestra cómo un producto comprado en USD cambia de precio en CUP a medida que la tasa cambiaria varía. El costo de reposición sube cuando el CUP se devalúa (tasa sube) y baja cuando el CUP se aprecia (tasa baja).</p>
+          </InfoTooltip>
+        </div>
+
+        <TimelineInfographic
+          productName={productName || 'tu producto'}
+          usd={usd}
+          purchaseRate={purchaseRate}
+          currentRate={currentRate}
+          forecastRate={forecast?.rateInFuture ?? currentRate}
+          purchaseDate={purchaseDate}
+          currentDate={currentDate}
+          forecastDays={forecastDays}
+          margin={margin}
+        />
+      </div>
+    </div>
+  );
+}
+
+// ════════════════════════════════════════════════════════════════════
+// INFOGRAFÍA SVG — Línea de tiempo del producto
+// ════════════════════════════════════════════════════════════════════
+function TimelineInfographic({
+  productName,
+  usd,
+  purchaseRate,
+  currentRate,
+  forecastRate,
+  purchaseDate,
+  currentDate,
+  forecastDays,
+  margin,
+}: {
+  productName: string;
+  usd: number;
+  purchaseRate: number;
+  currentRate: number;
+  forecastRate: number;
+  purchaseDate: string;
+  currentDate: string;
+  forecastDays: number;
+  margin: number;
+}) {
+  const costAtPurchase = usd * purchaseRate;
+  const costNow = usd * currentRate;
+  const costFuture = usd * forecastRate;
+  const priceAtPurchase = costAtPurchase * (1 + margin / 100);
+  const priceNow = costNow * (1 + margin / 100);
+  const priceFuture = costFuture * (1 + margin / 100);
+
+  // Coordenadas del SVG
+  const W = 800;
+  const H = 320;
+  const padding = 40;
+  const stepX = (W - 2 * padding) / 2;
+
+  // Posiciones X de las 3 etapas
+  const x1 = padding;
+  const x2 = padding + stepX;
+  const x3 = padding + 2 * stepX;
+
+  // Determinar si la tasa sube o baja
+  const rateUp = currentRate > purchaseRate;
+  const rateUpFuture = forecastRate > currentRate;
+
+  return (
+    <div className="w-full overflow-x-auto">
+      <svg viewBox={`0 0 ${W} ${H}`} className="w-full min-w-[600px]" style={{ maxHeight: '400px' }}>
+        {/* Fondo */}
+        <rect x="0" y="0" width={W} height={H} fill="transparent" />
+
+        {/* Línea de tiempo */}
+        <line x1={x1} y1={180} x2={x3} y2={180} stroke="hsl(var(--border))" strokeWidth="2" strokeDasharray="6 4" />
+
+        {/* Flechas direccionales en la línea */}
+        <polygon points={`${x3 - 8},175 ${x3},180 ${x3 - 8},185`} fill="hsl(var(--muted-foreground))" />
+
+        {/* ═══ Etapa 1: Compra ═══ */}
+        <g>
+          {/* Círculo */}
+          <circle cx={x1} cy={180} r="12" fill="#3b82f6" stroke="white" strokeWidth="2" />
+          <text x={x1} y={185} textAnchor="middle" fill="white" fontSize="14" fontWeight="bold">1</text>
+
+          {/* Fecha */}
+          <text x={x1} y={215} textAnchor="middle" fill="hsl(var(--muted-foreground))" fontSize="10" fontWeight="600">{purchaseDate || '—'}</text>
+
+          {/* Tarjeta superior: costo + tasa */}
+          <rect x={x1 - 70} y={20} width="140" height="80" rx="10" fill="#3b82f6" fillOpacity="0.1" stroke="#3b82f6" strokeWidth="1.5" />
+          <text x={x1} y={38} textAnchor="middle" fill="#3b82f6" fontSize="10" fontWeight="bold">COMPRA</text>
+          <text x={x1} y={55} textAnchor="middle" fill="hsl(var(--foreground))" fontSize="11" fontWeight="600">Tasa: {purchaseRate.toFixed(0)} CUP</text>
+          <text x={x1} y={72} textAnchor="middle" fill="hsl(var(--foreground))" fontSize="11" fontWeight="600">Costo: {costAtPurchase.toFixed(0)} CUP</text>
+          <text x={x1} y={89} textAnchor="middle" fill="hsl(var(--foreground))" fontSize="10">Precio venta: {priceAtPurchase.toFixed(0)} CUP</text>
+        </g>
+
+        {/* ═══ Etapa 2: Hoy ═══ */}
+        <g>
+          <circle cx={x2} cy={180} r="12" fill={rateUp ? "#ef4444" : "#22c55e"} stroke="white" strokeWidth="2" />
+          <text x={x2} y={185} textAnchor="middle" fill="white" fontSize="14" fontWeight="bold">2</text>
+
+          <text x={x2} y={215} textAnchor="middle" fill="hsl(var(--muted-foreground))" fontSize="10" fontWeight="600">{currentDate || '—'} (HOY)</text>
+
+          <rect x={x2 - 70} y={20} width="140" height="80" rx="10" fill={rateUp ? "#ef4444" : "#22c55e"} fillOpacity="0.1" stroke={rateUp ? "#ef4444" : "#22c55e"} strokeWidth="1.5" />
+          <text x={x2} y={38} textAnchor="middle" fill={rateUp ? "#ef4444" : "#22c55e"} fontSize="10" fontWeight="bold">HOY</text>
+          <text x={x2} y={55} textAnchor="middle" fill="hsl(var(--foreground))" fontSize="11" fontWeight="600">Tasa: {currentRate.toFixed(0)} CUP</text>
+          <text x={x2} y={72} textAnchor="middle" fill="hsl(var(--foreground))" fontSize="11" fontWeight="600">Costo: {costNow.toFixed(0)} CUP</text>
+          <text x={x2} y={89} textAnchor="middle" fill="hsl(var(--foreground))" fontSize="10">Precio venta: {priceNow.toFixed(0)} CUP</text>
+
+          {/* Indicador de cambio */}
+          {rateUp ? (
+            <g>
+              <path d={`M ${x1 + 15} 130 L ${x2 - 15} 90`} stroke="#ef4444" strokeWidth="2" fill="none" markerEnd="url(#arrowUp)" />
+              <text x={(x1 + x2) / 2} y={115} textAnchor="middle" fill="#ef4444" fontSize="9" fontWeight="bold">CUP se devaluó ↑</text>
+            </g>
+          ) : (
+            <g>
+              <path d={`M ${x1 + 15} 130 L ${x2 - 15} 150`} stroke="#22c55e" strokeWidth="2" fill="none" markerEnd="url(#arrowDown)" />
+              <text x={(x1 + x2) / 2} y={145} textAnchor="middle" fill="#22c55e" fontSize="9" fontWeight="bold">CUP se apreció ↓</text>
+            </g>
+          )}
+        </g>
+
+        {/* ═══ Etapa 3: Proyección ═══ */}
+        <g>
+          <circle cx={x3} cy={180} r="12" fill="#a855f7" stroke="white" strokeWidth="2" />
+          <text x={x3} y={185} textAnchor="middle" fill="white" fontSize="14" fontWeight="bold">3</text>
+
+          <text x={x3} y={215} textAnchor="middle" fill="hsl(var(--muted-foreground))" fontSize="10" fontWeight="600">+{forecastDays} días (proy.)</text>
+
+          <rect x={x3 - 70} y={20} width="140" height="80" rx="10" fill="#a855f7" fillOpacity="0.1" stroke="#a855f7" strokeWidth="1.5" strokeDasharray="4 3" />
+          <text x={x3} y={38} textAnchor="middle" fill="#a855f7" fontSize="10" fontWeight="bold">PROYECTADO</text>
+          <text x={x3} y={55} textAnchor="middle" fill="hsl(var(--foreground))" fontSize="11" fontWeight="600">Tasa: {forecastRate.toFixed(0)} CUP</text>
+          <text x={x3} y={72} textAnchor="middle" fill="hsl(var(--foreground))" fontSize="11" fontWeight="600">Costo: {costFuture.toFixed(0)} CUP</text>
+          <text x={x3} y={89} textAnchor="middle" fill="hsl(var(--foreground))" fontSize="10">Precio venta: {priceFuture.toFixed(0)} CUP</text>
+
+          {/* Indicador */}
+          <g>
+            <path d={`M ${x2 + 15} ${rateUp ? 90 : 150} L ${x3 - 15} ${rateUpFuture ? 90 : 150}`} stroke="#a855f7" strokeWidth="2" fill="none" strokeDasharray="4 3" markerEnd="url(#arrowPurple)" />
+            <text x={(x2 + x3) / 2} y={rateUpFuture ? 80 : 140} textAnchor="middle" fill="#a855f7" fontSize="9" fontWeight="bold">
+              {rateUpFuture ? 'Sigue subiendo ↑' : 'Podría bajar ↓'}
+            </text>
+          </g>
+        </g>
+
+        {/* Definición de flechas */}
+        <defs>
+          <marker id="arrowUp" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto">
+            <path d="M0,0 L8,4 L0,8 Z" fill="#ef4444" />
+          </marker>
+          <marker id="arrowDown" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto">
+            <path d="M0,0 L8,4 L0,8 Z" fill="#22c55e" />
+          </marker>
+          <marker id="arrowPurple" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto">
+            <path d="M0,0 L8,4 L0,8 Z" fill="#a855f7" />
+          </marker>
+        </defs>
+
+        {/* Texto inferior explicativo */}
+        <text x={W / 2} y={250} textAnchor="middle" fill="hsl(var(--foreground))" fontSize="11" fontWeight="bold">
+          {productName}: {usd.toFixed(0)} USD comprados
+        </text>
+        <text x={W / 2} y={268} textAnchor="middle" fill="hsl(var(--muted-foreground))" fontSize="10">
+          El costo en CUP cambia cuando la tasa varía. Si mantienes el precio de venta fijo, tu margen se reduce.
+        </text>
+        <text x={W / 2} y={285} textAnchor="middle" fill="hsl(var(--muted-foreground))" fontSize="10">
+          Actualiza el precio de venta según la tasa actual para preservar tu margen del {margin}%.
+        </text>
+      </svg>
     </div>
   );
 }

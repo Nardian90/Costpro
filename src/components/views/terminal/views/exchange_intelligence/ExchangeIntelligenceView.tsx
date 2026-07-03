@@ -81,6 +81,7 @@ const TABS = [
   { id: 'mi-producto', label: 'Mi Producto', icon: DollarSign },
   { id: 'alerts', label: 'Alertas', icon: Bell },
   { id: 'simulator', label: 'Simulador', icon: Target },
+  { id: 'configuracion', label: 'Configuración', icon: RefreshCw },
 ];
 
 // Fallback si Supabase no tiene datos aún
@@ -494,28 +495,8 @@ export function ExchangeIntelligenceView() {
           </div>
         </div>
 
-        {/* ACCESIBILIDAD: botones con texto + icono, no solo icono */}
+        {/* Botón de refresh — los botones de carga están en el tab Configuración */}
         <div className="flex items-center gap-2 flex-wrap">
-          <button
-            onClick={() => handleManualCapture(7)}
-            disabled={capturing || loading}
-            className="flex items-center gap-2 px-4 py-2.5 min-h-[44px] rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-bold text-sm shadow-md"
-            aria-label="Actualizar base de datos — capturar últimos 7 días desde BCC"
-            title="Captura los últimos 7 días desde la API del Banco Central de Cuba"
-          >
-            <Database className={cn('w-4 h-4', capturing && 'animate-pulse')} />
-            <span>{capturing ? 'Capturando...' : 'Actualizar BD (7 días)'}</span>
-          </button>
-          <button
-            onClick={handleScrapeRealRate}
-            disabled={scraping || loading}
-            className="flex items-center gap-2 px-4 py-2.5 min-h-[44px] rounded-xl bg-amber-500 text-white hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-bold text-sm shadow-md"
-            aria-label="Capturar tasa real desde solucionescuba.com"
-            title="Scrapea la tasa actual desde solucionescuba.com (fuente alternativa a eltoque.com)"
-          >
-            <Globe className={cn('w-4 h-4', scraping && 'animate-pulse')} />
-            <span>{scraping ? 'Capturando...' : 'Capturar tasa real'}</span>
-          </button>
           <button
             onClick={fetchRates}
             disabled={loading}
@@ -525,30 +506,6 @@ export function ExchangeIntelligenceView() {
           >
             <RefreshCw className={cn('w-5 h-5', loading && 'animate-spin')} />
           </button>
-          {isAdmin && (
-            <button
-              onClick={() => setShowExcelModal(true)}
-              disabled={uploading}
-              className="flex items-center gap-2 px-4 py-2.5 min-h-[44px] rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-bold text-sm shadow-md"
-              aria-label="Cargar Excel con tasas históricas"
-              title="Sube un Excel con columnas fecha | bcc | informal (admin only)"
-            >
-              <Upload className={cn('w-4 h-4', uploading && 'animate-pulse')} />
-              <span>{uploading ? 'Subiendo...' : 'Cargar Excel'}</span>
-            </button>
-          )}
-          {isAdmin && (
-            <button
-              onClick={() => setShowHistoricalModal(true)}
-              disabled={scrapingHist || loading}
-              className="flex items-center gap-2 px-4 py-2.5 min-h-[44px] rounded-xl bg-purple-600 text-white hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-bold text-sm shadow-md"
-              aria-label="Cargar histórico completo desde solucionescuba.com"
-              title="Scrapea ~380 días de histórico desde bolsa-divisas.php (admin only)"
-            >
-              <Database className={cn('w-4 h-4', scrapingHist && 'animate-pulse')} />
-              <span>{scrapingHist ? 'Cargando...' : 'Cargar histórico'}</span>
-            </button>
-          )}
         </div>
       </div>
 
@@ -614,6 +571,25 @@ export function ExchangeIntelligenceView() {
             )}
             {activeTab === 'alerts' && <AlertsTab diffPct={parseFloat(diffPct)} historyData={historyData} />}
             {activeTab === 'simulator' && <SimulatorTab informalUsd={usdInformal} officialUsd={usdOfficial} historyData={historyData} />}
+            {activeTab === 'configuracion' && (
+              <ConfiguracionTab
+                onManualCapture={handleManualCapture}
+                onScrapeRealRate={handleScrapeRealRate}
+                onDownloadTemplate={handleDownloadTemplate}
+                onUploadExcel={handleUploadExcel}
+                onScrapeHistorical={() => setShowHistoricalModal(true)}
+                capturing={capturing}
+                scraping={scraping}
+                uploading={uploading}
+                scrapingHist={scrapingHist}
+                loading={loading}
+                isAdmin={isAdmin}
+                rates={rates}
+                lastCaptureInfo={lastCaptureInfo}
+                fetchRates={fetchRates}
+                bccSegment={bccSegment}
+              />
+            )}
           </>
         )}
       </div>
@@ -2528,6 +2504,142 @@ function StatBox({ label, value, color }: any) {
     <div className="bg-muted/40 rounded-xl p-4 text-center border border-border">
       <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1">{label}</p>
       <p className={cn('text-lg font-black font-mono', color)}>{value}</p>
+    </div>
+  );
+}
+
+// ════════════════════════════════════════════════════════════════════
+// TAB: CONFIGURACIÓN — carga de datos, Excel, histórico, scraping
+// ════════════════════════════════════════════════════════════════════
+function ConfiguracionTab({
+  onManualCapture,
+  onScrapeRealRate,
+  onDownloadTemplate,
+  onScrapeHistorical,
+  capturing,
+  scraping,
+  loading,
+  scrapingHist,
+  isAdmin,
+  rates,
+  lastCaptureInfo,
+  bccSegment,
+}: any) {
+  return (
+    <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      {/* Estado de la BD */}
+      <div className="bg-card rounded-2xl border-2 border-border p-6">
+        <h3 className="text-base font-black uppercase tracking-widest text-foreground mb-4">
+          Estado de la base de datos
+        </h3>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="bg-muted/40 rounded-xl p-3 text-center border border-border">
+            <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1">Total registros</p>
+            <p className="text-lg font-black font-mono text-foreground">{rates.length}</p>
+          </div>
+          <div className="bg-muted/40 rounded-xl p-3 text-center border border-border">
+            <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1">Última captura</p>
+            <p className="text-sm font-black font-mono text-foreground">{lastCaptureInfo?.date ?? '—'}</p>
+          </div>
+          <div className="bg-muted/40 rounded-xl p-3 text-center border border-border">
+            <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1">Segmento BCC</p>
+            <p className="text-sm font-black font-mono text-foreground">{bccSegment === '1' ? 'Estatal' : bccSegment === '2' ? 'CADECA' : 'MIPYMES'}</p>
+          </div>
+          <div className="bg-muted/40 rounded-xl p-3 text-center border border-border">
+            <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1">Tasas reales</p>
+            <p className="text-lg font-black font-mono text-green-600 dark:text-green-400">
+              {rates.filter((r: any) => r.capture_method === 'real').length}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Acciones de captura */}
+      <div className="bg-card rounded-2xl border-2 border-border p-6 space-y-4">
+        <h3 className="text-base font-black uppercase tracking-widest text-foreground">
+          Captura de tasas
+        </h3>
+
+        {/* Actualizar BD (7 días) */}
+        <div className="flex items-center justify-between gap-4 p-4 rounded-xl bg-primary/5 border border-primary/20">
+          <div className="flex-1">
+            <p className="text-sm font-black text-foreground">Actualizar BD (7 días)</p>
+            <p className="text-xs text-muted-foreground mt-0.5">Captura los últimos 7 días desde la API del Banco Central de Cuba + solucionescuba.com</p>
+          </div>
+          <button
+            onClick={() => onManualCapture(7)}
+            disabled={capturing || loading}
+            className="flex items-center gap-2 px-4 py-2.5 min-h-[44px] rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-bold text-sm shadow-md shrink-0"
+          >
+            <Database className={cn('w-4 h-4', capturing && 'animate-pulse')} />
+            <span>{capturing ? 'Capturando...' : 'Ejecutar'}</span>
+          </button>
+        </div>
+
+        {/* Capturar tasa real */}
+        <div className="flex items-center justify-between gap-4 p-4 rounded-xl bg-amber-500/5 border border-amber-500/20">
+          <div className="flex-1">
+            <p className="text-sm font-black text-foreground">Capturar tasa real (hoy)</p>
+            <p className="text-xs text-muted-foreground mt-0.5">Scrapea la tasa actual de USD/EUR/MLC desde solucionescuba.com</p>
+          </div>
+          <button
+            onClick={onScrapeRealRate}
+            disabled={scraping || loading}
+            className="flex items-center gap-2 px-4 py-2.5 min-h-[44px] rounded-xl bg-amber-500 text-white hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-bold text-sm shadow-md shrink-0"
+          >
+            <Globe className={cn('w-4 h-4', scraping && 'animate-pulse')} />
+            <span>{scraping ? 'Capturando...' : 'Ejecutar'}</span>
+          </button>
+        </div>
+
+        {/* Cargar histórico (admin) */}
+        {isAdmin && (
+          <div className="flex items-center justify-between gap-4 p-4 rounded-xl bg-purple-600/5 border border-purple-600/20">
+            <div className="flex-1">
+              <p className="text-sm font-black text-foreground">Cargar histórico completo</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Scrapea ~380 días de histórico desde bolsa-divisas.php (solo admin)</p>
+            </div>
+            <button
+              onClick={onScrapeHistorical}
+              disabled={scrapingHist || loading}
+              className="flex items-center gap-2 px-4 py-2.5 min-h-[44px] rounded-xl bg-purple-600 text-white hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-bold text-sm shadow-md shrink-0"
+            >
+              <Database className={cn('w-4 h-4', scrapingHist && 'animate-pulse')} />
+              <span>{scrapingHist ? 'Cargando...' : 'Ejecutar'}</span>
+            </button>
+          </div>
+        )}
+
+        {/* Cargar Excel (admin) */}
+        {isAdmin && (
+          <div className="flex items-center justify-between gap-4 p-4 rounded-xl bg-emerald-600/5 border border-emerald-600/20">
+            <div className="flex-1">
+              <p className="text-sm font-black text-foreground">Cargar Excel (admin)</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Descarga plantilla, llénala con tasas y súbelo. Columnas: fecha | bcc | informal</p>
+            </div>
+            <button
+              onClick={onDownloadTemplate}
+              disabled={loading}
+              className="flex items-center gap-2 px-4 py-2.5 min-h-[44px] rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-bold text-sm shadow-md shrink-0"
+            >
+              <Download className="w-4 h-4" />
+              <span>Descargar plantilla</span>
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Info */}
+      <div className="bg-muted/30 rounded-2xl border border-border p-4">
+        <p className="text-xs text-muted-foreground leading-relaxed">
+          <strong className="text-foreground">Fuentes de datos:</strong><br />
+          • BCC (oficial): API del Banco Central de Cuba (api.bc.gob.cu)<br />
+          • Informal: solucionescuba.com (scraper de HTML + histórico de bolsa-divisas.php)<br />
+          • Excel: carga manual para fechas no scrapeables<br />
+          <br />
+          <strong className="text-foreground">Nota:</strong> Las tasas informales se capturan en tiempo real desde solucionescuba.com. Si el scraper falla, se usa el último valor real disponible (carry-forward).
+        </p>
+      </div>
     </div>
   );
 }
