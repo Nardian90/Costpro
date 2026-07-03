@@ -1534,7 +1534,7 @@ function DashboardTab({
           value={`${forecastProjection.toFixed(0)} CUP`}
           icon={Target}
           color={forecastConfidence === 'high' ? 'success' : forecastConfidence === 'medium' ? 'warning' : 'risk'}
-          subtitle={`Regresión lineal · R²=${forecastR2.toFixed(2)} · conf.${forecastConfidence === 'high' ? 'alta' : forecastConfidence === 'medium' ? 'media' : 'baja'}`}
+          subtitle={`Regresión lineal · R²=${forecastR2.toFixed(0)} · conf.${forecastConfidence === 'high' ? 'alta' : forecastConfidence === 'medium' ? 'media' : 'baja'}`}
           tooltip={
             <InfoTooltip title="Proyección 10 días — regresión lineal">
               <p className="mb-2">
@@ -1545,7 +1545,7 @@ function DashboardTab({
               </code>
               <ul className="list-disc pl-4 mt-2 text-xs space-y-0.5">
                 <li>Pendiente (m): <strong>{forecast10d?.slope.toFixed(0) ?? '—'} CUP/día</strong></li>
-                <li>R² (bondad de ajuste): <strong>{forecastR2.toFixed(2)}</strong></li>
+                <li>R² (bondad de ajuste): <strong>{forecastR2.toFixed(0)}</strong></li>
                 <li>Tasa actual: <strong>{informalUsd.toFixed(0)} CUP</strong></li>
                 <li>Proyección +10 días: <strong>{forecastProjection.toFixed(0)} CUP</strong></li>
               </ul>
@@ -2252,7 +2252,7 @@ function SimulatorTab({ informalUsd, officialUsd, historyData }: any) {
         </div>
 
         <p className="text-xs text-muted-foreground italic mb-4">
-          Modelo por defecto: <strong className="text-purple-600 dark:text-purple-400">{TREND_MODELS.find(m => m.id === defaultModelId)?.label}</strong> (mayor R² = {projR2.toFixed(2)}). Puedes cambiarlo abajo.
+          Modelo por defecto: <strong className="text-purple-600 dark:text-purple-400">{TREND_MODELS.find(m => m.id === defaultModelId)?.label}</strong> (mayor R² = {projR2.toFixed(0)}). Puedes cambiarlo abajo.
         </p>
 
         {/* ─── Configuración: modo de inicio, valor inicial, costo ─── */}
@@ -2375,7 +2375,7 @@ function SimulatorTab({ informalUsd, officialUsd, historyData }: any) {
                     )}
                   </div>
                   <p className={cn('text-xs font-mono', isSelected ? 'text-white/80' : 'text-muted-foreground')}>
-                    R² = {r2.toFixed(2)}
+                    R² = {r2.toFixed(0)}
                   </p>
                   <p className={cn('text-xs font-mono mt-0.5', isSelected ? 'text-white' : 'text-foreground')}>
                     Proy. +7d: {proj?.rate7d != null ? proj.rate7d.toFixed(0) : '—'} CUP
@@ -2450,7 +2450,7 @@ function SimulatorTab({ informalUsd, officialUsd, historyData }: any) {
               <span className="text-xs font-black uppercase tracking-widest text-purple-600 dark:text-purple-400">+7 días (proy.)</span>
             </div>
             <p className="text-xs text-muted-foreground mb-2">
-              Modelo: {TREND_MODELS.find(m => m.id === selectedModel)?.label} · R² = {projR2.toFixed(2)}
+              Modelo: {TREND_MODELS.find(m => m.id === selectedModel)?.label} · R² = {projR2.toFixed(0)}
             </p>
             <div className="space-y-1 text-sm">
               <div className="flex justify-between">
@@ -2484,11 +2484,11 @@ function SimulatorTab({ informalUsd, officialUsd, historyData }: any) {
             <strong className={rateSourceMeta.color}>{currentRate.toFixed(0)} CUP/USD</strong>, por lo que el costo actual es{' '}
             <strong>{costNow.toFixed(0)} CUP</strong> — {changeToNow >= 0 ? '+' : ''}{changeToNowPct.toFixed(0)}% ({changeToNow >= 0 ? '+' : ''}{changeToNow.toFixed(0)} CUP).{' '}
             <span className="text-purple-600 dark:text-purple-400">
-              Según el modelo <strong>{TREND_MODELS.find(m => m.id === selectedModel)?.label}</strong> (R² = {projR2.toFixed(2)}),
+              Según el modelo <strong>{TREND_MODELS.find(m => m.id === selectedModel)?.label}</strong> (R² = {projR2.toFixed(0)}),
               en <strong>7 días</strong> la tasa proyectada es <strong>{proj7d.toFixed(0)} CUP/USD</strong> — {changeTo7d >= 0 ? '+' : ''}{changeTo7dPct.toFixed(0)}% ({changeTo7d >= 0 ? '+' : ''}{changeTo7d.toFixed(0)} CUP) respecto a hoy.
             </span>
             {projR2 < 0.4 && (
-              <span className="block mt-2 text-warning">⚠ R² bajo ({projR2.toFixed(2)}) — la proyección de este modelo no es confiable. Considera otro modelo.</span>
+              <span className="block mt-2 text-warning">⚠ R² bajo ({projR2.toFixed(0)}) — la proyección de este modelo no es confiable. Considera otro modelo.</span>
             )}
           </p>
         </div>
