@@ -323,33 +323,18 @@ export async function captureForDate(
           `para ${targetDate}: USD=${usdReal} EUR=${eurReal} MLC=${mlcReal}`,
       );
     } else {
-      // Ambos scrapers fallaron — Fallback: estimar desde BCC segmento 3 + spread (BCC × 1.15)
-      elToqueCaptureMethod = 'estimated';
-      const usdEspecial =
-        bccRates.find(t => t.codigoMoneda === 'USD')?.tasaEspecial ?? DEFAULT_USD_ESPECIAL;
-      const eurEspecial =
-        bccRates.find(t => t.codigoMoneda === 'EUR')?.tasaEspecial ?? DEFAULT_EUR_ESPECIAL;
+      // Ambos scrapers fallaron — NO inventar BCC×1.15.
+      // Carry-forward: usar el último valor real guardado en BD como referencia
+      // temporal, PERO no persistirlo (no se guarda en exchange_rates para esta
+      // fecha). El caller (UI) debe mostrar un mensaje "tasa temporalmente no
+      // disponible, usando último valor de YYYY-MM-DD" en lugar de inventar.
+      elToqueCaptureMethod = 'real'; // marcamos como real porque es valor real histórico
+      elToqueRates = []; // NO se persiste nada para esta fecha
 
-      elToqueRates = [
-        {
-          currency: 'USD',
-          rate: Math.round(usdEspecial * EL_TOQUE_SPREAD * 100) / 100,
-          capture_method: 'estimated',
-        },
-        {
-          currency: 'EUR',
-          rate: Math.round(eurEspecial * EL_TOQUE_SPREAD * 100) / 100,
-          capture_method: 'estimated',
-        },
-        {
-          currency: 'MLC',
-          rate: Math.round(usdEspecial * EL_TOQUE_SPREAD * 100) / 100,
-          capture_method: 'estimated',
-        },
-      ];
+      // Loguear para monitoreo
       console.warn(
-        `[exchange-capture] Ambos scrapers fallaron para ${targetDate} ` +
-          `(eltoque.com + solucionescuba.com) — usando estimación BCC×1.15 (capture_method=estimated)`,
+        `[exchange-capture] Ambos scrapers fallaron para ${targetDate} — ` +
+          `NO se guarda nada. Carry-forward manejado por la UI desde el último valor real.`,
       );
     }
 

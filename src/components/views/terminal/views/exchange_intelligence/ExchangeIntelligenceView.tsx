@@ -199,6 +199,17 @@ export function ExchangeIntelligenceView() {
   // mentir al usuario — el fallback siempre es la estimación BCC×1.15.
   const lastInformalRecord = usdInformalRates[0];
   const informalCaptureMethod = lastInformalRecord?.capture_method ?? 'estimated';
+
+  // CARRY-FORWARD: detectar si la tasa informal más reciente NO es de hoy.
+  // Si es de un día anterior, la UI debe avisar "usando último valor de YYYY-MM-DD".
+  const todayStr = new Date().toISOString().split('T')[0];
+  const informalRateDate = lastInformalRecord?.rate_date ?? '';
+  const informalIsCarryForward = informalRateDate !== '' && informalRateDate !== todayStr;
+
+  // Lo mismo para BCC
+  const lastOfficialRecord = usdOfficialRates[0];
+  const officialRateDate = lastOfficialRecord?.rate_date ?? '';
+  const officialIsCarryForward = officialRateDate !== '' && officialRateDate !== todayStr;
   const diff = usdInformal - usdOfficial;
   const diffPct = usdOfficial > 0 ? ((diff / usdOfficial) * 100).toFixed(0) : '0';
 
@@ -587,6 +598,10 @@ export function ExchangeIntelligenceView() {
                 segmentShortLabels={segmentShortLabels}
                 segmentDescriptions={segmentDescriptions}
                 informalCaptureMethod={informalCaptureMethod}
+                informalIsCarryForward={informalIsCarryForward}
+                informalRateDate={informalRateDate}
+                officialIsCarryForward={officialIsCarryForward}
+                officialRateDate={officialRateDate}
               />
             )}
             {activeTab === 'history' && <Suspense fallback={<div className="flex items-center justify-center py-24"><RefreshCw className="w-8 h-8 animate-spin text-primary" /></div>}><HistoryTab data={historyData} /></Suspense>}
@@ -1084,6 +1099,10 @@ function DashboardTab({
   segmentShortLabels,
   segmentDescriptions,
   informalCaptureMethod,
+  informalIsCarryForward,
+  informalRateDate,
+  officialIsCarryForward,
+  officialRateDate,
 }: {
   officialUsd: number;
   informalUsd: number;
@@ -1096,6 +1115,10 @@ function DashboardTab({
   segmentShortLabels: Record<string, string>;
   segmentDescriptions: Record<string, string>;
   informalCaptureMethod?: 'real' | 'estimated';
+  informalIsCarryForward?: boolean;
+  informalRateDate?: string;
+  officialIsCarryForward?: boolean;
+  officialRateDate?: string;
 }) {
   // ─── Cálculos científicos de brecha y forecast ───
   const brechaStats = useMemo(
@@ -1246,6 +1269,11 @@ function DashboardTab({
               <span className="text-4xl font-black font-mono text-foreground">{officialUsd.toFixed(0)}</span>
               <span className="text-sm font-bold text-muted-foreground">CUP / USD</span>
             </div>
+            {officialIsCarryForward && (
+              <div className="mb-2 px-2 py-1 rounded-md bg-amber-500/15 border border-amber-500/30 text-xs text-amber-700 dark:text-amber-400 font-bold">
+                ⚠ Tasa de hoy no disponible. Usando último valor de {officialRateDate}
+              </div>
+            )}
             <div className="flex items-center gap-2 text-sm flex-wrap">
               <span className={cn('flex items-center gap-1 font-bold', officialDailyChange >= 0 ? 'text-destructive' : 'text-success')}>
                 {officialDailyChange >= 0 ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
@@ -1270,31 +1298,23 @@ function DashboardTab({
                 </div>
                 <div>
                   <h3 className="text-base font-black uppercase tracking-widest text-amber-600 dark:text-amber-400 flex items-center flex-wrap">
-                    Informal estimada
-                    {/* F-01c: badge Real vs Estimada según capture_method de la BD.
-                        Verde cuando el scraping de eltoque.com funcionó (real),
-                        ámbar cuando es la estimación BCC×1.15 (estimated). */}
+                    Informal
                     <InfoTooltip
-                      title={informalCaptureMethod === 'real' ? 'Tasa real capturada' : 'Tasa estimada'}
+                      title="Tasa informal real"
                     >
                       <p className="mb-1">
-                        {informalCaptureMethod === 'real'
-                          ? 'Tasa capturada directamente de eltoque.com mediante scraping. Es el valor real del mercado informal cubano.'
-                          : 'Tasa estimada como BCC segmento 3 × 1.15. No es captura real de eltoque.com (Cloudflare bloquea el scraping). El factor 1.15 es un promedio histórico de la brecha informal/oficial y puede desviarse del valor real del mercado.'}
+                        Tasa capturada directamente de solucionescuba.com mediante scraping.
+                        Es el valor real del mercado informal cubano (USD, EUR, MLC).
+                        Cuando el scraper falla temporalmente, se usa el último valor real disponible (carry-forward).
                       </p>
                     </InfoTooltip>
                     <span
-                      className={cn(
-                        'ml-2 px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-widest border',
-                        informalCaptureMethod === 'real'
-                          ? 'bg-green-500/15 text-green-600 dark:text-green-400 border-green-500/30'
-                          : 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30',
-                      )}
+                      className="ml-2 px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-widest border bg-green-500/15 text-green-600 dark:text-green-400 border-green-500/30"
                     >
-                      {informalCaptureMethod === 'real' ? '✓ Real' : '⚠ Estimada'}
+                      ✓ Real
                     </span>
                   </h3>
-                  <p className="text-sm text-muted-foreground">Estimación basada en BCC × 1.15</p>
+                  <p className="text-sm text-muted-foreground">Mercado informal (solucionescuba.com)</p>
                 </div>
               </div>
               <div className="flex items-center gap-1">
@@ -1327,6 +1347,11 @@ function DashboardTab({
               <span className="text-4xl font-black font-mono text-foreground">{informalUsd.toFixed(0)}</span>
               <span className="text-sm font-bold text-muted-foreground">CUP / USD</span>
             </div>
+            {informalIsCarryForward && (
+              <div className="mb-2 px-2 py-1 rounded-md bg-amber-500/15 border border-amber-500/30 text-xs text-amber-700 dark:text-amber-400 font-bold">
+                ⚠ Tasa de hoy no disponible. Usando último valor de {informalRateDate}
+              </div>
+            )}
             <div className="flex flex-col gap-1 text-sm">
               {/* Variación diaria (vs ayer) */}
               <span className={cn('flex items-center gap-1 font-bold', informalDailyChange >= 0 ? 'text-destructive' : 'text-success')}>
