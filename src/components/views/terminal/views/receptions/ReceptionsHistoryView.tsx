@@ -103,7 +103,8 @@ export default function ReceptionsHistoryView() {
         const res = await fetch(`/api/exchange-rates?currency=${moneda}&source=BCC&segment=3&days=1`);
         if (res.ok) {
           const data = await res.json();
-          if (data && data.length > 0) setBackfillForm(prev => ({ ...prev, tasa: data[0].rate }));
+          // FIX-F03: la API devuelve { rates: [...] } no un array directo.
+          if (data?.rates && data.rates.length > 0) setBackfillForm(prev => ({ ...prev, tasa: data.rates[0].rate }));
         }
       } catch {}
     }

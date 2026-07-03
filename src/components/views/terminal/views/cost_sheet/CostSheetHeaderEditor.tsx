@@ -199,8 +199,9 @@ const CostSheetHeaderEditor: React.FC<CostSheetHeaderEditorProps> = ({
       const res = await fetch('/api/exchange-rates?currency=USD&source=BCC&segment=3&days=1');
       if (!res.ok) throw new Error('API error');
       const data = await res.json();
-      if (data && data.length > 0) {
-        const latest = data[0];
+      // FIX-F03: la API devuelve { rates: [...] } no un array directo.
+      if (data?.rates && data.rates.length > 0) {
+        const latest = data.rates[0];
         updateValue(['header', 'exchangeRate'], latest.rate);
         updateValue(['header', 'rateSource'], `BCC MIPYMES (seg 3)`);
         updateValue(['header', 'rateDate'], latest.rate_date);

@@ -3,8 +3,9 @@ import { withAuth, type AuthenticatedSession } from '@/lib/auth-middleware';
 import { withTracing } from '@/lib/observability';
 import { getSupabaseAdminSafe } from '@/lib/supabase-admin';
 import { calculateProductCost, calculateDashboard } from '@/lib/costeo-dinamico/engine';
-import type { ProductCostInput, CostEngineConfig, CurrentRate } from '@/lib/costeo-dinamico/types';
+import type { ProductCostInput, CostEngineConfig, CurrentRate, RateSource, RoundingRule } from '@/lib/costeo-dinamico/types';
 import { logger } from '@/lib/logger';
+import { z } from 'zod';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -19,28 +20,45 @@ export const maxDuration = 60;
  *   store_id, currency, simulated_rate, source, min_margin, target_margin, rounding
  */
 
+// FIX-F05: Validación zod de inputs. Antes `simulated_rate` podía ser
+// NaN/negativo/cero porque solo se hacía `parseFloat(simulated_rate)` tras
+// un truthy check. Ahora zod garantiza que sea un número positivo en [1, 10000].
+const simulateSchema = z.object({
+  store_id: z.string().uuid(),
+  currency: z.string().optional(),
+  simulated_rate: z.number().positive().min(1).max(10000),
+  source: z.string().optional(),
+  min_margin: z.number().optional(),
+  target_margin: z.number().optional(),
+  rounding: z.string().optional(),
+});
+
 async function postHandler(req: NextRequest, session: AuthenticatedSession) {
   const body = await req.json().catch(() => ({}));
-  const { store_id, currency, simulated_rate, source, min_margin, target_margin, rounding } = body;
 
-  if (!store_id || !simulated_rate) {
-    return NextResponse.json({ error: 'store_id y simulated_rate son requeridos' }, { status: 400 });
+  const parsed = simulateSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: 'Invalid input', details: parsed.error.flatten() },
+      { status: 400 },
+    );
   }
+  const { store_id, currency, simulated_rate, source, min_margin, target_margin, rounding } = parsed.data;
 
   const supabase = getSupabaseAdminSafe();
   if (!supabase) return NextResponse.json({ error: 'Server misconfigured' }, { status: 500 });
 
   const currentRate: CurrentRate = {
     currency: currency || 'USD',
-    rate: parseFloat(simulated_rate),
-    source: source || 'Manual',
+    rate: simulated_rate,
+    source: (source || 'Manual') as RateSource,
     date: new Date().toISOString(),
   };
 
   const config: CostEngineConfig = {
-    min_margin: parseFloat(min_margin) || 0.15,
-    target_margin: parseFloat(target_margin) || 0.30,
-    rounding_rule: rounding || 'multiple_10',
+    min_margin: min_margin ?? 0.15,
+    target_margin: target_margin ?? 0.30,
+    rounding_rule: (rounding || 'multiple_10') as RoundingRule,
     rounding_direction: 'nearest',
     rate_source: 'Manual',
     manual_rate: currentRate,

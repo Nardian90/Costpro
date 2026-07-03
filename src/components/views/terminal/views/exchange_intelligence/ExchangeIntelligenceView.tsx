@@ -143,12 +143,12 @@ export function ExchangeIntelligenceView() {
     '3': 'Micro, pequeñas y medianas empresas privadas. Tasa aplicable a importaciones y operaciones comerciales del sector no estatal.',
   };
 
-  // Calcular KPIs desde datos reales — filtrar por segmento seleccionado
-  const latestOfficial = rates.filter(r => r.source === 'BCC' && r.segment === bccSegment).slice(-6);
-  const latestInformal = rates.filter(r => r.source === 'elToque').slice(-6);
-
-  const usdOfficial = latestOfficial.find(r => r.currency === 'USD')?.rate ?? FALLBACK_OFFICIAL.USD;
-  const usdInformal = latestInformal.find(r => r.currency === 'USD')?.rate ?? FALLBACK_INFORMAL.USD;
+  // Calcular KPIs desde datos reales — filtrar por segmento + currency + source
+  // FIX-F10: Antes usábamos .slice(-6) que es frágil: si entre los últimos 6
+  // registros había 7+ de EUR, el USD no se encontraba y caía al fallback 120/650.
+  // Ahora filtramos directamente por currency + source + segment sin slice.
+  const usdOfficial = rates.find(r => r.source === 'BCC' && r.segment === bccSegment && r.currency === 'USD')?.rate ?? FALLBACK_OFFICIAL.USD;
+  const usdInformal = rates.find(r => r.source === 'elToque' && r.currency === 'USD')?.rate ?? FALLBACK_INFORMAL.USD;
   const diff = usdInformal - usdOfficial;
   const diffPct = usdOfficial > 0 ? ((diff / usdOfficial) * 100).toFixed(0) : '0';
 

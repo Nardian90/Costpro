@@ -108,7 +108,8 @@ export function ReceptionDetailsModal({
         const res = await fetch(`/api/exchange-rates?currency=${moneda}&source=BCC&segment=3&days=1`);
         if (res.ok) {
           const data = await res.json();
-          if (data && data.length > 0) setBatchTasa(data[0].rate);
+          // FIX-F03: la API devuelve { rates: [...] } no un array directo.
+          if (data?.rates && data.rates.length > 0) setBatchTasa(data.rates[0].rate);
         }
       } catch {}
     }
@@ -561,9 +562,10 @@ export function ReceptionDetailsModal({
                                       const res = await fetch(`/api/exchange-rates?currency=${moneda}&source=BCC&segment=3&days=1`);
                                       if (res.ok) {
                                         const data = await res.json();
-                                        if (data && data.length > 0) {
-                                          if (tasaInput) tasaInput.value = String(data[0].rate);
-                                          await updateItemTasa(item.id, moneda, data[0].rate);
+                                        // FIX-F03: la API devuelve { rates: [...] } no un array directo.
+                                        if (data?.rates && data.rates.length > 0) {
+                                          if (tasaInput) tasaInput.value = String(data.rates[0].rate);
+                                          await updateItemTasa(item.id, moneda, data.rates[0].rate);
                                         }
                                       }
                                     } catch {}

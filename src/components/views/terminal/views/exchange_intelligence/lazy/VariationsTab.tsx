@@ -1,6 +1,7 @@
 'use client';
 import React, { useState, useMemo } from 'react';
 import { cn } from '@/lib/utils';
+import { parseISO, differenceInCalendarDays } from 'date-fns';
 
 type RateSource = 'informal' | 'oficial';
 
@@ -10,64 +11,79 @@ const RATE_SOURCES: { id: RateSource; label: string; color: string }[] = [
 ];
 
 function VariationsTab({ data }: any) {
-  // ─── Filtrar solo fechas que tengan valor (tanto informal como oficial) ───
-  // El usuario requiere: "todas las fechas con valor"
-  const validData = useMemo(
-    () => (data as any[]).filter((d) => d.informal != null || d.oficial != null),
-    [data],
-  );
-
   // ─── Selector de tasa: informal o formal ───
   const [rateSource, setRateSource] = useState<RateSource>('informal');
 
-  // ─── Índices: por defecto, inicial = día anterior al actual, final = última fecha con valor ───
-  // "la fecha inicial siempre debe ser un día antes que el del día actual"
-  // "la fecha final la fecha final siempre que contengan valores"
+  // FIX: Filtrar validData por la tasa SELECCIONADA, no por "informal OR oficial".
+  // Antes: validData era la misma para ambas tasas → al cambiar rateSource,
+  // safeStartIdx/safeEndIdx no cambiaban si las últimas fechas tenían ambas tasas,
+  // y las tarjetas de crecimiento no se actualizaban visualmente.
+  // Ahora: validData cambia cuando cambia rateSource, forzando recálculo completo.
+  const validData = useMemo(
+    () => (data as any[]).filter((d) => d[rateSource] != null),
+    [data, rateSource],
+  );
+
+  // ─── Índices por defecto ───
+  // inicial = penúltimo registro (día anterior), final = último registro
   const defaultStartIdx = useMemo(() => {
     if (validData.length === 0) return 0;
-    // "día anterior al actual" = penúltimo registro con valor (asumiendo que el último es "hoy")
     return Math.max(0, validData.length - 2);
   }, [validData]);
 
   const defaultEndIdx = useMemo(() => {
     if (validData.length === 0) return 0;
-    return validData.length - 1; // última fecha con valor
+    return validData.length - 1;
   }, [validData]);
 
   const [startIdx, setStartIdx] = useState(defaultStartIdx);
   const [endIdx, setEndIdx] = useState(defaultEndIdx);
 
-  // Reset cuando cambia el dataset (por ej. al cambiar segmento BCC o filtro)
+  // Reset cuando cambia el dataset o la tasa seleccionada
   React.useEffect(() => {
     setStartIdx(defaultStartIdx);
     setEndIdx(defaultEndIdx);
   }, [defaultStartIdx, defaultEndIdx]);
 
-  // ─── Asegurar que las fechas elegidas tengan valor para la tasa seleccionada ───
-  // Si la fecha seleccionada no tiene valor para la tasa actual, buscar la más cercana anterior con valor
-  const safeStartIdx = useMemo(() => {
-    const max = validData.length - 1;
-    let idx = Math.min(Math.max(0, startIdx), max);
-    while (idx > 0 && validData[idx]?.[rateSource] == null) idx--;
-    return idx;
-  }, [startIdx, validData, rateSource]);
-
-  const safeEndIdx = useMemo(() => {
-    const max = validData.length - 1;
-    let idx = Math.min(Math.max(0, endIdx), max);
-    while (idx > 0 && validData[idx]?.[rateSource] == null) idx--;
-    // Asegurar endIdx >= startIdx
-    if (idx < safeStartIdx) return safeStartIdx;
-    return idx;
-  }, [endIdx, validData, rateSource, safeStartIdx]);
+  // ─── Asegurar índices dentro de rango ───
+  const safeStartIdx = Math.min(Math.max(0, startIdx), Math.max(0, validData.length - 1));
+  const safeEndIdx = Math.min(Math.max(0, endIdx), Math.max(0, validData.length - 1));
 
   // ─── Cálculos ───
   const startRate = validData[safeStartIdx]?.[rateSource] ?? 0;
   const endRate = validData[safeEndIdx]?.[rateSource] ?? 0;
   const absChange = endRate - startRate;
   const pctChange = startRate > 0 ? ((absChange / startRate) * 100).toFixed(0) : '0';
-  const daysBetween = safeEndIdx - safeStartIdx;
-  const dailyGrowth = daysBetween > 0 && startRate > 0 ? (Math.pow(endRate / startRate, 1 / daysBetween) - 1) * 100 : 0;
+
+  // FIX F-08: Usar días de calendario reales (no diferencia de índices)
+  // Antes: daysBetween = safeEndIdx - safeStartIdx (subcuenta si hay huecos)
+  // Ahora: diferencia real entre fechas
+  const startDateStr = validData[safeStartIdx]?.date ?? '';
+  const endDateStr = validData[safeEndIdx]?.date ?? '';
+  let daysBetween = safeEndIdx - safeStartIdx; // fallback
+  try {
+    if (startDateStr && endDateStr) {
+      const realDays = differenceInCalendarDays(parseISO(endDateStr), parseISO(startDateStr));
+      if (realDays > 0) daysBetween = realDays;
+    }
+  } catch {
+    /* keep fallback */
+  }
+
+  // FIX F-08: Crecimiento compuesto (no lineal)
+  // Antes: dailyGrowth * 30 → producía -365% anual (matemáticamente imposible)
+  // Ahora: (1 + dailyRate) ^ N - 1 (crecimiento compuesto)
+  const dailyGrowth = daysBetween > 0 && startRate > 0
+    ? (Math.pow(endRate / startRate, 1 / daysBetween) - 1) * 100
+    : 0;
+
+  // Crecimiento compuesto: (1 + daily) ^ N - 1
+  const monthlyGrowth = daysBetween > 0
+    ? (Math.pow(1 + dailyGrowth / 100, 30) - 1) * 100
+    : 0;
+  const annualGrowth = daysBetween > 0
+    ? (Math.pow(1 + dailyGrowth / 100, 365) - 1) * 100
+    : 0;
 
   const rateSourceMeta = RATE_SOURCES.find(r => r.id === rateSource)!;
 
@@ -100,7 +116,7 @@ function VariationsTab({ data }: any) {
         </div>
 
         <p className="text-xs text-muted-foreground italic mb-4">
-          Solo se muestran fechas con valor disponible. Por defecto: fecha inicial = día anterior a la última, fecha final = última fecha con valor.
+          Solo se muestran fechas con valor disponible para la tasa seleccionada. Por defecto: fecha inicial = día anterior a la última, fecha final = última fecha con valor.
         </p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
@@ -114,7 +130,7 @@ function VariationsTab({ data }: any) {
               {validData.map((d: any, i: number) => {
                 const v = d[rateSource];
                 return (
-                  <option key={i} value={i} disabled={v == null}>
+                  <option key={i} value={i}>
                     {d.date} — {v != null ? `${v.toFixed(0)} CUP` : 'N/A'}
                   </option>
                 );
@@ -131,7 +147,7 @@ function VariationsTab({ data }: any) {
               {validData.map((d: any, i: number) => {
                 const v = d[rateSource];
                 return (
-                  <option key={i} value={i} disabled={v == null || i < safeStartIdx}>
+                  <option key={i} value={i} disabled={i < safeStartIdx}>
                     {d.date} — {v != null ? `${v.toFixed(0)} CUP` : 'N/A'}
                   </option>
                 );
@@ -155,9 +171,13 @@ function VariationsTab({ data }: any) {
           />
           <StatBox label="Días" value={`${daysBetween}`} color="text-foreground" />
           <StatBox label="Crecimiento diario" value={`${dailyGrowth.toFixed(0)}%`} color="text-warning" />
-          <StatBox label="Crecimiento mensual" value={`${(dailyGrowth * 30).toFixed(0)}%`} color="text-warning" />
-          <StatBox label="Crecimiento anual" value={`${(dailyGrowth * 365).toFixed(0)}%`} color="text-destructive" />
+          <StatBox label="Crecimiento mensual" value={`${monthlyGrowth.toFixed(0)}%`} color="text-warning" />
+          <StatBox label="Crecimiento anual" value={`${annualGrowth.toFixed(0)}%`} color="text-destructive" />
         </div>
+
+        <p className="text-xs text-muted-foreground italic mt-4">
+          Crecimiento mensual y anual calculados con fórmula compuesta (1+tasa diaria)^N - 1, no extrapolación lineal.
+        </p>
       </div>
     </div>
   );
