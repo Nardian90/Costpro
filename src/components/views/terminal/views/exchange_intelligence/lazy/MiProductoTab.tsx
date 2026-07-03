@@ -120,7 +120,7 @@ function MiProductoTab({ historyData, informalUsd, officialUsd }: any) {
     ? purchasePoint?.informal
     : purchasePoint?.oficial) ?? currentRate;
   const purchaseDate = purchasePoint?.date ?? '';
-  const currentDate = validDataForRate[validDataForRate.length - 1]?.date ?? '';
+  const currentDate = dataForRate[dataForRate.length - 1]?.date ?? '';
 
   // ─── Forecast con regresión lineal ───
   const valuesForForecast: number[] = (dataForRate as any[])
