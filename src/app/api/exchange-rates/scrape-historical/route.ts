@@ -33,9 +33,13 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
   }
 
   let dryRun = false;
+  let sourceFilter: 'both' | 'bcc' | 'informal' = 'both';
   try {
     const body = await req.json().catch(() => ({}));
     dryRun = !!body?.dryRun;
+    if (body?.source && ['both', 'bcc', 'informal'].includes(body.source)) {
+      sourceFilter = body.source;
+    }
   } catch {
     // body vacío es válido
   }
@@ -43,6 +47,7 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
   logger.info('DATABASE', 'EXCHANGE_RATES_HISTORICAL_START', {
     user: session.user.id,
     dryRun,
+    sourceFilter,
   });
 
   // 1. Scrapear histórico
@@ -59,6 +64,7 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
     return NextResponse.json({
       success: true,
       dryRun: true,
+      sourceFilter,
       count: entries.length,
       firstDate: entries[0]?.date,
       lastDate: entries[entries.length - 1]?.date,
@@ -82,7 +88,18 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
   let errors: string[] = [];
   let captureMethodMissing = false;
 
-  // Construir todos los rows a insertar (3 por entrada: USD, EUR, MLC)
+  // Construir todos los rows a insertar
+  // NOTA: El histórico de solucionescuba.com SOLO tiene tasas informales (elToque).
+  // Las tasas BCC se capturan vía API del BCC (api.bc.gob.cu) en exchange-capture.ts.
+  // Si sourceFilter='bcc', este endpoint no tiene datos que cargar — devolver error.
+  if (sourceFilter === 'bcc') {
+    return NextResponse.json({
+      success: false,
+      error: 'El histórico de solucionescuba.com solo contiene tasas informales (elToque). ' +
+             'Para cargar BCC histórico, usa "Actualizar BD (7 días)" que llama a la API del BCC.',
+    }, { status: 400 });
+  }
+
   const rows: Array<{
     rate_date: string;
     captured_at: string;
@@ -94,6 +111,7 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
   }> = [];
 
   for (const entry of entries) {
+    // sourceFilter === 'both' o 'informal' → cargar tasas informales (elToque)
     // USD siempre
     rows.push({
       rate_date: entry.date,

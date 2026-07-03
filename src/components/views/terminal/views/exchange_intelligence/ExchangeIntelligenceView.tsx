@@ -318,9 +318,13 @@ export function ExchangeIntelligenceView() {
   // Scrapea bolsa-divisas.php que contiene ~380 entradas con JSON embebido
   // (timestamp + tasas). Hace upsert masivo de todo el histórico.
   const [scrapingHist, setScrapingHist] = useState(false);
+  const [showHistoricalModal, setShowHistoricalModal] = useState(false);
+  const [histSource, setHistSource] = useState<'both' | 'informal'>('both');
+
   const handleScrapeHistorical = useCallback(async () => {
+    setShowHistoricalModal(false);
     setScrapingHist(true);
-    const toastId = toast.loading('Scrapeando histórico desde solucionescuba.com...', {
+    const toastId = toast.loading(`Scrapeando histórico (${histSource === 'both' ? 'ambos' : 'solo informal'}) desde solucionescuba.com...`, {
       description: 'Puede tardar 30-60s (~380 días × 3 monedas)',
     });
 
@@ -333,7 +337,7 @@ export function ExchangeIntelligenceView() {
           'Content-Type': 'application/json',
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
-        body: JSON.stringify({}),
+        body: JSON.stringify({ source: histSource }),
       });
 
       if (!res.ok) {
@@ -359,7 +363,7 @@ export function ExchangeIntelligenceView() {
     } finally {
       setScrapingHist(false);
     }
-  }, [fetchRates]);
+  }, [fetchRates, histSource]);
 
   // ═══ CARGA MASIVA POR EXCEL (admin only) ═══
   // Descarga plantilla con fechas hábiles (2021-01-01 → hoy) para que el
@@ -524,7 +528,7 @@ export function ExchangeIntelligenceView() {
           )}
           {isAdmin && (
             <button
-              onClick={handleScrapeHistorical}
+              onClick={() => setShowHistoricalModal(true)}
               disabled={scrapingHist || loading}
               className="flex items-center gap-2 px-4 py-2.5 min-h-[44px] rounded-xl bg-purple-600 text-white hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-bold text-sm shadow-md"
               aria-label="Cargar histórico completo desde solucionescuba.com"
@@ -733,6 +737,99 @@ export function ExchangeIntelligenceView() {
           </div>
         </div>
       </BaseModal>
+
+      {/* ═══ MODAL: Cargar histórico con selector de fuente ═══ */}
+      {showHistoricalModal && (
+        <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={() => !scrapingHist && setShowHistoricalModal(false)}>
+          <div className="bg-card rounded-2xl border-2 border-border p-6 max-w-md w-full shadow-2xl" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-base font-black uppercase tracking-widest text-foreground">
+                Cargar histórico
+              </h3>
+              <button
+                onClick={() => !scrapingHist && setShowHistoricalModal(false)}
+                className="w-8 h-8 rounded-lg bg-muted/50 hover:bg-muted flex items-center justify-center"
+                aria-label="Cerrar"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <p className="text-xs text-muted-foreground mb-4 leading-relaxed">
+              Scrapea ~380 días de histórico desde{' '}
+              <a href="https://solucionescuba.com/bolsa-divisas.php" target="_blank" rel="noopener noreferrer" className="text-purple-600 dark:text-purple-400 underline font-bold">
+                solucionescuba.com
+              </a>
+              . El histórico solo contiene <strong>tasas informales</strong> (elToque). Para BCC histórico usa "Actualizar BD (7 días)".
+            </p>
+
+            <div className="space-y-3 mb-5">
+              <label className="text-xs font-black uppercase tracking-widest text-foreground block mb-1.5">¿Qué cargar?</label>
+              <button
+                onClick={() => setHistSource('both')}
+                className={cn(
+                  'w-full px-4 py-3 rounded-xl text-sm font-bold transition-all min-h-[48px] border-2 text-left',
+                  histSource === 'both'
+                    ? 'bg-purple-600 text-white border-purple-600 shadow-md'
+                    : 'bg-background text-foreground border-border hover:bg-purple-600/10'
+                )}
+              >
+                <div className="flex items-center justify-between">
+                  <span>Solo informal (recomendado)</span>
+                  {histSource === 'both' && <CheckCircle2 className="w-4 h-4" />}
+                </div>
+                <p className={cn('text-xs mt-0.5', histSource === 'both' ? 'text-white/70' : 'text-muted-foreground')}>
+                  USD + EUR + MLC de elToque (~380 días)
+                </p>
+              </button>
+              <button
+                onClick={() => setHistSource('informal')}
+                className={cn(
+                  'w-full px-4 py-3 rounded-xl text-sm font-bold transition-all min-h-[48px] border-2 text-left',
+                  histSource === 'informal'
+                    ? 'bg-purple-600 text-white border-purple-600 shadow-md'
+                    : 'bg-background text-foreground border-border hover:bg-purple-600/10'
+                )}
+              >
+                <div className="flex items-center justify-between">
+                  <span>Solo informal (igual)</span>
+                  {histSource === 'informal' && <CheckCircle2 className="w-4 h-4" />}
+                </div>
+                <p className={cn('text-xs mt-0.5', histSource === 'informal' ? 'text-white/70' : 'text-muted-foreground')}>
+                  Misma opción (el histórico no tiene BCC)
+                </p>
+              </button>
+            </div>
+
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowHistoricalModal(false)}
+                disabled={scrapingHist}
+                className="flex-1 px-4 py-2.5 min-h-[44px] rounded-xl bg-muted text-foreground hover:bg-muted/70 disabled:opacity-50 transition-colors font-bold text-sm"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleScrapeHistorical}
+                disabled={scrapingHist}
+                className="flex-1 px-4 py-2.5 min-h-[44px] rounded-xl bg-purple-600 text-white hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-bold text-sm shadow-md flex items-center justify-center gap-2"
+              >
+                {scrapingHist ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    Cargando...
+                  </>
+                ) : (
+                  <>
+                    <Database className="w-4 h-4" />
+                    Cargar histórico
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -40,7 +40,7 @@
  */
 
 import { fetchElToqueRatesReal } from './eltoque-scraper';
-import { fetchSolucionesCubaRates } from './soluciones-cuba-scraper';
+import { fetchSolucionesCubaRates, fetchHistoricalRates } from './soluciones-cuba-scraper';
 
 // Constantes (antes magic numbers esparcidos)
 export const BCC_API_BASE = 'https://api.bc.gob.cu/v1/tasas-de-cambio';
@@ -246,7 +246,8 @@ export async function captureForDate(
     // 2. elToque: PRIMERO intentar scraping real (F-01b).
     //    Orden de intentos:
     //      1. eltoque.com (probablemente falle por Cloudflare — imágenes + challenge)
-    //      2. solucionescuba.com (HTML estático con tasas en texto — debería funcionar)
+    //      2. solucionescuba.com — si es HOY: home (tasa actual);
+    //         si es fecha PASADA: bolsa-divisas.php (histórico JSON embebido)
     //      3. Fallback BCC×1.15 con capture_method='estimated'
     //    Ambos scrapers devuelven null si fallan (no lanzan), por lo que
     //    encadenamos y solo caemos al estimado si AMBOS fallan.
@@ -254,9 +255,35 @@ export async function captureForDate(
     let elToqueCaptureMethod: CaptureMethod;
 
     const realRatesElToque = await fetchElToqueRatesReal();
-    const realRatesSoluciones = realRatesElToque
-      ? null
-      : await fetchSolucionesCubaRates();
+
+    // FIX: Si la fecha objetivo NO es hoy, la home de solucionescuba.com
+    // devuelve la tasa ACTUAL, no la histórica. Para fechas pasadas, usar
+    // el histórico de bolsa-divisas.php que tiene JSON embebido con ~380 días.
+    const todayStr = new Date().toISOString().split('T')[0];
+    const isToday = targetDate === todayStr;
+
+    let realRatesSoluciones: { usd: number; eur: number; mlc: number } | null = null;
+    if (!realRatesElToque) {
+      if (isToday) {
+        // Hoy: usar la home que tiene la tasa actual
+        realRatesSoluciones = await fetchSolucionesCubaRates();
+      } else {
+        // Fecha pasada: usar histórico de bolsa-divisas.php
+        const historical = await fetchHistoricalRates();
+        const entry = historical.find(h => h.date === targetDate);
+        if (entry && entry.usd > 0) {
+          realRatesSoluciones = {
+            usd: entry.usd,
+            eur: entry.eur,
+            mlc: entry.mlc,
+          };
+          console.info(
+            `[exchange-capture] Histórico solucionescuba.com para ${targetDate}: ` +
+              `USD=${entry.usd} EUR=${entry.eur} MLC=${entry.mlc}`,
+          );
+        }
+      }
+    }
 
     if (realRatesElToque) {
       // Scraping de eltoque.com exitoso
