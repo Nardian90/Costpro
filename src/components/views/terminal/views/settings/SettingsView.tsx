@@ -524,6 +524,185 @@ export default function SettingsView() {
           ))}
         </div>
       </div>
+
+      {/* ─── Sección: Plan y Límites ─── */}
+      <PlanAndLimitsSection user={user} />
+    </div>
+  );
+}
+
+// ════════════════════════════════════════════════════════════════════
+// SECCIÓN: Plan y Límites — muestra el plan actual, límite de tiendas,
+// y botones para cambiar el plan o contactar soporte.
+// ════════════════════════════════════════════════════════════════════
+function PlanAndLimitsSection({ user }: { user: any }) {
+  const [plan, setPlan] = useState<string>(user?.plan || 'basico');
+  const [storeCount, setStoreCount] = useState<number>(0);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  const PLAN_INFO: Record<string, { label: string; limit: number; color: string; icon: any }> = {
+    basico: { label: 'Básico', limit: 1, color: 'text-muted-foreground', icon: ShieldCheck },
+    profesional: { label: 'Profesional', limit: 3, color: 'text-primary', icon: Zap },
+    enterprise: { label: 'Enterprise', limit: 10, color: 'text-amber-500', icon: Crown },
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      // Obtener plan actual del perfil
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('plan')
+        .eq('id', user?.id)
+        .single();
+      if (profile?.plan) setPlan(profile.plan);
+
+      // Contar tiendas activas del usuario
+      const { count } = await supabase
+        .from('user_store_memberships')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user?.id)
+        .eq('is_active', true);
+      setStoreCount(count || 0);
+    } catch (e) {
+      // fallback
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleChangePlan = async (newPlan: string) => {
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ plan: newPlan })
+        .eq('id', user?.id);
+      if (error) throw error;
+      setPlan(newPlan);
+      toast.success(`Plan cambiado a ${PLAN_INFO[newPlan]?.label || newPlan}`, {
+        description: `Ahora puedes tener hasta ${PLAN_INFO[newPlan]?.limit || 1} tiendas activas.`,
+      });
+    } catch (e: any) {
+      toast.error('Error al cambiar el plan', { description: e.message });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const currentPlanInfo = PLAN_INFO[plan] || PLAN_INFO.basico;
+  const CurrentIcon = currentPlanInfo.icon;
+  const atLimit = storeCount >= currentPlanInfo.limit;
+
+  return (
+    <div className="p-4 sm:p-6 rounded-3xl border border-border bg-card shadow-sm">
+      <h3 className="text-sm font-black uppercase tracking-widest text-primary flex items-center gap-2 mb-5">
+        <Crown className="w-4 h-4" />
+        Plan y Límites
+      </h3>
+
+      {/* Plan actual + uso */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-5">
+        <div className="p-4 rounded-2xl border-2 border-border bg-muted/30">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1">Plan actual</p>
+          <div className="flex items-center gap-2">
+            <CurrentIcon className={cn('w-5 h-5', currentPlanInfo.color)} />
+            <p className={cn('text-lg font-black', currentPlanInfo.color)}>{currentPlanInfo.label}</p>
+          </div>
+        </div>
+        <div className="p-4 rounded-2xl border-2 border-border bg-muted/30">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1">Tiendas activas</p>
+          <p className="text-lg font-black font-mono text-foreground">
+            {loading ? '...' : storeCount} / {currentPlanInfo.limit}
+          </p>
+        </div>
+        <div className={cn(
+          'p-4 rounded-2xl border-2',
+          atLimit ? 'border-destructive/30 bg-destructive/5' : 'border-success/30 bg-success/5'
+        )}>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1">Estado</p>
+          <p className={cn(
+            'text-lg font-black',
+            atLimit ? 'text-destructive' : 'text-success'
+          )}>
+            {atLimit ? 'Límite alcanzado' : 'Disponible'}
+          </p>
+        </div>
+      </div>
+
+      {/* Aviso si está en el límite */}
+      {atLimit && (
+        <div className="mb-5 p-4 rounded-xl bg-destructive/10 border-2 border-destructive/30 flex items-start gap-3">
+          <Info className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <p className="text-sm font-black text-destructive uppercase tracking-widest mb-1">Límite de tiendas alcanzado</p>
+            <p className="text-xs text-foreground leading-relaxed mb-3">
+              Tu plan <strong>{currentPlanInfo.label}</strong> permite hasta {currentPlanInfo.limit} tienda(s).
+              Para crear más tiendas, cambia a un plan superior abajo o contacta a soporte por WhatsApp.
+            </p>
+            <button
+              onClick={() => {
+                const whatsappNumber = '+53 53183215';
+                const message = encodeURIComponent(`Hola, necesito ampliar el límite de tiendas. Actualmente tengo el plan ${currentPlanInfo.label} con ${currentPlanInfo.limit} tienda(s).`);
+                window.open(`https://wa.me/${whatsappNumber.replace(/\D/g, '')}?text=${message}`, '_blank');
+              }}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-green-500 text-white font-bold text-xs uppercase tracking-widest hover:bg-green-600 transition-colors"
+            >
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+              Contactar soporte
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Cambiar plan */}
+      <div className="space-y-2">
+        <p className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-2">Cambiar plan</p>
+        {Object.entries(PLAN_INFO).map(([planId, info]) => {
+          const Icon = info.icon;
+          const isCurrent = plan === planId;
+          return (
+            <button
+              key={planId}
+              onClick={() => !isCurrent && !saving && handleChangePlan(planId)}
+              disabled={isCurrent || saving}
+              className={cn(
+                'w-full flex items-center justify-between gap-3 p-4 rounded-xl border-2 transition-all',
+                isCurrent
+                  ? 'border-primary bg-primary/5 cursor-default'
+                  : 'border-border hover:border-primary/30 hover:bg-primary/5',
+                saving && 'opacity-50 cursor-not-allowed'
+              )}
+            >
+              <div className="flex items-center gap-3">
+                <Icon className={cn('w-5 h-5', info.color)} />
+                <div className="text-left">
+                  <p className={cn('text-sm font-black', info.color)}>{info.label}</p>
+                  <p className="text-xs text-muted-foreground">Hasta {info.limit} tiendas</p>
+                </div>
+              </div>
+              {isCurrent ? (
+                <span className="px-3 py-1 rounded-lg bg-primary/15 text-primary text-xs font-black uppercase tracking-widest">
+                  Actual
+                </span>
+              ) : (
+                <span className="px-3 py-1 rounded-lg bg-muted text-muted-foreground text-xs font-black uppercase tracking-widest">
+                  Cambiar
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      <p className="text-[10px] text-muted-foreground mt-4 leading-relaxed">
+        Los cambios de plan se aplican inmediatamente. Si necesitas un plan personalizado o más de 10 tiendas, contacta a soporte por WhatsApp al +53 53183215.
+      </p>
     </div>
   );
 }
