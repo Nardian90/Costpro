@@ -496,9 +496,11 @@ describe('F-01b: captureForDate integra scraper con fallback', () => {
     expect(eurEt!.rate).toBeCloseTo(750.95, 2);
     expect(mlcEt!.rate).toBeCloseTo(660.1, 2);
 
-    // Log de advertencia emitido
+    // Log de advertencia emitido — IC-SOLUCIONES-CUBA-SCRAPER: el mensaje
+    // cambió a "Ambos scrapers fallaron" porque ahora intentamos eltoque.com
+    // primero y solucionescuba.com después antes de caer al estimado.
     expect(console.warn).toHaveBeenCalledWith(
-      expect.stringContaining('elToque scraping falló'),
+      expect.stringContaining('Ambos scrapers fallaron'),
     );
   });
 

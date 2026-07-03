@@ -19,7 +19,10 @@ import {
   Info,
   Sigma,
   Target,
-  Edit3,
+  Globe,
+  Upload,
+  Download,
+  FileSpreadsheet,
   X,
 } from 'lucide-react';
 // FIX: Code splitting — HistoryTab y VariationsTab usan recharts (1.8MB)
@@ -30,6 +33,8 @@ const MiProductoTab = lazy(() => import('./lazy/MiProductoTab'));
 import { supabase } from '@/lib/supabaseClient';
 import { toast } from 'sonner';
 import { useIntervalWhenVisible } from '@/hooks/ui/use-interval-when-visible';
+import { useAuthStore } from '@/store';
+import { BaseModal } from '@/components/ui/BaseModal';
 
 /**
  * IC-2: Inteligencia Cambiaria — AUDIT-2/3/5: Conectado a datos reales de Supabase.
@@ -92,6 +97,20 @@ export function ExchangeIntelligenceView() {
   const [error, setError] = useState<string | null>(null);
   const [capturing, setCapturing] = useState(false);
   const [lastCaptureInfo, setLastCaptureInfo] = useState<{ count: number; date: string } | null>(null);
+
+  // IC-EXCEL-BULK-UPLOAD: carga masiva por Excel (admin only).
+  // El botón solo se muestra si el usuario es admin; el endpoint valida
+  // de nuevo el rol (defense in depth).
+  const { user } = useAuthStore();
+  const isAdmin = user?.role === 'admin';
+  const [showExcelModal, setShowExcelModal] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploadResult, setUploadResult] = useState<{
+    processed: number;
+    total_rows: number;
+    errors: Array<{ row: number; error: string }>;
+  } | null>(null);
 
   // Fetch real de Supabase
   const fetchRates = useCallback(async () => {
@@ -228,35 +247,28 @@ export function ExchangeIntelligenceView() {
     [fetchRates],
   );
 
-  // ═══ INGRESAR TASA REAL DE ELTOQUE MANUALMENTE ═══
-  // Cloudflare bloquea el scraping automático desde el servidor. Esta función
-  // permite al usuario ingresar manualmente la tasa que ve en eltoque.com,
-  // se persiste con capture_method='real' (no 'estimated').
-  const [showManualRateModal, setShowManualRateModal] = useState(false);
-  const [manualCurrency, setManualCurrency] = useState<'USD' | 'EUR' | 'MLC'>('USD');
-  const [manualRate, setManualRate] = useState('');
-  const [savingManual, setSavingManual] = useState(false);
+  // ═══ CAPTURAR TASA REAL DESDE solucionescuba.com ═══
+  // eltoque.com bloquea el scraping automático (Cloudflare + imágenes).
+  // solucionescuba.com publica las tasas en HTML estático como TEXTO, así
+  // que el scraping funciona. Esta función llama al endpoint que dispara
+  // el scraper y persiste con capture_method='real' (no 'estimated').
+  const [scraping, setScraping] = useState(false);
 
-  const handleSaveManualRate = useCallback(async () => {
-    const rate = parseFloat(manualRate);
-    if (!rate || rate <= 0 || rate > 10000) {
-      toast.error('Tasa inválida', { description: 'Debe ser un número entre 1 y 10000' });
-      return;
-    }
-
-    setSavingManual(true);
-    const toastId = toast.loading(`Guardando tasa ${manualCurrency} = ${rate} CUP...`);
+  const handleScrapeRealRate = useCallback(async () => {
+    setScraping(true);
+    const toastId = toast.loading('Capturando tasa desde solucionescuba.com...', {
+      description: 'Scrapeando HTML público — alternativa a eltoque.com',
+    });
 
     try {
       const { useAuthStore } = await import('@/store');
       const token = useAuthStore.getState().token;
-      const res = await fetch('/api/exchange-rates/manual', {
+      const res = await fetch('/api/exchange-rates/scrape-soluciones', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
-        body: JSON.stringify({ currency: manualCurrency, rate }),
       });
 
       if (!res.ok) {
@@ -264,26 +276,125 @@ export function ExchangeIntelligenceView() {
         throw new Error(errBody.error || `HTTP ${res.status}`);
       }
 
-      toast.success(`Tasa ${manualCurrency} = ${rate} CUP guardada como REAL`, {
+      const data = await res.json();
+      const usdRate = data.rates?.usd ?? 0;
+      const captured = data.captured ?? 0;
+
+      toast.success(`Tasa USD=${usdRate} CUP capturada como REAL`, {
         id: toastId,
-        description: 'El badge cambiará a "✓ Real" en la tarjeta',
-        duration: 6000,
+        description: `${captured} moneda(s) guardada(s) · El badge cambiará a "✓ Real"`,
+        duration: 7000,
         icon: <CheckCircle2 className="w-4 h-4" />,
       });
 
-      setShowManualRateModal(false);
-      setManualRate('');
       await fetchRates();
     } catch (e: any) {
-      toast.error('Error al guardar tasa', {
+      toast.error('No se pudo capturar. Intenta cargar por Excel.', {
         id: toastId,
         description: e.message || 'Error desconocido',
         duration: 10000,
       });
     } finally {
-      setSavingManual(false);
+      setScraping(false);
     }
-  }, [manualCurrency, manualRate, fetchRates]);
+  }, [fetchRates]);
+
+  // ═══ CARGA MASIVA POR EXCEL (admin only) ═══
+  // Descarga plantilla con fechas hábiles (2021-01-01 → hoy) para que el
+  // usuario llene bcc/informal manualmente. Luego sube el Excel lleno.
+  const handleDownloadTemplate = useCallback(async () => {
+    const toastId = toast.loading('Generando plantilla...', {
+      description: 'Fechas hábiles desde enero 2021 hasta hoy',
+    });
+    try {
+      const { useAuthStore: useAuth } = await import('@/store');
+      const token = useAuth.getState().token;
+      const res = await fetch('/api/exchange-rates/template', {
+        headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+      });
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({}));
+        throw new Error(errBody.error || `HTTP ${res.status}`);
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'plantilla-tasas-cuba.xlsx';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast.success('Plantilla descargada', {
+        id: toastId,
+        description: 'Ábrela en Excel/Google Sheets y llena bcc/informal',
+        icon: <Download className="w-4 h-4" />,
+      });
+    } catch (e: any) {
+      toast.error('No se pudo descargar la plantilla', {
+        id: toastId,
+        description: e.message || 'Error desconocido',
+      });
+    }
+  }, []);
+
+  const handleUploadExcel = useCallback(async () => {
+    if (!selectedFile) {
+      toast.error('Selecciona un archivo primero');
+      return;
+    }
+    setUploading(true);
+    setUploadResult(null);
+    const toastId = toast.loading(`Subiendo ${selectedFile.name}...`, {
+      description: 'Procesando filas y guardando en Supabase',
+    });
+    try {
+      const { useAuthStore: useAuth } = await import('@/store');
+      const token = useAuth.getState().token;
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+      const res = await fetch('/api/exchange-rates/bulk-upload', {
+        method: 'POST',
+        headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: formData,
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || `HTTP ${res.status}`);
+      }
+      setUploadResult({
+        processed: data.processed ?? 0,
+        total_rows: data.total_rows ?? 0,
+        errors: data.errors ?? [],
+      });
+      const errMsgs = (data.errors ?? []).length;
+      toast.success(
+        `Procesadas ${data.processed ?? 0} tasas (${data.total_rows ?? 0} filas)`,
+        {
+          id: toastId,
+          description: errMsgs > 0 ? `${errMsgs} error(es) — revisa el detalle` : 'Sin errores',
+          duration: 10000,
+          icon: <CheckCircle2 className="w-4 h-4" />,
+        }
+      );
+      // Refrescar datos locales para ver las nuevas tasas en los gráficos.
+      await fetchRates();
+    } catch (e: any) {
+      toast.error('Error al subir el Excel', {
+        id: toastId,
+        description: e.message || 'Error desconocido',
+        duration: 10000,
+      });
+    } finally {
+      setUploading(false);
+    }
+  }, [selectedFile, fetchRates]);
+
+  const handleCloseExcelModal = useCallback(() => {
+    setShowExcelModal(false);
+    setSelectedFile(null);
+    setUploadResult(null);
+  }, []);
 
   return (
     <div className="w-full max-w-7xl mx-auto space-y-6 p-4" aria-busy={loading}>
@@ -319,14 +430,14 @@ export function ExchangeIntelligenceView() {
             <span>{capturing ? 'Capturando...' : 'Actualizar BD (7 días)'}</span>
           </button>
           <button
-            onClick={() => setShowManualRateModal(true)}
-            disabled={loading}
+            onClick={handleScrapeRealRate}
+            disabled={scraping || loading}
             className="flex items-center gap-2 px-4 py-2.5 min-h-[44px] rounded-xl bg-amber-500 text-white hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-bold text-sm shadow-md"
-            aria-label="Ingresar tasa real de elToque manualmente"
-            title="Ingresa manualmente la tasa que ves en eltoque.com (Cloudflare bloquea el scraping automático)"
+            aria-label="Capturar tasa real desde solucionescuba.com"
+            title="Scrapea la tasa actual desde solucionescuba.com (fuente alternativa a eltoque.com)"
           >
-            <Edit3 className="w-4 h-4" />
-            <span>Ingresar tasa real</span>
+            <Globe className={cn('w-4 h-4', scraping && 'animate-pulse')} />
+            <span>{scraping ? 'Capturando...' : 'Capturar tasa real'}</span>
           </button>
           <button
             onClick={fetchRates}
@@ -337,109 +448,20 @@ export function ExchangeIntelligenceView() {
           >
             <RefreshCw className={cn('w-5 h-5', loading && 'animate-spin')} />
           </button>
+          {isAdmin && (
+            <button
+              onClick={() => setShowExcelModal(true)}
+              disabled={uploading}
+              className="flex items-center gap-2 px-4 py-2.5 min-h-[44px] rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-bold text-sm shadow-md"
+              aria-label="Cargar Excel con tasas históricas"
+              title="Sube un Excel con columnas fecha | bcc | informal (admin only)"
+            >
+              <Upload className={cn('w-4 h-4', uploading && 'animate-pulse')} />
+              <span>{uploading ? 'Subiendo...' : 'Cargar Excel'}</span>
+            </button>
+          )}
         </div>
       </div>
-
-      {/* ═══ MODAL: Ingresar tasa real de elToque manualmente ═══ */}
-      {showManualRateModal && (
-        <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={() => !savingManual && setShowManualRateModal(false)}>
-          <div className="bg-card rounded-2xl border-2 border-border p-6 max-w-md w-full shadow-2xl" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-base font-black uppercase tracking-widest text-foreground">
-                Ingresar tasa real de elToque
-              </h3>
-              <button
-                onClick={() => !savingManual && setShowManualRateModal(false)}
-                disabled={savingManual}
-                className="w-8 h-8 rounded-lg bg-muted/50 hover:bg-muted flex items-center justify-center disabled:opacity-50"
-                aria-label="Cerrar"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <p className="text-xs text-muted-foreground mb-4 leading-relaxed">
-              Cloudflare bloquea el scraping automático desde el servidor. Ingresa manualmente la tasa que ves en{' '}
-              <a href="https://eltoque.com" target="_blank" rel="noopener noreferrer" className="text-amber-600 dark:text-amber-400 underline font-bold">
-                eltoque.com
-              </a>{' '}
-              y se guardará con <strong className="text-green-600 dark:text-green-400">capture_method='real'</strong> (no estimada).
-            </p>
-
-            <div className="space-y-3">
-              <div>
-                <label className="text-xs font-black uppercase tracking-widest text-foreground block mb-1.5">Moneda</label>
-                <div className="flex gap-2">
-                  {(['USD', 'EUR', 'MLC'] as const).map(c => (
-                    <button
-                      key={c}
-                      onClick={() => setManualCurrency(c)}
-                      disabled={savingManual}
-                      className={cn(
-                        'flex-1 px-3 py-2 rounded-lg text-sm font-black uppercase tracking-widest transition-all min-h-[40px] border',
-                        manualCurrency === c
-                          ? 'bg-amber-500 text-white border-amber-500 shadow-md'
-                          : 'bg-background text-muted-foreground border-border hover:bg-amber-500/10',
-                      )}
-                    >
-                      {c}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <label className="text-xs font-black uppercase tracking-widest text-foreground block mb-1.5">
-                  Tasa actual (CUP por 1 {manualCurrency})
-                </label>
-                <input
-                  type="number"
-                  value={manualRate}
-                  onChange={e => setManualRate(e.target.value)}
-                  disabled={savingManual}
-                  className="w-full h-12 px-3 rounded-xl border-2 border-border bg-background text-lg font-black font-mono min-h-[44px] text-foreground"
-                  placeholder="630"
-                  step="0.01"
-                  min="1"
-                  max="10000"
-                  autoFocus
-                  onKeyDown={e => e.key === 'Enter' && handleSaveManualRate()}
-                />
-                <p className="text-xs text-muted-foreground mt-1">
-                  Ej: si elToque muestra USD = 630, ingresa <strong>630</strong>
-                </p>
-              </div>
-            </div>
-
-            <div className="flex gap-2 mt-5">
-              <button
-                onClick={() => setShowManualRateModal(false)}
-                disabled={savingManual}
-                className="flex-1 px-4 py-2.5 min-h-[44px] rounded-xl bg-muted text-foreground hover:bg-muted/70 disabled:opacity-50 transition-colors font-bold text-sm"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={handleSaveManualRate}
-                disabled={savingManual || !manualRate}
-                className="flex-1 px-4 py-2.5 min-h-[44px] rounded-xl bg-amber-500 text-white hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-bold text-sm shadow-md flex items-center justify-center gap-2"
-              >
-                {savingManual ? (
-                  <>
-                    <RefreshCw className="w-4 h-4 animate-spin" />
-                    Guardando...
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle2 className="w-4 h-4" />
-                    Guardar como REAL
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* IC-AUDIT: Selector de segmento BCC — ahora dentro del tab Dashboard */}
 
@@ -502,6 +524,141 @@ export function ExchangeIntelligenceView() {
           </>
         )}
       </div>
+
+      {/* IC-EXCEL-BULK-UPLOAD: modal para admin — descarga plantilla + sube Excel */}
+      <BaseModal
+        open={showExcelModal}
+        onOpenChange={(o) => (o ? setShowExcelModal(true) : handleCloseExcelModal())}
+        title="Cargar tasas por Excel"
+        description="Para análisis de tendencias históricas. Descarga la plantilla, llénala con las tasas que recuerdes y súbelo."
+        maxWidth="sm:max-w-2xl"
+        footer={
+          <>
+            <button
+              onClick={handleCloseExcelModal}
+              disabled={uploading}
+              className="px-4 py-2 min-h-[44px] rounded-xl bg-muted text-foreground hover:bg-muted/70 disabled:opacity-50 font-bold text-sm"
+            >
+              Cerrar
+            </button>
+            <button
+              onClick={handleUploadExcel}
+              disabled={uploading || !selectedFile}
+              className="flex items-center gap-2 px-4 py-2 min-h-[44px] rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed font-bold text-sm"
+            >
+              <Upload className={cn('w-4 h-4', uploading && 'animate-pulse')} />
+              {uploading ? 'Procesando...' : 'Subir y procesar'}
+            </button>
+          </>
+        }
+      >
+        <div className="space-y-5">
+          {/* Paso 1: descargar plantilla */}
+          <div className="space-y-2">
+            <p className="text-sm font-bold text-foreground">Paso 1 — Descargar plantilla</p>
+            <p className="text-xs text-muted-foreground">
+              Excel con todas las fechas hábiles desde enero 2021 hasta hoy (lunes-viernes).
+              Las columnas bcc e informal están vacías para que las llenes.
+            </p>
+            <button
+              onClick={handleDownloadTemplate}
+              disabled={uploading}
+              className="flex items-center gap-2 px-3 py-2 min-h-[44px] rounded-xl bg-primary/10 text-primary hover:bg-primary/20 disabled:opacity-50 font-bold text-sm border border-primary/30"
+            >
+              <Download className="w-4 h-4" />
+              Descargar plantilla (.xlsx)
+            </button>
+          </div>
+
+          {/* Paso 2: subir Excel lleno */}
+          <div className="space-y-2">
+            <p className="text-sm font-bold text-foreground">Paso 2 — Subir Excel lleno</p>
+            <p className="text-xs text-muted-foreground">
+              Columnas aceptadas (case-insensitive): fecha | bcc | informal.
+              Formatos de fecha: YYYY-MM-DD o DD/MM/YYYY. Máximo 1000 filas.
+            </p>
+            <label
+              htmlFor="excel-upload-input"
+              className="flex items-center gap-3 px-4 py-3 rounded-xl border-2 border-dashed border-border hover:border-primary/50 cursor-pointer transition-colors bg-muted/30"
+            >
+              <FileSpreadsheet className="w-6 h-6 text-primary shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-bold text-foreground truncate">
+                  {selectedFile ? selectedFile.name : 'Seleccionar archivo...'}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {selectedFile
+                    ? `${(selectedFile.size / 1024).toFixed(1)} KB`
+                    : '.xlsx, .xls o .csv'}
+                </p>
+              </div>
+              {selectedFile && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setSelectedFile(null);
+                    setUploadResult(null);
+                  }}
+                  className="p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
+                  aria-label="Quitar archivo"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </label>
+            <input
+              id="excel-upload-input"
+              type="file"
+              accept=".xlsx,.xls,.csv"
+              className="sr-only"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                setSelectedFile(f ?? null);
+                setUploadResult(null);
+              }}
+            />
+          </div>
+
+          {/* Resultado */}
+          {uploadResult && (
+            <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-2">
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                <p className="text-sm font-bold text-foreground">
+                  {uploadResult.processed} tasas guardadas ({uploadResult.total_rows} filas)
+                </p>
+              </div>
+              {uploadResult.errors.length > 0 ? (
+                <details className="text-xs">
+                  <summary className="cursor-pointer text-amber-600 font-bold">
+                    {uploadResult.errors.length} error(es) — click para ver
+                  </summary>
+                  <ul className="mt-2 space-y-1 max-h-40 overflow-y-auto">
+                    {uploadResult.errors.map((e, i) => (
+                      <li key={i} className="text-muted-foreground">
+                        <span className="font-mono">fila {e.row}:</span> {e.error}
+                      </li>
+                    ))}
+                  </ul>
+                </details>
+              ) : (
+                <p className="text-xs text-muted-foreground">Sin errores.</p>
+              )}
+            </div>
+          )}
+
+          {/* Nota informativa */}
+          <div className="rounded-xl bg-blue-500/5 border border-blue-500/20 p-3 flex gap-2">
+            <Info className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" />
+            <p className="text-xs text-muted-foreground">
+              Las tasas se guardan con <code className="font-mono">capture_method='real'</code>.
+              Si ya existe una tasa para esa fecha+fuente, se sobreescribe (upsert).
+              No afecta al scraper automático de solucionescuba.com.
+            </p>
+          </div>
+        </div>
+      </BaseModal>
     </div>
   );
 }

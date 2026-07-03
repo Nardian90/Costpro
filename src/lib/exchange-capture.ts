@@ -24,9 +24,23 @@
  *   - Las filas source='BCC' siempre se marcan `capture_method='real'`
  *     (la API del BCC es pública y se captura directamente).
  *   - Migración: `20260703000004_exchange_rates_capture_method.sql`.
+ *
+ * ACTUALIZACIÓN IC-SOLUCIONES-CUBA-SCRAPER (2026-07-03):
+ *   - El scraping de eltoque.com NO funciona (Cloudflare bloquea todo fetch
+ *     del agente + publican tasas como imágenes). Se añadió un segundo
+ *     scraper como fallback: `fetchSolucionesCubaRates()` (ver
+ *     `./soluciones-cuba-scraper.ts`). solucionescuba.com responde HTTP 200
+ *     con HTML estático que contiene las tasas como TEXTO visible.
+ *   - Orden de intentos para source='elToque':
+ *       1. eltoque.com (probablemente falle)
+ *       2. solucionescuba.com (debería funcionar)
+ *       3. BCC × 1.15 estimado (fallback final)
+ *   - Las tasas capturadas de solucionescuba.com también se marcan
+ *     `capture_method='real'` porque son la tasa informal real publicada.
  */
 
 import { fetchElToqueRatesReal } from './eltoque-scraper';
+import { fetchSolucionesCubaRates } from './soluciones-cuba-scraper';
 
 // Constantes (antes magic numbers esparcidos)
 export const BCC_API_BASE = 'https://api.bc.gob.cu/v1/tasas-de-cambio';
@@ -230,28 +244,59 @@ export async function captureForDate(
     }
 
     // 2. elToque: PRIMERO intentar scraping real (F-01b).
-    //    Si `fetchElToqueRatesReal()` devuelve tasas, se persisten con
-    //    capture_method='real'. Si retorna null (Cloudflare, timeout,
-    //    parse error), se cae al cálculo BCC×1.15 con capture_method='estimated'.
+    //    Orden de intentos:
+    //      1. eltoque.com (probablemente falle por Cloudflare — imágenes + challenge)
+    //      2. solucionescuba.com (HTML estático con tasas en texto — debería funcionar)
+    //      3. Fallback BCC×1.15 con capture_method='estimated'
+    //    Ambos scrapers devuelven null si fallan (no lanzan), por lo que
+    //    encadenamos y solo caemos al estimado si AMBOS fallan.
     let elToqueRates: Array<{ currency: string; rate: number; capture_method: CaptureMethod }>;
     let elToqueCaptureMethod: CaptureMethod;
 
-    const realRates = await fetchElToqueRatesReal();
+    const realRatesElToque = await fetchElToqueRatesReal();
+    const realRatesSoluciones = realRatesElToque
+      ? null
+      : await fetchSolucionesCubaRates();
 
-    if (realRates) {
-      // Scraping exitoso — usar tasas reales de eltoque.com
+    if (realRatesElToque) {
+      // Scraping de eltoque.com exitoso
       elToqueCaptureMethod = 'real';
       elToqueRates = [
-        { currency: 'USD', rate: Math.round(realRates.usd * 100) / 100, capture_method: 'real' },
-        { currency: 'EUR', rate: Math.round(realRates.eur * 100) / 100, capture_method: 'real' },
-        { currency: 'MLC', rate: Math.round(realRates.mlc * 100) / 100, capture_method: 'real' },
+        { currency: 'USD', rate: Math.round(realRatesElToque.usd * 100) / 100, capture_method: 'real' },
+        { currency: 'EUR', rate: Math.round(realRatesElToque.eur * 100) / 100, capture_method: 'real' },
+        { currency: 'MLC', rate: Math.round(realRatesElToque.mlc * 100) / 100, capture_method: 'real' },
       ];
       console.info(
-        `[exchange-capture] elToque REAL capturado (${realRates.strategy}) ` +
-          `para ${targetDate}: USD=${realRates.usd} EUR=${realRates.eur} MLC=${realRates.mlc}`,
+        `[exchange-capture] elToque REAL capturado (${realRatesElToque.strategy}) ` +
+          `para ${targetDate}: USD=${realRatesElToque.usd} EUR=${realRatesElToque.eur} MLC=${realRatesElToque.mlc}`,
+      );
+    } else if (realRatesSoluciones) {
+      // eltoque.com falló — scraping de solucionescuba.com exitoso.
+      // Si EUR o MLC no fueron encontrados por el scraper (reportados como 0),
+      // estimarlos desde BCC×1.15 para no guardar 0 en BD.
+      elToqueCaptureMethod = 'real';
+      const eurEspecialBcc =
+        bccRates.find(t => t.codigoMoneda === 'EUR')?.tasaEspecial ?? DEFAULT_EUR_ESPECIAL;
+      const usdReal = realRatesSoluciones.usd;
+      const eurReal =
+        realRatesSoluciones.eur > 0
+          ? realRatesSoluciones.eur
+          : Math.round(eurEspecialBcc * EL_TOQUE_SPREAD * 100) / 100;
+      const mlcReal =
+        realRatesSoluciones.mlc > 0
+          ? realRatesSoluciones.mlc
+          : usdReal; // MLC suele ≈ USD cuando no se reporta
+      elToqueRates = [
+        { currency: 'USD', rate: Math.round(usdReal * 100) / 100, capture_method: 'real' },
+        { currency: 'EUR', rate: Math.round(eurReal * 100) / 100, capture_method: 'real' },
+        { currency: 'MLC', rate: Math.round(mlcReal * 100) / 100, capture_method: 'real' },
+      ];
+      console.info(
+        `[exchange-capture] solucionescuba.com REAL capturado ` +
+          `para ${targetDate}: USD=${usdReal} EUR=${eurReal} MLC=${mlcReal}`,
       );
     } else {
-      // Fallback: estimar desde BCC segmento 3 + spread (BCC × 1.15)
+      // Ambos scrapers fallaron — Fallback: estimar desde BCC segmento 3 + spread (BCC × 1.15)
       elToqueCaptureMethod = 'estimated';
       const usdEspecial =
         bccRates.find(t => t.codigoMoneda === 'USD')?.tasaEspecial ?? DEFAULT_USD_ESPECIAL;
@@ -276,8 +321,8 @@ export async function captureForDate(
         },
       ];
       console.warn(
-        `[exchange-capture] elToque scraping falló para ${targetDate} — ` +
-          `usando estimación BCC×1.15 (capture_method=estimated)`,
+        `[exchange-capture] Ambos scrapers fallaron para ${targetDate} ` +
+          `(eltoque.com + solucionescuba.com) — usando estimación BCC×1.15 (capture_method=estimated)`,
       );
     }
 
