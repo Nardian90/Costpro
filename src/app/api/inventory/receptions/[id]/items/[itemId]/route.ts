@@ -5,6 +5,8 @@ import { getSupabaseAdminSafe } from '@/lib/supabase-admin';
 import { logger } from '@/lib/logger';
 // F4-GAP1: Import cache invalidation
 import { invalidateCacheForStore } from '@/app/api/inventory/costeo-dinamico/route';
+// F-21: validar tasa_cambio_recepcion antes de actualizar receipt_items
+import { validateReceiptItemTasa } from '@/lib/receipt-items-validation';
 
 /**
  * PATCH /api/inventory/receptions/[id]/items/[itemId]
@@ -59,6 +61,21 @@ async function patchHandler(req: NextRequest, session: AuthenticatedSession) {
   const oldTasa = currentItem.tasa_cambio_recepcion;
   const newMoneda = moneda_recepcion || oldMoneda;
   const newTasa = tasa_cambio_recepcion !== undefined ? tasa_cambio_recepcion : oldTasa;
+
+  // F-21: validar que la combinación (newMoneda, newTasa) sea coherente.
+  // Impide que un admin/manager "corrija" la moneda a USD pero deje tasa=1.0
+  // (o cualquier valor <= 1.5), lo que generaría costeos absurdos.
+  const tasaValidation = validateReceiptItemTasa(newMoneda, newTasa);
+  if (!tasaValidation.valid) {
+    return NextResponse.json(
+      {
+        error: tasaValidation.error,
+        message: tasaValidation.details,
+        code: 'ERR_F21_TASA_INVALIDA',
+      },
+      { status: 400 }
+    );
+  }
 
   // 2. Actualizar el item
   const { error: updateError } = await supabase

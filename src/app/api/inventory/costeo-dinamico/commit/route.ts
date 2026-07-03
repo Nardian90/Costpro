@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { withAuth, type AuthenticatedSession } from '@/lib/auth-middleware';
+import { withAuth, withStoreAccess, type AuthenticatedSession } from '@/lib/auth-middleware';
 import { withTracing } from '@/lib/observability';
 import { getSupabaseAdminSafe } from '@/lib/supabase-admin';
 import { logger } from '@/lib/logger';
@@ -171,5 +171,11 @@ async function rollbackHandler(req: NextRequest, session: AuthenticatedSession) 
   return NextResponse.json({ success: true, reverted: changes.length });
 }
 
-export const POST = withTracing(withAuth(postHandler) as any, 'POST /api/inventory/costeo-dinamico/commit');
+// IC-F04-STORE-ACCESS: withStoreAccess reads store_id from the JSON body and
+// validates the user has an active membership to that store before running the
+// handler. Prevents cross-store price commits via getSupabaseAdminSafe().
+// NOTE: the per-handler role check (admin/manager) on line 32 is kept as
+// defense-in-depth — withStoreAccess verifies membership, the role check
+// verifies the user's authority to commit prices.
+export const POST = withTracing(withStoreAccess(postHandler) as any, 'POST /api/inventory/costeo-dinamico/commit');
 export const PUT = withTracing(withAuth(rollbackHandler) as any, 'PUT /api/inventory/costeo-dinamico/commit');

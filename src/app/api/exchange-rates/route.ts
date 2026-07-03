@@ -18,7 +18,7 @@ import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
  *   - /activas — tasas del día actual
  *   - /historico?fechaInicio=...&fechaFin=...&codigoMoneda=USD — histórico
  *
- * elToque: No tiene API pública. Se captura diariamente y se acumula en BD.
+ * elToque: No tiene API pública. Se estima como BCC segmento 3 × 1.15 (constante EL_TOQUE_SPREAD). No es captura de eltoque.com.
  */
 
 const BCC_API = 'https://api.bc.gob.cu/v1/tasas-de-cambio';

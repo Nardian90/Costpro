@@ -19,6 +19,8 @@ import { rateLimit } from "@/lib/rate-limit";
 import { withStoreAccess, AuthenticatedSession } from "@/lib/auth-middleware";
 import { withTracing } from "@/lib/observability";
 import { registerReceptionParamsSchema } from "@/validation/schemas";
+// F-21: validar tasa_cambio_recepcion antes de llamar a la RPC
+import { validateReceiptItemsTasa } from "@/lib/receipt-items-validation";
 
 async function postHandler(request: NextRequest, session: AuthenticatedSession) {
   const clientId = request.headers.get('x-forwarded-for') || session.user.id;
@@ -56,6 +58,20 @@ async function postHandler(request: NextRequest, session: AuthenticatedSession) 
     return NextResponse.json(
       { error: "Unauthorized", message: "Sesión no válida" },
       { status: 401 }
+    );
+  }
+
+  // F-21: validar que ningún item tenga tasa=1.0 (o <=1.5) con moneda no-CUP.
+  // Esto evita costeos absurdos cuando falla el auto-fill de tasa.
+  const tasaValidation = validateReceiptItemsTasa(params.p_items);
+  if (!tasaValidation.valid) {
+    return NextResponse.json(
+      {
+        error: tasaValidation.error,
+        message: tasaValidation.details,
+        code: 'ERR_F21_TASA_INVALIDA',
+      },
+      { status: 400 }
     );
   }
 

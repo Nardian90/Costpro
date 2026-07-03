@@ -7,6 +7,8 @@ import { rateLimit } from '@/lib/rate-limit';
 import { validateOrigin } from '@/lib/csrf';
 import { withTracing } from '@/lib/observability';
 import { createApiError } from '@/lib/api-errors';
+// F-21: validar tasa_cambio_recepcion antes de llamar a register_reception
+import { validateReceiptItemsTasa } from '@/lib/receipt-items-validation';
 
 export const runtime = 'nodejs';
 
@@ -61,6 +63,36 @@ const handler = withAuth(async (req, session) => {
     const results: unknown[] = [];
 
     for (const op of batch.operations) {
+      // F-21: para recepciones, validar tasa_cambio_recepcion antes de tocar la RPC.
+      // Si el item viola la regla (moneda != CUP y tasa <= 1.5), se rechaza con
+      // 400 para que el cliente pueda corregir y reintentar — no se encola.
+      if (op.entity === 'reception' && Array.isArray(op.payload?.p_items)) {
+        const tasaValidation = validateReceiptItemsTasa(op.payload.p_items);
+        if (!tasaValidation.valid) {
+          results.push({
+            idempotencyKey: op.idempotencyKey,
+            status: 'error',
+            error: (process.env.NODE_ENV !== 'production' || !!process.env.VITEST)
+              ? `F-21: ${tasaValidation.error} — ${tasaValidation.details}`
+              : 'Tasa de cambio inválida',
+          });
+          // Registrar en sync_log para que el cliente pueda ver el rechazo.
+          await supabase.from('sync_log').upsert({
+            idempotency_key: op.idempotencyKey,
+            user_id: session.user.id,
+            entity: op.entity,
+            operation_type: op.operationType,
+            status: 'error',
+            response_data: {
+              error: 'ERR_F21_TASA_INVALIDA',
+              message: tasaValidation.details,
+            },
+            store_id: op.payload?.p_store_id || null,
+          });
+          continue;
+        }
+      }
+
       // 1. Check idempotency
       const { data: existingLog } = await supabase
         .from('sync_log')

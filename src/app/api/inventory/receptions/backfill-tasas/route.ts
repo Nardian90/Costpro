@@ -5,6 +5,8 @@ import { getSupabaseAdminSafe } from '@/lib/supabase-admin';
 import { invalidateCacheForStore } from '@/app/api/inventory/costeo-dinamico/route';
 import { logger } from '@/lib/logger';
 import { z } from 'zod';
+// F-21: validar tasa_cambio_recepcion en backfill masivo
+import { TASA_CAMBIO_MINIMA_NO_CUP } from '@/lib/receipt-items-validation';
 
 export const runtime = 'nodejs';
 
@@ -13,7 +15,14 @@ const backfillSchema = z.object({
   date_from: z.string().optional(),
   date_to: z.string().optional(),
   moneda: z.enum(['USD', 'EUR', 'MLC']),
-  tasa: z.number().positive(),
+  // F-21: la tasa debe ser > 1.5 para monedas no-CUP. Zod refina el positive
+  // original para garantizar que el backfill no genere items inválidos.
+  tasa: z
+    .number()
+    .positive()
+    .refine((v) => v > TASA_CAMBIO_MINIMA_NO_CUP, {
+      message: `tasa debe ser mayor a ${TASA_CAMBIO_MINIMA_NO_CUP} CUP por unidad para moneda no-CUP (F-21)`,
+    }),
   motivo: z.string().optional(),
 });
 

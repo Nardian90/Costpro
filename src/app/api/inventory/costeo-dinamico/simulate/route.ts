@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { withAuth, type AuthenticatedSession } from '@/lib/auth-middleware';
+import { withStoreAccess, type AuthenticatedSession } from '@/lib/auth-middleware';
 import { withTracing } from '@/lib/observability';
 import { getSupabaseAdminSafe } from '@/lib/supabase-admin';
 import { calculateProductCost, calculateDashboard } from '@/lib/costeo-dinamico/engine';
@@ -135,4 +135,7 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
   return NextResponse.json({ data: results, dashboard, currentRate, config });
 }
 
-export const POST = withTracing(withAuth(postHandler) as any, 'POST /api/inventory/costeo-dinamico/simulate');
+// IC-F04-STORE-ACCESS: withStoreAccess reads store_id from the JSON body and
+// validates the user has an active membership to that store before running the
+// handler. Prevents cross-store simulation leaks via getSupabaseAdminSafe().
+export const POST = withTracing(withStoreAccess(postHandler) as any, 'POST /api/inventory/costeo-dinamico/simulate');

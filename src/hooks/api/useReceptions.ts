@@ -4,6 +4,8 @@ import { supabase } from '@/lib/supabaseClient';
 import { validateRPCArrayResponse } from '@/lib/rpc-validator';
 import { receiptSchema, receiptItemSchema } from '@/validation/schemas';
 import { withTableLogging, getCleanStoreId } from './base';
+// F-21: validar tasa_cambio_recepcion antes de insertar receipt_items
+import { validateReceiptItemsTasa } from '@/lib/receipt-items-validation';
 
 export function useReceptions(storeId?: string | null, isAdmin = false) {
   const cleanStoreId = getCleanStoreId(storeId);
@@ -291,6 +293,14 @@ export function useSavePendingReception() {
 
       if (allItems.length === 0) {
         throw new Error('No hay items válidos para guardar');
+      }
+
+      // F-21: validar tasa_cambio_recepcion antes de insertar receipt_items.
+      // Si algún item tiene moneda != CUP y tasa <= 1.5, lanzar error claro
+      // para que el usuario corrija antes de tocar la BD.
+      const tasaValidation = validateReceiptItemsTasa(allItems);
+      if (!tasaValidation.valid) {
+        throw new Error(`F-21: ${tasaValidation.error} — ${tasaValidation.details}`);
       }
 
       const totalCost = allItems.reduce((s, i) => s + i.quantity * i.unit_cost, 0);

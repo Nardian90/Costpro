@@ -5,7 +5,7 @@ import { useAuthStore } from '@/store';
 import { apiFetch } from '@/lib/api-fetch';
 import { cn } from '@/lib/utils';
 import { getRiskColor, getRiskLabel } from '@/lib/costeo-dinamico/risk.classifier';
-import type { ProductCostResult, DashboardSummary, CurrentRate, CostEngineConfig } from '@/lib/costeo-dinamico/types';
+import type { ProductCostResult, DashboardSummary, CurrentRate, CostEngineConfig, RateSource } from '@/lib/costeo-dinamico/types';
 import {
   TrendingUp, TrendingDown, AlertTriangle, DollarSign, Package,
   Loader2, RefreshCw, Sliders, CheckCircle2, ArrowLeftRight, Search, Download,
@@ -15,6 +15,38 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+
+// ─── F-02: Selector cross-módulo de fuente de tasa ────────────────────────────
+// Persiste la preferencia del usuario en localStorage para que el motor de
+// costeo use la misma fuente que se muestra en Inteligencia Cambiaria, en vez
+// de hardcodear siempre BCC_seg3. Los valores deben coincidir con `RateSource`
+// en `src/lib/costeo-dinamico/types.ts` (excluyendo 'Manual' que es solo para
+// simulación manual).
+// IMPORTANTE: 'elToque' se mapea en el backend (route.ts línea 102) a
+// `source='elToque', segment='3'` en la tabla `exchange_rates`, que es donde
+// se persiste la estimación informal (BCC seg3 × 1.15). Ver worklog
+// IC-F01-RENAME-ELTOQUE-INFORMAL para el contexto del renombramiento UI.
+const RATE_SOURCE_STORAGE_KEY = 'costpro:costeo-dinamico:rate-source';
+const RATE_SOURCE_OPTIONS: { value: RateSource; shortLabel: string; description: string }[] = [
+  { value: 'BCC_seg1', shortLabel: 'BCC seg1', description: 'BCC segmento 1 — Estatal (empresas estatales).' },
+  { value: 'BCC_seg2', shortLabel: 'BCC seg2', description: 'BCC segmento 2 — CADECA (cajero minorista).' },
+  { value: 'BCC_seg3', shortLabel: 'BCC seg3', description: 'BCC segmento 3 — MIPYMES (por defecto).' },
+  { value: 'elToque', shortLabel: 'Informal', description: 'Informal estimada — BCC seg3 × 1.15. Aproxima el mercado paralelo; no es captura de eltoque.com.' },
+];
+
+function getRateSourceLabel(value: RateSource): string {
+  switch (value) {
+    case 'BCC_seg1': return 'BCC Estatal';
+    case 'BCC_seg2': return 'BCC CADECA';
+    case 'BCC_seg3': return 'BCC MIPYMES';
+    case 'elToque':  return 'Informal estimada';
+    case 'Manual':   return 'Manual';
+  }
+}
+
+function isValidRateSource(value: string | null): value is RateSource {
+  return value === 'BCC_seg1' || value === 'BCC_seg2' || value === 'BCC_seg3' || value === 'elToque' || value === 'Manual';
+}
 
 export default function CosteoDinamicoView() {
   const user = useAuthStore((s) => s.user);
@@ -29,6 +61,24 @@ export default function CosteoDinamicoView() {
   const [sortBy, setSortBy] = useState<string>('risk');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
 
+  // F-02: Preferencia de fuente de tasa persistida en localStorage.
+  // El usuario puede elegir entre las 4 fuentes que muestra Inteligencia
+  // Cambiaria (BCC seg1/2/3 + Informal estimada) para que el motor de costeo
+  // use la misma tasa que ve en el otro módulo.
+  const [rateSource, setRateSource] = useState<RateSource>(() => {
+    if (typeof window !== 'undefined') {
+      const stored = window.localStorage.getItem(RATE_SOURCE_STORAGE_KEY);
+      if (isValidRateSource(stored)) return stored;
+    }
+    return 'BCC_seg3';
+  });
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(RATE_SOURCE_STORAGE_KEY, rateSource);
+    }
+  }, [rateSource]);
+
   // Simulación
   const [simulating, setSimulating] = useState(false);
   const [simRate, setSimRate] = useState('');
@@ -39,15 +89,29 @@ export default function CosteoDinamicoView() {
   const [showCommitModal, setShowCommitModal] = useState(false);
   const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
 
-  // Config
-  const [config, setConfig] = useState<CostEngineConfig>({
+  // Config — rate_source se sincroniza con la preferencia persistida (F-02).
+  const [config, setConfig] = useState<CostEngineConfig>(() => ({
     min_margin: 0.15,
     target_margin: 0.30,
     rounding_rule: 'multiple_10',
     rounding_direction: 'nearest',
-    rate_source: 'BCC_seg3',
+    rate_source: (() => {
+      if (typeof window !== 'undefined') {
+        const stored = window.localStorage.getItem(RATE_SOURCE_STORAGE_KEY);
+        if (isValidRateSource(stored)) return stored;
+      }
+      return 'BCC_seg3';
+    })(),
     manual_rate: null,
-  });
+  }));
+
+  // F-02: mantener config.rate_source sincronizado con la preferencia del
+  // selector para que cualquier consumidor futuro de `config` vea el valor
+  // correcto. El fetch usa `rateSource` directamente para evitar el ciclo
+  // extra de render que introduciría depender de `config.rate_source`.
+  useEffect(() => {
+    setConfig(prev => prev.rate_source === rateSource ? prev : { ...prev, rate_source: rateSource });
+  }, [rateSource]);
 
   const fetchData = useCallback(async () => {
     if (!storeId) {
@@ -58,7 +122,7 @@ export default function CosteoDinamicoView() {
     try {
       const params = new URLSearchParams({
         store_id: storeId,
-        source: config.rate_source,
+        source: rateSource,
         min_margin: String(config.min_margin),
         target_margin: String(config.target_margin),
         rounding: config.rounding_rule,
@@ -72,7 +136,7 @@ export default function CosteoDinamicoView() {
     } finally {
       setLoading(false);
     }
-  }, [storeId, config]);
+  }, [storeId, config.min_margin, config.target_margin, config.rounding_rule, rateSource]);
 
   useEffect(() => {
     fetchData();
@@ -245,6 +309,51 @@ export default function CosteoDinamicoView() {
               <CheckCircle2 className="w-4 h-4" /> Actualizar {selectedProducts.size} precios
             </Button>
           )}
+        </div>
+      </div>
+
+      {/* F-02: Selector cross-módulo de fuente de tasa + badge visible */}
+      <div className="flex items-center justify-between gap-3 flex-wrap p-3 rounded-xl border border-border bg-card/50">
+        <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex flex-col gap-1">
+            <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+              Tasa aplicada al costeo
+            </Label>
+            <div
+              className="inline-flex items-center rounded-lg border border-border bg-muted/30 p-0.5 gap-0.5"
+              role="radiogroup"
+              aria-label="Fuente de tasa"
+            >
+              {RATE_SOURCE_OPTIONS.map(opt => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  role="radio"
+                  aria-checked={rateSource === opt.value}
+                  onClick={() => setRateSource(opt.value)}
+                  title={opt.description}
+                  className={cn(
+                    'min-h-[44px] px-3 rounded-md text-xs font-bold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary',
+                    rateSource === opt.value
+                      ? 'bg-primary text-primary-foreground shadow-sm'
+                      : 'text-muted-foreground hover:bg-muted/70 hover:text-foreground'
+                  )}
+                >
+                  {opt.shortLabel}
+                </button>
+              ))}
+            </div>
+          </div>
+          <p className="text-xs text-muted-foreground max-w-xs hidden sm:block">
+            Selecciona qué tasa aplica al costeo. Por defecto BCC seg3 (MIPYMES).
+            «Informal» = BCC seg3 × 1.15.
+          </p>
+        </div>
+        <div
+          className="text-xs px-3 py-1.5 rounded-md bg-primary/10 border border-primary/30 text-primary font-mono font-bold"
+          title="Fuente de tasa utilizada en el cálculo del costeo. Coincide con la tabla Inteligencia Cambiaria."
+        >
+          Tasa usada: {getRateSourceLabel(rateSource)}
         </div>
       </div>
 

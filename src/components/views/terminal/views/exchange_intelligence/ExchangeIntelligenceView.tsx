@@ -731,9 +731,9 @@ function DashboardTab({
                 </div>
                 <div>
                   <h3 className="text-base font-black uppercase tracking-widest text-amber-600 dark:text-amber-400">
-                    elToque — Informal
+                    Informal estimada
                   </h3>
-                  <p className="text-sm text-muted-foreground">Mercado informal</p>
+                  <p className="text-sm text-muted-foreground">Estimación basada en BCC × 1.15</p>
                 </div>
               </div>
               <div className="flex items-center gap-1">
@@ -1035,7 +1035,7 @@ function ImpactTab({ officialUsd, informalUsd, historyData }: any) {
   // ─── Toggle tasa formal/informal ───
   const [rateSource, setRateSource] = useState<'informal' | 'oficial'>('informal');
   const rateSourceMeta = {
-    informal: { label: 'elToque (informal)', color: 'text-orange-500', current: informalUsd },
+    informal: { label: 'Informal estimada', color: 'text-orange-500', current: informalUsd },
     oficial: { label: 'BCC (oficial)', color: 'text-green-500', current: officialUsd },
   }[rateSource];
 
@@ -1103,7 +1103,7 @@ function ImpactTab({ officialUsd, informalUsd, historyData }: any) {
                   : 'text-muted-foreground hover:text-foreground',
               )}
             >
-              elToque (informal)
+              Informal estimada
             </button>
             <button
               onClick={() => setRateSource('oficial')}
@@ -1448,7 +1448,7 @@ function SimulatorTab({ informalUsd, officialUsd, historyData }: any) {
   // ─── Tasa: formal o informal ───
   const [rateSource, setRateSource] = useState<'informal' | 'oficial'>('informal');
   const rateSourceMeta = {
-    informal: { label: 'elToque (informal)', color: 'text-orange-500', current: informalUsd, colorClass: 'bg-orange-500' },
+    informal: { label: 'Informal estimada', color: 'text-orange-500', current: informalUsd, colorClass: 'bg-orange-500' },
     oficial: { label: 'BCC (oficial)', color: 'text-green-500', current: officialUsd, colorClass: 'bg-green-500' },
   }[rateSource];
 
@@ -1649,7 +1649,7 @@ function SimulatorTab({ informalUsd, officialUsd, historyData }: any) {
                   : 'text-muted-foreground hover:text-foreground',
               )}
             >
-              elToque (informal)
+              Informal estimada
             </button>
             <button
               onClick={() => setRateSource('oficial')}

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { withAuth, type AuthenticatedSession } from '@/lib/auth-middleware';
+import { withStoreAccess, type AuthenticatedSession } from '@/lib/auth-middleware';
 import { withTracing } from '@/lib/observability';
 import { getSupabaseAdminSafe } from '@/lib/supabase-admin';
 import { calculateProductCost, calculateDashboard } from '@/lib/costeo-dinamico/engine';
@@ -62,12 +62,10 @@ export function invalidateCacheForStore(storeId: string): void {
 
 async function getHandler(req: NextRequest, session: AuthenticatedSession) {
   const { searchParams } = new URL(req.url);
-  const storeId = searchParams.get('store_id');
+  // IC-F04-STORE-ACCESS: storeId presence & user access validated by withStoreAccess.
+  // Non-null assertion is safe — withStoreAccess returns 400 if missing and 403 if no access.
+  const storeId = searchParams.get('store_id')!;
   const productId = searchParams.get('product_id'); // F4-GAP2
-
-  if (!storeId) {
-    return NextResponse.json({ error: 'store_id es requerido' }, { status: 400 });
-  }
 
   // F4.4: Check cache first (skip cache for single-product queries)
   const rateSource = searchParams.get('source') || 'BCC_seg3';
@@ -235,4 +233,7 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
   return NextResponse.json(response);
 }
 
-export const GET = withTracing(withAuth(getHandler) as any, 'GET /api/inventory/costeo-dinamico');
+// IC-F04-STORE-ACCESS: withStoreAccess validates that the user has an active
+// membership to the requested store_id before running the handler. Prevents
+// cross-store data leaks via getSupabaseAdminSafe() (service_role bypasses RLS).
+export const GET = withTracing(withStoreAccess(getHandler) as any, 'GET /api/inventory/costeo-dinamico');

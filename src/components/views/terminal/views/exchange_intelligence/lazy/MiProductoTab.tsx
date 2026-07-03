@@ -20,7 +20,7 @@ type RateSource = 'informal' | 'oficial';
 const RATE_SOURCES: { id: RateSource; label: string; color: string; bgClass: string; textClass: string }[] = [
   {
     id: 'informal',
-    label: 'elToque (informal)',
+    label: 'Informal estimada',
     color: COLOR_ELTOQUE,
     bgClass: 'bg-orange-500',
     textClass: 'text-orange-500',
@@ -197,7 +197,7 @@ function MiProductoTab({ historyData, informalUsd, officialUsd }: any) {
 
         <p className="text-xs text-muted-foreground italic">
           {rateSource === 'informal'
-            ? 'Usa la tasa del mercado informal (elToque). Recomendado si compras USD en el mercado paralelo.'
+            ? 'Usa una estimación de la tasa informal (= BCC segmento 3 × 1.15). Aproxima el mercado paralelo; no proviene de eltoque.com.'
             : 'Usa la tasa oficial del BCC. Recomendado si importas vía sector formal.'}
         </p>
 

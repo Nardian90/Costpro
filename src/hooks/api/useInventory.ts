@@ -16,6 +16,8 @@ import { useSyncContext } from '@/components/providers/SyncProvider';
 // R2-4: imports para auditoría
 import { useAuthStore } from '@/store';
 import { auditService } from '@/services/audit-service';
+// F-21: validar tasa_cambio_recepcion antes de llamar a register_reception
+import { validateReceiptItemsTasa } from '@/lib/receipt-items-validation';
 
 export function useSuspenseInventory(storeId?: string | null, searchTerm = '', category = '', limit = 20) {
   const cleanStoreId = getCleanStoreId(storeId);
@@ -95,6 +97,16 @@ export function useRegisterReception() {
   return useMutation({
     mutationFn: async (rawParams: z.input<typeof registerReceptionParamsSchema>) => {
       const params = registerReceptionParamsSchema.parse(rawParams);
+
+      // F-21: validar tasa_cambio_recepcion antes de encolar o llamar a la RPC.
+      // El backend (/api/inventory/receptions, /api/sync/batch y la BD CHECK
+      // constraint) también valida, pero este fail-fast da feedback inmediato
+      // al usuario y evita enviar un payload inválido.
+      const tasaValidation = validateReceiptItemsTasa(params.p_items);
+      if (!tasaValidation.valid) {
+        throw new Error(`F-21: ${tasaValidation.error} — ${tasaValidation.details}`);
+      }
+
       if (!navigator.onLine) {
         return await addToQueue('reception', 'CREATE', params);
       }

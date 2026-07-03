@@ -74,14 +74,14 @@ const CHART_MODES: { id: ChartMode; label: string; icon: any }[] = [
 type VariationSource = 'both' | 'informal' | 'oficial';
 const VARIATION_SOURCES: { id: VariationSource; label: string }[] = [
   { id: 'both', label: 'Ambos' },
-  { id: 'informal', label: 'elToque' },
+  { id: 'informal', label: 'Informal est.' },
   { id: 'oficial', label: 'BCC' },
 ];
 
 // ─── Tasa para la calculadora de impacto ───
 type RateSource = 'informal' | 'oficial';
 const RATE_SOURCES: { id: RateSource; label: string; description: string }[] = [
-  { id: 'informal', label: 'elToque (informal)', description: 'Tasa del mercado informal — relevante si compras USD en el mercado paralelo.' },
+  { id: 'informal', label: 'Informal estimada', description: 'Estimación = BCC segmento 3 × 1.15. Aproxima el mercado paralelo; no es captura de eltoque.com.' },
   { id: 'oficial', label: 'BCC (oficial)', description: 'Tasa del Banco Central de Cuba — relevante si importas vía sector formal.' },
 ];
 
@@ -601,7 +601,7 @@ function HistoryTab({ data }: any) {
                 </span>
                 <InfoTooltip title="Proyección a futuro — cómo se calcula">
                   <p className="mb-2">
-                    Se proyectan <strong>ambas tasas</strong> (elToque informal y BCC oficial) al futuro usando <strong>regresión lineal por mínimos cuadrados</strong> sobre los datos visibles:
+                    Se proyectan <strong>ambas tasas</strong> (informal estimada y BCC oficial) al futuro usando <strong>regresión lineal por mínimos cuadrados</strong> sobre los datos visibles:
                   </p>
                   <code className="block bg-muted/60 rounded-md p-2 text-xs font-mono">
                     tasa(t) = m·t + b
@@ -663,7 +663,7 @@ function HistoryTab({ data }: any) {
             <div className="flex items-center gap-3 text-xs font-bold flex-wrap">
               <div className="flex items-center gap-1.5">
                 <Target className="w-3.5 h-3.5 text-orange-500" />
-                <span className="text-muted-foreground">Pendiente elToque:</span>
+                <span className="text-muted-foreground">Pendiente informal:</span>
                 <span className={cn('font-mono', forecastModel.informal.slope >= 0 ? 'text-destructive' : 'text-success')}>
                   {forecastModel.informal.slope >= 0 ? '+' : ''}{forecastModel.informal.slope.toFixed(3)} CUP/día
                 </span>
@@ -687,7 +687,7 @@ function HistoryTab({ data }: any) {
         <div className="flex flex-wrap gap-4 mb-4 text-sm font-bold">
           <div className="flex items-center gap-2">
             <span className="inline-block w-6 h-1.5 rounded-full" style={{ backgroundColor: CHART_COLOR_INFORMAL }} />
-            <span className="text-foreground">USD Informal (elToque)</span>
+            <span className="text-foreground">USD Informal (estimada)</span>
           </div>
           <div className="flex items-center gap-2">
             <span className="inline-block w-6 h-1.5 rounded-full" style={{ backgroundColor: CHART_COLOR_OFICIAL }} />
@@ -703,7 +703,7 @@ function HistoryTab({ data }: any) {
             <>
               <div className="flex items-center gap-2">
                 <span className="inline-block w-6 h-1.5 rounded-full border-t-2 border-dashed" style={{ borderColor: CHART_COLOR_FORECAST_INFORMAL }} />
-                <span className="text-foreground">Proy. elToque (+{forecastDays}d)</span>
+                <span className="text-foreground">Proy. informal (+{forecastDays}d)</span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="inline-block w-6 h-1.5 rounded-full border-t-2 border-dashed" style={{ borderColor: CHART_COLOR_FORECAST_OFICIAL }} />
@@ -777,7 +777,7 @@ function HistoryTab({ data }: any) {
                 strokeWidth={3}
                 fillOpacity={1}
                 fill="url(#colorInformal)"
-                name="USD Informal (elToque)"
+                name="USD Informal (estimada)"
                 dot={false}
                 activeDot={{ r: 6, fill: CHART_COLOR_INFORMAL, stroke: 'hsl(var(--card))', strokeWidth: 2 }}
                 connectNulls
@@ -791,7 +791,7 @@ function HistoryTab({ data }: any) {
                 strokeWidth={3}
                 dot={false}
                 activeDot={{ r: 6, fill: CHART_COLOR_INFORMAL, stroke: 'hsl(var(--card))', strokeWidth: 2 }}
-                name="USD Informal (elToque)"
+                name="USD Informal (estimada)"
                 connectNulls
               />
             )}
@@ -799,7 +799,7 @@ function HistoryTab({ data }: any) {
               <Bar
                 dataKey="informal"
                 fill={CHART_COLOR_INFORMAL}
-                name="USD Informal (elToque)"
+                name="USD Informal (estimada)"
                 radius={[4, 4, 0, 0]}
               />
             )}
@@ -863,7 +863,7 @@ function HistoryTab({ data }: any) {
                 strokeWidth={2}
                 strokeDasharray="5 3"
                 dot={{ r: 2, fill: CHART_COLOR_FORECAST_INFORMAL }}
-                name={`Proy. elToque (+${forecastDays}d)`}
+                name={`Proy. informal (+${forecastDays}d)`}
                 connectNulls
               />
             )}
@@ -930,7 +930,7 @@ function HistoryTab({ data }: any) {
           {(variationSource === 'both' || variationSource === 'informal') && (
             <div className="flex items-center gap-2">
               <span className="inline-block w-6 h-1.5 rounded-full" style={{ backgroundColor: CHART_COLOR_INFORMAL }} />
-              <span className="text-foreground">Variación elToque</span>
+              <span className="text-foreground">Variación informal</span>
             </div>
           )}
           {(variationSource === 'both' || variationSource === 'oficial') && (
@@ -976,11 +976,11 @@ function HistoryTab({ data }: any) {
               }}
             />
             <ReferenceLine y={0} stroke={REFERENCE_LINE_STROKE} strokeWidth={1.5} />
-            {/* Variación elToque — barras coloreadas según signo (verde +/rojo -) */}
+            {/* Variación informal — barras coloreadas según signo (verde +/rojo -) */}
             {(variationSource === 'both' || variationSource === 'informal') && (
               <Bar
                 dataKey="informalChange"
-                name="Variación elToque"
+                name="Variación informal"
                 radius={[3, 3, 0, 0]}
               >
                 {variationData.map((entry: any, i: number) => {
