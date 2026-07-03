@@ -188,7 +188,100 @@ function HistoryTab({ data }: any) {
   const [advancedOpen, setAdvancedOpen] = useState(false);
 
   // ─── Método de tendencia ───
+  // Default: el método con mejor R² (ajuste más cercano a los datos).
+  // Si el usuario cambia manualmente, se respeta su elección.
   const [trendMethod, setTrendMethod] = useState<TrendMethod>('none');
+  const [userChangedTrend, setUserChangedTrend] = useState(false);
+
+  // Calcular R² de cada método para elegir el default y mostrar info de confiabilidad
+  const trendR2Info = useMemo(() => {
+    const informalValues: (number | null)[] = (filtered as any[]).map((d: any) =>
+      d.informal != null ? Number(d.informal) : null,
+    );
+    const validValues: number[] = informalValues.filter((v): v is number => v != null);
+    if (validValues.length < 5) return null;
+
+    // R² de regresión lineal
+    const lin = linearRegression(validValues);
+    const r2Linear = lin?.r2 ?? 0;
+
+    // R² de SMA 7 (1 - SS_res/SS_tot comparando valores reales vs SMA)
+    const sma7Series = sma(informalValues, 7);
+    const sma7Pairs = informalValues
+      .map((v, i) => ({ v, s: sma7Series[i] }))
+      .filter(p => p.v != null && p.s != null) as { v: number; s: number }[];
+    const meanSMA7 = sma7Pairs.reduce((a, b) => a + b.v, 0) / sma7Pairs.length;
+    const ssTotSMA7 = sma7Pairs.reduce((s, p) => s + (p.v - meanSMA7) ** 2, 0);
+    const ssResSMA7 = sma7Pairs.reduce((s, p) => s + (p.v - p.s) ** 2, 0);
+    const r2SMA7 = ssTotSMA7 > 0 ? Math.max(0, 1 - ssResSMA7 / ssTotSMA7) : 0;
+
+    // R² de SMA 30
+    const sma30Series = sma(informalValues, 30);
+    const sma30Pairs = informalValues
+      .map((v, i) => ({ v, s: sma30Series[i] }))
+      .filter(p => p.v != null && p.s != null) as { v: number; s: number }[];
+    const meanSMA30 = sma30Pairs.reduce((a, b) => a + b.v, 0) / sma30Pairs.length;
+    const ssTotSMA30 = sma30Pairs.reduce((s, p) => s + (p.v - meanSMA30) ** 2, 0);
+    const ssResSMA30 = sma30Pairs.reduce((s, p) => s + (p.v - p.s) ** 2, 0);
+    const r2SMA30 = ssTotSMA30 > 0 ? Math.max(0, 1 - ssResSMA30 / ssTotSMA30) : 0;
+
+    // R² de poly2
+    const poly = polyRegression2(validValues);
+    const r2Poly2 = poly?.r2 ?? 0;
+
+    const methods: { id: TrendMethod; r2: number }[] = [
+      { id: 'linear', r2: r2Linear },
+      { id: 'sma7', r2: r2SMA7 },
+      { id: 'sma30', r2: r2SMA30 },
+      { id: 'poly2', r2: r2Poly2 },
+    ];
+    const best = methods.reduce((a, b) => (b.r2 > a.r2 ? b : a));
+
+    return {
+      best: best.id,
+      bestR2: best.r2,
+      r2Linear,
+      r2SMA7,
+      r2SMA30,
+      r2Poly2,
+      current: trendMethod === 'none' ? best.id : trendMethod,
+      currentR2: trendMethod === 'none'
+        ? best.r2
+        : methods.find(m => m.id === trendMethod)?.r2 ?? 0,
+    };
+  }, [filtered, trendMethod]);
+
+  // Elegir el método default automáticamente (solo si el usuario no ha cambiado)
+  useEffect(() => {
+    if (!userChangedTrend && trendR2Info && trendMethod === 'none') {
+      setTrendMethod(trendR2Info.best);
+    }
+  }, [trendR2Info, userChangedTrend, trendMethod]);
+
+  // Wrapper para setTrendMethod que marca que el usuario cambió
+  const handleTrendMethodChange = useCallback((method: TrendMethod) => {
+    setUserChangedTrend(true);
+    setTrendMethod(method);
+  }, []);
+
+  // Info de confiabilidad del método actual
+  const reliabilityInfo = useMemo(() => {
+    if (!trendR2Info || trendMethod === 'none') return null;
+    const r2 = trendR2Info.currentR2;
+    let level: 'alta' | 'media' | 'baja';
+    let explanation: string;
+    if (r2 >= 0.7) {
+      level = 'alta';
+      explanation = 'El modelo se ajusta muy bien a los datos (R² ≥ 0.70). La tendencia explicada es fuerte y la proyección es confiable. R² mide qué porcentaje de la variación de la tasa se explica por el modelo: 0.70 significa que el 70% del movimiento de la tasa sigue el patrón detectado.';
+    } else if (r2 >= 0.4) {
+      level = 'media';
+      explanation = 'El modelo se ajusta moderadamente (R² entre 0.40 y 0.70). Hay una tendencia visible pero con ruido. Úsalo como referencia pero considera que puede desviarse. R² mide qué porcentaje de la variación se explica: 0.50 significa que la mitad del movimiento sigue el patrón, la otra mitad es ruido.';
+    } else {
+      level = 'baja';
+      explanation = 'El modelo NO se ajusta bien (R² < 0.40). No hay tendencia lineal clara — los datos son muy volátiles o hay un cambio de régimen reciente. NO uses esta proyección para decisiones de precio. R² bajo significa que menos del 40% del movimiento de la tasa sigue el patrón detectado; el resto es ruido aleatorio.';
+    }
+    return { level, explanation, r2 };
+  }, [trendR2Info, trendMethod]);
 
   // ─── Modo de gráfico (área / línea / barras) ───
   const [chartMode, setChartMode] = useState<ChartMode>('area');
@@ -575,23 +668,62 @@ function HistoryTab({ data }: any) {
                     <strong>Cuándo usar cada uno:</strong> SMA para ver tendencia suavizada; lineal para proyección simple; polinomial para detectar cambio de régimen.
                   </p>
                 </InfoTooltip>
-                {TREND_METHODS.map(m => (
-                  <button
-                    key={m.id}
-                    onClick={() => setTrendMethod(m.id)}
-                    title={m.description}
-                    className={cn(
-                      'px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all min-h-[36px] border',
-                      trendMethod === m.id
-                        ? 'bg-purple-600 text-white shadow-md border-purple-600'
-                        : 'bg-background text-muted-foreground hover:bg-purple-600/10 hover:text-purple-600 border-border',
-                    )}
-                  >
-                    {m.label}
-                  </button>
-                ))}
+                {TREND_METHODS.map(m => {
+                  const isBest = trendR2Info?.best === m.id;
+                  const r2 = m.id === 'linear' ? trendR2Info?.r2Linear
+                    : m.id === 'sma7' ? trendR2Info?.r2SMA7
+                    : m.id === 'sma30' ? trendR2Info?.r2SMA30
+                    : m.id === 'poly2' ? trendR2Info?.r2Poly2
+                    : undefined;
+                  return (
+                    <button
+                      key={m.id}
+                      onClick={() => handleTrendMethodChange(m.id)}
+                      title={m.description}
+                      className={cn(
+                        'px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all min-h-[36px] border flex items-center gap-1',
+                        trendMethod === m.id
+                          ? 'bg-purple-600 text-white shadow-md border-purple-600'
+                          : 'bg-background text-muted-foreground hover:bg-purple-600/10 hover:text-purple-600 border-border',
+                      )}
+                    >
+                      {m.label}
+                      {r2 !== undefined && (
+                        <span className={cn(
+                          'text-[9px] font-mono',
+                          trendMethod === m.id ? 'text-white/70' : 'text-muted-foreground/60'
+                        )}>
+                          R²={r2.toFixed(4)}
+                        </span>
+                      )}
+                      {isBest && m.id !== 'none' && (
+                        <span className={cn(
+                          'text-[8px] font-black px-1 py-0.5 rounded',
+                          trendMethod === m.id ? 'bg-white/20 text-white' : 'bg-purple-600/15 text-purple-600 dark:text-purple-400'
+                        )}>
+                          MEJOR
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
             </div>
+
+            {/* Info de confiabilidad del método seleccionado */}
+            {reliabilityInfo && (
+              <div className={cn(
+                'mt-2 px-3 py-2 rounded-lg border text-xs flex items-start gap-2',
+                reliabilityInfo.level === 'alta' ? 'bg-green-500/10 border-green-500/30 text-green-700 dark:text-green-400'
+                : reliabilityInfo.level === 'media' ? 'bg-amber-500/10 border-amber-500/30 text-amber-700 dark:text-amber-400'
+                : 'bg-red-500/10 border-red-500/30 text-red-700 dark:text-red-400'
+              )}>
+                <span className="font-black uppercase shrink-0">
+                  Confianza {reliabilityInfo.level} (R²={reliabilityInfo.r2.toFixed(4)}):
+                </span>
+                <span className="text-foreground/80">{reliabilityInfo.explanation}</span>
+              </div>
+            )}
 
             {/* Días a proyectar al futuro */}
             <div className="flex flex-wrap items-center gap-2">
@@ -1232,7 +1364,7 @@ function HistoryTab({ data }: any) {
           <p className="text-sm text-foreground leading-relaxed">
             {!forecast || forecast.r2 < 0.4 ? (
               <>
-                <strong className="text-muted-foreground">Proyección no confiable.</strong> La regresión lineal sobre los datos visibles tiene R² = {forecast?.r2.toFixed(4) ?? '—'}, lo que indica que no hay tendencia lineal clara. Esto puede deberse a alta volatilidad o a un cambio de régimen reciente. No se recomienda usar esta proyección para decisiones de pricing.
+                <strong className="text-muted-foreground">Proyección no confiable.</strong> La regresión lineal sobre los datos visibles tiene R² = {forecast?.r2.toFixed(4) ?? '—'}, lo que indica que no hay tendencia lineal clara. Esto puede deberse a alta volatilidad o a un cambio de régimen reciente. No se recomienda usar esta proyección para decisiones de precio.
               </>
             ) : (
               <>

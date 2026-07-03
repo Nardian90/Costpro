@@ -1,100 +1,128 @@
 'use client';
 import React, { useState, useMemo } from 'react';
 import { cn } from '@/lib/utils';
+import { TrendingUp, TrendingDown, Minus, Info } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { parseISO, differenceInCalendarDays } from 'date-fns';
 
 type RateSource = 'informal' | 'oficial';
 
 const RATE_SOURCES: { id: RateSource; label: string; color: string }[] = [
-  { id: 'informal', label: 'Informal', color: 'text-orange-500' },
+  { id: 'informal', label: 'Informal (solucionescuba)', color: 'text-orange-500' },
   { id: 'oficial', label: 'BCC (oficial)', color: 'text-green-500' },
 ];
 
+function InfoTooltip({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          aria-label={`Más información sobre ${title}`}
+          className="inline-flex items-center justify-center w-5 h-5 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
+        >
+          <Info className="w-3.5 h-3.5" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent side="bottom" align="end" className="w-72 text-sm leading-relaxed border-border bg-popover text-popover-foreground p-3 rounded-xl shadow-xl">
+        <p className="font-black uppercase tracking-widest text-xs mb-2 text-foreground">{title}</p>
+        <div className="text-muted-foreground">{children}</div>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 function VariationsTab({ data }: any) {
-  // ─── Selector de tasa: informal o formal ───
   const [rateSource, setRateSource] = useState<RateSource>('informal');
 
-  // FIX: Filtrar validData por la tasa SELECCIONADA, no por "informal OR oficial".
-  // Antes: validData era la misma para ambas tasas → al cambiar rateSource,
-  // safeStartIdx/safeEndIdx no cambiaban si las últimas fechas tenían ambas tasas,
-  // y las tarjetas de crecimiento no se actualizaban visualmente.
-  // Ahora: validData cambia cuando cambia rateSource, forzando recálculo completo.
+  // Filtrar datos con valor para la tasa seleccionada
   const validData = useMemo(
-    () => (data as any[]).filter((d) => d[rateSource] != null),
+    () => (data as any[]).filter(d => d[rateSource] != null),
     [data, rateSource],
   );
 
-  // ─── Índices por defecto ───
-  // inicial = penúltimo registro (día anterior), final = último registro
-  const defaultStartIdx = useMemo(() => {
-    if (validData.length === 0) return 0;
-    return Math.max(0, validData.length - 2);
-  }, [validData]);
+  // ─── Calcular variaciones % 24h, 7d, 30d ───
+  const variations = useMemo(() => {
+    if (validData.length === 0) return null;
+    const latest = validData[validData.length - 1];
+    const latestRate = latest[rateSource];
+    const latestDate = latest.date;
 
-  const defaultEndIdx = useMemo(() => {
-    if (validData.length === 0) return 0;
-    return validData.length - 1;
-  }, [validData]);
+    const findRateNDaysAgo = (n: number): number | null => {
+      // Buscar el registro más cercano a N días atrás
+      const target = validData[validData.length - 1 - n];
+      return target ? target[rateSource] : null;
+    };
 
-  const [startIdx, setStartIdx] = useState(defaultStartIdx);
-  const [endIdx, setEndIdx] = useState(defaultEndIdx);
+    const rate24h = validData.length >= 2 ? validData[validData.length - 2][rateSource] : null;
+    const rate7d = findRateNDaysAgo(7);
+    const rate30d = findRateNDaysAgo(30);
 
-  // Reset cuando cambia el dataset o la tasa seleccionada
-  React.useEffect(() => {
-    setStartIdx(defaultStartIdx);
-    setEndIdx(defaultEndIdx);
-  }, [defaultStartIdx, defaultEndIdx]);
+    const calcPct = (old: number | null, current: number): number | null => {
+      if (old == null || old <= 0) return null;
+      return ((current - old) / old) * 100;
+    };
 
-  // ─── Asegurar índices dentro de rango ───
-  const safeStartIdx = Math.min(Math.max(0, startIdx), Math.max(0, validData.length - 1));
-  const safeEndIdx = Math.min(Math.max(0, endIdx), Math.max(0, validData.length - 1));
+    return {
+      latestRate,
+      latestDate,
+      pct24h: calcPct(rate24h, latestRate),
+      pct7d: calcPct(rate7d, latestRate),
+      pct30d: calcPct(rate30d, latestRate),
+    };
+  }, [validData, rateSource]);
 
-  // ─── Cálculos ───
-  const startRate = validData[safeStartIdx]?.[rateSource] ?? 0;
-  const endRate = validData[safeEndIdx]?.[rateSource] ?? 0;
-  const absChange = endRate - startRate;
-  const pctChange = startRate > 0 ? ((absChange / startRate) * 100).toFixed(0) : '0';
+  // ─── Widget: "Si hubieras invertido X USD el día Y" ───
+  const [investUsd, setInvestUsd] = useState('100');
+  const [investDateIdx, setInvestDateIdx] = useState(0);
 
-  // FIX F-08: Usar días de calendario reales (no diferencia de índices)
-  // Antes: daysBetween = safeEndIdx - safeStartIdx (subcuenta si hay huecos)
-  // Ahora: diferencia real entre fechas
-  const startDateStr = validData[safeStartIdx]?.date ?? '';
-  const endDateStr = validData[safeEndIdx]?.date ?? '';
-  let daysBetween = safeEndIdx - safeStartIdx; // fallback
+  const safeInvestIdx = Math.min(Math.max(0, investDateIdx), Math.max(0, validData.length - 1));
+  const investPoint = validData[safeInvestIdx];
+  const investRate = investPoint?.[rateSource] ?? 0;
+  const investDate = investPoint?.date ?? '';
+  const currentRate = validData[validData.length - 1]?.[rateSource] ?? 0;
+  const currentDate = validData[validData.length - 1]?.date ?? '';
+
+  const usd = parseFloat(investUsd) || 0;
+  const initialValueCup = usd * investRate;
+  const currentValueCup = usd * currentRate;
+  const gainLoss = currentValueCup - initialValueCup;
+  const gainLossPct = initialValueCup > 0 ? (gainLoss / initialValueCup) * 100 : 0;
+  const isGain = gainLoss >= 0;
+
+  let daysBetween = 0;
   try {
-    if (startDateStr && endDateStr) {
-      const realDays = differenceInCalendarDays(parseISO(endDateStr), parseISO(startDateStr));
-      if (realDays > 0) daysBetween = realDays;
+    if (investDate && currentDate) {
+      daysBetween = differenceInCalendarDays(parseISO(currentDate), parseISO(investDate));
     }
-  } catch {
-    /* keep fallback */
-  }
-
-  // FIX F-08: Crecimiento compuesto (no lineal)
-  // Antes: dailyGrowth * 30 → producía -365% anual (matemáticamente imposible)
-  // Ahora: (1 + dailyRate) ^ N - 1 (crecimiento compuesto)
-  const dailyGrowth = daysBetween > 0 && startRate > 0
-    ? (Math.pow(endRate / startRate, 1 / daysBetween) - 1) * 100
-    : 0;
-
-  // Crecimiento compuesto: (1 + daily) ^ N - 1
-  const monthlyGrowth = daysBetween > 0
-    ? (Math.pow(1 + dailyGrowth / 100, 30) - 1) * 100
-    : 0;
-  const annualGrowth = daysBetween > 0
-    ? (Math.pow(1 + dailyGrowth / 100, 365) - 1) * 100
-    : 0;
+  } catch { /* ignore */ }
 
   const rateSourceMeta = RATE_SOURCES.find(r => r.id === rateSource)!;
 
+  // Reset investDateIdx cuando cambia la tasa
+  React.useEffect(() => {
+    setInvestDateIdx(0);
+  }, [rateSource]);
+
+  if (!variations) {
+    return (
+      <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="bg-card rounded-2xl border-2 border-border p-6 text-center">
+          <p className="text-sm text-muted-foreground">No hay datos suficientes para mostrar variaciones.</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      {/* ─── Tabla estilo cripto/bolsa ─── */}
       <div className="bg-card rounded-2xl border-2 border-border p-6">
         <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
           <h3 className="text-base font-black uppercase tracking-widest text-foreground">
-            Análisis de Variación (USD {rateSource === 'informal' ? 'Informal' : 'Oficial'})
+            Variaciones de tasa
           </h3>
-          {/* ─── Toggle elToque / BCC ─── */}
+          {/* Toggle elToque / BCC */}
           <div className="flex items-center gap-1 p-1 rounded-xl bg-muted/50 border border-border">
             {RATE_SOURCES.map(r => (
               <button
@@ -115,82 +143,190 @@ function VariationsTab({ data }: any) {
           </div>
         </div>
 
-        <p className="text-xs text-muted-foreground italic mb-4">
-          Solo se muestran fechas con valor disponible para la tasa seleccionada. Por defecto: fecha inicial = día anterior a la última, fecha final = última fecha con valor.
-        </p>
+        {/* Tabla */}
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border">
+                <th className="text-left py-2 px-2 font-black uppercase tracking-widest text-xs text-muted-foreground">Divisa</th>
+                <th className="text-right py-2 px-2 font-black uppercase tracking-widest text-xs text-muted-foreground">
+                  <div className="flex items-center justify-end gap-1">
+                    Último
+                    <InfoTooltip title="Último valor disponible">
+                      <p>Valor más reciente de la tasa {rateSourceMeta.label}. Si no hay dato de hoy, se usa el último disponible (carry-forward).</p>
+                    </InfoTooltip>
+                  </div>
+                </th>
+                <th className="text-right py-2 px-2 font-black uppercase tracking-widest text-xs text-muted-foreground">% 24h</th>
+                <th className="text-right py-2 px-2 font-black uppercase tracking-widest text-xs text-muted-foreground">% 7d</th>
+                <th className="text-right py-2 px-2 font-black uppercase tracking-widest text-xs text-muted-foreground">% 30d</th>
+              </tr>
+            </thead>
+            <tbody>
+              {/* USD */}
+              <tr className="border-b border-border/50 hover:bg-muted/30 transition-colors">
+                <td className="py-3 px-2">
+                  <div className="flex items-center gap-2">
+                    <div className={cn(
+                      'w-8 h-8 rounded-lg flex items-center justify-center text-xs font-black text-white',
+                      rateSource === 'informal' ? 'bg-orange-500' : 'bg-green-500'
+                    )}>
+                      $
+                    </div>
+                    <div>
+                      <p className="font-black text-foreground">USD</p>
+                      <p className="text-xs text-muted-foreground">{rateSourceMeta.label}</p>
+                    </div>
+                  </div>
+                </td>
+                <td className="text-right py-3 px-2">
+                  <p className="font-black font-mono text-foreground text-base">{variations.latestRate.toFixed(0)}</p>
+                  <p className="text-xs text-muted-foreground">CUP × 1</p>
+                </td>
+                <td className="text-right py-3 px-2">
+                  <PctCell value={variations.pct24h} />
+                </td>
+                <td className="text-right py-3 px-2">
+                  <PctCell value={variations.pct7d} />
+                </td>
+                <td className="text-right py-3 px-2">
+                  <PctCell value={variations.pct30d} />
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <p className="text-xs text-muted-foreground italic mt-3">
+          Última actualización: {variations.latestDate}. Las variaciones se calculan comparando el valor actual con el de hace 1, 7 y 30 días.
+        </p>
+      </div>
+
+      {/* ═══ Widget: "Si hubieras invertido" ═══ */}
+      <div className="bg-card rounded-2xl border-2 border-border p-6 space-y-4">
+        <div className="flex items-center gap-2">
+          <h3 className="text-base font-black uppercase tracking-widest text-foreground">
+            Simulador de inversión
+          </h3>
+          <InfoTooltip title="¿Qué es esto?">
+            <p>Simula cuánto valdría hoy una inversión en USD hecha en una fecha pasada, según la variación de la tasa cambiaria {rateSourceMeta.label}.</p>
+          </InfoTooltip>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div>
-            <label className="text-sm font-black uppercase tracking-widest text-foreground block mb-2">Fecha inicial</label>
-            <select
-              value={safeStartIdx}
-              onChange={e => setStartIdx(Number(e.target.value))}
-              className="w-full h-12 px-3 rounded-xl border-2 border-border bg-background text-sm font-bold min-h-[44px] text-foreground"
-            >
-              {validData.map((d: any, i: number) => {
-                const v = d[rateSource];
-                return (
-                  <option key={i} value={i}>
-                    {d.date} — {v != null ? `${v.toFixed(0)} CUP` : 'N/A'}
-                  </option>
-                );
-              })}
-            </select>
+            <label className="text-xs font-black uppercase tracking-widest text-foreground block mb-1.5">
+              Cantidad invertida (USD)
+            </label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-black text-muted-foreground">$</span>
+              <input
+                type="number"
+                value={investUsd}
+                onChange={e => setInvestUsd(e.target.value)}
+                className="w-full h-10 pl-7 pr-3 rounded-xl border-2 border-border bg-background text-sm font-bold min-h-[40px] text-foreground font-mono"
+                step="0.01"
+                min="0"
+              />
+            </div>
           </div>
           <div>
-            <label className="text-sm font-black uppercase tracking-widest text-foreground block mb-2">Fecha final</label>
+            <label className="text-xs font-black uppercase tracking-widest text-foreground block mb-1.5">
+              Fecha de inversión
+            </label>
             <select
-              value={safeEndIdx}
-              onChange={e => setEndIdx(Number(e.target.value))}
-              className="w-full h-12 px-3 rounded-xl border-2 border-border bg-background text-sm font-bold min-h-[44px] text-foreground"
+              value={safeInvestIdx}
+              onChange={e => setInvestDateIdx(Number(e.target.value))}
+              className="w-full h-10 px-3 rounded-xl border-2 border-border bg-background text-sm font-bold min-h-[40px] text-foreground"
             >
-              {validData.map((d: any, i: number) => {
-                const v = d[rateSource];
-                return (
-                  <option key={i} value={i} disabled={i < safeStartIdx}>
-                    {d.date} — {v != null ? `${v.toFixed(0)} CUP` : 'N/A'}
-                  </option>
-                );
-              })}
+              {validData.map((d: any, i: number) => (
+                <option key={i} value={i}>
+                  {d.date} — 1 USD = {d[rateSource]?.toFixed(0)} CUP
+                </option>
+              ))}
             </select>
           </div>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <StatBox label="Valor Inicial" value={`${startRate.toFixed(0)} CUP`} color="text-foreground" />
-          <StatBox label="Valor Final" value={`${endRate.toFixed(0)} CUP`} color={rateSourceMeta.color} />
-          <StatBox
-            label={absChange >= 0 ? 'Incremento' : 'Disminución'}
-            value={`${absChange >= 0 ? '+' : ''}${absChange.toFixed(0)} CUP`}
-            color={absChange >= 0 ? 'text-destructive' : 'text-success'}
-          />
-          <StatBox
-            label={parseFloat(pctChange) >= 0 ? 'Incremento %' : 'Disminución %'}
-            value={`${pctChange}%`}
-            color={parseFloat(pctChange) >= 0 ? 'text-destructive' : 'text-success'}
-          />
-          <StatBox label="Días" value={`${daysBetween}`} color="text-foreground" />
-          <StatBox label="Crecimiento diario" value={`${dailyGrowth.toFixed(0)}%`} color="text-warning" />
-          <StatBox label="Crecimiento mensual" value={`${monthlyGrowth.toFixed(0)}%`} color="text-warning" />
-          <StatBox label="Crecimiento anual" value={`${annualGrowth.toFixed(0)}%`} color="text-destructive" />
-        </div>
+        {/* Resultado narrativo */}
+        <div className={cn(
+          'rounded-xl p-4 border-2',
+          isGain ? 'bg-green-500/10 border-green-500/30' : 'bg-red-500/10 border-red-500/30'
+        )}>
+          <p className="text-sm text-foreground leading-relaxed mb-3">
+            Si el <strong className="text-foreground">{investDate}</strong> hubieras invertido{' '}
+            <strong className="text-foreground">{usd.toFixed(0)} USD</strong> (que en ese momento equivalían a{' '}
+            <strong className="text-foreground">{initialValueCup.toFixed(0)} CUP</strong> según la tasa {rateSourceMeta.label}),
+            hoy ({currentDate}, {daysBetween} días después) ese capital valdría{' '}
+            <strong className={isGain ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}>
+              {currentValueCup.toFixed(0)} CUP
+            </strong>.
+          </p>
 
-        <p className="text-xs text-muted-foreground italic mt-4">
-          Crecimiento mensual y anual calculados con fórmula compuesta (1+tasa diaria)^N - 1, no extrapolación lineal.
-        </p>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="bg-background/60 rounded-lg p-3 border border-border/50">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1">Valor inicial</p>
+              <p className="text-lg font-black font-mono text-foreground">{initialValueCup.toFixed(0)} CUP</p>
+              <p className="text-xs text-muted-foreground">{investDate}</p>
+            </div>
+            <div className="bg-background/60 rounded-lg p-3 border border-border/50">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1">Valor actual</p>
+              <p className="text-lg font-black font-mono text-foreground">{currentValueCup.toFixed(0)} CUP</p>
+              <p className="text-xs text-muted-foreground">{currentDate}</p>
+            </div>
+            <div className="bg-background/60 rounded-lg p-3 border border-border/50">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1">
+                {isGain ? 'Ganancia' : 'Pérdida'} neta
+              </p>
+              <p className={cn(
+                'text-lg font-black font-mono',
+                isGain ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
+              )}>
+                {isGain ? '+' : ''}{gainLoss.toFixed(0)} CUP
+              </p>
+            </div>
+            <div className="bg-background/60 rounded-lg p-3 border border-border/50">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1">
+                {isGain ? 'Ganancia' : 'Pérdida'} %
+              </p>
+              <p className={cn(
+                'text-lg font-black font-mono',
+                isGain ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
+              )}>
+                {isGain ? '+' : ''}{gainLossPct.toFixed(0)}%
+              </p>
+            </div>
+          </div>
+
+          <p className="text-xs text-muted-foreground italic mt-3">
+            Esto refleja cómo la devaluación del CUP afecta el poder adquisitiva: si mantenías USD, tu capital en CUP aumentó; si mantenías CUP, perdiste poder de compra.
+          </p>
+        </div>
       </div>
     </div>
   );
 }
 
-export default VariationsTab;
-
-// StatBox local
-function StatBox({ label, value, color }: any) {
+// ─── Componente auxiliar: celda de % con color ───
+function PctCell({ value }: { value: number | null }) {
+  if (value == null) {
+    return (
+      <div className="flex items-center justify-end gap-1 text-muted-foreground">
+        <Minus className="w-3 h-3" />
+        <span className="font-mono text-sm">—</span>
+      </div>
+    );
+  }
+  const isPositive = value >= 0;
   return (
-    <div className="bg-muted/40 rounded-xl p-4 text-center border border-border">
-      <p className="text-elderly-label text-muted-foreground mb-1">{label}</p>
-      <p className={cn('text-elderly-amount', color)}>{value}</p>
+    <div className={cn(
+      'flex items-center justify-end gap-1 font-mono text-sm font-bold',
+      isPositive ? 'text-red-500' : 'text-green-500' // En tasas cambiarias: subida = rojo (devaluación CUP), bajada = verde
+    )}>
+      {isPositive ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+      {isPositive ? '+' : ''}{value.toFixed(2)}%
     </div>
   );
 }
+
+export default VariationsTab;
