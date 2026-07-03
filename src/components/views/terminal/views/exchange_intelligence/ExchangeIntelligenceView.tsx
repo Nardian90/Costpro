@@ -19,6 +19,8 @@ import {
   Info,
   Sigma,
   Target,
+  Edit3,
+  X,
 } from 'lucide-react';
 // FIX: Code splitting — HistoryTab y VariationsTab usan recharts (1.8MB)
 // Se cargan con lazy solo cuando el usuario abre esas tabs
@@ -226,6 +228,63 @@ export function ExchangeIntelligenceView() {
     [fetchRates],
   );
 
+  // ═══ INGRESAR TASA REAL DE ELTOQUE MANUALMENTE ═══
+  // Cloudflare bloquea el scraping automático desde el servidor. Esta función
+  // permite al usuario ingresar manualmente la tasa que ve en eltoque.com,
+  // se persiste con capture_method='real' (no 'estimated').
+  const [showManualRateModal, setShowManualRateModal] = useState(false);
+  const [manualCurrency, setManualCurrency] = useState<'USD' | 'EUR' | 'MLC'>('USD');
+  const [manualRate, setManualRate] = useState('');
+  const [savingManual, setSavingManual] = useState(false);
+
+  const handleSaveManualRate = useCallback(async () => {
+    const rate = parseFloat(manualRate);
+    if (!rate || rate <= 0 || rate > 10000) {
+      toast.error('Tasa inválida', { description: 'Debe ser un número entre 1 y 10000' });
+      return;
+    }
+
+    setSavingManual(true);
+    const toastId = toast.loading(`Guardando tasa ${manualCurrency} = ${rate} CUP...`);
+
+    try {
+      const { useAuthStore } = await import('@/store');
+      const token = useAuthStore.getState().token;
+      const res = await fetch('/api/exchange-rates/manual', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ currency: manualCurrency, rate }),
+      });
+
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({}));
+        throw new Error(errBody.error || `HTTP ${res.status}`);
+      }
+
+      toast.success(`Tasa ${manualCurrency} = ${rate} CUP guardada como REAL`, {
+        id: toastId,
+        description: 'El badge cambiará a "✓ Real" en la tarjeta',
+        duration: 6000,
+        icon: <CheckCircle2 className="w-4 h-4" />,
+      });
+
+      setShowManualRateModal(false);
+      setManualRate('');
+      await fetchRates();
+    } catch (e: any) {
+      toast.error('Error al guardar tasa', {
+        id: toastId,
+        description: e.message || 'Error desconocido',
+        duration: 10000,
+      });
+    } finally {
+      setSavingManual(false);
+    }
+  }, [manualCurrency, manualRate, fetchRates]);
+
   return (
     <div className="w-full max-w-7xl mx-auto space-y-6 p-4" aria-busy={loading}>
       {/* Header */}
@@ -260,6 +319,16 @@ export function ExchangeIntelligenceView() {
             <span>{capturing ? 'Capturando...' : 'Actualizar BD (7 días)'}</span>
           </button>
           <button
+            onClick={() => setShowManualRateModal(true)}
+            disabled={loading}
+            className="flex items-center gap-2 px-4 py-2.5 min-h-[44px] rounded-xl bg-amber-500 text-white hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-bold text-sm shadow-md"
+            aria-label="Ingresar tasa real de elToque manualmente"
+            title="Ingresa manualmente la tasa que ves en eltoque.com (Cloudflare bloquea el scraping automático)"
+          >
+            <Edit3 className="w-4 h-4" />
+            <span>Ingresar tasa real</span>
+          </button>
+          <button
             onClick={fetchRates}
             disabled={loading}
             className="p-2.5 min-h-[44px] min-w-[44px] rounded-xl bg-muted hover:bg-primary/15 text-muted-foreground hover:text-primary transition-colors border border-border"
@@ -270,6 +339,107 @@ export function ExchangeIntelligenceView() {
           </button>
         </div>
       </div>
+
+      {/* ═══ MODAL: Ingresar tasa real de elToque manualmente ═══ */}
+      {showManualRateModal && (
+        <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={() => !savingManual && setShowManualRateModal(false)}>
+          <div className="bg-card rounded-2xl border-2 border-border p-6 max-w-md w-full shadow-2xl" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-base font-black uppercase tracking-widest text-foreground">
+                Ingresar tasa real de elToque
+              </h3>
+              <button
+                onClick={() => !savingManual && setShowManualRateModal(false)}
+                disabled={savingManual}
+                className="w-8 h-8 rounded-lg bg-muted/50 hover:bg-muted flex items-center justify-center disabled:opacity-50"
+                aria-label="Cerrar"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <p className="text-xs text-muted-foreground mb-4 leading-relaxed">
+              Cloudflare bloquea el scraping automático desde el servidor. Ingresa manualmente la tasa que ves en{' '}
+              <a href="https://eltoque.com" target="_blank" rel="noopener noreferrer" className="text-amber-600 dark:text-amber-400 underline font-bold">
+                eltoque.com
+              </a>{' '}
+              y se guardará con <strong className="text-green-600 dark:text-green-400">capture_method='real'</strong> (no estimada).
+            </p>
+
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs font-black uppercase tracking-widest text-foreground block mb-1.5">Moneda</label>
+                <div className="flex gap-2">
+                  {(['USD', 'EUR', 'MLC'] as const).map(c => (
+                    <button
+                      key={c}
+                      onClick={() => setManualCurrency(c)}
+                      disabled={savingManual}
+                      className={cn(
+                        'flex-1 px-3 py-2 rounded-lg text-sm font-black uppercase tracking-widest transition-all min-h-[40px] border',
+                        manualCurrency === c
+                          ? 'bg-amber-500 text-white border-amber-500 shadow-md'
+                          : 'bg-background text-muted-foreground border-border hover:bg-amber-500/10',
+                      )}
+                    >
+                      {c}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-black uppercase tracking-widest text-foreground block mb-1.5">
+                  Tasa actual (CUP por 1 {manualCurrency})
+                </label>
+                <input
+                  type="number"
+                  value={manualRate}
+                  onChange={e => setManualRate(e.target.value)}
+                  disabled={savingManual}
+                  className="w-full h-12 px-3 rounded-xl border-2 border-border bg-background text-lg font-black font-mono min-h-[44px] text-foreground"
+                  placeholder="630"
+                  step="0.01"
+                  min="1"
+                  max="10000"
+                  autoFocus
+                  onKeyDown={e => e.key === 'Enter' && handleSaveManualRate()}
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Ej: si elToque muestra USD = 630, ingresa <strong>630</strong>
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-2 mt-5">
+              <button
+                onClick={() => setShowManualRateModal(false)}
+                disabled={savingManual}
+                className="flex-1 px-4 py-2.5 min-h-[44px] rounded-xl bg-muted text-foreground hover:bg-muted/70 disabled:opacity-50 transition-colors font-bold text-sm"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleSaveManualRate}
+                disabled={savingManual || !manualRate}
+                className="flex-1 px-4 py-2.5 min-h-[44px] rounded-xl bg-amber-500 text-white hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-bold text-sm shadow-md flex items-center justify-center gap-2"
+              >
+                {savingManual ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    Guardando...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="w-4 h-4" />
+                    Guardar como REAL
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* IC-AUDIT: Selector de segmento BCC — ahora dentro del tab Dashboard */}
 
