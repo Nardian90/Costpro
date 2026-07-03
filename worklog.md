@@ -1239,3 +1239,404 @@ ya arreglado, pero defensa en profundidad), se guardaría `USD × 1.0` → coste
 4. **No se añadieron tests E2E** para los endpoints modificados — los tests
    unitarios del helper cubren la lógica de validación. Se recomienda añadir tests
    de integración en una tarea posterior.
+
+---
+Task ID: TELEGRAM-SECURITY-FIXES
+Agent: Security Engineer (sub-agent)
+Task: Implementar 5 fixes de seguridad en el módulo Telegram detectados por auditoría
+
+Work Log:
+
+### FIX 1 (CRÍTICO) — Webhook secret fail-open → fail-closed (TELEGRAM-SEC-1)
+
+- **Archivo**: `src/app/api/telegram/webhook/route.ts`
+- **Bug**: Si `config.webhook_secret` existía pero el header `secretHeader`
+  faltaba, el código solo logueaba como informativo y aceptaba el request.
+  Eso era fail-open: un atacante podía bypassar el secret simplemente
+  omitiendo el header `X-Telegram-Bot-Api-Secret-Token`.
+- **Fix**: Reemplazado el bloque inline por `validateWebhookSecret()` de
+  `src/lib/telegram/security.ts` que ya hace fail-closed (devuelve false si
+  falta el header o el secret, o si no coinciden — timing-safe comparison).
+  Comportamiento nuevo:
+    - Si `config.webhook_secret` está seteado → el header DEBE estar presente
+      Y coincidir. Si no → 403.
+    - Si `config.webhook_secret` NO está seteado (bot sin secret configurado)
+      → aceptamos sin header (comportamiento legado) pero logueamos warning
+      `TELEGRAM_WEBHOOK_NO_SECRET_CONFIGURED` para que se vea en logs que
+      el bot está expuesto a updates falsos.
+- **Imports consolidados**: eliminadas las funciones locales duplicadas
+  `isIpInCidr`, `isTelegramIp`, `TELEGRAM_IP_RANGES` (líneas 36-67 originales)
+  — ya existen en `src/lib/telegram/security.ts`. Ahora se importan desde ahí.
+
+### FIX 2 (CRÍTICO) — bot_token en texto plano vía GET (TELEGRAM-SEC-2)
+
+- **Archivo**: `src/app/api/telegram/config/route.ts`
+- **Bug**: El handler GET hacía `...config` que incluía `bot_token` en texto
+  plano en la respuesta JSON. Cualquier rol que pasara `canManageStore`
+  (admin, manager, encargado) recibía el token completo del bot — con ese
+  token se puede controlar el bot completamente (enviar mensajes, leer
+  updates, cambiar webhook URL, etc.).
+- **Fix**: Enmascarar `bot_token` en la respuesta GET. Ahora se devuelve:
+    - `bot_token_masked`: `${first4}…${last4}` para identificación visual.
+    - `has_bot_token`: flag booleano para saber si hay token configurado.
+    - El resto de la config sin `bot_token` (destructured out).
+  El token sigue siendo write-only: se acepta en PUT para crear/rotar,
+  pero nunca se devuelve en texto plano.
+- **Frontend**: `src/components/views/terminal/views/telegram/TelegramConfigView.tsx`
+  actualizado para:
+    - No precargar el input con el token (era un input de formulario
+      precargado — el usuario lo veía al hacer click en 👁).
+    - Mostrar `bot_token_masked` como placeholder del input + mensaje
+      explicativo "Token configurado: XXXX…XXXX. Para rotarlo, ingresa
+      un nuevo token. Déjalo vacío para mantener el actual."
+    - `isConfigured` ahora usa `has_bot_token` (flag del backend) en vez
+      de `bot_token` (que ya no se devuelve).
+    - Save logic: solo envía `bot_token` si el usuario escribió uno nuevo
+      (`botToken.trim() ? botToken : undefined`). Input vacío = no tocar
+      el token existente.
+- **Verificación frontend**: grep confirmó que el único consumidor de
+  `config.bot_token` era `TelegramConfigView.tsx` (no hay hooks
+  `useTelegram*`). El frontend NO usa el token para llamadas a la Bot API
+  desde el cliente — todas las llamadas a la Bot API pasan por el backend
+  (`bot-client.ts`). No hay bug adicional que documentar.
+
+### FIX 3 — Test falso "sin secret header → 403" (TELEGRAM-SEC-3)
+
+- **Archivo**: `src/__tests__/integration/telegram-module.test.ts`
+- **Bug**: El test afirmaba probar "sin secret header → 403" pero el
+  comentario interno admitía que solo validaba "bot no encontrado → 404"
+  porque el mock default de `getSupabaseAdminSafe` era null. El assert
+  `expect([403, 404]).toContain(res.status)` siempre caía en 404 — nunca
+  ejercitaba el check del secret.
+- **Fix**:
+  1. Añadido mock explícito de `@/lib/telegram/webhook-handler` con
+     `findConfigByBotUserId` y `handleTelegramUpdate` como `vi.fn()`
+     controlables por test. Sin esto, el handler real importaba
+     `handlers.ts` y cascadeaba.
+  2. Añadido `getRealClientIp` al mock de `@/lib/telegram/security`
+     (necesario porque FIX 5 lo importa en el webhook route).
+  3. Reemplazado el test falso por 3 tests reales:
+     - `sin secret header con secret configurado → 403`: mockea
+       `findConfigByBotUserId` para devolver config con `webhook_secret:
+       'test-secret-123'` y `validateWebhookSecret` para devolver false
+       (que es lo que retorna cuando el header falta). Assert estricto
+       `expect(res.status).toBe(403)` — NO acepta 404.
+     - `secret header incorrecto → 403`: mismo mock de config, header
+       presente con valor `wrong-secret`, `validateWebhookSecret` retorna
+       false. Assert `toBe(403)`.
+     - `secret header correcto → 200`: mismo mock de config, header
+       presente con valor `test-secret-123`, `validateWebhookSecret`
+       retorna true. Assert `toBe(200)`.
+  4. Cada test hace `vi.mocked(...).mockResolvedValue(...)` /
+     `mockReturnValue(...)` explícito al inicio para evitar polución
+     cross-test (el `beforeEach: vi.restoreAllMocks()` no resetea los
+     `vi.fn()` standalone, solo los spies).
+
+### FIX 4 — waitUntil de @vercel/functions inconsistente (TELEGRAM-SEC-4)
+
+- **Archivo**: `src/app/api/telegram/webhook/route.ts`
+- **Bug**: Importaba `waitUntil` de `@vercel/functions` (línea 2 original).
+  El módulo WhatsApp ya decidió que el deploy es Docker persistente (no
+  Vercel serverless). `waitUntil` es una primitiva Vercel que puede no
+  funcionar como se espera en Docker — en runtime persistente no hay
+  "lifetime que extender", la promise simplemente se ejecuta en el
+  proceso.
+- **Fix**: Creado wrapper `waitUntilCompat(promise)` que:
+    - En Vercel: usa `waitUntil` real de `@vercel/functions` (vía
+      `require('@vercel/functions')` dinámico dentro de try/catch).
+    - En Docker: ejecuta la promise sin await (fire-and-forget en proceso
+      persistente) con `.catch()` que loguea errores a
+      `TELEGRAM_WEBHOOK_ASYNC_ERROR`.
+  Eliminado el import top-level de `@vercel/functions`. Reemplazada la
+  llamada `waitUntil(...)` (línea 140 original) por `waitUntilCompat(...)`.
+  Declarado `global.__waitUntilFallback` para compatibilidad futura (aunque
+  no se usa en el wrapper actual — se mantiene como placeholder para
+  futuras extensiones que necesiten un fallback personalizado).
+
+### FIX 5 — isTelegramIp confía ciegamente en x-forwarded-for (TELEGRAM-SEC-5)
+
+- **Archivo**: `src/lib/telegram/security.ts` + `src/app/api/telegram/webhook/route.ts`
+- **Bug**: `isTelegramIp()` confía en la IP que se le pasa, pero el caller
+  (`webhook/route.ts` líneas 74-77 originales) la sacaba de
+  `x-forwarded-for` que es spoofable si no hay proxy delante. En el deploy
+  actual (Docker persistente), este check era COSMÉTICO — un atacante podía
+  poner cualquier IP en `x-forwarded-for` y pasar el check.
+- **Fix**:
+  1. Añadido JSDoc extenso a `isTelegramIp()` documentando el riesgo:
+     explica que la función confía en la IP recibida, que el deploy actual
+     sin reverse proxy hace el check cosmético, y que la solución real es
+     deployar un reverse proxy (nginx/Caddy/Cloudflare) o usar
+     `req.socket.remoteAddress` (no spoofable).
+  2. Añadido helper `getRealClientIp(req)` que extrae la IP del cliente:
+       - Prioridad: `x-forwarded-for` > `x-real-ip` > `req.socket.remoteAddress` > 'unknown'
+       - La prioridad por `x-forwarded-for` es necesaria cuando hay un
+         proxy delante (Caddy en producción sobrescribe este header con la
+         IP TCP real). El fallback a `socket.remoteAddress` cubre el caso
+         Docker sin proxy donde `x-forwarded-for` podría no estar seteado.
+       - JSDoc explica que el caller debe asegurar que el proxy
+         sobrescriba estos headers si los usa.
+  3. Actualizado `webhook/route.ts` para usar `getRealClientIp(req)` en
+     vez del inline `req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || ...`.
+  4. Añadido `getRealClientIp` al mock de `@/lib/telegram/security` en
+     `telegram-module.test.ts` (retorna `'127.0.0.1'`) — sin esto, el
+     import fallaría y el outer try/catch del webhook devolvería 200 en
+     vez de los códigos esperados, rompiendo todos los tests de webhook.
+
+### Archivos modificados (5)
+
+1. `src/app/api/telegram/webhook/route.ts` — FIX 1 (validateWebhookSecret
+   fail-closed) + FIX 4 (waitUntilCompat) + FIX 5 (getRealClientIp) +
+   eliminación de funciones duplicadas (isIpInCidr, isTelegramIp,
+   TELEGRAM_IP_RANGES).
+2. `src/lib/telegram/security.ts` — FIX 5 (JSDoc en isTelegramIp + nuevo
+   helper `getRealClientIp`).
+3. `src/app/api/telegram/config/route.ts` — FIX 2 (enmascarar bot_token
+   en GET, devolver `bot_token_masked` + `has_bot_token`).
+4. `src/components/views/terminal/views/telegram/TelegramConfigView.tsx`
+   — FIX 2 (no precargar input con token, usar masked como placeholder,
+   `isConfigured` con `has_bot_token`, save logic write-only).
+5. `src/__tests__/integration/telegram-module.test.ts` — FIX 3 (3 tests
+   reales del webhook secret: sin header → 403, header incorrecto → 403,
+   header correcto → 200) + mock de `webhook-handler` + `getRealClientIp`
+   en mock de security.
+
+### Validación
+
+- **TypeScript**: `npx tsc --noEmit -p tsconfig.json` → 0 errores.
+- **ESLint**: `npx eslint` en los 5 archivos modificados → 0 errores
+  (1 warning inicial sobre `eslint-disable` no usado en
+  `declare global { var __waitUntilFallback }` — corregido eliminando
+  el comentario).
+- **Tests**: `npx vitest run src/__tests__/integration/telegram-module.test.ts`
+  → 29 tests pasan (incluyendo los 3 nuevos del FIX 3).
+  `npx vitest run src/__tests__/integration/telegram-multimedia.test.ts`
+  → 19 tests pasan (sin regresión).
+- **Grep verifications**:
+  - `rg validateWebhookSecret src/app/api/telegram/webhook/route.ts` →
+    confirmado en líneas 5 (import), 103 (comentario), 108 (uso).
+  - `rg bot_token src/app/api/telegram/config/route.ts` → confirmado que
+    ya no hay spread `...config` con `bot_token`. El destructuring
+    `const { bot_token, ...configWithoutToken } = config;` aísla el token
+    y solo se devuelve `bot_token_masked` + `has_bot_token`. Las
+    referencias restantes a `bot_token` son uso interno (webhook info
+    lookup línea 41/43) o el PUT handler (acepta token del body, write-only).
+
+### Issues encontrados / Limitaciones
+
+- **FIX 3**: los tests mockean `validateWebhookSecret` en vez de usar la
+  implementación real. Esto es necesario porque el mock module-level
+  reemplaza la función y no se puede hacer `vi.importActual` para
+  reemplazarla solo en el webhook route (que la importa al cargar). La
+  implementación real ya está testeada en los tests existentes
+  "validateWebhookSecret rechaza secret vacío / mismatch / acepta match"
+  que usan `vi.importActual`. Los nuevos tests validan que el webhook
+  route LLAMA a `validateWebhookSecret` y actúa según su retorno
+  (fail-closed), que es el comportamiento que el fix busca garantizar.
+- **FIX 5**: `getRealClientIp` prioriza `x-forwarded-for` sobre
+  `socket.remoteAddress`. Esto es correcto cuando hay un proxy delante
+  (Caddy en producción), pero en Docker sin proxy un atacante podría
+  seguir spoofeando `x-forwarded-for`. El JSDoc documenta este trade-off
+  explícitamente. La solución real (fuera del scope de esta ronda) es
+  configurar Caddy para que sobrescriba `x-forwarded-for` con la IP TCP
+  real (que ya hace por defecto en Caddyfile), o deshabilitar la
+  prioridad de `x-forwarded-for` cuando se detecte que no hay proxy.
+- **No se tocaron**: módulo WhatsApp, CameraBarcodeScanner, manifest.json
+  (van en otros agentes). Lógica de negocio de los handlers sin cambios.
+
+---
+
+Task ID: PWA-CAMERA-ANTI-BAN
+Agent: Sub Agent (general-purpose)
+Task: 2 fixes críticos — (1) PWA cámara: `permissions_policy` en manifest + UX estado denied en CameraBarcodeScanner; (2) WhatsApp anti-ban no debe bloquear respuestas reactivas.
+
+Work Log:
+
+### FIX 1 (CRÍTICO) — PWA cámara: `permissions_policy` + UX estado denied
+
+#### Contexto
+- En navegador: "habilita cámara en el navegador" aparece, pero el botón
+  "Reintentar" no hace nada (porque `getUserMedia()` tira `NotAllowedError`
+  inmediatamente cuando el permiso ya está denegado — el navegador NUNCA
+  vuelve a mostrar el popup nativo).
+- En APK TWA generada por PWA Builder: dice "no tiene permiso" pero no hay
+  botón para ir a dar permiso. La APK se generó sin
+  `android.permission.CAMERA` porque `manifest.json` no tenía bloque
+  `permissions_policy` con `camera`.
+
+#### Fix A — `public/manifest.json`
+
+Añadido el bloque `permissions_policy` al manifest a nivel top-level, después
+del bloque `categories`. Sintaxis W3C correcta:
+
+```json
+"permissions_policy": {
+  "camera": ["self"],
+  "microphone": [],
+  "geolocation": []
+}
+```
+
+PWA Builder lee este campo para decidir qué `<uses-permission>` meter en
+`AndroidManifest.xml`. Sin él, la APK se generaba sin
+`android.permission.CAMERA`. Con `"camera": ["self"]`, la APK pedirá el
+permiso y la cámara funcionará dentro de la TWA.
+
+No se eliminaron ni modificaron otros campos del manifest. Validado con
+`JSON.parse()` → OK.
+
+#### Fix B — `src/components/views/terminal/views/pos/CameraBarcodeScanner.tsx`
+
+3 cambios:
+
+1. **Nuevo estado `platform` + `useEffect` de detección TWA**:
+   Detecta si corremos dentro de una TWA (APK generada por PWA Builder)
+   mirando `document.referrer.startsWith('android-app://')`. Esto cambia
+   el mensaje de error y los botones que se muestran cuando el permiso
+   está denegado.
+
+2. **Verificación previa con `navigator.permissions.query`** en `startCamera`:
+   Antes de llamar `getUserMedia()`, consulta `navigator.permissions.query({ name: 'camera' })`.
+   Si el permiso ya está `'denied'`, va directo al estado `'denied'` con
+   instrucciones claras según el contexto (APK vs navegador). Esto evita
+   disparar otro `NotAllowedError` inútil. Si la Permissions API no está
+   soportada (Firefox, navegadores viejos), continúa con `getUserMedia`
+   (comportamiento heredado).
+
+3. **Render mejorado del estado `denied`**:
+   - Si `platform === 'apk-twa'`: botón "Abrir ajustes de la app" que
+     llama `window.location.href = 'app-settings:'` (intenta abrir los
+     ajustes de Android; puede no funcionar en todos los dispositivos,
+     en cuyo caso el mensaje de texto ya explica los pasos manuales como
+     fallback). El botón "Reintentar" queda como secundario.
+   - Si `platform === 'browser'`: solo instrucciones en texto + botón
+     "Reintentar" secundario.
+   - El mensaje cambia: en APK explica cómo ir a Ajustes de Android →
+     Apps → CostPro → Permisos → Cámara; en navegador explica el candado
+     🔒 junto a la URL.
+
+   Añadida la clase `whitespace-pre-line` al `<p>` del error para que los
+   saltos de línea del mensaje se respeten.
+
+### FIX 2 — WhatsApp anti-ban no debe bloquear respuestas reactivas
+
+#### Contexto
+- En el fix anterior (FIX-AUDIT-WA-4) se añadió `canInviteNow()` antes de
+  `sock.sendMessage()` para evitar bypass del anti-ban.
+- **Bug**: si un cliente escribe al negocio a las 10pm (fuera del horario
+  laboral 9am-9pm del anti-ban) o después de mandar 20 mensajes salientes
+  ese día, el negocio **no puede responderle manualmente** — el anti-ban
+  bloquea la respuesta con 429.
+- **Intención original**: el anti-ban debía proteger el número de
+  **invitaciones frías** (cold outreach), no de **respuestas a clientes
+  que escribieron primero**.
+
+#### Fix — `src/app/api/whatsapp/messages/send/route.ts`
+
+Antes del bloque anti-ban existente, se distingue entre invitación fría y
+respuesta reactiva consultando `whatsapp_messages`:
+
+1. Se obtiene el admin client con `getSupabaseAdminSafe()`.
+2. Se hace una query `count('exact', head: true)` sobre `whatsapp_messages`
+   filtrada por `store_id` + `direction='incoming'` + (`contact_id` si
+   viene, o `phone_number` si no).
+3. Si `count > 0` → hay mensajes entrantes previos → es respuesta
+   reactiva → NO se aplica anti-ban (bypass legítimo).
+4. Si `count === 0` o el query falla → se asume cold outreach → se aplica
+   anti-ban (comportamiento heredado de FIX-AUDIT-WA-4).
+
+**Schema verificado**: `whatsapp_messages.direction` es `TEXT NOT NULL`
+con valores `'incoming'`/`'outgoing'` (confirmado en migración
+`20260702000001_create_whatsapp_module.sql` línea 59 y en uso en
+`glm-orchestrator.ts:31`, `handlers.ts:78`, `metrics/route.ts:36` etc.).
+No hay columna `from_me`; se usa `direction='incoming'`.
+
+**Fail-safe**: si `getSupabaseAdminSafe()` devuelve `null` (dev sin
+SUPABASE_SERVICE_ROLE_KEY), si el query tira error, o si hay exception,
+se asume `isIncomingConversation = false` → aplicar anti-ban. Es
+preferible bloquear una respuesta legítima (que el usuario puede
+reintentar) que permitir una invitación fría que tumbe el número. Todos
+los errores se loguean con `logger.warn('DATABASE', ...)` siguiendo la
+convención del módulo WhatsApp (no existe categoría 'WHATSAPP' en
+`Logger` — se usa 'DATABASE' como el resto del módulo).
+
+**Importaciones añadidas**: `getSupabaseAdminSafe` de
+`@/lib/supabase-admin` y `logger` de `@/lib/logger`.
+
+**Docstring actualizado**: el bloque JSDoc del handler documenta ahora
+también el fix ANTI-BAN-REACTIVE con su semántica y fail-safe.
+
+### Validación
+
+- **TypeScript**: `npx tsc --noEmit -p tsconfig.json` → 0 errores.
+  (Inicialmente 2 errores por usar categoría 'WHATSAPP' en logger; corregido
+  a 'DATABASE' que es la convención del módulo.)
+- **ESLint**: `npx eslint` en los 3 archivos modificados
+  (`CameraBarcodeScanner.tsx`, `route.ts`, `whatsapp-module.test.ts`)
+  → 0 errores. `manifest.json` no tiene config ESLint aplicable (warning
+  "File ignored because no matching configuration was supplied" — esperado).
+- **Tests**: `npx vitest run src/__tests__/integration/whatsapp-module.test.ts`
+  → 37/37 pasan (incluyendo el test original de FIX-AUDIT-WA-4 que ahora
+  tiene título más explícito "rechaza 429 cuando canInviteNow devuelve
+  allowed=false (cold outreach)" + 3 tests nuevos de
+  FIX-ANTI-BAN-REACTIVE). `npx vitest run src/__tests__/integration/whatsapp-realtime.test.ts`
+  → 7/7 pasan (sin regresión).
+
+#### Tests nuevos en `whatsapp-module.test.ts` (FIX ANTI-BAN-REACTIVE)
+
+1. **"NO bloquea cuando el cliente ya escribió antes (respuesta reactiva)"**:
+   Mockea `getSupabaseAdminSafe` para devolver un admin client cuyo query
+   devuelve `count=1`. Mockea `canInviteNow` para que devuelva
+   `allowed=false` (si se llamara, el test fallaría). Mockea `getSocket`
+   con un socket que tiene `sendMessage` mockeado. Verifica que la
+   respuesta es 200 success, que `body.sent === true` y que `sendMessage`
+   fue llamado.
+
+2. **"SÍ bloquea cuando no hay mensajes entrantes previos (cold outreach)"**:
+   Misma estructura pero `count=0`. Verifica que la respuesta es 429 con
+   `blocked_by_anti_ban === true`.
+
+3. **"Fail-safe: si el admin client es null, aplica anti-ban"**:
+   No mockea `getSupabaseAdminSafe` (usa el mock global que devuelve
+   `null`). Verifica que la respuesta es 429 → fail-safe funciona.
+
+**Cambio necesario en mock global**: `vi.mock('@/lib/supabase-admin', ...)`
+cambiado de `getSupabaseAdminSafe: () => null` a
+`getSupabaseAdminSafe: vi.fn(() => null)` para poder usar
+`vi.mocked(getSupabaseAdminSafe).mockReturnValueOnce(...)` en los tests
+nuevos. No afecta a otros tests — el comportamiento por defecto sigue
+siendo devolver `null`.
+
+### Issues encontrados / Limitaciones
+
+- **`navigator.permissions.query` no soportado en Firefox**: si la
+  Permissions API no está disponible, se hace catch y se continúa con
+  `getUserMedia`. En ese caso, el botón "Reintentar" vuelve a tirar
+  `NotAllowedError` y el estado `denied` se muestra con el mensaje
+  contextual correcto. No es un callejón sin salida en APK TWA porque
+  hay botón "Abrir ajustes de la app" además del "Reintentar".
+- **Esquema `app-settings:` URL scheme**: este scheme Android puede no
+  estar disponible en todos los dispositivos/versiones de Android. El
+  botón "Abrir ajustes de la app" está envuelto en try/catch y el
+  mensaje de texto explica los pasos manuales como fallback. No es
+  garantía pero mejora UX en la mayoría de los casos.
+- **`document.referrer` para detección TWA**: funciona para TWAs
+  generadas por PWA Builder estándar. Algunas configuraciones de TWA
+  pueden no setear el referrer; en ese caso la plataforma se queda como
+  `'browser'` y se muestran las instrucciones de navegador (que también
+  mencionan los ajustes de Android como plan B).
+- **Query anti-ban reactiva por `phone_number`**: si el cliente escribió
+  desde un número y el negocio responde a un `phone_number` con formato
+  distinto (ej. con prefijo `+` vs sin él), el count puede ser 0 y la
+  respuesta se trataría como cold outreach. Esto es una limitación
+  conocida — la normalización de phone numbers debería ser consistente
+  en todo el pipeline (ya lo es en `glm-orchestrator.saveMessage` que
+  recibe `phoneNumber` crudo y lo guarda tal cual). No se introduce
+  normalización aquí para no romper el contrato existente; si se detecta
+  en producción, se puede añadir normalización en un fix posterior.
+- **Fail-safe puede dar falso positivo anti-ban**: si Supabase está
+  caído temporalmente, todas las respuestas reactivas se bloquean con
+  429. Esto es intencional — preferimos bloquear respuestas legítimas
+  (reintentables) que permitir cold outreach que bantee el número. El
+  error se loguea para que ops pueda detectar el problema.
+- **No se tocaron**: módulo Telegram (ya arreglado por otro agente),
+  lógica de negocio de los handlers, otras rutas del módulo WhatsApp.

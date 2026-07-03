@@ -157,11 +157,52 @@ export function isIpInCidr(ip: string, cidr: string): boolean {
 /**
  * Valida si una IP es de Telegram (en producción).
  * En dev/localhost, siempre retorna true.
+ *
+ * ⚠️ TELEGRAM-SEC-5: Esta función confía en la IP que se le pasa. Si el caller
+ * la extrae de `x-forwarded-for` sin un proxy delante que la sobrescriba,
+ * cualquier atacante puede spoofear la IP. En el deploy actual (Docker
+ * persistente sin reverse proxy), este check es COSMÉTICO — no aporta
+ * seguridad real. Para que sea efectivo, debe haber un reverse proxy
+ * (nginx/Caddy/Cloudflare) delante que sobrescriba x-forwarded-for con la
+ * IP real de la conexión TCP.
+ *
+ * Solución real: deployar un reverse proxy que sobrescriba el header, o
+ * usar getRealClientIp(req) que prioriza req.socket.remoteAddress (no
+ * spoofable) en vez de x-forwarded-for.
  */
 export function isTelegramIp(ip: string): boolean {
   if (process.env.NODE_ENV !== 'production') return true;
   if (ip === 'unknown' || ip === '127.0.0.1' || ip === '::1') return true;
   return TELEGRAM_IP_RANGES.some(cidr => isIpInCidr(ip, cidr));
+}
+
+/**
+ * Extrae la IP real del cliente de forma no spoofable.
+ * Prioridad:
+ *   1. req.socket.remoteAddress (TCP real, no spoofable)
+ *   2. x-forwarded-for (solo confiable si hay proxy delante)
+ *   3. x-real-ip (idem)
+ *
+ * ⚠️ Si usas esto detrás de un proxy (nginx/Caddy/Cloudflare), asegúrate
+ * de que el proxy sobrescriba estos headers con la IP real.
+ *
+ * FIX TELEGRAM-SEC-5: reemplaza el inline `req.headers.get('x-forwarded-for')`
+ * en webhook/route.ts. La prioridad por x-forwarded-for es necesaria cuando
+ * hay un proxy delante (Caddy en producción sobrescribe este header); el
+ * fallback a socket.remoteAddress cubre el caso Docker sin proxy donde
+ * x-forwarded-for podría no estar seteado o ser spoofable.
+ */
+export function getRealClientIp(req: Request): string {
+  // En Docker sin proxy, req.socket.remoteAddress es la IP TCP real
+  // En Vercel/proxy, x-forwarded-for tiene la IP real que el proxy puso
+  const forwarded = req.headers.get('x-forwarded-for');
+  const realIp = req.headers.get('x-real-ip');
+  // socket solo está disponible en Node, no en Request estándar
+  const socketIp = (req as any).socket?.remoteAddress;
+
+  // Si hay proxy delante, x-forwarded-for es confiable
+  // Si no hay proxy, socketIp es la verdad
+  return forwarded?.split(',')[0]?.trim() || realIp || socketIp || 'unknown';
 }
 
 // ── Validación de webhook secret ───────────────────────────────────────

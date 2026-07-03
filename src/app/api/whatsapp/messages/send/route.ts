@@ -9,6 +9,8 @@ import { saveMessage, validateContactBelongsToStore } from '@/lib/whatsapp/glm-o
 import { getSocket } from '@/lib/whatsapp/baileys-client';
 import { canInviteNow, getRiskState } from '@/lib/whatsapp/anti-ban';
 import { emitMessage } from '@/lib/whatsapp/realtime-server';
+import { getSupabaseAdminSafe } from '@/lib/supabase-admin';
+import { logger } from '@/lib/logger';
 
 const sendSchema = z.object({
   store_id: z.string().uuid(),
@@ -39,6 +41,15 @@ const sendSchema = z.object({
  *    El guard se aplica solo cuando hay socket activo (envío real a WhatsApp);
  *    el guardado en BD no está sujeto al anti-ban para no bloquear el logging
  *    de operaciones internas.
+ *
+ *  - FIX ANTI-BAN-REACTIVE (PWA-CAMERA-ANTI-BAN): el guard de FIX-AUDIT-WA-4
+ *    solo se aplica a invitaciones frías (cold outreach). Si el cliente ya
+ *    escribió primero (existe ≥1 mensaje incoming previo en whatsapp_messages
+ *    para el mismo contact_id o phone_number), se considera respuesta reactiva
+ *    legítima y el anti-ban NO se aplica — esto evita bloquear al negocio
+ *    cuando intenta responder a un cliente fuera del horario laboral o tras
+ *    agotar el cupo diario de invitaciones. Fail-safe: si el query falla,
+ *    asumir cold outreach y aplicar anti-ban.
  */
 async function postHandler(req: NextRequest, session: AuthenticatedSession) {
   const { allowed } = await rateLimit(`wa:send:${session.user.id}`, { windowMs: 60_000, maxRequests: 20 });
@@ -83,26 +94,80 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
   // Enviar por WhatsApp si hay sesión activa
   const sock = getSocket(store_id);
   if (sock) {
-    // FIX-AUDIT-WA-4: aplicar anti-ban antes de enviar. El sistema anti-ban
-    // (canInviteNow) se construyó en Fase 3 para proteger el número de WhatsApp
-    // de bloqueos por uso automatizado. Antes solo se invocaba desde
-    // invitation-queue.ts; el envío manual por esta ruta lo bypassa, lo que
-    // permite exceder los límites (20/día, intervalo, horario laboral) y
-    // tumbar el número. Ahora cualquier envío saliente pasa por el mismo guard.
-    const riskState = await getRiskState(store_id);
-    const guard = canInviteNow(
-      riskState.dailyInvitationCount,
-      riskState.lastInvitationAt,
-      riskState
-    );
-    if (!guard.allowed) {
-      return NextResponse.json({
-        success: false,
-        sent: false,
-        blocked_by_anti_ban: true,
-        reason: guard.reason,
-        next_allowed_at: guard.nextAllowedAt?.toISOString() || null,
-      }, { status: 429 });
+    // FIX ANTI-BAN-REACTIVE: distinguir invitación fría (cold outreach) de
+    // respuesta reactiva (cliente escribió primero). El anti-ban solo debe
+    // proteger el cold outreach — bloquear respuestas a clientes que ya escribieron
+    // es un bug de UX que impide al negocio operar fuera del horario laboral.
+    //
+    // Estrategia: consultar whatsapp_messages para ver si existe algún mensaje
+    // entrante (direction='incoming') previo del mismo contacto o phone_number.
+    //   - Si hay ≥1 mensaje entrante → respuesta reactiva → NO aplicar anti-ban.
+    //   - Si no hay ninguno → invitación fría → aplicar anti-ban (comportamiento
+    //     heredado de FIX-AUDIT-WA-4).
+    //
+    // Fail-safe: si el query falla (timeout, error, admin client null), asumir
+    // que NO es conversación entrante → aplicar anti-ban. Es preferible bloquear
+    // una respuesta legítima (que el usuario puede reintentar) que permitir una
+    // invitación fría que tumbe el número.
+    const admin = getSupabaseAdminSafe();
+    let isIncomingConversation = false;
+
+    if (admin) {
+      try {
+        let query = admin.from('whatsapp_messages')
+          .select('id', { count: 'exact', head: true })
+          .eq('store_id', store_id)
+          .eq('direction', 'incoming');
+
+        if (contact_id) {
+          query = query.eq('contact_id', contact_id);
+        } else if (phone_number) {
+          query = query.eq('phone_number', phone_number);
+        }
+
+        const { count, error: countError } = await query;
+        if (countError) {
+          logger.warn('DATABASE', 'ANTI_BAN_REACTIVE_QUERY_ERROR', {
+            store_id, contact_id: contact_id || null, phone_number,
+            error: countError.message,
+          });
+          // fail-safe: isIncomingConversation queda false → aplicar anti-ban
+        } else {
+          isIncomingConversation = (count ?? 0) > 0;
+        }
+      } catch (e: any) {
+        logger.warn('DATABASE', 'ANTI_BAN_REACTIVE_QUERY_EXCEPTION', {
+          store_id, contact_id: contact_id || null, phone_number,
+          error: e?.message || String(e),
+        });
+        // fail-safe: isIncomingConversation queda false → aplicar anti-ban
+      }
+    }
+
+    // Si es invitación fría (no hay mensajes entrantes previos), aplicar anti-ban.
+    // Si es respuesta reactiva (cliente escribió primero), NO aplicar anti-ban.
+    if (!isIncomingConversation) {
+      // FIX-AUDIT-WA-4: aplicar anti-ban antes de enviar. El sistema anti-ban
+      // (canInviteNow) se construyó en Fase 3 para proteger el número de WhatsApp
+      // de bloqueos por uso automatizado. Antes solo se invocaba desde
+      // invitation-queue.ts; el envío manual por esta ruta lo bypassa, lo que
+      // permite exceder los límites (20/día, intervalo, horario laboral) y
+      // tumbar el número. Ahora cualquier envío saliente pasa por el mismo guard.
+      const riskState = await getRiskState(store_id);
+      const guard = canInviteNow(
+        riskState.dailyInvitationCount,
+        riskState.lastInvitationAt,
+        riskState
+      );
+      if (!guard.allowed) {
+        return NextResponse.json({
+          success: false,
+          sent: false,
+          blocked_by_anti_ban: true,
+          reason: guard.reason,
+          next_allowed_at: guard.nextAllowedAt?.toISOString() || null,
+        }, { status: 429 });
+      }
     }
 
     const jid = phone_number.includes('@') ? phone_number : `${phone_number}@s.whatsapp.net`;

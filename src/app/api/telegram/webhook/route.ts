@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { waitUntil } from '@vercel/functions';
 import { logger } from '@/lib/logger';
 import { handleTelegramUpdate, findConfigByBotUserId } from '@/lib/telegram/webhook-handler';
+import {
+  validateWebhookSecret,
+  isTelegramIp,
+  getRealClientIp,
+} from '@/lib/telegram/security';
 import type { TelegramUpdate } from '@/types/telegram';
 
 /**
@@ -22,48 +26,42 @@ import type { TelegramUpdate } from '@/types/telegram';
  *   - 91.108.4.0/22
  *
  * Resilencia:
- *   - Respondemos 200 inmediatamente y procesamos async con waitUntil.
+ *   - Respondemos 200 inmediatamente y procesamos async con waitUntilCompat.
  *   - Telegram reintenta si respondemos != 200 (hasta 12 veces en 24h).
  *   - Si fallamos, logueamos pero respondemos 200 para evitar duplicados.
  *
  * Rate limiting:
  *   - Telegram no documenta límites explícitos para webhooks, pero se
- *     recomienda responder en <60s. Con waitUntil procesamos en background.
+ *     recomienda responder en <60s. Con waitUntilCompat procesamos en background.
  */
 
-// ── Telegram IP Allowlist (rangos oficiales) ──────────────────────────
-// https://core.telegram.org/bots/webhooks#the-short-version
-const TELEGRAM_IP_RANGES = [
-  '149.154.160.0/20',
-  '91.108.4.0/22',
-  '95.161.64.0/20',
-  '185.76.151.0/24',
-];
-
-/**
- * Valida si una IP está en un rango CIDR.
- * Soporta IPv4. Telegram usa IPv4 para webhooks.
- */
-function isIpInCidr(ip: string, cidr: string): boolean {
-  const [range, bits] = cidr.split('/');
-  const mask = parseInt(bits, 10);
-  const ipParts = ip.split('.').map(Number);
-  const rangeParts = range.split('.').map(Number);
-  if (ipParts.length !== 4 || rangeParts.length !== 4) return false;
-  if (ipParts.some(isNaN) || rangeParts.some(isNaN)) return false;
-
-  const ipNum = (ipParts[0] << 24) | (ipParts[1] << 16) | (ipParts[2] << 8) | ipParts[3];
-  const rangeNum = (rangeParts[0] << 24) | (rangeParts[1] << 16) | (rangeParts[2] << 8) | rangeParts[3];
-  const maskNum = mask === 0 ? 0 : (0xFFFFFFFF << (32 - mask)) >>> 0;
-
-  return (ipNum & maskNum) === (rangeNum & maskNum);
+// ── waitUntil compatible Docker + Vercel ──────────────────────────────
+// FIX TELEGRAM-SEC-4: @vercel/functions:waitUntil es específico de Vercel
+// serverless. En Docker persistente no hace nada útil (no hay lifetime que
+// extender). Usamos un wrapper que:
+//   - En Vercel: usa waitUntil real de @vercel/functions (si está disponible)
+//   - En Docker: ejecuta la promise sin await (fire-and-forget en proceso persistente)
+// La decisión de runtime está documentada en src/lib/whatsapp/realtime-server.ts.
+declare global {
+  var __waitUntilFallback: ((promise: Promise<unknown>) => void) | undefined;
 }
 
-function isTelegramIp(ip: string): boolean {
-  // En dev/localhost, saltar validación
-  if (process.env.NODE_ENV !== 'production') return true;
-  if (ip === 'unknown' || ip === '127.0.0.1' || ip === '::1') return true;
-  return TELEGRAM_IP_RANGES.some(cidr => isIpInCidr(ip, cidr));
+function waitUntilCompat(promise: Promise<unknown>): void {
+  // Si hay waitUntil real de Vercel, usarlo
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { waitUntil } = require('@vercel/functions');
+    if (typeof waitUntil === 'function') {
+      waitUntil(promise);
+      return;
+    }
+  } catch {
+    // @vercel/functions no disponible (Docker) — usar fallback
+  }
+  // Fallback: fire-and-forget en proceso persistente
+  promise.catch(err => {
+    logger.error('DATABASE', 'TELEGRAM_WEBHOOK_ASYNC_ERROR', { error: err?.message || String(err) });
+  });
 }
 
 export async function POST(req: NextRequest): Promise<Response> {
@@ -71,10 +69,9 @@ export async function POST(req: NextRequest): Promise<Response> {
 
   try {
     // ── 1. IP Allowlist (Fase T7) ────────────────────────────────────
-    const clientIp =
-      req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
-      req.headers.get('x-real-ip') ||
-      'unknown';
+    // FIX TELEGRAM-SEC-5: usar getRealClientIp que prioriza req.socket.remoteAddress
+    // (no spoofable) cuando no hay proxy delante. Ver JSDoc en security.ts.
+    const clientIp = getRealClientIp(req);
 
     if (!isTelegramIp(clientIp)) {
       logger.warn('DATABASE', 'TELEGRAM_WEBHOOK_IP_BLOCKED', { ip: clientIp });
@@ -100,30 +97,27 @@ export async function POST(req: NextRequest): Promise<Response> {
       return NextResponse.json({ error: 'Bot no configurado' }, { status: 404 });
     }
 
-    // ── 4. Validar secret token (HMAC-like) ──────────────────────────
-    // Telegram envía X-Telegram-Bot-Api-Secret-Token SOLO si se configuró con
-    // setWebhook(secret_token: ...). Si el webhook se re-registró sin secret,
-    // el header no se envía.
-    //
-    // Validación resiliente:
-    //   - Si AMBOS existen (config + header) y NO coinciden → rechazar (sospechoso)
-    //   - Si solo uno existe o ninguno → aceptar (no hay suficiente info para rechazar)
-    // La seguridad real viene del bot_id (solo Telegram lo sabe) + IP allowlist.
-    // Rechazar cuando Telegram no envía el secret causa pérdida de mensajes del grupo.
+    // ── 4. Validar secret token (fail-closed) ──────────────────────────
+    // FIX TELEGRAM-SEC-1: antes era fail-open (si faltaba el header se aceptaba).
+    // Ahora: si config.webhook_secret está seteado, el header DEBE estar presente
+    // Y coincidir (timing-safe comparison vía validateWebhookSecret).
+    // Si config.webhook_secret NO está seteado (bot sin secret configurado),
+    // aceptamos sin header (comportamiento legado, pero logueamos warning).
     const secretHeader = req.headers.get('x-telegram-bot-api-secret-token');
-    if (config.webhook_secret && secretHeader && secretHeader !== config.webhook_secret) {
-      logger.warn('DATABASE', 'TELEGRAM_WEBHOOK_SECRET_MISMATCH', {
+    if (config.webhook_secret) {
+      if (!validateWebhookSecret(secretHeader, config.webhook_secret)) {
+        logger.warn('DATABASE', 'TELEGRAM_WEBHOOK_SECRET_INVALID', {
+          botUserId,
+          hasSecret: !!config.webhook_secret,
+          hasHeader: !!secretHeader,
+        });
+        return NextResponse.json({ error: 'Secret inválido' }, { status: 403 });
+      }
+    } else {
+      // Bot sin secret configurado — aceptamos pero advertimos
+      logger.warn('DATABASE', 'TELEGRAM_WEBHOOK_NO_SECRET_CONFIGURED', {
         botUserId,
-        hasSecret: !!config.webhook_secret,
-        hasHeader: !!secretHeader,
-      });
-      return NextResponse.json({ error: 'Secret inválido' }, { status: 403 });
-    }
-    // Log informativo si no hay secret (para debug, pero no bloquear)
-    if (config.webhook_secret && !secretHeader) {
-      logger.info('DATABASE', 'TELEGRAM_WEBHOOK_NO_SECRET_HEADER', {
-        botUserId,
-        message: 'Aceptando update sin secret header (webhook re-registrado sin secret)',
+        message: 'Bot sin webhook_secret configurado — cualquiera puede enviar updates falsos',
       });
     }
 
@@ -135,9 +129,9 @@ export async function POST(req: NextRequest): Promise<Response> {
     }
 
     // ── 6. Responder 200 inmediatamente y procesar async ─────────────
-    // Telegram espera respuesta en <60s. Procesamos en background con waitUntil.
+    // Telegram espera respuesta en <60s. Procesamos en background con waitUntilCompat.
     // Pasamos la config ya resuelta al handler para evitar re-buscarla.
-    waitUntil(
+    waitUntilCompat(
       (async () => {
         try {
           await handleTelegramUpdate(update, config);

@@ -12,7 +12,7 @@ import { NextRequest } from 'next/server';
 // ── Mocks ──────────────────────────────────────────────────────────────
 
 vi.mock('@/lib/supabase-admin', () => ({
-  getSupabaseAdminSafe: () => null,
+  getSupabaseAdminSafe: vi.fn(() => null),
 }));
 
 vi.mock('@/lib/auth-middleware', () => ({
@@ -364,7 +364,7 @@ describe('WhatsApp Module — 4 Fases', () => {
   // ── FIX-AUDIT-WA-4: anti-ban guard en envío directo ──────────────
 
   describe('FIX-AUDIT-WA-4: anti-ban guard en messages/send', () => {
-    it('rechaza 429 cuando canInviteNow devuelve allowed=false', async () => {
+    it('rechaza 429 cuando canInviteNow devuelve allowed=false (cold outreach)', async () => {
       const { canInviteNow } = await import('@/lib/whatsapp/anti-ban');
       vi.mocked(canInviteNow).mockReturnValueOnce({
         allowed: false,
@@ -390,6 +390,133 @@ describe('WhatsApp Module — 4 Fases', () => {
       const body = await res.json();
       expect(body.blocked_by_anti_ban).toBe(true);
       expect(body.reason).toContain('anti-ban');
+    });
+  });
+
+  // ── FIX ANTI-BAN-REACTIVE (PWA-CAMERA-ANTI-BAN): bypass para respuestas reactivas ──
+
+  describe('FIX ANTI-BAN-REACTIVE: bypass anti-ban para respuestas reactivas', () => {
+    it('NO bloquea cuando el cliente ya escribió antes (respuesta reactiva)', async () => {
+      // Mockear getSupabaseAdminSafe para devolver un admin client mock
+      // cuya query de whatsapp_messages devuelva count=1 (hay mensaje entrante).
+      const { getSupabaseAdminSafe } = await import('@/lib/supabase-admin');
+      // La API Supabase encadena select().eq().eq().eq(); la última llamada
+      // (con phone_number) debe resolver la promesa { count, error }.
+      // Construimos un builder fluido.
+      const chainable = {
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+      };
+      chainable.eq.mockImplementation((field: string) => {
+        if (field === 'phone_number') {
+          return Promise.resolve({ count: 1, error: null });
+        }
+        return chainable;
+      });
+      const mockAdmin = { from: vi.fn(() => chainable) };
+      vi.mocked(getSupabaseAdminSafe).mockReturnValueOnce(mockAdmin as any);
+
+      // canInviteNow debería NO ser invocado (bypass). Lo mockeamos para que
+      // devuelva allowed=false de todas formas: si se llamara, el test fallaría.
+      const { canInviteNow } = await import('@/lib/whatsapp/anti-ban');
+      vi.mocked(canInviteNow).mockReturnValueOnce({
+        allowed: false,
+        reason: 'Pausa anti-banneo activa — NO debería llegar aquí',
+      });
+
+      // Mockear socket activo para que el código entre al bloque del anti-ban
+      const { getSocket } = await import('@/lib/whatsapp/baileys-client');
+      const sendMessageMock = vi.fn().mockResolvedValue({});
+      vi.mocked(getSocket).mockReturnValueOnce({ sendMessage: sendMessageMock } as any);
+
+      const res = await (sendPOST as any)(
+        makeRequest('/api/whatsapp/messages/send', 'POST', {
+          store_id: STORE_A,
+          phone_number: '5312345678',
+          message: 'Hola, respondiendo tu mensaje',
+        }),
+        makeSession('manager', [{ store_id: STORE_A, role: 'manager', status: 'active' }])
+      );
+
+      // La respuesta debe ser 200 success — el anti-ban fue bypassed.
+      expect(res.status).toBe(200);
+      const body = await res.json();
+      expect(body.success).toBe(true);
+      expect(body.sent).toBe(true);
+      // Y sendMessage debe haber sido llamado
+      expect(sendMessageMock).toHaveBeenCalled();
+    });
+
+    it('SÍ bloquea cuando no hay mensajes entrantes previos (cold outreach)', async () => {
+      // Mockear getSupabaseAdminSafe con count=0 → cold outreach → aplicar anti-ban
+      const { getSupabaseAdminSafe } = await import('@/lib/supabase-admin');
+      const chainable = {
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+      };
+      chainable.eq.mockImplementation((field: string) => {
+        if (field === 'phone_number') {
+          return Promise.resolve({ count: 0, error: null });
+        }
+        return chainable;
+      });
+      const mockAdmin = { from: vi.fn(() => chainable) };
+      vi.mocked(getSupabaseAdminSafe).mockReturnValueOnce(mockAdmin as any);
+
+      const { canInviteNow } = await import('@/lib/whatsapp/anti-ban');
+      vi.mocked(canInviteNow).mockReturnValueOnce({
+        allowed: false,
+        reason: 'Pausa anti-banneo activa',
+        nextAllowedAt: new Date(Date.now() + 3600_000),
+      });
+
+      const { getSocket } = await import('@/lib/whatsapp/baileys-client');
+      vi.mocked(getSocket).mockReturnValueOnce({
+        sendMessage: vi.fn(),
+      } as any);
+
+      const res = await (sendPOST as any)(
+        makeRequest('/api/whatsapp/messages/send', 'POST', {
+          store_id: STORE_A,
+          phone_number: '5312345678',
+          message: 'Hola, te contacto para ofrecerte...',
+        }),
+        makeSession('manager', [{ store_id: STORE_A, role: 'manager', status: 'active' }])
+      );
+
+      expect(res.status).toBe(429);
+      const body = await res.json();
+      expect(body.blocked_by_anti_ban).toBe(true);
+    });
+
+    it('Fail-safe: si el admin client es null, aplica anti-ban (cold outreach por defecto)', async () => {
+      // El mock global de getSupabaseAdminSafe devuelve null.
+      // No hacemos mockReturnValueOnce, así que usa el mock global → null.
+      const { canInviteNow } = await import('@/lib/whatsapp/anti-ban');
+      vi.mocked(canInviteNow).mockReturnValueOnce({
+        allowed: false,
+        reason: 'Pausa anti-banneo activa',
+        nextAllowedAt: new Date(Date.now() + 3600_000),
+      });
+
+      const { getSocket } = await import('@/lib/whatsapp/baileys-client');
+      vi.mocked(getSocket).mockReturnValueOnce({
+        sendMessage: vi.fn(),
+      } as any);
+
+      const res = await (sendPOST as any)(
+        makeRequest('/api/whatsapp/messages/send', 'POST', {
+          store_id: STORE_A,
+          phone_number: '5312345678',
+          message: 'hola',
+        }),
+        makeSession('manager', [{ store_id: STORE_A, role: 'manager', status: 'active' }])
+      );
+
+      // Fail-safe → cold outreach → anti-ban aplicado → 429
+      expect(res.status).toBe(429);
+      const body = await res.json();
+      expect(body.blocked_by_anti_ban).toBe(true);
     });
   });
 

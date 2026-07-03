@@ -46,9 +46,19 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
     }
   }
 
+  // FIX TELEGRAM-SEC-2: enmascarar bot_token en GET. El token se acepta en PUT
+  // (write-only) pero nunca se devuelve en texto plano. Solo se devuelve un flag
+  // has_token + los primeros 4 caracteres para identificación visual.
+  const { bot_token, ...configWithoutToken } = config;
+  const botTokenMasked = bot_token
+    ? `${bot_token.substring(0, 4)}…${bot_token.substring(bot_token.length - 4)}`
+    : null;
+
   return NextResponse.json({
     data: {
-      ...config,
+      ...configWithoutToken,
+      bot_token_masked: botTokenMasked,
+      has_bot_token: !!bot_token,
       configured: true,
       webhook_info: webhookInfo,
     },

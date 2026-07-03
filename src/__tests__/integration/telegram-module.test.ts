@@ -80,6 +80,17 @@ vi.mock('@/lib/telegram/security', () => ({
   validateWebhookSecret: vi.fn().mockReturnValue(true),
   isIpInCidr: vi.fn().mockReturnValue(true),
   cleanupRateBuckets: vi.fn(),
+  // FIX TELEGRAM-SEC-5: getRealClientIp añadido al mock para que el
+  // webhook route pueda importarlo correctamente.
+  getRealClientIp: vi.fn().mockReturnValue('127.0.0.1'),
+}));
+
+// FIX TELEGRAM-SEC-1: mock explícito de webhook-handler para poder controlar
+// findConfigByBotUserId en los tests del webhook. Sin esto, el handler
+// importaría el módulo real que a su vez importa handlers.ts y cascadea.
+vi.mock('@/lib/telegram/webhook-handler', () => ({
+  findConfigByBotUserId: vi.fn().mockResolvedValue(null),
+  handleTelegramUpdate: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock('@vercel/functions', () => ({
@@ -168,19 +179,91 @@ describe('Telegram Module — 8 Fases', () => {
       expect(res.status).toBe(400);
     });
 
-    it('POST /api/telegram/webhook — sin secret header → 403', async () => {
-      // Caso: bot_id no encontrado en BD → 404 (no 403).
-      // El 403 real requiere mock complejo de supabase. Validamos el flujo
-      // de "bot no encontrado" que es el primer guard del webhook.
+    it('POST /api/telegram/webhook — sin secret header con secret configurado → 403', async () => {
+      // FIX TELEGRAM-SEC-1/FIX TELEGRAM-SEC-3: antes este test era falso —
+      // afirmaba probar "sin secret header → 403" pero el mock default de
+      // admin era null, así que findConfigByBotUserId devolvía null y el
+      // webhook respondía 404. El assert `expect([403, 404]).toContain`.
+      // siempre caía en 404, sin ejercitar el check del secret.
+      //
+      // Ahora mockeamos findConfigByBotUserId para devolver una config real
+      // CON webhook_secret, y validateWebhookSecret para devolver false
+      // (que es lo que retorna cuando el header falta o no coincide).
+      const { findConfigByBotUserId } = await import('@/lib/telegram/webhook-handler');
+      const { validateWebhookSecret } = await import('@/lib/telegram/security');
+      vi.mocked(findConfigByBotUserId).mockResolvedValue({
+        store_id: STORE_A,
+        bot_user_id: BOT_USER_ID,
+        bot_token: 'fake-bot-token',
+        webhook_secret: 'test-secret-123',
+        is_active: true,
+      } as any);
+      // validateWebhookSecret(null, 'test-secret-123') debería retornar false
+      // en la implementación real (header faltante). Lo mockeamos explícito
+      // para garantizar fail-closed en el test.
+      vi.mocked(validateWebhookSecret).mockReturnValue(false);
+
       const req = {
         method: 'POST',
         url: `http://localhost:3000/api/telegram/webhook?bot_id=${BOT_USER_ID}`,
-        headers: new Headers({ 'x-forwarded-for': '127.0.0.1' }),
+        headers: new Headers({ 'x-forwarded-for': '127.0.0.1' }), // sin secret header
         json: async () => ({ update_id: 1 }),
       } as any;
       const res = await (webhookPOST as any)(req);
-      // Con admin=null (mock default), findConfigByBotUserId retorna null → 404
-      expect([403, 404]).toContain(res.status);
+      expect(res.status).toBe(403); // NO aceptar 404 — debe ser 403
+    });
+
+    it('POST /api/telegram/webhook — secret header incorrecto → 403', async () => {
+      // FIX TELEGRAM-SEC-3: secret header presente pero con valor incorrecto.
+      const { findConfigByBotUserId } = await import('@/lib/telegram/webhook-handler');
+      const { validateWebhookSecret } = await import('@/lib/telegram/security');
+      vi.mocked(findConfigByBotUserId).mockResolvedValue({
+        store_id: STORE_A,
+        bot_user_id: BOT_USER_ID,
+        bot_token: 'fake-bot-token',
+        webhook_secret: 'test-secret-123',
+        is_active: true,
+      } as any);
+      vi.mocked(validateWebhookSecret).mockReturnValue(false);
+
+      const req = {
+        method: 'POST',
+        url: `http://localhost:3000/api/telegram/webhook?bot_id=${BOT_USER_ID}`,
+        headers: new Headers({
+          'x-forwarded-for': '127.0.0.1',
+          'x-telegram-bot-api-secret-token': 'wrong-secret',
+        }),
+        json: async () => ({ update_id: 1 }),
+      } as any;
+      const res = await (webhookPOST as any)(req);
+      expect(res.status).toBe(403);
+    });
+
+    it('POST /api/telegram/webhook — secret header correcto → 200', async () => {
+      // FIX TELEGRAM-SEC-3: secret header presente y correcto → pasa el
+      // check y procesa el update async. Debe responder 200.
+      const { findConfigByBotUserId } = await import('@/lib/telegram/webhook-handler');
+      const { validateWebhookSecret } = await import('@/lib/telegram/security');
+      vi.mocked(findConfigByBotUserId).mockResolvedValue({
+        store_id: STORE_A,
+        bot_user_id: BOT_USER_ID,
+        bot_token: 'fake-bot-token',
+        webhook_secret: 'test-secret-123',
+        is_active: true,
+      } as any);
+      vi.mocked(validateWebhookSecret).mockReturnValue(true);
+
+      const req = {
+        method: 'POST',
+        url: `http://localhost:3000/api/telegram/webhook?bot_id=${BOT_USER_ID}`,
+        headers: new Headers({
+          'x-forwarded-for': '127.0.0.1',
+          'x-telegram-bot-api-secret-token': 'test-secret-123',
+        }),
+        json: async () => ({ update_id: 1 }),
+      } as any;
+      const res = await (webhookPOST as any)(req);
+      expect(res.status).toBe(200);
     });
   });
 

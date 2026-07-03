@@ -54,6 +54,19 @@ export default function CameraBarcodeScanner({ isOpen, onScan, onClose }: Camera
   const [method, setMethod] = useState<'BarcodeDetector' | 'ZXing' | null>(null);
   const [torchOn, setTorchOn] = useState(false);
   const [torchSupported, setTorchSupported] = useState(false);
+  // FIX PWA-CAM: detectar si corremos dentro de una TWA (APK generada por
+  // PWA Builder) vs navegador normal. Esto cambia el mensaje de error y los
+  // botones que se muestran cuando el permiso de cámara está denegado.
+  const [platform, setPlatform] = useState<'apk-twa' | 'browser'>('browser');
+
+  // ── Detectar plataforma TWA ──
+  useEffect(() => {
+    // Detectar si estamos corriendo dentro de una TWA (Trusted Web Activity)
+    // generada por PWA Builder. En TWA, document.referrer empieza con 'android-app://'.
+    if (typeof document !== 'undefined' && document.referrer.startsWith('android-app://')) {
+      setPlatform('apk-twa');
+    }
+  }, []);
 
   // ── Detectar si BarcodeDetector está disponible ──
   const isBarcodeDetectorSupported = useCallback(() => {
@@ -144,10 +157,34 @@ export default function CameraBarcodeScanner({ isOpen, onScan, onClose }: Camera
     }
   }, [status, lastScan, onScan]);
 
+  // ── Mensaje de permiso denegado según plataforma ──
+  const buildDeniedMessage = useCallback(() => {
+    return platform === 'apk-twa'
+      ? 'La app no tiene permiso de cámara. Ve a Ajustes de Android → Apps → CostPro → Permisos → Cámara y actívalo.'
+      : 'Permiso de cámara denegado. Toca el candado 🔒 junto a la URL → Permisos del sitio → Cámara → Permitir. Si ya está permitido y no funciona, verifica que la app del navegador tenga permiso de cámara en Ajustes de Android.';
+  }, [platform]);
+
   // ── Iniciar cámara ──
   const startCamera = useCallback(async () => {
     setStatus('starting');
     setErrorMsg('');
+
+    // FIX PWA-CAM: Verificar permiso antes de llamar getUserMedia.
+    // navigator.permissions.query nos dice si el permiso ya está 'denied'
+    // sin disparar otro NotAllowedError. Si está denegado, no tiene sentido
+    // llamar getUserMedia — vamos directo al estado 'denied' con instrucciones
+    // claras según el contexto (APK vs navegador).
+    try {
+      // @ts-ignore — PermissionName 'camera' no está en todas las TS lib defs
+      const permission = await navigator.permissions?.query({ name: 'camera' });
+      if (permission?.state === 'denied') {
+        setStatus('denied');
+        setErrorMsg(buildDeniedMessage());
+        return;
+      }
+    } catch {
+      // permissions API no soportada (Firefox, algunos navegadores) — continuar con getUserMedia
+    }
 
     try {
       // Pedir cámara trasera con preferencia
@@ -202,7 +239,7 @@ export default function CameraBarcodeScanner({ isOpen, onScan, onClose }: Camera
     } catch (e: any) {
       if (e.name === 'NotAllowedError') {
         setStatus('denied');
-        setErrorMsg('Permiso de cámara denegado. Habilita la cámara en la configuración del navegador.');
+        setErrorMsg(buildDeniedMessage());
       } else if (e.name === 'NotFoundError') {
         setStatus('error');
         setErrorMsg('No se encontró ninguna cámara en este dispositivo.');
@@ -211,7 +248,7 @@ export default function CameraBarcodeScanner({ isOpen, onScan, onClose }: Camera
         setErrorMsg(e.message || 'Error al acceder a la cámara.');
       }
     }
-  }, [isBarcodeDetectorSupported, initBarcodeDetector, initZXing, scanLoopBarcodeDetector, startZXingScan]);
+  }, [isBarcodeDetectorSupported, initBarcodeDetector, initZXing, scanLoopBarcodeDetector, startZXingScan, buildDeniedMessage]);
 
   // ── Detener cámara ──
   const stopCamera = useCallback(() => {
@@ -312,10 +349,31 @@ export default function CameraBarcodeScanner({ isOpen, onScan, onClose }: Camera
             <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center">
               {status === 'denied' ? <CameraOff className="w-8 h-8 text-red-400" /> : <AlertTriangle className="w-8 h-8 text-amber-400" />}
             </div>
-            <p className="text-sm text-white/80 text-center max-w-xs">{errorMsg}</p>
+            <p className="text-sm text-white/80 text-center max-w-xs whitespace-pre-line">{errorMsg}</p>
+
+            {/* Botones según plataforma */}
+            {status === 'denied' && platform === 'apk-twa' && (
+              <button
+                onClick={() => {
+                  // Intentar abrir ajustes de la app en Android.
+                  // Puede no funcionar en todos los dispositivos — el mensaje de texto
+                  // ya explica los pasos manuales como fallback.
+                  try {
+                    window.location.href = 'app-settings:';
+                  } catch {
+                    // ignore — el usuario sigue los pasos manuales del texto
+                  }
+                }}
+                className="px-6 py-3 rounded-xl bg-green-500 text-white font-black text-xs uppercase tracking-widest hover:bg-green-600 transition-colors"
+              >
+                Abrir ajustes de la app
+              </button>
+            )}
+
+            {/* Reintentar — útil si el usuario ya activó el permiso manualmente */}
             <button
               onClick={startCamera}
-              className="px-6 py-3 rounded-xl bg-green-500 text-white font-black text-xs uppercase tracking-widest hover:bg-green-600 transition-colors"
+              className="px-6 py-3 rounded-xl bg-white/10 text-white font-black text-xs uppercase tracking-widest hover:bg-white/20 transition-colors"
             >
               Reintentar
             </button>

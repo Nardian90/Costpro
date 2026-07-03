@@ -31,7 +31,10 @@ import { cn } from '@/lib/utils';
 
 interface Config {
   configured: boolean;
-  bot_token?: string;
+  // FIX TELEGRAM-SEC-2: bot_token ya no se devuelve en GET (write-only).
+  // El backend devuelve bot_token_masked + has_bot_token en su lugar.
+  bot_token_masked?: string | null;
+  has_bot_token?: boolean;
   bot_username?: string | null;
   bot_user_id?: number | null;
   is_active?: boolean;
@@ -87,7 +90,11 @@ export default function TelegramConfigView() {
       const json = await res.json();
       if (json.data) {
         setConfig(json.data);
-        setBotToken(json.data.bot_token || '');
+        // FIX TELEGRAM-SEC-2: el backend ya no devuelve bot_token en texto
+        // plano. No precargamos el input — el usuario debe re-ingresar el
+        // token solo si quiere rotarlo. Mostramos bot_token_masked como
+        // placeholder para identificación visual.
+        setBotToken('');
         setSystemPrompt(json.data.system_prompt || '');
         setModelName(json.data.model_name || 'glm-4.5-flash');
         setTemperature(json.data.temperature ?? 0.7);
@@ -117,7 +124,10 @@ export default function TelegramConfigView() {
         headers: { 'Content-Type': 'application/json', ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}) },
         body: JSON.stringify({
           store_id: storeId,
-          bot_token: botToken !== config?.bot_token ? botToken : undefined,
+          // FIX TELEGRAM-SEC-2: solo enviamos bot_token si el usuario
+          // escribió uno nuevo. Si el input está vacío, no tocamos el
+          // token existente (lo dejamos tal cual en BD).
+          bot_token: botToken.trim() ? botToken : undefined,
           system_prompt: systemPrompt,
           model_name: modelName,
           temperature,
@@ -214,7 +224,9 @@ export default function TelegramConfigView() {
     );
   }
 
-  const isConfigured = config?.configured && config?.bot_token;
+  // FIX TELEGRAM-SEC-2: usar has_bot_token (flag del backend) en vez de
+  // bot_token (que ya no se devuelve en texto plano).
+  const isConfigured = config?.configured && !!config?.has_bot_token;
   const webhookRegistered = !!config?.webhook_url;
 
   return (
@@ -272,13 +284,21 @@ export default function TelegramConfigView() {
               type={showToken ? 'text' : 'password'}
               value={botToken}
               onChange={e => setBotToken(e.target.value)}
-              placeholder="123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11"
+              // FIX TELEGRAM-SEC-2: mostramos el token enmascarado como
+              // placeholder para que el usuario sepa que ya hay uno configurado.
+              placeholder={config?.bot_token_masked || '123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11'}
               className="text-xs h-11 font-mono"
             />
             <Button variant="outline" size="sm" onClick={() => setShowToken(!showToken)} className="text-xs h-11 min-w-[44px]">
               {showToken ? '🙈' : '👁'}
             </Button>
           </div>
+          {config?.has_bot_token && (
+            <p className="text-[10px] text-muted-foreground">
+              Token configurado: <code className="bg-muted px-1 rounded font-mono">{config.bot_token_masked}</code>.
+              Para rotarlo, ingresa un nuevo token arriba. Déjalo vacío para mantener el actual.
+            </p>
+          )}
           {config?.bot_username && (
             <Badge className="bg-blue-500/10 text-blue-600 text-[10px]">
               ✓ Bot: @{config.bot_username}

@@ -11,6 +11,11 @@
   "dir": "ltr",
   "lang": "es",
   "categories": ["business", "finance", "productivity"],
+  "permissions_policy": {
+    "camera": ["self"],
+    "microphone": [],
+    "geolocation": []
+  },
   "icons": [
     {
       "src": "/icons/icon-192.png",
