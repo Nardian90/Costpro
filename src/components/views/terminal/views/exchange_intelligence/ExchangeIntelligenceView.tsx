@@ -146,9 +146,13 @@ export function ExchangeIntelligenceView() {
   // Calcular KPIs desde datos reales — filtrar por segmento + currency + source
   // FIX-F10: Antes usábamos .slice(-6) que es frágil: si entre los últimos 6
   // registros había 7+ de EUR, el USD no se encontraba y caía al fallback 120/650.
-  // Ahora filtramos directamente por currency + source + segment sin slice.
-  const usdOfficial = rates.find(r => r.source === 'BCC' && r.segment === bccSegment && r.currency === 'USD')?.rate ?? FALLBACK_OFFICIAL.USD;
-  const usdInformal = rates.find(r => r.source === 'elToque' && r.currency === 'USD')?.rate ?? FALLBACK_INFORMAL.USD;
+  // FIX-BUG-TASA-HOY: Antes usábamos rates.find() que devuelve el PRIMER match
+  // (el más antiguo, porque rates se carga con ascending=true). Ahora filtramos
+  // y tomamos el ÚLTIMO match (el más reciente = tasa de hoy).
+  const usdOfficialRates = rates.filter(r => r.source === 'BCC' && r.segment === bccSegment && r.currency === 'USD');
+  const usdInformalRates = rates.filter(r => r.source === 'elToque' && r.currency === 'USD');
+  const usdOfficial = usdOfficialRates[usdOfficialRates.length - 1]?.rate ?? FALLBACK_OFFICIAL.USD;
+  const usdInformal = usdInformalRates[usdInformalRates.length - 1]?.rate ?? FALLBACK_INFORMAL.USD;
   const diff = usdInformal - usdOfficial;
   const diffPct = usdOfficial > 0 ? ((diff / usdOfficial) * 100).toFixed(0) : '0';
 
@@ -455,7 +459,7 @@ function getBrechaStatus(stats: ReturnType<typeof calcBrechaStats>) {
       level = 'warning';
     }
     label = 'Cambio abrupto detectado';
-    explanation = `La brecha ha cambiado ${delta7d >= 0 ? '+' : ''}${delta7d.toFixed(1)} puntos porcentuales en 7 días. Esto supera 2σ de la volatilidad diaria típica (${(stats.dailyChangeStd || 0).toFixed(2)}pp/día), lo que constituye una anomalía estadística al 95% de confianza. ${explanation}`;
+    explanation = `La brecha ha cambiado ${delta7d >= 0 ? '+' : ''}${delta7d.toFixed(0)} puntos porcentuales en 7 días. Esto supera 2σ de la volatilidad diaria típica (${(stats.dailyChangeStd || 0).toFixed(0)}pp/día), lo que constituye una anomalía estadística al 95% de confianza. ${explanation}`;
   }
 
   return {
@@ -825,11 +829,11 @@ function DashboardTab({
                     <strong>Análisis estadístico (90 días):</strong>
                   </p>
                   <ul className="list-disc pl-4 space-y-0.5 text-xs">
-                    <li>Promedio 90 días: <strong>{brechaStats?.avg.toFixed(2) ?? '—'}%</strong></li>
-                    <li>Desviación estándar: <strong>{brechaStats?.std.toFixed(2) ?? '—'}%</strong></li>
-                    <li>Z-score actual: <strong>{brechaStats?.zScore.toFixed(2) ?? '—'}σ</strong> ({Math.abs(brechaStats?.zScore ?? 0) > 2 ? 'anómalo' : 'normal'})</li>
-                    <li>Δ 7 días: <strong>{brechaStats && brechaStats.delta7d >= 0 ? '+' : ''}{brechaStats?.delta7d.toFixed(2) ?? '—'}pp</strong></li>
-                    <li>Volatilidad diaria: <strong>{brechaStats?.dailyChangeStd.toFixed(2) ?? '—'}pp/día</strong></li>
+                    <li>Promedio 90 días: <strong>{brechaStats?.avg.toFixed(0) ?? '—'}%</strong></li>
+                    <li>Desviación estándar: <strong>{brechaStats?.std.toFixed(0) ?? '—'}%</strong></li>
+                    <li>Z-score actual: <strong>{brechaStats?.zScore.toFixed(0) ?? '—'}σ</strong> ({Math.abs(brechaStats?.zScore ?? 0) > 2 ? 'anómalo' : 'normal'})</li>
+                    <li>Δ 7 días: <strong>{brechaStats && brechaStats.delta7d >= 0 ? '+' : ''}{brechaStats?.delta7d.toFixed(0) ?? '—'}pp</strong></li>
+                    <li>Volatilidad diaria: <strong>{brechaStats?.dailyChangeStd.toFixed(0) ?? '—'}pp/día</strong></li>
                     <li>Muestras: <strong>{brechaStats?.samples ?? 0}</strong></li>
                   </ul>
                   <p className="mt-3 pt-2 border-t border-border/50 text-xs">
@@ -860,7 +864,7 @@ function DashboardTab({
             <div className="bg-background/60 rounded-lg p-2 border border-border/50 text-center">
               <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Z-score</p>
               <p className={cn('text-sm font-black font-mono', Math.abs(brechaStats.zScore) > 2 ? 'text-warning' : 'text-foreground')}>
-                {brechaStats.zScore.toFixed(2)}σ
+                {brechaStats.zScore.toFixed(0)}σ
               </p>
             </div>
             <div className="bg-background/60 rounded-lg p-2 border border-border/50 text-center">
@@ -958,8 +962,8 @@ function DashboardTab({
                 tasa(t) = m·t + b
               </code>
               <ul className="list-disc pl-4 mt-2 text-xs space-y-0.5">
-                <li>Pendiente (m): <strong>{forecast10d?.slope.toFixed(3) ?? '—'} CUP/día</strong></li>
-                <li>R² (bondad de ajuste): <strong>{forecastR2.toFixed(3)}</strong></li>
+                <li>Pendiente (m): <strong>{forecast10d?.slope.toFixed(0) ?? '—'} CUP/día</strong></li>
+                <li>R² (bondad de ajuste): <strong>{forecastR2.toFixed(2)}</strong></li>
                 <li>Tasa actual: <strong>{informalUsd.toFixed(0)} CUP</strong></li>
                 <li>Proyección +10 días: <strong>{forecastProjection.toFixed(0)} CUP</strong></li>
               </ul>
@@ -1006,7 +1010,7 @@ function DashboardTab({
             <div className="bg-background/60 rounded-lg p-2 border border-border/50">
               <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Z-score</p>
               <p className={cn('text-sm font-black font-mono', Math.abs(brechaStats.zScore) > 2 ? 'text-warning' : 'text-foreground')}>
-                {brechaStats.zScore.toFixed(2)}σ {Math.abs(brechaStats.zScore) > 2 && '⚠'}
+                {brechaStats.zScore.toFixed(0)}σ {Math.abs(brechaStats.zScore) > 2 && '⚠'}
               </p>
             </div>
             <div className="bg-background/60 rounded-lg p-2 border border-border/50">
