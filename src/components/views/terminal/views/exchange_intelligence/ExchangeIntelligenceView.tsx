@@ -120,7 +120,8 @@ export function ExchangeIntelligenceView() {
       const { data, error: err } = await supabase
         .from('exchange_rates')
         .select('*')
-        .order('rate_date', { ascending: true });
+        .order('rate_date', { ascending: true })
+        .order('captured_at', { ascending: true });
 
       if (err) throw err;
       setRates(data || []);
@@ -174,15 +175,29 @@ export function ExchangeIntelligenceView() {
   // FIX-BUG-TASA-HOY: Antes usábamos rates.find() que devuelve el PRIMER match
   // (el más antiguo, porque rates se carga con ascending=true). Ahora filtramos
   // y tomamos el ÚLTIMO match (el más reciente = tasa de hoy).
-  const usdOfficialRates = rates.filter(r => r.source === 'BCC' && r.segment === bccSegment && r.currency === 'USD');
-  const usdInformalRates = rates.filter(r => r.source === 'elToque' && r.currency === 'USD');
-  const usdOfficial = usdOfficialRates[usdOfficialRates.length - 1]?.rate ?? FALLBACK_OFFICIAL.USD;
-  const usdInformal = usdInformalRates[usdInformalRates.length - 1]?.rate ?? FALLBACK_INFORMAL.USD;
+  // FIX-BADGE-REAL: Ordenar por fecha DESC + captured_at DESC antes de tomar
+  // el primero, para garantizar que obtenemos el registro más reciente de hoy
+  // (no el de ayer que podría ser 'estimated').
+  const usdOfficialRates = rates
+    .filter(r => r.source === 'BCC' && r.segment === bccSegment && r.currency === 'USD')
+    .sort((a, b) => {
+      if (a.rate_date !== b.rate_date) return b.rate_date.localeCompare(a.rate_date);
+      return (b.captured_at || '').localeCompare(a.captured_at || '');
+    });
+  const usdInformalRates = rates
+    .filter(r => r.source === 'elToque' && r.currency === 'USD')
+    .sort((a, b) => {
+      if (a.rate_date !== b.rate_date) return b.rate_date.localeCompare(a.rate_date);
+      return (b.captured_at || '').localeCompare(a.captured_at || '');
+    });
+  // El primero del array ordenado DESC es el más reciente (hoy)
+  const usdOfficial = usdOfficialRates[0]?.rate ?? FALLBACK_OFFICIAL.USD;
+  const usdInformal = usdInformalRates[0]?.rate ?? FALLBACK_INFORMAL.USD;
   // F-01c: detecta el método de captura del último registro informal para
   // mostrar badge 'Real' vs 'Estimada' en el Dashboard. Si la columna no
   // existe aún en BD (NULL) o no hay registros, cae a 'estimated' para no
   // mentir al usuario — el fallback siempre es la estimación BCC×1.15.
-  const lastInformalRecord = usdInformalRates[usdInformalRates.length - 1];
+  const lastInformalRecord = usdInformalRates[0];
   const informalCaptureMethod = lastInformalRecord?.capture_method ?? 'estimated';
   const diff = usdInformal - usdOfficial;
   const diffPct = usdOfficial > 0 ? ((diff / usdOfficial) * 100).toFixed(0) : '0';
@@ -1002,9 +1017,17 @@ function DashboardTab({
   const monthWindowDays = last30.length;
 
   // ─── Variación diaria (vs día anterior) para ambas tarjetas ───
-  // elToque: últimos 2 registros informales
-  const informalToday = usdInformalRates[usdInformalRates.length - 1]?.rate;
-  const informalYesterday = usdInformalRates[usdInformalRates.length - 2]?.rate;
+  // FIX-BADGE-REAL: Ordenar DESC por fecha + captured_at para garantizar
+  // que tomamos hoy (no ayer).
+  // elToque: últimos 2 registros informales (hoy = primero, ayer = segundo)
+  const usdInformalRatesLocal = rates
+    .filter((r: ExchangeRate) => r.source === 'elToque' && r.currency === 'USD')
+    .sort((a, b) => {
+      if (a.rate_date !== b.rate_date) return b.rate_date.localeCompare(a.rate_date);
+      return (b.captured_at || '').localeCompare(a.captured_at || '');
+    });
+  const informalToday = usdInformalRatesLocal[0]?.rate;
+  const informalYesterday = usdInformalRatesLocal[1]?.rate;
   const informalDailyChange = (informalToday != null && informalYesterday != null)
     ? informalToday - informalYesterday
     : 0;
@@ -1013,9 +1036,14 @@ function DashboardTab({
     : 0;
 
   // BCC: últimos 2 registros oficiales para el segmento seleccionado
-  const usdOfficialRates = rates.filter((r: ExchangeRate) => r.source === 'BCC' && r.currency === 'USD' && r.segment === bccSegment);
-  const officialToday = usdOfficialRates[usdOfficialRates.length - 1]?.rate;
-  const officialYesterday = usdOfficialRates[usdOfficialRates.length - 2]?.rate;
+  const usdOfficialRatesLocal = rates
+    .filter((r: ExchangeRate) => r.source === 'BCC' && r.currency === 'USD' && r.segment === bccSegment)
+    .sort((a, b) => {
+      if (a.rate_date !== b.rate_date) return b.rate_date.localeCompare(a.rate_date);
+      return (b.captured_at || '').localeCompare(a.captured_at || '');
+    });
+  const officialToday = usdOfficialRatesLocal[0]?.rate;
+  const officialYesterday = usdOfficialRatesLocal[1]?.rate;
   const officialDailyChange = (officialToday != null && officialYesterday != null)
     ? officialToday - officialYesterday
     : 0;
