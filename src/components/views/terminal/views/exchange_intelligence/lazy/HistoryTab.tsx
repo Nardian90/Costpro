@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { cn } from '@/lib/utils';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
@@ -123,7 +123,7 @@ function linearRegression(values: number[]): { slope: number; intercept: number;
   return { slope, intercept, r2 };
 }
 
-function polyRegression2(values: number[]): { a: number; b: number; c: number } | null {
+function polyRegression2(values: number[]): { a: number; b: number; c: number; r2: number } | null {
   if (values.length < 4) return null;
   const n = values.length;
   let S4 = 0, S3 = 0, S2 = 0, S1 = 0, S0 = n;
@@ -138,7 +138,15 @@ function polyRegression2(values: number[]): { a: number; b: number; c: number } 
   const a = (Sx2y * (S2 * S0 - S1 * S1) - Sxy * (S3 * S0 - S1 * S2) + Sy * (S3 * S1 - S2 * S2)) / det;
   const b = (S4 * (Sxy * S0 - Sy * S1) - S3 * (Sx2y * S0 - Sy * S2) + S2 * (Sx2y * S1 - Sxy * S2)) / det;
   const c = (S4 * (S2 * Sy - S1 * Sxy) - S3 * (S3 * Sy - S1 * Sx2y) + S2 * (S3 * Sxy - S2 * Sx2y)) / det;
-  return { a, b, c };
+  // Calcular R²
+  const meanY = Sy / n;
+  const ssTot = values.reduce((s, y) => s + (y - meanY) ** 2, 0);
+  const ssRes = values.reduce((s, y, i) => {
+    const predicted = a * i * i + b * i + c;
+    return s + (y - predicted) ** 2;
+  }, 0);
+  const r2 = ssTot > 0 ? 1 - ssRes / ssTot : 0;
+  return { a, b, c, r2 };
 }
 
 // ─── Componente InfoTooltip local ───
@@ -193,95 +201,11 @@ function HistoryTab({ data }: any) {
   const [trendMethod, setTrendMethod] = useState<TrendMethod>('none');
   const [userChangedTrend, setUserChangedTrend] = useState(false);
 
-  // Calcular R² de cada método para elegir el default y mostrar info de confiabilidad
-  const trendR2Info = useMemo(() => {
-    const informalValues: (number | null)[] = (filtered as any[]).map((d: any) =>
-      d.informal != null ? Number(d.informal) : null,
-    );
-    const validValues: number[] = informalValues.filter((v): v is number => v != null);
-    if (validValues.length < 5) return null;
-
-    // R² de regresión lineal
-    const lin = linearRegression(validValues);
-    const r2Linear = lin?.r2 ?? 0;
-
-    // R² de SMA 7 (1 - SS_res/SS_tot comparando valores reales vs SMA)
-    const sma7Series = sma(informalValues, 7);
-    const sma7Pairs = informalValues
-      .map((v, i) => ({ v, s: sma7Series[i] }))
-      .filter(p => p.v != null && p.s != null) as { v: number; s: number }[];
-    const meanSMA7 = sma7Pairs.reduce((a, b) => a + b.v, 0) / sma7Pairs.length;
-    const ssTotSMA7 = sma7Pairs.reduce((s, p) => s + (p.v - meanSMA7) ** 2, 0);
-    const ssResSMA7 = sma7Pairs.reduce((s, p) => s + (p.v - p.s) ** 2, 0);
-    const r2SMA7 = ssTotSMA7 > 0 ? Math.max(0, 1 - ssResSMA7 / ssTotSMA7) : 0;
-
-    // R² de SMA 30
-    const sma30Series = sma(informalValues, 30);
-    const sma30Pairs = informalValues
-      .map((v, i) => ({ v, s: sma30Series[i] }))
-      .filter(p => p.v != null && p.s != null) as { v: number; s: number }[];
-    const meanSMA30 = sma30Pairs.reduce((a, b) => a + b.v, 0) / sma30Pairs.length;
-    const ssTotSMA30 = sma30Pairs.reduce((s, p) => s + (p.v - meanSMA30) ** 2, 0);
-    const ssResSMA30 = sma30Pairs.reduce((s, p) => s + (p.v - p.s) ** 2, 0);
-    const r2SMA30 = ssTotSMA30 > 0 ? Math.max(0, 1 - ssResSMA30 / ssTotSMA30) : 0;
-
-    // R² de poly2
-    const poly = polyRegression2(validValues);
-    const r2Poly2 = poly?.r2 ?? 0;
-
-    const methods: { id: TrendMethod; r2: number }[] = [
-      { id: 'linear', r2: r2Linear },
-      { id: 'sma7', r2: r2SMA7 },
-      { id: 'sma30', r2: r2SMA30 },
-      { id: 'poly2', r2: r2Poly2 },
-    ];
-    const best = methods.reduce((a, b) => (b.r2 > a.r2 ? b : a));
-
-    return {
-      best: best.id,
-      bestR2: best.r2,
-      r2Linear,
-      r2SMA7,
-      r2SMA30,
-      r2Poly2,
-      current: trendMethod === 'none' ? best.id : trendMethod,
-      currentR2: trendMethod === 'none'
-        ? best.r2
-        : methods.find(m => m.id === trendMethod)?.r2 ?? 0,
-    };
-  }, [filtered, trendMethod]);
-
-  // Elegir el método default automáticamente (solo si el usuario no ha cambiado)
-  useEffect(() => {
-    if (!userChangedTrend && trendR2Info && trendMethod === 'none') {
-      setTrendMethod(trendR2Info.best);
-    }
-  }, [trendR2Info, userChangedTrend, trendMethod]);
-
   // Wrapper para setTrendMethod que marca que el usuario cambió
   const handleTrendMethodChange = useCallback((method: TrendMethod) => {
     setUserChangedTrend(true);
     setTrendMethod(method);
   }, []);
-
-  // Info de confiabilidad del método actual
-  const reliabilityInfo = useMemo(() => {
-    if (!trendR2Info || trendMethod === 'none') return null;
-    const r2 = trendR2Info.currentR2;
-    let level: 'alta' | 'media' | 'baja';
-    let explanation: string;
-    if (r2 >= 0.7) {
-      level = 'alta';
-      explanation = 'El modelo se ajusta muy bien a los datos (R² ≥ 0.70). La tendencia explicada es fuerte y la proyección es confiable. R² mide qué porcentaje de la variación de la tasa se explica por el modelo: 0.70 significa que el 70% del movimiento de la tasa sigue el patrón detectado.';
-    } else if (r2 >= 0.4) {
-      level = 'media';
-      explanation = 'El modelo se ajusta moderadamente (R² entre 0.40 y 0.70). Hay una tendencia visible pero con ruido. Úsalo como referencia pero considera que puede desviarse. R² mide qué porcentaje de la variación se explica: 0.50 significa que la mitad del movimiento sigue el patrón, la otra mitad es ruido.';
-    } else {
-      level = 'baja';
-      explanation = 'El modelo NO se ajusta bien (R² < 0.40). No hay tendencia lineal clara — los datos son muy volátiles o hay un cambio de régimen reciente. NO uses esta proyección para decisiones de precio. R² bajo significa que menos del 40% del movimiento de la tasa sigue el patrón detectado; el resto es ruido aleatorio.';
-    }
-    return { level, explanation, r2 };
-  }, [trendR2Info, trendMethod]);
 
   // ─── Modo de gráfico (área / línea / barras) ───
   const [chartMode, setChartMode] = useState<ChartMode>('area');
@@ -306,6 +230,85 @@ function HistoryTab({ data }: any) {
     }
     return data.slice(-preset);
   }, [data, preset, useCustomRange, startDate, endDate]);
+
+  // ─── Calcular R² de cada método para elegir el default y mostrar info de confiabilidad ───
+  const trendR2Info = useMemo(() => {
+    const informalValues: (number | null)[] = (filtered as any[]).map((d: any) =>
+      d.informal != null ? Number(d.informal) : null,
+    );
+    const validValues: number[] = informalValues.filter((v): v is number => v != null);
+    if (validValues.length < 5) return null;
+
+    const lin = linearRegression(validValues);
+    const r2Linear = lin?.r2 ?? 0;
+
+    const sma7Series = sma(informalValues, 7);
+    const sma7Pairs = informalValues
+      .map((v, i) => ({ v, s: sma7Series[i] }))
+      .filter(p => p.v != null && p.s != null) as { v: number; s: number }[];
+    const meanSMA7 = sma7Pairs.length > 0 ? sma7Pairs.reduce((a, b) => a + b.v, 0) / sma7Pairs.length : 0;
+    const ssTotSMA7 = sma7Pairs.reduce((s, p) => s + (p.v - meanSMA7) ** 2, 0);
+    const ssResSMA7 = sma7Pairs.reduce((s, p) => s + (p.v - p.s) ** 2, 0);
+    const r2SMA7 = ssTotSMA7 > 0 ? Math.max(0, 1 - ssResSMA7 / ssTotSMA7) : 0;
+
+    const sma30Series = sma(informalValues, 30);
+    const sma30Pairs = informalValues
+      .map((v, i) => ({ v, s: sma30Series[i] }))
+      .filter(p => p.v != null && p.s != null) as { v: number; s: number }[];
+    const meanSMA30 = sma30Pairs.length > 0 ? sma30Pairs.reduce((a, b) => a + b.v, 0) / sma30Pairs.length : 0;
+    const ssTotSMA30 = sma30Pairs.reduce((s, p) => s + (p.v - meanSMA30) ** 2, 0);
+    const ssResSMA30 = sma30Pairs.reduce((s, p) => s + (p.v - p.s) ** 2, 0);
+    const r2SMA30 = ssTotSMA30 > 0 ? Math.max(0, 1 - ssResSMA30 / ssTotSMA30) : 0;
+
+    const poly = polyRegression2(validValues);
+    const r2Poly2 = poly?.r2 ?? 0;
+
+    const methods: { id: TrendMethod; r2: number }[] = [
+      { id: 'linear', r2: r2Linear },
+      { id: 'sma7', r2: r2SMA7 },
+      { id: 'sma30', r2: r2SMA30 },
+      { id: 'poly2', r2: r2Poly2 },
+    ];
+    const best = methods.reduce((a, b) => (b.r2 > a.r2 ? b : a));
+
+    return {
+      best: best.id,
+      bestR2: best.r2,
+      r2Linear,
+      r2SMA7,
+      r2SMA30,
+      r2Poly2,
+      currentR2: trendMethod === 'none'
+        ? best.r2
+        : methods.find(m => m.id === trendMethod)?.r2 ?? 0,
+    };
+  }, [filtered, trendMethod]);
+
+  // Elegir el método default automáticamente (solo si el usuario no ha cambiado)
+  useEffect(() => {
+    if (!userChangedTrend && trendR2Info && trendMethod === 'none') {
+      setTrendMethod(trendR2Info.best);
+    }
+  }, [trendR2Info, userChangedTrend, trendMethod]);
+
+  // Info de confiabilidad del método actual
+  const reliabilityInfo = useMemo(() => {
+    if (!trendR2Info || trendMethod === 'none') return null;
+    const r2 = trendR2Info.currentR2;
+    let level: 'alta' | 'media' | 'baja';
+    let explanation: string;
+    if (r2 >= 0.7) {
+      level = 'alta';
+      explanation = 'El modelo se ajusta muy bien a los datos (R² ≥ 0.70). La tendencia explicada es fuerte y la proyección es confiable. R² mide qué porcentaje de la variación de la tasa se explica por el modelo: 0.70 significa que el 70% del movimiento de la tasa sigue el patrón detectado.';
+    } else if (r2 >= 0.4) {
+      level = 'media';
+      explanation = 'El modelo se ajusta moderadamente (R² entre 0.40 y 0.70). Hay una tendencia visible pero con ruido. Úsalo como referencia pero considera que puede desviarse. R² mide qué porcentaje de la variación se explica: 0.50 significa que la mitad del movimiento sigue el patrón, la otra mitad es ruido.';
+    } else {
+      level = 'baja';
+      explanation = 'El modelo NO se ajusta bien (R² < 0.40). No hay tendencia lineal clara — los datos son muy volátiles o hay un cambio de régimen reciente. NO uses esta proyección para decisiones de precio. R² bajo significa que menos del 40% del movimiento de la tasa sigue el patrón detectado; el resto es ruido aleatorio.';
+    }
+    return { level, explanation, r2 };
+  }, [trendR2Info, trendMethod]);
 
   // ─── Regresión lineal sobre ambas tasas para proyección ───
   const forecastModel = useMemo(() => {
