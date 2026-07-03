@@ -299,6 +299,53 @@ export function ExchangeIntelligenceView() {
     }
   }, [fetchRates]);
 
+  // ═══ SCRAPING HISTÓRICO (admin only) ═══
+  // Scrapea bolsa-divisas.php que contiene ~380 entradas con JSON embebido
+  // (timestamp + tasas). Hace upsert masivo de todo el histórico.
+  const [scrapingHist, setScrapingHist] = useState(false);
+  const handleScrapeHistorical = useCallback(async () => {
+    setScrapingHist(true);
+    const toastId = toast.loading('Scrapeando histórico desde solucionescuba.com...', {
+      description: 'Puede tardar 30-60s (~380 días × 3 monedas)',
+    });
+
+    try {
+      const { useAuthStore } = await import('@/store');
+      const token = useAuthStore.getState().token;
+      const res = await fetch('/api/exchange-rates/scrape-historical', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({}),
+      });
+
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({}));
+        throw new Error(errBody.error || errBody.message || `HTTP ${res.status}`);
+      }
+
+      const data = await res.json();
+      toast.success(`Histórico cargado: ${data.processed} filas`, {
+        id: toastId,
+        description: `${data.totalEntries} días (${data.firstDate} → ${data.lastDate})`,
+        duration: 10000,
+        icon: <CheckCircle2 className="w-4 h-4" />,
+      });
+
+      await fetchRates();
+    } catch (e: any) {
+      toast.error('No se pudo cargar el histórico', {
+        id: toastId,
+        description: e.message || 'Error desconocido',
+        duration: 10000,
+      });
+    } finally {
+      setScrapingHist(false);
+    }
+  }, [fetchRates]);
+
   // ═══ CARGA MASIVA POR EXCEL (admin only) ═══
   // Descarga plantilla con fechas hábiles (2021-01-01 → hoy) para que el
   // usuario llene bcc/informal manualmente. Luego sube el Excel lleno.
@@ -458,6 +505,18 @@ export function ExchangeIntelligenceView() {
             >
               <Upload className={cn('w-4 h-4', uploading && 'animate-pulse')} />
               <span>{uploading ? 'Subiendo...' : 'Cargar Excel'}</span>
+            </button>
+          )}
+          {isAdmin && (
+            <button
+              onClick={handleScrapeHistorical}
+              disabled={scrapingHist || loading}
+              className="flex items-center gap-2 px-4 py-2.5 min-h-[44px] rounded-xl bg-purple-600 text-white hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-bold text-sm shadow-md"
+              aria-label="Cargar histórico completo desde solucionescuba.com"
+              title="Scrapea ~380 días de histórico desde bolsa-divisas.php (admin only)"
+            >
+              <Database className={cn('w-4 h-4', scrapingHist && 'animate-pulse')} />
+              <span>{scrapingHist ? 'Cargando...' : 'Cargar histórico'}</span>
             </button>
           )}
         </div>

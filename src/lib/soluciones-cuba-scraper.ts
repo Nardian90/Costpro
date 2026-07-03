@@ -47,6 +47,9 @@ export interface CubaRates {
 /** URL canónica del sitio. */
 const SOLUCIONES_CUBA_URL = 'https://solucionescuba.com';
 
+/** URL de la página de histórico (bolsa-divisas.php) con JSON embebido. */
+const SOLUCIONES_CUBA_HISTORICAL_URL = 'https://solucionescuba.com/bolsa-divisas.php';
+
 /** Timeout del fetch en ms (3s más que BCC/elToque para tolerar HTML grande). */
 const SOLUCIONES_CUBA_TIMEOUT_MS = 15_000;
 
@@ -241,5 +244,127 @@ export async function fetchSolucionesCubaRates(): Promise<CubaRates | null> {
     const msg = error instanceof Error ? error.message : String(error);
     console.warn(`[soluciones-cuba-scraper] fetch falló: ${msg}`);
     return null;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// HISTÓRICO — bolsa-divisas.php
+// ═══════════════════════════════════════════════════════════════════════
+
+/**
+ * Entrada histórica: timestamp Unix + tasas de cada moneda.
+ * Solo se usan USD, EUR, MLC. Las demás (BTC, TRX, USDT_TRC20, ECU, BNB) se ignoran.
+ */
+export interface HistoricalRateEntry {
+  /** Timestamp Unix (segundos). */
+  ts: number;
+  /** Fecha ISO (YYYY-MM-DD) derivada del timestamp. */
+  date: string;
+  usd: number;
+  eur: number;
+  mlc: number;
+}
+
+/**
+ * Parsea el HTML de bolsa-divisas.php extrayendo el histórico embebido como JSON.
+ *
+ * La página contiene bloques como:
+ *   {"ts":1766714346,"rates":{"USD":435,"BTC":463,"MLC":410,"ECU":480,"TRX":130,"USDT_TRC20":485,"EUR":480}}
+ *
+ * Esta función extrae todos esos bloques y devuelve una lista ordenada por timestamp ascendente.
+ *
+ * Reglas:
+ *   - Solo se incluyen entradas con USD presente y > 0.
+ *   - Si hay múltiples entradas para la misma fecha (YYYY-MM-DD), se conserva
+ *     solo la ÚLTIMA del día (la más reciente) — el BCC publica 1 tasa/día.
+ *   - EUR y MLC pueden ser 0 si no están en el bloque (se reportan como 0).
+ */
+export function parseHistoricalHtml(html: string): HistoricalRateEntry[] {
+  if (!html) return [];
+
+  // Patrón: "ts":NNNNNNNNNN,"rates":{...}
+  const pattern = /"ts":(\d+),"rates":\{([^}]+)\}/g;
+  const rawEntries: { ts: number; rates: Record<string, number> }[] = [];
+
+  let match: RegExpExecArray | null;
+  while ((match = pattern.exec(html)) !== null) {
+    const ts = parseInt(match[1], 10);
+    if (!Number.isFinite(ts) || ts <= 0) continue;
+
+    // Parsear el objeto de rates: "USD":435,"BTC":463,...
+    const ratesStr = match[2];
+    const rates: Record<string, number> = {};
+    const ratePattern = /"(\w+)":(\d+(?:\.\d+)?)/g;
+    let rateMatch: RegExpExecArray | null;
+    while ((rateMatch = ratePattern.exec(ratesStr)) !== null) {
+      const currency = rateMatch[1];
+      const value = parseFloat(rateMatch[2]);
+      if (Number.isFinite(value)) {
+        rates[currency] = value;
+      }
+    }
+
+    rawEntries.push({ ts, rates });
+  }
+
+  // Agrupar por fecha (YYYY-MM-DD) y conservar la última entrada del día
+  const byDate = new Map<string, HistoricalRateEntry>();
+  for (const entry of rawEntries) {
+    const date = new Date(entry.ts * 1000).toISOString().split('T')[0];
+    const usd = entry.rates.USD;
+    if (!usd || usd <= 0) continue; // USD obligatoria
+
+    const existing = byDate.get(date);
+    if (!existing || entry.ts > existing.ts) {
+      byDate.set(date, {
+        ts: entry.ts,
+        date,
+        usd,
+        eur: entry.rates.EUR ?? 0,
+        mlc: entry.rates.MLC ?? 0,
+      });
+    }
+  }
+
+  // Ordenar por fecha ascendente
+  return Array.from(byDate.values()).sort((a, b) => a.date.localeCompare(b.date));
+}
+
+/**
+ * Hace fetch a bolsa-divisas.php y extrae el histórico completo.
+ *
+ * Retorna array vacío si:
+ *   - Fetch falla (timeout, 4xx, 5xx)
+ *   - HTML sin bloques JSON extraíbles
+ *
+ * NO lanza excepciones.
+ */
+export async function fetchHistoricalRates(): Promise<HistoricalRateEntry[]> {
+  try {
+    const response = await fetch(SOLUCIONES_CUBA_HISTORICAL_URL, {
+      headers: SOLUCIONES_CUBA_HEADERS,
+      signal: AbortSignal.timeout(SOLUCIONES_CUBA_TIMEOUT_MS),
+      redirect: 'follow',
+    });
+
+    if (!response.ok) {
+      console.warn(
+        `[soluciones-cuba-scraper] Historical HTTP ${response.status} — fetch rechazado`,
+      );
+      return [];
+    }
+
+    const html = await response.text();
+    const entries = parseHistoricalHtml(html);
+
+    console.info(
+      `[soluciones-cuba-scraper] Histórico: ${entries.length} entradas ` +
+        `(${entries[0]?.date ?? '—'} → ${entries[entries.length - 1]?.date ?? '—'})`,
+    );
+    return entries;
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : String(error);
+    console.warn(`[soluciones-cuba-scraper] Historical fetch falló: ${msg}`);
+    return [];
   }
 }
