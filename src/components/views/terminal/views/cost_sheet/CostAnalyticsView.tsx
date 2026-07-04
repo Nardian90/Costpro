@@ -94,6 +94,7 @@ export default function CostAnalyticsView() {
   const [loading, setLoading] = useState(true);
   const [templateConfig, setTemplateConfig] = useState<AnalyticsViewConfig | null>(null);
   const [activeTemplate, setActiveTemplate] = useState<string | null>(null);
+  const [resetKey, setResetKey] = useState(0);
 
   // ── Field definitions ──
   const fields: AnalyticsField[] = useMemo(() => [
@@ -150,6 +151,19 @@ export default function CostAnalyticsView() {
     setTemplateConfig({ ...template.config, rows: [...template.config.rows], values: [...template.config.values] });
     setActiveTemplate(templateId);
     toast.success(`Plantilla cargada: ${template.name}`);
+  }, []);
+
+  // FIX-LIMPIAR: usar un timestamp para forzar el useEffect cuando se limpia
+  // (si templateConfig ya era null, setTemplateConfig(null) no dispara re-render)
+  const handleClearTemplate = useCallback(() => {
+    setActiveTemplate(null);
+    // Usar un objeto vacío único con timestamp para forzar el cambio de referencia
+    // El DynamicAnalyticsCenter interpreta initialConfig === null como reset,
+    // pero necesitamos que la referencia cambie. Usamos un objeto vacío con
+    // una prop interna que el DynamicAnalyticsCenter puede detectar.
+    // En realidad, pasamos null y usamos un resetKey para forzar el useEffect.
+    setTemplateConfig(null);
+    setResetKey(k => k + 1);
   }, []);
 
   // ── Save view ──
@@ -230,7 +244,7 @@ export default function CostAnalyticsView() {
         })}
         {activeTemplate && (
           <button
-            onClick={() => { setActiveTemplate(null); setTemplateConfig(null); }}
+            onClick={handleClearTemplate}
             className="px-2 py-1.5 rounded-lg text-[10px] font-bold text-muted-foreground hover:text-destructive hover:bg-destructive/5 border border-transparent transition-colors"
             title="Quitar plantilla"
           >
@@ -241,6 +255,7 @@ export default function CostAnalyticsView() {
 
       <div className="flex-1 min-h-0">
         <DynamicAnalyticsCenter
+          key={resetKey}
           dataSet={dataSet}
           module="costs"
           storeId={storeId}

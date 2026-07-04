@@ -243,11 +243,35 @@ export function DynamicAnalyticsCenter({
     sortConfig: [],
   });
 
-  // FIX-PROFESSIONAL: cuando initialConfig cambia (cargar plantilla), actualizar config
+  // FIX-PROFESSIONAL: cuando initialConfig cambia (cargar plantilla o limpiar), actualizar config
+  // Usar un ref para distinguir el primer render (no resetear) de cambios posteriores
+  const isFirstRender = useRef(true);
   useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
     if (initialConfig) {
       setConfig(initialConfig);
       onConfigChange?.(initialConfig);
+    } else if (initialConfig === null) {
+      // FIX-LIMPIAR-PLANTILLA: cuando initialConfig es null, resetear a config vacío
+      setConfig({
+        rows: [],
+        columns: [],
+        values: [],
+        filters: [],
+        columnWidths: {},
+        hiddenColumns: [],
+        sortConfig: [],
+      });
+      setSortState({});
+      setExpandedGroups(new Set());
+      setFilterValues({});
+      setShowHeatMap(false);
+      setShowChart(false);
+      setColumnOrder([]);
+      setTableColumnWidths({});
     }
   }, [initialConfig]);
   const [activeDragId, setActiveDragId] = useState<string | null>(null);

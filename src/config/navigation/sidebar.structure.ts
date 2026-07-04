@@ -131,13 +131,9 @@ export const SIDEBAR_STRUCTURE: NavModule[] = [
           // "Generación" eliminado. Al hacer clic abre una vista con 2 tabs
           // internos: "Generación Rápida" y "Generación Experta".
           { id: 'gen-easy', label: 'Generar fácil', type: 'item', icon: Zap, ariaLabel: 'Generación rápida y experta de fichas de costo' },
-          // FIX-TABLERO-PRINCIPAL (2026-07-04): "Tablero Principal" ahora es una
-          // vista DEDICADA al Centro de Análisis Dinámico (pivot table), NO la
-          // ficha de costo. La ficha de costo tiene su propio item abajo.
-          { id: 'cost-sheets', label: 'Tablero Principal', type: 'item', icon: Table2, ariaLabel: 'Centro de análisis dinámico de costos', description: 'Tabla dinámica tipo Power BI para analizar costos, márgenes y rentabilidad con drag & drop.' },
-          // Ficha de Costo: vista dedicada a editar/ver una ficha de costo
-          // individual con tabs (Plantillas / Datos Generales / Estructura / Anexos).
-          // Antes era lo que se abría al clicar "Tablero Principal".
+          // FIX-MULTI-TIENDA (2026-07-04): "Tablero Principal" (Centro de Análisis)
+          // se movió a MULTI-TIENDA → Analítica. Aquí en COSTOS solo queda
+          // la Ficha de Costo y las vistas de trabajo de costo.
           { id: 'cost-sheet-editor', label: 'Ficha de Costo', type: 'item', icon: FileText, ariaLabel: 'Editor de ficha de costo individual', description: 'Edita una ficha de costo: plantillas, datos generales, estructura y anexos.' },
           { id: 'view-assisted', label: 'Modo Asistido', type: 'item', icon: Sparkles },
           { id: 'view-reading', label: 'Informe', type: 'item', icon: ClipboardList },
@@ -199,6 +195,11 @@ export const SIDEBAR_STRUCTURE: NavModule[] = [
         description: 'Indicadores de desempeño y generación de reportes profesionales de operación.',
         allowedRoles: ['admin', 'manager', 'encargado'],
         children: [
+          // FIX-MULTI-TIENDA (2026-07-04): "Tablero Principal" (Centro de Análisis
+          // Dinámico) ahora vive en MULTI-TIENDA → Analítica, no en COSTOS.
+          // Es una herramienta de análisis de productos que pertenece a la
+          // operación multi-tienda, no al módulo de costo.
+          { id: 'cost-analytics', label: 'Tablero Principal', type: 'item', icon: Table2, ariaLabel: 'Centro de análisis dinámico', description: 'Tabla dinámica tipo Power BI para analizar costos, márgenes y rentabilidad con drag & drop, plantillas y gráficos integrados.', allowedRoles: ['admin', 'manager', 'encargado'] },
           { id: 'dashboard', label: 'Dashboard KPI', type: 'item', icon: TrendingUp, ariaLabel: 'Indicadores clave de desempeño', description: 'Indicadores clave de desempeño en tiempo real: ventas, stock, recepciones, rentabilidad.', allowedRoles: ['admin', 'manager', 'encargado'] },
           { id: 'exchange-intelligence', label: 'Inteligencia Cambiaria', type: 'item', icon: DollarSign, ariaLabel: 'Inteligencia cambiaria y devaluación monetaria', description: 'Centro de inteligencia económica: tasas oficiales vs informales, impacto en precios, alertas estratégicas y simulador de escenarios.', allowedRoles: ['admin', 'manager', 'encargado'] },
           { id: 'reports', label: 'Generador de Reportes', type: 'item', icon: BarChart4, ariaLabel: 'Diseñar y generar reportes profesionales', description: 'Diseña y genera reportes profesionales en PDF/Excel con filtros y agrupaciones personalizadas.', allowedRoles: ['admin', 'manager'] }
@@ -262,7 +263,8 @@ export const SIDEBAR_STRUCTURE: NavModule[] = [
         children: [
           { id: 'estructura-costo', label: 'Estructura de Costo', type: 'item', icon: Calculator, ariaLabel: 'Ver estructura de costo', description: 'Visualiza la composición del costo de cada producto: base, transportación, manipulación, comisiones, servicios, variación cambiaria.' },
           { id: 'costeo-dinamico', label: 'Costeo Dinámico', type: 'item', icon: DollarSign, ariaLabel: 'Ver costeo dinámico', description: 'Calcula el costo real de reposición del inventario absorbiendo servicios, comisiones e impacto cambiario.' },
-          { id: 'cost-analytics', label: 'Centro de Análisis', type: 'item', icon: BarChart3, isBeta: true, ariaLabel: 'Centro de Análisis Dinámico de Costos', description: 'Tabla dinámica tipo Power BI para analizar costos, márgenes y rentabilidad con drag & drop, agrupaciones y exportación.' },
+          // FIX-MULTI-TIENDA: 'cost-analytics' (Tablero Principal) se movió a
+          // MULTI-TIENDA → Analítica. Ya no está aquí en Costo.
         ]
       },
       // Redes Sociales — grupo unificado de WhatsApp y Telegram.
