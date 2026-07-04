@@ -7,6 +7,10 @@ import {
   useDraggable, useDroppable,
 } from '@dnd-kit/core';
 import {
+  useSortable, SortableContext, arrayMove,
+  sortableKeyboardCoordinates,
+} from '@dnd-kit/sortable';
+import {
   useVirtualizer,
 } from '@tanstack/react-virtual';
 import {
@@ -50,6 +54,27 @@ interface DropZoneProps {
 function DropZone({ id, label, items, onRemove, onAggregationChange, onDateGroupingChange, onReorder, accentColor, icon: Icon }: DropZoneProps) {
   const { setNodeRef, isOver } = useDroppable({ id });
 
+  // FIX-PROFESSIONAL: IDs para SortableContext (uno por item)
+  const sortableIds = items.map((item, idx) => `${id}__${idx}__${item.fieldKey}`);
+
+  const handleSortEnd = (event: { active: { id: string | number }; over: { id: string | number } | null }) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    // Extraer índices de los IDs
+    const activeIdStr = String(active.id);
+    const overIdStr = String(over.id);
+    const activeParts = activeIdStr.split('__');
+    const overParts = overIdStr.split('__');
+    if (activeParts.length >= 2 && overParts.length >= 2) {
+      const fromIndex = parseInt(activeParts[1], 10);
+      const toIndex = parseInt(overParts[1], 10);
+      if (!isNaN(fromIndex) && !isNaN(toIndex) && onReorder) {
+        onReorder(fromIndex, toIndex);
+      }
+    }
+  };
+
   return (
     <div
       ref={setNodeRef}
@@ -67,28 +92,30 @@ function DropZone({ id, label, items, onRemove, onAggregationChange, onDateGroup
         <span className={cn('text-[10px] font-black uppercase tracking-widest', accentColor)}>{label}</span>
         {items.length > 0 && <Badge variant="secondary" className="h-4 text-[9px] ml-auto">{items.length}</Badge>}
       </div>
-      <div className="flex flex-wrap gap-1.5">
-        {items.map((item, idx) => (
-          <DropZoneItem
-            key={`${item.fieldKey}-${idx}`}
-            zoneId={id}
-            item={item}
-            index={idx}
-            onRemove={onRemove}
-            onAggregationChange={onAggregationChange}
-            onDateGroupingChange={onDateGroupingChange}
-            onReorder={onReorder}
-          />
-        ))}
-        {items.length === 0 && (
-          <span className="text-[10px] text-muted-foreground/50 italic">Arrastrar aquí…</span>
-        )}
-      </div>
+      <SortableContext items={sortableIds}>
+        <div className="flex flex-wrap gap-1.5">
+          {items.map((item, idx) => (
+            <DropZoneItem
+              key={`${item.fieldKey}-${idx}`}
+              zoneId={id}
+              item={item}
+              index={idx}
+              onRemove={onRemove}
+              onAggregationChange={onAggregationChange}
+              onDateGroupingChange={onDateGroupingChange}
+              onReorder={onReorder}
+            />
+          ))}
+          {items.length === 0 && (
+            <span className="text-[10px] text-muted-foreground/50 italic">Arrastrar aquí…</span>
+          )}
+        </div>
+      </SortableContext>
     </div>
   );
 }
 
-// ── Drop zone item (draggable for reordering) ────────────────────
+// ── Drop zone item (sortable for reordering within zone) ─────────
 
 function DropZoneItem({
   zoneId,
@@ -107,21 +134,27 @@ function DropZoneItem({
   onDateGroupingChange?: (index: number, grouping: DateGrouping) => void;
   onReorder?: (fromIndex: number, toIndex: number) => void;
 }) {
-  // ID único: zoneId + index + fieldKey para drag de reordenamiento
-  const dragId = `${zoneId}__${index}__${item.fieldKey}`;
-  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
-    id: dragId,
+  // FIX-PROFESSIONAL: useSortable para reordenamiento real dentro de zona
+  const sortableId = `${zoneId}__${index}__${item.fieldKey}`;
+  const { attributes, listeners, setNodeRef, isDragging, transform, transition } = useSortable({
+    id: sortableId,
     data: { zoneId, index, fieldKey: item.fieldKey },
   });
+
+  const style: React.CSSProperties = {
+    transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
+    transition,
+  };
 
   return (
     <div
       ref={setNodeRef}
+      style={style}
       {...attributes}
       {...listeners}
       className={cn(
         'group flex items-center gap-1 px-2 py-1 rounded-md bg-card border border-border text-xs font-medium shadow-sm cursor-grab touch-none',
-        isDragging && 'opacity-50'
+        isDragging && 'opacity-50 z-10 shadow-lg'
       )}
     >
       <GripVertical className="w-2.5 h-2.5 text-muted-foreground/40 shrink-0" />
@@ -313,29 +346,46 @@ export function DynamicAnalyticsCenter({
     const overId = e.over.id as string;
     const activeId = e.active.id as string;
 
-    // FIX-PROFESSIONAL: detectar si es reordenamiento dentro de zona
-    // Los items de DropZone tienen IDs con formato: zoneId__index__fieldKey
-    if (activeId.includes('__')) {
-      const [sourceZoneId, sourceIndexStr, fieldKey] = activeId.split('__');
-      const sourceIndex = parseInt(sourceIndexStr, 10);
-
-      // Si el destino es la misma zona → reordenar
-      if (overId === sourceZoneId) {
-        // Reordenamiento: el over es la zona misma, necesitamos calcular
-        // el índice destino basado en la posición. Por simplicidad, movemos
-        // al final de la zona. En una implementación más sofisticada,
-        // usaríamos useSortable de dnd-kit.
-        // Por ahora, no hacemos nada especial si es la misma zona — el item
-        // ya está ahí. El reordenamiento real requeriría useSortable.
+    // FIX-PROFESSIONAL: reordenamiento dentro de la misma zona
+    // Si ambos IDs tienen '__', son items sortable → reordenar
+    if (activeId.includes('__') && overId.includes('__')) {
+      const [activeZone, activeIdxStr, activeFieldKey] = activeId.split('__');
+      const [overZone, overIdxStr] = overId.split('__');
+      if (activeZone === overZone) {
+        const fromIdx = parseInt(activeIdxStr, 10);
+        const toIdx = parseInt(overIdxStr, 10);
+        if (!isNaN(fromIdx) && !isNaN(toIdx) && fromIdx !== toIdx) {
+          const zone = activeZone as 'rows' | 'columns' | 'values' | 'filters';
+          setConfig(prev => ({
+            ...prev,
+            [zone]: arrayMove(prev[zone] as any, fromIdx, toIdx),
+          }));
+        }
         return;
       }
     }
 
-    // Si el destino es una zona (rows/columns/values/filters), mover el campo
+    // Si el activeId tiene '__' (es item de zona) pero el overId no (es zona destino)
+    // → mover entre zonas
+    if (activeId.includes('__') && !overId.includes('__')) {
+      const [sourceZoneId, , fieldKey] = activeId.split('__');
+      const targetZoneId = overId as 'rows' | 'columns' | 'values' | 'filters';
+      if (sourceZoneId === targetZoneId) return; // misma zona, no hacer nada
+
+      // Remover de zona origen
+      setConfig(prev => {
+        const item = (prev as any)[sourceZoneId].find((i: AnalyticsZoneItem) => i.fieldKey === fieldKey);
+        if (!item) return prev;
+        const sourceArray = (prev as any)[sourceZoneId].filter((i: AnalyticsZoneItem) => i.fieldKey !== fieldKey);
+        const targetArray = [...(prev as any)[targetZoneId], item];
+        return { ...prev, [sourceZoneId]: sourceArray, [targetZoneId]: targetArray };
+      });
+      return;
+    }
+
+    // Si el activeId no tiene '__' (es campo disponible) → añadir a zona
     const zoneId = overId as 'rows' | 'columns' | 'values' | 'filters';
-    const fieldKey = activeId.includes('__')
-      ? activeId.split('__')[2]
-      : activeId;
+    const fieldKey = activeId;
     const field = fields.find(f => f.key === fieldKey);
     if (!field) return;
 
@@ -1093,6 +1143,7 @@ export function DynamicAnalyticsCenter({
                 id="rows" label="Filas" items={config.rows}
                 onRemove={(i) => removeFromZone('rows', i)}
                 onDateGroupingChange={(i, g) => updateDateGrouping('rows', i, g)}
+                onReorder={(from, to) => setConfig(prev => ({ ...prev, rows: arrayMove(prev.rows, from, to) }))}
                 accentColor="text-blue-600 dark:text-blue-400"
                 icon={ChevronRight}
               />
@@ -1100,6 +1151,7 @@ export function DynamicAnalyticsCenter({
                 id="columns" label="Columnas" items={config.columns}
                 onRemove={(i) => removeFromZone('columns', i)}
                 onDateGroupingChange={(i, g) => updateDateGrouping('columns', i, g)}
+                onReorder={(from, to) => setConfig(prev => ({ ...prev, columns: arrayMove(prev.columns, from, to) }))}
                 accentColor="text-purple-600 dark:text-purple-400"
                 icon={ChevronDown}
               />
@@ -1107,12 +1159,14 @@ export function DynamicAnalyticsCenter({
                 id="values" label="Valores" items={config.values}
                 onRemove={(i) => removeFromZone('values', i)}
                 onAggregationChange={updateAggregation}
+                onReorder={(from, to) => setConfig(prev => ({ ...prev, values: arrayMove(prev.values, from, to) }))}
                 accentColor="text-emerald-600 dark:text-emerald-400"
                 icon={BarChart3}
               />
               <DropZone
                 id="filters" label="Filtros" items={config.filters as unknown as AnalyticsZoneItem[]}
                 onRemove={(i) => removeFromZone('filters', i)}
+                onReorder={(from, to) => setConfig(prev => ({ ...prev, filters: arrayMove(prev.filters as any, from, to) }))}
                 accentColor="text-amber-600 dark:text-amber-400"
                 icon={Settings2}
               />
