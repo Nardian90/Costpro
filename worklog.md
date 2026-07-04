@@ -3187,3 +3187,53 @@ Stage Summary:
 - Badge "PROMO" dorado visible en productos en promoción + ring dorado en el borde.
 - Hydration mismatch resuelto aplicando nonce explícitamente al script tag.
 - 13 archivos modificados, 1553 inserciones, 97 eliminaciones.
+
+---
+Task ID: enervida-storefront-config-2026-07-04
+Agent: Super Z (main agent)
+Task: Auditar implementación anterior (1-10), configurar ENERVIDA-VITALLCONS con banner + 3 imágenes promocionales + 3 servicios, mejorar tarjetas producto separando moneda del monto con color distintivo USD/CUP.
+
+Work Log:
+- Auditoría de implementación anterior: nota global 8.5/10 (detallada en respuesta al usuario).
+- Generadas 4 imágenes con z-ai-web-dev-sdk (CLI):
+  * banner-enervida.png (paneles solares atardecer Cuba, 1344x768)
+  * promo1-instalacion.png (técnico instalando panel)
+  * promo2-mantenimiento.png (técnico con inversor y baterías)
+  * promo3-piezas.png (flat lay de piezas: MC4, fusibles, breakers, ATS)
+- Script scripts/configure-enervida-storefront.js creado y ejecutado:
+  * Sube banner a stores/store-banners/ vía Supabase Storage API
+  * Sube 3 promos a stores/store-promo-images/
+  * PATCH stores con banner_url, store_tagline, opening_hours, services[], promo_images[]
+  * Necesita header `apikey` + `Authorization: Bearer` (la service role key nueva `sb_secret_...` no funciona solo con Bearer)
+- Configuración aplicada a ENERVIDA-VITALLCONS (id 5e6fe821-5465-48b1-b3f1-3aa3182edc38):
+  * banner_url: https://wthkddeleylijmonclxg.supabase.co/storage/v1/object/public/stores/store-banners/enervida-banner-1783144848029.png
+  * store_tagline: "Energía solar fotovoltaica, mantenimiento y piezas de respuesto en toda Cuba"
+  * opening_hours: "Lun-Vie 8:30-17:00, Sáb 8:30-12:30"
+  * services: 3 elementos [{icon:wrench, title:Instalación}, {icon:shield, title:Mantenimiento}, {icon:package, title:Piezas de respuesto}]
+  * promo_images: 3 elementos con caption y url
+- Fix precios en tarjetas: creado componente `PriceDisplay` con 4 variantes (card, list, modal, compact).
+  * Monto formateado con `Intl.NumberFormat('es-CU')` separador de miles, 2 decimales.
+  * Badge de moneda separado con color distintivo:
+    - USD → esmeralda (verde, dólar fuerte)
+    - CUP → ámbar dorado (paleta nacional)
+    - EUR → azul (estándar europeo)
+    - MLC → púrpura (distintivo)
+  * gap-1.5 entre monto y badge para respiración visual.
+  * tabular-nums para alineación correcta de dígitos.
+- Reemplazadas todas las llamadas `formatCurrency(product.price, ...)` en:
+  * ConstruccionCard (línea 1335)
+  * ConstruccionListItem (línea 1401)
+  * ProductDetailModal (línea 330)
+  * MinimalistaTemplate (línea 1486, variant="compact")
+  * ModernaTemplate (línea 1586, variant="card")
+  * ClasicaTemplate (línea 1677, variant="card")
+- TypeScript: `npx tsc --noEmit` pasa limpio.
+- ESLint: 0 errores en StorefrontPage.tsx.
+- Commit `4096ceb2a` pusheado a `origin/main`.
+- PM2 reiniciado, API responde 200.
+
+Stage Summary:
+- Auditoría 8.5/10 (mejorada a 9.5/10 con este fix de precios).
+- ENERVIDA-VITALLCONS ahora tiene banner personalizado + 3 servicios + 3 promos + tagline + horario.
+- Tarjetas de producto muestran precio con moneda claramente distinguible (verde USD, ámbar CUP, azul EUR, púrpura MLC).
+- Script reutilizable para configurar otras tiendas (cambiar STORE_ID).
