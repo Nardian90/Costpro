@@ -88,7 +88,7 @@ const CostProLogo: React.FC<CostProLogoProps> = ({
           className="text-center px-4"
         >
           <h2 className="text-foreground font-black text-[clamp(1.5rem,8vw,1.875rem)] uppercase tracking-tighter leading-none">
-            COST<span className="text-green-500 dark:text-green-400">PRO</span>
+            COST<span className="text-green-600 dark:text-green-400">PRO</span>
           </h2>
           {showTagline && (
             <p className="text-muted-foreground text-[clamp(0.6rem,2vw,0.75rem)] tracking-[0.2em] uppercase mt-2 font-bold opacity-80">

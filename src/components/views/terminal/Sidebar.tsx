@@ -484,17 +484,17 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
                 type="button"
                 onClick={() => setCurrentView('sales-hub')}
                 className="text-foreground font-black text-lg uppercase tracking-tighter leading-none hover:opacity-80 active:scale-95 transition-all outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded px-1 -mx-1"
-                aria-label="Ir al hub de Venta"
+                aria-label="CostPro — Volver al inicio"
                 title="Volver a Venta"
               >
-                COST<span className="text-green-500 dark:text-green-400">PRO</span>
+                COST<span className="text-green-600 dark:text-green-400">PRO</span>
               </button>
             ) : (
               <button
                 type="button"
                 onClick={() => setCurrentView('sales-hub')}
                 className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-black text-xs hover:opacity-80 active:scale-95 transition-all outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
-                aria-label="Ir al hub de Venta"
+                aria-label="CostPro — Volver al inicio"
                 title="Volver a Venta"
               >
                 CP
@@ -535,9 +535,7 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
 
         <nav
           id="sidebar-nav"
-          role="menubar"
           aria-label="Navegación del menú principal"
-          aria-orientation="vertical"
           className="flex-1 overflow-y-auto pt-0 px-3 pb-4 sm:pb-4 no-scrollbar overscroll-contain scroll-smooth"
         >
           <AnimatePresence mode="wait">
@@ -649,7 +647,7 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
                   <p className="text-[11px] font-bold truncate text-sidebar-foreground leading-tight">
                     {user?.fullName || user?.email || 'Usuario'}
                   </p>
-                  <span className="inline-block mt-1 bg-primary/10 text-primary text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wider">
+                  <span className="inline-block mt-1 bg-primary/15 text-primary text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wider">
                     {user?.role || 'costo'}
                   </span>
                 </div>

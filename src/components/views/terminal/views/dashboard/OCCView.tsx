@@ -155,10 +155,10 @@ export default function OCCView() {
         <button type="button"
           onClick={() => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }))}
           className="w-full flex items-center px-6 py-4 bg-card border border-border/50 rounded-2xl text-left hover:border-primary/30 hover:bg-muted/50 transition-all active:scale-[0.99]"
-          aria-label="Abrir búsqueda rápida"
+          aria-label="Buscar o ejecutar acción"
         >
           <Search className="w-5 h-5 text-muted-foreground mr-4" />
-          <span className="flex-1 text-base font-medium text-muted-foreground/70">Buscar o ejecutar acción...</span>
+          <span className="flex-1 text-base font-medium text-muted-foreground/90">Buscar o ejecutar acción...</span>
           <kbd className="hidden sm:flex px-3 py-1.5 bg-muted rounded-xl text-sm font-semibold border border-border/50 items-center gap-2 text-muted-foreground uppercase tracking-wider">
             <Command className="w-3.5 h-3.5" /> K
           </kbd>
