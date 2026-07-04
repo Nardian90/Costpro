@@ -349,15 +349,28 @@ export default function EditProductModal({
             <label htmlFor="edit-product-precio-empresa" className="text-xs font-black uppercase tracking-widest ml-1">
               Precio Empresa <span className="font-normal normal-case tracking-normal text-muted-foreground">(venta mayorista)</span>
             </label>
-            <input
-              id="edit-product-precio-empresa"
-              type="number"
-              aria-label="Precio de venta empresa/mayorista"
-              value={editForm.precio_empresa || ''}
-              onChange={(e) => onFormChange({ ...editForm, precio_empresa: parseFloat(e.target.value) || 0 })}
-              className="neu-input w-full font-bold"
-              placeholder="0.00"
-            />
+            <div className="flex gap-2">
+              <input
+                id="edit-product-precio-empresa"
+                type="number"
+                aria-label="Precio de venta empresa/mayorista"
+                value={editForm.precio_empresa || ''}
+                onChange={(e) => onFormChange({ ...editForm, precio_empresa: parseFloat(e.target.value) || 0 })}
+                className="neu-input flex-1 font-bold"
+                placeholder="0.00"
+              />
+              <select
+                value={editForm.price_currency || 'CUP'}
+                onChange={(e) => onFormChange({ ...editForm, price_currency: e.target.value })}
+                className="neu-input w-20 font-bold"
+                aria-label="Moneda del precio empresa"
+              >
+                <option value="CUP">CUP</option>
+                <option value="USD">USD</option>
+                <option value="EUR">EUR</option>
+                <option value="MLC">MLC</option>
+              </select>
+            </div>
           </div>
         </div>
 

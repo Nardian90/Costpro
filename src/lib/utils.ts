@@ -44,10 +44,12 @@ export const resolveProductImage = (product: Product | null | undefined): string
 /**
  * Utility to format currency in Spanish (Cuba).
  */
-export const formatCurrency = (amount: number): string => {
+export const formatCurrency = (amount: number, currency: string = 'CUP'): string => {
+  // FIX: Aceptar currency como parámetro para mostrar la moneda correcta
+  const validCurrency = ['CUP', 'USD', 'EUR', 'MLC'].includes(currency) ? currency : 'CUP';
   return new Intl.NumberFormat('es-CU', {
     style: 'currency',
-    currency: 'CUP',
+    currency: validCurrency,
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(amount);

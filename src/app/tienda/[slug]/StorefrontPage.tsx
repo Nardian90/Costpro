@@ -182,7 +182,7 @@ function ProductDetailModal({
   const imageUrl = imageUrlRaw ? getProductImageUrl(imageUrlRaw) : null;
   const inStock = product.inStock;
   const productText = encodeURIComponent(
-    `${t('whatsappInquiryMessage', { name: product.name })}${product.sku ? t('whatsappInquirySku', { sku: product.sku }) : ''}${product.price != null ? t('whatsappInquiryPrice', { price: formatCurrency(product.price) }) : ''}`
+    `${t('whatsappInquiryMessage', { name: product.name })}${product.sku ? t('whatsappInquirySku', { sku: product.sku }) : ''}${product.price != null ? t('whatsappInquiryPrice', { price: formatCurrency(product.price, (product as any).price_currency || "CUP") }) : ''}`
   );
   const whatsappUrl = storePhone
     ? `https://wa.me/${storePhone.replace(/[^0-9]/g, '')}?text=${productText}`
@@ -244,7 +244,7 @@ function ProductDetailModal({
               <p className="text-[9px] font-black uppercase tracking-widest text-stone-400">{t('retailPrice')}</p>
               {product.price != null ? (
                 <>
-                  <p className="text-2xl font-black text-stone-900">{formatCurrency(product.price)}</p>
+                  <p className="text-2xl font-black text-stone-900">{formatCurrency(product.price, (product as any).price_currency || "CUP")}</p>
                   <span className="text-xs text-stone-400">{product.unit_of_measure || t('unit')}</span>
                 </>
               ) : (
@@ -908,7 +908,7 @@ function ConstruccionCard({ product, image, onClick }: { product: StorefrontProd
           <div>
             <p className="text-[8px] font-black uppercase tracking-[0.15em] text-stone-400 mb-0.5">{t('price')}</p>
             {product.price != null ? (
-              <p className="text-lg sm:text-xl font-black text-stone-900 tracking-tight">{formatCurrency(product.price)}</p>
+              <p className="text-lg sm:text-xl font-black text-stone-900 tracking-tight">{formatCurrency(product.price, (product as any).price_currency || "CUP")}</p>
             ) : (
               <p className="text-lg sm:text-xl font-black text-stone-400 italic">{t('priceOnRequest', { defaultValue: 'Consultar' })}</p>
             )}
@@ -961,7 +961,7 @@ function ConstruccionListItem({ product, image, onClick }: { product: Storefront
           </div>
           <div className="text-right shrink-0">
             {product.price != null ? (
-              <p className="text-lg sm:text-xl font-black text-stone-900 tracking-tight">{formatCurrency(product.price)}</p>
+              <p className="text-lg sm:text-xl font-black text-stone-900 tracking-tight">{formatCurrency(product.price, (product as any).price_currency || "CUP")}</p>
             ) : (
               <p className="text-lg sm:text-xl font-black text-stone-400 italic">{t('priceOnRequest', { defaultValue: 'Consultar' })}</p>
             )}
@@ -1044,7 +1044,7 @@ function MinimalistaTemplate({ store, products }: StorefrontPageProps) {
                 </div>
                 <p className="text-[10px] font-medium uppercase tracking-widest text-stone-400">{p.category || ''}</p>
                 <h3 className="text-sm font-medium mt-0.5 truncate">{p.name}</h3>
-                <p className="text-sm text-stone-600 mt-1">{p.price != null ? formatCurrency(p.price) : "Consultar"} <span className="text-stone-300">/ {p.unit_of_measure || t('unit')}</span></p>
+                <p className="text-sm text-stone-600 mt-1">{p.price != null ? formatCurrency(p.price, (p as any).price_currency || "CUP") : "Consultar"} <span className="text-stone-300">/ {p.unit_of_measure || t('unit')}</span></p>
               </div>
             ))}
           </div>
@@ -1137,7 +1137,7 @@ function ModernaTemplate({ store, products }: StorefrontPageProps) {
                     {p.description && <p className="text-xs text-stone-400 line-clamp-2">{p.description}</p>}
                     <div className="flex-1" />
                     <div className="flex items-center justify-between pt-3 border-t border-stone-100">
-                      <p className="text-lg font-bold bg-gradient-to-r from-violet-600 to-indigo-600 bg-clip-text text-transparent">{p.price != null ? formatCurrency(p.price) : "Consultar"}</p>
+                      <p className="text-lg font-bold bg-gradient-to-r from-violet-600 to-indigo-600 bg-clip-text text-transparent">{p.price != null ? formatCurrency(p.price, (p as any).price_currency || "CUP") : "Consultar"}</p>
                       <span className="text-[10px] text-stone-400 font-medium">{p.unit_of_measure || t('unit')}</span>
                     </div>
                   </div>
@@ -1225,7 +1225,7 @@ function ClasicaTemplate({ store, products }: StorefrontPageProps) {
                     {p.description && <p className="text-xs text-stone-500 line-clamp-2 mt-1">{p.description}</p>}
                     <div className="flex-1" />
                     <div className="flex items-center justify-between mt-2">
-                      <p className="text-lg font-bold text-amber-800">{p.price != null ? formatCurrency(p.price) : "Consultar"}</p>
+                      <p className="text-lg font-bold text-amber-800">{p.price != null ? formatCurrency(p.price, (p as any).price_currency || "CUP") : "Consultar"}</p>
                       <span className="text-[10px] text-stone-400">{p.unit_of_measure || t('unit')}</span>
                     </div>
                   </div>

@@ -177,11 +177,21 @@ export default function InventoryView() {
     // En móvil forzamos siempre 'card' (UX). En desktop respetamos el valor
     // persistido en localStorage (no sobreescribimos) para que la preferencia
     // del usuario sobreviva entre sesiones.
+    // FIX: Solo forzar card si isMobile CAMBIA a true (no en cada render).
+    const prevIsMobileRef = useRef(isMobile);
     useEffect(() => {
-        if (!isMobile) return;
-        requestAnimationFrame(() => {
-            setLayoutMode('card');
-        });
+        if (!isMobile) {
+            prevIsMobileRef.current = false;
+            return;
+        }
+        // Solo forzar card si es la primera vez que detecta mobile
+        // (no si el usuario ya eligió table en desktop y luego cambia a mobile)
+        if (!prevIsMobileRef.current) {
+            requestAnimationFrame(() => {
+                setLayoutMode('card');
+            });
+        }
+        prevIsMobileRef.current = true;
     }, [isMobile]);
 
     const {
