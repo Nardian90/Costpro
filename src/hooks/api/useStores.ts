@@ -64,16 +64,16 @@ function normalizeCostTemplate(raw: Record<string, unknown>): StoreCostTemplate 
   return result;
 }
 
-export function useStores(userId: string, isAdmin: boolean, isEncargado: boolean) {
+export function useStores(userId: string, isAdmin: boolean, isEncargado: boolean, statusFilter?: 'active' | 'inactive' | 'all') {
   return useQuery({
-    queryKey: ['stores', userId, isAdmin, isEncargado],
+    queryKey: ['stores', userId, isAdmin, isEncargado, statusFilter ?? 'active'],
     staleTime: 5 * 60 * 1000,
     queryFn: async () => {
       if (!isAdmin && (!userId || userId.length < MIN_USER_ID_LENGTH)) return [];
 
       try {
           // Fetch stores through the API route (role-based filtering done server-side)
-          const storesData = await storeApiClient.fetchStores();
+          const storesData = await storeApiClient.fetchStores(statusFilter);
 
           // FIX-RES-4: Log warnings for stores that fail Zod validation instead of silently dropping
           const validatedStores: Store[] = [];

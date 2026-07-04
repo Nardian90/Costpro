@@ -41,18 +41,20 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
     const storeColumns = 'id, name, address, logo_url, reeup, nit, bank_account, signature_url, stamp_url, latitude, longitude, phone, email, is_active, slug, plantilla, created_at, store_cost_templates(id, store_id, template_id, modalidad, pdf_format, is_active)';
 
     let stores;
+    // FIX: Allow fetching inactive stores via ?status=all or ?status=inactive
+    const { searchParams } = new URL(req.url);
+    const statusFilter = searchParams.get('status') || 'active';
+
     if (session.user.role === 'admin') {
-      // Admin sees all active, non-archived stores
-      // FIX-AUDIT-3: Filter is_archived=false — without this, archived stores with
-      // is_active=true (e.g. archived via /api/stores/[id]/archive which sets both
-      // is_active=false AND is_archived=true, but legacy data may only have is_active)
-      // would still appear in the dashboard.
-      const { data, error } = await admin
-        .from('stores')
-        .select(storeColumns)
-        .eq('is_active', true)
-        .eq('is_archived', false)
-        .order('name');
+      // Admin can see all stores (with optional status filter)
+      let query = admin.from('stores').select(storeColumns);
+      if (statusFilter === 'active') {
+        query = query.eq('is_active', true).eq('is_archived', false);
+      } else if (statusFilter === 'inactive') {
+        query = query.eq('is_active', false);
+      }
+      // 'all' = no filter
+      const { data, error } = await query.order('name');
       if (error) return NextResponse.json(createApiError('STORE_FETCH_FAILED', error.message), { status: 500 });
       stores = data;
     } else {

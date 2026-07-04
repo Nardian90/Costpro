@@ -39,10 +39,14 @@ export function useStoresView() {
     // Data Fetching
     const isEncargado = user?.role === 'encargado' || user?.role === 'manager' || user?.memberships?.some(m => m.role === 'encargado');
 
+    // FIX: Filtro de estado de tiendas (activas/inactivas/todas)
+    const [statusFilter, setStatusFilter] = useState<'active' | 'inactive' | 'all'>('active');
+
     const { data: storesData = [], isLoading: isLoadingStores } = useStores(
         user?.id || '',
         user?.role === 'admin',
-        isEncargado || false
+        isEncargado || false,
+        user?.role === 'admin' ? statusFilter : undefined // solo admin puede ver inactivas
     );
 
     const filteredStores = useMemo(() => {
@@ -254,6 +258,8 @@ export function useStoresView() {
         storeFormMode,
         selectedStore,
         isSubmitting,
+        statusFilter,
+        setStatusFilter,
 
         // Data
         stores: filteredStores,

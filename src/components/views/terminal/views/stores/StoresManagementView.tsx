@@ -64,6 +64,8 @@ export default function StoresManagementView() {
   const {
     searchTerm,
     setSearchTerm,
+    statusFilter,
+    setStatusFilter,
     stores,
     activeStoreId,
     isAdmin,
@@ -219,7 +221,37 @@ export default function StoresManagementView() {
           />
         </div>
 
-        <SearchBar value={searchTerm} onChange={setSearchTerm} placeholder={t('filterByLocation')} aria-label={t('search')} />
+        <div className="flex items-center gap-2 flex-wrap">
+          <SearchBar value={searchTerm} onChange={setSearchTerm} placeholder={t('filterByLocation')} aria-label={t('search')} />
+
+          {/* Filtro de estado: Activas / Inactivas / Todas (solo admin) */}
+          {isAdmin && (
+            <div className="flex items-center gap-1 p-1 rounded-xl bg-muted/50 border border-border">
+              {([
+                { id: 'active' as const, label: 'Activas' },
+                { id: 'inactive' as const, label: 'Inactivas' },
+                { id: 'all' as const, label: 'Todas' },
+              ]).map(f => (
+                <button
+                  key={f.id}
+                  onClick={() => setStatusFilter(f.id)}
+                  className={cn(
+                    'px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all min-h-[32px]',
+                    statusFilter === f.id
+                      ? f.id === 'active'
+                        ? 'bg-success text-white shadow-md'
+                        : f.id === 'inactive'
+                          ? 'bg-destructive text-white shadow-md'
+                          : 'bg-primary text-primary-foreground shadow-md'
+                      : 'text-muted-foreground hover:text-foreground',
+                  )}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
 
         {/* B3 + FIX-AUDIT-7: VirtualizedStoreGrid activado para >20 tiendas.
             StoreCard extraído a componente independiente para que el virtualizer

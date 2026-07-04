@@ -31,9 +31,11 @@ function timeoutController(ms: number = REQUEST_TIMEOUT_MS): AbortController {
 }
 
 export const storeApiClient = {
-  async fetchStores(): Promise<Store[]> {
+  async fetchStores(status?: 'active' | 'inactive' | 'all'): Promise<Store[]> {
     const controller = timeoutController();
-    const res = await fetch(API_BASE, {
+    const url = new URL(API_BASE);
+    if (status) url.searchParams.set('status', status);
+    const res = await fetch(url.toString(), {
       method: 'GET',
       headers: authHeaders(),
       signal: controller.signal,
