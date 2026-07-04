@@ -72,6 +72,9 @@ const WhatsAppConversationsView = dynamic(() => import('@/components/views/termi
 const WhatsAppInvitationsView = dynamic(() => import('@/components/views/terminal/views/whatsapp/WhatsAppInvitationsView'), { ssr: false });
 const WhatsAppDashboardView = dynamic(() => import('@/components/views/terminal/views/whatsapp/WhatsAppDashboardView'), { ssr: false });
 const WhatsAppGroupView = dynamic(() => import('@/components/views/terminal/views/whatsapp/WhatsAppGroupView'), { ssr: false });
+// FIX-SOCIAL-HUB (2026-07-04): Hub unificado con tabs internos
+const WhatsAppHubView = dynamic(() => import('@/components/views/terminal/views/whatsapp/WhatsAppHubView'), { ssr: false });
+const TelegramHubView = dynamic(() => import('@/components/views/terminal/views/whatsapp/TelegramHubView'), { ssr: false });
 // Fase T5: Telegram Bot — serverless-native, Vercel-compatible
 const TelegramConfigView = dynamic(() => import('@/components/views/terminal/views/telegram/TelegramConfigView'), { ssr: false });
 const TelegramConversationsView = dynamic(() => import('@/components/views/terminal/views/telegram/TelegramConversationsView'), { ssr: false });
@@ -361,6 +364,9 @@ export default function TerminalShell() {
         case 'whatsapp-invitations': return <ViewErrorBoundary viewName="WhatsApp Invitaciones"><WhatsAppInvitationsView /></ViewErrorBoundary>;
         case 'whatsapp-dashboard': return <ViewErrorBoundary viewName="WhatsApp Dashboard"><WhatsAppDashboardView /></ViewErrorBoundary>;
         case 'whatsapp-group': return <ViewErrorBoundary viewName="WhatsApp Grupo"><WhatsAppGroupView /></ViewErrorBoundary>;
+        // FIX-SOCIAL-HUB (2026-07-04): hubs unificados con tabs internos
+        case 'whatsapp-hub': return <ViewErrorBoundary viewName="WhatsApp"><WhatsAppHubView /></ViewErrorBoundary>;
+        case 'telegram-hub': return <ViewErrorBoundary viewName="Telegram"><TelegramHubView /></ViewErrorBoundary>;
         // Fase T5: Telegram Bot
         case 'telegram-config': return <ViewErrorBoundary viewName="Telegram Config"><TelegramConfigView /></ViewErrorBoundary>;
         case 'telegram-conversations': return <ViewErrorBoundary viewName="Telegram Conversaciones"><TelegramConversationsView /></ViewErrorBoundary>;
