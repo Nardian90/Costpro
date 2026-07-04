@@ -1474,10 +1474,12 @@ function ConstruccionTemplate({ store, products }: StorefrontPageProps) {
             onLoad={() => setBannerLoaded(true)}
             loading="eager"
           />
-          {/* Dark gradient overlay for text readability */}
-          <div className="absolute inset-0 bg-gradient-to-t from-stone-900/95 via-stone-900/60 to-stone-900/30" />
+          {/* Dark gradient overlay for text readability — FIX-MOBILE-LEGIBILITY:
+              overlay más oscuro en mobile para garantizar contraste WCAG AA
+              entre el texto y cualquier imagen de fondo */}
+          <div className="absolute inset-0 bg-gradient-to-t from-stone-950/98 via-stone-950/85 to-stone-950/50" />
           {/* Warm amber glow at bottom */}
-          <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-amber-600/20 to-transparent" />
+          <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-amber-600/25 to-transparent" />
 
           {/* Store info overlaid on banner */}
           <div className="absolute inset-0 flex items-end">
