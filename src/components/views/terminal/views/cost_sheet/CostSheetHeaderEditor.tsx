@@ -197,7 +197,17 @@ const CostSheetHeaderEditor: React.FC<CostSheetHeaderEditorProps> = ({
     setFetchingRate(true);
     try {
       const res = await fetch('/api/exchange-rates?currency=USD&source=BCC&segment=3&days=1');
-      if (!res.ok) throw new Error('API error');
+      if (!res.ok) {
+        // FIX-TASA-ERROR (2026-07-04): manejar 401 (sesión expirada) y otros
+        // errores HTTP con mensajes claros en vez del genérico "API error".
+        if (res.status === 401) {
+          throw new Error('Sesión expirada. Recarga la página para volver a iniciar sesión.');
+        }
+        if (res.status === 500) {
+          throw new Error('Error del servidor al consultar tasas.');
+        }
+        throw new Error(`Error HTTP ${res.status}`);
+      }
       const data = await res.json();
       // FIX-F03: la API devuelve { rates: [...] } no un array directo.
       if (data?.rates && data.rates.length > 0) {
@@ -211,7 +221,12 @@ const CostSheetHeaderEditor: React.FC<CostSheetHeaderEditorProps> = ({
         toast.warning('No hay tasas disponibles. Ejecute "Actualizar BD" en Inteligencia Cambiaria.');
       }
     } catch (e: any) {
-      toast.error('Error al obtener tasa: ' + e.message);
+      // No mostrar toast si es error de red (fetch falló) — puede ser ruido
+      if (e.message.includes('Failed to fetch') || e.message.includes('NetworkError')) {
+        console.warn('[fetchLatestRate] Error de red:', e.message);
+      } else {
+        toast.error('Error al obtener tasa: ' + e.message);
+      }
     } finally {
       setFetchingRate(false);
     }

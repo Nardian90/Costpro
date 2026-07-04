@@ -135,13 +135,21 @@ export const useUIStore = create<UIState>()(
     }),
     {
       name: 'costpro-ui-storage',
-      version: 2,
+      version: 3,
       migrate: (persistedState: any, version: number) => {
         if (version < 2) {
-          return {
+          persistedState = {
             ...persistedState,
             sidebarState: persistedState.sidebarOpen ? 'expanded' : 'closed',
           };
+        }
+        // FIX-TABLERO-PRINCIPAL (2026-07-04): migrar activeCostSection de 'main'
+        // a 'cost-analytics' para que el Tablero Principal abra el Centro de
+        // Análisis en vez de la ficha de costo.
+        if (version < 3) {
+          if (persistedState?.activeCostSection === 'main') {
+            persistedState.activeCostSection = 'cost-analytics';
+          }
         }
         return persistedState;
       },
