@@ -142,8 +142,8 @@ function CheckCell({ type, value }: { type: 'yes' | 'no' | 'partial' | 'text'; v
   if (type === 'yes') {
     return (
       <div className="flex items-center justify-center" title={value}>
-        <div className="w-6 h-6 rounded-md bg-emerald-500/15 flex items-center justify-center">
-          <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400" strokeWidth={3} />
+        <div className="w-7 h-7 sm:w-6 sm:h-6 rounded-lg bg-emerald-500/15 flex items-center justify-center">
+          <Check className="w-5 h-5 sm:w-4 sm:h-4 text-emerald-600 dark:text-emerald-400" strokeWidth={3} />
         </div>
       </div>
     );
@@ -154,8 +154,8 @@ function CheckCell({ type, value }: { type: 'yes' | 'no' | 'partial' | 'text'; v
     return (
       <div className="flex items-center justify-center" title={value}>
         <div className="flex flex-col items-center gap-0.5">
-          <div className="w-6 h-6 rounded-md bg-amber-500/15 flex items-center justify-center">
-            <Check className="w-4 h-4 text-amber-600 dark:text-amber-400" strokeWidth={3} />
+          <div className="w-7 h-7 sm:w-6 sm:h-6 rounded-lg bg-amber-500/15 flex items-center justify-center">
+            <Check className="w-5 h-5 sm:w-4 sm:h-4 text-amber-600 dark:text-amber-400" strokeWidth={3} />
           </div>
           {condition && (
             <span className="text-[9px] font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wider leading-none text-center max-w-[80px]">
@@ -169,8 +169,8 @@ function CheckCell({ type, value }: { type: 'yes' | 'no' | 'partial' | 'text'; v
   if (type === 'no') {
     return (
       <div className="flex items-center justify-center" title={value}>
-        <div className="w-6 h-6 rounded-md bg-muted/30 flex items-center justify-center">
-          <Minus className="w-4 h-4 text-muted-foreground/50" strokeWidth={2.5} />
+        <div className="w-7 h-7 sm:w-6 sm:h-6 rounded-lg bg-muted/30 flex items-center justify-center">
+          <Minus className="w-5 h-5 sm:w-4 sm:h-4 text-muted-foreground/50" strokeWidth={2.5} />
         </div>
       </div>
     );
@@ -183,22 +183,22 @@ function CheckCell({ type, value }: { type: 'yes' | 'no' | 'partial' | 'text'; v
 function PermissionsTableMobile({ headers, rows }: { headers: string[]; rows: React.ReactNode[][] }) {
   const roles = headers.slice(1); // primera columna es "Permiso"
   return (
-    <div className="sm:hidden space-y-3">
+    <div className="sm:hidden space-y-4">
       {rows.map((row, rowIdx) => {
         const label = extractText(row[0]);
         return (
-          <div key={rowIdx} className="rounded-xl border border-border/50 bg-card/50 overflow-hidden">
+          <div key={rowIdx} className="rounded-xl border border-border/50 bg-card/50 overflow-hidden shadow-sm">
             {/* Header de la card: nombre del permiso */}
-            <div className="px-4 py-3 bg-muted/30 border-b border-border/40">
+            <div className="px-4 py-3.5 bg-muted/30 border-b border-border/40">
               <p className="text-sm font-black text-foreground leading-tight">{label}</p>
             </div>
-            {/* Grid de roles con sus checks */}
+            {/* Grid de roles con sus checks — gap-px con bg-border para líneas separadoras */}
             <div className="grid grid-cols-2 gap-px bg-border/30">
               {roles.map((role, colIdx) => {
                 const cellValue = extractText(row[colIdx + 1] ?? '');
                 const parsed = parseCheckCell(cellValue);
                 return (
-                  <div key={colIdx} className="bg-card px-3 py-2.5 flex items-center justify-between gap-2">
+                  <div key={colIdx} className="bg-card px-3 py-3 flex items-center justify-between gap-2 min-h-[52px]">
                     <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground truncate">
                       {role}
                     </span>
