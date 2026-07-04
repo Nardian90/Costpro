@@ -922,17 +922,17 @@ export default function HelpSectionRenderer({ content, glossary }: HelpSectionRe
                   "my-6 sm:my-8 rounded-xl border-l-4 shadow-sm overflow-hidden",
                   callout.color
                 )} {...props}>
-                  {/* Header con icono + label del tipo */}
-                  <div className="flex items-center gap-2.5 px-4 sm:px-6 pt-3.5 pb-1">
-                    <div className={cn("shrink-0 w-8 h-8 rounded-lg flex items-center justify-center", iconBg)}>
-                      <IconComp className={cn("w-4 h-4", iconColor)} />
+                  {/* Header con icono grande + label del tipo — bien visible */}
+                  <div className="flex items-center gap-3 px-4 sm:px-6 pt-4 pb-2">
+                    <div className={cn("shrink-0 w-10 h-10 rounded-xl flex items-center justify-center", iconBg)}>
+                      <IconComp className={cn("w-5 h-5", iconColor)} strokeWidth={2.5} />
                     </div>
-                    <span className={cn("text-[10px] font-black uppercase tracking-widest", iconColor)}>
+                    <span className={cn("text-xs font-black uppercase tracking-widest", iconColor)}>
                       {callout.label}
                     </span>
                   </div>
                   {/* Contenido */}
-                  <div className="px-4 sm:px-6 pb-4 pt-2 text-[14px] sm:text-[14px] font-medium leading-[1.7] text-foreground/85 hyphens-auto">
+                  <div className="px-4 sm:px-6 pb-4 pt-1 text-[14px] sm:text-[14px] font-medium leading-[1.7] text-foreground/85 hyphens-auto">
                     {(() => {
                       const childArray = React.Children.toArray(children);
                       return childArray.map((child, idx) => {
