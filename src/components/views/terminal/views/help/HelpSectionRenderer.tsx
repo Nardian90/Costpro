@@ -183,13 +183,13 @@ function CheckCell({ type, value }: { type: 'yes' | 'no' | 'partial' | 'text'; v
 function PermissionsTableMobile({ headers, rows }: { headers: string[]; rows: React.ReactNode[][] }) {
   const roles = headers.slice(1); // primera columna es "Permiso"
   return (
-    <div className="sm:hidden space-y-4">
+    <div className="sm:hidden space-y-5">
       {rows.map((row, rowIdx) => {
         const label = extractText(row[0]);
         return (
           <div key={rowIdx} className="rounded-xl border border-border/50 bg-card/50 overflow-hidden shadow-sm">
             {/* Header de la card: nombre del permiso */}
-            <div className="px-4 py-3.5 bg-muted/30 border-b border-border/40">
+            <div className="px-4 py-4 bg-muted/30 border-b border-border/40">
               <p className="text-sm font-black text-foreground leading-tight">{label}</p>
             </div>
             {/* Grid de roles con sus checks — gap-px con bg-border para líneas separadoras */}
@@ -198,7 +198,7 @@ function PermissionsTableMobile({ headers, rows }: { headers: string[]; rows: Re
                 const cellValue = extractText(row[colIdx + 1] ?? '');
                 const parsed = parseCheckCell(cellValue);
                 return (
-                  <div key={colIdx} className="bg-card px-3 py-3 flex items-center justify-between gap-2 min-h-[52px]">
+                  <div key={colIdx} className="bg-card px-3.5 py-3.5 flex items-center justify-between gap-2 min-h-[56px]">
                     <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground truncate">
                       {role}
                     </span>
@@ -919,7 +919,7 @@ export default function HelpSectionRenderer({ content, glossary }: HelpSectionRe
               const iconColor = iconColorMap[callout.type] || 'text-foreground';
               return (
                 <div className={cn(
-                  "my-6 sm:my-8 rounded-xl border-l-4 shadow-sm overflow-hidden",
+                  "my-8 sm:my-10 rounded-xl border-l-4 shadow-sm overflow-hidden",
                   callout.color
                 )} {...props}>
                   {/* Header con icono grande + label del tipo — bien visible */}
@@ -932,7 +932,7 @@ export default function HelpSectionRenderer({ content, glossary }: HelpSectionRe
                     </span>
                   </div>
                   {/* Contenido */}
-                  <div className="px-4 sm:px-6 pb-4 pt-1 text-[14px] sm:text-[14px] font-medium leading-[1.7] text-foreground/85 hyphens-auto">
+                  <div className="px-4 sm:px-6 pb-5 pt-1 text-[14px] sm:text-[14px] font-medium leading-[1.7] text-foreground/85 hyphens-auto">
                     {(() => {
                       const childArray = React.Children.toArray(children);
                       return childArray.map((child, idx) => {
