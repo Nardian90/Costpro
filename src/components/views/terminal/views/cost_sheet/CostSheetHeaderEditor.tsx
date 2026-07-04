@@ -8,6 +8,7 @@ import { ChevronRight, RefreshCw, Loader2 } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
+import { apiFetch } from '@/lib/api-fetch';
 
 import { useTranslations } from 'next-intl';
 // ── Types ───────────────────────────────────────────────────────────
@@ -196,19 +197,10 @@ const CostSheetHeaderEditor: React.FC<CostSheetHeaderEditorProps> = ({
   const fetchLatestRate = useCallback(async () => {
     setFetchingRate(true);
     try {
-      const res = await fetch('/api/exchange-rates?currency=USD&source=BCC&segment=3&days=1');
-      if (!res.ok) {
-        // FIX-TASA-ERROR (2026-07-04): manejar 401 (sesión expirada) y otros
-        // errores HTTP con mensajes claros en vez del genérico "API error".
-        if (res.status === 401) {
-          throw new Error('Sesión expirada. Recarga la página para volver a iniciar sesión.');
-        }
-        if (res.status === 500) {
-          throw new Error('Error del servidor al consultar tasas.');
-        }
-        throw new Error(`Error HTTP ${res.status}`);
-      }
-      const data = await res.json();
+      // FIX-TASA-AUTH (2026-07-04): usar apiFetch en vez de fetch nativo
+      // para que envíe el token JWT en el header Authorization.
+      // Antes usaba fetch() sin token → 401 "No autorizado".
+      const data = await apiFetch<any>('/api/exchange-rates?currency=USD&source=BCC&segment=3&days=1');
       // FIX-F03: la API devuelve { rates: [...] } no un array directo.
       if (data?.rates && data.rates.length > 0) {
         const latest = data.rates[0];
@@ -232,12 +224,11 @@ const CostSheetHeaderEditor: React.FC<CostSheetHeaderEditorProps> = ({
     }
   }, [updateValue]);
 
-  // Auto-fetch on mount if exchangeRate is empty
-  useEffect(() => {
-    if (!header.exchangeRate && !fetchingRate) {
-      fetchLatestRate();
-    }
-  }, []);
+  // FIX-TASA-MANUAL (2026-07-04): NO auto-fetch al montar.
+  // El usuario solicitó que la tasa solo se cargue cuando él haga clic en
+  // el icono de actualizar, no automáticamente. Evita errores 401 no
+  // solicitados y da control al usuario.
+  // (useEffect de auto-fetch eliminado intencionalmente)
 
   const toggleGroup = (groupTitle: string) => {
     setCollapsedGroups((prev) => ({ ...prev, [groupTitle]: !prev[groupTitle] }));
