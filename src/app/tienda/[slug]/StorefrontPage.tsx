@@ -1491,41 +1491,64 @@ function ConstruccionTemplate({ store, products }: StorefrontPageProps) {
                   </div>
                   <span className="text-[9px] font-bold uppercase tracking-widest text-amber-300/90">{t('officialCatalog')}</span>
                 </div>
-                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black uppercase tracking-tighter leading-[0.95] text-white drop-shadow-lg">
+                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black uppercase tracking-tighter leading-[0.95] text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
                   {store.name}
                 </h1>
                 {store.store_tagline && (
-                  <p className="mt-2 text-sm sm:text-base font-medium text-amber-200/90 drop-shadow line-clamp-2">
+                  <p className="mt-2 text-sm sm:text-base font-bold text-amber-300 drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] line-clamp-2">
                     {store.store_tagline}
                   </p>
                 )}
-                <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs sm:text-sm text-stone-300 font-medium">
-                  {store.address && <span className="flex items-center gap-1.5"><MapPin className="w-3 h-3 text-amber-400/80" />{store.address}</span>}
-                  {store.phone && <span className="flex items-center gap-1.5"><Phone className="w-3 h-3 text-amber-400/80" />{store.phone}</span>}
-                  {store.email && <span className="flex items-center gap-1.5"><Mail className="w-3 h-3 text-amber-400/80" />{store.email}</span>}
-                  {store.opening_hours && <span className="flex items-center gap-1.5"><Clock className="w-3 h-3 text-amber-400/80" />{store.opening_hours}</span>}
+                {/* FIX-MOBILE-LEGIBILITY (2026-07-04): en mobile ocultamos address/email
+                    para reducir densidad; solo mostramos phone + horario que son los
+                    críticos. En desktop se muestran todos. */}
+                <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs sm:text-sm text-white font-bold drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">
+                  {store.address && (
+                    <span className="hidden sm:flex items-center gap-1.5">
+                      <MapPin className="w-3 h-3 text-amber-400" />
+                      {store.address}
+                    </span>
+                  )}
+                  {store.phone && (
+                    <span className="flex items-center gap-1.5">
+                      <Phone className="w-3.5 h-3.5 text-amber-400" />
+                      {store.phone}
+                    </span>
+                  )}
+                  {store.email && (
+                    <span className="hidden sm:flex items-center gap-1.5">
+                      <Mail className="w-3 h-3 text-amber-400" />
+                      {store.email}
+                    </span>
+                  )}
+                  {store.opening_hours && (
+                    <span className="flex items-center gap-1.5 bg-stone-900/60 backdrop-blur-sm px-2 py-1 rounded-md border border-amber-500/20">
+                      <Clock className="w-3.5 h-3.5 text-amber-400" />
+                      {store.opening_hours}
+                    </span>
+                  )}
                 </div>
                 {/* FIX-BANNER-CTA (2026-07-04): CTA editable superpuesto al banner.
-                    Si banner_cta_link está set, es un <a> externo. Si no, es un
-                    botón que hace scroll a la sección de productos (#productos). */}
+                    Tamaño más grande en mobile (min-h-[48px]) para touch target cómodo.
+                    Si banner_cta_link está set, es un <a> externo. Si no, scroll a #productos. */}
                 {store.banner_cta_text && (
                   store.banner_cta_link ? (
                     <a
                       href={store.banner_cta_link}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="mt-4 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-900 text-xs font-black uppercase tracking-widest shadow-lg shadow-amber-500/30 transition-all hover:scale-105 active:scale-95"
+                      className="mt-5 inline-flex items-center gap-2 px-6 py-3 sm:px-5 sm:py-2.5 min-h-[48px] rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-900 text-sm sm:text-xs font-black uppercase tracking-widest shadow-xl shadow-amber-500/40 transition-all hover:scale-105 active:scale-95"
                     >
                       {store.banner_cta_text}
-                      <ChevronRight className="w-3.5 h-3.5" />
+                      <ChevronRight className="w-4 h-4" />
                     </a>
                   ) : (
                     <a
                       href="#productos"
-                      className="mt-4 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-900 text-xs font-black uppercase tracking-widest shadow-lg shadow-amber-500/30 transition-all hover:scale-105 active:scale-95"
+                      className="mt-5 inline-flex items-center gap-2 px-6 py-3 sm:px-5 sm:py-2.5 min-h-[48px] rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-900 text-sm sm:text-xs font-black uppercase tracking-widest shadow-xl shadow-amber-500/40 transition-all hover:scale-105 active:scale-95"
                     >
                       {store.banner_cta_text}
-                      <ChevronRight className="w-3.5 h-3.5" />
+                      <ChevronRight className="w-4 h-4" />
                     </a>
                   )
                 )}
@@ -1534,26 +1557,28 @@ function ConstruccionTemplate({ store, products }: StorefrontPageProps) {
           </div>
         </div>
 
-        {/* Stats bar with glass effect */}
-        <div className="bg-stone-900/90 backdrop-blur-md border-t border-amber-500/20">
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
+        {/* Stats bar with glass effect — FIX-MOBILE-LEGIBILITY: textos más grandes
+            y jerarquía clara para mobile */}
+        <div className="bg-stone-900/95 backdrop-blur-md border-t border-amber-500/20">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 sm:py-3 flex items-center justify-between gap-4">
             <div className="flex items-center gap-4 sm:gap-8">
-              <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-lg bg-amber-500/20 flex items-center justify-center">
-                  <Package className="w-3.5 h-3.5 text-amber-400" />
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 sm:w-8 sm:h-8 rounded-lg bg-amber-500/20 flex items-center justify-center">
+                  <Package className="w-4 h-4 sm:w-4 sm:h-4 text-amber-400" />
                 </div>
                 <div>
-                  <p className="text-base sm:text-lg font-black text-white leading-none">{filter.totalProducts}</p>
-                  <p className="text-[8px] font-bold uppercase tracking-widest text-stone-400">{t('productsLabel', { count: filter.totalProducts })}</p>
+                  <p className="text-lg sm:text-xl font-black text-white leading-none">{filter.totalProducts}</p>
+                  <p className="text-[9px] sm:text-[8px] font-bold uppercase tracking-widest text-stone-400 mt-0.5">{t('productsLabel', { count: filter.totalProducts })}</p>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-lg bg-emerald-500/20 flex items-center justify-center">
-                  <Zap className="w-3.5 h-3.5 text-emerald-400" />
+              <div className="w-px h-8 bg-stone-700/60" />
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 sm:w-8 sm:h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center">
+                  <Zap className="w-4 h-4 sm:w-4 sm:h-4 text-emerald-400" />
                 </div>
                 <div>
-                  <p className="text-base sm:text-lg font-black text-white leading-none">{filter.totalWithStock}</p>
-                  <p className="text-[8px] font-bold uppercase tracking-widest text-stone-400">{t('availableLabel', { count: filter.totalWithStock })}</p>
+                  <p className="text-lg sm:text-xl font-black text-white leading-none">{filter.totalWithStock}</p>
+                  <p className="text-[9px] sm:text-[8px] font-bold uppercase tracking-widest text-stone-400 mt-0.5">{t('availableLabel', { count: filter.totalWithStock })}</p>
                 </div>
               </div>
             </div>
