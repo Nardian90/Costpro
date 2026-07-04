@@ -91,6 +91,10 @@ export interface AnalyticsProps {
   onDeleteView?: (viewId: string) => Promise<void>;
   /** ClassName adicional */
   className?: string;
+  /** Configuración inicial controlada (para plantillas) */
+  initialConfig?: AnalyticsViewConfig | null;
+  /** Callback cuando la configuración cambia (para que el parent sepa) */
+  onConfigChange?: (config: AnalyticsViewConfig) => void;
 }
 
 // ── Helpers de agregación ──

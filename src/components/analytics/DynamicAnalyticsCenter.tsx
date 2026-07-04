@@ -229,9 +229,11 @@ export function DynamicAnalyticsCenter({
   onLoadViews,
   onDeleteView,
   className,
+  initialConfig,
+  onConfigChange,
 }: AnalyticsProps) {
   const { fields, data } = dataSet;
-  const [config, setConfig] = useState<AnalyticsViewConfig>({
+  const [config, setConfig] = useState<AnalyticsViewConfig>(initialConfig || {
     rows: [],
     columns: [],
     values: [],
@@ -240,6 +242,14 @@ export function DynamicAnalyticsCenter({
     hiddenColumns: [],
     sortConfig: [],
   });
+
+  // FIX-PROFESSIONAL: cuando initialConfig cambia (cargar plantilla), actualizar config
+  useEffect(() => {
+    if (initialConfig) {
+      setConfig(initialConfig);
+      onConfigChange?.(initialConfig);
+    }
+  }, [initialConfig]);
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
   const [activeDragField, setActiveDragField] = useState<AnalyticsField | null>(null);
   const [search, setSearch] = useState('');
