@@ -900,20 +900,34 @@ export default function HelpSectionRenderer({ content, glossary }: HelpSectionRe
 
             if (callout) {
               const IconComp = callout.icon;
-              // Extraer el color de fondo del callout.color (primer bg-*)
-              const bgClass = callout.color.split(' ').find(c => c.startsWith('bg-')) || 'bg-muted/20';
-              const textClass = callout.color.split(' ').find(c => c.startsWith('text-')) || 'text-foreground';
+              // Mapear el color sutil (bg-warning/5) a un bg más vibrante para el icono
+              const iconBgMap: Record<string, string> = {
+                'tip': 'bg-amber-500/20',
+                'important': 'bg-rose-500/20',
+                'note': 'bg-blue-500/20',
+                'danger': 'bg-red-500/20',
+                'success': 'bg-emerald-500/20',
+              };
+              const iconColorMap: Record<string, string> = {
+                'tip': 'text-amber-600 dark:text-amber-400',
+                'important': 'text-rose-600 dark:text-rose-400',
+                'note': 'text-blue-600 dark:text-blue-400',
+                'danger': 'text-red-600 dark:text-red-400',
+                'success': 'text-emerald-600 dark:text-emerald-400',
+              };
+              const iconBg = iconBgMap[callout.type] || 'bg-muted/40';
+              const iconColor = iconColorMap[callout.type] || 'text-foreground';
               return (
                 <div className={cn(
                   "my-6 sm:my-8 rounded-xl border-l-4 shadow-sm overflow-hidden",
                   callout.color
                 )} {...props}>
                   {/* Header con icono + label del tipo */}
-                  <div className="flex items-center gap-2 px-4 sm:px-6 pt-3 pb-1">
-                    <div className={cn("shrink-0 w-7 h-7 rounded-lg flex items-center justify-center", bgClass)}>
-                      <IconComp className={cn("w-4 h-4", textClass)} />
+                  <div className="flex items-center gap-2.5 px-4 sm:px-6 pt-3.5 pb-1">
+                    <div className={cn("shrink-0 w-8 h-8 rounded-lg flex items-center justify-center", iconBg)}>
+                      <IconComp className={cn("w-4 h-4", iconColor)} />
                     </div>
-                    <span className={cn("text-[10px] font-black uppercase tracking-widest", textClass)}>
+                    <span className={cn("text-[10px] font-black uppercase tracking-widest", iconColor)}>
                       {callout.label}
                     </span>
                   </div>
