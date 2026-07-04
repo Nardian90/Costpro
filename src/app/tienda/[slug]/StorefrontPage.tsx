@@ -402,8 +402,8 @@ function ServicesSection({ services }: { services: NonNullable<StorefrontStore['
   if (!services || services.length === 0) return null;
   return (
     <section className="bg-white border-b border-stone-200/60" aria-label="Servicios">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
-        <div className="flex items-center gap-3 mb-6">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10 sm:py-12">
+        <div className="flex items-center gap-3 mb-8">
           <div className="h-px flex-1 bg-gradient-to-r from-amber-300 to-transparent" />
           <h2 className="text-[11px] font-black uppercase tracking-[0.2em] text-amber-700">
             Nuestros Servicios
@@ -1623,9 +1623,12 @@ function ConstruccionTemplate({ store, products }: StorefrontPageProps) {
         </div>
       </header>
 
-      {/* Carrusel promocional configurable (hasta 5 imágenes) */}
+      {/* Carrusel promocional configurable (hasta 5 imágenes) — mt-1 para
+          separación visual del stats bar */}
       {store.promo_images && store.promo_images.length > 0 && (
-        <PromoCarousel images={store.promo_images} />
+        <div className="mt-1">
+          <PromoCarousel images={store.promo_images} />
+        </div>
       )}
 
       {/* Servicios configurables (hasta 6) */}
