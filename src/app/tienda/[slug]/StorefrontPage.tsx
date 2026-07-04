@@ -847,11 +847,13 @@ function ConstruccionCard({ product, image, onClick }: { product: StorefrontProd
   const t = useTranslations('stores.storefront');
   const [expanded, setExpanded] = useState(false);
   const inStock = product.inStock;
+  // FIX: Si está en promoción, mostrar como disponible (sin opacidad) aunque stock=0
+  const showAsAvailable = inStock || product.on_promotion === true;
 
   return (
     <div className={cn(
       'group rounded-2xl bg-white overflow-hidden transition-all duration-300 flex flex-col cursor-pointer shadow-sm',
-      inStock
+      showAsAvailable
         ? 'hover:shadow-xl hover:shadow-amber-500/10 hover:-translate-y-1 border border-stone-200/80'
         : 'opacity-60 border border-stone-200/40',
     )} onClick={onClick}>
@@ -925,12 +927,13 @@ function ConstruccionCard({ product, image, onClick }: { product: StorefrontProd
 function ConstruccionListItem({ product, image, onClick }: { product: StorefrontProduct; image: string | null; onClick: () => void }) {
   const t = useTranslations('stores.storefront');
   const inStock = product.inStock;
+  const showAsAvailable = inStock || product.on_promotion === true;
 
   return (
     <div
       className={cn(
         'group flex gap-4 p-3 sm:p-4 rounded-xl bg-white border transition-all duration-200 cursor-pointer',
-        inStock
+        showAsAvailable
           ? 'border-stone-200/80 hover:border-amber-400/50 hover:shadow-md hover:shadow-amber-500/5'
           : 'border-stone-200/40 opacity-60'
       )}
@@ -1116,9 +1119,10 @@ function ModernaTemplate({ store, products }: StorefrontPageProps) {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {filter.filteredProducts.map((p) => {
               const inStock = p.inStock;
+              const showAsAvailable = inStock || p.on_promotion === true;
               const img = filter.productImage(p);
               return (
-                <div key={p.id} className={cn('group rounded-2xl bg-white shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col cursor-pointer', !inStock && 'opacity-50')} onClick={() => setDetailProduct(p)}>
+                <div key={p.id} className={cn('group rounded-2xl bg-white shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col cursor-pointer', !showAsAvailable && 'opacity-50')} onClick={() => setDetailProduct(p)}>
                   <div className="relative aspect-[4/3] bg-gradient-to-br from-violet-50 to-sky-50 overflow-hidden">
                     {img ? (
                       <ProductImage src={img} alt={p.name} className="absolute inset-0" imgClassName="group-hover:scale-105" />
@@ -1203,7 +1207,7 @@ function ClasicaTemplate({ store, products }: StorefrontPageProps) {
               const inStock = p.inStock;
               const img = filter.productImage(p);
               return (
-                <div key={p.id} className={cn('flex gap-4 p-4 rounded-xl border border-amber-200/60 bg-white cursor-pointer hover:shadow-md transition-all', !inStock && 'opacity-50')} onClick={() => setDetailProduct(p)}>
+                <div key={p.id} className={cn('flex gap-4 p-4 rounded-xl border border-amber-200/60 bg-white cursor-pointer hover:shadow-md transition-all', !(inStock || p.on_promotion === true) && 'opacity-50')} onClick={() => setDetailProduct(p)}>
                   <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-lg bg-amber-50 overflow-hidden shrink-0">
                     {img ? (
                       <ProductImage src={img} alt={p.name} className="h-full w-full" />
