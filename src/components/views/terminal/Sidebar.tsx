@@ -211,7 +211,7 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
                 aria-current={isActive ? 'page' : undefined}
                 className={cn(
                   "w-12 h-12 flex items-center justify-center rounded-xl transition-all active:scale-95 mx-auto mb-2",
-                  isActive ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" : "text-sidebar-foreground/60 hover:bg-primary/10 hover:text-primary"
+                  isActive ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" : "text-sidebar-foreground/80 hover:bg-primary/10 hover:text-primary"
                 )}
               >
                 {item.icon && <item.icon className="w-5 h-5" />}
@@ -233,10 +233,10 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
           aria-current={isActive ? 'page' : undefined}
           className={cn(
             "w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all group active:scale-95 outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
-            isActive ? "bg-primary/10 text-primary font-bold shadow-sm" : "text-sidebar-foreground/60 hover:bg-primary/5 hover:text-sidebar-foreground"
+            isActive ? "bg-primary/10 text-primary font-bold shadow-sm" : "text-sidebar-foreground/80 hover:bg-primary/5 hover:text-sidebar-foreground"
           )}
         >
-          {item.icon && <item.icon className={cn("w-4 h-4 transition-transform group-hover:scale-110", isActive ? "text-primary" : "opacity-50")} />}
+          {item.icon && <item.icon className={cn("w-4 h-4 transition-transform group-hover:scale-110", isActive ? "text-primary" : "opacity-70")} />}
           <span className="text-xs uppercase tracking-wider truncate flex-1 text-left">{item.label}</span>
           {isActive && (
             <motion.div layoutId="active-nav-indicator" className="ml-auto w-1.5 h-1.5 rounded-full bg-primary" />
@@ -293,7 +293,7 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
                 aria-expanded={isExpanded}
                 className={cn(
                   "w-12 h-12 flex items-center justify-center rounded-xl transition-all active:scale-95 mx-auto mb-2",
-                  "text-sidebar-foreground/60 hover:bg-primary/10 hover:text-primary"
+                  "text-sidebar-foreground/80 hover:bg-primary/10 hover:text-primary"
                 )}
               >
                 {mod.icon && <mod.icon className="w-5 h-5" />}
@@ -326,11 +326,11 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
               className={cn(
                 "w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all outline-none focus-visible:ring-2 focus-visible:ring-primary/50 active:scale-[0.98]",
                 depth === 0 && "sm:mt-3",
-                "text-sidebar-foreground/60 hover:bg-primary/5 hover:text-sidebar-foreground"
+                "text-sidebar-foreground/80 hover:bg-primary/5 hover:text-sidebar-foreground"
               )}
             >
               <div className="flex items-center gap-3">
-                {mod.icon && <mod.icon className="w-4 h-4 opacity-50" />}
+                {mod.icon && <mod.icon className="w-4 h-4 opacity-70" />}
                 <span className={cn(
                   "font-black tracking-[0.2em] uppercase",
                   depth === 0 ? "text-xs" : "text-[11px] opacity-80"
@@ -348,11 +348,11 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
             className={cn(
               "w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all outline-none focus-visible:ring-2 focus-visible:ring-primary/50 active:scale-[0.98]",
               depth === 0 && "sm:mt-3",
-              "text-sidebar-foreground/60 hover:bg-primary/5 hover:text-sidebar-foreground"
+              "text-sidebar-foreground/80 hover:bg-primary/5 hover:text-sidebar-foreground"
             )}
           >
             <div className="flex items-center gap-3">
-              {mod.icon && <mod.icon className="w-4 h-4 opacity-50" />}
+              {mod.icon && <mod.icon className="w-4 h-4 opacity-70" />}
               <span className={cn(
                 "font-black tracking-[0.2em] uppercase",
                 depth === 0 ? "text-xs" : "text-[11px] opacity-80"
@@ -372,11 +372,11 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
           className={cn(
             "w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
             "sm:mt-0.5",
-            isExpanded ? "text-sidebar-foreground" : "text-sidebar-foreground/60 hover:text-sidebar-foreground"
+            isExpanded ? "text-sidebar-foreground" : "text-sidebar-foreground/80 hover:text-sidebar-foreground"
           )}
         >
           <div className="flex items-center gap-3">
-            {mod.icon && <mod.icon className="w-4 h-4 opacity-50" />}
+            {mod.icon && <mod.icon className="w-4 h-4 opacity-70" />}
             <span className="text-[11px] font-black tracking-[0.2em] uppercase opacity-80">{mod.label}</span>
           </div>
           <ChevronDown className={cn("w-3.5 h-3.5 transition-transform duration-300", isExpanded && "rotate-180")} />
@@ -523,7 +523,7 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
                   onChange={(e) => setSidebarSearch(e.target.value)}
                   aria-label="Buscar en el menú"
                   placeholder="BUSCAR..."
-                  className="w-full h-9 bg-background/50 border border-primary/10 rounded-xl pl-9 pr-16 text-xs font-black focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all uppercase tracking-[0.2em] placeholder:text-muted-foreground/30"
+                  className="w-full h-9 bg-background/50 border border-primary/10 rounded-xl pl-9 pr-16 text-xs font-black focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all uppercase tracking-[0.2em] placeholder:text-muted-foreground/50"
                 />
                 <kbd className="hidden sm:flex absolute right-3 top-1/2 -translate-y-1/2 items-center bg-muted text-muted-foreground text-[10px] font-mono px-1.5 py-0.5 rounded pointer-events-none select-none">
                   ⌘K
@@ -558,14 +558,14 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
                       setCurrentView('occ');
                       onViewChange('occ');
                     }}
-                    className="flex items-center gap-1.5 text-muted-foreground/40 hover:text-primary transition-colors group outline-none"
+                    className="flex items-center gap-1.5 text-muted-foreground/70 hover:text-primary transition-colors group outline-none"
                     aria-label="Volver al inicio"
                   >
-                    <span className="opacity-50 text-xs">/</span>
+                    <span className="opacity-70 text-xs">/</span>
                     <span>INICIO</span>
                   </button>
-                  <span className="opacity-20 text-xs">/</span>
-                  <span className="text-primary/60 truncate">{focusedModule.label}</span>
+                  <span className="opacity-40 text-xs">/</span>
+                  <span className="text-primary/80 truncate">{focusedModule.label}</span>
                 </div>
 
                 {/* FEATURE-CHATBOT-VIEW: Pinned chat access at the top of focus mode.
@@ -591,7 +591,7 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
                   >
                     <Bot className="w-4 h-4 shrink-0" />
                     <span className="flex-1 text-left">Chat con Darian</span>
-                    <span className="text-[9px] font-bold uppercase tracking-wider opacity-60">AI</span>
+                    <span className="text-[9px] font-bold uppercase tracking-wider opacity-80">AI</span>
                   </button>
                 </div>
 
@@ -614,10 +614,10 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
                 {pinnedItems.length > 0 && sidebarState === 'expanded' && !sidebarSearch && (
                   <div className="space-y-1 mb-2">
                     <div className="px-4 py-1 flex items-center justify-between">
-                      <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60">
+                      <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/80">
                         Fijados
                       </span>
-                      <Pin className="w-3 h-3 text-muted-foreground/40" aria-hidden="true" />
+                      <Pin className="w-3 h-3 text-muted-foreground/70" aria-hidden="true" />
                     </div>
                     {pinnedItems.map(item => renderNavItem(item, 0))}
                   </div>
@@ -697,7 +697,7 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
               className={cn(
                 "rounded-xl transition-all group active:scale-95 font-bold outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
                 sidebarState === 'expanded' ? "p-3.5" : "w-12 h-12 flex items-center justify-center",
-                "hover:bg-primary/5 text-sidebar-foreground/60"
+                "hover:bg-primary/5 text-sidebar-foreground/80"
               )}
             >
               <Settings className="w-4.5 h-4.5" />
@@ -712,7 +712,7 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
                 sidebarState === 'expanded' ? "p-3.5" : "w-12 h-12 flex items-center justify-center",
                 isCalculatorOpen
                   ? "bg-primary/10 text-primary border border-primary/20"
-                  : "hover:bg-primary/5 text-sidebar-foreground/60"
+                  : "hover:bg-primary/5 text-sidebar-foreground/80"
               )}
             >
               <Calculator className="w-4.5 h-4.5" />

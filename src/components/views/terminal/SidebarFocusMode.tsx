@@ -41,14 +41,14 @@ export const SidebarFocusMode: React.FC<SidebarFocusModeProps> = ({
       <div className="px-4 py-2 mb-6 flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.3em] ml-4 border-l-2 border-primary/20">
         <button
           onClick={handleHomeClick}
-          className="flex items-center gap-1.5 text-muted-foreground/40 hover:text-primary transition-colors group outline-none"
+          className="flex items-center gap-1.5 text-muted-foreground/70 hover:text-primary transition-colors group outline-none"
           aria-label="Volver al inicio"
         >
           <Home className="w-3 h-3 transition-transform group-hover:scale-110" />
           <span>INICIO</span>
         </button>
-        <ChevronRight className="w-3 h-3 opacity-30 text-muted-foreground/40" />
-        <span className="text-primary/60 truncate">{module.label}</span>
+        <ChevronRight className="w-3 h-3 opacity-50 text-muted-foreground/70" />
+        <span className="text-primary/80 truncate">{module.label}</span>
       </div>
 
       <div className="space-y-1">
