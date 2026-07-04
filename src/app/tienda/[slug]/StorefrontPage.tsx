@@ -29,6 +29,7 @@ import {
   Headphones,
   Calendar,
   ExternalLink,
+  Loader2,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { cn, formatCurrency, getProductImageUrl } from '@/lib/utils';
@@ -79,6 +80,8 @@ export interface StorefrontStore {
   services?: Array<{ icon: string; title: string; description?: string }> | null;
   promo_images?: Array<{ url: string; caption?: string; link?: string }> | null;
   opening_hours?: string | null;
+  banner_cta_text?: string | null;
+  banner_cta_link?: string | null;
 }
 
 export interface StorefrontPageProps {
@@ -94,16 +97,25 @@ const SEARCH_DEBOUNCE_MS = 300;
 function useProductFilter(products: StorefrontProduct[]) {
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [showFilters, setShowFilters] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Debounce the search term to avoid excessive filtering on every keystroke
+  // Debounce the search term to avoid excessive filtering on every keystroke.
+  // FIX-SEARCH-DEBOUNCE-VISUAL (2026-07-04): también exponemos `isSearching`
+  // para que el input pueda mostrar "Buscando…" mientras el debounce corre.
   const handleSearchChange = useCallback((value: string) => {
     setSearchTerm(value);
+    if (value && value !== debouncedSearch) {
+      setIsSearching(true);
+    }
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => setDebouncedSearch(value), SEARCH_DEBOUNCE_MS);
-  }, []);
+    debounceRef.current = setTimeout(() => {
+      setDebouncedSearch(value);
+      setIsSearching(false);
+    }, SEARCH_DEBOUNCE_MS);
+  }, [debouncedSearch]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -147,6 +159,7 @@ function useProductFilter(products: StorefrontProduct[]) {
 
   return {
     searchTerm, setSearchTerm: handleSearchChange,
+    isSearching,
     selectedCategory, setSelectedCategory,
     showFilters, setShowFilters,
     categories, filteredProducts,
@@ -1076,6 +1089,334 @@ function SearchToolbar({
   );
 }
 
+// ── WhatsApp Floating Action Button (FAB) ───────────────────────
+// FIX-FAB (2026-07-04): CTA siempre accesible mientras el usuario navega
+// la vitrina. Se prioriza whatsapp_group_url si existe (lleva al grupo),
+// si no, wa.me con el teléfono de la tienda. Posición: esquina inferior
+// derecha, encima del LiveSalesNotifications (que está abajo-izquierda).
+// En mobile es 56x56 (touch target cómodo), en desktop 48x48.
+
+function WhatsAppFAB({ store }: { store: StorefrontStore }) {
+  const href = store.whatsapp_group_url
+    || (store.phone ? `https://wa.me/${store.phone.replace(/[^0-9]/g, '')}` : null);
+
+  if (!href) return null;
+
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label="Consultar por WhatsApp"
+      className="fixed bottom-6 right-6 z-40 sm:bottom-8 sm:right-8 w-14 h-14 sm:w-12 sm:h-12 rounded-full bg-green-600 hover:bg-green-500 text-white shadow-2xl shadow-green-600/30 flex items-center justify-center transition-all hover:scale-105 active:scale-95"
+    >
+      {/* Pulse ring para llamar la atención sin ser invasivo */}
+      <span className="absolute inset-0 rounded-full bg-green-500 animate-ping opacity-20" />
+      <MessageCircle className="w-7 h-7 sm:w-6 sm:h-6 relative" />
+      {/* Badge "1" estilo notificación para reforzar que es un chat */}
+      <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-red-500 text-white text-[9px] font-black flex items-center justify-center border-2 border-white">
+        1
+      </span>
+    </a>
+  );
+}
+
+// ── Sticky Mini-Stats (mobile only) ─────────────────────────────
+// FIX-STICKY-STATS (2026-07-04): barra pegajosa en la parte superior de
+// mobile que muestra conteo rápido de productos + disponibles. Aparece
+// solo después de hacer scroll > 400px (cuando el header original ya
+// salió de vista). Oculta en desktop (sm:hidden).
+
+function StickyMiniStats({ total, available }: { total: number; available: number }) {
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setVisible(window.scrollY > 400);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  return (
+    <div
+      className={cn(
+        'sm:hidden fixed top-0 left-0 right-0 z-30 bg-stone-900/95 backdrop-blur-md border-b border-amber-500/20 transition-transform duration-300',
+        visible ? 'translate-y-0' : '-translate-y-full'
+      )}
+    >
+      <div className="px-4 py-2 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3 text-white">
+          <span className="flex items-center gap-1 text-xs font-black">
+            <Package className="w-3.5 h-3.5 text-amber-400" />
+            {total}
+          </span>
+          <span className="text-stone-500">·</span>
+          <span className="flex items-center gap-1 text-xs font-black">
+            <Zap className="w-3.5 h-3.5 text-emerald-400" />
+            {available}
+          </span>
+        </div>
+        <span className="text-[10px] font-black uppercase tracking-widest text-amber-300/80">
+          ENERVIDA
+        </span>
+      </div>
+    </div>
+  );
+}
+
+// ── Mobile Category Bottom-Sheet ────────────────────────────────
+// FIX-MOBILE-CATEGORIES (2026-07-04): en mobile el filtro de categorías
+// se abre como bottom-sheet (modal deslizante desde abajo) en vez de
+// inline. Esto libera espacio vertical y sigue el patrón nativo de iOS/
+// Android. En desktop sigue funcionando inline como antes.
+
+function MobileCategorySheet({
+  open,
+  onClose,
+  categories,
+  selectedCategory,
+  onSelect,
+  totalProducts,
+  categoryCounts,
+}: {
+  open: boolean;
+  onClose: () => void;
+  categories: string[];
+  selectedCategory: string | null;
+  onSelect: (cat: string | null) => void;
+  totalProducts: number;
+  categoryCounts: Record<string, number>;
+}) {
+  return (
+    <>
+      {/* Backdrop */}
+      <div
+        className={cn(
+          'sm:hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-sm transition-opacity duration-300',
+          open ? 'opacity-100' : 'opacity-0 pointer-events-none'
+        )}
+        onClick={onClose}
+        aria-hidden="true"
+      />
+      {/* Sheet */}
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Filtrar por categoría"
+        className={cn(
+          'sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-3xl shadow-2xl transition-transform duration-300 ease-out max-h-[80vh] overflow-y-auto',
+          open ? 'translate-y-0' : 'translate-y-full'
+        )}
+      >
+        {/* Handle bar */}
+        <div className="pt-3 pb-2 flex justify-center">
+          <div className="w-12 h-1.5 rounded-full bg-stone-300" />
+        </div>
+        {/* Header */}
+        <div className="px-5 pb-3 flex items-center justify-between border-b border-stone-100">
+          <h3 className="text-sm font-black uppercase tracking-widest text-stone-900">
+            Categorías
+          </h3>
+          <button
+            onClick={onClose}
+            className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center text-stone-500 hover:bg-stone-200"
+            aria-label="Cerrar"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+        {/* Lista de categorías */}
+        <div className="p-3 space-y-1.5">
+          <button
+            onClick={() => { onSelect(null); onClose(); }}
+            className={cn(
+              'w-full flex items-center justify-between px-4 py-3.5 rounded-xl text-sm font-black uppercase tracking-wider transition-all min-h-[48px]',
+              !selectedCategory
+                ? 'bg-amber-600 text-white'
+                : 'bg-stone-50 text-stone-700 hover:bg-stone-100'
+            )}
+          >
+            <span>Todas</span>
+            <span className={cn('text-xs', !selectedCategory ? 'text-amber-100' : 'text-stone-400')}>
+              {totalProducts}
+            </span>
+          </button>
+          {categories.map((cat) => (
+            <button
+              key={cat}
+              onClick={() => { onSelect(cat); onClose(); }}
+              className={cn(
+                'w-full flex items-center justify-between px-4 py-3.5 rounded-xl text-sm font-black uppercase tracking-wider transition-all min-h-[48px]',
+                selectedCategory === cat
+                  ? 'bg-amber-600 text-white'
+                  : 'bg-stone-50 text-stone-700 hover:bg-stone-100'
+              )}
+            >
+              <span className="truncate text-left">{cat}</span>
+              <span className={cn('text-xs shrink-0 ml-2', selectedCategory === cat ? 'text-amber-100' : 'text-stone-400')}>
+                {categoryCounts[cat] ?? 0}
+              </span>
+            </button>
+          ))}
+        </div>
+        {/* Safe area padding */}
+        <div className="h-4" />
+      </div>
+    </>
+  );
+}
+
+// ── Low Stock Badge ("Solo quedan N") ───────────────────────────
+// FIX-LOW-STOCK (2026-07-04): el storefront API solo envía inStock
+// (boolean), no stock_current. Para no romper FIX-SEC-H6 (no exponer
+// stock exacto), usamos un campo opcional `stock_level` que el API puede
+// enviar como 'low' | 'medium' | 'high' | null. Si es 'low', mostramos
+// "Solo quedan pocas unidades" — sensación de escasez sin exponer número.
+
+function LowStockBadge({ stockLevel }: { stockLevel?: 'low' | 'medium' | 'high' | null }) {
+  if (stockLevel !== 'low') return null;
+  return (
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-orange-100 text-orange-700 text-[9px] font-black uppercase tracking-widest border border-orange-200 animate-pulse">
+      <Zap className="w-2.5 h-2.5" />
+      Solo quedan pocas
+    </span>
+  );
+}
+
+// ── Quick View Modal (vista rápida) ─────────────────────────────
+// FIX-QUICK-VIEW (2026-07-04): al hacer hover sobre una tarjeta en
+// desktop aparece un botón "Vista rápida" que abre un modal compacto
+// con la info esencial (imagen, nombre, precio, descripción corta, CTA
+// WhatsApp). En mobile el botón no aparece (se usa tap directo al modal
+// completo). Esto evita tener que abrir el modal completo para cada
+// producto que el usuario quiere ojear.
+
+function QuickViewModal({
+  product,
+  image,
+  onClose,
+  onFullDetails,
+  storePhone,
+}: {
+  product: StorefrontProduct;
+  image: string | null;
+  onClose: () => void;
+  onFullDetails: () => void;
+  storePhone?: string | null;
+}) {
+  const t = useTranslations('stores.storefront');
+  const inStock = product.inStock;
+  const isOnPromotion = product.on_promotion === true;
+  const productText = encodeURIComponent(
+    `${t('whatsappInquiryMessage', { name: product.name })}${product.sku ? t('whatsappInquirySku', { sku: product.sku }) : ''}${product.price != null ? t('whatsappInquiryPrice', { price: formatCurrency(product.price, (product as any).price_currency || "CUP") }) : ''}`
+  );
+  const whatsappUrl = storePhone
+    ? `https://wa.me/${storePhone.replace(/[^0-9]/g, '')}?text=${productText}`
+    : null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6" onClick={onClose}>
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+      <div
+        className="relative bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden max-h-[90vh] flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header con imagen */}
+        <div className="relative aspect-[4/3] bg-stone-100 shrink-0">
+          {image ? (
+            <img src={image} alt={product.name} className="w-full h-full object-cover" />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center">
+              <Package className="w-16 h-16 text-stone-200" />
+            </div>
+          )}
+          {/* Close button */}
+          <button
+            onClick={onClose}
+            className="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-black/70 transition-colors"
+            aria-label={t('close')}
+          >
+            <X className="w-4 h-4" />
+          </button>
+          {/* Badge PROMO */}
+          {isOnPromotion && (
+            <span className="absolute top-3 left-3 px-2 py-0.5 rounded-md bg-amber-500 text-white text-[9px] font-black uppercase tracking-widest shadow-md flex items-center gap-1">
+              <Zap className="w-3 h-3" />
+              Promo
+            </span>
+          )}
+          {/* Category */}
+          {product.category && (
+            <span className="absolute bottom-3 left-3 px-2 py-0.5 rounded-md bg-stone-900/80 text-[9px] font-black uppercase tracking-widest text-amber-400 backdrop-blur-md">
+              {product.category}
+            </span>
+          )}
+        </div>
+        {/* Body */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-3">
+          <div>
+            <h3 className="font-black text-base uppercase tracking-tight text-stone-900 leading-tight">
+              {product.name}
+            </h3>
+            {product.sku && (
+              <p className="text-[10px] font-mono text-stone-400 mt-0.5">{t('sku')}: {product.sku}</p>
+            )}
+          </div>
+          {product.description && (
+            <p className="text-xs text-stone-600 leading-relaxed line-clamp-4">
+              {product.description}
+            </p>
+          )}
+          {/* Precio + stock */}
+          <div className="flex items-end justify-between gap-2 pt-2 border-t border-stone-100">
+            <div>
+              <p className="text-[8px] font-black uppercase tracking-[0.15em] text-stone-400 mb-0.5">
+                {t('price')}
+              </p>
+              {product.price != null ? (
+                <PriceDisplay price={product.price} currency={(product as any).price_currency || 'CUP'} variant="modal" />
+              ) : (
+                <p className="text-lg font-black text-stone-400 italic">{t('priceOnRequest', { defaultValue: 'Consultar' })}</p>
+              )}
+            </div>
+            {product.stock_visible !== false && (
+              <span className={cn(
+                'px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-widest',
+                inStock ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-600'
+              )}>
+                {inStock ? t('inStock') : t('soldOut')}
+              </span>
+            )}
+          </div>
+        </div>
+        {/* Footer con CTAs */}
+        <div className="p-4 border-t border-stone-100 grid grid-cols-2 gap-2 shrink-0">
+          <button
+            onClick={onFullDetails}
+            className="px-3 py-2.5 min-h-[44px] rounded-xl border border-stone-300 text-stone-700 text-[10px] font-black uppercase tracking-widest hover:bg-stone-50 transition-colors"
+          >
+            Ver detalles
+          </button>
+          {whatsappUrl ? (
+            <a
+              href={whatsappUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-3 py-2.5 min-h-[44px] rounded-xl bg-green-600 hover:bg-green-700 text-white text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-1.5 transition-colors"
+            >
+              <MessageCircle className="w-3.5 h-3.5" />
+              Consultar
+            </a>
+          ) : (
+            <span className="px-3 py-2.5 min-h-[44px] rounded-xl bg-stone-100 text-stone-400 text-[10px] font-black uppercase tracking-widest flex items-center justify-center">
+              Sin WhatsApp
+            </span>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ══════════════════════════════════════════════════════════════════
 // TEMPLATE: CONSTRUCCIÓN (Caribbean Cuban architecture, earth tones)
 // ══════════════════════════════════════════════════════════════════
@@ -1086,15 +1427,26 @@ function ConstruccionTemplate({ store, products }: StorefrontPageProps) {
   const t = useTranslations('stores.storefront');
   const filter = useProductFilter(products);
   const [detailProduct, setDetailProduct] = useState<StorefrontProduct | null>(null);
+  const [quickViewProduct, setQuickViewProduct] = useState<StorefrontProduct | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [showBackTop, setShowBackTop] = useState(false);
   const [bannerLoaded, setBannerLoaded] = useState(false);
+  const [showMobileCategories, setShowMobileCategories] = useState(false);
 
   useEffect(() => {
     const onScroll = () => setShowBackTop(window.scrollY > 600);
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
+
+  // Conteos por categoría para el bottom-sheet mobile
+  const categoryCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    products.forEach((p) => {
+      if (p.category) counts[p.category] = (counts[p.category] ?? 0) + 1;
+    });
+    return counts;
+  }, [products]);
 
   return (
     <div className="min-h-screen bg-stone-100 text-stone-900">
@@ -1153,6 +1505,30 @@ function ConstruccionTemplate({ store, products }: StorefrontPageProps) {
                   {store.email && <span className="flex items-center gap-1.5"><Mail className="w-3 h-3 text-amber-400/80" />{store.email}</span>}
                   {store.opening_hours && <span className="flex items-center gap-1.5"><Clock className="w-3 h-3 text-amber-400/80" />{store.opening_hours}</span>}
                 </div>
+                {/* FIX-BANNER-CTA (2026-07-04): CTA editable superpuesto al banner.
+                    Si banner_cta_link está set, es un <a> externo. Si no, es un
+                    botón que hace scroll a la sección de productos (#productos). */}
+                {store.banner_cta_text && (
+                  store.banner_cta_link ? (
+                    <a
+                      href={store.banner_cta_link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-4 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-900 text-xs font-black uppercase tracking-widest shadow-lg shadow-amber-500/30 transition-all hover:scale-105 active:scale-95"
+                    >
+                      {store.banner_cta_text}
+                      <ChevronRight className="w-3.5 h-3.5" />
+                    </a>
+                  ) : (
+                    <a
+                      href="#productos"
+                      className="mt-4 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-900 text-xs font-black uppercase tracking-widest shadow-lg shadow-amber-500/30 transition-all hover:scale-105 active:scale-95"
+                    >
+                      {store.banner_cta_text}
+                      <ChevronRight className="w-3.5 h-3.5" />
+                    </a>
+                  )
+                )}
               </div>
             </div>
           </div>
@@ -1253,21 +1629,37 @@ function ConstruccionTemplate({ store, products }: StorefrontPageProps) {
       ) : null}
 
       {/* Search + Filter + View Toggle Toolbar */}
-      <div className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-stone-200 shadow-sm">
+      <div id="productos" className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-stone-200 shadow-sm scroll-mt-0">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3">
           <div className="flex items-center gap-3">
             {/* Search */}
             <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
+              <Search className={cn(
+                'absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 transition-colors',
+                filter.isSearching ? 'text-amber-500 animate-pulse' : 'text-stone-400'
+              )} />
               <input
                 type="text"
                 value={filter.searchTerm}
                 onChange={(e) => filter.setSearchTerm(e.target.value)}
                 placeholder={t('searchPlaceholder')}
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl border-2 border-stone-200 bg-stone-50 text-sm font-bold focus:border-amber-400 focus:bg-white outline-none transition-all"
+                className={cn(
+                  'w-full pl-10 pr-4 py-2.5 rounded-xl border-2 bg-stone-50 text-sm font-bold focus:bg-white outline-none transition-all',
+                  filter.isSearching
+                    ? 'border-amber-400 bg-amber-50/30'
+                    : 'border-stone-200 focus:border-amber-400'
+                )}
                 aria-label={t('searchProducts')}
               />
-              {filter.searchTerm && (
+              {/* FIX-SEARCH-DEBOUNCE-VISUAL: indicador "Buscando…" mientras
+                  el debounce corre. Aparece a la derecha del input. */}
+              {filter.isSearching && (
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-amber-600">
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                  <span className="hidden sm:inline">Buscando…</span>
+                </div>
+              )}
+              {!filter.isSearching && filter.searchTerm && (
                 <button
                   onClick={() => filter.setSearchTerm('')}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600"
@@ -1277,20 +1669,31 @@ function ConstruccionTemplate({ store, products }: StorefrontPageProps) {
                 </button>
               )}
             </div>
-            {/* Category filter button */}
+            {/* Category filter button — en mobile abre bottom-sheet, en desktop inline */}
             <button
-              onClick={() => filter.setShowFilters(!filter.showFilters)}
-              aria-expanded={filter.showFilters}
+              onClick={() => {
+                if (typeof window !== 'undefined' && window.innerWidth < 640) {
+                  setShowMobileCategories(true);
+                } else {
+                  filter.setShowFilters(!filter.showFilters);
+                }
+              }}
+              aria-expanded={filter.showFilters || showMobileCategories}
               aria-controls="construccion-category-filters"
               className={cn(
-                'flex items-center gap-1.5 px-3 py-2.5 rounded-xl border-2 text-[11px] font-black uppercase tracking-widest transition-all',
-                filter.showFilters
+                'flex items-center gap-1.5 px-3 py-2.5 rounded-xl border-2 text-[11px] font-black uppercase tracking-widest transition-all min-h-[44px]',
+                (filter.showFilters || filter.selectedCategory)
                   ? 'border-amber-600 bg-amber-600 text-white'
                   : 'border-stone-200 bg-stone-50 text-stone-600 hover:border-amber-300'
               )}
             >
               <Filter className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">{t('categories')}</span>
+              {filter.selectedCategory && (
+                <span className="sm:hidden ml-0.5 px-1.5 py-0.5 rounded-full bg-white/30 text-[9px]">
+                  1
+                </span>
+              )}
             </button>
             {/* View toggle */}
             <div className="flex rounded-xl border-2 border-stone-200 overflow-hidden">
@@ -1381,7 +1784,7 @@ function ConstruccionTemplate({ store, products }: StorefrontPageProps) {
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
               {filter.filteredProducts.map((p) => (
-                <ConstruccionCard key={p.id} product={p} image={filter.productImage(p)} onClick={() => setDetailProduct(p)} />
+                <ConstruccionCard key={p.id} product={p} image={filter.productImage(p)} onClick={() => setDetailProduct(p)} onQuickView={() => setQuickViewProduct(p)} />
               ))}
             </div>
           </>
@@ -1427,8 +1830,38 @@ function ConstruccionTemplate({ store, products }: StorefrontPageProps) {
       {/* Notificaciones de ventas en vivo (social proof) */}
       <LiveSalesNotifications products={products} />
 
+      {/* WhatsApp FAB — CTA siempre accesible */}
+      <WhatsAppFAB store={store} />
+
+      {/* Sticky mini-stats en mobile (aparece al hacer scroll) */}
+      <StickyMiniStats total={filter.totalProducts} available={filter.totalWithStock} />
+
+      {/* Bottom-sheet de categorías para mobile */}
+      <MobileCategorySheet
+        open={showMobileCategories}
+        onClose={() => setShowMobileCategories(false)}
+        categories={filter.categories}
+        selectedCategory={filter.selectedCategory}
+        onSelect={filter.setSelectedCategory}
+        totalProducts={filter.totalProducts}
+        categoryCounts={categoryCounts}
+      />
+
       <StorefrontFooter store={store} template="construccion" />
       {detailProduct && <ProductDetailModal product={detailProduct} onClose={() => setDetailProduct(null)} storePhone={store.phone} />}
+      {quickViewProduct && (
+        <QuickViewModal
+          product={quickViewProduct}
+          image={filter.productImage(quickViewProduct)}
+          onClose={() => setQuickViewProduct(null)}
+          onFullDetails={() => {
+            const p = quickViewProduct;
+            setQuickViewProduct(null);
+            setDetailProduct(p);
+          }}
+          storePhone={store.phone}
+        />
+      )}
     </div>
   );
 }
@@ -1461,7 +1894,7 @@ function StockPill({ inStock }: { inStock: boolean }) {
   );
 }
 
-function ConstruccionCard({ product, image, onClick }: { product: StorefrontProduct; image: string | null; onClick: () => void }) {
+function ConstruccionCard({ product, image, onClick, onQuickView }: { product: StorefrontProduct; image: string | null; onClick: () => void; onQuickView?: () => void }) {
   const t = useTranslations('stores.storefront');
   const [expanded, setExpanded] = useState(false);
   const inStock = product.inStock;
@@ -1510,12 +1943,26 @@ function ConstruccionCard({ product, image, onClick }: { product: StorefrontProd
             (si está en promoción, el badge PROMO ya indica disponibilidad) */}
         {product.stock_visible !== false && !isOnPromotion && <StockBadge inStock={inStock} />}
         <div className="absolute inset-0 bg-gradient-to-t from-black/15 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+        {/* FIX-QUICK-VIEW: botón "Vista rápida" aparece en hover (desktop only) */}
+        {onQuickView && (
+          <button
+            onClick={(e) => { e.stopPropagation(); onQuickView(); }}
+            className="absolute bottom-3 right-3 px-3 py-1.5 rounded-lg bg-white/95 backdrop-blur-md text-stone-900 text-[10px] font-black uppercase tracking-widest shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 hover:bg-white hidden sm:flex items-center gap-1 z-10"
+          >
+            <Search className="w-3 h-3" />
+            Vista rápida
+          </button>
+        )}
       </div>
       <div className="flex-1 p-4 flex flex-col gap-1.5">
         <div className="min-w-0">
           <h3 className="font-black text-sm uppercase tracking-tight truncate text-stone-900 group-hover:text-amber-800 transition-colors">{product.name}</h3>
           {product.sku && <p className="text-[10px] font-mono text-stone-400 mt-0.5">{t('sku')}: {product.sku}</p>}
         </div>
+        {/* FIX-LOW-STOCK: badge "Solo quedan pocas" si stock_level === 'low' */}
+        {(product as any).stock_level === 'low' && showAsAvailable && (
+          <LowStockBadge stockLevel="low" />
+        )}
         {product.description && (
           <div>
             <p className={cn('text-xs text-stone-500 leading-relaxed', !expanded && 'line-clamp-2')}>{product.description}</p>

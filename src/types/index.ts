@@ -189,6 +189,10 @@ export interface Store {
   promo_images?: StorePromoImage[] | null;
   /** Horario de atención en texto libre. */
   opening_hours?: string | null;
+  /** Texto del CTA superpuesto al banner (opcional). */
+  banner_cta_text?: string | null;
+  /** URL del CTA del banner (opcional). Si es null, scroll a #productos. */
+  banner_cta_link?: string | null;
 }
 
 // ============================================

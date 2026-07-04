@@ -114,13 +114,14 @@ export default async function TiendaPublicPage({ params }: PageProps) {
 
   // Try exact match first, then normalized match (handles spaces in DB slugs)
   // FIX-STOREFRONT-CONFIG (2026-07-04): incluir banner_url, store_tagline,
-  // whatsapp_group_url, telegram_url, services, promo_images, opening_hours
-  // para que el SSR renderice la vitrina con la configuración personalizada.
-  // Antes el SELECT solo traía campos básicos y el storefront siempre caía
-  // al banner por defecto, ignorando la configuración del admin.
+  // whatsapp_group_url, telegram_url, services, promo_images, opening_hours,
+  // banner_cta_text, banner_cta_link para que el SSR renderice la vitrina con
+  // la configuración personalizada. Antes el SELECT solo traía campos básicos
+  // y el storefront siempre caía al banner por defecto, ignorando la
+  // configuración del admin.
   const { data: store, error: storeError } = await supabase
     .from('stores')
-    .select('id, name, address, phone, email, logo_url, slug, plantilla, reeup, is_active, banner_url, store_tagline, whatsapp_group_url, telegram_url, services, promo_images, opening_hours')
+    .select('id, name, address, phone, email, logo_url, slug, plantilla, reeup, is_active, banner_url, store_tagline, whatsapp_group_url, telegram_url, services, promo_images, opening_hours, banner_cta_text, banner_cta_link')
     .eq('is_active', true)
     .or(`slug.eq.${rawSlug},slug.eq.${slug}`)
     .maybeSingle();
@@ -193,9 +194,18 @@ export default async function TiendaPublicPage({ params }: PageProps) {
   // FIX-SEC-H6: Strip commercially-sensitive fields before sending to the public client.
   // The storefront API route already excludes these, but the SSR page bypasses it
   // by calling get_paginated_products directly. We must filter here too.
+  // FIX-LOW-STOCK (2026-07-04): compute stock_level ('low' | 'medium' | 'high' | null)
+  // without exposing exact stock_current.
   const productList = visibleProducts.map((p) => {
     const variants = variantsByProduct.get(p.id as string);
     const onPromotion = (p.on_promotion as boolean) === true;
+    const stockCurrent = (p.stock_current as number) ?? 0;
+    let stockLevel: 'low' | 'medium' | 'high' | null = null;
+    if (!onPromotion && (p.stock_visible as boolean) !== false && stockCurrent > 0) {
+      if (stockCurrent <= 5) stockLevel = 'low';
+      else if (stockCurrent <= 20) stockLevel = 'medium';
+      else stockLevel = 'high';
+    }
     return {
       id: p.id as string,
       name: p.name as string,
@@ -207,9 +217,10 @@ export default async function TiendaPublicPage({ params }: PageProps) {
       public_image_url: (p.public_image_url as string | null) ?? null,
       category: (p.category as string | null) ?? null,
       unit_of_measure: (p.unit_of_measure as string | null) ?? null,
-      inStock: onPromotion || ((p.stock_current as number) ?? 0) > 0,
+      inStock: onPromotion || stockCurrent > 0,
       on_promotion: onPromotion,
       stock_visible: (p.stock_visible as boolean) !== false,
+      stock_level: stockLevel,
       product_variants: variants
         ? variants.map(({ id, name, sku, price, conversion_factor }) => ({
             id, name, sku, price, conversion_factor,
@@ -256,7 +267,9 @@ export default async function TiendaPublicPage({ params }: PageProps) {
           offers: {
             '@type': 'Offer',
             price: product.price,
-            priceCurrency: 'CUP',
+            // FIX-SEO (2026-07-04): priceCurrency real del producto (USD, CUP, EUR, MLC)
+            // antes era hardcoded 'CUP' lo que era incorrecto para productos en USD.
+            priceCurrency: product.price_currency || 'CUP',
             availability: product.inStock
               ? 'https://schema.org/InStock'
               : 'https://schema.org/OutOfStock',

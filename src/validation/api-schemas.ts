@@ -241,6 +241,8 @@ export const createStoreSchema = z.object({
     link: z.string().url().optional().nullable(),
   })).max(5).optional().nullable(),
   opening_hours: z.string().max(200).optional().nullable(),
+  banner_cta_text: z.string().max(50).optional().nullable(),
+  banner_cta_link: z.string().url().optional().nullable().or(z.literal('')),
 });
 
 export const updateStoreSchema = z.object({
@@ -280,6 +282,8 @@ export const updateStoreSchema = z.object({
     link: z.string().url().optional().nullable(),
   })).max(5).optional().nullable(),
   opening_hours: z.string().max(200).optional().nullable(),
+  banner_cta_text: z.string().max(50).optional().nullable(),
+  banner_cta_link: z.string().url().optional().nullable().or(z.literal('')),
 });
 
 export const deleteStoreSchema = z.object({

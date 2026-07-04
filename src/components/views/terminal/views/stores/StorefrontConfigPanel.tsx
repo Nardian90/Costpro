@@ -112,6 +112,8 @@ export function StorefrontConfigPanel({ store, onSaved }: StorefrontConfigPanelP
   const [bannerUrl, setBannerUrl] = useState<string>('');
   const [storeTagline, setStoreTagline] = useState<string>('');
   const [openingHours, setOpeningHours] = useState<string>('');
+  const [bannerCtaText, setBannerCtaText] = useState<string>('');
+  const [bannerCtaLink, setBannerCtaLink] = useState<string>('');
   const [whatsappGroupUrl, setWhatsappGroupUrl] = useState<string>('');
   const [telegramUrl, setTelegramUrl] = useState<string>('');
   const [services, setServices] = useState<StoreService[]>([]);
@@ -137,6 +139,8 @@ export function StorefrontConfigPanel({ store, onSaved }: StorefrontConfigPanelP
     setBannerUrl(store.banner_url ?? '');
     setStoreTagline(store.store_tagline ?? '');
     setOpeningHours(store.opening_hours ?? '');
+    setBannerCtaText(store.banner_cta_text ?? '');
+    setBannerCtaLink(store.banner_cta_link ?? '');
     setWhatsappGroupUrl(store.whatsapp_group_url ?? '');
     setTelegramUrl(store.telegram_url ?? '');
     setServices(Array.isArray(store.services) ? store.services : []);
@@ -145,7 +149,7 @@ export function StorefrontConfigPanel({ store, onSaved }: StorefrontConfigPanelP
     setDirtyContact(false);
     setDirtyServices(false);
     setDirtyPromo(false);
-  }, [store.id, store.banner_url, store.store_tagline, store.opening_hours, store.whatsapp_group_url, store.telegram_url, store.services, store.promo_images]);
+  }, [store.id, store.banner_url, store.store_tagline, store.opening_hours, store.banner_cta_text, store.banner_cta_link, store.whatsapp_group_url, store.telegram_url, store.services, store.promo_images]);
 
   // ── Helper: comparar para detectar cambios ──
   const eq = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
@@ -154,9 +158,11 @@ export function StorefrontConfigPanel({ store, onSaved }: StorefrontConfigPanelP
     setDirtyBanner(
       bannerUrl !== (store.banner_url ?? '') ||
       storeTagline !== (store.store_tagline ?? '') ||
-      openingHours !== (store.opening_hours ?? '')
+      openingHours !== (store.opening_hours ?? '') ||
+      bannerCtaText !== (store.banner_cta_text ?? '') ||
+      bannerCtaLink !== (store.banner_cta_link ?? '')
     );
-  }, [bannerUrl, storeTagline, openingHours, store.banner_url, store.store_tagline, store.opening_hours]);
+  }, [bannerUrl, storeTagline, openingHours, bannerCtaText, bannerCtaLink, store.banner_url, store.store_tagline, store.opening_hours, store.banner_cta_text, store.banner_cta_link]);
 
   useEffect(() => {
     setDirtyContact(
@@ -182,6 +188,8 @@ export function StorefrontConfigPanel({ store, onSaved }: StorefrontConfigPanelP
         banner_url: bannerUrl.trim() || null,
         store_tagline: storeTagline.trim() || null,
         opening_hours: openingHours.trim() || null,
+        banner_cta_text: bannerCtaText.trim() || null,
+        banner_cta_link: bannerCtaLink.trim() || null,
       });
       toast.success(t('updateSuccess'));
       queryClient.invalidateQueries({ queryKey: ['stores'] });
@@ -413,6 +421,38 @@ export function StorefrontConfigPanel({ store, onSaved }: StorefrontConfigPanelP
               className="h-11"
             />
             <p className="text-[11px] text-muted-foreground">{tS('openingHoursHint')}</p>
+          </div>
+
+          {/* Banner CTA */}
+          <div className="grid sm:grid-cols-2 gap-3 pt-2 border-t border-border/40 mt-2">
+            <div className="grid gap-2">
+              <Label htmlFor="banner-cta-text" className="text-xs font-black uppercase tracking-widest text-primary/70">
+                {tS('bannerCtaText')}
+              </Label>
+              <Input
+                id="banner-cta-text"
+                value={bannerCtaText}
+                onChange={(e) => setBannerCtaText(e.target.value)}
+                placeholder={tS('bannerCtaTextPlaceholder')}
+                maxLength={50}
+                className="h-11"
+              />
+              <p className="text-[11px] text-muted-foreground">{tS('bannerCtaTextHint')}</p>
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="banner-cta-link" className="text-xs font-black uppercase tracking-widest text-primary/70">
+                {tS('bannerCtaLink')}
+              </Label>
+              <Input
+                id="banner-cta-link"
+                type="url"
+                value={bannerCtaLink}
+                onChange={(e) => setBannerCtaLink(e.target.value)}
+                placeholder={tS('bannerCtaLinkPlaceholder')}
+                className="h-11"
+              />
+              <p className="text-[11px] text-muted-foreground">{tS('bannerCtaLinkHint')}</p>
+            </div>
           </div>
         </div>
       </SectionCard>

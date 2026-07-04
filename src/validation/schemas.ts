@@ -126,6 +126,8 @@ export const storeSchema = z.object({
     link: z.string().url().optional().nullable(),
   })).max(5).nullable().optional(),
   opening_hours: z.string().max(200).nullable().optional(),
+  banner_cta_text: z.string().max(50).nullable().optional(),
+  banner_cta_link: z.string().url().nullable().optional().or(z.literal('')),
 });
 
 export const userStoreMembershipSchema = z.object({
