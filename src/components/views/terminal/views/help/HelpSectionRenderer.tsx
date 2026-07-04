@@ -2,6 +2,7 @@
 
 import React, { useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { sanitizeHtml } from '@/lib/sanitize';
 import { cn } from '@/lib/utils';
 import {
@@ -675,6 +676,7 @@ export default function HelpSectionRenderer({ content, glossary }: HelpSectionRe
     const headerContent = parsed.preContent ? (
       <div className="mb-8">
         <ReactMarkdown
+          remarkPlugins={[remarkGfm]}
           components={{
             h1: ({ node, ...props }) => (
               <h1 className="text-3xl md:text-4xl font-black tracking-tight leading-tight text-foreground mb-4 pb-6 border-b border-border/30" {...props} />
@@ -742,6 +744,7 @@ export default function HelpSectionRenderer({ content, glossary }: HelpSectionRe
         {parsed.postContent && (
           <div className="mt-10 pt-8 border-t border-border/30">
             <ReactMarkdown
+              remarkPlugins={[remarkGfm]}
               components={{
                 p: ({ node, ...props }) => (
                   <p className="text-[14px] leading-[1.8] font-medium text-muted-foreground text-justify hyphens-auto mb-6" {...props} />
@@ -788,6 +791,7 @@ export default function HelpSectionRenderer({ content, glossary }: HelpSectionRe
   return (
     <article className="max-w-none">
       <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
         components={{
           // ── HEADINGS ──────────────────────────────────────────────────
           h1: ({ node, ...props }) => {
