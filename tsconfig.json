@@ -39,6 +39,18 @@
   "exclude": [
     "node_modules",
     "examples",
-    "skills"
+    "skills",
+    "scripts/analyze-*.ts",
+    "scripts/check-*.ts",
+    "scripts/analyze-header.ts",
+    "scripts/analyze-header2.ts",
+    "scripts/analyze-screenshot.ts",
+    "scripts/analyze-screenshot2.ts",
+    "scripts/analyze-screenshot3.ts",
+    "scripts/analyze-tg.ts",
+    "scripts/analyze-tg3.ts",
+    "scripts/check-raw.ts",
+    "scripts/check-telegram-msgs.ts",
+    "src/lib/db.ts"
   ]
 }
