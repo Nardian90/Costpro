@@ -867,6 +867,14 @@ export default function InventoryView() {
                                 onAdjust={handleAdjustProduct}
                                 fcStatusMap={fcStatusMap}
                                 onViewFC={handleViewFC}
+                                onToggleVisible={handleToggleVisible}
+                                isTogglingVisible={togglingVisibleId}
+                                onTogglePriceVisible={handleTogglePriceVisible}
+                                isTogglingPriceVisible={togglingPriceVisibleId}
+                                onToggleStockVisible={handleToggleStockVisible}
+                                isTogglingStockVisible={togglingStockVisibleId}
+                                onTogglePromotion={handleTogglePromotion}
+                                isTogglingPromotion={togglingPromotionId}
                             />
                         ) : (
                             <InventoryTableView

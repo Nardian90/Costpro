@@ -1,10 +1,10 @@
 'use client';
 
-import React, { useRef, useCallback, useEffect } from 'react';
+import React, { useRef, useCallback, useEffect, useState } from 'react';
 import type { Product, ProductFCStatus } from '@/types';
 import type { FCResolutionResult } from '@/lib/integration/fc-automation';
 import { cn } from '@/lib/utils';
-import { Package } from 'lucide-react';
+import { Package, Eye, EyeOff, DollarSign, Tag } from 'lucide-react';
 import { CostProLoader } from '@/components/ui/CostProLoader';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useReducedMotion, motionSafe } from '@/hooks/ui/useReducedMotion';
@@ -22,9 +22,23 @@ interface InventoryCardViewProps {
     fcStatusMap?: Map<string, ProductFCStatus>;
     /** Callback cuando el usuario quiere ver/generar FC de un producto */
     onViewFC?: (product: Product, resolution: FCResolutionResult) => void;
+    onToggleVisible?: (product: Product, visible: boolean) => void;
+    isTogglingVisible?: string | null;
+    onTogglePriceVisible?: (product: Product) => void;
+    isTogglingPriceVisible?: string | null;
+    onToggleStockVisible?: (product: Product) => void;
+    isTogglingStockVisible?: string | null;
+    onTogglePromotion?: (product: Product) => void;
+    isTogglingPromotion?: string | null;
 }
 
-export default function InventoryCardView({ products, loadMore, hasMore, isLoading, onAdjust, fcStatusMap, onViewFC }: InventoryCardViewProps) {
+export default function InventoryCardView({
+    products, loadMore, hasMore, isLoading, onAdjust, fcStatusMap, onViewFC,
+    onToggleVisible, isTogglingVisible,
+    onTogglePriceVisible, isTogglingPriceVisible,
+    onToggleStockVisible, isTogglingStockVisible,
+    onTogglePromotion, isTogglingPromotion,
+}: InventoryCardViewProps) {
     const prefersReduced = useReducedMotion();
     const observer = useRef<IntersectionObserver | null>(null);
     const lastElementRef = useCallback((node: HTMLDivElement) => {
@@ -38,7 +52,6 @@ export default function InventoryCardView({ products, loadMore, hasMore, isLoadi
         if (node) observer.current.observe(node);
     }, [isLoading, hasMore, loadMore]);
 
-    // FIX-RCT-111: Disconnect observer on unmount to prevent leaks
     useEffect(() => {
         return () => { observer.current?.disconnect(); };
     }, []);
@@ -69,7 +82,7 @@ export default function InventoryCardView({ products, loadMore, hasMore, isLoadi
                                         variant="inventory"
                                         onEdit={() => onAdjust?.(product)}
                                     />
-                                    {/* FC status badge next to product name area */}
+                                    {/* FC status badge */}
                                     {fcStatus && (
                                       <div className="absolute top-3 right-3 flex items-center gap-1 z-10">
                                           <FCStatusBadge status={fcStatus} variant="dot" showLabel={false} />
@@ -97,6 +110,96 @@ export default function InventoryCardView({ products, loadMore, hasMore, isLoadi
                                             En mínimo
                                           </span>
                                         )}
+                                    </div>
+
+                                    {/* ── Toggles de visibilidad en la parte inferior de la tarjeta ── */}
+                                    <div className="flex items-center justify-center gap-1.5 mt-2 pb-1">
+                                        {/* Visible en tienda */}
+                                        <button
+                                            type="button"
+                                            onClick={() => onToggleVisible?.(product, !product.visible_en_tienda)}
+                                            disabled={isTogglingVisible === product.id}
+                                            className={cn(
+                                                'inline-flex items-center justify-center w-7 h-7 rounded-lg border transition-all active:scale-90 disabled:opacity-50',
+                                                product.visible_en_tienda
+                                                    ? 'bg-success/10 border-success/20 text-success'
+                                                    : 'bg-muted border-border text-muted-foreground/50 hover:bg-muted/80'
+                                            )}
+                                            title={product.visible_en_tienda ? 'Visible en tienda — Clic para ocultar' : 'Oculto — Clic para mostrar'}
+                                            aria-label={product.visible_en_tienda ? 'Ocultar de la tienda pública' : 'Mostrar en la tienda pública'}
+                                            aria-pressed={!!product.visible_en_tienda}
+                                        >
+                                            {isTogglingVisible === product.id ? (
+                                                <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                                            ) : product.visible_en_tienda ? (
+                                                <Eye className="w-3.5 h-3.5" />
+                                            ) : (
+                                                <EyeOff className="w-3.5 h-3.5" />
+                                            )}
+                                        </button>
+
+                                        {/* Precio visible */}
+                                        <button
+                                            type="button"
+                                            onClick={() => onTogglePriceVisible?.(product)}
+                                            disabled={isTogglingPriceVisible === product.id}
+                                            className={cn(
+                                                'inline-flex items-center justify-center w-7 h-7 rounded-lg border transition-all active:scale-90 disabled:opacity-50',
+                                                product.price_visible
+                                                    ? 'bg-success/10 border-success/20 text-success'
+                                                    : 'bg-muted border-border text-muted-foreground/50 hover:bg-muted/80'
+                                            )}
+                                            title={product.price_visible ? 'Precio visible — Clic para ocultar' : 'Precio oculto — Clic para mostrar'}
+                                            aria-pressed={!!product.price_visible}
+                                        >
+                                            {isTogglingPriceVisible === product.id ? (
+                                                <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                                            ) : (
+                                                <DollarSign className={cn('w-3.5 h-3.5', !product.price_visible && 'line-through opacity-60')} />
+                                            )}
+                                        </button>
+
+                                        {/* Stock visible */}
+                                        <button
+                                            type="button"
+                                            onClick={() => onToggleStockVisible?.(product)}
+                                            disabled={isTogglingStockVisible === product.id}
+                                            className={cn(
+                                                'inline-flex items-center justify-center w-7 h-7 rounded-lg border transition-all active:scale-90 disabled:opacity-50',
+                                                product.stock_visible
+                                                    ? 'bg-success/10 border-success/20 text-success'
+                                                    : 'bg-muted border-border text-muted-foreground/50 hover:bg-muted/80'
+                                            )}
+                                            title={product.stock_visible ? 'Stock visible — Clic para ocultar' : 'Stock oculto — Clic para mostrar'}
+                                            aria-pressed={!!product.stock_visible}
+                                        >
+                                            {isTogglingStockVisible === product.id ? (
+                                                <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                                            ) : (
+                                                <Package className={cn('w-3.5 h-3.5', !product.stock_visible && 'line-through opacity-60')} />
+                                            )}
+                                        </button>
+
+                                        {/* Promoción */}
+                                        <button
+                                            type="button"
+                                            onClick={() => onTogglePromotion?.(product)}
+                                            disabled={isTogglingPromotion === product.id}
+                                            className={cn(
+                                                'inline-flex items-center justify-center w-7 h-7 rounded-lg border transition-all active:scale-90 disabled:opacity-50',
+                                                product.on_promotion
+                                                    ? 'bg-warning/10 border-warning/20 text-warning'
+                                                    : 'bg-muted border-border text-muted-foreground/50 hover:bg-muted/80'
+                                            )}
+                                            title={product.on_promotion ? 'En promoción — Clic para desactivar' : 'Sin promoción — Clic para activar'}
+                                            aria-pressed={!!product.on_promotion}
+                                        >
+                                            {isTogglingPromotion === product.id ? (
+                                                <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                                            ) : (
+                                                <Tag className="w-3.5 h-3.5" />
+                                            )}
+                                        </button>
                                     </div>
                                 </div>
                             </motion.div>
