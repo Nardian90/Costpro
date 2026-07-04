@@ -5,15 +5,13 @@ import { useTheme } from 'next-themes';
 import {
   Sun, Moon, Monitor, Zap, Wifi, WifiOff, Bot, Plus, Key, Loader2,
   Edit2, Trash2, Percent, ShieldCheck, Bell, Sparkles, Crown,
-  Check, X, Info, Store as StoreIcon
+  Check, X, Info
 } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
 import { useUIStore, useAuthStore } from '@/store';
 import { supabase } from '@/lib/supabaseClient';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { StorefrontConfigPanel } from '@/components/views/terminal/views/stores/StorefrontConfigPanel';
-import type { Store } from '@/types';
 
 interface AIKey {
   id: string;
@@ -527,118 +525,8 @@ export default function SettingsView() {
         </div>
       </div>
 
-      {/* ─── Sección: Vitrina Pública (Storefront configurable) ─── */}
-      <StorefrontSection activeStoreId={user?.activeStoreId} />
-
       {/* ─── Sección: Plan y Límites ─── */}
       <PlanAndLimitsSection user={user} />
-    </div>
-  );
-}
-
-// ════════════════════════════════════════════════════════════════════
-// SECCIÓN: Vitrina Pública — configuración altamente personalizable
-// del storefront (banner, redes, servicios, carrusel promocional).
-// ════════════════════════════════════════════════════════════════════
-function StorefrontSection({ activeStoreId }: { activeStoreId?: string }) {
-  const [store, setStore] = useState<Store | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!activeStoreId) {
-      setLoading(false);
-      return;
-    }
-    let cancelled = false;
-    (async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const { data, error } = await supabase
-          .from('stores')
-          .select('id, name, address, phone, email, logo_url, slug, plantilla, banner_url, store_tagline, whatsapp_group_url, telegram_url, services, promo_images, opening_hours, is_active')
-          .eq('id', activeStoreId)
-          .single();
-        if (cancelled) return;
-        if (error) {
-          setError(error.message);
-        } else if (data) {
-          setStore(data as Store);
-        }
-      } catch (err) {
-        if (!cancelled) setError(err instanceof Error ? err.message : 'Error desconocido');
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-    return () => { cancelled = true; };
-  }, [activeStoreId]);
-
-  if (!activeStoreId) {
-    return (
-      <div className="p-4 sm:p-6 rounded-3xl border border-border bg-card shadow-sm">
-        <h3 className="text-sm font-black uppercase tracking-widest text-primary flex items-center gap-2 mb-3">
-          <StoreIcon className="w-4 h-4" />
-          Vitrina Pública
-        </h3>
-        <div className="p-6 rounded-xl border border-dashed border-border text-center">
-          <StoreIcon className="w-8 h-8 text-muted-foreground/40 mx-auto mb-2" />
-          <p className="text-xs font-bold text-muted-foreground">
-            Selecciona una tienda activa para configurar su vitrina.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  if (loading) {
-    return (
-      <div className="p-4 sm:p-6 rounded-3xl border border-border bg-card shadow-sm">
-        <h3 className="text-sm font-black uppercase tracking-widest text-primary flex items-center gap-2 mb-4">
-          <StoreIcon className="w-4 h-4" />
-          Vitrina Pública
-        </h3>
-        <div className="flex items-center justify-center py-10">
-          <Loader2 className="w-6 h-6 animate-spin text-primary" />
-        </div>
-      </div>
-    );
-  }
-
-  if (error || !store) {
-    return (
-      <div className="p-4 sm:p-6 rounded-3xl border border-border bg-card shadow-sm">
-        <h3 className="text-sm font-black uppercase tracking-widest text-primary flex items-center gap-2 mb-3">
-          <StoreIcon className="w-4 h-4" />
-          Vitrina Pública
-        </h3>
-        <div className="p-4 rounded-xl border border-destructive/30 bg-destructive/5 text-xs text-destructive">
-          {error || 'No se pudo cargar la tienda activa.'}
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="p-4 sm:p-6 rounded-3xl border border-border bg-card shadow-sm">
-      <div className="flex items-center justify-between gap-3 mb-5">
-        <h3 className="text-sm font-black uppercase tracking-widest text-primary flex items-center gap-2">
-          <StoreIcon className="w-4 h-4" />
-          Vitrina Pública
-        </h3>
-        {store.slug && (
-          <a
-            href={`/tienda/${store.slug}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-[10px] font-black uppercase tracking-widest text-primary hover:underline"
-          >
-            Ver tienda →
-          </a>
-        )}
-      </div>
-      <StorefrontConfigPanel store={store} onSaved={(updated) => setStore(updated)} />
     </div>
   );
 }

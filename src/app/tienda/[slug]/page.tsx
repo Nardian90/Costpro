@@ -29,7 +29,7 @@ function normalizeSlug(raw: string): string {
     .replace(/^_|_$/g, '');
 }
 
-export const revalidate = 60; // ISR: re-generate every 60s
+export const revalidate = 0; // FIX-STOREFRONT-CONFIG: always render fresh (config changes must reflect instantly)
 
 export async function generateStaticParams() {
   try {
@@ -113,9 +113,14 @@ export default async function TiendaPublicPage({ params }: PageProps) {
   const nonce = headersList.get('x-csp-nonce') || '';
 
   // Try exact match first, then normalized match (handles spaces in DB slugs)
+  // FIX-STOREFRONT-CONFIG (2026-07-04): incluir banner_url, store_tagline,
+  // whatsapp_group_url, telegram_url, services, promo_images, opening_hours
+  // para que el SSR renderice la vitrina con la configuración personalizada.
+  // Antes el SELECT solo traía campos básicos y el storefront siempre caía
+  // al banner por defecto, ignorando la configuración del admin.
   const { data: store, error: storeError } = await supabase
     .from('stores')
-    .select('id, name, address, phone, email, logo_url, slug, plantilla, reeup, is_active')
+    .select('id, name, address, phone, email, logo_url, slug, plantilla, reeup, is_active, banner_url, store_tagline, whatsapp_group_url, telegram_url, services, promo_images, opening_hours')
     .eq('is_active', true)
     .or(`slug.eq.${rawSlug},slug.eq.${slug}`)
     .maybeSingle();

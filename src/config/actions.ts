@@ -42,7 +42,8 @@ import {
   GraduationCap,
   Rss,
   Building,
-  HeartPulse
+  HeartPulse,
+  Store
 } from 'lucide-react';
 import { ViewType } from '@/store';
 
@@ -536,6 +537,15 @@ export const SYSTEM_ACTIONS: Action[] = [
     route: 'stores',
     roles: ['admin'],
     description: 'Configura las diferentes ubicaciones físicas de tu negocio.'
+  },
+  {
+    id: 'storefront-config',
+    label: 'Vitrina Pública',
+    icon: Store,
+    keywords: ['vitrina', 'banner', 'storefront', 'publica', 'tienda online', 'carrusel', 'promociones', 'whatsapp group', 'telegram'],
+    route: 'storefront-config',
+    roles: ['admin', 'manager', 'encargado'],
+    description: 'Personaliza el banner, servicios, carrusel promocional y canales de contacto de tu vitrina pública.'
   },
   {
     id: 'health',

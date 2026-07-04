@@ -85,6 +85,7 @@ const SalesHistoryView = dynamic(() => import('@/components/views/terminal/views
 const UsersManagementView = dynamic(() => import('@/components/views/terminal/views/users/UsersManagementView'), { ssr: false });
 const RolesManagementView = dynamic(() => import('@/components/views/terminal/views/users/RolesManagementView'), { ssr: false });
 const StoresManagementView = dynamic(() => import('@/components/views/terminal/views/stores/StoresManagementView'), { ssr: false });
+const StorefrontConfigView = dynamic(() => import('@/components/views/terminal/views/stores/StorefrontConfigView'), { ssr: false });
 const AuditGlobalView = dynamic(() => import('@/components/views/terminal/views/audit/AuditGlobalView'), { ssr: false });
 const InventoryView = dynamic(() => import('@/components/views/terminal/views/inventory/InventoryView'), { ssr: false });
 const CatalogView = dynamic(() => import('@/components/views/terminal/views/catalog/CatalogView'), { ssr: false });
@@ -291,6 +292,7 @@ export default function TerminalShell() {
         case 'users': return <ViewErrorBoundary viewName="Usuarios"><UsersManagementView /></ViewErrorBoundary>;
         case 'roles': return <ViewErrorBoundary viewName="Roles"><RolesManagementView /></ViewErrorBoundary>;
         case 'stores': return <ViewErrorBoundary viewName="Tiendas"><StoresManagementView /></ViewErrorBoundary>;
+        case 'storefront-config': return <ViewErrorBoundary viewName="Vitrina Pública"><StorefrontConfigView /></ViewErrorBoundary>;
         case 'audit': return <ViewErrorBoundary viewName="Auditoría"><AuditGlobalView /></ViewErrorBoundary>;
         case 'inventory': return <ViewErrorBoundary viewName="Inventario"><InventoryView /></ViewErrorBoundary>;
         case 'catalog': return <ViewErrorBoundary viewName="Catálogo"><CatalogView /></ViewErrorBoundary>;

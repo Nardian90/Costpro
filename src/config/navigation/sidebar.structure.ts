@@ -60,7 +60,8 @@ import {
   Calculator,
   Smartphone,
   MessageCircle,
-  Send
+  Send,
+  Store
 } from 'lucide-react';
 
 export type NavItemType = 'item' | 'submenu' | 'group';
@@ -172,6 +173,11 @@ export const SIDEBAR_STRUCTURE: NavModule[] = [
       // para que sea accesible con 1 clic desde el grupo MULTI-TIENDA (donde el admin
       // naturalmente la busca), en lugar de estar a 3 niveles de profundidad.
       { id: 'stores', label: 'Gestión Tiendas', type: 'item', icon: Building, ariaLabel: 'Administrar tiendas del tenant', allowedRoles: ['admin'] },
+      // Vitrina pública configurable (2026-07-04): accesible directamente desde
+      // MULTI-TIENDA en lugar de estar oculta en Settings. El encargado/admin
+      // configura banner, servicios, carrusel y canales de WhatsApp/Telegram
+      // de la tienda activa.
+      { id: 'storefront-config', label: 'Vitrina', type: 'item', icon: Store, ariaLabel: 'Configurar vitrina pública', description: 'Personaliza el banner, servicios, carrusel promocional y canales de contacto (WhatsApp/Telegram) de tu vitrina pública.', allowedRoles: ['admin', 'manager', 'encargado'] },
       { id: 'workers', label: 'Trabajadores y Comisiones', type: 'item', icon: UserCog, ariaLabel: 'Gestión de trabajadores y cálculo de comisiones', description: 'CRUD de trabajadores por tienda, reglas de comisión versionables, cálculo por periodo y registro de pagos con auditoría completa.', allowedRoles: ['admin', 'manager', 'encargado'] },
       // QW-4 (IA Audit): "Dashboard KPI" y "Generador de Reportes" agrupados en
       // un submenú "Analítica". Antes eran 2 ítems sueltos a nivel raíz del grupo
