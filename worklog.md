@@ -3338,3 +3338,43 @@ Stage Summary:
 - Mobile-first evaluación: 4.5/10 → 8.7/10 (humano), 8/10 (VLM estricto)
 - Desktop evaluación: 7/10 → 9/10
 - Todas las funciones pedidas por el usuario están operativas
+
+---
+Task ID: social-hub-identity-2026-07-04
+Agent: Super Z (main agent)
+Task: (1) Permitir editar plantilla + slug desde Vitrina. (2) Crear padre 'Redes Sociales' en sidebar. (3) Mover WhatsApp y Telegram a una vista con tabs.
+
+Work Log:
+- Creado WhatsAppHubView.tsx con 5 tabs: Dashboard / Conexión y Config / Conversaciones / Grupo de Ventas / Invitaciones
+- Creado TelegramHubView.tsx con 5 tabs iguales
+- Ambos hubs:
+  * Tab activo persistido en localStorage
+  * Sub-vistas existentes lazy-loaded con React.Suspense (preserva bundle splitting)
+  * Tabs responsive: grid-cols-3 mobile / grid-cols-5 desktop
+  * Touch targets min-h-[48px]
+  * Estado 'sin tienda activa' manejado
+- Sidebar actualizado:
+  * Eliminados 2 submenús separados (WhatsApp + Telegram con 5 items cada uno = 10 items)
+  * Creado 1 submenú 'Redes Sociales' con 2 items (WhatsApp, Telegram)
+  * Reduce ruido del sidebar y agrupa lo relacionado
+- ViewType actualizado: añadidos 'whatsapp-hub' y 'telegram-hub'
+- TerminalShell actualizado: dynamic imports + cases para los 2 nuevos hubs
+- Compatibilidad hacia atrás: cases viejos (whatsapp-config, etc.) se mantienen
+  para que links profundos no rompan
+- StoreIdentitySection creado en StorefrontConfigView:
+  * Sección nueva antes del StorefrontConfigPanel
+  * Edita nombre, plantilla (4 cards visuales) y slug
+  * Verificación de slug en tiempo real (debounce 500ms) con check/X visual
+  * Validación de caracteres (solo minúsculas, números, guiones)
+  * Botón Guardar deshabilitado si no hay cambios o slug en uso
+  * Invalida cache de stores al guardar
+- TS: 0 errores
+- ESLint: 0 errores
+- Commit a8247b6cf pusheado a origin/main
+- PM2 reiniciado, servidor responde 200
+
+Stage Summary:
+- Sidebar más limpio: 10 items → 2 items bajo 'Redes Sociales'
+- Vitrina ahora permite editar nombre/plantilla/slug sin ir a Gestión Tiendas
+- Tabs internos preservan toda la funcionalidad existente
+- 6 archivos modificados, 501 inserciones, 33 eliminaciones
