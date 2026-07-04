@@ -81,6 +81,11 @@ export const storeSchema = z.object({
   latitude: z.number().nullable().optional(),
   longitude: z.number().nullable().optional(),
   is_active: z.boolean().optional(),
+  // FIX-VISIBILITY: Campos de visibilidad y promoción para la tienda pública
+  price_visible: z.boolean().optional().default(true),
+  stock_visible: z.boolean().optional().default(true),
+  on_promotion: z.boolean().optional().default(false),
+  price_currency: z.string().optional().default('CUP'),
   slug: z.string().nullable().optional(),
   plantilla: z.enum(STORE_TEMPLATES).nullable().optional(),
   created_at: z.string().optional(),
