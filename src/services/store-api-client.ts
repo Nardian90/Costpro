@@ -33,9 +33,10 @@ function timeoutController(ms: number = REQUEST_TIMEOUT_MS): AbortController {
 export const storeApiClient = {
   async fetchStores(status?: 'active' | 'inactive' | 'all'): Promise<Store[]> {
     const controller = timeoutController();
-    const url = new URL(API_BASE);
-    if (status) url.searchParams.set('status', status);
-    const res = await fetch(url.toString(), {
+    // FIX: new URL('/api/stores') falla en el browser (base relativa).
+    // Construir la URL manualmente.
+    const url = status ? `${API_BASE}?status=${status}` : API_BASE;
+    const res = await fetch(url, {
       method: 'GET',
       headers: authHeaders(),
       signal: controller.signal,
