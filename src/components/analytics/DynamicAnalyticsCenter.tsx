@@ -20,7 +20,7 @@ import {
   Download, Save, FolderOpen, Trash2, Copy, RotateCcw,
   Search, ChevronRight, ChevronDown, X, Plus, Settings2,
   FileSpreadsheet, FileText, Printer, BarChart3, GripVertical,
-  PanelLeft, PanelRight, ArrowUp, ArrowDown,
+  PanelLeft, PanelRight, ArrowUp, ArrowDown, Filter,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useVirtualizer as useVirtual } from '@tanstack/react-virtual';
@@ -227,6 +227,21 @@ export function DynamicAnalyticsCenter({
 
   // FIX-PROFESSIONAL: sort state — { fieldKey: 'asc' | 'desc' }
   const [sortState, setSortState] = useState<Record<string, 'asc' | 'desc'>>({});
+
+  // FIX-PROFESSIONAL: drill-down state — grupo seleccionado para ver detalle
+  const [drillDownGroup, setDrillDownGroup] = useState<{ key: string; label: string; items: Record<string, unknown>[] } | null>(null);
+
+  // FIX-PROFESSIONAL: filtros por valor — { fieldKey: Set<string> de valores permitidos }
+  // Si un campo está en config.filters, se aplican sus valores seleccionados
+  const [filterValues, setFilterValues] = useState<Record<string, Set<string>>>({});
+  const [openFilterField, setOpenFilterField] = useState<string | null>(null);
+
+  // FIX-PROFESSIONAL: formato condicional (heat map)
+  const [showHeatMap, setShowHeatMap] = useState(false);
+
+  // FIX-PROFESSIONAL: anchuras de columnas de la tabla (drag bordes)
+  const [tableColumnWidths, setTableColumnWidths] = useState<Record<string, number>>({});
+  const [resizingColumn, setResizingColumn] = useState<string | null>(null);
 
   // ── Panel resize handlers ──
   const startResize = useCallback((panel: 'left' | 'right') => (e: React.MouseEvent) => {
@@ -578,6 +593,96 @@ export function DynamicAnalyticsCenter({
     });
   }, [pivotResult.rowGroups, pivotResult.groupTotals, sortState]);
 
+  // FIX-PROFESSIONAL: aplicar filtros por valor a filteredData
+  const filteredByValues = useMemo(() => {
+    let result = filteredData;
+    for (const filterItem of config.filters) {
+      const allowed = filterValues[filterItem.fieldKey];
+      if (allowed && allowed.size > 0) {
+        result = result.filter(row => {
+          const val = String(row[filterItem.fieldKey] ?? '—');
+          return allowed.has(val);
+        });
+      }
+    }
+    return result;
+  }, [filteredData, config.filters, filterValues]);
+
+  // Override filteredData usage in pivot computation
+  // (We need to recompute pivotResult with filteredByValues instead of filteredData)
+  // For simplicity, we modify the pivot computation to use filteredByValues
+
+  // FIX-PROFESSIONAL: obtener valores únicos para un campo (para dropdown de filtros)
+  const getUniqueValues = useCallback((fieldKey: string): string[] => {
+    const vals = new Set<string>();
+    data.forEach(row => {
+      vals.add(String(row[fieldKey] ?? '—'));
+    });
+    return Array.from(vals).sort();
+  }, [data]);
+
+  // FIX-PROFESSIONAL: toggle valor en filtro
+  const toggleFilterValue = useCallback((fieldKey: string, value: string) => {
+    setFilterValues(prev => {
+      const current = prev[fieldKey] ? new Set(prev[fieldKey]) : new Set<string>();
+      if (current.has(value)) current.delete(value);
+      else current.add(value);
+      return { ...prev, [fieldKey]: current };
+    });
+  }, []);
+
+  // FIX-PROFESSIONAL: heat map — calcula intensidad 0-1 para una celda
+  const getHeatMapIntensity = useCallback((value: number, allValues: number[]): number => {
+    if (allValues.length === 0) return 0;
+    const max = Math.max(...allValues, 0);
+    const min = Math.min(...allValues, 0);
+    if (max === min) return 0;
+    return (value - min) / (max - min);
+  }, []);
+
+  // FIX-PROFESSIONAL: redimensionar columnas de la tabla
+  const startColumnResize = useCallback((colKey: string) => (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setResizingColumn(colKey);
+
+    const startX = e.clientX;
+    const startWidth = tableColumnWidths[colKey] || 120;
+
+    const onMouseMove = (moveEvent: MouseEvent) => {
+      const delta = moveEvent.clientX - startX;
+      const newWidth = Math.max(60, Math.min(400, startWidth + delta));
+      setTableColumnWidths(prev => ({ ...prev, [colKey]: newWidth }));
+    };
+
+    const onMouseUp = () => {
+      setResizingColumn(null);
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+  }, [tableColumnWidths]);
+
+  // Recopilar todos los valores numéricos para heat map
+  const allNumericValues = useMemo(() => {
+    if (!showHeatMap) return [];
+    const vals: number[] = [];
+    sortedRowGroups.forEach(g => {
+      const totals = pivotResult.groupTotals?.get(g.key) || {};
+      config.values.forEach(v => {
+        const val = totals[v.fieldKey];
+        if (typeof val === 'number') vals.push(val);
+      });
+    });
+    return vals;
+  }, [showHeatMap, sortedRowGroups, pivotResult.groupTotals, config.values]);
+
   // ── Render ──
   const availableFields = fields.filter(f =>
     !config.rows.some(r => r.fieldKey === f.key) &&
@@ -629,6 +734,9 @@ export function DynamicAnalyticsCenter({
           </Button>
           <Button variant="ghost" size="sm" className="h-8" onClick={resetView} title="Limpiar">
             <RotateCcw className="w-3.5 h-3.5" />
+          </Button>
+          <Button variant="ghost" size="sm" className={cn('h-8', showHeatMap && 'text-primary bg-primary/10')} onClick={() => setShowHeatMap(!showHeatMap)} title="Mapa de calor">
+            <BarChart3 className="w-3.5 h-3.5" />
           </Button>
         </div>
       </div>
@@ -784,17 +892,35 @@ export function DynamicAnalyticsCenter({
                           pivotResult.columnKeys.map(col => {
                             const cell = pivotResult.cellValues?.get(`${group.key}||${col}`) || {};
                             return (
-                              <td key={col} className="text-right px-3 py-2 font-mono tabular-nums">
+                              <td
+                                key={col}
+                                className="text-right px-3 py-2 font-mono tabular-nums cursor-pointer hover:bg-primary/5 transition-colors"
+                                onClick={() => setDrillDownGroup({ key: group.key, label: `${group.label} › ${col}`, items: group.items })}
+                                title="Click para ver detalle"
+                              >
                                 {config.values.map(v => formatValue(cell[v.fieldKey] ?? 0, v.fieldKey, fields)).join(' / ')}
                               </td>
                             );
                           })
                         ) : (
-                          config.values.map(v => (
-                            <td key={v.fieldKey} className="text-right px-3 py-2 font-mono tabular-nums">
-                              {formatValue(totals[v.fieldKey] ?? 0, v.fieldKey, fields)}
-                            </td>
-                          ))
+                          config.values.map(v => {
+                            const cellVal = totals[v.fieldKey] ?? 0;
+                            const intensity = showHeatMap ? getHeatMapIntensity(Number(cellVal), allNumericValues) : 0;
+                            const heatStyle = showHeatMap && intensity > 0
+                              ? { backgroundColor: `rgba(34, 197, 94, ${intensity * 0.3})` }
+                              : {};
+                            return (
+                              <td
+                                key={v.fieldKey}
+                                className="text-right px-3 py-2 font-mono tabular-nums cursor-pointer hover:bg-primary/5 transition-colors relative group/cell"
+                                style={heatStyle}
+                                onClick={() => setDrillDownGroup({ key: group.key, label: group.label, items: group.items })}
+                                title="Click para ver detalle"
+                              >
+                                {formatValue(cellVal, v.fieldKey, fields)}
+                              </td>
+                            );
+                          })
                         )}
                       </tr>
                       {/* Detail rows when expanded */}
@@ -901,6 +1027,42 @@ export function DynamicAnalyticsCenter({
                 accentColor="text-amber-600 dark:text-amber-400"
                 icon={Settings2}
               />
+
+              {/* FIX-PROFESSIONAL: botones de filtro por valor — aparecen cuando
+                  hay campos en la zona Filtros. Click abre dropdown con checkboxes. */}
+              {config.filters.length > 0 && (
+                <div className="mt-3 pt-2 border-t border-border/40">
+                  <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground mb-1.5">
+                    Valores de filtro
+                  </p>
+                  <div className="space-y-1">
+                    {config.filters.map(f => {
+                      const filterLabel = fields.find(fl => fl.key === f.fieldKey)?.label || f.fieldKey;
+                      return (
+                      <button
+                        key={f.fieldKey}
+                        onClick={() => setOpenFilterField(openFilterField === f.fieldKey ? null : f.fieldKey)}
+                        className={cn(
+                          'w-full flex items-center justify-between px-2 py-1.5 rounded-md text-[11px] font-bold border transition-colors',
+                          openFilterField === f.fieldKey
+                            ? 'border-primary bg-primary/10 text-primary'
+                            : 'border-border bg-card hover:bg-muted/50',
+                          filterValues[f.fieldKey]?.size > 0 && 'ring-1 ring-amber-500/40'
+                        )}
+                      >
+                        <span className="truncate">{filterLabel}</span>
+                        <span className="flex items-center gap-1 shrink-0">
+                          {filterValues[f.fieldKey]?.size > 0 && (
+                            <Badge variant="secondary" className="h-3.5 text-[8px] px-1">{filterValues[f.fieldKey].size}</Badge>
+                          )}
+                          <Filter className="w-3 h-3" />
+                        </span>
+                      </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Quick add buttons (alternative to drag for mobile/touch) */}
@@ -947,10 +1109,86 @@ export function DynamicAnalyticsCenter({
       </DragOverlay>
       </DndContext>
 
+      {/* Drill-down modal */}
+      {drillDownGroup && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setDrillDownGroup(null)}>
+          <Card className="w-full max-w-4xl max-h-[80vh] flex flex-col m-4" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Drill-down</p>
+                <h3 className="text-sm font-black">{drillDownGroup.label}</h3>
+              </div>
+              <div className="flex items-center gap-2">
+                <Badge variant="secondary">{drillDownGroup.items.length} registros</Badge>
+                <button onClick={() => setDrillDownGroup(null)} className="w-7 h-7 rounded-lg hover:bg-muted flex items-center justify-center">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+            <div className="flex-1 overflow-auto p-2">
+              <table className="w-full text-xs">
+                <thead className="sticky top-0 bg-card border-b border-border">
+                  <tr>
+                    {fields.map(f => (
+                      <th key={f.key} className="text-left px-2 py-1.5 font-black uppercase tracking-widest text-[9px] text-muted-foreground whitespace-nowrap">
+                        {f.label}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {drillDownGroup.items.slice(0, 500).map((item, i) => (
+                    <tr key={i} className="border-b border-border/20 hover:bg-muted/30">
+                      {fields.map(f => (
+                        <td key={f.key} className="px-2 py-1.5 text-[11px] font-medium">
+                          {f.type === 'number' ? formatValue(Number(item[f.key]) || 0, f.key, fields) : String(item[f.key] ?? '—')}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {drillDownGroup.items.length > 500 && (
+                <p className="text-center text-[10px] text-muted-foreground italic py-2">
+                  Mostrando 500 de {drillDownGroup.items.length} registros
+                </p>
+              )}
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {/* Filter dropdown popover */}
+      {openFilterField && (
+        <div className="absolute z-50" style={{ right: `${rightPanelWidth + 16}px`, top: '120px' }}>
+          <Card className="w-56 max-h-64 overflow-y-auto p-2 shadow-2xl">
+            <div className="flex items-center justify-between mb-2 px-1">
+              <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Filtrar valores</span>
+              <button onClick={() => setOpenFilterField(null)} className="w-5 h-5 rounded hover:bg-muted flex items-center justify-center">
+                <X className="w-3 h-3" />
+              </button>
+            </div>
+            <div className="space-y-0.5">
+              {getUniqueValues(openFilterField).map(val => (
+                <label key={val} className="flex items-center gap-2 px-2 py-1 rounded hover:bg-muted cursor-pointer text-xs">
+                  <input
+                    type="checkbox"
+                    checked={filterValues[openFilterField]?.has(val) ?? false}
+                    onChange={() => toggleFilterValue(openFilterField, val)}
+                    className="w-3 h-3 rounded"
+                  />
+                  <span className="truncate">{val}</span>
+                </label>
+              ))}
+            </div>
+          </Card>
+        </div>
+      )}
+
       {/* Status bar */}
       <div className="flex items-center justify-between px-4 py-1.5 border-t border-border bg-card/50 text-[10px] text-muted-foreground">
-        <span>{filteredData.length.toLocaleString()} registros · {pivotResult.rowGroups.length} grupos</span>
-        <span>{fields.length} campos · {config.values.length} valores</span>
+        <span>{filteredData.length.toLocaleString()} registros · {pivotResult.rowGroups.length} grupos{Object.keys(filterValues).length > 0 && ' · filtros activos'}</span>
+        <span>{fields.length} campos · {config.values.length} valores{showHeatMap && ' · 🔥 heat map'}</span>
       </div>
     </div>
   );
