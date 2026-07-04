@@ -54,7 +54,12 @@ const IPV_ROUTES: Record<string, ModuleRoute> = {
 // Costos Module: sidebar IDs → cost-sheets view + internal section
 // ────────────────────────────────────────────────────────────────
 const COSTOS_ROUTES: Record<string, ModuleRoute> = {
-  'cost-sheets':      { type: 'module', view: 'cost-sheets', tab: 'main' },
+  // FIX-TABLERO-PRINCIPAL (2026-07-04): "Tablero Principal" (cost-sheets) ahora
+  // abre directamente el Centro de Análisis Dinámico (tab: 'cost-analytics'),
+  // NO la ficha de costo. La ficha de costo sigue accesible desde el item
+  // "Ficha de Costo" (cost-sheet-editor) que usa tab: 'main'.
+  'cost-sheets':      { type: 'module', view: 'cost-sheets', tab: 'cost-analytics' },
+  'cost-sheet-editor': { type: 'module', view: 'cost-sheets', tab: 'main' },
   'view-assisted':    { type: 'module', view: 'cost-sheets', tab: 'view-assisted' },
   'view-reading':     { type: 'module', view: 'cost-sheets', tab: 'view-reading' },
   // B2-B3: 'gen-easy' reemplaza a 'gen-quick' + 'gen-expert' — abre una vista

@@ -464,6 +464,18 @@ const CostSheetView = () => {
   // Without this check, the view renders with the reinicioTemplate default
   // during hydration, showing a blank/wrong state before the real data loads.
 
+  // FIX-TABLERO-PRINCIPAL (2026-07-04): cuando activeSection === 'cost-analytics',
+  // renderizamos el Centro de Análisis directamente sin requerir una ficha de
+  // costo cargada. El Centro de Análisis es una vista independiente que carga
+  // sus propios datos desde la tabla products + product_cost_sheets.
+  if (activeSection === 'cost-analytics') {
+    return (
+      <div className="h-[calc(100vh-80px)]">
+        <CostAnalyticsView />
+      </div>
+    );
+  }
+
   if (!hasHydrated || !data || !data.header || !data.annexes || !data.sections) {
     return <ViewLoadingSplash label="Tablero Principal" showTips />;
   }
@@ -495,8 +507,10 @@ const CostSheetView = () => {
             4. Anexos (combina 'all-annexes' + 'signature' — firmas aquí también)
           Solo se muestra en modo experto + isEditing.
           B2: NO se muestra cuando activeSection === 'gen-easy' (esa es una vista separada).
-          B3: NO se muestra para 'arena-fc', 'massive-gen', 'steel-calculator', 'ai-chat' (vistas separadas). */}
-      {viewMode === 'expert' && isEditing && !['gen-easy', 'arena-fc', 'massive-gen', 'steel-calculator', 'ai-chat', 'audit'].includes(activeSection) && (
+          B3: NO se muestra para 'arena-fc', 'massive-gen', 'steel-calculator', 'ai-chat' (vistas separadas).
+          FIX-TABLERO-PRINCIPAL (2026-07-04): NO se muestra para 'cost-analytics'
+          (Tablero Principal es una vista dedicada, no muestra tabs de ficha de costo). */}
+      {viewMode === 'expert' && isEditing && !['gen-easy', 'arena-fc', 'massive-gen', 'steel-calculator', 'ai-chat', 'audit', 'cost-analytics'].includes(activeSection) && (
         <div className="mt-4 w-full flex justify-center">
           <div className="w-full max-w-6xl">
             <CostSheetMainTabs
