@@ -21,7 +21,7 @@ import { useState, useEffect, useMemo, useTransition, useCallback, useRef } from
 import type { ProductFCStatus } from '@/types';
 import { useAuthStore } from '@/store';
 import { useInventory, useAdjustStock } from '@/hooks/api/useInventory';
-import { Download, Plus, X, LayoutList, Table as TableIcon, Package, BarChart3, FileSpreadsheet, Filter, Eye, EyeOff, Store, CheckCircle2, Calculator } from 'lucide-react';
+import { Download, Plus, X, LayoutList, Table as TableIcon, Package, BarChart3, FileSpreadsheet, Filter, Eye, EyeOff, Store, CheckCircle2, Calculator, DollarSign, Tag } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabaseClient';
 import { useQueryClient } from '@tanstack/react-query';
@@ -569,6 +569,40 @@ export default function InventoryView() {
         }
     }, [filteredProducts]);
 
+    // FIX-BULK: Bulk toggle para price_visible, stock_visible, on_promotion
+    const handleBulkField = useCallback(async (field: 'price_visible' | 'stock_visible' | 'on_promotion', value: boolean) => {
+        const targets = filteredProducts;
+        if (targets.length === 0) {
+            toast.info('No hay productos en la vista actual para aplicar el cambio.');
+            return;
+        }
+
+        setBulkToggling(true);
+        const targetIds = targets.map(p => p.id);
+
+        try {
+            const { error } = await supabase
+                .from('products')
+                .update({ [field]: value })
+                .in('id', targetIds);
+
+            if (error) throw error;
+
+            queryClient.invalidateQueries({ queryKey: ['products'] });
+
+            const fieldLabels: Record<string, string> = {
+                price_visible: value ? 'precio visible' : 'precio oculto',
+                stock_visible: value ? 'stock visible' : 'stock oculto',
+                on_promotion: value ? 'promoción activada' : 'promoción desactivada',
+            };
+            toast.success(`${targets.length} producto(s) — ${fieldLabels[field]}`);
+        } catch (err: unknown) {
+            toast.error('Error masivo: ' + (err instanceof Error ? err.message : String(err)));
+        } finally {
+            setBulkToggling(false);
+        }
+    }, [filteredProducts]);
+
     const handleConfirmAdjustment = async (adjustmentData: {
         quantityDelta: number;
         unitCostAdjustment: number | null;
@@ -700,6 +734,69 @@ export default function InventoryView() {
                         ) : (
                             <EyeOff className="w-3.5 h-3.5" />
                         )}
+                    </button>
+
+                    {/* Separador */}
+                    <span className="w-px h-4 bg-border mx-1" />
+
+                    {/* Bulk: Precio visible ON/OFF */}
+                    <button
+                        type="button"
+                        onClick={() => handleBulkField('price_visible', true)}
+                        disabled={bulkToggling || filteredProducts.length === 0}
+                        className="inline-flex items-center justify-center w-7 h-7 rounded-full border transition-all active:scale-95 disabled:opacity-50 bg-success/90 border-success/30 text-white dark:text-black hover:bg-success"
+                        title={`Mostrar precio en ${filteredProducts.length} producto(s)`}
+                    >
+                        {bulkToggling ? <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" /> : <DollarSign className="w-3.5 h-3.5" />}
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => handleBulkField('price_visible', false)}
+                        disabled={bulkToggling || filteredProducts.length === 0}
+                        className="inline-flex items-center justify-center w-7 h-7 rounded-full border transition-all active:scale-95 disabled:opacity-50 bg-destructive/10 border-destructive/20 text-destructive hover:bg-destructive/20"
+                        title={`Ocultar precio en ${filteredProducts.length} producto(s)`}
+                    >
+                        {bulkToggling ? <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" /> : <DollarSign className="w-3.5 h-3.5 line-through opacity-60" />}
+                    </button>
+
+                    {/* Bulk: Stock visible ON/OFF */}
+                    <button
+                        type="button"
+                        onClick={() => handleBulkField('stock_visible', true)}
+                        disabled={bulkToggling || filteredProducts.length === 0}
+                        className="inline-flex items-center justify-center w-7 h-7 rounded-full border transition-all active:scale-95 disabled:opacity-50 bg-success/90 border-success/30 text-white dark:text-black hover:bg-success"
+                        title={`Mostrar stock en ${filteredProducts.length} producto(s)`}
+                    >
+                        {bulkToggling ? <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" /> : <Package className="w-3.5 h-3.5" />}
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => handleBulkField('stock_visible', false)}
+                        disabled={bulkToggling || filteredProducts.length === 0}
+                        className="inline-flex items-center justify-center w-7 h-7 rounded-full border transition-all active:scale-95 disabled:opacity-50 bg-destructive/10 border-destructive/20 text-destructive hover:bg-destructive/20"
+                        title={`Ocultar stock en ${filteredProducts.length} producto(s)`}
+                    >
+                        {bulkToggling ? <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" /> : <Package className="w-3.5 h-3.5 line-through opacity-60" />}
+                    </button>
+
+                    {/* Bulk: Promoción ON/OFF */}
+                    <button
+                        type="button"
+                        onClick={() => handleBulkField('on_promotion', true)}
+                        disabled={bulkToggling || filteredProducts.length === 0}
+                        className="inline-flex items-center justify-center w-7 h-7 rounded-full border transition-all active:scale-95 disabled:opacity-50 bg-amber-500 border-amber-400/30 text-white hover:bg-amber-600"
+                        title={`Activar promoción en ${filteredProducts.length} producto(s) (muestra como disponible aunque stock=0)`}
+                    >
+                        {bulkToggling ? <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" /> : <Tag className="w-3.5 h-3.5" />}
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => handleBulkField('on_promotion', false)}
+                        disabled={bulkToggling || filteredProducts.length === 0}
+                        className="inline-flex items-center justify-center w-7 h-7 rounded-full border transition-all active:scale-95 disabled:opacity-50 bg-muted border-border text-muted-foreground hover:bg-muted/70"
+                        title={`Desactivar promoción en ${filteredProducts.length} producto(s)`}
+                    >
+                        {bulkToggling ? <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" /> : <Tag className="w-3.5 h-3.5 opacity-40" />}
                     </button>
                 </div>
 
