@@ -9,10 +9,15 @@ const KNOWLEDGE_BASE = path.join(/*turbopackIgnore: true*/process.cwd(), 'knowle
 
 // Section metadata mapping — Diataxis framework
 const SECTION_META: Record<string, { label: string; icon: string }> = {
+  '01-empezar': { label: 'Para Empezar', icon: 'BookOpen' },
   '01-tutoriales': { label: 'Tutoriales', icon: 'GraduationCap' },
   '02-como-hacer': { label: 'Cómo Hacer', icon: 'Wrench' },
+  '02-gestion': { label: 'Gestión', icon: 'Settings' },
+  '03-inventario': { label: 'Inventario', icon: 'Package' },
   '03-referencia': { label: 'Referencia', icon: 'BookOpen' },
+  '04-configuracion': { label: 'Configuración', icon: 'Settings' },
   '04-explicacion': { label: 'Explicación', icon: 'Lightbulb' },
+  '05-referencia': { label: 'Referencia Avanzada', icon: 'Terminal' },
 };
 
 interface SearchResult {
@@ -78,7 +83,10 @@ function buildStructure(): HelpResponse {
       }));
 
     return {
-      id: dirName.replace(/^\d{2}-/, ''),
+      // FIX-DUPLICATE-KEY (2026-07-04): usar dirName completo (con prefijo numérico)
+      // como id para evitar colisiones cuando hay carpetas con el mismo nombre base
+      // (ej: 03-referencia y 05-referencia ambas generaban id 'referencia').
+      id: dirName,
       dir: `help/${dirName}`,
       label: meta.label,
       icon: meta.icon,

@@ -29,13 +29,24 @@ const ICON_MAP: Record<string, LucideIcon> = {
 };
 
 const SECTION_STYLES: Record<string, { color: string; gradient: string }> = {
+  // FIX-DUPLICATE-KEY (2026-07-04): keys ahora usan dirName completo con prefijo
+  '01-empezar':       { color: 'text-primary dark:text-blue-400',   gradient: 'from-primary/10 to-primary/5 border-primary/20' },
+  '01-tutoriales':    { color: 'text-primary dark:text-blue-400',   gradient: 'from-primary/10 to-primary/5 border-primary/20' },
+  '02-como-hacer':    { color: 'text-warning dark:text-amber-400',  gradient: 'from-warning/10 to-warning/5 border-warning/20' },
+  '02-gestion':       { color: 'text-success dark:text-emerald-400', gradient: 'from-success/10 to-success/5 border-success/20' },
+  '03-inventario':    { color: 'text-warning dark:text-amber-400',  gradient: 'from-warning/10 to-warning/5 border-warning/20' },
+  '03-referencia':    { color: 'text-rose-600 dark:text-rose-400',  gradient: 'from-rose-500/10 to-rose-600/5 border-rose-500/20' },
+  '04-configuracion': { color: 'text-violet-600 dark:text-violet-400', gradient: 'from-violet-500/10 to-violet-600/5 border-violet-500/20' },
+  '04-explicacion':   { color: 'text-warning dark:text-amber-400',  gradient: 'from-warning/10 to-warning/5 border-warning/20' },
+  '05-referencia':    { color: 'text-rose-600 dark:text-rose-400',  gradient: 'from-rose-500/10 to-rose-600/5 border-rose-500/20' },
+  compliance:         { color: 'text-sky-600 dark:text-sky-400',    gradient: 'from-sky-500/10 to-sky-600/5 border-sky-500/20' },
+  toc:                { color: 'text-primary dark:text-primary',    gradient: 'from-primary/10 to-primary/5 border-primary/20' },
+  // Fallback para IDs sin prefijo (compatibilidad)
   empezar:       { color: 'text-primary dark:text-blue-400',   gradient: 'from-primary/10 to-primary/5 border-primary/20' },
   gestion:       { color: 'text-success dark:text-emerald-400', gradient: 'from-success/10 to-success/5 border-success/20' },
   inventario:    { color: 'text-warning dark:text-amber-400',  gradient: 'from-warning/10 to-warning/5 border-warning/20' },
-  configuracion:{ color: 'text-violet-600 dark:text-violet-400', gradient: 'from-violet-500/10 to-violet-600/5 border-violet-500/20' },
-  referencia:    { color: 'text-rose-600 dark:text-rose-400',     gradient: 'from-rose-500/10 to-rose-600/5 border-rose-500/20' },
-  compliance:    { color: 'text-sky-600 dark:text-sky-400',       gradient: 'from-sky-500/10 to-sky-600/5 border-sky-500/20' },
-  toc:           { color: 'text-primary dark:text-primary',       gradient: 'from-primary/10 to-primary/5 border-primary/20' },
+  configuracion: { color: 'text-violet-600 dark:text-violet-400', gradient: 'from-violet-500/10 to-violet-600/5 border-violet-500/20' },
+  referencia:    { color: 'text-rose-600 dark:text-rose-400',  gradient: 'from-rose-500/10 to-rose-600/5 border-rose-500/20' },
 };
 
 interface HelpSidebarProps {
@@ -176,7 +187,7 @@ export default function HelpSidebar({ structure, toc, onSelect, activePath, isAc
           {visibleCategories.map((cat) => {
             const isOpen = openCategories[cat.id] ?? false;
             const activeInCategory = cat.files.some((f) => activePath === f.path);
-            const styles = SECTION_STYLES[cat.id] || SECTION_STYLES.referencia;
+            const styles = SECTION_STYLES[cat.id] || SECTION_STYLES['03-referencia'];
             const IconComp = cat.icon;
 
             return (
