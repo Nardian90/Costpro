@@ -231,7 +231,7 @@ function ProductDetailModal({
                       <span className="text-[10px] text-stone-400 ml-1">(x{v.conversion_factor})</span>
                     </div>
                     <div className="text-right">
-                      <span className="text-xs font-black text-stone-900">{formatCurrency(v.price)}</span>
+                      <span className="text-xs font-black text-stone-900">{v.price != null ? formatCurrency(v.price) : "—"}</span>
                       {/* precio_empresa excluded from public storefront (FIX-SEC-H6) */}
                     </div>
                   </div>
@@ -898,7 +898,7 @@ function ConstruccionCard({ product, image, onClick }: { product: StorefrontProd
           <div className="flex flex-wrap gap-1">
             {product.product_variants.map((v) => (
               <span key={v.id} className="px-1.5 py-0.5 rounded bg-amber-50 text-[9px] font-bold text-amber-700 border border-amber-200/60">
-                {v.name}{v.price !== product.price && <span className="ml-0.5 text-amber-600">{formatCurrency(v.price)}</span>}
+                {v.name}{v.price !== product.price && <span className="ml-0.5 text-amber-600">{v.price != null ? formatCurrency(v.price) : "—"}</span>}
               </span>
             ))}
           </div>
@@ -1044,7 +1044,7 @@ function MinimalistaTemplate({ store, products }: StorefrontPageProps) {
                 </div>
                 <p className="text-[10px] font-medium uppercase tracking-widest text-stone-400">{p.category || ''}</p>
                 <h3 className="text-sm font-medium mt-0.5 truncate">{p.name}</h3>
-                <p className="text-sm text-stone-600 mt-1">{formatCurrency(p.price)} <span className="text-stone-300">/ {p.unit_of_measure || t('unit')}</span></p>
+                <p className="text-sm text-stone-600 mt-1">{p.price != null ? formatCurrency(p.price) : "Consultar"} <span className="text-stone-300">/ {p.unit_of_measure || t('unit')}</span></p>
               </div>
             ))}
           </div>
@@ -1137,7 +1137,7 @@ function ModernaTemplate({ store, products }: StorefrontPageProps) {
                     {p.description && <p className="text-xs text-stone-400 line-clamp-2">{p.description}</p>}
                     <div className="flex-1" />
                     <div className="flex items-center justify-between pt-3 border-t border-stone-100">
-                      <p className="text-lg font-bold bg-gradient-to-r from-violet-600 to-indigo-600 bg-clip-text text-transparent">{formatCurrency(p.price)}</p>
+                      <p className="text-lg font-bold bg-gradient-to-r from-violet-600 to-indigo-600 bg-clip-text text-transparent">{p.price != null ? formatCurrency(p.price) : "Consultar"}</p>
                       <span className="text-[10px] text-stone-400 font-medium">{p.unit_of_measure || t('unit')}</span>
                     </div>
                   </div>
@@ -1225,7 +1225,7 @@ function ClasicaTemplate({ store, products }: StorefrontPageProps) {
                     {p.description && <p className="text-xs text-stone-500 line-clamp-2 mt-1">{p.description}</p>}
                     <div className="flex-1" />
                     <div className="flex items-center justify-between mt-2">
-                      <p className="text-lg font-bold text-amber-800">{formatCurrency(p.price)}</p>
+                      <p className="text-lg font-bold text-amber-800">{p.price != null ? formatCurrency(p.price) : "Consultar"}</p>
                       <span className="text-[10px] text-stone-400">{p.unit_of_measure || t('unit')}</span>
                     </div>
                   </div>
