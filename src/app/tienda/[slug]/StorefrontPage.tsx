@@ -1612,10 +1612,11 @@ function ConstruccionTemplate({ store, products }: StorefrontPageProps) {
                   href={`https://wa.me/${store.phone.replace(/[^0-9]/g, '')}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-green-600 hover:bg-green-500 text-white text-[11px] font-black uppercase tracking-widest transition-all hover:shadow-lg hover:shadow-green-600/20 active:scale-95"
+                  aria-label={t('inquireNow')}
+                  className="flex items-center gap-2 px-3 sm:px-4 py-2 min-h-[40px] rounded-xl bg-green-600 hover:bg-green-500 text-white text-[11px] font-black uppercase tracking-widest transition-all hover:shadow-lg hover:shadow-green-600/20 active:scale-95"
                 >
                   <MessageCircle className="w-3.5 h-3.5" />
-                  {t('inquireNow')}
+                  <span className="hidden sm:inline">{t('inquireNow')}</span>
                 </a>
               )}
             </div>
