@@ -890,7 +890,8 @@ export default function HelpSectionRenderer({ content, glossary }: HelpSectionRe
 
           // ── BLOCKQUOTES / CALLOUTS ────────────────────────────────────
           // FIX-HELP-CALLOUTS (2026-07-04): callouts más visuales en mobile
-          // con icono más grande, padding más generoso, y label visible.
+          // con icono más grande en caja redondeada, padding más generoso,
+          // y label visible del tipo (Tip/Importante/Nota/Peligro).
           blockquote: ({ node, children, ...props }: any) => {
             const textContent = React.Children.toArray(children)
               .map(c => typeof c === 'string' ? c : '')
@@ -899,36 +900,41 @@ export default function HelpSectionRenderer({ content, glossary }: HelpSectionRe
 
             if (callout) {
               const IconComp = callout.icon;
+              // Extraer el color de fondo del callout.color (primer bg-*)
+              const bgClass = callout.color.split(' ').find(c => c.startsWith('bg-')) || 'bg-muted/20';
+              const textClass = callout.color.split(' ').find(c => c.startsWith('text-')) || 'text-foreground';
               return (
                 <div className={cn(
-                  "my-6 sm:my-8 rounded-xl border-l-4 px-4 sm:px-6 py-4 sm:py-5 shadow-sm",
+                  "my-6 sm:my-8 rounded-xl border-l-4 shadow-sm overflow-hidden",
                   callout.color
                 )} {...props}>
-                  <div className="flex items-start gap-3">
-                    <div className={cn("shrink-0 w-8 h-8 rounded-lg flex items-center justify-center", callout.color.split(' ').find(c => c.startsWith('bg-')))}>
-                      <IconComp className="w-4 h-4" />
+                  {/* Header con icono + label del tipo */}
+                  <div className="flex items-center gap-2 px-4 sm:px-6 pt-3 pb-1">
+                    <div className={cn("shrink-0 w-7 h-7 rounded-lg flex items-center justify-center", bgClass)}>
+                      <IconComp className={cn("w-4 h-4", textClass)} />
                     </div>
-                    <div className="flex-1 text-[14px] sm:text-[14px] font-medium leading-[1.7] text-foreground/85 hyphens-auto">
-                      {/* Quitar el prefijo "**Tip:**" etc. del contenido renderizado */}
-                      {(() => {
-                        const childArray = React.Children.toArray(children);
-                        // El primer child suele ser <p>**Tip:** ...</p> — lo limpiamos
-                        return childArray.map((child, idx) => {
-                          if (idx === 0 && React.isValidElement(child) && (child.type as any) === 'p') {
-                            const cleanedText = React.Children.toArray((child.props as any).children)
-                              .map(c => {
-                                if (typeof c === 'string') {
-                                  // Quitar "**Tip:**", "**Importante:**", etc. del inicio
-                                  return c.replace(/^\s*\*\*(tip|importante|nota|danger|consejo|warning|💡|⚠️?|ℹ️|❌|🚫)\s*:?\s*\*\*\s*/i, '');
-                                }
-                                return c;
-                              });
-                            return React.cloneElement(child, {} as any, ...cleanedText);
-                          }
-                          return child;
-                        });
-                      })()}
-                    </div>
+                    <span className={cn("text-[10px] font-black uppercase tracking-widest", textClass)}>
+                      {callout.label}
+                    </span>
+                  </div>
+                  {/* Contenido */}
+                  <div className="px-4 sm:px-6 pb-4 pt-2 text-[14px] sm:text-[14px] font-medium leading-[1.7] text-foreground/85 hyphens-auto">
+                    {(() => {
+                      const childArray = React.Children.toArray(children);
+                      return childArray.map((child, idx) => {
+                        if (idx === 0 && React.isValidElement(child) && (child.type as any) === 'p') {
+                          const cleanedText = React.Children.toArray((child.props as any).children)
+                            .map(c => {
+                              if (typeof c === 'string') {
+                                return c.replace(/^\s*\*\*(tip|importante|nota|danger|consejo|warning|💡|⚠️?|ℹ️|❌|🚫)\s*:?\s*\*\*\s*/i, '');
+                              }
+                              return c;
+                            });
+                          return React.cloneElement(child, {} as any, ...cleanedText);
+                        }
+                        return child;
+                      });
+                    })()}
                   </div>
                 </div>
               );
