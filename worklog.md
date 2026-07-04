@@ -3237,3 +3237,54 @@ Stage Summary:
 - ENERVIDA-VITALLCONS ahora tiene banner personalizado + 3 servicios + 3 promos + tagline + horario.
 - Tarjetas de producto muestran precio con moneda claramente distinguible (verde USD, ámbar CUP, azul EUR, púrpura MLC).
 - Script reutilizable para configurar otras tiendas (cambiar STORE_ID).
+
+---
+Task ID: storefront-dedicated-view-2026-07-04
+Agent: Super Z (main agent)
+Task: Mover StorefrontConfigPanel de Settings a una vista dedicada bajo MULTI-TIENDA. Fix del bug: el banner nuevo generado no se veía, solo el viejo default.
+
+Work Log:
+- VLM analizó imagen del usuario: confirmó que se veía el banner VIEJO (edificio colonial cubano) en lugar del nuevo (paneles solares al atardecer).
+- Verificada DB: banner_url SÍ estaba persistido correctamente (https://wthkddeleylijmonclxg.supabase.co/storage/v1/object/public/stores/store-banners/enervida-banner-1783144848029.png).
+- Verificada API /api/storefront/[slug]: SÍ retornaba banner_url correcto.
+- DIAGNÓSTICO RAÍZ: page.tsx (SSR) hacía SELECT sin los 7 campos nuevos (banner_url, store_tagline, whatsapp_group_url, telegram_url, services, promo_images, opening_hours). El StorefrontPage recibía banner_url=undefined → hacía fallback a /storefront-construccion-banner.png (banner viejo).
+- FIX page.tsx: añadidos los 7 campos al SELECT del SSR. Cambiado revalidate de 60 a 0 para que los cambios de config se reflejen instantáneamente.
+
+Vista dedicada StorefrontConfigView:
+- Creada en src/components/views/terminal/views/stores/StorefrontConfigView.tsx
+- Header con título + botones Revalidar / Ver tienda
+- Banner de contexto mostrando tienda activa + plantilla + URL
+- 3 estados: sin tienda activa, loading, error
+- Delega el resto a StorefrontConfigPanel
+- Botón "Revalidar" llama a /api/storefront/revalidate para forzar SSR
+
+Registro en navegación:
+- ViewType añadido 'storefront-config' en src/store/index.ts
+- TerminalShell.tsx: dynamic import + case 'storefront-config'
+- sidebar.structure.ts: item bajo MULTI-TIENDA con icono Store, allowedRoles admin/manager/encargado
+- actions.ts: entrada en command palette con keywords (vitrina, banner, storefront, carrusel, etc.)
+
+Endpoint revalidación:
+- POST /api/storefront/revalidate con body { slug }
+- Verifica permisos via canManageStore(session.user, store.id)
+- revalidatePath('/tienda/[slug]', 'page') + revalidatePath('/tienda/[slug]', 'page')
+
+Limpieza:
+- Eliminada StorefrontSection de SettingsView (~110 líneas)
+- Eliminados imports no usados (StoreIcon, StorefrontConfigPanel, Store type)
+
+Verificación post-fix:
+- curl /tienda/enervida-vitallcons ahora retorna HTML con store-banners/enervida-banner-1783144848029.png
+- Las 3 promo images (promo1, promo2, promo3) aparecen en el HTML
+- Servicios (Instalación, Mantenimiento, Piezas de respuesto) aparecen
+- Horario (Lun-Vie 8:30) aparece
+- TypeScript: 0 errores
+- ESLint: 0 errores
+- Commit 8deb1fbfb pusheado a origin/main
+- PM2 reiniciado
+
+Stage Summary:
+- Bug crítico resuelto: el SSR no pedía los campos nuevos a Supabase.
+- Vista dedicada accesible en MULTI-TIENDA → Vitrina (1 clic).
+- Botón Revalidar permite forzar SSR sin esperar al revalidate automático.
+- El usuario debe hacer hard-refresh (Ctrl+Shift+R) en /tienda/enervida-vitallcons para ver el banner nuevo.
