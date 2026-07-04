@@ -236,7 +236,7 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
             isActive ? "bg-primary/10 text-primary font-bold shadow-sm" : "text-sidebar-foreground/80 hover:bg-primary/5 hover:text-sidebar-foreground"
           )}
         >
-          {item.icon && <item.icon className={cn("w-4 h-4 transition-transform group-hover:scale-110", isActive ? "text-primary" : "opacity-70")} />}
+          {item.icon && <item.icon className={cn("w-4 h-4 transition-transform group-hover:scale-110", isActive ? "text-primary" : "opacity-80")} />}
           <span className="text-xs uppercase tracking-wider truncate flex-1 text-left">{item.label}</span>
           {isActive && (
             <motion.div layoutId="active-nav-indicator" className="ml-auto w-1.5 h-1.5 rounded-full bg-primary" />
@@ -330,7 +330,7 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
               )}
             >
               <div className="flex items-center gap-3">
-                {mod.icon && <mod.icon className="w-4 h-4 opacity-70" />}
+                {mod.icon && <mod.icon className="w-4 h-4 opacity-80" />}
                 <span className={cn(
                   "font-black tracking-[0.2em] uppercase",
                   depth === 0 ? "text-xs" : "text-[11px] opacity-80"
@@ -352,7 +352,7 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
             )}
           >
             <div className="flex items-center gap-3">
-              {mod.icon && <mod.icon className="w-4 h-4 opacity-70" />}
+              {mod.icon && <mod.icon className="w-4 h-4 opacity-80" />}
               <span className={cn(
                 "font-black tracking-[0.2em] uppercase",
                 depth === 0 ? "text-xs" : "text-[11px] opacity-80"
@@ -376,7 +376,7 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
           )}
         >
           <div className="flex items-center gap-3">
-            {mod.icon && <mod.icon className="w-4 h-4 opacity-70" />}
+            {mod.icon && <mod.icon className="w-4 h-4 opacity-80" />}
             <span className="text-[11px] font-black tracking-[0.2em] uppercase opacity-80">{mod.label}</span>
           </div>
           <ChevronDown className={cn("w-3.5 h-3.5 transition-transform duration-300", isExpanded && "rotate-180")} />
