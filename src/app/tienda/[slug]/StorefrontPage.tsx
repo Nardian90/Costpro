@@ -425,19 +425,221 @@ function ServicesSection({ services }: { services: NonNullable<StorefrontStore['
   );
 }
 
+// ── Live Sales Notifications (social proof en vivo) ─────────────
+//
+// FIX-LIVE-SALES (2026-07-04): simula notificaciones tipo "Se vendió X hace
+// 2 min" para dar sensación de tienda viva. Aparecen como toasts flotantes
+// en la esquina inferior izquierda, cada 25-45s aleatoriamente.
+//
+// Comportamiento:
+//   - Selecciona un producto al azar del catálogo
+//   - Muestra notificación por 5s con animación slide-in
+//   - Descarta y espera 25-45s para la siguiente
+//   - Pausa cuando el usuario tiene la pestaña en background (visibilitychange)
+//   - No muestra si hay < 3 productos (no tendría sentido)
+//   - Variantes de mensaje: "Se vendió", "Alguien compró", "Nuevo pedido de"
+//   - Time stamps aleatorios: "hace 2 min", "hace 5 min", "hace 1 min"
+//   - Nombres de clientes genéricos cubanos: "Carlos en La Habana", "María en Santiago"
+
+const LIVE_SALE_MESSAGES = [
+  'Se vendió',
+  'Alguien compró',
+  'Nuevo pedido de',
+  'Acaba de venderse',
+  'Cliente adquirió',
+];
+
+const LIVE_SALE_LOCATIONS = [
+  'La Habana', 'Santiago de Cuba', 'Camagüey', 'Holguín', 'Santa Clara',
+  'Guantánamo', 'Bayamo', 'Las Tunas', 'Cienfuegos', 'Pinar del Río',
+  'Matanzas', 'Ciego de Ávila', 'Sancti Spíritus', 'Manzanillo',
+];
+
+const LIVE_SALE_TIMES = [
+  'hace 1 min', 'hace 2 min', 'hace 3 min', 'hace 5 min',
+  'hace 8 min', 'hace 12 min', 'ahora mismo',
+];
+
+interface LiveSale {
+  id: number;
+  product: StorefrontProduct;
+  message: string;
+  location: string;
+  timeAgo: string;
+}
+
+function LiveSalesNotifications({ products }: { products: StorefrontProduct[] }) {
+  const [currentSale, setCurrentSale] = useState<LiveSale | null>(null);
+  const [isVisible, setIsVisible] = useState(false);
+  const saleIdRef = useRef(0);
+
+  useEffect(() => {
+    // No mostrar si hay menos de 3 productos o la pestaña no está visible
+    if (products.length < 3) return;
+
+    let timeoutShow: ReturnType<typeof setTimeout>;
+    let timeoutHide: ReturnType<typeof setTimeout>;
+    let isPaused = false;
+
+    const scheduleNext = () => {
+      if (isPaused) return;
+      // Intervalo aleatorio entre 25s y 45s
+      const delay = 25_000 + Math.random() * 20_000;
+      timeoutShow = setTimeout(() => {
+        if (isPaused) return;
+        // Seleccionar producto al azar
+        const randomProduct = products[Math.floor(Math.random() * products.length)];
+        const message = LIVE_SALE_MESSAGES[Math.floor(Math.random() * LIVE_SALE_MESSAGES.length)];
+        const location = LIVE_SALE_LOCATIONS[Math.floor(Math.random() * LIVE_SALE_LOCATIONS.length)];
+        const timeAgo = LIVE_SALE_TIMES[Math.floor(Math.random() * LIVE_SALE_TIMES.length)];
+        saleIdRef.current += 1;
+        setCurrentSale({
+          id: saleIdRef.current,
+          product: randomProduct,
+          message,
+          location,
+          timeAgo,
+        });
+        setIsVisible(true);
+
+        // Ocultar después de 5.5s
+        timeoutHide = setTimeout(() => {
+          setIsVisible(false);
+          // Limpiar después de la animación de salida (500ms)
+          setTimeout(() => setCurrentSale(null), 500);
+          // Programar la siguiente
+          scheduleNext();
+        }, 5500);
+      }, delay);
+    };
+
+    // Pausar cuando la pestaña no está visible
+    const onVisibilityChange = () => {
+      isPaused = document.hidden;
+      if (!isPaused) {
+        // Al volver, re-programar si no hay notificación activa
+        if (!currentSale) scheduleNext();
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibilityChange);
+
+    // Primera notificación después de 8s (más rápida para que el usuario la vea)
+    timeoutShow = setTimeout(() => {
+      if (isPaused) return;
+      const randomProduct = products[Math.floor(Math.random() * products.length)];
+      const message = LIVE_SALE_MESSAGES[Math.floor(Math.random() * LIVE_SALE_MESSAGES.length)];
+      const location = LIVE_SALE_LOCATIONS[Math.floor(Math.random() * LIVE_SALE_LOCATIONS.length)];
+      const timeAgo = LIVE_SALE_TIMES[Math.floor(Math.random() * LIVE_SALE_TIMES.length)];
+      saleIdRef.current += 1;
+      setCurrentSale({
+        id: saleIdRef.current,
+        product: randomProduct,
+        message,
+        location,
+        timeAgo,
+      });
+      setIsVisible(true);
+      timeoutHide = setTimeout(() => {
+        setIsVisible(false);
+        setTimeout(() => setCurrentSale(null), 500);
+        scheduleNext();
+      }, 5500);
+    }, 8000);
+
+    return () => {
+      clearTimeout(timeoutShow);
+      clearTimeout(timeoutHide);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+    };
+  }, [products.length]);
+
+  if (!currentSale) return null;
+
+  const p = currentSale.product;
+  const imageUrlRaw = p.image_url || p.public_image_url;
+  const imageUrl = imageUrlRaw ? getProductImageUrl(imageUrlRaw) : null;
+  const priceText = p.price != null
+    ? formatCurrency(p.price, (p as any).price_currency || 'CUP')
+    : null;
+
+  return (
+    <div
+      key={currentSale.id}
+      role="status"
+      aria-live="polite"
+      className={cn(
+        'fixed bottom-4 left-4 z-40 max-w-[calc(100vw-2rem)] sm:max-w-sm',
+        'transition-all duration-500 ease-out',
+        isVisible
+          ? 'translate-y-0 opacity-100'
+          : 'translate-y-8 opacity-0 pointer-events-none'
+      )}
+    >
+      <div className="bg-white rounded-xl shadow-2xl border border-stone-200/80 overflow-hidden flex items-center gap-3 p-2.5 pr-4">
+        {/* Thumbnail del producto */}
+        <div className="w-12 h-12 rounded-lg overflow-hidden bg-stone-100 shrink-0 flex items-center justify-center">
+          {imageUrl ? (
+            <img src={imageUrl} alt={p.name} className="w-full h-full object-cover" />
+          ) : (
+            <Package className="w-5 h-5 text-stone-300" />
+          )}
+        </div>
+        {/* Texto */}
+        <div className="flex-1 min-w-0">
+          <p className="text-[11px] font-bold text-stone-700 leading-tight">
+            <span className="text-emerald-600 font-black uppercase tracking-wider text-[10px]">
+              {currentSale.message}
+            </span>{' '}
+            <span className="text-stone-900 font-black truncate">{p.name}</span>
+          </p>
+          <p className="text-[10px] text-stone-500 mt-0.5 flex items-center gap-1.5">
+            <span className="font-medium">{currentSale.location}</span>
+            <span className="text-stone-300">·</span>
+            <span>{currentSale.timeAgo}</span>
+            {priceText && (
+              <>
+                <span className="text-stone-300">·</span>
+                <span className="font-black text-stone-700">{priceText}</span>
+              </>
+            )}
+          </p>
+        </div>
+        {/* Indicador "live" */}
+        <div className="shrink-0 flex items-center gap-1 self-start mt-0.5">
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+          </span>
+          <span className="text-[9px] font-black uppercase tracking-widest text-emerald-600">
+            Live
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Promo Carousel ──────────────────────────────────────────────
+//
+// FIX-CAROUSEL-TRANSITION (2026-07-04): antes usaba `translateX(-100%)` para
+// "deslizar" entre slides, lo que produce un cambio seco y brusco. Ahora usamos
+// crossfade: todas las imágenes están apiladas (absolute inset-0) y solo
+// cambiamos la opacidad. Transición de 1000ms con ease-in-out → feel suave y
+// natural. La imagen activa tiene opacity-100, las demás opacity-0.
+// Cada slide también tiene un sutil scale(1.02) → scale(1) durante la
+// transición (efecto Ken Burns ligero) que aporta movimiento sin distraer.
 
 function PromoCarousel({ images }: { images: NonNullable<StorefrontStore['promo_images']> }) {
   const [current, setCurrent] = useState(0);
   const [paused, setPaused] = useState(false);
   const total = images.length;
 
-  // Autoplay cada 5s, pausable al hover
+  // Autoplay cada 5.5s, pausable al hover
   useEffect(() => {
     if (paused || total <= 1) return;
     const timer = setInterval(() => {
       setCurrent(c => (c + 1) % total);
-    }, 5000);
+    }, 5500);
     return () => clearInterval(timer);
   }, [paused, total]);
 
@@ -451,83 +653,86 @@ function PromoCarousel({ images }: { images: NonNullable<StorefrontStore['promo_
       onMouseLeave={() => setPaused(false)}
     >
       <div className="max-w-6xl mx-auto px-0 sm:px-6 sm:py-4">
-        <div className="relative overflow-hidden sm:rounded-2xl">
-          {/* Slides container */}
-          <div
-            className="flex transition-transform duration-500 ease-out"
-            style={{ transform: `translateX(-${current * 100}%)` }}
-          >
-            {images.map((img, i) => (
-              <div key={i} className="relative w-full shrink-0 aspect-[16/7] sm:aspect-[3/1] bg-stone-900">
-                {img.link ? (
-                  <a
-                    href={img.link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="absolute inset-0 group"
-                  >
-                    <img
-                      src={img.url}
-                      alt={img.caption || `Promoción ${i + 1}`}
-                      className="w-full h-full object-cover"
-                      loading={i === 0 ? 'eager' : 'lazy'}
-                    />
-                    {img.caption && (
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent flex items-end p-4 sm:p-6">
-                        <p className="text-white font-black text-sm sm:text-lg uppercase tracking-tight drop-shadow-lg flex items-center gap-1.5">
-                          {img.caption}
-                          <ExternalLink className="w-3.5 h-3.5 opacity-70" />
-                        </p>
-                      </div>
-                    )}
-                  </a>
-                ) : (
-                  <div className="absolute inset-0">
-                    <img
-                      src={img.url}
-                      alt={img.caption || `Promoción ${i + 1}`}
-                      className="w-full h-full object-cover"
-                      loading={i === 0 ? 'eager' : 'lazy'}
-                    />
-                    {img.caption && (
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent flex items-end p-4 sm:p-6">
-                        <p className="text-white font-black text-sm sm:text-lg uppercase tracking-tight drop-shadow-lg">
-                          {img.caption}
-                        </p>
-                      </div>
-                    )}
+        <div className="relative overflow-hidden sm:rounded-2xl aspect-[16/7] sm:aspect-[3/1] bg-stone-900">
+          {/* Slides apiladas — crossfade suave */}
+          {images.map((img, i) => {
+            const isActive = i === current;
+            const content = (
+              <>
+                <img
+                  src={img.url}
+                  alt={img.caption || `Promoción ${i + 1}`}
+                  className={cn(
+                    'w-full h-full object-cover transition-all duration-[1200ms] ease-in-out',
+                    isActive ? 'opacity-100 scale-100' : 'opacity-0 scale-105'
+                  )}
+                  loading={i === 0 ? 'eager' : 'lazy'}
+                  decoding="async"
+                />
+                {img.caption && (
+                  <div className={cn(
+                    'absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent flex items-end p-4 sm:p-6 transition-opacity duration-1000',
+                    isActive ? 'opacity-100' : 'opacity-0'
+                  )}>
+                    <p className="text-white font-black text-sm sm:text-lg uppercase tracking-tight drop-shadow-lg flex items-center gap-1.5">
+                      {img.caption}
+                      {img.link && <ExternalLink className="w-3.5 h-3.5 opacity-70" />}
+                    </p>
                   </div>
                 )}
+              </>
+            );
+
+            // Cada slide es absolute inset-0 apilada — el crossfade cambia opacity
+            return img.link ? (
+              <a
+                key={i}
+                href={img.link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="absolute inset-0 group"
+                aria-hidden={!isActive}
+                tabIndex={isActive ? 0 : -1}
+              >
+                {content}
+              </a>
+            ) : (
+              <div
+                key={i}
+                className="absolute inset-0"
+                aria-hidden={!isActive}
+              >
+                {content}
               </div>
-            ))}
-          </div>
+            );
+          })}
 
           {/* Navigation arrows (solo si hay más de 1) */}
           {total > 1 && (
             <>
               <button
                 onClick={() => setCurrent(c => (c - 1 + total) % total)}
-                className="absolute left-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/40 hover:bg-black/60 text-white flex items-center justify-center transition-colors backdrop-blur-sm"
+                className="absolute left-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/40 hover:bg-black/60 text-white flex items-center justify-center transition-colors backdrop-blur-sm z-10"
                 aria-label="Anterior"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
               <button
                 onClick={() => setCurrent(c => (c + 1) % total)}
-                className="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/40 hover:bg-black/60 text-white flex items-center justify-center transition-colors backdrop-blur-sm"
+                className="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/40 hover:bg-black/60 text-white flex items-center justify-center transition-colors backdrop-blur-sm z-10"
                 aria-label="Siguiente"
               >
                 <ChevronRight className="w-4 h-4" />
               </button>
 
-              {/* Dots indicator */}
+              {/* Dots indicator — con transición suave */}
               <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
                 {images.map((_, i) => (
                   <button
                     key={i}
                     onClick={() => setCurrent(i)}
                     className={cn(
-                      'rounded-full transition-all',
+                      'rounded-full transition-all duration-500',
                       i === current
                         ? 'w-6 h-1.5 bg-white'
                         : 'w-1.5 h-1.5 bg-white/50 hover:bg-white/80'
@@ -1218,6 +1423,9 @@ function ConstruccionTemplate({ store, products }: StorefrontPageProps) {
           <ArrowUp className="w-4 h-4" />
         </button>
       )}
+
+      {/* Notificaciones de ventas en vivo (social proof) */}
+      <LiveSalesNotifications products={products} />
 
       <StorefrontFooter store={store} template="construccion" />
       {detailProduct && <ProductDetailModal product={detailProduct} onClose={() => setDetailProduct(null)} storePhone={store.phone} />}
