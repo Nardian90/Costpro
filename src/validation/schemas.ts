@@ -216,6 +216,29 @@ export const productSchema = z.object({
       return val;
     }, z.boolean().optional())
     .default(true),
+  // FIX-VISIBILITY: Campos de visibilidad y promoción — deben estar en productSchema
+  // para que Zod safeParse los preserve al validar la respuesta del RPC
+  price_visible: z
+    .preprocess((val) => {
+      if (val === undefined || val === null) return undefined;
+      if (typeof val === "string") return val === "true";
+      return val;
+    }, z.boolean().optional())
+    .default(true),
+  stock_visible: z
+    .preprocess((val) => {
+      if (val === undefined || val === null) return undefined;
+      if (typeof val === "string") return val === "true";
+      return val;
+    }, z.boolean().optional())
+    .default(true),
+  on_promotion: z
+    .preprocess((val) => {
+      if (val === undefined || val === null) return undefined;
+      if (typeof val === "string") return val === "true";
+      return val;
+    }, z.boolean().optional())
+    .default(false),
 });
 
 export const productVariantSchema = z.object({
