@@ -20,7 +20,6 @@ export default async function StorefrontLayout({
     <>
       {/* Force light theme: remove 'dark' class and suppress dark variants */}
       <script
-        nonce={nonce}
         dangerouslySetInnerHTML={{
           __html: `
             (function(){

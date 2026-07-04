@@ -190,20 +190,21 @@ export default async function TiendaPublicPage({ params }: PageProps) {
   // by calling get_paginated_products directly. We must filter here too.
   const productList = visibleProducts.map((p) => {
     const variants = variantsByProduct.get(p.id as string);
+    const onPromotion = (p.on_promotion as boolean) === true;
     return {
       id: p.id as string,
       name: p.name as string,
       description: (p.description as string | null) ?? null,
       sku: (p.sku as string | null) ?? null,
-      price: (p.price as number) ?? 0,
-      // precio_empresa intentionally excluded from public storefront
+      price: (p.price_visible as boolean) === false ? null : (p.price as number) ?? 0,
+      price_currency: (p.price_currency as string) ?? 'CUP',
       image_url: (p.image_url as string | null) ?? null,
       public_image_url: (p.public_image_url as string | null) ?? null,
       category: (p.category as string | null) ?? null,
       unit_of_measure: (p.unit_of_measure as string | null) ?? null,
-      // stock_current intentionally excluded — only inStock boolean is derived server-side
-      inStock: ((p.stock_current as number) ?? 0) > 0,
-      // Variants: strip precio_empresa from public view
+      inStock: onPromotion || ((p.stock_current as number) ?? 0) > 0,
+      on_promotion: onPromotion,
+      stock_visible: (p.stock_visible as boolean) !== false,
       product_variants: variants
         ? variants.map(({ id, name, sku, price, conversion_factor }) => ({
             id, name, sku, price, conversion_factor,
