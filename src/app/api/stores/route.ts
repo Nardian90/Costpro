@@ -176,7 +176,7 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
       }
 
       // FIX: Detectar error de clave duplicada (PostgreSQL 23505) y mostrar mensaje claro
-      const isDuplicateKey = errMsg.includes('23505') || errMsg.includes('duplicate key') || errMsg.includes('ya existe');
+      const isDuplicateKey = errMsg.includes('23505') || errMsg.includes('duplicate key') || errMsg.includes('ya existe') || errMsg.includes('unique');
       if (isDuplicateKey) {
         // Determinar qué campo es el duplicado
         let detail = 'Ya existe una tienda con ese ';
@@ -186,8 +186,10 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
           detail += 'REEUP. Verifica que no haya otra tienda con el mismo REEUP.';
         } else if (errMsg.includes('nit') || errMsg.includes('stores_nit')) {
           detail += 'NIT. Verifica que no haya otra tienda con el mismo NIT.';
+        } else if (errMsg.includes('name') || errMsg.includes('stores_name')) {
+          detail += 'nombre. Ya existe una tienda activa con ese nombre exacto.';
         } else {
-          detail += 'nombre o identificador.';
+          detail += 'identificador. Revisa que el nombre, slug, REEUP y NIT sean únicos.';
         }
         return NextResponse.json(
           { error: 'Clave duplicada', message: detail, details: errMsg },
@@ -195,6 +197,7 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
         );
       }
 
+      // Para cualquier otro error del RPC, mostrar el mensaje completo
       return NextResponse.json(
         { error: 'Error al crear tienda', message: errMsg, details: errMsg },
         { status: 500 }
