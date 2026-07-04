@@ -178,6 +178,77 @@ function ProductImage({ src, alt, className, imgClassName }: {
   );
 }
 
+// ── Price Display (monto + moneda separados, con color distintivo) ──
+//
+// FIX-PRICE-FORMAT (2026-07-04): Antes el precio se mostraba con
+// Intl.NumberFormat('es-CU', { style: 'currency' }) que produce
+// "12,50 US$" o "1.234,00 CUP" — todo pegado y con el símbolo al final.
+// El usuario reportó que no se distingue visualmente USD de CUP.
+//
+// Ahora separamos el monto (formato es-CU con separador de miles y 2
+// decimales) del código de moneda, y aplicamos color distintivo:
+//   - USD → verde esmeralda (asociado a divisa fuerte / dólar)
+//   - CUP → ámbar dorado (color nacional cubano, coherente con la paleta)
+//   - EUR → azul (estándar europeo)
+//   - MLC → púrpura (distintivo, no se confunde con CUP)
+
+const CURRENCY_STYLES: Record<string, { color: string; bg: string; label: string }> = {
+  USD: { color: 'text-emerald-700', bg: 'bg-emerald-50 border-emerald-200', label: 'USD' },
+  CUP: { color: 'text-amber-700',  bg: 'bg-amber-50 border-amber-200',    label: 'CUP' },
+  EUR: { color: 'text-blue-700',   bg: 'bg-blue-50 border-blue-200',      label: 'EUR' },
+  MLC: { color: 'text-purple-700', bg: 'bg-purple-50 border-purple-200',  label: 'MLC' },
+};
+
+function formatAmount(amount: number): string {
+  return new Intl.NumberFormat('es-CU', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(amount);
+}
+
+/**
+ * PriceDisplay — renderiza el precio con monto y moneda separados.
+ *
+ * Variantes:
+ *   - 'card'    → tarjeta de producto (precio grande, badge pequeño)
+ *   - 'list'    → fila de lista (precio mediano, badge pequeño)
+ *   - 'modal'   → modal de detalle (precio XL, badge mediano)
+ *   - 'compact' → variantes inline (precio pequeño, badge tiny)
+ */
+function PriceDisplay({
+  price,
+  currency = 'CUP',
+  variant = 'card',
+  className,
+}: {
+  price: number;
+  currency?: string;
+  variant?: 'card' | 'list' | 'modal' | 'compact';
+  className?: string;
+}) {
+  const validCurrency = ['CUP', 'USD', 'EUR', 'MLC'].includes(currency) ? currency : 'CUP';
+  const styles = CURRENCY_STYLES[validCurrency];
+
+  // Tamaños por variante
+  const sizeConfig = {
+    card:    { amount: 'text-lg sm:text-xl font-black',     badge: 'text-[10px] font-black px-1.5 py-0.5 rounded' },
+    list:    { amount: 'text-lg sm:text-xl font-black',     badge: 'text-[10px] font-black px-1.5 py-0.5 rounded' },
+    modal:   { amount: 'text-2xl sm:text-3xl font-black',   badge: 'text-xs font-black px-2 py-0.5 rounded-md' },
+    compact: { amount: 'text-sm font-black',                badge: 'text-[9px] font-bold px-1 py-0.5 rounded' },
+  }[variant];
+
+  return (
+    <span className={cn('inline-flex items-baseline gap-1.5', className)}>
+      <span className={cn(sizeConfig.amount, 'text-stone-900 tracking-tight tabular-nums')}>
+        {formatAmount(price)}
+      </span>
+      <span className={cn(sizeConfig.badge, 'uppercase tracking-widest border', styles.color, styles.bg)}>
+        {styles.label}
+      </span>
+    </span>
+  );
+}
+
 // ── Product Detail Modal ────────────────────────────────────────
 
 function ProductDetailModal({
@@ -256,8 +327,8 @@ function ProductDetailModal({
               <p className="text-[9px] font-black uppercase tracking-widest text-stone-400">{t('retailPrice')}</p>
               {product.price != null ? (
                 <>
-                  <p className="text-2xl font-black text-stone-900">{formatCurrency(product.price, (product as any).price_currency || "CUP")}</p>
-                  <span className="text-xs text-stone-400">{product.unit_of_measure || t('unit')}</span>
+                  <PriceDisplay price={product.price} currency={(product as any).price_currency || 'CUP'} variant="modal" className="mt-1" />
+                  <span className="block text-xs text-stone-400 mt-1">{product.unit_of_measure || t('unit')}</span>
                 </>
               ) : (
                 <p className="text-2xl font-black text-stone-400 italic">{t('priceOnRequest', { defaultValue: 'Consultar' })}</p>
@@ -1261,7 +1332,7 @@ function ConstruccionCard({ product, image, onClick }: { product: StorefrontProd
           <div>
             <p className="text-[8px] font-black uppercase tracking-[0.15em] text-stone-400 mb-0.5">{t('price')}</p>
             {product.price != null ? (
-              <p className="text-lg sm:text-xl font-black text-stone-900 tracking-tight">{formatCurrency(product.price, (product as any).price_currency || "CUP")}</p>
+              <PriceDisplay price={product.price} currency={(product as any).price_currency || 'CUP'} variant="card" />
             ) : (
               <p className="text-lg sm:text-xl font-black text-stone-400 italic">{t('priceOnRequest', { defaultValue: 'Consultar' })}</p>
             )}
@@ -1327,7 +1398,7 @@ function ConstruccionListItem({ product, image, onClick }: { product: Storefront
           </div>
           <div className="text-right shrink-0">
             {product.price != null ? (
-              <p className="text-lg sm:text-xl font-black text-stone-900 tracking-tight">{formatCurrency(product.price, (product as any).price_currency || "CUP")}</p>
+              <PriceDisplay price={product.price} currency={(product as any).price_currency || 'CUP'} variant="list" className="justify-end" />
             ) : (
               <p className="text-lg sm:text-xl font-black text-stone-400 italic">{t('priceOnRequest', { defaultValue: 'Consultar' })}</p>
             )}
@@ -1410,7 +1481,14 @@ function MinimalistaTemplate({ store, products }: StorefrontPageProps) {
                 </div>
                 <p className="text-[10px] font-medium uppercase tracking-widest text-stone-400">{p.category || ''}</p>
                 <h3 className="text-sm font-medium mt-0.5 truncate">{p.name}</h3>
-                <p className="text-sm text-stone-600 mt-1">{p.price != null ? formatCurrency(p.price, (p as any).price_currency || "CUP") : "Consultar"} <span className="text-stone-300">/ {p.unit_of_measure || t('unit')}</span></p>
+                <div className="mt-1 flex items-baseline gap-1.5">
+                  {p.price != null ? (
+                    <PriceDisplay price={p.price} currency={(p as any).price_currency || 'CUP'} variant="compact" />
+                  ) : (
+                    <span className="text-sm font-bold text-stone-400 italic">Consultar</span>
+                  )}
+                  <span className="text-stone-300 text-xs">/ {p.unit_of_measure || t('unit')}</span>
+                </div>
               </div>
             ))}
           </div>
@@ -1504,7 +1582,11 @@ function ModernaTemplate({ store, products }: StorefrontPageProps) {
                     {p.description && <p className="text-xs text-stone-400 line-clamp-2">{p.description}</p>}
                     <div className="flex-1" />
                     <div className="flex items-center justify-between pt-3 border-t border-stone-100">
-                      <p className="text-lg font-bold bg-gradient-to-r from-violet-600 to-indigo-600 bg-clip-text text-transparent">{p.price != null ? formatCurrency(p.price, (p as any).price_currency || "CUP") : "Consultar"}</p>
+                      {p.price != null ? (
+                        <PriceDisplay price={p.price} currency={(p as any).price_currency || 'CUP'} variant="card" />
+                      ) : (
+                        <p className="text-lg font-bold text-stone-400 italic">Consultar</p>
+                      )}
                       <span className="text-[10px] text-stone-400 font-medium">{p.unit_of_measure || t('unit')}</span>
                     </div>
                   </div>
@@ -1592,7 +1674,11 @@ function ClasicaTemplate({ store, products }: StorefrontPageProps) {
                     {p.description && <p className="text-xs text-stone-500 line-clamp-2 mt-1">{p.description}</p>}
                     <div className="flex-1" />
                     <div className="flex items-center justify-between mt-2">
-                      <p className="text-lg font-bold text-amber-800">{p.price != null ? formatCurrency(p.price, (p as any).price_currency || "CUP") : "Consultar"}</p>
+                      {p.price != null ? (
+                        <PriceDisplay price={p.price} currency={(p as any).price_currency || 'CUP'} variant="card" />
+                      ) : (
+                        <p className="text-lg font-bold text-stone-400 italic">Consultar</p>
+                      )}
                       <span className="text-[10px] text-stone-400">{p.unit_of_measure || t('unit')}</span>
                     </div>
                   </div>
