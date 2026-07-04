@@ -1529,7 +1529,7 @@ function ConstruccionTemplate({ store, products }: StorefrontPageProps) {
                   )}
                 </div>
                 {/* FIX-BANNER-CTA (2026-07-04): CTA editable superpuesto al banner.
-                    Tamaño más grande en mobile (min-h-[48px]) para touch target cómodo.
+                    Tamaño grande en mobile (min-h-[52px] text-base) para touch target cómodo.
                     Si banner_cta_link está set, es un <a> externo. Si no, scroll a #productos. */}
                 {store.banner_cta_text && (
                   store.banner_cta_link ? (
@@ -1537,18 +1537,18 @@ function ConstruccionTemplate({ store, products }: StorefrontPageProps) {
                       href={store.banner_cta_link}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="mt-5 inline-flex items-center gap-2 px-6 py-3 sm:px-5 sm:py-2.5 min-h-[48px] rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-900 text-sm sm:text-xs font-black uppercase tracking-widest shadow-xl shadow-amber-500/40 transition-all hover:scale-105 active:scale-95"
+                      className="mt-5 inline-flex items-center gap-2 px-7 py-3.5 sm:px-5 sm:py-2.5 min-h-[52px] rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-900 text-base sm:text-xs font-black uppercase tracking-widest shadow-xl shadow-amber-500/40 transition-all hover:scale-105 active:scale-95"
                     >
                       {store.banner_cta_text}
-                      <ChevronRight className="w-4 h-4" />
+                      <ChevronRight className="w-5 h-5 sm:w-3.5 sm:h-3.5" />
                     </a>
                   ) : (
                     <a
                       href="#productos"
-                      className="mt-5 inline-flex items-center gap-2 px-6 py-3 sm:px-5 sm:py-2.5 min-h-[48px] rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-900 text-sm sm:text-xs font-black uppercase tracking-widest shadow-xl shadow-amber-500/40 transition-all hover:scale-105 active:scale-95"
+                      className="mt-5 inline-flex items-center gap-2 px-7 py-3.5 sm:px-5 sm:py-2.5 min-h-[52px] rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-900 text-base sm:text-xs font-black uppercase tracking-widest shadow-xl shadow-amber-500/40 transition-all hover:scale-105 active:scale-95"
                     >
                       {store.banner_cta_text}
-                      <ChevronRight className="w-4 h-4" />
+                      <ChevronRight className="w-5 h-5 sm:w-3.5 sm:h-3.5" />
                     </a>
                   )
                 )}
@@ -1558,27 +1558,27 @@ function ConstruccionTemplate({ store, products }: StorefrontPageProps) {
         </div>
 
         {/* Stats bar with glass effect — FIX-MOBILE-LEGIBILITY: textos más grandes
-            y jerarquía clara para mobile */}
-        <div className="bg-stone-900/95 backdrop-blur-md border-t border-amber-500/20">
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 sm:py-3 flex items-center justify-between gap-4">
-            <div className="flex items-center gap-4 sm:gap-8">
+            y jerarquía clara para mobile, más padding vertical */}
+        <div className="bg-stone-900/95 backdrop-blur-md border-t-2 border-amber-500/30">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 sm:py-3 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-5 sm:gap-8">
               <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 sm:w-8 sm:h-8 rounded-lg bg-amber-500/20 flex items-center justify-center">
-                  <Package className="w-4 h-4 sm:w-4 sm:h-4 text-amber-400" />
+                <div className="w-10 h-10 sm:w-9 sm:h-9 rounded-xl bg-amber-500/20 flex items-center justify-center">
+                  <Package className="w-5 h-5 sm:w-4 sm:h-4 text-amber-400" />
                 </div>
                 <div>
-                  <p className="text-lg sm:text-xl font-black text-white leading-none">{filter.totalProducts}</p>
-                  <p className="text-[9px] sm:text-[8px] font-bold uppercase tracking-widest text-stone-400 mt-0.5">{t('productsLabel', { count: filter.totalProducts })}</p>
+                  <p className="text-xl sm:text-2xl font-black text-white leading-none">{filter.totalProducts}</p>
+                  <p className="text-[10px] sm:text-[9px] font-bold uppercase tracking-widest text-amber-300/80 mt-1">{t('productsLabel', { count: filter.totalProducts })}</p>
                 </div>
               </div>
-              <div className="w-px h-8 bg-stone-700/60" />
+              <div className="w-px h-10 bg-stone-700/60" />
               <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 sm:w-8 sm:h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center">
-                  <Zap className="w-4 h-4 sm:w-4 sm:h-4 text-emerald-400" />
+                <div className="w-10 h-10 sm:w-9 sm:h-9 rounded-xl bg-emerald-500/20 flex items-center justify-center">
+                  <Zap className="w-5 h-5 sm:w-4 sm:h-4 text-emerald-400" />
                 </div>
                 <div>
-                  <p className="text-lg sm:text-xl font-black text-white leading-none">{filter.totalWithStock}</p>
-                  <p className="text-[9px] sm:text-[8px] font-bold uppercase tracking-widest text-stone-400 mt-0.5">{t('availableLabel', { count: filter.totalWithStock })}</p>
+                  <p className="text-xl sm:text-2xl font-black text-white leading-none">{filter.totalWithStock}</p>
+                  <p className="text-[10px] sm:text-[9px] font-bold uppercase tracking-widest text-emerald-300/80 mt-1">{t('availableLabel', { count: filter.totalWithStock })}</p>
                 </div>
               </div>
             </div>
