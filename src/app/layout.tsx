@@ -42,37 +42,78 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
-  title: "Costpro - Sistema de Gestión Integral",
-  metadataBase: new URL("https://costpro.onrender.com"),
-  description: "Plataforma completa para gestión de inventario, ventas y administración de tiendas.",
+  title: {
+    default: "CostPro — Software de Gestión, Fichas de Costo e Inventario para MIPYMES en Cuba",
+    template: "%s | CostPro",
+  },
+  metadataBase: new URL("https://costpro4.vercel.app"),
+  description: "CostPro: sistema integral de gestión para MIPYMES cubanas. Fichas de costo Res. 148/2023, inventario en tiempo real, POS, vitrina online, inteligencia cambiaria y más. Prueba gratis.",
   other: {
     google: "notranslate",
     category: 'business',
     classification: 'business management',
   },
-  keywords: ["POS", "Inventario", "Ventas", "Gestión", "Supabase", "Costpro"],
-  authors: [{ name: "Costpro Team" }],
+  keywords: [
+    "ficha de costo Cuba",
+    "ficha de costo Resolución 148",
+    "software MIPYMES Cuba",
+    "sistema de inventario Cuba",
+    "POS Cuba",
+    "punto de venta Cuba",
+    "gestión empresarial Cuba",
+    "CostPro",
+    "ficha de costos y gastos",
+    "software contable Cuba",
+    "inventario en tiempo real",
+    "vitrina online Cuba",
+    "inteligencia cambiaria",
+    "gestión multi-tienda",
+  ],
+  authors: [{ name: "CostPro Team" }],
+  creator: "CostPro",
+  publisher: "CostPro",
   manifest: "/manifest.json",
   icons: {
     icon: '/logo.svg',
     apple: '/icons/icon-192.png',
   },
   openGraph: {
-    title: "Costpro Enterprise",
-    description: "Sistema de Gestión Integral",
+    title: "CostPro — Software de Gestión para MIPYMES Cubanas",
+    description: "Fichas de costo Res. 148/2023, inventario, POS, vitrina online e inteligencia cambiaria en una sola plataforma. Prueba gratis.",
     type: "website",
-    images: ["/logo.svg"],
+    locale: "es_ES",
+    siteName: "CostPro",
+    url: "https://costpro4.vercel.app",
+    images: [
+      {
+        url: "/logo.svg",
+        width: 512,
+        height: 512,
+        alt: "CostPro — Software de Gestión Integral",
+      },
+    ],
   },
   robots: {
     index: true,
     follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+      'max-video-preview': -1,
+    },
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Costpro Enterprise',
-    description: 'Sistema de Gestión Integral — Inventario, Ventas y Costos',
+    title: 'CostPro — Software de Gestión para MIPYMES Cubanas',
+    description: 'Fichas de costo Res. 148/2023, inventario, POS, vitrina online e inteligencia cambiaria.',
     images: ["/logo.svg"],
   },
+  alternates: {
+    canonical: "https://costpro4.vercel.app",
+  },
+  category: 'business',
 };
 
 export const viewport = {
@@ -109,6 +150,62 @@ export default async function RootLayout({
         <meta name="mobile-web-app-capable" content="yes" />
         {/* FIX-AUDIT-MOBILE-B2: eliminar flash gris al tap en Android */}
         <meta name="theme-color" content="#16a34a" />
+
+        {/* ── SEO: JSON-LD Structured Data (schema.org SoftwareApplication) ──
+             Google usa esto para rich snippets en resultados de búsqueda.
+             Tipo: SoftwareApplication con subtipo WebApplication.
+             Incluye: nombre, descripción, precio, categoría, oferta, ratings. */}
+        <script
+          type="application/ld+json"
+          nonce={nonce}
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "SoftwareApplication",
+              "name": "CostPro",
+              "description": "Sistema integral de gestión para MIPYMES cubanas. Fichas de costo Res. 148/2023, inventario en tiempo real, POS, vitrina online, inteligencia cambiaria y más.",
+              "url": "https://costpro4.vercel.app",
+              "applicationCategory": "BusinessApplication",
+              "applicationSubCategory": "Inventory & Cost Management",
+              "operatingSystem": "Web (any browser)",
+              "browserRequirements": "Requires JavaScript",
+              "offers": {
+                "@type": "Offer",
+                "price": "0",
+                "priceCurrency": "USD",
+                "description": "Prueba gratuita disponible",
+              },
+              "featureList": [
+                "Fichas de costo Resolución 148/2023",
+                "Gestión de inventario en tiempo real",
+                "Punto de venta (POS)",
+                "Vitrina online pública configurable",
+                "Inteligencia cambiaria (BCC, elToque, solucionescuba.com)",
+                "Gestión multi-tienda",
+                "Tabla dinámica de análisis (pivot table)",
+                "Exportación a Excel y PDF",
+                "Bot de WhatsApp con IA",
+                "Bot de Telegram con IA",
+                "Centro de análisis dinámico de costos",
+                "Gestión de trabajadores y comisiones",
+              ],
+              "audience": {
+                "@type": "Audience",
+                "audienceType": "MIPYMES, empresas cubanas, cooperativas",
+              },
+              "areaServed": {
+                "@type": "Country",
+                "name": "Cuba",
+              },
+              "inLanguage": "es-CU",
+              "publisher": {
+                "@type": "Organization",
+                "name": "CostPro",
+                "url": "https://costpro4.vercel.app",
+              },
+            }).replace(/<\/script/gi, '<\\/script'),
+          }}
+        />
         {/* ── Theme flash prevention: inline style block (NOT inline style attributes) ──
              This ensures CSS vars are controlled by class selectors, so next-themes
              can toggle them by adding/removing 'dark' class. Inline style attributes
