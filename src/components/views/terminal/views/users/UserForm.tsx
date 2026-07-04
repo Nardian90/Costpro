@@ -18,6 +18,7 @@ const userFormSchema = z.object({
   role: z.enum(['admin', 'encargado', 'usuario', 'manager', 'clerk', 'warehouse', 'costo'] as const),
   password: z.string().min(6, 'La contraseña debe tener al menos 6 caracteres').optional().or(z.literal('')),
   isActive: z.boolean(),
+  plan: z.enum(['basico', 'profesional', 'enterprise']).catch('basico'),
   maxStoresLimit: z.number().min(0).catch(0),
   maxUsersLimit: z.number().min(0).catch(0),
   memberships: z.array(z.object({
@@ -74,6 +75,7 @@ export default function UserForm({
     register,
     handleSubmit,
     control,
+    setValue,
     watch,
     formState: { errors, isSubmitted },
   } = useForm<UserFormData>({
@@ -83,6 +85,7 @@ export default function UserForm({
       email: initialData.email,
       role: initialData.role,
       isActive: initialData.isActive,
+      plan: (initialData as any).plan || 'basico',
       maxStoresLimit: initialData.maxStoresLimit ?? 0,
       maxUsersLimit: initialData.maxUsersLimit ?? 0,
       memberships: initialData.memberships?.map(m => ({
@@ -99,6 +102,7 @@ export default function UserForm({
       isActive: true,
       maxStoresLimit: 0,
       maxUsersLimit: 0,
+      plan: 'basico',
       memberships: [],
     },
   });
@@ -280,6 +284,44 @@ export default function UserForm({
             </div>
             <p className="col-span-2 text-xs text-muted-foreground font-medium italic">
               * Estas capacidades definen cuántos recursos puede gestionar el usuario si tiene rol de Encargado.
+            </p>
+          </div>
+        )}
+
+        {/* Plan y Límites — solo admin puede cambiar */}
+        {isAdmin && (
+          <div className="p-4 bg-amber-500/5 rounded-2xl border border-amber-500/10">
+            <label className="text-xs font-black uppercase text-amber-600 dark:text-amber-400 tracking-widest mb-2 block">
+              Plan del usuario
+            </label>
+            <div className="grid grid-cols-3 gap-2">
+              {([
+                { id: 'basico', label: 'Básico', limit: 1, color: 'text-muted-foreground' },
+                { id: 'profesional', label: 'Profesional', limit: 3, color: 'text-primary' },
+                { id: 'enterprise', label: 'Enterprise', limit: 10, color: 'text-amber-500' },
+              ] as const).map(p => {
+                const currentPlan = watch('plan');
+                const isSelected = currentPlan === p.id;
+                return (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() => setValue('plan', p.id)}
+                    className={cn(
+                      'p-3 rounded-xl border-2 text-center transition-all',
+                      isSelected
+                        ? 'border-primary bg-primary/5 shadow-sm'
+                        : 'border-border hover:border-primary/30'
+                    )}
+                  >
+                    <p className={cn('text-sm font-black', isSelected ? 'text-primary' : p.color)}>{p.label}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{p.limit} tiendas</p>
+                  </button>
+                );
+              })}
+            </div>
+            <p className="text-xs text-muted-foreground mt-2 italic">
+              El plan determina cuántas tiendas puede crear este usuario. Básico: 1, Profesional: 3, Enterprise: 10.
             </p>
           </div>
         )}

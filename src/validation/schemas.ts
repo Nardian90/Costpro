@@ -567,6 +567,7 @@ export const managedCreateUserParamsSchema = z.object({
   p_email: z.string().email(),
   p_full_name: z.string().min(1),
   p_role: userRoleSchema,
+  p_plan: z.enum(['basico', 'profesional', 'enterprise']).optional(),
   p_store_id: z.string().regex(uuidRegex).nullable().optional(),
   p_memberships: z
     .array(

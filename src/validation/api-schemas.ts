@@ -230,7 +230,7 @@ export const createStoreSchema = z.object({
 export const updateStoreSchema = z.object({
   storeId: uuidLoose,
   name: z.string().min(1).max(100).optional(),
-  address: z.string().min(1).max(200).optional(),
+  address: z.string().max(200).optional().nullable(),
   logo_url: z.string().url().optional().nullable(),
   reeup: z.string().regex(/^\d{11}$/).optional().nullable(),
   nit: z.string().regex(/^\d{1,15}$/, 'NIT debe contener solo dígitos').optional().nullable(),

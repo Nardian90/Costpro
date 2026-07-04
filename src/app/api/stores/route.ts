@@ -175,9 +175,26 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
         );
       }
 
-      // FIX: Eliminar fallback no transaccional. Si el RPC falla, devolver error.
-      // Antes: insertaba tienda + membership por separado (no atómico, dejaba tienda huérfana).
-      // Ahora: el RPC es la única vía. Si falla, el usuario reintenta.
+      // FIX: Detectar error de clave duplicada (PostgreSQL 23505) y mostrar mensaje claro
+      const isDuplicateKey = errMsg.includes('23505') || errMsg.includes('duplicate key') || errMsg.includes('ya existe');
+      if (isDuplicateKey) {
+        // Determinar qué campo es el duplicado
+        let detail = 'Ya existe una tienda con ese ';
+        if (errMsg.includes('slug') || errMsg.includes('stores_slug')) {
+          detail += 'slug (identificador URL). Prueba con un nombre diferente.';
+        } else if (errMsg.includes('reeup') || errMsg.includes('stores_reeup')) {
+          detail += 'REEUP. Verifica que no haya otra tienda con el mismo REEUP.';
+        } else if (errMsg.includes('nit') || errMsg.includes('stores_nit')) {
+          detail += 'NIT. Verifica que no haya otra tienda con el mismo NIT.';
+        } else {
+          detail += 'nombre o identificador.';
+        }
+        return NextResponse.json(
+          { error: 'Clave duplicada', message: detail, details: errMsg },
+          { status: 409 }
+        );
+      }
+
       return NextResponse.json(
         { error: 'Error al crear tienda', message: errMsg, details: errMsg },
         { status: 500 }

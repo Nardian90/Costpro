@@ -56,8 +56,20 @@ export const storeApiClient = {
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({ error: 'Error de conexión' }));
-      // BUG-FIX: Capturar TODOS los campos de error posibles del API
-      const errMsg = err.message || err.error || err.details || err.rpcError || 'Error al crear tienda';
+      // FIX: Si hay details de Zod, formatearlos como texto legible
+      let errMsg = err.message || err.error || 'Error al crear tienda';
+      if (err.details && typeof err.details === 'object') {
+        const fields = Object.entries(err.details)
+          .filter(([k]) => k !== '_errors')
+          .map(([field, val]: [string, any]) => {
+            const msgs = Array.isArray(val) ? val : (val?._errors || []);
+            return msgs.length > 0 ? `${field}: ${msgs.join(', ')}` : null;
+          })
+          .filter(Boolean);
+        if (fields.length > 0) {
+          errMsg = `Datos inválidos — ${fields.join(' | ')}`;
+        }
+      }
       throw new Error(errMsg);
     }
     const result = await res.json();
@@ -74,7 +86,20 @@ export const storeApiClient = {
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({ error: 'Error de conexión' }));
-      throw new Error(err.message || err.error || 'Error al actualizar tienda');
+      let errMsg = err.message || err.error || 'Error al actualizar tienda';
+      if (err.details && typeof err.details === 'object') {
+        const fields = Object.entries(err.details)
+          .filter(([k]) => k !== '_errors')
+          .map(([field, val]: [string, any]) => {
+            const msgs = Array.isArray(val) ? val : (val?._errors || []);
+            return msgs.length > 0 ? `${field}: ${msgs.join(', ')}` : null;
+          })
+          .filter(Boolean);
+        if (fields.length > 0) {
+          errMsg = `Datos inválidos — ${fields.join(' | ')}`;
+        }
+      }
+      throw new Error(errMsg);
     }
     const result = await res.json();
     return result.data as Store;

@@ -68,6 +68,7 @@ export function useUsersView() {
               p_email: data.email,
               p_full_name: data.fullName,
               p_role: data.role,
+              p_plan: data.plan || 'basico',
               p_store_id: data.memberships?.[0]?.store_id || (data.role !== 'costo' ? user.activeStoreId : null),
               p_memberships: data.memberships,
               p_max_stores: data.role === 'encargado' ? data.maxStoresLimit : 0,
@@ -86,6 +87,7 @@ export function useUsersView() {
               full_name: data.fullName,
               role: data.role,
               is_active: data.isActive,
+              plan: data.plan || 'basico',
               max_stores_limit: data.role === 'encargado' ? data.maxStoresLimit : 0,
               max_users_limit: data.role === 'encargado' ? data.maxUsersLimit : 0
             });
