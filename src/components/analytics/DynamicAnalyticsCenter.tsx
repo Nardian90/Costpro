@@ -21,6 +21,7 @@ import {
   Search, ChevronRight, ChevronDown, X, Plus, Settings2,
   FileSpreadsheet, FileText, Printer, BarChart3, GripVertical,
   PanelLeft, PanelRight, ArrowUp, ArrowDown, Filter,
+  LineChart, TrendingUp,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useVirtualizer as useVirtual } from '@tanstack/react-virtual';
@@ -242,6 +243,13 @@ export function DynamicAnalyticsCenter({
   // FIX-PROFESSIONAL: anchuras de columnas de la tabla (drag bordes)
   const [tableColumnWidths, setTableColumnWidths] = useState<Record<string, number>>({});
   const [resizingColumn, setResizingColumn] = useState<string | null>(null);
+
+  // FIX-PROFESSIONAL: orden de columnas (drag headers para reordenar)
+  const [columnOrder, setColumnOrder] = useState<string[]>([]);
+
+  // FIX-PROFESSIONAL: toggle vista de gráfico
+  const [showChart, setShowChart] = useState(false);
+  const [chartType, setChartType] = useState<'bar' | 'line'>('bar');
 
   // ── Panel resize handlers ──
   const startResize = useCallback((panel: 'left' | 'right') => (e: React.MouseEvent) => {
@@ -738,6 +746,14 @@ export function DynamicAnalyticsCenter({
           <Button variant="ghost" size="sm" className={cn('h-8', showHeatMap && 'text-primary bg-primary/10')} onClick={() => setShowHeatMap(!showHeatMap)} title="Mapa de calor">
             <BarChart3 className="w-3.5 h-3.5" />
           </Button>
+          <Button variant="ghost" size="sm" className={cn('h-8', showChart && 'text-primary bg-primary/10')} onClick={() => setShowChart(!showChart)} title="Gráfico">
+            {chartType === 'bar' ? <BarChart3 className="w-3.5 h-3.5" /> : <TrendingUp className="w-3.5 h-3.5" />}
+          </Button>
+          {showChart && (
+            <Button variant="ghost" size="sm" className="h-8" onClick={() => setChartType(chartType === 'bar' ? 'line' : 'bar')} title="Cambiar tipo de gráfico">
+              <LineChart className="w-3.5 h-3.5" />
+            </Button>
+          )}
         </div>
       </div>
 
@@ -821,6 +837,24 @@ export function DynamicAnalyticsCenter({
 
         {/* Pivot table (center) */}
         <div className="flex-1 min-w-0 overflow-auto">
+          {/* FIX-PROFESSIONAL: gráfico integrado — barras CSS puras o línea SVG */}
+          {showChart && sortedRowGroups.length > 0 && (
+            <div className="border-b border-border bg-card/30 p-4">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                  {chartType === 'bar' ? '📊 Gráfico de barras' : '📈 Gráfico de líneas'}
+                </p>
+                <span className="text-[10px] text-muted-foreground">{sortedRowGroups.length} grupos</span>
+              </div>
+              <PivotChart
+                groups={sortedRowGroups}
+                groupTotals={pivotResult.groupTotals}
+                values={config.values}
+                fields={fields}
+                type={chartType}
+              />
+            </div>
+          )}
           {config.rows.length === 0 && config.values.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full gap-3 text-muted-foreground">
               <BarChart3 className="w-12 h-12 opacity-20" />
@@ -840,7 +874,10 @@ export function DynamicAnalyticsCenter({
               {/* Header */}
               <thead className="sticky top-0 z-10 bg-card border-b border-border">
                 <tr>
-                  <th className="text-left px-3 py-2 font-black uppercase tracking-widest text-[10px] text-muted-foreground min-w-[200px]">
+                  <th
+                    className="text-left px-3 py-2 font-black uppercase tracking-widest text-[10px] text-muted-foreground min-w-[200px] relative group/th"
+                    style={{ width: tableColumnWidths['__rows__'] ? `${tableColumnWidths['__rows__']}px` : undefined }}
+                  >
                     <button onClick={() => {
                       if (allExpanded) setExpandedGroups(new Set());
                       else setExpandedGroups(new Set(pivotResult.rowGroups.map(g => g.key)));
@@ -848,29 +885,81 @@ export function DynamicAnalyticsCenter({
                       {allExpanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
                       {config.rows.map(r => r.label).join(' / ') || 'Grupo'}
                     </button>
+                    {/* Resize handle for rows column */}
+                    <div
+                      onMouseDown={startColumnResize('__rows__')}
+                      className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-primary/40 opacity-0 group-hover/th:opacity-100 transition-opacity"
+                    />
                   </th>
-                  {pivotResult.columnKeys.length > 0 ? (
-                    pivotResult.columnKeys.map(col => (
-                      <th key={col} className="text-right px-3 py-2 font-black uppercase tracking-widest text-[10px] text-muted-foreground whitespace-nowrap">
-                        {col}
-                      </th>
-                    ))
-                  ) : (
-                    config.values.map(v => (
-                      <th key={v.fieldKey} className="text-right px-3 py-2 font-black uppercase tracking-widest text-[10px] text-muted-foreground whitespace-nowrap">
-                        <button
-                          onClick={() => handleSort(v.fieldKey)}
-                          className="inline-flex items-center gap-1 hover:text-foreground transition-colors"
-                          title="Click para ordenar"
+                  {(() => {
+                    // Aplicar orden de columnas si está definido
+                    const valueCols = pivotResult.columnKeys.length > 0
+                      ? pivotResult.columnKeys
+                      : config.values.map(v => v.fieldKey);
+                    const orderedCols = columnOrder.length > 0
+                      ? valueCols.filter(c => columnOrder.includes(c)).sort((a, b) => columnOrder.indexOf(a) - columnOrder.indexOf(b))
+                      : valueCols;
+
+                    return orderedCols.map((colKey, colIdx) => {
+                      const isPivotCol = pivotResult.columnKeys.length > 0;
+                      const label = isPivotCol ? colKey : (config.values.find(v => v.fieldKey === colKey)?.label || colKey);
+                      const agg = !isPivotCol ? config.values.find(v => v.fieldKey === colKey)?.aggregation : undefined;
+                      const width = tableColumnWidths[colKey];
+
+                      return (
+                        <th
+                          key={colKey}
+                          className="text-right px-3 py-2 font-black uppercase tracking-widest text-[10px] text-muted-foreground whitespace-nowrap relative group/th"
+                          style={width ? { width: `${width}px` } : undefined}
                         >
-                          {v.label}
-                          {v.aggregation && <span className="text-[8px] block text-muted-foreground/60">{AGGREGATION_LABELS[v.aggregation]}</span>}
-                          {sortState[v.fieldKey] === 'asc' && <ArrowUp className="w-3 h-3 text-primary" />}
-                          {sortState[v.fieldKey] === 'desc' && <ArrowDown className="w-3 h-3 text-primary" />}
-                        </button>
-                      </th>
-                    ))
-                  )}
+                          {/* Drag handle for reordering */}
+                          <div
+                            draggable
+                            onDragStart={(e) => {
+                              e.dataTransfer.setData('text/plain', colKey);
+                              e.dataTransfer.effectAllowed = 'move';
+                            }}
+                            onDragOver={(e) => {
+                              e.preventDefault();
+                              e.dataTransfer.dropEffect = 'move';
+                            }}
+                            onDrop={(e) => {
+                              e.preventDefault();
+                              const fromKey = e.dataTransfer.getData('text/plain');
+                              if (fromKey && fromKey !== colKey) {
+                                setColumnOrder(prev => {
+                                  const cols = prev.length > 0 ? [...prev] : [...valueCols];
+                                  const fromIdx = cols.indexOf(fromKey);
+                                  const toIdx = cols.indexOf(colKey);
+                                  if (fromIdx === -1 || toIdx === -1) return prev;
+                                  cols.splice(fromIdx, 1);
+                                  cols.splice(toIdx, 0, fromKey);
+                                  return cols;
+                                });
+                              }
+                            }}
+                            className="absolute left-0 top-0 bottom-0 w-2 cursor-grab hover:bg-primary/20 opacity-0 group-hover/th:opacity-100 transition-opacity active:cursor-grabbing"
+                            title="Arrastra para reordenar"
+                          />
+                          <button
+                            onClick={() => !isPivotCol && handleSort(colKey)}
+                            className="inline-flex items-center gap-1 hover:text-foreground transition-colors"
+                            title={!isPivotCol ? "Click para ordenar" : ""}
+                          >
+                            {label}
+                            {agg && <span className="text-[8px] block text-muted-foreground/60">{AGGREGATION_LABELS[agg]}</span>}
+                            {!isPivotCol && sortState[colKey] === 'asc' && <ArrowUp className="w-3 h-3 text-primary" />}
+                            {!isPivotCol && sortState[colKey] === 'desc' && <ArrowDown className="w-3 h-3 text-primary" />}
+                          </button>
+                          {/* Resize handle */}
+                          <div
+                            onMouseDown={startColumnResize(colKey)}
+                            className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-primary/40 opacity-0 group-hover/th:opacity-100 transition-opacity"
+                          />
+                        </th>
+                      );
+                    });
+                  })()}
                 </tr>
               </thead>
               {/* Body */}
@@ -1212,6 +1301,125 @@ function formatValue(value: number, fieldKey: string, fields: AnalyticsField[]):
     default:
       return new Intl.NumberFormat('es-CU', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value);
   }
+}
+
+// ── PivotChart: gráfico CSS puro (barras o líneas) de datos pivot ──
+// FIX-PROFESSIONAL (2026-07-04): gráfico integrado sin dependencias externas.
+// Barras con divs + línes con SVG polylínea.
+
+function PivotChart({
+  groups,
+  groupTotals,
+  values,
+  fields,
+  type,
+}: {
+  groups: Array<{ key: string; label: string; items: Record<string, unknown>[] }>;
+  groupTotals?: Map<string, Record<string, unknown>>;
+  values: AnalyticsZoneItem[];
+  fields: AnalyticsField[];
+  type: 'bar' | 'line';
+}) {
+  // Solo graficar el primer valor de la zona Valores
+  const valueField = values[0];
+  if (!valueField) return null;
+
+  // Preparar datos: [{ label, value }]
+  const chartData = groups.slice(0, 30).map(g => {
+    const totals = groupTotals?.get(g.key) || {};
+    const val = Number(totals[valueField.fieldKey]) || 0;
+    return { label: g.label.length > 15 ? g.label.slice(0, 15) + '…' : g.label, value: val };
+  });
+
+  const maxVal = Math.max(...chartData.map(d => Math.abs(d.value)), 1);
+  const chartHeight = 200;
+  const barWidth = type === 'bar' ? Math.max(20, Math.floor(800 / chartData.length) - 8) : 0;
+
+  // Colores por valor
+  const colors = ['#22c55e', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
+
+  if (type === 'bar') {
+    return (
+      <div className="overflow-x-auto">
+        <div className="flex items-end gap-2 min-h-[200px]" style={{ height: `${chartHeight + 40}px` }}>
+          {chartData.map((d, i) => {
+            const barHeight = Math.max(2, (Math.abs(d.value) / maxVal) * chartHeight);
+            const color = colors[i % colors.length];
+            return (
+              <div key={i} className="flex flex-col items-center gap-1 shrink-0" style={{ width: `${barWidth}px` }}>
+                <span className="text-[9px] font-bold tabular-nums text-muted-foreground whitespace-nowrap">
+                  {formatValue(d.value, valueField.fieldKey, fields)}
+                </span>
+                <div
+                  className="w-full rounded-t-md transition-all hover:opacity-80 cursor-pointer relative group/bar"
+                  style={{ height: `${barHeight}px`, backgroundColor: color }}
+                  title={`${d.label}: ${formatValue(d.value, valueField.fieldKey, fields)}`}
+                >
+                  <div className="absolute -top-6 left-1/2 -translate-x-1/2 opacity-0 group-hover/bar:opacity-100 transition-opacity bg-card border border-border rounded-md px-2 py-0.5 text-[9px] font-bold whitespace-nowrap shadow-lg z-10">
+                    {d.label}
+                  </div>
+                </div>
+                <span className="text-[8px] text-muted-foreground text-center truncate w-full" title={d.label}>
+                  {d.label}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
+  // Line chart con SVG
+  const svgWidth = Math.max(400, chartData.length * 40);
+  const points = chartData.map((d, i) => {
+    const x = (i / Math.max(chartData.length - 1, 1)) * svgWidth;
+    const y = chartHeight - (Math.abs(d.value) / maxVal) * chartHeight + 10;
+    return `${x},${y}`;
+  }).join(' ');
+
+  return (
+    <div className="overflow-x-auto">
+      <svg width={svgWidth} height={chartHeight + 30} className="overflow-visible">
+        {/* Grid lines */}
+        {[0, 0.25, 0.5, 0.75, 1].map(ratio => (
+          <line
+            key={ratio}
+            x1={0} y1={chartHeight - ratio * chartHeight + 10}
+            x2={svgWidth} y2={chartHeight - ratio * chartHeight + 10}
+            stroke="currentColor" strokeWidth={0.5}
+            className="text-border"
+            strokeDasharray="2 4"
+          />
+        ))}
+        {/* Line */}
+        <polyline
+          points={points}
+          fill="none"
+          stroke="#22c55e"
+          strokeWidth={2}
+          strokeLinejoin="round"
+          strokeLinecap="round"
+        />
+        {/* Points */}
+        {chartData.map((d, i) => {
+          const x = (i / Math.max(chartData.length - 1, 1)) * svgWidth;
+          const y = chartHeight - (Math.abs(d.value) / maxVal) * chartHeight + 10;
+          return (
+            <g key={i}>
+              <circle cx={x} cy={y} r={3} fill="#22c55e" className="hover:r-5 transition-all" />
+              <text x={x} y={y - 8} textAnchor="middle" className="text-[8px] fill-muted-foreground font-bold">
+                {formatValue(d.value, valueField.fieldKey, fields)}
+              </text>
+              <text x={x} y={chartHeight + 24} textAnchor="middle" className="text-[7px] fill-muted-foreground">
+                {d.label}
+              </text>
+            </g>
+          );
+        })}
+      </svg>
+    </div>
+  );
 }
 
 export default DynamicAnalyticsCenter;
