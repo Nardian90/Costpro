@@ -64,8 +64,12 @@ BEGIN
   RETURNING id INTO v_store_id;
 
   -- Insert membership (same transaction — guaranteed atomic)
+  -- FIX: El trigger trigger_auto_assign_store_to_creator ya crea la membership
+  -- automáticamente tras el INSERT del store. Usar ON CONFLICT DO NOTHING
+  -- para evitar error de clave duplicada (23505) cuando ambos intentan crearla.
   INSERT INTO user_store_memberships (user_id, store_id, role, status)
-  VALUES (p_created_by, v_store_id, 'admin', 'active');
+  VALUES (p_created_by, v_store_id, 'admin', 'active')
+  ON CONFLICT (user_id, store_id) DO NOTHING;
 
   -- Return the created store
   SELECT jsonb_build_object(

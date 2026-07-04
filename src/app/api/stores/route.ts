@@ -168,6 +168,12 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
     if (rpcError) {
       // Handle plan limit exception from the RPC function
       const errMsg = rpcError.message || 'Error desconocido en RPC';
+      // FIX: Log completo del error para debugging
+      console.error('[stores/route.ts] RPC error completo:', JSON.stringify(rpcError));
+      console.error('[stores/route.ts] RPC error message:', errMsg);
+      console.error('[stores/route.ts] RPC error code:', (rpcError as any).code);
+      console.error('[stores/route.ts] RPC error details:', (rpcError as any).details);
+      console.error('[stores/route.ts] RPC error hint:', (rpcError as any).hint);
       const isPlanLimit = errMsg.includes('límite') || errMsg.includes('limit');
 
       if (isPlanLimit) {
