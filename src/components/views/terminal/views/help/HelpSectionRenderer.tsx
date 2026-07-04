@@ -19,11 +19,328 @@ import {
   Copy,
   ArrowRight,
   BookA,
+  Check,
+  Minus,
 } from 'lucide-react';
 
 interface HelpSectionRendererProps {
   content: string;
   glossary?: Record<string, string>;
+}
+
+// ── HelpTable: rediseño mobile-first de tablas markdown ────────────────────
+//
+// FIX-HELP-TABLES (2026-07-04): antes las tablas usaban overflow-x-auto que
+// en mobile rompía la UX (scroll horizontal, texto ilegible). Ahora:
+//
+// 1. Detecta si es "tabla de permisos" (celdas con ✅/❌/—/✓/✗ solo) →
+//    renderiza como matriz visual con checks grandes y coloridos.
+// 2. En mobile: cards apiladas (cada fila = una card con su label + grid
+//    de checks por rol).
+// 3. En desktop: tabla con mejor contraste, bordes laterales, hover.
+// 4. Headers sticky en desktop para tablas largas.
+// 5. Texto justificado solo en párrafos, no en celdas.
+
+/** Detecta si una celda es un "check" (✅, ✓, yes, sí) o "no" (❌, ✗, —, -, no). */
+function parseCheckCell(text: string): { type: 'yes' | 'no' | 'partial' | 'text'; value: string } | null {
+  const t = text.trim().toLowerCase();
+  if (t === '✅' || t === '✓' || t === 'yes' || t === 'sí' || t === 'si') {
+    return { type: 'yes', value: text };
+  }
+  if (t === '❌' || t === '✗' || t === 'no' || t === 'x') {
+    return { type: 'no', value: text };
+  }
+  if (t === '—' || t === '-' || t === '' || t === 'n/a') {
+    return { type: 'no', value: '—' };
+  }
+  if (t.startsWith('✅') || t.startsWith('✓')) {
+    // Caso "✅ (propias)" o "✅ (lectura)" — permiso parcial/condicional
+    return { type: 'partial', value: text };
+  }
+  return null; // texto normal, no es check
+}
+
+/** Extrae texto plano de un nodo React (para detectar checks). */
+function extractText(node: React.ReactNode): string {
+  if (node == null || node === false) return '';
+  if (typeof node === 'string' || typeof node === 'number') return String(node);
+  if (Array.isArray(node)) return node.map(extractText).join('');
+  if (React.isValidElement(node)) {
+    return extractText((node.props as any).children);
+  }
+  return '';
+}
+
+interface ParsedTable {
+  headers: string[];
+  rows: React.ReactNode[][];
+  isPermissionsTable: boolean;
+}
+
+/** Parsea el children de un <table> de react-markdown a headers + rows. */
+function parseTableNode(tableChildren: React.ReactNode): ParsedTable | null {
+  // react-markdown pasa thead > tr > th y tbody > tr > td como children
+  const headers: string[] = [];
+  const rows: React.ReactNode[][] = [];
+  let isPermissionsTable = false;
+  let checkCellCount = 0;
+  let totalDataCells = 0;
+
+  React.Children.forEach(tableChildren, (child) => {
+    if (!React.isValidElement(child)) return;
+    const tag = (child.type as any);
+    // thead
+    if (tag === 'thead') {
+      React.Children.forEach((child.props as any).children, (trChild) => {
+        if (React.isValidElement(trChild) && (trChild.type as any) === 'tr') {
+          React.Children.forEach((trChild.props as any).children, (thChild) => {
+            if (React.isValidElement(thChild) && ((thChild.type as any) === 'th' || (thChild.type as any) === 'td')) {
+              headers.push(extractText((thChild.props as any).children).trim());
+            }
+          });
+        }
+      });
+    }
+    // tbody (a veces react-markdown no envuelve en tbody)
+    if (tag === 'tbody' || tag === 'thead') {
+      React.Children.forEach((child.props as any).children, (trChild) => {
+        if (React.isValidElement(trChild) && (trChild.type as any) === 'tr') {
+          const row: React.ReactNode[] = [];
+          React.Children.forEach((trChild.props as any).children, (cellChild) => {
+            if (React.isValidElement(cellChild) && ((cellChild.type as any) === 'td' || (cellChild.type as any) === 'th')) {
+              const cellChildren = (cellChild.props as any).children;
+              row.push(cellChildren);
+              // Detectar si es check
+              const text = extractText(cellChildren);
+              if (parseCheckCell(text)) {
+                checkCellCount++;
+              }
+              totalDataCells++;
+            }
+          });
+          if (row.length > 0) rows.push(row);
+        }
+      });
+    }
+  });
+
+  // Es tabla de permisos si >50% de las celdas (excluyendo la primera columna)
+  // son checks, y hay al menos 2 columnas de datos
+  if (headers.length >= 3 && rows.length > 0) {
+    const dataCellCount = totalDataCells - rows.length; // restamos primera columna
+    if (dataCellCount > 0 && checkCellCount / dataCellCount > 0.5) {
+      isPermissionsTable = true;
+    }
+  }
+
+  return { headers, rows, isPermissionsTable };
+}
+
+/** Renderiza un check cell (✅/❌/—) como icono visual grande. */
+function CheckCell({ type, value }: { type: 'yes' | 'no' | 'partial' | 'text'; value: string }) {
+  if (type === 'yes') {
+    return (
+      <div className="flex items-center justify-center" title={value}>
+        <div className="w-6 h-6 rounded-md bg-emerald-500/15 flex items-center justify-center">
+          <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400" strokeWidth={3} />
+        </div>
+      </div>
+    );
+  }
+  if (type === 'partial') {
+    // "✅ (propias)" — permiso con condición
+    const condition = value.replace(/^[✅✓]\s*/, '').trim();
+    return (
+      <div className="flex items-center justify-center" title={value}>
+        <div className="flex flex-col items-center gap-0.5">
+          <div className="w-6 h-6 rounded-md bg-amber-500/15 flex items-center justify-center">
+            <Check className="w-4 h-4 text-amber-600 dark:text-amber-400" strokeWidth={3} />
+          </div>
+          {condition && (
+            <span className="text-[9px] font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wider leading-none text-center max-w-[80px]">
+              {condition}
+            </span>
+          )}
+        </div>
+      </div>
+    );
+  }
+  if (type === 'no') {
+    return (
+      <div className="flex items-center justify-center" title={value}>
+        <div className="w-6 h-6 rounded-md bg-muted/30 flex items-center justify-center">
+          <Minus className="w-4 h-4 text-muted-foreground/50" strokeWidth={2.5} />
+        </div>
+      </div>
+    );
+  }
+  // text
+  return <span className="text-sm font-medium text-foreground">{value}</span>;
+}
+
+/** Renderiza tabla de permisos en mobile como cards apiladas. */
+function PermissionsTableMobile({ headers, rows }: { headers: string[]; rows: React.ReactNode[][] }) {
+  const roles = headers.slice(1); // primera columna es "Permiso"
+  return (
+    <div className="sm:hidden space-y-3">
+      {rows.map((row, rowIdx) => {
+        const label = extractText(row[0]);
+        return (
+          <div key={rowIdx} className="rounded-xl border border-border/50 bg-card/50 overflow-hidden">
+            {/* Header de la card: nombre del permiso */}
+            <div className="px-4 py-3 bg-muted/30 border-b border-border/40">
+              <p className="text-sm font-black text-foreground leading-tight">{label}</p>
+            </div>
+            {/* Grid de roles con sus checks */}
+            <div className="grid grid-cols-2 gap-px bg-border/30">
+              {roles.map((role, colIdx) => {
+                const cellValue = extractText(row[colIdx + 1] ?? '');
+                const parsed = parseCheckCell(cellValue);
+                return (
+                  <div key={colIdx} className="bg-card px-3 py-2.5 flex items-center justify-between gap-2">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground truncate">
+                      {role}
+                    </span>
+                    {parsed ? (
+                      <CheckCell type={parsed.type} value={parsed.value} />
+                    ) : (
+                      <span className="text-xs text-foreground">{cellValue}</span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/** Renderiza tabla de permisos en desktop como matriz visual. */
+function PermissionsTableDesktop({ headers, rows }: { headers: string[]; rows: React.ReactNode[][] }) {
+  const roles = headers.slice(1);
+  return (
+    <div className="hidden sm:block overflow-x-auto rounded-xl border border-border/50 shadow-sm">
+      <table className="w-full">
+        <thead>
+          <tr className="bg-muted/40 border-b-2 border-border/60">
+            <th className="px-4 py-3.5 text-left text-[11px] font-black uppercase tracking-widest text-foreground sticky left-0 bg-muted/40 z-10 min-w-[200px]">
+              {headers[0]}
+            </th>
+            {roles.map((role, i) => (
+              <th key={i} className="px-3 py-3.5 text-center text-[10px] font-black uppercase tracking-widest text-muted-foreground min-w-[80px]">
+                {role}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row, rowIdx) => (
+            <tr key={rowIdx} className={cn('border-b border-border/20 transition-colors', rowIdx % 2 === 0 ? 'bg-background' : 'bg-muted/20')}>
+              <td className="px-4 py-3 text-left text-sm font-bold text-foreground sticky left-0 z-10 min-w-[200px]" style={{ background: rowIdx % 2 === 0 ? 'var(--background)' : 'var(--muted-2)' }}>
+                {extractText(row[0])}
+              </td>
+              {roles.map((_, colIdx) => {
+                const cellValue = extractText(row[colIdx + 1] ?? '');
+                const parsed = parseCheckCell(cellValue);
+                return (
+                  <td key={colIdx} className="px-3 py-3 text-center">
+                    {parsed ? (
+                      <CheckCell type={parsed.type} value={parsed.value} />
+                    ) : (
+                      <span className="text-xs text-foreground">{cellValue}</span>
+                    )}
+                  </td>
+                );
+              })}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+/** Tabla genérica (no de permisos) con mejor contraste mobile-first. */
+function GenericTable({ headers, rows }: { headers: string[]; rows: React.ReactNode[][] }) {
+  return (
+    <div className="my-8">
+      {/* Mobile: cards apiladas */}
+      <div className="sm:hidden space-y-3">
+        {rows.map((row, rowIdx) => (
+          <div key={rowIdx} className="rounded-xl border border-border/50 bg-card/50 overflow-hidden">
+            {headers.map((header, colIdx) => {
+              const cellValue = row[colIdx];
+              const cellText = extractText(cellValue);
+              return (
+                <div key={colIdx} className={cn(
+                  'flex gap-3 px-4 py-2.5',
+                  colIdx > 0 && 'border-t border-border/20'
+                )}>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground shrink-0 w-24">
+                    {header}
+                  </span>
+                  <span className="text-sm font-medium text-foreground flex-1 break-words">
+                    {cellValue ?? cellText}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        ))}
+      </div>
+      {/* Desktop: tabla tradicional mejorada */}
+      <div className="hidden sm:block overflow-x-auto rounded-xl border border-border/50 shadow-sm">
+        <table className="w-full">
+          <thead>
+            <tr className="bg-muted/40 border-b-2 border-border/60">
+              {headers.map((header, i) => (
+                <th key={i} className="px-5 py-3.5 text-left text-[10px] font-black uppercase tracking-widest text-foreground">
+                  {header}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row, rowIdx) => (
+              <tr key={rowIdx} className={cn('border-b border-border/20 transition-colors hover:bg-primary/5', rowIdx % 2 === 0 ? 'bg-background' : 'bg-muted/15')}>
+                {row.map((cell, colIdx) => (
+                  <td key={colIdx} className="px-5 py-3.5 text-sm font-medium text-foreground/90 leading-relaxed align-top">
+                    {cell ?? extractText(cell)}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+/** Componente principal de tabla — detecta tipo y renderiza accordingly. */
+function HelpTable({ children }: { children?: React.ReactNode }) {
+  const parsed = useMemo(() => parseTableNode(children), [children]);
+  if (!parsed || parsed.headers.length === 0) {
+    // Fallback: tabla nativa si no podemos parsear
+    return (
+      <div className="overflow-x-auto my-8 rounded-xl border border-border/40 shadow-sm">
+        <table className="w-full text-left">{children}</table>
+      </div>
+    );
+  }
+
+  if (parsed.isPermissionsTable) {
+    return (
+      <div className="my-8">
+        <PermissionsTableMobile headers={parsed.headers} rows={parsed.rows} />
+        <PermissionsTableDesktop headers={parsed.headers} rows={parsed.rows} />
+      </div>
+    );
+  }
+
+  return <GenericTable headers={parsed.headers} rows={parsed.rows} />;
 }
 
 // ── Callout Detection ──────────────────────────────────────────────────────
@@ -524,6 +841,11 @@ export default function HelpSectionRenderer({ content, glossary }: HelpSectionRe
           },
 
           // ── PARAGRAPHS — Professional documentation style ─────────────
+          // FIX-HELP-READABILITY (2026-07-04): en mobile el texto de 14px con
+          // leading 1.8 es muy denso. Subimos a 15px en mobile, mantenemos
+          // 14px en desktop. Color foreground/80 en vez de muted-foreground
+          // para mayor contraste WCAG AA. Eliminado text-justify (mejor
+          // left-align en mobile para lectura cómoda).
           p: ({ node, children, ...props }) => {
             const processedChildren = React.Children.map(children, child => {
               if (typeof child === 'string') {
@@ -533,7 +855,7 @@ export default function HelpSectionRenderer({ content, glossary }: HelpSectionRe
             });
             return (
               <p
-                className="text-[14px] leading-[1.8] font-medium text-muted-foreground mb-6 text-justify hyphens-auto indent-0"
+                className="text-[15px] sm:text-[14px] leading-[1.75] font-medium text-foreground/80 mb-6 hyphens-auto indent-0"
                 {...props}
               >
                 {processedChildren}
@@ -549,29 +871,22 @@ export default function HelpSectionRenderer({ content, glossary }: HelpSectionRe
             <em className="italic text-foreground/90" {...props} />
           ),
 
-          // ── TABLES ───────────────────────────────────────────────────
+          // ── TABLES — rediseño mobile-first (FIX-HELP-TABLES) ─────────
+          // Antes: overflow-x-auto con celdas densas y texto justificado.
+          // Ahora: HelpTable detecta tablas de permisos (✅/❌/—) y renderiza
+          // como matriz visual en desktop + cards apiladas en mobile.
           table: ({ node, ...props }) => (
-            <div className="overflow-x-auto my-8 rounded-xl border border-border/40 shadow-sm">
-              <table className="w-full text-left" {...props} />
-            </div>
+            <HelpTable {...props} />
           ),
-          thead: ({ node, ...props }) => (
-            <thead
-              className="bg-muted/50 border-b-2 border-border/50 uppercase text-[9px] font-black tracking-widest text-muted-foreground"
-              {...props}
-            />
-          ),
-          th: ({ node, ...props }) => <th className="px-5 py-3.5 font-black text-xs text-foreground" {...props} />,
-          td: ({ node, children, ...props }: any) => (
-            <td
-              className="px-5 py-4 border-b border-border/15 text-[13px] font-medium leading-[1.8] text-muted-foreground even:bg-muted/15 text-justify hyphens-auto"
-              {...props}
-            >
-              {children}
-            </td>
-          ),
+          thead: ({ node, ...props }) => <thead {...props} />,
+          tbody: ({ node, ...props }) => <tbody {...props} />,
+          tr: ({ node, ...props }) => <tr {...props} />,
+          th: ({ node, ...props }) => <th {...props} />,
+          td: ({ node, ...props }) => <td {...props} />,
 
           // ── BLOCKQUOTES / CALLOUTS ────────────────────────────────────
+          // FIX-HELP-CALLOUTS (2026-07-04): callouts más visuales en mobile
+          // con icono más grande, padding más generoso, y label visible.
           blockquote: ({ node, children, ...props }: any) => {
             const textContent = React.Children.toArray(children)
               .map(c => typeof c === 'string' ? c : '')
@@ -582,13 +897,33 @@ export default function HelpSectionRenderer({ content, glossary }: HelpSectionRe
               const IconComp = callout.icon;
               return (
                 <div className={cn(
-                  "my-8 rounded-xl border-l-4 px-6 py-5 shadow-sm",
+                  "my-6 sm:my-8 rounded-xl border-l-4 px-4 sm:px-6 py-4 sm:py-5 shadow-sm",
                   callout.color
                 )} {...props}>
                   <div className="flex items-start gap-3">
-                    <IconComp className="w-4 h-4 mt-0.5 shrink-0" />
-                    <div className="flex-1 text-[14px] font-medium leading-[1.8] italic text-foreground/80 text-justify hyphens-auto">
-                      {children}
+                    <div className={cn("shrink-0 w-8 h-8 rounded-lg flex items-center justify-center", callout.color.split(' ').find(c => c.startsWith('bg-')))}>
+                      <IconComp className="w-4 h-4" />
+                    </div>
+                    <div className="flex-1 text-[14px] sm:text-[14px] font-medium leading-[1.7] text-foreground/85 hyphens-auto">
+                      {/* Quitar el prefijo "**Tip:**" etc. del contenido renderizado */}
+                      {(() => {
+                        const childArray = React.Children.toArray(children);
+                        // El primer child suele ser <p>**Tip:** ...</p> — lo limpiamos
+                        return childArray.map((child, idx) => {
+                          if (idx === 0 && React.isValidElement(child) && (child.type as any) === 'p') {
+                            const cleanedText = React.Children.toArray((child.props as any).children)
+                              .map(c => {
+                                if (typeof c === 'string') {
+                                  // Quitar "**Tip:**", "**Importante:**", etc. del inicio
+                                  return c.replace(/^\s*\*\*(tip|importante|nota|danger|consejo|warning|💡|⚠️?|ℹ️|❌|🚫)\s*:?\s*\*\*\s*/i, '');
+                                }
+                                return c;
+                              });
+                            return React.cloneElement(child, {} as any, ...cleanedText);
+                          }
+                          return child;
+                        });
+                      })()}
                     </div>
                   </div>
                 </div>
@@ -596,7 +931,7 @@ export default function HelpSectionRenderer({ content, glossary }: HelpSectionRe
             }
 
             return (
-              <blockquote className="border-l-4 border-primary/30 bg-primary/3 rounded-r-xl px-6 py-5 my-8 not-italic shadow-sm" {...props}>
+              <blockquote className="border-l-4 border-primary/30 bg-primary/3 rounded-r-xl px-4 sm:px-6 py-4 sm:py-5 my-6 sm:my-8 not-italic shadow-sm" {...props}>
                 <div className="text-[14px] font-medium leading-[1.8] italic text-muted-foreground/80 text-justify hyphens-auto">
                   {children}
                 </div>
