@@ -20,6 +20,7 @@ import {
   Download, Save, FolderOpen, Trash2, Copy, RotateCcw,
   Search, ChevronRight, ChevronDown, X, Plus, Settings2,
   FileSpreadsheet, FileText, Printer, BarChart3, GripVertical,
+  PanelLeft, PanelRight, ArrowUp, ArrowDown,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useVirtualizer as useVirtual } from '@tanstack/react-virtual';
@@ -168,6 +169,51 @@ export function DynamicAnalyticsCenter({
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [showFieldPanel, setShowFieldPanel] = useState(true);
+  const [showDropZonesPanel, setShowDropZonesPanel] = useState(true);
+
+  // FIX-PROFESSIONAL (2026-07-04): paneles redimensionables
+  const [leftPanelWidth, setLeftPanelWidth] = useState(208); // 52 * 4 = 208px default
+  const [rightPanelWidth, setRightPanelWidth] = useState(240); // 60 * 4 = 240px default
+  const [resizingPanel, setResizingPanel] = useState<'left' | 'right' | null>(null);
+
+  // FIX-PROFESSIONAL: sort state — { fieldKey: 'asc' | 'desc' }
+  const [sortState, setSortState] = useState<Record<string, 'asc' | 'desc'>>({});
+
+  // ── Panel resize handlers ──
+  const startResize = useCallback((panel: 'left' | 'right') => (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setResizingPanel(panel);
+
+    const startX = e.clientX;
+    const startWidth = panel === 'left' ? leftPanelWidth : rightPanelWidth;
+
+    const onMouseMove = (moveEvent: MouseEvent) => {
+      const delta = moveEvent.clientX - startX;
+      if (panel === 'left') {
+        // Left panel: dragging right increases width
+        const newWidth = Math.max(160, Math.min(400, startWidth + delta));
+        setLeftPanelWidth(newWidth);
+      } else {
+        // Right panel: dragging left increases width
+        const newWidth = Math.max(180, Math.min(400, startWidth - delta));
+        setRightPanelWidth(newWidth);
+      }
+    };
+
+    const onMouseUp = () => {
+      setResizingPanel(null);
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+  }, [leftPanelWidth, rightPanelWidth]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
@@ -424,6 +470,40 @@ export function DynamicAnalyticsCenter({
 
   const allExpanded = pivotResult.rowGroups.length > 0 && pivotResult.rowGroups.every(g => expandedGroups.has(g.key));
 
+  // FIX-PROFESSIONAL: sort handler — click en header de columna toggle asc/desc
+  const handleSort = useCallback((fieldKey: string) => {
+    setSortState(prev => {
+      const current = prev[fieldKey];
+      if (current === 'asc') {
+        // asc → desc
+        return { ...prev, [fieldKey]: 'desc' };
+      } else if (current === 'desc') {
+        // desc → sin sort
+        const next = { ...prev };
+        delete next[fieldKey];
+        return next;
+      } else {
+        // sin sort → asc
+        return { ...prev, [fieldKey]: 'asc' };
+      }
+    });
+  }, []);
+
+  // Apply sort to pivotResult rowGroups
+  const sortedRowGroups = useMemo(() => {
+    if (Object.keys(sortState).length === 0) return pivotResult.rowGroups;
+    const sortEntries = Object.entries(sortState);
+    return [...pivotResult.rowGroups].sort((a, b) => {
+      for (const [fieldKey, direction] of sortEntries) {
+        const aVal = pivotResult.groupTotals?.get(a.key)?.[fieldKey] ?? 0;
+        const bVal = pivotResult.groupTotals?.get(b.key)?.[fieldKey] ?? 0;
+        const comparison = (aVal as number) - (bVal as number);
+        if (comparison !== 0) return direction === 'asc' ? comparison : -comparison;
+      }
+      return 0;
+    });
+  }, [pivotResult.rowGroups, pivotResult.groupTotals, sortState]);
+
   // ── Render ──
   const availableFields = fields.filter(f =>
     !config.rows.some(r => r.fieldKey === f.key) &&
@@ -452,23 +532,28 @@ export function DynamicAnalyticsCenter({
               className="h-8 w-40 pl-8 text-xs"
             />
           </div>
-          <Button variant="ghost" size="sm" className="h-8" onClick={() => setShowFieldPanel(!showFieldPanel)}>
-            <Settings2 className="w-3.5 h-3.5" />
+          {/* FIX-PROFESSIONAL: toggle panels (left/right) */}
+          <Button variant="ghost" size="sm" className="h-8" onClick={() => setShowFieldPanel(!showFieldPanel)} title={showFieldPanel ? 'Ocultar campos' : 'Mostrar campos'}>
+            <PanelLeft className={cn('w-3.5 h-3.5', showFieldPanel ? 'text-primary' : '')} />
           </Button>
+          <Button variant="ghost" size="sm" className="h-8" onClick={() => setShowDropZonesPanel(!showDropZonesPanel)} title={showDropZonesPanel ? 'Ocultar zonas' : 'Mostrar zonas'}>
+            <PanelRight className={cn('w-3.5 h-3.5', showDropZonesPanel ? 'text-primary' : '')} />
+          </Button>
+          <div className="w-px h-5 bg-border mx-0.5" />
           {onSaveView && (
-            <Button variant="ghost" size="sm" className="h-8" onClick={() => setShowSaveDialog(true)} disabled={isLoading}>
+            <Button variant="ghost" size="sm" className="h-8" onClick={() => setShowSaveDialog(true)} disabled={isLoading} title="Guardar vista">
               <Save className="w-3.5 h-3.5" />
             </Button>
           )}
           {onLoadViews && savedViews.length > 0 && (
-            <Button variant="ghost" size="sm" className="h-8" onClick={() => setShowViewsList(!showViewsList)}>
+            <Button variant="ghost" size="sm" className="h-8" onClick={() => setShowViewsList(!showViewsList)} title="Vistas guardadas">
               <FolderOpen className="w-3.5 h-3.5" />
             </Button>
           )}
-          <Button variant="ghost" size="sm" className="h-8" onClick={() => setShowExportMenu(!showExportMenu)}>
+          <Button variant="ghost" size="sm" className="h-8" onClick={() => setShowExportMenu(!showExportMenu)} title="Exportar">
             <Download className="w-3.5 h-3.5" />
           </Button>
-          <Button variant="ghost" size="sm" className="h-8" onClick={resetView}>
+          <Button variant="ghost" size="sm" className="h-8" onClick={resetView} title="Limpiar">
             <RotateCcw className="w-3.5 h-3.5" />
           </Button>
         </div>
@@ -524,19 +609,32 @@ export function DynamicAnalyticsCenter({
       {/* Body: field panel (left) + pivot table (center) + drop zones (right) */}
       <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
       <div className="flex flex-1 min-h-0">
-        {/* Field panel (left) */}
+        {/* Field panel (left) — redimensionable */}
         {showFieldPanel && (
-          <div className="w-52 shrink-0 border-r border-border bg-card/30 p-3 overflow-y-auto">
-            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2">Campos disponibles</p>
-            <div className="space-y-1">
-              {availableFields.map(field => (
-                <DraggableField key={field.key} field={field} />
-              ))}
-              {availableFields.length === 0 && (
-                <p className="text-[10px] text-muted-foreground/50 italic">Todos los campos están en uso</p>
-              )}
+          <>
+            <div
+              className="shrink-0 border-r border-border bg-card/30 p-3 overflow-y-auto"
+              style={{ width: `${leftPanelWidth}px` }}
+            >
+              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2">Campos disponibles</p>
+              <div className="space-y-1">
+                {availableFields.map(field => (
+                  <DraggableField key={field.key} field={field} />
+                ))}
+                {availableFields.length === 0 && (
+                  <p className="text-[10px] text-muted-foreground/50 italic">Todos los campos están en uso</p>
+                )}
+              </div>
             </div>
-          </div>
+            {/* Resize handle — left panel */}
+            <div
+              onMouseDown={startResize('left')}
+              className="w-1 shrink-0 cursor-col-resize bg-border/40 hover:bg-primary/40 transition-colors relative group"
+              title="Arrastra para redimensionar"
+            >
+              <div className="absolute inset-y-0 -left-0. -right-0.5" />
+            </div>
+          </>
         )}
 
         {/* Pivot table (center) */}
@@ -578,8 +676,16 @@ export function DynamicAnalyticsCenter({
                   ) : (
                     config.values.map(v => (
                       <th key={v.fieldKey} className="text-right px-3 py-2 font-black uppercase tracking-widest text-[10px] text-muted-foreground whitespace-nowrap">
-                        {v.label}
-                        {v.aggregation && <span className="text-[8px] block text-muted-foreground/60">{AGGREGATION_LABELS[v.aggregation]}</span>}
+                        <button
+                          onClick={() => handleSort(v.fieldKey)}
+                          className="inline-flex items-center gap-1 hover:text-foreground transition-colors"
+                          title="Click para ordenar"
+                        >
+                          {v.label}
+                          {v.aggregation && <span className="text-[8px] block text-muted-foreground/60">{AGGREGATION_LABELS[v.aggregation]}</span>}
+                          {sortState[v.fieldKey] === 'asc' && <ArrowUp className="w-3 h-3 text-primary" />}
+                          {sortState[v.fieldKey] === 'desc' && <ArrowDown className="w-3 h-3 text-primary" />}
+                        </button>
                       </th>
                     ))
                   )}
@@ -587,7 +693,7 @@ export function DynamicAnalyticsCenter({
               </thead>
               {/* Body */}
               <tbody>
-                {pivotResult.rowGroups.map(group => {
+                {sortedRowGroups.map(group => {
                   const isExpanded = expandedGroups.has(group.key);
                   const totals = pivotResult.groupTotals?.get(group.key) || {};
                   return (
@@ -672,9 +778,21 @@ export function DynamicAnalyticsCenter({
           )}
         </div>
 
+        {/* Resize handle — right panel */}
+        {showDropZonesPanel && (
+          <div
+            onMouseDown={startResize('right')}
+            className="w-1 shrink-0 cursor-col-resize bg-border/40 hover:bg-primary/40 transition-colors"
+            title="Arrastra para redimensionar"
+          />
+        )}
+
         {/* Drop zones panel (right) — estilo Excel pivot table fields list */}
-        {showFieldPanel && (
-          <div className="w-60 shrink-0 border-l border-border bg-card/30 p-3 overflow-y-auto">
+        {showDropZonesPanel && (
+          <div
+            className="shrink-0 border-l border-border bg-card/30 p-3 overflow-y-auto"
+            style={{ width: `${rightPanelWidth}px` }}
+          >
             <div className="flex items-center gap-1.5 mb-3">
               <Settings2 className="w-3.5 h-3.5 text-muted-foreground" />
               <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
