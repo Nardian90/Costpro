@@ -36,13 +36,17 @@ export interface StorefrontProduct {
   name: string;
   description: string | null;
   sku: string | null;
-  price: number;
+  price: number | null;
   image_url: string | null;
   public_image_url: string | null;
   category: string | null;
   unit_of_measure: string | null;
   /** Whether the product is in stock — only a boolean is exposed publicly (FIX-SEC-H6) */
   inStock: boolean;
+  /** Whether to show stock info (FIX-VISIBILITY) */
+  stock_visible?: boolean;
+  /** Whether product is on promotion (shows as available even with 0 stock) */
+  on_promotion?: boolean;
   product_variants: {
     id: string;
     name: string;
@@ -178,7 +182,7 @@ function ProductDetailModal({
   const imageUrl = imageUrlRaw ? getProductImageUrl(imageUrlRaw) : null;
   const inStock = product.inStock;
   const productText = encodeURIComponent(
-    `${t('whatsappInquiryMessage', { name: product.name })}${product.sku ? t('whatsappInquirySku', { sku: product.sku }) : ''}${t('whatsappInquiryPrice', { price: formatCurrency(product.price) })}`
+    `${t('whatsappInquiryMessage', { name: product.name })}${product.sku ? t('whatsappInquirySku', { sku: product.sku }) : ''}${product.price != null ? t('whatsappInquiryPrice', { price: formatCurrency(product.price) }) : ''}`
   );
   const whatsappUrl = storePhone
     ? `https://wa.me/${storePhone.replace(/[^0-9]/g, '')}?text=${productText}`
@@ -238,15 +242,23 @@ function ProductDetailModal({
           <div className="flex items-end justify-between pt-4 border-t border-stone-100">
             <div>
               <p className="text-[9px] font-black uppercase tracking-widest text-stone-400">{t('retailPrice')}</p>
-              <p className="text-2xl font-black text-stone-900">{formatCurrency(product.price)}</p>
-              <span className="text-xs text-stone-400">{product.unit_of_measure || t('unit')}</span>
+              {product.price != null ? (
+                <>
+                  <p className="text-2xl font-black text-stone-900">{formatCurrency(product.price)}</p>
+                  <span className="text-xs text-stone-400">{product.unit_of_measure || t('unit')}</span>
+                </>
+              ) : (
+                <p className="text-2xl font-black text-stone-400 italic">{t('priceOnRequest', { defaultValue: 'Consultar' })}</p>
+              )}
             </div>
-            <span className={cn(
-              'px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest',
-              inStock ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-600'
-            )}>
-              {inStock ? t('inStock') : t('soldOut')}
-            </span>
+            {product.stock_visible !== false && (
+              <span className={cn(
+                'px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest',
+                inStock ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-600'
+              )}>
+                {inStock ? t('inStock') : t('soldOut')}
+              </span>
+            )}
           </div>
           {whatsappUrl && (
             <a
@@ -864,7 +876,7 @@ function ConstruccionCard({ product, image, onClick }: { product: StorefrontProd
             {product.category}
           </span>
         )}
-        <StockBadge inStock={inStock} />
+        {product.stock_visible !== false && <StockBadge inStock={inStock} />}
         <div className="absolute inset-0 bg-gradient-to-t from-black/15 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
       </div>
       <div className="flex-1 p-4 flex flex-col gap-1.5">
@@ -895,8 +907,11 @@ function ConstruccionCard({ product, image, onClick }: { product: StorefrontProd
         <div className="flex items-end justify-between pt-2.5 border-t border-stone-100">
           <div>
             <p className="text-[8px] font-black uppercase tracking-[0.15em] text-stone-400 mb-0.5">{t('price')}</p>
-            <p className="text-lg sm:text-xl font-black text-stone-900 tracking-tight">{formatCurrency(product.price)}</p>
-            {/* precio_empresa excluded from public storefront (FIX-SEC-H6) */}
+            {product.price != null ? (
+              <p className="text-lg sm:text-xl font-black text-stone-900 tracking-tight">{formatCurrency(product.price)}</p>
+            ) : (
+              <p className="text-lg sm:text-xl font-black text-stone-400 italic">{t('priceOnRequest', { defaultValue: 'Consultar' })}</p>
+            )}
           </div>
           <span className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">{product.unit_of_measure || t('unit')}</span>
         </div>
@@ -945,8 +960,11 @@ function ConstruccionListItem({ product, image, onClick }: { product: Storefront
             {product.sku && <p className="text-[10px] font-mono text-stone-400 mt-0.5">{t('sku')}: {product.sku}</p>}
           </div>
           <div className="text-right shrink-0">
-            <p className="text-lg sm:text-xl font-black text-stone-900 tracking-tight">{formatCurrency(product.price)}</p>
-            {/* precio_empresa excluded from public storefront (FIX-SEC-H6) */}
+            {product.price != null ? (
+              <p className="text-lg sm:text-xl font-black text-stone-900 tracking-tight">{formatCurrency(product.price)}</p>
+            ) : (
+              <p className="text-lg sm:text-xl font-black text-stone-400 italic">{t('priceOnRequest', { defaultValue: 'Consultar' })}</p>
+            )}
             <span className="text-[9px] font-bold text-stone-400 uppercase tracking-widest">{product.unit_of_measure || t('unit')}</span>
           </div>
         </div>
@@ -963,7 +981,7 @@ function ConstruccionListItem({ product, image, onClick }: { product: Storefront
               ))}
             </div>
           )}
-          <StockPill inStock={inStock} />
+          {product.stock_visible !== false && <StockPill inStock={inStock} />}
         </div>
       </div>
     </div>

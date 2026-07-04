@@ -89,8 +89,24 @@ export default function InventoryView() {
     const queryClient = useQueryClient();
 
     const [currentView, setCurrentView] = useState<'inventory' | 'reception'>('inventory');
-    const [inventoryTab, setInventoryTab] = useState<'stock' | 'catalog' | 'trazabilidad'>('stock');
-    const [layoutMode, setLayoutMode] = useState<'table' | 'card'>('table');
+    // ── Persistencia de UI (Cambio 1) ──────────────────────────────
+    // Tab activo, layout, categoría seleccionada y filtros se persisten en
+    // localStorage para sobrevivir navegación entre vistas. Las claves usan
+    // el namespace `costpro:inventory:*` para evitar colisiones.
+    const [inventoryTab, setInventoryTab] = useState<'stock' | 'catalog' | 'trazabilidad'>(() => {
+      if (typeof window !== 'undefined') {
+        const v = localStorage.getItem('costpro:inventory:tab');
+        if (v === 'stock' || v === 'catalog' || v === 'trazabilidad') return v;
+      }
+      return 'stock';
+    });
+    const [layoutMode, setLayoutMode] = useState<'table' | 'card'>(() => {
+      if (typeof window !== 'undefined') {
+        const v = localStorage.getItem('costpro:inventory:layout');
+        if (v === 'table' || v === 'card') return v;
+      }
+      return 'table';
+    });
     const [searchTerm, setSearchTerm] = useState('');
     const [debouncedSearch, setDebouncedSearch] = useState('');
     const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -103,9 +119,26 @@ export default function InventoryView() {
         }, 300);
         return () => { if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current); };
     }, [searchTerm]);
-    const [selectedCategory, setSelectedCategory] = useState('');
-    const [stockFilter, setStockFilter] = useState<'with_stock' | 'all' | 'normal' | 'low' | 'out'>('with_stock');
-    const [fcFilter, setFcFilter] = useState<'all' | 'vigente' | 'pendiente' | 'sin_fc'>('all');
+    const [selectedCategory, setSelectedCategory] = useState(() => {
+      if (typeof window !== 'undefined') {
+        return localStorage.getItem('costpro:inventory:category') || '';
+      }
+      return '';
+    });
+    const [stockFilter, setStockFilter] = useState<'with_stock' | 'all' | 'normal' | 'low' | 'out'>(() => {
+      if (typeof window !== 'undefined') {
+        const v = localStorage.getItem('costpro:inventory:stockFilter');
+        if (v === 'with_stock' || v === 'all' || v === 'normal' || v === 'low' || v === 'out') return v;
+      }
+      return 'with_stock';
+    });
+    const [fcFilter, setFcFilter] = useState<'all' | 'vigente' | 'pendiente' | 'sin_fc'>(() => {
+      if (typeof window !== 'undefined') {
+        const v = localStorage.getItem('costpro:inventory:fcFilter');
+        if (v === 'all' || v === 'vigente' || v === 'pendiente' || v === 'sin_fc') return v;
+      }
+      return 'all';
+    });
     const [selectedFCProduct, setSelectedFCProduct] = useState<Product | null>(null);
     const [adjustingProduct, setAdjustingProduct] = useState<Product | null>(null);
     const [kardexProduct, setKardexProduct] = useState<Product | null>(null);
@@ -115,15 +148,39 @@ export default function InventoryView() {
     const [isAlertsPanelOpen, setIsAlertsPanelOpen] = useState(false);
     const [showScrollTop, setShowScrollTop] = useState(false);
     const [togglingVisibleId, setTogglingVisibleId] = useState<string | null>(null);
+    const [togglingPriceVisibleId, setTogglingPriceVisibleId] = useState<string | null>(null);
+    const [togglingStockVisibleId, setTogglingStockVisibleId] = useState<string | null>(null);
+    const [togglingPromotionId, setTogglingPromotionId] = useState<string | null>(null);
     const [bulkToggling, setBulkToggling] = useState(false);
     // Local visibility overrides: survives React Query refetches that don't include visible_en_tienda
     const [visibilityOverrides, setVisibilityOverrides] = useState<Record<string, boolean>>({});
 
     const { mutateAsync: adjustStock } = useAdjustStock();
 
+    // Persistencia (Cambio 1): sincroniza los 5 estados con localStorage.
     useEffect(() => {
+      if (typeof window !== 'undefined') localStorage.setItem('costpro:inventory:tab', inventoryTab);
+    }, [inventoryTab]);
+    useEffect(() => {
+      if (typeof window !== 'undefined') localStorage.setItem('costpro:inventory:layout', layoutMode);
+    }, [layoutMode]);
+    useEffect(() => {
+      if (typeof window !== 'undefined') localStorage.setItem('costpro:inventory:category', selectedCategory);
+    }, [selectedCategory]);
+    useEffect(() => {
+      if (typeof window !== 'undefined') localStorage.setItem('costpro:inventory:stockFilter', stockFilter);
+    }, [stockFilter]);
+    useEffect(() => {
+      if (typeof window !== 'undefined') localStorage.setItem('costpro:inventory:fcFilter', fcFilter);
+    }, [fcFilter]);
+
+    // En móvil forzamos siempre 'card' (UX). En desktop respetamos el valor
+    // persistido en localStorage (no sobreescribimos) para que la preferencia
+    // del usuario sobreviva entre sesiones.
+    useEffect(() => {
+        if (!isMobile) return;
         requestAnimationFrame(() => {
-            setLayoutMode(isMobile ? 'card' : 'table');
+            setLayoutMode('card');
         });
     }, [isMobile]);
 
@@ -395,6 +452,76 @@ export default function InventoryView() {
         }
     }, []);
 
+    // ── Cambio 2: Toggles de price_visible, stock_visible y on_promotion ──
+    // Mismo patrón visual/UX que handleToggleVisible (loading state por fila,
+    // toast de feedback, invalidate queries) pero sin optimistic overrides ni
+    // auditoría fire-and-forget — son toggles operacionales más livianos.
+    const handleTogglePriceVisible = useCallback(async (product: Product) => {
+        const next = !product.price_visible;
+        setTogglingPriceVisibleId(product.id);
+        try {
+            const { error } = await supabase
+                .from('products')
+                .update({ price_visible: next })
+                .eq('id', product.id);
+            if (error) throw error;
+            queryClient.invalidateQueries({ queryKey: ['products'] });
+            queryClient.invalidateQueries({ queryKey: ['inventory'] });
+            toast.success(next
+                ? `Precio de "${product.name}" visible en la tienda`
+                : `Precio de "${product.name}" oculto en la tienda`
+            );
+        } catch (e) {
+            toast.error('Error al cambiar visibilidad del precio');
+        } finally {
+            setTogglingPriceVisibleId(null);
+        }
+    }, [queryClient]);
+
+    const handleToggleStockVisible = useCallback(async (product: Product) => {
+        const next = !product.stock_visible;
+        setTogglingStockVisibleId(product.id);
+        try {
+            const { error } = await supabase
+                .from('products')
+                .update({ stock_visible: next })
+                .eq('id', product.id);
+            if (error) throw error;
+            queryClient.invalidateQueries({ queryKey: ['products'] });
+            queryClient.invalidateQueries({ queryKey: ['inventory'] });
+            toast.success(next
+                ? `Stock de "${product.name}" visible en la tienda`
+                : `Stock de "${product.name}" oculto en la tienda`
+            );
+        } catch (e) {
+            toast.error('Error al cambiar visibilidad del stock');
+        } finally {
+            setTogglingStockVisibleId(null);
+        }
+    }, [queryClient]);
+
+    const handleTogglePromotion = useCallback(async (product: Product) => {
+        const next = !product.on_promotion;
+        setTogglingPromotionId(product.id);
+        try {
+            const { error } = await supabase
+                .from('products')
+                .update({ on_promotion: next })
+                .eq('id', product.id);
+            if (error) throw error;
+            queryClient.invalidateQueries({ queryKey: ['products'] });
+            queryClient.invalidateQueries({ queryKey: ['inventory'] });
+            toast.success(next
+                ? `"${product.name}" marcado en promoción`
+                : `"${product.name}" quitado de promoción`
+            );
+        } catch (e) {
+            toast.error('Error al cambiar estado de promoción');
+        } finally {
+            setTogglingPromotionId(null);
+        }
+    }, [queryClient]);
+
     // Bulk visibility toggle
     const handleBulkVisibility = useCallback(async (visible: boolean) => {
         const targets = filteredProducts;
@@ -644,6 +771,12 @@ export default function InventoryView() {
                                 onViewKardex={setKardexProduct}
                                 onToggleVisible={handleToggleVisible}
                                 isTogglingVisible={togglingVisibleId}
+                                onTogglePriceVisible={handleTogglePriceVisible}
+                                isTogglingPriceVisible={togglingPriceVisibleId}
+                                onToggleStockVisible={handleToggleStockVisible}
+                                isTogglingStockVisible={togglingStockVisibleId}
+                                onTogglePromotion={handleTogglePromotion}
+                                isTogglingPromotion={togglingPromotionId}
                                 fcStatusMap={fcStatusMap}
                                 fcResolutionMap={fcResolutionMap}
                                 onViewFC={handleViewFC}

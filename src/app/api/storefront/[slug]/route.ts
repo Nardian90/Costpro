@@ -44,9 +44,10 @@ export async function GET(
 
     // Fetch visible products for this store
     // FIX-SEC-H6: Exclude sensitive fields (precio_empresa, conversion_factor) from public API
+    // FIX-VISIBILITY: Include price_visible, stock_visible, on_promotion for storefront control
     const { data: products, error: productsError } = await supabase
       .from('products')
-      .select('id, name, description, sku, price, image_url, public_image_url, category, unit_of_measure, product_variants(id, name, sku, price)')
+      .select('id, name, description, sku, price, price_currency, image_url, public_image_url, category, unit_of_measure, price_visible, stock_visible, on_promotion, product_variants(id, name, sku, price)')
       .eq('store_id', store.id)
       .eq('visible_en_tienda', true)
       .eq('is_active', true)
@@ -59,11 +60,22 @@ export async function GET(
 
     // Resolve image URLs to full Supabase public URLs
     // FIX-SEC-H6: Removed stock_current from public response (commercial sensitivity)
-    const productList = (products || []).map(p => ({
-      ...p,
-      image_url: p.image_url ? getProductImageUrl(p.image_url) : null,
-      public_image_url: p.public_image_url ? getProductImageUrl(p.public_image_url) : null,
-    }));
+    // FIX-VISIBILITY: Compute inStock based on on_promotion flag — promoted products
+    // show as in stock even with stock_current=0
+    const productList = (products || []).map(p => {
+      const onPromotion = p.on_promotion === true;
+      return {
+        ...p,
+        image_url: p.image_url ? getProductImageUrl(p.image_url) : null,
+        public_image_url: p.public_image_url ? getProductImageUrl(p.public_image_url) : null,
+        // Si está en promoción, siempre mostrar como disponible
+        inStock: onPromotion ? true : (p as any).stock_current > 0,
+        // Si price_visible es false, no enviar el precio al cliente
+        price: p.price_visible === false ? null : p.price,
+        // Si stock_visible es false, no mostrar info de stock
+        stock_visible: p.stock_visible !== false,
+      };
+    });
 
     return NextResponse.json({
       store,

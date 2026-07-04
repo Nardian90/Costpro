@@ -187,6 +187,12 @@ export interface Product {
   is_complete?: boolean;
   has_movements?: boolean;
   visible_en_tienda?: boolean;
+  /** Precio visible en la tienda pública (toggle de vitrina por producto) */
+  price_visible?: boolean;
+  /** Stock visible en la tienda pública (toggle de vitrina por producto) */
+  stock_visible?: boolean;
+  /** Marca el producto como en promoción/oferta en la vitrina */
+  on_promotion?: boolean;
   product_variants?: ProductVariant[] | null;
   cost_sheet_id?: string | null;
   fc_auto_enabled?: boolean;

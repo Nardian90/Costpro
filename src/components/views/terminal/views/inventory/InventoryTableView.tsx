@@ -4,7 +4,7 @@ import React, { useRef, useCallback, useEffect, useState, useMemo } from 'react'
 import type { Product, ProductFCStatus } from '@/types';
 import type { FCResolutionResult } from '@/lib/integration/fc-automation';
 import { cn, resolveProductImage, formatCurrency } from '@/lib/utils';
-import { Package, Edit, BookOpen, ArrowUpDown, ArrowUp, ArrowDown, Store, Eye, EyeOff } from 'lucide-react';
+import { Package, Edit, BookOpen, ArrowUpDown, ArrowUp, ArrowDown, Store, Eye, EyeOff, DollarSign, Tag } from 'lucide-react';
 import { CostProLoader } from '@/components/ui/CostProLoader';
 import ProductImage from '@/components/ui/ProductImage';
 import { FCStatusBadge } from '@/components/ui/FCStatusBadge';
@@ -22,6 +22,15 @@ interface InventoryTableViewProps {
     onViewKardex?: (product: Product) => void;
     onToggleVisible?: (product: Product, visible: boolean) => void;
     isTogglingVisible?: string | null;
+    /** Cambio 2: toggle de price_visible en la vitrina */
+    onTogglePriceVisible?: (product: Product) => void;
+    isTogglingPriceVisible?: string | null;
+    /** Cambio 2: toggle de stock_visible en la vitrina */
+    onToggleStockVisible?: (product: Product) => void;
+    isTogglingStockVisible?: string | null;
+    /** Cambio 2: toggle de on_promotion en la vitrina */
+    onTogglePromotion?: (product: Product) => void;
+    isTogglingPromotion?: string | null;
     /** FC status map: productId → ProductFCStatus */
     fcStatusMap?: Map<string, ProductFCStatus>;
     /** FC resolution map: productId → FCResolutionResult */
@@ -30,7 +39,7 @@ interface InventoryTableViewProps {
     onViewFC?: (product: Product, resolution: FCResolutionResult) => void;
 }
 
-const ProductRow = React.forwardRef<HTMLTableRowElement, { product: Product; onAdjust?: (product: Product) => void; onViewKardex?: (product: Product) => void; onToggleVisible?: (product: Product, visible: boolean) => void; isTogglingVisible?: string | null; fcStatus?: ProductFCStatus; fcResolution?: FCResolutionResult; onViewFC?: (product: Product, resolution: FCResolutionResult) => void }>(({ product, onAdjust, onViewKardex, onToggleVisible, isTogglingVisible, fcStatus, fcResolution, onViewFC }, ref) => {
+const ProductRow = React.forwardRef<HTMLTableRowElement, { product: Product; onAdjust?: (product: Product) => void; onViewKardex?: (product: Product) => void; onToggleVisible?: (product: Product, visible: boolean) => void; isTogglingVisible?: string | null; onTogglePriceVisible?: (product: Product) => void; isTogglingPriceVisible?: string | null; onToggleStockVisible?: (product: Product) => void; isTogglingStockVisible?: string | null; onTogglePromotion?: (product: Product) => void; isTogglingPromotion?: string | null; fcStatus?: ProductFCStatus; fcResolution?: FCResolutionResult; onViewFC?: (product: Product, resolution: FCResolutionResult) => void }>(({ product, onAdjust, onViewKardex, onToggleVisible, isTogglingVisible, onTogglePriceVisible, isTogglingPriceVisible, onToggleStockVisible, isTogglingStockVisible, onTogglePromotion, isTogglingPromotion, fcStatus, fcResolution, onViewFC }, ref) => {
     const isLowStock = product.stock_current <= (product.min_stock ?? 0);
     return (
         <tr ref={ref} className="border-b last:border-0 hover:bg-accent/5 transition-colors">
@@ -131,6 +140,8 @@ const ProductRow = React.forwardRef<HTMLTableRowElement, { product: Product; onA
                                 : 'bg-muted border-border text-muted-foreground/50 hover:bg-muted/80',
                         )}
                         title={product.visible_en_tienda ? 'Visible en tienda — Clic para ocultar' : 'Oculto en tienda — Clic para mostrar'}
+                        aria-label={product.visible_en_tienda ? 'Ocultar producto en la tienda pública' : 'Mostrar producto en la tienda pública'}
+                        aria-pressed={!!product.visible_en_tienda}
                     >
                         {isTogglingVisible === product.id ? (
                             <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
@@ -138,6 +149,69 @@ const ProductRow = React.forwardRef<HTMLTableRowElement, { product: Product; onA
                             <Eye className="w-3.5 h-3.5" />
                         ) : (
                             <EyeOff className="w-3.5 h-3.5" />
+                        )}
+                    </button>
+                    {/* Cambio 2: Precio visible en tienda (DollarSign) — verde si visible, tachado si no */}
+                    <button
+                        type="button"
+                        onClick={() => onTogglePriceVisible?.(product)}
+                        disabled={isTogglingPriceVisible === product.id}
+                        className={cn(
+                            'inline-flex items-center justify-center w-7 h-7 rounded-lg border transition-all active:scale-90 disabled:opacity-50',
+                            product.price_visible
+                                ? 'bg-success/10 border-success/20 text-success'
+                                : 'bg-muted border-border text-muted-foreground/50 hover:bg-muted/80',
+                        )}
+                        title={product.price_visible ? 'Precio visible en tienda — Clic para ocultar' : 'Precio oculto en tienda — Clic para mostrar'}
+                        aria-label={product.price_visible ? 'Ocultar precio en la tienda pública' : 'Mostrar precio en la tienda pública'}
+                        aria-pressed={!!product.price_visible}
+                    >
+                        {isTogglingPriceVisible === product.id ? (
+                            <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                            <DollarSign className={cn('w-3.5 h-3.5', !product.price_visible && 'line-through opacity-60')} />
+                        )}
+                    </button>
+                    {/* Cambio 2: Stock visible en tienda (Package) — verde si visible, tachado si no */}
+                    <button
+                        type="button"
+                        onClick={() => onToggleStockVisible?.(product)}
+                        disabled={isTogglingStockVisible === product.id}
+                        className={cn(
+                            'inline-flex items-center justify-center w-7 h-7 rounded-lg border transition-all active:scale-90 disabled:opacity-50',
+                            product.stock_visible
+                                ? 'bg-success/10 border-success/20 text-success'
+                                : 'bg-muted border-border text-muted-foreground/50 hover:bg-muted/80',
+                        )}
+                        title={product.stock_visible ? 'Stock visible en tienda — Clic para ocultar' : 'Stock oculto en tienda — Clic para mostrar'}
+                        aria-label={product.stock_visible ? 'Ocultar stock en la tienda pública' : 'Mostrar stock en la tienda pública'}
+                        aria-pressed={!!product.stock_visible}
+                    >
+                        {isTogglingStockVisible === product.id ? (
+                            <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                            <Package className={cn('w-3.5 h-3.5', !product.stock_visible && 'line-through opacity-60')} />
+                        )}
+                    </button>
+                    {/* Cambio 2: En promoción (Tag) — amarillo si activa, gris si no */}
+                    <button
+                        type="button"
+                        onClick={() => onTogglePromotion?.(product)}
+                        disabled={isTogglingPromotion === product.id}
+                        className={cn(
+                            'inline-flex items-center justify-center w-7 h-7 rounded-lg border transition-all active:scale-90 disabled:opacity-50',
+                            product.on_promotion
+                                ? 'bg-warning/10 border-warning/20 text-warning'
+                                : 'bg-muted border-border text-muted-foreground/50 hover:bg-muted/80',
+                        )}
+                        title={product.on_promotion ? 'En promoción — Clic para desactivar' : 'Sin promoción — Clic para activar'}
+                        aria-label={product.on_promotion ? 'Quitar promoción del producto' : 'Marcar producto en promoción'}
+                        aria-pressed={!!product.on_promotion}
+                    >
+                        {isTogglingPromotion === product.id ? (
+                            <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                            <Tag className="w-3.5 h-3.5" />
                         )}
                     </button>
                 </div>
@@ -154,7 +228,7 @@ function SortIcon({ col, sortKey, sortDir }: { col: SortKey; sortKey: SortKey; s
         : <ArrowDown className="w-3 h-3 text-primary" />;
 }
 
-export default function InventoryTableView({ products, loadMore, hasMore, isLoading, onAdjust, onViewKardex, onToggleVisible, isTogglingVisible, fcStatusMap, fcResolutionMap, onViewFC }: InventoryTableViewProps) {
+export default function InventoryTableView({ products, loadMore, hasMore, isLoading, onAdjust, onViewKardex, onToggleVisible, isTogglingVisible, onTogglePriceVisible, isTogglingPriceVisible, onToggleStockVisible, isTogglingStockVisible, onTogglePromotion, isTogglingPromotion, fcStatusMap, fcResolutionMap, onViewFC }: InventoryTableViewProps) {
     const [sortKey, setSortKey] = useState<SortKey>('name');
     const [sortDir, setSortDir] = useState<SortDir>('asc');
 
@@ -223,6 +297,12 @@ export default function InventoryTableView({ products, loadMore, hasMore, isLoad
                             onViewKardex={onViewKardex}
                             onToggleVisible={onToggleVisible}
                             isTogglingVisible={isTogglingVisible}
+                            onTogglePriceVisible={onTogglePriceVisible}
+                            isTogglingPriceVisible={isTogglingPriceVisible}
+                            onToggleStockVisible={onToggleStockVisible}
+                            isTogglingStockVisible={isTogglingStockVisible}
+                            onTogglePromotion={onTogglePromotion}
+                            isTogglingPromotion={isTogglingPromotion}
                             fcStatus={fcStatusMap?.get(product.id)}
                             fcResolution={fcResolutionMap?.get(product.id)}
                             onViewFC={onViewFC}

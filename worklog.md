@@ -2989,3 +2989,162 @@ además de parsear el buffer retornado como .xlsx válido con `XLSX.read()`.
 - **Undo**: el bulk-upload sobreescribe (upsert). Si el admin se equivoca,
   no hay forma de revertir. Podría añadirse un endpoint `/bulk-upload/undo`
   que borre las filas insertadas en la última carga (usando un batch_id).
+
+---
+Task ID: INVENTORY-PERSIST-VISIBILITY
+Agent: Sub Agent (Persist tabs + visibility toggles)
+Task: Persistir tab activo + filtros del Inventario en localStorage y añadir 3 toggles de visibilidad (price_visible, stock_visible, on_promotion)
+
+### CONTEXTO
+
+El Inventario (`InventoryView.tsx`) pierde el contexto visual al salir y
+regresar de la vista: tab activo (Stock | Catálogo | Trazabilidad), layout
+(tabla/tarjeta), categoría seleccionada, filtro de stock y filtro de FC se
+reiniciaban a sus defaults. Además, el toggle existente de `visible_en_tienda`
+era insuficiente para gestionar la vitrina pública: el agente de storefront
+necesita los campos `price_visible`, `stock_visible` y `on_promotion` para
+decidir qué mostrar/ocultar y qué marcar como oferta.
+
+### CAMBIOS REALIZADOS
+
+#### Cambio 1 — Persistencia de UI (5 estados)
+
+Archivo: `src/components/views/terminal/views/inventory/InventoryView.tsx`
+
+- Reemplazados 5 `useState` por inicializadores perezosos que leen de
+  `localStorage` con namespace `costpro:inventory:*`:
+  - `inventoryTab` ← `costpro:inventory:tab` (validado contra el union type)
+  - `layoutMode` ← `costpro:inventory:layout` (validado `table`|`card`)
+  - `selectedCategory` ← `costpro:inventory:category`
+  - `stockFilter` ← `costpro:inventory:stockFilter` (validado contra union)
+  - `fcFilter` ← `costpro:inventory:fcFilter` (validado contra union)
+- Añadidos 5 `useEffect` que persisten en cada cambio (todos con guard
+  `typeof window !== 'undefined'` para SSR-safe).
+- **Modificado el `useEffect` de `isMobile`**: antes forzaba `setLayoutMode`
+  en cada render. Ahora solo fuerza `'card'` cuando `isMobile === true`. En
+  desktop se respeta el valor persistido en localStorage — esto es clave
+  para que la persistencia funcione; de lo contrario el effect sobreescribía
+  la preferencia guardada en cada montaje.
+- Validación defensiva: los inicializadores perezosos validan el valor
+  leído contra el union type antes de usarlo. Si localStorage tiene basura
+  (p.ej. un valor antiguo inválido), cae al default en lugar de romper TS.
+
+#### Cambio 2 — Toggles de price_visible, stock_visible, on_promotion
+
+Archivo: `src/types/index.ts`
+
+- Añadidos 3 campos opcionales al `interface Product` (junto al existente
+  `visible_en_tienda`):
+  ```ts
+  price_visible?: boolean;
+  stock_visible?: boolean;
+  on_promotion?: boolean;
+  ```
+
+Archivo: `src/components/views/terminal/views/inventory/InventoryView.tsx`
+
+- Añadidos 3 estados de loading por fila:
+  - `togglingPriceVisibleId`, `togglingStockVisibleId`, `togglingPromotionId`
+- Añadidos 3 handlers con `useCallback`, siguiendo el MISMO patrón visual/UX
+  que `handleToggleVisible` (loading state por fila, toast de feedback,
+  invalidate queries) pero sin optimistic overrides ni auditoría
+  fire-and-forget — son toggles operacionales más livianos:
+  - `handleTogglePriceVisible(product)` → update `price_visible`, invalidate
+  - `handleToggleStockVisible(product)` → update `stock_visible`, invalidate
+  - `handleTogglePromotion(product)` → update `on_promotion`, invalidate
+- Pasadas las 6 props nuevas (3 handlers + 3 loading states) al
+  `InventoryTableView` en el JSX.
+
+Archivo: `src/components/views/terminal/views/inventory/InventoryTableView.tsx`
+
+- Importados `DollarSign` y `Tag` de `lucide-react` (`Package` ya estaba).
+- Extendida la `interface InventoryTableViewProps` con 6 props nuevas.
+- Extendido el tipo del `ProductRow` (forwardRef) con las 6 props nuevas.
+- Añadidos 3 botones toggle en la celda de acciones, junto al existente de
+  `visible_en_tienda` (NO se rompe el toggle existente):
+  - **DollarSign** para `price_visible`: verde (`bg-success/10 text-success`)
+    si visible, gris + `line-through opacity-60` si no.
+  - **Package** para `stock_visible`: mismo patrón color que precio.
+  - **Tag** para `on_promotion`: amarillo (`bg-warning/10 text-warning`) si
+    activa, gris si no. Sin `line-through` (es un flag, no visibilidad).
+- Cada botón incluye `title`, `aria-label` y `aria-pressed` para accesibilidad.
+- Estado loading consistente: spinner `w-3 h-3 border-2 border-current
+  border-t-transparent rounded-full animate-spin` idéntico al toggle original.
+- Pasadas las 6 props nuevas desde `InventoryTableView` a cada `ProductRow`
+  en el `.map()`.
+
+### DECISIONES DE DISEÑO
+
+1. **No tocar el storefront**: los cambios solo afectan al backend de
+   Supabase (update de campos) y a la tabla de Inventario. Cómo los lee el
+   storefront lo decide otro agente.
+2. **No romper `visible_en_tienda`**: el handler original se conserva
+   intacto, con sus optimistic overrides y auditoría fire-and-forget.
+3. **Sin optimistic overrides para los 3 nuevos**: añadir overrides por
+   campo triplicaría la complejidad del `products` memo. El invalidate de
+   `['products']` + `['inventory']` es suficiente para feedback visual
+   rápido (~200ms en cache hit).
+4. **Validación estricta de localStorage**: los inicializadores perezosos
+   validan el valor leído contra el union type. Esto previene bugs si una
+   futura versión cambia los valores posibles — el código cae al default
+   en lugar de asigar un valor inválido al estado.
+5. **`isMobile` effect modificado**: el effect original forzaba `table` en
+   desktop en cada montaje, lo que anulaba la persistencia. La versión
+   nueva solo fuerza `card` en móvil y deja que el lazy initializer
+   controle el caso desktop.
+6. **`colSpan` de fila vacía**: la tabla tiene 8 columnas visibles, pero el
+   caso de "No se encontraron productos" usa `colSpan={9}`. NO se modificó
+   (es un bug preexistente menor; no está en el scope de este task).
+
+### VALIDACIÓN
+
+```
+npx tsc --noEmit -p tsconfig.json                                                          → EXIT=0 (0 errores)
+npx eslint src/components/views/terminal/views/inventory/InventoryView.tsx                  → EXIT=0 (0 errores)
+npx eslint src/components/views/terminal/views/inventory/InventoryTableView.tsx             → EXIT=0 (0 errores)
+npx eslint src/types/index.ts                                                               → EXIT=0 (0 errores)
+```
+
+### ARCHIVOS MODIFICADOS
+
+- `src/types/index.ts` (MODIFICADO) — 3 campos nuevos en `interface Product`
+- `src/components/views/terminal/views/inventory/InventoryView.tsx` (MODIFICADO)
+  - 5 useState con lazy initializer leyendo localStorage
+  - 5 useEffect para persistir
+  - useEffect de isMobile modificado para respetar layout persistido en desktop
+  - 3 estados nuevos (togglingPriceVisibleId, togglingStockVisibleId, togglingPromotionId)
+  - 3 handlers nuevos (handleTogglePriceVisible, handleToggleStockVisible, handleTogglePromotion)
+  - 6 props nuevas pasadas a InventoryTableView
+- `src/components/views/terminal/views/inventory/InventoryTableView.tsx` (MODIFICADO)
+  - Imports: añadidos DollarSign, Tag
+  - interface InventoryTableViewProps: 6 props nuevas
+  - ProductRow forwardRef: 6 props nuevas en el tipo
+  - Celda de acciones: 3 botones nuevos junto al de visible_en_tienda
+  - Pasadas las 6 props del parent a cada ProductRow
+
+### PRÓXIMOS PASOS SUGERIDOS (no incluidos en este task)
+
+- **Migración SQL**: añadir las columnas `price_visible`, `stock_visible` y
+  `on_promotion` a la tabla `products` en Supabase. Sin estas columnas los
+  updates fallarán con error 400 (column does not exist). Sugerencia:
+  ```sql
+  ALTER TABLE products
+    ADD COLUMN IF NOT EXISTS price_visible boolean DEFAULT true,
+    ADD COLUMN IF NOT EXISTS stock_visible boolean DEFAULT true,
+    ADD COLUMN IF NOT EXISTS on_promotion boolean DEFAULT false;
+  ```
+- **Incluir los 3 campos en el SELECT de `useInventory`**: actualmente la
+  RPC `get_paginated_products` probablemente no retorna estos campos. Hay
+  que añadirlos al SELECT de la RPC o al hook para que el toggle refleje
+  el estado real al recargar.
+- **Bulk toggle para los 3 nuevos**: el `handleBulkVisibility` solo aplica
+  a `visible_en_tienda`. Podría extenderse para bulk-toggle de los 3 nuevos
+  (p.ej. "marcar todos en promoción" en Black Friday).
+- **Toggles en card view**: los nuevos toggles solo están en
+  `InventoryTableView`. La `InventoryCardView` no los muestra (usa
+  `ProductCard` atómico). Considerar añadirlos en móvil si el usuario los
+  necesita ahí.
+- **Columna separada para visibilidad**: actualmente los 4 toggles viven en
+  la celda "Acciones" apilados horizontalmente. En pantallas pequeñas eso
+  puede desbordar. Considerar una columna "Vitrina" dedicada con los 4
+  toggles apilados verticalmente.
