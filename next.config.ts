@@ -63,8 +63,10 @@ const withSentry = withSentryConfig(nextConfig, {
   // Disable automatic tunnel route creation (we handle it manually via /api/monitoring)
   tunnelRoute: undefined,
 
-  // Disable automatic middleware wrapping to prevent Edge Runtime issues on Vercel
-  automaticVercelMonitors: false,
+  // FIX-DEPRECATION (2026-07-04): automaticVercelMonitors moved to webpack config
+  // and is not supported with Turbopack. Disable completely to remove warning.
+  // When we switch to webpack, use: webpack: { automaticVercelMonitors: false }
+  // For now with Turbopack, we omit it entirely.
 });
 
 export default withBundleAnalyzer(withNextIntl(withSentry));

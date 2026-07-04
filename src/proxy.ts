@@ -1,11 +1,12 @@
-// FIX-INF-003: CORS not configured at middleware — all API routes are same-origin only by design.
-// Add CORS headers here if external integrations need cross-origin access.
+// FIX-DEPRECATION (2026-07-04): Renamed from middleware.ts to proxy.ts
+// Next.js 16 deprecated the "middleware" file convention in favor of "proxy".
+// This file now exports `proxy` instead of `middleware`.
+// FIX-INF-003: CORS not configured at proxy level — all API routes are same-origin only by design.
 // FIX-INF-004: Auth is enforced per-route via withAuth/withRole HOFs.
-// Consider adding a middleware-level route check as defense-in-depth.
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   // Edge-compatible nonce generation using Web Crypto API
   const array = new Uint8Array(18);
   crypto.getRandomValues(array);
