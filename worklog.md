@@ -3148,3 +3148,42 @@ npx eslint src/types/index.ts                                                   
   la celda "Acciones" apilados horizontalmente. En pantallas pequeñas eso
   puede desbordar. Considerar una columna "Vitrina" dedicada con los 4
   toggles apilados verticalmente.
+
+---
+Task ID: storefront-config-2026-07-04
+Agent: Super Z (main agent)
+Task: Hacer altamente configurable la vitrina pública: banner personalizado, WhatsApp group, Telegram, sección de servicios, carrusel promocional (hasta 5 imgs), y arreglar bugs de hidratación + opacidad en productos en promoción + footer mobile.
+
+Work Log:
+- Aplicada migración SQL `20260704000001_storefront_config.sql` vía Supabase Management API: 7 columnas nuevas en `stores` (banner_url, store_tagline, whatsapp_group_url, telegram_url, services JSONB, promo_images JSONB, opening_hours).
+- Actualizado `src/types/index.ts`: añadidos interfaces `StoreService` y `StorePromoImage`, extendida `Store` con 7 campos nuevos.
+- Actualizado `src/validation/schemas.ts`: `storeSchema` valida los 7 campos con límites (services max 6, promo_images max 5).
+- Actualizado `src/validation/api-schemas.ts`: `createStoreSchema` y `updateStoreSchema` permiten los nuevos campos.
+- Actualizado `src/app/api/stores/route.ts`: GET incluye las 7 columnas nuevas en `storeColumns`.
+- Actualizado `src/app/api/storefront/[slug]/route.ts`: SELECT incluye las 7 columnas nuevas.
+- Creado `src/components/views/terminal/views/stores/StorefrontConfigPanel.tsx` (~540 líneas): 4 secciones auto-save con dirty tracking. Upload banner y promo images vía `uploadStoreImage`. Editor de servicios con 8 iconos disponibles (truck, shield, clock, wrench, package, headphones, zap, star) + reordenar arriba/abajo + eliminar. Carrusel de 5 imágenes con caption + link opcional. Vista previa + link directo a la vitrina.
+- Integrado en `src/components/views/terminal/views/settings/SettingsView.tsx` como nueva sección "Vitrina Pública" (componente `StorefrontSection` que carga el store activo y renderiza `StorefrontConfigPanel`).
+- Actualizado `src/app/tienda/[slug]/StorefrontPage.tsx`:
+  * `StorefrontStore` interface extendida con los 7 campos.
+  * `ConstruccionTemplate`: usa `store.banner_url` si está configurado (fallback al default `/storefront-construccion-banner.png`), muestra `store_tagline` debajo del nombre, muestra `opening_hours` en el header, stats bar con botones Grupo/Telegram, banner y tagline en el header.
+  * Nuevo componente `PromoCarousel`: autoplay 5s pausable, dots indicator, flechas, hasta 5 imágenes con caption + link click-through.
+  * Nuevo componente `ServicesSection`: grid responsivo (3 cols si ≤3 servicios, 6 cols si >3), iconos configurables vía mapa.
+  * Trust bar solo se muestra si NO hay servicios configurados (evita redundancia).
+  * `StorefrontFooter` reescrito mobile-first: 2 columnas en mobile (identidad + contacto), 4 botones (Compartir/WhatsApp/Llamar/Grupo/Telegram) en grid-cols-2 sm:flex con min-h-[44px], backdrop para cerrar popup compartir, badge "OK" al copiar URL, horario visible en el footer.
+  * `ConstruccionCard` y `ConstruccionListItem`: añadido badge "PROMO" dorado con icono Zap, ring-1 ring-amber-400/40 en el borde, StockBadge/stock dot se omiten si on_promotion=true (evita información redundante).
+- Fix hydration mismatch en `src/app/tienda/[slug]/layout.tsx`: aplicado `nonce={nonce}` al `<script>` tag que fuerza light mode. Antes Next.js inyectaba nonce automáticamente en client pero no en server.
+- Añadidas traducciones `stores.storefrontConfig.*` (38 claves) en `src/messages/es.json` y `src/messages/en.json`.
+- Verificado TypeScript: `npx tsc --noEmit` pasa limpio (0 errores).
+- Verificado ESLint: 0 errores en los 9 archivos modificados.
+- Commit `404bc7d89` pusheado a `origin/main`.
+- PM2 reiniciado; API storefront responde correctamente con los nuevos campos.
+- API test: todos los 12 productos de ENERVIDA-VITALLCONS llegan con `on_promotion=true` e `inStock=true` (antes de la hidratación).
+
+Stage Summary:
+- 7 columnas nuevas en `stores`, todas NULLABLES para compatibilidad retroactiva.
+- 4 secciones auto-save en StorefrontConfigPanel (banner/branding, contacto/redes, servicios, carrusel).
+- Carrusel y servicios se renderizan condicionalmente en la vitrina solo si están configurados.
+- Footer mobile-first con todos los CTAs visibles (Compartir/WhatsApp/Llamar/Grupo/Telegram).
+- Badge "PROMO" dorado visible en productos en promoción + ring dorado en el borde.
+- Hydration mismatch resuelto aplicando nonce explícitamente al script tag.
+- 13 archivos modificados, 1553 inserciones, 97 eliminaciones.
