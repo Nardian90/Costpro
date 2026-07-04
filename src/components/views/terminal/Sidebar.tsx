@@ -233,7 +233,7 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
           aria-current={isActive ? 'page' : undefined}
           className={cn(
             "w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all group active:scale-95 outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
-            isActive ? "bg-primary/10 text-primary font-bold shadow-sm" : "text-sidebar-foreground/80 hover:bg-primary/5 hover:text-sidebar-foreground"
+            isActive ? "bg-primary/15 text-primary font-black shadow-md shadow-primary/20 ring-1 ring-primary/25" : "text-sidebar-foreground/80 hover:bg-primary/5 hover:text-sidebar-foreground"
           )}
         >
           {item.icon && <item.icon className={cn("w-4 h-4 transition-transform group-hover:scale-110", isActive ? "text-primary" : "opacity-80")} />}
