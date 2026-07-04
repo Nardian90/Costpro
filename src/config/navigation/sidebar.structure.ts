@@ -131,7 +131,11 @@ export const SIDEBAR_STRUCTURE: NavModule[] = [
           // "Generación" eliminado. Al hacer clic abre una vista con 2 tabs
           // internos: "Generación Rápida" y "Generación Experta".
           { id: 'gen-easy', label: 'Generar fácil', type: 'item', icon: Zap, ariaLabel: 'Generación rápida y experta de fichas de costo' },
-          { id: 'cost-sheets', label: 'Tablero Principal', type: 'item', icon: Table2 },
+          // FIX-TABLERO-PRINCIPAL (2026-07-04): "Tablero Principal" ahora abre
+          // directamente el Centro de Análisis Dinámico (pivot table) en vez
+          // de la ficha de costo. La ficha de costo sigue accesible desde
+          // otros items del sidebar.
+          { id: 'cost-sheets', label: 'Tablero Principal', type: 'item', icon: Table2, ariaLabel: 'Centro de análisis dinámico de costos', description: 'Tabla dinámica tipo Power BI para analizar costos, márgenes y rentabilidad con drag & drop.' },
           { id: 'view-assisted', label: 'Modo Asistido', type: 'item', icon: Sparkles },
           { id: 'view-reading', label: 'Informe', type: 'item', icon: ClipboardList },
           // C3+G2: "Arena FC" movido aquí desde el grupo Plantillas (eliminado).

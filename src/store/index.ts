@@ -90,7 +90,7 @@ export const useUIStore = create<UIState>()(
       initialProductName: '',
       isChatBotOpen: false,
       ipvActiveTab: 'dashboard',
-      activeCostSection: 'main',
+      activeCostSection: 'cost-analytics',
       pendingAuditFilter: null,
       noShiftBannerDismissUntil: null,
       isHelpReadingMode: false,
