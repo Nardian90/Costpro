@@ -28,9 +28,12 @@ export async function GET(
     const supabase = createServerClient();
 
     // Fetch store by slug
+    // FIX-STOREFRONT-CONFIG (2026-07-04): Include banner_url, store_tagline,
+    // whatsapp_group_url, telegram_url, services, promo_images, opening_hours
+    // so the public storefront can render the configurable sections.
     const { data: store, error: storeError } = await supabase
       .from('stores')
-      .select('id, name, address, phone, email, logo_url, slug, plantilla, reeup, is_active')
+      .select('id, name, address, phone, email, logo_url, slug, plantilla, reeup, is_active, banner_url, store_tagline, whatsapp_group_url, telegram_url, services, promo_images, opening_hours')
       .eq('slug', slug)
       .eq('is_active', true)
       .single();

@@ -38,7 +38,10 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
     // FIX-FC-PERSIST-V2: Also include id, store_id from store_cost_templates —
     //   normalizeCostTemplate needs these fields; without them they default to ''
     //   which breaks template lookups and deactivation detection.
-    const storeColumns = 'id, name, address, logo_url, reeup, nit, bank_account, signature_url, stamp_url, latitude, longitude, phone, email, is_active, slug, plantilla, created_at, store_cost_templates(id, store_id, template_id, modalidad, pdf_format, is_active)';
+    // FIX-STOREFRONT-CONFIG (2026-07-04): Include banner_url, store_tagline,
+    //   whatsapp_group_url, telegram_url, services, promo_images, opening_hours
+    //   so the StorefrontConfigPanel can render the current state.
+    const storeColumns = 'id, name, address, logo_url, reeup, nit, bank_account, signature_url, stamp_url, latitude, longitude, phone, email, is_active, slug, plantilla, created_at, banner_url, store_tagline, whatsapp_group_url, telegram_url, services, promo_images, opening_hours, store_cost_templates(id, store_id, template_id, modalidad, pdf_format, is_active)';
 
     let stores;
     // FIX: Allow fetching inactive stores via ?status=all or ?status=inactive

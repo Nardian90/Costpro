@@ -25,6 +25,10 @@ import {
   Star,
   LayoutGrid,
   List,
+  Wrench,
+  Headphones,
+  Calendar,
+  ExternalLink,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { cn, formatCurrency, getProductImageUrl } from '@/lib/utils';
@@ -67,6 +71,14 @@ export interface StorefrontStore {
   plantilla: string | null;
   reeup: string | null;
   is_active: boolean;
+  // ── Storefront config (2026-07-04) ──
+  banner_url?: string | null;
+  store_tagline?: string | null;
+  whatsapp_group_url?: string | null;
+  telegram_url?: string | null;
+  services?: Array<{ icon: string; title: string; description?: string }> | null;
+  promo_images?: Array<{ url: string; caption?: string; link?: string }> | null;
+  opening_hours?: string | null;
 }
 
 export interface StorefrontPageProps {
@@ -279,6 +291,190 @@ function ProductDetailModal({
 
 // ── Social Share Footer ─────────────────────────────────────────
 
+/**
+ * Mapeo de nombres de iconos (string, guardado en DB) a componentes lucide-react.
+ * El admin configura el servicio en StorefrontConfigPanel eligiendo de una lista
+ * acotada — aquí solo necesitamos renderizar el que corresponda.
+ */
+const SERVICE_ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
+  truck: Truck,
+  shield: Shield,
+  clock: Clock,
+  wrench: Wrench,
+  package: Package,
+  headphones: Headphones,
+  zap: Zap,
+  star: Star,
+};
+
+function ServiceIcon({ name, className }: { name: string; className?: string }) {
+  const Icon = SERVICE_ICON_MAP[name] ?? Package;
+  return <Icon className={className} />;
+}
+
+// ── Services Section ────────────────────────────────────────────
+
+function ServicesSection({ services }: { services: NonNullable<StorefrontStore['services']> }) {
+  if (!services || services.length === 0) return null;
+  return (
+    <section className="bg-white border-b border-stone-200/60" aria-label="Servicios">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="h-px flex-1 bg-gradient-to-r from-amber-300 to-transparent" />
+          <h2 className="text-[11px] font-black uppercase tracking-[0.2em] text-amber-700">
+            Nuestros Servicios
+          </h2>
+          <div className="h-px flex-1 bg-gradient-to-l from-amber-300 to-transparent" />
+        </div>
+        <div className={cn(
+          "grid gap-3 sm:gap-4",
+          services.length <= 3 ? "grid-cols-1 sm:grid-cols-3" : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-6"
+        )}>
+          {services.map((service, i) => (
+            <div
+              key={i}
+              className="rounded-2xl bg-stone-50 border border-stone-200/80 p-3 sm:p-4 flex flex-col items-center text-center hover:shadow-md hover:shadow-amber-500/5 transition-all"
+            >
+              <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-amber-500/15 flex items-center justify-center mb-2">
+                <ServiceIcon name={service.icon} className="w-5 h-5 text-amber-700" />
+              </div>
+              <p className="text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-stone-900 leading-tight">
+                {service.title}
+              </p>
+              {service.description && (
+                <p className="text-[9px] sm:text-[10px] text-stone-500 mt-1 leading-relaxed line-clamp-2">
+                  {service.description}
+                </p>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ── Promo Carousel ──────────────────────────────────────────────
+
+function PromoCarousel({ images }: { images: NonNullable<StorefrontStore['promo_images']> }) {
+  const [current, setCurrent] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const total = images.length;
+
+  // Autoplay cada 5s, pausable al hover
+  useEffect(() => {
+    if (paused || total <= 1) return;
+    const timer = setInterval(() => {
+      setCurrent(c => (c + 1) % total);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [paused, total]);
+
+  if (!images || images.length === 0) return null;
+
+  return (
+    <section
+      className="bg-stone-900"
+      aria-label="Promociones"
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+    >
+      <div className="max-w-6xl mx-auto px-0 sm:px-6 sm:py-4">
+        <div className="relative overflow-hidden sm:rounded-2xl">
+          {/* Slides container */}
+          <div
+            className="flex transition-transform duration-500 ease-out"
+            style={{ transform: `translateX(-${current * 100}%)` }}
+          >
+            {images.map((img, i) => (
+              <div key={i} className="relative w-full shrink-0 aspect-[16/7] sm:aspect-[3/1] bg-stone-900">
+                {img.link ? (
+                  <a
+                    href={img.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="absolute inset-0 group"
+                  >
+                    <img
+                      src={img.url}
+                      alt={img.caption || `Promoción ${i + 1}`}
+                      className="w-full h-full object-cover"
+                      loading={i === 0 ? 'eager' : 'lazy'}
+                    />
+                    {img.caption && (
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent flex items-end p-4 sm:p-6">
+                        <p className="text-white font-black text-sm sm:text-lg uppercase tracking-tight drop-shadow-lg flex items-center gap-1.5">
+                          {img.caption}
+                          <ExternalLink className="w-3.5 h-3.5 opacity-70" />
+                        </p>
+                      </div>
+                    )}
+                  </a>
+                ) : (
+                  <div className="absolute inset-0">
+                    <img
+                      src={img.url}
+                      alt={img.caption || `Promoción ${i + 1}`}
+                      className="w-full h-full object-cover"
+                      loading={i === 0 ? 'eager' : 'lazy'}
+                    />
+                    {img.caption && (
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent flex items-end p-4 sm:p-6">
+                        <p className="text-white font-black text-sm sm:text-lg uppercase tracking-tight drop-shadow-lg">
+                          {img.caption}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* Navigation arrows (solo si hay más de 1) */}
+          {total > 1 && (
+            <>
+              <button
+                onClick={() => setCurrent(c => (c - 1 + total) % total)}
+                className="absolute left-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/40 hover:bg-black/60 text-white flex items-center justify-center transition-colors backdrop-blur-sm"
+                aria-label="Anterior"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setCurrent(c => (c + 1) % total)}
+                className="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/40 hover:bg-black/60 text-white flex items-center justify-center transition-colors backdrop-blur-sm"
+                aria-label="Siguiente"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+
+              {/* Dots indicator */}
+              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
+                {images.map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setCurrent(i)}
+                    className={cn(
+                      'rounded-full transition-all',
+                      i === current
+                        ? 'w-6 h-1.5 bg-white'
+                        : 'w-1.5 h-1.5 bg-white/50 hover:bg-white/80'
+                    )}
+                    aria-label={`Ir a diapositiva ${i + 1}`}
+                  />
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ── Social Share Footer ─────────────────────────────────────────
+
 function StorefrontFooter({
   store,
   template = 'construccion',
@@ -295,43 +491,109 @@ function StorefrontFooter({
 
   const isConstruccion = template === 'construccion';
   const footerBg = isConstruccion ? 'bg-stone-900 border-t-4 border-amber-500' : 'bg-white border-t border-stone-200';
-  const footerText = isConstruccion ? 'text-stone-400' : 'text-stone-500';
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(storeUrl).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
 
   return (
     <footer className={cn(footerBg)}>
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
+        {/* ── Bloque 1: Identidad + info de contacto ── */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
+          {/* Identidad */}
           <div className="text-center sm:text-left">
-            <p className={cn('font-black text-sm uppercase tracking-tighter', isConstruccion ? 'text-white' : 'text-stone-900')}>
+            <p className={cn('font-black text-base sm:text-lg uppercase tracking-tighter', isConstruccion ? 'text-white' : 'text-stone-900')}>
               {store.name}
             </p>
-            <p className="text-[10px] font-bold uppercase tracking-widest mt-1 text-stone-500">
+            {store.store_tagline && (
+              <p className={cn('text-xs font-medium mt-1', isConstruccion ? 'text-amber-300/80' : 'text-amber-700')}>
+                {store.store_tagline}
+              </p>
+            )}
+            <p className="text-[10px] font-bold uppercase tracking-widest mt-2 text-stone-500">
               {t('catalogViewOnly')}
             </p>
+            {store.opening_hours && (
+              <p className={cn('text-[11px] mt-3 flex items-center justify-center sm:justify-start gap-1.5', isConstruccion ? 'text-stone-400' : 'text-stone-600')}>
+                <Calendar className="w-3.5 h-3.5 shrink-0" />
+                <span className="font-bold">{store.opening_hours}</span>
+              </p>
+            )}
           </div>
-          <div className="flex items-center gap-3 flex-wrap justify-center">
-            {/* Social Share */}
-            <div className="relative">
-              <button
-                onClick={() => setShowShare(!showShare)}
-                className={cn(
-                  'flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-colors',
-                  isConstruccion
-                    ? 'border border-stone-700 hover:border-stone-500'
-                    : 'border border-stone-200 hover:border-stone-400'
-                )}
-                title={t('shareStore')}
-              >
-                <Share2 className="w-4 h-4" />
-                {t('share')}
-              </button>
-              {showShare && (
-                <div className="absolute bottom-full mb-2 right-0 bg-white rounded-xl shadow-xl border border-stone-200 p-2 flex items-center gap-1.5 z-50">
+
+          {/* Contacto */}
+          <div className={cn('text-center sm:text-right space-y-1.5', isConstruccion ? 'text-stone-300' : 'text-stone-700')}>
+            {store.address && (
+              <p className="text-xs flex items-center justify-center sm:justify-end gap-1.5">
+                <MapPin className="w-3.5 h-3.5 shrink-0 opacity-70" />
+                <span>{store.address}</span>
+              </p>
+            )}
+            {store.phone && (
+              <p className="text-xs flex items-center justify-center sm:justify-end gap-1.5">
+                <Phone className="w-3.5 h-3.5 shrink-0 opacity-70" />
+                <a
+                  href={`tel:${store.phone}`}
+                  className={cn('font-bold hover:underline', isConstruccion ? 'hover:text-amber-300' : 'hover:text-amber-700')}
+                >
+                  {store.phone}
+                </a>
+              </p>
+            )}
+            {store.email && (
+              <p className="text-xs flex items-center justify-center sm:justify-end gap-1.5">
+                <Mail className="w-3.5 h-3.5 shrink-0 opacity-70" />
+                <a
+                  href={`mailto:${store.email}`}
+                  className={cn('font-bold hover:underline', isConstruccion ? 'hover:text-amber-300' : 'hover:text-amber-700')}
+                >
+                  {store.email}
+                </a>
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* ── Bloque 2: Botones de acción (siempre visibles, mobile-first) ── */}
+        <div className={cn(
+          'grid gap-2 sm:gap-3',
+          'grid-cols-2 sm:flex sm:flex-wrap sm:justify-center'
+        )}>
+          {/* Compartir */}
+          <div className="relative col-span-2 sm:col-auto">
+            <button
+              onClick={() => setShowShare(!showShare)}
+              className={cn(
+                'w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-3 sm:py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-colors min-h-[44px]',
+                isConstruccion
+                  ? 'border border-stone-700 hover:border-amber-500 text-white'
+                  : 'border border-stone-200 hover:border-amber-400 text-stone-700'
+              )}
+              title={t('shareStore')}
+              aria-expanded={showShare}
+            >
+              <Share2 className="w-4 h-4" />
+              {t('share')}
+            </button>
+            {showShare && (
+              <>
+                {/* Backdrop para cerrar al hacer clic fuera */}
+                <div
+                  className="fixed inset-0 z-40"
+                  onClick={() => setShowShare(false)}
+                  aria-hidden="true"
+                />
+                <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 sm:left-auto sm:right-0 sm:translate-x-0 bg-white rounded-xl shadow-xl border border-stone-200 p-2 flex items-center gap-1.5 z-50">
                   <a
                     href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(storeUrl)}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-9 h-9 rounded-lg bg-blue-600 text-white flex items-center justify-center hover:bg-blue-700 transition-colors"
+                    className="w-10 h-10 rounded-lg bg-blue-600 text-white flex items-center justify-center hover:bg-blue-700 transition-colors"
                     title={t('shareFacebook')}
                     onClick={() => setShowShare(false)}
                   >
@@ -341,7 +603,7 @@ function StorefrontFooter({
                     href={`https://t.me/share/url?url=${encodeURIComponent(storeUrl)}&text=${shareText}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-9 h-9 rounded-lg bg-sky-500 text-white flex items-center justify-center hover:bg-sky-600 transition-colors"
+                    className="w-10 h-10 rounded-lg bg-sky-500 text-white flex items-center justify-center hover:bg-sky-600 transition-colors"
                     title={t('shareTelegram')}
                     onClick={() => setShowShare(false)}
                   >
@@ -351,53 +613,88 @@ function StorefrontFooter({
                     href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(storeUrl)}&text=${shareText}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-9 h-9 rounded-lg bg-stone-800 text-white flex items-center justify-center hover:bg-stone-900 transition-colors"
+                    className="w-10 h-10 rounded-lg bg-stone-800 text-white flex items-center justify-center hover:bg-stone-900 transition-colors"
                     title={t('shareTwitter')}
                     onClick={() => setShowShare(false)}
                   >
                     <Twitter className="w-4 h-4" />
                   </a>
                   <button
-                    onClick={() => {
-                      navigator.clipboard.writeText(storeUrl).then(() => {
-                        setShowShare(false);
-                      });
-                    }}
-                    className="w-9 h-9 rounded-lg bg-stone-100 text-stone-600 flex items-center justify-center hover:bg-stone-200 transition-colors"
+                    onClick={handleCopy}
+                    className="w-10 h-10 rounded-lg bg-stone-100 text-stone-600 flex items-center justify-center hover:bg-stone-200 transition-colors"
                     title={t('copyLink')}
                   >
-                    <span className="text-xs font-black">URL</span>
+                    {copied ? <span className="text-[9px] font-black">OK</span> : <span className="text-[9px] font-black">URL</span>}
                   </button>
                 </div>
-              )}
-            </div>
-            {store.phone && (
-              <a
-                href={`https://wa.me/${store.phone.replace(/[^0-9]/g, '')}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-green-600 text-white text-xs font-black uppercase tracking-widest hover:bg-green-700 transition-colors"
-              >
-                <MessageCircle className="w-4 h-4" />
-                {t('whatsapp')}
-              </a>
-            )}
-            {store.phone && (
-              <a
-                href={`tel:${store.phone}`}
-                className={cn(
-                  'flex items-center gap-2 px-4 py-2 rounded-xl border text-xs font-black uppercase tracking-widest transition-colors',
-                  isConstruccion
-                    ? 'border-stone-700 hover:border-stone-500'
-                    : 'border-stone-200 hover:border-stone-400'
-                )}
-              >
-                <Phone className="w-4 h-4" />
-                {t('call')}
-              </a>
+              </>
             )}
           </div>
+
+          {/* WhatsApp directo al teléfono (si existe) */}
+          {store.phone && (
+            <a
+              href={`https://wa.me/${store.phone.replace(/[^0-9]/g, '')}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-2 px-4 py-3 sm:py-2.5 rounded-xl bg-green-600 hover:bg-green-700 text-white text-xs font-black uppercase tracking-widest transition-colors min-h-[44px]"
+            >
+              <MessageCircle className="w-4 h-4" />
+              <span className="truncate">{t('whatsapp')}</span>
+            </a>
+          )}
+
+          {/* Llamar (siempre visible si hay teléfono) */}
+          {store.phone && (
+            <a
+              href={`tel:${store.phone}`}
+              className={cn(
+                'flex items-center justify-center gap-2 px-4 py-3 sm:py-2.5 rounded-xl border text-xs font-black uppercase tracking-widest transition-colors min-h-[44px]',
+                isConstruccion
+                  ? 'border-stone-700 hover:border-amber-500 text-white'
+                  : 'border-stone-200 hover:border-amber-400 text-stone-700'
+              )}
+            >
+              <Phone className="w-4 h-4" />
+              <span className="truncate">{t('call')}</span>
+            </a>
+          )}
+
+          {/* Grupo de WhatsApp configurable */}
+          {store.whatsapp_group_url && (
+            <a
+              href={store.whatsapp_group_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-2 px-4 py-3 sm:py-2.5 rounded-xl bg-green-700 hover:bg-green-800 text-white text-xs font-black uppercase tracking-widest transition-colors min-h-[44px]"
+            >
+              <MessageCircle className="w-4 h-4" />
+              <span className="truncate">Grupo</span>
+            </a>
+          )}
+
+          {/* Telegram configurable */}
+          {store.telegram_url && (
+            <a
+              href={store.telegram_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-2 px-4 py-3 sm:py-2.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-xs font-black uppercase tracking-widest transition-colors min-h-[44px]"
+            >
+              <Send className="w-4 h-4" />
+              <span className="truncate">Telegram</span>
+            </a>
+          )}
         </div>
+
+        {/* ── Bloque 3: REEUP / NIT (info fiscal discreta) ── */}
+        {store.reeup && (
+          <div className="mt-6 pt-4 border-t border-stone-700/40 text-center">
+            <p className="text-[10px] font-mono text-stone-500">
+              REEUP: {store.reeup}
+            </p>
+          </div>
+        )}
       </div>
     </footer>
   );
@@ -534,13 +831,13 @@ function ConstruccionTemplate({ store, products }: StorefrontPageProps) {
           animation: 'construccionShimmer 4s ease-in-out infinite',
         }} />
 
-        {/* Banner background image */}
+        {/* Banner background image — configurable via banner_url, fallback to default */}
         <div className="relative h-52 sm:h-64 md:h-80 lg:h-96">
           {/* Preload placeholder */}
           <div className="absolute inset-0 bg-gradient-to-br from-amber-900 via-stone-800 to-stone-900" />
-          {/* Actual image */}
+          {/* Actual image — usa banner_url si está configurado, sino el default */}
           <img
-            src="/storefront-construccion-banner.png"
+            src={store.banner_url || "/storefront-construccion-banner.png"}
             alt=""
             className={cn(
               'absolute inset-0 w-full h-full object-cover transition-opacity duration-700',
@@ -569,10 +866,16 @@ function ConstruccionTemplate({ store, products }: StorefrontPageProps) {
                 <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black uppercase tracking-tighter leading-[0.95] text-white drop-shadow-lg">
                   {store.name}
                 </h1>
+                {store.store_tagline && (
+                  <p className="mt-2 text-sm sm:text-base font-medium text-amber-200/90 drop-shadow line-clamp-2">
+                    {store.store_tagline}
+                  </p>
+                )}
                 <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs sm:text-sm text-stone-300 font-medium">
                   {store.address && <span className="flex items-center gap-1.5"><MapPin className="w-3 h-3 text-amber-400/80" />{store.address}</span>}
                   {store.phone && <span className="flex items-center gap-1.5"><Phone className="w-3 h-3 text-amber-400/80" />{store.phone}</span>}
                   {store.email && <span className="flex items-center gap-1.5"><Mail className="w-3 h-3 text-amber-400/80" />{store.email}</span>}
+                  {store.opening_hours && <span className="flex items-center gap-1.5"><Clock className="w-3 h-3 text-amber-400/80" />{store.opening_hours}</span>}
                 </div>
               </div>
             </div>
@@ -602,40 +905,76 @@ function ConstruccionTemplate({ store, products }: StorefrontPageProps) {
                 </div>
               </div>
             </div>
-            {store.phone && (
-              <a
-                href={`https://wa.me/${store.phone.replace(/[^0-9]/g, '')}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-xl bg-green-600 hover:bg-green-500 text-white text-[11px] font-black uppercase tracking-widest transition-all hover:shadow-lg hover:shadow-green-600/20 active:scale-95"
-              >
-                <MessageCircle className="w-3.5 h-3.5" />
-                {t('inquireNow')}
-              </a>
-            )}
+            <div className="flex items-center gap-2">
+              {store.whatsapp_group_url && (
+                <a
+                  href={store.whatsapp_group_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hidden sm:flex items-center gap-2 px-3 py-2 rounded-xl bg-green-700 hover:bg-green-600 text-white text-[11px] font-black uppercase tracking-widest transition-all hover:shadow-lg hover:shadow-green-600/20 active:scale-95"
+                >
+                  <MessageCircle className="w-3.5 h-3.5" />
+                  Grupo
+                </a>
+              )}
+              {store.telegram_url && (
+                <a
+                  href={store.telegram_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hidden sm:flex items-center gap-2 px-3 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-[11px] font-black uppercase tracking-widest transition-all hover:shadow-lg hover:shadow-sky-500/20 active:scale-95"
+                >
+                  <Send className="w-3.5 h-3.5" />
+                  Telegram
+                </a>
+              )}
+              {store.phone && (
+                <a
+                  href={`https://wa.me/${store.phone.replace(/[^0-9]/g, '')}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-green-600 hover:bg-green-500 text-white text-[11px] font-black uppercase tracking-widest transition-all hover:shadow-lg hover:shadow-green-600/20 active:scale-95"
+                >
+                  <MessageCircle className="w-3.5 h-3.5" />
+                  {t('inquireNow')}
+                </a>
+              )}
+            </div>
           </div>
         </div>
       </header>
 
-      {/* Trust bar */}
-      <div className="bg-white border-b border-stone-200/60">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3">
-          <div className="grid grid-cols-3 gap-3">
-            <div className="flex items-center gap-1.5 justify-center">
-              <Truck className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-              <span className="text-[9px] sm:text-[11px] font-bold uppercase tracking-wider text-stone-500">{t('deliveryAvailable')}</span>
-            </div>
-            <div className="flex items-center gap-1.5 justify-center">
-              <Shield className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-              <span className="text-[9px] sm:text-[11px] font-bold uppercase tracking-wider text-stone-500">{t('verifiedProducts')}</span>
-            </div>
-            <div className="flex items-center gap-1.5 justify-center">
-              <Clock className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-              <span className="text-[9px] sm:text-[11px] font-bold uppercase tracking-wider text-stone-500">{t('updatedToday')}</span>
+      {/* Carrusel promocional configurable (hasta 5 imágenes) */}
+      {store.promo_images && store.promo_images.length > 0 && (
+        <PromoCarousel images={store.promo_images} />
+      )}
+
+      {/* Servicios configurables (hasta 6) */}
+      {store.services && store.services.length > 0 && (
+        <ServicesSection services={store.services} />
+      )}
+
+      {/* Trust bar — solo se muestra si NO hay servicios configurados (evita redundancia) */}
+      {!store.services || store.services.length === 0 ? (
+        <div className="bg-white border-b border-stone-200/60">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3">
+            <div className="grid grid-cols-3 gap-3">
+              <div className="flex items-center gap-1.5 justify-center">
+                <Truck className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                <span className="text-[9px] sm:text-[11px] font-bold uppercase tracking-wider text-stone-500">{t('deliveryAvailable')}</span>
+              </div>
+              <div className="flex items-center gap-1.5 justify-center">
+                <Shield className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                <span className="text-[9px] sm:text-[11px] font-bold uppercase tracking-wider text-stone-500">{t('verifiedProducts')}</span>
+              </div>
+              <div className="flex items-center gap-1.5 justify-center">
+                <Clock className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                <span className="text-[9px] sm:text-[11px] font-bold uppercase tracking-wider text-stone-500">{t('updatedToday')}</span>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      ) : null}
 
       {/* Search + Filter + View Toggle Toolbar */}
       <div className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-stone-200 shadow-sm">
@@ -849,6 +1188,7 @@ function ConstruccionCard({ product, image, onClick }: { product: StorefrontProd
   const inStock = product.inStock;
   // FIX: Si está en promoción, mostrar como disponible (sin opacidad) aunque stock=0
   const showAsAvailable = inStock || product.on_promotion === true;
+  const isOnPromotion = product.on_promotion === true;
 
   return (
     <div className={cn(
@@ -856,6 +1196,8 @@ function ConstruccionCard({ product, image, onClick }: { product: StorefrontProd
       showAsAvailable
         ? 'hover:shadow-xl hover:shadow-amber-500/10 hover:-translate-y-1 border border-stone-200/80'
         : 'opacity-60 border border-stone-200/40',
+      // FIX-PROMO-VISIBILITY: borde dorado + ring sutil para productos en promoción
+      isOnPromotion && 'ring-1 ring-amber-400/40 border-amber-300/60',
     )} onClick={onClick}>
       <div className="relative aspect-[4/3] bg-gradient-to-br from-stone-100 to-stone-50 overflow-hidden">
         {image ? (
@@ -878,7 +1220,16 @@ function ConstruccionCard({ product, image, onClick }: { product: StorefrontProd
             {product.category}
           </span>
         )}
-        {product.stock_visible !== false && <StockBadge inStock={inStock} />}
+        {/* FIX-PROMO-VISIBILITY: Badge PROMO siempre visible en esquina superior derecha */}
+        {isOnPromotion && (
+          <span className="absolute top-3 right-3 px-2 py-0.5 rounded-md bg-amber-500 text-white text-[9px] font-black uppercase tracking-widest shadow-md flex items-center gap-1 z-10">
+            <Zap className="w-3 h-3" />
+            Promo
+          </span>
+        )}
+        {/* Badge de stock solo si stock_visible es true Y no está en promoción
+            (si está en promoción, el badge PROMO ya indica disponibilidad) */}
+        {product.stock_visible !== false && !isOnPromotion && <StockBadge inStock={inStock} />}
         <div className="absolute inset-0 bg-gradient-to-t from-black/15 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
       </div>
       <div className="flex-1 p-4 flex flex-col gap-1.5">
@@ -928,6 +1279,7 @@ function ConstruccionListItem({ product, image, onClick }: { product: Storefront
   const t = useTranslations('stores.storefront');
   const inStock = product.inStock;
   const showAsAvailable = inStock || product.on_promotion === true;
+  const isOnPromotion = product.on_promotion === true;
 
   return (
     <div
@@ -935,7 +1287,9 @@ function ConstruccionListItem({ product, image, onClick }: { product: Storefront
         'group flex gap-4 p-3 sm:p-4 rounded-xl bg-white border transition-all duration-200 cursor-pointer',
         showAsAvailable
           ? 'border-stone-200/80 hover:border-amber-400/50 hover:shadow-md hover:shadow-amber-500/5'
-          : 'border-stone-200/40 opacity-60'
+          : 'border-stone-200/40 opacity-60',
+        // FIX-PROMO-VISIBILITY: borde dorado para productos en promoción
+        isOnPromotion && 'border-amber-300/70 ring-1 ring-amber-400/30',
       )}
       onClick={onClick}
     >
@@ -948,8 +1302,17 @@ function ConstruccionListItem({ product, image, onClick }: { product: Storefront
             <Package className="w-8 h-8 text-stone-200" />
           </div>
         )}
-        {/* Stock dot */}
-        <span className={cn('absolute top-1.5 right-1.5 w-2.5 h-2.5 rounded-full border-2 border-white', inStock ? 'bg-emerald-500' : 'bg-red-500')} />
+        {/* Stock dot — solo si no está en promoción (promoción usa badge dorado) */}
+        {!isOnPromotion && (
+          <span className={cn('absolute top-1.5 right-1.5 w-2.5 h-2.5 rounded-full border-2 border-white', inStock ? 'bg-emerald-500' : 'bg-red-500')} />
+        )}
+        {/* Badge PROMO */}
+        {isOnPromotion && (
+          <span className="absolute top-1 right-1 px-1.5 py-0.5 rounded bg-amber-500 text-white text-[8px] font-black uppercase tracking-widest shadow flex items-center gap-0.5 z-10">
+            <Zap className="w-2.5 h-2.5" />
+            Promo
+          </span>
+        )}
       </div>
 
       {/* Content */}

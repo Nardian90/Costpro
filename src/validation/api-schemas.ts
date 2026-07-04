@@ -225,6 +225,22 @@ export const createStoreSchema = z.object({
   stamp_url: z.string().url().optional().nullable(),
   latitude: z.number().optional().nullable(),
   longitude: z.number().optional().nullable(),
+  // ── Storefront config (2026-07-04) ──
+  banner_url: z.string().url().optional().nullable(),
+  store_tagline: z.string().max(200).optional().nullable(),
+  whatsapp_group_url: z.string().url().optional().nullable().or(z.literal('')),
+  telegram_url: z.string().url().optional().nullable().or(z.literal('')),
+  services: z.array(z.object({
+    icon: z.string().max(50),
+    title: z.string().max(100),
+    description: z.string().max(300).optional(),
+  })).max(6).optional().nullable(),
+  promo_images: z.array(z.object({
+    url: z.string().url(),
+    caption: z.string().max(200).optional(),
+    link: z.string().url().optional().nullable(),
+  })).max(5).optional().nullable(),
+  opening_hours: z.string().max(200).optional().nullable(),
 });
 
 export const updateStoreSchema = z.object({
@@ -248,6 +264,22 @@ export const updateStoreSchema = z.object({
   // El toggle preserva memberships y configuración; el DELETE las revoca todas.
   // Diferencia clave: toggle = pausa temporal; DELETE = baja permanente con cleanup.
   is_active: z.boolean().optional(),
+  // ── Storefront config (2026-07-04) ──
+  banner_url: z.string().url().optional().nullable(),
+  store_tagline: z.string().max(200).optional().nullable(),
+  whatsapp_group_url: z.string().url().optional().nullable().or(z.literal('')),
+  telegram_url: z.string().url().optional().nullable().or(z.literal('')),
+  services: z.array(z.object({
+    icon: z.string().max(50),
+    title: z.string().max(100),
+    description: z.string().max(300).optional(),
+  })).max(6).optional().nullable(),
+  promo_images: z.array(z.object({
+    url: z.string().url(),
+    caption: z.string().max(200).optional(),
+    link: z.string().url().optional().nullable(),
+  })).max(5).optional().nullable(),
+  opening_hours: z.string().max(200).optional().nullable(),
 });
 
 export const deleteStoreSchema = z.object({

@@ -110,6 +110,22 @@ export const storeSchema = z.object({
       is_active: z.boolean().optional(),
     }),
   ]).nullable().optional(),
+  // ── Storefront config (2026-07-04) ──
+  banner_url: z.string().nullable().optional(),
+  store_tagline: z.string().max(200).nullable().optional(),
+  whatsapp_group_url: z.string().url().nullable().optional().or(z.literal('')),
+  telegram_url: z.string().url().nullable().optional().or(z.literal('')),
+  services: z.array(z.object({
+    icon: z.string().max(50),
+    title: z.string().max(100),
+    description: z.string().max(300).optional(),
+  })).max(6).nullable().optional(),
+  promo_images: z.array(z.object({
+    url: z.string().url(),
+    caption: z.string().max(200).optional(),
+    link: z.string().url().optional().nullable(),
+  })).max(5).nullable().optional(),
+  opening_hours: z.string().max(200).nullable().optional(),
 });
 
 export const userStoreMembershipSchema = z.object({

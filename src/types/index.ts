@@ -133,6 +133,28 @@ export interface UserStoreMembership {
 
 export type StoreTemplate = 'construccion' | 'minimalista' | 'moderna' | 'clasica';
 
+/**
+ * Servicio que presta la empresa — se muestra en la vitrina pública.
+ * icon: nombre de icono lucide-react (truck, shield, clock, wrench, etc.)
+ */
+export interface StoreService {
+  icon: string;
+  title: string;
+  description?: string | null;
+}
+
+/**
+ * Imagen promocional del carrusel de la vitrina.
+ * url: URL pública de la imagen (Supabase Storage)
+ * caption: texto opcional sobre la imagen
+ * link: URL opcional a la que salta al hacer clic
+ */
+export interface StorePromoImage {
+  url: string;
+  caption?: string | null;
+  link?: string | null;
+}
+
 export interface Store {
   id: string;
   name: string;
@@ -152,6 +174,21 @@ export interface Store {
   plantilla?: StoreTemplate | null;
   cost_template?: StoreCostTemplate | null;
   created_at?: string;
+  // ── Storefront config (2026-07-04) ──
+  /** URL del banner personalizado para la vitrina. Si es null usa el default por plantilla. */
+  banner_url?: string | null;
+  /** Subtítulo o eslogan corto debajo del nombre. */
+  store_tagline?: string | null;
+  /** URL del grupo de WhatsApp (https://chat.whatsapp.com/...). */
+  whatsapp_group_url?: string | null;
+  /** URL del canal/grupo de Telegram (https://t.me/...). */
+  telegram_url?: string | null;
+  /** Array de servicios que presta la empresa (máx 6). */
+  services?: StoreService[] | null;
+  /** Array de imágenes promocionales del carrusel (máx 5). */
+  promo_images?: StorePromoImage[] | null;
+  /** Horario de atención en texto libre. */
+  opening_hours?: string | null;
 }
 
 // ============================================

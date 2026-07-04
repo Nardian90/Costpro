@@ -4,6 +4,12 @@
  * Forces light mode so the storefront always looks correct regardless
  * of the admin's theme preference. Also isolates the storefront from
  * unnecessary app providers (SyncProvider, CookieConsent, etc.).
+ *
+ * FIX-HYDRATION (2026-07-04): El script que fuerza el light mode se
+ * renderiza con `nonce={nonce}` para que coincida el atributo entre
+ * server y client. Antes, Next.js inyectaba el nonce automáticamente
+ * en hidratación pero no en SSR, causando el mismatch
+ * `nonce=""` (server) vs `nonce="A9dlI-..."` (client).
  */
 import { headers } from 'next/headers';
 
@@ -18,8 +24,10 @@ export default async function StorefrontLayout({
 
   return (
     <>
-      {/* Force light theme: remove 'dark' class and suppress dark variants */}
+      {/* Force light theme: remove 'dark' class and suppress dark variants
+          FIX-HYDRATION: nonce aplicado explícitamente al script tag */}
       <script
+        nonce={nonce}
         dangerouslySetInnerHTML={{
           __html: `
             (function(){
