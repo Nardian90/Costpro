@@ -14,6 +14,8 @@ export interface ConsolidatedTransaction {
   currency: string;
   transactionId: string;
   bank: string;
+  /** FIX-WALLET (2026-07-05): tarjeta/cuenta extraída del SMS */
+  card?: string;
   counterparty?: string;
   isAdjustment?: boolean;
   isStatement?: boolean;
@@ -24,6 +26,8 @@ export interface AnalyticalTransaction {
   id: string;
   date: string;
   bank: string;
+  /** FIX-WALLET: tarjeta/cuenta */
+  card?: string;
   typeOperation: string;
   nature: 'CR' | 'DB';
   amount: number;
@@ -42,12 +46,27 @@ export interface WalletSummary {
   balance: number;
 }
 
+/** FIX-WALLET (2026-07-05): resumen por banco con saldo y tarjeta */
+export interface BankSummary {
+  income: number;
+  expenses: number;
+  current_balance: number;
+  /** Última fecha de saldo reportado */
+  last_balance_date?: string;
+  /** Tarjeta/cuenta principal */
+  card?: string;
+  /** Número de transacciones */
+  transaction_count: number;
+}
+
 export interface WalletAnalytics {
   summary: WalletSummary;
-  banks: Record<string, { income: number; expenses: number; current_balance: number }>;
+  banks: Record<string, BankSummary>;
   monthly: Record<string, { income: number; expenses: number }>;
   categories: Record<string, number>;
   transactions: AnalyticalTransaction[];
   rawSms: RawSms[];
   consolidated: ConsolidatedTransaction[];
+  /** FIX-WALLET: saldo total real (suma de saldos reportados por banco) */
+  total_real_balance?: number;
 }

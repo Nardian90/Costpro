@@ -1,5 +1,5 @@
 import Decimal from 'decimal.js';
-import { RawSms, ConsolidatedTransaction, AnalyticalTransaction, WalletAnalytics, WalletSummary } from './types';
+import { RawSms, ConsolidatedTransaction, AnalyticalTransaction, WalletAnalytics, WalletSummary, BankSummary } from './types';
 
 const generateId = () => Math.random().toString(36).substring(2, 11) + Date.now().toString(36);
 
@@ -142,7 +142,28 @@ export function normalizeBank(text: string): string {
   if (low.includes('banco popular de ahorro') || low.includes('bpa')) return 'BPA';
   if (low.includes('bandec')) return 'BANDEC';
   if (low.includes('metropolitano')) return 'METRO';
-  return 'BANDEC';
+  // FIX-WALLET (2026-07-05): si no se puede determinar, usar 'DESCONOCIDO'
+  // antes retornaba 'BANDEC' como default lo cual era incorrecto
+  return 'DESCONOCIDO';
+}
+
+/**
+ * FIX-WALLET (2026-07-05): extrae el número de tarjeta/cuenta del SMS.
+ * Ej: "920406XXXXXX1162" → "****1162"
+ */
+export function extractCard(text: string): string | undefined {
+  // Patrón: "cuenta 920406XXXXXX1162" o "cuenta 9204069997231162"
+  const match = text.match(/cuenta\s+(\d{6}[Xx]*\d{4})/i);
+  if (match) {
+    const card = match[1];
+    // Si tiene X, mostrar últimos 4
+    if (card.includes('X') || card.includes('x')) {
+      return `****${card.slice(-4)}`;
+    }
+    // Si son todos dígitos, mostrar últimos 4
+    return `****${card.slice(-4)}`;
+  }
+  return undefined;
 }
 
 export function deriveTransactions(raw: RawSms[]): ConsolidatedTransaction[] {
@@ -151,6 +172,7 @@ export function deriveTransactions(raw: RawSms[]): ConsolidatedTransaction[] {
 
   raw.forEach(sms => {
     const bank = normalizeBank(sms.content);
+    const card = extractCard(sms.content);
 
     if (sms.content.includes('Ultimas operaciones')) {
       // Split by newline or pipe, then look for date patterns to handle joined headers
@@ -185,6 +207,7 @@ export function deriveTransactions(raw: RawSms[]): ConsolidatedTransaction[] {
                                 currency,
                                 transactionId,
                                 bank,
+                                card, // FIX-WALLET: incluir tarjeta
                                 counterparty: service,
                                 isStatement: true
                             });
@@ -245,6 +268,7 @@ export function deriveTransactions(raw: RawSms[]): ConsolidatedTransaction[] {
             currency: data.currency,
             transactionId: data.transactionId,
             bank,
+            card, // FIX-WALLET: incluir tarjeta
             counterparty: data.counterparty
           });
           seen.add(key);
@@ -288,6 +312,7 @@ export function deriveAnalyticalData(consolidated: ConsolidatedTransaction[]): A
       id: `an-${idx}-${tx.transactionId}`,
       date: tx.date,
       bank: tx.bank,
+      card: tx.card, // FIX-WALLET: incluir tarjeta
       typeOperation,
       nature: tx.operation,
       amount: tx.amount,
@@ -400,7 +425,7 @@ export function calculateAnalytics(rawSms: RawSms[]): WalletAnalytics {
   const transactions = deriveAnalyticalData(consolidated);
 
   const summary: WalletSummary = { total_income: 0, total_expenses: 0, balance: 0 };
-  const banks: Record<string, { income: number; expenses: number; current_balance: number }> = {};
+  const banks: Record<string, BankSummary> = {};
   const categories: Record<string, number> = {};
   const monthly: Record<string, { income: number; expenses: number }> = {};
 
@@ -408,9 +433,13 @@ export function calculateAnalytics(rawSms: RawSms[]): WalletAnalytics {
     if (tx.nature === 'CR') summary.total_income = new Decimal(summary.total_income).plus(tx.amount).toNumber();
     else summary.total_expenses = new Decimal(summary.total_expenses).plus(tx.amount).toNumber();
 
-    if (!banks[tx.bank]) banks[tx.bank] = { income: 0, expenses: 0, current_balance: 0 };
+    if (!banks[tx.bank]) banks[tx.bank] = { income: 0, expenses: 0, current_balance: 0, transaction_count: 0 };
     if (tx.nature === 'CR') banks[tx.bank].income = new Decimal(banks[tx.bank].income).plus(tx.amount).toNumber();
     else banks[tx.bank].expenses = new Decimal(banks[tx.bank].expenses).plus(tx.amount).toNumber();
+    banks[tx.bank].transaction_count++;
+
+    // FIX-WALLET: guardar tarjeta si existe
+    if (tx.card && !banks[tx.bank].card) banks[tx.bank].card = tx.card;
 
     const month = tx.date.substring(0, 7);
     if (!monthly[month]) monthly[month] = { income: 0, expenses: 0 };
@@ -422,6 +451,36 @@ export function calculateAnalytics(rawSms: RawSms[]): WalletAnalytics {
 
   summary.balance = new Decimal(summary.total_income).minus(summary.total_expenses).toNumber();
 
+  // FIX-WALLET (2026-07-05): calcular saldo REAL por banco usando el último
+  // saldo reportado en los SMS (no el teórico calculado)
+  let totalRealBalance = 0;
+  const bankNames = Object.keys(banks);
+  for (const bankName of bankNames) {
+    const bankSms = rawSms.filter(sms => normalizeBank(sms.content) === bankName);
+    let lastBalanceDate = '';
+    let lastBalanceAmount = 0;
+    let hasBalance = false;
+
+    for (const sms of bankSms) {
+      const match = sms.content.match(/(?:Saldo Disponible|Saldo restante|Saldo Restante):\s*(CR|DB)?\s*([\d,.]+)\s*(CUP|USD)?/i);
+      if (match) {
+        const balDate = formatDateFromSms(sms.date);
+        const balAmount = parseAmount(match[2]);
+        if (!hasBalance || balDate >= lastBalanceDate) {
+          lastBalanceDate = balDate;
+          lastBalanceAmount = balAmount;
+          hasBalance = true;
+        }
+      }
+    }
+
+    if (hasBalance) {
+      banks[bankName].current_balance = lastBalanceAmount;
+      banks[bankName].last_balance_date = lastBalanceDate;
+      totalRealBalance = new Decimal(totalRealBalance).plus(lastBalanceAmount).toNumber();
+    }
+  }
+
   return {
     summary,
     banks,
@@ -429,7 +488,8 @@ export function calculateAnalytics(rawSms: RawSms[]): WalletAnalytics {
     categories,
     transactions,
     rawSms,
-    consolidated
+    consolidated,
+    total_real_balance: totalRealBalance,
   };
 }
 
@@ -440,17 +500,22 @@ function formatDate(dateStr: string): string {
 
   const parts = dateStr.split('/');
   if (parts.length === 3) {
-    const day = parts[0].padStart(2, '0');
-    const month = parts[1].padStart(2, '0');
+    let day = parts[0].padStart(2, '0');
+    let month = parts[1].padStart(2, '0');
     const year = parts[2].length === 2 ? '20' + parts[2] : parts[2];
+    // FIX-WALLET (2026-07-05): si day o month es "00", usar "01"
+    if (day === '00') day = '01';
+    if (month === '00') month = '01';
     return `${year}-${month}-${day}`;
   }
 
   const partsHyphen = dateStr.split('-');
   if (partsHyphen.length === 3) {
-      const day = partsHyphen[0].padStart(2, '0');
-      const month = partsHyphen[1].padStart(2, '0');
+      let day = partsHyphen[0].padStart(2, '0');
+      let month = partsHyphen[1].padStart(2, '0');
       const year = partsHyphen[2].length === 2 ? '20' + partsHyphen[2] : partsHyphen[2];
+      if (day === '00') day = '01';
+      if (month === '00') month = '01';
       return `${year}-${month}-${day}`;
   }
 
