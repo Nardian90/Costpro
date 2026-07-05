@@ -9,7 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import {
     Wallet, ArrowUpRight, ArrowDownRight, Landmark, CreditCard,
     Search, Plus, Tag, Calendar, BarChart3, Edit2, X,
-    TrendingUp, TrendingDown, Building2, ChevronRight, Table as TableIcon
+    TrendingUp, TrendingDown, Building2, ChevronRight, Table as TableIcon,
+    Upload, FileUp, Smartphone
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { parseRawSms, calculateAnalytics } from "@/lib/wallet/parser";
@@ -32,6 +33,10 @@ export default function WalletView() {
     const [searchQuery, setSearchQuery] = useState('');
     const [isImporting, setIsImporting] = useState(false);
     const [importText, setImportText] = useState('');
+    const [importMode, setImportMode] = useState<'sms' | 'trm'>('sms');
+    const [importingTrm, setImportingTrm] = useState(false);
+    const [trmData, setTrmData] = useState<any>(null);
+    const [isDragging, setIsDragging] = useState(false);
     const [viewMode, setViewMode] = useState<ViewMode>('resumen');
     const [filterBank, setFilterBank] = useState<string | 'all'>('all');
     const [editingTxId, setEditingTxId] = useState<string | null>(null);
@@ -59,6 +64,72 @@ export default function WalletView() {
             setImportText(''); setIsImporting(false);
         } catch (e) { toast.error('Error al procesar'); }
     };
+
+    // FIX-TRM (2026-07-05): importar respaldo .trm de Transfermovil
+    const handleTrmFile = async (file: File) => {
+        setImportingTrm(true);
+        try {
+            const content = await file.text();
+            const { useAuthStore } = await import('@/store');
+            const token = useAuthStore.getState().token;
+
+            const res = await fetch('/api/wallet/import-trm', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                },
+                body: JSON.stringify({ content }),
+            });
+
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err.error || `HTTP ${res.status}`);
+            }
+
+            const data = await res.json();
+            setTrmData(data);
+            // Guardar en localStorage para persistencia
+            localStorage.setItem('wallet_trm_data', JSON.stringify(data));
+            toast.success(`Respaldo descifrado: ${data.count.transactions} transacciones, ${data.count.accounts} cuentas`, {
+                description: `Fecha del respaldo: ${data.fecha_exp}`,
+                duration: 7000,
+            });
+            setIsImporting(false);
+        } catch (e: any) {
+            toast.error('Error al importar .trm', { description: e.message, duration: 8000 });
+        } finally {
+            setImportingTrm(false);
+        }
+    };
+
+    const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file && file.name.endsWith('.trm')) {
+            handleTrmFile(file);
+        } else {
+            toast.error('El archivo debe ser .trm');
+        }
+    };
+
+    const handleDrop = (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragging(false);
+        const file = e.dataTransfer.files?.[0];
+        if (file && file.name.endsWith('.trm')) {
+            handleTrmFile(file);
+        } else {
+            toast.error('Arrastra un archivo .trm de Transfermovil');
+        }
+    };
+
+    // Cargar TRM data de localStorage al montar
+    useEffect(() => {
+        const savedTrm = localStorage.getItem('wallet_trm_data');
+        if (savedTrm) {
+            try { setTrmData(JSON.parse(savedTrm)); } catch {}
+        }
+    }, []);
 
     const analytics = useMemo(() => {
         const a = calculateAnalytics(rawSms);
@@ -342,9 +413,64 @@ export default function WalletView() {
             {isImporting && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-background/90 backdrop-blur-sm" onClick={() => setIsImporting(false)}>
                     <Card className="w-full max-w-lg rounded-3xl border-border/30 shadow-2xl p-5" onClick={e => e.stopPropagation()}>
-                        <div className="flex justify-between items-center mb-3"><h2 className="text-sm font-black uppercase">Importar SMS</h2><button onClick={() => setIsImporting(false)} className="text-muted-foreground hover:text-foreground"><X className="w-4 h-4" /></button></div>
-                        <textarea value={importText} onChange={e => setImportText(e.target.value)} placeholder="Pega mensajes de Transfermóvil..." className="w-full h-32 p-3 bg-muted/20 rounded-2xl text-xs focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none mb-3" />
-                        <div className="flex justify-end gap-2"><Button variant="ghost" size="sm" onClick={() => setIsImporting(false)} className="text-[10px] uppercase">Cancelar</Button><Button size="sm" onClick={handleImport} className="text-[10px] uppercase">Procesar</Button></div>
+                        <div className="flex justify-between items-center mb-3">
+                            <h2 className="text-sm font-black uppercase">Importar Datos</h2>
+                            <button onClick={() => setIsImporting(false)} className="text-muted-foreground hover:text-foreground"><X className="w-4 h-4" /></button>
+                        </div>
+                        {/* Toggle modo */}
+                        <div className="flex items-center gap-1 bg-muted/20 p-1 rounded-lg mb-4">
+                            <button onClick={() => setImportMode('trm')} className={cn("flex-1 flex items-center justify-center gap-1.5 py-2 rounded text-[10px] font-bold uppercase", importMode === 'trm' ? "bg-primary text-primary-foreground" : "text-muted-foreground")}>
+                                <Smartphone className="w-3.5 h-3.5" /> Respaldo .trm
+                            </button>
+                            <button onClick={() => setImportMode('sms')} className={cn("flex-1 flex items-center justify-center gap-1.5 py-2 rounded text-[10px] font-bold uppercase", importMode === 'sms' ? "bg-primary text-primary-foreground" : "text-muted-foreground")}>
+                                <FileUp className="w-3.5 h-3.5" /> SMS Pegados
+                            </button>
+                        </div>
+
+                        {importMode === 'trm' ? (
+                            <div className="space-y-3">
+                                {/* Drag & Drop */}
+                                <div
+                                    onDragOver={e => { e.preventDefault(); setIsDragging(true); }}
+                                    onDragLeave={() => setIsDragging(false)}
+                                    onDrop={handleDrop}
+                                    className={cn(
+                                        "border-2 border-dashed rounded-2xl p-8 text-center transition-all cursor-pointer",
+                                        isDragging ? "border-primary bg-primary/10" : "border-border/40 hover:border-primary/40"
+                                    )}
+                                    onClick={() => document.getElementById('trm-file-input')?.click()}
+                                >
+                                    {importingTrm ? (
+                                        <div className="space-y-2">
+                                            <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
+                                            <p className="text-xs font-bold uppercase text-muted-foreground">Descifrando...</p>
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-2">
+                                            <Upload className="w-8 h-8 mx-auto text-muted-foreground/50" />
+                                            <p className="text-xs font-bold uppercase">Arrastra tu archivo .trm</p>
+                                            <p className="text-[10px] text-muted-foreground">o click para seleccionar</p>
+                                            <p className="text-[9px] text-muted-foreground/60 mt-1">Transfermóvil → Respaldo → Exportar</p>
+                                        </div>
+                                    )}
+                                    <input id="trm-file-input" type="file" accept=".trm" onChange={handleFileInput} className="hidden" />
+                                </div>
+                                {trmData && (
+                                    <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-[10px]">
+                                        <p className="font-black text-emerald-500 uppercase">✓ Respaldo cargado</p>
+                                        <p className="text-muted-foreground mt-1">{trmData.count.transactions} transacciones · {trmData.count.accounts} cuentas · {trmData.fecha_exp}</p>
+                                    </div>
+                                )}
+                            </div>
+                        ) : (
+                            <div className="space-y-3">
+                                <textarea value={importText} onChange={e => setImportText(e.target.value)} placeholder="Pega mensajes de Transfermóvil..." className="w-full h-32 p-3 bg-muted/20 rounded-2xl text-xs focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none" />
+                                <div className="flex justify-end gap-2">
+                                    <Button variant="ghost" size="sm" onClick={() => setIsImporting(false)} className="text-[10px] uppercase">Cancelar</Button>
+                                    <Button size="sm" onClick={handleImport} className="text-[10px] uppercase">Procesar</Button>
+                                </div>
+                            </div>
+                        )}
                     </Card>
                 </div>
             )}
