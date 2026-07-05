@@ -137,11 +137,14 @@ export default function Pick3IntelligenceView() {
   const handleSync = async () => {
     setSyncState(s => ({ ...s, isSyncing: true }));
     try {
-      const response = await fetch('/api/pick3/sync', { method: 'POST', headers: { 'Authorization': `Bearer ${useAuthStore.getState().token}` } });
+      // FIX-SYNC-7DIAS (2026-07-04): solo sincronizar últimos 7 días
+      // desde LotteryUSA (scraper client-side). El histórico completo
+      // viene del PDF oficial cargado previamente.
+      const response = await fetch('/api/pick3/sync?days=7', { method: 'POST', headers: { 'Authorization': `Bearer ${useAuthStore.getState().token}` } });
       const data = await response.json();
       const error = !response.ok || !data.success ? (data.message || 'Sync failed') : null;
       if (error) throw error;
-      toast.success("Sincronización completada");
+      toast.success(`Sincronización completada: ${data.data?.length || 0} sorteos actualizados`);
       fetchData();
     } catch (err) {
       toast.error("Error en sincronización automática");
@@ -191,9 +194,10 @@ export default function Pick3IntelligenceView() {
               className="rounded-full font-black uppercase h-12 px-6 border-primary/20 hover:bg-primary/5 group"
               onClick={handleSync}
               disabled={syncState.isSyncing}
+              title="Actualiza los últimos 7 días desde LotteryUSA"
             >
               <RefreshCw className={cn("w-4 h-4 mr-2", syncState.isSyncing && "animate-spin")} />
-              {syncState.isSyncing ? "Sincronizando..." : "Sincronizar"}
+              {syncState.isSyncing ? "Actualizando..." : "Actualizar 7 días"}
             </Button>
             <Button
               className="rounded-full font-black uppercase h-12 px-8 shadow-lg shadow-primary/20 group"

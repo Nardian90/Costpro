@@ -16,6 +16,7 @@ async function postHandler(req: NextRequest) {
 
   const { searchParams } = new URL(req.url);
   const forceFull = searchParams.get('full') === 'true';
+  const days = parseInt(searchParams.get('days') || '0', 10); // FIX-SYNC-7DIAS: días a sincronizar
   const authHeader = req.headers.get('Authorization');
   const isCron = authHeader === `Bearer ${process.env.CRON_SECRET}`;
 
@@ -26,10 +27,25 @@ async function postHandler(req: NextRequest) {
     );
   }
 
-  logger.info('PICK3', `Sync triggered. Source: ${isCron ? 'Cron' : 'Manual'}, Full: ${forceFull}`);
+  logger.info('PICK3', `Sync triggered. Source: ${isCron ? 'Cron' : 'Manual'}, Full: ${forceFull}, Days: ${days}`);
 
   try {
-    const results = await Pick3ScraperService.scrapeLatestResults();
+    let results;
+    if (days > 0) {
+      // FIX-SYNC-7DIAS (2026-07-04): sincronización parcial de N días
+      // Solo obtiene resultados recientes de LotteryUSA
+      results = await Pick3ScraperService.scrapeLatestResults();
+
+      // Filtrar solo los últimos N días (incluyendo hoy)
+      if (days > 0 && results.length > 0) {
+        const cutoff = new Date();
+        cutoff.setDate(cutoff.getDate() - days);
+        const cutoffStr = cutoff.toISOString().split('T')[0];
+        results = results.filter(r => r.date >= cutoffStr);
+      }
+    } else {
+      results = await Pick3ScraperService.scrapeLatestResults();
+    }
 
     return NextResponse.json({
       success: true,
