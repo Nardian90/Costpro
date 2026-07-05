@@ -58,11 +58,11 @@ export function Pick3HistorySection({ history, onRefresh }: Pick3HistorySectionP
   }, [viewMode]);
 
   // FIX-PERSIST: displayLimit persistido
-  // FIX-DISPLAY (2026-07-05): default 30 para mostrar ~15 días (2 sorteos × 15 = 30)
+  // FIX-DISPLAY (2026-07-05): default 100 para mostrar ~50 días (2 sorteos × 50 = 100)
   const [displayLimit, setDisplayLimit] = useState(() => {
-    if (typeof window === 'undefined') return 30;
-    const saved = parseInt(localStorage.getItem('pick3-display-limit') || '30', 10);
-    return isNaN(saved) ? 30 : saved;
+    if (typeof window === 'undefined') return 100;
+    const saved = parseInt(localStorage.getItem('pick3-display-limit') || '100', 10);
+    return isNaN(saved) ? 100 : saved;
   });
 
   useEffect(() => {
@@ -156,9 +156,14 @@ export function Pick3HistorySection({ history, onRefresh }: Pick3HistorySectionP
   const handleForceRefresh = async () => {
     setForceRefreshing(true);
     try {
+      // Limpiar localStorage ANTES de hacer el fetch
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('pick3-display-limit');
+        localStorage.removeItem('pick3_draw_history');
+      }
+      // Resetear displayLimit al default alto
+      setDisplayLimit(100);
       const result = await Pick3Storage.forceRefreshHistory();
-      // Resetear displayLimit para mostrar más registros
-      setDisplayLimit(60);
       if (result.records.length > 0) {
         toast.success(`Datos actualizados: ${result.records.length} registros. Último sorteo: ${result.latestDate}`);
         onRefresh(); // Trigger fetchData en el parent para refrescar toda la UI
@@ -286,32 +291,50 @@ export function Pick3HistorySection({ history, onRefresh }: Pick3HistorySectionP
   return (
     <div className="space-y-4">
       {/* FIX-INDICATOR (2026-07-05): indicador visible de última fecha y total */}
-      <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-muted/30 border border-border/30 text-[10px] font-bold uppercase">
-        <div className="flex items-center gap-2">
+      <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-muted/30 border border-border/30 text-[10px] font-bold uppercase flex-wrap gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <CalendarIcon className="w-3 h-3 text-primary" />
-          <span className="opacity-60">Última fecha:</span>
+          <span className="opacity-60">Última:</span>
           <span className="text-primary font-black">
             {history[0]?.date ? format(new Date(history[0].date), 'dd/MM/yyyy', { locale: es }) : '—'}
           </span>
           <span className="opacity-40">·</span>
-          <span className="opacity-60">Total:</span>
+          <span className="opacity-60">Total BD:</span>
           <span className="font-black">{history.length}</span>
           <span className="opacity-40">·</span>
-          <span className="opacity-60">Mostrando:</span>
-          <span className="font-black">{visibleMidday.length + visibleEvening.length}</span>
+          <span className="opacity-60">displayLimit:</span>
+          <span className="font-black text-amber-500">{displayLimit}</span>
+          <span className="opacity-40">·</span>
+          <span className="opacity-60">Midday:</span>
+          <span className="font-black text-warning">{visibleMidday.length}</span>
+          <span className="opacity-40">·</span>
+          <span className="opacity-60">Noche:</span>
+          <span className="font-black text-primary">{visibleEvening.length}</span>
         </div>
         <div className="flex items-center gap-1">
           {history.some(h => h.date === '2026-07-04') ? (
             <Badge className="bg-emerald-500/20 text-emerald-600 border-emerald-500/30 text-[8px]">
-              ✓ 04/07 cargado
+              ✓ 04/07 en BD
             </Badge>
           ) : (
             <Badge className="bg-amber-500/20 text-amber-600 border-amber-500/30 text-[8px]">
-              ⚠ 04/07 no cargado
+              ⚠ 04/07 no en BD
             </Badge>
           )}
         </div>
       </div>
+
+      {/* FIX-DEBUG (2026-07-05): mostrar primeros 3 registros de cada columna inline */}
+      {visibleMidday.length > 0 && (
+        <div className="text-[9px] font-mono opacity-50 px-3 py-1 bg-muted/20 rounded">
+          DEBUG Midday[0-2]: {visibleMidday.slice(0, 3).map(r => `${r.date}=${r.result.join('')}`).join(' | ')}
+        </div>
+      )}
+      {visibleEvening.length > 0 && (
+        <div className="text-[9px] font-mono opacity-50 px-3 py-1 bg-muted/20 rounded">
+          DEBUG Noche[0-2]: {visibleEvening.slice(0, 3).map(r => `${r.date}=${r.result.join('')}`).join(' | ')}
+        </div>
+      )}
 
       {/* Gaps Alert */}
       {gaps.length > 0 && (
