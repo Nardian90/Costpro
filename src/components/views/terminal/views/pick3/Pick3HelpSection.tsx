@@ -35,7 +35,7 @@ export function Pick3HelpSection() {
              <Target className="w-6 h-6 text-primary" />
           </div>
           <h3 className="font-black uppercase italic text-sm">1. Elige tu Jugada</h3>
-          <p className="text-xs font-medium opacity-60 leading-relaxed italic">Revisa la "Hero Card" en el dashboard o la pestaña de Predicciones. El sistema resalta las 3 combinaciones con mayor convergencia estadística hoy.</p>
+          <p className="text-xs font-medium opacity-60 leading-relaxed italic">Revisa la tarjeta principal en el Dashboard o la pestaña de Predicciones. El sistema resalta las 3 combinaciones con mayor convergencia estadística hoy.</p>
         </div>
         <div className="p-6 rounded-[32px] bg-background border border-border/50 shadow-sm space-y-4">
           <div className="w-12 h-12 rounded-2xl bg-success/10 flex items-center justify-center">
@@ -52,6 +52,78 @@ export function Pick3HelpSection() {
           <p className="text-xs font-medium opacity-60 leading-relaxed italic">¿Dudas de la IA? Ve a la pestaña de "Simulación". Verás qué habría pasado si hubieras seguido nuestras 3 sugerencias en los últimos 30 días.</p>
         </div>
       </div>
+
+      {/* FIX-GUIDE (2026-07-05): sección crítica sobre la realidad estadística de la lotería */}
+      <Card className="rounded-[32px] border-2 border-amber-500/30 bg-amber-500/5">
+        <CardHeader>
+          <CardTitle className="text-base font-black uppercase tracking-tight flex items-center gap-2 text-amber-600">
+            <ShieldCheck className="w-5 h-5" /> La Realidad Estadística: ¿Cuánto se Puede Ganar?
+          </CardTitle>
+          <CardDescription className="text-[11px] font-bold uppercase opacity-70">
+            Lee esto ANTES de apostar. Es la verdad matemática que ningún "gurú" te dice.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4 text-[12px] leading-relaxed">
+          <div className="space-y-2">
+            <p className="font-black uppercase text-[10px] text-amber-600">Las matemáticas no mienten</p>
+            <p className="opacity-80">
+              Pick 3 tiene <strong>1000 combinaciones posibles</strong> (000-999). La probabilidad de acertar
+              el número exacto (straight) en un solo sorteo es de <strong>1 en 1000 = 0.1%</strong>.
+              Si juegas 3 combinaciones por día, tu probabilidad sube a <strong>3 en 1000 = 0.3%</strong> por sorteo.
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <p className="font-black uppercase text-[10px] text-amber-600">¿Cuántos aciertos puedes esperar?</p>
+            <p className="opacity-80">
+              En <strong>30 días (60 sorteos)</strong> con 3 picks por sorteo, los aciertos esperados por
+              puro azar son: <strong>60 × 0.3% = 0.18 aciertos</strong>. Es decir, lo más probable es que
+              <strong> NO aciertes ni una vez</strong> en 30 días. La probabilidad de acertar al menos 1 vez
+              es solo del <strong>~16.5%</strong>.
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <p className="font-black uppercase text-[10px] text-amber-600">Expected Value (EV) negativo</p>
+            <p className="opacity-80">
+              El pago típico de Pick 3 straight es <strong>$500 por $1 apostado</strong>. Pero la probabilidad
+              de ganar es 0.1%. El EV = (0.001 × $500) - (0.999 × $1) = <strong>-$0.499 por cada $1 apostado</strong>.
+              Esto significa que <strong>por cada dólar que apuestes, pierdes 50 centavos a largo plazo</strong>.
+              La lotería es por diseño un juego de expected value negativo.
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <p className="font-black uppercase text-[10px] text-amber-600">¿Por qué solo 1 acierto en la simulación?</p>
+            <p className="opacity-80">
+              Si en la pestaña Simulación ves solo 1 acierto en 30 días, <strong>eso es estadísticamente normal</strong>.
+              No es un bug del sistema: es la realidad matemática de la lotería. Nuestros tests estadísticos
+              (chi-cuadrado, Kolmogorov-Smirnov, runs test, entropía de Shannon) confirman que los datos de
+              Florida Pick 3 son consistentes con un proceso aleatorio uniforme. <strong>No hay patrón explotable.</strong>
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <p className="font-black uppercase text-[10px] text-amber-600">¿Entonces para qué sirve este módulo?</p>
+            <p className="opacity-80">
+              Este módulo NO promete ganancias. Su valor está en:
+            </p>
+            <ul className="list-disc pl-5 space-y-1 opacity-80">
+              <li><strong>Gestión de bankroll profesional</strong>: si vas a jugar igual, al menos gestiona tu capital con métricas cuantitativas reales (Kelly, Sharpe, drawdown).</li>
+              <li><strong>Honestidad estadística</strong>: ningún "gurú de lotería" te va a mostrar p-values o EV negativo. Nosotros sí.</li>
+              <li><strong>Education financiera</strong>: aprende conceptos de trading (Sharpe, Sortino, Calmar) aplicados a un contexto simple.</li>
+              <li><strong>Detección de anomalías</strong>: si algún día los datos dejan de ser aleatorios (e.g., sesgo físico en el equipo de sorteos), este módulo lo detectará.</li>
+            </ul>
+          </div>
+
+          <div className="p-3 rounded-xl bg-destructive/10 border border-destructive/20">
+            <p className="text-[10px] font-black text-destructive uppercase">
+              ⚠ Advertencia: Las loterías son juegos de azar con EV negativo. Ningún método garantiza ganancias.
+              Juega responsablemente. Solo apuesta lo que puedes permitirte perder.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Terminology */}

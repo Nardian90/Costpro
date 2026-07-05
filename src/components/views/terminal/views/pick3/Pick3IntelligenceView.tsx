@@ -134,12 +134,14 @@ export default function Pick3IntelligenceView() {
     try {
       const backtestEngine = new BacktestEngine(hist);
       const days = simConfig.mode === 'manual' ? simConfig.windowDays : 30;
-      const result = backtestEngine.runValidation(config, 1000, days);
+      // FIX-ENSEMBLE (2026-07-05): pasar simConfig al backtest para que use
+      // EnsembleEngine con pesos manuales cuando el modo es 'manual'
+      const result = backtestEngine.runValidation(config, 1000, days, simConfig);
       setSimResult(result);
     } finally {
       setSimRunning(false);
     }
-  }, [simConfig.windowDays, simConfig.mode]);
+  }, [simConfig]);
 
   // FIX-SIM-RERUN (2026-07-05): re-ejecutar simulación con config manual
   const handleReRunSimulation = useCallback(() => {
@@ -151,9 +153,9 @@ export default function Pick3IntelligenceView() {
     try {
       const backtestEngine = new BacktestEngine(history);
       const days = simConfig.mode === 'manual' ? simConfig.windowDays : 30;
-      const result = backtestEngine.runValidation(bConfig, 1000, days);
+      const result = backtestEngine.runValidation(bConfig, 1000, days, simConfig);
       setSimResult(result);
-      toast.success(`Simulación re-ejecutada (${days} días, ${simConfig.mode})`);
+      toast.success(`Simulación re-ejecutada (${days} días, modo ${simConfig.mode}, ${simConfig.mode === 'manual' ? Object.values(simConfig.models).filter(m => m.enabled).length + ' modelos' : 'auto'})`);
     } catch (err) {
       toast.error("Error en simulación");
     } finally {

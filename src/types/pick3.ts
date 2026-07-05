@@ -74,6 +74,15 @@ export interface BacktestResult {
   kellyFraction?: number; // Fracción Kelly segura (decimal)
   kellyEdge?: number; // Edge estimado
   isOverfitting?: boolean; // Heurística de overfitting detectada
+  // FIX-PVALUE (2026-07-05): métricas de significancia estadística
+  totalStraightWins?: number;
+  totalBoxWins?: number;
+  expectedHits?: number; // Hits esperados por azar
+  observedHits?: number; // Hits observados
+  edgeRatio?: number; // observed/expected (1.0 = azar, >1 = mejor que azar)
+  pValue?: number; // p-value del performance
+  expectedValue?: number; // EV por $1 apostado
+  isStatisticallySignificant?: boolean; // p < 0.05 y observed > expected
   // === SPRINT-1-STATS (2026-07-05) ===
   // Tests estadísticos sobre la serie histórica usada
   statisticalTests?: {

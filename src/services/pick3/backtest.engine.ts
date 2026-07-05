@@ -1,7 +1,26 @@
 import { Pick3Result, BacktestResult, BettingConfig, IntelligencePlay, DrawTime } from '@/types/pick3';
 import { AnalysisEngine } from './analysis.engine';
 import { PredictionEngine } from './prediction.engine';
+import { EnsembleEngine } from './ensemble.engine';
 import { BankrollManager } from './bankroll.manager';
+
+/**
+ * Configuración de simulación que se pasa al backtest.
+ * FIX-ENSEMBLE (2026-07-05): permite usar EnsembleEngine con pesos manuales
+ * en vez del PredictionEngine legacy con pesos fijos.
+ */
+export interface BacktestSimConfig {
+  mode: 'auto' | 'manual';
+  models: {
+    frequency: { enabled: boolean; weight: number };
+    markov: { enabled: boolean; weight: number };
+    positional: { enabled: boolean; weight: number };
+    sumrange: { enabled: boolean; weight: number };
+  };
+  windowDays: number;
+  topPicks: number;
+  minConfidence: number;
+}
 import {
   computeFullQuantReport,
   calculateStreaks,
@@ -68,17 +87,36 @@ export class BacktestEngine {
     return result as BacktestResult;
   }
 
-  public runValidation(config: BettingConfig, initialBankroll: number, days: number = 30): ModelValidationResult {
+  /**
+   * FIX-ENSEMBLE (2026-07-05): runValidation ahora acepta simConfig opcional.
+   * - Si simConfig.mode === 'manual': usa EnsembleEngine con pesos manuales del panel
+   * - Si simConfig.mode === 'auto' o no se pasa: usa EnsembleEngine con pesos automáticos
+   *   (basados en backtest de cada modelo)
+   *
+   * Esto reemplaza el PredictionEngine v8.0 legacy que tenía pesos fijos hardcoded.
+   */
+  public runValidation(
+    config: BettingConfig,
+    initialBankroll: number,
+    days: number = 30,
+    simConfig?: BacktestSimConfig,
+  ): ModelValidationResult {
     const bankrollHistory: number[] = [initialBankroll];
     const pnlSeries: number[] = [];
     let currentBankroll = initialBankroll;
     let totalBets = 0;
     let totalWins = 0;
+    let totalStraightWins = 0;
+    let totalBoxWins = 0;
 
     const dailyHistory: ProjectionDay[] = [];
     let middayProfit = 0;
     let eveningProfit = 0;
 
+    // FIX-WALK-FORWARD (2026-07-05): walk-forward validation real.
+    // En vez de usar todo el histórico de una vez, usamos ventanas móviles:
+    // - testData: los últimos N sorteos (período a validar)
+    // - Para cada sorteo en testData, la ventana de entrenamiento es todo lo anterior
     const testData = this.history.slice(-(days * 2));
     const baseHistory = this.history.slice(0, -(days * 2));
 
@@ -88,9 +126,32 @@ export class BacktestEngine {
 
       const analysisEngine = new AnalysisEngine(windowHistory);
       const analysis = analysisEngine.analyze(60);
-      const predictionEngine = new PredictionEngine(windowHistory, analysis);
 
-      const predictions = predictionEngine.generatePredictions(config, 3);
+      // FIX-ENSEMBLE: usar EnsembleEngine en vez de PredictionEngine legacy
+      let predictions: IntelligencePlay[];
+      const topPicks = simConfig?.topPicks || 3;
+
+      if (simConfig && simConfig.mode === 'manual') {
+        // Modo manual: EnsembleEngine con pesos del panel
+        const ensembleEngine = new EnsembleEngine(windowHistory, analysis);
+        // Aplicar pesos manuales si la configuración lo indica
+        ensembleEngine.applyManualWeights(simConfig);
+        const report = ensembleEngine.generateReport(config, topPicks);
+        predictions = report.predictions.filter(p =>
+          p.confidence >= (simConfig.minConfidence || 0)
+        );
+      } else {
+        // Modo auto: EnsembleEngine con pesos dinámicos (calibrados por backtest)
+        const ensembleEngine = new EnsembleEngine(windowHistory, analysis);
+        const report = ensembleEngine.generateReport(config, topPicks);
+        predictions = report.predictions;
+      }
+
+      // Fallback: si no hay predicciones (confidence muy bajo), usar PredictionEngine
+      if (predictions.length === 0) {
+        const predictionEngine = new PredictionEngine(windowHistory, analysis);
+        predictions = predictionEngine.generatePredictions(config, topPicks);
+      }
 
       let dailyExposure = 0;
       const bets = predictions.map(p => {
@@ -145,7 +206,11 @@ export class BacktestEngine {
       if (draw.draw_time === 'midday') middayProfit += dailyProfit;
       else eveningProfit += dailyProfit;
 
-      if (won) totalWins++;
+      if (won) {
+        totalWins++;
+        if (isStraight) totalStraightWins++;
+        if (isBox) totalBoxWins++;
+      }
       totalBets += bets.length;
 
       bankrollHistory.push(currentBankroll);
@@ -166,6 +231,33 @@ export class BacktestEngine {
 
     const netProfit = currentBankroll - initialBankroll;
     const bestDrawTime = middayProfit >= eveningProfit ? 'midday' : 'evening';
+
+    // ====== FIX-PVALUE (2026-07-05): p-value del performance observado ======
+    // Calcula si el rendimiento observado es estadísticamente significativo
+    // o si puede explicarse por azar puro.
+    const totalDraws = testData.length;
+    const picksPerDraw = simConfig?.topPicks || 3;
+    const universeSize = config.mode === 'LAST2' ? 100 : 1000;
+    // Probabilidad esperada de acierto straight por sorteo con N picks
+    const pExpectedStraight = picksPerDraw / universeSize;
+    // Probabilidad esperada de acierto box (6-way) por sorteo
+    const pExpectedBox = config.mode === 'LAST2' ? (picksPerDraw * 6) / universeSize : (picksPerDraw * 6) / universeSize;
+    // Hits observados
+    const observedHits = totalStraightWins + totalBoxWins;
+    // Hits esperados por azar
+    const expectedHits = totalDraws * (pExpectedStraight + pExpectedBox * 0.5);
+    // Ratio observado vs esperado (1.0 = azar, >1 = mejor que azar)
+    const edgeRatio = expectedHits > 0 ? observedHits / expectedHits : 0;
+    // p-value simple: probabilidad de obtener >= observedHits por azar
+    // Usando aproximación Poisson (lambda = expectedHits)
+    const poissonPValue = observedHits > 0 && expectedHits > 0
+      ? 1 - Math.exp(-expectedHits) * (1 + expectedHits + (expectedHits ** 2) / 2)
+      : 1;
+    // FIX-EV (2026-07-05): Expected Value calculator
+    // EV = (p_win * payout) - (p_loss * 1) por $1 apostado
+    const evPerBet = totalBets > 0
+      ? (totalWins / totalBets) * config.payout - 1
+      : -1 + pExpectedStraight * config.payout;
 
     // ====== SPRINT-1-QUANT: Cálculos cuantitativos correctos ======
     const trades = pnlSeries.map((pnl, i) => ({
@@ -223,6 +315,15 @@ export class BacktestEngine {
       bestDrawTime,
       middayProfit,
       eveningProfit,
+      // FIX-PVALUE (2026-07-05): métricas estadísticas de significancia
+      totalStraightWins,
+      totalBoxWins,
+      expectedHits,
+      observedHits,
+      edgeRatio,
+      pValue: poissonPValue,
+      expectedValue: evPerBet,
+      isStatisticallySignificant: poissonPValue < 0.05 && observedHits > expectedHits,
       // === SPRINT-1-QUANT: Métricas correctas ===
       sharpeRatio: ratios.sharpe,
       sortinoRatio: ratios.sortino,

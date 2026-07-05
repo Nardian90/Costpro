@@ -234,6 +234,53 @@ export function Pick3SimulationDashboard({ result, initialBankroll, config }: Pi
                 "Empezando con <span className="font-black text-primary">{formatMoney(initialBankroll)}</span> hace {result.periodDays} días, con esta estrategia hoy tendrías <span className="font-black text-primary">{formatMoney(result.finalCapital)}</span>. La simulación asume ejecución perfecta sin costos de transacción."
               </p>
             </div>
+
+            {/* FIX-PVALUE (2026-07-05): contexto estadístico — ¿es edge real o varianza? */}
+            <div className="p-3 rounded-2xl bg-muted/20 border border-border/30 space-y-2">
+              <p className="text-[9px] font-black uppercase opacity-60">Contexto Estadístico</p>
+              <div className="grid grid-cols-2 gap-2 text-[10px]">
+                <div>
+                  <span className="opacity-50">Aciertos observados:</span>{' '}
+                  <span className="font-black">{result.observedHits ?? 0}</span>
+                  {' '}({result.totalStraightWins ?? 0} straight + {result.totalBoxWins ?? 0} box)
+                </div>
+                <div>
+                  <span className="opacity-50">Esperados por azar:</span>{' '}
+                  <span className="font-black">{(result.expectedHits ?? 0).toFixed(2)}</span>
+                </div>
+                <div>
+                  <span className="opacity-50">Ratio edge:</span>{' '}
+                  <span className={cn("font-black", (result.edgeRatio ?? 0) >= 1 ? "text-success" : "text-destructive")}>
+                    {(result.edgeRatio ?? 0).toFixed(2)}x
+                  </span>
+                  {(result.edgeRatio ?? 0) >= 1 ? ' (mejor que azar)' : ' (igual o peor que azar)'}
+                </div>
+                <div>
+                  <span className="opacity-50">p-value:</span>{' '}
+                  <span className={cn("font-black", (result.pValue ?? 1) < 0.05 ? "text-success" : "opacity-60")}>
+                    {(result.pValue ?? 1).toFixed(4)}
+                  </span>
+                  {(result.pValue ?? 1) < 0.05 ? ' ✓ significativo' : ' (no significativo)'}
+                </div>
+                <div className="col-span-2">
+                  <span className="opacity-50">Expected Value por $1:</span>{' '}
+                  <span className={cn("font-black", (result.expectedValue ?? -1) > 0 ? "text-success" : "text-destructive")}>
+                    {result.expectedValue !== undefined ? `$${result.expectedValue.toFixed(3)}` : 'N/A'}
+                  </span>
+                  {(result.expectedValue ?? -1) < 0 && ' (EV negativo = se pierde dinero a largo plazo)'}
+                </div>
+              </div>
+              {(result.isStatisticallySignificant) && (
+                <p className="text-[9px] text-emerald-500 font-bold mt-1">
+                  ✓ El resultado es estadísticamente significativo (p &lt; 0.05). Podría haber edge real.
+                </p>
+              )}
+              {!result.isStatisticallySignificant && (result.observedHits ?? 0) > 0 && (
+                <p className="text-[9px] text-amber-500 font-bold mt-1">
+                  ⚠ El resultado NO es estadísticamente significativo. Los aciertos pueden explicarse por varianza aleatoria.
+                </p>
+              )}
+            </div>
           </div>
 
           {/* LADO DERECHO: Curva de Capital ARREGLADA */}

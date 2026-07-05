@@ -567,6 +567,39 @@ export class EnsembleEngine {
   }
 
   /**
+   * FIX-ENSEMBLE (2026-07-05): Aplica pesos manuales del SimulationConfigPanel.
+   * Override los pesos calculados por calibrate() con los del usuario.
+   * Los modelos deshabilitados se marcan como excluded.
+   */
+  public applyManualWeights(simConfig: {
+    models: {
+      frequency: { enabled: boolean; weight: number };
+      markov: { enabled: boolean; weight: number };
+      positional: { enabled: boolean; weight: number };
+      sumrange: { enabled: boolean; weight: number };
+    };
+  }): void {
+    if (!this.performances) {
+      this.calibrate();
+    }
+
+    // Normalizar pesos de modelos habilitados para que sumen 1
+    const enabledEntries = Object.entries(simConfig.models).filter(([_, m]) => m.enabled);
+    const totalWeight = enabledEntries.reduce((sum, [_, m]) => sum + m.weight, 0);
+
+    this.performances!.forEach(p => {
+      const modelConfig = (simConfig.models as any)[p.model];
+      if (modelConfig) {
+        p.isExcluded = !modelConfig.enabled;
+        // Normalizar peso al rango 0-1
+        p.weight = modelConfig.enabled && totalWeight > 0
+          ? modelConfig.weight / totalWeight
+          : 0;
+      }
+    });
+  }
+
+  /**
    * Genera predicción ensemble combinando los 4 modelos con pesos dinámicos.
    */
   public generatePredictions(config: BettingConfig, count: number = 10): EnsemblePrediction[] {
