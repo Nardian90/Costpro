@@ -1,5 +1,5 @@
 import { SimulationResult, StrategyConfig, Pick3Result } from '@/types/pick3';
-import { supabase } from '@/lib/supabaseClient';
+import { supabase, getSupabaseAuthClient } from '@/lib/supabaseClient';
 import { logger } from '@/lib/logger';
 
 const STORAGE_KEYS = {
@@ -208,9 +208,27 @@ export class Pick3Storage {
 
   static async getHistory(): Promise<Pick3Result[]> {
     try {
+      // FIX-AUTH (2026-07-05): usar el token del usuario autenticado para que
+      // RLS permita ver los registros. El cliente singleton usa la anon key,
+      // pero la política pick3_history_select_authenticated requiere rol authenticated.
+      // Sin token, la query retorna [] (vacío).
+      let client = supabase;
+      if (isBrowser) {
+        // Intentar obtener el token del auth store (lazy import para evitar circular dep)
+        try {
+          const { useAuthStore } = await import('@/store');
+          const token = useAuthStore.getState().token;
+          if (token) {
+            client = getSupabaseAuthClient(token);
+          }
+        } catch {
+          // Si no podemos importar el store, usar el cliente singleton
+        }
+      }
+
       // FIX-ORDER (2026-07-05): ordenar por draw_date DESC y draw_time DESC
       // para que evening quede antes que midday en la misma fecha (más reciente primero)
-      const { data, error } = await supabase
+      const { data, error } = await client
         .from('pick3_history')
         .select('*')
         .order('draw_date', { ascending: false })
@@ -221,7 +239,16 @@ export class Pick3Storage {
         return this.getHistoryLocal();
       }
 
-      if (!data) return this.getHistoryLocal();
+      if (!data || data.length === 0) {
+        // FIX-AUTH: si la query retorna vacío, intentar con localStorage como fallback
+        // (puede ser que el usuario no esté autenticado o el token expiró)
+        const local = this.getHistoryLocal();
+        if (local.length > 0) {
+          logger.info('PICK3', 'Query returned empty, using localStorage cache', { localCount: local.length });
+          return local;
+        }
+        return [];
+      }
 
       const results = data.map(r => ({
         date: r.draw_date,
