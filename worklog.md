@@ -4228,3 +4228,29 @@ Stage Summary:
 - Admin en modo lectura: no puede importar, agregar, editar, eliminar ni reset
 - Servidor PM2 activo y respondiendo
 - Push exitoso a origin/main
+
+---
+Task ID: VERCEL-DEPLOY-FIX
+Agent: main
+Task: Revisar despliegue de Vercel que estaba fallando
+
+Work Log:
+- Diagnóstico vía Vercel API (token vcp_1ks8nrbr...):
+  - Último despliegue READY: commit 2260273b (fix(wallet): rewrite mobile-first)
+  - 7 despliegues con ERROR consecutivos después de ese
+  - Causa del error: "Type error: Argument of type '"WALLET"' is not assignable to parameter of type 'AUTH' | 'POS' | ... | 'AUDIT'"
+  - El tipo LogCategory en src/lib/logger.ts NO incluía 'WALLET'
+  - Los endpoints /api/wallet/* usaban logger.info('WALLET', ...) pero el tipo no lo permitía
+- Fix ya aplicado en el commit 648209bd1 (push anterior):
+  - logger.ts: agregado 'WALLET' al tipo LogCategory
+  - Verificado: npx tsc --noEmit pasa sin errores localmente
+- Verificación del despliegue nuevo (dpl_7eRauDV2kQi4AVhsSaNm7ByEz44j):
+  - Estado inicial: BUILDING
+  - Después de ~60s: READY ✅
+  - URL: costpro4.vercel.app responde HTTP 200
+  - Aliases: costpro4.vercel.app, costpro-nardian90s-projects.vercel.app, costpro-git-main-nardian90s-projects.vercel.app
+
+Stage Summary:
+- Causa raíz: tipo LogCategory no incluía 'WALLET' (ya fixeado en commit anterior)
+- Despliegue actual: READY y funcionando en costpro4.vercel.app (HTTP 200)
+- 7 despliegues fallidos anteriores ya no afectan — el último commit sí compila
