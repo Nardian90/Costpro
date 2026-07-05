@@ -3700,3 +3700,169 @@ Work Log:
 Próximos sprints:
 - Sprint 4: Monetización (Stripe, tier gating Free/Player/Quant/Desk)
 - Sprint 5: Growth engine (referrals, programmatic SEO, content, A/B testing)
+
+---
+Task ID: SPRINT-4-MONETIZATION
+Agent: Main Agent (Super Z)
+Task: Sprint 4 — Monetización. Crear sistema completo de suscripciones con 4 tiers (Free/Player/Quant/Desk), usage tracking, tier gating en advisor, PricingPage con trial de 14 días. Stripe-ready (modo demo activo cuando no hay STRIPE_SECRET_KEY). + Auditoría Sprint 3 + push.
+
+Work Log:
+
+### AUDITORÍA SPRINT 3 — Hallazgos
+
+- Test de integración: `src/__tests__/integration/sprint3.integration.test.ts` (37 tests)
+- 37/37 tests pasan
+- Verificación: API route estructura, engines execution, system prompt anti-patterns,
+  risk modes, quantitative context sections, response metadata, componente render
+- Fix: ajuste de regex para metadata?.isRandom (optional chaining)
+- Sprint 1 flaky test fixed: mulberry32(seed=12345) determinístico
+- Total: 162/162 tests pasan tras auditoría
+
+### SPRINT 4 — IMPLEMENTACIÓN
+
+### 1. NEW FILE: `src/services/pick3/subscription.types.ts` (290 líneas)
+- 4 tiers con TierLimits completo:
+  - Free ($0): 3 IA queries/mes, backtest 90 días, 1 lotería, sin API
+  - Player ($19): 20 IA queries/mes, backtest ilimitado, regime alerts
+  - Quant ($49): IA ilimitada, 5 loterías, API access, custom models, priority support
+  - Desk ($149): multi-user (10), white-label, loterías ilimitadas, account manager
+- Pricing mensual + anual (20% descuento)
+- Helpers: getHigherTier, tierHasFeature, tierGte, getNextTier
+- TRIAL_DAYS = 14, getTrialDaysLeft()
+- Cada tier: id, name, tagline, price, limits, features, cta, color, icon, target, highlight
+
+### 2. NEW FILE: `src/services/pick3/subscription.service.ts` (400 líneas)
+- **Subscription management**:
+  - getSubscription: obtiene o crea Free auto
+  - startTrial: 14 días gratis, 1 trial por usuario (metadata.had_trial)
+  - changeTier: upgrade/downgrade directo (demo) o via Stripe checkout
+  - cancelAtPeriodEnd / reactivate
+  - expireTrial: degrada a Free cuando expira trial
+- **Usage tracking**:
+  - getUsage: contadores mensuales con snapshot de límites
+  - checkUsage: verifica límite sin consumir (para UI)
+  - incrementUsage: suma 1 al contador
+  - checkAndConsume: atómico check+increment
+- **Stripe integration (preparada)**:
+  - createCheckoutSession: si no hay STRIPE_SECRET_KEY, modo demo (auto-upgrade)
+  - handleStripeWebhook: stub para integración real
+- **Admin**:
+  - getAdminMetrics: total subscribers, MRR, ARR, by tier, churn rate
+
+### 3. NEW FILE: `src/app/api/pick3/subscription/route.ts` (140 líneas)
+- GET: subscription + usage + checks (ai_query, backtest) + tiers
+- POST actions: change_tier, start_trial, cancel, reactivate, admin_metrics
+- Solo admin (role='admin' o 'super_admin') puede ver métricas
+
+### 4. NEW FILE: `src/app/api/pick3/usage/route.ts` (90 líneas)
+- GET: usage + checks (ai_query, backtest, api_call)
+- POST: { action, mode: 'check' | 'consume' } → check or consume atomic
+
+### 5. NEW FILE: `supabase/migrations/20260705000000_pick3_subscriptions.sql` (170 líneas)
+- Tabla `pick3_subscriptions`:
+  - tier (CHECK constraint: free/player/quant/desk)
+  - status (CHECK constraint: active/trialing/past_due/canceled/expired/paused)
+  - current_period_start/end, trial_end
+  - stripe_customer_id, stripe_subscription_id, stripe_price_id
+  - cancel_at_period_end, metadata JSONB
+  - EXCLUDE constraint: una suscripción activa por usuario
+- Tabla `pick3_usage`:
+  - period (YYYY-MM), UNIQUE(user_id, period)
+  - ai_queries_count, backtests_count, api_calls_count
+  - ai_queries_limit, backtests_limit (snapshot)
+  - last_reset
+- RLS: usuario solo ve/modifica sus propios registros
+- Trigger updated_at automático
+- Índices en user_id, status, tier, period_end, period
+
+### 6. NEW FILE: `src/components/views/terminal/views/pick3/PricingPage.tsx` (430 líneas)
+- Estado actual del usuario:
+  - Tier badge con color, icono, días de trial restantes
+  - Usage count (consultas IA usadas / límite)
+  - Botones Cancelar / Reactivar según estado
+- Toggle mensual/anual con badge -20%
+- Grid de 4 tiers (responsive 1/2/4 columnas):
+  - Icono + nombre + target + tagline
+  - Precio (mensual o anual calculado)
+  - CTA contextual:
+    - Plan actual (disabled) si es el tier actual
+    - Iniciar trial (si no ha usado trial)
+    - Upgrade (si tier es mayor)
+    - Bajar a Free (si tier es free)
+  - Features con checkmarks
+  - Límites destacados (consultas IA, backtest, loterías, API)
+  - Badge '⭐ Más Popular' en Player (highlight)
+- Trial banner para Free users: '14 días gratis, sin tarjeta'
+- FAQ: cancelación, datos, trial sin tarjeta, disclaimer honesto
+  ('Las loterías son juegos de azar con expected value negativo')
+
+### 7. UPDATED: `src/app/api/pick3/advisor/route.ts`
+- **Tier gating**: checkUsage antes de procesar la consulta
+- Si límite alcanzado → HTTP 402 con:
+  - error: mensaje explicativo
+  - upgradeRequired: true
+  - suggestedTier: siguiente tier recomendado
+  - currentTier: tier actual
+  - usage: { used, limit, remaining }
+  - tiers: catálogo completo
+- **Consumo solo después de respuesta exitosa de Gemini** (no cuenta errores)
+- Response metadata incluye `usage`:
+  - tier, used, limit, remaining
+  - isTrial, trialDaysLeft
+  - upgradeRequired
+
+### 8. UPDATED: `src/components/views/terminal/views/pick3/Pick3AIAdvisor.tsx`
+- Maneja HTTP 402 (usage limit reached):
+  - Muestra mensaje de límite alcanzado
+  - CTA 'Ver planes' con link a ?tab=config&upgrade=1
+  - upgradeRequired flag en mensaje
+- Cada respuesta del assistant muestra barra de usage:
+  - Plan (tier)
+  - Consultas usadas / límite
+  - Trial days restantes (si aplica)
+- Filtra mensajes con upgradeRequired del contexto enviado al modelo
+
+### 9. NEW TESTS: `src/__tests__/services/pick3-subscription.test.ts` (34 tests)
+- 4 tiers definidos con precios correctos
+- Límites por tier (Free 3 IA queries, Player 20, Quant ilimitado, Desk multi-user)
+- getHigherTier: retorna el mayor
+- tierHasFeature: API access, whiteLabel, regimeAlerts
+- tierGte: comparación jerárquica
+- getNextTier: free→player→quant→desk→null
+- TRIAL_DAYS = 14, getTrialDaysLeft (future, past, null)
+- Pricing consistency (mensual < anual con 20% descuento)
+- Jerarquía respeta tier order
+- Player es el tier destacado (highlight=true)
+
+### VALIDACIÓN
+- TypeScript: 0 errores
+- Tests: 196/196 pasan (70 sprint1 + 40 sprint2 + 8 sprint1-integration + 8 sprint2-integration + 37 sprint3-integration + 7 sprint3 unit + 34 sprint4 unit - overlaps)
+- PM2: costpro online, HTTP 200 confirmado
+- Push: Sprint 3 audit (36ef7ab98) + Sprint 4 (4703df36b) a main
+
+### Stage Summary:
+- **4 tiers de suscripción** completamente definidos con límites coherentes
+- **Usage tracking** mensual con contadores y snapshot de límites
+- **Tier gating** integrado en /api/pick3/advisor (HTTP 402 cuando se excede límite)
+- **Trial de 14 días** sin tarjeta de crédito (1 trial por usuario)
+- **Stripe-ready**: modo demo activo cuando no hay STRIPE_SECRET_KEY
+- **PricingPage** completa con toggle mensual/anual, FAQ, trial banner
+- **Admin metrics**: MRR, ARR, by tier, churn (preparado para dashboard admin)
+- **RLS**: usuario solo ve/modifica sus propios registros
+- **Disclaimer honesto**: 'Las loterías son juegos de azar con EV negativo'
+
+### Cómo activar Stripe real (cuando se agreguen claves):
+1. Agregar STRIPE_SECRET_KEY al .env
+2. Crear productos y precios en Stripe Dashboard
+3. Agregar STRIPE_PRICE_FREE, STRIPE_PRICE_PLAYER, STRIPE_PRICE_QUANT, STRIPE_PRICE_DESK
+4. Implementar handleStripeWebhook para eventos:
+   - checkout.session.completed
+   - customer.subscription.updated
+   - customer.subscription.deleted
+   - invoice.payment_succeeded
+   - invoice.payment_failed
+5. Crear endpoint /api/stripe/webhook (sin auth)
+6. Configurar webhook en Stripe Dashboard apuntando al endpoint
+
+Próximo sprint:
+- Sprint 5: Growth engine (referrals, programmatic SEO, content marketing, A/B testing)
