@@ -11,7 +11,8 @@ import {
   Target,
   Plus,
   PlayCircle,
-  BookOpen
+  BookOpen,
+  Bot,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -35,6 +36,10 @@ const Pick3Visuals = dynamic(() => import('./Pick3Visuals').then(m => ({ default
   loading: () => <div className="animate-pulse bg-muted rounded h-64" />,
 });
 const Pick3SimulationDashboard = dynamic(() => import('./Pick3SimulationDashboard').then(m => ({ default: m.Pick3SimulationDashboard })), {
+  ssr: false,
+  loading: () => <div className="animate-pulse bg-muted rounded h-64" />,
+});
+const Pick3AIAdvisor = dynamic(() => import('./Pick3AIAdvisor'), {
   ssr: false,
   loading: () => <div className="animate-pulse bg-muted rounded h-64" />,
 });
@@ -266,6 +271,9 @@ export default function Pick3IntelligenceView() {
             <TabsTrigger value="help" className="rounded-full py-2.5 sm:py-3 font-black text-[9px] sm:text-[10px] uppercase tracking-wider whitespace-nowrap shrink-0 px-3 sm:px-2 bg-primary/5 text-primary">
               <BookOpen className="w-3.5 h-3.5 mr-1.5 sm:mr-2" /> Guía
             </TabsTrigger>
+            <TabsTrigger value="advisor" className="rounded-full py-2.5 sm:py-3 font-black text-[9px] sm:text-[10px] uppercase tracking-wider whitespace-nowrap shrink-0 px-3 sm:px-2 bg-primary/10 text-primary">
+              <Bot className="w-3.5 h-3.5 mr-1.5 sm:mr-2" /> Asesor IA
+            </TabsTrigger>
             <TabsTrigger value="config" className="rounded-full py-2.5 sm:py-3 font-black text-[9px] sm:text-[10px] uppercase tracking-wider whitespace-nowrap shrink-0 px-3 sm:px-2">
               <Settings className="w-3.5 h-3.5 mr-1.5 sm:mr-2" /> Ajustes
             </TabsTrigger>
@@ -301,6 +309,16 @@ export default function Pick3IntelligenceView() {
 
           <TabsContent value="help" className="pt-6">
              <Pick3HelpSection />
+          </TabsContent>
+
+          <TabsContent value="advisor" className="pt-6">
+             <Pick3AIAdvisor
+               history={history}
+               analysis={analysis}
+               plays={plays}
+               config={bConfig}
+               simResult={simResult}
+             />
           </TabsContent>
 
           <TabsContent value="config" className="pt-6">

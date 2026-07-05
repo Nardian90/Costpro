@@ -77,29 +77,36 @@ export function Pick3SimulationDashboard({ result, initialBankroll }: Pick3Simul
             </div>
           </div>
 
-          <div className="p-8 space-y-6">
+          <div className="p-4 sm:p-8 space-y-4">
             <h3 className="text-xs font-black uppercase tracking-widest flex items-center gap-2 opacity-60">
               <AreaChart className="w-4 h-4" /> Curva de Capital (Equity Curve)
             </h3>
-            <div className="h-[200px] w-full">
+            <div className="h-[280px] sm:h-[300px] w-full bg-background/30 rounded-2xl border border-border/30 p-3">
               <ResponsiveContainer width="100%" height="100%">
-                <RechartsAreaChart data={chartData}>
+                <RechartsAreaChart data={chartData} margin={{ top: 10, right: 10, bottom: 10, left: 10 }}>
                   <defs>
                     <linearGradient id="colorCap" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+                      <stop offset="5%" stopColor="#22c55e" stopOpacity={0.4}/>
+                      <stop offset="95%" stopColor="#22c55e" stopOpacity={0}/>
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--muted-foreground))" opacity={0.1} />
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="currentColor" opacity={0.1} />
                   <XAxis dataKey="draw" hide />
-                  <YAxis hide domain={['dataMin - 100', 'dataMax + 100']} />
+                  <YAxis
+                    domain={['dataMin - 100', 'dataMax + 100']}
+                    tick={{ fontSize: 10, fill: 'currentColor' }}
+                    stroke="currentColor"
+                    opacity={0.4}
+                    width={60}
+                    tickFormatter={(v) => `$${(v / 1000).toFixed(1)}k`}
+                  />
                   <Tooltip
                     content={({ active, payload }) => {
                       if (active && payload && payload.length) {
                         return (
-                          <div className="bg-background border border-border p-3 rounded-2xl shadow-xl">
+                          <div className="bg-card border border-border p-3 rounded-2xl shadow-xl">
                             <p className="text-[10px] font-black uppercase opacity-60 mb-1">Sorteo #{payload[0].payload.draw}</p>
-                            <p className="text-sm font-black italic text-primary">{formatMoney(payload[0].value as number)}</p>
+                            <p className="text-sm font-black italic text-emerald-500">{formatMoney(payload[0].value as number)}</p>
                           </div>
                         );
                       }
@@ -109,10 +116,12 @@ export function Pick3SimulationDashboard({ result, initialBankroll }: Pick3Simul
                   <Area
                     type="monotone"
                     dataKey="capital"
-                    stroke="hsl(var(--primary))"
-                    strokeWidth={4}
+                    stroke="#22c55e"
+                    strokeWidth={3}
                     fillOpacity={1}
                     fill="url(#colorCap)"
+                    dot={false}
+                    activeDot={{ r: 5, fill: '#22c55e' }}
                   />
                 </RechartsAreaChart>
               </ResponsiveContainer>
