@@ -58,11 +58,11 @@ export function Pick3HistorySection({ history, onRefresh }: Pick3HistorySectionP
   }, [viewMode]);
 
   // FIX-PERSIST: displayLimit persistido
-  // FIX-DISPLAY (2026-07-05): default 100 para mostrar ~50 días (2 sorteos × 50 = 100)
+  // FIX-DISPLAY (2026-07-05): default 500 para mostrar ~250 días (2 sorteos × 250 = 500)
   const [displayLimit, setDisplayLimit] = useState(() => {
-    if (typeof window === 'undefined') return 100;
-    const saved = parseInt(localStorage.getItem('pick3-display-limit') || '100', 10);
-    return isNaN(saved) ? 100 : saved;
+    if (typeof window === 'undefined') return 500;
+    const saved = parseInt(localStorage.getItem('pick3-display-limit') || '500', 10);
+    return isNaN(saved) ? 500 : saved;
   });
 
   useEffect(() => {
@@ -162,16 +162,15 @@ export function Pick3HistorySection({ history, onRefresh }: Pick3HistorySectionP
         localStorage.removeItem('pick3_draw_history');
       }
       // Resetear displayLimit a un valor alto que garantice ver los últimos registros
-      setDisplayLimit(100);
+      setDisplayLimit(500);
 
       const result = await Pick3Storage.forceRefreshHistory();
 
       // FIX-CANONICO (2026-07-05): después del fetch, ajustar displayLimit
       // para que sea >= al total de registros (así se ven todos)
       if (result.records.length > 0) {
-        // Mostrar TODOS los registros que trajimos (limit 100 en getHistory)
         const totalRecords = result.records.length;
-        if (totalRecords > 100) {
+        if (totalRecords > 500) {
           setDisplayLimit(totalRecords);
         }
         toast.success(`Datos actualizados: ${result.records.length} registros. Último sorteo: ${result.latestDate}`);
@@ -311,14 +310,11 @@ export function Pick3HistorySection({ history, onRefresh }: Pick3HistorySectionP
           <span className="opacity-60">Total BD:</span>
           <span className="font-black">{history.length}</span>
           <span className="opacity-40">·</span>
-          <span className="opacity-60">displayLimit:</span>
-          <span className="font-black text-amber-500">{displayLimit}</span>
-          <span className="opacity-40">·</span>
           <span className="opacity-60">Midday:</span>
-          <span className="font-black text-warning">{visibleMidday.length}</span>
+          <span className="font-black text-warning">{middayHistory.length}</span>
           <span className="opacity-40">·</span>
           <span className="opacity-60">Noche:</span>
-          <span className="font-black text-primary">{visibleEvening.length}</span>
+          <span className="font-black text-primary">{eveningHistory.length}</span>
         </div>
         <div className="flex items-center gap-1">
           {history.some(h => h.date === '2026-07-04') ? (
@@ -332,18 +328,6 @@ export function Pick3HistorySection({ history, onRefresh }: Pick3HistorySectionP
           )}
         </div>
       </div>
-
-      {/* FIX-DEBUG (2026-07-05): mostrar primeros 3 registros de cada columna inline */}
-      {visibleMidday.length > 0 && (
-        <div className="text-[9px] font-mono opacity-50 px-3 py-1 bg-muted/20 rounded">
-          DEBUG Midday[0-2]: {visibleMidday.slice(0, 3).map(r => `${r.date}=${r.result.join('')}`).join(' | ')}
-        </div>
-      )}
-      {visibleEvening.length > 0 && (
-        <div className="text-[9px] font-mono opacity-50 px-3 py-1 bg-muted/20 rounded">
-          DEBUG Noche[0-2]: {visibleEvening.slice(0, 3).map(r => `${r.date}=${r.result.join('')}`).join(' | ')}
-        </div>
-      )}
 
       {/* Gaps Alert */}
       {gaps.length > 0 && (

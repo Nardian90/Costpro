@@ -244,8 +244,12 @@ export class Pick3Storage {
 
       logger.info('PICK3', `getHistory: tokenSource=${tokenSource}`);
 
-      // FIX-LIMIT-CANONICO (2026-07-05): traer solo los 100 registros más recientes.
-      // El usuario solo necesita ver los últimos ~50 días, no los 15,051 históricos.
+      // FIX-LIMIT-CANONICO (2026-07-05): traer los 500 registros más recientes.
+      // 500 registros = ~250 días = ~8 meses, suficiente para:
+      //   - Mostrar histórico reciente en la UI
+      //   - Backtest con ventana de 60 días (necesita 60+ registros)
+      //   - Análisis estadístico con muestra significativa
+      //   - Predicciones del ensemble con data suficiente
       //
       // ORDEN CANÓNICO:
       // - draw_date DESC (más reciente primero)
@@ -257,25 +261,32 @@ export class Pick3Storage {
         .select('*')
         .order('draw_date', { ascending: false })
         .order('draw_time', { ascending: true })
-        .limit(100);
+        .limit(500);
 
       if (error) {
-        logger.warn('PICK3', 'Error fetching from Supabase, falling back to local', { error });
-        return this.getHistoryLocal();
-      }
-
-      if (!data || data.length === 0) {
-        // FIX-AUTH: si la query retorna vacío, intentar con localStorage como fallback
-        const local = this.getHistoryLocal();
-        if (local.length > 0) {
-          logger.info('PICK3', 'Query returned empty, using localStorage cache', { localCount: local.length, tokenSource });
-          return local;
-        }
-        logger.warn('PICK3', 'Query returned empty AND localStorage is empty', { tokenSource });
+        logger.error('PICK3', 'Error fetching from Supabase', { error, tokenSource });
+        // FIX-CANONICO: ya NO caer al localStorage — eso escondía el problema
+        // y mostraba datos viejos. Retornar vacío para que el componente muestre
+        // el estado de error y el usuario sepa que algo falló.
         return [];
       }
 
-      logger.info('PICK3', `getHistory: fetched ${data.length} records from Supabase`, { tokenSource, latestDate: data[0]?.draw_date, latestTime: data[0]?.draw_time });
+      // FIX-CANONICO (2026-07-05): NO caer al localStorage si la query retorna vacío.
+      // Si la query retorna vacío, es porque el token no es válido o no hay datos.
+      // Caer al localStorage escondía el problema y mostraba datos viejos sin 04/07.
+      // Ahora retornamos vacío y dejamos que el componente muestre el estado correcto.
+      if (!data || data.length === 0) {
+        logger.warn('PICK3', 'Query returned empty (no data or token invalid)', { tokenSource });
+        return [];
+      }
+
+      logger.info('PICK3', `getHistory: fetched ${data.length} records from Supabase`, {
+        tokenSource,
+        latestDate: data[0]?.draw_date,
+        latestTime: data[0]?.draw_time,
+        latestSyncMethod: data[0]?.sync_method,
+        has_04_07: data.some((r: any) => r.draw_date === '2026-07-04')
+      });
 
       const results = data.map(r => ({
         date: r.draw_date,
@@ -294,7 +305,8 @@ export class Pick3Storage {
       return results;
     } catch (err) {
       logger.error('PICK3', 'Critical error fetching history', { error: err });
-      return this.getHistoryLocal();
+      // FIX-CANONICO: ya NO caer al localStorage en caso de error
+      return [];
     }
   }
 
