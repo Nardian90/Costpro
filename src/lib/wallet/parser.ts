@@ -1,5 +1,5 @@
 import Decimal from 'decimal.js';
-import { RawSms, ConsolidatedTransaction, AnalyticalTransaction, WalletAnalytics, WalletSummary, BankSummary } from './types';
+import { RawSms, ConsolidatedTransaction, AnalyticalTransaction, WalletAnalytics, WalletSummary, BankSummary, CategorySummary, MonthlySummary } from './types';
 
 const generateId = () => Math.random().toString(36).substring(2, 11) + Date.now().toString(36);
 
@@ -288,31 +288,64 @@ export function deriveAnalyticalData(consolidated: ConsolidatedTransaction[]): A
     let note = tx.service;
 
     const serviceLow = tx.service.toLowerCase();
+    // FIX-WALLET-V2 (2026-07-05): categorización mejorada usando el contenido del SMS
+    // no solo el campo service. Referencia: Fintonic/Mint usan NLP sobre descripción.
+    const contentLow = (tx.counterparty || '').toLowerCase() + ' ' + serviceLow;
 
     if (serviceLow.includes('transferencia') || serviceLow === 'otr') {
       typeOperation = 'Transferencia';
-      category = tx.operation === 'CR' ? 'Ingreso' : 'Transferencia';
-      note = tx.operation === 'CR' ? 'Recibida' : 'Enviada';
+      if (tx.operation === 'CR') {
+        category = 'Transferencia Recibida';
+        note = 'Recibida';
+      } else {
+        category = 'Transferencia';
+        note = 'Enviada';
+      }
     } else if (serviceLow.includes('recarga')) {
       typeOperation = 'Recarga';
       category = 'Telecom';
+      note = 'Recarga móvil';
+    } else if (contentLow.includes('electric') || contentLow.includes('energía') || contentLow.includes('energia')) {
+      typeOperation = 'Pago';
+      category = 'Electricidad';
+      note = 'Factura de electricidad';
+    } else if (contentLow.includes('agua') || contentLow.includes('acueducto')) {
+      typeOperation = 'Pago';
+      category = 'Agua';
+      note = 'Factura de agua';
+    } else if (contentLow.includes('gas')) {
+      typeOperation = 'Pago';
+      category = 'Gas';
+      note = 'Factura de gas';
+    } else if (contentLow.includes('internet') || contentLow.includes('nauta') || contentLow.includes('datos')) {
+      typeOperation = 'Pago';
+      category = 'Internet';
+      note = 'Servicio de internet';
     } else if (serviceLow.includes('pago') || serviceLow.includes('factura')) {
       typeOperation = 'Pago';
       category = 'Servicios';
-    } else if (serviceLow.includes('impuesto') || serviceLow.includes('sello')) {
+      note = 'Pago de servicio';
+    } else if (serviceLow.includes('impuesto') || serviceLow.includes('sello') || contentLow.includes('timbre')) {
       typeOperation = 'Impuesto';
       category = 'Impuestos';
+      note = 'Impuesto/sello del timbre';
     } else if (tx.isAdjustment) {
       typeOperation = 'Ajuste';
-      category = 'Ajuste';
+      category = 'Otros';
       note = 'Ajuste automático para integridad contable';
+    } else if (tx.operation === 'CR') {
+      category = 'Otros Ingresos';
+      note = 'Ingreso sin clasificar';
+    } else {
+      category = 'Otros';
+      note = 'Gasto sin clasificar';
     }
 
     return {
       id: `an-${idx}-${tx.transactionId}`,
       date: tx.date,
       bank: tx.bank,
-      card: tx.card, // FIX-WALLET: incluir tarjeta
+      card: tx.card,
       typeOperation,
       nature: tx.operation,
       amount: tx.amount,
@@ -481,11 +514,58 @@ export function calculateAnalytics(rawSms: RawSms[]): WalletAnalytics {
     }
   }
 
+  // FIX-WALLET-V2 (2026-07-05): generar categoryDetails y monthlyDetails
+  // CategoryDetails: lista de categorías con total, count, percentage, isIncome
+  const categoryDetails: CategorySummary[] = [];
+  const categoryMap: Record<string, { total: number; count: number; isIncome: boolean }> = {};
+
+  transactions.forEach(tx => {
+    const cat = tx.manualCategory || tx.category;
+    if (!categoryMap[cat]) categoryMap[cat] = { total: 0, count: 0, isIncome: tx.nature === 'CR' };
+    categoryMap[cat].total = new Decimal(categoryMap[cat].total).plus(tx.amount).toNumber();
+    categoryMap[cat].count++;
+  });
+
+  const totalExpenses = summary.total_expenses || 1;
+  const totalIncome = summary.total_income || 1;
+
+  Object.entries(categoryMap).forEach(([name, data]) => {
+    categoryDetails.push({
+      name,
+      total: data.total,
+      count: data.count,
+      percentage: data.isIncome ? (data.total / totalIncome) * 100 : (data.total / totalExpenses) * 100,
+      isIncome: data.isIncome,
+    });
+  });
+
+  categoryDetails.sort((a, b) => b.total - a.total);
+
+  // MonthlyDetails: resúmenes mensuales con categorías desglosadas
+  const monthlyMap: Record<string, { income: number; expenses: number; balance: number; transactionCount: number; categories: Record<string, number> }> = {};
+
+  transactions.forEach(tx => {
+    const month = tx.date.substring(0, 7);
+    if (!monthlyMap[month]) monthlyMap[month] = { income: 0, expenses: 0, balance: 0, transactionCount: 0, categories: {} };
+    if (tx.nature === 'CR') monthlyMap[month].income = new Decimal(monthlyMap[month].income).plus(tx.amount).toNumber();
+    else monthlyMap[month].expenses = new Decimal(monthlyMap[month].expenses).plus(tx.amount).toNumber();
+    monthlyMap[month].balance = new Decimal(monthlyMap[month].income).minus(monthlyMap[month].expenses).toNumber();
+    monthlyMap[month].transactionCount++;
+    const cat = tx.manualCategory || tx.category;
+    monthlyMap[month].categories[cat] = new Decimal(monthlyMap[month].categories[cat] || 0).plus(tx.amount).toNumber();
+  });
+
+  const monthlyDetails: MonthlySummary[] = Object.entries(monthlyMap)
+    .map(([month, data]) => ({ month, ...data }))
+    .sort((a, b) => a.month.localeCompare(b.month));
+
   return {
     summary,
     banks,
     monthly,
     categories,
+    categoryDetails,
+    monthlyDetails,
     transactions,
     rawSms,
     consolidated,

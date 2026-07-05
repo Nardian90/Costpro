@@ -1,6 +1,6 @@
 export interface RawSms {
   id: string;
-  type: string; // "Recibido" | "Enviado"
+  type: string;
   date: string;
   nameNumber: string;
   content: string;
@@ -14,7 +14,6 @@ export interface ConsolidatedTransaction {
   currency: string;
   transactionId: string;
   bank: string;
-  /** FIX-WALLET (2026-07-05): tarjeta/cuenta extraída del SMS */
   card?: string;
   counterparty?: string;
   isAdjustment?: boolean;
@@ -26,7 +25,6 @@ export interface AnalyticalTransaction {
   id: string;
   date: string;
   bank: string;
-  /** FIX-WALLET: tarjeta/cuenta */
   card?: string;
   typeOperation: string;
   nature: 'CR' | 'DB';
@@ -38,6 +36,8 @@ export interface AnalyticalTransaction {
   channel: string;
   note: string;
   isStatement?: boolean;
+  /** FIX-WALLET-V2: categoría manual override (persistida en localStorage) */
+  manualCategory?: string;
 }
 
 export interface WalletSummary {
@@ -46,17 +46,32 @@ export interface WalletSummary {
   balance: number;
 }
 
-/** FIX-WALLET (2026-07-05): resumen por banco con saldo y tarjeta */
 export interface BankSummary {
   income: number;
   expenses: number;
   current_balance: number;
-  /** Última fecha de saldo reportado */
   last_balance_date?: string;
-  /** Tarjeta/cuenta principal */
   card?: string;
-  /** Número de transacciones */
   transaction_count: number;
+}
+
+/** FIX-WALLET-V2: categoría con detalle completo */
+export interface CategorySummary {
+  name: string;
+  total: number;
+  count: number;
+  percentage: number;
+  isIncome: boolean;
+}
+
+/** FIX-WALLET-V2: resumen mensual con detalle */
+export interface MonthlySummary {
+  month: string; // YYYY-MM
+  income: number;
+  expenses: number;
+  balance: number;
+  transactionCount: number;
+  categories: Record<string, number>;
 }
 
 export interface WalletAnalytics {
@@ -64,9 +79,42 @@ export interface WalletAnalytics {
   banks: Record<string, BankSummary>;
   monthly: Record<string, { income: number; expenses: number }>;
   categories: Record<string, number>;
+  /** FIX-WALLET-V2: categorías detalladas */
+  categoryDetails: CategorySummary[];
+  /** FIX-WALLET-V2: resúmenes mensuales detallados */
+  monthlyDetails: MonthlySummary[];
   transactions: AnalyticalTransaction[];
   rawSms: RawSms[];
   consolidated: ConsolidatedTransaction[];
-  /** FIX-WALLET: saldo total real (suma de saldos reportados por banco) */
   total_real_balance?: number;
 }
+
+/** FIX-WALLET-V2: categorías disponibles para clasificación manual */
+export const EXPENSE_CATEGORIES = [
+  'Electricidad',
+  'Agua',
+  'Gas',
+  'Telecom',
+  'Internet',
+  'Alimentación',
+  'Transporte',
+  'Salud',
+  'Educación',
+  'Ropa',
+  'Ocio',
+  'Hogar',
+  'Impuestos',
+  'Transferencia',
+  'Servicios',
+  'Recarga',
+  'Otros',
+] as const;
+
+export const INCOME_CATEGORIES = [
+  'Salario',
+  'Ventas',
+  'Transferencia Recibida',
+  'Reembolso',
+  'Intereses',
+  'Otros Ingresos',
+] as const;
