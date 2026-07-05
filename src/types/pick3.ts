@@ -16,6 +16,7 @@ export type BetType = 'straight' | 'box' | 'last2';
 export interface BettingConfig {
   mode: 'PICK3' | 'LAST2';
   payout: number;
+  boxPayout?: number; // FIX-PAYOUT (2026-07-05): premio para box (cualquier orden)
   digits: 2 | 3;
   maxCombinations: number;
   riskFactor: number; // 0.2% - 2%

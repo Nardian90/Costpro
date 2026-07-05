@@ -265,9 +265,9 @@ async function advisorHandler(req: NextRequest) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
 
-    // FIX-ADMIN-LIMIT (2026-07-05): Admin tiene acceso limitado al Asesor IA
-    // Los admins pueden probar el asesor pero con límite reducido (5 consultas/mes)
-    // para evitar uso abusivo. El asesor es para usuarios que pagan, no para admins.
+    // FIX-ADMIN-UNLIMITED (2026-07-05): Admin tiene acceso ILIMITADO al Asesor IA.
+    // El admin es el dueño/gerente del sistema, necesita acceso completo para auditar
+    // y probar el asesor sin restricciones. No pasa por tier gating ni usage tracking.
     const isAdmin = session.user.role === 'admin' || session.user.role === 'super_admin';
 
     let body: AdvisorRequestBody;
@@ -281,28 +281,21 @@ async function advisorHandler(req: NextRequest) {
       return NextResponse.json({ error: 'No hay mensajes' }, { status: 400 });
     }
 
-    // === SPRINT-4: Tier gating + usage check (solo si hay messages válidos) ===
-    // FIX-ADMIN-LIMIT: Admin no pasa por tier gating, tiene su propio límite
+    // === SPRINT-4: Tier gating + usage check ===
+    // FIX-ADMIN-UNLIMITED: Admin bypassa el tier gating completamente
     let usageCheck;
     if (isAdmin) {
-      // Admin: límite especial de 5 consultas/mes para testing
-      // Reusamos el sistema de usage pero con límite override
-      const adminUsage = await SubscriptionService.checkUsage(session.user.id, 'ai_query');
-      // Override: admin tiene límite de 5 (no el del tier)
-      const adminLimit = 5;
-      if (adminUsage.used >= adminLimit) {
-        return NextResponse.json({
-          error: `Límite de admin alcanzado (${adminUsage.used}/${adminLimit} consultas este mes). El Asesor IA es para usuarios finales, no para admins.`,
-          upgradeRequired: false,
-          isAdmin: true,
-          usage: { used: adminUsage.used, limit: adminLimit, remaining: 0 },
-        }, { status: 402 });
-      }
+      // Admin: acceso ilimitado, no pasa por checkUsage ni incrementUsage
       usageCheck = {
-        ...adminUsage,
-        limit: adminLimit,
-        remaining: adminLimit - adminUsage.used,
+        allowed: true,
+        tier: 'desk' as any,
+        isTrial: false,
+        upgradeRequired: false,
+        used: 0,
+        limit: -1, // -1 = ilimitado
+        remaining: -1,
       };
+      logger.info('PICK3', `Admin access granted to advisor (unlimited): ${session.user.id}`);
     } else {
       usageCheck = await SubscriptionService.checkUsage(
         session.user.id,
@@ -467,8 +460,13 @@ async function advisorHandler(req: NextRequest) {
     }
 
     // === SPRINT-4: Consumir usage SOLO después de respuesta exitosa ===
-    await SubscriptionService.incrementUsage(session.user.id, 'ai_query');
-    const updatedUsage = await SubscriptionService.checkUsage(session.user.id, 'ai_query');
+    // FIX-ADMIN-UNLIMITED: Admin no consume usage (acceso ilimitado)
+    if (!isAdmin) {
+      await SubscriptionService.incrementUsage(session.user.id, 'ai_query');
+    }
+    const updatedUsage = isAdmin
+      ? { tier: 'desk', used: 0, limit: -1, remaining: -1, isTrial: false, trialDaysLeft: undefined, upgradeRequired: false }
+      : await SubscriptionService.checkUsage(session.user.id, 'ai_query');
 
     // === 10. Devolver respuesta + metadata cuantitativa ===
     return NextResponse.json({

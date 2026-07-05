@@ -45,6 +45,7 @@ const Pick3AIAdvisor = dynamic(() => import('./Pick3AIAdvisor'), {
 });
 import { Pick3HeroCard } from './Pick3HeroCard';
 import { Pick3HelpSection } from './Pick3HelpSection';
+import { SimulationConfigPanel, DEFAULT_CONFIG as SIM_DEFAULT_CONFIG, SimulationConfig as SimConfig } from './SimulationConfigPanel';
 import { BacktestEngine, ModelValidationResult } from '@/services/pick3/backtest.engine';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuthStore } from '@/store';
@@ -76,6 +77,24 @@ export default function Pick3IntelligenceView() {
   const [showBetDialog, setShowBetDialog] = useState(false);
   const [simResult, setSimResult] = useState<ModelValidationResult | null>(null);
 
+  // FIX-SIM-CONFIG (2026-07-05): configuración de simulación (auto/manual)
+  const [simConfig, setSimConfig] = useState<SimConfig>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('pick3-sim-config');
+      if (saved) {
+        try { return JSON.parse(saved); } catch {}
+      }
+    }
+    return SIM_DEFAULT_CONFIG;
+  });
+  const [simRunning, setSimRunning] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('pick3-sim-config', JSON.stringify(simConfig));
+    }
+  }, [simConfig]);
+
   const [bConfig, setBConfig] = useState<BettingConfig>(() => {
     // FIX-PERSIST: cargar bConfig de localStorage al iniciar
     if (typeof window !== 'undefined') {
@@ -87,6 +106,7 @@ export default function Pick3IntelligenceView() {
     return {
       mode: 'PICK3',
       payout: 500,
+      boxPayout: 80,
       digits: 3,
       maxCombinations: 10,
       riskFactor: 1.0,
@@ -110,10 +130,36 @@ export default function Pick3IntelligenceView() {
 
   const runSimulation = useCallback((hist: Pick3Result[], config: BettingConfig) => {
     if (hist.length < 60) return;
-    const backtestEngine = new BacktestEngine(hist);
-    const result = backtestEngine.runValidation(config, 1000, 30);
-    setSimResult(result);
-  }, []);
+    setSimRunning(true);
+    try {
+      const backtestEngine = new BacktestEngine(hist);
+      const days = simConfig.mode === 'manual' ? simConfig.windowDays : 30;
+      const result = backtestEngine.runValidation(config, 1000, days);
+      setSimResult(result);
+    } finally {
+      setSimRunning(false);
+    }
+  }, [simConfig.windowDays, simConfig.mode]);
+
+  // FIX-SIM-RERUN (2026-07-05): re-ejecutar simulación con config manual
+  const handleReRunSimulation = useCallback(() => {
+    if (history.length < 60) {
+      toast.error("Se necesitan al menos 60 sorteos");
+      return;
+    }
+    setSimRunning(true);
+    try {
+      const backtestEngine = new BacktestEngine(history);
+      const days = simConfig.mode === 'manual' ? simConfig.windowDays : 30;
+      const result = backtestEngine.runValidation(bConfig, 1000, days);
+      setSimResult(result);
+      toast.success(`Simulación re-ejecutada (${days} días, ${simConfig.mode})`);
+    } catch (err) {
+      toast.error("Error en simulación");
+    } finally {
+      setSimRunning(false);
+    }
+  }, [history, bConfig, simConfig]);
 
   const fetchData = useCallback(async () => {
     if (!user) return;
@@ -223,14 +269,14 @@ export default function Pick3IntelligenceView() {
   return (
     <TooltipProvider>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6 sm:space-y-8 animate-in fade-in duration-700">
-        {/* Header & Main Stats */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="space-y-1">
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-black italic tracking-tighter uppercase flex items-center gap-2 sm:gap-3">
-              <ShieldCheck className="w-7 h-7 sm:w-9 sm:h-9 md:w-10 md:h-10 text-primary shrink-0" />
+        {/* Header & Main Stats — FIX-SIZE (2026-07-05): tamaño reducido para no ser tan prominente */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+          <div className="space-y-0.5">
+            <h1 className="text-lg sm:text-xl font-black italic tracking-tight uppercase flex items-center gap-2">
+              <ShieldCheck className="w-5 h-5 sm:w-6 sm:h-6 text-primary shrink-0" />
               <span>Risk Investment <span className="text-primary">Manager</span></span>
             </h1>
-            <p className="text-[10px] sm:text-xs font-bold uppercase opacity-60 tracking-widest">Gestión de Riesgo & Análisis Estadístico de Inversión</p>
+            <p className="text-[9px] sm:text-[10px] font-bold uppercase opacity-50 tracking-widest">Gestión de Riesgo & Análisis Estadístico</p>
           </div>
 
           <div className="flex flex-wrap gap-2 sm:gap-3">
@@ -300,7 +346,14 @@ export default function Pick3IntelligenceView() {
              {analysis && <Pick3StrategySection analysis={analysis} plays={plays} config={bConfig} />}
           </TabsContent>
 
-          <TabsContent value="simulation" className="pt-6">
+          <TabsContent value="simulation" className="pt-6 space-y-6">
+             {/* FIX-SIM-CONFIG (2026-07-05): panel de configuración de simulación */}
+             <SimulationConfigPanel
+               config={simConfig}
+               onChange={setSimConfig}
+               onReRun={handleReRunSimulation}
+               isRunning={simRunning}
+             />
              {simResult ? (
                 <Pick3SimulationDashboard result={simResult} initialBankroll={1000} />
              ) : (
@@ -350,7 +403,13 @@ export default function Pick3IntelligenceView() {
                             id="pick3-mode"
                             className="w-full h-12 rounded-xl border-border bg-background px-4 text-sm font-black italic uppercase"
                             value={bConfig.mode}
-                            onChange={(e) => setBConfig({...bConfig, mode: e.target.value as any})}
+                            onChange={(e) => {
+                              const newMode = e.target.value as any;
+                              // FIX-PAYOUT (2026-07-05): ajustar payout default según modo
+                              const newPayout = newMode === 'LAST2' ? 90 : 500;
+                              const newBoxPayout = newMode === 'LAST2' ? 60 : 80;
+                              setBConfig({...bConfig, mode: newMode, payout: newPayout, boxPayout: newBoxPayout});
+                            }}
                          >
                             <option value="PICK3">Florida Lottery Pick 3 (Official)</option>
                             <option value="LAST2">Terminal / Bolita (Last 2)</option>
@@ -366,6 +425,45 @@ export default function Pick3IntelligenceView() {
                             onChange={(e) => setBConfig({...bConfig, riskFactor: parseFloat(e.target.value)})}
                             className="w-full h-12 rounded-xl border border-border bg-background px-4 font-black text-lg"
                          />
+                      </div>
+                      {/* FIX-PAYOUT (2026-07-05): premio por coincidencia configurable */}
+                      <div className="space-y-2">
+                         <label htmlFor="pick3-payout" className="text-[10px] font-black uppercase ml-1">
+                            Premio Straight (coincidencia exacta)
+                         </label>
+                         <div className="flex items-center gap-2">
+                           <input
+                              id="pick3-payout"
+                              type="number" step="1" min="1"
+                              aria-label="Premio Straight"
+                              value={bConfig.payout}
+                              onChange={(e) => setBConfig({...bConfig, payout: parseFloat(e.target.value) || 500})}
+                              className="w-full h-12 rounded-xl border border-border bg-background px-4 font-black text-lg"
+                           />
+                           <span className="text-[10px] font-black uppercase opacity-50 shrink-0">x por $1</span>
+                         </div>
+                         <p className="text-[9px] opacity-50 ml-1">
+                           {bConfig.mode === 'LAST2' ? 'Default: 90 (Last 2)' : 'Default: 500 (Pick 3 straight)'}
+                         </p>
+                      </div>
+                      <div className="space-y-2">
+                         <label htmlFor="pick3-box-payout" className="text-[10px] font-black uppercase ml-1">
+                            Premio Box (cualquier orden)
+                         </label>
+                         <div className="flex items-center gap-2">
+                           <input
+                              id="pick3-box-payout"
+                              type="number" step="1" min="1"
+                              aria-label="Premio Box"
+                              value={(bConfig as any).boxPayout || (bConfig.mode === 'LAST2' ? 60 : 80)}
+                              onChange={(e) => setBConfig({...bConfig, boxPayout: parseFloat(e.target.value) || 80} as any)}
+                              className="w-full h-12 rounded-xl border border-border bg-background px-4 font-black text-lg"
+                           />
+                           <span className="text-[10px] font-black uppercase opacity-50 shrink-0">x por $1</span>
+                         </div>
+                         <p className="text-[9px] opacity-50 ml-1">
+                           {bConfig.mode === 'LAST2' ? 'Default: 60 (Last 2 pares)' : 'Default: 80 (Pick 3 box 6-way)'}
+                         </p>
                       </div>
                    </div>
                    <Button
