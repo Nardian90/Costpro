@@ -19,6 +19,7 @@ const nextConfig: NextConfig = {
     'z-ai-web-dev-sdk',
     '@whiskeysockets/baileys',
     '@hapi/boom',
+    'crypto-js', // FIX-TRM (2026-07-05): evitar que Turbopack intente bundlear crypto-js
   ],
   images: {
     remotePatterns: [
