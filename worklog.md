@@ -4002,3 +4002,83 @@ Work Log:
 5. **Sprint 5**: Growth engine (referrals, programmatic SEO, A/B testing)
 
 Total commits pushed: ~15 commits en main, todos los tests pasando, servidor online.
+
+---
+Task ID: SYNC-PDF-2026-07-03
+Agent: Main Agent (Super Z)
+Task: Sincronizar pick3_history con PDF oficial p3.pdf (actualizado hasta 03/07/2026). La BD estaba desactualizada (último registro 06/07/2026). Cargar los 13,724 registros faltantes.
+
+Work Log:
+
+### ESTADO INICIAL
+- BD: 1,325 registros (rango: 2021-02-19 a 2026-06-07)
+- PDF: 15,049 registros (rango: 1988-04-29 a 2026-07-03)
+- Faltantes: 13,724 registros
+
+### PARSER PDF (4 iteraciones)
+
+- **v1**: Parser simple, asume 3 columnas largas (centena, decena, unidad) con N dígitos cada una.
+  Resultado: solo 50 registros de 1988. Falló porque la estructura es más compleja.
+
+- **v2**: Parser página por página (130 páginas).
+  Resultado: 50 registros. Solo procesó 1 página (la última con datos antiguos).
+
+- **v3**: Detecta que cada página tiene 2 bloques de 53 sorteos (106 total) con 4 columnas largas.
+  Resultado: 13,674 registros únicos. Pero faltaban registros (e.g., 2021-02-19).
+
+- **v4 (FINAL)**: Detecta que el PDF tiene DOS formatos mezclados:
+  1. **Formato columnar** (páginas recientes): fechas en lista, E/M en lista, 2 columnas largas de centena/decena, dígitos individuales de unidad, FB en lista
+  2. **Formato línea-por-línea** (páginas antiguas, ~1988-2020): `MM/DD/YY E X - X - X FB X`
+  
+  El PDF tiene 2 columnas físicas por página, y pdftotext las intercala línea por línea.
+  
+  Resultado: 15,049 registros únicos (100% del PDF)
+
+### COMPARACIÓN BD vs PDF (post-parser v4)
+- BD: 1,325 registros
+- PDF: 15,049 registros
+- Intersección: 1,325 (100% de la BD está en el PDF ✓)
+- Faltantes: 13,724 registros (en PDF pero no en BD)
+- Extras: 0 (no hay registros en BD que no estén en el PDF ✓)
+
+### INSERCIÓN BULK
+
+- 13,724 registros insertados en 28 lotes de 500 (sin errores)
+- 50 registros adicionales de 1988 insertados (parser fallback los había perdido)
+- Total insertado: 13,774 registros
+
+### VERIFICACIÓN FINAL
+
+- **BD total: 15,049 registros** (igual que el PDF, 100% cobertura)
+- **Rango BD**: 1988-04-29 → 2026-07-03
+- **Últimos registros**:
+  - 2026-07-03 | midday  | 460 | FB=6
+  - 2026-07-03 | evening | 361 | FB=5
+  - 2026-07-02 | midday  | 208 | FB=1
+  - 2026-07-02 | evening | 564 | FB=8
+  - 2026-07-01 | midday  | 627 | FB=9
+- **2021-02-19** verificado en BD: evening 760, midday 377 ✓
+- **Por año** (últimos 5):
+  - 2026: 368 sorteos (hasta 03/07)
+  - 2025: 730 sorteos
+  - 2024: 732 sorteos
+  - 2023: 730 sorteos
+  - 2022: 730 sorteos
+  - 2021: 730 sorteos
+
+### Stage Summary:
+- **BD completamente sincronizada** con el PDF oficial actualizado al 03/07/2026
+- **15,049 registros** en BD (igual que el PDF)
+- **100% cobertura** (0 faltantes, 0 extras)
+- **Rango histórico**: 1988-04-29 → 2026-07-03 (38+ años de datos)
+- **Fireball incluido** para sorteos post-2014
+- **Source: 'official'** y **sync_method: 'pdf'** para todos los registros nuevos
+- Servidor PM2 reiniciado, HTTP 200 confirmado
+
+El módulo Pick 3 Intelligence ahora tiene ~38 años de datos históricos reales,
+lo que mejora significativamente la calidad de:
+- Tests estadísticos (chi-cuadrado, KS, runs, entropy) con N=15,049
+- Backtesting con ventanas más largas
+- Análisis de régimen (drift detection)
+- Predicciones del ensemble (4 modelos con más datos de calibración)
+- Programmatic SEO (páginas por combinación con stats reales)
