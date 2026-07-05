@@ -61,7 +61,65 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
     const { data, error } = await query;
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-    return NextResponse.json({ rates: data, count: data?.length || 0 });
+    // FIX-CARRY-FORWARD (2026-07-05): si hoy no hay tasa para alguna combinación
+    // source/currency/segment, buscar el último valor disponible y crear un
+    // registro virtual carry-forward para que la UI no muestre brincos.
+    //
+    // Esto resuelve el problema: si el BCC o elToque fallan hoy, la UI usa
+    // automáticamente el último valor real disponible arrastrándolo hasta
+    // que el servicio se restablezca.
+    const todayStr = new Date().toISOString().split('T')[0];
+    const sources = source ? [source] : ['BCC', 'elToque'];
+    const currencies = currency ? [currency] : ['USD', 'EUR', 'MLC'];
+    const segments = [segment];
+
+    const carryForwardRecords: any[] = [];
+
+    for (const src of sources) {
+      for (const cur of currencies) {
+        for (const seg of segments) {
+          // Verificar si ya existe un registro para hoy
+          const hasToday = data?.some(
+            (r: any) => r.rate_date === todayStr && r.source === src && r.currency === cur && r.segment === seg
+          );
+
+          if (!hasToday) {
+            // Buscar el último valor real disponible (más reciente antes de hoy)
+            const lastReal = data
+              ?.filter((r: any) => r.source === src && r.currency === cur && r.segment === seg)
+              .sort((a: any, b: any) => b.rate_date.localeCompare(a.rate_date))[0];
+
+            if (lastReal) {
+              // Crear registro carry-forward virtual
+              carryForwardRecords.push({
+                ...lastReal,
+                rate_date: todayStr,
+                captured_at: new Date().toISOString(),
+                capture_method: 'carry_forward',
+                original_rate_date: lastReal.rate_date,
+                id: `cf-${lastReal.id}`,
+              });
+            }
+          }
+        }
+      }
+    }
+
+    // Combinar datos reales + carry-forward
+    const allRates = [...(data || []), ...carryForwardRecords].sort(
+      (a: any, b: any) => a.rate_date.localeCompare(b.rate_date)
+    );
+
+    return NextResponse.json({
+      rates: allRates,
+      count: allRates.length,
+      carry_forward_count: carryForwardRecords.length,
+      carry_forward_dates: carryForwardRecords.map((r: any) => ({
+        source: r.source,
+        currency: r.currency,
+        original_date: r.original_rate_date,
+      })),
+    });
   } catch (error: unknown) {
     return NextResponse.json({ error: error instanceof Error ? error.message : 'Unknown' }, { status: 500 });
   }
