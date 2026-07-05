@@ -161,10 +161,19 @@ export function Pick3HistorySection({ history, onRefresh }: Pick3HistorySectionP
         localStorage.removeItem('pick3-display-limit');
         localStorage.removeItem('pick3_draw_history');
       }
-      // Resetear displayLimit al default alto
+      // Resetear displayLimit a un valor alto que garantice ver los últimos registros
       setDisplayLimit(100);
+
       const result = await Pick3Storage.forceRefreshHistory();
+
+      // FIX-CANONICO (2026-07-05): después del fetch, ajustar displayLimit
+      // para que sea >= al total de registros (así se ven todos)
       if (result.records.length > 0) {
+        // Mostrar TODOS los registros que trajimos (limit 100 en getHistory)
+        const totalRecords = result.records.length;
+        if (totalRecords > 100) {
+          setDisplayLimit(totalRecords);
+        }
         toast.success(`Datos actualizados: ${result.records.length} registros. Último sorteo: ${result.latestDate}`);
         onRefresh(); // Trigger fetchData en el parent para refrescar toda la UI
       } else {

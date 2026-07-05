@@ -244,44 +244,27 @@ export class Pick3Storage {
 
       logger.info('PICK3', `getHistory: tokenSource=${tokenSource}`);
 
-      // FIX-PAGINATION (2026-07-05): Supabase limita a 1000 registros por query.
-      // La BD tiene 15,051 registros. Necesitamos paginar para traerlos todos.
-      const allData: any[] = [];
-      const PAGE_SIZE = 1000;
-      let offset = 0;
-      let hasMore = true;
+      // FIX-LIMIT-CANONICO (2026-07-05): traer solo los 100 registros más recientes.
+      // El usuario solo necesita ver los últimos ~50 días, no los 15,051 históricos.
+      //
+      // ORDEN CANÓNICO:
+      // - draw_date DESC (más reciente primero)
+      // - draw_time ASC para que evening quede ANTES que midday en la misma fecha
+      //   (en un mismo día, evening es el sorteo más reciente, debe aparecer primero)
+      //   Nota: alfabéticamente "evening" < "midday", así que ASC pone evening primero.
+      const { data, error } = await client
+        .from('pick3_history')
+        .select('*')
+        .order('draw_date', { ascending: false })
+        .order('draw_time', { ascending: true })
+        .limit(100);
 
-      while (hasMore) {
-        const { data, error } = await client
-          .from('pick3_history')
-          .select('*')
-          .order('draw_date', { ascending: false })
-          .order('draw_time', { ascending: false })
-          .range(offset, offset + PAGE_SIZE - 1);
-
-        if (error) {
-          logger.warn('PICK3', 'Error fetching from Supabase, falling back to local', { error });
-          // Si ya tenemos datos parciales, usarlos; si no, fallback a local
-          if (allData.length > 0) break;
-          return this.getHistoryLocal();
-        }
-
-        if (!data || data.length === 0) {
-          hasMore = false;
-          break;
-        }
-
-        allData.push(...data);
-
-        // Si recibimos menos de PAGE_SIZE, no hay más páginas
-        if (data.length < PAGE_SIZE) {
-          hasMore = false;
-        } else {
-          offset += PAGE_SIZE;
-        }
+      if (error) {
+        logger.warn('PICK3', 'Error fetching from Supabase, falling back to local', { error });
+        return this.getHistoryLocal();
       }
 
-      if (allData.length === 0) {
+      if (!data || data.length === 0) {
         // FIX-AUTH: si la query retorna vacío, intentar con localStorage como fallback
         const local = this.getHistoryLocal();
         if (local.length > 0) {
@@ -292,9 +275,9 @@ export class Pick3Storage {
         return [];
       }
 
-      logger.info('PICK3', `getHistory: fetched ${allData.length} records from Supabase (paginated)`, { tokenSource, latestDate: allData[0]?.draw_date });
+      logger.info('PICK3', `getHistory: fetched ${data.length} records from Supabase`, { tokenSource, latestDate: data[0]?.draw_date, latestTime: data[0]?.draw_time });
 
-      const results = allData.map(r => ({
+      const results = data.map(r => ({
         date: r.draw_date,
         draw_time: r.draw_time as any,
         result: r.result as [number, number, number],
