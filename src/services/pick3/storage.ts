@@ -213,18 +213,36 @@ export class Pick3Storage {
       // pero la política pick3_history_select_authenticated requiere rol authenticated.
       // Sin token, la query retorna [] (vacío).
       let client = supabase;
+      let tokenSource = 'anon';
+
       if (isBrowser) {
-        // Intentar obtener el token del auth store (lazy import para evitar circular dep)
+        // Método 1: intentar obtener el token del auth store
         try {
           const { useAuthStore } = await import('@/store');
           const token = useAuthStore.getState().token;
-          if (token) {
+          if (token && token.length > 20) {
             client = getSupabaseAuthClient(token);
+            tokenSource = 'authStore';
           }
         } catch {
-          // Si no podemos importar el store, usar el cliente singleton
+          // Si no podemos importar el store, continuar con cliente singleton
+        }
+
+        // Método 2 (fallback): si el authStore no tenía token, intentar getSession()
+        if (tokenSource === 'anon') {
+          try {
+            const { data: sessionData } = await supabase.auth.getSession();
+            if (sessionData?.session?.access_token) {
+              client = getSupabaseAuthClient(sessionData.session.access_token);
+              tokenSource = 'supabaseSession';
+            }
+          } catch {
+            // Ignorar
+          }
         }
       }
+
+      logger.info('PICK3', `getHistory: tokenSource=${tokenSource}`);
 
       // FIX-ORDER (2026-07-05): ordenar por draw_date DESC y draw_time DESC
       // para que evening quede antes que midday en la misma fecha (más reciente primero)
@@ -244,11 +262,14 @@ export class Pick3Storage {
         // (puede ser que el usuario no esté autenticado o el token expiró)
         const local = this.getHistoryLocal();
         if (local.length > 0) {
-          logger.info('PICK3', 'Query returned empty, using localStorage cache', { localCount: local.length });
+          logger.info('PICK3', 'Query returned empty, using localStorage cache', { localCount: local.length, tokenSource });
           return local;
         }
+        logger.warn('PICK3', 'Query returned empty AND localStorage is empty', { tokenSource });
         return [];
       }
+
+      logger.info('PICK3', `getHistory: fetched ${data.length} records from Supabase`, { tokenSource, latestDate: data[0]?.draw_date });
 
       const results = data.map(r => ({
         date: r.draw_date,
@@ -269,6 +290,28 @@ export class Pick3Storage {
       logger.error('PICK3', 'Critical error fetching history', { error: err });
       return this.getHistoryLocal();
     }
+  }
+
+  /**
+   * FIX-FORCE-REFRESH (2026-07-05): Fuerza una recarga limpia desde Supabase.
+   * Limpia el cache de localStorage y hace una query fresca con el token.
+   * Usar cuando el usuario sospeche que los datos están desactualizados.
+   */
+  static async forceRefreshHistory(): Promise<{ records: Pick3Result[]; source: string; latestDate: string | null }> {
+    // 1. Limpiar localStorage cache
+    if (isBrowser) {
+      localStorage.removeItem(STORAGE_KEYS.HISTORY);
+      logger.info('PICK3', 'forceRefreshHistory: localStorage cache cleared');
+    }
+
+    // 2. Hacer query fresca
+    const records = await this.getHistory();
+
+    return {
+      records,
+      source: 'force-refresh',
+      latestDate: records[0]?.date || null,
+    };
   }
 
   private static getHistoryLocal(): Pick3Result[] {

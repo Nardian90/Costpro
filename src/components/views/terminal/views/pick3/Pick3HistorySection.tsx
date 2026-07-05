@@ -19,7 +19,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
-  Search, List, LayoutGrid, Calendar as CalendarIcon, Clock, ChevronDown, Plus, AlertTriangle, Edit2, Trash2
+  Search, List, LayoutGrid, Calendar as CalendarIcon, Clock, ChevronDown, Plus, AlertTriangle, Edit2, Trash2, RefreshCw, Loader2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
@@ -38,6 +38,7 @@ interface Pick3HistorySectionProps {
 export function Pick3HistorySection({ history, onRefresh }: Pick3HistorySectionProps) {
   const clientTodayISO = useSyncExternalStore(noopSubscribe, () => format(new Date(), 'yyyy-MM-dd'), () => '');
   const [searchTerm, setSearchTerm] = useState('');
+  const [forceRefreshing, setForceRefreshing] = useState(false);
 
   // FIX-PERSIST+MOBILE (2026-07-04): viewMode default = tabla en desktop, tarjeta en mobile
   // Persistir preferencia del usuario en localStorage
@@ -135,6 +136,24 @@ export function Pick3HistorySection({ history, onRefresh }: Pick3HistorySectionP
 
   const loadMore = () => {
     setDisplayLimit(prev => prev + 20);
+  };
+
+  // FIX-FORCE-REFRESH (2026-07-05): botón Actualizar que limpia cache y fuerza fetch fresco
+  const handleForceRefresh = async () => {
+    setForceRefreshing(true);
+    try {
+      const result = await Pick3Storage.forceRefreshHistory();
+      if (result.records.length > 0) {
+        toast.success(`Datos actualizados: ${result.records.length} registros. Último sorteo: ${result.latestDate}`);
+        onRefresh(); // Trigger fetchData en el parent para refrescar toda la UI
+      } else {
+        toast.error("No se pudieron cargar datos. Verifica tu sesión.");
+      }
+    } catch (err) {
+      toast.error("Error al actualizar: " + (err instanceof Error ? err.message : 'desconocido'));
+    } finally {
+      setForceRefreshing(false);
+    }
   };
 
   const handleSave = async () => {
@@ -289,6 +308,20 @@ export function Pick3HistorySection({ history, onRefresh }: Pick3HistorySectionP
           />
         </div>
         <div className="flex items-center gap-1 bg-muted/50 p-1 rounded-full w-full sm:w-auto">
+          <Button
+            variant="ghost"
+            size="sm"
+            disabled={forceRefreshing}
+            className="rounded-full h-8 font-bold text-[10px] uppercase bg-emerald-500/10 text-emerald-600 mr-2 disabled:opacity-50"
+            onClick={handleForceRefresh}
+            title="Limpiar cache y forzar recarga desde Supabase"
+          >
+            {forceRefreshing ? (
+              <><Loader2 className="w-3 h-3 mr-1 animate-spin" /> Actualizando...</>
+            ) : (
+              <><RefreshCw className="w-3 h-3 mr-1" /> Actualizar</>
+            )}
+          </Button>
           <Button
             variant="ghost"
             size="sm"
