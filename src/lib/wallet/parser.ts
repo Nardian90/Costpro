@@ -3,6 +3,34 @@ import { RawSms, ConsolidatedTransaction, AnalyticalTransaction, WalletAnalytics
 
 const generateId = () => Math.random().toString(36).substring(2, 11) + Date.now().toString(36);
 
+// FIX-DECIMAL (2026-07-05): parseAmount robusto que maneja todos los formatos:
+// - "223,743.87" (coma miles, punto decimal) → 223743.87
+// - "223.743,87" (punto miles, coma decimal) → 223743.87
+// - "223743.87" (sin separador miles) → 223743.87
+// - "223743,87" (coma decimal) → 223743.87
+// - "5000.00" → 5000
+// Antes: replace(',', '.') convertía "223,743.87" en "223.743.87" → DecimalError
+export function parseAmount(str: string | undefined): number {
+  if (!str) return 0;
+  let s = str.trim();
+  const hasComma = s.includes(',');
+  const hasDot = s.includes('.');
+  if (hasComma && hasDot) {
+    if (s.lastIndexOf(',') > s.lastIndexOf('.')) {
+      s = s.replace(/\./g, '').replace(',', '.');
+    } else {
+      s = s.replace(/,/g, '');
+    }
+  } else if (hasComma) {
+    s = s.replace(',', '.');
+  }
+  try {
+    return new Decimal(s || '0').toNumber();
+  } catch {
+    return 0;
+  }
+}
+
 export function parseRawSms(text: string): RawSms[] {
   if (!text) return [];
 
@@ -141,7 +169,7 @@ export function deriveTransactions(raw: RawSms[]): ConsolidatedTransaction[] {
                     const service = parts[1].trim();
                     const operation = parts[2].trim().toUpperCase();
                     const amountStr = parts[3].replace(',', '.').trim();
-                    const amount = new Decimal(amountStr || '0').toNumber();
+                    const amount = parseAmount(amountStr);
                     const currency = parts[4].trim();
                     const transactionId = parts[5].trim();
 
@@ -172,14 +200,14 @@ export function deriveTransactions(raw: RawSms[]): ConsolidatedTransaction[] {
     const patterns = [
       {
         regex: /Transferencia fue completada.*?Monto:\s*([\d,.]+)\s*(\w+).*?Nro\. Transaccion\s+([A-Z0-9]+).*?Fecha:\s*(\d+\/\d+\/\d+)/i,
-        map: (m: RegExpMatchArray) => ({ amount: new Decimal(m[1]?.replace(',', '.') || '0').toNumber(), currency: m[2], transactionId: m[3], date: m[4], operation: 'DB' as const, service: 'Transferencia', counterparty: 'Enviada' })
+        map: (m: RegExpMatchArray) => ({ amount: parseAmount(m[1]), currency: m[2], transactionId: m[3], date: m[4], operation: 'DB' as const, service: 'Transferencia', counterparty: 'Enviada' })
       },
       {
         regex: /le ha realizado una transferencia.*?de\s+([\d,.]+)\s*(\w+).*?Nro\. Transaccion\s+([A-Z0-9]+).*?Fecha:\s*(\d+\/\d+\/\d+)/i,
         map: (m: RegExpMatchArray) => {
             const phoneMatch = sms.content.match(/telefono\s+(\d+)/i);
             return {
-                amount: new Decimal(m[1]?.replace(',', '.') || '0').toNumber(),
+                amount: parseAmount(m[1]),
                 currency: m[2],
                 transactionId: m[3],
                 date: m[4],
@@ -191,15 +219,15 @@ export function deriveTransactions(raw: RawSms[]): ConsolidatedTransaction[] {
       },
       {
         regex: /Recarga se realizo con exito.*?Monto Pagado:\s*([\d,.]+)\s*(\w+).*?Id transaccion:\s+([A-Z0-9]+)/i,
-        map: (m: RegExpMatchArray) => ({ amount: new Decimal(m[1]?.replace(',', '.') || '0').toNumber(), currency: m[2], transactionId: m[3], date: sms.date, operation: 'DB' as const, service: 'Recarga', counterparty: 'ETECSA' })
+        map: (m: RegExpMatchArray) => ({ amount: parseAmount(m[1]), currency: m[2], transactionId: m[3], date: sms.date, operation: 'DB' as const, service: 'Recarga', counterparty: 'ETECSA' })
       },
       {
         regex: /Pago de la factura.*?fue completado.*?Importe Pagado:\s*([\d,.]+)\s*(\w+).*?Nro\. Transaccion:\s+([A-Z0-9]+)/i,
-        map: (m: RegExpMatchArray) => ({ amount: new Decimal(m[1]?.replace(',', '.') || '0').toNumber(), currency: m[2], transactionId: m[3], date: sms.date, operation: 'DB' as const, service: 'Pago', counterparty: 'Servicio' })
+        map: (m: RegExpMatchArray) => ({ amount: parseAmount(m[1]), currency: m[2], transactionId: m[3], date: sms.date, operation: 'DB' as const, service: 'Pago', counterparty: 'Servicio' })
       },
       {
         regex: /pago del impuesto.*?completado.*?Importe Pagado:\s*([\d,.]+)\s*(\w+).*?Nro\. Transaccion Banco:\s+([A-Z0-9]+)/i,
-        map: (m: RegExpMatchArray) => ({ amount: new Decimal(m[1]?.replace(',', '.') || '0').toNumber(), currency: m[2], transactionId: m[3], date: sms.date, operation: 'DB' as const, service: 'Impuesto', counterparty: 'ONAT' })
+        map: (m: RegExpMatchArray) => ({ amount: parseAmount(m[1]), currency: m[2], transactionId: m[3], date: sms.date, operation: 'DB' as const, service: 'Impuesto', counterparty: 'ONAT' })
       }
     ];
 
@@ -278,6 +306,36 @@ export function calculateLedger(raw: RawSms[], consolidated: ConsolidatedTransac
   const ledger: ConsolidatedTransaction[] = [...consolidated];
   const banks = Array.from(new Set(ledger.map(t => t.bank)));
 
+  // FIX-DECIMAL (2026-07-05): parseAmount robusto que maneja:
+  // - "223,743.87" (coma miles, punto decimal) → 223743.87
+  // - "223.743,87" (punto miles, coma decimal) → 223743.87
+  // - "223743.87" (sin separador miles) → 223743.87
+  // - "223743,87" (coma decimal) → 223743.87
+  const parseAmount = (str: string | undefined): number => {
+    if (!str) return 0;
+    let s = str.trim();
+    const hasComma = s.includes(',');
+    const hasDot = s.includes('.');
+    if (hasComma && hasDot) {
+      // Ambos: el último es el decimal, el otro es miles
+      if (s.lastIndexOf(',') > s.lastIndexOf('.')) {
+        // Coma decimal: "223.743,87" → quitar puntos, coma→punto
+        s = s.replace(/\./g, '').replace(',', '.');
+      } else {
+        // Punto decimal: "223,743.87" → quitar comas
+        s = s.replace(/,/g, '');
+      }
+    } else if (hasComma) {
+      // Solo coma: es decimal
+      s = s.replace(',', '.');
+    }
+    try {
+      return new Decimal(s || '0').toNumber();
+    } catch {
+      return 0;
+    }
+  };
+
   banks.forEach(bank => {
     const bankTxs = ledger.filter(t => t.bank === bank).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     const balances: { date: string, amount: number }[] = [];
@@ -288,7 +346,7 @@ export function calculateLedger(raw: RawSms[], consolidated: ConsolidatedTransac
         if (match) {
           balances.push({
             date: formatDateFromSms(sms.date),
-            amount: new Decimal(match[3]?.replace(',', '.') || '0').toNumber()
+            amount: parseAmount(match[3])
           });
         }
       }
