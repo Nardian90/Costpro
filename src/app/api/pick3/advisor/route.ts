@@ -265,6 +265,11 @@ async function advisorHandler(req: NextRequest) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
 
+    // FIX-ADMIN-LIMIT (2026-07-05): Admin tiene acceso limitado al Asesor IA
+    // Los admins pueden probar el asesor pero con límite reducido (5 consultas/mes)
+    // para evitar uso abusivo. El asesor es para usuarios que pagan, no para admins.
+    const isAdmin = session.user.role === 'admin' || session.user.role === 'super_admin';
+
     let body: AdvisorRequestBody;
     try {
       body = await req.json();
@@ -277,10 +282,34 @@ async function advisorHandler(req: NextRequest) {
     }
 
     // === SPRINT-4: Tier gating + usage check (solo si hay messages válidos) ===
-    const usageCheck = await SubscriptionService.checkUsage(
-      session.user.id,
-      'ai_query',
-    );
+    // FIX-ADMIN-LIMIT: Admin no pasa por tier gating, tiene su propio límite
+    let usageCheck;
+    if (isAdmin) {
+      // Admin: límite especial de 5 consultas/mes para testing
+      // Reusamos el sistema de usage pero con límite override
+      const adminUsage = await SubscriptionService.checkUsage(session.user.id, 'ai_query');
+      // Override: admin tiene límite de 5 (no el del tier)
+      const adminLimit = 5;
+      if (adminUsage.used >= adminLimit) {
+        return NextResponse.json({
+          error: `Límite de admin alcanzado (${adminUsage.used}/${adminLimit} consultas este mes). El Asesor IA es para usuarios finales, no para admins.`,
+          upgradeRequired: false,
+          isAdmin: true,
+          usage: { used: adminUsage.used, limit: adminLimit, remaining: 0 },
+        }, { status: 402 });
+      }
+      usageCheck = {
+        ...adminUsage,
+        limit: adminLimit,
+        remaining: adminLimit - adminUsage.used,
+      };
+    } else {
+      usageCheck = await SubscriptionService.checkUsage(
+        session.user.id,
+        'ai_query',
+      );
+    }
+
     if (!usageCheck.allowed) {
       logger.info('PICK3', `Usage limit reached for user ${session.user.id}: ${usageCheck.reason}`);
       return NextResponse.json({

@@ -47,14 +47,22 @@ export function Pick3HeroCard({ plays, config, bankroll }: Pick3HeroCardProps) {
                 </div>
 
                 <div className="flex gap-4 justify-center lg:justify-start">
-                  {mainPlay.combination.map((digit, i) => (
-                    <div
-                      key={i}
-                      className="w-20 h-24 lg:w-24 lg:h-32 rounded-[32px] bg-background border-4 border-primary/10 flex items-center justify-center text-5xl lg:text-7xl font-black italic text-primary shadow-xl group-hover:border-primary/40 transition-all duration-500"
-                    >
-                      {digit}
-                    </div>
-                  ))}
+                  {mainPlay.combination.map((digit, i) => {
+                    // FIX-LAST2 (2026-07-05): En modo LAST2, el primer dígito (centena)
+                    // se muestra en transparencia para centrar en los dígitos que importan
+                    const isLast2Dimmed = config.mode === 'LAST2' && i === 0;
+                    return (
+                      <div
+                        key={i}
+                        className={cn(
+                          "w-20 h-24 lg:w-24 lg:h-32 rounded-[32px] bg-background border-4 border-primary/10 flex items-center justify-center text-5xl lg:text-7xl font-black italic text-primary shadow-xl group-hover:border-primary/40 transition-all duration-500",
+                          isLast2Dimmed && "opacity-30 border-dashed border-muted-foreground/20 text-muted-foreground scale-90"
+                        )}
+                      >
+                        {digit}
+                      </div>
+                    );
+                  })}
                 </div>
 
                 <div className="flex items-center gap-2 justify-center lg:justify-start text-success font-black italic text-sm">
@@ -108,11 +116,17 @@ export function Pick3HeroCard({ plays, config, bankroll }: Pick3HeroCardProps) {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="flex gap-1">
-                      {alt.combination.map((d, j) => (
-                        <span key={j} className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center font-black italic text-primary text-sm">
-                          {d}
-                        </span>
-                      ))}
+                      {alt.combination.map((d, j) => {
+                        const isLast2Dimmed = config.mode === 'LAST2' && j === 0;
+                        return (
+                          <span key={j} className={cn(
+                            "w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center font-black italic text-primary text-sm",
+                            isLast2Dimmed && "opacity-30 bg-muted/30 text-muted-foreground"
+                          )}>
+                            {d}
+                          </span>
+                        );
+                      })}
                     </div>
                     <div className="flex flex-col">
                       <span className="text-[8px] font-black uppercase opacity-40">Opción Alternativa {i + 2}</span>

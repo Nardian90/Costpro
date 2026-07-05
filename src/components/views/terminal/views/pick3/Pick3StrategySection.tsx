@@ -4,7 +4,7 @@ import { BrainCircuit, Activity, Shield, TrendingUp, Info } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { AdvancedAnalysis, IntelligencePlay } from '@/types/pick3';
+import { AdvancedAnalysis, IntelligencePlay, BettingConfig } from '@/types/pick3';
 import { cn } from "@/lib/utils";
 import {
   Tooltip,
@@ -15,9 +15,10 @@ import {
 interface Pick3StrategySectionProps {
   analysis: AdvancedAnalysis;
   plays: IntelligencePlay[];
+  config?: BettingConfig;
 }
 
-export function Pick3StrategySection({ analysis, plays }: Pick3StrategySectionProps) {
+export function Pick3StrategySection({ analysis, plays, config }: Pick3StrategySectionProps) {
   const accuracies = analysis.strategyAccuracy || {};
 
   return (
@@ -48,11 +49,18 @@ export function Pick3StrategySection({ analysis, plays }: Pick3StrategySectionPr
                 )}
                 <div className="flex justify-between items-start mb-3">
                   <div className="flex gap-1">
-                    {play.combination.map((num, idx) => (
-                      <div key={idx} className="w-10 h-10 rounded-xl bg-background border border-primary/20 flex items-center justify-center text-xl font-black italic text-primary group-hover:scale-110 transition-transform shadow-sm">
-                        {num}
-                      </div>
-                    ))}
+                    {play.combination.map((num, idx) => {
+                      // FIX-LAST2 (2026-07-05): primer dígito en transparencia en modo LAST2
+                      const isLast2Dimmed = config?.mode === 'LAST2' && idx === 0;
+                      return (
+                        <div key={idx} className={cn(
+                          "w-10 h-10 rounded-xl bg-background border border-primary/20 flex items-center justify-center text-xl font-black italic text-primary group-hover:scale-110 transition-transform shadow-sm",
+                          isLast2Dimmed && "opacity-30 border-dashed border-muted-foreground/20 text-muted-foreground scale-90"
+                        )}>
+                          {num}
+                        </div>
+                      );
+                    })}
                   </div>
                   <div className="text-right">
                     <div className="text-[10px] font-bold text-muted-foreground uppercase flex items-center justify-end gap-1">

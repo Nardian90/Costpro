@@ -495,11 +495,11 @@ export const SYSTEM_ACTIONS: Action[] = [
   },
   {
     id: 'pick3',
-    label: 'Pick3 Intelligence',
+    label: 'Risk Investment Manager',
     icon: Zap,
-    keywords: ['pick3', 'inteligencia', 'análisis', 'predicción', 'datos'],
+    keywords: ['pick3', 'risk', 'inversión', 'análisis', 'predicción', 'datos', 'riesgo'],
     route: 'pick3-intelligence',
-    description: 'Análisis avanzado y predicciones operativas.'
+    description: 'Gestión de riesgo y análisis estadístico de inversión.'
   },
   {
     id: 'academy',

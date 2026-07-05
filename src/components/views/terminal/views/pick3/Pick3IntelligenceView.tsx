@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect, useCallback } from 'react';
 import {
-  BrainCircuit,
+  ShieldCheck,
   TrendingUp,
   History,
   Settings,
@@ -227,10 +227,10 @@ export default function Pick3IntelligenceView() {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="space-y-1">
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-black italic tracking-tighter uppercase flex items-center gap-2 sm:gap-3">
-              <BrainCircuit className="w-7 h-7 sm:w-9 sm:h-9 md:w-10 md:h-10 text-primary shrink-0" />
-              <span>Pick 3 Intelligence <span className="text-primary">v9.0</span></span>
+              <ShieldCheck className="w-7 h-7 sm:w-9 sm:h-9 md:w-10 md:h-10 text-primary shrink-0" />
+              <span>Risk Investment <span className="text-primary">Manager</span></span>
             </h1>
-            <p className="text-[10px] sm:text-xs font-bold uppercase opacity-60 tracking-widest">Auditoría Estadística & Gestión de Bankroll</p>
+            <p className="text-[10px] sm:text-xs font-bold uppercase opacity-60 tracking-widest">Gestión de Riesgo & Análisis Estadístico de Inversión</p>
           </div>
 
           <div className="flex flex-wrap gap-2 sm:gap-3">
@@ -256,46 +256,48 @@ export default function Pick3IntelligenceView() {
           </div>
         </div>
 
-        {/* Hero Card - Next Recommended Play */}
-        {plays.length > 0 && profile && (
-          <Pick3HeroCard plays={plays} config={bConfig} bankroll={profile.current_bankroll / 100} />
-        )}
-
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          {/* FIX-MOBILE: en mobile scroll horizontal, en desktop grid de 7 */}
-          <TabsList className="flex md:grid md:grid-cols-7 overflow-x-auto md:overflow-visible h-auto p-1 bg-muted/30 rounded-[28px] border border-border/50 sticky top-4 z-50 backdrop-blur-md gap-1 md:gap-0 no-scrollbar">
-            <TabsTrigger value="dashboard" className="rounded-full py-2.5 sm:py-3 font-black text-[9px] sm:text-[10px] uppercase tracking-wider whitespace-nowrap shrink-0 px-3 sm:px-2">
-              <Wallet className="w-3.5 h-3.5 mr-1.5 sm:mr-2" /> Dashboard
+          {/* FIX-MOBILE-FIRST (2026-07-05): tabs optimizadas para mobile
+              - En mobile: scroll horizontal fluido con snap, iconos siempre visibles, texto abreviado
+              - En desktop: grid de 8 columnas con texto completo
+              - El tab activo se resalta con escala y sombra */}
+          <TabsList className="flex md:grid md:grid-cols-8 overflow-x-auto md:overflow-visible h-auto p-1.5 bg-muted/30 rounded-[24px] border border-border/50 sticky top-4 z-50 backdrop-blur-md gap-1 md:gap-0.5 no-scrollbar snap-x snap-mandatory">
+            <TabsTrigger value="dashboard" className="rounded-full py-2.5 font-black text-[10px] uppercase tracking-wider whitespace-nowrap shrink-0 px-4 sm:px-3 snap-start data-[state=active]:scale-105 data-[state=active]:shadow-md transition-all">
+              <Wallet className="w-4 h-4 mr-1.5 shrink-0" /> <span className="hidden sm:inline">Dashboard</span><span className="sm:hidden">Inicio</span>
             </TabsTrigger>
-            <TabsTrigger value="prediction" className="rounded-full py-2.5 sm:py-3 font-black text-[9px] sm:text-[10px] uppercase tracking-wider whitespace-nowrap shrink-0 px-3 sm:px-2">
-              <Target className="w-3.5 h-3.5 mr-1.5 sm:mr-2" /> Predicciones
+            <TabsTrigger value="prediction" className="rounded-full py-2.5 font-black text-[10px] uppercase tracking-wider whitespace-nowrap shrink-0 px-4 sm:px-3 snap-start data-[state=active]:scale-105 data-[state=active]:shadow-md transition-all">
+              <Target className="w-4 h-4 mr-1.5 shrink-0" /> <span className="hidden sm:inline">Predicciones</span><span className="sm:hidden">Pred.</span>
             </TabsTrigger>
-            <TabsTrigger value="simulation" className="rounded-full py-2.5 sm:py-3 font-black text-[9px] sm:text-[10px] uppercase tracking-wider whitespace-nowrap shrink-0 px-3 sm:px-2">
-              <PlayCircle className="w-3.5 h-3.5 mr-1.5 sm:mr-2" /> Simulación
+            <TabsTrigger value="simulation" className="rounded-full py-2.5 font-black text-[10px] uppercase tracking-wider whitespace-nowrap shrink-0 px-4 sm:px-3 snap-start data-[state=active]:scale-105 data-[state=active]:shadow-md transition-all">
+              <PlayCircle className="w-4 h-4 mr-1.5 shrink-0" /> <span className="hidden sm:inline">Simulación</span><span className="sm:hidden">Sim.</span>
             </TabsTrigger>
-            <TabsTrigger value="intel" className="rounded-full py-2.5 sm:py-3 font-black text-[9px] sm:text-[10px] uppercase tracking-wider whitespace-nowrap shrink-0 px-3 sm:px-2">
-              <TrendingUp className="w-3.5 h-3.5 mr-1.5 sm:mr-2" /> Análisis
+            <TabsTrigger value="intel" className="rounded-full py-2.5 font-black text-[10px] uppercase tracking-wider whitespace-nowrap shrink-0 px-4 sm:px-3 snap-start data-[state=active]:scale-105 data-[state=active]:shadow-md transition-all">
+              <TrendingUp className="w-4 h-4 mr-1.5 shrink-0" /> <span className="hidden sm:inline">Análisis</span><span className="sm:hidden">Anál.</span>
             </TabsTrigger>
-            <TabsTrigger value="history" className="rounded-full py-2.5 sm:py-3 font-black text-[9px] sm:text-[10px] uppercase tracking-wider whitespace-nowrap shrink-0 px-3 sm:px-2">
-              <History className="w-3.5 h-3.5 mr-1.5 sm:mr-2" /> Histórico
+            <TabsTrigger value="history" className="rounded-full py-2.5 font-black text-[10px] uppercase tracking-wider whitespace-nowrap shrink-0 px-4 sm:px-3 snap-start data-[state=active]:scale-105 data-[state=active]:shadow-md transition-all">
+              <History className="w-4 h-4 mr-1.5 shrink-0" /> <span className="hidden sm:inline">Histórico</span><span className="sm:hidden">Hist.</span>
             </TabsTrigger>
-            <TabsTrigger value="help" className="rounded-full py-2.5 sm:py-3 font-black text-[9px] sm:text-[10px] uppercase tracking-wider whitespace-nowrap shrink-0 px-3 sm:px-2 bg-primary/5 text-primary">
-              <BookOpen className="w-3.5 h-3.5 mr-1.5 sm:mr-2" /> Guía
+            <TabsTrigger value="help" className="rounded-full py-2.5 font-black text-[10px] uppercase tracking-wider whitespace-nowrap shrink-0 px-4 sm:px-3 snap-start data-[state=active]:scale-105 data-[state=active]:shadow-md transition-all bg-primary/5 text-primary">
+              <BookOpen className="w-4 h-4 mr-1.5 shrink-0" /> <span className="hidden sm:inline">Guía</span><span className="sm:hidden">Guía</span>
             </TabsTrigger>
-            <TabsTrigger value="advisor" className="rounded-full py-2.5 sm:py-3 font-black text-[9px] sm:text-[10px] uppercase tracking-wider whitespace-nowrap shrink-0 px-3 sm:px-2 bg-primary/10 text-primary">
-              <Bot className="w-3.5 h-3.5 mr-1.5 sm:mr-2" /> Asesor IA
+            <TabsTrigger value="advisor" className="rounded-full py-2.5 font-black text-[10px] uppercase tracking-wider whitespace-nowrap shrink-0 px-4 sm:px-3 snap-start data-[state=active]:scale-105 data-[state=active]:shadow-md transition-all bg-primary/10 text-primary">
+              <Bot className="w-4 h-4 mr-1.5 shrink-0" /> <span className="hidden sm:inline">Asesor IA</span><span className="sm:hidden">IA</span>
             </TabsTrigger>
-            <TabsTrigger value="config" className="rounded-full py-2.5 sm:py-3 font-black text-[9px] sm:text-[10px] uppercase tracking-wider whitespace-nowrap shrink-0 px-3 sm:px-2">
-              <Settings className="w-3.5 h-3.5 mr-1.5 sm:mr-2" /> Ajustes
+            <TabsTrigger value="config" className="rounded-full py-2.5 font-black text-[10px] uppercase tracking-wider whitespace-nowrap shrink-0 px-4 sm:px-3 snap-start data-[state=active]:scale-105 data-[state=active]:shadow-md transition-all">
+              <Settings className="w-4 h-4 mr-1.5 shrink-0" /> <span className="hidden sm:inline">Ajustes</span><span className="sm:hidden">Ajust.</span>
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="dashboard" className="pt-6">
+          <TabsContent value="dashboard" className="pt-6 space-y-6">
+            {/* FIX-DASHBOARD (2026-07-05): Hero Card movida al Dashboard para que sea lo primero que se ve */}
+            {plays.length > 0 && profile && (
+              <Pick3HeroCard plays={plays} config={bConfig} bankroll={profile.current_bankroll / 100} />
+            )}
             {profile && <BankrollDashboard profile={profile} ledger={ledger} />}
           </TabsContent>
 
           <TabsContent value="prediction" className="pt-6">
-             {analysis && <Pick3StrategySection analysis={analysis} plays={plays} />}
+             {analysis && <Pick3StrategySection analysis={analysis} plays={plays} config={bConfig} />}
           </TabsContent>
 
           <TabsContent value="simulation" className="pt-6">
@@ -314,7 +316,7 @@ export default function Pick3IntelligenceView() {
           </TabsContent>
 
           <TabsContent value="history" className="pt-6 space-y-6">
-             <Pick3HistorySection history={history} onRefresh={fetchData} />
+             <Pick3HistorySection history={history} onRefresh={fetchData} config={bConfig} />
              <Pick3ControlPanel syncState={syncState as any} onSync={handleSync} />
           </TabsContent>
 

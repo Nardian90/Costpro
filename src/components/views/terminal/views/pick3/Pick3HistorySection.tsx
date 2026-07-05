@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useMemo, useSyncExternalStore, useEffect } from 'react';
-import { Pick3Result, DrawTime } from '@/types/pick3';
+import { Pick3Result, DrawTime, BettingConfig } from '@/types/pick3';
 import {
   Card, CardContent, CardHeader, CardTitle
 } from '@/components/ui/card';
@@ -53,9 +53,10 @@ function parseDateSafe(dateStr: string): Date {
 interface Pick3HistorySectionProps {
   history: Pick3Result[];
   onRefresh: () => void;
+  config?: BettingConfig;
 }
 
-export function Pick3HistorySection({ history, onRefresh }: Pick3HistorySectionProps) {
+export function Pick3HistorySection({ history, onRefresh, config }: Pick3HistorySectionProps) {
   const clientTodayISO = useSyncExternalStore(noopSubscribe, () => format(new Date(), 'yyyy-MM-dd'), () => '');
   const [searchTerm, setSearchTerm] = useState('');
   const [forceRefreshing, setForceRefreshing] = useState(false);
@@ -290,16 +291,21 @@ export function Pick3HistorySection({ history, onRefresh }: Pick3HistorySectionP
         </div>
         <div className="flex items-center gap-2">
           <div className="flex gap-1">
-            {item.result.map((digit, i) => (
-              <div key={i} className={cn(
-                "w-8 h-8 rounded-full border flex items-center justify-center text-base font-black italic",
-                item.draw_time === 'midday'
-                  ? "bg-warning/10 border-warning/20 text-warning"
-                  : "bg-primary/10 border-primary/20 text-primary"
-              )}>
-                {digit}
-              </div>
-            ))}
+            {item.result.map((digit, i) => {
+              // FIX-LAST2 (2026-07-05): En modo LAST2, primer dígito en transparencia
+              const isLast2Dimmed = config?.mode === 'LAST2' && i === 0;
+              return (
+                <div key={i} className={cn(
+                  "w-8 h-8 rounded-full border flex items-center justify-center text-base font-black italic",
+                  item.draw_time === 'midday'
+                    ? "bg-warning/10 border-warning/20 text-warning"
+                    : "bg-primary/10 border-primary/20 text-primary",
+                  isLast2Dimmed && "opacity-30 border-dashed border-muted-foreground/20 text-muted-foreground scale-90"
+                )}>
+                  {digit}
+                </div>
+              );
+            })}
           </div>
           {item.sync_method === 'manual' && (
             <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -508,8 +514,13 @@ export function Pick3HistorySection({ history, onRefresh }: Pick3HistorySectionP
                     {row.midday ? (
                       <div className="flex items-center justify-between gap-2">
                         <div className="flex items-center gap-2">
+                          {/* FIX-LAST2: en modo LAST2, primer dígito en transparencia */}
                           <span className="font-black italic text-warning text-base tracking-wider">
-                            {row.midday.result.join(' ')}
+                            {row.midday.result.map((d: number, i: number) => (
+                              <span key={i} className={cn(config?.mode === 'LAST2' && i === 0 && "opacity-30")}>
+                                {d}{i < row.midday!.result.length - 1 ? ' ' : ''}
+                              </span>
+                            ))}
                           </span>
                           {row.midday.fireball != null && row.midday.fireball !== 0 && (
                             <Badge variant="outline" className="text-[8px] font-black uppercase border-warning/30 text-warning px-1 py-0">
@@ -537,8 +548,13 @@ export function Pick3HistorySection({ history, onRefresh }: Pick3HistorySectionP
                     {row.evening ? (
                       <div className="flex items-center justify-between gap-2">
                         <div className="flex items-center gap-2">
+                          {/* FIX-LAST2: en modo LAST2, primer dígito en transparencia */}
                           <span className="font-black italic text-primary text-base tracking-wider">
-                            {row.evening.result.join(' ')}
+                            {row.evening.result.map((d: number, i: number) => (
+                              <span key={i} className={cn(config?.mode === 'LAST2' && i === 0 && "opacity-30")}>
+                                {d}{i < row.evening!.result.length - 1 ? ' ' : ''}
+                              </span>
+                            ))}
                           </span>
                           {row.evening.fireball != null && row.evening.fireball !== 0 && (
                             <Badge variant="outline" className="text-[8px] font-black uppercase border-primary/30 text-primary px-1 py-0">
