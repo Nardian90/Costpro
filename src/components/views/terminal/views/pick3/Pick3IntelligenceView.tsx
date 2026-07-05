@@ -206,33 +206,36 @@ export default function Pick3IntelligenceView() {
 
   return (
     <TooltipProvider>
-      <div className="max-w-7xl mx-auto px-4 py-8 space-y-8 animate-in fade-in duration-700">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6 sm:space-y-8 animate-in fade-in duration-700">
         {/* Header & Main Stats */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="space-y-1">
-            <h1 className="text-4xl font-black italic tracking-tighter uppercase flex items-center gap-3">
-              <BrainCircuit className="w-10 h-10 text-primary" />
-              Pick 3 Intelligence <span className="text-primary">v9.0</span>
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-black italic tracking-tighter uppercase flex items-center gap-2 sm:gap-3">
+              <BrainCircuit className="w-7 h-7 sm:w-9 sm:h-9 md:w-10 md:h-10 text-primary shrink-0" />
+              <span>Pick 3 Intelligence <span className="text-primary">v9.0</span></span>
             </h1>
-            <p className="text-xs font-bold uppercase opacity-60 tracking-widest">Auditoría Estadística & Gestión de Bankroll</p>
+            <p className="text-[10px] sm:text-xs font-bold uppercase opacity-60 tracking-widest">Auditoría Estadística & Gestión de Bankroll</p>
           </div>
 
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap gap-2 sm:gap-3">
              <Button
               variant="outline"
-              className="rounded-full font-black uppercase h-12 px-6 border-primary/20 hover:bg-primary/5 group"
+              className="rounded-full font-black uppercase h-11 sm:h-12 px-4 sm:px-6 border-primary/20 hover:bg-primary/5 group text-[11px] sm:text-xs"
               onClick={handleSync}
               disabled={syncState.isSyncing}
               title="Actualiza los últimos 7 días desde LotteryUSA"
             >
-              <RefreshCw className={cn("w-4 h-4 mr-2", syncState.isSyncing && "animate-spin")} />
-              {syncState.isSyncing ? "Actualizando..." : "Actualizar 7 días"}
+              <RefreshCw className={cn("w-4 h-4 mr-1.5 sm:mr-2", syncState.isSyncing && "animate-spin")} />
+              <span className="hidden sm:inline">{syncState.isSyncing ? "Actualizando..." : "Actualizar 7 días"}</span>
+              <span className="sm:hidden">{syncState.isSyncing ? "..." : "7 días"}</span>
             </Button>
             <Button
-              className="rounded-full font-black uppercase h-12 px-8 shadow-lg shadow-primary/20 group"
+              className="rounded-full font-black uppercase h-11 sm:h-12 px-4 sm:px-8 shadow-lg shadow-primary/20 group text-[11px] sm:text-xs"
               onClick={() => setShowBetDialog(true)}
             >
-              <Plus className="w-4 h-4 mr-2 group-hover:scale-125 transition-transform" /> Registrar Apuesta
+              <Plus className="w-4 h-4 mr-1.5 sm:mr-2 group-hover:scale-125 transition-transform" />
+              <span className="hidden sm:inline">Registrar Apuesta</span>
+              <span className="sm:hidden">Apuesta</span>
             </Button>
           </div>
         </div>
@@ -243,27 +246,28 @@ export default function Pick3IntelligenceView() {
         )}
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid grid-cols-2 md:grid-cols-7 h-auto p-1 bg-muted/30 rounded-[28px] border border-border/50 sticky top-4 z-50 backdrop-blur-md">
-            <TabsTrigger value="dashboard" className="rounded-full py-3 font-black text-[10px] uppercase tracking-wider">
-              <Wallet className="w-3.5 h-3.5 mr-2" /> Dashboard
+          {/* FIX-MOBILE: en mobile scroll horizontal, en desktop grid de 7 */}
+          <TabsList className="flex md:grid md:grid-cols-7 overflow-x-auto md:overflow-visible h-auto p-1 bg-muted/30 rounded-[28px] border border-border/50 sticky top-4 z-50 backdrop-blur-md gap-1 md:gap-0 no-scrollbar">
+            <TabsTrigger value="dashboard" className="rounded-full py-2.5 sm:py-3 font-black text-[9px] sm:text-[10px] uppercase tracking-wider whitespace-nowrap shrink-0 px-3 sm:px-2">
+              <Wallet className="w-3.5 h-3.5 mr-1.5 sm:mr-2" /> Dashboard
             </TabsTrigger>
-            <TabsTrigger value="prediction" className="rounded-full py-3 font-black text-[10px] uppercase tracking-wider">
-              <Target className="w-3.5 h-3.5 mr-2" /> Predicciones
+            <TabsTrigger value="prediction" className="rounded-full py-2.5 sm:py-3 font-black text-[9px] sm:text-[10px] uppercase tracking-wider whitespace-nowrap shrink-0 px-3 sm:px-2">
+              <Target className="w-3.5 h-3.5 mr-1.5 sm:mr-2" /> Predicciones
             </TabsTrigger>
-            <TabsTrigger value="simulation" className="rounded-full py-3 font-black text-[10px] uppercase tracking-wider">
-              <PlayCircle className="w-3.5 h-3.5 mr-2" /> Simulación
+            <TabsTrigger value="simulation" className="rounded-full py-2.5 sm:py-3 font-black text-[9px] sm:text-[10px] uppercase tracking-wider whitespace-nowrap shrink-0 px-3 sm:px-2">
+              <PlayCircle className="w-3.5 h-3.5 mr-1.5 sm:mr-2" /> Simulación
             </TabsTrigger>
-            <TabsTrigger value="intel" className="rounded-full py-3 font-black text-[10px] uppercase tracking-wider">
-              <TrendingUp className="w-3.5 h-3.5 mr-2" /> Análisis
+            <TabsTrigger value="intel" className="rounded-full py-2.5 sm:py-3 font-black text-[9px] sm:text-[10px] uppercase tracking-wider whitespace-nowrap shrink-0 px-3 sm:px-2">
+              <TrendingUp className="w-3.5 h-3.5 mr-1.5 sm:mr-2" /> Análisis
             </TabsTrigger>
-            <TabsTrigger value="history" className="rounded-full py-3 font-black text-[10px] uppercase tracking-wider">
-              <History className="w-3.5 h-3.5 mr-2" /> Histórico
+            <TabsTrigger value="history" className="rounded-full py-2.5 sm:py-3 font-black text-[9px] sm:text-[10px] uppercase tracking-wider whitespace-nowrap shrink-0 px-3 sm:px-2">
+              <History className="w-3.5 h-3.5 mr-1.5 sm:mr-2" /> Histórico
             </TabsTrigger>
-            <TabsTrigger value="help" className="rounded-full py-3 font-black text-[10px] uppercase tracking-wider bg-primary/5 text-primary">
-              <BookOpen className="w-3.5 h-3.5 mr-2" /> Guía de Usuario
+            <TabsTrigger value="help" className="rounded-full py-2.5 sm:py-3 font-black text-[9px] sm:text-[10px] uppercase tracking-wider whitespace-nowrap shrink-0 px-3 sm:px-2 bg-primary/5 text-primary">
+              <BookOpen className="w-3.5 h-3.5 mr-1.5 sm:mr-2" /> Guía
             </TabsTrigger>
-            <TabsTrigger value="config" className="rounded-full py-3 font-black text-[10px] uppercase tracking-wider">
-              <Settings className="w-3.5 h-3.5 mr-2" /> Ajustes
+            <TabsTrigger value="config" className="rounded-full py-2.5 sm:py-3 font-black text-[9px] sm:text-[10px] uppercase tracking-wider whitespace-nowrap shrink-0 px-3 sm:px-2">
+              <Settings className="w-3.5 h-3.5 mr-1.5 sm:mr-2" /> Ajustes
             </TabsTrigger>
           </TabsList>
 
