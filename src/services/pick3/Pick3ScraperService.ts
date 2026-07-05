@@ -191,14 +191,16 @@ export class Pick3ScraperService {
       const dateMatch = dateRegex.exec(content);
       if (!dateMatch) continue;
 
-      const date = dateMatch[1].split('T')[0];
+      // FIX-PARSE (2026-07-05): LotteryUSA devuelve "Jul 4, 2026" no ISO.
+      // Convertir a YYYY-MM-DD.
+      const date = this.normalizeDate(dateMatch[1].trim());
       const balls: number[] = [];
       let bMatch;
       while ((bMatch = ballRegex.exec(content)) !== null) {
         balls.push(parseInt(bMatch[1]));
       }
 
-      if (balls.length >= 3) {
+      if (balls.length >= 3 && date) {
         results.push({
              date, draw_time: drawTime, result: [balls[0], balls[1], balls[2]] as [number, number, number], source: 'lotteryusa' });
       }

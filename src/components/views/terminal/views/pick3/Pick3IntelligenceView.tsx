@@ -178,7 +178,18 @@ export default function Pick3IntelligenceView() {
       const data = await response.json();
       const error = !response.ok || !data.success ? (data.message || 'Sync failed') : null;
       if (error) throw error;
-      toast.success(`Sincronización completada: ${data.data?.length || 0} sorteos actualizados`);
+
+      // FIX-TOAST (2026-07-05): mostrar fechas sincronizadas para feedback claro
+      const sorteos = data.data || [];
+      if (sorteos.length > 0) {
+        const dates = [...new Set(sorteos.map((s: any) => s.date))].sort().reverse();
+        const dateRange = dates.length > 0
+          ? `${dates[dates.length - 1]} → ${dates[0]}`
+          : '';
+        toast.success(`Sincronización completada: ${sorteos.length} sorteos (${dateRange})`);
+      } else {
+        toast.info("Sincronización completada. No hay sorteos nuevos para los últimos 7 días.");
+      }
       fetchData();
     } catch (err) {
       toast.error("Error en sincronización automática");

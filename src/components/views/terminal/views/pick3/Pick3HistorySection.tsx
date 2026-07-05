@@ -57,10 +57,11 @@ export function Pick3HistorySection({ history, onRefresh }: Pick3HistorySectionP
   }, [viewMode]);
 
   // FIX-PERSIST: displayLimit persistido
+  // FIX-DISPLAY (2026-07-05): default 30 para mostrar ~15 días (2 sorteos × 15 = 30)
   const [displayLimit, setDisplayLimit] = useState(() => {
-    if (typeof window === 'undefined') return 20;
-    const saved = parseInt(localStorage.getItem('pick3-display-limit') || '20', 10);
-    return isNaN(saved) ? 20 : saved;
+    if (typeof window === 'undefined') return 30;
+    const saved = parseInt(localStorage.getItem('pick3-display-limit') || '30', 10);
+    return isNaN(saved) ? 30 : saved;
   });
 
   useEffect(() => {
@@ -91,9 +92,44 @@ export function Pick3HistorySection({ history, onRefresh }: Pick3HistorySectionP
     });
   }, [history, searchTerm]);
 
-  const visibleHistory = useMemo(() => {
-    return filteredHistory.slice(0, displayLimit);
-  }, [filteredHistory, displayLimit]);
+  // FIX-COLUMNS (2026-07-05): separar por turno para mostrar en 2 columnas
+  // Mediodía y Noche en columnas separadas (modo tarjeta y modo tabla)
+  const { middayHistory, eveningHistory } = useMemo(() => {
+    const midday = filteredHistory.filter(item => item.draw_time === 'midday');
+    const evening = filteredHistory.filter(item => item.draw_time === 'evening');
+    return { middayHistory: midday, eveningHistory: evening };
+  }, [filteredHistory]);
+
+  // Para el modo tabla de 2 columnas, necesitamos emparejar por fecha
+  // Crear un mapa fecha → { midday, evening }
+  const pairedByDate = useMemo(() => {
+    const map = new Map<string, { date: string; midday?: Pick3Result; evening?: Pick3Result }>();
+    for (const item of filteredHistory) {
+      if (!map.has(item.date)) {
+        map.set(item.date, { date: item.date });
+      }
+      const entry = map.get(item.date)!;
+      if (item.draw_time === 'midday') {
+        entry.midday = item;
+      } else {
+        entry.evening = item;
+      }
+    }
+    // Convertir a array y ordenar por fecha descendente
+    return Array.from(map.values()).sort((a, b) => b.date.localeCompare(a.date));
+  }, [filteredHistory]);
+
+  const visiblePaired = useMemo(() => {
+    return pairedByDate.slice(0, Math.ceil(displayLimit / 2));
+  }, [pairedByDate, displayLimit]);
+
+  const visibleMidday = useMemo(() => {
+    return middayHistory.slice(0, displayLimit);
+  }, [middayHistory, displayLimit]);
+
+  const visibleEvening = useMemo(() => {
+    return eveningHistory.slice(0, displayLimit);
+  }, [eveningHistory, displayLimit]);
 
   const hasMore = displayLimit < filteredHistory.length;
 
@@ -156,41 +192,54 @@ export function Pick3HistorySection({ history, onRefresh }: Pick3HistorySectionP
   };
 
   const ResultCard = ({ item }: { item: Pick3Result }) => (
-    <Card className="rounded-2xl border-border bg-card/50 shadow-sm overflow-hidden mb-3 group">
-      <CardContent className="p-4 flex items-center justify-between">
+    <Card className="rounded-2xl border-border bg-card/50 shadow-sm overflow-hidden group hover:shadow-md transition-shadow">
+      <CardContent className="p-3 flex items-center justify-between">
         <div className="flex flex-col gap-1">
-          <div className="flex items-center gap-2 text-[10px] font-black uppercase text-muted-foreground">
-            <CalendarIcon className="w-3 h-3" />
-            {format(new Date(item.date), 'dd MMM yyyy', { locale: es })}
+          <div className="flex items-center gap-1.5 text-[9px] font-black uppercase text-muted-foreground">
+            <CalendarIcon className="w-2.5 h-2.5" />
+            {format(new Date(item.date), 'dd MMM', { locale: es })}
             {item.sync_method === 'manual' && (
-              <Badge variant="secondary" className="bg-warning/10 text-warning text-[8px] border-none px-1.5 h-4">MANUAL</Badge>
+              <Badge variant="secondary" className="bg-warning/10 text-warning text-[7px] border-none px-1 h-3.5">MANUAL</Badge>
             )}
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
             <Badge variant="outline" className={cn(
-              "text-[8px] font-black uppercase px-1.5 py-0 rounded-full",
+              "text-[7px] font-black uppercase px-1 py-0 rounded-full",
               item.draw_time === 'midday' ? "border-warning/30 text-warning" : "border-primary/30 text-primary"
             )}>
-              <Clock className="w-2 h-2 mr-1" />
-              {item.draw_time === 'midday' ? 'Mediodía' : 'Noche'}
+              <Clock className="w-2 h-2 mr-0.5" />
+              {item.draw_time === 'midday' ? 'M' : 'N'}
             </Badge>
+            {item.fireball != null && item.fireball !== 0 && (
+              <Badge variant="outline" className={cn(
+                "text-[7px] font-black uppercase px-1 py-0",
+                item.draw_time === 'midday' ? "border-warning/30 text-warning" : "border-primary/30 text-primary"
+              )}>
+                FB {item.fireball}
+              </Badge>
+            )}
           </div>
         </div>
-        <div className="flex items-center gap-4">
-          <div className="flex gap-1.5">
+        <div className="flex items-center gap-2">
+          <div className="flex gap-1">
             {item.result.map((digit, i) => (
-              <div key={i} className="w-10 h-10 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-lg font-black italic text-primary">
+              <div key={i} className={cn(
+                "w-8 h-8 rounded-full border flex items-center justify-center text-base font-black italic",
+                item.draw_time === 'midday'
+                  ? "bg-warning/10 border-warning/20 text-warning"
+                  : "bg-primary/10 border-primary/20 text-primary"
+              )}>
                 {digit}
               </div>
             ))}
           </div>
           {item.sync_method === 'manual' && (
-            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={() => openEdit(item)}>
-                <Edit2 className="w-3.5 h-3.5" />
+            <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+              <Button variant="ghost" size="icon" className="h-7 w-7 rounded-full" onClick={() => openEdit(item)}>
+                <Edit2 className="w-3 h-3" />
               </Button>
-              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full text-destructive" onClick={() => handleDelete(item)}>
-                <Trash2 className="w-3.5 h-3.5" />
+              <Button variant="ghost" size="icon" className="h-7 w-7 rounded-full text-destructive" onClick={() => handleDelete(item)}>
+                <Trash2 className="w-3 h-3" />
               </Button>
             </div>
           )}
@@ -273,57 +322,131 @@ export function Pick3HistorySection({ history, onRefresh }: Pick3HistorySectionP
 
       {/* Content */}
       {viewMode === 'card' ? (
-        <div className="grid grid-cols-1 gap-1">
-          {visibleHistory.map((item, i) => (
-            <ResultCard key={i} item={item} />
-          ))}
+        // FIX-COLUMNS (2026-07-05): 2 columnas — Mediodía | Noche
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Columna Mediodía */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 px-2 py-1 sticky top-12 z-10 bg-background/80 backdrop-blur-md">
+              <Clock className="w-3.5 h-3.5 text-warning" />
+              <span className="text-[10px] font-black uppercase tracking-widest text-warning">Mediodía</span>
+              <Badge variant="outline" className="text-[8px] font-black uppercase border-warning/30 text-warning">
+                {middayHistory.length}
+              </Badge>
+            </div>
+            {visibleMidday.length === 0 ? (
+              <p className="text-[10px] font-bold uppercase opacity-40 text-center py-8">Sin sorteos de mediodía</p>
+            ) : (
+              visibleMidday.map((item, i) => (
+                <ResultCard key={`midday-${i}`} item={item} />
+              ))
+            )}
+          </div>
+
+          {/* Columna Noche */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 px-2 py-1 sticky top-12 z-10 bg-background/80 backdrop-blur-md">
+              <Clock className="w-3.5 h-3.5 text-primary" />
+              <span className="text-[10px] font-black uppercase tracking-widest text-primary">Noche</span>
+              <Badge variant="outline" className="text-[8px] font-black uppercase border-primary/30 text-primary">
+                {eveningHistory.length}
+              </Badge>
+            </div>
+            {visibleEvening.length === 0 ? (
+              <p className="text-[10px] font-bold uppercase opacity-40 text-center py-8">Sin sorteos de noche</p>
+            ) : (
+              visibleEvening.map((item, i) => (
+                <ResultCard key={`evening-${i}`} item={item} />
+              ))
+            )}
+          </div>
         </div>
       ) : (
+        // FIX-COLUMNS (2026-07-05): tabla con 2 columnas (Mediodía | Noche) emparejadas por fecha
         <Card className="rounded-[24px] border-border bg-card overflow-hidden">
           <Table>
             <TableHeader>
               <TableRow className="hover:bg-transparent border-border/50">
-                <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Fecha</TableHead>
-                <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Turno</TableHead>
-                <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground text-center">Modo</TableHead>
-                <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground text-right">Resultado</TableHead>
+                <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground w-[120px]">Fecha</TableHead>
+                <TableHead className="text-[10px] font-black uppercase tracking-widest text-warning border-l border-warning/20">
+                  <div className="flex items-center gap-1.5">
+                    <Clock className="w-3 h-3" /> Mediodía
+                  </div>
+                </TableHead>
+                <TableHead className="text-[10px] font-black uppercase tracking-widest text-primary border-l border-primary/20">
+                  <div className="flex items-center gap-1.5">
+                    <Clock className="w-3 h-3" /> Noche
+                  </div>
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {visibleHistory.map((item, i) => (
+              {visiblePaired.map((row, i) => (
                 <TableRow key={i} className="border-border/50 group">
-                  <TableCell className="text-xs font-bold py-3">
-                    {format(new Date(item.date), 'dd/MM/yyyy')}
+                  <TableCell className="text-xs font-bold py-3 align-top">
+                    <div className="flex flex-col">
+                      <span>{format(new Date(row.date), 'dd/MM/yyyy')}</span>
+                      <span className="text-[9px] font-bold uppercase opacity-50">
+                        {format(new Date(row.date), 'EEE', { locale: es })}
+                      </span>
+                    </div>
                   </TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className={cn(
-                      "text-[8px] font-black uppercase px-1.5 py-0",
-                      item.draw_time === 'midday' ? "text-warning border-warning/20" : "text-primary border-primary/20"
-                    )}>
-                      {item.draw_time === 'midday' ? 'Mediodía' : 'Noche'}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-center">
-                    {item.sync_method === 'manual' ? (
-                      <Badge className="bg-warning/10 text-warning text-[8px] border-none">Manual</Badge>
+                  {/* Mediodía */}
+                  <TableCell className="py-3 align-top border-l border-warning/10">
+                    {row.midday ? (
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <span className="font-black italic text-warning text-base tracking-wider">
+                            {row.midday.result.join(' ')}
+                          </span>
+                          {row.midday.fireball != null && row.midday.fireball !== 0 && (
+                            <Badge variant="outline" className="text-[8px] font-black uppercase border-warning/30 text-warning px-1 py-0">
+                              FB {row.midday.fireball}
+                            </Badge>
+                          )}
+                        </div>
+                        {row.midday.sync_method === 'manual' && (
+                          <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => openEdit(row.midday!)}>
+                              <Edit2 className="w-3 h-3" />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => handleDelete(row.midday!)}>
+                              <Trash2 className="w-3 h-3" />
+                            </Button>
+                          </div>
+                        )}
+                      </div>
                     ) : (
-                      <Badge variant="outline" className="text-[8px] opacity-40 border-none">{item.sync_method || 'Web'}</Badge>
+                      <span className="text-[10px] font-bold opacity-20 uppercase">—</span>
                     )}
                   </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex items-center justify-end gap-3">
-                       <span className="font-black italic text-primary">{item.result.join(' ')}</span>
-                       {item.sync_method === 'manual' && (
-                         <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => openEdit(item)}>
-                                <Edit2 className="w-3 h-3" />
+                  {/* Noche */}
+                  <TableCell className="py-3 align-top border-l border-primary/10">
+                    {row.evening ? (
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <span className="font-black italic text-primary text-base tracking-wider">
+                            {row.evening.result.join(' ')}
+                          </span>
+                          {row.evening.fireball != null && row.evening.fireball !== 0 && (
+                            <Badge variant="outline" className="text-[8px] font-black uppercase border-primary/30 text-primary px-1 py-0">
+                              FB {row.evening.fireball}
+                            </Badge>
+                          )}
+                        </div>
+                        {row.evening.sync_method === 'manual' && (
+                          <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => openEdit(row.evening!)}>
+                              <Edit2 className="w-3 h-3" />
                             </Button>
-                            <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => handleDelete(item)}>
-                                <Trash2 className="w-3 h-3" />
+                            <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => handleDelete(row.evening!)}>
+                              <Trash2 className="w-3 h-3" />
                             </Button>
-                         </div>
-                       )}
-                    </div>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-[10px] font-bold opacity-20 uppercase">—</span>
+                    )}
                   </TableCell>
                 </TableRow>
               ))}

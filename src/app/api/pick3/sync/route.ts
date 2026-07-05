@@ -37,11 +37,23 @@ async function postHandler(req: NextRequest) {
       results = await Pick3ScraperService.scrapeLatestResults();
 
       // Filtrar solo los últimos N días (incluyendo hoy)
+      // FIX-FILTER (2026-07-05): el cutoff debe incluir el día de hoy correctamente
       if (days > 0 && results.length > 0) {
         const cutoff = new Date();
-        cutoff.setDate(cutoff.getDate() - days);
+        // Empezar desde hoy (no restar un día extra)
+        cutoff.setHours(0, 0, 0, 0); // Inicio de hoy
+        cutoff.setDate(cutoff.getDate() - (days - 1)); // Incluir hoy + (days-1) hacia atrás
         const cutoffStr = cutoff.toISOString().split('T')[0];
+
+        logger.info('PICK3', `Filtering last ${days} days (cutoff: ${cutoffStr}), total before filter: ${results.length}`);
         results = results.filter(r => r.date >= cutoffStr);
+        logger.info('PICK3', `After filter: ${results.length} results`);
+
+        // Log de las fechas que se van a guardar
+        if (results.length > 0) {
+          const dates = [...new Set(results.map(r => r.date))].sort().reverse();
+          logger.info('PICK3', `Dates to sync: ${dates.join(', ')}`);
+        }
       }
     } else {
       results = await Pick3ScraperService.scrapeLatestResults();

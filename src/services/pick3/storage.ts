@@ -101,10 +101,13 @@ export class Pick3Storage {
 
   static async getHistory(): Promise<Pick3Result[]> {
     try {
+      // FIX-ORDER (2026-07-05): ordenar por draw_date DESC y draw_time DESC
+      // para que evening quede antes que midday en la misma fecha (más reciente primero)
       const { data, error } = await supabase
         .from('pick3_history')
         .select('*')
-        .order('draw_date', { ascending: false });
+        .order('draw_date', { ascending: false })
+        .order('draw_time', { ascending: false });
 
       if (error) {
         logger.warn('PICK3', 'Error fetching from Supabase, falling back to local', { error });
