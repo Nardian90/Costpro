@@ -128,15 +128,20 @@ export default function Pick3IntelligenceView() {
     sources: []
   });
 
-  const runSimulation = useCallback((hist: Pick3Result[], config: BettingConfig) => {
+  const runSimulation = useCallback((hist: Pick3Result[], config: BettingConfig, useEnsemble: boolean = false) => {
     if (hist.length < 60) return;
     setSimRunning(true);
     try {
       const backtestEngine = new BacktestEngine(hist);
       const days = simConfig.mode === 'manual' ? simConfig.windowDays : 30;
-      // FIX-ENSEMBLE (2026-07-05): pasar simConfig al backtest para que use
-      // EnsembleEngine con pesos manuales cuando el modo es 'manual'
-      const result = backtestEngine.runValidation(config, 1000, days, simConfig);
+      // FIX-PERF (2026-07-05): solo pasar simConfig (que activa EnsembleEngine) cuando
+      // el usuario explícitamente lo pide (useEnsemble=true). En el auto-load inicial,
+      // NO pasar simConfig para que use PredictionEngine (ligero, O(n) no O(n²)).
+      // EnsembleEngine calibra 4 modelos × 440 iteraciones × 60 sorteos = 105,600 cálculos
+      // que bloquean el navegador. PredictionEngine hace 60 cálculos simples.
+      const result = useEnsemble
+        ? backtestEngine.runValidation(config, 1000, days, simConfig)
+        : backtestEngine.runValidation(config, 1000, days);
       setSimResult(result);
     } finally {
       setSimRunning(false);
@@ -144,23 +149,29 @@ export default function Pick3IntelligenceView() {
   }, [simConfig]);
 
   // FIX-SIM-RERUN (2026-07-05): re-ejecutar simulación con config manual
+  // Esta función SÍ usa EnsembleEngine (pesado) porque el usuario lo pidió explícitamente
   const handleReRunSimulation = useCallback(() => {
     if (history.length < 60) {
       toast.error("Se necesitan al menos 60 sorteos");
       return;
     }
     setSimRunning(true);
-    try {
-      const backtestEngine = new BacktestEngine(history);
-      const days = simConfig.mode === 'manual' ? simConfig.windowDays : 30;
-      const result = backtestEngine.runValidation(bConfig, 1000, days, simConfig);
-      setSimResult(result);
-      toast.success(`Simulación re-ejecutada (${days} días, modo ${simConfig.mode}, ${simConfig.mode === 'manual' ? Object.values(simConfig.models).filter(m => m.enabled).length + ' modelos' : 'auto'})`);
-    } catch (err) {
-      toast.error("Error en simulación");
-    } finally {
-      setSimRunning(false);
-    }
+    // FIX-PERF: usar setTimeout para no bloquear el hilo principal inmediatamente
+    // y permitir que el spinner se renderice antes del cálculo pesado
+    setTimeout(() => {
+      try {
+        const backtestEngine = new BacktestEngine(history);
+        const days = simConfig.mode === 'manual' ? simConfig.windowDays : 30;
+        // Pasar simConfig activa EnsembleEngine (pesado pero preciso)
+        const result = backtestEngine.runValidation(bConfig, 1000, days, simConfig);
+        setSimResult(result);
+        toast.success(`Simulación re-ejecutada (${days} días, modo ${simConfig.mode})`);
+      } catch (err) {
+        toast.error("Error en simulación");
+      } finally {
+        setSimRunning(false);
+      }
+    }, 50);
   }, [history, bConfig, simConfig]);
 
   const fetchData = useCallback(async () => {
@@ -201,8 +212,11 @@ export default function Pick3IntelligenceView() {
         const genPlays = engine.generateSimulatedPicks(currentBConfig);
         setPlays(genPlays);
 
-        // Run simulation by default
-        runSimulation(hist, currentBConfig);
+        // FIX-PERF (2026-07-05): NO auto-ejecutar simulación con EnsembleEngine en mount.
+        // EnsembleEngine es O(n²) y bloquea el navegador (~105,600 cálculos).
+        // Usar PredictionEngine (ligero) para el auto-load inicial.
+        // El usuario puede re-ejecutar con EnsembleEngine desde el tab Simulación.
+        runSimulation(hist, currentBConfig, false);
       }
     } catch (err) {
       console.error("Error fetching Pick 3 data:", err);
