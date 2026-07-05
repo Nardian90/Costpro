@@ -144,6 +144,25 @@ export default function WalletView() {
         } catch { toast.error('Error al eliminar'); }
     };
 
+    // FIX-PHASE6 (2026-07-06): Reiniciar/limpiar BD
+    const [isResetting, setIsResetting] = useState(false);
+    const handleReset = async () => {
+        if (!confirm('¿Borrar TODAS las transacciones y cuentas? Esta acción no se puede deshacer.')) return;
+        setIsResetting(true);
+        try {
+            const { useAuthStore } = await import('@/store');
+            const token = useAuthStore.getState().token;
+            const res = await fetch('/api/wallet/reset', {
+                method: 'DELETE',
+                headers: token ? { Authorization: `Bearer ${token}` } : {},
+            });
+            if (!res.ok) throw new Error('Error');
+            toast.success('Datos eliminados. Importa un .trm para comenzar de nuevo.');
+            setData(null);
+        } catch { toast.error('Error al reiniciar'); }
+        finally { setIsResetting(false); }
+    };
+
     const fmt = (v: number) => new Intl.NumberFormat('es-CU', { style: 'currency', currency: 'CUP', maximumFractionDigits: 2 }).format(v || 0);
     const fmtShort = (v: number) => Math.abs(v) >= 1000000 ? `$${(v/1000000).toFixed(1)}M` : Math.abs(v) >= 1000 ? `$${(v/1000).toFixed(1)}K` : `$${(v||0).toFixed(0)}`;
 
@@ -202,7 +221,14 @@ export default function WalletView() {
                         <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center"><Wallet className="w-4.5 h-4.5 text-primary-foreground" /></div>
                         <div><h1 className="text-sm font-black leading-none">Billetera</h1><p className="text-[8px] text-muted-foreground font-bold uppercase tracking-wider mt-0.5">Finanzas</p></div>
                     </div>
-                    <Button onClick={() => setIsImporting(true)} size="sm" className="h-8 px-3 text-[10px] font-black uppercase shrink-0"><Upload className="w-3.5 h-3.5 mr-1" /> .trm</Button>
+                    <div className="flex items-center gap-2">
+                        <Button onClick={() => setIsImporting(true)} size="sm" className="h-8 px-3 text-[10px] font-black uppercase shrink-0"><Upload className="w-3.5 h-3.5 mr-1" /> .trm</Button>
+                        {data && data.transactions.length > 0 && (
+                            <Button onClick={handleReset} disabled={isResetting} variant="ghost" size="sm" className="h-8 px-2 text-[10px] font-bold uppercase text-destructive hover:bg-destructive/10" title="Borrar todos los datos">
+                                {isResetting ? <div className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" /> : <X className="w-3.5 h-3.5" />}
+                            </Button>
+                        )}
+                    </div>
                 </div>
                 <div className="flex items-center gap-0.5 px-2 pb-2 overflow-x-auto no-scrollbar">
                     {([{'id':'home','l':'Inicio','i':Wallet},{'id':'movimientos','l':'Movimientos','i':BarChart3},{'id':'categorias','l':'Categorías','i':Tag},{'id':'reportes','l':'Reportes','i':Calendar}] as const).map(t => (
