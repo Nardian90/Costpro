@@ -1,170 +1,146 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from '@/lib/auth';
 import { logger } from '@/lib/logger';
-import { processTrmBackup, getAllAccounts, getAllTransactions, TransfermovilBackup } from '@/lib/transfermovil/transfermovil';
+import { processTrmBackup, getAllAccounts, getAllTransactions } from '@/lib/transfermovil/transfermovil';
 
 export const runtime = 'nodejs';
 export const maxDuration = 30;
 
-/**
- * POST /api/wallet/import-trm
- *
- * Recibe el contenido de un archivo .trm de Transfermovil, lo descifra,
- * extrae cuentas y transacciones, y las devuelve en formato unificado
- * para que el frontend las muestre en la Billetera Digital.
- *
- * El descifrado ocurre server-side (no en el navegador) por seguridad:
- * - La constante CV_HARDCODED no se expone al cliente
- * - El JSON descifrado completo no se envía al cliente (solo lo necesario)
- *
- * Body: { content: string } — contenido del .trm como string
- * Response: { accounts, transactions, summary }
- */
 async function postHandler(req: NextRequest) {
   try {
     const session = await getServerSession(req);
-    if (!session) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
-    }
+    if (!session) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
 
     const body = await req.json();
     const { content } = body;
+    if (!content || typeof content !== 'string') return NextResponse.json({ error: 'Contenido .trm requerido' }, { status: 400 });
 
-    if (!content || typeof content !== 'string') {
-      return NextResponse.json({ error: 'Contenido del .trm requerido' }, { status: 400 });
-    }
+    logger.info('WALLET', `TRM import by ${session.user.id}, size: ${content.length}`);
 
-    logger.info('WALLET', `TRM import started by ${session.user.id}, size: ${content.length}`);
-
-    // Descifrar
     const result = processTrmBackup(content);
-
-    if (!result.ok || !result.data) {
-      logger.error('WALLET', `TRM decryption failed: ${result.error}`);
-      return NextResponse.json({ error: `Descifrado fallido: ${result.error}` }, { status: 400 });
-    }
+    if (!result.ok || !result.data) return NextResponse.json({ error: `Descifrado fallido: ${result.error}` }, { status: 400 });
 
     const backup = result.data;
-
-    // Extraer cuentas
     const accounts = getAllAccounts(backup);
-
-    // Extraer transacciones
     const transactions = getAllTransactions(backup);
 
-    // Calcular saldos por cuenta (último saldo reportado en RecordSMS)
-    const accountBalances: Record<string, { balance: number; currency: string; lastDate: string }> = {};
+    const { createClient } = await import('@supabase/supabase-js');
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+    const admin = createClient(supabaseUrl, serviceKey, { auth: { autoRefreshToken: false, persistSession: false } });
+
+    // 1. Guardar cuentas en wallet_accounts (upsert)
+    let accountsSaved = 0;
+    for (const acc of accounts) {
+      const bankName = extractBank(acc.source, acc.accountNumber);
+      const maskedNum = maskAccount(acc.accountNumber);
+      const { error } = await admin.from('wallet_accounts').upsert({
+        user_id: session.user.id,
+        source: acc.source,
+        bank: bankName,
+        account_number: maskedNum,
+        account_full: acc.accountNumber,
+        description: acc.description || null,
+        movil: acc.movil || null,
+        tipo_cuenta: acc.tipo_cuenta || null,
+        currency: 'CUP',
+      }, { onConflict: 'user_id,source,account_number' });
+      if (!error) accountsSaved++;
+    }
+
+    // 2. Guardar transacciones en wallet_transactions (upsert)
+    let txSaved = 0;
+    let txSkipped = 0;
     for (const tx of transactions) {
-      const accountKey = tx.raw.cuenta || 'unknown';
-      // Buscar saldos en el contenido del SMS
-      const balanceMatch = tx.raw.content_sms?.match(/(?:Saldo Disponible|Saldo restante|Saldo Restante):\s*(CR|DB)?\s*([\d,.]+)\s*(CUP|USD)?/i);
-      if (balanceMatch) {
-        const amount = parseFloat(balanceMatch[2].replace(/[,.](?=\d{3})/g, '').replace(',', '.')) || 0;
+      const bankName = extractBankFromService(tx.serviceType);
+      const maskedCard = maskAccount(tx.raw.cuenta);
+      const category = categorize(tx.service, tx.serviceType);
+      const dateStr = tx.date.toISOString().split('T')[0];
+      const amount = Math.abs(tx.amount);
+      const operation = tx.amount > 0 ? 'CR' : 'DB';
+
+      const { error } = await admin.from('wallet_transactions').upsert({
+        user_id: session.user.id,
+        trm_transaction_id: tx.transactionId,
+        date: dateStr,
+        bank: bankName,
+        card: maskedCard,
+        operation,
+        amount,
+        currency: tx.currency || 'CUP',
+        service: tx.service,
+        service_type: tx.serviceType,
+        category,
+        counterparty: tx.raw.cuenta || null,
+        note: tx.serviceType,
+        is_statement: false,
+      }, { onConflict: 'user_id,trm_transaction_id' });
+      if (!error) txSaved++;
+      else txSkipped++;
+    }
+
+    // 3. Calcular saldos reales por cuenta desde SMS de saldo
+    const accountBalances: Record<string, { balance: number; lastDate: string }> = {};
+    for (const tx of transactions) {
+      const balMatch = tx.raw.content_sms?.match(/(?:Saldo Disponible|Saldo restante|Saldo Restante):\s*(CR|DB)?\s*([\d,.]+)\s*(CUP|USD)?/i);
+      if (balMatch) {
+        const amount = parseFloat(balMatch[2].replace(/[,.](?=\d{3})/g, '').replace(',', '.')) || 0;
         const dateStr = tx.date.toISOString().split('T')[0];
-        if (!accountBalances[accountKey] || dateStr >= accountBalances[accountKey].lastDate) {
-          accountBalances[accountKey] = { balance: amount, currency: balanceMatch[3] || 'CUP', lastDate: dateStr };
+        const bankName = extractBankFromService(tx.serviceType);
+        if (!accountBalances[bankName] || dateStr >= accountBalances[bankName].lastDate) {
+          accountBalances[bankName] = { balance: amount, lastDate: dateStr };
         }
       }
     }
 
-    // Mapear transacciones al formato de WalletView
-    const mappedTransactions = transactions.map(tx => ({
-      id: `trm-${tx.id}`,
-      date: tx.date.toISOString().split('T')[0],
-      bank: extractBankFromService(tx.serviceType),
-      card: maskAccount(tx.raw.cuenta),
-      typeOperation: tx.service,
-      nature: tx.amount > 0 ? 'CR' : 'DB' as const,
-      amount: Math.abs(tx.amount),
-      currency: tx.currency,
-      counterparty: tx.raw.cuenta || 'N/A',
-      category: categorizeTransaction(tx.service, tx.serviceType),
-      transactionId: tx.transactionId,
-      channel: 'Transfermovil',
-      note: tx.serviceType,
-      isStatement: false,
-    }));
-
-    // Resumen
-    const totalIncome = mappedTransactions.filter(t => t.nature === 'CR').reduce((sum, t) => sum + t.amount, 0);
-    const totalExpenses = mappedTransactions.filter(t => t.nature === 'DB').reduce((sum, t) => sum + t.amount, 0);
-
-    // Resumen por banco
-    const banks: Record<string, { income: number; expenses: number; current_balance: number; transaction_count: number; card?: string }> = {};
-    for (const tx of mappedTransactions) {
-      if (!banks[tx.bank]) banks[tx.bank] = { income: 0, expenses: 0, current_balance: 0, transaction_count: 0 };
-      if (tx.nature === 'CR') banks[tx.bank].income += tx.amount;
-      else banks[tx.bank].expenses += tx.amount;
-      banks[tx.bank].transaction_count++;
-      if (tx.card && !banks[tx.bank].card) banks[tx.bank].card = tx.card;
+    // Actualizar saldos en wallet_accounts
+    for (const [bankName, bal] of Object.entries(accountBalances)) {
+      await admin.from('wallet_accounts')
+        .update({ current_balance: bal.balance, last_balance_date: bal.lastDate, updated_at: new Date().toISOString() })
+        .eq('user_id', session.user.id)
+        .eq('bank', bankName);
     }
 
-    // Saldos reales por banco desde accountBalances
-    for (const [accountKey, bal] of Object.entries(accountBalances)) {
-      const bankName = extractBankFromAccount(accountKey);
-      if (banks[bankName]) {
-        banks[bankName].current_balance = bal.balance;
-      }
-    }
-
-    const totalRealBalance = Object.values(banks).reduce((sum, b) => sum + b.current_balance, 0);
-
-    logger.info('WALLET', `TRM import success: ${accounts.length} accounts, ${transactions.length} transactions`);
+    logger.info('WALLET', `TRM saved: ${accountsSaved} accounts, ${txSaved} transactions (${txSkipped} skipped)`);
 
     return NextResponse.json({
       success: true,
-      accounts: accounts.map(a => ({
-        ...a,
-        accountNumber: maskAccount(a.accountNumber),
-      })),
-      transactions: mappedTransactions,
-      summary: {
-        total_income: totalIncome,
-        total_expenses: totalExpenses,
-        balance: totalIncome - totalExpenses,
-        total_real_balance: totalRealBalance,
-      },
-      banks,
-      count: {
-        accounts: accounts.length,
-        transactions: transactions.length,
-        tables: backup.cantidad_tablas,
-      },
+      accounts: accountsSaved,
+      transactions: txSaved,
+      skipped: txSkipped,
       fecha_exp: backup.fecha_exp,
       version_apk: backup.version_apk,
     });
   } catch (error: unknown) {
     logger.error('WALLET', `TRM import error: ${error instanceof Error ? error.message : String(error)}`);
-    return NextResponse.json({
-      error: `Error interno: ${error instanceof Error ? error.message : String(error)}`,
-    }, { status: 500 });
+    return NextResponse.json({ error: `Error: ${error instanceof Error ? error.message : String(error)}` }, { status: 500 });
   }
 }
 
-function extractBankFromService(serviceType: string): string {
-  const low = (serviceType || '').toLowerCase();
-  if (low.includes('bandec')) return 'BANDEC';
-  if (low.includes('bpa') || low.includes('popular')) return 'BPA';
-  if (low.includes('metro') || low.includes('metropolitano')) return 'METRO';
-  return 'DESCONOCIDO';
-}
-
-function extractBankFromAccount(account: string): string {
-  const low = (account || '').toLowerCase();
+function extractBank(source: string, account: string): string {
+  const low = (source + ' ' + account).toLowerCase();
   if (low.includes('bandec')) return 'BANDEC';
   if (low.includes('bpa') || low.includes('popular')) return 'BPA';
   if (low.includes('metro')) return 'METRO';
   return 'DESCONOCIDO';
 }
 
-function maskAccount(account: string): string | undefined {
-  if (!account || account.length < 4) return undefined;
-  const digits = account.replace(/\D/g, '');
-  if (digits.length >= 4) return `****${digits.slice(-4)}`;
-  return `****${account.slice(-4)}`;
+function extractBankFromService(serviceType: string): string {
+  const low = (serviceType || '').toLowerCase();
+  if (low.includes('bandec')) return 'BANDEC';
+  if (low.includes('bpa') || low.includes('popular')) return 'BPA';
+  if (low.includes('metro')) return 'METRO';
+  return 'DESCONOCIDO';
 }
 
-function categorizeTransaction(service: string, serviceType: string): string {
+function maskAccount(account: string): string | null {
+  if (!account || account.length < 4) return null;
+  const digits = account.replace(/\D/g, '');
+  if (digits.length >= 4) return `****${digits.slice(-4)}`;
+  return null;
+}
+
+function categorize(service: string, serviceType: string): string {
   const low = (service + ' ' + serviceType).toLowerCase();
   if (low.includes('transferencia') || low.includes('transfer')) return 'Transferencia';
   if (low.includes('recarga')) return 'Telecom';

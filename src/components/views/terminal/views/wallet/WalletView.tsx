@@ -1,258 +1,211 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, useSyncExternalStore } from 'react';
-import dynamic from 'next/dynamic';
-import { Card, CardContent } from "@/components/ui/card";
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
-    Wallet, ArrowUpRight, ArrowDownRight, Landmark, CreditCard,
-    Search, Plus, Tag, Calendar, BarChart3, Edit2, X,
-    TrendingUp, TrendingDown, Building2, ChevronRight, Table as TableIcon,
-    Upload, FileUp, Smartphone
+    Wallet, ArrowDownRight, ArrowUpRight, Landmark, CreditCard,
+    Plus, Upload, Smartphone, X, Tag, Calendar, BarChart3,
+    TrendingUp, TrendingDown, Building2, ChevronRight, Edit2,
+    PieChart as PieChartIcon, Search
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
-import { parseRawSms, calculateAnalytics } from "@/lib/wallet/parser";
-import { RawSms, EXPENSE_CATEGORIES, INCOME_CATEGORIES } from "@/lib/wallet/types";
 import { toast } from "sonner";
-import { CostProLoader } from '@/components/ui/CostProLoader';
-
-const AnalyticsDashboard = dynamic(
-  () => import('./components/AnalyticsDashboard').then(mod => mod.AnalyticsDashboard),
-  { ssr: false, loading: () => <div className="flex items-center justify-center p-20"><CostProLoader text="ANALYTICS" subtext="Cargando..." showText showSubtext /></div> }
-);
+import { EXPENSE_CATEGORIES, INCOME_CATEGORIES } from "@/lib/wallet/types";
 
 const MONTH_NAMES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-const CATEGORY_COLORS = ['bg-red-500', 'bg-orange-500', 'bg-amber-500', 'bg-yellow-500', 'bg-lime-500', 'bg-green-500', 'bg-emerald-500', 'bg-teal-500', 'bg-cyan-500', 'bg-blue-500', 'bg-indigo-500', 'bg-purple-500', 'bg-pink-500', 'bg-rose-500', 'bg-gray-500', 'bg-slate-500'];
+const CAT_COLORS: Record<string, string> = {
+    'Transferencia': '#3b82f6', 'Telecom': '#f59e0b', 'Electricidad': '#ef4444',
+    'Agua': '#06b6d4', 'Gas': '#ec4899', 'Internet': '#8b5cf6',
+    'Impuestos': '#dc2626', 'Servicios': '#10b981', 'Otros': '#6b7280',
+    'Otros Ingresos': '#22c55e', 'Transferencia Recibida': '#16a34a',
+};
+const CAT_ICONS: Record<string, string> = {
+    'Transferencia': '💸', 'Telecom': '📱', 'Electricidad': '⚡', 'Agua': '💧',
+    'Gas': '🔥', 'Internet': '🌐', 'Impuestos': '🏛️', 'Servicios': '🧾',
+    'Otros': '📦', 'Otros Ingresos': '💰', 'Transferencia Recibida': '📥',
+};
 
-type ViewMode = 'resumen' | 'transacciones' | 'categorias' | 'reportes' | 'analytics' | 'bd';
+type ViewMode = 'home' | 'movimientos' | 'categorias' | 'reportes';
+interface WalletData {
+    accounts: any[]; transactions: any[]; summary: any;
+    banks: Record<string, any>; categories: Record<string, number>;
+    monthly: Record<string, { income: number; expenses: number }>;
+}
 
 export default function WalletView() {
-    const [rawSms, setRawSms] = useState<RawSms[]>([]);
-    const [searchQuery, setSearchQuery] = useState('');
+    const [data, setData] = useState<WalletData | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [viewMode, setViewMode] = useState<ViewMode>('home');
     const [isImporting, setIsImporting] = useState(false);
-    const [importText, setImportText] = useState('');
-    const [importMode, setImportMode] = useState<'sms' | 'trm'>('sms');
     const [importingTrm, setImportingTrm] = useState(false);
-    const [trmData, setTrmData] = useState<any>(null);
     const [isDragging, setIsDragging] = useState(false);
-    const [viewMode, setViewMode] = useState<ViewMode>('resumen');
-    const [filterBank, setFilterBank] = useState<string | 'all'>('all');
+    const [searchQuery, setSearchQuery] = useState('');
+    const [filterBank, setFilterBank] = useState<string>('all');
     const [editingTxId, setEditingTxId] = useState<string | null>(null);
-    const [manualCategories, setManualCategories] = useState<Record<string, string>>({});
-    const isMounted = useSyncExternalStore(() => () => {}, () => true, () => false);
 
-    useEffect(() => {
+    const fetchData = useCallback(async () => {
+        setLoading(true);
         try {
-            const saved = localStorage.getItem('wallet_raw_sms');
-            if (saved) requestAnimationFrame(() => setRawSms(JSON.parse(saved)));
-            const savedCats = localStorage.getItem('wallet_manual_categories');
-            if (savedCats) setManualCategories(JSON.parse(savedCats));
-        } catch (e) { console.error('Storage error', e); }
+            const { useAuthStore } = await import('@/store');
+            const token = useAuthStore.getState().token;
+            const res = await fetch('/api/wallet/data', {
+                headers: token ? { Authorization: `Bearer ${token}` } : {},
+            });
+            if (res.ok) setData(await res.json());
+        } catch (e) { console.error('Fetch error', e); }
+        finally { setLoading(false); }
     }, []);
 
-    const handleImport = () => {
-        if (!importText.trim()) return;
-        try {
-            const parsed = parseRawSms(importText);
-            if (parsed.length === 0) { toast.error('Sin datos válidos'); return; }
-            const existingKeys = new Set(rawSms.map(sms => `${sms.type}|${sms.date}|${sms.content}`));
-            const uniqueNew = parsed.filter(sms => !existingKeys.has(`${sms.type}|${sms.date}|${sms.content}`));
-            if (uniqueNew.length === 0) { toast.info('No se encontraron mensajes nuevos'); }
-            else { setRawSms(prev => { const next = [...uniqueNew, ...prev]; localStorage.setItem('wallet_raw_sms', JSON.stringify(next)); return next; }); toast.success(`${uniqueNew.length} mensajes importados`); }
-            setImportText(''); setIsImporting(false);
-        } catch (e) { toast.error('Error al procesar'); }
-    };
+    useEffect(() => { fetchData(); }, [fetchData]);
 
-    // FIX-TRM (2026-07-05): importar respaldo .trm de Transfermovil
     const handleTrmFile = async (file: File) => {
         setImportingTrm(true);
         try {
             const content = await file.text();
             const { useAuthStore } = await import('@/store');
             const token = useAuthStore.getState().token;
-
             const res = await fetch('/api/wallet/import-trm', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-                },
+                headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
                 body: JSON.stringify({ content }),
             });
-
-            if (!res.ok) {
-                const err = await res.json().catch(() => ({}));
-                throw new Error(err.error || `HTTP ${res.status}`);
-            }
-
-            const data = await res.json();
-            setTrmData(data);
-            // Guardar en localStorage para persistencia
-            localStorage.setItem('wallet_trm_data', JSON.stringify(data));
-            toast.success(`Respaldo descifrado: ${data.count.transactions} transacciones, ${data.count.accounts} cuentas`, {
-                description: `Fecha del respaldo: ${data.fecha_exp}`,
-                duration: 7000,
-            });
+            if (!res.ok) { const err = await res.json(); throw new Error(err.error || 'Error'); }
+            const result = await res.json();
+            toast.success(`Importado: ${result.transactions} transacciones, ${result.accounts} cuentas`);
             setIsImporting(false);
-        } catch (e: any) {
-            toast.error('Error al importar .trm', { description: e.message, duration: 8000 });
-        } finally {
-            setImportingTrm(false);
-        }
+            fetchData();
+        } catch (e: any) { toast.error('Error al importar .trm', { description: e.message }); }
+        finally { setImportingTrm(false); }
     };
 
-    const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (file && file.name.endsWith('.trm')) {
-            handleTrmFile(file);
-        } else {
-            toast.error('El archivo debe ser .trm');
-        }
-    };
-
-    const handleDrop = (e: React.DragEvent) => {
-        e.preventDefault();
-        setIsDragging(false);
-        const file = e.dataTransfer.files?.[0];
-        if (file && file.name.endsWith('.trm')) {
-            handleTrmFile(file);
-        } else {
-            toast.error('Arrastra un archivo .trm de Transfermovil');
-        }
-    };
-
-    // Cargar TRM data de localStorage al montar
-    useEffect(() => {
-        const savedTrm = localStorage.getItem('wallet_trm_data');
-        if (savedTrm) {
-            try { setTrmData(JSON.parse(savedTrm)); } catch {}
-        }
-    }, []);
-
-    const analytics = useMemo(() => {
-        const a = calculateAnalytics(rawSms);
-        a.transactions.forEach(tx => { if (manualCategories[tx.id]) tx.manualCategory = manualCategories[tx.id]; });
-        return a;
-    }, [rawSms, manualCategories]);
-
-    const handleSetCategory = (txId: string, category: string) => {
-        const newCats = { ...manualCategories, [txId]: category };
-        setManualCategories(newCats);
-        localStorage.setItem('wallet_manual_categories', JSON.stringify(newCats));
+    const handleSetCategory = async (txId: string, category: string) => {
         setEditingTxId(null);
-        toast.success(`Clasificado: ${category}`);
+        try {
+            const { useAuthStore } = await import('@/store');
+            const token = useAuthStore.getState().token;
+            const { createClient } = await import('@supabase/supabase-js');
+            const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, { auth: { persistSession: false } });
+            await admin.from('wallet_transactions').update({ manual_category: category }).eq('id', txId);
+            toast.success(`Clasificado: ${category}`);
+            fetchData();
+        } catch { toast.error('Error al clasificar'); }
     };
 
-    const fmt = (val: number) => new Intl.NumberFormat('es-CU', { style: 'currency', currency: 'CUP', maximumFractionDigits: 2 }).format(val);
-    const fmtShort = (val: number) => Math.abs(val) >= 1000000 ? `$${(val/1000000).toFixed(1)}M` : Math.abs(val) >= 1000 ? `$${(val/1000).toFixed(1)}K` : `$${val.toFixed(0)}`;
+    const fmt = (v: number) => new Intl.NumberFormat('es-CU', { style: 'currency', currency: 'CUP', maximumFractionDigits: 2 }).format(v || 0);
+    const fmtShort = (v: number) => Math.abs(v) >= 1000000 ? `$${(v/1000000).toFixed(1)}M` : Math.abs(v) >= 1000 ? `$${(v/1000).toFixed(1)}K` : `$${(v||0).toFixed(0)}`;
 
-    const bankEntries = Object.entries(analytics.banks).sort(([a],[b]) => a.localeCompare(b));
+    const bankEntries = data ? Object.entries(data.banks).sort(([a],[b]) => a.localeCompare(b)) : [];
     const bankNames = bankEntries.map(([n]) => n);
+
+    // Categorías para el donut chart (solo gastos)
+    const expenseCats = useMemo(() => {
+        if (!data) return [];
+        return Object.entries(data.categories)
+            .filter(([name]) => !name.includes('Ingreso') && !name.includes('Recibida'))
+            .map(([name, total]) => ({ name, total, color: CAT_COLORS[name] || '#6b7280', icon: CAT_ICONS[name] || '📦' }))
+            .sort((a, b) => b.total - a.total);
+    }, [data]);
+
+    const totalExpenses = expenseCats.reduce((s, c) => s + c.total, 0);
+
     const filteredTx = useMemo(() => {
-        let txs = analytics.transactions;
-        if (filterBank !== 'all') txs = txs.filter(t => t.bank === filterBank);
-        if (searchQuery) { const q = searchQuery.toLowerCase(); txs = txs.filter(t => t.note.toLowerCase().includes(q) || t.category.toLowerCase().includes(q) || t.bank.toLowerCase().includes(q) || t.typeOperation.toLowerCase().includes(q) || (t.card && t.card.includes(q))); }
+        if (!data) return [];
+        let txs = data.transactions;
+        if (filterBank !== 'all') txs = txs.filter((t: any) => t.bank === filterBank);
+        if (searchQuery) { const q = searchQuery.toLowerCase(); txs = txs.filter((t: any) => (t.service||'').toLowerCase().includes(q) || (t.category||'').toLowerCase().includes(q) || (t.bank||'').toLowerCase().includes(q)); }
         return txs;
-    }, [analytics.transactions, filterBank, searchQuery]);
+    }, [data, filterBank, searchQuery]);
 
-    if (!isMounted) return null;
+    if (loading) return <div className="flex items-center justify-center h-full"><div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>;
+    if (!data) return <div className="flex flex-col items-center justify-center h-full gap-4"><Building2 className="w-12 h-12 text-muted-foreground/30" /><p className="text-sm text-muted-foreground">Sin datos. Importa un respaldo .trm.</p><Button onClick={() => setIsImporting(true)}><Upload className="w-4 h-4 mr-2" /> Importar</Button></div>;
 
-    const bankColors: Record<string,string> = { 'BPA': 'border-blue-500/30 bg-blue-500/5', 'BANDEC': 'border-emerald-500/30 bg-emerald-500/5', 'METRO': 'border-purple-500/30 bg-purple-500/5', 'DESCONOCIDO': 'border-border/30 bg-muted/5' };
-
-    const tabs: {id: ViewMode, label: string, icon: any}[] = [
-        {id:'resumen',label:'Resumen',icon:Building2},{id:'transacciones',label:'Movimientos',icon:TableIcon},
-        {id:'categorias',label:'Categorías',icon:Tag},{id:'reportes',label:'Reportes',icon:BarChart3},
-        {id:'analytics',label:'Análisis',icon:Wallet},{id:'bd',label:'SMS',icon:Search},
-    ];
+    // SVG Donut chart
+    const donutSegments = expenseCats.slice(0, 8);
+    let cumulativePct = 0;
+    const donutPaths = donutSegments.map(cat => {
+        const pct = totalExpenses > 0 ? (cat.total / totalExpenses) * 100 : 0;
+        const startAngle = (cumulativePct / 100) * 360 - 90;
+        const endAngle = ((cumulativePct + pct) / 100) * 360 - 90;
+        cumulativePct += pct;
+        const r1 = 60, r2 = 90, cx = 100, cy = 100;
+        const x1 = cx + r1 * Math.cos(startAngle * Math.PI / 180);
+        const y1 = cy + r1 * Math.sin(startAngle * Math.PI / 180);
+        const x2 = cx + r2 * Math.cos(startAngle * Math.PI / 180);
+        const y2 = cy + r2 * Math.sin(startAngle * Math.PI / 180);
+        const x3 = cx + r2 * Math.cos(endAngle * Math.PI / 180);
+        const y3 = cy + r2 * Math.sin(endAngle * Math.PI / 180);
+        const x4 = cx + r1 * Math.cos(endAngle * Math.PI / 180);
+        const y4 = cy + r1 * Math.sin(endAngle * Math.PI / 180);
+        const largeArc = pct > 50 ? 1 : 0;
+        return { path: `M${x1},${y1} L${x2},${y2} A${r2},${r2} 0 ${largeArc} 1 ${x3},${y3} L${x4},${y4} A${r1},${r1} 0 ${largeArc} 0 ${x1},${y1} Z`, color: cat.color, name: cat.name, pct };
+    });
 
     return (
         <div className="flex flex-col h-full bg-background">
-            {/* Header compacto */}
+            {/* Header */}
             <div className="shrink-0 border-b border-border/20 bg-background/95 backdrop-blur-sm">
                 <div className="flex items-center justify-between px-4 py-3 gap-3">
                     <div className="flex items-center gap-2.5 shrink-0">
                         <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center"><Wallet className="w-4.5 h-4.5 text-primary-foreground" /></div>
-                        <div>
-                            <h1 className="text-sm font-black tracking-tight leading-none">Billetera</h1>
-                            <p className="text-[8px] text-muted-foreground font-bold uppercase tracking-wider mt-0.5">Finanzas Personales</p>
-                        </div>
+                        <div><h1 className="text-sm font-black leading-none">Billetera</h1><p className="text-[8px] text-muted-foreground font-bold uppercase tracking-wider mt-0.5">Finanzas</p></div>
                     </div>
-                    <Button onClick={() => setIsImporting(true)} size="sm" className="h-8 px-3 text-[10px] font-black uppercase shrink-0">
-                        <Plus className="w-3.5 h-3.5 mr-1" /> Importar
-                    </Button>
+                    <Button onClick={() => setIsImporting(true)} size="sm" className="h-8 px-3 text-[10px] font-black uppercase shrink-0"><Upload className="w-3.5 h-3.5 mr-1" /> .trm</Button>
                 </div>
-                {/* Tabs scroll horizontal */}
                 <div className="flex items-center gap-0.5 px-2 pb-2 overflow-x-auto no-scrollbar">
-                    {tabs.map(tab => {
-                        const Icon = tab.icon;
-                        return (
-                            <button key={tab.id} onClick={() => setViewMode(tab.id)}
-                                className={cn("flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase whitespace-nowrap transition-all shrink-0",
-                                    viewMode === tab.id ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground hover:bg-muted/50")}>
-                                <Icon className="w-3.5 h-3.5" /> {tab.label}
-                            </button>
-                        );
-                    })}
+                    {([{'id':'home','l':'Inicio','i':Wallet},{'id':'movimientos','l':'Movimientos','i':BarChart3},{'id':'categorias','l':'Categorías','i':Tag},{'id':'reportes','l':'Reportes','i':Calendar}] as const).map(t => (
+                        <button key={t.id} onClick={() => setViewMode(t.id)} className={cn("flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase whitespace-nowrap shrink-0", viewMode === t.id ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground hover:bg-muted/50")}>
+                            <t.i className="w-3.5 h-3.5" /> {t.l}
+                        </button>
+                    ))}
                 </div>
             </div>
 
-            {/* Contenido scrollable */}
-            <div className="flex-1 overflow-y-auto no-scrollbar px-4 py-4 pb-24">
-                {viewMode === 'resumen' && (
-                    <div className="space-y-4 max-w-2xl mx-auto">
-                        {/* Patrimonio Total */}
-                        <Card className="rounded-3xl border-2 border-primary/20 bg-gradient-to-br from-primary/10 to-transparent p-6">
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Patrimonio Total</p>
-                                    <p className="text-3xl font-black italic text-primary mt-1">{fmt(analytics.total_real_balance || 0)}</p>
+            <div className="flex-1 overflow-y-auto no-scrollbar px-4 py-4 pb-24 max-w-2xl mx-auto w-full">
+                {/* ═══ HOME (estilo Monefy) ═══ */}
+                {viewMode === 'home' && (
+                    <div className="space-y-4">
+                        {/* Donut chart central */}
+                        <Card className="rounded-3xl border-border/30 p-6 flex flex-col items-center">
+                            <svg width="200" height="200" viewBox="0 0 200 200" className="mb-4">
+                                {donutPaths.map((seg, i) => <path key={i} d={seg.path} fill={seg.color} className="hover:opacity-80 transition-opacity cursor-pointer" onClick={() => setViewMode('categorias')} />)}
+                                {donutPaths.length === 0 && <circle cx="100" cy="100" r="75" fill="none" stroke="hsl(var(--muted))" strokeWidth="2" strokeDasharray="4 4" />}
+                            </svg>
+                            <div className="text-center -mt-32 mb-4 pointer-events-none">
+                                <p className="text-[9px] font-bold uppercase text-muted-foreground">Patrimonio</p>
+                                <p className="text-2xl font-black italic text-primary">{fmtShort(data.summary.total_real_balance || 0)}</p>
+                            </div>
+                            <div className="grid grid-cols-2 gap-3 w-full mt-8">
+                                <div className="text-center p-3 rounded-xl bg-emerald-500/5">
+                                    <TrendingUp className="w-4 h-4 text-emerald-500 mx-auto mb-1" />
+                                    <p className="text-[8px] font-bold uppercase text-muted-foreground">Ingresos</p>
+                                    <p className="text-sm font-black text-emerald-500">{fmtShort(data.summary.total_income)}</p>
                                 </div>
-                                <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center"><Wallet className="w-7 h-7 text-primary" /></div>
+                                <div className="text-center p-3 rounded-xl bg-red-500/5">
+                                    <TrendingDown className="w-4 h-4 text-red-500 mx-auto mb-1" />
+                                    <p className="text-[8px] font-bold uppercase text-muted-foreground">Gastos</p>
+                                    <p className="text-sm font-black text-red-500">{fmtShort(data.summary.total_expenses)}</p>
+                                </div>
                             </div>
                         </Card>
-                        {/* Ingresos / Gastos */}
-                        <div className="grid grid-cols-2 gap-3">
-                            <Card className="rounded-2xl border-border/30 p-4">
-                                <div className="flex items-center gap-1.5 mb-1"><TrendingUp className="w-3.5 h-3.5 text-emerald-500" /><p className="text-[9px] font-black uppercase text-muted-foreground">Ingresos</p></div>
-                                <p className="text-lg font-black text-emerald-500">{fmt(analytics.summary.total_income)}</p>
-                            </Card>
-                            <Card className="rounded-2xl border-border/30 p-4">
-                                <div className="flex items-center gap-1.5 mb-1"><TrendingDown className="w-3.5 h-3.5 text-red-500" /><p className="text-[9px] font-black uppercase text-muted-foreground">Gastos</p></div>
-                                <p className="text-lg font-black text-red-500">{fmt(analytics.summary.total_expenses)}</p>
-                            </Card>
-                        </div>
-                        {/* Tarjetas por banco */}
+
+                        {/* Cuentas */}
                         <div className="space-y-2">
                             <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground px-1">Cuentas</p>
-                            {bankEntries.length === 0 ? (
-                                <Card className="rounded-2xl border-dashed border-border/30 p-8 text-center">
-                                    <Building2 className="w-8 h-8 mx-auto mb-2 text-muted-foreground/40" />
-                                    <p className="text-xs font-bold text-muted-foreground">Importa SMS para comenzar</p>
-                                </Card>
-                            ) : bankEntries.map(([bankName, bank]) => (
-                                <Card key={bankName} className={cn("rounded-2xl border p-4 cursor-pointer transition-all hover:shadow-md", bankColors[bankName] || bankColors['DESCONOCIDO'])}
-                                    onClick={() => { setFilterBank(bankName); setViewMode('transacciones'); }}>
+                            {bankEntries.length === 0 ? <p className="text-xs text-muted-foreground text-center py-4">Sin cuentas</p> :
+                            bankEntries.map(([bankName, bank]) => (
+                                <Card key={bankName} className="rounded-2xl border-border/30 p-4 cursor-pointer hover:shadow-md transition-all" onClick={() => { setFilterBank(bankName); setViewMode('movimientos'); }}>
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-3">
-                                            <div className="w-9 h-9 rounded-xl bg-background/60 flex items-center justify-center"><Landmark className="w-4.5 h-4.5" /></div>
-                                            <div>
-                                                <p className="text-sm font-black uppercase leading-none">{bankName}</p>
-                                                {bank.card && <div className="flex items-center gap-1 mt-1"><CreditCard className="w-2.5 h-2.5 text-muted-foreground" /><p className="text-[8px] font-bold text-muted-foreground">{bank.card}</p></div>}
-                                            </div>
+                                            <div className="w-9 h-9 rounded-xl bg-muted/40 flex items-center justify-center"><Landmark className="w-4.5 h-4.5" /></div>
+                                            <div><p className="text-sm font-black uppercase">{bankName}</p>{bank.card && <p className="text-[8px] text-muted-foreground font-bold">{bank.card}</p>}</div>
                                         </div>
                                         <ChevronRight className="w-4 h-4 text-muted-foreground/40" />
                                     </div>
-                                    <div className="mt-3 flex items-end justify-between">
-                                        <div>
-                                            <p className="text-[8px] font-black uppercase text-muted-foreground">Saldo</p>
-                                            <p className={cn("text-xl font-black italic", bank.current_balance > 0 ? "text-emerald-500" : "text-red-500")}>{fmt(bank.current_balance)}</p>
-                                        </div>
-                                        <div className="text-right">
-                                            <p className="text-[8px] text-muted-foreground">{bank.transaction_count} mov.</p>
-                                            {bank.last_balance_date && <p className="text-[7px] text-muted-foreground/60">{bank.last_balance_date}</p>}
-                                        </div>
+                                    <div className="flex items-end justify-between mt-2">
+                                        <p className={cn("text-lg font-black italic", bank.current_balance > 0 ? "text-emerald-500" : "text-red-500")}>{fmt(bank.current_balance)}</p>
+                                        <p className="text-[8px] text-muted-foreground">{bank.transaction_count} mov.</p>
                                     </div>
                                 </Card>
                             ))}
@@ -260,49 +213,42 @@ export default function WalletView() {
                     </div>
                 )}
 
-                {viewMode === 'transacciones' && (
-                    <div className="space-y-3 max-w-4xl mx-auto">
-                        {/* Stats compactas */}
-                        <div className="grid grid-cols-3 gap-2">
-                            <Card className="rounded-xl p-2.5 text-center border-border/30"><p className="text-[8px] font-bold uppercase text-muted-foreground">Ingresos</p><p className="text-sm font-black text-emerald-500">{fmtShort(analytics.summary.total_income)}</p></Card>
-                            <Card className="rounded-xl p-2.5 text-center border-border/30"><p className="text-[8px] font-bold uppercase text-muted-foreground">Gastos</p><p className="text-sm font-black text-red-500">{fmtShort(analytics.summary.total_expenses)}</p></Card>
-                            <Card className="rounded-xl p-2.5 text-center border-border/30"><p className="text-[8px] font-bold uppercase text-muted-foreground">Balance</p><p className={cn("text-sm font-black", analytics.summary.balance >= 0 ? "text-emerald-500" : "text-red-500")}>{fmtShort(analytics.summary.balance)}</p></Card>
-                        </div>
-                        {/* Filtros */}
+                {/* ═══ MOVIMIENTOS ═══ */}
+                {viewMode === 'movimientos' && (
+                    <div className="space-y-3">
                         <div className="flex flex-wrap items-center gap-2">
                             <div className="relative flex-1 min-w-[140px]">
                                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-                                <Input placeholder="Buscar..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="pl-8 h-8 bg-muted/20 border-border/30 rounded-lg text-xs" />
+                                <input placeholder="Buscar..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="w-full pl-8 h-8 bg-muted/20 border border-border/30 rounded-lg text-xs" />
                             </div>
                             <div className="flex items-center gap-0.5 bg-muted/20 p-0.5 rounded-lg">
                                 <button onClick={() => setFilterBank('all')} className={cn("px-2 py-1 rounded text-[9px] font-bold uppercase", filterBank === 'all' ? "bg-primary text-primary-foreground" : "text-muted-foreground")}>Todos</button>
                                 {bankNames.map(b => <button key={b} onClick={() => setFilterBank(b)} className={cn("px-2 py-1 rounded text-[9px] font-bold uppercase", filterBank === b ? "bg-primary text-primary-foreground" : "text-muted-foreground")}>{b}</button>)}
                             </div>
                         </div>
-                        {/* Lista mobile-first */}
                         <div className="space-y-1.5">
-                            {filteredTx.slice(0, 150).map(tx => (
+                            {filteredTx.slice(0, 150).map((tx: any) => (
                                 <Card key={tx.id} className="rounded-xl border-border/30 p-3">
                                     <div className="flex items-center gap-2.5">
-                                        <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center shrink-0", tx.nature === 'CR' ? "bg-emerald-500/10" : "bg-red-500/10")}>
-                                            {tx.nature === 'CR' ? <ArrowDownRight className="w-4 h-4 text-emerald-500" /> : <ArrowUpRight className="w-4 h-4 text-red-500" />}
+                                        <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center shrink-0", tx.operation === 'CR' ? "bg-emerald-500/10" : "bg-red-500/10")}>
+                                            {tx.operation === 'CR' ? <ArrowDownRight className="w-4 h-4 text-emerald-500" /> : <ArrowUpRight className="w-4 h-4 text-red-500" />}
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                            <p className="text-[10px] font-black uppercase truncate">{tx.typeOperation}</p>
+                                            <p className="text-[10px] font-black uppercase truncate">{tx.service}</p>
                                             <p className="text-[8px] text-muted-foreground">{tx.date} · {tx.bank}{tx.card ? ` · ${tx.card}` : ''}</p>
                                         </div>
-                                        <p className={cn("text-sm font-black italic shrink-0", tx.nature === 'CR' ? "text-emerald-500" : "text-red-500")}>{tx.nature === 'CR' ? '+' : '-'}{fmtShort(tx.amount)}</p>
+                                        <p className={cn("text-sm font-black italic shrink-0", tx.operation === 'CR' ? "text-emerald-500" : "text-red-500")}>{tx.operation === 'CR' ? '+' : '-'}{fmtShort(parseFloat(tx.amount))}</p>
                                     </div>
                                     <div className="flex items-center justify-between mt-1.5 pt-1.5 border-t border-border/10">
                                         {editingTxId === tx.id ? (
                                             <select className="text-[9px] font-bold rounded border border-border bg-background px-1.5 h-6 flex-1 mr-2" onChange={e => handleSetCategory(tx.id, e.target.value)} defaultValue="">
-                                                <option value="" disabled>Seleccionar...</option>
-                                                {(tx.nature === 'CR' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES).map(c => <option key={c} value={c}>{c}</option>)}
+                                                <option value="" disabled>...</option>
+                                                {(tx.operation === 'CR' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES).map(c => <option key={c} value={c}>{c}</option>)}
                                             </select>
                                         ) : (
-                                            <Badge variant="outline" className="text-[7px] font-black uppercase cursor-pointer hover:bg-primary/10" onClick={() => setEditingTxId(tx.id)}>{tx.manualCategory || tx.category}</Badge>
+                                            <Badge variant="outline" className="text-[7px] font-black uppercase cursor-pointer hover:bg-primary/10" onClick={() => setEditingTxId(tx.id)}>{tx.manual_category || tx.category}</Badge>
                                         )}
-                                        <span className="text-[8px] text-muted-foreground/60">{tx.note}</span>
+                                        <span className="text-[8px] text-muted-foreground/60">{tx.service_type}</span>
                                     </div>
                                 </Card>
                             ))}
@@ -310,101 +256,62 @@ export default function WalletView() {
                     </div>
                 )}
 
+                {/* ═══ CATEGORÍAS ═══ */}
                 {viewMode === 'categorias' && (
-                    <div className="space-y-4 max-w-2xl mx-auto">
+                    <div className="space-y-4">
                         <Card className="rounded-2xl border-border/30 p-4">
                             <h2 className="text-xs font-black uppercase tracking-widest flex items-center gap-2 mb-3"><TrendingDown className="w-4 h-4 text-red-500" /> Gastos</h2>
-                            {analytics.categoryDetails?.filter(c => !c.isIncome).length === 0 ? <p className="text-xs text-muted-foreground text-center py-4">Sin gastos</p> :
                             <div className="space-y-2">
-                                {analytics.categoryDetails?.filter(c => !c.isIncome).map((cat, i) => (
+                                {expenseCats.map(cat => (
                                     <div key={cat.name} className="space-y-0.5">
-                                        <div className="flex justify-between text-[10px]"><span className="font-bold">{cat.name}</span><span className="font-black text-red-500">{fmt(cat.total)} <span className="text-muted-foreground font-normal">({cat.percentage.toFixed(0)}%)</span></span></div>
-                                        <div className="h-4 rounded bg-muted/30 overflow-hidden"><div className={cn("h-full rounded", CATEGORY_COLORS[i % CATEGORY_COLORS.length])} style={{width: `${Math.max(cat.percentage, 2)}%`}} /></div>
+                                        <div className="flex items-center justify-between text-[10px]">
+                                            <span className="font-bold flex items-center gap-1"><span>{cat.icon}</span> {cat.name}</span>
+                                            <span className="font-black text-red-500">{fmt(cat.total)} <span className="text-muted-foreground font-normal">({totalExpenses > 0 ? ((cat.total/totalExpenses)*100).toFixed(0) : 0}%)</span></span>
+                                        </div>
+                                        <div className="h-3 rounded-full bg-muted/30 overflow-hidden"><div className="h-full rounded-full transition-all" style={{ width: `${totalExpenses > 0 ? Math.max((cat.total/totalExpenses)*100, 2) : 0}%`, backgroundColor: cat.color }} /></div>
                                     </div>
                                 ))}
-                            </div>}
-                        </Card>
-                        <Card className="rounded-2xl border-border/30 p-4">
-                            <h2 className="text-xs font-black uppercase tracking-widest flex items-center gap-2 mb-3"><TrendingUp className="w-4 h-4 text-emerald-500" /> Ingresos</h2>
-                            {analytics.categoryDetails?.filter(c => c.isIncome).length === 0 ? <p className="text-xs text-muted-foreground text-center py-4">Sin ingresos</p> :
-                            <div className="space-y-2">
-                                {analytics.categoryDetails?.filter(c => c.isIncome).map((cat, i) => (
-                                    <div key={cat.name} className="space-y-0.5">
-                                        <div className="flex justify-between text-[10px]"><span className="font-bold">{cat.name}</span><span className="font-black text-emerald-500">{fmt(cat.total)} <span className="text-muted-foreground font-normal">({cat.percentage.toFixed(0)}%)</span></span></div>
-                                        <div className="h-4 rounded bg-muted/30 overflow-hidden"><div className={cn("h-full rounded", CATEGORY_COLORS[(i+8) % CATEGORY_COLORS.length])} style={{width: `${Math.max(cat.percentage, 2)}%`}} /></div>
-                                    </div>
-                                ))}
-                            </div>}
+                            </div>
                         </Card>
                         <Card className="rounded-2xl border-border/30 p-4">
                             <h2 className="text-xs font-black uppercase tracking-widest flex items-center gap-2 mb-2"><Edit2 className="w-4 h-4 text-primary" /> Sin Clasificar</h2>
                             <div className="space-y-1.5 max-h-60 overflow-y-auto no-scrollbar">
-                                {analytics.transactions.filter(tx => { const c = tx.manualCategory || tx.category; return c === 'Otros' || c === 'Otros Ingresos'; }).slice(0, 30).map(tx => (
+                                {data.transactions.filter((t: any) => { const c = t.manual_category || t.category; return c === 'Otros' || c === 'Otros Ingresos'; }).slice(0, 30).map((tx: any) => (
                                     <div key={tx.id} className="flex items-center gap-2 p-2 rounded-lg bg-muted/20">
-                                        <div className="flex-1 min-w-0"><p className="text-[9px] font-bold truncate">{tx.typeOperation} — {tx.note}</p><p className="text-[7px] text-muted-foreground">{tx.date} · {fmt(tx.amount)}</p></div>
+                                        <div className="flex-1 min-w-0"><p className="text-[9px] font-bold truncate">{tx.service}</p><p className="text-[7px] text-muted-foreground">{tx.date} · {fmt(parseFloat(tx.amount))}</p></div>
                                         {editingTxId === tx.id ? (
-                                            <select className="text-[8px] font-bold rounded border border-border bg-background px-1 h-5" onChange={e => handleSetCategory(tx.id, e.target.value)} defaultValue=""><option value="" disabled>...</option>{(tx.nature === 'CR' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES).map(c => <option key={c} value={c}>{c}</option>)}</select>
+                                            <select className="text-[8px] font-bold rounded border border-border bg-background px-1 h-5" onChange={e => handleSetCategory(tx.id, e.target.value)} defaultValue=""><option value="" disabled>...</option>{(tx.operation === 'CR' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES).map(c => <option key={c} value={c}>{c}</option>)}</select>
                                         ) : <button onClick={() => setEditingTxId(tx.id)} className="text-muted-foreground hover:text-primary shrink-0"><Edit2 className="w-3 h-3" /></button>}
                                     </div>
                                 ))}
-                                {analytics.transactions.filter(tx => { const c = tx.manualCategory || tx.category; return c === 'Otros' || c === 'Otros Ingresos'; }).length === 0 && <p className="text-[9px] text-muted-foreground text-center py-2">✓ Todo clasificado</p>}
+                                {data.transactions.filter((t: any) => { const c = t.manual_category || t.category; return c === 'Otros' || c === 'Otros Ingresos'; }).length === 0 && <p className="text-[9px] text-muted-foreground text-center py-2">✓ Todo clasificado</p>}
                             </div>
                         </Card>
                     </div>
                 )}
 
+                {/* ═══ REPORTES ═══ */}
                 {viewMode === 'reportes' && (
-                    <div className="space-y-4 max-w-2xl mx-auto">
+                    <div className="space-y-4">
                         <Card className="rounded-2xl border-border/30 p-4">
-                            <h2 className="text-xs font-black uppercase tracking-widest flex items-center gap-2 mb-3"><Calendar className="w-4 h-4 text-primary" /> Mensual</h2>
-                            {analytics.monthlyDetails?.length === 0 ? <p className="text-xs text-muted-foreground text-center py-4">Sin datos</p> :
+                            <h2 className="text-xs font-black uppercase tracking-widest mb-3">Mensual</h2>
+                            {Object.keys(data.monthly).length === 0 ? <p className="text-xs text-muted-foreground text-center py-4">Sin datos</p> :
                             <div className="space-y-3">
-                                {[...(analytics.monthlyDetails || [])].reverse().map(m => {
+                                {Object.entries(data.monthly).sort(([a],[b]) => b.localeCompare(a)).map(([month, m]) => {
                                     const max = Math.max(m.income, m.expenses, 1);
-                                    const mi = parseInt(m.month.split('-')[1]) - 1;
+                                    const mi = parseInt(month.split('-')[1]) - 1;
                                     return (
-                                        <div key={m.month}>
-                                            <div className="flex justify-between text-[10px] mb-1"><span className="font-bold">{MONTH_NAMES[mi] || m.month} {m.month.split('-')[0]}</span><span className={cn("font-black", m.balance >= 0 ? "text-emerald-500" : "text-red-500")}>{m.balance >= 0 ? '+' : ''}{fmtShort(m.balance)}</span></div>
-                                            <div className="flex gap-1 h-12 items-end">
-                                                <div className="flex-1 flex flex-col items-center"><div className="w-full bg-emerald-500/70 rounded-t" style={{height: `${(m.income/max)*100}%`}} /><span className="text-[6px] font-bold text-emerald-500 mt-0.5">{fmtShort(m.income)}</span></div>
-                                                <div className="flex-1 flex flex-col items-center"><div className="w-full bg-red-500/70 rounded-t" style={{height: `${(m.expenses/max)*100}%`}} /><span className="text-[6px] font-bold text-red-500 mt-0.5">{fmtShort(m.expenses)}</span></div>
+                                        <div key={month}>
+                                            <div className="flex justify-between text-[10px] mb-1"><span className="font-bold">{MONTH_NAMES[mi] || month} {month.split('-')[0]}</span><span className={cn("font-black", m.income-m.expenses >= 0 ? "text-emerald-500" : "text-red-500")}>{m.income-m.expenses >= 0 ? '+' : ''}{fmtShort(m.income-m.expenses)}</span></div>
+                                            <div className="flex gap-1 h-10 items-end">
+                                                <div className="flex-1 flex flex-col items-center"><div className="w-full bg-emerald-500/70 rounded-t" style={{height: `${(m.income/max)*100}%`}} /><span className="text-[6px] font-bold text-emerald-500">{fmtShort(m.income)}</span></div>
+                                                <div className="flex-1 flex flex-col items-center"><div className="w-full bg-red-500/70 rounded-t" style={{height: `${(m.expenses/max)*100}%`}} /><span className="text-[6px] font-bold text-red-500">{fmtShort(m.expenses)}</span></div>
                                             </div>
                                         </div>
                                     );
                                 })}
                             </div>}
                         </Card>
-                        <Card className="rounded-2xl border-border/30 p-4">
-                            <h2 className="text-xs font-black uppercase tracking-widest mb-3">Anual</h2>
-                            {(() => {
-                                const yr: Record<string, {i:number,e:number}> = {};
-                                analytics.monthlyDetails?.forEach(m => { const y = m.month.split('-')[0]; if (!yr[y]) yr[y] = {i:0,e:0}; yr[y].i += m.income; yr[y].e += m.expenses; });
-                                return Object.entries(yr).sort(([a],[b]) => b.localeCompare(a)).map(([y,d]) => (
-                                    <div key={y} className="grid grid-cols-4 gap-2 p-2.5 rounded-lg bg-muted/20 mb-1.5 text-[10px]">
-                                        <div><p className="text-[7px] uppercase text-muted-foreground">Año</p><p className="font-black">{y}</p></div>
-                                        <div><p className="text-[7px] uppercase text-muted-foreground">Ing.</p><p className="font-black text-emerald-500">{fmtShort(d.i)}</p></div>
-                                        <div><p className="text-[7px] uppercase text-muted-foreground">Gas.</p><p className="font-black text-red-500">{fmtShort(d.e)}</p></div>
-                                        <div><p className="text-[7px] uppercase text-muted-foreground">Bal.</p><p className={cn("font-black", d.i-d.e >= 0 ? "text-emerald-500" : "text-red-500")}>{fmtShort(d.i-d.e)}</p></div>
-                                    </div>
-                                ));
-                            })()}
-                        </Card>
-                    </div>
-                )}
-
-                {viewMode === 'analytics' && <AnalyticsDashboard analytics={analytics} />}
-
-                {viewMode === 'bd' && (
-                    <div className="space-y-3 max-w-2xl mx-auto">
-                        <div className="relative"><Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" /><Input placeholder="Buscar SMS..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="pl-8 h-8 bg-muted/20 border-border/30 rounded-lg text-xs" /></div>
-                        <div className="space-y-1.5">
-                            {analytics.rawSms.filter(s => s.content.toLowerCase().includes(searchQuery.toLowerCase())).slice(0, 100).map(sms => (
-                                <Card key={sms.id} className="rounded-xl border-border/30 p-2.5">
-                                    <div className="flex items-center gap-2 mb-1"><Badge variant="outline" className="text-[7px] font-black uppercase shrink-0">{sms.type}</Badge><span className="text-[8px] text-muted-foreground">{sms.date}</span></div>
-                                    <p className="text-[9px] text-muted-foreground/80 leading-snug">{sms.content.substring(0, 200)}{sms.content.length > 200 ? '...' : ''}</p>
-                                </Card>
-                            ))}
-                        </div>
                     </div>
                 )}
             </div>
@@ -414,63 +321,19 @@ export default function WalletView() {
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-background/90 backdrop-blur-sm" onClick={() => setIsImporting(false)}>
                     <Card className="w-full max-w-lg rounded-3xl border-border/30 shadow-2xl p-5" onClick={e => e.stopPropagation()}>
                         <div className="flex justify-between items-center mb-3">
-                            <h2 className="text-sm font-black uppercase">Importar Datos</h2>
+                            <h2 className="text-sm font-black uppercase">Importar .trm</h2>
                             <button onClick={() => setIsImporting(false)} className="text-muted-foreground hover:text-foreground"><X className="w-4 h-4" /></button>
                         </div>
-                        {/* Toggle modo */}
-                        <div className="flex items-center gap-1 bg-muted/20 p-1 rounded-lg mb-4">
-                            <button onClick={() => setImportMode('trm')} className={cn("flex-1 flex items-center justify-center gap-1.5 py-2 rounded text-[10px] font-bold uppercase", importMode === 'trm' ? "bg-primary text-primary-foreground" : "text-muted-foreground")}>
-                                <Smartphone className="w-3.5 h-3.5" /> Respaldo .trm
-                            </button>
-                            <button onClick={() => setImportMode('sms')} className={cn("flex-1 flex items-center justify-center gap-1.5 py-2 rounded text-[10px] font-bold uppercase", importMode === 'sms' ? "bg-primary text-primary-foreground" : "text-muted-foreground")}>
-                                <FileUp className="w-3.5 h-3.5" /> SMS Pegados
-                            </button>
+                        <div onDragOver={e => { e.preventDefault(); setIsDragging(true); }} onDragLeave={() => setIsDragging(false)} onDrop={e => { e.preventDefault(); setIsDragging(false); const f = e.dataTransfer.files?.[0]; if (f?.name.endsWith('.trm')) handleTrmFile(f); else toast.error('Debe ser .trm'); }}
+                            className={cn("border-2 border-dashed rounded-2xl p-8 text-center transition-all cursor-pointer", isDragging ? "border-primary bg-primary/10" : "border-border/40 hover:border-primary/40")}
+                            onClick={() => document.getElementById('trm-file-input')?.click()}>
+                            {importingTrm ? (
+                                <div className="space-y-2"><div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" /><p className="text-xs font-bold uppercase text-muted-foreground">Descifrando y guardando...</p></div>
+                            ) : (
+                                <div className="space-y-2"><Smartphone className="w-8 h-8 mx-auto text-muted-foreground/50" /><p className="text-xs font-bold uppercase">Arrastra tu .trm</p><p className="text-[10px] text-muted-foreground">Transfermóvil → Respaldo → Exportar</p></div>
+                            )}
+                            <input id="trm-file-input" type="file" accept=".trm" onChange={e => { const f = e.target.files?.[0]; if (f?.name.endsWith('.trm')) handleTrmFile(f); }} className="hidden" />
                         </div>
-
-                        {importMode === 'trm' ? (
-                            <div className="space-y-3">
-                                {/* Drag & Drop */}
-                                <div
-                                    onDragOver={e => { e.preventDefault(); setIsDragging(true); }}
-                                    onDragLeave={() => setIsDragging(false)}
-                                    onDrop={handleDrop}
-                                    className={cn(
-                                        "border-2 border-dashed rounded-2xl p-8 text-center transition-all cursor-pointer",
-                                        isDragging ? "border-primary bg-primary/10" : "border-border/40 hover:border-primary/40"
-                                    )}
-                                    onClick={() => document.getElementById('trm-file-input')?.click()}
-                                >
-                                    {importingTrm ? (
-                                        <div className="space-y-2">
-                                            <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
-                                            <p className="text-xs font-bold uppercase text-muted-foreground">Descifrando...</p>
-                                        </div>
-                                    ) : (
-                                        <div className="space-y-2">
-                                            <Upload className="w-8 h-8 mx-auto text-muted-foreground/50" />
-                                            <p className="text-xs font-bold uppercase">Arrastra tu archivo .trm</p>
-                                            <p className="text-[10px] text-muted-foreground">o click para seleccionar</p>
-                                            <p className="text-[9px] text-muted-foreground/60 mt-1">Transfermóvil → Respaldo → Exportar</p>
-                                        </div>
-                                    )}
-                                    <input id="trm-file-input" type="file" accept=".trm" onChange={handleFileInput} className="hidden" />
-                                </div>
-                                {trmData && (
-                                    <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-[10px]">
-                                        <p className="font-black text-emerald-500 uppercase">✓ Respaldo cargado</p>
-                                        <p className="text-muted-foreground mt-1">{trmData.count.transactions} transacciones · {trmData.count.accounts} cuentas · {trmData.fecha_exp}</p>
-                                    </div>
-                                )}
-                            </div>
-                        ) : (
-                            <div className="space-y-3">
-                                <textarea value={importText} onChange={e => setImportText(e.target.value)} placeholder="Pega mensajes de Transfermóvil..." className="w-full h-32 p-3 bg-muted/20 rounded-2xl text-xs focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none" />
-                                <div className="flex justify-end gap-2">
-                                    <Button variant="ghost" size="sm" onClick={() => setIsImporting(false)} className="text-[10px] uppercase">Cancelar</Button>
-                                    <Button size="sm" onClick={handleImport} className="text-[10px] uppercase">Procesar</Button>
-                                </div>
-                            </div>
-                        )}
                     </Card>
                 </div>
             )}
