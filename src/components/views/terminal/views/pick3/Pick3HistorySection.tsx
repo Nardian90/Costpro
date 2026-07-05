@@ -30,6 +30,26 @@ import { toast } from 'sonner';
 
 const noopSubscribe = () => () => {};
 
+/**
+ * FIX-TIMEZONE (2026-07-05): Convierte un ISO date string (YYYY-MM-DD) a Date
+ * sin que el timezone del navegador lo descuadre.
+ *
+ * PROBLEMA: new Date('2026-07-04') se interpreta como UTC medianoche.
+ * En timezones detrás de UTC (Havana UTC-4, Mexico UTC-6, etc.), esto se
+ * convierte en el día anterior (2026-07-03 20:00 local).
+ * Resultado: el registro de 04/07 se muestra como "03 jul".
+ *
+ * FIX: agregar 'T12:00:00' para que sea mediodía UTC, que en cualquier
+ * timezone razonable (UTC-12 a UTC+12) siga siendo el mismo día.
+ */
+function parseDateSafe(dateStr: string): Date {
+  if (!dateStr) return new Date();
+  // Si ya tiene tiempo, usarlo tal cual
+  if (dateStr.includes('T')) return new Date(dateStr);
+  // Agregar mediodía UTC para evitar drift de timezone
+  return new Date(dateStr + 'T12:00:00Z');
+}
+
 interface Pick3HistorySectionProps {
   history: Pick3Result[];
   onRefresh: () => void;
@@ -245,7 +265,7 @@ export function Pick3HistorySection({ history, onRefresh }: Pick3HistorySectionP
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-1.5 text-[9px] font-black uppercase text-muted-foreground">
             <CalendarIcon className="w-2.5 h-2.5" />
-            {format(new Date(item.date), 'dd MMM', { locale: es })}
+            {format(parseDateSafe(item.date), 'dd MMM', { locale: es })}
             {item.sync_method === 'manual' && (
               <Badge variant="secondary" className="bg-warning/10 text-warning text-[7px] border-none px-1 h-3.5">MANUAL</Badge>
             )}
@@ -304,7 +324,7 @@ export function Pick3HistorySection({ history, onRefresh }: Pick3HistorySectionP
           <CalendarIcon className="w-3 h-3 text-primary" />
           <span className="opacity-60">Última:</span>
           <span className="text-primary font-black">
-            {history[0]?.date ? format(new Date(history[0].date), 'dd/MM/yyyy', { locale: es }) : '—'}
+            {history[0]?.date ? format(parseDateSafe(history[0].date), 'dd/MM/yyyy', { locale: es }) : '—'}
           </span>
           <span className="opacity-40">·</span>
           <span className="opacity-60">Total BD:</span>
@@ -346,7 +366,7 @@ export function Pick3HistorySection({ history, onRefresh }: Pick3HistorySectionP
                   className="cursor-pointer hover:bg-warning/10 border-warning/20 text-warning font-bold uppercase text-[9px] py-1 gap-2"
                   onClick={() => openAddGap(gap)}
                 >
-                  {format(new Date(gap.date), 'dd/MM')} {gap.drawTime === 'midday' ? 'M' : 'N'}
+                  {format(parseDateSafe(gap.date), 'dd/MM')} {gap.drawTime === 'midday' ? 'M' : 'N'}
                   <Plus className="w-3 h-3" />
                 </Badge>
               ))}
@@ -477,9 +497,9 @@ export function Pick3HistorySection({ history, onRefresh }: Pick3HistorySectionP
                 <TableRow key={i} className="border-border/50 group">
                   <TableCell className="text-xs font-bold py-3 align-top">
                     <div className="flex flex-col">
-                      <span>{format(new Date(row.date), 'dd/MM/yyyy')}</span>
+                      <span>{format(parseDateSafe(row.date), 'dd/MM/yyyy')}</span>
                       <span className="text-[9px] font-bold uppercase opacity-50">
-                        {format(new Date(row.date), 'EEE', { locale: es })}
+                        {format(parseDateSafe(row.date), 'EEE', { locale: es })}
                       </span>
                     </div>
                   </TableCell>
