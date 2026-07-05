@@ -93,6 +93,20 @@ export function Pick3HistorySection({ history, onRefresh }: Pick3HistorySectionP
     });
   }, [history, searchTerm]);
 
+  // FIX-DEBUG (2026-07-05): log para ver qué history recibe el componente
+  useEffect(() => {
+    if (history.length > 0) {
+      console.log('[Pick3HistorySection] history received:', {
+        total: history.length,
+        firstDate: history[0]?.date,
+        firstDrawTime: history[0]?.draw_time,
+        lastDate: history[history.length - 1]?.date,
+        has_04_07: history.some(h => h.date === '2026-07-04'),
+        has_03_07: history.some(h => h.date === '2026-07-03'),
+      });
+    }
+  }, [history]);
+
   // FIX-COLUMNS (2026-07-05): separar por turno para mostrar en 2 columnas
   // Mediodía y Noche en columnas separadas (modo tarjeta y modo tabla)
   const { middayHistory, eveningHistory } = useMemo(() => {
@@ -143,6 +157,8 @@ export function Pick3HistorySection({ history, onRefresh }: Pick3HistorySectionP
     setForceRefreshing(true);
     try {
       const result = await Pick3Storage.forceRefreshHistory();
+      // Resetear displayLimit para mostrar más registros
+      setDisplayLimit(60);
       if (result.records.length > 0) {
         toast.success(`Datos actualizados: ${result.records.length} registros. Último sorteo: ${result.latestDate}`);
         onRefresh(); // Trigger fetchData en el parent para refrescar toda la UI
@@ -269,6 +285,34 @@ export function Pick3HistorySection({ history, onRefresh }: Pick3HistorySectionP
 
   return (
     <div className="space-y-4">
+      {/* FIX-INDICATOR (2026-07-05): indicador visible de última fecha y total */}
+      <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-muted/30 border border-border/30 text-[10px] font-bold uppercase">
+        <div className="flex items-center gap-2">
+          <CalendarIcon className="w-3 h-3 text-primary" />
+          <span className="opacity-60">Última fecha:</span>
+          <span className="text-primary font-black">
+            {history[0]?.date ? format(new Date(history[0].date), 'dd/MM/yyyy', { locale: es }) : '—'}
+          </span>
+          <span className="opacity-40">·</span>
+          <span className="opacity-60">Total:</span>
+          <span className="font-black">{history.length}</span>
+          <span className="opacity-40">·</span>
+          <span className="opacity-60">Mostrando:</span>
+          <span className="font-black">{visibleMidday.length + visibleEvening.length}</span>
+        </div>
+        <div className="flex items-center gap-1">
+          {history.some(h => h.date === '2026-07-04') ? (
+            <Badge className="bg-emerald-500/20 text-emerald-600 border-emerald-500/30 text-[8px]">
+              ✓ 04/07 cargado
+            </Badge>
+          ) : (
+            <Badge className="bg-amber-500/20 text-amber-600 border-amber-500/30 text-[8px]">
+              ⚠ 04/07 no cargado
+            </Badge>
+          )}
+        </div>
+      </div>
+
       {/* Gaps Alert */}
       {gaps.length > 0 && (
         <Card className="border-warning/20 bg-warning/[0.03] rounded-2xl overflow-hidden">
