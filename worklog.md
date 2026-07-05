@@ -4185,27 +4185,46 @@ Stage Summary:
 - Endpoints ya filtran por session.user.id (verificado por auditoría)
 
 ---
-Task ID: FIX-SUPABASE-KEYS-DEFINITIVE
+Task ID: WALLET-ADMIN-VIEW
 Agent: main
-Task: Fix "Invalid API key" en preview local (no tocar Vercel aún)
+Task: Admin con select para cargar billetera por usuario (default = self), no-admin sin opción
 
 Work Log:
-- Descubierto: el proyecto de Supabase tiene las keys LEGACY (JWT eyJhbGci...) DESHABILITADAS
-- Las keys legacy devuelven 401 "Invalid API key" al usarlas
-- El proyecto usa el NUEVO formato de keys de Supabase:
-  - publishable: sb_publishable__[REDACTED] (reemplaza a anon)
-  - secret: sb_secret_[REDACTED] (reemplaza a service_role)
-- Test: ambas keys nuevas devuelven 200 OK en /auth/v1/settings
-- Test: supabase-js v2.105.1 funciona correctamente con la publishable key
-- .env actualizado: NEXT_PUBLIC_SUPABASE_ANON_KEY ahora es sb_publishable__...
-- SUPABASE_SERVICE_ROLE_KEY ya era correcta (sb_secret_...)
-- PM2 reiniciado, servidor responde 200
-- Confirmado: el error "Invalid API key" ya NO aparece con las nuevas keys
-- Login de usuarios falla con "invalid_credentials" (no "Invalid API key") — esto es un problema SEPARADO de auth.users en Supabase
-- NO se hizo push a Vercel (esperando confirmación del usuario)
+- Verificado servidor PM2: estaba online pero atascado (2.7GB RAM). Reiniciado, ahora responde 401 correctamente
+- Endpoint /api/wallet/data: agregado soporte ?userId=X para admins
+  - Non-admin: parámetro ignorado, siempre usa session.user.id (defensa en profundidad)
+  - Admin: puede ver billetera de cualquier usuario
+  - Response incluye viewer.{is_admin, self_id, target_id, is_own}
+- Nuevo endpoint /api/wallet/users (admin only, 403 si no es admin):
+  - Lista usuarios con wallet_accounts
+  - JOIN con profiles para full_name, email
+  - Counts de accounts y transactions por usuario
+  - Ordenado: primero el admin mismo, luego alfabético
+- WalletView: agregado select de usuarios en el header
+  - Solo visible si isAdmin && walletUsers.length > 0
+  - Default: "Mi billetera" (targetUserId = null = self)
+  - Al cambiar: resetea filtros, viewMode a home, recarga data
+- WalletView: banner "Modo lectura" cuando admin ve otra billetera
+  - Color amber, icono Eye
+  - Texto: "viendo billetera de otro usuario. Acciones de escritura deshabilitadas."
+- WalletView: acciones de escritura bloqueadas en modo lectura:
+  - handleTrmFile: toast.error si intenta importar
+  - handleAddTransaction: toast.error
+  - handleSetCategory: toast.error
+  - handleDeleteTransaction: toast.error
+  - handleReset: toast.error
+  - Botón importar: disabled
+  - Botón reiniciar: oculto
+  - Botones flotantes +/-: ocultos
+- Imports: agregados Users, Eye de lucide-react
+- TypeScript: sin errores
+- Push a GitHub: exitoso (commit 648209bd1)
+  - Se removieron scripts de debug con credentials del tracking
+  - .gitignore actualizado para excluir scripts/test_trm_import.*, analyze_trm*, clean_*, etc.
 
 Stage Summary:
-- Causa raíz: keys legacy de Supabase deshabilitadas en el proyecto
-- Fix: usar publishable key (sb_publishable__) en lugar de anon key legacy (eyJhbGci...)
-- El preview local ahora debería funcionar sin "Invalid API key"
-- Pendiente: confirmar con usuario antes de actualizar Vercel
+- Admin puede ver su propia billetera (default) o seleccionar otro usuario del dropdown
+- Non-admin NO ve el select, siempre carga su propia billetera
+- Admin en modo lectura: no puede importar, agregar, editar, eliminar ni reset
+- Servidor PM2 activo y respondiendo
+- Push exitoso a origin/main
