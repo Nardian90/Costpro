@@ -3509,3 +3509,94 @@ Próximos sprints pendientes:
 - Sprint 3: IA Advisor "Quant Analyst Adaptativo" (regime-aware, modos Defensive/Balanced/Aggressive, honest mode)
 - Sprint 4: Monetización (Stripe, tier gating Free/Player/Quant/Desk)
 - Sprint 5: Growth engine (referrals, programmatic SEO, content, A/B testing)
+
+---
+Task ID: SPRINT-2-ENSEMBLE-RISK
+Agent: Main Agent (Super Z)
+Task: Sprint 2 — Risk Layer + Multi-Modelo Ensemble. Crear ensemble engine con 4 modelos independientes (Frequency, Markov, Positional, SumRange) con pesos dinámicos basados en backtesting, + risk layer con 3 modos (defensive/balanced/aggressive), Kelly adaptativo, stop-loss/take-profit dinámicos. + Auditoría Sprint 1 + push.
+
+Work Log:
+
+### AUDITORÍA SPRINT 1 — Hallazgos y fixes
+
+- Test de integración end-to-end: `src/__tests__/integration/sprint1.integration.test.ts` (8 tests)
+- BUG 1 encontrado: `downsideDeviation` dividía entre `count(negativos)` en vez de `N` total
+  → Fix: ahora divide entre N (definición estándar de Sortino)
+- BUG 2 encontrado: IC 95% retornaba rangos absurdos ([-140588%, 140446%]) porque la asunción de normalidad no aplica a lotería
+  → Fix: sanity check del IC. Si rango > 1000pp o > 5x CAGR absoluto, no se devuelve
+- BUG 3 (no bug): volatility=0 cuando todos los PnL son iguales es estadísticamente correcto
+- 70/70 tests pasan tras fixes (34 quant + 28 stat + 8 integration)
+
+### SPRINT 2 — IMPLEMENTACIÓN
+
+### 1. NEW FILE: `src/services/pick3/ensemble.engine.ts` (570 líneas)
+- 4 modelos independientes, cada uno con su propia predicción + confidence + reasoning:
+  - **FrequencyModel**: hot/cold numbers con chi-cuadrado de significancia. Si los datos son uniformes, edge se reduce al 30%.
+  - **MarkovModel**: cadena de Markov de orden 1 por posición. Edge basado en entropía de la matriz de transición (si ≈ log2(10), no hay patrón).
+  - **PositionalModel**: análisis posicional independiente. Edge basado en chi-cuadrado por posición (0, 1, 2).
+  - **SumRangeModel**: distribución de sumas (triangular teórica) + patrones odd-even/high-low. Edge basado en chi-cuadrado vs distribución teórica.
+- Cada modelo tiene método `backtest(windowSize)` que evalúa hit rate global + reciente (30 sorteos)
+- `EnsembleEngine.calibrate(windowSize=60)`:
+  - Backtestea los 4 modelos independientemente
+  - Edge baseline = 1.5% (3 picks en 1000 combinaciones = 0.3% straight, 1.8% box)
+  - rawWeight = combinedEdge / 5 (5% edge → peso 1.0)
+  - Si rawWeight < 0.10 → modelo excluido
+  - Pesos normalizados para sumar 1.0 entre los activos
+- `EnsembleEngine.generatePredictions(config, count)`:
+  - Combina predicciones con weighted voting
+  - Cada predicción tiene `modelContributions` (explainability)
+  - `ensembleConfidence` = weighted average de confidences
+  - `strategyLabel` = modelo dominante (Hot/Cold, Markov, Positional, Sum/Pattern)
+- `EnsembleEngine.generateReport(config, count)`:
+  - Predicciones + performances + regimeAlert + totalModelsUsed
+  - RegimeAlert cuando un modelo domina (>60% peso)
+- Fallback: si todos los modelos excluidos, usa FrequencyModel con 50% confidence reduction
+
+### 2. NEW FILE: `src/services/pick3/risk.layer.ts` (250 líneas)
+- **3 Risk Profiles**:
+  - Defensive: 10% Kelly cap, max 2% bankroll/sorteo, stop-loss 15%, take-profit 50%
+  - Balanced: 25% Kelly cap, max 5% bankroll/sorteo, stop-loss 25%, take-profit 100%
+  - Aggressive: 50% Kelly cap, max 10% bankroll/sorteo, stop-loss 35%, take-profit 200%
+- **Kelly adaptativo**: usa `ensembleConfidence/100 * winProb` como winProb efectivo
+- **Stop-loss dinámico**: si DD ≥ 70% del stop-loss → exposición × 0.5 (zona preventiva)
+- **Take-profit dinámico**: si ROI ≥ take-profit → exposición × 1.5
+- **Confidence scaling**: si ensembleConfidence < 30% → exposición × 0.3
+- **Exposure limits**: respeta maxExposurePerDrawPct y maxExposurePerBetPct
+- **Risk levels**: low / medium / high / critical
+- `canContinue()`: false si DD ≥ stop-loss O bankroll ≤ 0
+- `getActionRecommendation()`: CRÍTICO / PRECAUCIÓN / ÓPTIMO / RECUPERACIÓN / NORMAL
+- `inferRiskMode(config)`: convierte BettingConfig.riskFactor a RiskMode
+- `calculateDynamicStopLoss()`: se reduce si bankroll < 50% del inicial (más conservador)
+
+### 3. NEW TESTS: `src/__tests__/services/pick3-ensemble-engine.test.ts` (10 tests)
+- calibrate: 4 performances, pesos suman 1.0, isExcluded funciona, hitRate válido
+- generatePredictions: modelContributions, ordenamiento, modo LAST2
+- generateReport: performances + predicciones, regimeAlert, fallback
+
+### 4. NEW TESTS: `src/__tests__/services/pick3-risk-layer.test.ts` (30 tests)
+- RISK_PROFILES: 3 modos definidos, defensive < balanced < aggressive
+- calculateRecommendation: betSize > 0, stop-loss, take-profit, confidence bajo, defensive vs aggressive, exposure limits, betSize mínimo, edge negativo
+- canContinue: true/false según DD y bankroll
+- getActionRecommendation: 5 estados (CRÍTICO/PRECAUCIÓN/ÓPTIMO/RECUPERACIÓN/NORMAL)
+- inferRiskMode: 3 thresholds
+- calculateDynamicStopLoss: bankroll sano vs reducido
+- Edge cases: bankroll=0, confidence=0, winProb=0, payout alto
+
+### VALIDACIÓN
+- TypeScript: 0 errores
+- Tests: 110/110 pasan (70 sprint1 + 40 sprint2)
+- PM2: costpro online, HTTP 200 confirmado
+- Push: Sprint 1 (fddaf662c) + Sprint 2 (53fe22159) a main
+
+### Stage Summary:
+- **Auditoría Sprint 1**: 2 bugs reales encontrados y fixeados (downsideDeviation, CI sanity check)
+- **Ensemble Engine**: 4 modelos independientes con pesos dinámicos basados en backtesting real
+- **Risk Layer**: 3 modos de riesgo con Kelly adaptativo, stop-loss/take-profit dinámicos
+- **Explainability**: cada predicción muestra qué modelo contribuyó y cuánto peso tuvo
+- **Regime Detection**: alerta automática cuando un modelo domina (>60% peso)
+- **110 tests** garantizan que el sistema funciona end-to-end
+
+Próximos sprints:
+- Sprint 3: IA Advisor "Quant Analyst Adaptativo" (regime-aware, honest mode, streaming)
+- Sprint 4: Monetización (Stripe, tier gating Free/Player/Quant/Desk)
+- Sprint 5: Growth engine (referrals, programmatic SEO, content, A/B testing)
