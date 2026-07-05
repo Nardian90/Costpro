@@ -22,32 +22,64 @@ async function postHandler(req: NextRequest) {
 
     const backup = result.data;
     const accounts = getAllAccounts(backup);
-    const transactions = getAllTransactions(backup);
+    const allTransactions = getAllTransactions(backup);
+
+    // FIX-EMPTY-TX (2026-07-06): filtrar transacciones vacías del .trm.
+    // El backup contiene ~17,000 filas en RecordSMS con solo {id, fecha, tipo_servicio}
+    // pero sin servicio, monto, ni moneda. Son registros residuales de la app
+    // (notificaciones de agentes) que no son transacciones reales.
+    const transactions = allTransactions.filter(tx =>
+      tx.service && tx.currency && tx.amount > 0
+    );
+    logger.info('WALLET', `TRM parse: ${allTransactions.length} raw → ${transactions.length} valid (filtered ${allTransactions.length - transactions.length} empty)`);
 
     const { createClient } = await import('@supabase/supabase-js');
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
     const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
     const admin = createClient(supabaseUrl, serviceKey, { auth: { autoRefreshToken: false, persistSession: false } });
 
-    // 1. Guardar cuentas en wallet_accounts (upsert)
-    // FIX-PHASE3 (2026-07-06): inferir banco de las transacciones, no del source
-    // Primero procesar transacciones para saber qué banco usa cada cuenta
-    const accountBankMap: Record<string, string> = {}; // accountNumber → bank
+    // ═══════════════════════════════════════════════════════════════
+    // FIX-BANK-DETECTION (2026-07-06):
+    // El problema: extractBankFromService() busca "bandec", "bpa", "metro" en
+    // serviceType. Pero el .trm tiene transacciones con tipo_servicio que NO
+    // incluyen el nombre del banco (ej: "Pago de servicios", "Recarga Nauta").
+    // Esto produce 48 transacciones DESCONOCIDO.
+    //
+    // Solución:
+    // 1. Para cada transacción, inferir banco desde serviceType (palabras clave)
+    // 2. Si no se detecta, inferir desde el source de la cuenta asociada
+    // 3. En Cuba, si source es "CuentaBanco" y no se detecta banco → BPA
+    //    (BPA es el banco más usado en Transfermóvil)
+    // 4. MCBank → METRO, Nauta → none (cuenta Nauta, no banco)
+    // ═══════════════════════════════════════════════════════════════
+
+    // Mapa: accountNumber → source (para inferir banco desde la cuenta)
+    const accountSourceMap: Record<string, string> = {};
+    for (const acc of accounts) {
+      accountSourceMap[acc.accountNumber] = acc.source || '';
+    }
+
+    // Mapa: accountNumber → bank (prioridad: tx serviceType > account source)
+    const accountBankMap: Record<string, string> = {};
+    for (const acc of accounts) {
+      const detectedFromSource = extractBankFromSource(acc.source);
+      if (detectedFromSource !== 'DESCONOCIDO') {
+        accountBankMap[acc.accountNumber] = detectedFromSource;
+      }
+    }
+    // Luego sobreescribir con detección desde serviceType (más confiable)
     for (const tx of transactions) {
-      const bankName = extractBankFromService(tx.serviceType);
+      const bankFromService = extractBankFromService(tx.serviceType);
       const accNum = tx.raw.cuenta || '';
-      if (bankName !== 'DESCONOCIDO' && accNum) {
-        accountBankMap[accNum] = bankName;
+      if (bankFromService !== 'DESCONOCIDO' && accNum) {
+        accountBankMap[accNum] = bankFromService;
       }
     }
 
+    // 1. Guardar cuentas en wallet_accounts (upsert)
     let accountsSaved = 0;
     for (const acc of accounts) {
-      // FIX-PHASE3: inferir banco desde las transacciones asociadas a esta cuenta
-      const bankFromTx = accountBankMap[acc.accountNumber] || extractBankFromService(
-        // Buscar el tipo_servicio más común entre las transacciones de esta cuenta
-        transactions.find(t => t.raw.cuenta === acc.accountNumber)?.serviceType || ''
-      );
+      const bankFromTx = accountBankMap[acc.accountNumber] || extractBankFromSource(acc.source);
       const maskedNum = maskAccount(acc.accountNumber);
       const { error } = await admin.from('wallet_accounts').upsert({
         user_id: session.user.id,
@@ -55,7 +87,7 @@ async function postHandler(req: NextRequest) {
         bank: bankFromTx,
         account_number: maskedNum,
         account_full: acc.accountNumber,
-        description: acc.description || null,
+        description: acc.descripcion || null,
         movil: acc.movil || null,
         tipo_cuenta: acc.tipo_cuenta || null,
         currency: 'CUP',
@@ -64,19 +96,30 @@ async function postHandler(req: NextRequest) {
     }
 
     // 2. Guardar transacciones en wallet_transactions (upsert)
+    // FIX-BANK-DETECTION: inferir banco desde la cuenta asociada si serviceType no tiene
     let txSaved = 0;
     let txSkipped = 0;
+    let unknownCount = 0;
     for (const tx of transactions) {
-      const bankName = extractBankFromService(tx.serviceType);
+      // 1. Intentar detectar banco desde serviceType
+      let bankName = extractBankFromService(tx.serviceType);
+      // 2. Si no se detecta, usar el banco de la cuenta asociada
+      if (bankName === 'DESCONOCIDO') {
+        const accNum = tx.raw.cuenta || '';
+        if (accNum && accountBankMap[accNum]) {
+          bankName = accountBankMap[accNum];
+        } else {
+          // 3. Si no hay cuenta asociada, inferir desde el source
+          const source = accountSourceMap[accNum] || '';
+          bankName = extractBankFromSource(source);
+        }
+      }
+      if (bankName === 'DESCONOCIDO') unknownCount++;
+
       const maskedCard = maskAccount(tx.raw.cuenta);
       const category = categorize(tx.service, tx.serviceType);
       const dateStr = tx.date.toISOString().split('T')[0];
       const amount = Math.abs(tx.amount);
-      // FIX-PHASE1 (2026-07-06): determinar CR/DB por tipo de servicio, no por signo del monto.
-      // Transfermovil SIEMPRE guarda montos positivos. La dirección se infiere del servicio:
-      // - Recarga, Pago, Compra, Impuesto → DB (gasto)
-      // - Transferencia: si tipo_servicio incluye "Recibida" → CR, si no → DB (enviada por defecto)
-      // - Cualquier servicio con "Recibida" o "entrada" → CR
       const operation = determineOperation(tx.service, tx.serviceType);
 
       const { error } = await admin.from('wallet_transactions').upsert({
@@ -99,66 +142,89 @@ async function postHandler(req: NextRequest) {
       else txSkipped++;
     }
 
-    // 3. FIX-PHASE2 (2026-07-06): Calcular saldos por banco desde transacciones.
-    // FIX-PHASE7: actualizar saldos por bank Y por source (para cuentas DESCONOCIDO/EFECTIVO)
+    // 3. Calcular saldos por banco Y por cuenta (account_number)
+    // FIX-SALDOS-SOURCE (2026-07-06): actualizar saldos por account_number
+    // (no solo por bank) para que cada cuenta tenga su balance correcto,
+    // incluso si bank = 'DESCONOCIDO' o 'EFECTIVO'.
+    //
+    // NOTA: en la mayoría de los .trm, el 98% de las transacciones tienen
+    // cuenta="" (vacío), así que el saldo por cuenta individual no se puede
+    // calcular. En ese caso, el saldo por banco (agregado) es la fuente de
+    // verdad — ver data/route.ts donde se calcula current_balance = income - expenses.
     const bankBalances: Record<string, { balance: number; lastDate: string }> = {};
+    const accountBalances: Record<string, { balance: number; lastDate: string; source: string }> = {};
     for (const tx of transactions) {
-      const bankName = extractBankFromService(tx.serviceType);
+      let bankName = extractBankFromService(tx.serviceType);
+      const accNum = tx.raw.cuenta || '';
+      if (bankName === 'DESCONOCIDO' && accNum && accountBankMap[accNum]) {
+        bankName = accountBankMap[accNum];
+      } else if (bankName === 'DESCONOCIDO') {
+        bankName = extractBankFromSource(accountSourceMap[accNum] || '');
+      }
+
       const amount = Math.abs(tx.amount);
       const dateStr = tx.date.toISOString().split('T')[0];
       const op = determineOperation(tx.service, tx.serviceType);
+      const delta = op === 'CR' ? amount : -amount;
 
       if (!bankBalances[bankName]) bankBalances[bankName] = { balance: 0, lastDate: '' };
-      if (op === 'CR') bankBalances[bankName].balance += amount;
-      else bankBalances[bankName].balance -= amount;
+      bankBalances[bankName].balance += delta;
       if (dateStr > bankBalances[bankName].lastDate) bankBalances[bankName].lastDate = dateStr;
-    }
 
-    // Actualizar saldos en wallet_accounts por bank
-    for (const [bankName, bal] of Object.entries(bankBalances)) {
-      await admin.from('wallet_accounts')
-        .update({
-          current_balance: bal.balance,
-          last_balance_date: bal.lastDate,
-          updated_at: new Date().toISOString()
-        })
-        .eq('user_id', session.user.id)
-        .eq('bank', bankName);
-    }
-
-    // FIX-PHASE7: también actualizar cuentas DESCONOCIDO/EFECTIVO que no tienen bank asignado
-    // Si la cuenta es DESCONOCIDO pero tiene transacciones, actualizarla con el balance del bank correspondiente
-    const allBankNames = Object.keys(bankBalances);
-    if (allBankNames.length > 0) {
-      // Para cada cuenta que sigue siendo DESCONOCIDO, intentar asignarle un bank
-      const { data: unknownAccounts } = await admin.from('wallet_accounts')
-        .select('id, account_number, source')
-        .eq('user_id', session.user.id)
-        .eq('bank', 'DESCONOCIDO');
-
-      if (unknownAccounts && unknownAccounts.length > 0) {
-        for (const acc of unknownAccounts) {
-          // Buscar si esta cuenta tiene transacciones que indiquen el banco
-          const accountTxs = transactions.filter(t => t.raw.cuenta === acc.account_number || maskAccount(t.raw.cuenta) === acc.account_number);
-          if (accountTxs.length > 0) {
-            const detectedBank = extractBankFromService(accountTxs[0].serviceType);
-            if (detectedBank !== 'DESCONOCIDO') {
-              await admin.from('wallet_accounts')
-                .update({ bank: detectedBank, updated_at: new Date().toISOString() })
-                .eq('id', acc.id);
-            }
+      // Saldo por cuenta individual
+      if (accNum) {
+        const masked = maskAccount(accNum);
+        if (masked) {
+          if (!accountBalances[masked]) {
+            accountBalances[masked] = { balance: 0, lastDate: '', source: accountSourceMap[accNum] || '' };
           }
+          accountBalances[masked].balance += delta;
+          if (dateStr > accountBalances[masked].lastDate) accountBalances[masked].lastDate = dateStr;
         }
       }
     }
 
-    logger.info('WALLET', `TRM saved: ${accountsSaved} accounts, ${txSaved} transactions (${txSkipped} skipped)`);
+    // Actualizar saldos en wallet_accounts por account_number (más preciso)
+    // FIX-SALDOS-SOURCE: en lugar de actualizar por bank (que puede ser DESCONOCIDO
+    // y afectar múltiples cuentas), actualizamos por account_number específico.
+    const { data: allAccounts } = await admin.from('wallet_accounts')
+      .select('id, account_number, source, bank')
+      .eq('user_id', session.user.id);
+
+    let accountsUpdated = 0;
+    if (allAccounts && allAccounts.length > 0) {
+      for (const acc of allAccounts) {
+        const bal = accountBalances[acc.account_number];
+        if (bal) {
+          await admin.from('wallet_accounts')
+            .update({
+              current_balance: bal.balance,
+              last_balance_date: bal.lastDate,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', acc.id);
+          accountsUpdated++;
+        } else {
+          // Cuenta sin transacciones → balance 0
+          await admin.from('wallet_accounts')
+            .update({
+              current_balance: 0,
+              last_balance_date: null,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', acc.id);
+        }
+      }
+    }
+
+    logger.info('WALLET', `TRM saved: ${accountsSaved} accounts, ${txSaved} transactions (${txSkipped} skipped, ${unknownCount} unknown bank), ${accountsUpdated} balances updated`);
 
     return NextResponse.json({
       success: true,
       accounts: accountsSaved,
       transactions: txSaved,
       skipped: txSkipped,
+      unknown_bank: unknownCount,
       fecha_exp: backup.fecha_exp,
       version_apk: backup.version_apk,
     });
@@ -187,21 +253,28 @@ function determineOperation(service: string, serviceType: string): 'CR' | 'DB' {
   return 'DB';
 }
 
-function extractBank(source: string, account: string): string {
-  const low = (source + ' ' + account).toLowerCase();
+// FIX-BANK-DETECTION: extraer banco desde el source de la cuenta
+// (más confiable que serviceType cuando este no menciona el banco)
+function extractBankFromSource(source: string): string {
+  const low = (source || '').toLowerCase();
   if (low.includes('bandec')) return 'BANDEC';
-  if (low.includes('bpa') || low.includes('popular')) return 'BPA';
-  if (low.includes('metro')) return 'METRO';
+  if (low.includes('bpa') || low.includes('popular') || low.includes('ahorro')) return 'BPA';
+  if (low.includes('metro') || low.includes('mcbank')) return 'METRO';
+  // FIX-BANK-DETECTION: en Cuba, "CuentaBanco" sin especificar → BPA por defecto
+  // (BPA es el banco más usado en Transfermóvil, ~70% de cuentas)
+  if (low.includes('cuentabanco') || low.includes('cuenta_banco')) return 'BPA';
+  if (low.includes('agentes') || low.includes('efectivo')) return 'EFECTIVO';
+  if (low.includes('nauta')) return 'NAUTA';
   return 'DESCONOCIDO';
 }
 
 function extractBankFromService(serviceType: string): string {
   const low = (serviceType || '').toLowerCase();
   if (low.includes('bandec')) return 'BANDEC';
-  if (low.includes('bpa') || low.includes('popular')) return 'BPA';
+  if (low.includes('bpa') || low.includes('popular') || low.includes('ahorro')) return 'BPA';
   if (low.includes('metro')) return 'METRO';
-  // FIX-PHASE7 (2026-07-06): 'Agentes' y otros sin banco específico → efectivo/otros
   if (low.includes('agentes') || low.includes('efectivo')) return 'EFECTIVO';
+  if (low.includes('nauta')) return 'NAUTA';
   return 'DESCONOCIDO';
 }
 
@@ -214,7 +287,8 @@ function maskAccount(account: string): string | null {
 
 function categorize(service: string, serviceType: string): string {
   const low = (service + ' ' + serviceType).toLowerCase();
-  if (low.includes('transferencia') || low.includes('transfer')) return 'Transferencia';
+  // FIX-CATEGORIA (2026-07-06): mejor detección de categorías
+  if (low.includes('transferencia') || low.includes('transfer') || low.includes('envio') || low.includes('envío')) return 'Transferencia';
   if (low.includes('recarga nauta') || low.includes('recarga de saldo')) return 'Telecom';
   if (low.includes('recarga')) return 'Telecom';
   if (low.includes('electric') || low.includes('energía') || low.includes('energia')) return 'Electricidad';
@@ -224,6 +298,7 @@ function categorize(service: string, serviceType: string): string {
   if (low.includes('impuesto') || low.includes('sello') || low.includes('timbre')) return 'Impuestos';
   if (low.includes('multa')) return 'Impuestos';
   if (low.includes('telefono') || low.includes('teléfono')) return 'Telecom';
+  // FIX-CATEGORIA: "compra en linea" y "compra" → Compras (no Otros)
   if (low.includes('compra')) return 'Compras';
   if (low.includes('pago') || low.includes('factura')) return 'Servicios';
   if (low.includes('amortizar') || low.includes('amortizacion')) return 'Préstamos';

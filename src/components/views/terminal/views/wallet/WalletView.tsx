@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -8,7 +8,7 @@ import {
     Wallet, ArrowDownRight, ArrowUpRight, Landmark, CreditCard,
     Plus, Upload, Smartphone, X, Tag, Calendar, BarChart3,
     TrendingUp, TrendingDown, Building2, ChevronRight, Edit2,
-    PieChart as PieChartIcon, Search
+    PieChart as PieChartIcon, Search, Trash2, AlertTriangle, Users, Eye
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -47,22 +47,86 @@ export default function WalletView() {
     const [filterBank, setFilterBank] = useState<string>('all');
     const [editingTxId, setEditingTxId] = useState<string | null>(null);
 
+    // FIX-IMPORT-CLICK (2026-07-06): ref directa al input de archivo para evitar
+    // el problema del click cancelado cuando el input está anidado en un div onclick.
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    // FIX-ADMIN-VIEW (2026-07-06): el admin puede ver la billetera de otros usuarios.
+    // Por defecto carga la suya propia (targetUserId = null = self).
+    // Si selecciona otro usuario del <select>, targetUserId cambia.
+    // Los no-admin NO ven el select y siempre cargan su propia billetera.
+    const [currentUser, setCurrentUser] = useState<{ id: string; role: string; roles: string[] } | null>(null);
+    const [targetUserId, setTargetUserId] = useState<string | null>(null);
+    const [walletUsers, setWalletUsers] = useState<Array<{ user_id: string; full_name: string; email: string; accounts_count: number; transactions_count: number }>>([]);
+    const isAdmin = currentUser?.role === 'admin' || (currentUser?.roles || []).includes('admin');
+
     const fetchData = useCallback(async () => {
         setLoading(true);
         try {
             const { useAuthStore } = await import('@/store');
             const token = useAuthStore.getState().token;
-            const res = await fetch('/api/wallet/data', {
+            // FIX-ADMIN-VIEW: pasar ?userId=X si el admin seleccionó otro usuario
+            const url = targetUserId ? `/api/wallet/data?userId=${encodeURIComponent(targetUserId)}` : '/api/wallet/data';
+            const res = await fetch(url, {
                 headers: token ? { Authorization: `Bearer ${token}` } : {},
             });
             if (res.ok) setData(await res.json());
         } catch (e) { console.error('Fetch error', e); }
         finally { setLoading(false); }
+    }, [targetUserId]);
+
+    useEffect(() => {
+        // Cargar usuario actual desde el store
+        (async () => {
+            const { useAuthStore } = await import('@/store');
+            const u = useAuthStore.getState().user as any;
+            if (u) {
+                setCurrentUser({ id: u.id, role: u.role || 'user', roles: u.roles || [] });
+            }
+        })();
     }, []);
 
     useEffect(() => { fetchData(); }, [fetchData]);
 
+    // FIX-ADMIN-VIEW: si es admin, cargar la lista de usuarios con billetera
+    useEffect(() => {
+        if (!isAdmin) { setWalletUsers([]); return; }
+        (async () => {
+            try {
+                const { useAuthStore } = await import('@/store');
+                const token = useAuthStore.getState().token;
+                const res = await fetch('/api/wallet/users', {
+                    headers: token ? { Authorization: `Bearer ${token}` } : {},
+                });
+                if (res.ok) {
+                    const json = await res.json();
+                    setWalletUsers(json.users || []);
+                }
+            } catch (e) { console.error('Fetch wallet users error', e); }
+        })();
+    }, [isAdmin]);
+
+    // FIX-ADMIN-VIEW: cuando el admin cambia de usuario en el select, resetear filtros
+    const handleUserChange = (uid: string) => {
+        setTargetUserId(uid === 'self' ? null : uid);
+        setFilterBank('all');
+        setSearchQuery('');
+        setViewMode('home');
+    };
+
+    // FIX-ADMIN-VIEW: bandera para saber si el admin está viendo otra billetera
+    // Si true, se deshabilitan las acciones de escritura (importar, agregar, editar, eliminar, reset)
+    const viewingOther = isAdmin && !!targetUserId;
+
     const handleTrmFile = async (file: File) => {
+        // FIX-ADMIN-VIEW: si el admin está viendo otra billetera, no puede importar .trm
+        // (la importación siempre es para el propio usuario, no para otros)
+        if (isAdmin && targetUserId) {
+            toast.error('No puedes importar .trm a la billetera de otro usuario', {
+                description: 'Vuelve a tu propia billetera para importar'
+            });
+            return;
+        }
         setImportingTrm(true);
         try {
             const content = await file.text();
@@ -83,6 +147,7 @@ export default function WalletView() {
     };
 
     const handleSetCategory = async (txId: string, category: string) => {
+        if (viewingOther) { toast.error('No puedes modificar la billetera de otro usuario'); return; }
         setEditingTxId(null);
         try {
             const { useAuthStore } = await import('@/store');
@@ -99,11 +164,44 @@ export default function WalletView() {
     };
 
     // FIX-PHASE4 (2026-07-06): Agregar transacción manual
+    // FIX-HYDRATION (2026-07-06): No usar new Date() en useState initializer — causa
+    // hydration mismatch porque server y client pueden calcular fechas distintas si
+    // la petición cruza medianoche UTC. Usar string vacío y llenarlo en useEffect.
     const [showAddModal, setShowAddModal] = useState(false);
     const [addType, setAddType] = useState<'CR' | 'DB'>('DB');
-    const [addForm, setAddForm] = useState({ amount: '', category: 'Otros', note: '', bank: 'BANDEC', date: new Date().toISOString().split('T')[0] });
+    const [addForm, setAddForm] = useState({ amount: '', category: 'Otros', note: '', bank: 'BANDEC', date: '' });
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => {
+        setMounted(true);
+        setAddForm(f => ({ ...f, date: new Date().toISOString().split('T')[0] }));
+    }, []);
+
+    // FIX-CONFIRM-DIALOG (2026-07-06): Diálogo custom en lugar de window.confirm()
+    // window.confirm() abre una ventana nativa del navegador que rompe la UX.
+    const [confirmDialog, setConfirmDialog] = useState<{
+        open: boolean;
+        title: string;
+        message: string;
+        confirmLabel: string;
+        variant: 'danger' | 'default';
+        onConfirm: () => void;
+    }>({ open: false, title: '', message: '', confirmLabel: '', variant: 'default', onConfirm: () => {} });
+
+    const requestConfirm = (opts: { title: string; message: string; confirmLabel?: string; variant?: 'danger' | 'default'; onConfirm: () => void }) => {
+        setConfirmDialog({
+            open: true,
+            title: opts.title,
+            message: opts.message,
+            confirmLabel: opts.confirmLabel || 'Confirmar',
+            variant: opts.variant || 'default',
+            onConfirm: opts.onConfirm,
+        });
+    };
+
+    const closeConfirm = () => setConfirmDialog(d => ({ ...d, open: false }));
 
     const handleAddTransaction = async () => {
+        if (viewingOther) { toast.error('No puedes modificar la billetera de otro usuario'); return; }
         if (!addForm.amount || parseFloat(addForm.amount) <= 0) { toast.error('Monto inválido'); return; }
         try {
             const { useAuthStore } = await import('@/store');
@@ -131,38 +229,56 @@ export default function WalletView() {
     };
 
     // FIX-PHASE5 (2026-07-06): Eliminar transacción
-    const handleDeleteTransaction = async (txId: string) => {
-        if (!confirm('¿Eliminar esta transacción?')) return;
-        try {
-            const { useAuthStore } = await import('@/store');
-            const token = useAuthStore.getState().token;
-            const res = await fetch(`/api/wallet/transaction?id=${txId}`, {
-                method: 'DELETE',
-                headers: token ? { Authorization: `Bearer ${token}` } : {},
-            });
-            if (!res.ok) throw new Error('Error');
-            toast.success('Transacción eliminada');
-            fetchData();
-        } catch { toast.error('Error al eliminar'); }
+    const handleDeleteTransaction = (txId: string) => {
+        if (viewingOther) { toast.error('No puedes modificar la billetera de otro usuario'); return; }
+        requestConfirm({
+            title: 'Eliminar transacción',
+            message: '¿Seguro que quieres eliminar esta transacción? Esta acción no se puede deshacer.',
+            confirmLabel: 'Eliminar',
+            variant: 'danger',
+            onConfirm: async () => {
+                closeConfirm();
+                try {
+                    const { useAuthStore } = await import('@/store');
+                    const token = useAuthStore.getState().token;
+                    const res = await fetch(`/api/wallet/transaction?id=${txId}`, {
+                        method: 'DELETE',
+                        headers: token ? { Authorization: `Bearer ${token}` } : {},
+                    });
+                    if (!res.ok) throw new Error('Error');
+                    toast.success('Transacción eliminada');
+                    fetchData();
+                } catch { toast.error('Error al eliminar'); }
+            },
+        });
     };
 
-    // FIX-PHASE6 (2026-07-06): Reiniciar/limpiar BD
+    // FIX-PHASE6 (2026-07-06): Reiniciar/limpiar BD — ahora con diálogo custom
     const [isResetting, setIsResetting] = useState(false);
-    const handleReset = async () => {
-        if (!confirm('¿Borrar TODAS las transacciones y cuentas? Esta acción no se puede deshacer.')) return;
-        setIsResetting(true);
-        try {
-            const { useAuthStore } = await import('@/store');
-            const token = useAuthStore.getState().token;
-            const res = await fetch('/api/wallet/reset', {
-                method: 'DELETE',
-                headers: token ? { Authorization: `Bearer ${token}` } : {},
-            });
-            if (!res.ok) throw new Error('Error');
-            toast.success('Datos eliminados. Importa un .trm para comenzar de nuevo.');
-            setData(null);
-        } catch { toast.error('Error al reiniciar'); }
-        finally { setIsResetting(false); }
+    const handleReset = () => {
+        if (viewingOther) { toast.error('No puedes reiniciar la billetera de otro usuario'); return; }
+        requestConfirm({
+            title: 'Reiniciar billetera',
+            message: 'Se borrarán TODAS las transacciones y cuentas. Esta acción no se puede deshacer. ¿Continuar?',
+            confirmLabel: 'Borrar todo',
+            variant: 'danger',
+            onConfirm: async () => {
+                closeConfirm();
+                setIsResetting(true);
+                try {
+                    const { useAuthStore } = await import('@/store');
+                    const token = useAuthStore.getState().token;
+                    const res = await fetch('/api/wallet/reset', {
+                        method: 'DELETE',
+                        headers: token ? { Authorization: `Bearer ${token}` } : {},
+                    });
+                    if (!res.ok) throw new Error('Error');
+                    toast.success('Datos eliminados. Importa un .trm para comenzar de nuevo.');
+                    setData(null);
+                } catch { toast.error('Error al reiniciar'); }
+                finally { setIsResetting(false); }
+            },
+        });
     };
 
     const fmt = (v: number) => new Intl.NumberFormat('es-CU', { style: 'currency', currency: 'CUP', maximumFractionDigits: 2 }).format(v || 0);
@@ -190,8 +306,7 @@ export default function WalletView() {
         return txs;
     }, [data, filterBank, searchQuery]);
 
-    if (loading) return <div className="flex items-center justify-center h-full"><div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>;
-    if (!data) return <div className="flex flex-col items-center justify-center h-full gap-4"><Building2 className="w-12 h-12 text-muted-foreground/30" /><p className="text-sm text-muted-foreground">Sin datos. Importa un respaldo .trm.</p><Button onClick={() => setIsImporting(true)}><Upload className="w-4 h-4 mr-2" /> Importar</Button></div>;
+
 
     // SVG Donut chart
     const donutSegments = expenseCats.slice(0, 8);
@@ -224,14 +339,61 @@ export default function WalletView() {
                         <div><h1 className="text-sm font-black leading-none">Billetera</h1><p className="text-[8px] text-muted-foreground font-bold uppercase tracking-wider mt-0.5">Finanzas</p></div>
                     </div>
                     <div className="flex items-center gap-2">
-                        <Button onClick={() => setIsImporting(true)} size="sm" className="h-8 px-3 text-[10px] font-black uppercase shrink-0"><Upload className="w-3.5 h-3.5 mr-1" /> .trm</Button>
-                        {data && data.transactions.length > 0 && (
-                            <Button onClick={handleReset} disabled={isResetting} variant="ghost" size="sm" className="h-8 px-2 text-[10px] font-bold uppercase text-destructive hover:bg-destructive/10" title="Borrar todos los datos">
-                                {isResetting ? <div className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" /> : <X className="w-3.5 h-3.5" />}
+                        {/* FIX-ADMIN-VIEW: botón importar deshabilitado si el admin está viendo otra billetera */}
+                        <Button
+                            onClick={() => setIsImporting(true)}
+                            disabled={viewingOther}
+                            size="sm"
+                            className="h-8 px-3 text-[10px] font-black uppercase shrink-0"
+                            title={viewingOther ? 'Vuelve a tu billetera para importar' : 'Importar .trm'}
+                        >
+                            <Upload className="w-3.5 h-3.5 mr-1" /> .trm
+                        </Button>
+                        {data && data.transactions.length > 0 && !viewingOther && (
+                            <Button onClick={handleReset} disabled={isResetting} variant="ghost" size="sm" className="h-8 px-3 text-[10px] font-black uppercase text-destructive hover:bg-destructive/10 gap-1" title="Reiniciar billetera">
+                                {isResetting ? <div className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" /> : <><Trash2 className="w-3.5 h-3.5" /> Reiniciar</>}
                             </Button>
                         )}
                     </div>
                 </div>
+
+                {/* FIX-ADMIN-VIEW (2026-07-06): select de usuarios solo para admins.
+                    Por defecto carga la billetera del propio admin (value="self").
+                    Si selecciona otro usuario, se carga su billetera en modo lectura.
+                    Los no-admin NO ven este control. */}
+                {isAdmin && walletUsers.length > 0 && (
+                    <div className="flex items-center gap-2 px-4 pb-2">
+                        <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase text-muted-foreground shrink-0">
+                            <Users className="w-3.5 h-3.5" />
+                            <span>Viendo:</span>
+                        </div>
+                        <select
+                            value={targetUserId || 'self'}
+                            onChange={e => handleUserChange(e.target.value)}
+                            className="flex-1 h-8 px-2 bg-muted/20 border border-border/30 rounded-lg text-xs font-bold"
+                        >
+                            <option value="self">Mi billetera ({currentUser?.id?.slice(0, 8)}...)</option>
+                            {walletUsers
+                                .filter(u => u.user_id !== currentUser?.id)
+                                .map(u => (
+                                    <option key={u.user_id} value={u.user_id}>
+                                        {u.full_name} — {u.email} ({u.transactions_count} tx)
+                                    </option>
+                                ))}
+                        </select>
+                    </div>
+                )}
+
+                {/* Banner modo lectura cuando admin ve otra billetera */}
+                {viewingOther && (
+                    <div className="flex items-center gap-2 px-4 py-2 bg-amber-500/10 border-y border-amber-500/30 text-amber-600 dark:text-amber-400">
+                        <Eye className="w-3.5 h-3.5 shrink-0" />
+                        <p className="text-[10px] font-bold uppercase">
+                            Modo lectura — viendo billetera de otro usuario. Las acciones de escritura están deshabilitadas.
+                        </p>
+                    </div>
+                )}
+
                 <div className="flex items-center gap-0.5 px-2 pb-2 overflow-x-auto no-scrollbar">
                     {([{'id':'home','l':'Inicio','i':Wallet},{'id':'movimientos','l':'Movimientos','i':BarChart3},{'id':'categorias','l':'Categorías','i':Tag},{'id':'reportes','l':'Reportes','i':Calendar}] as const).map(t => (
                         <button key={t.id} onClick={() => setViewMode(t.id)} className={cn("flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase whitespace-nowrap shrink-0", viewMode === t.id ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground hover:bg-muted/50")}>
@@ -242,8 +404,23 @@ export default function WalletView() {
             </div>
 
             <div className="flex-1 overflow-y-auto no-scrollbar px-4 py-4 pb-24 max-w-2xl mx-auto w-full">
+                {/* FIX-IMPORT-MODAL (2026-07-06): estados de loading y vacío renderizados
+                    inline en lugar de early return, para que el modal de importación
+                    y los diálogos puedan abrirse incluso cuando data es null. */}
+                {loading && (
+                    <div className="flex items-center justify-center h-full py-20">
+                        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                    </div>
+                )}
+                {!loading && !data && (
+                    <div className="flex flex-col items-center justify-center h-full py-20 gap-4">
+                        <Building2 className="w-12 h-12 text-muted-foreground/30" />
+                        <p className="text-sm text-muted-foreground text-center">Sin datos todavía.<br />Importa un respaldo <span className="font-bold">.trm</span> de Transfermóvil para empezar.</p>
+                        <Button onClick={() => setIsImporting(true)}><Upload className="w-4 h-4 mr-2" /> Importar .trm</Button>
+                    </div>
+                )}
                 {/* ═══ HOME (estilo Monefy) ═══ */}
-                {viewMode === 'home' && (
+                {viewMode === 'home' && data && (
                     <div className="space-y-4">
                         {/* Donut chart central */}
                         <Card className="rounded-3xl border-border/30 p-6 flex flex-col items-center">
@@ -293,7 +470,7 @@ export default function WalletView() {
                 )}
 
                 {/* ═══ MOVIMIENTOS ═══ */}
-                {viewMode === 'movimientos' && (
+                {viewMode === 'movimientos' && data && (
                     <div className="space-y-3">
                         <div className="flex flex-wrap items-center gap-2">
                             <div className="relative flex-1 min-w-[140px]">
@@ -327,7 +504,17 @@ export default function WalletView() {
                                         ) : (
                                             <Badge variant="outline" className="text-[7px] font-black uppercase cursor-pointer hover:bg-primary/10" onClick={() => setEditingTxId(tx.id)}>{tx.manual_category || tx.category}</Badge>
                                         )}
-                                        <span className="text-[8px] text-muted-foreground/60">{tx.service_type}</span>
+                                        <div className="flex items-center gap-1.5">
+                                            <span className="text-[8px] text-muted-foreground/60">{tx.service_type}</span>
+                                            <button
+                                                onClick={() => handleDeleteTransaction(tx.id)}
+                                                className="text-muted-foreground/50 hover:text-destructive transition-colors p-0.5"
+                                                aria-label="Eliminar transacción"
+                                                title="Eliminar"
+                                            >
+                                                <Trash2 className="w-3 h-3" />
+                                            </button>
+                                        </div>
                                     </div>
                                 </Card>
                             ))}
@@ -336,7 +523,7 @@ export default function WalletView() {
                 )}
 
                 {/* ═══ CATEGORÍAS ═══ */}
-                {viewMode === 'categorias' && (
+                {viewMode === 'categorias' && data && (
                     <div className="space-y-4">
                         <Card className="rounded-2xl border-border/30 p-4">
                             <h2 className="text-xs font-black uppercase tracking-widest flex items-center gap-2 mb-3"><TrendingDown className="w-4 h-4 text-red-500" /> Gastos</h2>
@@ -370,7 +557,7 @@ export default function WalletView() {
                 )}
 
                 {/* ═══ REPORTES ═══ */}
-                {viewMode === 'reportes' && (
+                {viewMode === 'reportes' && data && (
                     <div className="space-y-4">
                         <Card className="rounded-2xl border-border/30 p-4">
                             <h2 className="text-xs font-black uppercase tracking-widest mb-3">Mensual</h2>
@@ -403,21 +590,55 @@ export default function WalletView() {
                             <h2 className="text-sm font-black uppercase">Importar .trm</h2>
                             <button onClick={() => setIsImporting(false)} className="text-muted-foreground hover:text-foreground"><X className="w-4 h-4" /></button>
                         </div>
-                        <div onDragOver={e => { e.preventDefault(); setIsDragging(true); }} onDragLeave={() => setIsDragging(false)} onDrop={e => { e.preventDefault(); setIsDragging(false); const f = e.dataTransfer.files?.[0]; if (f?.name.endsWith('.trm')) handleTrmFile(f); else toast.error('Debe ser .trm'); }}
-                            className={cn("border-2 border-dashed rounded-2xl p-8 text-center transition-all cursor-pointer", isDragging ? "border-primary bg-primary/10" : "border-border/40 hover:border-primary/40")}
-                            onClick={() => document.getElementById('trm-file-input')?.click()}>
-                            {importingTrm ? (
-                                <div className="space-y-2"><div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" /><p className="text-xs font-bold uppercase text-muted-foreground">Descifrando y guardando...</p></div>
-                            ) : (
-                                <div className="space-y-2"><Smartphone className="w-8 h-8 mx-auto text-muted-foreground/50" /><p className="text-xs font-bold uppercase">Arrastra tu .trm</p><p className="text-[10px] text-muted-foreground">Transfermóvil → Respaldo → Exportar</p></div>
+                        {/* FIX-IMPORT-CLICK (2026-07-06): el <input type="file"> debe estar FUERA
+                            del div clickable para evitar que el click se cancele o haga loop.
+                            Antes estaba dentro del div con onClick, lo que causaba que el
+                            navegador a veces no abriera el selector de archivos. */}
+                        <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept=".trm"
+                            onChange={e => { const f = e.target.files?.[0]; if (f?.name.endsWith('.trm')) handleTrmFile(f); e.target.value = ''; }}
+                            className="hidden"
+                        />
+                        <div
+                            onDragOver={e => { e.preventDefault(); setIsDragging(true); }}
+                            onDragLeave={() => setIsDragging(false)}
+                            onDrop={e => {
+                                e.preventDefault();
+                                setIsDragging(false);
+                                const f = e.dataTransfer.files?.[0];
+                                if (f?.name.endsWith('.trm')) handleTrmFile(f);
+                                else toast.error('Debe ser un archivo .trm');
+                            }}
+                            className={cn(
+                                "border-2 border-dashed rounded-2xl p-8 text-center transition-all cursor-pointer",
+                                isDragging ? "border-primary bg-primary/10" : "border-border/40 hover:border-primary/40"
                             )}
-                            <input id="trm-file-input" type="file" accept=".trm" onChange={e => { const f = e.target.files?.[0]; if (f?.name.endsWith('.trm')) handleTrmFile(f); }} className="hidden" />
+                            onClick={() => fileInputRef.current?.click()}
+                        >
+                            {importingTrm ? (
+                                <div className="space-y-2">
+                                    <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
+                                    <p className="text-xs font-bold uppercase text-muted-foreground">Descifrando y guardando...</p>
+                                </div>
+                            ) : (
+                                <div className="space-y-2">
+                                    <Smartphone className="w-8 h-8 mx-auto text-muted-foreground/50" />
+                                    <p className="text-xs font-bold uppercase">Arrastra tu .trm</p>
+                                    <p className="text-[10px] text-muted-foreground">Transfermóvil → Respaldo → Exportar</p>
+                                </div>
+                            )}
                         </div>
                     </Card>
                 </div>
             )}
 
-            {/* FIX-PHASE4: Botones flotantes + y - estilo Monefy Pro */}
+            {/* FIX-PHASE4: Botones flotantes + y - estilo Monefy Pro
+                FIX-EMPTY-STATE: solo mostrar cuando hay data, para que no se solapen
+                con el botón "Importar .trm" del estado vacío.
+                FIX-ADMIN-VIEW: ocultar cuando el admin está viendo otra billetera (modo lectura). */}
+            {data && !viewingOther && (
             <div className="fixed bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-3 z-50">
                 <button onClick={() => { setAddType('DB'); setShowAddModal(true); }}
                     className="w-14 h-14 rounded-full bg-red-500 text-white shadow-xl flex items-center justify-center hover:scale-110 transition-transform"
@@ -436,6 +657,7 @@ export default function WalletView() {
                     <span className="text-2xl font-black">+</span>
                 </button>
             </div>
+            )}
 
             {/* FIX-PHASE4: Modal agregar transacción */}
             {showAddModal && (
@@ -478,6 +700,61 @@ export default function WalletView() {
                             <Button onClick={handleAddTransaction} className={cn("w-full h-11 rounded-xl font-black uppercase text-xs", addType === 'CR' ? "bg-emerald-500" : "bg-red-500")}>
                                 {addType === 'CR' ? 'Agregar Ingreso' : 'Agregar Gasto'}
                             </Button>
+                        </div>
+                    </Card>
+                </div>
+            )}
+
+            {/* FIX-CONFIRM-DIALOG (2026-07-06): Diálogo de confirmación custom
+                en lugar de window.confirm(). Estilizado, accesible y con botones claros. */}
+            {confirmDialog.open && (
+                <div
+                    className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-background/90 backdrop-blur-sm"
+                    onClick={closeConfirm}
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="confirm-title"
+                >
+                    <Card
+                        className="w-full max-w-sm rounded-3xl border-border/30 shadow-2xl p-6"
+                        onClick={e => e.stopPropagation()}
+                    >
+                        <div className="flex flex-col items-center text-center gap-3">
+                            <div className={cn(
+                                "w-12 h-12 rounded-full flex items-center justify-center",
+                                confirmDialog.variant === 'danger' ? "bg-destructive/15" : "bg-primary/15"
+                            )}>
+                                <AlertTriangle className={cn(
+                                    "w-6 h-6",
+                                    confirmDialog.variant === 'danger' ? "text-destructive" : "text-primary"
+                                )} />
+                            </div>
+                            <h2 id="confirm-title" className="text-sm font-black uppercase">
+                                {confirmDialog.title}
+                            </h2>
+                            <p className="text-xs text-muted-foreground">
+                                {confirmDialog.message}
+                            </p>
+                            <div className="flex gap-2 w-full mt-2">
+                                <Button
+                                    variant="outline"
+                                    onClick={closeConfirm}
+                                    className="flex-1 h-10 rounded-xl text-xs font-black uppercase"
+                                >
+                                    Cancelar
+                                </Button>
+                                <Button
+                                    onClick={() => { confirmDialog.onConfirm(); }}
+                                    className={cn(
+                                        "flex-1 h-10 rounded-xl text-xs font-black uppercase",
+                                        confirmDialog.variant === 'danger'
+                                            ? "bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+                                            : "bg-primary hover:bg-primary/90"
+                                    )}
+                                >
+                                    {confirmDialog.confirmLabel}
+                                </Button>
+                            </div>
                         </div>
                     </Card>
                 </div>

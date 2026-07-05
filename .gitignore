@@ -97,3 +97,13 @@ upload/
 # VLM debug scripts
 scripts/analyze-screenshot*.ts
 prisma/
+
+# Wallet test/debug scripts (contain Supabase credentials)
+scripts/test_trm_import.*
+scripts/analyze_trm*.ts
+scripts/clean_wallet_db.js
+scripts/clean_test_data.js
+scripts/list_users.js
+scripts/apply_*.js
+scripts/verify_policies.js
+

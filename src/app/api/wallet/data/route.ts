@@ -18,6 +18,18 @@ async function getHandler(req: NextRequest) {
     const session = await getServerSession(req);
     if (!session) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
 
+    // FIX-ADMIN-VIEW (2026-07-06): si el usuario es admin, puede pasar ?userId=X
+    // para ver la billetera de otro usuario. Por defecto carga la suya propia.
+    // Los no-admin NO pueden usar este parámetro — se ignora y siempre se usa
+    // su propio user_id (defensa en profundidad).
+    const requestedUserId = req.nextUrl.searchParams.get('userId');
+    const isAdmin = (session.user as any).role === 'admin' ||
+                    ((session.user as any).roles || []).includes('admin');
+    const targetUserId = (isAdmin && requestedUserId) ? requestedUserId : session.user.id;
+    if (isAdmin && requestedUserId && requestedUserId !== session.user.id) {
+      logger.info('WALLET', `Admin ${session.user.id} viewing wallet of ${requestedUserId}`);
+    }
+
     const { createClient } = await import('@supabase/supabase-js');
     const admin = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -26,10 +38,13 @@ async function getHandler(req: NextRequest) {
     );
 
     // Cuentas
+    // FIX-SECURITY (2026-07-06): no exponer account_full (número de cuenta completo
+    // descifrado) al cliente. Solo el dueño debería verlo, y de cualquier forma
+    // el frontend solo usa account_number (mascarado ****1234).
     const { data: accounts, error: accErr } = await admin
       .from('wallet_accounts')
-      .select('*')
-      .eq('user_id', session.user.id)
+      .select('id,user_id,source,bank,account_number,description,movil,tipo_cuenta,current_balance,last_balance_date,currency,created_at,updated_at')
+      .eq('user_id', targetUserId)
       .order('bank', { ascending: true });
 
     if (accErr) {
@@ -41,7 +56,7 @@ async function getHandler(req: NextRequest) {
     const { data: transactions, error: txErr } = await admin
       .from('wallet_transactions')
       .select('*')
-      .eq('user_id', session.user.id)
+      .eq('user_id', targetUserId)
       .order('date', { ascending: false })
       .limit(500);
 
@@ -77,14 +92,35 @@ async function getHandler(req: NextRequest) {
     }
 
     // Saldos reales desde wallet_accounts
+    // FIX-SALDOS-SOURCE (2026-07-06): calcular current_balance por banco
+    // directamente desde las transacciones (income - expenses), NO desde
+    // wallet_accounts.current_balance (que suele estar en 0 porque el 98%
+    // de las transacciones del .trm no tienen campo "cuenta" y no se pueden
+    // asociar a una cuenta individual).
     let totalRealBalance = 0;
+    for (const b of Object.keys(banks)) {
+      // Saldo neto por banco = ingresos - gastos
+      banks[b].current_balance = banks[b].income - banks[b].expenses;
+      totalRealBalance += banks[b].current_balance;
+    }
+
+    // Para mostrar el card de cada cuenta, usar el saldo del banco al que pertenece
     for (const acc of accounts || []) {
-      if (banks[acc.bank]) {
-        banks[acc.bank].current_balance = parseFloat(acc.current_balance) || 0;
-        banks[acc.bank].last_balance_date = acc.last_balance_date;
-        banks[acc.bank].card = acc.account_number;
+      const bankName = acc.bank || 'DESCONOCIDO';
+      if (banks[bankName]) {
+        banks[bankName].card = acc.account_number;
+        banks[bankName].last_balance_date = acc.last_balance_date;
+      } else {
+        // Cuenta sin transacciones — crear entrada con saldo 0
+        banks[bankName] = {
+          income: 0,
+          expenses: 0,
+          current_balance: 0,
+          transaction_count: 0,
+          card: acc.account_number,
+          last_balance_date: acc.last_balance_date,
+        };
       }
-      totalRealBalance += parseFloat(acc.current_balance) || 0;
     }
 
     return NextResponse.json({
@@ -99,6 +135,13 @@ async function getHandler(req: NextRequest) {
       banks,
       categories,
       monthly,
+      // FIX-ADMIN-VIEW: metadatos para que el frontend sepa qué usuario está viendo
+      viewer: {
+        is_admin: isAdmin,
+        self_id: session.user.id,
+        target_id: targetUserId,
+        is_own: targetUserId === session.user.id,
+      },
     });
   } catch (error: unknown) {
     logger.error('WALLET', `Data fetch error: ${error instanceof Error ? error.message : String(error)}`);
