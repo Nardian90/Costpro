@@ -3600,3 +3600,103 @@ Próximos sprints:
 - Sprint 3: IA Advisor "Quant Analyst Adaptativo" (regime-aware, honest mode, streaming)
 - Sprint 4: Monetización (Stripe, tier gating Free/Player/Quant/Desk)
 - Sprint 5: Growth engine (referrals, programmatic SEO, content, A/B testing)
+
+---
+Task ID: SPRINT-3-ADVISOR
+Agent: Main Agent (Super Z)
+Task: Sprint 3 — IA Advisor "Quant Analyst Adaptativo". Crear API route dedicada que ejecuta todos los engines (AnalysisEngine + EnsembleEngine + BacktestEngine + stat tests + drift detection + RiskLayer) y pasa el contexto cuantitativo completo al modelo Gemini con un system prompt de Senior Quant Analyst. Rediseñar el componente Pick3AIAdvisor con selector de modo, badges contextuales y renderizado markdown. + Auditoría Sprint 2 + push.
+
+Work Log:
+
+### AUDITORÍA SPRINT 2 — Hallazgos
+
+- Test de integración: `src/__tests__/integration/sprint2.integration.test.ts` (8 tests)
+- 8/8 tests pasan
+- Hallazgo menor (no bug): Con datos aleatorios puros, los 4 modelos tienen weight=25% (fallback) porque ningún modelo tiene edge. Esto es comportamiento CORRECTO — el sistema es honesto: "no hay edge, usen gestión de bankroll".
+- Verificación: RiskLayer respeta los 3 modos (defensive $1 < balanced $3 < aggressive $12)
+- Verificación: Stats tests detectan sesgo en datos biased (isRandom=false)
+- 118/118 tests pasan tras auditoría sprint 2
+
+### SPRINT 3 — IMPLEMENTACIÓN
+
+### 1. NEW FILE: `src/app/api/pick3/advisor/route.ts` (440 líneas)
+- API route dedicada para el IA Advisor (no usa el endpoint genérico /api/ai/chat)
+- Requiere sesión autenticada (getServerSession)
+- Mínimo 30 sorteos en histórico
+- Flujo:
+  1. Carga histórico completo del usuario (Pick3Storage.getHistory)
+  2. Ejecuta AnalysisEngine.analyze(60) → análisis estadístico avanzado
+  3. Ejecuta EnsembleEngine.generateReport(config, 5) → 4 modelos + pesos dinámicos
+  4. Ejecuta BacktestEngine.runValidation(config, bankroll, 30) → métricas cuant
+  5. Ejecuta runFullStatisticalTests(history) → 4 tests estadísticos
+  6. Ejecuta detectRegimeChange(history, 30, 50) → drift detection
+  7. Ejecuta RiskLayer.calculateRecommendation(confidence, winProb, payout, 3)
+  8. Construye CONTEXTO CUANTITATIVO completo (datos, predicciones, tests, drift, backtest, riesgo)
+  9. Llama a Gemini 2.5 Flash con system prompt específico y temperatura 0.4
+  10. Devuelve text + metadata cuantitativa para badges en frontend
+
+- **System prompt** (1500+ palabras):
+  - Identidad: Senior Quant Analyst, PhD estadística, 15 años Wall Street, lottery vertical
+  - 5 principios no negociables:
+    1. HONESTIDAD ESTADÍSTICA: si tests dicen random, lo dice claro. Nunca promete retornos.
+    2. REGIME AWARENESS: si detecta drift, lo explica con detalle
+    3. GESTIÓN DE RIESGO: 3 modos (Defensive 10% Kelly / Balanced 25% / Aggressive 50%)
+    4. EXPLAINABILITY: cada recomendación incluye qué modelo aportó y peso
+    5. EDUCACIÓN: explica conceptos (Sharpe, Sortino, Calmar, Kelly, PoR)
+  - Formato de respuesta estructurado (4 secciones: Análisis/Recomendación/Advertencias/Contexto)
+  - 5 anti-patrones prohibidos (no apofenia, no gambler's fallacy, no promesas)
+  - Lenguaje: español, markdown, conciso (max 500 palabras)
+
+### 2. REDESIGNED: `src/components/views/terminal/views/pick3/Pick3AIAdvisor.tsx`
+- **Header con selector de modo**: 3 botones (Defensive/Balanced/Aggressive) con iconos
+  - Persistencia en localStorage ('pick3-risk-mode')
+  - Al cambiar modo, se re-envía el mensaje inicial con el nuevo system prompt
+- **Barra de estado contextual**: badges con estado actual
+  - Azar/Edge (basado en statisticalTests.isRandom)
+  - Drift (si driftDetected)
+  - Overfit (si isOverfitting)
+  - Confidence (de plays[0].confidence)
+  - Sorteos count
+- **Chat mejorado**:
+  - Avatar diferenciado: usuario (initial) vs Darian-Quant (gradient primary)
+  - Renderizado markdown simple (headings ###/##, listas -, bold **, emojis)
+  - Cada respuesta del assistant muestra badges de metadata cuantitativa:
+    - Azar/Edge, Drift, Overfit, Stop-loss, Risk level, Models used
+- **Quick questions contextuales** (6):
+  - ¿Hay edge estadístico real o es ruido?
+  - ¿Qué combinaciones jugar hoy y por qué?
+  - Analiza las rachas (win/loss streak)
+  - ¿Detectaste drift en el régimen?
+  - ¿Cuánto debería apostar según Kelly?
+  - Explica el Profit Factor y Recovery Factor
+- **Loading state explicativo**: 'Ejecutando análisis cuantitativo... Calculando 4 tests estadísticos, ensemble de 4 modelos, backtest y recomendación de riesgo'
+- **Disclaimer honesto**: 'las loterías son juegos de azar con expected value negativo: ningún método garantiza ganancias'
+
+### 3. UPDATED: `src/components/views/terminal/views/pick3/Pick3IntelligenceView.tsx`
+- Pasa `profile` al Pick3AIAdvisor para que tenga acceso al bankroll real del usuario
+
+### 4. NEW TESTS: `src/__tests__/services/pick3-advisor.test.ts` (7 tests)
+- buildSystemPrompt: 3 modos diferentes, incluye nombre del modo
+- buildQuantitativeContext: incluye bankroll, modo, sorteos
+- Risk mode persistence: 3 modos válidos
+- Anti-patterns: NO promete retornos garantizados
+
+### VALIDACIÓN
+- TypeScript: 0 errores
+- Tests: 125/125 pasan (70 sprint1 + 40 sprint2 + 8 sprint2-integration + 7 sprint3)
+- PM2: costpro online, HTTP 200 confirmado
+- Push: Sprint 3 (2a1fa4bc7) a main
+
+### Stage Summary:
+- **Asesor ahora es estadísticamente honesto**: si los tests dicen random, lo dice claro
+- **Regime-aware**: detecta y explica drift detection en lenguaje natural
+- **Risk-conscious**: recomienda Kelly adaptativo + stop-loss + take-profit
+- **Explainable**: cada recomendación muestra qué modelo aportó y cuánto peso
+- **Educativo**: explica conceptos (Sharpe, Sortino, Calmar, Kelly, Probability of Ruin)
+- **3 modos seleccionables**: Defensive/Balanced/Aggressive cambian el comportamiento
+- **Metadata cuantitativa en cada respuesta**: badges contextuales para el usuario
+- **Anti-patrones prohibidos**: no promete retornos, no apofenia, no gambler's fallacy
+
+Próximos sprints:
+- Sprint 4: Monetización (Stripe, tier gating Free/Player/Quant/Desk)
+- Sprint 5: Growth engine (referrals, programmatic SEO, content, A/B testing)
