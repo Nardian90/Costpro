@@ -71,8 +71,8 @@ describe('SPRINT-1 INTEGRATION AUDIT', () => {
 
     expect(result.cagr).toBeDefined();
     expect(typeof result.cagr).toBe('number');
-    expect(isFinite(result.cagr)).toBe(true);
-    console.log(`[AUDIT] CAGR: ${result.cagr.toFixed(2)}%`);
+    expect(isFinite(result.cagr as number)).toBe(true);
+    console.log(`[AUDIT] CAGR: ${(result.cagr ?? 0).toFixed(2)}%`);
     console.log(`[AUDIT] Total Return: ${result.totalReturn?.toFixed(2)}%`);
 
     if (result.cagrConfidenceInterval) {
