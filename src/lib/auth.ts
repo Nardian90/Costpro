@@ -52,7 +52,35 @@ export async function getServerSession(request: NextRequest) {
         const { data: { user }, error } = await supabase.auth.getUser(token);
 
         if (!error && user) {
-          return { user, token };
+          // FIX-ADMIN-ROLE (2026-07-05): obtener el role de la tabla profiles
+          // El JWT de Supabase Auth NO incluye el role — viene de profiles.
+          // Sin esto, session.user.role siempre es undefined para usuarios reales
+          // y el admin bypass del Asesor IA no funciona.
+          try {
+            const { supabase: supabaseAdmin } = await import('@/lib/supabaseClient');
+            const adminClient = (await import('@supabase/supabase-js')).createClient(
+              process.env.NEXT_PUBLIC_SUPABASE_URL!,
+              process.env.SUPABASE_SERVICE_ROLE_KEY!,
+              { auth: { persistSession: false, autoRefreshToken: false } }
+            );
+            const { data: profile } = await adminClient
+              .from('profiles')
+              .select('role')
+              .eq('id', user.id)
+              .maybeSingle();
+
+            return {
+              user: {
+                ...user,
+                role: profile?.role || 'user',
+                roles: profile?.role ? [profile.role] : ['user'],
+              },
+              token,
+            };
+          } catch {
+            // Si no podemos obtener el profile, retornar sin role
+            return { user, token };
+          }
         }
 
         // FIX-AUDIT-AUTH-1: FAIL CLOSED on any error.

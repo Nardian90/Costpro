@@ -119,15 +119,19 @@ export function Pick3Visuals({ analysis, history }: Pick3VisualsProps) {
   );
 
   // FIX-A11Y (2026-07-05): colores que funcionan en ambos themes (light/dark)
-  // Usar currentColor para que herede del texto y hsl con opacity para grid
+  // FIX-CHART-COLOR (2026-07-05): usar verde (success) para todas las barras
+  // y currentColor con buena opacidad para ejes. Antes coldColor era casi negro en dark theme.
   const gridStroke = 'currentColor';
   const gridOpacity = 0.1;
   const axisStroke = 'currentColor';
   const tooltipBg = 'hsl(var(--card))';
   const tooltipBorder = 'hsl(var(--border))';
   const tooltipText = 'hsl(var(--card-foreground))';
-  const hotColor = 'hsl(var(--primary))';
-  const coldColor = 'hsl(var(--muted-foreground) / 0.3)';
+  // Verde para todas las barras — funciona bien en light y dark theme
+  const hotColor = 'hsl(var(--success))';
+  const coldColor = 'hsl(var(--success) / 0.5)'; // verde más tenue para no-hot
+  // Label de barras: usar color del foreground (blanco en dark, negro en light)
+  const labelColor = 'hsl(var(--foreground))';
 
   if (!mounted) return null;
 
@@ -145,6 +149,8 @@ export function Pick3Visuals({ analysis, history }: Pick3VisualsProps) {
               <Tooltip
                 cursor={{ fill: 'currentColor', fillOpacity: 0.05 }}
                 contentStyle={{ backgroundColor: tooltipBg, border: `1px solid ${tooltipBorder}`, borderRadius: '12px', color: tooltipText }}
+                labelStyle={{ color: labelColor }}
+                itemStyle={{ color: tooltipText }}
               />
               <Bar isAnimationActive={false} dataKey="frequency" radius={[4, 4, 0, 0]}>
                 {freqData.map((entry, index) => (
@@ -167,6 +173,8 @@ export function Pick3Visuals({ analysis, history }: Pick3VisualsProps) {
               <Tooltip
                 cursor={{ fill: 'currentColor', fillOpacity: 0.05 }}
                 contentStyle={{ backgroundColor: tooltipBg, border: `1px solid ${tooltipBorder}`, borderRadius: '12px', color: tooltipText }}
+                labelStyle={{ color: labelColor }}
+                itemStyle={{ color: tooltipText }}
               />
               <Bar isAnimationActive={false} dataKey="count" fill="hsl(var(--success))" radius={[0, 4, 4, 0]} />
             </BarChart>
