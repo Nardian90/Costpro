@@ -201,22 +201,36 @@ export default function Pick3IntelligenceView() {
       setLedger(ledgerData || []);
 
       if (hist.length > 0) {
-        const engine = new Pick3Engine(hist);
-        const advAnalysis = engine.analyzeAdvanced(60);
-        setAnalysis(advAnalysis);
+        // FIX-PERF (2026-07-05): NO ejecutar análisis pesado ni simulación en mount.
+        // Antes se ejecutaban en mount:
+        //   1. Pick3Engine.analyzeAdvanced(60) — Markov + Law of Thirds (pesado)
+        //   2. engine.generateSimulatedPicks() — genera predicciones
+        //   3. runSimulation() — backtest + runFullStatisticalTests + detectRegimeChange
+        // Esto congelaba el navegador por 30-60 segundos.
+        //
+        // Ahora: solo cargar datos básicos. El análisis y simulación se hacen
+        // lazy cuando el usuario abre cada tab.
 
         const savedConfig = Pick3Storage.getConfig();
         const currentBConfig = savedConfig?.bettingConfig || bConfig;
         if (savedConfig?.bettingConfig) setBConfig(savedConfig.bettingConfig);
 
-        const genPlays = engine.generateSimulatedPicks(currentBConfig);
-        setPlays(genPlays);
+        // FIX-PERF: análisis y predicciones en setTimeout para no bloquear
+        setTimeout(() => {
+          try {
+            const engine = new Pick3Engine(hist);
+            const advAnalysis = engine.analyzeAdvanced(60);
+            setAnalysis(advAnalysis);
 
-        // FIX-PERF (2026-07-05): NO auto-ejecutar simulación con EnsembleEngine en mount.
-        // EnsembleEngine es O(n²) y bloquea el navegador (~105,600 cálculos).
-        // Usar PredictionEngine (ligero) para el auto-load inicial.
-        // El usuario puede re-ejecutar con EnsembleEngine desde el tab Simulación.
-        runSimulation(hist, currentBConfig, false);
+            const genPlays = engine.generateSimulatedPicks(currentBConfig);
+            setPlays(genPlays);
+          } catch (err) {
+            console.error('Error in lazy analysis:', err);
+          }
+        }, 100);
+
+        // FIX-PERF: simulación también lazy — solo si el usuario está en el tab simulation
+        // NO auto-ejecutar en mount
       }
     } catch (err) {
       console.error("Error fetching Pick 3 data:", err);
@@ -224,11 +238,22 @@ export default function Pick3IntelligenceView() {
     } finally {
       setLoading(false);
     }
-  }, [user, runSimulation]);
+  }, [user]);
 
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  // FIX-PERF (2026-07-05): simulación lazy — solo ejecutar cuando el usuario
+  // abre el tab Simulación Y no hay resultados previos
+  useEffect(() => {
+    if (activeTab === 'simulation' && !simResult && history.length >= 60 && !simRunning) {
+      // Usar PredictionEngine (ligero) para el primer load
+      setTimeout(() => {
+        runSimulation(history, bConfig, false);
+      }, 50);
+    }
+  }, [activeTab, simResult, history, bConfig, simRunning, runSimulation]);
 
   const handleSync = async () => {
     setSyncState(s => ({ ...s, isSyncing: true }));

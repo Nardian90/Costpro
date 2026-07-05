@@ -244,14 +244,14 @@ export class Pick3Storage {
 
       logger.info('PICK3', `getHistory: tokenSource=${tokenSource}`);
 
-      // FIX-LIMIT-CANONICO (2026-07-05): traer los 200 registros más recientes.
-      // 200 registros = ~100 días = ~3 meses, suficiente para:
-      //   - Mostrar histórico reciente en la UI
-      //   - Backtest con ventana de 30-60 días (necesita 60+ registros)
-      //   - Análisis estadístico con muestra significativa
-      //   - Predicciones del ensemble con data suficiente
-      // FIX-PERF (2026-07-05): reducido de 500 a 200 para evitar congelamiento del navegador.
-      // 500 registros causaba que EnsembleEngine calibrara 440 iteraciones × 4 modelos = muy lento.
+      // FIX-LIMIT-CANONICO (2026-07-05): traer los 100 registros más recientes.
+      // 100 registros = ~50 días, suficiente para:
+      //   - Mostrar histórico reciente en la UI (50 días × 2 sorteos)
+      //   - Backtest con ventana de 30 días (necesita 60+ registros)
+      //   - Análisis estadístico básico
+      // FIX-PERF (2026-07-05): reducido de 200 a 100 para evitar congelamiento.
+      // detectRegimeChange hace chi-cuadrado por cada posición (n-30 posiciones).
+      // Con 200 registros = 170 chi-cuadrados. Con 100 = 70. Mucho más rápido.
       //
       // ORDEN CANÓNICO:
       // - draw_date DESC (más reciente primero)
@@ -261,7 +261,7 @@ export class Pick3Storage {
         .select('*')
         .order('draw_date', { ascending: false })
         .order('draw_time', { ascending: true })
-        .limit(200);
+        .limit(100);
 
       if (error) {
         logger.error('PICK3', 'Error fetching from Supabase', { error, tokenSource });

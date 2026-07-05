@@ -285,8 +285,11 @@ export class BacktestEngine {
     const por = calculateProbabilityOfRuin(winProbForKelly, initialBankroll, config.payout);
 
     // ====== SPRINT-1-STATS: Tests estadísticos ======
-    const statsTests = runFullStatisticalTests(this.history);
-    const regimeChange = detectRegimeChange(this.history, 30, 50);
+    // FIX-PERF (2026-07-05): usar solo los últimos 100 registros para tests
+    // estadísticos y regime change (suficiente para detectar patrones, mucho más rápido)
+    const statsHistory = this.history.slice(-100);
+    const statsTests = runFullStatisticalTests(statsHistory);
+    const regimeChange = detectRegimeChange(statsHistory, 30, 50);
 
     // ====== Heurística de overfitting ======
     // ROI > 50% + Sharpe > 3 + muestra < 60 trades → MUY sospechoso
