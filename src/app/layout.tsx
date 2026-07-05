@@ -154,10 +154,13 @@ export default async function RootLayout({
         {/* ── SEO: JSON-LD Structured Data (schema.org SoftwareApplication) ──
              Google usa esto para rich snippets en resultados de búsqueda.
              Tipo: SoftwareApplication con subtipo WebApplication.
-             Incluye: nombre, descripción, precio, categoría, oferta, ratings. */}
+             Incluye: nombre, descripción, precio, categoría, oferta, ratings.
+             FIX-HYDRATION (2026-07-05): suppressHydrationWarning para evitar
+             mismatch del nonce (server lo genera vacío, cliente lo tiene real). */}
         <script
           type="application/ld+json"
           nonce={nonce}
+          suppressHydrationWarning
           dangerouslySetInnerHTML={{
             __html: JSON.stringify({
               "@context": "https://schema.org",
