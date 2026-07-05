@@ -318,6 +318,7 @@ export default function Pick3IntelligenceView() {
                plays={plays}
                config={bConfig}
                simResult={simResult}
+               profile={profile}
              />
           </TabsContent>
 
