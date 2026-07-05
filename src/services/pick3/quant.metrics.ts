@@ -129,14 +129,20 @@ function mean(values: number[]): number {
 }
 
 /**
- * Downside deviation solo de los retornos negativos (Sortino)
+ * Downside deviation solo de los retornos negativos (Sortino).
+ *
+ * Correct implementation: divide entre N (total returns), no entre
+ * count of negative returns. Esta es la definición estándar de Sortino.
+ *
+ * Reference: Sortino & Price (1994)
  */
 function downsideDeviation(returns: number[]): number {
-  const downside = returns
+  if (returns.length === 0) return 0;
+  const downsideSquaredSum = returns
     .filter(r => r < SORTINO_MAR)
-    .map(r => Math.pow(r - SORTINO_MAR, 2));
-  if (downside.length === 0) return 0;
-  return Math.sqrt(downside.reduce((a, b) => a + b, 0) / returns.length);
+    .reduce((acc, r) => acc + Math.pow(r - SORTINO_MAR, 2), 0);
+  // Dividir entre N (todos los retornos), no entre count(negativos)
+  return Math.sqrt(downsideSquaredSum / returns.length);
 }
 
 /**
@@ -406,7 +412,14 @@ export function calculateCAGR(
 
 /**
  * Calcula CAGR + intervalo de confianza del 95%.
- * El CI asume distribución normal de retornos (asunción fuerte, pero estándar).
+ *
+ * El CI se calcula bajo la asunción de normalidad de los retornos diarios,
+ * lo cual NO es estrictamente cierto en lotería (distribución altamente
+ * sesgada con saltos discretos). Por eso:
+ *   - Solo devolvemos CI si hay al menos 30 trades (Ley Central del Límite)
+ *   - Si la volatilidad es 0 (todos los PnL iguales), no hay IC
+ *   - Si el CI resultante tiene un rango absurdo (>1000% en valor absoluto),
+ *     lo clampeamos porque no aporta información útil
  */
 export function calculateCAGRWithCI(
   initial: number,
@@ -419,18 +432,29 @@ export function calculateCAGRWithCI(
 
   const returns = trades.map(t => t.pnl);
   const dailyVol = std(returns);
+
+  // Si no hay volatilidad (todos los PnL iguales), no hay IC
+  if (dailyVol === 0) return base;
+
   const annualizedVol = dailyVol * Math.sqrt(TRADING_DAYS_PER_YEAR);
   const yearFraction = days / 365;
 
   // Z = 1.96 para IC 95%
   const z = 1.96;
-  const ciHalfWidth = (annualizedVol * z) / Math.sqrt(yearFraction);
+  const ciHalfWidthDecimal = (annualizedVol * z) / Math.sqrt(yearFraction);
+  // Convertir a puntos porcentuales: ciHalfWidth en decimal → ×100
+  const ciHalfWidthPct = ciHalfWidthDecimal * 100;
+
+  // Sanity check: si el rango es absurdo (>5x el CAGR absoluto o >1000pp),
+  // no devolver IC — los datos no satisfacen la asunción de normalidad
+  const cagrAbs = Math.abs(base.cagr);
+  if (ciHalfWidthPct > Math.max(1000, cagrAbs * 5)) return base;
 
   return {
     ...base,
     ci95: {
-      lower: base.cagr - ciHalfWidth * 100,
-      upper: base.cagr + ciHalfWidth * 100,
+      lower: base.cagr - ciHalfWidthPct,
+      upper: base.cagr + ciHalfWidthPct,
     },
   };
 }
