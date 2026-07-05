@@ -36,7 +36,20 @@ interface ChatMessage {
     isOverfitting?: boolean;
     modelsUsed?: number;
     regimeAlert?: string;
+    // SPRINT-4: usage info
+    usage?: {
+      tier: string;
+      used: number;
+      limit: number;
+      remaining: number;
+      isTrial: boolean;
+      trialDaysLeft?: number;
+      upgradeRequired: boolean;
+    };
   };
+  // SPRINT-4: upgrade required flag
+  upgradeRequired?: boolean;
+  suggestedTier?: string;
 }
 
 type RiskMode = 'defensive' | 'balanced' | 'aggressive';
@@ -90,6 +103,18 @@ export default function Pick3AIAdvisor({
         }),
       });
 
+      if (res.status === 402) {
+        // SPRINT-4: Usage limit reached
+        const errData = await res.json().catch(() => ({}));
+        setMessages([{
+          role: 'assistant',
+          content: `## ⚠️ Límite mensual alcanzado\n\nHas usado todas tus consultas IA de este mes.\n\n**Tu plan:** ${errData.currentTier?.toUpperCase() || 'FREE'}\n**Consultas usadas:** ${errData.usage?.used || 0} / ${errData.usage?.limit || 3}\n\nPara seguir usando el asesor, actualiza tu plan:`,
+          upgradeRequired: true,
+          suggestedTier: errData.suggestedTier,
+        }]);
+        return;
+      }
+
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
         throw new Error(errData.error || 'Error en el asesor');
@@ -140,7 +165,7 @@ export default function Pick3AIAdvisor({
         },
         body: JSON.stringify({
           messages: [
-            ...messages.map(m => ({ role: m.role, content: m.content })),
+            ...messages.filter(m => !m.upgradeRequired).map(m => ({ role: m.role, content: m.content })),
             { role: 'user', content: userMsg },
           ],
           riskMode,
@@ -148,6 +173,18 @@ export default function Pick3AIAdvisor({
           config,
         }),
       });
+
+      if (res.status === 402) {
+        // SPRINT-4: Usage limit reached
+        const errData = await res.json().catch(() => ({}));
+        setMessages(prev => [...prev, {
+          role: 'assistant',
+          content: `## ⚠️ Límite mensual alcanzado\n\nHas usado todas tus consultas IA de este mes.\n\n**Tu plan:** ${errData.currentTier?.toUpperCase() || 'FREE'}\n**Consultas usadas:** ${errData.usage?.used || 0} / ${errData.usage?.limit || 3}\n\nPara seguir usando el asesor, actualiza tu plan:`,
+          upgradeRequired: true,
+          suggestedTier: errData.suggestedTier,
+        }]);
+        return;
+      }
 
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
@@ -385,6 +422,43 @@ export default function Pick3AIAdvisor({
                       <div className="space-y-0.5">
                         {renderMarkdown(msg.content)}
                         {renderStatusBadges(msg.metadata)}
+                        {msg.metadata?.usage && (
+                          <div className="mt-2 pt-2 border-t border-border/30 flex items-center gap-2 text-[9px] opacity-60">
+                            <span className="font-black uppercase">Plan {msg.metadata.usage.tier}</span>
+                            <span>·</span>
+                            <span>
+                              {msg.metadata.usage.used}/{msg.metadata.usage.limit === -1 ? '∞' : msg.metadata.usage.limit} consultas
+                            </span>
+                            {msg.metadata.usage.isTrial && msg.metadata.usage.trialDaysLeft !== undefined && (
+                              <>
+                                <span>·</span>
+                                <span className="text-amber-500 font-bold">
+                                  Trial: {msg.metadata.usage.trialDaysLeft}d restantes
+                                </span>
+                              </>
+                            )}
+                          </div>
+                        )}
+                        {msg.upgradeRequired && (
+                          <div className="mt-3 p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 space-y-2">
+                            <div className="flex items-center gap-2">
+                              <AlertTriangle className="w-4 h-4 text-amber-500" />
+                              <p className="text-xs font-black uppercase text-amber-600">
+                                Upgrade requerido
+                              </p>
+                            </div>
+                            <p className="text-[10px] opacity-70 leading-relaxed">
+                              Has alcanzado el límite de tu plan {msg.suggestedTier ? `(${msg.suggestedTier.toUpperCase()})` : ''}.
+                              Actualiza para seguir consultando al asesor.
+                            </p>
+                            <a
+                              href="?tab=config&upgrade=1"
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary text-primary-foreground text-[10px] font-black uppercase hover:bg-primary/90 transition-colors"
+                            >
+                              <Sparkles className="w-3 h-3" /> Ver planes
+                            </a>
+                          </div>
+                        )}
                       </div>
                     ) : (
                       <p className="text-sm whitespace-pre-wrap leading-relaxed">{msg.content}</p>

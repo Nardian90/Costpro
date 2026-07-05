@@ -8,6 +8,8 @@ import { BacktestEngine } from '@/services/pick3/backtest.engine';
 import { RiskLayer, inferRiskMode } from '@/services/pick3/risk.layer';
 import { runFullStatisticalTests, detectRegimeChange } from '@/services/pick3/stat.tests';
 import { BettingConfig } from '@/types/pick3';
+import { SubscriptionService } from '@/services/pick3/subscription.service';
+import { TIERS } from '@/services/pick3/subscription.types';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -274,6 +276,27 @@ async function advisorHandler(req: NextRequest) {
       return NextResponse.json({ error: 'No hay mensajes' }, { status: 400 });
     }
 
+    // === SPRINT-4: Tier gating + usage check (solo si hay messages válidos) ===
+    const usageCheck = await SubscriptionService.checkUsage(
+      session.user.id,
+      'ai_query',
+    );
+    if (!usageCheck.allowed) {
+      logger.info('PICK3', `Usage limit reached for user ${session.user.id}: ${usageCheck.reason}`);
+      return NextResponse.json({
+        error: usageCheck.reason || 'Has alcanzado tu límite mensual de consultas IA',
+        upgradeRequired: true,
+        suggestedTier: usageCheck.suggestedTier,
+        currentTier: usageCheck.tier,
+        usage: {
+          used: usageCheck.used,
+          limit: usageCheck.limit,
+          remaining: usageCheck.remaining,
+        },
+        tiers: TIERS,
+      }, { status: 402 }); // 402 Payment Required
+    }
+
     // === 1. Cargar histórico ===
     const history = await Pick3Storage.getHistory();
     if (history.length < 30) {
@@ -414,6 +437,10 @@ async function advisorHandler(req: NextRequest) {
       if (part.text) text += part.text;
     }
 
+    // === SPRINT-4: Consumir usage SOLO después de respuesta exitosa ===
+    await SubscriptionService.incrementUsage(session.user.id, 'ai_query');
+    const updatedUsage = await SubscriptionService.checkUsage(session.user.id, 'ai_query');
+
     // === 10. Devolver respuesta + metadata cuantitativa ===
     return NextResponse.json({
       text,
@@ -429,6 +456,16 @@ async function advisorHandler(req: NextRequest) {
         isOverfitting: backtestResult.isOverfitting,
         modelsUsed: ensembleReport.totalModelsUsed,
         regimeAlert: ensembleReport.regimeAlert,
+        // SPRINT-4: usage info
+        usage: {
+          tier: updatedUsage.tier,
+          used: updatedUsage.used,
+          limit: updatedUsage.limit,
+          remaining: updatedUsage.remaining,
+          isTrial: updatedUsage.isTrial,
+          trialDaysLeft: updatedUsage.trialDaysLeft,
+          upgradeRequired: updatedUsage.upgradeRequired,
+        },
       },
     });
   } catch (error: unknown) {
