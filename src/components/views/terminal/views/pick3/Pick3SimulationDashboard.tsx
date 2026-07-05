@@ -1,5 +1,5 @@
 "use client";
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -20,6 +20,7 @@ import {
   Scale,
 } from 'lucide-react';
 import { ModelValidationResult } from '@/services/pick3/backtest.engine';
+import { BettingConfig } from '@/types/pick3';
 import { cn } from '@/lib/utils';
 import {
   XAxis,
@@ -40,9 +41,29 @@ import {
 interface Pick3SimulationDashboardProps {
   result: ModelValidationResult;
   initialBankroll: number;
+  config?: BettingConfig;
 }
 
-export function Pick3SimulationDashboard({ result, initialBankroll }: Pick3SimulationDashboardProps) {
+export function Pick3SimulationDashboard({ result, initialBankroll, config }: Pick3SimulationDashboardProps) {
+  // FIX-BITACORA-FILTER (2026-07-05): filtro de la bitácora, default 'straights' (solo aciertos straight)
+  const [bitacoraFilter, setBitacoraFilter] = useState<'all' | 'wins' | 'straights' | 'boxes' | 'losses'>('straights');
+
+  const filteredDailyHistory = useMemo(() => {
+    const reversed = result.dailyHistory.slice().reverse();
+    switch (bitacoraFilter) {
+      case 'wins':
+        return reversed.filter(d => d.win);
+      case 'straights':
+        return reversed.filter(d => d.win && d.isStraight);
+      case 'boxes':
+        return reversed.filter(d => d.win && d.isBox);
+      case 'losses':
+        return reversed.filter(d => !d.win);
+      default:
+        return reversed;
+    }
+  }, [result.dailyHistory, bitacoraFilter]);
+
   const chartData = result.equityCurve.map((value, index) => ({
     draw: index,
     capital: value,
@@ -170,15 +191,40 @@ export function Pick3SimulationDashboard({ result, initialBankroll }: Pick3Simul
               </div>
             </div>
 
+            {/* FIX-LAYOUT (2026-07-05): Métricas cuantitativas integradas aquí para reducir espacios muertos */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              <div className="p-2 rounded-xl bg-background/50 border border-border/30 text-center">
+                <p className="text-[8px] font-black uppercase opacity-50">Sharpe</p>
+                <p className={cn("text-base font-black italic", result.sharpeRatio >= 1 ? "text-success" : result.sharpeRatio < 0 ? "text-destructive" : "")}>
+                  {result.sharpeRatio.toFixed(2)}
+                </p>
+              </div>
+              <div className="p-2 rounded-xl bg-background/50 border border-border/30 text-center">
+                <p className="text-[8px] font-black uppercase opacity-50">Sortino</p>
+                <p className={cn("text-base font-black italic", result.sortinoRatio >= 1 ? "text-success" : result.sortinoRatio < 0 ? "text-destructive" : "")}>
+                  {result.sortinoRatio.toFixed(2)}
+                </p>
+              </div>
+              <div className="p-2 rounded-xl bg-background/50 border border-border/30 text-center">
+                <p className="text-[8px] font-black uppercase opacity-50">Calmar</p>
+                <p className={cn("text-base font-black italic", result.calmarRatio >= 1 ? "text-success" : result.calmarRatio < 0 ? "text-destructive" : "")}>
+                  {result.calmarRatio.toFixed(2)}
+                </p>
+              </div>
+              <div className="p-2 rounded-xl bg-background/50 border border-border/30 text-center">
+                <p className="text-[8px] font-black uppercase opacity-50">Profit Factor</p>
+                <p className={cn("text-base font-black italic", result.profitFactor >= 1.5 ? "text-success" : result.profitFactor < 1 ? "text-destructive" : "")}>
+                  {result.profitFactor >= 999 ? '∞' : result.profitFactor.toFixed(2)}
+                </p>
+              </div>
+            </div>
+
             {/* Confidence interval */}
             {result.cagrConfidenceInterval && (
-              <div className="p-3 rounded-2xl bg-background/50 border border-primary/10">
-                <p className="text-[9px] font-black uppercase opacity-60 mb-1">Intervalo de confianza 95% (CAGR)</p>
-                <p className="text-sm font-black italic">
+              <div className="p-2 rounded-xl bg-background/50 border border-primary/10">
+                <p className="text-[9px] font-black uppercase opacity-60 mb-1">IC 95% (CAGR)</p>
+                <p className="text-xs font-black italic">
                   [{ciLower.toFixed(1)}% , {ciUpper.toFixed(1)}%]
-                </p>
-                <p className="text-[9px] opacity-50 mt-1">
-                  Si repetimos este backtest 100 veces, en 95 de ellas el CAGR real caerá en este rango.
                 </p>
               </div>
             )}
@@ -304,72 +350,7 @@ export function Pick3SimulationDashboard({ result, initialBankroll }: Pick3Simul
         </div>
       </Card>
 
-      {/* === QUANT METRICS GRID (NEW) === */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Card className="rounded-[20px] border-border/50 p-4 space-y-2">
-          <div className="flex items-center justify-between">
-            <p className="text-[9px] font-black uppercase opacity-60">Sharpe Ratio</p>
-            <UI_Tooltip>
-              <TooltipTrigger><Info className="w-3 h-3 opacity-50" /></TooltipTrigger>
-              <TooltipContent className="text-[10px] max-w-[180px]">
-                Retorno por unidad de volatilidad total. &gt;1 aceptable, &gt;2 bueno, &gt;3 excelente (o overfitting).
-              </TooltipContent>
-            </UI_Tooltip>
-          </div>
-          <p className={cn("text-2xl font-black italic", result.sharpeRatio >= 1 ? "text-success" : result.sharpeRatio < 0 ? "text-destructive" : "")}>
-            {result.sharpeRatio.toFixed(2)}
-          </p>
-          <p className="text-[8px] opacity-50">Annualizado</p>
-        </Card>
-
-        <Card className="rounded-[20px] border-border/50 p-4 space-y-2">
-          <div className="flex items-center justify-between">
-            <p className="text-[9px] font-black uppercase opacity-60">Sortino Ratio</p>
-            <UI_Tooltip>
-              <TooltipTrigger><Info className="w-3 h-3 opacity-50" /></TooltipTrigger>
-              <TooltipContent className="text-[10px] max-w-[180px]">
-                Como Sharpe pero solo penaliza volatilidad a la baja. Más honesto con estrategias asimétricas.
-              </TooltipContent>
-            </UI_Tooltip>
-          </div>
-          <p className={cn("text-2xl font-black italic", result.sortinoRatio >= 1 ? "text-success" : result.sortinoRatio < 0 ? "text-destructive" : "")}>
-            {result.sortinoRatio.toFixed(2)}
-          </p>
-          <p className="text-[8px] opacity-50">Downside only</p>
-        </Card>
-
-        <Card className="rounded-[20px] border-border/50 p-4 space-y-2">
-          <div className="flex items-center justify-between">
-            <p className="text-[9px] font-black uppercase opacity-60">Calmar Ratio</p>
-            <UI_Tooltip>
-              <TooltipTrigger><Info className="w-3 h-3 opacity-50" /></TooltipTrigger>
-              <TooltipContent className="text-[10px] max-w-[180px]">
-                CAGR / Max Drawdown. &gt;1 = buena recuperación, &gt;3 = excelente, &lt;0.5 = problema.
-              </TooltipContent>
-            </UI_Tooltip>
-          </div>
-          <p className={cn("text-2xl font-black italic", result.calmarRatio >= 1 ? "text-success" : result.calmarRatio < 0 ? "text-destructive" : "")}>
-            {result.calmarRatio.toFixed(2)}
-          </p>
-          <p className="text-[8px] opacity-50">CAGR / MaxDD</p>
-        </Card>
-
-        <Card className="rounded-[20px] border-border/50 p-4 space-y-2">
-          <div className="flex items-center justify-between">
-            <p className="text-[9px] font-black uppercase opacity-60">Profit Factor</p>
-            <UI_Tooltip>
-              <TooltipTrigger><Info className="w-3 h-3 opacity-50" /></TooltipTrigger>
-              <TooltipContent className="text-[10px] max-w-[180px]">
-                Σ ganancias / Σ pérdidas. &gt;1.5 decente, &gt;2 profesional, &gt;3 sospechoso de overfitting.
-              </TooltipContent>
-            </UI_Tooltip>
-          </div>
-          <p className={cn("text-2xl font-black italic", result.profitFactor >= 1.5 ? "text-success" : result.profitFactor < 1 ? "text-destructive" : "")}>
-            {result.profitFactor >= 999 ? '∞' : result.profitFactor.toFixed(2)}
-          </p>
-          <p className="text-[8px] opacity-50">Gross profit / loss</p>
-        </Card>
-      </div>
+      {/* FIX-LAYOUT (2026-07-05): Quant Metrics Grid removido — ya integrado en la sección de Capital Final */}
 
       {/* === RISK METRICS GRID === */}
       <Card className="rounded-[28px] border-border/50 p-5">
@@ -508,14 +489,47 @@ export function Pick3SimulationDashboard({ result, initialBankroll }: Pick3Simul
       {/* === PROFIT/LOSS DETAIL === */}
       <Card className="rounded-[32px] border-border shadow-lg overflow-hidden">
         <CardHeader className="border-b border-border/50 bg-muted/20">
-          <CardTitle className="text-sm font-black uppercase tracking-widest flex items-center gap-2">
-            <TableIcon className="w-4 h-4 text-primary" /> Bitácora de Aciertos Simulados
-          </CardTitle>
-          <CardDescription className="text-[10px] font-bold uppercase opacity-60">
-            Detalle sorteo a sorteo en la ventana de {result.periodDays} días
-          </CardDescription>
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <div>
+              <CardTitle className="text-sm font-black uppercase tracking-widest flex items-center gap-2">
+                <TableIcon className="w-4 h-4 text-primary" /> Bitácora de Aciertos Simulados
+              </CardTitle>
+              <CardDescription className="text-[10px] font-bold uppercase opacity-60">
+                {filteredDailyHistory.length} de {result.dailyHistory.length} sorteos · ventana de {result.periodDays} días
+              </CardDescription>
+            </div>
+            {/* FIX-BITACORA-FILTER (2026-07-05): filtros con default 'straights' */}
+            <div className="flex items-center gap-1 bg-background/50 p-1 rounded-full border border-border/30 flex-wrap">
+              {([
+                { id: 'straights', label: 'Straights', count: result.dailyHistory.filter(d => d.win && d.isStraight).length },
+                { id: 'boxes', label: 'Boxes', count: result.dailyHistory.filter(d => d.win && d.isBox).length },
+                { id: 'wins', label: 'Todos aciertos', count: result.dailyHistory.filter(d => d.win).length },
+                { id: 'losses', label: 'Pérdidas', count: result.dailyHistory.filter(d => !d.win).length },
+                { id: 'all', label: 'Todos', count: result.dailyHistory.length },
+              ] as const).map(f => (
+                <button
+                  key={f.id}
+                  onClick={() => setBitacoraFilter(f.id)}
+                  className={cn(
+                    "px-2.5 py-1 rounded-full text-[9px] font-black uppercase transition-all whitespace-nowrap",
+                    bitacoraFilter === f.id
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  {f.label} <span className="opacity-60">({f.count})</span>
+                </button>
+              ))}
+            </div>
+          </div>
         </CardHeader>
         <CardContent className="p-0">
+          {filteredDailyHistory.length === 0 ? (
+            <div className="p-12 text-center opacity-40">
+              <TableIcon className="w-12 h-12 mx-auto mb-3" />
+              <p className="text-xs font-black uppercase">No hay registros para este filtro</p>
+            </div>
+          ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
@@ -528,7 +542,7 @@ export function Pick3SimulationDashboard({ result, initialBankroll }: Pick3Simul
                 </tr>
               </thead>
               <tbody className="divide-y border-t">
-                {result.dailyHistory.slice().reverse().map((day, i) => (
+                {filteredDailyHistory.map((day, i) => (
                   <tr key={i} className={cn("group transition-colors", day.win ? "bg-success/5" : "hover:bg-muted/30")}>
                     <td className="px-6 py-4">
                       <p className="text-[11px] font-black italic">{day.date}</p>
@@ -548,14 +562,19 @@ export function Pick3SimulationDashboard({ result, initialBankroll }: Pick3Simul
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex justify-center gap-1">
-                        {day.result.map((n, idx) => (
-                          <div key={idx} className={cn(
-                            "w-6 h-6 rounded-lg flex items-center justify-center text-[11px] font-black italic",
-                            day.win ? "bg-success text-white" : "bg-muted border border-border"
-                          )}>
-                            {n}
-                          </div>
-                        ))}
+                        {day.result.map((n, idx) => {
+                          // FIX-LAST2 (2026-07-05): en modo LAST2, primer dígito del resultado real (3 dígitos) en transparencia
+                          const isLast2Dimmed = config?.mode === 'LAST2' && day.result.length === 3 && idx === 0;
+                          return (
+                            <div key={idx} className={cn(
+                              "w-6 h-6 rounded-lg flex items-center justify-center text-[11px] font-black italic",
+                              day.win ? "bg-success text-white" : "bg-muted border border-border",
+                              isLast2Dimmed && "opacity-30 border-dashed"
+                            )}>
+                              {n}
+                            </div>
+                          );
+                        })}
                       </div>
                     </td>
                     <td className="px-6 py-4 text-center">
@@ -583,6 +602,7 @@ export function Pick3SimulationDashboard({ result, initialBankroll }: Pick3Simul
               </tbody>
             </table>
           </div>
+          )}
         </CardContent>
       </Card>
     </div>

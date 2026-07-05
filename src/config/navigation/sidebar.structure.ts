@@ -372,7 +372,7 @@ export const SIDEBAR_STRUCTURE: NavModule[] = [
           }
         ]
       },
-      { id: 'pick3-intelligence', label: 'Risk Investment Manager', type: 'item', icon: BarChart3, ariaLabel: 'Gestor de inversión de riesgo', description: 'Gestión de riesgo y análisis estadístico de inversión. Métricas cuantitativas, gestión de bankroll y asesor IA.' },
+      { id: 'pick3-intelligence', label: 'Gestor de Riesgo de Inversión', type: 'item', icon: BarChart3, ariaLabel: 'Gestor de riesgo de inversión', description: 'Gestión de riesgo y análisis estadístico de inversión. Métricas cuantitativas, gestión de bankroll y asesor IA.' },
       { id: 'wallet', label: 'Billetera Digital', type: 'item', icon: Wallet, ariaLabel: 'Gestión de billetera', description: 'Monitorea ingresos por transferencias, pagos digitales y notificaciones SMS en tiempo real.' }
     ]
   },

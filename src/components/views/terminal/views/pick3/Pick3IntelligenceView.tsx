@@ -269,14 +269,14 @@ export default function Pick3IntelligenceView() {
   return (
     <TooltipProvider>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6 sm:space-y-8 animate-in fade-in duration-700">
-        {/* Header & Main Stats — FIX-SIZE (2026-07-05): tamaño reducido para no ser tan prominente */}
+        {/* Header & Main Stats — FIX-SIZE (2026-07-05): tamaño reducido, nombre en español */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
           <div className="space-y-0.5">
             <h1 className="text-lg sm:text-xl font-black italic tracking-tight uppercase flex items-center gap-2">
               <ShieldCheck className="w-5 h-5 sm:w-6 sm:h-6 text-primary shrink-0" />
-              <span>Risk Investment <span className="text-primary">Manager</span></span>
+              <span>Gestor de <span className="text-primary">Riesgo</span> de Inversión</span>
             </h1>
-            <p className="text-[9px] sm:text-[10px] font-bold uppercase opacity-50 tracking-widest">Gestión de Riesgo & Análisis Estadístico</p>
+            <p className="text-[9px] sm:text-[10px] font-bold uppercase opacity-50 tracking-widest">Análisis Estadístico & Gestión de Capital</p>
           </div>
 
           <div className="flex flex-wrap gap-2 sm:gap-3">
@@ -347,21 +347,22 @@ export default function Pick3IntelligenceView() {
           </TabsContent>
 
           <TabsContent value="simulation" className="pt-6 space-y-6">
-             {/* FIX-SIM-CONFIG (2026-07-05): panel de configuración de simulación */}
-             <SimulationConfigPanel
-               config={simConfig}
-               onChange={setSimConfig}
-               onReRun={handleReRunSimulation}
-               isRunning={simRunning}
-             />
+             {/* FIX-LAYOUT (2026-07-05): dashboard primero, config panel después de métricas */}
              {simResult ? (
-                <Pick3SimulationDashboard result={simResult} initialBankroll={1000} />
+                <Pick3SimulationDashboard result={simResult} initialBankroll={1000} config={bConfig} />
              ) : (
                 <div className="p-12 text-center opacity-40">
                   <PlayCircle className="w-16 h-16 mx-auto mb-4" />
                   <p className="text-sm font-black uppercase">No hay datos suficientes para simular (Mínimo 60 sorteos)</p>
                 </div>
              )}
+             {/* Panel de configuración DESPUÉS del dashboard (debajo de métricas de riesgo) */}
+             <SimulationConfigPanel
+               config={simConfig}
+               onChange={setSimConfig}
+               onReRun={handleReRunSimulation}
+               isRunning={simRunning}
+             />
           </TabsContent>
 
           <TabsContent value="intel" className="pt-6">

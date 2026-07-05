@@ -495,9 +495,9 @@ export const SYSTEM_ACTIONS: Action[] = [
   },
   {
     id: 'pick3',
-    label: 'Risk Investment Manager',
+    label: 'Gestor de Riesgo de Inversión',
     icon: Zap,
-    keywords: ['pick3', 'risk', 'inversión', 'análisis', 'predicción', 'datos', 'riesgo'],
+    keywords: ['pick3', 'risk', 'inversión', 'análisis', 'predicción', 'datos', 'riesgo', 'gestor'],
     route: 'pick3-intelligence',
     description: 'Gestión de riesgo y análisis estadístico de inversión.'
   },

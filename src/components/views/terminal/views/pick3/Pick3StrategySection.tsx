@@ -50,8 +50,8 @@ export function Pick3StrategySection({ analysis, plays, config }: Pick3StrategyS
                 <div className="flex justify-between items-start mb-3">
                   <div className="flex gap-1">
                     {play.combination.map((num, idx) => {
-                      // FIX-LAST2 (2026-07-05): primer dígito en transparencia en modo LAST2
-                      const isLast2Dimmed = config?.mode === 'LAST2' && idx === 0;
+                      // FIX-LAST2 (2026-07-05): solo dimmea si combinación es de 3 dígitos
+                      const isLast2Dimmed = config?.mode === 'LAST2' && play.combination.length === 3 && idx === 0;
                       return (
                         <div key={idx} className={cn(
                           "w-10 h-10 rounded-xl bg-background border border-primary/20 flex items-center justify-center text-xl font-black italic text-primary group-hover:scale-110 transition-transform shadow-sm",

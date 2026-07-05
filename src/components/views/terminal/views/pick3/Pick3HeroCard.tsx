@@ -48,9 +48,10 @@ export function Pick3HeroCard({ plays, config, bankroll }: Pick3HeroCardProps) {
 
                 <div className="flex gap-4 justify-center lg:justify-start">
                   {mainPlay.combination.map((digit, i) => {
-                    // FIX-LAST2 (2026-07-05): En modo LAST2, el primer dígito (centena)
-                    // se muestra en transparencia para centrar en los dígitos que importan
-                    const isLast2Dimmed = config.mode === 'LAST2' && i === 0;
+                    // FIX-LAST2 (2026-07-05): En modo LAST2, las recomendaciones son
+                    // de 2 dígitos y AMBOS son importantes. Solo se dimmea el primer
+                    // dígito si la combinación tiene 3 dígitos (modo PICK3 viendo Last2).
+                    const isLast2Dimmed = config.mode === 'LAST2' && mainPlay.combination.length === 3 && i === 0;
                     return (
                       <div
                         key={i}
@@ -117,7 +118,7 @@ export function Pick3HeroCard({ plays, config, bankroll }: Pick3HeroCardProps) {
                   <div className="flex items-center gap-3">
                     <div className="flex gap-1">
                       {alt.combination.map((d, j) => {
-                        const isLast2Dimmed = config.mode === 'LAST2' && j === 0;
+                        const isLast2Dimmed = config.mode === 'LAST2' && alt.combination.length === 3 && j === 0;
                         return (
                           <span key={j} className={cn(
                             "w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center font-black italic text-primary text-sm",
