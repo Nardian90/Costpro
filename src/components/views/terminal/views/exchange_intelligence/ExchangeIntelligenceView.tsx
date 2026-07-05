@@ -118,19 +118,39 @@ export function ExchangeIntelligenceView() {
     setLoading(true);
     setError(null);
     try {
-      const { data, error: err } = await supabase
-        .from('exchange_rates')
-        .select('*')
-        .order('rate_date', { ascending: true })
-        .order('captured_at', { ascending: true });
+      // FIX-CARRY-FORWARD (2026-07-05): usar el API route en vez del cliente
+      // Supabase directo. El API route tiene:
+      // 1. Carry-forward automático (si hoy no hay tasa, usa la última disponible)
+      // 2. Service role key (bypass RLS)
+      // 3. Filtro por segmento (default 3 = MIPYMES)
+      const { useAuthStore } = await import('@/store');
+      const token = useAuthStore.getState().token;
+      const res = await fetch('/api/exchange-rates?days=90&segment=3', {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
 
-      if (err) throw err;
-      setRates(data || []);
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
+      }
+
+      const json = await res.json();
+      const data = json.rates || [];
+      setRates(data);
 
       // Detectar última fecha capturada
-      if (data && data.length > 0) {
+      if (data.length > 0) {
         const lastDate = data[data.length - 1].rate_date;
         setLastCaptureInfo({ count: data.length, date: lastDate });
+      }
+
+      // Mostrar notificación si hay carry-forward
+      if (json.carry_forward_count > 0) {
+        const cfDates = json.carry_forward_dates || [];
+        const sources = [...new Set(cfDates.map((d: any) => d.source))].join(', ');
+        toast.info(`Tasa en arrastre (${sources})`, {
+          description: `Usando último valor real disponible hasta que el servicio se restablezca`,
+          duration: 5000,
+        });
       }
     } catch (e: any) {
       setError(e.message || 'Error al cargar tasas');

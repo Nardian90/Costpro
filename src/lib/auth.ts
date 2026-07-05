@@ -56,27 +56,38 @@ export async function getServerSession(request: NextRequest) {
           // El JWT de Supabase Auth NO incluye el role — viene de profiles.
           // Sin esto, session.user.role siempre es undefined para usuarios reales
           // y el admin bypass del Asesor IA no funciona.
+          //
+          // FIX-PERF (2026-07-05): usar timeout de 3s para no bloquear requests
+          // si Supabase está lento. Si no se obtiene el profile, retornar sin role
+          // (mejor que timeout de toda la request).
           try {
-            const { supabase: supabaseAdmin } = await import('@/lib/supabaseClient');
-            const adminClient = (await import('@supabase/supabase-js')).createClient(
+            const { createClient } = await import('@supabase/supabase-js');
+            const adminClient = createClient(
               process.env.NEXT_PUBLIC_SUPABASE_URL!,
               process.env.SUPABASE_SERVICE_ROLE_KEY!,
               { auth: { persistSession: false, autoRefreshToken: false } }
             );
-            const { data: profile } = await adminClient
-              .from('profiles')
-              .select('role')
-              .eq('id', user.id)
-              .maybeSingle();
+            const profileResult = await Promise.race([
+              adminClient
+                .from('profiles')
+                .select('role')
+                .eq('id', user.id)
+                .maybeSingle(),
+              new Promise<null>((resolve) => setTimeout(() => resolve(null), 3000)),
+            ]);
 
-            return {
-              user: {
-                ...user,
-                role: profile?.role || 'user',
-                roles: profile?.role ? [profile.role] : ['user'],
-              },
-              token,
-            };
+            if (profileResult && 'data' in profileResult && profileResult.data) {
+              return {
+                user: {
+                  ...user,
+                  role: profileResult.data.role || 'user',
+                  roles: profileResult.data.role ? [profileResult.data.role] : ['user'],
+                },
+                token,
+              };
+            }
+            // Si el timeout ganó o no hay profile, retornar sin role
+            return { user, token };
           } catch {
             // Si no podemos obtener el profile, retornar sin role
             return { user, token };
