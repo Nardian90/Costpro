@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useSyncExternalStore } from 'react';
+import React, { useState, useMemo, useSyncExternalStore, useEffect } from 'react';
 import { Pick3Result, DrawTime } from '@/types/pick3';
 import {
   Card, CardContent, CardHeader, CardTitle
@@ -38,8 +38,37 @@ interface Pick3HistorySectionProps {
 export function Pick3HistorySection({ history, onRefresh }: Pick3HistorySectionProps) {
   const clientTodayISO = useSyncExternalStore(noopSubscribe, () => format(new Date(), 'yyyy-MM-dd'), () => '');
   const [searchTerm, setSearchTerm] = useState('');
-  const [viewMode, setViewMode] = useState<'card' | 'table'>('card');
-  const [displayLimit, setDisplayLimit] = useState(20);
+
+  // FIX-PERSIST+MOBILE (2026-07-04): viewMode default = tabla en desktop, tarjeta en mobile
+  // Persistir preferencia del usuario en localStorage
+  const [viewMode, setViewMode] = useState<'card' | 'table'>(() => {
+    if (typeof window === 'undefined') return 'table';
+    const saved = localStorage.getItem('pick3-history-viewmode');
+    if (saved === 'card' || saved === 'table') return saved;
+    // Default: tabla en desktop, tarjeta en mobile
+    return window.innerWidth >= 768 ? 'table' : 'card';
+  });
+
+  // Persistir viewMode cuando cambie
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('pick3-history-viewmode', viewMode);
+    }
+  }, [viewMode]);
+
+  // FIX-PERSIST: displayLimit persistido
+  const [displayLimit, setDisplayLimit] = useState(() => {
+    if (typeof window === 'undefined') return 20;
+    const saved = parseInt(localStorage.getItem('pick3-display-limit') || '20', 10);
+    return isNaN(saved) ? 20 : saved;
+  });
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('pick3-display-limit', String(displayLimit));
+    }
+  }, [displayLimit]);
+
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [editingResult, setEditingResult] = useState<Pick3Result | null>(null);
 

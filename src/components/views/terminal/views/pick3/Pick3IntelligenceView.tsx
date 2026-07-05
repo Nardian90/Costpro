@@ -52,21 +52,50 @@ export default function Pick3IntelligenceView() {
   const [analysis, setAnalysis] = useState<AdvancedAnalysis | null>(null);
   const [plays, setPlays] = useState<IntelligencePlay[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('dashboard');
+
+  // FIX-PERSIST (2026-07-04): persistir activeTab en localStorage
+  const [activeTab, setActiveTab] = useState<string>(() => {
+    if (typeof window === 'undefined') return 'dashboard';
+    return localStorage.getItem('pick3-active-tab') || 'dashboard';
+  });
+
+  // Persistir activeTab cuando cambie
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('pick3-active-tab', activeTab);
+    }
+  }, [activeTab]);
+
   const [profile, setProfile] = useState<Pick3Profile | null>(null);
   const [ledger, setLedger] = useState<Pick3LedgerEntry[]>([]);
   const [showBetDialog, setShowBetDialog] = useState(false);
   const [simResult, setSimResult] = useState<ModelValidationResult | null>(null);
 
-  const [bConfig, setBConfig] = useState<BettingConfig>({
-    mode: 'PICK3',
-    payout: 500,
-    digits: 3,
-    maxCombinations: 10,
-    riskFactor: 1.0,
-    stopLoss: 50.0,
-    criticalDrawdown: 30.0
+  const [bConfig, setBConfig] = useState<BettingConfig>(() => {
+    // FIX-PERSIST: cargar bConfig de localStorage al iniciar
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('pick3-bconfig');
+      if (saved) {
+        try { return JSON.parse(saved); } catch {}
+      }
+    }
+    return {
+      mode: 'PICK3',
+      payout: 500,
+      digits: 3,
+      maxCombinations: 10,
+      riskFactor: 1.0,
+      stopLoss: 50.0,
+      criticalDrawdown: 30.0
+    };
   });
+
+  // Persistir bConfig cuando cambie
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('pick3-bconfig', JSON.stringify(bConfig));
+    }
+  }, [bConfig]);
 
   const [syncState, setSyncState] = useState({
     isSyncing: false,
