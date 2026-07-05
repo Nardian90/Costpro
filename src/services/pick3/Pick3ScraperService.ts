@@ -73,9 +73,13 @@ export class Pick3ScraperService {
 
       if (allResults.length > 0) {
         try {
-          await Pick3Storage.saveHistory(allResults);
+          // FIX-RLS (2026-07-05): usar saveHistoryServer en vez de saveHistory
+          // para bypass RLS. El sync se ejecuta server-side en /api/pick3/sync,
+          // y la tabla pick3_history solo permite INSERT/UPDATE a admins.
+          // saveHistoryServer usa el service role key para bypass.
+          await Pick3Storage.saveHistoryServer(allResults);
         } catch (storageError: unknown) {
-          logger.error('PICK3', 'Failed to save to Supabase, but keeping results', { error: storageError });
+          logger.error('PICK3', 'Failed to save to Supabase (server-side), but keeping results', { error: storageError });
         }
       }
     } finally {

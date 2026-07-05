@@ -11,6 +11,37 @@ const STORAGE_KEYS = {
 
 const isBrowser = typeof window !== 'undefined';
 
+/**
+ * Crea un cliente Supabase con service role key para bypass RLS.
+ * Solo usar server-side (API routes) cuando el usuario no es admin.
+ *
+ * FIX-RLS (2026-07-05): el sync de Pick 3 fallaba con error 42501
+ * "new row violates row-level security policy" porque la tabla
+ * pick3_history solo permite INSERT/UPDATE a admins (is_admin()).
+ * Los usuarios normales pueden hacer sync desde el navegador,
+ * así que necesitamos el service role key para bypass RLS.
+ */
+function createServerClient() {
+  if (isBrowser) {
+    logger.warn('PICK3', 'createServerClient called from browser — using anon client (RLS will apply)');
+    return supabase;
+  }
+
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+
+  if (!serviceRoleKey || !supabaseUrl) {
+    logger.warn('PICK3', 'SUPABASE_SERVICE_ROLE_KEY not configured — using anon client');
+    return supabase;
+  }
+
+  // Lazy import para evitar cargar @supabase/supabase-js en el browser bundle
+  const { createClient } = require('@supabase/supabase-js');
+  return createClient(supabaseUrl, serviceRoleKey, {
+    auth: { persistSession: false, autoRefreshToken: false }
+  });
+}
+
 export class Pick3Storage {
   static async saveHistory(results: Pick3Result[]) {
     if (!results.length) return;
@@ -78,6 +109,82 @@ export class Pick3Storage {
     } catch (err) {
        console.error('[Pick3Storage] Critical error saving history:', err);
        throw err;
+    }
+  }
+
+  /**
+   * FIX-RLS (2026-07-05): Versión server-side de saveHistory que usa
+   * el service role key para bypass RLS. Solo llamar desde API routes.
+   *
+   * Necesario porque la tabla pick3_history tiene RLS que solo permite
+   * INSERT/UPDATE a admins (is_admin()). Los usuarios normales pueden
+   * hacer sync desde el navegador, pero el sync se procesa server-side
+   * en /api/pick3/sync, así que usamos este método para evitar el error
+   * 42501 "new row violates row-level security policy".
+   */
+  static async saveHistoryServer(results: Pick3Result[]) {
+    if (!results.length) return;
+
+    try {
+      const serverClient = createServerClient();
+
+      // 1. Fetch existing records to check sync_method priority
+      const dates = [...new Set(results.map(r => r.date))];
+      const { data: existing } = await serverClient
+        .from('pick3_history')
+        .select('draw_date, draw_time, sync_method')
+        .in('draw_date', dates);
+
+      const existingMap = new Map<string, string>();
+      existing?.forEach((e: any) => {
+        existingMap.set(`${e.draw_date}-${e.draw_time}`, e.sync_method);
+      });
+
+      // Priority Logic (igual que saveHistory):
+      // - PDF: Overwrites everything (Ultimate truth).
+      // - Manual: Overwrites Web or Gaps.
+      // - Web: Overwrites only Gaps. If Manual exists, Web waits for PDF.
+      const rowsToUpsert = results.filter(r => {
+        const key = `${r.date}-${r.draw_time}`;
+        const existingSync = existingMap.get(key);
+        const incomingSync = r.sync_method || 'web';
+
+        if (!existingSync) return true; // New record
+        if (incomingSync === 'pdf') return true; // PDF always wins
+        if (existingSync === 'pdf') return false; // PDF is locked
+
+        if (incomingSync === 'manual') return true; // User manual entry can correct Web or Gap
+        if (incomingSync === 'web') return (existingSync !== 'manual');
+
+        return false;
+      }).map(r => ({
+        draw_date: r.date,
+        draw_time: r.draw_time,
+        result: r.result as [number, number, number],
+        source: r.source || 'official',
+        fireball: (r as any).fireball,
+        sync_method: r.sync_method || 'web',
+        raw_text: (r as any).raw_text
+      }));
+
+      if (rowsToUpsert.length === 0) {
+        logger.info('PICK3', 'No new rows to upsert (all protected by priority rules)', { serverSide: true });
+        return;
+      }
+
+      const { error } = await serverClient
+        .from('pick3_history')
+        .upsert(rowsToUpsert, { onConflict: 'draw_date,draw_time' });
+
+      if (error) {
+        logger.error('PICK3', 'Error saving history (server-side) to Supabase', { error, count: rowsToUpsert.length });
+        throw error;
+      }
+
+      logger.info('PICK3', 'History saved successfully (server-side)', { count: rowsToUpsert.length });
+    } catch (err) {
+      console.error('[Pick3Storage] Critical error saving history (server-side):', err);
+      throw err;
     }
   }
 
