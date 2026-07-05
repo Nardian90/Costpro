@@ -20,11 +20,13 @@ const CAT_COLORS: Record<string, string> = {
     'Agua': '#06b6d4', 'Gas': '#ec4899', 'Internet': '#8b5cf6',
     'Impuestos': '#dc2626', 'Servicios': '#10b981', 'Otros': '#6b7280',
     'Otros Ingresos': '#22c55e', 'Transferencia Recibida': '#16a34a',
+    'Compras': '#f97316', 'Préstamos': '#6366f1',
 };
 const CAT_ICONS: Record<string, string> = {
     'Transferencia': '💸', 'Telecom': '📱', 'Electricidad': '⚡', 'Agua': '💧',
     'Gas': '🔥', 'Internet': '🌐', 'Impuestos': '🏛️', 'Servicios': '🧾',
     'Otros': '📦', 'Otros Ingresos': '💰', 'Transferencia Recibida': '📥',
+    'Compras': '🛒', 'Préstamos': '🏦',
 };
 
 type ViewMode = 'home' | 'movimientos' | 'categorias' | 'reportes';

@@ -107,6 +107,8 @@ export const EXPENSE_CATEGORIES = [
   'Transferencia',
   'Servicios',
   'Recarga',
+  'Compras',
+  'Préstamos',
   'Otros',
 ] as const;
 

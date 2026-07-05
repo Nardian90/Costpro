@@ -100,8 +100,7 @@ async function postHandler(req: NextRequest) {
     }
 
     // 3. FIX-PHASE2 (2026-07-06): Calcular saldos por banco desde transacciones.
-    // El .trm NO incluye el texto del SMS con "Saldo Disponible".
-    // Calculamos: saldo = Σ(CR) - Σ(DB) por banco.
+    // FIX-PHASE7: actualizar saldos por bank Y por source (para cuentas DESCONOCIDO/EFECTIVO)
     const bankBalances: Record<string, { balance: number; lastDate: string }> = {};
     for (const tx of transactions) {
       const bankName = extractBankFromService(tx.serviceType);
@@ -115,7 +114,7 @@ async function postHandler(req: NextRequest) {
       if (dateStr > bankBalances[bankName].lastDate) bankBalances[bankName].lastDate = dateStr;
     }
 
-    // Actualizar saldos en wallet_accounts
+    // Actualizar saldos en wallet_accounts por bank
     for (const [bankName, bal] of Object.entries(bankBalances)) {
       await admin.from('wallet_accounts')
         .update({
@@ -125,6 +124,32 @@ async function postHandler(req: NextRequest) {
         })
         .eq('user_id', session.user.id)
         .eq('bank', bankName);
+    }
+
+    // FIX-PHASE7: también actualizar cuentas DESCONOCIDO/EFECTIVO que no tienen bank asignado
+    // Si la cuenta es DESCONOCIDO pero tiene transacciones, actualizarla con el balance del bank correspondiente
+    const allBankNames = Object.keys(bankBalances);
+    if (allBankNames.length > 0) {
+      // Para cada cuenta que sigue siendo DESCONOCIDO, intentar asignarle un bank
+      const { data: unknownAccounts } = await admin.from('wallet_accounts')
+        .select('id, account_number, source')
+        .eq('user_id', session.user.id)
+        .eq('bank', 'DESCONOCIDO');
+
+      if (unknownAccounts && unknownAccounts.length > 0) {
+        for (const acc of unknownAccounts) {
+          // Buscar si esta cuenta tiene transacciones que indiquen el banco
+          const accountTxs = transactions.filter(t => t.raw.cuenta === acc.account_number || maskAccount(t.raw.cuenta) === acc.account_number);
+          if (accountTxs.length > 0) {
+            const detectedBank = extractBankFromService(accountTxs[0].serviceType);
+            if (detectedBank !== 'DESCONOCIDO') {
+              await admin.from('wallet_accounts')
+                .update({ bank: detectedBank, updated_at: new Date().toISOString() })
+                .eq('id', acc.id);
+            }
+          }
+        }
+      }
     }
 
     logger.info('WALLET', `TRM saved: ${accountsSaved} accounts, ${txSaved} transactions (${txSkipped} skipped)`);
@@ -175,6 +200,8 @@ function extractBankFromService(serviceType: string): string {
   if (low.includes('bandec')) return 'BANDEC';
   if (low.includes('bpa') || low.includes('popular')) return 'BPA';
   if (low.includes('metro')) return 'METRO';
+  // FIX-PHASE7 (2026-07-06): 'Agentes' y otros sin banco específico → efectivo/otros
+  if (low.includes('agentes') || low.includes('efectivo')) return 'EFECTIVO';
   return 'DESCONOCIDO';
 }
 
@@ -188,13 +215,19 @@ function maskAccount(account: string): string | null {
 function categorize(service: string, serviceType: string): string {
   const low = (service + ' ' + serviceType).toLowerCase();
   if (low.includes('transferencia') || low.includes('transfer')) return 'Transferencia';
+  if (low.includes('recarga nauta') || low.includes('recarga de saldo')) return 'Telecom';
   if (low.includes('recarga')) return 'Telecom';
   if (low.includes('electric') || low.includes('energía') || low.includes('energia')) return 'Electricidad';
   if (low.includes('agua') || low.includes('acueducto')) return 'Agua';
   if (low.includes('gas')) return 'Gas';
   if (low.includes('internet') || low.includes('nauta') || low.includes('datos')) return 'Internet';
   if (low.includes('impuesto') || low.includes('sello') || low.includes('timbre')) return 'Impuestos';
+  if (low.includes('multa')) return 'Impuestos';
+  if (low.includes('telefono') || low.includes('teléfono')) return 'Telecom';
+  if (low.includes('compra')) return 'Compras';
   if (low.includes('pago') || low.includes('factura')) return 'Servicios';
+  if (low.includes('amortizar') || low.includes('amortizacion')) return 'Préstamos';
+  if (low.includes('onat')) return 'Impuestos';
   return 'Otros';
 }
 
