@@ -58,6 +58,38 @@ export interface BacktestResult {
   equityCurve: number[];
   winStreak: number;
   lossStreak: number;
+  // === SPRINT-1-QUANT (2026-07-05) ===
+  // Métricas cuantitativas correctamente calculadas
+  cagr?: number; // Compound Annual Growth Rate (%)
+  cagrConfidenceInterval?: { lower: number; upper: number };
+  totalReturn?: number; // Retorno total (%) = ROI * 100
+  volatility?: number; // Volatilidad anualizada (decimal)
+  downsideDeviation?: number;
+  grossProfit?: number;
+  grossLoss?: number;
+  expectancy?: number; // Valor esperado por trade
+  maxDrawdownDuration?: number; // Duración del drawdown en trades
+  probabilityOfRuin?: number; // Probabilidad de ruina (0-1)
+  kellyFraction?: number; // Fracción Kelly segura (decimal)
+  kellyEdge?: number; // Edge estimado
+  isOverfitting?: boolean; // Heurística de overfitting detectada
+  // === SPRINT-1-STATS (2026-07-05) ===
+  // Tests estadísticos sobre la serie histórica usada
+  statisticalTests?: {
+    chiSquare: { statistic: number; pValue: number; isSignificant: boolean; interpretation: string };
+    kolmogorovSmirnov: { statistic: number; pValue: number; isSignificant: boolean; interpretation: string };
+    runsTest: { statistic: number; pValue: number; isSignificant: boolean; interpretation: string };
+    entropy: { statistic: number; pValue: number; isSignificant: boolean; interpretation: string };
+    isRandom: boolean;
+    confidence: number;
+    summary: string;
+  };
+  regimeChange?: {
+    driftDetected: boolean;
+    driftPoint: number;
+    magnitude: number;
+    description: string;
+  };
 }
 
 export interface SimulationResult {

@@ -3378,3 +3378,134 @@ Stage Summary:
 - Vitrina ahora permite editar nombre/plantilla/slug sin ir a Gestión Tiendas
 - Tabs internos preservan toda la funcionalidad existente
 - 6 archivos modificados, 501 inserciones, 33 eliminaciones
+
+---
+Task ID: SPRINT-1-QUANT-STATS
+Agent: Main Agent (Super Z)
+Task: Sprint 1 — Fundación Matemática de Pick 3 Intelligence. Fix de todas las métricas cuantitativas rotas (Sharpe=0, Sortino=0, Calmar=0, Streaks=0, Recovery=0, Profit Factor mal calculado, ROI engañoso) + implementación de 4 tests estadísticos estándar (Chi-cuadrado, KS, Runs Test, Entropy) + display honesto.
+
+Work Log:
+
+### 1. NEW FILE: `src/services/pick3/quant.metrics.ts` (640 líneas)
+- Implementación correcta de TODAS las métricas cuantitativas:
+  - `calculateStreaks(trades)` → maxWinStreak, maxLossStreak, currentStreak
+  - `calculateDrawdown(equityCurve)` → maxDrawdownPct, maxDrawdownAbs, maxDrawdownDuration, peak, trough
+  - `calculateRiskAdjustedRatios(trades, equity, rf, capital, days)` → Sharpe, Sortino, Calmar (annualizados)
+  - `calculateProfitability(trades, equity, capital)` → Profit Factor, Recovery Factor, Gross P/L, Expectancy, Win/Loss Rate
+  - `calculateCAGR(initial, final, days)` + `calculateCAGRWithCI(...)` con IC 95%
+  - `calculateKelly(bankroll, winProb, payout, cap=0.25)` → Quarter Kelly anti-ruin
+  - `calculateProbabilityOfRuin(winProb, bankrollUnits, payout)` → Feller's Gambler's Ruin
+  - `computeFullQuantReport(pnlSeries, initial, days, winProb, payout)` → Reporte completo
+- Helpers: `mean()`, `std()`, `downsideDeviation()`, `annualize()`
+- Trading days = 365 (lotería tiene 2 sorteos/día casi todos los días)
+- Sharpe annualizado con σ diaria × sqrt(365)
+
+### 2. NEW FILE: `src/services/pick3/stat.tests.ts` (470 líneas)
+- Implementación de 4 tests estadísticos estándar para validar aleatoriedad:
+  - `chiSquareUniformityTest(history, position)` → Pearson chi-cuadrado con df=9
+  - `kolmogorovSmirnovTest(history, position)` → KS con Stephens approximation
+  - `runsTest(history)` → Wald-Wolfowitz con clasificación par/impar de suma
+  - `entropyTest(history)` → Shannon entropy + Miller (1955) chi-cuadrado approximation
+- BONUS: `detectRegimeChange(history, window, threshold)` → Page-Hinkley simplificado para drift detection
+- `runFullStatisticalTests(history)` → Reporte completo con veredicto global
+- Helpers: `normalCDF()`, `invNormalCDF()`, `chiSquareCDF()`, `kolmogorovCDF()`
+- Cada test retorna: `statistic`, `pValue`, `isSignificant`, `nullHypothesisRejected`, `interpretation`, `alpha`
+
+### 3. UPDATED: `src/types/pick3.ts`
+- Ampliado `BacktestResult` interface con 15+ campos nuevos opcionales:
+  - CAGR, cagrConfidenceInterval, totalReturn
+  - volatility, downsideDeviation
+  - grossProfit, grossLoss, expectancy
+  - maxDrawdownDuration, probabilityOfRuin
+  - kellyFraction, kellyEdge
+  - isOverfitting (heurística)
+  - statisticalTests (los 4 tests + summary + isRandom + confidence)
+  - regimeChange (drift detection)
+
+### 4. REFACTORED: `src/services/pick3/backtest.engine.ts`
+- `runValidation()` ahora:
+  - Construye `pnlSeries[]` para alimentar las nuevas métricas
+  - Construye `trades[]` con `{pnl, equity}` por trade
+  - Llama a `calculateStreaks()`, `calculateDrawdown()`, `calculateRiskAdjustedRatios()`, `calculateProfitability()`, `calculateCAGRWithCI()`
+  - Estima `winProbForKelly` = totalWins / totalBets
+  - Llama a `calculateKelly()` y `calculateProbabilityOfRuin()`
+  - Llama a `runFullStatisticalTests(this.history)` para los 4 tests
+  - Llama a `detectRegimeChange(this.history, 30, 50)` para drift
+  - Heurística de overfitting: ROI > 100% + <60 trades O Sharpe > 3 + PF > 3 + <100 trades
+- Eliminados los `0` literales en sharpeRatio, sortinoRatio, calmarRatio, winStreak, lossStreak, recoveryFactor
+- Profit Factor ahora usa cálculo correcto (grossProfit/grossLoss) en vez de (wins*payout)/bets
+
+### 5. REDESIGNED: `src/components/views/terminal/views/pick3/Pick3SimulationDashboard.tsx`
+- FIX CRÍTICO: "curva de capital el gráfico apenas se ve" — ahora:
+  - Altura del gráfico: 280px → **400px** (+43%)
+  - Y-axis: domain automático → **[yMin, yMax] con padding 15%**
+  - Y-axis: formato `$X` en vez de `$Xk` (mejor para rangos pequeños)
+  - X-axis: muestra índices `#0, #1, ...` en vez de hide
+  - Added ReferenceLine en capital inicial con label
+  - Active dot: r=6 con stroke blanco (más visible)
+  - Padding interno del gráfico: 3 → 15-20
+- NEW: Honesty Banner con 4 posibles veredictos:
+  - OVERFITTING DETECTADO (rojo)
+  - CONSISTENTE CON AZAR (azul)
+  - EDGE POTENCIAL DETECTADO (amber)
+  - RESULTADO NEUTRO (gris)
+- NEW: CAGR + IC 95% displayed prominentemente (reemplaza ROI engañoso)
+- NEW: Quant Metrics Grid (4 cards): Sharpe, Sortino, Calmar, Profit Factor — cada uno con tooltip explicativo
+- NEW: Risk Metrics Card: Recovery Factor, Probability of Ruin, Kelly Safe, Expectancy, Win/Loss Streaks, Volatility
+- NEW: Statistical Validation Panel:
+  - 4 tests en grid 2x2 con badges OK/ANOMALÍA
+  - p-value y statistic para cada test
+  - Interpretación completa de cada test
+  - Summary banner con veredicto global
+  - Regime change alert si drift detectado
+- Mantiene la Bitácora de Aciertos (tabla detalle sorteo a sorteo)
+
+### 6. NEW TESTS: `src/__tests__/services/pick3-quant-metrics.test.ts` (34 tests)
+- Cobertura de TODAS las métricas cuantitativas:
+  - `calculateStreaks`: racha ganadora, perdedora, mixta, array vacío, racha más larga
+  - `calculateDrawdown`: max DD, sin DD, duración, equityCurve corto
+  - `calculateRiskAdjustedRatios`: Sharpe ≠ 0, Sortino ≠ 0, Calmar ≠ 0, Sortino ≥ Sharpe, <2 trades
+  - `calculateProfitability`: PF correcto, ∞ sin pérdidas, RF = net/DD, expectancy, win rate
+  - `calculateCAGR`: 1 año 100%, período parcial, pérdida, initial≤0
+  - `calculateCAGRWithCI`: IC con ≥30 trades, sin IC con <30
+  - `calculateKelly`: edge positivo, edge negativo (lotería), 25% cap, bankroll≤0
+  - `calculateProbabilityOfRuin`: EV<0 alta, EV>0 baja, bankroll≤0
+  - `computeFullQuantReport`: reporte completo, NUNCA ceros fantasma
+
+### 7. NEW TESTS: `src/__tests__/services/pick3-stat-tests.test.ts` (28 tests)
+- Cobertura de TODOS los tests estadísticos:
+  - `normalCDF` y `invNormalCDF`: 4 tests cada uno (simetría, valores tabulados, inversa)
+  - `chiSquareUniformityTest`: datos uniformes NO rechazan, datos sesgados SÍ rechazan, por posición, vacío
+  - `kolmogorovSmirnovTest`: uniformes NO, sesgados SÍ, D en [0,1]
+  - `runsTest`: aleatorios NO, requiere 20+, autocorrelación extrema SÍ
+  - `entropyTest`: uniformes NO, sesgados SÍ, max teórica log2(10)
+  - `detectRegimeChange`: no drift en uniformes, drift en cambio de régimen, descripción
+  - `runFullStatisticalTests`: 4 tests presentes, random cuando todos pasan, NO random si alguno falla, summary
+- PRNG: `mulberry32` para generar datos verdaderamente uniformes en tests
+
+### 8. VALIDACIÓN
+- TypeScript: `npx tsc --noEmit` → **0 errores**
+- Tests: `npx vitest run` en los 2 archivos → **62/62 tests pasan** (34 + 28)
+- PM2: costpro restart, HTTP 200 confirmado en http://localhost:3000/
+
+### Stage Summary:
+- **Métricas críticas ahora calculadas correctamente**:
+  - Sharpe Ratio, Sortino Ratio, Calmar Ratio: anualizados, ≠ 0
+  - Profit Factor: grossProfit/grossLoss, no (wins*payout)/bets
+  - Recovery Factor: netProfit/maxDrawdownAbs
+  - Win/Loss Streaks: racha máxima secuencial
+  - Max Drawdown: con duración, peak, trough
+  - CAGR con IC 95% reemplaza ROI engañoso
+  - Kelly Criterion con cap 25% (Quarter Kelly)
+  - Probability of Ruin (Feller's Gambler's Ruin)
+- **Tests estadísticos implementados**: Chi-cuadrado, KS, Runs Test, Entropy + drift detection (Page-Hinkley)
+- **Display honesto**: Honesty Banner con 4 veredictos, badges OK/ANOMALÍA, interpretation completa
+- **Gráfico de curva de capital arreglado**: 400px altura, Y-axis escalado correcto, ReferenceLine en capital inicial
+- **Heurística de overfitting**: ROI > 100% + <60 trades O Sharpe > 3 + PF > 3 + <100 trades → flag
+- **62 tests unitarios** garantizan que las métricas NUNCA vuelven a ser 0 silenciosamente
+
+Próximos sprints pendientes:
+- Sprint 2: Risk Layer + multi-modelo (Markov, Positional, Sum-Range, Frequency con ensemble dinámico)
+- Sprint 3: IA Advisor "Quant Analyst Adaptativo" (regime-aware, modos Defensive/Balanced/Aggressive, honest mode)
+- Sprint 4: Monetización (Stripe, tier gating Free/Player/Quant/Desk)
+- Sprint 5: Growth engine (referrals, programmatic SEO, content, A/B testing)
