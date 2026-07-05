@@ -347,6 +347,8 @@ export default function Pick3IntelligenceView() {
                 ledger={ledger}
               />
             )}
+            {/* FIX-CRUD (2026-07-05): mantener el BankrollDashboard con el ledger/historial de jugadas */}
+            {profile && <BankrollDashboard profile={profile} ledger={ledger} />}
           </TabsContent>
 
           <TabsContent value="prediction" className="pt-6">
