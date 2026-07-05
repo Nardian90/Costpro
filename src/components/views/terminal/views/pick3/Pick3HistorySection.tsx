@@ -300,7 +300,7 @@ export function Pick3HistorySection({ history, onRefresh, config }: Pick3History
                   item.draw_time === 'midday'
                     ? "bg-warning/10 border-warning/20 text-warning"
                     : "bg-primary/10 border-primary/20 text-primary",
-                  isLast2Dimmed && "opacity-30 border-dashed border-muted-foreground/20 text-muted-foreground scale-90"
+                  isLast2Dimmed && "opacity-40 border-dashed border-muted-foreground/20 text-muted-foreground scale-90"
                 )}>
                   {digit}
                 </div>
@@ -332,13 +332,13 @@ export function Pick3HistorySection({ history, onRefresh, config }: Pick3History
           <span className="text-primary font-black">
             {history[0]?.date ? format(parseDateSafe(history[0].date), 'dd/MM/yyyy', { locale: es }) : '—'}
           </span>
-          <span className="opacity-40">·</span>
+          <span className="opacity-60">·</span>
           <span className="opacity-60">Total BD:</span>
           <span className="font-black">{history.length}</span>
-          <span className="opacity-40">·</span>
+          <span className="opacity-60">·</span>
           <span className="opacity-60">Midday:</span>
           <span className="font-black text-warning">{middayHistory.length}</span>
-          <span className="opacity-40">·</span>
+          <span className="opacity-60">·</span>
           <span className="opacity-60">Noche:</span>
           <span className="font-black text-primary">{eveningHistory.length}</span>
         </div>
@@ -376,7 +376,7 @@ export function Pick3HistorySection({ history, onRefresh, config }: Pick3History
                   <Plus className="w-3 h-3" />
                 </Badge>
               ))}
-              {gaps.length > 8 && <span className="text-[9px] font-bold opacity-40 px-2 self-center">+{gaps.length - 8} más...</span>}
+              {gaps.length > 8 && <span className="text-[9px] font-bold opacity-60 px-2 self-center">+{gaps.length - 8} más...</span>}
             </div>
           </CardContent>
         </Card>
@@ -453,7 +453,7 @@ export function Pick3HistorySection({ history, onRefresh, config }: Pick3History
               </Badge>
             </div>
             {visibleMidday.length === 0 ? (
-              <p className="text-[10px] font-bold uppercase opacity-40 text-center py-8">Sin sorteos de mediodía</p>
+              <p className="text-[10px] font-bold uppercase opacity-60 text-center py-8">Sin sorteos de mediodía</p>
             ) : (
               visibleMidday.map((item, i) => (
                 <ResultCard key={`midday-${i}`} item={item} />
@@ -471,7 +471,7 @@ export function Pick3HistorySection({ history, onRefresh, config }: Pick3History
               </Badge>
             </div>
             {visibleEvening.length === 0 ? (
-              <p className="text-[10px] font-bold uppercase opacity-40 text-center py-8">Sin sorteos de noche</p>
+              <p className="text-[10px] font-bold uppercase opacity-60 text-center py-8">Sin sorteos de noche</p>
             ) : (
               visibleEvening.map((item, i) => (
                 <ResultCard key={`evening-${i}`} item={item} />

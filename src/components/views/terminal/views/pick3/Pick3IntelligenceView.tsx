@@ -31,17 +31,18 @@ import { Pick3OnboardingWizard } from './Pick3OnboardingWizard';
 import { BankrollDashboard } from './BankrollDashboard';
 import { BetEntryDialog } from './BetEntryDialog';
 
+// FIX-LAZY (2026-07-05): lazy loading con skeletons para componentes pesados
 const Pick3Visuals = dynamic(() => import('./Pick3Visuals').then(m => ({ default: m.Pick3Visuals })), {
   ssr: false,
-  loading: () => <div className="animate-pulse bg-muted rounded h-64" />,
+  loading: () => <div className="animate-pulse bg-muted rounded-[32px] h-64" />,
 });
 const Pick3SimulationDashboard = dynamic(() => import('./Pick3SimulationDashboard').then(m => ({ default: m.Pick3SimulationDashboard })), {
   ssr: false,
-  loading: () => <div className="animate-pulse bg-muted rounded h-64" />,
+  loading: () => <div className="animate-pulse bg-muted rounded-[32px] h-96" />,
 });
 const Pick3AIAdvisor = dynamic(() => import('./Pick3AIAdvisor'), {
   ssr: false,
-  loading: () => <div className="animate-pulse bg-muted rounded h-64" />,
+  loading: () => <div className="animate-pulse bg-muted rounded-[32px] h-96" />,
 });
 import { Pick3HeroCard } from './Pick3HeroCard';
 import { Pick3HelpSection } from './Pick3HelpSection';

@@ -428,3 +428,26 @@ html:not(.dark) .mesh-orb {
   transform: none !important;
   filter: none !important;
 }
+
+/* FIX-WCAG (2026-07-05): focus visible para accesibilidad WCAG AA */
+/* Asegura que todos los elementos interactivos tengan focus visible */
+*:focus-visible {
+  outline: 2px solid hsl(var(--primary));
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Tabs del módulo Pick3 */
+button:focus-visible,
+[role="tab"]:focus-visible {
+  outline: 2px solid hsl(var(--primary));
+  outline-offset: 2px;
+}
+
+/* Inputs */
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid hsl(var(--primary));
+  outline-offset: 1px;
+}

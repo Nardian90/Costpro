@@ -497,6 +497,9 @@ export class EnsembleEngine {
   private analysis: AdvancedAnalysis;
   private models: BaseModel[];
   private performances: ModelPerformance[] | null = null;
+  // FIX-CACHE (2026-07-05): cache de calibración para no recalcular si el histórico no cambió
+  private lastHistoryHash: string | null = null;
+  private lastWindowSize: number | null = null;
 
   constructor(history: Pick3Result[], analysis: AdvancedAnalysis) {
     this.history = history;
@@ -510,6 +513,18 @@ export class EnsembleEngine {
   }
 
   /**
+   * FIX-CACHE (2026-07-05): genera un hash simple del histórico para detectar cambios.
+   * Si el hash es igual al último, la calibración se puede reusar.
+   */
+  private computeHistoryHash(): string {
+    if (this.history.length === 0) return 'empty';
+    // Hash simple: primero + último + cantidad (suficiente para detectar cambios)
+    const first = this.history[0];
+    const last = this.history[this.history.length - 1];
+    return `${this.history.length}:${first.date}:${first.draw_time}:${last.date}:${last.draw_time}`;
+  }
+
+  /**
    * Backtest cada modelo independientemente y calcula pesos dinámicos.
    * Los pesos se basan en:
    *   - Hit rate global (50% peso)
@@ -517,6 +532,13 @@ export class EnsembleEngine {
    *   - Si hitRate < 1%, el modelo se excluye (no aporta edge)
    */
   public calibrate(windowSize: number = 60): ModelPerformance[] {
+    // FIX-CACHE (2026-07-05): si el histórico no cambió y el windowSize es el mismo,
+    // reusar la calibración anterior (evita recalcular 440 iteraciones × 4 modelos)
+    const currentHash = this.computeHistoryHash();
+    if (this.performances && this.lastHistoryHash === currentHash && this.lastWindowSize === windowSize) {
+      return this.performances;
+    }
+
     const performances: ModelPerformance[] = [];
 
     for (const model of this.models) {
@@ -562,6 +584,9 @@ export class EnsembleEngine {
       });
     }
 
+    // FIX-CACHE: guardar hash para próximas llamadas
+    this.lastHistoryHash = currentHash;
+    this.lastWindowSize = windowSize;
     this.performances = performances;
     return performances;
   }
