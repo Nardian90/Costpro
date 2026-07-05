@@ -39,7 +39,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   if (!validateCombination(digits)) {
     return {
-      title: 'Combinación no válida — Pick 3 Intelligence',
+      title: 'Combinación no válida — Gestor de Riesgo',
     };
   }
 
@@ -57,7 +57,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       description,
       type: 'website',
       locale: 'es_ES',
-      siteName: 'CostPro Pick 3 Intelligence',
+      siteName: 'CostPro Gestor de Riesgo',
     },
     twitter: {
       card: 'summary_large_image',
@@ -82,7 +82,7 @@ function generateJsonLd(digits: string, stats: any) {
     keywords: ['pick 3', 'florida lottery', digits, 'lottery analysis', 'estadística lotería'],
     creator: {
       '@type': 'Organization',
-      name: 'CostPro Pick 3 Intelligence',
+      name: 'CostPro Gestor de Riesgo',
     },
     temporalCoverage: stats.firstAppearance ? `${stats.firstAppearance}/${stats.lastAppearance}` : undefined,
     variableMeasured: [

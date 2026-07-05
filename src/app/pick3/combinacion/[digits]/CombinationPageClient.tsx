@@ -149,7 +149,7 @@ export default function Pick3CombinationPageClient({ stats, recentAppearances }:
             Análisis completo con IA Cuantitativa
           </h2>
           <p className="text-sm opacity-80 leading-relaxed">
-            Accede al módulo Pick 3 Intelligence: ensemble de 4 modelos estadísticos,
+            Accede al módulo Gestor de Riesgo: ensemble de 4 modelos estadísticos,
             4 tests de validación, gestión de bankroll con Kelly adaptativo, y asesor IA
             con rol de Senior Quant Analyst.
           </p>
@@ -186,7 +186,7 @@ export default function Pick3CombinationPageClient({ stats, recentAppearances }:
           </p>
           <p className="text-sm leading-relaxed opacity-80">
             <strong>Importante:</strong> Las loterías son juegos de azar con expected value negativo.
-            Ningún método estadístico puede garantizar ganancias. CostPro Pick 3 Intelligence
+            Ningún método estadístico puede garantizar ganancias. CostPro Gestor de Riesgo
             proporciona herramientas de gestión de bankroll y análisis educativo, NO predicciones.
           </p>
         </div>

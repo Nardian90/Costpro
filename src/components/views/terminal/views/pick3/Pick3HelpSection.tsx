@@ -16,7 +16,7 @@ export function Pick3HelpSection() {
           </div>
           <div className="relative z-10 space-y-4 max-w-2xl">
             <Badge className="bg-white/20 text-white font-black uppercase tracking-widest px-4 py-1 rounded-full border-none">
-              Guía del Usuario Pick 3 v9.0
+              Guía del Gestor de Riesgo
             </Badge>
             <h2 className="text-5xl font-black italic tracking-tighter leading-none">
               Domina la Probabilidad <br />con Inteligencia Artificial.

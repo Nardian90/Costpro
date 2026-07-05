@@ -287,7 +287,7 @@ export default function TerminalShell() {
   const renderView = (view: ViewType) => {
     switch (view) {
         case 'dashboard': return <ViewErrorBoundary viewName="Dashboard"><DashboardView /></ViewErrorBoundary>;
-        case 'pick3-intelligence': return <ViewErrorBoundary viewName="Pick3 Intelligence"><Pick3IntelligenceView /></ViewErrorBoundary>;
+        case 'pick3-intelligence': return <ViewErrorBoundary viewName="Gestor de Riesgo"><Pick3IntelligenceView /></ViewErrorBoundary>;
         case 'wallet': return <ViewErrorBoundary viewName="Wallet"><WalletView /></ViewErrorBoundary>;
         case 'pos': return <ViewErrorBoundary viewName="POS"><POSView /></ViewErrorBoundary>;
         case 'sales_catalog': return <ViewErrorBoundary viewName="Catálogo de Ventas"><SalesCatalogView /></ViewErrorBoundary>;

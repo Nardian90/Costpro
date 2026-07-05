@@ -42,9 +42,10 @@ interface Pick3SimulationDashboardProps {
   result: ModelValidationResult;
   initialBankroll: number;
   config?: BettingConfig;
+  simConfigPanel?: React.ReactNode;
 }
 
-export function Pick3SimulationDashboard({ result, initialBankroll, config }: Pick3SimulationDashboardProps) {
+export function Pick3SimulationDashboard({ result, initialBankroll, config, simConfigPanel }: Pick3SimulationDashboardProps) {
   // FIX-BITACORA-FILTER (2026-07-05): filtro de la bitácora, default 'straights' (solo aciertos straight)
   const [bitacoraFilter, setBitacoraFilter] = useState<'all' | 'wins' | 'straights' | 'boxes' | 'losses'>('straights');
 
@@ -281,6 +282,53 @@ export function Pick3SimulationDashboard({ result, initialBankroll, config }: Pi
                 </p>
               )}
             </div>
+
+            {/* FIX-LAYOUT (2026-07-05): Métricas de Riesgo integradas aquí para reducir espacios muertos */}
+            <div className="space-y-2">
+              <p className="text-[9px] font-black uppercase opacity-60">Métricas de Riesgo & Gestión</p>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                <div className="p-2 rounded-xl bg-background/50 border border-border/30 text-center">
+                  <p className="text-[8px] font-black uppercase opacity-50">Recovery</p>
+                  <p className={cn("text-sm font-black italic", result.recoveryFactor > 1 ? "text-success" : "text-amber-500")}>
+                    {result.recoveryFactor.toFixed(2)}
+                  </p>
+                </div>
+                <div className="p-2 rounded-xl bg-background/50 border border-border/30 text-center">
+                  <p className="text-[8px] font-black uppercase opacity-50">Prob. Ruina</p>
+                  <p className={cn("text-sm font-black italic", (result.probabilityOfRuin || 0) < 0.1 ? "text-success" : (result.probabilityOfRuin || 0) > 0.5 ? "text-destructive" : "text-amber-500")}>
+                    {((result.probabilityOfRuin || 0) * 100).toFixed(0)}%
+                  </p>
+                </div>
+                <div className="p-2 rounded-xl bg-background/50 border border-border/30 text-center">
+                  <p className="text-[8px] font-black uppercase opacity-50">Kelly Safe</p>
+                  <p className="text-sm font-black italic text-primary">
+                    {((result.kellyFraction || 0) * 100).toFixed(2)}%
+                  </p>
+                </div>
+                <div className="p-2 rounded-xl bg-background/50 border border-border/30 text-center">
+                  <p className="text-[8px] font-black uppercase opacity-50">Expectancy</p>
+                  <p className={cn("text-sm font-black italic", (result.expectancy || 0) > 0 ? "text-success" : "text-destructive")}>
+                    {formatMoney(result.expectancy || 0)}
+                  </p>
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                <div className="p-2 rounded-xl bg-background/50 border border-border/30 text-center">
+                  <p className="text-[8px] font-black uppercase opacity-50">Win Streak</p>
+                  <p className="text-sm font-black italic text-success">{result.winStreak}</p>
+                </div>
+                <div className="p-2 rounded-xl bg-background/50 border border-border/30 text-center">
+                  <p className="text-[8px] font-black uppercase opacity-50">Loss Streak</p>
+                  <p className="text-sm font-black italic text-destructive">{result.lossStreak}</p>
+                </div>
+                <div className="p-2 rounded-xl bg-background/50 border border-border/30 text-center">
+                  <p className="text-[8px] font-black uppercase opacity-50">Volatilidad</p>
+                  <p className="text-sm font-black italic">
+                    {((result.volatility || 0) * 100).toFixed(0)}%
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* LADO DERECHO: Curva de Capital ARREGLADA */}
@@ -397,65 +445,10 @@ export function Pick3SimulationDashboard({ result, initialBankroll, config }: Pi
         </div>
       </Card>
 
-      {/* FIX-LAYOUT (2026-07-05): Quant Metrics Grid removido — ya integrado en la sección de Capital Final */}
+      {/* FIX-LAYOUT (2026-07-05): Quant Metrics Grid y Risk Metrics integrados en Capital Final */}
 
-      {/* === RISK METRICS GRID === */}
-      <Card className="rounded-[28px] border-border/50 p-5">
-        <CardTitle className="text-sm font-black uppercase tracking-widest flex items-center gap-2 mb-4">
-          <ShieldCheck className="w-4 h-4 text-primary" /> Métricas de Riesgo & Gestión
-        </CardTitle>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="space-y-1">
-            <p className="text-[9px] font-black uppercase opacity-60">Recovery Factor</p>
-            <p className={cn("text-xl font-black italic", result.recoveryFactor > 1 ? "text-success" : "text-amber-500")}>
-              {result.recoveryFactor.toFixed(2)}
-            </p>
-            <p className="text-[8px] opacity-50">Net profit / MaxDD</p>
-          </div>
-          <div className="space-y-1">
-            <p className="text-[9px] font-black uppercase opacity-60">Prob. Ruina</p>
-            <p className={cn("text-xl font-black italic", (result.probabilityOfRuin || 0) < 0.1 ? "text-success" : (result.probabilityOfRuin || 0) > 0.5 ? "text-destructive" : "text-amber-500")}>
-              {((result.probabilityOfRuin || 0) * 100).toFixed(1)}%
-            </p>
-            <p className="text-[8px] opacity-50">Gambler's ruin</p>
-          </div>
-          <div className="space-y-1">
-            <p className="text-[9px] font-black uppercase opacity-60">Kelly Safe</p>
-            <p className="text-xl font-black italic text-primary">
-              {((result.kellyFraction || 0) * 100).toFixed(2)}%
-            </p>
-            <p className="text-[8px] opacity-50">25% Kelly cap</p>
-          </div>
-          <div className="space-y-1">
-            <p className="text-[9px] font-black uppercase opacity-60">Expectancy</p>
-            <p className={cn("text-xl font-black italic", (result.expectancy || 0) > 0 ? "text-success" : "text-destructive")}>
-              {formatMoney(result.expectancy || 0)}
-            </p>
-            <p className="text-[8px] opacity-50">Por trade</p>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-4 pt-4 border-t border-border/30">
-          <div className="space-y-1">
-            <p className="text-[9px] font-black uppercase opacity-60 flex items-center gap-1">
-              <Flame className="w-3 h-3 text-amber-500" /> Win Streak
-            </p>
-            <p className="text-lg font-black italic text-success">{result.winStreak}</p>
-          </div>
-          <div className="space-y-1">
-            <p className="text-[9px] font-black uppercase opacity-60 flex items-center gap-1">
-              <TrendingDown className="w-3 h-3 text-destructive" /> Loss Streak
-            </p>
-            <p className="text-lg font-black italic text-destructive">{result.lossStreak}</p>
-          </div>
-          <div className="space-y-1">
-            <p className="text-[9px] font-black uppercase opacity-60">Volatilidad</p>
-            <p className="text-lg font-black italic">
-              {((result.volatility || 0) * 100).toFixed(1)}%
-            </p>
-          </div>
-        </div>
-      </Card>
+      {/* === SIMULATION CONFIG PANEL (antes de la Bitácora) === */}
+      {simConfigPanel}
 
       {/* === STATISTICAL TESTS PANEL (NEW) === */}
       {result.statisticalTests && (

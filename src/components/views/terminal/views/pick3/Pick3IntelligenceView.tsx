@@ -337,11 +337,16 @@ export default function Pick3IntelligenceView() {
           </TabsList>
 
           <TabsContent value="dashboard" className="pt-6 space-y-6">
-            {/* FIX-DASHBOARD (2026-07-05): Hero Card movida al Dashboard para que sea lo primero que se ve */}
+            {/* FIX-DASHBOARD (2026-07-05): Hero Card con bankroll integrado */}
             {plays.length > 0 && profile && (
-              <Pick3HeroCard plays={plays} config={bConfig} bankroll={profile.current_bankroll / 100} />
+              <Pick3HeroCard
+                plays={plays}
+                config={bConfig}
+                bankroll={profile.current_bankroll / 100}
+                profile={profile}
+                ledger={ledger}
+              />
             )}
-            {profile && <BankrollDashboard profile={profile} ledger={ledger} />}
           </TabsContent>
 
           <TabsContent value="prediction" className="pt-6">
@@ -349,22 +354,35 @@ export default function Pick3IntelligenceView() {
           </TabsContent>
 
           <TabsContent value="simulation" className="pt-6 space-y-6">
-             {/* FIX-LAYOUT (2026-07-05): dashboard primero, config panel después de métricas */}
              {simResult ? (
-                <Pick3SimulationDashboard result={simResult} initialBankroll={1000} config={bConfig} />
+                <Pick3SimulationDashboard
+                  result={simResult}
+                  initialBankroll={1000}
+                  config={bConfig}
+                  simConfigPanel={
+                    <SimulationConfigPanel
+                      config={simConfig}
+                      onChange={setSimConfig}
+                      onReRun={handleReRunSimulation}
+                      isRunning={simRunning}
+                    />
+                  }
+                />
              ) : (
                 <div className="p-12 text-center opacity-40">
                   <PlayCircle className="w-16 h-16 mx-auto mb-4" />
                   <p className="text-sm font-black uppercase">No hay datos suficientes para simular (Mínimo 60 sorteos)</p>
                 </div>
              )}
-             {/* Panel de configuración DESPUÉS del dashboard (debajo de métricas de riesgo) */}
-             <SimulationConfigPanel
-               config={simConfig}
-               onChange={setSimConfig}
-               onReRun={handleReRunSimulation}
-               isRunning={simRunning}
-             />
+             {/* Panel de configuración también aquí para cuando no hay simResult */}
+             {simResult === null && (
+               <SimulationConfigPanel
+                 config={simConfig}
+                 onChange={setSimConfig}
+                 onReRun={handleReRunSimulation}
+                 isRunning={simRunning}
+               />
+             )}
           </TabsContent>
 
           <TabsContent value="intel" className="pt-6">

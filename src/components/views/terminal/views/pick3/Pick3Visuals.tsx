@@ -68,7 +68,8 @@ export function Pick3Visuals({ analysis, history }: Pick3VisualsProps) {
         .attr("height", y.bandwidth())
         .style("fill", (d: any) => color(d.value))
         .style("stroke-width", 1)
-        .style("stroke", "rgba(0,0,0,0.05)")
+        .style("stroke", "currentColor")
+        .style("stroke-opacity", 0.1)
         .append("title")
         .text((d: any) => `De ${d.x} a ${d.y}: ${d.value} veces`);
 
@@ -106,16 +107,27 @@ export function Pick3Visuals({ analysis, history }: Pick3VisualsProps) {
   const ChartWrapper = ({ title, desc, children }: any) => (
     <Card className="bg-card border-border/50 shadow-xl relative group overflow-hidden rounded-[32px]">
       <CardHeader>
-        <CardTitle className="text-xs font-black uppercase tracking-widest italic flex items-center gap-2">
+        <CardTitle className="text-xs font-black uppercase tracking-widest italic flex items-center gap-2 text-foreground">
           {title}
         </CardTitle>
-        <CardDescription className="text-[10px]">{desc}</CardDescription>
+        <CardDescription className="text-[10px] text-muted-foreground">{desc}</CardDescription>
       </CardHeader>
       <CardContent className="h-[200px] md:h-[250px]">
         {children}
       </CardContent>
     </Card>
   );
+
+  // FIX-A11Y (2026-07-05): colores que funcionan en ambos themes (light/dark)
+  // Usar currentColor para que herede del texto y hsl con opacity para grid
+  const gridStroke = 'currentColor';
+  const gridOpacity = 0.1;
+  const axisStroke = 'currentColor';
+  const tooltipBg = 'hsl(var(--card))';
+  const tooltipBorder = 'hsl(var(--border))';
+  const tooltipText = 'hsl(var(--card-foreground))';
+  const hotColor = 'hsl(var(--primary))';
+  const coldColor = 'hsl(var(--muted-foreground) / 0.3)';
 
   if (!mounted) return null;
 
@@ -127,16 +139,16 @@ export function Pick3Visuals({ analysis, history }: Pick3VisualsProps) {
        >
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={freqData}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.05)" />
-              <XAxis dataKey="number" stroke="#999" fontSize={10} axisLine={false} tickLine={false} />
-              <YAxis stroke="#999" fontSize={10} axisLine={false} tickLine={false} />
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={gridStroke} opacity={gridOpacity} />
+              <XAxis dataKey="number" stroke={axisStroke} fontSize={10} axisLine={false} tickLine={false} opacity={0.5} />
+              <YAxis stroke={axisStroke} fontSize={10} axisLine={false} tickLine={false} opacity={0.5} />
               <Tooltip
-                cursor={{ fill: 'rgba(0,0,0,0.05)' }}
-                contentStyle={{ backgroundColor: 'white', border: '1px solid rgba(0,0,0,0.1)', borderRadius: '12px' }}
+                cursor={{ fill: 'currentColor', fillOpacity: 0.05 }}
+                contentStyle={{ backgroundColor: tooltipBg, border: `1px solid ${tooltipBorder}`, borderRadius: '12px', color: tooltipText }}
               />
               <Bar isAnimationActive={false} dataKey="frequency" radius={[4, 4, 0, 0]}>
                 {freqData.map((entry, index) => (
-                  <Cell key={index} fill={entry.isHot ? '#3b82f6' : 'rgba(0,0,0,0.1)'} />
+                  <Cell key={index} fill={entry.isHot ? hotColor : coldColor} />
                 ))}
               </Bar>
             </BarChart>
@@ -149,11 +161,14 @@ export function Pick3Visuals({ analysis, history }: Pick3VisualsProps) {
        >
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={distribution2DData} layout="vertical">
-              <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="rgba(0,0,0,0.05)" />
+              <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={gridStroke} opacity={gridOpacity} />
               <XAxis type="number" hide />
-              <YAxis dataKey="val" type="category" stroke="#999" fontSize={10} axisLine={false} tickLine={false} width={30} />
-              <Tooltip />
-              <Bar isAnimationActive={false} dataKey="count" fill="#10b981" radius={[0, 4, 4, 0]} />
+              <YAxis dataKey="val" type="category" stroke={axisStroke} fontSize={10} axisLine={false} tickLine={false} width={30} opacity={0.5} />
+              <Tooltip
+                cursor={{ fill: 'currentColor', fillOpacity: 0.05 }}
+                contentStyle={{ backgroundColor: tooltipBg, border: `1px solid ${tooltipBorder}`, borderRadius: '12px', color: tooltipText }}
+              />
+              <Bar isAnimationActive={false} dataKey="count" fill="hsl(var(--success))" radius={[0, 4, 4, 0]} />
             </BarChart>
           </ResponsiveContainer>
        </ChartWrapper>

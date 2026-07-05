@@ -16,9 +16,11 @@ interface Pick3HeroCardProps {
   plays: IntelligencePlay[];
   config: BettingConfig;
   bankroll: number;
+  profile?: any;
+  ledger?: any[];
 }
 
-export function Pick3HeroCard({ plays, config, bankroll }: Pick3HeroCardProps) {
+export function Pick3HeroCard({ plays, config, bankroll, profile, ledger }: Pick3HeroCardProps) {
   if (!plays || plays.length === 0) return null;
 
   const mainPlay = plays[0];
@@ -104,6 +106,47 @@ export function Pick3HeroCard({ plays, config, bankroll }: Pick3HeroCardProps) {
                   <p className="text-sm font-black italic opacity-80">{mainPlay.strategyLabel || "Análisis Multivariante"}</p>
                   <p className="text-[11px] font-bold italic opacity-40 leading-tight">"{mainPlay.justification}"</p>
                 </div>
+
+                {/* FIX-LAYOUT (2026-07-05): Resumen compacto del bankroll integrado para reducir espacios muertos */}
+                {profile && (
+                  <div className="sm:col-span-2 p-4 rounded-[24px] bg-background/50 border border-border/30">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
+                      <div>
+                        <p className="text-[8px] font-black uppercase opacity-50">Capital Actual</p>
+                        <p className="text-lg font-black italic text-primary">
+                          ${(profile.current_bankroll / 100 || bankroll).toFixed(2)}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-[8px] font-black uppercase opacity-50">Ganancia Neta</p>
+                        <p className={cn(
+                          "text-lg font-black italic",
+                          (profile.current_bankroll / 100 - profile.initial_bankroll / 100) >= 0 ? "text-success" : "text-destructive"
+                        )}>
+                          {(profile.current_bankroll / 100 - profile.initial_bankroll / 100) >= 0 ? '+' : ''}
+                          ${(profile.current_bankroll / 100 - profile.initial_bankroll / 100).toFixed(2)}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-[8px] font-black uppercase opacity-50">ROI</p>
+                        <p className={cn(
+                          "text-lg font-black italic",
+                          (profile.current_bankroll / 100 - profile.initial_bankroll / 100) >= 0 ? "text-success" : "text-destructive"
+                        )}>
+                          {profile.initial_bankroll > 0
+                            ? (((profile.current_bankroll - profile.initial_bankroll) / profile.initial_bankroll) * 100).toFixed(1)
+                            : '0.0'}%
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-[8px] font-black uppercase opacity-50">Capital Inicial</p>
+                        <p className="text-lg font-black italic opacity-70">
+                          ${(profile.initial_bankroll / 100).toFixed(2)}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </CardContent>

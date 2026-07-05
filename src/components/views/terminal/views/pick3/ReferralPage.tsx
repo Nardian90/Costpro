@@ -62,8 +62,8 @@ export function ReferralPage() {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: 'CostPro Pick 3 Intelligence',
-          text: 'Únete a CostPro Pick 3 Intelligence — análisis estadístico real, sin promesas falsas.',
+          title: 'CostPro Gestor de Riesgo',
+          text: 'Únete a CostPro Gestor de Riesgo — análisis estadístico real, sin promesas falsas.',
           url: referralUrl,
         });
       } catch (err) {
@@ -93,7 +93,7 @@ export function ReferralPage() {
           <div className="flex-1">
             <h2 className="text-xl font-black italic uppercase tracking-tight">Programa de Referidos</h2>
             <p className="text-xs opacity-70 leading-relaxed mt-1">
-              Invita a tus amigos a CostPro Pick 3 Intelligence. Cuando se suscriban a un plan pago,
+              Invita a tus amigos a CostPro Gestor de Riesgo. Cuando se suscriban a un plan pago,
               ambos reciben <strong className="text-primary">1 mes gratis del plan Player</strong> (valor $19).
             </p>
           </div>

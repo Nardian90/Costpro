@@ -443,7 +443,7 @@ export function PricingPage({ compact = false, onSuccess }: PricingPageProps) {
             </div>
             <div>
               <p className="font-black uppercase text-[10px] mb-1">¿Las predicciones garantizan ganancias?</p>
-              <p className="opacity-70">No. Las loterías son juegos de azar con expected value negativo. CostPro Pick 3 Intelligence proporciona análisis estadístico y gestión de bankroll, NO predicciones garantizadas.</p>
+              <p className="opacity-70">No. Las loterías son juegos de azar con expected value negativo. CostPro Gestor de Riesgo proporciona análisis estadístico y gestión de bankroll, NO predicciones garantizadas.</p>
             </div>
           </CardContent>
         </Card>
