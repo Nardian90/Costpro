@@ -30,14 +30,29 @@ async function postHandler(req: NextRequest) {
     const admin = createClient(supabaseUrl, serviceKey, { auth: { autoRefreshToken: false, persistSession: false } });
 
     // 1. Guardar cuentas en wallet_accounts (upsert)
+    // FIX-PHASE3 (2026-07-06): inferir banco de las transacciones, no del source
+    // Primero procesar transacciones para saber qué banco usa cada cuenta
+    const accountBankMap: Record<string, string> = {}; // accountNumber → bank
+    for (const tx of transactions) {
+      const bankName = extractBankFromService(tx.serviceType);
+      const accNum = tx.raw.cuenta || '';
+      if (bankName !== 'DESCONOCIDO' && accNum) {
+        accountBankMap[accNum] = bankName;
+      }
+    }
+
     let accountsSaved = 0;
     for (const acc of accounts) {
-      const bankName = extractBank(acc.source, acc.accountNumber);
+      // FIX-PHASE3: inferir banco desde las transacciones asociadas a esta cuenta
+      const bankFromTx = accountBankMap[acc.accountNumber] || extractBankFromService(
+        // Buscar el tipo_servicio más común entre las transacciones de esta cuenta
+        transactions.find(t => t.raw.cuenta === acc.accountNumber)?.serviceType || ''
+      );
       const maskedNum = maskAccount(acc.accountNumber);
       const { error } = await admin.from('wallet_accounts').upsert({
         user_id: session.user.id,
         source: acc.source,
-        bank: bankName,
+        bank: bankFromTx,
         account_number: maskedNum,
         account_full: acc.accountNumber,
         description: acc.description || null,
@@ -57,7 +72,12 @@ async function postHandler(req: NextRequest) {
       const category = categorize(tx.service, tx.serviceType);
       const dateStr = tx.date.toISOString().split('T')[0];
       const amount = Math.abs(tx.amount);
-      const operation = tx.amount > 0 ? 'CR' : 'DB';
+      // FIX-PHASE1 (2026-07-06): determinar CR/DB por tipo de servicio, no por signo del monto.
+      // Transfermovil SIEMPRE guarda montos positivos. La dirección se infiere del servicio:
+      // - Recarga, Pago, Compra, Impuesto → DB (gasto)
+      // - Transferencia: si tipo_servicio incluye "Recibida" → CR, si no → DB (enviada por defecto)
+      // - Cualquier servicio con "Recibida" o "entrada" → CR
+      const operation = determineOperation(tx.service, tx.serviceType);
 
       const { error } = await admin.from('wallet_transactions').upsert({
         user_id: session.user.id,
@@ -79,24 +99,30 @@ async function postHandler(req: NextRequest) {
       else txSkipped++;
     }
 
-    // 3. Calcular saldos reales por cuenta desde SMS de saldo
-    const accountBalances: Record<string, { balance: number; lastDate: string }> = {};
+    // 3. FIX-PHASE2 (2026-07-06): Calcular saldos por banco desde transacciones.
+    // El .trm NO incluye el texto del SMS con "Saldo Disponible".
+    // Calculamos: saldo = Σ(CR) - Σ(DB) por banco.
+    const bankBalances: Record<string, { balance: number; lastDate: string }> = {};
     for (const tx of transactions) {
-      const balMatch = tx.raw.content_sms?.match(/(?:Saldo Disponible|Saldo restante|Saldo Restante):\s*(CR|DB)?\s*([\d,.]+)\s*(CUP|USD)?/i);
-      if (balMatch) {
-        const amount = parseFloat(balMatch[2].replace(/[,.](?=\d{3})/g, '').replace(',', '.')) || 0;
-        const dateStr = tx.date.toISOString().split('T')[0];
-        const bankName = extractBankFromService(tx.serviceType);
-        if (!accountBalances[bankName] || dateStr >= accountBalances[bankName].lastDate) {
-          accountBalances[bankName] = { balance: amount, lastDate: dateStr };
-        }
-      }
+      const bankName = extractBankFromService(tx.serviceType);
+      const amount = Math.abs(tx.amount);
+      const dateStr = tx.date.toISOString().split('T')[0];
+      const op = determineOperation(tx.service, tx.serviceType);
+
+      if (!bankBalances[bankName]) bankBalances[bankName] = { balance: 0, lastDate: '' };
+      if (op === 'CR') bankBalances[bankName].balance += amount;
+      else bankBalances[bankName].balance -= amount;
+      if (dateStr > bankBalances[bankName].lastDate) bankBalances[bankName].lastDate = dateStr;
     }
 
     // Actualizar saldos en wallet_accounts
-    for (const [bankName, bal] of Object.entries(accountBalances)) {
+    for (const [bankName, bal] of Object.entries(bankBalances)) {
       await admin.from('wallet_accounts')
-        .update({ current_balance: bal.balance, last_balance_date: bal.lastDate, updated_at: new Date().toISOString() })
+        .update({
+          current_balance: bal.balance,
+          last_balance_date: bal.lastDate,
+          updated_at: new Date().toISOString()
+        })
         .eq('user_id', session.user.id)
         .eq('bank', bankName);
     }
@@ -115,6 +141,25 @@ async function postHandler(req: NextRequest) {
     logger.error('WALLET', `TRM import error: ${error instanceof Error ? error.message : String(error)}`);
     return NextResponse.json({ error: `Error: ${error instanceof Error ? error.message : String(error)}` }, { status: 500 });
   }
+}
+
+function determineOperation(service: string, serviceType: string): 'CR' | 'DB' {
+  const low = (service + ' ' + serviceType).toLowerCase();
+  // Gastos siempre (DB)
+  if (low.includes('recarga')) return 'DB';
+  if (low.includes('pago') || low.includes('factura')) return 'DB';
+  if (low.includes('compra')) return 'DB';
+  if (low.includes('impuesto') || low.includes('sello') || low.includes('timbre')) return 'DB';
+  // Ingresos siempre (CR)
+  if (low.includes('recibida') || low.includes('entrada') || low.includes('deposito')) return 'CR';
+  // Transferencia: ambigua. En Transfermovil, las transferencias enviadas son más comunes.
+  // Si el tipo_servicio incluye "Recibida" → CR, sino → DB
+  if (low.includes('transferencia')) {
+    if (low.includes('recibida')) return 'CR';
+    return 'DB'; // enviada por defecto
+  }
+  // Default: si no sabemos, es gasto (conservador)
+  return 'DB';
 }
 
 function extractBank(source: string, account: string): string {

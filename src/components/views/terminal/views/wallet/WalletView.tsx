@@ -85,12 +85,63 @@ export default function WalletView() {
         try {
             const { useAuthStore } = await import('@/store');
             const token = useAuthStore.getState().token;
-            const { createClient } = await import('@supabase/supabase-js');
-            const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, { auth: { persistSession: false } });
-            await admin.from('wallet_transactions').update({ manual_category: category }).eq('id', txId);
+            const res = await fetch('/api/wallet/transaction', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+                body: JSON.stringify({ id: txId, category }),
+            });
+            if (!res.ok) throw new Error('Error');
             toast.success(`Clasificado: ${category}`);
             fetchData();
         } catch { toast.error('Error al clasificar'); }
+    };
+
+    // FIX-PHASE4 (2026-07-06): Agregar transacción manual
+    const [showAddModal, setShowAddModal] = useState(false);
+    const [addType, setAddType] = useState<'CR' | 'DB'>('DB');
+    const [addForm, setAddForm] = useState({ amount: '', category: 'Otros', note: '', bank: 'BANDEC', date: new Date().toISOString().split('T')[0] });
+
+    const handleAddTransaction = async () => {
+        if (!addForm.amount || parseFloat(addForm.amount) <= 0) { toast.error('Monto inválido'); return; }
+        try {
+            const { useAuthStore } = await import('@/store');
+            const token = useAuthStore.getState().token;
+            const res = await fetch('/api/wallet/transaction', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+                body: JSON.stringify({
+                    date: addForm.date,
+                    bank: addForm.bank,
+                    operation: addType,
+                    amount: parseFloat(addForm.amount),
+                    currency: 'CUP',
+                    service: addType === 'CR' ? 'Ingreso manual' : 'Gasto manual',
+                    category: addForm.category,
+                    note: addForm.note,
+                }),
+            });
+            if (!res.ok) throw new Error('Error');
+            toast.success(addType === 'CR' ? 'Ingreso agregado' : 'Gasto agregado');
+            setShowAddModal(false);
+            setAddForm({ amount: '', category: 'Otros', note: '', bank: 'BANDEC', date: new Date().toISOString().split('T')[0] });
+            fetchData();
+        } catch { toast.error('Error al agregar'); }
+    };
+
+    // FIX-PHASE5 (2026-07-06): Eliminar transacción
+    const handleDeleteTransaction = async (txId: string) => {
+        if (!confirm('¿Eliminar esta transacción?')) return;
+        try {
+            const { useAuthStore } = await import('@/store');
+            const token = useAuthStore.getState().token;
+            const res = await fetch(`/api/wallet/transaction?id=${txId}`, {
+                method: 'DELETE',
+                headers: token ? { Authorization: `Bearer ${token}` } : {},
+            });
+            if (!res.ok) throw new Error('Error');
+            toast.success('Transacción eliminada');
+            fetchData();
+        } catch { toast.error('Error al eliminar'); }
     };
 
     const fmt = (v: number) => new Intl.NumberFormat('es-CU', { style: 'currency', currency: 'CUP', maximumFractionDigits: 2 }).format(v || 0);
@@ -333,6 +384,72 @@ export default function WalletView() {
                                 <div className="space-y-2"><Smartphone className="w-8 h-8 mx-auto text-muted-foreground/50" /><p className="text-xs font-bold uppercase">Arrastra tu .trm</p><p className="text-[10px] text-muted-foreground">Transfermóvil → Respaldo → Exportar</p></div>
                             )}
                             <input id="trm-file-input" type="file" accept=".trm" onChange={e => { const f = e.target.files?.[0]; if (f?.name.endsWith('.trm')) handleTrmFile(f); }} className="hidden" />
+                        </div>
+                    </Card>
+                </div>
+            )}
+
+            {/* FIX-PHASE4: Botones flotantes + y - estilo Monefy Pro */}
+            <div className="fixed bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-3 z-50">
+                <button onClick={() => { setAddType('DB'); setShowAddModal(true); }}
+                    className="w-14 h-14 rounded-full bg-red-500 text-white shadow-xl flex items-center justify-center hover:scale-110 transition-transform"
+                    aria-label="Agregar gasto">
+                    <span className="text-2xl font-black">−</span>
+                </button>
+                <div className="px-4 py-2 rounded-full bg-card border border-border/30 shadow-lg">
+                    <p className="text-[8px] font-bold uppercase text-muted-foreground text-center">Balance</p>
+                    <p className={cn("text-sm font-black italic text-center", (data?.summary?.balance || 0) >= 0 ? "text-emerald-500" : "text-red-500")}>
+                        {fmtShort(data?.summary?.balance || 0)}
+                    </p>
+                </div>
+                <button onClick={() => { setAddType('CR'); setShowAddModal(true); }}
+                    className="w-14 h-14 rounded-full bg-emerald-500 text-white shadow-xl flex items-center justify-center hover:scale-110 transition-transform"
+                    aria-label="Agregar ingreso">
+                    <span className="text-2xl font-black">+</span>
+                </button>
+            </div>
+
+            {/* FIX-PHASE4: Modal agregar transacción */}
+            {showAddModal && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-background/90 backdrop-blur-sm" onClick={() => setShowAddModal(false)}>
+                    <Card className="w-full max-w-sm rounded-3xl border-border/30 shadow-2xl p-5" onClick={e => e.stopPropagation()}>
+                        <div className="flex justify-between items-center mb-4">
+                            <h2 className="text-sm font-black uppercase">{addType === 'CR' ? '🟢 Nuevo Ingreso' : '🔴 Nuevo Gasto'}</h2>
+                            <button onClick={() => setShowAddModal(false)} className="text-muted-foreground hover:text-foreground"><X className="w-4 h-4" /></button>
+                        </div>
+                        <div className="space-y-3">
+                            <div>
+                                <label className="text-[9px] font-bold uppercase text-muted-foreground">Monto</label>
+                                <input type="number" step="0.01" value={addForm.amount} onChange={e => setAddForm({...addForm, amount: e.target.value})}
+                                    placeholder="0.00" className="w-full h-10 px-3 bg-muted/20 rounded-xl text-lg font-black text-center border border-border/30" autoFocus />
+                            </div>
+                            <div>
+                                <label className="text-[9px] font-bold uppercase text-muted-foreground">Categoría</label>
+                                <select value={addForm.category} onChange={e => setAddForm({...addForm, category: e.target.value})}
+                                    className="w-full h-10 px-3 bg-muted/20 rounded-xl text-xs font-bold border border-border/30">
+                                    {(addType === 'CR' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES).map(c => <option key={c} value={c}>{c}</option>)}
+                                </select>
+                            </div>
+                            <div>
+                                <label className="text-[9px] font-bold uppercase text-muted-foreground">Banco</label>
+                                <select value={addForm.bank} onChange={e => setAddForm({...addForm, bank: e.target.value})}
+                                    className="w-full h-10 px-3 bg-muted/20 rounded-xl text-xs font-bold border border-border/30">
+                                    <option value="BANDEC">BANDEC</option><option value="BPA">BPA</option><option value="METRO">METRO</option><option value="MANUAL">Efectivo</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="text-[9px] font-bold uppercase text-muted-foreground">Fecha</label>
+                                <input type="date" value={addForm.date} onChange={e => setAddForm({...addForm, date: e.target.value})}
+                                    className="w-full h-10 px-3 bg-muted/20 rounded-xl text-xs font-bold border border-border/30" />
+                            </div>
+                            <div>
+                                <label className="text-[9px] font-bold uppercase text-muted-foreground">Nota</label>
+                                <input type="text" value={addForm.note} onChange={e => setAddForm({...addForm, note: e.target.value})}
+                                    placeholder="Descripción opcional..." className="w-full h-10 px-3 bg-muted/20 rounded-xl text-xs border border-border/30" />
+                            </div>
+                            <Button onClick={handleAddTransaction} className={cn("w-full h-11 rounded-xl font-black uppercase text-xs", addType === 'CR' ? "bg-emerald-500" : "bg-red-500")}>
+                                {addType === 'CR' ? 'Agregar Ingreso' : 'Agregar Gasto'}
+                            </Button>
                         </div>
                     </Card>
                 </div>
