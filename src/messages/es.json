@@ -573,7 +573,8 @@
       "seoDescription": "Explora los productos disponibles en {name}. Precios actualizados y gran variedad.{address, select, null {} other { Ubicada en {address}.}}",
       "seoOgDescription": "Catálogo de productos — {name}",
       "seoNotFound": "Tienda no encontrada",
-      "seoCatalogOf": "Catálogo de {name}"
+      "seoCatalogOf": "Catálogo de {name}",
+      "priceOnRequest": "Consultar"
     },
     "storefrontConfig": {
       "bannerSection": "Banner y Branding",
