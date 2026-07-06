@@ -4183,3 +4183,29 @@ Stage Summary:
 - RLS completa: dueño puede CRUD, admin puede SELECT, otros usuarios NO ven nada
 - account_full no expuesto al cliente
 - Endpoints ya filtran por session.user.id (verificado por auditoría)
+
+---
+Task ID: FIX-SUPABASE-KEYS-DEFINITIVE
+Agent: main
+Task: Fix "Invalid API key" en preview local (no tocar Vercel aún)
+
+Work Log:
+- Descubierto: el proyecto de Supabase tiene las keys LEGACY (JWT eyJhbGci...) DESHABILITADAS
+- Las keys legacy devuelven 401 "Invalid API key" al usarlas
+- El proyecto usa el NUEVO formato de keys de Supabase:
+  - publishable: sb_publishable__[REDACTED] (reemplaza a anon)
+  - secret: sb_secret_[REDACTED] (reemplaza a service_role)
+- Test: ambas keys nuevas devuelven 200 OK en /auth/v1/settings
+- Test: supabase-js v2.105.1 funciona correctamente con la publishable key
+- .env actualizado: NEXT_PUBLIC_SUPABASE_ANON_KEY ahora es sb_publishable__...
+- SUPABASE_SERVICE_ROLE_KEY ya era correcta (sb_secret_...)
+- PM2 reiniciado, servidor responde 200
+- Confirmado: el error "Invalid API key" ya NO aparece con las nuevas keys
+- Login de usuarios falla con "invalid_credentials" (no "Invalid API key") — esto es un problema SEPARADO de auth.users en Supabase
+- NO se hizo push a Vercel (esperando confirmación del usuario)
+
+Stage Summary:
+- Causa raíz: keys legacy de Supabase deshabilitadas en el proyecto
+- Fix: usar publishable key (sb_publishable__) en lugar de anon key legacy (eyJhbGci...)
+- El preview local ahora debería funcionar sin "Invalid API key"
+- Pendiente: confirmar con usuario antes de actualizar Vercel
