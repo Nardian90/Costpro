@@ -316,24 +316,24 @@ function maskAccount(account: string): string | null {
   return null;
 }
 
+// FIX-CATEGORIA (2026-07-06): la categoría ahora coincide EXACTAMENTE con el
+// nombre del servicio (servicio) que se muestra en Movimientos.
+// Antes se agrupaba en categorías genéricas (Telecom, Impuestos, etc.) que no
+// coincidían con lo que el usuario ve en la lista de transacciones.
+// Ahora cada servicio es su propia categoría:
+//   - "Recarga nauta banco" → categoría "Recarga nauta banco"
+//   - "Compra en linea" → categoría "Compra en linea"
+//   - "Transferencia" → categoría "Transferencia"
+//   - etc.
+// Esto permite que el donut chart y la vista Categorías muestren los mismos
+// nombres que aparecen en Movimientos.
 function categorize(service: string, serviceType: string): string {
-  const low = (service + ' ' + serviceType).toLowerCase();
-  // FIX-CATEGORIA (2026-07-06): mejor detección de categorías
-  if (low.includes('transferencia') || low.includes('transfer') || low.includes('envio') || low.includes('envío')) return 'Transferencia';
-  if (low.includes('recarga nauta') || low.includes('recarga de saldo')) return 'Telecom';
-  if (low.includes('recarga')) return 'Telecom';
-  if (low.includes('electric') || low.includes('energía') || low.includes('energia')) return 'Electricidad';
-  if (low.includes('agua') || low.includes('acueducto')) return 'Agua';
-  if (low.includes('gas')) return 'Gas';
-  if (low.includes('internet') || low.includes('nauta') || low.includes('datos')) return 'Internet';
-  if (low.includes('impuesto') || low.includes('sello') || low.includes('timbre')) return 'Impuestos';
-  if (low.includes('multa')) return 'Impuestos';
-  if (low.includes('telefono') || low.includes('teléfono')) return 'Telecom';
-  // FIX-CATEGORIA: "compra en linea" y "compra" → Compras (no Otros)
-  if (low.includes('compra')) return 'Compras';
-  if (low.includes('pago') || low.includes('factura')) return 'Servicios';
-  if (low.includes('amortizar') || low.includes('amortizacion')) return 'Préstamos';
-  if (low.includes('onat')) return 'Impuestos';
+  // Si el servicio existe, usarlo directamente como categoría
+  if (service && service.trim()) return service.trim();
+  // Fallback: si no hay servicio, categorizar por tipo_servicio
+  const low = (serviceType || '').toLowerCase();
+  if (low.includes('agentes')) return 'Agentes';
+  if (low.includes('bandec') || low.includes('bpa') || low.includes('metro')) return 'Banco';
   return 'Otros';
 }
 

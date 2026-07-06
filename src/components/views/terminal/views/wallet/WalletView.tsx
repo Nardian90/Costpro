@@ -145,6 +145,14 @@ export default function WalletView() {
     const [reportesView, setReportesView] = useState<'tarjeta' | 'tabla'>('tarjeta');
     const [kpiModalMonth, setKpiModalMonth] = useState<string | null>(null);
 
+    // FIX-CATEGORIA-FILTER (2026-07-06): filtro por fechas en vista Categorías
+    // Default: primer día del mes actual → día actual
+    const today = new Date();
+    const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    const toDateInput = (d: Date) => d.toISOString().split('T')[0];
+    const [catDateFrom, setCatDateFrom] = useState(toDateInput(firstDayOfMonth));
+    const [catDateTo, setCatDateTo] = useState(toDateInput(today));
+
     // Años disponibles extraídos de las transacciones
     const availableYears = useMemo(() => {
         if (!data) return [];
@@ -404,30 +412,45 @@ export default function WalletView() {
 
     // Categorías para el donut chart (solo gastos reales)
     // FIX-CR-DB-DISPLAY (2026-07-06): usar expenseCategories del API (solo DB)
-    // en lugar de data.categories (que mezclaba CR y DB).
+    // FIX-CATEGORIA-FILTER: aplicar filtro por fechas (catDateFrom / catDateTo)
     const expenseCats = useMemo(() => {
         if (!data) return [];
-        const cats = data.expenseCategories || data.categories;
+        const cats: Record<string, number> = {};
+        for (const tx of data.transactions) {
+            if (tx.operation !== 'DB') continue;
+            // Filtro por fechas
+            if (catDateFrom && tx.date < catDateFrom) continue;
+            if (catDateTo && tx.date > catDateTo) continue;
+            const c = tx.manual_category || tx.category || 'Otros';
+            cats[c] = (cats[c] || 0) + (parseFloat(tx.amount) || 0);
+        }
         return Object.entries(cats)
-            .filter(([name]) => !name.includes('Ingreso') && !name.includes('Recibida'))
             .map(([name, total]) => ({ name, total, color: CAT_COLORS[name] || '#6b7280', icon: CAT_ICONS[name] || '📦' }))
             .sort((a, b) => b.total - a.total);
-    }, [data]);
+    }, [data, catDateFrom, catDateTo]);
 
     // FIX-CR-DB-DISPLAY: categorías de ingresos (solo CR) para mostrar en UI
     const incomeCats = useMemo(() => {
-        if (!data || !data.incomeCategories) return [];
-        return Object.entries(data.incomeCategories)
+        if (!data) return [];
+        const cats: Record<string, number> = {};
+        for (const tx of data.transactions) {
+            if (tx.operation !== 'CR') continue;
+            if (catDateFrom && tx.date < catDateFrom) continue;
+            if (catDateTo && tx.date > catDateTo) continue;
+            const c = tx.manual_category || tx.category || 'Otros';
+            cats[c] = (cats[c] || 0) + (parseFloat(tx.amount) || 0);
+        }
+        return Object.entries(cats)
             .map(([name, total]) => ({ name, total, color: CAT_COLORS[name] || '#16a34a', icon: CAT_ICONS[name] || '💰' }))
             .sort((a, b) => b.total - a.total);
-    }, [data]);
+    }, [data, catDateFrom, catDateTo]);
 
     const totalIncomeCats = incomeCats.reduce((s, c) => s + c.total, 0);
 
     const totalExpenses = expenseCats.reduce((s, c) => s + c.total, 0);
 
     // FIX-REPORTES: KPIs por mes para las tarjetas de Reportes
-    // Cada item: { month, label, year, monthNum, ops, income, expenses, balance, expensePctOfIncome, topCategory }
+    // Incluye comparación con mes anterior ($ y % variación) + Top 5 categorías
     const monthlyKPIs = useMemo(() => {
         if (!data) return [];
         const months: Record<string, { income: number; expenses: number; ops: number; cats: Record<string, number> }> = {};
@@ -444,11 +467,15 @@ export default function WalletView() {
             }
             months[month].ops++;
         }
-        return Object.entries(months)
+        const sorted = Object.entries(months)
             .map(([month, m]) => {
                 const [year, monthNum] = month.split('-');
                 const mi = parseInt(monthNum) - 1;
-                const topCat = Object.entries(m.cats).sort((a, b) => b[1] - a[1])[0];
+                // FIX-TOP5: top 5 categorías de gasto del mes
+                const top5Cats = Object.entries(m.cats)
+                    .sort((a, b) => b[1] - a[1])
+                    .slice(0, 5)
+                    .map(([name, amount]) => ({ name, amount }));
                 return {
                     month,
                     label: `${MONTH_NAMES[mi] || monthNum} ${year}`,
@@ -459,12 +486,37 @@ export default function WalletView() {
                     expenses: m.expenses,
                     balance: m.income - m.expenses,
                     expensePctOfIncome: m.income > 0 ? (m.expenses / m.income) * 100 : 0,
-                    topCategory: topCat ? topCat[0] : '—',
-                    topCategoryAmount: topCat ? topCat[1] : 0,
+                    topCategory: top5Cats[0]?.name || '—',
+                    topCategoryAmount: top5Cats[0]?.amount || 0,
+                    top5Cats,
                     cats: m.cats,
+                    // FIX-COMPARISON: campos de comparación con mes anterior
+                    prevExpenses: 0 as number,
+                    expensesVar: 0 as number,
+                    expensesVarPct: 0 as number,
                 };
             })
             .sort((a, b) => b.month.localeCompare(a.month)); // más reciente primero
+
+        // FIX-COMPARISON: calcular variación vs mes anterior
+        for (let i = 0; i < sorted.length; i++) {
+            const current = sorted[i];
+            // Buscar el mes anterior (puede no ser el siguiente en el array si hay huecos)
+            const prevMonthDate = new Date(parseInt(current.year), current.monthNum - 1, 1);
+            prevMonthDate.setMonth(prevMonthDate.getMonth() - 1);
+            const prevMonthKey = `${prevMonthDate.getFullYear()}-${String(prevMonthDate.getMonth() + 1).padStart(2, '0')}`;
+            const prev = sorted.find(s => s.month === prevMonthKey);
+            if (prev) {
+                current.prevExpenses = prev.expenses;
+                current.expensesVar = current.expenses - prev.expenses; // $ variación
+                current.expensesVarPct = prev.expenses > 0 ? ((current.expenses - prev.expenses) / prev.expenses) * 100 : 0;
+            } else {
+                current.prevExpenses = 0;
+                current.expensesVar = current.expenses;
+                current.expensesVarPct = 100;
+            }
+        }
+        return sorted;
     }, [data]);
 
     const filteredTx = useMemo(() => {
@@ -963,6 +1015,32 @@ export default function WalletView() {
                 {/* ═══ CATEGORÍAS ═══ */}
                 {viewMode === 'categorias' && data && (
                     <div className="space-y-4">
+                        {/* FIX-CATEGORIA-FILTER: filtro por rango de fechas */}
+                        <Card className="rounded-2xl border-border/30 p-3">
+                            <div className="flex flex-wrap items-end gap-3">
+                                <div className="flex-1 min-w-[120px]">
+                                    <label className="text-[9px] font-bold uppercase text-muted-foreground block mb-1">Fecha inicio</label>
+                                    <input type="date" value={catDateFrom} onChange={e => setCatDateFrom(e.target.value)} className="w-full h-8 px-2 bg-muted/20 border border-border/30 rounded-lg text-xs font-bold" />
+                                </div>
+                                <div className="flex-1 min-w-[120px]">
+                                    <label className="text-[9px] font-bold uppercase text-muted-foreground block mb-1">Fecha fin</label>
+                                    <input type="date" value={catDateTo} onChange={e => setCatDateTo(e.target.value)} className="w-full h-8 px-2 bg-muted/20 border border-border/30 rounded-lg text-xs font-bold" />
+                                </div>
+                                <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="h-8 text-[9px] font-bold uppercase"
+                                    onClick={() => {
+                                        setCatDateFrom(toDateInput(firstDayOfMonth));
+                                        setCatDateTo(toDateInput(today));
+                                    }}
+                                >
+                                    Mes actual
+                                </Button>
+                            </div>
+                            <p className="text-[9px] text-muted-foreground mt-2">Mostrando transacciones del {catDateFrom} al {catDateTo}</p>
+                        </Card>
+
                         {/* FIX-CR-DB-DISPLAY: card de Ingresos (solo CR) */}
                         {incomeCats.length > 0 && (
                             <Card className="rounded-2xl border-border/30 p-4">
@@ -1090,11 +1168,36 @@ export default function WalletView() {
                                                 </div>
                                             </div>
 
-                                            {/* Top categoría */}
-                                            <div className="flex items-center justify-between mt-2 pt-2 border-t border-border/10 text-[8px]">
-                                                <span className="text-muted-foreground font-bold uppercase">Top gasto:</span>
-                                                <span className="font-black truncate ml-1">{CAT_ICONS[kpi.topCategory] || '📦'} {kpi.topCategory}</span>
-                                            </div>
+                                            {/* FIX-COMPARISON: comparación con mes anterior */}
+                                            {kpi.prevExpenses !== undefined && kpi.prevExpenses > 0 && (
+                                                <div className="mt-2 pt-2 border-t border-border/10">
+                                                    <div className="flex items-center justify-between text-[8px] font-bold uppercase mb-1">
+                                                        <span className="text-muted-foreground">vs mes anterior</span>
+                                                        <span className={cn("tabular-nums", (kpi.expensesVar || 0) > 0 ? "text-red-500" : "text-emerald-500")}>
+                                                            {(kpi.expensesVar || 0) > 0 ? '▲' : '▼'} {fmtShort(Math.abs(kpi.expensesVar || 0))}
+                                                            <span className="ml-1">({Math.abs(kpi.expensesVarPct || 0).toFixed(0)}%)</span>
+                                                        </span>
+                                                    </div>
+                                                    <div className="text-[7px] text-muted-foreground tabular-nums">
+                                                        Mes anterior: {fmtShort(kpi.prevExpenses)}
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {/* FIX-TOP5: Top 5 categorías de gasto */}
+                                            {kpi.top5Cats && kpi.top5Cats.length > 0 && (
+                                                <div className="mt-2 pt-2 border-t border-border/10">
+                                                    <p className="text-[8px] font-bold uppercase text-muted-foreground mb-1">Top 5 gastos:</p>
+                                                    <div className="space-y-0.5">
+                                                        {kpi.top5Cats.map((cat, i) => (
+                                                            <div key={cat.name} className="flex items-center justify-between text-[8px]">
+                                                                <span className="font-bold truncate flex-1 min-w-0">{i + 1}. {CAT_ICONS[cat.name] || '📦'} {cat.name}</span>
+                                                                <span className="font-black tabular-nums text-red-500 ml-1">{fmtShort(cat.amount)}</span>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
 
                                             <p className="text-[7px] text-muted-foreground/60 text-center mt-2 uppercase font-bold">Clic para ver detalles →</p>
                                         </Card>
