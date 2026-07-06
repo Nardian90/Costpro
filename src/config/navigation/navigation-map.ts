@@ -363,8 +363,15 @@ export function getBreadcrumbForView(
       }
     }
   } else if (currentView === 'cost-sheets' && activeCostSection) {
+    // FIX-TABLERO-PRINCIPAL (2026-07-06): sincronizar este mapa con el mapa real
+    // de COSTOS_ROUTES declarado al inicio del archivo. Antes faltaban las entradas
+    // 'cost-analytics' y 'cost-sheet-editor', y 'cost-sheets' apuntaba a 'main'
+    // en lugar de 'cost-analytics', lo que hacía que el breadcrumb mostrara
+    // "Módulo No Disponible" en vez de "MULTI-TIENDA > Analítica > Tablero Principal".
     const COSTOS_ROUTES = {
-      'cost-sheets': { tab: 'main' },
+      'cost-sheets': { tab: 'cost-analytics' },
+      'cost-sheet-editor': { tab: 'main' },
+      'cost-analytics': { tab: 'cost-analytics' },
       'view-assisted': { tab: 'view-assisted' },
       'view-reading': { tab: 'view-reading' },
       'gen-quick': { tab: 'gen-easy' },

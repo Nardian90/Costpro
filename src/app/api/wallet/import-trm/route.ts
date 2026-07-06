@@ -120,7 +120,13 @@ async function postHandler(req: NextRequest) {
       const category = categorize(tx.service, tx.serviceType);
       const dateStr = tx.date.toISOString().split('T')[0];
       const amount = Math.abs(tx.amount);
-      const operation = determineOperation(tx.service, tx.serviceType);
+      // FIX-CR-DB (2026-07-06): detección correcta de ingresos vs gastos.
+      // El .trm NO tiene campo explícito de dirección. Inferimos:
+      // - Transferencia CON cuenta (alguien te envió) → CR (ingreso)
+      // - Transferencia SIN cuenta (tú enviaste) → DB (gasto)
+      // - Recarga, Pago, Compra, Impuesto → DB (gasto)
+      // - Amortizar → DB (pago de préstamo)
+      const operation = determineOperation(tx.service, tx.serviceType, tx.raw.cuenta || '');
 
       const { error } = await admin.from('wallet_transactions').upsert({
         user_id: session.user.id,
@@ -164,7 +170,7 @@ async function postHandler(req: NextRequest) {
 
       const amount = Math.abs(tx.amount);
       const dateStr = tx.date.toISOString().split('T')[0];
-      const op = determineOperation(tx.service, tx.serviceType);
+      const op = determineOperation(tx.service, tx.serviceType, tx.raw.cuenta || '');
       const delta = op === 'CR' ? amount : -amount;
 
       if (!bankBalances[bankName]) bankBalances[bankName] = { balance: 0, lastDate: '' };
@@ -234,21 +240,46 @@ async function postHandler(req: NextRequest) {
   }
 }
 
-function determineOperation(service: string, serviceType: string): 'CR' | 'DB' {
+// FIX-CR-DB (2026-07-06): detección correcta de ingresos vs gastos.
+// El .trm NO tiene campo explícito de dirección (CR/DB). Inferimos:
+//
+// 1. Transferencia:
+//    - CON cuenta (campo cuenta no vacío) → CR (ingreso, alguien te envió dinero)
+//    - SIN cuenta (campo cuenta vacío) → DB (gasto, tú enviaste dinero)
+//    Esto se basa en el análisis del .trm real: 76 transferencias con cuenta
+//    (recibidas) vs 311 sin cuenta (enviadas).
+//
+// 2. Servicios de pago/recarga/compra → siempre DB (gasto)
+//
+// 3. Cualquier servicio con keyword "recibida/entrada/deposito" → CR (ingreso)
+//
+// Antes TODO era DB, lo que hacía que los ingresos no aparecieran.
+function determineOperation(service: string, serviceType: string, cuenta: string): 'CR' | 'DB' {
   const low = (service + ' ' + serviceType).toLowerCase();
+  const hasCuenta = !!(cuenta && cuenta.trim().length > 0);
+
+  // Ingresos explícitos por keyword
+  if (low.includes('recibida') || low.includes('entrada') || low.includes('deposito') || low.includes('depósito')) {
+    return 'CR';
+  }
+
+  // Transferencia: usar presencia de cuenta como indicador de dirección
+  if (low.includes('transferencia') || low.includes('transfer')) {
+    // Si hay cuenta del contraparte → recibida (CR)
+    // Si no hay cuenta → enviada (DB)
+    return hasCuenta ? 'CR' : 'DB';
+  }
+
   // Gastos siempre (DB)
   if (low.includes('recarga')) return 'DB';
   if (low.includes('pago') || low.includes('factura')) return 'DB';
   if (low.includes('compra')) return 'DB';
   if (low.includes('impuesto') || low.includes('sello') || low.includes('timbre')) return 'DB';
-  // Ingresos siempre (CR)
-  if (low.includes('recibida') || low.includes('entrada') || low.includes('deposito')) return 'CR';
-  // Transferencia: ambigua. En Transfermovil, las transferencias enviadas son más comunes.
-  // Si el tipo_servicio incluye "Recibida" → CR, sino → DB
-  if (low.includes('transferencia')) {
-    if (low.includes('recibida')) return 'CR';
-    return 'DB'; // enviada por defecto
-  }
+  if (low.includes('multa')) return 'DB';
+  if (low.includes('amortizar') || low.includes('amortizacion')) return 'DB';
+  if (low.includes('onat')) return 'DB';
+  if (low.includes('telefono') || low.includes('teléfono')) return 'DB';
+
   // Default: si no sabemos, es gasto (conservador)
   return 'DB';
 }

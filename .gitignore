@@ -107,3 +107,4 @@ scripts/list_users.js
 scripts/apply_*.js
 scripts/verify_policies.js
 
+scripts/clean_wallet_db.cjs

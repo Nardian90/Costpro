@@ -8,11 +8,13 @@ import {
     Wallet, ArrowDownRight, ArrowUpRight, Landmark, CreditCard,
     Plus, Upload, Smartphone, X, Tag, Calendar, BarChart3,
     TrendingUp, TrendingDown, Building2, ChevronRight, Edit2,
-    PieChart as PieChartIcon, Search, Trash2, AlertTriangle, Users, Eye
+    PieChart as PieChartIcon, Search, Trash2, AlertTriangle, Users, Eye,
+    Download, FileSpreadsheet, Table as TableIcon, LayoutGrid, ArrowUpDown, ArrowUp, ArrowDown
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { EXPENSE_CATEGORIES, INCOME_CATEGORIES } from "@/lib/wallet/types";
+import { WalletAnalyticsView } from './WalletAnalyticsView';
 
 const MONTH_NAMES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 const CAT_COLORS: Record<string, string> = {
@@ -29,11 +31,12 @@ const CAT_ICONS: Record<string, string> = {
     'Compras': '🛒', 'Préstamos': '🏦',
 };
 
-type ViewMode = 'home' | 'movimientos' | 'categorias' | 'reportes';
+type ViewMode = 'home' | 'movimientos' | 'categorias' | 'reportes' | 'analisis';
 interface WalletData {
     accounts: any[]; transactions: any[]; summary: any;
     banks: Record<string, any>; categories: Record<string, number>;
     monthly: Record<string, { income: number; expenses: number }>;
+    viewer?: { is_admin: boolean; self_id: string; target_id: string; is_own: boolean };
 }
 
 export default function WalletView() {
@@ -117,6 +120,64 @@ export default function WalletView() {
     // FIX-ADMIN-VIEW: bandera para saber si el admin está viendo otra billetera
     // Si true, se deshabilitan las acciones de escritura (importar, agregar, editar, eliminar, reset)
     const viewingOther = isAdmin && !!targetUserId;
+
+    // FIX-EXCEL (2026-07-06): export/import Excel + vista tabla en Movimientos
+    const [movimientosView, setMovimientosView] = useState<'tarjeta' | 'tabla'>('tarjeta');
+    const [sortField, setSortField] = useState<'date' | 'amount' | 'bank' | 'service' | null>(null);
+    const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
+    const [isExporting, setIsExporting] = useState(false);
+    const excelInputRef = useRef<HTMLInputElement>(null);
+
+    const handleExportExcel = async () => {
+        setIsExporting(true);
+        try {
+            const { useAuthStore } = await import('@/store');
+            const token = useAuthStore.getState().token;
+            const url = targetUserId ? `/api/wallet/export?userId=${encodeURIComponent(targetUserId)}` : '/api/wallet/export';
+            const res = await fetch(url, {
+                headers: token ? { Authorization: `Bearer ${token}` } : {},
+            });
+            if (!res.ok) throw new Error('Error al exportar');
+            const blob = await res.blob();
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `billetera-${new Date().toISOString().slice(0, 10)}.xlsx`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(a.href);
+            toast.success('Excel exportado correctamente');
+        } catch (e: any) { toast.error('Error al exportar Excel', { description: e.message }); }
+        finally { setIsExporting(false); }
+    };
+
+    const handleImportExcel = async (file: File) => {
+        try {
+            const content = await file.arrayBuffer();
+            // base64
+            const base64 = btoa(String.fromCharCode(...new Uint8Array(content)));
+            const { useAuthStore } = await import('@/store');
+            const token = useAuthStore.getState().token;
+            const res = await fetch('/api/wallet/import-excel', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+                body: JSON.stringify({ content: base64 }),
+            });
+            if (!res.ok) { const err = await res.json(); throw new Error(err.error || 'Error'); }
+            const result = await res.json();
+            toast.success(`Excel importado: ${result.transactions} transacciones`);
+            fetchData();
+        } catch (e: any) { toast.error('Error al importar Excel', { description: e.message }); }
+    };
+
+    const toggleSort = (field: 'date' | 'amount' | 'bank' | 'service') => {
+        if (sortField === field) {
+            setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+        } else {
+            setSortField(field);
+            setSortDir('desc');
+        }
+    };
 
     const handleTrmFile = async (file: File) => {
         // FIX-ADMIN-VIEW: si el admin está viendo otra billetera, no puede importar .trm
@@ -300,11 +361,26 @@ export default function WalletView() {
 
     const filteredTx = useMemo(() => {
         if (!data) return [];
-        let txs = data.transactions;
+        let txs = [...data.transactions];
         if (filterBank !== 'all') txs = txs.filter((t: any) => t.bank === filterBank);
         if (searchQuery) { const q = searchQuery.toLowerCase(); txs = txs.filter((t: any) => (t.service||'').toLowerCase().includes(q) || (t.category||'').toLowerCase().includes(q) || (t.bank||'').toLowerCase().includes(q)); }
+        // FIX-EXCEL: ordenamiento por campo seleccionado
+        if (sortField) {
+            txs.sort((a: any, b: any) => {
+                let av: any, bv: any;
+                if (sortField === 'amount') { av = parseFloat(a.amount) || 0; bv = parseFloat(b.amount) || 0; }
+                else if (sortField === 'date') { av = a.date || ''; bv = b.date || ''; }
+                else { av = String(a[sortField] || '').toLowerCase(); bv = String(b[sortField] || '').toLowerCase(); }
+                if (av < bv) return sortDir === 'asc' ? -1 : 1;
+                if (av > bv) return sortDir === 'asc' ? 1 : -1;
+                return 0;
+            });
+        } else {
+            // Default: fecha desc
+            txs.sort((a: any, b: any) => (b.date || '').localeCompare(a.date || ''));
+        }
         return txs;
-    }, [data, filterBank, searchQuery]);
+    }, [data, filterBank, searchQuery, sortField, sortDir]);
 
 
 
@@ -339,6 +415,32 @@ export default function WalletView() {
                         <div><h1 className="text-sm font-black leading-none">Billetera</h1><p className="text-[8px] text-muted-foreground font-bold uppercase tracking-wider mt-0.5">Finanzas</p></div>
                     </div>
                     <div className="flex items-center gap-2">
+                        {/* FIX-EXCEL: botones export/import Excel */}
+                        {data && data.transactions.length > 0 && (
+                            <Button
+                                onClick={handleExportExcel}
+                                disabled={isExporting}
+                                size="sm"
+                                variant="outline"
+                                className="h-8 px-3 text-[10px] font-black uppercase shrink-0 gap-1"
+                                title="Exportar a Excel"
+                            >
+                                {isExporting ? <div className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" /> : <Download className="w-3.5 h-3.5" />}
+                                Excel
+                            </Button>
+                        )}
+                        {!viewingOther && (
+                            <Button
+                                onClick={() => excelInputRef.current?.click()}
+                                size="sm"
+                                variant="outline"
+                                className="h-8 px-3 text-[10px] font-black uppercase shrink-0 gap-1"
+                                title="Importar desde Excel"
+                            >
+                                <FileSpreadsheet className="w-3.5 h-3.5" />
+                                Imp
+                            </Button>
+                        )}
                         {/* FIX-ADMIN-VIEW: botón importar deshabilitado si el admin está viendo otra billetera */}
                         <Button
                             onClick={() => setIsImporting(true)}
@@ -395,12 +497,20 @@ export default function WalletView() {
                 )}
 
                 <div className="flex items-center gap-0.5 px-2 pb-2 overflow-x-auto no-scrollbar">
-                    {([{'id':'home','l':'Inicio','i':Wallet},{'id':'movimientos','l':'Movimientos','i':BarChart3},{'id':'categorias','l':'Categorías','i':Tag},{'id':'reportes','l':'Reportes','i':Calendar}] as const).map(t => (
-                        <button key={t.id} onClick={() => setViewMode(t.id)} className={cn("flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase whitespace-nowrap shrink-0", viewMode === t.id ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground hover:bg-muted/50")}>
+                    {([{'id':'home','l':'Inicio','i':Wallet},{'id':'movimientos','l':'Movimientos','i':BarChart3},{'id':'categorias','l':'Categorías','i':Tag},{'id':'reportes','l':'Reportes','i':Calendar},{'id':'analisis','l':'Análisis','i':PieChartIcon}] as const).map(t => (
+                        <button key={t.id} onClick={() => setViewMode(t.id)} className={cn("flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase whitespace-nowrap shrink-0", viewMode === t.id ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground hover:bg-muted/50")} aria-current={viewMode === t.id ? 'page' : undefined}>
                             <t.i className="w-3.5 h-3.5" /> {t.l}
                         </button>
                     ))}
                 </div>
+                {/* Input oculto para import Excel */}
+                <input
+                    ref={excelInputRef}
+                    type="file"
+                    accept=".xlsx,.xls"
+                    onChange={e => { const f = e.target.files?.[0]; if (f) handleImportExcel(f); e.target.value = ''; }}
+                    className="hidden"
+                />
             </div>
 
             <div className="flex-1 overflow-y-auto no-scrollbar px-4 py-4 pb-24 max-w-2xl mx-auto w-full">
@@ -475,50 +585,142 @@ export default function WalletView() {
                         <div className="flex flex-wrap items-center gap-2">
                             <div className="relative flex-1 min-w-[140px]">
                                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-                                <input placeholder="Buscar..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="w-full pl-8 h-8 bg-muted/20 border border-border/30 rounded-lg text-xs" />
+                                <input placeholder="Buscar..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="w-full pl-8 h-8 bg-muted/20 border border-border/30 rounded-lg text-xs" aria-label="Buscar transacciones" />
                             </div>
                             <div className="flex items-center gap-0.5 bg-muted/20 p-0.5 rounded-lg">
                                 <button onClick={() => setFilterBank('all')} className={cn("px-2 py-1 rounded text-[9px] font-bold uppercase", filterBank === 'all' ? "bg-primary text-primary-foreground" : "text-muted-foreground")}>Todos</button>
                                 {bankNames.map(b => <button key={b} onClick={() => setFilterBank(b)} className={cn("px-2 py-1 rounded text-[9px] font-bold uppercase", filterBank === b ? "bg-primary text-primary-foreground" : "text-muted-foreground")}>{b}</button>)}
                             </div>
+                            {/* FIX-EXCEL: toggle tarjeta/tabla estilo Excel */}
+                            <div className="flex items-center gap-0.5 bg-muted/20 p-0.5 rounded-lg" role="group" aria-label="Vista de movimientos">
+                                <button onClick={() => setMovimientosView('tarjeta')} className={cn("px-2 py-1 rounded text-[9px] font-bold uppercase flex items-center gap-1", movimientosView === 'tarjeta' ? "bg-primary text-primary-foreground" : "text-muted-foreground")} title="Vista tarjeta" aria-pressed={movimientosView === 'tarjeta'}>
+                                    <LayoutGrid className="w-3 h-3" /> Tarjeta
+                                </button>
+                                <button onClick={() => setMovimientosView('tabla')} className={cn("px-2 py-1 rounded text-[9px] font-bold uppercase flex items-center gap-1", movimientosView === 'tabla' ? "bg-primary text-primary-foreground" : "text-muted-foreground")} title="Vista tabla" aria-pressed={movimientosView === 'tabla'}>
+                                    <TableIcon className="w-3 h-3" /> Tabla
+                                </button>
+                            </div>
                         </div>
-                        <div className="space-y-1.5">
-                            {filteredTx.slice(0, 150).map((tx: any) => (
-                                <Card key={tx.id} className="rounded-xl border-border/30 p-3">
-                                    <div className="flex items-center gap-2.5">
-                                        <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center shrink-0", tx.operation === 'CR' ? "bg-emerald-500/10" : "bg-red-500/10")}>
-                                            {tx.operation === 'CR' ? <ArrowDownRight className="w-4 h-4 text-emerald-500" /> : <ArrowUpRight className="w-4 h-4 text-red-500" />}
+
+                        {/* Vista Tarjeta (original) */}
+                        {movimientosView === 'tarjeta' && (
+                            <div className="space-y-1.5">
+                                {filteredTx.slice(0, 150).map((tx: any) => (
+                                    <Card key={tx.id} className="rounded-xl border-border/30 p-3">
+                                        <div className="flex items-center gap-2.5">
+                                            <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center shrink-0", tx.operation === 'CR' ? "bg-emerald-500/10" : "bg-red-500/10")}>
+                                                {tx.operation === 'CR' ? <ArrowDownRight className="w-4 h-4 text-emerald-500" /> : <ArrowUpRight className="w-4 h-4 text-red-500" />}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-[10px] font-black uppercase truncate">{tx.service}</p>
+                                                <p className="text-[8px] text-muted-foreground">{tx.date} · {tx.bank}{tx.card ? ` · ${tx.card}` : ''}</p>
+                                            </div>
+                                            <p className={cn("text-sm font-black italic shrink-0", tx.operation === 'CR' ? "text-emerald-500" : "text-red-500")}>{tx.operation === 'CR' ? '+' : '-'}{fmtShort(parseFloat(tx.amount))}</p>
                                         </div>
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-[10px] font-black uppercase truncate">{tx.service}</p>
-                                            <p className="text-[8px] text-muted-foreground">{tx.date} · {tx.bank}{tx.card ? ` · ${tx.card}` : ''}</p>
+                                        <div className="flex items-center justify-between mt-1.5 pt-1.5 border-t border-border/10">
+                                            {editingTxId === tx.id ? (
+                                                <select className="text-[9px] font-bold rounded border border-border bg-background px-1.5 h-6 flex-1 mr-2" onChange={e => handleSetCategory(tx.id, e.target.value)} defaultValue="">
+                                                    <option value="" disabled>...</option>
+                                                    {(tx.operation === 'CR' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES).map(c => <option key={c} value={c}>{c}</option>)}
+                                                </select>
+                                            ) : (
+                                                <Badge variant="outline" className="text-[7px] font-black uppercase cursor-pointer hover:bg-primary/10" onClick={() => setEditingTxId(tx.id)}>{tx.manual_category || tx.category}</Badge>
+                                            )}
+                                            <div className="flex items-center gap-1.5">
+                                                <span className="text-[8px] text-muted-foreground/60">{tx.service_type}</span>
+                                                <button
+                                                    onClick={() => handleDeleteTransaction(tx.id)}
+                                                    className="text-muted-foreground/50 hover:text-destructive transition-colors p-0.5"
+                                                    aria-label="Eliminar transacción"
+                                                    title="Eliminar"
+                                                >
+                                                    <Trash2 className="w-3 h-3" />
+                                                </button>
+                                            </div>
                                         </div>
-                                        <p className={cn("text-sm font-black italic shrink-0", tx.operation === 'CR' ? "text-emerald-500" : "text-red-500")}>{tx.operation === 'CR' ? '+' : '-'}{fmtShort(parseFloat(tx.amount))}</p>
-                                    </div>
-                                    <div className="flex items-center justify-between mt-1.5 pt-1.5 border-t border-border/10">
-                                        {editingTxId === tx.id ? (
-                                            <select className="text-[9px] font-bold rounded border border-border bg-background px-1.5 h-6 flex-1 mr-2" onChange={e => handleSetCategory(tx.id, e.target.value)} defaultValue="">
-                                                <option value="" disabled>...</option>
-                                                {(tx.operation === 'CR' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES).map(c => <option key={c} value={c}>{c}</option>)}
-                                            </select>
-                                        ) : (
-                                            <Badge variant="outline" className="text-[7px] font-black uppercase cursor-pointer hover:bg-primary/10" onClick={() => setEditingTxId(tx.id)}>{tx.manual_category || tx.category}</Badge>
-                                        )}
-                                        <div className="flex items-center gap-1.5">
-                                            <span className="text-[8px] text-muted-foreground/60">{tx.service_type}</span>
-                                            <button
-                                                onClick={() => handleDeleteTransaction(tx.id)}
-                                                className="text-muted-foreground/50 hover:text-destructive transition-colors p-0.5"
-                                                aria-label="Eliminar transacción"
-                                                title="Eliminar"
-                                            >
-                                                <Trash2 className="w-3 h-3" />
-                                            </button>
-                                        </div>
-                                    </div>
-                                </Card>
-                            ))}
-                        </div>
+                                    </Card>
+                                ))}
+                            </div>
+                        )}
+
+                        {/* Vista Tabla estilo Excel con filtros y ordenación */}
+                        {movimientosView === 'tabla' && (
+                            <Card className="rounded-xl border-border/30 overflow-hidden">
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-[10px]">
+                                        <thead className="bg-muted/30 border-b border-border/30">
+                                            <tr>
+                                                <th className="text-left p-2 font-black uppercase cursor-pointer hover:bg-muted/50 select-none" onClick={() => toggleSort('date')}>
+                                                    <span className="flex items-center gap-1">Fecha {sortField === 'date' && (sortDir === 'asc' ? <ArrowUp className="w-2.5 h-2.5" /> : <ArrowDown className="w-2.5 h-2.5" />)}</span>
+                                                </th>
+                                                <th className="text-left p-2 font-black uppercase cursor-pointer hover:bg-muted/50 select-none" onClick={() => toggleSort('bank')}>
+                                                    <span className="flex items-center gap-1">Banco {sortField === 'bank' && (sortDir === 'asc' ? <ArrowUp className="w-2.5 h-2.5" /> : <ArrowDown className="w-2.5 h-2.5" />)}</span>
+                                                </th>
+                                                <th className="text-left p-2 font-black uppercase cursor-pointer hover:bg-muted/50 select-none" onClick={() => toggleSort('service')}>
+                                                    <span className="flex items-center gap-1">Servicio {sortField === 'service' && (sortDir === 'asc' ? <ArrowUp className="w-2.5 h-2.5" /> : <ArrowDown className="w-2.5 h-2.5" />)}</span>
+                                                </th>
+                                                <th className="text-center p-2 font-black uppercase">Op</th>
+                                                <th className="text-right p-2 font-black uppercase cursor-pointer hover:bg-muted/50 select-none" onClick={() => toggleSort('amount')}>
+                                                    <span className="flex items-center gap-1 justify-end">Monto {sortField === 'amount' && (sortDir === 'asc' ? <ArrowUp className="w-2.5 h-2.5" /> : <ArrowDown className="w-2.5 h-2.5" />)}</span>
+                                                </th>
+                                                <th className="text-left p-2 font-black uppercase">Categoría</th>
+                                                <th className="text-left p-2 font-black uppercase">Tarjeta</th>
+                                                {!viewingOther && <th className="text-center p-2 font-black uppercase">Acción</th>}
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {filteredTx.slice(0, 300).map((tx: any) => (
+                                                <tr key={tx.id} className="border-b border-border/10 hover:bg-muted/20">
+                                                    <td className="p-2 whitespace-nowrap">{tx.date}</td>
+                                                    <td className="p-2 whitespace-nowrap font-bold">{tx.bank}</td>
+                                                    <td className="p-2 max-w-[160px] truncate" title={tx.service}>{tx.service}</td>
+                                                    <td className="p-2 text-center">
+                                                        <span className={cn("inline-block px-1.5 py-0.5 rounded text-[8px] font-black", tx.operation === 'CR' ? "bg-emerald-500/10 text-emerald-500" : "bg-red-500/10 text-red-500")}>
+                                                            {tx.operation === 'CR' ? 'CR' : 'DB'}
+                                                        </span>
+                                                    </td>
+                                                    <td className={cn("p-2 text-right font-black italic tabular-nums", tx.operation === 'CR' ? "text-emerald-500" : "text-red-500")}>
+                                                        {tx.operation === 'CR' ? '+' : '-'}{fmt(parseFloat(tx.amount))}
+                                                    </td>
+                                                    <td className="p-2">
+                                                        {editingTxId === tx.id ? (
+                                                            <select className="text-[8px] font-bold rounded border border-border bg-background px-1 h-5 w-full" onChange={e => handleSetCategory(tx.id, e.target.value)} defaultValue="">
+                                                                <option value="" disabled>...</option>
+                                                                {(tx.operation === 'CR' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES).map(c => <option key={c} value={c}>{c}</option>)}
+                                                            </select>
+                                                        ) : (
+                                                            <button onClick={() => setEditingTxId(tx.id)} className="text-[8px] font-bold uppercase hover:text-primary">
+                                                                {tx.manual_category || tx.category}
+                                                            </button>
+                                                        )}
+                                                    </td>
+                                                    <td className="p-2 text-muted-foreground tabular-nums">{tx.card || '—'}</td>
+                                                    {!viewingOther && (
+                                                        <td className="p-2 text-center">
+                                                            <button onClick={() => handleDeleteTransaction(tx.id)} className="text-muted-foreground/50 hover:text-destructive" aria-label={`Eliminar transacción ${tx.service}`}>
+                                                                <Trash2 className="w-3 h-3" />
+                                                            </button>
+                                                        </td>
+                                                    )}
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                        <tfoot className="bg-muted/30 border-t border-border/30">
+                                            <tr className="font-black">
+                                                <td colSpan={4} className="p-2 text-right uppercase">Total ({filteredTx.length} txs):</td>
+                                                <td className={cn("p-2 text-right italic tabular-nums", filteredTx.reduce((s:number, t:any) => s + (t.operation === 'CR' ? parseFloat(t.amount) : -parseFloat(t.amount)), 0) >= 0 ? "text-emerald-500" : "text-red-500")}>
+                                                    {fmt(filteredTx.reduce((s:number, t:any) => s + (t.operation === 'CR' ? parseFloat(t.amount) : -parseFloat(t.amount)), 0))}
+                                                </td>
+                                                <td colSpan={viewingOther ? 2 : 3}></td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
+                                {filteredTx.length > 300 && (
+                                    <p className="text-[9px] text-muted-foreground text-center p-2">Mostrando 300 de {filteredTx.length} transacciones. Usa el buscador para filtrar.</p>
+                                )}
+                            </Card>
+                        )}
                     </div>
                 )}
 
@@ -580,6 +782,11 @@ export default function WalletView() {
                         </Card>
                     </div>
                 )}
+
+                {/* ═══ ANÁLISIS (tabla dinámica reutilizada de multi-tienda) ═══ */}
+                {viewMode === 'analisis' && data && (
+                    <WalletAnalyticsView transactions={data.transactions} banks={bankNames} />
+                )}
             </div>
 
             {/* Import Modal */}
@@ -587,18 +794,22 @@ export default function WalletView() {
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-background/90 backdrop-blur-sm" onClick={() => setIsImporting(false)}>
                     <Card className="w-full max-w-lg rounded-3xl border-border/30 shadow-2xl p-5" onClick={e => e.stopPropagation()}>
                         <div className="flex justify-between items-center mb-3">
-                            <h2 className="text-sm font-black uppercase">Importar .trm</h2>
-                            <button onClick={() => setIsImporting(false)} className="text-muted-foreground hover:text-foreground"><X className="w-4 h-4" /></button>
+                            <h2 className="text-sm font-black uppercase">Importar archivo</h2>
+                            <button onClick={() => setIsImporting(false)} className="text-muted-foreground hover:text-foreground" aria-label="Cerrar"><X className="w-4 h-4" /></button>
                         </div>
-                        {/* FIX-IMPORT-CLICK (2026-07-06): el <input type="file"> debe estar FUERA
-                            del div clickable para evitar que el click se cancele o haga loop.
-                            Antes estaba dentro del div con onClick, lo que causaba que el
-                            navegador a veces no abriera el selector de archivos. */}
+                        {/* FIX-IMPORT-CLICK: input fuera del div clickable */}
                         <input
                             ref={fileInputRef}
                             type="file"
-                            accept=".trm"
-                            onChange={e => { const f = e.target.files?.[0]; if (f?.name.endsWith('.trm')) handleTrmFile(f); e.target.value = ''; }}
+                            accept=".trm,.xlsx,.xls"
+                            onChange={e => {
+                                const f = e.target.files?.[0];
+                                if (!f) { e.target.value = ''; return; }
+                                if (f.name.endsWith('.trm')) handleTrmFile(f);
+                                else if (f.name.endsWith('.xlsx') || f.name.endsWith('.xls')) handleImportExcel(f);
+                                else toast.error('Formato no soportado. Usa .trm o .xlsx');
+                                e.target.value = '';
+                            }}
                             className="hidden"
                         />
                         <div
@@ -608,25 +819,30 @@ export default function WalletView() {
                                 e.preventDefault();
                                 setIsDragging(false);
                                 const f = e.dataTransfer.files?.[0];
-                                if (f?.name.endsWith('.trm')) handleTrmFile(f);
-                                else toast.error('Debe ser un archivo .trm');
+                                if (!f) return;
+                                if (f.name.endsWith('.trm')) handleTrmFile(f);
+                                else if (f.name.endsWith('.xlsx') || f.name.endsWith('.xls')) handleImportExcel(f);
+                                else toast.error('Formato no soportado. Usa .trm o .xlsx');
                             }}
                             className={cn(
                                 "border-2 border-dashed rounded-2xl p-8 text-center transition-all cursor-pointer",
                                 isDragging ? "border-primary bg-primary/10" : "border-border/40 hover:border-primary/40"
                             )}
                             onClick={() => fileInputRef.current?.click()}
+                            role="button"
+                            tabIndex={0}
+                            onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInputRef.current?.click(); } }}
                         >
                             {importingTrm ? (
                                 <div className="space-y-2">
                                     <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
-                                    <p className="text-xs font-bold uppercase text-muted-foreground">Descifrando y guardando...</p>
+                                    <p className="text-xs font-bold uppercase text-muted-foreground">Procesando...</p>
                                 </div>
                             ) : (
                                 <div className="space-y-2">
                                     <Smartphone className="w-8 h-8 mx-auto text-muted-foreground/50" />
-                                    <p className="text-xs font-bold uppercase">Arrastra tu .trm</p>
-                                    <p className="text-[10px] text-muted-foreground">Transfermóvil → Respaldo → Exportar</p>
+                                    <p className="text-xs font-bold uppercase">Arrastra tu archivo aquí</p>
+                                    <p className="text-[10px] text-muted-foreground">Formatos soportados: <span className="font-bold">.trm</span> (Transfermóvil) o <span className="font-bold">.xlsx</span> (Excel)</p>
                                 </div>
                             )}
                         </div>
