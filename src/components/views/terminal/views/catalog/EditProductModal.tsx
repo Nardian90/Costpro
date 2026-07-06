@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/atomic';
 import { BaseModal } from '@/components/ui/BaseModal';
 import { FCStatusBadge } from '@/components/ui/FCStatusBadge';
-import { cn } from '@/lib/utils';
+import { cn, getProductImageUrl } from '@/lib/utils';
 // Accessibility-Fix: helper para detectar campos faltantes del producto.
 import { getIncompleteReasons } from '@/lib/product-completeness';
 import type { Product, ProductVariant, ProductFCStatus } from '@/types';
@@ -182,10 +182,23 @@ export default function EditProductModal({
           <div className="mt-2 flex items-center gap-3">
             {editImagePreview ? (
               <div className="relative group">
+                {/* FIX-IMAGE-LOAD (2026-07-06): resolver URL de Supabase Storage.
+                    Antes se usaba editImagePreview directamente, que podía ser solo
+                    el nombre del archivo (image_url) sin la URL completa. Ahora
+                    pasamos por getProductImageUrl() que genera la URL pública. */}
                 <img
-                  src={editImagePreview}
+                  src={(() => {
+                    // Si ya es una URL completa (http/https/blob), usarla tal cual
+                    if (/^(https?:|blob:|data:)/.test(editImagePreview)) return editImagePreview;
+                    // Si es solo nombre de archivo, resolver con Supabase Storage
+                    return getProductImageUrl(editImagePreview) || editImagePreview;
+                  })()}
                   alt="Vista previa"
                   className="w-20 h-20 rounded-xl object-cover border border-border"
+                  onError={(e) => {
+                    // Si la imagen falla al cargar, mostrar placeholder
+                    (e.target as HTMLImageElement).style.display = 'none';
+                  }}
                 />
                 <button
                   type="button"
@@ -319,7 +332,11 @@ export default function EditProductModal({
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {/* FIX-LAYOUT (2026-07-06): reestructurar precios para evitar superposición.
+            Antes: grid-cols-2 con flex (input + select w-20) → el select se superponía.
+            Ahora: cada precio en su propia fila, moneda debajo del input. */}
+        <div className="space-y-4">
+          {/* Precio Minorista */}
           <div className="space-y-1.5">
             <label htmlFor="edit-product-price" className="text-xs font-black uppercase tracking-widest ml-1">Precio Minorista</label>
             <div className="flex gap-2">
@@ -335,8 +352,8 @@ export default function EditProductModal({
               <select
                 value={editForm.price_currency || 'CUP'}
                 onChange={(e) => onFormChange({ ...editForm, price_currency: e.target.value })}
-                className="neu-input w-20 font-bold"
-                aria-label="Moneda del precio de venta"
+                className="neu-input w-24 font-bold"
+                aria-label="Moneda del precio minorista"
               >
                 <option value="CUP">CUP</option>
                 <option value="USD">USD</option>
@@ -345,6 +362,8 @@ export default function EditProductModal({
               </select>
             </div>
           </div>
+
+          {/* Precio Empresa (venta mayorista) — DEBAJO de Precio Minorista */}
           <div className="space-y-1.5">
             <label htmlFor="edit-product-precio-empresa" className="text-xs font-black uppercase tracking-widest ml-1">
               Precio Empresa <span className="font-normal normal-case tracking-normal text-muted-foreground">(venta mayorista)</span>
@@ -362,7 +381,7 @@ export default function EditProductModal({
               <select
                 value={editForm.price_currency || 'CUP'}
                 onChange={(e) => onFormChange({ ...editForm, price_currency: e.target.value })}
-                className="neu-input w-20 font-bold"
+                className="neu-input w-24 font-bold"
                 aria-label="Moneda del precio empresa"
               >
                 <option value="CUP">CUP</option>

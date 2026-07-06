@@ -113,14 +113,14 @@ export const IconButton: React.FC<{ icon: any; onClick: () => void; label?: stri
       aria-label={displayLabel}
       title={displayLabel}
       className={cn(
-        "p-2 rounded-lg transition-all active:scale-90",
+        "p-2.5 rounded-lg transition-all active:scale-90",
         variant === 'ghost' && "hover:bg-muted text-muted-foreground hover:text-foreground",
         variant === 'outline' && "border border-border hover:bg-muted text-muted-foreground hover:text-foreground",
         variant === 'primary' && "bg-primary text-foreground shadow-lg shadow-primary/20",
         className
       )}
     >
-      <Icon className="w-4 h-4" />
+      <Icon className="w-5 h-5" />
     </button>
   );
 

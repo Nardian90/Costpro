@@ -240,9 +240,22 @@ export const CreateProductModal = () => {
         toast.success(`Producto creado con éxito${vCount}`);
       }
       handleClose();
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Error al crear producto';
-      toast.error(message);
+    } catch (error: any) {
+      // FIX-ERROR-HANDLING (2026-07-06): traducir errores crudos de Postgres/Supabase
+      // a mensajes amigables en español.
+      const rawMsg = error?.message || (error instanceof Error ? error.message : 'Error al crear producto');
+      const lowMsg = rawMsg.toLowerCase();
+      let friendlyMsg = rawMsg;
+      if (lowMsg.includes('duplicate key') || lowMsg.includes('unique constraint') || lowMsg.includes('23505')) {
+        friendlyMsg = 'Ya existe un producto con ese SKU en esta tienda. Usa un SKU diferente o genera uno automáticamente.';
+      } else if (lowMsg.includes('row-level security') || lowMsg.includes('42501') || lowMsg.includes('rls')) {
+        friendlyMsg = 'No tienes permisos para crear productos en esta tienda.';
+      } else if (lowMsg.includes('margin') || lowMsg.includes('precio de venta no puede ser menor')) {
+        friendlyMsg = 'El precio de venta no puede ser menor que el costo (margen negativo).';
+      } else if (lowMsg.includes('network') || lowMsg.includes('fetch')) {
+        friendlyMsg = 'Error de conexión. Verifica tu internet e intenta de nuevo.';
+      }
+      toast.error(friendlyMsg);
     }
   };
 
@@ -380,17 +393,34 @@ export const CreateProductModal = () => {
             <div className="space-y-1.5">
               <label htmlFor="product-barcode" className="text-xs font-black uppercase tracking-widest ml-1 flex justify-between">
                 <span>Código Barras</span>
-                <span className="text-xs text-primary/70 italic">Opcional</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    // FIX-BARCODE-AUTO (2026-07-06): botón para autogenerar barcode EAN-13
+                    const sku = form.sku?.trim();
+                    if (!sku) {
+                      toast.error('Primero ingresa o auto-genera el SKU');
+                      return;
+                    }
+                    const generated = generateEAN13FromSKU(sku);
+                    setForm({ ...form, barcode: generated, barcode_type: 'EAN13' });
+                    toast.success(`Código de barras generado: ${generated}`);
+                  }}
+                  className="text-xs text-primary hover:underline italic font-bold"
+                >
+                  ↻ Auto-generar
+                </button>
               </label>
               <input
                 id="product-barcode"
                 type="text"
                 aria-label="Código de barras del producto"
                 value={form.barcode}
-                onChange={(e) => setForm({ ...form, barcode: e.target.value })}
+                onChange={(e) => setForm({ ...form, barcode: e.target.value, barcode_type: e.target.value ? 'CODE128' : 'EAN13' })}
                 className="neu-input w-full"
-                placeholder="Auto desde SKU"
+                placeholder="Auto desde SKU al guardar"
               />
+              <p className="text-[10px] text-muted-foreground italic ml-1">Si lo dejas vacío, se genera automáticamente al guardar.</p>
             </div>
           </div>
 
