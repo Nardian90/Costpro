@@ -959,7 +959,7 @@ export function DynamicAnalyticsCenter({
               <thead className="sticky top-0 z-10 bg-card border-b border-border">
                 <tr>
                   <th
-                    className="text-left px-3 py-2 font-black uppercase tracking-widest text-[10px] text-muted-foreground min-w-[200px] relative group/th"
+                    className="text-left px-3 py-2 font-black uppercase tracking-widest text-[10px] text-muted-foreground min-w-[200px] relative group/th sticky left-0 z-[2] bg-card border-r border-border/30"
                     style={{ width: tableColumnWidths['__rows__'] ? `${tableColumnWidths['__rows__']}px` : undefined }}
                   >
                     <button onClick={() => {
@@ -1044,6 +1044,12 @@ export function DynamicAnalyticsCenter({
                       );
                     });
                   })()}
+                  {/* FIX-ROW-TOTAL: header Total cuando hay pivot columns */}
+                  {pivotResult.columnKeys.length > 0 && config.values.length > 0 && (
+                    <th className="text-right px-3 py-2 font-black uppercase tracking-widest text-[10px] text-muted-foreground bg-muted/30 border-l-2 border-border/50">
+                      Total
+                    </th>
+                  )}
                 </tr>
               </thead>
               {/* Body */}
@@ -1054,7 +1060,7 @@ export function DynamicAnalyticsCenter({
                   return (
                     <React.Fragment key={group.key}>
                       <tr className="border-b border-border/50 hover:bg-muted/30">
-                        <td className="px-3 py-2 font-medium">
+                        <td className="px-3 py-2 font-medium sticky left-0 z-[1] bg-card border-r border-border/30">
                           <button onClick={() => toggleGroup(group.key)} className="inline-flex items-center gap-1">
                             {isExpanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
                             {group.label}
@@ -1064,10 +1070,21 @@ export function DynamicAnalyticsCenter({
                         {pivotResult.columnKeys.length > 0 ? (
                           pivotResult.columnKeys.map(col => {
                             const cell = pivotResult.cellValues?.get(`${group.key}||${col}`) || {};
+                            // FIX-HEATMAP-PIVOT + FIX-ZERO-OPACITY (2026-07-06)
+                            const cellSum = config.values.reduce((s: number, v: any) => s + (Number(cell[v.fieldKey]) || 0), 0);
+                            const isZero = cellSum === 0;
+                            const intensity = showHeatMap ? getHeatMapIntensity(cellSum, allNumericValues) : 0;
+                            const heatStyle = showHeatMap && intensity > 0
+                              ? { backgroundColor: `rgba(34, 197, 94, ${intensity * 0.45})` }
+                              : {};
                             return (
                               <td
                                 key={col}
-                                className="text-right px-3 py-2 font-mono tabular-nums cursor-pointer hover:bg-primary/5 transition-colors"
+                                className={cn(
+                                  "text-right px-3 py-2 font-mono tabular-nums cursor-pointer hover:bg-primary/5 transition-colors",
+                                  isZero && "opacity-30"
+                                )}
+                                style={heatStyle}
                                 onClick={() => setDrillDownGroup({ key: group.key, label: `${group.label} › ${col}`, items: group.items })}
                                 title="Click para ver detalle"
                               >
@@ -1078,14 +1095,18 @@ export function DynamicAnalyticsCenter({
                         ) : (
                           config.values.map(v => {
                             const cellVal = totals[v.fieldKey] ?? 0;
+                            const isZero = (Number(cellVal) || 0) === 0;
                             const intensity = showHeatMap ? getHeatMapIntensity(Number(cellVal), allNumericValues) : 0;
                             const heatStyle = showHeatMap && intensity > 0
-                              ? { backgroundColor: `rgba(34, 197, 94, ${intensity * 0.3})` }
+                              ? { backgroundColor: `rgba(34, 197, 94, ${intensity * 0.45})` }
                               : {};
                             return (
                               <td
                                 key={v.fieldKey}
-                                className="text-right px-3 py-2 font-mono tabular-nums cursor-pointer hover:bg-primary/5 transition-colors relative group/cell"
+                                className={cn(
+                                  "text-right px-3 py-2 font-mono tabular-nums cursor-pointer hover:bg-primary/5 transition-colors relative group/cell",
+                                  isZero && "opacity-30"
+                                )}
                                 style={heatStyle}
                                 onClick={() => setDrillDownGroup({ key: group.key, label: group.label, items: group.items })}
                                 title="Click para ver detalle"
@@ -1094,6 +1115,12 @@ export function DynamicAnalyticsCenter({
                               </td>
                             );
                           })
+                        )}
+                        {/* FIX-ROW-TOTAL (2026-07-06): columna Total al final de cada fila cuando hay pivot */}
+                        {pivotResult.columnKeys.length > 0 && config.values.length > 0 && (
+                          <td className="text-right px-3 py-2 font-mono tabular-nums font-black bg-muted/20 border-l-2 border-border/50">
+                            {formatValue(totals[config.values[0]?.fieldKey] ?? 0, config.values[0]?.fieldKey, fields)}
+                          </td>
                         )}
                       </tr>
                       {/* Detail rows when expanded */}
@@ -1129,14 +1156,33 @@ export function DynamicAnalyticsCenter({
                 })}
                 {/* Grand total */}
                 {pivotResult.grandTotals && Object.keys(pivotResult.grandTotals).length > 0 && (
-                  <tr className="border-t-2 border-border bg-muted/50 font-black sticky bottom-0">
-                    <td className="px-3 py-2 uppercase text-[10px] tracking-widest">Total General</td>
+                  <tr className="border-t-2 border-border bg-muted/50 font-black sticky bottom-0 z-[2]">
+                    <td className="px-3 py-2 uppercase text-[10px] tracking-widest sticky left-0 z-[2] bg-muted/50 border-r border-border/30">Total General</td>
                     {pivotResult.columnKeys.length > 0 ? (
-                      pivotResult.columnKeys.map(col => (
-                        <td key={col} className="text-right px-3 py-2 font-mono tabular-nums">
-                          —
-                        </td>
-                      ))
+                      <>
+                        {/* FIX-COLUMN-TOTALS (2026-07-06): calcular totales por columna en caso pivot */}
+                        {pivotResult.columnKeys.map(col => {
+                          let colTotal = 0;
+                          for (const g of pivotResult.rowGroups) {
+                            const cell = pivotResult.cellValues?.get(`${g.key}||${col}`) || {};
+                            for (const v of config.values) {
+                              colTotal += Number(cell[v.fieldKey]) || 0;
+                            }
+                          }
+                          const isZero = colTotal === 0;
+                          return (
+                            <td key={col} className={cn("text-right px-3 py-2 font-mono tabular-nums", isZero && "opacity-30")}>
+                              {formatValue(colTotal, config.values[0]?.fieldKey, fields)}
+                            </td>
+                          );
+                        })}
+                        {/* Total general (suma de todo) */}
+                        {config.values.length > 0 && (
+                          <td className="text-right px-3 py-2 font-mono tabular-nums bg-primary/10 border-l-2 border-border/50">
+                            {formatValue(pivotResult.grandTotals[config.values[0]?.fieldKey] ?? 0, config.values[0]?.fieldKey, fields)}
+                          </td>
+                        )}
+                      </>
                     ) : (
                       config.values.map(v => (
                         <td key={v.fieldKey} className="text-right px-3 py-2 font-mono tabular-nums">

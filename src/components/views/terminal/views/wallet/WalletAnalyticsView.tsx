@@ -6,15 +6,16 @@
  * Wrapper que adapta las transacciones de la billetera al formato del
  * DynamicAnalyticsCenter (tabla dinámica reutilizada de multi-tienda).
  *
- * Permite al usuario hacer drag&drop de campos (banco, fecha, categoría,
- * servicio, monto) entre filas/columnas/valores/filtros y obtener agregaciones
- * (sum, avg, count, etc.) como en un Excel PivotTable.
+ * Configuración por defecto (FIX-DEFAULT-CONFIG 2026-07-06):
+ * - Filas: Fecha (agrupada por Mes)
+ * - Columnas: Categoría
+ * - Valores: Monto (Suma)
  */
 
 import dynamic from 'next/dynamic';
 import { useMemo } from 'react';
 import { Card } from '@/components/ui/card';
-import { AnalyticsField, AnalyticsDataSet } from '@/components/analytics/types';
+import { AnalyticsField, AnalyticsDataSet, AnalyticsViewConfig } from '@/components/analytics/types';
 import { CostProLoader } from '@/components/ui/CostProLoader';
 
 const DynamicAnalyticsCenter = dynamic(
@@ -69,6 +70,24 @@ export function WalletAnalyticsView({ transactions, banks }: Props) {
     totalRecords: data.length,
   }), [fields, data]);
 
+  // FIX-DEFAULT-CONFIG (2026-07-06): configuración inicial por defecto
+  // Filas: Fecha (mes) | Columnas: Categoría | Valores: Monto (Suma)
+  const initialConfig: AnalyticsViewConfig = useMemo(() => ({
+    rows: [
+      { fieldKey: 'date', label: 'Fecha', dateGrouping: 'month' },
+    ],
+    columns: [
+      { fieldKey: 'category', label: 'Categoría' },
+    ],
+    values: [
+      { fieldKey: 'amount', label: 'Monto', aggregation: 'sum' },
+    ],
+    filters: [],
+    columnWidths: {},
+    hiddenColumns: [],
+    sortConfig: [],
+  }), []);
+
   if (data.length === 0) {
     return (
       <Card className="rounded-2xl border-border/30 p-8 text-center">
@@ -93,6 +112,7 @@ export function WalletAnalyticsView({ transactions, banks }: Props) {
         title="Análisis de Billetera"
         description="Tabla dinámica de transacciones: agrupa por banco, categoría, fecha, servicio y calcula sum/avg/count."
         className="w-full"
+        initialConfig={initialConfig}
       />
     </div>
   );
