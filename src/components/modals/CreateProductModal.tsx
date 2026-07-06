@@ -32,6 +32,7 @@ export const CreateProductModal = () => {
     price: 0,
     cost_price: 0,
     barcode: '',
+    barcode_type: 'EAN13' as string,
     unit_of_measure: 'unidad',
     description: '',
     price_currency: 'CUP' as string,
