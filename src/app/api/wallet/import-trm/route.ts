@@ -254,33 +254,14 @@ async function postHandler(req: NextRequest) {
 // 3. Cualquier servicio con keyword "recibida/entrada/deposito" → CR (ingreso)
 //
 // Antes TODO era DB, lo que hacía que los ingresos no aparecieran.
+// FIX-NO-INGRESOS (2026-07-06): Transfermóvil SOLO guarda operaciones que el
+// usuario inicia (enviadas). El .trm NO contiene ingresos recibidos — todas
+// las transacciones son gastos confirmados.
+// Antes se infería que transferencias CON cuenta eran CR (ingresos), pero eso
+// es incorrecto: el campo 'cuenta' en transferencias es la cuenta destino del
+// remitente, no indica que el usuario recibió dinero.
+// Por lo tanto: TODO es DB (gasto).
 function determineOperation(service: string, serviceType: string, cuenta: string): 'CR' | 'DB' {
-  const low = (service + ' ' + serviceType).toLowerCase();
-  const hasCuenta = !!(cuenta && cuenta.trim().length > 0);
-
-  // Ingresos explícitos por keyword
-  if (low.includes('recibida') || low.includes('entrada') || low.includes('deposito') || low.includes('depósito')) {
-    return 'CR';
-  }
-
-  // Transferencia: usar presencia de cuenta como indicador de dirección
-  if (low.includes('transferencia') || low.includes('transfer')) {
-    // Si hay cuenta del contraparte → recibida (CR)
-    // Si no hay cuenta → enviada (DB)
-    return hasCuenta ? 'CR' : 'DB';
-  }
-
-  // Gastos siempre (DB)
-  if (low.includes('recarga')) return 'DB';
-  if (low.includes('pago') || low.includes('factura')) return 'DB';
-  if (low.includes('compra')) return 'DB';
-  if (low.includes('impuesto') || low.includes('sello') || low.includes('timbre')) return 'DB';
-  if (low.includes('multa')) return 'DB';
-  if (low.includes('amortizar') || low.includes('amortizacion')) return 'DB';
-  if (low.includes('onat')) return 'DB';
-  if (low.includes('telefono') || low.includes('teléfono')) return 'DB';
-
-  // Default: si no sabemos, es gasto (conservador)
   return 'DB';
 }
 
