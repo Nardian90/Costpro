@@ -69,20 +69,34 @@ async function getHandler(req: NextRequest) {
     let totalIncome = 0, totalExpenses = 0;
     const banks: Record<string, any> = {};
     const categories: Record<string, number> = {};
+    // FIX-CR-DB-DISPLAY (2026-07-06): separar categorías de ingresos y gastos.
+    // Antes, categories[cat] sumaba CR y DB juntos, lo que hacía que las
+    // transferencias recibidas (CR, categoría "Transferencia") se mezclaran
+    // con las enviadas (DB, misma categoría) y aparecieran como gasto en el donut.
+    // Ahora: expenseCategories solo suma DB, incomeCategories solo suma CR.
+    const expenseCategories: Record<string, number> = {};
+    const incomeCategories: Record<string, number> = {};
     const monthly: Record<string, { income: number; expenses: number }> = {};
 
     for (const tx of transactions || []) {
       const cat = tx.manual_category || tx.category;
       const amount = parseFloat(tx.amount) || 0;
 
-      if (tx.operation === 'CR') totalIncome += amount;
-      else totalExpenses += amount;
+      if (tx.operation === 'CR') {
+        totalIncome += amount;
+        incomeCategories[cat] = (incomeCategories[cat] || 0) + amount;
+      } else {
+        totalExpenses += amount;
+        expenseCategories[cat] = (expenseCategories[cat] || 0) + amount;
+      }
 
       if (!banks[tx.bank]) banks[tx.bank] = { income: 0, expenses: 0, current_balance: 0, transaction_count: 0, card: tx.card };
       if (tx.operation === 'CR') banks[tx.bank].income += amount;
       else banks[tx.bank].expenses += amount;
       banks[tx.bank].transaction_count++;
 
+      // categories sigue siendo el mapa combinado (para compat con UI vieja)
+      // pero ahora se separa en expenseCategories / incomeCategories
       categories[cat] = (categories[cat] || 0) + amount;
 
       const month = tx.date.substring(0, 7);
@@ -134,6 +148,8 @@ async function getHandler(req: NextRequest) {
       },
       banks,
       categories,
+      expenseCategories,
+      incomeCategories,
       monthly,
       // FIX-ADMIN-VIEW: metadatos para que el frontend sepa qué usuario está viendo
       viewer: {

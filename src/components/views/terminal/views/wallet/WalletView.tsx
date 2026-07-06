@@ -36,6 +36,8 @@ type ViewMode = 'home' | 'movimientos' | 'categorias' | 'reportes' | 'analisis';
 interface WalletData {
     accounts: any[]; transactions: any[]; summary: any;
     banks: Record<string, any>; categories: Record<string, number>;
+    expenseCategories?: Record<string, number>;
+    incomeCategories?: Record<string, number>;
     monthly: Record<string, { income: number; expenses: number }>;
     viewer?: { is_admin: boolean; self_id: string; target_id: string; is_own: boolean };
 }
@@ -400,14 +402,27 @@ export default function WalletView() {
     const bankEntries = data ? Object.entries(data.banks).sort(([a],[b]) => a.localeCompare(b)) : [];
     const bankNames = bankEntries.map(([n]) => n);
 
-    // Categorías para el donut chart (solo gastos)
+    // Categorías para el donut chart (solo gastos reales)
+    // FIX-CR-DB-DISPLAY (2026-07-06): usar expenseCategories del API (solo DB)
+    // en lugar de data.categories (que mezclaba CR y DB).
     const expenseCats = useMemo(() => {
         if (!data) return [];
-        return Object.entries(data.categories)
+        const cats = data.expenseCategories || data.categories;
+        return Object.entries(cats)
             .filter(([name]) => !name.includes('Ingreso') && !name.includes('Recibida'))
             .map(([name, total]) => ({ name, total, color: CAT_COLORS[name] || '#6b7280', icon: CAT_ICONS[name] || '📦' }))
             .sort((a, b) => b.total - a.total);
     }, [data]);
+
+    // FIX-CR-DB-DISPLAY: categorías de ingresos (solo CR) para mostrar en UI
+    const incomeCats = useMemo(() => {
+        if (!data || !data.incomeCategories) return [];
+        return Object.entries(data.incomeCategories)
+            .map(([name, total]) => ({ name, total, color: CAT_COLORS[name] || '#16a34a', icon: CAT_ICONS[name] || '💰' }))
+            .sort((a, b) => b.total - a.total);
+    }, [data]);
+
+    const totalIncomeCats = incomeCats.reduce((s, c) => s + c.total, 0);
 
     const totalExpenses = expenseCats.reduce((s, c) => s + c.total, 0);
 
@@ -948,6 +963,23 @@ export default function WalletView() {
                 {/* ═══ CATEGORÍAS ═══ */}
                 {viewMode === 'categorias' && data && (
                     <div className="space-y-4">
+                        {/* FIX-CR-DB-DISPLAY: card de Ingresos (solo CR) */}
+                        {incomeCats.length > 0 && (
+                            <Card className="rounded-2xl border-border/30 p-4">
+                                <h2 className="text-xs font-black uppercase tracking-widest flex items-center gap-2 mb-3"><TrendingUp className="w-4 h-4 text-emerald-500" /> Ingresos</h2>
+                                <div className="space-y-2">
+                                    {incomeCats.map(cat => (
+                                        <div key={cat.name} className="space-y-0.5">
+                                            <div className="flex items-center justify-between text-[10px]">
+                                                <span className="font-bold flex items-center gap-1"><span>{cat.icon}</span> {cat.name}</span>
+                                                <span className="font-black text-emerald-500">{fmt(cat.total)} <span className="text-muted-foreground font-normal">({totalIncomeCats > 0 ? ((cat.total/totalIncomeCats)*100).toFixed(0) : 0}%)</span></span>
+                                            </div>
+                                            <div className="h-3 rounded-full bg-muted/30 overflow-hidden"><div className="h-full rounded-full transition-all" style={{ width: `${totalIncomeCats > 0 ? Math.max((cat.total/totalIncomeCats)*100, 2) : 0}%`, backgroundColor: cat.color }} /></div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </Card>
+                        )}
                         <Card className="rounded-2xl border-border/30 p-4">
                             <h2 className="text-xs font-black uppercase tracking-widest flex items-center gap-2 mb-3"><TrendingDown className="w-4 h-4 text-red-500" /> Gastos</h2>
                             <div className="space-y-2">
