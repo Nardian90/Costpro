@@ -9,7 +9,8 @@ import {
     Plus, Upload, Smartphone, X, Tag, Calendar, BarChart3,
     TrendingUp, TrendingDown, Building2, ChevronRight, Edit2,
     PieChart as PieChartIcon, Search, Trash2, AlertTriangle, Users, Eye,
-    Download, FileSpreadsheet, Table as TableIcon, LayoutGrid, ArrowUpDown, ArrowUp, ArrowDown
+    Download, FileSpreadsheet, Table as TableIcon, LayoutGrid, ArrowUpDown, ArrowUp, ArrowDown,
+    Filter, ChevronDown, RotateCcw
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -127,6 +128,57 @@ export default function WalletView() {
     const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
     const [isExporting, setIsExporting] = useState(false);
     const excelInputRef = useRef<HTMLInputElement>(null);
+
+    // FIX-FILTROS (2026-07-06): filtros avanzados en Movimientos
+    // Abanico desplegable con: periodo (año/mes/trimestre), operación (DB/CR), categoría
+    const [showFilters, setShowFilters] = useState(false);
+    const [filterPeriod, setFilterPeriod] = useState<'all' | 'year' | 'month' | 'quarter' | 'custom'>('all');
+    const [filterYear, setFilterYear] = useState<string>('all');
+    const [filterMonth, setFilterMonth] = useState<string>('all'); // 01-12 o 'all'
+    const [filterQuarter, setFilterQuarter] = useState<string>('all'); // 1-4 o 'all'
+    const [filterOp, setFilterOp] = useState<'all' | 'CR' | 'DB'>('all');
+    const [filterCategory, setFilterCategory] = useState<string>('all');
+
+    // FIX-REPORTES (2026-07-06): reescritura de Reportes con KPIs + tabla + modal gráfico
+    const [reportesView, setReportesView] = useState<'tarjeta' | 'tabla'>('tarjeta');
+    const [kpiModalMonth, setKpiModalMonth] = useState<string | null>(null);
+
+    // Años disponibles extraídos de las transacciones
+    const availableYears = useMemo(() => {
+        if (!data) return [];
+        const years = new Set<string>();
+        for (const tx of data.transactions) {
+            if (tx.date) years.add(tx.date.substring(0, 4));
+        }
+        return [...years].sort((a, b) => b.localeCompare(a));
+    }, [data]);
+
+    // Categorías disponibles
+    const availableCategories = useMemo(() => {
+        if (!data) return [];
+        const cats = new Set<string>();
+        for (const tx of data.transactions) {
+            cats.add(tx.manual_category || tx.category || 'Otros');
+        }
+        return [...cats].sort();
+    }, [data]);
+
+    const resetFilters = () => {
+        setFilterPeriod('all');
+        setFilterYear('all');
+        setFilterMonth('all');
+        setFilterQuarter('all');
+        setFilterOp('all');
+        setFilterCategory('all');
+    };
+
+    const activeFiltersCount = useMemo(() => {
+        let n = 0;
+        if (filterPeriod !== 'all') n++;
+        if (filterOp !== 'all') n++;
+        if (filterCategory !== 'all') n++;
+        return n;
+    }, [filterPeriod, filterOp, filterCategory]);
 
     const handleExportExcel = async () => {
         setIsExporting(true);
@@ -359,12 +411,77 @@ export default function WalletView() {
 
     const totalExpenses = expenseCats.reduce((s, c) => s + c.total, 0);
 
+    // FIX-REPORTES: KPIs por mes para las tarjetas de Reportes
+    // Cada item: { month, label, year, monthNum, ops, income, expenses, balance, expensePctOfIncome, topCategory }
+    const monthlyKPIs = useMemo(() => {
+        if (!data) return [];
+        const months: Record<string, { income: number; expenses: number; ops: number; cats: Record<string, number> }> = {};
+        for (const tx of data.transactions) {
+            const month = (tx.date || '').substring(0, 7); // YYYY-MM
+            if (!month) continue;
+            if (!months[month]) months[month] = { income: 0, expenses: 0, ops: 0, cats: {} };
+            const amount = parseFloat(tx.amount) || 0;
+            if (tx.operation === 'CR') months[month].income += amount;
+            else {
+                months[month].expenses += amount;
+                const cat = tx.manual_category || tx.category || 'Otros';
+                months[month].cats[cat] = (months[month].cats[cat] || 0) + amount;
+            }
+            months[month].ops++;
+        }
+        return Object.entries(months)
+            .map(([month, m]) => {
+                const [year, monthNum] = month.split('-');
+                const mi = parseInt(monthNum) - 1;
+                const topCat = Object.entries(m.cats).sort((a, b) => b[1] - a[1])[0];
+                return {
+                    month,
+                    label: `${MONTH_NAMES[mi] || monthNum} ${year}`,
+                    year,
+                    monthNum: parseInt(monthNum),
+                    ops: m.ops,
+                    income: m.income,
+                    expenses: m.expenses,
+                    balance: m.income - m.expenses,
+                    expensePctOfIncome: m.income > 0 ? (m.expenses / m.income) * 100 : 0,
+                    topCategory: topCat ? topCat[0] : '—',
+                    topCategoryAmount: topCat ? topCat[1] : 0,
+                    cats: m.cats,
+                };
+            })
+            .sort((a, b) => b.month.localeCompare(a.month)); // más reciente primero
+    }, [data]);
+
     const filteredTx = useMemo(() => {
         if (!data) return [];
         let txs = [...data.transactions];
+        // Filtro por banco (existente)
         if (filterBank !== 'all') txs = txs.filter((t: any) => t.bank === filterBank);
+        // Búsqueda (existente)
         if (searchQuery) { const q = searchQuery.toLowerCase(); txs = txs.filter((t: any) => (t.service||'').toLowerCase().includes(q) || (t.category||'').toLowerCase().includes(q) || (t.bank||'').toLowerCase().includes(q)); }
-        // FIX-EXCEL: ordenamiento por campo seleccionado
+
+        // FIX-FILTROS: filtros avanzados por periodo, operación y categoría
+        if (filterOp !== 'all') txs = txs.filter((t: any) => t.operation === filterOp);
+        if (filterCategory !== 'all') txs = txs.filter((t: any) => (t.manual_category || t.category) === filterCategory);
+        if (filterPeriod === 'year' && filterYear !== 'all') {
+            txs = txs.filter((t: any) => (t.date || '').startsWith(filterYear));
+        }
+        if (filterPeriod === 'month') {
+            if (filterYear !== 'all') txs = txs.filter((t: any) => (t.date || '').startsWith(filterYear));
+            if (filterMonth !== 'all') txs = txs.filter((t: any) => (t.date || '').substring(5, 7) === filterMonth);
+        }
+        if (filterPeriod === 'quarter') {
+            if (filterYear !== 'all') txs = txs.filter((t: any) => (t.date || '').startsWith(filterYear));
+            if (filterQuarter !== 'all') {
+                const q = parseInt(filterQuarter);
+                txs = txs.filter((t: any) => {
+                    const m = parseInt((t.date || '').substring(5, 7));
+                    return m >= (q - 1) * 3 + 1 && m <= q * 3;
+                });
+            }
+        }
+
+        // Ordenamiento
         if (sortField) {
             txs.sort((a: any, b: any) => {
                 let av: any, bv: any;
@@ -376,11 +493,10 @@ export default function WalletView() {
                 return 0;
             });
         } else {
-            // Default: fecha desc
             txs.sort((a: any, b: any) => (b.date || '').localeCompare(a.date || ''));
         }
         return txs;
-    }, [data, filterBank, searchQuery, sortField, sortDir]);
+    }, [data, filterBank, searchQuery, sortField, sortDir, filterOp, filterCategory, filterPeriod, filterYear, filterMonth, filterQuarter]);
 
 
 
@@ -591,6 +707,21 @@ export default function WalletView() {
                                 <button onClick={() => setFilterBank('all')} className={cn("px-2 py-1 rounded text-[9px] font-bold uppercase", filterBank === 'all' ? "bg-primary text-primary-foreground" : "text-muted-foreground")}>Todos</button>
                                 {bankNames.map(b => <button key={b} onClick={() => setFilterBank(b)} className={cn("px-2 py-1 rounded text-[9px] font-bold uppercase", filterBank === b ? "bg-primary text-primary-foreground" : "text-muted-foreground")}>{b}</button>)}
                             </div>
+                            {/* FIX-FILTROS: botón Filtros avanzados (abanico desplegable) */}
+                            <Button
+                                onClick={() => setShowFilters(s => !s)}
+                                size="sm"
+                                variant={showFilters ? "default" : "outline"}
+                                className="h-8 px-3 text-[10px] font-black uppercase gap-1"
+                                aria-expanded={showFilters}
+                                aria-controls="filter-panel"
+                            >
+                                <Filter className="w-3.5 h-3.5" /> Filtros
+                                {activeFiltersCount > 0 && (
+                                    <span className="ml-0.5 px-1.5 py-0.5 rounded-full bg-background text-primary text-[8px] font-black">{activeFiltersCount}</span>
+                                )}
+                                <ChevronDown className={cn("w-3 h-3 transition-transform", showFilters && "rotate-180")} />
+                            </Button>
                             {/* FIX-EXCEL: toggle tarjeta/tabla estilo Excel */}
                             <div className="flex items-center gap-0.5 bg-muted/20 p-0.5 rounded-lg" role="group" aria-label="Vista de movimientos">
                                 <button onClick={() => setMovimientosView('tarjeta')} className={cn("px-2 py-1 rounded text-[9px] font-bold uppercase flex items-center gap-1", movimientosView === 'tarjeta' ? "bg-primary text-primary-foreground" : "text-muted-foreground")} title="Vista tarjeta" aria-pressed={movimientosView === 'tarjeta'}>
@@ -601,6 +732,96 @@ export default function WalletView() {
                                 </button>
                             </div>
                         </div>
+
+                        {/* Panel de Filtros avanzados desplegable */}
+                        {showFilters && (
+                            <Card id="filter-panel" className="rounded-2xl border-border/30 p-4 space-y-3">
+                                <div className="flex items-center justify-between">
+                                    <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
+                                        <Filter className="w-3 h-3" /> Filtros Avanzados
+                                    </h3>
+                                    <button onClick={resetFilters} className="text-[9px] font-bold uppercase text-muted-foreground hover:text-destructive flex items-center gap-1" title="Limpiar filtros">
+                                        <RotateCcw className="w-3 h-3" /> Limpiar
+                                    </button>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-3">
+                                    {/* Periodo */}
+                                    <div>
+                                        <label className="text-[9px] font-bold uppercase text-muted-foreground block mb-1">Periodo</label>
+                                        <select value={filterPeriod} onChange={e => setFilterPeriod(e.target.value as any)} className="w-full h-8 px-2 bg-muted/20 border border-border/30 rounded-lg text-xs font-bold">
+                                            <option value="all">Todos</option>
+                                            <option value="year">Por Año</option>
+                                            <option value="month">Por Mes</option>
+                                            <option value="quarter">Por Trimestre</option>
+                                        </select>
+                                    </div>
+
+                                    {/* Operación */}
+                                    <div>
+                                        <label className="text-[9px] font-bold uppercase text-muted-foreground block mb-1">Operación</label>
+                                        <select value={filterOp} onChange={e => setFilterOp(e.target.value as any)} className="w-full h-8 px-2 bg-muted/20 border border-border/30 rounded-lg text-xs font-bold">
+                                            <option value="all">Todas</option>
+                                            <option value="CR">Ingresos (CR)</option>
+                                            <option value="DB">Gastos (DB)</option>
+                                        </select>
+                                    </div>
+
+                                    {/* Año (visible si periodo = year/month/quarter) */}
+                                    {filterPeriod !== 'all' && (
+                                        <div>
+                                            <label className="text-[9px] font-bold uppercase text-muted-foreground block mb-1">Año</label>
+                                            <select value={filterYear} onChange={e => setFilterYear(e.target.value)} className="w-full h-8 px-2 bg-muted/20 border border-border/30 rounded-lg text-xs font-bold">
+                                                <option value="all">Todos los años</option>
+                                                {availableYears.map(y => <option key={y} value={y}>{y}</option>)}
+                                            </select>
+                                        </div>
+                                    )}
+
+                                    {/* Mes (visible si periodo = month) */}
+                                    {filterPeriod === 'month' && (
+                                        <div>
+                                            <label className="text-[9px] font-bold uppercase text-muted-foreground block mb-1">Mes</label>
+                                            <select value={filterMonth} onChange={e => setFilterMonth(e.target.value)} className="w-full h-8 px-2 bg-muted/20 border border-border/30 rounded-lg text-xs font-bold">
+                                                <option value="all">Todos los meses</option>
+                                                {MONTH_NAMES.map((m, i) => <option key={i} value={String(i + 1).padStart(2, '0')}>{m}</option>)}
+                                            </select>
+                                        </div>
+                                    )}
+
+                                    {/* Trimestre (visible si periodo = quarter) */}
+                                    {filterPeriod === 'quarter' && (
+                                        <div>
+                                            <label className="text-[9px] font-bold uppercase text-muted-foreground block mb-1">Trimestre</label>
+                                            <select value={filterQuarter} onChange={e => setFilterQuarter(e.target.value)} className="w-full h-8 px-2 bg-muted/20 border border-border/30 rounded-lg text-xs font-bold">
+                                                <option value="all">Todos los trimestres</option>
+                                                <option value="1">T1 (Ene-Mar)</option>
+                                                <option value="2">T2 (Abr-Jun)</option>
+                                                <option value="3">T3 (Jul-Sep)</option>
+                                                <option value="4">T4 (Oct-Dic)</option>
+                                            </select>
+                                        </div>
+                                    )}
+
+                                    {/* Categoría */}
+                                    <div className={filterPeriod === 'all' ? 'col-span-2' : ''}>
+                                        <label className="text-[9px] font-bold uppercase text-muted-foreground block mb-1">Categoría</label>
+                                        <select value={filterCategory} onChange={e => setFilterCategory(e.target.value)} className="w-full h-8 px-2 bg-muted/20 border border-border/30 rounded-lg text-xs font-bold">
+                                            <option value="all">Todas las categorías</option>
+                                            {availableCategories.map(c => <option key={c} value={c}>{c}</option>)}
+                                        </select>
+                                    </div>
+                                </div>
+
+                                {/* Resumen de resultados */}
+                                <div className="flex items-center justify-between text-[9px] font-bold uppercase pt-2 border-t border-border/20">
+                                    <span className="text-muted-foreground">{filteredTx.length} transacciones encontradas</span>
+                                    <span className={cn("tabular-nums", filteredTx.reduce((s: number, t: any) => s + (t.operation === 'CR' ? parseFloat(t.amount) : -parseFloat(t.amount)), 0) >= 0 ? "text-emerald-500" : "text-red-500")}>
+                                        {fmt(filteredTx.reduce((s: number, t: any) => s + (t.operation === 'CR' ? parseFloat(t.amount) : -parseFloat(t.amount)), 0))}
+                                    </span>
+                                </div>
+                            </Card>
+                        )}
 
                         {/* Vista Tarjeta (original) */}
                         {movimientosView === 'tarjeta' && (
@@ -758,28 +979,232 @@ export default function WalletView() {
                     </div>
                 )}
 
-                {/* ═══ REPORTES ═══ */}
+                {/* ═══ REPORTES (reescrito: KPIs + tabla + modal gráfico) ═══ */}
                 {viewMode === 'reportes' && data && (
                     <div className="space-y-4">
-                        <Card className="rounded-2xl border-border/30 p-4">
-                            <h2 className="text-xs font-black uppercase tracking-widest mb-3">Mensual</h2>
-                            {Object.keys(data.monthly).length === 0 ? <p className="text-xs text-muted-foreground text-center py-4">Sin datos</p> :
-                            <div className="space-y-3">
-                                {Object.entries(data.monthly).sort(([a],[b]) => b.localeCompare(a)).map(([month, m]) => {
-                                    const max = Math.max(m.income, m.expenses, 1);
-                                    const mi = parseInt(month.split('-')[1]) - 1;
+                        {/* Toggle Tarjeta/Tabla + resumen anual */}
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                            <div className="flex items-center gap-0.5 bg-muted/20 p-0.5 rounded-lg" role="group" aria-label="Vista de reportes">
+                                <button onClick={() => setReportesView('tarjeta')} className={cn("px-3 py-1.5 rounded text-[9px] font-bold uppercase flex items-center gap-1", reportesView === 'tarjeta' ? "bg-primary text-primary-foreground" : "text-muted-foreground")} aria-pressed={reportesView === 'tarjeta'}>
+                                    <LayoutGrid className="w-3 h-3" /> Tarjetas KPI
+                                </button>
+                                <button onClick={() => setReportesView('tabla')} className={cn("px-3 py-1.5 rounded text-[9px] font-bold uppercase flex items-center gap-1", reportesView === 'tabla' ? "bg-primary text-primary-foreground" : "text-muted-foreground")} aria-pressed={reportesView === 'tabla'}>
+                                    <TableIcon className="w-3 h-3" /> Tabla
+                                </button>
+                            </div>
+                            <p className="text-[9px] font-bold uppercase text-muted-foreground">{monthlyKPIs.length} meses · {data.transactions.length} txs totales</p>
+                        </div>
+
+                        {monthlyKPIs.length === 0 ? (
+                            <Card className="rounded-2xl border-border/30 p-8 text-center">
+                                <p className="text-xs text-muted-foreground">Sin datos para mostrar reportes.</p>
+                            </Card>
+                        ) : reportesView === 'tarjeta' ? (
+                            /* Vista Tarjetas KPI — más reciente primero */
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                {monthlyKPIs.map((kpi) => {
+                                    const isPositive = kpi.balance >= 0;
+                                    const pctColor = kpi.expensePctOfIncome > 100 ? 'text-red-500' : kpi.expensePctOfIncome > 80 ? 'text-amber-500' : 'text-emerald-500';
                                     return (
-                                        <div key={month}>
-                                            <div className="flex justify-between text-[10px] mb-1"><span className="font-bold">{MONTH_NAMES[mi] || month} {month.split('-')[0]}</span><span className={cn("font-black", m.income-m.expenses >= 0 ? "text-emerald-500" : "text-red-500")}>{m.income-m.expenses >= 0 ? '+' : ''}{fmtShort(m.income-m.expenses)}</span></div>
-                                            <div className="flex gap-1 h-10 items-end">
-                                                <div className="flex-1 flex flex-col items-center"><div className="w-full bg-emerald-500/70 rounded-t" style={{height: `${(m.income/max)*100}%`}} /><span className="text-[6px] font-bold text-emerald-500">{fmtShort(m.income)}</span></div>
-                                                <div className="flex-1 flex flex-col items-center"><div className="w-full bg-red-500/70 rounded-t" style={{height: `${(m.expenses/max)*100}%`}} /><span className="text-[6px] font-bold text-red-500">{fmtShort(m.expenses)}</span></div>
+                                        <Card
+                                            key={kpi.month}
+                                            className="rounded-2xl border-border/30 p-4 cursor-pointer hover:shadow-lg hover:border-primary/40 transition-all"
+                                            onClick={() => setKpiModalMonth(kpi.month)}
+                                            role="button"
+                                            tabIndex={0}
+                                            onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setKpiModalMonth(kpi.month); } }}
+                                            aria-label={`Ver detalles de ${kpi.label}`}
+                                        >
+                                            {/* Header: mes + badge balance */}
+                                            <div className="flex items-center justify-between mb-3">
+                                                <div>
+                                                    <p className="text-sm font-black uppercase">{kpi.label}</p>
+                                                    <p className="text-[8px] text-muted-foreground font-bold uppercase">{kpi.ops} operaciones</p>
+                                                </div>
+                                                <Badge variant={isPositive ? "default" : "destructive"} className={cn("text-[8px] font-black uppercase tabular-nums", isPositive ? "bg-emerald-500/15 text-emerald-500 hover:bg-emerald-500/25" : "bg-red-500/15 text-red-500 hover:bg-red-500/25")}>
+                                                    {isPositive ? '+' : ''}{fmtShort(kpi.balance)}
+                                                </Badge>
                                             </div>
-                                        </div>
+
+                                            {/* Ingresos / Gastos */}
+                                            <div className="grid grid-cols-2 gap-2 mb-3">
+                                                <div className="p-2 rounded-lg bg-emerald-500/5">
+                                                    <div className="flex items-center gap-1 mb-0.5">
+                                                        <TrendingUp className="w-2.5 h-2.5 text-emerald-500" />
+                                                        <p className="text-[8px] font-bold uppercase text-muted-foreground">Ingresos</p>
+                                                    </div>
+                                                    <p className="text-xs font-black text-emerald-500 tabular-nums">{fmt(kpi.income)}</p>
+                                                </div>
+                                                <div className="p-2 rounded-lg bg-red-500/5">
+                                                    <div className="flex items-center gap-1 mb-0.5">
+                                                        <TrendingDown className="w-2.5 h-2.5 text-red-500" />
+                                                        <p className="text-[8px] font-bold uppercase text-muted-foreground">Gastos</p>
+                                                    </div>
+                                                    <p className="text-xs font-black text-red-500 tabular-nums">{fmt(kpi.expenses)}</p>
+                                                </div>
+                                            </div>
+
+                                            {/* Barra de % de gasto sobre ingresos */}
+                                            <div className="space-y-1">
+                                                <div className="flex items-center justify-between text-[8px] font-bold uppercase">
+                                                    <span className="text-muted-foreground">% Gasto/Ingreso</span>
+                                                    <span className={cn("tabular-nums", pctColor)}>{kpi.expensePctOfIncome.toFixed(0)}%</span>
+                                                </div>
+                                                <div className="h-1.5 rounded-full bg-muted/30 overflow-hidden">
+                                                    <div
+                                                        className={cn("h-full rounded-full transition-all", kpi.expensePctOfIncome > 100 ? "bg-red-500" : kpi.expensePctOfIncome > 80 ? "bg-amber-500" : "bg-emerald-500")}
+                                                        style={{ width: `${Math.min(kpi.expensePctOfIncome, 100)}%` }}
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            {/* Top categoría */}
+                                            <div className="flex items-center justify-between mt-2 pt-2 border-t border-border/10 text-[8px]">
+                                                <span className="text-muted-foreground font-bold uppercase">Top gasto:</span>
+                                                <span className="font-black truncate ml-1">{CAT_ICONS[kpi.topCategory] || '📦'} {kpi.topCategory}</span>
+                                            </div>
+
+                                            <p className="text-[7px] text-muted-foreground/60 text-center mt-2 uppercase font-bold">Clic para ver detalles →</p>
+                                        </Card>
                                     );
                                 })}
-                            </div>}
-                        </Card>
+                            </div>
+                        ) : (
+                            /* Vista Tabla — meses en filas con columnas ordenables visualmente */
+                            <Card className="rounded-2xl border-border/30 overflow-hidden">
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-[10px]">
+                                        <thead className="bg-muted/30 border-b border-border/30">
+                                            <tr>
+                                                <th className="text-left p-2 font-black uppercase">Mes</th>
+                                                <th className="text-right p-2 font-black uppercase">Ops</th>
+                                                <th className="text-right p-2 font-black uppercase text-emerald-500">Ingresos</th>
+                                                <th className="text-right p-2 font-black uppercase text-red-500">Gastos</th>
+                                                <th className="text-right p-2 font-black uppercase">Balance</th>
+                                                <th className="text-right p-2 font-black uppercase">% G/I</th>
+                                                <th className="text-left p-2 font-black uppercase">Top Categoría</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {monthlyKPIs.map((kpi) => (
+                                                <tr
+                                                    key={kpi.month}
+                                                    className="border-b border-border/10 hover:bg-muted/20 cursor-pointer"
+                                                    onClick={() => setKpiModalMonth(kpi.month)}
+                                                >
+                                                    <td className="p-2 font-black whitespace-nowrap">{kpi.label}</td>
+                                                    <td className="p-2 text-right tabular-nums">{kpi.ops}</td>
+                                                    <td className="p-2 text-right tabular-nums text-emerald-500 font-bold">{fmt(kpi.income)}</td>
+                                                    <td className="p-2 text-right tabular-nums text-red-500 font-bold">{fmt(kpi.expenses)}</td>
+                                                    <td className={cn("p-2 text-right tabular-nums font-black", kpi.balance >= 0 ? "text-emerald-500" : "text-red-500")}>{kpi.balance >= 0 ? '+' : ''}{fmt(kpi.balance)}</td>
+                                                    <td className={cn("p-2 text-right tabular-nums font-bold", kpi.expensePctOfIncome > 100 ? "text-red-500" : kpi.expensePctOfIncome > 80 ? "text-amber-500" : "text-emerald-500")}>{kpi.expensePctOfIncome.toFixed(0)}%</td>
+                                                    <td className="p-2 truncate" title={kpi.topCategory}>{CAT_ICONS[kpi.topCategory] || '📦'} {kpi.topCategory}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                        <tfoot className="bg-muted/30 border-t border-border/30">
+                                            <tr className="font-black">
+                                                <td className="p-2 uppercase">Total</td>
+                                                <td className="p-2 text-right tabular-nums">{monthlyKPIs.reduce((s, k) => s + k.ops, 0)}</td>
+                                                <td className="p-2 text-right tabular-nums text-emerald-500">{fmt(monthlyKPIs.reduce((s, k) => s + k.income, 0))}</td>
+                                                <td className="p-2 text-right tabular-nums text-red-500">{fmt(monthlyKPIs.reduce((s, k) => s + k.expenses, 0))}</td>
+                                                <td className={cn("p-2 text-right tabular-nums", monthlyKPIs.reduce((s, k) => s + k.balance, 0) >= 0 ? "text-emerald-500" : "text-red-500")}>
+                                                    {fmt(monthlyKPIs.reduce((s, k) => s + k.balance, 0))}
+                                                </td>
+                                                <td colSpan={2}></td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
+                            </Card>
+                        )}
+
+                        {/* Modal KPI: gráfico de gastos por categoría del mes seleccionado */}
+                        {kpiModalMonth && (() => {
+                            const kpi = monthlyKPIs.find(k => k.month === kpiModalMonth);
+                            if (!kpi) return null;
+                            const cats = Object.entries(kpi.cats).sort((a, b) => b[1] - a[1]);
+                            const totalGastos = kpi.expenses;
+                            const maxCat = cats[0]?.[1] || 1;
+                            return (
+                                <div
+                                    className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-background/90 backdrop-blur-sm"
+                                    onClick={() => setKpiModalMonth(null)}
+                                >
+                                    <Card
+                                        className="w-full max-w-md rounded-3xl border-border/30 shadow-2xl p-5 max-h-[90vh] overflow-y-auto"
+                                        onClick={e => e.stopPropagation()}
+                                    >
+                                        <div className="flex items-center justify-between mb-4">
+                                            <div>
+                                                <h2 className="text-sm font-black uppercase">{kpi.label}</h2>
+                                                <p className="text-[8px] text-muted-foreground font-bold uppercase">Detalle de gastos por categoría</p>
+                                            </div>
+                                            <button onClick={() => setKpiModalMonth(null)} className="text-muted-foreground hover:text-foreground" aria-label="Cerrar">
+                                                <X className="w-4 h-4" />
+                                            </button>
+                                        </div>
+
+                                        {/* Resumen rápido */}
+                                        <div className="grid grid-cols-3 gap-2 mb-4">
+                                            <div className="text-center p-2 rounded-lg bg-emerald-500/5">
+                                                <p className="text-[7px] font-bold uppercase text-muted-foreground">Ingresos</p>
+                                                <p className="text-[11px] font-black text-emerald-500 tabular-nums">{fmtShort(kpi.income)}</p>
+                                            </div>
+                                            <div className="text-center p-2 rounded-lg bg-red-500/5">
+                                                <p className="text-[7px] font-bold uppercase text-muted-foreground">Gastos</p>
+                                                <p className="text-[11px] font-black text-red-500 tabular-nums">{fmtShort(kpi.expenses)}</p>
+                                            </div>
+                                            <div className="text-center p-2 rounded-lg bg-primary/5">
+                                                <p className="text-[7px] font-bold uppercase text-muted-foreground">Balance</p>
+                                                <p className={cn("text-[11px] font-black tabular-nums", kpi.balance >= 0 ? "text-emerald-500" : "text-red-500")}>{kpi.balance >= 0 ? '+' : ''}{fmtShort(kpi.balance)}</p>
+                                            </div>
+                                        </div>
+
+                                        {/* Gráfico de barras horizontales por categoría */}
+                                        <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2">Gastos por Categoría</h3>
+                                        {cats.length === 0 ? (
+                                            <p className="text-xs text-muted-foreground text-center py-6">Sin gastos en este mes</p>
+                                        ) : (
+                                            <div className="space-y-2">
+                                                {cats.map(([cat, amount]) => {
+                                                    const pct = totalGastos > 0 ? (amount / totalGastos) * 100 : 0;
+                                                    const widthPct = (amount / maxCat) * 100;
+                                                    const color = CAT_COLORS[cat] || '#6b7280';
+                                                    return (
+                                                        <div key={cat} className="space-y-0.5">
+                                                            <div className="flex items-center justify-between text-[9px]">
+                                                                <span className="font-bold flex items-center gap-1">
+                                                                    <span>{CAT_ICONS[cat] || '📦'}</span>
+                                                                    {cat}
+                                                                </span>
+                                                                <span className="font-black tabular-nums">
+                                                                    {fmt(amount)}
+                                                                    <span className="text-muted-foreground font-normal ml-1">({pct.toFixed(0)}%)</span>
+                                                                </span>
+                                                            </div>
+                                                            <div className="h-2 rounded-full bg-muted/30 overflow-hidden">
+                                                                <div
+                                                                    className="h-full rounded-full transition-all"
+                                                                    style={{ width: `${widthPct}%`, backgroundColor: color }}
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
+
+                                        {/* Footer con stats adicionales */}
+                                        <div className="mt-4 pt-3 border-t border-border/10 space-y-1 text-[9px]">
+                                            <div className="flex justify-between"><span className="text-muted-foreground font-bold uppercase">Operaciones totales:</span><span className="font-black tabular-nums">{kpi.ops}</span></div>
+                                            <div className="flex justify-between"><span className="text-muted-foreground font-bold uppercase">% Gasto sobre Ingreso:</span><span className={cn("font-black tabular-nums", kpi.expensePctOfIncome > 100 ? "text-red-500" : kpi.expensePctOfIncome > 80 ? "text-amber-500" : "text-emerald-500")}>{kpi.expensePctOfIncome.toFixed(1)}%</span></div>
+                                            <div className="flex justify-between"><span className="text-muted-foreground font-bold uppercase">Categorías distintas:</span><span className="font-black tabular-nums">{cats.length}</span></div>
+                                        </div>
+                                    </Card>
+                                </div>
+                            );
+                        })()}
                     </div>
                 )}
 
