@@ -696,7 +696,9 @@ export default function WalletView() {
                 />
             </div>
 
-            <div className="flex-1 overflow-y-auto no-scrollbar px-4 py-4 pb-24 max-w-2xl mx-auto w-full">
+            <div className="flex-1 overflow-y-auto no-scrollbar py-4 pb-24 w-full">
+              {/* Contenedor estándar para todas las vistas excepto Análisis */}
+              <div className={cn("px-4 max-w-2xl mx-auto w-full", viewMode === 'analisis' && "hidden")}>
                 {/* FIX-IMPORT-MODAL (2026-07-06): estados de loading y vacío renderizados
                     inline en lugar de early return, para que el modal de importación
                     y los diálogos puedan abrirse incluso cuando data es null. */}
@@ -1343,9 +1345,12 @@ export default function WalletView() {
                     </div>
                 )}
 
-                {/* ═══ ANÁLISIS (tabla dinámica reutilizada de multi-tienda) ═══ */}
+                {/* ═══ ANÁLISIS (tabla dinámica, full-width fuera del max-w-2xl) ═══ */}
+              </div>{/* cierra contenedor max-w-2xl */}
                 {viewMode === 'analisis' && data && (
-                    <WalletAnalyticsView transactions={data.transactions} banks={bankNames} />
+                    <div className="w-full px-4">
+                        <WalletAnalyticsView transactions={data.transactions} banks={bankNames} />
+                    </div>
                 )}
             </div>
 

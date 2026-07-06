@@ -78,8 +78,8 @@ export function WalletAnalyticsView({ transactions, banks }: Props) {
   }
 
   return (
-    <div className="space-y-3 -mx-4">
-      <div className="px-4">
+    <div className="space-y-3 w-full">
+      <div>
         <h2 className="text-xs font-black uppercase tracking-widest text-muted-foreground">
           Tabla Dinámica — {data.length} transacciones
         </h2>
