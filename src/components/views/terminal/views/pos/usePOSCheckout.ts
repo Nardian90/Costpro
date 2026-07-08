@@ -19,6 +19,16 @@ export function usePOSCheckout() {
     paymentMethod: PaymentMethod;
     discount: { type: "fixed" | "percentage"; value: number } | null;
   } | null>(null);
+  // FIX-EXCHANGE-VALIDATION: modal custom de advertencia de tasa (no window.confirm)
+  const [showRateWarning, setShowRateWarning] = useState(false);
+  const [rateWarningData, setRateWarningData] = useState<{
+    totalCup: number;
+    totalPaidCup: number;
+    diff: number;
+    pctDiff: number;
+    usdRate: number;
+    currentRates: Record<string, number>;
+  } | null>(null);
 
   // POS-2 MM-9: Referencia al ID del toast activo para poder dismissarlo
   // si el usuario hace otra venta antes de que expire la ventana de undo.
@@ -98,14 +108,16 @@ export function usePOSCheckout() {
           p_subtotal: getSubtotal(),
           p_discount_type: (checkoutDiscount || discount)?.type || "fixed",
           p_discount_value: getDiscountAmount(),
-          // FIX F2-01: persistir split cash/transfer server-side
+          // FIX F2-01: persistir split cash/transfer/zelle server-side
           p_cash_amount: cashAmount,
           p_transfer_amount: transferAmount,
+          // FIX-ZELLE: enviar zelle_amount al RPC
+          p_zelle_amount: zelleAmount,
           // FIX: idempotencia con crypto.randomUUID() para mayor entropía
           p_idempotency_key: `sale-${crypto.randomUUID()}`,
           // FIX-MULTI-MONEDA: cada item lleva su propia moneda y tasa
-          p_sale_currency: 'MIXED',
-          p_sale_exchange_rate: 1.0,
+          p_sale_currency: useCartStore.getState().saleCurrency || 'MIXED',
+          p_sale_exchange_rate: useCartStore.getState().saleExchangeRate || 1.0,
           p_items: items.map((i) => ({
             product_id: i.product_id,
             variant_id: i.variant_id ?? null,
@@ -117,6 +129,10 @@ export function usePOSCheckout() {
             zelle_paid: i.zelle_paid || 0,
             currency: i.currency || 'CUP',
             exchange_rate: i.exchange_rate || 1.0,
+            // FIX-PAYMENT-METHOD-CURRENCY: moneda por método de pago
+            cash_currency: i.cash_currency || 'CUP',
+            transfer_currency: i.transfer_currency || 'CUP',
+            zelle_currency: i.zelle_currency || 'USD',
           })),
         });
 
@@ -312,52 +328,73 @@ export function usePOSCheckout() {
       }
 
       // FIX-EXCHANGE-VALIDATION (2026-07-06): validar que los pagos en múltiples
-      // monedas cuadren con el total usando la última tasa informal CUP/USD.
-      // Si hay diferencia > 2%, advertir al vendedor antes de confirmar.
-      if (paymentMethod === 'mixed' || items.some(i => i.currency && i.currency !== 'CUP')) {
+      // monedas cuadren con el total usando tasas (manuales primero, luego API).
+      // Si diferencia > 2%, abrir modal custom (NO window.confirm) para:
+      // 1. Mostrar detalles del descuadre
+      // 2. Permitir editar tasas manualmente (se arrastran via globalRates)
+      // 3. Confirmar o cancelar
+      const cartState = useCartStore.getState();
+      const hasMultiCurrency = paymentMethod === 'mixed'
+        || items.some(i => i.currency && i.currency !== 'CUP')
+        || items.some(i => i.zelle_paid && i.zelle_paid > 0)
+        || paymentMethod === 'zelle';
+
+      if (hasMultiCurrency) {
         try {
-          // Obtener última tasa informal CUP/USD
-          const rateRes = await fetch('/api/exchange-rates?currency=USD&source=elToque&days=1');
-          let usdToCupRate = 0;
-          if (rateRes.ok) {
-            const rateData = await rateRes.json();
-            if (rateData.rates && rateData.rates.length > 0) {
-              usdToCupRate = parseFloat(rateData.rates[0].rate) || 0;
-            }
-          }
-          // Fallback: usar tasa de BCC si no hay elToque
+          // FIX-GLOBAL-RATES: usar tasas manuales si existen, si no fetch API
+          let usdToCupRate = cartState.globalRates['USD'] || 0;
+
           if (usdToCupRate === 0) {
-            const bccRes = await fetch('/api/exchange-rates?currency=USD&source=BCC&segment=3&days=1');
-            if (bccRes.ok) {
-              const bccData = await bccRes.json();
-              if (bccData.rates && bccData.rates.length > 0) {
-                usdToCupRate = parseFloat(bccData.rates[0].rate) * 1.15 || 0; // spread estimado
+            // Fetch tasa informal
+            const rateRes = await fetch('/api/exchange-rates?currency=USD&source=elToque&days=1');
+            if (rateRes.ok) {
+              const rateData = await rateRes.json();
+              if (rateData.rates && rateData.rates.length > 0) {
+                usdToCupRate = parseFloat(rateData.rates[0].rate) || 0;
+              }
+            }
+            // Fallback BCC
+            if (usdToCupRate === 0) {
+              const bccRes = await fetch('/api/exchange-rates?currency=USD&source=BCC&segment=3&days=1');
+              if (bccRes.ok) {
+                const bccData = await bccRes.json();
+                if (bccData.rates && bccData.rates.length > 0) {
+                  usdToCupRate = parseFloat(bccData.rates[0].rate) * 1.15 || 0;
+                }
               }
             }
           }
 
           if (usdToCupRate > 0) {
-            // Calcular total en CUP y total pagado en CUP
-            const totalCup = useCartStore.getState().getTotalCup();
+            const totalCup = cartState.getTotalCup();
+            // Calcular total pagado en CUP usando tasas (manuales o item.exchange_rate)
             const totalPaidCup = items.reduce((s, i) => {
-              const rate = i.exchange_rate || (i.currency === 'USD' ? usdToCupRate : 1);
               const paidCup = (i.cash_paid || 0) + (i.transfer_paid || 0) + (i.zelle_paid || 0);
-              return s + (i.currency === 'CUP' ? paidCup : paidCup * rate);
+              // Si el item está en CUP, no convertir
+              if (i.currency === 'CUP' && !i.zelle_paid) return s + paidCup;
+              // Para Zelle, usar tasa manual o global
+              const zelleCup = (i.zelle_paid || 0) * (cartState.globalRates[i.zelle_currency || 'USD'] || usdToCupRate);
+              const otherCup = ((i.cash_paid || 0) + (i.transfer_paid || 0)) * (i.exchange_rate || 1);
+              return s + zelleCup + otherCup;
             }, 0);
 
             const diff = Math.abs(totalPaidCup - totalCup);
             const pctDiff = totalCup > 0 ? (diff / totalCup) * 100 : 0;
 
             if (pctDiff > 2) {
-              // Advertencia: el pago no cuadra con la tasa actual
-              const confirm = window.confirm(
-                `⚠ ADVERTENCIA: El pago no cuadra con la tasa actual (1 USD = ${usdToCupRate.toFixed(0)} CUP).\n\n` +
-                `Total venta: ${totalCup.toFixed(2)} CUP\n` +
-                `Total pagado (convertido): ${totalPaidCup.toFixed(2)} CUP\n` +
-                `Diferencia: ${diff.toFixed(2)} CUP (${pctDiff.toFixed(1)}%)\n\n` +
-                `¿Confirmar la venta de todos modos?`
-              );
-              if (!confirm) return;
+              // Abrir modal custom con datos del descuadre
+              setRateWarningData({
+                totalCup,
+                totalPaidCup,
+                diff,
+                pctDiff,
+                usdRate: usdToCupRate,
+                currentRates: { ...cartState.globalRates, USD: usdToCupRate },
+              });
+              setShowRateWarning(true);
+              // Guardar pending data para reanudar después de que el usuario decida
+              setPendingCheckoutData({ paymentMethod, discount: checkoutDiscount || null });
+              return; // Pausar checkout hasta que el usuario decida
             }
           }
         } catch (e) {
@@ -391,6 +428,32 @@ export function usePOSCheckout() {
     }
   }, [pendingCheckoutData, processCheckout]);
 
+  // FIX-EXCHANGE-VALIDATION: handlers del modal de advertencia de tasa
+  const confirmRateWarning = useCallback(async () => {
+    setShowRateWarning(false);
+    if (pendingCheckoutData) {
+      await processCheckout(
+        pendingCheckoutData.paymentMethod,
+        pendingCheckoutData.discount,
+      );
+      setPendingCheckoutData(null);
+    }
+  }, [pendingCheckoutData, processCheckout]);
+
+  const cancelRateWarning = useCallback(() => {
+    setShowRateWarning(false);
+    setRateWarningData(null);
+    setPendingCheckoutData(null);
+  }, []);
+
+  // FIX-GLOBAL-RATES: actualizar tasa manual desde el modal (se arrastra)
+  const updateRateFromModal = useCallback((currency: string, rate: number) => {
+    useCartStore.getState().setGlobalRate(currency, rate);
+    if (rateWarningData) {
+      setRateWarningData({ ...rateWarningData, currentRates: { ...rateWarningData.currentRates, [currency]: rate } });
+    }
+  }, [rateWarningData]);
+
   return {
     // Checkout
     startCheckout,
@@ -401,6 +464,12 @@ export function usePOSCheckout() {
     // Modals
     showPriceWarning,
     setShowPriceWarning,
+    // FIX-EXCHANGE-VALIDATION: modal de tasa
+    showRateWarning,
+    rateWarningData,
+    confirmRateWarning,
+    cancelRateWarning,
+    updateRateFromModal,
 
     // Sale result
     lastSale,

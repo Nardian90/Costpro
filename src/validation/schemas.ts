@@ -490,16 +490,22 @@ export const createSaleParamsSchema = z.object({
       discount_value: z.number().optional(),
       cash_paid: z.number().optional(),
       transfer_paid: z.number().optional(),
+      zelle_paid: z.number().optional(),
       cost: z.number().min(0),
       // FIX-MULTI-MONEDA: moneda y tasa por item
       currency: z.string().optional().default('CUP'),
       exchange_rate: z.number().optional().default(1.0),
+      // FIX-PAYMENT-METHOD-CURRENCY (2026-07-06): moneda por método de pago del item
+      cash_currency: z.string().optional(),
+      transfer_currency: z.string().optional(),
+      zelle_currency: z.string().optional(),
     }),
   ),
   p_applied_taxes: z.array(z.any()).optional(),
   p_tax_amount: z.number().optional(),
   p_cash_amount: z.number().optional(),
   p_transfer_amount: z.number().optional(),
+  p_zelle_amount: z.number().optional(),
   p_transaction_id: z.string().regex(uuidRegex).optional(),
   p_idempotency_key: z.string().optional(),
   // Política de secuencia global (forward-only locking):

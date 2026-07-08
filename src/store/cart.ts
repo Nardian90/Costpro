@@ -28,13 +28,22 @@ export interface CartItem {
   variant?: ProductVariant | null;
   discount_type: "percentage" | "fixed" | null;
   discount_value: number;
+  // FIX-DISCOUNT-CURRENCY-ITEM (2026-07-06): moneda del descuento por item
+  discount_currency: string;
   cash_paid: number;
   transfer_paid: number;
   // FIX-ZELLE (2026-07-06): agregar zelle_paid para pago mixto con Zelle
   zelle_paid: number;
+  // FIX-PAYMENT-METHOD-CURRENCY (2026-07-06): moneda por método de pago del item
+  // Permite ej: 2000 CUP efectivo + 500 USD Zelle en el mismo producto
+  cash_currency: string;
+  transfer_currency: string;
+  zelle_currency: string;
   // FIX-MULTI-MONEDA: moneda y tasa de cambio POR ITEM (no global)
   currency: string;
   exchange_rate: number;
+  // FIX-PAYMENT-MODE (2026-07-06): indica si el usuario editó manualmente los pagos de este item
+  payment_manual_override: boolean;
 }
 
 // FIX-MIXED-PAYMENT (2026-07-06): estructura para pago mixto con moneda por método
@@ -79,6 +88,7 @@ interface CartState {
     cashPaid: number,
     transferPaid: number,
     zellePaid?: number,
+    methodCurrencies?: { cash?: string; transfer?: string; zelle?: string },
   ) => void;
   prorateGlobalPayment: (totalCash: number, totalTransfer: number, totalZelle?: number) => void;
   setMixedPayments: (payments: MixedPayment[]) => void;
@@ -100,6 +110,13 @@ interface CartState {
   // FIX-MULTI-MONEDA
   setSaleCurrency: (currency: string, exchangeRate: number) => void;
   getTotalCup: () => number;
+  // FIX-PAYMENT-MODE (2026-07-06): detectar si el usuario especificó pagos por producto
+  isPaymentModeByProduct: () => boolean;
+  // FIX-PAYMENT-METHOD-CURRENCY: consolidar pagos por moneda (para tab Pago readonly)
+  getConsolidatedPayments: () => Record<string, { cash: number; transfer: number; zelle: number }>;
+  // FIX-GLOBAL-RATES: tasas de cambio manuales editables (se arrastran hasta actualizar)
+  globalRates: Record<string, number>;
+  setGlobalRate: (currency: string, rate: number) => void;
 }
 
 const calculateItemSubtotal = (item: CartItem) => {
@@ -128,6 +145,8 @@ export const useCartStore = create<CartState>()(
       selectedPayment: "cash" as PaymentMethod,
       customerId: null,
       customerName: null,
+      // FIX-GLOBAL-RATES: tasas manuales (default vacío, se llenan al editar)
+      globalRates: {},
 
       setSessionUserId: (sessionUserId) => set({ sessionUserId, lastUpdated: Date.now() }),
 
@@ -146,12 +165,45 @@ export const useCartStore = create<CartState>()(
       setSaleCurrency: (currency, exchangeRate) =>
         set({ saleCurrency: currency, saleExchangeRate: exchangeRate, lastUpdated: Date.now() }),
 
+      // FIX-GLOBAL-RATES: actualizar tasa manual (se arrastra hasta volver a editar)
+      setGlobalRate: (currency, rate) =>
+        set((state) => ({ globalRates: { ...state.globalRates, [currency]: rate }, lastUpdated: Date.now() })),
+
       // FIX-MULTI-MONEDA: total convertido a CUP sumando cada item con su propia tasa
       getTotalCup: () => {
         const subtotalCup = get().getSubtotalCup();
         const discountAmount = get().getDiscountAmount();
         const taxAmount = get().getTaxAmount();
         return Number(Math.max(0, subtotalCup - discountAmount + taxAmount).toFixed(2));
+      },
+
+      // FIX-PAYMENT-MODE: detectar si al menos un item tiene payment_manual_override=true
+      isPaymentModeByProduct: () => {
+        return get().items.some(i => i.payment_manual_override === true);
+      },
+
+      // FIX-PAYMENT-METHOD-CURRENCY: consolidar pagos por moneda
+      // Retorna: { 'CUP': {cash: X, transfer: Y, zelle: Z}, 'USD': {cash:..., transfer:..., zelle:...} }
+      getConsolidatedPayments: () => {
+        const result: Record<string, { cash: number; transfer: number; zelle: number }> = {};
+        for (const item of get().items) {
+          if (item.cash_paid > 0) {
+            const c = item.cash_currency || 'CUP';
+            if (!result[c]) result[c] = { cash: 0, transfer: 0, zelle: 0 };
+            result[c].cash += item.cash_paid;
+          }
+          if (item.transfer_paid > 0) {
+            const c = item.transfer_currency || 'CUP';
+            if (!result[c]) result[c] = { cash: 0, transfer: 0, zelle: 0 };
+            result[c].transfer += item.transfer_paid;
+          }
+          if (item.zelle_paid > 0) {
+            const c = item.zelle_currency || 'USD';
+            if (!result[c]) result[c] = { cash: 0, transfer: 0, zelle: 0 };
+            result[c].zelle += item.zelle_paid;
+          }
+        }
+        return result;
       },
 
       /**
@@ -239,9 +291,15 @@ export const useCartStore = create<CartState>()(
                 subtotal: 0,
                 discount_type: (productInput as any).discount_type || null,
                 discount_value: (productInput as any).discount_value || 0,
+                discount_currency: (productInput as any).discount_currency || 'CUP',
                 cash_paid: 0,
                 transfer_paid: 0,
                 zelle_paid: 0,
+                // FIX-PAYMENT-METHOD-CURRENCY: defaults heredan la moneda del item
+                cash_currency: (productInput as any).currency || (product as any)?.price_currency || 'CUP',
+                transfer_currency: (productInput as any).currency || (product as any)?.price_currency || 'CUP',
+                zelle_currency: 'USD', // Zelle default USD
+                payment_manual_override: false,
                 // FIX-MULTI-MONEDA: heredar moneda y tasa del producto (POR ITEM, no global)
                 currency: (productInput as any).currency || (product as any)?.price_currency || 'CUP',
                 exchange_rate: (productInput as any).exchange_rate || 1.0,
@@ -315,7 +373,7 @@ export const useCartStore = create<CartState>()(
           }),
         ),
 
-      updateItemPayment: (productId, variantId, cashPaid, transferPaid, zellePaid = 0) =>
+      updateItemPayment: (productId, variantId, cashPaid, transferPaid, zellePaid = 0, methodCurrencies) =>
         set(
           produce((state: CartState) => {
             const item = state.items.find(
@@ -323,11 +381,9 @@ export const useCartStore = create<CartState>()(
             );
             if (item) {
               const subtotal = item.subtotal || 0;
-              // Clamp: never negative, never exceed subtotal
               cashPaid = Math.max(0, Math.min(cashPaid, subtotal));
               zellePaid = Math.max(0, Math.min(zellePaid, subtotal - cashPaid));
               transferPaid = Math.max(0, Math.min(transferPaid, subtotal - cashPaid - zellePaid));
-              // If combined exceeds subtotal, redistribute proportionally
               if (cashPaid + zellePaid + transferPaid > subtotal) {
                 const total = cashPaid + zellePaid + transferPaid;
                 cashPaid = Number((cashPaid / total * subtotal).toFixed(2));
@@ -337,6 +393,12 @@ export const useCartStore = create<CartState>()(
               item.cash_paid = cashPaid;
               item.transfer_paid = transferPaid;
               item.zelle_paid = zellePaid;
+              // FIX-PAYMENT-METHOD-CURRENCY: actualizar monedas si se pasan
+              if (methodCurrencies?.cash) item.cash_currency = methodCurrencies.cash;
+              if (methodCurrencies?.transfer) item.transfer_currency = methodCurrencies.transfer;
+              if (methodCurrencies?.zelle) item.zelle_currency = methodCurrencies.zelle;
+              // FIX-PAYMENT-MODE: marcar override manual
+              item.payment_manual_override = true;
               state.lastUpdated = Date.now();
             }
           }),
@@ -492,6 +554,8 @@ export const useCartStore = create<CartState>()(
         // FIX-MULTI-MONEDA: resetear moneda de venta a CUP al limpiar
         saleCurrency: 'CUP',
         saleExchangeRate: 1.0,
+        // FIX-GLOBAL-RATES: resetear tasas manuales
+        globalRates: {},
         lastUpdated: Date.now(),
       }),
 

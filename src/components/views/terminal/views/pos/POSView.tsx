@@ -8,6 +8,7 @@ import {
   Eye,
   EyeOff,
   Camera,
+  AlertTriangle,
 } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
 import { useShallow } from 'zustand/react/shallow';
@@ -116,6 +117,12 @@ export default function POSView() {
     isProcessingSale,
     showPriceWarning,
     setShowPriceWarning,
+    // FIX-EXCHANGE-VALIDATION: modal de tasa
+    showRateWarning,
+    rateWarningData,
+    confirmRateWarning,
+    cancelRateWarning,
+    updateRateFromModal,
     lastSale,
     setLastSale,
   } = usePOSCheckout();
@@ -154,6 +161,7 @@ export default function POSView() {
     getSubtotal, getDiscountAmount, getTaxAmount, getTotal,
     discount, setDiscount,
     updateItemDiscount, updateItemPayment, prorateGlobalPayment,
+    isPaymentModeByProduct, getConsolidatedPayments,
     getItemCount,
   } = useCartStore(useShallow(state => ({
     items: state.items, addItem: state.addItem, removeItem: state.removeItem,
@@ -166,6 +174,8 @@ export default function POSView() {
     updateItemDiscount: state.updateItemDiscount,
     updateItemPayment: state.updateItemPayment,
     prorateGlobalPayment: state.prorateGlobalPayment,
+    isPaymentModeByProduct: state.isPaymentModeByProduct,
+    getConsolidatedPayments: state.getConsolidatedPayments,
     getItemCount: state.getItemCount,
   })));
 
@@ -332,6 +342,8 @@ export default function POSView() {
     updateItemDiscount,
     updateItemPayment,
     prorateGlobalPayment,
+    isPaymentModeByProduct,
+    getConsolidatedPayments,
     isProcessing: isProcessingSale,
     onCheckout: startCheckout,
     onClose: handleCloseCart,
@@ -433,6 +445,64 @@ export default function POSView() {
           onPriceWarningChange={setShowPriceWarning}
           onConfirmUnpriced={confirmUnpricedCheckout}
         />
+
+        {/* FIX-EXCHANGE-VALIDATION (2026-07-06): modal custom de advertencia de tasa */}
+        {showRateWarning && rateWarningData && (
+          <Portal>
+            <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-background/90 backdrop-blur-sm" onClick={cancelRateWarning}>
+              <div className="w-full max-w-md bg-card border border-border/50 rounded-3xl shadow-2xl p-5" onClick={e => e.stopPropagation()}>
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-full bg-amber-500/15 flex items-center justify-center">
+                    <AlertTriangle className="w-5 h-5 text-amber-500" />
+                  </div>
+                  <div>
+                    <h2 className="text-sm font-black uppercase">Descuadre de tasa</h2>
+                    <p className="text-[10px] text-muted-foreground">El pago no cuadra con la tasa actual</p>
+                  </div>
+                </div>
+
+                <div className="space-y-2 text-xs mb-4">
+                  <div className="flex justify-between"><span className="text-muted-foreground">Total venta:</span><span className="font-mono font-black">{rateWarningData.totalCup.toFixed(2)} CUP</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">Total pagado (CUP):</span><span className="font-mono font-black">{rateWarningData.totalPaidCup.toFixed(2)}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">Diferencia:</span><span className="font-mono font-black text-amber-500">{rateWarningData.diff.toFixed(2)} ({rateWarningData.pctDiff.toFixed(1)}%)</span></div>
+                </div>
+
+                {/* Tasas editables */}
+                <div className="space-y-2 mb-4">
+                  <p className="text-[10px] font-black uppercase text-muted-foreground">Tasas (editables — se arrastran):</p>
+                  {Object.entries(rateWarningData.currentRates).map(([cur, rate]) => (
+                    <div key={cur} className="flex items-center gap-2">
+                      <span className="text-xs font-bold w-12">1 {cur} =</span>
+                      <input
+                        type="number"
+                        value={rate}
+                        onChange={(e) => updateRateFromModal(cur, parseFloat(e.target.value) || 0)}
+                        className="flex-1 bg-background border border-border/50 rounded-lg px-2 py-2 text-xs font-bold"
+                        aria-label={`Tasa ${cur}`}
+                      />
+                      <span className="text-xs font-bold">CUP</span>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="flex gap-2">
+                  <button
+                    onClick={cancelRateWarning}
+                    className="flex-1 min-h-[44px] px-4 rounded-xl border border-border text-xs font-black uppercase hover:bg-muted"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={confirmRateWarning}
+                    className="flex-1 min-h-[44px] px-4 rounded-xl bg-primary text-primary-foreground text-xs font-black uppercase hover:bg-primary/90"
+                  >
+                    Confirmar venta
+                  </button>
+                </div>
+              </div>
+            </div>
+          </Portal>
+        )}
 
         {/* POS-3a: cuando el carrito está abierto en desktop, añadimos padding-right
             para que el grid de productos no quede tapado por el sidebar fijo. */}

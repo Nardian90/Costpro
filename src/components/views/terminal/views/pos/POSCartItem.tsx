@@ -11,6 +11,7 @@ import {
   Send,
   AlertTriangle,
   Image as ImageIcon,
+  CreditCard,
 } from "lucide-react";
 import { cn, formatCurrency } from "@/lib/utils";
 import { useCartStore, type CartItem } from "@/store/cart";
@@ -524,9 +525,11 @@ export const POSCartItem = ({
         </div>
         <div className="space-y-1">
           <span className="text-xs font-black uppercase text-muted-foreground">
-            Pago Mixto
+            Pago Mixto (Efectivo / Transf. / Zelle)
           </span>
-          <div className="flex gap-1">
+          {/* FIX-PAYMENT-METHOD-CURRENCY (2026-07-06): 3 métodos con moneda editable */}
+          {/* Efectivo */}
+          <div className="flex gap-1 items-center">
             <div className="relative flex-1">
               <DollarSign className="absolute left-1.5 top-1/2 -translate-y-1/2 w-3 h-3 text-success" aria-hidden="true" />
               <input
@@ -534,17 +537,37 @@ export const POSCartItem = ({
                 value={item.cash_paid || 0}
                 onChange={(e) => {
                   const val = Number(e.target.value);
+                  const remaining = Math.max(0, item.subtotal - val - (item.zelle_paid || 0));
                   updateItemPayment?.(
-                    item.product_id,
-                    item.variant_id,
-                    val,
-                    item.subtotal - val,
+                    item.product_id, item.variant_id,
+                    val, remaining, item.zelle_paid || 0,
+                    { cash: item.cash_currency, transfer: item.transfer_currency, zelle: item.zelle_currency },
                   );
                 }}
                 className="w-full bg-background border border-border/50 rounded-lg pl-5 pr-1 py-2.5 min-h-[44px] text-xs font-bold"
-                aria-label={`Monto pagado en efectivo para ${item.product.name}`}
+                aria-label={`Efectivo para ${item.product.name}`}
               />
             </div>
+            <select
+              value={item.cash_currency || 'CUP'}
+              onChange={(e) => {
+                updateItemPayment?.(
+                  item.product_id, item.variant_id,
+                  item.cash_paid, item.transfer_paid, item.zelle_paid,
+                  { cash: e.target.value, transfer: item.transfer_currency, zelle: item.zelle_currency },
+                );
+              }}
+              className="bg-background border border-border/50 rounded-lg px-1 py-2.5 min-h-[44px] text-[10px] font-bold"
+              aria-label="Moneda efectivo"
+            >
+              <option value="CUP">CUP</option>
+              <option value="USD">USD</option>
+              <option value="EUR">EUR</option>
+              <option value="MLC">MLC</option>
+            </select>
+          </div>
+          {/* Transferencia */}
+          <div className="flex gap-1 items-center">
             <div className="relative flex-1">
               <Send className="absolute left-1.5 top-1/2 -translate-y-1/2 w-3 h-3 text-primary" aria-hidden="true" />
               <input
@@ -552,23 +575,78 @@ export const POSCartItem = ({
                 value={item.transfer_paid || 0}
                 onChange={(e) => {
                   const val = Number(e.target.value);
+                  const remaining = Math.max(0, item.subtotal - val - (item.cash_paid || 0) - (item.zelle_paid || 0));
                   updateItemPayment?.(
-                    item.product_id,
-                    item.variant_id,
-                    item.subtotal - val,
-                    val,
+                    item.product_id, item.variant_id,
+                    item.cash_paid, val, item.zelle_paid || 0,
+                    { cash: item.cash_currency, transfer: item.transfer_currency, zelle: item.zelle_currency },
                   );
                 }}
                 className="w-full bg-background border border-border/50 rounded-lg pl-5 pr-1 py-2.5 min-h-[44px] text-xs font-bold"
-                aria-label={`Monto pagado por transferencia para ${item.product.name}`}
+                aria-label={`Transferencia para ${item.product.name}`}
               />
             </div>
+            <select
+              value={item.transfer_currency || 'CUP'}
+              onChange={(e) => {
+                updateItemPayment?.(
+                  item.product_id, item.variant_id,
+                  item.cash_paid, item.transfer_paid, item.zelle_paid,
+                  { cash: item.cash_currency, transfer: e.target.value, zelle: item.zelle_currency },
+                );
+              }}
+              className="bg-background border border-border/50 rounded-lg px-1 py-2.5 min-h-[44px] text-[10px] font-bold"
+              aria-label="Moneda transferencia"
+            >
+              <option value="CUP">CUP</option>
+              <option value="USD">USD</option>
+              <option value="EUR">EUR</option>
+              <option value="MLC">MLC</option>
+            </select>
+          </div>
+          {/* Zelle */}
+          <div className="flex gap-1 items-center">
+            <div className="relative flex-1">
+              <CreditCard className="absolute left-1.5 top-1/2 -translate-y-1/2 w-3 h-3 text-primary" aria-hidden="true" />
+              <input
+                type="number"
+                value={item.zelle_paid || 0}
+                onChange={(e) => {
+                  const val = Number(e.target.value);
+                  const remaining = Math.max(0, item.subtotal - (item.cash_paid || 0) - val);
+                  updateItemPayment?.(
+                    item.product_id, item.variant_id,
+                    item.cash_paid, remaining, val,
+                    { cash: item.cash_currency, transfer: item.transfer_currency, zelle: item.zelle_currency },
+                  );
+                }}
+                className="w-full bg-background border border-border/50 rounded-lg pl-5 pr-1 py-2.5 min-h-[44px] text-xs font-bold"
+                aria-label={`Zelle para ${item.product.name}`}
+              />
+            </div>
+            <select
+              value={item.zelle_currency || 'USD'}
+              onChange={(e) => {
+                updateItemPayment?.(
+                  item.product_id, item.variant_id,
+                  item.cash_paid, item.transfer_paid, item.zelle_paid,
+                  { cash: item.cash_currency, transfer: item.transfer_currency, zelle: e.target.value },
+                );
+              }}
+              className="bg-background border border-border/50 rounded-lg px-1 py-2.5 min-h-[44px] text-[10px] font-bold"
+              aria-label="Moneda Zelle"
+            >
+              <option value="CUP">CUP</option>
+              <option value="USD">USD</option>
+              <option value="EUR">EUR</option>
+              <option value="MLC">MLC</option>
+            </select>
           </div>
         </div>
       </div>
       </div>
       )}
-      {Math.abs(item.cash_paid + item.transfer_paid - item.subtotal) > 0.01 && (
+      {Math.abs(item.cash_paid + item.transfer_paid + (item.zelle_paid || 0) - item.subtotal) > 0.01 && (
         <div className="mt-1 text-[10px] font-bold text-destructive flex items-center gap-1" role="alert">
           <AlertTriangle className="w-3 h-3" aria-hidden="true" /> Error: Pago no coincide (
           {formatCurrency(item.subtotal)})

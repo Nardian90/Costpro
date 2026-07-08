@@ -99,8 +99,13 @@ export interface POSCartProps {
     variantId: string | null,
     cashPaid: number,
     transferPaid: number,
+    zellePaid?: number,
+    methodCurrencies?: { cash?: string; transfer?: string; zelle?: string },
   ) => void;
-  prorateGlobalPayment?: (totalCash: number, totalTransfer: number) => void;
+  prorateGlobalPayment?: (totalCash: number, totalTransfer: number, totalZelle?: number) => void;
+  // FIX-PAYMENT-MODE (2026-07-06): props para detección de modo
+  isPaymentModeByProduct?: () => boolean;
+  getConsolidatedPayments?: () => Record<string, { cash: number; transfer: number; zelle: number }>;
 }
 
 // ── Sub-component Props ────────────────────────────────────
@@ -126,6 +131,8 @@ export interface POSCartItemProps {
     variantId: string | null,
     cashPaid: number,
     transferPaid: number,
+    zellePaid?: number,
+    methodCurrencies?: { cash?: string; transfer?: string; zelle?: string },
   ) => void;
 }
 
