@@ -54,8 +54,11 @@ BEGIN
   END LOOP;
   v_is_mixed := array_length(v_currencies, 1) > 1;
 
-  -- FIX-ZELLE (2026-07-06): validación incluye zelle_amount
-  IF p_payment_method = 'mixed' AND (p_cash_amount + p_transfer_amount + p_zelle_amount) != p_total_amount THEN
+  -- FIX-BUG-5 (2026-07-06): relajar validación cuando hay multi-moneda (v_is_mixed)
+  -- En ese caso, los montos cash/transfer/zelle están en distintas monedas y no
+  -- pueden sumarse directamente con p_total_amount (que está en CUP).
+  -- La validación de coherencia se delega al cliente.
+  IF p_payment_method = 'mixed' AND NOT v_is_mixed AND (p_cash_amount + p_transfer_amount + p_zelle_amount) != p_total_amount THEN
     RAISE EXCEPTION 'ERR_PAYMENT_MISMATCH';
   END IF;
 

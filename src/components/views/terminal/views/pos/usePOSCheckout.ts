@@ -82,22 +82,37 @@ export function usePOSCheckout() {
           customerId && validUuid.test(customerId) ? customerId : null;
 
         // FIX: validar coherencia de pagos mixtos antes de enviar
-        const totalAmount = getTotal();
-        // FIX-ZELLE (2026-07-06): soportar 3 métodos de pago (cash + transfer + zelle)
-        const cashAmount = paymentMethod === 'cash' ? totalAmount
-          : paymentMethod === 'mixed' ? items.reduce((s, i) => s + (i.cash_paid || 0), 0)
+        // FIX-BUG-4 (2026-07-06): usar getTotalCup() (siempre CUP) para comparar
+        const totalAmountCup = cartState.getTotalCup();
+        // Para métodos únicos, el monto se paga en CUP equivalente
+        const cashAmountCup = paymentMethod === 'cash' ? totalAmountCup
+          : paymentMethod === 'mixed' ? items.reduce((s, i) => {
+              const rate = i.currency === 'CUP' ? 1 : (i.exchange_rate || 1);
+              return s + (i.cash_paid || 0) * (i.cash_currency === 'CUP' || i.cash_currency === i.currency ? rate : 1);
+            }, 0)
           : 0;
-        const transferAmount = paymentMethod === 'transfer' ? totalAmount
-          : paymentMethod === 'mixed' ? items.reduce((s, i) => s + (i.transfer_paid || 0), 0)
+        const transferAmountCup = paymentMethod === 'transfer' ? totalAmountCup
+          : paymentMethod === 'mixed' ? items.reduce((s, i) => {
+              const rate = i.currency === 'CUP' ? 1 : (i.exchange_rate || 1);
+              return s + (i.transfer_paid || 0) * (i.transfer_currency === 'CUP' || i.transfer_currency === i.currency ? rate : 1);
+            }, 0)
           : 0;
-        const zelleAmount = paymentMethod === 'zelle' ? totalAmount
-          : paymentMethod === 'mixed' ? items.reduce((s, i) => s + (i.zelle_paid || 0), 0)
+        const zelleAmountCup = paymentMethod === 'zelle' ? totalAmountCup
+          : paymentMethod === 'mixed' ? items.reduce((s, i) => {
+              // Zelle generalmente en USD — convertir a CUP con globalRate o exchange_rate
+              const zelleRate = cartState.globalRates[i.zelle_currency || 'USD'] || cartState.globalRates['USD'] || (i.exchange_rate || 1);
+              return s + (i.zelle_paid || 0) * zelleRate;
+            }, 0)
           : 0;
 
-        // FIX-ZELLE: validar coherencia solo para mixed (cash+transfer+zelle = total)
-        // Para métodos únicos (cash/transfer/zelle), el total se paga con ese método
-        if (paymentMethod === 'mixed' && Math.abs(cashAmount + transferAmount + zelleAmount - totalAmount) > 0.01) {
-          throw new Error(`Descuadre de pagos: cash (${cashAmount}) + transfer (${transferAmount}) + zelle (${zelleAmount}) ≠ total (${totalAmount})`);
+        // Para enviar al RPC, usamos los montos en CUP
+        const cashAmount = cashAmountCup;
+        const transferAmount = transferAmountCup;
+        const zelleAmount = zelleAmountCup;
+
+        // FIX-ZELLE: validar coherencia solo para mixed (en CUP)
+        if (paymentMethod === 'mixed' && Math.abs(cashAmountCup + transferAmountCup + zelleAmountCup - totalAmountCup) > 0.01) {
+          throw new Error(`Descuadre de pagos: cash (${cashAmountCup.toFixed(2)}) + transfer (${transferAmountCup.toFixed(2)}) + zelle (${zelleAmountCup.toFixed(2)}) ≠ total (${totalAmountCup.toFixed(2)}) CUP`);
         }
 
         const saleId = await createSale({

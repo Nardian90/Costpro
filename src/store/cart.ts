@@ -435,6 +435,8 @@ export const useCartStore = create<CartState>()(
                 0,
                 item.subtotal - globalDiscountAmount * weight,
               );
+              // FIX-BUG-2 (2026-07-06): resetear payment_manual_override al prorratear global
+              item.payment_manual_override = false;
 
               if (index === itemCount - 1) {
                 item.cash_paid = Number(remainingCash.toFixed(2));

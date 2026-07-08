@@ -95,7 +95,14 @@ export function useCreateSale() {
       }
       const rpcName = 'create_sale';
       const data = await withLogging<string>(rpcName, params, () => supabase.rpc(rpcName, params));
-      return await validateRPCResponse(data, z.string().regex(uuidRegex), rpcName);
+      // FIX-BUG-6 (2026-07-06): create_sale retorna {status, transaction_id}, no un UUID directo
+      const saleResultSchema = z.object({
+        status: z.string(),
+        transaction_id: z.string().regex(uuidRegex),
+      }).or(z.string().regex(uuidRegex)); // fallback para compat
+      const validated = await validateRPCResponse(data, saleResultSchema, rpcName);
+      // Si es objeto, extraer transaction_id; si es string (UUID), usar directo
+      return typeof validated === 'string' ? validated : validated.transaction_id;
     },
     onSuccess: (_, variables) => {
       const cleanStoreId = getCleanStoreId(variables.p_store_id);

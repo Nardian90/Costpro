@@ -302,8 +302,9 @@ export function POSCartCheckoutPanel({
               <div className="pb-3 space-y-3">
                 {/* FIX-PAYMENT-MODE (2026-07-06): Modo A (readonly por producto) vs Modo B (editable global) */}
                 {(() => {
-                  const modeByProduct = isPaymentModeByProduct?.() ?? false;
-                  const consolidated = getConsolidatedPayments?.() ?? {};
+                  // FIX-BUG-1 (2026-07-06): leer directo del store (no depender de props)
+                  const modeByProduct = useCartStore.getState().isPaymentModeByProduct();
+                  const consolidated = useCartStore.getState().getConsolidatedPayments();
 
                   if (modeByProduct) {
                     // MODO A: readonly — mostrar consolidación por moneda
@@ -348,10 +349,9 @@ export function POSCartCheckoutPanel({
                         <button
                           type="button"
                           onClick={() => {
-                            // Reset: volver a modo B (clear manual overrides)
-                            items.forEach(i => {
-                              prorateGlobalPayment?.(i.subtotal, 0, 0);
-                            });
+                            // FIX-BUG-3 (2026-07-06): una sola llamada con el grossSubtotal total
+                            const gross = items.reduce((a, i) => a + i.subtotal, 0);
+                            prorateGlobalPayment?.(gross, 0, 0);
                           }}
                           className="text-[9px] text-destructive hover:underline font-bold uppercase"
                         >
