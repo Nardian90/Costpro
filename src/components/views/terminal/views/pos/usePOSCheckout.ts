@@ -325,9 +325,16 @@ export function usePOSCheckout() {
             0,
             (i.subtotal || 0) - globalDiscountAmount * itemWeight,
           );
-          // FIX-ZELLE: incluir zelle_paid en la validación
-          const itemPaid = (i.cash_paid || 0) + (i.transfer_paid || 0) + (i.zelle_paid || 0);
-          return Math.abs(itemPaid - itemAdjustedSubtotal) > 0.01;
+          // FIX-BUG-4b (2026-07-06): convertir cada componente a CUP antes de comparar
+          // (cash/transfer en moneda del item, zelle en USD normalmente)
+          const cartSt = useCartStore.getState();
+          const cashCup = (i.cash_paid || 0) * (i.cash_currency === 'CUP' || i.cash_currency === i.currency ? 1 : (i.exchange_rate || 1));
+          const transferCup = (i.transfer_paid || 0) * (i.transfer_currency === 'CUP' || i.transfer_currency === i.currency ? 1 : (i.exchange_rate || 1));
+          const zelleCup = (i.zelle_paid || 0) * (cartSt.globalRates[i.zelle_currency || 'USD'] || cartSt.globalRates['USD'] || (i.exchange_rate || 1));
+          const itemPaidCup = cashCup + transferCup + zelleCup;
+          // Convertir subtotal ajustado a CUP también
+          const itemAdjustedSubtotalCup = itemAdjustedSubtotal * (i.currency === 'CUP' ? 1 : (i.exchange_rate || 1));
+          return Math.abs(itemPaidCup - itemAdjustedSubtotalCup) > 0.01;
         });
         if (mismatchedItem) {
           const name = mismatchedItem.product?.name || "Un producto";

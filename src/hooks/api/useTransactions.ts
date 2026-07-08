@@ -102,7 +102,7 @@ export function useCreateSale() {
       }).or(z.string().regex(uuidRegex)); // fallback para compat
       const validated = await validateRPCResponse(data, saleResultSchema, rpcName);
       // Si es objeto, extraer transaction_id; si es string (UUID), usar directo
-      return typeof validated === 'string' ? validated : validated.transaction_id;
+      return typeof validated === 'string' ? validated : validated?.transaction_id;
     },
     onSuccess: (_, variables) => {
       const cleanStoreId = getCleanStoreId(variables.p_store_id);
