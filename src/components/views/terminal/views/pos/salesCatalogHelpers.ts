@@ -38,7 +38,7 @@ export const calcSubtotal = (row: SalesCatalogRow): number => {
 export const PAYMENT_METHODS: { value: PaymentMethod; label: string; icon: null }[] = [
   { value: 'cash', label: 'Efectivo', icon: null },
   { value: 'transfer', label: 'Transf.', icon: null },
-  { value: 'card', label: 'Tarjeta', icon: null },
+  { value: 'zelle', label: 'Zelle', icon: null },
   { value: 'mixed', label: 'Mixto', icon: null },
 ];
 
@@ -62,7 +62,7 @@ export const autoAssignPayment = (r: SalesCatalogRow): SalesCatalogRow => {
       return { ...r, cashPaid: sub, transferPaid: 0 };
     case 'transfer':
       return { ...r, cashPaid: 0, transferPaid: sub };
-    case 'card':
+    case 'zelle':
       return { ...r, cashPaid: 0, transferPaid: 0 };
     case 'mixed':
     default:

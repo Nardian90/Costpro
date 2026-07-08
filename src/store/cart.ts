@@ -30,14 +30,26 @@ export interface CartItem {
   discount_value: number;
   cash_paid: number;
   transfer_paid: number;
+  // FIX-ZELLE (2026-07-06): agregar zelle_paid para pago mixto con Zelle
+  zelle_paid: number;
   // FIX-MULTI-MONEDA: moneda y tasa de cambio POR ITEM (no global)
   currency: string;
   exchange_rate: number;
 }
 
+// FIX-MIXED-PAYMENT (2026-07-06): estructura para pago mixto con moneda por método
+// Cada pago tiene: method, amount, currency — permite ej: 100 USD (Zelle) + 368000 CUP (efectivo)
+export interface MixedPayment {
+  method: 'cash' | 'transfer' | 'zelle';
+  amount: number;
+  currency: string; // CUP, USD, EUR, MLC
+}
+
 interface CartState {
   items: CartItem[];
-  discount: { type: "percentage" | "fixed"; value: number } | null;
+  discount: { type: "percentage" | "fixed"; value: number; currency?: string } | null;
+  // FIX-MIXED-PAYMENT: array de pagos mixtos con moneda por método
+  mixedPayments: MixedPayment[];
   appliedTaxes: TaxConfiguration[];
   sessionUserId: string | null;
   storeId: string | null;
@@ -66,9 +78,11 @@ interface CartState {
     variantId: string | null,
     cashPaid: number,
     transferPaid: number,
+    zellePaid?: number,
   ) => void;
-  prorateGlobalPayment: (totalCash: number, totalTransfer: number) => void;
-  setDiscount: (discount: { type: "percentage" | "fixed"; value: number } | null) => void;
+  prorateGlobalPayment: (totalCash: number, totalTransfer: number, totalZelle?: number) => void;
+  setMixedPayments: (payments: MixedPayment[]) => void;
+  setDiscount: (discount: { type: "percentage" | "fixed"; value: number; currency?: string } | null) => void;
   toggleTax: (tax: TaxConfiguration) => void;
   getSubtotal: () => number;
   getSubtotalCup: () => number;
@@ -103,6 +117,7 @@ export const useCartStore = create<CartState>()(
     (set, get) => ({
       items: [],
       discount: null,
+      mixedPayments: [],
       appliedTaxes: [],
       sessionUserId: null,
       storeId: null,
@@ -226,12 +241,14 @@ export const useCartStore = create<CartState>()(
                 discount_value: (productInput as any).discount_value || 0,
                 cash_paid: 0,
                 transfer_paid: 0,
+                zelle_paid: 0,
                 // FIX-MULTI-MONEDA: heredar moneda y tasa del producto (POR ITEM, no global)
                 currency: (productInput as any).currency || (product as any)?.price_currency || 'CUP',
                 exchange_rate: (productInput as any).exchange_rate || 1.0,
               };
               newItem.subtotal = calculateItemSubtotal(newItem);
               newItem.cash_paid = newItem.subtotal;
+              newItem.zelle_paid = 0;
               state.items.push(newItem);
             }
             state.lastUpdated = Date.now();
@@ -274,6 +291,7 @@ export const useCartStore = create<CartState>()(
               item.subtotal = calculateItemSubtotal(item);
               item.cash_paid = item.subtotal;
               item.transfer_paid = 0;
+              item.zelle_paid = 0;
               state.lastUpdated = Date.now();
             }
           }),
@@ -291,12 +309,13 @@ export const useCartStore = create<CartState>()(
               item.subtotal = calculateItemSubtotal(item);
               item.cash_paid = item.subtotal;
               item.transfer_paid = 0;
+              item.zelle_paid = 0;
               state.lastUpdated = Date.now();
             }
           }),
         ),
 
-      updateItemPayment: (productId, variantId, cashPaid, transferPaid) =>
+      updateItemPayment: (productId, variantId, cashPaid, transferPaid, zellePaid = 0) =>
         set(
           produce((state: CartState) => {
             const item = state.items.find(
@@ -306,83 +325,82 @@ export const useCartStore = create<CartState>()(
               const subtotal = item.subtotal || 0;
               // Clamp: never negative, never exceed subtotal
               cashPaid = Math.max(0, Math.min(cashPaid, subtotal));
-              transferPaid = Math.max(0, Math.min(transferPaid, subtotal));
+              zellePaid = Math.max(0, Math.min(zellePaid, subtotal - cashPaid));
+              transferPaid = Math.max(0, Math.min(transferPaid, subtotal - cashPaid - zellePaid));
               // If combined exceeds subtotal, redistribute proportionally
-              if (cashPaid + transferPaid > subtotal) {
-                const total = cashPaid + transferPaid;
+              if (cashPaid + zellePaid + transferPaid > subtotal) {
+                const total = cashPaid + zellePaid + transferPaid;
                 cashPaid = Number((cashPaid / total * subtotal).toFixed(2));
-                transferPaid = Number((subtotal - cashPaid).toFixed(2));
+                zellePaid = Number((zellePaid / total * subtotal).toFixed(2));
+                transferPaid = Number((subtotal - cashPaid - zellePaid).toFixed(2));
               }
               item.cash_paid = cashPaid;
               item.transfer_paid = transferPaid;
+              item.zelle_paid = zellePaid;
               state.lastUpdated = Date.now();
             }
           }),
         ),
 
-      prorateGlobalPayment: (totalCash, totalTransfer) =>
+      prorateGlobalPayment: (totalCash, totalTransfer, totalZelle = 0) =>
         set(
           produce((state: CartState) => {
-            // POS-3b audit P0.2: Fix bug con descuento global + pago mixto.
-            // ANTES: proration usaba suma de subtotales de items como base.
-            //   Si había descuento global activo, getTotal() < suma de subtotales,
-            //   y la validación en usePOSCheckout fallaba porque
-            //   item.cash_paid + item.transfer_paid > item.subtotal.
-            // AHORA: usamos el subtotal ajustado por el descuento global prorrateado
-            //   por peso de cada item. Así item.cash+transfer = item.subtotal_adjusted.
             const grossSubtotal = state.items.reduce((acc, item) => acc + item.subtotal, 0);
             if (grossSubtotal <= 0) return;
 
-            // Calcular descuento global proporcional por item
             const globalDiscountAmount = state.discount && state.discount.value > 0
               ? (state.discount.type === "percentage"
                 ? (grossSubtotal * state.discount.value) / 100
                 : Math.min(state.discount.value, grossSubtotal))
               : 0;
 
-            // Subtotal ajustado total (post-descuento)
             const adjustedSubtotal = Math.max(0, grossSubtotal - globalDiscountAmount);
             if (adjustedSubtotal <= 0) return;
 
-            // Clamp de los totales recibidos al adjustedSubtotal (no pagar más del total real)
+            // FIX-ZELLE: clamp de los 3 métodos de pago
             const clampedCash = Math.min(totalCash, adjustedSubtotal);
-            const clampedTransfer = Math.min(totalTransfer, adjustedSubtotal - clampedCash);
+            const clampedZelle = Math.min(totalZelle, adjustedSubtotal - clampedCash);
+            const clampedTransfer = Math.min(totalTransfer, adjustedSubtotal - clampedCash - clampedZelle);
 
             let remainingCash = clampedCash;
             let remainingTransfer = clampedTransfer;
+            let remainingZelle = clampedZelle;
             const itemCount = state.items.length;
 
             state.items.forEach((item, index) => {
-              // Peso del item sobre el subtotal bruto (proporcionalidad)
               const weight = item.subtotal / grossSubtotal;
-              // Subtotal ajustado de este item = bruto - porción del descuento global
               const itemAdjustedSubtotal = Math.max(
                 0,
                 item.subtotal - globalDiscountAmount * weight,
               );
 
               if (index === itemCount - 1) {
-                // Último item absorbe el remainder para evitar drift por redondeo
                 item.cash_paid = Number(remainingCash.toFixed(2));
                 item.transfer_paid = Number(remainingTransfer.toFixed(2));
+                item.zelle_paid = Number(remainingZelle.toFixed(2));
               } else {
                 const itemCash = Number((clampedCash * weight).toFixed(2));
+                const itemZelle = Number((clampedZelle * weight).toFixed(2));
                 const itemTransfer = Number((clampedTransfer * weight).toFixed(2));
 
-                // Clamp: no pagar más del subtotal ajustado del item
                 item.cash_paid = Math.min(itemCash, itemAdjustedSubtotal);
+                item.zelle_paid = Math.min(itemZelle, Math.max(0, itemAdjustedSubtotal - item.cash_paid));
                 item.transfer_paid = Math.min(
                   itemTransfer,
-                  Math.max(0, itemAdjustedSubtotal - item.cash_paid),
+                  Math.max(0, itemAdjustedSubtotal - item.cash_paid - item.zelle_paid),
                 );
 
                 remainingCash -= item.cash_paid;
                 remainingTransfer -= item.transfer_paid;
+                remainingZelle -= item.zelle_paid;
               }
             });
             state.lastUpdated = Date.now();
           }),
         ),
+
+      // FIX-MIXED-PAYMENT: setear pagos mixtos con moneda por método
+      setMixedPayments: (payments) => set({ mixedPayments: payments, lastUpdated: Date.now() }),
 
       setDiscount: (discount) => set({ discount, lastUpdated: Date.now() }),
 
@@ -425,7 +443,12 @@ export const useCartStore = create<CartState>()(
         if (discount.type === "percentage") {
           return Number(((subtotalCup * discount.value) / 100).toFixed(2));
         }
-        return discount.value;
+        // FIX-DISCOUNT-CURRENCY (2026-07-06): si el descuento fijo tiene moneda
+        // distinta a CUP, convertir usando la tasa de venta
+        const discountCurrency = discount.currency || 'CUP';
+        if (discountCurrency === 'CUP') return discount.value;
+        const saleRate = get().saleExchangeRate || 1;
+        return Number((discount.value * saleRate).toFixed(2));
       },
 
       // FIX-G4: getTaxAmount usa getSubtotalCup() y getDiscountAmount() (que ya
@@ -460,6 +483,7 @@ export const useCartStore = create<CartState>()(
       clearCart: () => set({
         items: [],
         discount: null,
+        mixedPayments: [],
         appliedTaxes: [],
         // POS-2 MM-10/MM-7: preserve selectedPayment on clearCart (default UX: most cashiers
         // repeatedly sell with the same method) but drop the customer.

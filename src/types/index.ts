@@ -4,7 +4,7 @@
 
 export type UserRole = 'admin' | 'encargado' | 'usuario' | 'manager' | 'clerk' | 'warehouse' | 'costo';
 
-export type PaymentMethod = 'cash' | 'card' | 'transfer' | 'wallet' | 'other' | 'mixed';
+export type PaymentMethod = 'cash' | 'transfer' | 'zelle' | 'other' | 'mixed';
 
 export type DiscountType = 'fixed' | 'percentage';
 

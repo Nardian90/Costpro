@@ -73,16 +73,21 @@ export function usePOSCheckout() {
 
         // FIX: validar coherencia de pagos mixtos antes de enviar
         const totalAmount = getTotal();
+        // FIX-ZELLE (2026-07-06): soportar 3 métodos de pago (cash + transfer + zelle)
         const cashAmount = paymentMethod === 'cash' ? totalAmount
           : paymentMethod === 'mixed' ? items.reduce((s, i) => s + (i.cash_paid || 0), 0)
           : 0;
         const transferAmount = paymentMethod === 'transfer' ? totalAmount
           : paymentMethod === 'mixed' ? items.reduce((s, i) => s + (i.transfer_paid || 0), 0)
           : 0;
+        const zelleAmount = paymentMethod === 'zelle' ? totalAmount
+          : paymentMethod === 'mixed' ? items.reduce((s, i) => s + (i.zelle_paid || 0), 0)
+          : 0;
 
-        // FIX: validar coherencia para TODOS los métodos de pago
-        if (Math.abs(cashAmount + transferAmount - totalAmount) > 0.01 && paymentMethod !== 'cash' && paymentMethod !== 'transfer') {
-          throw new Error(`Descuadre de pagos: cash (${cashAmount}) + transfer (${transferAmount}) ≠ total (${totalAmount})`);
+        // FIX-ZELLE: validar coherencia solo para mixed (cash+transfer+zelle = total)
+        // Para métodos únicos (cash/transfer/zelle), el total se paga con ese método
+        if (paymentMethod === 'mixed' && Math.abs(cashAmount + transferAmount + zelleAmount - totalAmount) > 0.01) {
+          throw new Error(`Descuadre de pagos: cash (${cashAmount}) + transfer (${transferAmount}) + zelle (${zelleAmount}) ≠ total (${totalAmount})`);
         }
 
         const saleId = await createSale({
@@ -109,6 +114,7 @@ export function usePOSCheckout() {
             cost: i.cost,
             cash_paid: i.cash_paid,
             transfer_paid: i.transfer_paid,
+            zelle_paid: i.zelle_paid || 0,
             currency: i.currency || 'CUP',
             exchange_rate: i.exchange_rate || 1.0,
           })),
@@ -288,12 +294,13 @@ export function usePOSCheckout() {
             0,
             (i.subtotal || 0) - globalDiscountAmount * itemWeight,
           );
-          const itemPaid = (i.cash_paid || 0) + (i.transfer_paid || 0);
+          // FIX-ZELLE: incluir zelle_paid en la validación
+          const itemPaid = (i.cash_paid || 0) + (i.transfer_paid || 0) + (i.zelle_paid || 0);
           return Math.abs(itemPaid - itemAdjustedSubtotal) > 0.01;
         });
         if (mismatchedItem) {
           const name = mismatchedItem.product?.name || "Un producto";
-          toast.error(`Pago mixto descuadrado en "${name}". Revisa el desglose efectivo/transferencia.`, {
+          toast.error(`Pago mixto descuadrado en "${name}". Revisa el desglose efectivo/transferencia/Zelle.`, {
             duration: 6000,
             action: {
               label: "Ver carrito",
@@ -301,6 +308,61 @@ export function usePOSCheckout() {
             },
           });
           return;
+        }
+      }
+
+      // FIX-EXCHANGE-VALIDATION (2026-07-06): validar que los pagos en múltiples
+      // monedas cuadren con el total usando la última tasa informal CUP/USD.
+      // Si hay diferencia > 2%, advertir al vendedor antes de confirmar.
+      if (paymentMethod === 'mixed' || items.some(i => i.currency && i.currency !== 'CUP')) {
+        try {
+          // Obtener última tasa informal CUP/USD
+          const rateRes = await fetch('/api/exchange-rates?currency=USD&source=elToque&days=1');
+          let usdToCupRate = 0;
+          if (rateRes.ok) {
+            const rateData = await rateRes.json();
+            if (rateData.rates && rateData.rates.length > 0) {
+              usdToCupRate = parseFloat(rateData.rates[0].rate) || 0;
+            }
+          }
+          // Fallback: usar tasa de BCC si no hay elToque
+          if (usdToCupRate === 0) {
+            const bccRes = await fetch('/api/exchange-rates?currency=USD&source=BCC&segment=3&days=1');
+            if (bccRes.ok) {
+              const bccData = await bccRes.json();
+              if (bccData.rates && bccData.rates.length > 0) {
+                usdToCupRate = parseFloat(bccData.rates[0].rate) * 1.15 || 0; // spread estimado
+              }
+            }
+          }
+
+          if (usdToCupRate > 0) {
+            // Calcular total en CUP y total pagado en CUP
+            const totalCup = useCartStore.getState().getTotalCup();
+            const totalPaidCup = items.reduce((s, i) => {
+              const rate = i.exchange_rate || (i.currency === 'USD' ? usdToCupRate : 1);
+              const paidCup = (i.cash_paid || 0) + (i.transfer_paid || 0) + (i.zelle_paid || 0);
+              return s + (i.currency === 'CUP' ? paidCup : paidCup * rate);
+            }, 0);
+
+            const diff = Math.abs(totalPaidCup - totalCup);
+            const pctDiff = totalCup > 0 ? (diff / totalCup) * 100 : 0;
+
+            if (pctDiff > 2) {
+              // Advertencia: el pago no cuadra con la tasa actual
+              const confirm = window.confirm(
+                `⚠ ADVERTENCIA: El pago no cuadra con la tasa actual (1 USD = ${usdToCupRate.toFixed(0)} CUP).\n\n` +
+                `Total venta: ${totalCup.toFixed(2)} CUP\n` +
+                `Total pagado (convertido): ${totalPaidCup.toFixed(2)} CUP\n` +
+                `Diferencia: ${diff.toFixed(2)} CUP (${pctDiff.toFixed(1)}%)\n\n` +
+                `¿Confirmar la venta de todos modos?`
+              );
+              if (!confirm) return;
+            }
+          }
+        } catch (e) {
+          // Si no se puede obtener la tasa, no bloquear la venta
+          console.warn('No se pudo validar la tasa de cambio:', e);
         }
       }
 

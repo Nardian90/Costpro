@@ -33,6 +33,8 @@ export interface PosCartItem {
 export type CartDiscount = {
   type: "fixed" | "percentage";
   value: number;
+  // FIX-DISCOUNT-CURRENCY (2026-07-06): moneda del descuento fijo (default CUP)
+  currency?: string;
 } | null;
 
 // ── Last Sale ──────────────────────────────────────────────

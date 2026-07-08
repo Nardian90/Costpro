@@ -144,7 +144,12 @@ export function usePOSCartExports({ lastSale }: UsePOSCartExportsOptions) {
           `${item.product.name} x${item.quantity} - ${formatCurrency(item.subtotal)}`,
       )
       .join("\n");
-    const message = `¡Hola!\nDetalle de Venta:\n${itemsList}\n\nTotal: ${formatCurrency(lastSale.total)}\nMétodo: ${lastSale.paymentMethod === "cash" ? "Efectivo" : "Transferencia"}\n\nGracias por su preferencia.`;
+    const methodLabel = lastSale.paymentMethod === "cash" ? "Efectivo"
+      : lastSale.paymentMethod === "transfer" ? "Transferencia"
+      : lastSale.paymentMethod === "zelle" ? "Zelle"
+      : lastSale.paymentMethod === "mixed" ? "Mixto"
+      : "Otro";
+    const message = `¡Hola!\nDetalle de Venta:\n${itemsList}\n\nTotal: ${formatCurrency(lastSale.total)}\nMétodo: ${methodLabel}\n\nGracias por su preferencia.`;
     window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank");
   }, [lastSale]);
 

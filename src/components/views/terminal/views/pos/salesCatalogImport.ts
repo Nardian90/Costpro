@@ -169,8 +169,8 @@ export function parseImportFile(
             paymentMethod = 'cash';
           } else if (formPagoLabel.includes('trans') || formPagoLabel === 'transfer') {
             paymentMethod = 'transfer';
-          } else if (formPagoLabel.includes('tarjeta') || formPagoLabel === 'card') {
-            paymentMethod = 'card';
+          } else if (formPagoLabel.includes('zelle') || formPagoLabel === 'zelle') {
+            paymentMethod = 'zelle';
           } else if (formPagoLabel.includes('mixto') || formPagoLabel === 'mixed') {
             paymentMethod = 'mixed';
           } else {

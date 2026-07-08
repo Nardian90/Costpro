@@ -43,9 +43,8 @@ export const optionalResilientUuid = resilientUuid.catch(null);
 
 export const paymentMethodSchema = z.enum([
   "cash",
-  "card",
   "transfer",
-  "wallet",
+  "zelle",
   "other",
   "mixed",
 ]);
