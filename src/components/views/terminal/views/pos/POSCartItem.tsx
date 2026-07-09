@@ -596,7 +596,31 @@ export const POSCartItem = ({
                 <option value="CUP">CUP</option><option value="USD">USD</option><option value="EUR">EUR</option><option value="MLC">MLC</option>
               </select>
             </div>
-
+            {/* Descuento efectivo */}
+            <div className="flex gap-1 items-center pl-1">
+              <select
+                value={item.cash_discount_type || 'none'}
+                onChange={(e) => {
+                  const type = e.target.value === 'none' ? null : e.target.value as 'percentage' | 'fixed';
+                  useCartStore.setState((state) => ({ items: state.items.map((it) => it.product_id === item.product_id && it.variant_id === item.variant_id ? { ...it, cash_discount_type: type } : it), lastUpdated: Date.now() }));
+                }}
+                className="bg-background border border-border/50 rounded px-1 py-1 text-[9px] font-bold"
+              >
+                <option value="none">Sin desc.</option><option value="percentage">%</option><option value="fixed">$</option>
+              </select>
+              {item.cash_discount_type && (
+                <>
+                  <input
+                    type="number"
+                    value={item.cash_discount_value || 0}
+                    onChange={(e) => useCartStore.setState((state) => ({ items: state.items.map((it) => it.product_id === item.product_id && it.variant_id === item.variant_id ? { ...it, cash_discount_value: parseFloat(e.target.value) || 0, cash_discount_currency: item.cash_currency } : it), lastUpdated: Date.now() }))}
+                    className="w-16 bg-background border border-border/50 rounded px-1 py-1 text-[9px] font-bold"
+                    placeholder="0"
+                  />
+                  <span className="text-[9px] text-muted-foreground font-bold">{item.cash_currency || 'CUP'}</span>
+                </>
+              )}
+            </div>
           </div>
 
           {/* Transferencia */}
@@ -627,7 +651,31 @@ export const POSCartItem = ({
                 <option value="CUP">CUP</option><option value="USD">USD</option><option value="EUR">EUR</option><option value="MLC">MLC</option>
               </select>
             </div>
-
+            {/* Descuento transferencia */}
+            <div className="flex gap-1 items-center pl-1">
+              <select
+                value={item.transfer_discount_type || 'none'}
+                onChange={(e) => {
+                  const type = e.target.value === 'none' ? null : e.target.value as 'percentage' | 'fixed';
+                  useCartStore.setState((state) => ({ items: state.items.map((it) => it.product_id === item.product_id && it.variant_id === item.variant_id ? { ...it, transfer_discount_type: type } : it), lastUpdated: Date.now() }));
+                }}
+                className="bg-background border border-border/50 rounded px-1 py-1 text-[9px] font-bold"
+              >
+                <option value="none">Sin desc.</option><option value="percentage">%</option><option value="fixed">$</option>
+              </select>
+              {item.transfer_discount_type && (
+                <>
+                  <input
+                    type="number"
+                    value={item.transfer_discount_value || 0}
+                    onChange={(e) => useCartStore.setState((state) => ({ items: state.items.map((it) => it.product_id === item.product_id && it.variant_id === item.variant_id ? { ...it, transfer_discount_value: parseFloat(e.target.value) || 0, transfer_discount_currency: item.transfer_currency } : it), lastUpdated: Date.now() }))}
+                    className="w-16 bg-background border border-border/50 rounded px-1 py-1 text-[9px] font-bold"
+                    placeholder="0"
+                  />
+                  <span className="text-[9px] text-muted-foreground font-bold">{item.transfer_currency || 'CUP'}</span>
+                </>
+              )}
+            </div>
           </div>
 
           {/* Zelle */}
@@ -658,22 +706,69 @@ export const POSCartItem = ({
                 <option value="CUP">CUP</option><option value="USD">USD</option><option value="EUR">EUR</option><option value="MLC">MLC</option>
               </select>
             </div>
-
+            {/* Descuento zelle */}
+            <div className="flex gap-1 items-center pl-1">
+              <select
+                value={item.zelle_discount_type || 'none'}
+                onChange={(e) => {
+                  const type = e.target.value === 'none' ? null : e.target.value as 'percentage' | 'fixed';
+                  useCartStore.setState((state) => ({ items: state.items.map((it) => it.product_id === item.product_id && it.variant_id === item.variant_id ? { ...it, zelle_discount_type: type } : it), lastUpdated: Date.now() }));
+                }}
+                className="bg-background border border-border/50 rounded px-1 py-1 text-[9px] font-bold"
+              >
+                <option value="none">Sin desc.</option><option value="percentage">%</option><option value="fixed">$</option>
+              </select>
+              {item.zelle_discount_type && (
+                <>
+                  <input
+                    type="number"
+                    value={item.zelle_discount_value || 0}
+                    onChange={(e) => useCartStore.setState((state) => ({ items: state.items.map((it) => it.product_id === item.product_id && it.variant_id === item.variant_id ? { ...it, zelle_discount_value: parseFloat(e.target.value) || 0, zelle_discount_currency: item.zelle_currency } : it), lastUpdated: Date.now() }))}
+                    className="w-16 bg-background border border-border/50 rounded px-1 py-1 text-[9px] font-bold"
+                    placeholder="0"
+                  />
+                  <span className="text-[9px] text-muted-foreground font-bold">{item.zelle_currency || 'USD'}</span>
+                </>
+              )}
+            </div>
           </div>
         </div>
       </div>
       </div>
       )}
-      {/* FIX-BUG-1 (2026-07-07): validación en CUP */}
+      {/* FIX-BUG-1 (2026-07-07): validación en CUP con descuento por método */}
       {(() => {
         const cartStore = useCartStore.getState();
+        // Subtotal base en CUP (sin descuento de método)
         const subtotalCup = cartStore.getItemSubtotalCup(item);
-        const paidCup = cartStore.getItemPaidCup(item);
-        const diff = paidCup - subtotalCup;
+        // Pagos en CUP por método
+        const cashPaidCup = (item.cash_paid || 0) * getRateToCupLocal(item.cash_currency || 'CUP', item.exchange_rate || 1, cartStore.globalRates);
+        const transferPaidCup = (item.transfer_paid || 0) * getRateToCupLocal(item.transfer_currency || 'CUP', item.exchange_rate || 1, cartStore.globalRates);
+        const zellePaidCup = (item.zelle_paid || 0) * getRateToCupLocal(item.zelle_currency || 'USD', item.exchange_rate || 1, cartStore.globalRates);
+        const totalPaidCup = cashPaidCup + transferPaidCup + zellePaidCup;
+        // Subtotal ajustado: el mayor entre los subtotales con descuento de cada método
+        // (porque cada método puede tener su propio descuento, tomamos el promedio ponderado)
+        const cashAdjusted = cartStore.getItemSubtotalWithMethodDiscountCup(item, 'cash');
+        const transferAdjusted = cartStore.getItemSubtotalWithMethodDiscountCup(item, 'transfer');
+        const zelleAdjusted = cartStore.getItemSubtotalWithMethodDiscountCup(item, 'zelle');
+        // El total esperado es el subtotal base menos el descuento promedio ponderado
+        // Simplificación: si solo hay un método con pago, usar ese subtotal ajustado
+        let expectedCup = subtotalCup;
+        const activeMethods = [item.cash_paid > 0, item.transfer_paid > 0, item.zelle_paid > 0].filter(Boolean).length;
+        if (activeMethods === 1) {
+          if (item.cash_paid > 0) expectedCup = cashAdjusted;
+          else if (item.transfer_paid > 0) expectedCup = transferAdjusted;
+          else if (item.zelle_paid > 0) expectedCup = zelleAdjusted;
+        } else if (activeMethods > 1) {
+          // Pago mixto: promedio ponderado de los subtotales ajustados
+          const total = (item.cash_paid > 0 ? cashAdjusted : 0) + (item.transfer_paid > 0 ? transferAdjusted : 0) + (item.zelle_paid > 0 ? zelleAdjusted : 0);
+          expectedCup = total / activeMethods;
+        }
+        const diff = totalPaidCup - expectedCup;
         if (Math.abs(diff) <= 0.01) {
           return (
             <div className="mt-1 text-[10px] font-bold text-emerald-500 flex items-center gap-1">
-              ✓ Pago completo ({formatCurrency(subtotalCup)} CUP)
+              ✓ Pago completo ({formatCurrency(expectedCup)} CUP)
             </div>
           );
         }
