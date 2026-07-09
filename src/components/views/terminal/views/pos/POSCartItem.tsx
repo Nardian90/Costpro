@@ -393,50 +393,60 @@ export const POSCartItem = ({
             value={item.currency || 'CUP'}
             onChange={async (e) => {
               const currency = e.target.value;
+              // FIX-CONVERSION (2026-07-07): NO auto-convertir el precio.
+              // El problema: el fetch usa tasa BCC (~120) pero el usuario opera con
+              // tasa informal (~580). La conversión automática daba precios incorrectos.
+              // Ahora: solo cambiar moneda + tasa, el usuario ajusta el precio manualmente.
+              // El CUP equivalente se muestra siempre como price * tasa.
               let rate = 1.0;
               if (currency !== 'CUP') {
-                try {
-                  const res = await fetch(`/api/exchange-rates?currency=${currency}&source=BCC&segment=3&days=1`);
-                  if (res.ok) {
-                    const data = await res.json();
-                    const rates = Array.isArray(data) ? data : (data?.rates || data?.data || []);
-                    if (Array.isArray(rates) && rates.length > 0) {
-                      const sorted = rates.sort((a: any, b: any) =>
-                        new Date(b.rate_date || 0).getTime() - new Date(a.rate_date || 0).getTime()
-                      );
-                      if (sorted[0]?.rate > 0) rate = sorted[0].rate;
+                // Usar globalRate si existe (el usuario ya la seteó antes)
+                const gr = useCartStore.getState().globalRates[currency];
+                if (gr && gr > 0) {
+                  rate = gr;
+                } else {
+                  // Fetch de API como sugerencia inicial
+                  try {
+                    const res = await fetch(`/api/exchange-rates?currency=${currency}&source=elToque&days=1`);
+                    if (res.ok) {
+                      const data = await res.json();
+                      const rates = Array.isArray(data) ? data : (data?.rates || data?.data || []);
+                      if (Array.isArray(rates) && rates.length > 0) {
+                        const sorted = rates.sort((a: any, b: any) =>
+                          new Date(b.rate_date || 0).getTime() - new Date(a.rate_date || 0).getTime()
+                        );
+                        if (sorted[0]?.rate > 0) rate = sorted[0].rate;
+                      }
                     }
+                  } catch {}
+                  // Fallback BCC si elToque no funciona
+                  if (rate <= 1) {
+                    try {
+                      const res = await fetch(`/api/exchange-rates?currency=${currency}&source=BCC&segment=3&days=1`);
+                      if (res.ok) {
+                        const data = await res.json();
+                        const rates = Array.isArray(data) ? data : (data?.rates || data?.data || []);
+                        if (Array.isArray(rates) && rates.length > 0 && rates[0]?.rate > 0) {
+                          rate = rates[0].rate;
+                        }
+                      }
+                    } catch {}
                   }
-                } catch {}
+                }
               }
-              // FIX-P2-A: convertir precio al cambiar moneda
-              // Si era CUP y pasa a USD: newPrice = oldPrice / rate
-              // Si era USD y pasa a CUP: newPrice = oldPrice * oldRate
-              // Si era USD y pasa a EUR: newPrice = (oldPrice * oldRate) / newRate
-              const oldRate = item.exchange_rate || 1.0;
-              const isOldCup = (item.currency || 'CUP') === 'CUP';
-              const isNewCup = currency === 'CUP';
-              let newPrice = item.price;
-              if (isOldCup && !isNewCup) {
-                newPrice = item.price / rate; // CUP → USD
-              } else if (!isOldCup && isNewCup) {
-                newPrice = item.price * oldRate; // USD → CUP
-              } else if (!isOldCup && !isNewCup) {
-                newPrice = (item.price * oldRate) / rate; // USD → EUR
-              }
-              // Actualizar el item con moneda, tasa, precio convertido Y subtotal recalculado
+              // Solo cambiar moneda y tasa — NO convertir precio
+              // El usuario ve el CUP equivalente (price * tasa) y ajusta el precio si necesita
               useCartStore.getState().items.forEach((it, idx) => {
                 if (it.product_id === item.product_id && it.variant_id === item.variant_id) {
                   const updatedItem = {
                     ...it,
-                    price: newPrice,
                     currency,
                     exchange_rate: rate,
                   };
                   updatedItem.subtotal = recalcSubtotal(updatedItem);
                   updatedItem.cash_paid = updatedItem.subtotal;
                   updatedItem.transfer_paid = 0;
-                  updatedItem.zelle_paid = 0; // FIX-BUG-2: reset zelle al cambiar moneda
+                  updatedItem.zelle_paid = 0;
                   useCartStore.setState((state) => ({
                     items: state.items.map((it2, i2) => i2 === idx ? updatedItem : it2),
                     lastUpdated: Date.now(),
