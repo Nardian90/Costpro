@@ -518,49 +518,6 @@ export const POSCartItem = ({
       <div className="grid grid-cols-2 gap-2">
         <div className="space-y-1">
           <span className="text-xs font-black uppercase text-muted-foreground">
-            Descuento
-          </span>
-          <div className="flex gap-1">
-            <button
-              type="button"
-              onClick={() =>
-                updateItemDiscount?.(
-                  item.product_id,
-                  item.variant_id,
-                  item.discount_type === "percentage"
-                    ? "fixed"
-                    : "percentage",
-                  item.discount_value,
-                )
-              }
-              className="min-w-[44px] min-h-[44px] p-2.5 rounded-lg bg-muted hover:bg-primary/10 transition-colors"
-              aria-label={`Cambiar tipo de descuento a ${item.discount_type === "percentage" ? "monto fijo" : "porcentaje"} para ${item.product.name}`}
-            >
-              {item.discount_type === "percentage" ? (
-                <Percent className="w-3 h-3" />
-              ) : (
-                <DollarSign className="w-3 h-3" />
-              )}
-            </button>
-            <input
-              type="number"
-              value={item.discount_value || ""}
-              onChange={(e) =>
-                updateItemDiscount?.(
-                  item.product_id,
-                  item.variant_id,
-                  item.discount_type || "fixed",
-                  Number(e.target.value),
-                )
-              }
-              className="w-full bg-background border border-border/50 rounded-lg px-2 py-2.5 min-h-[44px] text-xs font-bold"
-              placeholder="0"
-              aria-label={`Valor de descuento para ${item.product.name}`}
-            />
-          </div>
-        </div>
-        <div className="space-y-1">
-          <span className="text-xs font-black uppercase text-muted-foreground">
             Pago Mixto (Efectivo / Transf. / Zelle)
           </span>
           {/* FIX-DISCOUNT-PER-METHOD (2026-07-07): cada método tiene monto + moneda + descuento */}
