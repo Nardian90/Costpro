@@ -489,7 +489,7 @@ export const POSCartItem = ({
         </div>
         <div className="space-y-1">
           <span className="text-xs font-black uppercase text-muted-foreground">
-            Tasa {item.currency !== 'CUP' && `(≈ ${formatCurrency((item.subtotal || 0) * (item.exchange_rate || 1))} CUP)`}
+            Tasa {item.currency !== 'CUP' && `(1 ${item.currency} = ${item.exchange_rate || 1} CUP · precio unit. ≈ ${formatCurrency((item.price || 0) * (item.exchange_rate || 1))} CUP)`}
           </span>
           <input
             type="number"
