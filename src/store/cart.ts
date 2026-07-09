@@ -56,19 +56,13 @@ export interface CartItem {
   payment_manual_override: boolean;
 }
 
-// FIX-MIXED-PAYMENT (2026-07-06): estructura para pago mixto con moneda por método
-// Cada pago tiene: method, amount, currency — permite ej: 100 USD (Zelle) + 368000 CUP (efectivo)
-export interface MixedPayment {
-  method: 'cash' | 'transfer' | 'zelle';
-  amount: number;
-  currency: string; // CUP, USD, EUR, MLC
-}
+// FIX-MIXED-PAYMENT (2026-07-06): eliminado MixedPayment interface (dead code)
+// La consolidación de pagos se hace via getConsolidatedPayments() que lee directo
+// de los items, sin necesidad de un array paralelo.
 
 interface CartState {
   items: CartItem[];
   discount: { type: "percentage" | "fixed"; value: number; currency?: string } | null;
-  // FIX-MIXED-PAYMENT: array de pagos mixtos con moneda por método
-  mixedPayments: MixedPayment[];
   appliedTaxes: TaxConfiguration[];
   sessionUserId: string | null;
   storeId: string | null;
@@ -101,7 +95,6 @@ interface CartState {
     methodCurrencies?: { cash?: string; transfer?: string; zelle?: string },
   ) => void;
   prorateGlobalPayment: (totalCash: number, totalTransfer: number, totalZelle?: number) => void;
-  setMixedPayments: (payments: MixedPayment[]) => void;
   setDiscount: (discount: { type: "percentage" | "fixed"; value: number; currency?: string } | null) => void;
   toggleTax: (tax: TaxConfiguration) => void;
   getSubtotal: () => number;
@@ -160,7 +153,6 @@ export const useCartStore = create<CartState>()(
     (set, get) => ({
       items: [],
       discount: null,
-      mixedPayments: [],
       appliedTaxes: [],
       sessionUserId: null,
       storeId: null,
@@ -542,9 +534,6 @@ export const useCartStore = create<CartState>()(
           }),
         ),
 
-      // FIX-MIXED-PAYMENT: setear pagos mixtos con moneda por método
-      setMixedPayments: (payments) => set({ mixedPayments: payments, lastUpdated: Date.now() }),
-
       setDiscount: (discount) => set({ discount, lastUpdated: Date.now() }),
 
       toggleTax: (tax) =>
@@ -625,7 +614,6 @@ export const useCartStore = create<CartState>()(
       clearCart: () => set({
         items: [],
         discount: null,
-        mixedPayments: [],
         appliedTaxes: [],
         // POS-2 MM-10/MM-7: preserve selectedPayment on clearCart (default UX: most cashiers
         // repeatedly sell with the same method) but drop the customer.

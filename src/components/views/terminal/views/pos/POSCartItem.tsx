@@ -451,24 +451,26 @@ export const POSCartItem = ({
               } else if (!isOldCup && !isNewCup) {
                 newPrice = (item.price * oldRate) / rate; // USD → EUR
               }
-              useCartStore.getState().items.forEach((it, idx) => {
-                if (it.product_id === item.product_id && it.variant_id === item.variant_id) {
-                  const updatedItem = {
-                    ...it,
-                    price: newPrice,
-                    currency,
-                    exchange_rate: rate,
-                  };
-                  updatedItem.subtotal = recalcSubtotal(updatedItem);
-                  updatedItem.cash_paid = updatedItem.subtotal;
-                  updatedItem.transfer_paid = 0;
-                  updatedItem.zelle_paid = 0;
-                  useCartStore.setState((state) => ({
-                    items: state.items.map((it2, i2) => i2 === idx ? updatedItem : it2),
-                    lastUpdated: Date.now(),
-                  }));
-                }
-              });
+              // FIX-B12 (2026-07-10): setState atómico (no forEach + setState por item)
+              useCartStore.setState((state) => ({
+                items: state.items.map((it) => {
+                  if (it.product_id === item.product_id && it.variant_id === item.variant_id) {
+                    const updatedItem = {
+                      ...it,
+                      price: newPrice,
+                      currency,
+                      exchange_rate: rate,
+                    };
+                    updatedItem.subtotal = recalcSubtotal(updatedItem);
+                    updatedItem.cash_paid = updatedItem.subtotal;
+                    updatedItem.transfer_paid = 0;
+                    updatedItem.zelle_paid = 0;
+                    return updatedItem;
+                  }
+                  return it;
+                }),
+                lastUpdated: Date.now(),
+              }));
             }}
             className="w-full bg-background border border-border/50 rounded-lg px-2 py-2.5 min-h-[44px] text-xs font-bold"
             aria-label={`Moneda de venta para ${item.product.name}`}
@@ -491,18 +493,16 @@ export const POSCartItem = ({
             onChange={(e) => {
               const rate = parseFloat(e.target.value) || 1.0;
               // FIX-BUG-4 (2026-07-07): al editar la TASA, también actualizar globalRates
-              // para que todas las conversiones del carrito usen esta tasa
               useCartStore.getState().setGlobalRate(item.currency || 'USD', rate);
-              useCartStore.getState().items.forEach((it, idx) => {
-                if (it.product_id === item.product_id && it.variant_id === item.variant_id) {
-                  useCartStore.setState((state) => ({
-                    items: state.items.map((it2, i2) =>
-                      i2 === idx ? { ...it2, exchange_rate: rate } : it2
-                    ),
-                    lastUpdated: Date.now(),
-                  }));
-                }
-              });
+              // FIX-B12: setState atómico
+              useCartStore.setState((state) => ({
+                items: state.items.map((it) =>
+                  it.product_id === item.product_id && it.variant_id === item.variant_id
+                    ? { ...it, exchange_rate: rate }
+                    : it
+                ),
+                lastUpdated: Date.now(),
+              }));
             }}
             className="w-full bg-background border border-border/50 rounded-lg px-2 py-2.5 min-h-[44px] text-xs font-bold disabled:opacity-50"
             aria-label={`Tasa de cambio para ${item.product.name}`}
@@ -553,6 +553,7 @@ export const POSCartItem = ({
                   useCartStore.setState((state) => ({ items: state.items.map((it) => it.product_id === item.product_id && it.variant_id === item.variant_id ? { ...it, cash_discount_type: type } : it), lastUpdated: Date.now() }));
                 }}
                 className="bg-background border border-border/50 rounded px-1 py-2 min-h-[36px] text-[9px] font-bold shrink-0"
+                aria-label={`Tipo de descuento en efectivo para ${item.product.name}`}
               >
                 <option value="none">Sin desc</option><option value="percentage">%</option><option value="fixed">$</option>
               </select>
@@ -602,6 +603,7 @@ export const POSCartItem = ({
                   useCartStore.setState((state) => ({ items: state.items.map((it) => it.product_id === item.product_id && it.variant_id === item.variant_id ? { ...it, transfer_discount_type: type } : it), lastUpdated: Date.now() }));
                 }}
                 className="bg-background border border-border/50 rounded px-1 py-2 min-h-[36px] text-[9px] font-bold shrink-0"
+                aria-label={`Tipo de descuento en transferencia para ${item.product.name}`}
               >
                 <option value="none">Sin desc</option><option value="percentage">%</option><option value="fixed">$</option>
               </select>
@@ -651,6 +653,7 @@ export const POSCartItem = ({
                   useCartStore.setState((state) => ({ items: state.items.map((it) => it.product_id === item.product_id && it.variant_id === item.variant_id ? { ...it, zelle_discount_type: type } : it), lastUpdated: Date.now() }));
                 }}
                 className="bg-background border border-border/50 rounded px-1 py-2 min-h-[36px] text-[9px] font-bold shrink-0"
+                aria-label={`Tipo de descuento en Zelle para ${item.product.name}`}
               >
                 <option value="none">Sin desc</option><option value="percentage">%</option><option value="fixed">$</option>
               </select>
