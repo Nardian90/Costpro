@@ -520,12 +520,11 @@ export const POSCartItem = ({
           <span className="text-xs font-black uppercase text-muted-foreground">
             Pago Mixto (Efectivo / Transf. / Zelle)
           </span>
-          {/* FIX-DISCOUNT-PER-METHOD (2026-07-07): cada método tiene monto + moneda + descuento */}
-          {/* FIX-UI (2026-07-10): descuento en la misma línea del pago, sin label de moneda */}
+          {/* FIX-UI (2026-07-10): descuento en la misma línea, input de pago SIEMPRE visible */}
           {/* Efectivo */}
           <div className="border border-border/30 rounded-lg p-2 space-y-1.5">
-            <div className="flex gap-1 items-center">
-              <div className="relative flex-1">
+            <div className="flex flex-wrap gap-1 items-center">
+              <div className="relative min-w-[100px] flex-1">
                 <DollarSign className="absolute left-1.5 top-1/2 -translate-y-1/2 w-3 h-3 text-success" aria-hidden="true" />
                 <input
                   type="number"
@@ -549,7 +548,7 @@ export const POSCartItem = ({
               <select
                 value={item.cash_currency || 'CUP'}
                 onChange={(e) => updateItemPayment?.(item.product_id, item.variant_id, item.cash_paid, item.transfer_paid, item.zelle_paid, { cash: e.target.value, transfer: item.transfer_currency, zelle: item.zelle_currency })}
-                className="bg-background border border-border/50 rounded-lg px-1 py-2 min-h-[36px] text-[10px] font-bold"
+                className="bg-background border border-border/50 rounded-lg px-1 py-2 min-h-[36px] text-[10px] font-bold shrink-0"
               >
                 <option value="CUP">CUP</option><option value="USD">USD</option><option value="EUR">EUR</option><option value="MLC">MLC</option>
               </select>
@@ -559,7 +558,7 @@ export const POSCartItem = ({
                   const type = e.target.value === 'none' ? null : e.target.value as 'percentage' | 'fixed';
                   useCartStore.setState((state) => ({ items: state.items.map((it) => it.product_id === item.product_id && it.variant_id === item.variant_id ? { ...it, cash_discount_type: type } : it), lastUpdated: Date.now() }));
                 }}
-                className="bg-background border border-border/50 rounded px-1 py-2 min-h-[36px] text-[9px] font-bold"
+                className="bg-background border border-border/50 rounded px-1 py-2 min-h-[36px] text-[9px] font-bold shrink-0"
               >
                 <option value="none">Sin desc</option><option value="percentage">%</option><option value="fixed">$</option>
               </select>
@@ -568,7 +567,7 @@ export const POSCartItem = ({
                   type="number"
                   value={item.cash_discount_value || 0}
                   onChange={(e) => useCartStore.setState((state) => ({ items: state.items.map((it) => it.product_id === item.product_id && it.variant_id === item.variant_id ? { ...it, cash_discount_value: parseFloat(e.target.value) || 0, cash_discount_currency: item.cash_currency } : it), lastUpdated: Date.now() }))}
-                  className="w-14 bg-background border border-border/50 rounded px-1 py-2 min-h-[36px] text-[9px] font-bold"
+                  className="w-14 bg-background border border-border/50 rounded px-1 py-2 min-h-[36px] text-[9px] font-bold shrink-0"
                   placeholder="0"
                 />
               )}
@@ -577,8 +576,8 @@ export const POSCartItem = ({
 
           {/* Transferencia */}
           <div className="border border-border/30 rounded-lg p-2 space-y-1.5">
-            <div className="flex gap-1 items-center">
-              <div className="relative flex-1">
+            <div className="flex flex-wrap gap-1 items-center">
+              <div className="relative min-w-[100px] flex-1">
                 <Send className="absolute left-1.5 top-1/2 -translate-y-1/2 w-3 h-3 text-primary" aria-hidden="true" />
                 <input
                   type="number"
@@ -598,7 +597,7 @@ export const POSCartItem = ({
               <select
                 value={item.transfer_currency || 'CUP'}
                 onChange={(e) => updateItemPayment?.(item.product_id, item.variant_id, item.cash_paid, item.transfer_paid, item.zelle_paid, { cash: item.cash_currency, transfer: e.target.value, zelle: item.zelle_currency })}
-                className="bg-background border border-border/50 rounded-lg px-1 py-2 min-h-[36px] text-[10px] font-bold"
+                className="bg-background border border-border/50 rounded-lg px-1 py-2 min-h-[36px] text-[10px] font-bold shrink-0"
               >
                 <option value="CUP">CUP</option><option value="USD">USD</option><option value="EUR">EUR</option><option value="MLC">MLC</option>
               </select>
@@ -608,7 +607,7 @@ export const POSCartItem = ({
                   const type = e.target.value === 'none' ? null : e.target.value as 'percentage' | 'fixed';
                   useCartStore.setState((state) => ({ items: state.items.map((it) => it.product_id === item.product_id && it.variant_id === item.variant_id ? { ...it, transfer_discount_type: type } : it), lastUpdated: Date.now() }));
                 }}
-                className="bg-background border border-border/50 rounded px-1 py-2 min-h-[36px] text-[9px] font-bold"
+                className="bg-background border border-border/50 rounded px-1 py-2 min-h-[36px] text-[9px] font-bold shrink-0"
               >
                 <option value="none">Sin desc</option><option value="percentage">%</option><option value="fixed">$</option>
               </select>
@@ -617,7 +616,7 @@ export const POSCartItem = ({
                   type="number"
                   value={item.transfer_discount_value || 0}
                   onChange={(e) => useCartStore.setState((state) => ({ items: state.items.map((it) => it.product_id === item.product_id && it.variant_id === item.variant_id ? { ...it, transfer_discount_value: parseFloat(e.target.value) || 0, transfer_discount_currency: item.transfer_currency } : it), lastUpdated: Date.now() }))}
-                  className="w-14 bg-background border border-border/50 rounded px-1 py-2 min-h-[36px] text-[9px] font-bold"
+                  className="w-14 bg-background border border-border/50 rounded px-1 py-2 min-h-[36px] text-[9px] font-bold shrink-0"
                   placeholder="0"
                 />
               )}
@@ -626,8 +625,8 @@ export const POSCartItem = ({
 
           {/* Zelle */}
           <div className="border border-border/30 rounded-lg p-2 space-y-1.5">
-            <div className="flex gap-1 items-center">
-              <div className="relative flex-1">
+            <div className="flex flex-wrap gap-1 items-center">
+              <div className="relative min-w-[100px] flex-1">
                 <CreditCard className="absolute left-1.5 top-1/2 -translate-y-1/2 w-3 h-3 text-primary" aria-hidden="true" />
                 <input
                   type="number"
@@ -647,7 +646,7 @@ export const POSCartItem = ({
               <select
                 value={item.zelle_currency || 'USD'}
                 onChange={(e) => updateItemPayment?.(item.product_id, item.variant_id, item.cash_paid, item.transfer_paid, item.zelle_paid, { cash: item.cash_currency, transfer: item.transfer_currency, zelle: e.target.value })}
-                className="bg-background border border-border/50 rounded-lg px-1 py-2 min-h-[36px] text-[10px] font-bold"
+                className="bg-background border border-border/50 rounded-lg px-1 py-2 min-h-[36px] text-[10px] font-bold shrink-0"
               >
                 <option value="CUP">CUP</option><option value="USD">USD</option><option value="EUR">EUR</option><option value="MLC">MLC</option>
               </select>
@@ -657,7 +656,7 @@ export const POSCartItem = ({
                   const type = e.target.value === 'none' ? null : e.target.value as 'percentage' | 'fixed';
                   useCartStore.setState((state) => ({ items: state.items.map((it) => it.product_id === item.product_id && it.variant_id === item.variant_id ? { ...it, zelle_discount_type: type } : it), lastUpdated: Date.now() }));
                 }}
-                className="bg-background border border-border/50 rounded px-1 py-2 min-h-[36px] text-[9px] font-bold"
+                className="bg-background border border-border/50 rounded px-1 py-2 min-h-[36px] text-[9px] font-bold shrink-0"
               >
                 <option value="none">Sin desc</option><option value="percentage">%</option><option value="fixed">$</option>
               </select>
@@ -666,7 +665,7 @@ export const POSCartItem = ({
                   type="number"
                   value={item.zelle_discount_value || 0}
                   onChange={(e) => useCartStore.setState((state) => ({ items: state.items.map((it) => it.product_id === item.product_id && it.variant_id === item.variant_id ? { ...it, zelle_discount_value: parseFloat(e.target.value) || 0, zelle_discount_currency: item.zelle_currency } : it), lastUpdated: Date.now() }))}
-                  className="w-14 bg-background border border-border/50 rounded px-1 py-2 min-h-[36px] text-[9px] font-bold"
+                  className="w-14 bg-background border border-border/50 rounded px-1 py-2 min-h-[36px] text-[9px] font-bold shrink-0"
                   placeholder="0"
                 />
               )}
