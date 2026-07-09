@@ -436,23 +436,33 @@ export const POSCartItem = ({
                 }
               }
               // FIX-CONVERSION (2026-07-10): SÍ convertir el precio.
-              // FIX-CRITICAL (2026-07-10): si no se obtiene tasa válida (>1), NO cambiar moneda.
-              // Antes: si el fetch fallaba, rate=1.0 → precio 1600 CUP / 1 = 1600 USD (absurdo).
+              // FIX-CRITICAL (2026-07-10): si no se obtiene tasa válida (>1),
+              // cambiar la moneda de todas formas pero NO convertir el precio.
+              // El usuario edita la TASA manualmente y el precio se ajusta después.
+              // Antes: si el fetch fallaba, se bloqueaba el cambio de moneda y el
+              // usuario no podía hacer nada (campo TASA estaba disabled en CUP).
               if (currency !== 'CUP' && rate <= 1) {
-                toast.error('No se pudo obtener la tasa de cambio. Edita la tasa manualmente antes de cambiar la moneda.');
-                return;
+                toast.info('No se pudo obtener la tasa automáticamente. Cambia la moneda y edita la TASA manualmente.');
+                rate = 0; // señalar que no se obtuvo — el usuario debe editarla
               }
               const oldRate = item.exchange_rate || 1.0;
               const isOldCup = (item.currency || 'CUP') === 'CUP';
               const isNewCup = currency === 'CUP';
               let newPrice = item.price;
-              if (isOldCup && !isNewCup) {
-                newPrice = item.price / rate; // CUP → USD: 1600 / 680 = 2.35
-              } else if (!isOldCup && isNewCup) {
-                newPrice = item.price * oldRate; // USD → CUP: 2.35 * 680 = 1598
-              } else if (!isOldCup && !isNewCup) {
-                newPrice = (item.price * oldRate) / rate; // USD → EUR
+              // Solo convertir si tenemos una tasa válida
+              if (rate > 1) {
+                if (isOldCup && !isNewCup) {
+                  newPrice = item.price / rate; // CUP → USD: 1600 / 680 = 2.35
+                } else if (!isOldCup && isNewCup) {
+                  newPrice = item.price * oldRate; // USD → CUP: 2.35 * 680 = 1598
+                } else if (!isOldCup && !isNewCup) {
+                  newPrice = (item.price * oldRate) / rate; // USD → EUR
+                }
               }
+              // Si rate=0 (no se obtuvo), el precio se mantiene igual y el usuario
+              // edita la TASA. Al editarla, se actualiza globalRates y el CUP
+              // equivalente se recalcula automáticamente.
+              const finalRate = rate > 1 ? rate : 1; // default 1 si no se obtuvo
               // FIX-B12 (2026-07-10): setState atómico
               useCartStore.setState((state) => ({
                 items: state.items.map((it) => {
@@ -461,7 +471,7 @@ export const POSCartItem = ({
                       ...it,
                       price: newPrice,
                       currency,
-                      exchange_rate: rate,
+                      exchange_rate: finalRate,
                       // FIX-CURRENCY-INHERIT: pagos heredan la moneda de venta
                       cash_currency: currency,
                       transfer_currency: currency,
@@ -502,11 +512,25 @@ export const POSCartItem = ({
               useCartStore.getState().setGlobalRate(item.currency || 'USD', rate);
               // FIX-B12: setState atómico
               useCartStore.setState((state) => ({
-                items: state.items.map((it) =>
-                  it.product_id === item.product_id && it.variant_id === item.variant_id
-                    ? { ...it, exchange_rate: rate }
-                    : it
-                ),
+                items: state.items.map((it) => {
+                  if (it.product_id === item.product_id && it.variant_id === item.variant_id) {
+                    // FIX-TASA-RECALC (2026-07-10): si la tasa anterior era 1 (no se obtuvo),
+                    // recalcular el precio dividiendo el precio CUP original por la nueva tasa.
+                    // Esto permite al usuario: cambiar moneda → editar tasa → precio se ajusta.
+                    let newPrice = it.price;
+                    if (it.currency !== 'CUP' && (it.exchange_rate || 1) <= 1 && rate > 1) {
+                      // El precio original estaba en CUP, convertirlo ahora
+                      newPrice = it.price / rate;
+                    }
+                    const updatedItem = { ...it, exchange_rate: rate, price: newPrice };
+                    updatedItem.subtotal = recalcSubtotal(updatedItem);
+                    updatedItem.cash_paid = updatedItem.subtotal;
+                    updatedItem.transfer_paid = 0;
+                    updatedItem.zelle_paid = 0;
+                    return updatedItem;
+                  }
+                  return it;
+                }),
                 lastUpdated: Date.now(),
               }));
             }}
