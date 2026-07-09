@@ -14,6 +14,7 @@ import {
   CreditCard,
 } from "lucide-react";
 import { cn, formatCurrency } from "@/lib/utils";
+import { toast } from "sonner";
 import { useCartStore, type CartItem } from "@/store/cart";
 import type { POSCartItemProps } from "./POSCart.types";
 
@@ -434,24 +435,25 @@ export const POSCartItem = ({
                   }
                 }
               }
-              // FIX-CONVERSION (2026-07-10): SÍ convertir el precio usando la tasa obtenida.
-              // Antes no se convertía → producto de 1,600 CUP quedaba en 1,600 USD (incorrecto).
-              // Ahora: convertir el precio a la nueva moneda usando la tasa.
-              // CUP → USD: newPrice = oldPrice / rate
-              // USD → CUP: newPrice = oldPrice * oldRate
-              // USD → EUR: newPrice = (oldPrice * oldRate) / newRate
+              // FIX-CONVERSION (2026-07-10): SÍ convertir el precio.
+              // FIX-CRITICAL (2026-07-10): si no se obtiene tasa válida (>1), NO cambiar moneda.
+              // Antes: si el fetch fallaba, rate=1.0 → precio 1600 CUP / 1 = 1600 USD (absurdo).
+              if (currency !== 'CUP' && rate <= 1) {
+                toast.error('No se pudo obtener la tasa de cambio. Edita la tasa manualmente antes de cambiar la moneda.');
+                return;
+              }
               const oldRate = item.exchange_rate || 1.0;
               const isOldCup = (item.currency || 'CUP') === 'CUP';
               const isNewCup = currency === 'CUP';
               let newPrice = item.price;
               if (isOldCup && !isNewCup) {
-                newPrice = item.price / rate; // CUP → USD
+                newPrice = item.price / rate; // CUP → USD: 1600 / 680 = 2.35
               } else if (!isOldCup && isNewCup) {
-                newPrice = item.price * oldRate; // USD → CUP
+                newPrice = item.price * oldRate; // USD → CUP: 2.35 * 680 = 1598
               } else if (!isOldCup && !isNewCup) {
                 newPrice = (item.price * oldRate) / rate; // USD → EUR
               }
-              // FIX-B12 (2026-07-10): setState atómico (no forEach + setState por item)
+              // FIX-B12 (2026-07-10): setState atómico
               useCartStore.setState((state) => ({
                 items: state.items.map((it) => {
                   if (it.product_id === item.product_id && it.variant_id === item.variant_id) {
@@ -460,6 +462,10 @@ export const POSCartItem = ({
                       price: newPrice,
                       currency,
                       exchange_rate: rate,
+                      // FIX-CURRENCY-INHERIT: pagos heredan la moneda de venta
+                      cash_currency: currency,
+                      transfer_currency: currency,
+                      // zelle_currency se mantiene en USD (Zelle es siempre USD)
                     };
                     updatedItem.subtotal = recalcSubtotal(updatedItem);
                     updatedItem.cash_paid = updatedItem.subtotal;
