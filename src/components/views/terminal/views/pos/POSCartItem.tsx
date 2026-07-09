@@ -440,12 +440,28 @@ export const POSCartItem = ({
                   }
                 }
               }
-              // Solo cambiar moneda y tasa — NO convertir precio
-              // El usuario ve el CUP equivalente (price * tasa) y ajusta el precio si necesita
+              // FIX-CONVERSION (2026-07-10): SÍ convertir el precio usando la tasa obtenida.
+              // Antes no se convertía → producto de 1,600 CUP quedaba en 1,600 USD (incorrecto).
+              // Ahora: convertir el precio a la nueva moneda usando la tasa.
+              // CUP → USD: newPrice = oldPrice / rate
+              // USD → CUP: newPrice = oldPrice * oldRate
+              // USD → EUR: newPrice = (oldPrice * oldRate) / newRate
+              const oldRate = item.exchange_rate || 1.0;
+              const isOldCup = (item.currency || 'CUP') === 'CUP';
+              const isNewCup = currency === 'CUP';
+              let newPrice = item.price;
+              if (isOldCup && !isNewCup) {
+                newPrice = item.price / rate; // CUP → USD
+              } else if (!isOldCup && isNewCup) {
+                newPrice = item.price * oldRate; // USD → CUP
+              } else if (!isOldCup && !isNewCup) {
+                newPrice = (item.price * oldRate) / rate; // USD → EUR
+              }
               useCartStore.getState().items.forEach((it, idx) => {
                 if (it.product_id === item.product_id && it.variant_id === item.variant_id) {
                   const updatedItem = {
                     ...it,
+                    price: newPrice,
                     currency,
                     exchange_rate: rate,
                   };
@@ -597,17 +613,11 @@ export const POSCartItem = ({
                   <input
                     type="number"
                     value={item.cash_discount_value || 0}
-                    onChange={(e) => useCartStore.setState((state) => ({ items: state.items.map((it) => it.product_id === item.product_id && it.variant_id === item.variant_id ? { ...it, cash_discount_value: parseFloat(e.target.value) || 0 } : it), lastUpdated: Date.now() }))}
+                    onChange={(e) => useCartStore.setState((state) => ({ items: state.items.map((it) => it.product_id === item.product_id && it.variant_id === item.variant_id ? { ...it, cash_discount_value: parseFloat(e.target.value) || 0, cash_discount_currency: item.cash_currency } : it), lastUpdated: Date.now() }))}
                     className="w-16 bg-background border border-border/50 rounded px-1 py-1 text-[9px] font-bold"
                     placeholder="0"
                   />
-                  <select
-                    value={item.cash_discount_currency}
-                    onChange={(e) => useCartStore.setState((state) => ({ items: state.items.map((it) => it.product_id === item.product_id && it.variant_id === item.variant_id ? { ...it, cash_discount_currency: e.target.value } : it), lastUpdated: Date.now() }))}
-                    className="bg-background border border-border/50 rounded px-1 py-1 text-[9px] font-bold"
-                  >
-                    <option value="CUP">CUP</option><option value="USD">USD</option><option value="EUR">EUR</option><option value="MLC">MLC</option>
-                  </select>
+                  <span className="text-[9px] text-muted-foreground font-bold">{item.cash_currency || 'CUP'}</span>
                 </>
               )}
             </div>
@@ -658,17 +668,11 @@ export const POSCartItem = ({
                   <input
                     type="number"
                     value={item.transfer_discount_value || 0}
-                    onChange={(e) => useCartStore.setState((state) => ({ items: state.items.map((it) => it.product_id === item.product_id && it.variant_id === item.variant_id ? { ...it, transfer_discount_value: parseFloat(e.target.value) || 0 } : it), lastUpdated: Date.now() }))}
+                    onChange={(e) => useCartStore.setState((state) => ({ items: state.items.map((it) => it.product_id === item.product_id && it.variant_id === item.variant_id ? { ...it, transfer_discount_value: parseFloat(e.target.value) || 0, transfer_discount_currency: item.transfer_currency } : it), lastUpdated: Date.now() }))}
                     className="w-16 bg-background border border-border/50 rounded px-1 py-1 text-[9px] font-bold"
                     placeholder="0"
                   />
-                  <select
-                    value={item.transfer_discount_currency}
-                    onChange={(e) => useCartStore.setState((state) => ({ items: state.items.map((it) => it.product_id === item.product_id && it.variant_id === item.variant_id ? { ...it, transfer_discount_currency: e.target.value } : it), lastUpdated: Date.now() }))}
-                    className="bg-background border border-border/50 rounded px-1 py-1 text-[9px] font-bold"
-                  >
-                    <option value="CUP">CUP</option><option value="USD">USD</option><option value="EUR">EUR</option><option value="MLC">MLC</option>
-                  </select>
+                  <span className="text-[9px] text-muted-foreground font-bold">{item.transfer_currency || 'CUP'}</span>
                 </>
               )}
             </div>
@@ -719,17 +723,11 @@ export const POSCartItem = ({
                   <input
                     type="number"
                     value={item.zelle_discount_value || 0}
-                    onChange={(e) => useCartStore.setState((state) => ({ items: state.items.map((it) => it.product_id === item.product_id && it.variant_id === item.variant_id ? { ...it, zelle_discount_value: parseFloat(e.target.value) || 0 } : it), lastUpdated: Date.now() }))}
+                    onChange={(e) => useCartStore.setState((state) => ({ items: state.items.map((it) => it.product_id === item.product_id && it.variant_id === item.variant_id ? { ...it, zelle_discount_value: parseFloat(e.target.value) || 0, zelle_discount_currency: item.zelle_currency } : it), lastUpdated: Date.now() }))}
                     className="w-16 bg-background border border-border/50 rounded px-1 py-1 text-[9px] font-bold"
                     placeholder="0"
                   />
-                  <select
-                    value={item.zelle_discount_currency}
-                    onChange={(e) => useCartStore.setState((state) => ({ items: state.items.map((it) => it.product_id === item.product_id && it.variant_id === item.variant_id ? { ...it, zelle_discount_currency: e.target.value } : it), lastUpdated: Date.now() }))}
-                    className="bg-background border border-border/50 rounded px-1 py-1 text-[9px] font-bold"
-                  >
-                    <option value="CUP">CUP</option><option value="USD">USD</option><option value="EUR">EUR</option><option value="MLC">MLC</option>
-                  </select>
+                  <span className="text-[9px] text-muted-foreground font-bold">{item.zelle_currency || 'USD'}</span>
                 </>
               )}
             </div>
