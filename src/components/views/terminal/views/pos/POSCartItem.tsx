@@ -392,78 +392,30 @@ export const POSCartItem = ({
           <span className="text-xs font-black uppercase text-muted-foreground">Moneda Venta</span>
           <select
             value={item.currency || 'CUP'}
-            onChange={async (e) => {
+            onChange={(e) => {
               const currency = e.target.value;
-              // FIX-CONVERSION (2026-07-07): NO auto-convertir el precio.
-              // El problema: el fetch usa tasa BCC (~120) pero el usuario opera con
-              // tasa informal (~580). La conversión automática daba precios incorrectos.
-              // Ahora: solo cambiar moneda + tasa, el usuario ajusta el precio manualmente.
-              // El CUP equivalente se muestra siempre como price * tasa.
-              let rate = 1.0;
-              if (currency !== 'CUP') {
-                // Usar globalRate si existe (el usuario ya la seteó antes)
-                const gr = useCartStore.getState().globalRates[currency];
-                if (gr && gr > 0) {
-                  rate = gr;
-                } else {
-                  // Fetch de API como sugerencia inicial
-                  try {
-                    const res = await fetch(`/api/exchange-rates?currency=${currency}&source=elToque&days=1`);
-                    if (res.ok) {
-                      const data = await res.json();
-                      const rates = Array.isArray(data) ? data : (data?.rates || data?.data || []);
-                      if (Array.isArray(rates) && rates.length > 0) {
-                        const sorted = rates.sort((a: any, b: any) =>
-                          new Date(b.rate_date || 0).getTime() - new Date(a.rate_date || 0).getTime()
-                        );
-                        if (sorted[0]?.rate > 0) rate = sorted[0].rate;
-                      }
-                    }
-                  } catch {}
-                  // Fallback BCC si elToque no funciona
-                  if (rate <= 1) {
-                    try {
-                      const res = await fetch(`/api/exchange-rates?currency=${currency}&source=BCC&segment=3&days=1`);
-                      if (res.ok) {
-                        const data = await res.json();
-                        const rates = Array.isArray(data) ? data : (data?.rates || data?.data || []);
-                        if (Array.isArray(rates) && rates.length > 0 && rates[0]?.rate > 0) {
-                          rate = rates[0].rate;
-                        }
-                      }
-                    } catch {}
-                  }
-                }
-              }
-              // FIX-CONVERSION (2026-07-10): SÍ convertir el precio.
-              // FIX-CRITICAL (2026-07-10): si no se obtiene tasa válida (>1),
-              // cambiar la moneda de todas formas pero NO convertir el precio.
-              // El usuario edita la TASA manualmente y el precio se ajusta después.
-              // Antes: si el fetch fallaba, se bloqueaba el cambio de moneda y el
-              // usuario no podía hacer nada (campo TASA estaba disabled en CUP).
-              if (currency !== 'CUP' && rate <= 1) {
-                toast.info('No se pudo obtener la tasa automáticamente. Cambia la moneda y edita la TASA manualmente.');
-                rate = 0; // señalar que no se obtuvo — el usuario debe editarla
-              }
+              // FIX-SIMPLE (2026-07-10): cambiar moneda INMEDIATAMENTE sin esperar fetch.
+              // Si hay globalRate, usarla. Si no, rate=1 y el usuario edita la TASA después.
+              // El fetch async causaba que el select pareciera no responder.
+              const gr = useCartStore.getState().globalRates[currency];
+              const rate = (gr && gr > 0) ? gr : 1;
+
               const oldRate = item.exchange_rate || 1.0;
               const isOldCup = (item.currency || 'CUP') === 'CUP';
               const isNewCup = currency === 'CUP';
               let newPrice = item.price;
-              // Solo convertir si tenemos una tasa válida
               if (rate > 1) {
                 if (isOldCup && !isNewCup) {
-                  newPrice = item.price / rate; // CUP → USD: 1600 / 680 = 2.35
+                  newPrice = item.price / rate;
                 } else if (!isOldCup && isNewCup) {
-                  newPrice = item.price * oldRate; // USD → CUP: 2.35 * 680 = 1598
+                  newPrice = item.price * oldRate;
                 } else if (!isOldCup && !isNewCup) {
-                  newPrice = (item.price * oldRate) / rate; // USD → EUR
+                  newPrice = (item.price * oldRate) / rate;
                 }
+              } else if (currency !== 'CUP') {
+                toast.info('Edita la TASA manualmente para convertir el precio.');
               }
-              // Si rate=0 (no se obtuvo), el precio se mantiene igual y el usuario
-              // edita la TASA. Al editarla, se actualiza globalRates y el CUP
-              // equivalente se recalcula automáticamente.
-              const finalRate = rate > 1 ? rate : 1; // default 1 si no se obtuvo
-              // FIX-B12 (2026-07-10): setState atómico
+
               useCartStore.setState((state) => ({
                 items: state.items.map((it) => {
                   if (it.product_id === item.product_id && it.variant_id === item.variant_id) {
@@ -471,11 +423,9 @@ export const POSCartItem = ({
                       ...it,
                       price: newPrice,
                       currency,
-                      exchange_rate: finalRate,
-                      // FIX-CURRENCY-INHERIT: pagos heredan la moneda de venta
+                      exchange_rate: rate,
                       cash_currency: currency,
                       transfer_currency: currency,
-                      // zelle_currency se mantiene en USD (Zelle es siempre USD)
                     };
                     updatedItem.subtotal = recalcSubtotal(updatedItem);
                     updatedItem.cash_paid = updatedItem.subtotal;
@@ -487,6 +437,43 @@ export const POSCartItem = ({
                 }),
                 lastUpdated: Date.now(),
               }));
+
+              // Fetch de tasa en background (no bloquea el select)
+              if (currency !== 'CUP' && rate <= 1) {
+                fetch(`/api/exchange-rates?currency=${currency}&source=elToque&days=1`)
+                  .then(res => res.ok ? res.json() : null)
+                  .then(data => {
+                    if (!data) return null;
+                    const rates = Array.isArray(data) ? data : (data?.rates || data?.data || []);
+                    if (Array.isArray(rates) && rates.length > 0) {
+                      const sorted = rates.sort((a: any, b: any) =>
+                        new Date(b.rate_date || 0).getTime() - new Date(a.rate_date || 0).getTime()
+                      );
+                      if (sorted[0]?.rate > 0) {
+                        const fetchedRate = sorted[0].rate;
+                        useCartStore.getState().setGlobalRate(currency, fetchedRate);
+                        // Actualizar el item con la tasa obtenida
+                        useCartStore.setState((state) => ({
+                          items: state.items.map((it) => {
+                            if (it.product_id === item.product_id && it.variant_id === item.variant_id && it.currency === currency) {
+                              const newPriceConverted = item.price / fetchedRate;
+                              const updatedItem = { ...it, exchange_rate: fetchedRate, price: newPriceConverted };
+                              updatedItem.subtotal = recalcSubtotal(updatedItem);
+                              updatedItem.cash_paid = updatedItem.subtotal;
+                              updatedItem.transfer_paid = 0;
+                              updatedItem.zelle_paid = 0;
+                              return updatedItem;
+                            }
+                            return it;
+                          }),
+                          lastUpdated: Date.now(),
+                        }));
+                        toast.success(`Tasa obtenida: 1 ${currency} = ${fetchedRate} CUP`);
+                      }
+                    }
+                  })
+                  .catch(() => {});
+              }
             }}
             className="w-full bg-background border border-border/50 rounded-lg px-2 py-2.5 min-h-[44px] text-xs font-bold"
             aria-label={`Moneda de venta para ${item.product.name}`}
