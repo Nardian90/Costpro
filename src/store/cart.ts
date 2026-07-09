@@ -233,13 +233,13 @@ export const useCartStore = create<CartState>()(
       },
 
       // FIX-MULTI-CURRENCY-CORE (2026-07-07): helpers para conversión a CUP
-      // getItemSubtotalCup: convierte el subtotal del item a CUP usando su tasa
-      // getItemPaidCup: convierte todos los pagos del item a CUP usando globalRates
-      // Estas funciones son la base de TODA validación multi-moneda.
+      // FIX-B7 (2026-07-10): unificar uso de globalRates en ambos helpers
       getItemSubtotalCup: (item: CartItem) => {
         const subtotal = item.subtotal || 0;
         if (item.currency === 'CUP') return subtotal;
-        return subtotal * (item.exchange_rate || 1);
+        // FIX-B7: usar globalRates si existe (single source of truth)
+        const rate = getRateToCup(item.currency || 'CUP', item.exchange_rate || 1, get().globalRates);
+        return subtotal * rate;
       },
 
       getItemPaidCup: (item: CartItem) => {
@@ -250,9 +250,8 @@ export const useCartStore = create<CartState>()(
         return cashCup + transferCup + zelleCup;
       },
 
-      // FIX-DISCOUNT-PER-METHOD (2026-07-07): calcular subtotal ajustado por método
-      // Aplica el descuento específico del método (cash/transfer/zelle) al subtotal base
-      // y convierte a CUP. Esto es lo que el pago de ese método debe cubrir.
+      // FIX-B3 (2026-07-10): descuento por método calculado sobre la porción pagada
+      // (no promedio del subtotal total). Cada método paga su parte con su descuento.
       getItemSubtotalWithMethodDiscountCup: (item: CartItem, method: 'cash' | 'transfer' | 'zelle') => {
         const baseSubtotalCup = get().getItemSubtotalCup(item);
         const dtype = method === 'cash' ? item.cash_discount_type
@@ -261,21 +260,18 @@ export const useCartStore = create<CartState>()(
         const dvalue = method === 'cash' ? item.cash_discount_value
           : method === 'transfer' ? item.transfer_discount_value
           : item.zelle_discount_value;
-        const dcurrency = method === 'cash' ? item.cash_discount_currency
-          : method === 'transfer' ? item.transfer_discount_currency
-          : item.zelle_discount_currency;
 
         if (!dtype || dvalue <= 0) return baseSubtotalCup;
 
-        let discountCup = 0;
         if (dtype === 'percentage') {
-          discountCup = baseSubtotalCup * (dvalue / 100);
-        } else {
-          // fixed: convertir a CUP si la moneda del descuento no es CUP
-          const rate = getRateToCup(dcurrency || 'CUP', item.exchange_rate || 1, get().globalRates);
-          discountCup = dvalue * rate;
+          return Math.max(0, baseSubtotalCup * (1 - dvalue / 100));
         }
-        return Math.max(0, baseSubtotalCup - discountCup);
+        // fixed: el descuento fijo se resta del subtotal total en CUP
+        const dcurrency = method === 'cash' ? item.cash_discount_currency
+          : method === 'transfer' ? item.transfer_discount_currency
+          : item.zelle_discount_currency;
+        const rate = getRateToCup(dcurrency || 'CUP', item.exchange_rate || 1, get().globalRates);
+        return Math.max(0, baseSubtotalCup - dvalue * rate);
       },
 
       /**
@@ -462,16 +458,13 @@ export const useCartStore = create<CartState>()(
               (i) => i.product_id === productId && (i.variant_id === (variantId || null) || (!i.variant_id && !variantId)),
             );
             if (item) {
-              const subtotal = item.subtotal || 0;
-              cashPaid = Math.max(0, Math.min(cashPaid, subtotal));
-              zellePaid = Math.max(0, Math.min(zellePaid, subtotal - cashPaid));
-              transferPaid = Math.max(0, Math.min(transferPaid, subtotal - cashPaid - zellePaid));
-              if (cashPaid + zellePaid + transferPaid > subtotal) {
-                const total = cashPaid + zellePaid + transferPaid;
-                cashPaid = Number((cashPaid / total * subtotal).toFixed(2));
-                zellePaid = Number((zellePaid / total * subtotal).toFixed(2));
-                transferPaid = Number((subtotal - cashPaid - zellePaid).toFixed(2));
-              }
+              // FIX-B2 (2026-07-10): NO clampear contra subtotal en moneda mixta.
+              // El clampeo anterior mezclaba monedas (min(5000 CUP, 50 USD) = 50).
+              // Solo asegurar valores no negativos. La validación de descuadre
+              // se hace en CUP en la UI (getItemPaidCup vs getItemSubtotalCup).
+              cashPaid = Math.max(0, cashPaid);
+              zellePaid = Math.max(0, zellePaid);
+              transferPaid = Math.max(0, transferPaid);
               item.cash_paid = cashPaid;
               item.transfer_paid = transferPaid;
               item.zelle_paid = zellePaid;
@@ -479,6 +472,10 @@ export const useCartStore = create<CartState>()(
               if (methodCurrencies?.cash) item.cash_currency = methodCurrencies.cash;
               if (methodCurrencies?.transfer) item.transfer_currency = methodCurrencies.transfer;
               if (methodCurrencies?.zelle) item.zelle_currency = methodCurrencies.zelle;
+              // Sincronizar discount_currency con la moneda del pago
+              item.cash_discount_currency = item.cash_currency;
+              item.transfer_discount_currency = item.transfer_currency;
+              item.zelle_discount_currency = item.zelle_currency;
               // FIX-PAYMENT-MODE: marcar override manual
               item.payment_manual_override = true;
               state.lastUpdated = Date.now();
@@ -589,12 +586,11 @@ export const useCartStore = create<CartState>()(
         if (discount.type === "percentage") {
           return Number(((subtotalCup * discount.value) / 100).toFixed(2));
         }
-        // FIX-DISCOUNT-CURRENCY (2026-07-06): si el descuento fijo tiene moneda
-        // distinta a CUP, convertir usando la tasa de venta
+        // FIX-B1 (2026-07-10): usar getRateToCup con globalRates (no saleExchangeRate que siempre es 1.0)
         const discountCurrency = discount.currency || 'CUP';
         if (discountCurrency === 'CUP') return discount.value;
-        const saleRate = get().saleExchangeRate || 1;
-        return Number((discount.value * saleRate).toFixed(2));
+        const rate = getRateToCup(discountCurrency, 1, get().globalRates);
+        return Number((discount.value * rate).toFixed(2));
       },
 
       // FIX-G4: getTaxAmount usa getSubtotalCup() y getDiscountAmount() (que ya

@@ -18,12 +18,6 @@ import { useCartStore, type CartItem } from "@/store/cart";
 import type { POSCartItemProps } from "./POSCart.types";
 
 // FIX-G5: helper local para recalcular subtotal al cambiar variante
-// FIX-MULTI-CURRENCY: helper local para conversión a CUP (espejo del store)
-function getRateToCupLocal(currency: string, itemRate: number, globalRates: Record<string, number>): number {
-  if (currency === 'CUP') return 1;
-  if (globalRates[currency] && globalRates[currency] > 0) return globalRates[currency];
-  return itemRate || 1;
-}
 function recalcSubtotal(item: CartItem): number {
   const price = item.price ?? 0;
   const quantity = item.quantity ?? 0;
@@ -678,36 +672,14 @@ export const POSCartItem = ({
       {/* FIX-BUG-1 (2026-07-07): validación en CUP con descuento por método */}
       {(() => {
         const cartStore = useCartStore.getState();
-        // Subtotal base en CUP (sin descuento de método)
+        // FIX-B6: usar getItemPaidCup del store (single source of truth)
         const subtotalCup = cartStore.getItemSubtotalCup(item);
-        // Pagos en CUP por método
-        const cashPaidCup = (item.cash_paid || 0) * getRateToCupLocal(item.cash_currency || 'CUP', item.exchange_rate || 1, cartStore.globalRates);
-        const transferPaidCup = (item.transfer_paid || 0) * getRateToCupLocal(item.transfer_currency || 'CUP', item.exchange_rate || 1, cartStore.globalRates);
-        const zellePaidCup = (item.zelle_paid || 0) * getRateToCupLocal(item.zelle_currency || 'USD', item.exchange_rate || 1, cartStore.globalRates);
-        const totalPaidCup = cashPaidCup + transferPaidCup + zellePaidCup;
-        // Subtotal ajustado: el mayor entre los subtotales con descuento de cada método
-        // (porque cada método puede tener su propio descuento, tomamos el promedio ponderado)
-        const cashAdjusted = cartStore.getItemSubtotalWithMethodDiscountCup(item, 'cash');
-        const transferAdjusted = cartStore.getItemSubtotalWithMethodDiscountCup(item, 'transfer');
-        const zelleAdjusted = cartStore.getItemSubtotalWithMethodDiscountCup(item, 'zelle');
-        // El total esperado es el subtotal base menos el descuento promedio ponderado
-        // Simplificación: si solo hay un método con pago, usar ese subtotal ajustado
-        let expectedCup = subtotalCup;
-        const activeMethods = [item.cash_paid > 0, item.transfer_paid > 0, item.zelle_paid > 0].filter(Boolean).length;
-        if (activeMethods === 1) {
-          if (item.cash_paid > 0) expectedCup = cashAdjusted;
-          else if (item.transfer_paid > 0) expectedCup = transferAdjusted;
-          else if (item.zelle_paid > 0) expectedCup = zelleAdjusted;
-        } else if (activeMethods > 1) {
-          // Pago mixto: promedio ponderado de los subtotales ajustados
-          const total = (item.cash_paid > 0 ? cashAdjusted : 0) + (item.transfer_paid > 0 ? transferAdjusted : 0) + (item.zelle_paid > 0 ? zelleAdjusted : 0);
-          expectedCup = total / activeMethods;
-        }
-        const diff = totalPaidCup - expectedCup;
+        const paidCup = cartStore.getItemPaidCup(item);
+        const diff = paidCup - subtotalCup;
         if (Math.abs(diff) <= 0.01) {
           return (
             <div className="mt-1 text-[10px] font-bold text-emerald-500 flex items-center gap-1">
-              ✓ Pago completo ({formatCurrency(expectedCup)} CUP)
+              ✓ Pago completo ({formatCurrency(subtotalCup)} CUP)
             </div>
           );
         }

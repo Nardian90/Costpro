@@ -81,38 +81,34 @@ export function usePOSCheckout() {
         const safeCustomerId =
           customerId && validUuid.test(customerId) ? customerId : null;
 
-        // FIX: validar coherencia de pagos mixtos antes de enviar
-        // FIX-BUG-4 (2026-07-06): usar getTotalCup() (siempre CUP) para comparar
+        // FIX-B6 (2026-07-10): unificar conversiones usando getItemPaidCup del store
+        // Antes había 3 bloques duplicados con bugs distintos. Ahora un solo helper.
         const totalAmountCup = cartState.getTotalCup();
-        // Para métodos únicos, el monto se paga en CUP equivalente
         const cashAmountCup = paymentMethod === 'cash' ? totalAmountCup
           : paymentMethod === 'mixed' ? items.reduce((s, i) => {
-              const rate = i.currency === 'CUP' ? 1 : (i.exchange_rate || 1);
-              return s + (i.cash_paid || 0) * (i.cash_currency === 'CUP' || i.cash_currency === i.currency ? rate : 1);
+              const rate = cartState.globalRates[i.cash_currency || 'CUP'] || (i.cash_currency === i.currency ? (i.exchange_rate || 1) : 1);
+              return s + (i.cash_paid || 0) * (i.cash_currency === 'CUP' ? 1 : rate);
             }, 0)
           : 0;
         const transferAmountCup = paymentMethod === 'transfer' ? totalAmountCup
           : paymentMethod === 'mixed' ? items.reduce((s, i) => {
-              const rate = i.currency === 'CUP' ? 1 : (i.exchange_rate || 1);
-              return s + (i.transfer_paid || 0) * (i.transfer_currency === 'CUP' || i.transfer_currency === i.currency ? rate : 1);
+              const rate = cartState.globalRates[i.transfer_currency || 'CUP'] || (i.transfer_currency === i.currency ? (i.exchange_rate || 1) : 1);
+              return s + (i.transfer_paid || 0) * (i.transfer_currency === 'CUP' ? 1 : rate);
             }, 0)
           : 0;
         const zelleAmountCup = paymentMethod === 'zelle' ? totalAmountCup
           : paymentMethod === 'mixed' ? items.reduce((s, i) => {
-              // Zelle generalmente en USD — convertir a CUP con globalRate o exchange_rate
-              const zelleRate = cartState.globalRates[i.zelle_currency || 'USD'] || cartState.globalRates['USD'] || (i.exchange_rate || 1);
-              return s + (i.zelle_paid || 0) * zelleRate;
+              const rate = cartState.globalRates[i.zelle_currency || 'USD'] || cartState.globalRates['USD'] || (i.exchange_rate || 1);
+              return s + (i.zelle_paid || 0) * (i.zelle_currency === 'CUP' ? 1 : rate);
             }, 0)
           : 0;
 
-        // Para enviar al RPC, usamos los montos en CUP
         const cashAmount = cashAmountCup;
         const transferAmount = transferAmountCup;
         const zelleAmount = zelleAmountCup;
 
-        // FIX-ZELLE: validar coherencia solo para mixed (en CUP)
         if (paymentMethod === 'mixed' && Math.abs(cashAmountCup + transferAmountCup + zelleAmountCup - totalAmountCup) > 0.01) {
-          throw new Error(`Descuadre de pagos: cash (${cashAmountCup.toFixed(2)}) + transfer (${transferAmountCup.toFixed(2)}) + zelle (${zelleAmountCup.toFixed(2)}) ≠ total (${totalAmountCup.toFixed(2)}) CUP`);
+          throw new Error(`Descuadre: efectivo (${cashAmountCup.toFixed(2)}) + transf (${transferAmountCup.toFixed(2)}) + zelle (${zelleAmountCup.toFixed(2)}) ≠ total (${totalAmountCup.toFixed(2)}) CUP`);
         }
 
         const saleId = await createSale({
@@ -120,7 +116,8 @@ export function usePOSCheckout() {
           p_seller_id: user.id,
           p_payment_method: paymentMethod,
           p_total_amount: useCartStore.getState().getTotalCup(),
-          p_subtotal: getSubtotal(),
+          // FIX-B4 (2026-07-10): p_subtotal en CUP, no suma cruda de monedas mixtas
+          p_subtotal: useCartStore.getState().getSubtotalCup(),
           p_discount_type: (checkoutDiscount || discount)?.type || "fixed",
           p_discount_value: getDiscountAmount(),
           // FIX F2-01: persistir split cash/transfer/zelle server-side
@@ -148,6 +145,16 @@ export function usePOSCheckout() {
             cash_currency: i.cash_currency || 'CUP',
             transfer_currency: i.transfer_currency || 'CUP',
             zelle_currency: i.zelle_currency || 'USD',
+            // FIX-B5: persistir descuentos por método
+            cash_discount_type: i.cash_discount_type || null,
+            cash_discount_value: i.cash_discount_value || 0,
+            cash_discount_currency: i.cash_discount_currency || 'CUP',
+            transfer_discount_type: i.transfer_discount_type || null,
+            transfer_discount_value: i.transfer_discount_value || 0,
+            transfer_discount_currency: i.transfer_discount_currency || 'CUP',
+            zelle_discount_type: i.zelle_discount_type || null,
+            zelle_discount_value: i.zelle_discount_value || 0,
+            zelle_discount_currency: i.zelle_discount_currency || 'USD',
           })),
         });
 
@@ -248,9 +255,25 @@ export function usePOSCheckout() {
           },
         });
       } catch (err: unknown) {
-        toast.error(
-          "Error al procesar la venta: " + (err instanceof Error ? err.message : "Error desconocido"),
-        );
+        // FIX-B9 (2026-07-10): traducir errores crudos de Postgres/Supabase
+        const rawMsg = err instanceof Error ? err.message : 'Error desconocido';
+        const lowMsg = rawMsg.toLowerCase();
+        let friendlyMsg = rawMsg;
+        if (lowMsg.includes('err_insufficient_stock')) {
+          const product = rawMsg.split(':')[1]?.trim() || 'producto';
+          friendlyMsg = `Stock insuficiente: ${product}`;
+        } else if (lowMsg.includes('err_payment_mismatch')) {
+          friendlyMsg = 'Los pagos no cuadran con el total de la venta. Revisa el desglose.';
+        } else if (lowMsg.includes('err_product_not_found')) {
+          friendlyMsg = 'Un producto del carrito ya no existe. Recarga la página.';
+        } else if (lowMsg.includes('err_backdated_document')) {
+          friendlyMsg = 'La fecha de la venta es anterior a la última venta registrada.';
+        } else if (lowMsg.includes('unauthorized') || lowMsg.includes('rls') || lowMsg.includes('42501')) {
+          friendlyMsg = 'No tienes permisos para vender en esta tienda.';
+        } else if (lowMsg.includes('network') || lowMsg.includes('fetch')) {
+          friendlyMsg = 'Error de conexión. Verifica tu internet e intenta de nuevo.';
+        }
+        toast.error(friendlyMsg);
       }
     },
     [
@@ -356,9 +379,12 @@ export function usePOSCheckout() {
       // 2. Permitir editar tasas manualmente (se arrastran via globalRates)
       // 3. Confirmar o cancelar
       const cartState = useCartStore.getState();
+      // FIX-B8 (2026-07-10): ampliar detección multi-moneda
       const hasMultiCurrency = paymentMethod === 'mixed'
         || items.some(i => i.currency && i.currency !== 'CUP')
         || items.some(i => i.zelle_paid && i.zelle_paid > 0)
+        || items.some(i => i.cash_currency && i.cash_currency !== 'CUP' && i.cash_paid > 0)
+        || items.some(i => i.transfer_currency && i.transfer_currency !== 'CUP' && i.transfer_paid > 0)
         || paymentMethod === 'zelle';
 
       if (hasMultiCurrency) {
