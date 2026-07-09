@@ -521,6 +521,7 @@ export const POSCartItem = ({
             Pago Mixto (Efectivo / Transf. / Zelle)
           </span>
           {/* FIX-DISCOUNT-PER-METHOD (2026-07-07): cada método tiene monto + moneda + descuento */}
+          {/* FIX-UI (2026-07-10): descuento en la misma línea del pago, sin label de moneda */}
           {/* Efectivo */}
           <div className="border border-border/30 rounded-lg p-2 space-y-1.5">
             <div className="flex gap-1 items-center">
@@ -552,30 +553,24 @@ export const POSCartItem = ({
               >
                 <option value="CUP">CUP</option><option value="USD">USD</option><option value="EUR">EUR</option><option value="MLC">MLC</option>
               </select>
-            </div>
-            {/* Descuento efectivo */}
-            <div className="flex gap-1 items-center pl-1">
               <select
                 value={item.cash_discount_type || 'none'}
                 onChange={(e) => {
                   const type = e.target.value === 'none' ? null : e.target.value as 'percentage' | 'fixed';
                   useCartStore.setState((state) => ({ items: state.items.map((it) => it.product_id === item.product_id && it.variant_id === item.variant_id ? { ...it, cash_discount_type: type } : it), lastUpdated: Date.now() }));
                 }}
-                className="bg-background border border-border/50 rounded px-1 py-1 text-[9px] font-bold"
+                className="bg-background border border-border/50 rounded px-1 py-2 min-h-[36px] text-[9px] font-bold"
               >
-                <option value="none">Sin desc.</option><option value="percentage">%</option><option value="fixed">$</option>
+                <option value="none">Sin desc</option><option value="percentage">%</option><option value="fixed">$</option>
               </select>
               {item.cash_discount_type && (
-                <>
-                  <input
-                    type="number"
-                    value={item.cash_discount_value || 0}
-                    onChange={(e) => useCartStore.setState((state) => ({ items: state.items.map((it) => it.product_id === item.product_id && it.variant_id === item.variant_id ? { ...it, cash_discount_value: parseFloat(e.target.value) || 0, cash_discount_currency: item.cash_currency } : it), lastUpdated: Date.now() }))}
-                    className="w-16 bg-background border border-border/50 rounded px-1 py-1 text-[9px] font-bold"
-                    placeholder="0"
-                  />
-                  <span className="text-[9px] text-muted-foreground font-bold">{item.cash_currency || 'CUP'}</span>
-                </>
+                <input
+                  type="number"
+                  value={item.cash_discount_value || 0}
+                  onChange={(e) => useCartStore.setState((state) => ({ items: state.items.map((it) => it.product_id === item.product_id && it.variant_id === item.variant_id ? { ...it, cash_discount_value: parseFloat(e.target.value) || 0, cash_discount_currency: item.cash_currency } : it), lastUpdated: Date.now() }))}
+                  className="w-14 bg-background border border-border/50 rounded px-1 py-2 min-h-[36px] text-[9px] font-bold"
+                  placeholder="0"
+                />
               )}
             </div>
           </div>
@@ -607,30 +602,24 @@ export const POSCartItem = ({
               >
                 <option value="CUP">CUP</option><option value="USD">USD</option><option value="EUR">EUR</option><option value="MLC">MLC</option>
               </select>
-            </div>
-            {/* Descuento transferencia */}
-            <div className="flex gap-1 items-center pl-1">
               <select
                 value={item.transfer_discount_type || 'none'}
                 onChange={(e) => {
                   const type = e.target.value === 'none' ? null : e.target.value as 'percentage' | 'fixed';
                   useCartStore.setState((state) => ({ items: state.items.map((it) => it.product_id === item.product_id && it.variant_id === item.variant_id ? { ...it, transfer_discount_type: type } : it), lastUpdated: Date.now() }));
                 }}
-                className="bg-background border border-border/50 rounded px-1 py-1 text-[9px] font-bold"
+                className="bg-background border border-border/50 rounded px-1 py-2 min-h-[36px] text-[9px] font-bold"
               >
-                <option value="none">Sin desc.</option><option value="percentage">%</option><option value="fixed">$</option>
+                <option value="none">Sin desc</option><option value="percentage">%</option><option value="fixed">$</option>
               </select>
               {item.transfer_discount_type && (
-                <>
-                  <input
-                    type="number"
-                    value={item.transfer_discount_value || 0}
-                    onChange={(e) => useCartStore.setState((state) => ({ items: state.items.map((it) => it.product_id === item.product_id && it.variant_id === item.variant_id ? { ...it, transfer_discount_value: parseFloat(e.target.value) || 0, transfer_discount_currency: item.transfer_currency } : it), lastUpdated: Date.now() }))}
-                    className="w-16 bg-background border border-border/50 rounded px-1 py-1 text-[9px] font-bold"
-                    placeholder="0"
-                  />
-                  <span className="text-[9px] text-muted-foreground font-bold">{item.transfer_currency || 'CUP'}</span>
-                </>
+                <input
+                  type="number"
+                  value={item.transfer_discount_value || 0}
+                  onChange={(e) => useCartStore.setState((state) => ({ items: state.items.map((it) => it.product_id === item.product_id && it.variant_id === item.variant_id ? { ...it, transfer_discount_value: parseFloat(e.target.value) || 0, transfer_discount_currency: item.transfer_currency } : it), lastUpdated: Date.now() }))}
+                  className="w-14 bg-background border border-border/50 rounded px-1 py-2 min-h-[36px] text-[9px] font-bold"
+                  placeholder="0"
+                />
               )}
             </div>
           </div>
@@ -662,30 +651,24 @@ export const POSCartItem = ({
               >
                 <option value="CUP">CUP</option><option value="USD">USD</option><option value="EUR">EUR</option><option value="MLC">MLC</option>
               </select>
-            </div>
-            {/* Descuento zelle */}
-            <div className="flex gap-1 items-center pl-1">
               <select
                 value={item.zelle_discount_type || 'none'}
                 onChange={(e) => {
                   const type = e.target.value === 'none' ? null : e.target.value as 'percentage' | 'fixed';
                   useCartStore.setState((state) => ({ items: state.items.map((it) => it.product_id === item.product_id && it.variant_id === item.variant_id ? { ...it, zelle_discount_type: type } : it), lastUpdated: Date.now() }));
                 }}
-                className="bg-background border border-border/50 rounded px-1 py-1 text-[9px] font-bold"
+                className="bg-background border border-border/50 rounded px-1 py-2 min-h-[36px] text-[9px] font-bold"
               >
-                <option value="none">Sin desc.</option><option value="percentage">%</option><option value="fixed">$</option>
+                <option value="none">Sin desc</option><option value="percentage">%</option><option value="fixed">$</option>
               </select>
               {item.zelle_discount_type && (
-                <>
-                  <input
-                    type="number"
-                    value={item.zelle_discount_value || 0}
-                    onChange={(e) => useCartStore.setState((state) => ({ items: state.items.map((it) => it.product_id === item.product_id && it.variant_id === item.variant_id ? { ...it, zelle_discount_value: parseFloat(e.target.value) || 0, zelle_discount_currency: item.zelle_currency } : it), lastUpdated: Date.now() }))}
-                    className="w-16 bg-background border border-border/50 rounded px-1 py-1 text-[9px] font-bold"
-                    placeholder="0"
-                  />
-                  <span className="text-[9px] text-muted-foreground font-bold">{item.zelle_currency || 'USD'}</span>
-                </>
+                <input
+                  type="number"
+                  value={item.zelle_discount_value || 0}
+                  onChange={(e) => useCartStore.setState((state) => ({ items: state.items.map((it) => it.product_id === item.product_id && it.variant_id === item.variant_id ? { ...it, zelle_discount_value: parseFloat(e.target.value) || 0, zelle_discount_currency: item.zelle_currency } : it), lastUpdated: Date.now() }))}
+                  className="w-14 bg-background border border-border/50 rounded px-1 py-2 min-h-[36px] text-[9px] font-bold"
+                  placeholder="0"
+                />
               )}
             </div>
           </div>
