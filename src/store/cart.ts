@@ -35,10 +35,20 @@ export interface CartItem {
   // FIX-ZELLE (2026-07-06): agregar zelle_paid para pago mixto con Zelle
   zelle_paid: number;
   // FIX-PAYMENT-METHOD-CURRENCY (2026-07-06): moneda por método de pago del item
-  // Permite ej: 2000 CUP efectivo + 500 USD Zelle en el mismo producto
   cash_currency: string;
   transfer_currency: string;
   zelle_currency: string;
+  // FIX-DISCOUNT-PER-METHOD (2026-07-07): descuento individual por método de pago
+  // Cada método puede tener su propio descuento: tipo (% o $), valor, y moneda
+  cash_discount_type: "percentage" | "fixed" | null;
+  cash_discount_value: number;
+  cash_discount_currency: string;
+  transfer_discount_type: "percentage" | "fixed" | null;
+  transfer_discount_value: number;
+  transfer_discount_currency: string;
+  zelle_discount_type: "percentage" | "fixed" | null;
+  zelle_discount_value: number;
+  zelle_discount_currency: string;
   // FIX-MULTI-MONEDA: moneda y tasa de cambio POR ITEM (no global)
   currency: string;
   exchange_rate: number;
@@ -120,6 +130,8 @@ interface CartState {
   // FIX-MULTI-CURRENCY-CORE: helpers de conversión a CUP
   getItemSubtotalCup: (item: CartItem) => number;
   getItemPaidCup: (item: CartItem) => number;
+  // FIX-DISCOUNT-PER-METHOD: subtotal ajustado con descuento del método específico
+  getItemSubtotalWithMethodDiscountCup: (item: CartItem, method: 'cash' | 'transfer' | 'zelle') => number;
 }
 
 const calculateItemSubtotal = (item: CartItem) => {
@@ -238,6 +250,34 @@ export const useCartStore = create<CartState>()(
         return cashCup + transferCup + zelleCup;
       },
 
+      // FIX-DISCOUNT-PER-METHOD (2026-07-07): calcular subtotal ajustado por método
+      // Aplica el descuento específico del método (cash/transfer/zelle) al subtotal base
+      // y convierte a CUP. Esto es lo que el pago de ese método debe cubrir.
+      getItemSubtotalWithMethodDiscountCup: (item: CartItem, method: 'cash' | 'transfer' | 'zelle') => {
+        const baseSubtotalCup = get().getItemSubtotalCup(item);
+        const dtype = method === 'cash' ? item.cash_discount_type
+          : method === 'transfer' ? item.transfer_discount_type
+          : item.zelle_discount_type;
+        const dvalue = method === 'cash' ? item.cash_discount_value
+          : method === 'transfer' ? item.transfer_discount_value
+          : item.zelle_discount_value;
+        const dcurrency = method === 'cash' ? item.cash_discount_currency
+          : method === 'transfer' ? item.transfer_discount_currency
+          : item.zelle_discount_currency;
+
+        if (!dtype || dvalue <= 0) return baseSubtotalCup;
+
+        let discountCup = 0;
+        if (dtype === 'percentage') {
+          discountCup = baseSubtotalCup * (dvalue / 100);
+        } else {
+          // fixed: convertir a CUP si la moneda del descuento no es CUP
+          const rate = getRateToCup(dcurrency || 'CUP', item.exchange_rate || 1, get().globalRates);
+          discountCup = dvalue * rate;
+        }
+        return Math.max(0, baseSubtotalCup - discountCup);
+      },
+
       /**
        * Clears the cart when switching stores if the new store differs from the cart's store.
        * This prevents selling Store A products under Store B context.
@@ -327,6 +367,16 @@ export const useCartStore = create<CartState>()(
                 cash_paid: 0,
                 transfer_paid: 0,
                 zelle_paid: 0,
+                // FIX-DISCOUNT-PER-METHOD: defaults sin descuento
+                cash_discount_type: null,
+                cash_discount_value: 0,
+                cash_discount_currency: 'CUP',
+                transfer_discount_type: null,
+                transfer_discount_value: 0,
+                transfer_discount_currency: 'CUP',
+                zelle_discount_type: null,
+                zelle_discount_value: 0,
+                zelle_discount_currency: 'USD',
                 // FIX-PAYMENT-METHOD-CURRENCY: defaults heredan la moneda del item
                 cash_currency: (productInput as any).currency || (product as any)?.price_currency || 'CUP',
                 transfer_currency: (productInput as any).currency || (product as any)?.price_currency || 'CUP',
