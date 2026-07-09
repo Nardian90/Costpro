@@ -436,6 +436,7 @@ export const POSCartItem = ({
                   updatedItem.subtotal = recalcSubtotal(updatedItem);
                   updatedItem.cash_paid = updatedItem.subtotal;
                   updatedItem.transfer_paid = 0;
+                  updatedItem.zelle_paid = 0; // FIX-BUG-2: reset zelle al cambiar moneda
                   useCartStore.setState((state) => ({
                     items: state.items.map((it2, i2) => i2 === idx ? updatedItem : it2),
                     lastUpdated: Date.now(),
@@ -463,6 +464,9 @@ export const POSCartItem = ({
             disabled={item.currency === 'CUP'}
             onChange={(e) => {
               const rate = parseFloat(e.target.value) || 1.0;
+              // FIX-BUG-4 (2026-07-07): al editar la TASA, también actualizar globalRates
+              // para que todas las conversiones del carrito usen esta tasa
+              useCartStore.getState().setGlobalRate(item.currency || 'USD', rate);
               useCartStore.getState().items.forEach((it, idx) => {
                 if (it.product_id === item.product_id && it.variant_id === item.variant_id) {
                   useCartStore.setState((state) => ({
@@ -528,6 +532,7 @@ export const POSCartItem = ({
             Pago Mixto (Efectivo / Transf. / Zelle)
           </span>
           {/* FIX-PAYMENT-METHOD-CURRENCY (2026-07-06): 3 métodos con moneda editable */}
+          {/* FIX-UI (2026-07-07): mobile-first, CUP equivalente visible */}
           {/* Efectivo */}
           <div className="flex gap-1 items-center">
             <div className="relative flex-1">
@@ -547,6 +552,9 @@ export const POSCartItem = ({
                 className="w-full bg-background border border-border/50 rounded-lg pl-5 pr-1 py-2.5 min-h-[44px] text-xs font-bold"
                 aria-label={`Efectivo para ${item.product.name}`}
               />
+              {item.cash_paid > 0 && item.cash_currency !== 'CUP' && (
+                <p className="text-[8px] text-muted-foreground mt-0.5 ml-1">≈ {formatCurrency(item.cash_paid * (useCartStore.getState().globalRates[item.cash_currency || 'CUP'] || item.exchange_rate || 1))} CUP</p>
+              )}
             </div>
             <select
               value={item.cash_currency || 'CUP'}
@@ -585,6 +593,9 @@ export const POSCartItem = ({
                 className="w-full bg-background border border-border/50 rounded-lg pl-5 pr-1 py-2.5 min-h-[44px] text-xs font-bold"
                 aria-label={`Transferencia para ${item.product.name}`}
               />
+              {item.transfer_paid > 0 && item.transfer_currency !== 'CUP' && (
+                <p className="text-[8px] text-muted-foreground mt-0.5 ml-1">≈ {formatCurrency(item.transfer_paid * (useCartStore.getState().globalRates[item.transfer_currency || 'CUP'] || item.exchange_rate || 1))} CUP</p>
+              )}
             </div>
             <select
               value={item.transfer_currency || 'CUP'}
@@ -623,6 +634,9 @@ export const POSCartItem = ({
                 className="w-full bg-background border border-border/50 rounded-lg pl-5 pr-1 py-2.5 min-h-[44px] text-xs font-bold"
                 aria-label={`Zelle para ${item.product.name}`}
               />
+              {item.zelle_paid > 0 && item.zelle_currency !== 'CUP' && (
+                <p className="text-[8px] text-muted-foreground mt-0.5 ml-1">≈ {formatCurrency(item.zelle_paid * (useCartStore.getState().globalRates[item.zelle_currency || 'USD'] || item.exchange_rate || 1))} CUP</p>
+              )}
             </div>
             <select
               value={item.zelle_currency || 'USD'}
@@ -646,12 +660,32 @@ export const POSCartItem = ({
       </div>
       </div>
       )}
-      {Math.abs(item.cash_paid + item.transfer_paid + (item.zelle_paid || 0) - item.subtotal) > 0.01 && (
-        <div className="mt-1 text-[10px] font-bold text-destructive flex items-center gap-1" role="alert">
-          <AlertTriangle className="w-3 h-3" aria-hidden="true" /> Error: Pago no coincide (
-          {formatCurrency(item.subtotal)})
-        </div>
-      )}
+      {/* FIX-BUG-1 (2026-07-07): validación en CUP, no en monedas mixtas */}
+      {(() => {
+        const cartStore = useCartStore.getState();
+        const subtotalCup = cartStore.getItemSubtotalCup(item);
+        const paidCup = cartStore.getItemPaidCup(item);
+        const diff = paidCup - subtotalCup;
+        if (Math.abs(diff) <= 0.01) {
+          return (
+            <div className="mt-1 text-[10px] font-bold text-emerald-500 flex items-center gap-1">
+              ✓ Pago completo ({formatCurrency(subtotalCup)} CUP)
+            </div>
+          );
+        }
+        if (diff > 0) {
+          return (
+            <div className="mt-1 text-[10px] font-bold text-amber-500 flex items-center gap-1">
+              ⚠ Sobrepago: {formatCurrency(diff)} CUP
+            </div>
+          );
+        }
+        return (
+          <div className="mt-1 text-[10px] font-bold text-destructive flex items-center gap-1" role="alert">
+            <AlertTriangle className="w-3 h-3" aria-hidden="true" /> Falta: {formatCurrency(Math.abs(diff))} CUP
+          </div>
+        );
+      })()}
     </motion.div>
   );
 };

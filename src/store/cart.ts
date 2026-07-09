@@ -117,6 +117,9 @@ interface CartState {
   // FIX-GLOBAL-RATES: tasas de cambio manuales editables (se arrastran hasta actualizar)
   globalRates: Record<string, number>;
   setGlobalRate: (currency: string, rate: number) => void;
+  // FIX-MULTI-CURRENCY-CORE: helpers de conversión a CUP
+  getItemSubtotalCup: (item: CartItem) => number;
+  getItemPaidCup: (item: CartItem) => number;
 }
 
 const calculateItemSubtotal = (item: CartItem) => {
@@ -128,6 +131,17 @@ const calculateItemSubtotal = (item: CartItem) => {
   if (item.discount_type === "percentage") return base * (1 - item.discount_value / 100);
   return Math.max(0, (price - item.discount_value) * quantity);
 };
+
+// FIX-MULTI-CURRENCY-CORE (2026-07-07): función auxiliar para obtener la tasa
+// de conversión de cualquier moneda a CUP.
+// Prioridad: globalRates (manuales) > exchange_rate del item > 1 (CUP)
+function getRateToCup(currency: string, itemRate: number, globalRates: Record<string, number>): number {
+  if (currency === 'CUP') return 1;
+  // Usar tasa manual global si existe (el usuario la editó en el modal)
+  if (globalRates[currency] && globalRates[currency] > 0) return globalRates[currency];
+  // Fallback: tasa del item
+  return itemRate || 1;
+}
 
 export const useCartStore = create<CartState>()(
   persist(
@@ -204,6 +218,24 @@ export const useCartStore = create<CartState>()(
           }
         }
         return result;
+      },
+
+      // FIX-MULTI-CURRENCY-CORE (2026-07-07): helpers para conversión a CUP
+      // getItemSubtotalCup: convierte el subtotal del item a CUP usando su tasa
+      // getItemPaidCup: convierte todos los pagos del item a CUP usando globalRates
+      // Estas funciones son la base de TODA validación multi-moneda.
+      getItemSubtotalCup: (item: CartItem) => {
+        const subtotal = item.subtotal || 0;
+        if (item.currency === 'CUP') return subtotal;
+        return subtotal * (item.exchange_rate || 1);
+      },
+
+      getItemPaidCup: (item: CartItem) => {
+        const rates = get().globalRates;
+        const cashCup = (item.cash_paid || 0) * getRateToCup(item.cash_currency || 'CUP', item.exchange_rate || 1, rates);
+        const transferCup = (item.transfer_paid || 0) * getRateToCup(item.transfer_currency || 'CUP', item.exchange_rate || 1, rates);
+        const zelleCup = (item.zelle_paid || 0) * getRateToCup(item.zelle_currency || 'USD', item.exchange_rate || 1, rates);
+        return cashCup + transferCup + zelleCup;
       },
 
       /**
