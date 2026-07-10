@@ -13,6 +13,40 @@ function formatResult(result: number): string {
 }
 
 /* ─────────────────────────────────────────────────────
+ *  HistoryEntry — entrada del historial de cálculos
+ * ───────────────────────────────────────────────────── */
+export interface HistoryEntry {
+  id: string;
+  equation: string;   // ej: "1100 + 580"
+  result: string;     // ej: "1680"
+  timestamp: number;
+}
+
+const HISTORY_KEY = 'costpro-calc-history';
+const MAX_HISTORY = 50;
+
+function loadHistory(): HistoryEntry[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const raw = localStorage.getItem(HISTORY_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed.slice(0, MAX_HISTORY) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveHistory(entries: HistoryEntry[]) {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(entries.slice(0, MAX_HISTORY)));
+  } catch {
+    // ignore quota errors
+  }
+}
+
+/* ─────────────────────────────────────────────────────
  *  useCalculator — shared calculator logic (CSP-safe)
  *
  *  BUG-FIX LIST:
@@ -27,13 +61,52 @@ function formatResult(result: number): string {
  *    BF-09  Percent (%) divides current value by 100
  *    BF-10  Toggle sign (+/-) negates current display
  *    BF-11  handlersRef pattern for stable keyboard listeners
+ *    BF-12  History persistente en localStorage (50 entradas)
+ *    BF-13  Memory: M+, M-, MR, MC
+ *    BF-14  Use result from history (clic en entrada)
  * ───────────────────────────────────────────────────── */
 export function useCalculator() {
   const [display, setDisplay] = useState('0');
   const [equation, setEquation] = useState('');
   const [lastResult, setLastResult] = useState<number | null>(null);
+  const [history, setHistory] = useState<HistoryEntry[]>([]);
+  const [memory, setMemory] = useState<number>(0);
+  const [hasMemory, setHasMemory] = useState(false);
   // BF-01: expr-eval does NOT use Function constructor — CSP-safe
   const parser = useMemo(() => new Parser(), []);
+
+  // Cargar historial al montar
+  useEffect(() => {
+    setHistory(loadHistory());
+  }, []);
+
+  /* ── Add to history ──────────────────────────────── */
+  const addToHistory = useCallback((eq: string, result: string) => {
+    const entry: HistoryEntry = {
+      id: `h_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+      equation: eq,
+      result,
+      timestamp: Date.now(),
+    };
+    setHistory(prev => {
+      const next = [entry, ...prev].slice(0, MAX_HISTORY);
+      saveHistory(next);
+      return next;
+    });
+  }, []);
+
+  /* ── Clear history ───────────────────────────────── */
+  const clearHistory = useCallback(() => {
+    setHistory([]);
+    saveHistory([]);
+  }, []);
+
+  /* ── Use result from history ─────────────────────── */
+  const useHistoryResult = useCallback((entry: HistoryEntry) => {
+    setDisplay(entry.result);
+    setEquation('');
+    setLastResult(parseFloat(entry.result) || 0);
+  }, []);
 
   /* ── Number input ───────────────────────────────── */
   const handleNumber = useCallback((num: string) => {
@@ -111,6 +184,8 @@ export function useCalculator() {
         return;
       }
       const formatted = formatResult(result);
+      // BF-12: añadir al historial
+      addToHistory(fullEq, formatted);
       setDisplay(formatted);
       setEquation('');
       setLastResult(result);
@@ -118,7 +193,7 @@ export function useCalculator() {
       setDisplay('Error');
       setEquation('');
     }
-  }, [display, equation, parser]);
+  }, [display, equation, parser, addToHistory]);
 
   /* ── Clear (AC) ─────────────────────────────────── */
   const handleClear = useCallback(() => {
@@ -151,22 +226,53 @@ export function useCalculator() {
     setDisplay(prev => prev.startsWith('-') ? prev.slice(1) : '-' + prev);
   }, [display]);
 
+  /* ── Memory operations — BF-13 ──────────────────── */
+  const handleMemoryAdd = useCallback(() => {
+    if (display === 'Error') return;
+    const val = parseFloat(display) || 0;
+    setMemory(prev => prev + val);
+    setHasMemory(true);
+  }, [display]);
+
+  const handleMemorySubtract = useCallback(() => {
+    if (display === 'Error') return;
+    const val = parseFloat(display) || 0;
+    setMemory(prev => prev - val);
+    setHasMemory(true);
+  }, [display]);
+
+  const handleMemoryRecall = useCallback(() => {
+    if (!hasMemory) return;
+    setDisplay(formatResult(memory));
+    setLastResult(null);
+  }, [memory, hasMemory]);
+
+  const handleMemoryClear = useCallback(() => {
+    setMemory(0);
+    setHasMemory(false);
+  }, []);
+
   /* ── Stable ref for keyboard listeners — BF-11 ─── */
   const handlersRef = useRef({
     handleNumber, handleOperator, handleCalculate,
     handleClear, handleBackspace, handlePercent, handleToggleSign,
+    handleMemoryAdd, handleMemorySubtract, handleMemoryRecall, handleMemoryClear,
   });
   useEffect(() => {
     handlersRef.current = {
       handleNumber, handleOperator, handleCalculate,
       handleClear, handleBackspace, handlePercent, handleToggleSign,
+      handleMemoryAdd, handleMemorySubtract, handleMemoryRecall, handleMemoryClear,
     };
-  }, [handleNumber, handleOperator, handleCalculate, handleClear, handleBackspace, handlePercent, handleToggleSign]);
+  }, [handleNumber, handleOperator, handleCalculate, handleClear, handleBackspace, handlePercent, handleToggleSign, handleMemoryAdd, handleMemorySubtract, handleMemoryRecall, handleMemoryClear]);
 
   return {
     display,
     equation,
     lastResult,
+    history,
+    memory,
+    hasMemory,
     handleNumber,
     handleOperator,
     handleCalculate,
@@ -174,6 +280,13 @@ export function useCalculator() {
     handleBackspace,
     handlePercent,
     handleToggleSign,
+    handleMemoryAdd,
+    handleMemorySubtract,
+    handleMemoryRecall,
+    handleMemoryClear,
+    clearHistory,
+    useHistoryResult,
+    addToHistory,
     handlersRef,
   };
 }

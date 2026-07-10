@@ -528,7 +528,10 @@ export default function TerminalShell() {
       {currentView !== 'pos' && currentView !== 'help' &&
        currentView !== 'telegram-conversations' && currentView !== 'whatsapp-conversations' &&
        !isMobile && <ChatBot />}
-      {currentView !== "pos" && !isMobile && <FloatingCalculator />}
+      {/* FIX-CALC-PRO (2026-07-10): FloatingCalculator ahora disponible TAMBIÉN en POS.
+          Antes estaba gateado con currentView !== "pos". Como ahora tiene desglose de
+          billetes integrado, es útil en el checkout. Solo se oculta en mobile. */}
+      {!isMobile && <FloatingCalculator />}
 
       {/* B4: ScrollToTop montado en el shell — escucha .terminal-content scroll */}
       <ScrollToTop />
