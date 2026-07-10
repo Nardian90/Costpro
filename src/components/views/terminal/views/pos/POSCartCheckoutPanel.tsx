@@ -325,201 +325,32 @@ export function POSCartCheckoutPanel({
         </div>
       )}
 
-      {/* ── PAGO MIXTO (accordion) ────────────────────────────────── */}
+      {/* ── CONSOLIDACIÓN DE PAGOS (read-only, siempre visible) ────── */}
       <div className="px-4 sm:px-6 py-2 border-b border-border/50">
-        <button
-          type="button"
-          onClick={() => setShowMixedPayment(!showMixedPayment)}
-          className="w-full flex items-center justify-between py-2 text-xs font-black uppercase text-primary tracking-widest hover:underline"
-          aria-expanded={showMixedPayment}
-          aria-controls="pos-mixed-payment"
-        >
-          <span className="flex items-center gap-2">
-            <Send className="w-3.5 h-3.5" aria-hidden="true" />
-            Pago mixto
-          </span>
-          {showMixedPayment ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-        </button>
-        <AnimatePresence>
-          {showMixedPayment && (
-            <motion.div
-              id="pos-mixed-payment"
-              initial={{ height: 0, opacity: 0 }}
-              animate={prefersReducedMotion ? {} : { height: "auto", opacity: 1 }}
-              exit={prefersReducedMotion ? {} : { height: 0, opacity: 0 }}
-              className="overflow-hidden"
-            >
-              <div className="pb-3 space-y-3">
-                {/* FIX-PAYMENT-MODE (2026-07-06): Modo A (readonly por producto) vs Modo B (editable global) */}
-                {(() => {
-                  // FIX-BUG-1 (2026-07-06): leer directo del store (no depender de props)
-                  const modeByProduct = useCartStore.getState().isPaymentModeByProduct();
-                  const consolidated = useCartStore.getState().getConsolidatedPayments();
-
-                  if (modeByProduct) {
-                    // MODO A: readonly — mostrar consolidación por moneda
-                    const currencies = Object.keys(consolidated).sort();
-                    return (
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2 text-[10px] font-black uppercase text-amber-600 bg-amber-500/10 px-2 py-1 rounded-lg">
-                          <AlertTriangle className="w-3 h-3" />
-                          Modo por producto (read-only)
-                        </div>
-                        <p className="text-[9px] text-muted-foreground">
-                          Los pagos se especificaron por producto. Consolida por moneda:
-                        </p>
-                        {currencies.length === 0 ? (
-                          <p className="text-[10px] text-muted-foreground italic">Sin pagos configurados</p>
-                        ) : (
-                          <div className="space-y-2">
-                            {currencies.map(cur => {
-                              const c = consolidated[cur];
-                              return (
-                                <div key={cur} className="border border-border/50 rounded-lg p-2 bg-muted/20">
-                                  <p className="text-[10px] font-black uppercase mb-1">{cur}</p>
-                                  <div className="grid grid-cols-3 gap-1 text-[10px]">
-                                    <div className={c.cash > 0 ? "" : "opacity-30"}>
-                                      <span className="text-success font-bold">Efect:</span>
-                                      <span className="font-mono tabular-nums ml-1">{c.cash.toFixed(2)}</span>
-                                    </div>
-                                    <div className={c.transfer > 0 ? "" : "opacity-30"}>
-                                      <span className="text-primary font-bold">Transf:</span>
-                                      <span className="font-mono tabular-nums ml-1">{c.transfer.toFixed(2)}</span>
-                                    </div>
-                                    <div className={c.zelle > 0 ? "" : "opacity-30"}>
-                                      <span className="text-primary font-bold">Zelle:</span>
-                                      <span className="font-mono tabular-nums ml-1">{c.zelle.toFixed(2)}</span>
-                                    </div>
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        )}
-                        <button
-                          type="button"
-                          onClick={() => {
-                            // FIX-BUG-3 (2026-07-06): una sola llamada con el grossSubtotal total
-                            const gross = items.reduce((a, i) => a + i.subtotal, 0);
-                            prorateGlobalPayment?.(gross, 0, 0);
-                          }}
-                          className="text-[9px] text-destructive hover:underline font-bold uppercase"
-                        >
-                          ← Volver a distribución global
-                        </button>
-                      </div>
-                    );
-                  }
-
-                  // MODO B: editable — distribución global
-                  return (
-                    <>
-                      <div className="flex gap-2 flex-wrap">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            prorateGlobalPayment?.(total / 2, total / 2, 0);
-                            onSetSelectedPayment("mixed");
-                          }}
-                          className="min-h-[44px] flex-1 px-2 text-[10px] font-bold text-primary border border-primary/30 rounded-lg hover:bg-primary/5 focus:outline-none focus:ring-2 focus:ring-primary/30"
-                        >
-                          50/50 Efect+Transf
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            prorateGlobalPayment?.(total, 0, 0);
-                            onSetSelectedPayment("mixed");
-                          }}
-                          className="min-h-[44px] flex-1 px-2 text-[10px] font-bold text-primary border border-primary/30 rounded-lg hover:bg-primary/5 focus:outline-none focus:ring-2 focus:ring-primary/30"
-                        >
-                          Todo efectivo
-                        </button>
-                      </div>
-                      <div className="space-y-2">
-                        {/* Efectivo */}
-                        <div className="flex gap-2 items-end">
-                          <div className="flex-1">
-                            <label htmlFor="pos-cash-total" className="text-[10px] font-bold text-muted-foreground uppercase block mb-1">
-                              Efectivo
-                            </label>
-                            <div className="relative">
-                              <DollarSign className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-success" aria-hidden="true" />
-                              <input
-                                id="pos-cash-total"
-                                type="number"
-                                className="w-full min-h-[44px] bg-background border border-border/50 rounded-lg pl-8 pr-2 text-sm font-black tabular-nums focus:outline-none focus:ring-2 focus:ring-primary/30"
-                                value={items.reduce((acc, i) => acc + (i.cash_paid || 0), 0).toFixed(2)}
-                                onChange={(e) => {
-                                  const cash = Number(e.target.value);
-                                  const zelle = items.reduce((acc, i) => acc + (i.zelle_paid || 0), 0);
-                                  prorateGlobalPayment?.(cash, Math.max(0, total - cash - zelle), zelle);
-                                  onSetSelectedPayment("mixed");
-                                }}
-                                aria-label="Monto total a pagar en efectivo"
-                              />
-                            </div>
-                          </div>
-                        </div>
-                        {/* Transferencia */}
-                        <div className="flex gap-2 items-end">
-                          <div className="flex-1">
-                            <label htmlFor="pos-transfer-total" className="text-[10px] font-bold text-muted-foreground uppercase block mb-1">
-                              Transferencia
-                            </label>
-                            <div className="relative">
-                              <Send className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-primary" aria-hidden="true" />
-                              <input
-                                id="pos-transfer-total"
-                                type="number"
-                                className="w-full min-h-[44px] bg-background border border-border/50 rounded-lg pl-8 pr-2 text-sm font-black tabular-nums focus:outline-none focus:ring-2 focus:ring-primary/30"
-                                value={items.reduce((acc, i) => acc + (i.transfer_paid || 0), 0).toFixed(2)}
-                                onChange={(e) => {
-                                  const transf = Number(e.target.value);
-                                  const zelle = items.reduce((acc, i) => acc + (i.zelle_paid || 0), 0);
-                                  prorateGlobalPayment?.(Math.max(0, total - transf - zelle), transf, zelle);
-                                  onSetSelectedPayment("mixed");
-                                }}
-                                aria-label="Monto total a pagar por transferencia"
-                              />
-                            </div>
-                          </div>
-                        </div>
-                        {/* Zelle */}
-                        <div className="flex gap-2 items-end">
-                          <div className="flex-1">
-                            <label htmlFor="pos-zelle-total" className="text-[10px] font-bold text-muted-foreground uppercase block mb-1">
-                              Zelle
-                            </label>
-                            <div className="relative">
-                              <CreditCard className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-primary" aria-hidden="true" />
-                              <input
-                                id="pos-zelle-total"
-                                type="number"
-                                className="w-full min-h-[44px] bg-background border border-border/50 rounded-lg pl-8 pr-2 text-sm font-black tabular-nums focus:outline-none focus:ring-2 focus:ring-primary/30"
-                                value={items.reduce((acc, i) => acc + (i.zelle_paid || 0), 0).toFixed(2)}
-                                onChange={(e) => {
-                                  const zelle = Number(e.target.value);
-                                  const cash = items.reduce((acc, i) => acc + (i.cash_paid || 0), 0);
-                                  prorateGlobalPayment?.(cash, Math.max(0, total - cash - zelle), zelle);
-                                  onSetSelectedPayment("mixed");
-                                }}
-                                aria-label="Monto total a pagar por Zelle"
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </>
-                  );
-                })()}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {(() => {
+          const consolidated = useCartStore.getState().getConsolidatedPayments();
+          const currencies = Object.keys(consolidated).sort();
+          if (currencies.length === 0) return null;
+          return (
+            <div className="space-y-1">
+              <p className="text-[9px] font-black uppercase text-muted-foreground">Consolidado por tipo de pago</p>
+              {currencies.map(cur => {
+                const c = consolidated[cur];
+                return (
+                  <div key={cur} className="flex items-center gap-2 text-[10px] font-bold">
+                    <span className="text-muted-foreground w-8">{cur}</span>
+                    {c.cash > 0 && <span className="text-success">💵 {c.cash.toFixed(2)}</span>}
+                    {c.transfer > 0 && <span className="text-primary">📱 {c.transfer.toFixed(2)}</span>}
+                    {c.zelle > 0 && <span className="text-primary">💳 {c.zelle.toFixed(2)}</span>}
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })()}
       </div>
 
-      {/* ── DESCUENTO (accordion) ─────────────────────────────────── */}
+      {/* ── DESCUENTO / RECARGO GLOBAL (accordion) ────────────────── */}
       <div className="px-4 sm:px-6 py-2 border-b border-border/50">
         <button
           type="button"
@@ -530,10 +361,10 @@ export function POSCartCheckoutPanel({
         >
           <span className="flex items-center gap-2">
             <Tag className="w-3.5 h-3.5" aria-hidden="true" />
-            Descuento
+            Ajuste
             {discount && discount.value > 0 && (
-              <span className="bg-destructive/10 text-destructive px-1.5 py-0.5 rounded text-[9px]">
-                {discount.type === "percentage" ? `-${discount.value}%` : `-${formatCurrency(discount.value)}`}
+              <span className={cn("px-1.5 py-0.5 rounded text-[9px]", discount.value < 0 ? "bg-destructive/10 text-destructive" : "bg-amber-500/10 text-amber-500")}>
+                {discount.value < 0 ? `${discount.value}` : `+${discount.value}`}{discount.type === "percentage" ? "%" : ""}
               </span>
             )}
           </span>
