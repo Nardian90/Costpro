@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useEffect, useSyncExternalStore, useMemo } from 'react';
+import React, { useState, useRef, useEffect, useSyncExternalStore } from 'react';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
 import {
   Calculator,
@@ -15,8 +15,8 @@ import {
   DollarSign,
   Settings2,
   Trash2,
-  ArrowUp,
-  ArrowDown,
+  Copy,
+  Save,
 } from 'lucide-react';
 import { cn, isDarkTheme, formatCurrency } from "@/lib/utils";
 import { useTheme } from 'next-themes';
@@ -42,10 +42,8 @@ export const FloatingCalculator: React.FC = () => {
   useEffect(() => {
     if (!isCalculatorOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
-      // No interferir si el foco está en un input/select/textarea
       const target = e.target as HTMLElement;
       if (target && (target.tagName === 'INPUT' || target.tagName === 'SELECT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
-        // Permitir Escape para cerrar
         if (e.key === 'Escape') { setIsCalculatorOpen(false); return; }
         return;
       }
@@ -53,24 +51,16 @@ export const FloatingCalculator: React.FC = () => {
       const key = e.key;
       const h = calc.handlersRef.current;
 
-      // Digits 0-9
       if (/^[0-9]$/.test(key)) { e.preventDefault(); h.handleNumber(key); return; }
-      // Decimal point
       if (key === '.' || key === ',') { e.preventDefault(); h.handleNumber('.'); return; }
-      // Operators
       if (key === '+') { e.preventDefault(); h.handleOperator('+'); return; }
       if (key === '-') { e.preventDefault(); h.handleOperator('-'); return; }
       if (key === '*') { e.preventDefault(); h.handleOperator('*'); return; }
       if (key === '/') { e.preventDefault(); h.handleOperator('/'); return; }
-      // Enter or = → calculate
       if (key === 'Enter' || key === '=') { e.preventDefault(); h.handleCalculate(); return; }
-      // Backspace → delete last digit
       if (key === 'Backspace') { e.preventDefault(); h.handleBackspace(); return; }
-      // Escape → close
       if (key === 'Escape') { e.preventDefault(); setIsCalculatorOpen(false); return; }
-      // 'c' or 'C' → clear
       if (key === 'c' || key === 'C') { e.preventDefault(); h.handleClear(); return; }
-      // '%' → percent
       if (key === '%') { e.preventDefault(); h.handlePercent(); return; }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -81,22 +71,13 @@ export const FloatingCalculator: React.FC = () => {
 
   const isDark = isDarkTheme(resolvedTheme);
 
-  // Enhanced "Abanico" (Fan) Variants
   const fanVariants: Variants = {
     closed: {
-      opacity: 0,
-      scale: 0.3,
-      rotate: -15,
-      y: 20,
-      filter: "blur(10px)",
+      opacity: 0, scale: 0.3, rotate: -15, y: 20, filter: "blur(10px)",
       transition: { type: "spring", stiffness: 300, damping: 30 }
     },
     open: {
-      opacity: 1,
-      scale: 1,
-      rotate: 0,
-      y: 0,
-      filter: "blur(0px)",
+      opacity: 1, scale: 1, rotate: 0, y: 0, filter: "blur(0px)",
       transition: { type: "spring", stiffness: 150, damping: 15, staggerChildren: 0.03, delayChildren: 0.1 }
     }
   };
@@ -125,23 +106,17 @@ export const FloatingCalculator: React.FC = () => {
             aria-label="Calculadora CostPro Pro"
             aria-modal="true"
             className={cn(
-              "absolute top-24 right-4 sm:right-12 w-[300px] sm:w-[340px] max-w-[calc(100vw-2rem)] max-h-[calc(100vh-8rem)] rounded-[2rem] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.5)] overflow-hidden border flex flex-col pointer-events-auto",
+              "absolute top-24 right-4 sm:right-12 w-[300px] sm:w-[340px] max-w-[calc(100vw-2rem)] max-h-[calc(100vh-8rem)] rounded-[2rem] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.5)] overflow-hidden border flex flex-col pointer-events-auto backdrop-blur-xl",
               isDark
-                ? "bg-[#010203]/95 border-[#39FF14]/30 text-foreground"
-                : "bg-white/95 border-primary/30 text-foreground"
+                ? "bg-card/85 border-primary/20 text-foreground"
+                : "bg-card/90 border-primary/20 text-foreground"
             )}
           >
             {/* Draggable Handle */}
-            <div className={cn(
-              "p-3 flex items-center justify-between border-b cursor-move active:cursor-grabbing shrink-0",
-              isDark ? "bg-white/5 border-white/10" : "bg-muted/50 border-border/50"
-            )}>
+            <div className="p-3 flex items-center justify-between border-b cursor-move active:cursor-grabbing shrink-0 border-border/30 bg-muted/30">
               <div className="flex items-center gap-2">
-                <div className={cn(
-                  "w-8 h-8 rounded-xl flex items-center justify-center",
-                  isDark ? "bg-[#39FF14]/10" : "bg-primary/10"
-                )}>
-                  <Calculator className={cn("w-4 h-4", isDark ? "text-[#39FF14]" : "text-primary")} />
+                <div className="w-8 h-8 rounded-xl flex items-center justify-center bg-primary/10">
+                  <Calculator className="w-4 h-4 text-primary" />
                 </div>
                 <div>
                   <h4 className="text-[9px] font-black uppercase tracking-[0.2em] opacity-40 leading-none">CostPro Pro</h4>
@@ -154,20 +129,14 @@ export const FloatingCalculator: React.FC = () => {
                 type="button"
                 onClick={closeCalculator}
                 aria-label="Cerrar calculadora"
-                className={cn(
-                  "hover:rotate-90 transition-transform p-1.5 rounded-full",
-                  isDark ? "hover:bg-white/10" : "hover:bg-black/5"
-                )}
+                className="hover:rotate-90 transition-transform p-1.5 rounded-full hover:bg-muted"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             {/* Tabs */}
-            <div className={cn(
-              "flex border-b shrink-0",
-              isDark ? "border-white/10" : "border-border/50"
-            )}>
+            <div className="flex border-b shrink-0 border-border/30">
               <TabButton active={activeTab === 'calc'} onClick={() => setActiveTab('calc')} icon={<Calculator className="w-3 h-3" />} label="Calc" isDark={isDark} />
               <TabButton active={activeTab === 'history'} onClick={() => setActiveTab('history')} icon={<History className="w-3 h-3" />} label="Hist" isDark={isDark} badge={calc.history.length} />
               <TabButton active={activeTab === 'cash'} onClick={() => setActiveTab('cash')} icon={<DollarSign className="w-3 h-3" />} label="Cash" isDark={isDark} />
@@ -214,8 +183,8 @@ const TabButton: React.FC<TabButtonProps> = ({ active, onClick, icon, label, isD
     className={cn(
       "flex-1 py-2 flex flex-col items-center gap-0.5 text-[9px] font-black uppercase tracking-widest border-b-2 -mb-px transition-colors relative",
       active
-        ? (isDark ? "border-[#39FF14] text-[#39FF14]" : "border-primary text-primary")
-        : (isDark ? "border-transparent text-white/40 hover:text-white/70" : "border-transparent text-muted-foreground hover:text-foreground")
+        ? "border-primary text-primary"
+        : "border-transparent text-muted-foreground hover:text-foreground"
     )}
     aria-selected={active}
     role="tab"
@@ -223,10 +192,7 @@ const TabButton: React.FC<TabButtonProps> = ({ active, onClick, icon, label, isD
     {icon}
     <span>{label}</span>
     {badge !== undefined && badge > 0 && (
-      <span className={cn(
-        "absolute top-0.5 right-1/2 translate-x-4 px-1 rounded-full text-[7px] tabular-nums",
-        active ? "bg-current/20" : "bg-muted"
-      )}>
+      <span className="absolute top-0.5 right-1/2 translate-x-4 px-1 rounded-full text-[7px] tabular-nums bg-muted">
         {badge > 99 ? '99+' : badge}
       </span>
     )}
@@ -235,6 +201,8 @@ const TabButton: React.FC<TabButtonProps> = ({ active, onClick, icon, label, isD
 
 /* ─────────────────────────────────────────────────────
  *  Calc Tab — Display + Keypad + Memory
+ *  FIX-LAYOUT (2026-07-10): grid 5×4 sin row-span para
+ *  evitar el bug de botones de números invisibles.
  * ───────────────────────────────────────────────────── */
 interface CalcTabContentProps {
   calc: ReturnType<typeof useCalculator>;
@@ -245,16 +213,13 @@ const CalcTabContent: React.FC<CalcTabContentProps> = ({ calc, isDark, itemVaria
   return (
     <>
       {/* Display */}
-      <div className={cn(
-        "px-4 py-4 flex flex-col items-end justify-center gap-1 min-h-[90px] relative overflow-hidden",
-        isDark ? "bg-black/40" : "bg-slate-50/50"
-      )}>
+      <div className="px-4 py-4 flex flex-col items-end justify-center gap-1 min-h-[90px] relative overflow-hidden bg-muted/20">
         <div className="absolute inset-0 opacity-[0.03] pointer-events-none"
              style={{ backgroundImage: 'linear-gradient(#000 1px, transparent 1px), linear-gradient(90deg, #000 1px, transparent 1px)', backgroundSize: '10px 10px' }} />
 
-        <motion.div className="text-[10px] font-mono h-4 uppercase tracking-widest font-bold opacity-40 truncate w-full text-right">
+        <div className="text-[10px] font-mono h-4 uppercase tracking-widest font-bold opacity-40 truncate w-full text-right">
           {calc.equation || '\u00A0'}
-        </motion.div>
+        </div>
         <motion.div
           key={calc.display}
           initial={{ y: 5, opacity: 0 }}
@@ -262,13 +227,12 @@ const CalcTabContent: React.FC<CalcTabContentProps> = ({ calc, isDark, itemVaria
           className={cn(
             "text-3xl font-mono tracking-tighter w-full text-right font-black truncate",
             calc.display === 'Error'
-              ? "text-red-500"
-              : (isDark ? "text-[#39FF14] drop-shadow-[0_0_10px_rgba(57,255,20,0.3)]" : "text-primary")
+              ? "text-destructive"
+              : "text-primary"
           )}
         >
           {calc.display}
         </motion.div>
-        {/* Memory indicator */}
         {calc.hasMemory && (
           <div className="text-[8px] font-bold text-amber-500 mt-0.5">
             M: {formatCurrency(calc.memory)}
@@ -278,55 +242,47 @@ const CalcTabContent: React.FC<CalcTabContentProps> = ({ calc, isDark, itemVaria
 
       {/* Memory Row */}
       <div className="grid grid-cols-4 gap-1 px-3 pt-2">
-        <MemButton label="MC" onClick={calc.handleMemoryClear} disabled={!calc.hasMemory} isDark={isDark} />
-        <MemButton label="MR" onClick={calc.handleMemoryRecall} disabled={!calc.hasMemory} isDark={isDark} />
-        <MemButton label="M-" onClick={calc.handleMemorySubtract} isDark={isDark} />
-        <MemButton label="M+" onClick={calc.handleMemoryAdd} isDark={isDark} />
+        <MemButton label="MC" onClick={calc.handleMemoryClear} disabled={!calc.hasMemory} />
+        <MemButton label="MR" onClick={calc.handleMemoryRecall} disabled={!calc.hasMemory} />
+        <MemButton label="M-" onClick={calc.handleMemorySubtract} />
+        <MemButton label="M+" onClick={calc.handleMemoryAdd} />
       </div>
 
-      {/* Extra Row: %, ±, C, ⌫ */}
-      <div className="grid grid-cols-4 gap-1 px-3 pt-1">
-        <CalcButton variants={itemVariants} label="%" onClick={calc.handlePercent} variant="secondary" isDark={isDark} />
-        <CalcButton variants={itemVariants} label="±" onClick={calc.handleToggleSign} variant="secondary" isDark={isDark} />
-        <CalcButton variants={itemVariants} label="C" onClick={calc.handleClear} variant="danger" isDark={isDark} />
-        <CalcButton variants={itemVariants} icon={<Delete className="w-4 h-4" />} onClick={calc.handleBackspace} variant="secondary" isDark={isDark} />
-      </div>
+      {/* FIX-LAYOUT: Keypad 5×4 sin row-span — todos los botones visibles */}
+      <div className="p-3 grid grid-cols-4 gap-1.5">
+        {/* Row 1: % ± C ⌫ */}
+        <CalcButton variants={itemVariants} label="%" onClick={calc.handlePercent} variant="secondary" />
+        <CalcButton variants={itemVariants} label="±" onClick={calc.handleToggleSign} variant="secondary" />
+        <CalcButton variants={itemVariants} label="C" onClick={calc.handleClear} variant="danger" />
+        <CalcButton variants={itemVariants} icon={<Delete className="w-4 h-4" />} onClick={calc.handleBackspace} variant="secondary" />
 
-      {/* Main Keypad */}
-      <div className="p-3 grid grid-cols-4 gap-1.5 bg-gradient-to-b from-transparent to-black/5">
-        <CalcButton variants={itemVariants} icon={<Divide className="w-4 h-4" />} onClick={() => calc.handleOperator('/')} variant="operator" isDark={isDark} />
-        <CalcButton variants={itemVariants} icon={<X className="w-4 h-4" />} onClick={() => calc.handleOperator('*')} variant="operator" isDark={isDark} />
-        <CalcButton variants={itemVariants} icon={<Minus className="w-4 h-4" />} onClick={() => calc.handleOperator('-')} variant="operator" isDark={isDark} />
-        <CalcButton variants={itemVariants} icon={<Plus className="w-4 h-4" />} onClick={() => calc.handleOperator('+')} variant="operator" isDark={isDark} />
+        {/* Row 2: / * - + */}
+        <CalcButton variants={itemVariants} icon={<Divide className="w-4 h-4" />} onClick={() => calc.handleOperator('/')} variant="operator" />
+        <CalcButton variants={itemVariants} icon={<X className="w-4 h-4" />} onClick={() => calc.handleOperator('*')} variant="operator" />
+        <CalcButton variants={itemVariants} icon={<Minus className="w-4 h-4" />} onClick={() => calc.handleOperator('-')} variant="operator" />
+        <CalcButton variants={itemVariants} icon={<Plus className="w-4 h-4" />} onClick={() => calc.handleOperator('+')} variant="operator" />
 
-        {[7, 8, 9].map(num => (
-          <CalcButton key={num} variants={itemVariants} label={num.toString()} onClick={() => calc.handleNumber(num.toString())} isDark={isDark} />
-        ))}
-        <CalcButton variants={itemVariants} label="0" onClick={() => calc.handleNumber('0')} isDark={isDark} />
+        {/* Row 3: 7 8 9 = */}
+        <CalcButton variants={itemVariants} label="7" onClick={() => calc.handleNumber('7')} />
+        <CalcButton variants={itemVariants} label="8" onClick={() => calc.handleNumber('8')} />
+        <CalcButton variants={itemVariants} label="9" onClick={() => calc.handleNumber('9')} />
+        <CalcButton variants={itemVariants} icon={<Equal className="w-5 h-5" />} onClick={calc.handleCalculate} variant="primary" className="shadow-lg shadow-primary/20" />
 
-        {[4, 5, 6].map(num => (
-          <CalcButton key={num} variants={itemVariants} label={num.toString()} onClick={() => calc.handleNumber(num.toString())} isDark={isDark} />
-        ))}
-        <CalcButton variants={itemVariants} label="." onClick={() => calc.handleNumber('.')} isDark={isDark} />
+        {/* Row 4: 4 5 6 . */}
+        <CalcButton variants={itemVariants} label="4" onClick={() => calc.handleNumber('4')} />
+        <CalcButton variants={itemVariants} label="5" onClick={() => calc.handleNumber('5')} />
+        <CalcButton variants={itemVariants} label="6" onClick={() => calc.handleNumber('6')} />
+        <CalcButton variants={itemVariants} label="." onClick={() => calc.handleNumber('.')} />
 
-        {[1, 2, 3].map(num => (
-          <CalcButton key={num} variants={itemVariants} label={num.toString()} onClick={() => calc.handleNumber(num.toString())} isDark={isDark} />
-        ))}
-        <CalcButton
-          variants={itemVariants}
-          icon={<Equal className="w-5 h-5" />}
-          onClick={calc.handleCalculate}
-          variant="primary"
-          isDark={isDark}
-          className="row-span-2 h-full shadow-lg shadow-primary/20"
-        />
+        {/* Row 5: 1 2 3 0 */}
+        <CalcButton variants={itemVariants} label="1" onClick={() => calc.handleNumber('1')} />
+        <CalcButton variants={itemVariants} label="2" onClick={() => calc.handleNumber('2')} />
+        <CalcButton variants={itemVariants} label="3" onClick={() => calc.handleNumber('3')} />
+        <CalcButton variants={itemVariants} label="0" onClick={() => calc.handleNumber('0')} />
       </div>
 
       {/* Keyboard hint */}
-      <div className={cn(
-        "px-3 pb-2 pt-1 text-[8px] font-bold uppercase tracking-widest text-center opacity-50",
-        isDark ? "text-white/40" : "text-muted-foreground"
-      )}>
+      <div className="px-3 pb-2 pt-1 text-[8px] font-bold uppercase tracking-widest text-center text-muted-foreground opacity-60">
         ⌨ Teclado: 0-9 + − * / Enter ⌫ C % Esc
       </div>
     </>
@@ -365,10 +321,7 @@ const HistoryTabContent: React.FC<HistoryTabContentProps> = ({ history, onUse, o
         <button
           type="button"
           onClick={onClear}
-          className={cn(
-            "flex items-center gap-1 px-2 py-1 rounded text-[9px] font-black uppercase hover:opacity-80",
-            "text-destructive bg-destructive/10 border border-destructive/20"
-          )}
+          className="flex items-center gap-1 px-2 py-1 rounded text-[9px] font-black uppercase hover:opacity-80 text-destructive bg-destructive/10 border border-destructive/20"
         >
           <Trash2 className="w-3 h-3" /> Limpiar
         </button>
@@ -379,20 +332,12 @@ const HistoryTabContent: React.FC<HistoryTabContentProps> = ({ history, onUse, o
             key={entry.id}
             type="button"
             onClick={() => onUse(entry)}
-            className={cn(
-              "w-full text-right p-2 rounded-lg border transition-all hover:scale-[1.02]",
-              isDark
-                ? "bg-white/5 border-white/10 hover:bg-white/10"
-                : "bg-muted/30 border-border/40 hover:bg-muted/60"
-            )}
+            className="w-full text-right p-2 rounded-lg border transition-all hover:scale-[1.02] bg-muted/30 border-border/40 hover:bg-muted/60"
           >
             <div className="text-[10px] font-mono opacity-50 truncate">
               {entry.equation}
             </div>
-            <div className={cn(
-              "text-lg font-mono font-black truncate",
-              isDark ? "text-[#39FF14]" : "text-primary"
-            )}>
+            <div className="text-lg font-mono font-black truncate text-primary">
               = {entry.result}
             </div>
             <div className="text-[8px] opacity-40 mt-0.5">
@@ -407,13 +352,24 @@ const HistoryTabContent: React.FC<HistoryTabContentProps> = ({ history, onUse, o
 
 /* ─────────────────────────────────────────────────────
  *  Cash Tab — Desglose de billetes/monedas
- *  Calcula cuántos billetes de cada denominación suman al display actual
+ *  FIX-CASH-PRO (2026-07-10): botón limpiar visible +
+ *  guardar/clonar desglose como snapshot (historial de
+ *  desgloses).
  * ───────────────────────────────────────────────────── */
 const CASH_KEY = 'costpro-calc-cash-config';
+const SAVED_BREAKDOWNS_KEY = 'costpro-calc-saved-breakdowns';
+
 interface Denomination {
   value: number;
   label: string;
   active: boolean;
+}
+interface SavedBreakdown {
+  id: string;
+  name: string;
+  amount: number;
+  breakdown: Record<string, number>;
+  timestamp: number;
 }
 const DEFAULT_DENOMINATIONS: Denomination[] = [
   { value: 1000, label: '$1000', active: true },
@@ -441,11 +397,22 @@ function loadDenominations(): Denomination[] {
 
 function saveDenominations(denoms: Denomination[]) {
   if (typeof window === 'undefined') return;
+  try { localStorage.setItem(CASH_KEY, JSON.stringify(denoms)); } catch {}
+}
+
+function loadSavedBreakdowns(): SavedBreakdown[] {
+  if (typeof window === 'undefined') return [];
   try {
-    localStorage.setItem(CASH_KEY, JSON.stringify(denoms));
-  } catch {
-    // ignore
-  }
+    const raw = localStorage.getItem(SAVED_BREAKDOWNS_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch { return []; }
+}
+
+function saveSavedBreakdowns(items: SavedBreakdown[]) {
+  if (typeof window === 'undefined') return;
+  try { localStorage.setItem(SAVED_BREAKDOWNS_KEY, JSON.stringify(items.slice(0, 20))); } catch {}
 }
 
 interface CashTabContentProps {
@@ -456,15 +423,17 @@ const CashTabContent: React.FC<CashTabContentProps> = ({ display, isDark }) => {
   const [denominations, setDenominations] = useState<Denomination[]>(DEFAULT_DENOMINATIONS);
   const [breakdown, setBreakdown] = useState<Record<string, number>>({});
   const [showConfig, setShowConfig] = useState(false);
+  const [savedBreakdowns, setSavedBreakdowns] = useState<SavedBreakdown[]>([]);
+  const [showSaved, setShowSaved] = useState(false);
 
   useEffect(() => {
     setDenominations(loadDenominations());
+    setSavedBreakdowns(loadSavedBreakdowns());
   }, []);
 
   const targetAmount = parseFloat(display) || 0;
   const activeDenoms = denominations.filter(d => d.active).sort((a, b) => b.value - a.value);
 
-  // Auto-calcular desglose óptimo (greedy)
   const calculateOptimal = () => {
     if (targetAmount <= 0) return;
     let remaining = targetAmount;
@@ -490,30 +459,119 @@ const CashTabContent: React.FC<CashTabContentProps> = ({ display, isDark }) => {
     saveDenominations(next);
   };
 
+  const clearBreakdown = () => setBreakdown({});
+
+  const saveCurrentBreakdown = () => {
+    if (Object.keys(breakdown).length === 0) return;
+    const saved: SavedBreakdown = {
+      id: `bd_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+      name: `${formatCurrency(breakdownTotal)} — ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
+      amount: breakdownTotal,
+      breakdown: { ...breakdown },
+      timestamp: Date.now(),
+    };
+    const next = [saved, ...savedBreakdowns].slice(0, 20);
+    setSavedBreakdowns(next);
+    saveSavedBreakdowns(next);
+  };
+
+  const cloneSavedBreakdown = (saved: SavedBreakdown) => {
+    setBreakdown({ ...saved.breakdown });
+    setShowSaved(false);
+  };
+
+  const deleteSavedBreakdown = (id: string) => {
+    const next = savedBreakdowns.filter(s => s.id !== id);
+    setSavedBreakdowns(next);
+    saveSavedBreakdowns(next);
+  };
+
   return (
     <div className="p-3 space-y-2">
       {/* Target amount */}
-      <div className={cn(
-        "rounded-lg px-3 py-2 flex items-center justify-between",
-        isDark ? "bg-black/40" : "bg-slate-50"
-      )}>
+      <div className="rounded-lg px-3 py-2 flex items-center justify-between bg-muted/30">
         <span className="text-[9px] font-black uppercase text-muted-foreground">Desglosar:</span>
-        <span className={cn(
-          "text-lg font-mono font-black tabular-nums",
-          isDark ? "text-[#39FF14]" : "text-primary"
-        )}>
+        <span className="text-lg font-mono font-black tabular-nums text-primary">
           {formatCurrency(targetAmount)}
         </span>
       </div>
 
-      {/* Toggle config */}
+      {/* Action buttons row */}
+      <div className="grid grid-cols-3 gap-1">
+        <button
+          type="button"
+          onClick={calculateOptimal}
+          disabled={targetAmount <= 0}
+          className="h-8 rounded-lg bg-primary text-primary-foreground text-[9px] font-black uppercase hover:opacity-90 disabled:opacity-30 flex items-center justify-center gap-1"
+        >
+          <DollarSign className="w-3 h-3" /> Óptimo
+        </button>
+        <button
+          type="button"
+          onClick={saveCurrentBreakdown}
+          disabled={Object.keys(breakdown).length === 0}
+          className="h-8 rounded-lg bg-amber-500/20 text-amber-600 dark:text-amber-500 text-[9px] font-black uppercase hover:bg-amber-500/30 disabled:opacity-30 border border-amber-500/30 flex items-center justify-center gap-1"
+          title="Guardar desglose actual"
+        >
+          <Save className="w-3 h-3" /> Guardar
+        </button>
+        <button
+          type="button"
+          onClick={clearBreakdown}
+          disabled={Object.keys(breakdown).length === 0}
+          className="h-8 rounded-lg bg-destructive/10 text-destructive text-[9px] font-black uppercase hover:bg-destructive/20 disabled:opacity-30 border border-destructive/20 flex items-center justify-center gap-1"
+          title="Limpiar desglose"
+        >
+          <Trash2 className="w-3 h-3" /> Limpiar
+        </button>
+      </div>
+
+      {/* Saved breakdowns toggle */}
+      {savedBreakdowns.length > 0 && (
+        <button
+          type="button"
+          onClick={() => setShowSaved(!showSaved)}
+          className="w-full py-1.5 rounded-lg text-[9px] font-black uppercase flex items-center justify-center gap-1 border border-border/40 hover:bg-muted/30"
+        >
+          <Copy className="w-3 h-3" />
+          {showSaved ? 'Ocultar guardados' : `Desgloses guardados (${savedBreakdowns.length})`}
+        </button>
+      )}
+
+      {/* Saved breakdowns list */}
+      {showSaved && savedBreakdowns.length > 0 && (
+        <div className="space-y-1 max-h-[150px] overflow-y-auto no-scrollbar border border-border/30 rounded-lg p-1.5 bg-muted/10">
+          {savedBreakdowns.map(saved => (
+            <div key={saved.id} className="flex items-center gap-1 p-1.5 rounded bg-background/50 border border-border/20">
+              <button
+                type="button"
+                onClick={() => cloneSavedBreakdown(saved)}
+                className="flex-1 text-left"
+                title="Clonar este desglose"
+              >
+                <div className="text-[10px] font-bold text-primary">{saved.name}</div>
+                <div className="text-[8px] text-muted-foreground">
+                  {Object.entries(saved.breakdown).map(([d, c]) => `${c}×$${d}`).join(', ')}
+                </div>
+              </button>
+              <button
+                type="button"
+                onClick={() => deleteSavedBreakdown(saved.id)}
+                className="p-1 rounded text-destructive hover:bg-destructive/10"
+                title="Eliminar"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Config toggle */}
       <button
         type="button"
         onClick={() => setShowConfig(!showConfig)}
-        className={cn(
-          "w-full py-1.5 rounded-lg text-[9px] font-black uppercase flex items-center justify-center gap-1 border",
-          isDark ? "border-white/10 hover:bg-white/5" : "border-border/40 hover:bg-muted/30"
-        )}
+        className="w-full py-1.5 rounded-lg text-[9px] font-black uppercase flex items-center justify-center gap-1 border border-border/40 hover:bg-muted/30"
       >
         <Settings2 className="w-3 h-3" />
         {showConfig ? 'Ocultar config' : 'Configurar billetes'}
@@ -543,18 +601,8 @@ const CashTabContent: React.FC<CashTabContentProps> = ({ display, isDark }) => {
         </div>
       )}
 
-      {/* Auto-calc button */}
-      <button
-        type="button"
-        onClick={calculateOptimal}
-        disabled={targetAmount <= 0}
-        className="w-full h-9 rounded-lg bg-success text-white text-[10px] font-black uppercase hover:opacity-90 disabled:opacity-30 flex items-center justify-center gap-1"
-      >
-        <DollarSign className="w-3.5 h-3.5" /> Calcular óptimo
-      </button>
-
       {/* Breakdown input list */}
-      <div className="space-y-1 max-h-[250px] overflow-y-auto no-scrollbar">
+      <div className="space-y-1 max-h-[200px] overflow-y-auto no-scrollbar">
         {activeDenoms.map(d => {
           const count = breakdown[String(d.value)] || 0;
           return (
@@ -588,7 +636,7 @@ const CashTabContent: React.FC<CashTabContentProps> = ({ display, isDark }) => {
       <div className="border-t border-border/30 pt-2 space-y-1">
         <div className="flex justify-between text-[10px] font-bold">
           <span>Total contado:</span>
-          <span className="text-success tabular-nums">{formatCurrency(breakdownTotal)}</span>
+          <span className="text-primary tabular-nums">{formatCurrency(breakdownTotal)}</span>
         </div>
         <div className="flex justify-between text-[10px] font-bold">
           <span>Objetivo:</span>
@@ -598,7 +646,7 @@ const CashTabContent: React.FC<CashTabContentProps> = ({ display, isDark }) => {
           <span>Diferencia:</span>
           <span className={cn(
             "tabular-nums",
-            Math.abs(difference) < 0.01 ? "text-success"
+            Math.abs(difference) < 0.01 ? "text-primary"
             : difference > 0 ? "text-amber-500"
             : "text-destructive"
           )}>
@@ -606,23 +654,12 @@ const CashTabContent: React.FC<CashTabContentProps> = ({ display, isDark }) => {
           </span>
         </div>
       </div>
-
-      {/* Clear breakdown */}
-      {Object.keys(breakdown).length > 0 && (
-        <button
-          type="button"
-          onClick={() => setBreakdown({})}
-          className="w-full py-1.5 rounded-lg text-[9px] font-black uppercase text-destructive bg-destructive/10 border border-destructive/20 hover:bg-destructive/20"
-        >
-          Limpiar desglose
-        </button>
-      )}
     </div>
   );
 };
 
 /* ─────────────────────────────────────────────────────
- *  Config Tab — Configuración general
+ *  Config Tab
  * ───────────────────────────────────────────────────── */
 interface ConfigTabContentProps {
   isDark: boolean;
@@ -647,10 +684,7 @@ const ConfigTabContent: React.FC<ConfigTabContentProps> = ({ isDark }) => {
           ].map(([keys, desc]) => (
             <div key={desc} className="flex items-center justify-between">
               <span className="text-muted-foreground">{desc}</span>
-              <span className={cn(
-                "font-mono font-bold px-1.5 py-0.5 rounded text-[9px]",
-                isDark ? "bg-white/10" : "bg-muted"
-              )}>
+              <span className="font-mono font-bold px-1.5 py-0.5 rounded text-[9px] bg-muted">
                 {keys}
               </span>
             </div>
@@ -666,6 +700,7 @@ const ConfigTabContent: React.FC<ConfigTabContentProps> = ({ isDark }) => {
           <p>✓ Historial de 50 operaciones (persistente)</p>
           <p>✓ Memoria: M+ M- MR MC</p>
           <p>✓ Desglose de billetes automático</p>
+          <p>✓ Guardar/clonar desgloses (20 máx)</p>
           <p>✓ Configuración de billetes activos</p>
           <p>✓ Operador encadenado (9+5-3)</p>
           <p>✓ Signo ± y porcentaje %</p>
@@ -674,7 +709,7 @@ const ConfigTabContent: React.FC<ConfigTabContentProps> = ({ isDark }) => {
 
       <div className="border-t border-border/30 pt-3">
         <p className="text-[9px] text-muted-foreground/60 text-center">
-          CostPro Pro Calculator v2.0
+          CostPro Pro Calculator v2.1
         </p>
       </div>
     </div>
@@ -688,9 +723,8 @@ interface MemButtonProps {
   label: string;
   onClick: () => void;
   disabled?: boolean;
-  isDark: boolean;
 }
-const MemButton: React.FC<MemButtonProps> = ({ label, onClick, disabled, isDark }) => (
+const MemButton: React.FC<MemButtonProps> = ({ label, onClick, disabled }) => (
   <button
     type="button"
     onClick={onClick}
@@ -698,10 +732,8 @@ const MemButton: React.FC<MemButtonProps> = ({ label, onClick, disabled, isDark 
     className={cn(
       "h-8 rounded-lg text-[10px] font-black uppercase border transition-all",
       disabled
-        ? "opacity-30 cursor-not-allowed"
-        : (isDark
-          ? "bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 border-amber-500/20"
-          : "bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 border-amber-500/20")
+        ? "opacity-30 cursor-not-allowed bg-muted/20 border-border/30 text-muted-foreground"
+        : "bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-500 border-amber-500/20"
     )}
   >
     {label}
@@ -709,7 +741,8 @@ const MemButton: React.FC<MemButtonProps> = ({ label, onClick, disabled, isDark 
 );
 
 /* ─────────────────────────────────────────────────────
- *  Calc Button (extended with isDark prop)
+ *  Calc Button — ahora usa colores del design system (primary)
+ *  en vez de verde neón #39FF14
  * ───────────────────────────────────────────────────── */
 interface CalcButtonProps {
   label?: string;
@@ -718,25 +751,14 @@ interface CalcButtonProps {
   variant?: 'number' | 'operator' | 'primary' | 'danger' | 'secondary';
   className?: string;
   variants?: Variants;
-  isDark: boolean;
 }
-const CalcButton: React.FC<CalcButtonProps> = ({ label, icon, onClick, variant = 'number', className, variants, isDark }) => {
+const CalcButton: React.FC<CalcButtonProps> = ({ label, icon, onClick, variant = 'number', className, variants }) => {
   const variantStyles = {
-    number: isDark
-      ? "bg-white/5 hover:bg-white/10 text-foreground border-white/5"
-      : "bg-muted/30 hover:bg-muted/60 text-foreground border-border/40",
-    operator: isDark
-      ? "bg-[#39FF14]/5 hover:bg-[#39FF14]/20 text-[#39FF14] border-[#39FF14]/10"
-      : "bg-primary/5 hover:bg-primary/20 text-primary border-primary/10",
-    primary: isDark
-      ? "bg-[#39FF14] hover:bg-[#39FF14]/90 text-foreground border-[#39FF14]"
-      : "bg-primary hover:bg-primary/90 text-foreground border-primary",
-    danger: isDark
-      ? "bg-red-500/10 hover:bg-red-500/20 text-red-500 border-red-500/20"
-      : "bg-red-500/10 hover:bg-red-500/20 text-red-500 border-red-500/20",
-    secondary: isDark
-      ? "bg-white/10 hover:bg-white/20 text-white/70 border-white/10"
-      : "bg-muted hover:bg-muted/80 text-muted-foreground border-border",
+    number: "bg-muted/30 hover:bg-muted/60 text-foreground border-border/40",
+    operator: "bg-primary/5 hover:bg-primary/20 text-primary border-primary/10",
+    primary: "bg-primary hover:bg-primary/90 text-primary-foreground border-primary",
+    danger: "bg-destructive/10 hover:bg-destructive/20 text-destructive border-destructive/20",
+    secondary: "bg-muted hover:bg-muted/80 text-muted-foreground border-border",
   };
 
   return (
