@@ -110,6 +110,27 @@ export function POSCartCheckoutPanel({
   const [showMixedPayment, setShowMixedPayment] = useState(false);
   const [showDiscountSection, setShowDiscountSection] = useState(false);
   const [cashReceived, setCashReceived] = useState("");
+  // FIX-CASH-BREAKDOWN (2026-07-10): modal de desglose por billetes/monedas
+  const [showCashBreakdown, setShowCashBreakdown] = useState(false);
+  const [cashBreakdown, setCashBreakdown] = useState<Record<string, number>>({});
+  const [breakdownTab, setBreakdownTab] = useState<'count' | 'config'>('count');
+
+  // Billetes/monedas disponibles (configurable)
+  const [denominations, setDenominations] = useState([
+    { value: 1000, label: '$1000', active: true },
+    { value: 500, label: '$500', active: true },
+    { value: 200, label: '$200', active: true },
+    { value: 100, label: '$100', active: true },
+    { value: 50, label: '$50', active: true },
+    { value: 20, label: '$20', active: true },
+    { value: 10, label: '$10', active: true },
+    { value: 5, label: '$5', active: true },
+    { value: 1, label: '$1', active: true },
+  ]);
+
+  const cashBreakdownTotal = Object.entries(cashBreakdown).reduce((s, [denom, count]) => {
+    return s + (parseFloat(denom) * count);
+  }, 0);
 
   const total = getTotal();
   const subtotal = getSubtotal();
@@ -182,49 +203,103 @@ export function POSCartCheckoutPanel({
         </div>
       </div>
 
-      {/* ── MÉTODO DE PAGO (siempre visible, 4 botones 2x2) ───────── */}
-      <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-border/50">
-        <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest mb-2">
-          Método de pago
-        </p>
-        <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label="Seleccionar método de pago">
-          {PAYMENT_METHODS.map((method) => {
-            const Icon = method.icon;
-            const isActive = selectedPayment === method.id;
-            return (
-              <button
-                key={method.id}
-                type="button"
-                onClick={() => onSetSelectedPayment(method.id)}
-                className={cn(
-                  "p-2.5 sm:p-3 min-h-[44px] rounded-xl flex items-center justify-center gap-2 border-2 transition-all bg-background focus:outline-none focus:ring-2 focus:ring-primary/30",
-                  isActive
-                    ? "border-primary shadow-md shadow-primary/10 text-primary bg-primary/5"
-                    : "border-border text-muted-foreground hover:border-primary/40 hover:text-foreground",
-                )}
-                role="radio"
-                aria-checked={isActive}
-                aria-label={`Pagar en ${method.label.toLowerCase()}`}
-              >
-                <Icon className="w-4 h-4" aria-hidden="true" />
-                <span className="text-xs font-black uppercase tracking-widest">
-                  {method.short}
-                </span>
-              </button>
-            );
-          })}
-        </div>
+      {/* ── MÉTODOS DE PAGO (iconos en una línea, read-only de lo configurado por producto) ─── */}
+      <div className="px-4 sm:px-6 py-2 border-b border-border/50">
+        {(() => {
+          // FIX-CONSOLIDATE (2026-07-10): mostrar solo métodos usados en productos
+          const consolidated = useCartStore.getState().getConsolidatedPayments();
+          const modeByProduct = useCartStore.getState().isPaymentModeByProduct();
+          const usedMethods: string[] = [];
+          for (const [cur, methods] of Object.entries(consolidated)) {
+            if (methods.cash > 0) usedMethods.push('cash');
+            if (methods.transfer > 0) usedMethods.push('transfer');
+            if (methods.zelle > 0) usedMethods.push('zelle');
+          }
+          const uniqueMethods = [...new Set(usedMethods)];
+
+          return (
+            <div className="flex items-center gap-2">
+              {/* Métodos usados (read-only si ya configurados por producto) */}
+              {modeByProduct && uniqueMethods.length > 0 ? (
+                <>
+                  <span className="text-[9px] font-bold uppercase text-muted-foreground shrink-0">Pagos:</span>
+                  {uniqueMethods.map(m => {
+                    const method = PAYMENT_METHODS.find(p => p.id === m);
+                    if (!method) return null;
+                    const Icon = method.icon;
+                    return (
+                      <div key={m} className="flex items-center gap-1 px-2 py-1 rounded-lg bg-muted/30 text-[10px] font-bold">
+                        <Icon className="w-3 h-3" />
+                        <span>{method.short}</span>
+                      </div>
+                    );
+                  })}
+                  {/* Consolidación por moneda */}
+                  {Object.entries(consolidated).map(([cur, m]) => (
+                    <div key={cur} className="flex items-center gap-1 px-2 py-1 rounded-lg bg-primary/5 text-[9px] font-bold">
+                      <span className="text-muted-foreground">{cur}:</span>
+                      {m.cash > 0 && <span className="text-success">{m.cash.toFixed(0)}</span>}
+                      {m.transfer > 0 && <span className="text-primary">{m.transfer.toFixed(0)}</span>}
+                      {m.zelle > 0 && <span className="text-primary">{m.zelle.toFixed(0)}</span>}
+                    </div>
+                  ))}
+                </>
+              ) : (
+                /* Selectores normales (cuando no hay pagos por producto) */
+                <>
+                  {PAYMENT_METHODS.map((method) => {
+                    const Icon = method.icon;
+                    const isActive = selectedPayment === method.id;
+                    return (
+                      <button
+                        key={method.id}
+                        type="button"
+                        onClick={() => onSetSelectedPayment(method.id)}
+                        className={cn(
+                          "flex-1 min-h-[36px] rounded-lg flex items-center justify-center gap-1 border transition-all",
+                          isActive
+                            ? "border-primary bg-primary/10 text-primary"
+                            : "border-border text-muted-foreground hover:border-primary/40"
+                        )}
+                        role="radio"
+                        aria-checked={isActive}
+                        aria-label={method.label}
+                      >
+                        <Icon className="w-3.5 h-3.5" />
+                      </button>
+                    );
+                  })}
+                </>
+              )}
+            </div>
+          );
+        })()}
       </div>
 
       {/* ── EFECTIVO RECIBIDO + VUELTO (si cash) ──────────────────── */}
-      {selectedPayment === "cash" && (
-        <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-border/50 bg-success/5">
-          <label
-            htmlFor="pos-cash-received"
-            className="text-[10px] font-black uppercase text-success tracking-widest block mb-2"
-          >
-            Efectivo recibido
-          </label>
+      {selectedPayment === "cash" && !useCartStore.getState().isPaymentModeByProduct() && (
+        <div className="px-4 sm:px-6 py-2 border-b border-border/50 bg-success/5">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setShowCashBreakdown && setShowCashBreakdown(true)}
+              className="flex-1 min-h-[36px] rounded-lg bg-success/90 text-white dark:text-black text-[10px] font-black uppercase hover:bg-success transition-colors flex items-center justify-center gap-1.5"
+            >
+              <DollarSign className="w-3.5 h-3.5" /> Efectivo Recibido
+            </button>
+            {cashReceivedNum > 0 && (
+              <div className="flex items-center gap-2 shrink-0">
+                <div className="text-right">
+                  <p className="text-[8px] font-bold uppercase text-muted-foreground">Vuelto</p>
+                  <p className={cn("text-sm font-black tabular-nums", change >= 0 ? "text-success" : "text-destructive")}>
+                    {formatCurrency(Math.abs(change))}
+                    {change < 0 && " (insuf.)"}
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+          {/* Input rápido opcional */}
           <input
             id="pos-cash-received"
             type="number"
@@ -232,46 +307,21 @@ export function POSCartCheckoutPanel({
             placeholder="0.00"
             value={cashReceived}
             onChange={(e) => setCashReceived(e.target.value)}
-            className="w-full h-12 bg-background border-2 border-success/30 rounded-xl px-4 text-lg font-black text-success text-center tabular-nums outline-none focus:border-success"
+            className="w-full h-9 mt-2 bg-background border border-success/30 rounded-lg px-3 text-sm font-bold text-success text-center tabular-nums outline-none focus:border-success"
             aria-label="Efectivo recibido del cliente"
           />
-          {/* Presets */}
-          <div className="flex gap-2 mt-2">
+          <div className="flex gap-1 mt-1">
             {cashPresets.map((preset) => (
-              <button
-                key={preset}
-                type="button"
-                onClick={() => setCashReceived(String(preset))}
-                className="flex-1 min-h-[44px] rounded-lg bg-success/90 text-white dark:text-black text-xs font-black border border-success/30 hover:bg-success transition-colors focus:outline-none focus:ring-2 focus:ring-success/30"
-              >
+              <button key={preset} type="button" onClick={() => setCashReceived(String(preset))}
+                className="flex-1 min-h-[32px] rounded bg-success/80 text-white text-[9px] font-black hover:bg-success">
                 ${preset}
               </button>
             ))}
-            <button
-              type="button"
-              onClick={() => setCashReceived(total.toFixed(2))}
-              className="flex-1 min-h-[44px] rounded-lg bg-success text-white text-xs font-black hover:opacity-90 transition-opacity focus:outline-none focus:ring-2 focus:ring-success/30"
-            >
+            <button type="button" onClick={() => setCashReceived(total.toFixed(2))}
+              className="flex-1 min-h-[32px] rounded bg-success text-white text-[9px] font-black hover:opacity-90">
               Exacto
             </button>
           </div>
-          {/* Vuelto */}
-          {cashReceivedNum > 0 && (
-            <div className="mt-3 pt-2 border-t border-success/20 flex justify-between items-center">
-              <span className="text-[10px] font-black uppercase text-success tracking-widest">
-                Vuelto
-              </span>
-              <span
-                className={cn(
-                  "text-xl font-black tabular-nums",
-                  change >= 0 ? "text-success" : "text-destructive",
-                )}
-              >
-                {formatCurrency(Math.abs(change))}
-                {change < 0 && " (insuf.)"}
-              </span>
-            </div>
-          )}
         </div>
       )}
 
@@ -549,6 +599,103 @@ export function POSCartCheckoutPanel({
               {isProcessing ? "Procesando..." : "Confirmar"}
             </button>
           </div>
+        </div>
+      </POSPortalModal>
+
+      {/* FIX-CASH-BREAKDOWN (2026-07-10): modal de desglose por billetes/monedas */}
+      <POSPortalModal
+        open={showCashBreakdown}
+        onClose={() => setShowCashBreakdown(false)}
+        title="Efectivo Recibido"
+      >
+        <div className="space-y-3">
+          {/* Tabs */}
+          <div className="flex gap-1 bg-muted/20 p-0.5 rounded-lg">
+            <button onClick={() => setBreakdownTab('count')}
+              className={cn("flex-1 py-1.5 rounded text-[10px] font-black uppercase", breakdownTab === 'count' ? "bg-primary text-primary-foreground" : "text-muted-foreground")}>
+              Contar
+            </button>
+            <button onClick={() => setBreakdownTab('config')}
+              className={cn("flex-1 py-1.5 rounded text-[10px] font-black uppercase", breakdownTab === 'config' ? "bg-primary text-primary-foreground" : "text-muted-foreground")}>
+              Configurar
+            </button>
+          </div>
+
+          {breakdownTab === 'count' ? (
+            <>
+              {/* Tab contar: billetes/monedas activos */}
+              <div className="space-y-1.5 max-h-[300px] overflow-y-auto no-scrollbar">
+                {denominations.filter(d => d.active).map(d => (
+                  <div key={d.value} className="flex items-center gap-2">
+                    <span className="w-16 text-xs font-black text-right">{d.label}</span>
+                    <span className="text-[9px] text-muted-foreground">×</span>
+                    <input
+                      type="number"
+                      min="0"
+                      value={cashBreakdown[String(d.value)] || ''}
+                      onChange={(e) => setCashBreakdown(prev => {
+                        const next = { ...prev };
+                        const val = parseInt(e.target.value) || 0;
+                        if (val > 0) next[String(d.value)] = val;
+                        else delete next[String(d.value)];
+                        return next;
+                      })}
+                      className="w-16 bg-background border border-border/50 rounded px-2 py-1.5 text-xs font-bold text-center"
+                      placeholder="0"
+                      aria-label={`Cantidad de billetes de ${d.label}`}
+                    />
+                    <span className="text-[9px] text-muted-foreground flex-1">
+                      = {formatCurrency((cashBreakdown[String(d.value)] || 0) * d.value)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+              {/* Total + Vuelto */}
+              <div className="border-t border-border/30 pt-2 space-y-1">
+                <div className="flex justify-between text-xs font-black">
+                  <span>Total recibido:</span>
+                  <span className="text-success tabular-nums">{formatCurrency(cashBreakdownTotal)}</span>
+                </div>
+                <div className="flex justify-between text-xs font-black">
+                  <span>Total venta:</span>
+                  <span className="tabular-nums">{formatCurrency(useCartStore.getState().getTotalCup())}</span>
+                </div>
+                <div className="flex justify-between text-sm font-black">
+                  <span>Vuelto:</span>
+                  <span className={cn("tabular-nums", cashBreakdownTotal - useCartStore.getState().getTotalCup() >= 0 ? "text-success" : "text-destructive")}>
+                    {formatCurrency(Math.abs(cashBreakdownTotal - useCartStore.getState().getTotalCup()))}
+                    {cashBreakdownTotal < useCartStore.getState().getTotalCup() && " (insuf.)"}
+                  </span>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  setCashReceived(String(cashBreakdownTotal.toFixed(2)));
+                  setShowCashBreakdown(false);
+                }}
+                className="w-full h-10 rounded-xl bg-success text-white text-xs font-black uppercase hover:opacity-90"
+              >
+                Confirmar
+              </button>
+            </>
+          ) : (
+            /* Tab configurar: activar/desactivar billetes */
+            <div className="space-y-1.5">
+              <p className="text-[10px] text-muted-foreground">Activa los billetes/monedas que usas:</p>
+              {denominations.map(d => (
+                <div key={d.value} className="flex items-center gap-2">
+                  <button
+                    onClick={() => setDenominations(prev => prev.map(x => x.value === d.value ? { ...x, active: !x.active } : x))}
+                    className={cn("flex-1 py-1.5 rounded-lg text-xs font-bold border transition-all",
+                      d.active ? "bg-primary/10 border-primary text-primary" : "bg-muted/20 border-border text-muted-foreground"
+                    )}
+                  >
+                    {d.label}
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </POSPortalModal>
     </div>
