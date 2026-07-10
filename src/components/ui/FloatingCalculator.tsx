@@ -236,7 +236,7 @@ interface TabButtonProps {
   isDark: boolean;
   badge?: number;
 }
-const TabButton: React.FC<TabButtonProps> = ({ active, onClick, icon, label, isDark, badge }) => (
+export const TabButton: React.FC<TabButtonProps> = ({ active, onClick, icon, label, isDark, badge }) => (
   <button
     type="button"
     onClick={onClick}
@@ -268,7 +268,7 @@ interface CalcTabContentProps {
   calc: ReturnType<typeof useCalculator>;
   isDark: boolean;
 }
-const CalcTabContent: React.FC<CalcTabContentProps> = ({ calc, isDark }) => {
+export const CalcTabContent: React.FC<CalcTabContentProps> = ({ calc, isDark }) => {
   return (
     <>
       {/* Display */}
@@ -357,7 +357,7 @@ interface HistoryTabContentProps {
   onClear: () => void;
   isDark: boolean;
 }
-const HistoryTabContent: React.FC<HistoryTabContentProps> = ({ history, onUse, onClear, isDark }) => {
+export const HistoryTabContent: React.FC<HistoryTabContentProps> = ({ history, onUse, onClear, isDark }) => {
   if (history.length === 0) {
     return (
       <div className="p-6 text-center space-y-2">
@@ -478,7 +478,7 @@ interface CashTabContentProps {
   display: string;
   isDark: boolean;
 }
-const CashTabContent: React.FC<CashTabContentProps> = ({ display, isDark }) => {
+export const CashTabContent: React.FC<CashTabContentProps> = ({ display, isDark }) => {
   const [denominations, setDenominations] = useState<Denomination[]>(DEFAULT_DENOMINATIONS);
   const [breakdown, setBreakdown] = useState<Record<string, number>>({});
   const [showConfig, setShowConfig] = useState(false);
@@ -723,7 +723,7 @@ const CashTabContent: React.FC<CashTabContentProps> = ({ display, isDark }) => {
 interface ConfigTabContentProps {
   isDark: boolean;
 }
-const ConfigTabContent: React.FC<ConfigTabContentProps> = ({ isDark }) => {
+export const ConfigTabContent: React.FC<ConfigTabContentProps> = ({ isDark }) => {
   return (
     <div className="p-4 space-y-3">
       <div>
