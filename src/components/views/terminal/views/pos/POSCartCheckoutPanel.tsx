@@ -12,6 +12,8 @@ import {
   ChevronUp,
   Tag,
   AlertTriangle,
+  TrendingUp,
+  TrendingDown,
 } from "lucide-react";
 import { cn, formatCurrency } from "@/lib/utils";
 import { useCartStore } from "@/store/cart";
@@ -109,6 +111,7 @@ export function POSCartCheckoutPanel({
   const [showCheckoutConfirm, setShowCheckoutConfirm] = useState(false);
   const [showMixedPayment, setShowMixedPayment] = useState(false);
   const [showDiscountSection, setShowDiscountSection] = useState(false);
+  const [showSurchargeSection, setShowSurchargeSection] = useState(false);
   const [cashReceived, setCashReceived] = useState("");
   // FIX-CASH-BREAKDOWN (2026-07-10): modal de desglose por billetes/monedas
   const [showCashBreakdown, setShowCashBreakdown] = useState(false);
@@ -203,103 +206,55 @@ export function POSCartCheckoutPanel({
         </div>
       </div>
 
-      {/* ── MÉTODOS DE PAGO (iconos en una línea, read-only de lo configurado por producto) ─── */}
+      {/* ── MÉTODOS DE PAGO (iconos en una línea) ──────────────────── */}
       <div className="px-4 sm:px-6 py-2 border-b border-border/50">
-        {(() => {
-          // FIX-CONSOLIDATE (2026-07-10): mostrar solo métodos usados en productos
-          const consolidated = useCartStore.getState().getConsolidatedPayments();
-          const modeByProduct = useCartStore.getState().isPaymentModeByProduct();
-          const usedMethods: string[] = [];
-          for (const [cur, methods] of Object.entries(consolidated)) {
-            if (methods.cash > 0) usedMethods.push('cash');
-            if (methods.transfer > 0) usedMethods.push('transfer');
-            if (methods.zelle > 0) usedMethods.push('zelle');
-          }
-          const uniqueMethods = [...new Set(usedMethods)];
-
-          return (
-            <div className="flex items-center gap-2">
-              {/* Métodos usados (read-only si ya configurados por producto) */}
-              {modeByProduct && uniqueMethods.length > 0 ? (
-                <>
-                  <span className="text-[9px] font-bold uppercase text-muted-foreground shrink-0">Pagos:</span>
-                  {uniqueMethods.map(m => {
-                    const method = PAYMENT_METHODS.find(p => p.id === m);
-                    if (!method) return null;
-                    const Icon = method.icon;
-                    return (
-                      <div key={m} className="flex items-center gap-1 px-2 py-1 rounded-lg bg-muted/30 text-[10px] font-bold">
-                        <Icon className="w-3 h-3" />
-                        <span>{method.short}</span>
-                      </div>
-                    );
-                  })}
-                  {/* Consolidación por moneda */}
-                  {Object.entries(consolidated).map(([cur, m]) => (
-                    <div key={cur} className="flex items-center gap-1 px-2 py-1 rounded-lg bg-primary/5 text-[9px] font-bold">
-                      <span className="text-muted-foreground">{cur}:</span>
-                      {m.cash > 0 && <span className="text-success">{m.cash.toFixed(0)}</span>}
-                      {m.transfer > 0 && <span className="text-primary">{m.transfer.toFixed(0)}</span>}
-                      {m.zelle > 0 && <span className="text-primary">{m.zelle.toFixed(0)}</span>}
-                    </div>
-                  ))}
-                </>
-              ) : (
-                /* Selectores normales (cuando no hay pagos por producto) */
-                <>
-                  {PAYMENT_METHODS.map((method) => {
-                    const Icon = method.icon;
-                    const isActive = selectedPayment === method.id;
-                    return (
-                      <button
-                        key={method.id}
-                        type="button"
-                        onClick={() => onSetSelectedPayment(method.id)}
-                        className={cn(
-                          "flex-1 min-h-[36px] rounded-lg flex items-center justify-center gap-1 border transition-all",
-                          isActive
-                            ? "border-primary bg-primary/10 text-primary"
-                            : "border-border text-muted-foreground hover:border-primary/40"
-                        )}
-                        role="radio"
-                        aria-checked={isActive}
-                        aria-label={method.label}
-                      >
-                        <Icon className="w-3.5 h-3.5" />
-                      </button>
-                    );
-                  })}
-                </>
-              )}
-            </div>
-          );
-        })()}
+        <div className="flex items-center gap-2">
+          {PAYMENT_METHODS.map((method) => {
+            const Icon = method.icon;
+            const isActive = selectedPayment === method.id;
+            return (
+              <button
+                key={method.id}
+                type="button"
+                onClick={() => onSetSelectedPayment(method.id)}
+                className={cn(
+                  "flex-1 min-h-[36px] rounded-lg flex items-center justify-center gap-1 border transition-all",
+                  isActive
+                    ? "border-primary bg-primary/10 text-primary"
+                    : "border-border text-muted-foreground hover:border-primary/40"
+                )}
+                role="radio"
+                aria-checked={isActive}
+                aria-label={method.label}
+              >
+                <Icon className="w-3.5 h-3.5" />
+              </button>
+            );
+          })}
+        </div>
       </div>
 
-      {/* ── EFECTIVO RECIBIDO + VUELTO (si cash) ──────────────────── */}
-      {selectedPayment === "cash" && !useCartStore.getState().isPaymentModeByProduct() && (
+      {/* ── EFECTIVO RECIBIDO + VUELTO ────────────────────────────── */}
+      {selectedPayment === "cash" && (
         <div className="px-4 sm:px-6 py-2 border-b border-border/50 bg-success/5">
           <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={() => setShowCashBreakdown && setShowCashBreakdown(true)}
+              onClick={() => setShowCashBreakdown(true)}
               className="flex-1 min-h-[36px] rounded-lg bg-success/90 text-white dark:text-black text-[10px] font-black uppercase hover:bg-success transition-colors flex items-center justify-center gap-1.5"
             >
               <DollarSign className="w-3.5 h-3.5" /> Efectivo Recibido
             </button>
             {cashReceivedNum > 0 && (
-              <div className="flex items-center gap-2 shrink-0">
-                <div className="text-right">
-                  <p className="text-[8px] font-bold uppercase text-muted-foreground">Vuelto</p>
-                  <p className={cn("text-sm font-black tabular-nums", change >= 0 ? "text-success" : "text-destructive")}>
-                    {formatCurrency(Math.abs(change))}
-                    {change < 0 && " (insuf.)"}
-                  </p>
-                </div>
+              <div className="text-right shrink-0">
+                <p className="text-[8px] font-bold uppercase text-muted-foreground">Vuelto</p>
+                <p className={cn("text-sm font-black tabular-nums", change >= 0 ? "text-success" : "text-destructive")}>
+                  {formatCurrency(Math.abs(change))}
+                  {change < 0 && " (insuf.)"}
+                </p>
               </div>
             )}
           </div>
-          {/* Input rápido opcional */}
           <input
             id="pos-cash-received"
             type="number"
@@ -325,46 +280,61 @@ export function POSCartCheckoutPanel({
         </div>
       )}
 
-      {/* ── CONSOLIDACIÓN DE PAGOS (read-only, siempre visible) ────── */}
-      <div className="px-4 sm:px-6 py-2 border-b border-border/50">
-        {(() => {
-          const consolidated = useCartStore.getState().getConsolidatedPayments();
-          const currencies = Object.keys(consolidated).sort();
-          if (currencies.length === 0) return null;
-          return (
-            <div className="space-y-1">
-              <p className="text-[9px] font-black uppercase text-muted-foreground">Consolidado por tipo de pago</p>
+      {/* ── CONSOLIDADO POR MÉTODO DE PAGO ────────────────────────── */}
+      {(() => {
+        const consolidated = useCartStore.getState().getConsolidatedPayments();
+        const currencies = Object.keys(consolidated).sort();
+        if (currencies.length === 0) return null;
+        // Totales por método (todas las monedas)
+        let totalCash = 0, totalTransfer = 0, totalZelle = 0;
+        for (const [, m] of Object.entries(consolidated)) {
+          totalCash += m.cash;
+          totalTransfer += m.transfer;
+          totalZelle += m.zelle;
+        }
+        return (
+          <div className="px-4 sm:px-6 py-2 border-b border-border/50 space-y-2">
+            {/* Por método */}
+            <div className="flex items-center gap-3 text-[10px] font-black">
+              <span className="text-[9px] uppercase text-muted-foreground">Por método:</span>
+              {totalCash > 0 && <span className="text-success">💵 {totalCash.toFixed(2)}</span>}
+              {totalTransfer > 0 && <span className="text-primary">📱 {totalTransfer.toFixed(2)}</span>}
+              {totalZelle > 0 && <span className="text-primary">💳 {totalZelle.toFixed(2)}</span>}
+            </div>
+            {/* Por moneda */}
+            <div className="space-y-0.5">
+              <span className="text-[9px] uppercase text-muted-foreground font-black">Por moneda:</span>
               {currencies.map(cur => {
                 const c = consolidated[cur];
                 return (
-                  <div key={cur} className="flex items-center gap-2 text-[10px] font-bold">
+                  <div key={cur} className="flex items-center gap-2 text-[10px] font-bold pl-2">
                     <span className="text-muted-foreground w-8">{cur}</span>
-                    {c.cash > 0 && <span className="text-success">💵 {c.cash.toFixed(2)}</span>}
-                    {c.transfer > 0 && <span className="text-primary">📱 {c.transfer.toFixed(2)}</span>}
-                    {c.zelle > 0 && <span className="text-primary">💳 {c.zelle.toFixed(2)}</span>}
+                    {c.cash > 0 && <span className="text-success">💵{c.cash.toFixed(2)}</span>}
+                    {c.transfer > 0 && <span className="text-primary">📱{c.transfer.toFixed(2)}</span>}
+                    {c.zelle > 0 && <span className="text-primary">💳{c.zelle.toFixed(2)}</span>}
                   </div>
                 );
               })}
             </div>
-          );
-        })()}
-      </div>
+          </div>
+        );
+      })()}
 
-      {/* ── DESCUENTO / RECARGO GLOBAL (accordion) ────────────────── */}
+      {/* ── DESCUENTO (accordion) ─────────────────────────────────── */}
       <div className="px-4 sm:px-6 py-2 border-b border-border/50">
         <button
           type="button"
           onClick={() => setShowDiscountSection(!showDiscountSection)}
-          className="w-full flex items-center justify-between py-2 text-xs font-black uppercase text-muted-foreground tracking-widest hover:text-primary"
+          className="w-full flex items-center justify-between py-2 text-xs font-black uppercase text-muted-foreground tracking-widest hover:text-destructive"
           aria-expanded={showDiscountSection}
           aria-controls="pos-discount-section"
         >
           <span className="flex items-center gap-2">
-            <Tag className="w-3.5 h-3.5" aria-hidden="true" />
-            Ajuste
-            {discount && discount.value > 0 && (
-              <span className={cn("px-1.5 py-0.5 rounded text-[9px]", discount.value < 0 ? "bg-destructive/10 text-destructive" : "bg-amber-500/10 text-amber-500")}>
-                {discount.value < 0 ? `${discount.value}` : `+${discount.value}`}{discount.type === "percentage" ? "%" : ""}
+            <TrendingDown className="w-3.5 h-3.5" aria-hidden="true" />
+            Descuento
+            {discount && discount.value < 0 && (
+              <span className="bg-destructive/10 text-destructive px-1.5 py-0.5 rounded text-[9px]">
+                {discount.value}{discount.type === "percentage" ? "%" : ""}
               </span>
             )}
           </span>
@@ -374,6 +344,43 @@ export function POSCartCheckoutPanel({
           {showDiscountSection && (
             <motion.div
               id="pos-discount-section"
+              initial={{ height: 0, opacity: 0 }}
+              animate={prefersReducedMotion ? {} : { height: "auto", opacity: 1 }}
+              exit={prefersReducedMotion ? {} : { height: 0, opacity: 0 }}
+              className="overflow-hidden"
+            >
+              <div className="pb-3">
+                <POSCartDiscountModal discount={discount} setDiscount={setDiscount} />
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      {/* ── RECARGO (accordion) ───────────────────────────────────── */}
+      <div className="px-4 sm:px-6 py-2 border-b border-border/50">
+        <button
+          type="button"
+          onClick={() => setShowSurchargeSection(!showSurchargeSection)}
+          className="w-full flex items-center justify-between py-2 text-xs font-black uppercase text-muted-foreground tracking-widest hover:text-amber-500"
+          aria-expanded={showSurchargeSection}
+          aria-controls="pos-surcharge-section"
+        >
+          <span className="flex items-center gap-2">
+            <TrendingUp className="w-3.5 h-3.5" aria-hidden="true" />
+            Recargo
+            {discount && discount.value > 0 && (
+              <span className="bg-amber-500/10 text-amber-500 px-1.5 py-0.5 rounded text-[9px]">
+                +{discount.value}{discount.type === "percentage" ? "%" : ""}
+              </span>
+            )}
+          </span>
+          {showSurchargeSection ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+        </button>
+        <AnimatePresence>
+          {showSurchargeSection && (
+            <motion.div
+              id="pos-surcharge-section"
               initial={{ height: 0, opacity: 0 }}
               animate={prefersReducedMotion ? {} : { height: "auto", opacity: 1 }}
               exit={prefersReducedMotion ? {} : { height: 0, opacity: 0 }}
