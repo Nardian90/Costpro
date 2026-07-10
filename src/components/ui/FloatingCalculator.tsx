@@ -481,9 +481,12 @@ interface CashTabContentProps {
 export const CashTabContent: React.FC<CashTabContentProps> = ({ display, isDark }) => {
   const [denominations, setDenominations] = useState<Denomination[]>(DEFAULT_DENOMINATIONS);
   const [breakdown, setBreakdown] = useState<Record<string, number>>({});
-  const [showConfig, setShowConfig] = useState(false);
   const [savedBreakdowns, setSavedBreakdowns] = useState<SavedBreakdown[]>([]);
-  const [showSaved, setShowSaved] = useState(false);
+  // FIX-CASH-UI (2026-07-10): vista única con sub-vistas en vez de toggles
+  // 'count' = desglose de billetes (default)
+  // 'saved'  = lista de desgloses guardados
+  // 'config' = configurar billetes activos
+  const [view, setView] = useState<'count' | 'saved' | 'config'>('count');
 
   useEffect(() => {
     setDenominations(loadDenominations());
@@ -534,9 +537,10 @@ export const CashTabContent: React.FC<CashTabContentProps> = ({ display, isDark 
     saveSavedBreakdowns(next);
   };
 
+  // FIX-CASH-UI: al clonar, cargar el desglose y volver a la vista 'count'
   const cloneSavedBreakdown = (saved: SavedBreakdown) => {
     setBreakdown({ ...saved.breakdown });
-    setShowSaved(false);
+    setView('count');
   };
 
   const deleteSavedBreakdown = (id: string) => {
@@ -545,173 +549,205 @@ export const CashTabContent: React.FC<CashTabContentProps> = ({ display, isDark 
     saveSavedBreakdowns(next);
   };
 
-  return (
-    <div className="p-3 space-y-2">
-      {/* Target amount */}
-      <div className="rounded-lg px-3 py-2 flex items-center justify-between bg-muted/30">
-        <span className="text-[9px] font-black uppercase text-muted-foreground">Desglosar:</span>
-        <span className="text-lg font-mono font-black tabular-nums text-primary">
-          {formatCurrency(targetAmount)}
-        </span>
-      </div>
-
-      {/* Action buttons row */}
-      <div className="grid grid-cols-3 gap-1">
+  // Sub-vista: Configurar billetes
+  if (view === 'config') {
+    return (
+      <div className="p-3 space-y-2">
         <button
           type="button"
-          onClick={calculateOptimal}
-          disabled={targetAmount <= 0}
-          className="h-8 rounded-lg bg-primary text-primary-foreground text-[9px] font-black uppercase hover:opacity-90 disabled:opacity-30 flex items-center justify-center gap-1"
+          onClick={() => setView('count')}
+          className="text-[9px] font-black uppercase text-primary hover:underline flex items-center gap-1"
         >
-          <DollarSign className="w-3 h-3" /> Óptimo
+          ← Volver al desglose
         </button>
-        <button
-          type="button"
-          onClick={saveCurrentBreakdown}
-          disabled={Object.keys(breakdown).length === 0}
-          className="h-8 rounded-lg bg-amber-500/20 text-amber-600 dark:text-amber-500 text-[9px] font-black uppercase hover:bg-amber-500/30 disabled:opacity-30 border border-amber-500/30 flex items-center justify-center gap-1"
-          title="Guardar desglose actual"
-        >
-          <Save className="w-3 h-3" /> Guardar
-        </button>
-        <button
-          type="button"
-          onClick={clearBreakdown}
-          disabled={Object.keys(breakdown).length === 0}
-          className="h-8 rounded-lg bg-destructive/10 text-destructive text-[9px] font-black uppercase hover:bg-destructive/20 disabled:opacity-30 border border-destructive/20 flex items-center justify-center gap-1"
-          title="Limpiar desglose"
-        >
-          <Trash2 className="w-3 h-3" /> Limpiar
-        </button>
-      </div>
-
-      {/* Saved breakdowns toggle */}
-      {savedBreakdowns.length > 0 && (
-        <button
-          type="button"
-          onClick={() => setShowSaved(!showSaved)}
-          className="w-full py-1.5 rounded-lg text-[9px] font-black uppercase flex items-center justify-center gap-1 border border-border/40 hover:bg-muted/30"
-        >
-          <Copy className="w-3 h-3" />
-          {showSaved ? 'Ocultar guardados' : `Desgloses guardados (${savedBreakdowns.length})`}
-        </button>
-      )}
-
-      {/* Saved breakdowns list */}
-      {showSaved && savedBreakdowns.length > 0 && (
-        <div className="space-y-1 max-h-[150px] overflow-y-auto no-scrollbar border border-border/30 rounded-lg p-1.5 bg-muted/10">
-          {savedBreakdowns.map(saved => (
-            <div key={saved.id} className="flex items-center gap-1 p-1.5 rounded bg-background/50 border border-border/20">
-              <button
-                type="button"
-                onClick={() => cloneSavedBreakdown(saved)}
-                className="flex-1 text-left"
-                title="Clonar este desglose"
-              >
-                <div className="text-[10px] font-bold text-primary">{saved.name}</div>
-                <div className="text-[8px] text-muted-foreground">
-                  {Object.entries(saved.breakdown).map(([d, c]) => `${c}×$${d}`).join(', ')}
-                </div>
-              </button>
-              <button
-                type="button"
-                onClick={() => deleteSavedBreakdown(saved.id)}
-                className="p-1 rounded text-destructive hover:bg-destructive/10"
-                title="Eliminar"
-              >
-                <X className="w-3 h-3" />
-              </button>
-            </div>
+        <p className="text-[9px] text-muted-foreground uppercase font-bold">Activa los billetes que usas:</p>
+        <div className="grid grid-cols-3 gap-1">
+          {denominations.map(d => (
+            <button
+              key={d.value}
+              type="button"
+              onClick={() => toggleDenomination(d.value)}
+              className={cn(
+                "py-2 rounded-lg text-[10px] font-bold border transition-all",
+                d.active
+                  ? "bg-primary/10 border-primary text-primary"
+                  : "bg-muted/20 border-border text-muted-foreground"
+              )}
+            >
+              {d.label}
+            </button>
           ))}
         </div>
-      )}
+      </div>
+    );
+  }
 
-      {/* Config toggle */}
-      <button
-        type="button"
-        onClick={() => setShowConfig(!showConfig)}
-        className="w-full py-1.5 rounded-lg text-[9px] font-black uppercase flex items-center justify-center gap-1 border border-border/40 hover:bg-muted/30"
-      >
-        <Settings2 className="w-3 h-3" />
-        {showConfig ? 'Ocultar config' : 'Configurar billetes'}
-      </button>
-
-      {/* Config panel */}
-      {showConfig && (
-        <div className="space-y-1 pb-2 border-b border-border/30">
-          <p className="text-[8px] text-muted-foreground uppercase font-bold">Activa los billetes que usas:</p>
-          <div className="grid grid-cols-3 gap-1">
-            {denominations.map(d => (
-              <button
-                key={d.value}
-                type="button"
-                onClick={() => toggleDenomination(d.value)}
-                className={cn(
-                  "py-1.5 rounded text-[9px] font-bold border transition-all",
-                  d.active
-                    ? "bg-primary/10 border-primary text-primary"
-                    : "bg-muted/20 border-border text-muted-foreground"
-                )}
-              >
-                {d.label}
-              </button>
+  // Sub-vista: Desgloses guardados
+  if (view === 'saved') {
+    return (
+      <div className="p-3 space-y-2">
+        <button
+          type="button"
+          onClick={() => setView('count')}
+          className="text-[9px] font-black uppercase text-primary hover:underline flex items-center gap-1"
+        >
+          ← Volver al desglose
+        </button>
+        {savedBreakdowns.length === 0 ? (
+          <div className="text-center py-8 text-[10px] text-muted-foreground">
+            <Save className="w-6 h-6 mx-auto opacity-30 mb-2" />
+            Sin desgloses guardados.
+            <br />
+            Crea un desglose y guárdalo para reusarlo.
+          </div>
+        ) : (
+          <div className="space-y-1.5">
+            {savedBreakdowns.map(saved => (
+              <div key={saved.id} className="flex items-center gap-1 p-2 rounded-lg bg-muted/30 border border-border/30">
+                <button
+                  type="button"
+                  onClick={() => cloneSavedBreakdown(saved)}
+                  className="flex-1 text-left"
+                  title="Cargar este desglose"
+                >
+                  <div className="text-[11px] font-bold text-primary">{saved.name}</div>
+                  <div className="text-[9px] text-muted-foreground mt-0.5">
+                    {Object.entries(saved.breakdown).map(([d, c]) => `${c}×$${d}`).join(' · ')}
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => deleteSavedBreakdown(saved.id)}
+                  className="p-1.5 rounded text-destructive hover:bg-destructive/10"
+                  title="Eliminar"
+                  aria-label="Eliminar desglose guardado"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
             ))}
           </div>
-        </div>
-      )}
-
-      {/* Breakdown input list */}
-      <div className="space-y-1 max-h-[200px] overflow-y-auto no-scrollbar">
-        {activeDenoms.map(d => {
-          const count = breakdown[String(d.value)] || 0;
-          return (
-            <div key={d.value} className="flex items-center gap-1.5">
-              <span className="w-12 text-[10px] font-black text-right">{d.label}</span>
-              <span className="text-[8px] text-muted-foreground">×</span>
-              <input
-                type="number"
-                min="0"
-                value={count || ''}
-                onChange={(e) => setBreakdown(prev => {
-                  const next = { ...prev };
-                  const val = parseInt(e.target.value) || 0;
-                  if (val > 0) next[String(d.value)] = val;
-                  else delete next[String(d.value)];
-                  return next;
-                })}
-                className="w-12 bg-background border border-border/50 rounded px-1.5 py-1 text-[10px] font-bold text-center"
-                placeholder="0"
-                aria-label={`Cantidad de ${d.label}`}
-              />
-              <span className="text-[8px] text-muted-foreground flex-1">
-                = {formatCurrency(count * d.value)}
-              </span>
-            </div>
-          );
-        })}
+        )}
       </div>
+    );
+  }
 
-      {/* Totals */}
-      <div className="border-t border-border/30 pt-2 space-y-1">
-        <div className="flex justify-between text-[10px] font-bold">
-          <span>Total contado:</span>
-          <span className="text-primary tabular-nums">{formatCurrency(breakdownTotal)}</span>
+  // Sub-vista default: Desglose de billetes
+  return (
+    <div className="p-3 space-y-2">
+      {/* Header compacto: Target + Diferencia en una sola línea */}
+      <div className="grid grid-cols-2 gap-2">
+        <div className="rounded-lg px-2.5 py-1.5 bg-muted/30 flex flex-col">
+          <span className="text-[8px] font-black uppercase text-muted-foreground">Desglosar</span>
+          <span className="text-sm font-mono font-black tabular-nums text-primary leading-tight">{formatCurrency(targetAmount)}</span>
         </div>
-        <div className="flex justify-between text-[10px] font-bold">
-          <span>Objetivo:</span>
-          <span className="tabular-nums">{formatCurrency(targetAmount)}</span>
-        </div>
-        <div className="flex justify-between text-sm font-black">
-          <span>Diferencia:</span>
+        <div className={cn(
+          "rounded-lg px-2.5 py-1.5 flex flex-col border",
+          Math.abs(difference) < 0.01 ? "bg-primary/5 border-primary/20"
+          : difference > 0 ? "bg-amber-500/5 border-amber-500/20"
+          : "bg-destructive/5 border-destructive/20"
+        )}>
+          <span className="text-[8px] font-black uppercase text-muted-foreground">Diferencia</span>
           <span className={cn(
-            "tabular-nums",
+            "text-sm font-mono font-black tabular-nums leading-tight",
             Math.abs(difference) < 0.01 ? "text-primary"
             : difference > 0 ? "text-amber-500"
             : "text-destructive"
           )}>
-            {Math.abs(difference) < 0.01 ? '✓ Exacto' : `${difference > 0 ? '+' : ''}${formatCurrency(difference)}`}
+            {Math.abs(difference) < 0.01 ? '✓' : `${difference > 0 ? '+' : ''}${formatCurrency(difference)}`}
           </span>
         </div>
+      </div>
+
+      {/* Lista de billetes con acciones laterales (layout compacto) */}
+      <div className="flex gap-2">
+        {/* Columna izquierda: lista de billetes (crece) */}
+        <div className="flex-1 space-y-1">
+          {activeDenoms.map(d => {
+            const count = breakdown[String(d.value)] || 0;
+            return (
+              <div key={d.value} className="flex items-center gap-1.5">
+                <span className="w-10 text-[10px] font-black text-right shrink-0">{d.label}</span>
+                <span className="text-[8px] text-muted-foreground">×</span>
+                <input
+                  type="number"
+                  min="0"
+                  value={count || ''}
+                  onChange={(e) => setBreakdown(prev => {
+                    const next = { ...prev };
+                    const val = parseInt(e.target.value) || 0;
+                    if (val > 0) next[String(d.value)] = val;
+                    else delete next[String(d.value)];
+                    return next;
+                  })}
+                  className="w-10 bg-background border border-border/50 rounded px-1 py-1 text-[10px] font-bold text-center"
+                  placeholder="0"
+                  aria-label={`Cantidad de ${d.label}`}
+                />
+                <span className={cn(
+                  "text-[9px] flex-1 tabular-nums",
+                  count > 0 ? "text-primary font-bold" : "text-muted-foreground"
+                )}>
+                  {formatCurrency(count * d.value)}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Columna derecha: acciones verticales + total */}
+        <div className="w-20 shrink-0 flex flex-col gap-1">
+          <button
+            type="button"
+            onClick={calculateOptimal}
+            disabled={targetAmount <= 0}
+            className="h-9 rounded-lg bg-primary text-primary-foreground text-[9px] font-black uppercase hover:opacity-90 disabled:opacity-30 flex items-center justify-center gap-0.5"
+            title="Calcular desglose óptimo"
+          >
+            <DollarSign className="w-3 h-3" /> Óptimo
+          </button>
+          <button
+            type="button"
+            onClick={saveCurrentBreakdown}
+            disabled={Object.keys(breakdown).length === 0}
+            className="h-9 rounded-lg bg-amber-500/20 text-amber-600 dark:text-amber-500 text-[9px] font-black uppercase hover:bg-amber-500/30 disabled:opacity-30 border border-amber-500/30 flex items-center justify-center gap-0.5"
+            title="Guardar desglose actual"
+          >
+            <Save className="w-3 h-3" /> Guardar
+          </button>
+          <button
+            type="button"
+            onClick={clearBreakdown}
+            disabled={Object.keys(breakdown).length === 0}
+            className="h-9 rounded-lg bg-destructive/10 text-destructive text-[9px] font-black uppercase hover:bg-destructive/20 disabled:opacity-30 border border-destructive/20 flex items-center justify-center gap-0.5"
+            title="Limpiar desglose"
+          >
+            <Trash2 className="w-3 h-3" /> Limpiar
+          </button>
+          {/* Total contado al pie de las acciones */}
+          <div className="mt-auto rounded-lg px-1.5 py-1.5 bg-muted/30 text-center">
+            <div className="text-[7px] font-black uppercase text-muted-foreground">Total</div>
+            <div className="text-[10px] font-mono font-black tabular-nums text-primary">{formatCurrency(breakdownTotal)}</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Footer: accesos a guardados y config */}
+      <div className="grid grid-cols-2 gap-1.5 pt-1">
+        <button
+          type="button"
+          onClick={() => setView('saved')}
+          className="py-1.5 rounded-lg text-[9px] font-black uppercase flex items-center justify-center gap-1 border border-border/40 hover:bg-muted/30"
+        >
+          <Copy className="w-3 h-3" /> Guardados ({savedBreakdowns.length})
+        </button>
+        <button
+          type="button"
+          onClick={() => setView('config')}
+          className="py-1.5 rounded-lg text-[9px] font-black uppercase flex items-center justify-center gap-1 border border-border/40 hover:bg-muted/30"
+        >
+          <Settings2 className="w-3 h-3" /> Billetes
+        </button>
       </div>
     </div>
   );
