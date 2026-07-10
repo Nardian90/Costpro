@@ -479,7 +479,7 @@ export const POSCartItem = ({
         </div>
         <div className="space-y-1">
           <span className="text-xs font-black uppercase text-muted-foreground">
-            Tasa {item.currency !== 'CUP' && `(1 ${item.currency} = ${item.exchange_rate || 1} CUP · precio unit. ≈ ${formatCurrency((item.price || 0) * (item.exchange_rate || 1))} CUP)`}
+            Tasa {item.currency !== 'CUP' && `(1 ${item.currency}=${(item.exchange_rate || 1)} CUP · unit≈${formatCurrency((item.price || 0) * (item.exchange_rate || 1))})`}
           </span>
           <input
             type="number"
@@ -518,10 +518,10 @@ export const POSCartItem = ({
           />
         </div>
       </div>
-      <div className="grid grid-cols-2 gap-2">
-        <div className="space-y-1">
-          <span className="text-xs font-black uppercase text-muted-foreground">
-            Pago Mixto (Efectivo / Transf. / Zelle)
+      {/* FIX-LAYOUT: Pago Mixto ocupa todo el ancho disponible */}
+      <div className="space-y-1">
+        <span className="text-[10px] font-black uppercase text-muted-foreground">
+          Pago Mixto
           </span>
           {/* FIX-UI (2026-07-10): descuento en la misma línea, input de pago SIEMPRE visible */}
           {/* Efectivo */}
@@ -531,7 +531,7 @@ export const POSCartItem = ({
                 <DollarSign className="absolute left-1.5 top-1/2 -translate-y-1/2 w-3 h-3 text-success" aria-hidden="true" />
                 <input
                   type="number"
-                  value={item.cash_paid || 0}
+                  value={Number((item.cash_paid || 0).toFixed(2))}
                   onChange={(e) => {
                     const val = Number(e.target.value);
                     const remaining = Math.max(0, item.subtotal - val - (item.zelle_paid || 0));
@@ -569,7 +569,7 @@ export const POSCartItem = ({
               {item.cash_discount_type && (
                 <input
                   type="number"
-                  value={item.cash_discount_value || 0}
+                  value={Number((item.cash_discount_value || 0).toFixed(2))}
                   onChange={(e) => useCartStore.setState((state) => ({ items: state.items.map((it) => it.product_id === item.product_id && it.variant_id === item.variant_id ? { ...it, cash_discount_value: parseFloat(e.target.value) || 0, cash_discount_currency: item.cash_currency } : it), lastUpdated: Date.now() }))}
                   className="w-14 bg-background border border-border/50 rounded px-1 py-2 min-h-[36px] text-[9px] font-bold shrink-0"
                   placeholder="0"
@@ -585,7 +585,7 @@ export const POSCartItem = ({
                 <Send className="absolute left-1.5 top-1/2 -translate-y-1/2 w-3 h-3 text-primary" aria-hidden="true" />
                 <input
                   type="number"
-                  value={item.transfer_paid || 0}
+                  value={Number((item.transfer_paid || 0).toFixed(2))}
                   onChange={(e) => {
                     const val = Number(e.target.value);
                     const remaining = Math.max(0, item.subtotal - (item.cash_paid || 0) - val - (item.zelle_paid || 0));
@@ -619,7 +619,7 @@ export const POSCartItem = ({
               {item.transfer_discount_type && (
                 <input
                   type="number"
-                  value={item.transfer_discount_value || 0}
+                  value={Number((item.transfer_discount_value || 0).toFixed(2))}
                   onChange={(e) => useCartStore.setState((state) => ({ items: state.items.map((it) => it.product_id === item.product_id && it.variant_id === item.variant_id ? { ...it, transfer_discount_value: parseFloat(e.target.value) || 0, transfer_discount_currency: item.transfer_currency } : it), lastUpdated: Date.now() }))}
                   className="w-14 bg-background border border-border/50 rounded px-1 py-2 min-h-[36px] text-[9px] font-bold shrink-0"
                   placeholder="0"
@@ -635,7 +635,7 @@ export const POSCartItem = ({
                 <CreditCard className="absolute left-1.5 top-1/2 -translate-y-1/2 w-3 h-3 text-primary" aria-hidden="true" />
                 <input
                   type="number"
-                  value={item.zelle_paid || 0}
+                  value={Number((item.zelle_paid || 0).toFixed(2))}
                   onChange={(e) => {
                     const val = Number(e.target.value);
                     const remaining = Math.max(0, item.subtotal - (item.cash_paid || 0) - val);
@@ -669,7 +669,7 @@ export const POSCartItem = ({
               {item.zelle_discount_type && (
                 <input
                   type="number"
-                  value={item.zelle_discount_value || 0}
+                  value={Number((item.zelle_discount_value || 0).toFixed(2))}
                   onChange={(e) => useCartStore.setState((state) => ({ items: state.items.map((it) => it.product_id === item.product_id && it.variant_id === item.variant_id ? { ...it, zelle_discount_value: parseFloat(e.target.value) || 0, zelle_discount_currency: item.zelle_currency } : it), lastUpdated: Date.now() }))}
                   className="w-14 bg-background border border-border/50 rounded px-1 py-2 min-h-[36px] text-[9px] font-bold shrink-0"
                   placeholder="0"
@@ -679,9 +679,8 @@ export const POSCartItem = ({
           </div>
         </div>
       </div>
-      </div>
       )}
-      {/* FIX-BUG-1 (2026-07-07): validación en CUP con descuento por método */}
+      {/* FIX-BUG-1 (2026-07-07): validación en CUP */}
       {(() => {
         const cartStore = useCartStore.getState();
         // FIX-B6: usar getItemPaidCup del store (single source of truth)
