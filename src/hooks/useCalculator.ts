@@ -252,19 +252,72 @@ export function useCalculator() {
     setHasMemory(false);
   }, []);
 
+  /* ── Scientific functions — BF-15 ───────────────── */
+  // Aplican al valor actual del display y lo reemplazan
+  const handleScientific = useCallback((fn: string) => {
+    if (display === 'Error' || display === '0') {
+      // Para constantes π y e, reemplazar el 0
+      if (fn === 'pi') { setDisplay(formatResult(Math.PI)); setLastResult(Math.PI); return; }
+      if (fn === 'e') { setDisplay(formatResult(Math.E)); setLastResult(Math.E); return; }
+      return;
+    }
+    const current = parseFloat(display);
+    if (isNaN(current)) return;
+    let result: number;
+    let label: string;
+    switch (fn) {
+      case 'sqrt': result = Math.sqrt(current); label = `√(${display})`; break;
+      case 'square': result = current * current; label = `(${display})²`; break;
+      case 'cube': result = current * current * current; label = `(${display})³`; break;
+      case 'inv': result = 1 / current; label = `1/(${display})`; break;
+      case 'sin': result = Math.sin(current * Math.PI / 180); label = `sin(${display}°)`; break;
+      case 'cos': result = Math.cos(current * Math.PI / 180); label = `cos(${display}°)`; break;
+      case 'tan': result = Math.tan(current * Math.PI / 180); label = `tan(${display}°)`; break;
+      case 'log': result = Math.log10(current); label = `log(${display})`; break;
+      case 'ln': result = Math.log(current); label = `ln(${display})`; break;
+      case 'exp': result = Math.exp(current); label = `e^(${display})`; break;
+      case 'fact': {
+        if (current < 0 || !Number.isInteger(current)) { setDisplay('Error'); return; }
+        result = 1;
+        for (let i = 2; i <= current; i++) result *= i;
+        label = `${display}!`;
+        break;
+      }
+      case 'pi': result = Math.PI; label = 'π'; break;
+      case 'e': result = Math.E; label = 'e'; break;
+      case 'abs': result = Math.abs(current); label = `|${display}|`; break;
+      default: return;
+    }
+    if (!isFinite(result) || isNaN(result)) { setDisplay('Error'); return; }
+    const formatted = formatResult(result);
+    addToHistory(label, formatted);
+    setDisplay(formatted);
+    setLastResult(result);
+  }, [display, addToHistory]);
+
+  /* ── Power function (xʸ) ────────────────────────── */
+  const handlePower = useCallback(() => {
+    if (display === 'Error') return;
+    setEquation(display + ' ^ ');
+    setLastResult(null);
+    setDisplay('0');
+  }, [display]);
+
   /* ── Stable ref for keyboard listeners — BF-11 ─── */
   const handlersRef = useRef({
     handleNumber, handleOperator, handleCalculate,
     handleClear, handleBackspace, handlePercent, handleToggleSign,
     handleMemoryAdd, handleMemorySubtract, handleMemoryRecall, handleMemoryClear,
+    handleScientific, handlePower,
   });
   useEffect(() => {
     handlersRef.current = {
       handleNumber, handleOperator, handleCalculate,
       handleClear, handleBackspace, handlePercent, handleToggleSign,
       handleMemoryAdd, handleMemorySubtract, handleMemoryRecall, handleMemoryClear,
+      handleScientific, handlePower,
     };
-  }, [handleNumber, handleOperator, handleCalculate, handleClear, handleBackspace, handlePercent, handleToggleSign, handleMemoryAdd, handleMemorySubtract, handleMemoryRecall, handleMemoryClear]);
+  }, [handleNumber, handleOperator, handleCalculate, handleClear, handleBackspace, handlePercent, handleToggleSign, handleMemoryAdd, handleMemorySubtract, handleMemoryRecall, handleMemoryClear, handleScientific, handlePower]);
 
   return {
     display,
@@ -284,6 +337,8 @@ export function useCalculator() {
     handleMemorySubtract,
     handleMemoryRecall,
     handleMemoryClear,
+    handleScientific,
+    handlePower,
     clearHistory,
     useHistoryResult,
     addToHistory,

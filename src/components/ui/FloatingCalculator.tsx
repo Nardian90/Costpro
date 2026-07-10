@@ -834,3 +834,221 @@ const CalcButton: React.FC<CalcButtonProps> = ({ label, icon, onClick, variant =
     </motion.button>
   );
 };
+
+/* ═══════════════════════════════════════════════════════
+ *  Scientific Tab — Funciones científicas
+ *  FIX-CALC-PRO (2026-07-10): sin, cos, tan, log, ln, √, x², x³,
+ *  1/x, eˣ, n!, π, e, |x|, xʸ
+ * ═══════════════════════════════════════════════════════ */
+interface SciTabContentProps {
+  calc: ReturnType<typeof useCalculator>;
+  isDark: boolean;
+}
+export const SciTabContent: React.FC<SciTabContentProps> = ({ calc, isDark }) => {
+  const sciButtons = [
+    { label: 'sin', fn: 'sin' },
+    { label: 'cos', fn: 'cos' },
+    { label: 'tan', fn: 'tan' },
+    { label: 'xʸ', fn: 'power', action: calc.handlePower },
+    { label: 'log', fn: 'log' },
+    { label: 'ln', fn: 'ln' },
+    { label: '√', fn: 'sqrt' },
+    { label: 'x²', fn: 'square' },
+    { label: 'eˣ', fn: 'exp' },
+    { label: '1/x', fn: 'inv' },
+    { label: 'x³', fn: 'cube' },
+    { label: 'n!', fn: 'fact' },
+    { label: 'π', fn: 'pi' },
+    { label: 'e', fn: 'e' },
+    { label: '|x|', fn: 'abs' },
+  ];
+  return (
+    <div className="p-3 space-y-2">
+      <div className="bg-muted/20 rounded-lg px-3 py-2 flex items-center justify-between">
+        <span className="text-[9px] font-black uppercase text-muted-foreground">Display:</span>
+        <span className="text-lg font-mono font-black tabular-nums text-primary">{calc.display}</span>
+      </div>
+      <p className="text-[9px] text-muted-foreground text-center">
+        Las funciones se aplican al valor actual del display
+      </p>
+      <div className="grid grid-cols-4 gap-1.5">
+        {sciButtons.map(btn => (
+          <button
+            key={btn.label}
+            type="button"
+            onClick={() => btn.action ? btn.action() : calc.handleScientific(btn.fn)}
+            className="h-11 rounded-xl flex items-center justify-center text-sm font-bold border transition-all bg-primary/5 hover:bg-primary/20 text-primary border-primary/10 active:scale-90"
+          >
+            {btn.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+/* ═══════════════════════════════════════════════════════
+ *  Convert Tab — Conversión de monedas
+ *  FIX-CALC-PRO (2026-07-10): CUP/USD/EUR/MLC con tasas del store
+ * ═══════════════════════════════════════════════════════ */
+interface ConvertTabContentProps {
+  display: string;
+  isDark: boolean;
+}
+export const ConvertTabContent: React.FC<ConvertTabContentProps> = ({ display, isDark }) => {
+  const [fromCurrency, setFromCurrency] = useState<string>('CUP');
+  const [toCurrency, setToCurrency] = useState<string>('USD');
+  const [amount, setAmount] = useState<string>('');
+
+  const [rates, setRates] = useState<Record<string, number>>({ USD: 420, EUR: 450, MLC: 1 });
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('costpro-global-rates');
+      if (stored) setRates(JSON.parse(stored));
+    } catch {}
+  }, []);
+
+  const CURRENCIES = ['CUP', 'USD', 'EUR', 'MLC'];
+  const getRate = (cur: string): number => cur === 'CUP' ? 1 : (rates[cur] || 1);
+  const convert = (amt: number, from: string, to: string): number => {
+    const inCup = amt * getRate(from);
+    return inCup / getRate(to);
+  };
+  const useDisplayAmount = () => {
+    const val = parseFloat(display);
+    if (!isNaN(val) && val > 0) setAmount(String(val));
+  };
+  const amountNum = parseFloat(amount) || 0;
+  const result = convert(amountNum, fromCurrency, toCurrency);
+  const swap = () => { setFromCurrency(toCurrency); setToCurrency(fromCurrency); };
+
+  return (
+    <div className="p-3 space-y-3">
+      <div className="bg-muted/20 rounded-lg px-3 py-2 flex items-center justify-between">
+        <span className="text-[9px] font-black uppercase text-muted-foreground">Display:</span>
+        <button type="button" onClick={useDisplayAmount} className="text-sm font-mono font-black tabular-nums text-primary hover:underline" title="Usar valor del display">
+          {display} →
+        </button>
+      </div>
+      <div>
+        <label className="text-[9px] font-black uppercase text-muted-foreground block mb-1">Cantidad</label>
+        <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" className="w-full h-10 bg-background border border-border/50 rounded-lg px-3 text-sm font-bold tabular-nums" />
+      </div>
+      <div>
+        <label className="text-[9px] font-black uppercase text-muted-foreground block mb-1">De</label>
+        <div className="grid grid-cols-4 gap-1">
+          {CURRENCIES.map(cur => (
+            <button key={cur} type="button" onClick={() => setFromCurrency(cur)} className={cn("py-2 rounded-lg text-[10px] font-black uppercase border transition-all", fromCurrency === cur ? "bg-primary/10 border-primary text-primary" : "bg-muted/20 border-border text-muted-foreground")}>
+              {cur}
+            </button>
+          ))}
+        </div>
+      </div>
+      <button type="button" onClick={swap} className="w-full py-1.5 rounded-lg text-[10px] font-black uppercase border border-border/40 hover:bg-muted/30 flex items-center justify-center gap-1">
+        ⇅ Intercambiar
+      </button>
+      <div>
+        <label className="text-[9px] font-black uppercase text-muted-foreground block mb-1">A</label>
+        <div className="grid grid-cols-4 gap-1">
+          {CURRENCIES.map(cur => (
+            <button key={cur} type="button" onClick={() => setToCurrency(cur)} className={cn("py-2 rounded-lg text-[10px] font-black uppercase border transition-all", toCurrency === cur ? "bg-primary/10 border-primary text-primary" : "bg-muted/20 border-border text-muted-foreground")}>
+              {cur}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className="bg-primary/5 border border-primary/20 rounded-lg p-3 text-center">
+        <div className="text-[9px] font-black uppercase text-muted-foreground">{amountNum || 0} {fromCurrency} =</div>
+        <div className="text-2xl font-mono font-black text-primary tabular-nums mt-1">{new Intl.NumberFormat('es-CU', { maximumFractionDigits: 2 }).format(result)}</div>
+        <div className="text-[10px] font-bold text-muted-foreground mt-0.5">{toCurrency}</div>
+      </div>
+      <div className="text-[9px] text-muted-foreground text-center">Tasas: 1 USD = {rates.USD} CUP · 1 EUR = {rates.EUR} CUP · 1 MLC = {rates.MLC} CUP</div>
+    </div>
+  );
+};
+
+/* ═══════════════════════════════════════════════════════
+ *  Units Tab — Conversión de unidades
+ *  FIX-CALC-PRO (2026-07-10): longitud, peso, temperatura
+ * ═══════════════════════════════════════════════════════ */
+interface UnitsTabContentProps {
+  display: string;
+  isDark: boolean;
+}
+type UnitCategory = 'length' | 'weight' | 'temperature';
+const UNIT_CATEGORIES: Record<UnitCategory, { label: string; units: string[]; toBase: (v: number, u: string) => number; fromBase: (v: number, u: string) => number }> = {
+  length: {
+    label: 'Longitud',
+    units: ['m', 'cm', 'mm', 'km', 'in', 'ft', 'yd', 'mi'],
+    toBase: (v, u) => { const f: Record<string, number> = { m: 1, cm: 0.01, mm: 0.001, km: 1000, in: 0.0254, ft: 0.3048, yd: 0.9144, mi: 1609.344 }; return v * (f[u] || 1); },
+    fromBase: (v, u) => { const f: Record<string, number> = { m: 1, cm: 100, mm: 1000, km: 0.001, in: 39.3701, ft: 3.28084, yd: 1.09361, mi: 0.000621371 }; return v * (f[u] || 1); },
+  },
+  weight: {
+    label: 'Peso',
+    units: ['kg', 'g', 'mg', 't', 'lb', 'oz'],
+    toBase: (v, u) => { const f: Record<string, number> = { kg: 1, g: 0.001, mg: 0.000001, t: 1000, lb: 0.453592, oz: 0.0283495 }; return v * (f[u] || 1); },
+    fromBase: (v, u) => { const f: Record<string, number> = { kg: 1, g: 1000, mg: 1000000, t: 0.001, lb: 2.20462, oz: 35.274 }; return v * (f[u] || 1); },
+  },
+  temperature: {
+    label: 'Temperatura',
+    units: ['°C', '°F', 'K'],
+    toBase: (v, u) => { if (u === '°C') return v; if (u === '°F') return (v - 32) * 5 / 9; if (u === 'K') return v - 273.15; return v; },
+    fromBase: (v, u) => { if (u === '°C') return v; if (u === '°F') return v * 9 / 5 + 32; if (u === 'K') return v + 273.15; return v; },
+  },
+};
+export const UnitsTabContent: React.FC<UnitsTabContentProps> = ({ display, isDark }) => {
+  const [category, setCategory] = useState<UnitCategory>('length');
+  const [fromUnit, setFromUnit] = useState<string>('m');
+  const [toUnit, setToUnit] = useState<string>('ft');
+  const [amount, setAmount] = useState<string>('');
+
+  const useDisplayAmount = () => { const val = parseFloat(display); if (!isNaN(val) && val > 0) setAmount(String(val)); };
+  const changeCategory = (cat: UnitCategory) => { setCategory(cat); setFromUnit(UNIT_CATEGORIES[cat].units[0]); setToUnit(UNIT_CATEGORIES[cat].units[1]); };
+  const amountNum = parseFloat(amount) || 0;
+  const cat = UNIT_CATEGORIES[category];
+  const inBase = cat.toBase(amountNum, fromUnit);
+  const result = cat.fromBase(inBase, toUnit);
+  const swap = () => { setFromUnit(toUnit); setToUnit(fromUnit); };
+
+  return (
+    <div className="p-3 space-y-3">
+      <div className="bg-muted/20 rounded-lg px-3 py-2 flex items-center justify-between">
+        <span className="text-[9px] font-black uppercase text-muted-foreground">Display:</span>
+        <button type="button" onClick={useDisplayAmount} className="text-sm font-mono font-black tabular-nums text-primary hover:underline" title="Usar valor del display">{display} →</button>
+      </div>
+      <div className="grid grid-cols-3 gap-1">
+        {(Object.keys(UNIT_CATEGORIES) as UnitCategory[]).map(cat => (
+          <button key={cat} type="button" onClick={() => changeCategory(cat)} className={cn("py-2 rounded-lg text-[10px] font-black uppercase border transition-all", category === cat ? "bg-primary/10 border-primary text-primary" : "bg-muted/20 border-border text-muted-foreground")}>
+            {UNIT_CATEGORIES[cat].label}
+          </button>
+        ))}
+      </div>
+      <div>
+        <label className="text-[9px] font-black uppercase text-muted-foreground block mb-1">Cantidad</label>
+        <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" className="w-full h-10 bg-background border border-border/50 rounded-lg px-3 text-sm font-bold tabular-nums" />
+      </div>
+      <div>
+        <label className="text-[9px] font-black uppercase text-muted-foreground block mb-1">De</label>
+        <div className="grid grid-cols-4 gap-1">
+          {cat.units.map(u => (
+            <button key={u} type="button" onClick={() => setFromUnit(u)} className={cn("py-2 rounded-lg text-[10px] font-bold border transition-all", fromUnit === u ? "bg-primary/10 border-primary text-primary" : "bg-muted/20 border-border text-muted-foreground")}>{u}</button>
+          ))}
+        </div>
+      </div>
+      <button type="button" onClick={swap} className="w-full py-1.5 rounded-lg text-[10px] font-black uppercase border border-border/40 hover:bg-muted/30 flex items-center justify-center gap-1">⇅ Intercambiar</button>
+      <div>
+        <label className="text-[9px] font-black uppercase text-muted-foreground block mb-1">A</label>
+        <div className="grid grid-cols-4 gap-1">
+          {cat.units.map(u => (
+            <button key={u} type="button" onClick={() => setToUnit(u)} className={cn("py-2 rounded-lg text-[10px] font-bold border transition-all", toUnit === u ? "bg-primary/10 border-primary text-primary" : "bg-muted/20 border-border text-muted-foreground")}>{u}</button>
+          ))}
+        </div>
+      </div>
+      <div className="bg-primary/5 border border-primary/20 rounded-lg p-3 text-center">
+        <div className="text-[9px] font-black uppercase text-muted-foreground">{amountNum || 0} {fromUnit} =</div>
+        <div className="text-2xl font-mono font-black text-primary tabular-nums mt-1">{new Intl.NumberFormat('es-CU', { maximumFractionDigits: 4 }).format(result)}</div>
+        <div className="text-[10px] font-bold text-muted-foreground mt-0.5">{toUnit}</div>
+      </div>
+    </div>
+  );
+};

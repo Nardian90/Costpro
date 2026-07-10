@@ -5,6 +5,9 @@ import {
   HistoryTabContent,
   CashTabContent,
   ConfigTabContent,
+  SciTabContent,
+  ConvertTabContent,
+  UnitsTabContent,
   TabButton,
 } from '@/components/ui/FloatingCalculator';
 import { useCalculator } from '@/hooks/useCalculator';
@@ -18,40 +21,39 @@ import {
   Settings2,
   ArrowLeft,
   Maximize2,
+  FlaskConical,
+  Coins,
+  Ruler,
+  X,
 } from 'lucide-react';
 import { cn, isDarkTheme } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/ui/useMobile';
 
 /**
- * CalculatorView — Vista integrada de la Calculadora Pro (layout de 2 paneles).
+ * CalculatorView — Vista integrada Pro Ultimate.
  *
- * FIX-CALC-VIEW (2026-07-10): En vez de solo centrar la calculadora como el
- * modal flotante (que deja espacio muerto a los lados), esta vista usa un
- * layout de dos paneles que aprovecha todo el ancho disponible:
+ * FIX-CALC-PRO (2026-07-10): Rediseño completo con 3 zonas:
+ *   1. Panel izquierdo: Calculadora básica (display + keypad + memoria) — siempre visible
+ *   2. Panel derecho: Tabs contextuales con herramientas avanzadas:
+ *      - Historial: operaciones previas
+ *      - Desglose: billetes/monedas
+ *      - Científico: sin/cos/tan/log/√/x²/etc
+ *      - Monedas: conversión CUP/USD/EUR/MLC
+ *      - Unidades: longitud/peso/temperatura
+ *   3. Modal de Configuración (accesible con botón al lado de "Volver")
  *
- *   ┌──────────────────┬──────────────────────────────┐
- *   │                  │ [Historial] [Desglose] [Cfg] │
- *   │   DISPLAY        ├──────────────────────────────┤
- *   │                  │                              │
- *   │   KEYPAD         │  Contenido contextual        │
- *   │   (siempre)      │  según tab activo:           │
- *   │                  │  - Historial → lista de ops  │
- *   │   MEMORY         │  - Desglose  → billetes      │
- *   │                  │  - Config    → atajos/ayuda  │
- *   └──────────────────┴──────────────────────────────┘
- *
- * La calculadora (display + keypad + memoria) está SIEMPRE visible a la
- * izquierda. El panel derecho cambia según el tab seleccionado. Esto elimina
- * el espacio muerto y permite ver el historial mientras se calcula.
+ * Referencia: Samsung Calculator Pro, PCalc, Calc++ — calculadoras avanzadas
+ * que mantienen la simplicidad del modal pero añaden poder en vista ampliada.
  */
 
-type RightTab = 'history' | 'cash' | 'config';
+type RightTab = 'history' | 'cash' | 'sci' | 'convert' | 'units';
 
 export default function CalculatorView() {
   const { setCurrentView, setIsCalculatorOpen } = useUIStore();
   const { resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [rightTab, setRightTab] = useState<RightTab>('history');
+  const [showConfig, setShowConfig] = useState(false);
   const isMobile = useIsMobile();
 
   const calc = useCalculator();
@@ -70,6 +72,14 @@ export default function CalculatorView() {
 
   const isDark = isDarkTheme(resolvedTheme);
 
+  const rightTabs = [
+    { id: 'history' as RightTab, label: 'Historial', icon: History, badge: calc.history.length },
+    { id: 'cash' as RightTab, label: 'Desglose', icon: DollarSign },
+    { id: 'sci' as RightTab, label: 'Científico', icon: FlaskConical },
+    { id: 'convert' as RightTab, label: 'Monedas', icon: Coins },
+    { id: 'units' as RightTab, label: 'Unidades', icon: Ruler },
+  ];
+
   return (
     <div className="relative flex flex-col h-full w-full overflow-hidden bg-background">
       {/* ── Header ── */}
@@ -81,12 +91,22 @@ export default function CalculatorView() {
           <div className="min-w-0">
             <h2 className="text-xs sm:text-sm font-black uppercase tracking-widest leading-none truncate">Calculadora Pro</h2>
             <p className="text-[9px] sm:text-[10px] text-muted-foreground mt-0.5 hidden sm:block">
-              Historial, memoria y desglose de billetes
+              Científica · Monedas · Unidades · Historial
             </p>
           </div>
         </div>
         <div className="flex items-center gap-1.5 shrink-0">
-          {/* Cambiar a modo modal flotante — oculto en móvil (ya es pantalla completa) */}
+          {/* Config — botón al lado de Volver (abre modal) */}
+          <button
+            type="button"
+            onClick={() => setShowConfig(true)}
+            className="px-2.5 sm:px-3 py-1.5 rounded-lg text-[10px] font-black uppercase border border-border/40 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors flex items-center gap-1"
+            title="Configuración y atajos"
+            aria-label="Configuración"
+          >
+            <Settings2 className="w-3 h-3" /> <span className="hidden sm:inline">Config</span>
+          </button>
+          {/* Flotante — oculto en móvil */}
           {!isMobile && (
             <button
               type="button"
@@ -109,10 +129,7 @@ export default function CalculatorView() {
         </div>
       </div>
 
-      {/* ── Layout: 2 paneles (desktop) o apilado vertical (móvil) ──
-          FIX-RESPONSIVE (2026-07-10): En móvil (<768px) los paneles se apilan
-          verticalmente con la calculadora arriba y el panel contextual abajo.
-          En desktop se mantienen lado a lado para aprovechar el ancho. */}
+      {/* ── Layout: 2 paneles (desktop) o apilado (móvil) ── */}
       <div className={cn(
         "flex-1 min-h-0 gap-2 sm:gap-3 p-2 sm:p-3 md:p-4 overflow-hidden",
         isMobile ? "flex flex-col overflow-y-auto" : "flex flex-row"
@@ -121,80 +138,98 @@ export default function CalculatorView() {
         {/* ═══ LEFT/TOP PANE: Calculator ═══ */}
         <div className={cn(
           "flex flex-col rounded-[1.25rem] sm:rounded-[1.5rem] border border-border/30 bg-card shadow-[0_16px_32px_-8px_rgba(0,0,0,0.2)] overflow-hidden",
-          isMobile
-            ? "w-full shrink-0"  // móvil: ancho completo, no shrink
-            : "w-[300px] sm:w-[340px] shrink-0"  // desktop: ancho fijo
+          isMobile ? "w-full shrink-0" : "w-[300px] sm:w-[340px] shrink-0"
         )}>
           <div className="flex-1 overflow-y-auto no-scrollbar">
             <CalcTabContent calc={calc} isDark={isDark} />
           </div>
         </div>
 
-        {/* ═══ RIGHT/BOTTOM PANE: Contextual panel ═══ */}
+        {/* ═══ RIGHT/BOTTOM PANE: Advanced tools ═══ */}
         <div className={cn(
           "flex flex-col rounded-[1.25rem] sm:rounded-[1.5rem] border border-border/30 bg-card shadow-[0_16px_32px_-8px_rgba(0,0,0,0.2)] overflow-hidden",
-          isMobile
-            ? "w-full flex-1 min-h-[300px]"  // móvil: ancho completo, mínimo 300px de alto
-            : "flex-1 min-w-0"  // desktop: llena el espacio restante
+          isMobile ? "w-full flex-1 min-h-[400px]" : "flex-1 min-w-0"
         )}>
-
-          {/* Tab switcher for right pane */}
-          <div className="shrink-0 flex border-b border-border/30">
-            <TabButton
-              active={rightTab === 'history'}
-              onClick={() => setRightTab('history')}
-              icon={<History className="w-3 h-3" />}
-              label="Historial"
-              isDark={isDark}
-              badge={calc.history.length}
-            />
-            <TabButton
-              active={rightTab === 'cash'}
-              onClick={() => setRightTab('cash')}
-              icon={<DollarSign className="w-3 h-3" />}
-              label="Desglose"
-              isDark={isDark}
-            />
-            <TabButton
-              active={rightTab === 'config'}
-              onClick={() => setRightTab('config')}
-              icon={<Settings2 className="w-3 h-3" />}
-              label="Config"
-              isDark={isDark}
-            />
+          {/* Tab switcher — scrollable en móvil */}
+          <div className="shrink-0 flex border-b border-border/30 overflow-x-auto no-scrollbar">
+            {rightTabs.map(tab => {
+              const Icon = tab.icon;
+              return (
+                <TabButton
+                  key={tab.id}
+                  active={rightTab === tab.id}
+                  onClick={() => setRightTab(tab.id)}
+                  icon={<Icon className="w-3 h-3" />}
+                  label={tab.label}
+                  isDark={isDark}
+                  badge={tab.badge}
+                />
+              );
+            })}
           </div>
 
           {/* Right pane content */}
           <div className="flex-1 overflow-y-auto overflow-x-hidden no-scrollbar">
             {rightTab === 'history' && (
-              <HistoryTabContent
-                history={calc.history}
-                onUse={calc.useHistoryResult}
-                onClear={calc.clearHistory}
-                isDark={isDark}
-              />
+              <HistoryTabContent history={calc.history} onUse={calc.useHistoryResult} onClear={calc.clearHistory} isDark={isDark} />
             )}
             {rightTab === 'cash' && (
               <CashTabContent display={calc.display} isDark={isDark} />
             )}
-            {rightTab === 'config' && (
-              <ConfigTabContent isDark={isDark} />
+            {rightTab === 'sci' && (
+              <SciTabContent calc={calc} isDark={isDark} />
+            )}
+            {rightTab === 'convert' && (
+              <ConvertTabContent display={calc.display} isDark={isDark} />
+            )}
+            {rightTab === 'units' && (
+              <UnitsTabContent display={calc.display} isDark={isDark} />
             )}
           </div>
         </div>
       </div>
 
-      {/* ── Status bar (bottom) — oculto en móvil para ganar espacio ── */}
+      {/* ── Status bar — oculto en móvil ── */}
       {!isMobile && (
         <div className="shrink-0 px-4 py-1.5 border-t border-border/30 bg-muted/20 flex items-center justify-between text-[9px] font-bold uppercase tracking-widest text-muted-foreground">
+          <span>⌨ Teclado: 0-9 + − * / Enter ⌫ C % Esc</span>
           <div className="flex items-center gap-3">
-            <span>⌨ Teclado: 0-9 + − * / Enter ⌫ C % Esc</span>
-          </div>
-          <div className="flex items-center gap-3">
-            {calc.hasMemory && (
-              <span className="text-amber-500">M: {new Intl.NumberFormat('es-CU').format(calc.memory)}</span>
-            )}
+            {calc.hasMemory && <span className="text-amber-500">M: {new Intl.NumberFormat('es-CU').format(calc.memory)}</span>}
             <span>{calc.history.length} ops en historial</span>
+          </div>
+        </div>
+      )}
+
+      {/* ── Modal de Configuración ── */}
+      {showConfig && (
+        <div
+          className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm"
+          onClick={() => setShowConfig(false)}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Configuración de calculadora"
+        >
+          <div
+            className="w-full max-w-md bg-card border border-border/50 rounded-2xl shadow-2xl max-h-[85vh] overflow-hidden flex flex-col"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="shrink-0 flex items-center justify-between p-3 border-b border-border/30 bg-muted/20">
+              <div className="flex items-center gap-2">
+                <Settings2 className="w-4 h-4 text-primary" />
+                <h3 className="text-xs font-black uppercase tracking-widest">Configuración</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowConfig(false)}
+                className="p-1.5 rounded-full hover:bg-muted"
+                aria-label="Cerrar"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto no-scrollbar">
+              <ConfigTabContent isDark={isDark} />
+            </div>
           </div>
         </div>
       )}
