@@ -43,16 +43,23 @@ export interface CartItem {
   transfer_currency: string;
   zelle_currency: string;
   // FIX-DISCOUNT-PER-METHOD (2026-07-07): descuento individual por método de pago
-  // Cada método puede tener su propio descuento: tipo (% o $), valor, y moneda
+  // FIX-SURCHARGE (2026-07-10): también recargo (% o $) por método
+  // Cada método puede tener descuento O recargo: tipo (% o $), valor, y moneda
   cash_discount_type: "percentage" | "fixed" | null;
   cash_discount_value: number;
   cash_discount_currency: string;
+  cash_surcharge_type: "percentage" | "fixed" | null;
+  cash_surcharge_value: number;
   transfer_discount_type: "percentage" | "fixed" | null;
   transfer_discount_value: number;
   transfer_discount_currency: string;
+  transfer_surcharge_type: "percentage" | "fixed" | null;
+  transfer_surcharge_value: number;
   zelle_discount_type: "percentage" | "fixed" | null;
   zelle_discount_value: number;
   zelle_discount_currency: string;
+  zelle_surcharge_type: "percentage" | "fixed" | null;
+  zelle_surcharge_value: number;
   // FIX-MULTI-MONEDA: moneda y tasa de cambio POR ITEM (no global)
   currency: string;
   exchange_rate: number;
@@ -252,8 +259,7 @@ export const useCartStore = create<CartState>()(
         return cashCup + transferCup + zelleCup;
       },
 
-      // FIX-B3 (2026-07-10): descuento por método calculado sobre la porción pagada
-      // (no promedio del subtotal total). Cada método paga su parte con su descuento.
+      // FIX-B3 (2026-07-10): descuento/recargo por método calculado sobre base_price_cup
       getItemSubtotalWithMethodDiscountCup: (item: CartItem, method: 'cash' | 'transfer' | 'zelle') => {
         const baseSubtotalCup = get().getItemSubtotalCup(item);
         const dtype = method === 'cash' ? item.cash_discount_type
@@ -262,18 +268,39 @@ export const useCartStore = create<CartState>()(
         const dvalue = method === 'cash' ? item.cash_discount_value
           : method === 'transfer' ? item.transfer_discount_value
           : item.zelle_discount_value;
+        // FIX-SURCHARGE: recargo por método
+        const stype = method === 'cash' ? item.cash_surcharge_type
+          : method === 'transfer' ? item.transfer_surcharge_type
+          : item.zelle_surcharge_type;
+        const svalue = method === 'cash' ? item.cash_surcharge_value
+          : method === 'transfer' ? item.transfer_surcharge_value
+          : item.zelle_surcharge_value;
 
-        if (!dtype || dvalue <= 0) return baseSubtotalCup;
+        let result = baseSubtotalCup;
 
-        if (dtype === 'percentage') {
-          return Math.max(0, baseSubtotalCup * (1 - dvalue / 100));
+        // Aplicar descuento
+        if (dtype && dvalue > 0) {
+          if (dtype === 'percentage') {
+            result = result * (1 - dvalue / 100);
+          } else {
+            const dcurrency = method === 'cash' ? item.cash_discount_currency
+              : method === 'transfer' ? item.transfer_discount_currency
+              : item.zelle_discount_currency;
+            const rate = getRateToCup(dcurrency || 'CUP', item.exchange_rate || 1, get().globalRates);
+            result = Math.max(0, result - dvalue * rate);
+          }
         }
-        // fixed: el descuento fijo se resta del subtotal total en CUP
-        const dcurrency = method === 'cash' ? item.cash_discount_currency
-          : method === 'transfer' ? item.transfer_discount_currency
-          : item.zelle_discount_currency;
-        const rate = getRateToCup(dcurrency || 'CUP', item.exchange_rate || 1, get().globalRates);
-        return Math.max(0, baseSubtotalCup - dvalue * rate);
+
+        // Aplicar recargo
+        if (stype && svalue > 0) {
+          if (stype === 'percentage') {
+            result = result * (1 + svalue / 100);
+          } else {
+            result = result + svalue;
+          }
+        }
+
+        return Math.max(0, result);
       },
 
       /**
@@ -373,12 +400,18 @@ export const useCartStore = create<CartState>()(
                 cash_discount_type: null,
                 cash_discount_value: 0,
                 cash_discount_currency: 'CUP',
+                cash_surcharge_type: null,
+                cash_surcharge_value: 0,
                 transfer_discount_type: null,
                 transfer_discount_value: 0,
                 transfer_discount_currency: 'CUP',
+                transfer_surcharge_type: null,
+                transfer_surcharge_value: 0,
                 zelle_discount_type: null,
                 zelle_discount_value: 0,
                 zelle_discount_currency: 'USD',
+                zelle_surcharge_type: null,
+                zelle_surcharge_value: 0,
                 // FIX-PAYMENT-METHOD-CURRENCY: defaults heredan la moneda del item
                 cash_currency: (productInput as any).currency || (product as any)?.price_currency || 'CUP',
                 transfer_currency: (productInput as any).currency || (product as any)?.price_currency || 'CUP',

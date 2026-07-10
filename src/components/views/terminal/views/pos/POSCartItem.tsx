@@ -477,31 +477,108 @@ export const POSCartItem = ({
             <option value="MLC">MLC</option>
           </select>
         </div>
-        <div className="space-y-1">
-          <span className="text-xs font-black uppercase text-muted-foreground">
-            Tasa {item.currency !== 'CUP' && `(1 ${item.currency}=${(item.exchange_rate || 1)} CUP · unit≈${formatCurrency((item.price || 0) * (item.exchange_rate || 1))})`}
-          </span>
-          <input
-            type="number"
-            step="0.01"
-            value={item.exchange_rate || 1.0}
-            disabled={item.currency === 'CUP'}
-            onChange={(e) => {
-              const rate = parseFloat(e.target.value) || 1.0;
-              // FIX-BUG-4: al editar la TASA, actualizar globalRates
-              useCartStore.getState().setGlobalRate(item.currency || 'USD', rate);
-              // FIX-BASE-PRICE (2026-07-10): SIEMPRE recalcular desde base_price_cup
+        {/* FIX-TASAS-BUTTON (2026-07-10): botón para actualizar tasas + input TASA compacto */}
+        <div className="flex gap-1 items-center">
+          {item.currency !== 'CUP' && (
+            <input
+              type="number"
+              step="0.01"
+              value={item.exchange_rate || 1.0}
+              onChange={(e) => {
+                const rate = parseFloat(e.target.value) || 1.0;
+                useCartStore.getState().setGlobalRate(item.currency || 'USD', rate);
+                useCartStore.setState((state) => ({
+                  items: state.items.map((it) => {
+                    if (it.product_id === item.product_id && it.variant_id === item.variant_id) {
+                      let newPrice: number;
+                      if (it.currency === 'CUP' || rate <= 0) {
+                        newPrice = it.base_price_cup || it.price;
+                      } else {
+                        newPrice = (it.base_price_cup || it.price) / rate;
+                      }
+                      const updatedItem = { ...it, exchange_rate: rate, price: newPrice };
+                      updatedItem.subtotal = recalcSubtotal(updatedItem);
+                      updatedItem.cash_paid = updatedItem.subtotal;
+                      updatedItem.transfer_paid = 0;
+                      updatedItem.zelle_paid = 0;
+                      return updatedItem;
+                    }
+                    return it;
+                  }),
+                  lastUpdated: Date.now(),
+                }));
+              }}
+              className="w-20 bg-background border border-border/50 rounded-lg px-2 py-2 min-h-[36px] text-xs font-bold"
+              aria-label={`Tasa para ${item.product.name}`}
+            />
+          )}
+          <button
+            type="button"
+            onClick={async () => {
+              const { useAuthStore } = await import('@/store');
+              const token = useAuthStore.getState().token;
+              const user = useAuthStore.getState().user as any;
+              const storeId = user?.activeStoreId;
+              if (!storeId) return;
+
+              // Cargar tasas actuales
+              const res = await fetch(`/api/store-rates?storeId=${storeId}`, {
+                headers: token ? { Authorization: `Bearer ${token}` } : {},
+              });
+              let currentRates: Record<string, number> = {};
+              if (res.ok) {
+                const data = await res.json();
+                currentRates = data.rates || {};
+              }
+
+              // Prompt simple para editar tasas
+              const currencies = ['USD', 'EUR', 'MLC'];
+              let inputHtml = currencies.map(c =>
+                `${c}: ${currentRates[c] || 'no seteada'}`
+              ).join('\n');
+
+              const newRatesStr = window.prompt(
+                `Tasas actuales:\n${inputHtml}\n\nIngresa las nuevas tasas (formato: USD=680,EUR=720,MLC=600):`,
+                currencies.map(c => `${c}=${currentRates[c] || ''}`).join(',')
+              );
+
+              if (!newRatesStr) return;
+
+              // Parsear
+              const newRates: Record<string, number> = {};
+              for (const pair of newRatesStr.split(',')) {
+                const [cur, val] = pair.trim().split('=');
+                if (cur && val) {
+                  const num = parseFloat(val.trim());
+                  if (num > 0) newRates[cur.trim().toUpperCase()] = num;
+                }
+              }
+
+              if (Object.keys(newRates).length === 0) {
+                toast.error('Formato inválido. Usa: USD=680,EUR=720,MLC=600');
+                return;
+              }
+
+              // Guardar en BD
+              const saveRes = await fetch('/api/store-rates', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+                body: JSON.stringify({ storeId, rates: newRates }),
+              });
+
+              if (!saveRes.ok) { toast.error('Error al guardar tasas'); return; }
+
+              // Actualizar globalRates en el store
+              for (const [cur, rate] of Object.entries(newRates)) {
+                useCartStore.getState().setGlobalRate(cur, rate);
+              }
+
+              // Recalcular precios de todos los items
               useCartStore.setState((state) => ({
                 items: state.items.map((it) => {
-                  if (it.product_id === item.product_id && it.variant_id === item.variant_id) {
-                    // Precio = base_price_cup / tasa (siempre, sin importar tasa anterior)
-                    let newPrice: number;
-                    if (it.currency === 'CUP' || rate <= 0) {
-                      newPrice = it.base_price_cup || it.price;
-                    } else {
-                      newPrice = (it.base_price_cup || it.price) / rate;
-                    }
-                    const updatedItem = { ...it, exchange_rate: rate, price: newPrice };
+                  if (it.currency !== 'CUP' && newRates[it.currency]) {
+                    const newPrice = (it.base_price_cup || it.price) / newRates[it.currency];
+                    const updatedItem = { ...it, exchange_rate: newRates[it.currency], price: newPrice };
                     updatedItem.subtotal = recalcSubtotal(updatedItem);
                     updatedItem.cash_paid = updatedItem.subtotal;
                     updatedItem.transfer_paid = 0;
@@ -512,10 +589,14 @@ export const POSCartItem = ({
                 }),
                 lastUpdated: Date.now(),
               }));
+
+              toast.success('Tasas actualizadas y guardadas');
             }}
-            className="w-full bg-background border border-border/50 rounded-lg px-2 py-2.5 min-h-[44px] text-xs font-bold disabled:opacity-50"
-            aria-label={`Tasa de cambio para ${item.product.name}`}
-          />
+            className="text-[9px] font-black uppercase text-primary border border-primary/30 rounded-lg px-2 py-2 min-h-[36px] hover:bg-primary/5 shrink-0"
+            title="Actualizar tasas de cambio de la tienda"
+          >
+            Tasas
+          </button>
         </div>
       </div>
       {/* FIX-LAYOUT: Pago Mixto ocupa todo el ancho disponible */}
@@ -564,7 +645,7 @@ export const POSCartItem = ({
                 className="bg-background border border-border/50 rounded px-1 py-2 min-h-[36px] text-[9px] font-bold shrink-0"
                 aria-label={`Tipo de descuento en efectivo para ${item.product.name}`}
               >
-                <option value="none">Sin desc</option><option value="percentage">%</option><option value="fixed">$</option>
+                <option value="none">—</option><option value="percentage">-%</option><option value="fixed">-$</option>
               </select>
               {item.cash_discount_type && (
                 <input
@@ -614,7 +695,7 @@ export const POSCartItem = ({
                 className="bg-background border border-border/50 rounded px-1 py-2 min-h-[36px] text-[9px] font-bold shrink-0"
                 aria-label={`Tipo de descuento en transferencia para ${item.product.name}`}
               >
-                <option value="none">Sin desc</option><option value="percentage">%</option><option value="fixed">$</option>
+                <option value="none">—</option><option value="percentage">-%</option><option value="fixed">-$</option>
               </select>
               {item.transfer_discount_type && (
                 <input
@@ -664,7 +745,7 @@ export const POSCartItem = ({
                 className="bg-background border border-border/50 rounded px-1 py-2 min-h-[36px] text-[9px] font-bold shrink-0"
                 aria-label={`Tipo de descuento en Zelle para ${item.product.name}`}
               >
-                <option value="none">Sin desc</option><option value="percentage">%</option><option value="fixed">$</option>
+                <option value="none">—</option><option value="percentage">-%</option><option value="fixed">-$</option>
               </select>
               {item.zelle_discount_type && (
                 <input
