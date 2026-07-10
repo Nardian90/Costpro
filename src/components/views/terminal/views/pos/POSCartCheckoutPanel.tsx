@@ -218,7 +218,11 @@ export function POSCartCheckoutPanel({
       {/* ── EFECTIVO RECIBIDO + VUELTO ────────────────────────────── */}
       {(() => {
         const items = useCartStore.getState().items;
-        const hasCash = items.some(i => (i.cash_paid || 0) > 0);
+        // FIX-PAYMENT-ROWS: detectar cash en payments[] o legacy
+        const hasCash = items.some(i =>
+          (i.payments && i.payments.some(p => p.method === 'cash' && p.amount > 0))
+          || (!i.payments && (i.cash_paid || 0) > 0)
+        );
         if (!hasCash) return null;
         return (
         <div className="px-4 sm:px-6 py-2 border-b border-border/50 bg-success/5">
@@ -283,19 +287,30 @@ export function POSCartCheckoutPanel({
         const isBalanced = Math.abs(diff) <= 0.01;
 
         // Determinar label del ajuste activo (ej: "+5%")
+        // FIX-PAYMENT-ROWS: buscar en payments[] primero, fallback a legacy
         let adjLabel = '';
         for (const item of cartStore.items) {
-          if (item.cash_paid > 0 && item.cash_discount_type && item.cash_discount_value) {
-            adjLabel = ` (${item.cash_discount_value > 0 ? '+' : ''}${item.cash_discount_value}${item.cash_discount_type === 'percentage' ? '%' : ''})`;
-            break;
-          }
-          if (item.transfer_paid > 0 && item.transfer_discount_type && item.transfer_discount_value) {
-            adjLabel = ` (${item.transfer_discount_value > 0 ? '+' : ''}${item.transfer_discount_value}${item.transfer_discount_type === 'percentage' ? '%' : ''})`;
-            break;
-          }
-          if (item.zelle_paid > 0 && item.zelle_discount_type && item.zelle_discount_value) {
-            adjLabel = ` (${item.zelle_discount_value > 0 ? '+' : ''}${item.zelle_discount_value}${item.zelle_discount_type === 'percentage' ? '%' : ''})`;
-            break;
+          if (item.payments && item.payments.length > 0) {
+            for (const p of item.payments) {
+              if (p.amount > 0 && p.discount_type && p.discount_value) {
+                adjLabel = ` (${p.discount_value > 0 ? '+' : ''}${p.discount_value}${p.discount_type === 'percentage' ? '%' : ''})`;
+                break;
+              }
+            }
+            if (adjLabel) break;
+          } else {
+            if (item.cash_paid > 0 && item.cash_discount_type && item.cash_discount_value) {
+              adjLabel = ` (${item.cash_discount_value > 0 ? '+' : ''}${item.cash_discount_value}${item.cash_discount_type === 'percentage' ? '%' : ''})`;
+              break;
+            }
+            if (item.transfer_paid > 0 && item.transfer_discount_type && item.transfer_discount_value) {
+              adjLabel = ` (${item.transfer_discount_value > 0 ? '+' : ''}${item.transfer_discount_value}${item.transfer_discount_type === 'percentage' ? '%' : ''})`;
+              break;
+            }
+            if (item.zelle_paid > 0 && item.zelle_discount_type && item.zelle_discount_value) {
+              adjLabel = ` (${item.zelle_discount_value > 0 ? '+' : ''}${item.zelle_discount_value}${item.zelle_discount_type === 'percentage' ? '%' : ''})`;
+              break;
+            }
           }
         }
 
@@ -340,54 +355,66 @@ export function POSCartCheckoutPanel({
 
       {/* ── DESCUENTO + RECARGO (read-only, lado a lado) ───────────
           FIX-LAYOUT (2026-07-10): unir Descuento y Recargo en una sola
-          fila con 2 columnas para ahorrar espacio vertical. */}
+          fila con 2 columnas para ahorrar espacio vertical.
+          FIX-PAYMENT-ROWS (2026-07-10): ahora itera sobre payments[]
+          para soportar múltiples filas del mismo método. */}
       {(() => {
         const items = useCartStore.getState().items;
-        // Item con ajuste negativo (descuento) o positivo (recargo)
-        const itemsWithDiscount = items.filter(i =>
-          (i.cash_discount_type && i.cash_discount_value < 0) ||
-          (i.transfer_discount_type && i.transfer_discount_value < 0) ||
-          (i.zelle_discount_type && i.zelle_discount_value < 0)
-        );
-        const itemsWithSurcharge = items.filter(i =>
-          (i.cash_discount_type && i.cash_discount_value > 0) ||
-          (i.transfer_discount_type && i.transfer_discount_value > 0) ||
-          (i.zelle_discount_type && i.zelle_discount_value > 0)
-        );
-        if (itemsWithDiscount.length === 0 && itemsWithSurcharge.length === 0) return null;
+        // Construir lista plana de ajustes: {itemName, methodIcon, method, value, type, isDiscount}
+        type Adj = { itemKey: string; itemName: string; method: 'cash' | 'transfer' | 'zelle'; value: number; dtype: 'percentage' | 'fixed' };
+        const discounts: Adj[] = [];
+        const surcharges: Adj[] = [];
+        for (const item of items) {
+          // FIX-PAYMENT-ROWS: iterar payments[]
+          if (item.payments && item.payments.length > 0) {
+            for (const p of item.payments) {
+              if (p.discount_type && p.discount_value) {
+                const adj: Adj = {
+                  itemKey: `${item.product_id}-${p.id}`,
+                  itemName: item.product.name,
+                  method: p.method,
+                  value: p.discount_value,
+                  dtype: p.discount_type,
+                };
+                if (p.discount_value < 0) discounts.push(adj);
+                else if (p.discount_value > 0) surcharges.push(adj);
+              }
+            }
+          } else {
+            // Fallback legacy
+            if (item.cash_discount_type && item.cash_discount_value < 0) {
+              discounts.push({ itemKey: `${item.product_id}-cash`, itemName: item.product.name, method: 'cash', value: item.cash_discount_value, dtype: item.cash_discount_type });
+            }
+            if (item.transfer_discount_type && item.transfer_discount_value < 0) {
+              discounts.push({ itemKey: `${item.product_id}-transfer`, itemName: item.product.name, method: 'transfer', value: item.transfer_discount_value, dtype: item.transfer_discount_type });
+            }
+            if (item.zelle_discount_type && item.zelle_discount_value < 0) {
+              discounts.push({ itemKey: `${item.product_id}-zelle`, itemName: item.product.name, method: 'zelle', value: item.zelle_discount_value, dtype: item.zelle_discount_type });
+            }
+            if (item.cash_discount_type && item.cash_discount_value > 0) {
+              surcharges.push({ itemKey: `${item.product_id}-cash`, itemName: item.product.name, method: 'cash', value: item.cash_discount_value, dtype: item.cash_discount_type });
+            }
+            if (item.transfer_discount_type && item.transfer_discount_value > 0) {
+              surcharges.push({ itemKey: `${item.product_id}-transfer`, itemName: item.product.name, method: 'transfer', value: item.transfer_discount_value, dtype: item.transfer_discount_type });
+            }
+            if (item.zelle_discount_type && item.zelle_discount_value > 0) {
+              surcharges.push({ itemKey: `${item.product_id}-zelle`, itemName: item.product.name, method: 'zelle', value: item.zelle_discount_value, dtype: item.zelle_discount_type });
+            }
+          }
+        }
+        if (discounts.length === 0 && surcharges.length === 0) return null;
 
-        const renderAdjustments = (list: typeof items, isDiscount: boolean) => {
+        const methodIcon = (m: string) => m === 'cash' ? '💵' : m === 'transfer' ? '📱' : '💳';
+        const renderAdjustments = (list: Adj[], isDiscount: boolean) => {
           if (list.length === 0) {
             return <span className="text-[9px] text-muted-foreground/50 italic">—</span>;
           }
-          return list.map(item => (
-            <div key={item.product_id} className="text-[9px] font-bold">
-              <span className="text-muted-foreground">{item.product.name}:</span>
-              {isDiscount ? (
-                <>
-                  {item.cash_discount_type && item.cash_discount_value < 0 && (
-                    <span className="text-destructive ml-1">💵 {item.cash_discount_value}{item.cash_discount_type === 'percentage' ? '%' : ''}</span>
-                  )}
-                  {item.transfer_discount_type && item.transfer_discount_value < 0 && (
-                    <span className="text-destructive ml-1">📱 {item.transfer_discount_value}{item.transfer_discount_type === 'percentage' ? '%' : ''}</span>
-                  )}
-                  {item.zelle_discount_type && item.zelle_discount_value < 0 && (
-                    <span className="text-destructive ml-1">💳 {item.zelle_discount_value}{item.zelle_discount_type === 'percentage' ? '%' : ''}</span>
-                  )}
-                </>
-              ) : (
-                <>
-                  {item.cash_discount_type && item.cash_discount_value > 0 && (
-                    <span className="text-amber-500 ml-1">💵 +{item.cash_discount_value}{item.cash_discount_type === 'percentage' ? '%' : ''}</span>
-                  )}
-                  {item.transfer_discount_type && item.transfer_discount_value > 0 && (
-                    <span className="text-amber-500 ml-1">📱 +{item.transfer_discount_value}{item.transfer_discount_type === 'percentage' ? '%' : ''}</span>
-                  )}
-                  {item.zelle_discount_type && item.zelle_discount_value > 0 && (
-                    <span className="text-amber-500 ml-1">💳 +{item.zelle_discount_value}{item.zelle_discount_type === 'percentage' ? '%' : ''}</span>
-                  )}
-                </>
-              )}
+          return list.map(adj => (
+            <div key={adj.itemKey} className="text-[9px] font-bold">
+              <span className="text-muted-foreground">{adj.itemName}:</span>
+              <span className={cn("ml-1", isDiscount ? "text-destructive" : "text-amber-500")}>
+                {methodIcon(adj.method)} {isDiscount ? '' : '+'}{adj.value}{adj.dtype === 'percentage' ? '%' : ''}
+              </span>
             </div>
           ));
         };
@@ -401,7 +428,7 @@ export function POSCartCheckoutPanel({
                   <TrendingDown className="w-3 h-3 text-destructive" />
                   <span className="uppercase text-destructive">Descuento</span>
                 </div>
-                {renderAdjustments(itemsWithDiscount, true)}
+                {renderAdjustments(discounts, true)}
               </div>
               {/* Columna Recargo */}
               <div className="space-y-0.5 border-l border-border/30 pl-3">
@@ -409,7 +436,7 @@ export function POSCartCheckoutPanel({
                   <TrendingUp className="w-3 h-3 text-amber-500" />
                   <span className="uppercase text-amber-500">Recargo</span>
                 </div>
-                {renderAdjustments(itemsWithSurcharge, false)}
+                {renderAdjustments(surcharges, false)}
               </div>
             </div>
           </div>

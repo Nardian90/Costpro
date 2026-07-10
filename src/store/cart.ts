@@ -17,6 +17,21 @@ function notify(type: "warning" | "error", message: string) {
   _onCartNotification?.(type, message);
 }
 
+// FIX-PAYMENT-ROWS (2026-07-10): cada item puede tener N filas de pago,
+// permitiendo múltiples filas del mismo método (ej: 2 efectivos, uno CUP y otro USD).
+// Antes: 3 campos fijos (cash_paid/transfer_paid/zelle_paid) que no permitían
+// tener 2 efectivos en distintas monedas.
+export interface PaymentRow {
+  id: string;  // único dentro del item
+  method: 'cash' | 'transfer' | 'zelle';
+  amount: number;
+  currency: string;
+  // FIX-B3 (2026-07-10): unificado — positivo=recargo, negativo=descuento
+  discount_type: 'percentage' | 'fixed' | null;
+  discount_value: number;
+  discount_currency: string;
+}
+
 export interface CartItem {
   product_id: string;
   variant_id: string | null;
@@ -34,6 +49,10 @@ export interface CartItem {
   discount_value: number;
   // FIX-DISCOUNT-CURRENCY-ITEM (2026-07-06): moneda del descuento por item
   discount_currency: string;
+  // FIX-PAYMENT-ROWS (2026-07-10): array de filas de pago (reemplaza los campos fijos)
+  payments: PaymentRow[];
+  // ── LEGACY (mantenidos por compatibilidad con backend RPC y código no migrado) ──
+  // Se sincronizan desde payments[] en cada update. NO editar directamente.
   cash_paid: number;
   transfer_paid: number;
   // FIX-ZELLE (2026-07-06): agregar zelle_paid para pago mixto con Zelle
@@ -142,6 +161,11 @@ interface CartState {
   // usaba getSubtotalCup() - getDiscountAmount() e ignoraba recargos/descuentos
   // por método, causando descuadre entre tab Items y tab Pago.
   getExpectedTotalCup: () => number;
+  // FIX-PAYMENT-ROWS (2026-07-10): acciones para gestionar filas de pago dinámicas
+  addItemPayment: (productId: string, variantId: string | null, method?: 'cash' | 'transfer' | 'zelle') => void;
+  removeItemPayment: (productId: string, variantId: string | null, paymentId: string) => void;
+  duplicateItemPayment: (productId: string, variantId: string | null, paymentId: string) => void;
+  updateItemPaymentRow: (productId: string, variantId: string | null, paymentId: string, updates: Partial<PaymentRow>) => void;
 }
 
 const calculateItemSubtotal = (item: CartItem) => {
@@ -153,6 +177,68 @@ const calculateItemSubtotal = (item: CartItem) => {
   if (item.discount_type === "percentage") return base * (1 - item.discount_value / 100);
   return Math.max(0, (price - item.discount_value) * quantity);
 };
+
+// FIX-PAYMENT-ROWS (2026-07-10): generar IDs únicos para PaymentRow
+function generatePaymentId(): string {
+  return `pay_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+}
+
+// FIX-PAYMENT-ROWS (2026-07-10): sincronizar campos legacy desde payments[].
+// Esto mantiene compatibilidad con el backend RPC (create_sale) y código no migrado
+// que todavía lee cash_paid/transfer_paid/zelle_paid directamente.
+// Se llama después de cada mutación a payments[].
+function syncLegacyFields(item: CartItem): void {
+  // Reset legacy fields
+  item.cash_paid = 0;
+  item.transfer_paid = 0;
+  item.zelle_paid = 0;
+  // Para monedas legacy: tomar la del primer pago de cada método
+  let cashCur = item.cash_currency || 'CUP';
+  let transferCur = item.transfer_currency || 'CUP';
+  let zelleCur = item.zelle_currency || 'USD';
+  // Reset discount legacy fields
+  item.cash_discount_type = null;
+  item.cash_discount_value = 0;
+  item.cash_discount_currency = 'CUP';
+  item.transfer_discount_type = null;
+  item.transfer_discount_value = 0;
+  item.transfer_discount_currency = 'CUP';
+  item.zelle_discount_type = null;
+  item.zelle_discount_value = 0;
+  item.zelle_discount_currency = 'USD';
+
+  for (const p of item.payments) {
+    if (p.method === 'cash') {
+      item.cash_paid += p.amount;
+      cashCur = p.currency;
+      // Si la fila tiene ajuste, reflejarlo en legacy (última fila con ajuste gana)
+      if (p.discount_type && p.discount_value) {
+        item.cash_discount_type = p.discount_type;
+        item.cash_discount_value = p.discount_value;
+        item.cash_discount_currency = p.discount_currency;
+      }
+    } else if (p.method === 'transfer') {
+      item.transfer_paid += p.amount;
+      transferCur = p.currency;
+      if (p.discount_type && p.discount_value) {
+        item.transfer_discount_type = p.discount_type;
+        item.transfer_discount_value = p.discount_value;
+        item.transfer_discount_currency = p.discount_currency;
+      }
+    } else if (p.method === 'zelle') {
+      item.zelle_paid += p.amount;
+      zelleCur = p.currency;
+      if (p.discount_type && p.discount_value) {
+        item.zelle_discount_type = p.discount_type;
+        item.zelle_discount_value = p.discount_value;
+        item.zelle_discount_currency = p.discount_currency;
+      }
+    }
+  }
+  item.cash_currency = cashCur;
+  item.transfer_currency = transferCur;
+  item.zelle_currency = zelleCur;
+}
 
 // FIX-MULTI-CURRENCY-CORE (2026-07-07): función auxiliar para obtener la tasa
 // de conversión de cualquier moneda a CUP.
@@ -205,23 +291,39 @@ export const useCartStore = create<CartState>()(
         set((state) => ({ globalRates: { ...state.globalRates, [currency]: rate }, lastUpdated: Date.now() })),
 
       // FIX-CONSISTENCY (2026-07-10): total esperado considerando ajustes por método.
-      // Replica la lógica del POSCartItem.tsx para elegir el método activo
-      // (aquel con pago > 0 Y ajuste configurado). Si ningún método tiene ajuste,
-      // usa el subtotal base del item. Esta es la fuente de verdad que debe
-      // coincidir entre tab Items (Esperado: $X) y tab Pago (Total a cobrar: $X).
+      // FIX-PAYMENT-ROWS (2026-07-10): ahora itera sobre payments[] para encontrar
+      // la primera fila con ajuste activo y aplica ese ajuste al subtotal del item.
+      // Si ninguna fila tiene ajuste, usa el subtotal base.
       getExpectedTotalCup: () => {
         const sum = get().items.reduce((acc, item) => {
-          const hasCashAdj = item.cash_discount_type && item.cash_discount_value;
-          const hasTransferAdj = item.transfer_discount_type && item.transfer_discount_value;
-          const hasZelleAdj = item.zelle_discount_type && item.zelle_discount_value;
-
           let expected = get().getItemSubtotalCup(item);
-          if (item.cash_paid > 0 && hasCashAdj) {
-            expected = get().getItemSubtotalWithMethodDiscountCup(item, 'cash');
-          } else if (item.transfer_paid > 0 && hasTransferAdj) {
-            expected = get().getItemSubtotalWithMethodDiscountCup(item, 'transfer');
-          } else if (item.zelle_paid > 0 && hasZelleAdj) {
-            expected = get().getItemSubtotalWithMethodDiscountCup(item, 'zelle');
+          // FIX-PAYMENT-ROWS: buscar la primera fila con monto > 0 Y ajuste configurado
+          if (item.payments && item.payments.length > 0) {
+            for (const p of item.payments) {
+              if (p.amount > 0 && p.discount_type && p.discount_value) {
+                // Aplicar el ajuste de esta fila al subtotal del item
+                const baseSubtotalCup = get().getItemSubtotalCup(item);
+                if (p.discount_type === 'percentage') {
+                  expected = baseSubtotalCup * (1 + p.discount_value / 100);
+                } else {
+                  const rate = getRateToCup(p.discount_currency || 'CUP', item.exchange_rate || 1, get().globalRates);
+                  expected = Math.max(0, baseSubtotalCup + p.discount_value * rate);
+                }
+                break;  // solo el primer ajuste activo cuenta
+              }
+            }
+          } else {
+            // Fallback legacy
+            const hasCashAdj = item.cash_discount_type && item.cash_discount_value;
+            const hasTransferAdj = item.transfer_discount_type && item.transfer_discount_value;
+            const hasZelleAdj = item.zelle_discount_type && item.zelle_discount_value;
+            if (item.cash_paid > 0 && hasCashAdj) {
+              expected = get().getItemSubtotalWithMethodDiscountCup(item, 'cash');
+            } else if (item.transfer_paid > 0 && hasTransferAdj) {
+              expected = get().getItemSubtotalWithMethodDiscountCup(item, 'transfer');
+            } else if (item.zelle_paid > 0 && hasZelleAdj) {
+              expected = get().getItemSubtotalWithMethodDiscountCup(item, 'zelle');
+            }
           }
           return acc + expected;
         }, 0);
@@ -246,24 +348,37 @@ export const useCartStore = create<CartState>()(
       },
 
       // FIX-PAYMENT-METHOD-CURRENCY: consolidar pagos por moneda
-      // Retorna: { 'CUP': {cash: X, transfer: Y, zelle: Z}, 'USD': {cash:..., transfer:..., zelle:...} }
+      // FIX-PAYMENT-ROWS (2026-07-10): ahora itera sobre payments[] en vez de campos fijos.
+      // Retorna: { 'CUP': {cash: X, transfer: Y, zille: Z}, 'USD': {cash:..., transfer:..., zelle:...} }
       getConsolidatedPayments: () => {
         const result: Record<string, { cash: number; transfer: number; zelle: number }> = {};
         for (const item of get().items) {
-          if (item.cash_paid > 0) {
-            const c = item.cash_currency || 'CUP';
-            if (!result[c]) result[c] = { cash: 0, transfer: 0, zelle: 0 };
-            result[c].cash += item.cash_paid;
-          }
-          if (item.transfer_paid > 0) {
-            const c = item.transfer_currency || 'CUP';
-            if (!result[c]) result[c] = { cash: 0, transfer: 0, zelle: 0 };
-            result[c].transfer += item.transfer_paid;
-          }
-          if (item.zelle_paid > 0) {
-            const c = item.zelle_currency || 'USD';
-            if (!result[c]) result[c] = { cash: 0, transfer: 0, zelle: 0 };
-            result[c].zelle += item.zelle_paid;
+          // FIX-PAYMENT-ROWS: usar payments[] si existe, sino fallback a legacy
+          if (item.payments && item.payments.length > 0) {
+            for (const p of item.payments) {
+              if (p.amount > 0) {
+                const c = p.currency || 'CUP';
+                if (!result[c]) result[c] = { cash: 0, transfer: 0, zelle: 0 };
+                result[c][p.method] += p.amount;
+              }
+            }
+          } else {
+            // Fallback legacy
+            if (item.cash_paid > 0) {
+              const c = item.cash_currency || 'CUP';
+              if (!result[c]) result[c] = { cash: 0, transfer: 0, zelle: 0 };
+              result[c].cash += item.cash_paid;
+            }
+            if (item.transfer_paid > 0) {
+              const c = item.transfer_currency || 'CUP';
+              if (!result[c]) result[c] = { cash: 0, transfer: 0, zelle: 0 };
+              result[c].transfer += item.transfer_paid;
+            }
+            if (item.zelle_paid > 0) {
+              const c = item.zelle_currency || 'USD';
+              if (!result[c]) result[c] = { cash: 0, transfer: 0, zelle: 0 };
+              result[c].zelle += item.zelle_paid;
+            }
           }
         }
         return result;
@@ -287,6 +402,13 @@ export const useCartStore = create<CartState>()(
 
       getItemPaidCup: (item: CartItem) => {
         const rates = get().globalRates;
+        // FIX-PAYMENT-ROWS (2026-07-10): sumar sobre payments[] en vez de campos fijos
+        if (item.payments && item.payments.length > 0) {
+          return item.payments.reduce((sum, p) => {
+            return sum + (p.amount || 0) * getRateToCup(p.currency || 'CUP', item.exchange_rate || 1, rates);
+          }, 0);
+        }
+        // Fallback legacy
         const cashCup = (item.cash_paid || 0) * getRateToCup(item.cash_currency || 'CUP', item.exchange_rate || 1, rates);
         const transferCup = (item.transfer_paid || 0) * getRateToCup(item.transfer_currency || 'CUP', item.exchange_rate || 1, rates);
         const zelleCup = (item.zelle_paid || 0) * getRateToCup(item.zelle_currency || 'USD', item.exchange_rate || 1, rates);
@@ -377,8 +499,20 @@ export const useCartStore = create<CartState>()(
               }
               existing.quantity += incomingQuantity;
               existing.subtotal = calculateItemSubtotal(existing);
-              existing.cash_paid = existing.subtotal;
-              existing.transfer_paid = 0;
+              // FIX-PAYMENT-ROWS: actualizar el monto de la primera fila de pago cash
+              if (existing.payments && existing.payments.length > 0) {
+                const firstCash = existing.payments.find(p => p.method === 'cash');
+                if (firstCash) {
+                  firstCash.amount = existing.subtotal;
+                } else {
+                  // Si no hay fila cash, asegurar que la primera fila tenga el subtotal
+                  existing.payments[0].amount = existing.subtotal;
+                }
+                syncLegacyFields(existing);
+              } else {
+                existing.cash_paid = existing.subtotal;
+                existing.transfer_paid = 0;
+              }
             } else {
               const conversionFactor = variant?.conversion_factor || 1;
               const stock = product?.stock_current ?? 999999;
@@ -396,6 +530,9 @@ export const useCartStore = create<CartState>()(
               price = price ?? 0;
 
               const cost = product?.cost_price ?? product?.cost_average ?? (productInput as any).cost ?? 0;
+              const itemCurrency = (productInput as any).currency || (product as any)?.price_currency || 'CUP';
+              // FIX-PAYMENT-ROWS: inicializar con 1 fila de pago default (efectivo)
+              const initialSubtotal = price * incomingQuantity;
               const newItem: CartItem = {
                 product_id: productId,
                 variant_id: variant?.id || null,
@@ -412,6 +549,16 @@ export const useCartStore = create<CartState>()(
                 discount_type: (productInput as any).discount_type || null,
                 discount_value: (productInput as any).discount_value || 0,
                 discount_currency: (productInput as any).discount_currency || 'CUP',
+                // FIX-PAYMENT-ROWS: 1 fila default en efectivo con el subtotal
+                payments: [{
+                  id: generatePaymentId(),
+                  method: 'cash',
+                  amount: initialSubtotal,
+                  currency: itemCurrency,
+                  discount_type: null,
+                  discount_value: 0,
+                  discount_currency: itemCurrency,
+                }],
                 cash_paid: 0,
                 transfer_paid: 0,
                 zelle_paid: 0,
@@ -432,17 +579,18 @@ export const useCartStore = create<CartState>()(
                 zelle_surcharge_type: null,
                 zelle_surcharge_value: 0,
                 // FIX-PAYMENT-METHOD-CURRENCY: defaults heredan la moneda del item
-                cash_currency: (productInput as any).currency || (product as any)?.price_currency || 'CUP',
-                transfer_currency: (productInput as any).currency || (product as any)?.price_currency || 'CUP',
+                cash_currency: itemCurrency,
+                transfer_currency: itemCurrency,
                 zelle_currency: 'USD', // Zelle default USD
                 payment_manual_override: false,
                 // FIX-MULTI-MONEDA: heredar moneda y tasa del producto (POR ITEM, no global)
-                currency: (productInput as any).currency || (product as any)?.price_currency || 'CUP',
+                currency: itemCurrency,
                 exchange_rate: (productInput as any).exchange_rate || 1.0,
               };
               newItem.subtotal = calculateItemSubtotal(newItem);
-              newItem.cash_paid = newItem.subtotal;
-              newItem.zelle_paid = 0;
+              // Asegurar que la primera fila tenga el subtotal correcto
+              newItem.payments[0].amount = newItem.subtotal;
+              syncLegacyFields(newItem);
               state.items.push(newItem);
             }
             state.lastUpdated = Date.now();
@@ -483,9 +631,19 @@ export const useCartStore = create<CartState>()(
                 return;
               }
               item.subtotal = calculateItemSubtotal(item);
-              item.cash_paid = item.subtotal;
-              item.transfer_paid = 0;
-              item.zelle_paid = 0;
+              // FIX-PAYMENT-ROWS: si el item NO tiene override manual, resetear a 1 fila cash con el nuevo subtotal
+              if (!item.payment_manual_override) {
+                item.payments = [{
+                  id: generatePaymentId(),
+                  method: 'cash',
+                  amount: item.subtotal,
+                  currency: item.cash_currency || item.currency || 'CUP',
+                  discount_type: null,
+                  discount_value: 0,
+                  discount_currency: item.cash_currency || item.currency || 'CUP',
+                }];
+              }
+              syncLegacyFields(item);
               state.lastUpdated = Date.now();
             }
           }),
@@ -501,9 +659,19 @@ export const useCartStore = create<CartState>()(
               item.discount_type = type;
               item.discount_value = value;
               item.subtotal = calculateItemSubtotal(item);
-              item.cash_paid = item.subtotal;
-              item.transfer_paid = 0;
-              item.zelle_paid = 0;
+              // FIX-PAYMENT-ROWS: si el item NO tiene override manual, resetear a 1 fila cash
+              if (!item.payment_manual_override) {
+                item.payments = [{
+                  id: generatePaymentId(),
+                  method: 'cash',
+                  amount: item.subtotal,
+                  currency: item.cash_currency || item.currency || 'CUP',
+                  discount_type: null,
+                  discount_value: 0,
+                  discount_currency: item.cash_currency || item.currency || 'CUP',
+                }];
+              }
+              syncLegacyFields(item);
               state.lastUpdated = Date.now();
             }
           }),
@@ -523,20 +691,154 @@ export const useCartStore = create<CartState>()(
               cashPaid = Math.max(0, cashPaid);
               zellePaid = Math.max(0, zellePaid);
               transferPaid = Math.max(0, transferPaid);
-              item.cash_paid = cashPaid;
-              item.transfer_paid = transferPaid;
-              item.zelle_paid = zellePaid;
-              // FIX-PAYMENT-METHOD-CURRENCY: actualizar monedas si se pasan
-              if (methodCurrencies?.cash) item.cash_currency = methodCurrencies.cash;
-              if (methodCurrencies?.transfer) item.transfer_currency = methodCurrencies.transfer;
-              if (methodCurrencies?.zelle) item.zelle_currency = methodCurrencies.zelle;
-              // Sincronizar discount_currency con la moneda del pago
-              item.cash_discount_currency = item.cash_currency;
-              item.transfer_discount_currency = item.transfer_currency;
-              item.zelle_discount_currency = item.zelle_currency;
+              // FIX-PAYMENT-ROWS: este es el callback legacy. Lo usamos para actualizar
+              // la primera fila de cada método. Si no existe, se crea.
+              // Esto mantiene compatibilidad con código UI no migrado.
+              const cur = {
+                cash: methodCurrencies?.cash || item.cash_currency || 'CUP',
+                transfer: methodCurrencies?.transfer || item.transfer_currency || 'CUP',
+                zelle: methodCurrencies?.zelle || item.zelle_currency || 'USD',
+              };
+              // Asegurar que payments[] exista
+              if (!item.payments) item.payments = [];
+              // Función helper para upsert la primera fila de un método
+              const upsertMethodRow = (method: 'cash' | 'transfer' | 'zelle', amount: number, currency: string) => {
+                if (amount <= 0) {
+                  // Remover filas de este método
+                  item.payments = item.payments.filter(p => p.method !== method);
+                  return;
+                }
+                let row = item.payments.find(p => p.method === method);
+                if (row) {
+                  row.amount = amount;
+                  row.currency = currency;
+                } else {
+                  item.payments.push({
+                    id: generatePaymentId(),
+                    method,
+                    amount,
+                    currency,
+                    discount_type: null,
+                    discount_value: 0,
+                    discount_currency: currency,
+                  });
+                }
+              };
+              upsertMethodRow('cash', cashPaid, cur.cash);
+              upsertMethodRow('transfer', transferPaid, cur.transfer);
+              upsertMethodRow('zelle', zellePaid, cur.zelle);
+              // Si payments quedó vacío (todos en 0), agregar 1 fila cash default
+              if (item.payments.length === 0) {
+                item.payments.push({
+                  id: generatePaymentId(),
+                  method: 'cash',
+                  amount: 0,
+                  currency: cur.cash,
+                  discount_type: null,
+                  discount_value: 0,
+                  discount_currency: cur.cash,
+                });
+              }
               // FIX-PAYMENT-MODE: marcar override manual
               item.payment_manual_override = true;
+              syncLegacyFields(item);
               state.lastUpdated = Date.now();
+            }
+          }),
+        ),
+
+      // FIX-PAYMENT-ROWS (2026-07-10): añadir una nueva fila de pago al item.
+      // Por default crea una fila cash con monto 0 en la moneda del item.
+      addItemPayment: (productId, variantId, method = 'cash') =>
+        set(
+          produce((state: CartState) => {
+            const item = state.items.find(
+              (i) => i.product_id === productId && (i.variant_id === (variantId || null) || (!i.variant_id && !variantId)),
+            );
+            if (item) {
+              if (!item.payments) item.payments = [];
+              const currency = method === 'zelle' ? 'USD' : (item.currency || 'CUP');
+              item.payments.push({
+                id: generatePaymentId(),
+                method,
+                amount: 0,
+                currency,
+                discount_type: null,
+                discount_value: 0,
+                discount_currency: currency,
+              });
+              item.payment_manual_override = true;
+              syncLegacyFields(item);
+              state.lastUpdated = Date.now();
+            }
+          }),
+        ),
+
+      // FIX-PAYMENT-ROWS (2026-07-10): remover una fila de pago específica.
+      // Si es la última fila, NO remover (mínimo 1 fila requerida).
+      removeItemPayment: (productId, variantId, paymentId) =>
+        set(
+          produce((state: CartState) => {
+            const item = state.items.find(
+              (i) => i.product_id === productId && (i.variant_id === (variantId || null) || (!i.variant_id && !variantId)),
+            );
+            if (item && item.payments && item.payments.length > 1) {
+              item.payments = item.payments.filter(p => p.id !== paymentId);
+              syncLegacyFields(item);
+              state.lastUpdated = Date.now();
+            }
+          }),
+        ),
+
+      // FIX-PAYMENT-ROWS (2026-07-10): duplicar una fila de pago existente.
+      duplicateItemPayment: (productId, variantId, paymentId) =>
+        set(
+          produce((state: CartState) => {
+            const item = state.items.find(
+              (i) => i.product_id === productId && (i.variant_id === (variantId || null) || (!i.variant_id && !variantId)),
+            );
+            if (item && item.payments) {
+              const src = item.payments.find(p => p.id === paymentId);
+              if (src) {
+                const idx = item.payments.findIndex(p => p.id === paymentId);
+                const clone: PaymentRow = {
+                  id: generatePaymentId(),
+                  method: src.method,
+                  amount: src.amount,
+                  currency: src.currency,
+                  discount_type: src.discount_type,
+                  discount_value: src.discount_value,
+                  discount_currency: src.discount_currency,
+                };
+                item.payments.splice(idx + 1, 0, clone);
+                item.payment_manual_override = true;
+                syncLegacyFields(item);
+                state.lastUpdated = Date.now();
+              }
+            }
+          }),
+        ),
+
+      // FIX-PAYMENT-ROWS (2026-07-10): actualizar una fila de pago específica.
+      // Solo se pasan los campos a actualizar (Partial<PaymentRow>).
+      updateItemPaymentRow: (productId, variantId, paymentId, updates) =>
+        set(
+          produce((state: CartState) => {
+            const item = state.items.find(
+              (i) => i.product_id === productId && (i.variant_id === (variantId || null) || (!i.variant_id && !variantId)),
+            );
+            if (item && item.payments) {
+              const row = item.payments.find(p => p.id === paymentId);
+              if (row) {
+                Object.assign(row, updates);
+                // Si cambió la moneda, sincronizar discount_currency
+                if (updates.currency && !updates.discount_currency) {
+                  row.discount_currency = updates.currency;
+                }
+                item.payment_manual_override = true;
+                syncLegacyFields(item);
+                state.lastUpdated = Date.now();
+              }
             }
           }),
         ),
@@ -575,26 +877,76 @@ export const useCartStore = create<CartState>()(
               // FIX-BUG-2 (2026-07-06): resetear payment_manual_override al prorratear global
               item.payment_manual_override = false;
 
+              let itemCash: number, itemTransfer: number, itemZelle: number;
               if (index === itemCount - 1) {
-                item.cash_paid = Number(remainingCash.toFixed(2));
-                item.transfer_paid = Number(remainingTransfer.toFixed(2));
-                item.zelle_paid = Number(remainingZelle.toFixed(2));
+                itemCash = Number(remainingCash.toFixed(2));
+                itemTransfer = Number(remainingTransfer.toFixed(2));
+                itemZelle = Number(remainingZelle.toFixed(2));
               } else {
-                const itemCash = Number((clampedCash * weight).toFixed(2));
-                const itemZelle = Number((clampedZelle * weight).toFixed(2));
-                const itemTransfer = Number((clampedTransfer * weight).toFixed(2));
+                const rawCash = Number((clampedCash * weight).toFixed(2));
+                const rawZelle = Number((clampedZelle * weight).toFixed(2));
+                const rawTransfer = Number((clampedTransfer * weight).toFixed(2));
 
-                item.cash_paid = Math.min(itemCash, itemAdjustedSubtotal);
-                item.zelle_paid = Math.min(itemZelle, Math.max(0, itemAdjustedSubtotal - item.cash_paid));
-                item.transfer_paid = Math.min(
-                  itemTransfer,
-                  Math.max(0, itemAdjustedSubtotal - item.cash_paid - item.zelle_paid),
+                itemCash = Math.min(rawCash, itemAdjustedSubtotal);
+                itemZelle = Math.min(rawZelle, Math.max(0, itemAdjustedSubtotal - itemCash));
+                itemTransfer = Math.min(
+                  rawTransfer,
+                  Math.max(0, itemAdjustedSubtotal - itemCash - itemZelle),
                 );
 
-                remainingCash -= item.cash_paid;
-                remainingTransfer -= item.transfer_paid;
-                remainingZelle -= item.zelle_paid;
+                remainingCash -= itemCash;
+                remainingTransfer -= itemTransfer;
+                remainingZelle -= itemZelle;
               }
+              // FIX-PAYMENT-ROWS: reconstruir payments[] desde los montos prorrateados
+              // Esto resetea cualquier configuración previa y deja 1 fila por método activo
+              item.payments = [];
+              if (itemCash > 0) {
+                item.payments.push({
+                  id: generatePaymentId(),
+                  method: 'cash',
+                  amount: itemCash,
+                  currency: item.cash_currency || item.currency || 'CUP',
+                  discount_type: null,
+                  discount_value: 0,
+                  discount_currency: item.cash_currency || item.currency || 'CUP',
+                });
+              }
+              if (itemTransfer > 0) {
+                item.payments.push({
+                  id: generatePaymentId(),
+                  method: 'transfer',
+                  amount: itemTransfer,
+                  currency: item.transfer_currency || item.currency || 'CUP',
+                  discount_type: null,
+                  discount_value: 0,
+                  discount_currency: item.transfer_currency || item.currency || 'CUP',
+                });
+              }
+              if (itemZelle > 0) {
+                item.payments.push({
+                  id: generatePaymentId(),
+                  method: 'zelle',
+                  amount: itemZelle,
+                  currency: item.zelle_currency || 'USD',
+                  discount_type: null,
+                  discount_value: 0,
+                  discount_currency: item.zelle_currency || 'USD',
+                });
+              }
+              // Si todos son 0, asegurar 1 fila cash default
+              if (item.payments.length === 0) {
+                item.payments.push({
+                  id: generatePaymentId(),
+                  method: 'cash',
+                  amount: 0,
+                  currency: item.cash_currency || item.currency || 'CUP',
+                  discount_type: null,
+                  discount_value: 0,
+                  discount_currency: item.cash_currency || item.currency || 'CUP',
+                });
+              }
+              syncLegacyFields(item);
             });
             state.lastUpdated = Date.now();
           }),
@@ -723,6 +1075,60 @@ export const useCartStore = create<CartState>()(
           state.customerId = null;
           state.customerName = null;
           state.lastUpdated = Date.now();
+        }
+        // FIX-PAYMENT-ROWS (2026-07-10): migrar items antiguos que no tienen payments[]
+        // Construye payments[] desde los campos legacy cash_paid/transfer_paid/zelle_paid
+        if (state && state.items) {
+          for (const item of state.items) {
+            if (!item.payments || item.payments.length === 0) {
+              item.payments = [];
+              if (item.cash_paid > 0) {
+                item.payments.push({
+                  id: `pay_legacy_cash_${item.product_id}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+                  method: 'cash',
+                  amount: item.cash_paid,
+                  currency: item.cash_currency || 'CUP',
+                  discount_type: item.cash_discount_type || null,
+                  discount_value: item.cash_discount_value || 0,
+                  discount_currency: item.cash_discount_currency || item.cash_currency || 'CUP',
+                });
+              }
+              if (item.transfer_paid > 0) {
+                item.payments.push({
+                  id: `pay_legacy_transfer_${item.product_id}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+                  method: 'transfer',
+                  amount: item.transfer_paid,
+                  currency: item.transfer_currency || 'CUP',
+                  discount_type: item.transfer_discount_type || null,
+                  discount_value: item.transfer_discount_value || 0,
+                  discount_currency: item.transfer_discount_currency || item.transfer_currency || 'CUP',
+                });
+              }
+              if (item.zelle_paid > 0) {
+                item.payments.push({
+                  id: `pay_legacy_zelle_${item.product_id}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+                  method: 'zelle',
+                  amount: item.zelle_paid,
+                  currency: item.zelle_currency || 'USD',
+                  discount_type: item.zelle_discount_type || null,
+                  discount_value: item.zelle_discount_value || 0,
+                  discount_currency: item.zelle_discount_currency || item.zelle_currency || 'USD',
+                });
+              }
+              // Si todavía está vacío, crear 1 fila cash default
+              if (item.payments.length === 0) {
+                item.payments.push({
+                  id: `pay_default_${item.product_id}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+                  method: 'cash',
+                  amount: item.subtotal || 0,
+                  currency: item.cash_currency || item.currency || 'CUP',
+                  discount_type: null,
+                  discount_value: 0,
+                  discount_currency: item.cash_currency || item.currency || 'CUP',
+                });
+              }
+            }
+          }
         }
       }
     },

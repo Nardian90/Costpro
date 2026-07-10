@@ -369,8 +369,19 @@ export const POSCartItem = ({
                     quantity: destItem.quantity + currentItem.quantity,
                   };
                   mergedItem.subtotal = recalcSubtotal(mergedItem);
+                  // FIX-PAYMENT-ROWS: resetear payments[] a 1 fila cash
+                  mergedItem.payments = [{
+                    id: `pay_merge_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+                    method: 'cash',
+                    amount: mergedItem.subtotal,
+                    currency: mergedItem.cash_currency || mergedItem.currency || 'CUP',
+                    discount_type: null,
+                    discount_value: 0,
+                    discount_currency: mergedItem.cash_currency || mergedItem.currency || 'CUP',
+                  }];
                   mergedItem.cash_paid = mergedItem.subtotal;
                   mergedItem.transfer_paid = 0;
+                  mergedItem.zelle_paid = 0;
 
                   // Remover item actual y actualizar destino
                   const newItems = state.items.filter((_, i) => i !== currentIdx);
@@ -389,8 +400,19 @@ export const POSCartItem = ({
                     exchange_rate: currentItem.exchange_rate,
                   };
                   updatedItem.subtotal = recalcSubtotal(updatedItem);
+                  // FIX-PAYMENT-ROWS: resetear payments[] a 1 fila cash
+                  updatedItem.payments = [{
+                    id: `pay_var_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+                    method: 'cash',
+                    amount: updatedItem.subtotal,
+                    currency: updatedItem.cash_currency || updatedItem.currency || 'CUP',
+                    discount_type: null,
+                    discount_value: 0,
+                    discount_currency: updatedItem.cash_currency || updatedItem.currency || 'CUP',
+                  }];
                   updatedItem.cash_paid = updatedItem.subtotal;
                   updatedItem.transfer_paid = 0;
+                  updatedItem.zelle_paid = 0;
                   useCartStore.setState((s) => ({
                     items: s.items.map((it2, i2) => i2 === currentIdx ? updatedItem : it2),
                     lastUpdated: Date.now(),
@@ -431,9 +453,23 @@ export const POSCartItem = ({
                   if (it.product_id === item.product_id && it.variant_id === item.variant_id) {
                     const updatedItem = { ...it, price: newPrice, currency, exchange_rate: rate, cash_currency: currency, transfer_currency: currency };
                     updatedItem.subtotal = recalcSubtotal(updatedItem);
-                    updatedItem.cash_paid = updatedItem.subtotal;
-                    updatedItem.transfer_paid = 0;
-                    updatedItem.zelle_paid = 0;
+                    // FIX-PAYMENT-ROWS: al cambiar moneda del item, resetear payments[] a 1 fila cash con el nuevo subtotal
+                    // (a menos que el usuario ya haya hecho override manual)
+                    if (!updatedItem.payment_manual_override) {
+                      updatedItem.payments = [{
+                        id: `pay_cur_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+                        method: 'cash',
+                        amount: updatedItem.subtotal,
+                        currency,
+                        discount_type: null,
+                        discount_value: 0,
+                        discount_currency: currency,
+                      }];
+                    }
+                    // Sincronizar legacy manualmente (syncLegacyFields es internal del store)
+                    updatedItem.cash_paid = updatedItem.payments?.filter(p => p.method === 'cash').reduce((s, p) => s + p.amount, 0) || 0;
+                    updatedItem.transfer_paid = updatedItem.payments?.filter(p => p.method === 'transfer').reduce((s, p) => s + p.amount, 0) || 0;
+                    updatedItem.zelle_paid = updatedItem.payments?.filter(p => p.method === 'zelle').reduce((s, p) => s + p.amount, 0) || 0;
                     return updatedItem;
                   }
                   return it;
@@ -457,9 +493,21 @@ export const POSCartItem = ({
                               const np = (item.base_price_cup || item.price) / fetchedRate;
                               const ui = { ...it, exchange_rate: fetchedRate, price: np };
                               ui.subtotal = recalcSubtotal(ui);
-                              ui.cash_paid = ui.subtotal;
-                              ui.transfer_paid = 0;
-                              ui.zelle_paid = 0;
+                              // FIX-PAYMENT-ROWS: resetear payments[] si no hay override manual
+                              if (!ui.payment_manual_override) {
+                                ui.payments = [{
+                                  id: `pay_rate_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+                                  method: 'cash',
+                                  amount: ui.subtotal,
+                                  currency: ui.cash_currency || ui.currency || 'CUP',
+                                  discount_type: null,
+                                  discount_value: 0,
+                                  discount_currency: ui.cash_currency || ui.currency || 'CUP',
+                                }];
+                              }
+                              ui.cash_paid = ui.payments?.filter(p => p.method === 'cash').reduce((s, p) => s + p.amount, 0) || 0;
+                              ui.transfer_paid = ui.payments?.filter(p => p.method === 'transfer').reduce((s, p) => s + p.amount, 0) || 0;
+                              ui.zelle_paid = ui.payments?.filter(p => p.method === 'zelle').reduce((s, p) => s + p.amount, 0) || 0;
                               return ui;
                             }
                             return it;
@@ -495,9 +543,21 @@ export const POSCartItem = ({
                       const np = it.currency === 'CUP' || rate <= 0 ? (it.base_price_cup || it.price) : (it.base_price_cup || it.price) / rate;
                       const ui = { ...it, exchange_rate: rate, price: np };
                       ui.subtotal = recalcSubtotal(ui);
-                      ui.cash_paid = ui.subtotal;
-                      ui.transfer_paid = 0;
-                      ui.zelle_paid = 0;
+                      // FIX-PAYMENT-ROWS: resetear payments[] si no hay override manual
+                      if (!ui.payment_manual_override) {
+                        ui.payments = [{
+                          id: `pay_rate_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+                          method: 'cash',
+                          amount: ui.subtotal,
+                          currency: ui.cash_currency || ui.currency || 'CUP',
+                          discount_type: null,
+                          discount_value: 0,
+                          discount_currency: ui.cash_currency || ui.currency || 'CUP',
+                        }];
+                      }
+                      ui.cash_paid = ui.payments?.filter(p => p.method === 'cash').reduce((s, p) => s + p.amount, 0) || 0;
+                      ui.transfer_paid = ui.payments?.filter(p => p.method === 'transfer').reduce((s, p) => s + p.amount, 0) || 0;
+                      ui.zelle_paid = ui.payments?.filter(p => p.method === 'zelle').reduce((s, p) => s + p.amount, 0) || 0;
                       return ui;
                     }
                     return it;
@@ -537,193 +597,197 @@ export const POSCartItem = ({
           </button>
         </div>
       </div>
-      {/* FIX-LAYOUT: Pago Mixto ocupa todo el ancho disponible */}
-      <div className="space-y-1">
-        <span className="text-[10px] font-black uppercase text-muted-foreground">
-          Pago Mixto
+      {/* FIX-PAYMENT-ROWS (2026-07-10): Pago Mixto dinámico — N filas.
+          Por defecto muestra solo 1 fila (Efectivo). El usuario puede:
+          - + Agregar: añade una nueva fila (efectivo por defecto)
+          - ⧉ Duplicar: clona la fila actual
+          - ✕: elimina la fila (mínimo 1 siempre) */}
+      <div className="space-y-1.5">
+        <div className="flex items-center justify-between">
+          <span className="text-[10px] font-black uppercase text-muted-foreground">
+            Pago Mixto
           </span>
-          {/* FIX-UI (2026-07-10): descuento en la misma línea, input de pago SIEMPRE visible */}
-          {/* Efectivo */}
-          <div className="border border-border/30 rounded-lg p-2 space-y-1.5">
-            <div className="flex flex-wrap gap-1 items-center">
-              <div className="relative min-w-[100px] flex-1">
-                <DollarSign className="absolute left-1.5 top-1/2 -translate-y-1/2 w-3 h-3 text-success" aria-hidden="true" />
-                <input
-                  type="number"
-                  value={Number((item.cash_paid || 0).toFixed(2))}
+          <span className="text-[9px] font-bold text-muted-foreground">
+            {item.payments?.length || 0} fila(s)
+          </span>
+        </div>
+
+        {item.payments?.map((p, idx) => {
+          const MethodIcon = p.method === 'cash' ? DollarSign : p.method === 'transfer' ? Send : CreditCard;
+          const methodColor = p.method === 'cash' ? 'text-success' : 'text-primary';
+          // Equivalente en CUP si la moneda no es CUP
+          const rateToCup = useCartStore.getState().globalRates[p.currency || 'CUP'] || item.exchange_rate || 1;
+          const equivCup = p.currency === 'CUP' ? p.amount : p.amount * rateToCup;
+          return (
+            <div key={p.id} className="border border-border/30 rounded-lg p-2 space-y-1">
+              <div className="flex flex-wrap gap-1 items-center">
+                {/* Selector de método */}
+                <select
+                  value={p.method}
+                  onChange={(e) => useCartStore.getState().updateItemPaymentRow(
+                    item.product_id, item.variant_id, p.id,
+                    { method: e.target.value as 'cash' | 'transfer' | 'zelle' }
+                  )}
+                  className="bg-background border border-border/50 rounded px-1 py-2 min-h-[36px] text-[9px] font-bold shrink-0"
+                  aria-label={`Método de pago fila ${idx + 1}`}
+                >
+                  <option value="cash">💵 Efect.</option>
+                  <option value="transfer">📱 Transf.</option>
+                  <option value="zelle">💳 Zelle</option>
+                </select>
+
+                {/* Monto */}
+                <div className="relative min-w-[90px] flex-1">
+                  <MethodIcon className={cn("absolute left-1.5 top-1/2 -translate-y-1/2 w-3 h-3", methodColor)} aria-hidden="true" />
+                  <input
+                    type="number"
+                    value={Number((p.amount || 0).toFixed(2))}
+                    onChange={(e) => useCartStore.getState().updateItemPaymentRow(
+                      item.product_id, item.variant_id, p.id,
+                      { amount: Math.max(0, Number(e.target.value)) }
+                    )}
+                    className="w-full bg-background border border-border/50 rounded-lg pl-5 pr-1 py-2 min-h-[36px] text-xs font-bold"
+                    aria-label={`Monto fila ${idx + 1} para ${item.product.name}`}
+                  />
+                </div>
+
+                {/* Moneda */}
+                <select
+                  value={p.currency || 'CUP'}
+                  onChange={(e) => useCartStore.getState().updateItemPaymentRow(
+                    item.product_id, item.variant_id, p.id,
+                    { currency: e.target.value }
+                  )}
+                  className="bg-background border border-border/50 rounded-lg px-1 py-2 min-h-[36px] text-[10px] font-bold shrink-0"
+                >
+                  <option value="CUP">CUP</option>
+                  <option value="USD">USD</option>
+                  <option value="EUR">EUR</option>
+                  <option value="MLC">MLC</option>
+                </select>
+
+                {/* Tipo de ajuste (—, %, $) */}
+                <select
+                  value={p.discount_type || 'none'}
                   onChange={(e) => {
-                    const val = Number(e.target.value);
-                    const remaining = Math.max(0, item.subtotal - val - (item.zelle_paid || 0));
-                    updateItemPayment?.(
-                      item.product_id, item.variant_id,
-                      val, remaining, item.zelle_paid || 0,
-                      { cash: item.cash_currency, transfer: item.transfer_currency, zelle: item.zelle_currency },
+                    const type = e.target.value === 'none' ? null : e.target.value as 'percentage' | 'fixed';
+                    useCartStore.getState().updateItemPaymentRow(
+                      item.product_id, item.variant_id, p.id,
+                      { discount_type: type, discount_value: type ? (p.discount_value || 0) : 0 }
                     );
                   }}
-                  className="w-full bg-background border border-border/50 rounded-lg pl-5 pr-1 py-2 min-h-[36px] text-xs font-bold"
-                  aria-label={`Efectivo para ${item.product.name}`}
-                />
-                {item.cash_paid > 0 && item.cash_currency !== 'CUP' && (
-                  <p className="text-[8px] text-muted-foreground mt-0.5 ml-1">≈ {formatCurrency(item.cash_paid * (useCartStore.getState().globalRates[item.cash_currency || 'CUP'] || item.exchange_rate || 1))} CUP</p>
-                )}
-              </div>
-              <select
-                value={item.cash_currency || 'CUP'}
-                onChange={(e) => updateItemPayment?.(item.product_id, item.variant_id, item.cash_paid, item.transfer_paid, item.zelle_paid, { cash: e.target.value, transfer: item.transfer_currency, zelle: item.zelle_currency })}
-                className="bg-background border border-border/50 rounded-lg px-1 py-2 min-h-[36px] text-[10px] font-bold shrink-0"
-              >
-                <option value="CUP">CUP</option><option value="USD">USD</option><option value="EUR">EUR</option><option value="MLC">MLC</option>
-              </select>
-              <select
-                value={item.cash_discount_type || 'none'}
-                onChange={(e) => {
-                  const type = e.target.value === 'none' ? null : e.target.value as 'percentage' | 'fixed';
-                  useCartStore.setState((state) => ({ items: state.items.map((it) => it.product_id === item.product_id && it.variant_id === item.variant_id ? { ...it, cash_discount_type: type } : it), lastUpdated: Date.now() }));
-                }}
-                className="bg-background border border-border/50 rounded px-1 py-2 min-h-[36px] text-[9px] font-bold shrink-0"
-                aria-label={`Tipo de descuento en efectivo para ${item.product.name}`}
-              >
-                <option value="none">—</option><option value="percentage">%</option><option value="fixed">$</option>
-              </select>
-              {item.cash_discount_type && (
-                <input
-                  type="number"
-                  value={Number((item.cash_discount_value || 0).toFixed(2))}
-                  onChange={(e) => useCartStore.setState((state) => ({ items: state.items.map((it) => it.product_id === item.product_id && it.variant_id === item.variant_id ? { ...it, cash_discount_value: parseFloat(e.target.value) || 0, cash_discount_currency: item.cash_currency } : it), lastUpdated: Date.now() }))}
-                  className={cn("w-14 bg-background border rounded px-1 py-2 min-h-[36px] text-[9px] font-bold shrink-0", (item.cash_discount_value || 0) < 0 ? "border-emerald-500/50 text-emerald-500" : (item.cash_discount_value || 0) > 0 ? "border-amber-500/50 text-amber-500" : "border-border/50")}
-                  placeholder="+/-"
-                  title="Negativo = descuento, Positivo = recargo"
-                />
-              )}
-            </div>
-          </div>
+                  className="bg-background border border-border/50 rounded px-1 py-2 min-h-[36px] text-[9px] font-bold shrink-0"
+                  aria-label={`Tipo de ajuste fila ${idx + 1}`}
+                >
+                  <option value="none">—</option>
+                  <option value="percentage">%</option>
+                  <option value="fixed">$</option>
+                </select>
 
-          {/* Transferencia */}
-          <div className="border border-border/30 rounded-lg p-2 space-y-1.5">
-            <div className="flex flex-wrap gap-1 items-center">
-              <div className="relative min-w-[100px] flex-1">
-                <Send className="absolute left-1.5 top-1/2 -translate-y-1/2 w-3 h-3 text-primary" aria-hidden="true" />
-                <input
-                  type="number"
-                  value={Number((item.transfer_paid || 0).toFixed(2))}
-                  onChange={(e) => {
-                    const val = Number(e.target.value);
-                    const remaining = Math.max(0, item.subtotal - (item.cash_paid || 0) - val - (item.zelle_paid || 0));
-                    updateItemPayment?.(item.product_id, item.variant_id, item.cash_paid, val, item.zelle_paid || 0, { cash: item.cash_currency, transfer: item.transfer_currency, zelle: item.zelle_currency });
-                  }}
-                  className="w-full bg-background border border-border/50 rounded-lg pl-5 pr-1 py-2 min-h-[36px] text-xs font-bold"
-                  aria-label={`Transferencia para ${item.product.name}`}
-                />
-                {item.transfer_paid > 0 && item.transfer_currency !== 'CUP' && (
-                  <p className="text-[8px] text-muted-foreground mt-0.5 ml-1">≈ {formatCurrency(item.transfer_paid * (useCartStore.getState().globalRates[item.transfer_currency || 'CUP'] || item.exchange_rate || 1))} CUP</p>
+                {/* Valor del ajuste */}
+                {p.discount_type && (
+                  <input
+                    type="number"
+                    value={Number((p.discount_value || 0).toFixed(2))}
+                    onChange={(e) => useCartStore.getState().updateItemPaymentRow(
+                      item.product_id, item.variant_id, p.id,
+                      { discount_value: parseFloat(e.target.value) || 0 }
+                    )}
+                    className={cn("w-14 bg-background border rounded px-1 py-2 min-h-[36px] text-[9px] font-bold shrink-0",
+                      (p.discount_value || 0) < 0 ? "border-emerald-500/50 text-emerald-500"
+                      : (p.discount_value || 0) > 0 ? "border-amber-500/50 text-amber-500"
+                      : "border-border/50"
+                    )}
+                    placeholder="+/-"
+                    title="Negativo = descuento, Positivo = recargo"
+                  />
                 )}
-              </div>
-              <select
-                value={item.transfer_currency || 'CUP'}
-                onChange={(e) => updateItemPayment?.(item.product_id, item.variant_id, item.cash_paid, item.transfer_paid, item.zelle_paid, { cash: item.cash_currency, transfer: e.target.value, zelle: item.zelle_currency })}
-                className="bg-background border border-border/50 rounded-lg px-1 py-2 min-h-[36px] text-[10px] font-bold shrink-0"
-              >
-                <option value="CUP">CUP</option><option value="USD">USD</option><option value="EUR">EUR</option><option value="MLC">MLC</option>
-              </select>
-              <select
-                value={item.transfer_discount_type || 'none'}
-                onChange={(e) => {
-                  const type = e.target.value === 'none' ? null : e.target.value as 'percentage' | 'fixed';
-                  useCartStore.setState((state) => ({ items: state.items.map((it) => it.product_id === item.product_id && it.variant_id === item.variant_id ? { ...it, transfer_discount_type: type } : it), lastUpdated: Date.now() }));
-                }}
-                className="bg-background border border-border/50 rounded px-1 py-2 min-h-[36px] text-[9px] font-bold shrink-0"
-                aria-label={`Tipo de descuento en transferencia para ${item.product.name}`}
-              >
-                <option value="none">—</option><option value="percentage">%</option><option value="fixed">$</option>
-              </select>
-              {item.transfer_discount_type && (
-                <input
-                  type="number"
-                  value={Number((item.transfer_discount_value || 0).toFixed(2))}
-                  onChange={(e) => useCartStore.setState((state) => ({ items: state.items.map((it) => it.product_id === item.product_id && it.variant_id === item.variant_id ? { ...it, transfer_discount_value: parseFloat(e.target.value) || 0, transfer_discount_currency: item.transfer_currency } : it), lastUpdated: Date.now() }))}
-                  className={cn("w-14 bg-background border rounded px-1 py-2 min-h-[36px] text-[9px] font-bold shrink-0", (item.transfer_discount_value || 0) < 0 ? "border-emerald-500/50 text-emerald-500" : (item.transfer_discount_value || 0) > 0 ? "border-amber-500/50 text-amber-500" : "border-border/50")}
-                  placeholder="+/-"
-                  title="Negativo = descuento, Positivo = recargo"
-                />
-              )}
-            </div>
-          </div>
 
-          {/* Zelle */}
-          <div className="border border-border/30 rounded-lg p-2 space-y-1.5">
-            <div className="flex flex-wrap gap-1 items-center">
-              <div className="relative min-w-[100px] flex-1">
-                <CreditCard className="absolute left-1.5 top-1/2 -translate-y-1/2 w-3 h-3 text-primary" aria-hidden="true" />
-                <input
-                  type="number"
-                  value={Number((item.zelle_paid || 0).toFixed(2))}
-                  onChange={(e) => {
-                    const val = Number(e.target.value);
-                    const remaining = Math.max(0, item.subtotal - (item.cash_paid || 0) - val);
-                    updateItemPayment?.(item.product_id, item.variant_id, item.cash_paid, remaining, val, { cash: item.cash_currency, transfer: item.transfer_currency, zelle: item.zelle_currency });
-                  }}
-                  className="w-full bg-background border border-border/50 rounded-lg pl-5 pr-1 py-2 min-h-[36px] text-xs font-bold"
-                  aria-label={`Zelle para ${item.product.name}`}
-                />
-                {item.zelle_paid > 0 && item.zelle_currency !== 'CUP' && (
-                  <p className="text-[8px] text-muted-foreground mt-0.5 ml-1">≈ {formatCurrency(item.zelle_paid * (useCartStore.getState().globalRates[item.zelle_currency || 'USD'] || item.exchange_rate || 1))} CUP</p>
+                {/* Botón duplicar */}
+                <button
+                  type="button"
+                  onClick={() => useCartStore.getState().duplicateItemPayment(item.product_id, item.variant_id, p.id)}
+                  className="bg-muted/30 hover:bg-muted border border-border/50 rounded px-1.5 py-2 min-h-[36px] text-[9px] font-bold shrink-0"
+                  title="Duplicar esta fila"
+                  aria-label={`Duplicar fila ${idx + 1}`}
+                >
+                  ⧉
+                </button>
+
+                {/* Botón eliminar (solo si hay más de 1 fila) */}
+                {item.payments.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => useCartStore.getState().removeItemPayment(item.product_id, item.variant_id, p.id)}
+                    className="bg-destructive/10 hover:bg-destructive/20 border border-destructive/30 text-destructive rounded px-1.5 py-2 min-h-[36px] text-[9px] font-bold shrink-0"
+                    title="Eliminar esta fila"
+                    aria-label={`Eliminar fila ${idx + 1}`}
+                  >
+                    ✕
+                  </button>
                 )}
               </div>
-              <select
-                value={item.zelle_currency || 'USD'}
-                onChange={(e) => updateItemPayment?.(item.product_id, item.variant_id, item.cash_paid, item.transfer_paid, item.zelle_paid, { cash: item.cash_currency, transfer: item.transfer_currency, zelle: e.target.value })}
-                className="bg-background border border-border/50 rounded-lg px-1 py-2 min-h-[36px] text-[10px] font-bold shrink-0"
-              >
-                <option value="CUP">CUP</option><option value="USD">USD</option><option value="EUR">EUR</option><option value="MLC">MLC</option>
-              </select>
-              <select
-                value={item.zelle_discount_type || 'none'}
-                onChange={(e) => {
-                  const type = e.target.value === 'none' ? null : e.target.value as 'percentage' | 'fixed';
-                  useCartStore.setState((state) => ({ items: state.items.map((it) => it.product_id === item.product_id && it.variant_id === item.variant_id ? { ...it, zelle_discount_type: type } : it), lastUpdated: Date.now() }));
-                }}
-                className="bg-background border border-border/50 rounded px-1 py-2 min-h-[36px] text-[9px] font-bold shrink-0"
-                aria-label={`Tipo de descuento en Zelle para ${item.product.name}`}
-              >
-                <option value="none">—</option><option value="percentage">%</option><option value="fixed">$</option>
-              </select>
-              {item.zelle_discount_type && (
-                <input
-                  type="number"
-                  value={Number((item.zelle_discount_value || 0).toFixed(2))}
-                  onChange={(e) => useCartStore.setState((state) => ({ items: state.items.map((it) => it.product_id === item.product_id && it.variant_id === item.variant_id ? { ...it, zelle_discount_value: parseFloat(e.target.value) || 0, zelle_discount_currency: item.zelle_currency } : it), lastUpdated: Date.now() }))}
-                  className={cn("w-14 bg-background border rounded px-1 py-2 min-h-[36px] text-[9px] font-bold shrink-0", (item.zelle_discount_value || 0) < 0 ? "border-emerald-500/50 text-emerald-500" : (item.zelle_discount_value || 0) > 0 ? "border-amber-500/50 text-amber-500" : "border-border/50")}
-                  placeholder="+/-"
-                  title="Negativo = descuento, Positivo = recargo"
-                />
+              {/* Equivalente en CUP si la moneda no es CUP */}
+              {p.amount > 0 && p.currency !== 'CUP' && (
+                <p className="text-[8px] text-muted-foreground ml-1">
+                  ≈ {formatCurrency(equivCup)} CUP
+                </p>
               )}
             </div>
-          </div>
+          );
+        })}
+
+        {/* Botón + Agregar Pago */}
+        <div className="flex gap-1">
+          <button
+            type="button"
+            onClick={() => useCartStore.getState().addItemPayment(item.product_id, item.variant_id, 'cash')}
+            className="flex-1 min-h-[36px] rounded-lg border-2 border-dashed border-primary/30 text-primary text-[10px] font-black uppercase hover:bg-primary/5 transition-colors flex items-center justify-center gap-1"
+          >
+            <Plus className="w-3.5 h-3.5" /> Agregar Pago
+          </button>
         </div>
+      </div>
       </div>
       )}
       {/* FIX-VALIDATION (2026-07-10): validación con descuento/recargo + monto esperado visible */}
+      {/* FIX-PAYMENT-ROWS: ahora busca el ajuste activo en payments[] */}
       {(() => {
         const cartStore = useCartStore.getState();
         const subtotalCup = cartStore.getItemSubtotalCup(item);
         const paidCup = cartStore.getItemPaidCup(item);
 
-        // Determinar si hay ajuste activo
-        const hasCashAdj = item.cash_discount_type && item.cash_discount_value;
-        const hasTransferAdj = item.transfer_discount_type && item.transfer_discount_value;
-        const hasZelleAdj = item.zelle_discount_type && item.zelle_discount_value;
-
+        // Buscar la primera fila con monto > 0 Y ajuste configurado
         let expectedCup = subtotalCup;
         let adjLabel = '';
-        if (item.cash_paid > 0 && hasCashAdj) {
-          expectedCup = cartStore.getItemSubtotalWithMethodDiscountCup(item, 'cash');
-          adjLabel = ` (${item.cash_discount_value > 0 ? '+' : ''}${item.cash_discount_value}${item.cash_discount_type === 'percentage' ? '%' : ''})`;
-        } else if (item.transfer_paid > 0 && hasTransferAdj) {
-          expectedCup = cartStore.getItemSubtotalWithMethodDiscountCup(item, 'transfer');
-          adjLabel = ` (${item.transfer_discount_value > 0 ? '+' : ''}${item.transfer_discount_value}${item.transfer_discount_type === 'percentage' ? '%' : ''})`;
-        } else if (item.zelle_paid > 0 && hasZelleAdj) {
-          expectedCup = cartStore.getItemSubtotalWithMethodDiscountCup(item, 'zelle');
-          adjLabel = ` (${item.zelle_discount_value > 0 ? '+' : ''}${item.zelle_discount_value}${item.zelle_discount_type === 'percentage' ? '%' : ''})`;
+        if (item.payments && item.payments.length > 0) {
+          for (const p of item.payments) {
+            if (p.amount > 0 && p.discount_type && p.discount_value) {
+              if (p.discount_type === 'percentage') {
+                expectedCup = subtotalCup * (1 + p.discount_value / 100);
+              } else {
+                const rate = cartStore.globalRates[p.discount_currency || 'CUP'] || item.exchange_rate || 1;
+                expectedCup = Math.max(0, subtotalCup + p.discount_value * rate);
+              }
+              adjLabel = ` (${p.discount_value > 0 ? '+' : ''}${p.discount_value}${p.discount_type === 'percentage' ? '%' : ''})`;
+              break;
+            }
+          }
+        } else {
+          // Fallback legacy
+          const hasCashAdj = item.cash_discount_type && item.cash_discount_value;
+          const hasTransferAdj = item.transfer_discount_type && item.transfer_discount_value;
+          const hasZelleAdj = item.zelle_discount_type && item.zelle_discount_value;
+          if (item.cash_paid > 0 && hasCashAdj) {
+            expectedCup = cartStore.getItemSubtotalWithMethodDiscountCup(item, 'cash');
+            adjLabel = ` (${item.cash_discount_value > 0 ? '+' : ''}${item.cash_discount_value}${item.cash_discount_type === 'percentage' ? '%' : ''})`;
+          } else if (item.transfer_paid > 0 && hasTransferAdj) {
+            expectedCup = cartStore.getItemSubtotalWithMethodDiscountCup(item, 'transfer');
+            adjLabel = ` (${item.transfer_discount_value > 0 ? '+' : ''}${item.transfer_discount_value}${item.transfer_discount_type === 'percentage' ? '%' : ''})`;
+          } else if (item.zelle_paid > 0 && hasZelleAdj) {
+            expectedCup = cartStore.getItemSubtotalWithMethodDiscountCup(item, 'zelle');
+            adjLabel = ` (${item.zelle_discount_value > 0 ? '+' : ''}${item.zelle_discount_value}${item.zelle_discount_type === 'percentage' ? '%' : ''})`;
+          }
         }
 
         const diff = paidCup - expectedCup;
@@ -825,9 +889,21 @@ export const POSCartItem = ({
                       const newPrice = (it.base_price_cup || it.price) / newRates[it.currency];
                       const updatedItem = { ...it, exchange_rate: newRates[it.currency], price: newPrice };
                       updatedItem.subtotal = recalcSubtotal(updatedItem);
-                      updatedItem.cash_paid = updatedItem.subtotal;
-                      updatedItem.transfer_paid = 0;
-                      updatedItem.zelle_paid = 0;
+                      // FIX-PAYMENT-ROWS: resetear payments[] si no hay override manual
+                      if (!updatedItem.payment_manual_override) {
+                        updatedItem.payments = [{
+                          id: `pay_rates_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+                          method: 'cash',
+                          amount: updatedItem.subtotal,
+                          currency: updatedItem.cash_currency || updatedItem.currency || 'CUP',
+                          discount_type: null,
+                          discount_value: 0,
+                          discount_currency: updatedItem.cash_currency || updatedItem.currency || 'CUP',
+                        }];
+                      }
+                      updatedItem.cash_paid = updatedItem.payments?.filter(p => p.method === 'cash').reduce((s, p) => s + p.amount, 0) || 0;
+                      updatedItem.transfer_paid = updatedItem.payments?.filter(p => p.method === 'transfer').reduce((s, p) => s + p.amount, 0) || 0;
+                      updatedItem.zelle_paid = updatedItem.payments?.filter(p => p.method === 'zelle').reduce((s, p) => s + p.amount, 0) || 0;
                       return updatedItem;
                     }
                     return it;

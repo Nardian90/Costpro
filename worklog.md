@@ -4275,3 +4275,74 @@ Stage Summary:
 - **3 estados claros**: ✓ Cuadrado (verde) / ↑ Sobrepago (amber) / ↓ Falta (rojo)
 - **Label de ajuste visible**: Muestra "(+5%)" o "(-10%)" junto al monto esperado para contexto
 - En el ejemplo del usuario: Consolidado CUP 💵1680 📱100 = 1780 vs Esperado 1680 → mostrará "Sobrepago: $100.00 CUP" en amber
+
+---
+Task ID: FIX-PAYMENT-ROWS
+Agent: Main Agent (Super Z)
+Task: Permitir múltiples filas del mismo método de pago en un item (ej: 2 efectivos, uno CUP y otro USD). Por defecto mostrar solo 1 fila Efectivo, con botones para Agregar/Duplicar/Eliminar filas.
+
+Work Log:
+- **Nuevo modelo de datos**: Añadida interfaz `PaymentRow` en `src/store/cart.ts`:
+  ```typescript
+  interface PaymentRow {
+    id: string;
+    method: 'cash' | 'transfer' | 'zelle';
+    amount: number;
+    currency: string;
+    discount_type: 'percentage' | 'fixed' | null;
+    discount_value: number;  // positivo=recargo, negativo=descuento
+    discount_currency: string;
+  }
+  ```
+- **Campo `payments: PaymentRow[]`** añadido a CartItem. Los campos legacy (`cash_paid`, `transfer_paid`, `zelle_paid`, `cash_currency`, etc.) se mantienen por compatibilidad con el backend RPC.
+- **Función `syncLegacyFields(item)`**: función internal que recalcula los campos legacy desde `payments[]`. Se llama después de cada mutación a `payments[]`.
+- **Migración automática en `onRehydrateStorage`**: cuando se carga un carrito viejo de localStorage que no tiene `payments[]`, se construye desde los campos legacy. Esto asegura que los carritos existentes sigan funcionando.
+- **Nuevas acciones en CartState**:
+  - `addItemPayment(productId, variantId, method='cash')`: añade una fila con monto 0
+  - `removeItemPayment(productId, variantId, paymentId)`: elimina una fila (mínimo 1 siempre)
+  - `duplicateItemPayment(productId, variantId, paymentId)`: clona una fila existente
+  - `updateItemPaymentRow(productId, variantId, paymentId, updates)`: actualiza campos de una fila específica
+- **Funciones de lectura actualizadas** para iterar sobre `payments[]`:
+  - `getItemPaidCup(item)`: suma `p.amount × rate` por cada fila
+  - `getConsolidatedPayments()`: agrupa por moneda+método
+  - `getExpectedTotalCup()`: busca la primera fila con ajuste activo y aplica al subtotal
+- **`updateItemPayment` (legacy)**: actualizado para hacer upsert en `payments[]` en vez de mutar campos fijos directamente.
+- **`prorateGlobalPayment`**: actualizado para reconstruir `payments[]` desde los montos prorrateados.
+- **`addItem`**: inicializa `payments[]` con 1 fila cash default (el subtotal).
+- **`updateQuantity` y `updateItemDiscount`**: si no hay override manual, resetean `payments[]` a 1 fila cash con el nuevo subtotal.
+- **POSCartItem.tsx — sección "Pago Mixto" reescrita**:
+  - Antes: 3 bloques fijos (Efectivo/Transferencia/Zelle) cada uno con su input, moneda, descuento
+  - Ahora: lista dinámica de filas. Cada fila tiene:
+    - Selector de método (💵 Efect. / 📱 Transf. / 💳 Zelle)
+    - Input de monto
+    - Selector de moneda (CUP/USD/EUR/MLC)
+    - Selector de ajuste (—, %, $)
+    - Input de valor de ajuste (visible solo si hay ajuste)
+    - Botón ⧉ Duplicar
+    - Botón ✕ Eliminar (solo si hay >1 fila)
+  - Botón "+ Agregar Pago" al final (border dashed, estilo CTA)
+  - Contador de filas en el header de la sección
+  - Cada fila muestra equivalente en CUP si la moneda no es CUP
+- **POSCartCheckoutPanel.tsx — Descuento/Recargo**: ahora itera sobre `payments[]` para consolidar ajustes. Cada fila con ajuste negativo va a "Descuento", cada fila con ajuste positivo va a "Recargo".
+- **POSCartCheckoutPanel.tsx — Consolidado + Cuadre**: la lógica del label de ajuste activo ahora busca en `payments[]` primero.
+- **POSCartCheckoutPanel.tsx — Efectivo Recibido**: `hasCash` ahora detecta cash en `payments[]` o legacy.
+- **usePOSCheckout.ts**: 
+  - `totalAmountCup` ahora usa `getExpectedTotalCup()` directamente
+  - Los cálculos de `cashAmountCup`/`transferAmountCup`/`zelleAmountCup` ahora suman sobre `payments[]` filtrando por método
+  - La verificación de descuadre de tasas usa `getItemPaidCup()` que ya itera `payments[]`
+  - `p_total_amount` usa `getExpectedTotalCup()`
+  - Los campos `p_items` siguen enviando los campos legacy (sincronizados desde `payments[]`) para compatibilidad con el backend RPC `create_sale`
+- **Handlers de cambio de moneda/tasa/variante** en POSCartItem.tsx: actualizados para resetear `payments[]` a 1 fila cash default cuando no hay override manual (preserva configuración manual del usuario).
+- TypeScript check pasó sin errores en archivos src/.
+
+Stage Summary:
+- **Múltiples filas del mismo método**: Ahora puedes tener 2 efectivos (ej: uno CUP $1000 + otro USD $5), o cualquier combinación de métodos
+- **UX intuitiva**: Por defecto 1 fila Efectivo. Botones + Agregar, ⧉ Duplicar, ✕ Eliminar
+- **Compatibilidad con backend**: Los campos legacy se mantienen sincronizados desde `payments[]`, así que el RPC `create_sale` sigue funcionando sin cambios
+- **Migración automática**: Carritos viejos en localStorage se migran a `payments[]` al cargar
+- **Archivos modificados**: 
+  - `src/store/cart.ts` (nuevo modelo, acciones, migración, funciones de lectura)
+  - `src/components/views/terminal/views/pos/POSCartItem.tsx` (UI dinámica de filas)
+  - `src/components/views/terminal/views/pos/POSCartCheckoutPanel.tsx` (consolidación iterando payments[])
+  - `src/components/views/terminal/views/pos/usePOSCheckout.ts` (cálculos de checkout usando payments[])
+- **Limitación conocida**: El backend RPC `create_sale` aún recibe los campos legacy (cash_paid/transfer_paid/zelle_paid sumados por método). Si se requiere persistir las filas individuales en la BD, habría que modificar el RPC y el schema. Por ahora, la suma por método es suficiente para el caso de uso.

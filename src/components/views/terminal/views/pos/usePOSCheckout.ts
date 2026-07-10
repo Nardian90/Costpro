@@ -82,22 +82,49 @@ export function usePOSCheckout() {
           customerId && validUuid.test(customerId) ? customerId : null;
 
         // FIX-B6 (2026-07-10): unificar conversiones usando getItemPaidCup del store
-        // Antes había 3 bloques duplicados con bugs distintos. Ahora un solo helper.
-        const totalAmountCup = cartState.getTotalCup();
+        // FIX-PAYMENT-ROWS (2026-07-10): usar getExpectedTotalCup() que considera ajustes por método.
+        // Antes: getTotalCup() que ya NO resta descuento global fantasma (delegaba en getExpectedTotalCup).
+        // Ahora: usar directamente getExpectedTotalCup() para consistencia con tab Pago.
+        const totalAmountCup = cartState.getExpectedTotalCup();
         const cashAmountCup = paymentMethod === 'cash' ? totalAmountCup
           : paymentMethod === 'mixed' ? items.reduce((s, i) => {
+              // FIX-PAYMENT-ROWS: sumar todas las filas cash de payments[]
+              if (i.payments && i.payments.length > 0) {
+                return s + i.payments
+                  .filter(p => p.method === 'cash')
+                  .reduce((ps, p) => {
+                    const rate = cartState.globalRates[p.currency || 'CUP'] || (p.currency === i.currency ? (i.exchange_rate || 1) : 1);
+                    return ps + (p.amount || 0) * (p.currency === 'CUP' ? 1 : rate);
+                  }, 0);
+              }
               const rate = cartState.globalRates[i.cash_currency || 'CUP'] || (i.cash_currency === i.currency ? (i.exchange_rate || 1) : 1);
               return s + (i.cash_paid || 0) * (i.cash_currency === 'CUP' ? 1 : rate);
             }, 0)
           : 0;
         const transferAmountCup = paymentMethod === 'transfer' ? totalAmountCup
           : paymentMethod === 'mixed' ? items.reduce((s, i) => {
+              if (i.payments && i.payments.length > 0) {
+                return s + i.payments
+                  .filter(p => p.method === 'transfer')
+                  .reduce((ps, p) => {
+                    const rate = cartState.globalRates[p.currency || 'CUP'] || (p.currency === i.currency ? (i.exchange_rate || 1) : 1);
+                    return ps + (p.amount || 0) * (p.currency === 'CUP' ? 1 : rate);
+                  }, 0);
+              }
               const rate = cartState.globalRates[i.transfer_currency || 'CUP'] || (i.transfer_currency === i.currency ? (i.exchange_rate || 1) : 1);
               return s + (i.transfer_paid || 0) * (i.transfer_currency === 'CUP' ? 1 : rate);
             }, 0)
           : 0;
         const zelleAmountCup = paymentMethod === 'zelle' ? totalAmountCup
           : paymentMethod === 'mixed' ? items.reduce((s, i) => {
+              if (i.payments && i.payments.length > 0) {
+                return s + i.payments
+                  .filter(p => p.method === 'zelle')
+                  .reduce((ps, p) => {
+                    const rate = cartState.globalRates[p.currency || 'USD'] || cartState.globalRates['USD'] || (i.exchange_rate || 1);
+                    return ps + (p.amount || 0) * (p.currency === 'CUP' ? 1 : rate);
+                  }, 0);
+              }
               const rate = cartState.globalRates[i.zelle_currency || 'USD'] || cartState.globalRates['USD'] || (i.exchange_rate || 1);
               return s + (i.zelle_paid || 0) * (i.zelle_currency === 'CUP' ? 1 : rate);
             }, 0)
@@ -115,7 +142,7 @@ export function usePOSCheckout() {
           p_store_id: user.activeStoreId,
           p_seller_id: user.id,
           p_payment_method: paymentMethod,
-          p_total_amount: useCartStore.getState().getTotalCup(),
+          p_total_amount: useCartStore.getState().getExpectedTotalCup(),
           // FIX-B4 (2026-07-10): p_subtotal en CUP, no suma cruda de monedas mixtas
           p_subtotal: useCartStore.getState().getSubtotalCup(),
           p_discount_type: (checkoutDiscount || discount)?.type || "fixed",
@@ -414,17 +441,10 @@ export function usePOSCheckout() {
           }
 
           if (usdToCupRate > 0) {
-            const totalCup = cartState.getTotalCup();
-            // Calcular total pagado en CUP usando tasas (manuales o item.exchange_rate)
-            const totalPaidCup = items.reduce((s, i) => {
-              const paidCup = (i.cash_paid || 0) + (i.transfer_paid || 0) + (i.zelle_paid || 0);
-              // Si el item está en CUP, no convertir
-              if (i.currency === 'CUP' && !i.zelle_paid) return s + paidCup;
-              // Para Zelle, usar tasa manual o global
-              const zelleCup = (i.zelle_paid || 0) * (cartState.globalRates[i.zelle_currency || 'USD'] || usdToCupRate);
-              const otherCup = ((i.cash_paid || 0) + (i.transfer_paid || 0)) * (i.exchange_rate || 1);
-              return s + zelleCup + otherCup;
-            }, 0);
+            // FIX-PAYMENT-ROWS (2026-07-10): usar getExpectedTotalCup() para consistencia
+            const totalCup = cartState.getExpectedTotalCup();
+            // Calcular total pagado en CUP usando getItemPaidCup (que ya itera payments[])
+            const totalPaidCup = items.reduce((s, i) => s + cartState.getItemPaidCup(i), 0);
 
             const diff = Math.abs(totalPaidCup - totalCup);
             const pctDiff = totalCup > 0 ? (diff / totalCup) * 100 : 0;
