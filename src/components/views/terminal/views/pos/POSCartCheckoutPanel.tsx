@@ -206,36 +206,12 @@ export function POSCartCheckoutPanel({
         </div>
       </div>
 
-      {/* ── MÉTODOS DE PAGO (iconos en una línea) ──────────────────── */}
-      <div className="px-4 sm:px-6 py-2 border-b border-border/50">
-        <div className="flex items-center gap-2">
-          {PAYMENT_METHODS.map((method) => {
-            const Icon = method.icon;
-            const isActive = selectedPayment === method.id;
-            return (
-              <button
-                key={method.id}
-                type="button"
-                onClick={() => onSetSelectedPayment(method.id)}
-                className={cn(
-                  "flex-1 min-h-[36px] rounded-lg flex items-center justify-center gap-1 border transition-all",
-                  isActive
-                    ? "border-primary bg-primary/10 text-primary"
-                    : "border-border text-muted-foreground hover:border-primary/40"
-                )}
-                role="radio"
-                aria-checked={isActive}
-                aria-label={method.label}
-              >
-                <Icon className="w-3.5 h-3.5" />
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
       {/* ── EFECTIVO RECIBIDO + VUELTO ────────────────────────────── */}
-      {selectedPayment === "cash" && (
+      {(() => {
+        const items = useCartStore.getState().items;
+        const hasCash = items.some(i => (i.cash_paid || 0) > 0);
+        if (!hasCash) return null;
+        return (
         <div className="px-4 sm:px-6 py-2 border-b border-border/50 bg-success/5">
           <div className="flex items-center gap-2">
             <button
@@ -278,121 +254,96 @@ export function POSCartCheckoutPanel({
             </button>
           </div>
         </div>
-      )}
+        );
+      })()}
 
-      {/* ── CONSOLIDADO POR MÉTODO DE PAGO ────────────────────────── */}
+      {/* ── CONSOLIDADO POR MONEDA (read-only) ────────────────────── */}
       {(() => {
         const consolidated = useCartStore.getState().getConsolidatedPayments();
         const currencies = Object.keys(consolidated).sort();
         if (currencies.length === 0) return null;
-        // Totales por método (todas las monedas)
-        let totalCash = 0, totalTransfer = 0, totalZelle = 0;
-        for (const [, m] of Object.entries(consolidated)) {
-          totalCash += m.cash;
-          totalTransfer += m.transfer;
-          totalZelle += m.zelle;
-        }
         return (
-          <div className="px-4 sm:px-6 py-2 border-b border-border/50 space-y-2">
-            {/* Por método */}
-            <div className="flex items-center gap-3 text-[10px] font-black">
-              <span className="text-[9px] uppercase text-muted-foreground">Por método:</span>
-              {totalCash > 0 && <span className="text-success">💵 {totalCash.toFixed(2)}</span>}
-              {totalTransfer > 0 && <span className="text-primary">📱 {totalTransfer.toFixed(2)}</span>}
-              {totalZelle > 0 && <span className="text-primary">💳 {totalZelle.toFixed(2)}</span>}
+          <div className="px-4 sm:px-6 py-2 border-b border-border/50 space-y-0.5">
+            <span className="text-[9px] uppercase text-muted-foreground font-black">Consolidado por moneda:</span>
+            {currencies.map(cur => {
+              const c = consolidated[cur];
+              return (
+                <div key={cur} className="flex items-center gap-2 text-[10px] font-bold pl-2">
+                  <span className="text-muted-foreground w-8">{cur}</span>
+                  {c.cash > 0 && <span className="text-success">💵{c.cash.toFixed(2)}</span>}
+                  {c.transfer > 0 && <span className="text-primary">📱{c.transfer.toFixed(2)}</span>}
+                  {c.zelle > 0 && <span className="text-primary">💳{c.zelle.toFixed(2)}</span>}
+                </div>
+              );
+            })}
+          </div>
+        );
+      })()}
+
+      {/* ── DESCUENTO (read-only, consolida de items) ────────────── */}
+      {(() => {
+        const items = useCartStore.getState().items;
+        const discounts = items.filter(i => i.cash_discount_type || i.transfer_discount_type || i.zelle_discount_type);
+        if (discounts.length === 0) return null;
+        return (
+          <div className="px-4 sm:px-6 py-2 border-b border-border/50">
+            <div className="flex items-center gap-2 text-[10px] font-black">
+              <TrendingDown className="w-3.5 h-3.5 text-destructive" />
+              <span className="uppercase text-destructive">Descuento</span>
             </div>
-            {/* Por moneda */}
-            <div className="space-y-0.5">
-              <span className="text-[9px] uppercase text-muted-foreground font-black">Por moneda:</span>
-              {currencies.map(cur => {
-                const c = consolidated[cur];
-                return (
-                  <div key={cur} className="flex items-center gap-2 text-[10px] font-bold pl-2">
-                    <span className="text-muted-foreground w-8">{cur}</span>
-                    {c.cash > 0 && <span className="text-success">💵{c.cash.toFixed(2)}</span>}
-                    {c.transfer > 0 && <span className="text-primary">📱{c.transfer.toFixed(2)}</span>}
-                    {c.zelle > 0 && <span className="text-primary">💳{c.zelle.toFixed(2)}</span>}
-                  </div>
-                );
-              })}
+            <div className="space-y-0.5 mt-1">
+              {discounts.map(item => (
+                <div key={item.product_id} className="text-[9px] font-bold pl-2">
+                  <span className="text-muted-foreground">{item.product.name}:</span>
+                  {item.cash_discount_type && item.cash_discount_value < 0 && (
+                    <span className="text-destructive ml-1">💵 {item.cash_discount_value}{item.cash_discount_type === 'percentage' ? '%' : ''}</span>
+                  )}
+                  {item.transfer_discount_type && item.transfer_discount_value < 0 && (
+                    <span className="text-destructive ml-1">📱 {item.transfer_discount_value}{item.transfer_discount_type === 'percentage' ? '%' : ''}</span>
+                  )}
+                  {item.zelle_discount_type && item.zelle_discount_value < 0 && (
+                    <span className="text-destructive ml-1">💳 {item.zelle_discount_value}{item.zelle_discount_type === 'percentage' ? '%' : ''}</span>
+                  )}
+                </div>
+              ))}
             </div>
           </div>
         );
       })()}
 
-      {/* ── DESCUENTO (accordion) ─────────────────────────────────── */}
-      <div className="px-4 sm:px-6 py-2 border-b border-border/50">
-        <button
-          type="button"
-          onClick={() => setShowDiscountSection(!showDiscountSection)}
-          className="w-full flex items-center justify-between py-2 text-xs font-black uppercase text-muted-foreground tracking-widest hover:text-destructive"
-          aria-expanded={showDiscountSection}
-          aria-controls="pos-discount-section"
-        >
-          <span className="flex items-center gap-2">
-            <TrendingDown className="w-3.5 h-3.5" aria-hidden="true" />
-            Descuento
-            {discount && discount.value < 0 && (
-              <span className="bg-destructive/10 text-destructive px-1.5 py-0.5 rounded text-[9px]">
-                {discount.value}{discount.type === "percentage" ? "%" : ""}
-              </span>
-            )}
-          </span>
-          {showDiscountSection ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-        </button>
-        <AnimatePresence>
-          {showDiscountSection && (
-            <motion.div
-              id="pos-discount-section"
-              initial={{ height: 0, opacity: 0 }}
-              animate={prefersReducedMotion ? {} : { height: "auto", opacity: 1 }}
-              exit={prefersReducedMotion ? {} : { height: 0, opacity: 0 }}
-              className="overflow-hidden"
-            >
-              <div className="pb-3">
-                <POSCartDiscountModal discount={discount} setDiscount={setDiscount} />
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-
-      {/* ── RECARGO (accordion) ───────────────────────────────────── */}
-      <div className="px-4 sm:px-6 py-2 border-b border-border/50">
-        <button
-          type="button"
-          onClick={() => setShowSurchargeSection(!showSurchargeSection)}
-          className="w-full flex items-center justify-between py-2 text-xs font-black uppercase text-muted-foreground tracking-widest hover:text-amber-500"
-          aria-expanded={showSurchargeSection}
-          aria-controls="pos-surcharge-section"
-        >
-          <span className="flex items-center gap-2">
-            <TrendingUp className="w-3.5 h-3.5" aria-hidden="true" />
-            Recargo
-            {discount && discount.value > 0 && (
-              <span className="bg-amber-500/10 text-amber-500 px-1.5 py-0.5 rounded text-[9px]">
-                +{discount.value}{discount.type === "percentage" ? "%" : ""}
-              </span>
-            )}
-          </span>
-          {showSurchargeSection ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-        </button>
-        <AnimatePresence>
-          {showSurchargeSection && (
-            <motion.div
-              id="pos-surcharge-section"
-              initial={{ height: 0, opacity: 0 }}
-              animate={prefersReducedMotion ? {} : { height: "auto", opacity: 1 }}
-              exit={prefersReducedMotion ? {} : { height: 0, opacity: 0 }}
-              className="overflow-hidden"
-            >
-              <div className="pb-3">
-                <POSCartDiscountModal discount={discount} setDiscount={setDiscount} />
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
+      {/* ── RECARGO (read-only, consolida de items) ──────────────── */}
+      {(() => {
+        const items = useCartStore.getState().items;
+        const surcharges = items.filter(i =>
+          (i.cash_surcharge_type || i.transfer_surcharge_type || i.zelle_surcharge_type) ||
+          (i.cash_discount_value > 0) || (i.transfer_discount_value > 0) || (i.zelle_discount_value > 0)
+        );
+        if (surcharges.length === 0) return null;
+        return (
+          <div className="px-4 sm:px-6 py-2 border-b border-border/50">
+            <div className="flex items-center gap-2 text-[10px] font-black">
+              <TrendingUp className="w-3.5 h-3.5 text-amber-500" />
+              <span className="uppercase text-amber-500">Recargo</span>
+            </div>
+            <div className="space-y-0.5 mt-1">
+              {surcharges.map(item => (
+                <div key={item.product_id} className="text-[9px] font-bold pl-2">
+                  <span className="text-muted-foreground">{item.product.name}:</span>
+                  {item.cash_discount_type && item.cash_discount_value > 0 && (
+                    <span className="text-amber-500 ml-1">💵 +{item.cash_discount_value}{item.cash_discount_type === 'percentage' ? '%' : ''}</span>
+                  )}
+                  {item.transfer_discount_type && item.transfer_discount_value > 0 && (
+                    <span className="text-amber-500 ml-1">📱 +{item.transfer_discount_value}{item.transfer_discount_type === 'percentage' ? '%' : ''}</span>
+                  )}
+                  {item.zelle_discount_type && item.zelle_discount_value > 0 && (
+                    <span className="text-amber-500 ml-1">💳 +{item.zelle_discount_value}{item.zelle_discount_type === 'percentage' ? '%' : ''}</span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
 
       {/* POS-3a-v3: El CTA "Cobrar" gigante se movió al POSCart externo (siempre visible abajo).
           Aquí solo conservamos el modal de confirmación, disparado por el botón oculto
