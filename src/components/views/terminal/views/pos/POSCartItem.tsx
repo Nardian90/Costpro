@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import {
   X,
@@ -12,6 +12,8 @@ import {
   AlertTriangle,
   Image as ImageIcon,
   CreditCard,
+  TrendingUp,
+  TrendingDown,
 } from "lucide-react";
 import { cn, formatCurrency } from "@/lib/utils";
 import { toast } from "sonner";
@@ -47,6 +49,22 @@ export const POSCartItem = ({
   // FIX-TASAS-MODAL (2026-07-10): modal custom para tasas (no window.prompt)
   const [showRatesModal, setShowRatesModal] = useState(false);
   const [ratesModalData, setRatesModalData] = useState<Record<string, string>>({});
+  const ratesModalRef = useRef<HTMLDivElement>(null);
+
+  // FIX-FOCUS-TRAP (2026-07-10): Esc cierra modal + focus trap
+  useEffect(() => {
+    if (!showRatesModal) return;
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setShowRatesModal(false);
+    };
+    document.addEventListener('keydown', handleEsc);
+    // Focus al primer input
+    setTimeout(() => {
+      const firstInput = ratesModalRef.current?.querySelector('input');
+      firstInput?.focus();
+    }, 50);
+    return () => document.removeEventListener('keydown', handleEsc);
+  }, [showRatesModal]);
 
   // POS-2 MM-4: Input directo de cantidad.
   // El span del número es clicable. Al click entra en modo edición (input),
@@ -602,8 +620,9 @@ export const POSCartItem = ({
                   type="number"
                   value={Number((item.cash_discount_value || 0).toFixed(2))}
                   onChange={(e) => useCartStore.setState((state) => ({ items: state.items.map((it) => it.product_id === item.product_id && it.variant_id === item.variant_id ? { ...it, cash_discount_value: parseFloat(e.target.value) || 0, cash_discount_currency: item.cash_currency } : it), lastUpdated: Date.now() }))}
-                  className="w-14 bg-background border border-border/50 rounded px-1 py-2 min-h-[36px] text-[9px] font-bold shrink-0"
-                  placeholder="0"
+                  className={cn("w-14 bg-background border rounded px-1 py-2 min-h-[36px] text-[9px] font-bold shrink-0", (item.cash_discount_value || 0) < 0 ? "border-emerald-500/50 text-emerald-500" : (item.cash_discount_value || 0) > 0 ? "border-amber-500/50 text-amber-500" : "border-border/50")}
+                  placeholder="+/-"
+                  title="Negativo = descuento, Positivo = recargo"
                 />
               )}
             </div>
@@ -652,8 +671,9 @@ export const POSCartItem = ({
                   type="number"
                   value={Number((item.transfer_discount_value || 0).toFixed(2))}
                   onChange={(e) => useCartStore.setState((state) => ({ items: state.items.map((it) => it.product_id === item.product_id && it.variant_id === item.variant_id ? { ...it, transfer_discount_value: parseFloat(e.target.value) || 0, transfer_discount_currency: item.transfer_currency } : it), lastUpdated: Date.now() }))}
-                  className="w-14 bg-background border border-border/50 rounded px-1 py-2 min-h-[36px] text-[9px] font-bold shrink-0"
-                  placeholder="0"
+                  className={cn("w-14 bg-background border rounded px-1 py-2 min-h-[36px] text-[9px] font-bold shrink-0", (item.transfer_discount_value || 0) < 0 ? "border-emerald-500/50 text-emerald-500" : (item.transfer_discount_value || 0) > 0 ? "border-amber-500/50 text-amber-500" : "border-border/50")}
+                  placeholder="+/-"
+                  title="Negativo = descuento, Positivo = recargo"
                 />
               )}
             </div>
@@ -702,8 +722,9 @@ export const POSCartItem = ({
                   type="number"
                   value={Number((item.zelle_discount_value || 0).toFixed(2))}
                   onChange={(e) => useCartStore.setState((state) => ({ items: state.items.map((it) => it.product_id === item.product_id && it.variant_id === item.variant_id ? { ...it, zelle_discount_value: parseFloat(e.target.value) || 0, zelle_discount_currency: item.zelle_currency } : it), lastUpdated: Date.now() }))}
-                  className="w-14 bg-background border border-border/50 rounded px-1 py-2 min-h-[36px] text-[9px] font-bold shrink-0"
-                  placeholder="0"
+                  className={cn("w-14 bg-background border rounded px-1 py-2 min-h-[36px] text-[9px] font-bold shrink-0", (item.zelle_discount_value || 0) < 0 ? "border-emerald-500/50 text-emerald-500" : (item.zelle_discount_value || 0) > 0 ? "border-amber-500/50 text-amber-500" : "border-border/50")}
+                  placeholder="+/-"
+                  title="Negativo = descuento, Positivo = recargo"
                 />
               )}
             </div>
@@ -711,47 +732,51 @@ export const POSCartItem = ({
         </div>
       </div>
       )}
-      {/* FIX-VALIDATION (2026-07-10): validación con descuento/recargo aplicado */}
+      {/* FIX-VALIDATION (2026-07-10): validación con descuento/recargo + monto esperado visible */}
       {(() => {
         const cartStore = useCartStore.getState();
         const subtotalCup = cartStore.getItemSubtotalCup(item);
         const paidCup = cartStore.getItemPaidCup(item);
 
-        // Si hay descuento/recargo en algún método, calcular el subtotal esperado
+        // Determinar si hay ajuste activo
         const hasCashAdj = item.cash_discount_type && item.cash_discount_value;
         const hasTransferAdj = item.transfer_discount_type && item.transfer_discount_value;
         const hasZelleAdj = item.zelle_discount_type && item.zelle_discount_value;
 
         let expectedCup = subtotalCup;
-        if (hasCashAdj || hasTransferAdj || hasZelleAdj) {
-          // Tomar el ajuste del método que tiene pago activo
-          if (item.cash_paid > 0 && hasCashAdj) {
-            expectedCup = cartStore.getItemSubtotalWithMethodDiscountCup(item, 'cash');
-          } else if (item.transfer_paid > 0 && hasTransferAdj) {
-            expectedCup = cartStore.getItemSubtotalWithMethodDiscountCup(item, 'transfer');
-          } else if (item.zelle_paid > 0 && hasZelleAdj) {
-            expectedCup = cartStore.getItemSubtotalWithMethodDiscountCup(item, 'zelle');
-          }
+        let adjLabel = '';
+        if (item.cash_paid > 0 && hasCashAdj) {
+          expectedCup = cartStore.getItemSubtotalWithMethodDiscountCup(item, 'cash');
+          adjLabel = ` (${item.cash_discount_value > 0 ? '+' : ''}${item.cash_discount_value}${item.cash_discount_type === 'percentage' ? '%' : ''})`;
+        } else if (item.transfer_paid > 0 && hasTransferAdj) {
+          expectedCup = cartStore.getItemSubtotalWithMethodDiscountCup(item, 'transfer');
+          adjLabel = ` (${item.transfer_discount_value > 0 ? '+' : ''}${item.transfer_discount_value}${item.transfer_discount_type === 'percentage' ? '%' : ''})`;
+        } else if (item.zelle_paid > 0 && hasZelleAdj) {
+          expectedCup = cartStore.getItemSubtotalWithMethodDiscountCup(item, 'zelle');
+          adjLabel = ` (${item.zelle_discount_value > 0 ? '+' : ''}${item.zelle_discount_value}${item.zelle_discount_type === 'percentage' ? '%' : ''})`;
         }
 
         const diff = paidCup - expectedCup;
-        if (Math.abs(diff) <= 0.01) {
-          return (
-            <div className="mt-1 text-[10px] font-bold text-emerald-500 flex items-center gap-1">
-              ✓ Pago completo ({formatCurrency(expectedCup)} CUP)
-            </div>
-          );
-        }
-        if (diff > 0) {
-          return (
-            <div className="mt-1 text-[10px] font-bold text-amber-500 flex items-center gap-1">
-              ⚠ Sobrepago: {formatCurrency(diff)} CUP
-            </div>
-          );
-        }
         return (
-          <div className="mt-1 text-[10px] font-bold text-destructive flex items-center gap-1" role="alert">
-            <AlertTriangle className="w-3 h-3" aria-hidden="true" /> Falta: {formatCurrency(Math.abs(diff))} CUP
+          <div className="mt-1 space-y-0.5">
+            {/* Monto esperado siempre visible */}
+            <div className="text-[9px] font-bold text-muted-foreground">
+              Esperado: {formatCurrency(expectedCup)} CUP{adjLabel}
+            </div>
+            {/* Estado de validación */}
+            {Math.abs(diff) <= 0.01 ? (
+              <div className="text-[10px] font-bold text-emerald-500 flex items-center gap-1">
+                ✓ Pago completo
+              </div>
+            ) : diff > 0 ? (
+              <div className="text-[10px] font-bold text-amber-500 flex items-center gap-1">
+                <TrendingUp className="w-3 h-3" /> Sobrepago: {formatCurrency(diff)} CUP
+              </div>
+            ) : (
+              <div className="text-[10px] font-bold text-destructive flex items-center gap-1" role="alert">
+                <TrendingDown className="w-3 h-3" /> Falta: {formatCurrency(Math.abs(diff))} CUP
+              </div>
+            )}
           </div>
         );
       })()}
@@ -763,18 +788,22 @@ export const POSCartItem = ({
           onClick={() => setShowRatesModal(false)}
           role="dialog"
           aria-modal="true"
+          aria-labelledby="rates-modal-title"
         >
           <div
+            ref={ratesModalRef}
             className="w-full max-w-sm bg-card border border-border/50 rounded-2xl shadow-2xl p-5"
             onClick={e => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-sm font-black uppercase">Tasas de Cambio</h2>
-              <button onClick={() => setShowRatesModal(false)} className="text-muted-foreground hover:text-foreground">
+            <div className="flex items-center justify-between mb-2">
+              <h2 id="rates-modal-title" className="text-sm font-black uppercase">Tasas de Cambio</h2>
+              <button onClick={() => setShowRatesModal(false)} className="text-muted-foreground hover:text-foreground" aria-label="Cerrar">
                 <X className="w-4 h-4" />
               </button>
             </div>
-            <p className="text-[10px] text-muted-foreground mb-3">Estas tasas se guardan en la tienda y persisten hasta el próximo cambio.</p>
+            <p className="text-[10px] text-muted-foreground mb-3">
+              Se guardan en la tienda y persisten hasta el próximo cambio. Presiona Enter para guardar, Esc para cancelar.
+            </p>
             <div className="space-y-2 mb-4">
               {['USD', 'EUR', 'MLC'].map(cur => (
                 <div key={cur} className="flex items-center gap-2">
@@ -784,10 +813,12 @@ export const POSCartItem = ({
                     step="0.01"
                     value={ratesModalData[cur] || ''}
                     onChange={(e) => setRatesModalData(prev => ({ ...prev, [cur]: e.target.value }))}
+                    onKeyDown={(e) => { if (e.key === 'Enter') (ratesModalRef.current?.querySelector('button:last-of-type') as HTMLButtonElement)?.click(); }}
                     className="flex-1 bg-background border border-border/50 rounded-lg px-2 py-2 text-xs font-bold"
                     placeholder="0"
+                    aria-label={`Tasa ${cur}`}
                   />
-                  <span className="text-[10px] text-muted-foreground">CUP</span>
+                  <span className="text-[10px] text-muted-foreground w-8">CUP</span>
                 </div>
               ))}
             </div>
