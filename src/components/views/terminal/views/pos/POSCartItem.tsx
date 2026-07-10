@@ -409,39 +409,27 @@ export const POSCartItem = ({
             </select>
           </div>
         )}
-        <div className="space-y-1">
-          <span className="text-xs font-black uppercase text-muted-foreground">Moneda Venta</span>
+        {/* FIX-LAYOUT (2026-07-10): Moneda + Tasa + Botón Tasas en una sola fila compacta */}
+        <div className="flex gap-1 items-center">
           <select
             value={item.currency || 'CUP'}
             onChange={(e) => {
               const currency = e.target.value;
-              // FIX-BASE-PRICE (2026-07-10): convertir SIEMPRE desde base_price_cup
-              // Esto elimina el bug de conversión doble y tasas persistentidas incorrectas
               const gr = useCartStore.getState().globalRates[currency];
               const rate = (gr && gr > 0) ? gr : 1;
-
-              // Precio nuevo = base_price_cup / tasa (si no es CUP) o base_price_cup (si es CUP)
               let newPrice: number;
               if (currency === 'CUP') {
                 newPrice = item.base_price_cup || item.price;
               } else if (rate > 1) {
                 newPrice = (item.base_price_cup || item.price) / rate;
               } else {
-                newPrice = item.price; // no hay tasa, mantener precio
-                if (currency !== 'CUP') toast.info('Edita la TASA manualmente para convertir el precio.');
+                newPrice = item.price;
+                if (currency !== 'CUP') toast.info('Edita la TASA o usa el botón Tasas.');
               }
-
               useCartStore.setState((state) => ({
                 items: state.items.map((it) => {
                   if (it.product_id === item.product_id && it.variant_id === item.variant_id) {
-                    const updatedItem = {
-                      ...it,
-                      price: newPrice,
-                      currency,
-                      exchange_rate: rate,
-                      cash_currency: currency,
-                      transfer_currency: currency,
-                    };
+                    const updatedItem = { ...it, price: newPrice, currency, exchange_rate: rate, cash_currency: currency, transfer_currency: currency };
                     updatedItem.subtotal = recalcSubtotal(updatedItem);
                     updatedItem.cash_paid = updatedItem.subtotal;
                     updatedItem.transfer_paid = 0;
@@ -452,8 +440,6 @@ export const POSCartItem = ({
                 }),
                 lastUpdated: Date.now(),
               }));
-
-              // Fetch de tasa en background
               if (currency !== 'CUP' && rate <= 1) {
                 fetch(`/api/exchange-rates?currency=${currency}&source=elToque&days=1`)
                   .then(res => res.ok ? res.json() : null)
@@ -461,45 +447,40 @@ export const POSCartItem = ({
                     if (!data) return;
                     const rates = Array.isArray(data) ? data : (data?.rates || data?.data || []);
                     if (Array.isArray(rates) && rates.length > 0) {
-                      const sorted = rates.sort((a: any, b: any) =>
-                        new Date(b.rate_date || 0).getTime() - new Date(a.rate_date || 0).getTime()
-                      );
+                      const sorted = rates.sort((a: any, b: any) => new Date(b.rate_date || 0).getTime() - new Date(a.rate_date || 0).getTime());
                       if (sorted[0]?.rate > 0) {
                         const fetchedRate = sorted[0].rate;
                         useCartStore.getState().setGlobalRate(currency, fetchedRate);
                         useCartStore.setState((state) => ({
                           items: state.items.map((it) => {
                             if (it.product_id === item.product_id && it.variant_id === item.variant_id && it.currency === currency) {
-                              const newPriceConverted = (item.base_price_cup || item.price) / fetchedRate;
-                              const updatedItem = { ...it, exchange_rate: fetchedRate, price: newPriceConverted };
-                              updatedItem.subtotal = recalcSubtotal(updatedItem);
-                              updatedItem.cash_paid = updatedItem.subtotal;
-                              updatedItem.transfer_paid = 0;
-                              updatedItem.zelle_paid = 0;
-                              return updatedItem;
+                              const np = (item.base_price_cup || item.price) / fetchedRate;
+                              const ui = { ...it, exchange_rate: fetchedRate, price: np };
+                              ui.subtotal = recalcSubtotal(ui);
+                              ui.cash_paid = ui.subtotal;
+                              ui.transfer_paid = 0;
+                              ui.zelle_paid = 0;
+                              return ui;
                             }
                             return it;
                           }),
                           lastUpdated: Date.now(),
                         }));
-                        toast.success(`Tasa obtenida: 1 ${currency} = ${fetchedRate} CUP`);
+                        toast.success(`Tasa: 1 ${currency} = ${fetchedRate} CUP`);
                       }
                     }
                   })
                   .catch(() => {});
               }
             }}
-            className="w-full bg-background border border-border/50 rounded-lg px-2 py-2.5 min-h-[44px] text-xs font-bold"
-            aria-label={`Moneda de venta para ${item.product.name}`}
+            className="bg-background border border-border/50 rounded-lg px-1 py-2 min-h-[36px] text-[10px] font-bold shrink-0"
+            aria-label={`Moneda para ${item.product.name}`}
           >
             <option value="CUP">CUP</option>
             <option value="USD">USD</option>
             <option value="EUR">EUR</option>
             <option value="MLC">MLC</option>
           </select>
-        </div>
-        {/* FIX-TASAS-BUTTON (2026-07-10): botón para actualizar tasas + input TASA compacto */}
-        <div className="flex gap-1 items-center">
           {item.currency !== 'CUP' && (
             <input
               type="number"
@@ -511,25 +492,20 @@ export const POSCartItem = ({
                 useCartStore.setState((state) => ({
                   items: state.items.map((it) => {
                     if (it.product_id === item.product_id && it.variant_id === item.variant_id) {
-                      let newPrice: number;
-                      if (it.currency === 'CUP' || rate <= 0) {
-                        newPrice = it.base_price_cup || it.price;
-                      } else {
-                        newPrice = (it.base_price_cup || it.price) / rate;
-                      }
-                      const updatedItem = { ...it, exchange_rate: rate, price: newPrice };
-                      updatedItem.subtotal = recalcSubtotal(updatedItem);
-                      updatedItem.cash_paid = updatedItem.subtotal;
-                      updatedItem.transfer_paid = 0;
-                      updatedItem.zelle_paid = 0;
-                      return updatedItem;
+                      const np = it.currency === 'CUP' || rate <= 0 ? (it.base_price_cup || it.price) : (it.base_price_cup || it.price) / rate;
+                      const ui = { ...it, exchange_rate: rate, price: np };
+                      ui.subtotal = recalcSubtotal(ui);
+                      ui.cash_paid = ui.subtotal;
+                      ui.transfer_paid = 0;
+                      ui.zelle_paid = 0;
+                      return ui;
                     }
                     return it;
                   }),
                   lastUpdated: Date.now(),
                 }));
               }}
-              className="w-20 bg-background border border-border/50 rounded-lg px-2 py-2 min-h-[36px] text-xs font-bold"
+              className="w-16 bg-background border border-border/50 rounded-lg px-1 py-2 min-h-[36px] text-[10px] font-bold shrink-0"
               aria-label={`Tasa para ${item.product.name}`}
             />
           )}
@@ -541,18 +517,11 @@ export const POSCartItem = ({
               const user = useAuthStore.getState().user as any;
               const storeId = user?.activeStoreId;
               if (!storeId) return;
-
-              // Cargar tasas actuales de BD
               const res = await fetch(`/api/store-rates?storeId=${storeId}`, {
                 headers: token ? { Authorization: `Bearer ${token}` } : {},
               });
               let currentRates: Record<string, number> = {};
-              if (res.ok) {
-                const data = await res.json();
-                currentRates = data.rates || {};
-              }
-
-              // Abrir modal custom (no window.prompt)
+              if (res.ok) { const data = await res.json(); currentRates = data.rates || {}; }
               setRatesModalData({
                 USD: String(currentRates.USD || ''),
                 EUR: String(currentRates.EUR || ''),
@@ -560,8 +529,9 @@ export const POSCartItem = ({
               });
               setShowRatesModal(true);
             }}
-            className="text-[9px] font-black uppercase text-primary border border-primary/30 rounded-lg px-2 py-2 min-h-[36px] hover:bg-primary/5 shrink-0"
+            className="text-[9px] font-black uppercase text-primary border border-primary/30 rounded-lg px-1.5 py-2 min-h-[36px] hover:bg-primary/5 shrink-0"
             title="Actualizar tasas de cambio de la tienda"
+            aria-label="Actualizar tasas"
           >
             Tasas
           </button>
