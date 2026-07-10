@@ -166,6 +166,11 @@ interface CartState {
   removeItemPayment: (productId: string, variantId: string | null, paymentId: string) => void;
   duplicateItemPayment: (productId: string, variantId: string | null, paymentId: string) => void;
   updateItemPaymentRow: (productId: string, variantId: string | null, paymentId: string, updates: Partial<PaymentRow>) => void;
+  // FIX-CASH-BREAKDOWN (2026-07-10): totales de efectivo agrupados por moneda.
+  // Retorna: { 'CUP': 1100, 'USD': 5 } — solo filas cash, excluye transfer/zelle.
+  // Usado por el modal "Efectivo Recibido" para validar contra el efectivo correcto
+  // y para separar el desglose de billetes por moneda.
+  getCashTotalsByCurrency: () => Record<string, number>;
 }
 
 const calculateItemSubtotal = (item: CartItem) => {
@@ -379,6 +384,31 @@ export const useCartStore = create<CartState>()(
               if (!result[c]) result[c] = { cash: 0, transfer: 0, zelle: 0 };
               result[c].zelle += item.zelle_paid;
             }
+          }
+        }
+        return result;
+      },
+
+      // FIX-CASH-BREAKDOWN (2026-07-10): totales de efectivo agrupados por moneda.
+      // Solo suma filas cash de payments[], excluye transfer/zelle.
+      // Retorna: { 'CUP': 1100, 'USD': 5 }
+      // Usado por el modal "Efectivo Recibido" para:
+      //   1. Validar contra el efectivo correcto (no el total de la venta)
+      //   2. Separar el desglose de billetes por moneda
+      getCashTotalsByCurrency: () => {
+        const result: Record<string, number> = {};
+        for (const item of get().items) {
+          if (item.payments && item.payments.length > 0) {
+            for (const p of item.payments) {
+              if (p.method === 'cash' && p.amount > 0) {
+                const c = p.currency || 'CUP';
+                result[c] = (result[c] || 0) + p.amount;
+              }
+            }
+          } else if ((item.cash_paid || 0) > 0) {
+            // Fallback legacy
+            const c = item.cash_currency || 'CUP';
+            result[c] = (result[c] || 0) + (item.cash_paid || 0);
           }
         }
         return result;

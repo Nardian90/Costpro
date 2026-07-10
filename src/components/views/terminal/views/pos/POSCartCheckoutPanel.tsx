@@ -106,8 +106,12 @@ export function POSCartCheckoutPanel({
   const [showCheckoutConfirm, setShowCheckoutConfirm] = useState(false);
   const [cashReceived, setCashReceived] = useState("");
   // FIX-CASH-BREAKDOWN (2026-07-10): modal de desglose por billetes/monedas
+  // separado por moneda. Cada moneda tiene su propio desglose y total.
   const [showCashBreakdown, setShowCashBreakdown] = useState(false);
-  const [cashBreakdown, setCashBreakdown] = useState<Record<string, number>>({});
+  // breakdown por moneda: { 'CUP': { '1000': 2, '500': 1 }, 'USD': { '20': 1 } }
+  const [cashBreakdownByCurrency, setCashBreakdownByCurrency] = useState<Record<string, Record<string, number>>>({});
+  // moneda activa en el modal (tab)
+  const [breakdownCurrency, setBreakdownCurrency] = useState<string>('CUP');
   const [breakdownTab, setBreakdownTab] = useState<'count' | 'config'>('count');
 
   // Billetes/monedas disponibles (configurable)
@@ -123,8 +127,28 @@ export function POSCartCheckoutPanel({
     { value: 1, label: '$1', active: true },
   ]);
 
-  const cashBreakdownTotal = Object.entries(cashBreakdown).reduce((s, [denom, count]) => {
+  // FIX-CASH-BREAKDOWN (2026-07-10): totales de efectivo por moneda (solo cash, no transfer/zelle)
+  const cashTotalsByCurrency = useCartStore.getState().getCashTotalsByCurrency();
+  const cashCurrencies = Object.keys(cashTotalsByCurrency).sort();
+  const totalCashCup = cashCurrencies.reduce((sum, cur) => {
+    const amt = cashTotalsByCurrency[cur];
+    if (cur === 'CUP') return sum + amt;
+    const rate = useCartStore.getState().globalRates[cur] || 1;
+    return sum + amt * rate;
+  }, 0);
+
+  // Suma del desglose de billetes por moneda activa
+  const currentBreakdown = cashBreakdownByCurrency[breakdownCurrency] || {};
+  const cashBreakdownTotal = Object.entries(currentBreakdown).reduce((s, [denom, count]) => {
     return s + (parseFloat(denom) * count);
+  }, 0);
+  // Total del desglose en CUP (para comparar con el total de efectivo en CUP)
+  const cashBreakdownTotalCup = cashCurrencies.reduce((sum, cur) => {
+    const bd = cashBreakdownByCurrency[cur] || {};
+    const curTotal = Object.entries(bd).reduce((s, [denom, count]) => s + (parseFloat(denom) * count), 0);
+    if (cur === 'CUP') return sum + curTotal;
+    const rate = useCartStore.getState().globalRates[cur] || 1;
+    return sum + curTotal * rate;
   }, 0);
 
   const taxAmount = getTaxAmount?.() ?? 0;
@@ -133,7 +157,9 @@ export function POSCartCheckoutPanel({
   // el total esperado (con recargos/descuentos por método), no contra getTotal()
   // que puede tener un descuento global fantasma restado.
   const expectedTotal = useCartStore.getState().getExpectedTotalCup();
-  const change = cashReceivedNum > 0 ? cashReceivedNum - expectedTotal : 0;
+  // FIX-CASH-BREAKDOWN: el vuelto se calcula contra el efectivo total (en CUP),
+  // NO contra el total de la venta. Si hay transfer/zelle, no se incluyen en el vuelto.
+  const change = cashReceivedNum > 0 ? cashReceivedNum - totalCashCup : 0;
   const cashPresets = [20, 50, 100, 200];
 
   const handleConfirmCheckout = () => {
@@ -215,7 +241,10 @@ export function POSCartCheckoutPanel({
         })()}
       </div>
 
-      {/* ── EFECTIVO RECIBIDO + VUELTO ────────────────────────────── */}
+      {/* ── EFECTIVO RECIBIDO + VUELTO ──────────────────────────────
+          FIX-CASH-BREAKDOWN (2026-07-10): ahora separa por moneda.
+          Si hay efectivo en CUP y USD, muestra ambos totales.
+          El vuelto se calcula contra el efectivo total (no contra el total de la venta). */}
       {(() => {
         const items = useCartStore.getState().items;
         // FIX-PAYMENT-ROWS: detectar cash en payments[] o legacy
@@ -229,7 +258,11 @@ export function POSCartCheckoutPanel({
           <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={() => setShowCashBreakdown(true)}
+              onClick={() => {
+                // Inicializar la moneda activa del modal con la primera moneda cash
+                if (cashCurrencies.length > 0) setBreakdownCurrency(cashCurrencies[0]);
+                setShowCashBreakdown(true);
+              }}
               className="flex-1 min-h-[36px] rounded-lg bg-success/90 text-white dark:text-black text-[10px] font-black uppercase hover:bg-success transition-colors flex items-center justify-center gap-1.5"
             >
               <DollarSign className="w-3.5 h-3.5" /> Efectivo Recibido
@@ -241,6 +274,21 @@ export function POSCartCheckoutPanel({
                   {formatCurrency(Math.abs(change))}
                   {change < 0 && " (insuf.)"}
                 </p>
+              </div>
+            )}
+          </div>
+          {/* FIX-CASH-BREAKDOWN: mostrar totales de efectivo por moneda */}
+          <div className="mt-1.5 space-y-0.5">
+            {cashCurrencies.map(cur => (
+              <div key={cur} className="flex items-center justify-between text-[10px] font-bold">
+                <span className="text-muted-foreground">Efectivo {cur}:</span>
+                <span className="text-success tabular-nums">{formatCurrency(cashTotalsByCurrency[cur])} {cur}</span>
+              </div>
+            ))}
+            {cashCurrencies.length > 1 && (
+              <div className="flex items-center justify-between text-[10px] font-black border-t border-border/30 pt-0.5 mt-0.5">
+                <span className="text-muted-foreground">Total efectivo (CUP):</span>
+                <span className="text-success tabular-nums">{formatCurrency(totalCashCup)}</span>
               </div>
             )}
           </div>
@@ -261,7 +309,8 @@ export function POSCartCheckoutPanel({
                 ${preset}
               </button>
             ))}
-            <button type="button" onClick={() => setCashReceived(expectedTotal.toFixed(2))}
+            {/* FIX-CASH-BREAKDOWN: "Exacto" ahora usa el total de efectivo (no el total de la venta) */}
+            <button type="button" onClick={() => setCashReceived(totalCashCup.toFixed(2))}
               className="flex-1 min-h-[32px] rounded bg-success text-white text-[9px] font-black hover:opacity-90">
               Exacto
             </button>
@@ -489,14 +538,34 @@ export function POSCartCheckoutPanel({
         </div>
       </POSPortalModal>
 
-      {/* FIX-CASH-BREAKDOWN (2026-07-10): modal de desglose por billetes/monedas */}
+      {/* FIX-CASH-BREAKDOWN (2026-07-10): modal de desglose por billetes/monedas
+          separado por moneda. Cada moneda tiene su propio tab, su propio desglose
+          de billetes, y valida contra el total de efectivo de ESA moneda.
+          NO incluye transfer ni zelle. */}
       <POSPortalModal
         open={showCashBreakdown}
         onClose={() => setShowCashBreakdown(false)}
         title="Efectivo Recibido"
       >
         <div className="space-y-3">
-          {/* Tabs */}
+          {/* Tabs de moneda (si hay más de una moneda cash) */}
+          {cashCurrencies.length > 1 && (
+            <div className="flex gap-1 bg-muted/20 p-0.5 rounded-lg">
+              {cashCurrencies.map(cur => (
+                <button
+                  key={cur}
+                  onClick={() => setBreakdownCurrency(cur)}
+                  className={cn("flex-1 py-1.5 rounded text-[10px] font-black uppercase",
+                    breakdownCurrency === cur ? "bg-success text-white" : "text-muted-foreground"
+                  )}
+                >
+                  {cur} · {formatCurrency(cashTotalsByCurrency[cur])}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Sub-tabs: Contar / Configurar */}
           <div className="flex gap-1 bg-muted/20 p-0.5 rounded-lg">
             <button onClick={() => setBreakdownTab('count')}
               className={cn("flex-1 py-1.5 rounded text-[10px] font-black uppercase", breakdownTab === 'count' ? "bg-primary text-primary-foreground" : "text-muted-foreground")}>
@@ -508,56 +577,96 @@ export function POSCartCheckoutPanel({
             </button>
           </div>
 
+          {/* Mostrar total de efectivo de la moneda activa */}
+          <div className="bg-muted/20 rounded-lg px-3 py-2 flex items-center justify-between">
+            <span className="text-[10px] font-black uppercase text-muted-foreground">
+              Efectivo a recibir ({breakdownCurrency}):
+            </span>
+            <span className="text-sm font-black text-success tabular-nums">
+              {formatCurrency(cashTotalsByCurrency[breakdownCurrency] || 0)} {breakdownCurrency}
+            </span>
+          </div>
+
           {breakdownTab === 'count' ? (
             <>
               {/* Tab contar: billetes/monedas activos */}
               <div className="space-y-1.5 max-h-[300px] overflow-y-auto no-scrollbar">
-                {denominations.filter(d => d.active).map(d => (
-                  <div key={d.value} className="flex items-center gap-2">
-                    <span className="w-16 text-xs font-black text-right">{d.label}</span>
-                    <span className="text-[9px] text-muted-foreground">×</span>
-                    <input
-                      type="number"
-                      min="0"
-                      value={cashBreakdown[String(d.value)] || ''}
-                      onChange={(e) => setCashBreakdown(prev => {
-                        const next = { ...prev };
-                        const val = parseInt(e.target.value) || 0;
-                        if (val > 0) next[String(d.value)] = val;
-                        else delete next[String(d.value)];
-                        return next;
-                      })}
-                      className="w-16 bg-background border border-border/50 rounded px-2 py-1.5 text-xs font-bold text-center"
-                      placeholder="0"
-                      aria-label={`Cantidad de billetes de ${d.label}`}
-                    />
-                    <span className="text-[9px] text-muted-foreground flex-1">
-                      = {formatCurrency((cashBreakdown[String(d.value)] || 0) * d.value)}
-                    </span>
-                  </div>
-                ))}
+                {denominations.filter(d => d.active).map(d => {
+                  const denomKey = String(d.value);
+                  const currentCount = currentBreakdown[denomKey] || 0;
+                  return (
+                    <div key={d.value} className="flex items-center gap-2">
+                      <span className="w-16 text-xs font-black text-right">{d.label}</span>
+                      <span className="text-[9px] text-muted-foreground">×</span>
+                      <input
+                        type="number"
+                        min="0"
+                        value={currentCount || ''}
+                        onChange={(e) => setCashBreakdownByCurrency(prev => {
+                          const next = { ...prev };
+                          const curBd = { ...(next[breakdownCurrency] || {}) };
+                          const val = parseInt(e.target.value) || 0;
+                          if (val > 0) curBd[denomKey] = val;
+                          else delete curBd[denomKey];
+                          next[breakdownCurrency] = curBd;
+                          return next;
+                        })}
+                        className="w-16 bg-background border border-border/50 rounded px-2 py-1.5 text-xs font-bold text-center"
+                        placeholder="0"
+                        aria-label={`Cantidad de billetes de ${d.label} en ${breakdownCurrency}`}
+                      />
+                      <span className="text-[9px] text-muted-foreground flex-1">
+                        = {formatCurrency(currentCount * d.value)} {breakdownCurrency}
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
-              {/* Total + Vuelto */}
+              {/* Total + Vuelto por moneda activa */}
               <div className="border-t border-border/30 pt-2 space-y-1">
                 <div className="flex justify-between text-xs font-black">
-                  <span>Total recibido:</span>
-                  <span className="text-success tabular-nums">{formatCurrency(cashBreakdownTotal)}</span>
+                  <span>Total contado ({breakdownCurrency}):</span>
+                  <span className="text-success tabular-nums">{formatCurrency(cashBreakdownTotal)} {breakdownCurrency}</span>
                 </div>
                 <div className="flex justify-between text-xs font-black">
-                  <span>Total venta:</span>
-                  <span className="tabular-nums">{formatCurrency(useCartStore.getState().getExpectedTotalCup())}</span>
+                  <span>Efectivo a recibir ({breakdownCurrency}):</span>
+                  <span className="tabular-nums">{formatCurrency(cashTotalsByCurrency[breakdownCurrency] || 0)} {breakdownCurrency}</span>
                 </div>
                 <div className="flex justify-between text-sm font-black">
-                  <span>Vuelto:</span>
-                  <span className={cn("tabular-nums", cashBreakdownTotal - useCartStore.getState().getExpectedTotalCup() >= 0 ? "text-success" : "text-destructive")}>
-                    {formatCurrency(Math.abs(cashBreakdownTotal - useCartStore.getState().getExpectedTotalCup()))}
-                    {cashBreakdownTotal < useCartStore.getState().getExpectedTotalCup() && " (insuf.)"}
+                  <span>Diferencia ({breakdownCurrency}):</span>
+                  <span className={cn("tabular-nums",
+                    cashBreakdownTotal - (cashTotalsByCurrency[breakdownCurrency] || 0) >= 0 ? "text-success" : "text-destructive"
+                  )}>
+                    {formatCurrency(Math.abs(cashBreakdownTotal - (cashTotalsByCurrency[breakdownCurrency] || 0)))} {breakdownCurrency}
+                    {cashBreakdownTotal < (cashTotalsByCurrency[breakdownCurrency] || 0) && " (insuf.)"}
                   </span>
                 </div>
+                {/* Si hay múltiples monedas, mostrar total consolidado en CUP */}
+                {cashCurrencies.length > 1 && (
+                  <div className="border-t border-border/30 pt-1 mt-1 space-y-1">
+                    <div className="flex justify-between text-xs font-bold text-muted-foreground">
+                      <span>Total desglose (CUP):</span>
+                      <span className="tabular-nums">{formatCurrency(cashBreakdownTotalCup)}</span>
+                    </div>
+                    <div className="flex justify-between text-xs font-bold text-muted-foreground">
+                      <span>Total efectivo (CUP):</span>
+                      <span className="tabular-nums">{formatCurrency(totalCashCup)}</span>
+                    </div>
+                    <div className="flex justify-between text-sm font-black">
+                      <span>Vuelto total (CUP):</span>
+                      <span className={cn("tabular-nums", cashBreakdownTotalCup - totalCashCup >= 0 ? "text-success" : "text-destructive")}>
+                        {formatCurrency(Math.abs(cashBreakdownTotalCup - totalCashCup))}
+                        {cashBreakdownTotalCup < totalCashCup && " (insuf.)"}
+                      </span>
+                    </div>
+                  </div>
+                )}
               </div>
               <button
                 onClick={() => {
-                  setCashReceived(String(cashBreakdownTotal.toFixed(2)));
+                  // FIX-CASH-BREAKDOWN: el "cashReceived" del input principal se setea
+                  // al total del desglose en CUP (para consolidar con transfer/zelle)
+                  setCashReceived(String(cashBreakdownTotalCup.toFixed(2)));
                   setShowCashBreakdown(false);
                 }}
                 className="w-full h-10 rounded-xl bg-success text-white text-xs font-black uppercase hover:opacity-90"
