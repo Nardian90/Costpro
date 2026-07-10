@@ -25,8 +25,17 @@ import { useCalculator, type HistoryEntry } from '@/hooks/useCalculator';
 
 type CalcTab = 'calc' | 'history' | 'cash' | 'config';
 
-export const FloatingCalculator: React.FC = () => {
-  const { isCalculatorOpen, setIsCalculatorOpen } = useUIStore();
+interface FloatingCalculatorProps {
+  /**
+   * FIX-CALC-VIEW (2026-07-10): Cuando es true, la calculadora se renderiza
+   * como vista integrada (llena el contenedor padre) en vez de modal flotante.
+   * Replica el patrón `embedded` del ChatBot.
+   */
+  embedded?: boolean;
+}
+
+export const FloatingCalculator: React.FC<FloatingCalculatorProps> = ({ embedded = false }) => {
+  const { isCalculatorOpen, setIsCalculatorOpen, currentView, setCurrentView } = useUIStore();
   const isMounted = useSyncExternalStore(
     () => () => {},
     () => true,
@@ -39,12 +48,15 @@ export const FloatingCalculator: React.FC = () => {
   const calc = useCalculator();
 
   /* ── Keyboard support (pro ultimate) ─────────────── */
+  // FIX-CALC-VIEW: en modo embedded, el teclado siempre está activo.
+  // En modo modal, solo cuando está abierto.
+  const keyboardActive = embedded ? true : isCalculatorOpen;
   useEffect(() => {
-    if (!isCalculatorOpen) return;
+    if (!keyboardActive) return;
     const handleKeyDown = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement;
       if (target && (target.tagName === 'INPUT' || target.tagName === 'SELECT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
-        if (e.key === 'Escape') { setIsCalculatorOpen(false); return; }
+        if (e.key === 'Escape' && !embedded) { setIsCalculatorOpen(false); return; }
         return;
       }
 
@@ -59,18 +71,22 @@ export const FloatingCalculator: React.FC = () => {
       if (key === '/') { e.preventDefault(); h.handleOperator('/'); return; }
       if (key === 'Enter' || key === '=') { e.preventDefault(); h.handleCalculate(); return; }
       if (key === 'Backspace') { e.preventDefault(); h.handleBackspace(); return; }
-      if (key === 'Escape') { e.preventDefault(); setIsCalculatorOpen(false); return; }
+      if (key === 'Escape' && !embedded) { e.preventDefault(); setIsCalculatorOpen(false); return; }
       if (key === 'c' || key === 'C') { e.preventDefault(); h.handleClear(); return; }
       if (key === '%') { e.preventDefault(); h.handlePercent(); return; }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isCalculatorOpen, setIsCalculatorOpen, calc.handlersRef]);
+  }, [keyboardActive, setIsCalculatorOpen, calc.handlersRef, embedded]);
 
   if (!isMounted) return null;
 
   const isDark = isDarkTheme(resolvedTheme);
 
+  // FIX-BUG-BUTTONS (2026-07-10): remover staggerChildren/delayChildren.
+  // Estos causaban que los botones no aparecieran al reabrir la calculadora
+  // porque Framer Motion no re-disparaba la animación de children correctamente
+  // tras un cycle close→open. Ahora usamos animación simple sin stagger.
   const fanVariants: Variants = {
     closed: {
       opacity: 0, scale: 0.3, rotate: -15, y: 20, filter: "blur(10px)",
@@ -78,17 +94,58 @@ export const FloatingCalculator: React.FC = () => {
     },
     open: {
       opacity: 1, scale: 1, rotate: 0, y: 0, filter: "blur(0px)",
-      transition: { type: "spring", stiffness: 150, damping: 15, staggerChildren: 0.03, delayChildren: 0.1 }
+      transition: { type: "spring", stiffness: 150, damping: 15 }
     }
-  };
-
-  const itemVariants: Variants = {
-    closed: { opacity: 0, scale: 0.5, rotate: -20, y: 10 },
-    open: { opacity: 1, scale: 1, rotate: 0, y: 0 }
   };
 
   const closeCalculator = () => setIsCalculatorOpen(false);
 
+  /* ── Modo embedded: render directo sin fixed/draggable ── */
+  if (embedded) {
+    return (
+      <div className="w-full h-full flex flex-col">
+        <div className="w-full max-w-md mx-auto rounded-[1.5rem] shadow-[0_16px_32px_-8px_rgba(0,0,0,0.3)] overflow-hidden border flex flex-col bg-card border-primary/20 backdrop-blur-xl">
+          {/* Header sin draggable */}
+          <div className="p-3 flex items-center justify-between border-b shrink-0 border-border/30 bg-muted/30">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-xl flex items-center justify-center bg-primary/10">
+                <Calculator className="w-4 h-4 text-primary" />
+              </div>
+              <div>
+                <h4 className="text-[9px] font-black uppercase tracking-[0.2em] opacity-40 leading-none">CostPro Pro</h4>
+                <p className="text-[10px] font-bold uppercase tracking-widest opacity-80">Calc</p>
+              </div>
+            </div>
+            {/* Botón para cambiar a modo modal flotante */}
+            <button
+              type="button"
+              onClick={() => { setCurrentView('occ'); setIsCalculatorOpen(true); }}
+              className="px-2 py-1 rounded-lg text-[9px] font-black uppercase border border-primary/20 text-primary hover:bg-primary/10 transition-colors"
+              title="Abrir como modal flotante"
+            >
+              ↗ Flotante
+            </button>
+          </div>
+          {/* Tabs */}
+          <div className="flex border-b shrink-0 border-border/30">
+            <TabButton active={activeTab === 'calc'} onClick={() => setActiveTab('calc')} icon={<Calculator className="w-3 h-3" />} label="Calc" isDark={isDark} />
+            <TabButton active={activeTab === 'history'} onClick={() => setActiveTab('history')} icon={<History className="w-3 h-3" />} label="Hist" isDark={isDark} badge={calc.history.length} />
+            <TabButton active={activeTab === 'cash'} onClick={() => setActiveTab('cash')} icon={<DollarSign className="w-3 h-3" />} label="Cash" isDark={isDark} />
+            <TabButton active={activeTab === 'config'} onClick={() => setActiveTab('config')} icon={<Settings2 className="w-3 h-3" />} label="Cfg" isDark={isDark} />
+          </div>
+          {/* Content */}
+          <div className="flex-1 overflow-y-auto overflow-x-hidden no-scrollbar">
+            {activeTab === 'calc' && <CalcTabContent calc={calc} isDark={isDark} />}
+            {activeTab === 'history' && <HistoryTabContent history={calc.history} onUse={calc.useHistoryResult} onClear={calc.clearHistory} isDark={isDark} />}
+            {activeTab === 'cash' && <CashTabContent display={calc.display} isDark={isDark} />}
+            {activeTab === 'config' && <ConfigTabContent isDark={isDark} />}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  /* ── Modo modal flotante (default) ── */
   return (
     <div ref={constraintsRef} className="fixed inset-0 z-[10000] pointer-events-none overflow-hidden">
       <AnimatePresence>
@@ -125,14 +182,25 @@ export const FloatingCalculator: React.FC = () => {
                   </p>
                 </div>
               </div>
-              <button
-                type="button"
-                onClick={closeCalculator}
-                aria-label="Cerrar calculadora"
-                className="hover:rotate-90 transition-transform p-1.5 rounded-full hover:bg-muted"
-              >
-                <X className="w-4 h-4" />
-              </button>
+              <div className="flex items-center gap-1">
+                {/* FIX-CALC-VIEW: botón para abrir vista integrada */}
+                <button
+                  type="button"
+                  onClick={() => { setCurrentView('calculator'); }}
+                  className="px-2 py-1 rounded-lg text-[9px] font-black uppercase border border-primary/20 text-primary hover:bg-primary/10 transition-colors"
+                  title="Abrir como vista integrada"
+                >
+                  ⛶ Vista
+                </button>
+                <button
+                  type="button"
+                  onClick={closeCalculator}
+                  aria-label="Cerrar calculadora"
+                  className="hover:rotate-90 transition-transform p-1.5 rounded-full hover:bg-muted"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
             </div>
 
             {/* Tabs */}
@@ -145,18 +213,10 @@ export const FloatingCalculator: React.FC = () => {
 
             {/* Content */}
             <div className="flex-1 overflow-y-auto overflow-x-hidden no-scrollbar">
-              {activeTab === 'calc' && (
-                <CalcTabContent calc={calc} isDark={isDark} itemVariants={itemVariants} />
-              )}
-              {activeTab === 'history' && (
-                <HistoryTabContent history={calc.history} onUse={calc.useHistoryResult} onClear={calc.clearHistory} isDark={isDark} />
-              )}
-              {activeTab === 'cash' && (
-                <CashTabContent display={calc.display} isDark={isDark} />
-              )}
-              {activeTab === 'config' && (
-                <ConfigTabContent isDark={isDark} />
-              )}
+              {activeTab === 'calc' && <CalcTabContent calc={calc} isDark={isDark} />}
+              {activeTab === 'history' && <HistoryTabContent history={calc.history} onUse={calc.useHistoryResult} onClear={calc.clearHistory} isDark={isDark} />}
+              {activeTab === 'cash' && <CashTabContent display={calc.display} isDark={isDark} />}
+              {activeTab === 'config' && <ConfigTabContent isDark={isDark} />}
             </div>
           </motion.div>
         )}
@@ -207,9 +267,8 @@ const TabButton: React.FC<TabButtonProps> = ({ active, onClick, icon, label, isD
 interface CalcTabContentProps {
   calc: ReturnType<typeof useCalculator>;
   isDark: boolean;
-  itemVariants: Variants;
 }
-const CalcTabContent: React.FC<CalcTabContentProps> = ({ calc, isDark, itemVariants }) => {
+const CalcTabContent: React.FC<CalcTabContentProps> = ({ calc, isDark }) => {
   return (
     <>
       {/* Display */}
@@ -251,34 +310,34 @@ const CalcTabContent: React.FC<CalcTabContentProps> = ({ calc, isDark, itemVaria
       {/* FIX-LAYOUT: Keypad 5×4 sin row-span — todos los botones visibles */}
       <div className="p-3 grid grid-cols-4 gap-1.5">
         {/* Row 1: % ± C ⌫ */}
-        <CalcButton variants={itemVariants} label="%" onClick={calc.handlePercent} variant="secondary" />
-        <CalcButton variants={itemVariants} label="±" onClick={calc.handleToggleSign} variant="secondary" />
-        <CalcButton variants={itemVariants} label="C" onClick={calc.handleClear} variant="danger" />
-        <CalcButton variants={itemVariants} icon={<Delete className="w-4 h-4" />} onClick={calc.handleBackspace} variant="secondary" />
+        <CalcButton label="%" onClick={calc.handlePercent} variant="secondary" />
+        <CalcButton label="±" onClick={calc.handleToggleSign} variant="secondary" />
+        <CalcButton label="C" onClick={calc.handleClear} variant="danger" />
+        <CalcButton icon={<Delete className="w-4 h-4" />} onClick={calc.handleBackspace} variant="secondary" />
 
         {/* Row 2: / * - + */}
-        <CalcButton variants={itemVariants} icon={<Divide className="w-4 h-4" />} onClick={() => calc.handleOperator('/')} variant="operator" />
-        <CalcButton variants={itemVariants} icon={<X className="w-4 h-4" />} onClick={() => calc.handleOperator('*')} variant="operator" />
-        <CalcButton variants={itemVariants} icon={<Minus className="w-4 h-4" />} onClick={() => calc.handleOperator('-')} variant="operator" />
-        <CalcButton variants={itemVariants} icon={<Plus className="w-4 h-4" />} onClick={() => calc.handleOperator('+')} variant="operator" />
+        <CalcButton icon={<Divide className="w-4 h-4" />} onClick={() => calc.handleOperator('/')} variant="operator" />
+        <CalcButton icon={<X className="w-4 h-4" />} onClick={() => calc.handleOperator('*')} variant="operator" />
+        <CalcButton icon={<Minus className="w-4 h-4" />} onClick={() => calc.handleOperator('-')} variant="operator" />
+        <CalcButton icon={<Plus className="w-4 h-4" />} onClick={() => calc.handleOperator('+')} variant="operator" />
 
         {/* Row 3: 7 8 9 = */}
-        <CalcButton variants={itemVariants} label="7" onClick={() => calc.handleNumber('7')} />
-        <CalcButton variants={itemVariants} label="8" onClick={() => calc.handleNumber('8')} />
-        <CalcButton variants={itemVariants} label="9" onClick={() => calc.handleNumber('9')} />
-        <CalcButton variants={itemVariants} icon={<Equal className="w-5 h-5" />} onClick={calc.handleCalculate} variant="primary" className="shadow-lg shadow-primary/20" />
+        <CalcButton label="7" onClick={() => calc.handleNumber('7')} />
+        <CalcButton label="8" onClick={() => calc.handleNumber('8')} />
+        <CalcButton label="9" onClick={() => calc.handleNumber('9')} />
+        <CalcButton icon={<Equal className="w-5 h-5" />} onClick={calc.handleCalculate} variant="primary" className="shadow-lg shadow-primary/20" />
 
         {/* Row 4: 4 5 6 . */}
-        <CalcButton variants={itemVariants} label="4" onClick={() => calc.handleNumber('4')} />
-        <CalcButton variants={itemVariants} label="5" onClick={() => calc.handleNumber('5')} />
-        <CalcButton variants={itemVariants} label="6" onClick={() => calc.handleNumber('6')} />
-        <CalcButton variants={itemVariants} label="." onClick={() => calc.handleNumber('.')} />
+        <CalcButton label="4" onClick={() => calc.handleNumber('4')} />
+        <CalcButton label="5" onClick={() => calc.handleNumber('5')} />
+        <CalcButton label="6" onClick={() => calc.handleNumber('6')} />
+        <CalcButton label="." onClick={() => calc.handleNumber('.')} />
 
         {/* Row 5: 1 2 3 0 */}
-        <CalcButton variants={itemVariants} label="1" onClick={() => calc.handleNumber('1')} />
-        <CalcButton variants={itemVariants} label="2" onClick={() => calc.handleNumber('2')} />
-        <CalcButton variants={itemVariants} label="3" onClick={() => calc.handleNumber('3')} />
-        <CalcButton variants={itemVariants} label="0" onClick={() => calc.handleNumber('0')} />
+        <CalcButton label="1" onClick={() => calc.handleNumber('1')} />
+        <CalcButton label="2" onClick={() => calc.handleNumber('2')} />
+        <CalcButton label="3" onClick={() => calc.handleNumber('3')} />
+        <CalcButton label="0" onClick={() => calc.handleNumber('0')} />
       </div>
 
       {/* Keyboard hint */}
@@ -750,9 +809,8 @@ interface CalcButtonProps {
   onClick: () => void;
   variant?: 'number' | 'operator' | 'primary' | 'danger' | 'secondary';
   className?: string;
-  variants?: Variants;
 }
-const CalcButton: React.FC<CalcButtonProps> = ({ label, icon, onClick, variant = 'number', className, variants }) => {
+const CalcButton: React.FC<CalcButtonProps> = ({ label, icon, onClick, variant = 'number', className }) => {
   const variantStyles = {
     number: "bg-muted/30 hover:bg-muted/60 text-foreground border-border/40",
     operator: "bg-primary/5 hover:bg-primary/20 text-primary border-primary/10",
@@ -764,7 +822,6 @@ const CalcButton: React.FC<CalcButtonProps> = ({ label, icon, onClick, variant =
   return (
     <motion.button
       type="button"
-      variants={variants}
       whileTap={{ scale: 0.9, transition: { type: "spring", stiffness: 400, damping: 10 } }}
       onClick={onClick}
       className={cn(

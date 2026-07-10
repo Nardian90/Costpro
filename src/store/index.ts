@@ -24,7 +24,9 @@ export type ViewType = 'occ' | 'dashboard' | 'wallet' | 'pos' | 'inventory' | 'r
 // Al hacer clic en un grupo raíz del breadcrumb (ej: "MULTI-TIENDA"), navega a
 // una vista overview con tarjetas de todos los submenus del grupo (patrón Odoo).
 // 'core' NO está aquí porque es la home (occ) y no necesita GroupHub.
-| 'costos' | 'tienda' | 'ipv_module' | 'otros' | 'administracion' | 'recursos';
+| 'costos' | 'tienda' | 'ipv_module' | 'otros' | 'administracion' | 'recursos'
+// FIX-CALC-VIEW (2026-07-10): vista integrada de calculadora (modo embedded)
+| 'calculator';
 
 export type SidebarState = 'expanded' | 'rail' | 'closed';
 

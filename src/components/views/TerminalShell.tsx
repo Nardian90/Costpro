@@ -126,6 +126,8 @@ const GroupHubView = dynamic(() => import('@/components/views/terminal/views/sec
 
 const FloatingCalculator = dynamic(() => import('@/components/ui/FloatingCalculator').then(m => m.FloatingCalculator), { ssr: false });
 const ChatBot = dynamic(() => import('@/components/ui/ChatBot').then(m => m.ChatBot), { ssr: false });
+// FIX-CALC-VIEW (2026-07-10): vista integrada de calculadora (modo embedded)
+const CalculatorView = dynamic(() => import('@/components/views/terminal/views/calculator/CalculatorView'), { ssr: false });
 const CreateProductModal = dynamic(() => import('@/components/modals/CreateProductModal').then(m => m.CreateProductModal), { ssr: false });
 const CommandPalette = dynamic(() => import('@/components/ui/CommandPalette').then(m => m.CommandPalette), { ssr: false });
 const SyncConflictModal = dynamic(() => import('@/components/modals/SyncConflictModal').then(m => m.SyncConflictModal), { ssr: false });
@@ -357,6 +359,8 @@ export default function TerminalShell() {
         case 'cost_tools':
           return <ViewErrorBoundary viewName="Sección"><SectionHubView submenuId={view} /></ViewErrorBoundary>;
         case 'chat': return <ViewErrorBoundary viewName="Chat con Darian"><ChatBotView /></ViewErrorBoundary>;
+        // FIX-CALC-VIEW (2026-07-10): vista integrada de calculadora
+        case 'calculator': return <ViewErrorBoundary viewName="Calculadora"><CalculatorView /></ViewErrorBoundary>;
         case 'costeo-dinamico': return <ViewErrorBoundary viewName="Costeo Dinámico"><CosteoDinamicoView /></ViewErrorBoundary>;
         case 'estructura-costo': return <ViewErrorBoundary viewName="Estructura de Costo"><EstructuraCostoView /></ViewErrorBoundary>;
         case 'whatsapp-config': return <ViewErrorBoundary viewName="WhatsApp Config"><WhatsAppConfigView /></ViewErrorBoundary>;
@@ -530,8 +534,10 @@ export default function TerminalShell() {
        !isMobile && <ChatBot />}
       {/* FIX-CALC-PRO (2026-07-10): FloatingCalculator ahora disponible TAMBIÉN en POS.
           Antes estaba gateado con currentView !== "pos". Como ahora tiene desglose de
-          billetes integrado, es útil en el checkout. Solo se oculta en mobile. */}
-      {!isMobile && <FloatingCalculator />}
+          billetes integrado, es útil en el checkout. Solo se oculta en mobile.
+          FIX-CALC-VIEW (2026-07-10): ocultar modal flotante cuando la vista activa
+          es 'calculator' (ya está renderizada como vista integrada embedded). */}
+      {currentView !== 'calculator' && !isMobile && <FloatingCalculator />}
 
       {/* B4: ScrollToTop montado en el shell — escucha .terminal-content scroll */}
       <ScrollToTop />

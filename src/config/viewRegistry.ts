@@ -25,6 +25,12 @@ export const VIEW_REGISTRY: ViewRegistryItem[] = [
     actions: ["ask_question", "search_entity", "get_cost_summary", "get_sales_summary", "open_view"]
   },
   {
+    id: "calculator",
+    route: "/terminal?view=calculator",
+    description: "Calculadora Pro con historial persistente, memoria (M+/M-/MR/MC), desglose de billetes automático y configuración de denominaciones.",
+    actions: ["open_view"]
+  },
+  {
     id: "dashboard",
     route: "/terminal",
     description: "Tablero principal con indicadores clave de rendimiento (KPIs), ventas del día y estado general.",

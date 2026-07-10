@@ -84,6 +84,8 @@ const DIRECT_ROUTES: Record<string, DirectRoute> = {
   occ:                   { type: 'direct', view: 'dashboard' },
   dashboard:             { type: 'direct', view: 'dashboard' },
   chat:                  { type: 'direct', view: 'chat' },
+  // FIX-CALC-VIEW (2026-07-10): vista integrada de calculadora
+  calculator:            { type: 'direct', view: 'calculator' },
   'costeo-dinamico':     { type: 'direct', view: 'costeo-dinamico' },
   'estructura-costo':    { type: 'direct', view: 'estructura-costo' },
   'whatsapp-config':     { type: 'direct', view: 'whatsapp-config' },

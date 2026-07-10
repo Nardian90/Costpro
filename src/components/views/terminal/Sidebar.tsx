@@ -129,6 +129,7 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
   // Mapeo completo de todos los grupos del sidebar.
   const MODULE_DEFAULT_VIEW: Record<string, ViewType> = {
     'core_chat': 'chat',
+    'core_tools': 'calculator',
     'core': 'occ',
     'costos': 'cost-sheets',
     'tienda': 'stores',
@@ -154,6 +155,14 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
     if (mod.id === 'core_chat') {
       setCurrentView('chat');
       onViewChange('chat');
+      if (isMobile) onClose();
+      return;
+    }
+    // FIX-CALC-VIEW (2026-07-10): HERRAMIENTAS (core_tools) es acceso directo
+    // a la vista de calculadora integrada — mismo patrón que core_chat.
+    if (mod.id === 'core_tools') {
+      setCurrentView('calculator');
+      onViewChange('calculator');
       if (isMobile) onClose();
       return;
     }
