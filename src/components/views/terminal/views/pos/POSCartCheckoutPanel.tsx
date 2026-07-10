@@ -1,23 +1,18 @@
 "use client";
 
 import React, { useState } from "react";
-import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
+import { useReducedMotion } from "framer-motion";
 import {
   DollarSign,
   CreditCard,
-  Wallet,
   Smartphone,
   Send,
-  ChevronDown,
-  ChevronUp,
-  Tag,
-  AlertTriangle,
   TrendingUp,
   TrendingDown,
+  Check,
 } from "lucide-react";
 import { cn, formatCurrency } from "@/lib/utils";
 import { useCartStore } from "@/store/cart";
-import { POSCartDiscountModal } from "./POSCartDiscountModal";
 import { POSPortalModal } from "./POSPortalModal";
 import type { PaymentMethod } from "@/types";
 
@@ -271,14 +266,63 @@ export function POSCartCheckoutPanel({
         );
       })()}
 
-      {/* ── CONSOLIDADO POR MONEDA (read-only) ────────────────────── */}
+      {/* ── CONSOLIDADO POR MONEDA + ESTADO DE CUADRE (read-only) ────
+          FIX-LAYOUT (2026-07-10): añadir al lado del consolidado un badge
+          que indique si los pagos cuadran con el total esperado.
+          Estados: ✓ Cuadrado / Sobrepago $X / Falta $X */}
       {(() => {
-        const consolidated = useCartStore.getState().getConsolidatedPayments();
+        const cartStore = useCartStore.getState();
+        const consolidated = cartStore.getConsolidatedPayments();
         const currencies = Object.keys(consolidated).sort();
         if (currencies.length === 0) return null;
+
+        // Calcular total pagado en CUP y total esperado
+        const totalPaidCup = cartStore.items.reduce((s, i) => s + cartStore.getItemPaidCup(i), 0);
+        const expectedTotal = cartStore.getExpectedTotalCup();
+        const diff = Number((totalPaidCup - expectedTotal).toFixed(2));
+        const isBalanced = Math.abs(diff) <= 0.01;
+
+        // Determinar label del ajuste activo (ej: "+5%")
+        let adjLabel = '';
+        for (const item of cartStore.items) {
+          if (item.cash_paid > 0 && item.cash_discount_type && item.cash_discount_value) {
+            adjLabel = ` (${item.cash_discount_value > 0 ? '+' : ''}${item.cash_discount_value}${item.cash_discount_type === 'percentage' ? '%' : ''})`;
+            break;
+          }
+          if (item.transfer_paid > 0 && item.transfer_discount_type && item.transfer_discount_value) {
+            adjLabel = ` (${item.transfer_discount_value > 0 ? '+' : ''}${item.transfer_discount_value}${item.transfer_discount_type === 'percentage' ? '%' : ''})`;
+            break;
+          }
+          if (item.zelle_paid > 0 && item.zelle_discount_type && item.zelle_discount_value) {
+            adjLabel = ` (${item.zelle_discount_value > 0 ? '+' : ''}${item.zelle_discount_value}${item.zelle_discount_type === 'percentage' ? '%' : ''})`;
+            break;
+          }
+        }
+
         return (
-          <div className="px-4 sm:px-6 py-2 border-b border-border/50 space-y-0.5">
-            <span className="text-[9px] uppercase text-muted-foreground font-black">Consolidado por moneda:</span>
+          <div className="px-4 sm:px-6 py-2 border-b border-border/50 space-y-1">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-[9px] uppercase text-muted-foreground font-black">Consolidado por moneda:</span>
+              {/* Badge de cuadre */}
+              <div className="flex flex-col items-end gap-0.5">
+                <span className="text-[9px] font-bold text-muted-foreground">
+                  Esperado: {formatCurrency(expectedTotal)} CUP{adjLabel}
+                </span>
+                {isBalanced ? (
+                  <span className="text-[10px] font-black text-emerald-500 flex items-center gap-0.5">
+                    <Check className="w-3 h-3" /> Cuadrado
+                  </span>
+                ) : diff > 0 ? (
+                  <span className="text-[10px] font-black text-amber-500 flex items-center gap-0.5">
+                    <TrendingUp className="w-3 h-3" /> Sobrepago: {formatCurrency(diff)} CUP
+                  </span>
+                ) : (
+                  <span className="text-[10px] font-black text-destructive flex items-center gap-0.5">
+                    <TrendingDown className="w-3 h-3" /> Falta: {formatCurrency(Math.abs(diff))} CUP
+                  </span>
+                )}
+              </div>
+            </div>
             {currencies.map(cur => {
               const c = consolidated[cur];
               return (
@@ -294,21 +338,33 @@ export function POSCartCheckoutPanel({
         );
       })()}
 
-      {/* ── DESCUENTO (read-only, consolida de items) ────────────── */}
+      {/* ── DESCUENTO + RECARGO (read-only, lado a lado) ───────────
+          FIX-LAYOUT (2026-07-10): unir Descuento y Recargo en una sola
+          fila con 2 columnas para ahorrar espacio vertical. */}
       {(() => {
         const items = useCartStore.getState().items;
-        const discounts = items.filter(i => i.cash_discount_type || i.transfer_discount_type || i.zelle_discount_type);
-        if (discounts.length === 0) return null;
-        return (
-          <div className="px-4 sm:px-6 py-2 border-b border-border/50">
-            <div className="flex items-center gap-2 text-[10px] font-black">
-              <TrendingDown className="w-3.5 h-3.5 text-destructive" />
-              <span className="uppercase text-destructive">Descuento</span>
-            </div>
-            <div className="space-y-0.5 mt-1">
-              {discounts.map(item => (
-                <div key={item.product_id} className="text-[9px] font-bold pl-2">
-                  <span className="text-muted-foreground">{item.product.name}:</span>
+        // Item con ajuste negativo (descuento) o positivo (recargo)
+        const itemsWithDiscount = items.filter(i =>
+          (i.cash_discount_type && i.cash_discount_value < 0) ||
+          (i.transfer_discount_type && i.transfer_discount_value < 0) ||
+          (i.zelle_discount_type && i.zelle_discount_value < 0)
+        );
+        const itemsWithSurcharge = items.filter(i =>
+          (i.cash_discount_type && i.cash_discount_value > 0) ||
+          (i.transfer_discount_type && i.transfer_discount_value > 0) ||
+          (i.zelle_discount_type && i.zelle_discount_value > 0)
+        );
+        if (itemsWithDiscount.length === 0 && itemsWithSurcharge.length === 0) return null;
+
+        const renderAdjustments = (list: typeof items, isDiscount: boolean) => {
+          if (list.length === 0) {
+            return <span className="text-[9px] text-muted-foreground/50 italic">—</span>;
+          }
+          return list.map(item => (
+            <div key={item.product_id} className="text-[9px] font-bold">
+              <span className="text-muted-foreground">{item.product.name}:</span>
+              {isDiscount ? (
+                <>
                   {item.cash_discount_type && item.cash_discount_value < 0 && (
                     <span className="text-destructive ml-1">💵 {item.cash_discount_value}{item.cash_discount_type === 'percentage' ? '%' : ''}</span>
                   )}
@@ -318,31 +374,9 @@ export function POSCartCheckoutPanel({
                   {item.zelle_discount_type && item.zelle_discount_value < 0 && (
                     <span className="text-destructive ml-1">💳 {item.zelle_discount_value}{item.zelle_discount_type === 'percentage' ? '%' : ''}</span>
                   )}
-                </div>
-              ))}
-            </div>
-          </div>
-        );
-      })()}
-
-      {/* ── RECARGO (read-only, consolida de items) ──────────────── */}
-      {(() => {
-        const items = useCartStore.getState().items;
-        const surcharges = items.filter(i =>
-          (i.cash_surcharge_type || i.transfer_surcharge_type || i.zelle_surcharge_type) ||
-          (i.cash_discount_value > 0) || (i.transfer_discount_value > 0) || (i.zelle_discount_value > 0)
-        );
-        if (surcharges.length === 0) return null;
-        return (
-          <div className="px-4 sm:px-6 py-2 border-b border-border/50">
-            <div className="flex items-center gap-2 text-[10px] font-black">
-              <TrendingUp className="w-3.5 h-3.5 text-amber-500" />
-              <span className="uppercase text-amber-500">Recargo</span>
-            </div>
-            <div className="space-y-0.5 mt-1">
-              {surcharges.map(item => (
-                <div key={item.product_id} className="text-[9px] font-bold pl-2">
-                  <span className="text-muted-foreground">{item.product.name}:</span>
+                </>
+              ) : (
+                <>
                   {item.cash_discount_type && item.cash_discount_value > 0 && (
                     <span className="text-amber-500 ml-1">💵 +{item.cash_discount_value}{item.cash_discount_type === 'percentage' ? '%' : ''}</span>
                   )}
@@ -352,8 +386,31 @@ export function POSCartCheckoutPanel({
                   {item.zelle_discount_type && item.zelle_discount_value > 0 && (
                     <span className="text-amber-500 ml-1">💳 +{item.zelle_discount_value}{item.zelle_discount_type === 'percentage' ? '%' : ''}</span>
                   )}
+                </>
+              )}
+            </div>
+          ));
+        };
+
+        return (
+          <div className="px-4 sm:px-6 py-2 border-b border-border/50">
+            <div className="grid grid-cols-2 gap-3">
+              {/* Columna Descuento */}
+              <div className="space-y-0.5">
+                <div className="flex items-center gap-1 text-[10px] font-black">
+                  <TrendingDown className="w-3 h-3 text-destructive" />
+                  <span className="uppercase text-destructive">Descuento</span>
                 </div>
-              ))}
+                {renderAdjustments(itemsWithDiscount, true)}
+              </div>
+              {/* Columna Recargo */}
+              <div className="space-y-0.5 border-l border-border/30 pl-3">
+                <div className="flex items-center gap-1 text-[10px] font-black">
+                  <TrendingUp className="w-3 h-3 text-amber-500" />
+                  <span className="uppercase text-amber-500">Recargo</span>
+                </div>
+                {renderAdjustments(itemsWithSurcharge, false)}
+              </div>
             </div>
           </div>
         );

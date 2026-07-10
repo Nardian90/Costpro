@@ -4250,3 +4250,28 @@ Stage Summary:
 - **Desglose claro en Pago tab**: Subt. $1,600 CUP / +$80.00 (ajustes) / Total $1,680
 - **Archivos modificados**: `src/store/cart.ts`, `src/components/views/terminal/views/pos/POSCartCheckoutPanel.tsx`, `src/components/views/terminal/views/pos/POSCart.tsx`
 - **No implementado aún**: Múltiples filas del mismo método en un item (ej: 2 efectivos, uno CUP y otro USD). El schema actual tiene cash_paid/transfer_paid/zelle_paid fijos por item. Se requiere decisión del usuario sobre si cambiar a array de pagos.
+
+---
+Task ID: FIX-LAYOUT-PAGO-TAB
+Agent: Main Agent (Super Z)
+Task: Reorganizar tab Pago: (1) poner Recargo al lado de Descuento en una sola fila, (2) añadir al lado de Consolidado por moneda un badge con el estado de cuadre (Esperado/Sobrepago/Falta/Cuadrado).
+
+Work Log:
+- Modificado `src/components/views/terminal/views/pos/POSCartCheckoutPanel.tsx`:
+  - **Consolidado por moneda + badge de cuadre**: La sección ahora tiene layout `flex justify-between` con el título a la izquierda y un bloque a la derecha que muestra:
+    - `Esperado: $1,680.00 CUP (+5%)` (con el label del ajuste activo)
+    - Badge de estado: `✓ Cuadrado` (emerald) / `↑ Sobrepago: $100.00 CUP` (amber) / `↓ Falta: $X CUP` (destructive)
+    - Calculado como: `totalPaidCup = sum(getItemPaidCup)` vs `expectedTotal = getExpectedTotalCup()`, diff = totalPaidCup - expectedTotal
+  - **Descuento + Recargo unificados**: Se combinaron las dos secciones verticales en una sola fila con `grid grid-cols-2 gap-3`. Columna izquierda = Descuento (con borde divisorio `border-l` para separar de Recargo). Columna derecha = Recargo. Si una columna no tiene items, muestra "—" en italic gris claro.
+  - Filtrado correcto: items con `cash_discount_value < 0` van a Descuento, items con `cash_discount_value > 0` van a Recargo (mismo campo `cash_discount_value` se usa con signo para distinguir).
+  - Extraída función `renderAdjustments(list, isDiscount)` para evitar duplicación de JSX.
+- Limpieza de imports no usados: `motion`, `AnimatePresence`, `Wallet`, `ChevronDown`, `ChevronUp`, `Tag`, `AlertTriangle`, `POSCartDiscountModal`
+- Añadido import de `Check` (lucide-react) para el ícono del badge "Cuadrado"
+- TypeScript check pasó sin errores
+
+Stage Summary:
+- **Layout compactado**: Descuento y Recargo ahora ocupan 1 fila en vez de 2 secciones separadas
+- **Feedback visual inmediato**: El cajero ve al lado del consolidado si la venta cuadra, sin tener que ir al tab Items
+- **3 estados claros**: ✓ Cuadrado (verde) / ↑ Sobrepago (amber) / ↓ Falta (rojo)
+- **Label de ajuste visible**: Muestra "(+5%)" o "(-10%)" junto al monto esperado para contexto
+- En el ejemplo del usuario: Consolidado CUP 💵1680 📱100 = 1780 vs Esperado 1680 → mostrará "Sobrepago: $100.00 CUP" en amber
