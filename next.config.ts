@@ -9,7 +9,10 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: false, // FIX-INF-017
   },
   reactStrictMode: true, // FIX-INF-018
-  allowedDevOrigins: ['http://localhost:3000'], // FIX-INF-009
+  allowedDevOrigins: [
+    'http://localhost:3000', // FIX-INF-009
+    'https://preview-chat-3d0c5abc-4abd-4c11-a041-35a333b52182.space-z.ai', // FIX-PREVIEW: dominio del preview del chat
+  ],
   serverExternalPackages: [
     '@opentelemetry/api',
     '@opentelemetry/sdk-node',
