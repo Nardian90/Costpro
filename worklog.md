@@ -4209,3 +4209,44 @@ Stage Summary:
 - Fix: usar publishable key (sb_publishable__) en lugar de anon key legacy (eyJhbGci...)
 - El preview local ahora debería funcionar sin "Invalid API key"
 - Pendiente: confirmar con usuario antes de actualizar Vercel
+
+---
+Task ID: FIX-CONSISTENCY-ITEMS-PAGO
+Agent: Main Agent (Super Z)
+Task: Corregir incongruencia entre tab Items (Esperado $1,680 con +5% recargo) y tab Pago (Total $1,590 con −$10 descuento fantasma). El checkout fallaba con error "Descuadre" porque sum(1100+580) ≠ 1590.
+
+Work Log:
+- Analizado el bug raíz en `src/store/cart.ts`:
+  - `getTotalCup()` usaba `getSubtotalCup() - getDiscountAmount() + getTaxAmount()`
+  - `getSubtotalCup()` solo suma `item.subtotal × exchange_rate`, NO considera ajustes por método
+  - `getDiscountAmount()` restaba un descuento global persistido (state.discount = $10) que NO existe en el modelo por-item
+  - El +5% recargo en cash (cash_discount_value=5, percentage) se ignoraba completamente
+- Añadida nueva función `getExpectedTotalCup()` al CartState interface e implementación:
+  - Recorre cada item y elige el método activo (con pago > 0 Y ajuste configurado)
+  - Llama a `getItemSubtotalWithMethodDiscountCup(item, method)` para obtener el monto esperado
+  - Si no hay ajuste, usa `getItemSubtotalCup(item)` (subtotal base)
+  - Replica exactamente la lógica del POSCartItem.tsx línea 716-727 para que ambos muestren el mismo número
+- Modificada `getTotalCup()` para usar `getExpectedTotalCup() + getTaxAmount()` (sin restar descuento global)
+- Modificado `src/components/views/terminal/views/pos/POSCartCheckoutPanel.tsx`:
+  - "Total a cobrar" ahora usa `getExpectedTotalCup()` (antes `getTotalCup()`)
+  - Eliminada la línea "−$X" del descuento global fantasma
+  - Añadida línea "Ajustes" que muestra el delta entre Total y Subt (positivo=recargo amber, negativo=descuento destructive)
+  - Botón "Exacto" ahora usa `expectedTotal` (antes `total` = getTotal())
+  - Vuelto ahora se calcula contra `expectedTotal` (antes `total`)
+  - Modal de confirmación y modal de desglose de efectivo también usan `expectedTotal`
+  - Limpiadas variables no usadas: `showMixedPayment`, `showDiscountSection`, `showSurchargeSection`, `total`, `subtotal`, `discountAmount`
+- Modificado `src/components/views/terminal/views/pos/POSCart.tsx`:
+  - Header del carrito, tab "Pago" badge, y CTA "Cobrar" ahora usan `expectedTotal`
+  - Eliminada variable `total` no usada
+- Verificado que `usePOSCheckout.ts` línea 110 (descuadre check) ahora pasa:
+  - Antes: 1100 + 580 = 1680 ≠ 1590 → ERROR
+  - Ahora: 1100 + 580 = 1680 = 1680 ✓
+- TypeScript check pasó sin errores en los archivos modificados
+
+Stage Summary:
+- **Bug crítico resuelto**: El checkout ya NO falla con "Descuadre" cuando hay ajustes por método
+- **Congruencia lograda**: Tab Items muestra "Esperado: $1,680.00 CUP (+5%)" y Tab Pago muestra "Total a cobrar $1,680.00" — mismo número
+- **Descuento global fantasma eliminado**: Ya no se resta state.discount del total; los ajustes por método son la única fuente de verdad
+- **Desglose claro en Pago tab**: Subt. $1,600 CUP / +$80.00 (ajustes) / Total $1,680
+- **Archivos modificados**: `src/store/cart.ts`, `src/components/views/terminal/views/pos/POSCartCheckoutPanel.tsx`, `src/components/views/terminal/views/pos/POSCart.tsx`
+- **No implementado aún**: Múltiples filas del mismo método en un item (ej: 2 efectivos, uno CUP y otro USD). El schema actual tiene cash_paid/transfer_paid/zelle_paid fijos por item. Se requiere decisión del usuario sobre si cambiar a array de pagos.

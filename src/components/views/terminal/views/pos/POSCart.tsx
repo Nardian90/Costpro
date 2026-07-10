@@ -88,7 +88,11 @@ export const POSCart = ({
   };
 
   const itemCount = items.length;
-  const total = getTotal();
+  // FIX-CONSISTENCY (2026-07-10): el CTA y el header del carrito deben mostrar el total
+  // esperado (con recargos/descuentos por método) para coincidir con el tab Pago.
+  // Antes usaban getTotal() que restaba un descuento global fantasma y causaba
+  // discrepancia: header/CTA mostraban $1,590 pero Pago tab mostraba $1,680.
+  const expectedTotal = useCartStore.getState().getExpectedTotalCup();
 
   return (
     <Container
@@ -133,7 +137,7 @@ export const POSCart = ({
             </h3>
             <span className="font-bold opacity-70 uppercase tracking-widest text-[10px] sm:text-xs truncate">
               {itemCount === 0 ? "Vacío" : `${itemCount} ${itemCount === 1 ? "producto" : "productos"}`}
-              {itemCount > 0 && ` · ${formatCurrency(total)}`}
+              {itemCount > 0 && ` · ${formatCurrency(expectedTotal)}`}
             </span>
           </div>
           <div className="flex items-center gap-1.5 shrink-0">
@@ -244,12 +248,12 @@ export const POSCart = ({
                   )}
                 >
                   💳 Pago
-                  {total > 0 && (
+                  {expectedTotal > 0 && (
                     <span className={cn(
                       "text-[10px] tabular-nums",
                       activeTab === "checkout" ? "text-primary" : "text-muted-foreground"
                     )}>
-                      {formatCurrency(total)}
+                      {formatCurrency(expectedTotal)}
                     </span>
                   )}
                 </button>
@@ -330,13 +334,13 @@ export const POSCart = ({
                     }}
                     disabled={isProcessing || itemCount === 0}
                     className="flex-1 h-14 sm:h-16 rounded-xl sm:rounded-2xl bg-primary text-primary-foreground font-black text-sm sm:text-base shadow-xl shadow-primary/20 disabled:opacity-50 flex items-center justify-center gap-3 transition-all active:scale-[0.98]"
-                    aria-label={`Cobrar ${itemCount} productos por ${formatCurrency(total)}`}
+                    aria-label={`Cobrar ${itemCount} productos por ${formatCurrency(expectedTotal)}`}
                   >
                     <Check className="w-6 h-6" />
                     <span className="uppercase tracking-widest">Cobrar</span>
-                    {total > 0 && (
+                    {expectedTotal > 0 && (
                       <span className="bg-primary-foreground/20 px-2 py-1 rounded-md text-xs sm:text-sm tabular-nums">
-                        {formatCurrency(total)}
+                        {formatCurrency(expectedTotal)}
                       </span>
                     )}
                   </button>

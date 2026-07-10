@@ -109,9 +109,6 @@ export function POSCartCheckoutPanel({
 }: POSCartCheckoutPanelProps) {
   const prefersReducedMotion = useReducedMotion();
   const [showCheckoutConfirm, setShowCheckoutConfirm] = useState(false);
-  const [showMixedPayment, setShowMixedPayment] = useState(false);
-  const [showDiscountSection, setShowDiscountSection] = useState(false);
-  const [showSurchargeSection, setShowSurchargeSection] = useState(false);
   const [cashReceived, setCashReceived] = useState("");
   // FIX-CASH-BREAKDOWN (2026-07-10): modal de desglose por billetes/monedas
   const [showCashBreakdown, setShowCashBreakdown] = useState(false);
@@ -135,12 +132,13 @@ export function POSCartCheckoutPanel({
     return s + (parseFloat(denom) * count);
   }, 0);
 
-  const total = getTotal();
-  const subtotal = getSubtotal();
-  const discountAmount = getDiscountAmount();
   const taxAmount = getTaxAmount?.() ?? 0;
   const cashReceivedNum = parseFloat(cashReceived) || 0;
-  const change = cashReceivedNum > 0 ? cashReceivedNum - total : 0;
+  // FIX-CONSISTENCY (2026-07-10): el vuelto y todos los montos se calculan contra
+  // el total esperado (con recargos/descuentos por método), no contra getTotal()
+  // que puede tener un descuento global fantasma restado.
+  const expectedTotal = useCartStore.getState().getExpectedTotalCup();
+  const change = cashReceivedNum > 0 ? cashReceivedNum - expectedTotal : 0;
   const cashPresets = [20, 50, 100, 200];
 
   const handleConfirmCheckout = () => {
@@ -169,8 +167,11 @@ export function POSCartCheckoutPanel({
           <span className="text-[10px] sm:text-xs font-black uppercase text-muted-foreground tracking-widest">
             Total a cobrar
           </span>
+          {/* FIX-CONSISTENCY (2026-07-10): usar getExpectedTotalCup() que considera
+              recargos/descuentos por método. Antes usaba getTotalCup() que restaba un
+              descuento global fantasma y NO aplicaba los +5% del recargo del item. */}
           <span className="text-[clamp(1.75rem,7vw,2.5rem)] font-black text-primary tracking-tighter leading-none tabular-nums">
-            {formatCurrency(useCartStore.getState().getTotalCup())}
+            {formatCurrency(useCartStore.getState().getExpectedTotalCup())}
           </span>
         </div>
         {/* FIX-MULTI-MONEDA: desglose por moneda si hay items en diferentes monedas */}
@@ -191,19 +192,32 @@ export function POSCartCheckoutPanel({
                 </span>
               ))}
               <span className="px-1.5 py-0.5 rounded bg-primary/10 text-primary">
-                Total CUP: {formatCurrency(useCartStore.getState().getTotalCup())}
+                Total CUP: {formatCurrency(useCartStore.getState().getExpectedTotalCup())}
               </span>
             </div>
           );
         })()}
-        {/* Desglose compacto */}
-        <div className="mt-1 flex items-center justify-between text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-          <span>Subt. {formatCurrency(useCartStore.getState().getSubtotalCup())} CUP</span>
-          {discountAmount > 0 && (
-            <span className="text-destructive">−{formatCurrency(discountAmount)}</span>
-          )}
-          {taxAmount > 0 && <span>Imp. {formatCurrency(taxAmount)}</span>}
-        </div>
+        {/* Desglose compacto:
+            Subt. = base sin ajustes (getSubtotalCup)
+            Ajustes = diferencia entre Total y Subt (positivo=recargo, negativo=descuento)
+            Imp. = impuestos (si los hay) */}
+        {(() => {
+          const subtotalCup = useCartStore.getState().getSubtotalCup();
+          const expectedTotal = useCartStore.getState().getExpectedTotalCup();
+          const adjustments = Number((expectedTotal - subtotalCup).toFixed(2));
+          const tax = taxAmount;
+          return (
+            <div className="mt-1 flex items-center justify-between gap-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+              <span>Subt. {formatCurrency(subtotalCup)} CUP</span>
+              {adjustments !== 0 && (
+                <span className={adjustments > 0 ? "text-amber-500" : "text-destructive"}>
+                  {adjustments > 0 ? '+' : '−'}{formatCurrency(Math.abs(adjustments))}
+                </span>
+              )}
+              {tax > 0 && <span>Imp. {formatCurrency(tax)}</span>}
+            </div>
+          );
+        })()}
       </div>
 
       {/* ── EFECTIVO RECIBIDO + VUELTO ────────────────────────────── */}
@@ -248,7 +262,7 @@ export function POSCartCheckoutPanel({
                 ${preset}
               </button>
             ))}
-            <button type="button" onClick={() => setCashReceived(total.toFixed(2))}
+            <button type="button" onClick={() => setCashReceived(expectedTotal.toFixed(2))}
               className="flex-1 min-h-[32px] rounded bg-success text-white text-[9px] font-black hover:opacity-90">
               Exacto
             </button>
@@ -359,7 +373,7 @@ export function POSCartCheckoutPanel({
         <div className="space-y-4">
           <div className="text-center">
             <p className="text-2xl font-black text-primary tabular-nums">
-              {formatCurrency(total)}
+              {formatCurrency(expectedTotal)}
             </p>
             <p className="text-xs text-muted-foreground mt-2">
               {itemCount} {itemCount === 1 ? "producto" : "productos"} ·{" "}
@@ -447,13 +461,13 @@ export function POSCartCheckoutPanel({
                 </div>
                 <div className="flex justify-between text-xs font-black">
                   <span>Total venta:</span>
-                  <span className="tabular-nums">{formatCurrency(useCartStore.getState().getTotalCup())}</span>
+                  <span className="tabular-nums">{formatCurrency(useCartStore.getState().getExpectedTotalCup())}</span>
                 </div>
                 <div className="flex justify-between text-sm font-black">
                   <span>Vuelto:</span>
-                  <span className={cn("tabular-nums", cashBreakdownTotal - useCartStore.getState().getTotalCup() >= 0 ? "text-success" : "text-destructive")}>
-                    {formatCurrency(Math.abs(cashBreakdownTotal - useCartStore.getState().getTotalCup()))}
-                    {cashBreakdownTotal < useCartStore.getState().getTotalCup() && " (insuf.)"}
+                  <span className={cn("tabular-nums", cashBreakdownTotal - useCartStore.getState().getExpectedTotalCup() >= 0 ? "text-success" : "text-destructive")}>
+                    {formatCurrency(Math.abs(cashBreakdownTotal - useCartStore.getState().getExpectedTotalCup()))}
+                    {cashBreakdownTotal < useCartStore.getState().getExpectedTotalCup() && " (insuf.)"}
                   </span>
                 </div>
               </div>

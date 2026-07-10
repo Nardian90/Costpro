@@ -136,6 +136,12 @@ interface CartState {
   getItemPaidCup: (item: CartItem) => number;
   // FIX-DISCOUNT-PER-METHOD: subtotal ajustado con descuento del método específico
   getItemSubtotalWithMethodDiscountCup: (item: CartItem, method: 'cash' | 'transfer' | 'zelle') => number;
+  // FIX-CONSISTENCY (2026-07-10): total esperado considerando ajustes por método.
+  // Suma getItemSubtotalWithMethodDiscountCup por cada item eligiendo el método
+  // activo (con pago + ajuste). Esto reemplaza el cálculo antiguo que solo
+  // usaba getSubtotalCup() - getDiscountAmount() e ignoraba recargos/descuentos
+  // por método, causando descuadre entre tab Items y tab Pago.
+  getExpectedTotalCup: () => number;
 }
 
 const calculateItemSubtotal = (item: CartItem) => {
@@ -198,12 +204,40 @@ export const useCartStore = create<CartState>()(
       setGlobalRate: (currency, rate) =>
         set((state) => ({ globalRates: { ...state.globalRates, [currency]: rate }, lastUpdated: Date.now() })),
 
+      // FIX-CONSISTENCY (2026-07-10): total esperado considerando ajustes por método.
+      // Replica la lógica del POSCartItem.tsx para elegir el método activo
+      // (aquel con pago > 0 Y ajuste configurado). Si ningún método tiene ajuste,
+      // usa el subtotal base del item. Esta es la fuente de verdad que debe
+      // coincidir entre tab Items (Esperado: $X) y tab Pago (Total a cobrar: $X).
+      getExpectedTotalCup: () => {
+        const sum = get().items.reduce((acc, item) => {
+          const hasCashAdj = item.cash_discount_type && item.cash_discount_value;
+          const hasTransferAdj = item.transfer_discount_type && item.transfer_discount_value;
+          const hasZelleAdj = item.zelle_discount_type && item.zelle_discount_value;
+
+          let expected = get().getItemSubtotalCup(item);
+          if (item.cash_paid > 0 && hasCashAdj) {
+            expected = get().getItemSubtotalWithMethodDiscountCup(item, 'cash');
+          } else if (item.transfer_paid > 0 && hasTransferAdj) {
+            expected = get().getItemSubtotalWithMethodDiscountCup(item, 'transfer');
+          } else if (item.zelle_paid > 0 && hasZelleAdj) {
+            expected = get().getItemSubtotalWithMethodDiscountCup(item, 'zelle');
+          }
+          return acc + expected;
+        }, 0);
+        return Number(sum.toFixed(2));
+      },
+
       // FIX-MULTI-MONEDA: total convertido a CUP sumando cada item con su propia tasa
+      // FIX-CONSISTENCY (2026-07-10): ahora usa getExpectedTotalCup() para considerar
+      // recargos/descuentos por método. Antes usaba getSubtotalCup() - getDiscountAmount()
+      // que ignoraba los ajustes por método y causaba descuadre entre Items y Pago.
+      // El descuento global (state.discount) ya NO se resta aquí — los ajustes por
+      // método son la fuente de verdad y se consolidan en getExpectedTotalCup().
       getTotalCup: () => {
-        const subtotalCup = get().getSubtotalCup();
-        const discountAmount = get().getDiscountAmount();
+        const expectedTotal = get().getExpectedTotalCup();
         const taxAmount = get().getTaxAmount();
-        return Number(Math.max(0, subtotalCup - discountAmount + taxAmount).toFixed(2));
+        return Number(Math.max(0, expectedTotal + taxAmount).toFixed(2));
       },
 
       // FIX-PAYMENT-MODE: detectar si al menos un item tiene payment_manual_override=true
