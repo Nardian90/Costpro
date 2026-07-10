@@ -394,26 +394,20 @@ export const POSCartItem = ({
             value={item.currency || 'CUP'}
             onChange={(e) => {
               const currency = e.target.value;
-              // FIX-SIMPLE (2026-07-10): cambiar moneda INMEDIATAMENTE sin esperar fetch.
-              // Si hay globalRate, usarla. Si no, rate=1 y el usuario edita la TASA después.
-              // El fetch async causaba que el select pareciera no responder.
+              // FIX-BASE-PRICE (2026-07-10): convertir SIEMPRE desde base_price_cup
+              // Esto elimina el bug de conversión doble y tasas persistentidas incorrectas
               const gr = useCartStore.getState().globalRates[currency];
               const rate = (gr && gr > 0) ? gr : 1;
 
-              const oldRate = item.exchange_rate || 1.0;
-              const isOldCup = (item.currency || 'CUP') === 'CUP';
-              const isNewCup = currency === 'CUP';
-              let newPrice = item.price;
-              if (rate > 1) {
-                if (isOldCup && !isNewCup) {
-                  newPrice = item.price / rate;
-                } else if (!isOldCup && isNewCup) {
-                  newPrice = item.price * oldRate;
-                } else if (!isOldCup && !isNewCup) {
-                  newPrice = (item.price * oldRate) / rate;
-                }
-              } else if (currency !== 'CUP') {
-                toast.info('Edita la TASA manualmente para convertir el precio.');
+              // Precio nuevo = base_price_cup / tasa (si no es CUP) o base_price_cup (si es CUP)
+              let newPrice: number;
+              if (currency === 'CUP') {
+                newPrice = item.base_price_cup || item.price;
+              } else if (rate > 1) {
+                newPrice = (item.base_price_cup || item.price) / rate;
+              } else {
+                newPrice = item.price; // no hay tasa, mantener precio
+                if (currency !== 'CUP') toast.info('Edita la TASA manualmente para convertir el precio.');
               }
 
               useCartStore.setState((state) => ({
@@ -438,12 +432,12 @@ export const POSCartItem = ({
                 lastUpdated: Date.now(),
               }));
 
-              // Fetch de tasa en background (no bloquea el select)
+              // Fetch de tasa en background
               if (currency !== 'CUP' && rate <= 1) {
                 fetch(`/api/exchange-rates?currency=${currency}&source=elToque&days=1`)
                   .then(res => res.ok ? res.json() : null)
                   .then(data => {
-                    if (!data) return null;
+                    if (!data) return;
                     const rates = Array.isArray(data) ? data : (data?.rates || data?.data || []);
                     if (Array.isArray(rates) && rates.length > 0) {
                       const sorted = rates.sort((a: any, b: any) =>
@@ -452,11 +446,10 @@ export const POSCartItem = ({
                       if (sorted[0]?.rate > 0) {
                         const fetchedRate = sorted[0].rate;
                         useCartStore.getState().setGlobalRate(currency, fetchedRate);
-                        // Actualizar el item con la tasa obtenida
                         useCartStore.setState((state) => ({
                           items: state.items.map((it) => {
                             if (it.product_id === item.product_id && it.variant_id === item.variant_id && it.currency === currency) {
-                              const newPriceConverted = item.price / fetchedRate;
+                              const newPriceConverted = (item.base_price_cup || item.price) / fetchedRate;
                               const updatedItem = { ...it, exchange_rate: fetchedRate, price: newPriceConverted };
                               updatedItem.subtotal = recalcSubtotal(updatedItem);
                               updatedItem.cash_paid = updatedItem.subtotal;
@@ -495,19 +488,18 @@ export const POSCartItem = ({
             disabled={item.currency === 'CUP'}
             onChange={(e) => {
               const rate = parseFloat(e.target.value) || 1.0;
-              // FIX-BUG-4 (2026-07-07): al editar la TASA, también actualizar globalRates
+              // FIX-BUG-4: al editar la TASA, actualizar globalRates
               useCartStore.getState().setGlobalRate(item.currency || 'USD', rate);
-              // FIX-B12: setState atómico
+              // FIX-BASE-PRICE (2026-07-10): SIEMPRE recalcular desde base_price_cup
               useCartStore.setState((state) => ({
                 items: state.items.map((it) => {
                   if (it.product_id === item.product_id && it.variant_id === item.variant_id) {
-                    // FIX-TASA-RECALC (2026-07-10): si la tasa anterior era 1 (no se obtuvo),
-                    // recalcular el precio dividiendo el precio CUP original por la nueva tasa.
-                    // Esto permite al usuario: cambiar moneda → editar tasa → precio se ajusta.
-                    let newPrice = it.price;
-                    if (it.currency !== 'CUP' && (it.exchange_rate || 1) <= 1 && rate > 1) {
-                      // El precio original estaba en CUP, convertirlo ahora
-                      newPrice = it.price / rate;
+                    // Precio = base_price_cup / tasa (siempre, sin importar tasa anterior)
+                    let newPrice: number;
+                    if (it.currency === 'CUP' || rate <= 0) {
+                      newPrice = it.base_price_cup || it.price;
+                    } else {
+                      newPrice = (it.base_price_cup || it.price) / rate;
                     }
                     const updatedItem = { ...it, exchange_rate: rate, price: newPrice };
                     updatedItem.subtotal = recalcSubtotal(updatedItem);

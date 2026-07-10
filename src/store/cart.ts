@@ -22,6 +22,10 @@ export interface CartItem {
   variant_id: string | null;
   quantity: number;
   price: number;
+  // FIX-BASE-PRICE (2026-07-10): precio original en CUP, inmutable.
+  // Se setea al agregar el item al carrito y NUNCA cambia.
+  // Todas las conversiones se hacen desde este precio base.
+  base_price_cup: number;
   cost: number;
   subtotal: number;
   product: Product;
@@ -225,13 +229,19 @@ export const useCartStore = create<CartState>()(
       },
 
       // FIX-MULTI-CURRENCY-CORE (2026-07-07): helpers para conversión a CUP
-      // FIX-B7 (2026-07-10): unificar uso de globalRates en ambos helpers
+      // FIX-BASE-PRICE (2026-07-10): usar base_price_cup como referencia inmutable
       getItemSubtotalCup: (item: CartItem) => {
-        const subtotal = item.subtotal || 0;
-        if (item.currency === 'CUP') return subtotal;
-        // FIX-B7: usar globalRates si existe (single source of truth)
-        const rate = getRateToCup(item.currency || 'CUP', item.exchange_rate || 1, get().globalRates);
-        return subtotal * rate;
+        // FIX-BASE-PRICE: el subtotal en CUP SIEMPRE se calcula desde base_price_cup
+        // Esto evita que conversiones múltiples corrompan el valor
+        const baseSubtotalCup = (item.base_price_cup || item.price || 0) * (item.quantity || 1);
+        // Aplicar descuento del item si existe
+        if (item.discount_type && item.discount_value > 0) {
+          if (item.discount_type === 'percentage') {
+            return baseSubtotalCup * (1 - item.discount_value / 100);
+          }
+          return Math.max(0, baseSubtotalCup - item.discount_value);
+        }
+        return baseSubtotalCup;
       },
 
       getItemPaidCup: (item: CartItem) => {
@@ -347,6 +357,10 @@ export const useCartStore = create<CartState>()(
                 product: product as Product,
                 variant: variant || null,
                 price,
+                // FIX-BASE-PRICE: guardar precio original en CUP (inmutable)
+                base_price_cup: (product as any)?.price_currency && (product as any).price_currency !== 'CUP'
+                  ? price * ((product as any).exchange_rate || 1) // si el producto ya viene en USD, convertir a CUP
+                  : price, // si viene en CUP, usar directo
                 cost,
                 subtotal: 0,
                 discount_type: (productInput as any).discount_type || null,
