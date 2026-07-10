@@ -259,7 +259,7 @@ export const useCartStore = create<CartState>()(
         return cashCup + transferCup + zelleCup;
       },
 
-      // FIX-B3 (2026-07-10): descuento/recargo por método calculado sobre base_price_cup
+      // FIX-B3 (2026-07-10): descuento/recargo unificado — positivo=recargo, negativo=descuento
       getItemSubtotalWithMethodDiscountCup: (item: CartItem, method: 'cash' | 'transfer' | 'zelle') => {
         const baseSubtotalCup = get().getItemSubtotalCup(item);
         const dtype = method === 'cash' ? item.cash_discount_type
@@ -268,39 +268,24 @@ export const useCartStore = create<CartState>()(
         const dvalue = method === 'cash' ? item.cash_discount_value
           : method === 'transfer' ? item.transfer_discount_value
           : item.zelle_discount_value;
-        // FIX-SURCHARGE: recargo por método
-        const stype = method === 'cash' ? item.cash_surcharge_type
-          : method === 'transfer' ? item.transfer_surcharge_type
-          : item.zelle_surcharge_type;
-        const svalue = method === 'cash' ? item.cash_surcharge_value
-          : method === 'transfer' ? item.transfer_surcharge_value
-          : item.zelle_surcharge_value;
+
+        if (!dtype || !dvalue || dvalue === 0) return baseSubtotalCup;
 
         let result = baseSubtotalCup;
-
-        // Aplicar descuento
-        if (dtype && dvalue > 0) {
-          if (dtype === 'percentage') {
-            result = result * (1 - dvalue / 100);
-          } else {
-            const dcurrency = method === 'cash' ? item.cash_discount_currency
-              : method === 'transfer' ? item.transfer_discount_currency
-              : item.zelle_discount_currency;
-            const rate = getRateToCup(dcurrency || 'CUP', item.exchange_rate || 1, get().globalRates);
-            result = Math.max(0, result - dvalue * rate);
-          }
+        if (dtype === 'percentage') {
+          // Positivo = recargo (×(1+val/100)), Negativo = descuento (×(1+val/100))
+          // Ej: +5% → 1600×1.05=1680, -5% → 1600×0.95=1520
+          result = result * (1 + dvalue / 100);
+        } else {
+          // fixed: positivo = recargo (+val), negativo = descuento (-val)
+          // Ej: +50 → 1650, -50 → 1550
+          const dcurrency = method === 'cash' ? item.cash_discount_currency
+            : method === 'transfer' ? item.transfer_discount_currency
+            : item.zelle_discount_currency;
+          const rate = getRateToCup(dcurrency || 'CUP', item.exchange_rate || 1, get().globalRates);
+          result = Math.max(0, result + dvalue * rate);
         }
-
-        // Aplicar recargo
-        if (stype && svalue > 0) {
-          if (stype === 'percentage') {
-            result = result * (1 + svalue / 100);
-          } else {
-            result = result + svalue;
-          }
-        }
-
-        return Math.max(0, result);
+        return result;
       },
 
       /**

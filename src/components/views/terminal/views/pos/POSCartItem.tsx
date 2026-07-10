@@ -44,6 +44,9 @@ export const POSCartItem = ({
   const maxStock = Math.floor((item.product?.stock_current ?? 999) / safeFactor);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const prefersReducedMotion = useReducedMotion();
+  // FIX-TASAS-MODAL (2026-07-10): modal custom para tasas (no window.prompt)
+  const [showRatesModal, setShowRatesModal] = useState(false);
+  const [ratesModalData, setRatesModalData] = useState<Record<string, string>>({});
 
   // POS-2 MM-4: Input directo de cantidad.
   // El span del número es clicable. Al click entra en modo edición (input),
@@ -521,7 +524,7 @@ export const POSCartItem = ({
               const storeId = user?.activeStoreId;
               if (!storeId) return;
 
-              // Cargar tasas actuales
+              // Cargar tasas actuales de BD
               const res = await fetch(`/api/store-rates?storeId=${storeId}`, {
                 headers: token ? { Authorization: `Bearer ${token}` } : {},
               });
@@ -531,66 +534,13 @@ export const POSCartItem = ({
                 currentRates = data.rates || {};
               }
 
-              // Prompt simple para editar tasas
-              const currencies = ['USD', 'EUR', 'MLC'];
-              let inputHtml = currencies.map(c =>
-                `${c}: ${currentRates[c] || 'no seteada'}`
-              ).join('\n');
-
-              const newRatesStr = window.prompt(
-                `Tasas actuales:\n${inputHtml}\n\nIngresa las nuevas tasas (formato: USD=680,EUR=720,MLC=600):`,
-                currencies.map(c => `${c}=${currentRates[c] || ''}`).join(',')
-              );
-
-              if (!newRatesStr) return;
-
-              // Parsear
-              const newRates: Record<string, number> = {};
-              for (const pair of newRatesStr.split(',')) {
-                const [cur, val] = pair.trim().split('=');
-                if (cur && val) {
-                  const num = parseFloat(val.trim());
-                  if (num > 0) newRates[cur.trim().toUpperCase()] = num;
-                }
-              }
-
-              if (Object.keys(newRates).length === 0) {
-                toast.error('Formato inválido. Usa: USD=680,EUR=720,MLC=600');
-                return;
-              }
-
-              // Guardar en BD
-              const saveRes = await fetch('/api/store-rates', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-                body: JSON.stringify({ storeId, rates: newRates }),
+              // Abrir modal custom (no window.prompt)
+              setRatesModalData({
+                USD: String(currentRates.USD || ''),
+                EUR: String(currentRates.EUR || ''),
+                MLC: String(currentRates.MLC || ''),
               });
-
-              if (!saveRes.ok) { toast.error('Error al guardar tasas'); return; }
-
-              // Actualizar globalRates en el store
-              for (const [cur, rate] of Object.entries(newRates)) {
-                useCartStore.getState().setGlobalRate(cur, rate);
-              }
-
-              // Recalcular precios de todos los items
-              useCartStore.setState((state) => ({
-                items: state.items.map((it) => {
-                  if (it.currency !== 'CUP' && newRates[it.currency]) {
-                    const newPrice = (it.base_price_cup || it.price) / newRates[it.currency];
-                    const updatedItem = { ...it, exchange_rate: newRates[it.currency], price: newPrice };
-                    updatedItem.subtotal = recalcSubtotal(updatedItem);
-                    updatedItem.cash_paid = updatedItem.subtotal;
-                    updatedItem.transfer_paid = 0;
-                    updatedItem.zelle_paid = 0;
-                    return updatedItem;
-                  }
-                  return it;
-                }),
-                lastUpdated: Date.now(),
-              }));
-
-              toast.success('Tasas actualizadas y guardadas');
+              setShowRatesModal(true);
             }}
             className="text-[9px] font-black uppercase text-primary border border-primary/30 rounded-lg px-2 py-2 min-h-[36px] hover:bg-primary/5 shrink-0"
             title="Actualizar tasas de cambio de la tienda"
@@ -645,7 +595,7 @@ export const POSCartItem = ({
                 className="bg-background border border-border/50 rounded px-1 py-2 min-h-[36px] text-[9px] font-bold shrink-0"
                 aria-label={`Tipo de descuento en efectivo para ${item.product.name}`}
               >
-                <option value="none">—</option><option value="percentage">-%</option><option value="fixed">-$</option>
+                <option value="none">—</option><option value="percentage">%</option><option value="fixed">$</option>
               </select>
               {item.cash_discount_type && (
                 <input
@@ -695,7 +645,7 @@ export const POSCartItem = ({
                 className="bg-background border border-border/50 rounded px-1 py-2 min-h-[36px] text-[9px] font-bold shrink-0"
                 aria-label={`Tipo de descuento en transferencia para ${item.product.name}`}
               >
-                <option value="none">—</option><option value="percentage">-%</option><option value="fixed">-$</option>
+                <option value="none">—</option><option value="percentage">%</option><option value="fixed">$</option>
               </select>
               {item.transfer_discount_type && (
                 <input
@@ -745,7 +695,7 @@ export const POSCartItem = ({
                 className="bg-background border border-border/50 rounded px-1 py-2 min-h-[36px] text-[9px] font-bold shrink-0"
                 aria-label={`Tipo de descuento en Zelle para ${item.product.name}`}
               >
-                <option value="none">—</option><option value="percentage">-%</option><option value="fixed">-$</option>
+                <option value="none">—</option><option value="percentage">%</option><option value="fixed">$</option>
               </select>
               {item.zelle_discount_type && (
                 <input
@@ -761,17 +711,34 @@ export const POSCartItem = ({
         </div>
       </div>
       )}
-      {/* FIX-BUG-1 (2026-07-07): validación en CUP */}
+      {/* FIX-VALIDATION (2026-07-10): validación con descuento/recargo aplicado */}
       {(() => {
         const cartStore = useCartStore.getState();
-        // FIX-B6: usar getItemPaidCup del store (single source of truth)
         const subtotalCup = cartStore.getItemSubtotalCup(item);
         const paidCup = cartStore.getItemPaidCup(item);
-        const diff = paidCup - subtotalCup;
+
+        // Si hay descuento/recargo en algún método, calcular el subtotal esperado
+        const hasCashAdj = item.cash_discount_type && item.cash_discount_value;
+        const hasTransferAdj = item.transfer_discount_type && item.transfer_discount_value;
+        const hasZelleAdj = item.zelle_discount_type && item.zelle_discount_value;
+
+        let expectedCup = subtotalCup;
+        if (hasCashAdj || hasTransferAdj || hasZelleAdj) {
+          // Tomar el ajuste del método que tiene pago activo
+          if (item.cash_paid > 0 && hasCashAdj) {
+            expectedCup = cartStore.getItemSubtotalWithMethodDiscountCup(item, 'cash');
+          } else if (item.transfer_paid > 0 && hasTransferAdj) {
+            expectedCup = cartStore.getItemSubtotalWithMethodDiscountCup(item, 'transfer');
+          } else if (item.zelle_paid > 0 && hasZelleAdj) {
+            expectedCup = cartStore.getItemSubtotalWithMethodDiscountCup(item, 'zelle');
+          }
+        }
+
+        const diff = paidCup - expectedCup;
         if (Math.abs(diff) <= 0.01) {
           return (
             <div className="mt-1 text-[10px] font-bold text-emerald-500 flex items-center gap-1">
-              ✓ Pago completo ({formatCurrency(subtotalCup)} CUP)
+              ✓ Pago completo ({formatCurrency(expectedCup)} CUP)
             </div>
           );
         }
@@ -788,6 +755,95 @@ export const POSCartItem = ({
           </div>
         );
       })()}
+
+      {/* FIX-TASAS-MODAL (2026-07-10): modal custom para actualizar tasas */}
+      {showRatesModal && (
+        <div
+          className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-background/90 backdrop-blur-sm"
+          onClick={() => setShowRatesModal(false)}
+          role="dialog"
+          aria-modal="true"
+        >
+          <div
+            className="w-full max-w-sm bg-card border border-border/50 rounded-2xl shadow-2xl p-5"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-sm font-black uppercase">Tasas de Cambio</h2>
+              <button onClick={() => setShowRatesModal(false)} className="text-muted-foreground hover:text-foreground">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <p className="text-[10px] text-muted-foreground mb-3">Estas tasas se guardan en la tienda y persisten hasta el próximo cambio.</p>
+            <div className="space-y-2 mb-4">
+              {['USD', 'EUR', 'MLC'].map(cur => (
+                <div key={cur} className="flex items-center gap-2">
+                  <span className="text-xs font-black w-12">{cur}</span>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={ratesModalData[cur] || ''}
+                    onChange={(e) => setRatesModalData(prev => ({ ...prev, [cur]: e.target.value }))}
+                    className="flex-1 bg-background border border-border/50 rounded-lg px-2 py-2 text-xs font-bold"
+                    placeholder="0"
+                  />
+                  <span className="text-[10px] text-muted-foreground">CUP</span>
+                </div>
+              ))}
+            </div>
+            <button
+              onClick={async () => {
+                const newRates: Record<string, number> = {};
+                for (const cur of ['USD', 'EUR', 'MLC']) {
+                  const val = parseFloat(ratesModalData[cur] || '0');
+                  if (val > 0) newRates[cur] = val;
+                }
+                if (Object.keys(newRates).length === 0) {
+                  toast.error('Ingresa al menos una tasa válida');
+                  return;
+                }
+                const { useAuthStore } = await import('@/store');
+                const token = useAuthStore.getState().token;
+                const user = useAuthStore.getState().user as any;
+                const storeId = user?.activeStoreId;
+                if (!storeId) return;
+
+                const saveRes = await fetch('/api/store-rates', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+                  body: JSON.stringify({ storeId, rates: newRates }),
+                });
+                if (!saveRes.ok) { toast.error('Error al guardar tasas'); return; }
+
+                for (const [cur, rate] of Object.entries(newRates)) {
+                  useCartStore.getState().setGlobalRate(cur, rate);
+                }
+                useCartStore.setState((state) => ({
+                  items: state.items.map((it) => {
+                    if (it.currency !== 'CUP' && newRates[it.currency]) {
+                      const newPrice = (it.base_price_cup || it.price) / newRates[it.currency];
+                      const updatedItem = { ...it, exchange_rate: newRates[it.currency], price: newPrice };
+                      updatedItem.subtotal = recalcSubtotal(updatedItem);
+                      updatedItem.cash_paid = updatedItem.subtotal;
+                      updatedItem.transfer_paid = 0;
+                      updatedItem.zelle_paid = 0;
+                      return updatedItem;
+                    }
+                    return it;
+                  }),
+                  lastUpdated: Date.now(),
+                }));
+
+                setShowRatesModal(false);
+                toast.success('Tasas actualizadas y guardadas');
+              }}
+              className="w-full h-10 rounded-xl bg-primary text-primary-foreground text-xs font-black uppercase hover:bg-primary/90"
+            >
+              Guardar Tasas
+            </button>
+          </div>
+        </div>
+      )}
     </motion.div>
   );
 };
