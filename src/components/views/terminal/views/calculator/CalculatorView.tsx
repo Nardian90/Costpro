@@ -62,6 +62,36 @@ export default function CalculatorView() {
     setMounted(true);
   }, []);
 
+  // FIX-KEYBOARD-VIEW (2026-07-10): listener de teclado para la vista integrada.
+  // Antes el teclado solo funcionaba en el modal flotante (FloatingCalculator),
+  // no en esta vista. Ahora captura digits/operators/Enter/Backspace/C/%/Esc
+  // y los envía al hook useCalculator via handlersRef.
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // No interferir si el foco está en un input/select/textarea
+      const target = e.target as HTMLElement;
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'SELECT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
+        return;
+      }
+
+      const key = e.key;
+      const h = calc.handlersRef.current;
+
+      if (/^[0-9]$/.test(key)) { e.preventDefault(); h.handleNumber(key); return; }
+      if (key === '.' || key === ',') { e.preventDefault(); h.handleNumber('.'); return; }
+      if (key === '+') { e.preventDefault(); h.handleOperator('+'); return; }
+      if (key === '-') { e.preventDefault(); h.handleOperator('-'); return; }
+      if (key === '*') { e.preventDefault(); h.handleOperator('*'); return; }
+      if (key === '/') { e.preventDefault(); h.handleOperator('/'); return; }
+      if (key === 'Enter' || key === '=') { e.preventDefault(); h.handleCalculate(); return; }
+      if (key === 'Backspace') { e.preventDefault(); h.handleBackspace(); return; }
+      if (key === 'c' || key === 'C') { e.preventDefault(); h.handleClear(); return; }
+      if (key === '%') { e.preventDefault(); h.handlePercent(); return; }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [calc.handlersRef]);
+
   if (!mounted) {
     return (
       <div className="flex items-center justify-center h-full w-full">
