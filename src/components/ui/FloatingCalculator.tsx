@@ -659,44 +659,46 @@ export const CashTabContent: React.FC<CashTabContentProps> = ({ display, isDark 
         </div>
       </div>
 
-      {/* Lista de billetes + botones pegados a la derecha (layout compacto) */}
-      <div className="flex gap-1.5">
-        {/* Columna izquierda: lista de billetes */}
-        <div className="flex-1 space-y-1">
-          {activeDenoms.map(d => {
-            const count = breakdown[String(d.value)] || 0;
-            return (
-              <div key={d.value} className="flex items-center gap-2">
-                <span className="w-12 text-[10px] font-black text-right shrink-0">{d.label}</span>
-                <span className="text-[8px] text-muted-foreground">×</span>
-                <input
-                  type="number"
-                  min="0"
-                  value={count || ''}
-                  onChange={(e) => setBreakdown(prev => {
-                    const next = { ...prev };
-                    const val = parseInt(e.target.value) || 0;
-                    if (val > 0) next[String(d.value)] = val;
-                    else delete next[String(d.value)];
-                    return next;
-                  })}
-                  className="w-24 bg-background border border-border/50 rounded px-2 py-1 text-[11px] font-bold text-center"
-                  placeholder="0"
-                  aria-label={`Cantidad de ${d.label}`}
-                />
-                <span className={cn(
-                  "text-[10px] w-16 text-right tabular-nums shrink-0",
-                  count > 0 ? "text-primary font-bold" : "text-muted-foreground"
-                )}>
-                  {formatCurrency(count * d.value)}
-                </span>
-              </div>
-            );
-          })}
+      {/* Lista de billetes centrada + botones a la izquierda de su columna */}
+      <div className="flex gap-2 justify-center">
+        {/* Columna izquierda: lista de billetes centrada */}
+        <div className="flex-1 flex flex-col items-center">
+          <div className="space-y-1 w-fit">
+            {activeDenoms.map(d => {
+              const count = breakdown[String(d.value)] || 0;
+              return (
+                <div key={d.value} className="flex items-center gap-2">
+                  <span className="w-12 text-[10px] font-black text-right shrink-0">{d.label}</span>
+                  <span className="text-[8px] text-muted-foreground">×</span>
+                  <input
+                    type="number"
+                    min="0"
+                    value={count || ''}
+                    onChange={(e) => setBreakdown(prev => {
+                      const next = { ...prev };
+                      const val = parseInt(e.target.value) || 0;
+                      if (val > 0) next[String(d.value)] = val;
+                      else delete next[String(d.value)];
+                      return next;
+                    })}
+                    className="w-24 bg-background border border-border/50 rounded px-2 py-1 text-[11px] font-bold text-center"
+                    placeholder="0"
+                    aria-label={`Cantidad de ${d.label}`}
+                  />
+                  <span className={cn(
+                    "text-[10px] w-16 text-right tabular-nums shrink-0",
+                    count > 0 ? "text-primary font-bold" : "text-muted-foreground"
+                  )}>
+                    {formatCurrency(count * d.value)}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
         </div>
 
-        {/* Columna derecha: acciones verticales + total (pegadas a la lista) */}
-        <div className="w-20 shrink-0 flex flex-col gap-1">
+        {/* Columna derecha: acciones verticales alineadas a la izquierda + total */}
+        <div className="w-20 shrink-0 flex flex-col gap-1 items-stretch">
           <button
             type="button"
             onClick={calculateOptimal}
