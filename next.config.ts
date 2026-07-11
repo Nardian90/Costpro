@@ -5,6 +5,10 @@ import createNextIntlPlugin from 'next-intl/plugin';
 const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 
 const nextConfig: NextConfig = {
+  // FIX-DEPLOY (2026-07-10): output standalone para que Docker, Render y Vercel
+  // puedan generar builds optimizados. Sin esto, Dockerfile falla en COPY .next/standalone
+  // y Vercel no puede hacer cold starts eficientes.
+  output: 'standalone',
   typescript: {
     ignoreBuildErrors: false, // FIX-INF-017
   },
