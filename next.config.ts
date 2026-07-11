@@ -13,6 +13,8 @@ const nextConfig: NextConfig = {
     'http://localhost:3000', // FIX-INF-009
     'https://preview-chat-3d0c5abc-4abd-4c11-a041-35a333b52182.space-z.ai', // FIX-PREVIEW: dominio del preview del chat
     'https://preview-3d0c5abc-4abd-4c11-a041-35a333b52182.space-z.ai', // FIX-PREVIEW: variante sin prefijo chat
+    'https://space-z.ai', // FIX-PREVIEW: dominio raíz
+    'https://*.space-z.ai', // FIX-PREVIEW: wildcard para cualquier subdominio
   ],
   serverExternalPackages: [
     '@opentelemetry/api',
