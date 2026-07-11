@@ -102,21 +102,6 @@ export const SIDEBAR_STRUCTURE: NavModule[] = [
       { id: 'chat', label: 'Chat con Darian', type: 'item', icon: Bot, ariaLabel: 'Abrir chat con Darian', description: 'Conversación con el asistente IA. Puede consultar costos, ventas, buscar productos, navegar vistas y ejecutar acciones.' },
     ]
   },
-  // FIX-CALC-VIEW (2026-07-10): Calculadora como vista integrada de primera clase.
-  // Tiene dos modos: modal flotante (botón inferior del sidebar) y vista integrada
-  // (este item de nav). Ambos comparten el mismo componente con prop embedded.
-  {
-    id: 'core_tools',
-    label: 'HERRAMIENTAS',
-    type: 'group',
-    icon: Calculator,
-    ariaLabel: 'Herramientas',
-    description: 'Calculadora con historial, memoria y desglose de billetes.',
-    allowedRoles: ['admin', 'manager', 'encargado', 'costo', 'clerk', 'usuario', 'warehouse'],
-    children: [
-      { id: 'calculator', label: 'Calculadora', type: 'item', icon: Calculator, ariaLabel: 'Abrir calculadora integrada', description: 'Calculadora Pro con historial persistente, memoria (M+/M-/MR/MC), desglose de billetes automático y configuración de denominaciones.' },
-    ]
-  },
   {
     id: 'core',
     label: 'ESCRITORIO',

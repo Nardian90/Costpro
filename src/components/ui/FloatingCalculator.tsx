@@ -659,43 +659,9 @@ export const CashTabContent: React.FC<CashTabContentProps> = ({ display, isDark 
         </div>
       </div>
 
-      {/* Lista de billetes con acciones laterales (layout compacto) */}
+      {/* Lista de billetes centrada con acciones a la izquierda (layout compacto) */}
       <div className="flex gap-2">
-        {/* Columna izquierda: lista de billetes (crece) */}
-        <div className="flex-1 space-y-1">
-          {activeDenoms.map(d => {
-            const count = breakdown[String(d.value)] || 0;
-            return (
-              <div key={d.value} className="flex items-center gap-1.5">
-                <span className="w-10 text-[10px] font-black text-right shrink-0">{d.label}</span>
-                <span className="text-[8px] text-muted-foreground">×</span>
-                <input
-                  type="number"
-                  min="0"
-                  value={count || ''}
-                  onChange={(e) => setBreakdown(prev => {
-                    const next = { ...prev };
-                    const val = parseInt(e.target.value) || 0;
-                    if (val > 0) next[String(d.value)] = val;
-                    else delete next[String(d.value)];
-                    return next;
-                  })}
-                  className="w-10 bg-background border border-border/50 rounded px-1 py-1 text-[10px] font-bold text-center"
-                  placeholder="0"
-                  aria-label={`Cantidad de ${d.label}`}
-                />
-                <span className={cn(
-                  "text-[9px] flex-1 tabular-nums",
-                  count > 0 ? "text-primary font-bold" : "text-muted-foreground"
-                )}>
-                  {formatCurrency(count * d.value)}
-                </span>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Columna derecha: acciones verticales + total */}
+        {/* Columna izquierda: acciones verticales + total */}
         <div className="w-20 shrink-0 flex flex-col gap-1">
           <button
             type="button"
@@ -728,6 +694,42 @@ export const CashTabContent: React.FC<CashTabContentProps> = ({ display, isDark 
           <div className="mt-auto rounded-lg px-1.5 py-1.5 bg-muted/30 text-center">
             <div className="text-[7px] font-black uppercase text-muted-foreground">Total</div>
             <div className="text-[10px] font-mono font-black tabular-nums text-primary">{formatCurrency(breakdownTotal)}</div>
+          </div>
+        </div>
+
+        {/* Columna derecha: lista de billetes centrada */}
+        <div className="flex-1 flex flex-col items-center">
+          <div className="space-y-1 w-full max-w-[200px]">
+            {activeDenoms.map(d => {
+              const count = breakdown[String(d.value)] || 0;
+              return (
+                <div key={d.value} className="flex items-center gap-1.5 justify-center">
+                  <span className="w-10 text-[10px] font-black text-right shrink-0">{d.label}</span>
+                  <span className="text-[8px] text-muted-foreground">×</span>
+                  <input
+                    type="number"
+                    min="0"
+                    value={count || ''}
+                    onChange={(e) => setBreakdown(prev => {
+                      const next = { ...prev };
+                      const val = parseInt(e.target.value) || 0;
+                      if (val > 0) next[String(d.value)] = val;
+                      else delete next[String(d.value)];
+                      return next;
+                    })}
+                    className="w-10 bg-background border border-border/50 rounded px-1 py-1 text-[10px] font-bold text-center"
+                    placeholder="0"
+                    aria-label={`Cantidad de ${d.label}`}
+                  />
+                  <span className={cn(
+                    "text-[9px] w-12 text-right tabular-nums shrink-0",
+                    count > 0 ? "text-primary font-bold" : "text-muted-foreground"
+                  )}>
+                    {formatCurrency(count * d.value)}
+                  </span>
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>
