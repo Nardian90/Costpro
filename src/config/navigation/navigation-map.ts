@@ -309,6 +309,16 @@ export function getBreadcrumbForView(
     return items;
   }
 
+  // FIX-CALC-VIEW (2026-07-10): 'calculator' y 'chat' son vistas de acceso directo
+  // que NO están en SIDEBAR_STRUCTURE como módulo. Mostrar breadcrumb simple sin
+  // "Módulo No Disponible".
+  if (currentView === 'calculator') {
+    return [{ label: 'Calculadora', isCurrent: true }];
+  }
+  if (currentView === 'chat') {
+    return [{ label: 'Chat con Darian', isCurrent: true }];
+  }
+
   // M-2: si la vista es una sub-vista de hub, construir path completo
   const hubMapping = VIEW_TO_HUB_MAP[currentView];
   if (hubMapping) {
