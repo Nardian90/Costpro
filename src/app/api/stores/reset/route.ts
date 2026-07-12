@@ -9,6 +9,9 @@ import { z } from 'zod';
 import { logger } from '@/lib/logger';
 import { canManageStore } from '@/lib/roles';
 import { getSupabaseAdminSafe } from '@/lib/supabase-admin';
+// FIX-AUDIT-MSTORE-04 (P2): idempotency para evitar doble-tap en reset destructivo
+import { withIdempotency } from '@/lib/idempotency';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
 const resetStoreSchema = z.object({
   storeId: uuidLoose,
@@ -137,40 +140,142 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
       logger.error('DATABASE', 'RESET_AUDIT_SNAPSHOT_FAILED', { storeId, error: auditErr });
     }
 
-    // Execute the reset via RPC — pasamos p_keep_catalog a la nueva versión de la RPC
-    const { error: rpcError } = await admin.rpc('reset_store_data', {
-      target_store_id: storeId,
-      p_keep_catalog: keepCatalog,
-    });
-
-    if (rpcError) {
-      logger.error('DATABASE', 'RESET_STORE_FAILED', { storeId, error: rpcError });
-      return NextResponse.json(
-        createApiError('STORE_RESET_FAILED', rpcError.message),
-        { status: 500 }
-      );
-    }
-
-    // Audit log: reset completed
+    // FIX-AUDIT-MSTORE-05 (P2): Snapshot pre-reset para recuperación manual.
+    // Antes de invocar la RPC que borra los datos, capturamos las tablas afectadas
+    // y las guardamos en store_reset_snapshots. Si el volumen es muy grande
+    // (>5000 filas combinadas), guardamos solo un resumen agregado (counts por tabla)
+    // y logueamos un warning — no bloqueamos el reset por esto.
+    //
+    // La restauración es MANUAL vía SQL (soporte) por ahora — no se automatiza
+    // en esta ronda. El cron de limpieza (borrar snapshots expirados) queda como
+    // TODO pendiente (ver PR description).
     try {
-      await admin.from('audit_logs').insert({
-        action: 'store_reset_completed',
-        table_name: 'stores',
-        record_id: storeId,
-        store_id: storeId,
-        metadata: {
-          completed_at: new Date().toISOString(),
-          initiated_by: session.user.id,
-        },
-      });
-    } catch (auditErr: unknown) {
-      logger.error('DATABASE', 'RESET_AUDIT_COMPLETE_FAILED', { storeId, error: auditErr });
+      await captureResetSnapshot(admin, storeId, session.user.id, keepCatalog);
+    } catch (snapshotErr: unknown) {
+      // No bloqueamos el reset si el snapshot falla — pero dejamos rastro
+      logger.error('DATABASE', 'RESET_SNAPSHOT_CAPTURE_FAILED', { storeId, error: snapshotErr });
     }
 
-    return NextResponse.json({ success: true });
+    // FIX-AUDIT-MSTORE-04 (P2): idempotency para evitar doble-tap en reset.
+    // TTL 48h (mayor que archive/restore porque reset es más destructivo y el
+    // cliente puede tardar en reintentar tras un fallo de red).
+    const idemKeyRaw = req.headers.get('idempotency-key');
+    const idemKey = idemKeyRaw ? `reset:${session.user.id}:${storeId}:${idemKeyRaw}` : null;
+
+    const { status: idemStatus, body: idemBody, replayed } = await withIdempotency<Record<string, unknown>>(
+      idemKey,
+      48 * 60 * 60, // 48h
+      async () => {
+        // Execute the reset via RPC — pasamos p_keep_catalog a la nueva versión de la RPC
+        const { error: rpcError } = await admin.rpc('reset_store_data', {
+          target_store_id: storeId,
+          p_keep_catalog: keepCatalog,
+        });
+
+        if (rpcError) {
+          logger.error('DATABASE', 'RESET_STORE_FAILED', { storeId, error: rpcError });
+          return { status: 500, body: createApiError('STORE_RESET_FAILED') };
+        }
+
+        // Audit log: reset completed
+        try {
+          await admin.from('audit_logs').insert({
+            action: 'store_reset_completed',
+            table_name: 'stores',
+            record_id: storeId,
+            store_id: storeId,
+            metadata: {
+              completed_at: new Date().toISOString(),
+              initiated_by: session.user.id,
+            },
+          });
+        } catch (auditErr: unknown) {
+          logger.error('DATABASE', 'RESET_AUDIT_COMPLETE_FAILED', { storeId, error: auditErr });
+        }
+
+        return { status: 200, body: { success: true } };
+      }
+    );
+
+    return NextResponse.json(idemBody, {
+      status: idemStatus,
+      ...(replayed ? { headers: { 'X-Idempotent-Replay': 'true' } } : {}),
+    });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : createApiError('UNKNOWN_ERROR').error;
     return NextResponse.json({ ...createApiError('UNKNOWN_ERROR'), error: message }, { status: 500 });
+  }
+}
+
+// ── FIX-AUDIT-MSTORE-05: Snapshot helper ────────────────────────────────────
+//
+// Captura las tablas afectadas por reset_store_data antes de que se borren.
+// Si el volumen combinado > 5000 filas, guarda solo un resumen (counts).
+const SNAPSHOT_FULL_LIMIT = 5000;
+
+async function captureResetSnapshot(
+  admin: SupabaseClient,
+  storeId: string,
+  userId: string,
+  keepCatalog: boolean
+): Promise<void> {
+  // Tablas que SIEMPRE se borran
+  const [productsResult, transactionsResult, stockMovementsResult, receiptsResult] = await Promise.all([
+    !keepCatalog
+      ? admin.from('products').select('*').eq('store_id', storeId)
+      : Promise.resolve({ data: null, error: null }),
+    admin.from('transactions').select('*').eq('store_id', storeId),
+    admin.from('stock_movements').select('*').eq('store_id', storeId),
+    admin.from('receipts').select('*').eq('store_id', storeId),
+  ]);
+
+  const products = (productsResult as any).data || [];
+  const transactions = (transactionsResult as any).data || [];
+  const stockMovements = (stockMovementsResult as any).data || [];
+  const receipts = (receiptsResult as any).data || [];
+
+  const totalRows = products.length + transactions.length + stockMovements.length + receipts.length;
+
+  const summary = {
+    products: products.length,
+    transactions: transactions.length,
+    stock_movements: stockMovements.length,
+    receipts: receipts.length,
+  };
+
+  // Si el volumen es muy grande, guardamos solo el resumen
+  const isFull = totalRows <= SNAPSHOT_FULL_LIMIT;
+  const snapshot: Record<string, unknown> = {
+    summary,
+    full: isFull,
+    captured_at: new Date().toISOString(),
+  };
+
+  if (isFull) {
+    if (!keepCatalog) snapshot.products = products;
+    snapshot.transactions = transactions;
+    snapshot.stock_movements = stockMovements;
+    snapshot.receipts = receipts;
+  } else {
+    logger.warn('DATABASE', 'RESET_SNAPSHOT_TRUNCATED', {
+      storeId, totalRows, limit: SNAPSHOT_FULL_LIMIT,
+      message: 'Snapshot too large — only summary counts saved, full data not captured',
+    });
+  }
+
+  const { error: snapError } = await admin.from('store_reset_snapshots').insert({
+    store_id: storeId,
+    initiated_by: userId,
+    keep_catalog: keepCatalog,
+    snapshot,
+  });
+
+  if (snapError) {
+    logger.error('DATABASE', 'RESET_SNAPSHOT_INSERT_FAILED', { storeId, error: snapError });
+  } else {
+    logger.info('DATABASE', 'RESET_SNAPSHOT_CAPTURED', {
+      storeId, keepCatalog, full: isFull, totalRows,
+    });
   }
 }
 

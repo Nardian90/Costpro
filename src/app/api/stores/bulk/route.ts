@@ -8,6 +8,8 @@ import { z } from 'zod';
 import { logger } from '@/lib/logger';
 import { checkTenantRateLimit, rateLimitHeaders, type Plan } from '@/lib/rate-limit/tenant-limiter'; // B1
 import { canManageStore } from '@/lib/roles';
+// FIX-AUDIT-MSTORE-04 (P2): idempotency para evitar doble-tap en bulk destructivo
+import { withIdempotency } from '@/lib/idempotency';
 
 /**
  * F4-T01: API route para operaciones bulk en tiendas.
@@ -116,70 +118,100 @@ async function bulkHandler(req: NextRequest, session: AuthenticatedSession) {
       action, count: allowedIds.length, denied: deniedIds.length, userId: session.user.id,
     });
 
-    if (action === 'activate' || action === 'deactivate') {
-      const isActive = action === 'activate';
-      // FIX-DEUDA: capturar el count real de filas afectadas (no inflar con storeIds.length).
-      // Antes retornábamos affected: storeIds.length sin verificar — si algún storeId
-      // no existía o RLS bloqueaba, el conteo se inflaba. Ahora usamos Promise.allSettled
-      // por tienda para contar solo las que realmente se actualizaron.
-      const results = await Promise.allSettled(
-        allowedIds.map(async (storeId) => {
-          const { error } = await admin
-            .from('stores')
-            .update({ is_active: isActive })
-            .eq('id', storeId);
-          if (error) throw error;
-          return 1; // 1 store actualizada
-        })
-      );
+    // FIX-AUDIT-MSTORE-04 (P2): idempotency para evitar doble-tap en bulk destructivo.
+    // Key combina userId + action + storeIds ordenados + idempotency-key del cliente.
+    // Los storeIds se ordenan para que el mismo set en distinto orden produzca la misma key.
+    const idemKeyRaw = req.headers.get('idempotency-key');
+    const sortedStoreIds = [...allowedIds].sort().join(',');
+    const idemKey = idemKeyRaw
+      ? `bulk:${session.user.id}:${action}:${sortedStoreIds}:${idemKeyRaw}`
+      : null;
 
-      const succeeded = results
-        .filter((r): r is PromiseFulfilledResult<number> => r.status === 'fulfilled')
-        .reduce((sum, r) => sum + r.value, 0);
-      const failed = results.filter(r => r.status === 'rejected').length;
+    const { status: idemStatus, body: idemBody, replayed } = await withIdempotency<Record<string, unknown>>(
+      idemKey,
+      24 * 60 * 60, // 24h
+      async () => {
+        if (action === 'activate' || action === 'deactivate') {
+          const isActive = action === 'activate';
+          // FIX-DEUDA: capturar el count real de filas afectadas (no inflar con storeIds.length).
+          // Antes retornábamos affected: storeIds.length sin verificar — si algún storeId
+          // no existía o RLS bloqueaba, el conteo se inflaba. Ahora usamos Promise.allSettled
+          // por tienda para contar solo las que realmente se actualizaron.
+          const results = await Promise.allSettled(
+            allowedIds.map(async (storeId) => {
+              const { error } = await admin
+                .from('stores')
+                .update({ is_active: isActive })
+                .eq('id', storeId);
+              if (error) throw error;
+              return 1; // 1 store actualizada
+            })
+          );
 
-      if (failed > 0) {
-        logger.warn('DATABASE', 'STORE_BULK_TOGGLE_PARTIAL', {
-          action, succeeded, failed,
-        });
+          const succeeded = results
+            .filter((r): r is PromiseFulfilledResult<number> => r.status === 'fulfilled')
+            .reduce((sum, r) => sum + r.value, 0);
+          const failed = results.filter(r => r.status === 'rejected').length;
+
+          if (failed > 0) {
+            logger.warn('DATABASE', 'STORE_BULK_TOGGLE_PARTIAL', {
+              action, succeeded, failed,
+            });
+          }
+
+          return {
+            status: 200,
+            body: {
+              success: true,
+              affected: succeeded,
+              failed,
+              denied: deniedIds.length,
+              action,
+            },
+          };
+        }
+
+        if (action === 'delete') {
+          const results = await Promise.allSettled(
+            allowedIds.map(async (storeId) => {
+              const { error } = await admin.rpc('soft_delete_store', {
+                p_store_id: storeId,
+                p_deleted_by: session.user.id,
+              });
+              if (error) throw error;
+              return storeId;
+            })
+          );
+
+          const succeeded = results.filter(r => r.status === 'fulfilled').map(r => (r as PromiseFulfilledResult<string>).value);
+          const failed = results.filter(r => r.status === 'rejected');
+
+          if (failed.length > 0) {
+            logger.warn('DATABASE', 'STORE_BULK_DELETE_PARTIAL', {
+              succeeded: succeeded.length, failed: failed.length,
+            });
+          }
+
+          return {
+            status: 200,
+            body: {
+              success: true,
+              affected: succeeded.length,
+              failed: failed.length,
+              denied: deniedIds.length,
+              action,
+            },
+          };
+        }
+
+        return { status: 400, body: createApiError('INVALID_DATA') };
       }
+    );
 
-      return NextResponse.json({
-        success: true,
-        affected: succeeded,
-        failed,
-        denied: deniedIds.length,
-        action,
-      });
-    }
-
-    if (action === 'delete') {
-      const results = await Promise.allSettled(
-        allowedIds.map(async (storeId) => {
-          const { error } = await admin.rpc('soft_delete_store', {
-            p_store_id: storeId,
-            p_deleted_by: session.user.id,
-          });
-          if (error) throw error;
-          return storeId;
-        })
-      );
-
-      const succeeded = results.filter(r => r.status === 'fulfilled').map(r => (r as PromiseFulfilledResult<string>).value);
-      const failed = results.filter(r => r.status === 'rejected');
-
-      if (failed.length > 0) {
-        logger.warn('DATABASE', 'STORE_BULK_DELETE_PARTIAL', {
-          succeeded: succeeded.length, failed: failed.length,
-        });
-      }
-
-      return NextResponse.json({
-        success: true, affected: succeeded.length, failed: failed.length, denied: deniedIds.length, action,
-      });
-    }
-
-    return NextResponse.json(createApiError('INVALID_DATA'), { status: 400 });
+    return NextResponse.json(idemBody, {
+      status: idemStatus,
+      ...(replayed ? { headers: { 'X-Idempotent-Replay': 'true' } } : {}),
+    });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : createApiError('UNKNOWN_ERROR').error;
     return NextResponse.json({ ...createApiError('UNKNOWN_ERROR'), error: message }, { status: 500 });
