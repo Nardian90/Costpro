@@ -2,7 +2,8 @@
 # FIX-INF-032: Bun 1.x is actively maintained; pin to specific minor if reproducibility issues arise
 FROM oven/bun:1 AS deps
 WORKDIR /app
-COPY package.json bun.lockb ./
+# FIX-DEPLOY (2026-07-10): usar bun.lock (no bun.lockb que no existe)
+COPY package.json bun.lock ./
 RUN bun install --frozen-lockfile --production=false
 
 # ── Stage 2: Build ──
