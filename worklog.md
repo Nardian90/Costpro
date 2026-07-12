@@ -4594,3 +4594,51 @@ Stage Summary:
   - Modificados: src/types/index.ts, src/services/rss-service.ts, src/app/api/rss/route.ts,
     src/components/views/terminal/views/rss/NewsView.tsx,
     src/components/views/terminal/views/rss/RSSManagementView.tsx
+
+---
+Task ID: FIX-CI-VERCEL-BUILD
+Agent: Main Agent (Super Z)
+Task: Fix Vercel build failure (TypeScript params Promise error) and CI test failures (16 failing tests). Also apply RSS migration to remote Supabase.
+
+Work Log:
+
+**Problema 1: Vercel build failing with TypeScript error**
+Error: `Type 'typeof import(".../commissions/payments/[id]/route")' does not satisfy the constraint 'RouteHandlerConfig<"/api/commissions/payments/[id]">'.`
+Root cause: 4 API routes used Next.js 14 signature `{ params: { id: string } }` but Next.js 16 requires `{ params: Promise<{ id: string }> }` and `await params`.
+Fixed files:
+- src/app/api/commissions/payments/[id]/route.ts (PATCH)
+- src/app/api/payments/[id]/route.ts (DELETE)
+- src/app/api/production-orders/[id]/route.ts (GET + PATCH, 6 references)
+- src/app/api/production-orders/[id]/withdraw/route.ts (POST)
+Verified: `npx tsc --noEmit` returns 0 errors.
+
+**Problema 2: 16 CI tests failing**
+
+(2a) Live-DB tests ENOTFOUND test.supabase.co (6 tests in sprint4 + pick3-growth):
+- Root cause: GH Actions CI workflow sets NEXT_PUBLIC_SUPABASE_URL='https://test.supabase.co' as placeholder.
+- Fix: Added IS_LIVE_DB check (skips when URL contains 'test.supabase.co' or 'localhost', or SKIP_LIVE_DB_TESTS=true).
+- Used itOrSkip pattern to conditionally skip tests.
+
+(2b) Sprint1/Sprint2 timeouts at 5000ms (8 tests):
+- Root cause: BacktestEngine tests take 10-25s each on slow CI runners; default testTimeout is 5s.
+- Fix: vitest.config.ts — testTimeout: 30_000, hookTimeout: 30_000.
+
+(2c) eltoque-scraper tests expecting 'estimated' fallback (2 tests):
+- Root cause: Implementation was changed (FIX-CARRY-FORWARD) to NOT invent BCC×1.15 estimates.
+- Now returns empty array, UI uses carry-forward from last real value.
+- Updated 2 tests to expect toHaveLength(0) instead of estimated rates.
+
+**Problema 3: RSS migration applied to production Supabase**
+- Used scripts/apply-migration.cjs (new helper) to apply migration via Management API.
+- Endpoint: POST https://api.supabase.com/v1/projects/{ref}/database/query
+- Verified: 15 feeds in rss_feeds (8 categories), 33 priority_keywords in rss_settings.
+- Also fixed migration SQL: changed UPDATE to INSERT...ON CONFLICT DO UPDATE (idempotent), removed apply_filter column reference (doesn't exist in prod).
+
+Stage Summary:
+- **Vercel build**: fixed, will deploy successfully on next push.
+- **CI tests**: 16/16 failures fixed. Verification: 97 tests pass + 6 skipped (live-DB).
+- **RSS migration**: applied to prod Supabase. 15 feeds + 33 keywords confirmed.
+- **3 commits pushed**:
+  1. `fix(build): Vercel compile error — Next.js 16 async params`
+  2. `test(ci): fix flaky CI failures — testTimeout, live-DB skip, scraper carry-forward`
+  3. `fix(rss): migration idempotency + apply-migration helper script`
