@@ -24,7 +24,9 @@ export const CostProLoader: React.FC<CostProLoaderProps> = ({
   className,
   fullScreen = false,
 }) => {
-  const id = React.useId().replace(/:/g, '');
+  // FIX-HYDRATION (2026-07-12): usar ID estable en vez de React.useId()
+  // que genera hashes diferentes entre server/client en Turbopack dev mode.
+  const id = 'cpl';
 
   const isReturning = useSyncExternalStore(
     () => () => {},
