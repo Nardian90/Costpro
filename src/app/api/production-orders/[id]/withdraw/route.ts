@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabaseClient';
 
 // POST: Dar salida a un item (descontar del inventario)
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id: orderId } = await params;
     const body = await request.json();
     const { item_id, qty, unit_cost } = body;
 
@@ -25,7 +26,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     });
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, orderId });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }

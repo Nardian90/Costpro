@@ -22,8 +22,9 @@ const updateSchema = z.object({
   exchange_rate: z.number().positive().default(1.0).optional(),
 });
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id: orderId } = await params;
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
 
@@ -31,20 +32,20 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     const { data: order, error } = await supabase
       .from('production_orders')
       .select('*')
-      .eq('id', params.id)
+      .eq('id', orderId)
       .single();
     if (error) return NextResponse.json({ error: error.message }, { status: 404 });
 
     const { data: items } = await supabase
       .from('production_order_items')
       .select('*, products(id, name, sku, stock_current)')
-      .eq('order_id', params.id);
+      .eq('order_id', orderId);
 
     const { data: payments } = await supabase
       .from('payment_transactions')
       .select('*')
       .eq('ref_type', 'production_order')
-      .eq('ref_id', params.id)
+      .eq('ref_id', orderId)
       .order('payment_date', { ascending: false });
 
     return NextResponse.json({ ...order, items: items || [], payments: payments || [] });
@@ -53,8 +54,9 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id: orderId } = await params;
     const body = await request.json();
     const parsed = updateSchema.safeParse(body);
     if (!parsed.success) return NextResponse.json({ error: 'Datos inválidos', details: parsed.error.flatten() }, { status: 400 });
@@ -71,7 +73,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
     const { data: order, error: orderFetchError } = await supabase
       .from('production_orders')
       .select('id, order_type, status, store_id')
-      .eq('id', params.id)
+      .eq('id', orderId)
       .single();
 
     if (orderFetchError || !order) {
@@ -90,7 +92,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
         const { error: payError } = await supabase.rpc('register_supplier_payment', {
           p_store_id: userData.active_store_id,
           p_ref_type: 'production_order',
-          p_ref_id: params.id,
+          p_ref_id: orderId,
           p_amount: final_amount,
           p_payment_method: final_method,
           p_paid_by: user.id,
@@ -106,7 +108,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
       // C5: Si es orden de producción, recibir producto terminado
       if (order.order_type === 'production' && output_product_id && output_quantity) {
         const { error: recvError } = await supabase.rpc('receive_production_output', {
-          p_order_id: params.id,
+          p_order_id: orderId,
           p_product_id: output_product_id,
           p_quantity: output_quantity,
           p_store_id: userData.active_store_id,
@@ -120,7 +122,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
       // C5: Si es orden de servicio, crear venta en transactions
       if (order.order_type === 'service') {
         const { error: saleError } = await supabase.rpc('close_service_order_as_sale', {
-          p_order_id: params.id,
+          p_order_id: orderId,
           p_store_id: userData.active_store_id,
           p_seller_id: user.id,
           p_payment_method: final_method || 'cash',
@@ -141,7 +143,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
     // Si es acción de recibir output (sin cerrar)
     if (action === 'receive_output' && output_product_id && output_quantity) {
       await supabase.rpc('receive_production_output', {
-        p_order_id: params.id,
+        p_order_id: orderId,
         p_product_id: output_product_id,
         p_quantity: output_quantity,
         p_store_id: userData.active_store_id,
@@ -151,7 +153,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
     const { data, error } = await supabase
       .from('production_orders')
       .update({ ...updateData, updated_at: new Date().toISOString() })
-      .eq('id', params.id)
+      .eq('id', orderId)
       .select()
       .single();
 

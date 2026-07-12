@@ -13,7 +13,7 @@ const updateCommissionSchema = z.object({
 // ── PATCH: Aprobar / Pagar / Cancelar comisión ──
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const body = await request.json();
@@ -32,7 +32,7 @@ export async function PATCH(
     }
 
     const { action, payment_method, currency, exchange_rate } = parsed.data;
-    const commissionId = params.id;
+    const { id: commissionId } = await params;
 
     // Verificar que existe y obtener estado actual
     const { data: commission, error: fetchError } = await supabase

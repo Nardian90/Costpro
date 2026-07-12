@@ -7,10 +7,10 @@ import { supabase } from '@/lib/supabaseClient';
 // paid_amount y payment_status del documento asociado.
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const paymentId = params.id;
+    const { id: paymentId } = await params;
     if (!paymentId) {
       return NextResponse.json({ error: 'ID de pago requerido' }, { status: 400 });
     }
