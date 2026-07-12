@@ -16,6 +16,7 @@ import { cn } from '@/lib/utils';
 import { useRSSFeeds, useRSSSettings, useAddRSSFeed, useUpdateRSSFeed, useDeleteRSSFeed, useUpdateRSSSettings } from '@/hooks/api/useRSS';
 import { StateRenderer } from '@/components/ui/StateRenderer';
 import { toast } from 'sonner';
+import { RSSFeedCategory, RSS_FEED_CATEGORIES } from '@/types';
 
 export default function RSSManagementView() {
   const { data: feeds, isLoading: isLoadingFeeds, error: feedsError } = useRSSFeeds();
@@ -28,6 +29,7 @@ export default function RSSManagementView() {
 
   const [newFeedUrl, setNewFeedUrl] = React.useState('');
   const [newFeedName, setNewFeedName] = React.useState('');
+  const [newFeedCategory, setNewFeedCategory] = React.useState<RSSFeedCategory | ''>('');
   const [newKeyword, setNewKeyword] = React.useState('');
 
   const handleAddFeed = async (e: React.FormEvent) => {
@@ -35,9 +37,15 @@ export default function RSSManagementView() {
     if (!newFeedUrl) return;
 
     try {
-      await addFeedMutation.mutateAsync({ url: newFeedUrl, name: newFeedName, is_active: true });
+      await addFeedMutation.mutateAsync({
+        url: newFeedUrl,
+        name: newFeedName,
+        is_active: true,
+        category: newFeedCategory || null,
+      });
       setNewFeedUrl('');
       setNewFeedName('');
+      setNewFeedCategory('');
       toast.success('Fuente RSS añadida correctamente');
     } catch (err: any) {
       toast.error('Error al añadir fuente: ' + err.message);
@@ -60,6 +68,15 @@ export default function RSSManagementView() {
       toast.success('Fuente eliminada');
     } catch (err: any) {
       toast.error('Error al eliminar fuente');
+    }
+  };
+
+  const handleChangeFeedCategory = async (id: string, category: RSSFeedCategory | null) => {
+    try {
+      await updateFeedMutation.mutateAsync({ id, feed: { category } });
+      toast.success('Categoría actualizada');
+    } catch (err: any) {
+      toast.error('Error al actualizar categoría');
     }
   };
 
@@ -104,32 +121,49 @@ export default function RSSManagementView() {
               Fuentes de Noticias (Feeds)
             </h3>
 
-            <form onSubmit={handleAddFeed} className="grid grid-cols-1 md:grid-cols-5 gap-3 mb-8">
-              <input
-                type="text"
-                value={newFeedName}
-                onChange={(e) => setNewFeedName(e.target.value)}
-                placeholder="NOMBRE (EJ. BBC)"
-                aria-label="Nombre del feed RSS"
-                className="md:col-span-2 bg-background border border-border rounded-xl px-4 py-3 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-primary/20 uppercase"
-              />
-              <input
-                type="url"
-                value={newFeedUrl}
-                onChange={(e) => setNewFeedUrl(e.target.value)}
-                placeholder="URL DEL FEED RSS..."
-                required
-                aria-label="URL del feed RSS"
-                className="md:col-span-2 bg-background border border-border rounded-xl px-4 py-3 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-primary/20"
-              />
-              <button
-                type="submit"
-                disabled={addFeedMutation.isPending}
-                className="bg-primary text-foreground font-black text-xs uppercase tracking-widest rounded-xl hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
-              >
-                <Plus className="w-4 h-4" />
-                Añadir
-              </button>
+            <form onSubmit={handleAddFeed} className="space-y-3 mb-8">
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
+                <input
+                  type="text"
+                  value={newFeedName}
+                  onChange={(e) => setNewFeedName(e.target.value)}
+                  placeholder="NOMBRE (EJ. BBC)"
+                  aria-label="Nombre del feed RSS"
+                  className="md:col-span-2 bg-background border border-border rounded-xl px-4 py-3 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-primary/20 uppercase"
+                />
+                <input
+                  type="url"
+                  value={newFeedUrl}
+                  onChange={(e) => setNewFeedUrl(e.target.value)}
+                  placeholder="URL DEL FEED RSS..."
+                  required
+                  aria-label="URL del feed RSS"
+                  className="md:col-span-3 bg-background border border-border rounded-xl px-4 py-3 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-primary/20"
+                />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
+                <select
+                  value={newFeedCategory}
+                  onChange={(e) => setNewFeedCategory(e.target.value as RSSFeedCategory | '')}
+                  aria-label="Categoría del feed RSS"
+                  className="md:col-span-4 bg-background border border-border rounded-xl px-4 py-3 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-primary/20 uppercase"
+                >
+                  <option value="">SIN CATEGORÍA</option>
+                  {(Object.entries(RSS_FEED_CATEGORIES) as [RSSFeedCategory, { label: string; icon: string; description: string }][]).map(([catKey, catInfo]) => (
+                    <option key={catKey} value={catKey}>
+                      {catInfo.icon} {catInfo.label.toUpperCase()}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="submit"
+                  disabled={addFeedMutation.isPending}
+                  className="md:col-span-1 bg-primary text-foreground font-black text-xs uppercase tracking-widest rounded-xl hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+                >
+                  <Plus className="w-4 h-4" />
+                  Añadir
+                </button>
+              </div>
             </form>
 
             <StateRenderer isLoading={isLoadingFeeds} error={feedsError} data={feeds}>
@@ -140,6 +174,7 @@ export default function RSSManagementView() {
                       <tr className="text-xs font-black uppercase text-muted-foreground tracking-[0.2em] border-b border-border">
                         <th className="p-4 text-left">Fuente</th>
                         <th className="p-4 text-left">URL</th>
+                        <th className="p-4 text-left">Categoría</th>
                         <th className="p-4 text-center">Estado</th>
                         <th className="p-4 text-right">Acciones</th>
                       </tr>
@@ -152,6 +187,21 @@ export default function RSSManagementView() {
                           </td>
                           <td className="p-4 font-mono text-xs text-muted-foreground max-w-[200px] truncate">
                             {feed.url}
+                          </td>
+                          <td className="p-4">
+                            <select
+                              value={feed.category || ''}
+                              onChange={(e) => handleChangeFeedCategory(feed.id, (e.target.value || null) as RSSFeedCategory | null)}
+                              aria-label={`Cambiar categoría de ${feed.name}`}
+                              className="bg-background border border-border rounded-lg px-2 py-1 text-[10px] font-black uppercase tracking-tight focus:outline-none focus:ring-2 focus:ring-primary/20"
+                            >
+                              <option value="">Sin cat.</option>
+                              {(Object.entries(RSS_FEED_CATEGORIES) as [RSSFeedCategory, { label: string; icon: string; description: string }][]).map(([catKey, catInfo]) => (
+                                <option key={catKey} value={catKey}>
+                                  {catInfo.icon} {catInfo.label}
+                                </option>
+                              ))}
+                            </select>
                           </td>
                           <td className="p-4">
                             <div className="flex justify-center">
@@ -242,7 +292,7 @@ export default function RSSManagementView() {
                   <div className="space-y-1">
                     <p className="text-xs font-black uppercase text-foreground tracking-widest">Nota del Sistema</p>
                     <p className="text-xs font-medium text-muted-foreground leading-relaxed">
-                      Las noticias que contengan estas palabras clave se mostrarán primero y con un indicador visual. Las tasas de cambio del Banco Central se priorizan automáticamente.
+                      Las noticias que contengan estas palabras clave se mostrarán primero y con un indicador visual. Las tasas de cambio del Banco Central se priorizan automáticamente. Usa el filtro por tema en la vista de Noticias para acotar por categoría (Economía, Comercio, Tributación, etc.).
                     </p>
                   </div>
                 </div>

@@ -16,7 +16,7 @@ import {
 import { cn, formatDate, formatTime, safeFormatDate } from '@/lib/utils';
 import { useRSSNews } from '@/hooks/api/useRSS';
 import { StateRenderer } from '@/components/ui/StateRenderer';
-import { RSSNewsItem } from '@/types';
+import { RSSNewsItem, RSSFeedCategory, RSS_FEED_CATEGORIES } from '@/types';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 
 export default function NewsView() {
@@ -24,6 +24,17 @@ export default function NewsView() {
   const { data: news, isLoading, error, refetch, isRefetching } = useRSSNews();
   const [searchTerm, setSearchTerm] = React.useState('');
   const [filterPriority, setFilterPriority] = React.useState(true);
+  // FIX-RSS-MIPYMES (2026-07-13): filtro por categoría temática (8 categorías MiPyme)
+  const [activeCategories, setActiveCategories] = React.useState<Set<RSSFeedCategory>>(new Set());
+
+  const toggleCategory = (cat: RSSFeedCategory) => {
+    setActiveCategories(prev => {
+      const next = new Set(prev);
+      if (next.has(cat)) next.delete(cat);
+      else next.add(cat);
+      return next;
+    });
+  };
 
   const filteredNews = React.useMemo(() => {
     if (!news) return [];
@@ -33,9 +44,25 @@ export default function NewsView() {
       const matchesSearch = title.includes(searchTerm.toLowerCase()) ||
                           content.includes(searchTerm.toLowerCase());
       const matchesPriority = filterPriority ? item.isPriority : true;
-      return matchesSearch && matchesPriority;
+      // Categoría: si no hay filtros activos, muestra todas. Si hay, solo las que matcheen.
+      const matchesCategory = activeCategories.size === 0
+        ? true
+        : (item.category ? activeCategories.has(item.category) : false);
+      return matchesSearch && matchesPriority && matchesCategory;
     });
-  }, [news, searchTerm, filterPriority]);
+  }, [news, searchTerm, filterPriority, activeCategories]);
+
+  // Conteo de noticias por categoría (para mostrar badges con conteo)
+  const categoryCounts = React.useMemo(() => {
+    const counts: Partial<Record<RSSFeedCategory, number>> = {};
+    if (!news) return counts;
+    for (const item of news) {
+      if (item.category) {
+        counts[item.category] = (counts[item.category] || 0) + 1;
+      }
+    }
+    return counts;
+  }, [news]);
 
   const exchangeRateNews = React.useMemo(() => {
     return news?.find(item => item.isExchangeRate);
@@ -144,6 +171,58 @@ export default function NewsView() {
         </div>
       </div>
 
+      {/* FIX-RSS-MIPYMES: Filtro por categoría temática (8 categorías MiPyme) */}
+      <div className="p-5 rounded-2xl border border-border bg-card">
+        <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+          <div className="flex items-center gap-2">
+            <Filter className="w-4 h-4 text-primary" />
+            <h3 className="text-xs font-black uppercase tracking-widest text-foreground">
+              Filtrar por Tema
+            </h3>
+          </div>
+          {activeCategories.size > 0 && (
+            <button type="button"
+              onClick={() => setActiveCategories(new Set())}
+              className="text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-destructive transition-colors"
+            >
+              Limpiar filtros ({activeCategories.size})
+            </button>
+          )}
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {(Object.entries(RSS_FEED_CATEGORIES) as [RSSFeedCategory, { label: string; icon: string; description: string }][]).map(([catKey, catInfo]) => {
+            const count = categoryCounts[catKey] || 0;
+            const isActive = activeCategories.has(catKey);
+            return (
+              <button
+                key={catKey}
+                type="button"
+                onClick={() => toggleCategory(catKey)}
+                title={catInfo.description}
+                aria-pressed={isActive}
+                className={cn(
+                  "flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold uppercase tracking-tight transition-all border",
+                  isActive
+                    ? "bg-primary text-primary-foreground border-primary shadow-md shadow-primary/20"
+                    : "bg-background border-border text-muted-foreground hover:bg-accent hover:text-foreground"
+                )}
+              >
+                <span className="text-sm">{catInfo.icon}</span>
+                <span>{catInfo.label}</span>
+                {count > 0 && (
+                  <span className={cn(
+                    "ml-1 px-1.5 py-0.5 rounded text-[9px] font-black tabular-nums",
+                    isActive ? "bg-primary-foreground/20 text-primary-foreground" : "bg-muted text-muted-foreground"
+                  )}>
+                    {count}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       {/* News List */}
       <StateRenderer
         isLoading={isLoading}
@@ -205,6 +284,14 @@ function NewsCard({ item }: { item: RSSNewsItem }) {
             <span className="text-xs font-black uppercase tracking-widest text-muted-foreground">
               {item.feedName || 'Noticias'}
             </span>
+            {item.category && RSS_FEED_CATEGORIES[item.category] && (
+              <span
+                title={RSS_FEED_CATEGORIES[item.category].description}
+                className="ml-1 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-muted/60 text-muted-foreground"
+              >
+                {RSS_FEED_CATEGORIES[item.category].icon} {RSS_FEED_CATEGORIES[item.category].label}
+              </span>
+            )}
           </div>
           <div className="text-xs font-bold text-muted-foreground uppercase flex items-center gap-1">
             <Clock className="w-3 h-3" />
