@@ -75,8 +75,11 @@ ON CONFLICT (url) DO UPDATE
   WHERE rss_feeds.category IS NULL;
 
 -- 5. Ampliar priority_keywords con términos MSME-relevantes
-UPDATE public.rss_settings
-SET priority_keywords = ARRAY[
+-- NOTA: la columna apply_filter no existe en producción (solo en la migration
+-- original 20260225_create_rss_module.sql pero fue eliminada posteriormente).
+-- Si la fila no existe, la creamos; si existe, la actualizamos.
+INSERT INTO public.rss_settings (id, priority_keywords)
+VALUES ('00000000-0000-0000-0000-000000000000', ARRAY[
   -- Finanzas / Tasas
   'Tasas de cambio', 'CUP', 'Divisas', 'Política Monetaria',
   'USD', 'EUR', 'Tipo de cambio', 'Banco Central',
@@ -93,8 +96,9 @@ SET priority_keywords = ARRAY[
   'Inflación', 'PIB', 'Recesión', 'Commodities',
   -- Digitalización
   'Transformación digital', 'Ciberseguridad', 'Pymes digitales'
-]
-WHERE id = '00000000-0000-0000-0000-000000000000';
+])
+ON CONFLICT (id) DO UPDATE
+  SET priority_keywords = EXCLUDED.priority_keywords;
 
 -- 6. Comentario informativo
 COMMENT ON COLUMN public.rss_feeds.category IS
