@@ -4506,3 +4506,91 @@ Stage Summary:
   - Eliminados: src/app/api/stores/setup-archive/route.ts, src/app/api/admin/migrate/route.ts
   - Nuevos: src/lib/idempotency.ts, supabase/migrations/20260712000001_store_reset_snapshots.sql, src/__tests__/unit/idempotency.test.ts, src/__tests__/integration/store-csrf-ratelimit-idempotency.test.ts
   - Modificados: archive/route.ts, restore/route.ts, check-slug/route.ts, health-batch/route.ts, reset/route.ts, bulk/route.ts, store-archive-restore-auth.test.ts, store-audit-health-reset-auth.test.ts
+
+---
+Task ID: GESTION-RSS-MIPYMES
+Agent: Main Agent (Super Z)
+Task: Revisar configuración del módulo "Gestión RSS" y terminar de configurarlo con otros sitios de interés para MiPymes, con filtros de temas que interesen a las MiPymes.
+
+Work Log:
+
+**Diagnóstico inicial**:
+- El módulo RSS solo tenía 1 feed sembrado: Banco Central de Cuba (https://www.bc.gob.cu/rss.xml)
+- El "filtro de temas" era solo por palabras clave de prioridad (6 keywords: Tasas de cambio, CUP, Divisas, Política Monetaria, Economía, Aranceles)
+- No existía categorización temática que permitiera al usuario filtrar por área de interés
+- Schema: tabla `rss_feeds` con columnas id/url/name/is_active/created_at — sin columna category
+
+**Categorías definidas (8 temas de interés MiPyme)**:
+1. economia_finanzas (💰) — Política monetaria, PIB, inflación, tasas
+2. comercio_exterior (🌍) — Importación, exportación, aranceles, aduanas
+3. tributacion_fiscal (📋) — Impuestos, ONAT, declaraciones, régimen MiPyme
+4. legislacion (⚖️) — Gaceta Oficial, decretos, normativa MiPyme
+5. tecnologia (💻) — Transformación digital, ciberseguridad, innovación
+6. mercados (📈) — Precios, materias primas, commodities, análisis
+7. educacion_negocios (🎓) — Capacitación, gestión, MBA, casos de estudio
+8. regional_latam (🌎) — Economía Cuba, Caribe, América Latina
+
+**Migration: 20260713000001_rss_mipymes_expansion.sql**:
+- ALTER TABLE rss_feeds ADD COLUMN category TEXT (nullable, retrocompatible)
+- UPDATE del feed existente (BCC) → category = 'economia_finanzas'
+- CREATE INDEX idx_rss_feeds_category_active ON (category, is_active)
+- INSERT de 14 feeds nuevos con ON CONFLICT (url) DO UPDATE SET category:
+  * economia_finanzas: BCC, FMI, Banco Mundial
+  * comercio_exterior: OMC, CEPAL
+  * tributacion_fiscal: CIAT
+  * legislacion: Gaceta Oficial de Cuba
+  * tecnologia: Wired Business, The Verge
+  * mercados: Reuters, Investing.com
+  * educacion_negocios: Harvard Business Review, SME News Latam
+  * regional_latam: Reuters LatAm, BBC Mundo
+- UPDATE rss_settings: priority_keywords ampliado de 6 a ~30 términos:
+  Tasas/Divisas/Banco Central, ONAT/Impuesto/Tributaria, Aranceles/Aduana,
+  MiPyme/Gaceta Oficial/Decreto, Inflación/PIB/Recesión,
+  Transformación digital/Ciberseguridad, etc.
+
+**Tipos (src/types/index.ts)**:
+- Nuevo type RSSFeedCategory (8 union members)
+- Nuevo const RSS_FEED_CATEGORIES: mapa categoría → {label, icon, description}
+- RSSFeed.category?: RSSFeedCategory | null
+- RSSNewsItem.category?: RSSFeedCategory | null
+
+**API (src/app/api/rss/route.ts)**:
+- Cada item ahora incluye feedCategory (desde feed.category)
+- El campo se propaga como 'category' en la respuesta JSON
+
+**Service (src/services/rss-service.ts)**:
+- getFeeds/addFeed/updateFeed ahora incluyen 'category' en select/insert/update
+
+**UI — NewsView.tsx (vista de noticias)**:
+- Nuevo estado activeCategories: Set<RSSFeedCategory> (multi-selección)
+- toggleCategory() activa/desactiva categorías individualmente
+- Filtro combinado AND: search + priority + categories
+- categoryCounts: memo que cuenta noticias por categoría
+- Nueva sección "Filtrar por Tema" con 8 chips con ícono + label + badge de conteo
+- Botón "Limpiar filtros (N)" visible cuando hay categorías activas
+- NewsCard ahora muestra badge de categoría con ícono + label + tooltip
+- Tooltips descriptivos en cada chip
+
+**UI — RSSManagementView.tsx (admin)**:
+- Formulario de añadir feed: nueva fila con selector de categoría (8 opciones + "Sin categoría")
+- Tabla de feeds: nueva columna "Categoría" con dropdown editable in-line
+  (cambiar la categoría dispara updateFeed mutation automáticamente)
+- Nota del Sistema actualizada mencionando el nuevo filtro por tema
+
+**Verificación**:
+- TypeScript check: 0 errores
+- ESLint: 0 errores en archivos modificados
+- Vitest: 103 tests pasaron (1 skip pre-existente) — sin regresiones
+
+Stage Summary:
+- **14 fuentes RSS** de calidad añadidas (antes: 1, ahora: 15)
+- **8 categorías temáticas** MiPyme definidas y aplicadas
+- **Filtro multi-categoría** en la vista de Noticias (chips con conteo)
+- **Gestión de categoría** en la vista de Admin (dropdown editable in-line)
+- **~30 palabras clave** de prioridad (antes: 6)
+- **Retrocompatible**: feeds existentes sin categoría funcionan como antes
+- **Archivos modificados**:
+  - Nuevo: supabase/migrations/20260713000001_rss_mipymes_expansion.sql
+  - Modificados: src/types/index.ts, src/services/rss-service.ts, src/app/api/rss/route.ts,
+    src/components/views/terminal/views/rss/NewsView.tsx,
+    src/components/views/terminal/views/rss/RSSManagementView.tsx
