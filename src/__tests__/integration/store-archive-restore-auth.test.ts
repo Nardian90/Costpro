@@ -48,6 +48,14 @@ vi.mock('@/lib/api-errors', () => ({
 vi.mock('@/lib/logger', () => ({
   logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn() },
 }));
+// FIX-AUDIT-MSTORE-04: mock idempotency para que los tests existentes no dependan
+// del cache. withIdempotency simplemente ejecuta el handler directo, replayed=false.
+vi.mock('@/lib/idempotency', () => ({
+  withIdempotency: async (_key: any, _ttl: any, handler: any) => {
+    const result = await handler();
+    return { ...result, replayed: false };
+  },
+}));
 
 // Importar DESPUÉS de los mocks
 import { POST as archivePOST } from '@/app/api/stores/[id]/archive/route';

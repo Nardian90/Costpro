@@ -41,6 +41,14 @@ vi.mock('@/lib/api-errors', () => ({
 vi.mock('@/lib/logger', () => ({
   logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn() },
 }));
+// FIX-AUDIT-MSTORE-04: mock idempotency para que los tests existentes no dependan
+// del cache. withIdempotency simplemente ejecuta el handler directo, replayed=false.
+vi.mock('@/lib/idempotency', () => ({
+  withIdempotency: async (_key: any, _ttl: any, handler: any) => {
+    const result = await handler();
+    return { ...result, replayed: false };
+  },
+}));
 
 // Importar DESPUÉS de los mocks
 import { GET as auditGET } from '@/app/api/stores/[id]/audit/route';
@@ -134,7 +142,9 @@ describe('FIX-AUDIT-9.0: auth gates en audit, health-batch, reset', () => {
       const res = await healthBatchGET(req as any, session);
       expect(res.status).toBe(400);
       const body = await res.json();
-      expect(body.error).toMatch(/UUID/i);
+      // FIX-AUDIT-MSTORE-03: ahora usa createApiError('INVALID_STORE_ID') en vez de
+      // un error message crudo. El mock devuelve { error: 'INVALID_STORE_ID' }.
+      expect(body.error).toMatch(/INVALID_STORE_ID|UUID/i);
     });
 
     it('UUID de tienda ajena → excluido del resultado (empty response)', async () => {
