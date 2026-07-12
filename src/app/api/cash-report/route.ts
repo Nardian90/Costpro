@@ -48,7 +48,12 @@ export async function GET(request: NextRequest) {
       (p: any) => p.payment_method === 'cash' && p.currency === 'CUP'
     );
     const totalCashPaymentsCup = cashCupPayments.reduce((sum: number, p: any) => sum + Number(p.total), 0);
-    const cashBalanceCup = (cashCupSales?.total || 0) - totalCashPaymentsCup;
+    // FIX-COMMISSION (2026-07-12): incluir comisiones pagadas en efectivo CUP como egresos
+    const cashCupCommissions = (reportData?.commissions || []).filter(
+      (c: any) => c.payment_method === 'cash' && c.currency === 'CUP'
+    );
+    const totalCashCommissionsCup = cashCupCommissions.reduce((sum: number, c: any) => sum + Number(c.total), 0);
+    const cashBalanceCup = (cashCupSales?.total || 0) - totalCashPaymentsCup - totalCashCommissionsCup;
 
     // Desglose óptimo (greedy) del balance de efectivo CUP
     let remaining = Math.max(0, cashBalanceCup);

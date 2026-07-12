@@ -1138,11 +1138,28 @@ function RulesTab({ rules, onRefresh, onEdit, onNew }: any) {
 // TAB 3: Pagos
 // ════════════════════════════════════════════════════════════════════
 function PaymentsTab({ payments, onRefresh }: any) {
+  const [payingId, setPayingId] = useState<string | null>(null);
+  const [payMethod, setPayMethod] = useState<'cash' | 'transfer' | 'zelle'>('cash');
+  const [payCurrency, setPayCurrency] = useState('CUP');
   const statusLabels: Record<string, { label: string; color: string }> = {
     draft: { label: 'Borrador', color: 'bg-muted text-muted-foreground border-border' },
     approved: { label: 'Aprobado', color: 'bg-primary/15 text-primary border-primary/30' },
     paid: { label: 'Pagado', color: 'bg-success/15 text-success border-success/30' },
     cancelled: { label: 'Cancelado', color: 'bg-destructive/15 text-destructive border-destructive/30' },
+  };
+
+  const handleAction = async (id: string, action: 'approve' | 'pay' | 'cancel', method?: string, currency?: string) => {
+    try {
+      const res = await fetch(`/api/commissions/payments/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action, payment_method: method, currency: currency || 'CUP' }),
+      });
+      if (res.ok) {
+        onRefresh();
+        setPayingId(null);
+      }
+    } catch { /* ignore */ }
   };
 
   return (
@@ -1157,15 +1174,14 @@ function PaymentsTab({ payments, onRefresh }: any) {
               <tr className="border-b-2 border-border text-left">
                 <th className="py-3 px-4 font-black uppercase tracking-widest text-xs text-muted-foreground">Trabajador</th>
                 <th className="py-3 px-4 font-black uppercase tracking-widest text-xs text-muted-foreground">Periodo</th>
-                <th className="py-3 px-4 font-black uppercase tracking-widest text-xs text-muted-foreground text-right">Calculado</th>
                 <th className="py-3 px-4 font-black uppercase tracking-widest text-xs text-muted-foreground text-right">Final</th>
                 <th className="py-3 px-4 font-black uppercase tracking-widest text-xs text-muted-foreground">Estado</th>
-                <th className="py-3 px-4 font-black uppercase tracking-widest text-xs text-muted-foreground">Creado</th>
+                <th className="py-3 px-4 font-black uppercase tracking-widest text-xs text-muted-foreground">Acciones</th>
               </tr>
             </thead>
             <tbody>
               {payments.length === 0 ? (
-                <tr><td colSpan={6} className="py-12 text-center text-muted-foreground">Sin pagos registrados</td></tr>
+                <tr><td colSpan={5} className="py-12 text-center text-muted-foreground">Sin pagos registrados</td></tr>
               ) : payments.map((p: any) => {
                 const s = statusLabels[p.status] || statusLabels.draft;
                 return (
@@ -1176,15 +1192,73 @@ function PaymentsTab({ payments, onRefresh }: any) {
                     <td className="py-3 px-4 text-xs text-muted-foreground">
                       {formatDate(p.period_start)} → {formatDate(p.period_end)}
                     </td>
-                    <td className="py-3 px-4 text-right font-mono text-muted-foreground">{formatCurrency(p.calculated_amount)}</td>
                     <td className="py-3 px-4 text-right font-mono font-black text-foreground">{formatCurrency(p.final_amount)}</td>
                     <td className="py-3 px-4">
                       <span className={cn('px-2 py-1 rounded-md text-xs font-bold uppercase border', s.color)}>
                         {s.label}
                       </span>
+                      {p.payment_method && p.status === 'paid' && (
+                        <span className="ml-1 text-xs">
+                          {p.payment_method === 'cash' ? '💵' : p.payment_method === 'transfer' ? '📱' : '💳'} {p.currency}
+                        </span>
+                      )}
                     </td>
-                    <td className="py-3 px-4 text-xs text-muted-foreground">
-                      {new Date(p.created_at).toLocaleDateString('es-ES')}
+                    <td className="py-3 px-4">
+                      {/* FIX-COMMISSION-PAY (2026-07-12): Acciones de aprobar/pagar/cancelar */}
+                      {p.status === 'draft' && (
+                        <button
+                          onClick={() => handleAction(p.id, 'approve')}
+                          className="px-2 py-1 rounded text-[10px] font-black uppercase bg-primary/10 text-primary border border-primary/30 hover:bg-primary/20 mr-1"
+                        >
+                          ✓ Aprobar
+                        </button>
+                      )}
+                      {(p.status === 'draft' || p.status === 'approved') && (
+                        <button
+                          onClick={() => setPayingId(payingId === p.id ? null : p.id)}
+                          className="px-2 py-1 rounded text-[10px] font-black uppercase bg-success/10 text-success border border-success/30 hover:bg-success/20 mr-1"
+                        >
+                          💰 Pagar
+                        </button>
+                      )}
+                      {p.status !== 'cancelled' && p.status !== 'paid' && (
+                        <button
+                          onClick={() => handleAction(p.id, 'cancel')}
+                          className="px-2 py-1 rounded text-[10px] font-black uppercase bg-destructive/10 text-destructive border border-destructive/30 hover:bg-destructive/20"
+                        >
+                          ✕
+                        </button>
+                      )}
+                      {/* Formulario de pago */}
+                      {payingId === p.id && (
+                        <div className="mt-2 flex flex-col gap-1.5 p-2 rounded-lg border border-border/30 bg-muted/10">
+                          <select
+                            value={payMethod}
+                            onChange={(e) => setPayMethod(e.target.value as any)}
+                            className="h-8 bg-background border border-border/50 rounded px-2 text-xs font-bold"
+                          >
+                            <option value="cash">💵 Efectivo</option>
+                            <option value="transfer">📱 Transferencia</option>
+                            <option value="zelle">💳 Zelle</option>
+                          </select>
+                          <select
+                            value={payCurrency}
+                            onChange={(e) => setPayCurrency(e.target.value)}
+                            className="h-8 bg-background border border-border/50 rounded px-2 text-xs font-bold"
+                          >
+                            <option value="CUP">CUP</option>
+                            <option value="USD">USD</option>
+                            <option value="EUR">EUR</option>
+                            <option value="MLC">MLC</option>
+                          </select>
+                          <button
+                            onClick={() => handleAction(p.id, 'pay', payMethod, payCurrency)}
+                            className="h-8 rounded bg-success text-white text-[10px] font-black uppercase hover:opacity-90"
+                          >
+                            Confirmar Pago
+                          </button>
+                        </div>
+                      )}
                     </td>
                   </tr>
                 );

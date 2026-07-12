@@ -166,6 +166,27 @@ export function CashReportModal({ open, onClose }: CashReportModalProps) {
               </div>
             </div>
 
+            {/* FIX-COMMISSION (2026-07-12): Comisiones pagadas a trabajadores */}
+            {report.commissions && report.commissions.length > 0 && (
+              <div>
+                <h3 className="text-[11px] font-black uppercase text-muted-foreground mb-2">Comisiones a Trabajadores</h3>
+                <div className="space-y-1">
+                  {report.commissions.map((c, i) => (
+                    <div key={i} className="flex items-center justify-between rounded-lg border border-border/30 p-2.5 bg-muted/10">
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg">{methodIcon(c.payment_method)}</span>
+                        <div>
+                          <p className="text-xs font-bold">{methodLabel(c.payment_method)} ({c.currency})</p>
+                          <p className="text-[10px] text-muted-foreground">{c.commission_count} comisiones</p>
+                        </div>
+                      </div>
+                      <p className="text-sm font-mono font-black tabular-nums text-destructive">−{formatCurrency(c.total)}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {report.cash_breakdown_cup.total > 0 && (
               <div>
                 <h3 className="text-[11px] font-black uppercase text-muted-foreground mb-2">

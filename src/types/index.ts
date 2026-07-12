@@ -462,9 +462,16 @@ export interface CashReport {
     payment_count: number;
     total: number;
   }>;
+  commissions: Array<{
+    payment_method: string;
+    currency: string;
+    commission_count: number;
+    total: number;
+  }>;
   totals: {
     sales_total_cup: number;
     payments_total_cup: number;
+    commissions_total_cup: number;
     balance_cup: number;
   };
   start_date: string;
