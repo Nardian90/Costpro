@@ -125,17 +125,18 @@ CREATE TRIGGER trg_update_payment_status
   FOR EACH ROW EXECUTE FUNCTION update_payment_status();
 
 -- ── 5. RPC: Registrar pago a proveedor ──
+-- FIX-DEPLOY (2026-07-12): todos los params con default deben ir al final
 CREATE OR REPLACE FUNCTION register_supplier_payment(
   p_store_id UUID,
   p_ref_type TEXT,
   p_ref_id UUID,
   p_amount NUMERIC,
   p_payment_method TEXT,
+  p_paid_by UUID,
   p_currency TEXT DEFAULT 'CUP',
   p_exchange_rate NUMERIC DEFAULT 1.0,
-  p_reference TEXT,
-  p_notes TEXT,
-  p_paid_by UUID
+  p_reference TEXT DEFAULT NULL,
+  p_notes TEXT DEFAULT NULL
 )
 RETURNS UUID AS $$
 DECLARE

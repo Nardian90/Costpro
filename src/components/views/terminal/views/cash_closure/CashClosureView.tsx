@@ -1,13 +1,15 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { DollarSign, CreditCard, Layers, Edit, History, Eye, CheckCircle2, RefreshCw, AlertTriangle, ShieldCheck, FileText, Clock, Wallet, ArrowRight, Play, Square } from 'lucide-react';
+import { DollarSign, CreditCard, Layers, Edit, History, Eye, CheckCircle2, RefreshCw, AlertTriangle, ShieldCheck, FileText, Clock, Wallet, ArrowRight, Play, Square, Printer } from 'lucide-react';
 import { cn, formatCurrency, formatDate, formatTime } from '@/lib/utils';
 import ActionMenu, { Action } from '@/components/ui/ActionMenu';
 import { BaseModal } from '@/components/ui/BaseModal';
 import { PrimaryButton, SecondaryButton } from '@/components/ui/atomic';
 import { Skeleton } from '@/components/ui/skeleton';
 import { motion } from 'framer-motion';
+// FIX-PAYMENT-TRACKING (2026-07-12): Reporte de caja con desglose de billetes
+import { CashReportModal } from '@/components/views/terminal/views/cash/CashReportModal';
 
 import { useCashClosures, useCreateCashClosure, useUpdateCashClosure, useSalesSinceLastClosure } from '@/hooks/api/useCashClosures';
 import { useAuthStore } from '@/store';
@@ -41,6 +43,8 @@ const AccessDenied = () => (
 export default function CashClosureView() {
   const { user } = useAuthStore();
   const { setCurrentView } = useUIStore();
+  // FIX-PAYMENT-TRACKING (2026-07-12): estado para el modal de reporte de caja
+  const [showCashReport, setShowCashReport] = useState(false);
   const {
     data: cashClosuresData,
     isLoading: isLoadingClosures,
@@ -265,7 +269,17 @@ export default function CashClosureView() {
               </div>
             ) : null}
           </div>
-          <div className="w-full sm:w-auto">
+          <div className="w-full sm:w-auto flex items-center gap-2">
+            {/* FIX-PAYMENT-TRACKING: Botón de Reporte de Caja para entrega de dinero */}
+            <button
+              type="button"
+              onClick={() => setShowCashReport(true)}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-primary/20 text-primary hover:bg-primary/10 transition-colors text-xs font-black uppercase tracking-widest min-h-[44px]"
+              title="Reporte de caja con desglose de billetes para entrega de dinero"
+            >
+              <Printer className="w-4 h-4" />
+              <span className="hidden sm:inline">Reporte Entrega</span>
+            </button>
             <ActionMenu
               actions={actions}
               sticky={false}
@@ -720,6 +734,9 @@ export default function CashClosureView() {
           </p>
         </div>
       </BaseModal>
+
+      {/* FIX-PAYMENT-TRACKING: Modal de Reporte de Caja para entrega de dinero */}
+      <CashReportModal open={showCashReport} onClose={() => setShowCashReport(false)} />
     </>
   );
 }
