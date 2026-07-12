@@ -459,7 +459,7 @@ describe('F-01b: captureForDate integra scraper con fallback', () => {
     });
   }
 
-  it('scraper falla (Cloudflare) → capture_method=estimated, tasas = BCC×1.15', async () => {
+  it('scraper falla (Cloudflare) → carry-forward: no se persiste nada para elToque', async () => {
     global.fetch = buildFetchMock({ eltoqueHtml: null });
 
     const result = await captureForDate(
@@ -468,7 +468,7 @@ describe('F-01b: captureForDate integra scraper con fallback', () => {
       'fake-service-key',
     );
 
-    // Sin errores
+    // Sin errores fatales
     expect(result.errors).toEqual([]);
 
     // BCC: 6 capturas (USD×3 segs + EUR×3 segs), todas 'real'
@@ -478,27 +478,15 @@ describe('F-01b: captureForDate integra scraper con fallback', () => {
       expect(c.capture_method).toBe('real');
     });
 
-    // elToque: 3 capturas (USD, EUR, MLC), todas 'estimated'
+    // FIX-CARRY-FORWARD (2026-07-13): el comportamiento cambió — cuando ambos
+    // scrapers fallan, NO se inventa BCC×1.15. En su lugar, no se persiste
+    // nada para elToque (array vacío) y la UI usa carry-forward desde el
+    // último valor real. Esto evita propagar tasas inventadas a reportes
+    // contables y transacciones.
     const etCaptured = result.captured.filter(c => c.source === 'elToque');
-    expect(etCaptured).toHaveLength(3);
-    etCaptured.forEach(c => {
-      expect(c.capture_method).toBe('estimated');
-    });
+    expect(etCaptured).toHaveLength(0);
 
-    // Tasas calculadas = BCC_seg3 × 1.15:
-    //   USD = 574 × 1.15 = 660.1 → Math.round(66010)/100 = 660.1
-    //   EUR = 653 × 1.15 = 750.95
-    //   MLC = USD
-    const usdEt = etCaptured.find(c => c.currency === 'USD');
-    const eurEt = etCaptured.find(c => c.currency === 'EUR');
-    const mlcEt = etCaptured.find(c => c.currency === 'MLC');
-    expect(usdEt!.rate).toBeCloseTo(660.1, 2);
-    expect(eurEt!.rate).toBeCloseTo(750.95, 2);
-    expect(mlcEt!.rate).toBeCloseTo(660.1, 2);
-
-    // Log de advertencia emitido — IC-SOLUCIONES-CUBA-SCRAPER: el mensaje
-    // cambió a "Ambos scrapers fallaron" porque ahora intentamos eltoque.com
-    // primero y solucionescuba.com después antes de caer al estimado.
+    // Log de advertencia emitido mencionando "Ambos scrapers fallaron"
     expect(console.warn).toHaveBeenCalledWith(
       expect.stringContaining('Ambos scrapers fallaron'),
     );
@@ -545,7 +533,7 @@ describe('F-01b: captureForDate integra scraper con fallback', () => {
     );
   });
 
-  it('scraper devuelve 200 pero HTML sin tasas → fallback estimated', async () => {
+  it('scraper devuelve 200 pero HTML sin tasas → carry-forward (no persiste elToque)', async () => {
     global.fetch = buildFetchMock({
       eltoqueHtml: '<html><body><h1>Sitio en mantenimiento</h1></body></html>',
     });
@@ -556,10 +544,10 @@ describe('F-01b: captureForDate integra scraper con fallback', () => {
       'fake-service-key',
     );
 
+    // FIX-CARRY-FORWARD (2026-07-13): si el scraper devuelve HTML sin tasas
+    // reconocibles, NO se inventan tasas estimadas. Se persiste solo lo que
+    // se pudo capturar de BCC, y elToque queda vacío para esa fecha.
     const etCaptured = result.captured.filter(c => c.source === 'elToque');
-    expect(etCaptured).toHaveLength(3);
-    etCaptured.forEach(c => {
-      expect(c.capture_method).toBe('estimated');
-    });
+    expect(etCaptured).toHaveLength(0);
   });
 });

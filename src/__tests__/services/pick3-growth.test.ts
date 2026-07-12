@@ -333,13 +333,16 @@ describe('SPRINT-5: Growth Engine', () => {
   // DATABASE VERIFICATION
   // =========================================================================
   describe('Database — pick3_referrals table', () => {
-    it('la tabla existe en Supabase', async () => {
-      const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://wthkddeleylijmonclxg.supabase.co';
-      const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
-      if (!SERVICE_ROLE_KEY) {
-        console.log('[SKIP] No SUPABASE_SERVICE_ROLE_KEY in env');
-        return;
-      }
+    // FIX-CI (2026-07-13): skip when Supabase URL is a placeholder (test.supabase.co)
+    const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://wthkddeleylijmonclxg.supabase.co';
+    const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+    const IS_LIVE_DB = !!SERVICE_ROLE_KEY
+      && !SUPABASE_URL.includes('test.supabase.co')
+      && !SUPABASE_URL.includes('localhost')
+      && process.env.SKIP_LIVE_DB_TESTS !== 'true';
+    const itOrSkip = IS_LIVE_DB ? it : it.skip;
+
+    itOrSkip('la tabla existe en Supabase', async () => {
       const response = await fetch(
         `${SUPABASE_URL}/rest/v1/pick3_referrals?select=id&limit=1`,
         {

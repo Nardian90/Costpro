@@ -18,6 +18,15 @@ import path from 'path';
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://wthkddeleylijmonclxg.supabase.co';
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 
+// FIX-CI (2026-07-13): Skip live-DB tests when Supabase URL is a placeholder.
+// CI sets NEXT_PUBLIC_SUPABASE_URL='https://test.supabase.co' which is not a real host,
+// causing ENOTFOUND errors. These tests should only run against a real Supabase instance.
+const IS_LIVE_DB = !!SERVICE_ROLE_KEY
+  && !!SUPABASE_URL
+  && !SUPABASE_URL.includes('test.supabase.co')
+  && !SUPABASE_URL.includes('localhost')
+  && process.env.SKIP_LIVE_DB_TESTS !== 'true';
+
 describe('SPRINT-4 INTEGRATION AUDIT', () => {
   describe('Migration file', () => {
     it('el archivo de migración existe', () => {
@@ -282,7 +291,10 @@ describe('SPRINT-4 INTEGRATION AUDIT', () => {
   });
 
   describe('Database (Supabase) - Live verification', () => {
-    it('las tablas existen en Supabase', async () => {
+    // FIX-CI (2026-07-13): skip all tests in this block when no real Supabase is configured
+    const itOrSkip = IS_LIVE_DB ? it : it.skip;
+
+    itOrSkip('las tablas existen en Supabase', async () => {
       // Usar el service role key para bypass RLS y verificar que las tablas existen
       const response = await fetch(
         `${SUPABASE_URL}/rest/v1/pick3_subscriptions?select=id&limit=1`,
@@ -299,7 +311,7 @@ describe('SPRINT-4 INTEGRATION AUDIT', () => {
       expect(response.status).toBe(200);
     }, 15000);
 
-    it('tabla pick3_usage existe en Supabase', async () => {
+    itOrSkip('tabla pick3_usage existe en Supabase', async () => {
       const response = await fetch(
         `${SUPABASE_URL}/rest/v1/pick3_usage?select=id&limit=1`,
         {
@@ -312,7 +324,7 @@ describe('SPRINT-4 INTEGRATION AUDIT', () => {
       expect(response.status).toBe(200);
     }, 15000);
 
-    it('pick3_subscriptions tiene columnas esperadas', async () => {
+    itOrSkip('pick3_subscriptions tiene columnas esperadas', async () => {
       // Hacer un SELECT con todas las columnas esperadas para verificar que existen
       const response = await fetch(
         `${SUPABASE_URL}/rest/v1/pick3_subscriptions?select=id,user_id,tier,status,current_period_start,current_period_end,trial_end,stripe_customer_id,stripe_subscription_id,stripe_price_id,cancel_at_period_end,metadata,created_at,updated_at&limit=0`,
@@ -326,7 +338,7 @@ describe('SPRINT-4 INTEGRATION AUDIT', () => {
       expect(response.status).toBe(200);
     }, 15000);
 
-    it('pick3_usage tiene columnas esperadas', async () => {
+    itOrSkip('pick3_usage tiene columnas esperadas', async () => {
       const response = await fetch(
         `${SUPABASE_URL}/rest/v1/pick3_usage?select=id,user_id,period,ai_queries_count,backtests_count,api_calls_count,ai_queries_limit,backtests_limit,last_reset,created_at,updated_at&limit=0`,
         {
@@ -339,7 +351,7 @@ describe('SPRINT-4 INTEGRATION AUDIT', () => {
       expect(response.status).toBe(200);
     }, 15000);
 
-    it('puede insertar y leer una suscripción de prueba', async () => {
+    itOrSkip('puede insertar y leer una suscripción de prueba', async () => {
       // Crear una suscripción de prueba usando service role (bypass RLS)
       // Nota: el user_id debe existir en auth.users por la foreign key constraint
       // Usamos un UUID aleatorio que probablemente no existe, pero capturamos el error
