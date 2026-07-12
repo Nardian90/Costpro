@@ -400,6 +400,13 @@ export interface Receipt {
   store_id?: string | null;
   supplier?: string | null;
   reception_date?: string | null;
+  // FIX-PAYMENT-TRACKING (2026-07-12): campos de pago a proveedor
+  payment_status?: 'unpaid' | 'partial' | 'paid';
+  payment_method?: 'cash' | 'transfer' | 'zelle' | null;
+  paid_amount?: number;
+  due_date?: string | null;
+  paid_at?: string | null;
+  payment_terms_days?: number;
 }
 
 export interface ReceiptItem {
@@ -418,6 +425,54 @@ export interface ReceiptItem {
     image_url?: string | null;
     public_image_url?: string | null;
   } | null;
+}
+
+// ============================================
+// Payment Tracking — Pagos a proveedores
+// ============================================
+export interface PaymentTransaction {
+  id: string;
+  store_id: string;
+  ref_type: 'receipt' | 'service';
+  ref_id: string;
+  amount: number;
+  payment_method: 'cash' | 'transfer' | 'zelle';
+  currency: string;
+  exchange_rate: number;
+  amount_cup: number;
+  payment_date: string;
+  reference?: string | null;
+  notes?: string | null;
+  paid_by?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CashReport {
+  sales: Array<{
+    payment_method: string;
+    currency: string;
+    transaction_count: number;
+    total: number;
+  }>;
+  payments: Array<{
+    payment_method: string;
+    currency: string;
+    ref_type: 'receipt' | 'service';
+    payment_count: number;
+    total: number;
+  }>;
+  totals: {
+    sales_total_cup: number;
+    payments_total_cup: number;
+    balance_cup: number;
+  };
+  start_date: string;
+  end_date: string;
+  cash_breakdown_cup: {
+    total: number;
+    denominations: Array<{ denomination: number; count: number; subtotal: number }>;
+  };
 }
 
 // ============================================

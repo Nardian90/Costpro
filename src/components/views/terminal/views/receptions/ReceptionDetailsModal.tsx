@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import { BaseModal } from "@/components/ui/BaseModal";
-import { Package, Hash, User, Calendar, FileText, Building2, Download, CheckCircle2, AlertTriangle, Trash2, Truck, Link2, Plus, RefreshCw, Eye, X, DollarSign } from 'lucide-react';
+import { Package, Hash, User, Calendar, FileText, Building2, Download, CheckCircle2, AlertTriangle, Trash2, Truck, Link2, Plus, RefreshCw, Eye, X, DollarSign, Wallet } from 'lucide-react';
 import { type Receipt, type ReceiptItem } from '@/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { resolveProductImage, getProductImageUrl, formatCurrency, formatDate } from '@/lib/utils';
@@ -52,7 +52,7 @@ export function ReceptionDetailsModal({
 }: ReceptionDetailsModalProps) {
   // F3: Tab state for "Costos Asociados" — debe ir ANTES de cualquier early return
   // para cumplir con las reglas de hooks de React.
-  const [activeTab, setActiveTab] = useState<'items' | 'costs' | 'tasa'>('items');
+  const [activeTab, setActiveTab] = useState<'items' | 'costs' | 'tasa' | 'payments'>('items');
   const [tasaUpdateLoading, setTasaUpdateLoading] = useState<string | null>(null);
 
   // FIX-BATCH: Estado para asignación global de tasa a toda la recepción
@@ -270,6 +270,22 @@ export function ReceptionDetailsModal({
                 <DollarSign className="w-4 h-4" />
                 Tasa de Cambio
               </button>
+              {/* Tab Pagos proveedor */}
+              <button
+                type="button"
+                onClick={() => setActiveTab('payments')}
+                className={cn(
+                  "flex-1 py-3 text-xs font-black uppercase tracking-widest border-b-2 -mb-px transition-colors min-h-[44px] flex items-center justify-center gap-2",
+                  activeTab === 'payments'
+                    ? 'border-primary text-primary'
+                    : 'border-transparent text-muted-foreground hover:text-foreground'
+                )}
+                aria-selected={activeTab === 'payments'}
+                role="tab"
+              >
+                <Wallet className="w-4 h-4" />
+                Pagos
+              </button>
             </div>
           )}
 
@@ -348,6 +364,11 @@ export function ReceptionDetailsModal({
           {/* TAB: Costos Asociados */}
           {activeTab === 'costs' && !isEditMode && receipt && (
             <CostsAssociatedTab receiptId={receipt.id} />
+          )}
+
+          {/* FIX-PAYMENT-TRACKING (2026-07-12): TAB: Pagos a proveedor */}
+          {activeTab === 'payments' && !isEditMode && receipt && (
+            <PaymentsTab receiptId={receipt.id} totalCost={receipt.total_cost} />
           )}
 
           {/* TAB: Productos (contenido original) */}
@@ -1002,6 +1023,200 @@ function QuickCreateRow({ type, onCreate }: { type: string; onCreate: (type: str
       >
         <Plus className="w-3.5 h-3.5" />
       </button>
+    </div>
+  );
+}
+
+// ============================================================================
+// FIX-PAYMENT-TRACKING (2026-07-12): PaymentsTab — Tab de pagos a proveedor
+// Permite registrar pagos (parciales o totales) y ver el historial de pagos.
+// ============================================================================
+function PaymentsTab({ receiptId, totalCost }: { receiptId: string; totalCost: number }) {
+  const [payments, setPayments] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [amount, setAmount] = useState('');
+  const [method, setMethod] = useState<'cash' | 'transfer' | 'zelle'>('cash');
+  const [reference, setReference] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  const fetchPayments = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/payments?ref_type=receipt&ref_id=${receiptId}`);
+      if (res.ok) {
+        const data = await res.json();
+        setPayments(data);
+      }
+    } catch (e) {
+      console.error('[PaymentsTab] Error:', e);
+    } finally {
+      setLoading(false);
+    }
+  }, [receiptId]);
+
+  useEffect(() => { fetchPayments(); }, [fetchPayments]);
+
+  const totalPaid = payments.reduce((sum, p) => sum + Number(p.amount_cup || p.amount), 0);
+  const balance = totalCost - totalPaid;
+  const paymentStatus = balance <= 0 ? 'paid' : totalPaid > 0 ? 'partial' : 'unpaid';
+
+  const handleSubmit = async () => {
+    const amt = parseFloat(amount);
+    if (!amt || amt <= 0) { toast.error('Monto inválido'); return; }
+    setSubmitting(true);
+    try {
+      const res = await fetch('/api/payments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ref_type: 'receipt',
+          ref_id: receiptId,
+          amount: amt,
+          payment_method: method,
+          currency: 'CUP',
+          exchange_rate: 1.0,
+          reference: reference || null,
+        }),
+      });
+      if (res.ok) {
+        toast.success('Pago registrado');
+        setAmount(''); setReference(''); setShowForm(false);
+        fetchPayments();
+      } else {
+        const err = await res.json();
+        toast.error(err.error || 'Error al registrar pago');
+      }
+    } catch (e) {
+      toast.error('Error de conexión');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const statusBadge = {
+    paid: { label: 'Pagado', color: 'bg-success/10 text-success border-success/30' },
+    partial: { label: 'Parcial', color: 'bg-amber-500/10 text-amber-500 border-amber-500/30' },
+    unpaid: { label: 'Pendiente', color: 'bg-destructive/10 text-destructive border-destructive/30' },
+  }[paymentStatus];
+
+  return (
+    <div className="p-6 space-y-4">
+      {/* Resumen */}
+      <div className="grid grid-cols-3 gap-3">
+        <div className="rounded-xl border border-border/30 bg-muted/20 p-3 text-center">
+          <p className="text-[10px] font-black uppercase text-muted-foreground">Total</p>
+          <p className="text-lg font-mono font-black tabular-nums">{formatCurrency(totalCost)}</p>
+        </div>
+        <div className="rounded-xl border border-success/20 bg-success/5 p-3 text-center">
+          <p className="text-[10px] font-black uppercase text-muted-foreground">Pagado</p>
+          <p className="text-lg font-mono font-black tabular-nums text-success">{formatCurrency(totalPaid)}</p>
+        </div>
+        <div className="rounded-xl border border-primary/20 bg-primary/5 p-3 text-center">
+          <p className="text-[10px] font-black uppercase text-muted-foreground">Saldo</p>
+          <p className="text-lg font-mono font-black tabular-nums text-primary">{formatCurrency(balance)}</p>
+        </div>
+      </div>
+
+      {/* Badge de estado */}
+      <div className="flex items-center justify-between">
+        <span className={cn("px-3 py-1 rounded-full text-[10px] font-black uppercase border", statusBadge.color)}>
+          {statusBadge.label}
+        </span>
+        <button
+          type="button"
+          onClick={() => setShowForm(!showForm)}
+          className="px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-[10px] font-black uppercase hover:opacity-90 flex items-center gap-1"
+        >
+          <Plus className="w-3 h-3" /> Registrar Pago
+        </button>
+      </div>
+
+      {/* Formulario de pago */}
+      {showForm && (
+        <div className="rounded-xl border border-border/30 p-4 space-y-3 bg-muted/10">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-[10px] font-black uppercase text-muted-foreground block mb-1">Monto (CUP)</label>
+              <input
+                type="number"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                placeholder={String(balance.toFixed(2))}
+                className="w-full h-10 bg-background border border-border/50 rounded-lg px-3 text-sm font-bold tabular-nums"
+              />
+            </div>
+            <div>
+              <label className="text-[10px] font-black uppercase text-muted-foreground block mb-1">Método</label>
+              <select
+                value={method}
+                onChange={(e) => setMethod(e.target.value as any)}
+                className="w-full h-10 bg-background border border-border/50 rounded-lg px-3 text-sm font-bold"
+              >
+                <option value="cash">💵 Efectivo</option>
+                <option value="transfer">📱 Transferencia</option>
+                <option value="zelle">💳 Zelle</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label className="text-[10px] font-black uppercase text-muted-foreground block mb-1">Referencia (opcional)</label>
+            <input
+              type="text"
+              value={reference}
+              onChange={(e) => setReference(e.target.value)}
+              placeholder="N° de transferencia, etc."
+              className="w-full h-10 bg-background border border-border/50 rounded-lg px-3 text-sm"
+            />
+          </div>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => setShowForm(false)}
+              className="flex-1 h-10 rounded-lg border border-border/40 text-[10px] font-black uppercase hover:bg-muted"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={handleSubmit}
+              disabled={submitting}
+              className="flex-1 h-10 rounded-lg bg-primary text-primary-foreground text-[10px] font-black uppercase hover:opacity-90 disabled:opacity-50"
+            >
+              {submitting ? 'Guardando...' : 'Confirmar Pago'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Historial de pagos */}
+      <div className="space-y-2">
+        <h4 className="text-[10px] font-black uppercase text-muted-foreground">Historial de Pagos</h4>
+        {loading ? (
+          <p className="text-xs text-muted-foreground text-center py-4">Cargando...</p>
+        ) : payments.length === 0 ? (
+          <div className="text-center py-6 text-muted-foreground">
+            <Wallet className="w-8 h-8 mx-auto opacity-30 mb-2" />
+            <p className="text-xs">Sin pagos registrados</p>
+          </div>
+        ) : (
+          payments.map((p) => (
+            <div key={p.id} className="flex items-center justify-between rounded-lg border border-border/30 p-3 bg-muted/10">
+              <div className="flex items-center gap-2">
+                <span className="text-lg">
+                  {p.payment_method === 'cash' ? '💵' : p.payment_method === 'transfer' ? '📱' : '💳'}
+                </span>
+                <div>
+                  <p className="text-sm font-bold tabular-nums">{formatCurrency(Number(p.amount_cup || p.amount))} {p.currency}</p>
+                  <p className="text-[10px] text-muted-foreground">
+                    {new Date(p.payment_date).toLocaleString()} · {p.reference || 'Sin referencia'}
+                  </p>
+                </div>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
     </div>
   );
 }
