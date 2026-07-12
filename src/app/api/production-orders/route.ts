@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabaseClient';
 import { z } from 'zod';
 
 const createOrderSchema = z.object({
-  order_type: z.enum(['production', 'service']).default('service'),
+  order_type: z.enum(['production', 'service', 'work']).default('service'),
   customer_name: z.string().optional(),
   customer_ci: z.string().optional(),
   customer_phone: z.string().optional(),
@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
 
     // Registrar anticipo como pago
     if (parsed.data.advance_amount > 0 && parsed.data.advance_method) {
-      await supabase.rpc('register_supplier_payment', {
+      const { error: payError } = await supabase.rpc('register_supplier_payment', {
         p_store_id: userData.active_store_id,
         p_ref_type: 'production_order',
         p_ref_id: order.id,
@@ -77,6 +77,10 @@ export async function POST(request: NextRequest) {
         p_paid_by: user.id,
         p_currency: parsed.data.advance_currency,
       });
+      if (payError) {
+        console.error('[production-orders] Error registering payment:', payError);
+        return NextResponse.json({ error: 'Error al registrar anticipo: ' + payError.message }, { status: 500 });
+      }
     }
 
     return NextResponse.json(order, { status: 201 });

@@ -489,7 +489,7 @@ export interface ProductionOrder {
   id: string;
   store_id: string;
   order_number: string;
-  order_type: 'production' | 'service';
+  order_type: 'production' | 'service' | 'work';
   status: 'draft' | 'approved' | 'in_progress' | 'paused' | 'completed' | 'closed' | 'voided';
   customer_name?: string | null;
   customer_ci?: string | null;
@@ -504,6 +504,7 @@ export interface ProductionOrder {
   payment_status: 'unpaid' | 'partial' | 'paid';
   output_product_id?: string | null;
   output_quantity: number;
+  transaction_id?: string | null;
   order_date: string;
   start_date?: string | null;
   completion_date?: string | null;

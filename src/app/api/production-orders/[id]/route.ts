@@ -67,11 +67,27 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
 
     const { action, final_amount, final_method, final_currency, exchange_rate, output_product_id, output_quantity, ...updateData } = parsed.data;
 
+    // Fetch la orden actual para validar tipo y estado
+    const { data: order, error: orderFetchError } = await supabase
+      .from('production_orders')
+      .select('id, order_type, status, store_id')
+      .eq('id', params.id)
+      .single();
+
+    if (orderFetchError || !order) {
+      return NextResponse.json({ error: 'Orden no encontrada' }, { status: 404 });
+    }
+
     // Si es acción de cerrar orden
     if (action === 'close') {
-      // Registrar pago final
+      // C5: Si es orden de production, output product es obligatorio
+      if (order.order_type === 'production' && (!output_product_id || !output_quantity)) {
+        return NextResponse.json({ error: 'Las órdenes de producción requieren un producto terminado y cantidad' }, { status: 400 });
+      }
+
+      // C6: Registrar pago final con inspección de errores
       if (final_amount && final_amount > 0 && final_method) {
-        await supabase.rpc('register_supplier_payment', {
+        const { error: payError } = await supabase.rpc('register_supplier_payment', {
           p_store_id: userData.active_store_id,
           p_ref_type: 'production_order',
           p_ref_id: params.id,
@@ -81,16 +97,40 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
           p_currency: final_currency || 'CUP',
           p_exchange_rate: exchange_rate || 1.0,
         });
+        if (payError) {
+          console.error('[production-orders/close] Payment error:', payError);
+          return NextResponse.json({ error: 'Error al registrar pago: ' + payError.message }, { status: 500 });
+        }
       }
 
-      // Si es orden de producción, recibir producto terminado
-      if (output_product_id && output_quantity && output_quantity > 0) {
-        await supabase.rpc('receive_production_output', {
+      // C5: Si es orden de producción, recibir producto terminado
+      if (order.order_type === 'production' && output_product_id && output_quantity) {
+        const { error: recvError } = await supabase.rpc('receive_production_output', {
           p_order_id: params.id,
           p_product_id: output_product_id,
           p_quantity: output_quantity,
           p_store_id: userData.active_store_id,
         });
+        if (recvError) {
+          console.error('[production-orders/close] Receive output error:', recvError);
+          return NextResponse.json({ error: 'Error al recibir producto: ' + recvError.message }, { status: 500 });
+        }
+      }
+
+      // C5: Si es orden de servicio, crear venta en transactions
+      if (order.order_type === 'service') {
+        const { error: saleError } = await supabase.rpc('close_service_order_as_sale', {
+          p_order_id: params.id,
+          p_store_id: userData.active_store_id,
+          p_seller_id: user.id,
+          p_payment_method: final_method || 'cash',
+          p_currency: final_currency || 'CUP',
+          p_exchange_rate: exchange_rate || 1.0,
+        });
+        if (saleError) {
+          console.error('[production-orders/close] Sale creation error:', saleError);
+          return NextResponse.json({ error: 'Error al crear venta: ' + saleError.message }, { status: 500 });
+        }
       }
 
       (updateData as any).status = 'closed';

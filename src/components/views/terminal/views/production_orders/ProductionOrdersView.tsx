@@ -94,6 +94,7 @@ export default function ProductionOrdersView() {
           <option value="all">Todos los tipos</option>
           <option value="production">🏭 Producción</option>
           <option value="service">🔧 Servicio</option>
+          <option value="work">📦 Trabajo</option>
         </select>
         {['all', 'draft', 'approved', 'in_progress', 'paused', 'completed', 'closed', 'voided'].map(s => (
           <button key={s} onClick={() => setFilter(s)}
@@ -139,7 +140,7 @@ export default function ProductionOrdersView() {
                       <p className="text-[10px] text-muted-foreground">{new Date(order.order_date).toLocaleDateString()}</p>
                     </td>
                     <td className="p-3 text-center">
-                      <span className="text-lg">{order.order_type === 'production' ? '🏭' : '🔧'}</span>
+                      <span className="text-lg">{order.order_type === 'production' ? '🏭' : order.order_type === 'work' ? '📦' : '🔧'}</span>
                     </td>
                     <td className="p-3">
                       <p className="text-xs font-bold">{order.customer_name || 'Sin cliente'}</p>
@@ -214,7 +215,7 @@ export default function ProductionOrdersView() {
 // ============================================================================
 function CreateOrderModal({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
   const { user } = useAuthStore();
-  const [orderType, setOrderType] = useState<'production' | 'service'>('service');
+  const [orderType, setOrderType] = useState<'production' | 'service' | 'work'>('service');
   const [customerName, setCustomerName] = useState('');
   const [customerCI, setCustomerCI] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
@@ -286,9 +287,12 @@ function CreateOrderModal({ onClose, onCreated }: { onClose: () => void; onCreat
         </div>
         <div className="p-4 space-y-3">
           {/* Tipo */}
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-3 gap-2">
             <button onClick={() => setOrderType('service')} className={cn("py-3 rounded-xl border-2 text-xs font-black uppercase flex flex-col items-center gap-1", orderType === 'service' ? "border-primary bg-primary/5 text-primary" : "border-border/30 text-muted-foreground")}>
               <Wrench className="w-5 h-5" /> Servicio
+            </button>
+            <button onClick={() => setOrderType('work')} className={cn("py-3 rounded-xl border-2 text-xs font-black uppercase flex flex-col items-center gap-1", orderType === 'work' ? "border-primary bg-primary/5 text-primary" : "border-border/30 text-muted-foreground")}>
+              <Package className="w-5 h-5" /> Trabajo
             </button>
             <button onClick={() => setOrderType('production')} className={cn("py-3 rounded-xl border-2 text-xs font-black uppercase flex flex-col items-center gap-1", orderType === 'production' ? "border-primary bg-primary/5 text-primary" : "border-border/30 text-muted-foreground")}>
               <Factory className="w-5 h-5" /> Producción
@@ -441,7 +445,7 @@ function OrderDetailModal({ order, onClose, onUpdate }: { order: ProductionOrder
         {/* Header */}
         <div className="sticky top-0 bg-card border-b border-border/30 p-4 flex items-center justify-between z-10">
           <div className="flex items-center gap-2">
-            <span className="text-2xl">{order.order_type === 'production' ? '🏭' : '🔧'}</span>
+            <span className="text-2xl">{order.order_type === 'production' ? '🏭' : order.order_type === 'work' ? '📦' : '🔧'}</span>
             <div>
               <h2 className="text-sm font-black uppercase tracking-widest">{order.order_number}</h2>
               <p className="text-[10px] text-muted-foreground">{order.customer_name || 'Sin cliente'} · {sc.label}</p>
@@ -461,7 +465,7 @@ function OrderDetailModal({ order, onClose, onUpdate }: { order: ProductionOrder
         {activeTab === 'info' && (
           <div className="p-4 space-y-3">
             <div className="grid grid-cols-2 gap-2 text-xs">
-              <div><span className="text-muted-foreground">Tipo:</span> <span className="font-bold">{order.order_type === 'production' ? '🏭 Producción' : '🔧 Servicio'}</span></div>
+              <div><span className="text-muted-foreground">Tipo:</span> <span className="font-bold">{order.order_type === 'production' ? '🏭 Producción' : order.order_type === 'work' ? '📦 Trabajo' : '🔧 Servicio'}</span></div>
               <div><span className="text-muted-foreground">Fecha:</span> <span className="font-bold">{new Date(order.order_date).toLocaleDateString()}</span></div>
               <div><span className="text-muted-foreground">Cliente:</span> <span className="font-bold">{order.customer_name || '—'}</span></div>
               <div><span className="text-muted-foreground">CI:</span> <span className="font-bold">{order.customer_ci || '—'}</span></div>
