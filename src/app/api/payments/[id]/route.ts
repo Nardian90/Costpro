@@ -21,11 +21,23 @@ export async function DELETE(
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
 
-    // Verificar que el pago existe y obtener info para auditoría
+    // Obtener store_id del usuario para validación
+    const { data: userData } = await supabase
+      .from('profiles')
+      .select('active_store_id')
+      .eq('id', user.id)
+      .single();
+
+    if (!userData?.active_store_id) {
+      return NextResponse.json({ error: 'Tienda no configurada' }, { status: 400 });
+    }
+
+    // FIX-B6: Verificar que el pago existe Y pertenece a la store_id del usuario
     const { data: payment, error: fetchError } = await supabase
       .from('payment_transactions')
       .select('id, ref_type, ref_id, amount, payment_method, store_id')
       .eq('id', paymentId)
+      .eq('store_id', userData.active_store_id)  // FIX-B6: scope por store_id
       .single();
 
     if (fetchError || !payment) {

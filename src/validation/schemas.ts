@@ -378,7 +378,14 @@ export const receiptSchema = z.object({
   store_id: optionalResilientUuid,
   supplier: z.string().nullable().optional(),
   reception_date: z.string().nullable().optional(),
-});
+  // FIX-PAYMENT-TRACKING (2026-07-12): campos de pago a proveedor
+  payment_status: z.enum(["unpaid", "partial", "paid"]).catch("unpaid").default("unpaid").optional(),
+  payment_method: z.string().nullable().optional(),
+  paid_amount: z.coerce.number().catch(0).default(0).optional(),
+  due_date: z.string().nullable().optional(),
+  paid_at: z.string().nullable().optional(),
+  payment_terms_days: z.coerce.number().catch(30).default(30).optional(),
+}).passthrough(); // FIX: permitir campos extra del DB sin stripped por Zod
 
 export const receiptItemSchema = z.object({
   id: z.string().regex(uuidRegex),

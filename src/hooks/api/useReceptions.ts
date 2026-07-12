@@ -13,7 +13,7 @@ export function useReceptions(storeId?: string | null, isAdmin = false) {
   return useQuery({
     queryKey: ['receptions', cleanStoreId, isAdmin],
     queryFn: async () => {
-      const columns = 'id, created_at, total_cost, status, reference_doc, supplier, reception_date, store_id, user_id';
+      const columns = 'id, created_at, total_cost, status, reference_doc, supplier, reception_date, store_id, user_id, payment_status, paid_amount, due_date, payment_method, paid_at';
       let query = supabase.from('receipts').select(columns);
       if (cleanStoreId) {
         query = query.eq('store_id', cleanStoreId);
@@ -33,7 +33,7 @@ export async function prefetchReceptions(queryClient: QueryClient, storeId: stri
   return queryClient.prefetchQuery({
     queryKey: ['receptions', cleanStoreId, isAdmin],
     queryFn: async () => {
-      const columns = 'id, created_at, total_cost, status, reference_doc, supplier, reception_date, store_id, user_id';
+      const columns = 'id, created_at, total_cost, status, reference_doc, supplier, reception_date, store_id, user_id, payment_status, paid_amount, due_date, payment_method, paid_at';
       let query = supabase.from('receipts').select(columns);
       if (cleanStoreId) {
         query = query.eq('store_id', cleanStoreId);

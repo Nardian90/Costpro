@@ -1141,6 +1141,8 @@ function PaymentsTab({ payments, onRefresh }: any) {
   const [payingId, setPayingId] = useState<string | null>(null);
   const [payMethod, setPayMethod] = useState<'cash' | 'transfer' | 'zelle'>('cash');
   const [payCurrency, setPayCurrency] = useState('CUP');
+  // FIX-B2 (2026-07-12): exchange_rate para conversión correcta a CUP
+  const [payRate, setPayRate] = useState('1.0');
   const statusLabels: Record<string, { label: string; color: string }> = {
     draft: { label: 'Borrador', color: 'bg-muted text-muted-foreground border-border' },
     approved: { label: 'Aprobado', color: 'bg-primary/15 text-primary border-primary/30' },
@@ -1148,12 +1150,12 @@ function PaymentsTab({ payments, onRefresh }: any) {
     cancelled: { label: 'Cancelado', color: 'bg-destructive/15 text-destructive border-destructive/30' },
   };
 
-  const handleAction = async (id: string, action: 'approve' | 'pay' | 'cancel', method?: string, currency?: string) => {
+  const handleAction = async (id: string, action: 'approve' | 'pay' | 'cancel', method?: string, currency?: string, rate?: number) => {
     try {
       const res = await fetch(`/api/commissions/payments/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action, payment_method: method, currency: currency || 'CUP' }),
+        body: JSON.stringify({ action, payment_method: method, currency: currency || 'CUP', exchange_rate: rate || 1.0 }),
       });
       if (res.ok) {
         onRefresh();
@@ -1243,7 +1245,11 @@ function PaymentsTab({ payments, onRefresh }: any) {
                           </select>
                           <select
                             value={payCurrency}
-                            onChange={(e) => setPayCurrency(e.target.value)}
+                            onChange={(e) => {
+                              setPayCurrency(e.target.value);
+                              // FIX-B2: auto-set rate to 1.0 for CUP
+                              if (e.target.value === 'CUP') setPayRate('1.0');
+                            }}
                             className="h-8 bg-background border border-border/50 rounded px-2 text-xs font-bold"
                           >
                             <option value="CUP">CUP</option>
@@ -1251,8 +1257,19 @@ function PaymentsTab({ payments, onRefresh }: any) {
                             <option value="EUR">EUR</option>
                             <option value="MLC">MLC</option>
                           </select>
+                          {/* FIX-B2: input de tasa de cambio para monedas no-CUP */}
+                          {payCurrency !== 'CUP' && (
+                            <input
+                              type="number"
+                              step="0.01"
+                              value={payRate}
+                              onChange={(e) => setPayRate(e.target.value)}
+                              placeholder="Tasa CUP"
+                              className="h-8 bg-background border border-border/50 rounded px-2 text-xs font-bold"
+                            />
+                          )}
                           <button
-                            onClick={() => handleAction(p.id, 'pay', payMethod, payCurrency)}
+                            onClick={() => handleAction(p.id, 'pay', payMethod, payCurrency, parseFloat(payRate) || 1.0)}
                             className="h-8 rounded bg-success text-white text-[10px] font-black uppercase hover:opacity-90"
                           >
                             Confirmar Pago

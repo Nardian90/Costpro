@@ -280,6 +280,16 @@ export default function CashClosureView() {
               <Printer className="w-4 h-4" />
               <span className="hidden sm:inline">Reporte Entrega</span>
             </button>
+            {/* FIX-B4: Botón de Cuentas por Pagar */}
+            <button
+              type="button"
+              onClick={() => setCurrentView('accounts-payable')}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-amber-500/30 text-amber-600 dark:text-amber-500 hover:bg-amber-500/10 transition-colors text-xs font-black uppercase tracking-widest min-h-[44px]"
+              title="Ver cuentas por pagar y vencimientos"
+            >
+              <Clock className="w-4 h-4" />
+              <span className="hidden sm:inline">Cuentas por Pagar</span>
+            </button>
             <ActionMenu
               actions={actions}
               sticky={false}
