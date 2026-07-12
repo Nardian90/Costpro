@@ -109,6 +109,8 @@ const CashClosureView = dynamic(() => import('@/components/views/terminal/views/
 const StockHistoryView = dynamic(() => import('@/components/views/terminal/views/stock_history/StockHistoryView'), { ssr: false });
 const NewsView = dynamic(() => import('@/components/views/terminal/views/rss/NewsView'), { ssr: false });
 const RSSManagementView = dynamic(() => import('@/components/views/terminal/views/rss/RSSManagementView'), { ssr: false });
+// FIX-GESTION-UNIFICADA (2026-07-13): hub unificado con 3 tabs (Noticias, Vitrina, Tiendas)
+const ManagementHubView = dynamic(() => import('@/components/views/terminal/views/management_hub/ManagementHubView'), { ssr: false });
 const WikiView = dynamic(() => import('@/components/views/terminal/views/wiki/WikiView'), { ssr: false });
 const HealthView = dynamic(() => import('@/components/views/health/HealthView'), { ssr: false });
 const UsageMonitoringView = dynamic(() => import('@/components/views/terminal/views/usage_monitoring/UsageMonitoringView'), { ssr: false });
@@ -322,6 +324,8 @@ export default function TerminalShell() {
         case 'history': return <ViewErrorBoundary viewName="Historial de Stock"><StockHistoryView /></ViewErrorBoundary>;
         case 'news': return <ViewErrorBoundary viewName="Noticias"><NewsView /></ViewErrorBoundary>;
         case 'rss_management': return <ViewErrorBoundary viewName="Gestión RSS"><RSSManagementView /></ViewErrorBoundary>;
+        // FIX-GESTION-UNIFICADA (2026-07-13): hub con 3 tabs (Noticias, Vitrina, Tiendas)
+        case 'management-hub': return <ViewErrorBoundary viewName="Gestión"><ManagementHubView /></ViewErrorBoundary>;
         case 'wiki': return <ViewErrorBoundary viewName="Wiki"><WikiView /></ViewErrorBoundary>;
         case 'health': return <ViewErrorBoundary viewName="Salud del Sistema"><HealthView /></ViewErrorBoundary>;
         case 'usage-monitoring': return <ViewErrorBoundary viewName="Monitoreo de Uso"><UsageMonitoringView /></ViewErrorBoundary>;

@@ -132,7 +132,10 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
     'core_tools': 'calculator',
     'core': 'occ',
     'costos': 'cost-sheets',
-    'tienda': 'stores',
+    // FIX-GESTION-UNIFICADA (2026-07-13): MULTI-TIENDA ahora aterriza en el hub
+    // de Gestión (que tiene tabs Noticias/Vitrina/Tiendas) en lugar de 'stores'
+    // directo. 'stores' sigue siendo una vista válida accesible desde el tab.
+    'tienda': 'management-hub',
     'ipv_module': 'ipv',
     'otros': 'pick3-intelligence',
     'administracion': 'users',

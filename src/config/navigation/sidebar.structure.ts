@@ -173,21 +173,29 @@ export const SIDEBAR_STRUCTURE: NavModule[] = [
     description: 'Operaciones de tienda: venta (POS, tabla IPV, catálogo, ofertas), almacén (stock, ajustes, etiquetas), logística (recepciones, OCs, transferencias) y analítica (dashboard, reportes).',
     allowedRoles: ['admin', 'manager', 'encargado', 'clerk', 'usuario', 'warehouse'],
     children: [
-      // F1-T01: 'Gestión Tiendas' movida aquí desde CONFIGURACIÓN > Administrativa
-      // para que sea accesible con 1 clic desde el grupo MULTI-TIENDA (donde el admin
-      // naturalmente la busca), en lugar de estar a 3 niveles de profundidad.
-      { id: 'stores', label: 'Gestión Tiendas', type: 'item', icon: Building, ariaLabel: 'Administrar tiendas del tenant', allowedRoles: ['admin'] },
+      // FIX-GESTION-UNIFICADA (2026-07-13): hub unificado con 3 tabs
+      // (Tablón Noticias + Vitrina + Gestión Tiendas). Reemplaza 3 items separados
+      // en el sidebar (Tablón Noticias en ADMINISTRACIÓN, Vitrina y Gestión Tiendas
+      // en MULTI-TIENDA) por 1 solo "Gestión" para disminuir el ruido del menú.
+      // El tab Tiendas incluye un botón "Ver Dashboard KPI" que lleva al dashboard
+      // directamente (ya no hay item separado para Dashboard KPI en el sidebar).
+      { id: 'management-hub', label: 'Gestión', type: 'item', icon: LayoutGrid, ariaLabel: 'Hub de gestión: noticias, vitrina y tiendas', description: 'Centro unificado de gestión: Tablón Noticias, Vitrina pública y Gestión de Tiendas con acceso directo a Dashboard KPI.', allowedRoles: ['admin', 'manager', 'encargado'] },
       // Vitrina pública configurable (2026-07-04): accesible directamente desde
       // MULTI-TIENDA en lugar de estar oculta en Settings. El encargado/admin
       // configura banner, servicios, carrusel y canales de WhatsApp/Telegram
       // de la tienda activa.
+      // FIX-GESTION-UNIFICADA: 'storefront-config' también es accesible vía el
+      // tab "Vitrina" del hub de Gestión. Se mantiene el item directo para acceso
+      // rápido de manager/encargado (no admin) que no ven el hub completo.
       { id: 'storefront-config', label: 'Vitrina', type: 'item', icon: Store, ariaLabel: 'Configurar vitrina pública', description: 'Personaliza el banner, servicios, carrusel promocional y canales de contacto (WhatsApp/Telegram) de tu vitrina pública.', allowedRoles: ['admin', 'manager', 'encargado'] },
       { id: 'workers', label: 'Trabajadores y Comisiones', type: 'item', icon: UserCog, ariaLabel: 'Gestión de trabajadores y cálculo de comisiones', description: 'CRUD de trabajadores por tienda, reglas de comisión versionables, cálculo por periodo y registro de pagos con auditoría completa.', allowedRoles: ['admin', 'manager', 'encargado'] },
-      // QW-4 (IA Audit): "Dashboard KPI" y "Generador de Reportes" agrupados en
-      // un submenú "Analítica". Antes eran 2 ítems sueltos a nivel raíz del grupo
-      // MULTI-TIENDA, lo que rompía la cohesión (mezclaba operación con análisis).
-      // Ahora el grupo MULTI-TIENDA tiene 4 entradas lógicas en lugar de 6 dispersas:
-      // Gestión Tiendas · Analítica (submenu) · Punto de Venta · Almacén · Logística.
+      // QW-4 (IA Audit): "Tablero Principal", "Inteligencia Cambiaria" y "Generador
+      // de Reportes" agrupados en un submenú "Analítica".
+      // FIX-GESTION-UNIFICADA (2026-07-13): "Dashboard KPI" removido de aquí —
+      // ahora se accede desde el botón "Ver Dashboard KPI" en el tab Tiendas del
+      // hub de Gestión. Razón: el dashboard mostraba casi lo mismo que Gestión
+      // Tiendas (KPIs por tienda), tenerlo como item separado era confuso.
+      // Los managers/encargados que necesitan ver KPIs lo acceden desde el hub.
       {
         id: 'analitica',
         label: 'Analítica',
@@ -201,7 +209,6 @@ export const SIDEBAR_STRUCTURE: NavModule[] = [
           // Es una herramienta de análisis de productos que pertenece a la
           // operación multi-tienda, no al módulo de costo.
           { id: 'cost-analytics', label: 'Tablero Principal', type: 'item', icon: Table2, ariaLabel: 'Centro de análisis dinámico', description: 'Tabla dinámica tipo Power BI para analizar costos, márgenes y rentabilidad con drag & drop, plantillas y gráficos integrados.', allowedRoles: ['admin', 'manager', 'encargado'] },
-          { id: 'dashboard', label: 'Dashboard KPI', type: 'item', icon: TrendingUp, ariaLabel: 'Indicadores clave de desempeño', description: 'Indicadores clave de desempeño en tiempo real: ventas, stock, recepciones, rentabilidad.', allowedRoles: ['admin', 'manager', 'encargado'] },
           { id: 'exchange-intelligence', label: 'Inteligencia Cambiaria', type: 'item', icon: DollarSign, ariaLabel: 'Inteligencia cambiaria y devaluación monetaria', description: 'Centro de inteligencia económica: tasas oficiales vs informales, impacto en precios, alertas estratégicas y simulador de escenarios.', allowedRoles: ['admin', 'manager', 'encargado'] },
           { id: 'reports', label: 'Generador de Reportes', type: 'item', icon: BarChart4, ariaLabel: 'Diseñar y generar reportes profesionales', description: 'Diseña y genera reportes profesionales en PDF/Excel con filtros y agrupaciones personalizadas.', allowedRoles: ['admin', 'manager'] }
         ]
@@ -389,7 +396,7 @@ export const SIDEBAR_STRUCTURE: NavModule[] = [
     type: 'group',
     icon: Settings,
     ariaLabel: 'Gestión administrativa del tenant',
-    description: 'Gestión administrativa del tenant: control de usuarios, seguridad y roles, salud de la plataforma, auditoría global, tablón de noticias y gestión RSS.',
+    description: 'Gestión administrativa del tenant: control de usuarios, seguridad y roles, salud de la plataforma, auditoría global y gestión RSS.',
     allowedRoles: ['admin'],
     children: [
       // F3-T04: items de gestión de entidades (antes bajo submenu 'administrativa')
@@ -400,7 +407,10 @@ export const SIDEBAR_STRUCTURE: NavModule[] = [
       { id: 'usage-monitoring', label: 'Monitoreo de Uso', type: 'item', icon: Gauge, description: 'Estima consumo de Vercel + Supabase en plan gratuito. Alertas antes de llegar a límites (60/80/90%). Forecast mensual con promedio 7 días.' },
       { id: 'audit', label: 'Auditoría Global', type: 'item', icon: Shield, description: 'Registro completo de acciones de usuarios: quién hizo qué, cuándo y desde dónde. Filtrado por usuario, fecha y acción.' },
       // F3-T04: items de comunicación (antes bajo submenu 'comunicación')
-      { id: 'news', label: 'Tablón Noticias', type: 'item', icon: Newspaper, description: 'Publica anuncios internos para el equipo. Notificaciones push a usuarios conectados.' },
+      // FIX-GESTION-UNIFICADA (2026-07-13): "Tablón Noticias" movido al hub de
+      // Gestión en MULTI-TIENDA (tab "Tablón Noticias"). Ya no es un item separado
+      // aquí en ADMINISTRACIÓN. La gestión RSS sigue aquí porque es configuración
+      // técnica de feeds que solo el admin debe tocar.
       { id: 'rss_management', label: 'Gestión RSS', type: 'item', icon: Rss, description: 'Configura feeds RSS externos (noticias fiscales, contables, regulatorias) para mostrar en el tablón.' },
     ]
   },
