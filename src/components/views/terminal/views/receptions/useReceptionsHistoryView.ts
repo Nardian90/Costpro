@@ -35,7 +35,7 @@ export function useReceptionsHistoryView() {
   const { data: receptions = [], isLoading } = useReceptions(user?.activeStoreId);
 
   const filteredReceipts = useMemo(() => {
-    return receptions.filter(r => {
+    return receptions.filter((r: any) => {
       const matchesSearch = (r.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
                              r.supplier?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                              r.reference_doc?.toLowerCase().includes(searchTerm.toLowerCase()));
@@ -57,7 +57,7 @@ export function useReceptionsHistoryView() {
   const { data: items = [], isLoading: loadingDetails } = useReceptionDetails(selectedReceiptId || undefined);
 
   const selectedReceipt = useMemo(() =>
-    receptions.find(r => r.id === selectedReceiptId) || null,
+    receptions.find((r: any) => r.id === selectedReceiptId) || null,
     [receptions, selectedReceiptId]
   );
 
@@ -248,7 +248,7 @@ export function useReceptionsHistoryView() {
     try {
       const toastId = toast.loading('Preparando Excel de recepciones...');
       const XLSX = await import('@e965/xlsx');
-      const data = receptions.map(r => ({
+      const data = receptions.map((r: any) => ({
         'ID': r.id.split('-')[0],
         'Fecha': r.reception_date || r.created_at ? new Date(r.reception_date || r.created_at || '').toLocaleDateString('es-CU') : '',
         'Proveedor': r.supplier || '',

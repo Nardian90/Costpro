@@ -130,6 +130,8 @@ const ChatBot = dynamic(() => import('@/components/ui/ChatBot').then(m => m.Chat
 const CalculatorView = dynamic(() => import('@/components/views/terminal/views/calculator/CalculatorView'), { ssr: false });
 // FIX-PAYMENT-TRACKING (2026-07-12): dashboard de cuentas por pagar
 const AccountsPayableView = dynamic(() => import('@/components/views/terminal/views/accounts_payable/AccountsPayableView'), { ssr: false });
+// FIX-PRODUCTION (2026-07-12): órdenes de producción y trabajo
+const ProductionOrdersView = dynamic(() => import('@/components/views/terminal/views/production_orders/ProductionOrdersView'), { ssr: false });
 const CreateProductModal = dynamic(() => import('@/components/modals/CreateProductModal').then(m => m.CreateProductModal), { ssr: false });
 const CommandPalette = dynamic(() => import('@/components/ui/CommandPalette').then(m => m.CommandPalette), { ssr: false });
 const SyncConflictModal = dynamic(() => import('@/components/modals/SyncConflictModal').then(m => m.SyncConflictModal), { ssr: false });
@@ -365,6 +367,8 @@ export default function TerminalShell() {
         case 'calculator': return <ViewErrorBoundary viewName="Calculadora"><CalculatorView /></ViewErrorBoundary>;
         // FIX-PAYMENT-TRACKING (2026-07-12): dashboard de cuentas por pagar
         case 'accounts-payable': return <ViewErrorBoundary viewName="Cuentas por Pagar"><AccountsPayableView /></ViewErrorBoundary>;
+        // FIX-PRODUCTION (2026-07-12): órdenes de producción y trabajo
+        case 'production-orders': return <ViewErrorBoundary viewName="Órdenes de Producción"><ProductionOrdersView /></ViewErrorBoundary>;
         case 'costeo-dinamico': return <ViewErrorBoundary viewName="Costeo Dinámico"><CosteoDinamicoView /></ViewErrorBoundary>;
         case 'estructura-costo': return <ViewErrorBoundary viewName="Estructura de Costo"><EstructuraCostoView /></ViewErrorBoundary>;
         case 'whatsapp-config': return <ViewErrorBoundary viewName="WhatsApp Config"><WhatsAppConfigView /></ViewErrorBoundary>;

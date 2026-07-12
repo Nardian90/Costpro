@@ -88,6 +88,8 @@ const DIRECT_ROUTES: Record<string, DirectRoute> = {
   calculator:            { type: 'direct', view: 'calculator' },
   // FIX-PAYMENT-TRACKING (2026-07-12): dashboard de cuentas por pagar
   'accounts-payable':    { type: 'direct', view: 'accounts-payable' },
+  // FIX-PRODUCTION (2026-07-12): órdenes de producción y trabajo
+  'production-orders':   { type: 'direct', view: 'production-orders' },
   'costeo-dinamico':     { type: 'direct', view: 'costeo-dinamico' },
   'estructura-costo':    { type: 'direct', view: 'estructura-costo' },
   'whatsapp-config':     { type: 'direct', view: 'whatsapp-config' },
@@ -323,6 +325,10 @@ export function getBreadcrumbForView(
   // FIX-B9 (2026-07-12): breadcrumb para accounts-payable
   if (currentView === 'accounts-payable') {
     return [{ label: 'Cuentas por Pagar', isCurrent: true }];
+  }
+  // FIX-PRODUCTION (2026-07-12): breadcrumb para production-orders
+  if (currentView === 'production-orders') {
+    return [{ label: 'Órdenes de Producción', isCurrent: true }];
   }
 
   // M-2: si la vista es una sub-vista de hub, construir path completo

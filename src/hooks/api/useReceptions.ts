@@ -19,7 +19,7 @@ export function useReceptions(storeId?: string | null, isAdmin = false) {
         query = query.eq('store_id', cleanStoreId);
       }
       const data = await withTableLogging('select', 'receipts', () => query.order('created_at', { ascending: false }));
-      return await validateRPCArrayResponse(data, receiptSchema, 'receipts');
+      return await validateRPCArrayResponse(data, receiptSchema, 'receipts') as any;
     },
     enabled: !!cleanStoreId,
     staleTime: 30 * 1000,
@@ -40,7 +40,7 @@ export async function prefetchReceptions(queryClient: QueryClient, storeId: stri
       }
       // FIX-LOG-014: Use withTableLogging for consistent logging pattern
       const data = await withTableLogging('select', 'receipts', () => query.order('created_at', { ascending: false }));
-      return await validateRPCArrayResponse(data, receiptSchema, 'receipts');
+      return await validateRPCArrayResponse(data, receiptSchema, 'receipts') as any;
     },
     staleTime: 30 * 1000,
   });

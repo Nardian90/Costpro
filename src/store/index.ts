@@ -28,7 +28,9 @@ export type ViewType = 'occ' | 'dashboard' | 'wallet' | 'pos' | 'inventory' | 'r
 // FIX-CALC-VIEW (2026-07-10): vista integrada de calculadora (modo embedded)
 | 'calculator'
 // FIX-PAYMENT-TRACKING (2026-07-12): dashboard de cuentas por pagar
-| 'accounts-payable';
+| 'accounts-payable'
+// FIX-PRODUCTION (2026-07-12): órdenes de producción y trabajo
+| 'production-orders';
 
 export type SidebarState = 'expanded' | 'rail' | 'closed';
 

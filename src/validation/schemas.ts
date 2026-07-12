@@ -385,7 +385,10 @@ export const receiptSchema = z.object({
   due_date: z.string().nullable().optional(),
   paid_at: z.string().nullable().optional(),
   payment_terms_days: z.coerce.number().catch(30).default(30).optional(),
-}).passthrough(); // FIX: permitir campos extra del DB sin stripped por Zod
+});
+
+// FIX-TYPE (2026-07-12): tipo helper para Receipt con campos de pago opcionales
+export type ReceiptWithPayments = z.infer<typeof receiptSchema>;
 
 export const receiptItemSchema = z.object({
   id: z.string().regex(uuidRegex),

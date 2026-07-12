@@ -58,6 +58,7 @@ import {
   Bot,
   FlaskConical,
   Calculator,
+  Factory,
   Smartphone,
   MessageCircle,
   Send,
@@ -263,6 +264,8 @@ export const SIDEBAR_STRUCTURE: NavModule[] = [
         children: [
           { id: 'estructura-costo', label: 'Estructura de Costo', type: 'item', icon: Calculator, ariaLabel: 'Ver estructura de costo', description: 'Visualiza la composición del costo de cada producto: base, transportación, manipulación, comisiones, servicios, variación cambiaria.' },
           { id: 'costeo-dinamico', label: 'Costeo Dinámico', type: 'item', icon: DollarSign, ariaLabel: 'Ver costeo dinámico', description: 'Calcula el costo real de reposición del inventario absorbiendo servicios, comisiones e impacto cambiario.' },
+          // FIX-PRODUCTION (2026-07-12): Órdenes de producción y trabajo dentro de Costo
+          { id: 'production-orders', label: 'Órdenes de Producción', type: 'item', icon: Factory, ariaLabel: 'Ver órdenes de producción', description: 'Gestión de órdenes de producción y servicio con presupuesto, salidas de inventario, anticipos y cierre con entrada de producto terminado.' },
           // FIX-MULTI-TIENDA: 'cost-analytics' (Tablero Principal) se movió a
           // MULTI-TIENDA → Analítica. Ya no está aquí en Costo.
         ]

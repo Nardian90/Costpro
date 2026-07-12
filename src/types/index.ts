@@ -483,6 +483,54 @@ export interface CashReport {
 }
 
 // ============================================
+// Production Orders — Órdenes de Producción y Trabajo
+// ============================================
+export interface ProductionOrder {
+  id: string;
+  store_id: string;
+  order_number: string;
+  order_type: 'production' | 'service';
+  status: 'draft' | 'approved' | 'in_progress' | 'paused' | 'completed' | 'closed' | 'voided';
+  customer_name?: string | null;
+  customer_ci?: string | null;
+  customer_phone?: string | null;
+  customer_address?: string | null;
+  budget_total: number;
+  budget_currency: string;
+  advance_amount: number;
+  advance_method?: 'cash' | 'transfer' | 'zelle' | null;
+  advance_currency: string;
+  paid_amount: number;
+  payment_status: 'unpaid' | 'partial' | 'paid';
+  output_product_id?: string | null;
+  output_quantity: number;
+  order_date: string;
+  start_date?: string | null;
+  completion_date?: string | null;
+  closed_at?: string | null;
+  description?: string | null;
+  notes?: string | null;
+  created_by?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ProductionOrderItem {
+  id: string;
+  order_id: string;
+  product_id: string;
+  variant_id?: string | null;
+  budgeted_qty: number;
+  budgeted_unit_cost: number;
+  actual_qty: number;
+  actual_unit_cost: number;
+  withdrawn_at?: string | null;
+  status: 'pending' | 'partial' | 'completed';
+  notes?: string | null;
+  products?: { id: string; name: string; sku?: string | null; stock_current: number } | null;
+}
+
+// ============================================
 // EM-R5: Orden de Compra
 // ============================================
 

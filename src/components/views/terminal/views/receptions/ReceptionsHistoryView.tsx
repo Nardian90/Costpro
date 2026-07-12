@@ -194,12 +194,12 @@ export default function ReceptionsHistoryView() {
 
         {/* Reception-Flow-Fix: banner informativo cuando hay recepciones pendientes.
             Ayuda al usuario a recordar que tiene recepciones sin confirmar. */}
-        {receptions.some(r => r.status === 'pending') && (
+        {receptions.some((r: any) => r.status === 'pending') && (
           <div className="p-3 rounded-xl bg-warning/10 border border-warning/30 flex items-center gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
             <Clock className="w-5 h-5 text-warning shrink-0" aria-hidden="true" />
             <div className="flex-1">
               <p className="text-xs font-black uppercase text-warning tracking-widest">
-                {receptions.filter(r => r.status === 'pending').length} recepción(es) pendiente(s)
+                {receptions.filter((r: any) => r.status === 'pending').length} recepción(es) pendiente(s)
               </p>
               <p className="text-[11px] text-warning/80 mt-0.5">
                 Las recepciones pendientes no afectan el inventario hasta que las confirmes.
@@ -278,7 +278,7 @@ export default function ReceptionsHistoryView() {
                   </tr>
                 </thead>
                 <tbody>
-                  {data.map(rec => (
+                  {data.map((rec: any) => (
                     <tr key={rec.id} className="border-b border-border/50 hover:bg-muted/20 transition-colors">
                       <td className="p-4 font-bold text-xs text-primary">{rec.id.split('-')[0]}</td>
                       <td className="p-4">
@@ -332,7 +332,7 @@ export default function ReceptionsHistoryView() {
                       <td className="p-4 text-center">
                         <div className="flex items-center justify-center gap-2">
                           <button type="button"
-                            onClick={() => handleViewDetails(rec)}
+                            onClick={() => handleViewDetails(rec as any)}
                             className="w-11 h-11 inline-flex items-center justify-center rounded-lg border border-border hover:bg-primary hover:text-foreground transition-all active:scale-95"
                             title="Ver productos"
                           >
