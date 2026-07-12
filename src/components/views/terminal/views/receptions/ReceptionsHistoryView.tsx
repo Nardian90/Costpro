@@ -312,6 +312,19 @@ export default function ReceptionsHistoryView() {
                            rec.status === 'voided' ? 'Anulado' :
                            rec.status === 'pending' ? 'Pendiente' : 'Parcial'}
                         </span>
+                        {/* FIX-PAYMENT-TRACKING (2026-07-12): badge de estado de pago */}
+                        {rec.status !== 'voided' && (rec as any).payment_status && (
+                          <span className={cn(
+                            "ml-1 inline-flex items-center px-2 py-0.5 rounded text-[10px] font-black uppercase",
+                            (rec as any).payment_status === 'paid' ? "bg-success/10 text-success"
+                            : (rec as any).payment_status === 'partial' ? "bg-amber-500/10 text-amber-500"
+                            : "bg-destructive/10 text-destructive"
+                          )}>
+                            {(rec as any).payment_status === 'paid' ? '💰 Pagado'
+                             : (rec as any).payment_status === 'partial' ? '⚖️ Parcial'
+                             : '⏳ Pendiente'}
+                          </span>
+                        )}
                       </td>
                       <td className="p-4 text-right">
                         <span className="text-base font-black text-primary tabular-nums">{formatCurrency(rec.total_cost)}</span>

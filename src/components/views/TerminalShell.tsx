@@ -128,6 +128,8 @@ const FloatingCalculator = dynamic(() => import('@/components/ui/FloatingCalcula
 const ChatBot = dynamic(() => import('@/components/ui/ChatBot').then(m => m.ChatBot), { ssr: false });
 // FIX-CALC-VIEW (2026-07-10): vista integrada de calculadora (modo embedded)
 const CalculatorView = dynamic(() => import('@/components/views/terminal/views/calculator/CalculatorView'), { ssr: false });
+// FIX-PAYMENT-TRACKING (2026-07-12): dashboard de cuentas por pagar
+const AccountsPayableView = dynamic(() => import('@/components/views/terminal/views/accounts_payable/AccountsPayableView'), { ssr: false });
 const CreateProductModal = dynamic(() => import('@/components/modals/CreateProductModal').then(m => m.CreateProductModal), { ssr: false });
 const CommandPalette = dynamic(() => import('@/components/ui/CommandPalette').then(m => m.CommandPalette), { ssr: false });
 const SyncConflictModal = dynamic(() => import('@/components/modals/SyncConflictModal').then(m => m.SyncConflictModal), { ssr: false });
@@ -361,6 +363,8 @@ export default function TerminalShell() {
         case 'chat': return <ViewErrorBoundary viewName="Chat con Darian"><ChatBotView /></ViewErrorBoundary>;
         // FIX-CALC-VIEW (2026-07-10): vista integrada de calculadora
         case 'calculator': return <ViewErrorBoundary viewName="Calculadora"><CalculatorView /></ViewErrorBoundary>;
+        // FIX-PAYMENT-TRACKING (2026-07-12): dashboard de cuentas por pagar
+        case 'accounts-payable': return <ViewErrorBoundary viewName="Cuentas por Pagar"><AccountsPayableView /></ViewErrorBoundary>;
         case 'costeo-dinamico': return <ViewErrorBoundary viewName="Costeo Dinámico"><CosteoDinamicoView /></ViewErrorBoundary>;
         case 'estructura-costo': return <ViewErrorBoundary viewName="Estructura de Costo"><EstructuraCostoView /></ViewErrorBoundary>;
         case 'whatsapp-config': return <ViewErrorBoundary viewName="WhatsApp Config"><WhatsAppConfigView /></ViewErrorBoundary>;

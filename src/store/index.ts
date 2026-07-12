@@ -26,7 +26,9 @@ export type ViewType = 'occ' | 'dashboard' | 'wallet' | 'pos' | 'inventory' | 'r
 // 'core' NO está aquí porque es la home (occ) y no necesita GroupHub.
 | 'costos' | 'tienda' | 'ipv_module' | 'otros' | 'administracion' | 'recursos'
 // FIX-CALC-VIEW (2026-07-10): vista integrada de calculadora (modo embedded)
-| 'calculator';
+| 'calculator'
+// FIX-PAYMENT-TRACKING (2026-07-12): dashboard de cuentas por pagar
+| 'accounts-payable';
 
 export type SidebarState = 'expanded' | 'rail' | 'closed';
 

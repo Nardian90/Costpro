@@ -28,6 +28,12 @@ interface ReceivedService {
   status: string;
   distribution_method: string;
   observations: string | null;
+  // FIX-PAYMENT-TRACKING (2026-07-12): campos de pago
+  payment_status?: 'unpaid' | 'partial' | 'paid';
+  payment_method?: 'cash' | 'transfer' | 'zelle' | null;
+  paid_amount?: number;
+  due_date?: string | null;
+  paid_at?: string | null;
 }
 
 const SERVICE_ICONS: Record<string, any> = {
@@ -45,6 +51,8 @@ export default function ReceivedServicesView() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'voided'>('all');
   const [createModalOpen, setCreateModalOpen] = useState(false);
+  // FIX-PAYMENT-TRACKING: estado para modal de detalle con tab de pagos
+  const [detailService, setDetailService] = useState<ReceivedService | null>(null);
 
   const fetchServices = useCallback(async () => {
     if (!user?.activeStoreId) return;
@@ -237,9 +245,24 @@ export default function ReceivedServicesView() {
                         )}>
                           {svc.status === 'active' ? 'Activo' : 'Anulado'}
                         </span>
+                        {/* FIX-PAYMENT-TRACKING: badge de estado de pago */}
+                        {svc.status === 'active' && svc.payment_status && (
+                          <span className={cn(
+                            "ml-1 px-2 py-1 rounded text-[10px] font-black uppercase",
+                            svc.payment_status === 'paid' ? "bg-success/10 text-success"
+                            : svc.payment_status === 'partial' ? "bg-amber-500/10 text-amber-500"
+                            : "bg-destructive/10 text-destructive"
+                          )}>
+                            {svc.payment_status === 'paid' ? '💰 Pagado' : svc.payment_status === 'partial' ? '⚖️ Parcial' : '⏳ Pendiente'}
+                          </span>
+                        )}
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center justify-center gap-1">
+                          {/* FIX-PAYMENT-TRACKING: botón Ver detalle con tab de pagos */}
+                          <button onClick={() => setDetailService(svc)} className="p-2 rounded-lg hover:bg-primary/10 text-primary transition-colors min-h-[44px] min-w-[44px]" aria-label="Ver detalle" title="Ver detalle y pagos">
+                            <Eye className="w-4 h-4" />
+                          </button>
                           <button onClick={() => handleRecalculate(svc.id)} className="p-2 rounded-lg hover:bg-primary/10 text-primary transition-colors min-h-[44px] min-w-[44px]" aria-label="Recalcular distribución" title="Recalcular">
                             <RefreshCw className="w-4 h-4" />
                           </button>
@@ -265,6 +288,210 @@ export default function ReceivedServicesView() {
         onClose={() => setCreateModalOpen(false)}
         onCreate={handleCreate}
       />
+
+      {/* FIX-PAYMENT-TRACKING (2026-07-12): Modal de detalle con tab de pagos */}
+      {detailService && (
+        <ServiceDetailModal
+          service={detailService}
+          onClose={() => setDetailService(null)}
+          onUpdate={() => { fetchServices(); }}
+        />
+      )}
+    </div>
+  );
+}
+
+// ============================================================================
+// ServiceDetailModal — Modal de detalle con tabs: Info + Pagos
+// ============================================================================
+function ServiceDetailModal({
+  service,
+  onClose,
+  onUpdate,
+}: {
+  service: ReceivedService;
+  onClose: () => void;
+  onUpdate: () => void;
+}) {
+  const [activeTab, setActiveTab] = useState<'info' | 'payments'>('info');
+  const [payments, setPayments] = useState<any[]>([]);
+  const [loadingPayments, setLoadingPayments] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [amount, setAmount] = useState('');
+  const [method, setMethod] = useState<'cash' | 'transfer' | 'zelle'>('cash');
+  const [reference, setReference] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  const fetchPayments = useCallback(async () => {
+    setLoadingPayments(true);
+    try {
+      const res = await fetch(`/api/payments?ref_type=service&ref_id=${service.id}`);
+      if (res.ok) setPayments(await res.json());
+    } catch { /* ignore */ } finally { setLoadingPayments(false); }
+  }, [service.id]);
+
+  useEffect(() => { fetchPayments(); }, [fetchPayments]);
+
+  const totalPaid = payments.reduce((s, p) => s + Number(p.amount_cup || p.amount), 0);
+  const balance = service.total_amount - totalPaid;
+  const paymentStatus = balance <= 0 ? 'paid' : totalPaid > 0 ? 'partial' : 'unpaid';
+
+  const handleSubmit = async () => {
+    const amt = parseFloat(amount);
+    if (!amt || amt <= 0) { toast.error('Monto inválido'); return; }
+    setSubmitting(true);
+    try {
+      const res = await fetch('/api/payments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ref_type: 'service',
+          ref_id: service.id,
+          amount: amt,
+          payment_method: method,
+          currency: 'CUP',
+          exchange_rate: 1.0,
+          reference: reference || null,
+        }),
+      });
+      if (res.ok) {
+        toast.success('Pago registrado');
+        setAmount(''); setReference(''); setShowForm(false);
+        fetchPayments();
+        onUpdate();
+      } else { toast.error('Error al registrar pago'); }
+    } catch { toast.error('Error de conexión'); }
+    finally { setSubmitting(false); }
+  };
+
+  const statusBadge = {
+    paid: { label: '💰 Pagado', color: 'bg-success/10 text-success border-success/30' },
+    partial: { label: '⚖️ Parcial', color: 'bg-amber-500/10 text-amber-500 border-amber-500/30' },
+    unpaid: { label: '⏳ Pendiente', color: 'bg-destructive/10 text-destructive border-destructive/30' },
+  }[paymentStatus];
+
+  return (
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm" onClick={onClose}>
+      <div className="w-full max-w-lg max-h-[90vh] overflow-y-auto bg-card border border-border/50 rounded-2xl shadow-2xl" onClick={e => e.stopPropagation()}>
+        <div className="sticky top-0 bg-card border-b border-border/30 p-4 flex items-center justify-between z-10">
+          <div className="flex items-center gap-2">
+            <FileText className="w-5 h-5 text-primary" />
+            <div>
+              <h2 className="text-sm font-black uppercase tracking-widest">{service.service_number}</h2>
+              <p className="text-[10px] text-muted-foreground">{service.service_type_name} · {service.supplier || 'Sin proveedor'}</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="p-2 rounded-lg hover:bg-muted" aria-label="Cerrar">
+            <span className="text-lg">✕</span>
+          </button>
+        </div>
+
+        <div className="flex border-b border-border/30">
+          <button onClick={() => setActiveTab('info')} className={cn("flex-1 py-3 text-xs font-black uppercase border-b-2 -mb-px", activeTab === 'info' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground')}>Info</button>
+          <button onClick={() => setActiveTab('payments')} className={cn("flex-1 py-3 text-xs font-black uppercase border-b-2 -mb-px flex items-center justify-center gap-1", activeTab === 'payments' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground')}>
+            Pagos {payments.length > 0 && <span className="bg-primary/10 px-1.5 rounded text-[9px]">{payments.length}</span>}
+          </button>
+        </div>
+
+        {activeTab === 'info' && (
+          <div className="p-4 space-y-2">
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              <div><span className="text-muted-foreground">Fecha:</span> <span className="font-bold">{service.service_date}</span></div>
+              <div><span className="text-muted-foreground">Moneda:</span> <span className="font-bold">{service.currency}</span></div>
+              <div><span className="text-muted-foreground">Proveedor:</span> <span className="font-bold">{service.supplier || '—'}</span></div>
+              <div><span className="text-muted-foreground">Ref:</span> <span className="font-bold">{service.reference_doc || '—'}</span></div>
+              <div><span className="text-muted-foreground">Distribución:</span> <span className="font-bold">{service.distribution_method}</span></div>
+              <div><span className="text-muted-foreground">Estado:</span> <span className="font-bold">{service.status === 'active' ? 'Activo' : 'Anulado'}</span></div>
+            </div>
+            <div className="pt-2 border-t border-border/30">
+              <div className="flex justify-between items-center">
+                <span className="text-xs text-muted-foreground">Total:</span>
+                <span className="text-lg font-mono font-black">{formatCurrency(service.total_amount)} {service.currency}</span>
+              </div>
+              {service.due_date && (
+                <div className="flex justify-between items-center mt-1">
+                  <span className="text-xs text-muted-foreground">Vence:</span>
+                  <span className={cn("text-xs font-bold", new Date(service.due_date) < new Date() && paymentStatus !== 'paid' ? "text-destructive" : "")}>{service.due_date}</span>
+                </div>
+              )}
+            </div>
+            {service.observations && (
+              <div className="pt-2 border-t border-border/30">
+                <p className="text-[10px] font-black uppercase text-muted-foreground mb-1">Observaciones</p>
+                <p className="text-xs">{service.observations}</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'payments' && (
+          <div className="p-4 space-y-3">
+            <div className="grid grid-cols-3 gap-2">
+              <div className="rounded-xl border border-border/30 bg-muted/20 p-2 text-center">
+                <p className="text-[9px] font-black uppercase text-muted-foreground">Total</p>
+                <p className="text-sm font-mono font-black">{formatCurrency(service.total_amount)}</p>
+              </div>
+              <div className="rounded-xl border border-success/20 bg-success/5 p-2 text-center">
+                <p className="text-[9px] font-black uppercase text-muted-foreground">Pagado</p>
+                <p className="text-sm font-mono font-black text-success">{formatCurrency(totalPaid)}</p>
+              </div>
+              <div className="rounded-xl border border-primary/20 bg-primary/5 p-2 text-center">
+                <p className="text-[9px] font-black uppercase text-muted-foreground">Saldo</p>
+                <p className="text-sm font-mono font-black text-primary">{formatCurrency(balance)}</p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <span className={cn("px-3 py-1 rounded-full text-[10px] font-black uppercase border", statusBadge.color)}>{statusBadge.label}</span>
+              <button onClick={() => setShowForm(!showForm)} className="px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-[10px] font-black uppercase hover:opacity-90 flex items-center gap-1">
+                <Plus className="w-3 h-3" /> Registrar Pago
+              </button>
+            </div>
+
+            {showForm && (
+              <div className="rounded-xl border border-border/30 p-3 space-y-2 bg-muted/10">
+                <div className="grid grid-cols-2 gap-2">
+                  <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder={String(balance.toFixed(2))} className="h-10 bg-background border border-border/50 rounded-lg px-3 text-sm font-bold tabular-nums" />
+                  <select value={method} onChange={(e) => setMethod(e.target.value as any)} className="h-10 bg-background border border-border/50 rounded-lg px-3 text-sm font-bold">
+                    <option value="cash">💵 Efectivo</option>
+                    <option value="transfer">📱 Transferencia</option>
+                    <option value="zelle">💳 Zelle</option>
+                  </select>
+                </div>
+                <input type="text" value={reference} onChange={(e) => setReference(e.target.value)} placeholder="Referencia (opcional)" className="w-full h-10 bg-background border border-border/50 rounded-lg px-3 text-sm" />
+                <div className="flex gap-2">
+                  <button onClick={() => setShowForm(false)} className="flex-1 h-10 rounded-lg border border-border/40 text-[10px] font-black uppercase hover:bg-muted">Cancelar</button>
+                  <button onClick={handleSubmit} disabled={submitting} className="flex-1 h-10 rounded-lg bg-primary text-primary-foreground text-[10px] font-black uppercase hover:opacity-90 disabled:opacity-50">{submitting ? '...' : 'Confirmar'}</button>
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-1">
+              <h4 className="text-[10px] font-black uppercase text-muted-foreground">Historial</h4>
+              {loadingPayments ? <p className="text-xs text-center py-2 text-muted-foreground">Cargando...</p>
+              : payments.length === 0 ? <p className="text-xs text-center py-4 text-muted-foreground">Sin pagos</p>
+              : payments.map((p) => (
+                <div key={p.id} className="flex items-center justify-between rounded-lg border border-border/30 p-2.5 bg-muted/10">
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">{p.payment_method === 'cash' ? '💵' : p.payment_method === 'transfer' ? '📱' : '💳'}</span>
+                    <div>
+                      <p className="text-xs font-bold tabular-nums">{formatCurrency(Number(p.amount_cup || p.amount))} {p.currency}</p>
+                      <p className="text-[10px] text-muted-foreground">{new Date(p.payment_date).toLocaleString()} · {p.reference || 'Sin ref'}</p>
+                    </div>
+                  </div>
+                  <button onClick={async () => {
+                    if (!confirm('¿Anular este pago?')) return;
+                    const res = await fetch(`/api/payments/${p.id}`, { method: 'DELETE' });
+                    if (res.ok) { toast.success('Pago anulado'); fetchPayments(); onUpdate(); }
+                  }} className="p-1.5 rounded text-destructive hover:bg-destructive/10" title="Anular">
+                    <Ban className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

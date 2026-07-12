@@ -1213,6 +1213,27 @@ function PaymentsTab({ receiptId, totalCost }: { receiptId: string; totalCost: n
                   </p>
                 </div>
               </div>
+              {/* FIX-DELETE-PAYMENT: botón para anular pago */}
+              <button
+                type="button"
+                onClick={async () => {
+                  if (!confirm('¿Anular este pago? El saldo se recalculará automáticamente.')) return;
+                  try {
+                    const res = await fetch(`/api/payments/${p.id}`, { method: 'DELETE' });
+                    if (res.ok) {
+                      toast.success('Pago anulado');
+                      fetchPayments();
+                    } else {
+                      toast.error('Error al anular pago');
+                    }
+                  } catch { toast.error('Error de conexión'); }
+                }}
+                className="p-1.5 rounded text-destructive hover:bg-destructive/10"
+                title="Anular pago"
+                aria-label="Anular pago"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
             </div>
           ))
         )}
