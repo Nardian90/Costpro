@@ -19,9 +19,9 @@
   },
   {
     "feature": "Punto de Venta (POS)",
-    "descripcion_usuario": "Terminal de ventas con búsqueda de productos por nombre o código de barras, carrito interactivo con descuentos, 4 métodos de pago (efectivo, tarjeta, mixto, transferencia), cálculo automático de cambio, generación de recibo con código QR y actualización de inventario post-venta.",
-    "acciones": ["Agregar productos al carrito", "Aplicar descuentos", "Procesar pago", "Generar recibo", "Consultar historial de ventas", "Realizar arqueo de caja"],
-    "resultados": ["Venta registrada", "Recibo generado", "Stock actualizado automáticamente", "Historial de ventas disponible"]
+    "descripcion_usuario": "Terminal de ventas con búsqueda de productos por nombre o código de barras, carrito interactivo con descuentos, 3 métodos de pago (efectivo, transferencia, Zelle) combinables en el mismo carrito con 4 monedas (CUP, USD, EUR, MLC), modelo de filas de pago múltiples que permite tener 2 efectivos en monedas distintas para el mismo item, ajustes independientes por fila (descuento o recargo en % o fijo), cálculo automático de cambio, generación de recibo con código QR y actualización de inventario post-venta.",
+    "acciones": ["Agregar productos al carrito", "Aplicar descuentos y recargos por método", "Procesar pago mixto multi-moneda", "Agregar/duplicar/eliminar filas de pago", "Generar recibo", "Consultar historial de ventas", "Realizar arqueo de caja"],
+    "resultados": ["Venta registrada con desglose por moneda", "Recibo generado", "Stock actualizado automáticamente", "Historial de ventas disponible"]
   },
   {
     "feature": "Catálogo de Ventas (Tablas IPV)",
@@ -76,5 +76,11 @@
     "descripcion_usuario": "Asistente inteligente integrado con capacidades de chat multimodal, análisis de imágenes, búsqueda web y herramientas de productividad. Responde preguntas sobre el sistema, genera contenido y ejecuta acciones automatizadas.",
     "acciones": ["Enviar mensaje de texto", "Adjuntar imagen para análisis", "Solicitar búsqueda web", "Usar herramientas de productividad"],
     "resultados": ["Respuesta inteligente generada", "Análisis de imagen completado", "Acciones automatizadas ejecutadas"]
+  },
+  {
+    "feature": "Órdenes de Producción, Servicio y Trabajo",
+    "descripcion_usuario": "Gestión de trabajos a medida para clientes con 3 tipos de orden (servicio intangible, trabajo físico sin producto, producción que genera producto terminado), presupuesto con moneda y materiales estimados, anticipo opcional al crear, seguimiento de estado (borrador → aprobada → en progreso → pausada → completada → cerrada / anulada), salida de materiales del inventario durante la ejecución, pago final al cerrar con conversión multi-moneda, y entrada automática del producto terminado al almacén en caso de producción.",
+    "acciones": ["Crear orden con tipo (servicio/trabajo/producción)", "Registrar datos del cliente (nombre, CI, teléfono, dirección)", "Definir presupuesto con moneda", "Registrar anticipo (efectivo/transferencia/Zelle)", "Agregar materiales presupuestados", "Aprobar e iniciar la orden", "Dar salida a materiales durante el trabajo", "Cerrar orden con pago final", "Recibir producto terminado al almacén (solo producción)"],
+    "resultados": ["Orden creada con número OP-YYYY-NNN", "Estado de pago actualizado (pendiente/parcial/pagado)", "Materiales descontados del inventario", "Producto terminado ingresado al almacén (producción)", "Venta creada automáticamente (servicio)"]
   }
 ]

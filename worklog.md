@@ -4346,3 +4346,71 @@ Stage Summary:
   - `src/components/views/terminal/views/pos/POSCartCheckoutPanel.tsx` (consolidación iterando payments[])
   - `src/components/views/terminal/views/pos/usePOSCheckout.ts` (cálculos de checkout usando payments[])
 - **Limitación conocida**: El backend RPC `create_sale` aún recibe los campos legacy (cash_paid/transfer_paid/zelle_paid sumados por método). Si se requiere persistir las filas individuales en la BD, habría que modificar el RPC y el schema. Por ahora, la suma por método es suficiente para el caso de uso.
+
+---
+Task ID: HELP-PROD-PAYMENTS-AUDIT-FIX
+Agent: Main Agent (Super Z)
+Task: Actualizar módulo de ayuda con nuevas funcionalidades (creación de órdenes de producción, formas de pago, estado del pago, etc.) y corregir el error "Error al cargar Auditoría" en Inicio > ADMINISTRACIÓN > Auditoría Global.
+
+Work Log:
+- **Bug fix en AuditGlobalView.tsx**:
+  - Antes: si `useStores` o `useAuditLogs` fallaban, el `StateRenderer` NO recibía el prop `error`, así que caía silenciosamente al estado "No se encontraron registros" sin informar al usuario del error real.
+  - Ahora: se extrae `error: storesError` de `useStores` y `error: auditError` de `useAuditLogs`.
+  - Se añadieron 2 useEffects que disparan `toast.error(...)` con el mensaje real cuando hay error (incluyendo el texto "Error al cargar Auditoría" cuando falla el fetch de audit_logs).
+  - Se pasa `error={displayError}` al StateRenderer para que muestre el componente de error con botón "Reintentar" en vez del empty state.
+  - `isEmpty` ahora también verifica `!displayError` para no mostrar empty cuando en realidad hay error.
+  - Import añadido: `useEffect` (de react), `toast` (de sonner).
+  - TypeScript check: 0 errores en archivos src/.
+
+- **Actualización de doc de métodos de pago** (`knowledge/help/03-referencia/06-metodos-pago.md`):
+  - Reescrito completamente para reflejar el nuevo sistema de pago (FIX-PAYMENT-ROWS 2026-07-10).
+  - Antes: 4 métodos (efectivo, tarjeta, mixto, transferencia) — desactualizado.
+  - Ahora: 3 métodos (efectivo, transferencia, Zelle) + 4 monedas (CUP, USD, EUR, MLC).
+  - Explicación del modelo de filas de pago múltiples (PaymentRow[]) con operaciones ➕ Agregar / ⧉ Duplicar / ✕ Eliminar.
+  - Sección nueva de ajustes por método: descuentos vs recargos, tipos (% o $), casos de uso típicos.
+  - Consolidación visible en tab Pago: Descuento total, Recargo total, Consolidado por moneda, Esperado, Estado de cuadre (✓ Cuadrado / ↑ Sobrepago / ↓ Falta).
+  - 5 ejemplos prácticos (venta simple, con descuento, con recargo, multi-moneda, anticipo+saldo).
+  - 9 preguntas frecuentes + 4 casos especiales y errores comunes.
+
+- **Nueva doc: Cómo crear orden de producción** (`knowledge/help/02-como-hacer/16-como-crear-orden-produccion.md`):
+  - Documenta el flujo completo de 11 pasos: abrir módulo → elegir tipo (servicio/trabajo/producción) → datos del cliente → presupuesto → anticipo → materiales presupuestados → descripción → crear → cambiar estado → dar salida a materiales → cerrar orden.
+  - Tabla comparativa de los 3 tipos de orden (servicio intangible / trabajo físico / producción con producto terminado).
+  - Detalle del cierre: pago final, recepción de producto terminado (solo producción), creación automática de venta (solo servicio).
+  - 8 preguntas frecuentes + 5 casos especiales y errores comunes.
+
+- **Nueva doc: Referencia de estados de orden de producción y pago** (`knowledge/help/03-referencia/09-estados-orden-produccion.md`):
+  - Tabla de los 7 estados de orden: draft → approved → in_progress ⇄ paused → completed → closed / voided.
+  - Diagrama ASCII de transiciones válidas.
+  - Matriz de acciones disponibles por estado (editar / dar salida / registrar pagos / cerrar / anular).
+  - Tabla de los 3 estados de pago: unpaid / partial / paid + cálculo automático.
+  - Comportamiento al cierre por tipo (servicio crea venta, trabajo solo cierra, producción ejecuta receive_production_output).
+  - Detalle de los métodos de pago registrables y la tabla `payment_transactions`.
+  - Convención de números de orden OP-YYYY-NNN por tienda.
+  - 8 preguntas frecuentes + 5 errores comunes y soluciones.
+
+- **Actualización del índice de ayuda** (`knowledge/help/00-diataxis-map.md`):
+  - Añadidas 2 entradas:
+    - `02-como-hacer/16-como-crear-orden-produccion.md` — Crear una orden de producción, servicio o trabajo
+    - `03-referencia/09-estados-orden-produccion.md` — Estados de órdenes de producción y de pago
+  - Actualizada la descripción de `03-referencia/06-metodos-pago.md` para indicar "(multi-moneda, multi-fila)".
+
+- **Actualización de user_help.json** (`knowledge/help/user_help.json`):
+  - Actualizada la entrada "Punto de Venta (POS)": 3 métodos (efectivo/transferencia/Zelle), 4 monedas, modelo multi-fila, ajustes por fila.
+  - Añadida nueva entrada "Órdenes de Producción, Servicio y Trabajo": describe los 3 tipos, estados, anticipo, materiales, cierre con pago final, recepción de producto terminado.
+  - JSON validado: 14 features totales.
+
+Stage Summary:
+- **Bug de Auditoría Global corregido**: Ahora los errores de carga (de stores o de audit_logs) se muestran explícitamente al usuario con toast + componente de error con botón Reintentar, en vez de caer al estado "No se encontraron registros".
+- **3 documentos de ayuda actualizados/creados**:
+  1. `06-metodos-pago.md` — reescrito (multi-fila, multi-moneda, ajustes por método)
+  2. `16-como-crear-orden-produccion.md` — nuevo (flujo completo de 11 pasos)
+  3. `09-estados-orden-produccion.md` — nuevo (referencia de estados y transiciones)
+- **2 archivos de metadatos actualizados**: `00-diataxis-map.md` e `user_help.json`.
+- **TypeScript check**: 0 errores en archivos src/ modificados.
+- **Archivos modificados**:
+  - `src/components/views/terminal/views/audit/AuditGlobalView.tsx`
+  - `knowledge/help/03-referencia/06-metodos-pago.md`
+  - `knowledge/help/02-como-hacer/16-como-crear-orden-produccion.md` (nuevo)
+  - `knowledge/help/03-referencia/09-estados-orden-produccion.md` (nuevo)
+  - `knowledge/help/00-diataxis-map.md`
+  - `knowledge/help/user_help.json`

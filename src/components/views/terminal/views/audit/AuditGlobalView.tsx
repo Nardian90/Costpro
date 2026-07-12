@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Shield, Filter, Download, ChevronDown, Search, Eye } from 'lucide-react';
+import { toast } from 'sonner';
 import { cn, formatDate, formatTime } from '@/lib/utils';
 import { useAuthStore } from '@/store';
 import { useStores } from '@/hooks/api/useStores';
@@ -75,7 +76,7 @@ export default function AuditGlobalView() {
   const [storeFilter, setStoreFilter] = useState('');
   const [searchText, setSearchText] = useState('');
 
-  const { data: stores = [] } = useStores(user?.id || '', isAdmin, isEncargado);
+  const { data: stores = [], error: storesError } = useStores(user?.id || '', isAdmin, isEncargado);
   const storeIds = useMemo(
     () => storeFilter ? [storeFilter] : stores.map(s => s.id),
     [stores, storeFilter]
@@ -84,10 +85,29 @@ export default function AuditGlobalView() {
   const {
     data,
     isLoading,
+    error: auditError,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
   } = useAuditLogs({ storeIds, action: actionFilter || undefined, dateFrom, dateTo });
+
+  // FIX-AUDIT-LOAD (2026-07-12): mostrar errores al usuario en vez de silenciarlos.
+  // Antes, si useStores o useAuditLogs fallaban, el StateRenderer caía al estado
+  // "No se encontraron registros" sin informar al usuario del error real.
+  useEffect(() => {
+    if (storesError) {
+      toast.error('Error al cargar tiendas: ' + (storesError.message || 'desconocido'));
+    }
+  }, [storesError]);
+
+  useEffect(() => {
+    if (auditError) {
+      toast.error('Error al cargar Auditoría: ' + (auditError.message || 'desconocido'));
+    }
+  }, [auditError]);
+
+  // Determinar si hay un error real para mostrar en el StateRenderer
+  const displayError = storesError || auditError;
 
   const allLogs = useMemo(
     () => data?.pages.flatMap(p => p.logs) ?? [],
@@ -219,12 +239,13 @@ export default function AuditGlobalView() {
 
       <StateRenderer
         isLoading={isLoading}
+        error={displayError}
         loadingComponent={
           <div className="space-y-2">
             {[...Array(8)].map((_, i) => <Skeleton key={i} className="h-12 rounded-xl" />)}
           </div>
         }
-        isEmpty={!isLoading && filteredLogs.length === 0}
+        isEmpty={!isLoading && !displayError && filteredLogs.length === 0}
         emptyMessage="No se encontraron registros de auditoría con los filtros aplicados."
         data={filteredLogs}
       >

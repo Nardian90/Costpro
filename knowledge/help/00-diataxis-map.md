@@ -41,6 +41,7 @@ Piense en ello como una biblioteca con 4 secciones:
 - `02-como-hacer/13-como-pagar-comisiones.md` — Pagar comisiones a trabajadores
 - `02-como-hacer/14-como-recibir-servicio.md` — Recibir un servicio (no mercancía)
 - `02-como-hacer/15-como-ver-uso-sistema.md` — Ver cuánto se usa el sistema
+- `02-como-hacer/16-como-crear-orden-produccion.md` — Crear una orden de producción, servicio o trabajo
 
 ### 3. Referencia (datos técnicos)
 - `03-referencia/01-glosario.md` — Diccionario de términos
@@ -48,9 +49,10 @@ Piense en ello como una biblioteca con 4 secciones:
 - `03-referencia/03-atajos-teclado.md` — Atajos de teclado
 - `03-referencia/04-temas-visuales.md` — Temas visuales disponibles
 - `03-referencia/05-tipos-reportes.md` — Los 11 tipos de reportes
-- `03-referencia/06-metodos-pago.md` — Métodos de pago del POS
+- `03-referencia/06-metodos-pago.md` — Métodos de pago del POS (multi-moneda, multi-fila)
 - `03-referencia/07-causas-ajuste.md` — Las 7 causas de ajuste de inventario
 - `03-referencia/08-estados-transferencia.md` — Estados de una transferencia
+- `03-referencia/09-estados-orden-produccion.md` — Estados de órdenes de producción y de pago
 
 ### 4. Explicación (entender a fondo)
 - `04-explicacion/01-que-es-multi-tienda.md` — ¿Qué significa "multi-tienda"?
