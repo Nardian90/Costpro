@@ -280,6 +280,7 @@ export default async function RootLayout({
                 defaultTheme="dark"
                 disableTransitionOnChange
                 themes={['light', 'dark', 'auto']}
+                nonce={nonce}
               >
                 <IntelligentThemeHandler />
                 <QueryProvider>

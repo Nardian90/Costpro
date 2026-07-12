@@ -84,12 +84,6 @@
   "iarc_rating_id": "e84b072d-71b3-4d3e-86ae-31a8ce4e53b7",
   "display_override": ["standalone", "fullscreen", "window-controls-overlay"],
   "scope": "/",
-  "scope_extensions": [
-    {
-      "type": "window",
-      "origin": "https://costpro4.vercel.app"
-    }
-  ],
   "file_handlers": [
     {
       "action": "/dashboard/inventory",
