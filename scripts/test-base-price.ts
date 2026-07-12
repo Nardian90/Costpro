@@ -1,6 +1,11 @@
 // Test de lógica multi-moneda con base_price_cup
 // Ejecutar: npx tsx scripts/test-base-price.ts
 
+// FIX-DEPLOY (2026-07-10): export {} convierte este archivo en un módulo
+// aislado, evitando que `function assert` y `const base_price_cup` colisionen
+// con las declaraciones idénticas en test-store-rates.ts (error TS2393/TS2451).
+export {};
+
 function assert(name: string, actual: number, expected: number, tolerance = 1) {
   const diff = Math.abs(actual - expected);
   if (diff <= tolerance) {

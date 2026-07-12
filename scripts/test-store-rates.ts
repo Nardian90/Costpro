@@ -1,6 +1,10 @@
 // Test de tasas persistentes + recargo + base_price_cup
 // Ejecutar: npx tsx scripts/test-store-rates.ts
 
+// FIX-DEPLOY (2026-07-10): export {} convierte este archivo en un módulo
+// aislado, evitando colisión con test-base-price.ts.
+export {};
+
 function assert(name: string, actual: number, expected: number, tolerance = 1) {
   const diff = Math.abs(actual - expected);
   if (diff <= tolerance) {

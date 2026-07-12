@@ -12,6 +12,8 @@ function createMockItem(overrides: Partial<CartItem> = {}): CartItem {
     variant_id: null,
     quantity: 1,
     price: 1600,
+    // FIX-DEPLOY (2026-07-10): base_price_cup es requerido en CartItem
+    base_price_cup: 1600,
     cost: 800,
     subtotal: 1600,
     product: { id: 'test-1', name: 'ARAGANES' } as any,
@@ -19,6 +21,16 @@ function createMockItem(overrides: Partial<CartItem> = {}): CartItem {
     discount_type: null,
     discount_value: 0,
     discount_currency: 'CUP',
+    // FIX-PAYMENT-ROWS: payments[] es requerido (array de filas de pago)
+    payments: [{
+      id: 'test-pay-1',
+      method: 'cash',
+      amount: 1600,
+      currency: 'CUP',
+      discount_type: null,
+      discount_value: 0,
+      discount_currency: 'CUP',
+    }],
     cash_paid: 1600,
     transfer_paid: 0,
     zelle_paid: 0,
@@ -28,12 +40,18 @@ function createMockItem(overrides: Partial<CartItem> = {}): CartItem {
     cash_discount_type: null,
     cash_discount_value: 0,
     cash_discount_currency: 'CUP',
+    cash_surcharge_type: null,
+    cash_surcharge_value: 0,
     transfer_discount_type: null,
     transfer_discount_value: 0,
     transfer_discount_currency: 'CUP',
+    transfer_surcharge_type: null,
+    transfer_surcharge_value: 0,
     zelle_discount_type: null,
     zelle_discount_value: 0,
     zelle_discount_currency: 'USD',
+    zelle_surcharge_type: null,
+    zelle_surcharge_value: 0,
     currency: 'CUP',
     exchange_rate: 1,
     payment_manual_override: false,
@@ -112,7 +130,8 @@ console.log('Producto: $1,600 CUP, cambiar a USD pero tasa fetch falla (rate=1)'
 {
   const rate = 1; // fetch falló
   const price = 1600;
-  const currency = 'USD';
+  // FIX-DEPLOY (2026-07-10): tipar como string para permitir comparación con 'CUP'
+  const currency: string = 'USD';
   // FIX-CRITICAL: si rate <= 1, NO cambiar moneda
   if (currency !== 'CUP' && rate <= 1) {
     console.log('  ✅ Bloqueado: "No se pudo obtener la tasa de cambio"');
