@@ -60,6 +60,7 @@ const handler = withAuth(async (req, session) => {
         return parsedFeed.items.map((item) => ({
           ...item,
           feedName: feed.name || parsedFeed.title,
+          feedCategory: feed.category || null,
         }));
       } catch (err) {
         console.error(`Error parsing feed ${feed.url}:`, err);
@@ -111,6 +112,7 @@ const handler = withAuth(async (req, session) => {
         content,
         contentSnippet,
         feedName: item.feedName,
+        category: item.feedCategory || null,
         isPriority: isPriority || isExchangeRate,
         isExchangeRate,
         exchangeRateData,

@@ -27,7 +27,7 @@ export const rssService = {
   async getFeeds(): Promise<RSSFeed[]> {
     const { data, error } = await supabase
       .from('rss_feeds')
-      .select('id, url, name, is_active, created_at, updated_at')
+      .select('id, url, name, is_active, category, created_at, updated_at')
       .order('created_at', { ascending: false });
 
     if (error) throw error;
@@ -41,7 +41,7 @@ export const rssService = {
     const { data, error } = await supabase
       .from('rss_feeds')
       .insert(feed)
-      .select('id, url, name, is_active, created_at, updated_at')
+      .select('id, url, name, is_active, category, created_at, updated_at')
       .single();
 
     if (error) throw error;
@@ -56,7 +56,7 @@ export const rssService = {
       .from('rss_feeds')
       .update(feed)
       .eq('id', id)
-      .select('id, url, name, is_active, created_at, updated_at')
+      .select('id, url, name, is_active, category, created_at, updated_at')
       .single();
 
     if (error) throw error;

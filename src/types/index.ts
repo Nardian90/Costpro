@@ -82,11 +82,34 @@ export interface Role {
 // RSS y Noticias
 // ============================================
 
+// Categorías temáticas de los feeds RSS (interest MiPymes)
+export type RSSFeedCategory =
+  | 'economia_finanzas'
+  | 'comercio_exterior'
+  | 'tributacion_fiscal'
+  | 'legislacion'
+  | 'tecnologia'
+  | 'mercados'
+  | 'educacion_negocios'
+  | 'regional_latam';
+
+export const RSS_FEED_CATEGORIES: Record<RSSFeedCategory, { label: string; icon: string; description: string }> = {
+  economia_finanzas:  { label: 'Economía y Finanzas',  icon: '💰', description: 'Política monetaria, PIB, inflación, tasas de interés' },
+  comercio_exterior:  { label: 'Comercio Exterior',    icon: '🌍', description: 'Importación, exportación, aranceles, aduanas' },
+  tributacion_fiscal: { label: 'Tributación y Fiscal',  icon: '📋', description: 'Impuestos, ONAT, declaraciones, régimen MiPyme' },
+  legislacion:        { label: 'Legislación',           icon: '⚖️', description: 'Gaceta Oficial, decretos, normativa MiPyme' },
+  tecnologia:         { label: 'Tecnología',            icon: '💻', description: 'Transformación digital, ciberseguridad, innovación' },
+  mercados:           { label: 'Mercados',              icon: '📈', description: 'Precios, materias primas, commodities, análisis' },
+  educacion_negocios: { label: 'Educación y Negocios',  icon: '🎓', description: 'Capacitación, gestión, MBA, casos de estudio' },
+  regional_latam:     { label: 'Regional LatAm',        icon: '🌎', description: 'Economía Cuba, Caribe, América Latina' },
+};
+
 export interface RSSFeed {
   id: string;
   url: string;
   name: string | null;
   is_active: boolean;
+  category?: RSSFeedCategory | null;
   created_at?: string;
   updated_at?: string;
 }
@@ -107,6 +130,7 @@ export interface RSSNewsItem {
   content: string;
   contentSnippet?: string;
   feedName?: string;
+  category?: RSSFeedCategory | null;
   isPriority: boolean;
   isExchangeRate?: boolean;
   exchangeRateData?: {
