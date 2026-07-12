@@ -241,29 +241,13 @@ export default async function RootLayout({
             __html: `if('serviceWorker' in navigator) { navigator.serviceWorker.register('/sw.js'); }`
           }}
         />
-        {/* DIAG: Client-side splash timing diagnostic */}
-        {process.env.NODE_ENV === 'development' && (
-          <script
-            nonce={nonce}
-            suppressHydrationWarning
-            dangerouslySetInnerHTML={{
-              __html: `
-window.__DIAG = { t0: performance.now(), phases: [] };
-window.__DIAG_LOG = function(phase) {
-  var e = { phase: phase, ms: Math.round(performance.now() - window.__DIAG.t0) };
-  window.__DIAG.phases.push(e);
-  console.log('[DIAG] ' + e.phase + ' @ ' + e.ms + 'ms');
-};
-window.__DIAG_LOG('script_exec');
-window.addEventListener('DOMContentLoaded', function() { window.__DIAG_LOG('DOMContentLoaded'); });
-window.addEventListener('load', function() { window.__DIAG_LOG('window_load'); });
-setTimeout(function() {
-  console.log('[DIAG] SUMMARY:', JSON.stringify(window.__DIAG.phases));
-}, 15000);
-`
-            }}
-          />
-        )}
+        {/* FIX-CSP (2026-07-13): DIAG debug script removed — was causing CSP
+            violation in dev mode. The inline script had nonce={nonce} but the
+            nonce wasn't always propagated from proxy.ts to server component
+            headers() in Next.js 16, causing 'unsafe-inline' to be ignored
+            (nonce is present in CSP) and the script to be blocked. The diagnostic
+            was only used during initial splash timing analysis and is no longer
+            needed. */}
         {/* safe: static structured data — nonce from middleware */}
         <script
           nonce={nonce}

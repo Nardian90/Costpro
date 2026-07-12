@@ -35,9 +35,9 @@ export default function HomePageClient() {
   }, []);
 
   useEffect(() => {
-    console.log('[DIAG] page mounted, authStore.loading=', useAuthStore.getState().loading);
+    // FIX-CSP (2026-07-13): removed DIAG console.logs — they were debug-only
+    // and cluttered the console. The auth flow is now well-tested.
     const unsub = useAuthStore.subscribe((state) => {
-      console.log('[DIAG] authStore changed:', { loading: state.loading, status: state.status, hasUser: !!state.user });
       if (!state.loading) {
         setIsReady(true);
         setIsAuthenticated(!!state.user && state.status !== 'unauthenticated');
@@ -69,17 +69,13 @@ export default function HomePageClient() {
   // While splash is showing, render full-screen splash
   // CostProLoader handles its own auto-dismiss (first visit ~3.5s, returning ~500ms)
   if (!splashDismissed) {
-    console.log('[DIAG] rendering CostProLoader splash');
     return (
       <CostProLoader fullScreen text={t('main')} subtext={t('initializing')} />
     );
   }
 
-  console.log('[DIAG] splash dismissed, isReady=', isReady, 'isAuthenticated=', isAuthenticated);
-
   const showLogin = !isReady || !isAuthenticated;
 
-  console.log('[DIAG] showLogin=', showLogin);
   if (showLogin) {
     return (
       <Suspense fallback={
