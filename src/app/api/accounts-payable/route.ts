@@ -36,7 +36,7 @@ const querySchema = z.object({
 
 interface UnifiedPayable {
   id: string;
-  ref_type: 'receipt' | 'service';
+  ref_type: 'receipt' | 'service' | 'commission';
   ref_id: string;
   supplier: string | null;
   reference: string | null;
@@ -108,16 +108,48 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
     if (currency) {
       if (currency === 'CUP') {
         servicesQuery = servicesQuery.eq('currency', 'CUP');
+        // Comisiones siempre son CUP, no filtrar
       } else {
         // receipts no tienen currency en header (siempre CUP), excluir si filtra por otra moneda
         receiptsQuery = receiptsQuery.eq('supplier', '__NONEXISTENT__');
         servicesQuery = servicesQuery.eq('currency', currency);
+        // Comisiones son CUP, excluir si filtra por otra moneda
       }
     }
 
-    const [receiptsResult, servicesResult] = await Promise.all([
+    // ── FASE 3: Consultar commission_payments (comisiones approved o paid) ──
+    // R2: comisiones se pagan completo en CUP (efectivo/transferencia/mixto)
+    // status 'approved' = pendiente de pago, 'paid' = pagada
+    let commissionsQuery = supabase
+      .from('commission_payments')
+      .select(`
+        id,
+        worker_id,
+        period_start,
+        period_end,
+        due_date,
+        final_amount,
+        calculated_amount,
+        status,
+        payment_method,
+        payment_reference,
+        paid_at,
+        created_at,
+        worker:workers!inner(first_name, last_name, ci)
+      `)
+      .eq('store_id', store_id)
+      .in('status', ['approved', 'paid'])
+      .order('due_date', { ascending: true, nullsFirst: false });
+
+    // Excluir comisiones si filtra por moneda no-CUP
+    if (currency && currency !== 'CUP') {
+      commissionsQuery = commissionsQuery.eq('id', '00000000-0000-0000-0000-000000000000');
+    }
+
+    const [receiptsResult, servicesResult, commissionsResult] = await Promise.all([
       receiptsQuery,
       servicesQuery,
+      commissionsQuery,
     ]);
 
     if (receiptsResult.error) {
@@ -127,6 +159,10 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
     if (servicesResult.error) {
       console.error('[accounts-payable] Error services:', servicesResult.error);
       return NextResponse.json({ error: servicesResult.error.message }, { status: 500 });
+    }
+    if (commissionsResult.error) {
+      console.error('[accounts-payable] Error commissions:', commissionsResult.error);
+      return NextResponse.json({ error: commissionsResult.error.message }, { status: 500 });
     }
 
     // ── Normalizar a UnifiedPayable[] ──
@@ -231,10 +267,70 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
       });
     }
 
+    // ── FASE 3: Procesar commission_payments ──
+    // R2: comisiones en CUP, pago completo, efectivo/transferencia/mixto
+    // status 'approved' → unpaid (pendiente), 'paid' → paid
+    for (const c of commissionsResult.data || []) {
+      const total = Number(c.final_amount) || 0;
+      const paid = c.status === 'paid' ? total : 0;
+      const balance = total - paid;
+      const workerName = c.worker
+        ? `${c.worker.first_name || ''} ${c.worker.last_name || ''}`.trim()
+        : 'Trabajador desconocido';
+      const dueDate = c.due_date ? new Date(c.due_date) : null;
+      const daysUntilDue = dueDate
+        ? Math.ceil((dueDate.getTime() - today.getTime()) / 86400000)
+        : null;
+      const isOverdue = dueDate ? dueDate < today && c.status !== 'paid' : false;
+      const paymentStatus = c.status === 'paid' ? 'paid' : 'unpaid';
+
+      let agingBucket: UnifiedPayable['aging_bucket'] = 'current';
+      if (c.status === 'paid') {
+        agingBucket = 'paid';
+      } else if (isOverdue) {
+        const overdueDays = daysUntilDue !== null ? Math.abs(daysUntilDue) : 0;
+        if (overdueDays > 120) agingBucket = '120+';
+        else if (overdueDays > 90) agingBucket = '120';
+        else if (overdueDays > 60) agingBucket = '90';
+        else if (overdueDays > 30) agingBucket = '60';
+        else agingBucket = '30';
+      }
+
+      payables.push({
+        id: `commission-${c.id}`,
+        ref_type: 'commission',
+        ref_id: c.id,
+        supplier: workerName,
+        reference: `Comisión ${c.period_start} a ${c.period_end}`,
+        total,
+        total_cup: total, // comisiones siempre CUP
+        paid_amount: paid,
+        paid_cup: paid,
+        balance,
+        balance_cup: balance,
+        currency: 'CUP',
+        exchange_rate: 1.0,
+        payment_status: paymentStatus,
+        payment_method: c.payment_method,
+        due_date: c.due_date,
+        days_until_due: daysUntilDue,
+        is_overdue: isOverdue,
+        aging_bucket: agingBucket,
+        created_at: c.created_at,
+      });
+    }
+
     // ── Filtrar por método de pago ──
+    // Para comisiones, payment_method puede ser 'mixed' — incluir si filtra por cash o transfer
     let filtered = payables;
     if (method) {
-      filtered = filtered.filter(p => p.payment_method === method);
+      filtered = filtered.filter(p => {
+        if (p.ref_type === 'commission') {
+          // Comisiones: 'mixed' contiene ambos métodos
+          return p.payment_method === method || p.payment_method === 'mixed';
+        }
+        return p.payment_method === method;
+      });
     }
 
     // ── Filtrar por tab ──
@@ -276,6 +372,12 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
         count: payables.filter(p => p.ref_type === 'service').length,
         balance_cup: payables
           .filter(p => p.ref_type === 'service' && p.payment_status !== 'paid')
+          .reduce((s, p) => s + p.balance_cup, 0),
+      },
+      commissions: {
+        count: payables.filter(p => p.ref_type === 'commission').length,
+        balance_cup: payables
+          .filter(p => p.ref_type === 'commission' && p.payment_status !== 'paid')
           .reduce((s, p) => s + p.balance_cup, 0),
       },
     };

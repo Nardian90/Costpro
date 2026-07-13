@@ -7,7 +7,7 @@ import { useRegisterPayment, type PaymentRowInput } from '@/hooks/api/useRegiste
 import { supabase } from '@/lib/supabaseClient';
 
 export interface PayableDocument {
-  ref_type: 'receipt' | 'service';
+  ref_type: 'receipt' | 'service' | 'commission';
   ref_id: string;
   supplier: string | null;
   total: number;
@@ -109,6 +109,54 @@ export default function PaymentModal({ document: doc, onClose, onPaymentRegister
       return;
     }
 
+    // FASE 3: Comisiones — R2: pago completo en CUP, efectivo/transferencia/mixto
+    // Las comisiones NO usan /api/payments — usan PATCH /api/commissions/payments/[id]
+    if (doc.ref_type === 'commission') {
+      // Validar que sea pago completo (R2)
+      if (!isExact) {
+        setError('Las comisiones deben pagarse completas (no se permiten pagos parciales).');
+        return;
+      }
+      // Validar que todo sea en CUP (R2)
+      const allCup = rows.every(r => r.currency === 'CUP');
+      if (!allCup) {
+        setError('Las comisiones solo se pueden pagar en CUP.');
+        return;
+      }
+      // Determinar método: si hay 1 fila, ese método. Si hay 2+, 'mixed'.
+      const validRows = rows.filter(r => Number(r.amount) > 0);
+      const method = validRows.length === 1
+        ? validRows[0].payment_method
+        : 'mixed';
+
+      setError(null);
+      try {
+        const response = await fetch(`/api/commissions/payments/${doc.ref_id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'pay',
+            payment_method: method,
+          }),
+        });
+
+        if (!response.ok) {
+          const err = await response.json().catch(() => ({}));
+          throw new Error(err.error || `HTTP ${response.status}`);
+        }
+
+        setSuccess(true);
+        setTimeout(() => {
+          onPaymentRegistered();
+          onClose();
+        }, 1500);
+      } catch (e: any) {
+        setError(e.message || 'Error al pagar comisión');
+      }
+      return;
+    }
+
+    // Recepciones y Servicios: usar /api/payments (pago mixto multi-moneda)
     setError(null);
     const payments: PaymentRowInput[] = rows
       .filter(r => Number(r.amount) > 0)

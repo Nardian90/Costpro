@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
-import { AlertTriangle, Clock, CheckCircle2, Wallet, TrendingDown, Search, Table2, List, CreditCard } from 'lucide-react';
+import React, { useState, useMemo, Fragment } from 'react';
+import { AlertTriangle, Clock, CheckCircle2, Wallet, TrendingDown, Search, Table2, List, CreditCard, User } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
 import { useAccountsPayable, type AgingTab, type GroupedPayable, type UnifiedPayable } from '@/hooks/api/useAccountsPayable';
 import PaymentModal, { type PayableDocument } from './PaymentModal';
+import PaymentHistoryRow from './PaymentHistoryRow';
 
 const PAYMENT_STATUS_LABELS: Record<string, string> = {
   unpaid: 'Pendiente',
@@ -346,80 +347,89 @@ function ListView({ data, onPay }: { data: UnifiedPayable[]; onPay: (doc: Payabl
         </thead>
         <tbody>
           {data.map((p) => (
-            <tr key={p.id} className="border-t border-border/20 hover:bg-muted/10">
-              <td className="p-3">
-                <p className="font-bold text-xs">{p.supplier || 'Sin proveedor'}</p>
-                <p className="text-[10px] text-muted-foreground">{p.reference || 'Sin ref'}</p>
-              </td>
-              <td className="p-3 text-center text-xs">
-                {p.ref_type === 'receipt' ? '📦 Recepción' : '🔧 Servicio'}
-              </td>
-              <td className="p-3 text-right">
-                <p className="font-mono font-bold tabular-nums text-xs">{formatCurrency(p.total, p.currency)}</p>
-                {p.currency !== 'CUP' && (
-                  <p className="text-[9px] text-muted-foreground font-mono">= {formatCurrency(p.total_cup, 'CUP')}</p>
-                )}
-              </td>
-              <td className="p-3 text-right font-mono text-xs tabular-nums text-success">
-                {formatCurrency(p.paid_cup, 'CUP')}
-              </td>
-              <td className="p-3 text-right">
-                <p className="font-mono font-black tabular-nums text-xs text-primary">
-                  {formatCurrency(p.balance_cup, 'CUP')}
-                </p>
-                {p.currency !== 'CUP' && p.balance > 0 && (
-                  <p className="text-[9px] text-muted-foreground font-mono">{formatCurrency(p.balance, p.currency)}</p>
-                )}
-              </td>
-              <td className="p-3 text-center">
-                {p.due_date ? (
-                  <div>
-                    <p className={cn("text-xs font-bold", p.is_overdue ? "text-destructive" : "")}>
-                      {new Date(p.due_date).toLocaleDateString('es-CU')}
-                    </p>
-                    {p.payment_status !== 'paid' && p.days_until_due !== null && (
-                      <p className={cn(
-                        "text-[10px]",
-                        p.is_overdue ? "text-destructive font-bold" : p.days_until_due <= 7 ? "text-amber-500" : "text-muted-foreground"
-                      )}>
-                        {p.is_overdue ? `Vencido ${Math.abs(p.days_until_due)}d` : `${p.days_until_due}d`}
+            <Fragment key={p.id}>
+              <tr className="border-t border-border/20 hover:bg-muted/10">
+                <td className="p-3">
+                  <p className="font-bold text-xs">{p.supplier || 'Sin proveedor'}</p>
+                  <p className="text-[10px] text-muted-foreground">{p.reference || 'Sin ref'}</p>
+                </td>
+                <td className="p-3 text-center text-xs">
+                  {p.ref_type === 'receipt' ? '📦 Recepción' : p.ref_type === 'service' ? '🔧 Servicio' : '👤 Comisión'}
+                </td>
+                <td className="p-3 text-right">
+                  <p className="font-mono font-bold tabular-nums text-xs">{formatCurrency(p.total, p.currency)}</p>
+                  {p.currency !== 'CUP' && (
+                    <p className="text-[9px] text-muted-foreground font-mono">= {formatCurrency(p.total_cup, 'CUP')}</p>
+                  )}
+                </td>
+                <td className="p-3 text-right font-mono text-xs tabular-nums text-success">
+                  {formatCurrency(p.paid_cup, 'CUP')}
+                </td>
+                <td className="p-3 text-right">
+                  <p className="font-mono font-black tabular-nums text-xs text-primary">
+                    {formatCurrency(p.balance_cup, 'CUP')}
+                  </p>
+                  {p.currency !== 'CUP' && p.balance > 0 && (
+                    <p className="text-[9px] text-muted-foreground font-mono">{formatCurrency(p.balance, p.currency)}</p>
+                  )}
+                </td>
+                <td className="p-3 text-center">
+                  {p.due_date ? (
+                    <div>
+                      <p className={cn("text-xs font-bold", p.is_overdue ? "text-destructive" : "")}>
+                        {new Date(p.due_date).toLocaleDateString('es-CU')}
                       </p>
+                      {p.payment_status !== 'paid' && p.days_until_due !== null && (
+                        <p className={cn(
+                          "text-[10px]",
+                          p.is_overdue ? "text-destructive font-bold" : p.days_until_due <= 7 ? "text-amber-500" : "text-muted-foreground"
+                        )}>
+                          {p.is_overdue ? `Vencido ${Math.abs(p.days_until_due)}d` : `${p.days_until_due}d`}
+                        </p>
+                      )}
+                    </div>
+                  ) : <span className="text-xs text-muted-foreground">—</span>}
+                </td>
+                <td className="p-3 text-center">
+                  <span className={cn(
+                    "px-2 py-1 rounded text-[10px] font-black uppercase",
+                    p.payment_status === 'paid' ? "bg-success/10 text-success"
+                    : p.payment_status === 'partial' ? "bg-amber-500/10 text-amber-500"
+                    : "bg-destructive/10 text-destructive"
+                  )}>
+                    {p.payment_status === 'paid' ? '💰' : p.payment_status === 'partial' ? '⚖️' : '⏳'} {PAYMENT_STATUS_LABELS[p.payment_status]}
+                  </span>
+                </td>
+                <td className="p-3 text-center">
+                  <div className="flex items-center justify-center gap-1">
+                    {p.payment_status !== 'paid' && (
+                      <button
+                        onClick={() => onPay({
+                          ref_type: p.ref_type,
+                          ref_id: p.ref_id,
+                          supplier: p.supplier,
+                          total: p.total,
+                          total_cup: p.total_cup,
+                          paid_cup: p.paid_cup,
+                          balance_cup: p.balance_cup,
+                          currency: p.currency,
+                          exchange_rate: p.exchange_rate,
+                          payment_status: p.payment_status,
+                        })}
+                        className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-primary text-primary-foreground text-[10px] font-black uppercase hover:bg-primary/90"
+                      >
+                        <CreditCard className="w-3 h-3" /> Pagar
+                      </button>
                     )}
+                    <PaymentHistoryRow
+                      refType={p.ref_type}
+                      refId={p.ref_id}
+                      paidAmount={p.paid_cup}
+                    />
                   </div>
-                ) : <span className="text-xs text-muted-foreground">—</span>}
-              </td>
-              <td className="p-3 text-center">
-                <span className={cn(
-                  "px-2 py-1 rounded text-[10px] font-black uppercase",
-                  p.payment_status === 'paid' ? "bg-success/10 text-success"
-                  : p.payment_status === 'partial' ? "bg-amber-500/10 text-amber-500"
-                  : "bg-destructive/10 text-destructive"
-                )}>
-                  {p.payment_status === 'paid' ? '💰' : p.payment_status === 'partial' ? '⚖️' : '⏳'} {PAYMENT_STATUS_LABELS[p.payment_status]}
-                </span>
-              </td>
-              <td className="p-3 text-center">
-                {p.payment_status !== 'paid' && (
-                  <button
-                    onClick={() => onPay({
-                      ref_type: p.ref_type,
-                      ref_id: p.ref_id,
-                      supplier: p.supplier,
-                      total: p.total,
-                      total_cup: p.total_cup,
-                      paid_cup: p.paid_cup,
-                      balance_cup: p.balance_cup,
-                      currency: p.currency,
-                      exchange_rate: p.exchange_rate,
-                      payment_status: p.payment_status,
-                    })}
-                    className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-primary text-primary-foreground text-[10px] font-black uppercase hover:bg-primary/90"
-                  >
-                    <CreditCard className="w-3 h-3" /> Pagar
-                  </button>
-                )}
-              </td>
-            </tr>
+                </td>
+              </tr>
+            </Fragment>
           ))}
         </tbody>
       </table>

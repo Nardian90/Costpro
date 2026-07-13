@@ -37,7 +37,7 @@ export function useRegisterPayment(): UseRegisterPaymentResult {
 
   const registerPayment = useCallback(
     async (
-      refType: 'receipt' | 'service',
+      refType: 'receipt' | 'service' | 'commission',
       refId: string,
       payments: PaymentRowInput[]
     ): Promise<{ success: boolean; error?: string; paymentIds?: string[] }> => {

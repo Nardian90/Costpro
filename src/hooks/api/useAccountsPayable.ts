@@ -7,7 +7,7 @@ export type AgingTab = 'all' | 'overdue' | '30' | '60' | '90' | '120' | 'paid';
 
 export interface UnifiedPayable {
   id: string;
-  ref_type: 'receipt' | 'service';
+  ref_type: 'receipt' | 'service' | 'commission';
   ref_id: string;
   supplier: string | null;
   reference: string | null;
