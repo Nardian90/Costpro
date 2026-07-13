@@ -129,28 +129,63 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
 
           // R3: monto = saldo exacto
           // FIX-AUD4-4: idempotency key determinista (no Date.now())
-          const { error: rpcError } = await supabase.rpc('register_supplier_payment', {
-            p_store_id: storeId,
-            p_ref_type: item.ref_type,
-            p_ref_id: item.ref_id,
-            p_amount: balance,
-            p_payment_method: payment_method === 'mixed' ? 'cash' : payment_method,
-            p_currency: 'CUP',
-            p_exchange_rate: 1.0,
-            p_reference: payment_reference || null,
-            p_notes: `Bulk pay - ${items.length} documentos`,
-            p_paid_by: session.user.id,
-            p_idempotency_key: `bulk:${item.ref_type}:${item.ref_id}:${payment_method}`,
-          });
+          // FIX-AUD5-L2: para 'mixed', registrar 2 transacciones (cash + transfer)
+          // cada una por la mitad del saldo, preservando trazabilidad del método mixto
+          if (payment_method === 'mixed') {
+            const halfBalance = balance / 2;
+            const methods: Array<'cash' | 'transfer'> = ['cash', 'transfer'];
 
-          if (rpcError) {
-            results.push({ ...item, success: false, error: rpcError.message });
-            errorCount++;
-            continue;
+            for (const m of methods) {
+              const { error: rpcError } = await supabase.rpc('register_supplier_payment', {
+                p_store_id: storeId,
+                p_ref_type: item.ref_type,
+                p_ref_id: item.ref_id,
+                p_amount: halfBalance,
+                p_payment_method: m,
+                p_currency: 'CUP',
+                p_exchange_rate: 1.0,
+                p_reference: payment_reference || null,
+                p_notes: `Bulk pay (mixed ${m}) - ${items.length} documentos`,
+                p_paid_by: session.user.id,
+                p_idempotency_key: `bulk:${item.ref_type}:${item.ref_id}:${m}`,
+              });
+
+              if (rpcError) {
+                results.push({ ...item, success: false, error: rpcError.message });
+                errorCount++;
+                break;
+              }
+            }
+
+            // Si no hubo error en el loop, marcar como éxito
+            if (!results.find(r => r.ref_id === item.ref_id && !r.success)) {
+              results.push({ ...item, success: true });
+              successCount++;
+            }
+          } else {
+            const { error: rpcError } = await supabase.rpc('register_supplier_payment', {
+              p_store_id: storeId,
+              p_ref_type: item.ref_type,
+              p_ref_id: item.ref_id,
+              p_amount: balance,
+              p_payment_method: payment_method,
+              p_currency: 'CUP',
+              p_exchange_rate: 1.0,
+              p_reference: payment_reference || null,
+              p_notes: `Bulk pay - ${items.length} documentos`,
+              p_paid_by: session.user.id,
+              p_idempotency_key: `bulk:${item.ref_type}:${item.ref_id}:${payment_method}`,
+            });
+
+            if (rpcError) {
+              results.push({ ...item, success: false, error: rpcError.message });
+              errorCount++;
+              continue;
+            }
+
+            results.push({ ...item, success: true });
+            successCount++;
           }
-
-          results.push({ ...item, success: true });
-          successCount++;
         }
       } catch (e: any) {
         results.push({ ...item, success: false, error: e.message });

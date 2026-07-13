@@ -30,8 +30,10 @@ const querySchema = z.object({
   method: z.enum(['cash', 'transfer', 'zelle']).optional(),
   currency: z.string().optional(),
   search: z.string().optional(),
-  // FIX-EXCEL-VIEW: mode='grouped' agrupa por proveedor con columnas por aging
   mode: z.enum(['list', 'grouped']).default('list'),
+  // FIX-AUD5-M1: paginación para evitar cargar todos los documentos
+  limit: z.coerce.number().min(1).max(500).default(200),
+  offset: z.coerce.number().min(0).default(0),
 });
 
 interface UnifiedPayable {
@@ -76,7 +78,7 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
       );
     }
 
-    const { store_id, tab, method, currency, search, mode } = parsed.data;
+    const { store_id, tab, method, currency, search, mode, limit, offset } = parsed.data;
     const supabase = getSupabaseForSession(session);
 
     // ── Fecha de hoy en zona horaria del servidor (UTC) ──
@@ -147,10 +149,11 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
       commissionsQuery = commissionsQuery.eq('id', '00000000-0000-0000-0000-000000000000');
     }
 
+    // FIX-AUD5-M1: aplicar paginación a cada query
     const [receiptsResult, servicesResult, commissionsResult] = await Promise.all([
-      receiptsQuery,
-      servicesQuery,
-      commissionsQuery,
+      receiptsQuery.range(offset, offset + limit - 1),
+      servicesQuery.range(offset, offset + limit - 1),
+      commissionsQuery.range(offset, offset + limit - 1),
     ]);
 
     if (receiptsResult.error) {
@@ -474,6 +477,7 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
       summary,
       count: filtered.length,
       mode: 'list',
+      pagination: { limit, offset, has_more: filtered.length === limit },  // FIX-AUD5-M1
     });
   } catch (error: any) {
     console.error('[accounts-payable] Error:', error);

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { apiFetch } from '@/lib/api-fetch';
+import { useAuthStore } from '@/store';
 
 export interface PaymentRecord {
   id: string;
@@ -38,9 +39,10 @@ export function usePaymentHistory(
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [refetchTrigger, setRefetchTrigger] = useState(0);
+  const { user } = useAuthStore();
 
   useEffect(() => {
-    if (!enabled || !refType || !refId) {
+    if (!enabled || !refType || !refId || !user?.activeStoreId) {
       setPayments([]);
       return;
     }
@@ -51,8 +53,12 @@ export function usePaymentHistory(
       setError(null);
 
       try {
-        const params = new URLSearchParams({ ref_type: refType, ref_id: refId });
-        // FIX-AUTH: usar apiFetch que incluye el token JWT
+        // FIX-AUD5-H1: incluir store_id obligatorio
+        const params = new URLSearchParams({
+          ref_type: refType,
+          ref_id: refId,
+          store_id: user.activeStoreId!,
+        });
         const json = await apiFetch(`/api/payments?${params.toString()}`);
         if (!cancelled) {
           setPayments(Array.isArray(json) ? json : (json.data || []));
@@ -71,7 +77,7 @@ export function usePaymentHistory(
     fetchHistory();
 
     return () => { cancelled = true; };
-  }, [refType, refId, enabled, refetchTrigger]);
+  }, [refType, refId, enabled, refetchTrigger, user?.activeStoreId]);
 
   return {
     payments,

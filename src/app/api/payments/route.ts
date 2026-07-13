@@ -141,6 +141,8 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
 }
 
 // ── GET: Listar pagos de un documento ──
+// FIX-AUD5-H1 (2026-07-13): store_id obligatorio para prevenir cross-store
+// data leakage si RLS falla. Antes era opcional y dependía solo de RLS.
 async function getHandler(req: NextRequest, session: AuthenticatedSession) {
   try {
     const { searchParams } = new URL(req.url);
@@ -152,20 +154,20 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
       return NextResponse.json({ error: 'ref_type y ref_id son requeridos' }, { status: 400 });
     }
 
+    if (!store_id) {
+      return NextResponse.json({ error: 'store_id es requerido' }, { status: 400 });
+    }
+
     const supabase = getSupabaseForSession(session);
 
-    let query = supabase
+    // FIX-AUD5-H1: siempre filtrar por store_id (no opcional)
+    const { data, error } = await supabase
       .from('payment_transactions')
       .select('*')
       .eq('ref_type', ref_type)
       .eq('ref_id', ref_id)
+      .eq('store_id', store_id)
       .order('payment_date', { ascending: false });
-
-    if (store_id) {
-      query = query.eq('store_id', store_id);
-    }
-
-    const { data, error } = await query;
 
     if (error) {
       console.error('[payments] Error fetching:', error);
