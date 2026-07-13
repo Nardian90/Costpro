@@ -252,6 +252,32 @@
   background-image: none !important;
 }
 
+/* ── FIX-PERF-LAYERS-V2 (2026-07-13): Ocultar TODAS las enhanced-layers ──
+   Doble seguridad: además del display:none por defecto en ParticleBackground,
+   forzamos display:none cuando html tiene clase .mode-performance.
+   Esto asegura que orbs, tip text y canvas NUNCA se vean en performance,
+   sin importar el orden de carga de los estilos. */
+.mode-performance .enhanced-layer,
+.mode-performance .enhanced-layer *,
+.mode-performance .mesh-orb,
+.mode-performance .bg-tip-text,
+.mode-performance .enhanced-glass,
+.mode-performance .enhanced-card,
+.mode-performance .enhanced-sidebar-edge::after {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  background: none !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  filter: none !important;
+}
+
+/* Asegurar que el canvas también se oculte */
+.mode-performance canvas.enhanced-layer {
+  display: none !important;
+}
+
 .mode-performance *,
 .mode-performance *::before,
 .mode-performance *::after {

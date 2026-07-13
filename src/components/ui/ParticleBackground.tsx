@@ -220,14 +220,15 @@ export function ParticleBackground({ viewId }: ParticleBackgroundProps = {}) {
       </motion.div>
 
       {/* ── Layer 2: Background Tip Text (contextual, professional) ── */}
-      {/* FIX-PERF-TIPS: reemplaza los greetings aleatorios por tips profesionales.
-          Clase 'enhanced-layer' asegura que se oculte en performance mode. */}
+      {/* FIX-PERF-TIPS-V2: reemplaza los greetings aleatorios por tips profesionales.
+          Clase 'enhanced-layer' asegura display:none en performance mode.
+          Removido whitespace-nowrap para permitir salto de línea en tips largos. */}
       <motion.div
         className="absolute inset-0 z-[-1] pointer-events-none flex items-center justify-center overflow-hidden enhanced-layer"
         aria-hidden="true"
         style={{ opacity: meshFade }}
       >
-        <span className="bg-tip-text select-none whitespace-nowrap" key={tipText}>
+        <span className="bg-tip-text select-none" key={tipText}>
           {tipText}
         </span>
       </motion.div>
@@ -241,15 +242,20 @@ export function ParticleBackground({ viewId }: ParticleBackgroundProps = {}) {
 
       <style jsx global>{`
         /* ── Enhanced layers: hidden by default, fade in when active ── */
-        /* FIX-PERF-ORBS: en modo performance (default sin .mode-enhanced),
-           TODAS las layers (orbs, tip text, canvas) están ocultas (opacity: 0).
+        /* FIX-PERF-ORBS-V2 (2026-07-13): en modo performance (default sin
+           .mode-enhanced), TODAS las layers están OCULTAS con display:none
+           (no solo opacity:0, que seguía ocupando espacio y renderizando).
            Solo se muestran cuando html tiene clase .mode-enhanced. */
         .enhanced-layer {
-          opacity: 0;
-          transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+          display: none;
         }
         html.mode-enhanced .enhanced-layer {
-          opacity: 1;
+          display: block;
+          opacity: 0;
+          animation: enhanced-fade-in 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+        @keyframes enhanced-fade-in {
+          to { opacity: 1; }
         }
 
         /* ── Mesh Gradient Orbs ── */
@@ -299,20 +305,28 @@ export function ParticleBackground({ viewId }: ParticleBackgroundProps = {}) {
         }
 
         /* ── Background Tip Text (contextual, professional) ── */
-        /* FIX-PERF-TIPS: estilo más sutil y profesional que el greeting anterior.
-           Tamaño menor, peso medio (no 900), opacity muy baja. */
+        /* FIX-PERF-TIPS-V2 (2026-07-13): estilo más elegante y menos ruidoso.
+           - Salto de línea automático (white-space: normal, no nowrap)
+           - Tamaño menor, peso ligero
+           - Opacity muy baja para no distraer
+           - Max-width para forzar wrap en tips largos */
         .bg-tip-text {
-          font-size: clamp(2rem, 5vw, 4rem);
-          font-weight: 600;
-          letter-spacing: -0.02em;
-          line-height: 1.2;
-          color: rgba(34, 197, 94, 0.05);
+          font-size: clamp(1.5rem, 3.5vw, 2.5rem);
+          font-weight: 400;
+          letter-spacing: 0;
+          line-height: 1.4;
+          color: rgba(34, 197, 94, 0.035);
           text-align: center;
-          max-width: 80vw;
+          max-width: min(600px, 70vw);
           padding: 0 2rem;
+          white-space: normal;
+          word-wrap: break-word;
+          overflow-wrap: break-word;
+          font-style: italic;
+          letter-spacing: 0.02em;
         }
         html:not(.dark) .bg-tip-text {
-          color: rgba(0, 0, 0, 0.04);
+          color: rgba(0, 0, 0, 0.03);
         }
 
         /* ── Enhanced mode: frosted glass content panels ── */
