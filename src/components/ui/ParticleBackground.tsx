@@ -3,7 +3,8 @@
 
 import React, { useEffect, useRef, useCallback } from 'react';
 import { useScroll, useTransform, motion } from 'framer-motion';
-import { getTipForView } from '@/config/navigation/view-tips';
+// FIX-TIP-REMOVE: getTipForView ya no se usa aquí — tips removidos del fondo.
+// El archivo view-tips.ts se mantiene para uso futuro.
 
 interface Particle {
   x: number;
@@ -38,13 +39,11 @@ interface Particle {
  * Performance mode: all layers hidden (opacity: 0 via .enhanced-layer).
  */
 interface ParticleBackgroundProps {
-  /** Vista actual para mostrar tip contextual relevante */
+  /** Vista actual (reservado para uso futuro) */
   viewId?: string | null;
-  /** FIX-TIP-LOADING: ocultar el tip durante la carga de la vista */
-  hideTip?: boolean;
 }
 
-export function ParticleBackground({ viewId, hideTip }: ParticleBackgroundProps = {}) {
+export function ParticleBackground({ viewId }: ParticleBackgroundProps = {}) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animRef = useRef<number>(0);
   const particlesRef = useRef<Particle[]>([]);
@@ -204,8 +203,8 @@ export function ParticleBackground({ viewId, hideTip }: ParticleBackgroundProps 
   const { scrollY } = useScroll();
   const meshFade = useTransform(scrollY, [0, 400], [1, 0]);
 
-  /* ── FIX-PERF-TIPS: Tip profesional contextual según la vista ── */
-  const tipText = getTipForView(viewId);
+  // FIX-TIP-REMOVE: tipText removido — ya no se renderiza tip en el fondo.
+  // viewId se mantiene como prop para uso futuro.
 
   return (
     <>
@@ -221,21 +220,13 @@ export function ParticleBackground({ viewId, hideTip }: ParticleBackgroundProps 
         <div className="mesh-orb mesh-orb-3" />
       </motion.div>
 
-      {/* ── Layer 2: Background Tip Text (contextual, professional) ── */}
-      {/* FIX-PERF-TIPS-V2: reemplaza los greetings aleatorios por tips profesionales.
-          Clase 'enhanced-layer' asegura display:none en performance mode.
-          Removido whitespace-nowrap para permitir salto de línea en tips largos.
-          FIX-TIP-LOADING: ocultar durante la carga de la vista (hideTip=true)
-          para que no aparezca en el medio mientras la vista carga. */}
-      <motion.div
-        className="absolute inset-0 z-[-1] pointer-events-none flex items-center justify-center overflow-hidden enhanced-layer"
-        aria-hidden="true"
-        style={{ opacity: hideTip ? 0 : meshFade }}
-      >
-        <span className="bg-tip-text select-none" key={tipText}>
-          {tipText}
-        </span>
-      </motion.div>
+      {/* ── Layer 2: Background Tip Text — REMOVIDO ──
+          FIX-TIP-REMOVE (2026-07-13): el tip text se removió completamente
+          porque causaba ruido visual persistente. Los tips aparecían centrados
+          con salto de línea y permanecían visibles después de que la vista
+          cargaba, lo que distraía del contenido real.
+          El archivo view-tips.ts se mantiene para uso futuro (ej: tooltips,
+          pantalla de ayuda) pero ya no se renderiza como fondo. */}
 
       {/* ── Layer 3: Particle canvas ── */}
       <canvas
