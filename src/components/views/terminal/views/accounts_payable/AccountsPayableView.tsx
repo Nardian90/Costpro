@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useState, useMemo, Fragment } from 'react';
-import { AlertTriangle, Clock, CheckCircle2, Wallet, TrendingDown, Search, Table2, List, CreditCard, User, Download } from 'lucide-react';
+import { AlertTriangle, Clock, CheckCircle2, Wallet, TrendingDown, Search, Table2, List, CreditCard, User, Download, CheckSquare, Square } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
 import { useAuthStore } from '@/store';
+import { apiFetch } from '@/lib/api-fetch';
 import { useAccountsPayable, type AgingTab, type GroupedPayable, type UnifiedPayable } from '@/hooks/api/useAccountsPayable';
 import PaymentModal, { type PayableDocument } from './PaymentModal';
 import PaymentHistoryRow from './PaymentHistoryRow';
@@ -46,6 +47,10 @@ export default function AccountsPayableView() {
   const [viewMode, setViewMode] = useState<'grouped' | 'list'>('grouped');
   const [paymentModalDoc, setPaymentModalDoc] = useState<PayableDocument | null>(null);
   const [exporting, setExporting] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkPaying, setBulkPaying] = useState(false);
+  const [bulkMethod, setBulkMethod] = useState<'cash' | 'transfer' | 'mixed'>('cash');
+  const [showBulkBar, setShowBulkBar] = useState(false);
   const { user } = useAuthStore();
 
   const { data, totals, kpis, summary, count, loading, error, refetch } = useAccountsPayable({
@@ -89,6 +94,60 @@ export default function AccountsPayableView() {
       timer = setTimeout(() => setSearchQuery(value), 400);
     };
   }, []);
+
+  // Bulk actions
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      setShowBulkBar(next.size > 0);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = (items: UnifiedPayable[]) => {
+    const payableItems = items.filter(p => p.payment_status !== 'paid');
+    if (selectedIds.size === payableItems.length && payableItems.length > 0) {
+      setSelectedIds(new Set());
+      setShowBulkBar(false);
+    } else {
+      setSelectedIds(new Set(payableItems.map(p => p.id)));
+      setShowBulkBar(true);
+    }
+  };
+
+  const handleBulkPay = async () => {
+    if (selectedIds.size === 0) return;
+    const listData = data as UnifiedPayable[];
+    const selected = listData.filter(p => selectedIds.has(p.id));
+
+    if (!confirm(`¿Marcar ${selected.length} documento(s) como pagados con método "${bulkMethod}"?`)) return;
+
+    setBulkPaying(true);
+    try {
+      const result = await apiFetch('/api/accounts-payable/bulk-pay', {
+        method: 'POST',
+        body: JSON.stringify({
+          items: selected.map(p => ({ ref_type: p.ref_type, ref_id: p.ref_id })),
+          payment_method: bulkMethod,
+        }),
+      });
+
+      if (result.error_count > 0) {
+        alert(`${result.success_count} pagados, ${result.error_count} con errores. Revisa la consola.`);
+        console.error('Bulk pay errors:', result.results.filter((r: any) => !r.success));
+      }
+
+      setSelectedIds(new Set());
+      setShowBulkBar(false);
+      refetch();
+    } catch (e: any) {
+      alert(`Error: ${e.message}`);
+    } finally {
+      setBulkPaying(false);
+    }
+  };
 
   return (
     <div className="space-y-4 p-4">
@@ -250,7 +309,41 @@ export default function AccountsPayableView() {
         <ListView
           data={data as UnifiedPayable[]}
           onPay={(doc) => setPaymentModalDoc(doc)}
+          selectedIds={selectedIds}
+          onToggleSelect={toggleSelect}
+          onToggleSelectAll={toggleSelectAll}
         />
+      )}
+
+      {/* Bulk action bar */}
+      {showBulkBar && viewMode === 'list' && (
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 bg-background border border-border/40 rounded-2xl shadow-2xl p-3 flex items-center gap-3">
+          <span className="text-xs font-black uppercase">
+            {selectedIds.size} seleccionado(s)
+          </span>
+          <select
+            value={bulkMethod}
+            onChange={(e) => setBulkMethod(e.target.value as any)}
+            className="px-2 py-1.5 rounded-lg border border-border/40 bg-background text-xs"
+          >
+            <option value="cash">Efectivo</option>
+            <option value="transfer">Transferencia</option>
+            <option value="mixed">Mixto</option>
+          </select>
+          <button
+            onClick={handleBulkPay}
+            disabled={bulkPaying}
+            className="px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-[10px] font-black uppercase hover:bg-primary/90 disabled:opacity-50"
+          >
+            {bulkPaying ? 'Procesando...' : 'Marcar Pagadas'}
+          </button>
+          <button
+            onClick={() => { setSelectedIds(new Set()); setShowBulkBar(false); }}
+            className="px-2 py-1.5 rounded-lg border border-border/40 text-[10px] font-black uppercase hover:bg-muted"
+          >
+            Cancelar
+          </button>
+        </div>
       )}
 
       {/* Count */}
@@ -360,7 +453,19 @@ function GroupedTableView({ data, totals }: { data: GroupedPayable[]; totals: an
 // ═════════════════════════════════════════════════════════════════
 // LIST VIEW — detalle por documento (vista original mejorada)
 // ═════════════════════════════════════════════════════════════════
-function ListView({ data, onPay }: { data: UnifiedPayable[]; onPay: (doc: PayableDocument) => void }) {
+function ListView({
+  data,
+  onPay,
+  selectedIds,
+  onToggleSelect,
+  onToggleSelectAll,
+}: {
+  data: UnifiedPayable[];
+  onPay: (doc: PayableDocument) => void;
+  selectedIds: Set<string>;
+  onToggleSelect: (id: string) => void;
+  onToggleSelectAll: (items: UnifiedPayable[]) => void;
+}) {
   if (data.length === 0) {
     return (
       <div className="text-center py-12 text-muted-foreground">
@@ -370,11 +475,23 @@ function ListView({ data, onPay }: { data: UnifiedPayable[]; onPay: (doc: Payabl
     );
   }
 
+  const payableItems = data.filter(p => p.payment_status !== 'paid');
+  const allSelected = payableItems.length > 0 && selectedIds.size === payableItems.length;
+
   return (
     <div className="overflow-x-auto rounded-xl border border-border/30">
       <table className="w-full text-sm">
         <thead className="bg-muted/30">
           <tr className="text-[10px] font-black uppercase text-muted-foreground">
+            <th className="p-3 text-center w-10">
+              <button
+                onClick={() => onToggleSelectAll(data)}
+                className="hover:text-primary"
+                aria-label="Seleccionar todos"
+              >
+                {allSelected ? <CheckSquare className="w-4 h-4 text-primary" /> : <Square className="w-4 h-4" />}
+              </button>
+            </th>
             <th className="p-3 text-left">Proveedor</th>
             <th className="p-3 text-center">Tipo</th>
             <th className="p-3 text-right">Total</th>
@@ -388,7 +505,23 @@ function ListView({ data, onPay }: { data: UnifiedPayable[]; onPay: (doc: Payabl
         <tbody>
           {data.map((p) => (
             <Fragment key={p.id}>
-              <tr className="border-t border-border/20 hover:bg-muted/10">
+              <tr className={cn(
+                "border-t border-border/20 hover:bg-muted/10",
+                selectedIds.has(p.id) && "bg-primary/5"
+              )}>
+                <td className="p-3 text-center">
+                  {p.payment_status !== 'paid' && (
+                    <button
+                      onClick={() => onToggleSelect(p.id)}
+                      aria-label="Seleccionar"
+                    >
+                      {selectedIds.has(p.id)
+                        ? <CheckSquare className="w-4 h-4 text-primary" />
+                        : <Square className="w-4 h-4 text-muted-foreground" />
+                      }
+                    </button>
+                  )}
+                </td>
                 <td className="p-3">
                   <p className="font-bold text-xs">{p.supplier || 'Sin proveedor'}</p>
                   <p className="text-[10px] text-muted-foreground">{p.reference || 'Sin ref'}</p>
