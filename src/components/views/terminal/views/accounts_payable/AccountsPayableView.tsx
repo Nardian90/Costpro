@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { AlertTriangle, Clock, CheckCircle2, Wallet, TrendingDown, Search, Package, Wrench, Filter } from 'lucide-react';
+import { AlertTriangle, Clock, CheckCircle2, Wallet, TrendingDown, Search, Table2, List } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
-import { useAccountsPayable, type AgingTab } from '@/hooks/api/useAccountsPayable';
+import { useAccountsPayable, type AgingTab, type GroupedPayable, type UnifiedPayable } from '@/hooks/api/useAccountsPayable';
 
 const PAYMENT_STATUS_LABELS: Record<string, string> = {
   unpaid: 'Pendiente',
@@ -40,15 +40,16 @@ export default function AccountsPayableView() {
   const [methodFilter, setMethodFilter] = useState('');
   const [currencyFilter, setCurrencyFilter] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [viewMode, setViewMode] = useState<'grouped' | 'list'>('grouped');
 
-  const { data, kpis, summary, count, loading, error } = useAccountsPayable({
+  const { data, totals, kpis, summary, count, loading, error } = useAccountsPayable({
     tab,
     method: methodFilter || undefined,
     currency: currencyFilter || undefined,
     search: searchQuery || undefined,
+    mode: viewMode,
   });
 
-  // Debounce search
   const [searchInput, setSearchInput] = useState('');
   const debouncedSearch = useMemo(() => {
     let timer: ReturnType<typeof setTimeout>;
@@ -61,11 +62,35 @@ export default function AccountsPayableView() {
   return (
     <div className="space-y-4 p-4">
       {/* Header */}
-      <div>
-        <h2 className="text-2xl font-black uppercase tracking-tight">Cuentas por Pagar</h2>
-        <p className="text-xs text-muted-foreground mt-1">
-          Obligaciones pendientes: recepciones y servicios recibidos
-        </p>
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <div>
+          <h2 className="text-2xl font-black uppercase tracking-tight">Cuentas por Pagar</h2>
+          <p className="text-xs text-muted-foreground mt-1">
+            Antigüedad de saldos: recepciones y servicios recibidos
+          </p>
+        </div>
+
+        {/* View mode toggle */}
+        <div className="flex rounded-lg border border-border/40 overflow-hidden">
+          <button
+            onClick={() => setViewMode('grouped')}
+            className={cn(
+              "px-3 py-1.5 text-[10px] font-black uppercase flex items-center gap-1.5",
+              viewMode === 'grouped' ? "bg-primary text-primary-foreground" : "bg-background text-muted-foreground hover:bg-muted"
+            )}
+          >
+            <Table2 className="w-3.5 h-3.5" /> Por Proveedor
+          </button>
+          <button
+            onClick={() => setViewMode('list')}
+            className={cn(
+              "px-3 py-1.5 text-[10px] font-black uppercase flex items-center gap-1.5",
+              viewMode === 'list' ? "bg-primary text-primary-foreground" : "bg-background text-muted-foreground hover:bg-muted"
+            )}
+          >
+            <List className="w-3.5 h-3.5" /> Detalle
+          </button>
+        </div>
       </div>
 
       {/* KPI Cards */}
@@ -110,18 +135,6 @@ export default function AccountsPayableView() {
           </p>
         </div>
       </div>
-
-      {/* Summary by type */}
-      {summary && (
-        <div className="flex gap-2 text-[10px] text-muted-foreground">
-          <span className="px-2 py-1 rounded-lg bg-muted/30">
-            📦 Recepciones: <strong className="text-foreground">{summary.receipts.count}</strong> · {formatCurrency(summary.receipts.balance_cup)}
-          </span>
-          <span className="px-2 py-1 rounded-lg bg-muted/30">
-            🔧 Servicios: <strong className="text-foreground">{summary.services.count}</strong> · {formatCurrency(summary.services.balance_cup)}
-          </span>
-        </div>
-      )}
 
       {/* Aging Tabs */}
       <div className="flex flex-wrap gap-1.5">
@@ -185,128 +198,197 @@ export default function AccountsPayableView() {
         </div>
       )}
 
-      {/* Table */}
+      {/* Content */}
       {loading ? (
         <p className="text-center py-8 text-muted-foreground">Cargando...</p>
-      ) : data.length === 0 ? (
-        <div className="text-center py-12 text-muted-foreground">
-          <Wallet className="w-8 h-8 mx-auto opacity-30 mb-2" />
-          <p className="text-sm">No hay cuentas por pagar en esta categoría</p>
-        </div>
+      ) : error ? null : viewMode === 'grouped' ? (
+        <GroupedTableView data={data as GroupedPayable[]} totals={totals} />
       ) : (
-        <div className="overflow-x-auto rounded-xl border border-border/30">
-          <table className="w-full text-sm">
-            <thead className="bg-muted/30">
-              <tr className="text-[10px] font-black uppercase text-muted-foreground">
-                <th className="p-3 text-left">Proveedor</th>
-                <th className="p-3 text-center">Tipo</th>
-                <th className="p-3 text-right">Total</th>
-                <th className="p-3 text-right">Pagado</th>
-                <th className="p-3 text-right">Saldo CUP</th>
-                <th className="p-3 text-center">Vence</th>
-                <th className="p-3 text-center">Estado</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.map((p) => (
-                <tr key={p.id} className="border-t border-border/20 hover:bg-muted/10">
-                  {/* Proveedor */}
-                  <td className="p-3">
-                    <p className="font-bold text-xs">{p.supplier || 'Sin proveedor'}</p>
-                    <p className="text-[10px] text-muted-foreground">{p.reference || 'Sin ref'}</p>
-                  </td>
-
-                  {/* Tipo */}
-                  <td className="p-3 text-center">
-                    {p.ref_type === 'receipt' ? (
-                      <span className="inline-flex items-center gap-1 text-xs" title="Recepción">
-                        <Package className="w-3.5 h-3.5" /> Recepción
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 text-xs" title="Servicio">
-                        <Wrench className="w-3.5 h-3.5" /> Servicio
-                      </span>
-                    )}
-                  </td>
-
-                  {/* Total (con moneda original) */}
-                  <td className="p-3 text-right">
-                    <p className="font-mono font-bold tabular-nums text-xs">
-                      {formatCurrency(p.total, p.currency)}
-                    </p>
-                    {p.currency !== 'CUP' && (
-                      <p className="text-[9px] text-muted-foreground font-mono">
-                        = {formatCurrency(p.total_cup, 'CUP')}
-                      </p>
-                    )}
-                  </td>
-
-                  {/* Pagado */}
-                  <td className="p-3 text-right font-mono text-xs tabular-nums text-success">
-                    {formatCurrency(p.paid_cup, 'CUP')}
-                  </td>
-
-                  {/* Saldo CUP */}
-                  <td className="p-3 text-right">
-                    <p className="font-mono font-black tabular-nums text-xs text-primary">
-                      {formatCurrency(p.balance_cup, 'CUP')}
-                    </p>
-                    {p.currency !== 'CUP' && p.balance > 0 && (
-                      <p className="text-[9px] text-muted-foreground font-mono">
-                        {formatCurrency(p.balance, p.currency)}
-                      </p>
-                    )}
-                  </td>
-
-                  {/* Vence */}
-                  <td className="p-3 text-center">
-                    {p.due_date ? (
-                      <div>
-                        <p className={cn("text-xs font-bold", p.is_overdue ? "text-destructive" : "")}>
-                          {new Date(p.due_date).toLocaleDateString('es-CU')}
-                        </p>
-                        {p.payment_status !== 'paid' && p.days_until_due !== null && (
-                          <p className={cn(
-                            "text-[10px]",
-                            p.is_overdue ? "text-destructive font-bold" : p.days_until_due <= 7 ? "text-amber-500" : "text-muted-foreground"
-                          )}>
-                            {p.is_overdue
-                              ? `Vencido ${Math.abs(p.days_until_due)}d`
-                              : `${p.days_until_due}d`}
-                          </p>
-                        )}
-                      </div>
-                    ) : (
-                      <span className="text-xs text-muted-foreground">—</span>
-                    )}
-                  </td>
-
-                  {/* Estado */}
-                  <td className="p-3 text-center">
-                    <span className={cn(
-                      "px-2 py-1 rounded text-[10px] font-black uppercase",
-                      p.payment_status === 'paid'
-                        ? "bg-success/10 text-success"
-                        : p.payment_status === 'partial'
-                          ? "bg-amber-500/10 text-amber-500"
-                          : "bg-destructive/10 text-destructive"
-                    )}>
-                      {p.payment_status === 'paid' ? '💰' : p.payment_status === 'partial' ? '⚖️' : '⏳'} {PAYMENT_STATUS_LABELS[p.payment_status]}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <ListView data={data as UnifiedPayable[]} />
       )}
 
       {/* Count */}
-      {!loading && count > 0 && (
+      {!loading && !error && count > 0 && (
         <p className="text-[10px] text-muted-foreground text-center">
-          {count} documento{count !== 1 ? 's' : ''} en esta vista
+          {count} {viewMode === 'grouped' ? 'proveedor(es)' : 'documento(s)'} en esta vista
         </p>
       )}
+    </div>
+  );
+}
+
+// ═════════════════════════════════════════════════════════════════
+// GROUPED TABLE VIEW — estilo Excel con columnas por aging
+// ═════════════════════════════════════════════════════════════════
+function GroupedTableView({ data, totals }: { data: GroupedPayable[]; totals: any }) {
+  if (data.length === 0) {
+    return (
+      <div className="text-center py-12 text-muted-foreground">
+        <Wallet className="w-8 h-8 mx-auto opacity-30 mb-2" />
+        <p className="text-sm">No hay cuentas por pagar en esta categoría</p>
+      </div>
+    );
+  }
+
+  const fmt = (n: number) => formatCurrency(n, 'CUP');
+  const cellClass = (n: number) => cn(
+    "p-2 text-right font-mono tabular-nums text-xs",
+    n > 0 ? "font-bold" : "text-muted-foreground/40"
+  );
+
+  return (
+    <div className="overflow-x-auto rounded-xl border border-border/30">
+      <table className="w-full text-sm">
+        <thead className="bg-muted/30 sticky top-0">
+          <tr className="text-[10px] font-black uppercase text-muted-foreground">
+            <th className="p-2 text-left sticky left-0 bg-muted/30 z-10" rowSpan={2}>Proveedor / Acreedor</th>
+            <th className="p-2 text-center" rowSpan={2}>Docs</th>
+            <th className="p-2 text-right" rowSpan={2}>Total</th>
+            <th className="p-2 text-right" rowSpan={2}>Pagado</th>
+            <th className="p-2 text-right border-l border-border/40" rowSpan={2}>Saldo</th>
+            <th className="p-2 text-center border-l border-border/40" colSpan={2}>Por Vencer</th>
+            <th className="p-2 text-center border-l border-border/40" colSpan={5}>Vencido</th>
+          </tr>
+          <tr className="text-[9px] font-black uppercase text-muted-foreground">
+            <th className="p-2 text-right border-l border-border/40">Corriente</th>
+            <th className="p-2 text-right">Próx 7d</th>
+            <th className="p-2 text-right border-l border-border/40 text-destructive">0-30d</th>
+            <th className="p-2 text-right text-destructive">31-60d</th>
+            <th className="p-2 text-right text-destructive">61-90d</th>
+            <th className="p-2 text-right text-destructive">91-120d</th>
+            <th className="p-2 text-right text-destructive">+120d</th>
+          </tr>
+        </thead>
+        <tbody>
+          {data.map((row, idx) => (
+            <tr key={idx} className="border-t border-border/20 hover:bg-muted/10">
+              <td className="p-2 text-xs font-bold sticky left-0 bg-background z-10">
+                {row.supplier}
+              </td>
+              <td className="p-2 text-center text-xs text-muted-foreground">{row.count}</td>
+              <td className={cellClass(row.total_cup)}>{fmt(row.total_cup)}</td>
+              <td className={cellClass(row.paid_cup)}>{fmt(row.paid_cup)}</td>
+              <td className={cn(cellClass(row.balance_cup), "border-l border-border/40 text-primary font-black")}>
+                {fmt(row.balance_cup)}
+              </td>
+              <td className={cn(cellClass(row.aging.current), "border-l border-border/40")}>{fmt(row.aging.current)}</td>
+              <td className={cellClass(0)}>—</td>
+              <td className={cn(cellClass(row.aging['30']), "border-l border-border/40", row.aging['30'] > 0 && "text-destructive")}>{fmt(row.aging['30'])}</td>
+              <td className={cn(cellClass(row.aging['60']), row.aging['60'] > 0 && "text-destructive")}>{fmt(row.aging['60'])}</td>
+              <td className={cn(cellClass(row.aging['90']), row.aging['90'] > 0 && "text-destructive")}>{fmt(row.aging['90'])}</td>
+              <td className={cn(cellClass(row.aging['120']), row.aging['120'] > 0 && "text-destructive")}>{fmt(row.aging['120'])}</td>
+              <td className={cn(cellClass(row.aging['120+']), row.aging['120+'] > 0 && "text-destructive font-black")}>{fmt(row.aging['120+'])}</td>
+            </tr>
+          ))}
+        </tbody>
+        {totals && (
+          <tfoot className="bg-primary/5 border-t-2 border-primary/30 sticky bottom-0">
+            <tr className="text-[10px] font-black uppercase">
+              <td className="p-2 text-left sticky left-0 bg-primary/5 z-10">TOTALES</td>
+              <td className="p-2 text-center">—</td>
+              <td className={cellClass(totals.total_cup)}>{fmt(totals.total_cup)}</td>
+              <td className={cellClass(totals.paid_cup)}>{fmt(totals.paid_cup)}</td>
+              <td className={cn(cellClass(totals.balance_cup), "border-l border-border/40 text-primary")}>{fmt(totals.balance_cup)}</td>
+              <td className={cn(cellClass(totals.aging.current), "border-l border-border/40")}>{fmt(totals.aging.current)}</td>
+              <td className={cellClass(0)}>—</td>
+              <td className={cn(cellClass(totals.aging['30']), "border-l border-border/40", totals.aging['30'] > 0 && "text-destructive")}>{fmt(totals.aging['30'])}</td>
+              <td className={cn(cellClass(totals.aging['60']), totals.aging['60'] > 0 && "text-destructive")}>{fmt(totals.aging['60'])}</td>
+              <td className={cn(cellClass(totals.aging['90']), totals.aging['90'] > 0 && "text-destructive")}>{fmt(totals.aging['90'])}</td>
+              <td className={cn(cellClass(totals.aging['120']), totals.aging['120'] > 0 && "text-destructive")}>{fmt(totals.aging['120'])}</td>
+              <td className={cn(cellClass(totals.aging['120+']), totals.aging['120+'] > 0 && "text-destructive")}>{fmt(totals.aging['120+'])}</td>
+            </tr>
+          </tfoot>
+        )}
+      </table>
+    </div>
+  );
+}
+
+// ═════════════════════════════════════════════════════════════════
+// LIST VIEW — detalle por documento (vista original mejorada)
+// ═════════════════════════════════════════════════════════════════
+function ListView({ data }: { data: UnifiedPayable[] }) {
+  if (data.length === 0) {
+    return (
+      <div className="text-center py-12 text-muted-foreground">
+        <Wallet className="w-8 h-8 mx-auto opacity-30 mb-2" />
+        <p className="text-sm">No hay documentos en esta categoría</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="overflow-x-auto rounded-xl border border-border/30">
+      <table className="w-full text-sm">
+        <thead className="bg-muted/30">
+          <tr className="text-[10px] font-black uppercase text-muted-foreground">
+            <th className="p-3 text-left">Proveedor</th>
+            <th className="p-3 text-center">Tipo</th>
+            <th className="p-3 text-right">Total</th>
+            <th className="p-3 text-right">Pagado</th>
+            <th className="p-3 text-right">Saldo CUP</th>
+            <th className="p-3 text-center">Vence</th>
+            <th className="p-3 text-center">Estado</th>
+          </tr>
+        </thead>
+        <tbody>
+          {data.map((p) => (
+            <tr key={p.id} className="border-t border-border/20 hover:bg-muted/10">
+              <td className="p-3">
+                <p className="font-bold text-xs">{p.supplier || 'Sin proveedor'}</p>
+                <p className="text-[10px] text-muted-foreground">{p.reference || 'Sin ref'}</p>
+              </td>
+              <td className="p-3 text-center text-xs">
+                {p.ref_type === 'receipt' ? '📦 Recepción' : '🔧 Servicio'}
+              </td>
+              <td className="p-3 text-right">
+                <p className="font-mono font-bold tabular-nums text-xs">{formatCurrency(p.total, p.currency)}</p>
+                {p.currency !== 'CUP' && (
+                  <p className="text-[9px] text-muted-foreground font-mono">= {formatCurrency(p.total_cup, 'CUP')}</p>
+                )}
+              </td>
+              <td className="p-3 text-right font-mono text-xs tabular-nums text-success">
+                {formatCurrency(p.paid_cup, 'CUP')}
+              </td>
+              <td className="p-3 text-right">
+                <p className="font-mono font-black tabular-nums text-xs text-primary">
+                  {formatCurrency(p.balance_cup, 'CUP')}
+                </p>
+                {p.currency !== 'CUP' && p.balance > 0 && (
+                  <p className="text-[9px] text-muted-foreground font-mono">{formatCurrency(p.balance, p.currency)}</p>
+                )}
+              </td>
+              <td className="p-3 text-center">
+                {p.due_date ? (
+                  <div>
+                    <p className={cn("text-xs font-bold", p.is_overdue ? "text-destructive" : "")}>
+                      {new Date(p.due_date).toLocaleDateString('es-CU')}
+                    </p>
+                    {p.payment_status !== 'paid' && p.days_until_due !== null && (
+                      <p className={cn(
+                        "text-[10px]",
+                        p.is_overdue ? "text-destructive font-bold" : p.days_until_due <= 7 ? "text-amber-500" : "text-muted-foreground"
+                      )}>
+                        {p.is_overdue ? `Vencido ${Math.abs(p.days_until_due)}d` : `${p.days_until_due}d`}
+                      </p>
+                    )}
+                  </div>
+                ) : <span className="text-xs text-muted-foreground">—</span>}
+              </td>
+              <td className="p-3 text-center">
+                <span className={cn(
+                  "px-2 py-1 rounded text-[10px] font-black uppercase",
+                  p.payment_status === 'paid' ? "bg-success/10 text-success"
+                  : p.payment_status === 'partial' ? "bg-amber-500/10 text-amber-500"
+                  : "bg-destructive/10 text-destructive"
+                )}>
+                  {p.payment_status === 'paid' ? '💰' : p.payment_status === 'partial' ? '⚖️' : '⏳'} {PAYMENT_STATUS_LABELS[p.payment_status]}
+                </span>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }

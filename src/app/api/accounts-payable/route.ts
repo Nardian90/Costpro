@@ -30,6 +30,8 @@ const querySchema = z.object({
   method: z.enum(['cash', 'transfer', 'zelle']).optional(),
   currency: z.string().optional(),
   search: z.string().optional(),
+  // FIX-EXCEL-VIEW: mode='grouped' agrupa por proveedor con columnas por aging
+  mode: z.enum(['list', 'grouped']).default('list'),
 });
 
 interface UnifiedPayable {
@@ -73,7 +75,7 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
       );
     }
 
-    const { store_id, tab, method, currency, search } = parsed.data;
+    const { store_id, tab, method, currency, search, mode } = parsed.data;
     const supabase = getSupabaseForSession(session);
 
     // ── Fecha de hoy en zona horaria del servidor (UTC) ──
@@ -278,11 +280,97 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
       },
     };
 
+    // ── FIX-EXCEL-VIEW: mode='grouped' agrupa por proveedor con columnas aging ──
+    // Estructura estilo Excel: una fila por proveedor, columnas por rango de vencimiento.
+    // Columnas: Proveedor | Total | Pagado | Saldo | 0-30d | 31-60d | 61-90d | 91-120d | 120+ | Vencido
+    if (mode === 'grouped') {
+      const supplierMap = new Map<string, {
+        supplier: string;
+        total_cup: number;
+        paid_cup: number;
+        balance_cup: number;
+        aging: {
+          current: number;  // no vencido, > 7 días (próximo)
+          overdue: number;  // vencido (cualquier antigüedad)
+          '30': number;     // vencido 0-30d
+          '60': number;     // vencido 31-60d
+          '90': number;     // vencido 61-90d
+          '120': number;    // vencido 91-120d
+          '120+': number;   // vencido +120d
+        };
+        count: number;
+      }>();
+
+      for (const p of payables) {
+        if (p.payment_status === 'paid') continue; // excluir pagados del aging
+
+        const key = p.supplier || 'Sin proveedor';
+        if (!supplierMap.has(key)) {
+          supplierMap.set(key, {
+            supplier: key,
+            total_cup: 0,
+            paid_cup: 0,
+            balance_cup: 0,
+            aging: { current: 0, overdue: 0, '30': 0, '60': 0, '90': 0, '120': 0, '120+': 0 },
+            count: 0,
+          });
+        }
+
+        const entry = supplierMap.get(key)!;
+        entry.total_cup += p.total_cup;
+        entry.paid_cup += p.paid_cup;
+        entry.balance_cup += p.balance_cup;
+        entry.count += 1;
+
+        // Distribuir el saldo en la columna de aging correspondiente
+        if (p.is_overdue) {
+          entry.aging.overdue += p.balance_cup;
+          // Bucket específico de vencido
+          if (p.aging_bucket === '30') entry.aging['30'] += p.balance_cup;
+          else if (p.aging_bucket === '60') entry.aging['60'] += p.balance_cup;
+          else if (p.aging_bucket === '90') entry.aging['90'] += p.balance_cup;
+          else if (p.aging_bucket === '120') entry.aging['120'] += p.balance_cup;
+          else if (p.aging_bucket === '120+') entry.aging['120+'] += p.balance_cup;
+        } else {
+          // No vencido = "corriente" (próximo a vencer o sin vencimiento)
+          entry.aging.current += p.balance_cup;
+        }
+      }
+
+      const groupedData = Array.from(supplierMap.values()).sort((a, b) => b.balance_cup - a.balance_cup);
+
+      // Totales generales (fila de totales)
+      const totals = {
+        total_cup: groupedData.reduce((s, g) => s + g.total_cup, 0),
+        paid_cup: groupedData.reduce((s, g) => s + g.paid_cup, 0),
+        balance_cup: groupedData.reduce((s, g) => s + g.balance_cup, 0),
+        aging: {
+          current: groupedData.reduce((s, g) => s + g.aging.current, 0),
+          overdue: groupedData.reduce((s, g) => s + g.aging.overdue, 0),
+          '30': groupedData.reduce((s, g) => s + g.aging['30'], 0),
+          '60': groupedData.reduce((s, g) => s + g.aging['60'], 0),
+          '90': groupedData.reduce((s, g) => s + g.aging['90'], 0),
+          '120': groupedData.reduce((s, g) => s + g.aging['120'], 0),
+          '120+': groupedData.reduce((s, g) => s + g.aging['120+'], 0),
+        },
+      };
+
+      return NextResponse.json({
+        data: groupedData,
+        totals,
+        kpis,
+        summary,
+        count: groupedData.length,
+        mode: 'grouped',
+      });
+    }
+
     return NextResponse.json({
       data: filtered,
       kpis,
       summary,
       count: filtered.length,
+      mode: 'list',
     });
   } catch (error: any) {
     console.error('[accounts-payable] Error:', error);

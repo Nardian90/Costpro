@@ -45,10 +45,36 @@ interface UseAccountsPayableParams {
   method?: 'cash' | 'transfer' | 'zelle';
   currency?: string;
   search?: string;
+  mode?: 'list' | 'grouped';
+}
+
+export interface GroupedPayable {
+  supplier: string;
+  total_cup: number;
+  paid_cup: number;
+  balance_cup: number;
+  aging: {
+    current: number;
+    overdue: number;
+    '30': number;
+    '60': number;
+    '90': number;
+    '120': number;
+    '120+': number;
+  };
+  count: number;
+}
+
+export interface GroupedTotals {
+  total_cup: number;
+  paid_cup: number;
+  balance_cup: number;
+  aging: GroupedPayable['aging'];
 }
 
 interface UseAccountsPayableResult {
-  data: UnifiedPayable[];
+  data: UnifiedPayable[] | GroupedPayable[];
+  totals: GroupedTotals | null;
   kpis: AccountsPayableKPIs | null;
   summary: AccountsPayableSummary | null;
   count: number;
@@ -65,7 +91,8 @@ interface UseAccountsPayableResult {
  */
 export function useAccountsPayable(params: UseAccountsPayableParams = {}): UseAccountsPayableResult {
   const { user } = useAuthStore();
-  const [data, setData] = useState<UnifiedPayable[]>([]);
+  const [data, setData] = useState<UnifiedPayable[] | GroupedPayable[]>([]);
+  const [totals, setTotals] = useState<GroupedTotals | null>(null);
   const [kpis, setKpis] = useState<AccountsPayableKPIs | null>(null);
   const [summary, setSummary] = useState<AccountsPayableSummary | null>(null);
   const [count, setCount] = useState(0);
@@ -87,15 +114,19 @@ export function useAccountsPayable(params: UseAccountsPayableParams = {}): UseAc
       setError(null);
 
       try {
-        const params = new URLSearchParams({
+        // FIX-TDZ (2026-07-13): renombrar a 'queryParams' para evitar
+        // colisión con 'params' (argumento del hook) que causaba
+        // "Cannot access 'params' before initialization".
+        const queryParams = new URLSearchParams({
           store_id: user.activeStoreId!,
           tab: params.tab || 'all',
+          mode: params.mode || 'list',
         });
-        if (params.method) params.set('method', params.method);
-        if (params.currency) params.set('currency', params.currency);
-        if (params.search) params.set('search', params.search);
+        if (params.method) queryParams.set('method', params.method);
+        if (params.currency) queryParams.set('currency', params.currency);
+        if (params.search) queryParams.set('search', params.search);
 
-        const response = await fetch(`/api/accounts-payable?${params.toString()}`, {
+        const response = await fetch(`/api/accounts-payable?${queryParams.toString()}`, {
           headers: {
             'Content-Type': 'application/json',
           },
@@ -110,6 +141,7 @@ export function useAccountsPayable(params: UseAccountsPayableParams = {}): UseAc
 
         if (!cancelled) {
           setData(json.data || []);
+          setTotals(json.totals || null);
           setKpis(json.kpis || null);
           setSummary(json.summary || null);
           setCount(json.count || 0);
@@ -130,7 +162,7 @@ export function useAccountsPayable(params: UseAccountsPayableParams = {}): UseAc
     return () => {
       cancelled = true;
     };
-  }, [user?.activeStoreId, params.tab, params.method, params.currency, params.search, refetchTrigger]);
+  }, [user?.activeStoreId, params.tab, params.method, params.currency, params.search, params.mode, refetchTrigger]);
 
-  return { data, kpis, summary, count, loading, error, refetch };
+  return { data, totals, kpis, summary, count, loading, error, refetch };
 }
