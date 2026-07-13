@@ -128,6 +128,7 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
           }
 
           // R3: monto = saldo exacto
+          // FIX-AUD4-4: idempotency key determinista (no Date.now())
           const { error: rpcError } = await supabase.rpc('register_supplier_payment', {
             p_store_id: storeId,
             p_ref_type: item.ref_type,
@@ -139,7 +140,7 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
             p_reference: payment_reference || null,
             p_notes: `Bulk pay - ${items.length} documentos`,
             p_paid_by: session.user.id,
-            p_idempotency_key: `bulk-${Date.now()}-${item.ref_id}`,
+            p_idempotency_key: `bulk:${item.ref_type}:${item.ref_id}:${payment_method}`,
           });
 
           if (rpcError) {

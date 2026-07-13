@@ -9,24 +9,24 @@ import { getSupabaseForSession } from '@/lib/supabase-session';
  * El trigger trg_update_payment_status recalcula automáticamente
  * paid_amount y payment_status del documento asociado.
  *
- * FIX-AUDIT-C1 (2026-07-13): reescrito con withAuth + getSupabaseForSession.
- * Antes usaba supabase.auth.getUser() sin sesión SSR → 401 siempre.
+ * FIX-AUD4-1 (2026-07-13): usar extractIdFromUrl en vez de params
+ * destructuring (withAuth no pasa el context object).
  */
 
-async function deleteHandler(
-  request: NextRequest,
-  session: AuthenticatedSession,
-  { params }: { params: Promise<{ id: string }> }
-) {
+function extractIdFromUrl(req: NextRequest): string | null {
+  const match = req.nextUrl?.pathname?.match(/\/api\/payments\/([^/]+)/);
+  return match?.[1] || null;
+}
+
+async function deleteHandler(req: NextRequest, session: AuthenticatedSession) {
   try {
-    const { id: paymentId } = await params;
+    const paymentId = extractIdFromUrl(req);
     if (!paymentId) {
       return NextResponse.json({ error: 'ID de pago requerido' }, { status: 400 });
     }
 
     const supabase = getSupabaseForSession(session);
 
-    // Obtener store_id del usuario
     const { data: userData, error: userError } = await supabase
       .from('profiles')
       .select('active_store_id')
@@ -37,7 +37,6 @@ async function deleteHandler(
       return NextResponse.json({ error: 'Tienda no configurada' }, { status: 400 });
     }
 
-    // FIX-B6: Verificar que el pago existe Y pertenece a la store_id del usuario
     const { data: payment, error: fetchError } = await supabase
       .from('payment_transactions')
       .select('id, ref_type, ref_id, amount, payment_method, store_id')
@@ -49,7 +48,6 @@ async function deleteHandler(
       return NextResponse.json({ error: 'Pago no encontrado' }, { status: 404 });
     }
 
-    // Eliminar el pago — el trigger recalcula el estado automáticamente
     const { error: deleteError } = await supabase
       .from('payment_transactions')
       .delete()

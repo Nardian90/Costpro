@@ -66,6 +66,7 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
       method: searchParams.get('method') || undefined,
       currency: searchParams.get('currency') || undefined,
       search: searchParams.get('search') || undefined,
+      mode: searchParams.get('mode') || 'list',  // FIX-AUD4-2: mode no se parseaba
     });
 
     if (!parsed.success) {
