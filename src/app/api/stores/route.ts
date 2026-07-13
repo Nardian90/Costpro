@@ -278,7 +278,7 @@ async function patchHandler(req: NextRequest, session: AuthenticatedSession) {
 
     if (error) {
       // FIX-IDEMPOTENCY-LEAK (2026-07-13): no pasar error.message como details
-      logger.error('DATABASE', 'STORE_UPDATE_FAILED', { storeId: parsed.data.id, error });
+      logger.error('DATABASE', 'STORE_UPDATE_FAILED', { storeId: validated.data.storeId, error });
       return NextResponse.json(createApiError('STORE_UPDATE_FAILED'), { status: 500 });
     }
 
@@ -354,7 +354,7 @@ async function deleteHandler(req: NextRequest, session: AuthenticatedSession) {
 
     if (error) {
       // FIX-IDEMPOTENCY-LEAK (2026-07-13): no pasar error.message como details
-      logger.error('DATABASE', 'STORE_DELETE_FAILED', { storeId: parsed.data.id, error });
+      logger.error('DATABASE', 'STORE_DELETE_FAILED', { storeId: validated.data.storeId, error });
       return NextResponse.json(createApiError('STORE_DELETE_FAILED'), { status: 500 });
     }
 

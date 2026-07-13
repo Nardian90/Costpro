@@ -1,16 +1,22 @@
 import * as Sentry from '@sentry/nextjs';
 
+// FIX-PERF (2026-07-13): desactivar Sentry cuando no hay DSN o en dev.
+// El server-side Sentry con tracesSampleRate=1.0 + debug=true generaba
+// overhead masivo que causaba que el dev server consumiera 2.8GB de RAM.
+const SENTRY_DSN = process.env.NEXT_PUBLIC_SENTRY_DSN;
+
+if (SENTRY_DSN && process.env.NODE_ENV !== 'development') {
 Sentry.init({
-  dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
+  dsn: SENTRY_DSN,
 
   // Adjust this value in production
-  tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1.0,
+  tracesSampleRate: 0.1,
 
-  // Debug mode
-  debug: process.env.NODE_ENV !== 'production',
+  // Debug mode (off always to reduce noise)
+  debug: false,
 
   // Don't send events in localhost development
-  enabled: process.env.NODE_ENV !== 'development',
+  enabled: process.env.NODE_ENV === 'production',
 
   environment: process.env.NODE_ENV || 'development',
 
@@ -22,3 +28,7 @@ Sentry.init({
     return event;
   },
 });
+} else {
+  // eslint-disable-next-line no-console
+  console.log('[Sentry Server] DSN not configured or dev mode — skipping initialization');
+}
