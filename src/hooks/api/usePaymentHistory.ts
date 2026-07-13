@@ -30,7 +30,7 @@ interface UsePaymentHistoryResult {
  * para mostrar el historial colapsable en la vista de Cuentas por Pagar.
  */
 export function usePaymentHistory(
-  refType: 'receipt' | 'service' | null,
+  refType: 'receipt' | 'service' | 'commission' | null,
   refId: string | null,
   enabled: boolean = true
 ): UsePaymentHistoryResult {

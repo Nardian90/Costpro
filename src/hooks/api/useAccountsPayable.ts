@@ -39,6 +39,7 @@ export interface AccountsPayableKPIs {
 export interface AccountsPayableSummary {
   receipts: { count: number; balance_cup: number };
   services: { count: number; balance_cup: number };
+  commissions?: { count: number; balance_cup: number };
 }
 
 interface UseAccountsPayableParams {

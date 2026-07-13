@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { randomUUID } from 'crypto';
 import { apiFetch } from '@/lib/api-fetch';
 
 export interface PaymentRowInput {
@@ -15,7 +14,7 @@ export interface PaymentRowInput {
 
 interface UseRegisterPaymentResult {
   registerPayment: (
-    refType: 'receipt' | 'service',
+    refType: 'receipt' | 'service' | 'commission',
     refId: string,
     payments: PaymentRowInput[]
   ) => Promise<{ success: boolean; error?: string; paymentIds?: string[] }>;
@@ -50,9 +49,12 @@ export function useRegisterPayment(): UseRegisterPaymentResult {
       setError(null);
 
       try {
-        const idempotencyKey = randomUUID();
+        // FIX-C4 (2026-07-13): idempotency key determinista para prevenir
+        // doble-click real. Antes usaba randomUUID() que generaba keys
+        // distintas en cada intento → no protegía contra duplicados.
+        // Ahora: hash de (refType + refId + payments) → mismo input = misma key.
+        const idempotencyKey = `${refType}:${refId}:${JSON.stringify(payments)}`;
 
-        // FIX-AUTH: usar apiFetch que incluye el token JWT
         const json = await apiFetch('/api/payments', {
           method: 'POST',
           body: JSON.stringify({

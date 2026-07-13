@@ -1,12 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabaseClient';
+import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
+import { getSupabaseForSession } from '@/lib/supabase-session';
 
-// ── DELETE: Anular un pago registrado por error ──
-// FIX-PAYMENT-TRACKING (2026-07-12): permite eliminar un pago.
-// El trigger trg_update_payment_status recalcula automáticamente
-// paid_amount y payment_status del documento asociado.
-export async function DELETE(
+/**
+ * DELETE /api/payments/[id]
+ *
+ * Anula un pago registrado por error.
+ * El trigger trg_update_payment_status recalcula automáticamente
+ * paid_amount y payment_status del documento asociado.
+ *
+ * FIX-AUDIT-C1 (2026-07-13): reescrito con withAuth + getSupabaseForSession.
+ * Antes usaba supabase.auth.getUser() sin sesión SSR → 401 siempre.
+ */
+
+async function deleteHandler(
   request: NextRequest,
+  session: AuthenticatedSession,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -15,20 +24,16 @@ export async function DELETE(
       return NextResponse.json({ error: 'ID de pago requerido' }, { status: 400 });
     }
 
-    const { data: { user } } = await supabase.auth.getUser();
+    const supabase = getSupabaseForSession(session);
 
-    if (!user) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
-    }
-
-    // Obtener store_id del usuario para validación
-    const { data: userData } = await supabase
+    // Obtener store_id del usuario
+    const { data: userData, error: userError } = await supabase
       .from('profiles')
       .select('active_store_id')
-      .eq('id', user.id)
+      .eq('id', session.user.id)
       .single();
 
-    if (!userData?.active_store_id) {
+    if (userError || !userData?.active_store_id) {
       return NextResponse.json({ error: 'Tienda no configurada' }, { status: 400 });
     }
 
@@ -37,7 +42,7 @@ export async function DELETE(
       .from('payment_transactions')
       .select('id, ref_type, ref_id, amount, payment_method, store_id')
       .eq('id', paymentId)
-      .eq('store_id', userData.active_store_id)  // FIX-B6: scope por store_id
+      .eq('store_id', userData.active_store_id)
       .single();
 
     if (fetchError || !payment) {
@@ -65,3 +70,5 @@ export async function DELETE(
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+
+export const DELETE = withAuth(deleteHandler);

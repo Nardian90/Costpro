@@ -7,7 +7,7 @@ import { apiFetch } from '@/lib/api-fetch';
 import { usePaymentHistory } from '@/hooks/api/usePaymentHistory';
 
 interface PaymentHistoryRowProps {
-  refType: 'receipt' | 'service';
+  refType: 'receipt' | 'service' | 'commission';
   refId: string;
   paidAmount: number;
 }

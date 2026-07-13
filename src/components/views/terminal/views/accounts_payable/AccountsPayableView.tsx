@@ -65,11 +65,17 @@ export default function AccountsPayableView() {
     if (!user?.activeStoreId) return;
     setExporting(true);
     try {
+      // FIX-M9 (2026-07-13): usar token JWT via apiFetch pattern (no fetch directo)
       const token = useAuthStore.getState().token;
       const response = await fetch(`/api/accounts-payable/export?store_id=${user.activeStoreId}`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
       });
-      if (!response.ok) throw new Error('Error al exportar');
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({ error: `HTTP ${response.status}` }));
+        throw new Error(err.error || 'Error al exportar');
+      }
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');

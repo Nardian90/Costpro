@@ -5,7 +5,7 @@ import { X, Plus, Trash2, Banknote, Smartphone, DollarSign, CheckCircle2, AlertC
 import { cn, formatCurrency } from '@/lib/utils';
 import { apiFetch } from '@/lib/api-fetch';
 import { useRegisterPayment, type PaymentRowInput } from '@/hooks/api/useRegisterPayment';
-import { supabase } from '@/lib/supabaseClient';
+import { useAuthStore } from '@/store';
 
 export interface PayableDocument {
   ref_type: 'receipt' | 'service' | 'commission';
@@ -54,19 +54,17 @@ export default function PaymentModal({ document: doc, onClose, onPaymentRegister
     }
   }, [doc]);
 
-  // Obtener tasa de cambio viva (sugerencia)
+  // FIX-A1 (2026-07-13): obtener tasa de cambio via API en vez de supabase directo
   useEffect(() => {
     if (!doc) return;
     const fetchLiveRate = async () => {
       try {
-        const { data } = await supabase
-          .from('exchange_rates')
-          .select('rate')
-          .eq('currency', 'USD')
-          .order('date', { ascending: false })
-          .limit(1);
-        if (data && data.length > 0) {
+        // Intentar obtener tasa viva del endpoint de exchange-rates
+        const data = await apiFetch('/api/exchange-rates?currency=USD&limit=1').catch(() => null);
+        if (data && Array.isArray(data) && data.length > 0) {
           setLiveRate(Number(data[0].rate) || 1);
+        } else if (data?.data?.[0]?.rate) {
+          setLiveRate(Number(data.data[0].rate) || 1);
         }
       } catch {
         // fallback a 1
@@ -227,6 +225,106 @@ export default function PaymentModal({ document: doc, onClose, onPaymentRegister
             <CheckCircle2 className="w-16 h-16 mx-auto text-success mb-3" />
             <p className="text-lg font-black uppercase">¡Pago Registrado!</p>
             <p className="text-xs text-muted-foreground mt-1">Cerrando...</p>
+          </div>
+        ) : doc.ref_type === 'commission' ? (
+          /* FASE 3/A8: UI simplificada para comisiones — solo método + referencia */
+          <div className="p-4 space-y-4">
+            <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-3">
+              <p className="text-[10px] font-black uppercase text-amber-500 mb-1">
+                Pago de Comisión
+              </p>
+              <p className="text-[11px] text-muted-foreground">
+                R2: Las comisiones se pagan completas en CUP. Seleccione el método de pago.
+              </p>
+            </div>
+
+            <div>
+              <label className="text-[10px] font-black uppercase text-muted-foreground mb-2 block">
+                Método de Pago
+              </label>
+              <div className="grid grid-cols-3 gap-2">
+                {PAYMENT_METHODS.filter(m => m.id !== 'zelle').map(m => {
+                  const Icon = m.icon;
+                  const isSelected = rows[0]?.payment_method === m.id;
+                  return (
+                    <button
+                      key={m.id}
+                      onClick={() => updateRow(rows[0].id, { payment_method: m.id })}
+                      className={cn(
+                        "flex flex-col items-center gap-1.5 py-3 rounded-lg border text-[10px] font-bold uppercase",
+                        isSelected
+                          ? "border-primary bg-primary/10 text-primary"
+                          : "border-border/40 text-muted-foreground hover:bg-muted"
+                      )}
+                    >
+                      <Icon className="w-5 h-5" />
+                      {m.label}
+                    </button>
+                  );
+                })}
+                <button
+                  onClick={() => {
+                    // mixed: añadir segunda fila
+                    if (rows.length === 1) addRow();
+                  }}
+                  className={cn(
+                    "flex flex-col items-center gap-1.5 py-3 rounded-lg border text-[10px] font-bold uppercase",
+                    rows.length > 1
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-border/40 text-muted-foreground hover:bg-muted"
+                  )}
+                >
+                  <Banknote className="w-5 h-5" />
+                  Mixto
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <label className="text-[9px] uppercase font-black text-muted-foreground">
+                Referencia (opcional)
+              </label>
+              <input
+                type="text"
+                value={rows[0]?.reference || ''}
+                onChange={(e) => updateRow(rows[0].id, { reference: e.target.value })}
+                className="w-full px-2 py-1.5 rounded border border-border/40 bg-background text-xs"
+                placeholder="# transferencia, etc."
+              />
+            </div>
+
+            <div className="p-3 bg-muted/20 rounded-lg">
+              <p className="text-[10px] text-muted-foreground">
+                Monto a pagar: <strong className="text-foreground font-mono">{formatCurrency(doc.balance_cup, 'CUP')}</strong> (CUP)
+              </p>
+              <p className="text-[10px] text-muted-foreground mt-1">
+                Estado resultante: <strong className="text-success">Pagado</strong>
+              </p>
+            </div>
+
+            {error && (
+              <div className="flex items-center gap-2 p-2 rounded-lg text-[10px] font-bold text-destructive bg-destructive/10">
+                <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                {error}
+              </div>
+            )}
+
+            <div className="flex gap-2">
+              <button
+                onClick={onClose}
+                disabled={loading}
+                className="flex-1 py-2.5 rounded-lg border border-border/40 text-xs font-black uppercase hover:bg-muted disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleSubmit}
+                disabled={loading}
+                className="flex-1 py-2.5 rounded-lg bg-primary text-primary-foreground text-xs font-black uppercase hover:bg-primary/90 disabled:opacity-50"
+              >
+                {loading ? 'Procesando...' : 'Pagar Comisión'}
+              </button>
+            </div>
           </div>
         ) : (
           <>
