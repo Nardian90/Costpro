@@ -1,29 +1,9 @@
 // Math.random() is used here for particle animation (non-cryptographic, visual-only). Safe per CWE-338 exception.
 'use client';
-import { safePick } from '@/lib/safe-random';
 
-import React, { useEffect, useRef, useCallback, useMemo } from 'react';
+import React, { useEffect, useRef, useCallback } from 'react';
 import { useScroll, useTransform, motion } from 'framer-motion';
-
-/* ── Random background greetings ── */
-const BG_GREETINGS = [
-  '¡Vamos!',
-  '¡Dale!',
-  '¡Hola!',
-  '¡Arrancamos!',
-  '¡Siempre adelante!',
-  'Listo',
-  '¡Genial!',
-  '¡Vamos con todo!',
-  '¡A ganar!',
-  '¡Éxito!',
-  '¡Bravo!',
-  '¡Positivo!',
-  '¡Súper!',
-  '¡Arranca!',
-  '¡Levanta!',
-  '¡Boom!',
-];
+import { getTipForView } from '@/config/navigation/view-tips';
 
 interface Particle {
   x: number;
@@ -43,17 +23,26 @@ interface Particle {
 /**
  * ParticleBackground — Enhanced mode premium backdrop.
  *
- * Professional approach (used by Apple, Stripe, Linear):
- *   1. Background image at very low opacity (0.08) + heavy blur (24px)
- *      → becomes a soft texture that doesn't steal focus
- *   2. Edge-fade gradient in the app's base color
- *      → image melts into the white/dark background, no hard cut
- *   3. Subtle center-bright vignette for depth
- *   4. Particle canvas on top — green dots/glows/streaks
+ * FIX-PERF-TIPS (2026-07-13):
+ * - Removida la lista aleatoria de greetings ("¡Hola!", "Listo", etc.)
+ * - Reemplazada por tips profesionales contextuales según la vista actual
+ * - El tip se pasa como prop `viewId` y se obtiene de VIEW_TIPS
+ * - En modo performance: ORBS, TEXTO y CANVAS se ocultan completamente
+ * - En modo enhanced: se muestran con animación
  *
- * Performance mode: all layers hidden, canvas idle (zero GPU cost).
+ * Professional approach (used by Apple, Stripe, Linear):
+ *   1. Mesh gradient orbs (CSS only, 0 GPU cost)
+ *   2. Background tip text (contextual, professional)
+ *   3. Particle canvas (green dots/glows/streaks)
+ *
+ * Performance mode: all layers hidden (opacity: 0 via .enhanced-layer).
  */
-export function ParticleBackground() {
+interface ParticleBackgroundProps {
+  /** Vista actual para mostrar tip contextual relevante */
+  viewId?: string | null;
+}
+
+export function ParticleBackground({ viewId }: ParticleBackgroundProps = {}) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animRef = useRef<number>(0);
   const particlesRef = useRef<Particle[]>([]);
@@ -213,12 +202,13 @@ export function ParticleBackground() {
   const { scrollY } = useScroll();
   const meshFade = useTransform(scrollY, [0, 400], [1, 0]);
 
-  /* ── Random background greeting ── */
-  const bgGreeting = useMemo(() => safePick(BG_GREETINGS), []);
+  /* ── FIX-PERF-TIPS: Tip profesional contextual según la vista ── */
+  const tipText = getTipForView(viewId);
 
   return (
     <>
       {/* ── Layer 1: Mesh Gradient — animated orbs (pure CSS, 0 GPU cost) ── */}
+      {/* FIX-PERF-ORBS: clase 'enhanced-layer' asegura que se oculte en performance */}
       <motion.div
         className="absolute inset-0 z-[-3] pointer-events-none enhanced-layer overflow-hidden"
         aria-hidden="true"
@@ -229,17 +219,16 @@ export function ParticleBackground() {
         <div className="mesh-orb mesh-orb-3" />
       </motion.div>
 
-      {/* ── Layer 2: Background Greeting Text ── */}
-      {/* FIX-PERF-BG (2026-07-13): añadida clase 'enhanced-layer' para que el
-          texto de fondo ("¡Hola!", "Listo", etc.) se oculte en modo performance.
-          Antes NO se ocultaba porque solo tenía z-[-1] sin la clase enhanced-layer. */}
+      {/* ── Layer 2: Background Tip Text (contextual, professional) ── */}
+      {/* FIX-PERF-TIPS: reemplaza los greetings aleatorios por tips profesionales.
+          Clase 'enhanced-layer' asegura que se oculte en performance mode. */}
       <motion.div
         className="absolute inset-0 z-[-1] pointer-events-none flex items-center justify-center overflow-hidden enhanced-layer"
         aria-hidden="true"
         style={{ opacity: meshFade }}
       >
-        <span className="bg-greeting-text select-none whitespace-nowrap">
-          {bgGreeting}
+        <span className="bg-tip-text select-none whitespace-nowrap" key={tipText}>
+          {tipText}
         </span>
       </motion.div>
 
@@ -252,6 +241,9 @@ export function ParticleBackground() {
 
       <style jsx global>{`
         /* ── Enhanced layers: hidden by default, fade in when active ── */
+        /* FIX-PERF-ORBS: en modo performance (default sin .mode-enhanced),
+           TODAS las layers (orbs, tip text, canvas) están ocultas (opacity: 0).
+           Solo se muestran cuando html tiene clase .mode-enhanced. */
         .enhanced-layer {
           opacity: 0;
           transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1);
@@ -306,16 +298,21 @@ export function ParticleBackground() {
           .mesh-orb { animation: none !important; }
         }
 
-        /* ── Background Greeting Text ── */
-        .bg-greeting-text {
-          font-size: clamp(4rem, 12vw, 10rem);
-          font-weight: 900;
-          letter-spacing: -0.04em;
-          line-height: 1;
-          color: rgba(34, 197, 94, 0.04);
+        /* ── Background Tip Text (contextual, professional) ── */
+        /* FIX-PERF-TIPS: estilo más sutil y profesional que el greeting anterior.
+           Tamaño menor, peso medio (no 900), opacity muy baja. */
+        .bg-tip-text {
+          font-size: clamp(2rem, 5vw, 4rem);
+          font-weight: 600;
+          letter-spacing: -0.02em;
+          line-height: 1.2;
+          color: rgba(34, 197, 94, 0.05);
+          text-align: center;
+          max-width: 80vw;
+          padding: 0 2rem;
         }
-        html:not(.dark) .bg-greeting-text {
-          color: rgba(0, 0, 0, 0.03);
+        html:not(.dark) .bg-tip-text {
+          color: rgba(0, 0, 0, 0.04);
         }
 
         /* ── Enhanced mode: frosted glass content panels ── */

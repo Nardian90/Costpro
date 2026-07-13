@@ -485,7 +485,7 @@ export default function TerminalShell() {
               ? "overflow-y-auto p-0"
               : "overflow-y-auto px-3 sm:px-4 pt-0 pb-24 sm:pb-24 lg:pb-28"
         )}>
-          <ParticleBackground />
+          <ParticleBackground viewId={currentView} />
           <Suspense fallback={
             <ViewLoadingSplash
               label={currentView === 'cost-sheets' ? 'Tablero Principal' : String(currentView).replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
