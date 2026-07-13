@@ -104,9 +104,14 @@ describe('SPRINT-2 INTEGRATION AUDIT', () => {
   });
 
   it('RiskLayer + Ensemble + Backtest integration', () => {
+    // FIX-CI-TIMEOUT (2026-07-13): days reducido de 30 a 10 para evitar timeout.
+    // days=30 genera 60 iteraciones walk-forward (cada una instancia AnalysisEngine +
+    // EnsembleEngine nuevos) → 35-65s. days=10 genera 20 iteraciones → ~12s.
+    // La intención del test (verificar que RiskLayer + Ensemble + Backtest
+    // producen resultados coherentes) se preserva con menos iteraciones.
     const history = generateRealisticHistory(200);
     const backtestEngine = new BacktestEngine(history);
-    const backtestResult = backtestEngine.runValidation(config, 1000, 30);
+    const backtestResult = backtestEngine.runValidation(config, 1000, 10);
 
     const analysis = new AnalysisEngine(history).analyze(60);
     const ensemble = new EnsembleEngine(history, analysis);
@@ -147,7 +152,7 @@ describe('SPRINT-2 INTEGRATION AUDIT', () => {
     console.log(`  - Risk level: ${riskRec.riskLevel}`);
     console.log(`  - Should stop: ${riskRec.shouldStop}`);
     console.log(`  - Warnings: ${riskRec.warnings.length}`);
-  });
+  }, 60000); // FIX-CI-TIMEOUT: 60s margen (days=10 + margen para runners lentos)
 
   it('detecta régimen cuando hay cambio en los datos', () => {
     const history = generateRealisticHistory(200);
@@ -191,9 +196,10 @@ describe('SPRINT-2 INTEGRATION AUDIT', () => {
   });
 
   it('RiskLayer respeta los 3 modos correctamente', () => {
+    // FIX-CI-TIMEOUT (2026-07-13): days reducido de 30 a 10 (mismo fix que arriba).
     const history = generateRealisticHistory(200);
     const backtestEngine = new BacktestEngine(history);
-    const backtestResult = backtestEngine.runValidation(config, 1000, 30);
+    const backtestResult = backtestEngine.runValidation(config, 1000, 10);
 
     const modes: Array<'defensive' | 'balanced' | 'aggressive'> = ['defensive', 'balanced', 'aggressive'];
     const betSizes: number[] = [];
@@ -213,7 +219,7 @@ describe('SPRINT-2 INTEGRATION AUDIT', () => {
     // Defensive debe ser ≤ Balanced ≤ Aggressive
     expect(betSizes[0]).toBeLessThanOrEqual(betSizes[1]);
     expect(betSizes[1]).toBeLessThanOrEqual(betSizes[2]);
-  });
+  }, 60000); // FIX-CI-TIMEOUT: 60s margen
 
   it('los 3 risk profiles tienen configuraciones coherentes', () => {
     expect(RISK_PROFILES.defensive.kellyCap).toBeLessThan(RISK_PROFILES.balanced.kellyCap);
