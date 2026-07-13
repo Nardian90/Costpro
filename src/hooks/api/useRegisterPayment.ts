@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import { randomUUID } from 'crypto';
+import { apiFetch } from '@/lib/api-fetch';
 
 export interface PaymentRowInput {
   payment_method: 'cash' | 'transfer' | 'zelle';
@@ -51,9 +52,9 @@ export function useRegisterPayment(): UseRegisterPaymentResult {
       try {
         const idempotencyKey = randomUUID();
 
-        const response = await fetch('/api/payments', {
+        // FIX-AUTH: usar apiFetch que incluye el token JWT
+        const json = await apiFetch('/api/payments', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             ref_type: refType,
             ref_id: refId,
@@ -61,12 +62,6 @@ export function useRegisterPayment(): UseRegisterPaymentResult {
             idempotency_key: idempotencyKey,
           }),
         });
-
-        const json = await response.json();
-
-        if (!response.ok) {
-          throw new Error(json.error || `HTTP ${response.status}`);
-        }
 
         return {
           success: true,

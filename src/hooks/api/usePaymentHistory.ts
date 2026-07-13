@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { apiFetch } from '@/lib/api-fetch';
 
 export interface PaymentRecord {
   id: string;
@@ -51,16 +52,8 @@ export function usePaymentHistory(
 
       try {
         const params = new URLSearchParams({ ref_type: refType, ref_id: refId });
-        const response = await fetch(`/api/payments?${params.toString()}`, {
-          headers: { 'Content-Type': 'application/json' },
-        });
-
-        if (!response.ok) {
-          const errBody = await response.json().catch(() => ({}));
-          throw new Error(errBody.error || `HTTP ${response.status}`);
-        }
-
-        const json = await response.json();
+        // FIX-AUTH: usar apiFetch que incluye el token JWT
+        const json = await apiFetch(`/api/payments?${params.toString()}`);
         if (!cancelled) {
           setPayments(Array.isArray(json) ? json : (json.data || []));
         }

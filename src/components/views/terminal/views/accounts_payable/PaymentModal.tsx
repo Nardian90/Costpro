@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { X, Plus, Trash2, Banknote, Smartphone, DollarSign, CheckCircle2, AlertCircle } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
+import { apiFetch } from '@/lib/api-fetch';
 import { useRegisterPayment, type PaymentRowInput } from '@/hooks/api/useRegisterPayment';
 import { supabase } from '@/lib/supabaseClient';
 
@@ -131,19 +132,14 @@ export default function PaymentModal({ document: doc, onClose, onPaymentRegister
 
       setError(null);
       try {
-        const response = await fetch(`/api/commissions/payments/${doc.ref_id}`, {
+        // FIX-AUTH: usar apiFetch que incluye el token JWT
+        await apiFetch(`/api/commissions/payments/${doc.ref_id}`, {
           method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             action: 'pay',
             payment_method: method,
           }),
         });
-
-        if (!response.ok) {
-          const err = await response.json().catch(() => ({}));
-          throw new Error(err.error || `HTTP ${response.status}`);
-        }
 
         setSuccess(true);
         setTimeout(() => {

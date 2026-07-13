@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useState, useMemo, Fragment } from 'react';
-import { AlertTriangle, Clock, CheckCircle2, Wallet, TrendingDown, Search, Table2, List, CreditCard, User } from 'lucide-react';
+import { AlertTriangle, Clock, CheckCircle2, Wallet, TrendingDown, Search, Table2, List, CreditCard, User, Download } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
+import { useAuthStore } from '@/store';
 import { useAccountsPayable, type AgingTab, type GroupedPayable, type UnifiedPayable } from '@/hooks/api/useAccountsPayable';
 import PaymentModal, { type PayableDocument } from './PaymentModal';
 import PaymentHistoryRow from './PaymentHistoryRow';
@@ -44,6 +45,8 @@ export default function AccountsPayableView() {
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'grouped' | 'list'>('grouped');
   const [paymentModalDoc, setPaymentModalDoc] = useState<PayableDocument | null>(null);
+  const [exporting, setExporting] = useState(false);
+  const { user } = useAuthStore();
 
   const { data, totals, kpis, summary, count, loading, error, refetch } = useAccountsPayable({
     tab,
@@ -52,6 +55,31 @@ export default function AccountsPayableView() {
     search: searchQuery || undefined,
     mode: viewMode,
   });
+
+  const handleExport = async () => {
+    if (!user?.activeStoreId) return;
+    setExporting(true);
+    try {
+      const token = useAuthStore.getState().token;
+      const response = await fetch(`/api/accounts-payable/export?store_id=${user.activeStoreId}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (!response.ok) throw new Error('Error al exportar');
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `cuentas_por_pagar_${new Date().toISOString().slice(0, 10)}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (e: any) {
+      alert(`Error al exportar: ${e.message}`);
+    } finally {
+      setExporting(false);
+    }
+  };
 
   const [searchInput, setSearchInput] = useState('');
   const debouncedSearch = useMemo(() => {
@@ -73,25 +101,37 @@ export default function AccountsPayableView() {
           </p>
         </div>
 
-        {/* View mode toggle */}
-        <div className="flex rounded-lg border border-border/40 overflow-hidden">
+        {/* View mode toggle + Export */}
+        <div className="flex items-center gap-2">
+          <div className="flex rounded-lg border border-border/40 overflow-hidden">
+            <button
+              onClick={() => setViewMode('grouped')}
+              className={cn(
+                "px-3 py-1.5 text-[10px] font-black uppercase flex items-center gap-1.5",
+                viewMode === 'grouped' ? "bg-primary text-primary-foreground" : "bg-background text-muted-foreground hover:bg-muted"
+              )}
+            >
+              <Table2 className="w-3.5 h-3.5" /> Por Proveedor
+            </button>
+            <button
+              onClick={() => setViewMode('list')}
+              className={cn(
+                "px-3 py-1.5 text-[10px] font-black uppercase flex items-center gap-1.5",
+                viewMode === 'list' ? "bg-primary text-primary-foreground" : "bg-background text-muted-foreground hover:bg-muted"
+              )}
+            >
+              <List className="w-3.5 h-3.5" /> Detalle
+            </button>
+          </div>
+
           <button
-            onClick={() => setViewMode('grouped')}
-            className={cn(
-              "px-3 py-1.5 text-[10px] font-black uppercase flex items-center gap-1.5",
-              viewMode === 'grouped' ? "bg-primary text-primary-foreground" : "bg-background text-muted-foreground hover:bg-muted"
-            )}
+            onClick={handleExport}
+            disabled={exporting || loading}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border/40 text-[10px] font-black uppercase hover:bg-muted disabled:opacity-50"
+            title="Exportar a Excel"
           >
-            <Table2 className="w-3.5 h-3.5" /> Por Proveedor
-          </button>
-          <button
-            onClick={() => setViewMode('list')}
-            className={cn(
-              "px-3 py-1.5 text-[10px] font-black uppercase flex items-center gap-1.5",
-              viewMode === 'list' ? "bg-primary text-primary-foreground" : "bg-background text-muted-foreground hover:bg-muted"
-            )}
-          >
-            <List className="w-3.5 h-3.5" /> Detalle
+            <Download className="w-3.5 h-3.5" />
+            {exporting ? 'Exportando...' : 'Excel'}
           </button>
         </div>
       </div>

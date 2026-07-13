@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { ChevronDown, ChevronRight, History, Trash2, Banknote, Smartphone, DollarSign } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
+import { apiFetch } from '@/lib/api-fetch';
 import { usePaymentHistory } from '@/hooks/api/usePaymentHistory';
 
 interface PaymentHistoryRowProps {
@@ -35,15 +36,8 @@ export default function PaymentHistoryRow({ refType, refId, paidAmount }: Paymen
     if (!confirm('¿Anular este pago? El saldo se recalculará automáticamente.')) return;
 
     try {
-      const response = await fetch(`/api/payments/${paymentId}`, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) {
-        const err = await response.json().catch(() => ({}));
-        throw new Error(err.error || `HTTP ${response.status}`);
-      }
-
+      // FIX-AUTH: usar apiFetch que incluye el token JWT
+      await apiFetch(`/api/payments/${paymentId}`, { method: 'DELETE' });
       refetch();
     } catch (e: any) {
       alert(`Error al anular: ${e.message}`);

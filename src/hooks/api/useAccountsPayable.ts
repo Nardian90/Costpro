@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useAuthStore } from '@/store';
+import { apiFetch } from '@/lib/api-fetch';
 
 export type AgingTab = 'all' | 'overdue' | '30' | '60' | '90' | '120' | 'paid';
 
@@ -126,18 +127,8 @@ export function useAccountsPayable(params: UseAccountsPayableParams = {}): UseAc
         if (params.currency) queryParams.set('currency', params.currency);
         if (params.search) queryParams.set('search', params.search);
 
-        const response = await fetch(`/api/accounts-payable?${queryParams.toString()}`, {
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
-
-        if (!response.ok) {
-          const errBody = await response.json().catch(() => ({}));
-          throw new Error(errBody.error || `HTTP ${response.status}`);
-        }
-
-        const json = await response.json();
+        // FIX-AUTH: usar apiFetch que incluye el token JWT en Authorization header
+        const json = await apiFetch(`/api/accounts-payable?${queryParams.toString()}`);
 
         if (!cancelled) {
           setData(json.data || []);
