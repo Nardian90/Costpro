@@ -179,15 +179,10 @@ export const SIDEBAR_STRUCTURE: NavModule[] = [
       // en MULTI-TIENDA) por 1 solo "Gestión" para disminuir el ruido del menú.
       // El tab Tiendas incluye un botón "Ver Dashboard KPI" que lleva al dashboard
       // directamente (ya no hay item separado para Dashboard KPI en el sidebar).
-      { id: 'management-hub', label: 'Gestión', type: 'item', icon: LayoutGrid, ariaLabel: 'Hub de gestión: noticias, vitrina y tiendas', description: 'Centro unificado de gestión: Tablón Noticias, Vitrina pública y Gestión de Tiendas con acceso directo a Dashboard KPI.', allowedRoles: ['admin', 'manager', 'encargado'] },
-      // Vitrina pública configurable (2026-07-04): accesible directamente desde
-      // MULTI-TIENDA en lugar de estar oculta en Settings. El encargado/admin
-      // configura banner, servicios, carrusel y canales de WhatsApp/Telegram
-      // de la tienda activa.
-      // FIX-GESTION-UNIFICADA: 'storefront-config' también es accesible vía el
-      // tab "Vitrina" del hub de Gestión. Se mantiene el item directo para acceso
-      // rápido de manager/encargado (no admin) que no ven el hub completo.
-      { id: 'storefront-config', label: 'Vitrina', type: 'item', icon: Store, ariaLabel: 'Configurar vitrina pública', description: 'Personaliza el banner, servicios, carrusel promocional y canales de contacto (WhatsApp/Telegram) de tu vitrina pública.', allowedRoles: ['admin', 'manager', 'encargado'] },
+      { id: 'management-hub', label: 'Gestión', type: 'item', icon: LayoutGrid, ariaLabel: 'Hub de gestión: noticias, vitrina y tiendas', description: 'Centro unificado de gestión: Tablón Noticias, Vitrina pública y Gestión de Tiendas con KPIs en tiempo real y acceso al dashboard avanzado por tienda.', allowedRoles: ['admin', 'manager', 'encargado'] },
+      // FIX-GESTION-UNIFICADA-V2 (2026-07-13): "Vitrina" removido del sidebar.
+      // Ya es accesible vía el tab "Vitrina" del hub de Gestión. Tenerlo duplicado
+      // como item directo era ruido innecesario en el menú.
       { id: 'workers', label: 'Trabajadores y Comisiones', type: 'item', icon: UserCog, ariaLabel: 'Gestión de trabajadores y cálculo de comisiones', description: 'CRUD de trabajadores por tienda, reglas de comisión versionables, cálculo por periodo y registro de pagos con auditoría completa.', allowedRoles: ['admin', 'manager', 'encargado'] },
       // QW-4 (IA Audit): "Tablero Principal", "Inteligencia Cambiaria" y "Generador
       // de Reportes" agrupados en un submenú "Analítica".

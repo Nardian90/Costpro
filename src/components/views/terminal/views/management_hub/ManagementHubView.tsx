@@ -3,37 +3,46 @@
 /**
  * ManagementHubView — Hub de Gestión (MULTI-TIENDA).
  *
- * GESTION-UNIFICADA (2026-07-13): unifica 3 vistas administrativas en tabs:
+ * GESTION-UNIFICADA-V2 (2026-07-13): unifica 3 vistas administrativas en tabs:
  *   1. Tablón Noticias  → NewsView (lectura + tasa de cambio)
  *   2. Vitrina          → StorefrontConfigView (configuración vitrina pública)
- *   3. Gestión Tiendas  → StoresManagementView + acceso directo a Dashboard KPI
+ *   3. Gestión Tiendas  → StoresManagementView con KPIs + dashboard avanzado
  *
- * Objetivo: disminuir opciones del menú lateral izquierdo. Antes eran 3 items
- * separados en 2 grupos (Tablón Noticias en ADMINISTRACIÓN, Vitrina y Gestión
- * Tiendas en MULTI-TIENDA, más Dashboard KPI en Analítica). Ahora es 1 solo
- * item "Gestión" en MULTI-TIENDA, con 3 tabs internos.
+ * FIX-GESTION-UNIFICADA-V2: el tab "Gestión Tiendas" ahora renderiza
+ * StoresManagementView con una prop `onOpenDashboard`. Cuando el user hace
+ * clic en el botón "Ver Dashboard" de una tarjeta, se abre StoreDashboardView
+ * (dashboard avanzado por tienda, 3160 LOC con ECharts + insights IA).
  *
- * El Tab "Gestión Tiendas" incluye un botón "Ver Dashboard KPI" que lleva a la
- * vista dashboard directamente (en lugar de tenerla como item separado en el
- * sidebar). Esto resuelve el problema de tener dos lugares que hacen casi lo
- * mismo: el dashboard ahora se accede desde el contexto de Gestión Tiendas,
- * que es donde el admin naturalmente lo busca.
+ * El botón "Ver Dashboard KPI" del header fue removido — ya hay un botón
+ * "Ver Dashboard" por cada tarjeta de tienda, que es más específico.
  *
- * Patrón: TABS (igual que InventoryView). No es HUB porque las 3 secciones son
- * homogéneas (gestión administrativa del tenant) y convive mejor con tabs.
+ * Patrón: TABS (igual que InventoryView).
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import dynamic from 'next/dynamic';
-import { Newspaper, Store, Building, TrendingUp, ExternalLink } from 'lucide-react';
+import { Newspaper, Store, Building, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useUIStore } from '@/store';
 import { useAuthStore } from '@/store';
 
-// Lazy-load de las 3 sub-vistas para que el bundle inicial sea pequeño
+// Lazy-load de las sub-vistas
 const NewsView = dynamic(() => import('@/components/views/terminal/views/rss/NewsView'), { ssr: false });
 const StorefrontConfigView = dynamic(() => import('@/components/views/terminal/views/stores/StorefrontConfigView'), { ssr: false });
 const StoresManagementView = dynamic(() => import('@/components/views/terminal/views/stores/StoresManagementView'), { ssr: false });
+
+// StoreDashboardView — dashboard avanzado por tienda (3160 LOC con ECharts).
+// Lazy-loaded. Solo se carga cuando el user hace clic en "Ver Dashboard".
+const StoreDashboardView = dynamic(
+  () => import('@/components/views/terminal/views/dashboard/StoreDashboardView'),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="fixed inset-0 z-[200] flex items-center justify-center bg-background/80 backdrop-blur-sm">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    ),
+  }
+);
 
 type TabId = 'news' | 'storefront' | 'stores';
 
@@ -42,7 +51,7 @@ interface TabDef {
   label: string;
   icon: React.ElementType;
   description: string;
-  roles: string[]; // roles que pueden ver este tab
+  roles: string[];
 }
 
 const TABS: TabDef[] = [
@@ -64,22 +73,20 @@ const TABS: TabDef[] = [
     id: 'stores',
     label: 'Gestión Tiendas',
     icon: Building,
-    description: 'Administrar tiendas del tenant',
-    roles: ['admin'],
+    description: 'Tiendas con KPIs en tiempo real y dashboard avanzado por tienda',
+    roles: ['admin', 'manager', 'encargado'],
   },
 ];
 
 export default function ManagementHubView() {
   const { user } = useAuthStore();
-  const { setCurrentView } = useUIStore();
   const [activeTab, setActiveTab] = useState<TabId>('news');
+  const [dashboardStore, setDashboardStore] = useState<{ id: string; name: string } | null>(null);
 
-  // Persistir el tab activo en localStorage para que al volver de una sub-vista
-  // (ej: dashboard) el usuario vuelva al mismo tab.
+  // Persistir el tab activo en localStorage
   useEffect(() => {
-    const saved = typeof window !== 'undefined' ? localStorage.getItem('mgmt-hub-tab') as TabId | null : null;
+    const saved = typeof window !== 'undefined' ? (localStorage.getItem('mgmt-hub-tab') as TabId | null) : null;
     if (saved && TABS.some(t => t.id === saved)) {
-      // Verificar que el user tenga rol para el tab guardado
       const tab = TABS.find(t => t.id === saved)!;
       if (user && tab.roles.includes(user.role)) {
         setActiveTab(saved);
@@ -94,10 +101,8 @@ export default function ManagementHubView() {
     }
   };
 
-  // Filtrar tabs por rol del usuario
   const visibleTabs = TABS.filter(tab => !user || tab.roles.includes(user.role));
 
-  // Si el tab activo no es visible para el user (por cambio de rol), resetear
   useEffect(() => {
     if (!visibleTabs.some(t => t.id === activeTab) && visibleTabs.length > 0) {
       setActiveTab(visibleTabs[0].id);
@@ -105,6 +110,14 @@ export default function ManagementHubView() {
   }, [visibleTabs, activeTab]);
 
   const activeTabDef = TABS.find(t => t.id === activeTab);
+
+  const handleOpenDashboard = useCallback((store: { id: string; name: string }) => {
+    setDashboardStore({ id: store.id, name: store.name });
+  }, []);
+
+  const handleCloseDashboard = useCallback(() => {
+    setDashboardStore(null);
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -117,19 +130,8 @@ export default function ManagementHubView() {
               {activeTabDef?.description || 'Centro unificado de gestión administrativa'}
             </p>
           </div>
-          {/* FIX-GESTION-UNIFICADA: acceso directo a Dashboard KPI desde el tab Tiendas */}
-          {activeTab === 'stores' && (
-            <button
-              type="button"
-              onClick={() => setCurrentView('dashboard')}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary text-primary-foreground text-xs font-black uppercase tracking-widest hover:opacity-90 transition-opacity"
-              aria-label="Ver Dashboard KPI"
-            >
-              <TrendingUp className="w-4 h-4" />
-              Ver Dashboard KPI
-              <ExternalLink className="w-3 h-3 opacity-70" />
-            </button>
-          )}
+          {/* FIX-GESTION-UNIFICADA-V2: botón "Ver Dashboard KPI" removido.
+              Ahora cada tarjeta de tienda tiene su propio botón "Ver Dashboard". */}
         </div>
 
         {/* Tabs */}
@@ -169,8 +171,19 @@ export default function ManagementHubView() {
       >
         {activeTab === 'news' && <NewsView />}
         {activeTab === 'storefront' && <StorefrontConfigView />}
-        {activeTab === 'stores' && <StoresManagementView />}
+        {activeTab === 'stores' && (
+          <StoresManagementView onOpenDashboard={handleOpenDashboard} />
+        )}
       </div>
+
+      {/* Dashboard avanzado overlay — se abre al clickear "Ver Dashboard" */}
+      {dashboardStore && (
+        <StoreDashboardView
+          storeId={dashboardStore.id}
+          storeName={dashboardStore.name}
+          onClose={handleCloseDashboard}
+        />
+      )}
     </div>
   );
 }

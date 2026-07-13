@@ -5,10 +5,12 @@ import Image from 'next/image';
 import {
   Edit, Trash2, Building, Target, Check, Loader2,
   RotateCcw, Power, UserCog, Settings, X, Archive, ArchiveRestore,
-  Copy, ExternalLink, FileText, Users,
+  Copy, ExternalLink, FileText, Users, BarChart3, TrendingUp,
+  ShoppingCart, AlertTriangle, Package,
 } from 'lucide-react';
-import { cn, getStoreLogoUrl } from '@/lib/utils';
+import { cn, formatCurrency, getStoreLogoUrl } from '@/lib/utils';
 import type { Store } from '@/types';
+import type { StoreKPI } from '@/hooks/api/useMultiStoreDashboard';
 import { Checkbox } from '@/components/ui/checkbox';
 import { StoreHealthBadge } from './StoreHealthBadge';
 import { useTranslations } from 'next-intl';
@@ -53,6 +55,9 @@ export interface StoreCardProps {
   onArchiveStore: (store: Store) => void;
   onRestoreStore: (store: Store) => void;
   onDeleteStore: (store: Store) => void;
+  // FIX-GESTION-UNIFICADA-V2: KPIs en tiempo real + dashboard avanzado
+  kpi?: StoreKPI;
+  onOpenDashboard?: (store: Store) => void;
 }
 
 export function StoreCard({
@@ -75,6 +80,8 @@ export function StoreCard({
   onArchiveStore,
   onRestoreStore,
   onDeleteStore,
+  kpi,
+  onOpenDashboard,
 }: StoreCardProps) {
   const t = useTranslations('stores');
   const tc = useTranslations('common');
@@ -132,6 +139,37 @@ export function StoreCard({
 
       <h3 className="font-black text-lg uppercase tracking-tight mb-1">{store.name}</h3>
       <p className="text-sm font-bold text-muted-foreground leading-relaxed mb-1">{store.address || t('addressNotSpecified')}</p>
+
+      {/* FIX-GESTION-UNIFICADA-V2: KPIs en tiempo real (de MultiStoreDashboardView) */}
+      {kpi && (
+        <div className="grid grid-cols-4 gap-2 my-3 p-2.5 rounded-xl bg-muted/20 border border-border/50">
+          <KpiMini
+            icon={TrendingUp}
+            label="Ventas hoy"
+            value={formatCurrency(kpi.todaySales)}
+            color="text-primary"
+          />
+          <KpiMini
+            icon={ShoppingCart}
+            label="Trans."
+            value={kpi.todayTransactions}
+            color="text-foreground"
+          />
+          <KpiMini
+            icon={AlertTriangle}
+            label="Stock bajo"
+            value={kpi.lowStockCount}
+            color={kpi.lowStockCount > 0 ? 'text-destructive' : 'text-muted-foreground'}
+            alert={kpi.lowStockCount > 0}
+          />
+          <KpiMini
+            icon={Package}
+            label="En vitrina"
+            value={kpi.visibleProducts}
+            color="text-foreground"
+          />
+        </div>
+      )}
 
       {/* FC Template Indicator */}
       <div className="flex items-center gap-1.5 mb-1">
@@ -256,6 +294,19 @@ export function StoreCard({
       <div className="flex-1" />
 
       <div className="space-y-2">
+        {/* FIX-GESTION-UNIFICADA-V2: botón "Ver Dashboard" → dashboard avanzado por tienda */}
+        {onOpenDashboard && (
+          <button
+            type="button"
+            onClick={() => onOpenDashboard(store)}
+            aria-label={`Ver dashboard avanzado de ${store.name}`}
+            title="Dashboard con analytics, insights IA y drill-down"
+            className="w-full min-h-[44px] py-2.5 rounded-xl bg-primary text-primary-foreground font-black text-sm uppercase tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-transform"
+          >
+            <BarChart3 className="w-3.5 h-3.5" />
+            Ver Dashboard
+          </button>
+        )}
         {activeStoreId !== store.id ? (
           <button
             type="button"
@@ -385,6 +436,33 @@ export function StoreCard({
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+// ── KPI Mini (sub-componente para KPIs en tiempo real) ─────────────────────
+function KpiMini({
+  icon: Icon,
+  label,
+  value,
+  color,
+  alert = false,
+}: {
+  icon: React.ElementType;
+  label: string;
+  value: string | number;
+  color: string;
+  alert?: boolean;
+}) {
+  return (
+    <div className="flex flex-col items-center text-center gap-0.5">
+      <Icon className={cn('w-3 h-3', alert ? 'text-destructive' : 'text-muted-foreground')} />
+      <p className="text-[9px] font-black uppercase tracking-tight text-muted-foreground leading-tight">
+        {label}
+      </p>
+      <p className={cn('text-xs font-black tabular-nums leading-tight', color)}>
+        {value}
+      </p>
     </div>
   );
 }

@@ -48,13 +48,14 @@ import { StoreCard } from './StoreCard'; // FIX-AUDIT-7: extracted component
 import { DestructiveConfirmModal } from '@/components/ui/DestructiveConfirmModal';
 import { useAuthStore } from '@/store';
 import { useStoreUserCounts } from '@/hooks/api/useStoreUserCounts';
+import { useMultiStoreDashboard } from '@/hooks/api/useMultiStoreDashboard';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { apiFetch } from '@/lib/api-fetch';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 
-export default function StoresManagementView() {
+export default function StoresManagementView({ onOpenDashboard }: { onOpenDashboard?: (store: { id: string; name: string }) => void }) {
   const t = useTranslations('stores');
   const tc = useTranslations('common');
   const { user } = useAuthStore();
@@ -91,6 +92,9 @@ export default function StoresManagementView() {
   // FIX-F4-T05: debe ir DESPUÉS de desestructurar `stores` de useStoresView,
   // no antes (era ReferenceError: Cannot access 'stores' before initialization).
   const { data: health } = useStoreHealth(stores);
+  // FIX-GESTION-UNIFICADA-V2: KPIs en tiempo real para mostrar en cada tarjeta
+  const { data: kpis = [] } = useMultiStoreDashboard(stores, user?.activeStoreId);
+  const kpiMap = new Map<string, typeof kpis[number]>(kpis.map(k => [k.storeId, k]));
   // FIX-AUDIT-2: Use queryClient.invalidateQueries instead of window.location.reload()
   // to refresh the stores list without destroying React state or causing a page flash.
   const queryClient = useQueryClient();
@@ -283,6 +287,8 @@ export default function StoresManagementView() {
                 onArchiveStore={handleArchiveStore}
                 onRestoreStore={handleRestoreStore}
                 onDeleteStore={handleDeleteStore}
+                kpi={kpiMap.get(store.id)}
+                onOpenDashboard={onOpenDashboard}
               />
             )}
           />
@@ -318,6 +324,8 @@ export default function StoresManagementView() {
               onArchiveStore={handleArchiveStore}
               onRestoreStore={handleRestoreStore}
               onDeleteStore={handleDeleteStore}
+              kpi={kpiMap.get(store.id)}
+              onOpenDashboard={onOpenDashboard}
             />
           ))}
 
