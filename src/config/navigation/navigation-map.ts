@@ -330,6 +330,32 @@ export function getBreadcrumbForView(
   if (currentView === 'production-orders') {
     return [{ label: 'Órdenes de Producción', isCurrent: true }];
   }
+  // FIX-MANAGEMENT-HUB (2026-07-13): breadcrumb para management-hub
+  if (currentView === 'management-hub') {
+    return [{ label: 'Gestión', isCurrent: true }];
+  }
+  // FIX-TABLERO-BREADCRUMB (2026-07-13): 'cost-analytics' cuando se navega desde
+  // MULTI-TIENDA → Analítica → Tablero Principal, currentView se setea a 'cost-sheets'
+  // con activeCostSection='cost-analytics'. El breadcrumb debe mostrar el path
+  // de MULTI-TIENDA → Analítica → Tablero Principal, no de COSTOS.
+  // Si currentView es 'cost-sheets' Y activeCostSection es 'cost-analytics',
+  // significa que el user viene del Tablero Principal (no de la ficha de costo).
+  if (currentView === 'cost-sheets' && activeCostSection === 'cost-analytics') {
+    const path = findSidebarPath('cost-analytics');
+    if (path.length > 0) {
+      return path.map((p, i) => ({
+        label: p.label,
+        view: i < path.length - 1 ? p.view : undefined,
+        isCurrent: i === path.length - 1,
+      }));
+    }
+    // Fallback si no encuentra el path
+    return [
+      { label: 'MULTI-TIENDA', view: 'management-hub' },
+      { label: 'Analítica', view: 'analitica' },
+      { label: 'Tablero Principal', isCurrent: true },
+    ];
+  }
 
   // M-2: si la vista es una sub-vista de hub, construir path completo
   const hubMapping = VIEW_TO_HUB_MAP[currentView];
