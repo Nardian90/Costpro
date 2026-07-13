@@ -1,183 +1,194 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { AlertTriangle, Clock, CheckCircle2, Wallet, TrendingDown } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { AlertTriangle, Clock, CheckCircle2, Wallet, TrendingDown, Search, Package, Wrench, Filter } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
-import { supabase } from '@/lib/supabaseClient';
-import { useAuthStore } from '@/store';
-import { toast } from 'sonner';
+import { useAccountsPayable, type AgingTab } from '@/hooks/api/useAccountsPayable';
 
-interface PayableItem {
-  id: string;
-  ref_type: 'receipt' | 'service';
-  ref_id: string;
-  supplier: string | null;
-  total: number;
-  paid_amount: number;
-  balance: number;
-  due_date: string | null;
-  payment_status: 'unpaid' | 'partial' | 'paid';
-  days_until_due: number | null;
-  is_overdue: boolean;
-  reference: string | null;
-}
-
-// FIX-I18N (2026-07-13): traducción de payment_status a español para UI.
-// Antes se mostraba el valor crudo del enum ('unpaid', 'partial', 'paid')
-// directamente en la tabla de Cuentas por Pagar, lo que rompía la uniformidad
-// del idioma de la aplicación (todo está en español).
-const PAYMENT_STATUS_LABELS: Record<PayableItem['payment_status'], string> = {
+const PAYMENT_STATUS_LABELS: Record<string, string> = {
   unpaid: 'Pendiente',
   partial: 'Parcial',
   paid: 'Pagado',
 };
 
+const AGING_TABS: { id: AgingTab; label: string }[] = [
+  { id: 'all', label: 'Todas' },
+  { id: 'overdue', label: 'Vencidas' },
+  { id: '30', label: '0-30d' },
+  { id: '60', label: '31-60d' },
+  { id: '90', label: '61-90d' },
+  { id: '120', label: '91-120d' },
+  { id: 'paid', label: 'Pagadas' },
+];
+
+const METHOD_FILTERS = [
+  { id: '', label: 'Todos los métodos' },
+  { id: 'cash', label: 'Efectivo' },
+  { id: 'transfer', label: 'Transferencia' },
+  { id: 'zelle', label: 'Zelle' },
+];
+
+const CURRENCY_FILTERS = [
+  { id: '', label: 'Todas las monedas' },
+  { id: 'CUP', label: 'CUP' },
+  { id: 'USD', label: 'USD' },
+  { id: 'MLC', label: 'MLC' },
+];
+
 export default function AccountsPayableView() {
-  const { user } = useAuthStore();
-  const [payables, setPayables] = useState<PayableItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<'all' | 'overdue' | 'upcoming' | 'paid'>('all');
+  const [tab, setTab] = useState<AgingTab>('all');
+  const [methodFilter, setMethodFilter] = useState('');
+  const [currencyFilter, setCurrencyFilter] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
 
-  useEffect(() => {
-    if (!user?.activeStoreId) return;
-    fetchPayables();
-  }, [user?.activeStoreId]);
-
-  const fetchPayables = async () => {
-    if (!user?.activeStoreId) return;
-    setLoading(true);
-    try {
-      const { data: receipts, error: rErr } = await supabase
-        .from('receipts')
-        .select('id, supplier, total_cost, paid_amount, due_date, payment_status, reference_doc, status')
-        .eq('store_id', user.activeStoreId)
-        .neq('status', 'voided')
-        .order('due_date', { ascending: true, nullsFirst: false });
-
-      const { data: services, error: sErr } = await supabase
-        .from('received_services')
-        .select('id, supplier, total_amount, paid_amount, due_date, payment_status, reference_doc, status')
-        .eq('store_id', user.activeStoreId)
-        .neq('status', 'voided')
-        .order('due_date', { ascending: true, nullsFirst: false });
-
-      if (rErr || sErr) throw rErr || sErr;
-
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-
-      const allPayables: PayableItem[] = [
-        ...(receipts || []).map((r: any) => ({
-          id: `receipt-${r.id}`,
-          ref_type: 'receipt' as const,
-          ref_id: r.id,
-          supplier: r.supplier,
-          total: Number(r.total_cost) || 0,
-          paid_amount: Number(r.paid_amount) || 0,
-          balance: Number(r.total_cost) - Number(r.paid_amount || 0),
-          due_date: r.due_date,
-          payment_status: r.payment_status || 'unpaid',
-          days_until_due: r.due_date ? Math.ceil((new Date(r.due_date).getTime() - today.getTime()) / 86400000) : null,
-          is_overdue: r.due_date ? new Date(r.due_date) < today && r.payment_status !== 'paid' : false,
-          reference: r.reference_doc,
-        })),
-        ...(services || []).map((s: any) => ({
-          id: `service-${s.id}`,
-          ref_type: 'service' as const,
-          ref_id: s.id,
-          supplier: s.supplier,
-          total: Number(s.total_amount) || 0,
-          paid_amount: Number(s.paid_amount) || 0,
-          balance: Number(s.total_amount) - Number(s.paid_amount || 0),
-          due_date: s.due_date,
-          payment_status: s.payment_status || 'unpaid',
-          days_until_due: s.due_date ? Math.ceil((new Date(s.due_date).getTime() - today.getTime()) / 86400000) : null,
-          is_overdue: s.due_date ? new Date(s.due_date) < today && s.payment_status !== 'paid' : false,
-          reference: s.reference_doc,
-        })),
-      ];
-
-      setPayables(allPayables);
-    } catch (e: any) {
-      toast.error('Error al cargar cuentas por pagar: ' + e.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const filtered = payables.filter(p => {
-    if (filter === 'overdue') return p.is_overdue;
-    if (filter === 'upcoming') return !p.is_overdue && p.payment_status !== 'paid' && (p.days_until_due !== null && p.days_until_due <= 7);
-    if (filter === 'paid') return p.payment_status === 'paid';
-    return true;
+  const { data, kpis, summary, count, loading, error } = useAccountsPayable({
+    tab,
+    method: methodFilter || undefined,
+    currency: currencyFilter || undefined,
+    search: searchQuery || undefined,
   });
 
-  const totalOverdue = payables.filter(p => p.is_overdue).reduce((s, p) => s + p.balance, 0);
-  const totalUpcoming = payables.filter(p => !p.is_overdue && p.payment_status !== 'paid' && p.days_until_due !== null && p.days_until_due <= 7).reduce((s, p) => s + p.balance, 0);
-  const totalPending = payables.filter(p => p.payment_status !== 'paid').reduce((s, p) => s + p.balance, 0);
-  const totalPaid = payables.filter(p => p.payment_status === 'paid').reduce((s, p) => s + p.total, 0);
+  // Debounce search
+  const [searchInput, setSearchInput] = useState('');
+  const debouncedSearch = useMemo(() => {
+    let timer: ReturnType<typeof setTimeout>;
+    return (value: string) => {
+      clearTimeout(timer);
+      timer = setTimeout(() => setSearchQuery(value), 400);
+    };
+  }, []);
 
   return (
     <div className="space-y-4 p-4">
+      {/* Header */}
       <div>
         <h2 className="text-2xl font-black uppercase tracking-tight">Cuentas por Pagar</h2>
-        <p className="text-xs text-muted-foreground mt-1">Vencimientos de recepciones y servicios recibidos</p>
+        <p className="text-xs text-muted-foreground mt-1">
+          Obligaciones pendientes: recepciones y servicios recibidos
+        </p>
       </div>
 
+      {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <div className={cn("rounded-xl border p-3", totalOverdue > 0 ? "border-destructive/30 bg-destructive/5" : "border-border/30")}>
+        <div className={cn("rounded-xl border p-3", (kpis?.totalOverdue ?? 0) > 0 ? "border-destructive/30 bg-destructive/5" : "border-border/30")}>
           <div className="flex items-center gap-2 mb-1">
-            <AlertTriangle className={cn("w-4 h-4", totalOverdue > 0 ? "text-destructive" : "text-muted-foreground")} />
+            <AlertTriangle className={cn("w-4 h-4", (kpis?.totalOverdue ?? 0) > 0 ? "text-destructive" : "text-muted-foreground")} />
             <span className="text-[10px] font-black uppercase text-muted-foreground">Vencido</span>
           </div>
-          <p className={cn("text-lg font-mono font-black tabular-nums", totalOverdue > 0 ? "text-destructive" : "")}>{formatCurrency(totalOverdue)}</p>
+          <p className={cn("text-lg font-mono font-black tabular-nums", (kpis?.totalOverdue ?? 0) > 0 ? "text-destructive" : "")}>
+            {formatCurrency(kpis?.totalOverdue ?? 0)}
+          </p>
         </div>
-        <div className={cn("rounded-xl border p-3", totalUpcoming > 0 ? "border-amber-500/30 bg-amber-500/5" : "border-border/30")}>
+
+        <div className={cn("rounded-xl border p-3", (kpis?.totalUpcoming ?? 0) > 0 ? "border-amber-500/30 bg-amber-500/5" : "border-border/30")}>
           <div className="flex items-center gap-2 mb-1">
-            <Clock className={cn("w-4 h-4", totalUpcoming > 0 ? "text-amber-500" : "text-muted-foreground")} />
+            <Clock className={cn("w-4 h-4", (kpis?.totalUpcoming ?? 0) > 0 ? "text-amber-500" : "text-muted-foreground")} />
             <span className="text-[10px] font-black uppercase text-muted-foreground">Próx. 7 días</span>
           </div>
-          <p className={cn("text-lg font-mono font-black tabular-nums", totalUpcoming > 0 ? "text-amber-500" : "")}>{formatCurrency(totalUpcoming)}</p>
+          <p className={cn("text-lg font-mono font-black tabular-nums", (kpis?.totalUpcoming ?? 0) > 0 ? "text-amber-500" : "")}>
+            {formatCurrency(kpis?.totalUpcoming ?? 0)}
+          </p>
         </div>
+
         <div className="rounded-xl border border-primary/30 bg-primary/5 p-3">
           <div className="flex items-center gap-2 mb-1">
             <TrendingDown className="w-4 h-4 text-primary" />
             <span className="text-[10px] font-black uppercase text-muted-foreground">Total Pendiente</span>
           </div>
-          <p className="text-lg font-mono font-black tabular-nums text-primary">{formatCurrency(totalPending)}</p>
+          <p className="text-lg font-mono font-black tabular-nums text-primary">
+            {formatCurrency(kpis?.totalPending ?? 0)}
+          </p>
         </div>
+
         <div className="rounded-xl border border-success/30 bg-success/5 p-3">
           <div className="flex items-center gap-2 mb-1">
             <CheckCircle2 className="w-4 h-4 text-success" />
             <span className="text-[10px] font-black uppercase text-muted-foreground">Pagado</span>
           </div>
-          <p className="text-lg font-mono font-black tabular-nums text-success">{formatCurrency(totalPaid)}</p>
+          <p className="text-lg font-mono font-black tabular-nums text-success">
+            {formatCurrency(kpis?.totalPaid ?? 0)}
+          </p>
         </div>
       </div>
 
-      <div className="flex gap-2">
-        {[
-          { id: 'all', label: 'Todas' },
-          { id: 'overdue', label: 'Vencidas' },
-          { id: 'upcoming', label: 'Próximas' },
-          { id: 'paid', label: 'Pagadas' },
-        ].map(f => (
+      {/* Summary by type */}
+      {summary && (
+        <div className="flex gap-2 text-[10px] text-muted-foreground">
+          <span className="px-2 py-1 rounded-lg bg-muted/30">
+            📦 Recepciones: <strong className="text-foreground">{summary.receipts.count}</strong> · {formatCurrency(summary.receipts.balance_cup)}
+          </span>
+          <span className="px-2 py-1 rounded-lg bg-muted/30">
+            🔧 Servicios: <strong className="text-foreground">{summary.services.count}</strong> · {formatCurrency(summary.services.balance_cup)}
+          </span>
+        </div>
+      )}
+
+      {/* Aging Tabs */}
+      <div className="flex flex-wrap gap-1.5">
+        {AGING_TABS.map(t => (
           <button
-            key={f.id}
-            onClick={() => setFilter(f.id as any)}
+            key={t.id}
+            onClick={() => setTab(t.id)}
             className={cn(
               "px-3 py-1.5 rounded-lg text-[10px] font-black uppercase border transition-colors",
-              filter === f.id ? "bg-primary text-primary-foreground border-primary" : "border-border/40 text-muted-foreground hover:bg-muted"
+              tab === t.id
+                ? "bg-primary text-primary-foreground border-primary"
+                : "border-border/40 text-muted-foreground hover:bg-muted"
             )}
           >
-            {f.label}
+            {t.label}
           </button>
         ))}
       </div>
 
+      {/* Filters */}
+      <div className="flex flex-wrap gap-2 items-center">
+        <div className="relative flex-1 min-w-[200px]">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+          <input
+            type="text"
+            placeholder="Buscar por proveedor..."
+            value={searchInput}
+            onChange={(e) => {
+              setSearchInput(e.target.value);
+              debouncedSearch(e.target.value);
+            }}
+            className="w-full pl-9 pr-3 py-2 rounded-lg border border-border/40 bg-background text-xs outline-none focus:ring-2 focus:ring-primary/30"
+          />
+        </div>
+
+        <select
+          value={methodFilter}
+          onChange={(e) => setMethodFilter(e.target.value)}
+          className="px-3 py-2 rounded-lg border border-border/40 bg-background text-xs outline-none focus:ring-2 focus:ring-primary/30"
+        >
+          {METHOD_FILTERS.map(m => (
+            <option key={m.id} value={m.id}>{m.label}</option>
+          ))}
+        </select>
+
+        <select
+          value={currencyFilter}
+          onChange={(e) => setCurrencyFilter(e.target.value)}
+          className="px-3 py-2 rounded-lg border border-border/40 bg-background text-xs outline-none focus:ring-2 focus:ring-primary/30"
+        >
+          {CURRENCY_FILTERS.map(c => (
+            <option key={c.id} value={c.id}>{c.label}</option>
+          ))}
+        </select>
+      </div>
+
+      {/* Error */}
+      {error && (
+        <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-3">
+          <p className="text-xs text-destructive font-bold">Error: {error}</p>
+        </div>
+      )}
+
+      {/* Table */}
       {loading ? (
         <p className="text-center py-8 text-muted-foreground">Cargando...</p>
-      ) : filtered.length === 0 ? (
+      ) : data.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">
           <Wallet className="w-8 h-8 mx-auto opacity-30 mb-2" />
           <p className="text-sm">No hay cuentas por pagar en esta categoría</p>
@@ -190,43 +201,95 @@ export default function AccountsPayableView() {
                 <th className="p-3 text-left">Proveedor</th>
                 <th className="p-3 text-center">Tipo</th>
                 <th className="p-3 text-right">Total</th>
-                <th className="p-3 text-right">Saldo</th>
+                <th className="p-3 text-right">Pagado</th>
+                <th className="p-3 text-right">Saldo CUP</th>
                 <th className="p-3 text-center">Vence</th>
                 <th className="p-3 text-center">Estado</th>
               </tr>
             </thead>
             <tbody>
-              {filtered.map((p) => (
+              {data.map((p) => (
                 <tr key={p.id} className="border-t border-border/20 hover:bg-muted/10">
+                  {/* Proveedor */}
                   <td className="p-3">
                     <p className="font-bold text-xs">{p.supplier || 'Sin proveedor'}</p>
                     <p className="text-[10px] text-muted-foreground">{p.reference || 'Sin ref'}</p>
                   </td>
+
+                  {/* Tipo */}
                   <td className="p-3 text-center">
-                    <span className="text-xs">{p.ref_type === 'receipt' ? '📦 Recepción' : '🔧 Servicio'}</span>
+                    {p.ref_type === 'receipt' ? (
+                      <span className="inline-flex items-center gap-1 text-xs" title="Recepción">
+                        <Package className="w-3.5 h-3.5" /> Recepción
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-xs" title="Servicio">
+                        <Wrench className="w-3.5 h-3.5" /> Servicio
+                      </span>
+                    )}
                   </td>
-                  <td className="p-3 text-right font-mono font-bold tabular-nums">{formatCurrency(p.total)}</td>
-                  <td className="p-3 text-right font-mono font-black tabular-nums text-primary">{formatCurrency(p.balance)}</td>
+
+                  {/* Total (con moneda original) */}
+                  <td className="p-3 text-right">
+                    <p className="font-mono font-bold tabular-nums text-xs">
+                      {formatCurrency(p.total, p.currency)}
+                    </p>
+                    {p.currency !== 'CUP' && (
+                      <p className="text-[9px] text-muted-foreground font-mono">
+                        = {formatCurrency(p.total_cup, 'CUP')}
+                      </p>
+                    )}
+                  </td>
+
+                  {/* Pagado */}
+                  <td className="p-3 text-right font-mono text-xs tabular-nums text-success">
+                    {formatCurrency(p.paid_cup, 'CUP')}
+                  </td>
+
+                  {/* Saldo CUP */}
+                  <td className="p-3 text-right">
+                    <p className="font-mono font-black tabular-nums text-xs text-primary">
+                      {formatCurrency(p.balance_cup, 'CUP')}
+                    </p>
+                    {p.currency !== 'CUP' && p.balance > 0 && (
+                      <p className="text-[9px] text-muted-foreground font-mono">
+                        {formatCurrency(p.balance, p.currency)}
+                      </p>
+                    )}
+                  </td>
+
+                  {/* Vence */}
                   <td className="p-3 text-center">
                     {p.due_date ? (
                       <div>
                         <p className={cn("text-xs font-bold", p.is_overdue ? "text-destructive" : "")}>
-                          {new Date(p.due_date).toLocaleDateString()}
+                          {new Date(p.due_date).toLocaleDateString('es-CU')}
                         </p>
-                        {p.days_until_due !== null && p.payment_status !== 'paid' && (
-                          <p className={cn("text-[10px]", p.is_overdue ? "text-destructive" : p.days_until_due <= 7 ? "text-amber-500" : "text-muted-foreground")}>
-                            {p.is_overdue ? `Vencido ${Math.abs(p.days_until_due)}d` : `${p.days_until_due}d`}
+                        {p.payment_status !== 'paid' && p.days_until_due !== null && (
+                          <p className={cn(
+                            "text-[10px]",
+                            p.is_overdue ? "text-destructive font-bold" : p.days_until_due <= 7 ? "text-amber-500" : "text-muted-foreground"
+                          )}>
+                            {p.is_overdue
+                              ? `Vencido ${Math.abs(p.days_until_due)}d`
+                              : `${p.days_until_due}d`}
                           </p>
                         )}
                       </div>
-                    ) : <span className="text-xs text-muted-foreground">—</span>}
+                    ) : (
+                      <span className="text-xs text-muted-foreground">—</span>
+                    )}
                   </td>
+
+                  {/* Estado */}
                   <td className="p-3 text-center">
                     <span className={cn(
                       "px-2 py-1 rounded text-[10px] font-black uppercase",
-                      p.payment_status === 'paid' ? "bg-success/10 text-success"
-                      : p.payment_status === 'partial' ? "bg-amber-500/10 text-amber-500"
-                      : "bg-destructive/10 text-destructive"
+                      p.payment_status === 'paid'
+                        ? "bg-success/10 text-success"
+                        : p.payment_status === 'partial'
+                          ? "bg-amber-500/10 text-amber-500"
+                          : "bg-destructive/10 text-destructive"
                     )}>
                       {p.payment_status === 'paid' ? '💰' : p.payment_status === 'partial' ? '⚖️' : '⏳'} {PAYMENT_STATUS_LABELS[p.payment_status]}
                     </span>
@@ -236,6 +299,13 @@ export default function AccountsPayableView() {
             </tbody>
           </table>
         </div>
+      )}
+
+      {/* Count */}
+      {!loading && count > 0 && (
+        <p className="text-[10px] text-muted-foreground text-center">
+          {count} documento{count !== 1 ? 's' : ''} en esta vista
+        </p>
       )}
     </div>
   );
