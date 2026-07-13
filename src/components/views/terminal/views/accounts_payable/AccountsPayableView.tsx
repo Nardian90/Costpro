@@ -55,7 +55,7 @@ export default function AccountsPayableView() {
 
   const { data, totals, kpis, summary, count, loading, error, refetch } = useAccountsPayable({
     tab,
-    method: methodFilter || undefined,
+    method: (methodFilter || undefined) as 'cash' | 'transfer' | 'zelle' | undefined,
     currency: currencyFilter || undefined,
     search: searchQuery || undefined,
     mode: viewMode,

@@ -278,8 +278,9 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
       const total = Number(c.final_amount) || 0;
       const paid = c.status === 'paid' ? total : 0;
       const balance = total - paid;
-      const workerName = c.worker
-        ? `${c.worker.first_name || ''} ${c.worker.last_name || ''}`.trim()
+      const workerData = Array.isArray(c.worker) ? c.worker[0] : c.worker;
+      const workerName = workerData
+        ? `${workerData.first_name || ''} ${workerData.last_name || ''}`.trim()
         : 'Trabajador desconocido';
       const dueDate = c.due_date ? new Date(c.due_date) : null;
       const daysUntilDue = dueDate

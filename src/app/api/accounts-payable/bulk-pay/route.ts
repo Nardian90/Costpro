@@ -117,7 +117,7 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
             continue;
           }
 
-          const total = Number(doc[totalField]) || 0;
+          const total = Number((doc as any)[totalField]) || 0;
           const paid = Number(doc.paid_amount) || 0;
           const balance = total - paid;
 
