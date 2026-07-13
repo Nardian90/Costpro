@@ -21,7 +21,29 @@ export async function register() {
     return;
   }
 
-  // Initialize Sentry in server runtime
+  // FIX-PERF (2026-07-13): desactivar Sentry y OTel en dev para reducir overhead.
+  // El dev server consumía 2.8GB de RAM — Sentry y OTel contribuían al overhead
+  // con tracing de cada request. En dev no necesitamos telemetría.
+  if (process.env.NODE_ENV === 'development') {
+    // eslint-disable-next-line no-console
+    console.log('[Instrumentation] Dev mode — skipping Sentry and OpenTelemetry');
+    // Solo registrar process-level error handlers (sin overhead)
+    try {
+      if (typeof process !== 'undefined' && typeof process.on === 'function') {
+        process.on('unhandledRejection', (reason) => {
+          console.error('[Process] Unhandled rejection:', reason);
+        });
+        process.on('uncaughtException', (error) => {
+          console.error('[Process] Uncaught exception:', error);
+        });
+      }
+    } catch {
+      // process.on not available in this runtime
+    }
+    return;
+  }
+
+  // Initialize Sentry in server runtime (solo en production)
   if (process.env.NEXT_RUNTIME === 'nodejs') {
     try {
       await import('./sentry.server.config');

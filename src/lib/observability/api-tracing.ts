@@ -34,6 +34,13 @@ export function withTracing<T extends RouteHandler>(
   handler: T,
   routeName: string
 ): T {
+  // FIX-PERF (2026-07-13): en dev, bypass tracing y logging para reducir overhead.
+  // withTracing se usa en TODAS las API routes — el logInfo por request genera
+  // overhead innecesario en dev. En production, tracing está activo.
+  if (process.env.NODE_ENV === 'development') {
+    return handler;
+  }
+
   const wrappedHandler = async (request: NextRequest, context?: { params?: Promise<Record<string, string | undefined>> }): Promise<Response> => {
     const url = request.url || 'unknown';
     const method = request.method || 'UNKNOWN';
