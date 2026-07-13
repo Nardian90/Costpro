@@ -3,8 +3,7 @@
 
 import React, { useEffect, useRef, useCallback } from 'react';
 import { useScroll, useTransform, motion } from 'framer-motion';
-// FIX-TIP-REMOVE: getTipForView ya no se usa aquí — tips removidos del fondo.
-// El archivo view-tips.ts se mantiene para uso futuro.
+import { getTipForView } from '@/config/navigation/view-tips';
 
 interface Particle {
   x: number;
@@ -39,11 +38,13 @@ interface Particle {
  * Performance mode: all layers hidden (opacity: 0 via .enhanced-layer).
  */
 interface ParticleBackgroundProps {
-  /** Vista actual (reservado para uso futuro) */
+  /** Vista actual para mostrar tip contextual */
   viewId?: string | null;
+  /** FIX-COSTPRO-LOADING: mostrar "COSTPRO" + tips durante la carga de vista */
+  showLoadingBranding?: boolean;
 }
 
-export function ParticleBackground({ viewId }: ParticleBackgroundProps = {}) {
+export function ParticleBackground({ viewId, showLoadingBranding }: ParticleBackgroundProps = {}) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animRef = useRef<number>(0);
   const particlesRef = useRef<Particle[]>([]);
@@ -203,13 +204,12 @@ export function ParticleBackground({ viewId }: ParticleBackgroundProps = {}) {
   const { scrollY } = useScroll();
   const meshFade = useTransform(scrollY, [0, 400], [1, 0]);
 
-  // FIX-TIP-REMOVE: tipText removido — ya no se renderiza tip en el fondo.
-  // viewId se mantiene como prop para uso futuro.
+  /* ── Tip contextual para mostrar durante la carga ── */
+  const tipText = getTipForView(viewId);
 
   return (
     <>
       {/* ── Layer 1: Mesh Gradient — animated orbs (pure CSS, 0 GPU cost) ── */}
-      {/* FIX-PERF-ORBS: clase 'enhanced-layer' asegura que se oculte en performance */}
       <motion.div
         className="absolute inset-0 z-[-3] pointer-events-none enhanced-layer overflow-hidden"
         aria-hidden="true"
@@ -220,13 +220,25 @@ export function ParticleBackground({ viewId }: ParticleBackgroundProps = {}) {
         <div className="mesh-orb mesh-orb-3" />
       </motion.div>
 
-      {/* ── Layer 2: Background Tip Text — REMOVIDO ──
-          FIX-TIP-REMOVE (2026-07-13): el tip text se removió completamente
-          porque causaba ruido visual persistente. Los tips aparecían centrados
-          con salto de línea y permanecían visibles después de que la vista
-          cargaba, lo que distraía del contenido real.
-          El archivo view-tips.ts se mantiene para uso futuro (ej: tooltips,
-          pantalla de ayuda) pero ya no se renderiza como fondo. */}
+      {/* ── Layer 2: COSTPRO branding + tips — SOLO durante carga ──
+          FIX-COSTPRO-LOADING (2026-07-13):
+          - "COSTPRO" texto grande con opacity baja
+          - Tips debajo (contextual a la vista)
+          - SOLO visible cuando showLoadingBranding=true (vista cargando)
+          - SOLO en enhanced mode (display:none via .enhanced-layer en perf)
+          - SOLO en dark mode (CSS .dark-only)
+          - Desaparece inmediatamente cuando la vista termina de cargar */}
+      <motion.div
+        className={`absolute inset-0 z-[-1] pointer-events-none flex flex-col items-center justify-center overflow-hidden enhanced-layer dark-only ${showLoadingBranding ? 'loading-branding-visible' : 'loading-branding-hidden'}`}
+        aria-hidden="true"
+      >
+        <span className="bg-costpro-branding select-none" key={`brand-${viewId}`}>
+          COSTPRO
+        </span>
+        <span className="bg-tip-text select-none" key={`tip-${viewId}`}>
+          {tipText}
+        </span>
+      </motion.div>
 
       {/* ── Layer 3: Particle canvas ── */}
       <canvas
@@ -299,29 +311,58 @@ export function ParticleBackground({ viewId }: ParticleBackgroundProps = {}) {
           .mesh-orb { animation: none !important; }
         }
 
-        /* ── Background Tip Text (contextual, professional) ── */
-        /* FIX-PERF-TIPS-V2 (2026-07-13): estilo más elegante y menos ruidoso.
-           - Salto de línea automático (white-space: normal, no nowrap)
-           - Tamaño menor, peso ligero
-           - Opacity muy baja para no distraer
-           - Max-width para forzar wrap en tips largos */
-        .bg-tip-text {
-          font-size: clamp(1.5rem, 3.5vw, 2.5rem);
-          font-weight: 400;
-          letter-spacing: 0;
-          line-height: 1.4;
-          color: rgba(34, 197, 94, 0.035);
+        /* ── COSTPRO branding text (loading indicator) ──
+           FIX-COSTPRO-LOADING (2026-07-13): texto "COSTPRO" grande con
+           opacity baja, solo visible durante la carga de la vista.
+           Solo en dark mode + enhanced mode. */
+        .bg-costpro-branding {
+          font-size: clamp(4rem, 12vw, 9rem);
+          font-weight: 900;
+          letter-spacing: 0.15em;
+          line-height: 1;
+          color: rgba(34, 197, 94, 0.08);
           text-align: center;
-          max-width: min(600px, 70vw);
+          margin-bottom: 1.5rem;
+          text-shadow: 0 0 60px rgba(34, 197, 94, 0.05);
+        }
+
+        /* ── Background Tip Text (debajo de COSTPRO) ── */
+        .bg-tip-text {
+          font-size: clamp(1rem, 2.5vw, 1.5rem);
+          font-weight: 400;
+          letter-spacing: 0.02em;
+          line-height: 1.4;
+          color: rgba(34, 197, 94, 0.06);
+          text-align: center;
+          max-width: min(500px, 70vw);
           padding: 0 2rem;
           white-space: normal;
           word-wrap: break-word;
           overflow-wrap: break-word;
           font-style: italic;
-          letter-spacing: 0.02em;
         }
-        html:not(.dark) .bg-tip-text {
-          color: rgba(0, 0, 0, 0.03);
+
+        /* ── dark-only: ocultar en light mode ── */
+        .dark-only {
+          display: none;
+        }
+        html.dark .dark-only {
+          display: flex;
+        }
+
+        /* ── Loading branding visibility ──
+           Solo visible cuando showLoadingBranding=true.
+           Cuando es false, display:none para no renderizar en absoluto. */
+        .loading-branding-hidden {
+          display: none !important;
+        }
+        .loading-branding-visible {
+          display: flex;
+          opacity: 0;
+          animation: branding-fade-in 0.3s ease-out forwards;
+        }
+        @keyframes branding-fade-in {
+          to { opacity: 1; }
         }
 
         /* ── Enhanced mode: frosted glass content panels ── */

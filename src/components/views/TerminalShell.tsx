@@ -184,9 +184,22 @@ export default function TerminalShell() {
   });
   const [sidebarSearch, setSidebarSearch] = useState('');
   const [showKeyboardHelp, setShowKeyboardHelp] = useState(false);
-  // FIX-TIP-REMOVE (2026-07-13): isViewLoading/loadedView removidos — ya no
-  // se necesitan porque el tip text fue eliminado del ParticleBackground.
+  // FIX-COSTPRO-LOADING (2026-07-13): trackear cuando la vista está cargando
+  // para mostrar "COSTPRO" + tips en el fondo SOLO durante la carga.
+  // Estado: true cuando currentView cambia, false después de 800ms.
+  const [isViewLoading, setIsViewLoading] = useState(false);
+  const [loadedView, setLoadedView] = useState(currentView);
   const nav = useTerminalNavigation(user as any, sidebarSearch);
+
+  // Detectar cambio de vista → mostrar COSTPRO durante la carga
+  useEffect(() => {
+    if (currentView !== loadedView) {
+      setIsViewLoading(true);
+      setLoadedView(currentView);
+      const timer = setTimeout(() => setIsViewLoading(false), 800);
+      return () => clearTimeout(timer);
+    }
+  }, [currentView, loadedView]);
 
   useKeyboardShortcuts();
 
@@ -487,7 +500,7 @@ export default function TerminalShell() {
               ? "overflow-y-auto p-0"
               : "overflow-y-auto px-3 sm:px-4 pt-0 pb-24 sm:pb-24 lg:pb-28"
         )}>
-          <ParticleBackground viewId={currentView} />
+          <ParticleBackground viewId={currentView} showLoadingBranding={isViewLoading} />
           <Suspense fallback={
             <ViewLoadingSplash
               label={currentView === 'cost-sheets' ? 'Tablero Principal' : String(currentView).replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
