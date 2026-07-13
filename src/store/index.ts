@@ -84,7 +84,11 @@ interface UIState {
 export const useUIStore = create<UIState>()(
   persist(
     (set) => ({
-      currentView: 'chat',
+      // FIX-DEFAULT-VIEW (2026-07-13): default a 'occ' (Centro de Control Operativo)
+      // en vez de 'chat'. Los usuarios nuevos deben ver el dashboard al iniciar sesión,
+      // no el chat de IA. El chat sigue accesible desde el sidebar (item "Chat con Darian"
+      // dentro del grupo ESCRITORIO).
+      currentView: 'occ',
       previousView: null,
       sidebarState: 'expanded',
       isCalculatorOpen: false,

@@ -86,23 +86,10 @@ export interface NavModule {
 }
 
 export const SIDEBAR_STRUCTURE: NavModule[] = [
-  // FEATURE-CHATBOT-VIEW: ChatBot as a first-class view (not floating window).
-  // This is the FIRST item in the sidebar so it's always visible and accessible
-  // from any module (Costo, Multi-Tienda, etc.). Default landing view after login.
-  // Note: 'core_chat' is a new group id (not 'core') to avoid collision with the
-  // existing ESCRITORIO group which keeps id='core' for MODULE_DEFAULT_VIEW mapping.
-  {
-    id: 'core_chat',
-    label: 'ASISTENTE',
-    type: 'group',
-    icon: Bot,
-    ariaLabel: 'Asistente Darian',
-    description: 'Chat con Darian, el asistente inteligente de CostPro. Disponible desde cualquier módulo.',
-    allowedRoles: ['admin', 'manager', 'encargado', 'costo', 'clerk', 'usuario', 'warehouse'],
-    children: [
-      { id: 'chat', label: 'Chat con Darian', type: 'item', icon: Bot, ariaLabel: 'Abrir chat con Darian', description: 'Conversación con el asistente IA. Puede consultar costos, ventas, buscar productos, navegar vistas y ejecutar acciones.' },
-    ]
-  },
+  // FIX-DEFAULT-VIEW (2026-07-13): ESCRITORIO ahora es el PRIMER grupo del sidebar.
+  // Antes ASISTENTE era el primer grupo y 'chat' la vista default al login, lo que
+  // confundía a los usuarios nuevos (veían el chat en vez del dashboard).
+  // Ahora el login aterriza en 'occ' (Centro de Control Operativo).
   {
     id: 'core',
     label: 'ESCRITORIO',
@@ -111,6 +98,10 @@ export const SIDEBAR_STRUCTURE: NavModule[] = [
     ariaLabel: 'Navegación principal',
     children: [
       { id: 'occ', label: 'Centro de Control', type: 'item', icon: Home, ariaLabel: 'Ir al escritorio principal' },
+      // FIX-CHAT-INLINE (2026-07-13): Chat movido dentro de ESCRITORIO como item directo.
+      // Antes era un grupo 'ASISTENTE' separado con un solo hijo (redundante).
+      // Ahora es un item más bajo ESCRITORIO, accesible en 1 clic desde el dashboard.
+      { id: 'chat', label: 'Chat con Darian', type: 'item', icon: Bot, ariaLabel: 'Abrir chat con Darian', description: 'Conversación con el asistente IA. Puede consultar costos, ventas, buscar productos, navegar vistas y ejecutar acciones.' },
     ]
   },
   {

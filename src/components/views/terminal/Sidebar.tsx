@@ -128,7 +128,8 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
   // F3 + GAP-3: Al clickear un módulo raíz, navegar a la vista por defecto.
   // Mapeo completo de todos los grupos del sidebar.
   const MODULE_DEFAULT_VIEW: Record<string, ViewType> = {
-    'core_chat': 'chat',
+    // FIX-DEFAULT-VIEW (2026-07-13): 'core_chat' eliminado — el grupo ASISTENTE
+    // fue removido y Chat ahora es un item directo dentro de ESCRITORIO (core).
     'core_tools': 'calculator',
     'core': 'occ',
     'costos': 'cost-sheets',
@@ -150,19 +151,11 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
       if (isMobile) onClose();
       return;
     }
-    // FEATURE-CHATBOT-VIEW: ASISTENTE (core_chat) is a DIRECT ACCESS to the
-    // chat view — it does NOT enter or exit focus mode. The sidebar state
-    // (including any active focus module like Multi-Tienda) is preserved,
-    // so the user can return to where they were by clicking the focused
-    // module again. Only currentView changes.
-    if (mod.id === 'core_chat') {
-      setCurrentView('chat');
-      onViewChange('chat');
-      if (isMobile) onClose();
-      return;
-    }
+    // FIX-DEFAULT-VIEW (2026-07-13): el caso especial 'core_chat' fue eliminado.
+    // El grupo ASISTENTE ya no existe — Chat es ahora un item directo dentro de
+    // ESCRITORIO y se navega como cualquier otro item (handleItemClick).
     // FIX-CALC-VIEW (2026-07-10): HERRAMIENTAS (core_tools) es acceso directo
-    // a la vista de calculadora integrada — mismo patrón que core_chat.
+    // a la vista de calculadora integrada.
     if (mod.id === 'core_tools') {
       setCurrentView('calculator');
       onViewChange('calculator');
@@ -322,36 +315,10 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
     // Root module in expanded mode → triggers focus mode on click
     if (isRoot) {
       const isCore = mod.id === CORE_MODULE_ID;
-      const isChatModule = mod.id === 'core_chat';
       const isFocused = focusModuleId === mod.id;
-      const isChatActive = isChatModule && currentView === 'chat';
-
-      // FEATURE-CHATBOT-VIEW: ASISTENTE module is a DIRECT ACCESS item.
-      // It has NO children rendered in the sidebar (no "Chat con Darian" leaf).
-      // Clicking it navigates directly to the chat view without entering or
-      // exiting focus mode — the user stays wherever they are in the sidebar.
-      if (isChatModule) {
-        return (
-          <div key={mod.id} className="relative">
-            <button
-              onClick={() => handleRootModuleClick(mod)}
-              className={cn(
-                "w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all outline-none focus-visible:ring-2 focus-visible:ring-primary/50 active:scale-[0.98]",
-                depth === 0 && "sm:mt-3",
-                "text-sidebar-foreground/80 hover:bg-primary/5 hover:text-sidebar-foreground"
-              )}
-            >
-              <div className="flex items-center gap-3">
-                {mod.icon && <mod.icon className="w-4 h-4 opacity-80" />}
-                <span className={cn(
-                  "font-black tracking-[0.2em] uppercase",
-                  depth === 0 ? "text-xs" : "text-[11px] opacity-80"
-                )}>{mod.label}</span>
-              </div>
-            </button>
-          </div>
-        );
-      }
+      // FIX-DEFAULT-VIEW (2026-07-13): isChatModule/isChatActive eliminados —
+      // el grupo ASISTENTE (core_chat) ya no existe. Chat es ahora un item
+      // normal dentro de ESCRITORIO.
 
       return (
         <div key={mod.id} className="relative">
