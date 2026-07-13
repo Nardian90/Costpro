@@ -314,7 +314,8 @@ export const Header = ({
       </div>
 
       {/* Subtle green gradient accent line with glow shadow above */}
-      <div className="absolute bottom-0 left-0 right-0">
+      {/* FIX-PERF-BG (2026-07-13): oculto en modo performance via clase CSS */}
+      <div className="absolute bottom-0 left-0 right-0 perf-hide-gradient">
         <div className="h-4 bg-gradient-to-b from-transparent to-[#22c55e]/[0.03]" />
         <div className="h-px bg-gradient-to-r from-transparent via-[#22c55e]/40 to-transparent" />
       </div>

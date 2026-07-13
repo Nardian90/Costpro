@@ -137,6 +137,85 @@
   text-shadow: none !important;
 }
 
+/* ── FIX-PERF-GRADIENT (2026-07-13): Eliminar TODOS los gradientes verdes ──
+   En modo performance, los gradientes verdes decorativos se ocultan para
+   lograr un fondo negro sólido limpio. Esto incluye:
+   - El gradient accent line del Header (perf-hide-gradient)
+   - El OnlineStatusDot verde del avatar (perf-hide-status-dot)
+   - Cualquier radial-gradient o linear-gradient verde decorativo */
+.mode-performance .perf-hide-gradient,
+.mode-performance .perf-hide-status-dot {
+  display: none !important;
+}
+
+/* ── FIX-PERF-GRADIENT: Eliminar gradientes verdes residuales ──
+   Captura cualquier bg-gradient con verde (#22c55e, primary) que pueda
+   seguir mostrándose como "luz" en el fondo. */
+.mode-performance [class*="bg-gradient-to"][class*="22c55e"],
+.mode-performance [class*="bg-gradient-to"][class*="primary"],
+.mode-performance [class*="via-primary"],
+.mode-performance [class*="via-[#22c55e]"],
+.mode-performance [class*="to-[#22c55e]"],
+.mode-performance [class*="from-[#22c55e]"],
+.mode-performance [class*="from-primary"],
+.mode-performance [class*="to-primary"] {
+  background: transparent !important;
+  background-image: none !important;
+}
+
+/* ── FIX-PERF-SHADOW (2026-07-13): Eliminar TODAS las shadows en hover ──
+   Antes: performance reducía a --shadow-xs. Ahora: elimina completamente.
+   Las shadows en hover causan repaint costoso. */
+.mode-performance *:hover {
+  box-shadow: none !important;
+}
+
+.mode-performance .neu-raised-hover:hover,
+.mode-performance .neu-card:hover,
+.mode-performance .neu-btn:hover,
+.mode-performance .glass-card-interactive:hover,
+.mode-performance .hover-lift:hover {
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+/* ── FIX-PERF-SHADOW: Eliminar shadows decorativas residuales ── */
+.mode-performance [class*="shadow-[0_0"],
+.mode-performance [class*="shadow-green"],
+.mode-performance [class*="shadow-emerald"],
+.mode-performance [class*="glow"] {
+  box-shadow: none !important;
+}
+
+/* ── FIX-PERF-LAZY (2026-07-13): content-visibility en listas largas ──
+   content-visibility: auto permite al navegador saltar el render de
+   elementos off-screen, ahorrando hasta 50% de tiempo de render en
+   listas largas (inventory, transactions, receipts). */
+.mode-performance .virtual-list-item,
+.mode-performance [data-list-item],
+.mode-performance table tbody tr {
+  content-visibility: auto;
+  contain-intrinsic-size: 48px;
+}
+
+/* ── FIX-PERF-LAZY: content-visibility en cards de dashboards ──
+   Las tarjetas de KPI/dashboard que están fuera del viewport inicial
+   también se benefician de content-visibility. */
+.mode-performance .neu-card,
+.mode-performance .glass-card,
+.mode-performance .stats-glass-card {
+  content-visibility: auto;
+  contain-intrinsic-size: 200px;
+}
+
+/* ── FIX-PERF-AVATAR (2026-07-13): Avatar sólido sin gradient verde ──
+   El avatar del usuario en el sidebar usa bg-gradient-to-br from-primary
+   to-primary-dark (verde). En performance se reemplaza por fondo sólido. */
+.mode-performance .perf-avatar-solid {
+  background: var(--primary) !important;
+  background-image: none !important;
+}
+
 .mode-performance *,
 .mode-performance *::before,
 .mode-performance *::after {

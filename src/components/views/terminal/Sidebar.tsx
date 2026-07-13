@@ -614,7 +614,9 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
             <div className="px-4 pt-4 pb-2">
               <div className="flex items-center gap-3">
                 <div className="relative shrink-0">
-                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center text-primary-foreground text-xs font-black uppercase">
+                  {/* FIX-PERF-BG (2026-07-13): perf-avatar-solid reemplaza el
+                      gradient verde por un fondo sólido en modo performance. */}
+                  <div className="perf-avatar-solid w-9 h-9 rounded-full bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center text-primary-foreground text-xs font-black uppercase">
                     {(() => {
                       const name = user?.fullName || user?.email || 'CP';
                       return name.split(' ').filter(Boolean).map(w => w[0]).slice(0, 2).join('').toUpperCase();
