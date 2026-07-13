@@ -208,7 +208,11 @@ export const ofertaPdfExportSchema = z.object({
 
 // ─── Stores ───────────────────────────────────────────────────────────────────
 export const createStoreSchema = z.object({
-  name: z.string().min(1, 'Nombre requerido').max(100),
+  // FIX-STORE-NO-NAME (2026-07-13): trim() + refine() para rechazar nombres
+  // con solo espacios. Antes, "   " pasaba la validación min(1) y creaba
+  // tiendas sin nombre real (mismo bug que workers).
+  // Nota: en Zod v4, .max() debe ir ANTES de .transform()/.refine().
+  name: z.string().max(100).transform(s => typeof s === 'string' ? s.trim() : s).refine(s => s && s.length >= 1, 'Nombre requerido'),
   // F4-FIX: address es opcional para soportar el flujo 'create-quick' donde
   // solo se envía name + slug. El admin completa la dirección después desde
   // StoreConfigModal. Antes era min(1) lo que causaba 400 "Datos inválidos".

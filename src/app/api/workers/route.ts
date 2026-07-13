@@ -48,10 +48,17 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
   const body = await req.json();
   const { store_id, first_name, last_name, ci, gender, address, province, municipality, shirt_size, shoe_size, waist_size } = body;
 
+  // FIX-WORKER-NO-NAME (2026-07-13): trim() antes de validar para rechazar
+  // nombres con solo espacios ("   "). Antes, `!first_name` solo verificaba
+  // null/undefined/empty-string, pero NO rechazaba "   " → creaba trabajadores
+  // sin nombre real (bug reportado por el usuario).
+  const trimmedFirstName = typeof first_name === 'string' ? first_name.trim() : '';
+  const trimmedLastName = typeof last_name === 'string' ? last_name.trim() : '';
+
   // Validaciones
-  if (!store_id || !first_name || !last_name || !ci) {
+  if (!store_id || !trimmedFirstName || !trimmedLastName || !ci) {
     return NextResponse.json(
-      { error: 'Campos requeridos: store_id, first_name, last_name, ci' },
+      { error: 'Campos requeridos: store_id, first_name, last_name, ci (no pueden ser solo espacios)' },
       { status: 400 },
     );
   }
@@ -86,8 +93,8 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
     .from('workers')
     .insert({
       store_id,
-      first_name,
-      last_name,
+      first_name: trimmedFirstName,
+      last_name: trimmedLastName,
       ci: String(ci).trim(),
       gender: gender || null,
       birth_date: birthDate,

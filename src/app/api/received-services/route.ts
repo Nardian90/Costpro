@@ -18,7 +18,17 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
     const admin = createClient(url, key, { auth: { autoRefreshToken: false, persistSession: false } });
 
     const { searchParams } = new URL(req.url);
-    const storeId = searchParams.get('store_id') || session.user.id;
+    // FIX-SERVICES-STORE-ID (2026-07-13): store_id es OBLIGATORIO.
+    // Antes se hacia fallback a session.user.id (un user UUID), lo que causaba
+    // que la API devolviera 200 con data vacía en vez de 400 cuando faltaba
+    // el parámetro. Esto ocultaba bugs en el frontend y dificultaba el debugging.
+    const storeId = searchParams.get('store_id');
+    if (!storeId) {
+      return NextResponse.json(
+        { error: 'store_id es requerido' },
+        { status: 400 },
+      );
+    }
     const status = searchParams.get('status');
 
     let query = admin.from('received_services').select('*').eq('store_id', storeId).order('created_at', { ascending: false });
@@ -44,7 +54,14 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
     const admin = createClient(url, key, { auth: { autoRefreshToken: false, persistSession: false } });
 
     const body = await req.json();
-    const storeId = body.store_id || session.user.id;
+    // FIX-SERVICES-STORE-ID: store_id obligatorio en POST también.
+    const storeId = body.store_id;
+    if (!storeId) {
+      return NextResponse.json(
+        { error: 'store_id es requerido' },
+        { status: 400 },
+      );
+    }
 
     // Generar número de servicio
     const { count } = await admin.from('received_services').select('*', { count: 'exact', head: true }).eq('store_id', storeId);

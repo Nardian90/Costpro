@@ -22,6 +22,16 @@ interface PayableItem {
   reference: string | null;
 }
 
+// FIX-I18N (2026-07-13): traducción de payment_status a español para UI.
+// Antes se mostraba el valor crudo del enum ('unpaid', 'partial', 'paid')
+// directamente en la tabla de Cuentas por Pagar, lo que rompía la uniformidad
+// del idioma de la aplicación (todo está en español).
+const PAYMENT_STATUS_LABELS: Record<PayableItem['payment_status'], string> = {
+  unpaid: 'Pendiente',
+  partial: 'Parcial',
+  paid: 'Pagado',
+};
+
 export default function AccountsPayableView() {
   const { user } = useAuthStore();
   const [payables, setPayables] = useState<PayableItem[]>([]);
@@ -218,7 +228,7 @@ export default function AccountsPayableView() {
                       : p.payment_status === 'partial' ? "bg-amber-500/10 text-amber-500"
                       : "bg-destructive/10 text-destructive"
                     )}>
-                      {p.payment_status === 'paid' ? '💰' : p.payment_status === 'partial' ? '⚖️' : '⏳'} {p.payment_status}
+                      {p.payment_status === 'paid' ? '💰' : p.payment_status === 'partial' ? '⚖️' : '⏳'} {PAYMENT_STATUS_LABELS[p.payment_status]}
                     </span>
                   </td>
                 </tr>
