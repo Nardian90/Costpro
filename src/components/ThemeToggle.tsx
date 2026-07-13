@@ -94,7 +94,7 @@ export function ThemeToggle() {
           "hidden sm:flex relative w-9 h-9 sm:w-11 sm:h-11 items-center justify-center rounded-xl border active:scale-90 transition-all outline-none focus-visible:ring-2 focus-visible:ring-ring",
           isTransitioning && "scale-95",
           isPerformance
-            ? "border-amber-500/30 bg-amber-500/5 hover:bg-amber-500/10 shadow-[0_0_8px_rgba(245,158,11,0.15)]"
+            ? "border-amber-500/40 bg-amber-500/10 hover:bg-amber-500/15"
             : "border-border/50 bg-muted/50 hover:bg-muted"
         )}
         aria-label={
@@ -110,7 +110,7 @@ export function ThemeToggle() {
             <Zap className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
           )}
         </div>
-        {/* Mode label */}
+        {/* Mode label - FIX: removida la luz verde de fondo en performance */}
         <span className={cn(
           "absolute -bottom-0.5 text-[6px] font-black uppercase tracking-widest",
           isPerformance ? "text-amber-500" : "text-muted-foreground/60"

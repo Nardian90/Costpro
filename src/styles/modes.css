@@ -14,6 +14,8 @@
    - No complex gradients
    - Minimal shadows
    - Prioritize Core Web Vitals
+   - FIX-PERF-BG (2026-07-13): fondos sólidos (negro en dark mode)
+     sin transparencias, bordes degradados sutiles para estética
    ============================================ */
 
 /* ── Auto: prefers-reduced-motion forces performance ── */
@@ -32,6 +34,107 @@
   /* ── Kill backdrop-filter (GPU expensive) ── */
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
+}
+
+/* ── FIX-PERF-BG: Fondos sólidos en modo performance ──
+   En dark mode: fondo negro sólido (#000) para sidebar, main y vistas.
+   En light mode: fondo blanco sólido (#fff).
+   Sin transparencias (no más /50, /10, etc.) para mejorar legibilidad
+   y reducir composición de capas GPU. */
+.mode-performance.dark,
+.dark .mode-performance {
+  background: #000 !important;
+}
+
+.mode-performance:not(.dark) {
+  background: #fff !important;
+}
+
+/* Sidebar: fondo negro sólido */
+.mode-performance .sidebar-container,
+.mode-performance [data-sidebar],
+.mode-performance aside[class*="sidebar"],
+.mode-performance nav[class*="sidebar"] {
+  background: #000 !important;
+  backdrop-filter: none !important;
+}
+
+/* Main content area: fondo sólido */
+.mode-performance main,
+.mode-performance [role="main"],
+.mode-performance .terminal-main,
+.mode-performance .main-content {
+  background: var(--background) !important;
+  backdrop-filter: none !important;
+}
+
+/* ── FIX-PERF-BG: Eliminar transparencias en cards/paneles ──
+   Reemplazar bg-card/50, bg-muted/50, etc. con versiones sólidas */
+.mode-performance .glass-panel,
+.mode-performance .glass-card,
+.mode-performance .glass-card-interactive,
+.mode-performance .stats-glass-card,
+.mode-performance .form-card-glass,
+.mode-performance [class*="backdrop-blur"],
+.mode-performance [class*="bg-card/"],
+.mode-performance [class*="bg-muted/"],
+.mode-performance [class*="bg-background/"] {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* Forzar backgrounds sólidos en dark mode para cualquier elemento con bg */
+.mode-performance.dark [class*="bg-card"] {
+  background: #0a0a0a !important;
+}
+
+.mode-performance.dark [class*="bg-muted"] {
+  background: #111 !important;
+}
+
+.mode-performance.dark [class*="bg-popover"] {
+  background: #0a0a0a !important;
+}
+
+.mode-performance.dark [class*="bg-background"] {
+  background: #000 !important;
+}
+
+/* ── FIX-PERF-BORDER: Bordes degradados sutiles ──
+   En vez de borders planos, usar gradientes sutiles para dar profundidad
+   sin usar blur/sombra (que cuesta GPU). Solo en bordes de cards principales. */
+.mode-performance .neu-card,
+.mode-performance .glass-card,
+.mode-performance .stats-glass-card {
+  position: relative;
+  border: 1px solid transparent !important;
+  background-clip: padding-box !important;
+}
+
+.mode-performance .neu-card::before,
+.mode-performance .glass-card::before,
+.mode-performance .stats-glass-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(34, 197, 94, 0.05) 50%, transparent);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* ── FIX-PERF-BG: Indicador de estado performance sin luz verde ──
+   El botón de performance ya no muestra glow verde (ver ThemeToggle.tsx).
+   Aquí aseguramos que ningún indicador de modo tenga glow verde parpadeante. */
+.mode-performance .mode-indicator,
+.mode-performance [class*="mode-glow"],
+.mode-performance [class*="performance-glow"] {
+  box-shadow: none !important;
+  text-shadow: none !important;
 }
 
 .mode-performance *,
