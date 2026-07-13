@@ -351,10 +351,12 @@ export function ParticleBackground({ viewId, showLoadingBranding }: ParticleBack
         }
 
         /* ── Loading branding visibility ──
+           FIX-TIMING (2026-07-13): fade-in al aparecer, fade-out al ocultar.
            Solo visible cuando showLoadingBranding=true.
-           Cuando es false, display:none para no renderizar en absoluto. */
+           Cuando es false, fade-out 0.5s luego display:none. */
         .loading-branding-hidden {
-          display: none !important;
+          opacity: 0;
+          animation: branding-fade-out 0.5s ease-out forwards;
         }
         .loading-branding-visible {
           display: flex;
@@ -363,6 +365,9 @@ export function ParticleBackground({ viewId, showLoadingBranding }: ParticleBack
         }
         @keyframes branding-fade-in {
           to { opacity: 1; }
+        }
+        @keyframes branding-fade-out {
+          to { opacity: 0; }
         }
 
         /* ── Enhanced mode: frosted glass content panels ── */

@@ -291,14 +291,16 @@
 }
 
 /* ── FIX-PERF-LAYERS-V2 (2026-07-13): Ocultar SOLO las enhanced-layers ──
-   FIX-PERF-LAYERS-V3 (2026-07-13): NO usar selector .enhanced-layer * (con
-   asterisco) porque oculta hijos de cualquier elemento con esa clase,
-   incluyendo contenido real. Solo ocultar los 3 layers específicos del
-   ParticleBackground: mesh-orbs, bg-tip-text, y canvas.enhanced-layer.
-   NO tocar .enhanced-glass, .enhanced-card, .enhanced-sidebar-edge que
-   son clases usadas por el sidebar y cards reales. */
+   FIX-PERF-LAYERS-V4 (2026-07-13): añadir .bg-costpro-branding y el
+   contenedor .loading-branding-visible a la lista de ocultar en performance.
+   Antes solo se ocultaban mesh-orbs, bg-tip-text y canvas, pero el
+   contenedor Layer 2 con clase loading-branding-visible tenía display:flex
+   que pisaba el display:none, mostrando COSTPRO en performance. */
 .mode-performance .mesh-orb,
 .mode-performance .bg-tip-text,
+.mode-performance .bg-costpro-branding,
+.mode-performance .loading-branding-visible,
+.mode-performance .loading-branding-hidden,
 .mode-performance canvas.enhanced-layer {
   display: none !important;
 }

@@ -192,11 +192,14 @@ export default function TerminalShell() {
   const nav = useTerminalNavigation(user as any, sidebarSearch);
 
   // Detectar cambio de vista → mostrar COSTPRO durante la carga
+  // FIX-TIMING (2026-07-13): aumentar a 1500ms para que COSTPRO + tips
+  // permanezcan visibles un tiempo después de cargada la vista, luego
+  // desaparecen con fade-out suave.
   useEffect(() => {
     if (currentView !== loadedView) {
       setIsViewLoading(true);
       setLoadedView(currentView);
-      const timer = setTimeout(() => setIsViewLoading(false), 800);
+      const timer = setTimeout(() => setIsViewLoading(false), 1500);
       return () => clearTimeout(timer);
     }
   }, [currentView, loadedView]);
