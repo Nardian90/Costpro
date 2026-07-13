@@ -92,8 +92,10 @@ async function auditHandler(
     const { data: logs, count, error } = await query;
 
     if (error) {
-      logger.error('AUDIT', 'STORE_AUDIT_QUERY_FAILED', { storeId, error: error.message });
-      return NextResponse.json(createApiError('AUDIT_QUERY_FAILED', error.message), { status: 500 });
+      // FIX-IDEMPOTENCY-LEAK (2026-07-13): no pasar error.message como details
+      // al cliente — logger.error ya lo captura server-side con contexto.
+      logger.error('AUDIT', 'STORE_AUDIT_QUERY_FAILED', { storeId, error });
+      return NextResponse.json(createApiError('AUDIT_QUERY_FAILED'), { status: 500 });
     }
 
     return NextResponse.json({

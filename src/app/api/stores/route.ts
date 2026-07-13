@@ -4,6 +4,7 @@ import { withTracing } from '@/lib/observability';
 import { validateOrigin } from '@/lib/csrf';
 import { rateLimit } from '@/lib/rate-limit';
 import { createApiError } from '@/lib/api-errors';
+import { logger } from '@/lib/logger';
 import { createStoreSchema, updateStoreSchema, deleteStoreSchema } from '@/validation/api-schemas';
 import { PLAN_STORE_LIMITS } from '@/config/app';
 import { checkStoreQuota, rateLimitHeaders, type Plan } from '@/lib/rate-limit/tenant-limiter'; // B1
@@ -58,7 +59,12 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
       }
       // 'all' = no filter
       const { data, error } = await query.order('name');
-      if (error) return NextResponse.json(createApiError('STORE_FETCH_FAILED', error.message), { status: 500 });
+      if (error) {
+        // FIX-IDEMPOTENCY-LEAK (2026-07-13): no pasar error.message como details
+        // al cliente — puede filtrar internals de Postgres/PostgREST.
+        logger.error('DATABASE', 'STORE_LIST_FAILED', { userId: session.user.id, error });
+        return NextResponse.json(createApiError('STORE_FETCH_FAILED'), { status: 500 });
+      }
       stores = data;
     } else {
       // Non-admin sees stores where they have active membership
@@ -78,7 +84,11 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
         .eq('is_active', true)
         .eq('is_archived', false)
         .order('name');
-      if (error) return NextResponse.json(createApiError('STORE_FETCH_FAILED', error.message), { status: 500 });
+      if (error) {
+        // FIX-IDEMPOTENCY-LEAK (2026-07-13): no pasar error.message como details
+        logger.error('DATABASE', 'STORE_LIST_BY_MEMBERSHIP_FAILED', { userId: session.user.id, error });
+        return NextResponse.json(createApiError('STORE_FETCH_FAILED'), { status: 500 });
+      }
       stores = data;
     }
 
@@ -267,7 +277,9 @@ async function patchHandler(req: NextRequest, session: AuthenticatedSession) {
       .single();
 
     if (error) {
-      return NextResponse.json(createApiError('STORE_UPDATE_FAILED', error.message), { status: 500 });
+      // FIX-IDEMPOTENCY-LEAK (2026-07-13): no pasar error.message como details
+      logger.error('DATABASE', 'STORE_UPDATE_FAILED', { storeId: parsed.data.id, error });
+      return NextResponse.json(createApiError('STORE_UPDATE_FAILED'), { status: 500 });
     }
 
     return NextResponse.json({ data });
@@ -341,7 +353,9 @@ async function deleteHandler(req: NextRequest, session: AuthenticatedSession) {
     });
 
     if (error) {
-      return NextResponse.json(createApiError('STORE_DELETE_FAILED', error.message), { status: 500 });
+      // FIX-IDEMPOTENCY-LEAK (2026-07-13): no pasar error.message como details
+      logger.error('DATABASE', 'STORE_DELETE_FAILED', { storeId: parsed.data.id, error });
+      return NextResponse.json(createApiError('STORE_DELETE_FAILED'), { status: 500 });
     }
 
     return NextResponse.json({ success: true });
