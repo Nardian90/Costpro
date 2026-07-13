@@ -133,3 +133,62 @@ async function patchHandler(
 }
 
 export const PATCH = withAuth(patchHandler);
+
+/**
+ * GET /api/commissions/payments/[id]
+ *
+ * Obtiene una comisión por ID (con validación de store_id).
+ *
+ * FIX-AUD3-2 (2026-07-13): este endpoint faltaba — PaymentHistoryRow
+ * lo llamaba y recibía 405, haciendo que el historial de comisiones
+ * siempre apareciera vacío.
+ */
+async function getHandler(
+  request: NextRequest,
+  session: AuthenticatedSession,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id: commissionId } = await params;
+    if (!commissionId) {
+      return NextResponse.json({ error: 'ID requerido' }, { status: 400 });
+    }
+
+    const supabase = getSupabaseForSession(session);
+
+    // Obtener store_id del usuario
+    const { data: userData, error: userError } = await supabase
+      .from('profiles')
+      .select('active_store_id')
+      .eq('id', session.user.id)
+      .single();
+
+    if (userError || !userData?.active_store_id) {
+      return NextResponse.json({ error: 'Tienda no configurada' }, { status: 400 });
+    }
+
+    const { data: commission, error: fetchError } = await supabase
+      .from('commission_payments')
+      .select(`
+        id, store_id, worker_id, period_start, period_end, due_date,
+        final_amount, calculated_amount, status, payment_method,
+        payment_reference, paid_at, paid_by, approved_by, approved_at,
+        currency, exchange_rate, created_at, updated_at,
+        worker:workers!inner(first_name, last_name, ci)
+      `)
+      .eq('id', commissionId)
+      .eq('store_id', userData.active_store_id)  // FIX-AUD3: validar store_id
+      .single();
+
+    if (fetchError || !commission) {
+      return NextResponse.json({ error: 'Comisión no encontrada' }, { status: 404 });
+    }
+
+    return NextResponse.json(commission);
+  } catch (error: any) {
+    console.error('[commissions/get] Error:', error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
+
+export const GET = withAuth(getHandler);

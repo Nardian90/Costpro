@@ -5,7 +5,6 @@ import { X, Plus, Trash2, Banknote, Smartphone, DollarSign, CheckCircle2, AlertC
 import { cn, formatCurrency } from '@/lib/utils';
 import { apiFetch } from '@/lib/api-fetch';
 import { useRegisterPayment, type PaymentRowInput } from '@/hooks/api/useRegisterPayment';
-import { useAuthStore } from '@/store';
 
 export interface PayableDocument {
   ref_type: 'receipt' | 'service' | 'commission';
@@ -48,7 +47,14 @@ export default function PaymentModal({ document: doc, onClose, onPaymentRegister
   // Reset cuando cambia el documento
   useEffect(() => {
     if (doc) {
-      setRows([createEmptyRow(doc.currency)]);
+      // FIX-AUD3-1 (2026-07-13): para comisiones, setear amount = balance_cup
+      // para que isExact sea true y el pago pueda proceder.
+      // La UI de comisiones no tiene input de monto (se paga completo).
+      const initialRow = createEmptyRow('CUP');
+      if (doc.ref_type === 'commission') {
+        initialRow.amount = doc.balance_cup;
+      }
+      setRows([initialRow]);
       setError(null);
       setSuccess(false);
     }
@@ -136,6 +142,7 @@ export default function PaymentModal({ document: doc, onClose, onPaymentRegister
           body: JSON.stringify({
             action: 'pay',
             payment_method: method,
+            payment_reference: rows[0]?.reference || null,  // FIX-AUD3-4
           }),
         });
 

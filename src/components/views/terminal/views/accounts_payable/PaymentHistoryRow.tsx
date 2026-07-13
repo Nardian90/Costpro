@@ -83,6 +83,18 @@ export default function PaymentHistoryRow({ refType, refId, paidAmount }: Paymen
     : payments;
   const displayLoading = refType === 'commission' ? commissionLoading : loading;
 
+  // FIX-AUD3-3 (2026-07-13): handleVoid estaba indefinido → ReferenceError
+  const handleVoid = async (paymentId: string) => {
+    if (!confirm('¿Anular este pago? El saldo se recalculará automáticamente.')) return;
+
+    try {
+      await apiFetch(`/api/payments/${paymentId}`, { method: 'DELETE' });
+      refetch();
+    } catch (e: any) {
+      alert(`Error al anular: ${e.message}`);
+    }
+  };
+
   return (
     <>
       {/* Toggle button */}
