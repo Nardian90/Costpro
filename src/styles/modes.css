@@ -37,34 +37,34 @@
 }
 
 /* ── FIX-PERF-BG: Fondos sólidos en modo performance ──
-   En dark mode: fondo negro sólido (#000) para sidebar, main y vistas.
-   En light mode: fondo blanco sólido (#fff).
-   Sin transparencias (no más /50, /10, etc.) para mejorar legibilidad
-   y reducir composición de capas GPU. */
+   FIX-PERF-BG-V2 (2026-07-13): usar #1e1e1e (charcoal gray) en dark mode,
+   NO negro puro (#000). Esto coincide con el sidebar existente y la
+   estética deseada (ver imagen de referencia: VS Code dark theme).
+   Sin tinte verde — solo charcoal sólido neutro. */
 .mode-performance.dark,
 .dark .mode-performance {
-  background: #000 !important;
+  background: #1e1e1e !important;
 }
 
 .mode-performance:not(.dark) {
-  background: #fff !important;
+  background: #ffffff !important;
 }
 
-/* Sidebar: fondo negro sólido */
+/* Sidebar: charcoal sólido (#1e1e1e) — mismo color que el main */
 .mode-performance .sidebar-container,
 .mode-performance [data-sidebar],
 .mode-performance aside[class*="sidebar"],
 .mode-performance nav[class*="sidebar"] {
-  background: #000 !important;
+  background: #1e1e1e !important;
   backdrop-filter: none !important;
 }
 
-/* Main content area: fondo sólido */
+/* Main content area: charcoal sólido */
 .mode-performance main,
 .mode-performance [role="main"],
 .mode-performance .terminal-main,
 .mode-performance .main-content {
-  background: var(--background) !important;
+  background: #1e1e1e !important;
   backdrop-filter: none !important;
 }
 
@@ -83,21 +83,57 @@
   -webkit-backdrop-filter: none !important;
 }
 
-/* Forzar backgrounds sólidos en dark mode para cualquier elemento con bg */
+/* Forzar backgrounds sólidos en dark mode — CHARCOAL (#1e1e1e, #252525)
+   Sin tinte verde. Esta es la paleta deseada:
+   - background: #1e1e1e (charcoal base)
+   - card: #252525 (ligeramente más claro)
+   - muted: #2a2a2a (áreas inactivas)
+   - popover: #252525 (dropdowns) */
 .mode-performance.dark [class*="bg-card"] {
-  background: #0a0a0a !important;
+  background: #252525 !important;
 }
 
 .mode-performance.dark [class*="bg-muted"] {
-  background: #111 !important;
+  background: #2a2a2a !important;
 }
 
 .mode-performance.dark [class*="bg-popover"] {
-  background: #0a0a0a !important;
+  background: #252525 !important;
 }
 
 .mode-performance.dark [class*="bg-background"] {
-  background: #000 !important;
+  background: #1e1e1e !important;
+}
+
+/* ── FIX-PERF-TINT (2026-07-13): Eliminar TINTES VERDES del fondo ──
+   El problema: bg-primary/5, bg-primary/10, bg-primary/15 aplican un
+   tinte verde sutil sobre el charcoal. En performance se eliminan
+   totalmente para lograr un charcoal sólido neutro. */
+.mode-performance.dark [class*="bg-primary/"],
+.mode-performance.dark [class*="bg-primary-50"],
+.mode-performance.dark [class*="bg-primary-100"],
+.mode-performance.dark [class*="bg-emerald/"],
+.mode-performance.dark [class*="bg-green/"],
+.mode-performance.dark [class*="bg-green-50"],
+.mode-performance.dark [class*="bg-green-500/"],
+.mode-performance.dark [class*="bg-emerald-50"],
+.mode-performance.dark [class*="bg-emerald-500/"] {
+  background: #2a2a2a !important;
+  background-color: #2a2a2a !important;
+}
+
+/* ── FIX-PERF-TINT: Eliminar radial-gradient verde del fondo ──
+   Algunos componentes usan radial-gradient con verde como decoración
+   de fondo. En performance se eliminan. */
+.mode-performance.dark [style*="radial-gradient"][style*="34, 197, 94"],
+.mode-performance.dark [style*="radial-gradient"][style*="22c55e"],
+.mode-performance.dark [style*="radial-gradient"][style*="rgba(34"],
+.mode-performance.dark [style*="linear-gradient"][style*="34, 197, 94"],
+.mode-performance.dark [style*="linear-gradient"][style*="22c55e"],
+.mode-performance.dark [style*="linear-gradient"][style*="052e16"],
+.mode-performance.dark [style*="linear-gradient"][style*="064e3b"] {
+  background: #1e1e1e !important;
+  background-image: none !important;
 }
 
 /* ── FIX-PERF-BORDER: Bordes degradados sutiles ──

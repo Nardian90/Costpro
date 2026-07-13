@@ -230,8 +230,11 @@ export function ParticleBackground() {
       </motion.div>
 
       {/* ── Layer 2: Background Greeting Text ── */}
+      {/* FIX-PERF-BG (2026-07-13): añadida clase 'enhanced-layer' para que el
+          texto de fondo ("¡Hola!", "Listo", etc.) se oculte en modo performance.
+          Antes NO se ocultaba porque solo tenía z-[-1] sin la clase enhanced-layer. */}
       <motion.div
-        className="absolute inset-0 z-[-1] pointer-events-none flex items-center justify-center overflow-hidden"
+        className="absolute inset-0 z-[-1] pointer-events-none flex items-center justify-center overflow-hidden enhanced-layer"
         aria-hidden="true"
         style={{ opacity: meshFade }}
       >
