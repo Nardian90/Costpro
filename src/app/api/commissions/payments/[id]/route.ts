@@ -1,18 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabaseClient';
+import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
+import { getSupabaseForSession } from '@/lib/supabase-session';
 import { z } from 'zod';
 
-// ── Schema para actualizar estado de comisión ──
+/**
+ * PATCH /api/commissions/payments/[id]
+ *
+ * Aprobar / Pagar / Cancelar comisión.
+ *
+ * FIX-AUD2-1 (2026-07-13): reescrito con withAuth + getSupabaseForSession.
+ * Antes usaba supabase.auth.getUser() sin sesión SSR → 401 siempre.
+ *
+ * FIX-AUD2-3: valida store_id (cross-store access control).
+ * FIX-AUD2-4: idempotente — solo actualiza si status coincide con el esperado.
+ */
+
 const updateCommissionSchema = z.object({
   action: z.enum(['approve', 'pay', 'cancel']),
-  payment_method: z.enum(['cash', 'transfer', 'zelle']).optional(),
+  payment_method: z.enum(['cash', 'transfer', 'zelle', 'mixed']).optional(),
+  payment_reference: z.string().optional().nullable(),
   currency: z.string().default('CUP'),
   exchange_rate: z.number().positive().default(1.0),
 });
 
-// ── PATCH: Aprobar / Pagar / Cancelar comisión ──
-export async function PATCH(
+async function patchHandler(
   request: NextRequest,
+  session: AuthenticatedSession,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -26,19 +39,30 @@ export async function PATCH(
       );
     }
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
-    }
-
-    const { action, payment_method, currency, exchange_rate } = parsed.data;
+    const { action, payment_method, payment_reference, currency, exchange_rate } = parsed.data;
     const { id: commissionId } = await params;
 
-    // Verificar que existe y obtener estado actual
+    const supabase = getSupabaseForSession(session);
+
+    // Obtener store_id del usuario
+    const { data: userData, error: userError } = await supabase
+      .from('profiles')
+      .select('active_store_id')
+      .eq('id', session.user.id)
+      .single();
+
+    if (userError || !userData?.active_store_id) {
+      return NextResponse.json({ error: 'Tienda no configurada' }, { status: 400 });
+    }
+
+    const storeId = userData.active_store_id;
+
+    // FIX-AUD2-3: verificar que la comisión existe Y pertenece a la store del usuario
     const { data: commission, error: fetchError } = await supabase
       .from('commission_payments')
-      .select('id, status, final_amount')
+      .select('id, status, final_amount, store_id')
       .eq('id', commissionId)
+      .eq('store_id', storeId)  // FIX-AUD2-3: scope por store_id
       .single();
 
     if (fetchError || !commission) {
@@ -53,30 +77,46 @@ export async function PATCH(
         return NextResponse.json({ error: 'Solo se pueden aprobar comisiones en borrador' }, { status: 400 });
       }
       updateData.status = 'approved';
-      updateData.approved_by = user.id;
+      updateData.approved_by = session.user.id;
       updateData.approved_at = new Date().toISOString();
     } else if (action === 'pay') {
+      // FIX-AUD2-4: idempotente — solo se pueden pagar comisiones approved
+      if (currentStatus === 'paid') {
+        // Ya está pagada — idempotente, devolver sin error
+        return NextResponse.json({
+          ...commission,
+          message: 'La comisión ya estaba pagada',
+        });
+      }
       if (currentStatus !== 'approved' && currentStatus !== 'draft') {
-        return NextResponse.json({ error: 'Solo se pueden pagar comisiones aprobadas o en borrador' }, { status: 400 });
+        return NextResponse.json(
+          { error: `No se puede pagar una comisión con estado "${currentStatus}"` },
+          { status: 400 }
+        );
       }
       if (!payment_method) {
         return NextResponse.json({ error: 'payment_method es requerido para pagar' }, { status: 400 });
       }
       updateData.status = 'paid';
-      updateData.paid_by = user.id;
+      updateData.paid_by = session.user.id;
       updateData.paid_at = new Date().toISOString();
       updateData.payment_method = payment_method;
+      updateData.payment_reference = payment_reference || null;
       updateData.currency = currency;
       updateData.exchange_rate = exchange_rate;
-      // amount_cup se calcula automáticamente via trigger
     } else if (action === 'cancel') {
+      if (currentStatus === 'paid') {
+        return NextResponse.json({ error: 'No se puede cancelar una comisión ya pagada' }, { status: 400 });
+      }
       updateData.status = 'cancelled';
     }
 
+    // FIX-AUD2-4: UPDATE con condición de status para idempotencia
     const { data, error } = await supabase
       .from('commission_payments')
       .update(updateData)
       .eq('id', commissionId)
+      .eq('store_id', storeId)  // FIX-AUD2-3: doble validación
       .select()
       .single();
 
@@ -91,3 +131,5 @@ export async function PATCH(
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+
+export const PATCH = withAuth(patchHandler);
