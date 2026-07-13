@@ -84,54 +84,60 @@
 }
 
 /* Forzar backgrounds sólidos en dark mode — DARK NEUTRO (#0a0a0a, #141414, #1a1a1a)
-   Sin tinte verde. Paleta deseada:
-   - background: #0a0a0a (dark base, más oscuro)
+   FIX-PERF-BG-V4 (2026-07-13): selectores MÁS PRECISOS para no romper
+   elementos con bg-card-foreground, bg-muted-foreground, etc.
+   Solo afectar las clases exactas de fondo, no las variantes -foreground.
+   Paleta:
+   - background: #0a0a0a (dark base)
    - card: #141414 (ligeramente más claro)
    - muted: #1a1a1a (áreas inactivas)
    - popover: #141414 (dropdowns) */
-.mode-performance.dark [class*="bg-card"] {
-  background: #141414 !important;
+.mode-performance.dark [class*="bg-card"]:not([class*="bg-card-foreground"]):not([class*="bg-card/"]) {
+  background-color: #141414 !important;
 }
 
-.mode-performance.dark [class*="bg-muted"] {
-  background: #1a1a1a !important;
+.mode-performance.dark [class*="bg-muted"]:not([class*="bg-muted-foreground"]):not([class*="bg-muted/"]) {
+  background-color: #1a1a1a !important;
 }
 
-.mode-performance.dark [class*="bg-popover"] {
-  background: #141414 !important;
+.mode-performance.dark [class*="bg-popover"]:not([class*="bg-popover-foreground"]):not([class*="bg-popover/"]) {
+  background-color: #141414 !important;
 }
 
-.mode-performance.dark [class*="bg-background"] {
-  background: #0a0a0a !important;
+.mode-performance.dark [class*="bg-background"]:not([class*="bg-background-foreground"]):not([class*="bg-background/"]) {
+  background-color: #0a0a0a !important;
+}
+
+/* Solo afectar bg-card/ con transparencia, no bg-card sólido */
+.mode-performance.dark [class*="bg-card/"],
+.mode-performance.dark [class*="bg-muted/"],
+.mode-performance.dark [class*="bg-popover/"],
+.mode-performance.dark [class*="bg-background/"] {
+  background-color: #141414 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
 
 /* ── FIX-PERF-TINT (2026-07-13): Eliminar TINTES VERDES del fondo ──
-   El problema: bg-primary/5, bg-primary/10, bg-primary/15 aplican un
-   tinte verde sutil sobre el dark. En performance se eliminan
-   totalmente para lograr un dark sólido neutro. */
-.mode-performance.dark [class*="bg-primary/"],
-.mode-performance.dark [class*="bg-primary-50"],
-.mode-performance.dark [class*="bg-primary-100"],
-.mode-performance.dark [class*="bg-emerald/"],
-.mode-performance.dark [class*="bg-green/"],
-.mode-performance.dark [class*="bg-green-50"],
-.mode-performance.dark [class*="bg-green-500/"],
-.mode-performance.dark [class*="bg-emerald-50"],
-.mode-performance.dark [class*="bg-emerald-500/"] {
-  background: #1a1a1a !important;
+   FIX-PERF-TINT-V2 (2026-07-13): selectores más precisos.
+   Solo afectar las clases que son SOLO de fondo (no -foreground).
+   No usar background: que resetea todo, usar background-color: que
+   solo cambia el color manteniendo otros estilos. */
+.mode-performance.dark [class*="bg-primary/"]:not([class*="text-"]),
+.mode-performance.dark [class*="bg-emerald/"]:not([class*="text-"]),
+.mode-performance.dark [class*="bg-green/"]:not([class*="text-"]) {
   background-color: #1a1a1a !important;
 }
 
 /* ── FIX-PERF-TINT: Eliminar radial-gradient verde del fondo ──
-   Algunos componentes usan radial-gradient con verde como decoración
-   de fondo. En performance se eliminan. */
-.mode-performance.dark [style*="radial-gradient"][style*="34, 197, 94"],
-.mode-performance.dark [style*="radial-gradient"][style*="22c55e"],
-.mode-performance.dark [style*="radial-gradient"][style*="rgba(34"],
-.mode-performance.dark [style*="linear-gradient"][style*="34, 197, 94"],
-.mode-performance.dark [style*="linear-gradient"][style*="22c55e"],
-.mode-performance.dark [style*="linear-gradient"][style*="052e16"],
-.mode-performance.dark [style*="linear-gradient"][style*="064e3b"] {
+   Solo afectar elementos con style inline que tengan gradientes verdes
+   EN SU FONDO (no en texto). */
+.mode-performance.dark div[style*="radial-gradient"][style*="34, 197, 94"],
+.mode-performance.dark div[style*="radial-gradient"][style*="22c55e"],
+.mode-performance.dark div[style*="linear-gradient"][style*="34, 197, 94"],
+.mode-performance.dark div[style*="linear-gradient"][style*="22c55e"],
+.mode-performance.dark div[style*="linear-gradient"][style*="052e16"],
+.mode-performance.dark div[style*="linear-gradient"][style*="064e3b"] {
   background: #0a0a0a !important;
   background-image: none !important;
 }
@@ -252,30 +258,26 @@
   background-image: none !important;
 }
 
-/* ── FIX-PERF-LAYERS-V2 (2026-07-13): Ocultar TODAS las enhanced-layers ──
-   Doble seguridad: además del display:none por defecto en ParticleBackground,
-   forzamos display:none cuando html tiene clase .mode-performance.
-   Esto asegura que orbs, tip text y canvas NUNCA se vean en performance,
-   sin importar el orden de carga de los estilos. */
-.mode-performance .enhanced-layer,
-.mode-performance .enhanced-layer *,
+/* ── FIX-PERF-LAYERS-V2 (2026-07-13): Ocultar SOLO las enhanced-layers ──
+   FIX-PERF-LAYERS-V3 (2026-07-13): NO usar selector .enhanced-layer * (con
+   asterisco) porque oculta hijos de cualquier elemento con esa clase,
+   incluyendo contenido real. Solo ocultar los 3 layers específicos del
+   ParticleBackground: mesh-orbs, bg-tip-text, y canvas.enhanced-layer.
+   NO tocar .enhanced-glass, .enhanced-card, .enhanced-sidebar-edge que
+   son clases usadas por el sidebar y cards reales. */
 .mode-performance .mesh-orb,
 .mode-performance .bg-tip-text,
-.mode-performance .enhanced-glass,
-.mode-performance .enhanced-card,
-.mode-performance .enhanced-sidebar-edge::after {
-  display: none !important;
-  opacity: 0 !important;
-  visibility: hidden !important;
-  background: none !important;
-  background-image: none !important;
-  box-shadow: none !important;
-  filter: none !important;
-}
-
-/* Asegurar que el canvas también se oculte */
 .mode-performance canvas.enhanced-layer {
   display: none !important;
+}
+
+/* Ocultar SOLO los contenedores específicos del ParticleBackground */
+.mode-performance .mesh-orb-1,
+.mode-performance .mesh-orb-2,
+.mode-performance .mesh-orb-3 {
+  display: none !important;
+  background: none !important;
+  filter: none !important;
 }
 
 .mode-performance *,
