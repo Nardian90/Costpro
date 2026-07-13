@@ -40,31 +40,63 @@
    FIX-PERF-BG-V3 (2026-07-13): oscurecer el fondo a #0a0a0a (más oscuro
    que #1e1e1e pero no negro puro #000). El sidebar original usa #0a0a0a
    en dark mode, así que ahora todo coincide.
-   Sin tinte verde — solo dark neutro sólido. */
+   Sin tinte verde — solo dark neutro sólido.
+   FIX-PERF-BG-V5 (2026-07-13): las reglas oscuras SOLO aplican en dark
+   mode. Antes .mode-performance .sidebar-container (sin .dark) forzaba
+   #0a0a0a incluso en light mode, causando fondo negro en light. */
+
+/* DARK MODE: fondo oscuro sólido */
 .mode-performance.dark,
 .dark .mode-performance {
   background: #0a0a0a !important;
 }
 
+/* LIGHT MODE: fondo claro sólido */
 .mode-performance:not(.dark) {
   background: #ffffff !important;
 }
 
-/* Sidebar: dark sólido (#0a0a0a) — mismo color que el main */
-.mode-performance .sidebar-container,
-.mode-performance [data-sidebar],
-.mode-performance aside[class*="sidebar"],
-.mode-performance nav[class*="sidebar"] {
+/* Sidebar: dark sólido SOLO en dark mode */
+.mode-performance.dark .sidebar-container,
+.mode-performance.dark [data-sidebar],
+.mode-performance.dark aside[class*="sidebar"],
+.mode-performance.dark nav[class*="sidebar"],
+.dark .mode-performance .sidebar-container,
+.dark .mode-performance [data-sidebar],
+.dark .mode-performance aside[class*="sidebar"],
+.dark .mode-performance nav[class*="sidebar"] {
   background: #0a0a0a !important;
   backdrop-filter: none !important;
 }
 
-/* Main content area: dark sólido */
-.mode-performance main,
-.mode-performance [role="main"],
-.mode-performance .terminal-main,
-.mode-performance .main-content {
+/* Sidebar: claro sólido en LIGHT mode */
+.mode-performance:not(.dark) .sidebar-container,
+.mode-performance:not(.dark) [data-sidebar],
+.mode-performance:not(.dark) aside[class*="sidebar"],
+.mode-performance:not(.dark) nav[class*="sidebar"] {
+  background: #f8fafc !important;
+  backdrop-filter: none !important;
+}
+
+/* Main content area: dark sólido SOLO en dark mode */
+.mode-performance.dark main,
+.mode-performance.dark [role="main"],
+.mode-performance.dark .terminal-main,
+.mode-performance.dark .main-content,
+.dark .mode-performance main,
+.dark .mode-performance [role="main"],
+.dark .mode-performance .terminal-main,
+.dark .mode-performance .main-content {
   background: #0a0a0a !important;
+  backdrop-filter: none !important;
+}
+
+/* Main content area: claro sólido en LIGHT mode */
+.mode-performance:not(.dark) main,
+.mode-performance:not(.dark) [role="main"],
+.mode-performance:not(.dark) .terminal-main,
+.mode-performance:not(.dark) .main-content {
+  background: #ffffff !important;
   backdrop-filter: none !important;
 }
 
