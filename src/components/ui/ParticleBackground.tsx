@@ -40,9 +40,11 @@ interface Particle {
 interface ParticleBackgroundProps {
   /** Vista actual para mostrar tip contextual relevante */
   viewId?: string | null;
+  /** FIX-TIP-LOADING: ocultar el tip durante la carga de la vista */
+  hideTip?: boolean;
 }
 
-export function ParticleBackground({ viewId }: ParticleBackgroundProps = {}) {
+export function ParticleBackground({ viewId, hideTip }: ParticleBackgroundProps = {}) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animRef = useRef<number>(0);
   const particlesRef = useRef<Particle[]>([]);
@@ -222,11 +224,13 @@ export function ParticleBackground({ viewId }: ParticleBackgroundProps = {}) {
       {/* ── Layer 2: Background Tip Text (contextual, professional) ── */}
       {/* FIX-PERF-TIPS-V2: reemplaza los greetings aleatorios por tips profesionales.
           Clase 'enhanced-layer' asegura display:none en performance mode.
-          Removido whitespace-nowrap para permitir salto de línea en tips largos. */}
+          Removido whitespace-nowrap para permitir salto de línea en tips largos.
+          FIX-TIP-LOADING: ocultar durante la carga de la vista (hideTip=true)
+          para que no aparezca en el medio mientras la vista carga. */}
       <motion.div
         className="absolute inset-0 z-[-1] pointer-events-none flex items-center justify-center overflow-hidden enhanced-layer"
         aria-hidden="true"
-        style={{ opacity: meshFade }}
+        style={{ opacity: hideTip ? 0 : meshFade }}
       >
         <span className="bg-tip-text select-none" key={tipText}>
           {tipText}
