@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { AlertTriangle, Clock, CheckCircle2, Wallet, TrendingDown, Search, Table2, List } from 'lucide-react';
+import { AlertTriangle, Clock, CheckCircle2, Wallet, TrendingDown, Search, Table2, List, CreditCard } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
 import { useAccountsPayable, type AgingTab, type GroupedPayable, type UnifiedPayable } from '@/hooks/api/useAccountsPayable';
+import PaymentModal, { type PayableDocument } from './PaymentModal';
 
 const PAYMENT_STATUS_LABELS: Record<string, string> = {
   unpaid: 'Pendiente',
@@ -41,8 +42,9 @@ export default function AccountsPayableView() {
   const [currencyFilter, setCurrencyFilter] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'grouped' | 'list'>('grouped');
+  const [paymentModalDoc, setPaymentModalDoc] = useState<PayableDocument | null>(null);
 
-  const { data, totals, kpis, summary, count, loading, error } = useAccountsPayable({
+  const { data, totals, kpis, summary, count, loading, error, refetch } = useAccountsPayable({
     tab,
     method: methodFilter || undefined,
     currency: currencyFilter || undefined,
@@ -204,7 +206,10 @@ export default function AccountsPayableView() {
       ) : error ? null : viewMode === 'grouped' ? (
         <GroupedTableView data={data as GroupedPayable[]} totals={totals} />
       ) : (
-        <ListView data={data as UnifiedPayable[]} />
+        <ListView
+          data={data as UnifiedPayable[]}
+          onPay={(doc) => setPaymentModalDoc(doc)}
+        />
       )}
 
       {/* Count */}
@@ -213,6 +218,13 @@ export default function AccountsPayableView() {
           {count} {viewMode === 'grouped' ? 'proveedor(es)' : 'documento(s)'} en esta vista
         </p>
       )}
+
+      {/* Payment Modal */}
+      <PaymentModal
+        document={paymentModalDoc}
+        onClose={() => setPaymentModalDoc(null)}
+        onPaymentRegistered={refetch}
+      />
     </div>
   );
 }
@@ -307,7 +319,7 @@ function GroupedTableView({ data, totals }: { data: GroupedPayable[]; totals: an
 // ═════════════════════════════════════════════════════════════════
 // LIST VIEW — detalle por documento (vista original mejorada)
 // ═════════════════════════════════════════════════════════════════
-function ListView({ data }: { data: UnifiedPayable[] }) {
+function ListView({ data, onPay }: { data: UnifiedPayable[]; onPay: (doc: PayableDocument) => void }) {
   if (data.length === 0) {
     return (
       <div className="text-center py-12 text-muted-foreground">
@@ -329,6 +341,7 @@ function ListView({ data }: { data: UnifiedPayable[] }) {
             <th className="p-3 text-right">Saldo CUP</th>
             <th className="p-3 text-center">Vence</th>
             <th className="p-3 text-center">Estado</th>
+            <th className="p-3 text-center">Acción</th>
           </tr>
         </thead>
         <tbody>
@@ -384,6 +397,27 @@ function ListView({ data }: { data: UnifiedPayable[] }) {
                 )}>
                   {p.payment_status === 'paid' ? '💰' : p.payment_status === 'partial' ? '⚖️' : '⏳'} {PAYMENT_STATUS_LABELS[p.payment_status]}
                 </span>
+              </td>
+              <td className="p-3 text-center">
+                {p.payment_status !== 'paid' && (
+                  <button
+                    onClick={() => onPay({
+                      ref_type: p.ref_type,
+                      ref_id: p.ref_id,
+                      supplier: p.supplier,
+                      total: p.total,
+                      total_cup: p.total_cup,
+                      paid_cup: p.paid_cup,
+                      balance_cup: p.balance_cup,
+                      currency: p.currency,
+                      exchange_rate: p.exchange_rate,
+                      payment_status: p.payment_status,
+                    })}
+                    className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-primary text-primary-foreground text-[10px] font-black uppercase hover:bg-primary/90"
+                  >
+                    <CreditCard className="w-3 h-3" /> Pagar
+                  </button>
+                )}
               </td>
             </tr>
           ))}
