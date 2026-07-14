@@ -441,7 +441,9 @@ export function CashReportModal({ open, onClose }: CashReportModalProps) {
               </div>
             )}
 
-            {/* Desglose CUP */}
+            {/* Desglose CUP — ocultar si filtro de moneda es USD/MLC */}
+            {(!filterCurrency || filterCurrency === 'CUP') && (
+            <>
             <div>
               <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
                 <h3 className="text-[11px] font-black uppercase text-muted-foreground">Desglose para Entrega — CUP</h3>
@@ -503,8 +505,11 @@ export function CashReportModal({ open, onClose }: CashReportModalProps) {
                 </div>
               </div>
             </div>
+            </>
+            )}
 
-            {/* Desglose USD */}
+            {/* Desglose USD — ocultar si filtro de moneda es CUP/MLC */}
+            {(!filterCurrency || filterCurrency === 'USD') && (
             <div>
               <h3 className="text-[11px] font-black uppercase text-muted-foreground mb-2">Desglose para Entrega — USD</h3>
               <div className="rounded-xl border border-border/40 p-3 space-y-2">
@@ -519,6 +524,7 @@ export function CashReportModal({ open, onClose }: CashReportModalProps) {
                 <div className="border-t border-border/40 pt-2"><div className="flex items-center justify-between"><span className="text-xs font-black uppercase">Total USD:</span><span className="font-mono font-black">${usdTotal.toFixed(2)}</span></div></div>
               </div>
             </div>
+            )}
 
             {/* Selector de plantilla + Exportar */}
             {showTemplateSelector && (

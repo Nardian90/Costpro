@@ -40,7 +40,7 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
     if (type === 'sale') {
       const { data, error } = await supabase
         .from('transactions')
-        .select('id, created_at, total_amount, payment_method, sale_currency, reference, status')
+        .select('id, created_at, total_amount, payment_method, sale_currency, customer_name, status, cash_amount, transfer_amount, zelle_amount')
         .eq('store_id', storeId)
         .eq('payment_method', method)
         .eq('sale_currency', currency)
