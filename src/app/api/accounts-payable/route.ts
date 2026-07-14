@@ -24,13 +24,16 @@ import { z } from 'zod';
  * FASE 3 (próximo): + commission_payments (comisiones approved)
  */
 
-// FIX (2026-07-14): usar uuidLoose (regex simple) en vez de z.string().uuid()
+// FIX (2026-07-14): usar regex simple en vez de z.string().uuid()
 // porque el store_id de Tienda Central Costpro (d1c4ba0e-5767-4ba0-e576-7d1c4ba0e576)
 // no es UUID v4 estricto y z.string().uuid() lo rechaza.
-import { uuidLoose } from '@/validation/api-schemas';
+const uuidLooseRegex = z.string().regex(
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
+  'UUID inválido'
+);
 
 const querySchema = z.object({
-  store_id: uuidLoose,
+  store_id: uuidLooseRegex,
   tab: z.enum(['all', 'overdue', '30', '60', '90', '120', 'paid']).default('all'),
   method: z.enum(['cash', 'transfer', 'zelle']).optional(),
   currency: z.string().optional(),

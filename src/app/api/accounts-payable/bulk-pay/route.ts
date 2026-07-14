@@ -2,7 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
 import { getSupabaseForSession } from '@/lib/supabase-session';
 import { z } from 'zod';
-import { uuidLoose } from '@/validation/api-schemas';
+
+// FIX (2026-07-14): regex simple para aceptar UUIDs no-v4
+const uuidLooseRegex = z.string().regex(
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
+  'UUID inválido'
+);
 
 /**
  * POST /api/accounts-payable/bulk-pay
@@ -28,7 +33,7 @@ import { uuidLoose } from '@/validation/api-schemas';
 const bulkPaySchema = z.object({
   items: z.array(z.object({
     ref_type: z.enum(['receipt', 'service', 'commission']),
-    ref_id: uuidLoose,  // FIX: uuidLoose acepta UUIDs no-v4
+    ref_id: uuidLooseRegex,
   })).min(1, 'Debe seleccionar al menos 1 documento'),
   payment_method: z.enum(['cash', 'transfer', 'mixed']),
   payment_reference: z.string().optional().nullable(),
