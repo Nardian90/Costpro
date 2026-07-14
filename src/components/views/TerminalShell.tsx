@@ -62,6 +62,17 @@ function ViewErrorBoundary({ children, viewName }: { children: React.ReactNode; 
   );
 }
 
+// FIX-CASH-REPORT (2026-07-14): wrapper para mostrar CashReportModal como vista
+function CashReportWrapper() {
+  const { setCurrentView } = useUIStore();
+  const [open, setOpen] = React.useState(true);
+  return (
+    <div className="p-4">
+      <CashReportModal open={open} onClose={() => { setOpen(false); setCurrentView('sales-hub'); }} />
+    </div>
+  );
+}
+
 const DashboardView = dynamic(() => import('@/components/views/terminal/views/dashboard/DashboardView'), { ssr: false });
 const OCCView = dynamic(() => import('@/components/views/terminal/views/dashboard/OCCView'), { ssr: false });
 const ChatBotView = dynamic(() => import('@/components/views/terminal/views/chat/ChatBotView'), { ssr: false });
@@ -132,6 +143,8 @@ const ChatBot = dynamic(() => import('@/components/ui/ChatBot').then(m => m.Chat
 const CalculatorView = dynamic(() => import('@/components/views/terminal/views/calculator/CalculatorView'), { ssr: false });
 // FIX-PAYMENT-TRACKING (2026-07-12): dashboard de cuentas por pagar
 const AccountsPayableView = dynamic(() => import('@/components/views/terminal/views/accounts_payable/AccountsPayableView'), { ssr: false });
+// FIX-CASH-REPORT (2026-07-14): modal de reporte de entrega desde SalesHub
+const CashReportModal = dynamic(() => import('@/components/views/terminal/views/cash/CashReportModal').then(m => ({ default: m.CashReportModal })), { ssr: false });
 // FIX-PRODUCTION (2026-07-12): órdenes de producción y trabajo
 const ProductionOrdersView = dynamic(() => import('@/components/views/terminal/views/production_orders/ProductionOrdersView'), { ssr: false });
 const CreateProductModal = dynamic(() => import('@/components/modals/CreateProductModal').then(m => m.CreateProductModal), { ssr: false });
@@ -388,7 +401,10 @@ export default function TerminalShell() {
         // FIX-CALC-VIEW (2026-07-10): vista integrada de calculadora
         case 'calculator': return <ViewErrorBoundary viewName="Calculadora"><CalculatorView /></ViewErrorBoundary>;
         // FIX-PAYMENT-TRACKING (2026-07-12): dashboard de cuentas por pagar
-        case 'accounts-payable': return <ViewErrorBoundary viewName="Cuentas por Pagar"><AccountsPayableView /></ViewErrorBoundary>;
+        case 'accounts-payable':
+        case 'accounts_payable': return <ViewErrorBoundary viewName="Cuentas por Pagar"><AccountsPayableView /></ViewErrorBoundary>;
+        // FIX-CASH-REPORT (2026-07-14): reporte de entrega como vista desde SalesHub
+        case 'cash_report': return <ViewErrorBoundary viewName="Reporte de Entrega"><CashReportWrapper /></ViewErrorBoundary>;
         // FIX-PRODUCTION (2026-07-12): órdenes de producción y trabajo
         case 'production-orders': return <ViewErrorBoundary viewName="Órdenes de Producción"><ProductionOrdersView /></ViewErrorBoundary>;
         case 'costeo-dinamico': return <ViewErrorBoundary viewName="Costeo Dinámico"><CosteoDinamicoView /></ViewErrorBoundary>;

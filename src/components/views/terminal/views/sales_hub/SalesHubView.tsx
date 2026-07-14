@@ -42,6 +42,7 @@ import {
   ShoppingCart, Table2, Package, Receipt, DollarSign,
   ArrowRight, Wallet, TrendingUp, ClipboardList,
   AlertCircle, Package as PackageIcon, FileClock,
+  Scale, CreditCard,
 } from "lucide-react";
 import { cn, formatCurrency } from "@/lib/utils";
 import { useUIStore } from "@/store";
@@ -131,6 +132,26 @@ const SECONDARY_CARDS: HubCard[] = [
     color: "text-info",
     bgColor: "bg-info/5",
     borderColor: "border-info/20",
+  },
+  {
+    id: "cash_report",
+    title: "Reporte de Entrega",
+    description: "Genera el reporte de caja para entrega de dinero con desglose de billetes, cuadre CUP/USD y exportación a PDF.",
+    icon: Scale,
+    view: "cash_report",
+    color: "text-primary",
+    bgColor: "bg-primary/5",
+    borderColor: "border-primary/20",
+  },
+  {
+    id: "accounts_payable",
+    title: "Cuentas por Pagar",
+    description: "Antigüedad de saldos: recepciones, servicios recibidos y comisiones. Filtra por vencimiento, paga a proveedores y exporta a Excel.",
+    icon: CreditCard,
+    view: "accounts_payable",
+    color: "text-destructive",
+    bgColor: "bg-destructive/5",
+    borderColor: "border-destructive/20",
   },
 ];
 
