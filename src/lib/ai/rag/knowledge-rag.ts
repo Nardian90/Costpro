@@ -82,11 +82,16 @@ function extractTitle(content: string): string | null {
 }
 
 function extractKeywords(content: string, title: string): string[] {
+  const stopwords = new Set(['para','como','los','las','con','por','que','una','uno','del','desde','hasta','cuando','donde','este','esta','estos','estas','pero','mas','muy','puede','pueden','tiene','tienen','sistema','costpro','usuario']);
   const words = (content.toLowerCase() + ' ' + title.toLowerCase())
-    .replace(/[^\w\sáéíóúñ]/g, ' ').split(/\s+/).filter(w => w.length > 3);
+    .replace(/[^\w\sáéíóúñ]/g, ' ').split(/\s+/).filter(w => w.length > 3 && !stopwords.has(w));
   const freq: Record<string, number> = {};
   for (const w of words) { freq[w] = (freq[w] || 0) + 1; }
   return Object.entries(freq).sort((a, b) => b[1] - a[1]).slice(0, 20).map(([w]) => w);
+}
+
+function escapeRegExp(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 export function searchKnowledge(query: string, maxResults: number = 3): Array<{
@@ -105,7 +110,7 @@ export function searchKnowledge(query: string, maxResults: number = 3): Array<{
     for (const word of queryWords) {
       if (titleLower.includes(word)) score += 10;
       if (doc.keywords.includes(word)) score += 5;
-      const matches = (contentLower.match(new RegExp(word, 'g')) || []).length;
+      const matches = (contentLower.match(new RegExp(escapeRegExp(word), 'g')) || []).length;
       score += matches;
     }
     if (query.toLowerCase().includes('cómo') || query.toLowerCase().includes('como hacer')) {

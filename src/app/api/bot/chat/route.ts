@@ -115,6 +115,7 @@ async function botChatHandler(req: NextRequest) {
     const effectiveStoreId = storeId || '';
 
     const supabaseClient = createServerClient();
+    // FIX-RAG (2026-07-14): pasar messages para que buildRagContext recupere docs relevantes
     const systemPrompt = await buildSystemPrompt({
       userName,
       userRole,
@@ -122,6 +123,7 @@ async function botChatHandler(req: NextRequest) {
       storeId: effectiveStoreId,
       uiMode,
       supabase: supabaseClient,
+      messages: messages.map(m => ({ role: m.role, content: m.content || '' })),
     });
 
     // ── Convert messages to ModelMessage[] for Vercel AI SDK ──────────────────
@@ -231,6 +233,13 @@ async function botChatHandler(req: NextRequest) {
                 const lastAction = allActions[allActions.length - 1];
                 if (lastAction && lastAction.name === part.toolName) {
                   lastAction.result = part.output;
+                  // FIX-RAG (2026-07-14): si el tool result contiene un action
+                  // (ej: navigation), extraerlo y pusharlo plano para que
+                  // ChatBot.tsx handlewitch(action.type) lo procese
+                  const out = part.output as any;
+                  if (out?.action) {
+                    allActions.push(out.action);
+                  }
                 }
                 break;
               }
