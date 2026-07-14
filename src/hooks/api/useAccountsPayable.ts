@@ -107,6 +107,7 @@ export function useAccountsPayable(params: UseAccountsPayableParams = {}): UseAc
   useEffect(() => {
     if (!user?.activeStoreId) {
       setLoading(false);
+      setError('No hay tienda activa configurada. Selecciona una tienda para ver las cuentas por pagar.');
       return;
     }
 

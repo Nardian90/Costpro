@@ -25,15 +25,21 @@ import { z } from 'zod';
  */
 
 const querySchema = z.object({
-  store_id: z.string().uuid(),
+  store_id: z.string().uuid().or(z.literal('null')).or(z.literal('undefined')).or(z.literal('')),
   tab: z.enum(['all', 'overdue', '30', '60', '90', '120', 'paid']).default('all'),
   method: z.enum(['cash', 'transfer', 'zelle']).optional(),
   currency: z.string().optional(),
   search: z.string().optional(),
   mode: z.enum(['list', 'grouped']).default('list'),
-  // FIX-AUD5-M1: paginación para evitar cargar todos los documentos
   limit: z.coerce.number().min(1).max(500).default(200),
   offset: z.coerce.number().min(0).default(0),
+}).refine(data => {
+  // Validar que store_id sea un UUID real (no null/undefined/empty)
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(data.store_id);
+}, {
+  message: 'store_id es requerido y debe ser un UUID válido. El usuario no tiene tienda activa configurada.',
+  path: ['store_id'],
 });
 
 interface UnifiedPayable {

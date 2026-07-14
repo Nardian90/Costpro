@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Download, Printer, DollarSign, TrendingUp, TrendingDown, Wallet } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
+import { apiFetch } from '@/lib/api-fetch';
 import { toast } from 'sonner';
 import type { CashReport } from '@/types';
 
@@ -14,25 +15,29 @@ interface CashReportModalProps {
 export function CashReportModal({ open, onClose }: CashReportModalProps) {
   const [report, setReport] = useState<CashReport | null>(null);
   const [loading, setLoading] = useState(true);
+  // FIX (2026-07-14): fechas en formato HTML date input (YYYY-MM-DD)
+  // Default: fecha actual en ambos
   const [startDate, setStartDate] = useState(() => {
     const d = new Date();
     d.setHours(0, 0, 0, 0);
-    return d.toISOString();
+    return d.toISOString().slice(0, 10);
   });
-  const [endDate, setEndDate] = useState(() => new Date().toISOString());
+  const [endDate, setEndDate] = useState(() => {
+    const d = new Date();
+    d.setHours(23, 59, 59, 999);
+    return d.toISOString().slice(0, 10);
+  });
 
   const fetchReport = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/cash-report?start_date=${encodeURIComponent(startDate)}&end_date=${encodeURIComponent(endDate)}`);
-      if (res.ok) {
-        const data = await res.json();
-        setReport(data);
-      } else {
-        toast.error('Error al generar reporte');
-      }
-    } catch (e) {
-      toast.error('Error de conexión');
+      // FIX: usar apiFetch con token JWT + enviar fechas como ISO
+      const startISO = new Date(startDate + 'T00:00:00').toISOString();
+      const endISO = new Date(endDate + 'T23:59:59').toISOString();
+      const data = await apiFetch(`/api/cash-report?start_date=${encodeURIComponent(startISO)}&end_date=${encodeURIComponent(endISO)}`);
+      setReport(data);
+    } catch (e: any) {
+      toast.error(e.message || 'Error al generar reporte');
     } finally {
       setLoading(false);
     }
@@ -57,18 +62,41 @@ export function CashReportModal({ open, onClose }: CashReportModalProps) {
         className="w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-card border border-border/50 rounded-2xl shadow-2xl"
         onClick={e => e.stopPropagation()}
       >
-        <div className="sticky top-0 bg-card border-b border-border/30 p-4 flex items-center justify-between z-10">
-          <div className="flex items-center gap-2">
-            <Wallet className="w-5 h-5 text-primary" />
-            <h2 className="text-sm font-black uppercase tracking-widest">Reporte de Caja — Entrega</h2>
+        <div className="sticky top-0 bg-card border-b border-border/30 p-4 z-10">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <Wallet className="w-5 h-5 text-primary" />
+              <h2 className="text-sm font-black uppercase tracking-widest">Reporte de Caja — Entrega</h2>
+            </div>
+            <div className="flex items-center gap-1">
+              <button onClick={handlePrint} className="p-2 rounded-lg hover:bg-muted" aria-label="Imprimir">
+                <Printer className="w-4 h-4" />
+              </button>
+              <button onClick={onClose} className="p-2 rounded-lg hover:bg-muted" aria-label="Cerrar">
+                <span className="text-lg">✕</span>
+              </button>
+            </div>
           </div>
-          <div className="flex items-center gap-1">
-            <button onClick={handlePrint} className="p-2 rounded-lg hover:bg-muted" aria-label="Imprimir">
-              <Printer className="w-4 h-4" />
-            </button>
-            <button onClick={onClose} className="p-2 rounded-lg hover:bg-muted" aria-label="Cerrar">
-              <span className="text-lg">✕</span>
-            </button>
+          {/* FIX (2026-07-14): selectores de fecha inicio/fin */}
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
+              <label className="text-[10px] font-black uppercase text-muted-foreground">Desde:</label>
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="px-2 py-1 rounded-lg border border-border/40 bg-background text-xs"
+              />
+            </div>
+            <div className="flex items-center gap-1.5">
+              <label className="text-[10px] font-black uppercase text-muted-foreground">Hasta:</label>
+              <input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="px-2 py-1 rounded-lg border border-border/40 bg-background text-xs"
+              />
+            </div>
           </div>
         </div>
 

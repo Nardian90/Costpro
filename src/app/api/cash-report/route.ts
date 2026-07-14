@@ -1,29 +1,34 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabaseClient';
+import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
+import { getSupabaseForSession } from '@/lib/supabase-session';
 
-// ── GET: Reporte de caja para entrega de dinero ──
-// Query params: ?start_date=ISO&end_date=ISO
-// Devuelve: ventas por método+moneda, pagos por método+moneda, balance, y desglose de billetes sugerido
-export async function GET(request: NextRequest) {
+/**
+ * GET /api/cash-report?start_date=ISO&end_date=ISO
+ *
+ * Reporte de caja para entrega de dinero.
+ * Devuelve: ventas por método+moneda, pagos por método+moneda, balance,
+ * y desglose de billetes sugerido.
+ *
+ * FIX (2026-07-14): reescrito con withAuth + getSupabaseForSession.
+ * Antes usaba supabase.auth.getUser() sin sesión SSR → 401 siempre.
+ */
+
+async function getHandler(req: NextRequest, session: AuthenticatedSession) {
   try {
-    const { searchParams } = new URL(request.url);
+    const { searchParams } = new URL(req.url);
     const startDate = searchParams.get('start_date') || new Date(Date.now() - 86400000).toISOString();
     const endDate = searchParams.get('end_date') || new Date().toISOString();
 
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
-    }
+    const supabase = getSupabaseForSession(session);
 
     // Obtener store_id
-    const { data: userData } = await supabase
+    const { data: userData, error: userError } = await supabase
       .from('profiles')
       .select('active_store_id')
-      .eq('id', user.id)
+      .eq('id', session.user.id)
       .single();
 
-    if (!userData?.active_store_id) {
+    if (userError || !userData?.active_store_id) {
       return NextResponse.json({ error: 'Tienda no configurada' }, { status: 400 });
     }
 
@@ -48,7 +53,6 @@ export async function GET(request: NextRequest) {
       (p: any) => p.payment_method === 'cash' && p.currency === 'CUP'
     );
     const totalCashPaymentsCup = cashCupPayments.reduce((sum: number, p: any) => sum + Number(p.total), 0);
-    // FIX-COMMISSION (2026-07-12): incluir comisiones pagadas en efectivo CUP como egresos
     const cashCupCommissions = (reportData?.commissions || []).filter(
       (c: any) => c.payment_method === 'cash' && c.currency === 'CUP'
     );
@@ -59,19 +63,20 @@ export async function GET(request: NextRequest) {
     let remaining = Math.max(0, cashBalanceCup);
     const breakdown = denominations.map(denom => {
       const count = Math.floor(remaining / denom);
-      remaining = Math.round((remaining - count * denom) * 100) / 100;
-      return { denomination: denom, count, subtotal: count * denom };
+      remaining -= count * denom;
+      return { denom, count, total: count * denom };
     }).filter(b => b.count > 0);
 
     return NextResponse.json({
       ...reportData,
-      cash_breakdown_cup: {
-        total: cashBalanceCup,
-        denominations: breakdown,
-      },
+      cash_breakdown: breakdown,
+      cash_balance_cup: cashBalanceCup,
+      period: { start: startDate, end: endDate },
     });
   } catch (error: any) {
     console.error('[cash-report] Error:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+
+export const GET = withAuth(getHandler);
