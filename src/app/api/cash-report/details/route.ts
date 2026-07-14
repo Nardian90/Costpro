@@ -6,18 +6,25 @@ import { getSupabaseForSession } from '@/lib/supabase-session';
  * GET /api/cash-report/details
  *
  * Devuelve los documentos individuales que componen un grupo del reporte de caja.
- * Query: type=sale|payment, method=cash|transfer|zelle, currency=CUP|USD,
+ * Query: type=sale|payment, method=cash|transfer|zelle, currency=CUP|USD|MLC,
  *        start_date, end_date, ref_type? (para payments)
  *
- * FIX-C1 (2026-07-14): este endpoint faltaba — el accordion del CashReportModal
- * siempre mostraba "Sin documentos detallados".
+ * FIX-C1+FIX-METHOD (2026-07-14): el frontend enviaba "efectivo" en vez de "cash".
+ * Ahora acepta ambos (traduce español→inglés).
  */
+
+const METHOD_MAP: Record<string, string> = {
+  'efectivo': 'cash', 'cash': 'cash',
+  'transferencia': 'transfer', 'transfer': 'transfer',
+  'zelle': 'zelle',
+};
 
 async function getHandler(req: NextRequest, session: AuthenticatedSession) {
   try {
     const { searchParams } = new URL(req.url);
     const type = searchParams.get('type') || 'sale';
-    const method = searchParams.get('method') || 'cash';
+    const rawMethod = (searchParams.get('method') || 'cash').toLowerCase();
+    const method = METHOD_MAP[rawMethod] || rawMethod;
     const currency = searchParams.get('currency') || 'CUP';
     const refType = searchParams.get('ref_type');
     const startDate = searchParams.get('start_date') || new Date(Date.now() - 86400000).toISOString();
@@ -31,7 +38,6 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
     const storeId = userData.active_store_id;
 
     if (type === 'sale') {
-      // Transacciones de venta
       const { data, error } = await supabase
         .from('transactions')
         .select('id, created_at, total_amount, payment_method, sale_currency, reference, status')
@@ -47,7 +53,6 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
       if (error) return NextResponse.json({ error: error.message }, { status: 500 });
       return NextResponse.json(data || []);
     } else {
-      // Pagos a proveedores
       let query = supabase
         .from('payment_transactions')
         .select('id, payment_date, amount, amount_cup, payment_method, currency, reference, notes, ref_type, ref_id')
