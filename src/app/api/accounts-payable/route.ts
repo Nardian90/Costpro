@@ -404,19 +404,20 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
         paid_cup: number;
         balance_cup: number;
         aging: {
-          current: number;  // no vencido, > 7 días (próximo)
-          overdue: number;  // vencido (cualquier antigüedad)
-          '30': number;     // vencido 0-30d
-          '60': number;     // vencido 31-60d
-          '90': number;     // vencido 61-90d
-          '120': number;    // vencido 91-120d
-          '120+': number;   // vencido +120d
+          current: number;
+          upcoming7: number;  // FIX: vence en próximos 7 días
+          overdue: number;
+          '30': number;
+          '60': number;
+          '90': number;
+          '120': number;
+          '120+': number;
         };
         count: number;
       }>();
 
       for (const p of payables) {
-        if (p.payment_status === 'paid') continue; // excluir pagados del aging
+        if (p.payment_status === 'paid') continue;
 
         const key = p.supplier || 'Sin proveedor';
         if (!supplierMap.has(key)) {
@@ -425,7 +426,7 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
             total_cup: 0,
             paid_cup: 0,
             balance_cup: 0,
-            aging: { current: 0, overdue: 0, '30': 0, '60': 0, '90': 0, '120': 0, '120+': 0 },
+            aging: { current: 0, upcoming7: 0, overdue: 0, '30': 0, '60': 0, '90': 0, '120': 0, '120+': 0 },
             count: 0,
           });
         }
@@ -445,8 +446,11 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
           else if (p.aging_bucket === '90') entry.aging['90'] += p.balance_cup;
           else if (p.aging_bucket === '120') entry.aging['120'] += p.balance_cup;
           else if (p.aging_bucket === '120+') entry.aging['120+'] += p.balance_cup;
+        } else if (p.days_until_due !== null && p.days_until_due <= 7) {
+          // No vencido pero vence en los próximos 7 días
+          entry.aging.upcoming7 += p.balance_cup;
         } else {
-          // No vencido = "corriente" (próximo a vencer o sin vencimiento)
+          // No vencido = "corriente" (próximo a vencer > 7 días o sin vencimiento)
           entry.aging.current += p.balance_cup;
         }
       }
@@ -460,6 +464,7 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
         balance_cup: groupedData.reduce((s, g) => s + g.balance_cup, 0),
         aging: {
           current: groupedData.reduce((s, g) => s + g.aging.current, 0),
+          upcoming7: groupedData.reduce((s, g) => s + g.aging.upcoming7, 0),
           overdue: groupedData.reduce((s, g) => s + g.aging.overdue, 0),
           '30': groupedData.reduce((s, g) => s + g.aging['30'], 0),
           '60': groupedData.reduce((s, g) => s + g.aging['60'], 0),

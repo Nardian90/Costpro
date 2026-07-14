@@ -424,7 +424,7 @@ function GroupedTableView({ data, totals }: { data: GroupedPayable[]; totals: an
                 {fmt(row.balance_cup)}
               </td>
               <td className={cn(cellClass(row.aging.current), "border-l border-border/40")}>{fmt(row.aging.current)}</td>
-              <td className={cellClass(0)}>—</td>
+              <td className={cn(cellClass(row.aging.upcoming7 || 0), row.aging.upcoming7 > 0 && "text-amber-500")}>{fmt(row.aging.upcoming7 || 0)}</td>
               <td className={cn(cellClass(row.aging['30']), "border-l border-border/40", row.aging['30'] > 0 && "text-destructive")}>{fmt(row.aging['30'])}</td>
               <td className={cn(cellClass(row.aging['60']), row.aging['60'] > 0 && "text-destructive")}>{fmt(row.aging['60'])}</td>
               <td className={cn(cellClass(row.aging['90']), row.aging['90'] > 0 && "text-destructive")}>{fmt(row.aging['90'])}</td>
@@ -442,7 +442,7 @@ function GroupedTableView({ data, totals }: { data: GroupedPayable[]; totals: an
               <td className={cellClass(totals.paid_cup)}>{fmt(totals.paid_cup)}</td>
               <td className={cn(cellClass(totals.balance_cup), "border-l border-border/40 text-primary")}>{fmt(totals.balance_cup)}</td>
               <td className={cn(cellClass(totals.aging.current), "border-l border-border/40")}>{fmt(totals.aging.current)}</td>
-              <td className={cellClass(0)}>—</td>
+              <td className={cn(cellClass(totals.aging.upcoming7 || 0), totals.aging.upcoming7 > 0 && "text-amber-500")}>{fmt(totals.aging.upcoming7 || 0)}</td>
               <td className={cn(cellClass(totals.aging['30']), "border-l border-border/40", totals.aging['30'] > 0 && "text-destructive")}>{fmt(totals.aging['30'])}</td>
               <td className={cn(cellClass(totals.aging['60']), totals.aging['60'] > 0 && "text-destructive")}>{fmt(totals.aging['60'])}</td>
               <td className={cn(cellClass(totals.aging['90']), totals.aging['90'] > 0 && "text-destructive")}>{fmt(totals.aging['90'])}</td>

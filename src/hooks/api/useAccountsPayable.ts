@@ -57,6 +57,7 @@ export interface GroupedPayable {
   balance_cup: number;
   aging: {
     current: number;
+    upcoming7: number;
     overdue: number;
     '30': number;
     '60': number;
