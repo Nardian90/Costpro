@@ -86,6 +86,17 @@ export const botService = {
       knowledgeBase = await getKnowledgeBaseContext();
     }
 
+    // FIX-RAG (2026-07-14): usar RAG de knowledge/help/ para recuperar docs relevantes
+    let ragContext = '';
+    if (!lightQuery) {
+      try {
+        const { buildRagContext } = await import('@/lib/ai/rag/knowledge-rag');
+        ragContext = buildRagContext(historyToProcess.map(m => ({ role: m.role, content: m.content || '' })));
+      } catch (e) {
+        console.warn('[bot-service] RAG no disponible:', e);
+      }
+    }
+
     // Compact context representation - Only include full context if NOT a light query
     const viewsContext = lightQuery
       ? "Responde de forma breve y amable."
@@ -99,7 +110,9 @@ export const botService = {
 Vista Actual: ${botContext?.currentView || 'unknown'}.
 ${lightQuery ? '' : 'Vistas:' + viewsContext + '\nForms:' + formsContext}
 ${knowledgeBase ? 'KB:' + knowledgeBase : ''}
-Reglas: ${lightQuery ? 'Eres un asistente amable. No uses tools para saludos.' : 'Actúa siempre con tools si es posible. Solo Tienda:' + storeId + '. Solo ejecuta run_system_health_check si el usuario lo pide explícitamente y está en la vista salud.'}`
+${ragContext}
+Reglas: ${lightQuery ? 'Eres un asistente amable. No uses tools para saludos.' : 'Actúa siempre con tools si es posible. Solo Tienda:' + storeId + '. Solo ejecuta run_system_health_check si el usuario lo pide explícitamente y está en la vista salud.'}
+${lightQuery ? '' : `\n## 🧭 Navegación: Si el usuario pregunta CÓMO hacer algo, explícalo y OFRECE navegar usando open_view. ViewIds: pos, sales, cash, inventory, catalog, cost-sheets, reception_list, accounts_payable, cash_report, workers, transferencias, purchase-orders, reports, settings, occ.`}`
     };
 
     let provider: LLMProvider;
