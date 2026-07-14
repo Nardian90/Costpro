@@ -53,6 +53,7 @@ export function CashReportModal({ open, onClose }: CashReportModalProps) {
 
   const [storeInfo, setStoreInfo] = useState<StoreInfo | null>(null);
   const [showSuggested, setShowSuggested] = useState(false);
+  const [selectedDoc, setSelectedDoc] = useState<any | null>(null);
 
   // Filtros
   const [filterCurrency, setFilterCurrency] = useState<string>('');
@@ -103,6 +104,13 @@ export function CashReportModal({ open, onClose }: CashReportModalProps) {
     })();
     return () => ctrl.abort();
   }, [open, startDate, endDate]);
+
+  // FIX: limpiar cache del accordion cuando cambian las fechas
+  useEffect(() => {
+    setExpandedItems(new Set());
+    setItemDetails({});
+    setLoadingDetails(new Set());
+  }, [startDate, endDate]);
 
   const cupTotal = Object.entries(cupBreakdown).reduce((s, [d, c]) => s + Number(d) * (Number(c) || 0), 0);
   const usdTotal = Object.entries(usdBreakdown).reduce((s, [d, c]) => s + Number(d) * (Number(c) || 0), 0);
@@ -297,17 +305,40 @@ export function CashReportModal({ open, onClose }: CashReportModalProps) {
         <div id={`p-${key}`} role="region" className="border-t border-border/20 p-2 bg-background">
           {loadingDetails.has(key) ? <p className="text-xs text-muted-foreground text-center py-2">Cargando documentos...</p>
           : (itemDetails[key]?.length ?? 0) === 0 ? <p className="text-xs text-muted-foreground text-center py-2">Sin documentos</p>
-          : <div className="space-y-1 max-h-48 overflow-y-auto">
-              {itemDetails[key]?.map((doc: any, i: number) => (
-                <div key={i} className="flex items-center justify-between text-[11px] py-1.5 px-2 rounded hover:bg-muted/30">
-                  <div className="flex items-center gap-2">
-                    <Eye className="w-3.5 h-3.5 text-muted-foreground cursor-pointer hover:text-primary" />
-                    <span className="font-mono">{doc.date || doc.created_at?.slice(0,10) || doc.payment_date?.slice(0,10) || '—'}</span>
-                    <span className="text-muted-foreground truncate max-w-[120px]">{doc.reference || doc.reference_doc || doc.supplier || ''}</span>
+          : <div className="space-y-1 max-h-56 overflow-y-auto">
+              {itemDetails[key]?.map((doc: any, i: number) => {
+                const date = doc.created_at?.slice(0,16).replace('T',' ') || doc.payment_date?.slice(0,16).replace('T',' ') || '—';
+                const amount = Number(doc.amount || doc.total || doc.total_amount || doc.amount_cup || 0);
+                const ref = doc.reference || doc.reference_doc || doc.notes || '';
+                const customer = doc.customer_name || '';
+                const refType = doc.ref_type || '';
+                const docId = doc.id || '';
+                return (
+                  <div key={i} className="flex items-center justify-between text-[11px] py-2 px-2 rounded hover:bg-muted/30 gap-2">
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                      <button
+                        onClick={() => setSelectedDoc({ ...doc, _type: isNeg ? 'payment' : 'sale', _refType: refType, _currency: currency, _method: pm })}
+                        aria-label="Ver documento"
+                        className="p-1 rounded hover:bg-primary/10 shrink-0"
+                      >
+                        <Eye className="w-3.5 h-3.5 text-muted-foreground hover:text-primary" />
+                      </button>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono text-[10px] shrink-0">{date}</span>
+                          {customer && <span className="text-[10px] font-bold truncate">{customer}</span>}
+                        </div>
+                        <div className="flex items-center gap-1.5 text-[9px] text-muted-foreground">
+                          {refType && <span className="px-1 rounded bg-muted/40">{refType}</span>}
+                          {ref && <span className="truncate">{ref}</span>}
+                          {doc.payment_method && <span className="px-1 rounded bg-muted/40">{methodLabel(doc.payment_method)}</span>}
+                        </div>
+                      </div>
+                    </div>
+                    <span className="font-mono tabular-nums font-bold shrink-0">{fmt(amount, currency)}</span>
                   </div>
-                  <span className="font-mono tabular-nums">{fmt(Number(doc.amount || doc.total || doc.total_amount || 0), currency)}</span>
-                </div>
-              ))}
+                );
+              })}
             </div>}
         </div>
       )}
@@ -545,6 +576,52 @@ export function CashReportModal({ open, onClose }: CashReportModalProps) {
               <button onClick={handleExportPDF} className={`flex-1 rounded-xl bg-primary text-primary-foreground text-xs font-black uppercase hover:opacity-90 flex items-center justify-center gap-2 ${touch}`}>
                 <Download className="w-4 h-4" /> Exportar PDF
               </button>
+            </div>
+          </div>
+        )}
+
+        {/* Modal de detalle de documento (ojo) */}
+        {selectedDoc && (
+          <div className="fixed inset-0 z-[210] flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm" onClick={() => setSelectedDoc(null)}>
+            <div className="w-full max-w-md bg-card border border-border/50 rounded-2xl shadow-2xl p-4 space-y-3" onClick={e => e.stopPropagation()}>
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-black uppercase">Detalle de Documento</h3>
+                <button onClick={() => setSelectedDoc(null)} aria-label="Cerrar" className="p-2 rounded-lg hover:bg-muted"><span className="text-lg">✕</span></button>
+              </div>
+              <div className="space-y-2 text-xs">
+                <div className="flex justify-between"><span className="text-muted-foreground">Tipo:</span><span className="font-bold">{selectedDoc._type === 'sale' ? 'Venta' : 'Pago a Proveedor'}</span></div>
+                {selectedDoc._refType && <div className="flex justify-between"><span className="text-muted-foreground">Ref. Tipo:</span><span className="font-bold capitalize">{selectedDoc._refType}</span></div>}
+                <div className="flex justify-between"><span className="text-muted-foreground">Fecha:</span><span className="font-mono">{selectedDoc.created_at?.slice(0,16).replace('T',' ') || selectedDoc.payment_date?.slice(0,16).replace('T',' ') || '—'}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Monto:</span><span className="font-mono font-black">{fmt(Number(selectedDoc.amount || selectedDoc.total || selectedDoc.total_amount || selectedDoc.amount_cup || 0), selectedDoc._currency)}</span></div>
+                {selectedDoc.payment_method && <div className="flex justify-between"><span className="text-muted-foreground">Método:</span><span className="font-bold">{methodLabel(selectedDoc.payment_method)}</span></div>}
+                {selectedDoc.customer_name && <div className="flex justify-between"><span className="text-muted-foreground">Cliente:</span><span className="font-bold">{selectedDoc.customer_name}</span></div>}
+                {selectedDoc.reference && <div className="flex justify-between"><span className="text-muted-foreground">Referencia:</span><span className="font-mono">{selectedDoc.reference}</span></div>}
+                {selectedDoc.notes && <div className="flex justify-between"><span className="text-muted-foreground">Notas:</span><span className="text-right">{selectedDoc.notes}</span></div>}
+                {selectedDoc.cash_amount != null && Number(selectedDoc.cash_amount) > 0 && <div className="flex justify-between"><span className="text-muted-foreground">Efectivo:</span><span className="font-mono">{formatCurrency(Number(selectedDoc.cash_amount))}</span></div>}
+                {selectedDoc.transfer_amount != null && Number(selectedDoc.transfer_amount) > 0 && <div className="flex justify-between"><span className="text-muted-foreground">Transferencia:</span><span className="font-mono">{formatCurrency(Number(selectedDoc.transfer_amount))}</span></div>}
+                {selectedDoc.status && <div className="flex justify-between"><span className="text-muted-foreground">Estado:</span><span className="font-bold">{selectedDoc.status}</span></div>}
+                <div className="flex justify-between"><span className="text-muted-foreground">ID:</span><span className="font-mono text-[9px] text-muted-foreground">{selectedDoc.id}</span></div>
+              </div>
+              <div className="flex gap-2 pt-2 border-t border-border/30">
+                <button
+                  onClick={() => {
+                    if (selectedDoc._type === 'sale') {
+                      window.open(`/terminal?view=sales`, '_blank');
+                    } else if (selectedDoc._refType === 'receipt') {
+                      window.open(`/terminal?view=reception_list`, '_blank');
+                    } else if (selectedDoc._refType === 'service') {
+                      window.open(`/terminal?view=received-services`, '_blank');
+                    } else if (selectedDoc._refType === 'commission') {
+                      window.open(`/terminal?view=workers`, '_blank');
+                    }
+                    setSelectedDoc(null);
+                  }}
+                  className={`flex-1 rounded-lg bg-primary text-primary-foreground text-xs font-black uppercase hover:opacity-90 flex items-center justify-center gap-1.5 ${touch}`}
+                >
+                  <Eye className="w-3.5 h-3.5" /> Ver en módulo
+                </button>
+                <button onClick={() => setSelectedDoc(null)} className={`flex-1 rounded-lg border border-border/40 text-xs font-black uppercase hover:bg-muted ${touch}`}>Cerrar</button>
+              </div>
             </div>
           </div>
         )}
