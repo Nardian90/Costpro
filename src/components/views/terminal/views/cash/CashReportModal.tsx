@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Download, Printer, DollarSign, TrendingUp, TrendingDown, Wallet } from 'lucide-react';
+import { Download, DollarSign, TrendingUp, TrendingDown, Wallet, ChevronDown, ChevronRight } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
 import { apiFetch } from '@/lib/api-fetch';
+import { useAuthStore } from '@/store';
 import { toast } from 'sonner';
 import type { CashReport } from '@/types';
 import jsPDF from 'jspdf';
@@ -13,17 +14,53 @@ interface CashReportModalProps {
   onClose: () => void;
 }
 
+interface StoreInfo {
+  name: string;
+  logo_url: string | null;
+  address: string | null;
+  phone: string | null;
+  email: string | null;
+  reeup: string | null;
+  nit: string | null;
+}
+
 export function CashReportModal({ open, onClose }: CashReportModalProps) {
+  const { user } = useAuthStore();
   const [report, setReport] = useState<CashReport | null>(null);
   const [loading, setLoading] = useState(true);
   const [startDate, setStartDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [endDate, setEndDate] = useState(() => new Date().toISOString().slice(0, 10));
-  // FIX: desglose de billetes que ingresa el usuario para la entrega
   const [userBreakdown, setUserBreakdown] = useState<Record<number, string>>({});
   const [recipientName, setRecipientName] = useState('');
   const [deliveredBy, setDeliveredBy] = useState('');
+  const [showSuggested, setShowSuggested] = useState(false);
+  const [storeInfo, setStoreInfo] = useState<StoreInfo | null>(null);
 
   const denominations = [1000, 500, 200, 100, 50, 20, 10, 5, 1];
+
+  // Obtener info de la tienda
+  useEffect(() => {
+    if (!open || !user?.activeStoreId) return;
+    const fetchStore = async () => {
+      try {
+        const data = await apiFetch(`/api/stores?status=all`);
+        const stores = data?.data || data || [];
+        const store = Array.isArray(stores) ? stores.find((s: any) => s.id === user.activeStoreId) : null;
+        if (store) {
+          setStoreInfo({
+            name: store.name || 'Tienda',
+            logo_url: store.logo_url || null,
+            address: store.address || null,
+            phone: store.phone || null,
+            email: store.email || null,
+            reeup: store.reeup || null,
+            nit: store.nit || null,
+          });
+        }
+      } catch { /* fallback a nombre genérico */ }
+    };
+    fetchStore();
+  }, [open, user?.activeStoreId]);
 
   const fetchReport = async () => {
     setLoading(true);
@@ -43,7 +80,6 @@ export function CashReportModal({ open, onClose }: CashReportModalProps) {
     if (open) fetchReport();
   }, [open, startDate, endDate]);
 
-  // Calcular total que el usuario está entregando
   const userBreakdownTotal = Object.entries(userBreakdown).reduce((sum, [denom, count]) => {
     return sum + (Number(denom) * (Number(count) || 0));
   }, 0);
@@ -56,112 +92,158 @@ export function CashReportModal({ open, onClose }: CashReportModalProps) {
 
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
+    const margin = 14;
+    let y = 20;
 
-    // Header con logo simulado
-    doc.setFontSize(20);
+    // ── HEADER: nombre de la tienda + logo + info ──
+    const storeName = storeInfo?.name || 'Tienda';
+
+    // Logo (si existe)
+    if (storeInfo?.logo_url) {
+      try {
+        doc.addImage(storeInfo.logo_url, 'PNG', margin, y - 5, 25, 25);
+      } catch { /* si falla, no poner logo */ }
+    }
+
+    // Nombre de la tienda (NO "COSTPRO")
+    doc.setFontSize(16);
     doc.setFont('helvetica', 'bold');
-    doc.setTextColor(34, 197, 94);
-    doc.text('CostPro', 14, 20);
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(100);
-    doc.text('Reporte de Caja — Entrega de Dinero', 14, 27);
-
-    // Línea separadora
-    doc.setDrawColor(34, 197, 94);
-    doc.setLineWidth(0.5);
-    doc.line(14, 30, pageWidth - 14, 30);
-
-    // Info general
-    doc.setFontSize(9);
     doc.setTextColor(0);
-    let y = 40;
-    doc.text(`Periodo: ${startDate} a ${endDate}`, 14, y);
-    y += 6;
-    if (deliveredBy) { doc.text(`Entrega: ${deliveredBy}`, 14, y); y += 6; }
-    if (recipientName) { doc.text(`Recibe: ${recipientName}`, 14, y); y += 6; }
-    doc.text(`Generado: ${new Date().toLocaleString('es-CU')}`, 14, y);
-    y += 10;
-
-    // Resumen
-    doc.setFontSize(12);
-    doc.setFont('helvetica', 'bold');
-    doc.text('Resumen', 14, y);
-    y += 6;
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'normal');
-    doc.text(`Ingresos (Ventas): ${formatCurrency(report?.totals?.sales_total_cup ?? 0)}`, 14, y); y += 5;
-    doc.text(`Egresos (Pagos): ${formatCurrency(report?.totals?.payments_total_cup ?? 0)}`, 14, y); y += 5;
-    doc.text(`Comisiones: ${formatCurrency(report?.totals?.commissions_total_cup ?? 0)}`, 14, y); y += 5;
-    doc.setFont('helvetica', 'bold');
-    doc.text(`Balance CUP: ${formatCurrency(report?.totals?.balance_cup ?? 0)}`, 14, y); y += 10;
-
-    // Ventas por método
-    doc.setFontSize(12);
-    doc.text('Ventas por Método', 14, y); y += 6;
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'normal');
-    (report.sales || []).forEach((s: any) => {
-      doc.text(`  ${s.payment_method} (${s.currency}): ${s.transaction_count} trans. - ${formatCurrency(s.total)}`, 14, y);
-      y += 5;
-    });
+    doc.text(storeName, margin + (storeInfo?.logo_url ? 30 : 0), y);
     y += 5;
 
-    // Pagos a proveedores
-    if ((report.payments || []).length > 0) {
-      doc.setFontSize(12);
-      doc.setFont('helvetica', 'bold');
-      doc.text('Pagos a Proveedores', 14, y); y += 6;
-      doc.setFontSize(9);
-      doc.setFont('helvetica', 'normal');
-      (report.payments || []).forEach((p: any) => {
-        doc.text(`  ${p.payment_method} (${p.currency}): ${p.payment_count} pagos - ${formatCurrency(p.total)}`, 14, y);
-        y += 5;
-      });
-      y += 5;
-    }
-
-    // Desglose de entrega
-    doc.setFontSize(12);
-    doc.setFont('helvetica', 'bold');
-    doc.text('Desglose para Entrega (Efectivo CUP)', 14, y); y += 6;
-    doc.setFontSize(9);
+    // Info de la tienda
+    doc.setFontSize(7);
     doc.setFont('helvetica', 'normal');
+    doc.setTextColor(80);
+    if (storeInfo?.address) { doc.text(storeInfo.address, margin + (storeInfo?.logo_url ? 30 : 0), y); y += 3.5; }
+    if (storeInfo?.phone) { doc.text(`Tel: ${storeInfo.phone}`, margin + (storeInfo?.logo_url ? 30 : 0), y); y += 3.5; }
+    if (storeInfo?.reeup) { doc.text(`REEUP: ${storeInfo.reeup}`, margin + (storeInfo?.logo_url ? 30 : 0), y); y += 3.5; }
+    if (storeInfo?.nit) { doc.text(`NIT: ${storeInfo.nit}`, margin + (storeInfo?.logo_url ? 30 : 0), y); y += 3.5; }
 
-    if ((report.cash_breakdown || []).length > 0) {
-      doc.text('Sugerido:', 14, y); y += 5;
-      (report.cash_breakdown || []).forEach((d: any) => {
-        doc.text(`  $${d.denom} × ${d.count} = ${formatCurrency(d.total)}`, 14, y);
-        y += 5;
-      });
-      y += 3;
-    }
+    // Línea separadora
+    y += 3;
+    doc.setDrawColor(180);
+    doc.setLineWidth(0.3);
+    doc.line(margin, y, pageWidth - margin, y);
+    y += 8;
 
-    // Desglose del usuario
-    const userEntries = Object.entries(userBreakdown).filter(([, c]) => Number(c) > 0);
-    if (userEntries.length > 0) {
-      doc.text('Entregado:', 14, y); y += 5;
-      userEntries.forEach(([denom, count]) => {
-        doc.text(`  $${denom} × ${count} = ${formatCurrency(Number(denom) * Number(count))}`, 14, y);
-        y += 5;
-      });
-      y += 3;
-      doc.setFont('helvetica', 'bold');
-      doc.text(`Total entregado: ${formatCurrency(userBreakdownTotal)}`, 14, y); y += 5;
-      doc.text(`Diferencia: ${formatCurrency(difference)} ${difference === 0 ? '(cuadrado)' : difference > 0 ? '(sobrante)' : '(faltante)'}`, 14, y);
-    }
-
-    // Firmas
-    y += 20;
-    doc.setDrawColor(200);
-    doc.line(14, y, 80, y);
-    doc.line(pageWidth - 80, y, pageWidth - 14, y);
+    // ── Título del reporte ──
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(0);
+    doc.text('Reporte de Caja — Entrega de Dinero', margin, y);
+    y += 6;
     doc.setFontSize(8);
     doc.setFont('helvetica', 'normal');
-    doc.text('Entrega', 14, y + 5);
-    doc.text('Recibe', pageWidth - 80, y + 5);
+    doc.setTextColor(80);
+    doc.text(`Periodo: ${startDate} a ${endDate}`, margin, y);
+    y += 4;
+    if (deliveredBy) { doc.text(`Entrega: ${deliveredBy}`, margin, y); y += 4; }
+    if (recipientName) { doc.text(`Recibe: ${recipientName}`, margin, y); y += 4; }
+    doc.text(`Generado: ${new Date().toLocaleString('es-CU')}`, margin, y);
+    y += 8;
 
-    doc.save(`reporte_caja_${startDate}_${endDate}.pdf`);
+    // ── Resumen ──
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(0);
+    doc.text('Resumen', margin, y); y += 5;
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Ingresos (Ventas):  ${formatCurrency(report?.totals?.sales_total_cup ?? 0)}`, margin, y); y += 4;
+    doc.text(`Egresos (Pagos):    ${formatCurrency(report?.totals?.payments_total_cup ?? 0)}`, margin, y); y += 4;
+    doc.text(`Comisiones:         ${formatCurrency(report?.totals?.commissions_total_cup ?? 0)}`, margin, y); y += 4;
+    doc.setFont('helvetica', 'bold');
+    doc.text(`Balance CUP:        ${formatCurrency(report?.totals?.balance_cup ?? 0)}`, margin, y); y += 8;
+
+    // ── Ventas por método ──
+    doc.setFontSize(9);
+    doc.text('Ventas por Metodo', margin, y); y += 5;
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+    (report.sales || []).forEach((s: any) => {
+      const label = s.payment_method === 'cash' ? 'Efectivo' : s.payment_method === 'transfer' ? 'Transferencia' : 'Zelle';
+      doc.text(`  ${label} (${s.currency}): ${s.transaction_count} trans. - ${formatCurrency(s.total)}`, margin, y);
+      y += 4;
+    });
+    y += 4;
+
+    // ── Pagos a proveedores ──
+    if ((report.payments || []).length > 0) {
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Pagos a Proveedores', margin, y); y += 5;
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'normal');
+      (report.payments || []).forEach((p: any) => {
+        const label = p.payment_method === 'cash' ? 'Efectivo' : p.payment_method === 'transfer' ? 'Transferencia' : 'Zelle';
+        doc.text(`  ${label} (${p.currency}): ${p.payment_count} pagos - ${formatCurrency(p.total)}`, margin, y);
+        y += 4;
+      });
+      y += 4;
+    }
+
+    // ── Desglose para Entrega (OBLIGATORIO en PDF) ──
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Desglose para Entrega (Efectivo CUP)', margin, y); y += 5;
+
+    // Sugerido (si existe)
+    if ((report.cash_breakdown || []).length > 0) {
+      doc.setFontSize(7);
+      doc.setFont('helvetica', 'italic');
+      doc.setTextColor(120);
+      doc.text('Sugerido:', margin, y); y += 3.5;
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(80);
+      (report.cash_breakdown || []).forEach((d: any) => {
+        if (d.count > 0) {
+          doc.text(`  $${d.denom} x ${d.count} = ${formatCurrency(d.total)}`, margin, y);
+          y += 3.5;
+        }
+      });
+      y += 2;
+    }
+
+    // Desglose del usuario (OBLIGATORIO)
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(0);
+    doc.text('Entregado:', margin, y); y += 4;
+    doc.setFont('helvetica', 'normal');
+
+    const userEntries = Object.entries(userBreakdown).filter(([, c]) => Number(c) > 0);
+    if (userEntries.length > 0) {
+      userEntries.forEach(([denom, count]) => {
+        doc.text(`  $${denom} x ${count} = ${formatCurrency(Number(denom) * Number(count))}`, margin, y);
+        y += 4;
+      });
+      y += 2;
+      doc.setFont('helvetica', 'bold');
+      doc.text(`Total entregado: ${formatCurrency(userBreakdownTotal)}`, margin, y); y += 4;
+      const diffLabel = difference === 0 ? '(cuadrado)' : difference > 0 ? '(sobrante)' : '(faltante)';
+      doc.text(`Diferencia: ${formatCurrency(Math.abs(difference))} ${diffLabel}`, margin, y);
+    } else {
+      doc.setFont('helvetica', 'italic');
+      doc.setTextColor(120);
+      doc.text('  (Sin desglose ingresado)', margin, y);
+    }
+    y += 10;
+
+    // ── Firmas ──
+    doc.setDrawColor(120);
+    doc.setLineWidth(0.3);
+    const sigY = Math.max(y + 10, doc.internal.pageSize.getHeight() - 30);
+    doc.line(margin, sigY, margin + 70, sigY);
+    doc.line(pageWidth - margin - 70, sigY, pageWidth - margin, sigY);
+    doc.setFontSize(7);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(80);
+    doc.text(deliveredBy || 'Entrega', margin, sigY + 4);
+    doc.text(recipientName || 'Recibe', pageWidth - margin - 70, sigY + 4);
+
+    doc.save(`reporte_caja_${storeName.replace(/\s+/g, '_')}_${startDate}.pdf`);
   };
 
   if (!open) return null;
@@ -186,25 +268,16 @@ export function CashReportModal({ open, onClose }: CashReportModalProps) {
               <span className="text-lg">✕</span>
             </button>
           </div>
-          {/* Selectores de fecha (sin duplicar) */}
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-1.5">
               <label className="text-[10px] font-black uppercase text-muted-foreground">Desde:</label>
-              <input
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                className="px-2 py-1 rounded-lg border border-border/40 bg-background text-xs"
-              />
+              <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)}
+                className="px-2 py-1 rounded-lg border border-border/40 bg-background text-xs" />
             </div>
             <div className="flex items-center gap-1.5">
               <label className="text-[10px] font-black uppercase text-muted-foreground">Hasta:</label>
-              <input
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                className="px-2 py-1 rounded-lg border border-border/40 bg-background text-xs"
-              />
+              <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)}
+                className="px-2 py-1 rounded-lg border border-border/40 bg-background text-xs" />
             </div>
           </div>
         </div>
@@ -301,73 +374,70 @@ export function CashReportModal({ open, onClose }: CashReportModalProps) {
               </div>
             )}
 
-            {/* Sugerencia de desglose automática */}
+            {/* Desglose Sugerido — COLAPSABLE (accordion) */}
             {(report?.cash_breakdown?.length ?? 0) > 0 && (
               <div>
-                <h3 className="text-[11px] font-black uppercase text-muted-foreground mb-2">
+                <button
+                  onClick={() => setShowSuggested(!showSuggested)}
+                  className="w-full flex items-center gap-2 text-[11px] font-black uppercase text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  {showSuggested ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
                   Desglose Sugerido (Efectivo CUP)
-                </h3>
-                <div className="rounded-xl border border-primary/20 bg-primary/5 p-3 space-y-1">
-                  {(report?.cash_breakdown ?? []).map((d: any) => (
-                    <div key={d.denom} className="flex items-center justify-between text-sm">
-                      <span className="font-bold">${d.denom} × {d.count}</span>
-                      <span className="font-mono tabular-nums text-muted-foreground">{formatCurrency(d.total)}</span>
+                </button>
+                {showSuggested && (
+                  <div className="mt-2 rounded-xl border border-primary/20 bg-primary/5 p-3 space-y-1">
+                    {(report?.cash_breakdown ?? []).map((d: any) => (
+                      <div key={d.denom} className="flex items-center justify-between text-sm">
+                        <span className="font-bold">${d.denom} × {d.count}</span>
+                        <span className="font-mono tabular-nums text-muted-foreground">{formatCurrency(d.total)}</span>
+                      </div>
+                    ))}
+                    <div className="border-t border-primary/20 pt-2 flex items-center justify-between">
+                      <span className="text-xs font-black uppercase">Total sugerido:</span>
+                      <span className="font-mono font-black text-primary">{formatCurrency(expectedTotal)}</span>
                     </div>
-                  ))}
-                  <div className="border-t border-primary/20 pt-2 flex items-center justify-between">
-                    <span className="text-xs font-black uppercase">Total sugerido:</span>
-                    <span className="font-mono font-black text-primary">{formatCurrency(expectedTotal)}</span>
                   </div>
-                </div>
+                )}
               </div>
             )}
 
-            {/* Desglose que ingresa el usuario para la entrega */}
+            {/* Desglose para Entrega (input del usuario — OBLIGATORIO en PDF) */}
             <div>
               <h3 className="text-[11px] font-black uppercase text-muted-foreground mb-2">
                 Desglose para Entrega (ingresar billetes contados)
               </h3>
               <div className="rounded-xl border border-border/40 p-3 space-y-2">
+                {/* Campos Entrega/Recibe */}
                 <div className="grid grid-cols-2 gap-2 mb-2">
                   <div>
                     <label className="text-[9px] font-black uppercase text-muted-foreground">Entrega</label>
-                    <input
-                      type="text"
-                      value={deliveredBy}
-                      onChange={(e) => setDeliveredBy(e.target.value)}
+                    <input type="text" value={deliveredBy} onChange={(e) => setDeliveredBy(e.target.value)}
                       className="w-full px-2 py-1.5 rounded border border-border/40 bg-background text-xs"
-                      placeholder="Nombre de quien entrega"
-                    />
+                      placeholder="Nombre de quien entrega" />
                   </div>
                   <div>
                     <label className="text-[9px] font-black uppercase text-muted-foreground">Recibe</label>
-                    <input
-                      type="text"
-                      value={recipientName}
-                      onChange={(e) => setRecipientName(e.target.value)}
+                    <input type="text" value={recipientName} onChange={(e) => setRecipientName(e.target.value)}
                       className="w-full px-2 py-1.5 rounded border border-border/40 bg-background text-xs"
-                      placeholder="Nombre de quien recibe"
-                    />
+                      placeholder="Nombre de quien recibe" />
                   </div>
                 </div>
 
+                {/* Denominaciones */}
                 <div className="grid grid-cols-3 gap-1.5">
                   {denominations.map(denom => (
                     <div key={denom} className="flex items-center gap-1">
                       <span className="text-[10px] font-bold w-12">${denom}</span>
                       <span className="text-[10px] text-muted-foreground">×</span>
-                      <input
-                        type="number"
-                        min="0"
-                        value={userBreakdown[denom] || ''}
+                      <input type="number" min="0" value={userBreakdown[denom] || ''}
                         onChange={(e) => setUserBreakdown(prev => ({ ...prev, [denom]: e.target.value }))}
                         className="w-full px-1.5 py-1 rounded border border-border/40 bg-background text-xs font-mono"
-                        placeholder="0"
-                      />
+                        placeholder="0" />
                     </div>
                   ))}
                 </div>
 
+                {/* Resumen del desglose */}
                 <div className="border-t border-border/40 pt-2 space-y-1">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-black uppercase">Total contado:</span>
@@ -384,10 +454,7 @@ export function CashReportModal({ open, onClose }: CashReportModalProps) {
                     <span className="text-xs font-black uppercase">
                       {difference === 0 ? 'Cuadrado' : difference > 0 ? 'Sobrante' : 'Faltante'}:
                     </span>
-                    <span className={cn(
-                      "font-mono font-black",
-                      difference === 0 ? "text-success" : "text-destructive"
-                    )}>
+                    <span className={cn("font-mono font-black", difference === 0 ? "text-success" : "text-destructive")}>
                       {formatCurrency(Math.abs(difference))}
                     </span>
                   </div>
@@ -396,10 +463,8 @@ export function CashReportModal({ open, onClose }: CashReportModalProps) {
             </div>
 
             {/* Botón Exportar PDF */}
-            <button
-              onClick={handleExportPDF}
-              className="w-full h-10 rounded-xl bg-primary text-primary-foreground text-xs font-black uppercase hover:opacity-90 flex items-center justify-center gap-2"
-            >
+            <button onClick={handleExportPDF}
+              className="w-full h-10 rounded-xl bg-primary text-primary-foreground text-xs font-black uppercase hover:opacity-90 flex items-center justify-center gap-2">
               <Download className="w-4 h-4" /> Exportar PDF
             </button>
           </div>
