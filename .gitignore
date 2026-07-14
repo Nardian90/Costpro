@@ -108,3 +108,10 @@ scripts/apply_*.js
 scripts/verify_policies.js
 
 scripts/clean_wallet_db.cjs
+
+# FIX-CLEANUP (2026-07-14): artifacts y archivos temporales
+.git-rewrite/
+worklog.md
+.zscripts/
+download/
+*.pid
