@@ -500,10 +500,9 @@ export interface CashReport {
   };
   start_date: string;
   end_date: string;
-  cash_breakdown_cup: {
-    total: number;
-    denominations: Array<{ denomination: number; count: number; subtotal: number }>;
-  };
+  cash_balance_cup: number;
+  cash_breakdown: Array<{ denom: number; count: number; total: number }>;
+  period?: { start: string; end: string };
 }
 
 // ============================================
