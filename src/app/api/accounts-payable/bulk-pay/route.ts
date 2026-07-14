@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
 import { getSupabaseForSession } from '@/lib/supabase-session';
 import { z } from 'zod';
+import { uuidLoose } from '@/validation/api-schemas';
 
 /**
  * POST /api/accounts-payable/bulk-pay
@@ -27,7 +28,7 @@ import { z } from 'zod';
 const bulkPaySchema = z.object({
   items: z.array(z.object({
     ref_type: z.enum(['receipt', 'service', 'commission']),
-    ref_id: z.string().uuid(),
+    ref_id: uuidLoose,  // FIX: uuidLoose acepta UUIDs no-v4
   })).min(1, 'Debe seleccionar al menos 1 documento'),
   payment_method: z.enum(['cash', 'transfer', 'mixed']),
   payment_reference: z.string().optional().nullable(),

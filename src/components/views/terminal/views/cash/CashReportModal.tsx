@@ -131,24 +131,24 @@ export function CashReportModal({ open, onClose }: CashReportModalProps) {
               <div className="rounded-xl border border-success/20 bg-success/5 p-3 text-center">
                 <TrendingUp className="w-4 h-4 mx-auto text-success mb-1" />
                 <p className="text-[9px] font-black uppercase text-muted-foreground">Ingresos</p>
-                <p className="text-lg font-mono font-black tabular-nums text-success">{formatCurrency(report.totals.sales_total_cup)}</p>
+                <p className="text-lg font-mono font-black tabular-nums text-success">{formatCurrency(report?.totals?.sales_total_cup ?? 0)}</p>
               </div>
               <div className="rounded-xl border border-destructive/20 bg-destructive/5 p-3 text-center">
                 <TrendingDown className="w-4 h-4 mx-auto text-destructive mb-1" />
                 <p className="text-[9px] font-black uppercase text-muted-foreground">Egresos</p>
-                <p className="text-lg font-mono font-black tabular-nums text-destructive">{formatCurrency(report.totals.payments_total_cup)}</p>
+                <p className="text-lg font-mono font-black tabular-nums text-destructive">{formatCurrency(report?.totals?.payments_total_cup ?? 0)}</p>
               </div>
               <div className="rounded-xl border border-primary/20 bg-primary/5 p-3 text-center">
                 <DollarSign className="w-4 h-4 mx-auto text-primary mb-1" />
                 <p className="text-[9px] font-black uppercase text-muted-foreground">Balance</p>
-                <p className="text-lg font-mono font-black tabular-nums text-primary">{formatCurrency(report.totals.balance_cup)}</p>
+                <p className="text-lg font-mono font-black tabular-nums text-primary">{formatCurrency(report?.totals?.balance_cup ?? 0)}</p>
               </div>
             </div>
 
             <div>
               <h3 className="text-[11px] font-black uppercase text-muted-foreground mb-2">Ventas por Método</h3>
               <div className="space-y-1">
-                {report.sales.length === 0 ? (
+                {(report?.sales?.length ?? 0) === 0 ? (
                   <p className="text-xs text-muted-foreground text-center py-2">Sin ventas</p>
                 ) : (
                   report.sales.map((s, i) => (
@@ -170,7 +170,7 @@ export function CashReportModal({ open, onClose }: CashReportModalProps) {
             <div>
               <h3 className="text-[11px] font-black uppercase text-muted-foreground mb-2">Pagos a Proveedores</h3>
               <div className="space-y-1">
-                {report.payments.length === 0 ? (
+                {(report?.payments?.length ?? 0) === 0 ? (
                   <p className="text-xs text-muted-foreground text-center py-2">Sin pagos</p>
                 ) : (
                   report.payments.map((p, i) => (
@@ -195,7 +195,7 @@ export function CashReportModal({ open, onClose }: CashReportModalProps) {
             </div>
 
             {/* FIX-COMMISSION (2026-07-12): Comisiones pagadas a trabajadores */}
-            {report.commissions && report.commissions.length > 0 && (
+            {report?.commissions && report.commissions.length > 0 && (
               <div>
                 <h3 className="text-[11px] font-black uppercase text-muted-foreground mb-2">Comisiones a Trabajadores</h3>
                 <div className="space-y-1">
@@ -215,7 +215,7 @@ export function CashReportModal({ open, onClose }: CashReportModalProps) {
               </div>
             )}
 
-            {report.cash_breakdown_cup.total > 0 && (
+            {(report?.cash_breakdown?.length ?? 0) > 0 && (
               <div>
                 <h3 className="text-[11px] font-black uppercase text-muted-foreground mb-2">
                   Desglose para Entrega (Efectivo CUP)
@@ -224,14 +224,14 @@ export function CashReportModal({ open, onClose }: CashReportModalProps) {
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-black uppercase">Total a entregar:</span>
                     <span className="text-lg font-mono font-black text-primary tabular-nums">
-                      {formatCurrency(report.cash_breakdown_cup.total)}
+                      {formatCurrency(report?.cash_balance_cup ?? 0)}
                     </span>
                   </div>
                   <div className="border-t border-primary/20 pt-2 space-y-1">
-                    {report.cash_breakdown_cup.denominations.map((d) => (
-                      <div key={d.denomination} className="flex items-center justify-between text-sm">
-                        <span className="font-bold">${d.denomination} × {d.count}</span>
-                        <span className="font-mono tabular-nums text-muted-foreground">{formatCurrency(d.subtotal)}</span>
+                    {(report?.cash_breakdown ?? []).map((d: any) => (
+                      <div key={d.denom} className="flex items-center justify-between text-sm">
+                        <span className="font-bold">${d.denom} × {d.count}</span>
+                        <span className="font-mono tabular-nums text-muted-foreground">{formatCurrency(d.total)}</span>
                       </div>
                     ))}
                   </div>

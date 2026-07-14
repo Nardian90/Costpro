@@ -24,8 +24,13 @@ import { z } from 'zod';
  * FASE 3 (próximo): + commission_payments (comisiones approved)
  */
 
+// FIX (2026-07-14): usar uuidLoose (regex simple) en vez de z.string().uuid()
+// porque el store_id de Tienda Central Costpro (d1c4ba0e-5767-4ba0-e576-7d1c4ba0e576)
+// no es UUID v4 estricto y z.string().uuid() lo rechaza.
+import { uuidLoose } from '@/validation/api-schemas';
+
 const querySchema = z.object({
-  store_id: z.string().uuid().or(z.literal('null')).or(z.literal('undefined')).or(z.literal('')),
+  store_id: uuidLoose,
   tab: z.enum(['all', 'overdue', '30', '60', '90', '120', 'paid']).default('all'),
   method: z.enum(['cash', 'transfer', 'zelle']).optional(),
   currency: z.string().optional(),
@@ -33,13 +38,6 @@ const querySchema = z.object({
   mode: z.enum(['list', 'grouped']).default('list'),
   limit: z.coerce.number().min(1).max(500).default(200),
   offset: z.coerce.number().min(0).default(0),
-}).refine(data => {
-  // Validar que store_id sea un UUID real (no null/undefined/empty)
-  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-  return uuidRegex.test(data.store_id);
-}, {
-  message: 'store_id es requerido y debe ser un UUID válido. El usuario no tiene tienda activa configurada.',
-  path: ['store_id'],
 });
 
 interface UnifiedPayable {
