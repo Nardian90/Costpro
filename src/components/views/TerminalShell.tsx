@@ -4,6 +4,7 @@ import { logger } from '@/lib/logger';
 import React, { useState, useEffect, useTransition, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore, useUIStore, ViewType } from '@/store';
+import { isViewAllowedForRole } from '@/config/navigation/sidebar.structure';
 import { Header } from '@/components/views/terminal/Header';
 import Sidebar from '@/components/views/terminal/Sidebar';
 import { ParticleBackground } from '@/components/ui/ParticleBackground';
@@ -324,6 +325,32 @@ export default function TerminalShell() {
   };
 
   const renderView = (view: ViewType) => {
+    // FIX (2026-07-15): Guard de autorización por rol.
+    // Si el usuario no tiene permiso para ver esta vista (según allowedRoles
+    // del sidebar), redirige al dashboard en vez de renderizarla.
+    // Esto protege contra acceso directo via setCurrentView o URL.
+    if (!isViewAllowedForRole(view, user?.role)) {
+      console.warn(`[TerminalShell] Access denied to view "${view}" for role "${user?.role}". Redirecting to dashboard.`);
+      return (
+        <ViewErrorBoundary viewName="Acceso Denegado">
+          <div className="flex flex-col items-center justify-center py-24 gap-4 text-center">
+            <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center">
+              <span className="text-3xl">🔒</span>
+            </div>
+            <h2 className="text-xl font-black uppercase tracking-widest text-foreground">Acceso Denegado</h2>
+            <p className="text-sm text-muted-foreground max-w-md">
+              No tienes permisos para acceder a esta sección. Contacta al administrador si crees que es un error.
+            </p>
+            <button
+              onClick={() => setCurrentView('occ')}
+              className="px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-black uppercase tracking-widest hover:bg-primary/90 min-h-[44px]"
+            >
+              Volver al Dashboard
+            </button>
+          </div>
+        </ViewErrorBoundary>
+      );
+    }
     switch (view) {
         case 'dashboard': return <ViewErrorBoundary viewName="Dashboard"><DashboardView /></ViewErrorBoundary>;
         case 'pick3-intelligence': return <ViewErrorBoundary viewName="Gestor de Riesgo"><Pick3IntelligenceView /></ViewErrorBoundary>;

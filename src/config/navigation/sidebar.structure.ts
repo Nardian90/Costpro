@@ -286,6 +286,10 @@ export const SIDEBAR_STRUCTURE: NavModule[] = [
   // "EN DESARROLLO" (formerly "Otros"). The group is renamed to reflect that
   // these are experimental/in-development features. The 'otros' id is kept for
   // backwards compatibility (persisted Zustand state, MODULE_DEFAULT_VIEW).
+  //
+  // FIX (2026-07-15): acceso restringido a SOLO admin. Estas son funcionalidades
+  // experimentales y en desarrollo. Nadie excepto los administradores debe ver
+  // este menú. Antes incluía manager, encargado, clerk, usuario, warehouse.
   {
     id: 'otros',
     label: 'EN DESARROLLO',
@@ -293,7 +297,7 @@ export const SIDEBAR_STRUCTURE: NavModule[] = [
     icon: FlaskConical,
     ariaLabel: 'Funcionalidades en desarrollo',
     description: 'Funcionalidades experimentales y en desarrollo: IPV (Índice de Precios de Venta), inteligencia de picking (Pick 3) y billetera digital.',
-    allowedRoles: ['admin', 'manager', 'encargado', 'clerk', 'usuario', 'warehouse'],
+    allowedRoles: ['admin'],
     children: [
       // IPV moved here as a submenu (was a top-level group 'ipv_module')
       {
@@ -422,3 +426,58 @@ export const SIDEBAR_STRUCTURE: NavModule[] = [
     ]
   }
 ];
+
+// ════════════════════════════════════════════════════════════════════
+// FIX (2026-07-15): Helper para validar acceso por rol a una vista.
+// Recorre recursivamente el árbol del sidebar buscando el módulo cuyo id
+// coincide con viewId, y verifica si el rol del usuario está en allowedRoles.
+// Si el módulo no especifica allowedRoles, hereda del ancestro más cercano.
+// Si ningún ancestro tiene allowedRoles, permite el acceso (default open).
+// ════════════════════════════════════════════════════════════════════
+
+function findModuleAndAncestors(
+  modules: NavModule[],
+  viewId: string,
+  ancestors: NavModule[] = []
+): { module: NavModule; ancestors: NavModule[] } | null {
+  for (const m of modules) {
+    if (m.id === viewId) {
+      return { module: m, ancestors };
+    }
+    if (m.children && m.children.length > 0) {
+      const found = findModuleAndAncestors(m.children, viewId, [...ancestors, m]);
+      if (found) return found;
+    }
+  }
+  return null;
+}
+
+export function isViewAllowedForRole(viewId: string, userRole: string | undefined | null): boolean {
+  if (!userRole) return false;
+  // Vista default siempre permitida
+  if (viewId === 'occ') return true;
+
+  const result = findModuleAndAncestors(SIDEBAR_STRUCTURE, viewId);
+  if (!result) {
+    // Vista no encontrada en el sidebar (ej: 'cash_report' que es un modal)
+    // → permitir acceso (no es parte del menú, es navegación interna)
+    return true;
+  }
+
+  // Buscar el allowedRoles más cercano (del módulo o de sus ancestros)
+  let allowedRoles: string[] | undefined = result.module.allowedRoles;
+  if (!allowedRoles) {
+    // Buscar en ancestros del más cercano al más lejano
+    for (let i = result.ancestors.length - 1; i >= 0; i--) {
+      if (result.ancestors[i].allowedRoles) {
+        allowedRoles = result.ancestors[i].allowedRoles;
+        break;
+      }
+    }
+  }
+
+  // Si no hay allowedRoles definido en ningún nivel, permitir acceso
+  if (!allowedRoles || allowedRoles.length === 0) return true;
+
+  return allowedRoles.includes(userRole);
+}
