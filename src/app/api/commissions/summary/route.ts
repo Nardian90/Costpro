@@ -7,12 +7,16 @@ import { getSupabaseForSession } from '@/lib/supabase-session';
  * GET /api/commissions/summary?store_id=...&date_from=...&date_to=...
  *
  * Devuelve el resumen del RPC get_worker_commission_summary:
- *   - worker info
+ *   - worker info (worker_id, first_name, last_name, ci, status)
  *   - ventas cash/transfer/total en el rango
- *   - último pago
- *   - regla activa
+ *   - último pago (date, amount)
+ *   - regla activa (id, type, value)
  *
  * Usado por la tabla principal de WorkersView.
+ *
+ * FIX (2026-07-15): El RPC fue reescrito en la migración 20260715000002
+ * para devolver columnas sin prefijo o_ (worker_id en vez de o_worker_id).
+ * Ya no se requiere normalización post-hoc.
  */
 async function getHandler(req: NextRequest, session: AuthenticatedSession) {
   const { searchParams } = new URL(req.url);

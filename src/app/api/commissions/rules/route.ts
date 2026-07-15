@@ -35,10 +35,35 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
   const { data: rules, error } = await query;
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
+  // v2 (2026-07-15): hidratar reglas product_specific con sus product_ids asociados
+  let rulesHydrated = rules || [];
+  const productSpecificRules = (rules || []).filter((r: any) => r.type === 'product_specific');
+  if (productSpecificRules.length > 0) {
+    const { data: rpData } = await supabase
+      .from('commission_rule_products')
+      .select('rule_id, product_id, products:product_id (id, name, sku, price)')
+      .in('rule_id', productSpecificRules.map((r: any) => r.id));
+    const rpMap: Record<string, any[]> = {};
+    for (const rp of (rpData || [])) {
+      if (!rpMap[rp.rule_id]) rpMap[rp.rule_id] = [];
+      rpMap[rp.rule_id].push(rp.product_id);
+    }
+    const rpProductsMap: Record<string, any[]> = {};
+    for (const rp of (rpData || [])) {
+      if (!rpProductsMap[rp.rule_id]) rpProductsMap[rp.rule_id] = [];
+      rpProductsMap[rp.rule_id].push(rp.products);
+    }
+    rulesHydrated = (rules || []).map((r: any) => ({
+      ...r,
+      product_ids: rpMap[r.id] || [],
+      products: rpProductsMap[r.id] || [],
+    }));
+  }
+
   // Si se pide historial, cargar versiones
   let versions: Record<string, unknown[]> = {};
-  if (includeHistory && rules && rules.length > 0) {
-    const ruleIds = rules.map(r => r.id);
+  if (includeHistory && rulesHydrated && rulesHydrated.length > 0) {
+    const ruleIds = rulesHydrated.map((r: any) => r.id);
     const { data: vData } = await supabase
       .from('commission_rule_versions')
       .select('*')
@@ -52,7 +77,7 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
   }
 
   return NextResponse.json({
-    rules: rules || [],
+    rules: rulesHydrated,
     versions: includeHistory ? versions : undefined,
   });
 }
@@ -67,6 +92,8 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
   const {
     store_id, worker_id, type, value_percent, fixed_value, salary_amount,
     base_calculation, priority, valid_from, valid_to,
+    // v2 (2026-07-15): nuevos campos para scale_percentage y product_specific
+    min_price, max_price, product_commission_amount, product_ids,
   } = body;
 
   if (!store_id || !type || !valid_from) {
@@ -76,7 +103,17 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
     );
   }
 
+  // Validación: product_specific requiere product_ids[]
+  if (type === 'product_specific' && (!product_ids || product_ids.length === 0)) {
+    return NextResponse.json(
+      { error: 'Las reglas product_specific requieren al menos un product_id' },
+      { status: 400 },
+    );
+  }
+
   const supabase = getSupabaseForSession(session);
+
+  // 1. Insertar la regla
   const { data, error } = await supabase
     .from('commission_rules')
     .insert({
@@ -90,6 +127,10 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
       priority: priority ?? 0,
       valid_from,
       valid_to: valid_to || null,
+      // v2
+      min_price: min_price ?? null,
+      max_price: max_price ?? null,
+      product_commission_amount: product_commission_amount ?? null,
       created_by: /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(session.user.id || '') ? session.user.id : null,
     })
     .select()
@@ -97,6 +138,25 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  // 2. Si es product_specific, insertar asociaciones en commission_rule_products
+  if (type === 'product_specific' && product_ids && product_ids.length > 0) {
+    const inserts = product_ids.map((pid: string) => ({
+      rule_id: data.id,
+      product_id: pid,
+    }));
+    const { error: rpErr } = await supabase
+      .from('commission_rule_products')
+      .insert(inserts);
+    if (rpErr) {
+      // Rollback: borrar la regla recién creada
+      await supabase.from('commission_rules').delete().eq('id', data.id);
+      return NextResponse.json(
+        { error: `Error asociando productos: ${rpErr.message}` },
+        { status: 500 },
+      );
+    }
   }
 
   return NextResponse.json({ rule: data }, { status: 201 });

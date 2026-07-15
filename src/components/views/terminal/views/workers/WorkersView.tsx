@@ -20,6 +20,9 @@ import {
   ChevronRight,
   Loader2,
   UserPlus,
+  UserX,
+  UserCheck,
+  Save,
 } from 'lucide-react';
 import { useAuthStore } from '@/store';
 import { toast } from 'sonner';
@@ -62,6 +65,45 @@ interface WorkerSummary {
   active_rule_value: number | null;
 }
 
+interface ProRatedSubPeriod {
+  period: string;
+  rule_type: string;
+  rule_value: string;
+  sales_cash: number;
+  sales_transfer: number;
+  sales_total: number;
+  commission: number;
+}
+
+/** Línea de producto vendida (para modo manual del modal de pago) */
+interface WorkerProductLine {
+  line_item_id: string;
+  transaction_id: string | null;
+  sale_date: string;
+  product_id: string | null;
+  product_name: string;
+  product_sku: string | null;
+  quantity: number;
+  unit_price: number;
+  line_total: number;
+  cash_paid: number;
+  transfer_paid: number;
+  currency: string;
+}
+
+/** Desglose por producto devuelto por el motor avanzado */
+interface ProductCommissionDetail {
+  product_id: string;
+  product_name: string;
+  quantity: number;
+  unit_price: number;
+  line_total: number;
+  rule_id: string | null;
+  rule_type: string;
+  commission: number;
+  excluded_from_percentage: boolean;
+}
+
 interface Calculation {
   worker_id: string;
   worker_name: string;
@@ -74,6 +116,13 @@ interface Calculation {
   commission_suggested: number;
   calculation_explanation: string;
   period: { from: string; to: string };
+  // FIX-A5 (2026-07-15): campos opcionales cuando el backend aplicó pro-rateo
+  pro_rated?: boolean;
+  pro_rated_breakdown?: ProRatedSubPeriod[];
+  // v2 (2026-07-15): campos opcionales del motor avanzado
+  product_breakdown?: ProductCommissionDetail[];
+  excluded_sales_total?: number;
+  calculation_mode?: 'rules' | 'manual';
 }
 
 interface CommissionRule {
@@ -88,6 +137,12 @@ interface CommissionRule {
   priority: number;
   valid_from: string;
   valid_to: string | null;
+  // v2 (2026-07-15)
+  min_price?: number | null;
+  max_price?: number | null;
+  product_commission_amount?: number | null;
+  product_ids?: string[];
+  products?: Array<{ id: string; name: string; sku: string | null; price: number }>;
 }
 
 const TABS = [
@@ -102,6 +157,8 @@ const RULE_TYPE_LABELS: Record<string, string> = {
   fixed_amount: 'Monto Fijo',
   salary_based: 'Salario',
   hybrid: 'Híbrido',
+  product_specific: 'Por Producto',
+  scale_percentage: 'Por Escala',
 };
 
 const BASE_CALC_LABELS: Record<string, string> = {
@@ -117,6 +174,14 @@ function formatCurrency(n: number): string {
 
 function formatDate(s: string | null): string {
   if (!s) return '—';
+  // FIX (2026-07-15): las fechas vienen como 'YYYY-MM-DD' (sin timezone).
+  // new Date('2026-07-01') las interpreta como UTC midnight, y toLocaleDateString
+  // en zona horaria negativa (Havana UTC-5) las convierte al día anterior (30/06).
+  // Solución: si la fecha tiene formato YYYY-MM-DD, construir como local.
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
+    const [y, m, d] = s.split('-').map(Number);
+    return new Date(y, m - 1, d).toLocaleDateString('es-ES', { year: 'numeric', month: '2-digit', day: '2-digit' });
+  }
   return new Date(s).toLocaleDateString('es-ES', { year: 'numeric', month: '2-digit', day: '2-digit' });
 }
 
@@ -139,6 +204,28 @@ export function WorkersView() {
 
   // Modal de pago
   const [payModalWorker, setPayModalWorker] = useState<WorkerSummary | null>(null);
+
+  // v2 (2026-07-15): Modal de edición de trabajador
+  const [editModalWorker, setEditModalWorker] = useState<WorkerSummary | null>(null);
+
+  // v2: Toggle de status (activo/inactivo)
+  const handleToggleWorkerStatus = async (worker: WorkerSummary) => {
+    const newStatus = worker.status === 'active' ? 'inactive' : 'active';
+    try {
+      await apiFetch(`/api/workers/${worker.worker_id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status: newStatus }),
+      });
+      toast.success(
+        newStatus === 'active'
+          ? `${worker.first_name} ${worker.last_name} activado`
+          : `${worker.first_name} ${worker.last_name} inactivado`,
+      );
+      fetchWorkers();
+    } catch (e: any) {
+      toast.error('Error cambiando estado: ' + e.message);
+    }
+  };
 
   // FIX-REGRESSION: Modal de creación de trabajador (UI perdida, API existe)
   const [createModalOpen, setCreateModalOpen] = useState(false);
@@ -341,6 +428,8 @@ export function WorkersView() {
             onDateToChange={setDateTo}
             onRefresh={fetchWorkers}
             onPayCommission={(w: any) => setPayModalWorker(w)}
+            onEditWorker={(w: WorkerSummary) => setEditModalWorker(w)}
+            onToggleStatus={handleToggleWorkerStatus}
           />
         )}
         {activeTab === 'rules' && (
@@ -577,6 +666,33 @@ export function WorkersView() {
           </div>
         </div>
       </BaseModal>
+
+      {/* v2 (2026-07-15): Modal de creación/edición de reglas de comisión */}
+      {showRuleModal && (
+        <RuleFormModal
+          storeId={storeId || ''}
+          workers={workers}
+          editingRule={editingRule}
+          onClose={() => { setShowRuleModal(false); setEditingRule(null); }}
+          onSaved={() => {
+            setShowRuleModal(false);
+            setEditingRule(null);
+            fetchRules();
+          }}
+        />
+      )}
+
+      {/* v2 (2026-07-15): Modal de edición de trabajador */}
+      {editModalWorker && (
+        <EditWorkerModal
+          worker={editModalWorker}
+          onClose={() => setEditModalWorker(null)}
+          onSaved={() => {
+            setEditModalWorker(null);
+            fetchWorkers();
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -585,8 +701,21 @@ export function WorkersView() {
 // TAB 1: Trabajadores
 // ════════════════════════════════════════════════════════════════════
 function WorkersTab({
-  workers, loading, error, dateFrom, dateTo, onDateFromChange, onDateToChange, onRefresh, onPayCommission,
+  workers, loading, error, dateFrom, dateTo, onDateFromChange, onDateToChange, onRefresh, onPayCommission, onEditWorker, onToggleStatus,
 }: any) {
+  const [togglingId, setTogglingId] = useState<string | null>(null);
+
+  // Helper: maneja el toggle de status activo/inactivo
+  const handleToggleStatus = async (worker: WorkerSummary) => {
+    if (!onToggleStatus) return;
+    setTogglingId(worker.worker_id);
+    try {
+      await onToggleStatus(worker);
+    } finally {
+      setTogglingId(null);
+    }
+  };
+
   if (loading && workers.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-24 gap-4">
@@ -637,7 +766,7 @@ function WorkersTab({
                 <th className="py-3 px-4 font-black uppercase tracking-widest text-xs text-muted-foreground hidden lg:table-cell">Regla activa</th>
                 <th className="py-3 px-4 font-black uppercase tracking-widest text-xs text-muted-foreground hidden lg:table-cell">Último pago</th>
                 <th className="py-3 px-4 font-black uppercase tracking-widest text-xs text-muted-foreground text-center">Estado</th>
-                <th className="py-3 px-4 font-black uppercase tracking-widest text-xs text-muted-foreground text-center">Acción</th>
+                <th className="py-3 px-4 font-black uppercase tracking-widest text-xs text-muted-foreground text-center">Acciones</th>
               </tr>
             </thead>
             <tbody>
@@ -650,7 +779,7 @@ function WorkersTab({
                 </tr>
               ) : (
                 workers.map((w: WorkerSummary) => (
-                  <tr key={w.worker_id} className="border-b border-border/50 hover:bg-muted/30">
+                  <tr key={w.worker_id} className={cn('border-b border-border/50 hover:bg-muted/30', w.status !== 'active' && 'opacity-60')}>
                     <td className="py-3 px-4 font-bold text-foreground">{w.first_name} {w.last_name}</td>
                     <td className="py-3 px-4 font-mono text-muted-foreground hidden sm:table-cell">{w.ci}</td>
                     <td className="py-3 px-4 text-right font-mono text-foreground hidden md:table-cell">{formatCurrency(w.sales_cash)}</td>
@@ -684,15 +813,50 @@ function WorkersTab({
                         {w.status === 'active' ? 'Activo' : 'Inactivo'}
                       </span>
                     </td>
-                    <td className="py-3 px-4 text-center">
-                      <button
-                        onClick={() => onPayCommission(w)}
-                        disabled={w.status !== 'active'}
-                        className="px-3 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-black uppercase tracking-widest hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px]"
-                      >
-                        <DollarSign className="w-3 h-3 inline mr-1" />
-                        Pagar
-                      </button>
+                    <td className="py-3 px-4">
+                      <div className="flex items-center justify-center gap-1 flex-wrap">
+                        {/* Pagar comisión */}
+                        <button
+                          onClick={() => onPayCommission(w)}
+                          disabled={w.status !== 'active'}
+                          className="px-2 py-1.5 rounded-lg bg-primary text-primary-foreground text-[10px] font-black uppercase tracking-wider hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed min-h-[36px] flex items-center gap-1"
+                          title="Pagar comisión"
+                          aria-label={`Pagar comisión a ${w.first_name}`}
+                        >
+                          <DollarSign className="w-3 h-3" />
+                          <span className="hidden sm:inline">Pagar</span>
+                        </button>
+                        {/* Editar */}
+                        <button
+                          onClick={() => onEditWorker(w)}
+                          className="p-2 rounded-lg bg-muted/50 text-muted-foreground hover:bg-primary/10 hover:text-primary border border-border min-h-[36px] min-w-[36px] flex items-center justify-center"
+                          title="Editar datos del trabajador"
+                          aria-label={`Editar ${w.first_name}`}
+                        >
+                          <Edit3 className="w-3.5 h-3.5" />
+                        </button>
+                        {/* Activar / Inactivar */}
+                        <button
+                          onClick={() => handleToggleStatus(w)}
+                          disabled={togglingId === w.worker_id}
+                          className={cn(
+                            'p-2 rounded-lg border min-h-[36px] min-w-[36px] flex items-center justify-center disabled:opacity-50',
+                            w.status === 'active'
+                              ? 'bg-warning/10 text-warning border-warning/30 hover:bg-warning/20'
+                              : 'bg-success/10 text-success border-success/30 hover:bg-success/20'
+                          )}
+                          title={w.status === 'active' ? 'Inactivar trabajador' : 'Activar trabajador'}
+                          aria-label={w.status === 'active' ? `Inactivar ${w.first_name}` : `Activar ${w.first_name}`}
+                        >
+                          {togglingId === w.worker_id ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ) : w.status === 'active' ? (
+                            <UserX className="w-3.5 h-3.5" />
+                          ) : (
+                            <UserCheck className="w-3.5 h-3.5" />
+                          )}
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -719,31 +883,49 @@ function PayCommissionModal({ worker, onClose, onPaid }: {
   const activeStoreId = useAuthStore((s) => s.user?.activeStoreId);
   const [periodStart, setPeriodStart] = useState(() => {
     // Default: desde el último pago + 1 día
+    // FIX (2026-07-15): usar construcción local (no UTC) para evitar día anterior
     if (worker.last_payment_date) {
-      const d = new Date(worker.last_payment_date);
+      const s = worker.last_payment_date;
+      if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
+        const [y, m, d] = s.split('-').map(Number);
+        const dt = new Date(y, m - 1, d);
+        dt.setDate(dt.getDate() + 1);
+        return dt.toISOString().split('T')[0];
+      }
+      const d = new Date(s);
       d.setDate(d.getDate() + 1);
       return d.toISOString().split('T')[0];
     }
-    // Si no hay último pago, desde el primer día del mes
-    const d = new Date();
-    d.setDate(1);
-    return d.toISOString().split('T')[0];
+    // Si no hay último pago, desde el primer día del mes actual (local)
+    const now = new Date();
+    const dt = new Date(now.getFullYear(), now.getMonth(), 1);
+    return dt.toISOString().split('T')[0];
   });
-  const [periodEnd, setPeriodEnd] = useState(() => new Date().toISOString().split('T')[0]);
+  // FIX (2026-07-15): usar fecha local, no UTC
+  const [periodEnd, setPeriodEnd] = useState(() => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  });
   const [calculation, setCalculation] = useState<Calculation | null>(null);
   const [finalAmount, setFinalAmount] = useState('');
   const [adjustmentReason, setAdjustmentReason] = useState('');
   const [calculating, setCalculating] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  // Paso 2: calcular
+  // v2 (2026-07-15): Modo manual vs reglas
+  const [payMode, setPayMode] = useState<'rules' | 'manual'>('rules');
+  const [workerProducts, setWorkerProducts] = useState<WorkerProductLine[]>([]);
+  const [manualCommissions, setManualCommissions] = useState<Record<string, string>>({});
+  const [loadingProducts, setLoadingProducts] = useState(false);
+
+  // Paso 2: calcular (modo reglas)
   const handleCalculate = async () => {
     setCalculating(true);
     try {
       const data = await apiFetch('/api/commissions/calculate', {
         method: 'POST',
         body: JSON.stringify({
-          store_id: activeStoreId, // FIX C2: store_id real, no worker_id
+          store_id: activeStoreId,
           worker_ids: [worker.worker_id],
           date_from: periodStart,
           date_to: periodEnd,
@@ -759,6 +941,85 @@ function PayCommissionModal({ worker, onClose, onPaid }: {
     } finally {
       setCalculating(false);
     }
+  };
+
+  // v2: Paso 2 alternativo — cargar productos del worker (modo manual)
+  const handleLoadProducts = async () => {
+    setLoadingProducts(true);
+    try {
+      const data = await apiFetch(
+        `/api/commissions/worker-products?store_id=${activeStoreId}&worker_id=${worker.worker_id}&date_from=${periodStart}&date_to=${periodEnd}`,
+        { method: 'GET' },
+      );
+      setWorkerProducts(data.items || []);
+      // Inicializar comisiones manuales en 0
+      const initCommissions: Record<string, string> = {};
+      for (const item of (data.items || [])) {
+        initCommissions[item.line_item_id] = '0.00';
+      }
+      setManualCommissions(initCommissions);
+      // Construir cálculo inicial con todo 0
+      const calc: Calculation = {
+        worker_id: worker.worker_id,
+        worker_name: `${worker.first_name} ${worker.last_name}`,
+        worker_ci: worker.ci,
+        worker_status: worker.status,
+        period: { from: periodStart, to: periodEnd },
+        sales: {
+          cash: data.totals?.cash || 0,
+          transfer: data.totals?.transfer || 0,
+          total: data.totals?.total || 0,
+          base_used: data.totals?.total || 0,
+        },
+        rule_applied: null,
+        rule_applied_id: null,
+        breakdown: { percentage_component: 0, fixed_component: 0, salary_component: 0 },
+        commission_suggested: 0,
+        calculation_explanation: `Modo manual: ${data.items?.length || 0} producto(s) cargado(s) para edición`,
+        calculation_mode: 'manual',
+        product_breakdown: (data.items || []).map((it: WorkerProductLine) => ({
+          product_id: it.product_id || '',
+          product_name: it.product_name,
+          quantity: it.quantity,
+          unit_price: it.unit_price,
+          line_total: it.line_total,
+          rule_id: null,
+          rule_type: 'manual',
+          commission: 0,
+          excluded_from_percentage: false,
+        })),
+      };
+      setCalculation(calc);
+      setFinalAmount('0.00');
+      setStep(3);
+    } catch (e: any) {
+      toast.error('Error cargando productos: ' + e.message);
+    } finally {
+      setLoadingProducts(false);
+    }
+  };
+
+  // v2: Actualizar comisión manual de un producto
+  const updateManualCommission = (lineItemId: string, value: string) => {
+    setManualCommissions(prev => {
+      const next = { ...prev, [lineItemId]: value };
+      // Recalcular total
+      const total = Object.values(next).reduce((sum, v) => sum + (parseFloat(v) || 0), 0);
+      setFinalAmount(total.toFixed(2));
+      // Actualizar product_breakdown del calculation
+      if (calculation?.product_breakdown) {
+        const newBreakdown = calculation.product_breakdown.map((pb, idx) => ({
+          ...pb,
+          commission: parseFloat(next[workerProducts[idx]?.line_item_id || '']) || 0,
+        }));
+        setCalculation({
+          ...calculation,
+          commission_suggested: total,
+          product_breakdown: newBreakdown,
+        });
+      }
+      return next;
+    });
   };
 
   // Paso 4: guardar
@@ -778,7 +1039,7 @@ function PayCommissionModal({ worker, onClose, onPaid }: {
       const data = await apiFetch('/api/commissions/payments', {
         method: 'POST',
         body: JSON.stringify({
-          store_id: activeStoreId, // FIX C3: store_id real, no worker_id
+          store_id: activeStoreId,
           worker_id: worker.worker_id,
           period_start: periodStart,
           period_end: periodEnd,
@@ -872,6 +1133,53 @@ function PayCommissionModal({ worker, onClose, onPaid }: {
                 </label>
                 <input type="date" value={periodEnd} onChange={(e) => setPeriodEnd(e.target.value)} className="w-full h-12 px-3 rounded-xl border-2 border-border bg-background text-sm font-bold min-h-[44px] text-foreground" />
               </div>
+
+              {/* v2 (2026-07-15): Toggle Modo Manual vs Reglas */}
+              <div className="bg-muted/30 rounded-xl p-4 border border-border">
+                <label className="text-sm font-black uppercase tracking-widest text-foreground block mb-3">
+                  Modo de cálculo
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setPayMode('rules')}
+                    className={cn(
+                      'flex flex-col items-start gap-1 px-4 py-3 rounded-xl border-2 text-left min-h-[60px]',
+                      payMode === 'rules'
+                        ? 'border-primary bg-primary/10'
+                        : 'border-border bg-background hover:bg-muted/50'
+                    )}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Calculator className={cn('w-4 h-4', payMode === 'rules' ? 'text-primary' : 'text-muted-foreground')} />
+                      <span className="text-sm font-black uppercase tracking-wider text-foreground">Reglas</span>
+                    </div>
+                    <span className="text-xs text-muted-foreground">Cálculo automático según reglas configuradas</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPayMode('manual')}
+                    className={cn(
+                      'flex flex-col items-start gap-1 px-4 py-3 rounded-xl border-2 text-left min-h-[60px]',
+                      payMode === 'manual'
+                        ? 'border-primary bg-primary/10'
+                        : 'border-border bg-background hover:bg-muted/50'
+                    )}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Edit3 className={cn('w-4 h-4', payMode === 'manual' ? 'text-primary' : 'text-muted-foreground')} />
+                      <span className="text-sm font-black uppercase tracking-wider text-foreground">Manual</span>
+                    </div>
+                    <span className="text-xs text-muted-foreground">Comisión por producto, editable línea a línea</span>
+                  </button>
+                </div>
+                {payMode === 'manual' && (
+                  <p className="text-xs text-warning mt-2 italic">
+                    Se cargarán todos los productos vendidos por el trabajador en el periodo. Podrás asignar la comisión a cada uno individualmente.
+                  </p>
+                )}
+              </div>
+
               {periodStart > periodEnd && (
                 <div className="rounded-lg bg-destructive/10 border border-destructive/30 p-3 flex items-start gap-2">
                   <AlertTriangle className="w-4 h-4 text-destructive shrink-0 mt-0.5" />
@@ -930,6 +1238,208 @@ function PayCommissionModal({ worker, onClose, onPaid }: {
                 <div className="bg-primary/10 rounded-xl p-3 border border-primary/30">
                   <p className="text-xs font-bold uppercase tracking-widest text-primary mb-1">Regla aplicada</p>
                   <p className="text-sm text-foreground">{calculation.calculation_explanation}</p>
+                </div>
+              )}
+
+              {/* FIX-A5 (2026-07-15): bloque de pro-rateo cuando hubo cambio de regla en el periodo */}
+              {calculation.pro_rated && calculation.pro_rated_breakdown && calculation.pro_rated_breakdown.length > 0 && (
+                <div className="bg-warning/10 rounded-xl p-4 border-2 border-warning/40">
+                  {/* Encabezado con badge */}
+                  <div className="flex items-center gap-2 mb-3">
+                    <AlertTriangle className="w-4 h-4 text-warning shrink-0" />
+                    <span className="text-xs font-black uppercase tracking-widest text-warning">
+                      Pro-rateo aplicado · {calculation.pro_rated_breakdown.length} sub-periodos
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mb-3">
+                    El periodo seleccionado incluye cambios de regla de comisión. El cálculo se dividió en sub-periodos, cada uno con su regla vigente.
+                  </p>
+
+                  {/* Tabla de desglose por sub-periodo */}
+                  <div className="bg-background/60 rounded-lg border border-border overflow-hidden">
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-xs">
+                        <thead className="bg-muted/40">
+                          <tr className="border-b border-border text-left">
+                            <th className="py-2 px-2 font-black uppercase tracking-wider text-muted-foreground">Periodo</th>
+                            <th className="py-2 px-2 font-black uppercase tracking-wider text-muted-foreground">Regla</th>
+                            <th className="py-2 px-2 font-black uppercase tracking-wider text-muted-foreground text-right">Ventas</th>
+                            <th className="py-2 px-2 font-black uppercase tracking-wider text-muted-foreground text-right">Comisión</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {calculation.pro_rated_breakdown.map((sub, idx) => (
+                            <tr key={idx} className="border-b border-border/40 last:border-0">
+                              <td className="py-2 px-2 text-foreground font-mono">{sub.period}</td>
+                              <td className="py-2 px-2 text-foreground">
+                                <span className="inline-block px-1.5 py-0.5 rounded bg-primary/10 text-primary font-bold border border-primary/20">
+                                  {sub.rule_value}
+                                </span>
+                              </td>
+                              <td className="py-2 px-2 text-right font-mono text-foreground">
+                                {formatCurrency(sub.sales_total)}
+                              </td>
+                              <td className="py-2 px-2 text-right font-mono font-bold text-foreground">
+                                {formatCurrency(sub.commission)}
+                              </td>
+                            </tr>
+                          ))}
+                          {/* Fila de total */}
+                          <tr className="bg-warning/10 border-t-2 border-warning/40">
+                            <td className="py-2 px-2 font-black uppercase tracking-wider text-foreground" colSpan={3}>
+                              Total pro-rateado
+                            </td>
+                            <td className="py-2 px-2 text-right font-mono font-black text-warning">
+                              {formatCurrency(calculation.commission_suggested)}
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  <p className="text-xs text-muted-foreground mt-2 italic">
+                    Si necesitas ajustar manualmente, justifica el motivo abajo. El monto sugerido ya refleja la suma de los sub-periodos.
+                  </p>
+                </div>
+              )}
+
+              {/* v2 (2026-07-15): Tabla editable de productos en MODO MANUAL */}
+              {calculation.calculation_mode === 'manual' && workerProducts.length > 0 && (
+                <div className="bg-primary/5 rounded-xl p-4 border-2 border-primary/30">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="text-xs font-black uppercase tracking-widest text-primary">
+                      Comisión por producto · {workerProducts.length} ítem(s)
+                    </h4>
+                    <span className="text-xs text-muted-foreground">
+                      Total ventas: {formatCurrency(calculation.sales.total)} CUP
+                    </span>
+                  </div>
+
+                  <div className="bg-background/60 rounded-lg border border-border overflow-hidden">
+                    <div className="overflow-x-auto max-h-[400px] overflow-y-auto">
+                      <table className="w-full text-xs">
+                        <thead className="bg-muted/40 sticky top-0">
+                          <tr className="border-b border-border text-left">
+                            <th className="py-2 px-2 font-black uppercase tracking-wider text-muted-foreground">Fecha</th>
+                            <th className="py-2 px-2 font-black uppercase tracking-wider text-muted-foreground">Producto</th>
+                            <th className="py-2 px-2 font-black uppercase tracking-wider text-muted-foreground text-right">Cant.</th>
+                            <th className="py-2 px-2 font-black uppercase tracking-wider text-muted-foreground text-right">P.Unit</th>
+                            <th className="py-2 px-2 font-black uppercase tracking-wider text-muted-foreground text-right">Total</th>
+                            <th className="py-2 px-2 font-black uppercase tracking-wider text-primary text-right">Comisión $</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {workerProducts.map((item) => (
+                            <tr key={item.line_item_id} className="border-b border-border/40 last:border-0 hover:bg-muted/20">
+                              <td className="py-2 px-2 text-muted-foreground font-mono whitespace-nowrap">
+                                {formatDate(item.sale_date)}
+                              </td>
+                              <td className="py-2 px-2 text-foreground">
+                                <div className="font-bold">{item.product_name}</div>
+                                {item.product_sku && (
+                                  <div className="text-[10px] text-muted-foreground font-mono">SKU: {item.product_sku}</div>
+                                )}
+                              </td>
+                              <td className="py-2 px-2 text-right font-mono text-foreground">
+                                {item.quantity}
+                              </td>
+                              <td className="py-2 px-2 text-right font-mono text-foreground">
+                                {formatCurrency(item.unit_price)}
+                              </td>
+                              <td className="py-2 px-2 text-right font-mono font-bold text-foreground">
+                                {formatCurrency(item.line_total)}
+                              </td>
+                              <td className="py-2 px-2 text-right">
+                                <input
+                                  type="number"
+                                  step="0.01"
+                                  min="0"
+                                  value={manualCommissions[item.line_item_id] || '0.00'}
+                                  onChange={(e) => updateManualCommission(item.line_item_id, e.target.value)}
+                                  className="w-24 h-9 px-2 text-right rounded border-2 border-primary/40 bg-background text-xs font-mono font-bold text-primary focus:border-primary focus:outline-none min-h-[36px]"
+                                  placeholder="0.00"
+                                />
+                              </td>
+                            </tr>
+                          ))}
+                          {/* Fila de total */}
+                          <tr className="bg-primary/10 border-t-2 border-primary/30 sticky bottom-0">
+                            <td className="py-2 px-2 font-black uppercase tracking-wider text-foreground" colSpan={5}>
+                              Total comisión manual
+                            </td>
+                            <td className="py-2 px-2 text-right font-mono font-black text-primary">
+                              {formatCurrency(parseFloat(finalAmount) || 0)}
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  {workerProducts.length === 0 && (
+                    <p className="text-xs text-muted-foreground italic mt-2">
+                      No se encontraron productos vendidos por este trabajador en el periodo seleccionado.
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* v2: Tabla de desglose por producto en MODO REGLAS (solo lectura) */}
+              {calculation.calculation_mode !== 'manual' && calculation.product_breakdown && calculation.product_breakdown.length > 0 && (
+                <div className="bg-muted/20 rounded-xl p-3 border border-border">
+                  <h4 className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-2">
+                    Desglose por producto · {calculation.product_breakdown.length} ítem(s)
+                    {calculation.excluded_sales_total && calculation.excluded_sales_total > 0 && (
+                      <span className="ml-2 text-warning">· Excluido del %: {formatCurrency(calculation.excluded_sales_total)}</span>
+                    )}
+                  </h4>
+                  <div className="bg-background/60 rounded-lg border border-border overflow-hidden">
+                    <div className="overflow-x-auto max-h-[300px] overflow-y-auto">
+                      <table className="w-full text-xs">
+                        <thead className="bg-muted/40 sticky top-0">
+                          <tr className="border-b border-border text-left">
+                            <th className="py-2 px-2 font-black uppercase tracking-wider text-muted-foreground">Producto</th>
+                            <th className="py-2 px-2 font-black uppercase tracking-wider text-muted-foreground text-right">Cant.</th>
+                            <th className="py-2 px-2 font-black uppercase tracking-wider text-muted-foreground text-right">Total</th>
+                            <th className="py-2 px-2 font-black uppercase tracking-wider text-muted-foreground">Regla</th>
+                            <th className="py-2 px-2 font-black uppercase tracking-wider text-muted-foreground text-right">Comisión</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {calculation.product_breakdown.map((pb, idx) => (
+                            <tr key={idx} className={cn(
+                              'border-b border-border/40 last:border-0',
+                              pb.excluded_from_percentage && 'bg-warning/5'
+                            )}>
+                              <td className="py-2 px-2 text-foreground font-bold">
+                                {pb.product_name}
+                                {pb.excluded_from_percentage && (
+                                  <span className="ml-1 text-[10px] text-warning uppercase">★ excluida</span>
+                                )}
+                              </td>
+                              <td className="py-2 px-2 text-right font-mono text-foreground">{pb.quantity}</td>
+                              <td className="py-2 px-2 text-right font-mono text-foreground">{formatCurrency(pb.line_total)}</td>
+                              <td className="py-2 px-2 text-foreground">
+                                <span className={cn(
+                                  'inline-block px-1.5 py-0.5 rounded font-bold border text-[10px]',
+                                  pb.rule_type === 'product_specific' && 'bg-warning/15 text-warning border-warning/30',
+                                  pb.rule_type === 'scale_percentage' && 'bg-primary/10 text-primary border-primary/30',
+                                  pb.rule_type === 'percentage_sales' && 'bg-primary/10 text-primary border-primary/30',
+                                  pb.rule_type === 'none' && 'bg-muted text-muted-foreground border-border'
+                                )}>
+                                  {RULE_TYPE_LABELS[pb.rule_type] || pb.rule_type}
+                                </span>
+                              </td>
+                              <td className="py-2 px-2 text-right font-mono font-bold text-foreground">
+                                {formatCurrency(pb.commission)}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
                 </div>
               )}
 
@@ -1019,15 +1529,23 @@ function PayCommissionModal({ worker, onClose, onPaid }: {
 
           {step === 1 && (
             <button
-              onClick={() => { setStep(2); handleCalculate(); }}
+              onClick={() => {
+                if (payMode === 'manual') {
+                  setStep(2);
+                  handleLoadProducts();
+                } else {
+                  setStep(2);
+                  handleCalculate();
+                }
+              }}
               disabled={periodStart > periodEnd}
               className="px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-black uppercase tracking-widest hover:bg-primary/90 disabled:opacity-50 min-h-[44px]"
             >
-              Calcular <ChevronRight className="w-4 h-4 inline" />
+              {payMode === 'manual' ? 'Cargar productos' : 'Calcular'} <ChevronRight className="w-4 h-4 inline" />
             </button>
           )}
-          {step === 2 && calculating && (
-            <span className="text-sm text-muted-foreground">Calculando...</span>
+          {step === 2 && (calculating || loadingProducts) && (
+            <span className="text-sm text-muted-foreground">{payMode === 'manual' ? 'Cargando productos...' : 'Calculando...'}</span>
           )}
           {step === 3 && calculation && (
             <button
@@ -1332,6 +1850,849 @@ function HistoryTab({ rules }: any) {
             )}
           </div>
         ))}
+      </div>
+    </div>
+  );
+}
+
+// ════════════════════════════════════════════════════════════════════
+// v2 (2026-07-15): MODAL de creación/edición de reglas de comisión
+// Soporta los 6 tipos: percentage_sales, fixed_amount, salary_based, hybrid,
+// product_specific, scale_percentage
+// ════════════════════════════════════════════════════════════════════
+function RuleFormModal({
+  storeId,
+  workers,
+  editingRule,
+  onClose,
+  onSaved,
+}: {
+  storeId: string;
+  workers: WorkerSummary[];
+  editingRule: CommissionRule | null;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const [form, setForm] = useState({
+    type: editingRule?.type || 'percentage_sales',
+    worker_id: editingRule?.worker_id || '',
+    value_percent: editingRule?.value_percent?.toString() || '',
+    fixed_value: editingRule?.fixed_value?.toString() || '',
+    salary_amount: editingRule?.salary_amount?.toString() || '',
+    base_calculation: editingRule?.base_calculation || 'total_sales',
+    priority: editingRule?.priority?.toString() || '0',
+    valid_from: editingRule?.valid_from || new Date().toISOString().split('T')[0],
+    valid_to: editingRule?.valid_to || '',
+    // v2
+    min_price: editingRule?.min_price?.toString() || '',
+    max_price: editingRule?.max_price?.toString() || '',
+    product_commission_amount: editingRule?.product_commission_amount?.toString() || '',
+  });
+  const [productIds, setProductIds] = useState<string[]>(editingRule?.product_ids || []);
+  const [productSearch, setProductSearch] = useState('');
+  const [searchResults, setSearchResults] = useState<Array<{ id: string; name: string; sku: string | null; price: number }>>([]);
+  const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const updateForm = (key: string, value: string) => {
+    setForm(prev => ({ ...prev, [key]: value }));
+  };
+
+  // Buscar productos
+  const handleProductSearch = async (query: string) => {
+    setProductSearch(query);
+    if (query.length < 2) {
+      setSearchResults([]);
+      return;
+    }
+    try {
+      const data = await apiFetch(
+        `/api/inventory/products?store_id=${storeId}`,
+      );
+      const allProducts = data.products || data || [];
+      // Filtrar en el cliente por nombre o SKU
+      const filtered = allProducts
+        .filter((p: any) => {
+          const q = query.toLowerCase();
+          return (p.name || '').toLowerCase().includes(q)
+              || (p.sku || '').toLowerCase().includes(q);
+        })
+        .slice(0, 10);
+      setSearchResults(filtered);
+    } catch {
+      setSearchResults([]);
+    }
+  };
+
+  const toggleProduct = (productId: string) => {
+    setProductIds(prev =>
+      prev.includes(productId)
+        ? prev.filter(id => id !== productId)
+        : [...prev, productId]
+    );
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const payload: any = {
+        store_id: storeId,
+        worker_id: form.worker_id || null,
+        type: form.type,
+        base_calculation: form.base_calculation,
+        priority: parseInt(form.priority) || 0,
+        valid_from: form.valid_from,
+        valid_to: form.valid_to || null,
+        // v2
+        min_price: form.min_price ? parseFloat(form.min_price) : null,
+        max_price: form.max_price ? parseFloat(form.max_price) : null,
+        product_commission_amount: form.product_commission_amount ? parseFloat(form.product_commission_amount) : null,
+        // Type-specific
+        value_percent: form.value_percent ? parseFloat(form.value_percent) : null,
+        fixed_value: form.fixed_value ? parseFloat(form.fixed_value) : null,
+        salary_amount: form.salary_amount ? parseFloat(form.salary_amount) : null,
+        // v2: product_ids para product_specific
+        product_ids: form.type === 'product_specific' ? productIds : [],
+      };
+
+      // Validaciones
+      if (form.type === 'product_specific' && productIds.length === 0) {
+        toast.error('Selecciona al menos un producto para la regla product_specific');
+        setSaving(false);
+        return;
+      }
+      if (form.type === 'scale_percentage' && !form.value_percent) {
+        toast.error('Las reglas scale_percentage requieren un porcentaje');
+        setSaving(false);
+        return;
+      }
+
+      const url = editingRule
+        ? `/api/commissions/rules/${editingRule.id}`
+        : '/api/commissions/rules';
+      const method = editingRule ? 'PATCH' : 'POST';
+
+      await apiFetch(url, { method, body: JSON.stringify(payload) });
+      toast.success(editingRule ? 'Regla actualizada' : 'Regla creada');
+      onSaved();
+    } catch (e: any) {
+      toast.error('Error: ' + e.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!editingRule) return;
+    if (!confirm('¿Eliminar esta regla? Esta acción no se puede deshacer.')) return;
+    setDeleting(true);
+    try {
+      await apiFetch(`/api/commissions/rules/${editingRule.id}`, { method: 'DELETE' });
+      toast.success('Regla eliminada');
+      onSaved();
+    } catch (e: any) {
+      toast.error('Error: ' + e.message);
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
+      <div className="bg-card rounded-2xl border-2 border-border shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        {/* Header */}
+        <div className="sticky top-0 bg-card border-b-2 border-border p-5 flex items-center justify-between z-10">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center border border-primary/30">
+              <Settings className="w-5 h-5 text-primary" />
+            </div>
+            <div>
+              <h3 className="text-base font-black uppercase tracking-widest text-foreground">
+                {editingRule ? 'Editar regla' : 'Nueva regla de comisión'}
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                {RULE_TYPE_LABELS[form.type] || form.type}
+              </p>
+            </div>
+          </div>
+          <button onClick={onClose} className="p-2.5 min-h-[44px] min-w-[44px] rounded-lg hover:bg-muted flex items-center justify-center" aria-label="Cerrar">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Form */}
+        <div className="p-5 space-y-4">
+          {/* Tipo de regla */}
+          <div>
+            <label className="text-sm font-black uppercase tracking-widest text-foreground block mb-2">
+              Tipo de comisión
+            </label>
+            <select
+              value={form.type}
+              onChange={(e) => updateForm('type', e.target.value)}
+              className="w-full h-12 px-3 rounded-xl border-2 border-border bg-background text-sm font-bold min-h-[44px] text-foreground"
+            >
+              <option value="percentage_sales">% sobre Ventas (default)</option>
+              <option value="fixed_amount">Monto Fijo</option>
+              <option value="salary_based">Salario Fijo</option>
+              <option value="hybrid">Híbrido (salario + %)</option>
+              <option value="product_specific">Por Producto Específico (FIXED $/producto)</option>
+              <option value="scale_percentage">Por Escala de Precio (%)</option>
+            </select>
+            <p className="text-xs text-muted-foreground mt-1">
+              {form.type === 'percentage_sales' && 'Ej: 5% sobre el total de ventas. Aplica a todos los productos no cubiertos por reglas específicas.'}
+              {form.type === 'fixed_amount' && 'Ej: $500 fijos sin importar las ventas.'}
+              {form.type === 'salary_based' && 'Ej: $5000 de salario mensual.'}
+              {form.type === 'hybrid' && 'Ej: $3000 salario + 2% sobre ventas.'}
+              {form.type === 'product_specific' && 'Ej: producto X y Y generan $1000 de comisión por cada venta. Estas ventas se EXCLUYEN del cálculo % de otras reglas.'}
+              {form.type === 'scale_percentage' && 'Ej: productos < $1000 → 5%, productos ≥ $1000 → 3%. Define el rango de precios y el % aplica a productos en ese rango.'}
+            </p>
+          </div>
+
+          {/* Aplica a */}
+          <div>
+            <label className="text-sm font-black uppercase tracking-widest text-foreground block mb-2">
+              Aplica a
+            </label>
+            <select
+              value={form.worker_id}
+              onChange={(e) => updateForm('worker_id', e.target.value)}
+              className="w-full h-12 px-3 rounded-xl border-2 border-border bg-background text-sm font-bold min-h-[44px] text-foreground"
+            >
+              <option value="">Toda la tienda (todos los trabajadores)</option>
+              {workers.map((w) => (
+                <option key={w.worker_id} value={w.worker_id}>
+                  {w.first_name} {w.last_name} (CI: {w.ci})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Campos específicos por tipo */}
+          {form.type === 'percentage_sales' && (
+            <div>
+              <label className="text-sm font-black uppercase tracking-widest text-foreground block mb-2">
+                Porcentaje (%)
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                max="100"
+                value={form.value_percent}
+                onChange={(e) => updateForm('value_percent', e.target.value)}
+                className="w-full h-12 px-3 rounded-xl border-2 border-border bg-background text-base font-black font-mono min-h-[44px] text-foreground"
+                placeholder="5.00"
+              />
+            </div>
+          )}
+
+          {form.type === 'fixed_amount' && (
+            <div>
+              <label className="text-sm font-black uppercase tracking-widest text-foreground block mb-2">
+                Monto fijo (CUP)
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                value={form.fixed_value}
+                onChange={(e) => updateForm('fixed_value', e.target.value)}
+                className="w-full h-12 px-3 rounded-xl border-2 border-border bg-background text-base font-black font-mono min-h-[44px] text-foreground"
+                placeholder="500.00"
+              />
+            </div>
+          )}
+
+          {form.type === 'salary_based' && (
+            <div>
+              <label className="text-sm font-black uppercase tracking-widest text-foreground block mb-2">
+                Salario (CUP)
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                value={form.salary_amount}
+                onChange={(e) => updateForm('salary_amount', e.target.value)}
+                className="w-full h-12 px-3 rounded-xl border-2 border-border bg-background text-base font-black font-mono min-h-[44px] text-foreground"
+                placeholder="5000.00"
+              />
+            </div>
+          )}
+
+          {form.type === 'hybrid' && (
+            <>
+              <div>
+                <label className="text-sm font-black uppercase tracking-widest text-foreground block mb-2">
+                  Salario base (CUP)
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={form.salary_amount}
+                  onChange={(e) => updateForm('salary_amount', e.target.value)}
+                  className="w-full h-12 px-3 rounded-xl border-2 border-border bg-background text-base font-black font-mono min-h-[44px] text-foreground"
+                  placeholder="3000.00"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-black uppercase tracking-widest text-foreground block mb-2">
+                  Porcentaje adicional (%)
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  max="100"
+                  value={form.value_percent}
+                  onChange={(e) => updateForm('value_percent', e.target.value)}
+                  className="w-full h-12 px-3 rounded-xl border-2 border-border bg-background text-base font-black font-mono min-h-[44px] text-foreground"
+                  placeholder="2.00"
+                />
+              </div>
+            </>
+          )}
+
+          {/* product_specific: monto por producto + selector */}
+          {form.type === 'product_specific' && (
+            <>
+              <div>
+                <label className="text-sm font-black uppercase tracking-widest text-foreground block mb-2">
+                  Comisión por venta de cada producto (CUP)
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={form.product_commission_amount}
+                  onChange={(e) => updateForm('product_commission_amount', e.target.value)}
+                  className="w-full h-12 px-3 rounded-xl border-2 border-border bg-background text-base font-black font-mono min-h-[44px] text-foreground"
+                  placeholder="1000.00"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Cada venta de los productos seleccionados generará este monto fijo. El precio y la cantidad no afectan la comisión.
+                </p>
+              </div>
+
+              {/* Selector de productos */}
+              <div>
+                <label className="text-sm font-black uppercase tracking-widest text-foreground block mb-2">
+                  Productos asociados ({productIds.length})
+                </label>
+                <input
+                  type="text"
+                  value={productSearch}
+                  onChange={(e) => handleProductSearch(e.target.value)}
+                  placeholder="Buscar producto por nombre o SKU..."
+                  className="w-full h-12 px-3 rounded-xl border-2 border-border bg-background text-sm font-bold min-h-[44px] text-foreground mb-2"
+                />
+                {/* Resultados de búsqueda */}
+                {searchResults.length > 0 && (
+                  <div className="bg-muted/30 rounded-lg border border-border max-h-40 overflow-y-auto mb-2">
+                    {searchResults.map((p: any) => (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => {
+                          toggleProduct(p.id);
+                          setProductSearch('');
+                          setSearchResults([]);
+                        }}
+                        className="w-full text-left px-3 py-2 hover:bg-muted/50 border-b border-border/30 last:border-0"
+                      >
+                        <div className="text-sm font-bold text-foreground">{p.name}</div>
+                        <div className="text-xs text-muted-foreground">
+                          SKU: {p.sku || '—'} · Precio: {formatCurrency(p.price || 0)}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {/* Lista de productos seleccionados */}
+                {productIds.length > 0 && (
+                  <div className="space-y-1">
+                    {productIds.map(pid => {
+                      const prod = (editingRule?.products || []).find((p: any) => p.id === pid);
+                      return (
+                        <div key={pid} className="flex items-center justify-between bg-primary/10 border border-primary/30 rounded-lg px-3 py-2">
+                          <span className="text-sm font-bold text-foreground">
+                            {prod?.name || `Producto ${pid.substring(0, 8)}...`}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => toggleProduct(pid)}
+                            className="p-1 rounded hover:bg-destructive/10 text-destructive"
+                            aria-label="Quitar producto"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+
+          {/* scale_percentage: rango de precios + % */}
+          {form.type === 'scale_percentage' && (
+            <>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="text-sm font-black uppercase tracking-widest text-foreground block mb-2">
+                    Precio mínimo (CUP)
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={form.min_price}
+                    onChange={(e) => updateForm('min_price', e.target.value)}
+                    className="w-full h-12 px-3 rounded-xl border-2 border-border bg-background text-base font-black font-mono min-h-[44px] text-foreground"
+                    placeholder="0.00"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-black uppercase tracking-widest text-foreground block mb-2">
+                    Precio máximo (CUP)
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={form.max_price}
+                    onChange={(e) => updateForm('max_price', e.target.value)}
+                    className="w-full h-12 px-3 rounded-xl border-2 border-border bg-background text-base font-black font-mono min-h-[44px] text-foreground"
+                    placeholder="Vacío = sin límite"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="text-sm font-black uppercase tracking-widest text-foreground block mb-2">
+                  Porcentaje aplicado al rango (%)
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  max="100"
+                  value={form.value_percent}
+                  onChange={(e) => updateForm('value_percent', e.target.value)}
+                  className="w-full h-12 px-3 rounded-xl border-2 border-border bg-background text-base font-black font-mono min-h-[44px] text-foreground"
+                  placeholder="5.00"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Ej: min=0, max=999.99, %=5 → productos hasta $999.99 ganan 5%. Crea otra regla para el siguiente rango.
+                </p>
+              </div>
+            </>
+          )}
+
+          {/* Base de cálculo (solo para tipos %) */}
+          {(form.type === 'percentage_sales' || form.type === 'hybrid' || form.type === 'scale_percentage') && (
+            <div>
+              <label className="text-sm font-black uppercase tracking-widest text-foreground block mb-2">
+                Base de cálculo
+              </label>
+              <select
+                value={form.base_calculation}
+                onChange={(e) => updateForm('base_calculation', e.target.value)}
+                className="w-full h-12 px-3 rounded-xl border-2 border-border bg-background text-sm font-bold min-h-[44px] text-foreground"
+              >
+                <option value="total_sales">Total ventas (cash + transfer)</option>
+                <option value="cash_sales">Solo ventas en efectivo</option>
+                <option value="transfer_sales">Solo ventas por transferencia</option>
+                <option value="net_sales">Ventas netas (v1 = total)</option>
+              </select>
+            </div>
+          )}
+
+          {/* Prioridad */}
+          <div>
+            <label className="text-sm font-black uppercase tracking-widest text-foreground block mb-2">
+              Prioridad (mayor = más específica)
+            </label>
+            <input
+              type="number"
+              step="1"
+              min="0"
+              value={form.priority}
+              onChange={(e) => updateForm('priority', e.target.value)}
+              className="w-full h-12 px-3 rounded-xl border-2 border-border bg-background text-base font-black font-mono min-h-[44px] text-foreground"
+              placeholder="0"
+            />
+          </div>
+
+          {/* Vigencia */}
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="text-sm font-black uppercase tracking-widest text-foreground block mb-2">
+                Vigente desde
+              </label>
+              <input
+                type="date"
+                value={form.valid_from}
+                onChange={(e) => updateForm('valid_from', e.target.value)}
+                className="w-full h-12 px-3 rounded-xl border-2 border-border bg-background text-sm font-bold min-h-[44px] text-foreground"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-black uppercase tracking-widest text-foreground block mb-2">
+                Vigente hasta (vacío = sin fin)
+              </label>
+              <input
+                type="date"
+                value={form.valid_to}
+                onChange={(e) => updateForm('valid_to', e.target.value)}
+                className="w-full h-12 px-3 rounded-xl border-2 border-border bg-background text-sm font-bold min-h-[44px] text-foreground"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="sticky bottom-0 bg-card border-t-2 border-border p-4 flex items-center justify-between gap-2">
+          <div>
+            {editingRule && (
+              <button
+                onClick={handleDelete}
+                disabled={deleting}
+                className="px-4 py-2 rounded-xl bg-destructive/10 text-destructive border border-destructive/30 text-sm font-bold hover:bg-destructive/20 min-h-[44px]"
+              >
+                {deleting ? 'Eliminando...' : 'Eliminar'}
+              </button>
+            )}
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 rounded-xl bg-muted hover:bg-muted/80 text-foreground text-sm font-bold min-h-[44px]"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-black uppercase tracking-widest hover:bg-primary/90 disabled:opacity-50 min-h-[44px]"
+            >
+              {saving ? 'Guardando...' : (editingRule ? 'Actualizar' : 'Crear regla')}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ════════════════════════════════════════════════════════════════════
+// v2 (2026-07-15): MODAL de edición de trabajador
+// ════════════════════════════════════════════════════════════════════
+function EditWorkerModal({
+  worker,
+  onClose,
+  onSaved,
+}: {
+  worker: WorkerSummary;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const [form, setForm] = useState({
+    first_name: worker.first_name || '',
+    last_name: worker.last_name || '',
+    ci: worker.ci || '',
+    gender: '',
+    address: '',
+    province: '',
+    municipality: '',
+    shirt_size: '',
+    shoe_size: '',
+    waist_size: '',
+    status: worker.status || 'active',
+  });
+  const [saving, setSaving] = useState(false);
+  const [ciError, setCiError] = useState('');
+
+  // Cargar datos completos del trabajador al montar
+  useEffect(() => {
+    (async () => {
+      try {
+        const data = await apiFetch(`/api/workers/${worker.worker_id}`);
+        if (data.worker) {
+          const w = data.worker;
+          setForm({
+            first_name: w.first_name || '',
+            last_name: w.last_name || '',
+            ci: w.ci || '',
+            gender: w.gender || '',
+            address: w.address || '',
+            province: w.province || '',
+            municipality: w.municipality || '',
+            shirt_size: w.shirt_size || '',
+            shoe_size: w.shoe_size?.toString() || '',
+            waist_size: w.waist_size?.toString() || '',
+            status: w.status || 'active',
+          });
+        }
+      } catch (e) {
+        // silencioso — usar defaults del summary
+      }
+    })();
+  }, [worker.worker_id]);
+
+  const updateForm = (key: string, value: string) => {
+    setForm(prev => ({ ...prev, [key]: value }));
+    if (key === 'ci') setCiError('');
+  };
+
+  const handleSave = async () => {
+    if (!form.first_name.trim() || !form.last_name.trim()) {
+      toast.error('Nombre y apellidos son obligatorios');
+      return;
+    }
+    if (!form.ci || form.ci.length !== 11) {
+      setCiError('CI debe tener 11 dígitos');
+      toast.error('CI debe tener 11 dígitos');
+      return;
+    }
+    setSaving(true);
+    try {
+      const payload: any = {
+        first_name: form.first_name.trim(),
+        last_name: form.last_name.trim(),
+        ci: form.ci.trim(),
+        status: form.status,
+      };
+      if (form.gender) payload.gender = form.gender;
+      if (form.address) payload.address = form.address;
+      if (form.province) payload.province = form.province;
+      if (form.municipality) payload.municipality = form.municipality;
+      if (form.shirt_size) payload.shirt_size = form.shirt_size;
+      if (form.shoe_size) payload.shoe_size = parseInt(form.shoe_size) || null;
+      if (form.waist_size) payload.waist_size = parseInt(form.waist_size) || null;
+
+      await apiFetch(`/api/workers/${worker.worker_id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(payload),
+      });
+      toast.success(`Trabajador "${form.first_name} ${form.last_name}" actualizado`);
+      onSaved();
+    } catch (e: any) {
+      toast.error('Error actualizando: ' + e.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
+      <div className="bg-card rounded-2xl border-2 border-border shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        {/* Header */}
+        <div className="sticky top-0 bg-card border-b-2 border-border p-5 flex items-center justify-between z-10">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center border border-primary/30">
+              <Edit3 className="w-5 h-5 text-primary" />
+            </div>
+            <div>
+              <h3 className="text-base font-black uppercase tracking-widest text-foreground">
+                Editar trabajador
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                {worker.first_name} {worker.last_name} · CI: {worker.ci}
+              </p>
+            </div>
+          </div>
+          <button onClick={onClose} className="p-2.5 min-h-[44px] min-w-[44px] rounded-lg hover:bg-muted flex items-center justify-center" aria-label="Cerrar">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Form */}
+        <div className="p-5 space-y-4">
+          {/* Datos personales */}
+          <div className="space-y-3">
+            <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Datos personales</p>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs font-bold uppercase tracking-widest">Nombre *</Label>
+                <Input
+                  value={form.first_name}
+                  onChange={(e) => updateForm('first_name', e.target.value)}
+                  className="h-11 min-h-[44px] mt-1"
+                  placeholder="Nombre"
+                />
+              </div>
+              <div>
+                <Label className="text-xs font-bold uppercase tracking-widest">Apellidos *</Label>
+                <Input
+                  value={form.last_name}
+                  onChange={(e) => updateForm('last_name', e.target.value)}
+                  className="h-11 min-h-[44px] mt-1"
+                  placeholder="Apellidos"
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs font-bold uppercase tracking-widest">CI (11 dígitos) *</Label>
+                <Input
+                  value={form.ci}
+                  onChange={(e) => updateForm('ci', e.target.value.replace(/\D/g, '').slice(0, 11))}
+                  className={cn('h-11 min-h-[44px] mt-1 font-mono', ciError && 'border-destructive')}
+                  placeholder="00000000000"
+                  inputMode="numeric"
+                />
+                {ciError && <p className="text-xs text-destructive mt-1">{ciError}</p>}
+              </div>
+              <div>
+                <Label className="text-xs font-bold uppercase tracking-widest">Género</Label>
+                <select
+                  value={form.gender}
+                  onChange={(e) => updateForm('gender', e.target.value)}
+                  className="w-full h-11 px-3 rounded-xl border-2 border-border bg-background text-sm font-bold min-h-[44px] mt-1 text-foreground"
+                >
+                  <option value="">No especificar</option>
+                  <option value="M">Masculino</option>
+                  <option value="F">Femenino</option>
+                  <option value="other">Otro</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {/* Dirección */}
+          <div className="space-y-3">
+            <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Dirección</p>
+            <div>
+              <Label className="text-xs font-bold uppercase tracking-widest">Calle y número</Label>
+              <Input
+                value={form.address}
+                onChange={(e) => updateForm('address', e.target.value)}
+                className="h-11 min-h-[44px] mt-1"
+                placeholder="Calle 10 #25 entre 3ra y 5ta"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs font-bold uppercase tracking-widest">Provincia</Label>
+                <Input
+                  value={form.province}
+                  onChange={(e) => updateForm('province', e.target.value)}
+                  className="h-11 min-h-[44px] mt-1"
+                  placeholder="Las Tunas"
+                />
+              </div>
+              <div>
+                <Label className="text-xs font-bold uppercase tracking-widest">Municipio</Label>
+                <Input
+                  value={form.municipality}
+                  onChange={(e) => updateForm('municipality', e.target.value)}
+                  className="h-11 min-h-[44px] mt-1"
+                  placeholder="Puerto Padre"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Tallas */}
+          <div className="space-y-3">
+            <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Tallas (opcional)</p>
+            <div className="grid grid-cols-3 gap-3">
+              <div>
+                <Label className="text-xs font-bold uppercase tracking-widest">Camisa</Label>
+                <select
+                  value={form.shirt_size}
+                  onChange={(e) => updateForm('shirt_size', e.target.value)}
+                  className="w-full h-11 px-3 rounded-xl border-2 border-border bg-background text-sm font-bold min-h-[44px] mt-1 text-foreground"
+                >
+                  <option value="">—</option>
+                  <option value="XS">XS</option>
+                  <option value="S">S</option>
+                  <option value="M">M</option>
+                  <option value="L">L</option>
+                  <option value="XL">XL</option>
+                  <option value="XXL">XXL</option>
+                </select>
+              </div>
+              <div>
+                <Label className="text-xs font-bold uppercase tracking-widest">Zapato</Label>
+                <Input
+                  type="number"
+                  value={form.shoe_size}
+                  onChange={(e) => updateForm('shoe_size', e.target.value)}
+                  className="h-11 min-h-[44px] mt-1 font-mono"
+                  placeholder="42"
+                />
+              </div>
+              <div>
+                <Label className="text-xs font-bold uppercase tracking-widest">Cintura</Label>
+                <Input
+                  type="number"
+                  value={form.waist_size}
+                  onChange={(e) => updateForm('waist_size', e.target.value)}
+                  className="h-11 min-h-[44px] mt-1 font-mono"
+                  placeholder="32"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Estado */}
+          <div className="space-y-3">
+            <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Estado del trabajador</p>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => updateForm('status', 'active')}
+                className={cn(
+                  'flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 min-h-[44px]',
+                  form.status === 'active'
+                    ? 'border-success bg-success/10 text-success'
+                    : 'border-border bg-background text-muted-foreground hover:bg-muted/50'
+                )}
+              >
+                <UserCheck className="w-4 h-4" />
+                <span className="text-sm font-black uppercase tracking-wider">Activo</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => updateForm('status', 'inactive')}
+                className={cn(
+                  'flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 min-h-[44px]',
+                  form.status === 'inactive'
+                    ? 'border-warning bg-warning/10 text-warning'
+                    : 'border-border bg-background text-muted-foreground hover:bg-muted/50'
+                )}
+              >
+                <UserX className="w-4 h-4" />
+                <span className="text-sm font-black uppercase tracking-wider">Inactivo</span>
+              </button>
+            </div>
+            <p className="text-xs text-muted-foreground italic">
+              Un trabajador inactivo no aparece en cálculos de comisión ni puede recibir pagos nuevos, pero su histórico se conserva.
+            </p>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="sticky bottom-0 bg-card border-t-2 border-border p-4 flex items-center justify-end gap-2">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 rounded-xl bg-muted hover:bg-muted/80 text-foreground text-sm font-bold min-h-[44px]"
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={saving || !form.first_name.trim() || !form.last_name.trim() || form.ci.length !== 11}
+            className="px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-black uppercase tracking-widest hover:bg-primary/90 disabled:opacity-50 min-h-[44px] flex items-center gap-2"
+          >
+            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+            {saving ? 'Guardando...' : 'Guardar cambios'}
+          </button>
+        </div>
       </div>
     </div>
   );

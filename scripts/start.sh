@@ -25,7 +25,7 @@
 
 set -euo pipefail
 
-PROJECT_DIR="/home/z/my-project"
+PROJECT_DIR="/home/z/my-project/Costpro"
 PORT="${PORT:-3000}"
 
 # Mata cualquier proceso next/postcss/bun huérfano del proyecto
