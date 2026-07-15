@@ -61,11 +61,24 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
     return NextResponse.json({ error: 'Forbidden — requiere rol admin o manager' }, { status: 403 });
   }
 
+  const supabase = getSupabaseForSession(session);
+
+  // FIX-A2 (2026-07-14): validar que worker pertenece a store
+  const { data: workerCheck, error: workerErr } = await supabase
+    .from('workers')
+    .select('store_id')
+    .eq('id', worker_id)
+    .single();
+  if (workerErr || !workerCheck) {
+    return NextResponse.json({ error: 'Trabajador no encontrado' }, { status: 404 });
+  }
+  if (workerCheck.store_id !== store_id) {
+    return NextResponse.json({ error: 'El trabajador no pertenece a esta tienda' }, { status: 400 });
+  }
+
   if (period_start > period_end) {
     return NextResponse.json({ error: 'period_start > period_end' }, { status: 400 });
   }
-
-  const supabase = getSupabaseForSession(session);
 
   // FIX C5: recalcular calculated_amount server-side para evitar manipulación del cliente.
   // Si el cliente envía calculated_amount=0 pero la comisión real es 500,

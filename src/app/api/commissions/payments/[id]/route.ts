@@ -75,6 +75,11 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
 // ── PATCH: Aprobar / Pagar / Cancelar ──
 async function patchHandler(req: NextRequest, session: AuthenticatedSession) {
   try {
+    // FIX-C3 (2026-07-14): validar rol admin/manager (defense in depth)
+    if (session.user.role !== 'admin' && session.user.role !== 'manager') {
+      return NextResponse.json({ error: 'Forbidden — requiere rol admin o manager' }, { status: 403 });
+    }
+
     const commissionId = extractIdFromUrl(req);
     if (!commissionId) {
       return NextResponse.json({ error: 'ID requerido' }, { status: 400 });

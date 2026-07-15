@@ -1152,16 +1152,20 @@ function PaymentsTab({ payments, onRefresh }: any) {
 
   const handleAction = async (id: string, action: 'approve' | 'pay' | 'cancel', method?: string, currency?: string, rate?: number) => {
     try {
-      const res = await fetch(`/api/commissions/payments/${id}`, {
+      // FIX-C2 (2026-07-14): usar apiFetch con token JWT (antes fetch crudo → 401 en producción)
+      const { apiFetch } = await import('@/lib/api-fetch');
+      const { toast } = await import('sonner');
+      await apiFetch(`/api/commissions/payments/${id}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action, payment_method: method, currency: currency || 'CUP', exchange_rate: rate || 1.0 }),
       });
-      if (res.ok) {
-        onRefresh();
-        setPayingId(null);
-      }
-    } catch { /* ignore */ }
+      toast.success(action === 'approve' ? 'Comisión aprobada' : action === 'pay' ? 'Comisión pagada' : 'Comisión cancelada');
+      onRefresh();
+      setPayingId(null);
+    } catch (e: any) {
+      const { toast } = await import('sonner');
+      toast.error(e.message || 'Error al procesar acción');
+    }
   };
 
   return (
