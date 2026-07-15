@@ -92,6 +92,9 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
   }
 
   // 4. Cargar transaction_items para los ids disponibles
+  // FIX (2026-07-15): transaction_items NO tiene columna unit_price.
+  // Columnas reales: price_at_sale (moneda original), price_at_sale_cup (CUP),
+  // cost_at_sale, quantity, cash_paid, transfer_paid, price_currency.
   const allTxIds = [...new Set([...linkedTxIds, ...posTxIds])];
   let lineItems: any[] = [];
   if (allTxIds.length > 0) {
@@ -102,11 +105,12 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
         transaction_id,
         product_id,
         quantity,
-        unit_price,
         price_at_sale,
         price_at_sale_cup,
+        cost_at_sale,
         cash_paid,
         transfer_paid,
+        price_currency,
         products:product_id (id, name, sku, price),
         transactions:transaction_id (created_at, sale_currency, sale_exchange_rate)
       `)
@@ -140,7 +144,9 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
           : (li.transactions?.created_at
               ? new Date(li.transactions.created_at).toISOString().split('T')[0]
               : dateFrom));
-    const unitPrice = Number(li.price_at_sale_cup || li.price_at_sale || li.unit_price) || 0;
+    // FIX (2026-07-15): transaction_items no tiene unit_price.
+    // Usar price_at_sale_cup (preferido, en CUP) o price_at_sale como fallback.
+    const unitPrice = Number(li.price_at_sale_cup || li.price_at_sale) || 0;
     const qty = Number(li.quantity) || 0;
     return {
       line_item_id: li.id,
@@ -154,7 +160,7 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
       line_total: unitPrice * qty,
       cash_paid: Number(li.cash_paid) || 0,
       transfer_paid: Number(li.transfer_paid) || 0,
-      currency: li.transactions?.sale_currency || posInfo?.sale_currency || 'CUP',
+      currency: li.transactions?.sale_currency || li.price_currency || posInfo?.sale_currency || 'CUP',
     };
   });
 

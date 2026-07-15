@@ -143,11 +143,12 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
         transaction_id,
         product_id,
         quantity,
-        unit_price,
         price_at_sale,
         price_at_sale_cup,
+        cost_at_sale,
         cash_paid,
         transfer_paid,
+        price_currency,
         products:product_id (name),
         transactions:transaction_id (created_at)
       `)
@@ -165,7 +166,9 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
       const wId = txToWorker[li.transaction_id];
       if (!wId) continue;
       if (!lineItemsByWorker[wId]) lineItemsByWorker[wId] = [];
-      const unitPrice = Number(li.price_at_sale_cup || li.price_at_sale || li.unit_price) || 0;
+      // FIX (2026-07-15): transaction_items no tiene unit_price.
+      // Usar price_at_sale_cup (CUP) como preferido, price_at_sale como fallback.
+      const unitPrice = Number(li.price_at_sale_cup || li.price_at_sale) || 0;
       const qty = Number(li.quantity) || 0;
       const lineTotal = unitPrice * qty;
       lineItemsByWorker[wId].push({
