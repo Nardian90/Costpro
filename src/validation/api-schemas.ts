@@ -15,6 +15,24 @@ export const uuidLoose = z.string().regex(
   'UUID inválido'
 );
 
+/**
+ * Nullable URL validator (FIX 2026-07-15):
+ * Acepta URLs válidas, strings vacíos ('' = "limpiar") y null/undefined.
+ * Los strings vacíos se transforman a null para que la DB los guarde como NULL
+ * en lugar de romper el CHECK constraint o la validación .url().
+ *
+ * Sin este helper, un usuario que hace "Quitar imagen" en el StoreConfigModal
+ * envía stamp_url='' o logo_url='' y Zod rechaza TODO el body con 400,
+ * perdiendo los demás campos que sí eran válidos.
+ */
+export const nullableUrl = z.union([
+  z.string().url(),
+  z.literal(''),
+  z.null(),
+])
+  .optional()
+  .transform(v => (v === '' || v == null ? null : v));
+
 // ─── Users ───────────────────────────────────────────────────────────────────
 export const managedCreateUserSchema = z.object({
   p_email: z.string().email('Email inválido'),
@@ -217,7 +235,7 @@ export const createStoreSchema = z.object({
   // solo se envía name + slug. El admin completa la dirección después desde
   // StoreConfigModal. Antes era min(1) lo que causaba 400 "Datos inválidos".
   address: z.string().max(200).optional().default(''),
-  logo_url: z.string().url().optional().nullable(),
+  logo_url: nullableUrl,
   reeup: z.string().regex(/^\d{11}$/, 'REEUP debe tener 11 dígitos').optional().nullable(),
   nit: z.string().regex(/^\d{1,15}$/, 'NIT debe contener solo dígitos').optional().nullable(),
   bank_account: z.string().min(1).optional().nullable(),
@@ -225,15 +243,15 @@ export const createStoreSchema = z.object({
   email: z.string().email('Email inválido').optional().nullable(),
   slug: z.string().min(1).max(100).optional().nullable(),
   plantilla: z.enum(STORE_TEMPLATES).optional().nullable(),
-  signature_url: z.string().url().optional().nullable(),
-  stamp_url: z.string().url().optional().nullable(),
+  signature_url: nullableUrl,
+  stamp_url: nullableUrl,
   latitude: z.number().optional().nullable(),
   longitude: z.number().optional().nullable(),
   // ── Storefront config (2026-07-04) ──
-  banner_url: z.string().url().optional().nullable(),
+  banner_url: nullableUrl,
   store_tagline: z.string().max(200).optional().nullable(),
-  whatsapp_group_url: z.string().url().optional().nullable().or(z.literal('')),
-  telegram_url: z.string().url().optional().nullable().or(z.literal('')),
+  whatsapp_group_url: nullableUrl,
+  telegram_url: nullableUrl,
   services: z.array(z.object({
     icon: z.string().max(50),
     title: z.string().max(100),
@@ -246,14 +264,14 @@ export const createStoreSchema = z.object({
   })).max(5).optional().nullable(),
   opening_hours: z.string().max(200).optional().nullable(),
   banner_cta_text: z.string().max(50).optional().nullable(),
-  banner_cta_link: z.string().url().optional().nullable().or(z.literal('')),
+  banner_cta_link: nullableUrl,
 });
 
 export const updateStoreSchema = z.object({
   storeId: uuidLoose,
   name: z.string().min(1).max(100).optional(),
   address: z.string().max(200).optional().nullable(),
-  logo_url: z.string().url().optional().nullable(),
+  logo_url: nullableUrl,
   reeup: z.string().regex(/^\d{11}$/).optional().nullable(),
   nit: z.string().regex(/^\d{1,15}$/, 'NIT debe contener solo dígitos').optional().nullable(),
   bank_account: z.string().min(1).optional().nullable(),
@@ -261,8 +279,8 @@ export const updateStoreSchema = z.object({
   email: z.string().email().optional().nullable(),
   slug: z.string().min(1).max(100).optional().nullable(),
   plantilla: z.enum(STORE_TEMPLATES).optional().nullable(),
-  signature_url: z.string().url().optional().nullable(),
-  stamp_url: z.string().url().optional().nullable(),
+  signature_url: nullableUrl,
+  stamp_url: nullableUrl,
   latitude: z.number().optional().nullable(),
   longitude: z.number().optional().nullable(),
   // F2-T03: is_active permitido en PATCH para implementar toggle activar/desactivar
@@ -271,10 +289,10 @@ export const updateStoreSchema = z.object({
   // Diferencia clave: toggle = pausa temporal; DELETE = baja permanente con cleanup.
   is_active: z.boolean().optional(),
   // ── Storefront config (2026-07-04) ──
-  banner_url: z.string().url().optional().nullable(),
+  banner_url: nullableUrl,
   store_tagline: z.string().max(200).optional().nullable(),
-  whatsapp_group_url: z.string().url().optional().nullable().or(z.literal('')),
-  telegram_url: z.string().url().optional().nullable().or(z.literal('')),
+  whatsapp_group_url: nullableUrl,
+  telegram_url: nullableUrl,
   services: z.array(z.object({
     icon: z.string().max(50),
     title: z.string().max(100),
@@ -287,7 +305,7 @@ export const updateStoreSchema = z.object({
   })).max(5).optional().nullable(),
   opening_hours: z.string().max(200).optional().nullable(),
   banner_cta_text: z.string().max(50).optional().nullable(),
-  banner_cta_link: z.string().url().optional().nullable().or(z.literal('')),
+  banner_cta_link: nullableUrl,
 });
 
 export const deleteStoreSchema = z.object({

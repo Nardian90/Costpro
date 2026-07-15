@@ -84,7 +84,15 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
   // Si el cliente envía calculated_amount=0 pero la comisión real es 500,
   // un manager malicioso podría saltarse la justificación del ajuste.
   // Recalculamos usando commission-engine con las ventas reales del periodo.
+  //
+  // FIX (2026-07-15): EXCEPCIÓN — si el cliente envía calculated_breakdown.calculation_mode='manual',
+  // significa que el cálculo fue manual (comisiones editadas por producto por el admin).
+  // En ese caso respetamos el calculated_amount del cliente, porque el motor server-side
+  // no tiene forma de reproducir las decisiones manuales del admin.
   const { selectApplicableRule, calculateCommission } = await import('@/lib/commission-engine');
+
+  const isManualMode = calculated_breakdown?.calculation_mode === 'manual'
+    || (calculated_breakdown?.product_breakdown?.some((pb: any) => pb.rule_type === 'manual'));
 
   // Cargar reglas aplicables
   const { data: rules } = await supabase
@@ -97,9 +105,10 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
 
   // Cargar ventas del periodo (mismo filtro que calculate/route.ts)
   const endDateExclusive = (() => {
-    const d = new Date(period_end);
-    d.setDate(d.getDate() + 1);
-    return d.toISOString().split('T')[0];
+    const [y, m, d] = period_end.split('-').map(Number);
+    const dt = new Date(y, m - 1, d);
+    dt.setDate(dt.getDate() + 1);
+    return dt.toISOString().split('T')[0];
   })();
 
   const { data: sales, error: salesErr } = await supabase
@@ -128,19 +137,34 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
 
   const rule = selectApplicableRule((rules || []) as any, worker_id, period_end);
   const calc = calculateCommission(worker_id, workerSales, rule as any, { from: period_start, to: period_end });
-  const serverCalculated = calc.commission_suggested;
+  let serverCalculated = calc.commission_suggested;
+
+  // Si es modo manual, usar el calculated_amount del cliente (respetar decisiones del admin)
+  if (isManualMode) {
+    serverCalculated = Number(calculated_amount) || 0;
+    // Reemplazar el breakdown del server con el del cliente (que tiene product_breakdown manual)
+    if (calculated_breakdown) {
+      calc.commission_suggested = serverCalculated;
+      calc.calculation_explanation = calculated_breakdown.calculation_explanation || calc.calculation_explanation;
+      (calc as any).product_breakdown = calculated_breakdown.product_breakdown;
+      (calc as any).calculation_mode = 'manual';
+      (calc as any).excluded_sales_total = calculated_breakdown.excluded_sales_total;
+    }
+  }
 
   const clientCalculated = Number(calculated_amount) || 0;
   const final_ = Number(final_amount) || 0;
 
   // Si el cliente envió calculated_amount que difiere del server → usar el del server
   // y si final difiere del server-calculated, exigir reason
-  if (Math.abs(clientCalculated - serverCalculated) > 0.01) {
+  // (excepto en modo manual donde respetamos el cliente)
+  if (!isManualMode && Math.abs(clientCalculated - serverCalculated) > 0.01) {
     // Log warning pero no bloquear — usar serverCalculated como autoritativo
     console.warn(`[payments] calculated_amount mismatch: client=${clientCalculated} server=${serverCalculated}`);
   }
 
   // Si el monto final difiere del calculado (server) → justificar
+  // (en modo manual, serverCalculated = clientCalculated = final_ normalmente)
   if (Math.abs(final_ - serverCalculated) > 0.01 && !manual_adjustment_reason) {
     return NextResponse.json(
       { error: `manual_adjustment_reason es obligatorio cuando final_amount (${final_}) difiere de calculated_amount (${serverCalculated})` },
