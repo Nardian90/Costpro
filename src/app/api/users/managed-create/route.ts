@@ -106,8 +106,101 @@ const handler = withRole('admin', async (req, session) => {
     });
 
     if (rpcError) {
-      await supabaseAdmin.auth.admin.deleteUser(userId);
-      return NextResponse.json({ error: rpcError.message }, { status: 400 });
+      // FIX (2026-07-15): si el RPC falla por el trigger validate_active_store
+      // (catch-22: profile creado por trigger de auth.users con active_store_id=NULL,
+      // pero el RPC intenta UPDATE con active_store_id=storeId antes de insertar membership),
+      // hacemos fallback: insertar memberships primero, luego UPDATE del profile.
+      const isTriggerError = rpcError.message && (
+        rpcError.message.includes('ERR_INVALID_ACTIVE_STORE') ||
+        rpcError.message.includes('ERR_STORE_REQUIRED') ||
+        rpcError.message.includes('ROL ENCARGADO REQUIERE')
+      );
+
+      if (isTriggerError) {
+        console.warn('[managed-create] RPC failed with trigger error, using fallback:', rpcError.message);
+
+        // Fallback: insertar memberships primero, luego UPDATE profile
+        // 1. Buscar role_id
+        const roleNameMap: Record<string, string> = {
+          'clerk': 'Cajero', 'warehouse': 'Almacenero',
+          'encargado': 'Encargado', 'manager': 'Encargado',
+          'admin': 'Admin', 'costo': 'Costo',
+        };
+        const targetRoleName = roleNameMap[p_role] || 'Costo';
+        const { data: roleRow } = await supabaseAdmin
+          .from('roles').select('id').ilike('name', targetRoleName).limit(1).single();
+        const roleId = roleRow?.id || null;
+
+        // 2. UPDATE profile (datos básicos, sin tocar active_store_id para no disparar trigger)
+        const { error: profUpdErr } = await supabaseAdmin
+          .from('profiles')
+          .update({
+            full_name: p_full_name,
+            role: p_role,
+            role_id: roleId,
+            is_active: true,
+            created_by: session.user.id,
+            max_stores_limit: p_max_stores ?? 0,
+            max_users_limit: p_max_users ?? 0,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', userId);
+
+        if (profUpdErr) {
+          await supabaseAdmin.auth.admin.deleteUser(userId);
+          return NextResponse.json({ error: `Error actualizando profile: ${profUpdErr.message}` }, { status: 400 });
+        }
+
+        // 3. INSERT memberships
+        const membershipsToInsert: Array<{ user_id: string; store_id: string; role: string; status: string }> = [];
+        if (p_memberships && Array.isArray(p_memberships) && p_memberships.length > 0) {
+          for (const m of p_memberships) {
+            if (m?.store_id && m?.role) {
+              membershipsToInsert.push({
+                user_id: userId,
+                store_id: m.store_id,
+                role: m.role,
+                status: 'active',
+              });
+            }
+          }
+        } else if (p_store_id) {
+          membershipsToInsert.push({
+            user_id: userId,
+            store_id: p_store_id,
+            role: p_role,
+            status: 'active',
+          });
+        }
+
+        if (membershipsToInsert.length > 0) {
+          const { error: memInsErr } = await supabaseAdmin
+            .from('user_store_memberships')
+            .upsert(membershipsToInsert, { onConflict: 'user_id,store_id' });
+          if (memInsErr) {
+            await supabaseAdmin.auth.admin.deleteUser(userId);
+            return NextResponse.json({ error: `Error insertando memberships: ${memInsErr.message}` }, { status: 400 });
+          }
+        }
+
+        // 4. UPDATE profile.active_store_id (ahora la membership existe)
+        const activeStore = membershipsToInsert[0]?.store_id || p_store_id;
+        if (activeStore) {
+          const { error: actStoreErr } = await supabaseAdmin
+            .from('profiles')
+            .update({ active_store_id: activeStore, updated_at: new Date().toISOString() })
+            .eq('id', userId);
+          if (actStoreErr) {
+            console.warn('[managed-create] Could not set active_store_id:', actStoreErr.message);
+            // No abortar — el usuario está creado, solo sin active_store_id
+          }
+        }
+        // Fallback exitoso — continuar al paso 6
+      } else {
+        // Otro tipo de error → eliminar auth user y reportar
+        await supabaseAdmin.auth.admin.deleteUser(userId);
+        return NextResponse.json({ error: rpcError.message }, { status: 400 });
+      }
     }
 
     // 6. If no password provided, generate recovery link
