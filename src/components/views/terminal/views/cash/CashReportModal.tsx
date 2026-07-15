@@ -1,10 +1,10 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Download, DollarSign, TrendingUp, TrendingDown, Wallet, ChevronDown, ChevronRight, Eye, Trash2, Save, RotateCcw, Settings, Sparkles, FileText } from 'lucide-react';
+import { Download, DollarSign, TrendingUp, TrendingDown, Wallet, ChevronDown, ChevronRight, Eye, Trash2, Save, RotateCcw, Settings, Sparkles, FileText, CheckSquare, Square } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
 import { apiFetch } from '@/lib/api-fetch';
-import { useAuthStore } from '@/store';
+import { useAuthStore, useUIStore } from '@/store';
 import { toast } from 'sonner';
 import type { CashReport } from '@/types';
 import jsPDF from 'jspdf';
@@ -30,6 +30,7 @@ const TEMPLATES: { id: PdfTemplate; label: string; desc: string }[] = [
 
 export function CashReportModal({ open, onClose }: CashReportModalProps) {
   const { user } = useAuthStore();
+  const { setCurrentView } = useUIStore();
   const [report, setReport] = useState<CashReport | null>(null);
   const [loading, setLoading] = useState(true);
   const [startDate, setStartDate] = useState(() => new Date().toISOString().slice(0, 10));
@@ -62,6 +63,20 @@ export function CashReportModal({ open, onClose }: CashReportModalProps) {
   // Plantilla PDF
   const [pdfTemplate, setPdfTemplate] = useState<PdfTemplate>('estandar');
   const [showTemplateSelector, setShowTemplateSelector] = useState(false);
+
+  // FIX (2026-07-15): Toggles para incluir detalle por sección en el PDF.
+  // Cuando están activos, el PDF incluye páginas anexas con el listado de documentos.
+  const [pdfOptions, setPdfOptions] = useState({
+    detailSales: false,        // detalle de productos vendidos por método
+    detailPayments: false,     // detalle de pagos a proveedores
+    detailCommissions: false,  // detalle de comisiones pagadas
+    detailProduction: false,   // detalle de órdenes de producción/servicios
+    includeBreakdown: true,    // desglose de billetes CUP
+    includeUsd: true,          // cuadre USD si hay
+    includeSignature: true,    // líneas de firma
+  });
+  const togglePdfOption = (key: keyof typeof pdfOptions) =>
+    setPdfOptions(prev => ({ ...prev, [key]: !prev[key] }));
 
   const modalRef = useRef<HTMLDivElement>(null);
 
@@ -151,6 +166,38 @@ export function CashReportModal({ open, onClose }: CashReportModalProps) {
     const sn = storeInfo?.name || 'Tienda';
     const es = (need: number) => { if (y + need > ph - m) { doc.addPage(); y = m; } };
 
+    // Helper para añadir página anexa con detalle de documentos
+    const renderDetailPage = async (title: string, items: any[], currency: string, isNeg: boolean = false) => {
+      if (!items || items.length === 0) return;
+      doc.addPage();
+      y = m;
+      es(15);
+      doc.setFontSize(11); doc.setFont('helvetica', 'bold'); doc.setTextColor(0);
+      doc.text(title, m, y); y += 6;
+      doc.setFontSize(8); doc.setFont('helvetica', 'normal'); doc.setTextColor(80);
+      doc.text(`Total documentos: ${items.length}`, m, y); y += 8;
+
+      let total = 0;
+      for (const doc_ of items) {
+        const date = doc_.created_at?.slice(0, 16).replace('T', ' ') || doc_.payment_date?.slice(0, 16).replace('T', ' ') || '—';
+        const amt = Number(doc_.amount || doc_.total || doc_.total_amount || doc_.amount_cup || 0);
+        total += amt;
+        const ref = doc_.reference || doc_.reference_doc || doc_.notes || '';
+        const customer = doc_.customer_name || '';
+        es(6);
+        doc.setFontSize(8); doc.setFont('helvetica', 'bold'); doc.setTextColor(0);
+        doc.text(`${date}  ${customer}`, m, y); y += 4;
+        doc.setFont('helvetica', 'normal'); doc.setTextColor(80);
+        if (ref) { es(4); doc.text(`Ref: ${ref.substring(0, 80)}`, m, y); y += 4; }
+        doc.setFont('helvetica', 'bold'); doc.setTextColor(0);
+        doc.text(`Monto: ${isNeg ? '−' : ''}${fmt(amt, currency)}`, m, y); y += 5;
+      }
+      es(8);
+      doc.setDrawColor(180); doc.setLineWidth(0.3); doc.line(m, y, pw - m, y); y += 5;
+      doc.setFontSize(9); doc.setFont('helvetica', 'bold');
+      doc.text(`Total: ${isNeg ? '−' : ''}${fmt(total, currency)}`, m, y); y += 8;
+    };
+
     // Logo
     if (storeInfo?.logo_url) { try { const r = await fetch(storeInfo.logo_url); const b = await r.blob(); const du = await new Promise<string>((res, rej) => { const fr = new FileReader(); fr.onload = () => res(fr.result as string); fr.onerror = rej; fr.readAsDataURL(b); }); doc.addImage(du, 'PNG', m, y - 5, 25, 25); } catch {} }
 
@@ -186,12 +233,14 @@ export function CashReportModal({ open, onClose }: CashReportModalProps) {
       const sales = report.sales || [];
       const payments = report.payments || [];
       const commissions = report.commissions || [];
+      const production = (report as any).production || [];
 
       const cupCashSales = sales.filter((s: any) => s.payment_method === 'cash' && s.currency === 'CUP').reduce((s: number, x: any) => s + Number(x.total), 0);
       const cupTransferSales = sales.filter((s: any) => s.payment_method === 'transfer' && s.currency === 'CUP').reduce((s: number, x: any) => s + Number(x.total), 0);
       const cupZelleSales = sales.filter((s: any) => s.payment_method === 'zelle' && s.currency === 'CUP').reduce((s: number, x: any) => s + Number(x.total), 0);
       const cupCashPayments = payments.filter((p: any) => p.payment_method === 'cash' && p.currency === 'CUP').reduce((s: number, x: any) => s + Number(x.total), 0);
       const cupCashCommissions = commissions.filter((c: any) => c.payment_method === 'cash' && c.currency === 'CUP').reduce((s: number, x: any) => s + Number(x.total), 0);
+      const cupCashProduction = production.filter((p: any) => p.payment_method === 'cash' && p.currency === 'CUP').reduce((s: number, x: any) => s + Number(x.total), 0);
 
       es(10);
       doc.setFontSize(10); doc.setFont('helvetica', 'bold'); doc.setTextColor(0);
@@ -201,75 +250,129 @@ export function CashReportModal({ open, onClose }: CashReportModalProps) {
       doc.text(`Ventas Efectivo CUP:        ${formatCurrency(cupCashSales)}`, m, y); y += 4;
       doc.text(`Ventas Transferencia CUP:   ${formatCurrency(cupTransferSales)}`, m, y); y += 4;
       if (cupZelleSales > 0) { doc.text(`Ventas Zelle CUP:            ${formatCurrency(cupZelleSales)}`, m, y); y += 4; }
-      doc.text(`Total Ventas CUP:           ${formatCurrency(cupCashSales + cupTransferSales + cupZelleSales)}`, m, y); y += 5;
+      // FIX (2026-07-15): Órdenes de producción/servicios (anticipos + pagos recibidos) son INGRESOS
+      if (cupCashProduction > 0) {
+        doc.text(`(+) Producción/Servicios:    ${formatCurrency(cupCashProduction)}`, m, y); y += 4;
+      }
+      doc.text(`Total Ventas CUP:           ${formatCurrency(cupCashSales + cupTransferSales + cupZelleSales + cupCashProduction)}`, m, y); y += 5;
       doc.text(`(−) Transferencias:          ${formatCurrency(cupTransferSales)}`, m, y); y += 4;
       doc.text(`(−) Pagos en Efectivo:       ${formatCurrency(cupCashPayments)}`, m, y); y += 4;
       doc.text(`(−) Comisiones en Efectivo:  ${formatCurrency(cupCashCommissions)}`, m, y); y += 5;
       doc.setFont('helvetica', 'bold');
-      const dineroEntregar = cupCashSales - cupCashPayments - cupCashCommissions;
+      const dineroEntregar = cupCashSales + cupCashProduction - cupCashPayments - cupCashCommissions;
       doc.text(`Dinero a Entregar CUP:      ${formatCurrency(dineroEntregar)}`, m, y); y += 8;
 
-      // Desglose CUP
-      es(10);
-      doc.setFontSize(9); doc.setFont('helvetica', 'bold');
-      doc.text('Desglose de Billetes CUP', m, y); y += 5;
-      const cupEntries = Object.entries(cupBreakdown).filter(([, c]) => Number(c) > 0);
-      doc.setFontSize(8); doc.setFont('helvetica', 'normal');
-      if (cupEntries.length > 0) {
-        cupEntries.forEach(([d, c]) => { es(4); doc.text(`  $${d} × ${c} = ${formatCurrency(Number(d) * Number(c))}`, m, y); y += 4; });
-        y += 2; doc.setFont('helvetica', 'bold');
-        es(6); doc.text(`Total contado: ${formatCurrency(cupTotal)}`, m, y); y += 4;
-        es(4); const dl = cupDifference === 0 ? '(cuadrado)' : cupDifference > 0 ? '(sobrante)' : '(faltante)';
-        doc.text(`Diferencia: ${formatCurrency(Math.abs(cupDifference))} ${dl}`, m, y);
-      } else {
-        doc.setFont('helvetica', 'italic'); doc.setTextColor(120);
-        doc.text('  (Sin desglose ingresado)', m, y);
-      }
-      y += 10;
-
-      // ===== CUADRE USD =====
-      const usdCashSales = sales.filter((s: any) => s.payment_method === 'cash' && s.currency === 'USD').reduce((s: number, x: any) => s + Number(x.total), 0);
-      const usdTransferSales = sales.filter((s: any) => s.payment_method === 'transfer' && s.currency === 'USD').reduce((s: number, x: any) => s + Number(x.total), 0);
-      const usdCashPayments = payments.filter((p: any) => p.payment_method === 'cash' && p.currency === 'USD').reduce((s: number, x: any) => s + Number(x.total), 0);
-
-      if (usdCashSales > 0 || usdTransferSales > 0 || usdTotal > 0) {
+      // Desglose CUP (respeta toggle includeBreakdown)
+      if (pdfOptions.includeBreakdown) {
         es(10);
-        doc.setFontSize(10); doc.setFont('helvetica', 'bold'); doc.setTextColor(0);
-        doc.text('CUADRE USD', m, y); y += 6;
+        doc.setFontSize(9); doc.setFont('helvetica', 'bold');
+        doc.text('Desglose de Billetes CUP', m, y); y += 5;
+        const cupEntries = Object.entries(cupBreakdown).filter(([, c]) => Number(c) > 0);
         doc.setFontSize(8); doc.setFont('helvetica', 'normal');
-        doc.text(`Ventas Efectivo USD:        $${usdCashSales.toFixed(2)}`, m, y); y += 4;
-        doc.text(`Ventas Transferencia USD:   $${usdTransferSales.toFixed(2)}`, m, y); y += 4;
-        doc.text(`(−) Pagos en Efectivo USD:   $${usdCashPayments.toFixed(2)}`, m, y); y += 5;
-        doc.setFont('helvetica', 'bold');
-        const usdEntregar = usdCashSales - usdCashPayments;
-        doc.text(`Dinero a Entregar USD:      $${usdEntregar.toFixed(2)}`, m, y); y += 8;
-
-        // Desglose USD
-        es(10);
-        doc.setFontSize(9); doc.text('Desglose de Billetes USD', m, y); y += 5;
-        doc.setFontSize(8); doc.setFont('helvetica', 'normal');
-        const usdEntries = Object.entries(usdBreakdown).filter(([, c]) => Number(c) > 0);
-        if (usdEntries.length > 0) {
-          usdEntries.forEach(([d, c]) => { es(4); doc.text(`  $${d} × ${c} = $${(Number(d) * Number(c)).toFixed(2)}`, m, y); y += 4; });
+        if (cupEntries.length > 0) {
+          cupEntries.forEach(([d, c]) => { es(4); doc.text(`  $${d} × ${c} = ${formatCurrency(Number(d) * Number(c))}`, m, y); y += 4; });
           y += 2; doc.setFont('helvetica', 'bold');
-          es(4); doc.text(`Total contado USD: $${usdTotal.toFixed(2)}`, m, y);
+          es(6); doc.text(`Total contado: ${formatCurrency(cupTotal)}`, m, y); y += 4;
+          es(4); const dl = cupDifference === 0 ? '(cuadrado)' : cupDifference > 0 ? '(sobrante)' : '(faltante)';
+          doc.text(`Diferencia: ${formatCurrency(Math.abs(cupDifference))} ${dl}`, m, y);
         } else {
           doc.setFont('helvetica', 'italic'); doc.setTextColor(120);
           doc.text('  (Sin desglose ingresado)', m, y);
         }
         y += 10;
       }
+
+      // ===== CUADRE USD (respeta toggle includeUsd) =====
+      if (pdfOptions.includeUsd) {
+        const usdCashSales = sales.filter((s: any) => s.payment_method === 'cash' && s.currency === 'USD').reduce((s: number, x: any) => s + Number(x.total), 0);
+        const usdTransferSales = sales.filter((s: any) => s.payment_method === 'transfer' && s.currency === 'USD').reduce((s: number, x: any) => s + Number(x.total), 0);
+        const usdCashPayments = payments.filter((p: any) => p.payment_method === 'cash' && p.currency === 'USD').reduce((s: number, x: any) => s + Number(x.total), 0);
+
+        if (usdCashSales > 0 || usdTransferSales > 0 || usdTotal > 0) {
+          es(10);
+          doc.setFontSize(10); doc.setFont('helvetica', 'bold'); doc.setTextColor(0);
+          doc.text('CUADRE USD', m, y); y += 6;
+          doc.setFontSize(8); doc.setFont('helvetica', 'normal');
+          doc.text(`Ventas Efectivo USD:        $${usdCashSales.toFixed(2)}`, m, y); y += 4;
+          doc.text(`Ventas Transferencia USD:   $${usdTransferSales.toFixed(2)}`, m, y); y += 4;
+          doc.text(`(−) Pagos en Efectivo USD:   $${usdCashPayments.toFixed(2)}`, m, y); y += 5;
+          doc.setFont('helvetica', 'bold');
+          const usdEntregar = usdCashSales - usdCashPayments;
+          doc.text(`Dinero a Entregar USD:      $${usdEntregar.toFixed(2)}`, m, y); y += 8;
+
+          // Desglose USD
+          if (pdfOptions.includeBreakdown) {
+            es(10);
+            doc.setFontSize(9); doc.text('Desglose de Billetes USD', m, y); y += 5;
+            doc.setFontSize(8); doc.setFont('helvetica', 'normal');
+            const usdEntries = Object.entries(usdBreakdown).filter(([, c]) => Number(c) > 0);
+            if (usdEntries.length > 0) {
+              usdEntries.forEach(([d, c]) => { es(4); doc.text(`  $${d} × ${c} = $${(Number(d) * Number(c)).toFixed(2)}`, m, y); y += 4; });
+              y += 2; doc.setFont('helvetica', 'bold');
+              es(4); doc.text(`Total contado USD: $${usdTotal.toFixed(2)}`, m, y);
+            } else {
+              doc.setFont('helvetica', 'italic'); doc.setTextColor(120);
+              doc.text('  (Sin desglose ingresado)', m, y);
+            }
+            y += 10;
+          }
+        }
+      }
     }
 
-    // Firmas
-    es(20);
-    doc.setDrawColor(120); doc.setLineWidth(0.3);
-    const sigY = Math.max(y + 10, ph - 30);
-    doc.line(m, sigY, m + 70, sigY);
-    doc.line(pw - m - 70, sigY, pw - m, sigY);
-    doc.setFontSize(7); doc.setFont('helvetica', 'normal'); doc.setTextColor(80);
-    doc.text(deliveredBy || 'Entrega', m, sigY + 4);
-    doc.text(recipientName || 'Recibe', pw - m - 70, sigY + 4);
+    // FIX (2026-07-15): Páginas anexas con detalle por sección (si los toggles están activos)
+    // Cargar los detalles bajo demanda (igual que toggleAccordion)
+    const fetchDetail = async (type: 'sale' | 'payment', method: string, currency: string, refType?: string): Promise<any[]> => {
+      try {
+        const s = new Date(startDate + 'T00:00:00').toISOString();
+        const e = new Date(endDate + 'T23:59:59').toISOString();
+        let url = `/api/cash-report/details?type=${type}&method=${method}&currency=${currency}&start_date=${s}&end_date=${e}`;
+        if (refType) url += `&ref_type=${refType}`;
+        const data = await apiFetch(url);
+        return Array.isArray(data) ? data : (data?.data || []);
+      } catch { return []; }
+    };
+
+    // Detalle de ventas por método
+    if (pdfOptions.detailSales && report.sales) {
+      for (const s of report.sales) {
+        const items = await fetchDetail('sale', s.payment_method, s.currency);
+        await renderDetailPage(`ANEXO — Ventas ${methodLabel(s.payment_method)} (${s.currency})`, items, s.currency, false);
+      }
+    }
+    // Detalle de pagos a proveedores
+    if (pdfOptions.detailPayments && report.payments) {
+      for (const p of report.payments) {
+        const items = await fetchDetail('payment', p.payment_method, p.currency, p.ref_type);
+        await renderDetailPage(`ANEXO — Pagos a Proveedores ${methodLabel(p.payment_method)} (${p.currency}) · ${p.ref_type}`, items, p.currency, true);
+      }
+    }
+    // Detalle de comisiones
+    if (pdfOptions.detailCommissions && report.commissions) {
+      for (const c of report.commissions) {
+        const items = await fetchDetail('payment', c.payment_method, c.currency, 'commission');
+        await renderDetailPage(`ANEXO — Comisiones ${methodLabel(c.payment_method)} (${c.currency})`, items, c.currency, true);
+      }
+    }
+    // Detalle de órdenes de producción/servicios
+    if (pdfOptions.detailProduction && (report as any).production) {
+      for (const p of (report as any).production) {
+        const items = await fetchDetail('payment', p.payment_method, p.currency, p.ref_type);
+        await renderDetailPage(`ANEXO — Órdenes Producción/Servicios ${methodLabel(p.payment_method)} (${p.currency}) · ${p.ref_type}`, items, p.currency, false);
+      }
+    }
+
+    // Firmas (respeta toggle includeSignature)
+    if (pdfOptions.includeSignature) {
+      es(20);
+      doc.setDrawColor(120); doc.setLineWidth(0.3);
+      const sigY = Math.max(y + 10, ph - 30);
+      doc.line(m, sigY, m + 70, sigY);
+      doc.line(pw - m - 70, sigY, pw - m, sigY);
+      doc.setFontSize(7); doc.setFont('helvetica', 'normal'); doc.setTextColor(80);
+      doc.text(deliveredBy || 'Entrega', m, sigY + 4);
+      doc.text(recipientName || 'Recibe', pw - m - 70, sigY + 4);
+    }
 
     doc.save(`reporte_caja_${sn.replace(/\s+/g, '_')}_${startDate}.pdf`);
     setShowTemplateSelector(false);
@@ -444,7 +547,26 @@ export function CashReportModal({ open, onClose }: CashReportModalProps) {
               <div>
                 <h3 className="text-[11px] font-black uppercase text-muted-foreground mb-2">Comisiones a Trabajadores</h3>
                 <div className="space-y-1">
-                  {report.commissions.filter(filterSales).map((c, i) => renderAccordionItem(`c-${c.payment_method}-${c.currency}-${i}`, c.payment_method, c.currency, `${c.commission_count} comisiones`, c.total, true))}
+                  {/* FIX (2026-07-15): pasar refType='commission' para que "Ver en Módulo" funcione */}
+                  {report.commissions.filter(filterSales).map((c, i) => renderAccordionItem(`c-${c.payment_method}-${c.currency}-${i}`, c.payment_method, c.currency, `${c.commission_count} comisiones`, c.total, true, 'commission'))}
+                </div>
+              </div>
+            )}
+
+            {/* Órdenes de Producción/Servicios — anticipos + pagos recibidos (INGRESOS) */}
+            {(report as any).production && (report as any).production.length > 0 && (
+              <div>
+                <h3 className="text-[11px] font-black uppercase text-success mb-2">
+                  Órdenes de Producción/Servicios (Anticipos + Pagos recibidos)
+                </h3>
+                <div className="space-y-1">
+                  {/* isNeg=false porque son INGRESOS (dinero que entra al cliente) */}
+                  {(report as any).production.filter(filterPayments).map((p: any, i: number) =>
+                    renderAccordionItem(`po-${p.payment_method}-${p.currency}-${p.ref_type}-${i}`,
+                      p.payment_method, p.currency,
+                      `${p.payment_count} pagos · ${p.ref_type === 'production_order' ? 'Producción' : 'Trabajo'}`,
+                      p.total, false, p.ref_type)
+                  )}
                 </div>
               </div>
             )}
@@ -559,14 +681,58 @@ export function CashReportModal({ open, onClose }: CashReportModalProps) {
 
             {/* Selector de plantilla + Exportar */}
             {showTemplateSelector && (
-              <div className="p-3 rounded-xl border border-border/30 bg-muted/10 space-y-2">
-                <p className="text-[10px] font-black uppercase text-muted-foreground">Plantilla PDF:</p>
-                {TEMPLATES.map(t => (
-                  <button key={t.id} onClick={() => setPdfTemplate(t.id)} className={cn("w-full flex items-center gap-2 p-2 rounded-lg border text-left", pdfTemplate === t.id ? "border-primary bg-primary/10" : "border-border/40")}>
-                    <FileText className="w-4 h-4" />
-                    <div><p className="text-xs font-bold">{t.label}</p><p className="text-[10px] text-muted-foreground">{t.desc}</p></div>
-                  </button>
-                ))}
+              <div className="p-3 rounded-xl border border-border/30 bg-muted/10 space-y-3">
+                <div>
+                  <p className="text-[10px] font-black uppercase text-muted-foreground mb-2">Plantilla PDF:</p>
+                  {TEMPLATES.map(t => (
+                    <button key={t.id} onClick={() => setPdfTemplate(t.id)} className={cn("w-full flex items-center gap-2 p-2 rounded-lg border text-left mb-1", pdfTemplate === t.id ? "border-primary bg-primary/10" : "border-border/40")}>
+                      <FileText className="w-4 h-4" />
+                      <div><p className="text-xs font-bold">{t.label}</p><p className="text-[10px] text-muted-foreground">{t.desc}</p></div>
+                    </button>
+                  ))}
+                </div>
+
+                {/* FIX (2026-07-15): Toggles para incluir páginas anexas con detalle por sección */}
+                <div>
+                  <p className="text-[10px] font-black uppercase text-muted-foreground mb-2">Incluir detalle en PDF (páginas anexas):</p>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    <button onClick={() => togglePdfOption('detailSales')} className={cn("flex items-center gap-2 p-2 rounded-lg border text-left text-xs", pdfOptions.detailSales ? "border-primary bg-primary/10 text-primary" : "border-border/40 text-muted-foreground")}>
+                      {pdfOptions.detailSales ? <CheckSquare className="w-3.5 h-3.5" /> : <Square className="w-3.5 h-3.5" />}
+                      <span className="font-bold">Ventas</span>
+                    </button>
+                    <button onClick={() => togglePdfOption('detailPayments')} className={cn("flex items-center gap-2 p-2 rounded-lg border text-left text-xs", pdfOptions.detailPayments ? "border-primary bg-primary/10 text-primary" : "border-border/40 text-muted-foreground")}>
+                      {pdfOptions.detailPayments ? <CheckSquare className="w-3.5 h-3.5" /> : <Square className="w-3.5 h-3.5" />}
+                      <span className="font-bold">Pagos Proveedor</span>
+                    </button>
+                    <button onClick={() => togglePdfOption('detailCommissions')} className={cn("flex items-center gap-2 p-2 rounded-lg border text-left text-xs", pdfOptions.detailCommissions ? "border-primary bg-primary/10 text-primary" : "border-border/40 text-muted-foreground")}>
+                      {pdfOptions.detailCommissions ? <CheckSquare className="w-3.5 h-3.5" /> : <Square className="w-3.5 h-3.5" />}
+                      <span className="font-bold">Comisiones</span>
+                    </button>
+                    <button onClick={() => togglePdfOption('detailProduction')} className={cn("flex items-center gap-2 p-2 rounded-lg border text-left text-xs", pdfOptions.detailProduction ? "border-primary bg-primary/10 text-primary" : "border-border/40 text-muted-foreground")}>
+                      {pdfOptions.detailProduction ? <CheckSquare className="w-3.5 h-3.5" /> : <Square className="w-3.5 h-3.5" />}
+                      <span className="font-bold">Producción</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Toggles para secciones del PDF */}
+                <div>
+                  <p className="text-[10px] font-black uppercase text-muted-foreground mb-2">Secciones del PDF:</p>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    <button onClick={() => togglePdfOption('includeBreakdown')} className={cn("flex items-center gap-2 p-2 rounded-lg border text-left text-xs", pdfOptions.includeBreakdown ? "border-primary bg-primary/10 text-primary" : "border-border/40 text-muted-foreground")}>
+                      {pdfOptions.includeBreakdown ? <CheckSquare className="w-3.5 h-3.5" /> : <Square className="w-3.5 h-3.5" />}
+                      <span className="font-bold">Desglose billetes</span>
+                    </button>
+                    <button onClick={() => togglePdfOption('includeUsd')} className={cn("flex items-center gap-2 p-2 rounded-lg border text-left text-xs", pdfOptions.includeUsd ? "border-primary bg-primary/10 text-primary" : "border-border/40 text-muted-foreground")}>
+                      {pdfOptions.includeUsd ? <CheckSquare className="w-3.5 h-3.5" /> : <Square className="w-3.5 h-3.5" />}
+                      <span className="font-bold">Cuadre USD</span>
+                    </button>
+                    <button onClick={() => togglePdfOption('includeSignature')} className={cn("flex items-center gap-2 p-2 rounded-lg border text-left text-xs col-span-2", pdfOptions.includeSignature ? "border-primary bg-primary/10 text-primary" : "border-border/40 text-muted-foreground")}>
+                      {pdfOptions.includeSignature ? <CheckSquare className="w-3.5 h-3.5" /> : <Square className="w-3.5 h-3.5" />}
+                      <span className="font-bold">Líneas de firma</span>
+                    </button>
+                  </div>
+                </div>
               </div>
             )}
             <div className="flex gap-2">
@@ -605,16 +771,21 @@ export function CashReportModal({ open, onClose }: CashReportModalProps) {
               <div className="flex gap-2 pt-2 border-t border-border/30">
                 <button
                   onClick={() => {
+                    // FIX (2026-07-15): usar setCurrentView del store Zustand en vez de
+                    // window.open('/terminal?view=...') que llevaba a 404 (no existe /terminal).
                     if (selectedDoc._type === 'sale') {
-                      window.open(`/terminal?view=sales`, '_blank');
+                      setCurrentView('sales');
                     } else if (selectedDoc._refType === 'receipt') {
-                      window.open(`/terminal?view=reception_list`, '_blank');
+                      setCurrentView('reception_list');
                     } else if (selectedDoc._refType === 'service') {
-                      window.open(`/terminal?view=received-services`, '_blank');
+                      setCurrentView('received-services');
                     } else if (selectedDoc._refType === 'commission') {
-                      window.open(`/terminal?view=workers`, '_blank');
+                      setCurrentView('workers');
+                    } else if (selectedDoc._refType === 'production_order' || selectedDoc._refType === 'work') {
+                      setCurrentView('production-orders');
                     }
                     setSelectedDoc(null);
+                    onClose();
                   }}
                   className={`flex-1 rounded-lg bg-primary text-primary-foreground text-xs font-black uppercase hover:opacity-90 flex items-center justify-center gap-1.5 ${touch}`}
                 >

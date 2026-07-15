@@ -482,7 +482,7 @@ export interface CashReport {
   payments: Array<{
     payment_method: string;
     currency: string;
-    ref_type: 'receipt' | 'service';
+    ref_type: 'receipt' | 'service' | 'production_order' | 'work';
     payment_count: number;
     total: number;
   }>;
@@ -492,10 +492,20 @@ export interface CashReport {
     commission_count: number;
     total: number;
   }>;
+  // FIX (2026-07-15): Órdenes de producción/servicios (anticipos + pagos recibidos).
+  // Son INGRESOS del cliente, van en sección aparte del reporte de caja.
+  production?: Array<{
+    payment_method: string;
+    currency: string;
+    ref_type: 'production_order' | 'work';
+    payment_count: number;
+    total: number;
+  }>;
   totals: {
     sales_total_cup: number;
     payments_total_cup: number;
     commissions_total_cup: number;
+    production_total_cup?: number;
     balance_cup: number;
   };
   start_date: string;

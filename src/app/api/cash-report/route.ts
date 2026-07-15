@@ -49,6 +49,8 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
     const cashCupSales = (reportData?.sales || []).find(
       (s: any) => s.payment_method === 'cash' && s.currency === 'CUP'
     );
+    // FIX (2026-07-15): el RPC ya filtra payments por ref_type IN ('receipt','service'),
+    // así que aquí NO incluimos production_order/work (van en sección aparte como ingresos)
     const cashCupPayments = (reportData?.payments || []).filter(
       (p: any) => p.payment_method === 'cash' && p.currency === 'CUP'
     );
@@ -57,7 +59,13 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
       (c: any) => c.payment_method === 'cash' && c.currency === 'CUP'
     );
     const totalCashCommissionsCup = cashCupCommissions.reduce((sum: number, c: any) => sum + Number(c.total), 0);
-    const cashBalanceCup = (cashCupSales?.total || 0) - totalCashPaymentsCup - totalCashCommissionsCup;
+    // FIX (2026-07-15): producción/servicios (anticipos + pagos recibidos) son INGRESOS en cash
+    const cashCupProduction = (reportData?.production || []).filter(
+      (p: any) => p.payment_method === 'cash' && p.currency === 'CUP'
+    );
+    const totalCashProductionCup = cashCupProduction.reduce((sum: number, p: any) => sum + Number(p.total), 0);
+    // Balance = Ventas cash + Producción cash (ingresos) - Pagos proveedores cash - Comisiones cash (egresos)
+    const cashBalanceCup = (cashCupSales?.total || 0) + totalCashProductionCup - totalCashPaymentsCup - totalCashCommissionsCup;
 
     // Desglose óptimo (greedy) del balance de efectivo CUP
     let remaining = Math.max(0, cashBalanceCup);
