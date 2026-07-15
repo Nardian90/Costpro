@@ -75,7 +75,7 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
   // 3. Obtener ventas por worker en el rango
   const { data: sales, error: sErr } = await supabase
     .from('sales_transactions')
-    .select('worker_id, payment_cash, payment_transfer, amount_total')
+    .select('worker_id, payment_cash, payment_transfer, amount_total, sale_date')
     .eq('store_id', store_id)
     // FIX C7: incluir ventas del último día (sale_date es DATE, no TIMESTAMP, pero
     // usamos date_to + 1 día exclusive para evitar edge cases de timezone)
@@ -100,26 +100,119 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
   }
 
   // 5. Calcular comisión por worker usando el motor
+  // FIX-A5 (2026-07-14): Pro-rateo cuando hay cambio de regla a mitad del periodo
   const calculations = workers.map((worker: any) => {
-    const workerSales = salesByWorker[worker.id] || { cash: 0, transfer: 0, total: 0 };
-    const rule = selectApplicableRule(
-      (rules || []) as CommissionRule[],
-      worker.id,
-      date_to,
-    );
-    const calc = calculateCommission(
-      worker.id,
-      workerSales,
-      rule,
-      { from: date_from, to: date_to },
-    );
+    const workerRules = (rules || []).filter(r =>
+      (r.worker_id === null || r.worker_id === worker.id) &&
+      r.valid_from <= date_to &&
+      (r.valid_to === null || r.valid_to >= date_from)
+    ) as CommissionRule[];
+
+    // Detectar si hubo cambio de regla durante el periodo
+    const ruleChangeDates: string[] = [];
+    for (const r of workerRules) {
+      if (r.valid_from > date_from && r.valid_from <= date_to) {
+        ruleChangeDates.push(r.valid_from);
+      }
+    }
+
+    if (ruleChangeDates.length === 0) {
+      // Sin cambios de regla — cálculo simple (comportamiento original)
+      const workerSales = salesByWorker[worker.id] || { cash: 0, transfer: 0, total: 0 };
+      const rule = selectApplicableRule(workerRules, worker.id, date_to);
+      const calc = calculateCommission(worker.id, workerSales, rule, { from: date_from, to: date_to });
+      return {
+        ...calc,
+        worker_id: worker.id,
+        worker_name: `${worker.first_name} ${worker.last_name}`,
+        worker_ci: worker.ci,
+        worker_status: worker.status,
+      };
+    }
+
+    // PRO-RATEO: dividir el periodo en sub-periodos por cada cambio de regla
+    const cutPoints = [date_from, ...ruleChangeDates.sort(), date_to];
+    const subPeriods: Array<{ start: string; end: string }> = [];
+    for (let i = 0; i < cutPoints.length - 1; i++) {
+      const start = cutPoints[i];
+      // El sub-periodo termina el día anterior al siguiente corte (o date_to)
+      if (i < cutPoints.length - 2) {
+        const end = new Date(new Date(cutPoints[i + 1]).getTime() - 86400000).toISOString().split('T')[0];
+        subPeriods.push({ start, end });
+      } else {
+        subPeriods.push({ start, end: cutPoints[i + 1] });
+      }
+    }
+
+    // Obtener ventas por sub-periodo para este worker
+    let totalCommission = 0;
+    const proRatedBreakdown: Array<{
+      period: string; rule_type: string; rule_value: string;
+      sales_cash: number; sales_transfer: number; sales_total: number; commission: number;
+    }> = [];
+
+    for (const sub of subPeriods) {
+      // Filtrar ventas del sub-periodo
+      const subSales = (sales || []).filter(s =>
+        s.worker_id === worker.id &&
+        s.sale_date >= sub.start &&
+        s.sale_date <= sub.end + 'T23:59:59'
+      );
+      const cash = subSales.reduce((sum, s) => sum + (Number(s.payment_cash) || 0), 0);
+      const transfer = subSales.reduce((sum, s) => sum + (Number(s.payment_transfer) || 0), 0);
+      const total = subSales.reduce((sum, s) => sum + (Number(s.amount_total) || 0), 0);
+
+      // Seleccionar regla vigente para el final de este sub-periodo
+      const subRule = selectApplicableRule(workerRules, worker.id, sub.end);
+      const subCalc = calculateCommission(worker.id, { cash, transfer, total }, subRule, { from: sub.start, to: sub.end });
+      totalCommission += subCalc.commission_suggested;
+
+      proRatedBreakdown.push({
+        period: `${sub.start} a ${sub.end}`,
+        rule_type: subRule?.type || 'sin regla',
+        rule_value: subRule?.type === 'percentage_sales'
+          ? `${subRule.value_percent}%`
+          : subRule?.type === 'fixed_amount'
+          ? `$${subRule.fixed_value}`
+          : subRule?.type === 'salary_based'
+          ? `$${subRule.salary_amount}`
+          : subRule?.type === 'hybrid'
+          ? `$${subRule.salary_amount} + ${subRule.value_percent}%`
+          : 'N/A',
+        sales_cash: cash,
+        sales_transfer: transfer,
+        sales_total: total,
+        commission: subCalc.commission_suggested,
+      });
+    }
+
+    // Usar la regla del último sub-periodo como regla_applied
+    const finalRule = selectApplicableRule(workerRules, worker.id, date_to);
+    const allSales = salesByWorker[worker.id] || { cash: 0, transfer: 0, total: 0 };
 
     return {
-      ...calc,
       worker_id: worker.id,
       worker_name: `${worker.first_name} ${worker.last_name}`,
       worker_ci: worker.ci,
       worker_status: worker.status,
+      period: { from: date_from, to: date_to },
+      sales: {
+        cash: allSales.cash,
+        transfer: allSales.transfer,
+        total: allSales.total,
+        base_used: allSales.total,
+      },
+      rule_applied: finalRule,
+      rule_applied_id: finalRule?.id || null,
+      breakdown: {
+        percentage_component: totalCommission,
+        fixed_component: 0,
+        salary_component: 0,
+      },
+      commission_suggested: totalCommission,
+      calculation_explanation: `Comisión calculada por pro-rateo en ${subPeriods.length} sub-periodos debido a cambio(s) de regla. Detalle: ${proRatedBreakdown.map(p => `${p.period}: ${p.rule_value} sobre ${p.sales_total.toFixed(2)} = ${p.commission.toFixed(2)}`).join('; ')}`,
+      pro_rated: true,
+      pro_rated_breakdown: proRatedBreakdown,
     };
   });
 

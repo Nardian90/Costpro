@@ -630,12 +630,12 @@ function WorkersTab({
             <thead className="bg-muted/30">
               <tr className="border-b-2 border-border text-left">
                 <th className="py-3 px-4 font-black uppercase tracking-widest text-xs text-muted-foreground">Trabajador</th>
-                <th className="py-3 px-4 font-black uppercase tracking-widest text-xs text-muted-foreground">CI</th>
-                <th className="py-3 px-4 font-black uppercase tracking-widest text-xs text-muted-foreground text-right">Cash</th>
-                <th className="py-3 px-4 font-black uppercase tracking-widest text-xs text-muted-foreground text-right">Transfer</th>
+                <th className="py-3 px-4 font-black uppercase tracking-widest text-xs text-muted-foreground hidden sm:table-cell">CI</th>
+                <th className="py-3 px-4 font-black uppercase tracking-widest text-xs text-muted-foreground text-right hidden md:table-cell">Cash</th>
+                <th className="py-3 px-4 font-black uppercase tracking-widest text-xs text-muted-foreground text-right hidden md:table-cell">Transfer</th>
                 <th className="py-3 px-4 font-black uppercase tracking-widest text-xs text-muted-foreground text-right">Total</th>
-                <th className="py-3 px-4 font-black uppercase tracking-widest text-xs text-muted-foreground">Regla activa</th>
-                <th className="py-3 px-4 font-black uppercase tracking-widest text-xs text-muted-foreground">Último pago</th>
+                <th className="py-3 px-4 font-black uppercase tracking-widest text-xs text-muted-foreground hidden lg:table-cell">Regla activa</th>
+                <th className="py-3 px-4 font-black uppercase tracking-widest text-xs text-muted-foreground hidden lg:table-cell">Último pago</th>
                 <th className="py-3 px-4 font-black uppercase tracking-widest text-xs text-muted-foreground text-center">Estado</th>
                 <th className="py-3 px-4 font-black uppercase tracking-widest text-xs text-muted-foreground text-center">Acción</th>
               </tr>
@@ -652,11 +652,11 @@ function WorkersTab({
                 workers.map((w: WorkerSummary) => (
                   <tr key={w.worker_id} className="border-b border-border/50 hover:bg-muted/30">
                     <td className="py-3 px-4 font-bold text-foreground">{w.first_name} {w.last_name}</td>
-                    <td className="py-3 px-4 font-mono text-muted-foreground">{w.ci}</td>
-                    <td className="py-3 px-4 text-right font-mono text-foreground">{formatCurrency(w.sales_cash)}</td>
-                    <td className="py-3 px-4 text-right font-mono text-foreground">{formatCurrency(w.sales_transfer)}</td>
+                    <td className="py-3 px-4 font-mono text-muted-foreground hidden sm:table-cell">{w.ci}</td>
+                    <td className="py-3 px-4 text-right font-mono text-foreground hidden md:table-cell">{formatCurrency(w.sales_cash)}</td>
+                    <td className="py-3 px-4 text-right font-mono text-foreground hidden md:table-cell">{formatCurrency(w.sales_transfer)}</td>
                     <td className="py-3 px-4 text-right font-mono font-black text-foreground">{formatCurrency(w.sales_total)}</td>
-                    <td className="py-3 px-4 text-xs">
+                    <td className="py-3 px-4 text-xs hidden lg:table-cell">
                       {w.active_rule_type ? (
                         <span className="px-2 py-1 rounded-md bg-primary/15 text-primary font-bold border border-primary/30">
                           {RULE_TYPE_LABELS[w.active_rule_type] || w.active_rule_type}
@@ -666,7 +666,7 @@ function WorkersTab({
                         <span className="text-muted-foreground">—</span>
                       )}
                     </td>
-                    <td className="py-3 px-4 text-xs text-muted-foreground">
+                    <td className="py-3 px-4 text-xs text-muted-foreground hidden lg:table-cell">
                       {w.last_payment_date ? (
                         <div>
                           <div>{formatDate(w.last_payment_date)}</div>
@@ -1320,12 +1320,8 @@ function HistoryTab({ rules }: any) {
                 </p>
                 <p className="text-xs text-muted-foreground">Vigencia: {formatDate(r.valid_from)} → {r.valid_to ? formatDate(r.valid_to) : '∞'}</p>
               </div>
-              <a
-                href={`/api/commissions/rules?store_id=${r.store_id}&history=true`}
-                className="text-xs text-primary hover:underline"
-              >
-                Ver versiones →
-              </a>
+              {/* FIX-A3 (2026-07-14): removido link que navegaba fuera de la SPA.
+                  El conteo de versiones se muestra abajo como info sin acción. */}
             </div>
             {r.versions && r.versions.length > 0 ? (
               <div className="text-xs text-muted-foreground">
