@@ -42,7 +42,7 @@ export function useStoresView() {
     // FIX: Filtro de estado de tiendas (activas/inactivas/todas)
     const [statusFilter, setStatusFilter] = useState<'active' | 'inactive' | 'all'>('active');
 
-    const { data: storesData = [], isLoading: isLoadingStores } = useStores(
+    const { data: storesData = [], isLoading: isLoadingStores, isError: isErrorStores, refetch: refetchStores } = useStores(
         user?.id || '',
         user?.role === 'admin',
         isEncargado || false,
@@ -264,6 +264,8 @@ export function useStoresView() {
         // Data
         stores: filteredStores,
         isLoading: isLoadingStores,
+        isError: isErrorStores,
+        refetch: refetchStores,
         activeStoreId: user?.activeStoreId,
         isAdmin: user?.role === 'admin',
 

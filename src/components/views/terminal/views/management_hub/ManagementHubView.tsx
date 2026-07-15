@@ -19,7 +19,7 @@
  * Patrón: TABS (igual que InventoryView).
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import { Newspaper, Store, Building, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -101,7 +101,7 @@ export default function ManagementHubView() {
     }
   };
 
-  const visibleTabs = TABS.filter(tab => !user || tab.roles.includes(user.role));
+  const visibleTabs = useMemo(() => TABS.filter(tab => !user || tab.roles.includes(user.role)), [user]);
 
   useEffect(() => {
     if (!visibleTabs.some(t => t.id === activeTab) && visibleTabs.length > 0) {

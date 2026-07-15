@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Image from 'next/image';
-import { Plus, Loader2, X, CheckSquare, Rocket, GitCompare, Building } from 'lucide-react';
+import { Plus, Loader2, X, CheckSquare, Rocket, GitCompare, Building, AlertTriangle, RotateCcw } from 'lucide-react';
 import { cn, getStoreLogoUrl } from '@/lib/utils';
 import type { Store } from '@/types';
 import SearchBar from '@/components/ui/SearchBar';
@@ -74,6 +74,8 @@ export default function StoresManagementView({ onOpenDashboard }: { onOpenDashbo
     selectedStore,
     isSubmitting,
     isLoading,
+    isError,
+    refetch,
     handleCreateStore,
     handleEditStore,
     handleDeleteStore,
@@ -294,8 +296,19 @@ export default function StoresManagementView({ onOpenDashboard }: { onOpenDashbo
           />
         ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+          {/* FIX-H1: Error state — antes confundía error con lista vacía */}
+          {isError && (
+            <div className="col-span-full py-24 flex flex-col items-center justify-center gap-3 border-2 border-destructive/30 rounded-xl bg-destructive/5">
+              <AlertTriangle className="w-12 h-12 text-destructive/60" aria-hidden="true" />
+              <p className="font-black uppercase text-sm text-destructive">Error al cargar tiendas</p>
+              <button onClick={() => refetch()} className="min-h-[44px] px-4 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-black uppercase hover:opacity-90 flex items-center gap-2">
+                <RotateCcw className="w-4 h-4" /> Reintentar
+              </button>
+            </div>
+          )}
+
           {/* UX-001: Loading state BEFORE map so it shows while fetching */}
-          {isLoading && (
+          {!isError && isLoading && (
             <div className="col-span-full py-24 flex flex-col items-center justify-center gap-3">
               <Loader2 className="w-8 h-8 animate-spin text-primary/40" aria-hidden="true" />
               <p className="text-sm font-black uppercase tracking-widest text-muted-foreground" role="status">{t('loadingStores')}</p>
@@ -329,7 +342,7 @@ export default function StoresManagementView({ onOpenDashboard }: { onOpenDashbo
             />
           ))}
 
-          {!isLoading && stores.length === 0 && (
+          {!isError && !isLoading && stores.length === 0 && (
             <div className="col-span-full py-24 text-center border-2 border-dashed border-border rounded-xl bg-muted/10">
                <Building className="w-16 h-16 mx-auto mb-4 opacity-5" />
                <p className="font-black uppercase tracking-widest text-sm text-muted-foreground mb-2">{t('noStores')}</p>
