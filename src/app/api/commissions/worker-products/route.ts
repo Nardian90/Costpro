@@ -145,9 +145,20 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
               ? new Date(li.transactions.created_at).toISOString().split('T')[0]
               : dateFrom));
     // FIX (2026-07-15): transaction_items no tiene unit_price.
-    // Usar price_at_sale_cup (preferido, en CUP) o price_at_sale como fallback.
-    const unitPrice = Number(li.price_at_sale_cup || li.price_at_sale) || 0;
+    // FIX CRÍTICO (2026-07-17): price_at_sale_cup en la BD ya es price × qty × rate
+    // (es decir, line_total_cup, NO unit_price_cup). Ver comentario en calculate/route.ts.
     const qty = Number(li.quantity) || 0;
+    const priceAtSaleCup = Number(li.price_at_sale_cup) || 0;
+    const priceAtSale = Number(li.price_at_sale) || 0;
+    let lineTotal: number;
+    let unitPrice: number;
+    if (priceAtSaleCup > 0 && qty > 0) {
+      lineTotal = priceAtSaleCup;
+      unitPrice = priceAtSaleCup / qty;
+    } else {
+      unitPrice = priceAtSale;
+      lineTotal = priceAtSale * qty;
+    }
     return {
       line_item_id: li.id,
       transaction_id: li.transaction_id,
@@ -157,7 +168,7 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
       product_sku: li.products?.sku || null,
       quantity: qty,
       unit_price: unitPrice,
-      line_total: unitPrice * qty,
+      line_total: lineTotal,
       cash_paid: Number(li.cash_paid) || 0,
       transfer_paid: Number(li.transfer_paid) || 0,
       currency: li.transactions?.sale_currency || li.price_currency || posInfo?.sale_currency || 'CUP',
