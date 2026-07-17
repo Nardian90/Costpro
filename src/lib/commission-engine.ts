@@ -390,7 +390,12 @@ export function calculateCommissionWithProducts(
   for (const item of lineItems) {
     // 1. ¿Producto específico?
     const pRule = selectProductSpecificRule(rules, worker_id, item.product_id, dateInRange);
-    if (pRule && pRule.product_commission_amount != null) {
+    // v3 (2026-07-17): condición robustecida — una regla aplica si tiene monto default
+    // (product_commission_amount) O si tiene overrides por producto (product_configs).
+    // Antes solo se verificaba product_commission_amount != null, lo que hacía que
+    // reglas v3 puras (solo product_configs, sin default) fueran ignoradas silenciosamente.
+    const hasProductConfig = pRule?.product_configs?.[item.product_id] != null;
+    if (pRule && (pRule.product_commission_amount != null || hasProductConfig)) {
       // v3 (2026-07-17): resolver configuración específica del producto si existe override
       const productConfig = pRule.product_configs?.[item.product_id];
       const effectiveAmount = productConfig?.amount != null
