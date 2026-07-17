@@ -36,6 +36,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { CUBAN_PROVINCES, validateCubanCI, getMunicipalitiesForProvince } from './worker-helpers';
+import { ExchangeRatesModal } from './ExchangeRatesModal';
 
 /**
  * WorkersView — Gestión de Trabajadores y Comisiones.
@@ -1746,6 +1747,8 @@ function ProductCommissionCatalog({ storeId, onRefresh }: { storeId: string; onR
   const [productConfigs, setProductConfigs] = useState<Record<string, ProductRuleConfig>>({});
   const [saving, setSaving] = useState(false);
   const [bulkOpen, setBulkOpen] = useState(false);
+  // v3 (2026-07-17): modal de tasas de cambio reutilizable (paso 6)
+  const [showRatesModal, setShowRatesModal] = useState(false);
 
   // Cargar catálogo + tasas + configs existentes
   const loadCatalog = useCallback(async () => {
@@ -1985,6 +1988,13 @@ function ProductCommissionCatalog({ storeId, onRefresh }: { storeId: string; onR
         </div>
         <div className="flex gap-2">
           <button
+            onClick={() => setShowRatesModal(true)}
+            className="px-3 py-2 rounded-xl border border-primary/30 bg-primary/5 text-primary text-xs font-black uppercase tracking-widest hover:bg-primary/10 min-h-[44px] flex items-center gap-2"
+            title="Configurar tasas de cambio de la tienda (USD, EUR, MLC → CUP)"
+          >
+            <TrendingUp className="w-3.5 h-3.5" /> Tasas
+          </button>
+          <button
             onClick={() => setBulkOpen(!bulkOpen)}
             className="px-3 py-2 rounded-xl border border-border text-xs font-black uppercase tracking-widest hover:bg-muted min-h-[44px] flex items-center gap-2"
           >
@@ -2193,6 +2203,17 @@ function ProductCommissionCatalog({ storeId, onRefresh }: { storeId: string; onR
           </table>
         </div>
       </div>
+
+      {/* Paso 6: Modal de tasas de cambio reutilizable */}
+      <ExchangeRatesModal
+        open={showRatesModal}
+        onClose={() => setShowRatesModal(false)}
+        storeId={storeId}
+        onSaved={(newRates) => {
+          // Actualizar tasas locales al guardar para que la tabla refleje los cambios
+          setExchangeRates(prev => ({ ...prev, ...newRates }));
+        }}
+      />
     </div>
   );
 }
