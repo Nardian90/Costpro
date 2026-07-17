@@ -829,7 +829,7 @@ function WorkersTab({
                         <button
                           onClick={() => onPayCommission(w)}
                           disabled={w.status !== 'active'}
-                          className="px-2 py-1.5 rounded-lg bg-primary text-primary-foreground text-[10px] font-black uppercase tracking-wider hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed min-h-[36px] flex items-center gap-1"
+                          className="px-2 py-1.5 rounded-lg bg-primary text-primary-foreground text-[10px] font-black uppercase tracking-wider hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed min-h-[44px] flex items-center gap-1"
                           title="Pagar comisión"
                           aria-label={`Pagar comisión a ${w.first_name}`}
                         >
@@ -839,7 +839,7 @@ function WorkersTab({
                         {/* Editar */}
                         <button
                           onClick={() => onEditWorker(w)}
-                          className="p-2 rounded-lg bg-muted/50 text-muted-foreground hover:bg-primary/10 hover:text-primary border border-border min-h-[36px] min-w-[36px] flex items-center justify-center"
+                          className="p-2 rounded-lg bg-muted/50 text-muted-foreground hover:bg-primary/10 hover:text-primary border border-border min-h-[44px] min-w-[44px] flex items-center justify-center"
                           title="Editar datos del trabajador"
                           aria-label={`Editar ${w.first_name}`}
                         >
@@ -850,7 +850,7 @@ function WorkersTab({
                           onClick={() => handleToggleStatus(w)}
                           disabled={togglingId === w.worker_id}
                           className={cn(
-                            'p-2 rounded-lg border min-h-[36px] min-w-[36px] flex items-center justify-center disabled:opacity-50',
+                            'p-2 rounded-lg border min-h-[44px] min-w-[44px] flex items-center justify-center disabled:opacity-50',
                             w.status === 'active'
                               ? 'bg-warning/10 text-warning border-warning/30 hover:bg-warning/20'
                               : 'bg-success/10 text-success border-success/30 hover:bg-success/20'
@@ -1074,8 +1074,9 @@ function PayCommissionModal({ worker, onClose, onPaid }: {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
-      <div className="bg-card rounded-2xl border-2 border-border shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 bg-background/80 backdrop-blur-sm">
+      <div className="bg-card rounded-t-2xl sm:rounded-2xl border-2 border-border shadow-2xl max-w-2xl w-full h-[95vh] sm:h-auto sm:max-h-[90vh] overflow-y-auto"
+        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
         {/* Header */}
         <div className="sticky top-0 bg-card border-b-2 border-border p-5 flex items-center justify-between z-10">
           <div className="flex items-center gap-3">
@@ -1096,9 +1097,9 @@ function PayCommissionModal({ worker, onClose, onPaid }: {
           </button>
         </div>
 
-        {/* Stepper */}
+        {/* Stepper — scroll horizontal en móvil */}
         <div className="px-5 py-3 bg-muted/30 border-b border-border">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 overflow-x-auto" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
             {['Rango', 'Cálculo', 'Editar', 'Confirmar'].map((label, i) => {
               const stepNum = i + 1;
               const isActive = step === stepNum;
@@ -1106,7 +1107,7 @@ function PayCommissionModal({ worker, onClose, onPaid }: {
               return (
                 <React.Fragment key={label}>
                   <div className={cn(
-                    'flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-widest',
+                    'flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-widest whitespace-nowrap shrink-0',
                     isActive ? 'bg-primary text-primary-foreground' :
                     isDone ? 'bg-success/15 text-success border border-success/30' :
                     'bg-muted text-muted-foreground'
@@ -1363,11 +1364,12 @@ function PayCommissionModal({ worker, onClose, onPaid }: {
                               <td className="py-2 px-2 text-right">
                                 <input
                                   type="number"
+                                  inputMode="decimal"
                                   step="0.01"
                                   min="0"
                                   value={manualCommissions[item.line_item_id] || '0.00'}
                                   onChange={(e) => updateManualCommission(item.line_item_id, e.target.value)}
-                                  className="w-24 h-9 px-2 text-right rounded border-2 border-primary/40 bg-background text-xs font-mono font-bold text-primary focus:border-primary focus:outline-none min-h-[36px]"
+                                  className="w-24 h-9 px-2 text-right rounded border-2 border-primary/40 bg-background text-xs font-mono font-bold text-primary focus:border-primary focus:outline-none min-h-[44px]"
                                   placeholder="0.00"
                                 />
                               </td>
@@ -1468,6 +1470,7 @@ function PayCommissionModal({ worker, onClose, onPaid }: {
                 </label>
                 <input
                   type="number"
+                  inputMode="decimal"
                   step="0.01"
                   value={finalAmount}
                   onChange={(e) => setFinalAmount(e.target.value)}
@@ -1608,23 +1611,23 @@ function RulesTab({ rules, storeId, onRefresh, onEdit, onNew }: any) {
         </button>
       </div>
 
-      {/* Sub-tabs: Lista de reglas | Catálogo por producto */}
-      <div className="flex gap-2 border-b border-border">
+      {/* Sub-tabs: Lista de reglas | Catálogo por producto — scroll horizontal en móvil */}
+      <div className="flex gap-2 border-b border-border overflow-x-auto" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
         <button
           onClick={() => setSubTab('list')}
           className={cn(
-            'px-4 py-2 text-xs font-black uppercase tracking-widest border-b-2 transition-colors min-h-[44px] flex items-center gap-2',
+            'px-4 py-2 text-xs font-black uppercase tracking-widest border-b-2 transition-colors min-h-[44px] flex items-center gap-2 whitespace-nowrap shrink-0',
             subTab === 'list'
               ? 'border-primary text-primary'
               : 'border-transparent text-muted-foreground hover:text-foreground'
           )}
         >
-          <Settings className="w-3.5 h-3.5" /> Lista de reglas
+          <Settings className="w-3.5 h-3.5" /> Lista
         </button>
         <button
           onClick={() => setSubTab('catalog')}
           className={cn(
-            'px-4 py-2 text-xs font-black uppercase tracking-widest border-b-2 transition-colors min-h-[44px] flex items-center gap-2',
+            'px-4 py-2 text-xs font-black uppercase tracking-widest border-b-2 transition-colors min-h-[44px] flex items-center gap-2 whitespace-nowrap shrink-0',
             subTab === 'catalog'
               ? 'border-primary text-primary'
               : 'border-transparent text-muted-foreground hover:text-foreground'
@@ -1637,15 +1640,15 @@ function RulesTab({ rules, storeId, onRefresh, onEdit, onNew }: any) {
       {subTab === 'list' ? (
         <div className="bg-card rounded-2xl border-2 border-border overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="w-full text-sm min-w-[640px]">
               <thead className="bg-muted/30">
                 <tr className="border-b-2 border-border text-left">
                   <th className="py-3 px-4 font-black uppercase tracking-widest text-xs text-muted-foreground">Tipo</th>
                   <th className="py-3 px-4 font-black uppercase tracking-widest text-xs text-muted-foreground">Aplica a</th>
                   <th className="py-3 px-4 font-black uppercase tracking-widest text-xs text-muted-foreground">Valor</th>
-                  <th className="py-3 px-4 font-black uppercase tracking-widest text-xs text-muted-foreground">Base</th>
-                  <th className="py-3 px-4 font-black uppercase tracking-widest text-xs text-muted-foreground">Prioridad</th>
-                  <th className="py-3 px-4 font-black uppercase tracking-widest text-xs text-muted-foreground">Vigencia</th>
+                  <th className="py-3 px-4 font-black uppercase tracking-widest text-xs text-muted-foreground hidden md:table-cell">Base</th>
+                  <th className="py-3 px-4 font-black uppercase tracking-widest text-xs text-muted-foreground hidden md:table-cell">Prioridad</th>
+                  <th className="py-3 px-4 font-black uppercase tracking-widest text-xs text-muted-foreground hidden lg:table-cell">Vigencia</th>
                   <th className="py-3 px-4 font-black uppercase tracking-widest text-xs text-muted-foreground text-center">Acción</th>
                 </tr>
               </thead>
@@ -1686,8 +1689,8 @@ function RulesTab({ rules, storeId, onRefresh, onEdit, onNew }: any) {
                       )}
                     </td>
                     <td className="py-3 px-4 text-xs">{BASE_CALC_LABELS[r.base_calculation] || r.base_calculation}</td>
-                    <td className="py-3 px-4 font-mono text-center">{r.priority}</td>
-                    <td className="py-3 px-4 text-xs text-muted-foreground">
+                    <td className="py-3 px-4 font-mono text-center hidden md:table-cell">{r.priority}</td>
+                    <td className="py-3 px-4 text-xs text-muted-foreground hidden lg:table-cell">
                       {formatDate(r.valid_from)} → {r.valid_to ? formatDate(r.valid_to) : '∞'}
                     </td>
                     <td className="py-3 px-4 text-center">
@@ -1979,45 +1982,49 @@ function ProductCommissionCatalog({ storeId, onRefresh }: { storeId: string; onR
 
   return (
     <div className="space-y-3">
-      {/* Header con tasas + guardado */}
-      <div className="bg-card rounded-2xl border-2 border-border p-3 flex flex-wrap items-center justify-between gap-2">
-        <div className="flex items-center gap-3 flex-wrap">
-          <div className="text-xs">
-            <span className="font-black uppercase tracking-widest text-muted-foreground">Tasas:</span>{' '}
-            {Object.entries(exchangeRates).map(([cur, rate]) => (
-              <span key={cur} className="ml-2 font-mono font-bold text-foreground">
-                {cur}={rate}
-              </span>
-            ))}
+      {/* Header con tasas + guardado — responsive: iconos solo en móvil, texto en desktop */}
+      <div className="bg-card rounded-2xl border-2 border-border p-3 space-y-2">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-muted-foreground shrink-0">Tasas:</span>
+            <div className="flex items-center gap-1 sm:gap-2 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+              {Object.entries(exchangeRates).map(([cur, rate]) => (
+                <span key={cur} className="font-mono font-bold text-foreground text-[10px] sm:text-xs whitespace-nowrap shrink-0">
+                  {cur}={rate}
+                </span>
+              ))}
+            </div>
           </div>
-          <span className="text-xs text-muted-foreground">·</span>
-          <span className="text-xs">
-            <span className="font-black uppercase tracking-widest text-muted-foreground">Configurados:</span>{' '}
+          <span className="text-[10px] sm:text-xs shrink-0">
             <span className="font-mono font-bold text-primary">{productCount}</span>
-            <span className="text-muted-foreground"> / {products.length}</span>
+            <span className="text-muted-foreground">/{products.length}</span>
           </span>
         </div>
         <div className="flex gap-2">
           <button
             onClick={() => setShowRatesModal(true)}
-            className="px-3 py-2 rounded-xl border border-primary/30 bg-primary/5 text-primary text-xs font-black uppercase tracking-widest hover:bg-primary/10 min-h-[44px] flex items-center gap-2"
+            className="px-3 py-2 rounded-xl border border-primary/30 bg-primary/5 text-primary text-xs font-black uppercase tracking-widest hover:bg-primary/10 min-h-[44px] flex items-center gap-2 flex-1 sm:flex-initial justify-center"
             title="Configurar tasas de cambio de la tienda (USD, EUR, MLC → CUP)"
+            aria-label="Configurar tasas de cambio"
           >
-            <TrendingUp className="w-3.5 h-3.5" /> Tasas
+            <TrendingUp className="w-4 h-4" />
+            <span className="hidden sm:inline">Tasas</span>
           </button>
           <button
             onClick={() => setBulkOpen(!bulkOpen)}
-            className="px-3 py-2 rounded-xl border border-border text-xs font-black uppercase tracking-widest hover:bg-muted min-h-[44px] flex items-center gap-2"
+            className="px-3 py-2 rounded-xl border border-border text-xs font-black uppercase tracking-widest hover:bg-muted min-h-[44px] flex items-center gap-2 flex-1 sm:flex-initial justify-center"
+            aria-label="Aplicar comisión en masa"
           >
-            <Layers className="w-3.5 h-3.5" /> Aplicar en masa
+            <Layers className="w-4 h-4" />
+            <span className="hidden sm:inline">En masa</span>
           </button>
           <button
             onClick={handleSave}
             disabled={saving || productCount === 0}
-            className="px-4 py-2 rounded-xl bg-primary text-primary-foreground text-xs font-black uppercase tracking-widest hover:bg-primary/90 disabled:opacity-50 min-h-[44px] flex items-center gap-2"
+            className="px-4 py-2 rounded-xl bg-primary text-primary-foreground text-xs font-black uppercase tracking-widest hover:bg-primary/90 disabled:opacity-50 min-h-[44px] flex items-center gap-2 flex-1 sm:flex-initial justify-center"
           >
-            {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
-            {saving ? 'Guardando...' : `Guardar (${productCount})`}
+            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+            <span>{saving ? '...' : `Guardar (${productCount})`}</span>
           </button>
         </div>
       </div>
@@ -2056,13 +2063,13 @@ function ProductCommissionCatalog({ storeId, onRefresh }: { storeId: string; onR
             <Layers className="w-4 h-4 text-primary" />
             <h4 className="text-xs font-black uppercase tracking-widest text-primary">Aplicar comisión en masa</h4>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
             <div>
               <label className="text-[10px] font-black uppercase text-muted-foreground block mb-1">Modo</label>
               <select
                 value={bulkMode}
                 onChange={(e) => setBulkMode(e.target.value as any)}
-                className="w-full h-10 px-2 rounded-lg border-2 border-border bg-background text-xs font-bold min-h-[40px] text-foreground"
+                className="w-full h-11 px-2 rounded-lg border-2 border-border bg-background text-xs font-bold min-h-[44px] text-foreground"
               >
                 <option value="per_unit">Por unidad</option>
                 <option value="per_sale">Por venta</option>
@@ -2072,12 +2079,13 @@ function ProductCommissionCatalog({ storeId, onRefresh }: { storeId: string; onR
               <label className="text-[10px] font-black uppercase text-muted-foreground block mb-1">Monto</label>
               <input
                 type="number"
+                inputMode="decimal"
                 step="0.01"
                 min="0"
                 value={bulkAmount}
                 onChange={(e) => setBulkAmount(e.target.value)}
                 placeholder="1000"
-                className="w-full h-10 px-2 rounded-lg border-2 border-border bg-background text-xs font-mono font-bold min-h-[40px] text-foreground"
+                className="w-full h-11 px-2 rounded-lg border-2 border-border bg-background text-xs font-mono font-bold min-h-[44px] text-foreground"
               />
             </div>
             <div>
@@ -2085,7 +2093,7 @@ function ProductCommissionCatalog({ storeId, onRefresh }: { storeId: string; onR
               <select
                 value={bulkCurrency}
                 onChange={(e) => setBulkCurrency(e.target.value as any)}
-                className="w-full h-10 px-2 rounded-lg border-2 border-border bg-background text-xs font-bold min-h-[40px] text-foreground"
+                className="w-full h-11 px-2 rounded-lg border-2 border-border bg-background text-xs font-bold min-h-[44px] text-foreground"
               >
                 <option value="CUP">CUP</option>
                 <option value="orig">Moneda original (convierte)</option>
@@ -2096,7 +2104,7 @@ function ProductCommissionCatalog({ storeId, onRefresh }: { storeId: string; onR
               <select
                 value={bulkScope}
                 onChange={(e) => setBulkScope(e.target.value as any)}
-                className="w-full h-10 px-2 rounded-lg border-2 border-border bg-background text-xs font-bold min-h-[40px] text-foreground"
+                className="w-full h-11 px-2 rounded-lg border-2 border-border bg-background text-xs font-bold min-h-[44px] text-foreground"
               >
                 <option value="all">Todos los filtrados</option>
                 <option value="category">Por categoría</option>
@@ -2108,7 +2116,7 @@ function ProductCommissionCatalog({ storeId, onRefresh }: { storeId: string; onR
             <select
               value={bulkCategory}
               onChange={(e) => setBulkCategory(e.target.value)}
-              className="w-full h-10 px-2 rounded-lg border-2 border-border bg-background text-xs font-bold min-h-[40px] text-foreground"
+              className="w-full h-11 px-2 rounded-lg border-2 border-border bg-background text-xs font-bold min-h-[44px] text-foreground"
             >
               <option value="">Selecciona categoría</option>
               {categories.map(c => <option key={c} value={c}>{c}</option>)}
@@ -2118,114 +2126,184 @@ function ProductCommissionCatalog({ storeId, onRefresh }: { storeId: string; onR
             <div className="grid grid-cols-2 gap-2">
               <input
                 type="number"
+                inputMode="decimal"
                 placeholder="Precio mín CUP"
                 value={bulkMinPrice}
                 onChange={(e) => setBulkMinPrice(e.target.value)}
-                className="h-10 px-2 rounded-lg border-2 border-border bg-background text-xs font-mono min-h-[40px] text-foreground"
+                className="h-11 px-2 rounded-lg border-2 border-border bg-background text-xs font-mono min-h-[44px] text-foreground"
               />
               <input
                 type="number"
+                inputMode="decimal"
                 placeholder="Precio máx CUP"
                 value={bulkMaxPrice}
                 onChange={(e) => setBulkMaxPrice(e.target.value)}
-                className="h-10 px-2 rounded-lg border-2 border-border bg-background text-xs font-mono min-h-[40px] text-foreground"
+                className="h-11 px-2 rounded-lg border-2 border-border bg-background text-xs font-mono min-h-[44px] text-foreground"
               />
             </div>
           )}
           <div className="flex gap-2 pt-1">
-            <button onClick={() => setBulkOpen(false)} className="px-3 py-2 rounded-lg border border-border text-xs font-bold uppercase hover:bg-muted min-h-[40px]">Cancelar</button>
-            <button onClick={applyBulk} className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-black uppercase hover:bg-primary/90 min-h-[40px]">Aplicar</button>
+            <button onClick={() => setBulkOpen(false)} className="px-3 py-2 rounded-lg border border-border text-xs font-bold uppercase hover:bg-muted min-h-[44px] flex-1 sm:flex-initial">Cancelar</button>
+            <button onClick={applyBulk} className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-black uppercase hover:bg-primary/90 min-h-[44px] flex-1">Aplicar</button>
           </div>
         </div>
       )}
 
-      {/* v3 (2026-07-17): Tabla catálogo virtualizada con @tanstack/react-virtual (P4) */}
-      <div className="bg-card rounded-2xl border-2 border-border overflow-hidden">
-        <div ref={parentRef} className="overflow-auto max-h-[600px]">
-          <table className="w-full text-sm table-fixed">
-            <thead className="bg-muted/30 sticky top-0 z-10">
-              <tr className="border-b-2 border-border text-left">
-                <th className="py-2 px-3 font-black uppercase tracking-widest text-[10px] text-muted-foreground w-[40%]">Producto</th>
-                <th className="py-2 px-3 font-black uppercase tracking-widest text-[10px] text-muted-foreground text-right w-[12%]">Precio</th>
-                <th className="py-2 px-3 font-black uppercase tracking-widest text-[10px] text-muted-foreground text-right w-[12%]">CUP</th>
-                <th className="py-2 px-3 font-black uppercase tracking-widest text-[10px] text-muted-foreground w-[12%]">Modo</th>
-                <th className="py-2 px-3 font-black uppercase tracking-widest text-[10px] text-muted-foreground text-right w-[12%]">Comisión</th>
-                <th className="py-2 px-3 font-black uppercase tracking-widest text-[10px] text-muted-foreground text-right w-[12%]">Preview</th>
-              </tr>
-            </thead>
-            <tbody style={{ height: `${rowVirtualizer.getTotalSize()}px`, position: 'relative', display: 'block' }}>
-              {filteredProducts.length === 0 ? (
-                <tr><td colSpan={6} className="py-12 text-center text-muted-foreground">Sin productos</td></tr>
-              ) : rowVirtualizer.getVirtualItems().map((virtualRow) => {
-                const p = filteredProducts[virtualRow.index];
-                if (!p) return null;
-                const cfg = productConfigs[p.id];
-                const cupPrice = priceInCup(p);
-                const preview = cfg?.amount != null && cfg.amount > 0 ? cfg.amount : 0;
-                return (
-                  <tr
-                    key={p.id}
-                    className={cn('border-b border-border/30 hover:bg-muted/20', cfg?.amount && 'bg-primary/5')}
-                    style={{
-                      position: 'absolute',
-                      top: 0,
-                      left: 0,
-                      width: '100%',
-                      transform: `translateY(${virtualRow.start}px)`,
-                      display: 'table',
-                      tableLayout: 'fixed',
-                    }}
-                  >
-                    <td className="py-2 px-3 w-[40%]">
-                      <div className="font-bold text-foreground text-xs truncate">{p.name}</div>
+      {/* v3 (2026-07-17): Catálogo dual — CARDS en móvil, TABLA virtualizada en desktop */}
+      {filteredProducts.length === 0 ? (
+        <div className="bg-card rounded-2xl border-2 border-border py-12 text-center text-muted-foreground">
+          Sin productos
+        </div>
+      ) : (
+        <>
+          {/* MÓVIL (<768px): Cards apiladas con edición inline */}
+          <div className="sm:hidden space-y-2 max-h-[600px] overflow-y-auto pb-4">
+            {filteredProducts.map((p) => {
+              const cfg = productConfigs[p.id];
+              const cupPrice = priceInCup(p);
+              const preview = cfg?.amount != null && cfg.amount > 0 ? cfg.amount : 0;
+              return (
+                <div key={p.id} className={cn(
+                  'bg-card rounded-xl border-2 p-3 space-y-2',
+                  cfg?.amount ? 'border-primary/40 bg-primary/5' : 'border-border'
+                )}>
+                  {/* Fila 1: nombre + precio */}
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <div className="font-bold text-foreground text-sm truncate">{p.name}</div>
                       <div className="text-[10px] text-muted-foreground truncate">
                         {p.sku || '—'} · {p.category || '—'} · Stock: {p.stock_current}
                       </div>
-                    </td>
-                    <td className="py-2 px-3 text-right font-mono text-xs w-[12%]">
-                      <div className="font-bold text-foreground">{p.price}</div>
-                      <div className="text-[10px] text-muted-foreground">{p.price_currency}</div>
-                    </td>
-                    <td className="py-2 px-3 text-right font-mono text-xs text-muted-foreground w-[12%]">
-                      {p.price_currency === 'CUP' ? '—' : cupPrice.toFixed(2)}
-                    </td>
-                    <td className="py-2 px-3 w-[12%]">
-                      <select
-                        value={cfg?.mode || 'per_unit'}
-                        onChange={(e) => updateConfig(p.id, { mode: e.target.value as 'per_sale' | 'per_unit' })}
-                        className="h-9 px-2 rounded-lg border border-border bg-background text-[10px] font-bold min-h-[36px] text-foreground w-full"
-                      >
-                        <option value="per_unit">Por unidad</option>
-                        <option value="per_sale">Por venta</option>
-                      </select>
-                    </td>
-                    <td className="py-2 px-3 text-right w-[12%]">
-                      <input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        value={cfg?.amount ?? ''}
-                        onChange={(e) => updateConfig(p.id, { amount: e.target.value ? parseFloat(e.target.value) : null })}
-                        placeholder="0"
-                        className="w-full h-9 px-2 text-right rounded-lg border border-border bg-background text-xs font-mono font-bold min-h-[36px] text-foreground focus:border-primary focus:outline-none"
-                      />
-                    </td>
-                    <td className="py-2 px-3 text-right font-mono text-xs w-[12%]">
-                      {preview > 0 ? (
-                        <span className="text-primary font-bold">
-                          {cfg?.mode === 'per_unit' ? `${preview}/u` : `${preview}`}
-                        </span>
-                      ) : (
-                        <span className="text-muted-foreground">—</span>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </div>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <div className="font-mono font-bold text-sm text-foreground">{p.price}</div>
+                      <div className="text-[10px] text-muted-foreground">{p.price_currency}
+                        {p.price_currency !== 'CUP' && ` · ${cupPrice.toFixed(0)} CUP`}
+                      </div>
+                    </div>
+                  </div>
+                  {/* Fila 2: modo + comisión + preview */}
+                  <div className="flex items-center gap-2">
+                    <select
+                      value={cfg?.mode || 'per_unit'}
+                      onChange={(e) => updateConfig(p.id, { mode: e.target.value as 'per_sale' | 'per_unit' })}
+                      className="flex-1 h-11 px-2 rounded-lg border border-border bg-background text-xs font-bold min-h-[44px] text-foreground"
+                      aria-label={`Modo de comisión para ${p.name}`}
+                    >
+                      <option value="per_unit">Por unidad</option>
+                      <option value="per_sale">Por venta</option>
+                    </select>
+                    <input
+                      type="number"
+                      inputMode="decimal"
+                      step="0.01"
+                      min="0"
+                      value={cfg?.amount ?? ''}
+                      onChange={(e) => updateConfig(p.id, { amount: e.target.value ? parseFloat(e.target.value) : null })}
+                      placeholder="0"
+                      className="w-24 h-11 px-2 text-right rounded-lg border border-border bg-background text-sm font-mono font-bold min-h-[44px] text-foreground focus:border-primary focus:outline-none"
+                      aria-label={`Monto de comisión para ${p.name}`}
+                    />
+                    {preview > 0 && (
+                      <span className="text-xs font-mono font-bold text-primary shrink-0">
+                        {cfg?.mode === 'per_unit' ? `${preview}/u` : `${preview}`}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* DESKTOP (≥768px): Tabla virtualizada */}
+          <div className="hidden sm:block bg-card rounded-2xl border-2 border-border overflow-hidden">
+            <div ref={parentRef} className="overflow-auto max-h-[600px]">
+              <div className="min-w-[700px]">
+                <table className="w-full text-sm table-fixed">
+                  <thead className="bg-muted/30 sticky top-0 z-10">
+                    <tr className="border-b-2 border-border text-left">
+                      <th className="py-2 px-3 font-black uppercase tracking-widest text-[10px] text-muted-foreground w-[34%]">Producto</th>
+                      <th className="py-2 px-3 font-black uppercase tracking-widest text-[10px] text-muted-foreground text-right w-[12%]">Precio</th>
+                      <th className="py-2 px-3 font-black uppercase tracking-widest text-[10px] text-muted-foreground text-right w-[12%]">CUP</th>
+                      <th className="py-2 px-3 font-black uppercase tracking-widest text-[10px] text-muted-foreground w-[14%]">Modo</th>
+                      <th className="py-2 px-3 font-black uppercase tracking-widest text-[10px] text-muted-foreground text-right w-[14%]">Comisión</th>
+                      <th className="py-2 px-3 font-black uppercase tracking-widest text-[10px] text-muted-foreground text-right w-[14%]">Preview</th>
+                    </tr>
+                  </thead>
+                  <tbody style={{ height: `${rowVirtualizer.getTotalSize()}px`, position: 'relative', display: 'block' }}>
+                    {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+                      const p = filteredProducts[virtualRow.index];
+                      if (!p) return null;
+                      const cfg = productConfigs[p.id];
+                      const cupPrice = priceInCup(p);
+                      const preview = cfg?.amount != null && cfg.amount > 0 ? cfg.amount : 0;
+                      return (
+                        <tr
+                          key={p.id}
+                          className={cn('border-b border-border/30 hover:bg-muted/20', cfg?.amount && 'bg-primary/5')}
+                          style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            width: '100%',
+                            transform: `translateY(${virtualRow.start}px)`,
+                            display: 'table-row',
+                          }}
+                        >
+                          <td className="py-2 px-3 w-[34%]">
+                            <div className="font-bold text-foreground text-xs truncate">{p.name}</div>
+                            <div className="text-[10px] text-muted-foreground truncate">
+                              {p.sku || '—'} · {p.category || '—'} · Stock: {p.stock_current}
+                            </div>
+                          </td>
+                          <td className="py-2 px-3 text-right font-mono text-xs w-[12%]">
+                            <div className="font-bold text-foreground">{p.price}</div>
+                            <div className="text-[10px] text-muted-foreground">{p.price_currency}</div>
+                          </td>
+                          <td className="py-2 px-3 text-right font-mono text-xs text-muted-foreground w-[12%]">
+                            {p.price_currency === 'CUP' ? '—' : cupPrice.toFixed(2)}
+                          </td>
+                          <td className="py-2 px-3 w-[14%]">
+                            <select
+                              value={cfg?.mode || 'per_unit'}
+                              onChange={(e) => updateConfig(p.id, { mode: e.target.value as 'per_sale' | 'per_unit' })}
+                              className="h-9 px-2 rounded-lg border border-border bg-background text-[10px] font-bold min-h-[44px] text-foreground w-full"
+                            >
+                              <option value="per_unit">Por unidad</option>
+                              <option value="per_sale">Por venta</option>
+                            </select>
+                          </td>
+                          <td className="py-2 px-3 text-right w-[14%]">
+                            <input
+                              type="number"
+                              inputMode="decimal"
+                              step="0.01"
+                              min="0"
+                              value={cfg?.amount ?? ''}
+                              onChange={(e) => updateConfig(p.id, { amount: e.target.value ? parseFloat(e.target.value) : null })}
+                              placeholder="0"
+                              className="w-full h-9 px-2 text-right rounded-lg border border-border bg-background text-xs font-mono font-bold min-h-[44px] text-foreground focus:border-primary focus:outline-none"
+                            />
+                          </td>
+                          <td className="py-2 px-3 text-right font-mono text-xs w-[14%]">
+                            {preview > 0 ? (
+                              <span className="text-primary font-bold">
+                                {cfg?.mode === 'per_unit' ? `${preview}/u` : `${preview}`}
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground">—</span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
 
       {/* Paso 6: Modal de tasas de cambio reutilizable */}
       <ExchangeRatesModal
@@ -2372,6 +2450,7 @@ function PaymentsTab({ payments, onRefresh }: any) {
                           {payCurrency !== 'CUP' && (
                             <input
                               type="number"
+                              inputMode="decimal"
                               step="0.01"
                               value={payRate}
                               onChange={(e) => setPayRate(e.target.value)}
@@ -2587,8 +2666,9 @@ function RuleFormModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
-      <div className="bg-card rounded-2xl border-2 border-border shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 bg-background/80 backdrop-blur-sm">
+      <div className="bg-card rounded-t-2xl sm:rounded-2xl border-2 border-border shadow-2xl max-w-2xl w-full h-[95vh] sm:h-auto sm:max-h-[90vh] overflow-y-auto"
+        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
         {/* Header */}
         <div className="sticky top-0 bg-card border-b-2 border-border p-5 flex items-center justify-between z-10">
           <div className="flex items-center gap-3">
@@ -2665,6 +2745,7 @@ function RuleFormModal({
               </label>
               <input
                 type="number"
+                inputMode="decimal"
                 step="0.01"
                 min="0"
                 max="100"
@@ -2683,6 +2764,7 @@ function RuleFormModal({
               </label>
               <input
                 type="number"
+                inputMode="decimal"
                 step="0.01"
                 min="0"
                 value={form.fixed_value}
@@ -2700,6 +2782,7 @@ function RuleFormModal({
               </label>
               <input
                 type="number"
+                inputMode="decimal"
                 step="0.01"
                 min="0"
                 value={form.salary_amount}
@@ -2718,6 +2801,7 @@ function RuleFormModal({
                 </label>
                 <input
                   type="number"
+                  inputMode="decimal"
                   step="0.01"
                   min="0"
                   value={form.salary_amount}
@@ -2732,6 +2816,7 @@ function RuleFormModal({
                 </label>
                 <input
                   type="number"
+                  inputMode="decimal"
                   step="0.01"
                   min="0"
                   max="100"
@@ -2753,6 +2838,7 @@ function RuleFormModal({
                 </label>
                 <input
                   type="number"
+                  inputMode="decimal"
                   step="0.01"
                   min="0"
                   value={form.product_commission_amount}
@@ -2836,6 +2922,7 @@ function RuleFormModal({
                   </label>
                   <input
                     type="number"
+                    inputMode="decimal"
                     step="0.01"
                     min="0"
                     value={form.min_price}
@@ -2850,6 +2937,7 @@ function RuleFormModal({
                   </label>
                   <input
                     type="number"
+                    inputMode="decimal"
                     step="0.01"
                     min="0"
                     value={form.max_price}
@@ -2865,6 +2953,7 @@ function RuleFormModal({
                 </label>
                 <input
                   type="number"
+                  inputMode="decimal"
                   step="0.01"
                   min="0"
                   max="100"
@@ -2906,6 +2995,7 @@ function RuleFormModal({
             </label>
             <input
               type="number"
+              inputMode="decimal"
               step="1"
               min="0"
               value={form.priority}
@@ -3076,8 +3166,9 @@ function EditWorkerModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
-      <div className="bg-card rounded-2xl border-2 border-border shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 bg-background/80 backdrop-blur-sm">
+      <div className="bg-card rounded-t-2xl sm:rounded-2xl border-2 border-border shadow-2xl max-w-2xl w-full h-[95vh] sm:h-auto sm:max-h-[90vh] overflow-y-auto"
+        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
         {/* Header */}
         <div className="sticky top-0 bg-card border-b-2 border-border p-5 flex items-center justify-between z-10">
           <div className="flex items-center gap-3">
@@ -3209,6 +3300,7 @@ function EditWorkerModal({
                 <Label className="text-xs font-bold uppercase tracking-widest">Zapato</Label>
                 <Input
                   type="number"
+                  inputMode="decimal"
                   value={form.shoe_size}
                   onChange={(e) => updateForm('shoe_size', e.target.value)}
                   className="h-11 min-h-[44px] mt-1 font-mono"
@@ -3219,6 +3311,7 @@ function EditWorkerModal({
                 <Label className="text-xs font-bold uppercase tracking-widest">Cintura</Label>
                 <Input
                   type="number"
+                  inputMode="decimal"
                   value={form.waist_size}
                   onChange={(e) => updateForm('waist_size', e.target.value)}
                   className="h-11 min-h-[44px] mt-1 font-mono"
