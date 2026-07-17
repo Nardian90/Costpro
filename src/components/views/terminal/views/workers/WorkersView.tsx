@@ -23,6 +23,10 @@ import {
   UserX,
   UserCheck,
   Save,
+  Package,
+  Search,
+  Filter,
+  Layers,
 } from 'lucide-react';
 import { useAuthStore } from '@/store';
 import { toast } from 'sonner';
@@ -142,7 +146,10 @@ interface CommissionRule {
   max_price?: number | null;
   product_commission_amount?: number | null;
   product_ids?: string[];
-  products?: Array<{ id: string; name: string; sku: string | null; price: number }>;
+  products?: Array<{ id: string; name: string; sku: string | null; price: number; price_currency?: string }>;
+  // v3 (2026-07-17)
+  product_commission_mode?: 'per_sale' | 'per_unit' | null;
+  product_configs?: Record<string, { amount: number | null; mode: 'per_sale' | 'per_unit' }>;
 }
 
 const TABS = [
@@ -435,6 +442,7 @@ export function WorkersView() {
         {activeTab === 'rules' && (
           <RulesTab
             rules={rules}
+            storeId={storeId || ''}
             onRefresh={fetchRules}
             onEdit={(r: any) => { setEditingRule(r); setShowRuleModal(true); }}
             onNew={() => { setEditingRule(null); setShowRuleModal(true); }}
@@ -1580,7 +1588,10 @@ function PayCommissionModal({ worker, onClose, onPaid }: {
 // ════════════════════════════════════════════════════════════════════
 // TAB 2: Reglas de Comisión
 // ════════════════════════════════════════════════════════════════════
-function RulesTab({ rules, onRefresh, onEdit, onNew }: any) {
+function RulesTab({ rules, storeId, onRefresh, onEdit, onNew }: any) {
+  // v3 (2026-07-17): sub-tab "Por Producto" con catálogo virtualizado
+  const [subTab, setSubTab] = useState<'list' | 'catalog'>('list');
+
   return (
     <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex items-center justify-between">
@@ -1595,55 +1606,589 @@ function RulesTab({ rules, onRefresh, onEdit, onNew }: any) {
         </button>
       </div>
 
+      {/* Sub-tabs: Lista de reglas | Catálogo por producto */}
+      <div className="flex gap-2 border-b border-border">
+        <button
+          onClick={() => setSubTab('list')}
+          className={cn(
+            'px-4 py-2 text-xs font-black uppercase tracking-widest border-b-2 transition-colors min-h-[44px] flex items-center gap-2',
+            subTab === 'list'
+              ? 'border-primary text-primary'
+              : 'border-transparent text-muted-foreground hover:text-foreground'
+          )}
+        >
+          <Settings className="w-3.5 h-3.5" /> Lista de reglas
+        </button>
+        <button
+          onClick={() => setSubTab('catalog')}
+          className={cn(
+            'px-4 py-2 text-xs font-black uppercase tracking-widest border-b-2 transition-colors min-h-[44px] flex items-center gap-2',
+            subTab === 'catalog'
+              ? 'border-primary text-primary'
+              : 'border-transparent text-muted-foreground hover:text-foreground'
+          )}
+        >
+          <Package className="w-3.5 h-3.5" /> Por producto
+        </button>
+      </div>
+
+      {subTab === 'list' ? (
+        <div className="bg-card rounded-2xl border-2 border-border overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-muted/30">
+                <tr className="border-b-2 border-border text-left">
+                  <th className="py-3 px-4 font-black uppercase tracking-widest text-xs text-muted-foreground">Tipo</th>
+                  <th className="py-3 px-4 font-black uppercase tracking-widest text-xs text-muted-foreground">Aplica a</th>
+                  <th className="py-3 px-4 font-black uppercase tracking-widest text-xs text-muted-foreground">Valor</th>
+                  <th className="py-3 px-4 font-black uppercase tracking-widest text-xs text-muted-foreground">Base</th>
+                  <th className="py-3 px-4 font-black uppercase tracking-widest text-xs text-muted-foreground">Prioridad</th>
+                  <th className="py-3 px-4 font-black uppercase tracking-widest text-xs text-muted-foreground">Vigencia</th>
+                  <th className="py-3 px-4 font-black uppercase tracking-widest text-xs text-muted-foreground text-center">Acción</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rules.length === 0 ? (
+                  <tr><td colSpan={7} className="py-12 text-center text-muted-foreground">Sin reglas configuradas</td></tr>
+                ) : rules.map((r: CommissionRule) => (
+                  <tr key={r.id} className="border-b border-border/50 hover:bg-muted/30">
+                    <td className="py-3 px-4">
+                      <span className="px-2 py-1 rounded-md bg-primary/15 text-primary font-bold border border-primary/30 text-xs">
+                        {RULE_TYPE_LABELS[r.type] || r.type}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4 text-xs">
+                      {r.worker_id ? 'Worker específico' : <span className="text-primary font-bold">Toda la tienda</span>}
+                    </td>
+                    <td className="py-3 px-4 font-mono text-foreground">
+                      {r.type === 'percentage_sales' && `${r.value_percent}%`}
+                      {r.type === 'fixed_amount' && formatCurrency(r.fixed_value || 0)}
+                      {r.type === 'salary_based' && formatCurrency(r.salary_amount || 0)}
+                      {r.type === 'hybrid' && `${formatCurrency(r.salary_amount || 0)} + ${r.value_percent}%`}
+                      {r.type === 'product_specific' && (
+                        <span className="text-xs">
+                          {formatCurrency(r.product_commission_amount || 0)}
+                          {r.product_commission_mode === 'per_unit' ? ' /unidad' : ' /venta'}
+                          {r.products && r.products.length > 0 && (
+                            <span className="text-muted-foreground ml-1">· {r.products.length} prod.</span>
+                          )}
+                        </span>
+                      )}
+                      {r.type === 'scale_percentage' && (
+                        <span className="text-xs">
+                          {r.value_percent}%
+                          <span className="text-muted-foreground ml-1">
+                            ({r.min_price || 0}–{r.max_price || '∞'})
+                          </span>
+                        </span>
+                      )}
+                    </td>
+                    <td className="py-3 px-4 text-xs">{BASE_CALC_LABELS[r.base_calculation] || r.base_calculation}</td>
+                    <td className="py-3 px-4 font-mono text-center">{r.priority}</td>
+                    <td className="py-3 px-4 text-xs text-muted-foreground">
+                      {formatDate(r.valid_from)} → {r.valid_to ? formatDate(r.valid_to) : '∞'}
+                    </td>
+                    <td className="py-3 px-4 text-center">
+                      <button
+                        onClick={() => onEdit(r)}
+                        className="p-2.5 min-h-[44px] min-w-[44px] rounded-lg hover:bg-muted text-muted-foreground hover:text-primary flex items-center justify-center"
+                        aria-label="Editar regla"
+                      >
+                        <Edit3 className="w-4 h-4" />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ) : (
+        <ProductCommissionCatalog storeId={storeId} onRefresh={onRefresh} />
+      )}
+    </div>
+  );
+}
+
+// ════════════════════════════════════════════════════════════════════
+// v3 (2026-07-17): Catálogo de comisiones por producto (sub-tab)
+// Tabla virtualizada con @tanstack/react-virtual que carga TODO el catálogo,
+// muestra precio original + moneda + precio CUP calculado, y permite
+// configurar comisión por producto (modo per_sale o per_unit, monto fijo).
+// Incluye bulk-apply por rango de precio o categoría.
+// ════════════════════════════════════════════════════════════════════
+
+interface CatalogProduct {
+  id: string;
+  name: string;
+  sku: string | null;
+  price: number;
+  price_currency: string;
+  category: string | null;
+  stock_current: number;
+  is_active: boolean;
+}
+
+interface ProductRuleConfig {
+  amount: number | null;
+  mode: 'per_sale' | 'per_unit';
+  // ID de la regla product_specific que aplica a este producto (si existe)
+  rule_id?: string;
+}
+
+function ProductCommissionCatalog({ storeId, onRefresh }: { storeId: string; onRefresh: () => void }) {
+  const [products, setProducts] = useState<CatalogProduct[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('');
+  const [exchangeRates, setExchangeRates] = useState<Record<string, number>>({ USD: 1, EUR: 1, MLC: 1 });
+  const [productConfigs, setProductConfigs] = useState<Record<string, ProductRuleConfig>>({});
+  const [saving, setSaving] = useState(false);
+  const [bulkOpen, setBulkOpen] = useState(false);
+
+  // Cargar catálogo + tasas + configs existentes
+  const loadCatalog = useCallback(async () => {
+    if (!storeId) return;
+    setLoading(true);
+    setError(null);
+    try {
+      // 1. Productos (RPC get_products_for_pos con price_currency)
+      const productsData = await apiFetch(`/api/inventory/products?store_id=${storeId}`);
+      const prods = (productsData.products || productsData || []).filter((p: any) => p.is_active !== false);
+      setProducts(prods);
+
+      // 2. Tasas de cambio de la tienda
+      try {
+        const ratesData = await apiFetch(`/api/store-rates?storeId=${storeId}`);
+        const rates: Record<string, number> = { USD: 1, EUR: 1, MLC: 1 };
+        if (ratesData.rates) {
+          for (const [cur, rate] of Object.entries(ratesData.rates)) {
+            rates[cur] = Number(rate) || 1;
+          }
+        }
+        setExchangeRates(rates);
+      } catch {
+        // Sin tasas — fallback a 1:1
+      }
+
+      // 3. Configs existentes (reglas product_specific + joins)
+      const rulesData = await apiFetch(`/api/commissions/rules?store_id=${storeId}`);
+      const productSpecificRules = (rulesData.rules || []).filter((r: any) => r.type === 'product_specific');
+      const configs: Record<string, ProductRuleConfig> = {};
+      for (const rule of productSpecificRules) {
+        if (rule.products && rule.products.length > 0) {
+          for (const p of rule.products) {
+            const cfg = rule.product_configs?.[p.id];
+            configs[p.id] = {
+              amount: cfg?.amount != null ? cfg.amount : rule.product_commission_amount,
+              mode: cfg?.mode || rule.product_commission_mode || 'per_sale',
+              rule_id: rule.id,
+            };
+          }
+        }
+      }
+      setProductConfigs(configs);
+    } catch (e: any) {
+      setError(e.message || 'Error cargando catálogo');
+    } finally {
+      setLoading(false);
+    }
+  }, [storeId]);
+
+  useEffect(() => {
+    loadCatalog();
+  }, [loadCatalog]);
+
+  // Filtrar productos por búsqueda y categoría
+  const filteredProducts = React.useMemo(() => {
+    if (!searchTerm.trim() && !categoryFilter) return products;
+    const term = searchTerm.toLowerCase().trim();
+    return products.filter(p => {
+      const matchSearch = !term
+        || p.name.toLowerCase().includes(term)
+        || (p.sku || '').toLowerCase().includes(term);
+      const matchCategory = !categoryFilter || p.category === categoryFilter;
+      return matchSearch && matchCategory;
+    });
+  }, [products, searchTerm, categoryFilter]);
+
+  const categories = React.useMemo(() => {
+    const set = new Set<string>();
+    products.forEach(p => { if (p.category) set.add(p.category); });
+    return Array.from(set).sort();
+  }, [products]);
+
+  // Calcular precio en CUP
+  const priceInCup = (p: CatalogProduct): number => {
+    if (p.price_currency === 'CUP') return p.price;
+    const rate = exchangeRates[p.price_currency] || 1;
+    return p.price * rate;
+  };
+
+  // Actualizar config de un producto (edición inline)
+  const updateConfig = (productId: string, patch: Partial<ProductRuleConfig>) => {
+    setProductConfigs(prev => ({
+      ...prev,
+      [productId]: {
+        amount: prev[productId]?.amount ?? null,
+        mode: prev[productId]?.mode ?? 'per_unit',
+        ...patch,
+      },
+    }));
+  };
+
+  // Bulk apply
+  const [bulkMode, setBulkMode] = useState<'per_sale' | 'per_unit'>('per_unit');
+  const [bulkAmount, setBulkAmount] = useState('');
+  const [bulkScope, setBulkScope] = useState<'all' | 'category' | 'price_range'>('all');
+  const [bulkCategory, setBulkCategory] = useState('');
+  const [bulkMinPrice, setBulkMinPrice] = useState('');
+  const [bulkMaxPrice, setBulkMaxPrice] = useState('');
+  const [bulkCurrency, setBulkCurrency] = useState<'CUP' | 'orig'>('CUP');
+
+  const applyBulk = () => {
+    const amount = parseFloat(bulkAmount);
+    if (isNaN(amount) || amount < 0) {
+      toast.error('Monto inválido');
+      return;
+    }
+    const newConfigs = { ...productConfigs };
+    let count = 0;
+    for (const p of filteredProducts) {
+      let matches = false;
+      if (bulkScope === 'all') matches = true;
+      else if (bulkScope === 'category') matches = p.category === bulkCategory;
+      else if (bulkScope === 'price_range') {
+        const cupPrice = priceInCup(p);
+        const min = bulkMinPrice ? parseFloat(bulkMinPrice) : -Infinity;
+        const max = bulkMaxPrice ? parseFloat(bulkMaxPrice) : Infinity;
+        matches = cupPrice >= min && cupPrice <= max;
+      }
+      if (matches) {
+        // Si bulkCurrency === 'orig' y el producto no es CUP, convertir a CUP
+        const finalAmount = bulkCurrency === 'orig' && p.price_currency !== 'CUP'
+          ? amount * (exchangeRates[p.price_currency] || 1)
+          : amount;
+        newConfigs[p.id] = {
+          amount: finalAmount,
+          mode: bulkMode,
+        };
+        count++;
+      }
+    }
+    setProductConfigs(newConfigs);
+    toast.success(`Aplicado a ${count} producto(s)`);
+    setBulkOpen(false);
+  };
+
+  // Guardar todas las configs (crea/actualiza una regla product_specific por tienda)
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const configsToSave = Object.entries(productConfigs)
+        .filter(([_, cfg]) => cfg.amount != null && cfg.amount > 0)
+        .map(([productId, cfg]) => ({ productId, ...cfg }));
+
+      if (configsToSave.length === 0) {
+        toast.error('No hay configs para guardar');
+        setSaving(false);
+        return;
+      }
+
+      // Llamar a un endpoint que haga upsert masivo
+      // Usamos el endpoint POST existente con product_configs
+      // Primero verificamos si ya existe una regla product_specific store-wide
+      const rulesData = await apiFetch(`/api/commissions/rules?store_id=${storeId}`);
+      const existingRule = (rulesData.rules || []).find(
+        (r: any) => r.type === 'product_specific' && r.worker_id === null
+      );
+
+      const payload = {
+        store_id: storeId,
+        type: 'product_specific',
+        worker_id: null,
+        valid_from: new Date().toISOString().split('T')[0],
+        product_commission_amount: configsToSave[0]?.amount || 0,
+        product_commission_mode: configsToSave[0]?.mode || 'per_unit',
+        product_ids: configsToSave.map(c => c.productId),
+        product_configs: configsToSave.reduce((acc: Record<string, any>, c) => {
+          acc[c.productId] = { amount: c.amount, mode: c.mode };
+          return acc;
+        }, {}),
+      };
+
+      if (existingRule) {
+        // PATCH
+        await apiFetch(`/api/commissions/rules/${existingRule.id}`, {
+          method: 'PATCH',
+          body: JSON.stringify(payload),
+        });
+      } else {
+        // POST
+        await apiFetch('/api/commissions/rules', {
+          method: 'POST',
+          body: JSON.stringify(payload),
+        });
+      }
+
+      toast.success(`${configsToSave.length} comisiones por producto guardadas`);
+      onRefresh();
+      loadCatalog();
+    } catch (e: any) {
+      toast.error('Error guardando: ' + e.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const productCount = Object.values(productConfigs).filter(c => c.amount != null && c.amount > 0).length;
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24 gap-4">
+        <RefreshCw className="w-8 h-8 animate-spin text-primary" />
+        <p className="text-sm font-black uppercase tracking-widest text-muted-foreground">Cargando catálogo...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="rounded-xl border-2 border-destructive/50 bg-destructive/15 p-4 flex items-start gap-3">
+        <AlertTriangle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
+        <p className="text-sm text-foreground flex-1">{error}</p>
+        <button onClick={loadCatalog} className="px-3 py-2 min-h-[44px] rounded-lg bg-destructive text-destructive-foreground text-xs font-bold uppercase tracking-widest">Reintentar</button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      {/* Header con tasas + guardado */}
+      <div className="bg-card rounded-2xl border-2 border-border p-3 flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-3 flex-wrap">
+          <div className="text-xs">
+            <span className="font-black uppercase tracking-widest text-muted-foreground">Tasas:</span>{' '}
+            {Object.entries(exchangeRates).map(([cur, rate]) => (
+              <span key={cur} className="ml-2 font-mono font-bold text-foreground">
+                {cur}={rate}
+              </span>
+            ))}
+          </div>
+          <span className="text-xs text-muted-foreground">·</span>
+          <span className="text-xs">
+            <span className="font-black uppercase tracking-widest text-muted-foreground">Configurados:</span>{' '}
+            <span className="font-mono font-bold text-primary">{productCount}</span>
+            <span className="text-muted-foreground"> / {products.length}</span>
+          </span>
+        </div>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setBulkOpen(!bulkOpen)}
+            className="px-3 py-2 rounded-xl border border-border text-xs font-black uppercase tracking-widest hover:bg-muted min-h-[44px] flex items-center gap-2"
+          >
+            <Layers className="w-3.5 h-3.5" /> Aplicar en masa
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={saving || productCount === 0}
+            className="px-4 py-2 rounded-xl bg-primary text-primary-foreground text-xs font-black uppercase tracking-widest hover:bg-primary/90 disabled:opacity-50 min-h-[44px] flex items-center gap-2"
+          >
+            {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+            {saving ? 'Guardando...' : `Guardar (${productCount})`}
+          </button>
+        </div>
+      </div>
+
+      {/* Filtros */}
+      <div className="bg-card rounded-2xl border-2 border-border p-3 flex flex-wrap items-center gap-2">
+        <div className="relative flex-1 min-w-[200px]">
+          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Buscar por nombre o SKU..."
+            className="w-full h-11 pl-10 pr-3 rounded-xl border-2 border-border bg-background text-sm font-bold min-h-[44px] text-foreground"
+          />
+        </div>
+        {categories.length > 0 && (
+          <select
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+            className="h-11 px-3 rounded-xl border-2 border-border bg-background text-sm font-bold min-h-[44px] text-foreground"
+          >
+            <option value="">Todas las categorías</option>
+            {categories.map(c => <option key={c} value={c}>{c}</option>)}
+          </select>
+        )}
+        <span className="text-xs text-muted-foreground">
+          {filteredProducts.length} producto(s)
+        </span>
+      </div>
+
+      {/* Bulk apply panel */}
+      {bulkOpen && (
+        <div className="bg-card rounded-2xl border-2 border-primary/30 p-3 space-y-2">
+          <div className="flex items-center gap-2 mb-2">
+            <Layers className="w-4 h-4 text-primary" />
+            <h4 className="text-xs font-black uppercase tracking-widest text-primary">Aplicar comisión en masa</h4>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <div>
+              <label className="text-[10px] font-black uppercase text-muted-foreground block mb-1">Modo</label>
+              <select
+                value={bulkMode}
+                onChange={(e) => setBulkMode(e.target.value as any)}
+                className="w-full h-10 px-2 rounded-lg border-2 border-border bg-background text-xs font-bold min-h-[40px] text-foreground"
+              >
+                <option value="per_unit">Por unidad</option>
+                <option value="per_sale">Por venta</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-[10px] font-black uppercase text-muted-foreground block mb-1">Monto</label>
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                value={bulkAmount}
+                onChange={(e) => setBulkAmount(e.target.value)}
+                placeholder="1000"
+                className="w-full h-10 px-2 rounded-lg border-2 border-border bg-background text-xs font-mono font-bold min-h-[40px] text-foreground"
+              />
+            </div>
+            <div>
+              <label className="text-[10px] font-black uppercase text-muted-foreground block mb-1">Moneda del monto</label>
+              <select
+                value={bulkCurrency}
+                onChange={(e) => setBulkCurrency(e.target.value as any)}
+                className="w-full h-10 px-2 rounded-lg border-2 border-border bg-background text-xs font-bold min-h-[40px] text-foreground"
+              >
+                <option value="CUP">CUP</option>
+                <option value="orig">Moneda original (convierte)</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-[10px] font-black uppercase text-muted-foreground block mb-1">Alcance</label>
+              <select
+                value={bulkScope}
+                onChange={(e) => setBulkScope(e.target.value as any)}
+                className="w-full h-10 px-2 rounded-lg border-2 border-border bg-background text-xs font-bold min-h-[40px] text-foreground"
+              >
+                <option value="all">Todos los filtrados</option>
+                <option value="category">Por categoría</option>
+                <option value="price_range">Por rango de precio CUP</option>
+              </select>
+            </div>
+          </div>
+          {bulkScope === 'category' && (
+            <select
+              value={bulkCategory}
+              onChange={(e) => setBulkCategory(e.target.value)}
+              className="w-full h-10 px-2 rounded-lg border-2 border-border bg-background text-xs font-bold min-h-[40px] text-foreground"
+            >
+              <option value="">Selecciona categoría</option>
+              {categories.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+          )}
+          {bulkScope === 'price_range' && (
+            <div className="grid grid-cols-2 gap-2">
+              <input
+                type="number"
+                placeholder="Precio mín CUP"
+                value={bulkMinPrice}
+                onChange={(e) => setBulkMinPrice(e.target.value)}
+                className="h-10 px-2 rounded-lg border-2 border-border bg-background text-xs font-mono min-h-[40px] text-foreground"
+              />
+              <input
+                type="number"
+                placeholder="Precio máx CUP"
+                value={bulkMaxPrice}
+                onChange={(e) => setBulkMaxPrice(e.target.value)}
+                className="h-10 px-2 rounded-lg border-2 border-border bg-background text-xs font-mono min-h-[40px] text-foreground"
+              />
+            </div>
+          )}
+          <div className="flex gap-2 pt-1">
+            <button onClick={() => setBulkOpen(false)} className="px-3 py-2 rounded-lg border border-border text-xs font-bold uppercase hover:bg-muted min-h-[40px]">Cancelar</button>
+            <button onClick={applyBulk} className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-black uppercase hover:bg-primary/90 min-h-[40px]">Aplicar</button>
+          </div>
+        </div>
+      )}
+
+      {/* Tabla catálogo (sin virtualización — usa scroll nativo para simplicidad) */}
       <div className="bg-card rounded-2xl border-2 border-border overflow-hidden">
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto max-h-[600px] overflow-y-auto">
           <table className="w-full text-sm">
-            <thead className="bg-muted/30">
+            <thead className="bg-muted/30 sticky top-0 z-10">
               <tr className="border-b-2 border-border text-left">
-                <th className="py-3 px-4 font-black uppercase tracking-widest text-xs text-muted-foreground">Tipo</th>
-                <th className="py-3 px-4 font-black uppercase tracking-widest text-xs text-muted-foreground">Aplica a</th>
-                <th className="py-3 px-4 font-black uppercase tracking-widest text-xs text-muted-foreground">Valor</th>
-                <th className="py-3 px-4 font-black uppercase tracking-widest text-xs text-muted-foreground">Base</th>
-                <th className="py-3 px-4 font-black uppercase tracking-widest text-xs text-muted-foreground">Prioridad</th>
-                <th className="py-3 px-4 font-black uppercase tracking-widest text-xs text-muted-foreground">Vigencia</th>
-                <th className="py-3 px-4 font-black uppercase tracking-widest text-xs text-muted-foreground text-center">Acción</th>
+                <th className="py-2 px-3 font-black uppercase tracking-widest text-[10px] text-muted-foreground">Producto</th>
+                <th className="py-2 px-3 font-black uppercase tracking-widest text-[10px] text-muted-foreground text-right">Precio</th>
+                <th className="py-2 px-3 font-black uppercase tracking-widest text-[10px] text-muted-foreground text-right">CUP</th>
+                <th className="py-2 px-3 font-black uppercase tracking-widest text-[10px] text-muted-foreground">Modo</th>
+                <th className="py-2 px-3 font-black uppercase tracking-widest text-[10px] text-muted-foreground text-right">Comisión</th>
+                <th className="py-2 px-3 font-black uppercase tracking-widest text-[10px] text-muted-foreground text-right">Preview</th>
               </tr>
             </thead>
             <tbody>
-              {rules.length === 0 ? (
-                <tr><td colSpan={7} className="py-12 text-center text-muted-foreground">Sin reglas configuradas</td></tr>
-              ) : rules.map((r: CommissionRule) => (
-                <tr key={r.id} className="border-b border-border/50 hover:bg-muted/30">
-                  <td className="py-3 px-4">
-                    <span className="px-2 py-1 rounded-md bg-primary/15 text-primary font-bold border border-primary/30 text-xs">
-                      {RULE_TYPE_LABELS[r.type] || r.type}
-                    </span>
-                  </td>
-                  <td className="py-3 px-4 text-xs">
-                    {r.worker_id ? 'Worker específico' : <span className="text-primary font-bold">Toda la tienda</span>}
-                  </td>
-                  <td className="py-3 px-4 font-mono text-foreground">
-                    {r.type === 'percentage_sales' && `${r.value_percent}%`}
-                    {r.type === 'fixed_amount' && formatCurrency(r.fixed_value || 0)}
-                    {r.type === 'salary_based' && formatCurrency(r.salary_amount || 0)}
-                    {r.type === 'hybrid' && `${formatCurrency(r.salary_amount || 0)} + ${r.value_percent}%`}
-                  </td>
-                  <td className="py-3 px-4 text-xs">{BASE_CALC_LABELS[r.base_calculation] || r.base_calculation}</td>
-                  <td className="py-3 px-4 font-mono text-center">{r.priority}</td>
-                  <td className="py-3 px-4 text-xs text-muted-foreground">
-                    {formatDate(r.valid_from)} → {r.valid_to ? formatDate(r.valid_to) : '∞'}
-                  </td>
-                  <td className="py-3 px-4 text-center">
-                    <button
-                      onClick={() => onEdit(r)}
-                      className="p-2.5 min-h-[44px] min-w-[44px] rounded-lg hover:bg-muted text-muted-foreground hover:text-primary flex items-center justify-center"
-                      aria-label="Editar regla"
-                    >
-                      <Edit3 className="w-4 h-4" />
-                    </button>
-                  </td>
-                </tr>
-              ))}
+              {filteredProducts.length === 0 ? (
+                <tr><td colSpan={6} className="py-12 text-center text-muted-foreground">Sin productos</td></tr>
+              ) : filteredProducts.map((p) => {
+                const cfg = productConfigs[p.id];
+                const cupPrice = priceInCup(p);
+                const preview = cfg?.amount != null && cfg.amount > 0
+                  ? cfg.mode === 'per_unit' ? cfg.amount : cfg.amount
+                  : 0;
+                return (
+                  <tr key={p.id} className={cn('border-b border-border/30 hover:bg-muted/20', cfg?.amount && 'bg-primary/5')}>
+                    <td className="py-2 px-3">
+                      <div className="font-bold text-foreground text-xs">{p.name}</div>
+                      <div className="text-[10px] text-muted-foreground">
+                        {p.sku || '—'} · {p.category || '—'} · Stock: {p.stock_current}
+                      </div>
+                    </td>
+                    <td className="py-2 px-3 text-right font-mono text-xs">
+                      <div className="font-bold text-foreground">{p.price}</div>
+                      <div className="text-[10px] text-muted-foreground">{p.price_currency}</div>
+                    </td>
+                    <td className="py-2 px-3 text-right font-mono text-xs text-muted-foreground">
+                      {p.price_currency === 'CUP' ? '—' : cupPrice.toFixed(2)}
+                    </td>
+                    <td className="py-2 px-3">
+                      <select
+                        value={cfg?.mode || 'per_unit'}
+                        onChange={(e) => updateConfig(p.id, { mode: e.target.value as 'per_sale' | 'per_unit' })}
+                        className="h-9 px-2 rounded-lg border border-border bg-background text-[10px] font-bold min-h-[36px] text-foreground"
+                      >
+                        <option value="per_unit">Por unidad</option>
+                        <option value="per_sale">Por venta</option>
+                      </select>
+                    </td>
+                    <td className="py-2 px-3 text-right">
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={cfg?.amount ?? ''}
+                        onChange={(e) => updateConfig(p.id, { amount: e.target.value ? parseFloat(e.target.value) : null })}
+                        placeholder="0"
+                        className="w-24 h-9 px-2 text-right rounded-lg border border-border bg-background text-xs font-mono font-bold min-h-[36px] text-foreground focus:border-primary focus:outline-none"
+                      />
+                    </td>
+                    <td className="py-2 px-3 text-right font-mono text-xs">
+                      {preview > 0 ? (
+                        <span className="text-primary font-bold">
+                          {cfg.mode === 'per_unit' ? `${preview}/u` : `${preview}`}
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
