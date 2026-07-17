@@ -1074,32 +1074,82 @@ function PayCommissionModal({ worker, onClose, onPaid }: {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 bg-background/80 backdrop-blur-sm">
-      <div className="bg-card rounded-t-2xl sm:rounded-2xl border-2 border-border shadow-2xl max-w-2xl w-full h-[95vh] sm:h-auto sm:max-h-[90vh] overflow-y-auto"
-        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
-        {/* Header */}
-        <div className="sticky top-0 bg-card border-b-2 border-border p-5 flex items-center justify-between z-10">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center border border-primary/30">
-              <DollarSign className="w-5 h-5 text-primary" />
-            </div>
-            <div>
-              <h3 className="text-base font-black uppercase tracking-widest text-foreground">
-                Pagar Comisión
-              </h3>
-              <p className="text-sm text-muted-foreground">
-                {worker.first_name} {worker.last_name} · CI: {worker.ci}
-              </p>
-            </div>
+    <BaseModal
+      open={true}
+      onOpenChange={(open) => { if (!open) onClose(); }}
+      maxWidth="sm:max-w-2xl"
+      title={
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center border border-primary/30">
+            <DollarSign className="w-5 h-5 text-primary" />
           </div>
-          <button onClick={onClose} className="p-2.5 min-h-[44px] min-w-[44px] rounded-lg hover:bg-muted flex items-center justify-center" aria-label="Cerrar modal">
-            <X className="w-5 h-5" />
-          </button>
+          <div>
+            <span className="block">Pagar Comisión</span>
+            <span className="text-sm font-normal text-muted-foreground">
+              {worker.first_name} {worker.last_name} · CI: {worker.ci}
+            </span>
+          </div>
         </div>
+      }
+      footer={
+        <div className="flex items-center justify-between gap-2 w-full">
+          <button
+            onClick={() => step > 1 ? setStep(step - 1) : onClose()}
+            className="px-4 py-2 rounded-xl bg-muted hover:bg-muted/80 text-foreground text-sm font-bold min-h-[44px]"
+          >
+            {step === 1 ? 'Cancelar' : <><ChevronLeft className="w-4 h-4 inline" /> Atrás</>}
+          </button>
 
-        {/* Stepper — scroll horizontal en móvil */}
-        <div className="px-5 py-3 bg-muted/30 border-b border-border">
-          <div className="flex items-center gap-1 overflow-x-auto" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+          {step === 1 && (
+            <button
+              onClick={() => {
+                if (payMode === 'manual') {
+                  setStep(2);
+                  handleLoadProducts();
+                } else {
+                  setStep(2);
+                  handleCalculate();
+                }
+              }}
+              disabled={periodStart > periodEnd}
+              className="px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-black uppercase tracking-widest hover:bg-primary/90 disabled:opacity-50 min-h-[44px]"
+            >
+              {payMode === 'manual' ? 'Cargar productos' : 'Calcular'} <ChevronRight className="w-4 h-4 inline" />
+            </button>
+          )}
+          {step === 2 && (calculating || loadingProducts) && (
+            <span className="text-sm text-muted-foreground">{payMode === 'manual' ? 'Cargando productos...' : 'Calculando...'}</span>
+          )}
+          {step === 3 && calculation && (
+            <button
+              onClick={() => {
+                const finalAmt = parseFloat(finalAmount) || 0;
+                if (Math.abs(finalAmt - calculation.commission_suggested) > 0.01 && !adjustmentReason.trim()) {
+                  toast.error('Justifica el ajuste manual');
+                  return;
+                }
+                setStep(4);
+              }}
+              className="px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-black uppercase tracking-widest hover:bg-primary/90 min-h-[44px]"
+            >
+              Revisar <ChevronRight className="w-4 h-4 inline" />
+            </button>
+          )}
+          {step === 4 && (
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="px-4 py-2 rounded-xl bg-success text-success-foreground text-sm font-black uppercase tracking-widest hover:bg-success/90 disabled:opacity-50 min-h-[44px]"
+            >
+              {saving ? 'Guardando...' : <><CheckCircle2 className="w-4 h-4 inline" /> Guardar</>}
+            </button>
+          )}
+        </div>
+      }
+    >
+      {/* Stepper — scroll horizontal en móvil */}
+      <div className="px-1 py-2 bg-muted/30 border-b border-border rounded-lg mb-3">
+        <div className="flex items-center gap-1 overflow-x-auto" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
             {['Rango', 'Cálculo', 'Editar', 'Confirmar'].map((label, i) => {
               const stepNum = i + 1;
               const isActive = step === stepNum;
@@ -1585,8 +1635,7 @@ function PayCommissionModal({ worker, onClose, onPaid }: {
             </button>
           )}
         </div>
-      </div>
-    </div>
+    </BaseModal>
   );
 }
 
@@ -2666,31 +2715,55 @@ function RuleFormModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 bg-background/80 backdrop-blur-sm">
-      <div className="bg-card rounded-t-2xl sm:rounded-2xl border-2 border-border shadow-2xl max-w-2xl w-full h-[95vh] sm:h-auto sm:max-h-[90vh] overflow-y-auto"
-        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
-        {/* Header */}
-        <div className="sticky top-0 bg-card border-b-2 border-border p-5 flex items-center justify-between z-10">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center border border-primary/30">
-              <Settings className="w-5 h-5 text-primary" />
-            </div>
-            <div>
-              <h3 className="text-base font-black uppercase tracking-widest text-foreground">
-                {editingRule ? 'Editar regla' : 'Nueva regla de comisión'}
-              </h3>
-              <p className="text-sm text-muted-foreground">
-                {RULE_TYPE_LABELS[form.type] || form.type}
-              </p>
-            </div>
+    <BaseModal
+      open={true}
+      onOpenChange={(open) => { if (!open) onClose(); }}
+      maxWidth="sm:max-w-2xl"
+      title={
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center border border-primary/30">
+            <Settings className="w-5 h-5 text-primary" />
           </div>
-          <button onClick={onClose} className="p-2.5 min-h-[44px] min-w-[44px] rounded-lg hover:bg-muted flex items-center justify-center" aria-label="Cerrar">
-            <X className="w-5 h-5" />
-          </button>
+          <div>
+            <span className="block">{editingRule ? 'Editar regla' : 'Nueva regla de comisión'}</span>
+            <span className="text-sm font-normal text-muted-foreground">
+              {RULE_TYPE_LABELS[form.type] || form.type}
+            </span>
+          </div>
         </div>
-
-        {/* Form */}
-        <div className="p-5 space-y-4">
+      }
+      footer={
+        <div className="flex items-center justify-between gap-2 w-full">
+          <div>
+            {editingRule && (
+              <button
+                onClick={handleDelete}
+                disabled={deleting}
+                className="px-4 py-2 rounded-xl bg-destructive/10 text-destructive border border-destructive/30 text-sm font-bold hover:bg-destructive/20 min-h-[44px]"
+              >
+                {deleting ? 'Eliminando...' : 'Eliminar'}
+              </button>
+            )}
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 rounded-xl bg-muted hover:bg-muted/80 text-foreground text-sm font-bold min-h-[44px]"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-black uppercase tracking-widest hover:bg-primary/90 disabled:opacity-50 min-h-[44px]"
+            >
+              {saving ? 'Guardando...' : (editingRule ? 'Actualizar' : 'Crear regla')}
+            </button>
+          </div>
+        </div>
+      }
+    >
+      <div className="space-y-4">
           {/* Tipo de regla */}
           <div>
             <label className="text-sm font-black uppercase tracking-widest text-foreground block mb-2">
@@ -3030,39 +3103,8 @@ function RuleFormModal({
               />
             </div>
           </div>
-        </div>
-
-        {/* Footer */}
-        <div className="sticky bottom-0 bg-card border-t-2 border-border p-4 flex items-center justify-between gap-2">
-          <div>
-            {editingRule && (
-              <button
-                onClick={handleDelete}
-                disabled={deleting}
-                className="px-4 py-2 rounded-xl bg-destructive/10 text-destructive border border-destructive/30 text-sm font-bold hover:bg-destructive/20 min-h-[44px]"
-              >
-                {deleting ? 'Eliminando...' : 'Eliminar'}
-              </button>
-            )}
-          </div>
-          <div className="flex gap-2">
-            <button
-              onClick={onClose}
-              className="px-4 py-2 rounded-xl bg-muted hover:bg-muted/80 text-foreground text-sm font-bold min-h-[44px]"
-            >
-              Cancelar
-            </button>
-            <button
-              onClick={handleSave}
-              disabled={saving}
-              className="px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-black uppercase tracking-widest hover:bg-primary/90 disabled:opacity-50 min-h-[44px]"
-            >
-              {saving ? 'Guardando...' : (editingRule ? 'Actualizar' : 'Crear regla')}
-            </button>
-          </div>
-        </div>
       </div>
-    </div>
+    </BaseModal>
   );
 }
 
@@ -3166,31 +3208,43 @@ function EditWorkerModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 bg-background/80 backdrop-blur-sm">
-      <div className="bg-card rounded-t-2xl sm:rounded-2xl border-2 border-border shadow-2xl max-w-2xl w-full h-[95vh] sm:h-auto sm:max-h-[90vh] overflow-y-auto"
-        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
-        {/* Header */}
-        <div className="sticky top-0 bg-card border-b-2 border-border p-5 flex items-center justify-between z-10">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center border border-primary/30">
-              <Edit3 className="w-5 h-5 text-primary" />
-            </div>
-            <div>
-              <h3 className="text-base font-black uppercase tracking-widest text-foreground">
-                Editar trabajador
-              </h3>
-              <p className="text-sm text-muted-foreground">
-                {worker.first_name} {worker.last_name} · CI: {worker.ci}
-              </p>
-            </div>
+    <BaseModal
+      open={true}
+      onOpenChange={(open) => { if (!open) onClose(); }}
+      maxWidth="sm:max-w-2xl"
+      title={
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center border border-primary/30">
+            <Edit3 className="w-5 h-5 text-primary" />
           </div>
-          <button onClick={onClose} className="p-2.5 min-h-[44px] min-w-[44px] rounded-lg hover:bg-muted flex items-center justify-center" aria-label="Cerrar">
-            <X className="w-5 h-5" />
+          <div>
+            <span className="block">Editar trabajador</span>
+            <span className="text-sm font-normal text-muted-foreground">
+              {worker.first_name} {worker.last_name} · CI: {worker.ci}
+            </span>
+          </div>
+        </div>
+      }
+      footer={
+        <div className="flex items-center justify-end gap-2 w-full">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 rounded-xl bg-muted hover:bg-muted/80 text-foreground text-sm font-bold min-h-[44px]"
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={saving || !form.first_name.trim() || !form.last_name.trim() || form.ci.length !== 11}
+            className="px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-black uppercase tracking-widest hover:bg-primary/90 disabled:opacity-50 min-h-[44px] flex items-center gap-2"
+          >
+            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+            {saving ? 'Guardando...' : 'Guardar cambios'}
           </button>
         </div>
-
-        {/* Form */}
-        <div className="p-5 space-y-4">
+      }
+    >
+      <div className="space-y-4">
           {/* Datos personales */}
           <div className="space-y-3">
             <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Datos personales</p>
@@ -3356,27 +3410,8 @@ function EditWorkerModal({
               Un trabajador inactivo no aparece en cálculos de comisión ni puede recibir pagos nuevos, pero su histórico se conserva.
             </p>
           </div>
-        </div>
-
-        {/* Footer */}
-        <div className="sticky bottom-0 bg-card border-t-2 border-border p-4 flex items-center justify-end gap-2">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 rounded-xl bg-muted hover:bg-muted/80 text-foreground text-sm font-bold min-h-[44px]"
-          >
-            Cancelar
-          </button>
-          <button
-            onClick={handleSave}
-            disabled={saving || !form.first_name.trim() || !form.last_name.trim() || form.ci.length !== 11}
-            className="px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-black uppercase tracking-widest hover:bg-primary/90 disabled:opacity-50 min-h-[44px] flex items-center gap-2"
-          >
-            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-            {saving ? 'Guardando...' : 'Guardar cambios'}
-          </button>
-        </div>
       </div>
-    </div>
+    </BaseModal>
   );
 }
 
