@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { cn } from '@/lib/utils';
-import { useVirtualizer } from '@tanstack/react-virtual';
 import { UnifiedTabs } from '@/components/views/terminal/views/cost_sheet/UnifiedTabs';
 import {
   Users,
@@ -2000,16 +1999,6 @@ function ProductCommissionCatalog({ storeId, onRefresh }: { storeId: string; onR
 
   const productCount = Object.values(productConfigs).filter(c => c.amount != null && c.amount > 0).length;
 
-  // v3 (2026-07-17): virtualización real con @tanstack/react-virtual (P4)
-  // Renderiza solo las filas visibles — eficiente para catálogos de 500+ productos.
-  const parentRef = useRef<HTMLDivElement>(null);
-  const rowVirtualizer = useVirtualizer({
-    count: filteredProducts.length,
-    getScrollElement: () => parentRef.current,
-    estimateSize: () => 56, // altura estimada por fila (px)
-    overscan: 10, // renderiza 10 filas extra fuera del viewport para scroll suave
-  });
-
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-24 gap-4">
@@ -2264,91 +2253,76 @@ function ProductCommissionCatalog({ storeId, onRefresh }: { storeId: string; onR
             })}
           </div>
 
-          {/* DESKTOP (≥768px): Tabla virtualizada */}
+          {/* DESKTOP (≥768px): Tabla nativa — alineación correcta thead/tbody */}
           <div className="hidden sm:block bg-card rounded-2xl border-2 border-border overflow-hidden">
-            <div ref={parentRef} className="overflow-auto max-h-[600px]">
-              <div className="min-w-[700px]">
-                <table className="w-full text-sm table-fixed">
-                  <thead className="bg-muted/30 sticky top-0 z-10">
-                    <tr className="border-b-2 border-border text-left">
-                      <th className="py-2 px-3 font-black uppercase tracking-widest text-[10px] text-muted-foreground w-[34%]">Producto</th>
-                      <th className="py-2 px-3 font-black uppercase tracking-widest text-[10px] text-muted-foreground text-right w-[12%]">Precio</th>
-                      <th className="py-2 px-3 font-black uppercase tracking-widest text-[10px] text-muted-foreground text-right w-[12%]">CUP</th>
-                      <th className="py-2 px-3 font-black uppercase tracking-widest text-[10px] text-muted-foreground w-[14%]">Modo</th>
-                      <th className="py-2 px-3 font-black uppercase tracking-widest text-[10px] text-muted-foreground text-right w-[14%]">Comisión</th>
-                      <th className="py-2 px-3 font-black uppercase tracking-widest text-[10px] text-muted-foreground text-right w-[14%]">Preview</th>
-                    </tr>
-                  </thead>
-                  <tbody style={{ height: `${rowVirtualizer.getTotalSize()}px`, position: 'relative', display: 'block' }}>
-                    {rowVirtualizer.getVirtualItems().map((virtualRow) => {
-                      const p = filteredProducts[virtualRow.index];
-                      if (!p) return null;
-                      const cfg = productConfigs[p.id];
-                      const cupPrice = priceInCup(p);
-                      const preview = cfg?.amount != null && cfg.amount > 0 ? cfg.amount : 0;
-                      return (
-                        <tr
-                          key={p.id}
-                          className={cn('border-b border-border/30 hover:bg-muted/20', cfg?.amount && 'bg-primary/5')}
-                          style={{
-                            position: 'absolute',
-                            top: 0,
-                            left: 0,
-                            width: '100%',
-                            transform: `translateY(${virtualRow.start}px)`,
-                            display: 'table-row',
-                          }}
-                        >
-                          <td className="py-2 px-3 w-[34%]">
-                            <div className="font-bold text-foreground text-xs truncate">{p.name}</div>
-                            <div className="text-[10px] text-muted-foreground truncate">
-                              {p.sku || '—'} · {p.category || '—'} · Stock: {p.stock_current}
-                            </div>
-                          </td>
-                          <td className="py-2 px-3 text-right font-mono text-xs w-[12%]">
-                            <div className="font-bold text-foreground">{p.price}</div>
-                            <div className="text-[10px] text-muted-foreground">{p.price_currency}</div>
-                          </td>
-                          <td className="py-2 px-3 text-right font-mono text-xs text-muted-foreground w-[12%]">
-                            {p.price_currency === 'CUP' ? '—' : cupPrice.toFixed(2)}
-                          </td>
-                          <td className="py-2 px-3 w-[14%]">
-                            <select
-                              value={cfg?.mode || 'per_unit'}
-                              onChange={(e) => updateConfig(p.id, { mode: e.target.value as 'per_sale' | 'per_unit' })}
-                              className="h-9 px-2 rounded-lg border border-border bg-background text-[10px] font-bold min-h-[44px] text-foreground w-full"
-                            >
-                              <option value="per_unit">Por unidad</option>
-                              <option value="per_sale">Por venta</option>
-                            </select>
-                          </td>
-                          <td className="py-2 px-3 text-right w-[14%]">
-                            <input
-                              type="number"
-                              inputMode="decimal"
-                              step="0.01"
-                              min="0"
-                              value={cfg?.amount ?? ''}
-                              onChange={(e) => updateConfig(p.id, { amount: e.target.value ? parseFloat(e.target.value) : null })}
-                              placeholder="0"
-                              className="w-full h-9 px-2 text-right rounded-lg border border-border bg-background text-xs font-mono font-bold min-h-[44px] text-foreground focus:border-primary focus:outline-none"
-                            />
-                          </td>
-                          <td className="py-2 px-3 text-right font-mono text-xs w-[14%]">
-                            {preview > 0 ? (
-                              <span className="text-primary font-bold">
-                                {cfg?.mode === 'per_unit' ? `${preview}/u` : `${preview}`}
-                              </span>
-                            ) : (
-                              <span className="text-muted-foreground">—</span>
-                            )}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
+            <div className="overflow-auto max-h-[600px]">
+              <table className="w-full text-sm">
+                <thead className="bg-muted/30 sticky top-0 z-10">
+                  <tr className="border-b-2 border-border text-left">
+                    <th className="py-2 px-3 font-black uppercase tracking-widest text-[10px] text-muted-foreground">Producto</th>
+                    <th className="py-2 px-3 font-black uppercase tracking-widest text-[10px] text-muted-foreground text-right">Precio</th>
+                    <th className="py-2 px-3 font-black uppercase tracking-widest text-[10px] text-muted-foreground text-right">CUP</th>
+                    <th className="py-2 px-3 font-black uppercase tracking-widest text-[10px] text-muted-foreground">Modo</th>
+                    <th className="py-2 px-3 font-black uppercase tracking-widest text-[10px] text-muted-foreground text-right">Comisión</th>
+                    <th className="py-2 px-3 font-black uppercase tracking-widest text-[10px] text-muted-foreground text-right">Preview</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredProducts.map((p) => {
+                    const cfg = productConfigs[p.id];
+                    const cupPrice = priceInCup(p);
+                    const preview = cfg?.amount != null && cfg.amount > 0 ? cfg.amount : 0;
+                    return (
+                      <tr key={p.id} className={cn('border-b border-border/30 hover:bg-muted/20', cfg?.amount && 'bg-primary/5')}>
+                        <td className="py-2 px-3">
+                          <div className="font-bold text-foreground text-xs truncate">{p.name}</div>
+                          <div className="text-[10px] text-muted-foreground truncate">
+                            {p.sku || '—'} · {p.category || '—'} · Stock: {p.stock_current}
+                          </div>
+                        </td>
+                        <td className="py-2 px-3 text-right font-mono text-xs whitespace-nowrap">
+                          <div className="font-bold text-foreground">{p.price}</div>
+                          <div className="text-[10px] text-muted-foreground">{p.price_currency}</div>
+                        </td>
+                        <td className="py-2 px-3 text-right font-mono text-xs text-muted-foreground whitespace-nowrap">
+                          {p.price_currency === 'CUP' ? '—' : cupPrice.toFixed(2)}
+                        </td>
+                        <td className="py-2 px-3">
+                          <select
+                            value={cfg?.mode || 'per_unit'}
+                            onChange={(e) => updateConfig(p.id, { mode: e.target.value as 'per_sale' | 'per_unit' })}
+                            className="h-9 px-2 rounded-lg border border-border bg-background text-[10px] font-bold min-h-[36px] text-foreground"
+                          >
+                            <option value="per_unit">Por unidad</option>
+                            <option value="per_sale">Por venta</option>
+                          </select>
+                        </td>
+                        <td className="py-2 px-3 text-right">
+                          <input
+                            type="number"
+                            inputMode="decimal"
+                            step="0.01"
+                            min="0"
+                            value={cfg?.amount ?? ''}
+                            onChange={(e) => updateConfig(p.id, { amount: e.target.value ? parseFloat(e.target.value) : null })}
+                            placeholder="0"
+                            className="w-24 h-9 px-2 text-right rounded-lg border border-border bg-background text-xs font-mono font-bold min-h-[36px] text-foreground focus:border-primary focus:outline-none"
+                          />
+                        </td>
+                        <td className="py-2 px-3 text-right font-mono text-xs whitespace-nowrap">
+                          {preview > 0 ? (
+                            <span className="text-primary font-bold">
+                              {cfg?.mode === 'per_unit' ? `${preview}/u` : `${preview}`}
+                            </span>
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
           </div>
         </>
