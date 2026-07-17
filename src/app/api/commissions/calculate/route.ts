@@ -7,6 +7,7 @@ import {
   calculateCommission,
   calculateCommissionWithProducts,
   buildBreakdownSnapshot,
+  deriveLineTotals,
   type CommissionRule,
   type ProductLineItem,
 } from '@/lib/commission-engine';
@@ -183,28 +184,11 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
       const wId = txToWorker[li.transaction_id];
       if (!wId) continue;
       if (!lineItemsByWorker[wId]) lineItemsByWorker[wId] = [];
-      // FIX (2026-07-15): transaction_items no tiene unit_price.
-      // FIX CRÍTICO (2026-07-17): price_at_sale_cup en la BD ya es price × qty × rate
-      // (es decir, line_total_cup, NO unit_price_cup). El RPC create_sale calcula:
-      //   v_price_cup := CASE WHEN currency='CUP' THEN price*qty ELSE price*qty*rate END
-      // Antes hacíamos unitPrice = price_at_sale_cup y lineTotal = unitPrice * qty,
-      // lo que INFLABA el total por un factor de qty. Ahora derivamos correctamente:
-      //   - Si price_at_sale_cup > 0: usarlo como line_total_cup, y unit_price = total / qty
-      //   - Sino: usar price_at_sale como unit_price (moneda original) y line_total = price × qty
+      // v3 (2026-07-17): usar helper DRY deriveLineTotals (P3)
+      // BUG CRÍTICO (2026-07-17): price_at_sale_cup en la BD ya es price × qty × rate
+      // (es decir, line_total_cup, NO unit_price_cup). El helper maneja esto correctamente.
+      const { unitPrice, lineTotal } = deriveLineTotals(li);
       const qty = Number(li.quantity) || 0;
-      const priceAtSaleCup = Number(li.price_at_sale_cup) || 0;
-      const priceAtSale = Number(li.price_at_sale) || 0;
-      let lineTotal: number;
-      let unitPrice: number;
-      if (priceAtSaleCup > 0 && qty > 0) {
-        // price_at_sale_cup ya es price × qty × rate → usar como line_total en CUP
-        lineTotal = priceAtSaleCup;
-        unitPrice = priceAtSaleCup / qty;
-      } else {
-        // fallback: price_at_sale (moneda original) × qty
-        unitPrice = priceAtSale;
-        lineTotal = priceAtSale * qty;
-      }
       lineItemsByWorker[wId].push({
         product_id: li.product_id,
         product_name: (li.products as any)?.name || 'Producto',

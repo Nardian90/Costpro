@@ -68,6 +68,8 @@ async function patchHandler(req: NextRequest, session: AuthenticatedSession) {
   if (min_price !== undefined) update.min_price = min_price ?? null;
   if (max_price !== undefined) update.max_price = max_price ?? null;
   if (product_commission_amount !== undefined) update.product_commission_amount = product_commission_amount ?? null;
+  // v3 (2026-07-17): persistir product_commission_mode en la columna nueva
+  if (product_commission_mode !== undefined) update.product_commission_mode = product_commission_mode || null;
 
   const { data, error } = await supabase
     .from('commission_rules')

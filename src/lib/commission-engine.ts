@@ -107,6 +107,10 @@ export interface ProductCommissionDetail {
   rule_type: CommissionType | 'manual' | 'none';
   commission: number;
   excluded_from_percentage: boolean; // true si este producto consumió una regla product_specific
+  // v3 (2026-07-17): snapshot enriquecido — captura el monto y modo efectivos
+  // usados para reproducir el cálculo post-pago. Solo aplican a product_specific.
+  effective_amount?: number | null;  // monto efectivo aplicado (override o default)
+  effective_mode?: 'per_sale' | 'per_unit' | null;  // modo efectivo aplicado
 }
 
 export interface CommissionCalculation {
@@ -423,6 +427,9 @@ export function calculateCommissionWithProducts(
         rule_type: 'product_specific',
         commission,
         excluded_from_percentage: true,
+        // v3 (2026-07-17): snapshot enriquecido
+        effective_amount: effectiveAmount,
+        effective_mode: effectiveMode,
       });
       continue;
     }
@@ -625,6 +632,45 @@ export function buildManualCommissionCalculation(
     product_breakdown: productBreakdown,
     excluded_sales_total: 0,
     calculation_mode: 'manual',
+  };
+}
+
+/**
+ * Helper DRY (2026-07-17): derivar line_total y unit_price desde un transaction_item.
+ *
+ * BUG HISTÓRICO: transaction_items.price_at_sale_cup en la BD ya es
+ * price × qty × rate (es decir, line_total_cup, NO unit_price_cup).
+ * El RPC create_sale calcula:
+ *   v_price_cup := CASE WHEN currency='CUP' THEN price*qty ELSE price*qty*rate END
+ *
+ * Antes los endpoints hacían:
+ *   unitPrice = price_at_sale_cup
+ *   lineTotal = unitPrice * qty   // ← INFLABA por factor qty
+ *
+ * Este helper centraliza la lógica correcta:
+ *   - Si price_at_sale_cup > 0: usarlo como line_total, derivar unit_price = total / qty
+ *   - Sino: fallback a price_at_sale (moneda original) × qty
+ */
+export function deriveLineTotals(lineItem: {
+  quantity: number;
+  price_at_sale_cup?: number | string | null;
+  price_at_sale?: number | string | null;
+}): { unitPrice: number; lineTotal: number } {
+  const qty = Number(lineItem.quantity) || 0;
+  const priceAtSaleCup = Number(lineItem.price_at_sale_cup) || 0;
+  const priceAtSale = Number(lineItem.price_at_sale) || 0;
+
+  if (priceAtSaleCup > 0 && qty > 0) {
+    // price_at_sale_cup ya es line_total_cup → derivar unit_price
+    return {
+      lineTotal: priceAtSaleCup,
+      unitPrice: priceAtSaleCup / qty,
+    };
+  }
+  // fallback: price_at_sale (moneda original) × qty
+  return {
+    unitPrice: priceAtSale,
+    lineTotal: priceAtSale * qty,
   };
 }
 

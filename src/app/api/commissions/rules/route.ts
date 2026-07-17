@@ -143,10 +143,8 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
       min_price: min_price ?? null,
       max_price: max_price ?? null,
       product_commission_amount: product_commission_amount ?? null,
-      // v3 (2026-07-17): modo default de la regla product_specific
-      // (NOTA: commission_rules no tiene columna product_commission_mode en DB;
-      //  se guarda solo en commission_rule_products.commission_mode por producto.
-      //  Este valor se usa como default cuando un producto no tiene override.)
+      // v3 (2026-07-17): modo default de la regla product_specific (persistido en DB)
+      product_commission_mode: product_commission_mode || null,
       created_by: /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(session.user.id || '') ? session.user.id : null,
     })
     .select()

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
 import { getSupabaseForSession } from '@/lib/supabase-session';
+import { deriveLineTotals } from '@/lib/commission-engine';
 
 /**
  * GET /api/commissions/worker-products?store_id=...&worker_id=...&date_from=...&date_to=...
@@ -144,21 +145,9 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
           : (li.transactions?.created_at
               ? new Date(li.transactions.created_at).toISOString().split('T')[0]
               : dateFrom));
-    // FIX (2026-07-15): transaction_items no tiene unit_price.
-    // FIX CRÍTICO (2026-07-17): price_at_sale_cup en la BD ya es price × qty × rate
-    // (es decir, line_total_cup, NO unit_price_cup). Ver comentario en calculate/route.ts.
+    // v3 (2026-07-17): usar helper DRY deriveLineTotals (P3)
+    const { unitPrice, lineTotal } = deriveLineTotals(li);
     const qty = Number(li.quantity) || 0;
-    const priceAtSaleCup = Number(li.price_at_sale_cup) || 0;
-    const priceAtSale = Number(li.price_at_sale) || 0;
-    let lineTotal: number;
-    let unitPrice: number;
-    if (priceAtSaleCup > 0 && qty > 0) {
-      lineTotal = priceAtSaleCup;
-      unitPrice = priceAtSaleCup / qty;
-    } else {
-      unitPrice = priceAtSale;
-      lineTotal = priceAtSale * qty;
-    }
     return {
       line_item_id: li.id,
       transaction_id: li.transaction_id,
