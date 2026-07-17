@@ -64,6 +64,17 @@ export interface CommissionRule {
   // IDs de productos asociados (para type='product_specific').
   // Se carga vía join table commission_rule_products en la API.
   product_ids?: string[];
+  // v3 (2026-07-17) — configuración por producto individual.
+  // Map de product_id → { amount, mode } que permite que una sola regla
+  // product_specific tenga monto y modo distintos por producto.
+  // Se carga vía join table commission_rule_products en la API.
+  // Si un product_id no está aquí, cae al default product_commission_amount + mode 'per_sale'.
+  product_configs?: Record<string, { amount: number | null; mode: 'per_sale' | 'per_unit' }>;
+  // v3 (2026-07-17) — modo default para la regla product_specific cuando
+  // un producto no tiene override en product_configs.
+  // Si es NULL o 'per_sale', comportamiento anterior (monto fijo por venta).
+  // Si es 'per_unit', monto × cantidad vendida.
+  product_commission_mode?: 'per_sale' | 'per_unit' | null;
 }
 
 /**
@@ -380,8 +391,20 @@ export function calculateCommissionWithProducts(
     // 1. ¿Producto específico?
     const pRule = selectProductSpecificRule(rules, worker_id, item.product_id, dateInRange);
     if (pRule && pRule.product_commission_amount != null) {
-      // Comisión fija $ por venta (sin importar cantidad ni precio)
-      const commission = Number(pRule.product_commission_amount) || 0;
+      // v3 (2026-07-17): resolver configuración específica del producto si existe override
+      const productConfig = pRule.product_configs?.[item.product_id];
+      const effectiveAmount = productConfig?.amount != null
+        ? Number(productConfig.amount)
+        : Number(pRule.product_commission_amount) || 0;
+      const effectiveMode = productConfig?.mode || pRule.product_commission_mode || 'per_sale';
+
+      // Calcular comisión según modo:
+      // - per_sale: monto fijo por venta (sin importar cantidad) — comportamiento original
+      // - per_unit: monto × cantidad vendida (ej: 1000 CUP × 3 paneles = 3000 CUP)
+      const commission = effectiveMode === 'per_unit'
+        ? effectiveAmount * item.quantity
+        : effectiveAmount;
+
       productSpecificTotal += commission;
       excludedSalesTotal += item.line_total;
 

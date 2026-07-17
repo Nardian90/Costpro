@@ -80,24 +80,41 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
 
   if (rErr) return NextResponse.json({ error: rErr.message }, { status: 500 });
 
-  // 2b. Cargar product_ids asociados a reglas product_specific (v2 — 2026-07-15)
+  // 2b. Cargar product_ids + commission_amount + commission_mode asociados a reglas product_specific
+  // v2 (2026-07-15): product_ids
+  // v3 (2026-07-17): commission_amount y commission_mode por producto individual (join table)
   const productSpecificRules = (rules || []).filter((r: any) => r.type === 'product_specific');
   let ruleProductsMap: Record<string, string[]> = {};
+  let ruleProductConfigsMap: Record<string, Record<string, { amount: number | null; mode: 'per_sale' | 'per_unit' }>> = {};
   if (productSpecificRules.length > 0) {
     const { data: rpData } = await supabase
       .from('commission_rule_products')
-      .select('rule_id, product_id')
+      .select('rule_id, product_id, commission_amount, commission_mode')
       .in('rule_id', productSpecificRules.map((r: any) => r.id));
     ruleProductsMap = (rpData || []).reduce((acc: Record<string, string[]>, rp: any) => {
       if (!acc[rp.rule_id]) acc[rp.rule_id] = [];
       acc[rp.rule_id].push(rp.product_id);
       return acc;
     }, {});
+    // Construir map de configs por producto
+    ruleProductConfigsMap = (rpData || []).reduce((acc: Record<string, Record<string, any>>, rp: any) => {
+      if (!acc[rp.rule_id]) acc[rp.rule_id] = {};
+      if (rp.commission_amount != null || rp.commission_mode != null) {
+        acc[rp.rule_id][rp.product_id] = {
+          amount: rp.commission_amount != null ? Number(rp.commission_amount) : null,
+          mode: (rp.commission_mode as 'per_sale' | 'per_unit') || 'per_sale',
+        };
+      }
+      return acc;
+    }, {});
   }
-  // Hidratar reglas con product_ids
+  // Hidratar reglas con product_ids y product_configs (v3)
   const rulesWithProducts: CommissionRule[] = (rules || []).map((r: any) => ({
     ...r,
     product_ids: ruleProductsMap[r.id] || [],
+    product_configs: ruleProductConfigsMap[r.id] || {},
+    // Modo default de la regla: si la regla tiene product_commission_mode en DB, usarlo; sino 'per_sale'
+    product_commission_mode: (r as any).product_commission_mode || 'per_sale',
   }));
 
   // 3. Obtener ventas por worker en el rango (totales agregados — sales_transactions)
