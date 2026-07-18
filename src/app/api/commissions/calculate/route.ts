@@ -147,14 +147,60 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
     salesByWorker[s.worker_id].total += Number(s.amount_total) || 0;
   }
 
+  // 4a. FIX (2026-07-17): Si no hay sales_transactions, usar transactions POS de la tienda
+  // como fallback. Esto permite calcular comisiones sobre ventas del POS que aún no
+  // están atribuidas a un worker específico vía sales_transactions.
+  // Todas las transactions POS se atribuyen a TODOS los workers activos (el admin
+  // decide luego a quién pagar). Esto resuelve el bug donde el cálculo daba 0.
+  let posTxIds: string[] = [];
+  if (!sales || sales.length === 0) {
+    const nextDayEnd = (() => {
+      const [y, m, d] = date_to.split('-').map(Number);
+      const dt = new Date(y, m - 1, d);
+      dt.setDate(dt.getDate() + 1);
+      return dt.toISOString().split('T')[0];
+    })();
+
+    const { data: posTxs } = await supabase
+      .from('transactions')
+      .select('id, total_amount, payment_method, sale_currency, sale_exchange_rate, cash_amount, transfer_amount, created_at')
+      .eq('store_id', store_id)
+      .gte('created_at', `${date_from}T00:00:00`)
+      .lt('created_at', `${nextDayEnd}T00:00:00`)
+      .neq('status', 'voided')
+      .order('created_at', { ascending: false });
+
+    if (posTxs && posTxs.length > 0) {
+      posTxIds = posTxs.map((t: any) => t.id);
+      // Atribuir TODAS las ventas POS a CADA worker activo
+      const posTotalCash = posTxs.reduce((sum: number, t: any) => sum + (Number(t.cash_amount) || 0), 0);
+      const posTotalTransfer = posTxs.reduce((sum: number, t: any) => sum + (Number(t.transfer_amount) || 0), 0);
+      const posTotalAmount = posTxs.reduce((sum: number, t: any) => sum + (Number(t.total_amount) || 0), 0);
+
+      for (const w of workers) {
+        if (w.status !== 'active') continue;
+        if (!salesByWorker[w.id]) {
+          salesByWorker[w.id] = { cash: 0, transfer: 0, total: 0 };
+        }
+        salesByWorker[w.id].cash += posTotalCash;
+        salesByWorker[w.id].transfer += posTotalTransfer;
+        salesByWorker[w.id].total += posTotalAmount;
+      }
+      console.log(`[calculate] Fallback: ${posTxs.length} transactions POS atribuidas a ${workers.length} workers (total: ${posTotalAmount} CUP)`);
+    }
+  }
+
   // 4b. v2 (2026-07-15): Cargar line items por producto desde transaction_items
-  // Solo si hay transactions vinculadas a sales_transactions
+  // FIX (2026-07-17): usar transactions POS como fallback si no hay sales_transactions
   const transactionIds = (sales || [])
     .map((s: any) => s.transaction_id)
     .filter((id: any) => id !== null && id !== undefined);
 
+  // Si no hay transactionIds de sales_transactions, usar los de transactions POS
+  const allTxIds = transactionIds.length > 0 ? transactionIds : posTxIds;
+
   let lineItemsByWorker: Record<string, ProductLineItem[]> = {};
-  if (transactionIds.length > 0) {
+  if (allTxIds.length > 0) {
     const { data: lineItems } = await supabase
       .from('transaction_items')
       .select(`
@@ -170,7 +216,7 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
         products:product_id (name),
         transactions:transaction_id (created_at)
       `)
-      .in('transaction_id', transactionIds);
+      .in('transaction_id', allTxIds);
 
     // Mapear transaction_id → worker_id
     const txToWorker: Record<string, string> = {};
@@ -180,28 +226,50 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
       }
     }
 
+    // FIX (2026-07-17): si no hay sales_transactions (fallback a POS),
+    // atribuir todos los line items a TODOS los workers activos
+    const isFallbackMode = transactionIds.length === 0 && posTxIds.length > 0;
+
     for (const li of (lineItems || [])) {
-      const wId = txToWorker[li.transaction_id];
-      if (!wId) continue;
-      if (!lineItemsByWorker[wId]) lineItemsByWorker[wId] = [];
-      // v3 (2026-07-17): usar helper DRY deriveLineTotals (P3)
-      // BUG CRÍTICO (2026-07-17): price_at_sale_cup en la BD ya es price × qty × rate
-      // (es decir, line_total_cup, NO unit_price_cup). El helper maneja esto correctamente.
       const { unitPrice, lineTotal } = deriveLineTotals(li);
       const qty = Number(li.quantity) || 0;
-      lineItemsByWorker[wId].push({
-        product_id: li.product_id,
-        product_name: (li.products as any)?.name || 'Producto',
-        quantity: qty,
-        unit_price: unitPrice,
-        line_total: lineTotal,
-        cash_paid: Number(li.cash_paid) || 0,
-        transfer_paid: Number(li.transfer_paid) || 0,
-        sale_date: (li.transactions as any)?.created_at
-          ? new Date((li.transactions as any).created_at).toISOString().split('T')[0]
-          : date_from,
-        transaction_id: li.transaction_id,
-      });
+      const saleDate = (li.transactions as any)?.created_at
+        ? new Date((li.transactions as any).created_at).toISOString().split('T')[0]
+        : date_from;
+
+      if (isFallbackMode) {
+        // Atribuir a todos los workers activos
+        for (const w of workers) {
+          if (w.status !== 'active') continue;
+          if (!lineItemsByWorker[w.id]) lineItemsByWorker[w.id] = [];
+          lineItemsByWorker[w.id].push({
+            product_id: li.product_id,
+            product_name: (li.products as any)?.name || 'Producto',
+            quantity: qty,
+            unit_price: unitPrice,
+            line_total: lineTotal,
+            cash_paid: Number(li.cash_paid) || 0,
+            transfer_paid: Number(li.transfer_paid) || 0,
+            sale_date: saleDate,
+            transaction_id: li.transaction_id,
+          });
+        }
+      } else {
+        const wId = txToWorker[li.transaction_id];
+        if (!wId) continue;
+        if (!lineItemsByWorker[wId]) lineItemsByWorker[wId] = [];
+        lineItemsByWorker[wId].push({
+          product_id: li.product_id,
+          product_name: (li.products as any)?.name || 'Producto',
+          quantity: qty,
+          unit_price: unitPrice,
+          line_total: lineTotal,
+          cash_paid: Number(li.cash_paid) || 0,
+          transfer_paid: Number(li.transfer_paid) || 0,
+          sale_date: saleDate,
+          transaction_id: li.transaction_id,
+        });
+      }
     }
   }
 

@@ -1579,61 +1579,6 @@ function PayCommissionModal({ worker, onClose, onPaid }: {
             </div>
           )}
         </div>
-
-        {/* Footer */}
-        <div className="sticky bottom-0 bg-card border-t-2 border-border p-4 flex items-center justify-between gap-2">
-          <button
-            onClick={() => step > 1 ? setStep(step - 1) : onClose()}
-            className="px-4 py-2 rounded-xl bg-muted hover:bg-muted/80 text-foreground text-sm font-bold min-h-[44px]"
-          >
-            {step === 1 ? 'Cancelar' : <><ChevronLeft className="w-4 h-4 inline" /> Atrás</>}
-          </button>
-
-          {step === 1 && (
-            <button
-              onClick={() => {
-                if (payMode === 'manual') {
-                  setStep(2);
-                  handleLoadProducts();
-                } else {
-                  setStep(2);
-                  handleCalculate();
-                }
-              }}
-              disabled={periodStart > periodEnd}
-              className="px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-black uppercase tracking-widest hover:bg-primary/90 disabled:opacity-50 min-h-[44px]"
-            >
-              {payMode === 'manual' ? 'Cargar productos' : 'Calcular'} <ChevronRight className="w-4 h-4 inline" />
-            </button>
-          )}
-          {step === 2 && (calculating || loadingProducts) && (
-            <span className="text-sm text-muted-foreground">{payMode === 'manual' ? 'Cargando productos...' : 'Calculando...'}</span>
-          )}
-          {step === 3 && calculation && (
-            <button
-              onClick={() => {
-                const finalAmt = parseFloat(finalAmount) || 0;
-                if (Math.abs(finalAmt - calculation.commission_suggested) > 0.01 && !adjustmentReason.trim()) {
-                  toast.error('Justifica el ajuste manual');
-                  return;
-                }
-                setStep(4);
-              }}
-              className="px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-black uppercase tracking-widest hover:bg-primary/90 min-h-[44px]"
-            >
-              Revisar <ChevronRight className="w-4 h-4 inline" />
-            </button>
-          )}
-          {step === 4 && (
-            <button
-              onClick={handleSave}
-              disabled={saving}
-              className="px-4 py-2 rounded-xl bg-success text-success-foreground text-sm font-black uppercase tracking-widest hover:bg-success/90 disabled:opacity-50 min-h-[44px]"
-            >
-              {saving ? 'Guardando...' : <><CheckCircle2 className="w-4 h-4 inline" /> Guardar</>}
-            </button>
-          )}
-        </div>
     </BaseModal>
   );
 }
