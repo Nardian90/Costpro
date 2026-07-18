@@ -558,24 +558,291 @@ function OrderDetailModal({ order, onClose, onUpdate }: { order: ProductionOrder
           </div>
         )}
 
-        {/* Tab Pagos */}
+        {/* Tab Pagos — Fase 2: formulario de registro + lista con tipo + balance CUP */}
         {activeTab === 'payments' && (
-          <div className="p-4 space-y-2">
-            {loading ? <p className="text-center text-muted-foreground py-4">Cargando...</p>
-            : payments.length === 0 ? <p className="text-center text-muted-foreground py-4">Sin pagos registrados</p>
-            : payments.map(p => (
-              <div key={p.id} className="flex items-center justify-between rounded-lg border border-border/30 p-3 bg-muted/10">
-                <div className="flex items-center gap-2">
-                  <span className="text-lg">{p.payment_method === 'cash' ? '💵' : p.payment_method === 'transfer' ? '📱' : '💳'}</span>
-                  <div>
-                    <p className="text-xs font-bold tabular-nums">{formatCurrency(Number(p.amount_cup || p.amount))} {p.currency}</p>
-                    <p className="text-[10px] text-muted-foreground">{new Date(p.payment_date).toLocaleString()}</p>
+          <PaymentsTab
+            order={order}
+            payments={payments}
+            loading={loading}
+            onRefresh={fetchDetail}
+          />
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ════════════════════════════════════════════════════════════════════
+// Fase 2: Tab Pagos — formulario de registro + lista + balance CUP
+// ════════════════════════════════════════════════════════════════════
+function PaymentsTab({ order, payments, loading, onRefresh }: {
+  order: ProductionOrder;
+  payments: any[];
+  loading: boolean;
+  onRefresh: () => void;
+}) {
+  const [showForm, setShowForm] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState({
+    amount: '',
+    payment_method: 'cash' as 'cash' | 'transfer' | 'zelle',
+    currency: 'CUP',
+    exchange_rate: '1',
+    payment_type: 'partial' as 'advance' | 'partial' | 'settlement',
+    reference: '',
+    notes: '',
+  });
+
+  const canPay = order.status !== 'closed' && order.status !== 'voided';
+
+  // Calcular totales en CUP
+  const totalPaidCup = payments.reduce((s, p) => s + Number(p.amount_cup || 0), 0);
+  const budgetCup = order.budget_currency === 'CUP'
+    ? Number(order.budget_total)
+    : Number(order.budget_total) * (parseFloat(form.exchange_rate) || 1);
+  const balanceCup = Math.max(0, budgetCup - totalPaidCup);
+
+  const methodIcon = (m: string) => m === 'cash' ? '💵' : m === 'transfer' ? '📱' : '💳';
+  const methodLabel = (m: string) => m === 'cash' ? 'Efectivo' : m === 'transfer' ? 'Transferencia' : 'Zelle';
+
+  const typeBadge: Record<string, { label: string; color: string }> = {
+    advance: { label: 'Anticipo', color: 'bg-blue-500/15 text-blue-500 border-blue-500/30' },
+    partial: { label: 'Parcial', color: 'bg-amber-500/15 text-amber-500 border-amber-500/30' },
+    settlement: { label: 'Liquidación', color: 'bg-success/15 text-success border-success/30' },
+  };
+
+  const handleSave = async () => {
+    const amount = parseFloat(form.amount);
+    if (!amount || amount <= 0) {
+      toast.error('Ingresa un monto válido');
+      return;
+    }
+    setSaving(true);
+    try {
+      const { token } = useAuthStore.getState();
+      const res = await fetch(`/api/production-orders/${order.id}/payments`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          amount,
+          payment_method: form.payment_method,
+          currency: form.currency,
+          exchange_rate: parseFloat(form.exchange_rate) || 1,
+          payment_type: form.payment_type,
+          reference: form.reference || undefined,
+          notes: form.notes || undefined,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        toast.success(data.message || 'Pago registrado');
+        setForm({ ...form, amount: '', reference: '', notes: '' });
+        setShowForm(false);
+        onRefresh();
+      } else {
+        toast.error(data.error || 'Error al registrar pago');
+      }
+    } catch (e: any) {
+      toast.error('Error: ' + e.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return <div className="p-4 text-center text-muted-foreground">Cargando pagos...</div>;
+  }
+
+  return (
+    <div className="p-4 space-y-3">
+      {/* Resumen financiero */}
+      <div className="grid grid-cols-3 gap-2">
+        <div className="rounded-lg border border-border/40 bg-muted/20 p-2 text-center">
+          <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Presupuesto</p>
+          <p className="text-sm font-mono font-black text-foreground">
+            {formatCurrency(Number(order.budget_total))}
+          </p>
+          <p className="text-[10px] text-muted-foreground">{order.budget_currency}</p>
+        </div>
+        <div className="rounded-lg border border-success/30 bg-success/5 p-2 text-center">
+          <p className="text-[10px] font-black uppercase tracking-widest text-success">Pagado</p>
+          <p className="text-sm font-mono font-black text-success">
+            {formatCurrency(totalPaidCup)}
+          </p>
+          <p className="text-[10px] text-muted-foreground">CUP</p>
+        </div>
+        <div className="rounded-lg border border-warning/30 bg-warning/5 p-2 text-center">
+          <p className="text-[10px] font-black uppercase tracking-widest text-warning">Saldo</p>
+          <p className="text-sm font-mono font-black text-warning">
+            {formatCurrency(balanceCup)}
+          </p>
+          <p className="text-[10px] text-muted-foreground">CUP</p>
+        </div>
+      </div>
+
+      {/* Botón registrar pago */}
+      {canPay && (
+        <button
+          onClick={() => setShowForm(!showForm)}
+          className="w-full px-4 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-black uppercase tracking-widest hover:bg-primary/90 min-h-[44px] flex items-center justify-center gap-2"
+        >
+          <DollarSign className="w-4 h-4" />
+          {showForm ? 'Cancelar' : 'Registrar pago'}
+        </button>
+      )}
+
+      {/* Formulario de registro */}
+      {showForm && canPay && (
+        <div className="rounded-xl border-2 border-primary/30 bg-primary/5 p-3 space-y-2">
+          {/* Tipo de pago */}
+          <div>
+            <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground block mb-1">Tipo de pago</label>
+            <div className="grid grid-cols-3 gap-1.5">
+              {(['advance', 'partial', 'settlement'] as const).map(t => (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => setForm({ ...form, payment_type: t })}
+                  className={cn(
+                    'px-2 py-2 rounded-lg border-2 text-[10px] font-black uppercase tracking-wider min-h-[44px] transition-colors',
+                    form.payment_type === t
+                      ? 'border-primary bg-primary/10 text-primary'
+                      : 'border-border text-muted-foreground hover:bg-muted/30'
+                  )}
+                >
+                  {typeBadge[t].label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Monto + moneda */}
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground block mb-1">Monto</label>
+              <input
+                type="number"
+                inputMode="decimal"
+                step="0.01"
+                min="0"
+                value={form.amount}
+                onChange={(e) => setForm({ ...form, amount: e.target.value })}
+                placeholder={balanceCup > 0 ? balanceCup.toFixed(2) : '0.00'}
+                className="w-full h-11 px-3 rounded-lg border-2 border-border bg-background text-sm font-mono font-bold min-h-[44px] text-foreground focus:border-primary focus:outline-none"
+              />
+            </div>
+            <div>
+              <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground block mb-1">Moneda</label>
+              <select
+                value={form.currency}
+                onChange={(e) => setForm({ ...form, currency: e.target.value, exchange_rate: e.target.value === 'CUP' ? '1' : form.exchange_rate })}
+                className="w-full h-11 px-2 rounded-lg border-2 border-border bg-background text-sm font-bold min-h-[44px] text-foreground"
+              >
+                <option value="CUP">CUP</option>
+                <option value="USD">USD</option>
+                <option value="EUR">EUR</option>
+                <option value="MLC">MLC</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Método + tasa */}
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground block mb-1">Método</label>
+              <select
+                value={form.payment_method}
+                onChange={(e) => setForm({ ...form, payment_method: e.target.value as any })}
+                className="w-full h-11 px-2 rounded-lg border-2 border-border bg-background text-sm font-bold min-h-[44px] text-foreground"
+              >
+                <option value="cash">💵 Efectivo</option>
+                <option value="transfer">📱 Transferencia</option>
+                <option value="zelle">💳 Zelle</option>
+              </select>
+            </div>
+            {form.currency !== 'CUP' && (
+              <div>
+                <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground block mb-1">Tasa a CUP</label>
+                <input
+                  type="number"
+                  inputMode="decimal"
+                  step="0.01"
+                  min="0"
+                  value={form.exchange_rate}
+                  onChange={(e) => setForm({ ...form, exchange_rate: e.target.value })}
+                  placeholder="680"
+                  className="w-full h-11 px-3 rounded-lg border-2 border-border bg-background text-sm font-mono font-bold min-h-[44px] text-foreground focus:border-primary focus:outline-none"
+                />
+              </div>
+            )}
+          </div>
+
+          {/* Referencia */}
+          <div>
+            <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground block mb-1">Referencia (opcional)</label>
+            <input
+              type="text"
+              value={form.reference}
+              onChange={(e) => setForm({ ...form, reference: e.target.value })}
+              placeholder="Ej: # Transferencia 12345"
+              className="w-full h-11 px-3 rounded-lg border-2 border-border bg-background text-sm font-bold min-h-[44px] text-foreground focus:border-primary focus:outline-none"
+            />
+          </div>
+
+          {/* Botón guardar */}
+          <button
+            onClick={handleSave}
+            disabled={saving || !form.amount}
+            className="w-full px-4 py-2.5 rounded-xl bg-success text-success-foreground text-sm font-black uppercase tracking-widest hover:bg-success/90 disabled:opacity-50 min-h-[44px] flex items-center justify-center gap-2"
+          >
+            {saving ? <Clock className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+            {saving ? 'Guardando...' : 'Confirmar pago'}
+          </button>
+        </div>
+      )}
+
+      {/* Lista de pagos */}
+      <div className="space-y-1.5">
+        <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+          Historial de pagos ({payments.length})
+        </p>
+        {payments.length === 0 ? (
+          <p className="text-center text-muted-foreground py-4 text-sm">Sin pagos registrados</p>
+        ) : payments.map((p, i) => {
+          // Inferir tipo de pago: primer pago = advance, último si balance 0 = settlement, resto = partial
+          const inferredType = i === 0 ? 'advance' : (i === payments.length - 1 && totalPaidCup >= budgetCup - 1 ? 'settlement' : 'partial');
+          const badge = typeBadge[inferredType] || typeBadge.partial;
+          return (
+            <div key={p.id} className="flex items-center justify-between rounded-lg border border-border/30 p-3 bg-muted/10 gap-2">
+              <div className="flex items-center gap-2 min-w-0 flex-1">
+                <span className="text-lg shrink-0">{methodIcon(p.payment_method)}</span>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <p className="text-xs font-bold tabular-nums text-foreground">
+                      {formatCurrency(Number(p.amount))} {p.currency}
+                    </p>
+                    <span className={cn('px-1.5 py-0.5 rounded text-[9px] font-black uppercase border', badge.color)}>
+                      {badge.label}
+                    </span>
                   </div>
+                  <p className="text-[10px] text-muted-foreground">
+                    {methodLabel(p.payment_method)} · {new Date(p.payment_date).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                  </p>
+                  {p.reference && <p className="text-[10px] text-muted-foreground truncate">Ref: {p.reference}</p>}
                 </div>
               </div>
-            ))}
-          </div>
-        )}
+              {p.amount_cup && p.currency !== 'CUP' && (
+                <div className="text-right shrink-0">
+                  <p className="text-[10px] font-mono font-bold text-muted-foreground">{formatCurrency(Number(p.amount_cup))}</p>
+                  <p className="text-[9px] text-muted-foreground">CUP</p>
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
