@@ -27,6 +27,7 @@ import {
   Search,
   Filter,
   Layers,
+  HelpCircle,
 } from 'lucide-react';
 import { useAuthStore } from '@/store';
 import { toast } from 'sonner';
@@ -1451,11 +1452,13 @@ function PayCommissionModal({ worker, onClose, onPaid }: {
               {/* v2: Tabla de desglose por producto en MODO REGLAS (solo lectura) */}
               {calculation.calculation_mode !== 'manual' && calculation.product_breakdown && calculation.product_breakdown.length > 0 && (
                 <div className="bg-muted/20 rounded-xl p-3 border border-border">
-                  <h4 className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-2">
-                    Desglose por producto · {calculation.product_breakdown.length} ítem(s)
+                  <h4 className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-2 flex items-center gap-2 flex-wrap">
+                    <span>Desglose por producto · {calculation.product_breakdown.length} ítem(s)</span>
                     {calculation.excluded_sales_total && calculation.excluded_sales_total > 0 && (
-                      <span className="ml-2 text-warning">· Excluido del %: {formatCurrency(calculation.excluded_sales_total)}</span>
+                      <span className="text-warning">· Excluido del %: {formatCurrency(calculation.excluded_sales_total)}</span>
                     )}
+                    {/* Icono de ayuda Diataxis */}
+                    <ProductBreakdownHelp />
                   </h4>
                   {/* Aviso si no hay reglas aplicables */}
                   {calculation.product_breakdown.every(pb => pb.rule_type === 'none') && (
@@ -3350,6 +3353,88 @@ function EditWorkerModal({
           </div>
       </div>
     </BaseModal>
+  );
+}
+
+// ════════════════════════════════════════════════════════════════════
+// Help: icono de ayuda con explicación Diataxis del desglose por producto
+// ════════════════════════════════════════════════════════════════════
+function ProductBreakdownHelp() {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="relative inline-block">
+      <button
+        onClick={() => setOpen(!open)}
+        className="p-1 rounded-full hover:bg-muted text-muted-foreground hover:text-primary min-h-[28px] min-w-[28px] flex items-center justify-center"
+        aria-label="Ayuda sobre el desglose por producto"
+        aria-expanded={open}
+      >
+        <HelpCircle className="w-3.5 h-3.5" />
+      </button>
+      {open && (
+        <>
+          {/* Overlay para cerrar al hacer clic fuera */}
+          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+          {/* Panel de ayuda — formato Diataxis */}
+          <div className="absolute top-full right-0 mt-1 z-50 w-[340px] max-w-[calc(100vw-2rem)] bg-card border-2 border-border rounded-xl shadow-2xl p-4 space-y-3 max-h-[400px] overflow-y-auto">
+            <div className="flex items-center justify-between">
+              <h5 className="text-xs font-black uppercase tracking-widest text-primary">¿Cómo funciona?</h5>
+              <button onClick={() => setOpen(false)} className="text-muted-foreground hover:text-foreground p-1" aria-label="Cerrar ayuda">
+                <X className="w-3 h-3" />
+              </button>
+            </div>
+
+            {/* TUTORIAL — qué hacer */}
+            <div className="space-y-1">
+              <p className="text-[10px] font-black uppercase tracking-widest text-success">📌 Paso a paso</p>
+              <p className="text-[11px] text-foreground leading-relaxed">
+                Esta tabla muestra cada producto vendido en el periodo y qué comisión generó. El motor aplica las reglas en orden de prioridad.
+              </p>
+            </div>
+
+            {/* CÓMO FUNCIONA — lógica del motor */}
+            <div className="space-y-1">
+              <p className="text-[10px] font-black uppercase tracking-widest text-primary">⚙️ Lógica del cálculo</p>
+              <div className="text-[11px] text-foreground leading-relaxed space-y-1.5">
+                <p><strong>1.</strong> Si el producto tiene una regla <strong>Por Producto</strong> (monto fijo $ por unidad o por venta), se aplica esa regla y el producto se marca como <strong className="text-warning">★ excluida</strong>.</p>
+                <p><strong>2.</strong> Si no, y el precio cae en un rango de <strong>Por Escala</strong>, se aplica el % de esa escala.</p>
+                <p><strong>3.</strong> Si no, se aplica la regla <strong>% sobre Ventas</strong> (default) sobre el subtotal de los productos sin regla específica.</p>
+              </div>
+            </div>
+
+            {/* REFERENCIA — qué significan los términos */}
+            <div className="space-y-1">
+              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">📖 Términos</p>
+              <div className="text-[11px] text-foreground space-y-1">
+                <p><strong className="text-warning">★ excluida</strong>: este producto tiene comisión fija propia (Por Producto). Se excluye del cálculo porcentual para evitar doble cobro.</p>
+                <p><strong className="text-warning">Excluido del %</strong>: suma total de ventas que ya se comisionaron con regla fija. NO se les aplica también el %.</p>
+                <p><strong>Sin regla</strong>: el producto no tiene ninguna regla aplicable. Comisión = 0.</p>
+                <p><strong>Por unidad</strong>: monto fijo × cantidad vendida (ej: 50 × 3 = 150 CUP).</p>
+                <p><strong>Por venta</strong>: monto fijo sin importar cantidad (ej: 50 CUP aunque venda 10).</p>
+              </div>
+            </div>
+
+            {/* EXPLICACIÓN — por qué existe la exclusión */}
+            <div className="space-y-1">
+              <p className="text-[10px] font-black uppercase tracking-widest text-primary">💡 ¿Por qué la exclusión?</p>
+              <p className="text-[11px] text-foreground leading-relaxed">
+                Sin la exclusión, un producto podría recibir <strong>doble comisión</strong>: una del monto fijo (Por Producto) y otra del porcentaje (% sobre Ventas). La exclusión garantiza que cada peso de venta se comisione <strong>una sola vez</strong>.
+              </p>
+            </div>
+
+            {/* Ejemplo concreto */}
+            <div className="bg-muted/30 rounded-lg p-2 border border-border/40">
+              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">Ejemplo</p>
+              <p className="text-[11px] text-foreground leading-relaxed">
+                Vendes 3 paneles a 200 CUP c/u. Regla: 50 CUP por unidad.<br/>
+                <strong>Comisión = 50 × 3 = 150 CUP</strong><br/>
+                Esos 600 CUP de venta se marcan como "excluidos del %" — no se les aplica también el 5%.
+              </p>
+            </div>
+          </div>
+        </>
+      )}
+    </div>
   );
 }
 
