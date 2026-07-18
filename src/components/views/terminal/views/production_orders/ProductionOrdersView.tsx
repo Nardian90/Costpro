@@ -606,6 +606,41 @@ function OrderDetailModal({ order, onClose, onUpdate }: { order: ProductionOrder
         {/* Tab Info */}
         {activeTab === 'info' && (
           <div className="p-4 space-y-3">
+            {/* Selector de estado — permite cambiar de estado directamente */}
+            {canEdit && (
+              <div>
+                <label className="text-[10px] font-black uppercase text-muted-foreground block mb-1">Estado de la orden</label>
+                <select
+                  value={order.status}
+                  onChange={async (e) => {
+                    try {
+                      const { token } = useAuthStore.getState();
+                      const res = await fetch(`/api/production-orders/${order.id}`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+                        body: JSON.stringify({ status: e.target.value }),
+                      });
+                      if (res.ok) {
+                        toast.success(`Estado cambiado a ${STATUS_CONFIG[e.target.value]?.label || e.target.value}`);
+                        onUpdate();
+                      } else {
+                        const err = await res.json();
+                        toast.error(err.error || 'Error al cambiar estado');
+                      }
+                    } catch { toast.error('Error'); }
+                  }}
+                  className="w-full h-11 px-3 rounded-lg border-2 border-border bg-background text-sm font-bold min-h-[44px] text-foreground"
+                >
+                  <option value="draft">📝 Borrador</option>
+                  <option value="approved">✅ Aprobada</option>
+                  <option value="in_progress">▶️ En Progreso</option>
+                  <option value="paused">⏸️ Pausada</option>
+                  <option value="completed">✔️ Completada</option>
+                  <option value="closed">🔒 Cerrada</option>
+                </select>
+              </div>
+            )}
+
             {/* Fase 3: edición en borrador */}
             {canEdit && !isEditing && (
               <button
