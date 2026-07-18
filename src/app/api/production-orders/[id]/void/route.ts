@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabaseClient';
+import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
+import { getSupabaseForSession } from '@/lib/supabase-session';
+
+
 
 /**
  * POST /api/production-orders/[id]/void
@@ -16,23 +19,21 @@ import { supabase } from '@/lib/supabaseClient';
  *
  * No se puede anular una orden ya cerrada o anulada.
  */
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+async function postHandler(request: NextRequest, session: AuthenticatedSession) {
+  const orderId = request.nextUrl.pathname.split('/').slice(-2, -1)[0] || '';
   try {
-    const { id: orderId } = await params;
+    // orderId extracted from URL above
     const body = await request.json().catch(() => ({}));
     const reason = body.reason || 'Anulación manual';
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+    const session_user = session.user;
+    const supabase = getSupabaseForSession(session);
 
     // Obtener store_id
     const { data: userData } = await supabase
       .from('profiles')
       .select('active_store_id')
-      .eq('id', user.id)
+      .eq('id', session_user.id)
       .single();
     if (!userData?.active_store_id) {
       return NextResponse.json({ error: 'Sin tienda activa' }, { status: 400 });
@@ -73,21 +74,35 @@ export async function POST(
         const qty = Number(item.actual_qty);
         if (qty <= 0) continue;
 
-        // Devolver al inventario
-        const { error: stockError } = await supabase.rpc('register_stock_movement', {
-          p_product_id: item.product_id,
-          p_store_id: userData.active_store_id,
-          p_user_id: user.id,
-          p_quantity: qty, // positivo = entrada
-          p_movement_type: 'adjustment',
-          p_reason: `Devolución por anulación de orden ${orderId.substring(0, 8)}`,
-          p_unit_cost: Number(item.budgeted_unit_cost) || 0,
-        });
+        // Devolver al inventario: actualizar stock_current directamente + registrar movimiento
+        const { data: product } = await supabase
+          .from('products')
+          .select('stock_current')
+          .eq('id', item.product_id)
+          .single();
 
-        if (stockError) {
-          console.error('[void] Error devolviendo stock:', stockError.message);
-          // Continuar — no bloquear la anulación por un item problemático
+        if (product) {
+          await supabase
+            .from('products')
+            .update({
+              stock_current: Number(product.stock_current) + qty,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', item.product_id);
         }
+
+        // Registrar movimiento de stock
+        await supabase
+          .from('stock_movements')
+          .insert({
+            store_id: userData.active_store_id,
+            product_id: item.product_id,
+            quantity_change: qty,
+            movement_type: 'adjustment',
+            reference_id: orderId,
+            movement_date: new Date().toISOString(),
+            created_at: new Date().toISOString(),
+          });
       }
     }
 
@@ -117,7 +132,7 @@ export async function POST(
         const { error: outputRevertError } = await supabase.rpc('register_stock_movement', {
           p_product_id: prodOrder.output_product_id,
           p_store_id: userData.active_store_id,
-          p_user_id: user.id,
+          p_user_id: session_user.id,
           p_quantity: -Number(prodOrder.output_quantity), // negativo = salida (revertir entrada)
           p_movement_type: 'adjustment',
           p_reason: `Reversión de producto terminado por anulación de orden ${orderId.substring(0, 8)}`,
@@ -154,3 +169,8 @@ export async function POST(
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+
+export const POST = withAuth(postHandler);
+
+
+

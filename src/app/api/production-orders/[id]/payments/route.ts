@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabaseClient';
+import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
+import { getSupabaseForSession } from '@/lib/supabase-session';
 import { z } from 'zod';
 import crypto from 'crypto';
+
+
 
 /**
  * POST /api/production-orders/[id]/payments
@@ -36,12 +39,10 @@ const paymentSchema = z.object({
   notes: z.string().optional(),
 });
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+async function postHandler(request: NextRequest, session: AuthenticatedSession) {
+  const orderId = request.nextUrl.pathname.split('/').slice(-2, -1)[0] || '';
   try {
-    const { id: orderId } = await params;
+    // orderId extracted from URL above
     const body = await request.json();
 
     // Validar
@@ -56,14 +57,14 @@ export async function POST(
     const { amount, payment_method, currency, exchange_rate, payment_type, reference, notes } = validated.data;
 
     // Autenticación
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+    const session_user = session.user;
+    const supabase = getSupabaseForSession(session);
 
     // Obtener store_id del usuario
     const { data: userData } = await supabase
       .from('profiles')
       .select('active_store_id')
-      .eq('id', user.id)
+      .eq('id', session_user.id)
       .single();
     if (!userData?.active_store_id) {
       return NextResponse.json({ error: 'Sin tienda activa' }, { status: 400 });
@@ -98,7 +99,7 @@ export async function POST(
     const ref_type = order.order_type === 'work' ? 'work' : 'production_order';
 
     // Generar idempotency key para evitar doble-click
-    const idempotencyKey = `${user.id}-${orderId}-${Date.now()}-${crypto.randomUUID()}`;
+    const idempotencyKey = `${session_user.id}-${orderId}-${Date.now()}-${crypto.randomUUID()}`;
 
     // Determinar el monto en CUP para validación de overpay
     const amountCup = currency === 'CUP' ? amount : amount * exchange_rate;
@@ -133,7 +134,7 @@ export async function POST(
       p_ref_id: orderId,
       p_amount: amount,
       p_payment_method: payment_method,
-      p_paid_by: user.id,
+      p_paid_by: session_user.id,
       p_currency: currency,
       p_exchange_rate: exchange_rate,
       p_idempotency_key: idempotencyKey,
@@ -183,15 +184,13 @@ export async function POST(
  *
  * Lista todos los pagos de una orden.
  */
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+async function getHandler(request: NextRequest, session: AuthenticatedSession) {
+  const orderId = request.nextUrl.pathname.split('/').slice(-2, -1)[0] || '';
   try {
-    const { id: orderId } = await params;
+    // orderId extracted from URL above
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+    const session_user = session.user;
+    const supabase = getSupabaseForSession(session);
 
     // Verificar ownership
     const { data: order } = await supabase
@@ -236,3 +235,9 @@ export async function GET(
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+
+export const POST = withAuth(postHandler);
+
+export const GET = withAuth(getHandler);
+
+

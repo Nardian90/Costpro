@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabaseClient';
+import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
+import { getSupabaseForSession } from '@/lib/supabase-session';
 import { z } from 'zod';
+
+
 
 /**
  * POST /api/production-orders/[id]/items
@@ -17,12 +20,10 @@ const addItemSchema = z.object({
   budgeted_unit_cost: z.number().min(0).default(0),
 });
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+async function postHandler(request: NextRequest, session: AuthenticatedSession) {
+  const orderId = request.nextUrl.pathname.split('/').slice(-2, -1)[0] || '';
   try {
-    const { id: orderId } = await params;
+    // orderId extracted from URL above
     const body = await request.json();
     const validated = addItemSchema.safeParse(body);
     if (!validated.success) {
@@ -31,8 +32,8 @@ export async function POST(
 
     const { product_id, variant_id, budgeted_qty, budgeted_unit_cost } = validated.data;
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+    const session_user = session.user;
+    const supabase = getSupabaseForSession(session);
 
     // Verificar que la orden existe, pertenece a la tienda y no está cerrada/anulada
     const { data: order } = await supabase
@@ -78,19 +79,17 @@ export async function POST(
   }
 }
 
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+async function deleteHandler(request: NextRequest, session: AuthenticatedSession) {
+  const orderId = request.nextUrl.pathname.split('/').slice(-2, -1)[0] || '';
   try {
-    const { id: orderId } = await params;
+    // orderId extracted from URL above
     const { searchParams } = new URL(request.url);
     const itemId = searchParams.get('item_id');
 
     if (!itemId) return NextResponse.json({ error: 'item_id es requerido' }, { status: 400 });
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+    const session_user = session.user;
+    const supabase = getSupabaseForSession(session);
 
     // Verificar orden
     const { data: order } = await supabase
@@ -130,3 +129,9 @@ export async function DELETE(
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+
+export const POST = withAuth(postHandler);
+
+
+
+export const DELETE = withAuth(deleteHandler);

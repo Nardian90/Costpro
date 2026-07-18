@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabaseClient';
+import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
+import { getSupabaseForSession } from '@/lib/supabase-session';
+
+
 
 // POST: Dar salida a un item (descontar del inventario)
-export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+async function postHandler(request: NextRequest, session: AuthenticatedSession) {
+  const orderId = request.nextUrl.pathname.split('/').slice(-2, -1)[0] || '';
   try {
-    const { id: orderId } = await params;
+    // orderId extracted from URL above
     const body = await request.json();
     const { item_id, qty, unit_cost } = body;
 
@@ -12,10 +16,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return NextResponse.json({ error: 'item_id y qty son requeridos' }, { status: 400 });
     }
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+    const session_user = session.user;
+    const supabase = getSupabaseForSession(session);
 
-    const { data: userData } = await supabase.from('profiles').select('active_store_id').eq('id', user.id).single();
+    const { data: userData } = await supabase.from('profiles').select('active_store_id').eq('id', session_user.id).single();
     if (!userData?.active_store_id) return NextResponse.json({ error: 'Tienda no configurada' }, { status: 400 });
 
     const { error } = await supabase.rpc('withdraw_production_item', {
@@ -31,3 +35,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+
+export const POST = withAuth(postHandler);
+
+
+
