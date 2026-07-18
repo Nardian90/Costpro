@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabaseClient';
 import { z } from 'zod';
+import crypto from 'crypto';
 
 // PATCH: Cambiar estado de la orden
 const updateSchema = z.object({
@@ -87,17 +88,19 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         return NextResponse.json({ error: 'Las órdenes de producción requieren un producto terminado y cantidad' }, { status: 400 });
       }
 
-      // C6: Registrar pago final con inspección de errores
+      // C6: Registrar pago final con inspección de errores (Fase 6: idempotency + ref_type dinámico)
       if (final_amount && final_amount > 0 && final_method) {
+        const refType = order.order_type === 'work' ? 'work' : 'production_order';
         const { error: payError } = await supabase.rpc('register_supplier_payment', {
           p_store_id: userData.active_store_id,
-          p_ref_type: 'production_order',
+          p_ref_type: refType,
           p_ref_id: orderId,
           p_amount: final_amount,
           p_payment_method: final_method,
           p_paid_by: user.id,
           p_currency: final_currency || 'CUP',
           p_exchange_rate: exchange_rate || 1.0,
+          p_idempotency_key: `close-${orderId}-${crypto.randomUUID()}`,
         });
         if (payError) {
           console.error('[production-orders/close] Payment error:', payError);
@@ -157,9 +160,18 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       .select()
       .single();
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    // Fase 5: manejar error de transición inválida del trigger
+    if (error) {
+      if (error.message?.includes('ERR_INVALID_TRANSITION')) {
+        return NextResponse.json({ error: error.message }, { status: 400 });
+      }
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
     return NextResponse.json(data);
   } catch (error: any) {
+    if (error.message?.includes('ERR_INVALID_TRANSITION')) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

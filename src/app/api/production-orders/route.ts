@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabaseClient';
 import { z } from 'zod';
+import crypto from 'crypto';
 
 const createOrderSchema = z.object({
   order_type: z.enum(['production', 'service', 'work']).default('service'),
@@ -66,16 +67,17 @@ export async function POST(request: NextRequest) {
       if (itemsError) return NextResponse.json({ error: itemsError.message }, { status: 500 });
     }
 
-    // Registrar anticipo como pago
+    // Registrar anticipo como pago (Fase 6: con idempotency_key anti doble-click)
     if (parsed.data.advance_amount > 0 && parsed.data.advance_method) {
       const { error: payError } = await supabase.rpc('register_supplier_payment', {
         p_store_id: userData.active_store_id,
-        p_ref_type: 'production_order',
+        p_ref_type: order.order_type === 'work' ? 'work' : 'production_order',
         p_ref_id: order.id,
         p_amount: parsed.data.advance_amount,
         p_payment_method: parsed.data.advance_method,
         p_paid_by: user.id,
         p_currency: parsed.data.advance_currency,
+        p_idempotency_key: `advance-${order.id}-${crypto.randomUUID()}`,
       });
       if (payError) {
         console.error('[production-orders] Error registering payment:', payError);
