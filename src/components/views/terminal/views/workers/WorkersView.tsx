@@ -167,6 +167,8 @@ const RULE_TYPE_LABELS: Record<string, string> = {
   hybrid: 'Híbrido',
   product_specific: 'Por Producto',
   scale_percentage: 'Por Escala',
+  none: 'Sin regla',
+  manual: 'Manual',
 };
 
 const BASE_CALC_LABELS: Record<string, string> = {
@@ -1455,6 +1457,19 @@ function PayCommissionModal({ worker, onClose, onPaid }: {
                       <span className="ml-2 text-warning">· Excluido del %: {formatCurrency(calculation.excluded_sales_total)}</span>
                     )}
                   </h4>
+                  {/* Aviso si no hay reglas aplicables */}
+                  {calculation.product_breakdown.every(pb => pb.rule_type === 'none') && (
+                    <div className="mb-2 rounded-lg bg-warning/10 border border-warning/30 p-3 flex items-start gap-2">
+                      <AlertTriangle className="w-4 h-4 text-warning shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-xs font-bold text-warning">No hay reglas de comisión configuradas</p>
+                        <p className="text-xs text-muted-foreground">
+                          Ve al tab <strong>Reglas Comisión</strong> → <strong>Nueva regla</strong> para configurar cómo se calcula la comisión.
+                          Sin reglas, la comisión sugerida es 0.
+                        </p>
+                      </div>
+                    </div>
+                  )}
                   <div className="bg-background/60 rounded-lg border border-border overflow-hidden">
                     <div className="overflow-x-auto max-h-[300px] overflow-y-auto">
                       <table className="w-full text-xs">
