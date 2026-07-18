@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { Plus, Factory, Wrench, Eye, Ban, Play, Pause, CheckCircle2, Clock, DollarSign, Package, ArrowDownToLine, X } from 'lucide-react';
+import { Plus, Factory, Wrench, Eye, Ban, Play, Pause, CheckCircle2, Clock, DollarSign, Package, ArrowDownToLine, X, Edit3 } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuthStore } from '@/store';
@@ -387,6 +387,30 @@ function OrderDetailModal({ order, onClose, onUpdate }: { order: ProductionOrder
   const [outputQty, setOutputQty] = useState('');
   const [products, setProducts] = useState<any[]>([]);
 
+  // Fase 3: edición en borrador
+  const [isEditing, setIsEditing] = useState(false);
+  const [editForm, setEditForm] = useState({
+    customer_name: order.customer_name || '',
+    customer_ci: order.customer_ci || '',
+    customer_phone: order.customer_phone || '',
+    customer_address: order.customer_address || '',
+    description: order.description || '',
+  });
+  const [savingEdit, setSavingEdit] = useState(false);
+
+  // Fase 3: añadir material
+  const [showAddMaterial, setShowAddMaterial] = useState(false);
+  const [materialSearch, setMaterialSearch] = useState('');
+  const [materialResults, setMaterialResults] = useState<any[]>([]);
+  const [newMaterialQty, setNewMaterialQty] = useState('1');
+  const [addingMaterial, setAddingMaterial] = useState(false);
+
+  // Fase 4: anular
+  const [voiding, setVoiding] = useState(false);
+
+  const canEdit = order.status !== 'closed' && order.status !== 'voided';
+  const sc = STATUS_CONFIG[order.status] || STATUS_CONFIG.draft;
+
   const fetchDetail = useCallback(async () => {
     setLoading(true);
     try {
@@ -401,6 +425,21 @@ function OrderDetailModal({ order, onClose, onUpdate }: { order: ProductionOrder
   }, [order.id]);
 
   useEffect(() => { fetchDetail(); }, [fetchDetail]);
+
+  // Búsqueda de materiales para añadir
+  useEffect(() => {
+    if (!showAddMaterial || !materialSearch) { setMaterialResults([]); return; }
+    const t = setTimeout(async () => {
+      const { data } = await supabase
+        .from('products')
+        .select('id, name, sku, price, stock_current, unit_of_measure')
+        .eq('store_id', order.store_id)
+        .or(`name.ilike.%${materialSearch}%,sku.ilike.%${materialSearch}%`)
+        .limit(10);
+      setMaterialResults(data || []);
+    }, 300);
+    return () => clearTimeout(t);
+  }, [materialSearch, showAddMaterial, order.store_id]);
 
   const totalPaid = payments.reduce((s, p) => s + Number(p.amount_cup || p.amount), 0);
   const balance = order.budget_total - order.paid_amount;
@@ -437,87 +476,236 @@ function OrderDetailModal({ order, onClose, onUpdate }: { order: ProductionOrder
     } catch { toast.error('Error'); }
   };
 
-  const sc = STATUS_CONFIG[order.status] || STATUS_CONFIG.draft;
+  // Fase 3: guardar edición
+  const handleSaveEdit = async () => {
+    setSavingEdit(true);
+    try {
+      const { token } = useAuthStore.getState();
+      const res = await fetch(`/api/production-orders/${order.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify(editForm),
+      });
+      if (res.ok) {
+        toast.success('Cambios guardados');
+        setIsEditing(false);
+        onUpdate();
+      } else {
+        const err = await res.json();
+        toast.error(err.error || 'Error');
+      }
+    } catch (e: any) { toast.error('Error: ' + e.message); }
+    finally { setSavingEdit(false); }
+  };
+
+  // Fase 3: añadir material
+  const handleAddMaterial = async (productId: string, productName: string) => {
+    setAddingMaterial(true);
+    try {
+      const { token } = useAuthStore.getState();
+      const res = await fetch(`/api/production-orders/${order.id}/items`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify({
+          product_id: productId,
+          budgeted_qty: parseFloat(newMaterialQty) || 1,
+        }),
+      });
+      if (res.ok) {
+        toast.success(`"${productName}" añadido`);
+        setMaterialSearch('');
+        setMaterialResults([]);
+        setNewMaterialQty('1');
+        fetchDetail();
+      } else {
+        const err = await res.json();
+        toast.error(err.error || 'Error');
+      }
+    } catch (e: any) { toast.error('Error: ' + e.message); }
+    finally { setAddingMaterial(false); }
+  };
+
+  // Fase 3: eliminar material
+  const handleDeleteItem = async (itemId: string, itemName: string) => {
+    if (!confirm(`¿Eliminar "${itemName}" de los materiales?`)) return;
+    try {
+      const { token } = useAuthStore.getState();
+      const res = await fetch(`/api/production-orders/${order.id}/items?item_id=${itemId}`, {
+        method: 'DELETE',
+        headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+      });
+      if (res.ok) { toast.success('Material eliminado'); fetchDetail(); }
+      else { const err = await res.json(); toast.error(err.error || 'Error'); }
+    } catch { toast.error('Error'); }
+  };
+
+  // Fase 4: anular orden
+  const handleVoid = async () => {
+    const reason = prompt('Motivo de anulación:', 'Anulación manual');
+    if (!reason) return;
+    setVoiding(true);
+    try {
+      const { token } = useAuthStore.getState();
+      const res = await fetch(`/api/production-orders/${order.id}/void`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify({ reason }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        toast.success(data.message || 'Orden anulada');
+        onUpdate();
+        onClose();
+      } else {
+        toast.error(data.error || 'Error');
+      }
+    } catch (e: any) { toast.error('Error: ' + e.message); }
+    finally { setVoiding(false); }
+  };
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm" onClick={onClose}>
-      <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-card border border-border/50 rounded-2xl shadow-2xl" onClick={e => e.stopPropagation()}>
+    <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center sm:p-4 bg-background/80 backdrop-blur-sm" onClick={onClose}>
+      <div className="w-full max-w-2xl h-[95vh] sm:h-auto sm:max-h-[90vh] overflow-y-auto bg-card rounded-t-2xl sm:rounded-2xl border border-border/50 shadow-2xl" onClick={e => e.stopPropagation()}
+        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
         {/* Header */}
         <div className="sticky top-0 bg-card border-b border-border/30 p-4 flex items-center justify-between z-10">
-          <div className="flex items-center gap-2">
-            <span className="text-2xl">{order.order_type === 'production' ? '🏭' : order.order_type === 'work' ? '📦' : '🔧'}</span>
-            <div>
-              <h2 className="text-sm font-black uppercase tracking-widest">{order.order_number}</h2>
-              <p className="text-[10px] text-muted-foreground">{order.customer_name || 'Sin cliente'} · {sc.label}</p>
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="text-2xl shrink-0">{order.order_type === 'production' ? '🏭' : order.order_type === 'work' ? '📦' : '🔧'}</span>
+            <div className="min-w-0">
+              <h2 className="text-sm font-black uppercase tracking-widest truncate">{order.order_number}</h2>
+              <p className="text-[10px] text-muted-foreground truncate">{order.customer_name || 'Sin cliente'} · {sc.label}</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-2 rounded-lg hover:bg-muted"><X className="w-4 h-4" /></button>
+          <div className="flex items-center gap-1 shrink-0">
+            {/* Fase 4: botón Anular */}
+            {canEdit && (
+              <button
+                onClick={handleVoid}
+                disabled={voiding}
+                className="px-2 py-2 rounded-lg bg-destructive/10 text-destructive border border-destructive/30 text-[10px] font-black uppercase hover:bg-destructive/20 min-h-[44px] flex items-center gap-1"
+                title="Anular orden"
+                aria-label="Anular orden"
+              >
+                <Ban className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Anular</span>
+              </button>
+            )}
+            <button onClick={onClose} className="p-2 rounded-lg hover:bg-muted min-h-[44px] min-w-[44px] flex items-center justify-center" aria-label="Cerrar">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b border-border/30">
-          <button onClick={() => setActiveTab('info')} className={cn("flex-1 py-3 text-xs font-black uppercase border-b-2 -mb-px", activeTab === 'info' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground')}>Info</button>
-          <button onClick={() => setActiveTab('items')} className={cn("flex-1 py-3 text-xs font-black uppercase border-b-2 -mb-px", activeTab === 'items' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground')}>Materiales ({items.length})</button>
-          <button onClick={() => setActiveTab('payments')} className={cn("flex-1 py-3 text-xs font-black uppercase border-b-2 -mb-px", activeTab === 'payments' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground')}>Pagos ({payments.length})</button>
+        <div className="flex border-b border-border/30 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+          <button onClick={() => setActiveTab('info')} className={cn("flex-1 py-3 px-4 text-xs font-black uppercase border-b-2 -mb-px whitespace-nowrap min-h-[44px]", activeTab === 'info' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground')}>Info</button>
+          <button onClick={() => setActiveTab('items')} className={cn("flex-1 py-3 px-4 text-xs font-black uppercase border-b-2 -mb-px whitespace-nowrap min-h-[44px]", activeTab === 'items' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground')}>Materiales ({items.length})</button>
+          <button onClick={() => setActiveTab('payments')} className={cn("flex-1 py-3 px-4 text-xs font-black uppercase border-b-2 -mb-px whitespace-nowrap min-h-[44px]", activeTab === 'payments' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground')}>Pagos ({payments.length})</button>
         </div>
 
         {/* Tab Info */}
         {activeTab === 'info' && (
           <div className="p-4 space-y-3">
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              <div><span className="text-muted-foreground">Tipo:</span> <span className="font-bold">{order.order_type === 'production' ? '🏭 Producción' : order.order_type === 'work' ? '📦 Trabajo' : '🔧 Servicio'}</span></div>
-              <div><span className="text-muted-foreground">Fecha:</span> <span className="font-bold">{new Date(order.order_date).toLocaleDateString()}</span></div>
-              <div><span className="text-muted-foreground">Cliente:</span> <span className="font-bold">{order.customer_name || '—'}</span></div>
-              <div><span className="text-muted-foreground">CI:</span> <span className="font-bold">{order.customer_ci || '—'}</span></div>
-              <div><span className="text-muted-foreground">Teléfono:</span> <span className="font-bold">{order.customer_phone || '—'}</span></div>
-              <div><span className="text-muted-foreground">Dirección:</span> <span className="font-bold">{order.customer_address || '—'}</span></div>
-            </div>
-            <div className="pt-2 border-t border-border/30 grid grid-cols-3 gap-2">
-              <div className="rounded-lg border border-border/30 bg-muted/20 p-2 text-center">
-                <p className="text-[9px] font-black uppercase text-muted-foreground">Presupuesto</p>
-                <p className="text-sm font-mono font-black">{formatCurrency(order.budget_total)} {order.budget_currency}</p>
+            {/* Fase 3: edición en borrador */}
+            {canEdit && !isEditing && (
+              <button
+                onClick={() => setIsEditing(true)}
+                className="w-full px-3 py-2 rounded-lg border border-border text-xs font-black uppercase hover:bg-muted min-h-[44px] flex items-center justify-center gap-2"
+              >
+                <Edit3 className="w-3.5 h-3.5" /> Editar información
+              </button>
+            )}
+
+            {isEditing ? (
+              /* Modo edición */
+              <div className="space-y-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <div>
+                    <label className="text-[10px] font-black uppercase text-muted-foreground block mb-1">Cliente</label>
+                    <input value={editForm.customer_name} onChange={(e) => setEditForm({ ...editForm, customer_name: e.target.value })} className="w-full h-11 px-3 rounded-lg border-2 border-border bg-background text-sm font-bold min-h-[44px]" placeholder="Nombre del cliente" />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-black uppercase text-muted-foreground block mb-1">CI</label>
+                    <input value={editForm.customer_ci} onChange={(e) => setEditForm({ ...editForm, customer_ci: e.target.value })} className="w-full h-11 px-3 rounded-lg border-2 border-border bg-background text-sm font-bold min-h-[44px]" placeholder="Carné de identidad" />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-black uppercase text-muted-foreground block mb-1">Teléfono</label>
+                    <input value={editForm.customer_phone} onChange={(e) => setEditForm({ ...editForm, customer_phone: e.target.value })} className="w-full h-11 px-3 rounded-lg border-2 border-border bg-background text-sm font-bold min-h-[44px]" placeholder="Teléfono" inputMode="tel" />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-black uppercase text-muted-foreground block mb-1">Dirección</label>
+                    <input value={editForm.customer_address} onChange={(e) => setEditForm({ ...editForm, customer_address: e.target.value })} className="w-full h-11 px-3 rounded-lg border-2 border-border bg-background text-sm font-bold min-h-[44px]" placeholder="Dirección" />
+                  </div>
+                </div>
+                <div>
+                  <label className="text-[10px] font-black uppercase text-muted-foreground block mb-1">Descripción</label>
+                  <textarea value={editForm.description} onChange={(e) => setEditForm({ ...editForm, description: e.target.value })} rows={2} className="w-full px-3 py-2 rounded-lg border-2 border-border bg-background text-sm min-h-[44px]" placeholder="Descripción del trabajo" />
+                </div>
+                <div className="flex gap-2">
+                  <button onClick={() => setIsEditing(false)} className="flex-1 h-11 rounded-lg border border-border text-xs font-black uppercase hover:bg-muted min-h-[44px]">Cancelar</button>
+                  <button onClick={handleSaveEdit} disabled={savingEdit} className="flex-1 h-11 rounded-lg bg-primary text-primary-foreground text-xs font-black uppercase hover:bg-primary/90 disabled:opacity-50 min-h-[44px]">
+                    {savingEdit ? 'Guardando...' : 'Guardar'}
+                  </button>
+                </div>
               </div>
-              <div className="rounded-lg border border-success/20 bg-success/5 p-2 text-center">
-                <p className="text-[9px] font-black uppercase text-muted-foreground">Pagado</p>
-                <p className="text-sm font-mono font-black text-success">{formatCurrency(order.paid_amount)}</p>
-              </div>
-              <div className="rounded-lg border border-primary/20 bg-primary/5 p-2 text-center">
-                <p className="text-[9px] font-black uppercase text-muted-foreground">Saldo</p>
-                <p className="text-sm font-mono font-black text-primary">{formatCurrency(balance)}</p>
-              </div>
-            </div>
-            {order.description && <p className="text-xs pt-2 border-t border-border/30">{order.description}</p>}
+            ) : (
+              /* Modo lectura */
+              <>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div><span className="text-muted-foreground">Tipo:</span> <span className="font-bold">{order.order_type === 'production' ? '🏭 Producción' : order.order_type === 'work' ? '📦 Trabajo' : '🔧 Servicio'}</span></div>
+                  <div><span className="text-muted-foreground">Fecha:</span> <span className="font-bold">{new Date(order.order_date).toLocaleDateString()}</span></div>
+                  <div><span className="text-muted-foreground">Cliente:</span> <span className="font-bold">{order.customer_name || '—'}</span></div>
+                  <div><span className="text-muted-foreground">CI:</span> <span className="font-bold">{order.customer_ci || '—'}</span></div>
+                  <div><span className="text-muted-foreground">Teléfono:</span> <span className="font-bold">{order.customer_phone || '—'}</span></div>
+                  <div><span className="text-muted-foreground">Dirección:</span> <span className="font-bold">{order.customer_address || '—'}</span></div>
+                </div>
+                <div className="pt-2 border-t border-border/30 grid grid-cols-3 gap-2">
+                  <div className="rounded-lg border border-border/30 bg-muted/20 p-2 text-center">
+                    <p className="text-[9px] font-black uppercase text-muted-foreground">Presupuesto</p>
+                    <p className="text-sm font-mono font-black">{formatCurrency(order.budget_total)} {order.budget_currency}</p>
+                  </div>
+                  <div className="rounded-lg border border-success/20 bg-success/5 p-2 text-center">
+                    <p className="text-[9px] font-black uppercase text-muted-foreground">Pagado</p>
+                    <p className="text-sm font-mono font-black text-success">{formatCurrency(order.paid_amount)}</p>
+                  </div>
+                  <div className="rounded-lg border border-primary/20 bg-primary/5 p-2 text-center">
+                    <p className="text-[9px] font-black uppercase text-muted-foreground">Saldo</p>
+                    <p className="text-sm font-mono font-black text-primary">{formatCurrency(balance)}</p>
+                  </div>
+                </div>
+                {order.description && <p className="text-xs pt-2 border-t border-border/30">{order.description}</p>}
+              </>
+            )}
 
             {/* Botón de cerrar orden */}
-            {order.status !== 'closed' && order.status !== 'voided' && (
+            {canEdit && !isEditing && (
               <div className="pt-2 border-t border-border/30">
                 {!showCloseForm ? (
-                  <button onClick={() => setShowCloseForm(true)} className="w-full h-10 rounded-lg bg-success text-white text-xs font-black uppercase hover:opacity-90 flex items-center justify-center gap-2">
+                  <button onClick={() => setShowCloseForm(true)} className="w-full h-11 rounded-lg bg-success text-white text-xs font-black uppercase hover:opacity-90 flex items-center justify-center gap-2 min-h-[44px]">
                     <CheckCircle2 className="w-4 h-4" /> Cerrar Orden
                   </button>
                 ) : (
                   <div className="space-y-2 p-3 rounded-xl border border-success/30 bg-success/5">
                     <p className="text-[10px] font-black uppercase text-muted-foreground">Pago al cerrar</p>
                     <div className="grid grid-cols-3 gap-2">
-                      <input type="number" value={finalAmount} onChange={(e) => setFinalAmount(e.target.value)} placeholder={String(balance.toFixed(2))} className="h-9 bg-background border border-border/50 rounded-lg px-3 text-sm font-bold tabular-nums" />
-                      <select value={finalMethod} onChange={(e) => setFinalMethod(e.target.value as any)} className="h-9 bg-background border border-border/50 rounded-lg px-2 text-xs font-bold">
+                      <input type="number" inputMode="decimal" value={finalAmount} onChange={(e) => setFinalAmount(e.target.value)} placeholder={String(balance.toFixed(2))} className="h-11 bg-background border border-border/50 rounded-lg px-3 text-sm font-bold tabular-nums min-h-[44px]" />
+                      <select value={finalMethod} onChange={(e) => setFinalMethod(e.target.value as any)} className="h-11 bg-background border border-border/50 rounded-lg px-2 text-xs font-bold min-h-[44px]">
                         <option value="cash">💵 Efectivo</option><option value="transfer">📱 Transfer</option><option value="zelle">💳 Zelle</option>
                       </select>
-                      <select value={finalCurrency} onChange={(e) => setFinalCurrency(e.target.value)} className="h-9 bg-background border border-border/50 rounded-lg px-2 text-xs font-bold">
+                      <select value={finalCurrency} onChange={(e) => setFinalCurrency(e.target.value)} className="h-11 bg-background border border-border/50 rounded-lg px-2 text-xs font-bold min-h-[44px]">
                         <option value="CUP">CUP</option><option value="USD">USD</option><option value="EUR">EUR</option><option value="MLC">MLC</option>
                       </select>
                     </div>
-                    {/* Output product para producción */}
                     {order.order_type === 'production' && (
                       <div className="space-y-1">
                         <p className="text-[10px] font-black uppercase text-muted-foreground">Producto terminado (entra al almacén)</p>
                         <ProductSearchInput value={outputProductId} onChange={setOutputProductId} storeId={order.store_id} />
-                        <input type="number" value={outputQty} onChange={(e) => setOutputQty(e.target.value)} placeholder="Cantidad producida" className="w-full h-9 bg-background border border-border/50 rounded-lg px-3 text-sm font-bold" />
+                        <input type="number" inputMode="decimal" value={outputQty} onChange={(e) => setOutputQty(e.target.value)} placeholder="Cantidad producida" className="w-full h-11 bg-background border border-border/50 rounded-lg px-3 text-sm font-bold min-h-[44px]" />
                       </div>
                     )}
                     <div className="flex gap-2">
-                      <button onClick={() => setShowCloseForm(false)} className="flex-1 h-9 rounded-lg border border-border/40 text-[10px] font-black uppercase">Cancelar</button>
-                      <button onClick={handleClose} className="flex-1 h-9 rounded-lg bg-success text-white text-[10px] font-black uppercase">Confirmar Cierre</button>
+                      <button onClick={() => setShowCloseForm(false)} className="flex-1 h-11 rounded-lg border border-border/40 text-[10px] font-black uppercase min-h-[44px]">Cancelar</button>
+                      <button onClick={handleClose} className="flex-1 h-11 rounded-lg bg-success text-white text-[10px] font-black uppercase min-h-[44px]">Confirmar Cierre</button>
                     </div>
                   </div>
                 )}
@@ -526,19 +714,77 @@ function OrderDetailModal({ order, onClose, onUpdate }: { order: ProductionOrder
           </div>
         )}
 
-        {/* Tab Items */}
+        {/* Tab Items — Fase 3: añadir/eliminar materiales */}
         {activeTab === 'items' && (
           <div className="p-4 space-y-2">
+            {/* Botón añadir material */}
+            {canEdit && !showAddMaterial && (
+              <button
+                onClick={() => setShowAddMaterial(true)}
+                className="w-full px-3 py-2 rounded-lg border border-border text-xs font-black uppercase hover:bg-muted min-h-[44px] flex items-center justify-center gap-2"
+              >
+                <Plus className="w-3.5 h-3.5" /> Agregar material
+              </button>
+            )}
+
+            {/* Formulario añadir material */}
+            {showAddMaterial && canEdit && (
+              <div className="rounded-xl border-2 border-primary/30 bg-primary/5 p-3 space-y-2">
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={materialSearch}
+                    onChange={(e) => setMaterialSearch(e.target.value)}
+                    placeholder="Buscar producto por nombre o SKU..."
+                    className="w-full h-11 px-3 rounded-lg border-2 border-border bg-background text-sm font-bold min-h-[44px]"
+                    autoFocus
+                  />
+                </div>
+                {materialResults.length > 0 && (
+                  <div className="max-h-40 overflow-y-auto rounded-lg border border-border/30 bg-background">
+                    {materialResults.map(p => (
+                      <button
+                        key={p.id}
+                        onClick={() => handleAddMaterial(p.id, p.name)}
+                        disabled={addingMaterial}
+                        className="w-full text-left px-3 py-2 hover:bg-muted/30 border-b border-border/20 last:border-0 min-h-[44px] flex items-center justify-between"
+                      >
+                        <div>
+                          <p className="text-xs font-bold">{p.name}</p>
+                          <p className="text-[10px] text-muted-foreground">{p.sku || '—'} · Stock: {p.stock_current} · {formatCurrency(p.price)}</p>
+                        </div>
+                        <Plus className="w-3 h-3 text-primary shrink-0" />
+                      </button>
+                    ))}
+                  </div>
+                )}
+                <div className="flex items-center gap-2">
+                  <label className="text-[10px] font-black uppercase text-muted-foreground shrink-0">Cant:</label>
+                  <input
+                    type="number"
+                    inputMode="decimal"
+                    min="0.01"
+                    step="0.01"
+                    value={newMaterialQty}
+                    onChange={(e) => setNewMaterialQty(e.target.value)}
+                    className="w-20 h-11 px-2 rounded-lg border-2 border-border bg-background text-sm font-mono font-bold min-h-[44px]"
+                  />
+                  <button onClick={() => setShowAddMaterial(false)} className="flex-1 h-11 rounded-lg border border-border text-xs font-bold uppercase hover:bg-muted min-h-[44px]">Cerrar</button>
+                </div>
+              </div>
+            )}
+
+            {/* Lista de items */}
             {loading ? <p className="text-center text-muted-foreground py-4">Cargando...</p>
             : items.length === 0 ? <p className="text-center text-muted-foreground py-4">Sin materiales</p>
             : items.map(item => (
               <div key={item.id} className="rounded-lg border border-border/30 p-3 bg-muted/10">
                 <div className="flex items-center justify-between mb-1">
-                  <div>
-                    <p className="text-xs font-bold">{item.products?.name || 'Producto'}</p>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-bold truncate">{item.products?.name || 'Producto'}</p>
                     <p className="text-[10px] text-muted-foreground">Stock actual: {item.products?.stock_current ?? '—'}</p>
                   </div>
-                  <span className={cn("px-2 py-1 rounded text-[10px] font-black uppercase",
+                  <span className={cn("px-2 py-1 rounded text-[10px] font-black uppercase shrink-0 ml-2",
                     item.status === 'completed' ? "bg-success/10 text-success" : item.status === 'partial' ? "bg-amber-500/10 text-amber-500" : "bg-muted text-muted-foreground")}>
                     {item.status}
                   </span>
@@ -548,17 +794,25 @@ function OrderDetailModal({ order, onClose, onUpdate }: { order: ProductionOrder
                   <div className="text-center"><span className="text-muted-foreground">Real</span><br />{item.actual_qty} × {formatCurrency(item.actual_unit_cost)}</div>
                   <div className="text-center"><span className="text-muted-foreground">Desviación</span><br />{item.actual_qty - item.budgeted_qty > 0 ? '+' : ''}{(item.actual_qty - item.budgeted_qty).toFixed(2)}</div>
                 </div>
-                {order.status === 'in_progress' && item.status !== 'completed' && (
-                  <button onClick={() => handleWithdraw(item)} className="mt-2 w-full h-8 rounded-lg bg-primary/10 text-primary text-[10px] font-black uppercase hover:bg-primary/20 flex items-center justify-center gap-1">
-                    <ArrowDownToLine className="w-3 h-3" /> Dar Salida
-                  </button>
-                )}
+                <div className="flex gap-1 mt-2">
+                  {order.status === 'in_progress' && item.status !== 'completed' && (
+                    <button onClick={() => handleWithdraw(item)} className="flex-1 h-9 rounded-lg bg-primary/10 text-primary text-[10px] font-black uppercase hover:bg-primary/20 flex items-center justify-center gap-1 min-h-[36px]">
+                      <ArrowDownToLine className="w-3 h-3" /> Dar Salida
+                    </button>
+                  )}
+                  {/* Fase 3: eliminar material si no tiene salida */}
+                  {canEdit && Number(item.actual_qty) === 0 && (
+                    <button onClick={() => handleDeleteItem(item.id, item.products?.name || 'Producto')} className="px-2 h-9 rounded-lg bg-destructive/10 text-destructive text-[10px] font-black uppercase hover:bg-destructive/20 flex items-center justify-center min-h-[36px]" aria-label="Eliminar material">
+                      <X className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
               </div>
             ))}
           </div>
         )}
 
-        {/* Tab Pagos — Fase 2: formulario de registro + lista con tipo + balance CUP */}
+        {/* Tab Pagos */}
         {activeTab === 'payments' && (
           <PaymentsTab
             order={order}
