@@ -284,12 +284,6 @@ function NewsCard({ item }: { item: RSSNewsItem }) {
             <span className="text-xs font-black uppercase tracking-widest text-muted-foreground">
               {item.feedName || 'Noticias'}
             </span>
-            {/* Badge Especial para Gaceta Oficial */}
-            {item.feedName && item.feedName.toLowerCase().includes('gaceta') && (
-              <span className="ml-1 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-red-500/15 text-red-400 border border-red-500/30 flex items-center gap-1">
-                ★ Oficial
-              </span>
-            )}
             {item.category && RSS_FEED_CATEGORIES[item.category] && (
               <span
                 title={RSS_FEED_CATEGORIES[item.category].description}

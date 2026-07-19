@@ -44,15 +44,10 @@ async function patchHandler(req: NextRequest, session: AuthenticatedSession) {
   }
 
   // Extraer campos a actualizar
-  // v3 (2026-07-17): FIX CRÍTICO — product_configs y product_commission_mode
-  // se extraen del body y se persisten en commission_rule_products.
-  // Antes se ignoraban, lo que hacía que editar una regla existente
-  // perdiera todas las configs por producto (bug crítico de la auditoría).
   const {
     worker_id, type, value_percent, fixed_value, salary_amount,
     base_calculation, priority, valid_from, valid_to,
     min_price, max_price, product_commission_amount, product_ids,
-    product_configs, product_commission_mode,
   } = body;
 
   const update: Record<string, any> = {};
@@ -68,8 +63,6 @@ async function patchHandler(req: NextRequest, session: AuthenticatedSession) {
   if (min_price !== undefined) update.min_price = min_price ?? null;
   if (max_price !== undefined) update.max_price = max_price ?? null;
   if (product_commission_amount !== undefined) update.product_commission_amount = product_commission_amount ?? null;
-  // v3 (2026-07-17): persistir product_commission_mode en la columna nueva
-  if (product_commission_mode !== undefined) update.product_commission_mode = product_commission_mode || null;
 
   const { data, error } = await supabase
     .from('commission_rules')
@@ -83,23 +76,12 @@ async function patchHandler(req: NextRequest, session: AuthenticatedSession) {
   }
 
   // Si se enviaron product_ids Y la regla es product_specific, reemplazar asociaciones
-  // v3 (2026-07-17): persistir commission_amount y commission_mode por producto individual.
-  // Antes se hacía DELETE + INSERT sin montos ni modos, perdiendo todas las configs.
   if (product_ids !== undefined && (data.type === 'product_specific' || type === 'product_specific')) {
     // Borrar las existentes
     await supabase.from('commission_rule_products').delete().eq('rule_id', id);
-    // Insertar las nuevas con configs por producto
+    // Insertar las nuevas
     if (Array.isArray(product_ids) && product_ids.length > 0) {
-      const defaultMode = product_commission_mode || 'per_sale';
-      const inserts = product_ids.map((pid: string) => {
-        const cfg = product_configs?.[pid];
-        return {
-          rule_id: id,
-          product_id: pid,
-          commission_amount: cfg?.amount != null ? cfg.amount : null,
-          commission_mode: cfg?.mode || defaultMode,
-        };
-      });
+      const inserts = product_ids.map((pid: string) => ({ rule_id: id, product_id: pid }));
       const { error: rpErr } = await supabase
         .from('commission_rule_products')
         .insert(inserts);

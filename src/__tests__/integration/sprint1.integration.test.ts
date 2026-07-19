@@ -58,7 +58,7 @@ describe('SPRINT-1 INTEGRATION AUDIT', () => {
     // Usar seed 12345 que produce algunos aciertos (verificado empíricamente)
     const history = generateRealisticHistory(200, 12345);
     const engine = new BacktestEngine(history);
-    const result = engine.runValidation(config, 1000, 10); // FIX-CI-TIMEOUT: days=10 para evitar timeout de 30s en CI
+    const result = engine.runValidation(config, 1000, 2);
 
     // === Métricas que eran 0 antes del Sprint 1 ===
     // Nota: con datos aleatorios puros, es posible que algunos PnL sean todos iguales
@@ -96,12 +96,12 @@ describe('SPRINT-1 INTEGRATION AUDIT', () => {
     if (result.totalBets > 0) {
       expect(result.winStreak + result.lossStreak).toBeGreaterThan(0);
     }
-  }, 60000); // FIX-CI-TIMEOUT: 60s margen (days=10 + margen para runners lentos)
+  });
 
   it('BacktestEngine incluye CAGR con IC 95%', () => {
     const history = generateRealisticHistory(200);
     const engine = new BacktestEngine(history);
-    const result = engine.runValidation(config, 1000, 15); // FIX-CI-TIMEOUT: days=15 (IC 95% necesita suficientes muestras)
+    const result = engine.runValidation(config, 1000, 2);
 
     expect(result.cagr).toBeDefined();
     expect(typeof result.cagr).toBe('number');
@@ -113,12 +113,12 @@ describe('SPRINT-1 INTEGRATION AUDIT', () => {
       console.log(`[AUDIT] CI 95%: [${result.cagrConfidenceInterval.lower.toFixed(2)}%, ${result.cagrConfidenceInterval.upper.toFixed(2)}%]`);
       expect(result.cagrConfidenceInterval.lower).toBeLessThan(result.cagrConfidenceInterval.upper);
     }
-  }, 60000); // FIX-CI-TIMEOUT: 60s margen
+  });
 
   it('BacktestEngine incluye Kelly y Probability of Ruin', () => {
     const history = generateRealisticHistory(200);
     const engine = new BacktestEngine(history);
-    const result = engine.runValidation(config, 1000, 10); // FIX-CI-TIMEOUT: days=10
+    const result = engine.runValidation(config, 1000, 2);
 
     expect(result.kellyFraction).toBeDefined();
     expect(result.probabilityOfRuin).toBeDefined();
@@ -126,12 +126,12 @@ describe('SPRINT-1 INTEGRATION AUDIT', () => {
     console.log(`[AUDIT] Kelly Safe: ${(result.kellyFraction! * 100).toFixed(2)}%`);
     console.log(`[AUDIT] Kelly Edge: ${(result.kellyEdge! * 100).toFixed(2)}%`);
     console.log(`[AUDIT] Probability of Ruin: ${((result.probabilityOfRuin || 0) * 100).toFixed(2)}%`);
-  }, 60000); // FIX-CI-TIMEOUT: 60s margen
+  });
 
   it('BacktestEngine incluye los 4 tests estadísticos', () => {
     const history = generateRealisticHistory(500);
     const engine = new BacktestEngine(history);
-    const result = engine.runValidation(config, 1000, 15); // FIX-CI-TIMEOUT: days=15 (tests estadísticos necesitan más muestras)
+    const result = engine.runValidation(config, 1000, 2);
 
     expect(result.statisticalTests).toBeDefined();
     expect(result.statisticalTests!.chiSquare.pValue).toBeGreaterThanOrEqual(0);
@@ -141,23 +141,23 @@ describe('SPRINT-1 INTEGRATION AUDIT', () => {
     console.log(`[AUDIT] Is Random: ${result.statisticalTests!.isRandom}`);
     console.log(`[AUDIT] Confidence: ${result.statisticalTests!.confidence.toFixed(1)}%`);
     console.log(`[AUDIT] Summary: ${result.statisticalTests!.summary.substring(0, 100)}...`);
-  }, 60000); // FIX-CI-TIMEOUT: 60s margen
+  });
 
   it('BacktestEngine incluye drift detection', () => {
     const history = generateRealisticHistory(200);
     const engine = new BacktestEngine(history);
-    const result = engine.runValidation(config, 1000, 10); // FIX-CI-TIMEOUT: days=10
+    const result = engine.runValidation(config, 1000, 2);
 
     expect(result.regimeChange).toBeDefined();
     expect(typeof result.regimeChange!.driftDetected).toBe('boolean');
     console.log(`[AUDIT] Drift Detected: ${result.regimeChange!.driftDetected}`);
     console.log(`[AUDIT] Drift Magnitude: ${result.regimeChange!.magnitude.toFixed(2)}`);
-  }, 60000); // FIX-CI-TIMEOUT: 60s margen
+  });
 
   it('BacktestEngine incluye volatility, downside deviation y expectancy', () => {
     const history = generateRealisticHistory(200);
     const engine = new BacktestEngine(history);
-    const result = engine.runValidation(config, 1000, 10); // FIX-CI-TIMEOUT: days=10
+    const result = engine.runValidation(config, 1000, 2);
 
     expect(result.volatility).toBeDefined();
     expect(result.downsideDeviation).toBeDefined();
@@ -165,7 +165,7 @@ describe('SPRINT-1 INTEGRATION AUDIT', () => {
     console.log(`[AUDIT] Volatility: ${((result.volatility || 0) * 100).toFixed(2)}%`);
     console.log(`[AUDIT] Downside Dev: ${((result.downsideDeviation || 0) * 100).toFixed(2)}%`);
     console.log(`[AUDIT] Expectancy: $${(result.expectancy || 0).toFixed(2)}`);
-  }, 60000); // FIX-CI-TIMEOUT: 60s margen
+  });
 
   it('computeFullQuantReport no retorna ceros fantasma', () => {
     const pnlSeries = Array.from({ length: 30 }, () => {

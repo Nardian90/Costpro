@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTheme } from 'next-themes';
 import { toast } from 'sonner';
 import {
   Lock, Headphones, X, Cookie,
@@ -14,7 +15,7 @@ import { useCookieConsent, usePromoBanner } from '@/components/landing/hooks';
 
 // ── Extracted components ──
 import HeroSection from '@/components/landing/HeroSection';
-import ServicesStorySection from '@/components/landing/ServicesStorySection';
+import AhaMomentSection from '@/components/landing/AhaMomentSection';
 import FeaturesSection from '@/components/landing/FeaturesSection';
 import PricingSection from '@/components/landing/PricingSection';
 import FAQSection from '@/components/landing/FAQSection';
@@ -31,8 +32,7 @@ import CommandPalette from '@/components/landing/CommandPalette';
 
 /* ── Landing / Login Split Screen ── */
 export default function LandingPage() {
-  // FIX (2026-07-18): landing SIEMPRE dark + enhanced — sin toggle de theme
-  const setTheme = (_v: any) => {}; // no-op: el landing siempre es dark
+  const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
@@ -78,14 +78,6 @@ export default function LandingPage() {
 
   useEffect(() => {
     queueMicrotask(() => setMounted(true));
-    // FIX (2026-07-18): forzar dark + enhanced en el landing SIEMPRE
-    const html = document.documentElement;
-    html.classList.add('dark');
-    html.classList.add('mode-enhanced');
-    html.classList.remove('mode-performance');
-    html.classList.remove('light');
-    // Remover el toggle de theme del localStorage
-    try { localStorage.setItem('theme', 'dark'); } catch {}
   }, []);
 
   // Listen for footer modal requests from LoginForm
@@ -217,8 +209,9 @@ export default function LandingPage() {
     return () => sectionObserver.disconnect();
   }, []);
 
-  // FIX (2026-07-18): sin toggle de theme — landing siempre dark
-  const handleToggleTheme = useCallback(() => {}, []);
+  const handleToggleTheme = useCallback(() => {
+    setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
+  }, [setTheme]);
 
   const toggleFaq = useCallback((index: number) => {
     setOpenFaq(openFaq === index ? null : index);
@@ -337,7 +330,7 @@ export default function LandingPage() {
         onOpenDemo={() => setShowDemoModal(true)}
       >
         {/* ── AHA MOMENT — Demo de ficha de costo ── */}
-        <ServicesStorySection />
+        <AhaMomentSection />
 
         <SectionDivider />
 
@@ -497,7 +490,10 @@ export default function LandingPage() {
                 ))}
               </nav>
               <div className="p-4 border-t border-white/[0.06] space-y-3">
-                {/* FIX (2026-07-18): sin toggle de theme en mobile nav — landing siempre dark */}
+                <button onClick={() => { handleToggleTheme(); setShowMobileNav(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg bg-white/[0.04] border border-white/[0.06] text-sm text-white/70 hover:text-white hover:bg-white/[0.08] transition-all">
+                  {theme === 'dark' ? <Cookie className="w-4 h-4" /> : <Cookie className="w-4 h-4" />}
+                  {theme === 'dark' ? 'Modo Claro' : 'Modo Oscuro'}
+                </button>
                 <button onClick={() => { setShowLoginModal(true); setShowMobileNav(false); }} className="w-full py-2.5 rounded-lg bg-[#22c55e] text-white text-sm font-bold hover:bg-[#16a34a] shadow-lg shadow-[#22c55e]/20 transition-all">
                   Iniciar Sesión
                 </button>

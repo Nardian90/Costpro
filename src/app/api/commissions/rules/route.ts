@@ -36,37 +36,27 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   // v2 (2026-07-15): hidratar reglas product_specific con sus product_ids asociados
-  // v3 (2026-07-17): incluir commission_amount y commission_mode por producto individual
   let rulesHydrated = rules || [];
   const productSpecificRules = (rules || []).filter((r: any) => r.type === 'product_specific');
   if (productSpecificRules.length > 0) {
     const { data: rpData } = await supabase
       .from('commission_rule_products')
-      .select('rule_id, product_id, commission_amount, commission_mode, products:product_id (id, name, sku, price, price_currency)')
+      .select('rule_id, product_id, products:product_id (id, name, sku, price)')
       .in('rule_id', productSpecificRules.map((r: any) => r.id));
     const rpMap: Record<string, any[]> = {};
-    const rpProductsMap: Record<string, any[]> = {};
-    const rpConfigsMap: Record<string, Record<string, { amount: number | null; mode: 'per_sale' | 'per_unit' }>> = {};
     for (const rp of (rpData || [])) {
       if (!rpMap[rp.rule_id]) rpMap[rp.rule_id] = [];
       rpMap[rp.rule_id].push(rp.product_id);
+    }
+    const rpProductsMap: Record<string, any[]> = {};
+    for (const rp of (rpData || [])) {
       if (!rpProductsMap[rp.rule_id]) rpProductsMap[rp.rule_id] = [];
       rpProductsMap[rp.rule_id].push(rp.products);
-      // v3: construir map de configs por producto
-      if (!rpConfigsMap[rp.rule_id]) rpConfigsMap[rp.rule_id] = {};
-      if (rp.commission_amount != null || rp.commission_mode != null) {
-        rpConfigsMap[rp.rule_id][rp.product_id] = {
-          amount: rp.commission_amount != null ? Number(rp.commission_amount) : null,
-          mode: (rp.commission_mode as 'per_sale' | 'per_unit') || 'per_sale',
-        };
-      }
     }
     rulesHydrated = (rules || []).map((r: any) => ({
       ...r,
       product_ids: rpMap[r.id] || [],
       products: rpProductsMap[r.id] || [],
-      product_configs: rpConfigsMap[r.id] || {},
-      product_commission_mode: r.product_commission_mode || 'per_sale',
     }));
   }
 
@@ -104,8 +94,6 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
     base_calculation, priority, valid_from, valid_to,
     // v2 (2026-07-15): nuevos campos para scale_percentage y product_specific
     min_price, max_price, product_commission_amount, product_ids,
-    // v3 (2026-07-17): modo default + configs por producto individual
-    product_commission_mode, product_configs,
   } = body;
 
   if (!store_id || !type || !valid_from) {
@@ -143,8 +131,6 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
       min_price: min_price ?? null,
       max_price: max_price ?? null,
       product_commission_amount: product_commission_amount ?? null,
-      // v3 (2026-07-17): modo default de la regla product_specific (persistido en DB)
-      product_commission_mode: product_commission_mode || null,
       created_by: /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(session.user.id || '') ? session.user.id : null,
     })
     .select()
@@ -155,18 +141,11 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
   }
 
   // 2. Si es product_specific, insertar asociaciones en commission_rule_products
-  // v3 (2026-07-17): incluir commission_amount y commission_mode por producto individual
   if (type === 'product_specific' && product_ids && product_ids.length > 0) {
-    const defaultMode = product_commission_mode || 'per_sale';
-    const inserts = product_ids.map((pid: string) => {
-      const cfg = product_configs?.[pid];
-      return {
-        rule_id: data.id,
-        product_id: pid,
-        commission_amount: cfg?.amount != null ? cfg.amount : null,
-        commission_mode: cfg?.mode || defaultMode,
-      };
-    });
+    const inserts = product_ids.map((pid: string) => ({
+      rule_id: data.id,
+      product_id: pid,
+    }));
     const { error: rpErr } = await supabase
       .from('commission_rule_products')
       .insert(inserts);
