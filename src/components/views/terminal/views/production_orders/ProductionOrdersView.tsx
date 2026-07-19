@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { Plus, Factory, Wrench, Eye, Ban, Play, Pause, CheckCircle2, Clock, DollarSign, Package, ArrowDownToLine, X } from 'lucide-react';
+import { Plus, Factory, Wrench, Eye, Ban, Play, Pause, CheckCircle2, Clock, DollarSign, Package, ArrowDownToLine, X, Edit3 } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuthStore } from '@/store';
@@ -62,9 +62,10 @@ export default function ProductionOrdersView() {
 
   const handleStatusChange = async (id: string, status: string) => {
     try {
+      const { token } = useAuthStore.getState();
       const res = await fetch(`/api/production-orders/${id}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
         body: JSON.stringify({ status }),
       });
       if (res.ok) { toast.success('Estado actualizado'); fetchOrders(); }
@@ -387,10 +388,53 @@ function OrderDetailModal({ order, onClose, onUpdate }: { order: ProductionOrder
   const [outputQty, setOutputQty] = useState('');
   const [products, setProducts] = useState<any[]>([]);
 
+  // Fase 3: edición en borrador
+  const [isEditing, setIsEditing] = useState(false);
+  const [editForm, setEditForm] = useState({
+    customer_name: order.customer_name || '',
+    customer_ci: order.customer_ci || '',
+    customer_phone: order.customer_phone || '',
+    customer_address: order.customer_address || '',
+    description: order.description || '',
+  });
+  const [savingEdit, setSavingEdit] = useState(false);
+
+  // Fase 3: añadir material
+  const [showAddMaterial, setShowAddMaterial] = useState(false);
+  const [materialSearch, setMaterialSearch] = useState('');
+  const [materialResults, setMaterialResults] = useState<any[]>([]);
+  const [newMaterialQty, setNewMaterialQty] = useState('1');
+  const [addingMaterial, setAddingMaterial] = useState(false);
+
+  // Fase 4: anular
+  const [voiding, setVoiding] = useState(false);
+
+  // ── Fase 7 (mejora UX): vista tabla + modal de salida + edición inline de presupuesto ──
+  const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
+  const [withdrawDialog, setWithdrawDialog] = useState<{
+    open: boolean;
+    item: ProductionOrderItem | null;
+    qty: string;
+    unitCost: string;
+    submitting: boolean;
+  }>({ open: false, item: null, qty: '', unitCost: '', submitting: false });
+  const [editingBudget, setEditingBudget] = useState<{
+    itemId: string;
+    qty: string;
+    cost: string;
+  } | null>(null);
+  const [savingBudget, setSavingBudget] = useState(false);
+
+  const canEdit = order.status !== 'closed' && order.status !== 'voided';
+  const sc = STATUS_CONFIG[order.status] || STATUS_CONFIG.draft;
+
   const fetchDetail = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/production-orders/${order.id}`);
+      const { token } = useAuthStore.getState();
+      const res = await fetch(`/api/production-orders/${order.id}`, {
+        headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+      });
       if (res.ok) {
         const data = await res.json();
         setItems(data.items || []);
@@ -402,27 +446,112 @@ function OrderDetailModal({ order, onClose, onUpdate }: { order: ProductionOrder
 
   useEffect(() => { fetchDetail(); }, [fetchDetail]);
 
+  // Búsqueda de materiales para añadir
+  useEffect(() => {
+    if (!showAddMaterial || !materialSearch) { setMaterialResults([]); return; }
+    const t = setTimeout(async () => {
+      const { data } = await supabase
+        .from('products')
+        .select('id, name, sku, price, stock_current, unit_of_measure')
+        .eq('store_id', order.store_id)
+        .or(`name.ilike.%${materialSearch}%,sku.ilike.%${materialSearch}%`)
+        .limit(10);
+      setMaterialResults(data || []);
+    }, 300);
+    return () => clearTimeout(t);
+  }, [materialSearch, showAddMaterial, order.store_id]);
+
   const totalPaid = payments.reduce((s, p) => s + Number(p.amount_cup || p.amount), 0);
   const balance = order.budget_total - order.paid_amount;
 
-  const handleWithdraw = async (item: ProductionOrderItem) => {
-    const qty = prompt(`Cantidad a dar salida de "${item.products?.name}":`, String(item.budgeted_qty - item.actual_qty));
-    if (!qty) return;
+  // ── Fase 7: handleWithdraw abre modal (no prompt) con vista previa ──
+  const handleWithdraw = (item: ProductionOrderItem) => {
+    const pending = Number(item.budgeted_qty) - Number(item.actual_qty);
+    setWithdrawDialog({
+      open: true,
+      item,
+      qty: String(pending > 0 ? pending : 1),
+      unitCost: String(item.budgeted_unit_cost || 0),
+      submitting: false,
+    });
+  };
+
+  const handleConfirmWithdraw = async () => {
+    if (!withdrawDialog.item) return;
+    const qty = parseFloat(withdrawDialog.qty);
+    const unitCost = parseFloat(withdrawDialog.unitCost);
+    if (!qty || qty <= 0) { toast.error('Cantidad inválida'); return; }
+    if (unitCost < 0) { toast.error('Costo unitario inválido'); return; }
+
+    setWithdrawDialog({ ...withdrawDialog, submitting: true });
     try {
+      const { token } = useAuthStore.getState();
       const res = await fetch(`/api/production-orders/${order.id}/withdraw`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ item_id: item.id, qty: parseFloat(qty), unit_cost: item.budgeted_unit_cost }),
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify({ item_id: withdrawDialog.item.id, qty, unit_cost: unitCost }),
       });
-      if (res.ok) { toast.success('Salida registrada'); fetchDetail(); }
-    } catch { toast.error('Error'); }
+      if (res.ok) {
+        toast.success('Salida registrada en inventario');
+        setWithdrawDialog({ open: false, item: null, qty: '', unitCost: '', submitting: false });
+        await fetchDetail();
+      } else {
+        const err = await res.json();
+        toast.error(err.error || 'Error al registrar salida');
+        setWithdrawDialog({ ...withdrawDialog, submitting: false });
+      }
+    } catch (e: any) {
+      toast.error('Error: ' + e.message);
+      setWithdrawDialog({ ...withdrawDialog, submitting: false });
+    }
+  };
+
+  // ── Fase 7: editar presupuesto inline (solo si actual_qty === 0) ──
+  const handleEditBudget = (item: ProductionOrderItem) => {
+    if (Number(item.actual_qty) > 0) {
+      toast.error('No se puede editar: ya tiene salidas registradas');
+      return;
+    }
+    setEditingBudget({
+      itemId: item.id,
+      qty: String(item.budgeted_qty),
+      cost: String(item.budgeted_unit_cost || 0),
+    });
+  };
+
+  const handleSaveBudget = async () => {
+    if (!editingBudget) return;
+    const qty = parseFloat(editingBudget.qty);
+    const cost = parseFloat(editingBudget.cost);
+    if (!qty || qty <= 0) { toast.error('Cantidad debe ser mayor a 0'); return; }
+    if (cost < 0) { toast.error('Costo no puede ser negativo'); return; }
+
+    setSavingBudget(true);
+    try {
+      const { token } = useAuthStore.getState();
+      const res = await fetch(`/api/production-orders/${order.id}/items`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify({ item_id: editingBudget.itemId, budgeted_qty: qty, budgeted_unit_cost: cost }),
+      });
+      if (res.ok) {
+        toast.success('Presupuesto actualizado');
+        setEditingBudget(null);
+        await fetchDetail();
+      } else {
+        const err = await res.json();
+        toast.error(err.error || 'Error');
+      }
+    } catch (e: any) { toast.error('Error: ' + e.message); }
+    finally { setSavingBudget(false); }
   };
 
   const handleClose = async () => {
     try {
+      const { token } = useAuthStore.getState();
       const res = await fetch(`/api/production-orders/${order.id}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
         body: JSON.stringify({
           action: 'close',
           final_amount: parseFloat(finalAmount) || 0,
@@ -437,87 +566,272 @@ function OrderDetailModal({ order, onClose, onUpdate }: { order: ProductionOrder
     } catch { toast.error('Error'); }
   };
 
-  const sc = STATUS_CONFIG[order.status] || STATUS_CONFIG.draft;
+  // Fase 3: guardar edición
+  const handleSaveEdit = async () => {
+    setSavingEdit(true);
+    try {
+      const { token } = useAuthStore.getState();
+      const res = await fetch(`/api/production-orders/${order.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify(editForm),
+      });
+      if (res.ok) {
+        toast.success('Cambios guardados');
+        setIsEditing(false);
+        onUpdate();
+      } else {
+        const err = await res.json();
+        toast.error(err.error || 'Error');
+      }
+    } catch (e: any) { toast.error('Error: ' + e.message); }
+    finally { setSavingEdit(false); }
+  };
+
+  // Fase 3: añadir material
+  const handleAddMaterial = async (productId: string, productName: string) => {
+    setAddingMaterial(true);
+    try {
+      const { token } = useAuthStore.getState();
+      const res = await fetch(`/api/production-orders/${order.id}/items`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify({
+          product_id: productId,
+          budgeted_qty: parseFloat(newMaterialQty) || 1,
+        }),
+      });
+      if (res.ok) {
+        toast.success(`"${productName}" añadido`);
+        setMaterialSearch('');
+        setMaterialResults([]);
+        setNewMaterialQty('1');
+        setShowAddMaterial(false);
+        await fetchDetail();
+      } else {
+        const err = await res.json();
+        toast.error(err.error || 'Error');
+      }
+    } catch (e: any) { toast.error('Error: ' + e.message); }
+    finally { setAddingMaterial(false); }
+  };
+
+  // Fase 3: eliminar material
+  const handleDeleteItem = async (itemId: string, itemName: string) => {
+    if (!confirm(`¿Eliminar "${itemName}" de los materiales?`)) return;
+    try {
+      const { token } = useAuthStore.getState();
+      const res = await fetch(`/api/production-orders/${order.id}/items?item_id=${itemId}`, {
+        method: 'DELETE',
+        headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+      });
+      if (res.ok) { toast.success('Material eliminado'); fetchDetail(); }
+      else { const err = await res.json(); toast.error(err.error || 'Error'); }
+    } catch { toast.error('Error'); }
+  };
+
+  // Fase 4: anular orden
+  const handleVoid = async () => {
+    const reason = prompt('Motivo de anulación:', 'Anulación manual');
+    if (!reason) return;
+    setVoiding(true);
+    try {
+      const { token } = useAuthStore.getState();
+      const res = await fetch(`/api/production-orders/${order.id}/void`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify({ reason }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        toast.success(data.message || 'Orden anulada');
+        onUpdate();
+        onClose();
+      } else {
+        toast.error(data.error || 'Error');
+      }
+    } catch (e: any) { toast.error('Error: ' + e.message); }
+    finally { setVoiding(false); }
+  };
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm" onClick={onClose}>
-      <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-card border border-border/50 rounded-2xl shadow-2xl" onClick={e => e.stopPropagation()}>
+    <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center sm:p-4 bg-background/80 backdrop-blur-sm" onClick={onClose}>
+      <div className="w-full max-w-2xl h-[95vh] sm:h-auto sm:max-h-[90vh] overflow-y-auto bg-card rounded-t-2xl sm:rounded-2xl border border-border/50 shadow-2xl" onClick={e => e.stopPropagation()}
+        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
         {/* Header */}
         <div className="sticky top-0 bg-card border-b border-border/30 p-4 flex items-center justify-between z-10">
-          <div className="flex items-center gap-2">
-            <span className="text-2xl">{order.order_type === 'production' ? '🏭' : order.order_type === 'work' ? '📦' : '🔧'}</span>
-            <div>
-              <h2 className="text-sm font-black uppercase tracking-widest">{order.order_number}</h2>
-              <p className="text-[10px] text-muted-foreground">{order.customer_name || 'Sin cliente'} · {sc.label}</p>
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="text-2xl shrink-0">{order.order_type === 'production' ? '🏭' : order.order_type === 'work' ? '📦' : '🔧'}</span>
+            <div className="min-w-0">
+              <h2 className="text-sm font-black uppercase tracking-widest truncate">{order.order_number}</h2>
+              <p className="text-[10px] text-muted-foreground truncate">{order.customer_name || 'Sin cliente'} · {sc.label}</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-2 rounded-lg hover:bg-muted"><X className="w-4 h-4" /></button>
+          <div className="flex items-center gap-1 shrink-0">
+            {/* Fase 4: botón Anular */}
+            {canEdit && (
+              <button
+                onClick={handleVoid}
+                disabled={voiding}
+                className="px-2 py-2 rounded-lg bg-destructive/10 text-destructive border border-destructive/30 text-[10px] font-black uppercase hover:bg-destructive/20 min-h-[44px] flex items-center gap-1"
+                title="Anular orden"
+                aria-label="Anular orden"
+              >
+                <Ban className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Anular</span>
+              </button>
+            )}
+            <button onClick={onClose} className="p-2 rounded-lg hover:bg-muted min-h-[44px] min-w-[44px] flex items-center justify-center" aria-label="Cerrar">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b border-border/30">
-          <button onClick={() => setActiveTab('info')} className={cn("flex-1 py-3 text-xs font-black uppercase border-b-2 -mb-px", activeTab === 'info' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground')}>Info</button>
-          <button onClick={() => setActiveTab('items')} className={cn("flex-1 py-3 text-xs font-black uppercase border-b-2 -mb-px", activeTab === 'items' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground')}>Materiales ({items.length})</button>
-          <button onClick={() => setActiveTab('payments')} className={cn("flex-1 py-3 text-xs font-black uppercase border-b-2 -mb-px", activeTab === 'payments' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground')}>Pagos ({payments.length})</button>
+        <div className="flex border-b border-border/30 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+          <button onClick={() => setActiveTab('info')} className={cn("flex-1 py-3 px-4 text-xs font-black uppercase border-b-2 -mb-px whitespace-nowrap min-h-[44px]", activeTab === 'info' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground')}>Info</button>
+          <button onClick={() => setActiveTab('items')} className={cn("flex-1 py-3 px-4 text-xs font-black uppercase border-b-2 -mb-px whitespace-nowrap min-h-[44px]", activeTab === 'items' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground')}>Materiales ({items.length})</button>
+          <button onClick={() => setActiveTab('payments')} className={cn("flex-1 py-3 px-4 text-xs font-black uppercase border-b-2 -mb-px whitespace-nowrap min-h-[44px]", activeTab === 'payments' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground')}>Pagos ({payments.length})</button>
         </div>
 
         {/* Tab Info */}
         {activeTab === 'info' && (
           <div className="p-4 space-y-3">
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              <div><span className="text-muted-foreground">Tipo:</span> <span className="font-bold">{order.order_type === 'production' ? '🏭 Producción' : order.order_type === 'work' ? '📦 Trabajo' : '🔧 Servicio'}</span></div>
-              <div><span className="text-muted-foreground">Fecha:</span> <span className="font-bold">{new Date(order.order_date).toLocaleDateString()}</span></div>
-              <div><span className="text-muted-foreground">Cliente:</span> <span className="font-bold">{order.customer_name || '—'}</span></div>
-              <div><span className="text-muted-foreground">CI:</span> <span className="font-bold">{order.customer_ci || '—'}</span></div>
-              <div><span className="text-muted-foreground">Teléfono:</span> <span className="font-bold">{order.customer_phone || '—'}</span></div>
-              <div><span className="text-muted-foreground">Dirección:</span> <span className="font-bold">{order.customer_address || '—'}</span></div>
-            </div>
-            <div className="pt-2 border-t border-border/30 grid grid-cols-3 gap-2">
-              <div className="rounded-lg border border-border/30 bg-muted/20 p-2 text-center">
-                <p className="text-[9px] font-black uppercase text-muted-foreground">Presupuesto</p>
-                <p className="text-sm font-mono font-black">{formatCurrency(order.budget_total)} {order.budget_currency}</p>
+            {/* Selector de estado — permite cambiar de estado directamente */}
+            {canEdit && (
+              <div>
+                <label className="text-[10px] font-black uppercase text-muted-foreground block mb-1">Estado de la orden</label>
+                <select
+                  value={order.status}
+                  onChange={async (e) => {
+                    try {
+                      const { token } = useAuthStore.getState();
+                      const res = await fetch(`/api/production-orders/${order.id}`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+                        body: JSON.stringify({ status: e.target.value }),
+                      });
+                      if (res.ok) {
+                        toast.success(`Estado cambiado a ${STATUS_CONFIG[e.target.value]?.label || e.target.value}`);
+                        onUpdate();
+                      } else {
+                        const err = await res.json();
+                        toast.error(err.error || 'Error al cambiar estado');
+                      }
+                    } catch { toast.error('Error'); }
+                  }}
+                  className="w-full h-11 px-3 rounded-lg border-2 border-border bg-background text-sm font-bold min-h-[44px] text-foreground"
+                >
+                  <option value="draft">📝 Borrador</option>
+                  <option value="approved">✅ Aprobada</option>
+                  <option value="in_progress">▶️ En Progreso</option>
+                  <option value="paused">⏸️ Pausada</option>
+                  <option value="completed">✔️ Completada</option>
+                  <option value="closed">🔒 Cerrada</option>
+                </select>
               </div>
-              <div className="rounded-lg border border-success/20 bg-success/5 p-2 text-center">
-                <p className="text-[9px] font-black uppercase text-muted-foreground">Pagado</p>
-                <p className="text-sm font-mono font-black text-success">{formatCurrency(order.paid_amount)}</p>
+            )}
+
+            {/* Fase 3: edición en borrador */}
+            {canEdit && !isEditing && (
+              <button
+                onClick={() => setIsEditing(true)}
+                className="w-full px-3 py-2 rounded-lg border border-border text-xs font-black uppercase hover:bg-muted min-h-[44px] flex items-center justify-center gap-2"
+              >
+                <Edit3 className="w-3.5 h-3.5" /> Editar información
+              </button>
+            )}
+
+            {isEditing ? (
+              /* Modo edición */
+              <div className="space-y-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <div>
+                    <label className="text-[10px] font-black uppercase text-muted-foreground block mb-1">Cliente</label>
+                    <input value={editForm.customer_name} onChange={(e) => setEditForm({ ...editForm, customer_name: e.target.value })} className="w-full h-11 px-3 rounded-lg border-2 border-border bg-background text-sm font-bold min-h-[44px]" placeholder="Nombre del cliente" />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-black uppercase text-muted-foreground block mb-1">CI</label>
+                    <input value={editForm.customer_ci} onChange={(e) => setEditForm({ ...editForm, customer_ci: e.target.value })} className="w-full h-11 px-3 rounded-lg border-2 border-border bg-background text-sm font-bold min-h-[44px]" placeholder="Carné de identidad" />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-black uppercase text-muted-foreground block mb-1">Teléfono</label>
+                    <input value={editForm.customer_phone} onChange={(e) => setEditForm({ ...editForm, customer_phone: e.target.value })} className="w-full h-11 px-3 rounded-lg border-2 border-border bg-background text-sm font-bold min-h-[44px]" placeholder="Teléfono" inputMode="tel" />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-black uppercase text-muted-foreground block mb-1">Dirección</label>
+                    <input value={editForm.customer_address} onChange={(e) => setEditForm({ ...editForm, customer_address: e.target.value })} className="w-full h-11 px-3 rounded-lg border-2 border-border bg-background text-sm font-bold min-h-[44px]" placeholder="Dirección" />
+                  </div>
+                </div>
+                <div>
+                  <label className="text-[10px] font-black uppercase text-muted-foreground block mb-1">Descripción</label>
+                  <textarea value={editForm.description} onChange={(e) => setEditForm({ ...editForm, description: e.target.value })} rows={2} className="w-full px-3 py-2 rounded-lg border-2 border-border bg-background text-sm min-h-[44px]" placeholder="Descripción del trabajo" />
+                </div>
+                <div className="flex gap-2">
+                  <button onClick={() => setIsEditing(false)} className="flex-1 h-11 rounded-lg border border-border text-xs font-black uppercase hover:bg-muted min-h-[44px]">Cancelar</button>
+                  <button onClick={handleSaveEdit} disabled={savingEdit} className="flex-1 h-11 rounded-lg bg-primary text-primary-foreground text-xs font-black uppercase hover:bg-primary/90 disabled:opacity-50 min-h-[44px]">
+                    {savingEdit ? 'Guardando...' : 'Guardar'}
+                  </button>
+                </div>
               </div>
-              <div className="rounded-lg border border-primary/20 bg-primary/5 p-2 text-center">
-                <p className="text-[9px] font-black uppercase text-muted-foreground">Saldo</p>
-                <p className="text-sm font-mono font-black text-primary">{formatCurrency(balance)}</p>
-              </div>
-            </div>
-            {order.description && <p className="text-xs pt-2 border-t border-border/30">{order.description}</p>}
+            ) : (
+              /* Modo lectura */
+              <>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div><span className="text-muted-foreground">Tipo:</span> <span className="font-bold">{order.order_type === 'production' ? '🏭 Producción' : order.order_type === 'work' ? '📦 Trabajo' : '🔧 Servicio'}</span></div>
+                  <div><span className="text-muted-foreground">Fecha:</span> <span className="font-bold">{new Date(order.order_date).toLocaleDateString()}</span></div>
+                  <div><span className="text-muted-foreground">Cliente:</span> <span className="font-bold">{order.customer_name || '—'}</span></div>
+                  <div><span className="text-muted-foreground">CI:</span> <span className="font-bold">{order.customer_ci || '—'}</span></div>
+                  <div><span className="text-muted-foreground">Teléfono:</span> <span className="font-bold">{order.customer_phone || '—'}</span></div>
+                  <div><span className="text-muted-foreground">Dirección:</span> <span className="font-bold">{order.customer_address || '—'}</span></div>
+                </div>
+                <div className="pt-2 border-t border-border/30 grid grid-cols-3 gap-2">
+                  <div className="rounded-lg border border-border/30 bg-muted/20 p-2 text-center">
+                    <p className="text-[9px] font-black uppercase text-muted-foreground">Presupuesto</p>
+                    <p className="text-sm font-mono font-black">{formatCurrency(order.budget_total)} {order.budget_currency}</p>
+                  </div>
+                  <div className="rounded-lg border border-success/20 bg-success/5 p-2 text-center">
+                    <p className="text-[9px] font-black uppercase text-muted-foreground">Pagado</p>
+                    <p className="text-sm font-mono font-black text-success">{formatCurrency(order.paid_amount)}</p>
+                  </div>
+                  <div className="rounded-lg border border-primary/20 bg-primary/5 p-2 text-center">
+                    <p className="text-[9px] font-black uppercase text-muted-foreground">Saldo</p>
+                    <p className="text-sm font-mono font-black text-primary">{formatCurrency(balance)}</p>
+                  </div>
+                </div>
+                {order.description && <p className="text-xs pt-2 border-t border-border/30">{order.description}</p>}
+              </>
+            )}
 
             {/* Botón de cerrar orden */}
-            {order.status !== 'closed' && order.status !== 'voided' && (
+            {canEdit && !isEditing && (
               <div className="pt-2 border-t border-border/30">
                 {!showCloseForm ? (
-                  <button onClick={() => setShowCloseForm(true)} className="w-full h-10 rounded-lg bg-success text-white text-xs font-black uppercase hover:opacity-90 flex items-center justify-center gap-2">
+                  <button onClick={() => setShowCloseForm(true)} className="w-full h-11 rounded-lg bg-success text-white text-xs font-black uppercase hover:opacity-90 flex items-center justify-center gap-2 min-h-[44px]">
                     <CheckCircle2 className="w-4 h-4" /> Cerrar Orden
                   </button>
                 ) : (
                   <div className="space-y-2 p-3 rounded-xl border border-success/30 bg-success/5">
                     <p className="text-[10px] font-black uppercase text-muted-foreground">Pago al cerrar</p>
                     <div className="grid grid-cols-3 gap-2">
-                      <input type="number" value={finalAmount} onChange={(e) => setFinalAmount(e.target.value)} placeholder={String(balance.toFixed(2))} className="h-9 bg-background border border-border/50 rounded-lg px-3 text-sm font-bold tabular-nums" />
-                      <select value={finalMethod} onChange={(e) => setFinalMethod(e.target.value as any)} className="h-9 bg-background border border-border/50 rounded-lg px-2 text-xs font-bold">
+                      <input type="number" inputMode="decimal" value={finalAmount} onChange={(e) => setFinalAmount(e.target.value)} placeholder={String(balance.toFixed(2))} className="h-11 bg-background border border-border/50 rounded-lg px-3 text-sm font-bold tabular-nums min-h-[44px]" />
+                      <select value={finalMethod} onChange={(e) => setFinalMethod(e.target.value as any)} className="h-11 bg-background border border-border/50 rounded-lg px-2 text-xs font-bold min-h-[44px]">
                         <option value="cash">💵 Efectivo</option><option value="transfer">📱 Transfer</option><option value="zelle">💳 Zelle</option>
                       </select>
-                      <select value={finalCurrency} onChange={(e) => setFinalCurrency(e.target.value)} className="h-9 bg-background border border-border/50 rounded-lg px-2 text-xs font-bold">
+                      <select value={finalCurrency} onChange={(e) => setFinalCurrency(e.target.value)} className="h-11 bg-background border border-border/50 rounded-lg px-2 text-xs font-bold min-h-[44px]">
                         <option value="CUP">CUP</option><option value="USD">USD</option><option value="EUR">EUR</option><option value="MLC">MLC</option>
                       </select>
                     </div>
-                    {/* Output product para producción */}
                     {order.order_type === 'production' && (
                       <div className="space-y-1">
                         <p className="text-[10px] font-black uppercase text-muted-foreground">Producto terminado (entra al almacén)</p>
                         <ProductSearchInput value={outputProductId} onChange={setOutputProductId} storeId={order.store_id} />
-                        <input type="number" value={outputQty} onChange={(e) => setOutputQty(e.target.value)} placeholder="Cantidad producida" className="w-full h-9 bg-background border border-border/50 rounded-lg px-3 text-sm font-bold" />
+                        <input type="number" inputMode="decimal" value={outputQty} onChange={(e) => setOutputQty(e.target.value)} placeholder="Cantidad producida" className="w-full h-11 bg-background border border-border/50 rounded-lg px-3 text-sm font-bold min-h-[44px]" />
                       </div>
                     )}
                     <div className="flex gap-2">
-                      <button onClick={() => setShowCloseForm(false)} className="flex-1 h-9 rounded-lg border border-border/40 text-[10px] font-black uppercase">Cancelar</button>
-                      <button onClick={handleClose} className="flex-1 h-9 rounded-lg bg-success text-white text-[10px] font-black uppercase">Confirmar Cierre</button>
+                      <button onClick={() => setShowCloseForm(false)} className="flex-1 h-11 rounded-lg border border-border/40 text-[10px] font-black uppercase min-h-[44px]">Cancelar</button>
+                      <button onClick={handleClose} className="flex-1 h-11 rounded-lg bg-success text-white text-[10px] font-black uppercase min-h-[44px]">Confirmar Cierre</button>
                     </div>
                   </div>
                 )}
@@ -526,56 +840,709 @@ function OrderDetailModal({ order, onClose, onUpdate }: { order: ProductionOrder
           </div>
         )}
 
-        {/* Tab Items */}
+        {/* Tab Items — Fase 3 + Fase 7: vista tabla/tarjetas + edición inline + modal de salida */}
         {activeTab === 'items' && (
-          <div className="p-4 space-y-2">
-            {loading ? <p className="text-center text-muted-foreground py-4">Cargando...</p>
-            : items.length === 0 ? <p className="text-center text-muted-foreground py-4">Sin materiales</p>
-            : items.map(item => (
-              <div key={item.id} className="rounded-lg border border-border/30 p-3 bg-muted/10">
-                <div className="flex items-center justify-between mb-1">
-                  <div>
-                    <p className="text-xs font-bold">{item.products?.name || 'Producto'}</p>
-                    <p className="text-[10px] text-muted-foreground">Stock actual: {item.products?.stock_current ?? '—'}</p>
-                  </div>
-                  <span className={cn("px-2 py-1 rounded text-[10px] font-black uppercase",
-                    item.status === 'completed' ? "bg-success/10 text-success" : item.status === 'partial' ? "bg-amber-500/10 text-amber-500" : "bg-muted text-muted-foreground")}>
-                    {item.status}
-                  </span>
-                </div>
-                <div className="grid grid-cols-3 gap-2 text-[10px] font-bold">
-                  <div className="text-center"><span className="text-muted-foreground">Presup.</span><br />{item.budgeted_qty} × {formatCurrency(item.budgeted_unit_cost)}</div>
-                  <div className="text-center"><span className="text-muted-foreground">Real</span><br />{item.actual_qty} × {formatCurrency(item.actual_unit_cost)}</div>
-                  <div className="text-center"><span className="text-muted-foreground">Desviación</span><br />{item.actual_qty - item.budgeted_qty > 0 ? '+' : ''}{(item.actual_qty - item.budgeted_qty).toFixed(2)}</div>
-                </div>
-                {order.status === 'in_progress' && item.status !== 'completed' && (
-                  <button onClick={() => handleWithdraw(item)} className="mt-2 w-full h-8 rounded-lg bg-primary/10 text-primary text-[10px] font-black uppercase hover:bg-primary/20 flex items-center justify-center gap-1">
-                    <ArrowDownToLine className="w-3 h-3" /> Dar Salida
+          <div className="p-4 space-y-3">
+            {/* Barra de acciones: toggle vista + agregar material */}
+            <div className="flex items-center gap-2">
+              {/* Toggle vista tabla/tarjetas */}
+              {items.length > 0 && (
+                <div className="flex rounded-lg border border-border/40 overflow-hidden shrink-0">
+                  <button
+                    onClick={() => setViewMode('table')}
+                    className={cn("px-3 h-9 text-[10px] font-black uppercase transition-colors",
+                      viewMode === 'table' ? "bg-primary text-primary-foreground" : "bg-background text-muted-foreground hover:bg-muted")}
+                    aria-label="Vista tabla"
+                  >
+                    <Package className="w-3.5 h-3.5 inline mr-1" /> Tabla
                   </button>
+                  <button
+                    onClick={() => setViewMode('cards')}
+                    className={cn("px-3 h-9 text-[10px] font-black uppercase transition-colors border-l border-border/40",
+                      viewMode === 'cards' ? "bg-primary text-primary-foreground" : "bg-background text-muted-foreground hover:bg-muted")}
+                    aria-label="Vista tarjetas"
+                  >
+                    <Factory className="w-3.5 h-3.5 inline mr-1" /> Tarjetas
+                  </button>
+                </div>
+              )}
+
+              {/* Botón añadir material */}
+              {canEdit && !showAddMaterial && (
+                <button
+                  onClick={() => setShowAddMaterial(true)}
+                  className="flex-1 px-3 py-2 rounded-lg border border-border text-xs font-black uppercase hover:bg-muted min-h-[44px] flex items-center justify-center gap-2"
+                >
+                  <Plus className="w-3.5 h-3.5" /> Agregar material
+                </button>
+              )}
+            </div>
+
+            {/* Formulario añadir material */}
+            {showAddMaterial && canEdit && (
+              <div className="rounded-xl border-2 border-primary/30 bg-primary/5 p-3 space-y-2">
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={materialSearch}
+                    onChange={(e) => setMaterialSearch(e.target.value)}
+                    placeholder="Buscar producto por nombre o SKU..."
+                    className="w-full h-11 px-3 rounded-lg border-2 border-border bg-background text-sm font-bold min-h-[44px]"
+                    autoFocus
+                  />
+                </div>
+                {materialResults.length > 0 && (
+                  <div className="max-h-40 overflow-y-auto rounded-lg border border-border/30 bg-background">
+                    {materialResults.map(p => (
+                      <button
+                        key={p.id}
+                        onClick={() => handleAddMaterial(p.id, p.name)}
+                        disabled={addingMaterial}
+                        className="w-full text-left px-3 py-2 hover:bg-muted/30 border-b border-border/20 last:border-0 min-h-[44px] flex items-center justify-between"
+                      >
+                        <div>
+                          <p className="text-xs font-bold">{p.name}</p>
+                          <p className="text-[10px] text-muted-foreground">{p.sku || '—'} · Stock: {p.stock_current} · {formatCurrency(p.price)}</p>
+                        </div>
+                        <Plus className="w-3 h-3 text-primary shrink-0" />
+                      </button>
+                    ))}
+                  </div>
                 )}
+                <div className="flex items-center gap-2">
+                  <label className="text-[10px] font-black uppercase text-muted-foreground shrink-0">Cant:</label>
+                  <input
+                    type="number"
+                    inputMode="decimal"
+                    min="0.01"
+                    step="0.01"
+                    value={newMaterialQty}
+                    onChange={(e) => setNewMaterialQty(e.target.value)}
+                    className="w-20 h-11 px-2 rounded-lg border-2 border-border bg-background text-sm font-mono font-bold min-h-[44px]"
+                  />
+                  <button onClick={() => setShowAddMaterial(false)} className="flex-1 h-11 rounded-lg border border-border text-xs font-bold uppercase hover:bg-muted min-h-[44px]">Cerrar</button>
+                </div>
               </div>
-            ))}
+            )}
+
+            {/* Lista de items */}
+            {loading ? (
+              <p className="text-center text-muted-foreground py-4">Cargando...</p>
+            ) : items.length === 0 ? (
+              <p className="text-center text-muted-foreground py-4">Sin materiales. Agrega productos para presupuestar el consumo esperado.</p>
+            ) : viewMode === 'table' ? (
+              /* ═══════ Vista Tabla (default) — edición inline + acciones por fila ═══════ */
+              <div className="overflow-x-auto rounded-xl border border-border/30">
+                <table className="w-full text-xs">
+                  <thead className="bg-muted/30">
+                    <tr className="text-[9px] font-black uppercase text-muted-foreground">
+                      <th className="p-2 text-left">Producto</th>
+                      <th className="p-2 text-center">Stock</th>
+                      <th className="p-2 text-center">Presupuesto</th>
+                      <th className="p-2 text-center">Real</th>
+                      <th className="p-2 text-center">Pendiente</th>
+                      <th className="p-2 text-center">Desv. Qty</th>
+                      <th className="p-2 text-center">Desv. $</th>
+                      <th className="p-2 text-center">Estado</th>
+                      <th className="p-2 text-center">Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {items.map(item => {
+                      const bQty = Number(item.budgeted_qty);
+                      const aQty = Number(item.actual_qty);
+                      const bCost = Number(item.budgeted_unit_cost || 0);
+                      const aCost = Number(item.actual_unit_cost || 0);
+                      const pending = Math.max(0, bQty - aQty);
+                      const devQty = aQty - bQty;
+                      const devMoney = (aQty * aCost) - (bQty * bCost);
+                      const isEditingThis = editingBudget?.itemId === item.id;
+                      const canEditBudget = canEdit && aQty === 0;
+                      const canWithdraw = order.status === 'in_progress' && item.status !== 'completed';
+
+                      return (
+                        <tr key={item.id} className="border-t border-border/20 hover:bg-muted/5">
+                          {/* Producto */}
+                          <td className="p-2">
+                            <p className="font-bold truncate max-w-[140px]">{item.products?.name || 'Producto'}</p>
+                            <p className="text-[9px] text-muted-foreground">{item.products?.sku || '—'}</p>
+                          </td>
+                          {/* Stock */}
+                          <td className="p-2 text-center font-mono font-bold">
+                            {item.products?.stock_current ?? '—'}
+                          </td>
+                          {/* Presupuesto (editable inline si no hay salidas) */}
+                          <td className="p-2 text-center">
+                            {isEditingThis ? (
+                              <div className="flex flex-col gap-1 min-w-[90px]">
+                                <div className="flex items-center gap-1">
+                                  <input
+                                    type="number" inputMode="decimal" min="0.01" step="0.01"
+                                    value={editingBudget!.qty}
+                                    onChange={(e) => setEditingBudget({ ...editingBudget!, qty: e.target.value })}
+                                    className="w-14 h-7 px-1 text-[10px] font-mono font-bold border border-primary rounded text-center"
+                                    autoFocus
+                                  />
+                                  <span className="text-[9px] text-muted-foreground">×</span>
+                                  <input
+                                    type="number" inputMode="decimal" min="0" step="0.01"
+                                    value={editingBudget!.cost}
+                                    onChange={(e) => setEditingBudget({ ...editingBudget!, cost: e.target.value })}
+                                    className="w-16 h-7 px-1 text-[10px] font-mono font-bold border border-primary rounded text-center"
+                                  />
+                                </div>
+                                <div className="flex gap-0.5">
+                                  <button
+                                    onClick={handleSaveBudget}
+                                    disabled={savingBudget}
+                                    className="flex-1 h-6 rounded bg-success text-white text-[9px] font-black uppercase hover:opacity-90 disabled:opacity-50"
+                                  >
+                                    {savingBudget ? '…' : 'OK'}
+                                  </button>
+                                  <button
+                                    onClick={() => setEditingBudget(null)}
+                                    className="flex-1 h-6 rounded border border-border text-[9px] font-black uppercase hover:bg-muted"
+                                  >
+                                    ✕
+                                  </button>
+                                </div>
+                              </div>
+                            ) : (
+                              <button
+                                onClick={() => canEditBudget && handleEditBudget(item)}
+                                disabled={!canEditBudget}
+                                className={cn(
+                                  "font-mono font-bold px-1 py-0.5 rounded",
+                                  canEditBudget ? "hover:bg-primary/10 cursor-text" : "cursor-default",
+                                  !canEditBudget && "opacity-70"
+                                )}
+                                title={canEditBudget ? "Click para editar presupuesto" : "No editable: ya tiene salidas"}
+                              >
+                                {bQty} × {formatCurrency(bCost)}
+                                {canEditBudget && <Edit3 className="w-2.5 h-2.5 inline ml-1 text-muted-foreground" />}
+                              </button>
+                            )}
+                          </td>
+                          {/* Real */}
+                          <td className="p-2 text-center font-mono">
+                            {aQty > 0 ? (
+                              <span className={aQty > bQty ? "text-destructive font-bold" : "text-success font-bold"}>
+                                {aQty} × {formatCurrency(aCost)}
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground">—</span>
+                            )}
+                          </td>
+                          {/* Pendiente */}
+                          <td className="p-2 text-center font-mono font-bold">
+                            {pending > 0 ? (
+                              <span className="text-amber-500">{pending.toFixed(2)}</span>
+                            ) : (
+                              <span className="text-success">0</span>
+                            )}
+                          </td>
+                          {/* Desviación Qty */}
+                          <td className={cn("p-2 text-center font-mono font-bold",
+                            devQty === 0 ? "text-muted-foreground" : devQty > 0 ? "text-destructive" : "text-success")}>
+                            {devQty > 0 ? '+' : ''}{devQty.toFixed(2)}
+                          </td>
+                          {/* Desviación $ */}
+                          <td className={cn("p-2 text-center font-mono font-bold",
+                            devMoney === 0 ? "text-muted-foreground" : devMoney > 0 ? "text-destructive" : "text-success")}>
+                            {devMoney > 0 ? '+' : ''}{formatCurrency(devMoney)}
+                          </td>
+                          {/* Estado */}
+                          <td className="p-2 text-center">
+                            <span className={cn("px-1.5 py-0.5 rounded text-[9px] font-black uppercase",
+                              item.status === 'completed' ? "bg-success/10 text-success" :
+                              item.status === 'partial' ? "bg-amber-500/10 text-amber-500" :
+                              "bg-muted text-muted-foreground")}>
+                              {item.status}
+                            </span>
+                          </td>
+                          {/* Acciones */}
+                          <td className="p-2">
+                            <div className="flex items-center justify-center gap-1">
+                              {canWithdraw && (
+                                <button
+                                  onClick={() => handleWithdraw(item)}
+                                  className="px-2 h-7 rounded bg-primary/10 text-primary text-[9px] font-black uppercase hover:bg-primary/20 flex items-center gap-0.5 whitespace-nowrap"
+                                  title="Dar salida de inventario"
+                                >
+                                  <ArrowDownToLine className="w-3 h-3" /> Salida
+                                </button>
+                              )}
+                              {canEditBudget && (
+                                <button
+                                  onClick={() => handleEditBudget(item)}
+                                  className="p-1.5 h-7 rounded bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 flex items-center"
+                                  title="Editar presupuesto"
+                                  aria-label="Editar presupuesto"
+                                >
+                                  <Edit3 className="w-3 h-3" />
+                                </button>
+                              )}
+                              {canEdit && aQty === 0 && (
+                                <button
+                                  onClick={() => handleDeleteItem(item.id, item.products?.name || 'Producto')}
+                                  className="p-1.5 h-7 rounded bg-destructive/10 text-destructive hover:bg-destructive/20 flex items-center"
+                                  title="Eliminar material"
+                                  aria-label="Eliminar material"
+                                >
+                                  <X className="w-3 h-3" />
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                  {/* Footer con totales */}
+                  {items.length > 0 && (
+                    <tfoot className="bg-muted/20 border-t-2 border-border/30">
+                      <tr className="text-[9px] font-black uppercase text-muted-foreground">
+                        <td className="p-2" colSpan={2}>Totales ({items.length})</td>
+                        <td className="p-2 text-center font-mono">
+                          {formatCurrency(items.reduce((s, i) => s + Number(i.budgeted_qty) * Number(i.budgeted_unit_cost || 0), 0))}
+                        </td>
+                        <td className="p-2 text-center font-mono">
+                          {formatCurrency(items.reduce((s, i) => s + Number(i.actual_qty) * Number(i.actual_unit_cost || 0), 0))}
+                        </td>
+                        <td className="p-2 text-center font-mono">
+                          {items.reduce((s, i) => s + Math.max(0, Number(i.budgeted_qty) - Number(i.actual_qty)), 0).toFixed(2)}
+                        </td>
+                        <td className="p-2 text-center font-mono">
+                          {(() => {
+                            const t = items.reduce((s, i) => s + (Number(i.actual_qty) - Number(i.budgeted_qty)), 0);
+                            return <span className={t > 0 ? "text-destructive" : t < 0 ? "text-success" : ""}>{t > 0 ? '+' : ''}{t.toFixed(2)}</span>;
+                          })()}
+                        </td>
+                        <td className="p-2 text-center font-mono">
+                          {(() => {
+                            const t = items.reduce((s, i) => s + (Number(i.actual_qty) * Number(i.actual_unit_cost || 0)) - (Number(i.budgeted_qty) * Number(i.budgeted_unit_cost || 0)), 0);
+                            return <span className={t > 0 ? "text-destructive" : t < 0 ? "text-success" : ""}>{t > 0 ? '+' : ''}{formatCurrency(t)}</span>;
+                          })()}
+                        </td>
+                        <td className="p-2" colSpan={2}></td>
+                      </tr>
+                    </tfoot>
+                  )}
+                </table>
+              </div>
+            ) : (
+              /* ═══════ Vista Tarjetas (alternativa) ═══════ */
+              items.map(item => {
+                const bQty = Number(item.budgeted_qty);
+                const aQty = Number(item.actual_qty);
+                const bCost = Number(item.budgeted_unit_cost || 0);
+                const aCost = Number(item.actual_unit_cost || 0);
+                const pending = Math.max(0, bQty - aQty);
+                const devQty = aQty - bQty;
+                const devMoney = (aQty * aCost) - (bQty * bCost);
+                const isEditingThis = editingBudget?.itemId === item.id;
+                const canEditBudget = canEdit && aQty === 0;
+                const canWithdraw = order.status === 'in_progress' && item.status !== 'completed';
+
+                return (
+                  <div key={item.id} className="rounded-lg border border-border/30 p-3 bg-muted/10">
+                    <div className="flex items-center justify-between mb-1">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-bold truncate">{item.products?.name || 'Producto'}</p>
+                        <p className="text-[10px] text-muted-foreground">Stock actual: {item.products?.stock_current ?? '—'}</p>
+                      </div>
+                      <span className={cn("px-2 py-1 rounded text-[10px] font-black uppercase shrink-0 ml-2",
+                        item.status === 'completed' ? "bg-success/10 text-success" : item.status === 'partial' ? "bg-amber-500/10 text-amber-500" : "bg-muted text-muted-foreground")}>
+                        {item.status}
+                      </span>
+                    </div>
+                    {isEditingThis ? (
+                      /* Edición inline en modo tarjeta */
+                      <div className="space-y-2 p-2 rounded-lg border-2 border-primary/30 bg-primary/5">
+                        <p className="text-[9px] font-black uppercase text-muted-foreground">Editar presupuesto</p>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <label className="text-[9px] font-black uppercase text-muted-foreground block mb-0.5">Cantidad</label>
+                            <input
+                              type="number" inputMode="decimal" min="0.01" step="0.01"
+                              value={editingBudget!.qty}
+                              onChange={(e) => setEditingBudget({ ...editingBudget!, qty: e.target.value })}
+                              className="w-full h-9 px-2 text-xs font-mono font-bold border border-primary rounded"
+                              autoFocus
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[9px] font-black uppercase text-muted-foreground block mb-0.5">Costo unit.</label>
+                            <input
+                              type="number" inputMode="decimal" min="0" step="0.01"
+                              value={editingBudget!.cost}
+                              onChange={(e) => setEditingBudget({ ...editingBudget!, cost: e.target.value })}
+                              className="w-full h-9 px-2 text-xs font-mono font-bold border border-primary rounded"
+                            />
+                          </div>
+                        </div>
+                        <div className="flex gap-1">
+                          <button onClick={handleSaveBudget} disabled={savingBudget} className="flex-1 h-9 rounded bg-success text-white text-[10px] font-black uppercase hover:opacity-90 disabled:opacity-50">
+                            {savingBudget ? 'Guardando...' : 'Guardar'}
+                          </button>
+                          <button onClick={() => setEditingBudget(null)} className="flex-1 h-9 rounded border border-border text-[10px] font-black uppercase hover:bg-muted">Cancelar</button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="grid grid-cols-3 gap-2 text-[10px] font-bold">
+                          <div className="text-center">
+                            <span className="text-muted-foreground">Presup.</span><br />
+                            <button
+                              onClick={() => canEditBudget && handleEditBudget(item)}
+                              disabled={!canEditBudget}
+                              className={cn("font-mono", canEditBudget && "hover:text-primary hover:underline")}
+                              title={canEditBudget ? "Click para editar" : "No editable: ya tiene salidas"}
+                            >
+                              {bQty} × {formatCurrency(bCost)}
+                            </button>
+                          </div>
+                          <div className="text-center">
+                            <span className="text-muted-foreground">Real</span><br />
+                            <span className={cn("font-mono", aQty > 0 ? (aQty > bQty ? "text-destructive" : "text-success") : "text-muted-foreground")}>
+                              {aQty} × {formatCurrency(aCost)}
+                            </span>
+                          </div>
+                          <div className="text-center">
+                            <span className="text-muted-foreground">Desviación</span><br />
+                            <span className={cn("font-mono", devQty === 0 ? "" : devQty > 0 ? "text-destructive" : "text-success")}>
+                              {devQty > 0 ? '+' : ''}{devQty.toFixed(2)}
+                            </span>
+                            <span className={cn("block text-[9px]", devMoney === 0 ? "text-muted-foreground" : devMoney > 0 ? "text-destructive" : "text-success")}>
+                              {devMoney > 0 ? '+' : ''}{formatCurrency(devMoney)}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex gap-1 mt-2">
+                          {canWithdraw && (
+                            <button onClick={() => handleWithdraw(item)} className="flex-1 h-9 rounded-lg bg-primary/10 text-primary text-[10px] font-black uppercase hover:bg-primary/20 flex items-center justify-center gap-1 min-h-[36px]">
+                              <ArrowDownToLine className="w-3 h-3" /> Dar Salida
+                            </button>
+                          )}
+                          {canEditBudget && (
+                            <button onClick={() => handleEditBudget(item)} className="px-2 h-9 rounded-lg bg-blue-500/10 text-blue-500 text-[10px] font-black uppercase hover:bg-blue-500/20 flex items-center justify-center min-h-[36px]" title="Editar presupuesto">
+                              <Edit3 className="w-3 h-3" />
+                            </button>
+                          )}
+                          {canEdit && aQty === 0 && (
+                            <button onClick={() => handleDeleteItem(item.id, item.products?.name || 'Producto')} className="px-2 h-9 rounded-lg bg-destructive/10 text-destructive text-[10px] font-black uppercase hover:bg-destructive/20 flex items-center justify-center min-h-[36px]" aria-label="Eliminar material">
+                              <X className="w-3 h-3" />
+                            </button>
+                          )}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                );
+              })
+            )}
+
+            {/* ── Modal de salida (WithdrawDialog) ── */}
+            {withdrawDialog.open && withdrawDialog.item && (
+              <WithdrawDialog
+                item={withdrawDialog.item}
+                qty={withdrawDialog.qty}
+                unitCost={withdrawDialog.unitCost}
+                submitting={withdrawDialog.submitting}
+                onQtyChange={(v) => setWithdrawDialog({ ...withdrawDialog, qty: v })}
+                onUnitCostChange={(v) => setWithdrawDialog({ ...withdrawDialog, unitCost: v })}
+                onConfirm={handleConfirmWithdraw}
+                onCancel={() => setWithdrawDialog({ open: false, item: null, qty: '', unitCost: '', submitting: false })}
+              />
+            )}
           </div>
         )}
 
         {/* Tab Pagos */}
         {activeTab === 'payments' && (
-          <div className="p-4 space-y-2">
-            {loading ? <p className="text-center text-muted-foreground py-4">Cargando...</p>
-            : payments.length === 0 ? <p className="text-center text-muted-foreground py-4">Sin pagos registrados</p>
-            : payments.map(p => (
-              <div key={p.id} className="flex items-center justify-between rounded-lg border border-border/30 p-3 bg-muted/10">
-                <div className="flex items-center gap-2">
-                  <span className="text-lg">{p.payment_method === 'cash' ? '💵' : p.payment_method === 'transfer' ? '📱' : '💳'}</span>
-                  <div>
-                    <p className="text-xs font-bold tabular-nums">{formatCurrency(Number(p.amount_cup || p.amount))} {p.currency}</p>
-                    <p className="text-[10px] text-muted-foreground">{new Date(p.payment_date).toLocaleString()}</p>
+          <PaymentsTab
+            order={order}
+            payments={payments}
+            loading={loading}
+            onRefresh={fetchDetail}
+          />
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ════════════════════════════════════════════════════════════════════
+// Fase 2: Tab Pagos — formulario de registro + lista + balance CUP
+// ════════════════════════════════════════════════════════════════════
+function PaymentsTab({ order, payments, loading, onRefresh }: {
+  order: ProductionOrder;
+  payments: any[];
+  loading: boolean;
+  onRefresh: () => void;
+}) {
+  const [showForm, setShowForm] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState({
+    amount: '',
+    payment_method: 'cash' as 'cash' | 'transfer' | 'zelle',
+    currency: 'CUP',
+    exchange_rate: '1',
+    payment_type: 'partial' as 'advance' | 'partial' | 'settlement',
+    reference: '',
+    notes: '',
+  });
+
+  const canPay = order.status !== 'closed' && order.status !== 'voided';
+
+  // Calcular totales en CUP
+  const totalPaidCup = payments.reduce((s, p) => s + Number(p.amount_cup || 0), 0);
+  const budgetCup = order.budget_currency === 'CUP'
+    ? Number(order.budget_total)
+    : Number(order.budget_total) * (parseFloat(form.exchange_rate) || 1);
+  const balanceCup = Math.max(0, budgetCup - totalPaidCup);
+
+  const methodIcon = (m: string) => m === 'cash' ? '💵' : m === 'transfer' ? '📱' : '💳';
+  const methodLabel = (m: string) => m === 'cash' ? 'Efectivo' : m === 'transfer' ? 'Transferencia' : 'Zelle';
+
+  const typeBadge: Record<string, { label: string; color: string }> = {
+    advance: { label: 'Anticipo', color: 'bg-blue-500/15 text-blue-500 border-blue-500/30' },
+    partial: { label: 'Parcial', color: 'bg-amber-500/15 text-amber-500 border-amber-500/30' },
+    settlement: { label: 'Liquidación', color: 'bg-success/15 text-success border-success/30' },
+  };
+
+  const handleSave = async () => {
+    const amount = parseFloat(form.amount);
+    if (!amount || amount <= 0) {
+      toast.error('Ingresa un monto válido');
+      return;
+    }
+    setSaving(true);
+    try {
+      const { token } = useAuthStore.getState();
+      const res = await fetch(`/api/production-orders/${order.id}/payments`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          amount,
+          payment_method: form.payment_method,
+          currency: form.currency,
+          exchange_rate: parseFloat(form.exchange_rate) || 1,
+          payment_type: form.payment_type,
+          reference: form.reference || undefined,
+          notes: form.notes || undefined,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        toast.success(data.message || 'Pago registrado');
+        setForm({ ...form, amount: '', reference: '', notes: '' });
+        setShowForm(false);
+        onRefresh();
+      } else {
+        toast.error(data.error || 'Error al registrar pago');
+      }
+    } catch (e: any) {
+      toast.error('Error: ' + e.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return <div className="p-4 text-center text-muted-foreground">Cargando pagos...</div>;
+  }
+
+  return (
+    <div className="p-4 space-y-3">
+      {/* Resumen financiero */}
+      <div className="grid grid-cols-3 gap-2">
+        <div className="rounded-lg border border-border/40 bg-muted/20 p-2 text-center">
+          <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Presupuesto</p>
+          <p className="text-sm font-mono font-black text-foreground">
+            {formatCurrency(Number(order.budget_total))}
+          </p>
+          <p className="text-[10px] text-muted-foreground">{order.budget_currency}</p>
+        </div>
+        <div className="rounded-lg border border-success/30 bg-success/5 p-2 text-center">
+          <p className="text-[10px] font-black uppercase tracking-widest text-success">Pagado</p>
+          <p className="text-sm font-mono font-black text-success">
+            {formatCurrency(totalPaidCup)}
+          </p>
+          <p className="text-[10px] text-muted-foreground">CUP</p>
+        </div>
+        <div className="rounded-lg border border-warning/30 bg-warning/5 p-2 text-center">
+          <p className="text-[10px] font-black uppercase tracking-widest text-warning">Saldo</p>
+          <p className="text-sm font-mono font-black text-warning">
+            {formatCurrency(balanceCup)}
+          </p>
+          <p className="text-[10px] text-muted-foreground">CUP</p>
+        </div>
+      </div>
+
+      {/* Botón registrar pago */}
+      {canPay && (
+        <button
+          onClick={() => setShowForm(!showForm)}
+          className="w-full px-4 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-black uppercase tracking-widest hover:bg-primary/90 min-h-[44px] flex items-center justify-center gap-2"
+        >
+          <DollarSign className="w-4 h-4" />
+          {showForm ? 'Cancelar' : 'Registrar pago'}
+        </button>
+      )}
+
+      {/* Formulario de registro */}
+      {showForm && canPay && (
+        <div className="rounded-xl border-2 border-primary/30 bg-primary/5 p-3 space-y-2">
+          {/* Tipo de pago */}
+          <div>
+            <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground block mb-1">Tipo de pago</label>
+            <div className="grid grid-cols-3 gap-1.5">
+              {(['advance', 'partial', 'settlement'] as const).map(t => (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => setForm({ ...form, payment_type: t })}
+                  className={cn(
+                    'px-2 py-2 rounded-lg border-2 text-[10px] font-black uppercase tracking-wider min-h-[44px] transition-colors',
+                    form.payment_type === t
+                      ? 'border-primary bg-primary/10 text-primary'
+                      : 'border-border text-muted-foreground hover:bg-muted/30'
+                  )}
+                >
+                  {typeBadge[t].label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Monto + moneda */}
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground block mb-1">Monto</label>
+              <input
+                type="number"
+                inputMode="decimal"
+                step="0.01"
+                min="0"
+                value={form.amount}
+                onChange={(e) => setForm({ ...form, amount: e.target.value })}
+                placeholder={balanceCup > 0 ? balanceCup.toFixed(2) : '0.00'}
+                className="w-full h-11 px-3 rounded-lg border-2 border-border bg-background text-sm font-mono font-bold min-h-[44px] text-foreground focus:border-primary focus:outline-none"
+              />
+            </div>
+            <div>
+              <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground block mb-1">Moneda</label>
+              <select
+                value={form.currency}
+                onChange={(e) => setForm({ ...form, currency: e.target.value, exchange_rate: e.target.value === 'CUP' ? '1' : form.exchange_rate })}
+                className="w-full h-11 px-2 rounded-lg border-2 border-border bg-background text-sm font-bold min-h-[44px] text-foreground"
+              >
+                <option value="CUP">CUP</option>
+                <option value="USD">USD</option>
+                <option value="EUR">EUR</option>
+                <option value="MLC">MLC</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Método + tasa */}
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground block mb-1">Método</label>
+              <select
+                value={form.payment_method}
+                onChange={(e) => setForm({ ...form, payment_method: e.target.value as any })}
+                className="w-full h-11 px-2 rounded-lg border-2 border-border bg-background text-sm font-bold min-h-[44px] text-foreground"
+              >
+                <option value="cash">💵 Efectivo</option>
+                <option value="transfer">📱 Transferencia</option>
+                <option value="zelle">💳 Zelle</option>
+              </select>
+            </div>
+            {form.currency !== 'CUP' && (
+              <div>
+                <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground block mb-1">Tasa a CUP</label>
+                <input
+                  type="number"
+                  inputMode="decimal"
+                  step="0.01"
+                  min="0"
+                  value={form.exchange_rate}
+                  onChange={(e) => setForm({ ...form, exchange_rate: e.target.value })}
+                  placeholder="680"
+                  className="w-full h-11 px-3 rounded-lg border-2 border-border bg-background text-sm font-mono font-bold min-h-[44px] text-foreground focus:border-primary focus:outline-none"
+                />
+              </div>
+            )}
+          </div>
+
+          {/* Referencia */}
+          <div>
+            <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground block mb-1">Referencia (opcional)</label>
+            <input
+              type="text"
+              value={form.reference}
+              onChange={(e) => setForm({ ...form, reference: e.target.value })}
+              placeholder="Ej: # Transferencia 12345"
+              className="w-full h-11 px-3 rounded-lg border-2 border-border bg-background text-sm font-bold min-h-[44px] text-foreground focus:border-primary focus:outline-none"
+            />
+          </div>
+
+          {/* Botón guardar */}
+          <button
+            onClick={handleSave}
+            disabled={saving || !form.amount}
+            className="w-full px-4 py-2.5 rounded-xl bg-success text-success-foreground text-sm font-black uppercase tracking-widest hover:bg-success/90 disabled:opacity-50 min-h-[44px] flex items-center justify-center gap-2"
+          >
+            {saving ? <Clock className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+            {saving ? 'Guardando...' : 'Confirmar pago'}
+          </button>
+        </div>
+      )}
+
+      {/* Lista de pagos */}
+      <div className="space-y-1.5">
+        <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+          Historial de pagos ({payments.length})
+        </p>
+        {payments.length === 0 ? (
+          <p className="text-center text-muted-foreground py-4 text-sm">Sin pagos registrados</p>
+        ) : payments.map((p, i) => {
+          // Inferir tipo de pago: primer pago = advance, último si balance 0 = settlement, resto = partial
+          const inferredType = i === 0 ? 'advance' : (i === payments.length - 1 && totalPaidCup >= budgetCup - 1 ? 'settlement' : 'partial');
+          const badge = typeBadge[inferredType] || typeBadge.partial;
+          return (
+            <div key={p.id} className="flex items-center justify-between rounded-lg border border-border/30 p-3 bg-muted/10 gap-2">
+              <div className="flex items-center gap-2 min-w-0 flex-1">
+                <span className="text-lg shrink-0">{methodIcon(p.payment_method)}</span>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <p className="text-xs font-bold tabular-nums text-foreground">
+                      {formatCurrency(Number(p.amount))} {p.currency}
+                    </p>
+                    <span className={cn('px-1.5 py-0.5 rounded text-[9px] font-black uppercase border', badge.color)}>
+                      {badge.label}
+                    </span>
                   </div>
+                  <p className="text-[10px] text-muted-foreground">
+                    {methodLabel(p.payment_method)} · {new Date(p.payment_date).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                  </p>
+                  {p.reference && <p className="text-[10px] text-muted-foreground truncate">Ref: {p.reference}</p>}
                 </div>
               </div>
-            ))}
-          </div>
-        )}
+              {p.amount_cup && p.currency !== 'CUP' && (
+                <div className="text-right shrink-0">
+                  <p className="text-[10px] font-mono font-bold text-muted-foreground">{formatCurrency(Number(p.amount_cup))}</p>
+                  <p className="text-[9px] text-muted-foreground">CUP</p>
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -603,6 +1570,211 @@ function ProductSearchInput({ value, onChange, storeId }: { value: string; onCha
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+// ════════════════════════════════════════════════════════════════════
+// Fase 7: WithdrawDialog — Modal para dar salida de inventario
+// con vista previa de impacto (stock después, desviación, estado resultante)
+// Sigue el patrón de "ajustes": editar → confirmar o cancelar
+// ════════════════════════════════════════════════════════════════════
+function WithdrawDialog({
+  item,
+  qty,
+  unitCost,
+  submitting,
+  onQtyChange,
+  onUnitCostChange,
+  onConfirm,
+  onCancel,
+}: {
+  item: ProductionOrderItem;
+  qty: string;
+  unitCost: string;
+  submitting: boolean;
+  onQtyChange: (v: string) => void;
+  onUnitCostChange: (v: string) => void;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  const bQty = Number(item.budgeted_qty);
+  const bCost = Number(item.budgeted_unit_cost || 0);
+  const aQtyCurrent = Number(item.actual_qty);
+  const aCostCurrent = Number(item.actual_unit_cost || 0);
+  const stockCurrent = Number(item.products?.stock_current ?? 0);
+
+  const newQty = parseFloat(qty) || 0;
+  const newCost = parseFloat(unitCost) || 0;
+  const newActualQty = aQtyCurrent + newQty;
+  const newActualCost = newCost;
+  const newActualTotal = newActualQty * newActualCost;
+  const budgetedTotal = bQty * bCost;
+  const moneyDeviation = newActualTotal - budgetedTotal;
+  const qtyDeviation = newActualQty - bQty;
+  const stockAfter = stockCurrent - newQty;
+  const willComplete = newActualQty >= bQty;
+  const willExceed = newActualQty > bQty;
+  const willOversell = newQty > stockCurrent;
+
+  return (
+    <div className="fixed inset-0 z-[300] flex items-end sm:items-center justify-center sm:p-4 bg-background/80 backdrop-blur-sm" onClick={onCancel}>
+      <div
+        className="w-full max-w-md max-h-[90vh] overflow-y-auto bg-card rounded-t-2xl sm:rounded-2xl border border-border/50 shadow-2xl"
+        onClick={e => e.stopPropagation()}
+        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+      >
+        {/* Header */}
+        <div className="sticky top-0 bg-card border-b border-border/30 p-4 flex items-center justify-between z-10">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+              <ArrowDownToLine className="w-4 h-4 text-primary" />
+            </div>
+            <div className="min-w-0">
+              <h2 className="text-sm font-black uppercase tracking-widest">Dar Salida</h2>
+              <p className="text-[10px] text-muted-foreground truncate">{item.products?.name || 'Producto'}</p>
+            </div>
+          </div>
+          <button onClick={onCancel} className="p-2 rounded-lg hover:bg-muted min-h-[44px] min-w-[44px] flex items-center justify-center" aria-label="Cerrar">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        <div className="p-4 space-y-3">
+          {/* Resumen actual */}
+          <div className="grid grid-cols-2 gap-2">
+            <div className="rounded-lg border border-border/30 bg-muted/20 p-2">
+              <p className="text-[9px] font-black uppercase text-muted-foreground">Presupuestado</p>
+              <p className="text-sm font-mono font-black">{bQty} × {formatCurrency(bCost)}</p>
+              <p className="text-[10px] text-muted-foreground">Total: {formatCurrency(budgetedTotal)}</p>
+            </div>
+            <div className="rounded-lg border border-border/30 bg-muted/20 p-2">
+              <p className="text-[9px] font-black uppercase text-muted-foreground">Ya emitido</p>
+              <p className="text-sm font-mono font-black">{aQtyCurrent} × {formatCurrency(aCostCurrent)}</p>
+              <p className="text-[10px] text-muted-foreground">Total: {formatCurrency(aQtyCurrent * aCostCurrent)}</p>
+            </div>
+          </div>
+
+          {/* Stock */}
+          <div className="flex items-center justify-between rounded-lg border border-border/30 p-2">
+            <span className="text-[10px] font-black uppercase text-muted-foreground">Stock en inventario</span>
+            <span className={cn("text-sm font-mono font-black", stockCurrent < bQty - aQtyCurrent && "text-amber-500")}>
+              {stockCurrent}
+              {stockCurrent < (bQty - aQtyCurrent) && (
+                <span className="ml-1 text-[9px] text-amber-500">(insuficiente para lo pendiente)</span>
+              )}
+            </span>
+          </div>
+
+          {/* Formulario */}
+          <div className="space-y-2 p-3 rounded-xl border-2 border-primary/30 bg-primary/5">
+            <p className="text-[10px] font-black uppercase text-muted-foreground">Cantidad a dar salida ahora</p>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="text-[9px] font-black uppercase text-muted-foreground block mb-1">Cantidad</label>
+                <input
+                  type="number"
+                  inputMode="decimal"
+                  min="0.01"
+                  step="0.01"
+                  value={qty}
+                  onChange={(e) => onQtyChange(e.target.value)}
+                  className="w-full h-11 px-3 rounded-lg border-2 border-border bg-background text-sm font-mono font-bold min-h-[44px]"
+                  autoFocus
+                />
+              </div>
+              <div>
+                <label className="text-[9px] font-black uppercase text-muted-foreground block mb-1">Costo unit. real</label>
+                <input
+                  type="number"
+                  inputMode="decimal"
+                  min="0"
+                  step="0.01"
+                  value={unitCost}
+                  onChange={(e) => onUnitCostChange(e.target.value)}
+                  className="w-full h-11 px-3 rounded-lg border-2 border-border bg-background text-sm font-mono font-bold min-h-[44px]"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Vista previa del impacto */}
+          <div className="space-y-1.5 p-3 rounded-xl border border-border/30 bg-muted/10">
+            <p className="text-[10px] font-black uppercase text-muted-foreground">Vista previa tras confirmar</p>
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              <div>
+                <p className="text-[9px] text-muted-foreground">Nuevo real</p>
+                <p className="font-mono font-black">{newActualQty.toFixed(2)} × {formatCurrency(newActualCost)}</p>
+              </div>
+              <div>
+                <p className="text-[9px] text-muted-foreground">Total real</p>
+                <p className="font-mono font-black">{formatCurrency(newActualTotal)}</p>
+              </div>
+              <div>
+                <p className="text-[9px] text-muted-foreground">Desviación qty</p>
+                <p className={cn("font-mono font-black",
+                  qtyDeviation === 0 ? "text-muted-foreground" : qtyDeviation > 0 ? "text-destructive" : "text-success")}>
+                  {qtyDeviation > 0 ? '+' : ''}{qtyDeviation.toFixed(2)}
+                </p>
+              </div>
+              <div>
+                <p className="text-[9px] text-muted-foreground">Desviación $</p>
+                <p className={cn("font-mono font-black",
+                  moneyDeviation === 0 ? "text-muted-foreground" : moneyDeviation > 0 ? "text-destructive" : "text-success")}>
+                  {moneyDeviation > 0 ? '+' : ''}{formatCurrency(moneyDeviation)}
+                </p>
+              </div>
+              <div>
+                <p className="text-[9px] text-muted-foreground">Stock después</p>
+                <p className={cn("font-mono font-black",
+                  willOversell ? "text-destructive" : stockAfter < 0 ? "text-destructive" : "text-foreground")}>
+                  {stockAfter.toFixed(2)}
+                  {willOversell && <span className="ml-1 text-[9px]">⚠ ¡insuficiente!</span>}
+                </p>
+              </div>
+              <div>
+                <p className="text-[9px] text-muted-foreground">Estado resultante</p>
+                <p className={cn("font-mono font-black",
+                  willExceed ? "text-destructive" : willComplete ? "text-success" : "text-amber-500")}>
+                  {willExceed ? 'completed ⚠' : willComplete ? 'completed ✓' : 'partial'}
+                </p>
+              </div>
+            </div>
+            {willExceed && (
+              <p className="text-[9px] text-destructive font-bold pt-1 border-t border-border/20">
+                ⚠ La cantidad emitida ({newActualQty.toFixed(2)}) supera lo presupuestado ({bQty}). Esto se registra como desviación positiva.
+              </p>
+            )}
+            {willOversell && (
+              <p className="text-[9px] text-destructive font-bold pt-1 border-t border-border/20">
+                ⚠ No hay stock suficiente. Inventario quedará negativo (-{Math.abs(stockAfter).toFixed(2)}).
+              </p>
+            )}
+          </div>
+
+          {/* Acciones */}
+          <div className="flex gap-2 pt-1">
+            <button
+              onClick={onCancel}
+              disabled={submitting}
+              className="flex-1 h-11 rounded-lg border border-border text-xs font-black uppercase hover:bg-muted min-h-[44px] disabled:opacity-50"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={onConfirm}
+              disabled={submitting || newQty <= 0}
+              className="flex-1 h-11 rounded-lg bg-primary text-primary-foreground text-xs font-black uppercase hover:opacity-90 disabled:opacity-50 min-h-[44px] flex items-center justify-center gap-1"
+            >
+              {submitting ? (
+                <><Clock className="w-3 h-3 animate-spin" /> Procesando...</>
+              ) : (
+                <><ArrowDownToLine className="w-3.5 h-3.5" /> Confirmar Salida</>
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

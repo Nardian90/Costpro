@@ -64,6 +64,17 @@ export interface CommissionRule {
   // IDs de productos asociados (para type='product_specific').
   // Se carga vía join table commission_rule_products en la API.
   product_ids?: string[];
+  // v3 (2026-07-17) — configuración por producto individual.
+  // Map de product_id → { amount, mode } que permite que una sola regla
+  // product_specific tenga monto y modo distintos por producto.
+  // Se carga vía join table commission_rule_products en la API.
+  // Si un product_id no está aquí, cae al default product_commission_amount + mode 'per_sale'.
+  product_configs?: Record<string, { amount: number | null; mode: 'per_sale' | 'per_unit' }>;
+  // v3 (2026-07-17) — modo default para la regla product_specific cuando
+  // un producto no tiene override en product_configs.
+  // Si es NULL o 'per_sale', comportamiento anterior (monto fijo por venta).
+  // Si es 'per_unit', monto × cantidad vendida.
+  product_commission_mode?: 'per_sale' | 'per_unit' | null;
 }
 
 /**
@@ -96,6 +107,10 @@ export interface ProductCommissionDetail {
   rule_type: CommissionType | 'manual' | 'none';
   commission: number;
   excluded_from_percentage: boolean; // true si este producto consumió una regla product_specific
+  // v3 (2026-07-17): snapshot enriquecido — captura el monto y modo efectivos
+  // usados para reproducir el cálculo post-pago. Solo aplican a product_specific.
+  effective_amount?: number | null;  // monto efectivo aplicado (override o default)
+  effective_mode?: 'per_sale' | 'per_unit' | null;  // modo efectivo aplicado
 }
 
 export interface CommissionCalculation {
@@ -379,9 +394,26 @@ export function calculateCommissionWithProducts(
   for (const item of lineItems) {
     // 1. ¿Producto específico?
     const pRule = selectProductSpecificRule(rules, worker_id, item.product_id, dateInRange);
-    if (pRule && pRule.product_commission_amount != null) {
-      // Comisión fija $ por venta (sin importar cantidad ni precio)
-      const commission = Number(pRule.product_commission_amount) || 0;
+    // v3 (2026-07-17): condición robustecida — una regla aplica si tiene monto default
+    // (product_commission_amount) O si tiene overrides por producto (product_configs).
+    // Antes solo se verificaba product_commission_amount != null, lo que hacía que
+    // reglas v3 puras (solo product_configs, sin default) fueran ignoradas silenciosamente.
+    const hasProductConfig = pRule?.product_configs?.[item.product_id] != null;
+    if (pRule && (pRule.product_commission_amount != null || hasProductConfig)) {
+      // v3 (2026-07-17): resolver configuración específica del producto si existe override
+      const productConfig = pRule.product_configs?.[item.product_id];
+      const effectiveAmount = productConfig?.amount != null
+        ? Number(productConfig.amount)
+        : Number(pRule.product_commission_amount) || 0;
+      const effectiveMode = productConfig?.mode || pRule.product_commission_mode || 'per_sale';
+
+      // Calcular comisión según modo:
+      // - per_sale: monto fijo por venta (sin importar cantidad) — comportamiento original
+      // - per_unit: monto × cantidad vendida (ej: 1000 CUP × 3 paneles = 3000 CUP)
+      const commission = effectiveMode === 'per_unit'
+        ? effectiveAmount * item.quantity
+        : effectiveAmount;
+
       productSpecificTotal += commission;
       excludedSalesTotal += item.line_total;
 
@@ -395,6 +427,9 @@ export function calculateCommissionWithProducts(
         rule_type: 'product_specific',
         commission,
         excluded_from_percentage: true,
+        // v3 (2026-07-17): snapshot enriquecido
+        effective_amount: effectiveAmount,
+        effective_mode: effectiveMode,
       });
       continue;
     }
@@ -597,6 +632,45 @@ export function buildManualCommissionCalculation(
     product_breakdown: productBreakdown,
     excluded_sales_total: 0,
     calculation_mode: 'manual',
+  };
+}
+
+/**
+ * Helper DRY (2026-07-17): derivar line_total y unit_price desde un transaction_item.
+ *
+ * BUG HISTÓRICO: transaction_items.price_at_sale_cup en la BD ya es
+ * price × qty × rate (es decir, line_total_cup, NO unit_price_cup).
+ * El RPC create_sale calcula:
+ *   v_price_cup := CASE WHEN currency='CUP' THEN price*qty ELSE price*qty*rate END
+ *
+ * Antes los endpoints hacían:
+ *   unitPrice = price_at_sale_cup
+ *   lineTotal = unitPrice * qty   // ← INFLABA por factor qty
+ *
+ * Este helper centraliza la lógica correcta:
+ *   - Si price_at_sale_cup > 0: usarlo como line_total, derivar unit_price = total / qty
+ *   - Sino: fallback a price_at_sale (moneda original) × qty
+ */
+export function deriveLineTotals(lineItem: {
+  quantity: number;
+  price_at_sale_cup?: number | string | null;
+  price_at_sale?: number | string | null;
+}): { unitPrice: number; lineTotal: number } {
+  const qty = Number(lineItem.quantity) || 0;
+  const priceAtSaleCup = Number(lineItem.price_at_sale_cup) || 0;
+  const priceAtSale = Number(lineItem.price_at_sale) || 0;
+
+  if (priceAtSaleCup > 0 && qty > 0) {
+    // price_at_sale_cup ya es line_total_cup → derivar unit_price
+    return {
+      lineTotal: priceAtSaleCup,
+      unitPrice: priceAtSaleCup / qty,
+    };
+  }
+  // fallback: price_at_sale (moneda original) × qty
+  return {
+    unitPrice: priceAtSale,
+    lineTotal: priceAtSale * qty,
   };
 }
 

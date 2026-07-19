@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabaseClient';
+import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
+import { getSupabaseForSession } from '@/lib/supabase-session';
 import { z } from 'zod';
+import crypto from 'crypto';
+
 
 const createOrderSchema = z.object({
   order_type: z.enum(['production', 'service', 'work']).default('service'),
@@ -24,7 +27,7 @@ const createOrderSchema = z.object({
 });
 
 // POST: Crear orden
-export async function POST(request: NextRequest) {
+async function postHandler(request: NextRequest, session: AuthenticatedSession) {
   try {
     const body = await request.json();
     const parsed = createOrderSchema.safeParse(body);
@@ -32,10 +35,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Datos inválidos', details: parsed.error.flatten() }, { status: 400 });
     }
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+    const session_user = session.user;
+    const supabase = getSupabaseForSession(session);
 
-    const { data: userData } = await supabase.from('profiles').select('active_store_id').eq('id', user.id).single();
+    const { data: userData } = await supabase.from('profiles').select('active_store_id').eq('id', session_user.id).single();
     if (!userData?.active_store_id) return NextResponse.json({ error: 'Tienda no configurada' }, { status: 400 });
 
     const { items, ...orderData } = parsed.data;
@@ -44,7 +47,7 @@ export async function POST(request: NextRequest) {
     const { data: order, error: orderError } = await supabase.from('production_orders').insert({
       ...orderData,
       store_id: userData.active_store_id,
-      created_by: user.id,
+      created_by: session_user.id,
       status: 'draft',
       paid_amount: parsed.data.advance_amount || 0,
       payment_status: (parsed.data.advance_amount || 0) > 0 ? 'partial' : 'unpaid',
@@ -66,16 +69,17 @@ export async function POST(request: NextRequest) {
       if (itemsError) return NextResponse.json({ error: itemsError.message }, { status: 500 });
     }
 
-    // Registrar anticipo como pago
+    // Registrar anticipo como pago (Fase 6: con idempotency_key anti doble-click)
     if (parsed.data.advance_amount > 0 && parsed.data.advance_method) {
       const { error: payError } = await supabase.rpc('register_supplier_payment', {
         p_store_id: userData.active_store_id,
-        p_ref_type: 'production_order',
+        p_ref_type: order.order_type === 'work' ? 'work' : 'production_order',
         p_ref_id: order.id,
         p_amount: parsed.data.advance_amount,
         p_payment_method: parsed.data.advance_method,
-        p_paid_by: user.id,
+        p_paid_by: session_user.id,
         p_currency: parsed.data.advance_currency,
+        p_idempotency_key: `advance-${order.id}-${crypto.randomUUID()}`,
       });
       if (payError) {
         console.error('[production-orders] Error registering payment:', payError);
@@ -90,16 +94,16 @@ export async function POST(request: NextRequest) {
 }
 
 // GET: Listar órdenes
-export async function GET(request: NextRequest) {
+async function getHandler(request: NextRequest, session: AuthenticatedSession) {
   try {
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status');
     const order_type = searchParams.get('order_type');
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+    const session_user = session.user;
+    const supabase = getSupabaseForSession(session);
 
-    const { data: userData } = await supabase.from('profiles').select('active_store_id').eq('id', user.id).single();
+    const { data: userData } = await supabase.from('profiles').select('active_store_id').eq('id', session_user.id).single();
     if (!userData?.active_store_id) return NextResponse.json({ error: 'Tienda no configurada' }, { status: 400 });
 
     let query = supabase.from('production_orders')
@@ -117,3 +121,9 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+
+export const POST = withAuth(postHandler);
+
+export const GET = withAuth(getHandler);
+
+

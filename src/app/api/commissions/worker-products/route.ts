@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
 import { getSupabaseForSession } from '@/lib/supabase-session';
+import { deriveLineTotals } from '@/lib/commission-engine';
 
 /**
  * GET /api/commissions/worker-products?store_id=...&worker_id=...&date_from=...&date_to=...
@@ -144,9 +145,8 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
           : (li.transactions?.created_at
               ? new Date(li.transactions.created_at).toISOString().split('T')[0]
               : dateFrom));
-    // FIX (2026-07-15): transaction_items no tiene unit_price.
-    // Usar price_at_sale_cup (preferido, en CUP) o price_at_sale como fallback.
-    const unitPrice = Number(li.price_at_sale_cup || li.price_at_sale) || 0;
+    // v3 (2026-07-17): usar helper DRY deriveLineTotals (P3)
+    const { unitPrice, lineTotal } = deriveLineTotals(li);
     const qty = Number(li.quantity) || 0;
     return {
       line_item_id: li.id,
@@ -157,7 +157,7 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
       product_sku: li.products?.sku || null,
       quantity: qty,
       unit_price: unitPrice,
-      line_total: unitPrice * qty,
+      line_total: lineTotal,
       cash_paid: Number(li.cash_paid) || 0,
       transfer_paid: Number(li.transfer_paid) || 0,
       currency: li.transactions?.sale_currency || li.price_currency || posInfo?.sale_currency || 'CUP',

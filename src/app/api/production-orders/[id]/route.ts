@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabaseClient';
+import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
+import { getSupabaseForSession } from '@/lib/supabase-session';
 import { z } from 'zod';
+import crypto from 'crypto';
+
 
 // PATCH: Cambiar estado de la orden
 const updateSchema = z.object({
@@ -22,11 +25,12 @@ const updateSchema = z.object({
   exchange_rate: z.number().positive().default(1.0).optional(),
 });
 
-export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+async function getHandler(request: NextRequest, session: AuthenticatedSession) {
+  const orderId = request.nextUrl.pathname.split('/').pop() || '';
   try {
-    const { id: orderId } = await params;
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+    // orderId extracted from URL above
+    const session_user = session.user;
+    const supabase = getSupabaseForSession(session);
 
     // Obtener orden + items
     const { data: order, error } = await supabase
@@ -54,17 +58,18 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   }
 }
 
-export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+async function patchHandler(request: NextRequest, session: AuthenticatedSession) {
+  const orderId = request.nextUrl.pathname.split('/').pop() || '';
   try {
-    const { id: orderId } = await params;
+    // orderId extracted from URL above
     const body = await request.json();
     const parsed = updateSchema.safeParse(body);
     if (!parsed.success) return NextResponse.json({ error: 'Datos inválidos', details: parsed.error.flatten() }, { status: 400 });
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+    const session_user = session.user;
+    const supabase = getSupabaseForSession(session);
 
-    const { data: userData } = await supabase.from('profiles').select('active_store_id').eq('id', user.id).single();
+    const { data: userData } = await supabase.from('profiles').select('active_store_id').eq('id', session_user.id).single();
     if (!userData?.active_store_id) return NextResponse.json({ error: 'Tienda no configurada' }, { status: 400 });
 
     const { action, final_amount, final_method, final_currency, exchange_rate, output_product_id, output_quantity, ...updateData } = parsed.data;
@@ -87,17 +92,19 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         return NextResponse.json({ error: 'Las órdenes de producción requieren un producto terminado y cantidad' }, { status: 400 });
       }
 
-      // C6: Registrar pago final con inspección de errores
+      // C6: Registrar pago final con inspección de errores (Fase 6: idempotency + ref_type dinámico)
       if (final_amount && final_amount > 0 && final_method) {
+        const refType = order.order_type === 'work' ? 'work' : 'production_order';
         const { error: payError } = await supabase.rpc('register_supplier_payment', {
           p_store_id: userData.active_store_id,
-          p_ref_type: 'production_order',
+          p_ref_type: refType,
           p_ref_id: orderId,
           p_amount: final_amount,
           p_payment_method: final_method,
-          p_paid_by: user.id,
+          p_paid_by: session_user.id,
           p_currency: final_currency || 'CUP',
           p_exchange_rate: exchange_rate || 1.0,
+          p_idempotency_key: `close-${orderId}-${crypto.randomUUID()}`,
         });
         if (payError) {
           console.error('[production-orders/close] Payment error:', payError);
@@ -124,7 +131,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         const { error: saleError } = await supabase.rpc('close_service_order_as_sale', {
           p_order_id: orderId,
           p_store_id: userData.active_store_id,
-          p_seller_id: user.id,
+          p_seller_id: session_user.id,
           p_payment_method: final_method || 'cash',
           p_currency: final_currency || 'CUP',
           p_exchange_rate: exchange_rate || 1.0,
@@ -157,9 +164,24 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       .select()
       .single();
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    // Fase 5: manejar error de transición inválida del trigger
+    if (error) {
+      if (error.message?.includes('ERR_INVALID_TRANSITION')) {
+        return NextResponse.json({ error: error.message }, { status: 400 });
+      }
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
     return NextResponse.json(data);
   } catch (error: any) {
+    if (error.message?.includes('ERR_INVALID_TRANSITION')) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+
+
+export const GET = withAuth(getHandler);
+
+export const PATCH = withAuth(patchHandler);
+
