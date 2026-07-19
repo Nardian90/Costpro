@@ -62,9 +62,10 @@ export default function ProductionOrdersView() {
 
   const handleStatusChange = async (id: string, status: string) => {
     try {
+      const { token } = useAuthStore.getState();
       const res = await fetch(`/api/production-orders/${id}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
         body: JSON.stringify({ status }),
       });
       if (res.ok) { toast.success('Estado actualizado'); fetchOrders(); }
@@ -408,13 +409,32 @@ function OrderDetailModal({ order, onClose, onUpdate }: { order: ProductionOrder
   // Fase 4: anular
   const [voiding, setVoiding] = useState(false);
 
+  // ── Fase 7 (mejora UX): vista tabla + modal de salida + edición inline de presupuesto ──
+  const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
+  const [withdrawDialog, setWithdrawDialog] = useState<{
+    open: boolean;
+    item: ProductionOrderItem | null;
+    qty: string;
+    unitCost: string;
+    submitting: boolean;
+  }>({ open: false, item: null, qty: '', unitCost: '', submitting: false });
+  const [editingBudget, setEditingBudget] = useState<{
+    itemId: string;
+    qty: string;
+    cost: string;
+  } | null>(null);
+  const [savingBudget, setSavingBudget] = useState(false);
+
   const canEdit = order.status !== 'closed' && order.status !== 'voided';
   const sc = STATUS_CONFIG[order.status] || STATUS_CONFIG.draft;
 
   const fetchDetail = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/production-orders/${order.id}`);
+      const { token } = useAuthStore.getState();
+      const res = await fetch(`/api/production-orders/${order.id}`, {
+        headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+      });
       if (res.ok) {
         const data = await res.json();
         setItems(data.items || []);
@@ -444,24 +464,94 @@ function OrderDetailModal({ order, onClose, onUpdate }: { order: ProductionOrder
   const totalPaid = payments.reduce((s, p) => s + Number(p.amount_cup || p.amount), 0);
   const balance = order.budget_total - order.paid_amount;
 
-  const handleWithdraw = async (item: ProductionOrderItem) => {
-    const qty = prompt(`Cantidad a dar salida de "${item.products?.name}":`, String(item.budgeted_qty - item.actual_qty));
-    if (!qty) return;
+  // ── Fase 7: handleWithdraw abre modal (no prompt) con vista previa ──
+  const handleWithdraw = (item: ProductionOrderItem) => {
+    const pending = Number(item.budgeted_qty) - Number(item.actual_qty);
+    setWithdrawDialog({
+      open: true,
+      item,
+      qty: String(pending > 0 ? pending : 1),
+      unitCost: String(item.budgeted_unit_cost || 0),
+      submitting: false,
+    });
+  };
+
+  const handleConfirmWithdraw = async () => {
+    if (!withdrawDialog.item) return;
+    const qty = parseFloat(withdrawDialog.qty);
+    const unitCost = parseFloat(withdrawDialog.unitCost);
+    if (!qty || qty <= 0) { toast.error('Cantidad inválida'); return; }
+    if (unitCost < 0) { toast.error('Costo unitario inválido'); return; }
+
+    setWithdrawDialog({ ...withdrawDialog, submitting: true });
     try {
+      const { token } = useAuthStore.getState();
       const res = await fetch(`/api/production-orders/${order.id}/withdraw`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ item_id: item.id, qty: parseFloat(qty), unit_cost: item.budgeted_unit_cost }),
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify({ item_id: withdrawDialog.item.id, qty, unit_cost: unitCost }),
       });
-      if (res.ok) { toast.success('Salida registrada'); fetchDetail(); }
-    } catch { toast.error('Error'); }
+      if (res.ok) {
+        toast.success('Salida registrada en inventario');
+        setWithdrawDialog({ open: false, item: null, qty: '', unitCost: '', submitting: false });
+        await fetchDetail();
+      } else {
+        const err = await res.json();
+        toast.error(err.error || 'Error al registrar salida');
+        setWithdrawDialog({ ...withdrawDialog, submitting: false });
+      }
+    } catch (e: any) {
+      toast.error('Error: ' + e.message);
+      setWithdrawDialog({ ...withdrawDialog, submitting: false });
+    }
+  };
+
+  // ── Fase 7: editar presupuesto inline (solo si actual_qty === 0) ──
+  const handleEditBudget = (item: ProductionOrderItem) => {
+    if (Number(item.actual_qty) > 0) {
+      toast.error('No se puede editar: ya tiene salidas registradas');
+      return;
+    }
+    setEditingBudget({
+      itemId: item.id,
+      qty: String(item.budgeted_qty),
+      cost: String(item.budgeted_unit_cost || 0),
+    });
+  };
+
+  const handleSaveBudget = async () => {
+    if (!editingBudget) return;
+    const qty = parseFloat(editingBudget.qty);
+    const cost = parseFloat(editingBudget.cost);
+    if (!qty || qty <= 0) { toast.error('Cantidad debe ser mayor a 0'); return; }
+    if (cost < 0) { toast.error('Costo no puede ser negativo'); return; }
+
+    setSavingBudget(true);
+    try {
+      const { token } = useAuthStore.getState();
+      const res = await fetch(`/api/production-orders/${order.id}/items`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify({ item_id: editingBudget.itemId, budgeted_qty: qty, budgeted_unit_cost: cost }),
+      });
+      if (res.ok) {
+        toast.success('Presupuesto actualizado');
+        setEditingBudget(null);
+        await fetchDetail();
+      } else {
+        const err = await res.json();
+        toast.error(err.error || 'Error');
+      }
+    } catch (e: any) { toast.error('Error: ' + e.message); }
+    finally { setSavingBudget(false); }
   };
 
   const handleClose = async () => {
     try {
+      const { token } = useAuthStore.getState();
       const res = await fetch(`/api/production-orders/${order.id}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
         body: JSON.stringify({
           action: 'close',
           final_amount: parseFloat(finalAmount) || 0,
@@ -516,7 +606,8 @@ function OrderDetailModal({ order, onClose, onUpdate }: { order: ProductionOrder
         setMaterialSearch('');
         setMaterialResults([]);
         setNewMaterialQty('1');
-        fetchDetail();
+        setShowAddMaterial(false);
+        await fetchDetail();
       } else {
         const err = await res.json();
         toast.error(err.error || 'Error');
@@ -749,18 +840,43 @@ function OrderDetailModal({ order, onClose, onUpdate }: { order: ProductionOrder
           </div>
         )}
 
-        {/* Tab Items — Fase 3: añadir/eliminar materiales */}
+        {/* Tab Items — Fase 3 + Fase 7: vista tabla/tarjetas + edición inline + modal de salida */}
         {activeTab === 'items' && (
-          <div className="p-4 space-y-2">
-            {/* Botón añadir material */}
-            {canEdit && !showAddMaterial && (
-              <button
-                onClick={() => setShowAddMaterial(true)}
-                className="w-full px-3 py-2 rounded-lg border border-border text-xs font-black uppercase hover:bg-muted min-h-[44px] flex items-center justify-center gap-2"
-              >
-                <Plus className="w-3.5 h-3.5" /> Agregar material
-              </button>
-            )}
+          <div className="p-4 space-y-3">
+            {/* Barra de acciones: toggle vista + agregar material */}
+            <div className="flex items-center gap-2">
+              {/* Toggle vista tabla/tarjetas */}
+              {items.length > 0 && (
+                <div className="flex rounded-lg border border-border/40 overflow-hidden shrink-0">
+                  <button
+                    onClick={() => setViewMode('table')}
+                    className={cn("px-3 h-9 text-[10px] font-black uppercase transition-colors",
+                      viewMode === 'table' ? "bg-primary text-primary-foreground" : "bg-background text-muted-foreground hover:bg-muted")}
+                    aria-label="Vista tabla"
+                  >
+                    <Package className="w-3.5 h-3.5 inline mr-1" /> Tabla
+                  </button>
+                  <button
+                    onClick={() => setViewMode('cards')}
+                    className={cn("px-3 h-9 text-[10px] font-black uppercase transition-colors border-l border-border/40",
+                      viewMode === 'cards' ? "bg-primary text-primary-foreground" : "bg-background text-muted-foreground hover:bg-muted")}
+                    aria-label="Vista tarjetas"
+                  >
+                    <Factory className="w-3.5 h-3.5 inline mr-1" /> Tarjetas
+                  </button>
+                </div>
+              )}
+
+              {/* Botón añadir material */}
+              {canEdit && !showAddMaterial && (
+                <button
+                  onClick={() => setShowAddMaterial(true)}
+                  className="flex-1 px-3 py-2 rounded-lg border border-border text-xs font-black uppercase hover:bg-muted min-h-[44px] flex items-center justify-center gap-2"
+                >
+                  <Plus className="w-3.5 h-3.5" /> Agregar material
+                </button>
+              )}
+            </div>
 
             {/* Formulario añadir material */}
             {showAddMaterial && canEdit && (
@@ -810,40 +926,335 @@ function OrderDetailModal({ order, onClose, onUpdate }: { order: ProductionOrder
             )}
 
             {/* Lista de items */}
-            {loading ? <p className="text-center text-muted-foreground py-4">Cargando...</p>
-            : items.length === 0 ? <p className="text-center text-muted-foreground py-4">Sin materiales</p>
-            : items.map(item => (
-              <div key={item.id} className="rounded-lg border border-border/30 p-3 bg-muted/10">
-                <div className="flex items-center justify-between mb-1">
-                  <div className="min-w-0 flex-1">
-                    <p className="text-xs font-bold truncate">{item.products?.name || 'Producto'}</p>
-                    <p className="text-[10px] text-muted-foreground">Stock actual: {item.products?.stock_current ?? '—'}</p>
-                  </div>
-                  <span className={cn("px-2 py-1 rounded text-[10px] font-black uppercase shrink-0 ml-2",
-                    item.status === 'completed' ? "bg-success/10 text-success" : item.status === 'partial' ? "bg-amber-500/10 text-amber-500" : "bg-muted text-muted-foreground")}>
-                    {item.status}
-                  </span>
-                </div>
-                <div className="grid grid-cols-3 gap-2 text-[10px] font-bold">
-                  <div className="text-center"><span className="text-muted-foreground">Presup.</span><br />{item.budgeted_qty} × {formatCurrency(item.budgeted_unit_cost)}</div>
-                  <div className="text-center"><span className="text-muted-foreground">Real</span><br />{item.actual_qty} × {formatCurrency(item.actual_unit_cost)}</div>
-                  <div className="text-center"><span className="text-muted-foreground">Desviación</span><br />{item.actual_qty - item.budgeted_qty > 0 ? '+' : ''}{(item.actual_qty - item.budgeted_qty).toFixed(2)}</div>
-                </div>
-                <div className="flex gap-1 mt-2">
-                  {order.status === 'in_progress' && item.status !== 'completed' && (
-                    <button onClick={() => handleWithdraw(item)} className="flex-1 h-9 rounded-lg bg-primary/10 text-primary text-[10px] font-black uppercase hover:bg-primary/20 flex items-center justify-center gap-1 min-h-[36px]">
-                      <ArrowDownToLine className="w-3 h-3" /> Dar Salida
-                    </button>
+            {loading ? (
+              <p className="text-center text-muted-foreground py-4">Cargando...</p>
+            ) : items.length === 0 ? (
+              <p className="text-center text-muted-foreground py-4">Sin materiales. Agrega productos para presupuestar el consumo esperado.</p>
+            ) : viewMode === 'table' ? (
+              /* ═══════ Vista Tabla (default) — edición inline + acciones por fila ═══════ */
+              <div className="overflow-x-auto rounded-xl border border-border/30">
+                <table className="w-full text-xs">
+                  <thead className="bg-muted/30">
+                    <tr className="text-[9px] font-black uppercase text-muted-foreground">
+                      <th className="p-2 text-left">Producto</th>
+                      <th className="p-2 text-center">Stock</th>
+                      <th className="p-2 text-center">Presupuesto</th>
+                      <th className="p-2 text-center">Real</th>
+                      <th className="p-2 text-center">Pendiente</th>
+                      <th className="p-2 text-center">Desv. Qty</th>
+                      <th className="p-2 text-center">Desv. $</th>
+                      <th className="p-2 text-center">Estado</th>
+                      <th className="p-2 text-center">Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {items.map(item => {
+                      const bQty = Number(item.budgeted_qty);
+                      const aQty = Number(item.actual_qty);
+                      const bCost = Number(item.budgeted_unit_cost || 0);
+                      const aCost = Number(item.actual_unit_cost || 0);
+                      const pending = Math.max(0, bQty - aQty);
+                      const devQty = aQty - bQty;
+                      const devMoney = (aQty * aCost) - (bQty * bCost);
+                      const isEditingThis = editingBudget?.itemId === item.id;
+                      const canEditBudget = canEdit && aQty === 0;
+                      const canWithdraw = order.status === 'in_progress' && item.status !== 'completed';
+
+                      return (
+                        <tr key={item.id} className="border-t border-border/20 hover:bg-muted/5">
+                          {/* Producto */}
+                          <td className="p-2">
+                            <p className="font-bold truncate max-w-[140px]">{item.products?.name || 'Producto'}</p>
+                            <p className="text-[9px] text-muted-foreground">{item.products?.sku || '—'}</p>
+                          </td>
+                          {/* Stock */}
+                          <td className="p-2 text-center font-mono font-bold">
+                            {item.products?.stock_current ?? '—'}
+                          </td>
+                          {/* Presupuesto (editable inline si no hay salidas) */}
+                          <td className="p-2 text-center">
+                            {isEditingThis ? (
+                              <div className="flex flex-col gap-1 min-w-[90px]">
+                                <div className="flex items-center gap-1">
+                                  <input
+                                    type="number" inputMode="decimal" min="0.01" step="0.01"
+                                    value={editingBudget!.qty}
+                                    onChange={(e) => setEditingBudget({ ...editingBudget!, qty: e.target.value })}
+                                    className="w-14 h-7 px-1 text-[10px] font-mono font-bold border border-primary rounded text-center"
+                                    autoFocus
+                                  />
+                                  <span className="text-[9px] text-muted-foreground">×</span>
+                                  <input
+                                    type="number" inputMode="decimal" min="0" step="0.01"
+                                    value={editingBudget!.cost}
+                                    onChange={(e) => setEditingBudget({ ...editingBudget!, cost: e.target.value })}
+                                    className="w-16 h-7 px-1 text-[10px] font-mono font-bold border border-primary rounded text-center"
+                                  />
+                                </div>
+                                <div className="flex gap-0.5">
+                                  <button
+                                    onClick={handleSaveBudget}
+                                    disabled={savingBudget}
+                                    className="flex-1 h-6 rounded bg-success text-white text-[9px] font-black uppercase hover:opacity-90 disabled:opacity-50"
+                                  >
+                                    {savingBudget ? '…' : 'OK'}
+                                  </button>
+                                  <button
+                                    onClick={() => setEditingBudget(null)}
+                                    className="flex-1 h-6 rounded border border-border text-[9px] font-black uppercase hover:bg-muted"
+                                  >
+                                    ✕
+                                  </button>
+                                </div>
+                              </div>
+                            ) : (
+                              <button
+                                onClick={() => canEditBudget && handleEditBudget(item)}
+                                disabled={!canEditBudget}
+                                className={cn(
+                                  "font-mono font-bold px-1 py-0.5 rounded",
+                                  canEditBudget ? "hover:bg-primary/10 cursor-text" : "cursor-default",
+                                  !canEditBudget && "opacity-70"
+                                )}
+                                title={canEditBudget ? "Click para editar presupuesto" : "No editable: ya tiene salidas"}
+                              >
+                                {bQty} × {formatCurrency(bCost)}
+                                {canEditBudget && <Edit3 className="w-2.5 h-2.5 inline ml-1 text-muted-foreground" />}
+                              </button>
+                            )}
+                          </td>
+                          {/* Real */}
+                          <td className="p-2 text-center font-mono">
+                            {aQty > 0 ? (
+                              <span className={aQty > bQty ? "text-destructive font-bold" : "text-success font-bold"}>
+                                {aQty} × {formatCurrency(aCost)}
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground">—</span>
+                            )}
+                          </td>
+                          {/* Pendiente */}
+                          <td className="p-2 text-center font-mono font-bold">
+                            {pending > 0 ? (
+                              <span className="text-amber-500">{pending.toFixed(2)}</span>
+                            ) : (
+                              <span className="text-success">0</span>
+                            )}
+                          </td>
+                          {/* Desviación Qty */}
+                          <td className={cn("p-2 text-center font-mono font-bold",
+                            devQty === 0 ? "text-muted-foreground" : devQty > 0 ? "text-destructive" : "text-success")}>
+                            {devQty > 0 ? '+' : ''}{devQty.toFixed(2)}
+                          </td>
+                          {/* Desviación $ */}
+                          <td className={cn("p-2 text-center font-mono font-bold",
+                            devMoney === 0 ? "text-muted-foreground" : devMoney > 0 ? "text-destructive" : "text-success")}>
+                            {devMoney > 0 ? '+' : ''}{formatCurrency(devMoney)}
+                          </td>
+                          {/* Estado */}
+                          <td className="p-2 text-center">
+                            <span className={cn("px-1.5 py-0.5 rounded text-[9px] font-black uppercase",
+                              item.status === 'completed' ? "bg-success/10 text-success" :
+                              item.status === 'partial' ? "bg-amber-500/10 text-amber-500" :
+                              "bg-muted text-muted-foreground")}>
+                              {item.status}
+                            </span>
+                          </td>
+                          {/* Acciones */}
+                          <td className="p-2">
+                            <div className="flex items-center justify-center gap-1">
+                              {canWithdraw && (
+                                <button
+                                  onClick={() => handleWithdraw(item)}
+                                  className="px-2 h-7 rounded bg-primary/10 text-primary text-[9px] font-black uppercase hover:bg-primary/20 flex items-center gap-0.5 whitespace-nowrap"
+                                  title="Dar salida de inventario"
+                                >
+                                  <ArrowDownToLine className="w-3 h-3" /> Salida
+                                </button>
+                              )}
+                              {canEditBudget && (
+                                <button
+                                  onClick={() => handleEditBudget(item)}
+                                  className="p-1.5 h-7 rounded bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 flex items-center"
+                                  title="Editar presupuesto"
+                                  aria-label="Editar presupuesto"
+                                >
+                                  <Edit3 className="w-3 h-3" />
+                                </button>
+                              )}
+                              {canEdit && aQty === 0 && (
+                                <button
+                                  onClick={() => handleDeleteItem(item.id, item.products?.name || 'Producto')}
+                                  className="p-1.5 h-7 rounded bg-destructive/10 text-destructive hover:bg-destructive/20 flex items-center"
+                                  title="Eliminar material"
+                                  aria-label="Eliminar material"
+                                >
+                                  <X className="w-3 h-3" />
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                  {/* Footer con totales */}
+                  {items.length > 0 && (
+                    <tfoot className="bg-muted/20 border-t-2 border-border/30">
+                      <tr className="text-[9px] font-black uppercase text-muted-foreground">
+                        <td className="p-2" colSpan={2}>Totales ({items.length})</td>
+                        <td className="p-2 text-center font-mono">
+                          {formatCurrency(items.reduce((s, i) => s + Number(i.budgeted_qty) * Number(i.budgeted_unit_cost || 0), 0))}
+                        </td>
+                        <td className="p-2 text-center font-mono">
+                          {formatCurrency(items.reduce((s, i) => s + Number(i.actual_qty) * Number(i.actual_unit_cost || 0), 0))}
+                        </td>
+                        <td className="p-2 text-center font-mono">
+                          {items.reduce((s, i) => s + Math.max(0, Number(i.budgeted_qty) - Number(i.actual_qty)), 0).toFixed(2)}
+                        </td>
+                        <td className="p-2 text-center font-mono">
+                          {(() => {
+                            const t = items.reduce((s, i) => s + (Number(i.actual_qty) - Number(i.budgeted_qty)), 0);
+                            return <span className={t > 0 ? "text-destructive" : t < 0 ? "text-success" : ""}>{t > 0 ? '+' : ''}{t.toFixed(2)}</span>;
+                          })()}
+                        </td>
+                        <td className="p-2 text-center font-mono">
+                          {(() => {
+                            const t = items.reduce((s, i) => s + (Number(i.actual_qty) * Number(i.actual_unit_cost || 0)) - (Number(i.budgeted_qty) * Number(i.budgeted_unit_cost || 0)), 0);
+                            return <span className={t > 0 ? "text-destructive" : t < 0 ? "text-success" : ""}>{t > 0 ? '+' : ''}{formatCurrency(t)}</span>;
+                          })()}
+                        </td>
+                        <td className="p-2" colSpan={2}></td>
+                      </tr>
+                    </tfoot>
                   )}
-                  {/* Fase 3: eliminar material si no tiene salida */}
-                  {canEdit && Number(item.actual_qty) === 0 && (
-                    <button onClick={() => handleDeleteItem(item.id, item.products?.name || 'Producto')} className="px-2 h-9 rounded-lg bg-destructive/10 text-destructive text-[10px] font-black uppercase hover:bg-destructive/20 flex items-center justify-center min-h-[36px]" aria-label="Eliminar material">
-                      <X className="w-3 h-3" />
-                    </button>
-                  )}
-                </div>
+                </table>
               </div>
-            ))}
+            ) : (
+              /* ═══════ Vista Tarjetas (alternativa) ═══════ */
+              items.map(item => {
+                const bQty = Number(item.budgeted_qty);
+                const aQty = Number(item.actual_qty);
+                const bCost = Number(item.budgeted_unit_cost || 0);
+                const aCost = Number(item.actual_unit_cost || 0);
+                const pending = Math.max(0, bQty - aQty);
+                const devQty = aQty - bQty;
+                const devMoney = (aQty * aCost) - (bQty * bCost);
+                const isEditingThis = editingBudget?.itemId === item.id;
+                const canEditBudget = canEdit && aQty === 0;
+                const canWithdraw = order.status === 'in_progress' && item.status !== 'completed';
+
+                return (
+                  <div key={item.id} className="rounded-lg border border-border/30 p-3 bg-muted/10">
+                    <div className="flex items-center justify-between mb-1">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-bold truncate">{item.products?.name || 'Producto'}</p>
+                        <p className="text-[10px] text-muted-foreground">Stock actual: {item.products?.stock_current ?? '—'}</p>
+                      </div>
+                      <span className={cn("px-2 py-1 rounded text-[10px] font-black uppercase shrink-0 ml-2",
+                        item.status === 'completed' ? "bg-success/10 text-success" : item.status === 'partial' ? "bg-amber-500/10 text-amber-500" : "bg-muted text-muted-foreground")}>
+                        {item.status}
+                      </span>
+                    </div>
+                    {isEditingThis ? (
+                      /* Edición inline en modo tarjeta */
+                      <div className="space-y-2 p-2 rounded-lg border-2 border-primary/30 bg-primary/5">
+                        <p className="text-[9px] font-black uppercase text-muted-foreground">Editar presupuesto</p>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <label className="text-[9px] font-black uppercase text-muted-foreground block mb-0.5">Cantidad</label>
+                            <input
+                              type="number" inputMode="decimal" min="0.01" step="0.01"
+                              value={editingBudget!.qty}
+                              onChange={(e) => setEditingBudget({ ...editingBudget!, qty: e.target.value })}
+                              className="w-full h-9 px-2 text-xs font-mono font-bold border border-primary rounded"
+                              autoFocus
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[9px] font-black uppercase text-muted-foreground block mb-0.5">Costo unit.</label>
+                            <input
+                              type="number" inputMode="decimal" min="0" step="0.01"
+                              value={editingBudget!.cost}
+                              onChange={(e) => setEditingBudget({ ...editingBudget!, cost: e.target.value })}
+                              className="w-full h-9 px-2 text-xs font-mono font-bold border border-primary rounded"
+                            />
+                          </div>
+                        </div>
+                        <div className="flex gap-1">
+                          <button onClick={handleSaveBudget} disabled={savingBudget} className="flex-1 h-9 rounded bg-success text-white text-[10px] font-black uppercase hover:opacity-90 disabled:opacity-50">
+                            {savingBudget ? 'Guardando...' : 'Guardar'}
+                          </button>
+                          <button onClick={() => setEditingBudget(null)} className="flex-1 h-9 rounded border border-border text-[10px] font-black uppercase hover:bg-muted">Cancelar</button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="grid grid-cols-3 gap-2 text-[10px] font-bold">
+                          <div className="text-center">
+                            <span className="text-muted-foreground">Presup.</span><br />
+                            <button
+                              onClick={() => canEditBudget && handleEditBudget(item)}
+                              disabled={!canEditBudget}
+                              className={cn("font-mono", canEditBudget && "hover:text-primary hover:underline")}
+                              title={canEditBudget ? "Click para editar" : "No editable: ya tiene salidas"}
+                            >
+                              {bQty} × {formatCurrency(bCost)}
+                            </button>
+                          </div>
+                          <div className="text-center">
+                            <span className="text-muted-foreground">Real</span><br />
+                            <span className={cn("font-mono", aQty > 0 ? (aQty > bQty ? "text-destructive" : "text-success") : "text-muted-foreground")}>
+                              {aQty} × {formatCurrency(aCost)}
+                            </span>
+                          </div>
+                          <div className="text-center">
+                            <span className="text-muted-foreground">Desviación</span><br />
+                            <span className={cn("font-mono", devQty === 0 ? "" : devQty > 0 ? "text-destructive" : "text-success")}>
+                              {devQty > 0 ? '+' : ''}{devQty.toFixed(2)}
+                            </span>
+                            <span className={cn("block text-[9px]", devMoney === 0 ? "text-muted-foreground" : devMoney > 0 ? "text-destructive" : "text-success")}>
+                              {devMoney > 0 ? '+' : ''}{formatCurrency(devMoney)}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex gap-1 mt-2">
+                          {canWithdraw && (
+                            <button onClick={() => handleWithdraw(item)} className="flex-1 h-9 rounded-lg bg-primary/10 text-primary text-[10px] font-black uppercase hover:bg-primary/20 flex items-center justify-center gap-1 min-h-[36px]">
+                              <ArrowDownToLine className="w-3 h-3" /> Dar Salida
+                            </button>
+                          )}
+                          {canEditBudget && (
+                            <button onClick={() => handleEditBudget(item)} className="px-2 h-9 rounded-lg bg-blue-500/10 text-blue-500 text-[10px] font-black uppercase hover:bg-blue-500/20 flex items-center justify-center min-h-[36px]" title="Editar presupuesto">
+                              <Edit3 className="w-3 h-3" />
+                            </button>
+                          )}
+                          {canEdit && aQty === 0 && (
+                            <button onClick={() => handleDeleteItem(item.id, item.products?.name || 'Producto')} className="px-2 h-9 rounded-lg bg-destructive/10 text-destructive text-[10px] font-black uppercase hover:bg-destructive/20 flex items-center justify-center min-h-[36px]" aria-label="Eliminar material">
+                              <X className="w-3 h-3" />
+                            </button>
+                          )}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                );
+              })
+            )}
+
+            {/* ── Modal de salida (WithdrawDialog) ── */}
+            {withdrawDialog.open && withdrawDialog.item && (
+              <WithdrawDialog
+                item={withdrawDialog.item}
+                qty={withdrawDialog.qty}
+                unitCost={withdrawDialog.unitCost}
+                submitting={withdrawDialog.submitting}
+                onQtyChange={(v) => setWithdrawDialog({ ...withdrawDialog, qty: v })}
+                onUnitCostChange={(v) => setWithdrawDialog({ ...withdrawDialog, unitCost: v })}
+                onConfirm={handleConfirmWithdraw}
+                onCancel={() => setWithdrawDialog({ open: false, item: null, qty: '', unitCost: '', submitting: false })}
+              />
+            )}
           </div>
         )}
 
@@ -1159,6 +1570,211 @@ function ProductSearchInput({ value, onChange, storeId }: { value: string; onCha
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+// ════════════════════════════════════════════════════════════════════
+// Fase 7: WithdrawDialog — Modal para dar salida de inventario
+// con vista previa de impacto (stock después, desviación, estado resultante)
+// Sigue el patrón de "ajustes": editar → confirmar o cancelar
+// ════════════════════════════════════════════════════════════════════
+function WithdrawDialog({
+  item,
+  qty,
+  unitCost,
+  submitting,
+  onQtyChange,
+  onUnitCostChange,
+  onConfirm,
+  onCancel,
+}: {
+  item: ProductionOrderItem;
+  qty: string;
+  unitCost: string;
+  submitting: boolean;
+  onQtyChange: (v: string) => void;
+  onUnitCostChange: (v: string) => void;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  const bQty = Number(item.budgeted_qty);
+  const bCost = Number(item.budgeted_unit_cost || 0);
+  const aQtyCurrent = Number(item.actual_qty);
+  const aCostCurrent = Number(item.actual_unit_cost || 0);
+  const stockCurrent = Number(item.products?.stock_current ?? 0);
+
+  const newQty = parseFloat(qty) || 0;
+  const newCost = parseFloat(unitCost) || 0;
+  const newActualQty = aQtyCurrent + newQty;
+  const newActualCost = newCost;
+  const newActualTotal = newActualQty * newActualCost;
+  const budgetedTotal = bQty * bCost;
+  const moneyDeviation = newActualTotal - budgetedTotal;
+  const qtyDeviation = newActualQty - bQty;
+  const stockAfter = stockCurrent - newQty;
+  const willComplete = newActualQty >= bQty;
+  const willExceed = newActualQty > bQty;
+  const willOversell = newQty > stockCurrent;
+
+  return (
+    <div className="fixed inset-0 z-[300] flex items-end sm:items-center justify-center sm:p-4 bg-background/80 backdrop-blur-sm" onClick={onCancel}>
+      <div
+        className="w-full max-w-md max-h-[90vh] overflow-y-auto bg-card rounded-t-2xl sm:rounded-2xl border border-border/50 shadow-2xl"
+        onClick={e => e.stopPropagation()}
+        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+      >
+        {/* Header */}
+        <div className="sticky top-0 bg-card border-b border-border/30 p-4 flex items-center justify-between z-10">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+              <ArrowDownToLine className="w-4 h-4 text-primary" />
+            </div>
+            <div className="min-w-0">
+              <h2 className="text-sm font-black uppercase tracking-widest">Dar Salida</h2>
+              <p className="text-[10px] text-muted-foreground truncate">{item.products?.name || 'Producto'}</p>
+            </div>
+          </div>
+          <button onClick={onCancel} className="p-2 rounded-lg hover:bg-muted min-h-[44px] min-w-[44px] flex items-center justify-center" aria-label="Cerrar">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        <div className="p-4 space-y-3">
+          {/* Resumen actual */}
+          <div className="grid grid-cols-2 gap-2">
+            <div className="rounded-lg border border-border/30 bg-muted/20 p-2">
+              <p className="text-[9px] font-black uppercase text-muted-foreground">Presupuestado</p>
+              <p className="text-sm font-mono font-black">{bQty} × {formatCurrency(bCost)}</p>
+              <p className="text-[10px] text-muted-foreground">Total: {formatCurrency(budgetedTotal)}</p>
+            </div>
+            <div className="rounded-lg border border-border/30 bg-muted/20 p-2">
+              <p className="text-[9px] font-black uppercase text-muted-foreground">Ya emitido</p>
+              <p className="text-sm font-mono font-black">{aQtyCurrent} × {formatCurrency(aCostCurrent)}</p>
+              <p className="text-[10px] text-muted-foreground">Total: {formatCurrency(aQtyCurrent * aCostCurrent)}</p>
+            </div>
+          </div>
+
+          {/* Stock */}
+          <div className="flex items-center justify-between rounded-lg border border-border/30 p-2">
+            <span className="text-[10px] font-black uppercase text-muted-foreground">Stock en inventario</span>
+            <span className={cn("text-sm font-mono font-black", stockCurrent < bQty - aQtyCurrent && "text-amber-500")}>
+              {stockCurrent}
+              {stockCurrent < (bQty - aQtyCurrent) && (
+                <span className="ml-1 text-[9px] text-amber-500">(insuficiente para lo pendiente)</span>
+              )}
+            </span>
+          </div>
+
+          {/* Formulario */}
+          <div className="space-y-2 p-3 rounded-xl border-2 border-primary/30 bg-primary/5">
+            <p className="text-[10px] font-black uppercase text-muted-foreground">Cantidad a dar salida ahora</p>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="text-[9px] font-black uppercase text-muted-foreground block mb-1">Cantidad</label>
+                <input
+                  type="number"
+                  inputMode="decimal"
+                  min="0.01"
+                  step="0.01"
+                  value={qty}
+                  onChange={(e) => onQtyChange(e.target.value)}
+                  className="w-full h-11 px-3 rounded-lg border-2 border-border bg-background text-sm font-mono font-bold min-h-[44px]"
+                  autoFocus
+                />
+              </div>
+              <div>
+                <label className="text-[9px] font-black uppercase text-muted-foreground block mb-1">Costo unit. real</label>
+                <input
+                  type="number"
+                  inputMode="decimal"
+                  min="0"
+                  step="0.01"
+                  value={unitCost}
+                  onChange={(e) => onUnitCostChange(e.target.value)}
+                  className="w-full h-11 px-3 rounded-lg border-2 border-border bg-background text-sm font-mono font-bold min-h-[44px]"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Vista previa del impacto */}
+          <div className="space-y-1.5 p-3 rounded-xl border border-border/30 bg-muted/10">
+            <p className="text-[10px] font-black uppercase text-muted-foreground">Vista previa tras confirmar</p>
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              <div>
+                <p className="text-[9px] text-muted-foreground">Nuevo real</p>
+                <p className="font-mono font-black">{newActualQty.toFixed(2)} × {formatCurrency(newActualCost)}</p>
+              </div>
+              <div>
+                <p className="text-[9px] text-muted-foreground">Total real</p>
+                <p className="font-mono font-black">{formatCurrency(newActualTotal)}</p>
+              </div>
+              <div>
+                <p className="text-[9px] text-muted-foreground">Desviación qty</p>
+                <p className={cn("font-mono font-black",
+                  qtyDeviation === 0 ? "text-muted-foreground" : qtyDeviation > 0 ? "text-destructive" : "text-success")}>
+                  {qtyDeviation > 0 ? '+' : ''}{qtyDeviation.toFixed(2)}
+                </p>
+              </div>
+              <div>
+                <p className="text-[9px] text-muted-foreground">Desviación $</p>
+                <p className={cn("font-mono font-black",
+                  moneyDeviation === 0 ? "text-muted-foreground" : moneyDeviation > 0 ? "text-destructive" : "text-success")}>
+                  {moneyDeviation > 0 ? '+' : ''}{formatCurrency(moneyDeviation)}
+                </p>
+              </div>
+              <div>
+                <p className="text-[9px] text-muted-foreground">Stock después</p>
+                <p className={cn("font-mono font-black",
+                  willOversell ? "text-destructive" : stockAfter < 0 ? "text-destructive" : "text-foreground")}>
+                  {stockAfter.toFixed(2)}
+                  {willOversell && <span className="ml-1 text-[9px]">⚠ ¡insuficiente!</span>}
+                </p>
+              </div>
+              <div>
+                <p className="text-[9px] text-muted-foreground">Estado resultante</p>
+                <p className={cn("font-mono font-black",
+                  willExceed ? "text-destructive" : willComplete ? "text-success" : "text-amber-500")}>
+                  {willExceed ? 'completed ⚠' : willComplete ? 'completed ✓' : 'partial'}
+                </p>
+              </div>
+            </div>
+            {willExceed && (
+              <p className="text-[9px] text-destructive font-bold pt-1 border-t border-border/20">
+                ⚠ La cantidad emitida ({newActualQty.toFixed(2)}) supera lo presupuestado ({bQty}). Esto se registra como desviación positiva.
+              </p>
+            )}
+            {willOversell && (
+              <p className="text-[9px] text-destructive font-bold pt-1 border-t border-border/20">
+                ⚠ No hay stock suficiente. Inventario quedará negativo (-{Math.abs(stockAfter).toFixed(2)}).
+              </p>
+            )}
+          </div>
+
+          {/* Acciones */}
+          <div className="flex gap-2 pt-1">
+            <button
+              onClick={onCancel}
+              disabled={submitting}
+              className="flex-1 h-11 rounded-lg border border-border text-xs font-black uppercase hover:bg-muted min-h-[44px] disabled:opacity-50"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={onConfirm}
+              disabled={submitting || newQty <= 0}
+              className="flex-1 h-11 rounded-lg bg-primary text-primary-foreground text-xs font-black uppercase hover:opacity-90 disabled:opacity-50 min-h-[44px] flex items-center justify-center gap-1"
+            >
+              {submitting ? (
+                <><Clock className="w-3 h-3 animate-spin" /> Procesando...</>
+              ) : (
+                <><ArrowDownToLine className="w-3.5 h-3.5" /> Confirmar Salida</>
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

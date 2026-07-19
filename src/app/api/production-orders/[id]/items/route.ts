@@ -130,8 +130,79 @@ async function deleteHandler(request: NextRequest, session: AuthenticatedSession
   }
 }
 
+// ── PATCH: Editar presupuesto de un item (budgeted_qty, budgeted_unit_cost) ──
+// Solo permitido si:
+//   - La orden no está cerrada/anulada
+//   - El item NO tiene salidas reales (actual_qty === 0)
+// Esto sigue el principio contable de que una vez iniciado el consumo,
+// el presupuesto original debe preservarse para el análisis de desviación.
+const updateItemSchema = z.object({
+  item_id: z.string().uuid(),
+  budgeted_qty: z.number().positive('La cantidad debe ser mayor a 0'),
+  budgeted_unit_cost: z.number().min(0),
+});
+
+async function patchHandler(request: NextRequest, session: AuthenticatedSession) {
+  const orderId = request.nextUrl.pathname.split('/').slice(-2, -1)[0] || '';
+  try {
+    const body = await request.json();
+    const validated = updateItemSchema.safeParse(body);
+    if (!validated.success) {
+      return NextResponse.json({ error: 'Datos inválidos', details: validated.error.format() }, { status: 400 });
+    }
+
+    const { item_id, budgeted_qty, budgeted_unit_cost } = validated.data;
+    const supabase = getSupabaseForSession(session);
+
+    // Verificar orden
+    const { data: order } = await supabase
+      .from('production_orders')
+      .select('status')
+      .eq('id', orderId)
+      .single();
+
+    if (!order) return NextResponse.json({ error: 'Orden no encontrada' }, { status: 404 });
+    if (order.status === 'closed' || order.status === 'voided') {
+      return NextResponse.json({ error: 'No se pueden editar items de una orden cerrada o anulada' }, { status: 400 });
+    }
+
+    // Verificar que el item no tenga salidas reales
+    const { data: item } = await supabase
+      .from('production_order_items')
+      .select('actual_qty, budgeted_qty, budgeted_unit_cost')
+      .eq('id', item_id)
+      .eq('order_id', orderId)
+      .single();
+
+    if (!item) return NextResponse.json({ error: 'Item no encontrado' }, { status: 404 });
+    if (Number(item.actual_qty) > 0) {
+      return NextResponse.json({
+        error: 'No se puede editar el presupuesto de un item que ya tiene salidas de inventario. El presupuesto original debe preservarse para el análisis de desviación.',
+      }, { status: 400 });
+    }
+
+    const { data: updated, error } = await supabase
+      .from('production_order_items')
+      .update({
+        budgeted_qty,
+        budgeted_unit_cost,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', item_id)
+      .eq('order_id', orderId)
+      .select('id, budgeted_qty, budgeted_unit_cost, updated_at')
+      .single();
+
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+    return NextResponse.json({ item: updated });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
+
 export const POST = withAuth(postHandler);
 
-
+export const PATCH = withAuth(patchHandler);
 
 export const DELETE = withAuth(deleteHandler);
