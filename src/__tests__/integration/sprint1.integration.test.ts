@@ -58,7 +58,7 @@ describe('SPRINT-1 INTEGRATION AUDIT', () => {
     // Usar seed 12345 que produce algunos aciertos (verificado empíricamente)
     const history = generateRealisticHistory(200, 12345);
     const engine = new BacktestEngine(history);
-    const result = engine.runValidation(config, 1000, 30);
+    const result = engine.runValidation(config, 1000, 2);
 
     // === Métricas que eran 0 antes del Sprint 1 ===
     // Nota: con datos aleatorios puros, es posible que algunos PnL sean todos iguales
@@ -101,7 +101,7 @@ describe('SPRINT-1 INTEGRATION AUDIT', () => {
   it('BacktestEngine incluye CAGR con IC 95%', () => {
     const history = generateRealisticHistory(200);
     const engine = new BacktestEngine(history);
-    const result = engine.runValidation(config, 1000, 30);
+    const result = engine.runValidation(config, 1000, 2);
 
     expect(result.cagr).toBeDefined();
     expect(typeof result.cagr).toBe('number');
@@ -118,7 +118,7 @@ describe('SPRINT-1 INTEGRATION AUDIT', () => {
   it('BacktestEngine incluye Kelly y Probability of Ruin', () => {
     const history = generateRealisticHistory(200);
     const engine = new BacktestEngine(history);
-    const result = engine.runValidation(config, 1000, 30);
+    const result = engine.runValidation(config, 1000, 2);
 
     expect(result.kellyFraction).toBeDefined();
     expect(result.probabilityOfRuin).toBeDefined();
@@ -131,7 +131,7 @@ describe('SPRINT-1 INTEGRATION AUDIT', () => {
   it('BacktestEngine incluye los 4 tests estadísticos', () => {
     const history = generateRealisticHistory(500);
     const engine = new BacktestEngine(history);
-    const result = engine.runValidation(config, 1000, 30);
+    const result = engine.runValidation(config, 1000, 2);
 
     expect(result.statisticalTests).toBeDefined();
     expect(result.statisticalTests!.chiSquare.pValue).toBeGreaterThanOrEqual(0);
@@ -146,7 +146,7 @@ describe('SPRINT-1 INTEGRATION AUDIT', () => {
   it('BacktestEngine incluye drift detection', () => {
     const history = generateRealisticHistory(200);
     const engine = new BacktestEngine(history);
-    const result = engine.runValidation(config, 1000, 30);
+    const result = engine.runValidation(config, 1000, 2);
 
     expect(result.regimeChange).toBeDefined();
     expect(typeof result.regimeChange!.driftDetected).toBe('boolean');
@@ -157,7 +157,7 @@ describe('SPRINT-1 INTEGRATION AUDIT', () => {
   it('BacktestEngine incluye volatility, downside deviation y expectancy', () => {
     const history = generateRealisticHistory(200);
     const engine = new BacktestEngine(history);
-    const result = engine.runValidation(config, 1000, 30);
+    const result = engine.runValidation(config, 1000, 2);
 
     expect(result.volatility).toBeDefined();
     expect(result.downsideDeviation).toBeDefined();
@@ -171,7 +171,7 @@ describe('SPRINT-1 INTEGRATION AUDIT', () => {
     const pnlSeries = Array.from({ length: 30 }, () => {
       return Math.random() > 0.5 ? 100 : -50;
     });
-    const { report } = computeFullQuantReport(pnlSeries, 1000, 30, 0.5, 2);
+    const { report } = computeFullQuantReport(pnlSeries, 1000, 2, 0.5, 2);
 
     expect(report.streaks.maxWinStreak).toBeGreaterThan(0);
     expect(report.streaks.maxLossStreak).toBeGreaterThan(0);

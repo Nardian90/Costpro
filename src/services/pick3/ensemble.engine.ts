@@ -176,7 +176,8 @@ class FrequencyModel extends BaseModel {
     let hits = 0, total = 0, recentHits = 0, recentTotal = 0;
     const recentCutoff = 30;
 
-    for (let i = windowSize; i < this.history.length; i++) {
+    const startIdx = Math.max(windowSize, this.history.length - 80);
+    for (let i = startIdx; i < this.history.length; i++) {
       const window = this.history.slice(0, i);
       const analysis = new AnalysisEngine(window).analyze(60);
       const model = new FrequencyModel(window, analysis);
@@ -270,7 +271,8 @@ class MarkovModel extends BaseModel {
     }
     let hits = 0, total = 0, recentHits = 0, recentTotal = 0;
 
-    for (let i = windowSize; i < this.history.length; i++) {
+    const startIdx = Math.max(windowSize, this.history.length - 80);
+    for (let i = startIdx; i < this.history.length; i++) {
       const window = this.history.slice(0, i);
       const analysis = new AnalysisEngine(window).analyze(60);
       const model = new MarkovModel(window, analysis);
@@ -356,7 +358,8 @@ class PositionalModel extends BaseModel {
     }
     let hits = 0, total = 0, recentHits = 0, recentTotal = 0;
 
-    for (let i = windowSize; i < this.history.length; i++) {
+    const startIdx = Math.max(windowSize, this.history.length - 80);
+    for (let i = startIdx; i < this.history.length; i++) {
       const window = this.history.slice(0, i);
       const analysis = new AnalysisEngine(window).analyze(60);
       const model = new PositionalModel(window, analysis);
@@ -465,7 +468,8 @@ class SumRangeModel extends BaseModel {
     }
     let hits = 0, total = 0, recentHits = 0, recentTotal = 0;
 
-    for (let i = windowSize; i < this.history.length; i++) {
+    const startIdx = Math.max(windowSize, this.history.length - 80);
+    for (let i = startIdx; i < this.history.length; i++) {
       const window = this.history.slice(0, i);
       const analysis = new AnalysisEngine(window).analyze(60);
       const model = new SumRangeModel(window, analysis);
