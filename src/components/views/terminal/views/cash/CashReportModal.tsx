@@ -132,7 +132,28 @@ export function CashReportModal({ open, onClose }: CashReportModalProps) {
   const expectedCup = report?.cash_balance_cup ?? report?.totals?.balance_cup ?? 0;
   const cupDifference = cupTotal - expectedCup;
 
-  const handleSuggest = () => { const s: Record<number, string> = {}; let r = Math.max(0, expectedCup); for (const d of cupDenoms) { const c = Math.floor(r / d); if (c > 0) { s[d] = String(c); r -= c * d; } } setCupBreakdown(s); toast.success('Sugerido aplicado'); };
+  const handleSuggest = () => {
+    if (expectedCup <= 0) {
+      // Cuando el balance es negativo o cero, no hay efectivo para desglosar.
+      // Mostrar mensaje informativo al usuario.
+      toast.info(`No hay efectivo para desglosar. El balance CUP es ${formatCurrency(expectedCup)}.`, {
+        description: expectedCup < 0
+          ? 'Las salidas superan a los ingresos en efectivo.'
+          : 'Los ingresos en efectivo igualan exactamente a las salidas.',
+        duration: 5000,
+      });
+      setCupBreakdown({});
+      return;
+    }
+    const s: Record<number, string> = {};
+    let r = Math.max(0, expectedCup);
+    for (const d of cupDenoms) {
+      const c = Math.floor(r / d);
+      if (c > 0) { s[d] = String(c); r -= c * d; }
+    }
+    setCupBreakdown(s);
+    toast.success(`Desglose sugerido aplicado: ${formatCurrency(expectedCup)}`);
+  };
   const handleClear = () => { setCupBreakdown({}); setUsdBreakdown({}); };
   const handleSave = () => { const e: SavedBreakdown = { id: Date.now().toString(), label: `${new Date().toLocaleDateString('es-CU')} ${deliveredBy || ''}`, date: new Date().toISOString(), breakdown: cupBreakdown, deliveredBy, recipientName, total: cupTotal }; const u = [e, ...savedHistory].slice(0, 10); setSavedHistory(u); localStorage.setItem(SK_HIST, JSON.stringify(u)); toast.success(`Guardado (${u.length}/10)`); };
   const handleRestore = (e: SavedBreakdown) => { setCupBreakdown(e.breakdown); setDeliveredBy(e.deliveredBy); setRecipientName(e.recipientName); setShowHistory(false); toast.success('Restaurado'); };
@@ -156,226 +177,483 @@ export function CashReportModal({ open, onClose }: CashReportModalProps) {
     }
   };
 
-  // ===== PDF PLANTILLA ESTÁNDAR =====
+  // ===== PDF PLANTILLA ESTÁNDAR (refactor 2026-07-20) =====
+  // Estructura profesional tipo flujo de caja:
+  //   P1: Header tienda + periodo + RESUMEN EJECUTIVO (dinero a entregar)
+  //   P2: TABLA DE PRODUCTOS VENDIDOS (qty, precio, CUP, transfer, zelle, comisión)
+  //   P3: COMISIONES A TRABAJADORES (por trabajador, periodos, método)
+  //   P4: ÓRDENES DE PRODUCCIÓN/SERVICIO (anticipos + liquidaciones)
+  //   P5: SALIDAS DE DINERO (pagos a proveedores, recepciones, servicios)
+  //   P6: DESGLOSE DE BILLETES + FIRMAS
   const handleExportPDF = async () => {
     if (!report) return;
-    const doc = new jsPDF();
+    const doc = new jsPDF({ unit: 'mm', format: 'a4' });
     const pw = doc.internal.pageSize.getWidth();
     const ph = doc.internal.pageSize.getHeight();
-    const m = 14; let y = 20;
+    const m = 12; let y = 18;
     const sn = storeInfo?.name || 'Tienda';
     const es = (need: number) => { if (y + need > ph - m) { doc.addPage(); y = m; } };
+    const fmt = (n: number, cur: string = 'CUP') => cur === 'CUP' ? formatCurrency(n) : `$${n.toFixed(2)}`;
 
-    // Helper para añadir página anexa con detalle de documentos
-    const renderDetailPage = async (title: string, items: any[], currency: string, isNeg: boolean = false) => {
-      if (!items || items.length === 0) return;
-      doc.addPage();
-      y = m;
-      es(15);
-      doc.setFontSize(11); doc.setFont('helvetica', 'bold'); doc.setTextColor(0);
-      doc.text(title, m, y); y += 6;
-      doc.setFontSize(8); doc.setFont('helvetica', 'normal'); doc.setTextColor(80);
-      doc.text(`Total documentos: ${items.length}`, m, y); y += 8;
+    // Colores corporativos
+    const C_PRIMARY: [number, number, number] = [22, 163, 74];     // green-600
+    const C_DARK: [number, number, number] = [17, 24, 39];         // gray-900
+    const C_MUTED: [number, number, number] = [107, 114, 128];     // gray-500
+    const C_LIGHT: [number, number, number] = [243, 244, 246];     // gray-100
+    const C_BORDER: [number, number, number] = [229, 231, 235];    // gray-200
+    const C_SUCCESS: [number, number, number] = [22, 163, 74];
+    const C_DANGER: [number, number, number] = [220, 38, 38];
+    const C_WARN: [number, number, number] = [217, 119, 6];
 
-      let total = 0;
-      for (const doc_ of items) {
-        const date = doc_.created_at?.slice(0, 16).replace('T', ' ') || doc_.payment_date?.slice(0, 16).replace('T', ' ') || '—';
-        const amt = Number(doc_.amount || doc_.total || doc_.total_amount || doc_.amount_cup || 0);
-        total += amt;
-        const ref = doc_.reference || doc_.reference_doc || doc_.notes || '';
-        const customer = doc_.customer_name || '';
-        es(6);
-        doc.setFontSize(8); doc.setFont('helvetica', 'bold'); doc.setTextColor(0);
-        doc.text(`${date}  ${customer}`, m, y); y += 4;
-        doc.setFont('helvetica', 'normal'); doc.setTextColor(80);
-        if (ref) { es(4); doc.text(`Ref: ${ref.substring(0, 80)}`, m, y); y += 4; }
-        doc.setFont('helvetica', 'bold'); doc.setTextColor(0);
-        doc.text(`Monto: ${isNeg ? '−' : ''}${fmt(amt, currency)}`, m, y); y += 5;
-      }
-      es(8);
-      doc.setDrawColor(180); doc.setLineWidth(0.3); doc.line(m, y, pw - m, y); y += 5;
-      doc.setFontSize(9); doc.setFont('helvetica', 'bold');
-      doc.text(`Total: ${isNeg ? '−' : ''}${fmt(total, currency)}`, m, y); y += 8;
+    // Helpers
+    const setFill = (c: [number, number, number]) => { doc.setFillColor(c[0], c[1], c[2]); };
+    const setText = (c: [number, number, number]) => { doc.setTextColor(c[0], c[1], c[2]); };
+    const setDraw = (c: [number, number, number]) => { doc.setDrawColor(c[0], c[1], c[2]); };
+
+    // Línea horizontal con color
+    const hr = (color: [number, number, number] = C_BORDER, w: number = 0.3) => {
+      setDraw(color); doc.setLineWidth(w); doc.line(m, y, pw - m, y); y += 3;
     };
 
-    // Logo
-    if (storeInfo?.logo_url) { try { const r = await fetch(storeInfo.logo_url); const b = await r.blob(); const du = await new Promise<string>((res, rej) => { const fr = new FileReader(); fr.onload = () => res(fr.result as string); fr.onerror = rej; fr.readAsDataURL(b); }); doc.addImage(du, 'PNG', m, y - 5, 25, 25); } catch {} }
-
-    doc.setFontSize(16); doc.setFont('helvetica', 'bold'); doc.setTextColor(0);
-    doc.text(sn, m + (storeInfo?.logo_url ? 30 : 0), y); y += 5;
-    doc.setFontSize(7); doc.setFont('helvetica', 'normal'); doc.setTextColor(80);
-    if (storeInfo?.address) { es(4); doc.text(storeInfo.address, m + (storeInfo?.logo_url ? 30 : 0), y); y += 3.5; }
-    if (storeInfo?.phone) { es(4); doc.text(`Tel: ${storeInfo.phone}`, m + (storeInfo?.logo_url ? 30 : 0), y); y += 3.5; }
-    if (storeInfo?.reeup) { es(4); doc.text(`REEUP: ${storeInfo.reeup}`, m + (storeInfo?.logo_url ? 30 : 0), y); y += 3.5; }
-    if (storeInfo?.nit) { es(4); doc.text(`NIT: ${storeInfo.nit}`, m + (storeInfo?.logo_url ? 30 : 0), y); y += 3.5; }
-    y += 3; es(8); doc.setDrawColor(180); doc.setLineWidth(0.3); doc.line(m, y, pw - m, y); y += 8;
-
-    es(15);
-    doc.setFontSize(11); doc.setFont('helvetica', 'bold');
-    doc.text('Reporte de Caja — Entrega de Dinero', m, y); y += 6;
-    doc.setFontSize(8); doc.setFont('helvetica', 'normal'); doc.setTextColor(80);
-    doc.text(`Periodo: ${startDate} a ${endDate}`, m, y); y += 4;
-    if (deliveredBy) { es(4); doc.text(`Entrega: ${deliveredBy}`, m, y); y += 4; }
-    if (recipientName) { es(4); doc.text(`Recibe: ${recipientName}`, m, y); y += 4; }
-    doc.text(`Generado: ${new Date().toLocaleString('es-CU')}`, m, y); y += 8;
-
-    if (pdfTemplate === 'simple') {
-      // Simple: solo resumen
-      es(20);
-      doc.setFontSize(9); doc.setFont('helvetica', 'bold');
-      doc.text('Resumen', m, y); y += 5;
-      doc.setFontSize(8); doc.setFont('helvetica', 'normal');
-      doc.text(`Ingresos:  ${formatCurrency(report?.totals?.sales_total_cup ?? 0)}`, m, y); y += 4;
-      doc.text(`Egresos:    ${formatCurrency(report?.totals?.payments_total_cup ?? 0)}`, m, y); y += 4;
-      doc.text(`Balance:    ${formatCurrency(expectedCup)}`, m, y); y += 8;
-    } else {
-      // ===== PLANTILLA ESTÁNDAR: Cuadre CUP =====
-      const sales = report.sales || [];
-      const payments = report.payments || [];
-      const commissions = report.commissions || [];
-      const production = (report as any).production || [];
-
-      const cupCashSales = sales.filter((s: any) => s.payment_method === 'cash' && s.currency === 'CUP').reduce((s: number, x: any) => s + Number(x.total), 0);
-      const cupTransferSales = sales.filter((s: any) => s.payment_method === 'transfer' && s.currency === 'CUP').reduce((s: number, x: any) => s + Number(x.total), 0);
-      const cupZelleSales = sales.filter((s: any) => s.payment_method === 'zelle' && s.currency === 'CUP').reduce((s: number, x: any) => s + Number(x.total), 0);
-      const cupCashPayments = payments.filter((p: any) => p.payment_method === 'cash' && p.currency === 'CUP').reduce((s: number, x: any) => s + Number(x.total), 0);
-      const cupCashCommissions = commissions.filter((c: any) => c.payment_method === 'cash' && c.currency === 'CUP').reduce((s: number, x: any) => s + Number(x.total), 0);
-      const cupCashProduction = production.filter((p: any) => p.payment_method === 'cash' && p.currency === 'CUP').reduce((s: number, x: any) => s + Number(x.total), 0);
-
-      es(10);
-      doc.setFontSize(10); doc.setFont('helvetica', 'bold'); doc.setTextColor(0);
-      doc.text('CUADRE CUP', m, y); y += 6;
-
-      doc.setFontSize(8); doc.setFont('helvetica', 'normal');
-      doc.text(`Ventas Efectivo CUP:        ${formatCurrency(cupCashSales)}`, m, y); y += 4;
-      doc.text(`Ventas Transferencia CUP:   ${formatCurrency(cupTransferSales)}`, m, y); y += 4;
-      if (cupZelleSales > 0) { doc.text(`Ventas Zelle CUP:            ${formatCurrency(cupZelleSales)}`, m, y); y += 4; }
-      // FIX (2026-07-15): Órdenes de producción/servicios (anticipos + pagos recibidos) son INGRESOS
-      if (cupCashProduction > 0) {
-        doc.text(`(+) Producción/Servicios:    ${formatCurrency(cupCashProduction)}`, m, y); y += 4;
+    // Sección título con fondo
+    const sectionTitle = (title: string, subtitle?: string) => {
+      es(12);
+      setFill(C_DARK);
+      doc.rect(m, y - 1, pw - 2 * m, 7, 'F');
+      setText([255, 255, 255]);
+      doc.setFontSize(10); doc.setFont('helvetica', 'bold');
+      doc.text(title, m + 2, y + 4);
+      if (subtitle) {
+        doc.setFontSize(7); doc.setFont('helvetica', 'normal');
+        doc.text(subtitle, pw - m - 2, y + 4, { align: 'right' });
       }
-      doc.text(`Total Ventas CUP:           ${formatCurrency(cupCashSales + cupTransferSales + cupZelleSales + cupCashProduction)}`, m, y); y += 5;
-      doc.text(`(−) Transferencias:          ${formatCurrency(cupTransferSales)}`, m, y); y += 4;
-      doc.text(`(−) Pagos en Efectivo:       ${formatCurrency(cupCashPayments)}`, m, y); y += 4;
-      doc.text(`(−) Comisiones en Efectivo:  ${formatCurrency(cupCashCommissions)}`, m, y); y += 5;
-      doc.setFont('helvetica', 'bold');
-      const dineroEntregar = cupCashSales + cupCashProduction - cupCashPayments - cupCashCommissions;
-      doc.text(`Dinero a Entregar CUP:      ${formatCurrency(dineroEntregar)}`, m, y); y += 8;
+      y += 8;
+      setText(C_DARK);
+    };
 
-      // Desglose CUP (respeta toggle includeBreakdown)
-      if (pdfOptions.includeBreakdown) {
-        es(10);
-        doc.setFontSize(9); doc.setFont('helvetica', 'bold');
-        doc.text('Desglose de Billetes CUP', m, y); y += 5;
-        const cupEntries = Object.entries(cupBreakdown).filter(([, c]) => Number(c) > 0);
-        doc.setFontSize(8); doc.setFont('helvetica', 'normal');
-        if (cupEntries.length > 0) {
-          cupEntries.forEach(([d, c]) => { es(4); doc.text(`  $${d} × ${c} = ${formatCurrency(Number(d) * Number(c))}`, m, y); y += 4; });
-          y += 2; doc.setFont('helvetica', 'bold');
-          es(6); doc.text(`Total contado: ${formatCurrency(cupTotal)}`, m, y); y += 4;
-          es(4); const dl = cupDifference === 0 ? '(cuadrado)' : cupDifference > 0 ? '(sobrante)' : '(faltante)';
-          doc.text(`Diferencia: ${formatCurrency(Math.abs(cupDifference))} ${dl}`, m, y);
-        } else {
-          doc.setFont('helvetica', 'italic'); doc.setTextColor(120);
-          doc.text('  (Sin desglose ingresado)', m, y);
+    // Tabla genérica con headers y filas
+    const renderTable = (
+      headers: string[],
+      rows: (string | number)[][],
+      colWidths: number[],
+      options: { align?: ('left' | 'right' | 'center')[]; totalsRow?: (string | number)[] } = {}
+    ) => {
+      const rowH = 6;
+      const headerH = 7;
+      const tableW = colWidths.reduce((s, w) => s + w, 0);
+      const startX = m;
+
+      // Verificar espacio, si no cabe añadir página
+      if (y + headerH + rows.length * rowH > ph - m - 10) {
+        doc.addPage(); y = m;
+      }
+
+      // Header
+      setFill(C_DARK);
+      doc.rect(startX, y, tableW, headerH, 'F');
+      setText([255, 255, 255]);
+      doc.setFontSize(7.5); doc.setFont('helvetica', 'bold');
+      let cx = startX;
+      headers.forEach((h, i) => {
+        const align = options.align?.[i] || 'left';
+        if (align === 'right') doc.text(h, cx + colWidths[i] - 1, y + 5, { align: 'right' });
+        else if (align === 'center') doc.text(h, cx + colWidths[i] / 2, y + 5, { align: 'center' });
+        else doc.text(h, cx + 1, y + 5);
+        cx += colWidths[i];
+      });
+      y += headerH;
+
+      // Filas
+      doc.setFontSize(7.5); doc.setFont('helvetica', 'normal');
+      rows.forEach((row, ri) => {
+        if (y + rowH > ph - m - 5) {
+          doc.addPage(); y = m;
+          // Repetir header
+          setFill(C_DARK);
+          doc.rect(startX, y, tableW, headerH, 'F');
+          setText([255, 255, 255]);
+          doc.setFontSize(7.5); doc.setFont('helvetica', 'bold');
+          cx = startX;
+          headers.forEach((h, i) => {
+            const align = options.align?.[i] || 'left';
+            if (align === 'right') doc.text(h, cx + colWidths[i] - 1, y + 5, { align: 'right' });
+            else if (align === 'center') doc.text(h, cx + colWidths[i] / 2, y + 5, { align: 'center' });
+            else doc.text(h, cx + 1, y + 5);
+            cx += colWidths[i];
+          });
+          y += headerH;
+          doc.setFontSize(7.5); doc.setFont('helvetica', 'normal');
         }
-        y += 10;
-      }
-
-      // ===== CUADRE USD (respeta toggle includeUsd) =====
-      if (pdfOptions.includeUsd) {
-        const usdCashSales = sales.filter((s: any) => s.payment_method === 'cash' && s.currency === 'USD').reduce((s: number, x: any) => s + Number(x.total), 0);
-        const usdTransferSales = sales.filter((s: any) => s.payment_method === 'transfer' && s.currency === 'USD').reduce((s: number, x: any) => s + Number(x.total), 0);
-        const usdCashPayments = payments.filter((p: any) => p.payment_method === 'cash' && p.currency === 'USD').reduce((s: number, x: any) => s + Number(x.total), 0);
-
-        if (usdCashSales > 0 || usdTransferSales > 0 || usdTotal > 0) {
-          es(10);
-          doc.setFontSize(10); doc.setFont('helvetica', 'bold'); doc.setTextColor(0);
-          doc.text('CUADRE USD', m, y); y += 6;
-          doc.setFontSize(8); doc.setFont('helvetica', 'normal');
-          doc.text(`Ventas Efectivo USD:        $${usdCashSales.toFixed(2)}`, m, y); y += 4;
-          doc.text(`Ventas Transferencia USD:   $${usdTransferSales.toFixed(2)}`, m, y); y += 4;
-          doc.text(`(−) Pagos en Efectivo USD:   $${usdCashPayments.toFixed(2)}`, m, y); y += 5;
-          doc.setFont('helvetica', 'bold');
-          const usdEntregar = usdCashSales - usdCashPayments;
-          doc.text(`Dinero a Entregar USD:      $${usdEntregar.toFixed(2)}`, m, y); y += 8;
-
-          // Desglose USD
-          if (pdfOptions.includeBreakdown) {
-            es(10);
-            doc.setFontSize(9); doc.text('Desglose de Billetes USD', m, y); y += 5;
-            doc.setFontSize(8); doc.setFont('helvetica', 'normal');
-            const usdEntries = Object.entries(usdBreakdown).filter(([, c]) => Number(c) > 0);
-            if (usdEntries.length > 0) {
-              usdEntries.forEach(([d, c]) => { es(4); doc.text(`  $${d} × ${c} = $${(Number(d) * Number(c)).toFixed(2)}`, m, y); y += 4; });
-              y += 2; doc.setFont('helvetica', 'bold');
-              es(4); doc.text(`Total contado USD: $${usdTotal.toFixed(2)}`, m, y);
-            } else {
-              doc.setFont('helvetica', 'italic'); doc.setTextColor(120);
-              doc.text('  (Sin desglose ingresado)', m, y);
-            }
-            y += 10;
-          }
+        // Background alternado
+        if (ri % 2 === 0) {
+          setFill(C_LIGHT);
+          doc.rect(startX, y, tableW, rowH, 'F');
         }
-      }
-    }
+        setText(C_DARK);
+        cx = startX;
+        row.forEach((cell, i) => {
+          const align = options.align?.[i] || 'left';
+          const txt = String(cell);
+          if (align === 'right') doc.text(txt, cx + colWidths[i] - 1, y + 4.5, { align: 'right' });
+          else if (align === 'center') doc.text(txt, cx + colWidths[i] / 2, y + 4.5, { align: 'center' });
+          else doc.text(txt, cx + 1, y + 4.5);
+          cx += colWidths[i];
+        });
+        y += rowH;
+      });
 
-    // FIX (2026-07-15): Páginas anexas con detalle por sección (si los toggles están activos)
-    // Cargar los detalles bajo demanda (igual que toggleAccordion)
-    const fetchDetail = async (type: 'sale' | 'payment', method: string, currency: string, refType?: string): Promise<any[]> => {
+      // Fila de totales
+      if (options.totalsRow && options.totalsRow.length === headers.length) {
+        setFill(C_PRIMARY);
+        doc.rect(startX, y, tableW, rowH + 1, 'F');
+        setText([255, 255, 255]);
+        doc.setFont('helvetica', 'bold');
+        cx = startX;
+        options.totalsRow.forEach((cell, i) => {
+          const align = options.align?.[i] || 'left';
+          const txt = String(cell);
+          if (align === 'right') doc.text(txt, cx + colWidths[i] - 1, y + 5, { align: 'right' });
+          else if (align === 'center') doc.text(txt, cx + colWidths[i] / 2, y + 5, { align: 'center' });
+          else doc.text(txt, cx + 1, y + 5);
+          cx += colWidths[i];
+        });
+        y += rowH + 1 + 3;
+      } else {
+        y += 2;
+      }
+      setText(C_DARK);
+    };
+
+    // ═══════════════════════════════════════════════════════════════
+    // PÁGINA 1: HEADER + RESUMEN EJECUTIVO
+    // ═══════════════════════════════════════════════════════════════
+
+    // Logo (si existe)
+    if (storeInfo?.logo_url) {
       try {
-        const s = new Date(startDate + 'T00:00:00').toISOString();
-        const e = new Date(endDate + 'T23:59:59').toISOString();
-        let url = `/api/cash-report/details?type=${type}&method=${method}&currency=${currency}&start_date=${s}&end_date=${e}`;
-        if (refType) url += `&ref_type=${refType}`;
-        const data = await apiFetch(url);
-        return Array.isArray(data) ? data : (data?.data || []);
-      } catch { return []; }
-    };
-
-    // Detalle de ventas por método
-    if (pdfOptions.detailSales && report.sales) {
-      for (const s of report.sales) {
-        const items = await fetchDetail('sale', s.payment_method, s.currency);
-        await renderDetailPage(`ANEXO — Ventas ${methodLabel(s.payment_method)} (${s.currency})`, items, s.currency, false);
-      }
-    }
-    // Detalle de pagos a proveedores
-    if (pdfOptions.detailPayments && report.payments) {
-      for (const p of report.payments) {
-        const items = await fetchDetail('payment', p.payment_method, p.currency, p.ref_type);
-        await renderDetailPage(`ANEXO — Pagos a Proveedores ${methodLabel(p.payment_method)} (${p.currency}) · ${p.ref_type}`, items, p.currency, true);
-      }
-    }
-    // Detalle de comisiones
-    if (pdfOptions.detailCommissions && report.commissions) {
-      for (const c of report.commissions) {
-        const items = await fetchDetail('payment', c.payment_method, c.currency, 'commission');
-        await renderDetailPage(`ANEXO — Comisiones ${methodLabel(c.payment_method)} (${c.currency})`, items, c.currency, true);
-      }
-    }
-    // Detalle de órdenes de producción/servicios
-    if (pdfOptions.detailProduction && (report as any).production) {
-      for (const p of (report as any).production) {
-        const items = await fetchDetail('payment', p.payment_method, p.currency, p.ref_type);
-        await renderDetailPage(`ANEXO — Órdenes Producción/Servicios ${methodLabel(p.payment_method)} (${p.currency}) · ${p.ref_type}`, items, p.currency, false);
-      }
+        const r = await fetch(storeInfo.logo_url);
+        const b = await r.blob();
+        const du = await new Promise<string>((res, rej) => { const fr = new FileReader(); fr.onload = () => res(fr.result as string); fr.onerror = rej; fr.readAsDataURL(b); });
+        doc.addImage(du, 'PNG', m, y - 4, 18, 18);
+      } catch {}
     }
 
-    // Firmas (respeta toggle includeSignature)
+    setText(C_DARK);
+    doc.setFontSize(14); doc.setFont('helvetica', 'bold');
+    doc.text(sn, m + (storeInfo?.logo_url ? 22 : 0), y + 2);
+    doc.setFontSize(7); doc.setFont('helvetica', 'normal'); setText(C_MUTED);
+    let addrY = y + 6;
+    if (storeInfo?.address) { doc.text(storeInfo.address, m + (storeInfo?.logo_url ? 22 : 0), addrY); addrY += 3; }
+    if (storeInfo?.phone) { doc.text(`Tel: ${storeInfo.phone}`, m + (storeInfo?.logo_url ? 22 : 0), addrY); addrY += 3; }
+    if (storeInfo?.reeup) { doc.text(`REEUP: ${storeInfo.reeup}  ·  NIT: ${storeInfo?.nit || '—'}`, m + (storeInfo?.logo_url ? 22 : 0), addrY); addrY += 3; }
+    y = Math.max(y + 18, addrY);
+    hr(C_BORDER, 0.5);
+
+    es(8);
+    setText(C_DARK);
+    doc.setFontSize(13); doc.setFont('helvetica', 'bold');
+    doc.text('REPORTE DE CAJA — ENTREGA DE DINERO', m, y); y += 5;
+    doc.setFontSize(8); doc.setFont('helvetica', 'normal'); setText(C_MUTED);
+    doc.text(`Periodo: ${startDate} → ${endDate}`, m, y); y += 3.5;
+    if (deliveredBy || recipientName) {
+      doc.text(`Entrega: ${deliveredBy || '—'}    Recibe: ${recipientName || '—'}`, m, y); y += 3.5;
+    }
+    doc.text(`Generado: ${new Date().toLocaleString('es-CU')}`, m, y); y += 6;
+    hr(C_BORDER, 0.3);
+
+    // Fetch paralelo de datos detallados
+    const sISO = new Date(startDate + 'T00:00:00').toISOString();
+    const eISO = new Date(endDate + 'T23:59:59').toISOString();
+    const [itemsSummary, commissionsSummary] = await Promise.all([
+      apiFetch(`/api/cash-report/items-summary?start_date=${encodeURIComponent(sISO)}&end_date=${encodeURIComponent(eISO)}`).catch(() => ({ items: [], total_cup: 0, total_cash: 0, total_transfer: 0, total_zelle: 0 })),
+      apiFetch(`/api/cash-report/commissions-summary?start_date=${encodeURIComponent(sISO)}&end_date=${encodeURIComponent(eISO)}`).catch(() => ({ workers: [], total_cup: 0, total_cash: 0, total_transfer: 0, total_zelle: 0 })),
+    ]);
+
+    // Cálculos del flujo de caja
+    const sales = report.sales || [];
+    const payments = report.payments || [];
+    const commissions = report.commissions || [];
+    const production = (report as any).production || [];
+
+    const cupCashSales = sales.filter((s: any) => s.payment_method === 'cash' && s.currency === 'CUP').reduce((s: number, x: any) => s + Number(x.total), 0);
+    const cupTransferSales = sales.filter((s: any) => s.payment_method === 'transfer' && s.currency === 'CUP').reduce((s: number, x: any) => s + Number(x.total), 0);
+    const cupZelleSales = sales.filter((s: any) => s.payment_method === 'zelle' && s.currency === 'CUP').reduce((s: number, x: any) => s + Number(x.total), 0);
+    const cupCashPayments = payments.filter((p: any) => p.payment_method === 'cash' && p.currency === 'CUP').reduce((s: number, x: any) => s + Number(x.total), 0);
+    const cupTransferPayments = payments.filter((p: any) => p.payment_method === 'transfer' && p.currency === 'CUP').reduce((s: number, x: any) => s + Number(x.total), 0);
+    const cupCashCommissions = commissions.filter((c: any) => c.payment_method === 'cash' && c.currency === 'CUP').reduce((s: number, x: any) => s + Number(c.total), 0);
+    const cupCashProduction = production.filter((p: any) => p.payment_method === 'cash' && p.currency === 'CUP').reduce((s: number, x: any) => s + Number(x.total), 0);
+    const cupTransferProduction = production.filter((p: any) => p.payment_method === 'transfer' && p.currency === 'CUP').reduce((s: number, x: any) => s + Number(x.total), 0);
+
+    // Flujo de caja resumen
+    sectionTitle('RESUMEN — FLUJO DE CAJA CUP', `${sales.length} grupos de ventas · ${payments.length} grupos de pagos`);
+
+    // Construir tabla resumen tipo flujo de caja
+    const summaryRows: (string | number)[][] = [
+      ['INGRESOS', '', '', ''],
+      ['  Ventas en Efectivo', `${sales.filter((s:any)=>s.payment_method==='cash'&&s.currency==='CUP').reduce((s:number,x:any)=>s+x.transaction_count,0)} txs`, '', fmt(cupCashSales)],
+      ['  Ventas por Transferencia', `${sales.filter((s:any)=>s.payment_method==='transfer'&&s.currency==='CUP').reduce((s:number,x:any)=>s+x.transaction_count,0)} txs`, '', fmt(cupTransferSales)],
+      ...(cupZelleSales > 0 ? [['  Ventas por Zelle', `${sales.filter((s:any)=>s.payment_method==='zelle'&&s.currency==='CUP').reduce((s:number,x:any)=>s+x.transaction_count,0)} txs`, '', fmt(cupZelleSales)] as (string|number)[][]] : []),
+      ['  Anticipos/Liquidaciones de Órdenes', `${production.reduce((s:number,x:any)=>s+x.payment_count,0)} pagos`, '', fmt(cupCashProduction + cupTransferProduction)],
+      ['SUBTOTAL INGRESOS', '', '', fmt(cupCashSales + cupTransferSales + cupZelleSales + cupCashProduction + cupTransferProduction)],
+      ['', '', '', ''],
+      ['EGRESOS (−)', '', '', ''],
+      ['  Pagos a Proveedores (Recepciones)', `${payments.filter((p:any)=>p.ref_type==='receipt').reduce((s:number,x:any)=>s+x.payment_count,0)} pagos`, '', fmt(payments.filter((p:any)=>p.ref_type==='receipt').reduce((s:number,x:any)=>s+Number(x.total),0))],
+      ['  Pagos por Servicios Recibidos', `${payments.filter((p:any)=>p.ref_type==='service').reduce((s:number,x:any)=>s+x.payment_count,0)} pagos`, '', fmt(payments.filter((p:any)=>p.ref_type==='service').reduce((s:number,x:any)=>s+Number(x.total),0))],
+      ['  Comisiones a Trabajadores', `${commissions.reduce((s:number,x:any)=>s+x.commission_count,0)} pagos`, '', fmt(commissions.reduce((s:number,x:any)=>s+Number(x.total),0))],
+      ['SUBTOTAL EGRESOS', '', '', fmt(cupCashPayments + cupTransferPayments + cupCashCommissions)],
+      ['', '', '', ''],
+      ['(−) Transferencias (no se entregan en efectivo)', '', '', fmt(cupTransferSales + cupTransferProduction)],
+    ];
+
+    const dineroEntregar = cupCashSales + cupCashProduction - cupCashPayments - cupCashCommissions;
+    renderTable(
+      ['Concepto', 'Documentos', '', 'Monto CUP'],
+      summaryRows,
+      [85, 30, 25, 40],
+      {
+        align: ['left', 'left', 'right', 'right'],
+        totalsRow: ['DINERO A ENTREGAR EN EFECTIVO', '', '', fmt(dineroEntregar)],
+      }
+    );
+
+    y += 4;
+
+    // ═══════════════════════════════════════════════════════════════
+    // PÁGINA 2: TABLA DE PRODUCTOS VENDIDOS
+    // ═══════════════════════════════════════════════════════════════
+    doc.addPage(); y = m;
+    sectionTitle('PRODUCTOS VENDIDOS', `${itemsSummary?.count || 0} productos · ${itemsSummary?.items?.reduce((s:number,i:any)=>s+i.transactions_count,0) || 0} transacciones`);
+
+    if (itemsSummary?.items?.length > 0) {
+      const productRows: (string | number)[][] = itemsSummary.items.map((it: any) => [
+        it.product_name.length > 30 ? it.product_name.substring(0, 28) + '…' : it.product_name,
+        it.sku || '—',
+        Number(it.total_quantity).toFixed(2),
+        fmt(Number(it.unit_price)),
+        fmt(Number(it.total_cup)),
+        fmt(Number(it.cash_paid)),
+        fmt(Number(it.transfer_paid)),
+        fmt(Number(it.zelle_paid)),
+      ]);
+      renderTable(
+        ['Producto', 'SKU', 'Cant.', 'P.Unit', 'Total CUP', 'Efectivo', 'Transfer', 'Zelle'],
+        productRows,
+        [44, 28, 14, 20, 26, 22, 22, 18],
+        {
+          align: ['left', 'left', 'right', 'right', 'right', 'right', 'right', 'right'],
+          totalsRow: ['TOTALES', '', '', '', fmt(itemsSummary.total_cup), fmt(itemsSummary.total_cash), fmt(itemsSummary.total_transfer), fmt(itemsSummary.total_zelle)],
+        }
+      );
+    } else {
+      doc.setFontSize(9); setText(C_MUTED); doc.setFont('helvetica', 'italic');
+      doc.text('No se vendieron productos en el periodo seleccionado.', m, y + 4); y += 8;
+    }
+
+    y += 4;
+
+    // ═══════════════════════════════════════════════════════════════
+    // PÁGINA 3: COMISIONES A TRABAJADORES
+    // ═══════════════════════════════════════════════════════════════
+    if (commissionsSummary?.workers?.length > 0) {
+      doc.addPage(); y = m;
+      sectionTitle('COMISIONES A TRABAJADORES', `${commissionsSummary.count} trabajadores · ${commissionsSummary.workers.reduce((s:number,w:any)=>s+w.count,0)} pagos`);
+
+      const workerRows: (string | number)[][] = commissionsSummary.workers.map((w: any) => [
+        w.worker_name,
+        w.ci,
+        String(w.count),
+        w.periods[0] || '—',
+        fmt(w.cash_paid),
+        fmt(w.transfer_paid),
+        fmt(w.zelle_paid),
+        fmt(w.total_amount_cup),
+      ]);
+      renderTable(
+        ['Trabajador', 'CI', 'Pagos', 'Periodo', 'Efectivo', 'Transfer', 'Zelle', 'Total CUP'],
+        workerRows,
+        [40, 22, 12, 35, 22, 22, 18, 26],
+        {
+          align: ['left', 'left', 'center', 'left', 'right', 'right', 'right', 'right'],
+          totalsRow: ['TOTALES', '', '', '', fmt(commissionsSummary.total_cash), fmt(commissionsSummary.total_transfer), fmt(commissionsSummary.total_zelle), fmt(commissionsSummary.total_cup)],
+        }
+      );
+      y += 4;
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // PÁGINA 4: ÓRDENES DE PRODUCCIÓN/SERVICIO (anticipos + liquidaciones)
+    // ═══════════════════════════════════════════════════════════════
+    if (pdfOptions.detailProduction && production.length > 0) {
+      doc.addPage(); y = m;
+      sectionTitle('ÓRDENES DE PRODUCCIÓN/SERVICIO', 'Anticipos + Liquidaciones recibidas (INGRESOS)');
+
+      // Agrupar por método + ref_type
+      for (const p of production) {
+        es(8);
+        setText(C_DARK);
+        doc.setFontSize(9); doc.setFont('helvetica', 'bold');
+        doc.text(`${methodLabel(p.payment_method)} (${p.currency}) · ${p.ref_type === 'production_order' ? 'Producción' : 'Trabajo'}`, m, y); y += 4;
+        doc.setFontSize(7); doc.setFont('helvetica', 'normal'); setText(C_MUTED);
+        doc.text(`${p.payment_count} pagos · Total: ${fmt(Number(p.total), p.currency)}`, m, y); y += 5;
+
+        // Fetch detalle
+        try {
+          const items = await (async () => {
+            const s = new Date(startDate + 'T00:00:00').toISOString();
+            const e = new Date(endDate + 'T23:59:59').toISOString();
+            let url = `/api/cash-report/details?type=payment&method=${p.payment_method}&currency=${p.currency}&start_date=${s}&end_date=${e}`;
+            url += `&ref_type=${p.ref_type}`;
+            const data = await apiFetch(url);
+            return Array.isArray(data) ? data : (data?.data || []);
+          })();
+
+          if (items.length > 0) {
+            const prodRows: (string | number)[][] = items.map((it: any) => {
+              const date = (it.payment_date || it.created_at || '').slice(0, 16).replace('T', ' ');
+              const amt = Number(it.amount_cup || it.amount || 0);
+              const ref = it.reference || it.notes || '';
+              return [date, ref.substring(0, 35), fmt(amt)];
+            });
+            renderTable(
+              ['Fecha', 'Referencia', 'Monto CUP'],
+              prodRows,
+              [35, 95, 35],
+              { align: ['left', 'left', 'right'] }
+            );
+          }
+        } catch {}
+        y += 3;
+      }
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // PÁGINA 5: SALIDAS DE DINERO (pagos a proveedores)
+    // ═══════════════════════════════════════════════════════════════
+    if (pdfOptions.detailPayments && payments.length > 0) {
+      doc.addPage(); y = m;
+      sectionTitle('SALIDAS DE DINERO', 'Pagos a proveedores, recepciones y servicios');
+
+      for (const p of payments) {
+        es(8);
+        setText(C_DARK);
+        doc.setFontSize(9); doc.setFont('helvetica', 'bold');
+        doc.text(`${methodLabel(p.payment_method)} (${p.currency}) · ${p.ref_type === 'receipt' ? 'Recepción de Mercancía' : 'Servicio Recibido'}`, m, y); y += 4;
+        doc.setFontSize(7); doc.setFont('helvetica', 'normal'); setText(C_DANGER);
+        doc.text(`${p.payment_count} pagos · Total: −${fmt(Number(p.total), p.currency)}`, m, y); y += 5;
+
+        try {
+          const items = await (async () => {
+            const s = new Date(startDate + 'T00:00:00').toISOString();
+            const e = new Date(endDate + 'T23:59:59').toISOString();
+            let url = `/api/cash-report/details?type=payment&method=${p.payment_method}&currency=${p.currency}&start_date=${s}&end_date=${e}`;
+            url += `&ref_type=${p.ref_type}`;
+            const data = await apiFetch(url);
+            return Array.isArray(data) ? data : (data?.data || []);
+          })();
+
+          if (items.length > 0) {
+            const payRows: (string | number)[][] = items.map((it: any) => {
+              const date = (it.payment_date || it.created_at || '').slice(0, 16).replace('T', ' ');
+              const amt = Number(it.amount_cup || it.amount || 0);
+              const ref = it.reference || it.notes || '';
+              return [date, ref.substring(0, 35), `−${fmt(amt)}`];
+            });
+            renderTable(
+              ['Fecha', 'Referencia', 'Monto CUP'],
+              payRows,
+              [35, 95, 35],
+              { align: ['left', 'left', 'right'] }
+            );
+          }
+        } catch {}
+        y += 3;
+      }
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // PÁGINA FINAL: DESGLOSE DE BILLETES + FIRMAS
+    // ═══════════════════════════════════════════════════════════════
+    doc.addPage(); y = m;
+    sectionTitle('DESGLOSE DE BILLETES PARA ENTREGA', 'Conteo físico de efectivo');
+
+    // Desglose CUP
+    if (pdfOptions.includeBreakdown) {
+      es(8);
+      setText(C_DARK); doc.setFontSize(10); doc.setFont('helvetica', 'bold');
+      doc.text('Desglose CUP', m, y); y += 5;
+
+      const cupEntries = Object.entries(cupBreakdown).filter(([, c]) => Number(c) > 0);
+      if (cupEntries.length > 0) {
+        const cupRows: (string | number)[][] = cupEntries.map(([d, c]) => [`$${d}`, String(c), fmt(Number(d) * Number(c))]);
+        renderTable(
+          ['Denominación', 'Cantidad', 'Subtotal'],
+          cupRows,
+          [50, 50, 65],
+          {
+            align: ['left', 'center', 'right'],
+            totalsRow: ['TOTAL CONTADO', '', fmt(cupTotal)],
+          }
+        );
+        es(6);
+        setText(cupDifference === 0 ? C_SUCCESS : cupDifference > 0 ? C_WARN : C_DANGER);
+        doc.setFontSize(9); doc.setFont('helvetica', 'bold');
+        const dl = cupDifference === 0 ? '(cuadrado)' : cupDifference > 0 ? '(sobrante)' : '(faltante)';
+        doc.text(`Diferencia: ${fmt(Math.abs(cupDifference))} ${dl}`, m, y); y += 8;
+      } else {
+        setText(C_MUTED); doc.setFont('helvetica', 'italic'); doc.setFontSize(9);
+        doc.text('(Sin desglose ingresado — use el botón "Sugerir" en la UI)', m, y); y += 6;
+      }
+    }
+
+    // Desglose USD si aplica
+    if (pdfOptions.includeUsd) {
+      const usdCashSales = sales.filter((s: any) => s.payment_method === 'cash' && s.currency === 'USD').reduce((s: number, x: any) => s + Number(x.total), 0);
+      if (usdCashSales > 0 || usdTotal > 0) {
+        es(8);
+        setText(C_DARK); doc.setFontSize(10); doc.setFont('helvetica', 'bold');
+        doc.text('Desglose USD', m, y); y += 5;
+        const usdEntries = Object.entries(usdBreakdown).filter(([, c]) => Number(c) > 0);
+        if (usdEntries.length > 0) {
+          const usdRows: (string | number)[][] = usdEntries.map(([d, c]) => [`$${d}`, String(c), `$${(Number(d) * Number(c)).toFixed(2)}`]);
+          renderTable(
+            ['Denominación', 'Cantidad', 'Subtotal USD'],
+            usdRows,
+            [50, 50, 65],
+            {
+              align: ['left', 'center', 'right'],
+              totalsRow: ['TOTAL CONTADO USD', '', `$${usdTotal.toFixed(2)}`],
+            }
+          );
+        }
+      }
+    }
+
+    // Firmas
     if (pdfOptions.includeSignature) {
-      es(20);
-      doc.setDrawColor(120); doc.setLineWidth(0.3);
-      const sigY = Math.max(y + 10, ph - 30);
-      doc.line(m, sigY, m + 70, sigY);
-      doc.line(pw - m - 70, sigY, pw - m, sigY);
-      doc.setFontSize(7); doc.setFont('helvetica', 'normal'); doc.setTextColor(80);
-      doc.text(deliveredBy || 'Entrega', m, sigY + 4);
-      doc.text(recipientName || 'Recibe', pw - m - 70, sigY + 4);
+      es(30);
+      setDraw(C_MUTED); doc.setLineWidth(0.3);
+      const sigY = Math.max(y + 15, ph - 35);
+      doc.line(m, sigY, m + 80, sigY);
+      doc.line(pw - m - 80, sigY, pw - m, sigY);
+      doc.setFontSize(8); doc.setFont('helvetica', 'normal'); setText(C_MUTED);
+      doc.text(deliveredBy || 'Entrega', m, sigY + 5);
+      doc.text(recipientName || 'Recibe', pw - m - 80, sigY + 5);
+      doc.setFontSize(6); setText(C_MUTED);
+      doc.text('Firma', m, sigY + 9);
+      doc.text('Firma', pw - m - 80, sigY + 9);
+    }
+
+    // Footer en cada página
+    const pageCount = doc.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(6); setText(C_MUTED); doc.setFont('helvetica', 'normal');
+      doc.text(`CostPro — Reporte de Caja · ${sn} · Página ${i} de ${pageCount}`, pw / 2, ph - 5, { align: 'center' });
     }
 
     doc.save(`reporte_caja_${sn.replace(/\s+/g, '_')}_${startDate}.pdf`);
     setShowTemplateSelector(false);
+    toast.success(`PDF generado: ${pageCount} página(s)`);
   };
 
   if (!open) return null;
@@ -545,10 +823,21 @@ export function CashReportModal({ open, onClose }: CashReportModalProps) {
             {/* Comisiones */}
             {report.commissions && report.commissions.length > 0 && (
               <div>
-                <h3 className="text-[11px] font-black uppercase text-muted-foreground mb-2">Comisiones a Trabajadores</h3>
+                <h3 className="text-[11px] font-black uppercase text-muted-foreground mb-2 flex items-center gap-2">
+                  <span>Comisiones a Trabajadores</span>
+                  <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-muted/40 text-muted-foreground">
+                    {report.commissions.reduce((s: number, c: any) => s + c.commission_count, 0)} pagos · {formatCurrency(report.commissions.reduce((s: number, c: any) => s + Number(c.total), 0))}
+                  </span>
+                </h3>
                 <div className="space-y-1">
                   {/* FIX (2026-07-15): pasar refType='commission' para que "Ver en Módulo" funcione */}
-                  {report.commissions.filter(filterSales).map((c, i) => renderAccordionItem(`c-${c.payment_method}-${c.currency}-${i}`, c.payment_method, c.currency, `${c.commission_count} comisiones`, c.total, true, 'commission'))}
+                  {report.commissions.filter(filterSales).length === 0 ? (
+                    <p className="text-[10px] text-muted-foreground italic py-2 text-center">
+                      Las comisiones existen pero están filtradas por la selección de moneda/método.
+                    </p>
+                  ) : (
+                    report.commissions.filter(filterSales).map((c, i) => renderAccordionItem(`c-${c.payment_method}-${c.currency}-${i}`, c.payment_method, c.currency, `${c.commission_count} comisiones`, c.total, true, 'commission'))
+                  )}
                 </div>
               </div>
             )}
@@ -571,24 +860,46 @@ export function CashReportModal({ open, onClose }: CashReportModalProps) {
               </div>
             )}
 
-            {/* Desglose Sugerido colapsable */}
-            {(report?.cash_breakdown?.length ?? 0) > 0 && (
+            {/* Desglose Sugerido colapsable — siempre visible cuando hay reporte */}
+            {report && (
               <div>
                 <button onClick={() => setShowSuggested(!showSuggested)} aria-expanded={showSuggested} className="w-full flex items-center gap-2 text-[11px] font-black uppercase text-muted-foreground hover:text-foreground transition-colors py-2">
                   {showSuggested ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />} Desglose Sugerido (CUP)
+                  <span className="ml-auto text-[10px] font-mono tabular-nums text-muted-foreground">{formatCurrency(expectedCup)}</span>
                 </button>
                 {showSuggested && (
                   <div className="mt-2 rounded-xl border border-primary/20 bg-primary/5 p-3 space-y-1">
-                    {(report?.cash_breakdown ?? []).map((d: any) => (
-                      <div key={d.denom} className="flex items-center justify-between text-sm">
-                        <span className="font-bold">${d.denom} × {d.count}</span>
-                        <span className="font-mono tabular-nums text-muted-foreground">{formatCurrency(d.total)}</span>
+                    {(report?.cash_breakdown ?? []).length > 0 ? (
+                      <>
+                        {(report?.cash_breakdown ?? []).map((d: any) => (
+                          <div key={d.denom} className="flex items-center justify-between text-sm">
+                            <span className="font-bold">${d.denom} × {d.count}</span>
+                            <span className="font-mono tabular-nums text-muted-foreground">{formatCurrency(d.total)}</span>
+                          </div>
+                        ))}
+                        <div className="border-t border-primary/20 pt-2 flex items-center justify-between">
+                          <span className="text-xs font-black uppercase">Total sugerido:</span>
+                          <span className="font-mono font-black text-primary">{formatCurrency(expectedCup)}</span>
+                        </div>
+                        <p className="text-[9px] text-muted-foreground pt-1">
+                          💡 Usa el botón <Sparkles className="w-2.5 h-2.5 inline" /> (Sugerir) para aplicar este desglose automáticamente al formulario de billetes.
+                        </p>
+                      </>
+                    ) : (
+                      <div className="space-y-2">
+                        <p className="text-[10px] text-muted-foreground italic">
+                          {expectedCup < 0
+                            ? `⚠️ El balance es negativo (${formatCurrency(expectedCup)}). Las salidas superan a los ingresos en efectivo.`
+                            : expectedCup === 0
+                            ? 'El balance es cero. No hay efectivo para desglosar.'
+                            : 'Haz clic en el botón ✨ (Sugerir) abajo para calcular el desglose óptimo de billetes.'}
+                        </p>
+                        <div className="border-t border-primary/20 pt-2 flex items-center justify-between">
+                          <span className="text-xs font-black uppercase">Balance a entregar:</span>
+                          <span className={`font-mono font-black ${expectedCup < 0 ? 'text-destructive' : 'text-primary'}`}>{formatCurrency(expectedCup)}</span>
+                        </div>
                       </div>
-                    ))}
-                    <div className="border-t border-primary/20 pt-2 flex items-center justify-between">
-                      <span className="text-xs font-black uppercase">Total sugerido:</span>
-                      <span className="font-mono font-black text-primary">{formatCurrency(expectedCup)}</span>
-                    </div>
+                    )}
                   </div>
                 )}
               </div>
