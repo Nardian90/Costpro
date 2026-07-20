@@ -53,11 +53,14 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
       if (error) return NextResponse.json({ error: error.message }, { status: 500 });
       return NextResponse.json(data || []);
     } else if (refType === 'commission') {
-      // FIX (2026-07-15): comisiones están en tabla diferente (commission_payments)
+      // FIX (2026-07-20): bug "column commission_payments.paid_ataspayment_date does not exist"
+      // PostgREST usa sintaxis `column:alias` (sin espacios) para renombrar columnas.
+      // El SQL `paid_at as payment_date` se concatenaba sin espacio → falla.
+      // Solución: NO usar alias en select, mapear manualmente después.
       const { data, error } = await supabase
         .from('commission_payments')
         .select(`
-          id, paid_at as payment_date, final_amount as amount, amount_cup,
+          id, paid_at, final_amount, amount_cup,
           payment_method, currency, status,
           worker:workers (first_name, last_name, ci ),
           period_start, period_end
@@ -75,12 +78,12 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
       // Aplanar para que coincida con el formato que espera el frontend
       const flattened = (data || []).map((c: any) => ({
         id: c.id,
-        payment_date: c.payment_date,
-        amount: c.amount,
+        payment_date: c.paid_at,
+        amount: c.final_amount,
         amount_cup: c.amount_cup,
         payment_method: c.payment_method,
         currency: c.currency,
-        reference: `Periodo ${c.period_start} → ${c.period_end}`,
+        reference: `Periodo ${c.period_start?.slice(0,10)} → ${c.period_end?.slice(0,10)}`,
         notes: c.worker ? `${c.worker.first_name} ${c.worker.last_name} (CI: ${c.worker.ci})` : '',
         ref_type: 'commission',
         customer_name: c.worker ? `${c.worker.first_name} ${c.worker.last_name}` : '',

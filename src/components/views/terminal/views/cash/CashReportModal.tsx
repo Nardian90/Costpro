@@ -416,18 +416,20 @@ export function CashReportModal({ open, onClose }: CashReportModalProps) {
       }
     );
 
-    y += 4;
+    y += 6;
 
     // ═══════════════════════════════════════════════════════════════
-    // PÁGINA 2: TABLA DE PRODUCTOS VENDIDOS
+    // SECCIÓN CONTINUA: TABLA DE PRODUCTOS VENDIDOS
+    // (no forzar addPage — deja que la tabla fluya y agregue páginas solo si se llena)
     // ═══════════════════════════════════════════════════════════════
-    doc.addPage(); y = m;
+    // Solo añadir página si quedan < 40mm (no cabe ni siquiera el header + 4 filas)
+    if (y + 40 > ph - m - 10) { doc.addPage(); y = m; }
     sectionTitle('PRODUCTOS VENDIDOS', `${itemsSummary?.count || 0} productos · ${itemsSummary?.items?.reduce((s:number,i:any)=>s+i.transactions_count,0) || 0} transacciones`);
 
     if (itemsSummary?.items?.length > 0) {
       const productRows: (string | number)[][] = itemsSummary.items.map((it: any) => [
-        it.product_name.length > 30 ? it.product_name.substring(0, 28) + '…' : it.product_name,
-        it.sku || '—',
+        (it.product_name || '—').length > 30 ? it.product_name.substring(0, 28) + '…' : (it.product_name || '—'),
+        (it.sku || '—').length > 18 ? it.sku.substring(0, 16) + '…' : (it.sku || '—'),
         Number(it.total_quantity).toFixed(2),
         fmt(Number(it.unit_price)),
         fmt(Number(it.total_cup)),
@@ -449,20 +451,22 @@ export function CashReportModal({ open, onClose }: CashReportModalProps) {
       doc.text('No se vendieron productos en el periodo seleccionado.', m, y + 4); y += 8;
     }
 
-    y += 4;
+    y += 6;
 
     // ═══════════════════════════════════════════════════════════════
-    // PÁGINA 3: COMISIONES A TRABAJADORES
+    // SECCIÓN CONTINUA: COMISIONES A TRABAJADORES (sin forzar addPage)
     // ═══════════════════════════════════════════════════════════════
     if (commissionsSummary?.workers?.length > 0) {
-      doc.addPage(); y = m;
+      // Verificar espacio mínimo para la sección (title + header + al menos 3 filas)
+      const minSpaceNeeded = 8 + 7 + 6 * 3;
+      if (y + minSpaceNeeded > ph - m - 10) { doc.addPage(); y = m; }
       sectionTitle('COMISIONES A TRABAJADORES', `${commissionsSummary.count} trabajadores · ${commissionsSummary.workers.reduce((s:number,w:any)=>s+w.count,0)} pagos`);
 
       const workerRows: (string | number)[][] = commissionsSummary.workers.map((w: any) => [
         w.worker_name,
         w.ci,
         String(w.count),
-        w.periods[0] || '—',
+        (w.periods[0] || '—').substring(0, 22),
         fmt(w.cash_paid),
         fmt(w.transfer_paid),
         fmt(w.zelle_paid),
@@ -477,19 +481,20 @@ export function CashReportModal({ open, onClose }: CashReportModalProps) {
           totalsRow: ['TOTALES', '', '', '', fmt(commissionsSummary.total_cash), fmt(commissionsSummary.total_transfer), fmt(commissionsSummary.total_zelle), fmt(commissionsSummary.total_cup)],
         }
       );
-      y += 4;
+      y += 6;
     }
 
     // ═══════════════════════════════════════════════════════════════
-    // PÁGINA 4: ÓRDENES DE PRODUCCIÓN/SERVICIO (anticipos + liquidaciones)
+    // SECCIÓN CONTINUA: ÓRDENES DE PRODUCCIÓN/SERVICIO
     // ═══════════════════════════════════════════════════════════════
     if (pdfOptions.detailProduction && production.length > 0) {
-      doc.addPage(); y = m;
+      // Solo añadir página si NO hay espacio mínimo
+      if (y + 30 > ph - m - 10) { doc.addPage(); y = m; }
       sectionTitle('ÓRDENES DE PRODUCCIÓN/SERVICIO', 'Anticipos + Liquidaciones recibidas (INGRESOS)');
 
       // Agrupar por método + ref_type
       for (const p of production) {
-        es(8);
+        es(12);
         setText(C_DARK);
         doc.setFontSize(9); doc.setFont('helvetica', 'bold');
         doc.text(`${methodLabel(p.payment_method)} (${p.currency}) · ${p.ref_type === 'production_order' ? 'Producción' : 'Trabajo'}`, m, y); y += 4;
@@ -511,7 +516,7 @@ export function CashReportModal({ open, onClose }: CashReportModalProps) {
             const prodRows: (string | number)[][] = items.map((it: any) => {
               const date = (it.payment_date || it.created_at || '').slice(0, 16).replace('T', ' ');
               const amt = Number(it.amount_cup || it.amount || 0);
-              const ref = it.reference || it.notes || '';
+              const ref = (it.reference || it.notes || it.customer_name || '').toString();
               return [date, ref.substring(0, 35), fmt(amt)];
             });
             renderTable(
@@ -522,19 +527,19 @@ export function CashReportModal({ open, onClose }: CashReportModalProps) {
             );
           }
         } catch {}
-        y += 3;
+        y += 4;
       }
     }
 
     // ═══════════════════════════════════════════════════════════════
-    // PÁGINA 5: SALIDAS DE DINERO (pagos a proveedores)
+    // SECCIÓN CONTINUA: SALIDAS DE DINERO (pagos a proveedores)
     // ═══════════════════════════════════════════════════════════════
     if (pdfOptions.detailPayments && payments.length > 0) {
-      doc.addPage(); y = m;
+      if (y + 30 > ph - m - 10) { doc.addPage(); y = m; }
       sectionTitle('SALIDAS DE DINERO', 'Pagos a proveedores, recepciones y servicios');
 
       for (const p of payments) {
-        es(8);
+        es(12);
         setText(C_DARK);
         doc.setFontSize(9); doc.setFont('helvetica', 'bold');
         doc.text(`${methodLabel(p.payment_method)} (${p.currency}) · ${p.ref_type === 'receipt' ? 'Recepción de Mercancía' : 'Servicio Recibido'}`, m, y); y += 4;
@@ -571,9 +576,10 @@ export function CashReportModal({ open, onClose }: CashReportModalProps) {
     }
 
     // ═══════════════════════════════════════════════════════════════
-    // PÁGINA FINAL: DESGLOSE DE BILLETES + FIRMAS
+    // SECCIÓN FINAL: DESGLOSE DE BILLETES + FIRMAS (continúa si hay espacio)
     // ═══════════════════════════════════════════════════════════════
-    doc.addPage(); y = m;
+    // Si no hay suficiente espacio para desglose + firmas, agregar página
+    if (y + 80 > ph - m - 10) { doc.addPage(); y = m; }
     sectionTitle('DESGLOSE DE BILLETES PARA ENTREGA', 'Conteo físico de efectivo');
 
     // Desglose CUP
@@ -664,67 +670,98 @@ export function CashReportModal({ open, onClose }: CashReportModalProps) {
   const touch = 'min-h-[44px]';
   const btnIcn = `p-2 rounded-lg border border-border/40 hover:bg-muted ${touch} flex items-center justify-center`;
 
-  // FIX: pasar payment_method real al accordion (no label traducido)
-  const renderAccordionItem = (key: string, pm: string, currency: string, sublabel: string, amount: number, isNeg: boolean = false, refType?: string) => (
-    <div key={key} className="rounded-lg border border-border/30 overflow-hidden">
-      <button onClick={() => toggleAccordion(key, isNeg ? 'payment' : 'sale', pm, currency, refType)}
-        aria-expanded={expandedItems.has(key)} aria-controls={`p-${key}`}
-        className={`w-full flex items-center justify-between p-3 bg-muted/10 hover:bg-muted/20 transition-colors ${touch}`}>
-        <div className="flex items-center gap-2">
-          <span className="text-lg">{methodIcon(pm)}</span>
-          <div className="text-left">
-            <p className="text-xs font-bold">{methodLabel(pm)} ({currency}){refType ? ` · ${refType}` : ''}</p>
-            <p className="text-[10px] text-muted-foreground">{sublabel}</p>
+  // FIX (2026-07-20): renderAccordionItem refactorizado a tabla tipo PDF.
+  // Antes: cada doc era una tarjeta con líneas sueltas (poco profesional).
+  // Ahora: tabla con columnas Fecha | Referencia/Cliente | Método | Monto
+  // + fila de totales al final (igual que el PDF exportado).
+  const renderAccordionItem = (key: string, pm: string, currency: string, sublabel: string, amount: number, isNeg: boolean = false, refType?: string) => {
+    const docs = itemDetails[key] || [];
+    const isLoading = loadingDetails.has(key);
+    const isExpanded = expandedItems.has(key);
+
+    // Calcular total de los documentos cargados
+    const docsTotal = docs.reduce((s: number, d: any) => s + Number(d.amount_cup || d.amount || d.total || d.total_amount || 0), 0);
+
+    return (
+      <div key={key} className="rounded-lg border border-border/30 overflow-hidden">
+        <button onClick={() => toggleAccordion(key, isNeg ? 'payment' : 'sale', pm, currency, refType)}
+          aria-expanded={isExpanded} aria-controls={`p-${key}`}
+          className={`w-full flex items-center justify-between p-3 bg-muted/10 hover:bg-muted/20 transition-colors ${touch}`}>
+          <div className="flex items-center gap-2">
+            <span className="text-lg">{methodIcon(pm)}</span>
+            <div className="text-left">
+              <p className="text-xs font-bold">{methodLabel(pm)} ({currency}){refType ? ` · ${refType}` : ''}</p>
+              <p className="text-[10px] text-muted-foreground">{sublabel}</p>
+            </div>
           </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <p className={`text-sm font-mono font-black tabular-nums ${isNeg ? 'text-destructive' : ''}`}>{isNeg ? '−' : ''}{fmt(amount, currency)}</p>
-          {expandedItems.has(key) ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />}
-        </div>
-      </button>
-      {expandedItems.has(key) && (
-        <div id={`p-${key}`} role="region" className="border-t border-border/20 p-2 bg-background">
-          {loadingDetails.has(key) ? <p className="text-xs text-muted-foreground text-center py-2">Cargando documentos...</p>
-          : (itemDetails[key]?.length ?? 0) === 0 ? <p className="text-xs text-muted-foreground text-center py-2">Sin documentos</p>
-          : <div className="space-y-1 max-h-56 overflow-y-auto">
-              {itemDetails[key]?.map((doc: any, i: number) => {
-                const date = doc.created_at?.slice(0,16).replace('T',' ') || doc.payment_date?.slice(0,16).replace('T',' ') || '—';
-                const amount = Number(doc.amount || doc.total || doc.total_amount || doc.amount_cup || 0);
-                const ref = doc.reference || doc.reference_doc || doc.notes || '';
-                const customer = doc.customer_name || '';
-                const refType = doc.ref_type || '';
-                const docId = doc.id || '';
-                return (
-                  <div key={i} className="flex items-center justify-between text-[11px] py-2 px-2 rounded hover:bg-muted/30 gap-2">
-                    <div className="flex items-center gap-2 min-w-0 flex-1">
-                      <button
-                        onClick={() => setSelectedDoc({ ...doc, _type: isNeg ? 'payment' : 'sale', _refType: refType, _currency: currency, _method: pm })}
-                        aria-label="Ver documento"
-                        className="p-1 rounded hover:bg-primary/10 shrink-0"
-                      >
-                        <Eye className="w-3.5 h-3.5 text-muted-foreground hover:text-primary" />
-                      </button>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2">
-                          <span className="font-mono text-[10px] shrink-0">{date}</span>
-                          {customer && <span className="text-[10px] font-bold truncate">{customer}</span>}
-                        </div>
-                        <div className="flex items-center gap-1.5 text-[9px] text-muted-foreground">
-                          {refType && <span className="px-1 rounded bg-muted/40">{refType}</span>}
-                          {ref && <span className="truncate">{ref}</span>}
-                          {doc.payment_method && <span className="px-1 rounded bg-muted/40">{methodLabel(doc.payment_method)}</span>}
-                        </div>
-                      </div>
-                    </div>
-                    <span className="font-mono tabular-nums font-bold shrink-0">{fmt(amount, currency)}</span>
-                  </div>
-                );
-              })}
-            </div>}
-        </div>
-      )}
-    </div>
-  );
+          <div className="flex items-center gap-2">
+            <p className={`text-sm font-mono font-black tabular-nums ${isNeg ? 'text-destructive' : ''}`}>{isNeg ? '−' : ''}{fmt(amount, currency)}</p>
+            {isExpanded ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />}
+          </div>
+        </button>
+        {isExpanded && (
+          <div id={`p-${key}`} role="region" className="border-t border-border/20 bg-background">
+            {isLoading ? (
+              <p className="text-xs text-muted-foreground text-center py-3">Cargando documentos...</p>
+            ) : docs.length === 0 ? (
+              <p className="text-xs text-muted-foreground text-center py-3">Sin documentos</p>
+            ) : (
+              <div className="max-h-72 overflow-y-auto">
+                <table className="w-full text-[10px]">
+                  <thead className="sticky top-0 bg-muted/30 z-10">
+                    <tr className="text-[9px] font-black uppercase text-muted-foreground border-b border-border/30">
+                      <th className="p-1.5 text-left">Fecha</th>
+                      <th className="p-1.5 text-left">Referencia / Cliente</th>
+                      <th className="p-1.5 text-right shrink-0">Monto {currency}</th>
+                      <th className="p-1.5 text-center w-8"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {docs.map((doc: any, i: number) => {
+                      const date = (doc.created_at || doc.payment_date || '').slice(0, 16).replace('T', ' ') || '—';
+                      const amt = Number(doc.amount_cup || doc.amount || doc.total || doc.total_amount || 0);
+                      const ref = doc.reference || doc.reference_doc || doc.notes || '';
+                      const customer = doc.customer_name || '';
+                      const docRefType = doc.ref_type || '';
+                      return (
+                        <tr key={i} className="border-b border-border/10 hover:bg-muted/20">
+                          <td className="p-1.5 font-mono text-[9px] whitespace-nowrap">{date}</td>
+                          <td className="p-1.5">
+                            {customer && <p className="text-[10px] font-bold truncate max-w-[160px]">{customer}</p>}
+                            {ref && <p className="text-[9px] text-muted-foreground truncate max-w-[160px]">{ref}</p>}
+                            {docRefType && <span className="inline-block mt-0.5 px-1 rounded bg-muted/40 text-[8px] text-muted-foreground">{docRefType}</span>}
+                          </td>
+                          <td className="p-1.5 text-right font-mono tabular-nums font-bold whitespace-nowrap">
+                            {isNeg ? '−' : ''}{fmt(amt, currency)}
+                          </td>
+                          <td className="p-1.5 text-center">
+                            <button
+                              onClick={() => setSelectedDoc({ ...doc, _type: isNeg ? 'payment' : 'sale', _refType: docRefType, _currency: currency, _method: pm })}
+                              aria-label="Ver documento"
+                              className="p-1 rounded hover:bg-primary/10"
+                            >
+                              <Eye className="w-3 h-3 text-muted-foreground hover:text-primary" />
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                  <tfoot className="sticky bottom-0 bg-primary/10 border-t-2 border-primary/30">
+                    <tr className="text-[10px] font-black uppercase">
+                      <td className="p-1.5" colSpan={2}>TOTAL ({docs.length} docs)</td>
+                      <td className="p-1.5 text-right font-mono tabular-nums">{isNeg ? '−' : ''}{fmt(docsTotal, currency)}</td>
+                      <td className="p-1.5"></td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  };
 
   // Filtrar items por moneda/método
   const filterSales = (s: any) => (!filterCurrency || s.currency === filterCurrency) && (!filterMethod || s.payment_method === filterMethod);
