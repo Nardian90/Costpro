@@ -10,6 +10,8 @@ jobs:
   unit-tests:
     name: Unit & Integration Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+
     env:
       NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || 'https://test.supabase.co' }}
       NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'test-anon-key' }}
@@ -19,6 +21,8 @@ jobs:
       ZAI_API_KEY: ${{ secrets.ZAI_API_KEY || 'test-key' }}
       ZAI_BASE_URL: ${{ secrets.ZAI_BASE_URL || 'https://open.bigmodel.cn/api/paas/v4' }}
       GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY || 'test-key' }}
+      NEXT_TELEMETRY_DISABLED: '1'
+
     steps:
       - uses: actions/checkout@v4
 
@@ -33,8 +37,7 @@ jobs:
           bun-version: latest
 
       - name: Install dependencies
-        run: |
-          bun install --frozen-lockfile
+        run: bun install --frozen-lockfile
 
       - name: Run tests with coverage
         run: bun run test:coverage
@@ -53,26 +56,20 @@ jobs:
     name: E2E Tests (Playwright)
     runs-on: ubuntu-latest
     needs: unit-tests
-    # FIX-CI: E2E no bloquea el workflow si fallan (requieren creds reales de Supabase)
     continue-on-error: true
 
     env:
-      # Variables mínimas para que Next.js arranque en CI
       NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || 'https://test.supabase.co' }}
       NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'test-anon-key' }}
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY || '' }}
       DATABASE_URL: ${{ secrets.DATABASE_URL || 'postgresql://test:test@localhost:5432/test' }}
       NEXT_PUBLIC_APP_URL: 'http://localhost:3000'
       NEXTAUTH_URL: 'http://localhost:3000'
-      ZAI_API_KEY: ${{ secrets.ZAI_API_KEY || 'test-key' }}
-      ZAI_BASE_URL: ${{ secrets.ZAI_BASE_URL || 'https://open.bigmodel.cn/api/paas/v4' }}
-      GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY || 'test-key' }}
-      # Tokens de autenticación para E2E tests
+      NEXT_TELEMETRY_DISABLED: '1'
       E2E_TEST_ADMIN_TOKEN: ${{ secrets.E2E_TEST_ADMIN_TOKEN || '' }}
       E2E_TEST_USER_TOKEN: ${{ secrets.E2E_TEST_USER_TOKEN || '' }}
       E2E_TEST_STORE_ID: ${{ secrets.E2E_TEST_STORE_ID || 'test-store-00000000' }}
       E2E_TEST_USER_ID: ${{ secrets.E2E_TEST_USER_ID || '' }}
-      # URL base para tests E2E (apunta al servidor local arrancado en el job)
       E2E_BASE_URL: 'http://localhost:3000'
 
     steps:
@@ -83,30 +80,30 @@ jobs:
         with:
           node-version: '22'
 
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
       - name: Install Playwright browsers
-        run: npx playwright install --with-deps chromium firefox
+        run: bunx playwright install --with-deps chromium
 
       - name: Build application
-        run: bun run build
-        env:
-          NEXT_TELEMETRY_DISABLED: '1'
+        run: NODE_OPTIONS="--max-old-space-size=4096" bun run build
 
       - name: Start server
         run: |
-          npx next start -p 3000 &
-          # Esperar a que el servidor esté listo (máximo 60s)
+          bunx next start -p 3000 &
           for i in $(seq 1 30); do
             if curl -s http://localhost:3000 > /dev/null 2>&1; then
-              echo "Servidor listo en intento $i"
+              echo "Server ready"
               break
             fi
-            echo "Esperando servidor... intento $i"
             sleep 2
           done
-          # Verificación final
           curl -s http://localhost:3000 > /dev/null || exit 1
 
       - name: Run E2E tests
