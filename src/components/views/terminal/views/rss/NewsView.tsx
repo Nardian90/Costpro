@@ -147,64 +147,60 @@ export default function NewsView() {
         </motion.div>
       )}
 
-      {/* Filters & Search — responsive */}
-      <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
-        {/* Search */}
-        <div className="relative group flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+      {/* Filters & Search — una sola línea en móvil, ahorra espacio */}
+      <div className="flex items-center gap-1.5 sm:gap-2">
+        {/* Search — flex-1 para ocupar el espacio disponible */}
+        <div className="relative group flex-1 min-w-0">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground group-focus-within:text-primary transition-colors shrink-0" />
           <input
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             aria-label="Buscar noticias"
-            placeholder="BUSCAR..."
-            className="w-full bg-card border border-border rounded-xl py-2.5 sm:py-3 pl-10 pr-3 text-xs font-black focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all uppercase tracking-widest min-h-[44px]"
+            placeholder="Buscar..."
+            className="w-full bg-card border border-border rounded-lg py-2 pl-9 pr-2 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all min-h-[44px]"
           />
         </div>
-        {/* Priority filter — compacto en móvil */}
+        {/* Priority + Scope + Count — todos compactos en una línea */}
         <button type="button"
           onClick={() => setFilterPriority(!filterPriority)}
           className={cn(
-            "flex items-center justify-center gap-1.5 rounded-xl border-2 transition-all text-[10px] sm:text-xs font-black uppercase tracking-widest min-h-[44px] px-3 sm:px-4 shrink-0",
+            "flex items-center justify-center rounded-lg border-2 transition-all text-[10px] font-black uppercase min-h-[44px] px-2 sm:px-3 shrink-0",
             filterPriority
               ? "bg-warning/10 border-warning text-warning"
               : "bg-card border-border text-muted-foreground hover:bg-accent"
           )}
         >
-          <Filter className="w-3.5 h-3.5" />
-          <span className="hidden sm:inline">{filterPriority ? 'Solo Prioritarias' : 'Todas'}</span>
-          <span className="sm:hidden">{filterPriority ? '⚠️ Prior.' : '📋 Todas'}</span>
+          {filterPriority ? '⚠️' : '📋'}
         </button>
-        {/* Scope filter: Nacional/Internacional/Ambos */}
-        <div className="flex rounded-xl border-2 border-border overflow-hidden shrink-0">
+        {/* Scope filter: compacto, sin separadores visibles */}
+        <div className="flex rounded-lg border border-border overflow-hidden shrink-0">
           {([
-            { key: 'all', label: 'Todos', icon: Globe },
-            { key: 'national', label: '🇨🇺 Nac.', icon: MapPin },
-            { key: 'international', label: '🌍 Inter.', icon: Globe },
-          ] as const).map(opt => {
-            const Icon = opt.icon;
-            return (
-              <button
-                key={opt.key}
-                type="button"
-                onClick={() => setScopeFilter(opt.key)}
-                className={cn(
-                  "flex items-center justify-center gap-1 px-2 sm:px-3 min-h-[44px] text-[10px] font-black uppercase border-r border-border last:border-0 transition-all",
-                  scopeFilter === opt.key
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-card text-muted-foreground hover:bg-accent"
-                )}
-                aria-pressed={scopeFilter === opt.key}
-              >
-                <span className="sm:hidden">{opt.label.split(' ')[0]}</span>
-                <span className="hidden sm:inline">{opt.label}</span>
-              </button>
-            );
-          })}
+            { key: 'all', label: 'Todos' },
+            { key: 'national', label: '🇨🇺' },
+            { key: 'international', label: '🌍' },
+          ] as const).map(opt => (
+            <button
+              key={opt.key}
+              type="button"
+              onClick={() => setScopeFilter(opt.key)}
+              className={cn(
+                "flex items-center justify-center px-2 sm:px-2.5 min-h-[44px] text-[10px] font-black uppercase border-r border-border last:border-0 transition-all",
+                scopeFilter === opt.key
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-card text-muted-foreground hover:bg-accent"
+              )}
+              aria-pressed={scopeFilter === opt.key}
+              title={opt.label}
+            >
+              <span className="sm:hidden">{opt.label === 'Todos' ? '📋' : opt.label}</span>
+              <span className="hidden sm:inline">{opt.label}</span>
+            </button>
+          ))}
         </div>
-        {/* Results count */}
-        <div className="flex items-center justify-center px-3 py-2 rounded-xl border border-dashed border-border bg-muted/30 shrink-0 min-h-[44px]">
-          <span className="text-[10px] sm:text-xs font-black uppercase text-muted-foreground tracking-widest">
+        {/* Results count — minimal */}
+        <div className="flex items-center justify-center px-2 py-1 rounded-lg bg-muted/30 shrink-0 min-h-[44px] min-w-[36px]">
+          <span className="text-xs font-black tabular-nums text-muted-foreground">
             {filteredNews.length}
           </span>
         </div>

@@ -2369,7 +2369,7 @@ function PaymentsTab({ payments, onRefresh }: any) {
                 <span className="text-[10px] text-muted-foreground uppercase font-bold">Monto</span>
                 <span className="font-mono font-black text-sm">{formatCurrency(p.final_amount)}</span>
               </div>
-              {/* Acciones SIEMPRE visibles en móvil */}
+              {/* Acciones SIEMPRE visibles en móvil — incluso si están inactivas */}
               <div className="flex flex-wrap gap-1.5 pt-1 border-t border-border/20">
                 {p.status === 'draft' && (
                   <button
@@ -2387,13 +2387,25 @@ function PaymentsTab({ payments, onRefresh }: any) {
                     💰 Pagar
                   </button>
                 )}
-                {p.status !== 'cancelled' && p.status !== 'paid' && (
+                {/* Cancelar — visible para draft/approved (activo) y paid (como anular pago) */}
+                {p.status !== 'cancelled' ? (
                   <button
                     onClick={() => handleAction(p.id, 'cancel')}
                     className="min-h-[36px] w-9 px-2 py-1.5 rounded-lg text-[10px] font-black uppercase bg-destructive/10 text-destructive border border-destructive/30 hover:bg-destructive/20 active:scale-95 transition-transform"
+                    title={p.status === 'paid' ? 'Anular pago' : 'Cancelar'}
                   >
                     ✕
                   </button>
+                ) : (
+                  <span className="flex-1 text-center text-[10px] font-black uppercase text-muted-foreground py-2">
+                    Cancelado
+                  </span>
+                )}
+                {/* Si está pagado, mostrar info del método de pago */}
+                {p.status === 'paid' && p.payment_method && (
+                  <span className="flex-1 text-center text-[10px] font-bold text-muted-foreground py-2">
+                    {p.payment_method === 'cash' ? '💵' : p.payment_method === 'transfer' ? '📱' : '💳'} {p.currency}
+                  </span>
                 )}
               </div>
               {/* Formulario de pago inline */}
@@ -2496,13 +2508,17 @@ function PaymentsTab({ payments, onRefresh }: any) {
                           💰 Pagar
                         </button>
                       )}
-                      {p.status !== 'cancelled' && p.status !== 'paid' && (
+                      {/* Cancelar — visible para draft/approved/paid (como anular pago) */}
+                      {p.status !== 'cancelled' ? (
                         <button
                           onClick={() => handleAction(p.id, 'cancel')}
                           className="px-2 py-1 rounded text-[10px] font-black uppercase bg-destructive/10 text-destructive border border-destructive/30 hover:bg-destructive/20"
+                          title={p.status === 'paid' ? 'Anular pago' : 'Cancelar'}
                         >
                           ✕
                         </button>
+                      ) : (
+                        <span className="text-[10px] font-black uppercase text-muted-foreground">Cancelado</span>
                       )}
                       {payingId === p.id && (
                         <div className="mt-2 flex flex-col gap-1.5 p-2 rounded-lg border border-border/30 bg-muted/10">
