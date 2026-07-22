@@ -2348,7 +2348,102 @@ function PaymentsTab({ payments, onRefresh }: any) {
       <h3 className="text-base font-black uppercase tracking-widest text-foreground">
         Pagos de comisión ({payments.length})
       </h3>
-      <div className="bg-card rounded-2xl border-2 border-border overflow-hidden">
+      {/* Móvil: cards apilados con acciones visibles */}
+      <div className="sm:hidden space-y-3">
+        {payments.length === 0 ? (
+          <div className="py-12 text-center text-muted-foreground">Sin pagos registrados</div>
+        ) : payments.map((p: any) => {
+          const s = statusLabels[p.status] || statusLabels.draft;
+          return (
+            <div key={p.id} className="bg-card rounded-xl border border-border p-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="min-w-0">
+                  <p className="text-xs font-bold truncate">{p.worker ? `${p.worker.first_name} ${p.worker.last_name}` : '—'}</p>
+                  <p className="text-[10px] text-muted-foreground">{formatDate(p.period_start)} → {formatDate(p.period_end)}</p>
+                </div>
+                <span className={cn('px-2 py-1 rounded-md text-[10px] font-bold uppercase border shrink-0', s.color)}>
+                  {s.label}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] text-muted-foreground uppercase font-bold">Monto</span>
+                <span className="font-mono font-black text-sm">{formatCurrency(p.final_amount)}</span>
+              </div>
+              {/* Acciones SIEMPRE visibles en móvil */}
+              <div className="flex flex-wrap gap-1.5 pt-1 border-t border-border/20">
+                {p.status === 'draft' && (
+                  <button
+                    onClick={() => handleAction(p.id, 'approve')}
+                    className="flex-1 min-h-[36px] px-2 py-1.5 rounded-lg text-[10px] font-black uppercase bg-primary/10 text-primary border border-primary/30 hover:bg-primary/20 active:scale-95 transition-transform"
+                  >
+                    ✓ Aprobar
+                  </button>
+                )}
+                {(p.status === 'draft' || p.status === 'approved') && (
+                  <button
+                    onClick={() => setPayingId(payingId === p.id ? null : p.id)}
+                    className="flex-1 min-h-[36px] px-2 py-1.5 rounded-lg text-[10px] font-black uppercase bg-success/10 text-success border border-success/30 hover:bg-success/20 active:scale-95 transition-transform"
+                  >
+                    💰 Pagar
+                  </button>
+                )}
+                {p.status !== 'cancelled' && p.status !== 'paid' && (
+                  <button
+                    onClick={() => handleAction(p.id, 'cancel')}
+                    className="min-h-[36px] w-9 px-2 py-1.5 rounded-lg text-[10px] font-black uppercase bg-destructive/10 text-destructive border border-destructive/30 hover:bg-destructive/20 active:scale-95 transition-transform"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+              {/* Formulario de pago inline */}
+              {payingId === p.id && (
+                <div className="flex flex-col gap-1.5 p-2 rounded-lg border border-border/30 bg-muted/10">
+                  <div className="grid grid-cols-2 gap-1.5">
+                    <select
+                      value={payMethod}
+                      onChange={(e) => setPayMethod(e.target.value as any)}
+                      className="h-9 bg-background border border-border/50 rounded px-2 text-xs font-bold min-h-[36px]"
+                    >
+                      <option value="cash">💵 Efectivo</option>
+                      <option value="transfer">📱 Transfer.</option>
+                      <option value="zelle">💳 Zelle</option>
+                    </select>
+                    <select
+                      value={payCurrency}
+                      onChange={(e) => { setPayCurrency(e.target.value); if (e.target.value === 'CUP') setPayRate('1.0'); }}
+                      className="h-9 bg-background border border-border/50 rounded px-2 text-xs font-bold min-h-[36px]"
+                    >
+                      <option value="CUP">CUP</option>
+                      <option value="USD">USD</option>
+                      <option value="EUR">EUR</option>
+                      <option value="MLC">MLC</option>
+                    </select>
+                  </div>
+                  {payCurrency !== 'CUP' && (
+                    <input
+                      type="number" inputMode="decimal" step="0.01"
+                      value={payRate}
+                      onChange={(e) => setPayRate(e.target.value)}
+                      placeholder="Tasa CUP"
+                      className="h-9 bg-background border border-border/50 rounded px-2 text-xs font-bold min-h-[36px]"
+                    />
+                  )}
+                  <button
+                    onClick={() => handleAction(p.id, 'pay', payMethod, payCurrency, parseFloat(payRate) || 1.0)}
+                    className="h-9 min-h-[36px] rounded-lg bg-success text-white text-[10px] font-black uppercase hover:opacity-90 active:scale-95 transition-transform"
+                  >
+                    Confirmar Pago
+                  </button>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Desktop: tabla con scroll horizontal */}
+      <div className="hidden sm:block bg-card rounded-2xl border-2 border-border overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-muted/30">
@@ -2385,7 +2480,6 @@ function PaymentsTab({ payments, onRefresh }: any) {
                       )}
                     </td>
                     <td className="py-2 px-2 sm:py-3 sm:px-4">
-                      {/* FIX-COMMISSION-PAY (2026-07-12): Acciones de aprobar/pagar/cancelar */}
                       {p.status === 'draft' && (
                         <button
                           onClick={() => handleAction(p.id, 'approve')}
@@ -2410,48 +2504,20 @@ function PaymentsTab({ payments, onRefresh }: any) {
                           ✕
                         </button>
                       )}
-                      {/* Formulario de pago */}
                       {payingId === p.id && (
                         <div className="mt-2 flex flex-col gap-1.5 p-2 rounded-lg border border-border/30 bg-muted/10">
-                          <select
-                            value={payMethod}
-                            onChange={(e) => setPayMethod(e.target.value as any)}
-                            className="h-8 bg-background border border-border/50 rounded px-2 text-xs font-bold"
-                          >
+                          <select value={payMethod} onChange={(e) => setPayMethod(e.target.value as any)} className="h-8 bg-background border border-border/50 rounded px-2 text-xs font-bold">
                             <option value="cash">💵 Efectivo</option>
                             <option value="transfer">📱 Transferencia</option>
                             <option value="zelle">💳 Zelle</option>
                           </select>
-                          <select
-                            value={payCurrency}
-                            onChange={(e) => {
-                              setPayCurrency(e.target.value);
-                              // FIX-B2: auto-set rate to 1.0 for CUP
-                              if (e.target.value === 'CUP') setPayRate('1.0');
-                            }}
-                            className="h-8 bg-background border border-border/50 rounded px-2 text-xs font-bold"
-                          >
-                            <option value="CUP">CUP</option>
-                            <option value="USD">USD</option>
-                            <option value="EUR">EUR</option>
-                            <option value="MLC">MLC</option>
+                          <select value={payCurrency} onChange={(e) => { setPayCurrency(e.target.value); if (e.target.value === 'CUP') setPayRate('1.0'); }} className="h-8 bg-background border border-border/50 rounded px-2 text-xs font-bold">
+                            <option value="CUP">CUP</option><option value="USD">USD</option><option value="EUR">EUR</option><option value="MLC">MLC</option>
                           </select>
-                          {/* FIX-B2: input de tasa de cambio para monedas no-CUP */}
                           {payCurrency !== 'CUP' && (
-                            <input
-                              type="number"
-                              inputMode="decimal"
-                              step="0.01"
-                              value={payRate}
-                              onChange={(e) => setPayRate(e.target.value)}
-                              placeholder="Tasa CUP"
-                              className="h-8 bg-background border border-border/50 rounded px-2 text-xs font-bold"
-                            />
+                            <input type="number" inputMode="decimal" step="0.01" value={payRate} onChange={(e) => setPayRate(e.target.value)} placeholder="Tasa CUP" className="h-8 bg-background border border-border/50 rounded px-2 text-xs font-bold" />
                           )}
-                          <button
-                            onClick={() => handleAction(p.id, 'pay', payMethod, payCurrency, parseFloat(payRate) || 1.0)}
-                            className="h-8 rounded bg-success text-white text-[10px] font-black uppercase hover:opacity-90"
-                          >
+                          <button onClick={() => handleAction(p.id, 'pay', payMethod, payCurrency, parseFloat(payRate) || 1.0)} className="h-8 rounded bg-success text-white text-[10px] font-black uppercase hover:opacity-90">
                             Confirmar Pago
                           </button>
                         </div>

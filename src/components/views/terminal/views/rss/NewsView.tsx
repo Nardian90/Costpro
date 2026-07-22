@@ -11,7 +11,10 @@ import {
   Search,
   Filter,
   DollarSign,
-  ChevronRight
+  ChevronRight,
+  ChevronDown,
+  Globe,
+  MapPin
 } from 'lucide-react';
 import { cn, formatDate, formatTime, safeFormatDate } from '@/lib/utils';
 import { useRSSNews } from '@/hooks/api/useRSS';
@@ -26,6 +29,9 @@ export default function NewsView() {
   const [filterPriority, setFilterPriority] = React.useState(true);
   // FIX-RSS-MIPYMES (2026-07-13): filtro por categoría temática (8 categorías MiPyme)
   const [activeCategories, setActiveCategories] = React.useState<Set<RSSFeedCategory>>(new Set());
+  // FIX (2026-07-23): filtro nacional/internacional + colapsable en móvil
+  const [scopeFilter, setScopeFilter] = React.useState<'all' | 'national' | 'international'>('all');
+  const [showTopicFilters, setShowTopicFilters] = React.useState(false);
 
   const toggleCategory = (cat: RSSFeedCategory) => {
     setActiveCategories(prev => {
@@ -44,13 +50,17 @@ export default function NewsView() {
       const matchesSearch = title.includes(searchTerm.toLowerCase()) ||
                           content.includes(searchTerm.toLowerCase());
       const matchesPriority = filterPriority ? item.isPriority : true;
+      // FIX (2026-07-23): filtro nacional/internacional basado en URL del feed
+      const itemUrl = item.link || '';
+      const isNational = itemUrl.includes('.cu') || itemUrl.includes('cubadebate') || itemUrl.includes('juventudrebelde') || itemUrl.includes('gacetaoficial');
+      const matchesScope = scopeFilter === 'all' ? true : scopeFilter === 'national' ? isNational : !isNational;
       // Categoría: si no hay filtros activos, muestra todas. Si hay, solo las que matcheen.
       const matchesCategory = activeCategories.size === 0
         ? true
         : (item.category ? activeCategories.has(item.category) : false);
-      return matchesSearch && matchesPriority && matchesCategory;
+      return matchesSearch && matchesPriority && matchesScope && matchesCategory;
     });
-  }, [news, searchTerm, filterPriority, activeCategories]);
+  }, [news, searchTerm, filterPriority, activeCategories, scopeFilter]);
 
   // Conteo de noticias por categoría (para mostrar badges con conteo)
   const categoryCounts = React.useMemo(() => {
@@ -137,59 +147,102 @@ export default function NewsView() {
         </motion.div>
       )}
 
-      {/* Filters & Search */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="md:col-span-2 relative group">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+      {/* Filters & Search — responsive */}
+      <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
+        {/* Search */}
+        <div className="relative group flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
           <input
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             aria-label="Buscar noticias"
-            placeholder="BUSCAR NOTICIAS..."
-            className="w-full bg-card border border-border rounded-2xl py-3.5 pl-11 pr-4 text-xs font-black focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all uppercase tracking-widest"
+            placeholder="BUSCAR..."
+            className="w-full bg-card border border-border rounded-xl py-2.5 sm:py-3 pl-10 pr-3 text-xs font-black focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all uppercase tracking-widest min-h-[44px]"
           />
         </div>
-        <div className="md:col-span-1">
-          <button type="button"
-            onClick={() => setFilterPriority(!filterPriority)}
-            className={cn(
-              "w-full h-full flex items-center justify-center gap-2 rounded-2xl border-2 transition-all text-xs font-black uppercase tracking-widest",
-              filterPriority
-                ? "bg-warning/10 border-warning text-warning shadow-lg shadow-warning/10"
-                : "bg-card border-border text-muted-foreground hover:bg-accent"
-            )}
-          >
-            <Filter className="w-4 h-4" />
-            {filterPriority ? 'Solo Prioritarias' : 'Todas'}
-          </button>
+        {/* Priority filter — compacto en móvil */}
+        <button type="button"
+          onClick={() => setFilterPriority(!filterPriority)}
+          className={cn(
+            "flex items-center justify-center gap-1.5 rounded-xl border-2 transition-all text-[10px] sm:text-xs font-black uppercase tracking-widest min-h-[44px] px-3 sm:px-4 shrink-0",
+            filterPriority
+              ? "bg-warning/10 border-warning text-warning"
+              : "bg-card border-border text-muted-foreground hover:bg-accent"
+          )}
+        >
+          <Filter className="w-3.5 h-3.5" />
+          <span className="hidden sm:inline">{filterPriority ? 'Solo Prioritarias' : 'Todas'}</span>
+          <span className="sm:hidden">{filterPriority ? '⚠️ Prior.' : '📋 Todas'}</span>
+        </button>
+        {/* Scope filter: Nacional/Internacional/Ambos */}
+        <div className="flex rounded-xl border-2 border-border overflow-hidden shrink-0">
+          {([
+            { key: 'all', label: 'Todos', icon: Globe },
+            { key: 'national', label: '🇨🇺 Nac.', icon: MapPin },
+            { key: 'international', label: '🌍 Inter.', icon: Globe },
+          ] as const).map(opt => {
+            const Icon = opt.icon;
+            return (
+              <button
+                key={opt.key}
+                type="button"
+                onClick={() => setScopeFilter(opt.key)}
+                className={cn(
+                  "flex items-center justify-center gap-1 px-2 sm:px-3 min-h-[44px] text-[10px] font-black uppercase border-r border-border last:border-0 transition-all",
+                  scopeFilter === opt.key
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-card text-muted-foreground hover:bg-accent"
+                )}
+                aria-pressed={scopeFilter === opt.key}
+              >
+                <span className="sm:hidden">{opt.label.split(' ')[0]}</span>
+                <span className="hidden sm:inline">{opt.label}</span>
+              </button>
+            );
+          })}
         </div>
-        <div className="md:col-span-1 flex items-center justify-center p-3 rounded-2xl border border-dashed border-border bg-muted/30">
-          <span className="text-xs font-black uppercase text-muted-foreground tracking-widest">
-            {filteredNews.length} Resultados
+        {/* Results count */}
+        <div className="flex items-center justify-center px-3 py-2 rounded-xl border border-dashed border-border bg-muted/30 shrink-0 min-h-[44px]">
+          <span className="text-[10px] sm:text-xs font-black uppercase text-muted-foreground tracking-widest">
+            {filteredNews.length}
           </span>
         </div>
       </div>
 
-      {/* FIX-RSS-MIPYMES: Filtro por categoría temática (8 categorías MiPyme) */}
-      <div className="p-5 rounded-2xl border border-border bg-card">
-        <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+      {/* FIX (2026-07-23): Filtro por categoría temática — COLAPSABLE en móvil */}
+      <div className="rounded-2xl border border-border bg-card overflow-hidden">
+        <button
+          type="button"
+          onClick={() => setShowTopicFilters(!showTopicFilters)}
+          className="w-full flex items-center justify-between p-3 sm:p-4 hover:bg-muted/30 transition-colors min-h-[44px]"
+          aria-expanded={showTopicFilters}
+        >
           <div className="flex items-center gap-2">
             <Filter className="w-4 h-4 text-primary" />
             <h3 className="text-xs font-black uppercase tracking-widest text-foreground">
               Filtrar por Tema
             </h3>
+            {activeCategories.size > 0 && (
+              <span className="px-1.5 py-0.5 rounded-full bg-primary text-primary-foreground text-[9px] font-black">
+                {activeCategories.size}
+              </span>
+            )}
           </div>
-          {activeCategories.size > 0 && (
-            <button type="button"
-              onClick={() => setActiveCategories(new Set())}
-              className="text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-destructive transition-colors"
-            >
-              Limpiar filtros ({activeCategories.size})
-            </button>
-          )}
-        </div>
-        <div className="flex flex-wrap gap-2">
+          <div className="flex items-center gap-2">
+            {activeCategories.size > 0 && (
+              <button type="button"
+                onClick={(e) => { e.stopPropagation(); setActiveCategories(new Set()); }}
+                className="text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-destructive transition-colors"
+              >
+                Limpiar
+              </button>
+            )}
+            <ChevronDown className={cn("w-4 h-4 text-muted-foreground transition-transform", showTopicFilters && "rotate-180")} />
+          </div>
+        </button>
+        {showTopicFilters && (
+        <div className="px-3 pb-3 sm:px-4 sm:pb-4 flex flex-wrap gap-2 border-t border-border/30 pt-3">
           {(Object.entries(RSS_FEED_CATEGORIES) as [RSSFeedCategory, { label: string; icon: string; description: string }][]).map(([catKey, catInfo]) => {
             const count = categoryCounts[catKey] || 0;
             const isActive = activeCategories.has(catKey);
@@ -221,6 +274,7 @@ export default function NewsView() {
             );
           })}
         </div>
+        )}
       </div>
 
       {/* News List */}

@@ -6,7 +6,7 @@ import {
   Edit, Trash2, Building, Target, Check, Loader2,
   RotateCcw, Power, UserCog, Settings, X, Archive, ArchiveRestore,
   Copy, ExternalLink, FileText, Users, BarChart3, TrendingUp,
-  ShoppingCart, AlertTriangle, Package,
+  ShoppingCart, AlertTriangle, Package, ChevronDown,
 } from 'lucide-react';
 import { cn, formatCurrency, getStoreLogoUrl } from '@/lib/utils';
 import type { Store } from '@/types';
@@ -331,110 +331,108 @@ export function StoreCard({
           </div>
         )}
 
-        <div className="grid grid-cols-2 gap-2">
-          {/* F2-T02: botón Configurar */}
-          <button
-            type="button"
-            onClick={() => onConfigStore(store)}
-            aria-label={`Configurar tienda ${store.name}`}
-            title="Configuración centralizada con checklist de completitud"
-            className="min-h-[44px] py-2.5 rounded-xl border border-border hover:bg-primary/10 hover:text-primary font-black text-sm uppercase tracking-widest flex items-center justify-center gap-2 transition-colors"
-          >
-            <Settings className="w-3 h-3" />
-            Configurar
-          </button>
-          <button
-            type="button"
-            onClick={() => onEditStore(store)}
-            aria-label={`${tc('edit')} ${store.name}`}
-            title="Formulario avanzado de edición (datos completos)"
-            className="min-h-[44px] py-2.5 rounded-xl border border-border hover:bg-muted font-black text-sm uppercase tracking-widest flex items-center justify-center gap-2 transition-colors"
-          >
-            <Edit className="w-3 h-3" />
-            {t('info')}
-          </button>
-          {/* F2-T05: botón Equipo */}
-          {isAdmin && (
+        {/* FIX (2026-07-23): botones secundarios agrupados en abanico colapsable "Ver opciones" */}
+        <details className="rounded-xl border border-border overflow-hidden">
+          <summary className="w-full min-h-[44px] py-2.5 px-4 rounded-xl font-black text-sm uppercase tracking-widest flex items-center justify-center gap-2 cursor-pointer hover:bg-muted transition-colors list-none [&::-webkit-details-marker]:hidden">
+            <Settings className="w-3.5 h-3.5" />
+            Ver opciones
+            <ChevronDown className="w-3.5 h-3.5" />
+          </summary>
+          <div className="grid grid-cols-2 gap-2 p-2 border-t border-border/30">
             <button
               type="button"
-              onClick={() => onTeamStore(store)}
-              aria-label={`Ver equipo de ${store.name}`}
-              title="Ver y administrar usuarios asignados a esta tienda"
-              className="min-h-[44px] py-2.5 rounded-xl border border-border hover:bg-primary/10 hover:text-primary font-black text-sm uppercase tracking-widest flex items-center justify-center gap-2 transition-colors"
+              onClick={() => onConfigStore(store)}
+              aria-label={`Configurar tienda ${store.name}`}
+              className="min-h-[44px] py-2.5 rounded-xl border border-border hover:bg-primary/10 hover:text-primary font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-colors"
             >
-              <UserCog className="w-3 h-3" />
-              Equipo
+              <Settings className="w-3 h-3" />
+              Configurar
             </button>
-          )}
-          {isAdmin && (
             <button
               type="button"
-              onClick={() => onResetStore(store)}
-              aria-label={`${t('resetStore')} ${store.name}`}
-              className="min-h-[44px] py-2.5 rounded-xl border border-border hover:bg-warning/10 hover:text-warning font-black text-sm uppercase tracking-widest flex items-center justify-center gap-2 transition-colors"
+              onClick={() => onEditStore(store)}
+              aria-label={`${tc('edit')} ${store.name}`}
+              className="min-h-[44px] py-2.5 rounded-xl border border-border hover:bg-muted font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-colors"
             >
-              <RotateCcw className="w-3 h-3" />
-              {t('reset')}
+              <Edit className="w-3 h-3" />
+              {t('info')}
             </button>
-          )}
-          {isAdmin && (
-            <button
-              type="button"
-              onClick={() => onToggleStatus(store)}
-              disabled={isTogglingStatus}
-              aria-label={`${store.is_active ? 'Desactivar' : 'Activar'} tienda ${store.name}`}
-              title={store.is_active ? 'Desactivar tienda (pausa temporal, preserva configuración y usuarios)' : 'Reactivar tienda (vuelve a estar operativa)'}
-              className={cn(
-                "min-h-[44px] py-2.5 rounded-xl border font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed",
-                store.is_active
-                  ? "border-border hover:bg-amber-100 hover:text-amber-700 hover:border-amber-300 dark:hover:bg-amber-950/40"
-                  : "border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800"
-              )}
-            >
-              {isTogglingStatus ? <Loader2 className="w-3 h-3 animate-spin" /> : <Power className="w-3 h-3" />}
-              {store.is_active ? 'Pausar' : 'Activar'}
-            </button>
-          )}
-          {/* Archivar / Restaurar */}
-          {isAdmin && store.is_active && (
-            <button
-              type="button"
-              onClick={() => onArchiveStore(store)}
-              disabled={archivingStoreId === store.id}
-              aria-label={`Archivar tienda ${store.name}`}
-              title="Archivar (cierre temporal prolongado). Preserva ventas, inventario y configuración. Puede restaurarla cuando quiera."
-              className="min-h-[44px] py-2.5 rounded-xl border border-border font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-colors hover:bg-violet-100 hover:text-violet-700 hover:border-violet-300 dark:hover:bg-violet-950/40 disabled:opacity-50"
-            >
-              {archivingStoreId === store.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Archive className="w-3 h-3" />}
-              Archivar
-            </button>
-          )}
-          {isAdmin && !store.is_active && (
-            <button
-              type="button"
-              onClick={() => onRestoreStore(store)}
-              disabled={archivingStoreId === store.id}
-              aria-label={`Restaurar tienda ${store.name}`}
-              title="Restaurar tienda archivada. Vuelve a estar activa y operativa."
-              className="min-h-[44px] py-2.5 rounded-xl border border-violet-300 bg-violet-50 font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-colors hover:bg-violet-100 dark:bg-violet-950/40 dark:text-violet-400 dark:border-violet-800 disabled:opacity-50"
-            >
-              {archivingStoreId === store.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <ArchiveRestore className="w-3 h-3" />}
-              Restaurar
-            </button>
-          )}
-          {isAdmin && (
-            <button
-              type="button"
-              onClick={() => onDeleteStore(store)}
-              aria-label={`${t('deleteStore')} ${store.name}`}
-              aria-describedby={`store-desc-${store.id}`}
-              className="col-span-2 min-h-[44px] py-2.5 rounded-xl border border-border hover:bg-destructive/10 hover:text-destructive font-black text-sm uppercase tracking-widest flex items-center justify-center gap-2 transition-colors"
-            >
-              <Trash2 className="w-3 h-3" />
-              {t('erase')}
-            </button>
-          )}
-        </div>
+            {isAdmin && (
+              <button
+                type="button"
+                onClick={() => onTeamStore(store)}
+                aria-label={`Ver equipo de ${store.name}`}
+                className="min-h-[44px] py-2.5 rounded-xl border border-border hover:bg-primary/10 hover:text-primary font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-colors"
+              >
+                <UserCog className="w-3 h-3" />
+                Equipo
+              </button>
+            )}
+            {isAdmin && (
+              <button
+                type="button"
+                onClick={() => onResetStore(store)}
+                aria-label={`${t('resetStore')} ${store.name}`}
+                className="min-h-[44px] py-2.5 rounded-xl border border-border hover:bg-warning/10 hover:text-warning font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-colors"
+              >
+                <RotateCcw className="w-3 h-3" />
+                {t('reset')}
+              </button>
+            )}
+            {isAdmin && (
+              <button
+                type="button"
+                onClick={() => onToggleStatus(store)}
+                disabled={isTogglingStatus}
+                aria-label={`${store.is_active ? 'Desactivar' : 'Activar'} tienda ${store.name}`}
+                className={cn(
+                  "min-h-[44px] py-2.5 rounded-xl border font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-colors disabled:opacity-50",
+                  store.is_active
+                    ? "border-border hover:bg-amber-100 hover:text-amber-700 dark:hover:bg-amber-950/40"
+                    : "border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800"
+                )}
+              >
+                {isTogglingStatus ? <Loader2 className="w-3 h-3 animate-spin" /> : <Power className="w-3 h-3" />}
+                {store.is_active ? 'Pausar' : 'Activar'}
+              </button>
+            )}
+            {isAdmin && store.is_active && (
+              <button
+                type="button"
+                onClick={() => onArchiveStore(store)}
+                disabled={archivingStoreId === store.id}
+                aria-label={`Archivar tienda ${store.name}`}
+                className="min-h-[44px] py-2.5 rounded-xl border border-border font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-colors hover:bg-violet-100 hover:text-violet-700 dark:hover:bg-violet-950/40 disabled:opacity-50"
+              >
+                {archivingStoreId === store.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Archive className="w-3 h-3" />}
+                Archivar
+              </button>
+            )}
+            {isAdmin && !store.is_active && (
+              <button
+                type="button"
+                onClick={() => onRestoreStore(store)}
+                disabled={archivingStoreId === store.id}
+                aria-label={`Restaurar tienda ${store.name}`}
+                className="min-h-[44px] py-2.5 rounded-xl border border-violet-300 bg-violet-50 font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-colors hover:bg-violet-100 dark:bg-violet-950/40 dark:text-violet-400 dark:border-violet-800 disabled:opacity-50"
+              >
+                {archivingStoreId === store.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <ArchiveRestore className="w-3 h-3" />}
+                Restaurar
+              </button>
+            )}
+            {isAdmin && (
+              <button
+                type="button"
+                onClick={() => onDeleteStore(store)}
+                aria-label={`${t('deleteStore')} ${store.name}`}
+                className="col-span-2 min-h-[44px] py-2.5 rounded-xl border border-border hover:bg-destructive/10 hover:text-destructive font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-colors"
+              >
+                <Trash2 className="w-3 h-3" />
+                {t('erase')}
+              </button>
+            )}
+          </div>
+        </details>
       </div>
     </div>
   );
