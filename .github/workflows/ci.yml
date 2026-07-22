@@ -47,7 +47,7 @@ jobs:
           bun install --frozen-lockfile
 
       - name: TypeCheck
-        run: npx tsc --noEmit
+        run: bunx tsc --noEmit
         continue-on-error: true
 
       - name: Lint
@@ -55,7 +55,7 @@ jobs:
         continue-on-error: true
 
       - name: Unit tests with coverage
-        run: npx vitest run --coverage
+        run: bunx vitest run --coverage
         env:
           CI: true
 
@@ -104,7 +104,7 @@ jobs:
 
       - name: Install Playwright Browsers
         run: |
-          if bun pm ls @playwright/test 2>/dev/null || npm ls @playwright/test 2>/dev/null 2>/dev/null; then
+          if bun pm ls @playwright/test 2>/dev/null || bun pm ls @playwright/test 2>/dev/null || true 2>/dev/null 2>/dev/null; then
             npx playwright install --with-deps chromium
           else
             echo "@playwright/test not installed — skipping E2E"
@@ -118,12 +118,12 @@ jobs:
 
       - name: Start server
         run: |
-          npx next start -p 3000 &
+          bunx next start -p 3000 &
           sleep 5
           curl -s http://localhost:3000 > /dev/null || exit 1
 
       - name: Run E2E tests
-        run: npx playwright test --reporter=line
+        run: bunx playwright test --reporter=line
         env:
           CI: true
 
