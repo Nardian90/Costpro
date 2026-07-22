@@ -46,13 +46,13 @@ import { useIsMobile } from '@/hooks/ui/useMobile';
  * que mantienen la simplicidad del modal pero añaden poder en vista ampliada.
  */
 
-type RightTab = 'history' | 'cash' | 'sci' | 'convert' | 'units';
+type RightTab = 'calc' | 'history' | 'cash' | 'sci' | 'convert' | 'units';
 
 export default function CalculatorView() {
   const { setCurrentView, setIsCalculatorOpen } = useUIStore();
   const { resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
-  const [rightTab, setRightTab] = useState<RightTab>('history');
+  const [rightTab, setRightTab] = useState<RightTab>('calc');
   const [showConfig, setShowConfig] = useState(false);
   const isMobile = useIsMobile();
 
@@ -159,65 +159,106 @@ export default function CalculatorView() {
         </div>
       </div>
 
-      {/* ── Layout: 2 paneles (desktop) o apilado (móvil) ── */}
-      <div className={cn(
-        "flex-1 min-h-0 gap-2 sm:gap-3 p-2 sm:p-3 md:p-4 overflow-hidden",
-        isMobile ? "flex flex-col overflow-y-auto" : "flex flex-row"
-      )}>
+      {/* ── Layout: 2 paneles (desktop) o calculadora fullscreen con tabs (móvil) ── */}
+      {isMobile ? (
+        /* ═══ MÓVIL: una sola tarjeta que llena toda la pantalla ═══ */
+        /* Calculadora + tabs avanzados en una sola vista, sin panel dividido */
+        <div className="flex-1 min-h-0 flex flex-col p-2 overflow-hidden">
+          <div className="flex-1 flex flex-col rounded-2xl border border-border/30 bg-card shadow-lg overflow-hidden min-h-0">
+            {/* Tab switcher — incluye Calc como primer tab en móvil */}
+            <div className="shrink-0 flex border-b border-border/30 overflow-x-auto no-scrollbar">
+              <TabButton
+                active={rightTab === 'calc'}
+                onClick={() => setRightTab('calc')}
+                icon={<Calculator className="w-3 h-3" />}
+                label="Calc"
+                isDark={isDark}
+              />
+              {rightTabs.map(tab => {
+                const Icon = tab.icon;
+                return (
+                  <TabButton
+                    key={tab.id}
+                    active={rightTab === tab.id}
+                    onClick={() => setRightTab(tab.id)}
+                    icon={<Icon className="w-3 h-3" />}
+                    label={tab.label}
+                    isDark={isDark}
+                    badge={tab.badge}
+                  />
+                );
+              })}
+            </div>
 
-        {/* ═══ LEFT/TOP PANE: Calculator ═══ */}
-        <div className={cn(
-          "flex flex-col rounded-[1.25rem] sm:rounded-[1.5rem] border border-border/30 bg-card shadow-[0_16px_32px_-8px_rgba(0,0,0,0.2)] overflow-hidden",
-          isMobile ? "w-full shrink-0" : "w-[300px] sm:w-[340px] shrink-0"
-        )}>
-          <div className="flex-1 overflow-y-auto no-scrollbar">
-            <CalcTabContent calc={calc} isDark={isDark} />
+            {/* Content — llena todo el espacio restante */}
+            <div className="flex-1 overflow-y-auto no-scrollbar min-h-0">
+              {rightTab === 'calc' && <CalcTabContent calc={calc} isDark={isDark} />}
+              {rightTab === 'history' && (
+                <HistoryTabContent history={calc.history} onUse={calc.useHistoryResult} onClear={calc.clearHistory} isDark={isDark} />
+              )}
+              {rightTab === 'cash' && (
+                <CashTabContent display={calc.display} isDark={isDark} />
+              )}
+              {rightTab === 'sci' && (
+                <SciTabContent calc={calc} isDark={isDark} />
+              )}
+              {rightTab === 'convert' && (
+                <ConvertTabContent display={calc.display} isDark={isDark} />
+              )}
+              {rightTab === 'units' && (
+                <UnitsTabContent display={calc.display} isDark={isDark} />
+              )}
+            </div>
           </div>
         </div>
-
-        {/* ═══ RIGHT/BOTTOM PANE: Advanced tools ═══ */}
-        <div className={cn(
-          "flex flex-col rounded-[1.25rem] sm:rounded-[1.5rem] border border-border/30 bg-card shadow-[0_16px_32px_-8px_rgba(0,0,0,0.2)] overflow-hidden",
-          isMobile ? "w-full flex-1 min-h-[400px]" : "flex-1 min-w-0"
-        )}>
-          {/* Tab switcher — scrollable en móvil */}
-          <div className="shrink-0 flex border-b border-border/30 overflow-x-auto no-scrollbar">
-            {rightTabs.map(tab => {
-              const Icon = tab.icon;
-              return (
-                <TabButton
-                  key={tab.id}
-                  active={rightTab === tab.id}
-                  onClick={() => setRightTab(tab.id)}
-                  icon={<Icon className="w-3 h-3" />}
-                  label={tab.label}
-                  isDark={isDark}
-                  badge={tab.badge}
-                />
-              );
-            })}
+      ) : (
+        /* ═══ DESKTOP: 2 paneles lado a lado ═══ */
+        <div className="flex-1 min-h-0 gap-2 sm:gap-3 p-2 sm:p-3 md:p-4 overflow-hidden flex flex-row">
+          {/* LEFT PANE: Calculator */}
+          <div className="flex flex-col rounded-[1.5rem] border border-border/30 bg-card shadow-[0_16px_32px_-8px_rgba(0,0,0,0.2)] overflow-hidden w-[340px] shrink-0">
+            <div className="flex-1 overflow-y-auto no-scrollbar">
+              <CalcTabContent calc={calc} isDark={isDark} />
+            </div>
           </div>
 
-          {/* Right pane content */}
-          <div className="flex-1 overflow-y-auto overflow-x-hidden no-scrollbar">
-            {rightTab === 'history' && (
-              <HistoryTabContent history={calc.history} onUse={calc.useHistoryResult} onClear={calc.clearHistory} isDark={isDark} />
-            )}
-            {rightTab === 'cash' && (
-              <CashTabContent display={calc.display} isDark={isDark} />
-            )}
-            {rightTab === 'sci' && (
-              <SciTabContent calc={calc} isDark={isDark} />
-            )}
-            {rightTab === 'convert' && (
-              <ConvertTabContent display={calc.display} isDark={isDark} />
-            )}
-            {rightTab === 'units' && (
-              <UnitsTabContent display={calc.display} isDark={isDark} />
-            )}
+          {/* RIGHT PANE: Advanced tools */}
+          <div className="flex flex-col rounded-[1.5rem] border border-border/30 bg-card shadow-[0_16px_32px_-8px_rgba(0,0,0,0.2)] overflow-hidden flex-1 min-w-0">
+            <div className="shrink-0 flex border-b border-border/30 overflow-x-auto no-scrollbar">
+              {rightTabs.map(tab => {
+                const Icon = tab.icon;
+                return (
+                  <TabButton
+                    key={tab.id}
+                    active={rightTab === tab.id}
+                    onClick={() => setRightTab(tab.id)}
+                    icon={<Icon className="w-3 h-3" />}
+                    label={tab.label}
+                    isDark={isDark}
+                    badge={tab.badge}
+                  />
+                );
+              })}
+            </div>
+            <div className="flex-1 overflow-y-auto overflow-x-hidden no-scrollbar">
+              {rightTab === 'history' && (
+                <HistoryTabContent history={calc.history} onUse={calc.useHistoryResult} onClear={calc.clearHistory} isDark={isDark} />
+              )}
+              {rightTab === 'cash' && (
+                <CashTabContent display={calc.display} isDark={isDark} />
+              )}
+              {rightTab === 'sci' && (
+                <SciTabContent calc={calc} isDark={isDark} />
+              )}
+              {rightTab === 'convert' && (
+                <ConvertTabContent display={calc.display} isDark={isDark} />
+              )}
+              {rightTab === 'units' && (
+                <UnitsTabContent display={calc.display} isDark={isDark} />
+              )}
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* ── Status bar — oculto en móvil ── */}
       {!isMobile && (
