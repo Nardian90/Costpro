@@ -60,9 +60,9 @@ function InfoTooltip({ title, children }: { title: string; children: React.React
 }
 
 // ─── Helper: regresión lineal ───
-/* eslint-disable no-unused-vars, @typescript-eslint/no-unused-vars */
+ 
 type LinearRegResult = { slope: number; intercept: number; r2: number; projected: (stepsAhead: number) => number };
-/* eslint-enable no-unused-vars, @typescript-eslint/no-unused-vars */
+ 
 function linearRegression(values: number[]): LinearRegResult | null {
   if (values.length < 5) return null;
   const n = values.length;

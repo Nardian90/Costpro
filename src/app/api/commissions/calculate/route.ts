@@ -290,7 +290,7 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
       const commissions = manual_commissions[worker.id] as number[];
       const workerSales = salesByWorker[worker.id] || { cash: 0, transfer: 0, total: 0 };
       // Import dinámico para evitar circularidad
-      const { buildManualCommissionCalculation } = require('@/lib/commission-engine');
+      const { buildManualCommissionCalculation } = await import('@/lib/commission-engine');
       const calc = buildManualCommissionCalculation(
         worker.id, workerSales, workerLineItems, commissions,
         { from: date_from, to: date_to }

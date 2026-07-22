@@ -139,7 +139,7 @@ export default function Pick3AIAdvisor({
 
   useEffect(() => {
     sendInitialContext();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [riskMode]);
 
   useEffect(() => {

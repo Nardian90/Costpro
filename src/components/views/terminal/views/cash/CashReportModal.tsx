@@ -380,7 +380,7 @@ export function CashReportModal({ open, onClose }: CashReportModalProps) {
     const cupZelleSales = sales.filter((s: any) => s.payment_method === 'zelle' && s.currency === 'CUP').reduce((s: number, x: any) => s + Number(x.total), 0);
     const cupCashPayments = payments.filter((p: any) => p.payment_method === 'cash' && p.currency === 'CUP').reduce((s: number, x: any) => s + Number(x.total), 0);
     const cupTransferPayments = payments.filter((p: any) => p.payment_method === 'transfer' && p.currency === 'CUP').reduce((s: number, x: any) => s + Number(x.total), 0);
-    const cupCashCommissions = commissions.filter((c: any) => c.payment_method === 'cash' && c.currency === 'CUP').reduce((s: number, x: any) => s + Number(c.total), 0);
+    const cupCashCommissions = commissions.filter((c: any) => c.payment_method === 'cash' && c.currency === 'CUP').reduce((s: number, x: any) => s + Number(x.total), 0);
     const cupCashProduction = production.filter((p: any) => p.payment_method === 'cash' && p.currency === 'CUP').reduce((s: number, x: any) => s + Number(x.total), 0);
     const cupTransferProduction = production.filter((p: any) => p.payment_method === 'transfer' && p.currency === 'CUP').reduce((s: number, x: any) => s + Number(x.total), 0);
 
@@ -392,7 +392,7 @@ export function CashReportModal({ open, onClose }: CashReportModalProps) {
       ['INGRESOS', '', '', ''],
       ['  Ventas en Efectivo', `${sales.filter((s:any)=>s.payment_method==='cash'&&s.currency==='CUP').reduce((s:number,x:any)=>s+x.transaction_count,0)} txs`, '', fmt(cupCashSales)],
       ['  Ventas por Transferencia', `${sales.filter((s:any)=>s.payment_method==='transfer'&&s.currency==='CUP').reduce((s:number,x:any)=>s+x.transaction_count,0)} txs`, '', fmt(cupTransferSales)],
-      ...(cupZelleSales > 0 ? [['  Ventas por Zelle', `${sales.filter((s:any)=>s.payment_method==='zelle'&&s.currency==='CUP').reduce((s:number,x:any)=>s+x.transaction_count,0)} txs`, '', fmt(cupZelleSales)] as (string|number)[][]] : []),
+      ...(cupZelleSales > 0 ? [['  Ventas por Zelle', `${sales.filter((s:any)=>s.payment_method==='zelle'&&s.currency==='CUP').reduce((s:number,x:any)=>s+x.transaction_count,0)} txs`, '', fmt(cupZelleSales)]] : []),
       ['  Anticipos/Liquidaciones de Órdenes', `${production.reduce((s:number,x:any)=>s+x.payment_count,0)} pagos`, '', fmt(cupCashProduction + cupTransferProduction)],
       ['SUBTOTAL INGRESOS', '', '', fmt(cupCashSales + cupTransferSales + cupZelleSales + cupCashProduction + cupTransferProduction)],
       ['', '', '', ''],

@@ -21,7 +21,7 @@ const isBrowser = typeof window !== 'undefined';
  * Los usuarios normales pueden hacer sync desde el navegador,
  * así que necesitamos el service role key para bypass RLS.
  */
-function createServerClient() {
+async function createServerClient() {
   if (isBrowser) {
     logger.warn('PICK3', 'createServerClient called from browser — using anon client (RLS will apply)');
     return supabase;
@@ -36,7 +36,7 @@ function createServerClient() {
   }
 
   // Lazy import para evitar cargar @supabase/supabase-js en el browser bundle
-  const { createClient } = require('@supabase/supabase-js');
+  const { createClient } = await import('@supabase/supabase-js');
   return createClient(supabaseUrl, serviceRoleKey, {
     auth: { persistSession: false, autoRefreshToken: false }
   });
@@ -126,7 +126,7 @@ export class Pick3Storage {
     if (!results.length) return;
 
     try {
-      const serverClient = createServerClient();
+      const serverClient = await createServerClient();
 
       // 1. Fetch existing records to check sync_method priority
       const dates = [...new Set(results.map(r => r.date))];
