@@ -6,6 +6,7 @@ import {
   selectApplicableRule,
   calculateCommission,
   calculateCommissionWithProducts,
+  buildManualCommissionCalculation,
   buildBreakdownSnapshot,
   deriveLineTotals,
   type CommissionRule,
@@ -289,8 +290,6 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
       const workerLineItems = lineItemsByWorker[worker.id] || [];
       const commissions = manual_commissions[worker.id] as number[];
       const workerSales = salesByWorker[worker.id] || { cash: 0, transfer: 0, total: 0 };
-      // Import dinámico para evitar circularidad
-      const { buildManualCommissionCalculation } = await import('@/lib/commission-engine');
       const calc = buildManualCommissionCalculation(
         worker.id, workerSales, workerLineItems, commissions,
         { from: date_from, to: date_to }
