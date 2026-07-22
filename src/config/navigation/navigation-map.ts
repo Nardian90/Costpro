@@ -242,7 +242,7 @@ export interface BreadcrumbItem {
  * cualquier nivel del árbol de navegación desde el breadcrumb.
  */
 function findSidebarPath(sidebarId: string): { label: string; view?: string }[] {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
+   
   const { SIDEBAR_STRUCTURE } = require('@/config/navigation/sidebar.structure');
 
   for (const group of SIDEBAR_STRUCTURE) {

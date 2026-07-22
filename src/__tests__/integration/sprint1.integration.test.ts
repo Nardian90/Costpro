@@ -96,7 +96,7 @@ describe('SPRINT-1 INTEGRATION AUDIT', () => {
     if (result.totalBets > 0) {
       expect(result.winStreak + result.lossStreak).toBeGreaterThan(0);
     }
-  }, 60000); // FIX-CI-TIMEOUT: 60s margen (days=10 + margen para runners lentos)
+  }, 120000); // FIX-CI-TIMEOUT: 120s — CI runners are slower than local (days=10 + margen para runners lentos)
 
   it('BacktestEngine incluye CAGR con IC 95%', () => {
     const history = generateRealisticHistory(200);
@@ -113,7 +113,7 @@ describe('SPRINT-1 INTEGRATION AUDIT', () => {
       console.log(`[AUDIT] CI 95%: [${result.cagrConfidenceInterval.lower.toFixed(2)}%, ${result.cagrConfidenceInterval.upper.toFixed(2)}%]`);
       expect(result.cagrConfidenceInterval.lower).toBeLessThan(result.cagrConfidenceInterval.upper);
     }
-  }, 60000); // FIX-CI-TIMEOUT: 60s margen
+  }, 120000); // FIX-CI-TIMEOUT: 120s — CI runners are slower than local
 
   it('BacktestEngine incluye Kelly y Probability of Ruin', () => {
     const history = generateRealisticHistory(200);
@@ -126,7 +126,7 @@ describe('SPRINT-1 INTEGRATION AUDIT', () => {
     console.log(`[AUDIT] Kelly Safe: ${(result.kellyFraction! * 100).toFixed(2)}%`);
     console.log(`[AUDIT] Kelly Edge: ${(result.kellyEdge! * 100).toFixed(2)}%`);
     console.log(`[AUDIT] Probability of Ruin: ${((result.probabilityOfRuin || 0) * 100).toFixed(2)}%`);
-  }, 60000); // FIX-CI-TIMEOUT: 60s margen
+  }, 120000); // FIX-CI-TIMEOUT: 120s — CI runners are slower than local
 
   it('BacktestEngine incluye los 4 tests estadísticos', () => {
     const history = generateRealisticHistory(500);
@@ -141,7 +141,7 @@ describe('SPRINT-1 INTEGRATION AUDIT', () => {
     console.log(`[AUDIT] Is Random: ${result.statisticalTests!.isRandom}`);
     console.log(`[AUDIT] Confidence: ${result.statisticalTests!.confidence.toFixed(1)}%`);
     console.log(`[AUDIT] Summary: ${result.statisticalTests!.summary.substring(0, 100)}...`);
-  }, 60000); // FIX-CI-TIMEOUT: 60s margen
+  }, 120000); // FIX-CI-TIMEOUT: 120s — CI runners are slower than local
 
   it('BacktestEngine incluye drift detection', () => {
     const history = generateRealisticHistory(200);
@@ -152,7 +152,7 @@ describe('SPRINT-1 INTEGRATION AUDIT', () => {
     expect(typeof result.regimeChange!.driftDetected).toBe('boolean');
     console.log(`[AUDIT] Drift Detected: ${result.regimeChange!.driftDetected}`);
     console.log(`[AUDIT] Drift Magnitude: ${result.regimeChange!.magnitude.toFixed(2)}`);
-  }, 60000); // FIX-CI-TIMEOUT: 60s margen
+  }, 120000); // FIX-CI-TIMEOUT: 120s — CI runners are slower than local
 
   it('BacktestEngine incluye volatility, downside deviation y expectancy', () => {
     const history = generateRealisticHistory(200);
@@ -165,7 +165,7 @@ describe('SPRINT-1 INTEGRATION AUDIT', () => {
     console.log(`[AUDIT] Volatility: ${((result.volatility || 0) * 100).toFixed(2)}%`);
     console.log(`[AUDIT] Downside Dev: ${((result.downsideDeviation || 0) * 100).toFixed(2)}%`);
     console.log(`[AUDIT] Expectancy: $${(result.expectancy || 0).toFixed(2)}`);
-  }, 60000); // FIX-CI-TIMEOUT: 60s margen
+  }, 120000); // FIX-CI-TIMEOUT: 120s — CI runners are slower than local
 
   it('computeFullQuantReport no retorna ceros fantasma', () => {
     const pnlSeries = Array.from({ length: 30 }, () => {

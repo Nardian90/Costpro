@@ -51,7 +51,7 @@ const nextConfig: NextConfig = {
 
 // Bundle analyzer wrapper — activated via ANALYZE=true env var
 const withBundleAnalyzer = (typeof process !== 'undefined' && process.env.ANALYZE === 'true')
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
+   
   ? require('@next/bundle-analyzer')({ enabled: true })
   : (config: NextConfig) => config;
 

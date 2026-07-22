@@ -78,7 +78,7 @@ export async function connectStore(storeId: string): Promise<void> {
   connectionStatus.set(storeId, 'connecting');
   logger.info('DATABASE', 'SESSION_CONNECTING', { storeId });
 
-  // eslint-disable-next-line react-hooks/rules-of-hooks -- useMultiFileAuthState is a Baileys API, not a React hook
+   
   const { state, saveCreds } = await useMultiFileAuthState(`./baileys-sessions/${storeId}`);
   const { version } = await fetchLatestBaileysVersion();
 

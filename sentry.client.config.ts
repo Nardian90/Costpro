@@ -8,7 +8,7 @@ const SENTRY_DSN = process.env.NEXT_PUBLIC_SENTRY_DSN;
 
 if (!SENTRY_DSN) {
   // Sin DSN → no inicializar Sentry. Evita overhead innecesario en dev.
-  // eslint-disable-next-line no-console
+   
   console.log('[Sentry] DSN not configured — skipping initialization');
 } else {
 Sentry.init({

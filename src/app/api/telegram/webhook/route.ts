@@ -49,7 +49,7 @@ declare global {
 function waitUntilCompat(promise: Promise<unknown>): void {
   // Si hay waitUntil real de Vercel, usarlo
   try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
+     
     const { waitUntil } = require('@vercel/functions');
     if (typeof waitUntil === 'function') {
       waitUntil(promise);

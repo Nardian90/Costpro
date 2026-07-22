@@ -29,6 +29,6 @@ Sentry.init({
   },
 });
 } else {
-  // eslint-disable-next-line no-console
+   
   console.log('[Sentry Server] DSN not configured or dev mode — skipping initialization');
 }

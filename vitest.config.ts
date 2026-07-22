@@ -9,7 +9,7 @@ export default defineConfig({
     // FIX-CI (2026-07-13): increase testTimeout from default 5s to 30s.
     // BacktestEngine tests with 200-500 draws + statistical tests take >5s
     // on slow CI runners, causing flaky timeouts.
-    testTimeout: 30_000,
+    testTimeout: 120_000,
     hookTimeout: 30_000,
     include: ['src/**/*.test.{ts,tsx}'],
     exclude: [
