@@ -122,10 +122,10 @@ export default function ManagementHubView() {
   return (
     <div className="space-y-6">
       {/* Header con tabs */}
-      <div className="border-b border-border px-4 sm:px-6 lg:px-8 pt-4">
+      <div className="border-b border-border px-0 sm:px-2 lg:px-4 pt-4">
         <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
           <div>
-            <h2 className="text-2xl font-black tracking-tight uppercase">Gestión</h2>
+            <h2 className="text-xl sm:text-2xl font-black tracking-tight uppercase">Gestión</h2>
             <p className="text-xs text-muted-foreground mt-1">
               {activeTabDef?.description || 'Centro unificado de gestión administrativa'}
             </p>

@@ -98,7 +98,7 @@ export default function GroupHubView({ groupId }: GroupHubViewProps) {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header con título + descripción */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-start gap-3">
@@ -147,7 +147,7 @@ export default function GroupHubView({ groupId }: GroupHubViewProps) {
                   initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: idx * 0.06 }}
-                  className="group relative p-6 rounded-2xl border-2 border-border/60 bg-card hover:border-primary/30 hover:shadow-xl transition-all active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-primary/30 text-left"
+                  className="group relative p-4 sm:p-6 rounded-2xl border-2 border-border/60 bg-card hover:border-primary/30 hover:shadow-xl transition-all active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-primary/30 text-left"
                 >
                   {(child.isNew || child.isBeta) && (
                     <div className="absolute top-3 right-3 flex gap-1">
@@ -202,7 +202,7 @@ export default function GroupHubView({ groupId }: GroupHubViewProps) {
                   initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: (directItems.length + idx) * 0.06}}
-                  className="group relative p-6 rounded-2xl border-2 border-border/60 bg-gradient-to-br from-primary/5 to-card hover:border-primary/30 hover:shadow-xl transition-all active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-primary/30 text-left"
+                  className="group relative p-4 sm:p-6 rounded-2xl border-2 border-border/60 bg-gradient-to-br from-primary/5 to-card hover:border-primary/30 hover:shadow-xl transition-all active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-primary/30 text-left"
                 >
                   {(child.isNew || child.isBeta) && (
                     <div className="absolute top-3 right-3 flex gap-1">

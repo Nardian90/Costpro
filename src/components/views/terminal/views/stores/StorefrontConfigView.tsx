@@ -101,7 +101,7 @@ export default function StorefrontConfigView() {
   // ── Estado: sin tienda activa ──
   if (!activeStoreId) {
     return (
-      <div className="p-6 sm:p-8">
+      <div className="p-2 sm:p-4">
         <Header />
         <div className="mt-8 p-8 rounded-2xl border border-dashed border-border bg-card/50 text-center">
           <StoreIcon className="w-12 h-12 text-muted-foreground/30 mx-auto mb-3" />
@@ -121,7 +121,7 @@ export default function StorefrontConfigView() {
   // ── Estado: cargando ──
   if (loading) {
     return (
-      <div className="p-6 sm:p-8">
+      <div className="p-2 sm:p-4">
         <Header />
         <div className="mt-8 flex items-center justify-center py-16">
           <Loader2 className="w-6 h-6 animate-spin text-primary" />
@@ -133,7 +133,7 @@ export default function StorefrontConfigView() {
   // ── Estado: error ──
   if (error || !store) {
     return (
-      <div className="p-6 sm:p-8">
+      <div className="p-2 sm:p-4">
         <Header />
         <div className="mt-8 p-4 rounded-xl border border-destructive/30 bg-destructive/5 flex items-start gap-3">
           <AlertCircle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
@@ -152,7 +152,7 @@ export default function StorefrontConfigView() {
 
   // ── Estado: tienda cargada ──
   return (
-    <div className="p-4 sm:p-6 lg:p-8">
+    <div className="py-2 sm:py-4 lg:py-6">
       <Header
         actions={
           <div className="flex items-center gap-2">

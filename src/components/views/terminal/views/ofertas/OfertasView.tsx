@@ -185,7 +185,7 @@ export default function OfertasView() {
   // ─── Render ────────────────────────────────────────────────────────────────────
 
   return (
-    <div className="flex flex-col lg:flex-row gap-6 h-full">
+    <div className="flex flex-col lg:flex-row gap-3 sm:gap-6 h-full">
       {/* LEFT PANEL: List */}
       <OfertaListPanel
         searchTerm={searchTerm}

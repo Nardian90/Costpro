@@ -841,7 +841,7 @@ export default function CatalogView() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3 sm:space-y-6">
       {/* Header Row */}
       <CatalogHeader
         totalCount={totalCount}

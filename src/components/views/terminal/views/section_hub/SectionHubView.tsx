@@ -136,7 +136,7 @@ export default function SectionHubView({ submenuId }: SectionHubViewProps) {
   const description = submenu.description || submenu.ariaLabel || '';
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header con título + descripción + back button */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-start gap-3">
@@ -183,7 +183,7 @@ export default function SectionHubView({ submenuId }: SectionHubViewProps) {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: idx * 0.08 }}
                 className={cn(
-                  'group relative p-6 rounded-2xl border-2 bg-card transition-all hover:shadow-xl',
+                  'group relative p-4 sm:p-6 rounded-2xl border-2 bg-card transition-all hover:shadow-xl',
                   isPremium
                     ? 'border-primary/40 hover:border-primary/60 ring-1 ring-primary/10'
                     : 'border-border/60 hover:border-primary/30',

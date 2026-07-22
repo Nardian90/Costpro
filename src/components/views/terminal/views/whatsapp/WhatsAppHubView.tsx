@@ -70,7 +70,7 @@ export default function WhatsAppHubView() {
 
   if (!user?.activeStoreId) {
     return (
-      <div className="p-6 sm:p-8 text-center">
+      <div className="py-4 sm:py-6 text-center">
         <Smartphone className="w-12 h-12 text-muted-foreground/30 mx-auto mb-3" />
         <h3 className="text-sm font-black uppercase tracking-widest mb-2">Sin tienda activa</h3>
         <p className="text-xs text-muted-foreground">
@@ -81,7 +81,7 @@ export default function WhatsAppHubView() {
   }
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8">
+    <div className="py-2 sm:py-4 lg:py-6">
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-xl sm:text-2xl font-black uppercase tracking-tighter text-foreground flex items-center gap-2">

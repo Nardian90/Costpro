@@ -512,7 +512,7 @@ export default function POSView() {
             (showCart || lastSale) && "lg:pr-[460px] xl:pr-[500px] 2xl:pr-[540px]",
           )}
         >
-          <div className="space-y-3 sm:space-y-4 sticky top-[76px] z-40 bg-background/95 backdrop-blur-md pb-3 sm:pb-4 pt-2 -mx-4 px-4 shadow-xl">
+          <div className="space-y-3 sm:space-y-4 sticky top-[calc(env(safe-area-inset-top)+56px)] sm:top-[76px] z-40 bg-background/95 backdrop-blur-md pb-3 sm:pb-4 pt-2 -mx-3 sm:-mx-4 px-3 sm:px-4 shadow-xl">
             <div className="flex items-center gap-2">
               <div className="flex-1 relative">
                 <SearchBar

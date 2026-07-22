@@ -69,7 +69,7 @@ export default function CatalogSearchAndFilters({
   return (
     <>
       {/* Professional Search Bar — categorías movidas al CatalogHeader */}
-      <div className="space-y-2 sticky top-[76px] z-40 bg-background/95 backdrop-blur-md pb-2 -mx-4 px-4 sm:relative sm:top-0 sm:bg-transparent sm:pb-0 sm:mx-0 sm:px-0">
+      <div className="space-y-2 sticky top-[calc(env(safe-area-inset-top)+56px)] sm:top-[76px] z-40 bg-background/95 backdrop-blur-md pb-2 -mx-3 sm:-mx-4 px-3 sm:px-4 sm:relative sm:top-0 sm:bg-transparent sm:pb-0 sm:mx-0 sm:px-0">
         <SearchBar
           value={searchTerm}
           onChange={onSearchChange}

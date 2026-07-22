@@ -261,7 +261,7 @@ export default function SalesHubView() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-[clamp(1.5rem,5vw,2.25rem)] font-black text-foreground tracking-tighter uppercase">
@@ -368,7 +368,7 @@ export default function SalesHubView() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: idx * 0.08 }}
               className={cn(
-                "group relative p-6 rounded-2xl border-2 text-left transition-all hover:shadow-xl active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-primary/30",
+                "group relative p-4 sm:p-6 rounded-2xl border-2 text-left transition-all hover:shadow-xl active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-primary/30",
                 card.bgColor,
                 card.borderColor,
               )}

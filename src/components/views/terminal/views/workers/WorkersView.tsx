@@ -378,18 +378,18 @@ export function WorkersView() {
   }
 
   return (
-    <div className="w-full max-w-7xl mx-auto space-y-6 p-4" aria-busy={loading}>
+    <div className="w-full space-y-3 sm:space-y-6" aria-busy={loading}>
       {/* Header */}
-      <div className="flex items-center justify-between gap-4 flex-wrap">
-        <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary to-success flex items-center justify-center shrink-0 shadow-lg">
-            <Users className="w-7 h-7 text-white" />
+      <div className="flex items-center justify-between gap-2 sm:gap-4 flex-wrap">
+        <div className="flex items-center gap-2 sm:gap-4 min-w-0">
+          <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-gradient-to-br from-primary to-success flex items-center justify-center shrink-0 shadow-lg">
+            <Users className="w-5 h-5 sm:w-7 sm:h-7 text-white" />
           </div>
-          <div>
-            <h1 className="text-2xl font-black uppercase tracking-tighter text-foreground">
+          <div className="min-w-0">
+            <h1 className="text-lg sm:text-2xl font-black uppercase tracking-tight sm:tracking-tighter text-foreground truncate">
               Trabajadores y Comisiones
             </h1>
-            <p className="text-sm font-bold text-muted-foreground uppercase tracking-widest mt-0.5">
+            <p className="text-[10px] sm:text-sm font-bold text-muted-foreground uppercase tracking-widest mt-0.5">
               {workers.length} trabajadores · tienda activa
             </p>
           </div>
@@ -750,7 +750,7 @@ function WorkersTab({
   return (
     <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
       {/* Filtros de fecha */}
-      <div className="bg-card rounded-2xl border-2 border-border p-4 flex flex-wrap items-end gap-4">
+      <div className="bg-card rounded-xl border border-border p-3 sm:p-4 flex flex-wrap items-end gap-2 sm:gap-4">
         <div>
           <label className="text-xs font-black uppercase tracking-widest text-muted-foreground block mb-1">Desde</label>
           <input type="date" value={dateFrom} onChange={(e) => onDateFromChange(e.target.value)} className="h-11 px-3 rounded-xl border-2 border-border bg-background text-sm font-bold min-h-[44px] text-foreground" />
@@ -770,15 +770,15 @@ function WorkersTab({
           <table className="w-full text-sm">
             <thead className="bg-muted/30">
               <tr className="border-b-2 border-border text-left">
-                <th className="py-3 px-4 font-black uppercase tracking-widest text-xs text-muted-foreground">Trabajador</th>
-                <th className="py-3 px-4 font-black uppercase tracking-widest text-xs text-muted-foreground hidden sm:table-cell">CI</th>
-                <th className="py-3 px-4 font-black uppercase tracking-widest text-xs text-muted-foreground text-right hidden md:table-cell">Cash</th>
-                <th className="py-3 px-4 font-black uppercase tracking-widest text-xs text-muted-foreground text-right hidden md:table-cell">Transfer</th>
-                <th className="py-3 px-4 font-black uppercase tracking-widest text-xs text-muted-foreground text-right">Total</th>
-                <th className="py-3 px-4 font-black uppercase tracking-widest text-xs text-muted-foreground hidden lg:table-cell">Regla activa</th>
-                <th className="py-3 px-4 font-black uppercase tracking-widest text-xs text-muted-foreground hidden lg:table-cell">Último pago</th>
-                <th className="py-3 px-4 font-black uppercase tracking-widest text-xs text-muted-foreground text-center">Estado</th>
-                <th className="py-3 px-4 font-black uppercase tracking-widest text-xs text-muted-foreground text-center">Acciones</th>
+                <th className="py-2 px-2 sm:py-3 sm:px-4 font-black uppercase tracking-widest text-xs text-muted-foreground">Trabajador</th>
+                <th className="py-2 px-2 sm:py-3 sm:px-4 font-black uppercase tracking-widest text-xs text-muted-foreground hidden sm:table-cell">CI</th>
+                <th className="py-2 px-2 sm:py-3 sm:px-4 font-black uppercase tracking-widest text-xs text-muted-foreground text-right hidden md:table-cell">Cash</th>
+                <th className="py-2 px-2 sm:py-3 sm:px-4 font-black uppercase tracking-widest text-xs text-muted-foreground text-right hidden md:table-cell">Transfer</th>
+                <th className="py-2 px-2 sm:py-3 sm:px-4 font-black uppercase tracking-widest text-xs text-muted-foreground text-right">Total</th>
+                <th className="py-2 px-2 sm:py-3 sm:px-4 font-black uppercase tracking-widest text-xs text-muted-foreground hidden lg:table-cell">Regla activa</th>
+                <th className="py-2 px-2 sm:py-3 sm:px-4 font-black uppercase tracking-widest text-xs text-muted-foreground hidden lg:table-cell">Último pago</th>
+                <th className="py-2 px-2 sm:py-3 sm:px-4 font-black uppercase tracking-widest text-xs text-muted-foreground text-center">Estado</th>
+                <th className="py-2 px-2 sm:py-3 sm:px-4 font-black uppercase tracking-widest text-xs text-muted-foreground text-center">Acciones</th>
               </tr>
             </thead>
             <tbody>
@@ -792,12 +792,12 @@ function WorkersTab({
               ) : (
                 workers.map((w: WorkerSummary) => (
                   <tr key={w.worker_id} className={cn('border-b border-border/50 hover:bg-muted/30', w.status !== 'active' && 'opacity-60')}>
-                    <td className="py-3 px-4 font-bold text-foreground">{w.first_name} {w.last_name}</td>
-                    <td className="py-3 px-4 font-mono text-muted-foreground hidden sm:table-cell">{w.ci}</td>
-                    <td className="py-3 px-4 text-right font-mono text-foreground hidden md:table-cell">{formatCurrency(w.sales_cash)}</td>
-                    <td className="py-3 px-4 text-right font-mono text-foreground hidden md:table-cell">{formatCurrency(w.sales_transfer)}</td>
-                    <td className="py-3 px-4 text-right font-mono font-black text-foreground">{formatCurrency(w.sales_total)}</td>
-                    <td className="py-3 px-4 text-xs hidden lg:table-cell">
+                    <td className="py-2 px-2 sm:py-3 sm:px-4 font-bold text-foreground">{w.first_name} {w.last_name}</td>
+                    <td className="py-2 px-2 sm:py-3 sm:px-4 font-mono text-muted-foreground hidden sm:table-cell">{w.ci}</td>
+                    <td className="py-2 px-2 sm:py-3 sm:px-4 text-right font-mono text-foreground hidden md:table-cell">{formatCurrency(w.sales_cash)}</td>
+                    <td className="py-2 px-2 sm:py-3 sm:px-4 text-right font-mono text-foreground hidden md:table-cell">{formatCurrency(w.sales_transfer)}</td>
+                    <td className="py-2 px-2 sm:py-3 sm:px-4 text-right font-mono font-black text-foreground">{formatCurrency(w.sales_total)}</td>
+                    <td className="py-2 px-2 sm:py-3 sm:px-4 text-xs hidden lg:table-cell">
                       {w.active_rule_type ? (
                         <span className="px-2 py-1 rounded-md bg-primary/15 text-primary font-bold border border-primary/30">
                           {RULE_TYPE_LABELS[w.active_rule_type] || w.active_rule_type}
@@ -807,7 +807,7 @@ function WorkersTab({
                         <span className="text-muted-foreground">—</span>
                       )}
                     </td>
-                    <td className="py-3 px-4 text-xs text-muted-foreground hidden lg:table-cell">
+                    <td className="py-2 px-2 sm:py-3 sm:px-4 text-xs text-muted-foreground hidden lg:table-cell">
                       {w.last_payment_date ? (
                         <div>
                           <div>{formatDate(w.last_payment_date)}</div>
@@ -815,7 +815,7 @@ function WorkersTab({
                         </div>
                       ) : '—'}
                     </td>
-                    <td className="py-3 px-4 text-center">
+                    <td className="py-2 px-2 sm:py-3 sm:px-4 text-center">
                       <span className={cn(
                         'px-2 py-1 rounded-md text-xs font-bold uppercase border',
                         w.status === 'active'
@@ -825,7 +825,7 @@ function WorkersTab({
                         {w.status === 'active' ? 'Activo' : 'Inactivo'}
                       </span>
                     </td>
-                    <td className="py-3 px-4">
+                    <td className="py-2 px-2 sm:py-3 sm:px-4">
                       <div className="flex items-center justify-center gap-1 flex-wrap">
                         {/* Pagar comisión */}
                         <button
@@ -1658,13 +1658,13 @@ function RulesTab({ rules, storeId, onRefresh, onEdit, onNew }: any) {
             <table className="w-full text-sm min-w-[640px]">
               <thead className="bg-muted/30">
                 <tr className="border-b-2 border-border text-left">
-                  <th className="py-3 px-4 font-black uppercase tracking-widest text-xs text-muted-foreground">Tipo</th>
-                  <th className="py-3 px-4 font-black uppercase tracking-widest text-xs text-muted-foreground">Aplica a</th>
-                  <th className="py-3 px-4 font-black uppercase tracking-widest text-xs text-muted-foreground">Valor</th>
-                  <th className="py-3 px-4 font-black uppercase tracking-widest text-xs text-muted-foreground hidden md:table-cell">Base</th>
-                  <th className="py-3 px-4 font-black uppercase tracking-widest text-xs text-muted-foreground hidden md:table-cell">Prioridad</th>
-                  <th className="py-3 px-4 font-black uppercase tracking-widest text-xs text-muted-foreground hidden lg:table-cell">Vigencia</th>
-                  <th className="py-3 px-4 font-black uppercase tracking-widest text-xs text-muted-foreground text-center">Acción</th>
+                  <th className="py-2 px-2 sm:py-3 sm:px-4 font-black uppercase tracking-widest text-xs text-muted-foreground">Tipo</th>
+                  <th className="py-2 px-2 sm:py-3 sm:px-4 font-black uppercase tracking-widest text-xs text-muted-foreground">Aplica a</th>
+                  <th className="py-2 px-2 sm:py-3 sm:px-4 font-black uppercase tracking-widest text-xs text-muted-foreground">Valor</th>
+                  <th className="py-2 px-2 sm:py-3 sm:px-4 font-black uppercase tracking-widest text-xs text-muted-foreground hidden md:table-cell">Base</th>
+                  <th className="py-2 px-2 sm:py-3 sm:px-4 font-black uppercase tracking-widest text-xs text-muted-foreground hidden md:table-cell">Prioridad</th>
+                  <th className="py-2 px-2 sm:py-3 sm:px-4 font-black uppercase tracking-widest text-xs text-muted-foreground hidden lg:table-cell">Vigencia</th>
+                  <th className="py-2 px-2 sm:py-3 sm:px-4 font-black uppercase tracking-widest text-xs text-muted-foreground text-center">Acción</th>
                 </tr>
               </thead>
               <tbody>
@@ -1672,15 +1672,15 @@ function RulesTab({ rules, storeId, onRefresh, onEdit, onNew }: any) {
                   <tr><td colSpan={7} className="py-12 text-center text-muted-foreground">Sin reglas configuradas</td></tr>
                 ) : rules.map((r: CommissionRule) => (
                   <tr key={r.id} className="border-b border-border/50 hover:bg-muted/30">
-                    <td className="py-3 px-4">
+                    <td className="py-2 px-2 sm:py-3 sm:px-4">
                       <span className="px-2 py-1 rounded-md bg-primary/15 text-primary font-bold border border-primary/30 text-xs">
                         {RULE_TYPE_LABELS[r.type] || r.type}
                       </span>
                     </td>
-                    <td className="py-3 px-4 text-xs">
+                    <td className="py-2 px-2 sm:py-3 sm:px-4 text-xs">
                       {r.worker_id ? 'Worker específico' : <span className="text-primary font-bold">Toda la tienda</span>}
                     </td>
-                    <td className="py-3 px-4 font-mono text-foreground">
+                    <td className="py-2 px-2 sm:py-3 sm:px-4 font-mono text-foreground">
                       {r.type === 'percentage_sales' && `${r.value_percent}%`}
                       {r.type === 'fixed_amount' && formatCurrency(r.fixed_value || 0)}
                       {r.type === 'salary_based' && formatCurrency(r.salary_amount || 0)}
@@ -1703,12 +1703,12 @@ function RulesTab({ rules, storeId, onRefresh, onEdit, onNew }: any) {
                         </span>
                       )}
                     </td>
-                    <td className="py-3 px-4 text-xs">{BASE_CALC_LABELS[r.base_calculation] || r.base_calculation}</td>
-                    <td className="py-3 px-4 font-mono text-center hidden md:table-cell">{r.priority}</td>
-                    <td className="py-3 px-4 text-xs text-muted-foreground hidden lg:table-cell">
+                    <td className="py-2 px-2 sm:py-3 sm:px-4 text-xs">{BASE_CALC_LABELS[r.base_calculation] || r.base_calculation}</td>
+                    <td className="py-2 px-2 sm:py-3 sm:px-4 font-mono text-center hidden md:table-cell">{r.priority}</td>
+                    <td className="py-2 px-2 sm:py-3 sm:px-4 text-xs text-muted-foreground hidden lg:table-cell">
                       {formatDate(r.valid_from)} → {r.valid_to ? formatDate(r.valid_to) : '∞'}
                     </td>
-                    <td className="py-3 px-4 text-center">
+                    <td className="py-2 px-2 sm:py-3 sm:px-4 text-center">
                       <button
                         onClick={() => onEdit(r)}
                         className="p-2.5 min-h-[44px] min-w-[44px] rounded-lg hover:bg-muted text-muted-foreground hover:text-primary flex items-center justify-center"
@@ -2353,11 +2353,11 @@ function PaymentsTab({ payments, onRefresh }: any) {
           <table className="w-full text-sm">
             <thead className="bg-muted/30">
               <tr className="border-b-2 border-border text-left">
-                <th className="py-3 px-4 font-black uppercase tracking-widest text-xs text-muted-foreground">Trabajador</th>
-                <th className="py-3 px-4 font-black uppercase tracking-widest text-xs text-muted-foreground">Periodo</th>
-                <th className="py-3 px-4 font-black uppercase tracking-widest text-xs text-muted-foreground text-right">Final</th>
-                <th className="py-3 px-4 font-black uppercase tracking-widest text-xs text-muted-foreground">Estado</th>
-                <th className="py-3 px-4 font-black uppercase tracking-widest text-xs text-muted-foreground">Acciones</th>
+                <th className="py-2 px-2 sm:py-3 sm:px-4 font-black uppercase tracking-widest text-xs text-muted-foreground">Trabajador</th>
+                <th className="py-2 px-2 sm:py-3 sm:px-4 font-black uppercase tracking-widest text-xs text-muted-foreground">Periodo</th>
+                <th className="py-2 px-2 sm:py-3 sm:px-4 font-black uppercase tracking-widest text-xs text-muted-foreground text-right">Final</th>
+                <th className="py-2 px-2 sm:py-3 sm:px-4 font-black uppercase tracking-widest text-xs text-muted-foreground">Estado</th>
+                <th className="py-2 px-2 sm:py-3 sm:px-4 font-black uppercase tracking-widest text-xs text-muted-foreground">Acciones</th>
               </tr>
             </thead>
             <tbody>
@@ -2367,14 +2367,14 @@ function PaymentsTab({ payments, onRefresh }: any) {
                 const s = statusLabels[p.status] || statusLabels.draft;
                 return (
                   <tr key={p.id} className="border-b border-border/50 hover:bg-muted/30">
-                    <td className="py-3 px-4 font-bold text-foreground">
+                    <td className="py-2 px-2 sm:py-3 sm:px-4 font-bold text-foreground">
                       {p.worker ? `${p.worker.first_name} ${p.worker.last_name}` : '—'}
                     </td>
-                    <td className="py-3 px-4 text-xs text-muted-foreground">
+                    <td className="py-2 px-2 sm:py-3 sm:px-4 text-xs text-muted-foreground">
                       {formatDate(p.period_start)} → {formatDate(p.period_end)}
                     </td>
-                    <td className="py-3 px-4 text-right font-mono font-black text-foreground">{formatCurrency(p.final_amount)}</td>
-                    <td className="py-3 px-4">
+                    <td className="py-2 px-2 sm:py-3 sm:px-4 text-right font-mono font-black text-foreground">{formatCurrency(p.final_amount)}</td>
+                    <td className="py-2 px-2 sm:py-3 sm:px-4">
                       <span className={cn('px-2 py-1 rounded-md text-xs font-bold uppercase border', s.color)}>
                         {s.label}
                       </span>
@@ -2384,7 +2384,7 @@ function PaymentsTab({ payments, onRefresh }: any) {
                         </span>
                       )}
                     </td>
-                    <td className="py-3 px-4">
+                    <td className="py-2 px-2 sm:py-3 sm:px-4">
                       {/* FIX-COMMISSION-PAY (2026-07-12): Acciones de aprobar/pagar/cancelar */}
                       {p.status === 'draft' && (
                         <button
