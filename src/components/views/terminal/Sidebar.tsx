@@ -107,9 +107,10 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
     setFocusModuleId(moduleId);
     // FIX: Do NOT auto-expand children — let the user expand manually
     setExpandedModules([]);
-    // Close sidebar on mobile after entering focus
-    if (isMobile) onClose();
-  }, [setSidebarState, isMobile, onClose]);
+    // FIX (2026-07-22): NO cerrar el sidebar al navegar en móvil.
+    // El usuario quiere navegación continua — el sidebar se cierra solo
+    // al hacer clic en el backdrop (overlay) o en el botón X.
+  }, [setSidebarState]);
 
   // ── Focus mode: exit ──
   const exitFocusMode = useCallback(() => {
@@ -148,18 +149,13 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
       exitFocusMode();
       setCurrentView('occ');
       onViewChange('occ');
-      if (isMobile) onClose();
+      // FIX (2026-07-22): NO cerrar sidebar al navegar en móvil.
       return;
     }
-    // FIX-DEFAULT-VIEW (2026-07-13): el caso especial 'core_chat' fue eliminado.
-    // El grupo ASISTENTE ya no existe — Chat es ahora un item directo dentro de
-    // ESCRITORIO y se navega como cualquier otro item (handleItemClick).
-    // FIX-CALC-VIEW (2026-07-10): HERRAMIENTAS (core_tools) es acceso directo
-    // a la vista de calculadora integrada.
     if (mod.id === 'core_tools') {
       setCurrentView('calculator');
       onViewChange('calculator');
-      if (isMobile) onClose();
+      // FIX (2026-07-22): NO cerrar sidebar al navegar en móvil.
       return;
     }
     // If already in focus for this module → exit focus
@@ -170,18 +166,23 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
     // Enter focus mode for this module
     enterFocusMode(mod.id);
     // F3: Navegar a la vista por defecto del módulo si existe.
-    // Esto asegura que el usuario vea contenido del módulo, no "Centro de Comando".
     const defaultView = MODULE_DEFAULT_VIEW[mod.id];
     if (defaultView) {
       onViewChange(defaultView);
     }
-  }, [exitFocusMode, enterFocusMode, focusModuleId, setCurrentView, onViewChange, isMobile, onClose]);
+  }, [exitFocusMode, enterFocusMode, focusModuleId, setCurrentView, onViewChange]);
 
   // ── Click on a nav item (leaf) ──
   const handleNavClick = useCallback((view: ViewType) => {
     onViewChange(view);
-    if (isMobile) onClose();
-  }, [onViewChange, isMobile, onClose]);
+    // FIX (2026-07-22): NO cerrar el sidebar al navegar en móvil.
+    // El sidebar se cierra solo al:
+    //   1. Clic en el backdrop/overlay (TerminalShell.tsx línea 591)
+    //   2. Clic en el botón X (línea 485 de este archivo)
+    //   3. Clic en el botón hamburguesa del header
+    // Esto permite navegación continua sin que el sidebar se cierre
+    // después de cada clic, como pidió el usuario.
+  }, [onViewChange]);
 
   // ── In rail mode, expand sidebar on module click ──
   const handleRailModuleClick = useCallback((mod: NavModule) => {
@@ -554,7 +555,7 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
                       exitFocusMode();
                       setCurrentView('chat');
                       onViewChange('chat');
-                      if (isMobile) onClose();
+                      // FIX (2026-07-22): NO cerrar sidebar al navegar en móvil.
                     }}
                     className={cn(
                       "w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-medium transition-all active:scale-[0.98]",

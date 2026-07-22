@@ -296,9 +296,12 @@ export default function TerminalShell() {
       });
     }
 
-    if (isMobile) {
-      setSidebarState('closed');
-    }
+    // FIX (2026-07-22): NO cerrar el sidebar al navegar en móvil.
+    // El usuario quiere navegación continua — el sidebar se cierra solo al:
+    //   1. Clic en el backdrop/overlay (línea 591)
+    //   2. Clic en el botón X del sidebar (Sidebar.tsx línea 486)
+    //   3. Clic en el botón toggle del header
+    // Antes: if (isMobile) { setSidebarState('closed'); }
   };
 
   const handlePrefetchView = (view: ViewType) => {
