@@ -119,7 +119,9 @@ const ActionMenu: React.FC<ActionMenuProps> = ({
         'w-full z-20 transition-all duration-300',
         sticky && (position === 'top'
           ? (topOffset || 'sticky top-[60px] sm:top-[92px]')
-          : 'fixed bottom-0 sm:sticky sm:bottom-4 left-0 right-0 p-4 sm:p-0'
+          // FIX (2026-07-22): en móvil NO usar fixed bottom-0 porque solapa con MobileTabBar.
+          // En su lugar, que fluya con el contenido (sticky en desktop, normal en móvil).
+          : 'sticky bottom-4 sm:sticky sm:bottom-4 p-2 sm:p-0'
         ),
         className
       )}

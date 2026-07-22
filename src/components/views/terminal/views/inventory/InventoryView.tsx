@@ -28,6 +28,7 @@ import { useQueryClient } from '@tanstack/react-query';
 
 import InventoryCardView from './InventoryCardView';
 import InventoryTableView from './InventoryTableView';
+import InventoryMobileTable from './InventoryMobileTable';
 import ProductReceptionView from './ProductReceptionView';
 import InventoryAdjustmentModal from './InventoryAdjustmentModal';
 import KardexModal from './KardexModal';
@@ -881,6 +882,31 @@ export default function InventoryView() {
                                 isTogglingStockVisible={togglingStockVisibleId}
                                 onTogglePromotion={handleTogglePromotion}
                                 isTogglingPromotion={togglingPromotionId}
+                            />
+                        ) : isMobile ? (
+                            // FIX (2026-07-22): tabla compacta REAL para móvil.
+                            // InventoryTableView usa table-to-cards CSS que convierte filas
+                            // en tarjetas apiladas (no es tabla). InventoryMobileTable es una
+                            // tabla de verdad con 3 columnas fijas (Producto | Stock | Precio)
+                            // y acciones expandibles inline al hacer tap en la fila.
+                            <InventoryMobileTable
+                                products={loadedProducts}
+                                loadMore={fetchMoreProducts}
+                                hasMore={hasNextPage}
+                                isLoading={isFetchingNextPage}
+                                onAdjust={handleAdjustProduct}
+                                onViewKardex={setKardexProduct}
+                                onToggleVisible={handleToggleVisible}
+                                isTogglingVisible={togglingVisibleId}
+                                onTogglePriceVisible={handleTogglePriceVisible}
+                                isTogglingPriceVisible={togglingPriceVisibleId}
+                                onToggleStockVisible={handleToggleStockVisible}
+                                isTogglingStockVisible={togglingStockVisibleId}
+                                onTogglePromotion={handleTogglePromotion}
+                                isTogglingPromotion={togglingPromotionId}
+                                fcStatusMap={fcStatusMap}
+                                fcResolutionMap={fcResolutionMap}
+                                onViewFC={handleViewFC}
                             />
                         ) : (
                             <InventoryTableView

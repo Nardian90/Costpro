@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Home, Package, ShoppingCart, Building, MoreHorizontal, Search, Check, X, Warehouse, DollarSign, FolderOpen, FileText, LayoutGrid, Paperclip, PenTool } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Home, Package, ShoppingCart, Building, MoreHorizontal, Search, Check, X, Warehouse, DollarSign, FolderOpen, FileText, LayoutGrid, Paperclip, PenTool, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { type ViewType, useUIStore } from '@/store';
@@ -14,20 +14,17 @@ import type { NavigationItem } from '@/hooks/ui/useTerminalNavigation';
 /**
  * F5-T02: Tab bar inferior fija para mobile (<768px).
  *
- * M-4 (IA Audit): rediseñado con 4 accesos rápidos alineados a las 4 tareas
- * operativas más frecuentes del personal de tienda:
- *   1. Vender   → Terminal de Venta (pos)
- *   2. Recibir  → Recepciones (reception_list) — abastecimiento
- *   3. Inventario → Inventario (inventory) — consulta de stock
- *   4. Caja     → Arqueo de Caja (cash) — cierre de turno
+ * FIX (2026-07-22): tab bar COLAPSABLE.
+ *   Problema: la tab bar固定 en bottom ocultaba el ActionMenu del InventoryView
+ *   (que también es fixed bottom-0) → solapamiento visual.
+ *   Solución: el usuario puede colapsar la tab bar con un botón (chevron).
+ *   Cuando está colapsada, se muestra un pequeño indicador vertical flotante
+ *   que permite expandirla de nuevo. El estado se persiste en localStorage.
  *
- * Antes: Inicio, Stock, POS, Tiendas, Más (5 tabs mezclando navegación raíz
- * con operación). Ahora: 4 tabs operativos + 1 "Más" para todo lo demás.
- * Las vistas de gestión (Inicio, Tiendas, Dashboard) están bajo "Más" porque
- * no son acciones operativas frecuentes del personal en piso de venta.
- *
- * El Sheet de "Tiendas" se mantiene accesible vía el Sheet "Más" para admins.
+ * M-4 (IA Audit): 4 accesos rápidos operativos + 1 "Más".
  */
+
+const COLLAPSED_KEY = 'costpro:mobile-tabbar:collapsed';
 
 interface MobileTabBarProps {
   navigationItems: NavigationItem[];
@@ -42,6 +39,20 @@ export function MobileTabBar({ navigationItems, currentView, onViewChange }: Mob
   const [moreSheetOpen, setMoreSheetOpen] = useState(false);
   const [storeSheetOpen, setStoreSheetOpen] = useState(false);
   const [storeSearch, setStoreSearch] = useState('');
+
+  // FIX (2026-07-22): estado colapsable persistido
+  const [collapsed, setCollapsed] = useState(false);
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const v = localStorage.getItem(COLLAPSED_KEY);
+      if (v === 'true') setCollapsed(true);
+    }
+  }, []);
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(COLLAPSED_KEY, String(collapsed));
+    }
+  }, [collapsed]);
 
   const isAdmin = user?.role === 'admin';
   const isEncargado = user?.role === 'encargado' || user?.role === 'manager';
@@ -100,36 +111,55 @@ export function MobileTabBar({ navigationItems, currentView, onViewChange }: Mob
 
   return (
     <>
-      {/* Tab bar fija inferior — solo mobile */}
-      <nav
-        className="sm:hidden fixed bottom-0 left-0 right-0 z-30 bg-card/95 backdrop-blur-md border-t border-border flex items-center justify-around px-2 py-1"
-        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
-        aria-label="Navegación principal mobile"
-      >
-        {isCostModule ? (
-          // C1: Tabs contextuales del módulo COSTOS — reemplazan los operativos
-          // de inventario cuando el usuario está en cost-sheets.
-          // F2: Labels cortos + aria-label completo para accesibilidad.
-          costTabs.map(tab => (
-            <TabButton
-              key={tab.section}
-              label={tab.label}
-              ariaLabel={tab.ariaLabel}
-              icon={tab.icon}
-              isActive={tab.section === '__more__' ? moreSheetOpen : activeCostSection === tab.section}
-              onClick={() => handleCostTabClick(tab.section)}
+      {/* FIX (2026-07-22): Si está colapsada, mostrar solo un indicador vertical flotante.
+          Cuando el usuario hace tap, se expande la tab bar completa. */}
+      {collapsed ? (
+        <button
+          type="button"
+          onClick={() => setCollapsed(false)}
+          aria-label="Expandir barra de navegación"
+          className="sm:hidden fixed bottom-4 right-4 z-30 w-12 h-12 rounded-full bg-primary text-primary-foreground shadow-2xl flex items-center justify-center active:scale-90 transition-transform"
+          style={{ bottom: 'calc(1rem + env(safe-area-inset-bottom))' }}
+        >
+          <ChevronDown className="w-5 h-5 rotate-180" />
+        </button>
+      ) : (
+        <nav
+          className="sm:hidden fixed bottom-0 left-0 right-0 z-30 bg-card/95 backdrop-blur-md border-t border-border flex items-center justify-around px-2 py-1"
+          style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+          aria-label="Navegación principal mobile"
+        >
+          {isCostModule ? (
+            costTabs.map(tab => (
+              <TabButton
+                key={tab.section}
+                label={tab.label}
+                ariaLabel={tab.ariaLabel}
+                icon={tab.icon}
+                isActive={tab.section === '__more__' ? moreSheetOpen : activeCostSection === tab.section}
+                onClick={() => handleCostTabClick(tab.section)}
+              />
+            ))
+          ) : (
+            <DefaultTabs
+              currentView={currentView}
+              handleTabClick={handleTabClick}
+              moreSheetOpen={moreSheetOpen}
+              setMoreSheetOpen={setMoreSheetOpen}
             />
-          ))
-        ) : (
-          // M-4 (IA Audit): 4 accesos operativos + Más (default para resto de módulos).
-          <DefaultTabs
-            currentView={currentView}
-            handleTabClick={handleTabClick}
-            moreSheetOpen={moreSheetOpen}
-            setMoreSheetOpen={setMoreSheetOpen}
-          />
-        )}
-      </nav>
+          )}
+          {/* Botón colapsar — a la derecha de los tabs */}
+          <button
+            type="button"
+            onClick={() => setCollapsed(true)}
+            aria-label="Colapsar barra de navegación"
+            className="flex flex-col items-center justify-center gap-0.5 py-1.5 px-1 min-h-[48px] min-w-[36px] rounded-lg transition-colors text-muted-foreground hover:text-foreground"
+          >
+            <ChevronDown className="w-4 h-4" />
+            <span className="text-[9px] font-bold uppercase">Ocultar</span>
+          </button>
+        </nav>
+      )}
 
       {/* Sheet: Selector de tienda — controlado directamente por state local */}
       <Sheet open={storeSheetOpen} onOpenChange={(o) => { setStoreSheetOpen(o); if (!o) setStoreSearch(''); }}>
