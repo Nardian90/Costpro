@@ -37,7 +37,7 @@ import { Product } from '@/types';
 import { uuidRegex } from '@/validation/schemas';
 import ActionMenu, { Action } from '@/components/ui/ActionMenu';
 import SearchBar from '@/components/ui/SearchBar';
-import { CategoryChips } from '@/components/ui/atomic';
+import { CategoryChips, ViewSwitcher } from '@/components/ui/atomic';
 import { StateRenderer } from '@/components/ui/StateRenderer';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useIsMobile } from '@/hooks/ui/useMobile';
@@ -104,6 +104,9 @@ export default function InventoryView() {
       if (typeof window !== 'undefined') {
         const v = localStorage.getItem('costpro:inventory:layout');
         if (v === 'table' || v === 'card') return v;
+        // FIX (2026-07-22): default 'card' en móvil, 'table' en desktop — como CatalogView.
+        // Antes siempre era 'table' y luego se forzaba 'card' en móvil sin dar opción al usuario.
+        return window.innerWidth >= 768 ? 'table' : 'card';
       }
       return 'table';
     });
@@ -174,24 +177,14 @@ export default function InventoryView() {
       if (typeof window !== 'undefined') localStorage.setItem('costpro:inventory:fcFilter', fcFilter);
     }, [fcFilter]);
 
-    // En móvil forzamos siempre 'card' (UX). En desktop respetamos el valor
-    // persistido en localStorage (no sobreescribimos) para que la preferencia
-    // del usuario sobreviva entre sesiones.
-    // FIX: Solo forzar card si isMobile CAMBIA a true (no en cada render).
+    // FIX (2026-07-22): Ya NO forzamos 'card' al detectar móvil.
+    // El usuario puede elegir entre card/table vía ViewSwitcher en cualquier viewport.
+    // El default (línea 109) ya es 'card' en móvil, 'table' en desktop.
+    // Si el usuario cambia explícitamente, se respeta y se persiste en localStorage.
     const prevIsMobileRef = useRef(isMobile);
     useEffect(() => {
-        if (!isMobile) {
-            prevIsMobileRef.current = false;
-            return;
-        }
-        // Solo forzar card si es la primera vez que detecta mobile
-        // (no si el usuario ya eligió table en desktop y luego cambia a mobile)
-        if (!prevIsMobileRef.current) {
-            requestAnimationFrame(() => {
-                setLayoutMode('card');
-            });
-        }
-        prevIsMobileRef.current = true;
+        // Solo limpiamos el ref para tracking futuro, sin forzar layout.
+        prevIsMobileRef.current = isMobile;
     }, [isMobile]);
 
     const {
@@ -350,7 +343,8 @@ export default function InventoryView() {
             label: layoutMode === 'table' ? 'Vista Tarjetas' : 'Vista Tabla',
             icon: layoutMode === 'table' ? LayoutList : TableIcon,
             onClick: () => setLayoutMode(prev => prev === 'table' ? 'card' : 'table'),
-            className: 'hidden md:flex',
+            // FIX (2026-07-22): visible siempre (móvil y desktop). Antes 'hidden md:flex' ocultaba el toggle en móvil.
+            className: 'flex',
         },
         {
             id: 'toggle-reception',
@@ -810,7 +804,19 @@ export default function InventoryView() {
                     </button>
                 </div>
 
-                {/* Action menu alineado a la derecha */}
+                {/* ViewSwitcher — visible SIEMPRE (móvil + desktop).
+                    FIX (2026-07-22): antes el toggle estaba oculto en móvil ('hidden md:flex')
+                    y se forzaba 'card'. Ahora el usuario elige en cualquier viewport,
+                    igual que en CatalogView.
+                    Adaptador: layoutMode 'card' ↔ ViewSwitcher 'grid' */}
+                <div className="flex items-center gap-2 ml-auto">
+                    <ViewSwitcher
+                        currentView={layoutMode === 'card' ? 'grid' : 'table'}
+                        onViewChange={(v) => setLayoutMode(v === 'grid' ? 'card' : 'table')}
+                    />
+                </div>
+
+                {/* Action menu alineado a la derecha — solo desktop (móvil usa bottom) */}
                 {!isMobile && (
                     <ActionMenu
                         actions={actions}
