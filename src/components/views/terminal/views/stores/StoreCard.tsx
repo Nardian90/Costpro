@@ -1,18 +1,21 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Image from 'next/image';
 import {
   Edit, Trash2, Building, Target, Check, Loader2,
   RotateCcw, Power, UserCog, Settings, X, Archive, ArchiveRestore,
   Copy, ExternalLink, FileText, Users, BarChart3, TrendingUp,
-  ShoppingCart, AlertTriangle, Package, ChevronDown,
+  ShoppingCart, AlertTriangle, Package, ChevronDown, ShieldCheck,
 } from 'lucide-react';
 import { cn, formatCurrency, getStoreLogoUrl } from '@/lib/utils';
 import type { Store } from '@/types';
 import type { StoreKPI } from '@/hooks/api/useMultiStoreDashboard';
 import { Checkbox } from '@/components/ui/checkbox';
 import { StoreHealthBadge } from './StoreHealthBadge';
+import { BackupModal } from './backup/BackupModal';
+import { RestoreBackupModal } from './backup/RestoreBackupModal';
+import { useAuthStore } from '@/store';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 
@@ -85,6 +88,18 @@ export function StoreCard({
 }: StoreCardProps) {
   const t = useTranslations('stores');
   const tc = useTranslations('common');
+  const { user } = useAuthStore();
+  const [backupOpen, setBackupOpen] = useState(false);
+  const [restoreOpen, setRestoreOpen] = useState(false);
+
+  // Permisos para backup: admin global O encargado/manager/admin de esta tienda
+  // (cualquier membership activa con rol encargado+ en esta tienda).
+  const canBackup = isAdmin || !!user?.memberships?.some(
+    (m) =>
+      m.store_id === store.id &&
+      m.status === 'active' &&
+      ['encargado', 'manager', 'admin'].includes(m.role),
+  );
 
   return (
     <div
@@ -339,6 +354,29 @@ export function StoreCard({
             <ChevronDown className="w-3.5 h-3.5" />
           </summary>
           <div className="grid grid-cols-2 gap-2 p-2 border-t border-border/30">
+            {/* Backup / Restore buttons — visible para admin global o encargado+ de la tienda */}
+            {canBackup && (
+              <button
+                type="button"
+                onClick={() => setBackupOpen(true)}
+                aria-label={`Respaldo de tienda ${store.name}`}
+                className="min-h-[44px] py-2.5 rounded-xl border border-border hover:bg-primary/10 hover:text-primary font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-colors"
+              >
+                <ShieldCheck className="w-3 h-3" />
+                Respaldo
+              </button>
+            )}
+            {canBackup && (
+              <button
+                type="button"
+                onClick={() => setRestoreOpen(true)}
+                aria-label={`Importar respaldo en tienda ${store.name}`}
+                className="min-h-[44px] py-2.5 rounded-xl border border-border hover:bg-violet-100 hover:text-violet-700 dark:hover:bg-violet-950/40 font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-colors"
+              >
+                <ArchiveRestore className="w-3 h-3" />
+                Importar
+              </button>
+            )}
             <button
               type="button"
               onClick={() => onConfigStore(store)}
@@ -434,6 +472,24 @@ export function StoreCard({
           </div>
         </details>
       </div>
+
+      {/* Backup / Restore modals — only mounted when needed */}
+      {backupOpen && (
+        <BackupModal
+          open={backupOpen}
+          onOpenChange={setBackupOpen}
+          storeId={store.id}
+          storeName={store.name}
+        />
+      )}
+      {restoreOpen && (
+        <RestoreBackupModal
+          open={restoreOpen}
+          onOpenChange={setRestoreOpen}
+          storeId={store.id}
+          storeName={store.name}
+        />
+      )}
     </div>
   );
 }
