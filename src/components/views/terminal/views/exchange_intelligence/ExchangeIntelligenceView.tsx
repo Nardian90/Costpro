@@ -24,6 +24,7 @@ import {
   Download,
   FileSpreadsheet,
   X,
+  ChevronDown,
 } from 'lucide-react';
 // FIX: Code splitting — HistoryTab y VariationsTab usan recharts (1.8MB)
 // Se cargan con lazy solo cuando el usuario abre esas tabs
@@ -73,7 +74,7 @@ interface HistoryPoint {
   informal: number | null;
 }
 
-const TABS = [
+const ALL_TABS = [
   { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
   { id: 'history', label: 'Histórico', icon: TrendingUp },
   { id: 'variations', label: 'Variaciones', icon: Activity },
@@ -104,6 +105,8 @@ export function ExchangeIntelligenceView() {
   // de nuevo el rol (defense in depth).
   const { user } = useAuthStore();
   const isAdmin = user?.role === 'admin';
+  // FIX (2026-07-23): tab Configuración solo visible para admin
+  const TABS = useMemo(() => isAdmin ? ALL_TABS : ALL_TABS.filter(t => t.id !== 'configuracion'), [isAdmin]);
   const [showExcelModal, setShowExcelModal] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -579,6 +582,9 @@ export function ExchangeIntelligenceView() {
                 informalRateDate={informalRateDate}
                 officialIsCarryForward={officialIsCarryForward}
                 officialRateDate={officialRateDate}
+                isAdmin={isAdmin}
+                onManualCapture={handleManualCapture}
+                capturing={capturing}
               />
             )}
             {activeTab === 'history' && <Suspense fallback={<div className="flex items-center justify-center py-24"><RefreshCw className="w-8 h-8 animate-spin text-primary" /></div>}><HistoryTab data={historyData} /></Suspense>}
@@ -1099,6 +1105,9 @@ function DashboardTab({
   informalRateDate,
   officialIsCarryForward,
   officialRateDate,
+  isAdmin,
+  onManualCapture,
+  capturing,
 }: {
   officialUsd: number;
   informalUsd: number;
@@ -1115,6 +1124,9 @@ function DashboardTab({
   informalRateDate?: string;
   officialIsCarryForward?: boolean;
   officialRateDate?: string;
+  isAdmin?: boolean;
+  onManualCapture?: (days: number) => void;
+  capturing?: boolean;
 }) {
   // ─── Cálculos científicos de brecha y forecast ───
   const brechaStats = useMemo(
@@ -1203,26 +1215,56 @@ function DashboardTab({
   const segmentDescription = segmentDescriptions?.[bccSegment] ?? '';
 
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      {/* ─── Selector de segmento BCC (dentro del tab Dashboard) ─── */}
-      <div className="flex items-center gap-3 flex-wrap p-3 rounded-xl bg-muted/30 border border-border">
-        <span className="text-sm font-black uppercase tracking-widest text-foreground">Segmento BCC:</span>
-        {(Object.entries(segmentLabels) as [string, string][]).map(([seg, label]) => (
-          <button
-            key={seg}
-            onClick={() => setBccSegment(seg)}
-            className={cn(
-              'px-4 py-2 rounded-xl text-sm font-black uppercase tracking-widest transition-all min-h-[44px] border',
-              bccSegment === seg
-                ? 'bg-primary text-primary-foreground shadow-lg border-primary'
-                : 'bg-background text-muted-foreground hover:bg-primary/10 hover:text-primary border-border',
-            )}
-            aria-pressed={bccSegment === seg}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
+    <div className="space-y-4 sm:space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      {/* ─── Abanico colapsable: Segmento BCC + Actualizar BD (admin) ─── */}
+      <details className="rounded-xl border border-border bg-muted/20 overflow-hidden">
+        <summary className="w-full flex items-center justify-between p-3 cursor-pointer hover:bg-muted/30 transition-colors min-h-[44px] list-none [&::-webkit-details-marker]:hidden">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-black uppercase tracking-widest text-foreground">Segmento BCC:</span>
+            <span className="px-2 py-0.5 rounded-lg bg-primary/10 text-primary text-[10px] font-black uppercase border border-primary/20">
+              {segmentShortLabel}
+            </span>
+          </div>
+          <ChevronDown className="w-4 h-4 text-muted-foreground" />
+        </summary>
+        <div className="p-3 border-t border-border/30 space-y-3">
+          {/* Selector de segmento */}
+          <div className="flex flex-wrap gap-2">
+            {(Object.entries(segmentLabels) as [string, string][]).map(([seg, label]) => (
+              <button
+                key={seg}
+                onClick={() => setBccSegment(seg)}
+                className={cn(
+                  'px-3 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all min-h-[44px] border',
+                  bccSegment === seg
+                    ? 'bg-primary text-primary-foreground shadow-lg border-primary'
+                    : 'bg-background text-muted-foreground hover:bg-primary/10 hover:text-primary border-border',
+                )}
+                aria-pressed={bccSegment === seg}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          {/* Botón Actualizar BD — solo admin */}
+          {isAdmin && onManualCapture && (
+            <div className="flex items-center justify-between gap-3 p-3 rounded-xl bg-primary/5 border border-primary/20">
+              <div className="min-w-0">
+                <p className="text-xs font-black text-foreground">Actualizar BD (7 días)</p>
+                <p className="text-[10px] text-muted-foreground mt-0.5">BCC + solucionescuba.com</p>
+              </div>
+              <button
+                onClick={() => onManualCapture(7)}
+                disabled={capturing}
+                className="flex items-center gap-1.5 px-3 py-2 min-h-[44px] rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors font-bold text-xs shrink-0"
+              >
+                <Database className={cn('w-3.5 h-3.5', capturing && 'animate-pulse')} />
+                <span>{capturing ? '...' : 'Ejecutar'}</span>
+              </button>
+            </div>
+          )}
+        </div>
+      </details>
 
       {/* ── Tarjetas premium diferenciadas BCC vs elToque ── */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
