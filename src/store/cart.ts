@@ -498,11 +498,18 @@ export const useCartStore = create<CartState>()(
             if (!productId) return;
 
             // Prevent adding products from a different store
+            // FIX (2026-07-23): el RPC get_products_for_pos retorna p_store_id (parámetro)
+            // como store_id, no p.store_id real. Si el producto no tiene store_id (null/undefined),
+            // NO bloquear — asumir que pertenece a la tienda activa.
             const productStoreId = product?.store_id || (productInput as any).store_id;
             const cartStoreId = state.storeId;
             if (cartStoreId && productStoreId && productStoreId !== cartStoreId) {
               notify("error", "No puedes agregar productos de otra tienda al carrito actual");
               return;
+            }
+            // FIX: si el producto no tiene store_id (RPC lo retorna null), asignar el del carrito
+            if (!productStoreId && cartStoreId && product) {
+              product.store_id = cartStoreId;
             }
 
             const existing = state.items.find(

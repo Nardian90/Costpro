@@ -32,6 +32,7 @@ import { POSModals } from './POSModals';
 import POSTableView from './POSTableView';
 import PriceSelectorModal from './PriceSelectorModal';
 import BarcodeScanner from './BarcodeScanner';
+import CameraBarcodeScanner from './CameraBarcodeScanner';
 import EmptyProducts from './EmptyProducts';
 import POSLoadingSkeleton from './POSLoadingSkeleton';
 import { CashStatusWidget } from './CashStatusWidget';
@@ -64,9 +65,18 @@ export default function POSView() {
   }, []);
 
   // Sync cart storeId with active store to prevent cross-store sales
+  // FIX (2026-07-23): forzar sync al montar + cuando cambia activeStoreId
   React.useEffect(() => {
     if (user?.activeStoreId) {
-      useCartStore.getState().clearCartOnStoreSwitch(user.activeStoreId);
+      const cartState = useCartStore.getState();
+      // Si el carrito tiene un storeId diferente al activeStoreId, forzar sync
+      if (cartState.storeId !== user.activeStoreId) {
+        useCartStore.getState().clearCartOnStoreSwitch(user.activeStoreId);
+      }
+      // FIX: si el carrito no tiene storeId, setearlo
+      if (!cartState.storeId) {
+        useCartStore.setState({ storeId: user.activeStoreId, lastUpdated: Date.now() });
+      }
     }
   }, [user?.activeStoreId]);
 
@@ -151,6 +161,8 @@ export default function POSView() {
   const [posLayoutMode, setPosLayoutMode] = useState<'grid' | 'table'>('grid');
   const [showCart, setShowCart] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
+  // FIX (2026-07-23): escaneo directo a cámara sin paso intermedio
+  const [showCameraDirect, setShowCameraDirect] = useState(false);
   const [selectedProductForVariants, setSelectedProductForVariants] = useState<Product | null>(null);
   // POS-3b EM-1: Modo Cajero Express (layout full-screen alternativo).
   const [expressMode, setExpressMode] = useState(false);
@@ -394,10 +406,12 @@ export default function POSView() {
               aria-expanded={showCart}
             >
               <ShoppingCart className="w-5 h-5" />
-              <span>{isMobile ? `(${cartCount})` : `Caja (${cartCount})`}</span>
+              <span>{isMobile ? `🛒 (${cartCount})` : `Caja (${cartCount})`}</span>
             </button>
             {/* POS-3b EM-1: Toggle Modo Cajero Express.
-                Layout full-screen alternativo optimizado para venta de alto volumen. */}
+                Layout full-screen alternativo optimizado para venta de alto volumen.
+                FIX (2026-07-23): oculto en móvil — no es útil en pantalla pequeña. */}
+            {!isMobile && (
             <button
               type="button"
               onClick={() => setExpressMode(true)}
@@ -408,6 +422,7 @@ export default function POSView() {
               <Zap className="w-4 h-4" />
               <span className="hidden sm:inline">Express</span>
             </button>
+            )}
           </div>
         </div>
         {/* POS-2 MM-6: Widget de estado de caja siempre visible en el header del POS.
@@ -598,7 +613,7 @@ export default function POSView() {
                   Icono Camera + label "Escanear" en sm+ para claridad. */}
               <button
                 type="button"
-                onClick={() => setShowScanner(true)}
+                onClick={() => setShowCameraDirect(true)}
                 className="shrink-0 flex items-center justify-center gap-2 h-11 px-3 sm:px-4 rounded-xl bg-green-500/10 border border-green-500/30 text-green-600 dark:text-green-400 font-black text-xs uppercase tracking-widest hover:bg-green-500/20 active:scale-95 transition-all min-w-[44px]"
                 aria-label="Escanear código de barras con cámara"
               >
@@ -712,6 +727,13 @@ export default function POSView() {
         onClose={() => setShowScanner(false)}
         onScan={handleScan}
         products={products}
+      />
+
+      {/* FIX (2026-07-23): Cámara directa sin paso intermedio del BarcodeScanner */}
+      <CameraBarcodeScanner
+        isOpen={showCameraDirect}
+        onScan={(code) => { handleScan(code); setShowCameraDirect(false); }}
+        onClose={() => setShowCameraDirect(false)}
       />
 
       {/* POS-3a-v3 Fix 3: SpeedDial solo visible cuando el carrito NO está abierto.
