@@ -87,11 +87,11 @@ export function ThemeToggle() {
         </div>
       </button>
 
-      {/* Performance / Enhanced Toggle */}
+      {/* Performance / Enhanced Toggle — visible en móvil y desktop */}
       <button
         onClick={handleToggleMode}
         className={cn(
-          "hidden sm:flex relative w-9 h-9 sm:w-11 sm:h-11 items-center justify-center rounded-xl border active:scale-90 transition-all outline-none focus-visible:ring-2 focus-visible:ring-ring",
+          "relative w-9 h-9 sm:w-11 sm:h-11 flex items-center justify-center rounded-xl border active:scale-90 transition-all outline-none focus-visible:ring-2 focus-visible:ring-ring",
           isTransitioning && "scale-95",
           isPerformance
             ? "border-amber-500/40 bg-amber-500/10 hover:bg-amber-500/15"
@@ -110,7 +110,6 @@ export function ThemeToggle() {
             <Zap className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
           )}
         </div>
-        {/* Mode label - FIX: removida la luz verde de fondo en performance */}
         <span className={cn(
           "absolute -bottom-0.5 text-[6px] font-black uppercase tracking-widest",
           isPerformance ? "text-amber-500" : "text-muted-foreground/60"

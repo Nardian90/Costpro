@@ -676,3 +676,87 @@
 html.mode-transitioning * {
   transition-duration: var(--duration-normal) var(--ease-default) !important;
 }
+
+/* ============================================
+   PERFORMANCE MODE — Mobile-specific optimizations
+   Reducen consumo de batería, datos y CPU en móvil
+   ============================================ */
+
+/* ── Ocultar imágenes decorativas pesadas ── */
+.mode-performance img[loading="lazy"][class*="absolute"],
+.mode-performance img[class*="decorative"],
+.mode-performance .hero-image,
+.mode-performance .landing-hero-image {
+  display: none !important;
+}
+
+/* ── Reducir calidad de imágenes de producto en móvil ── */
+@media (max-width: 768px) {
+  .mode-performance img[class*="object-cover"],
+  .mode-performance img[class*="product"] {
+    filter: none !important;
+    /* Evitar transform 3D en imágenes */
+    transform: none !important;
+  }
+}
+
+/* ── Desactivar framer-motion en móvil (via CSS) ──
+   Los componentes framer-motion usan will-change: transform
+   que consume GPU. En performance móvil, lo desactivamos. */
+@media (max-width: 768px) {
+  .mode-performance [style*="will-change"],
+  .mode-performance [style*="transform:"],
+  .mode-performance [style*="opacity:"] {
+    will-change: auto !important;
+  }
+
+  /* ── Reducir repaints: desactivar hover effects en touch ──
+     En móvil no hay hover real — los efectos hover solo causan repaints */
+  .mode-performance *:hover {
+    transform: none !important;
+    box-shadow: none !important;
+    background-color: inherit !important;
+  }
+
+  /* ── Simplificar scrollbar ── */
+  .mode-performance ::-webkit-scrollbar {
+    width: 4px !important;
+    height: 4px !important;
+  }
+
+  .mode-performance ::-webkit-scrollbar-thumb {
+    background: var(--muted-foreground) !important;
+    border: none !important;
+  }
+
+  /* ── Reducir tamaño de fuentes enormes ── */
+  .mode-performance h1 {
+    font-size: 1.5rem !important;
+  }
+  .mode-performance h2 {
+    font-size: 1.25rem !important;
+  }
+
+  /* ── Desactivar content-visibility en listas cortas ──
+     content-visibility tiene overhead propio — solo vale la pena
+     en listas largas. En móvil con listas cortas, lo desactivamos. */
+  .mode-performance table tbody tr:nth-child(n+50) {
+    content-visibility: auto;
+    contain-intrinsic-size: 48px;
+  }
+
+  /* ── Forzar GPU acceleration solo donde es necesario ── */
+  .mode-performance .fixed,
+  .mode-performance .sticky {
+    transform: translateZ(0);
+  }
+
+  /* ── Reducir blur en modales ── */
+  .mode-performance [class*="backdrop-blur"],
+  .mode-performance [class*="bg-background/80"],
+  .mode-performance [class*="bg-background/90"] {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    background: var(--background) !important;
+  }
+}
