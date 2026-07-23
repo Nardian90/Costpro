@@ -20,10 +20,16 @@ import React, { useState, useMemo } from 'react';
 import { BaseModal } from '@/components/ui/BaseModal';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { Download, FileJson, FileText, FileSpreadsheet, Loader2, ShieldCheck, AlertCircle } from 'lucide-react';
+import { Download, FileJson, FileText, FileSpreadsheet, Loader2, ShieldCheck, AlertCircle, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/store';
 import { logger } from '@/lib/logger';
+
+interface BackupWarning {
+  table: string;
+  message: string;
+  severity: 'warn' | 'error';
+}
 
 type BackupFormat = 'json' | 'pdf' | 'xlsx';
 type BackupRange = 'all' | 'year' | 'month';
@@ -80,6 +86,7 @@ export function BackupModal({ open, onOpenChange, storeId, storeName }: BackupMo
   const [year, setYear] = useState<number>(new Date().getFullYear());
   const [month, setMonth] = useState<number>(new Date().getMonth() + 1);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [lastWarnings, setLastWarnings] = useState<BackupWarning[]>([]);
 
   const { token } = useAuthStore();
 
@@ -128,7 +135,21 @@ export function BackupModal({ open, onOpenChange, storeId, storeName }: BackupMo
 
       // Extract metadata from headers (set by the API)
       const totalRecords = res.headers.get('X-Backup-Total-Records') || '?';
+      const warningsCount = Number(res.headers.get('X-Backup-Warnings-Count') || '0');
+      const warningsHeader = res.headers.get('X-Backup-Warnings') || '';
       const contentType = res.headers.get('Content-Type') || 'application/octet-stream';
+
+      // Decode warnings from base64 header
+      let warnings: BackupWarning[] = [];
+      if (warningsHeader) {
+        try {
+          const decoded = atob(warningsHeader);
+          warnings = JSON.parse(decoded) as BackupWarning[];
+        } catch (e) {
+          logger.warn('UI', 'BACKUP_WARNINGS_DECODE_FAILED', { error: String(e) });
+        }
+      }
+      setLastWarnings(warnings);
 
       // Get filename from Content-Disposition
       const cd = res.headers.get('Content-Disposition') || '';
@@ -150,9 +171,28 @@ export function BackupModal({ open, onOpenChange, storeId, storeName }: BackupMo
       URL.revokeObjectURL(downloadUrl);
 
       const sizeKb = Math.round(blob.size / 1024);
-      toast.success('Backup descargado', {
-        description: `${filename} · ${totalRecords} registros · ${sizeKb} KB`,
-      });
+      if (warnings.length > 0) {
+        // Show a warning toast listing tables that failed
+        const errorCount = warnings.filter(w => w.severity === 'error').length;
+        const warnCount = warnings.filter(w => w.severity === 'warn').length;
+        const summary = warnings.slice(0, 3).map(w => `${w.table}: ${w.message}`).join('\n');
+        const moreSuffix = warnings.length > 3 ? `\n... y ${warnings.length - 3} más` : '';
+        if (errorCount > 0) {
+          toast.error(`Backup descargado con ${errorCount} error(es)`, {
+            description: `${filename} · ${totalRecords} registros · ${sizeKb} KB\n\nTablas con problemas:\n${summary}${moreSuffix}`,
+            duration: 10000,
+          });
+        } else {
+          toast.warning(`Backup descargado con ${warnCount} advertencia(s)`, {
+            description: `${filename} · ${totalRecords} registros · ${sizeKb} KB\n\n${summary}${moreSuffix}`,
+            duration: 10000,
+          });
+        }
+      } else {
+        toast.success('Backup descargado', {
+          description: `${filename} · ${totalRecords} registros · ${sizeKb} KB`,
+        });
+      }
 
       onOpenChange(false);
     } catch (err) {

@@ -56,11 +56,13 @@ interface RestoreResult {
   dryRun: boolean;
   summary: {
     totalInserted: number;
+    totalUpdated: number;
     totalSkipped: number;
     errorsCount: number;
     durationMs: number;
   };
   inserted: Record<string, number>;
+  updated: Record<string, number>;
   skipped: Record<string, number>;
   errors: Array<{ table: string; message: string; sample?: unknown }>;
 }
@@ -187,15 +189,15 @@ export function RestoreBackupModal({ open, onOpenChange, storeId, storeName }: R
       const summary = body.summary || {};
       if (dryRun) {
         toast.success('Simulación completada', {
-          description: `${summary.totalInserted ?? 0} registros se insertarían (sin cambios reales)`,
+          description: `${summary.totalInserted ?? 0} nuevos · ${summary.totalUpdated ?? 0} existentes (se actualizarían) · sin cambios reales`,
         });
       } else if (summary.errorsCount) {
         toast.warning('Restauración completada con errores', {
-          description: `${summary.totalInserted ?? 0} insertados · ${summary.totalSkipped ?? 0} omitidos · ${summary.errorsCount} errores`,
+          description: `${summary.totalInserted ?? 0} insertados · ${summary.totalUpdated ?? 0} actualizados · ${summary.totalSkipped ?? 0} omitidos · ${summary.errorsCount} errores`,
         });
       } else {
         toast.success('Restauración completada', {
-          description: `${summary.totalInserted ?? 0} insertados · ${summary.totalSkipped ?? 0} omitidos`,
+          description: `${summary.totalInserted ?? 0} insertados · ${summary.totalUpdated ?? 0} actualizados · ${summary.totalSkipped ?? 0} omitidos`,
         });
       }
     } catch (err) {
@@ -494,7 +496,7 @@ function RestoreResultView({ result }: { result: RestoreResult }) {
             {isPartialSuccess && ' (con errores parciales)'}
           </p>
           <p className="text-xs text-muted-foreground mt-1">
-            {result.summary.totalInserted} insertados · {result.summary.totalSkipped} omitidos ·{' '}
+            {result.summary.totalInserted} nuevos · {result.summary.totalUpdated} actualizados · {result.summary.totalSkipped} omitidos ·{' '}
             {result.summary.errorsCount} errores · {Math.round(result.summary.durationMs / 1000)}s
           </p>
         </div>
@@ -505,25 +507,28 @@ function RestoreResultView({ result }: { result: RestoreResult }) {
         <h4 className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-2">
           Detalle por tabla
         </h4>
-        <div className="rounded-xl border border-border overflow-hidden">
+        <div className="rounded-xl border border-border overflow-hidden overflow-x-auto">
           <table className="w-full text-xs">
             <thead className="bg-muted/40">
               <tr>
                 <th className="text-left font-black uppercase tracking-widest p-2">Tabla</th>
-                <th className="text-right font-black uppercase tracking-widest p-2">Insertados</th>
+                <th className="text-right font-black uppercase tracking-widest p-2">Nuevos</th>
+                <th className="text-right font-black uppercase tracking-widest p-2">Actualizados</th>
                 <th className="text-right font-black uppercase tracking-widest p-2">Omitidos</th>
                 <th className="text-right font-black uppercase tracking-widest p-2">Errores</th>
               </tr>
             </thead>
             <tbody>
-              {Object.keys({ ...result.inserted, ...result.skipped }).map((table) => {
+              {Object.keys({ ...result.inserted, ...result.updated, ...result.skipped }).map((table) => {
                 const ins = result.inserted[table] || 0;
+                const upd = result.updated[table] || 0;
                 const skp = result.skipped[table] || 0;
                 const errCount = result.errors.filter((e) => e.table === table).length;
                 return (
                   <tr key={table} className="border-t border-border/50">
-                    <td className="p-2 font-mono">{table}</td>
+                    <td className="p-2 font-mono whitespace-nowrap">{table}</td>
                     <td className="p-2 text-right tabular-nums font-bold text-success">{ins}</td>
+                    <td className="p-2 text-right tabular-nums font-bold text-primary">{upd}</td>
                     <td className="p-2 text-right tabular-nums text-muted-foreground">{skp}</td>
                     <td className={cn('p-2 text-right tabular-nums', errCount ? 'font-bold text-destructive' : 'text-muted-foreground')}>
                       {errCount}

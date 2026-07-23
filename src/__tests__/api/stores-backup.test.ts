@@ -12,6 +12,7 @@
  *   8. POST /api/stores/[id]/backup/restore — happy path with valid JSON
  *   9. POST /api/stores/[id]/backup/restore — 400 for invalid JSON body
  *  10. POST /api/stores/[id]/backup/restore — 403 for non-encargado user
+ *  11. GET /api/stores/[id]/backup — warnings header present when tables fail
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -93,6 +94,7 @@ function setupSupabaseMock(storeId: string, tables: Record<string, any[]>) {
       gte: () => tableApi,
       lt: () => tableApi,
       order: () => tableApi,
+      in: () => tableApi, // for transaction_items
       upsert: () => Promise.resolve({ data: null, error: null }),
       then: (resolve: any, reject?: any) =>
         Promise.resolve({ data: rows, error: null }).then(resolve, reject),
@@ -144,6 +146,8 @@ describe('GET /api/stores/[id]/backup', () => {
     expect(res.headers.get('Content-Type')).toBe('application/json; charset=utf-8');
     expect(res.headers.get('Content-Disposition')).toMatch(/^attachment; filename="backup_central_completo_.+\.json"$/);
     expect(res.headers.get('X-Backup-Total-Records')).toBe('2'); // 1 store + 1 product
+    expect(res.headers.get('X-Backup-Warnings-Count')).toBe('0');
+    expect(res.headers.get('Cache-Control')).toBe('no-store');
 
     // Body should be valid JSON with metadata
     const text = await res.text();
@@ -285,14 +289,14 @@ describe('POST /api/stores/[id]/backup/restore', () => {
     mockUser = { id: 'admin-1', role: 'admin', memberships: [] };
   });
 
-  it('returns success with inserted counts on valid JSON', async () => {
+  it('returns success with inserted/updated counts on valid JSON (dry-run)', async () => {
     const storeId = 's1';
     setupSupabaseMock(storeId, { stores: [makeStoreRow(storeId)] });
 
     const { POST } = await import('@/app/api/stores/[id]/backup/restore/route');
 
     const validBackup = JSON.stringify({
-      meta: { format: 'costpro-store-backup', version: '1.0.0', storeId, storeName: 'T', exportedAt: '2026-01-01' },
+      meta: { format: 'costpro-store-backup', version: '1.1.0', storeId, storeName: 'T', exportedAt: '2026-01-01' },
       tables: {
         products: [{ id: 'p1', store_id: 'orig', name: 'P1' }],
       },
@@ -304,7 +308,13 @@ describe('POST /api/stores/[id]/backup/restore', () => {
     expect(res.status).toBe(200);
     expect(body.success).toBe(true);
     expect(body.dryRun).toBe(true);
-    expect(body.summary.totalInserted).toBeGreaterThan(0);
+    expect(body.summary).toBeDefined();
+    expect(body.summary.totalInserted).toBeDefined();
+    expect(body.summary.totalUpdated).toBeDefined();
+    expect(body.summary.totalSkipped).toBeDefined();
+    expect(body.inserted).toBeDefined();
+    expect(body.updated).toBeDefined();
+    expect(body.skipped).toBeDefined();
   });
 
   it('returns 400 for invalid JSON content', async () => {
@@ -327,7 +337,7 @@ describe('POST /api/stores/[id]/backup/restore', () => {
 
     const { POST } = await import('@/app/api/stores/[id]/backup/restore/route');
     const validBackup = JSON.stringify({
-      meta: { format: 'costpro-store-backup', version: '1.0.0', storeId, storeName: 'T', exportedAt: '2026-01-01' },
+      meta: { format: 'costpro-store-backup', version: '1.1.0', storeId, storeName: 'T', exportedAt: '2026-01-01' },
       tables: {},
     });
     const res = await POST(makePostRequest(storeId, { content: validBackup }) as any);

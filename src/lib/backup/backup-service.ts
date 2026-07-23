@@ -4,17 +4,28 @@
  * specific store (filtered by store_id) and serializes it to JSON, PDF, or
  * XLSX format. Used by /api/stores/[id]/backup.
  *
- * SCOPE: Exports store-scoped tables only (categories, products, sales,
- * sale_items, receipts, cash_reports, stock_movements, inventory_adjustments,
- * production_orders, production_order_items, workers, commissions,
- * worker_payments, stores row + cost_templates row).
+ * SCOPE: Exports store-scoped tables (products, transactions, transaction_items,
+ * sales_transactions, cash_closures, stock_movements, inventory_adjustments,
+ * production_orders, production_order_items, workers, commission_rules,
+ * commission_payments, store_cost_templates) + the store row itself.
+ *
+ * CATEGORIES: `categories` is GLOBAL (shared between stores — no store_id
+ * column). It is exported WITHOUT a store_id filter so the user has the
+ * complete catalog context. On restore, categories are upserted (existing
+ * IDs are kept) — they remain shared.
  *
  * SECURITY: Caller MUST verify canManageStore(session.user, storeId) before
  * invoking any function here. This service uses the service-role admin client
  * and bypasses RLS — it trusts the caller's authorization check.
  *
  * AUDIT: Caller MUST insert an audit_logs entry after calling. This service
- * returns metadata (recordCounts, totalBytes) that the caller should log.
+ * returns metadata (recordCounts, warnings, totalBytes) that the caller
+ * should log.
+ *
+ * WARNINGS: Tables that fail to export (missing column, table not found, etc.)
+ * are recorded in `warnings` and surfaced to the user. The backup does NOT
+ * silently skip tables — the user always knows what they got and what they
+ * didn't.
  */
 
 import type { SupabaseClient } from '@supabase/supabase-js';
@@ -37,6 +48,13 @@ export interface BackupOptions {
   month?: number;
 }
 
+export interface BackupWarning {
+  table: string;
+  message: string;
+  /** 'warn' = partial export (e.g. date filter not applied), 'error' = table skipped entirely. */
+  severity: 'warn' | 'error';
+}
+
 export interface BackupResult {
   /** File contents as a Uint8Array (binary) — works for all 3 formats. */
   data: Uint8Array;
@@ -50,34 +68,94 @@ export interface BackupResult {
   totalBytes: number;
   /** Store name (for audit). */
   storeName: string;
+  /** Per-table warnings (tables that failed to export or were partially exported). */
+  warnings: BackupWarning[];
 }
 
-// Tables grouped by dependency tier for ordered export.
-// Each entry: [tableName, dateColumnForRangeFilter | null]
-// Tables without a date column are exported in full (range filter ignored).
-const STORE_SCOPED_TABLES: ReadonlyArray<readonly [string, string | null]> = [
-  // Tier 0: store config (single row)
-  ['stores', null],
-  ['cost_templates', null],
-  ['categories', null],
+// ─────────────────────────────────────────────────────────────────────────────
+// Table configuration
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Strategy for filtering rows by store.
+ * - 'store_id'   → table has a `store_id` column, filter with .eq('store_id', X)
+ * - 'global'     → table is shared across stores (e.g. categories), no filter
+ * - 'via_parent' → table has no store_id; filter via a parent table's IDs
+ *                  (e.g. transaction_items via transaction_id IN transactions.id)
+ */
+type StoreFilterStrategy =
+  | { kind: 'store_id' }
+  | { kind: 'global' }
+  | { kind: 'via_parent'; parentTable: string; foreignKey: string };
+
+interface TableConfig {
+  name: string;
+  /** Date column for range filter (null = no date filter applied). */
+  dateCol: string | null;
+  /** How to filter rows by store. */
+  storeFilter: StoreFilterStrategy;
+}
+
+/**
+ * Tables to export, in dependency order (parents before children).
+ *
+ * FIXED (2026-07-23): corrected all table names to match actual DB schema:
+ *   - sales → transactions (POS sales) + sales_transactions (manual sales for commissions)
+ *   - sale_items → transaction_items (linked via transaction_id)
+ *   - cash_reports → cash_closures (cash_sessions is for open shifts; closures have the data)
+ *   - commissions → commission_rules + commission_payments
+ *   - worker_payments → commission_payments (already covered; payments to workers)
+ *   - cost_templates → store_cost_templates (linked via store_id directly)
+ *
+ * Categories is GLOBAL (no store_id) — exported without filter, restored as-is.
+ */
+const TABLE_CONFIGS: ReadonlyArray<TableConfig> = [
+  // Tier 0: store config + shared catalog
+  { name: 'stores',                dateCol: null,         storeFilter: { kind: 'store_id' } }, // fetched separately by id
+  { name: 'store_cost_templates',  dateCol: 'created_at', storeFilter: { kind: 'store_id' } },
+  { name: 'categories',            dateCol: 'created_at', storeFilter: { kind: 'global' } },
+
   // Tier 1: catalog
-  ['products', 'created_at'],
+  { name: 'products',              dateCol: 'created_at', storeFilter: { kind: 'store_id' } },
+
   // Tier 2: workers & production
-  ['workers', 'created_at'],
-  ['production_orders', 'created_at'],
-  ['production_order_items', 'created_at'],
-  // Tier 3: sales & receipts
-  ['sales', 'created_at'],
-  ['sale_items', 'created_at'],
-  ['receipts', 'created_at'],
-  // Tier 4: cash & inventory ops
-  ['cash_reports', 'opened_at'],
-  ['stock_movements', 'created_at'],
-  ['inventory_adjustments', 'created_at'],
-  // Tier 5: commissions & payments (workers)
-  ['commissions', 'created_at'],
-  ['worker_payments', 'created_at'],
-] as const;
+  { name: 'workers',               dateCol: 'created_at', storeFilter: { kind: 'store_id' } },
+  { name: 'production_orders',     dateCol: 'created_at', storeFilter: { kind: 'store_id' } },
+  { name: 'production_order_items',dateCol: 'created_at', storeFilter: { kind: 'via_parent', parentTable: 'production_orders', foreignKey: 'order_id' } },
+
+  // Tier 3: POS sales (transactions) + items (linked via transaction_id)
+  { name: 'transactions',          dateCol: 'created_at', storeFilter: { kind: 'store_id' } },
+  { name: 'transaction_items',     dateCol: 'created_at', storeFilter: { kind: 'via_parent', parentTable: 'transactions', foreignKey: 'transaction_id' } },
+
+  // Tier 3b: manual sales for commissions (separate from POS transactions)
+  { name: 'sales_transactions',    dateCol: 'sale_date',  storeFilter: { kind: 'store_id' } },
+
+  // Tier 4: cash closures (was cash_reports) + inventory ops
+  { name: 'cash_closures',         dateCol: 'closed_at',  storeFilter: { kind: 'store_id' } },
+  { name: 'stock_movements',       dateCol: 'created_at', storeFilter: { kind: 'store_id' } },
+  { name: 'inventory_adjustments', dateCol: 'created_at', storeFilter: { kind: 'store_id' } },
+
+  // Tier 5: commissions + payments to workers
+  { name: 'commission_rules',      dateCol: 'created_at', storeFilter: { kind: 'store_id' } },
+  { name: 'commission_payments',   dateCol: 'paid_at',    storeFilter: { kind: 'store_id' } },
+];
+
+// Tables grouped by dependency tier for ordered RESTORE.
+// Parents must be restored before children (FK integrity).
+const RESTORE_ORDER: ReadonlyArray<string> = TABLE_CONFIGS.map(t => t.name);
+
+/**
+ * Columns that are GENERATED ALWAYS AS (...) STORED in the DB schema.
+ * These cannot be written to via INSERT/UPDATE — the DB recomputes them
+ * automatically. The backup exports them (for completeness) but restore
+ * MUST strip them before upsert, otherwise PostgreSQL raises:
+ *   ERROR: cannot insert a non-DEFAULT value into column "X"
+ *
+ * If you add a new generated column to a table, add it here.
+ */
+const GENERATED_COLUMNS: ReadonlySet<string> = new Set([
+  'search_vector',          // products.search_vector (TSVECTOR full-text)
+]);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Date range filter
@@ -116,15 +194,110 @@ interface ExtractedData {
   exportedAt: string;
   /** Store slug (for filename). */
   storeSlug: string;
+  /** Per-table warnings collected during extraction. */
+  warnings: BackupWarning[];
+}
+
+/**
+ * Fetch rows from a table filtered by store, with date range applied.
+ * Returns { rows, warning } where warning is set if extraction failed
+ * partially or fully.
+ */
+async function fetchTableData(
+  supabase: SupabaseClient,
+  config: TableConfig,
+  storeId: string,
+  dateRange: { from?: string; to?: string },
+  parentIds?: string[],
+): Promise<{ rows: Record<string, unknown>[]; warning: BackupWarning | null }> {
+  let query = supabase.from(config.name).select('*');
+
+  // ── Store filter ──────────────────────────────────────────────────────────
+  if (config.storeFilter.kind === 'store_id') {
+    query = query.eq('store_id', storeId);
+  } else if (config.storeFilter.kind === 'global') {
+    // No filter — export all rows (categories are shared)
+  } else if (config.storeFilter.kind === 'via_parent') {
+    if (!parentIds || parentIds.length === 0) {
+      // No parent rows → no child rows
+      return { rows: [], warning: null };
+    }
+    // Chunk the IN filter to avoid URL length limits (Supabase/PostgREST
+    // caps URLs around 8KB; ~1000 UUIDs per chunk is safe).
+    const CHUNK_SIZE = 500;
+    const allChildRows: Record<string, unknown>[] = [];
+    for (let i = 0; i < parentIds.length; i += CHUNK_SIZE) {
+      const chunk = parentIds.slice(i, i + CHUNK_SIZE);
+      const { data: chunkData, error: chunkErr } = await query
+        .in(config.storeFilter.foreignKey, chunk);
+      if (chunkErr) {
+        return {
+          rows: allChildRows,
+          warning: {
+            table: config.name,
+            message: `Error al filtrar via ${config.storeFilter.foreignKey} (chunk ${i}): ${chunkErr.message}`,
+            severity: 'error',
+          },
+        };
+      }
+      allChildRows.push(...((chunkData || []) as Record<string, unknown>[]));
+    }
+    // Apply date filter post-fetch (since we couldn't chain after .in())
+    let filtered = allChildRows;
+    if (config.dateCol && dateRange.from && dateRange.to) {
+      filtered = allChildRows.filter((r) => {
+        const v = r[config.dateCol as keyof typeof r] as string | undefined;
+        if (!v) return false;
+        return v >= dateRange.from! && v < dateRange.to!;
+      });
+      if (filtered.length !== allChildRows.length) {
+        return {
+          rows: filtered,
+          warning: {
+            table: config.name,
+            message: `Filtro de fecha aplicado post-fetch (${allChildRows.length - filtered.length} filas omitidas)`,
+            severity: 'warn',
+          },
+        };
+      }
+    }
+    return { rows: filtered, warning: null };
+  }
+
+  // ── Date range filter ─────────────────────────────────────────────────────
+  if (config.dateCol && dateRange.from && dateRange.to) {
+    query = query.gte(config.dateCol, dateRange.from).lt(config.dateCol, dateRange.to);
+  }
+
+  // ── Order by date for stable diff across exports ──────────────────────────
+  if (config.dateCol) {
+    query = query.order(config.dateCol, { ascending: true });
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    return {
+      rows: [],
+      warning: {
+        table: config.name,
+        message: `${error.code || 'DB_ERROR'}: ${error.message}`,
+        severity: 'error',
+      },
+    };
+  }
+
+  return { rows: (data || []) as Record<string, unknown>[], warning: null };
 }
 
 async function extractStoreData(
   supabase: SupabaseClient,
   opts: BackupOptions,
 ): Promise<ExtractedData> {
-  const { from, to } = buildDateRange(opts);
+  const dateRange = buildDateRange(opts);
   const recordCounts: Record<string, number> = {};
   const tables: Record<string, Record<string, unknown>[]> = {};
+  const warnings: BackupWarning[] = [];
 
   // First, fetch the store row (also gives us name + slug for metadata).
   const { data: storeRow, error: storeErr } = await supabase
@@ -146,56 +319,46 @@ async function extractStoreData(
   tables['stores'] = [storeRow];
   recordCounts['stores'] = 1;
 
-  // Iterate remaining tables. For each, filter by store_id (when present) +
-  // date range (when the table has a date column and range != all).
-  for (const [table, dateCol] of STORE_SCOPED_TABLES) {
-    if (table === 'stores') continue; // already fetched
+  // Iterate remaining tables in dependency order. For 'via_parent' tables,
+  // we need to have already fetched the parent's IDs.
+  const tableRowsById: Map<string, Set<string>> = new Map();
 
-    let query = supabase.from(table).select('*');
+  for (const config of TABLE_CONFIGS) {
+    if (config.name === 'stores') continue; // already fetched
 
-    // store_id filter — but cost_templates may not have store_id directly;
-    // it may be linked via stores.cost_template_id. Handle gracefully.
-    // We try .eq('store_id', X) and if it errors, retry without the filter.
-    // For 'cost_templates' we link through the store row already fetched.
-    if (table === 'cost_templates') {
-      const templateId = (storeRow as { cost_template_id?: string }).cost_template_id;
-      if (templateId) {
-        query = query.eq('id', templateId);
-      } else {
-        // No template linked — skip.
-        tables[table] = [];
-        recordCounts[table] = 0;
-        continue;
+    // Resolve parent IDs for 'via_parent' strategy
+    let parentIds: string[] | undefined;
+    if (config.storeFilter.kind === 'via_parent') {
+      const parentSet = tableRowsById.get(config.storeFilter.parentTable);
+      parentIds = parentSet ? Array.from(parentSet) : [];
+    }
+
+    const { rows, warning } = await fetchTableData(
+      supabase, config, opts.storeId, dateRange, parentIds,
+    );
+
+    tables[config.name] = rows;
+    recordCounts[config.name] = rows.length;
+
+    // Track IDs of fetched rows for child tables that link via this table
+    if (rows.length > 0) {
+      const ids = new Set<string>();
+      for (const r of rows) {
+        const id = r['id'];
+        if (typeof id === 'string') ids.add(id);
       }
-    } else {
-      query = query.eq('store_id', opts.storeId);
+      tableRowsById.set(config.name, ids);
     }
 
-    // Date range filter
-    if (dateCol && from && to) {
-      query = query.gte(dateCol, from).lt(dateCol, to);
-    }
-
-    // Order by created_at (if exists) for stable diff across exports
-    if (dateCol) {
-      query = query.order(dateCol, { ascending: true });
-    }
-
-    const { data, error } = await query;
-
-    if (error) {
-      // Some tables may not exist in older migrations — log + skip rather
-      // than fail the whole backup. The audit log will show 0 records.
+    if (warning) {
+      warnings.push(warning);
       logger.warn('DATABASE', 'BACKUP_TABLE_FETCH_WARN', {
-        storeId: opts.storeId, table, error: error.message,
+        storeId: opts.storeId,
+        table: config.name,
+        severity: warning.severity,
+        message: warning.message,
       });
-      tables[table] = [];
-      recordCounts[table] = 0;
-      continue;
     }
-
-    tables[table] = (data || []) as Record<string, unknown>[];
-    recordCounts[table] = (data || []).length;
   }
 
   return {
@@ -204,6 +367,7 @@ async function extractStoreData(
     recordCounts,
     tables,
     exportedAt: new Date().toISOString(),
+    warnings,
   };
 }
 
@@ -238,7 +402,7 @@ function buildFilename(opts: BackupOptions, storeSlug: string): string {
 function serializeJson(extracted: ExtractedData, opts: BackupOptions): Uint8Array {
   const payload = {
     meta: {
-      version: '1.0.0',
+      version: '1.1.0',  // bumped from 1.0.0 due to schema fixes (correct table names)
       format: 'costpro-store-backup',
       exportedAt: extracted.exportedAt,
       storeId: opts.storeId,
@@ -249,6 +413,7 @@ function serializeJson(extracted: ExtractedData, opts: BackupOptions): Uint8Arra
       month: opts.month,
       recordCounts: extracted.recordCounts,
       totalRecords: Object.values(extracted.recordCounts).reduce((a, b) => a + b, 0),
+      warnings: extracted.warnings,
     },
     tables: extracted.tables,
   };
@@ -262,10 +427,10 @@ function serializeXlsx(extracted: ExtractedData): Uint8Array {
 
   const wb = XLSX.utils.book_new();
 
-  // Sheet 0: metadata
+  // Sheet 0: metadata + warnings
   const metaRows: (string | number)[][] = [
     ['Campo', 'Valor'],
-    ['Versión de formato', '1.0.0'],
+    ['Versión de formato', '1.1.0'],
     ['Tipo', 'costpro-store-backup'],
     ['Fecha de exportación', extracted.exportedAt],
     ['Nombre de tienda', extracted.storeName],
@@ -275,6 +440,17 @@ function serializeXlsx(extracted: ExtractedData): Uint8Array {
     ['Tabla', 'Registros'],
     ...Object.entries(extracted.recordCounts).map(([t, n]) => [t, n]),
   ];
+
+  // Append warnings section
+  if (extracted.warnings.length > 0) {
+    metaRows.push(['', '']);
+    metaRows.push(['ADVERTENCIAS', '']);
+    metaRows.push(['Tabla', 'Severidad', 'Mensaje']);
+    for (const w of extracted.warnings) {
+      metaRows.push([w.table, w.severity, w.message]);
+    }
+  }
+
   const wsMeta = XLSX.utils.aoa_to_sheet(metaRows);
   XLSX.utils.book_append_sheet(wb, wsMeta, 'Resumen');
 
@@ -341,6 +517,28 @@ async function serializePdf(extracted: ExtractedData, opts: BackupOptions): Prom
     margin: { left: margin, right: margin },
   });
 
+  // ── Warnings section (if any) ─────────────────────────────────────────────
+  if (extracted.warnings.length > 0) {
+    let currentY = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 30;
+    if (currentY > 700) {
+      doc.addPage();
+      currentY = 40;
+    }
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.setTextColor(180, 80, 0); // amber
+    doc.text(`Advertencias (${extracted.warnings.length})`, margin, currentY);
+    autoTable(doc, {
+      startY: currentY + 10,
+      head: [['Tabla', 'Severidad', 'Mensaje']],
+      body: extracted.warnings.map(w => [w.table, w.severity, w.message]),
+      theme: 'grid',
+      headStyles: { fillColor: [180, 80, 0], textColor: 255, fontStyle: 'bold', fontSize: 8 },
+      styles: { font: 'helvetica', fontSize: 8, cellPadding: 4, overflow: 'linebreak' },
+      margin: { left: margin, right: margin },
+    });
+  }
+
   // ── Per-table data ────────────────────────────────────────────────────────
   // For each non-empty table, render one section. We cap at 50 rows per
   // table in the PDF — it's a snapshot, not a full data export. For full
@@ -351,6 +549,7 @@ async function serializePdf(extracted: ExtractedData, opts: BackupOptions): Prom
     doc.addPage();
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(14);
+    doc.setTextColor(0, 0, 0);
     doc.text(`Tabla: ${tableName}`, margin, 40);
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(9);
@@ -447,6 +646,7 @@ export async function generateBackup(
     recordCounts: extracted.recordCounts,
     totalBytes: data.byteLength,
     storeName: extracted.storeName,
+    warnings: extracted.warnings,
   };
 }
 
@@ -455,8 +655,13 @@ export async function generateBackup(
 // ─────────────────────────────────────────────────────────────────────────────
 
 export interface RestoreResult {
+  /** New rows created (INSERT). */
   inserted: Record<string, number>;
+  /** Existing rows updated (UPDATE via upsert). */
+  updated: Record<string, number>;
+  /** Rows that already existed and were skipped (when upsert=false). */
   skipped: Record<string, number>;
+  /** Per-table errors. */
   errors: Array<{ table: string; message: string; sample?: unknown }>;
   /** Total time in ms. */
   durationMs: number;
@@ -474,40 +679,39 @@ interface BackupFile {
   tables: Record<string, Record<string, unknown>[]>;
 }
 
-// Order matters: parents before children. The export order above already
-// satisfies this for most cases, but restore must be explicit because some
-// tables reference others via FKs (e.g. sale_items -> sales).
-const RESTORE_ORDER: ReadonlyArray<string> = [
-  'stores',          // parent (UPDATE existing row, do not INSERT new)
-  'cost_templates',
-  'categories',
-  'products',
-  'workers',
-  'production_orders',
-  'production_order_items',
-  'sales',
-  'sale_items',
-  'receipts',
-  'cash_reports',
-  'stock_movements',
-  'inventory_adjustments',
-  'commissions',
-  'worker_payments',
-];
-
 /**
- * Columns that are GENERATED ALWAYS AS (...) STORED in the DB schema.
- * These cannot be written to via INSERT/UPDATE — the DB recomputes them
- * automatically. The backup exports them (for completeness) but restore
- * MUST strip them before upsert, otherwise PostgreSQL raises:
- *   ERROR: cannot insert a non-DEFAULT value into column "X"
+ * Pre-fetch existing IDs for a table to distinguish INSERT vs UPDATE.
+ * Returns a Set of IDs that already exist in the target table.
  *
- * If you add a new generated column to a table, add it here.
+ * We do this in chunks of 500 IDs to avoid URL length limits.
  */
-const GENERATED_COLUMNS: ReadonlySet<string> = new Set([
-  'search_vector',          // products.search_vector (TSVECTOR full-text)
-  // Add future generated columns here
-]);
+async function fetchExistingIds(
+  supabase: SupabaseClient,
+  tableName: string,
+  candidateIds: string[],
+): Promise<Set<string>> {
+  if (candidateIds.length === 0) return new Set();
+  const existing = new Set<string>();
+  const CHUNK_SIZE = 500;
+  for (let i = 0; i < candidateIds.length; i += CHUNK_SIZE) {
+    const chunk = candidateIds.slice(i, i + CHUNK_SIZE);
+    const { data, error } = await supabase
+      .from(tableName)
+      .select('id')
+      .in('id', chunk);
+    if (error) {
+      // If we can't pre-check, return empty set (caller will treat all as inserted)
+      logger.warn('DATABASE', 'BACKUP_RESTORE_PRECHECK_FAILED', {
+        table: tableName, error: error.message,
+      });
+      return new Set();
+    }
+    for (const row of (data || []) as Array<{ id: string }>) {
+      existing.add(row.id);
+    }
+  }
+  return existing;
+}
 
 export async function restoreFromBackup(
   supabase: SupabaseClient,
@@ -519,6 +723,7 @@ export async function restoreFromBackup(
   const upsert = options.upsert ?? true;
   const dryRun = options.dryRun ?? false;
   const inserted: Record<string, number> = {};
+  const updated: Record<string, number> = {};
   const skipped: Record<string, number> = {};
   const errors: RestoreResult['errors'] = [];
 
@@ -551,24 +756,39 @@ export async function restoreFromBackup(
     const rows = parsed.tables[tableName];
     if (!rows || rows.length === 0) {
       inserted[tableName] = 0;
+      updated[tableName] = 0;
       skipped[tableName] = 0;
       continue;
     }
 
     if (dryRun) {
-      inserted[tableName] = rows.length;
-      skipped[tableName] = 0;
+      // In dry-run, pre-check existing IDs to give accurate inserted/updated counts
+      const candidateIds = rows
+        .map((r) => r['id'])
+        .filter((id): id is string => typeof id === 'string');
+      const existingIds = await fetchExistingIds(supabase, tableName, candidateIds);
+      let insCount = 0, updCount = 0, skipCount = 0;
+      for (const r of rows) {
+        const id = r['id'];
+        if (typeof id === 'string' && existingIds.has(id)) {
+          if (upsert) updCount++; else skipCount++;
+        } else {
+          insCount++;
+        }
+      }
+      inserted[tableName] = insCount;
+      updated[tableName] = updCount;
+      skipped[tableName] = skipCount;
       continue;
     }
 
     // For 'stores' table: only update existing row, never insert (preserve id)
     if (tableName === 'stores') {
-      // Filter to only the row matching targetStoreId (in case backup has
-      // multiple — it shouldn't, but defense in depth)
       const targetRow = rows.find((r) => r.id === targetStoreId);
       if (!targetRow) {
         skipped[tableName] = rows.length;
         inserted[tableName] = 0;
+        updated[tableName] = 0;
         continue;
       }
       const { error } = await supabase
@@ -578,17 +798,20 @@ export async function restoreFromBackup(
       if (error) {
         errors.push({ table: tableName, message: error.message, sample: targetRow });
         inserted[tableName] = 0;
+        updated[tableName] = 0;
         skipped[tableName] = rows.length;
       } else {
-        inserted[tableName] = 1;
+        inserted[tableName] = 0;
+        updated[tableName] = 1;
         skipped[tableName] = rows.length - 1;
       }
       continue;
     }
 
     // For all other tables: ensure rows point to targetStoreId (rewrite
-    // store_id field if present) and strip GENERATED columns. This allows
-    // restoring a backup of store A into store B (cross-store migration).
+    // store_id field if present) and strip GENERATED columns.
+    // For 'categories' (global, no store_id), we DO NOT rewrite store_id
+    // because there is no store_id column.
     const normalizedRows = rows.map((r) => {
       const cleaned: Record<string, unknown> = {};
       for (const [k, v] of Object.entries(r)) {
@@ -602,31 +825,63 @@ export async function restoreFromBackup(
       return cleaned;
     });
 
+    // Pre-check existing IDs to distinguish INSERT vs UPDATE for the report
+    const candidateIds = normalizedRows
+      .map((r) => r['id'])
+      .filter((id): id is string => typeof id === 'string');
+    const existingIds = await fetchExistingIds(supabase, tableName, candidateIds);
+    let insCount = 0, updCount = 0;
+    for (const r of normalizedRows) {
+      const id = r['id'];
+      if (typeof id === 'string' && existingIds.has(id)) {
+        updCount++;
+      } else {
+        insCount++;
+      }
+    }
+
+    // If upsert=false and we want to skip existing rows, filter them out
+    let rowsToUpsert = normalizedRows;
+    if (!upsert) {
+      rowsToUpsert = normalizedRows.filter((r) => {
+        const id = r['id'];
+        return !(typeof id === 'string' && existingIds.has(id));
+      });
+    }
+
+    if (rowsToUpsert.length === 0) {
+      inserted[tableName] = 0;
+      updated[tableName] = 0;
+      skipped[tableName] = normalizedRows.length;
+      continue;
+    }
+
     // Use upsert to handle re-imports gracefully. onConflict='id' preserves
     // original UUIDs from the backup (needed for FK integrity).
     const { error } = await supabase
       .from(tableName)
-      .upsert(normalizedRows, { onConflict: 'id', ignoreDuplicates: !upsert });
+      .upsert(rowsToUpsert, { onConflict: 'id', ignoreDuplicates: !upsert });
 
     if (error) {
       // Common: FK violation (parent row missing), unique constraint, RLS.
-      // Record error and continue with other tables — partial restore is
-      // better than total failure.
       errors.push({
         table: tableName,
         message: error.message,
-        sample: normalizedRows[0],
+        sample: rowsToUpsert[0],
       });
       inserted[tableName] = 0;
+      updated[tableName] = 0;
       skipped[tableName] = normalizedRows.length;
     } else {
-      inserted[tableName] = normalizedRows.length;
-      skipped[tableName] = 0;
+      inserted[tableName] = insCount;
+      updated[tableName] = upsert ? updCount : 0;
+      skipped[tableName] = upsert ? 0 : (normalizedRows.length - rowsToUpsert.length);
     }
   }
 
   return {
     inserted,
+    updated,
     skipped,
     errors,
     durationMs: Date.now() - start,

@@ -154,6 +154,7 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
           upsert,
           dryRun,
           inserted: result.inserted,
+          updated: result.updated,
           skipped: result.skipped,
           errorsCount: result.errors.length,
           errors: result.errors.slice(0, 10), // cap audit payload
@@ -168,10 +169,12 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
 
     logger.info('AUDIT', 'STORE_BACKUP_RESTORED', {
       storeId: targetStoreId, userId: session.user.id, dryRun,
-      inserted: result.inserted, skipped: result.skipped, errorsCount: result.errors.length,
+      inserted: result.inserted, updated: result.updated,
+      skipped: result.skipped, errorsCount: result.errors.length,
     });
 
     const totalInserted = Object.values(result.inserted).reduce((a, b) => a + b, 0);
+    const totalUpdated = Object.values(result.updated).reduce((a, b) => a + b, 0);
     const totalSkipped = Object.values(result.skipped).reduce((a, b) => a + b, 0);
 
     return NextResponse.json({
@@ -179,11 +182,13 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
       dryRun,
       summary: {
         totalInserted,
+        totalUpdated,
         totalSkipped,
         errorsCount: result.errors.length,
         durationMs: result.durationMs,
       },
       inserted: result.inserted,
+      updated: result.updated,
       skipped: result.skipped,
       errors: result.errors,
     });

@@ -134,6 +134,8 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
           filename: result.filename,
           totalBytes: result.totalBytes,
           recordCounts: result.recordCounts,
+          warningsCount: result.warnings.length,
+          warnings: result.warnings.slice(0, 20), // cap audit payload
         },
       });
     } catch (auditErr) {
@@ -146,6 +148,7 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
     logger.info('AUDIT', 'STORE_BACKUP_EXPORTED', {
       storeId, userId: session.user.id, format, range,
       totalBytes: result.totalBytes, filename: result.filename,
+      warningsCount: result.warnings.length,
     });
 
     // ── Stream binary response ────────────────────────────────────────────
@@ -154,6 +157,13 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
       result.data.byteOffset,
       result.data.byteOffset + result.data.byteLength,
     ) as ArrayBuffer;
+
+    // Serialize warnings as a header so the UI can show them in a toast
+    // (JSON/XLSX/PDF all benefit — the user is notified even if they don't
+    // inspect the file's metadata section).
+    const warningsHeader = result.warnings.length > 0
+      ? Buffer.from(JSON.stringify(result.warnings)).toString('base64').slice(0, 7500) // 8KB header cap
+      : '';
 
     return new NextResponse(arrayBuffer, {
       status: 200,
@@ -164,6 +174,8 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
         'X-Backup-Total-Records': String(
           Object.values(result.recordCounts).reduce((a, b) => a + b, 0),
         ),
+        'X-Backup-Warnings-Count': String(result.warnings.length),
+        ...(warningsHeader ? { 'X-Backup-Warnings': warningsHeader } : {}),
         'X-RateLimit-Remaining': String(remaining),
         'Cache-Control': 'no-store',
       },
