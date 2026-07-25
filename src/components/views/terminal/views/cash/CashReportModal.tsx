@@ -22,10 +22,11 @@ const SK_HIST = 'costpro_cash_breakdown_history';
 
 function safeParse<T>(raw: string | null, fallback: T): T { if (!raw) return fallback; try { return JSON.parse(raw) as T; } catch { return fallback; } }
 
-type PdfTemplate = 'estandar' | 'simple';
+type PdfTemplate = 'estandar' | 'simple' | 'diario';
 const TEMPLATES: { id: PdfTemplate; label: string; desc: string }[] = [
   { id: 'estandar', label: 'Estándar', desc: 'Cuadre CUP+USD con desglose de billetes' },
   { id: 'simple', label: 'Simple', desc: 'Resumen básico sin desglose' },
+  { id: 'diario', label: 'Diario (Empresa)', desc: 'Plantilla estilo reporte diario: 3 páginas (CUP/USD/Órdenes) con tabla por producto + desglose billetes + firmas Hecho/Entregado/Recibido por' },
 ];
 
 export function CashReportModal({ open, onClose }: CashReportModalProps) {
@@ -187,6 +188,10 @@ export function CashReportModal({ open, onClose }: CashReportModalProps) {
   //   P6: DESGLOSE DE BILLETES + FIRMAS
   const handleExportPDF = async () => {
     if (!report) return;
+    // Dispatch to diario template if selected
+    if (pdfTemplate === 'diario') {
+      return handleExportPDFDiario();
+    }
     const doc = new jsPDF({ unit: 'mm', format: 'a4' });
     const pw = doc.internal.pageSize.getWidth();
     const ph = doc.internal.pageSize.getHeight();
@@ -662,7 +667,508 @@ export function CashReportModal({ open, onClose }: CashReportModalProps) {
     toast.success(`PDF generado: ${pageCount} página(s)`);
   };
 
-  if (!open) return null;
+  // ===== PDF PLANTILLA "DIARIO" (estilo reporte diario de empresa) =====
+  // Inspirado en el formato real usado por la empresa: 3 páginas independientes,
+  // una por moneda (CUP, USD) + una para órdenes de trabajo.
+  //
+  // Estructura de cada página:
+  //   - Header: "{Tienda} Reporte de Venta {MONEDA} Día: {fecha}"
+  //   - Tabla principal: Código | Clasificación | Descripción | Cantidad | {MONEDA} | {Transfer/Zelle} | Comisión
+  //   - Fila de totales (cantidades + montos)
+  //   - Bloque izquierdo: lista de "otros ingresos/egresos" (alquileres, comisiones, dietas, etc.)
+  //     con totales y "A entregar" destacado
+  //   - Bloque derecho: "Desglose de efectivo {MONEDA}" con denominaciones, cantidades, importes
+  //     + Total entregado + Cuadre + Nota
+  //   - Firmas: Hecho por | Entregado por | Recibido por
+  //
+  // Página 3: Órdenes de trabajo — misma estructura pero columna CUP + USD + Comisión.
+  const handleExportPDFDiario = async () => {
+    if (!report) return;
+    const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+    const pw = doc.internal.pageSize.getWidth();   // 210
+    const ph = doc.internal.pageSize.getHeight();  // 297
+    const m = 10; let y = 14;
+    const sn = storeInfo?.name || 'Tienda';
+    const fecha = new Date().toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
+
+    // Colors
+    const C_DARK: [number, number, number] = [17, 24, 39];
+    const C_MUTED: [number, number, number] = [107, 114, 128];
+    const C_LIGHT: [number, number, number] = [243, 244, 246];
+    const C_BORDER: [number, number, number] = [200, 200, 200];
+    const C_SUCCESS: [number, number, number] = [22, 163, 74];
+    const C_WARN: [number, number, number] = [217, 119, 6];
+
+    const setText = (c: [number, number, number]) => { doc.setTextColor(c[0], c[1], c[2]); };
+    const setFill = (c: [number, number, number]) => { doc.setFillColor(c[0], c[1], c[2]); };
+    const setDraw = (c: [number, number, number]) => { doc.setDrawColor(c[0], c[1], c[2]); };
+    const fmtCup = (n: number) => n.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const fmtUsd = (n: number) => n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+    // Fetch items summary (productos vendidos consolidados)
+    const sISO = new Date(startDate + 'T00:00:00').toISOString();
+    const eISO = new Date(endDate + 'T23:59:59').toISOString();
+    const [itemsSummary, paymentTotalsRes] = await Promise.all([
+      apiFetch(`/api/cash-report/items-summary?start_date=${encodeURIComponent(sISO)}&end_date=${encodeURIComponent(eISO)}`).catch(() => ({ items: [], total_cup: 0, total_cash: 0, total_transfer: 0, total_zelle: 0 })),
+      apiFetch(`/api/cash-report/payment-totals?start_date=${encodeURIComponent(sISO)}&end_date=${encodeURIComponent(eISO)}`).catch(() => ({ totals: {} })),
+    ]);
+
+    // Fetch production orders for the period
+    const productionOrders = await (async () => {
+      try {
+        const data = await apiFetch(`/api/production-orders?start_date=${encodeURIComponent(sISO)}&end_date=${encodeURIComponent(eISO)}&limit=100`);
+        return Array.isArray(data) ? data : (data?.data || data?.orders || []);
+      } catch { return []; }
+    })();
+
+    // Sales by currency from report
+    const sales = report.sales || [];
+    const production = (report as any).production || [];
+
+    // FIX: usar paymentTotals (desglose real por moneda desde transactions)
+    // porque report.sales agrupa por payment_method y no desglosa 'mixed'.
+    const paymentTotals = (paymentTotalsRes as any)?.totals || {};
+    const cupCashFromItems = Number(paymentTotals.CUP?.cash || 0);
+    const cupTransferFromItems = Number(paymentTotals.CUP?.transfer || 0);
+    const usdCashFromItems = Number(paymentTotals.USD?.cash || 0);
+    const usdZelleFromItems = Number(paymentTotals.USD?.zelle || 0);
+
+    // Helper: render the "otros ingresos/egresos" + "a entregar" block (left half of page)
+    const renderIncomeBlock = (
+      title: string,
+      rows: Array<{ label: string; amount: number; isTotal?: boolean; isSubtotal?: boolean }>,
+      aEntregar: number,
+      aEntregarLabel: string = 'A entregar'
+    ) => {
+      const blockW = (pw - 2 * m) / 2 - 4;
+      const x = m;
+      let by = y;
+      setText(C_DARK);
+      doc.setFontSize(10); doc.setFont('helvetica', 'bold');
+      doc.text(title, x, by); by += 5;
+
+      doc.setFontSize(8); doc.setFont('helvetica', 'normal');
+      for (const r of rows) {
+        if (r.isTotal) {
+          doc.setFont('helvetica', 'bold');
+          setText(C_DARK);
+        } else if (r.isSubtotal) {
+          doc.setFont('helvetica', 'bold');
+          setText(C_MUTED);
+        } else {
+          doc.setFont('helvetica', 'normal');
+          setText(C_DARK);
+        }
+        // label (truncated to fit blockW - 30mm for amount)
+        const maxLabel = blockW - 30;
+        let lbl = r.label;
+        if (doc.getTextWidth(lbl) > maxLabel) {
+          while (lbl.length > 0 && doc.getTextWidth(lbl + '…') > maxLabel) lbl = lbl.slice(0, -1);
+          lbl += '…';
+        }
+        doc.text(lbl, x, by);
+        // amount (right-aligned)
+        const amt = r.amount === 0 ? '-' : fmtCup(r.amount);
+        doc.text(amt, x + blockW - 2, by, { align: 'right' });
+        by += 4.2;
+      }
+
+      // "A entregar" highlighted box
+      by += 2;
+      setFill(C_SUCCESS);
+      doc.rect(x, by - 4, blockW, 7, 'F');
+      setText([255, 255, 255]);
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(10);
+      doc.text(aEntregarLabel, x + 2, by + 1);
+      doc.text(fmtCup(aEntregar), x + blockW - 2, by + 1, { align: 'right' });
+      by += 7;
+
+      return by;
+    };
+
+    // Helper: render desglose de billetes (right half of page)
+    const renderBreakdownBlock = (
+      title: string,
+      denominations: number[],
+      breakdown: Record<number, string>,
+      totalEntregado: number,
+      cuadre: number,
+      currency: 'CUP' | 'USD' = 'CUP'
+    ) => {
+      const blockW = (pw - 2 * m) / 2 - 4;
+      const x = m + (pw - 2 * m) / 2 + 4;
+      let by = y;
+      setText(C_DARK);
+      doc.setFontSize(10); doc.setFont('helvetica', 'bold');
+      doc.text(title, x, by); by += 5;
+
+      // Header row
+      doc.setFontSize(8); doc.setFont('helvetica', 'bold');
+      setText(C_MUTED);
+      doc.text('Denominación', x, by);
+      doc.text('Cantidad', x + blockW * 0.55, by, { align: 'center' });
+      doc.text('Importe', x + blockW - 2, by, { align: 'right' });
+      by += 4;
+
+      // Separator line
+      setDraw(C_BORDER); doc.setLineWidth(0.3);
+      doc.line(x, by - 1.5, x + blockW, by - 1.5);
+      by += 1;
+
+      doc.setFont('helvetica', 'normal');
+      setText(C_DARK);
+      for (const d of denominations) {
+        const cnt = Number(breakdown[d] || 0);
+        const imp = cnt * d;
+        const lbl = currency === 'CUP' ? `${d.toLocaleString('es-ES')}.00` : `${d.toFixed(2)}`;
+        const cntStr = cnt > 0 ? String(cnt) : '-';
+        const impStr = cnt > 0 ? (currency === 'CUP' ? fmtCup(imp) : fmtUsd(imp)) : '-';
+        doc.text(lbl, x, by);
+        doc.text(cntStr, x + blockW * 0.55, by, { align: 'center' });
+        doc.text(impStr, x + blockW - 2, by, { align: 'right' });
+        by += 4.2;
+      }
+
+      // Total entregado
+      by += 2;
+      setDraw(C_BORDER); doc.setLineWidth(0.3);
+      doc.line(x, by - 1.5, x + blockW, by - 1.5);
+      by += 3;
+      doc.setFont('helvetica', 'bold'); setText(C_DARK);
+      doc.text('Total entregado', x, by);
+      const totStr = currency === 'CUP' ? fmtCup(totalEntregado) : fmtUsd(totalEntregado);
+      doc.text(totStr, x + blockW - 2, by, { align: 'right' });
+      by += 5;
+
+      // Cuadre
+      doc.setFont('helvetica', 'normal');
+      const cuadreColor = cuadre === 0 ? C_SUCCESS : C_WARN;
+      setText(cuadreColor);
+      doc.text(`Cuadre`, x, by);
+      const cuadreStr = cuadre === 0 ? '-' : (currency === 'CUP' ? fmtCup(Math.abs(cuadre)) : fmtUsd(Math.abs(cuadre)));
+      doc.text(cuadreStr, x + blockW - 2, by, { align: 'right' });
+      by += 5;
+
+      // Nota
+      setText(C_MUTED); doc.setFont('helvetica', 'italic');
+      doc.text('Nota:', x, by);
+      by += 4;
+
+      return by;
+    };
+
+    // Helper: render firmas block at the bottom of a page
+    const renderFirmas = () => {
+      const sigY = ph - 25;
+      const colW = (pw - 2 * m) / 3;
+      setDraw(C_MUTED); doc.setLineWidth(0.3);
+
+      // Three signature lines
+      for (let i = 0; i < 3; i++) {
+        const x = m + i * colW;
+        doc.line(x + 5, sigY, x + colW - 5, sigY);
+      }
+
+      // Labels above the lines
+      setText(C_DARK); doc.setFont('helvetica', 'bold'); doc.setFontSize(9);
+      doc.text('Hecho por:', m + 5, sigY - 4);
+      doc.text('Entregado por:', m + colW + 5, sigY - 4);
+      doc.text('Recibido por:', m + 2 * colW + 5, sigY - 4);
+
+      // Names below the lines
+      setText(C_DARK); doc.setFont('helvetica', 'normal'); doc.setFontSize(9);
+      doc.text(deliveredBy || 'Israel Leyva Velazquez', m + 5, sigY + 5);
+      doc.text('____________________', m + colW + 5, sigY + 5);
+      doc.text(recipientName || 'Belkis Olivera Perez', m + 2 * colW + 5, sigY + 5);
+    };
+
+    // Helper: render the main sales table for a given currency
+    const renderSalesTable = (currency: 'CUP' | 'USD') => {
+      // Header
+      setFill(C_LIGHT);
+      doc.rect(m, y, pw - 2 * m, 6, 'F');
+      setText(C_DARK); doc.setFont('helvetica', 'bold'); doc.setFontSize(8);
+      const cols = [
+        { name: 'Código',    w: 18, align: 'left' as const },
+        { name: 'Clasificación', w: 22, align: 'left' as const },
+        { name: 'Descripción',   w: 55, align: 'left' as const },
+        { name: 'Cantidad',  w: 18, align: 'right' as const },
+        { name: currency,    w: 24, align: 'right' as const },
+        { name: currency === 'CUP' ? 'Transferencia' : 'Zelle', w: 24, align: 'right' as const },
+        { name: 'Comisión',  w: 18, align: 'right' as const },
+      ];
+      let cx = m;
+      for (const c of cols) {
+        if (c.align === 'right') doc.text(c.name, cx + c.w - 2, y + 4, { align: 'right' });
+        else doc.text(c.name, cx + 2, y + 4);
+        cx += c.w;
+      }
+      y += 6;
+
+      // Rows from items-summary filtered by currency
+      const items = (itemsSummary?.items || []).filter((it: any) =>
+        (it.currency || 'CUP') === currency
+      );
+      const fmtAmt = currency === 'CUP' ? fmtCup : fmtUsd;
+      let totCup = 0, totTransfer = 0, totCommission = 0;
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(8);
+      setText(C_DARK);
+
+      for (const it of items) {
+        if (y > ph - 80) { doc.addPage(); y = 14; } // page overflow guard
+        const unit = Number(it.unit_price || it.price || 0);
+        const qty = Number(it.total_quantity || 0);
+        const total = Number(it.total_cup || (unit * qty) || 0);
+        const transfer = Number(it.transfer_paid || 0);
+        const commission = Number(it.commission_paid || 0);
+        totCup += total;
+        totTransfer += transfer;
+        totCommission += commission;
+
+        cx = m;
+        // Código (SKU)
+        const sku = (it.sku || '').toString();
+        doc.text(sku, cx + 2, y + 4); cx += 18;
+        // Clasificación (category)
+        const cat = (it.category || '').toString().slice(0, 18);
+        doc.text(cat, cx + 2, y + 4); cx += 22;
+        // Descripción
+        let desc = (it.product_name || '').toString();
+        if (doc.getTextWidth(desc) > 53) {
+          while (desc.length > 0 && doc.getTextWidth(desc + '…') > 53) desc = desc.slice(0, -1);
+          desc += '…';
+        }
+        doc.text(desc, cx + 2, y + 4); cx += 55;
+        // Cantidad
+        doc.text(qty.toFixed(2), cx + 16, y + 4, { align: 'right' }); cx += 18;
+        // Monto (currency)
+        doc.text(fmtAmt(total), cx + 22, y + 4, { align: 'right' }); cx += 24;
+        // Transferencia/Zelle
+        doc.text(transfer > 0 ? fmtAmt(transfer) : '-', cx + 22, y + 4, { align: 'right' }); cx += 24;
+        // Comisión
+        doc.text(commission > 0 ? fmtAmt(commission) : '-', cx + 16, y + 4, { align: 'right' });
+
+        y += 5;
+      }
+
+      // Totals row
+      y += 1;
+      setDraw(C_DARK); doc.setLineWidth(0.5);
+      doc.line(m, y, pw - m, y); y += 4;
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(9);
+      cx = m + 18 + 22 + 55; // skip Código + Clasificación + Descripción
+      doc.text('', cx, y);
+      doc.text('', cx + 16, y, { align: 'right' }); cx += 18;
+      doc.text(fmtAmt(totCup), cx + 22, y, { align: 'right' }); cx += 24;
+      doc.text(totTransfer > 0 ? fmtAmt(totTransfer) : '-', cx + 22, y, { align: 'right' }); cx += 24;
+      doc.text(totCommission > 0 ? fmtAmt(totCommission) : '-', cx + 16, y, { align: 'right' });
+      y += 6;
+
+      return { totCup, totTransfer, totCommission };
+    };
+
+    // ────────────────────────────────────────────────────────────────────
+    // PAGE 1: REPORTE DE VENTA CUP
+    // ────────────────────────────────────────────────────────────────────
+    {
+      // Header line
+      setText(C_DARK);
+      doc.setFontSize(11); doc.setFont('helvetica', 'bold');
+      doc.text(`${sn} Reporte de Venta CUP Día:`, m, y);
+      doc.text(fecha, pw - m, y, { align: 'right' });
+      y += 7;
+
+      // Sales table
+      const totals = renderSalesTable('CUP');
+
+      // Below: two-column block (ingresos/egresos | desglose billetes)
+      y += 4;
+
+      // CUP cash total = sales cash - payments cash + production cash - commissions
+      // FIX: usar los totales desglosados de itemsSummary en vez de report.sales
+      // porque itemsSummary desglosa cash/transfer/zelle por item, mientras que
+      // report.sales agrupa por payment_method (no desglosa 'mixed').
+      const cupCashSales = cupCashFromItems;
+      const cupTransferSales = cupTransferFromItems;
+      const cupCashPayments = (report.payments || []).filter((p: any) => p.payment_method === 'cash' && p.currency === 'CUP').reduce((s: number, p: any) => s + Number(p.total), 0);
+      const cupCashProduction = production.filter((p: any) => p.payment_method === 'cash' && p.currency === 'CUP').reduce((s: number, p: any) => s + Number(p.total), 0);
+      const cupCashCommissions = (report.commissions || []).filter((c: any) => c.payment_method === 'cash' && c.currency === 'CUP').reduce((s: number, c: any) => s + Number(c.total), 0);
+
+      // Build ingresos/egresos rows
+      const incomeRows: Array<{ label: string; amount: number; isTotal?: boolean; isSubtotal?: boolean }> = [
+        { label: 'Ventas Totales', amount: totals.totCup, isTotal: true },
+        { label: 'Venta por Transferencia', amount: cupTransferSales },
+      ];
+
+      // Add production orders as ingresos
+      if (cupCashProduction > 0) {
+        incomeRows.push({ label: 'Órdenes de Trabajo (anticipos)', amount: cupCashProduction });
+      }
+      // Add payments as egresos (negative)
+      if (cupCashPayments > 0) {
+        incomeRows.push({ label: 'Pagos a Proveedores', amount: -cupCashPayments });
+      }
+      // Add commissions as egresos
+      if (cupCashCommissions > 0) {
+        incomeRows.push({ label: 'Comisiones', amount: -cupCashCommissions });
+      }
+
+      const aEntregar = cupCashSales + cupCashProduction - cupCashPayments - cupCashCommissions;
+      const blockEndY = renderIncomeBlock('Resumen del Día', incomeRows, aEntregar);
+
+      // Right block: desglose CUP
+      const expectedCup = aEntregar;
+      const cupDenoms = [1000, 500, 200, 100, 50, 20, 10, 5, 1];
+      const cupBreakdownLocal = cupBreakdown; // from state
+      const cupTotalCounted = Object.entries(cupBreakdownLocal).reduce((s, [d, c]) => s + Number(d) * (Number(c) || 0), 0);
+      const cupCuadre = cupTotalCounted - expectedCup;
+      renderBreakdownBlock('Desglose de efectivo MN', cupDenoms, cupBreakdownLocal, cupTotalCounted, cupCuadre, 'CUP');
+
+      y = Math.max(blockEndY, y) + 5;
+      renderFirmas();
+    }
+
+    // ────────────────────────────────────────────────────────────────────
+    // PAGE 2: REPORTE DE VENTA USD
+    // ────────────────────────────────────────────────────────────────────
+    doc.addPage(); y = 14;
+    {
+      setText(C_DARK);
+      doc.setFontSize(11); doc.setFont('helvetica', 'bold');
+      doc.text(`${sn} Reporte de Venta USD Día:`, m, y);
+      doc.text(fecha, pw - m, y, { align: 'right' });
+      y += 7;
+
+      const totals = renderSalesTable('USD');
+
+      y += 4;
+
+      // USD totals (FIX: usar itemsSummary desglose por item)
+      const usdCashSales = usdCashFromItems;
+      const usdZelleSales = usdZelleFromItems;
+
+      const usdIncomeRows: Array<{ label: string; amount: number; isTotal?: boolean; isSubtotal?: boolean }> = [
+        { label: 'Ventas Totales', amount: totals.totCup, isTotal: true },
+        { label: 'Venta por Zelle', amount: usdZelleSales },
+      ];
+
+      const usdAEntregar = usdCashSales;
+      const blockEndY = renderIncomeBlock('Resumen del Día USD', usdIncomeRows, usdAEntregar);
+
+      // Right: desglose USD
+      const usdDenoms = [100, 50, 20, 10, 5, 1];
+      const usdTotalCounted = Object.entries(usdBreakdown).reduce((s, [d, c]) => s + Number(d) * (Number(c) || 0), 0);
+      const usdCuadre = usdTotalCounted - usdAEntregar;
+      renderBreakdownBlock('Desglose de efectivo USD', usdDenoms, usdBreakdown, usdTotalCounted, usdCuadre, 'USD');
+
+      y = Math.max(blockEndY, y) + 5;
+      // For USD page, no signatures in reference PDF (only "Fondo de caja:" note)
+      setText(C_MUTED); doc.setFont('helvetica', 'italic'); doc.setFontSize(9);
+      doc.text('Fondo de caja:', m, ph - 20);
+    }
+
+    // ────────────────────────────────────────────────────────────────────
+    // PAGE 3: REPORTE DE ÓRDENES DE TRABAJO
+    // ────────────────────────────────────────────────────────────────────
+    doc.addPage(); y = 14;
+    {
+      setText(C_DARK);
+      doc.setFontSize(11); doc.setFont('helvetica', 'bold');
+      doc.text(`Reporte de Ordenes de trabajo`, m, y);
+      doc.text(fecha, pw - m, y, { align: 'right' });
+      y += 7;
+
+      // Header row for orders table (Código | Clasificación | Descripción | Cantidad | CUP | USD | Comisión)
+      setFill(C_LIGHT);
+      doc.rect(m, y, pw - 2 * m, 6, 'F');
+      setText(C_DARK); doc.setFont('helvetica', 'bold'); doc.setFontSize(8);
+      const cols = [
+        { name: 'Código',    w: 20, align: 'left' as const },
+        { name: 'Clasificación', w: 22, align: 'left' as const },
+        { name: 'Descripción',   w: 65, align: 'left' as const },
+        { name: 'Cantidad',  w: 15, align: 'right' as const },
+        { name: 'CUP',       w: 25, align: 'right' as const },
+        { name: 'USD',       w: 22, align: 'right' as const },
+        { name: 'Comisión',  w: 20, align: 'right' as const },
+      ];
+      let cx = m;
+      for (const c of cols) {
+        if (c.align === 'right') doc.text(c.name, cx + c.w - 2, y + 4, { align: 'right' });
+        else doc.text(c.name, cx + 2, y + 4);
+        cx += c.w;
+      }
+      y += 6;
+
+      // Rows from productionOrders
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(8); setText(C_DARK);
+      let totCup = 0, totUsd = 0, totCommission = 0;
+
+      for (const ord of productionOrders) {
+        if (y > ph - 80) { doc.addPage(); y = 14; }
+        const num = (ord.order_number || '').toString();
+        const desc = (ord.description || ord.title || ord.customer_name || 'Orden de trabajo').toString();
+        const cupAmt = Number(ord.advance_currency === 'CUP' ? ord.advance_amount : (ord.budget_currency === 'CUP' ? ord.budget_total : 0));
+        const usdAmt = Number(ord.advance_currency === 'USD' ? ord.advance_amount : (ord.budget_currency === 'USD' ? ord.budget_total : 0));
+        totCup += cupAmt; totUsd += usdAmt;
+
+        cx = m;
+        doc.text(num, cx + 2, y + 4); cx += 20;
+        doc.text('Trabajo', cx + 2, y + 4); cx += 22;
+        let d = desc;
+        if (doc.getTextWidth(d) > 63) {
+          while (d.length > 0 && doc.getTextWidth(d + '…') > 63) d = d.slice(0, -1);
+          d += '…';
+        }
+        doc.text(d, cx + 2, y + 4); cx += 65;
+        doc.text('1.00', cx + 13, y + 4, { align: 'right' }); cx += 15;
+        doc.text(cupAmt > 0 ? fmtCup(cupAmt) : '-', cx + 23, y + 4, { align: 'right' }); cx += 25;
+        doc.text(usdAmt > 0 ? fmtUsd(usdAmt) : '-', cx + 20, y + 4, { align: 'right' }); cx += 22;
+        doc.text('-', cx + 18, y + 4, { align: 'right' });
+        y += 5;
+      }
+
+      // Totals row
+      y += 1;
+      setDraw(C_DARK); doc.setLineWidth(0.5);
+      doc.line(m, y, pw - m, y); y += 4;
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(9);
+      cx = m + 20 + 22 + 65 + 15;
+      doc.text(fmtCup(totCup), cx + 23, y, { align: 'right' }); cx += 25;
+      doc.text(totUsd > 0 ? fmtUsd(totUsd) : '-', cx + 20, y, { align: 'right' }); cx += 22;
+      doc.text('-', cx + 18, y, { align: 'right' });
+      y += 8;
+
+      // Income + breakdown for orders
+      const incomeRows = [
+        { label: 'Ventas Totales', amount: totCup, isTotal: true },
+        { label: 'Venta por Transferencia', amount: 0 },
+      ];
+      const aEntregar = totCup;
+      const blockEndY = renderIncomeBlock('Resumen Órdenes', incomeRows, aEntregar);
+
+      // Right: desglose CUP
+      const cupDenoms = [200, 100, 50, 20, 10, 5, 1];
+      const cupTotalCounted = Object.entries(cupBreakdown).reduce((s, [d, c]) => s + Number(d) * (Number(c) || 0), 0);
+      const cupCuadre = cupTotalCounted - aEntregar;
+      renderBreakdownBlock('Desglose de efectivo CUP', cupDenoms, cupBreakdown, cupTotalCounted, cupCuadre, 'CUP');
+
+      y = Math.max(blockEndY, y) + 5;
+      renderFirmas();
+    }
+
+    // Footer on each page
+    const pageCount = doc.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(7); setText(C_MUTED); doc.setFont('helvetica', 'normal');
+      const sectionName = i === 1 ? 'CUP' : i === 2 ? 'USD' : i === 3 ? 'Órdenes' : '';
+      doc.text(`CostPro — Reporte Diario · ${sn} · ${sectionName} · Página ${i} de ${pageCount}`, pw / 2, ph - 5, { align: 'center' });
+    }
+
+    doc.save(`reporte_diario_${sn.replace(/\s+/g, '_')}_${startDate}.pdf`);
+    setShowTemplateSelector(false);
+    toast.success(`Reporte diario generado: ${pageCount} página(s)`);
+  };
 
   const methodIcon = (m: string) => m === 'cash' ? '💵' : m === 'transfer' ? '📱' : '💳';
   const methodLabel = (m: string) => m === 'cash' ? 'Efectivo' : m === 'transfer' ? 'Transferencia' : 'Zelle';
