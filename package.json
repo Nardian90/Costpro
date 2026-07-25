@@ -87,7 +87,7 @@
     "@types/react-syntax-highlighter": "^15.5.13",
     "@types/uuid": "^11.0.0",
     "@upstash/ratelimit": "^2.0.8",
-    "@upstash/redis": "^1.37.0",
+    "@upstash/redis": "^1.38.0",
     "@vercel/functions": "^3.7.4",
     "@whiskeysockets/baileys": "^7.0.0-rc13",
     "@zxing/browser": "^0.2.0",

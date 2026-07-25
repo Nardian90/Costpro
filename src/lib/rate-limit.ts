@@ -84,14 +84,22 @@ export async function rateLimit(
 
   // Producción: Upstash Redis (distribuido, persiste entre invocaciones serverless)
   // FIX-BUG-SEC-007: Look up/create limiter based on caller params instead of using a single fixed instance
+  // V1.1: try-catch alrededor de Upstash para fallback graceful si las credenciales fallan
   const upstashLimiter = await getUpstashLimiter(maxRequests, windowSec);
   if (upstashLimiter) {
-    const { success, remaining, reset } = await upstashLimiter.limit(identifier);
-    return {
-      allowed: success,
-      remaining,
-      resetAt: new Date(reset),
-    };
+    try {
+      const { success, remaining, reset } = await upstashLimiter.limit(identifier);
+      return {
+        allowed: success,
+        remaining,
+        resetAt: new Date(reset),
+      };
+    } catch (upstashErr) {
+      // Upstash falló (WRONGPASS, red, etc.) — logear y caer al fallback in-memory
+      console.warn('[RATE-LIMIT] Upstash error, fallback to in-memory:', upstashErr instanceof Error ? upstashErr.message : String(upstashErr));
+      // Invalidar el limiter cacheado para que reintente en la próxima llamada
+      upstashLimiterCache.delete(`${maxRequests}_${windowSec}`);
+    }
   }
 
   // Desarrollo: fallback en memoria (no apto para producción)
