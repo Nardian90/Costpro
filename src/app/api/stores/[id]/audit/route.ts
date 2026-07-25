@@ -31,10 +31,19 @@ const querySchema = z.object({
 async function auditHandler(
   req: NextRequest,
   session: AuthenticatedSession,
-  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id: storeId } = await context.params;
+    // FIX: withRole no pasa context.params al handler.
+    // Extraer storeId directamente del URL (patrón usado por otros endpoints
+    // como backup/route.ts y backup/restore/route.ts).
+    const url = new URL(req.url);
+    const pathParts = url.pathname.split('/');
+    const storesIdx = pathParts.indexOf('stores');
+    const storeId = storesIdx >= 0 ? pathParts[storesIdx + 1] : null;
+
+    if (!storeId) {
+      return NextResponse.json(createApiError('INVALID_STORE_ID'), { status: 400 });
+    }
 
     // FIX-AUDIT-SEC (#6): rate limiting como el resto de endpoints
     const clientIp = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || req.headers.get('x-real-ip') || 'unknown';
