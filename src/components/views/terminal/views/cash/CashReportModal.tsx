@@ -979,15 +979,16 @@ export function CashReportModal({ open, onClose }: CashReportModalProps) {
     // Helper: render the main sales table for a given currency
     // Estilo referencia: bordes negros gruesos en todas las celdas
     const renderSalesTable = (currency: 'CUP' | 'USD') => {
-      // Calcular dimensiones
+      // Calcular dimensiones — anchos optimizados para evitar desbordamiento
+      // de montos grandes como '100,205.00' (9 chars). Total: 184mm (cabe en 190mm útiles)
       const cols = [
-        { name: 'Código',    w: 18, align: 'left' as const },
-        { name: 'Clasificación', w: 22, align: 'left' as const },
-        { name: 'Descripción',   w: 55, align: 'left' as const },
-        { name: 'Cantidad',  w: 18, align: 'right' as const },
-        { name: currency,    w: 24, align: 'right' as const },
-        { name: currency === 'CUP' ? 'Transferencia' : 'Zelle', w: 24, align: 'right' as const },
-        { name: 'Comisión',  w: 18, align: 'right' as const },
+        { name: 'Código',    w: 14, align: 'left' as const },
+        { name: 'Clasificación', w: 16, align: 'left' as const },
+        { name: 'Descripción',   w: 48, align: 'left' as const },
+        { name: 'Cantidad',  w: 13, align: 'right' as const },
+        { name: currency,    w: 30, align: 'right' as const },
+        { name: currency === 'CUP' ? 'Transferencia' : 'Zelle', w: 30, align: 'right' as const },
+        { name: 'Comisión',  w: 23, align: 'right' as const },
       ];
       const colWidths = cols.map(c => c.w);
       const tableW = colWidths.reduce((s, w) => s + w, 0);
@@ -1053,31 +1054,31 @@ export function CashReportModal({ open, onClose }: CashReportModalProps) {
 
         cx = m;
         const sku = (it.sku || '').toString();
-        doc.text(sku, cx + 2, y + 3.5); cx += 18;
-        const cat = (it.category || '').toString().slice(0, 18);
-        doc.text(cat, cx + 2, y + 3.5); cx += 22;
+        doc.text(sku, cx + 2, y + 3.5); cx += 14;
+        const cat = (it.category || '').toString().slice(0, 14);
+        doc.text(cat, cx + 2, y + 3.5); cx += 16;
         let desc = (it.product_name || '').toString();
-        if (doc.getTextWidth(desc) > 53) {
-          while (desc.length > 0 && doc.getTextWidth(desc + '…') > 53) desc = desc.slice(0, -1);
+        if (doc.getTextWidth(desc) > 46) {
+          while (desc.length > 0 && doc.getTextWidth(desc + '…') > 46) desc = desc.slice(0, -1);
           desc += '…';
         }
-        doc.text(desc, cx + 2, y + 3.5); cx += 55;
-        doc.text(qty.toFixed(2), cx + 16, y + 3.5, { align: 'right' }); cx += 18;
-        doc.text(fmtAmt(total), cx + 22, y + 3.5, { align: 'right' }); cx += 24;
-        doc.text(transfer > 0 ? fmtAmt(transfer) : '-', cx + 22, y + 3.5, { align: 'right' }); cx += 24;
-        doc.text(commission > 0 ? fmtAmt(commission) : '-', cx + 16, y + 3.5, { align: 'right' });
+        doc.text(desc, cx + 2, y + 3.5); cx += 48;
+        doc.text(qty.toFixed(2), cx + 11, y + 3.5, { align: 'right' }); cx += 13;
+        doc.text(fmtAmt(total), cx + 28, y + 3.5, { align: 'right' }); cx += 30;
+        doc.text(transfer > 0 ? fmtAmt(transfer) : '-', cx + 28, y + 3.5, { align: 'right' }); cx += 30;
+        doc.text(commission > 0 ? fmtAmt(commission) : '-', cx + 21, y + 3.5, { align: 'right' });
 
         y += rowH;
       }
 
       // Fila de totales
       doc.setFont('helvetica', 'bold'); doc.setFontSize(9);
-      cx = m + 18 + 22 + 55; // skip Código + Clasificación + Descripción
+      cx = m + 14 + 16 + 48; // skip Código + Clasificación + Descripción
       doc.text('', cx, y + 3.5);
-      doc.text('', cx + 16, y + 3.5, { align: 'right' }); cx += 18;
-      doc.text(fmtAmt(totCup), cx + 22, y + 3.5, { align: 'right' }); cx += 24;
-      doc.text(totTransfer > 0 ? fmtAmt(totTransfer) : '-', cx + 22, y + 3.5, { align: 'right' }); cx += 24;
-      doc.text(totCommission > 0 ? fmtAmt(totCommission) : '-', cx + 16, y + 3.5, { align: 'right' });
+      doc.text('', cx + 11, y + 3.5, { align: 'right' }); cx += 13;
+      doc.text(fmtAmt(totCup), cx + 28, y + 3.5, { align: 'right' }); cx += 30;
+      doc.text(totTransfer > 0 ? fmtAmt(totTransfer) : '-', cx + 28, y + 3.5, { align: 'right' }); cx += 30;
+      doc.text(totCommission > 0 ? fmtAmt(totCommission) : '-', cx + 21, y + 3.5, { align: 'right' });
       y += rowH;
 
       return { totCup, totTransfer, totCommission };
@@ -1088,19 +1089,21 @@ export function CashReportModal({ open, onClose }: CashReportModalProps) {
     // ────────────────────────────────────────────────────────────────────
     {
       // ── Header con logo + título + fecha (estilo referencia) ──────────────
-      // Logo (si existe)
+      // Logo a la izquierda (14x14mm), título a su derecha, fecha al final.
+      // El logo NO se superpone con la tabla porque el header ocupa solo 8mm
+      // de alto y la tabla empieza después.
       if (logoDataUrl) {
         try {
-          // Logo a la izquierda, 18x18mm
-          doc.addImage(logoDataUrl, 'PNG', m, y - 4, 18, 18);
+          // Logo a la izquierda, 14x14mm (más pequeño que la tabla para no superponerse)
+          doc.addImage(logoDataUrl, 'PNG', m, y - 4, 14, 14);
         } catch {}
       }
       // Título centrado a la derecha del logo
       setText(C_DARK);
       doc.setFontSize(12); doc.setFont('helvetica', 'bold');
-      doc.text(`${sn} Reporte de Venta CUP Día:`, m + (logoDataUrl ? 22 : 0), y);
+      doc.text(`${sn} Reporte de Venta CUP Día:`, m + (logoDataUrl ? 18 : 0), y);
       doc.text(fecha, pw - m, y, { align: 'right' });
-      y += 7;
+      y += 8; // 8mm de separación para que el logo no toque la tabla
 
       // Sales table
       const totals = renderSalesTable('CUP');
@@ -1164,15 +1167,15 @@ export function CashReportModal({ open, onClose }: CashReportModalProps) {
     // ────────────────────────────────────────────────────────────────────
     doc.addPage(); y = 14;
     {
-      // Logo
+      // Logo (14x14mm, sin superposición con tabla)
       if (logoDataUrl) {
-        try { doc.addImage(logoDataUrl, 'PNG', m, y - 4, 18, 18); } catch {}
+        try { doc.addImage(logoDataUrl, 'PNG', m, y - 4, 14, 14); } catch {}
       }
       setText(C_DARK);
       doc.setFontSize(12); doc.setFont('helvetica', 'bold');
-      doc.text(`${sn} Reporte de Venta USD Día:`, m + (logoDataUrl ? 22 : 0), y);
+      doc.text(`${sn} Reporte de Venta USD Día:`, m + (logoDataUrl ? 18 : 0), y);
       doc.text(fecha, pw - m, y, { align: 'right' });
-      y += 7;
+      y += 8;
 
       const totals = renderSalesTable('USD');
 
@@ -1207,26 +1210,27 @@ export function CashReportModal({ open, onClose }: CashReportModalProps) {
     // ────────────────────────────────────────────────────────────────────
     doc.addPage(); y = 14;
     {
-      // Logo
+      // Logo (14x14mm)
       if (logoDataUrl) {
-        try { doc.addImage(logoDataUrl, 'PNG', m, y - 4, 18, 18); } catch {}
+        try { doc.addImage(logoDataUrl, 'PNG', m, y - 4, 14, 14); } catch {}
       }
       setText(C_DARK);
       doc.setFontSize(12); doc.setFont('helvetica', 'bold');
-      doc.text(`Reporte de Ordenes de trabajo`, m + (logoDataUrl ? 22 : 0), y);
+      doc.text(`Reporte de Ordenes de trabajo`, m + (logoDataUrl ? 18 : 0), y);
       doc.text(fecha, pw - m, y, { align: 'right' });
-      y += 7;
+      y += 8;
 
       // Header row for orders table (Código | Clasificación | Descripción | Cantidad | CUP | USD | Comisión)
       // Estilo referencia: bordes negros gruesos
+      // Anchos optimizados: total 183mm (cabe en 190mm útiles)
       const cols = [
-        { name: 'Código',    w: 20, align: 'left' as const },
-        { name: 'Clasificación', w: 22, align: 'left' as const },
-        { name: 'Descripción',   w: 65, align: 'left' as const },
-        { name: 'Cantidad',  w: 15, align: 'right' as const },
-        { name: 'CUP',       w: 25, align: 'right' as const },
-        { name: 'USD',       w: 22, align: 'right' as const },
-        { name: 'Comisión',  w: 20, align: 'right' as const },
+        { name: 'Código',    w: 18, align: 'left' as const },
+        { name: 'Clasificación', w: 18, align: 'left' as const },
+        { name: 'Descripción',   w: 60, align: 'left' as const },
+        { name: 'Cantidad',  w: 12, align: 'right' as const },
+        { name: 'CUP',       w: 28, align: 'right' as const },
+        { name: 'USD',       w: 25, align: 'right' as const },
+        { name: 'Comisión',  w: 22, align: 'right' as const },
       ];
       const colWidths = cols.map(c => c.w);
       const tableW = colWidths.reduce((s, w) => s + w, 0);
@@ -1270,18 +1274,18 @@ export function CashReportModal({ open, onClose }: CashReportModalProps) {
         totCup += cupAmt; totUsd += usdAmt;
 
         cx = m;
-        doc.text(num, cx + 2, y + 4); cx += 20;
-        doc.text('Trabajo', cx + 2, y + 4); cx += 22;
+        doc.text(num, cx + 2, y + 4); cx += 18;
+        doc.text('Trabajo', cx + 2, y + 4); cx += 18;
         let d = desc;
-        if (doc.getTextWidth(d) > 63) {
-          while (d.length > 0 && doc.getTextWidth(d + '…') > 63) d = d.slice(0, -1);
+        if (doc.getTextWidth(d) > 58) {
+          while (d.length > 0 && doc.getTextWidth(d + '…') > 58) d = d.slice(0, -1);
           d += '…';
         }
-        doc.text(d, cx + 2, y + 4); cx += 65;
-        doc.text('1.00', cx + 13, y + 4, { align: 'right' }); cx += 15;
-        doc.text(cupAmt > 0 ? fmtCup(cupAmt) : '-', cx + 23, y + 4, { align: 'right' }); cx += 25;
-        doc.text(usdAmt > 0 ? fmtUsd(usdAmt) : '-', cx + 20, y + 4, { align: 'right' }); cx += 22;
-        doc.text('-', cx + 18, y + 4, { align: 'right' });
+        doc.text(d, cx + 2, y + 4); cx += 60;
+        doc.text('1.00', cx + 10, y + 4, { align: 'right' }); cx += 12;
+        doc.text(cupAmt > 0 ? fmtCup(cupAmt) : '-', cx + 26, y + 4, { align: 'right' }); cx += 28;
+        doc.text(usdAmt > 0 ? fmtUsd(usdAmt) : '-', cx + 23, y + 4, { align: 'right' }); cx += 25;
+        doc.text('-', cx + 20, y + 4, { align: 'right' });
         y += 5;
       }
 
@@ -1290,10 +1294,10 @@ export function CashReportModal({ open, onClose }: CashReportModalProps) {
       setDraw(C_DARK); doc.setLineWidth(0.5);
       doc.line(m, y, pw - m, y); y += 4;
       doc.setFont('helvetica', 'bold'); doc.setFontSize(9);
-      cx = m + 20 + 22 + 65 + 15;
-      doc.text(fmtCup(totCup), cx + 23, y, { align: 'right' }); cx += 25;
-      doc.text(totUsd > 0 ? fmtUsd(totUsd) : '-', cx + 20, y, { align: 'right' }); cx += 22;
-      doc.text('-', cx + 18, y, { align: 'right' });
+      cx = m + 18 + 18 + 60 + 12;
+      doc.text(fmtCup(totCup), cx + 26, y, { align: 'right' }); cx += 28;
+      doc.text(totUsd > 0 ? fmtUsd(totUsd) : '-', cx + 23, y, { align: 'right' }); cx += 25;
+      doc.text('-', cx + 20, y, { align: 'right' });
       y += 8;
 
       // Income + breakdown for orders
