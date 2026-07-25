@@ -148,6 +148,11 @@ const AccountsPayableView = dynamic(() => import('@/components/views/terminal/vi
 const CashReportModal = dynamic(() => import('@/components/views/terminal/views/cash/CashReportModal').then(m => ({ default: m.CashReportModal })), { ssr: false });
 // FIX-PRODUCTION (2026-07-12): órdenes de producción y trabajo
 const ProductionOrdersView = dynamic(() => import('@/components/views/terminal/views/production_orders/ProductionOrdersView'), { ssr: false });
+// V1.2: Devoluciones, Clientes, Cotizaciones, Cierre Fiscal
+const DevolutionsView = dynamic(() => import('@/components/views/terminal/views/devolutions/DevolutionsView').then(m => ({ default: m.DevolutionsView })), { ssr: false });
+const CustomersView = dynamic(() => import('@/components/views/terminal/views/customers/CustomersView').then(m => ({ default: m.CustomersView })), { ssr: false });
+const QuotationsView = dynamic(() => import('@/components/views/terminal/views/quotations/QuotationsView').then(m => ({ default: m.QuotationsView })), { ssr: false });
+const FiscalCloseView = dynamic(() => import('@/components/views/terminal/views/fiscal_close/FiscalCloseView').then(m => ({ default: m.FiscalCloseView })), { ssr: false });
 const CreateProductModal = dynamic(() => import('@/components/modals/CreateProductModal').then(m => m.CreateProductModal), { ssr: false });
 const CommandPalette = dynamic(() => import('@/components/ui/CommandPalette').then(m => m.CommandPalette), { ssr: false });
 const SyncConflictModal = dynamic(() => import('@/components/modals/SyncConflictModal').then(m => m.SyncConflictModal), { ssr: false });
@@ -437,6 +442,11 @@ export default function TerminalShell() {
         case 'cash_report': return <ViewErrorBoundary viewName="Reporte de Entrega"><CashReportWrapper /></ViewErrorBoundary>;
         // FIX-PRODUCTION (2026-07-12): órdenes de producción y trabajo
         case 'production-orders': return <ViewErrorBoundary viewName="Órdenes de Producción"><ProductionOrdersView /></ViewErrorBoundary>;
+        // V1.2: Devoluciones, Clientes CRM, Cotizaciones, Cierre Fiscal
+        case 'devolutions': return <ViewErrorBoundary viewName="Devoluciones"><DevolutionsView /></ViewErrorBoundary>;
+        case 'customers': return <ViewErrorBoundary viewName="Clientes"><CustomersView /></ViewErrorBoundary>;
+        case 'quotations': return <ViewErrorBoundary viewName="Cotizaciones"><QuotationsView /></ViewErrorBoundary>;
+        case 'fiscal-close': return <ViewErrorBoundary viewName="Cierre Fiscal"><FiscalCloseView /></ViewErrorBoundary>;
         case 'costeo-dinamico': return <ViewErrorBoundary viewName="Costeo Dinámico"><CosteoDinamicoView /></ViewErrorBoundary>;
         case 'estructura-costo': return <ViewErrorBoundary viewName="Estructura de Costo"><EstructuraCostoView /></ViewErrorBoundary>;
         case 'whatsapp-config': return <ViewErrorBoundary viewName="WhatsApp Config"><WhatsAppConfigView /></ViewErrorBoundary>;
