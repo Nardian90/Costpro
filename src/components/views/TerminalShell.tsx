@@ -153,6 +153,11 @@ const DevolutionsView = dynamic(() => import('@/components/views/terminal/views/
 const CustomersView = dynamic(() => import('@/components/views/terminal/views/customers/CustomersView').then(m => ({ default: m.CustomersView })), { ssr: false });
 const QuotationsView = dynamic(() => import('@/components/views/terminal/views/quotations/QuotationsView').then(m => ({ default: m.QuotationsView })), { ssr: false });
 const FiscalCloseView = dynamic(() => import('@/components/views/terminal/views/fiscal_close/FiscalCloseView').then(m => ({ default: m.FiscalCloseView })), { ssr: false });
+// V2.0: Lotes, Almacenes, ABC, Conciliación Bancaria
+const LotsView = dynamic(() => import('@/components/views/terminal/views/lots/LotsView').then(m => ({ default: m.LotsView })), { ssr: false });
+const WarehousesView = dynamic(() => import('@/components/views/terminal/views/warehouses/WarehousesView').then(m => ({ default: m.WarehousesView })), { ssr: false });
+const ABCView = dynamic(() => import('@/components/views/terminal/views/abc_analysis/ABCView').then(m => ({ default: m.ABCView })), { ssr: false });
+const BankReconciliationView = dynamic(() => import('@/components/views/terminal/views/bank_reconciliation/BankReconciliationView').then(m => ({ default: m.BankReconciliationView })), { ssr: false });
 const CreateProductModal = dynamic(() => import('@/components/modals/CreateProductModal').then(m => m.CreateProductModal), { ssr: false });
 const CommandPalette = dynamic(() => import('@/components/ui/CommandPalette').then(m => m.CommandPalette), { ssr: false });
 const SyncConflictModal = dynamic(() => import('@/components/modals/SyncConflictModal').then(m => m.SyncConflictModal), { ssr: false });
@@ -447,6 +452,11 @@ export default function TerminalShell() {
         case 'customers': return <ViewErrorBoundary viewName="Clientes"><CustomersView /></ViewErrorBoundary>;
         case 'quotations': return <ViewErrorBoundary viewName="Cotizaciones"><QuotationsView /></ViewErrorBoundary>;
         case 'fiscal-close': return <ViewErrorBoundary viewName="Cierre Fiscal"><FiscalCloseView /></ViewErrorBoundary>;
+        // V2.0: Lotes, Almacenes, ABC, Conciliación Bancaria
+        case 'lots': return <ViewErrorBoundary viewName="Lotes"><LotsView /></ViewErrorBoundary>;
+        case 'warehouses': return <ViewErrorBoundary viewName="Almacenes"><WarehousesView /></ViewErrorBoundary>;
+        case 'abc-analysis': return <ViewErrorBoundary viewName="ABC"><ABCView /></ViewErrorBoundary>;
+        case 'bank-reconciliation': return <ViewErrorBoundary viewName="Conciliación"><BankReconciliationView /></ViewErrorBoundary>;
         case 'costeo-dinamico': return <ViewErrorBoundary viewName="Costeo Dinámico"><CosteoDinamicoView /></ViewErrorBoundary>;
         case 'estructura-costo': return <ViewErrorBoundary viewName="Estructura de Costo"><EstructuraCostoView /></ViewErrorBoundary>;
         case 'whatsapp-config': return <ViewErrorBoundary viewName="WhatsApp Config"><WhatsAppConfigView /></ViewErrorBoundary>;
