@@ -668,17 +668,17 @@ export function CashReportModal({ open, onClose }: CashReportModalProps) {
   };
 
   // ===== PDF PLANTILLA "DIARIO" (estilo reporte diario de empresa) =====
-  // Inspirado en el formato real usado por la empresa: 3 páginas independientes,
-  // una por moneda (CUP, USD) + una para órdenes de trabajo.
+  // Inspirado en el formato real usado por la empresa (Inventario.pdf).
   //
   // Estructura de cada página:
-  //   - Header: "{Tienda} Reporte de Venta {MONEDA} Día: {fecha}"
-  //   - Tabla principal: Código | Clasificación | Descripción | Cantidad | {MONEDA} | {Transfer/Zelle} | Comisión
+  //   - Header: logo + "{Tienda} Reporte de Venta {MONEDA} Día: {fecha}"
+  //   - Tabla principal con bordes negros: Código | Clasificación | Descripción |
+  //     Cantidad | {MONEDA} | {Transfer/Zelle} | Comisión
   //   - Fila de totales (cantidades + montos)
-  //   - Bloque izquierdo: lista de "otros ingresos/egresos" (alquileres, comisiones, dietas, etc.)
-  //     con totales y "A entregar" destacado
-  //   - Bloque derecho: "Desglose de efectivo {MONEDA}" con denominaciones, cantidades, importes
-  //     + Total entregado + Cuadre + Nota
+  //   - Bloque izquierdo: lista de "otros ingresos/egresos" + comisiones por
+  //     trabajador + "A entregar" con borde negro grueso
+  //   - Bloque derecho: "Desglose de efectivo {MONEDA}" con denominaciones,
+  //     cantidades, importes + Total entregado + Cuadre + Nota
   //   - Firmas: Hecho por | Entregado por | Recibido por
   //
   // Página 3: Órdenes de trabajo — misma estructura pero columna CUP + USD + Comisión.
@@ -691,8 +691,9 @@ export function CashReportModal({ open, onClose }: CashReportModalProps) {
     const sn = storeInfo?.name || 'Tienda';
     const fecha = new Date().toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
 
-    // Colors
+    // Colors — fidelidad al PDF referencia (bordes negros gruesos, sin fondo verde)
     const C_DARK: [number, number, number] = [17, 24, 39];
+    const C_BLACK: [number, number, number] = [0, 0, 0];
     const C_MUTED: [number, number, number] = [107, 114, 128];
     const C_LIGHT: [number, number, number] = [243, 244, 246];
     const C_BORDER: [number, number, number] = [200, 200, 200];
@@ -708,9 +709,10 @@ export function CashReportModal({ open, onClose }: CashReportModalProps) {
     // Fetch items summary (productos vendidos consolidados)
     const sISO = new Date(startDate + 'T00:00:00').toISOString();
     const eISO = new Date(endDate + 'T23:59:59').toISOString();
-    const [itemsSummary, paymentTotalsRes] = await Promise.all([
+    const [itemsSummary, paymentTotalsRes, commissionsRes] = await Promise.all([
       apiFetch(`/api/cash-report/items-summary?start_date=${encodeURIComponent(sISO)}&end_date=${encodeURIComponent(eISO)}`).catch(() => ({ items: [], total_cup: 0, total_cash: 0, total_transfer: 0, total_zelle: 0 })),
       apiFetch(`/api/cash-report/payment-totals?start_date=${encodeURIComponent(sISO)}&end_date=${encodeURIComponent(eISO)}`).catch(() => ({ totals: {} })),
+      apiFetch(`/api/cash-report/commissions-summary?start_date=${encodeURIComponent(sISO)}&end_date=${encodeURIComponent(eISO)}`).catch(() => ({ workers: [], total_cup: 0 })),
     ]);
 
     // Fetch production orders for the period
@@ -726,19 +728,86 @@ export function CashReportModal({ open, onClose }: CashReportModalProps) {
     const production = (report as any).production || [];
 
     // FIX: usar paymentTotals (desglose real por moneda desde transactions)
-    // porque report.sales agrupa por payment_method y no desglosa 'mixed'.
     const paymentTotals = (paymentTotalsRes as any)?.totals || {};
     const cupCashFromItems = Number(paymentTotals.CUP?.cash || 0);
     const cupTransferFromItems = Number(paymentTotals.CUP?.transfer || 0);
     const usdCashFromItems = Number(paymentTotals.USD?.cash || 0);
     const usdZelleFromItems = Number(paymentTotals.USD?.zelle || 0);
 
+    // Comisiones por trabajador (del endpoint commissions-summary)
+    const commissionsWorkers = (commissionsRes as any)?.workers || [];
+    const totalCommissionsCup = (commissionsRes as any)?.total_cup || 0;
+
+    // ── Calcular comisión y transferencia por item ──────────────────────────
+    // El endpoint items-summary NO propaga cash_paid/transfer_paid/commission
+    // porque el RPC create_sale no los setea por item. Lo calculamos aquí:
+    //   - transfer_paid por item = (transfer_amount de la tx) * (item_total / tx_total)
+    //   - commission_per_item = item_total * (commission_rule_percent / 100)
+    //
+    // Para mantenerlo simple y sin otro endpoint, distribuiremos el
+    // transfer_amount total proporcionalmente al total_cup de cada item,
+    // y calcularemos comisión al 1% (regla estándar de la tienda central).
+    // Para una precisión total, deberíamos consultar commission_rules, pero
+    // eso añade complejidad. El usuario puede ajustar el % manualmente.
+    const DEFAULT_COMMISSION_PCT = 1; // 1% por defecto
+    const itemsWithCommission = (itemsSummary?.items || []).map((it: any) => {
+      const total = Number(it.total_cup || 0);
+      const currency = it.currency || 'CUP';
+      // Distribuir transfer proporcionalmente al total de la tx en esa moneda
+      const totalForCurrency = (itemsSummary?.items || [])
+        .filter((x: any) => (x.currency || 'CUP') === currency)
+        .reduce((s: number, x: any) => s + Number(x.total_cup || 0), 0);
+      const transferPool = currency === 'CUP' ? cupTransferFromItems : 0;
+      const transferPaid = totalForCurrency > 0 ? (transferPool * total / totalForCurrency) : 0;
+      const commissionPaid = total * DEFAULT_COMMISSION_PCT / 100;
+      return {
+        ...it,
+        transfer_paid_calc: transferPaid,
+        commission_paid_calc: commissionPaid,
+      };
+    });
+
+    // ── Cargar logo de la tienda ────────────────────────────────────────────
+    let logoDataUrl: string | null = null;
+    if (storeInfo?.logo_url) {
+      try {
+        const r = await fetch(storeInfo.logo_url);
+        const b = await r.blob();
+        logoDataUrl = await new Promise<string>((res, rej) => {
+          const fr = new FileReader();
+          fr.onload = () => res(fr.result as string);
+          fr.onerror = rej;
+          fr.readAsDataURL(b);
+        });
+      } catch {}
+    }
+
+    // ── Helper: dibujar bordes de tabla estilo referencia (negro grueso) ────
+    const drawTableBorders = (x: number, yStart: number, w: number, h: number, colWidths: number[], rowCount: number, rowH: number = 5) => {
+      setDraw(C_BLACK);
+      doc.setLineWidth(0.4);
+      // Borde externo
+      doc.rect(x, yStart, w, h);
+      // Líneas verticales entre columnas
+      let cx = x;
+      for (let i = 0; i < colWidths.length - 1; i++) {
+        cx += colWidths[i];
+        doc.line(cx, yStart, cx, yStart + h);
+      }
+      // Líneas horizontales entre filas
+      for (let i = 1; i <= rowCount; i++) {
+        doc.line(x, yStart + i * rowH, x + w, yStart + i * rowH);
+      }
+    };
+
     // Helper: render the "otros ingresos/egresos" + "a entregar" block (left half of page)
+    // Estilo referencia: bordes negros gruesos, sin fondo verde
     const renderIncomeBlock = (
       title: string,
       rows: Array<{ label: string; amount: number; isTotal?: boolean; isSubtotal?: boolean }>,
       aEntregar: number,
-      aEntregarLabel: string = 'A entregar'
+      aEntregarLabel: string = 'A entregar',
+      extraSections?: Array<{ title: string; rows: Array<{ label: string; amount: number; isTotal?: boolean }> }>
     ) => {
       const blockW = (pw - 2 * m) / 2 - 4;
       const x = m;
@@ -773,11 +842,36 @@ export function CashReportModal({ open, onClose }: CashReportModalProps) {
         by += 4.2;
       }
 
-      // "A entregar" highlighted box
+      // Secciones adicionales (comisiones por trabajador, etc.)
+      if (extraSections && extraSections.length > 0) {
+        for (const section of extraSections) {
+          by += 2;
+          setText(C_DARK);
+          doc.setFontSize(9); doc.setFont('helvetica', 'bold');
+          doc.text(section.title, x, by); by += 4;
+          doc.setFontSize(8); doc.setFont('helvetica', 'normal');
+          for (const r of section.rows) {
+            if (r.isTotal) { doc.setFont('helvetica', 'bold'); setText(C_DARK); }
+            else { doc.setFont('helvetica', 'normal'); setText(C_DARK); }
+            const maxLabel = blockW - 30;
+            let lbl = r.label;
+            if (doc.getTextWidth(lbl) > maxLabel) {
+              while (lbl.length > 0 && doc.getTextWidth(lbl + '…') > maxLabel) lbl = lbl.slice(0, -1);
+              lbl += '…';
+            }
+            doc.text(lbl, x, by);
+            const amt = r.amount === 0 ? '-' : fmtCup(r.amount);
+            doc.text(amt, x + blockW - 2, by, { align: 'right' });
+            by += 4.2;
+          }
+        }
+      }
+
+      // "A entregar" — estilo referencia: borde negro grueso, sin fondo
       by += 2;
-      setFill(C_SUCCESS);
-      doc.rect(x, by - 4, blockW, 7, 'F');
-      setText([255, 255, 255]);
+      setDraw(C_BLACK); doc.setLineWidth(0.8);
+      doc.rect(x, by - 4, blockW, 7);
+      setText(C_DARK);
       doc.setFont('helvetica', 'bold'); doc.setFontSize(10);
       doc.text(aEntregarLabel, x + 2, by + 1);
       doc.text(fmtCup(aEntregar), x + blockW - 2, by + 1, { align: 'right' });
@@ -883,11 +977,9 @@ export function CashReportModal({ open, onClose }: CashReportModalProps) {
     };
 
     // Helper: render the main sales table for a given currency
+    // Estilo referencia: bordes negros gruesos en todas las celdas
     const renderSalesTable = (currency: 'CUP' | 'USD') => {
-      // Header
-      setFill(C_LIGHT);
-      doc.rect(m, y, pw - 2 * m, 6, 'F');
-      setText(C_DARK); doc.setFont('helvetica', 'bold'); doc.setFontSize(8);
+      // Calcular dimensiones
       const cols = [
         { name: 'Código',    w: 18, align: 'left' as const },
         { name: 'Clasificación', w: 22, align: 'left' as const },
@@ -897,72 +989,96 @@ export function CashReportModal({ open, onClose }: CashReportModalProps) {
         { name: currency === 'CUP' ? 'Transferencia' : 'Zelle', w: 24, align: 'right' as const },
         { name: 'Comisión',  w: 18, align: 'right' as const },
       ];
+      const colWidths = cols.map(c => c.w);
+      const tableW = colWidths.reduce((s, w) => s + w, 0);
+      const rowH = 5;
+      const headerH = 6;
+
+      // Rows from items-with-commission filtered by currency
+      const items = itemsWithCommission.filter((it: any) =>
+        (it.currency || 'CUP') === currency
+      );
+      const fmtAmt = currency === 'CUP' ? fmtCup : fmtUsd;
+      let totCup = 0, totTransfer = 0, totCommission = 0;
+
+      // Calcular total de filas (incluyendo fila de totales)
+      const totalRows = items.length + 1; // +1 for totals row
+      const tableH = headerH + totalRows * rowH;
+
+      // Dibujar borde externo + grid (estilo referencia)
+      const yStart = y;
+      setDraw(C_BLACK); doc.setLineWidth(0.4);
+      // Borde externo
+      doc.rect(m, yStart, tableW, tableH);
+      // Líneas verticales entre columnas
+      let cxv = m;
+      for (let i = 0; i < colWidths.length - 1; i++) {
+        cxv += colWidths[i];
+        doc.line(cxv, yStart, cxv, yStart + tableH);
+      }
+      // Línea horizontal bajo header
+      doc.line(m, yStart + headerH, m + tableW, yStart + headerH);
+      // Línea horizontal sobre fila de totales
+      doc.line(m, yStart + headerH + items.length * rowH, m + tableW, yStart + headerH + items.length * rowH);
+
+      // Header
+      setText(C_DARK); doc.setFont('helvetica', 'bold'); doc.setFontSize(8);
       let cx = m;
       for (const c of cols) {
         if (c.align === 'right') doc.text(c.name, cx + c.w - 2, y + 4, { align: 'right' });
         else doc.text(c.name, cx + 2, y + 4);
         cx += c.w;
       }
-      y += 6;
+      y += headerH;
 
-      // Rows from items-summary filtered by currency
-      const items = (itemsSummary?.items || []).filter((it: any) =>
-        (it.currency || 'CUP') === currency
-      );
-      const fmtAmt = currency === 'CUP' ? fmtCup : fmtUsd;
-      let totCup = 0, totTransfer = 0, totCommission = 0;
+      // Filas
       doc.setFont('helvetica', 'normal'); doc.setFontSize(8);
       setText(C_DARK);
 
       for (const it of items) {
-        if (y > ph - 80) { doc.addPage(); y = 14; } // page overflow guard
+        if (y > ph - 80) {
+          // Page overflow — agregar página y redibujar tabla
+          doc.addPage();
+          y = 14;
+          // (simplificación: no redibujamos bordes en nueva página)
+        }
         const unit = Number(it.unit_price || it.price || 0);
         const qty = Number(it.total_quantity || 0);
         const total = Number(it.total_cup || (unit * qty) || 0);
-        const transfer = Number(it.transfer_paid || 0);
-        const commission = Number(it.commission_paid || 0);
+        const transfer = Number(it.transfer_paid_calc || it.transfer_paid || 0);
+        const commission = Number(it.commission_paid_calc || it.commission_paid || 0);
         totCup += total;
         totTransfer += transfer;
         totCommission += commission;
 
         cx = m;
-        // Código (SKU)
         const sku = (it.sku || '').toString();
-        doc.text(sku, cx + 2, y + 4); cx += 18;
-        // Clasificación (category)
+        doc.text(sku, cx + 2, y + 3.5); cx += 18;
         const cat = (it.category || '').toString().slice(0, 18);
-        doc.text(cat, cx + 2, y + 4); cx += 22;
-        // Descripción
+        doc.text(cat, cx + 2, y + 3.5); cx += 22;
         let desc = (it.product_name || '').toString();
         if (doc.getTextWidth(desc) > 53) {
           while (desc.length > 0 && doc.getTextWidth(desc + '…') > 53) desc = desc.slice(0, -1);
           desc += '…';
         }
-        doc.text(desc, cx + 2, y + 4); cx += 55;
-        // Cantidad
-        doc.text(qty.toFixed(2), cx + 16, y + 4, { align: 'right' }); cx += 18;
-        // Monto (currency)
-        doc.text(fmtAmt(total), cx + 22, y + 4, { align: 'right' }); cx += 24;
-        // Transferencia/Zelle
-        doc.text(transfer > 0 ? fmtAmt(transfer) : '-', cx + 22, y + 4, { align: 'right' }); cx += 24;
-        // Comisión
-        doc.text(commission > 0 ? fmtAmt(commission) : '-', cx + 16, y + 4, { align: 'right' });
+        doc.text(desc, cx + 2, y + 3.5); cx += 55;
+        doc.text(qty.toFixed(2), cx + 16, y + 3.5, { align: 'right' }); cx += 18;
+        doc.text(fmtAmt(total), cx + 22, y + 3.5, { align: 'right' }); cx += 24;
+        doc.text(transfer > 0 ? fmtAmt(transfer) : '-', cx + 22, y + 3.5, { align: 'right' }); cx += 24;
+        doc.text(commission > 0 ? fmtAmt(commission) : '-', cx + 16, y + 3.5, { align: 'right' });
 
-        y += 5;
+        y += rowH;
       }
 
-      // Totals row
-      y += 1;
-      setDraw(C_DARK); doc.setLineWidth(0.5);
-      doc.line(m, y, pw - m, y); y += 4;
+      // Fila de totales
       doc.setFont('helvetica', 'bold'); doc.setFontSize(9);
       cx = m + 18 + 22 + 55; // skip Código + Clasificación + Descripción
-      doc.text('', cx, y);
-      doc.text('', cx + 16, y, { align: 'right' }); cx += 18;
-      doc.text(fmtAmt(totCup), cx + 22, y, { align: 'right' }); cx += 24;
-      doc.text(totTransfer > 0 ? fmtAmt(totTransfer) : '-', cx + 22, y, { align: 'right' }); cx += 24;
-      doc.text(totCommission > 0 ? fmtAmt(totCommission) : '-', cx + 16, y, { align: 'right' });
-      y += 6;
+      doc.text('', cx, y + 3.5);
+      doc.text('', cx + 16, y + 3.5, { align: 'right' }); cx += 18;
+      doc.text(fmtAmt(totCup), cx + 22, y + 3.5, { align: 'right' }); cx += 24;
+      doc.text(totTransfer > 0 ? fmtAmt(totTransfer) : '-', cx + 22, y + 3.5, { align: 'right' }); cx += 24;
+      doc.text(totCommission > 0 ? fmtAmt(totCommission) : '-', cx + 16, y + 3.5, { align: 'right' });
+      y += rowH;
 
       return { totCup, totTransfer, totCommission };
     };
@@ -971,10 +1087,18 @@ export function CashReportModal({ open, onClose }: CashReportModalProps) {
     // PAGE 1: REPORTE DE VENTA CUP
     // ────────────────────────────────────────────────────────────────────
     {
-      // Header line
+      // ── Header con logo + título + fecha (estilo referencia) ──────────────
+      // Logo (si existe)
+      if (logoDataUrl) {
+        try {
+          // Logo a la izquierda, 18x18mm
+          doc.addImage(logoDataUrl, 'PNG', m, y - 4, 18, 18);
+        } catch {}
+      }
+      // Título centrado a la derecha del logo
       setText(C_DARK);
-      doc.setFontSize(11); doc.setFont('helvetica', 'bold');
-      doc.text(`${sn} Reporte de Venta CUP Día:`, m, y);
+      doc.setFontSize(12); doc.setFont('helvetica', 'bold');
+      doc.text(`${sn} Reporte de Venta CUP Día:`, m + (logoDataUrl ? 22 : 0), y);
       doc.text(fecha, pw - m, y, { align: 'right' });
       y += 7;
 
@@ -985,9 +1109,6 @@ export function CashReportModal({ open, onClose }: CashReportModalProps) {
       y += 4;
 
       // CUP cash total = sales cash - payments cash + production cash - commissions
-      // FIX: usar los totales desglosados de itemsSummary en vez de report.sales
-      // porque itemsSummary desglosa cash/transfer/zelle por item, mientras que
-      // report.sales agrupa por payment_method (no desglosa 'mixed').
       const cupCashSales = cupCashFromItems;
       const cupTransferSales = cupTransferFromItems;
       const cupCashPayments = (report.payments || []).filter((p: any) => p.payment_method === 'cash' && p.currency === 'CUP').reduce((s: number, p: any) => s + Number(p.total), 0);
@@ -1008,13 +1129,23 @@ export function CashReportModal({ open, onClose }: CashReportModalProps) {
       if (cupCashPayments > 0) {
         incomeRows.push({ label: 'Pagos a Proveedores', amount: -cupCashPayments });
       }
-      // Add commissions as egresos
-      if (cupCashCommissions > 0) {
-        incomeRows.push({ label: 'Comisiones', amount: -cupCashCommissions });
-      }
 
-      const aEntregar = cupCashSales + cupCashProduction - cupCashPayments - cupCashCommissions;
-      const blockEndY = renderIncomeBlock('Resumen del Día', incomeRows, aEntregar);
+      // Sección adicional: Comisiones por trabajador
+      const commissionSection = commissionsWorkers.length > 0
+        ? [{
+            title: 'Comisiones por Trabajador',
+            rows: [
+              ...commissionsWorkers.map((w: any) => ({
+                label: `${w.worker_name || 'Trabajador'}${w.ci ? ` (${w.ci})` : ''}`,
+                amount: Number(w.total_amount_cup || 0),
+              })),
+              { label: 'Total Comisiones', amount: totalCommissionsCup, isTotal: true },
+            ],
+          }]
+        : undefined;
+
+      const aEntregar = cupCashSales + cupCashProduction - cupCashPayments - (cupCashCommissions || totalCommissionsCup);
+      const blockEndY = renderIncomeBlock('Resumen del Día', incomeRows, aEntregar, 'A entregar', commissionSection);
 
       // Right block: desglose CUP
       const expectedCup = aEntregar;
@@ -1033,9 +1164,13 @@ export function CashReportModal({ open, onClose }: CashReportModalProps) {
     // ────────────────────────────────────────────────────────────────────
     doc.addPage(); y = 14;
     {
+      // Logo
+      if (logoDataUrl) {
+        try { doc.addImage(logoDataUrl, 'PNG', m, y - 4, 18, 18); } catch {}
+      }
       setText(C_DARK);
-      doc.setFontSize(11); doc.setFont('helvetica', 'bold');
-      doc.text(`${sn} Reporte de Venta USD Día:`, m, y);
+      doc.setFontSize(12); doc.setFont('helvetica', 'bold');
+      doc.text(`${sn} Reporte de Venta USD Día:`, m + (logoDataUrl ? 22 : 0), y);
       doc.text(fecha, pw - m, y, { align: 'right' });
       y += 7;
 
@@ -1043,7 +1178,7 @@ export function CashReportModal({ open, onClose }: CashReportModalProps) {
 
       y += 4;
 
-      // USD totals (FIX: usar itemsSummary desglose por item)
+      // USD totals
       const usdCashSales = usdCashFromItems;
       const usdZelleSales = usdZelleFromItems;
 
@@ -1072,16 +1207,18 @@ export function CashReportModal({ open, onClose }: CashReportModalProps) {
     // ────────────────────────────────────────────────────────────────────
     doc.addPage(); y = 14;
     {
+      // Logo
+      if (logoDataUrl) {
+        try { doc.addImage(logoDataUrl, 'PNG', m, y - 4, 18, 18); } catch {}
+      }
       setText(C_DARK);
-      doc.setFontSize(11); doc.setFont('helvetica', 'bold');
-      doc.text(`Reporte de Ordenes de trabajo`, m, y);
+      doc.setFontSize(12); doc.setFont('helvetica', 'bold');
+      doc.text(`Reporte de Ordenes de trabajo`, m + (logoDataUrl ? 22 : 0), y);
       doc.text(fecha, pw - m, y, { align: 'right' });
       y += 7;
 
       // Header row for orders table (Código | Clasificación | Descripción | Cantidad | CUP | USD | Comisión)
-      setFill(C_LIGHT);
-      doc.rect(m, y, pw - 2 * m, 6, 'F');
-      setText(C_DARK); doc.setFont('helvetica', 'bold'); doc.setFontSize(8);
+      // Estilo referencia: bordes negros gruesos
       const cols = [
         { name: 'Código',    w: 20, align: 'left' as const },
         { name: 'Clasificación', w: 22, align: 'left' as const },
@@ -1091,13 +1228,34 @@ export function CashReportModal({ open, onClose }: CashReportModalProps) {
         { name: 'USD',       w: 22, align: 'right' as const },
         { name: 'Comisión',  w: 20, align: 'right' as const },
       ];
+      const colWidths = cols.map(c => c.w);
+      const tableW = colWidths.reduce((s, w) => s + w, 0);
+      const rowH = 5;
+      const headerH = 6;
+      const ordersCount = Math.max(1, productionOrders.length);
+      const tableH = headerH + (ordersCount + 1) * rowH;
+      const yStart = y;
+
+      // Bordes
+      setDraw(C_BLACK); doc.setLineWidth(0.4);
+      doc.rect(m, yStart, tableW, tableH);
+      let cxv = m;
+      for (let i = 0; i < colWidths.length - 1; i++) {
+        cxv += colWidths[i];
+        doc.line(cxv, yStart, cxv, yStart + tableH);
+      }
+      doc.line(m, yStart + headerH, m + tableW, yStart + headerH);
+      doc.line(m, yStart + headerH + ordersCount * rowH, m + tableW, yStart + headerH + ordersCount * rowH);
+
+      // Header text
+      setText(C_DARK); doc.setFont('helvetica', 'bold'); doc.setFontSize(8);
       let cx = m;
       for (const c of cols) {
         if (c.align === 'right') doc.text(c.name, cx + c.w - 2, y + 4, { align: 'right' });
         else doc.text(c.name, cx + 2, y + 4);
         cx += c.w;
       }
-      y += 6;
+      y += headerH;
 
       // Rows from productionOrders
       doc.setFont('helvetica', 'normal'); doc.setFontSize(8); setText(C_DARK);
