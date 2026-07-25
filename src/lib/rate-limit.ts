@@ -1,7 +1,19 @@
 // Detecta si Upstash está configurado
+// V1.1: En producción (Vercel/serverless), Upstash Redis es OBLIGATORIO para que
+// el rate limit funcione correctamente. Sin Upstash, cada invocación serverless
+// tiene su propio Map en memoria → el rate limit no se comparte entre instancias.
+// Para configurar:
+//   1. Crear cuenta en https://upstash.com (free tier: 10K requests/día)
+//   2. Crear Redis database
+//   3. Copiar UPSTASH_REDIS_REST_URL y UPSTASH_REDIS_REST_TOKEN a .env / Vercel
 const isUpstashConfigured =
   !!process.env.UPSTASH_REDIS_REST_URL &&
   !!process.env.UPSTASH_REDIS_REST_TOKEN;
+
+// V1.1: Warning en producción si Upstash no está configurado
+if (!isUpstashConfigured && process.env.NODE_ENV === 'production') {
+  console.warn('[RATE-LIMIT] ⚠ Upstash Redis no configurado. Rate limit NO funciona en serverless sin Upstash. Configurar UPSTASH_REDIS_REST_URL y UPSTASH_REDIS_REST_TOKEN.');
+}
 
 // FIX-BUG-SEC-007: Cache of Upstash limiters keyed by `${maxRequests}_${windowSec}`
 // so that caller-supplied params are honored instead of using a single fixed limiter.

@@ -3,11 +3,21 @@
     {
       "path": "/api/pick3/sync",
       "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/cron/purge-snapshots",
+      "schedule": "0 3 * * *"
     }
   ],
   "functions": {
-    "src/app/api/bot/chat/route.ts": { "maxDuration": 60 },
-    "src/app/api/cost-sheets/ai/chat/route.ts": { "maxDuration": 60 },
-    "src/app/api/ai/chat/route.ts": { "maxDuration": 60 }
+    "src/app/api/bot/chat/route.ts": {
+      "maxDuration": 60
+    },
+    "src/app/api/cost-sheets/ai/chat/route.ts": {
+      "maxDuration": 60
+    },
+    "src/app/api/ai/chat/route.ts": {
+      "maxDuration": 60
+    }
   }
 }
