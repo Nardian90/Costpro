@@ -52,11 +52,20 @@ const QUICK_PROMPTS = [
 ];
 
 // ─── STORAGE HELPERS WITH DEBOUNCE ────────────────────────────────────────────
-const CONVERSATIONS_KEY = 'darian_chat_conversations';
-const ACTIVE_CONVO_KEY = 'darian_chat_active_conversation';
+// SECURITY FIX (2026-07-25): Storage keys are now SCOPED BY USER ID to prevent
+// cross-user conversation leaks. If admin chats with the bot and then logs out,
+// the next user (e.g. clerk) on the same browser CANNOT read admin's conversations.
+// Each user gets their own localStorage namespace: `darian_chat_conversations_${userId}`.
 const MODEL_STORAGE_KEY = 'darian_chat_model';
 const SETTINGS_STORAGE_KEY = 'darian_chat_settings';
 const TEMP_STORAGE_KEY = 'darian_chat_temperature';
+
+function getConversationsKey(userId?: string) {
+  return userId ? `darian_chat_conversations_${userId}` : 'darian_chat_conversations_guest';
+}
+function getActiveConvoKey(userId?: string) {
+  return userId ? `darian_chat_active_conversation_${userId}` : 'darian_chat_active_conversation_guest';
+}
 
 function loadFromStorage<T>(key: string, fallback: T): T {
   if (typeof window === 'undefined') return fallback;
@@ -147,10 +156,25 @@ export function ChatBot({ embedded = false }: { embedded?: boolean } = {}) {
   const activeConversation = conversations.find(c => c.id === activeConversationId) || null;
   const messages = activeConversation?.messages || [];
 
-  // ─── LOAD CONVERSATIONS ON MOUNT ──────────────────────────────────────────
+  // ─── LOAD CONVERSATIONS ON MOUNT + USER CHANGE ────────────────────────────
+  // SECURITY FIX: Reload conversations when user changes (login/logout/switch).
+  // Each user gets their own localStorage namespace, so admin's conversations
+  // are invisible to clerk and vice versa.
+  const currentUserId = user?.id;
   useEffect(() => {
-    const saved = loadFromStorage<Conversation[]>(CONVERSATIONS_KEY, []);
-    const savedActiveId = loadFromStorage<string | null>(ACTIVE_CONVO_KEY, null);
+    if (!currentUserId) {
+      // User logged out — clear conversations from state (data stays in
+      // localStorage under the old user's key, but is not loaded into state)
+      setConversations([]);
+      setActiveConversationId(null);
+      activeConvoIdRef.current = null;
+      return;
+    }
+
+    const convKey = getConversationsKey(currentUserId);
+    const activeKey = getActiveConvoKey(currentUserId);
+    const saved = loadFromStorage<Conversation[]>(convKey, []);
+    const savedActiveId = loadFromStorage<string | null>(activeKey, null);
 
     if (saved.length > 0) {
       setConversations(saved);
@@ -160,34 +184,26 @@ export function ChatBot({ embedded = false }: { embedded?: boolean } = {}) {
       setActiveConversationId(restoredId);
       activeConvoIdRef.current = restoredId;
     } else {
-      // Migrate legacy single-conversation messages
-      try {
-        const legacyMessages = localStorage.getItem('darian_chat_messages');
-        if (legacyMessages) {
-          const parsed = JSON.parse(legacyMessages);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            const newConvo = createConversation('Conversación anterior', parsed[0]?.content);
-            newConvo.messages = parsed;
-            setConversations([newConvo]);
-            setActiveConversationId(newConvo.id);
-            activeConvoIdRef.current = newConvo.id;
-            localStorage.removeItem('darian_chat_messages');
-            debouncedSave(CONVERSATIONS_KEY, [newConvo]);
-          }
-        }
-      } catch { /* ignore */ }
+      // Start fresh for this user
+      setConversations([]);
+      setActiveConversationId(null);
+      activeConvoIdRef.current = null;
     }
-  }, []);
+  }, [currentUserId]);
 
   // ─── PERSIST CONVERSATIONS WITH DEBOUNCE ─────────────────────────────────
+  // SECURITY: Save to user-scoped key
   useEffect(() => {
+    if (!currentUserId) return;
+    const convKey = getConversationsKey(currentUserId);
+    const activeKey = getActiveConvoKey(currentUserId);
     if (conversations.length > 0) {
-      debouncedSave(CONVERSATIONS_KEY, conversations);
+      debouncedSave(convKey, conversations);
     }
     if (activeConversationId) {
-      debouncedSave(ACTIVE_CONVO_KEY, activeConversationId);
+      debouncedSave(activeKey, activeConversationId);
     }
-  }, [conversations, activeConversationId]);
+  }, [conversations, activeConversationId, currentUserId]);
 
   // Auto-scroll to bottom on new messages
   useEffect(() => {

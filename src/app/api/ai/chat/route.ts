@@ -1,10 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { withAuth, type AuthenticatedSession } from '@/lib/auth-middleware';
+import { validateOrigin } from '@/lib/csrf';
+import { rateLimit } from '@/lib/rate-limit';
+import { logger } from '@/lib/logger';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
 
 /**
- * Standalone Gemini AI Chat — NO auth required, NO Supabase dependency.
+ * Gemini AI Chat — REQUIRES AUTH (security fix 2026-07-25).
+ *
+ * SECURITY FIX: Previously this endpoint had NO authentication — anyone could
+ * call it and use the Google API key for free. Now requires a valid session.
  *
  * Calls Google Gemini REST API directly. Supports:
  *  - Multi-model selection (gemini-2.5-flash, gemini-2.5-pro, etc.)
@@ -47,8 +54,19 @@ function resolveApiKey(requestedKey?: string): string {
   return '';
 }
 
-async function chatHandler(req: NextRequest) {
+async function chatHandler(req: NextRequest, session: AuthenticatedSession) {
   try {
+    // ── CSRF validation ──────────────────────────────────────────────────
+    if (!validateOrigin(req)) {
+      return NextResponse.json({ error: 'Origen no permitido' }, { status: 403 });
+    }
+
+    // ── Rate limit per USER (not IP) ─────────────────────────────────────
+    const { allowed } = await rateLimit(`ai:chat:${session.user.id}`, { windowMs: 60_000, maxRequests: 15 });
+    if (!allowed) {
+      return NextResponse.json({ error: 'Demasiadas solicitudes. Espera un momento.' }, { status: 429 });
+    }
+
     let body: ChatRequestBody;
     try {
       body = await req.json();
@@ -118,16 +136,15 @@ async function chatHandler(req: NextRequest) {
       payload.tools = [{ googleSearch: {} }];
     }
 
-    // Rate limit: simple IP-based
-    const clientId = req.headers.get('x-forwarded-for') || 'unknown';
-    // FIX-BUG: simpleRateLimit returns a synchronous object, not a Promise.
-    // Removed unnecessary `await` (CodeQL: Unexpected await of non-Promise).
-    const { allowed } = simpleRateLimit(clientId, 15, 60_000);
-    if (!allowed) {
-      return NextResponse.json({ error: 'Demasiadas solicitudes. Espera un momento.' }, { status: 429 });
-    }
+    // SECURITY: Log who is using the AI chat (for audit trail)
+    logger.info('AI', 'AI_CHAT_REQUEST', {
+      userId: session.user.id,
+      model,
+      messageCount: body.messages.length,
+      grounding,
+    });
 
-    // Call Gemini REST API directly (like the MVP does)
+    // Call Gemini REST API directly
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
     const response = await fetch(url, {
@@ -192,34 +209,6 @@ async function chatHandler(req: NextRequest) {
   }
 }
 
-// Simple in-memory rate limiter
-const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
-function simpleRateLimit(clientId: string, maxRequests: number, windowMs: number): { allowed: boolean } {
-  // FIX-AUDIT-11: Lazy cleanup of stale entries
-  if (rateLimitMap.size > 500) {
-    const now = Date.now();
-    for (const [key, entry] of rateLimitMap) {
-      if (now > entry.resetAt) rateLimitMap.delete(key);
-    }
-  }
-
-  const now = Date.now();
-  const entry = rateLimitMap.get(clientId);
-
-  if (!entry || now > entry.resetAt) {
-    rateLimitMap.set(clientId, { count: 1, resetAt: now + windowMs });
-    return { allowed: true };
-  }
-
-  if (entry.count >= maxRequests) {
-    return { allowed: false };
-  }
-
-  entry.count++;
-  return { allowed: true };
-}
-
-// FIX-AUDIT-11: Removed setInterval leak — cleanup is now lazy inside simpleRateLimit()
-// This prevents timer leaks in serverless environments
-
-export const POST = chatHandler;
+// SECURITY FIX: Auth + CSRF + user-based rate limit now handled by withAuth
+// wrapper. The old in-memory IP-based rate limiter has been removed.
+export const POST = withAuth(chatHandler);
