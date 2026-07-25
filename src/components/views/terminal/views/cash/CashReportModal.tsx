@@ -980,15 +980,19 @@ export function CashReportModal({ open, onClose }: CashReportModalProps) {
     // NUEVO ENFOQUE: posiciones absolutas calculadas al inicio (no offsets acumulativos).
     // Esto elimina bugs de desplazamiento cuando los anchos cambian.
     // Estilo referencia: bordes negros gruesos en todas las celdas.
+    //
+    // FIX encabezados: 'Clasificación' (22mm de texto) no cabía en 16mm → se superponía con 'Descripción'.
+    // Solución: ampliar a 20mm + abreviar a 'Clase' para que quepa cómodo.
+    // 'Transferencia' (28mm de texto) también justa en 30mm → abreviar a 'Transfer.'.
     const renderSalesTable = (currency: 'CUP' | 'USD') => {
-      // Definición de columnas con ancho + alineación
+      // Definición de columnas con ancho + alineación + label abreviado para encabezado
       const cols = [
         { name: 'Código',    w: 14, align: 'left' as const },
-        { name: 'Clasificación', w: 16, align: 'left' as const },
-        { name: 'Descripción',   w: 48, align: 'left' as const },
-        { name: 'Cantidad',  w: 13, align: 'right' as const },
+        { name: 'Clase',    w: 20, align: 'left' as const },  // era 'Clasificación' w:16, ampliado a 20 + abreviado
+        { name: 'Descripción',   w: 44, align: 'left' as const },  // reducido de 48 a 44 para compensar
+        { name: 'Cant.',     w: 13, align: 'right' as const },  // abreviado de 'Cantidad'
         { name: currency,    w: 30, align: 'right' as const },
-        { name: currency === 'CUP' ? 'Transferencia' : 'Zelle', w: 30, align: 'right' as const },
+        { name: currency === 'CUP' ? 'Transfer.' : 'Zelle', w: 30, align: 'right' as const },  // 'Transferencia' → 'Transfer.'
         { name: 'Comisión',  w: 23, align: 'right' as const },
       ];
       const tableW = cols.reduce((s, c) => s + c.w, 0);
@@ -1067,8 +1071,8 @@ export function CashReportModal({ open, onClose }: CashReportModalProps) {
         const rowY = y + 3.5;
         // Código
         drawCell(0, rowY, (it.sku || '').toString(), 8);
-        // Clasificación (truncar a 14 chars para que quepa en 16mm)
-        const cat = (it.category || '').toString().slice(0, 14);
+        // Clasificación (truncar a 18 chars para que quepa en 20mm)
+        const cat = (it.category || '').toString().slice(0, 18);
         drawCell(1, rowY, cat, 8);
         // Descripción (truncar dinámicamente según ancho disponible)
         let desc = (it.product_name || '').toString();
@@ -1108,11 +1112,13 @@ export function CashReportModal({ open, onClose }: CashReportModalProps) {
     {
       // ── Header con logo + título + fecha (estilo referencia) ──────────────
       // Logo a la izquierda (14x14mm), título a su derecha, fecha al final.
-      // El logo NO se superpone con la tabla porque el header ocupa solo 8mm
-      // de alto y la tabla empieza después.
+      // El logo EMPUJA la tabla hacia abajo: si hay logo, reservamos 16mm de
+      // altura para el header (14mm del logo + 2mm de padding). Si no hay logo,
+      // solo 8mm (título + fecha en una línea).
+      const headerH_mm = logoDataUrl ? 16 : 8;
       if (logoDataUrl) {
         try {
-          // Logo a la izquierda, 14x14mm (más pequeño que la tabla para no superponerse)
+          // Logo a la izquierda, 14x14mm
           doc.addImage(logoDataUrl, 'PNG', m, y - 4, 14, 14);
         } catch {}
       }
@@ -1121,7 +1127,7 @@ export function CashReportModal({ open, onClose }: CashReportModalProps) {
       doc.setFontSize(12); doc.setFont('helvetica', 'bold');
       doc.text(`${sn} Reporte de Venta CUP Día:`, m + (logoDataUrl ? 18 : 0), y);
       doc.text(fecha, pw - m, y, { align: 'right' });
-      y += 8; // 8mm de separación para que el logo no toque la tabla
+      y += headerH_mm; // logo empuja la tabla hacia abajo
 
       // Sales table
       const totals = renderSalesTable('CUP');
@@ -1185,7 +1191,8 @@ export function CashReportModal({ open, onClose }: CashReportModalProps) {
     // ────────────────────────────────────────────────────────────────────
     doc.addPage(); y = 14;
     {
-      // Logo (14x14mm, sin superposición con tabla)
+      // Logo (14x14mm, empuja la tabla hacia abajo)
+      const headerH_mm = logoDataUrl ? 16 : 8;
       if (logoDataUrl) {
         try { doc.addImage(logoDataUrl, 'PNG', m, y - 4, 14, 14); } catch {}
       }
@@ -1193,7 +1200,7 @@ export function CashReportModal({ open, onClose }: CashReportModalProps) {
       doc.setFontSize(12); doc.setFont('helvetica', 'bold');
       doc.text(`${sn} Reporte de Venta USD Día:`, m + (logoDataUrl ? 18 : 0), y);
       doc.text(fecha, pw - m, y, { align: 'right' });
-      y += 8;
+      y += headerH_mm;
 
       const totals = renderSalesTable('USD');
 
@@ -1228,7 +1235,8 @@ export function CashReportModal({ open, onClose }: CashReportModalProps) {
     // ────────────────────────────────────────────────────────────────────
     doc.addPage(); y = 14;
     {
-      // Logo (14x14mm)
+      // Logo (14x14mm, empuja la tabla hacia abajo)
+      const headerH_mm = logoDataUrl ? 16 : 8;
       if (logoDataUrl) {
         try { doc.addImage(logoDataUrl, 'PNG', m, y - 4, 14, 14); } catch {}
       }
@@ -1236,7 +1244,7 @@ export function CashReportModal({ open, onClose }: CashReportModalProps) {
       doc.setFontSize(12); doc.setFont('helvetica', 'bold');
       doc.text(`Reporte de Ordenes de trabajo`, m + (logoDataUrl ? 18 : 0), y);
       doc.text(fecha, pw - m, y, { align: 'right' });
-      y += 8;
+      y += headerH_mm;
 
       // Tabla de órdenes — NUEVO ENFOQUE con posiciones absolutas (igual que sales table)
       const cols = [
