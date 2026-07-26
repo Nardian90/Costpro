@@ -50,18 +50,60 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
     const statusFilter = searchParams.get('status') || 'active';
 
     if (session.user.role === 'admin') {
-      // Admin can see all stores (with optional status filter)
+      // V2.6 H4: paginación para admin — antes traía TODAS las tiendas sin límite.
+      // Soporta 3 modos:
+      //   - Sin params: legacy (todas) para no romper UI existente
+      //   - ?page=1&limit=20: paginación offset
+      //   - ?cursor=<uuid>&limit=20: cursor keyset (más eficiente para >1000)
+      const pageParam = searchParams.get('page');
+      const limitParam = searchParams.get('limit');
+      const cursor = searchParams.get('cursor');
+
       let query = admin.from('stores').select(storeColumns);
       if (statusFilter === 'active') {
         query = query.eq('is_active', true).eq('is_archived', false);
       } else if (statusFilter === 'inactive') {
         query = query.eq('is_active', false);
       }
-      // 'all' = no filter
+
+      // Aplicar paginación solo si se especifica page o limit o cursor
+      if (pageParam || limitParam || cursor) {
+        const limit = Math.min(Number(limitParam) || 50, 200); // max 200 por seguridad
+        const page = Math.max(Number(pageParam) || 1, 1);
+
+        if (cursor) {
+          // Keyset pagination: obtener stores con name > cursor
+          query = query.gt('name', cursor).order('name').limit(limit);
+        } else {
+          // Offset pagination
+          const offset = (page - 1) * limit;
+          query = query.order('name').range(offset, offset + limit - 1);
+        }
+
+        const { data, error, count } = await query;
+        if (error) {
+          logger.error('DATABASE', 'STORE_LIST_FAILED', { userId: session.user.id, error });
+          return NextResponse.json(createApiError('STORE_FETCH_FAILED'), { status: 500 });
+        }
+
+        // Calcular nextCursor (último name) para paginación keyset
+        const nextCursor = data && data.length === limit ? data[data.length - 1].name : null;
+
+        return NextResponse.json({
+          data,
+          pagination: {
+            page: cursor ? null : page,
+            limit,
+            count: data?.length || 0,
+            nextCursor,
+            hasMore: data?.length === limit,
+          },
+        });
+      }
+
+      // Sin paginación: legacy (devuelve todas) — mantener compatibilidad
       const { data, error } = await query.order('name');
       if (error) {
-        // FIX-IDEMPOTENCY-LEAK (2026-07-13): no pasar error.message como details
-        // al cliente — puede filtrar internals de Postgres/PostgREST.
         logger.error('DATABASE', 'STORE_LIST_FAILED', { userId: session.user.id, error });
         return NextResponse.json(createApiError('STORE_FETCH_FAILED'), { status: 500 });
       }
