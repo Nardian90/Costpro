@@ -7,6 +7,12 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
+/**
+ * Helper de clase CSS para targets táctiles accesibles (mínimo 44px de alto).
+ * Usado por todos los componentes touch-safe del proyecto.
+ */
+export const touch = 'min-h-[44px]';
+
 export const getSupabaseUrl = (bucket: string, path: string | null | undefined): string | null => {
   if (!path) return null;
   if (path.startsWith('http')) return path;
