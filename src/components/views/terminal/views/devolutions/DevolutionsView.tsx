@@ -1,13 +1,14 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Plus, Search, RotateCcw, Loader2, FileText, X, RefreshCcw } from 'lucide-react';
+import { Plus, Search, RotateCcw, Loader2, FileText, X, RefreshCcw, Copy } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
 import { apiFetch } from '@/lib/api-fetch';
 import { useAuthStore } from '@/store';
 import { toast } from 'sonner';
 import { DocumentStatusBadge, canReverse } from '@/components/ui/DocumentStatusBadge';
 import { ReverseDocumentModal } from '@/components/ui/ReverseDocumentModal';
+import { useDuplicateDocumentV2 } from '@/hooks/api/useDuplicateDocumentV2';
 
 const touch = 'min-h-[44px]';
 
@@ -20,6 +21,8 @@ export function DevolutionsView() {
   const [showCreate, setShowCreate] = useState(false);
   // V2.2: modal de reversión
   const [reverseTarget, setReverseTarget] = useState<{ id: string; label: string } | null>(null);
+  // V2.4: hook de duplicación
+  const duplicateMutation = useDuplicateDocumentV2();
 
   const load = useCallback(async () => {
     if (!storeId) return;
@@ -104,6 +107,18 @@ export function DevolutionsView() {
                       Revertir
                     </button>
                   )}
+                  {/* V2.4: botón Duplicar */}
+                  <button
+                    type="button"
+                    onClick={() => duplicateMutation.mutate({ type: 'devolution', id: d.id, storeId: storeId! })}
+                    disabled={duplicateMutation.isPending}
+                    className="inline-flex items-center gap-1 px-2 py-1 rounded-lg border border-blue-500/40 bg-blue-500/5 text-blue-500 hover:bg-blue-500 hover:text-white transition-all active:scale-95 text-[10px] font-black uppercase tracking-widest disabled:opacity-50"
+                    title="Duplicar devolución (crea nueva con mismos items)"
+                    aria-label="Duplicar devolución"
+                  >
+                    <Copy className="w-3 h-3" />
+                    Duplicar
+                  </button>
                 </div>
               </div>
             </div>

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { Plus, Factory, Wrench, Eye, Ban, Play, Pause, CheckCircle2, Clock, DollarSign, Package, ArrowDownToLine, X, Edit3, RefreshCcw } from 'lucide-react';
+import { Plus, Factory, Wrench, Eye, Ban, Play, Pause, CheckCircle2, Clock, DollarSign, Package, ArrowDownToLine, X, Edit3, RefreshCcw, Copy } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuthStore } from '@/store';
@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import type { ProductionOrder, ProductionOrderItem } from '@/types';
 import { canReverse } from '@/components/ui/DocumentStatusBadge';
 import { ReverseDocumentModal } from '@/components/ui/ReverseDocumentModal';
+import { useDuplicateDocumentV2 } from '@/hooks/api/useDuplicateDocumentV2';
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: any }> = {
   draft:       { label: 'Borrador',     color: 'bg-muted text-muted-foreground border-border', icon: Clock },
@@ -392,6 +393,8 @@ function OrderDetailModal({ order, onClose, onUpdate }: { order: ProductionOrder
   const [products, setProducts] = useState<any[]>([]);
   // V2.2: modal de reversión
   const [showReverseModal, setShowReverseModal] = useState(false);
+  // V2.4: hook de duplicación
+  const duplicateMutation = useDuplicateDocumentV2();
 
   // Fase 3: edición en borrador
   const [isEditing, setIsEditing] = useState(false);
@@ -698,6 +701,17 @@ function OrderDetailModal({ order, onClose, onUpdate }: { order: ProductionOrder
                 <span className="hidden sm:inline">Revertir</span>
               </button>
             )}
+            {/* V2.4: botón Duplicar — crea nueva orden draft con mismos items */}
+            <button
+              onClick={() => duplicateMutation.mutate({ type: 'production_order', id: order.id, storeId: order.store_id })}
+              disabled={duplicateMutation.isPending}
+              className="px-2 py-2 rounded-lg bg-blue-500/10 text-blue-500 border border-blue-500/30 text-[10px] font-black uppercase hover:bg-blue-500/20 min-h-[44px] flex items-center gap-1 disabled:opacity-50"
+              title="Duplicar orden (crea nueva con mismos items)"
+              aria-label="Duplicar orden"
+            >
+              <Copy className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Duplicar</span>
+            </button>
             <button onClick={onClose} className="p-2 rounded-lg hover:bg-muted min-h-[44px] min-w-[44px] flex items-center justify-center" aria-label="Cerrar">
               <X className="w-4 h-4" />
             </button>

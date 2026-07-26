@@ -32,6 +32,7 @@ import { toast } from 'sonner';
 import { useCallback } from 'react';
 import { DocumentStatusBadge, canReverse } from '@/components/ui/DocumentStatusBadge';
 import { ReverseDocumentModal } from '@/components/ui/ReverseDocumentModal';
+import { useDuplicateDocumentV2 } from '@/hooks/api/useDuplicateDocumentV2';
 
 const STATUS_OPTIONS: { value: TransferStatus | 'TODOS'; label: string; icon: typeof Clock }[] = [
   { value: 'TODOS', label: 'Todos', icon: ArrowLeftRight },
@@ -50,6 +51,8 @@ export default function TransferenciasView() {
   const [activeStatus, setActiveStatus] = useState<TransferStatus | 'TODOS'>('TODOS');
   // V2.2: modal de reversión
   const [reverseTarget, setReverseTarget] = useState<{ id: string; label: string } | null>(null);
+  // V2.4: hook de duplicación
+  const duplicateMutation = useDuplicateDocumentV2();
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
   const sentinelRef = useRef<HTMLDivElement>(null);
@@ -410,6 +413,25 @@ export default function TransferenciasView() {
                           <RefreshCcw className="w-4 h-4" />
                         </button>
                       )}
+
+                      {/* V2.4: botón Duplicar transferencia */}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          duplicateMutation.mutate({
+                            type: 'transfer',
+                            id: t.id,
+                            storeId: user?.activeStoreId,
+                          });
+                        }}
+                        disabled={duplicateMutation.isPending}
+                        className="shrink-0 w-10 h-10 inline-flex items-center justify-center rounded-lg border border-blue-500/40 bg-blue-500/5 text-blue-500 hover:bg-blue-500 hover:text-white transition-all active:scale-95 disabled:opacity-50"
+                        title="Duplicar transferencia (crea nueva PENDIENTE con mismos items)"
+                        aria-label="Duplicar transferencia"
+                      >
+                        <Copy className="w-4 h-4" />
+                      </button>
                     </div>
                   </div>
                 ))}

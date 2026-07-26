@@ -1,0 +1,93 @@
+/**
+ * GET /api/transfers?store_id=X&limit=20&page=1
+ * POST /api/transfers — crear transferencia vía RPC create_transfer
+ *
+ * V2.4: Necesario para useDuplicateDocumentV2 (duplicación de transferencias).
+ */
+import { NextRequest, NextResponse } from 'next/server';
+import { withAuth, type AuthenticatedSession } from '@/lib/auth-middleware';
+import { withTracing } from '@/lib/observability';
+import { canManageStore } from '@/lib/roles';
+import { validateOrigin } from '@/lib/csrf';
+import { rateLimit } from '@/lib/rate-limit';
+import { createApiError } from '@/lib/api-errors';
+import { logger } from '@/lib/logger';
+import { z } from 'zod';
+
+const createSchema = z.object({
+  origin_store_id: z.string().min(1),
+  destination_store_id: z.string().min(1),
+  notes: z.string().max(500).optional(),
+  items: z.array(z.object({
+    product_id: z.string().min(1),
+    quantity: z.number().positive(),
+    unit_cost: z.number().nonnegative(),
+  })).min(1),
+});
+
+async function getHandler(req: NextRequest, session: AuthenticatedSession) {
+  const url = new URL(req.url);
+  const storeId = url.searchParams.get('store_id');
+  if (!storeId) return NextResponse.json(createApiError('BAD_REQUEST'), { status: 400 });
+  if (!canManageStore(session.user, storeId)) return NextResponse.json(createApiError('FORBIDDEN'), { status: 403 });
+
+  const { getSupabaseAdminSafe } = await import('@/lib/supabase-admin');
+  const supabase = getSupabaseAdminSafe();
+  if (!supabase) return NextResponse.json(createApiError('CONFIG_ERROR'), { status: 500 });
+
+  const page = Number(url.searchParams.get('page') || 1);
+  const limit = Math.min(Number(url.searchParams.get('limit') || 20), 100);
+  const from = (page - 1) * limit;
+
+  const { data, error, count } = await supabase
+    .from('transfers')
+    .select('*, items:transfer_items(*)', { count: 'exact' })
+    .or(`origin_store_id.eq.${storeId},destination_store_id.eq.${storeId}`)
+    .order('created_at', { ascending: false })
+    .range(from, from + limit - 1);
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  return NextResponse.json({ data, pagination: { page, limit, total: count ?? 0 } });
+}
+
+async function postHandler(req: NextRequest, session: AuthenticatedSession) {
+  if (!validateOrigin(req)) return NextResponse.json(createApiError('INVALID_ORIGIN'), { status: 403 });
+  const { allowed } = await rateLimit(`transfers:${session.user.id}`, { windowMs: 60_000, maxRequests: 10 });
+  if (!allowed) return NextResponse.json(createApiError('RATE_LIMITED'), { status: 429 });
+
+  const body = await req.json();
+  const parsed = createSchema.safeParse(body);
+  if (!parsed.success) return NextResponse.json({ ...createApiError('INVALID_DATA'), details: parsed.error.format() }, { status: 400 });
+
+  if (!canManageStore(session.user, parsed.data.origin_store_id)) {
+    return NextResponse.json(createApiError('FORBIDDEN'), { status: 403 });
+  }
+
+  const { getSupabaseAdminSafe } = await import('@/lib/supabase-admin');
+  const supabase = getSupabaseAdminSafe();
+  if (!supabase) return NextResponse.json(createApiError('CONFIG_ERROR'), { status: 500 });
+
+  const { data, error } = await supabase.rpc('create_transfer', {
+    p_origin_store_id: parsed.data.origin_store_id,
+    p_destination_store_id: parsed.data.destination_store_id,
+    p_created_by: session.user.id,
+    p_items: parsed.data.items,
+    p_notes: parsed.data.notes || null,
+  });
+
+  if (error) {
+    logger.error('DATABASE', 'CREATE_TRANSFER_FAILED', { error: error.message });
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  logger.info('DATABASE', 'TRANSFER_CREATED', {
+    originStoreId: parsed.data.origin_store_id,
+    destStoreId: parsed.data.destination_store_id,
+    userId: session.user.id,
+    transferId: data?.transfer_id,
+  });
+  return NextResponse.json(data);
+}
+
+export const GET = withTracing(withAuth(getHandler) as any, 'GET /api/transfers');
+export const POST = withTracing(withAuth(postHandler) as any, 'POST /api/transfers');

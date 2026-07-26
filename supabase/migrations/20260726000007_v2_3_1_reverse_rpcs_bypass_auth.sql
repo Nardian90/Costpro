@@ -131,15 +131,16 @@ BEGIN
   END IF;
 
   FOR v_item IN
-    SELECT product_id, quantity_change FROM public.inventory_adjustment_items WHERE adjustment_id = p_adjustment_id
+    SELECT product_id, difference FROM public.inventory_adjustment_items WHERE adjustment_id = p_adjustment_id
   LOOP
+    -- FIX V2.3.2: usar 'difference' (columna real) en vez de 'quantity_change'
     UPDATE public.products
-      SET stock_current = stock_current - v_item.quantity_change, updated_at = now()
+      SET stock_current = stock_current - v_item.difference, updated_at = now()
       WHERE id = v_item.product_id AND store_id = v_adj.store_id;
 
     INSERT INTO public.kardex_entries (store_id, product_id, movement_type, quantity, unit_cost, total_value,
       balance_quantity, balance_unit_cost, balance_total_value, reference_type, reference_id, reference_description, created_by)
-    SELECT v_adj.store_id, v_item.product_id, 'adjustment', ABS(v_item.quantity_change), 0, 0,
+    SELECT v_adj.store_id, v_item.product_id, 'adjustment', ABS(v_item.difference), 0, 0,
       p.stock_current, p.cost_average, p.stock_current * p.cost_average,
       'reversal', p_adjustment_id, 'Reversión de ajuste', v_uid
     FROM public.products p WHERE p.id = v_item.product_id;
