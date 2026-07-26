@@ -9,6 +9,7 @@ import {
   ArrowDownLeft,
   Plus,
   RefreshCcw,
+  Undo2,
   Clock,
   CheckCircle2,
   XCircle,
@@ -411,7 +412,7 @@ export default function TransferenciasView() {
                           title="Revertir transferencia (devuelve stock a origen)"
                           aria-label="Revertir transferencia"
                         >
-                          <RefreshCcw className="w-4 h-4" />
+                          <Undo2 className="w-4 h-4" />
                         </button>
                       )}
 

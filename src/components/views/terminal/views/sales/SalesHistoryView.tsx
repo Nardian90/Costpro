@@ -2,18 +2,18 @@
 
 import React, { useRef, useState } from 'react';
 import { useIsMobile } from '@/hooks/ui/useMobile';
-import { DollarSign, CreditCard, Eye, RefreshCcw, Copy, Calculator, CheckSquare, Square, AlertTriangle, ShoppingCart, Download, ChevronLeft, ChevronRight, X, Filter, Wallet, ArrowLeftRight } from 'lucide-react';
+import { DollarSign, CreditCard, Eye, Undo2, Copy, Calculator, CheckSquare, Square, AlertTriangle, ShoppingCart, Download, ChevronLeft, ChevronRight, X, Filter, Wallet, ArrowLeftRight } from 'lucide-react';
 import { cn, formatCurrency, formatDate, formatTime } from '@/lib/utils';
 import SearchBar from '@/components/ui/SearchBar';
 import { StateRenderer } from '@/components/ui/StateRenderer';
 import { Skeleton } from '@/components/ui/skeleton';
-import { BaseModal } from '@/components/ui/BaseModal';
 import { PrimaryButton, SecondaryButton } from '@/components/ui/atomic';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useSalesHistoryView } from './useSalesHistoryView';
 import { TransactionDetailsModal } from './TransactionDetailsModal';
 import { DocumentStatusBadge, canReverse } from '@/components/ui/DocumentStatusBadge';
 import { ReverseDocumentModal } from '@/components/ui/ReverseDocumentModal';
+import { useUIStore } from '@/store';
 
 // Helper para icono y etiqueta del método de pago
 function getPaymentMethodInfo(method: string | null | undefined): { icon: React.ElementType; label: string; color: string } {
@@ -128,8 +128,9 @@ const PaginationFooter = ({ page, totalPages, totalItems, onPageChange }: { page
 };
 
 export default function SalesHistoryView() {
-  // V2.2: estado para el modal de reversión contable (alternativa al void)
+  // ESTÁNDAR: Revertir es la única forma de deshacer una venta
   const [reverseTarget, setReverseTarget] = useState<{ id: string; label: string } | null>(null);
+  const { setCurrentView } = useUIStore();
 
   const {
     searchTerm,
@@ -160,15 +161,16 @@ export default function SalesHistoryView() {
     selectedTransactions,
     isTaxModalOpen,
     setIsTaxModalOpen,
-    handleRequestVoid,
-    handleConfirmVoid,
-    handleCancelVoid,
-    voidTarget,
     handleDuplicate,
     handleExportCSV,
-    isInverting,
-    canVoid
   } = useSalesHistoryView();
+
+  // ESTÁNDAR: tras duplicar, navegar al POS para que el usuario revise y confirme
+  const handleDuplicateAndNavigate = (txn: typeof transactions[0]) => {
+    handleDuplicate(txn);
+    // Navegar al POS tras un breve delay para que el carrito se cargue
+    setTimeout(() => setCurrentView('pos'), 500);
+  };
 
   const isMobile = useIsMobile();
 
@@ -420,24 +422,9 @@ export default function SalesHistoryView() {
                                     <Eye className="w-4 h-4" />
                                   </button>
 
-                                  {canVoid && (
-                                    <button type="button"
-                                      onClick={() => handleRequestVoid(txn)}
-                                      disabled={isVoided || isInverting}
-                                      className={cn(
-                                        "w-11 h-11 inline-flex items-center justify-center rounded-lg border transition-all active:scale-95",
-                                        isVoided
-                                          ? "border-border opacity-30 cursor-not-allowed"
-                                          : "border-border hover:bg-destructive hover:text-foreground"
-                                      )}
-                                      title={isVoided ? "Venta ya anulada" : "Anular Venta"}
-                                      aria-label={isVoided ? "Venta ya anulada" : "Anular venta"}
-                                    >
-                                      <RefreshCcw className={cn("w-4 h-4", isInverting && "animate-spin")} />
-                                    </button>
-                                  )}
-
-                                  {/* V2.2: botón Revertir — alternativa contable al void. Invierte stock + kardex. */}
+                                  {/* ESTÁNDAR: Revertir es la única forma de deshacer una venta completed.
+                                      Anular (void) se eliminó porque era redundante y sin trazabilidad contable.
+                                      Revertir invierte stock + crea kardex entries + pide motivo + audita. */}
                                   {canReverseTx && (
                                     <button type="button"
                                       onClick={() => setReverseTarget({
@@ -448,14 +435,14 @@ export default function SalesHistoryView() {
                                       title="Revertir venta (invierte stock + kardex)"
                                       aria-label="Revertir venta"
                                     >
-                                      <RefreshCcw className="w-4 h-4" />
+                                      <Undo2 className="w-4 h-4" />
                                     </button>
                                   )}
 
                                   <button type="button"
-                                    onClick={() => handleDuplicate(txn)}
-                                    className="w-11 h-11 inline-flex items-center justify-center rounded-lg border border-border hover:bg-warning hover:text-foreground transition-all active:scale-95"
-                                    title="Duplicar Venta"
+                                    onClick={() => handleDuplicateAndNavigate(txn)}
+                                    className="w-11 h-11 inline-flex items-center justify-center rounded-lg border border-blue-500/40 bg-blue-500/5 text-blue-500 hover:bg-blue-500 hover:text-white transition-all active:scale-95"
+                                    title="Duplicar Venta (carga items en POS)"
                                     aria-label="Duplicar venta"
                                   >
                                     <Copy className="w-4 h-4" />
@@ -493,7 +480,7 @@ export default function SalesHistoryView() {
         isLoading={loadingDetails}
       />
 
-      {/* V2.2: Modal de Reversión Contable */}
+      {/* ESTÁNDAR: Modal de Reversión Contable — única forma de deshacer venta */}
       <ReverseDocumentModal
         isOpen={!!reverseTarget}
         onClose={() => setReverseTarget(null)}
@@ -501,66 +488,6 @@ export default function SalesHistoryView() {
         docId={reverseTarget?.id || ''}
         docLabel={reverseTarget?.label}
       />
-
-      {/* Void Confirmation Modal */}
-      <BaseModal
-        open={!!voidTarget}
-        onOpenChange={(open) => { if (!open) handleCancelVoid(); }}
-        title={
-          <div className="flex items-center gap-2 text-destructive">
-            <AlertTriangle className="w-6 h-6" />
-            <span>Confirmar Anulacion</span>
-          </div>
-        }
-        footer={
-          <>
-            <SecondaryButton
-              label="No, Volver"
-              onClick={handleCancelVoid}
-              className="flex-1"
-            />
-            <PrimaryButton
-              label="Si, Anular Venta"
-              onClick={handleConfirmVoid}
-              disabled={isInverting}
-              className="flex-1 !bg-destructive hover:!bg-destructive/90 text-white shadow-destructive/20"
-            />
-          </>
-        }
-      >
-        <div className="py-4 space-y-4">
-          <p className="font-bold text-center text-sm">
-            Estas seguro de que deseas <span className="text-destructive uppercase">anular</span> esta venta?
-          </p>
-          <p className="text-xs text-muted-foreground text-center leading-relaxed">
-            Esta accion es <span className="font-bold text-foreground">irreversible</span>. La venta sera marcada como anulada,
-            los productos seran devueltos al inventario y se registrara un movimiento de stock.
-          </p>
-
-          {voidTarget && (
-            <div className="rounded-xl bg-muted/50 border border-border p-4 space-y-2">
-              <div className="flex justify-between items-center">
-                <span className="text-xs font-bold text-muted-foreground uppercase">Referencia</span>
-                <span className="text-xs font-black text-primary">{voidTarget.id.split('-')[0]}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-xs font-bold text-muted-foreground uppercase">Fecha</span>
-                <span className="text-xs font-black">{formatDate(voidTarget.created_at)}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-xs font-bold text-muted-foreground uppercase">Metodo</span>
-                <span className="text-xs font-black uppercase">
-                  {getPaymentMethodInfo(voidTarget.payment_method).label}
-                </span>
-              </div>
-              <div className="flex justify-between items-center pt-2 border-t border-border">
-                <span className="text-xs font-black uppercase">Total</span>
-                <span className="text-lg font-black text-primary tabular-nums">{formatCurrency(voidTarget.total_amount)}</span>
-              </div>
-            </div>
-          )}
-        </div>
-      </BaseModal>
 
       {/* Tax Calculation Modal */}
       <TaxCalculationModal

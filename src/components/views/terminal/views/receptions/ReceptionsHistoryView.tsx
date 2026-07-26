@@ -7,6 +7,7 @@ import {
   FileText,
   Eye,
   RefreshCcw,
+  Undo2,
   Copy,
   Pencil,
   Trash2,
@@ -345,21 +346,12 @@ export default function ReceptionsHistoryView() {
                               <CheckCircle2 className={cn("w-4 h-4", isConfirmingPending && confirmingReceiptId === rec.id && "animate-pulse")} />
                             </button>
                           )}
-                          {/* Reception-Flow-Restriction: para confirmadas (active) SOLO se permite
-                              Invertir (que es como anular pero dejando trazabilidad mediante
-                              documento de inversión) y Duplicar. NO se puede editar ni anular
-                              directamente — la trazabilidad requiere el documento de inversión. */}
+                          {/* ESTÁNDAR: para confirmadas (active) SOLO Revertir + Duplicar.
+                              "Invertir" se eliminó — era redundante con Revertir y sin trazabilidad.
+                              Revertir descuenta stock + crea kardex entries + pide motivo + audita. */}
                           {rec.status === 'active' && (
                             <>
-                              <button type="button"
-                                onClick={() => handleInvert(rec)}
-                                className="w-11 h-11 inline-flex items-center justify-center rounded-lg border border-border hover:bg-destructive hover:text-foreground transition-all active:scale-95"
-                                title="Invertir Recepción — Crea un documento de disminución que revierte el stock manteniendo trazabilidad (equivalente a anular con auditoría)"
-                                disabled={isInverting}
-                              >
-                                <RefreshCcw className={cn("w-4 h-4", isInverting && "animate-spin")} />
-                              </button>
-                              {/* V2.2: Revertir — alternativa contable que descuenta stock + kardex */}
+                              {/* ESTÁNDAR: Revertir — única forma de deshacer recepción confirmada */}
                               <button type="button"
                                 onClick={() => setReverseTarget({
                                   id: rec.id,
@@ -369,12 +361,12 @@ export default function ReceptionsHistoryView() {
                                 title="Revertir Recepción (descuenta stock + kardex)"
                                 aria-label="Revertir recepción"
                               >
-                                <RefreshCcw className="w-4 h-4" />
+                                <Undo2 className="w-4 h-4" />
                               </button>
                               <button type="button"
-                                onClick={() => handleDuplicate(rec)}
-                                className="w-11 h-11 inline-flex items-center justify-center rounded-lg border border-border hover:bg-info hover:text-foreground transition-all active:scale-95"
-                                title="Duplicar Recepción"
+                                onClick={() => { handleDuplicate(rec); setTimeout(() => setCurrentView('recepcion'), 500); }}
+                                className="w-11 h-11 inline-flex items-center justify-center rounded-lg border border-blue-500/40 bg-blue-500/5 text-blue-500 hover:bg-blue-500 hover:text-white transition-all active:scale-95"
+                                title="Duplicar Recepción (carga items en formulario)"
                               >
                                 <Copy className="w-4 h-4" />
                               </button>

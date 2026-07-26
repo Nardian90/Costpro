@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Plus, Search, RotateCcw, Loader2, FileText, X, RefreshCcw, Copy } from 'lucide-react';
+import { Plus, Search, RotateCcw, Loader2, FileText, X, Undo2, Copy } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
 import { apiFetch } from '@/lib/api-fetch';
 import { useAuthStore } from '@/store';
@@ -103,7 +103,7 @@ export function DevolutionsView() {
                       title="Revertir devolución (descuenta stock restaurado)"
                       aria-label="Revertir devolución"
                     >
-                      <RefreshCcw className="w-3 h-3" />
+                      <Undo2 className="w-3 h-3" />
                       Revertir
                     </button>
                   )}
