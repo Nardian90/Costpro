@@ -370,7 +370,7 @@ export default function TerminalShell() {
         case 'wallet': return <ViewErrorBoundary viewName="Wallet"><WalletView /></ViewErrorBoundary>;
         case 'pos': return <ViewErrorBoundary viewName="POS"><POSView /></ViewErrorBoundary>;
         case 'sales_catalog': return <ViewErrorBoundary viewName="Catálogo de Ventas"><SalesCatalogView /></ViewErrorBoundary>;
-        case 'sales': return <ViewErrorBoundary viewName="Ventas"><SalesHistoryView /></ViewErrorBoundary>;
+        case 'sales': return <ViewErrorBoundary viewName="Historial de Ventas"><SalesHistoryView /></ViewErrorBoundary>;
         case 'users': return <ViewErrorBoundary viewName="Usuarios"><UsersManagementView /></ViewErrorBoundary>;
         case 'roles': return <ViewErrorBoundary viewName="Roles"><RolesManagementView /></ViewErrorBoundary>;
         case 'stores': return <ViewErrorBoundary viewName="Tiendas"><StoresManagementView /></ViewErrorBoundary>;

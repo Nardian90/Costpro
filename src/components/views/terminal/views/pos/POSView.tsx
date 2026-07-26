@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
 import { useShallow } from 'zustand/react/shallow';
-import { useAuthStore } from '@/store';
+import { useAuthStore, useUIStore } from '@/store';
 import { useProducts } from '@/hooks/api/useProducts';
 import { useCartStore, setCartNotificationHandler } from '@/store/cart';
 import { Product, ProductVariant, PaymentMethod } from '@/types';
@@ -44,7 +44,7 @@ import { BackToVentaButton } from '@/components/ui/BackToVentaButton';
 import { LoadMoreIndicator } from './LoadMoreIndicator';
 import { POSExpressMode } from './POSExpressMode';
 import { OfflineStatusIndicator } from './OfflineStatusIndicator';
-import { Zap } from 'lucide-react';
+import { Zap, History } from 'lucide-react';
 
 // Extracted hooks
 import { usePOSCheckout } from './usePOSCheckout';
@@ -166,6 +166,15 @@ export default function POSView() {
   const [selectedProductForVariants, setSelectedProductForVariants] = useState<Product | null>(null);
   // POS-3b EM-1: Modo Cajero Express (layout full-screen alternativo).
   const [expressMode, setExpressMode] = useState(false);
+
+  // ESTÁNDAR: si se navegó al POS desde "Duplicar venta", abrir carrito automáticamente
+  const { forceOpenCart, setForceOpenCart, setCurrentView } = useUIStore();
+  useEffect(() => {
+    if (forceOpenCart) {
+      setShowCart(true);
+      setForceOpenCart(false);
+    }
+  }, [forceOpenCart, setForceOpenCart]);
 
   // ── Cart store (shallow) ────────────────────────────────────
   const {
@@ -423,6 +432,17 @@ export default function POSView() {
               <span className="hidden sm:inline">Express</span>
             </button>
             )}
+            {/* ESTÁNDAR: botón Registro — navega al Historial de Ventas */}
+            <button
+              type="button"
+              onClick={() => setCurrentView('history')}
+              className="inline-flex items-center gap-1.5 h-11 min-h-[44px] px-3 sm:px-4 rounded-xl border-2 border-blue-500/30 bg-blue-500/5 text-blue-500 font-black text-xs uppercase tracking-widest hover:bg-blue-500/10 hover:border-blue-500/50 transition-all active:scale-95"
+              aria-label="Ir al Historial de Ventas"
+              title="Ver historial de ventas registradas"
+            >
+              <History className="w-4 h-4" />
+              <span className="hidden sm:inline">Registro</span>
+            </button>
           </div>
         </div>
         {/* POS-2 MM-6: Widget de estado de caja siempre visible en el header del POS.

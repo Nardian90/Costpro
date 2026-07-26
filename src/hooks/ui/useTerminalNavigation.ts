@@ -38,7 +38,7 @@ export function useTerminalNavigation(user: UserContract | null, sidebarSearch: 
       { id: 'wallet', icon: Wallet, label: 'Billetera', roles: ['admin', 'manager', 'encargado'], category: 'OPERACIONES' },
       { id: 'news', icon: Newspaper, label: 'Noticias', roles: ['admin', 'manager', 'clerk', 'warehouse', 'encargado'], category: 'OPERACIONES' },
       { id: 'pos', icon: ShoppingCart, label: 'Vender', roles: ['clerk', 'manager', 'admin', 'encargado'], category: 'OPERACIONES' },
-      { id: 'sales', icon: Receipt, label: 'Ventas', roles: ['clerk', 'manager', 'encargado'], category: 'OPERACIONES' },
+      { id: 'sales', icon: Receipt, label: 'Historial', roles: ['clerk', 'manager', 'encargado'], category: 'OPERACIONES' },
       { id: 'cash', icon: DollarSign, label: 'Caja', roles: ['manager', 'admin', 'encargado'], category: 'OPERACIONES' },
 
       { id: 'inventory', icon: Package, label: 'Inventario', roles: ['admin', 'manager', 'warehouse', 'encargado'], category: 'INVENTARIO' },

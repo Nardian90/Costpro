@@ -130,7 +130,7 @@ const PaginationFooter = ({ page, totalPages, totalItems, onPageChange }: { page
 export default function SalesHistoryView() {
   // ESTÁNDAR: Revertir es la única forma de deshacer una venta
   const [reverseTarget, setReverseTarget] = useState<{ id: string; label: string } | null>(null);
-  const { setCurrentView } = useUIStore();
+  const { setCurrentView, setForceOpenCart } = useUIStore();
 
   const {
     searchTerm,
@@ -165,9 +165,11 @@ export default function SalesHistoryView() {
     handleExportCSV,
   } = useSalesHistoryView();
 
-  // ESTÁNDAR: tras duplicar, navegar al POS para que el usuario revise y confirme
+  // ESTÁNDAR: tras duplicar, navegar al POS con carrito abierto para que el usuario vea los items
   const handleDuplicateAndNavigate = (txn: typeof transactions[0]) => {
     handleDuplicate(txn);
+    // Forzar que el POS abra el carrito automáticamente al montar
+    setForceOpenCart(true);
     // Navegar al POS tras un breve delay para que el carrito se cargue
     setTimeout(() => setCurrentView('pos'), 500);
   };

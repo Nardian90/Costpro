@@ -61,6 +61,9 @@ interface UIState {
   // null = nunca silenciado (comportamiento por defecto).
   // Se persiste para que sobreviva recargas y reinicios de sesión del mismo usuario.
   noShiftBannerDismissUntil: string | null;
+  // Flag para forzar apertura del carrito al navegar al POS (usado por Duplicar venta)
+  forceOpenCart: boolean;
+  setForceOpenCart: (v: boolean) => void;
   setCurrentView: (view: ViewType) => void;
   setSidebarState: (state: SidebarState) => void;
   toggleSidebar: () => void;
@@ -104,6 +107,8 @@ export const useUIStore = create<UIState>()(
       pendingAuditFilter: null,
       noShiftBannerDismissUntil: null,
       isHelpReadingMode: false,
+      forceOpenCart: false,
+      setForceOpenCart: (v: boolean) => set({ forceOpenCart: v }),
       setCurrentView: (view: ViewType) => set((state: UIState) => ({
         previousView: state.currentView,
         currentView: view,

@@ -94,9 +94,12 @@ export function DuplicateDocumentModal({
   const isImmediate = info.effect === 'immediate';
 
   async function handleConfirm() {
-    await duplicateMutation.mutateAsync({ type, id: docId });
-    if (duplicateMutation.isSuccess) {
+    try {
+      await duplicateMutation.mutateAsync({ type, id: docId });
+      // Si mutateAsync no lanzó error, la duplicación fue exitosa → cerrar modal
       onClose();
+    } catch {
+      // El error se muestra en el modal via duplicateMutation.error
     }
   }
 

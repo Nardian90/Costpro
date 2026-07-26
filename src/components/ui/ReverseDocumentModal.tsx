@@ -78,9 +78,13 @@ export function ReverseDocumentModal({
 
   async function handleSubmit() {
     if (!canSubmit) return;
-    await reverseMutation.mutateAsync({ type, id: docId, reason: reason.trim() });
-    if (reverseMutation.isSuccess) {
+    try {
+      await reverseMutation.mutateAsync({ type, id: docId, reason: reason.trim() });
+      // Si mutateAsync no lanzó error, la reversión fue exitosa → cerrar modal
       onClose();
+    } catch {
+      // El error se muestra en el modal via reverseMutation.error
+      // No cerrar el modal para que el usuario vea el error
     }
   }
 
