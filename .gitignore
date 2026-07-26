@@ -116,3 +116,5 @@ worklog.md
 download/
 *.pid
 test-results/
+playwright-report/
+test-results/
