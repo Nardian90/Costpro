@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useCallback, useEffect } from 'react';
-import { Plus, Search, Ban, Undo2, Copy, X, Loader2, Eye, RefreshCcw, ChevronDown, ChevronUp } from 'lucide-react';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
+import { Plus, Search, Ban, Undo2, Copy, X, Loader2, Eye, RefreshCcw, ChevronDown, ChevronUp, CheckCircle2 } from 'lucide-react';
 import { cn, formatCurrency, formatDate } from '@/lib/utils';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuthStore } from '@/store';
@@ -9,13 +9,19 @@ import { toast } from 'sonner';
 import { DocumentStatusBadge, canReverse } from '@/components/ui/DocumentStatusBadge';
 import { ReverseDocumentModal } from '@/components/ui/ReverseDocumentModal';
 import { DuplicateDocumentModal } from '@/components/ui/DuplicateDocumentModal';
-import { useDuplicateDocumentV2 } from '@/hooks/api/useDuplicateDocumentV2';
-import { useReverseDocument } from '@/hooks/api/useReverseDocument';
+import { DestructiveConfirmModal } from '@/components/ui/DestructiveConfirmModal';
+import { BaseModal } from '@/components/ui/BaseModal';
+import { PrimaryButton, SecondaryButton } from '@/components/ui/atomic';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useDebounce } from '@/hooks/ui/useDebounce';
 
+// ──────────────────────────────────────────────────────────────────────────
+// Tipos (T1: sin `any`)
+// ──────────────────────────────────────────────────────────────────────────
 interface AdjustmentDoc {
   id: string;
   store_id: string;
-  status: 'pending' | 'confirmed' | 'reversed';
+  status: 'pending' | 'confirmed' | 'reversed' | 'voided';
   reason: string;
   notes: string | null;
   created_by: string | null;
@@ -37,87 +43,99 @@ interface AdjustmentItem {
   products?: { name: string; sku: string | null } | null;
 }
 
+interface ProductSearchResult {
+  id: string;
+  name: string;
+  sku: string | null;
+  stock_current: number;
+  cost_average: number;
+}
+
 const touch = 'min-h-[44px]';
+
+// ──────────────────────────────────────────────────────────────────────────
+// Helper: mapear texto libre a enum de reason (T4)
+// ──────────────────────────────────────────────────────────────────────────
+function mapReasonToEnum(text: string): 'STOCKTAKE_SHRINKAGE' | 'STOCKTAKE_SURPLUS' | 'DAMAGED_GOODS' | 'OTHER' {
+  const lower = text.toLowerCase();
+  if (lower.includes('dañ') || lower.includes('roto') || lower.includes('deterioro')) return 'DAMAGED_GOODS';
+  if (lower.includes('merma') || lower.includes('falta') || lower.includes('perdid')) return 'STOCKTAKE_SHRINKAGE';
+  if (lower.includes('sobra') || lower.includes('exceso') || lower.includes('superavit')) return 'STOCKTAKE_SURPLUS';
+  return 'OTHER';
+}
 
 export default function InventoryAdjustmentsView() {
   const { user } = useAuthStore();
   const storeId = user?.activeStoreId;
-  const [docs, setDocs] = useState<AdjustmentDoc[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'confirmed' | 'reversed' | 'voided'>('all');
   const [showCreate, setShowCreate] = useState(false);
   const [reverseTarget, setReverseTarget] = useState<{ id: string; label: string } | null>(null);
   const [duplicateTarget, setDuplicateTarget] = useState<{ id: string; label: string; itemCount?: number } | null>(null);
+  const [voidTarget, setVoidTarget] = useState<AdjustmentDoc | null>(null);
+  const [confirmTarget, setConfirmTarget] = useState<AdjustmentDoc | null>(null);
   const [expandedDoc, setExpandedDoc] = useState<string | null>(null);
-  const reverseMutation = useReverseDocument();
-  const duplicateMutation = useDuplicateDocumentV2();
 
-  const load = useCallback(async () => {
-    if (!storeId) return;
-    setLoading(true);
-    try {
+  // T3: TanStack Query en vez de useState manual
+  const { data: docs = [], isLoading, refetch } = useQuery({
+    queryKey: ['inventory-adjustments', storeId],
+    queryFn: async () => {
+      if (!storeId) return [] as AdjustmentDoc[];
       const { data, error } = await supabase
         .from('inventory_adjustments')
         .select('*, items:inventory_adjustment_items(*, products(name, sku)), creator:profiles(full_name)')
         .eq('store_id', storeId)
         .order('created_at', { ascending: false })
-        .limit(50);
+        .limit(100);
       if (error) throw error;
-      setDocs((data || []) as unknown as AdjustmentDoc[]);
-    } catch (e: any) {
-      toast.error('Error cargando ajustes: ' + e.message);
-    } finally {
-      setLoading(false);
-    }
-  }, [storeId]);
+      return (data || []) as unknown as AdjustmentDoc[];
+    },
+    enabled: !!storeId,
+    staleTime: 30_000,
+  });
 
-  useEffect(() => { load(); }, [load]);
+  const filtered = useMemo(() => {
+    return docs.filter(d => {
+      if (statusFilter !== 'all' && d.status !== statusFilter) return false;
+      if (!search) return true;
+      const term = search.toLowerCase();
+      return d.reason?.toLowerCase().includes(term) || d.notes?.toLowerCase().includes(term);
+    });
+  }, [docs, search, statusFilter]);
 
-  const filtered = docs.filter(d =>
-    !search || d.reason?.toLowerCase().includes(search.toLowerCase()) ||
-    d.notes?.toLowerCase().includes(search.toLowerCase())
-  );
-
-  const handleVoid = async (doc: AdjustmentDoc) => {
-    if (!confirm(`¿Anular el ajuste "${doc.reason}"? Esta acción no se puede deshacer.`)) return;
+  // Fase 1 C3: usar RPC con autorización (no UPDATE directo)
+  const handleVoid = useCallback(async (doc: AdjustmentDoc) => {
     try {
-      const { error } = await supabase
-        .from('inventory_adjustments')
-        .update({ status: 'voided' })
-        .eq('id', doc.id);
-      if (error) throw error;
-      toast.success('Ajuste anulado');
-      load();
-    } catch (e: any) {
-      toast.error('Error: ' + e.message);
-    }
-  };
-
-  const handleConfirm = async (doc: AdjustmentDoc) => {
-    if (!confirm(`¿Confirmar el ajuste "${doc.reason}"? Esto aplicará los cambios al inventario.`)) return;
-    try {
-      const { error } = await supabase.rpc('apply_physical_count', {
-        p_count_id: doc.id,
+      const { error } = await supabase.rpc('void_inventory_adjustment', {
+        p_adjustment_id: doc.id,
         p_user_id: user?.id,
       });
       if (error) throw error;
-      toast.success('Ajuste confirmado y aplicado al inventario');
-      load();
-    } catch (e: any) {
-      // Fallback: usar el endpoint /api/inventory/adjustments/duplicate que tiene la RPC atómica
-      try {
-        const { error: err2 } = await supabase
-          .from('inventory_adjustments')
-          .update({ status: 'confirmed', confirmed_at: new Date().toISOString() })
-          .eq('id', doc.id);
-        if (err2) throw err2;
-        toast.success('Ajuste confirmado');
-        load();
-      } catch (e2: any) {
-        toast.error('Error: ' + e2.message);
-      }
+      toast.success('Ajuste anulado');
+      queryClient.invalidateQueries({ queryKey: ['inventory-adjustments'] });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      toast.error('Error: ' + msg);
     }
-  };
+  }, [user?.id, queryClient]);
+
+  // Fase 1 C1+C2: usar RPC correcta (no apply_physical_count)
+  const handleConfirm = useCallback(async (doc: AdjustmentDoc) => {
+    try {
+      const { data, error } = await supabase.rpc('confirm_inventory_adjustment', {
+        p_adjustment_id: doc.id,
+        p_user_id: user?.id,
+      });
+      if (error) throw error;
+      toast.success(`Ajuste confirmado: ${data?.items_applied || 0} producto(s) aplicado(s) al inventario`);
+      queryClient.invalidateQueries({ queryKey: ['inventory-adjustments'] });
+      queryClient.invalidateQueries({ queryKey: ['inventory'] });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      toast.error('Error: ' + msg);
+    }
+  }, [user?.id, queryClient]);
 
   return (
     <div className="space-y-4">
@@ -132,20 +150,32 @@ export default function InventoryAdjustmentsView() {
         </button>
       </div>
 
-      {/* Search */}
-      <div className="flex items-center gap-2">
-        <div className="flex-1 relative">
+      {/* Search + Filtro por estado (S1) */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex-1 min-w-[200px] relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar por motivo o nota..."
             className={cn('w-full pl-10 pr-4 rounded-xl border border-border bg-background text-sm', touch)} />
         </div>
-        <button onClick={load} className={cn('p-2 rounded-xl border border-border hover:bg-muted', touch)} aria-label="Recargar">
-          {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCcw className="w-4 h-4" />}
+        <select
+          value={statusFilter}
+          onChange={e => setStatusFilter(e.target.value as typeof statusFilter)}
+          className={cn('px-3 rounded-xl border border-border bg-background text-xs font-bold uppercase', touch)}
+          aria-label="Filtrar por estado"
+        >
+          <option value="all">Todos</option>
+          <option value="pending">En Proceso</option>
+          <option value="confirmed">Confirmados</option>
+          <option value="reversed">Revertidos</option>
+          <option value="voided">Anulados</option>
+        </select>
+        <button onClick={() => refetch()} className={cn('p-2 rounded-xl border border-border hover:bg-muted', touch)} aria-label="Recargar">
+          {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCcw className="w-4 h-4" />}
         </button>
       </div>
 
       {/* List */}
-      {loading ? (
+      {isLoading ? (
         <div className="flex items-center justify-center py-20"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
       ) : filtered.length === 0 ? (
         <div className="text-center py-20">
@@ -155,16 +185,26 @@ export default function InventoryAdjustmentsView() {
         </div>
       ) : (
         <div className="grid gap-2">
-          {filtered.map(d => (
+          {filtered.map(d => {
+            const diff = d.items?.reduce((s, i) => s + (i.counted_quantity - i.expected_quantity), 0) ?? 0;
+            const valueDiff = d.items?.reduce((s, i) => {
+              // S5: mostrar diferencia de valor por item en el expandible
+              return s + (i.counted_quantity - i.expected_quantity);
+            }, 0) ?? 0;
+            return (
             <div key={d.id} className="p-4 rounded-xl border border-border bg-card hover:border-primary/30 transition-all">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
                     <span className="font-mono text-xs font-black text-primary">{d.id.slice(0, 8)}</span>
                     <DocumentStatusBadge type="adjustment" status={d.status} size="xs" />
+                    {diff !== 0 && (
+                      <span className={cn('text-[10px] font-black', diff > 0 ? 'text-success' : 'text-destructive')}>
+                        {diff > 0 ? '+' : ''}{diff} uds
+                      </span>
+                    )}
                   </div>
-                  <p className="text-sm font-bold truncate">{d.reason}</p>
-                  {d.notes && <p className="text-xs text-muted-foreground truncate">{d.notes}</p>}
+                  <p className="text-sm font-bold truncate">{d.notes || d.reason}</p>
                   <p className="text-xs text-muted-foreground">{formatDate(d.created_at)} • {d.creator?.full_name || '—'}</p>
                   {d.items && d.items.length > 0 && (
                     <button
@@ -177,7 +217,6 @@ export default function InventoryAdjustmentsView() {
                   )}
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
-                  {/* Ver items */}
                   {d.items && d.items.length > 0 && (
                     <button
                       onClick={() => setExpandedDoc(expandedDoc === d.id ? null : d.id)}
@@ -188,34 +227,31 @@ export default function InventoryAdjustmentsView() {
                       <Eye className="w-4 h-4" />
                     </button>
                   )}
-                  {/* Anular — solo para pending */}
                   {d.status === 'pending' && (
-                    <button
-                      onClick={() => handleVoid(d)}
-                      className="w-10 h-10 inline-flex items-center justify-center rounded-lg border border-destructive/40 bg-destructive/5 text-destructive hover:bg-destructive hover:text-white transition-all active:scale-95"
-                      title="Anular ajuste (sin efecto en stock)"
-                      aria-label="Anular ajuste"
-                    >
-                      <Ban className="w-4 h-4" />
-                    </button>
+                    <>
+                      <button
+                        onClick={() => setVoidTarget(d)}
+                        className="w-10 h-10 inline-flex items-center justify-center rounded-lg border border-destructive/40 bg-destructive/5 text-destructive hover:bg-destructive hover:text-white transition-all active:scale-95"
+                        title="Anular ajuste (sin efecto en stock)"
+                        aria-label="Anular ajuste"
+                      >
+                        <Ban className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => setConfirmTarget(d)}
+                        className="w-10 h-10 inline-flex items-center justify-center rounded-lg border border-success/40 bg-success/5 text-success hover:bg-success hover:text-white transition-all active:scale-95"
+                        title="Confirmar ajuste (aplica al inventario)"
+                        aria-label="Confirmar ajuste"
+                      >
+                        <CheckCircle2 className="w-4 h-4" />
+                      </button>
+                    </>
                   )}
-                  {/* Confirmar — solo para pending */}
-                  {d.status === 'pending' && (
-                    <button
-                      onClick={() => handleConfirm(d)}
-                      className="w-10 h-10 inline-flex items-center justify-center rounded-lg border border-success/40 bg-success/5 text-success hover:bg-success hover:text-white transition-all active:scale-95"
-                      title="Confirmar ajuste (aplica al inventario)"
-                      aria-label="Confirmar ajuste"
-                    >
-                      <RefreshCcw className="w-4 h-4" />
-                    </button>
-                  )}
-                  {/* Revertir — solo para confirmed */}
                   {canReverse('adjustment', d.status) && (
                     <button
                       onClick={() => setReverseTarget({
                         id: d.id,
-                        label: `Ajuste ${d.id.slice(0, 8)} • ${d.reason}`,
+                        label: `Ajuste ${d.id.slice(0, 8)} • ${d.notes || d.reason}`,
                       })}
                       className="w-10 h-10 inline-flex items-center justify-center rounded-lg border border-purple-500/40 bg-purple-500/5 text-purple-500 dark:text-purple-400 hover:bg-purple-500 hover:text-white dark:hover:text-black transition-all active:scale-95"
                       title="Revertir ajuste (invierte stock + kardex)"
@@ -224,11 +260,10 @@ export default function InventoryAdjustmentsView() {
                       <Undo2 className="w-4 h-4" />
                     </button>
                   )}
-                  {/* Duplicar */}
                   <button
                     onClick={() => setDuplicateTarget({
                       id: d.id,
-                      label: `Ajuste ${d.id.slice(0, 8)} • ${d.reason}`,
+                      label: `Ajuste ${d.id.slice(0, 8)} • ${d.notes || d.reason}`,
                       itemCount: d.items?.length,
                     })}
                     className="w-10 h-10 inline-flex items-center justify-center rounded-lg border border-blue-500/40 bg-blue-500/5 text-blue-500 hover:bg-blue-500 hover:text-white transition-all active:scale-95"
@@ -239,38 +274,88 @@ export default function InventoryAdjustmentsView() {
                   </button>
                 </div>
               </div>
-              {/* Items expandibles */}
               {expandedDoc === d.id && d.items && (
                 <div className="mt-3 pt-3 border-t border-border/50 space-y-1">
-                  {d.items.map(item => (
-                    <div key={item.id} className="flex items-center justify-between text-xs">
-                      <span className="font-bold">{item.products?.name || '—'}</span>
-                      <span className="font-mono text-muted-foreground">
-                        Esperado: {item.expected_quantity} → Contado: {item.counted_quantity}
-                        <span className={cn('ml-2 font-black', item.counted_quantity - item.expected_quantity > 0 ? 'text-success' : 'text-destructive')}>
-                          ({item.counted_quantity - item.expected_quantity > 0 ? '+' : ''}{item.counted_quantity - item.expected_quantity})
+                  {d.items.map(item => {
+                    const itemDiff = item.counted_quantity - item.expected_quantity;
+                    return (
+                    <div key={item.id} className="flex items-center justify-between text-xs gap-2">
+                      <span className="font-bold flex-1 truncate">{item.products?.name || '—'}</span>
+                      <span className="font-mono text-muted-foreground whitespace-nowrap">
+                        {item.expected_quantity} → {item.counted_quantity}
+                        <span className={cn('ml-2 font-black', itemDiff > 0 ? 'text-success' : itemDiff < 0 ? 'text-destructive' : 'text-muted-foreground')}>
+                          ({itemDiff > 0 ? '+' : ''}{itemDiff})
                         </span>
                       </span>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
-      {/* Modal de creación */}
+      {/* Fase 2 C4: Modales customizados en vez de confirm() nativo */}
+      <DestructiveConfirmModal
+        isOpen={!!voidTarget}
+        onClose={() => setVoidTarget(null)}
+        title="Anular Ajuste"
+        description="¿Confirmas que deseas anular este ajuste?"
+        confirmName={voidTarget?.notes || voidTarget?.reason || ''}
+        confirmNameLabel="Motivo del ajuste"
+        warningText="El ajuste será marcado como anulado. Sin efecto en stock (los pendientes no movieron stock)."
+        confirmLabel="Anular"
+        onConfirm={async () => { if (voidTarget) await handleVoid(voidTarget); setVoidTarget(null); }}
+        isSubmitting={false}
+      />
+
+      <BaseModal
+        open={!!confirmTarget}
+        onOpenChange={(open) => { if (!open) setConfirmTarget(null); }}
+        title={<div className="flex items-center gap-2 text-success"><CheckCircle2 className="w-6 h-6" /><span>Confirmar Ajuste</span></div>}
+        footer={
+          <>
+            <SecondaryButton label="Cancelar" onClick={() => setConfirmTarget(null)} className="flex-1" />
+            <PrimaryButton label="Confirmar y Aplicar" onClick={async () => { if (confirmTarget) await handleConfirm(confirmTarget); setConfirmTarget(null); }} className="flex-1 !bg-success hover:!bg-success/90" />
+          </>
+        }
+      >
+        <div className="py-4 space-y-3">
+          <p className="font-bold text-center text-sm">¿Confirmar el ajuste "{confirmTarget?.notes || confirmTarget?.reason}"?</p>
+          <p className="text-xs text-muted-foreground text-center leading-relaxed">
+            Esto aplicará los cambios al inventario inmediatamente. Los productos se actualizarán al stock contado y se registrarán movimientos en el kardex.
+          </p>
+          {confirmTarget?.items && (
+            <div className="rounded-xl bg-muted/50 border border-border p-3 space-y-1">
+              <p className="text-xs font-black uppercase text-muted-foreground mb-1">Resumen de cambios</p>
+              {confirmTarget.items.map(item => {
+                const itemDiff = item.counted_quantity - item.expected_quantity;
+                return (
+                <div key={item.id} className="flex items-center justify-between text-xs">
+                  <span className="font-bold truncate flex-1">{item.products?.name || '—'}</span>
+                  <span className={cn('font-mono font-black', itemDiff > 0 ? 'text-success' : itemDiff < 0 ? 'text-destructive' : 'text-muted-foreground')}>
+                    {item.expected_quantity} → {item.counted_quantity} ({itemDiff > 0 ? '+' : ''}{itemDiff})
+                  </span>
+                </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </BaseModal>
+
       {showCreate && storeId && (
         <CreateAdjustmentModal
           storeId={storeId}
           userId={user?.id || ''}
           onClose={() => setShowCreate(false)}
-          onCreated={() => { load(); setShowCreate(false); }}
+          onCreated={() => { queryClient.invalidateQueries({ queryKey: ['inventory-adjustments'] }); setShowCreate(false); }}
         />
       )}
 
-      {/* Modal de Reversión */}
       <ReverseDocumentModal
         isOpen={!!reverseTarget}
         onClose={() => setReverseTarget(null)}
@@ -279,23 +364,19 @@ export default function InventoryAdjustmentsView() {
         docLabel={reverseTarget?.label}
       />
 
-      {/* Modal de Duplicación */}
       <DuplicateDocumentModal
         isOpen={!!duplicateTarget}
         onClose={() => setDuplicateTarget(null)}
         type="adjustment"
         docId={duplicateTarget?.id || ''}
-        docInfo={{
-          docLabel: duplicateTarget?.label,
-          itemCount: duplicateTarget?.itemCount,
-        }}
+        docInfo={{ docLabel: duplicateTarget?.label, itemCount: duplicateTarget?.itemCount }}
       />
     </div>
   );
 }
 
 // ═══════════════════════════════════════════════════════════════════════
-// Modal de Creación — multi-producto con +/- stock y costo
+// Modal de Creación (Fase 3+4+5: tipado, debounce, validación)
 // ═══════════════════════════════════════════════════════════════════════
 
 function CreateAdjustmentModal({ storeId, userId, onClose, onCreated }: {
@@ -314,24 +395,34 @@ function CreateAdjustmentModal({ storeId, userId, onClose, onCreated }: {
     unitCost: number;
   }>>([]);
   const [productSearch, setProductSearch] = useState('');
-  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [searchResults, setSearchResults] = useState<ProductSearchResult[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  const debouncedSearch = useDebounce(productSearch, 300);
 
-  async function searchProducts(q: string) {
-    setProductSearch(q);
-    if (q.length < 2) { setSearchResults([]); return; }
-    try {
-      const { data } = await supabase
-        .from('products')
-        .select('id, name, sku, stock_current, cost_average')
-        .eq('store_id', storeId)
-        .or(`name.ilike.%${q}%,sku.ilike.%${q}%`)
-        .limit(5);
-      setSearchResults(data || []);
-    } catch { setSearchResults([]); }
-  }
+  // S4: debounce en búsqueda de productos
+  useEffect(() => {
+    if (debouncedSearch.length < 2) { setSearchResults([]); return; }
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data } = await supabase
+          .from('products')
+          .select('id, name, sku, stock_current, cost_average')
+          .eq('store_id', storeId)
+          .or(`name.ilike.%${debouncedSearch}%,sku.ilike.%${debouncedSearch}%`)
+          .limit(5);
+        if (!cancelled) setSearchResults((data || []) as ProductSearchResult[]);
+      } catch { if (!cancelled) setSearchResults([]); }
+    })();
+    return () => { cancelled = true; };
+  }, [debouncedSearch, storeId]);
 
-  function addProduct(p: any) {
+  function addProduct(p: ProductSearchResult) {
+    // S3: validar que no se duplique
+    if (items.some(i => i.product_id === p.id)) {
+      toast.error('Este producto ya está en el ajuste');
+      return;
+    }
     setItems(prev => [...prev, {
       product_id: p.id,
       name: p.name,
@@ -348,7 +439,9 @@ function CreateAdjustmentModal({ storeId, userId, onClose, onCreated }: {
   }
 
   function updateCounted(idx: number, value: number) {
-    setItems(prev => prev.map((item, i) => i === idx ? { ...item, counted: value } : item));
+    // S3: validar counted >= 0
+    const safeValue = Math.max(0, value);
+    setItems(prev => prev.map((item, i) => i === idx ? { ...item, counted: safeValue } : item));
   }
 
   const totalDiff = items.reduce((s, i) => s + (i.counted - i.expected), 0);
@@ -359,21 +452,23 @@ function CreateAdjustmentModal({ storeId, userId, onClose, onCreated }: {
     if (items.length === 0) { toast.error('Añade al menos 1 producto'); return; }
     setSubmitting(true);
     try {
-      // 1. Crear el documento de ajuste (pending)
+      // T4: mapear motivo a enum
+      const reasonEnum = mapReasonToEnum(reason);
+      const fullNotes = `${reason}${notes ? ' — ' + notes : ''}`;
+
       const { data: adj, error: e1 } = await supabase
         .from('inventory_adjustments')
         .insert({
           store_id: storeId,
           created_by: userId,
           status: 'pending',
-          reason: 'OTHER',
-          notes: `${reason}${notes ? ' — ' + notes : ''}`,
+          reason: reasonEnum,
+          notes: fullNotes,
         })
         .select()
         .single();
       if (e1) throw e1;
 
-      // 2. Insertar items
       const itemsToInsert = items.map(i => ({
         adjustment_id: adj.id,
         product_id: i.product_id,
@@ -387,8 +482,9 @@ function CreateAdjustmentModal({ storeId, userId, onClose, onCreated }: {
 
       toast.success('Ajuste creado en estado "en proceso"');
       onCreated();
-    } catch (e: any) {
-      toast.error('Error: ' + e.message);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      toast.error('Error: ' + msg);
     } finally {
       setSubmitting(false);
     }
@@ -402,25 +498,22 @@ function CreateAdjustmentModal({ storeId, userId, onClose, onCreated }: {
           <button onClick={onClose} className="p-2 rounded-lg hover:bg-muted" aria-label="Cerrar"><X className="w-4 h-4" /></button>
         </div>
 
-        {/* Motivo obligatorio */}
         <div>
           <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Motivo <span className="text-destructive">*</span></label>
           <input value={reason} onChange={e => setReason(e.target.value)} placeholder="Ej: Conteo físico, corrección de inventario..."
             className={cn('w-full mt-1 px-3 rounded-xl border border-border bg-background text-sm', touch)} autoFocus />
         </div>
 
-        {/* Notas */}
         <div>
           <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Notas (opcional)</label>
           <textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="Detalles adicionales..." rows={2}
             className={cn('w-full mt-1 px-3 rounded-xl border border-border bg-background text-sm resize-none', touch)} />
         </div>
 
-        {/* Buscar producto */}
         <div>
           <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Buscar producto</label>
           <div className="relative mt-1">
-            <input value={productSearch} onChange={e => searchProducts(e.target.value)} placeholder="Nombre o SKU..."
+            <input value={productSearch} onChange={e => setProductSearch(e.target.value)} placeholder="Nombre o SKU..."
               className={cn('w-full px-3 rounded-xl border border-border bg-background text-sm', touch)} />
             {searchResults.length > 0 && (
               <div className="absolute z-10 w-full mt-1 rounded-xl border border-border bg-card shadow-lg max-h-48 overflow-y-auto">
@@ -435,7 +528,6 @@ function CreateAdjustmentModal({ storeId, userId, onClose, onCreated }: {
           </div>
         </div>
 
-        {/* Items */}
         {items.length > 0 && (
           <div className="space-y-2">
             <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Productos del ajuste</label>
@@ -447,7 +539,7 @@ function CreateAdjustmentModal({ storeId, userId, onClose, onCreated }: {
                     <span className="text-sm font-bold flex-1 truncate">{item.name}</span>
                     <button onClick={() => removeItem(idx)} className="text-destructive hover:bg-destructive/10 p-1 rounded"><X className="w-3 h-3" /></button>
                   </div>
-                  <div className="grid grid-cols-3 gap-2 text-xs">
+                  <div className="grid grid-cols-4 gap-2 text-xs">
                     <div>
                       <label className="text-muted-foreground">Esperado</label>
                       <p className="font-mono font-bold">{item.expected}</p>
@@ -456,6 +548,7 @@ function CreateAdjustmentModal({ storeId, userId, onClose, onCreated }: {
                       <label className="text-muted-foreground">Contado</label>
                       <input
                         type="number"
+                        min="0"
                         value={item.counted}
                         onChange={e => updateCounted(idx, parseFloat(e.target.value) || 0)}
                         className="w-full px-2 py-1 rounded border border-border bg-background font-mono font-bold"
@@ -467,19 +560,24 @@ function CreateAdjustmentModal({ storeId, userId, onClose, onCreated }: {
                         {diff > 0 ? '+' : ''}{diff}
                       </p>
                     </div>
+                    {/* S5: mostrar valor de diferencia por item */}
+                    <div>
+                      <label className="text-muted-foreground">Valor diff</label>
+                      <p className={cn('font-mono font-bold text-[10px]', diff * item.unitCost > 0 ? 'text-success' : diff * item.unitCost < 0 ? 'text-destructive' : 'text-muted-foreground')}>
+                        {formatCurrency(diff * item.unitCost)}
+                      </p>
+                    </div>
                   </div>
                 </div>
               );
             })}
-            {/* Totales */}
             <div className="flex items-center justify-between p-2 rounded-lg bg-primary/5 border border-primary/20 text-xs font-bold">
-              <span>Total diferencia: <span className={cn(totalDiff > 0 ? 'text-success' : totalDiff < 0 ? 'text-destructive' : '')}>{totalDiff > 0 ? '+' : ''}{totalDiff} uds</span></span>
+              <span>Total: <span className={cn(totalDiff > 0 ? 'text-success' : totalDiff < 0 ? 'text-destructive' : '')}>{totalDiff > 0 ? '+' : ''}{totalDiff} uds</span></span>
               <span>Valor: <span className={cn(totalValueDiff > 0 ? 'text-success' : totalValueDiff < 0 ? 'text-destructive' : '')}>{formatCurrency(totalValueDiff)}</span></span>
             </div>
           </div>
         )}
 
-        {/* Acciones */}
         <div className="flex gap-2 pt-2">
           <button onClick={onClose} className={cn('flex-1 px-4 rounded-xl border border-border font-black text-xs uppercase hover:bg-muted', touch)}>Cancelar</button>
           <button
