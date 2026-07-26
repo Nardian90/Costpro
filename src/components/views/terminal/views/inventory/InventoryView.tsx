@@ -675,167 +675,126 @@ export default function InventoryView() {
             <>
             {/* Contenido de Stock Actual */}
 
-            {/* Action menu + filtros en una sola fila compacta */}
-            <div className="flex items-center justify-between gap-2 flex-wrap">
-                {/* Filtros + categorías en una sola fila con separadores */}
-                <div className="flex items-center gap-1 flex-wrap">
-                    {/* Category chips integrados en la fila de filtros */}
-                    <CategoryChips
-                        categories={uniqueCategories.filter((c): c is string => Boolean(c))}
-                        selectedCategory={selectedCategory}
-                        onCategoryChange={handleCategoryChange}
-                    />
-                    {/* Separador entre categorías y filtros de stock */}
-                    <span className="w-px h-4 bg-border mx-1" />
-                    {/* Stock status filter pills */}
-                    {([
-                        { key: 'with_stock', label: 'Con stock', title: 'Mostrar solo productos con stock (default — oculta agotados para no hacer ruido visual)' },
-                        { key: 'all', label: 'Todos', title: 'Mostrar todos los productos (incluye agotados)' },
-                        { key: 'normal', label: 'Normal', title: 'Productos con stock normal' },
-                        { key: 'low', label: 'Bajo', title: 'Stock Bajo — productos por debajo del mínimo' },
-                        { key: 'out', label: 'Agotado', title: 'Agotados — productos sin existencias' },
-                    ] as const).map(opt => (
-                        <button
-                            key={opt.key}
-                            type="button"
-                            onClick={() => setStockFilter(opt.key)}
-                            title={opt.title}
-                            aria-label={opt.title}
-                            className={cn(
-                                'px-2.5 py-1 min-h-[28px] rounded-full text-[10px] font-bold uppercase border transition-all active:scale-95',
-                                stockFilter === opt.key
-                                    ? 'bg-primary text-primary-foreground border-primary'
-                                    : 'bg-muted/50 text-muted-foreground border-border hover:bg-muted'
-                            )}
-                        >
-                            {opt.label}
-                        </button>
-                    ))}
-                    {/* Separador entre filtros de stock y visibilidad */}
-                    <span className="w-px h-4 bg-border mx-1" />
-                    {/* Bulk store visibility actions */}
-                    <button
-                        type="button"
-                        onClick={() => handleBulkVisibility(true)}
-                        disabled={bulkToggling || filteredProducts.length === 0}
-                        className="inline-flex items-center justify-center w-7 h-7 rounded-full border transition-all active:scale-95 disabled:opacity-50 bg-success/90 border-success/30 text-white dark:text-black hover:bg-success"
-                        title={`Mostrar ${filteredProducts.length} producto(s) en la tienda pública`}
+            {/* ESTÁNDAR: SearchBar con filtros colapsables + ViewSwitcher + ActionMenu */}
+            <div className="flex items-center gap-2">
+                <div className="flex-1">
+                    <SearchBar
+                        value={searchTerm}
+                        onChange={setSearchTerm}
+                        placeholder="Buscar por nombre o SKU en inventario..."
+                        showSettings={true}
+                        aria-label="Buscar productos en el inventario por nombre o código SKU"
+                        className="[&_input]:!text-base [&_input]:!py-3 [&_input]:!pl-12 [&_input]:rounded-xl [&_input]:border-primary/20 [&_input]:bg-card [&_input]:shadow-sm [&_input]:focus:border-primary [&_input]:focus:ring-2 [&_input]:focus:ring-primary/15"
                     >
-                        {bulkToggling ? (
-                            <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                        ) : (
-                            <Eye className="w-3.5 h-3.5" />
-                        )}
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => handleBulkVisibility(false)}
-                        disabled={bulkToggling || filteredProducts.length === 0}
-                        className="inline-flex items-center justify-center w-7 h-7 rounded-full border transition-all active:scale-95 disabled:opacity-50 bg-destructive/10 border-destructive/20 text-destructive hover:bg-destructive/20"
-                        title={`Ocultar ${filteredProducts.length} producto(s) de la tienda pública`}
-                    >
-                        {bulkToggling ? (
-                            <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                        ) : (
-                            <EyeOff className="w-3.5 h-3.5" />
-                        )}
-                    </button>
+                        {/* Filtros colapsables (icono Settings2 a la derecha del buscador) */}
+                        <div className="space-y-4">
+                            {/* Categorías */}
+                            <div>
+                                <label className="text-xs font-black text-muted-foreground uppercase mb-2 block">Categorías</label>
+                                <CategoryChips
+                                    categories={uniqueCategories.filter((c): c is string => Boolean(c))}
+                                    selectedCategory={selectedCategory}
+                                    onCategoryChange={handleCategoryChange}
+                                />
+                            </div>
 
-                    {/* Separador */}
-                    <span className="w-px h-4 bg-border mx-1" />
+                            {/* Filtro de stock */}
+                            <div>
+                                <label className="text-xs font-black text-muted-foreground uppercase mb-2 block">Estado de Stock</label>
+                                <div className="flex items-center gap-1 flex-wrap">
+                                    {([
+                                        { key: 'with_stock', label: 'Con stock', title: 'Mostrar solo productos con stock (default)' },
+                                        { key: 'all', label: 'Todos', title: 'Mostrar todos los productos' },
+                                        { key: 'normal', label: 'Normal', title: 'Productos con stock normal' },
+                                        { key: 'low', label: 'Bajo', title: 'Stock Bajo — por debajo del mínimo' },
+                                        { key: 'out', label: 'Agotado', title: 'Agotados — sin existencias' },
+                                    ] as const).map(opt => (
+                                        <button
+                                            key={opt.key}
+                                            type="button"
+                                            onClick={() => setStockFilter(opt.key)}
+                                            title={opt.title}
+                                            aria-label={opt.title}
+                                            className={cn(
+                                                'px-2.5 py-1 min-h-[28px] rounded-full text-[10px] font-bold uppercase border transition-all active:scale-95',
+                                                stockFilter === opt.key
+                                                    ? 'bg-primary text-primary-foreground border-primary'
+                                                    : 'bg-muted/50 text-muted-foreground border-border hover:bg-muted'
+                                            )}
+                                        >
+                                            {opt.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
 
-                    {/* Bulk: Precio visible ON/OFF */}
-                    <button
-                        type="button"
-                        onClick={() => handleBulkField('price_visible', true)}
-                        disabled={bulkToggling || filteredProducts.length === 0}
-                        className="inline-flex items-center justify-center w-7 h-7 rounded-full border transition-all active:scale-95 disabled:opacity-50 bg-success/90 border-success/30 text-white dark:text-black hover:bg-success"
-                        title={`Mostrar precio en ${filteredProducts.length} producto(s)`}
-                    >
-                        {bulkToggling ? <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" /> : <DollarSign className="w-3.5 h-3.5" />}
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => handleBulkField('price_visible', false)}
-                        disabled={bulkToggling || filteredProducts.length === 0}
-                        className="inline-flex items-center justify-center w-7 h-7 rounded-full border transition-all active:scale-95 disabled:opacity-50 bg-destructive/10 border-destructive/20 text-destructive hover:bg-destructive/20"
-                        title={`Ocultar precio en ${filteredProducts.length} producto(s)`}
-                    >
-                        {bulkToggling ? <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" /> : <DollarSign className="w-3.5 h-3.5 line-through opacity-60" />}
-                    </button>
-
-                    {/* Bulk: Stock visible ON/OFF */}
-                    <button
-                        type="button"
-                        onClick={() => handleBulkField('stock_visible', true)}
-                        disabled={bulkToggling || filteredProducts.length === 0}
-                        className="inline-flex items-center justify-center w-7 h-7 rounded-full border transition-all active:scale-95 disabled:opacity-50 bg-success/90 border-success/30 text-white dark:text-black hover:bg-success"
-                        title={`Mostrar stock en ${filteredProducts.length} producto(s)`}
-                    >
-                        {bulkToggling ? <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" /> : <Package className="w-3.5 h-3.5" />}
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => handleBulkField('stock_visible', false)}
-                        disabled={bulkToggling || filteredProducts.length === 0}
-                        className="inline-flex items-center justify-center w-7 h-7 rounded-full border transition-all active:scale-95 disabled:opacity-50 bg-destructive/10 border-destructive/20 text-destructive hover:bg-destructive/20"
-                        title={`Ocultar stock en ${filteredProducts.length} producto(s)`}
-                    >
-                        {bulkToggling ? <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" /> : <Package className="w-3.5 h-3.5 line-through opacity-60" />}
-                    </button>
-
-                    {/* Bulk: Promoción ON/OFF */}
-                    <button
-                        type="button"
-                        onClick={() => handleBulkField('on_promotion', true)}
-                        disabled={bulkToggling || filteredProducts.length === 0}
-                        className="inline-flex items-center justify-center w-7 h-7 rounded-full border transition-all active:scale-95 disabled:opacity-50 bg-amber-500 border-amber-400/30 text-white hover:bg-amber-600"
-                        title={`Activar promoción en ${filteredProducts.length} producto(s) (muestra como disponible aunque stock=0)`}
-                    >
-                        {bulkToggling ? <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" /> : <Tag className="w-3.5 h-3.5" />}
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => handleBulkField('on_promotion', false)}
-                        disabled={bulkToggling || filteredProducts.length === 0}
-                        className="inline-flex items-center justify-center w-7 h-7 rounded-full border transition-all active:scale-95 disabled:opacity-50 bg-muted border-border text-muted-foreground hover:bg-muted/70"
-                        title={`Desactivar promoción en ${filteredProducts.length} producto(s)`}
-                    >
-                        {bulkToggling ? <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" /> : <Tag className="w-3.5 h-3.5 opacity-40" />}
-                    </button>
+                            {/* Acciones masivas (bulk) */}
+                            <div>
+                                <label className="text-xs font-black text-muted-foreground uppercase mb-2 block">Acciones Masivas ({filteredProducts.length} productos)</label>
+                                <div className="flex items-center gap-1 flex-wrap">
+                                    {/* Visibilidad tienda pública */}
+                                    <button type="button" onClick={() => handleBulkVisibility(true)} disabled={bulkToggling || filteredProducts.length === 0}
+                                        className="inline-flex items-center justify-center w-9 h-9 rounded-full border transition-all active:scale-95 disabled:opacity-50 bg-success/90 border-success/30 text-white dark:text-black hover:bg-success"
+                                        title={`Mostrar ${filteredProducts.length} producto(s) en la tienda pública`}>
+                                        {bulkToggling ? <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" /> : <Eye className="w-4 h-4" />}
+                                    </button>
+                                    <button type="button" onClick={() => handleBulkVisibility(false)} disabled={bulkToggling || filteredProducts.length === 0}
+                                        className="inline-flex items-center justify-center w-9 h-9 rounded-full border transition-all active:scale-95 disabled:opacity-50 bg-destructive/10 border-destructive/20 text-destructive hover:bg-destructive/20"
+                                        title={`Ocultar ${filteredProducts.length} producto(s) de la tienda pública`}>
+                                        {bulkToggling ? <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" /> : <EyeOff className="w-4 h-4" />}
+                                    </button>
+                                    <span className="w-px h-5 bg-border mx-1" />
+                                    {/* Precio visible */}
+                                    <button type="button" onClick={() => handleBulkField('price_visible', true)} disabled={bulkToggling || filteredProducts.length === 0}
+                                        className="inline-flex items-center justify-center w-9 h-9 rounded-full border transition-all active:scale-95 disabled:opacity-50 bg-success/90 border-success/30 text-white dark:text-black hover:bg-success"
+                                        title={`Mostrar precio en ${filteredProducts.length} producto(s)`}>
+                                        {bulkToggling ? <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" /> : <DollarSign className="w-4 h-4" />}
+                                    </button>
+                                    <button type="button" onClick={() => handleBulkField('price_visible', false)} disabled={bulkToggling || filteredProducts.length === 0}
+                                        className="inline-flex items-center justify-center w-9 h-9 rounded-full border transition-all active:scale-95 disabled:opacity-50 bg-destructive/10 border-destructive/20 text-destructive hover:bg-destructive/20"
+                                        title={`Ocultar precio en ${filteredProducts.length} producto(s)`}>
+                                        {bulkToggling ? <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" /> : <DollarSign className="w-4 h-4 line-through opacity-60" />}
+                                    </button>
+                                    <span className="w-px h-5 bg-border mx-1" />
+                                    {/* Stock visible */}
+                                    <button type="button" onClick={() => handleBulkField('stock_visible', true)} disabled={bulkToggling || filteredProducts.length === 0}
+                                        className="inline-flex items-center justify-center w-9 h-9 rounded-full border transition-all active:scale-95 disabled:opacity-50 bg-success/90 border-success/30 text-white dark:text-black hover:bg-success"
+                                        title={`Mostrar stock en ${filteredProducts.length} producto(s)`}>
+                                        {bulkToggling ? <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" /> : <Package className="w-4 h-4" />}
+                                    </button>
+                                    <button type="button" onClick={() => handleBulkField('stock_visible', false)} disabled={bulkToggling || filteredProducts.length === 0}
+                                        className="inline-flex items-center justify-center w-9 h-9 rounded-full border transition-all active:scale-95 disabled:opacity-50 bg-destructive/10 border-destructive/20 text-destructive hover:bg-destructive/20"
+                                        title={`Ocultar stock en ${filteredProducts.length} producto(s)`}>
+                                        {bulkToggling ? <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" /> : <Package className="w-4 h-4 line-through opacity-60" />}
+                                    </button>
+                                    <span className="w-px h-5 bg-border mx-1" />
+                                    {/* Promoción */}
+                                    <button type="button" onClick={() => handleBulkField('on_promotion', true)} disabled={bulkToggling || filteredProducts.length === 0}
+                                        className="inline-flex items-center justify-center w-9 h-9 rounded-full border transition-all active:scale-95 disabled:opacity-50 bg-amber-500 border-amber-400/30 text-white hover:bg-amber-600"
+                                        title={`Activar promoción en ${filteredProducts.length} producto(s)`}>
+                                        {bulkToggling ? <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" /> : <Tag className="w-4 h-4" />}
+                                    </button>
+                                    <button type="button" onClick={() => handleBulkField('on_promotion', false)} disabled={bulkToggling || filteredProducts.length === 0}
+                                        className="inline-flex items-center justify-center w-9 h-9 rounded-full border transition-all active:scale-95 disabled:opacity-50 bg-muted border-border text-muted-foreground hover:bg-muted/70"
+                                        title={`Desactivar promoción en ${filteredProducts.length} producto(s)`}>
+                                        {bulkToggling ? <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" /> : <Tag className="w-4 h-4 opacity-40" />}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </SearchBar>
                 </div>
 
-                {/* ViewSwitcher — visible SIEMPRE (móvil + desktop).
-                    FIX (2026-07-22): antes el toggle estaba oculto en móvil ('hidden md:flex')
-                    y se forzaba 'card'. Ahora el usuario elige en cualquier viewport,
-                    igual que en CatalogView.
-                    Adaptador: layoutMode 'card' ↔ ViewSwitcher 'grid' */}
-                <div className="flex items-center gap-2 ml-auto">
+                {/* ViewSwitcher — visible SIEMPRE */}
+                <div className="flex items-center gap-2 shrink-0">
                     <ViewSwitcher
                         currentView={layoutMode === 'card' ? 'grid' : 'table'}
                         onViewChange={(v) => setLayoutMode(v === 'grid' ? 'card' : 'table')}
                     />
+                    {!isMobile && (
+                        <ActionMenu actions={actions} position="top" />
+                    )}
                 </div>
-
-                {/* Action menu alineado a la derecha — solo desktop (móvil usa bottom) */}
-                {!isMobile && (
-                    <ActionMenu
-                        actions={actions}
-                        position="top"
-                    />
-                )}
-            </div>
-
-            {/* Search Bar */}
-            <div className="relative">
-                <SearchBar
-                    value={searchTerm}
-                    onChange={setSearchTerm}
-                    placeholder="Buscar por nombre o SKU en inventario..."
-                    showSettings={false}
-                    aria-label="Buscar productos en el inventario por nombre o código SKU"
-                    className="[&_input]:!text-base [&_input]:!py-3 [&_input]:!pl-12 [&_input]:rounded-xl [&_input]:border-primary/20 [&_input]:bg-card [&_input]:shadow-sm [&_input]:focus:border-primary [&_input]:focus:ring-2 [&_input]:focus:ring-primary/15"
-                />
             </div>
 
             {/* FC Coverage Accordion — replaces separate FC bar + FC filter tabs */}

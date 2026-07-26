@@ -16,7 +16,11 @@ import { useAuthStore } from '@/store';
 export default function StockHistoryView() {
   const { user } = useAuthStore();
   const [searchTerm, setSearchTerm] = useState('');
-  const [dateRange, setDateRange] = useState({ from: '', to: '' });
+  // ESTÁNDAR: default fechas = inicio del mes actual → hoy
+  const _today = new Date();
+  const _firstDay = new Date(_today.getFullYear(), _today.getMonth(), 1);
+  const _fmt = (d: Date) => d.toISOString().split('T')[0];
+  const [dateRange, setDateRange] = useState({ from: _fmt(_firstDay), to: _fmt(_today) });
 
   const {
     data: pagesData,
