@@ -6,7 +6,7 @@ import { cn, formatDate } from '@/lib/utils';
 import SearchBar from '@/components/ui/SearchBar';
 import ActionMenu from '@/components/ui/ActionMenu';
 import { QueryInspector } from '@/components/ui/QueryInspector';
-import { SecondaryButton, IconButton } from '@/components/ui/atomic';
+import { SecondaryButton, IconButton, ViewSwitcher } from '@/components/ui/atomic';
 
 import { useState, useRef, useCallback } from 'react';
 import { toast } from 'sonner';
@@ -21,6 +21,12 @@ export default function StockHistoryView() {
   const _firstDay = new Date(_today.getFullYear(), _today.getMonth(), 1);
   const _fmt = (d: Date) => d.toISOString().split('T')[0];
   const [dateRange, setDateRange] = useState({ from: _fmt(_firstDay), to: _fmt(_today) });
+  const [layoutMode, setLayoutMode] = useState<'card' | 'table'>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('trazabilidad-layout') as 'card' | 'table' || 'card';
+    }
+    return 'card';
+  });
 
   const {
     data: pagesData,
@@ -123,13 +129,23 @@ export default function StockHistoryView() {
             </span>
           )}
         </div>
-        <ActionMenu
-          actions={[
-            { id: 'export', label: 'Exportar CSV', icon: Download, onClick: handleExportCSV },
-            { id: 'refresh', label: 'Actualizar', icon: History, onClick: onRefresh, variant: 'primary' }
-          ]}
-          className="sm:w-auto"
-        />
+        <div className="flex items-center gap-2">
+          <ViewSwitcher
+            currentView={layoutMode === 'card' ? 'grid' : 'table'}
+            onViewChange={(v) => {
+              const mode = v === 'grid' ? 'card' : 'table';
+              setLayoutMode(mode);
+              if (typeof window !== 'undefined') localStorage.setItem('trazabilidad-layout', mode);
+            }}
+          />
+          <ActionMenu
+            actions={[
+              { id: 'export', label: 'Exportar CSV', icon: Download, onClick: handleExportCSV },
+              { id: 'refresh', label: 'Actualizar', icon: History, onClick: onRefresh, variant: 'primary' }
+            ]}
+            className="sm:w-auto"
+          />
+        </div>
       </div>
 
       <QueryInspector />
@@ -181,7 +197,33 @@ export default function StockHistoryView() {
         </div>
       </SearchBar>
 
-      {/* Movements List */}
+      {/* Movements List — card o table según layoutMode */}
+      {layoutMode === 'table' ? (
+        <div className="overflow-x-auto rounded-xl border border-border">
+          <table className="w-full text-sm">
+            <thead className="bg-muted/50 border-b border-border">
+              <tr className="text-left">
+                <th className="p-3 text-xs font-black uppercase text-muted-foreground">Producto</th>
+                <th className="p-3 text-xs font-black uppercase text-muted-foreground">Tipo</th>
+                <th className="p-3 text-xs font-black uppercase text-muted-foreground text-right">Cantidad</th>
+                <th className="p-3 text-xs font-black uppercase text-muted-foreground">Referencia</th>
+                <th className="p-3 text-xs font-black uppercase text-muted-foreground">Fecha</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredMovements.map(mov => (
+                <tr key={mov.id} className="border-b border-border/50 hover:bg-muted/20">
+                  <td className="p-3 font-bold">{mov.product?.name || '—'}</td>
+                  <td className="p-3"><span className={cn("text-xs font-black uppercase px-2 py-0.5 rounded-full", getMovementBadge(mov.movement_type))}>{mov.movement_type}</span></td>
+                  <td className={cn("p-3 text-right font-black tabular-nums", (mov.quantity_change ?? 0) > 0 ? 'text-success' : 'text-destructive')}>{(mov.quantity_change ?? 0) > 0 ? '+' : ''}{mov.quantity_change}</td>
+                  <td className="p-3 text-xs text-muted-foreground font-mono">{mov.reference_doc || '—'}</td>
+                  <td className="p-3 text-xs text-muted-foreground">{formatDate(mov.created_at)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
       <div className="space-y-3">
         {filteredMovements.map(mov => (
           <div key={mov.id} className="p-4 rounded-xl border border-border bg-card flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:border-primary/30 transition-all group">
@@ -268,6 +310,7 @@ export default function StockHistoryView() {
           </div>
         )}
       </div>
+      )} {/* fin del condicional layoutMode === 'table' ? table : cards */}
     </div>
   );
 }

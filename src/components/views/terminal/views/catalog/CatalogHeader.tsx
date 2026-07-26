@@ -374,20 +374,20 @@ export default function CatalogHeader({
               </div>
             )}
             <div className="ml-auto flex items-center gap-2">
-              <ViewSwitcher currentView={layoutMode} onViewChange={onLayoutChange} />
+              {/* ViewSwitcher movido a FILA 2 para compactar */}
             </div>
           </div>
 
-          {/* FILA 2: Acciones masivas + Crear producto */}
+          {/* FILA 2: Acciones masivas + Crear producto + ViewSwitcher (compacto) */}
           <div className="flex items-center gap-2 flex-wrap">
             <SecondaryButton icon={FileDown} onClick={onExport} className="gap-1.5">
-              <span className="hidden sm:inline">Exportar Excel</span>
+              <span className="hidden sm:inline">Exportar</span>
             </SecondaryButton>
             <SecondaryButton icon={FileUp} onClick={onImport} className="gap-1.5">
-              <span className="hidden sm:inline">Importar Excel</span>
+              <span className="hidden sm:inline">Importar</span>
             </SecondaryButton>
             <SecondaryButton icon={TrendingUp} onClick={onBulkPrice} className="gap-1.5">
-              <span className="hidden sm:inline">Incremento de Precios</span>
+              <span className="hidden lg:inline">Incremento Precios</span>
             </SecondaryButton>
             <span className="w-px h-6 bg-border mx-1 hidden sm:block" />
             <button
@@ -398,6 +398,10 @@ export default function CatalogHeader({
               <Plus className="w-3.5 h-3.5" />
               <span>Crear</span>
             </button>
+            {/* ViewSwitcher al final de la fila — compacto */}
+            <div className="ml-auto">
+              <ViewSwitcher currentView={layoutMode} onViewChange={onLayoutChange} />
+            </div>
           </div>
         </>
       )}
