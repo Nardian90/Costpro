@@ -148,9 +148,7 @@ export default function StockHistoryView() {
         </div>
       </div>
 
-      <QueryInspector />
-
-      {/* Search + Date Filters */}
+      {/* ESTÁNDAR: Buscador PRIMERO (antes que QueryInspector) */}
       <SearchBar
         value={searchTerm}
         onChange={onSearchChange}
@@ -196,6 +194,8 @@ export default function StockHistoryView() {
           )}
         </div>
       </SearchBar>
+
+      <QueryInspector />
 
       {/* Movements List — card o table según layoutMode */}
       {layoutMode === 'table' ? (

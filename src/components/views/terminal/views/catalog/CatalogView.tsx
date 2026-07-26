@@ -841,55 +841,16 @@ export default function CatalogView() {
   };
 
   return (
-    <div className="space-y-3 sm:space-y-6">
-      {/* Header Row */}
-      <CatalogHeader
-        totalCount={totalCount}
-        incompleteCount={incompleteCount}
-        showIncompleteOnly={showIncompleteOnly}
-        onToggleIncomplete={() => setShowIncompleteOnly(prev => !prev)}
-        onExport={handleExportExcel}
-        onImport={handleOpenImport}
-        onBulkPrice={() => setIsBulkPriceOpen(true)}
-        layoutMode={layoutMode}
-        onLayoutChange={setLayoutMode}
-        onCreateProduct={handleOpenCreate}
-        // CM-2.7: Size selector
-        pageSize={pageSize}
-        onPageSizeChange={setPageSize}
-        // CM-2.5: Filtros combinables
-        stockFilter={stockFilter}
-        onStockFilterChange={setStockFilter}
-        activeFilter={activeFilter}
-        onActiveFilterChange={setActiveFilter}
-        // CM-4.3: Filtros guardados
-        savedFilters={savedFilters}
-        onSaveFilter={saveCurrentFilter}
-        onApplyFilter={(name) => {
-          const filter = savedFilters.find(f => f.name === name);
-          if (filter) applySavedFilter(filter);
-        }}
-        onDeleteFilter={deleteSavedFilter}
-        // Categorías (multi-select) — movidas al header
-        categories={categories}
-        selectedCategories={selectedCategories}
-        onCategoryToggle={toggleCategory}
-        onCategoryChange={(cat) => {
-          setSelectedCategories(cat ? new Set([cat]) : new Set());
-        }}
-      />
-
-      {/* Search Bar + Category Chips + FC Filter */}
+    <div className="space-y-3 sm:space-y-4">
+      {/* ESTÁNDAR: Buscador PRIMERO (con filtros colapsables Settings2) */}
       <CatalogSearchAndFilters
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
         categories={categories}
-        // CM-3.8: Multi-categoría — pasar Set y toggle handler
-        selectedCategory=""  // compat: pasar string vacío para el componente legacy
+        selectedCategory=""
         selectedCategories={selectedCategories}
         onCategoryToggle={toggleCategory}
         onCategoryChange={(cat) => {
-          // Single select: limpiar Set y poner solo esta
           setSelectedCategories(cat ? new Set([cat]) : new Set());
         }}
         showIncompleteOnly={showIncompleteOnly}
@@ -907,6 +868,39 @@ export default function CatalogView() {
         activeFilter={activeFilter}
         onActiveFilterChange={setActiveFilter}
         onToggleIncomplete={() => setShowIncompleteOnly(prev => !prev)}
+      />
+
+      {/* Header Row — DESPUÉS del buscador (botones Export/Import/Crear + ViewSwitcher) */}
+      <CatalogHeader
+        totalCount={totalCount}
+        incompleteCount={incompleteCount}
+        showIncompleteOnly={showIncompleteOnly}
+        onToggleIncomplete={() => setShowIncompleteOnly(prev => !prev)}
+        onExport={handleExportExcel}
+        onImport={handleOpenImport}
+        onBulkPrice={() => setIsBulkPriceOpen(true)}
+        layoutMode={layoutMode}
+        onLayoutChange={setLayoutMode}
+        onCreateProduct={handleOpenCreate}
+        pageSize={pageSize}
+        onPageSizeChange={setPageSize}
+        stockFilter={stockFilter}
+        onStockFilterChange={setStockFilter}
+        activeFilter={activeFilter}
+        onActiveFilterChange={setActiveFilter}
+        savedFilters={savedFilters}
+        onSaveFilter={saveCurrentFilter}
+        onApplyFilter={(name) => {
+          const filter = savedFilters.find(f => f.name === name);
+          if (filter) applySavedFilter(filter);
+        }}
+        onDeleteFilter={deleteSavedFilter}
+        categories={categories}
+        selectedCategories={selectedCategories}
+        onCategoryToggle={toggleCategory}
+        onCategoryChange={(cat) => {
+          setSelectedCategories(cat ? new Set([cat]) : new Set());
+        }}
       />
 
       {/* Product Grid / Table */}
