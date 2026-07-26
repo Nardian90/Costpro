@@ -85,8 +85,32 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
   const supabase = getSupabaseAdminSafe();
   if (!supabase) return NextResponse.json(createApiError('CONFIG_ERROR'), { status: 500 });
 
-  // V2.4: Insert directo (service_role bypass RLS). create_transfer RPC usa auth.uid()
-  // que es NULL cuando se llama con service_role key, causando errores.
+  // V2.10.3: validar que TODOS los productos existen en el store de origen
+  const productIds = parsed.data.items.map(i => i.product_id);
+  const { data: existingProducts, error: productCheckErr } = await supabase
+    .from('products')
+    .select('id, cost_average')
+    .in('id', productIds)
+    .eq('store_id', parsed.data.origin_store_id);
+
+  if (productCheckErr) {
+    logger.error('DATABASE', 'TRANSFER_PRODUCT_CHECK_FAILED', { error: productCheckErr.message });
+    return NextResponse.json({ error: 'Error validando productos' }, { status: 500 });
+  }
+
+  const foundIds = new Set((existingProducts || []).map(p => p.id));
+  const missingIds = productIds.filter(id => !foundIds.has(id));
+  if (missingIds.length > 0) {
+    return NextResponse.json(
+      { error: `Productos no encontrados en store origen: ${missingIds.join(', ')}` },
+      { status: 400 },
+    );
+  }
+
+  // Mapa product_id → cost_average para costo server-side
+  const costMap = new Map((existingProducts || []).map(p => [p.id, p.cost_average || 0]));
+
+  // V2.4: Insert directo (service_role bypass RLS)
   const { data: tr, error: e1 } = await supabase.from('transfers').insert({
     origin_store_id: parsed.data.origin_store_id,
     destination_store_id: parsed.data.destination_store_id,
@@ -99,12 +123,12 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
     return NextResponse.json({ error: e1.message }, { status: 500 });
   }
 
-  // Insertar items
+  // V2.10.3: Insertar items con costo server-side (cost_average del store origen)
   const itemsToInsert = parsed.data.items.map(i => ({
     transfer_id: tr.id,
     product_id: i.product_id,
     quantity: i.quantity,
-    unit_cost: i.unit_cost,
+    unit_cost: costMap.get(i.product_id) ?? 0,  // server-side, no del cliente
   }));
   const { error: e2 } = await supabase.from('transfer_items').insert(itemsToInsert);
   if (e2) {
