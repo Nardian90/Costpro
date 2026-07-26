@@ -119,36 +119,8 @@ export default function StockHistoryView() {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header — el título se omite cuando se usa dentro de tabs de InventoryView */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          {totalCount > 0 && (
-            <span className="text-xs font-black bg-muted/50 text-muted-foreground px-2 py-0.5 rounded-full border border-border">
-              {totalCount} registro{totalCount !== 1 ? 's' : ''}
-            </span>
-          )}
-        </div>
-        <div className="flex items-center gap-2">
-          <ViewSwitcher
-            currentView={layoutMode === 'card' ? 'grid' : 'table'}
-            onViewChange={(v) => {
-              const mode = v === 'grid' ? 'card' : 'table';
-              setLayoutMode(mode);
-              if (typeof window !== 'undefined') localStorage.setItem('trazabilidad-layout', mode);
-            }}
-          />
-          <ActionMenu
-            actions={[
-              { id: 'export', label: 'Exportar CSV', icon: Download, onClick: handleExportCSV },
-              { id: 'refresh', label: 'Actualizar', icon: History, onClick: onRefresh, variant: 'primary' }
-            ]}
-            className="sm:w-auto"
-          />
-        </div>
-      </div>
-
-      {/* ESTÁNDAR: Buscador PRIMERO (antes que QueryInspector) */}
+    <div className="space-y-3">
+      {/* ESTÁNDAR: Buscador PRIMERO (coherencia con Stock Actual y Catálogo) */}
       <SearchBar
         value={searchTerm}
         onChange={onSearchChange}
@@ -194,6 +166,30 @@ export default function StockHistoryView() {
           )}
         </div>
       </SearchBar>
+
+      {/* Header con ViewSwitcher + ActionMenu — DESPUÉS del buscador (estándar) */}
+      <div className="flex items-center justify-end gap-2">
+        {totalCount > 0 && (
+          <span className="text-xs font-black bg-muted/50 text-muted-foreground px-2 py-0.5 rounded-full border border-border mr-auto">
+            {totalCount} registro{totalCount !== 1 ? 's' : ''}
+          </span>
+        )}
+        <ViewSwitcher
+          currentView={layoutMode === 'card' ? 'grid' : 'table'}
+          onViewChange={(v) => {
+            const mode = v === 'grid' ? 'card' : 'table';
+            setLayoutMode(mode);
+            if (typeof window !== 'undefined') localStorage.setItem('trazabilidad-layout', mode);
+          }}
+        />
+        <ActionMenu
+          actions={[
+            { id: 'export', label: 'Exportar CSV', icon: Download, onClick: handleExportCSV },
+            { id: 'refresh', label: 'Actualizar', icon: History, onClick: onRefresh, variant: 'primary' }
+          ]}
+          className="sm:w-auto"
+        />
+      </div>
 
       <QueryInspector />
 
