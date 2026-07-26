@@ -62,31 +62,53 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
   if (!canManageStore(session.user, parsed.data.origin_store_id)) {
     return NextResponse.json(createApiError('FORBIDDEN'), { status: 403 });
   }
+  if (parsed.data.origin_store_id === parsed.data.destination_store_id) {
+    return NextResponse.json({ error: 'Origin y destino deben ser diferentes' }, { status: 400 });
+  }
 
   const { getSupabaseAdminSafe } = await import('@/lib/supabase-admin');
   const supabase = getSupabaseAdminSafe();
   if (!supabase) return NextResponse.json(createApiError('CONFIG_ERROR'), { status: 500 });
 
-  const { data, error } = await supabase.rpc('create_transfer', {
-    p_origin_store_id: parsed.data.origin_store_id,
-    p_destination_store_id: parsed.data.destination_store_id,
-    p_created_by: session.user.id,
-    p_items: parsed.data.items,
-    p_notes: parsed.data.notes || null,
-  });
+  // V2.4: Insert directo (service_role bypass RLS). create_transfer RPC usa auth.uid()
+  // que es NULL cuando se llama con service_role key, causando errores.
+  const { data: tr, error: e1 } = await supabase.from('transfers').insert({
+    origin_store_id: parsed.data.origin_store_id,
+    destination_store_id: parsed.data.destination_store_id,
+    created_by: session.user.id,
+    status: 'PENDIENTE',
+    notes: parsed.data.notes || null,
+  }).select().single();
+  if (e1) {
+    logger.error('DATABASE', 'CREATE_TRANSFER_FAILED', { error: e1.message });
+    return NextResponse.json({ error: e1.message }, { status: 500 });
+  }
 
-  if (error) {
-    logger.error('DATABASE', 'CREATE_TRANSFER_FAILED', { error: error.message });
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  // Insertar items
+  const itemsToInsert = parsed.data.items.map(i => ({
+    transfer_id: tr.id,
+    product_id: i.product_id,
+    quantity: i.quantity,
+    unit_cost: i.unit_cost,
+  }));
+  const { error: e2 } = await supabase.from('transfer_items').insert(itemsToInsert);
+  if (e2) {
+    logger.error('DATABASE', 'CREATE_TRANSFER_ITEMS_FAILED', { error: e2.message, transferId: tr.id });
+    return NextResponse.json({ error: e2.message }, { status: 500 });
   }
 
   logger.info('DATABASE', 'TRANSFER_CREATED', {
     originStoreId: parsed.data.origin_store_id,
     destStoreId: parsed.data.destination_store_id,
     userId: session.user.id,
-    transferId: data?.transfer_id,
+    transferId: tr.id,
   });
-  return NextResponse.json(data);
+  return NextResponse.json({
+    id: tr.id,
+    transfer_id: tr.id,
+    status: tr.status,
+    transfer_number: tr.id.slice(0, 8),
+  });
 }
 
 export const GET = withTracing(withAuth(getHandler) as any, 'GET /api/transfers');

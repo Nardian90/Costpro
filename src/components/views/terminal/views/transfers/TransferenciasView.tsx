@@ -14,6 +14,7 @@ import {
   XCircle,
   Search,
   Download,
+  Copy,
 } from 'lucide-react';
 import {
   useIncomingTransfers,

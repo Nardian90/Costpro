@@ -169,6 +169,8 @@ export function useDuplicateDocumentV2() {
 
   // ────────────────────────────────────────────────────────────────────
   // TRANSFER: crear nueva transferencia PENDIENTE con los mismos items
+  // V2.4: usa endpoint /api/transfers (insert directo, no RPC create_transfer
+  // que requiere auth.uid() del caller)
   // ────────────────────────────────────────────────────────────────────
   async function duplicateTransfer(id: string, storeId: string): Promise<DuplicateResult> {
     // Cargar transfer original
@@ -185,7 +187,6 @@ export function useDuplicateDocumentV2() {
       .eq('transfer_id', id);
     if (e2 || !items || items.length === 0) throw new Error('Sin items');
 
-    // Llamar al endpoint de transfer (usa create_transfer RPC)
     const res = await apiFetch('/api/transfers', {
       method: 'POST',
       body: JSON.stringify({
@@ -227,7 +228,7 @@ export function useDuplicateDocumentV2() {
     const res = await apiFetch('/api/devolutions', {
       method: 'POST',
       body: JSON.stringify({
-        store_id: storeId,
+        store_id: dev.store_id, // V2.4 fix: usar store del original, no active store
         reason: `Duplicada de ${dev.devolution_number} — ${dev.reason}`.slice(0, 500),
         items: items.map(i => ({
           product_id: i.product_id,
@@ -240,9 +241,10 @@ export function useDuplicateDocumentV2() {
       }),
     });
 
+    // V2.4 fix: create_devolution RPC retorna { devolution_id, devolution_number }, no { id }
     return {
       success: true,
-      newId: res.id,
+      newId: res.devolution_id || res.id,
       newDocNumber: res.devolution_number,
     };
   }
@@ -299,41 +301,18 @@ export function useDuplicateDocumentV2() {
   }
 
   // ────────────────────────────────────────────────────────────────────
-  // ADJUSTMENT: crear nuevo ajuste con los mismos items
-  // El endpoint /api/inventory/adjustments espera: { storeId, items: [{ product_id, quantity, movement_type, reason }] }
+  // ADJUSTMENT: usar endpoint /api/inventory/adjustments/duplicate
+  // (inserta inventory_adjustment + items + aplica stock + crea kardex)
   // ────────────────────────────────────────────────────────────────────
   async function duplicateAdjustment(id: string, storeId: string): Promise<DuplicateResult> {
-    const { data: adj, error: e1 } = await supabase
-      .from('inventory_adjustments')
-      .select('*')
-      .eq('id', id)
-      .single();
-    if (e1 || !adj) throw new Error('Ajuste no encontrado');
-
-    const { data: items, error: e2 } = await supabase
-      .from('inventory_adjustment_items')
-      .select('product_id, expected_quantity, counted_quantity, difference')
-      .eq('adjustment_id', id);
-    if (e2 || !items || items.length === 0) throw new Error('Sin items');
-
-    // Convertir difference → {quantity, movement_type}
-    // difference > 0 (sobra) → 'add', difference < 0 (falta) → 'subtract'
-    const res = await apiFetch('/api/inventory/adjustments', {
+    const res = await apiFetch('/api/inventory/adjustments/duplicate', {
       method: 'POST',
-      body: JSON.stringify({
-        storeId,
-        items: items.map(i => ({
-          product_id: i.product_id,
-          quantity: Math.abs(i.difference || 0),
-          movement_type: (i.difference || 0) >= 0 ? 'add' : 'subtract',
-          reason: `Duplicada de ${id.slice(0, 8)}`,
-        })),
-      }),
+      body: JSON.stringify({ original_id: id }),
     });
 
     return {
       success: true,
-      newId: res.saleId || res.id,
+      newId: res.id,
       newDocNumber: res.adjustment_number,
     };
   }
