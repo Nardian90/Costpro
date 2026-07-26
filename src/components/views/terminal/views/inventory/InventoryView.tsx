@@ -640,7 +640,7 @@ export default function InventoryView() {
     }
 
     return (
-        <div className="space-y-2">
+        <div className="space-y-1.5">
             {/* Tabs internas: Stock | Catálogo | Trazabilidad — actúan como header */}
             <div className="flex border-b border-border bg-card rounded-t-xl overflow-hidden" role="tablist">
                 {([
@@ -675,8 +675,8 @@ export default function InventoryView() {
             <>
             {/* Contenido de Stock Actual */}
 
-            {/* ESTÁNDAR: SearchBar a línea completa + ViewSwitcher debajo (como otros tabs) */}
-            <div className="space-y-2">
+            {/* ESTÁNDAR: SearchBar a línea completa + ViewSwitcher debajo — compacto */}
+            <div className="space-y-1.5">
                 <SearchBar
                     value={searchTerm}
                     onChange={setSearchTerm}
