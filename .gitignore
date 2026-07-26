@@ -115,3 +115,4 @@ worklog.md
 .zscripts/
 download/
 *.pid
+test-results/
