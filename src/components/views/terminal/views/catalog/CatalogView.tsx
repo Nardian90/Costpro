@@ -902,6 +902,11 @@ export default function CatalogView() {
         fcPendienteCount={fcPendienteCount}
         fcSinFCCount={fcSinFCCount}
         fcCoverage={fcCoverage.total > 0 ? fcCoverage : undefined}
+        stockFilter={stockFilter}
+        onStockFilterChange={setStockFilter}
+        activeFilter={activeFilter}
+        onActiveFilterChange={setActiveFilter}
+        onToggleIncomplete={() => setShowIncompleteOnly(prev => !prev)}
       />
 
       {/* Product Grid / Table */}

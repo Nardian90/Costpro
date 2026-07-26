@@ -34,6 +34,12 @@ interface CatalogSearchAndFiltersProps {
   fcSinFCCount: number;
   /** Cobertura FC (para la barra consolidada) */
   fcCoverage?: FCCoverageData;
+  /** ESTÁNDAR: filtros de stock y active para el colapsable */
+  stockFilter?: 'all' | 'out' | 'low' | 'ok';
+  onStockFilterChange?: (v: 'all' | 'out' | 'low' | 'ok') => void;
+  activeFilter?: 'all' | 'active' | 'inactive';
+  onActiveFilterChange?: (v: 'all' | 'active' | 'inactive') => void;
+  onToggleIncomplete?: () => void;
 }
 
 const FC_FILTER_OPTIONS: Array<{ value: FCFilterStatus; label: string; color: string }> = [
@@ -51,6 +57,11 @@ export default function CatalogSearchAndFilters({
   onCategoryChange,
   selectedCategories,
   onCategoryToggle,
+  stockFilter = 'all',
+  onStockFilterChange,
+  activeFilter = 'all',
+  onActiveFilterChange,
+  onToggleIncomplete,
   showIncompleteOnly,
   incompleteCount,
   filteredCount,
@@ -114,35 +125,72 @@ export default function CatalogSearchAndFilters({
                 </div>
               </div>
             )}
-            {/* Productos incompletos */}
-            {incompleteCount > 0 && (
+            {/* Filtro de stock */}
+            {onStockFilterChange && (
               <div>
-                <label className="text-xs font-black text-muted-foreground uppercase mb-2 block">Estado de Producto</label>
+                <label className="text-xs font-black text-muted-foreground uppercase mb-2 block">Estado de Stock</label>
                 <div className="flex items-center gap-1 flex-wrap">
-                  <button
-                    type="button"
-                    onClick={() => onClearIncomplete()}
-                    className={cn(
-                      'px-2.5 py-1 min-h-[28px] rounded-full text-[10px] font-bold uppercase border transition-all active:scale-95',
-                      !showIncompleteOnly
-                        ? 'bg-primary text-primary-foreground border-primary'
-                        : 'bg-muted/50 text-muted-foreground border-border hover:bg-muted'
-                    )}
-                  >
-                    Todos ({filteredCount})
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => { /* toggle incomplete */ }}
-                    className={cn(
-                      'px-2.5 py-1 min-h-[28px] rounded-full text-[10px] font-bold uppercase border transition-all active:scale-95',
-                      showIncompleteOnly
-                        ? 'bg-warning text-white border-warning'
-                        : 'bg-muted/50 text-muted-foreground border-border hover:bg-muted'
-                    )}
-                  >
-                    Incompletos ({incompleteCount})
-                  </button>
+                  {([
+                    { key: 'all', label: 'Todos' },
+                    { key: 'ok', label: 'Normal' },
+                    { key: 'low', label: 'Bajo' },
+                    { key: 'out', label: 'Agotado' },
+                  ] as const).map(opt => (
+                    <button
+                      key={opt.key}
+                      type="button"
+                      onClick={() => onStockFilterChange(opt.key)}
+                      className={cn(
+                        'px-2.5 py-1 min-h-[28px] rounded-full text-[10px] font-bold uppercase border transition-all active:scale-95',
+                        stockFilter === opt.key
+                          ? 'bg-primary text-primary-foreground border-primary'
+                          : 'bg-muted/50 text-muted-foreground border-border hover:bg-muted'
+                      )}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+            {/* Filtro activo/inactivo */}
+            {onActiveFilterChange && (
+              <div>
+                <label className="text-xs font-black text-muted-foreground uppercase mb-2 block">Estado del Producto</label>
+                <div className="flex items-center gap-1 flex-wrap">
+                  {([
+                    { key: 'all', label: 'Todos' },
+                    { key: 'active', label: 'Activos' },
+                    { key: 'inactive', label: 'Inactivos' },
+                  ] as const).map(opt => (
+                    <button
+                      key={opt.key}
+                      type="button"
+                      onClick={() => onActiveFilterChange(opt.key)}
+                      className={cn(
+                        'px-2.5 py-1 min-h-[28px] rounded-full text-[10px] font-bold uppercase border transition-all active:scale-95',
+                        activeFilter === opt.key
+                          ? 'bg-primary text-primary-foreground border-primary'
+                          : 'bg-muted/50 text-muted-foreground border-border hover:bg-muted'
+                      )}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                  {incompleteCount > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => onToggleIncomplete?.()}
+                      className={cn(
+                        'px-2.5 py-1 min-h-[28px] rounded-full text-[10px] font-bold uppercase border transition-all active:scale-95',
+                        showIncompleteOnly
+                          ? 'bg-warning text-white border-warning'
+                          : 'bg-muted/50 text-muted-foreground border-border hover:bg-muted'
+                      )}
+                    >
+                      Incompletos ({incompleteCount})
+                    </button>
+                  )}
                 </div>
               </div>
             )}

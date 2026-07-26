@@ -20,7 +20,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; icon: any }>
   completed:   { label: 'Completada',   color: 'bg-success/15 text-success border-success/30', icon: CheckCircle2 },
   closed:      { label: 'Cerrada',      color: 'bg-muted text-muted-foreground border-border', icon: CheckCircle2 },
   voided:      { label: 'Anulada',      color: 'bg-destructive/15 text-destructive border-destructive/30', icon: Ban },
-  reversed:    { label: 'Revertida',    color: 'bg-purple-500/15 text-purple-500 dark:text-purple-400 border-purple-500/30', icon: RefreshCcw }, // V2.2
+  reversed:    { label: 'Revertida',    color: 'bg-purple-500/15 text-purple-500 dark:text-purple-400 border-purple-500/30', icon: Undo2 }, // V2.2
 };
 
 const PAYMENT_BADGE: Record<string, { label: string; color: string }> = {
