@@ -124,9 +124,20 @@ const ALLOWLIST = new Set([
   'admin_delete_store',
   'admin_reset_store_inventory',
 
-  // Mutación — FOLLOW-UP V2.7 (añadir has_store_access_as)
-  'close_service_order_as_sale',    // TODO: añadir has_store_access_as(p_store_id)
-  'compensate_inventory_error',     // TODO: añadir has_store_access_as(p_store_id)
+  // V2.7: cerradas las 2 TODOs (ya tienen has_store_access_as)
+  // 'close_service_order_as_sale',    // MOVIDA a compliant en V2.7
+  // 'compensate_inventory_error',     // MOVIDA a compliant en V2.7
+
+  // V2.10 H7: aprobación por umbral en transferencias
+  'set_transfer_approval_rule',     // admin-only (valida rol admin internamente)
+  'transfer_requires_approval',     // helper de lectura
+  'approve_transfer',               // valida has_store_access_as internamente
+  'reject_transfer',                // valida has_store_access_as internamente
+
+  // V2.9 H6: conteo físico
+  'create_physical_count',          // valida has_store_access_as internamente
+  'record_counted_quantity',        // valida has_store_access_as internamente
+  'apply_physical_count',           // valida has_store_access_as internamente
 ]);
 
 const C = { g: '\x1b[32m', r: '\x1b[31m', c: '\x1b[36m', p: '\x1b[35m', b: '\x1b[1m', y: '\x1b[33m', x: '\x1b[0m' };
