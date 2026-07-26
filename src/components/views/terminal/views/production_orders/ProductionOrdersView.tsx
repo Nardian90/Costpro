@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 import type { ProductionOrder, ProductionOrderItem } from '@/types';
 import { canReverse } from '@/components/ui/DocumentStatusBadge';
 import { ReverseDocumentModal } from '@/components/ui/ReverseDocumentModal';
-import { useDuplicateDocumentV2 } from '@/hooks/api/useDuplicateDocumentV2';
+import { DuplicateDocumentModal } from '@/components/ui/DuplicateDocumentModal';
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: any }> = {
   draft:       { label: 'Borrador',     color: 'bg-muted text-muted-foreground border-border', icon: Clock },
@@ -393,8 +393,8 @@ function OrderDetailModal({ order, onClose, onUpdate }: { order: ProductionOrder
   const [products, setProducts] = useState<any[]>([]);
   // V2.2: modal de reversión
   const [showReverseModal, setShowReverseModal] = useState(false);
-  // V2.4: hook de duplicación
-  const duplicateMutation = useDuplicateDocumentV2();
+  // V2.4: modal de duplicación
+  const [showDuplicateModal, setShowDuplicateModal] = useState(false);
 
   // Fase 3: edición en borrador
   const [isEditing, setIsEditing] = useState(false);
@@ -701,11 +701,10 @@ function OrderDetailModal({ order, onClose, onUpdate }: { order: ProductionOrder
                 <span className="hidden sm:inline">Revertir</span>
               </button>
             )}
-            {/* V2.4: botón Duplicar — crea nueva orden draft con mismos items */}
+            {/* V2.4: botón Duplicar — abre modal de confirmación */}
             <button
-              onClick={() => duplicateMutation.mutate({ type: 'production_order', id: order.id, storeId: order.store_id })}
-              disabled={duplicateMutation.isPending}
-              className="px-2 py-2 rounded-lg bg-blue-500/10 text-blue-500 border border-blue-500/30 text-[10px] font-black uppercase hover:bg-blue-500/20 min-h-[44px] flex items-center gap-1 disabled:opacity-50"
+              onClick={() => setShowDuplicateModal(true)}
+              className="px-2 py-2 rounded-lg bg-blue-500/10 text-blue-500 border border-blue-500/30 text-[10px] font-black uppercase hover:bg-blue-500/20 min-h-[44px] flex items-center gap-1"
               title="Duplicar orden (crea nueva con mismos items)"
               aria-label="Duplicar orden"
             >
@@ -1307,6 +1306,18 @@ function OrderDetailModal({ order, onClose, onUpdate }: { order: ProductionOrder
         type="production_order"
         docId={order.id}
         docLabel={`Orden ${order.order_number} • ${order.customer_name || 'Sin cliente'}`}
+      />
+
+      {/* V2.4: Modal de Duplicación */}
+      <DuplicateDocumentModal
+        isOpen={showDuplicateModal}
+        onClose={() => setShowDuplicateModal(false)}
+        type="production_order"
+        docId={order.id}
+        docInfo={{
+          docLabel: `Orden ${order.order_number} • ${order.customer_name || 'Sin cliente'}`,
+          itemCount: items.length,
+        }}
       />
     </div>
   );

@@ -4,7 +4,8 @@ import { useState, useMemo, useCallback } from 'react';
 import { useAuthStore } from '@/store';
 import { useReceptions, useReceptionDetails, useUpdateReception, useVoidReception, useConfirmPendingReception } from '@/hooks/api/useReceptions';
 import { Receipt, ReceiptItem } from '@/types';
-import { useInvertDocument, useDuplicateDocument } from '@/hooks/api/useDocumentActions';
+import { useInvertDocument } from '@/hooks/api/useDocumentActions';
+import { useDuplicateDocumentV2 } from '@/hooks/api/useDuplicateDocumentV2';
 import { toast } from 'sonner';
 import { logger } from '@/lib/logger';
 
@@ -29,7 +30,7 @@ export function useReceptionsHistoryView() {
 
   // Document Actions Hooks
   const invertDocumentMutation = useInvertDocument();
-  const duplicateDocumentMutation = useDuplicateDocument();
+  const duplicateDocumentMutation = useDuplicateDocumentV2();
 
   // Data Fetching
   const { data: receptions = [], isLoading } = useReceptions(user?.activeStoreId);
@@ -188,11 +189,12 @@ export function useReceptionsHistoryView() {
     }
   };
 
+  // V2.4.4: usa useDuplicateDocumentV2 (carga items en carrito sin pre-fetch)
   const handleDuplicate = (receipt: Receipt) => {
     duplicateDocumentMutation.mutate({
       type: 'reception',
       id: receipt.id,
-      items: items.length > 0 && selectedReceiptId === receipt.id ? items : undefined
+      storeId: user?.activeStoreId,
     });
   };
 

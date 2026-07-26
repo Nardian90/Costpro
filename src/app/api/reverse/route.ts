@@ -19,10 +19,12 @@ import { rateLimit } from '@/lib/rate-limit';
 import { createApiError } from '@/lib/api-errors';
 import { logger } from '@/lib/logger';
 import { z } from 'zod';
+// V2.4.4: usar uuidRegex del proyecto (permisivo, no exige variant bits como z.string().uuid())
+import { uuidRegex } from '@/validation/schemas';
 
 const reverseSchema = z.object({
   type: z.enum(['transaction', 'receipt', 'transfer', 'adjustment', 'devolution', 'production_order']),
-  id: z.string().min(1),
+  id: z.string().regex(uuidRegex, 'ID de documento inválido'),
   reason: z.string().min(3).max(500),
 });
 
@@ -41,7 +43,14 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
   const { allowed } = await rateLimit(`reverse:${session.user.id}`, { windowMs: 60_000, maxRequests: 5 });
   if (!allowed) return NextResponse.json(createApiError('RATE_LIMITED'), { status: 429 });
 
-  const body = await req.json();
+  // V2.4.4: try/catch para body inválido (sin JSON, mal formado)
+  let body: unknown;
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json(createApiError('INVALID_DATA'), { status: 400 });
+  }
+
   const parsed = reverseSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(

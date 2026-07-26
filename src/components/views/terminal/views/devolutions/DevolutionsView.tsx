@@ -8,7 +8,7 @@ import { useAuthStore } from '@/store';
 import { toast } from 'sonner';
 import { DocumentStatusBadge, canReverse } from '@/components/ui/DocumentStatusBadge';
 import { ReverseDocumentModal } from '@/components/ui/ReverseDocumentModal';
-import { useDuplicateDocumentV2 } from '@/hooks/api/useDuplicateDocumentV2';
+import { DuplicateDocumentModal } from '@/components/ui/DuplicateDocumentModal';
 
 const touch = 'min-h-[44px]';
 
@@ -21,8 +21,8 @@ export function DevolutionsView() {
   const [showCreate, setShowCreate] = useState(false);
   // V2.2: modal de reversión
   const [reverseTarget, setReverseTarget] = useState<{ id: string; label: string } | null>(null);
-  // V2.4: hook de duplicación
-  const duplicateMutation = useDuplicateDocumentV2();
+  // V2.4: modal de duplicación
+  const [duplicateTarget, setDuplicateTarget] = useState<{ id: string; label: string; itemCount?: number } | null>(null);
 
   const load = useCallback(async () => {
     if (!storeId) return;
@@ -107,12 +107,15 @@ export function DevolutionsView() {
                       Revertir
                     </button>
                   )}
-                  {/* V2.4: botón Duplicar */}
+                  {/* V2.4: botón Duplicar — abre modal de confirmación */}
                   <button
                     type="button"
-                    onClick={() => duplicateMutation.mutate({ type: 'devolution', id: d.id, storeId: storeId! })}
-                    disabled={duplicateMutation.isPending}
-                    className="inline-flex items-center gap-1 px-2 py-1 rounded-lg border border-blue-500/40 bg-blue-500/5 text-blue-500 hover:bg-blue-500 hover:text-white transition-all active:scale-95 text-[10px] font-black uppercase tracking-widest disabled:opacity-50"
+                    onClick={() => setDuplicateTarget({
+                      id: d.id,
+                      label: `Devolución ${d.devolution_number} • ${formatCurrency(Number(d.total_amount))}`,
+                      itemCount: d.items?.length,
+                    })}
+                    className="inline-flex items-center gap-1 px-2 py-1 rounded-lg border border-blue-500/40 bg-blue-500/5 text-blue-500 hover:bg-blue-500 hover:text-white transition-all active:scale-95 text-[10px] font-black uppercase tracking-widest"
                     title="Duplicar devolución (crea nueva con mismos items)"
                     aria-label="Duplicar devolución"
                   >
@@ -135,6 +138,18 @@ export function DevolutionsView() {
         type="devolution"
         docId={reverseTarget?.id || ''}
         docLabel={reverseTarget?.label}
+      />
+
+      {/* V2.4: Modal de Duplicación */}
+      <DuplicateDocumentModal
+        isOpen={!!duplicateTarget}
+        onClose={() => setDuplicateTarget(null)}
+        type="devolution"
+        docId={duplicateTarget?.id || ''}
+        docInfo={{
+          docLabel: duplicateTarget?.label,
+          itemCount: duplicateTarget?.itemCount,
+        }}
       />
     </div>
   );

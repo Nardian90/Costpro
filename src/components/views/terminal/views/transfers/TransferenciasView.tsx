@@ -33,7 +33,7 @@ import { toast } from 'sonner';
 import { useCallback } from 'react';
 import { DocumentStatusBadge, canReverse } from '@/components/ui/DocumentStatusBadge';
 import { ReverseDocumentModal } from '@/components/ui/ReverseDocumentModal';
-import { useDuplicateDocumentV2 } from '@/hooks/api/useDuplicateDocumentV2';
+import { DuplicateDocumentModal } from '@/components/ui/DuplicateDocumentModal';
 
 const STATUS_OPTIONS: { value: TransferStatus | 'TODOS'; label: string; icon: typeof Clock }[] = [
   { value: 'TODOS', label: 'Todos', icon: ArrowLeftRight },
@@ -52,8 +52,8 @@ export default function TransferenciasView() {
   const [activeStatus, setActiveStatus] = useState<TransferStatus | 'TODOS'>('TODOS');
   // V2.2: modal de reversión
   const [reverseTarget, setReverseTarget] = useState<{ id: string; label: string } | null>(null);
-  // V2.4: hook de duplicación
-  const duplicateMutation = useDuplicateDocumentV2();
+  // V2.4: modal de duplicación
+  const [duplicateTarget, setDuplicateTarget] = useState<{ id: string; label: string; itemCount?: number } | null>(null);
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
   const sentinelRef = useRef<HTMLDivElement>(null);
@@ -415,19 +415,18 @@ export default function TransferenciasView() {
                         </button>
                       )}
 
-                      {/* V2.4: botón Duplicar transferencia */}
+                      {/* V2.4: botón Duplicar transferencia — abre modal */}
                       <button
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation();
-                          duplicateMutation.mutate({
-                            type: 'transfer',
+                          setDuplicateTarget({
                             id: t.id,
-                            storeId: user?.activeStoreId,
+                            label: `Transferencia ${t.id.split('-')[0]} • ${t.destination_store?.name ?? '—'}`,
+                            itemCount: t.items?.length,
                           });
                         }}
-                        disabled={duplicateMutation.isPending}
-                        className="shrink-0 w-10 h-10 inline-flex items-center justify-center rounded-lg border border-blue-500/40 bg-blue-500/5 text-blue-500 hover:bg-blue-500 hover:text-white transition-all active:scale-95 disabled:opacity-50"
+                        className="shrink-0 w-10 h-10 inline-flex items-center justify-center rounded-lg border border-blue-500/40 bg-blue-500/5 text-blue-500 hover:bg-blue-500 hover:text-white transition-all active:scale-95"
                         title="Duplicar transferencia (crea nueva PENDIENTE con mismos items)"
                         aria-label="Duplicar transferencia"
                       >
@@ -469,6 +468,18 @@ export default function TransferenciasView() {
         type="transfer"
         docId={reverseTarget?.id || ''}
         docLabel={reverseTarget?.label}
+      />
+
+      {/* V2.4: Modal de Duplicación */}
+      <DuplicateDocumentModal
+        isOpen={!!duplicateTarget}
+        onClose={() => setDuplicateTarget(null)}
+        type="transfer"
+        docId={duplicateTarget?.id || ''}
+        docInfo={{
+          docLabel: duplicateTarget?.label,
+          itemCount: duplicateTarget?.itemCount,
+        }}
       />
     </div>
   );

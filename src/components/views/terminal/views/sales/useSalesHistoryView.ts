@@ -5,7 +5,8 @@ import { useAuthStore } from '@/store';
 import { useTransactionDetails } from '@/hooks/api/useTransactions';
 import { useTransactions } from '@/hooks/api/useTransactions';
 import { Transaction, ROLE_PERMISSIONS, TransactionItem } from '@/types';
-import { useInvertDocument, useDuplicateDocument } from '@/hooks/api/useDocumentActions';
+import { useInvertDocument } from '@/hooks/api/useDocumentActions';
+import { useDuplicateDocumentV2 } from '@/hooks/api/useDuplicateDocumentV2';
 import { toast } from 'sonner';
 import { formatCurrency, formatDate } from '@/lib/utils';
 
@@ -74,7 +75,7 @@ export function useSalesHistoryView() {
 
     // Document Actions Hooks
     const invertDocumentMutation = useInvertDocument();
-    const duplicateDocumentMutation = useDuplicateDocument();
+    const duplicateDocumentMutation = useDuplicateDocumentV2();
 
     // Permission check — merge all user roles to determine void capability
     const canVoid = (() => {
@@ -181,17 +182,14 @@ export function useSalesHistoryView() {
         setVoidTarget(null);
     }, []);
 
-    // ── Duplicate ──
+    // ── Duplicate ── V2.4.4: usa useDuplicateDocumentV2 (carga items en carrito sin setTimeout)
     const handleDuplicate = useCallback((txn: Transaction) => {
-        setSelectedTransactionId(txn.id);
-        setTimeout(() => {
-            duplicateDocumentMutation.mutate({
-                type: 'sale',
-                id: txn.id,
-                items: transactionItems.length > 0 && selectedTransactionId === txn.id ? transactionItems : undefined
-            });
-        }, 400);
-    }, [duplicateDocumentMutation, selectedTransactionId, transactionItems]);
+        duplicateDocumentMutation.mutate({
+            type: 'sale',
+            id: txn.id,
+            storeId: user?.activeStoreId,
+        });
+    }, [duplicateDocumentMutation, user?.activeStoreId]);
 
     // ── CSV Export ──
     const handleExportCSV = useCallback(() => {

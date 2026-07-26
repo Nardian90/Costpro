@@ -6,7 +6,6 @@ import { supabase } from '@/lib/supabaseClient';
 import { useAuthStore } from '@/store';
 import { toast } from 'sonner';
 import { withTableLogging } from './base';
-import { useCartStore } from '@/store';
 // R2-M7: import para auditoría de anulación de ventas
 import { auditService } from '@/services/audit-service';
 
@@ -154,57 +153,7 @@ export function useInvertDocument() {
   });
 }
 
-export function useDuplicateDocument() {
-  const { addItem, clearCart } = useCartStore();
+// V2.4.4: useDuplicateDocument legacy ELIMINADO.
+// Reemplazado por useDuplicateDocumentV2 en /hooks/api/useDuplicateDocumentV2.ts
+// que soporta 6 tipos de documento y usa DuplicateDocumentModal para confirmación.
 
-  return useMutation({
-    mutationFn: async (props: DocumentActionProps) => {
-      const { type, id, items: providedItems } = props;
-
-      let items = providedItems;
-      if (!items || items.length === 0 || !items[0].products) {
-        const table = type === 'sale' ? 'transaction_items' : 'receipt_items';
-        const foreignKey = type === 'sale' ? 'transaction_id' : 'receipt_id';
-
-        // Fetch items with full product data
-        const data = await withTableLogging('select', table, () =>
-          supabase.from(table).select('*, products(*)').eq(foreignKey, id)
-        );
-        items = data as any[];
-      }
-
-      if (!items || items.length === 0) {
-        throw new Error('No se encontraron items para duplicar.');
-      }
-
-      clearCart();
-
-      for (const item of items) {
-        if (!item.products) continue;
-
-        const qty = Math.abs(item.quantity);
-        const price = item.price_at_sale || item.products.price || 0;
-
-        addItem({
-          product_id: item.product_id,
-          variant_id: item.variant_id || null,
-          product: item.products,
-          variant: null,
-          quantity: qty,
-          price: price,
-          cost: item.unit_cost || item.cost_at_sale || item.products.cost_price || 0,
-          subtotal: qty * price
-        });
-      }
-
-      return { success: true };
-    },
-    onSuccess: () => {
-      toast.success('Productos cargados en el carrito para duplicar la operación.');
-    },
-    onError: (error: unknown) => {
-      const message = error instanceof Error ? error.message : String(error);
-      toast.error(`Error al duplicar: ${message}`);
-    }
-  });
-}

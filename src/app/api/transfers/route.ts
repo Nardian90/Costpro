@@ -13,13 +13,15 @@ import { rateLimit } from '@/lib/rate-limit';
 import { createApiError } from '@/lib/api-errors';
 import { logger } from '@/lib/logger';
 import { z } from 'zod';
+// V2.4.4: usar uuidRegex del proyecto (permisivo)
+import { uuidRegex } from '@/validation/schemas';
 
 const createSchema = z.object({
-  origin_store_id: z.string().min(1),
-  destination_store_id: z.string().min(1),
+  origin_store_id: z.string().regex(uuidRegex, 'origin_store_id inválido'),
+  destination_store_id: z.string().regex(uuidRegex, 'destination_store_id inválido'),
   notes: z.string().max(500).optional(),
   items: z.array(z.object({
-    product_id: z.string().min(1),
+    product_id: z.string().regex(uuidRegex, 'product_id inválido'),
     quantity: z.number().positive(),
     unit_cost: z.number().nonnegative(),
   })).min(1),
@@ -55,11 +57,24 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
   const { allowed } = await rateLimit(`transfers:${session.user.id}`, { windowMs: 60_000, maxRequests: 10 });
   if (!allowed) return NextResponse.json(createApiError('RATE_LIMITED'), { status: 429 });
 
-  const body = await req.json();
+  // V2.4.4: try/catch para body inválido
+  let body: unknown;
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json(createApiError('INVALID_DATA'), { status: 400 });
+  }
+
   const parsed = createSchema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ ...createApiError('INVALID_DATA'), details: parsed.error.format() }, { status: 400 });
 
+  // V2.4.4: canManageStore para AMBAS tiendas (origin + destination) — debt T3
   if (!canManageStore(session.user, parsed.data.origin_store_id)) {
+    return NextResponse.json(createApiError('FORBIDDEN'), { status: 403 });
+  }
+  // V2.4.4: el usuario debe tener acceso también al destino para evitar transferencias
+  // cross-tenant no autorizadas
+  if (!canManageStore(session.user, parsed.data.destination_store_id)) {
     return NextResponse.json(createApiError('FORBIDDEN'), { status: 403 });
   }
   if (parsed.data.origin_store_id === parsed.data.destination_store_id) {
