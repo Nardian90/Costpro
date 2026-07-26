@@ -432,10 +432,10 @@ export default function POSView() {
               <span className="hidden sm:inline">Express</span>
             </button>
             )}
-            {/* ESTÁNDAR: botón Registro — navega al Historial de Ventas */}
+            {/* ESTÁNDAR: botón Registro — navega al Historial de Ventas (sales), NO a kardex (history) */}
             <button
               type="button"
-              onClick={() => setCurrentView('history')}
+              onClick={() => setCurrentView('sales')}
               className="inline-flex items-center gap-1.5 h-11 min-h-[44px] px-3 sm:px-4 rounded-xl border-2 border-blue-500/30 bg-blue-500/5 text-blue-500 font-black text-xs uppercase tracking-widest hover:bg-blue-500/10 hover:border-blue-500/50 transition-all active:scale-95"
               aria-label="Ir al Historial de Ventas"
               title="Ver historial de ventas registradas"

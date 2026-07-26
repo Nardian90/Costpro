@@ -30,7 +30,11 @@ export default function NewsView() {
   // FIX-RSS-MIPYMES (2026-07-13): filtro por categoría temática (8 categorías MiPyme)
   const [activeCategories, setActiveCategories] = React.useState<Set<RSSFeedCategory>>(new Set());
   // FIX (2026-07-23): filtro nacional/internacional + colapsable en móvil
-  const [scopeFilter, setScopeFilter] = React.useState<'all' | 'national' | 'international'>('all');
+  // ESTÁNDAR: default 'national' (Cuba) y persistir en localStorage
+  const [scopeFilter, setScopeFilter] = React.useState<'all' | 'national' | 'international'>(() => {
+    if (typeof window === 'undefined') return 'national';
+    return (localStorage.getItem('news-scope-filter') as 'all' | 'national' | 'international') || 'national';
+  });
   const [showTopicFilters, setShowTopicFilters] = React.useState(false);
 
   const toggleCategory = (cat: RSSFeedCategory) => {
@@ -183,7 +187,10 @@ export default function NewsView() {
             <button
               key={opt.key}
               type="button"
-              onClick={() => setScopeFilter(opt.key)}
+              onClick={() => {
+                setScopeFilter(opt.key);
+                if (typeof window !== 'undefined') localStorage.setItem('news-scope-filter', opt.key);
+              }}
               className={cn(
                 "flex items-center justify-center px-2 sm:px-2.5 min-h-[44px] text-[10px] font-black uppercase border-r border-border last:border-0 transition-all",
                 scopeFilter === opt.key

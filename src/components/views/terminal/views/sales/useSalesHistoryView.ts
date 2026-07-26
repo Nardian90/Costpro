@@ -64,8 +64,12 @@ export function useSalesHistoryView() {
     const { user } = useAuthStore();
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedStatus, setSelectedStatus] = useState('');
-    const [dateFrom, setDateFrom] = useState('');
-    const [dateTo, setDateTo] = useState('');
+    // ESTÁNDAR: filtros de fecha por defecto = inicio del mes actual → hoy
+    const today = new Date();
+    const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    const formatDateInput = (d: Date) => d.toISOString().split('T')[0]; // YYYY-MM-DD
+    const [dateFrom, setDateFrom] = useState(formatDateInput(firstDayOfMonth));
+    const [dateTo, setDateTo] = useState(formatDateInput(today));
     const [selectedTransactionId, setSelectedTransactionId] = useState<string | null>(null);
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
     const [isTaxModalOpen, setIsTaxModalOpen] = useState(false);
@@ -238,16 +242,19 @@ export function useSalesHistoryView() {
         };
     }, [transactionsData]);
 
-    // Clear filters
+    // Clear filters — restaura al default (mes actual → hoy)
     const handleClearFilters = useCallback(() => {
         setSearchTerm('');
         setSelectedStatus('');
-        setDateFrom('');
-        setDateTo('');
+        const t = new Date();
+        const fdom = new Date(t.getFullYear(), t.getMonth(), 1);
+        setDateFrom(fdom.toISOString().split('T')[0]);
+        setDateTo(t.toISOString().split('T')[0]);
         setPage(1);
     }, []);
 
-    const hasActiveFilters = !!(searchTerm || selectedStatus || dateFrom || dateTo);
+    // hasActiveFilters: solo true si hay búsqueda o status (las fechas son default)
+    const hasActiveFilters = !!(searchTerm || selectedStatus);
 
     return {
         // State
