@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { useIsMobile } from '@/hooks/ui/useMobile';
 import { DollarSign, CreditCard, Eye, RefreshCcw, Copy, Calculator, CheckSquare, Square, AlertTriangle, ShoppingCart, Download, ChevronLeft, ChevronRight, X, Filter, Wallet, ArrowLeftRight } from 'lucide-react';
 import { cn, formatCurrency, formatDate, formatTime } from '@/lib/utils';
@@ -12,6 +12,8 @@ import { PrimaryButton, SecondaryButton } from '@/components/ui/atomic';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useSalesHistoryView } from './useSalesHistoryView';
 import { TransactionDetailsModal } from './TransactionDetailsModal';
+import { DocumentStatusBadge, canReverse } from '@/components/ui/DocumentStatusBadge';
+import { ReverseDocumentModal } from '@/components/ui/ReverseDocumentModal';
 
 // Helper para icono y etiqueta del método de pago
 function getPaymentMethodInfo(method: string | null | undefined): { icon: React.ElementType; label: string; color: string } {
@@ -126,6 +128,9 @@ const PaginationFooter = ({ page, totalPages, totalItems, onPageChange }: { page
 };
 
 export default function SalesHistoryView() {
+  // V2.2: estado para el modal de reversión contable (alternativa al void)
+  const [reverseTarget, setReverseTarget] = useState<{ id: string; label: string } | null>(null);
+
   const {
     searchTerm,
     setSearchTerm,
@@ -342,7 +347,8 @@ export default function SalesHistoryView() {
                 <div style={{ height: `${rowVirtualizer.getTotalSize()}px`, position: 'relative' }}>
                   {rowVirtualizer.getVirtualItems().map((virtualRow) => {
                     const txn = transactions[virtualRow.index];
-                    const isVoided = txn.status === 'voided';
+                    const isVoided = txn.status === 'voided' || txn.status === 'reversed';
+                    const canReverseTx = canReverse('transaction', txn.status);
                     return (
                       <div
                         key={virtualRow.key}
@@ -401,14 +407,7 @@ export default function SalesHistoryView() {
                                 )}>{formatCurrency(txn.total_amount)}</span>
                               </td>
                               <td className="p-4 text-center priority-low hidden sm:table-cell">
-                                <span className={cn(
-                                  "inline-flex items-center px-2 py-0.5 rounded text-xs font-black uppercase",
-                                  txn.status === 'completed' ? "bg-success/10 text-success" :
-                                  txn.status === 'pending' ? "bg-warning/10 text-warning" : "bg-destructive/10 text-destructive"
-                                )}>
-                                  {txn.status === 'completed' ? 'Completada' :
-                                   txn.status === 'pending' ? 'Pendiente' : 'Anulada'}
-                                </span>
+                                <DocumentStatusBadge type="transaction" status={txn.status} />
                               </td>
                               <td className="p-4 text-center" aria-label="Acciones de la venta">
                                 <div className="flex items-center justify-center gap-1.5">
@@ -435,6 +434,21 @@ export default function SalesHistoryView() {
                                       aria-label={isVoided ? "Venta ya anulada" : "Anular venta"}
                                     >
                                       <RefreshCcw className={cn("w-4 h-4", isInverting && "animate-spin")} />
+                                    </button>
+                                  )}
+
+                                  {/* V2.2: botón Revertir — alternativa contable al void. Invierte stock + kardex. */}
+                                  {canReverseTx && (
+                                    <button type="button"
+                                      onClick={() => setReverseTarget({
+                                        id: txn.id,
+                                        label: `Venta ${txn.id.split('-')[0]} • ${formatCurrency(txn.total_amount)}`,
+                                      })}
+                                      className="w-11 h-11 inline-flex items-center justify-center rounded-lg border border-purple-500/40 bg-purple-500/5 text-purple-500 dark:text-purple-400 hover:bg-purple-500 hover:text-white dark:hover:text-black transition-all active:scale-95"
+                                      title="Revertir venta (invierte stock + kardex)"
+                                      aria-label="Revertir venta"
+                                    >
+                                      <RefreshCcw className="w-4 h-4" />
                                     </button>
                                   )}
 
@@ -477,6 +491,15 @@ export default function SalesHistoryView() {
         onClose={handleCloseDetails}
         items={transactionItems}
         isLoading={loadingDetails}
+      />
+
+      {/* V2.2: Modal de Reversión Contable */}
+      <ReverseDocumentModal
+        isOpen={!!reverseTarget}
+        onClose={() => setReverseTarget(null)}
+        type="transaction"
+        docId={reverseTarget?.id || ''}
+        docLabel={reverseTarget?.label}
       />
 
       {/* Void Confirmation Modal */}

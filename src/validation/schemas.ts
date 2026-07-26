@@ -59,6 +59,7 @@ export const transactionStatusSchema = z.enum([
   "cancelled",
   "refunded",
   "voided",
+  "reversed", // V2.2
 ]);
 
 // ============================================
@@ -369,7 +370,7 @@ export const receiptSchema = z.object({
   updated_at: z.string().optional().nullable(),
   user_id: optionalResilientUuid,
   status: z
-    .enum(["active", "voided", "pending", "partial"])
+    .enum(["active", "voided", "pending", "partial", "confirmed", "reversed"]) // V2.2: +confirmed, +reversed
     .catch("active")
     .default("active"),
   total_cost: z.coerce.number().catch(0).default(0),
@@ -823,6 +824,7 @@ export const transferStatusSchema = z.enum([
   "PENDIENTE",
   "CONFIRMADA",
   "CANCELADA",
+  "REVERSADA", // V2.2
 ]);
 
 export const transferItemSchema = z.object({

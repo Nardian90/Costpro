@@ -15,7 +15,8 @@ export type TransactionStatus =
   | 'compensated'
   | 'cancelled'
   | 'refunded'
-  | 'voided';
+  | 'voided'
+  | 'reversed'; // V2.2: reversión contable (invierte stock + kardex)
 
 export type MovementType =
   | 'sale'
@@ -375,6 +376,11 @@ export interface Transaction {
   tax_amount?: number | null;
   applied_taxes?: any[] | null;
   idempotency_key?: string | null;
+  // V2.2: campos de auditoría de reversión contable
+  reversed_at?: string | null;
+  reversed_by?: string | null;
+  reversal_reason?: string | null;
+  original_transaction_id?: string | null;
 }
 
 export interface TransactionItem {
@@ -417,7 +423,7 @@ export interface Receipt {
   created_at: string;
   updated_at?: string | null;
   user_id?: string | null;
-  status: 'active' | 'voided' | 'pending' | 'partial';
+  status: 'active' | 'voided' | 'pending' | 'partial' | 'confirmed' | 'reversed'; // V2.2: +confirmed, +reversed
   total_cost: number;
   reference_doc?: string | null;
   notes?: string | null;
@@ -431,6 +437,13 @@ export interface Receipt {
   due_date?: string | null;
   paid_at?: string | null;
   payment_terms_days?: number;
+  // V2.2: campos de auditoría de reversión contable
+  confirmed_at?: string | null;
+  confirmed_by?: string | null;
+  reversed_at?: string | null;
+  reversed_by?: string | null;
+  reversal_reason?: string | null;
+  original_receipt_id?: string | null;
 }
 
 export interface ReceiptItem {
@@ -523,7 +536,7 @@ export interface ProductionOrder {
   store_id: string;
   order_number: string;
   order_type: 'production' | 'service' | 'work';
-  status: 'draft' | 'approved' | 'in_progress' | 'paused' | 'completed' | 'closed' | 'voided';
+  status: 'draft' | 'approved' | 'in_progress' | 'paused' | 'completed' | 'closed' | 'voided' | 'reversed'; // V2.2: +reversed
   customer_name?: string | null;
   customer_ci?: string | null;
   customer_phone?: string | null;
@@ -547,6 +560,10 @@ export interface ProductionOrder {
   created_by?: string | null;
   created_at: string;
   updated_at: string;
+  // V2.2: auditoría de reversión contable
+  reversed_at?: string | null;
+  reversed_by?: string | null;
+  reversal_reason?: string | null;
 }
 
 export interface ProductionOrderItem {
@@ -602,7 +619,7 @@ export interface PurchaseOrderItem {
 // Transferencias
 // ============================================
 
-export type TransferStatus = 'PENDIENTE' | 'CONFIRMADA' | 'CANCELADA';
+export type TransferStatus = 'PENDIENTE' | 'CONFIRMADA' | 'CANCELADA' | 'REVERSADA'; // V2.2: +REVERSADA
 
 export interface Transfer {
   id: string;
@@ -617,6 +634,12 @@ export interface Transfer {
   destination_store?: Store | null;
   creator?: { full_name: string } | null;
   items?: TransferItem[] | null;
+  // V2.2: campos de auditoría de reversión contable
+  confirmed_at?: string | null;
+  confirmed_by?: string | null;
+  reversed_at?: string | null;
+  reversed_by?: string | null;
+  reversal_reason?: string | null;
 }
 
 export interface TransferItem {
@@ -626,6 +649,67 @@ export interface TransferItem {
   quantity: number;
   unit_cost: number;
   product?: Product | null;
+}
+
+// ============================================
+// V2.2: Devoluciones (estaban ausentes en types)
+// ============================================
+export type DevolutionStatus = 'pending' | 'completed' | 'voided' | 'reversed';
+
+export interface Devolution {
+  id: string;
+  store_id: string;
+  devolution_number: string;
+  customer_name?: string | null;
+  customer_ci?: string | null;
+  reason: string;
+  total_amount: number;
+  payment_method?: 'cash' | 'transfer' | 'zelle' | null;
+  status: DevolutionStatus;
+  processed_at: string;
+  processed_by?: string | null;
+  transaction_id?: string | null;
+  // V2.2: auditoría de reversión
+  reversed_at?: string | null;
+  reversed_by?: string | null;
+  reversal_reason?: string | null;
+  items?: Array<{
+    id: string;
+    devolution_id: string;
+    product_id: string;
+    quantity: number;
+    unit_price: number;
+  }> | null;
+}
+
+// ============================================
+// V2.2: Inventory Adjustments (estaban ausentes en types)
+// ============================================
+export type InventoryAdjustmentStatus = 'pending' | 'confirmed' | 'reversed';
+
+export interface InventoryAdjustment {
+  id: string;
+  store_id: string;
+  adjustment_number?: string | null;
+  reason: string;
+  status: InventoryAdjustmentStatus;
+  created_by?: string | null;
+  created_at: string;
+  updated_at?: string;
+  // V2.2: auditoría de reversión
+  confirmed_at?: string | null;
+  confirmed_by?: string | null;
+  reversed_at?: string | null;
+  reversed_by?: string | null;
+  reversal_reason?: string | null;
+  items?: Array<{
+    id: string;
+    adjustment_id: string;
+    product_id: string;
+    quantity_change: number;
+    unit_cost?: number;
+    reason?: string | null;
+  }> | null;
 }
 
 export interface PurchaseItem {

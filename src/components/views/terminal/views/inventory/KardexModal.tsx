@@ -3,7 +3,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { BookOpen, X, Download, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import { Product } from '@/types';
-import { formatDate, formatCurrency } from '@/lib/utils';
+import { formatDate, formatCurrency, cn } from '@/lib/utils';
 import { BaseModal } from '@/components/ui/BaseModal';
 import { PrimaryButton, SecondaryButton } from '@/components/ui/atomic';
 import { toast } from 'sonner';
@@ -164,16 +164,36 @@ export default function KardexModal({ product, isOpen, onClose }: KardexModalPro
                   </td>
                 </tr>
               ) : (
-                entries.map((entry) => (
-                  <tr key={entry.id} className="hover:bg-muted/30 transition-colors">
+                entries.map((entry) => {
+                  // V2.2: mapa completo de movement_type con colores + etiquetas legibles
+                  const mt = entry.movement_type || '';
+                  const isReversal = entry.reference_type === 'reversal';
+                  const MOVEMENT_INFO: Record<string, { label: string; color: string }> = {
+                    sale:          { label: 'Venta',        color: 'text-primary' },
+                    purchase:      { label: 'Compra',       color: 'text-success' },
+                    adjustment:    { label: 'Ajuste',       color: 'text-warning' },
+                    return:        { label: 'Devolución',   color: 'text-blue-500' },
+                    initial:       { label: 'Inicial',      color: 'text-muted-foreground' },
+                    transfer:      { label: 'Transferencia',color: 'text-blue-500' },
+                    void:          { label: 'Anulación',    color: 'text-destructive' },
+                    devolution_in: { label: 'Dev. entrada', color: 'text-success' },
+                    transfer_in:   { label: 'Transf. ent.', color: 'text-success' },
+                    transfer_out:  { label: 'Transf. sal.', color: 'text-destructive' },
+                    out:           { label: 'Salida',       color: 'text-destructive' },
+                    production:    { label: 'Producción',   color: 'text-purple-500' },
+                  };
+                  const info = MOVEMENT_INFO[mt] || { label: mt || '—', color: 'text-muted-foreground' };
+                  return (
+                  <tr key={entry.id} className={cn('hover:bg-muted/30 transition-colors', isReversal && 'bg-purple-500/5')}>
                     <td className="px-3 py-2 font-mono text-[11px]">{formatDate(entry.created_at)}</td>
                     <td className="px-3 py-2">
-                      <span className={
-                        entry.movement_type === 'sale' ? 'text-primary' :
-                        entry.movement_type === 'purchase' ? 'text-success' : 'text-warning'
-                      }>
-                        {entry.movement_type === 'sale' ? 'Venta' :
-                         entry.movement_type === 'purchase' ? 'Compra' : 'Ajuste'}
+                      <span className={cn('font-black uppercase text-[10px]', info.color)}>
+                        {info.label}
+                        {isReversal && (
+                          <span className="ml-1 px-1 py-0.5 rounded bg-purple-500/20 text-purple-500 dark:text-purple-400 text-[9px]">
+                            REVERSIÓN
+                          </span>
+                        )}
                       </span>
                     </td>
                     <td className="px-3 py-2 text-right font-bold text-success tabular-nums">
@@ -184,10 +204,11 @@ export default function KardexModal({ product, isOpen, onClose }: KardexModalPro
                     </td>
                     <td className="px-3 py-2 text-right font-black tabular-nums">{entry.running_balance}</td>
                     <td className="px-3 py-2 text-[11px] text-muted-foreground truncate max-w-[120px]">
-                      {entry.reference_doc || '—'}
+                      {entry.reference_doc || (isReversal ? 'Reversión contable' : '—')}
                     </td>
                   </tr>
-                ))
+                  );
+                })
               )}
             </tbody>
           </table>

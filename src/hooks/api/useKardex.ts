@@ -11,6 +11,7 @@ export interface KardexEntry {
   exit: number;
   running_balance: number;
   reference_doc: string | null;
+  reference_type?: string | null; // V2.2: 'reversal' para entradas de reversión contable
 }
 
 interface KardexResponse {
@@ -52,6 +53,7 @@ export function useKardex(
         exit: Math.min(0, item.quantity_change ?? 0) * -1,
         running_balance: 0,
         reference_doc: item.reference_doc || null,
+        reference_type: item.reference_type || null, // V2.2
       }));
 
       const totalItems = data.length > 0 ? (data[0].total_count || 0) : 0;

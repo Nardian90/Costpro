@@ -27,6 +27,8 @@ import { DestructiveConfirmModal } from '@/components/ui/DestructiveConfirmModal
 import { BaseModal } from '@/components/ui/BaseModal';
 import { apiFetch } from '@/lib/api-fetch';
 import { toast } from 'sonner';
+import { DocumentStatusBadge, canReverse } from '@/components/ui/DocumentStatusBadge';
+import { ReverseDocumentModal } from '@/components/ui/ReverseDocumentModal';
 import { useAuthStore } from '@/store';
 import { useUIStore } from '@/store';
 import { useReceptionsHistoryView } from './useReceptionsHistoryView';
@@ -42,6 +44,8 @@ const ReceptionsLoadingSkeleton = () => (
 
 export default function ReceptionsHistoryView() {
   const { setCurrentView } = useUIStore();
+  // V2.2: estado del modal de reversión contable
+  const [reverseTarget, setReverseTarget] = useState<{ id: string; label: string } | null>(null);
   const {
     searchTerm,
     setSearchTerm,
@@ -230,6 +234,7 @@ export default function ReceptionsHistoryView() {
                   <option value="voided">Anulada</option>
                   <option value="pending">Pendiente</option>
                   <option value="partial">Parcial</option>
+                  <option value="reversed">Revertida</option>
                 </select>
               </div>
               <div>
@@ -301,19 +306,9 @@ export default function ReceptionsHistoryView() {
                         </div>
                       </td>
                       <td className="p-4 text-center priority-low">
-                        <span className={cn(
-                          "inline-flex items-center px-2 py-0.5 rounded text-xs font-black uppercase",
-                          rec.status === 'active' ? "bg-success/10 text-success" :
-                          rec.status === 'voided' ? "bg-destructive/10 text-destructive" :
-                          rec.status === 'pending' ? "bg-warning/10 text-warning" :
-                          "bg-success/10 text-success"
-                        )}>
-                          {rec.status === 'active' ? 'Confirmada' :
-                           rec.status === 'voided' ? 'Anulado' :
-                           rec.status === 'pending' ? 'Pendiente' : 'Parcial'}
-                        </span>
+                        <DocumentStatusBadge type="receipt" status={rec.status} />
                         {/* FIX-PAYMENT-TRACKING (2026-07-12): badge de estado de pago */}
-                        {rec.status !== 'voided' && (rec as any).payment_status && (
+                        {rec.status !== 'voided' && rec.status !== 'reversed' && (rec as any).payment_status && (
                           <span className={cn(
                             "ml-1 inline-flex items-center px-2 py-0.5 rounded text-[10px] font-black uppercase",
                             (rec as any).payment_status === 'paid' ? "bg-success/10 text-success"
@@ -363,6 +358,18 @@ export default function ReceptionsHistoryView() {
                                 disabled={isInverting}
                               >
                                 <RefreshCcw className={cn("w-4 h-4", isInverting && "animate-spin")} />
+                              </button>
+                              {/* V2.2: Revertir — alternativa contable que descuenta stock + kardex */}
+                              <button type="button"
+                                onClick={() => setReverseTarget({
+                                  id: rec.id,
+                                  label: `Recepción ${rec.reference_doc || rec.id.split('-')[0]} • ${formatCurrency(rec.total_cost)}`,
+                                })}
+                                className="w-11 h-11 inline-flex items-center justify-center rounded-lg border border-purple-500/40 bg-purple-500/5 text-purple-500 dark:text-purple-400 hover:bg-purple-500 hover:text-white dark:hover:text-black transition-all active:scale-95"
+                                title="Revertir Recepción (descuenta stock + kardex)"
+                                aria-label="Revertir recepción"
+                              >
+                                <RefreshCcw className="w-4 h-4" />
                               </button>
                               <button type="button"
                                 onClick={() => handleDuplicate(rec)}
@@ -564,6 +571,15 @@ export default function ReceptionsHistoryView() {
           </div>
         </div>
       </BaseModal>
+
+      {/* V2.2: Modal de Reversión Contable */}
+      <ReverseDocumentModal
+        isOpen={!!reverseTarget}
+        onClose={() => setReverseTarget(null)}
+        type="receipt"
+        docId={reverseTarget?.id || ''}
+        docLabel={reverseTarget?.label}
+      />
     </>
   );
 }

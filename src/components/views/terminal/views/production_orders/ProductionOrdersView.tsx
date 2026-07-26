@@ -2,12 +2,14 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { Plus, Factory, Wrench, Eye, Ban, Play, Pause, CheckCircle2, Clock, DollarSign, Package, ArrowDownToLine, X, Edit3 } from 'lucide-react';
+import { Plus, Factory, Wrench, Eye, Ban, Play, Pause, CheckCircle2, Clock, DollarSign, Package, ArrowDownToLine, X, Edit3, RefreshCcw } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuthStore } from '@/store';
 import { toast } from 'sonner';
 import type { ProductionOrder, ProductionOrderItem } from '@/types';
+import { canReverse } from '@/components/ui/DocumentStatusBadge';
+import { ReverseDocumentModal } from '@/components/ui/ReverseDocumentModal';
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: any }> = {
   draft:       { label: 'Borrador',     color: 'bg-muted text-muted-foreground border-border', icon: Clock },
@@ -17,6 +19,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; icon: any }>
   completed:   { label: 'Completada',   color: 'bg-success/15 text-success border-success/30', icon: CheckCircle2 },
   closed:      { label: 'Cerrada',      color: 'bg-muted text-muted-foreground border-border', icon: CheckCircle2 },
   voided:      { label: 'Anulada',      color: 'bg-destructive/15 text-destructive border-destructive/30', icon: Ban },
+  reversed:    { label: 'Revertida',    color: 'bg-purple-500/15 text-purple-500 dark:text-purple-400 border-purple-500/30', icon: RefreshCcw }, // V2.2
 };
 
 const PAYMENT_BADGE: Record<string, { label: string; color: string }> = {
@@ -97,7 +100,7 @@ export default function ProductionOrdersView() {
           <option value="service">🔧 Servicio</option>
           <option value="work">📦 Trabajo</option>
         </select>
-        {['all', 'draft', 'approved', 'in_progress', 'paused', 'completed', 'closed', 'voided'].map(s => (
+        {['all', 'draft', 'approved', 'in_progress', 'paused', 'completed', 'closed', 'voided', 'reversed'].map(s => (
           <button key={s} onClick={() => setFilter(s)}
             className={cn("px-3 py-1.5 rounded-lg text-[10px] font-black uppercase border",
               filter === s ? "bg-primary text-primary-foreground border-primary" : "border-border/40 text-muted-foreground hover:bg-muted")}>
@@ -387,6 +390,8 @@ function OrderDetailModal({ order, onClose, onUpdate }: { order: ProductionOrder
   const [outputProductId, setOutputProductId] = useState('');
   const [outputQty, setOutputQty] = useState('');
   const [products, setProducts] = useState<any[]>([]);
+  // V2.2: modal de reversión
+  const [showReverseModal, setShowReverseModal] = useState(false);
 
   // Fase 3: edición en borrador
   const [isEditing, setIsEditing] = useState(false);
@@ -679,6 +684,18 @@ function OrderDetailModal({ order, onClose, onUpdate }: { order: ProductionOrder
               >
                 <Ban className="w-3.5 h-3.5" />
                 <span className="hidden sm:inline">Anular</span>
+              </button>
+            )}
+            {/* V2.2: botón Revertir — reabastece insumos + descuenta output + kardex */}
+            {canReverse('production_order', order.status) && (
+              <button
+                onClick={() => setShowReverseModal(true)}
+                className="px-2 py-2 rounded-lg bg-purple-500/10 text-purple-500 dark:text-purple-400 border border-purple-500/30 text-[10px] font-black uppercase hover:bg-purple-500/20 min-h-[44px] flex items-center gap-1"
+                title="Revertir orden (reabastece insumos + descuenta output)"
+                aria-label="Revertir orden"
+              >
+                <RefreshCcw className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Revertir</span>
               </button>
             )}
             <button onClick={onClose} className="p-2 rounded-lg hover:bg-muted min-h-[44px] min-w-[44px] flex items-center justify-center" aria-label="Cerrar">
@@ -1268,6 +1285,15 @@ function OrderDetailModal({ order, onClose, onUpdate }: { order: ProductionOrder
           />
         )}
       </div>
+
+      {/* V2.2: Modal de Reversión Contable */}
+      <ReverseDocumentModal
+        isOpen={showReverseModal}
+        onClose={() => setShowReverseModal(false)}
+        type="production_order"
+        docId={order.id}
+        docLabel={`Orden ${order.order_number} • ${order.customer_name || 'Sin cliente'}`}
+      />
     </div>
   );
 }

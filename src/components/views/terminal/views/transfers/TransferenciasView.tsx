@@ -30,12 +30,15 @@ import TransferDetailsModal from './TransferDetailsModal';
 import { useDebounce } from '@/hooks/ui/useDebounce';
 import { toast } from 'sonner';
 import { useCallback } from 'react';
+import { DocumentStatusBadge, canReverse } from '@/components/ui/DocumentStatusBadge';
+import { ReverseDocumentModal } from '@/components/ui/ReverseDocumentModal';
 
 const STATUS_OPTIONS: { value: TransferStatus | 'TODOS'; label: string; icon: typeof Clock }[] = [
   { value: 'TODOS', label: 'Todos', icon: ArrowLeftRight },
   { value: 'PENDIENTE', label: 'Pendiente', icon: Clock },
   { value: 'CONFIRMADA', label: 'Confirmada', icon: CheckCircle2 },
   { value: 'CANCELADA', label: 'Cancelada', icon: XCircle },
+  { value: 'REVERSADA', label: 'Revertida', icon: RefreshCcw },
 ];
 
 export default function TransferenciasView() {
@@ -45,6 +48,8 @@ export default function TransferenciasView() {
   const [selectedTransferId, setSelectedTransferId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeStatus, setActiveStatus] = useState<TransferStatus | 'TODOS'>('TODOS');
+  // V2.2: modal de reversión
+  const [reverseTarget, setReverseTarget] = useState<{ id: string; label: string } | null>(null);
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
   const sentinelRef = useRef<HTMLDivElement>(null);
@@ -188,30 +193,9 @@ export default function TransferenciasView() {
     }
   };
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'PENDIENTE':
-        return (
-          <span className="flex items-center gap-1 text-warning bg-warning/10 px-2 py-0.5 rounded-full text-xs font-black uppercase tracking-widest">
-            <Clock className="w-3 h-3" /> Pendiente
-          </span>
-        );
-      case 'CONFIRMADA':
-        return (
-          <span className="flex items-center gap-1 text-success bg-success/10 px-2 py-0.5 rounded-full text-xs font-black uppercase tracking-widest">
-            <CheckCircle2 className="w-3 h-3" /> Confirmada
-          </span>
-        );
-      case 'CANCELADA':
-        return (
-          <span className="flex items-center gap-1 text-destructive bg-destructive/10 px-2 py-0.5 rounded-full text-xs font-black uppercase tracking-widest">
-            <XCircle className="w-3 h-3" /> Cancelada
-          </span>
-        );
-      default:
-        return <span className="text-xs">{status}</span>;
-    }
-  };
+  const getStatusBadge = (status: string) => (
+    <DocumentStatusBadge type="transfer" status={status} />
+  );
 
   return (
     <div className="space-y-6">
@@ -407,6 +391,25 @@ export default function TransferenciasView() {
                         </p>
                       </div>
                       <ArrowLeftRight className="w-5 h-5 text-muted-foreground hidden sm:flex sm:opacity-0 sm:group-hover:opacity-100 opacity-100 transition-opacity" />
+
+                      {/* V2.2: botón Revertir transferencia confirmada */}
+                      {canReverse('transfer', t.status) && activeTab === 'outgoing' && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setReverseTarget({
+                              id: t.id,
+                              label: `Transferencia ${t.id.split('-')[0]} • ${t.destination_store?.name ?? '—'}`,
+                            });
+                          }}
+                          className="shrink-0 w-10 h-10 inline-flex items-center justify-center rounded-lg border border-purple-500/40 bg-purple-500/5 text-purple-500 dark:text-purple-400 hover:bg-purple-500 hover:text-white dark:hover:text-black transition-all active:scale-95"
+                          title="Revertir transferencia (devuelve stock a origen)"
+                          aria-label="Revertir transferencia"
+                        >
+                          <RefreshCcw className="w-4 h-4" />
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -434,6 +437,15 @@ export default function TransferenciasView() {
       <TransferDetailsModal
         transferId={selectedTransferId}
         onClose={() => setSelectedTransferId(null)}
+      />
+
+      {/* V2.2: Modal de Reversión Contable */}
+      <ReverseDocumentModal
+        isOpen={!!reverseTarget}
+        onClose={() => setReverseTarget(null)}
+        type="transfer"
+        docId={reverseTarget?.id || ''}
+        docLabel={reverseTarget?.label}
       />
     </div>
   );

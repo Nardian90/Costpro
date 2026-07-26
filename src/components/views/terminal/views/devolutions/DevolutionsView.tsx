@@ -1,11 +1,13 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Plus, Search, RotateCcw, Loader2, FileText, X } from 'lucide-react';
+import { Plus, Search, RotateCcw, Loader2, FileText, X, RefreshCcw } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
 import { apiFetch } from '@/lib/api-fetch';
 import { useAuthStore } from '@/store';
 import { toast } from 'sonner';
+import { DocumentStatusBadge, canReverse } from '@/components/ui/DocumentStatusBadge';
+import { ReverseDocumentModal } from '@/components/ui/ReverseDocumentModal';
 
 const touch = 'min-h-[44px]';
 
@@ -16,6 +18,8 @@ export function DevolutionsView() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [showCreate, setShowCreate] = useState(false);
+  // V2.2: modal de reversión
+  const [reverseTarget, setReverseTarget] = useState<{ id: string; label: string } | null>(null);
 
   const load = useCallback(async () => {
     if (!storeId) return;
@@ -73,19 +77,33 @@ export function DevolutionsView() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
                     <span className="font-mono text-xs font-black text-primary">{d.devolution_number}</span>
-                    <span className={cn('text-[10px] font-black uppercase px-1.5 py-0.5 rounded',
-                      d.status === 'completed' ? 'bg-success/10 text-success' :
-                      d.status === 'voided' ? 'bg-destructive/10 text-destructive' : 'bg-muted text-muted-foreground')}>
-                      {d.status === 'completed' ? 'Completada' : d.status === 'voided' ? 'Anulada' : 'Pendiente'}
-                    </span>
+                    <DocumentStatusBadge type="devolution" status={d.status} size="xs" />
                   </div>
                   <p className="text-sm font-bold truncate">{d.reason}</p>
                   {d.customer_name && <p className="text-xs text-muted-foreground">Cliente: {d.customer_name}</p>}
                   <p className="text-xs text-muted-foreground">{new Date(d.processed_at).toLocaleString('es-CU')}</p>
                 </div>
-                <div className="text-right shrink-0">
-                  <p className="font-mono font-black text-sm">{formatCurrency(Number(d.total_amount))}</p>
-                  <p className="text-[10px] text-muted-foreground uppercase">{d.payment_method}</p>
+                <div className="text-right shrink-0 flex flex-col items-end gap-2">
+                  <div>
+                    <p className="font-mono font-black text-sm">{formatCurrency(Number(d.total_amount))}</p>
+                    <p className="text-[10px] text-muted-foreground uppercase">{d.payment_method}</p>
+                  </div>
+                  {/* V2.2: botón Revertir devolución completada */}
+                  {canReverse('devolution', d.status) && (
+                    <button
+                      type="button"
+                      onClick={() => setReverseTarget({
+                        id: d.id,
+                        label: `Devolución ${d.devolution_number} • ${formatCurrency(Number(d.total_amount))}`,
+                      })}
+                      className="inline-flex items-center gap-1 px-2 py-1 rounded-lg border border-purple-500/40 bg-purple-500/5 text-purple-500 dark:text-purple-400 hover:bg-purple-500 hover:text-white dark:hover:text-black transition-all active:scale-95 text-[10px] font-black uppercase tracking-widest"
+                      title="Revertir devolución (descuenta stock restaurado)"
+                      aria-label="Revertir devolución"
+                    >
+                      <RefreshCcw className="w-3 h-3" />
+                      Revertir
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
@@ -94,6 +112,15 @@ export function DevolutionsView() {
       )}
 
       {showCreate && <CreateDevolutionModal onClose={() => setShowCreate(false)} onCreated={() => { load(); setShowCreate(false); }} storeId={storeId!} />}
+
+      {/* V2.2: Modal de Reversión Contable */}
+      <ReverseDocumentModal
+        isOpen={!!reverseTarget}
+        onClose={() => setReverseTarget(null)}
+        type="devolution"
+        docId={reverseTarget?.id || ''}
+        docLabel={reverseTarget?.label}
+      />
     </div>
   );
 }

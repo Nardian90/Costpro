@@ -1,13 +1,15 @@
 /**
  * POST /api/reverse — reversión de documentos contables
  *
- * Body: { type: 'transaction'|'receipt'|'transfer'|'adjustment'|'devolution', id: UUID, reason: string }
+ * Body: { type: 'transaction'|'receipt'|'transfer'|'adjustment'|'devolution'|'production_order', id: UUID, reason: string }
  *
  * Invoca la RPC correspondiente para revertir la operación:
- * - Devuelve/descuenta stock afectado
- * - Crea kardex entries de reversión
+ * - Devuelve/descuenta stock afectado (productos + lotes + output de producción)
+ * - Crea kardex entries de reversión (reference_type='reversal')
  * - Marca el documento como 'reversed'/'REVERSADA'
- * - Registra quien revirtió y por qué
+ * - Registra quien revirtió y por qué (reversed_at, reversed_by, reversal_reason)
+ *
+ * V2.3: añadido soporte para production_order + limpiado código muerto.
  */
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, type AuthenticatedSession } from '@/lib/auth-middleware';
@@ -19,17 +21,19 @@ import { logger } from '@/lib/logger';
 import { z } from 'zod';
 
 const reverseSchema = z.object({
-  type: z.enum(['transaction', 'receipt', 'transfer', 'adjustment', 'devolution']),
+  type: z.enum(['transaction', 'receipt', 'transfer', 'adjustment', 'devolution', 'production_order']),
   id: z.string().min(1),
-  reason: z.string().min(3),
+  reason: z.string().min(3).max(500),
 });
 
-const RPC_MAP: Record<string, string> = {
-  transaction: 'reverse_transaction',
-  receipt: 'reverse_receipt',
-  transfer: 'reverse_transfer',
-  adjustment: 'reverse_adjustment',
-  devolution: 'reverse_devolution',
+/** V2.3: cada tipo mapea a (rpc_name, id_param_name). SÓLO ese param se envía. */
+const RPC_MAP: Record<string, { rpc: string; idParam: string }> = {
+  transaction:      { rpc: 'reverse_transaction',        idParam: 'p_transaction_id' },
+  receipt:          { rpc: 'reverse_receipt',            idParam: 'p_receipt_id' },
+  transfer:         { rpc: 'reverse_transfer',           idParam: 'p_transfer_id' },
+  adjustment:       { rpc: 'reverse_adjustment',         idParam: 'p_adjustment_id' },
+  devolution:       { rpc: 'reverse_devolution',         idParam: 'p_devolution_id' },
+  production_order: { rpc: 'reverse_production_order',   idParam: 'p_order_id' },
 };
 
 async function postHandler(req: NextRequest, session: AuthenticatedSession) {
@@ -39,54 +43,50 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
 
   const body = await req.json();
   const parsed = reverseSchema.safeParse(body);
-  if (!parsed.success) return NextResponse.json({ ...createApiError('INVALID_DATA'), details: parsed.error.format() }, { status: 400 });
+  if (!parsed.success) {
+    return NextResponse.json(
+      { ...createApiError('INVALID_DATA'), details: parsed.error.format() },
+      { status: 400 },
+    );
+  }
 
   const { getSupabaseAdminSafe } = await import('@/lib/supabase-admin');
   const supabase = getSupabaseAdminSafe();
   if (!supabase) return NextResponse.json(createApiError('CONFIG_ERROR'), { status: 500 });
 
-  const rpcName = RPC_MAP[parsed.data.type];
-  if (!rpcName) return NextResponse.json({ error: 'Tipo de documento no soportado' }, { status: 400 });
+  const mapping = RPC_MAP[parsed.data.type];
+  if (!mapping) {
+    return NextResponse.json({ error: 'Tipo de documento no soportado' }, { status: 400 });
+  }
 
-  const { data, error } = await supabase.rpc(rpcName, {
-    p_transaction_id: parsed.data.id,    // parameter name varies but Supabase matches by position
-    p_receipt_id: parsed.data.id,
-    p_transfer_id: parsed.data.id,
-    p_adjustment_id: parsed.data.id,
-    p_devolution_id: parsed.data.id,
-    p_reason: parsed.data.reason,
-    p_user_id: session.user.id,
-  });
-
-  // The RPC call above won't work because Supabase sends ALL params.
-  // Instead, call with only the relevant params.
-  // Let's use a different approach: call with named params matching the RPC.
+  // V2.3: enviar SOLO los params relevantes a la RPC
   const rpcParams: Record<string, unknown> = {
+    [mapping.idParam]: parsed.data.id,
     p_reason: parsed.data.reason,
     p_user_id: session.user.id,
   };
 
-  // Set the correct ID parameter based on type
-  const idParamMap: Record<string, string> = {
-    transaction: 'p_transaction_id',
-    receipt: 'p_receipt_id',
-    transfer: 'p_transfer_id',
-    adjustment: 'p_adjustment_id',
-    devolution: 'p_devolution_id',
-  };
-  rpcParams[idParamMap[parsed.data.type]] = parsed.data.id;
-
-  const { data: rpcResult, error: rpcError } = await supabase.rpc(rpcName, rpcParams);
+  const { data: rpcResult, error: rpcError } = await supabase.rpc(mapping.rpc, rpcParams);
 
   if (rpcError) {
     logger.error('DATABASE', 'REVERSE_FAILED', {
       type: parsed.data.type, id: parsed.data.id, error: rpcError.message, userId: session.user.id,
     });
-    return NextResponse.json({ error: rpcError.message }, { status: 500 });
+    // Mensaje amigable para errores conocidos
+    const msg = rpcError.message || '';
+    let status = 500;
+    if (msg.includes('ERR_ALREADY_REVERSED')) status = 409;
+    else if (msg.includes('ERR_ALREADY_VOIDED')) status = 409;
+    else if (msg.includes('ERR_NOT_CONFIRMED')) status = 422;
+    else if (msg.includes('ERR_INVALID_TRANSITION')) status = 422;
+    else if (msg.includes('ERR_UNAUTHORIZED')) status = 403;
+    else if (msg.includes('ERR_') && msg.includes('_NOT_FOUND')) status = 404;
+    return NextResponse.json({ error: msg }, { status });
   }
 
   logger.info('DATABASE', 'DOCUMENT_REVERSED', {
-    type: parsed.data.type, id: parsed.data.id, userId: session.user.id, reason: parsed.data.reason, result: rpcResult,
+    type: parsed.data.type, id: parsed.data.id, userId: session.user.id,
+    reason: parsed.data.reason, result: rpcResult,
   });
 
   return NextResponse.json(rpcResult);
