@@ -672,18 +672,15 @@ export default function InventoryView() {
             ) : inventoryTab === 'trazabilidad' ? (
                 <StockHistoryView />
             ) : (
-            <>
-            {/* Contenido de Stock Actual */}
-
-            {/* ESTÁNDAR: SearchBar a línea completa + ViewSwitcher debajo — sin gap con tabs */}
             <div className="space-y-1">
+            {/* Contenido de Stock Actual — SearchBar pegado a tabs */}
                 <SearchBar
                     value={searchTerm}
                     onChange={setSearchTerm}
                     placeholder="Buscar por nombre o SKU en inventario..."
                     showSettings={true}
                     aria-label="Buscar productos en el inventario por nombre o código SKU"
-                    className="[&_input]:!text-base [&_input]:!py-3 [&_input]:!pl-12 [&_input]:!pr-12 [&_input]:rounded-xl [&_input]:border-primary/20 [&_input]:bg-card [&_input]:shadow-sm [&_input]:focus:border-primary [&_input]:focus:ring-2 [&_input]:focus:ring-primary/15"
+                    className="!space-y-0 [&_input]:!text-base [&_input]:!py-3 [&_input]:!pl-12 [&_input]:!pr-12 [&_input]:rounded-xl [&_input]:border-primary/20 [&_input]:bg-card [&_input]:shadow-sm [&_input]:focus:border-primary [&_input]:focus:ring-2 [&_input]:focus:ring-primary/15"
                 >
                         {/* Filtros colapsables (icono Settings2 a la derecha del buscador) */}
                         <div className="space-y-4">
@@ -793,7 +790,6 @@ export default function InventoryView() {
                         <ActionMenu actions={actions} position="top" />
                     )}
                 </div>
-            </div>
 
             {/* FC Coverage Accordion — replaces separate FC bar + FC filter tabs */}
             {fcCoverage.total > 0 && (
@@ -958,7 +954,7 @@ export default function InventoryView() {
                 en TerminalShell (ScrollToTop) que escucha .terminal-content y funciona
                 en todas las vistas. Antes había duplicación: este botón + el global se veían
                 superpuestos en desktop, y este quedaba cortado por el tab bar en mobile. */}
-            </>
+            </div>
             )}
         </div>
     );
