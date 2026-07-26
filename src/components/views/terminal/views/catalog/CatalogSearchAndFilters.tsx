@@ -68,15 +68,86 @@ export default function CatalogSearchAndFilters({
 
   return (
     <>
-      {/* Professional Search Bar — categorías movidas al CatalogHeader */}
+      {/* Professional Search Bar — con filtros colapsables (estándar) */}
       <div className="space-y-2 sticky top-[calc(env(safe-area-inset-top)+56px)] sm:top-[76px] z-40 bg-background/95 backdrop-blur-md pb-2 -mx-3 sm:-mx-4 px-3 sm:px-4 sm:relative sm:top-0 sm:bg-transparent sm:pb-0 sm:mx-0 sm:px-0">
         <SearchBar
           value={searchTerm}
           onChange={onSearchChange}
           placeholder="Buscar por nombre o SKU..."
-          showSettings={false}
+          showSettings={true}
           aria-label="Buscar productos del catálogo por nombre o código SKU"
-        />
+        >
+          {/* Filtros colapsables estándar */}
+          <div className="space-y-4">
+            {/* Categorías multi-select */}
+            {categories.length > 0 && (
+              <div>
+                <label className="text-xs font-black text-muted-foreground uppercase mb-2 block">Categorías</label>
+                <div className="flex items-center gap-1 flex-wrap">
+                  <button
+                    type="button"
+                    onClick={() => onCategoryChange('')}
+                    className={cn(
+                      'px-2.5 py-1 min-h-[28px] rounded-full text-[10px] font-bold uppercase border transition-all active:scale-95',
+                      !selectedCategories || selectedCategories.size === 0
+                        ? 'bg-primary text-primary-foreground border-primary'
+                        : 'bg-muted/50 text-muted-foreground border-border hover:bg-muted'
+                    )}
+                  >
+                    Todas
+                  </button>
+                  {categories.map(cat => (
+                    <button
+                      key={cat}
+                      type="button"
+                      onClick={() => onCategoryToggle?.(cat)}
+                      className={cn(
+                        'px-2.5 py-1 min-h-[28px] rounded-full text-[10px] font-bold uppercase border transition-all active:scale-95',
+                        selectedCategories?.has(cat)
+                          ? 'bg-primary text-primary-foreground border-primary'
+                          : 'bg-muted/50 text-muted-foreground border-border hover:bg-muted'
+                      )}
+                    >
+                      {cat}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+            {/* Productos incompletos */}
+            {incompleteCount > 0 && (
+              <div>
+                <label className="text-xs font-black text-muted-foreground uppercase mb-2 block">Estado de Producto</label>
+                <div className="flex items-center gap-1 flex-wrap">
+                  <button
+                    type="button"
+                    onClick={() => onClearIncomplete()}
+                    className={cn(
+                      'px-2.5 py-1 min-h-[28px] rounded-full text-[10px] font-bold uppercase border transition-all active:scale-95',
+                      !showIncompleteOnly
+                        ? 'bg-primary text-primary-foreground border-primary'
+                        : 'bg-muted/50 text-muted-foreground border-border hover:bg-muted'
+                    )}
+                  >
+                    Todos ({filteredCount})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { /* toggle incomplete */ }}
+                    className={cn(
+                      'px-2.5 py-1 min-h-[28px] rounded-full text-[10px] font-bold uppercase border transition-all active:scale-95',
+                      showIncompleteOnly
+                        ? 'bg-warning text-white border-warning'
+                        : 'bg-muted/50 text-muted-foreground border-border hover:bg-muted'
+                    )}
+                  >
+                    Incompletos ({incompleteCount})
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </SearchBar>
       </div>
 
       {/* FC Accordion Panel — Cobertura + Filtros consolidados */}

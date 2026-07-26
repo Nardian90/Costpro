@@ -675,16 +675,17 @@ export default function InventoryView() {
             <>
             {/* Contenido de Stock Actual */}
 
-            {/* ESTÁNDAR: SearchBar con filtros colapsables + ViewSwitcher + ActionMenu */}
-            <div className="flex items-center gap-2">
-                <div className="flex-1">
+            {/* ESTÁNDAR: SearchBar con filtros colapsables + ViewSwitcher + ActionMenu
+                Mobile-first: buscador a ancho completo, ViewSwitcher salta a línea siguiente */}
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                <div className="flex-1 min-w-0">
                     <SearchBar
                         value={searchTerm}
                         onChange={setSearchTerm}
                         placeholder="Buscar por nombre o SKU en inventario..."
                         showSettings={true}
                         aria-label="Buscar productos en el inventario por nombre o código SKU"
-                        className="[&_input]:!text-base [&_input]:!py-3 [&_input]:!pl-12 [&_input]:rounded-xl [&_input]:border-primary/20 [&_input]:bg-card [&_input]:shadow-sm [&_input]:focus:border-primary [&_input]:focus:ring-2 [&_input]:focus:ring-primary/15"
+                        className="[&_input]:!text-base [&_input]:!py-3 [&_input]:!pl-12 [&_input]:!pr-12 [&_input]:rounded-xl [&_input]:border-primary/20 [&_input]:bg-card [&_input]:shadow-sm [&_input]:focus:border-primary [&_input]:focus:ring-2 [&_input]:focus:ring-primary/15"
                     >
                         {/* Filtros colapsables (icono Settings2 a la derecha del buscador) */}
                         <div className="space-y-4">
@@ -785,8 +786,8 @@ export default function InventoryView() {
                     </SearchBar>
                 </div>
 
-                {/* ViewSwitcher — visible SIEMPRE */}
-                <div className="flex items-center gap-2 shrink-0">
+                {/* ViewSwitcher — mobile: línea siguiente; desktop: al lado del buscador */}
+                <div className="flex items-center gap-2 shrink-0 justify-end sm:justify-start">
                     <ViewSwitcher
                         currentView={layoutMode === 'card' ? 'grid' : 'table'}
                         onViewChange={(v) => setLayoutMode(v === 'grid' ? 'card' : 'table')}

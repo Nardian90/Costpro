@@ -115,18 +115,18 @@ const ProductRow = React.forwardRef<HTMLTableRowElement, { product: Product; onA
                         type="button"
                         onClick={() => onViewKardex?.(product)}
                         title="Kardex"
-                        className="inline-flex items-center justify-center w-7 h-7 rounded-lg border bg-info/8 border-info/15 text-info hover:bg-info/15 transition-all active:scale-90"
+                        className="inline-flex items-center justify-center w-10 h-10 min-h-[40px] rounded-lg border bg-info/8 border-info/15 text-info hover:bg-info/15 transition-all active:scale-90"
                     >
-                        <BookOpen className="w-3.5 h-3.5" />
+                        <BookOpen className="w-4 h-4" />
                     </button>
                     {/* Ajustar Stock */}
                     <button
                         type="button"
                         onClick={() => onAdjust?.(product)}
                         title="Ajustar stock"
-                        className="inline-flex items-center justify-center w-7 h-7 rounded-lg border bg-warning/8 border-warning/15 text-warning hover:bg-warning/15 transition-all active:scale-90"
+                        className="inline-flex items-center justify-center w-10 h-10 min-h-[40px] rounded-lg border bg-warning/8 border-warning/15 text-warning hover:bg-warning/15 transition-all active:scale-90"
                     >
-                        <Edit className="w-3.5 h-3.5" />
+                        <Edit className="w-4 h-4" />
                     </button>
                     {/* Visible en tienda */}
                     <button
@@ -134,7 +134,7 @@ const ProductRow = React.forwardRef<HTMLTableRowElement, { product: Product; onA
                         onClick={() => onToggleVisible?.(product, !product.visible_en_tienda)}
                         disabled={isTogglingVisible === product.id}
                         className={cn(
-                            'inline-flex items-center justify-center w-7 h-7 rounded-lg border transition-all active:scale-90 disabled:opacity-50',
+                            'inline-flex items-center justify-center w-10 h-10 min-h-[40px] rounded-lg border transition-all active:scale-90 disabled:opacity-50',
                             product.visible_en_tienda
                                 ? 'bg-primary/10 border-primary/20 text-primary'
                                 : 'bg-muted border-border text-muted-foreground/50 hover:bg-muted/80',
@@ -146,9 +146,9 @@ const ProductRow = React.forwardRef<HTMLTableRowElement, { product: Product; onA
                         {isTogglingVisible === product.id ? (
                             <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
                         ) : product.visible_en_tienda ? (
-                            <Eye className="w-3.5 h-3.5" />
+                            <Eye className="w-4 h-4" />
                         ) : (
-                            <EyeOff className="w-3.5 h-3.5" />
+                            <EyeOff className="w-4 h-4" />
                         )}
                     </button>
                     {/* Cambio 2: Precio visible en tienda (DollarSign) — verde si visible, tachado si no */}
@@ -157,7 +157,7 @@ const ProductRow = React.forwardRef<HTMLTableRowElement, { product: Product; onA
                         onClick={() => onTogglePriceVisible?.(product)}
                         disabled={isTogglingPriceVisible === product.id}
                         className={cn(
-                            'inline-flex items-center justify-center w-7 h-7 rounded-lg border transition-all active:scale-90 disabled:opacity-50',
+                            'inline-flex items-center justify-center w-10 h-10 min-h-[40px] rounded-lg border transition-all active:scale-90 disabled:opacity-50',
                             product.price_visible
                                 ? 'bg-success/10 border-success/20 text-success'
                                 : 'bg-muted border-border text-muted-foreground/50 hover:bg-muted/80',
@@ -169,7 +169,7 @@ const ProductRow = React.forwardRef<HTMLTableRowElement, { product: Product; onA
                         {isTogglingPriceVisible === product.id ? (
                             <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
                         ) : (
-                            <DollarSign className={cn('w-3.5 h-3.5', !product.price_visible && 'line-through opacity-60')} />
+                            <DollarSign className={cn('w-4 h-4', !product.price_visible && 'line-through opacity-60')} />
                         )}
                     </button>
                     {/* Cambio 2: Stock visible en tienda (Package) — verde si visible, tachado si no */}
@@ -178,7 +178,7 @@ const ProductRow = React.forwardRef<HTMLTableRowElement, { product: Product; onA
                         onClick={() => onToggleStockVisible?.(product)}
                         disabled={isTogglingStockVisible === product.id}
                         className={cn(
-                            'inline-flex items-center justify-center w-7 h-7 rounded-lg border transition-all active:scale-90 disabled:opacity-50',
+                            'inline-flex items-center justify-center w-10 h-10 min-h-[40px] rounded-lg border transition-all active:scale-90 disabled:opacity-50',
                             product.stock_visible
                                 ? 'bg-success/10 border-success/20 text-success'
                                 : 'bg-muted border-border text-muted-foreground/50 hover:bg-muted/80',
@@ -190,7 +190,7 @@ const ProductRow = React.forwardRef<HTMLTableRowElement, { product: Product; onA
                         {isTogglingStockVisible === product.id ? (
                             <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
                         ) : (
-                            <Package className={cn('w-3.5 h-3.5', !product.stock_visible && 'line-through opacity-60')} />
+                            <Package className={cn('w-4 h-4', !product.stock_visible && 'line-through opacity-60')} />
                         )}
                     </button>
                     {/* Cambio 2: En promoción (Tag) — amarillo si activa, gris si no */}
@@ -199,7 +199,7 @@ const ProductRow = React.forwardRef<HTMLTableRowElement, { product: Product; onA
                         onClick={() => onTogglePromotion?.(product)}
                         disabled={isTogglingPromotion === product.id}
                         className={cn(
-                            'inline-flex items-center justify-center w-7 h-7 rounded-lg border transition-all active:scale-90 disabled:opacity-50',
+                            'inline-flex items-center justify-center w-10 h-10 min-h-[40px] rounded-lg border transition-all active:scale-90 disabled:opacity-50',
                             product.on_promotion
                                 ? 'bg-warning/10 border-warning/20 text-warning'
                                 : 'bg-muted border-border text-muted-foreground/50 hover:bg-muted/80',
@@ -211,7 +211,7 @@ const ProductRow = React.forwardRef<HTMLTableRowElement, { product: Product; onA
                         {isTogglingPromotion === product.id ? (
                             <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
                         ) : (
-                            <Tag className="w-3.5 h-3.5" />
+                            <Tag className="w-4 h-4" />
                         )}
                     </button>
                 </div>
