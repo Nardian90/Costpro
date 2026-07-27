@@ -197,7 +197,7 @@ async function getHandler(request: NextRequest, session: AuthenticatedSession) {
   if (status) query = query.eq('status', status);
   if (order_type) query = query.eq('order_type', order_type);
 
-  const { data, error } = await query;
+  const { data, error } = await query.limit(200); // H5: paginación
   if (error) {
     logger.error('DATABASE', 'LIST_PO_FAILED', { error: error.message, userId: session.user.id });
     return NextResponse.json({ error: error.message }, { status: 500 });

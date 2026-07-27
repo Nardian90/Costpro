@@ -20,7 +20,8 @@ export function useCostSheets() {
       const { data, error } = await supabase
         .from('cost_sheets')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(200); // H5: paginación
 
       if (error) throw error;
 

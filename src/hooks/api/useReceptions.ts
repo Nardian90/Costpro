@@ -18,7 +18,8 @@ export function useReceptions(storeId?: string | null, isAdmin = false) {
       if (cleanStoreId) {
         query = query.eq('store_id', cleanStoreId);
       }
-      const data = await withTableLogging('select', 'receipts', () => query.order('created_at', { ascending: false }));
+      // H5: paginación — limit 200 para no cargar TODAS las recepciones
+      const data = await withTableLogging('select', 'receipts', () => query.order('created_at', { ascending: false }).limit(200));
       return await validateRPCArrayResponse(data, receiptSchema, 'receipts') as any;
     },
     enabled: !!cleanStoreId,
