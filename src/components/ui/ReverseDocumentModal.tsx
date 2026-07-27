@@ -68,7 +68,6 @@ export function ReverseDocumentModal({
       setReason('');
       reverseMutation.reset();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
   if (!isOpen) return null;

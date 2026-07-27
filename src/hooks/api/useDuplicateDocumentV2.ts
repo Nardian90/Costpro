@@ -277,7 +277,7 @@ async function duplicateToCart(
   type: DuplicableDocType,
   id: string,
   config: CartAdapterConfig,
-  cartActions: { addItem: Function; clearCart: Function },
+  cartActions: { addItem: (item: any) => void; clearCart: () => void },
 ): Promise<DuplicateResult> {
   const { data: items, error } = await supabase
     .from(config.itemsTable)
