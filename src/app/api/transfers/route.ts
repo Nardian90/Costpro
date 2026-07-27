@@ -85,68 +85,39 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
   const supabase = getSupabaseAdminSafe();
   if (!supabase) return NextResponse.json(createApiError('CONFIG_ERROR'), { status: 500 });
 
-  // V2.10.3: validar que TODOS los productos existen en el store de origen
-  const productIds = parsed.data.items.map(i => i.product_id);
-  const { data: existingProducts, error: productCheckErr } = await supabase
-    .from('products')
-    .select('id, cost_average')
-    .in('id', productIds)
-    .eq('store_id', parsed.data.origin_store_id);
+  // H3 FIX: usar create_transfer RPC (no INSERT directo) — garantiza BOLA + audit + validation
+  const { data: transferId, error: rpcError } = await supabase.rpc('create_transfer', {
+    p_origin_store_id: parsed.data.origin_store_id,
+    p_destination_store_id: parsed.data.destination_store_id,
+    p_items: parsed.data.items.map(i => ({
+      product_id: i.product_id,
+      quantity: i.quantity,
+      unit_cost: i.unit_cost, // la RPC ignora esto y usa cost_average server-side
+    })),
+    p_notes: parsed.data.notes || null,
+    p_user_id: session.user.id,
+  });
 
-  if (productCheckErr) {
-    logger.error('DATABASE', 'TRANSFER_PRODUCT_CHECK_FAILED', { error: productCheckErr.message });
-    return NextResponse.json({ error: 'Error validando productos' }, { status: 500 });
-  }
-
-  const foundIds = new Set((existingProducts || []).map(p => p.id));
-  const missingIds = productIds.filter(id => !foundIds.has(id));
-  if (missingIds.length > 0) {
-    return NextResponse.json(
-      { error: `Productos no encontrados en store origen: ${missingIds.join(', ')}` },
-      { status: 400 },
-    );
-  }
-
-  // Mapa product_id → cost_average para costo server-side
-  const costMap = new Map((existingProducts || []).map(p => [p.id, p.cost_average || 0]));
-
-  // V2.4: Insert directo (service_role bypass RLS)
-  const { data: tr, error: e1 } = await supabase.from('transfers').insert({
-    origin_store_id: parsed.data.origin_store_id,
-    destination_store_id: parsed.data.destination_store_id,
-    created_by: session.user.id,
-    status: 'PENDIENTE',
-    notes: parsed.data.notes || null,
-  }).select().single();
-  if (e1) {
-    logger.error('DATABASE', 'CREATE_TRANSFER_FAILED', { error: e1.message });
-    return NextResponse.json({ error: e1.message }, { status: 500 });
-  }
-
-  // V2.10.3: Insertar items con costo server-side (cost_average del store origen)
-  const itemsToInsert = parsed.data.items.map(i => ({
-    transfer_id: tr.id,
-    product_id: i.product_id,
-    quantity: i.quantity,
-    unit_cost: costMap.get(i.product_id) ?? 0,  // server-side, no del cliente
-  }));
-  const { error: e2 } = await supabase.from('transfer_items').insert(itemsToInsert);
-  if (e2) {
-    logger.error('DATABASE', 'CREATE_TRANSFER_ITEMS_FAILED', { error: e2.message, transferId: tr.id });
-    return NextResponse.json({ error: e2.message }, { status: 500 });
+  if (rpcError) {
+    logger.error('DATABASE', 'CREATE_TRANSFER_FAILED', { error: rpcError.message });
+    const msg = rpcError.message || '';
+    let status = 500;
+    if (msg.includes('ERR_UNAUTHORIZED')) status = 403;
+    else if (msg.includes('ERR_PRODUCT_NOT_IN_STORE')) status = 400;
+    return NextResponse.json({ error: msg }, { status });
   }
 
   logger.info('DATABASE', 'TRANSFER_CREATED', {
     originStoreId: parsed.data.origin_store_id,
     destStoreId: parsed.data.destination_store_id,
     userId: session.user.id,
-    transferId: tr.id,
+    transferId,
   });
   return NextResponse.json({
-    id: tr.id,
-    transfer_id: tr.id,
-    status: tr.status,
-    transfer_number: tr.id.slice(0, 8),
+    id: transferId,
+    transfer_id: transferId,
+    status: 'PENDIENTE',
+    transfer_number: (transferId as string)?.slice(0, 8) || '',
   });
 }
 
