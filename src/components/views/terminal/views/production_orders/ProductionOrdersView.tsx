@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { Plus, Factory, Wrench, Eye, Ban, Play, Pause, CheckCircle2, Clock, DollarSign, Package, ArrowDownToLine, X, Edit3, Undo2, Copy } from 'lucide-react';
+import { Plus, Factory, Wrench, Eye, Ban, Play, Pause, CheckCircle2, Clock, DollarSign, Package, ArrowDownToLine, X, Edit3, Undo2, Copy, Download } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuthStore } from '@/store';
@@ -395,6 +395,37 @@ function OrderDetailModal({ order, onClose, onUpdate }: { order: ProductionOrder
   const [showReverseModal, setShowReverseModal] = useState(false);
   // V2.4: modal de duplicación
   const [showDuplicateModal, setShowDuplicateModal] = useState(false);
+  // V2.12.15: export PDF loading state
+  const [exportingPDF, setExportingPDF] = useState(false);
+
+  // V2.12.15: exportar OT a PDF
+  const handleExportPDF = async () => {
+    setExportingPDF(true);
+    try {
+      const token = useAuthStore.getState().token;
+      const res = await fetch(`/api/production-orders/${order.id}/pdf`, {
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: 'Error generando PDF' }));
+        throw new Error(err.error || `HTTP ${res.status}`);
+      }
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `OT_${order.order_number}_${new Date().toISOString().split('T')[0]}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+      toast.success('PDF descargado correctamente');
+    } catch (e: any) {
+      toast.error(`Error exportando PDF: ${e.message}`);
+    } finally {
+      setExportingPDF(false);
+    }
+  };
 
   // Fase 3: edición en borrador
   const [isEditing, setIsEditing] = useState(false);
@@ -711,6 +742,17 @@ function OrderDetailModal({ order, onClose, onUpdate }: { order: ProductionOrder
             >
               <Copy className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Duplicar</span>
+            </button>
+            {/* V2.12.15: botón Exportar PDF — descarga la OT como PDF */}
+            <button
+              onClick={handleExportPDF}
+              disabled={exportingPDF}
+              className="px-2 py-2 rounded-lg bg-success/10 text-success border border-success/30 text-[10px] font-black uppercase hover:bg-success/20 min-h-[44px] flex items-center gap-1 disabled:opacity-50"
+              title="Exportar orden a PDF"
+              aria-label="Exportar PDF"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">{exportingPDF ? '...' : 'PDF'}</span>
             </button>
             <button onClick={onClose} className="p-2 rounded-lg hover:bg-muted min-h-[44px] min-w-[44px] flex items-center justify-center" aria-label="Cerrar">
               <X className="w-4 h-4" />
