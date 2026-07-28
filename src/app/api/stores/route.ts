@@ -101,13 +101,40 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
         });
       }
 
-      // Sin paginación: legacy (devuelve todas) — mantener compatibilidad
-      const { data, error } = await query.order('name');
-      if (error) {
-        logger.error('DATABASE', 'STORE_LIST_FAILED', { userId: session.user.id, error });
-        return NextResponse.json(createApiError('STORE_FETCH_FAILED'), { status: 500 });
+      // Sin params de paginación explícitos:
+      // V2.12.11 (H4 fix): por seguridad, default a paginación con limit=200.
+      // El caller puede pedir ?all=true para legacy (todas sin límite), pero solo
+      // si explícitamente lo pide — evita el bug original donde el admin podía
+      // traer todas las tiendas sin filtro y sin saberlo.
+      const allParam = searchParams.get('all');
+      if (allParam === 'true') {
+        // Legacy: devuelve todas sin paginación (mantener compatibilidad admin UI)
+        const { data, error } = await query.order('name');
+        if (error) {
+          logger.error('DATABASE', 'STORE_LIST_FAILED', { userId: session.user.id, error });
+          return NextResponse.json(createApiError('STORE_FETCH_FAILED'), { status: 500 });
+        }
+        stores = data;
+      } else {
+        // Default: paginación con limit=200 (suficiente para la mayoría de UIs,
+        // evita traer 10K+ tiendas accidentalmente)
+        const limit = 200;
+        const { data, error } = await query.order('name').limit(limit);
+        if (error) {
+          logger.error('DATABASE', 'STORE_LIST_FAILED', { userId: session.user.id, error });
+          return NextResponse.json(createApiError('STORE_FETCH_FAILED'), { status: 500 });
+        }
+        return NextResponse.json({
+          data,
+          pagination: {
+            page: 1,
+            limit,
+            count: data?.length || 0,
+            nextCursor: data && data.length === limit ? data[data.length - 1].name : null,
+            hasMore: data?.length === limit,
+          },
+        });
       }
-      stores = data;
     } else {
       // Non-admin sees stores where they have active membership
       const memberships = session.user.memberships || [];
