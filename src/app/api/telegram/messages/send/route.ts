@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, type AuthenticatedSession } from '@/lib/auth-middleware';
+import { validateOrigin } from '@/lib/csrf';
 import { withTracing } from '@/lib/observability';
 import { rateLimit } from '@/lib/rate-limit';
 import { createApiError } from '@/lib/api-errors';
@@ -35,6 +36,7 @@ const sendSchema = z.object({
 );
 
 async function postHandler(req: NextRequest, session: AuthenticatedSession) {
+    if (!validateOrigin(req)) { return NextResponse.json({ error: "INVALID_ORIGIN" }, { status: 403 }); }
   const { allowed } = await rateLimit(`telegram:send:${session.user.id}`, {
     windowMs: 60_000, maxRequests: 20,
   });

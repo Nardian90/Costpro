@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth } from '@/lib/auth-middleware';
+import { validateOrigin } from '@/lib/csrf';
 import Papa from 'papaparse';
 import { createWorkbook } from '@/lib/export/lazy-excel';
 import { rateLimit } from '@/lib/rate-limit';
@@ -79,6 +80,7 @@ const handler = withAuth(async (req, session) => {
 });
 
 async function postHandler(req: NextRequest) {
+    if (!validateOrigin(req)) { return NextResponse.json({ error: "INVALID_ORIGIN" }, { status: 403 }); }
   return handler(req);
 }
 

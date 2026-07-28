@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
 import { getSupabaseForSession } from '@/lib/supabase-session';
+import { withSecurity } from '@/lib/with-security';
 
 
 
@@ -170,7 +171,10 @@ async function postHandler(request: NextRequest, session: AuthenticatedSession) 
   }
 }
 
-export const POST = withAuth(postHandler);
+export const POST = withAuth(withSecurity(postHandler, {
+  rateLimitKey: 'po-void:post',
+  maxRequests: 5,
+}));
 
 
 

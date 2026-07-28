@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
 // FIX C1: usar getSupabaseAuthClient para que RLS respete el usuario autenticado
 import { getSupabaseForSession } from '@/lib/supabase-session';
+import { withSecurity } from '@/lib/with-security';
 
 /**
  * GET /api/commissions/rules?store_id=...&worker_id=...
@@ -184,4 +185,7 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
 }
 
 export const GET = withAuth(getHandler);
-export const POST = withAuth(postHandler);
+export const POST = withAuth(withSecurity(postHandler, {
+  rateLimitKey: 'commissions-rules:post',
+  maxRequests: 10,
+}));

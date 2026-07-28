@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, type AuthenticatedSession } from '@/lib/auth-middleware';
+import { validateOrigin } from '@/lib/csrf';
 import { withTracing } from '@/lib/observability';
 import { rateLimit } from '@/lib/rate-limit';
 import { createApiError } from '@/lib/api-errors';
@@ -14,6 +15,7 @@ import { getBotInfo, getWebhookInfo } from '@/lib/telegram/bot-client';
  * Devuelve la config del bot + status (webhook info, bot info cacheada).
  */
 async function getHandler(req: NextRequest, session: AuthenticatedSession) {
+    if (!validateOrigin(req)) { return NextResponse.json({ error: "INVALID_ORIGIN" }, { status: 403 }); }
   const url = new URL(req.url);
   const storeId = url.searchParams.get('store_id');
   if (!storeId) {
@@ -88,6 +90,7 @@ const putSchema = z.object({
  * y cachea bot_user_id + bot_username.
  */
 async function putHandler(req: NextRequest, session: AuthenticatedSession) {
+    if (!validateOrigin(req)) { return NextResponse.json({ error: "INVALID_ORIGIN" }, { status: 403 }); }
   const { allowed } = await rateLimit(`telegram:config:${session.user.id}`, {
     windowMs: 60_000, maxRequests: 10,
   });

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, type AuthenticatedSession } from '@/lib/auth-middleware';
+import { validateOrigin } from '@/lib/csrf';
 import { withTracing } from '@/lib/observability';
 import { rateLimit } from '@/lib/rate-limit';
 import { createApiError } from '@/lib/api-errors';
@@ -14,6 +15,7 @@ const testSchema = z.object({
 });
 
 async function postHandler(req: NextRequest, session: AuthenticatedSession) {
+    if (!validateOrigin(req)) { return NextResponse.json({ error: "INVALID_ORIGIN" }, { status: 403 }); }
   const { allowed } = await rateLimit(`wa:test:${session.user.id}`, { windowMs: 60_000, maxRequests: 10 });
   if (!allowed) return NextResponse.json(createApiError('RATE_LIMITED'), { status: 429 });
 

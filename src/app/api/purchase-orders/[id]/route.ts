@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
 import { getSupabaseForSession } from '@/lib/supabase-session';
+import { withSecurity } from '@/lib/with-security';
 
 /**
  * /api/purchase-orders/[id]
@@ -168,5 +169,11 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
 }
 
 export const GET = withAuth(getHandler);
-export const PATCH = withAuth(patchHandler);
-export const POST = withAuth(postHandler);
+export const PATCH = withAuth(withSecurity(patchHandler, {
+  rateLimitKey: 'purchase-orders:patch',
+  maxRequests: 20,
+}));
+export const POST = withAuth(withSecurity(postHandler, {
+  rateLimitKey: 'purchase-orders:post',
+  maxRequests: 10,
+}));

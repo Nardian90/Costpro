@@ -1,6 +1,7 @@
 import { academyGenerateSchema, zodError } from '@/validation/api-schemas';
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdminSafe as getSupabaseAdmin } from '@/lib/supabase-admin';
+import { validateOrigin } from '@/lib/csrf';
 import { generateText } from 'ai';
 import { getServerSession } from "@/lib/auth";
 import { rateLimit } from '@/lib/rate-limit';
@@ -19,6 +20,7 @@ export const runtime = 'nodejs';
 export const maxDuration = 120; // 2 minutes for processing PDFs and AI
 
 async function postHandler(req: NextRequest) {
+    if (!validateOrigin(req)) { return NextResponse.json({ error: "INVALID_ORIGIN" }, { status: 403 }); }
   try {
     const session = await getServerSession(req);
     if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -187,6 +189,7 @@ async function postHandler(req: NextRequest) {
 export const POST = withTracing(postHandler, 'POST /api/academy/generate');
 
 async function getHandler(req: NextRequest) {
+    if (!validateOrigin(req)) { return NextResponse.json({ error: "INVALID_ORIGIN" }, { status: 403 }); }
   try {
     const session = await getServerSession(req);
     if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
 import { getSupabaseForSession } from '@/lib/supabase-session';
+import { withSecurity } from '@/lib/with-security';
 import { z } from 'zod';
 
 /**
@@ -180,4 +181,7 @@ async function patchHandler(req: NextRequest, session: AuthenticatedSession) {
 }
 
 export const GET = withAuth(getHandler);
-export const PATCH = withAuth(patchHandler);
+export const PATCH = withAuth(withSecurity(patchHandler, {
+  rateLimitKey: 'commissions-payments:patch',
+  maxRequests: 20,
+}));

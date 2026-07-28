@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth } from '@/lib/auth-middleware';
+import { validateOrigin } from '@/lib/csrf';
 import { FichaJSONSchema } from '@/lib/cost-engine/schemas';
 import { calculateFicha, validateFicha } from '@/lib/cost-engine';
 import { rateLimit } from '@/lib/rate-limit';
@@ -56,6 +57,7 @@ const handler = withAuth(async (req, session) => {
 });
 
 async function postHandler(req: NextRequest) {
+    if (!validateOrigin(req)) { return NextResponse.json({ error: "INVALID_ORIGIN" }, { status: 403 }); }
   return handler(req);
 }
 

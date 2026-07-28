@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from '@/lib/auth';
+import { validateOrigin } from '@/lib/csrf';
 import { withTracing } from '@/lib/observability';
 import { rateLimit } from '@/lib/rate-limit';
 
@@ -13,6 +14,7 @@ function sanitizeLogField(val: unknown, maxLen = 200): string {
 }
 
 async function postHandler(req: NextRequest) {
+    if (!validateOrigin(req)) { return NextResponse.json({ error: "INVALID_ORIGIN" }, { status: 403 }); }
   try {
     // 1. Rate limit by IP (anonymous) with low limit - BUG-027
     const clientId = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'anon-log';

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, type AuthenticatedSession } from '@/lib/auth-middleware';
+import { validateOrigin } from '@/lib/csrf';
 import { withTracing } from '@/lib/observability';
 import { rateLimit } from '@/lib/rate-limit';
 import { createApiError } from '@/lib/api-errors';
@@ -17,6 +18,7 @@ const addSchema = z.object({
 });
 
 async function getHandler(req: NextRequest, session: AuthenticatedSession) {
+    if (!validateOrigin(req)) { return NextResponse.json({ error: "INVALID_ORIGIN" }, { status: 403 }); }
   const { allowed } = await rateLimit(`wa:inv:${session.user.id}`, { windowMs: 60_000, maxRequests: 30 });
   if (!allowed) return NextResponse.json(createApiError('RATE_LIMITED'), { status: 429 });
 
@@ -48,6 +50,7 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
 }
 
 async function postHandler(req: NextRequest, session: AuthenticatedSession) {
+    if (!validateOrigin(req)) { return NextResponse.json({ error: "INVALID_ORIGIN" }, { status: 403 }); }
   const { allowed } = await rateLimit(`wa:inv:add:${session.user.id}`, { windowMs: 60_000, maxRequests: 10 });
   if (!allowed) return NextResponse.json(createApiError('RATE_LIMITED'), { status: 429 });
 
@@ -79,6 +82,7 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
 }
 
 async function deleteHandler(req: NextRequest, session: AuthenticatedSession) {
+    if (!validateOrigin(req)) { return NextResponse.json({ error: "INVALID_ORIGIN" }, { status: 403 }); }
   const url = new URL(req.url);
   const invitationId = url.searchParams.get('id');
   const storeId = url.searchParams.get('store_id');

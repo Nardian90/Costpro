@@ -3,6 +3,7 @@ import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
 // FIX C1: usar getSupabaseAuthClient para que RLS respete el usuario autenticado
 import { getSupabaseForSession } from '@/lib/supabase-session';
 import { parseCI, getBirthDateFromCI } from '@/lib/parse-ci';
+import { withSecurity } from '@/lib/with-security';
 
 /**
  * /api/workers/[id]
@@ -155,5 +156,11 @@ async function deleteHandler(req: NextRequest, session: AuthenticatedSession) {
 }
 
 export const GET = withAuth(getHandler);
-export const PATCH = withAuth(patchHandler);
-export const DELETE = withAuth(deleteHandler);
+export const PATCH = withAuth(withSecurity(patchHandler, {
+  rateLimitKey: 'workers:patch',
+  maxRequests: 20,
+}));
+export const DELETE = withAuth(withSecurity(deleteHandler, {
+  rateLimitKey: 'workers:delete',
+  maxRequests: 10,
+}));

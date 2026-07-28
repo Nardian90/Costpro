@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
+import { withSecurity } from '@/lib/with-security';
 
 /**
  * POST /api/received-services/distribute
@@ -58,4 +59,7 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
   }
 }
 
-export const POST = withAuth(postHandler);
+export const POST = withAuth(withSecurity(postHandler, {
+  rateLimitKey: 'received-services-distribute:post',
+  maxRequests: 5,
+}));

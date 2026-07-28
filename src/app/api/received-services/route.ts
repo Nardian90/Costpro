@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
 import { rateLimit } from '@/lib/rate-limit';
 import { createApiError } from '@/lib/api-errors';
+import { withSecurity } from '@/lib/with-security';
 
 /**
  * GET /api/received-services?store_id=...&status=...&type=...
@@ -150,5 +151,8 @@ async function patchHandler(req: NextRequest, session: AuthenticatedSession) {
 }
 
 export const GET = withAuth(getHandler);
-export const POST = withAuth(postHandler);
+export const POST = withAuth(withSecurity(postHandler, {
+  rateLimitKey: 'received-services:post',
+  maxRequests: 10,
+}));
 export const PATCH = withAuth(patchHandler);

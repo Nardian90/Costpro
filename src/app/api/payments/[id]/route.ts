@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
 import { getSupabaseForSession } from '@/lib/supabase-session';
+import { withSecurity } from '@/lib/with-security';
 
 /**
  * DELETE /api/payments/[id]
@@ -69,4 +70,7 @@ async function deleteHandler(req: NextRequest, session: AuthenticatedSession) {
   }
 }
 
-export const DELETE = withAuth(deleteHandler);
+export const DELETE = withAuth(withSecurity(deleteHandler, {
+  rateLimitKey: 'payments:delete',
+  maxRequests: 10,
+}));

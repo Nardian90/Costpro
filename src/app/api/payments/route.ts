@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
 import { getSupabaseForSession } from '@/lib/supabase-session';
+import { withSecurity } from '@/lib/with-security';
 import { z } from 'zod';
 import { randomUUID } from 'crypto';
 
@@ -181,5 +182,8 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
   }
 }
 
-export const POST = withAuth(postHandler);
+export const POST = withAuth(withSecurity(postHandler, {
+  rateLimitKey: 'payments:post',
+  maxRequests: 10,
+}));
 export const GET = withAuth(getHandler);

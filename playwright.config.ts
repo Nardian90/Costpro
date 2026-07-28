@@ -1,4 +1,9 @@
 import { defineConfig, devices } from '@playwright/test';
+import dotenv from 'dotenv';
+
+// Cargar .env para que los tests e2e tengan acceso a NEXT_PUBLIC_SUPABASE_URL,
+// SERVICE_KEY, etc. Sin esto, los tests que llaman a Supabase directo fallan.
+dotenv.config({ path: './.env' });
 
 /**
  * Playwright E2E configuration for CostPro.

@@ -31,6 +31,13 @@ function timeoutController(ms: number = REQUEST_TIMEOUT_MS): AbortController {
 }
 
 export const storeApiClient = {
+  /**
+   * Obtiene tiendas. V2.12.11: la API ahora devuelve paginación por defecto
+   * (limit=200). Si se necesitan TODAS las tiendas (caso admin con muchas),
+   * usar fetchAllStores() que itera con cursor hasta hasMore=false.
+   *
+   * Para uso normal (UI típica), fetchStores() es suficiente.
+   */
   async fetchStores(status?: 'active' | 'inactive' | 'all'): Promise<Store[]> {
     const controller = timeoutController();
     // FIX: new URL('/api/stores') falla en el browser (base relativa).
@@ -47,6 +54,53 @@ export const storeApiClient = {
     }
     const result = await res.json();
     return result.data as Store[];
+  },
+
+  /**
+   * V2.12.14: Itera la API con cursor pagination hasta traer TODAS las tiendas.
+   * Útil para admins con >200 tiendas. En cada llamada usa ?cursor=<last name>&limit=200.
+   * Tiene un safety cap de 10000 tiendas para evitar loops infinitos.
+   *
+   * @returns Promise<Store[]> con todas las tiendas (puede ser >200)
+   */
+  async fetchAllStores(status?: 'active' | 'inactive' | 'all'): Promise<Store[]> {
+    const allStores: Store[] = [];
+    let cursor: string | null = null;
+    const limit = 200;
+    const maxIterations = 50; // safety cap: 50 * 200 = 10000 tiendas máximo
+
+    for (let i = 0; i < maxIterations; i++) {
+      const controller = timeoutController();
+      const params = new URLSearchParams();
+      if (status) params.set('status', status);
+      if (cursor) params.set('cursor', cursor);
+      params.set('limit', String(limit));
+
+      const res = await fetch(`${API_BASE}?${params.toString()}`, {
+        method: 'GET',
+        headers: authHeaders(),
+        signal: controller.signal,
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: 'Error de conexión' }));
+        throw new Error(err.message || err.error || 'Error al cargar tiendas');
+      }
+      const result = await res.json();
+      const data = result.data as Store[];
+      allStores.push(...data);
+
+      // Si la API devuelve pagination metadata, usar nextCursor; si no, usar
+      // el último name como cursor fallback
+      const pagination = result.pagination;
+      if (pagination?.hasMore) {
+        cursor = pagination.nextCursor || (data.length > 0 ? data[data.length - 1].name : null);
+        if (!cursor) break; // no hay cursor y no hay más datos
+      } else {
+        break; // hasMore=false o no hay pagination metadata
+      }
+    }
+
+    return allStores;
   },
 
   async createStore(data: Partial<Store> & { name: string; address: string }): Promise<Store> {

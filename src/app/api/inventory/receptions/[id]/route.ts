@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
 import { getSupabaseForSession } from '@/lib/supabase-session';
+import { withSecurity } from '@/lib/with-security';
 
 /**
  * PATCH /api/inventory/receptions/[id]
@@ -90,4 +91,7 @@ async function patchHandler(req: NextRequest, session: AuthenticatedSession) {
   return NextResponse.json({ success: true });
 }
 
-export const PATCH = withAuth(patchHandler);
+export const PATCH = withAuth(withSecurity(patchHandler, {
+  rateLimitKey: 'receptions:patch',
+  maxRequests: 20,
+}));

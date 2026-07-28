@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, type AuthenticatedSession } from '@/lib/auth-middleware';
+import { validateOrigin } from '@/lib/csrf';
 import { withTracing } from '@/lib/observability';
 import { rateLimit } from '@/lib/rate-limit';
 import { createApiError } from '@/lib/api-errors';
@@ -12,6 +13,7 @@ import { getSupabaseAdminSafe } from '@/lib/supabase-admin';
  * Lista invitaciones con filtro opcional por estado.
  */
 async function getHandler(req: NextRequest, session: AuthenticatedSession) {
+    if (!validateOrigin(req)) { return NextResponse.json({ error: "INVALID_ORIGIN" }, { status: 403 }); }
   const url = new URL(req.url);
   const storeId = url.searchParams.get('store_id');
   const status = url.searchParams.get('status');
@@ -53,6 +55,7 @@ const postSchema = z.object({
  * Crea una nueva invitación (estado 'pending').
  */
 async function postHandler(req: NextRequest, session: AuthenticatedSession) {
+    if (!validateOrigin(req)) { return NextResponse.json({ error: "INVALID_ORIGIN" }, { status: 403 }); }
   const { allowed } = await rateLimit(`telegram:inv:${session.user.id}`, {
     windowMs: 60_000, maxRequests: 20,
   });
@@ -97,6 +100,7 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
  * Elimina una invitación.
  */
 async function deleteHandler(req: NextRequest, session: AuthenticatedSession) {
+    if (!validateOrigin(req)) { return NextResponse.json({ error: "INVALID_ORIGIN" }, { status: 403 }); }
   const url = new URL(req.url);
   const id = url.searchParams.get('id');
   const storeId = url.searchParams.get('store_id');

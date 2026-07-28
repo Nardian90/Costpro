@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
 import { getSupabaseForSession } from '@/lib/supabase-session';
+import { withSecurity } from '@/lib/with-security';
 
 /**
  * PATCH /api/commissions/rules/[id]
@@ -150,5 +151,11 @@ async function deleteHandler(req: NextRequest, session: AuthenticatedSession) {
   return NextResponse.json({ success: true, id });
 }
 
-export const PATCH = withAuth(patchHandler);
-export const DELETE = withAuth(deleteHandler);
+export const PATCH = withAuth(withSecurity(patchHandler, {
+  rateLimitKey: 'commissions-rules:patch',
+  maxRequests: 20,
+}));
+export const DELETE = withAuth(withSecurity(deleteHandler, {
+  rateLimitKey: 'commissions-rules:delete',
+  maxRequests: 10,
+}));
