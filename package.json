@@ -22,7 +22,8 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:coverage:ci": "vitest run --coverage --reporter=json",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "test:security": "node scripts/security-contract-test.cjs"
   },
   "dependencies": {
     "@ai-sdk/google": "^4.0.2",
