@@ -13,7 +13,7 @@ import { useSalesHistoryView } from './useSalesHistoryView';
 import { TransactionDetailsModal } from './TransactionDetailsModal';
 import { DocumentStatusBadge, canReverse } from '@/components/ui/DocumentStatusBadge';
 import { ReverseDocumentModal } from '@/components/ui/ReverseDocumentModal';
-import { useUIStore } from '@/store';
+import { useUIStore, useAuthStore } from '@/store';
 
 // Helper para icono y etiqueta del método de pago
 function getPaymentMethodInfo(method: string | null | undefined): { icon: React.ElementType; label: string; color: string } {
@@ -133,6 +133,8 @@ export default function SalesHistoryView() {
   const [reverseTarget, setReverseTarget] = useState<{ id: string; label: string } | null>(null);
   const [activeTab, setActiveTab] = useState<'detalle' | 'resumen'>('detalle');
   const { setCurrentView, setForceOpenCart } = useUIStore();
+  const user = useAuthStore(s => s.user);
+  const activeStoreId = user?.activeStoreId || '';
 
   const {
     searchTerm,
@@ -315,7 +317,7 @@ export default function SalesHistoryView() {
           <SalesSummaryTab
             dateFrom={dateFrom || ''}
             dateTo={dateTo || ''}
-            storeId={typeof window !== 'undefined' ? localStorage.getItem('currentStoreId') || '' : ''}
+            storeId={activeStoreId}
           />
         )}
 

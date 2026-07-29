@@ -34,6 +34,7 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
         id,
         completed_at,
         sale_currency,
+        payment_method,
         cash_amount,
         transfer_amount,
         zelle_amount,
@@ -78,9 +79,25 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
         // USD: usar zelle_amount si existe, sino total_amount
         day.usd += Number(tx.zelle_amount || tx.total_amount || 0);
       } else {
-        // CUP
-        day.efectivo_cup += Number(tx.cash_amount || 0);
-        day.transf_cup += Number(tx.transfer_amount || 0);
+        // CUP: si cash_amount o transfer_amount son 0 pero total_amount > 0,
+        // usar payment_method para decidir dónde poner el monto
+        const cashAmt = Number(tx.cash_amount || 0);
+        const transfAmt = Number(tx.transfer_amount || 0);
+        const totalAmt = Number(tx.total_amount || 0);
+
+        if (cashAmt > 0) {
+          day.efectivo_cup += cashAmt;
+        } else if (transfAmt > 0) {
+          day.transf_cup += transfAmt;
+        } else if (totalAmt > 0) {
+          // Fallback: si no hay desglose, usar payment_method para clasificar
+          const method = (tx as any).payment_method || 'cash';
+          if (method === 'transfer') {
+            day.transf_cup += totalAmt;
+          } else {
+            day.efectivo_cup += totalAmt;
+          }
+        }
       }
     }
 
