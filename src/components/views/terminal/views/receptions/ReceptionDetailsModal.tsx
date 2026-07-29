@@ -1101,20 +1101,20 @@ function PaymentsTab({ receiptId, totalCost }: { receiptId: string; totalCost: n
   }[paymentStatus];
 
   return (
-    <div className="p-6 space-y-4">
-      {/* Resumen */}
-      <div className="grid grid-cols-3 gap-3">
+    <div className="p-4 sm:p-6 space-y-4">
+      {/* Resumen — V2.12.20: grid-cols-3 en desktop, grid-cols-1 en móvil para evitar compresión */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div className="rounded-xl border border-border/30 bg-muted/20 p-3 text-center">
           <p className="text-[10px] font-black uppercase text-muted-foreground">Total</p>
-          <p className="text-lg font-mono font-black tabular-nums">{formatCurrency(totalCost)}</p>
+          <p className="text-base sm:text-lg font-mono font-black tabular-nums">{formatCurrency(totalCost)}</p>
         </div>
         <div className="rounded-xl border border-success/20 bg-success/5 p-3 text-center">
           <p className="text-[10px] font-black uppercase text-muted-foreground">Pagado</p>
-          <p className="text-lg font-mono font-black tabular-nums text-success">{formatCurrency(totalPaid)}</p>
+          <p className="text-base sm:text-lg font-mono font-black tabular-nums text-success">{formatCurrency(totalPaid)}</p>
         </div>
         <div className="rounded-xl border border-primary/20 bg-primary/5 p-3 text-center">
           <p className="text-[10px] font-black uppercase text-muted-foreground">Saldo</p>
-          <p className="text-lg font-mono font-black tabular-nums text-primary">{formatCurrency(balance)}</p>
+          <p className="text-base sm:text-lg font-mono font-black tabular-nums text-primary">{formatCurrency(balance)}</p>
         </div>
       </div>
 
@@ -1126,7 +1126,7 @@ function PaymentsTab({ receiptId, totalCost }: { receiptId: string; totalCost: n
         <button
           type="button"
           onClick={() => setShowForm(!showForm)}
-          className="px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-[10px] font-black uppercase hover:opacity-90 flex items-center gap-1"
+          className="px-3 py-2 min-h-[40px] rounded-lg bg-primary text-primary-foreground text-[10px] font-black uppercase hover:opacity-90 flex items-center gap-1"
         >
           <Plus className="w-3 h-3" /> Registrar Pago
         </button>
@@ -1135,15 +1135,16 @@ function PaymentsTab({ receiptId, totalCost }: { receiptId: string; totalCost: n
       {/* Formulario de pago */}
       {showForm && (
         <div className="rounded-xl border border-border/30 p-4 space-y-3 bg-muted/10">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="text-[10px] font-black uppercase text-muted-foreground block mb-1">Monto (CUP)</label>
               <input
                 type="number"
+                inputMode="numeric"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 placeholder={String(balance.toFixed(2))}
-                className="w-full h-10 bg-background border border-border/50 rounded-lg px-3 text-sm font-bold tabular-nums"
+                className="w-full h-12 bg-background border border-border/50 rounded-lg px-3 text-sm font-bold tabular-nums"
               />
             </div>
             <div>
@@ -1151,7 +1152,7 @@ function PaymentsTab({ receiptId, totalCost }: { receiptId: string; totalCost: n
               <select
                 value={method}
                 onChange={(e) => setMethod(e.target.value as any)}
-                className="w-full h-10 bg-background border border-border/50 rounded-lg px-3 text-sm font-bold"
+                className="w-full h-12 bg-background border border-border/50 rounded-lg px-3 text-sm font-bold"
               >
                 <option value="cash">💵 Efectivo</option>
                 <option value="transfer">📱 Transferencia</option>
@@ -1166,14 +1167,14 @@ function PaymentsTab({ receiptId, totalCost }: { receiptId: string; totalCost: n
               value={reference}
               onChange={(e) => setReference(e.target.value)}
               placeholder="N° de transferencia, etc."
-              className="w-full h-10 bg-background border border-border/50 rounded-lg px-3 text-sm"
+              className="w-full h-12 bg-background border border-border/50 rounded-lg px-3 text-sm"
             />
           </div>
           <div className="flex gap-2">
             <button
               type="button"
               onClick={() => setShowForm(false)}
-              className="flex-1 h-10 rounded-lg border border-border/40 text-[10px] font-black uppercase hover:bg-muted"
+              className="flex-1 h-12 min-h-[44px] rounded-lg border border-border/40 text-[10px] font-black uppercase hover:bg-muted"
             >
               Cancelar
             </button>
@@ -1181,7 +1182,7 @@ function PaymentsTab({ receiptId, totalCost }: { receiptId: string; totalCost: n
               type="button"
               onClick={handleSubmit}
               disabled={submitting}
-              className="flex-1 h-10 rounded-lg bg-primary text-primary-foreground text-[10px] font-black uppercase hover:opacity-90 disabled:opacity-50"
+              className="flex-1 h-12 min-h-[44px] rounded-lg bg-primary text-primary-foreground text-[10px] font-black uppercase hover:opacity-90 disabled:opacity-50"
             >
               {submitting ? 'Guardando...' : 'Confirmar Pago'}
             </button>
@@ -1201,16 +1202,26 @@ function PaymentsTab({ receiptId, totalCost }: { receiptId: string; totalCost: n
           </div>
         ) : (
           payments.map((p) => (
-            <div key={p.id} className="flex items-center justify-between rounded-lg border border-border/30 p-3 bg-muted/10">
-              <div className="flex items-center gap-2">
-                <span className="text-lg">
+            /* V2.12.20: layout responsivo — flex-col en móvil, flex-row en sm+.
+               Antes: flex-row siempre → valores se solapaban en 375px. */
+            <div key={p.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 rounded-lg border border-border/30 p-3 bg-muted/10">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="text-lg shrink-0">
                   {p.payment_method === 'cash' ? '💵' : p.payment_method === 'transfer' ? '📱' : '💳'}
                 </span>
-                <div>
-                  <p className="text-sm font-bold tabular-nums">{formatCurrency(Number(p.amount_cup || p.amount))} {p.currency}</p>
-                  <p className="text-[10px] text-muted-foreground">
-                    {new Date(p.payment_date).toLocaleString()} · {p.reference || 'Sin referencia'}
+                <div className="min-w-0 flex-1">
+                  {/* V2.12.20: monto y moneda en línea propia, sin solapamiento */}
+                  <p className="text-sm font-bold tabular-nums">
+                    {formatCurrency(Number(p.amount_cup || p.amount))}
+                    <span className="text-muted-foreground ml-1 text-xs">{p.currency}</span>
                   </p>
+                  {/* V2.12.20: fecha y referencia en línea propia, separados por · */}
+                  <p className="text-[10px] text-muted-foreground truncate">
+                    {new Date(p.payment_date).toLocaleDateString('es-CU', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                  </p>
+                  {p.reference && (
+                    <p className="text-[10px] text-muted-foreground truncate">Ref: {p.reference}</p>
+                  )}
                 </div>
               </div>
               {/* FIX-DELETE-PAYMENT: botón para anular pago */}
@@ -1228,7 +1239,7 @@ function PaymentsTab({ receiptId, totalCost }: { receiptId: string; totalCost: n
                     }
                   } catch { toast.error('Error de conexión'); }
                 }}
-                className="p-1.5 rounded text-destructive hover:bg-destructive/10"
+                className="p-2 min-h-[44px] min-w-[44px] self-end sm:self-center rounded text-destructive hover:bg-destructive/10"
                 title="Anular pago"
                 aria-label="Anular pago"
               >

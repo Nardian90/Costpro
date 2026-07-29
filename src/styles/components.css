@@ -418,6 +418,21 @@
     border-collapse: collapse;
   }
 
+  /* V2.12.20: en móvil (<640px), la tabla se ajusta al ancho del contenedor
+     para evitar scroll horizontal. Las columnas no prioritarias ya se ocultan
+     con hidden sm:table-cell en el componente. */
+  @media (max-width: 639px) {
+    .data-table {
+      width: 100% !important;
+    }
+    .data-table th,
+    .data-table td {
+      white-space: normal !important;
+      padding: 0.5rem !important;
+      font-size: 0.75rem !important;
+    }
+  }
+
   .data-table th,
   .data-table td {
     white-space: nowrap !important;
