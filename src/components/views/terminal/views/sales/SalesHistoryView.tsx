@@ -28,6 +28,7 @@ function getPaymentMethodInfo(method: string | null | undefined): { icon: React.
     }
 }
 import { TaxCalculationModal } from './TaxCalculationModal';
+import { SalesSummaryTab } from './SalesSummaryTab';
 
 const SalesLoadingSkeleton = () => (
   <div className="space-y-4">
@@ -130,6 +131,7 @@ const PaginationFooter = ({ page, totalPages, totalItems, onPageChange }: { page
 export default function SalesHistoryView() {
   // ESTÁNDAR: Revertir es la única forma de deshacer una venta
   const [reverseTarget, setReverseTarget] = useState<{ id: string; label: string } | null>(null);
+  const [activeTab, setActiveTab] = useState<'detalle' | 'resumen'>('detalle');
   const { setCurrentView, setForceOpenCart } = useUIStore();
 
   const {
@@ -286,6 +288,39 @@ export default function SalesHistoryView() {
            )}
         </SearchBar>
 
+        {/* V2.12.22: Tabs — Detalle | Resumen Consolidado */}
+        <div className="flex border-b border-border overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+          <button
+            onClick={() => setActiveTab('detalle')}
+            className={cn(
+              "flex-1 py-3 px-4 text-xs font-black uppercase border-b-2 -mb-px whitespace-nowrap min-h-[44px] transition-colors",
+              activeTab === 'detalle' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'
+            )}
+          >
+            <Eye className="w-3.5 h-3.5 inline mr-1" /> Detalle
+          </button>
+          <button
+            onClick={() => setActiveTab('resumen')}
+            className={cn(
+              "flex-1 py-3 px-4 text-xs font-black uppercase border-b-2 -mb-px whitespace-nowrap min-h-[44px] transition-colors",
+              activeTab === 'resumen' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'
+            )}
+          >
+            <TrendingUp className="w-3.5 h-3.5 inline mr-1" /> Resumen Consolidado
+          </button>
+        </div>
+
+        {/* Tab Resumen Consolidado */}
+        {activeTab === 'resumen' && (
+          <SalesSummaryTab
+            dateFrom={dateFrom || ''}
+            dateTo={dateTo || ''}
+            storeId={typeof window !== 'undefined' ? localStorage.getItem('currentStoreId') || '' : ''}
+          />
+        )}
+
+        {/* Tab Detalle (contenido original) */}
+        {activeTab === 'detalle' && (
         <StateRenderer
           isLoading={isLoading}
           error={null}
@@ -471,6 +506,7 @@ export default function SalesHistoryView() {
             </div>
           )}
         </StateRenderer>
+        )}
       </div>
 
       {/* Transaction Details Modal */}
