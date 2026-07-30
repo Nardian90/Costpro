@@ -50,8 +50,8 @@ export function SupervisorAuthModal({
     setError(null);
     try {
       // Validar credenciales contra Supabase Auth
-      const { createClient } = await import('@/lib/supabaseClient');
-      const supabase = createClient();
+      // V2.12.26 fix: supabaseClient.ts exporta `supabase` (no `createClient`)
+      const { supabase } = await import('@/lib/supabaseClient');
       const { data, error: authError } = await supabase.auth.signInWithPassword({
         email,
         password,

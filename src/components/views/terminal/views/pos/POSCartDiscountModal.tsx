@@ -1,8 +1,13 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { cn } from "@/lib/utils";
 import type { POSCartDiscountProps } from "./POSCart.types";
+import { SupervisorAuthModal } from "./SupervisorAuthModal";
+
+// V2.12.26: umbral de descuento que requiere autorización de supervisor
+// Descuentos >= 15% requieren PIN de supervisor/manager
+const DISCOUNT_SUPERVISOR_THRESHOLD = 15;
 
 // FIX-BPOS-010: Contextual quick-select values per discount type
 const PERCENTAGE_PRESETS = [0, 5, 10, 15, 20];
@@ -15,6 +20,32 @@ export const POSCartDiscountModal = ({
   const isPercentage = discount?.type === "percentage";
   const presets = isPercentage ? PERCENTAGE_PRESETS : FIXED_PRESETS;
 
+  // V2.12.26: estado para modal de autorización de supervisor
+  const [showSupervisorAuth, setShowSupervisorAuth] = useState(false);
+  const [pendingDiscount, setPendingDiscount] = useState<typeof discount>(null);
+
+  // V2.12.26: wrapper que verifica si el descuento requiere autorización
+  const handleSetDiscount = (newDiscount: typeof discount) => {
+    if (!newDiscount) { setDiscount(null); return; }
+
+    // Si es porcentaje y >= threshold, requerir supervisor
+    if (newDiscount.type === "percentage" && newDiscount.value >= DISCOUNT_SUPERVISOR_THRESHOLD) {
+      setPendingDiscount(newDiscount);
+      setShowSupervisorAuth(true);
+      return;
+    }
+
+    // Si no requiere autorización, aplicar directamente
+    setDiscount(newDiscount);
+  };
+
+  const handleSupervisorAuthorize = () => {
+    if (pendingDiscount) {
+      setDiscount(pendingDiscount);
+      setPendingDiscount(null);
+    }
+  };
+
   return (
     <div className="space-y-3 p-3 rounded-xl bg-muted/50 border border-border">
       <div className="flex justify-between items-center">
@@ -25,7 +56,7 @@ export const POSCartDiscountModal = ({
           <button
             type="button"
             onClick={() =>
-              setDiscount({
+              handleSetDiscount({
                 type: "percentage",
                 value: discount?.value || 0,
               })
@@ -43,7 +74,7 @@ export const POSCartDiscountModal = ({
           <button
             type="button"
             onClick={() =>
-              setDiscount({
+              handleSetDiscount({
                 type: "fixed",
                 value: discount?.value || 0,
               })
@@ -75,7 +106,7 @@ export const POSCartDiscountModal = ({
               key={d}
               type="button"
               onClick={() =>
-                setDiscount({
+                handleSetDiscount({
                   type: discount?.type || "percentage",
                   value: d,
                 })
@@ -108,7 +139,7 @@ export const POSCartDiscountModal = ({
             let val = parseFloat(e.target.value) || 0;
             if (isPercentage) val = Math.min(100, Math.max(0, val));
             else val = Math.max(0, val);
-            setDiscount({ type: discount?.type || "percentage", value: val, currency: discount?.currency || 'CUP' });
+            handleSetDiscount({ type: discount?.type || "percentage", value: val, currency: discount?.currency || 'CUP' });
           }}
           aria-label="Valor del descuento"
           className="flex-1 pl-7 p-2 min-h-[44px] rounded-xl border border-border bg-background text-xs font-bold focus:ring-1 focus:ring-primary outline-none"
@@ -119,7 +150,7 @@ export const POSCartDiscountModal = ({
           <select
             value={discount?.currency || 'CUP'}
             onChange={(e) => {
-              setDiscount({
+              handleSetDiscount({
                 type: 'fixed',
                 value: discount?.value || 0,
                 currency: e.target.value,
@@ -135,6 +166,16 @@ export const POSCartDiscountModal = ({
           </select>
         )}
       </div>
+
+      {/* V2.12.26: Modal de autorización de supervisor para descuentos >= 15% */}
+      <SupervisorAuthModal
+        isOpen={showSupervisorAuth}
+        onClose={() => { setShowSupervisorAuth(false); setPendingDiscount(null); }}
+        onAuthorize={handleSupervisorAuthorize}
+        discountPercent={pendingDiscount?.type === 'percentage' ? pendingDiscount.value : 0}
+        discountValue={pendingDiscount?.value || 0}
+        maxAllowed={DISCOUNT_SUPERVISOR_THRESHOLD}
+      />
     </div>
   );
 };
