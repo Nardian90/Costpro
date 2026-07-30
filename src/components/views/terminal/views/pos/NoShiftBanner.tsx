@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useActiveShift } from "@/hooks/api/useActiveShift";
 import { useAuthStore } from "@/store";
 import { useUIStore } from "@/store";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -68,14 +69,14 @@ export function NoShiftBanner() {
         <div className="absolute top-3 right-3 z-10">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button
+              <Button
                 type="button"
                 className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
                 aria-label="Cerrar notificación"
                 title="Cerrar o silenciar"
               >
                 <X className="w-4 h-4" />
-              </button>
+              </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56 rounded-xl p-1">
               <DropdownMenuLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground px-2 py-1.5 flex items-center gap-1.5">
@@ -123,7 +124,7 @@ export function NoShiftBanner() {
               Abre tu turno de caja para registrar ventas, controlar efectivo
               y reconciliar al final del día.
             </p>
-            <button
+            <Button
               type="button"
               onClick={() => setCurrentView("cash")}
               className="mt-3 inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary text-primary-foreground font-black text-xs sm:text-sm uppercase tracking-widest shadow-lg shadow-primary/20 hover:opacity-90 active:scale-[0.98] transition-all"
@@ -131,7 +132,7 @@ export function NoShiftBanner() {
             >
               Abrir turno
               <ArrowRight className="w-4 h-4" />
-            </button>
+            </Button>
           </div>
         </div>
       </motion.div>

@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/lib/supabaseClient';
+import { Button } from "@/components/ui/button";
 import { toast } from 'sonner';
 import LegalConsultant from './LegalConsultant';
 import LegalModelForm from './LegalModelForm';
@@ -52,13 +53,13 @@ export default function LegalView() {
   if (selectedModel) {
     return (
       <div className="space-y-6">
-        <button type="button"
+        <Button type="button"
           onClick={() => setSelectedModel(null)}
           className="flex items-center gap-2 text-primary hover:opacity-80 transition-opacity font-bold uppercase text-xs tracking-widest"
         >
           <ArrowLeft className="w-4 h-4" />
           Volver al Consultor
-        </button>
+        </Button>
         <LegalModelForm model={selectedModel} onCancel={() => setSelectedModel(null)} />
       </div>
     );

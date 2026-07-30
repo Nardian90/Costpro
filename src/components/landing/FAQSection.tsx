@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
+import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, ThumbsUp, ThumbsDown, Search, HelpCircle } from 'lucide-react';
 import { toast } from 'sonner';
@@ -116,7 +117,7 @@ export default function FAQSection({
               const isActive = activeCategory === cat;
               const count = categoryCounts[cat] || 0;
               return (
-                <button
+                <Button
                   key={cat}
                   onClick={() => {
                     setActiveCategory(cat);
@@ -139,7 +140,7 @@ export default function FAQSection({
                       transition={{ type: 'spring', stiffness: 500, damping: 40 }}
                     />
                   )}
-                </button>
+                </Button>
               );
             })}
           </div>
@@ -187,7 +188,7 @@ export default function FAQSection({
                   }`}
                 >
                   {/* Question header */}
-                  <button
+                  <Button
                     onClick={() => toggleFaq(i)}
                     className="flex items-center justify-between w-full p-4 text-left gap-3 group/faq cursor-pointer"
                   >
@@ -211,7 +212,7 @@ export default function FAQSection({
                         className={`w-4 h-4 text-[#22c55e] transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${isOpen ? 'rotate-180' : ''}`}
                       />
                     </div>
-                  </button>
+                  </Button>
 
                   {/* Answer — smooth expand/collapse, no mode="wait" */}
                   <AnimatePresence initial={false}>
@@ -229,20 +230,20 @@ export default function FAQSection({
                           </p>
                           <div className="flex items-center gap-3">
                             <span className="text-[10px] text-white/25">¿Te fue útil?</span>
-                            <button
+                            <Button
                               onClick={(e) => { e.stopPropagation(); setFaqFeedback(prev => ({ ...prev, [i]: prev[i] === 'up' ? null : 'up' })); if (!faqFeedback[i]) toast.success('¡Gracias por tu feedback!'); }}
                               className={`flex items-center gap-1 px-2 py-1 rounded-md transition-all duration-200 cursor-pointer ${faqFeedback[i] === 'up' ? 'bg-[#22c55e]/15 text-[#22c55e]' : 'text-white/30 hover:text-[#22c55e]/60 hover:bg-white/[0.04]'}`}
                               aria-label="Útil"
                             >
                               <ThumbsUp className="w-3 h-3" />
-                            </button>
-                            <button
+                            </Button>
+                            <Button
                               onClick={(e) => { e.stopPropagation(); setFaqFeedback(prev => ({ ...prev, [i]: prev[i] === 'down' ? null : 'down' })); if (!faqFeedback[i]) toast.success('¡Gracias por tu feedback!'); }}
                               className={`flex items-center gap-1 px-2 py-1 rounded-md transition-all duration-200 cursor-pointer ${faqFeedback[i] === 'down' ? 'bg-red-500/15 text-red-400' : 'text-white/30 hover:text-white/50 hover:bg-white/[0.04]'}`}
                               aria-label="No útil"
                             >
                               <ThumbsDown className="w-3 h-3" />
-                            </button>
+                            </Button>
                           </div>
                         </div>
                       </motion.div>

@@ -41,6 +41,7 @@ import { ArrowRight, Sparkles, ChevronDown } from 'lucide-react';
 import { useUIStore, ViewType } from '@/store';
 import { SIDEBAR_STRUCTURE, NavModule } from '@/config/navigation/sidebar.structure';
 import { useAuthStore } from '@/store';
+import { Button } from "@/components/ui/button";
 import { useTranslations } from 'next-intl';
 
 interface GroupHubViewProps {
@@ -65,12 +66,12 @@ export default function GroupHubView({ groupId }: GroupHubViewProps) {
         <p className="text-muted-foreground text-sm max-w-md">
           No se encontró el grupo <code className="px-1.5 py-0.5 bg-muted rounded text-sm font-mono">{groupId}</code>.
         </p>
-        <button
+        <Button
           onClick={() => setCurrentView('dashboard')}
           className="px-6 min-h-[44px] py-2.5 bg-primary text-primary-foreground font-bold rounded-xl hover:opacity-90 transition-opacity text-sm uppercase tracking-widest"
         >
           {t('groupHub.goDashboard')}
-        </button>
+        </Button>
       </div>
     );
   }

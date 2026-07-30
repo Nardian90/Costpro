@@ -12,6 +12,7 @@ import { FilterSheet, FilterSection, FilterChip } from '@/components/ui/FilterSh
 import { useIsMobile } from '@/hooks/ui/useMobile';
 import { cn } from '@/lib/utils';
 
+import { Button } from "@/components/ui/button";
 interface CatalogHeaderProps {
   totalCount: number;
   incompleteCount: number;
@@ -107,7 +108,7 @@ export default function CatalogHeader({
                 </span>
               )}
               {incompleteCount > 0 && (
-                <button
+                <Button
                   type="button"
                   onClick={onToggleIncomplete}
                   className={cn(
@@ -119,7 +120,7 @@ export default function CatalogHeader({
                 >
                   <AlertTriangle className="w-3 h-3" />
                   {incompleteCount}
-                </button>
+                </Button>
               )}
             </div>
             <div className="flex items-center gap-2 shrink-0">
@@ -184,14 +185,14 @@ export default function CatalogHeader({
 
           {/* Fila 2 móvil: Crear + Acciones en menú */}
           <div className="flex items-center gap-2">
-            <button
+            <Button
               type="button"
               onClick={onCreateProduct}
               className="inline-flex items-center gap-1.5 px-3 py-2 min-h-[44px] rounded-xl bg-primary text-primary-foreground text-[10px] font-black uppercase tracking-widest hover:opacity-90 transition-opacity active:scale-95 flex-1"
             >
               <Plus className="w-4 h-4" />
               <span>Crear producto</span>
-            </button>
+            </Button>
           </div>
         </>
       ) : (
@@ -205,7 +206,7 @@ export default function CatalogHeader({
               </span>
             )}
             {incompleteCount > 0 && (
-              <button
+              <Button
                 type="button"
                 onClick={onToggleIncomplete}
                 className={cn(
@@ -217,7 +218,7 @@ export default function CatalogHeader({
               >
                 <AlertTriangle className="w-3 h-3" />
                 {incompleteCount} incompleto{incompleteCount !== 1 ? 's' : ''}
-              </button>
+              </Button>
             )}
             <span className="w-px h-5 bg-border" />
             {onStockFilterChange && (
@@ -228,7 +229,7 @@ export default function CatalogHeader({
                   { key: 'low', label: 'Bajo' },
                   { key: 'ok', label: 'OK' },
                 ] as const).map(opt => (
-                  <button
+                  <Button
                     key={opt.key}
                     type="button"
                     onClick={() => onStockFilterChange(opt.key)}
@@ -240,14 +241,14 @@ export default function CatalogHeader({
                     )}
                   >
                     {opt.label}
-                  </button>
+                  </Button>
                 ))}
               </div>
             )}
             <span className="w-px h-5 bg-border" />
             {onCategoryToggle && selectedCategories && (
               <div className="flex items-center gap-1 flex-wrap">
-                <button
+                <Button
                   type="button"
                   aria-pressed={selectedCategories.size === 0}
                   onClick={() => onCategoryChange?.('')}
@@ -259,11 +260,11 @@ export default function CatalogHeader({
                   )}
                 >
                   Todas
-                </button>
+                </Button>
                 {categories.map((cat) => {
                   const isSelected = selectedCategories.has(cat);
                   return (
-                    <button
+                    <Button
                       key={cat}
                       type="button"
                       onClick={() => onCategoryToggle(cat)}
@@ -275,7 +276,7 @@ export default function CatalogHeader({
                       )}
                     >
                       {cat}
-                    </button>
+                    </Button>
                   );
                 })}
               </div>
@@ -306,7 +307,7 @@ export default function CatalogHeader({
             )}
             {onSaveFilter && (
               <div className="relative">
-                <button
+                <Button
                   type="button"
                   onClick={() => setShowSavedMenu(!showSavedMenu)}
                   className={cn(
@@ -315,7 +316,7 @@ export default function CatalogHeader({
                   )}
                 >
                   <Bookmark className="w-3 h-3" /> Filtros
-                </button>
+                </Button>
                 {showSavedMenu && (
                   <div className="absolute top-full right-0 mt-1 z-50 w-64 p-3 rounded-xl bg-card border border-border shadow-xl">
                     <div className="flex items-center gap-1.5 mb-2 pb-2 border-b border-border">
@@ -326,7 +327,7 @@ export default function CatalogHeader({
                         placeholder="Nombre del filtro..."
                         className="flex-1 px-2 py-1.5 h-8 rounded-lg border border-border bg-background text-xs outline-none"
                       />
-                      <button
+                      <Button
                         type="button"
                         onClick={() => {
                           if (newFilterName.trim()) {
@@ -337,7 +338,7 @@ export default function CatalogHeader({
                         className="px-2 py-1.5 h-8 rounded-lg bg-primary text-primary-foreground text-xs font-bold"
                       >
                         <Plus className="w-3 h-3" />
-                      </button>
+                      </Button>
                     </div>
                     {savedFilters.length === 0 ? (
                       <p className="text-[10px] text-muted-foreground text-center py-2">Sin filtros guardados</p>
@@ -345,7 +346,7 @@ export default function CatalogHeader({
                       <div className="space-y-1 max-h-40 overflow-y-auto">
                         {savedFilters.map(f => (
                           <div key={f.name} className="flex items-center gap-1.5 p-1.5 rounded-lg hover:bg-muted/30">
-                            <button
+                            <Button
                               type="button"
                               onClick={() => {
                                 onApplyFilter?.(f.name);
@@ -354,16 +355,16 @@ export default function CatalogHeader({
                               className="flex-1 text-left text-xs font-bold hover:text-primary"
                             >
                               {f.name}
-                            </button>
+                            </Button>
                             {onDeleteFilter && (
-                              <button
+                              <Button
                                 type="button"
                                 onClick={() => onDeleteFilter(f.name)}
                                 className="p-1 hover:bg-destructive/10 rounded text-destructive"
                                 aria-label={`Eliminar filtro ${f.name}`}
                               >
                                 <Trash2 className="w-3 h-3" />
-                              </button>
+                              </Button>
                             )}
                           </div>
                         ))}
@@ -390,14 +391,14 @@ export default function CatalogHeader({
               <span className="hidden lg:inline">Incremento Precios</span>
             </SecondaryButton>
             <span className="w-px h-6 bg-border mx-1 hidden sm:block" />
-            <button
+            <Button
               type="button"
               onClick={onCreateProduct}
               className="inline-flex items-center gap-1.5 px-3 py-2 min-h-[44px] rounded-lg bg-primary text-primary-foreground text-[10px] font-black uppercase tracking-widest hover:opacity-90 transition-opacity active:scale-95"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Crear</span>
-            </button>
+            </Button>
             {/* ViewSwitcher al final de la fila — compacto */}
             <div className="ml-auto">
               <ViewSwitcher currentView={layoutMode} onViewChange={onLayoutChange} />

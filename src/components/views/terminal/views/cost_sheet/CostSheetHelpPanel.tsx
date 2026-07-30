@@ -8,6 +8,7 @@ import { CostSheetFormulaGuide } from './CostSheetFormulaGuide';
 import { getHelpContent } from '@/lib/cost-engine/help-provider';
 import { useFocusTrap } from '@/hooks/ui/useFocusTrap';
 
+import { Button } from "@/components/ui/button";
 import { useTranslations } from 'next-intl';
 interface CostSheetHelpPanelProps {
   isOpen: boolean;
@@ -62,12 +63,12 @@ export const CostSheetHelpPanel: React.FC<CostSheetHelpPanelProps> = ({
                   {help ? 'Ayuda Contextual' : 'Ayuda y Guía'}
                 </span>
               </div>
-              <button type="button"
+              <Button type="button"
                 onClick={onClose}
                 className="p-2 rounded-xl hover:bg-primary/10 text-muted-foreground transition-colors active:scale-95"
               >
                 <XIcon className="w-5 h-5" />
-              </button>
+              </Button>
             </div>
 
             {/* Content */}
@@ -126,12 +127,12 @@ export const CostSheetHelpPanel: React.FC<CostSheetHelpPanelProps> = ({
                     </ul>
                   </section>
 
-                  <button type="button"
+                  <Button type="button"
                     onClick={() => onClose()}
                     className="w-full mt-8 p-4 rounded-2xl bg-primary text-primary-foreground font-black uppercase tracking-[0.2em] text-xs hover:scale-[1.02] active:scale-95 transition-all shadow-lg shadow-primary/20"
                   >
                     Entendido
-                  </button>
+                  </Button>
                 </div>
               ) : (
                 <div className="px-2">

@@ -55,6 +55,7 @@ import { FCPreviewModal } from '@/components/ui/FCPreviewModal';
 import { ProductFCSync } from '@/components/ui/ProductFCSync';
 import { getQuickPdfUrl } from '@/lib/integration/fc-automation';
 import type { FCResolutionResult } from '@/lib/integration/fc-automation';
+import { Button } from "@/components/ui/button";
 // Tabs: Catálogo y Trazabilidad (import dinámico para code-splitting)
 import dynamic from 'next/dynamic';
 const CatalogView = dynamic(() => import('@/components/views/terminal/views/catalog/CatalogView'), { ssr: false });
@@ -648,7 +649,7 @@ export default function InventoryView() {
                   { id: 'catalog', label: 'Catálogo' },
                   { id: 'trazabilidad', label: 'Trazabilidad' },
                 ] as const).map((tab) => (
-                  <button
+                  <Button
                     key={tab.id}
                     type="button"
                     role="tab"
@@ -662,7 +663,7 @@ export default function InventoryView() {
                     )}
                   >
                     {tab.label}
-                  </button>
+                  </Button>
                 ))}
             </div>
 
@@ -705,7 +706,7 @@ export default function InventoryView() {
                                         { key: 'low', label: 'Bajo', title: 'Stock Bajo — por debajo del mínimo' },
                                         { key: 'out', label: 'Agotado', title: 'Agotados — sin existencias' },
                                     ] as const).map(opt => (
-                                        <button
+                                        <Button
                                             key={opt.key}
                                             type="button"
                                             onClick={() => setStockFilter(opt.key)}
@@ -719,7 +720,7 @@ export default function InventoryView() {
                                             )}
                                         >
                                             {opt.label}
-                                        </button>
+                                        </Button>
                                     ))}
                                 </div>
                             </div>
@@ -729,52 +730,52 @@ export default function InventoryView() {
                                 <label className="text-xs font-black text-muted-foreground uppercase mb-2 block">Acciones Masivas ({filteredProducts.length} productos)</label>
                                 <div className="flex items-center gap-1 flex-wrap">
                                     {/* Visibilidad tienda pública */}
-                                    <button type="button" onClick={() => handleBulkVisibility(true)} disabled={bulkToggling || filteredProducts.length === 0}
+                                    <Button type="button" onClick={() => handleBulkVisibility(true)} disabled={bulkToggling || filteredProducts.length === 0}
                                         className="inline-flex items-center justify-center w-9 h-9 rounded-full border transition-all active:scale-95 disabled:opacity-50 bg-success/90 border-success/30 text-white dark:text-black hover:bg-success"
                                         title={`Mostrar ${filteredProducts.length} producto(s) en la tienda pública`}>
                                         {bulkToggling ? <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" /> : <Eye className="w-4 h-4" />}
-                                    </button>
-                                    <button type="button" onClick={() => handleBulkVisibility(false)} disabled={bulkToggling || filteredProducts.length === 0}
+                                    </Button>
+                                    <Button type="button" onClick={() => handleBulkVisibility(false)} disabled={bulkToggling || filteredProducts.length === 0}
                                         className="inline-flex items-center justify-center w-9 h-9 rounded-full border transition-all active:scale-95 disabled:opacity-50 bg-destructive/10 border-destructive/20 text-destructive hover:bg-destructive/20"
                                         title={`Ocultar ${filteredProducts.length} producto(s) de la tienda pública`}>
                                         {bulkToggling ? <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" /> : <EyeOff className="w-4 h-4" />}
-                                    </button>
+                                    </Button>
                                     <span className="w-px h-5 bg-border mx-1" />
                                     {/* Precio visible */}
-                                    <button type="button" onClick={() => handleBulkField('price_visible', true)} disabled={bulkToggling || filteredProducts.length === 0}
+                                    <Button type="button" onClick={() => handleBulkField('price_visible', true)} disabled={bulkToggling || filteredProducts.length === 0}
                                         className="inline-flex items-center justify-center w-9 h-9 rounded-full border transition-all active:scale-95 disabled:opacity-50 bg-success/90 border-success/30 text-white dark:text-black hover:bg-success"
                                         title={`Mostrar precio en ${filteredProducts.length} producto(s)`}>
                                         {bulkToggling ? <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" /> : <DollarSign className="w-4 h-4" />}
-                                    </button>
-                                    <button type="button" onClick={() => handleBulkField('price_visible', false)} disabled={bulkToggling || filteredProducts.length === 0}
+                                    </Button>
+                                    <Button type="button" onClick={() => handleBulkField('price_visible', false)} disabled={bulkToggling || filteredProducts.length === 0}
                                         className="inline-flex items-center justify-center w-9 h-9 rounded-full border transition-all active:scale-95 disabled:opacity-50 bg-destructive/10 border-destructive/20 text-destructive hover:bg-destructive/20"
                                         title={`Ocultar precio en ${filteredProducts.length} producto(s)`}>
                                         {bulkToggling ? <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" /> : <DollarSign className="w-4 h-4 line-through opacity-60" />}
-                                    </button>
+                                    </Button>
                                     <span className="w-px h-5 bg-border mx-1" />
                                     {/* Stock visible */}
-                                    <button type="button" onClick={() => handleBulkField('stock_visible', true)} disabled={bulkToggling || filteredProducts.length === 0}
+                                    <Button type="button" onClick={() => handleBulkField('stock_visible', true)} disabled={bulkToggling || filteredProducts.length === 0}
                                         className="inline-flex items-center justify-center w-9 h-9 rounded-full border transition-all active:scale-95 disabled:opacity-50 bg-success/90 border-success/30 text-white dark:text-black hover:bg-success"
                                         title={`Mostrar stock en ${filteredProducts.length} producto(s)`}>
                                         {bulkToggling ? <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" /> : <Package className="w-4 h-4" />}
-                                    </button>
-                                    <button type="button" onClick={() => handleBulkField('stock_visible', false)} disabled={bulkToggling || filteredProducts.length === 0}
+                                    </Button>
+                                    <Button type="button" onClick={() => handleBulkField('stock_visible', false)} disabled={bulkToggling || filteredProducts.length === 0}
                                         className="inline-flex items-center justify-center w-9 h-9 rounded-full border transition-all active:scale-95 disabled:opacity-50 bg-destructive/10 border-destructive/20 text-destructive hover:bg-destructive/20"
                                         title={`Ocultar stock en ${filteredProducts.length} producto(s)`}>
                                         {bulkToggling ? <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" /> : <Package className="w-4 h-4 line-through opacity-60" />}
-                                    </button>
+                                    </Button>
                                     <span className="w-px h-5 bg-border mx-1" />
                                     {/* Promoción */}
-                                    <button type="button" onClick={() => handleBulkField('on_promotion', true)} disabled={bulkToggling || filteredProducts.length === 0}
+                                    <Button type="button" onClick={() => handleBulkField('on_promotion', true)} disabled={bulkToggling || filteredProducts.length === 0}
                                         className="inline-flex items-center justify-center w-9 h-9 rounded-full border transition-all active:scale-95 disabled:opacity-50 bg-amber-500 border-amber-400/30 text-white hover:bg-amber-600"
                                         title={`Activar promoción en ${filteredProducts.length} producto(s)`}>
                                         {bulkToggling ? <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" /> : <Tag className="w-4 h-4" />}
-                                    </button>
-                                    <button type="button" onClick={() => handleBulkField('on_promotion', false)} disabled={bulkToggling || filteredProducts.length === 0}
+                                    </Button>
+                                    <Button type="button" onClick={() => handleBulkField('on_promotion', false)} disabled={bulkToggling || filteredProducts.length === 0}
                                         className="inline-flex items-center justify-center w-9 h-9 rounded-full border transition-all active:scale-95 disabled:opacity-50 bg-muted border-border text-muted-foreground hover:bg-muted/70"
                                         title={`Desactivar promoción en ${filteredProducts.length} producto(s)`}>
                                         {bulkToggling ? <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" /> : <Tag className="w-4 h-4 opacity-40" />}
-                                    </button>
+                                    </Button>
                                 </div>
                             </div>
                         </div>

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Search, Book, HelpCircle, ChevronRight, Layout, Database, GitPullRequest } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
+import { Button } from "@/components/ui/button";
 interface UserHelpItem {
   id: string;
   name: string;
@@ -48,7 +49,7 @@ export const UserHelpGallery: React.FC<UserHelpGalleryProps> = ({ data }) => {
         </div>
         <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2 w-full md:w-auto">
           {categories.map((cat) => (
-            <button
+            <Button
               key={cat.id}
               onClick={() => setActiveCategory(cat.id)}
               className={cn(
@@ -60,7 +61,7 @@ export const UserHelpGallery: React.FC<UserHelpGalleryProps> = ({ data }) => {
             >
               <cat.icon className="w-3.5 h-3.5" />
               {cat.name}
-            </button>
+            </Button>
           ))}
         </div>
       </div>
@@ -92,9 +93,9 @@ export const UserHelpGallery: React.FC<UserHelpGalleryProps> = ({ data }) => {
 
             <div className="mt-8 pt-6 border-t border-border/50 flex items-center justify-between">
                <span className="text-[8px] font-black uppercase tracking-widest opacity-40 italic">ID: {item.id}</span>
-               <button disabled title="Próximamente" aria-label="Ver guía detallada" className="text-[9px] font-black uppercase tracking-widest text-primary opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-0 cursor-not-allowed">
+               <Button disabled title="Próximamente" aria-label="Ver guía detallada" className="text-[9px] font-black uppercase tracking-widest text-primary opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-0 cursor-not-allowed">
                   Ver guía detallada
-               </button>
+               </Button>
             </div>
           </div>
         ))}

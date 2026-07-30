@@ -38,7 +38,7 @@ export function NotificationCenter() {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <button
+        <Button
           className="relative p-2 rounded-xl hover:bg-muted transition-colors"
           aria-label={`Notificaciones${unreadCount > 0 ? ` (${unreadCount} sin leer)` : ''}`}
         >
@@ -48,7 +48,7 @@ export function NotificationCenter() {
               {unreadCount > 9 ? '9+' : unreadCount}
             </span>
           )}
-        </button>
+        </Button>
       </PopoverTrigger>
       <PopoverContent align="end" className="w-80 sm:w-96 p-0 max-h-[70vh] overflow-y-auto">
         <div className="px-4 py-3 border-b border-border">

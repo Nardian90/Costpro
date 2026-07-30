@@ -6,6 +6,7 @@ import { Wifi, WifiOff, RefreshCw, CheckCircle2, AlertCircle } from "lucide-reac
 import { cn } from "@/lib/utils";
 import { useSyncContext } from "@/components/providers/SyncProvider";
 
+import { Button } from "@/components/ui/button";
 /**
  * POS-3b EM-5: Indicador visual de estado offline + cola de sync.
  *
@@ -94,7 +95,7 @@ export function OfflineStatusIndicator({ className }: { className?: string }) {
                 : "Sincronizado"}
         </span>
         {hasPending && isOnline && (
-          <button
+          <Button
             type="button"
             onClick={() => processQueue()}
             disabled={isSyncing}
@@ -103,7 +104,7 @@ export function OfflineStatusIndicator({ className }: { className?: string }) {
             title="Forzar sync ahora"
           >
             Sync
-          </button>
+          </Button>
         )}
         {lastSync && !hasPending && (
           <span className="text-[9px] opacity-70 ml-1">

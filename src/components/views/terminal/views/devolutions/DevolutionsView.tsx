@@ -10,6 +10,7 @@ import { DocumentStatusBadge, canReverse } from '@/components/ui/DocumentStatusB
 import { ReverseDocumentModal } from '@/components/ui/ReverseDocumentModal';
 import { DuplicateDocumentModal } from '@/components/ui/DuplicateDocumentModal';
 
+import { Button } from "@/components/ui/button";
 const touch = 'min-h-[44px]';
 
 export function DevolutionsView() {
@@ -49,9 +50,9 @@ export function DevolutionsView() {
           <h1 className="text-xl font-black uppercase tracking-tight">Devoluciones</h1>
           <p className="text-xs text-muted-foreground">Notas de crédito y devoluciones de productos</p>
         </div>
-        <button onClick={() => setShowCreate(true)} className={cn('flex items-center gap-2 px-4 rounded-xl bg-primary text-primary-foreground text-xs font-black uppercase hover:opacity-90', touch)}>
+        <Button onClick={() => setShowCreate(true)} className={cn('flex items-center gap-2 px-4 rounded-xl bg-primary text-primary-foreground text-xs font-black uppercase hover:opacity-90', touch)}>
           <Plus className="w-4 h-4" /> Nueva Devolución
-        </button>
+        </Button>
       </div>
 
       <div className="flex items-center gap-2">
@@ -60,9 +61,9 @@ export function DevolutionsView() {
           <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar por número, cliente, motivo..."
             className={cn('w-full pl-10 pr-4 rounded-xl border border-border bg-background text-sm', touch)} />
         </div>
-        <button onClick={load} className={cn('p-2 rounded-xl border border-border hover:bg-muted', touch)} aria-label="Recargar">
+        <Button onClick={load} className={cn('p-2 rounded-xl border border-border hover:bg-muted', touch)} aria-label="Recargar">
           {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RotateCcw className="w-4 h-4" />}
-        </button>
+        </Button>
       </div>
 
       {loading ? (
@@ -93,7 +94,7 @@ export function DevolutionsView() {
                   </div>
                   {/* V2.2: botón Revertir devolución completada */}
                   {canReverse('devolution', d.status) && (
-                    <button
+                    <Button
                       type="button"
                       onClick={() => setReverseTarget({
                         id: d.id,
@@ -105,10 +106,10 @@ export function DevolutionsView() {
                     >
                       <Undo2 className="w-3 h-3" />
                       Revertir
-                    </button>
+                    </Button>
                   )}
                   {/* V2.4: botón Duplicar — abre modal de confirmación */}
-                  <button
+                  <Button
                     type="button"
                     onClick={() => setDuplicateTarget({
                       id: d.id,
@@ -121,7 +122,7 @@ export function DevolutionsView() {
                   >
                     <Copy className="w-3 h-3" />
                     Duplicar
-                  </button>
+                  </Button>
                 </div>
               </div>
             </div>
@@ -201,7 +202,7 @@ function CreateDevolutionModal({ onClose, onCreated, storeId }: { onClose: () =>
       <div className="w-full max-w-lg bg-card border border-border rounded-2xl shadow-2xl p-5 space-y-4 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-black uppercase">Nueva Devolución</h2>
-          <button onClick={onClose} className="p-2 rounded-lg hover:bg-muted" aria-label="Cerrar"><X className="w-4 h-4" /></button>
+          <Button onClick={onClose} className="p-2 rounded-lg hover:bg-muted" aria-label="Cerrar"><X className="w-4 h-4" /></Button>
         </div>
 
         <div>
@@ -218,10 +219,10 @@ function CreateDevolutionModal({ onClose, onCreated, storeId }: { onClose: () =>
             {searchResults.length > 0 && (
               <div className="absolute z-10 w-full mt-1 rounded-xl border border-border bg-card shadow-lg max-h-48 overflow-y-auto">
                 {searchResults.map(p => (
-                  <button key={p.id} onClick={() => addProduct(p)} className="w-full text-left p-2 hover:bg-muted text-sm border-b border-border/30 last:border-0">
+                  <Button key={p.id} onClick={() => addProduct(p)} className="w-full text-left p-2 hover:bg-muted text-sm border-b border-border/30 last:border-0">
                     <span className="font-bold">{p.name}</span>
                     <span className="text-xs text-muted-foreground ml-2">${p.price}</span>
-                  </button>
+                  </Button>
                 ))}
               </div>
             )}
@@ -243,7 +244,7 @@ function CreateDevolutionModal({ onClose, onCreated, storeId }: { onClose: () =>
                     <span className="text-xs font-mono font-bold">{formatCurrency(item.quantity * item.unit_price)}</span>
                   </div>
                 </div>
-                <button onClick={() => removeItem(idx)} className="p-1 rounded hover:bg-destructive/10 text-destructive"><X className="w-3 h-3" /></button>
+                <Button onClick={() => removeItem(idx)} className="p-1 rounded hover:bg-destructive/10 text-destructive"><X className="w-3 h-3" /></Button>
               </div>
             ))}
             <div className="flex justify-between p-2 rounded-lg bg-muted/30">
@@ -253,10 +254,10 @@ function CreateDevolutionModal({ onClose, onCreated, storeId }: { onClose: () =>
           </div>
         )}
 
-        <button onClick={handleSubmit} disabled={submitting || !reason.trim() || items.length === 0}
+        <Button onClick={handleSubmit} disabled={submitting || !reason.trim() || items.length === 0}
           className={cn('w-full rounded-xl bg-primary text-primary-foreground text-sm font-black uppercase hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2', touch)}>
           {submitting ? <><Loader2 className="w-4 h-4 animate-spin" /> Creando...</> : <><RotateCcw className="w-4 h-4" /> Crear Devolución</>}
-        </button>
+        </Button>
       </div>
     </div>
   );

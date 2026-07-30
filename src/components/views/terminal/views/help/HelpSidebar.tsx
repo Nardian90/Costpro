@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
+import { Button } from "@/components/ui/button";
 import {
   Rocket,
   Calculator,
@@ -192,7 +193,7 @@ export default function HelpSidebar({ structure, toc, onSelect, activePath, isAc
 
             return (
               <div key={cat.id} className="group">
-                <button type="button"
+                <Button type="button"
                   onClick={() => toggleCategory(cat.id)}
                   className={cn(
                     'w-full text-left px-3 py-3 rounded-xl transition-all duration-200 flex items-center gap-3',
@@ -227,14 +228,14 @@ export default function HelpSidebar({ structure, toc, onSelect, activePath, isAc
                   <div className={cn('transition-transform duration-300 shrink-0', isOpen ? 'rotate-180' : '')}>
                     <ChevronDown className="w-3.5 h-3.5 text-muted-foreground/40" />
                   </div>
-                </button>
+                </Button>
 
                 {isOpen && (
                   <div className="ml-4 mr-1 mt-1 mb-2 space-y-0.5 animate-in slide-in-from-top-2 duration-200">
                     {cat.files.map((file) => {
                       const isActive = activePath === file.path;
                       return (
-                        <button type="button"
+                        <Button type="button"
                           key={file.path}
                           onClick={() => onSelect(file.path)}
                           className={cn(
@@ -253,7 +254,7 @@ export default function HelpSidebar({ structure, toc, onSelect, activePath, isAc
                           />
                           <span className="truncate">{file.name}</span>
                           {isActive && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-primary shrink-0" />}
-                        </button>
+                        </Button>
                       );
                     })}
                   </div>
@@ -265,7 +266,7 @@ export default function HelpSidebar({ structure, toc, onSelect, activePath, isAc
           {/* ── TOC Section — collapsible, after all modules ── */}
           {toc.length > 0 && (
             <div className="group">
-              <button type="button"
+              <Button type="button"
                 onClick={() => toggleCategory('toc')}
                 className={cn(
                   'w-full text-left px-3 py-3 rounded-xl transition-all duration-200 flex items-center gap-3',
@@ -299,7 +300,7 @@ export default function HelpSidebar({ structure, toc, onSelect, activePath, isAc
                 <div className={cn('transition-transform duration-300 shrink-0', tocOpen ? 'rotate-180' : '')}>
                   <ChevronDown className="w-3.5 h-3.5 text-muted-foreground/40" />
                 </div>
-              </button>
+              </Button>
 
               {tocOpen && (
                 <div className="ml-4 mr-1 mt-1 mb-2 space-y-0.5 animate-in slide-in-from-top-2 duration-200">
@@ -364,7 +365,7 @@ export default function HelpSidebar({ structure, toc, onSelect, activePath, isAc
       <div className="shrink-0 bg-card/95 backdrop-blur-sm border-t border-border/40">
         {/* Accessibility link */}
         <div className="px-3 py-2">
-          <button type="button"
+          <Button type="button"
             onClick={onSelectAccessibility}
             className={cn(
               'w-full text-left px-3 py-2.5 rounded-xl text-[11px] font-medium transition-all duration-200 flex items-center gap-2.5',
@@ -383,7 +384,7 @@ export default function HelpSidebar({ structure, toc, onSelect, activePath, isAc
             />
             <span>Accesibilidad</span>
             {isAccessibilityActive && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-primary shrink-0" />}
-          </button>
+          </Button>
         </div>
 
         {/* Bottom branding */}

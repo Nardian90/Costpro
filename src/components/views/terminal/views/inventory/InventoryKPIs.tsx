@@ -7,6 +7,7 @@ import { formatCurrency, cn } from '@/lib/utils';
 import { FCCoverageBar } from '@/components/ui/FCStatusBadge';
 import type { FCCoverageData } from '@/hooks/ui/useProductFCStatus';
 
+import { Button } from "@/components/ui/button";
 interface InventoryKPIsProps {
   products: Product[];
   /** FC coverage data for the FC Coverage metric card */
@@ -152,7 +153,7 @@ export default function InventoryKPIsPanel({ products, fcCoverage, className }: 
   return (
     <div className={cn('space-y-4', className)}>
       {/* Collapsible header with health bar */}
-      <button
+      <Button
         type="button"
         onClick={() => setIsOpen(prev => !prev)}
         className="w-full flex items-center justify-between group min-h-[44px]"
@@ -185,7 +186,7 @@ export default function InventoryKPIsPanel({ products, fcCoverage, className }: 
         )}>
           {isOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
         </div>
-      </button>
+      </Button>
 
       {/* Collapsible content */}
       <div

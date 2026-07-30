@@ -16,6 +16,7 @@ import { useCartStore } from "@/store/cart";
 import { POSPortalModal } from "./POSPortalModal";
 import type { PaymentMethod } from "@/types";
 
+import { Button } from "@/components/ui/button";
 /**
  * POS-3a-2 / 3a-3 / 3a-4: POSCartCheckoutPanel
  *
@@ -173,7 +174,7 @@ export function POSCartCheckoutPanel({
           vía document.querySelector('#pos-checkout-cta').click().
           Esto permite que el botón COBRAR gigante esté siempre visible abajo
           sin importar el tab activo, pero el modal de confirmación viva aquí. */}
-      <button
+      <Button
         id="pos-checkout-cta"
         type="button"
         onClick={() => setShowCheckoutConfirm(true)}
@@ -256,7 +257,7 @@ export function POSCartCheckoutPanel({
         return (
         <div className="px-4 sm:px-6 py-2 border-b border-border/50 bg-success/5">
           <div className="flex items-center gap-2">
-            <button
+            <Button
               type="button"
               onClick={() => {
                 // Inicializar la moneda activa del modal con la primera moneda cash
@@ -266,7 +267,7 @@ export function POSCartCheckoutPanel({
               className="flex-1 min-h-[36px] rounded-lg bg-success/90 text-white dark:text-black text-[10px] font-black uppercase hover:bg-success transition-colors flex items-center justify-center gap-1.5"
             >
               <DollarSign className="w-3.5 h-3.5" /> Efectivo Recibido
-            </button>
+            </Button>
             {cashReceivedNum > 0 && (
               <div className="text-right shrink-0">
                 <p className="text-[8px] font-bold uppercase text-muted-foreground">Vuelto</p>
@@ -304,16 +305,16 @@ export function POSCartCheckoutPanel({
           />
           <div className="flex gap-1 mt-1">
             {cashPresets.map((preset) => (
-              <button key={preset} type="button" onClick={() => setCashReceived(String(preset))}
+              <Button key={preset} type="button" onClick={() => setCashReceived(String(preset))}
                 className="flex-1 min-h-[32px] rounded bg-success/80 text-white text-[9px] font-black hover:bg-success">
                 ${preset}
-              </button>
+              </Button>
             ))}
             {/* FIX-CASH-BREAKDOWN: "Exacto" ahora usa el total de efectivo (no el total de la venta) */}
-            <button type="button" onClick={() => setCashReceived(totalCashCup.toFixed(2))}
+            <Button type="button" onClick={() => setCashReceived(totalCashCup.toFixed(2))}
               className="flex-1 min-h-[32px] rounded bg-success text-white text-[9px] font-black hover:opacity-90">
               Exacto
-            </button>
+            </Button>
           </div>
         </div>
         );
@@ -519,21 +520,21 @@ export function POSCartCheckoutPanel({
             )}
           </div>
           <div className="flex gap-2">
-            <button
+            <Button
               type="button"
               onClick={() => setShowCheckoutConfirm(false)}
               className="flex-1 h-12 rounded-xl border border-border text-xs font-black uppercase tracking-widest hover:bg-muted transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30"
             >
               Cancelar
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
               onClick={handleConfirmCheckout}
               disabled={isProcessing}
               className="flex-1 h-12 rounded-xl bg-primary text-primary-foreground text-xs font-black uppercase tracking-widest hover:opacity-90 transition-opacity disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-primary/30"
             >
               {isProcessing ? "Procesando..." : "Confirmar"}
-            </button>
+            </Button>
           </div>
         </div>
       </POSPortalModal>
@@ -552,7 +553,7 @@ export function POSCartCheckoutPanel({
           {cashCurrencies.length > 1 && (
             <div className="flex gap-1 bg-muted/20 p-0.5 rounded-lg">
               {cashCurrencies.map(cur => (
-                <button
+                <Button
                   key={cur}
                   onClick={() => setBreakdownCurrency(cur)}
                   className={cn("flex-1 py-1.5 rounded text-[10px] font-black uppercase",
@@ -560,21 +561,21 @@ export function POSCartCheckoutPanel({
                   )}
                 >
                   {cur} · {formatCurrency(cashTotalsByCurrency[cur])}
-                </button>
+                </Button>
               ))}
             </div>
           )}
 
           {/* Sub-tabs: Contar / Configurar */}
           <div className="flex gap-1 bg-muted/20 p-0.5 rounded-lg">
-            <button onClick={() => setBreakdownTab('count')}
+            <Button onClick={() => setBreakdownTab('count')}
               className={cn("flex-1 py-1.5 rounded text-[10px] font-black uppercase", breakdownTab === 'count' ? "bg-primary text-primary-foreground" : "text-muted-foreground")}>
               Contar
-            </button>
-            <button onClick={() => setBreakdownTab('config')}
+            </Button>
+            <Button onClick={() => setBreakdownTab('config')}
               className={cn("flex-1 py-1.5 rounded text-[10px] font-black uppercase", breakdownTab === 'config' ? "bg-primary text-primary-foreground" : "text-muted-foreground")}>
               Configurar
-            </button>
+            </Button>
           </div>
 
           {/* Mostrar total de efectivo de la moneda activa */}
@@ -662,7 +663,7 @@ export function POSCartCheckoutPanel({
                   </div>
                 )}
               </div>
-              <button
+              <Button
                 onClick={() => {
                   // FIX-CASH-BREAKDOWN: el "cashReceived" del input principal se setea
                   // al total del desglose en CUP (para consolidar con transfer/zelle)
@@ -672,7 +673,7 @@ export function POSCartCheckoutPanel({
                 className="w-full h-10 rounded-xl bg-success text-white text-xs font-black uppercase hover:opacity-90"
               >
                 Confirmar
-              </button>
+              </Button>
             </>
           ) : (
             /* Tab configurar: activar/desactivar billetes */
@@ -680,14 +681,14 @@ export function POSCartCheckoutPanel({
               <p className="text-[10px] text-muted-foreground">Activa los billetes/monedas que usas:</p>
               {denominations.map(d => (
                 <div key={d.value} className="flex items-center gap-2">
-                  <button
+                  <Button
                     onClick={() => setDenominations(prev => prev.map(x => x.value === d.value ? { ...x, active: !x.active } : x))}
                     className={cn("flex-1 py-1.5 rounded-lg text-xs font-bold border transition-all",
                       d.active ? "bg-primary/10 border-primary text-primary" : "bg-muted/20 border-border text-muted-foreground"
                     )}
                   >
                     {d.label}
-                  </button>
+                  </Button>
                 </div>
               ))}
             </div>

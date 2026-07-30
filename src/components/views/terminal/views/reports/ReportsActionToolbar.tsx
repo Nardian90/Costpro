@@ -39,6 +39,7 @@ import {
 import { cn } from '@/lib/utils';
 import { CostProLoader } from '@/components/ui/CostProLoader';
 
+import { Button } from "@/components/ui/button";
 export interface ToolbarAction {
   id: string;
   label: string;
@@ -141,14 +142,14 @@ export function ReportsActionToolbar({
       {overflowActions.length > 0 && (
         <DropdownMenu open={isOverflowOpen} onOpenChange={setIsOverflowOpen}>
           <DropdownMenuTrigger asChild>
-            <button
+            <Button
               type="button"
               aria-label="Más acciones"
               title="Más acciones"
               className="shrink-0 inline-flex items-center justify-center gap-2 h-9 px-3 rounded-xl border border-border text-foreground hover:bg-muted hover:text-foreground transition-all active:scale-95 outline-none focus-visible:ring-2 focus-visible:ring-primary/40 font-bold uppercase tracking-widest text-xs"
             >
               <MoreHorizontal className="w-4 h-4" aria-hidden="true" />
-            </button>
+            </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
             {overflowActions.map((action) => {
@@ -193,7 +194,7 @@ function ToolbarButton({ action }: { action: ToolbarAction }) {
   const variantClass = getVariantClass(action.variant);
 
   return (
-    <button
+    <Button
       type="button"
       onClick={action.onClick}
       disabled={action.disabled}
@@ -209,7 +210,7 @@ function ToolbarButton({ action }: { action: ToolbarAction }) {
       {Icon && !isLoading && <Icon className="w-4 h-4" aria-hidden="true" />}
       {Icon && isLoading && <CostProLoader size={16} showText={false} showSubtext={false} />}
       <span className="whitespace-nowrap">{action.label}</span>
-    </button>
+    </Button>
   );
 }
 

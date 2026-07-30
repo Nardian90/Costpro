@@ -32,6 +32,7 @@ import { CostProLoader } from '@/components/ui/CostProLoader';
 import ProductImage from '@/components/ui/ProductImage';
 import { FCStatusBadge } from '@/components/ui/FCStatusBadge';
 
+import { Button } from "@/components/ui/button";
 type SortKey = 'name' | 'stock' | 'price';
 type SortDir = 'asc' | 'desc';
 
@@ -123,15 +124,15 @@ export default function InventoryMobileTable({
     <div className="rounded-xl border border-border/30 overflow-hidden bg-card">
       {/* Header de tabla — con fuente monospace para columnas numéricas */}
       <div className="grid grid-cols-[1fr_50px_70px] gap-0 px-2 py-1.5 bg-muted/60 border-b-2 border-border text-[9px] font-black uppercase text-muted-foreground tracking-wider">
-        <button
+        <Button
           type="button"
           onClick={() => handleSort('name')}
           className="flex items-center gap-1 text-left min-h-[32px] pl-1 border-r border-border/40"
           aria-label="Ordenar por nombre"
         >
           Producto <SortIcon col="name" sortKey={sortKey} sortDir={sortDir} />
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
           onClick={() => handleSort('stock')}
           className="flex items-center justify-end gap-1 text-right min-h-[32px] pr-1 border-r border-border/40"
@@ -139,8 +140,8 @@ export default function InventoryMobileTable({
           aria-label="Ordenar por stock"
         >
           Stock <SortIcon col="stock" sortKey={sortKey} sortDir={sortDir} />
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
           onClick={() => handleSort('price')}
           className="flex items-center justify-end gap-1 text-right min-h-[32px] pr-1"
@@ -148,7 +149,7 @@ export default function InventoryMobileTable({
           aria-label="Ordenar por precio"
         >
           Precio <SortIcon col="price" sortKey={sortKey} sortDir={sortDir} />
-        </button>
+        </Button>
       </div>
 
       {/* Filas — altura FIJA, alineación estricta, nombre con line-clamp-2 (no truncate) */}
@@ -228,27 +229,27 @@ export default function InventoryMobileTable({
                 <div className="px-2 pb-2 pt-1 bg-muted/10 border-t border-border/10">
                   <div className="flex flex-wrap items-center gap-1">
                     {onAdjust && (
-                      <button
+                      <Button
                         type="button"
                         onClick={(e) => { e.stopPropagation(); onAdjust(product); }}
                         className="inline-flex items-center gap-1 px-2 py-1.5 min-h-[36px] rounded-lg bg-primary/10 text-primary text-[10px] font-bold uppercase border border-primary/20 active:scale-95 transition-transform"
                         aria-label="Ajustar stock"
                       >
                         <Edit className="w-3 h-3" /> Ajustar
-                      </button>
+                      </Button>
                     )}
                     {onViewKardex && (
-                      <button
+                      <Button
                         type="button"
                         onClick={(e) => { e.stopPropagation(); onViewKardex(product); }}
                         className="inline-flex items-center gap-1 px-2 py-1.5 min-h-[36px] rounded-lg bg-muted text-foreground text-[10px] font-bold uppercase border border-border active:scale-95 transition-transform"
                         aria-label="Ver kardex"
                       >
                         <BookOpen className="w-3 h-3" /> Kardex
-                      </button>
+                      </Button>
                     )}
                     {onToggleVisible && (
-                      <button
+                      <Button
                         type="button"
                         onClick={(e) => { e.stopPropagation(); onToggleVisible(product, !product.visible_en_tienda); }}
                         disabled={isTogglingVisible === product.id}
@@ -260,10 +261,10 @@ export default function InventoryMobileTable({
                         aria-pressed={!!product.visible_en_tienda}
                       >
                         {isTogglingVisible === product.id ? <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" /> : product.visible_en_tienda ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
-                      </button>
+                      </Button>
                     )}
                     {onTogglePriceVisible && (
-                      <button
+                      <Button
                         type="button"
                         onClick={(e) => { e.stopPropagation(); onTogglePriceVisible(product); }}
                         disabled={isTogglingPriceVisible === product.id}
@@ -275,10 +276,10 @@ export default function InventoryMobileTable({
                         aria-pressed={!!product.price_visible}
                       >
                         {isTogglingPriceVisible === product.id ? <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" /> : <DollarSign className={cn('w-3.5 h-3.5', !product.price_visible && 'line-through opacity-60')} />}
-                      </button>
+                      </Button>
                     )}
                     {onToggleStockVisible && (
-                      <button
+                      <Button
                         type="button"
                         onClick={(e) => { e.stopPropagation(); onToggleStockVisible(product); }}
                         disabled={isTogglingStockVisible === product.id}
@@ -290,10 +291,10 @@ export default function InventoryMobileTable({
                         aria-pressed={!!product.stock_visible}
                       >
                         {isTogglingStockVisible === product.id ? <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" /> : <Package className={cn('w-3.5 h-3.5', !product.stock_visible && 'line-through opacity-60')} />}
-                      </button>
+                      </Button>
                     )}
                     {onTogglePromotion && (
-                      <button
+                      <Button
                         type="button"
                         onClick={(e) => { e.stopPropagation(); onTogglePromotion(product); }}
                         disabled={isTogglingPromotion === product.id}
@@ -305,7 +306,7 @@ export default function InventoryMobileTable({
                         aria-pressed={!!product.on_promotion}
                       >
                         {isTogglingPromotion === product.id ? <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" /> : <Tag className="w-3.5 h-3.5" />}
-                      </button>
+                      </Button>
                     )}
                   </div>
                 </div>

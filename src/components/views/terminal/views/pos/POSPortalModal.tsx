@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+import { Button } from "@/components/ui/button";
 interface POSPortalModalProps {
   open: boolean;
   onClose: () => void;
@@ -139,14 +140,14 @@ export function POSPortalModal({
               {title}
             </h2>
             {!hideCloseButton && (
-              <button
+              <Button
                 type="button"
                 onClick={onClose}
                 className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
                 aria-label="Cerrar"
               >
                 <X className="w-4 h-4" />
-              </button>
+              </Button>
             )}
           </div>
         )}

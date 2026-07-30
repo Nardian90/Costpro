@@ -153,14 +153,14 @@ const CostSheetForm: React.FC<CostSheetFormProps> = ({
                 <h3 className="text-xl font-black text-primary">Anexo {annex.id}</h3>
                 <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">{annex.title}</p>
             </div>
-            <button type="button"
+            <Button type="button"
               onClick={() => addRow(annex.id)}
               className="bg-primary text-primary-foreground h-11 !px-5 rounded-xl w-full sm:w-auto flex items-center justify-center gap-2 font-bold text-sm shadow-lg shadow-primary/20"
               aria-label={`Añadir fila al anexo ${annex.id}`}
             >
                 <Plus className="w-4 h-4" aria-hidden="true" />
                 Añadir Fila
-            </button>
+            </Button>
          </div>
 
          <div className="w-full">
@@ -197,13 +197,13 @@ const CostSheetForm: React.FC<CostSheetFormProps> = ({
                                   </TableCell>
                               ))}
                               <TableCell data-label="Acciones" className="text-center p-3 sm:p-4">
-                                  <button type="button"
+                                  <Button type="button"
                                       onClick={() => removeRow(annex.id, rowIndex)}
                                       className="w-11 h-11 flex items-center justify-center text-danger hover:bg-danger/10 rounded-xl transition-all mx-auto"
                                       aria-label="Eliminar fila"
                                   >
                                       <Trash2 className="h-4 w-4" />
-                                  </button>
+                                  </Button>
                               </TableCell>
                           </TableRow>
                       ))}

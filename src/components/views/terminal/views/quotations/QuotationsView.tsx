@@ -5,6 +5,7 @@ import { Plus, Search, RotateCcw, Loader2, FileText, X, CheckCircle2 } from 'luc
 import { cn, formatCurrency } from '@/lib/utils';
 import { apiFetch } from '@/lib/api-fetch';
 import { useAuthStore } from '@/store';
+import { Button } from "@/components/ui/button";
 import { toast } from 'sonner';
 
 const touch = 'min-h-[44px]';
@@ -50,9 +51,9 @@ export function QuotationsView() {
           <h1 className="text-xl font-black uppercase tracking-tight">Cotizaciones</h1>
           <p className="text-xs text-muted-foreground">Pedidos y cotizaciones a clientes</p>
         </div>
-        <button onClick={() => setShowCreate(true)} className={cn('flex items-center gap-2 px-4 rounded-xl bg-primary text-primary-foreground text-xs font-black uppercase hover:opacity-90', touch)}>
+        <Button onClick={() => setShowCreate(true)} className={cn('flex items-center gap-2 px-4 rounded-xl bg-primary text-primary-foreground text-xs font-black uppercase hover:opacity-90', touch)}>
           <Plus className="w-4 h-4" /> Nueva Cotización
-        </button>
+        </Button>
       </div>
 
       <div className="flex items-center gap-2">
@@ -61,9 +62,9 @@ export function QuotationsView() {
           <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar por número o cliente..."
             className={cn('w-full pl-10 pr-4 rounded-xl border border-border bg-background text-sm', touch)} />
         </div>
-        <button onClick={load} className={cn('p-2 rounded-xl border border-border hover:bg-muted', touch)}>
+        <Button onClick={load} className={cn('p-2 rounded-xl border border-border hover:bg-muted', touch)}>
           {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RotateCcw className="w-4 h-4" />}
-        </button>
+        </Button>
       </div>
 
       {loading ? (
@@ -149,7 +150,7 @@ function CreateQuotationModal({ onClose, onCreated, storeId }: { onClose: () => 
       <div className="w-full max-w-lg bg-card border border-border rounded-2xl shadow-2xl p-5 space-y-4 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-black uppercase">Nueva Cotización</h2>
-          <button onClick={onClose} className="p-2 rounded-lg hover:bg-muted"><X className="w-4 h-4" /></button>
+          <Button onClick={onClose} className="p-2 rounded-lg hover:bg-muted"><X className="w-4 h-4" /></Button>
         </div>
 
         <div className="grid grid-cols-2 gap-2">
@@ -173,10 +174,10 @@ function CreateQuotationModal({ onClose, onCreated, storeId }: { onClose: () => 
             {searchResults.length > 0 && (
               <div className="absolute z-10 w-full mt-1 rounded-xl border border-border bg-card shadow-lg max-h-48 overflow-y-auto">
                 {searchResults.map(p => (
-                  <button key={p.id} onClick={() => addProduct(p)} className="w-full text-left p-2 hover:bg-muted text-sm border-b border-border/30 last:border-0">
+                  <Button key={p.id} onClick={() => addProduct(p)} className="w-full text-left p-2 hover:bg-muted text-sm border-b border-border/30 last:border-0">
                     <span className="font-bold">{p.name}</span>
                     <span className="text-xs text-muted-foreground ml-2">${p.price}</span>
-                  </button>
+                  </Button>
                 ))}
               </div>
             )}
@@ -197,7 +198,7 @@ function CreateQuotationModal({ onClose, onCreated, storeId }: { onClose: () => 
                   </div>
                 </div>
                 <span className="text-sm font-mono font-bold">{formatCurrency(item.quantity * item.unit_price)}</span>
-                <button onClick={() => setItems(prev => prev.filter((_, i) => i !== idx))} className="p-1 rounded hover:bg-destructive/10 text-destructive"><X className="w-3 h-3" /></button>
+                <Button onClick={() => setItems(prev => prev.filter((_, i) => i !== idx))} className="p-1 rounded hover:bg-destructive/10 text-destructive"><X className="w-3 h-3" /></Button>
               </div>
             ))}
             <div className="flex justify-between p-2 rounded-lg bg-muted/30">
@@ -207,10 +208,10 @@ function CreateQuotationModal({ onClose, onCreated, storeId }: { onClose: () => 
           </div>
         )}
 
-        <button onClick={handleSubmit} disabled={submitting || items.length === 0}
+        <Button onClick={handleSubmit} disabled={submitting || items.length === 0}
           className={cn('w-full rounded-xl bg-primary text-primary-foreground text-sm font-black uppercase hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2', touch)}>
           {submitting ? <><Loader2 className="w-4 h-4 animate-spin" /> Creando...</> : <><FileText className="w-4 h-4" /> Crear Cotización</>}
-        </button>
+        </Button>
       </div>
     </div>
   );

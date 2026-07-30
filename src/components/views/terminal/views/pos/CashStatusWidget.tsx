@@ -7,6 +7,7 @@ import { useActiveShift } from "@/hooks/api/useActiveShift";
 import { useSalesSinceLastClosure } from "@/hooks/api/useCashClosures";
 import { useAuthStore } from "@/store";
 import { useUIStore } from "@/store";
+import { Button } from "@/components/ui/button";
 import { useQueryClient } from "@tanstack/react-query";
 
 interface CashStatusWidgetProps {
@@ -53,7 +54,7 @@ export function CashStatusWidget({ compact = false, className }: CashStatusWidge
 
   if (compact) {
     return (
-      <button
+      <Button
         type="button"
         onClick={hasShift ? handleNavigateToCash : handleNavigateToCash}
         title={hasShift ? "Turno activo — clic para ir a Caja" : "Sin turno abierto — clic para abrir turno en Caja"}
@@ -75,12 +76,12 @@ export function CashStatusWidget({ compact = false, className }: CashStatusWidge
         />
         {hasShift ? formatCurrency(totalSales) : "Abrir turno"}
         <ArrowRight className="w-3 h-3 opacity-70" aria-hidden="true" />
-      </button>
+      </Button>
     );
   }
 
   return (
-    <button
+    <Button
       type="button"
       onClick={handleNavigateToCash}
       className={cn(
@@ -170,6 +171,6 @@ export function CashStatusWidget({ compact = false, className }: CashStatusWidge
           Clic para <span className="text-destructive underline">abrir tu turno</span> y empezar a vender.
         </p>
       )}
-    </button>
+    </Button>
   );
 }

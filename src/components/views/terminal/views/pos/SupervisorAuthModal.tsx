@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Shield, Lock, X, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
+import { Button } from "@/components/ui/button";
 /**
  * SupervisorAuthModal — Pide PIN de supervisor para autorizar descuentos
  * que exceden el umbral configurado por tienda.
@@ -107,13 +108,13 @@ export function SupervisorAuthModal({
             <Shield className="w-5 h-5 text-amber-500" />
             <h3 className="text-sm font-black uppercase tracking-widest">Autorización de Supervisor</h3>
           </div>
-          <button
+          <Button
             onClick={onClose}
             className="p-2 rounded-lg hover:bg-muted min-h-[44px] min-w-[44px] flex items-center justify-center"
             aria-label="Cerrar"
           >
             <X className="w-4 h-4" />
-          </button>
+          </Button>
         </div>
 
         {/* Body */}
@@ -171,13 +172,13 @@ export function SupervisorAuthModal({
 
           {/* Actions */}
           <div className="flex gap-2">
-            <button
+            <Button
               onClick={onClose}
               className="flex-1 h-12 min-h-[44px] rounded-lg border border-border text-xs font-black uppercase hover:bg-muted"
             >
               Cancelar
-            </button>
-            <button
+            </Button>
+            <Button
               onClick={handleAuthorize}
               disabled={loading || !email || !password}
               className="flex-1 h-12 min-h-[44px] rounded-lg bg-amber-500 text-white text-xs font-black uppercase hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
@@ -187,7 +188,7 @@ export function SupervisorAuthModal({
               ) : (
                 <><Shield className="w-3.5 h-3.5" /> Autorizar</>
               )}
-            </button>
+            </Button>
           </div>
         </div>
       </div>

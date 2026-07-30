@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useAuthStore } from '@/store';
 
+import { Button } from "@/components/ui/button";
 import { useTranslations } from 'next-intl';
 interface CostSheetOptionsDropdownProps {
   onImport: () => void;
@@ -32,7 +33,7 @@ export function CostSheetOptionsDropdown({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button type="button"
+        <Button type="button"
           className="group relative flex items-center gap-2 px-3 h-11 min-h-[44px] rounded-xl bg-background/50 border border-border/50 hover:bg-muted hover:border-primary/20 transition-all outline-none shrink-0 whitespace-nowrap"
         >
           <Ellipsis className="w-3.5 h-3.5 text-muted-foreground" />
@@ -40,7 +41,7 @@ export function CostSheetOptionsDropdown({
             Opciones
           </span>
           <ChevronDown className="w-3 h-3 opacity-30 group-hover:opacity-100 transition-opacity" />
-        </button>
+        </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56 p-2 rounded-2xl bg-card border-border shadow-2xl">
         <div className="px-2 py-1.5 text-xs font-black uppercase tracking-widest text-muted-foreground mb-1 border-b border-border/50 pb-2">

@@ -285,7 +285,7 @@ export default function WhatsAppConversationsView() {
             </div>
           ) : (
             filteredConversations.map((conv) => (
-              <button
+              <Button
                 key={conv.id}
                 onClick={() => setSelectedContact(conv)}
                 className={cn(
@@ -330,7 +330,7 @@ export default function WhatsAppConversationsView() {
                   )}
                 </div>
                 {conv.is_banned && <Ban className="w-3 h-3 text-destructive shrink-0" />}
-              </button>
+              </Button>
             ))
           )}
         </div>

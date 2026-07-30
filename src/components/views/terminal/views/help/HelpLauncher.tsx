@@ -19,6 +19,7 @@ import { HelpCircle } from 'lucide-react';
 import { useUIStore } from '@/store';
 import { cn } from '@/lib/utils';
 
+import { Button } from "@/components/ui/button";
 // Mapeo de ViewType → documento de ayuda.
 // Las rutas son relativas a /knowledge/help/.
 export const HELP_DOC_BY_VIEW: Record<string, string> = {
@@ -165,7 +166,7 @@ export function HelpLauncher({
   };
 
   return (
-    <button
+    <Button
       type="button"
       onClick={handleClick}
       title={`Ayuda de esta vista`}
@@ -180,7 +181,7 @@ export function HelpLauncher({
     >
       <HelpCircle className={iconSizes[size]} aria-hidden="true" />
       {label && <span className="text-xs font-semibold">{label}</span>}
-    </button>
+    </Button>
   );
 }
 

@@ -5,6 +5,7 @@ import { Loader2, Lock, CheckCircle2, AlertTriangle, Calendar } from 'lucide-rea
 import { cn, formatCurrency } from '@/lib/utils';
 import { apiFetch } from '@/lib/api-fetch';
 import { useAuthStore } from '@/store';
+import { Button } from "@/components/ui/button";
 import { toast } from 'sonner';
 
 const touch = 'min-h-[44px]';
@@ -123,18 +124,18 @@ export function FiscalCloseView() {
           {/* Actions */}
           <div className="flex gap-2">
             {status === 'open' && (
-              <button onClick={handleClose} disabled={actionLoading}
+              <Button onClick={handleClose} disabled={actionLoading}
                 className={cn('flex-1 rounded-xl bg-primary text-primary-foreground text-sm font-black uppercase hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2', touch)}>
                 {actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
                 Cerrar Periodo
-              </button>
+              </Button>
             )}
             {status === 'closed' && isAdmin && (
-              <button onClick={handleLock} disabled={actionLoading}
+              <Button onClick={handleLock} disabled={actionLoading}
                 className={cn('flex-1 rounded-xl bg-destructive text-destructive-foreground text-sm font-black uppercase hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2', touch)}>
                 {actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Lock className="w-4 h-4" />}
                 Bloquear Periodo (Admin)
-              </button>
+              </Button>
             )}
             {status === 'locked' && (
               <p className="text-xs text-muted-foreground text-center py-4">

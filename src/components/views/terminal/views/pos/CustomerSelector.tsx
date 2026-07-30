@@ -6,6 +6,7 @@ import { Search, X, User, UserPlus, Check } from "lucide-react";
 import { cn, formatCurrency } from "@/lib/utils";
 import { db, type Customer as DexieCustomer } from "@/lib/dexie";
 import { useCartStore } from "@/store/cart";
+import { Button } from "@/components/ui/button";
 import { useShallow } from "zustand/react/shallow";
 
 /**
@@ -94,7 +95,7 @@ export function CustomerSelector({ className }: { className?: string }) {
   return (
     <div ref={containerRef} className={cn("relative", className)}>
       {/* Trigger button — muestra cliente actual o "Walk-in" */}
-      <button
+      <Button
         type="button"
         onClick={() => {
           setIsOpen(!isOpen);
@@ -137,7 +138,7 @@ export function CustomerSelector({ className }: { className?: string }) {
             <X className="w-3.5 h-3.5" />
           </span>
         )}
-      </button>
+      </Button>
 
       {/* Dropdown */}
       {isOpen && (
@@ -170,7 +171,7 @@ export function CustomerSelector({ className }: { className?: string }) {
                   </p>
                 ) : (
                   filtered.map((c) => (
-                    <button
+                    <Button
                       key={c.ci}
                       type="button"
                       onClick={() => handleSelect(c)}
@@ -185,14 +186,14 @@ export function CustomerSelector({ className }: { className?: string }) {
                       {customerId === c.ci && (
                         <Check className="w-4 h-4 text-primary shrink-0" aria-hidden="true" />
                       )}
-                    </button>
+                    </Button>
                   ))
                 )}
               </div>
 
               {/* Footer actions */}
               <div className="border-t border-border p-2 flex gap-2">
-                <button
+                <Button
                   type="button"
                   onClick={handleWalkIn}
                   className={cn(
@@ -203,15 +204,15 @@ export function CustomerSelector({ className }: { className?: string }) {
                   )}
                 >
                   Walk-in
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
                   onClick={() => setShowManualForm(true)}
                   className="flex-1 px-2 py-1.5 text-xs font-black uppercase tracking-wider rounded-lg border border-border text-muted-foreground hover:bg-muted hover:text-foreground transition-colors flex items-center justify-center gap-1"
                 >
                   <UserPlus className="w-3 h-3" />
                   Manual
-                </button>
+                </Button>
               </div>
             </>
           ) : (
@@ -236,21 +237,21 @@ export function CustomerSelector({ className }: { className?: string }) {
                 className="w-full px-3 py-2 text-sm rounded-lg border border-border bg-background focus:border-primary focus:ring-1 focus:ring-primary/20 outline-none"
               />
               <div className="flex gap-2 pt-1">
-                <button
+                <Button
                   type="button"
                   onClick={() => setShowManualForm(false)}
                   className="flex-1 px-2 py-1.5 text-xs font-black uppercase tracking-wider rounded-lg border border-border text-muted-foreground hover:bg-muted transition-colors"
                 >
                   Cancelar
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
                   onClick={handleManualSave}
                   disabled={!manualName.trim()}
                   className="flex-1 px-2 py-1.5 text-xs font-black uppercase tracking-wider rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition-opacity disabled:opacity-50"
                 >
                   Guardar
-                </button>
+                </Button>
               </div>
             </div>
           )}

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 import {
   ChevronDown, ArrowRight,
@@ -352,13 +353,13 @@ export default function HeroSection({
                 <span className="text-xs font-bold text-white tracking-wide">
                   Fichas de costo automáticas · Resolución 148/2023 · Gratis para empezar
                 </span>
-                <button
+                <Button
                   onClick={handleDismissPromo}
                   className="absolute right-2 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors pointer-events-auto"
                   aria-label="Cerrar promoción"
                 >
                   <X className="w-3 h-3 text-white" />
-                </button>
+                </Button>
               </div>
             </motion.div>
           )}
@@ -398,23 +399,23 @@ export default function HeroSection({
           {/* Right actions */}
           <div className="flex items-center gap-2">
             {/* Ver Demo button */}
-            <button
+            <Button
               onClick={onOpenDemo}
               className="hidden sm:flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/[0.06] border border-white/[0.08] text-white/80 text-sm font-medium hover:bg-white/[0.1] hover:text-white transition-all duration-200 cursor-pointer"
             >
               <span className="w-2 h-2 rounded-full bg-[#22c55e] animate-pulse" />
               <span>Ver demo interactiva de CostPro</span>
-            </button>
+            </Button>
             {/* Login CTA */}
-            <button
+            <Button
               onClick={() => setShowLoginModal(true)}
               className="hidden sm:flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/[0.06] border border-white/[0.08] text-white/80 text-sm font-medium hover:bg-white/[0.1] hover:text-white transition-all duration-200 cursor-pointer"
             >
               <span>Iniciar Sesión</span>
-            </button>
+            </Button>
 
             {/* Mobile hamburger */}
-            <button
+            <Button
               onClick={() => setShowMobileNav(!showMobileNav)}
               className="flex md:hidden items-center justify-center w-9 h-9 rounded-lg hover:bg-white/[0.06] transition-colors"
               aria-label="Abrir menú"
@@ -424,7 +425,7 @@ export default function HeroSection({
                 <span />
                 <span />
               </div>
-            </button>
+            </Button>
           </div>
         </motion.nav>
 
@@ -453,20 +454,20 @@ export default function HeroSection({
                     {link.label}
                   </a>
                 ))}
-                <button
+                <Button
                   onClick={() => { onOpenDemo?.(); setShowMobileNav(false); }}
                   className="block w-full text-left px-4 py-3 text-sm text-[#22c55e] font-medium rounded-lg hover:bg-[#22c55e]/10 transition-all flex items-center gap-2"
                 >
                   <span className="w-2 h-2 rounded-full bg-[#22c55e] animate-pulse" />
                   Ver demo interactiva de CostPro
-                </button>
+                </Button>
                 <div className="h-px bg-white/[0.08] my-2" />
-                <button
+                <Button
                   onClick={() => { setShowLoginModal(true); setShowMobileNav(false); }}
                   className="block w-full text-left px-4 py-3 text-sm text-[#22c55e] font-medium rounded-lg hover:bg-[#22c55e]/10 transition-all"
                 >
                   Iniciar Sesión
-                </button>
+                </Button>
               </div>
             </motion.div>
           )}
@@ -510,7 +511,7 @@ export default function HeroSection({
             className="mt-8 flex flex-col sm:flex-row items-center gap-3"
           >
             {/* Primary CTA — "Comenzar Gratis" */}
-            <button
+            <Button
               onClick={() => {
                 if (setLoginDefaultTab) setLoginDefaultTab('login');
                 setShowLoginModal(true);
@@ -535,17 +536,17 @@ export default function HeroSection({
                   }}
                 />
               </div>
-            </button>
+            </Button>
 
             {/* Secondary CTA — "Ver Demo" */}
-            <button data-testid="hero-demo-button" aria-label="Ver demostración completa"
+            <Button data-testid="hero-demo-button" aria-label="Ver demostración completa"
               onClick={onOpenDemo}
               className="px-8 py-3.5 rounded-2xl font-semibold text-sm text-white/60 border border-white/[0.08] hover:text-white/90 hover:bg-white/[0.04] hover:border-white/[0.15] transition-all duration-300 flex items-center gap-2"
               style={{ minWidth: '180px' }}
             >
               <span className="w-2 h-2 rounded-full bg-[#22c55e] animate-pulse" />
               Ver demostración completa
-            </button>
+            </Button>
           </motion.div>
 
           {/* CTA subtext — trust signal */}

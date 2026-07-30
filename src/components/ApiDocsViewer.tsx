@@ -416,7 +416,7 @@ export default function ApiDocsViewer() {
                       }`}
                     >
                       {/* Endpoint header */}
-                      <button
+                      <Button
                         onClick={() => togglePath(pathKey)}
                         className="w-full flex items-center gap-3 p-3 text-left hover:bg-muted/30 rounded-lg transition-colors"
                       >
@@ -440,7 +440,7 @@ export default function ApiDocsViewer() {
                           )}
                           <ChevronRight className={`h-4 w-4 text-muted-foreground transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
                         </div>
-                      </button>
+                      </Button>
 
                       {/* Expanded details */}
                       {isExpanded && (
@@ -497,13 +497,13 @@ export default function ApiDocsViewer() {
                                     )}
                                     {data.example != null && (
                                       <div className="mt-1">
-                                        <button
+                                        <Button
                                           onClick={() => copyToClipboard(JSON.stringify(data.example, null, 2), `example-${pathKey}`)}
                                           className="text-[10px] text-muted-foreground hover:text-foreground flex items-center gap-1 mb-1"
                                         >
                                           {copiedId === `example-${pathKey}` ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
                                           Copy example
-                                        </button>
+                                        </Button>
                                         <pre className="text-[11px] bg-muted/40 rounded p-2 overflow-x-auto font-mono max-h-48">
                                           {JSON.stringify(data.example, null, 2)}
                                         </pre>
@@ -558,12 +558,12 @@ export default function ApiDocsViewer() {
                             <div className="flex items-center gap-2 text-[10px] text-muted-foreground pt-1">
                               <span>operationId:</span>
                               <code className="font-mono bg-muted/40 px-1 rounded">{operation.operationId}</code>
-                              <button
+                              <Button
                                 onClick={() => copyToClipboard(operation.operationId!, `opid-${pathKey}`)}
                                 className="hover:text-foreground"
                               >
                                 {copiedId === `opid-${pathKey}` ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-                              </button>
+                              </Button>
                             </div>
                           )}
                         </div>

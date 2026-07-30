@@ -51,6 +51,7 @@ import { usePOSCheckout } from './usePOSCheckout';
 import { usePOSShortcuts } from './usePOSShortcuts';
 import { usePOSServerSearch } from '@/hooks/api/usePOSServerSearch';
 
+import { Button } from "@/components/ui/button";
 export default function POSView() {
   const { user } = useAuthStore();
   const isMobile = useIsMobile();
@@ -400,7 +401,7 @@ export default function POSView() {
             {/* POS-3a-v3 Fix 2: botón simple en vez de ActionMenu de un solo botón.
                 El ActionMenu trae lógica de scroll horizontal con flechas — overkill
                 para un solo botón y causaba scroll innecesario en el header. */}
-            <button
+            <Button
               type="button"
               onClick={() => setShowCart(!showCart)}
               className={cn(
@@ -416,12 +417,12 @@ export default function POSView() {
             >
               <ShoppingCart className="w-5 h-5" />
               <span>{isMobile ? `🛒 (${cartCount})` : `Caja (${cartCount})`}</span>
-            </button>
+            </Button>
             {/* POS-3b EM-1: Toggle Modo Cajero Express.
                 Layout full-screen alternativo optimizado para venta de alto volumen.
                 FIX (2026-07-23): oculto en móvil — no es útil en pantalla pequeña. */}
             {!isMobile && (
-            <button
+            <Button
               type="button"
               onClick={() => setExpressMode(true)}
               className="inline-flex items-center gap-1.5 h-11 min-h-[44px] px-3 sm:px-4 rounded-xl border-2 border-primary/30 bg-primary/5 text-primary font-black text-xs uppercase tracking-widest hover:bg-primary/10 hover:border-primary/50 transition-all active:scale-95"
@@ -430,10 +431,10 @@ export default function POSView() {
             >
               <Zap className="w-4 h-4" />
               <span className="hidden sm:inline">Express</span>
-            </button>
+            </Button>
             )}
             {/* ESTÁNDAR: botón Registro — navega al Historial de Ventas (sales), NO a kardex (history) */}
-            <button
+            <Button
               type="button"
               onClick={() => setCurrentView('sales')}
               className="inline-flex items-center gap-1.5 h-11 min-h-[44px] px-3 sm:px-4 rounded-xl border-2 border-blue-500/30 bg-blue-500/5 text-blue-500 font-black text-xs uppercase tracking-widest hover:bg-blue-500/10 hover:border-blue-500/50 transition-all active:scale-95"
@@ -442,7 +443,7 @@ export default function POSView() {
             >
               <History className="w-4 h-4" />
               <span className="hidden sm:inline">Registro</span>
-            </button>
+            </Button>
           </div>
         </div>
         {/* POS-2 MM-6: Widget de estado de caja siempre visible en el header del POS.
@@ -521,18 +522,18 @@ export default function POSView() {
                 </div>
 
                 <div className="flex gap-2">
-                  <button
+                  <Button
                     onClick={cancelRateWarning}
                     className="flex-1 min-h-[44px] px-4 rounded-xl border border-border text-xs font-black uppercase hover:bg-muted"
                   >
                     Cancelar
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     onClick={confirmRateWarning}
                     className="flex-1 min-h-[44px] px-4 rounded-xl bg-primary text-primary-foreground text-xs font-black uppercase hover:bg-primary/90"
                   >
                     Confirmar venta
-                  </button>
+                  </Button>
                 </div>
               </div>
             </div>
@@ -631,7 +632,7 @@ export default function POSView() {
                   Antes el escáner estaba oculto en el SpeedDial (4 taps para llegar).
                   Ahora es un botón de 44px al lado del search, accesible en 1 tap.
                   Icono Camera + label "Escanear" en sm+ para claridad. */}
-              <button
+              <Button
                 type="button"
                 onClick={() => setShowCameraDirect(true)}
                 className="shrink-0 flex items-center justify-center gap-2 h-11 px-3 sm:px-4 rounded-xl bg-green-500/10 border border-green-500/30 text-green-600 dark:text-green-400 font-black text-xs uppercase tracking-widest hover:bg-green-500/20 active:scale-95 transition-all min-w-[44px]"
@@ -639,7 +640,7 @@ export default function POSView() {
               >
                 <Camera className="w-5 h-5" />
                 <span className="hidden sm:inline">Escanear</span>
-              </button>
+              </Button>
             </div>
             <CategoryChips
               categories={categories}
@@ -651,7 +652,7 @@ export default function POSView() {
                 El cajero solo debe ver lo que puede vender AHORA. Si necesita ver agotados
                 (para verificar catalogación, reponer, etc.), activa el toggle. */}
             <div className="flex items-center justify-between gap-2 px-2 py-1.5">
-              <button
+              <Button
                 type="button"
                 onClick={() => setHideOutOfStock(!hideOutOfStock)}
                 className={cn(
@@ -667,7 +668,7 @@ export default function POSView() {
               >
                 {hideOutOfStock ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
                 {hideOutOfStock ? 'Solo con stock' : 'Ver todo (incl. agotados)'}
-              </button>
+              </Button>
               <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
                 {filteredProducts.length} productos
               </p>

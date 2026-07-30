@@ -149,13 +149,13 @@ export function CookieConsent() {
                 <Cookie className="w-5 h-5 text-green-500" aria-hidden="true" />
                 <h3 className="font-semibold text-foreground">Preferencias de Cookies</h3>
               </div>
-              <button
+              <Button
                 onClick={() => setShowDetails(false)}
                 className="p-1 hover:bg-muted rounded-md transition-colors"
                 aria-label="Cerrar configuración de cookies"
               >
                 <X className="w-4 h-4" />
-              </button>
+              </Button>
             </div>
 
             <div className="space-y-4">

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { Button } from "@/components/ui/button";
 import { TrendingUp, Power, X, FileText, Trash2, RotateCcw, Tag, Eye, EyeOff } from 'lucide-react';
 
 interface BulkSelectionBarProps {
@@ -45,46 +46,46 @@ export default function BulkSelectionBar({
         <span className="text-xs font-black whitespace-nowrap">{selectedCount} selec.</span>
         <div className="w-px h-5 bg-primary-foreground/20 shrink-0" />
         {onBulkGenerateFC && (
-          <button type="button" onClick={onBulkGenerateFC} className="min-h-[44px] px-3 text-xs font-bold flex items-center gap-1 hover:opacity-80 whitespace-nowrap">
+          <Button type="button" onClick={onBulkGenerateFC} className="min-h-[44px] px-3 text-xs font-bold flex items-center gap-1 hover:opacity-80 whitespace-nowrap">
             <FileText className="w-3.5 h-3.5" /> FC
-          </button>
+          </Button>
         )}
-        <button type="button" onClick={onBulkPrice} className="min-h-[44px] px-3 text-xs font-bold flex items-center gap-1 hover:opacity-80 whitespace-nowrap">
+        <Button type="button" onClick={onBulkPrice} className="min-h-[44px] px-3 text-xs font-bold flex items-center gap-1 hover:opacity-80 whitespace-nowrap">
           <TrendingUp className="w-3.5 h-3.5" /> Precios
-        </button>
+        </Button>
         {onBulkActivate && (
-          <button type="button" onClick={onBulkActivate} className="min-h-[44px] px-3 text-xs font-bold flex items-center gap-1 hover:opacity-80 whitespace-nowrap">
+          <Button type="button" onClick={onBulkActivate} className="min-h-[44px] px-3 text-xs font-bold flex items-center gap-1 hover:opacity-80 whitespace-nowrap">
             <RotateCcw className="w-3.5 h-3.5" /> Activar
-          </button>
+          </Button>
         )}
-        <button type="button" onClick={onBulkDeactivate} className="min-h-[44px] px-3 text-xs font-bold flex items-center gap-1 hover:opacity-80 whitespace-nowrap">
+        <Button type="button" onClick={onBulkDeactivate} className="min-h-[44px] px-3 text-xs font-bold flex items-center gap-1 hover:opacity-80 whitespace-nowrap">
           <Power className="w-3.5 h-3.5" /> Pausar
-        </button>
+        </Button>
         {/* CM-4.6: Bulk asignar categoría */}
         {onBulkAssignCategory && (
-          <button type="button" onClick={() => setShowCategoryMenu(!showCategoryMenu)} className="min-h-[44px] px-3 text-xs font-bold flex items-center gap-1 hover:opacity-80 whitespace-nowrap">
+          <Button type="button" onClick={() => setShowCategoryMenu(!showCategoryMenu)} className="min-h-[44px] px-3 text-xs font-bold flex items-center gap-1 hover:opacity-80 whitespace-nowrap">
             <Tag className="w-3.5 h-3.5" /> Categoría
-          </button>
+          </Button>
         )}
         {/* CM-4.7: Bulk toggle visibilidad */}
         {onBulkToggleVisibility && (
           <>
-            <button type="button" onClick={() => onBulkToggleVisibility(true)} className="min-h-[44px] px-3 text-xs font-bold flex items-center gap-1 hover:opacity-80 whitespace-nowrap" title="Hacer visibles en tienda pública">
+            <Button type="button" onClick={() => onBulkToggleVisibility(true)} className="min-h-[44px] px-3 text-xs font-bold flex items-center gap-1 hover:opacity-80 whitespace-nowrap" title="Hacer visibles en tienda pública">
               <Eye className="w-3.5 h-3.5" /> Vis.
-            </button>
-            <button type="button" onClick={() => onBulkToggleVisibility(false)} className="min-h-[44px] px-3 text-xs font-bold flex items-center gap-1 hover:opacity-80 whitespace-nowrap" title="Ocultar de tienda pública">
+            </Button>
+            <Button type="button" onClick={() => onBulkToggleVisibility(false)} className="min-h-[44px] px-3 text-xs font-bold flex items-center gap-1 hover:opacity-80 whitespace-nowrap" title="Ocultar de tienda pública">
               <EyeOff className="w-3.5 h-3.5" />
-            </button>
+            </Button>
           </>
         )}
         {onBulkDelete && (
-          <button type="button" onClick={onBulkDelete} className="min-h-[44px] px-3 text-xs font-bold flex items-center gap-1 hover:opacity-80 whitespace-nowrap text-destructive-foreground bg-destructive/30">
+          <Button type="button" onClick={onBulkDelete} className="min-h-[44px] px-3 text-xs font-bold flex items-center gap-1 hover:opacity-80 whitespace-nowrap text-destructive-foreground bg-destructive/30">
             <Trash2 className="w-3.5 h-3.5" /> Eliminar
-          </button>
+          </Button>
         )}
-        <button type="button" onClick={onCancel} className="min-h-[44px] px-3 text-xs font-bold flex items-center gap-1 hover:opacity-80 whitespace-nowrap">
+        <Button type="button" onClick={onCancel} className="min-h-[44px] px-3 text-xs font-bold flex items-center gap-1 hover:opacity-80 whitespace-nowrap">
           <X className="w-3.5 h-3.5" /> Cancelar
-        </button>
+        </Button>
       </div>
 
       {/* CM-4.6: Menu desplegable de categorías */}
@@ -107,7 +108,7 @@ export default function BulkSelectionBar({
             placeholder="O escribir nueva..."
             className="px-2 py-1.5 h-9 rounded-lg border border-primary-foreground/20 bg-primary text-primary-foreground text-xs outline-none w-32"
           />
-          <button
+          <Button
             type="button"
             onClick={() => {
               if (customCategory.trim()) {
@@ -119,7 +120,7 @@ export default function BulkSelectionBar({
             className="px-3 py-1.5 h-9 rounded-lg bg-primary-foreground text-primary text-xs font-black uppercase tracking-widest hover:opacity-90"
           >
             Aplicar
-          </button>
+          </Button>
         </div>
       )}
     </div>

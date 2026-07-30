@@ -7,6 +7,7 @@ import { PrimaryButton } from '@/components/ui/atomic';
 import { offlineStorage } from '@/lib/sync/offline-storage';
 import { useSyncContext } from '@/components/providers/SyncProvider';
 
+import { Button } from "@/components/ui/button";
 export function SyncConflictModal() {
   const { status, processQueue } = useSyncContext();
   const [isOpen, setIsOpen] = useState(false);
@@ -56,12 +57,12 @@ export function SyncConflictModal() {
       maxWidth="sm:max-w-2xl"
       footer={
         <div className="flex flex-row justify-between w-full gap-4">
-          <button
+          <Button
             onClick={() => setIsOpen(false)}
             className="neu-btn px-6 py-2 text-xs font-black uppercase"
           >
             Cerrar
-          </button>
+          </Button>
           <PrimaryButton
             label="Procesar Restantes"
             icon={RefreshCw}
@@ -113,18 +114,18 @@ export function SyncConflictModal() {
                 </div>
 
                 <div className="flex gap-2">
-                  <button
+                  <Button
                     onClick={() => resolveConflict(conflict.idempotencyKey, 'server')}
                     className="flex-1 neu-btn text-xs font-black uppercase py-2 hover:bg-muted"
                   >
                     Mantener Servidor
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     onClick={() => resolveConflict(conflict.idempotencyKey, 'client')}
                     className="flex-1 neu-btn-primary text-xs font-black uppercase py-2"
                   >
                     Sobrescribir con Local
-                  </button>
+                  </Button>
                 </div>
               </div>
             ))}

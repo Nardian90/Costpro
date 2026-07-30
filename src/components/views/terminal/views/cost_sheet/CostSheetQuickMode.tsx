@@ -206,12 +206,12 @@ export const CostSheetQuickMode: React.FC<CostSheetQuickModeProps> = ({
                     </div>
                   </td>
                   <td data-label="Acciones" className="px-6 py-3 text-center">
-                    <button type="button"
+                    <Button type="button"
                       onClick={() => removeRow(idx)}
                       className="p-1.5 text-destructive/70 hover:text-destructive hover:bg-destructive/10 rounded-lg transition-all"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
-                    </button>
+                    </Button>
                   </td>
                 </tr>
               ))}

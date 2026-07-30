@@ -16,6 +16,7 @@ import { useAuthStore } from '@/store';
 import { useUIStore } from '@/store';
 import { CashClosure } from '@/types';
 
+import { Button } from "@/components/ui/button";
 // ── Loading Skeleton ──
 const ClosureLoadingSkeleton = () => (
   <div className="space-y-8">
@@ -271,7 +272,7 @@ export default function CashClosureView() {
           </div>
           <div className="w-full sm:w-auto flex items-center gap-2">
             {/* FIX-PAYMENT-TRACKING: Botón de Reporte de Caja para entrega de dinero */}
-            <button
+            <Button
               type="button"
               onClick={() => setShowCashReport(true)}
               className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-primary/20 text-primary hover:bg-primary/10 transition-colors text-xs font-black uppercase tracking-widest min-h-[44px]"
@@ -279,9 +280,9 @@ export default function CashClosureView() {
             >
               <Printer className="w-4 h-4" />
               <span className="hidden sm:inline">Reporte Entrega</span>
-            </button>
+            </Button>
             {/* FIX-B4: Botón de Cuentas por Pagar */}
-            <button
+            <Button
               type="button"
               onClick={() => setCurrentView('accounts-payable')}
               className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-amber-500/30 text-amber-600 dark:text-amber-500 hover:bg-amber-500/10 transition-colors text-xs font-black uppercase tracking-widest min-h-[44px]"
@@ -289,7 +290,7 @@ export default function CashClosureView() {
             >
               <Clock className="w-4 h-4" />
               <span className="hidden sm:inline">Cuentas por Pagar</span>
-            </button>
+            </Button>
             <ActionMenu
               actions={actions}
               sticky={false}
@@ -323,14 +324,14 @@ export default function CashClosureView() {
                       El turno se cerrará al final del día contando el efectivo y comparándolo con el sistema.
                     </p>
                   </div>
-                  <button
+                  <Button
                     type="button"
                     onClick={() => setShowOpenConfirm(true)}
                     className="shrink-0 inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary text-primary-foreground font-black text-xs sm:text-sm uppercase tracking-widest shadow-lg shadow-primary/20 hover:opacity-90 active:scale-[0.98] transition-all"
                   >
                     <Play className="w-4 h-4" />
                     Abrir Turno
-                  </button>
+                  </Button>
                 </div>
               </motion.div>
             )}
@@ -362,23 +363,23 @@ export default function CashClosureView() {
                   </div>
                 </div>
                 <div className="flex gap-2 shrink-0">
-                  <button
+                  <Button
                     type="button"
                     onClick={() => setCurrentView('pos')}
                     className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-black uppercase tracking-widest hover:opacity-90 transition-opacity"
                   >
                     Vender
                     <ArrowRight className="w-3.5 h-3.5" />
-                  </button>
+                  </Button>
                   {canClose ? (
-                    <button
+                    <Button
                       type="button"
                       onClick={() => setShowCloseConfirm(true)}
                       className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-success/15 text-success border border-success/30 text-xs font-black uppercase tracking-widest hover:bg-success/25 transition-colors"
                     >
                       <Square className="w-3.5 h-3.5" />
                       Cerrar Turno
-                    </button>
+                    </Button>
                   ) : (
                     <span
                       className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-muted text-muted-foreground text-[10px] font-bold uppercase tracking-widest"

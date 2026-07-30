@@ -330,7 +330,7 @@ export default function Pick3AIAdvisor({
             </CardTitle>
             <div className="flex items-center gap-1.5 bg-background/50 p-1 rounded-full border border-border/30">
               {(['defensive', 'balanced', 'aggressive'] as RiskMode[]).map((mode) => (
-                <button
+                <Button
                   key={mode}
                   onClick={() => setRiskMode(mode)}
                   className={cn(
@@ -344,7 +344,7 @@ export default function Pick3AIAdvisor({
                   {mode === 'balanced' && <Scale className="w-3 h-3 inline mr-1" />}
                   {mode === 'aggressive' && <Zap className="w-3 h-3 inline mr-1" />}
                   {mode}
-                </button>
+                </Button>
               ))}
             </div>
           </div>
@@ -484,13 +484,13 @@ export default function Pick3AIAdvisor({
           {messages.length > 0 && (
             <div className="px-4 py-2 border-t border-border/30 flex flex-wrap gap-1.5">
               {quickQuestions.map((q, i) => (
-                <button
+                <Button
                   key={i}
                   onClick={() => { setInput(q); }}
                   className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-muted/40 hover:bg-primary/10 hover:text-primary border border-border/40 transition-colors"
                 >
                   {q}
-                </button>
+                </Button>
               ))}
             </div>
           )}

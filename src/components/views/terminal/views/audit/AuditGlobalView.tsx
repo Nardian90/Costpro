@@ -9,6 +9,7 @@ import { useStores } from '@/hooks/api/useStores';
 import { useAuditLogs, AUDIT_ACTION_LABELS, AuditLogEntry } from '@/hooks/api/useAuditLogs';
 import { Skeleton } from '@/components/ui/skeleton';
 import { StateRenderer } from '@/components/ui/StateRenderer';
+import { Button } from "@/components/ui/button";
 import { useVirtualizer } from '@tanstack/react-virtual';
 
 function AuditRow({ entry }: { entry: AuditLogEntry }) {
@@ -41,7 +42,7 @@ function AuditRow({ entry }: { entry: AuditLogEntry }) {
           </code>
         </td>
         <td className="px-4 py-3">
-          <button type="button"
+          <Button type="button"
             onClick={() => setExpanded(p => !p)}
             aria-label={expanded ? 'Colapsar detalles' : 'Ver detalles del evento'}
             aria-expanded={expanded}
@@ -49,7 +50,7 @@ function AuditRow({ entry }: { entry: AuditLogEntry }) {
           >
             <Eye className="w-3 h-3" />
             {expanded ? 'Ocultar' : 'Ver'}
-          </button>
+          </Button>
         </td>
       </tr>
       {expanded && (
@@ -171,7 +172,7 @@ export default function AuditGlobalView() {
             </p>
           </div>
         </div>
-        <button type="button"
+        <Button type="button"
           onClick={handleExportCSV}
           disabled={filteredLogs.length === 0}
           aria-label="Exportar registros de auditoría como CSV"
@@ -179,7 +180,7 @@ export default function AuditGlobalView() {
         >
           <Download className="w-4 h-4" />
           Exportar CSV
-        </button>
+        </Button>
       </div>
 
       <div className="flex flex-wrap gap-3">
@@ -303,14 +304,14 @@ export default function AuditGlobalView() {
 
       {hasNextPage && (
         <div className="flex justify-center pt-4">
-          <button type="button"
+          <Button type="button"
             onClick={() => fetchNextPage()}
             disabled={isFetchingNextPage}
             aria-label="Cargar más registros de auditoría"
             className="px-6 py-3 rounded-xl border border-border text-xs font-black uppercase tracking-widest hover:bg-muted transition-colors disabled:opacity-40"
           >
             {isFetchingNextPage ? 'Cargando...' : `Cargar más (${totalCount - filteredLogs.length} restantes)`}
-          </button>
+          </Button>
         </div>
       )}
     </div>

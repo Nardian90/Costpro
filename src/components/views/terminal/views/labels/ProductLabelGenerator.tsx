@@ -9,6 +9,7 @@ import type { Product } from '@/types';
 import JsBarcode from 'jsbarcode';
 import { createPDFDocument } from '@/lib/export/lazy-pdf';
 
+import { Button } from "@/components/ui/button";
 /** Maximum number of labels per page (2x2 grid on letter paper) */
 const MAX_LABELS_PER_PAGE = 4;
 
@@ -357,7 +358,7 @@ export default function ProductLabelGenerator() {
                   </div>
                   {!repeatMode && (
                     <div className="flex items-center gap-1">
-                      <button
+                      <Button
                         type="button"
                         onClick={() => updateQuantity(sp.product.id, -1)}
                         disabled={sp.quantity <= 1}
@@ -365,9 +366,9 @@ export default function ProductLabelGenerator() {
                         aria-label="Reducir cantidad"
                       >
                         <Minus className="w-3 h-3" />
-                      </button>
+                      </Button>
                       <span className="w-6 text-center text-xs font-black">{sp.quantity}</span>
-                      <button
+                      <Button
                         type="button"
                         onClick={() => updateQuantity(sp.product.id, 1)}
                         disabled={sp.quantity >= 4}
@@ -375,17 +376,17 @@ export default function ProductLabelGenerator() {
                         aria-label="Aumentar cantidad"
                       >
                         <Plus className="w-3 h-3" />
-                      </button>
+                      </Button>
                     </div>
                   )}
-                  <button
+                  <Button
                     type="button"
                     onClick={() => removeProduct(sp.product.id)}
                     className="w-11 h-11 rounded-md flex items-center justify-center text-destructive hover:bg-destructive/10"
                     aria-label="Eliminar producto"
                   >
                     <Trash2 className="w-3 h-3" />
-                  </button>
+                  </Button>
                 </div>
               ))
             )}
@@ -408,7 +409,7 @@ export default function ProductLabelGenerator() {
           {searchTerm && availableProducts.length > 0 && (
             <div className="border border-border rounded-xl overflow-hidden max-h-48 overflow-y-auto">
               {availableProducts.slice(0, 10).map(product => (
-                <button
+                <Button
                   type="button"
                   key={product.id}
                   onClick={() => addProduct(product)}
@@ -422,7 +423,7 @@ export default function ProductLabelGenerator() {
                     ${product.price?.toFixed(2) || '0.00'}
                   </div>
                   <Plus className="w-3 h-3 text-muted-foreground flex-shrink-0" />
-                </button>
+                </Button>
               ))}
             </div>
           )}
@@ -445,7 +446,7 @@ export default function ProductLabelGenerator() {
                 : `${selectedProducts.length} producto(s) seleccionado(s)`}
             </div>
           </div>
-          <button
+          <Button
             onClick={handleExportPDF}
             disabled={totalLabelCount === 0 || isGeneratingPDF}
             className="flex items-center gap-2 px-8 py-3 bg-primary text-primary-foreground font-black rounded-xl hover:opacity-90 transition-opacity text-xs uppercase tracking-widest disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/25 focus-visible:ring-offset-1 active:scale-95"
@@ -457,7 +458,7 @@ export default function ProductLabelGenerator() {
               <FileDown className="w-4 h-4" />
             )}
             {isGeneratingPDF ? 'Generando PDF...' : 'Exportar a PDF'}
-          </button>
+          </Button>
         </div>
       </div>
 

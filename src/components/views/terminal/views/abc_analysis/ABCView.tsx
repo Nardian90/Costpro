@@ -4,6 +4,7 @@ import { Loader2, BarChart3, Calculator } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
 import { apiFetch } from '@/lib/api-fetch';
 import { useAuthStore } from '@/store';
+import { Button } from "@/components/ui/button";
 import { toast } from 'sonner';
 const touch = 'min-h-[44px]';
 
@@ -39,7 +40,7 @@ export function ABCView() {
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
         <div><h1 className="text-xl font-black uppercase tracking-tight">Clasificación ABC</h1><p className="text-xs text-muted-foreground">Análisis Pareto de productos por valor de consumo</p></div>
-        <button onClick={handleCalculate} disabled={calculating} className={cn('flex items-center gap-2 px-4 rounded-xl bg-primary text-primary-foreground text-xs font-black uppercase hover:opacity-90 disabled:opacity-50', touch)}>{calculating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Calculator className="w-4 h-4" />} Calcular</button>
+        <Button onClick={handleCalculate} disabled={calculating} className={cn('flex items-center gap-2 px-4 rounded-xl bg-primary text-primary-foreground text-xs font-black uppercase hover:opacity-90 disabled:opacity-50', touch)}>{calculating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Calculator className="w-4 h-4" />} Calcular</Button>
       </div>
       <div className="flex gap-2 items-center">
         <select value={month} onChange={e => setMonth(Number(e.target.value))} className={cn('px-3 rounded-xl border border-border bg-background text-sm font-bold', touch)}>{['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'].map((m, i) => <option key={m} value={i + 1}>{m}</option>)}</select>

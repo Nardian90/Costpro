@@ -51,7 +51,7 @@ const ClassificationCombobox = React.memo(({ value, options, onChange }: {
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <button
+        <Button
           type="button"
           className={cn(
             "flex items-center justify-between h-9 w-full text-xs px-1.5 py-0 rounded transition-colors font-medium text-left gap-0.5",
@@ -63,7 +63,7 @@ const ClassificationCombobox = React.memo(({ value, options, onChange }: {
         >
           <span className="truncate flex-1">{displayValue || 'Seleccionar...'}</span>
           <ChevronsUpDown className="w-3 h-3 text-muted-foreground/70 shrink-0" />
-        </button>
+        </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[300px] p-0 z-[60]" align="start" sideOffset={4}>
         <Command className="rounded-lg border-border/60">
@@ -420,7 +420,7 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
             <ArrowLeft className="w-3 h-3 text-warning/70 shrink-0" />
             <span className="text-xs font-black uppercase tracking-widest text-warning/70">Usado en:</span>
             {referencingSections.map((ref, idx) => (
-              <button
+              <Button
                 key={`${ref.sectionId}-${ref.rowId}-${idx}`}
                 type="button"
                 onClick={() => onNavigateToSection(ref.rowId)}
@@ -428,7 +428,7 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
                 title={`${ref.sectionLabel} → ${ref.rowLabel}`}
               >
                 {ref.sectionLabel}: {ref.rowLabel}
-              </button>
+              </Button>
             ))}
          </div>
        )}

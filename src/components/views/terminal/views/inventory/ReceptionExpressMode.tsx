@@ -19,6 +19,7 @@ import { useRegisterReception } from "@/hooks/api/useInventory";
 import { supabase } from "@/lib/supabaseClient";
 import { auditService } from "@/services/audit-service";
 import { POSPortalModal } from "@/components/views/terminal/views/pos/POSPortalModal";
+import { Button } from "@/components/ui/button";
 import { useReceptionShortcuts } from "./useReceptionShortcuts";
 
 interface ReceptionExpressItem {
@@ -252,7 +253,7 @@ export function ReceptionExpressMode({ onExit }: ReceptionExpressModeProps) {
     <div className="fixed inset-0 z-[9999] bg-background flex flex-col">
       {/* Header */}
       <header className="flex items-center justify-between p-4 border-b border-border bg-card shrink-0 gap-4">
-        <button
+        <Button
           type="button"
           onClick={onExit}
           className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary/10 text-primary hover:bg-primary/20 transition-colors text-xs font-black uppercase tracking-widest border border-primary/20 active:scale-95 shrink-0"
@@ -260,7 +261,7 @@ export function ReceptionExpressMode({ onExit }: ReceptionExpressModeProps) {
         >
           <ArrowLeft className="w-4 h-4" />
           Salir
-        </button>
+        </Button>
         <div className="flex items-center gap-2">
           <Zap className="w-5 h-5 text-primary" />
           <h1 className="text-base sm:text-lg font-black uppercase tracking-widest text-foreground">
@@ -374,7 +375,7 @@ export function ReceptionExpressMode({ onExit }: ReceptionExpressModeProps) {
             <>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                 {products.map((product) => (
-                  <button
+                  <Button
                     key={product.id}
                     type="button"
                     onClick={() => addItem(product)}
@@ -393,18 +394,18 @@ export function ReceptionExpressMode({ onExit }: ReceptionExpressModeProps) {
                     <p className="text-[9px] text-muted-foreground mt-0.5">
                       Stock: {product.stock_current ?? 0}
                     </p>
-                  </button>
+                  </Button>
                 ))}
               </div>
               {hasMore && (
-                <button
+                <Button
                   type="button"
                   onClick={loadMore}
                   disabled={isFetchingMore}
                   className="w-full mt-4 py-3 rounded-xl border-2 border-dashed border-primary/30 text-primary text-xs font-black uppercase tracking-widest hover:bg-primary/5 disabled:opacity-50"
                 >
                   {isFetchingMore ? "Cargando..." : "Cargar más productos"}
-                </button>
+                </Button>
               )}
             </>
           )}
@@ -423,7 +424,7 @@ export function ReceptionExpressMode({ onExit }: ReceptionExpressModeProps) {
               )}
             </h2>
             {items.length > 0 && (
-              <button
+              <Button
                 type="button"
                 onClick={() => setItems([])}
                 className="text-destructive hover:bg-destructive/10 p-1.5 rounded-lg transition-colors"
@@ -431,7 +432,7 @@ export function ReceptionExpressMode({ onExit }: ReceptionExpressModeProps) {
                 title="Vaciar items"
               >
                 <Trash2 className="w-4 h-4" />
-              </button>
+              </Button>
             )}
           </div>
 
@@ -463,7 +464,7 @@ export function ReceptionExpressMode({ onExit }: ReceptionExpressModeProps) {
                       </p>
                     </div>
                     <div className="flex items-center gap-1 shrink-0">
-                      <button
+                      <Button
                         type="button"
                         onClick={() =>
                           setItems((prev) => prev.map((it) =>
@@ -476,11 +477,11 @@ export function ReceptionExpressMode({ onExit }: ReceptionExpressModeProps) {
                         aria-label="Reducir cantidad"
                       >
                         <Minus className="w-3 h-3" />
-                      </button>
+                      </Button>
                       <span className="w-8 text-center font-black tabular-nums">
                         {item.quantity}
                       </span>
-                      <button
+                      <Button
                         type="button"
                         onClick={() =>
                           setItems((prev) => prev.map((it) =>
@@ -493,16 +494,16 @@ export function ReceptionExpressMode({ onExit }: ReceptionExpressModeProps) {
                         aria-label="Aumentar cantidad"
                       >
                         <Plus className="w-3 h-3" />
-                      </button>
+                      </Button>
                     </div>
-                    <button
+                    <Button
                       type="button"
                       onClick={() => setItems((prev) => prev.filter((it) => it.local_id !== item.local_id))}
                       className="text-destructive hover:bg-destructive/10 p-1.5 rounded-lg transition-colors shrink-0"
                       aria-label="Quitar"
                     >
                       <X className="w-4 h-4" />
-                    </button>
+                    </Button>
                   </motion.div>
                 ))}
               </AnimatePresence>
@@ -519,7 +520,7 @@ export function ReceptionExpressMode({ onExit }: ReceptionExpressModeProps) {
                 {formatCurrency(totalCost)}
               </span>
             </div>
-            <button
+            <Button
               type="button"
               onClick={() => setShowConfirm(true)}
               disabled={items.length === 0 || isSubmitting || !supplier || !invoiceNumber}
@@ -533,7 +534,7 @@ export function ReceptionExpressMode({ onExit }: ReceptionExpressModeProps) {
                   {formatCurrency(totalCost)}
                 </span>
               )}
-            </button>
+            </Button>
             {(!supplier || !invoiceNumber) && (
               <p className="text-[10px] text-warning text-center">
                 Completa proveedor y factura para registrar
@@ -559,28 +560,28 @@ export function ReceptionExpressMode({ onExit }: ReceptionExpressModeProps) {
             </p>
           </div>
           <div className="flex gap-2">
-            <button
+            <Button
               type="button"
               onClick={() => setShowConfirm(false)}
               className="flex-1 h-12 rounded-xl border border-border text-xs font-black uppercase tracking-widest hover:bg-muted transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30"
             >
               Cancelar
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
               onClick={handleConfirmSale}
               disabled={isSubmitting}
               className="flex-1 h-12 rounded-xl bg-primary text-primary-foreground text-xs font-black uppercase tracking-widest hover:opacity-90 transition-opacity disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-primary/30"
             >
               {isSubmitting ? "Procesando..." : "Confirmar"}
-            </button>
+            </Button>
           </div>
         </div>
       </POSPortalModal>
 
       {/* Audit-Fix: botón flotante de cerrar (X) en esquina superior derecha.
           Visible siempre, incluso si el header scrolla fuera de vista. */}
-      <button
+      <Button
         type="button"
         onClick={onExit}
         className="fixed top-4 right-4 z-[10000] w-12 h-12 rounded-full bg-destructive text-destructive-foreground shadow-2xl hover:bg-destructive/90 transition-all active:scale-90 flex items-center justify-center border-2 border-background"
@@ -588,7 +589,7 @@ export function ReceptionExpressMode({ onExit }: ReceptionExpressModeProps) {
         title="Cerrar modo Express"
       >
         <X className="w-5 h-5" />
-      </button>
+      </Button>
     </div>,
     document.body
   );

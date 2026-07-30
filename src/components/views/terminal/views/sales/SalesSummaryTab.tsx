@@ -7,6 +7,7 @@ import { formatCurrency } from '@/lib/utils';
 import { Calendar, DollarSign, RefreshCw, TrendingUp, Wallet, ArrowLeftRight, Banknote } from 'lucide-react';
 import { StateRenderer } from '@/components/ui/StateRenderer';
 
+import { Button } from "@/components/ui/button";
 interface DaySummary {
   fecha: string;
   efectivo_cup: number;
@@ -184,12 +185,12 @@ export function SalesSummaryTab({ dateFrom, dateTo, storeId }: SalesSummaryTabPr
 
       {/* Botón refrescar */}
       <div className="flex justify-end">
-        <button
+        <Button
           onClick={fetchData}
           className="flex items-center gap-2 px-4 h-10 rounded-xl border border-border text-xs font-black uppercase hover:bg-muted transition-all"
         >
           <RefreshCw className="w-3.5 h-3.5" /> Actualizar
-        </button>
+        </Button>
       </div>
     </div>
   );

@@ -26,6 +26,7 @@ import OnlineStatusDot from '@/components/shared/OnlineStatusDot';
 import { useIsMobile } from '@/hooks/ui/useMobile';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
+import { Button } from "@/components/ui/button";
 interface SidebarProps {
   onViewChange: (view: ViewType) => void;
   onLogout: () => void;
@@ -211,7 +212,7 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
         <TooltipProvider key={item.id} delayDuration={0}>
           <Tooltip>
             <TooltipTrigger asChild>
-              <button
+              <Button
                 onClick={() => handleNavClick(item.id as ViewType)}
                 onMouseEnter={() => onPrefetchView(item.id as ViewType)}
                 aria-current={isActive ? 'page' : undefined}
@@ -221,7 +222,7 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
                 )}
               >
                 {item.icon && <item.icon className="w-5 h-5" />}
-              </button>
+              </Button>
             </TooltipTrigger>
             <TooltipContent side="right" className="font-bold uppercase tracking-widest text-[10px]">
               {item.label}
@@ -233,7 +234,7 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
 
     return (
       <div key={item.id} className="relative group/nav-item">
-        <button
+        <Button
           onClick={() => handleNavClick(item.id as ViewType)}
           onMouseEnter={() => onPrefetchView(item.id as ViewType)}
           aria-current={isActive ? 'page' : undefined}
@@ -247,12 +248,12 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
           {isActive && (
             <motion.div layoutId="active-nav-indicator" className="ml-auto w-1.5 h-1.5 rounded-full bg-primary" />
           )}
-        </button>
+        </Button>
         {/* E-2 (IA Audit): botón pin/desfijar visible al hover.
             Permite al usuario fijar accesos rápidos en la sección "FIJADOS"
             al inicio del sidebar. Máximo 5 items fijados. */}
         {!isRail && sidebarState === 'expanded' && (
-          <button
+          <Button
             type="button"
             onClick={(e) => {
               e.stopPropagation();
@@ -270,7 +271,7 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
             ) : (
               <Pin className="w-3 h-3" aria-hidden="true" />
             )}
-          </button>
+          </Button>
         )}
       </div>
     );
@@ -293,7 +294,7 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
         <TooltipProvider key={mod.id} delayDuration={0}>
           <Tooltip>
             <TooltipTrigger asChild>
-              <button
+              <Button
                 onClick={() => handleRailModuleClick(mod)}
                 aria-label={mod.label}
                 aria-expanded={isExpanded}
@@ -303,7 +304,7 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
                 )}
               >
                 {mod.icon && <mod.icon className="w-5 h-5" />}
-              </button>
+              </Button>
             </TooltipTrigger>
             <TooltipContent side="right" className="font-bold uppercase tracking-widest text-[10px]">
               {mod.label}
@@ -323,7 +324,7 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
 
       return (
         <div key={mod.id} className="relative">
-          <button
+          <Button
             onClick={() => handleRootModuleClick(mod)}
             className={cn(
               "w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all outline-none focus-visible:ring-2 focus-visible:ring-primary/50 active:scale-[0.98]",
@@ -338,7 +339,7 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
                 depth === 0 ? "text-xs" : "text-[11px] opacity-80"
               )}>{mod.label}</span>
             </div>
-          </button>
+          </Button>
         </div>
       );
     }
@@ -346,7 +347,7 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
     // Submenu (inside a focused module) → toggle expand/collapse only
     return (
       <div key={mod.id} className="relative">
-        <button
+        <Button
           aria-expanded={isExpanded}
           onClick={() => toggleSubmenu(mod.id)}
           className={cn(
@@ -360,7 +361,7 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
             <span className="text-[11px] font-black tracking-[0.2em] uppercase opacity-80">{mod.label}</span>
           </div>
           <ChevronDown className={cn("w-3.5 h-3.5 transition-transform duration-300", isExpanded && "rotate-180")} />
-        </button>
+        </Button>
 
         <AnimatePresence initial={false}>
           {isExpanded && (
@@ -460,7 +461,7 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
               // workflow principal del usuario (vender). Mismo patrón que Shopify
               // admin (clic en logo → home del admin). El usuario ya tiene el
               // sidebar abierto; el logo es el target más predecible.
-              <button
+              <Button
                 type="button"
                 onClick={() => setCurrentView('sales-hub')}
                 className="text-foreground font-black text-lg uppercase tracking-tighter leading-none hover:opacity-80 active:scale-95 transition-all outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded px-1 -mx-1"
@@ -468,9 +469,9 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
                 title="Volver a Venta"
               >
                 COST<span className="text-green-600 dark:text-green-400">PRO</span>
-              </button>
+              </Button>
             ) : (
-              <button
+              <Button
                 type="button"
                 onClick={() => setCurrentView('sales-hub')}
                 className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-black text-xs hover:opacity-80 active:scale-95 transition-all outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
@@ -478,17 +479,17 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
                 title="Volver a Venta"
               >
                 CP
-              </button>
+              </Button>
             )}
 
             {isMobile && (
-               <button
+               <Button
                 onClick={onClose}
                 className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-primary/10 transition-all active:scale-95 outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
                 aria-label="Cerrar menú lateral"
                >
                  <X className="w-4 h-4" />
-               </button>
+               </Button>
             )}
           </div>
 
@@ -530,7 +531,7 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
               >
                 {/* Focus breadcrumb: INICIO > MODULE NAME */}
                 <div className="px-4 py-2 mb-4 flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.3em] ml-4 border-l-2 border-primary/20">
-                  <button
+                  <Button
                     onClick={() => {
                       exitFocusMode();
                       setCurrentView('occ');
@@ -541,7 +542,7 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
                   >
                     <span className="opacity-70 text-xs">/</span>
                     <span>INICIO</span>
-                  </button>
+                  </Button>
                   <span className="opacity-40 text-xs">/</span>
                   <span className="text-primary/80 truncate">{focusedModule.label}</span>
                 </div>
@@ -550,7 +551,7 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
                     This ensures the AI assistant is ALWAYS accessible, even when
                     the user is focused on a specific module (Multi-Tienda, Costos, etc.). */}
                 <div className="px-2 mb-3">
-                  <button
+                  <Button
                     onClick={() => {
                       exitFocusMode();
                       setCurrentView('chat');
@@ -570,7 +571,7 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
                     <Bot className="w-4 h-4 shrink-0" />
                     <span className="flex-1 text-left">Chat con Darian</span>
                     <span className="text-[9px] font-bold uppercase tracking-wider opacity-80">AI</span>
-                  </button>
+                  </Button>
                 </div>
 
                 {/* Focused module children */}
@@ -639,7 +640,7 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
 
           <div className={cn("p-4 space-y-1", sidebarState === 'rail' && "p-2 items-center flex flex-col")}>
           {user?.plan === 'free' && user?.role !== 'admin' && sidebarState === 'expanded' && (
-            <button
+            <Button
               onClick={() => {
                 const whatsappNumber = "+53 53183215";
                 const message = encodeURIComponent("Hola, me interesa obtener el Plan Pro de CostoPro para tener acceso ilimitado.");
@@ -653,13 +654,13 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
                 <span className="text-[10px] uppercase tracking-widest">Plan Gratuito</span>
                 <span className="text-[8px] uppercase tracking-[0.2em] opacity-70">Subir a PRO</span>
               </div>
-            </button>
+            </Button>
           )}
           <div className={cn("flex items-center justify-between gap-2", sidebarState === 'rail' && "flex-col")}>
             {/* FIX-AUDIT-MOBILE: "Mi Perfil" y "Configuración" movidos aquí desde el dropdown
                 del avatar en el Header. Libera el header móvil de un icono y centraliza
                 las opciones de cuenta en el sidebar (patrón estándar: GitHub, Slack, Discord). */}
-            <button
+            <Button
               onClick={() => onViewChange('settings')}
               aria-label="Mi perfil"
               className={cn(
@@ -669,9 +670,9 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
             >
               <User className="w-4.5 h-4.5" />
               {sidebarState === 'expanded' && <span className="text-xs uppercase tracking-wider">Mi Perfil</span>}
-            </button>
+            </Button>
 
-            <button
+            <Button
               onClick={() => onViewChange('settings')}
               aria-label="Configuración"
               className={cn(
@@ -681,9 +682,9 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
               )}
             >
               <Settings className="w-4.5 h-4.5" />
-            </button>
+            </Button>
 
-            <button
+            <Button
               onClick={() => setIsCalculatorOpen(!isCalculatorOpen)}
               aria-label="Abrir calculadora"
               aria-pressed={isCalculatorOpen}
@@ -696,11 +697,11 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
               )}
             >
               <Calculator className="w-4.5 h-4.5" />
-            </button>
+            </Button>
           </div>
 
           {/* Salir — en su propia fila para evitar mezclar acción destructiva con utilidades */}
-          <button
+          <Button
             onClick={onLogout}
             aria-label="Cerrar sesión"
             className={cn(
@@ -710,7 +711,7 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
           >
             <LogOut className="w-4.5 h-4.5" />
             {sidebarState === 'expanded' && <span className="text-xs uppercase tracking-wider">Salir</span>}
-          </button>
+          </Button>
         </div>
       </div>
       </div>

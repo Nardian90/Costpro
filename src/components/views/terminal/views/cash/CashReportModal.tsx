@@ -7,6 +7,7 @@ import { apiFetch } from '@/lib/api-fetch';
 import { useAuthStore, useUIStore } from '@/store';
 import { toast } from 'sonner';
 import type { CashReport } from '@/types';
+import { Button } from "@/components/ui/button";
 import jsPDF from 'jspdf';
 
 interface CashReportModalProps { open: boolean; onClose: () => void; }
@@ -1388,7 +1389,7 @@ export function CashReportModal({ open, onClose }: CashReportModalProps) {
 
     return (
       <div key={key} className="rounded-lg border border-border/30 overflow-hidden">
-        <button onClick={() => toggleAccordion(key, isNeg ? 'payment' : 'sale', pm, currency, refType)}
+        <Button onClick={() => toggleAccordion(key, isNeg ? 'payment' : 'sale', pm, currency, refType)}
           aria-expanded={isExpanded} aria-controls={`p-${key}`}
           className={`w-full flex items-center justify-between p-3 bg-muted/10 hover:bg-muted/20 transition-colors ${touch}`}>
           <div className="flex items-center gap-2">
@@ -1402,7 +1403,7 @@ export function CashReportModal({ open, onClose }: CashReportModalProps) {
             <p className={`text-sm font-mono font-black tabular-nums ${isNeg ? 'text-destructive' : ''}`}>{isNeg ? '−' : ''}{fmt(amount, currency)}</p>
             {isExpanded ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />}
           </div>
-        </button>
+        </Button>
         {isExpanded && (
           <div id={`p-${key}`} role="region" className="border-t border-border/20 bg-background">
             {isLoading ? (
@@ -1439,13 +1440,13 @@ export function CashReportModal({ open, onClose }: CashReportModalProps) {
                             {isNeg ? '−' : ''}{fmt(amt, currency)}
                           </td>
                           <td className="p-1.5 text-center">
-                            <button
+                            <Button
                               onClick={() => setSelectedDoc({ ...doc, _type: isNeg ? 'payment' : 'sale', _refType: docRefType, _currency: currency, _method: pm })}
                               aria-label="Ver documento"
                               className="p-1 rounded hover:bg-primary/10"
                             >
                               <Eye className="w-3 h-3 text-muted-foreground hover:text-primary" />
-                            </button>
+                            </Button>
                           </td>
                         </tr>
                       );
@@ -1483,7 +1484,7 @@ export function CashReportModal({ open, onClose }: CashReportModalProps) {
               <Wallet className="w-5 h-5 text-primary" />
               <h2 id="cash-title" className="text-sm font-black uppercase tracking-widest">Reporte de Caja — Entrega</h2>
             </div>
-            <button onClick={onClose} aria-label="Cerrar" className={`p-2 rounded-lg hover:bg-muted ${touch} flex items-center justify-center`}><span className="text-lg">✕</span></button>
+            <Button onClick={onClose} aria-label="Cerrar" className={`p-2 rounded-lg hover:bg-muted ${touch} flex items-center justify-center`}><span className="text-lg">✕</span></Button>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <div className="flex items-center gap-1.5">
@@ -1604,10 +1605,10 @@ export function CashReportModal({ open, onClose }: CashReportModalProps) {
             {/* Desglose Sugerido colapsable — siempre visible cuando hay reporte */}
             {report && (
               <div>
-                <button onClick={() => setShowSuggested(!showSuggested)} aria-expanded={showSuggested} className="w-full flex items-center gap-2 text-[11px] font-black uppercase text-muted-foreground hover:text-foreground transition-colors py-2">
+                <Button onClick={() => setShowSuggested(!showSuggested)} aria-expanded={showSuggested} className="w-full flex items-center gap-2 text-[11px] font-black uppercase text-muted-foreground hover:text-foreground transition-colors py-2">
                   {showSuggested ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />} Desglose Sugerido (CUP)
                   <span className="ml-auto text-[10px] font-mono tabular-nums text-muted-foreground">{formatCurrency(expectedCup)}</span>
-                </button>
+                </Button>
                 {showSuggested && (
                   <div className="mt-2 rounded-xl border border-primary/20 bg-primary/5 p-3 space-y-1">
                     {(report?.cash_breakdown ?? []).length > 0 ? (
@@ -1653,11 +1654,11 @@ export function CashReportModal({ open, onClose }: CashReportModalProps) {
               <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
                 <h3 className="text-[11px] font-black uppercase text-muted-foreground">Desglose para Entrega — CUP</h3>
                 <div className="flex flex-wrap items-center gap-1.5">
-                  <button onClick={handleSuggest} aria-label="Sugerir" className={btnIcn}><Sparkles className="w-4 h-4 text-primary" /></button>
-                  <button onClick={handleClear} aria-label="Limpiar" className={btnIcn}><Trash2 className="w-4 h-4 text-destructive" /></button>
-                  <button onClick={() => setShowConfig(!showConfig)} aria-label="Configurar" aria-expanded={showConfig} className={btnIcn}><Settings className="w-4 h-4" /></button>
-                  <button onClick={handleSave} aria-label="Guardar" className={btnIcn}><Save className="w-4 h-4 text-primary" /></button>
-                  <button onClick={() => setShowHistory(!showHistory)} aria-label="Restaurar" aria-expanded={showHistory} className={btnIcn}><RotateCcw className="w-4 h-4" /></button>
+                  <Button onClick={handleSuggest} aria-label="Sugerir" className={btnIcn}><Sparkles className="w-4 h-4 text-primary" /></Button>
+                  <Button onClick={handleClear} aria-label="Limpiar" className={btnIcn}><Trash2 className="w-4 h-4 text-destructive" /></Button>
+                  <Button onClick={() => setShowConfig(!showConfig)} aria-label="Configurar" aria-expanded={showConfig} className={btnIcn}><Settings className="w-4 h-4" /></Button>
+                  <Button onClick={handleSave} aria-label="Guardar" className={btnIcn}><Save className="w-4 h-4 text-primary" /></Button>
+                  <Button onClick={() => setShowHistory(!showHistory)} aria-label="Restaurar" aria-expanded={showHistory} className={btnIcn}><RotateCcw className="w-4 h-4" /></Button>
                 </div>
               </div>
               {showConfig && (
@@ -1665,7 +1666,7 @@ export function CashReportModal({ open, onClose }: CashReportModalProps) {
                   <p className="text-[10px] font-black uppercase text-muted-foreground mb-2">Denominaciones:</p>
                   <div className="flex flex-wrap gap-1.5">
                     {ALL_DENOMS.map(d => (
-                      <button key={d} onClick={() => toggleDenom(d)} aria-label={`$${d}`} aria-pressed={cupDenoms.includes(d)} className={`px-3 py-2 rounded-lg text-[10px] font-bold border min-h-[36px] ${cupDenoms.includes(d) ? 'border-primary bg-primary/10 text-primary' : 'border-border/40 text-muted-foreground'}`}>${d}</button>
+                      <Button key={d} onClick={() => toggleDenom(d)} aria-label={`$${d}`} aria-pressed={cupDenoms.includes(d)} className={`px-3 py-2 rounded-lg text-[10px] font-bold border min-h-[36px] ${cupDenoms.includes(d) ? 'border-primary bg-primary/10 text-primary' : 'border-border/40 text-muted-foreground'}`}>${d}</Button>
                     ))}
                   </div>
                 </div>
@@ -1675,9 +1676,9 @@ export function CashReportModal({ open, onClose }: CashReportModalProps) {
                   <p className="text-[10px] font-black uppercase text-muted-foreground mb-2">Historial ({savedHistory.length}/10):</p>
                   {savedHistory.length === 0 ? <p className="text-xs text-muted-foreground">Sin guardados</p> :
                     savedHistory.map(h => (
-                      <button key={h.id} onClick={() => handleRestore(h)} className="w-full flex items-center justify-between p-2 rounded hover:bg-muted/30 text-left min-h-[36px]">
+                      <Button key={h.id} onClick={() => handleRestore(h)} className="w-full flex items-center justify-between p-2 rounded hover:bg-muted/30 text-left min-h-[36px]">
                         <span className="text-[10px]">{h.label}</span><span className="text-[10px] font-mono">{formatCurrency(h.total)}</span>
-                      </button>
+                      </Button>
                     ))}
                 </div>
               )}
@@ -1737,10 +1738,10 @@ export function CashReportModal({ open, onClose }: CashReportModalProps) {
                 <div>
                   <p className="text-[10px] font-black uppercase text-muted-foreground mb-2">Plantilla PDF:</p>
                   {TEMPLATES.map(t => (
-                    <button key={t.id} onClick={() => setPdfTemplate(t.id)} className={cn("w-full flex items-center gap-2 p-2 rounded-lg border text-left mb-1", pdfTemplate === t.id ? "border-primary bg-primary/10" : "border-border/40")}>
+                    <Button key={t.id} onClick={() => setPdfTemplate(t.id)} className={cn("w-full flex items-center gap-2 p-2 rounded-lg border text-left mb-1", pdfTemplate === t.id ? "border-primary bg-primary/10" : "border-border/40")}>
                       <FileText className="w-4 h-4" />
                       <div><p className="text-xs font-bold">{t.label}</p><p className="text-[10px] text-muted-foreground">{t.desc}</p></div>
-                    </button>
+                    </Button>
                   ))}
                 </div>
 
@@ -1748,22 +1749,22 @@ export function CashReportModal({ open, onClose }: CashReportModalProps) {
                 <div>
                   <p className="text-[10px] font-black uppercase text-muted-foreground mb-2">Incluir detalle en PDF (páginas anexas):</p>
                   <div className="grid grid-cols-2 gap-1.5">
-                    <button onClick={() => togglePdfOption('detailSales')} className={cn("flex items-center gap-2 p-2 rounded-lg border text-left text-xs", pdfOptions.detailSales ? "border-primary bg-primary/10 text-primary" : "border-border/40 text-muted-foreground")}>
+                    <Button onClick={() => togglePdfOption('detailSales')} className={cn("flex items-center gap-2 p-2 rounded-lg border text-left text-xs", pdfOptions.detailSales ? "border-primary bg-primary/10 text-primary" : "border-border/40 text-muted-foreground")}>
                       {pdfOptions.detailSales ? <CheckSquare className="w-3.5 h-3.5" /> : <Square className="w-3.5 h-3.5" />}
                       <span className="font-bold">Ventas</span>
-                    </button>
-                    <button onClick={() => togglePdfOption('detailPayments')} className={cn("flex items-center gap-2 p-2 rounded-lg border text-left text-xs", pdfOptions.detailPayments ? "border-primary bg-primary/10 text-primary" : "border-border/40 text-muted-foreground")}>
+                    </Button>
+                    <Button onClick={() => togglePdfOption('detailPayments')} className={cn("flex items-center gap-2 p-2 rounded-lg border text-left text-xs", pdfOptions.detailPayments ? "border-primary bg-primary/10 text-primary" : "border-border/40 text-muted-foreground")}>
                       {pdfOptions.detailPayments ? <CheckSquare className="w-3.5 h-3.5" /> : <Square className="w-3.5 h-3.5" />}
                       <span className="font-bold">Pagos Proveedor</span>
-                    </button>
-                    <button onClick={() => togglePdfOption('detailCommissions')} className={cn("flex items-center gap-2 p-2 rounded-lg border text-left text-xs", pdfOptions.detailCommissions ? "border-primary bg-primary/10 text-primary" : "border-border/40 text-muted-foreground")}>
+                    </Button>
+                    <Button onClick={() => togglePdfOption('detailCommissions')} className={cn("flex items-center gap-2 p-2 rounded-lg border text-left text-xs", pdfOptions.detailCommissions ? "border-primary bg-primary/10 text-primary" : "border-border/40 text-muted-foreground")}>
                       {pdfOptions.detailCommissions ? <CheckSquare className="w-3.5 h-3.5" /> : <Square className="w-3.5 h-3.5" />}
                       <span className="font-bold">Comisiones</span>
-                    </button>
-                    <button onClick={() => togglePdfOption('detailProduction')} className={cn("flex items-center gap-2 p-2 rounded-lg border text-left text-xs", pdfOptions.detailProduction ? "border-primary bg-primary/10 text-primary" : "border-border/40 text-muted-foreground")}>
+                    </Button>
+                    <Button onClick={() => togglePdfOption('detailProduction')} className={cn("flex items-center gap-2 p-2 rounded-lg border text-left text-xs", pdfOptions.detailProduction ? "border-primary bg-primary/10 text-primary" : "border-border/40 text-muted-foreground")}>
                       {pdfOptions.detailProduction ? <CheckSquare className="w-3.5 h-3.5" /> : <Square className="w-3.5 h-3.5" />}
                       <span className="font-bold">Producción</span>
-                    </button>
+                    </Button>
                   </div>
                 </div>
 
@@ -1771,29 +1772,29 @@ export function CashReportModal({ open, onClose }: CashReportModalProps) {
                 <div>
                   <p className="text-[10px] font-black uppercase text-muted-foreground mb-2">Secciones del PDF:</p>
                   <div className="grid grid-cols-2 gap-1.5">
-                    <button onClick={() => togglePdfOption('includeBreakdown')} className={cn("flex items-center gap-2 p-2 rounded-lg border text-left text-xs", pdfOptions.includeBreakdown ? "border-primary bg-primary/10 text-primary" : "border-border/40 text-muted-foreground")}>
+                    <Button onClick={() => togglePdfOption('includeBreakdown')} className={cn("flex items-center gap-2 p-2 rounded-lg border text-left text-xs", pdfOptions.includeBreakdown ? "border-primary bg-primary/10 text-primary" : "border-border/40 text-muted-foreground")}>
                       {pdfOptions.includeBreakdown ? <CheckSquare className="w-3.5 h-3.5" /> : <Square className="w-3.5 h-3.5" />}
                       <span className="font-bold">Desglose billetes</span>
-                    </button>
-                    <button onClick={() => togglePdfOption('includeUsd')} className={cn("flex items-center gap-2 p-2 rounded-lg border text-left text-xs", pdfOptions.includeUsd ? "border-primary bg-primary/10 text-primary" : "border-border/40 text-muted-foreground")}>
+                    </Button>
+                    <Button onClick={() => togglePdfOption('includeUsd')} className={cn("flex items-center gap-2 p-2 rounded-lg border text-left text-xs", pdfOptions.includeUsd ? "border-primary bg-primary/10 text-primary" : "border-border/40 text-muted-foreground")}>
                       {pdfOptions.includeUsd ? <CheckSquare className="w-3.5 h-3.5" /> : <Square className="w-3.5 h-3.5" />}
                       <span className="font-bold">Cuadre USD</span>
-                    </button>
-                    <button onClick={() => togglePdfOption('includeSignature')} className={cn("flex items-center gap-2 p-2 rounded-lg border text-left text-xs col-span-2", pdfOptions.includeSignature ? "border-primary bg-primary/10 text-primary" : "border-border/40 text-muted-foreground")}>
+                    </Button>
+                    <Button onClick={() => togglePdfOption('includeSignature')} className={cn("flex items-center gap-2 p-2 rounded-lg border text-left text-xs col-span-2", pdfOptions.includeSignature ? "border-primary bg-primary/10 text-primary" : "border-border/40 text-muted-foreground")}>
                       {pdfOptions.includeSignature ? <CheckSquare className="w-3.5 h-3.5" /> : <Square className="w-3.5 h-3.5" />}
                       <span className="font-bold">Líneas de firma</span>
-                    </button>
+                    </Button>
                   </div>
                 </div>
               </div>
             )}
             <div className="flex gap-2">
-              <button onClick={() => setShowTemplateSelector(!showTemplateSelector)} className={`px-3 rounded-xl border border-border/40 text-xs font-black uppercase hover:bg-muted flex items-center gap-1.5 ${touch}`}>
+              <Button onClick={() => setShowTemplateSelector(!showTemplateSelector)} className={`px-3 rounded-xl border border-border/40 text-xs font-black uppercase hover:bg-muted flex items-center gap-1.5 ${touch}`}>
                 <FileText className="w-4 h-4" /> {TEMPLATES.find(t => t.id === pdfTemplate)?.label}
-              </button>
-              <button onClick={handleExportPDF} className={`flex-1 rounded-xl bg-primary text-primary-foreground text-xs font-black uppercase hover:opacity-90 flex items-center justify-center gap-2 ${touch}`}>
+              </Button>
+              <Button onClick={handleExportPDF} className={`flex-1 rounded-xl bg-primary text-primary-foreground text-xs font-black uppercase hover:opacity-90 flex items-center justify-center gap-2 ${touch}`}>
                 <Download className="w-4 h-4" /> Exportar PDF
-              </button>
+              </Button>
             </div>
           </div>
         )}
@@ -1804,7 +1805,7 @@ export function CashReportModal({ open, onClose }: CashReportModalProps) {
             <div className="w-full max-w-md bg-card border border-border/50 rounded-2xl shadow-2xl p-4 space-y-3" onClick={e => e.stopPropagation()}>
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-black uppercase">Detalle de Documento</h3>
-                <button onClick={() => setSelectedDoc(null)} aria-label="Cerrar" className="p-2 rounded-lg hover:bg-muted"><span className="text-lg">✕</span></button>
+                <Button onClick={() => setSelectedDoc(null)} aria-label="Cerrar" className="p-2 rounded-lg hover:bg-muted"><span className="text-lg">✕</span></Button>
               </div>
               <div className="space-y-2 text-xs">
                 <div className="flex justify-between"><span className="text-muted-foreground">Tipo:</span><span className="font-bold">{selectedDoc._type === 'sale' ? 'Venta' : 'Pago a Proveedor'}</span></div>
@@ -1821,7 +1822,7 @@ export function CashReportModal({ open, onClose }: CashReportModalProps) {
                 <div className="flex justify-between"><span className="text-muted-foreground">ID:</span><span className="font-mono text-[9px] text-muted-foreground">{selectedDoc.id}</span></div>
               </div>
               <div className="flex gap-2 pt-2 border-t border-border/30">
-                <button
+                <Button
                   onClick={() => {
                     // FIX (2026-07-15): usar setCurrentView del store Zustand en vez de
                     // window.open('/terminal?view=...') que llevaba a 404 (no existe /terminal).
@@ -1842,8 +1843,8 @@ export function CashReportModal({ open, onClose }: CashReportModalProps) {
                   className={`flex-1 rounded-lg bg-primary text-primary-foreground text-xs font-black uppercase hover:opacity-90 flex items-center justify-center gap-1.5 ${touch}`}
                 >
                   <Eye className="w-3.5 h-3.5" /> Ver en módulo
-                </button>
-                <button onClick={() => setSelectedDoc(null)} className={`flex-1 rounded-lg border border-border/40 text-xs font-black uppercase hover:bg-muted ${touch}`}>Cerrar</button>
+                </Button>
+                <Button onClick={() => setSelectedDoc(null)} className={`flex-1 rounded-lg border border-border/40 text-xs font-black uppercase hover:bg-muted ${touch}`}>Cerrar</Button>
               </div>
             </div>
           </div>

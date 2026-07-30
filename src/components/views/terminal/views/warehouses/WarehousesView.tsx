@@ -4,6 +4,7 @@ import { Plus, Loader2, Warehouse, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { apiFetch } from '@/lib/api-fetch';
 import { useAuthStore } from '@/store';
+import { Button } from "@/components/ui/button";
 import { toast } from 'sonner';
 const touch = 'min-h-[44px]';
 
@@ -34,11 +35,11 @@ export function WarehousesView() {
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
         <div><h1 className="text-xl font-black uppercase tracking-tight">Almacenes</h1><p className="text-xs text-muted-foreground">Multi-almacén por tienda</p></div>
-        <button onClick={() => setShowCreate(true)} className={cn('flex items-center gap-2 px-4 rounded-xl bg-primary text-primary-foreground text-xs font-black uppercase hover:opacity-90', touch)}><Plus className="w-4 h-4" /> Nuevo Almacén</button>
+        <Button onClick={() => setShowCreate(true)} className={cn('flex items-center gap-2 px-4 rounded-xl bg-primary text-primary-foreground text-xs font-black uppercase hover:opacity-90', touch)}><Plus className="w-4 h-4" /> Nuevo Almacén</Button>
       </div>
       <div className="flex gap-2">
-        <button onClick={() => setTab('warehouses')} className={cn('px-4 rounded-xl text-xs font-black uppercase', tab === 'warehouses' ? 'bg-primary text-primary-foreground' : 'border border-border', touch)}>Almacenes</button>
-        <button onClick={() => setTab('stock')} className={cn('px-4 rounded-xl text-xs font-black uppercase', tab === 'stock' ? 'bg-primary text-primary-foreground' : 'border border-border', touch)}>Stock</button>
+        <Button onClick={() => setTab('warehouses')} className={cn('px-4 rounded-xl text-xs font-black uppercase', tab === 'warehouses' ? 'bg-primary text-primary-foreground' : 'border border-border', touch)}>Almacenes</Button>
+        <Button onClick={() => setTab('stock')} className={cn('px-4 rounded-xl text-xs font-black uppercase', tab === 'stock' ? 'bg-primary text-primary-foreground' : 'border border-border', touch)}>Stock</Button>
       </div>
       {loading ? <div className="flex items-center justify-center py-20"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
       : tab === 'warehouses' ? (
@@ -79,12 +80,12 @@ function CreateWhModal({ onClose, onCreated, storeId }: { onClose: () => void; o
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm" onClick={onClose}>
       <div className="w-full max-w-sm bg-card border border-border rounded-2xl shadow-2xl p-5 space-y-3" onClick={e => e.stopPropagation()}>
-        <div className="flex items-center justify-between"><h2 className="text-lg font-black uppercase">Nuevo Almacén</h2><button onClick={onClose} className="p-2 rounded-lg hover:bg-muted"><X className="w-4 h-4" /></button></div>
+        <div className="flex items-center justify-between"><h2 className="text-lg font-black uppercase">Nuevo Almacén</h2><Button onClick={onClose} className="p-2 rounded-lg hover:bg-muted"><X className="w-4 h-4" /></Button></div>
         {[{ k: 'name', l: 'Nombre *' }, { k: 'code', l: 'Código' }, { k: 'location', l: 'Ubicación' }].map(f => (
           <div key={f.k}><label className="text-xs font-bold uppercase text-muted-foreground">{f.l}</label><input value={(form as any)[f.k]} onChange={e => setForm(prev => ({ ...prev, [f.k]: e.target.value }))} className={cn('w-full mt-1 px-3 rounded-xl border border-border bg-background text-sm', touch)} /></div>
         ))}
         <label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={form.is_default} onChange={e => setForm(prev => ({ ...prev, is_default: e.target.checked }))} className="w-5 h-5 accent-primary" /><span className="text-sm font-bold">Almacén principal</span></label>
-        <button onClick={handleSubmit} disabled={submitting || !form.name.trim()} className={cn('w-full rounded-xl bg-primary text-primary-foreground text-sm font-black uppercase hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2', touch)}>{submitting ? <><Loader2 className="w-4 h-4 animate-spin" /> Creando...</> : <><Plus className="w-4 h-4" /> Crear</>}</button>
+        <Button onClick={handleSubmit} disabled={submitting || !form.name.trim()} className={cn('w-full rounded-xl bg-primary text-primary-foreground text-sm font-black uppercase hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2', touch)}>{submitting ? <><Loader2 className="w-4 h-4 animate-spin" /> Creando...</> : <><Plus className="w-4 h-4" /> Crear</>}</Button>
       </div>
     </div>
   );

@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { getRiskColor, getRiskLabel } from '@/lib/costeo-dinamico/risk.classifier';
 import type { ProductCostResult } from '@/lib/costeo-dinamico/types';
 
+import { Button } from "@/components/ui/button";
 /**
  * F4: ProductCostAnalysisModal — Análisis de formación de costo por producto.
  * Muestra: Costo Base, Transporte, Manipulación, Seguro, Otros, Costo Total, % Incremento.
@@ -129,21 +130,21 @@ export function ProductCostAnalysisModal({
       <div className="space-y-6">
         {/* F4.2: Tab selector */}
         <div className="flex gap-1 border-b border-border">
-          <button
+          <Button
             onClick={() => setActiveTab('recepciones')}
             className={cn('px-4 py-2 text-xs font-black uppercase tracking-widest border-b-2 transition-colors',
               activeTab === 'recepciones' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground')}
           >
             Recepciones
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={() => setActiveTab('costeo-dinamico')}
             className={cn('px-4 py-2 text-xs font-black uppercase tracking-widest border-b-2 transition-colors flex items-center gap-1.5',
               activeTab === 'costeo-dinamico' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground')}
           >
             <DollarSign className="w-3.5 h-3.5" />
             Impacto Cambiario
-          </button>
+          </Button>
         </div>
 
         {/* F4.2: Tab content — Costeo Dinámico */}

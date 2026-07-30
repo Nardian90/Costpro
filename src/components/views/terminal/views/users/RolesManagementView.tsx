@@ -10,6 +10,7 @@ import { BaseModal } from '@/components/ui/BaseModal';
 import RoleForm, { RoleFormData } from './RoleForm';
 import { Role } from '@/types';
 
+import { Button } from "@/components/ui/button";
 export default function RolesManagementView() {
   const { data: roles = [], isLoading } = useRoles();
   const deleteRoleMutation = useDeleteRole();
@@ -124,20 +125,20 @@ export default function RolesManagementView() {
                 </td>
                 <td className="p-4">
                   <div className="flex justify-center gap-2">
-                    <button type="button"
+                    <Button type="button"
                       onClick={() => handleEdit(role)}
                       className="w-10 h-10 sm:w-8 sm:h-8 flex items-center justify-center rounded-lg border border-border hover:bg-primary hover:text-foreground transition-all active:scale-95"
                       aria-label="Editar rol"
                     >
                       <Edit className="w-4 h-4" />
-                    </button>
-                    <button type="button"
+                    </Button>
+                    <Button type="button"
                       onClick={() => handleDelete(role.id)}
                       className="w-10 h-10 sm:w-8 sm:h-8 flex items-center justify-center rounded-lg border border-border hover:bg-danger hover:text-foreground transition-all active:scale-95"
                       aria-label="Eliminar rol"
                     >
                       <Trash2 className="w-4 h-4" />
-                    </button>
+                    </Button>
                   </div>
                 </td>
               </tr>

@@ -176,7 +176,7 @@ export default function ReceivedServicesView() {
         </div>
         <div className="flex gap-1 bg-muted p-0.5 rounded-lg border border-border">
           {(['all', 'active', 'voided'] as const).map(s => (
-            <button
+            <Button
               key={s}
               onClick={() => setStatusFilter(s)}
               className={cn(
@@ -185,7 +185,7 @@ export default function ReceivedServicesView() {
               )}
             >
               {s === 'all' ? 'Todos' : s === 'active' ? 'Activos' : 'Anulados'}
-            </button>
+            </Button>
           ))}
         </div>
       </div>
@@ -260,16 +260,16 @@ export default function ReceivedServicesView() {
                       <td className="px-4 py-3">
                         <div className="flex items-center justify-center gap-1">
                           {/* FIX-PAYMENT-TRACKING: botón Ver detalle con tab de pagos */}
-                          <button onClick={() => setDetailService(svc)} className="p-2 rounded-lg hover:bg-primary/10 text-primary transition-colors min-h-[44px] min-w-[44px]" aria-label="Ver detalle" title="Ver detalle y pagos">
+                          <Button onClick={() => setDetailService(svc)} className="p-2 rounded-lg hover:bg-primary/10 text-primary transition-colors min-h-[44px] min-w-[44px]" aria-label="Ver detalle" title="Ver detalle y pagos">
                             <Eye className="w-4 h-4" />
-                          </button>
-                          <button onClick={() => handleRecalculate(svc.id)} className="p-2 rounded-lg hover:bg-primary/10 text-primary transition-colors min-h-[44px] min-w-[44px]" aria-label="Recalcular distribución" title="Recalcular">
+                          </Button>
+                          <Button onClick={() => handleRecalculate(svc.id)} className="p-2 rounded-lg hover:bg-primary/10 text-primary transition-colors min-h-[44px] min-w-[44px]" aria-label="Recalcular distribución" title="Recalcular">
                             <RefreshCw className="w-4 h-4" />
-                          </button>
+                          </Button>
                           {svc.status === 'active' && (
-                            <button onClick={() => handleVoid(svc.id)} className="p-2 rounded-lg hover:bg-destructive/10 text-destructive transition-colors min-h-[44px] min-w-[44px]" aria-label="Anular" title="Anular">
+                            <Button onClick={() => handleVoid(svc.id)} className="p-2 rounded-lg hover:bg-destructive/10 text-destructive transition-colors min-h-[44px] min-w-[44px]" aria-label="Anular" title="Anular">
                               <Ban className="w-4 h-4" />
-                            </button>
+                            </Button>
                           )}
                         </div>
                       </td>
@@ -381,16 +381,16 @@ function ServiceDetailModal({
               <p className="text-[10px] text-muted-foreground">{service.service_type_name} · {service.supplier || 'Sin proveedor'}</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-2 rounded-lg hover:bg-muted" aria-label="Cerrar">
+          <Button onClick={onClose} className="p-2 rounded-lg hover:bg-muted" aria-label="Cerrar">
             <span className="text-lg">✕</span>
-          </button>
+          </Button>
         </div>
 
         <div className="flex border-b border-border/30">
-          <button onClick={() => setActiveTab('info')} className={cn("flex-1 py-3 text-xs font-black uppercase border-b-2 -mb-px", activeTab === 'info' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground')}>Info</button>
-          <button onClick={() => setActiveTab('payments')} className={cn("flex-1 py-3 text-xs font-black uppercase border-b-2 -mb-px flex items-center justify-center gap-1", activeTab === 'payments' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground')}>
+          <Button onClick={() => setActiveTab('info')} className={cn("flex-1 py-3 text-xs font-black uppercase border-b-2 -mb-px", activeTab === 'info' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground')}>Info</Button>
+          <Button onClick={() => setActiveTab('payments')} className={cn("flex-1 py-3 text-xs font-black uppercase border-b-2 -mb-px flex items-center justify-center gap-1", activeTab === 'payments' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground')}>
             Pagos {payments.length > 0 && <span className="bg-primary/10 px-1.5 rounded text-[9px]">{payments.length}</span>}
-          </button>
+          </Button>
         </div>
 
         {activeTab === 'info' && (
@@ -443,9 +443,9 @@ function ServiceDetailModal({
 
             <div className="flex items-center justify-between">
               <span className={cn("px-3 py-1 rounded-full text-[10px] font-black uppercase border", statusBadge.color)}>{statusBadge.label}</span>
-              <button onClick={() => setShowForm(!showForm)} className="px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-[10px] font-black uppercase hover:opacity-90 flex items-center gap-1">
+              <Button onClick={() => setShowForm(!showForm)} className="px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-[10px] font-black uppercase hover:opacity-90 flex items-center gap-1">
                 <Plus className="w-3 h-3" /> Registrar Pago
-              </button>
+              </Button>
             </div>
 
             {showForm && (
@@ -460,8 +460,8 @@ function ServiceDetailModal({
                 </div>
                 <input type="text" value={reference} onChange={(e) => setReference(e.target.value)} placeholder="Referencia (opcional)" className="w-full h-10 bg-background border border-border/50 rounded-lg px-3 text-sm" />
                 <div className="flex gap-2">
-                  <button onClick={() => setShowForm(false)} className="flex-1 h-10 rounded-lg border border-border/40 text-[10px] font-black uppercase hover:bg-muted">Cancelar</button>
-                  <button onClick={handleSubmit} disabled={submitting} className="flex-1 h-10 rounded-lg bg-primary text-primary-foreground text-[10px] font-black uppercase hover:opacity-90 disabled:opacity-50">{submitting ? '...' : 'Confirmar'}</button>
+                  <Button onClick={() => setShowForm(false)} className="flex-1 h-10 rounded-lg border border-border/40 text-[10px] font-black uppercase hover:bg-muted">Cancelar</Button>
+                  <Button onClick={handleSubmit} disabled={submitting} className="flex-1 h-10 rounded-lg bg-primary text-primary-foreground text-[10px] font-black uppercase hover:opacity-90 disabled:opacity-50">{submitting ? '...' : 'Confirmar'}</Button>
                 </div>
               </div>
             )}
@@ -479,13 +479,13 @@ function ServiceDetailModal({
                       <p className="text-[10px] text-muted-foreground">{new Date(p.payment_date).toLocaleString()} · {p.reference || 'Sin ref'}</p>
                     </div>
                   </div>
-                  <button onClick={async () => {
+                  <Button onClick={async () => {
                     if (!confirm('¿Anular este pago?')) return;
                     const res = await fetch(`/api/payments/${p.id}`, { method: 'DELETE' });
                     if (res.ok) { toast.success('Pago anulado'); fetchPayments(); onUpdate(); }
                   }} className="p-1.5 rounded text-destructive hover:bg-destructive/10" title="Anular">
                     <Ban className="w-3.5 h-3.5" />
-                  </button>
+                  </Button>
                 </div>
               ))}
             </div>
@@ -536,11 +536,11 @@ function CreateServiceModal({ isOpen, onClose, onCreate }: { isOpen: boolean; on
           <label className="text-xs font-black uppercase tracking-widest text-muted-foreground block mb-2">Tipo de servicio</label>
           <div className="flex flex-wrap gap-2">
             {quickTypes.map(t => (
-              <button key={t} type="button" onClick={() => setType(t)}
+              <Button key={t} type="button" onClick={() => setType(t)}
                 className={cn("px-3 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all min-h-[44px]",
                   type === t ? "bg-primary text-primary-foreground shadow-lg" : "bg-muted text-muted-foreground hover:bg-primary/10 hover:text-primary")}>
                 {t}
-              </button>
+              </Button>
             ))}
           </div>
         </div>

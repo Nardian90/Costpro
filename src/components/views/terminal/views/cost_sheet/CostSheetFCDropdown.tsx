@@ -11,6 +11,7 @@ import {
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
+import { Button } from "@/components/ui/button";
 import { useTranslations } from 'next-intl';
 interface CostSheetFCDropdownProps {
   activeSection: string;
@@ -49,7 +50,7 @@ export function CostSheetFCDropdown({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button type="button"
+        <Button type="button"
           className={cn(
             "group relative flex items-center gap-2 px-4 h-11 rounded-xl transition-all outline-none shrink-0 whitespace-nowrap",
             isAnyOptionActive
@@ -60,7 +61,7 @@ export function CostSheetFCDropdown({
         >
           <span className="text-xs font-black uppercase tracking-[0.2em]">Ficha</span>
           <ChevronDown className="w-3 h-3 opacity-50 group-hover:opacity-100 transition-opacity" />
-        </button>
+        </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-56 p-2 rounded-2xl bg-card border-border shadow-2xl z-[110]">
         <div className="px-2 py-1.5 text-xs font-black uppercase tracking-widest text-primary/70 mb-1 border-b border-border/50 pb-2">

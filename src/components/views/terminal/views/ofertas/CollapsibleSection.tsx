@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { Button } from "@/components/ui/button";
 import { ChevronDown, ChevronUp } from 'lucide-react';
 
 interface CollapsibleSectionProps {
@@ -23,7 +24,7 @@ export default function CollapsibleSection({
   const [open, setOpen] = useState(defaultOpen);
   return (
     <div className="border border-border rounded-xl overflow-hidden">
-      <button
+      <Button
         type="button"
         onClick={() => setOpen(!open)}
         className="w-full flex items-center justify-between p-3 bg-muted/30 hover:bg-muted/50 transition-colors"
@@ -43,7 +44,7 @@ export default function CollapsibleSection({
           )}
         </div>
         {open ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-      </button>
+      </Button>
       {open && <div className="p-4 space-y-3">{children}</div>}
     </div>
   );

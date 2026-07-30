@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { LayoutTemplate, Package, TrendingUp, Warehouse } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
+import { Button } from "@/components/ui/button";
 // ── Plantillas de ejemplo metodológico ────────────────────────────
 // 3 configuraciones pre-armadas que demuestran diferentes análisis
 // que se pueden hacer con la tabla dinámica.
@@ -226,7 +227,7 @@ export default function CostAnalyticsView() {
         {TEMPLATES.map(tpl => {
           const Icon = tpl.icon;
           return (
-            <button
+            <Button
               key={tpl.id}
               onClick={() => handleTemplateClick(tpl.id)}
               className={cn(
@@ -239,17 +240,17 @@ export default function CostAnalyticsView() {
             >
               <Icon className="w-3 h-3 shrink-0" />
               <span className="hidden sm:inline">{tpl.name}</span>
-            </button>
+            </Button>
           );
         })}
         {activeTemplate && (
-          <button
+          <Button
             onClick={handleClearTemplate}
             className="px-2 py-1.5 rounded-lg text-[10px] font-bold text-muted-foreground hover:text-destructive hover:bg-destructive/5 border border-transparent transition-colors"
             title="Quitar plantilla"
           >
             ✕ Limpiar
-          </button>
+          </Button>
         )}
       </div>
 

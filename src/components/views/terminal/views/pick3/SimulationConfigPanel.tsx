@@ -132,7 +132,7 @@ export function SimulationConfigPanel({ config, onChange, onReRun, isRunning }: 
           <div className="flex items-center gap-2">
             {/* Mode toggle */}
             <div className="flex items-center gap-1 bg-background/50 p-1 rounded-full border border-border/30">
-              <button
+              <Button
                 onClick={() => setMode('auto')}
                 className={cn(
                   "px-3 py-1 rounded-full text-[9px] font-black uppercase transition-all",
@@ -142,8 +142,8 @@ export function SimulationConfigPanel({ config, onChange, onReRun, isRunning }: 
                 )}
               >
                 <Zap className="w-3 h-3 inline mr-1" /> Auto
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={() => setMode('manual')}
                 className={cn(
                   "px-3 py-1 rounded-full text-[9px] font-black uppercase transition-all",
@@ -153,7 +153,7 @@ export function SimulationConfigPanel({ config, onChange, onReRun, isRunning }: 
                 )}
               >
                 <Settings className="w-3 h-3 inline mr-1" /> Manual
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -171,12 +171,12 @@ export function SimulationConfigPanel({ config, onChange, onReRun, isRunning }: 
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <p className="text-[10px] font-black uppercase opacity-60">Modelos Activos ({enabledCount}/4)</p>
-                <button
+                <Button
                   onClick={normalizeWeights}
                   className="text-[9px] font-black uppercase text-primary hover:underline"
                 >
                   Normalizar pesos
-                </button>
+                </Button>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                 {(Object.entries(localConfig.models) as Array<[keyof SimulationConfig['models'], SimulationModelConfig]>).map(([key, model]) => {
@@ -197,7 +197,7 @@ export function SimulationConfigPanel({ config, onChange, onReRun, isRunning }: 
                           <Icon className={cn("w-4 h-4", info.color)} />
                           <span className="text-[11px] font-black uppercase">{info.name}</span>
                         </div>
-                        <button
+                        <Button
                           onClick={() => updateModel(key, { enabled: !model.enabled })}
                           className={cn(
                             "w-9 h-5 rounded-full transition-colors relative",
@@ -208,7 +208,7 @@ export function SimulationConfigPanel({ config, onChange, onReRun, isRunning }: 
                             "absolute top-0.5 w-4 h-4 rounded-full bg-white transition-transform",
                             model.enabled ? "translate-x-4" : "translate-x-0.5"
                           )} />
-                        </button>
+                        </Button>
                       </div>
                       <p className="text-[9px] opacity-60 leading-relaxed mb-2">{info.description}</p>
                       {model.enabled && (

@@ -294,14 +294,14 @@ export const ReportConfigPanel = ({ config, setConfig }: ReportConfigPanelProps)
                 { id: 'month', label: 'Mes', get: () => { const t = new Date(); const first = new Date(t.getFullYear(), t.getMonth(), 1); return { from: fmt(first), to: fmt(t) }; } },
                 { id: 'last-month', label: 'Mes anterior', get: () => { const t = new Date(); const first = new Date(t.getFullYear(), t.getMonth() - 1, 1); const last = new Date(t.getFullYear(), t.getMonth(), 0); return { from: fmt(first), to: fmt(last) }; } },
               ] as const).map(preset => (
-                <button
+                <Button
                   key={preset.id}
                   type="button"
                   onClick={() => setConfig({ ...config, date_range: preset.get() })}
                   className="px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-widest text-primary/60 hover:text-primary hover:bg-primary/10 border border-primary/10 transition-all"
                 >
                   {preset.label}
-                </button>
+                </Button>
               ))}
             </div>
           </div>

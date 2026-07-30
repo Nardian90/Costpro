@@ -4,6 +4,7 @@ import React from 'react';
 import { AlertCircle, FileText, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
+import { Button } from "@/components/ui/button";
 interface IntelligenceConsoleProps {
   timestamp: Date;
   alerts: any[];
@@ -60,20 +61,20 @@ export const IntelligenceConsole: React.FC<IntelligenceConsoleProps> = ({
       </div>
 
       <div className="w-full xl:w-96 grid grid-cols-2 gap-4">
-        <button
+        <Button
           onClick={onExport}
           className="flex flex-col items-center justify-center p-8 rounded-[40px] bg-emerald-500 text-white shadow-xl shadow-emerald-500/20 hover:scale-105 transition-all group"
         >
           <FileText className="w-8 h-8 mb-4 group-hover:rotate-6 transition-transform" />
           <span className="text-[11px] font-black uppercase tracking-widest">Exportar PDF</span>
-        </button>
-        <button
+        </Button>
+        <Button
           onClick={onSync}
           className="flex flex-col items-center justify-center p-8 rounded-[40px] bg-card/80 border-2 border-border/50 hover:border-primary/50 transition-all group"
         >
           <RefreshCw className="w-8 h-8 mb-4 text-muted-foreground group-hover:rotate-180 transition-transform duration-700" />
           <span className="text-[11px] font-black uppercase tracking-widest text-muted-foreground">Sincronizar</span>
-        </button>
+        </Button>
       </div>
     </footer>
   );

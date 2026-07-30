@@ -3,6 +3,7 @@ import React, { useState, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { TrendingUp, TrendingDown, Minus, Info } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Button } from "@/components/ui/button";
 import { parseISO, differenceInCalendarDays } from 'date-fns';
 
 type RateSource = 'informal' | 'oficial';
@@ -16,13 +17,13 @@ function InfoTooltip({ title, children }: { title: string; children: React.React
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <button
+        <Button
           type="button"
           aria-label={`Más información sobre ${title}`}
           className="inline-flex items-center justify-center w-5 h-5 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
         >
           <Info className="w-3.5 h-3.5" />
-        </button>
+        </Button>
       </PopoverTrigger>
       <PopoverContent side="bottom" align="end" className="w-72 text-sm leading-relaxed border-border bg-popover text-popover-foreground p-3 rounded-xl shadow-xl">
         <p className="font-black uppercase tracking-widest text-xs mb-2 text-foreground">{title}</p>
@@ -218,7 +219,7 @@ function VariationsTab({ data }: any) {
           {/* Toggle informal/BCC — SOLO para el simulador */}
           <div className="flex items-center gap-1 p-1 rounded-xl bg-muted/50 border border-border">
             {RATE_SOURCES.map(r => (
-              <button
+              <Button
                 key={r.id}
                 onClick={() => setRateSource(r.id)}
                 className={cn(
@@ -229,7 +230,7 @@ function VariationsTab({ data }: any) {
                 )}
               >
                 {r.label}
-              </button>
+              </Button>
             ))}
           </div>
         </div>

@@ -6,6 +6,7 @@ import { cn, formatCurrency } from '@/lib/utils';
 import { apiFetch } from '@/lib/api-fetch';
 import { usePaymentHistory, type PaymentRecord } from '@/hooks/api/usePaymentHistory';
 
+import { Button } from "@/components/ui/button";
 interface PaymentHistoryRowProps {
   refType: 'receipt' | 'service' | 'commission';
   refId: string;
@@ -98,14 +99,14 @@ export default function PaymentHistoryRow({ refType, refId, paidAmount }: Paymen
   return (
     <>
       {/* Toggle button */}
-      <button
+      <Button
         onClick={() => setExpanded(!expanded)}
         className="inline-flex items-center gap-1 px-2 py-1 rounded-lg border border-border/40 text-[10px] font-bold uppercase hover:bg-muted"
       >
         {expanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
         <History className="w-3 h-3" />
         {paidAmount > 0 ? `${payments.length || ''} pago(s)` : 'Ver pagos'}
-      </button>
+      </Button>
 
       {/* Expanded content */}
       {expanded && (
@@ -177,14 +178,14 @@ export default function PaymentHistoryRow({ refType, refId, paidAmount }: Paymen
                               <td className="p-1.5 text-center">
                                 {/* FIX-AUD2-2: no mostrar botón anular para comisiones */}
                                 {refType !== 'commission' && (
-                                  <button
+                                  <Button
                                     onClick={() => handleVoid(p.id)}
                                     className="text-destructive hover:bg-destructive/10 p-1 rounded"
                                     title="Anular pago"
                                     aria-label="Anular pago"
                                   >
                                     <Trash2 className="w-3 h-3" />
-                                  </button>
+                                  </Button>
                                 )}
                               </td>
                             </tr>

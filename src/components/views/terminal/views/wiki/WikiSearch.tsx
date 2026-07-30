@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
+import { Button } from "@/components/ui/button";
 import { Search, Loader2, BookOpen, FileText, Hash } from 'lucide-react';
 import {
   Command,
@@ -67,7 +68,7 @@ export const WikiSearch: React.FC<WikiSearchProps> = ({ data, onSelect }) => {
 
   return (
     <>
-      <button type="button"
+      <Button type="button"
         onClick={() => setOpen(true)}
         className="flex items-center gap-2 h-10 w-48 lg:w-64 rounded-xl border bg-muted/50 px-3 text-xs font-black uppercase tracking-widest text-muted-foreground hover:bg-muted transition-all"
       >
@@ -76,7 +77,7 @@ export const WikiSearch: React.FC<WikiSearchProps> = ({ data, onSelect }) => {
         <kbd className="hidden lg:inline-flex h-5 items-center gap-1 rounded border bg-background px-1.5 font-mono text-[10px] font-medium opacity-100">
           <span className="text-xs">⌘</span>K
         </kbd>
-      </button>
+      </Button>
 
       <CommandDialog open={open} onOpenChange={setOpen}>
         <CommandInput

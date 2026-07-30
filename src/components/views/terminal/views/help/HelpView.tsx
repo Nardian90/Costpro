@@ -11,6 +11,7 @@ import { AccessibilityStatement } from './AccessibilityStatement';
 import { useHelpContent } from './hooks/useHelpContent';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
+import { Button } from "@/components/ui/button";
 import HelpScrollFab from './HelpScrollFab';
 
 // ── Scroll to top utility (finds the visible help scroll container) ──
@@ -196,17 +197,17 @@ export default function HelpView() {
                 aria-label="Buscar documentación"
               />
               {searchQuery && (
-                <button type="button"
+                <Button type="button"
                   onClick={() => setSearchQuery('')}
                   className="absolute right-2.5 top-1/2 -translate-y-1/2 w-5 h-5 rounded-md hover:bg-muted flex items-center justify-center transition-colors"
                 >
                   <X className="w-3 h-3 text-muted-foreground" />
-                </button>
+                </Button>
               )}
             </div>
 
             {/* Reading mode toggle */}
-            <button type="button"
+            <Button type="button"
               onClick={() => setIsReadingMode(!isReadingMode)}
               className={cn(
                 "flex items-center gap-1.5 px-3 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all border",
@@ -218,7 +219,7 @@ export default function HelpView() {
             >
               {isReadingMode ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
               <span className="hidden sm:inline">{isReadingMode ? 'Salir Lectura' : 'Modo Lectura'}</span>
-            </button>
+            </Button>
           </div>
         </div>
 
@@ -249,7 +250,7 @@ export default function HelpView() {
 
       {/* ── Botón flotante "Salir Lectura" — visible solo en modo lectura ── */}
       {isReadingMode && (
-        <button
+        <Button
           type="button"
           onClick={() => setIsReadingMode(false)}
           className="fixed top-4 right-4 z-[110] flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary text-primary-foreground shadow-xl shadow-primary/30 hover:bg-primary/90 active:scale-95 transition-all min-h-[44px] text-xs font-bold uppercase tracking-wider"
@@ -258,7 +259,7 @@ export default function HelpView() {
         >
           <EyeOff className="w-4 h-4" />
           <span>Salir Lectura</span>
-        </button>
+        </Button>
       )}
     </>
   );

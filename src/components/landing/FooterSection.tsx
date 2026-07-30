@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { Button } from "@/components/ui/button";
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { Cookie } from 'lucide-react';
@@ -29,12 +30,12 @@ function FooterLink({
 }) {
   return (
     <li>
-      <button
+      <Button
         onClick={onClick}
         className="text-sm text-white/40 hover:text-[#22c55e] transition-colors duration-200 cursor-pointer inline-block py-0.5 px-1 rounded-md text-left"
       >
         {label}
-      </button>
+      </Button>
     </li>
   );
 }

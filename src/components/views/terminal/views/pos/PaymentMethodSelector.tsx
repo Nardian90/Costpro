@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 import { Banknote, ArrowLeftRight, DollarSign, Wallet } from 'lucide-react';
 import type { PaymentMethod } from '@/types';
 
+import { Button } from "@/components/ui/button";
 /**
  * PaymentMethodSelector — Componente unificado para selección de método de pago.
  *
@@ -112,7 +113,7 @@ export function PaymentMethodSelector({
         const Icon = opt.icon;
         const isSelected = value === opt.value;
         return (
-          <button
+          <Button
             key={opt.value}
             type="button"
             role="radio"
@@ -127,7 +128,7 @@ export function PaymentMethodSelector({
           >
             <Icon className="w-5 h-5" />
             <span className="text-[10px] font-black uppercase tracking-widest">{opt.shortLabel}</span>
-          </button>
+          </Button>
         );
       })}
     </div>

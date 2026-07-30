@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { cn } from '@/lib/utils';
+import { Button } from "@/components/ui/button";
 import { FolderOpen, FileText, LayoutGrid, Paperclip } from 'lucide-react';
 
 import { useTranslations } from 'next-intl';
@@ -55,7 +56,7 @@ export function CostSheetMainTabs({ activeTab, onTabChange, annexCount = 0 }: Co
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
           return (
-            <button
+            <Button
               key={tab.id}
               type="button"
               role="tab"
@@ -78,7 +79,7 @@ export function CostSheetMainTabs({ activeTab, onTabChange, annexCount = 0 }: Co
                   {annexCount}
                 </span>
               )}
-            </button>
+            </Button>
           );
         })}
       </div>
@@ -94,7 +95,7 @@ export function CostSheetMainTabs({ activeTab, onTabChange, annexCount = 0 }: Co
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
           return (
-            <button
+            <Button
               key={tab.id}
               type="button"
               role="tab"
@@ -117,7 +118,7 @@ export function CostSheetMainTabs({ activeTab, onTabChange, annexCount = 0 }: Co
                   {annexCount}
                 </span>
               )}
-            </button>
+            </Button>
           );
         })}
       </div>

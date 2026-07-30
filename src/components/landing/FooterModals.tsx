@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { Button } from "@/components/ui/button";
 import { motion } from 'framer-motion';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
@@ -56,7 +57,7 @@ function CTAButton({ label, onClick, variant = 'primary' }: {
   label: string; onClick?: () => void; variant?: 'primary' | 'secondary';
 }) {
   return (
-    <button
+    <Button
       onClick={onClick}
       className={`px-5 py-2.5 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer ${
         variant === 'primary'
@@ -65,7 +66,7 @@ function CTAButton({ label, onClick, variant = 'primary' }: {
       }`}
     >
       {label}
-    </button>
+    </Button>
   );
 }
 

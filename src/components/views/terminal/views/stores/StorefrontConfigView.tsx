@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils';
 import { StorefrontConfigPanel } from '@/components/views/terminal/views/stores/StorefrontConfigPanel';
 import type { Store, StoreTemplate } from '@/types';
 
+import { Button } from "@/components/ui/button";
 /**
  * StorefrontConfigView (2026-07-04)
  *
@@ -156,7 +157,7 @@ export default function StorefrontConfigView() {
       <Header
         actions={
           <div className="flex items-center gap-2">
-            <button
+            <Button
               onClick={handleRevalidate}
               disabled={revalidating}
               className="inline-flex items-center gap-1.5 px-3 py-2 min-h-[40px] rounded-xl border border-border bg-card text-xs font-black uppercase tracking-widest hover:bg-muted transition-colors disabled:opacity-60"
@@ -164,7 +165,7 @@ export default function StorefrontConfigView() {
             >
               {revalidating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
               <span className="hidden sm:inline">Revalidar</span>
-            </button>
+            </Button>
             {store.slug && (
               <a
                 href={`/tienda/${store.slug}`}
@@ -320,14 +321,14 @@ function StoreIdentitySection({ store, onSaved }: { store: Store; onSaved: (s: S
             Nombre, plantilla visual y URL pública de la vitrina
           </p>
         </div>
-        <button
+        <Button
           onClick={handleSave}
           disabled={!dirty || saving || (slug !== store.slug && slugAvailable !== true)}
           className="shrink-0 inline-flex items-center gap-1.5 h-9 px-3 rounded-lg bg-primary text-primary-foreground text-xs font-black uppercase tracking-widest hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
           <span className="hidden sm:inline">Guardar</span>
-        </button>
+        </Button>
       </div>
       <div className="p-4 sm:p-5 space-y-4">
         {/* Nombre */}
@@ -352,7 +353,7 @@ function StoreIdentitySection({ store, onSaved }: { store: Store; onSaved: (s: S
           </label>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             {TEMPLATES.map(tpl => (
-              <button
+              <Button
                 key={tpl.value}
                 type="button"
                 onClick={() => setPlantilla(tpl.value)}
@@ -369,7 +370,7 @@ function StoreIdentitySection({ store, onSaved }: { store: Store; onSaved: (s: S
                 <p className="text-[10px] text-muted-foreground mt-1 leading-tight">
                   {tpl.description}
                 </p>
-              </button>
+              </Button>
             ))}
           </div>
         </div>

@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { cn } from '@/lib/utils';
 
+import { Button } from "@/components/ui/button";
 interface HelpScrollFabProps {
   /** 0–100 scroll percentage from the parent */
   scrollProgress: number;
@@ -60,7 +61,7 @@ export default function HelpScrollFab({ scrollProgress }: HelpScrollFabProps) {
   const pct = Math.round(smoothProgress);
 
   return (
-    <button type="button"
+    <Button type="button"
       onClick={handleScrollTop}
       aria-label={`Volver arriba · ${pct}% leído`}
       className={cn(
@@ -136,6 +137,6 @@ export default function HelpScrollFab({ scrollProgress }: HelpScrollFabProps) {
       )}>
         Volver arriba
       </div>
-    </button>
+    </Button>
   );
 }

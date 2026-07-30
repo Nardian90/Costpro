@@ -9,6 +9,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useReducedMotion, motionSafe } from '@/hooks/ui/useReducedMotion';
 import { useFocusTrap } from '@/hooks/ui/useFocusTrap';
 
+import { Button } from "@/components/ui/button";
 interface StockAlertsPanelProps {
   alerts: StockAlert[];
   isOpen: boolean;
@@ -80,13 +81,13 @@ export default function StockAlertsPanel({ alerts, isOpen, onClose, onReceive }:
                   {warningCount > 0 && `${warningCount} en mínimo`}
                 </p>
               </div>
-              <button type="button"
+              <Button type="button"
                 onClick={onClose}
                 aria-label="Cerrar panel de alertas"
                 className="w-11 h-11 rounded-lg flex items-center justify-center hover:bg-muted transition-colors"
               >
                 <X className="w-4 h-4" />
-              </button>
+              </Button>
             </div>
 
             {/* Lista */}
@@ -126,13 +127,13 @@ export default function StockAlertsPanel({ alerts, isOpen, onClose, onReceive }:
                       Stock: <strong className="tabular-nums">{alert.currentStock}</strong>
                       {alert.minStock > 0 && <span> / Mín: <strong className="tabular-nums">{alert.minStock}</strong></span>}
                     </span>
-                    <button type="button"
+                    <Button type="button"
                       onClick={() => { onReceive(alert.product); onClose(); }}
                       aria-label={`Recibir mercancía para ${alert.product.name}`}
                       className="flex items-center gap-1 text-xs font-black uppercase tracking-widest text-primary hover:underline min-h-[44px] px-3"
                     >
                       Recibir <ArrowRight className="w-3 h-3" />
-                    </button>
+                    </Button>
                   </div>
                 </div>
               ))}

@@ -18,6 +18,7 @@ import { StateRenderer } from '@/components/ui/StateRenderer';
 import { toast } from 'sonner';
 import { RSSFeedCategory, RSS_FEED_CATEGORIES } from '@/types';
 
+import { Button } from "@/components/ui/button";
 export default function RSSManagementView() {
   const { data: feeds, isLoading: isLoadingFeeds, error: feedsError } = useRSSFeeds();
   const { data: settings, isLoading: isLoadingSettings, error: settingsError } = useRSSSettings();
@@ -155,14 +156,14 @@ export default function RSSManagementView() {
                     </option>
                   ))}
                 </select>
-                <button
+                <Button
                   type="submit"
                   disabled={addFeedMutation.isPending}
                   className="md:col-span-1 bg-primary text-foreground font-black text-xs uppercase tracking-widest rounded-xl hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
                 >
                   <Plus className="w-4 h-4" />
                   Añadir
-                </button>
+                </Button>
               </div>
             </form>
 
@@ -205,7 +206,7 @@ export default function RSSManagementView() {
                           </td>
                           <td className="p-4">
                             <div className="flex justify-center">
-                              <button type="button"
+                              <Button type="button"
                                 onClick={() => handleToggleFeed(feed.id, feed.is_active)}
                                 aria-label={feed.is_active ? `Desactivar feed: ${feed.name}` : `Activar feed: ${feed.name}`}
                                 className={cn(
@@ -216,16 +217,16 @@ export default function RSSManagementView() {
                                 )}
                               >
                                 {feed.is_active ? 'Activo' : 'Inactivo'}
-                              </button>
+                              </Button>
                             </div>
                           </td>
                           <td className="p-4 text-right">
-                            <button type="button"
+                            <Button type="button"
                               onClick={() => handleDeleteFeed(feed.id)}
                               className="p-2 text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
                             >
                               <Trash2 className="w-4 h-4" />
-                            </button>
+                            </Button>
                           </td>
                         </tr>
                       ))}
@@ -258,12 +259,12 @@ export default function RSSManagementView() {
                     >
                       <Tag className="w-3 h-3" />
                       {kw}
-                      <button type="button"
+                      <Button type="button"
                         onClick={() => handleRemoveKeyword(kw)}
                         className="ml-1 opacity-0 group-hover:opacity-100 transition-opacity"
                       >
                         <Trash2 className="w-3 h-3 text-destructive" />
-                      </button>
+                      </Button>
                     </div>
                   ))}
                 </div>
@@ -277,12 +278,12 @@ export default function RSSManagementView() {
                     className="flex-1 bg-background border border-border rounded-xl px-4 py-2.5 text-xs font-bold uppercase"
                     onKeyDown={(e) => e.key === 'Enter' && handleAddKeyword()}
                   />
-                  <button type="button"
+                  <Button type="button"
                     onClick={handleAddKeyword}
                     className="p-2.5 bg-primary text-foreground rounded-xl hover:opacity-90 transition-opacity"
                   >
                     <Plus className="w-5 h-5" />
-                  </button>
+                  </Button>
                 </div>
               </section>
 
@@ -298,13 +299,13 @@ export default function RSSManagementView() {
                 </div>
               </section>
 
-              <button type="button"
+              <Button type="button"
                 disabled
                 className="w-full py-4 bg-muted text-muted-foreground font-black text-xs uppercase tracking-[0.3em] rounded-2xl flex items-center justify-center gap-2 cursor-not-allowed"
               >
                 <Save className="w-4 h-4" />
                 Guardar Configuración
-              </button>
+              </Button>
             </div>
           </div>
         </div>

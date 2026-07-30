@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/tabs";
 import { HorizontalScroll } from '@/components/ui/HorizontalScroll';
 
+import { Button } from "@/components/ui/button";
 import { useTranslations } from 'next-intl';
 interface Token {
   id: string;
@@ -186,12 +187,12 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
               {token.type === 'reference' && <Code className="w-3 h-3 sm:w-3.5 sm:h-3.5" />}
               <span className="truncate max-w-[80px] sm:max-w-none">{token.label}</span>
               {token.type !== 'punctuation' && (
-                <button type="button"
+                <Button type="button"
                   onClick={() => removeToken(token.id)}
                   className="hover:text-destructive transition-colors ml-1"
                 >
                   <X className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
-                </button>
+                </Button>
               )}
             </div>
           ))}
@@ -232,7 +233,7 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
             <ScrollArea className="h-[250px] sm:h-[300px] rounded-xl">
               <TabsContent value="functions" className="m-0 space-y-2 pb-4 pr-3 outline-none">
                 {Object.keys(SPANISH_TO_ENGLISH).map(func => (
-                  <button type="button"
+                  <Button type="button"
                     key={func}
                     onClick={() => addToken('function', SPANISH_TO_ENGLISH[func], func)}
                     className="w-full flex items-center gap-3 sm:gap-4 p-2 sm:p-3 rounded-xl bg-transparent hover:bg-muted/10 dark:hover:bg-white/5 border border-border/50 dark:border-white/5 hover:border-primary dark:hover:border-primary/30 hover:bg-muted dark:hover:bg-accent/60 transition-all text-left group relative overflow-hidden"
@@ -248,7 +249,7 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
                     <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-border dark:bg-muted flex items-center justify-center text-muted-foreground dark:text-muted-foreground group-hover:bg-primary dark:group-hover:bg-primary group-hover:text-primary-foreground dark:group-hover:text-foreground transition-all">
                       <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                     </div>
-                  </button>
+                  </Button>
                 ))}
               </TabsContent>
 
@@ -256,7 +257,7 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
                 <div className="space-y-2">
                   <div className="text-xs sm:text-xs font-black text-muted-foreground dark:text-muted-foreground uppercase tracking-widest px-2 mb-2">Filas de la Ficha</div>
                   {suggestions.filter(s => s.value?.startsWith('ref') || s.value?.startsWith('vh')).map(s => (
-                    <button type="button"
+                    <Button type="button"
                       key={s.value}
                       onClick={() => addToken('reference', s.value, s.label)}
                       className="w-full flex items-center gap-3 sm:gap-4 p-2 sm:p-3 rounded-xl bg-transparent hover:bg-muted/10 dark:hover:bg-white/5 border border-border/50 dark:border-white/5 hover:border-primary dark:hover:border-primary/30 hover:bg-muted dark:hover:bg-accent/60 transition-all text-left group relative overflow-hidden"
@@ -272,7 +273,7 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
                       <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-border dark:bg-muted flex items-center justify-center text-muted-foreground dark:text-muted-foreground group-hover:bg-primary dark:group-hover:bg-primary group-hover:text-primary-foreground dark:group-hover:text-foreground transition-all">
                         <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                       </div>
-                    </button>
+                    </Button>
                   ))}
                 </div>
               </TabsContent>
@@ -281,7 +282,7 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
                 <div className="space-y-2">
                   <div className="text-xs sm:text-xs font-black text-muted-foreground dark:text-muted-foreground uppercase tracking-widest px-2 mb-2">Referencias a Anexos</div>
                   {suggestions.filter(s => s.value?.startsWith('Anexo')).map(s => (
-                    <button type="button"
+                    <Button type="button"
                       key={s.value}
                       onClick={() => addToken('reference', s.value, s.label)}
                       className="w-full flex items-center gap-3 sm:gap-4 p-2 sm:p-3 rounded-xl bg-transparent hover:bg-muted/10 dark:hover:bg-white/5 border border-border/50 dark:border-white/5 hover:border-primary dark:hover:border-primary/30 hover:bg-muted dark:hover:bg-accent/60 transition-all text-left group relative overflow-hidden"
@@ -297,7 +298,7 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
                       <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-border dark:bg-muted flex items-center justify-center text-muted-foreground dark:text-muted-foreground group-hover:bg-primary dark:group-hover:bg-primary group-hover:text-primary-foreground dark:group-hover:text-foreground transition-all">
                         <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                       </div>
-                    </button>
+                    </Button>
                   ))}
                   {suggestions.filter(s => s.value?.startsWith('Anexo')).length === 0 && (
                     <div className="p-8 text-center border-2 border-dashed border-border dark:border-white/5 rounded-3xl">
@@ -318,13 +319,13 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
                     { v: ')', l: ')', i: <span className="text-lg sm:text-xl font-bold">)</span> },
                     { v: ',', l: ',', i: <span className="text-xl sm:text-2xl font-black">,</span> },
                   ].map(op => (
-                    <button type="button"
+                    <Button type="button"
                       key={op.v}
                       onClick={() => addToken(op.v === '(' || op.v === ')' || op.v === ',' ? 'punctuation' : 'operator', op.v, op.l)}
                       className="flex items-center justify-center h-12 sm:h-16 rounded-xl sm:rounded-xl bg-muted/50 dark:bg-background/50 border border-border dark:border-border hover:border-primary/50 dark:hover:border-primary/50 hover:bg-muted dark:hover:bg-accent text-muted-foreground dark:text-muted-foreground hover:text-primary dark:hover:text-primary transition-all shadow-sm"
                     >
                       {op.i}
-                    </button>
+                    </Button>
                   ))}
 
                   <div className="col-span-4 mt-2 sm:mt-4 p-2 sm:p-3 rounded-xl sm:rounded-xl bg-muted/30 dark:bg-background/30 border border-border dark:border-border">
@@ -343,7 +344,7 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
                           }
                         }}
                       />
-                      <button type="button"
+                      <Button type="button"
                         onClick={(e) => {
                           const input = e.currentTarget.previousElementSibling as HTMLInputElement;
                           const val = input.value;
@@ -353,7 +354,7 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
                         className="h-11 w-11 sm:h-12 sm:w-12 rounded-lg sm:rounded-xl bg-primary text-primary-foreground dark:text-foreground flex items-center justify-center  transition-all shrink-0"
                       >
                         <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 </div>

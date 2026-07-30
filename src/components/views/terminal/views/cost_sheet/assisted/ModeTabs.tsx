@@ -2,6 +2,7 @@
 
 import React, { useCallback } from 'react';
 import { cn } from '@/lib/utils';
+import { Button } from "@/components/ui/button";
 import type { ActiveMode } from './types';
 import { MODE_LABELS } from './constants';
 
@@ -28,7 +29,7 @@ const ModeTabs: React.FC<ModeTabsProps> = ({ activeMode, onModeChange }) => {
         const isActive = activeMode === mode;
         const info = MODE_LABELS[mode];
         return (
-          <button type="button"
+          <Button type="button"
             key={mode}
             onClick={() => handleModeChange(mode)}
             className={cn(
@@ -44,7 +45,7 @@ const ModeTabs: React.FC<ModeTabsProps> = ({ activeMode, onModeChange }) => {
             )} />
             <span className="hidden sm:inline">{info.label}</span>
             <span className="sm:hidden">{info.label.slice(0, 4)}</span>
-          </button>
+          </Button>
         );
       })}
     </div>

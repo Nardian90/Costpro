@@ -6,6 +6,7 @@ import { cn, formatCurrency } from '@/lib/utils';
 import { TrendingUp, Package, Users, Settings, Zap, Plus, Minus } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 
+import { Button } from "@/components/ui/button";
 import { useTranslations } from 'next-intl';
 interface TelemetryItem {
   label: string;
@@ -126,7 +127,7 @@ export const CostSheetMasterRing: React.FC<CostSheetMasterRingProps> = ({
       {/* Price Control Slider */}
       {onPriceChange && (
         <div className="flex items-center gap-3 w-full px-4 sm:px-8 -mt-4 mb-2">
-          <button type="button"
+          <Button type="button"
             onClick={(e) => {
               e.stopPropagation();
               onPriceAdjust?.(-1);
@@ -134,7 +135,7 @@ export const CostSheetMasterRing: React.FC<CostSheetMasterRingProps> = ({
             className="h-11 w-11 flex items-center justify-center shrink-0 rounded-xl bg-muted dark:bg-muted/50 hover:bg-primary/10 hover:text-primary transition-all active:scale-95 border border-transparent hover:border-primary/20"
           >
             <Minus className="w-4 h-4" />
-          </button>
+          </Button>
 
           <div className="flex-1 px-2">
             <Slider
@@ -147,7 +148,7 @@ export const CostSheetMasterRing: React.FC<CostSheetMasterRingProps> = ({
             />
           </div>
 
-          <button type="button"
+          <Button type="button"
             onClick={(e) => {
               e.stopPropagation();
               onPriceAdjust?.(1);
@@ -155,7 +156,7 @@ export const CostSheetMasterRing: React.FC<CostSheetMasterRingProps> = ({
             className="h-11 w-11 flex items-center justify-center shrink-0 rounded-xl bg-muted dark:bg-muted/50 hover:bg-primary/10 hover:text-primary transition-all active:scale-95 border border-transparent hover:border-primary/20"
           >
             <Plus className="w-4 h-4" />
-          </button>
+          </Button>
         </div>
       )}
 

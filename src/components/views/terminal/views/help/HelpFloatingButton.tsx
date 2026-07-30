@@ -21,6 +21,7 @@ import React from 'react';
 import { HelpCircle } from 'lucide-react';
 import { useUIStore } from '@/store';
 import { cn } from '@/lib/utils';
+import { Button } from "@/components/ui/button";
 import { HELP_DOC_BY_VIEW } from './HelpLauncher';
 
 export interface HelpFloatingButtonProps {
@@ -61,7 +62,7 @@ export function HelpFloatingButton({
   };
 
   return (
-    <button
+    <Button
       type="button"
       onClick={handleClick}
       title={`Ayuda de esta vista`}
@@ -83,7 +84,7 @@ export function HelpFloatingButton({
         className="absolute inset-0 rounded-full bg-primary/30 animate-ping opacity-20 pointer-events-none"
         aria-hidden="true"
       />
-    </button>
+    </Button>
   );
 }
 

@@ -6,6 +6,7 @@ import * as d3 from 'd3';
 import { Share2, ZoomIn, ZoomOut, RotateCcw, Eye, EyeOff, Layers, Crosshair, Maximize2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
+import { Button } from "@/components/ui/button";
 interface Node {
   id: string;
   label: string;
@@ -429,28 +430,28 @@ export const GraphViewer: React.FC<GraphViewerProps> = ({ data, title }) => {
 
         {/* ── Controls ── */}
         <div className="flex items-center gap-1.5">
-          <button onClick={() => setShowLabels(!showLabels)} className="w-8 h-8 rounded-lg bg-white/[0.04] border border-white/[0.06] flex items-center justify-center hover:bg-white/[0.08] transition-all" title={showLabels ? 'Ocultar etiquetas' : 'Mostrar etiquetas'}>
+          <Button onClick={() => setShowLabels(!showLabels)} className="w-8 h-8 rounded-lg bg-white/[0.04] border border-white/[0.06] flex items-center justify-center hover:bg-white/[0.08] transition-all" title={showLabels ? 'Ocultar etiquetas' : 'Mostrar etiquetas'}>
             {showLabels ? <Eye className="w-3 h-3 text-white/40" /> : <EyeOff className="w-3 h-3 text-white/40" />}
-          </button>
-          <button onClick={() => setShowLegend(!showLegend)} className="w-8 h-8 rounded-lg bg-white/[0.04] border border-white/[0.06] flex items-center justify-center hover:bg-white/[0.08] transition-all" title="Capas">
+          </Button>
+          <Button onClick={() => setShowLegend(!showLegend)} className="w-8 h-8 rounded-lg bg-white/[0.04] border border-white/[0.06] flex items-center justify-center hover:bg-white/[0.08] transition-all" title="Capas">
             <Layers className="w-3 h-3 text-white/40" />
-          </button>
+          </Button>
           <div className="w-px h-5 bg-white/[0.06]" />
           <div className="px-2.5 py-1 rounded-md bg-white/[0.04] border border-white/[0.06] text-[8px] font-mono font-bold text-white/30 min-w-[40px] text-center">
             {Math.round(zoomLevel * 100)}%
           </div>
-          <button onClick={() => { if (svgRef.current) { d3.select(svgRef.current).transition().duration(400).call((svgRef.current as any).__zoom.scaleBy, 1.8); } }} className="w-8 h-8 rounded-lg bg-white/[0.04] border border-white/[0.06] flex items-center justify-center hover:bg-white/[0.08] transition-all" title="Zoom +">
+          <Button onClick={() => { if (svgRef.current) { d3.select(svgRef.current).transition().duration(400).call((svgRef.current as any).__zoom.scaleBy, 1.8); } }} className="w-8 h-8 rounded-lg bg-white/[0.04] border border-white/[0.06] flex items-center justify-center hover:bg-white/[0.08] transition-all" title="Zoom +">
             <ZoomIn className="w-3 h-3 text-white/40" />
-          </button>
-          <button onClick={() => { if (svgRef.current) { d3.select(svgRef.current).transition().duration(400).call((svgRef.current as any).__zoom.scaleBy, 0.55); } }} className="w-8 h-8 rounded-lg bg-white/[0.04] border border-white/[0.06] flex items-center justify-center hover:bg-white/[0.08] transition-all" title="Zoom -">
+          </Button>
+          <Button onClick={() => { if (svgRef.current) { d3.select(svgRef.current).transition().duration(400).call((svgRef.current as any).__zoom.scaleBy, 0.55); } }} className="w-8 h-8 rounded-lg bg-white/[0.04] border border-white/[0.06] flex items-center justify-center hover:bg-white/[0.08] transition-all" title="Zoom -">
             <ZoomOut className="w-3 h-3 text-white/40" />
-          </button>
-          <button onClick={fitToView} className="w-8 h-8 rounded-lg bg-white/[0.04] border border-white/[0.06] flex items-center justify-center hover:bg-white/[0.08] transition-all" title="Ajustar a vista">
+          </Button>
+          <Button onClick={fitToView} className="w-8 h-8 rounded-lg bg-white/[0.04] border border-white/[0.06] flex items-center justify-center hover:bg-white/[0.08] transition-all" title="Ajustar a vista">
             <Maximize2 className="w-3 h-3 text-white/40" />
-          </button>
-          <button onClick={resetView} className="w-8 h-8 rounded-lg bg-white/[0.04] border border-white/[0.06] flex items-center justify-center hover:bg-white/[0.08] transition-all" title="Restablecer">
+          </Button>
+          <Button onClick={resetView} className="w-8 h-8 rounded-lg bg-white/[0.04] border border-white/[0.06] flex items-center justify-center hover:bg-white/[0.08] transition-all" title="Restablecer">
             <RotateCcw className="w-3 h-3 text-white/40" />
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -466,21 +467,21 @@ export const GraphViewer: React.FC<GraphViewerProps> = ({ data, title }) => {
                 <Layers className="w-2.5 h-2.5 text-purple-400/60" />
                 <span className="text-[7px] font-black uppercase tracking-widest text-white/40">Capas</span>
               </div>
-              <button onClick={() => setActiveFilter(null)} className={cn("text-[6px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded", !activeFilter ? "bg-white/10 text-white/60" : "text-white/20 hover:text-white/40")}>Todas</button>
+              <Button onClick={() => setActiveFilter(null)} className={cn("text-[6px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded", !activeFilter ? "bg-white/10 text-white/60" : "text-white/20 hover:text-white/40")}>Todas</Button>
             </div>
             <div className="space-y-1">
               {layerStats.map(([layer, count]) => {
                 const c = getColor(layer);
                 const isActive = activeFilter === layer;
                 return (
-                  <button key={layer} onClick={() => setActiveFilter(isActive ? null : layer)}
+                  <Button key={layer} onClick={() => setActiveFilter(isActive ? null : layer)}
                     className={cn("w-full flex items-center gap-2 px-2 py-1.5 rounded-lg transition-all text-left",
                       isActive ? "bg-white/[0.08] border border-white/[0.12]" : "hover:bg-white/[0.03] border border-transparent"
                     )}>
                     <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: c.stroke, boxShadow: isActive ? `0 0 8px ${c.stroke}` : 'none' }} />
                     <span className="text-[7px] font-bold uppercase tracking-wider text-white/50 truncate flex-1">{layer}</span>
                     <span className={cn("text-[7px] font-mono font-bold", isActive ? "text-white/60" : "text-white/20")}>{count}</span>
-                  </button>
+                  </Button>
                 );
               })}
             </div>
@@ -500,7 +501,7 @@ export const GraphViewer: React.FC<GraphViewerProps> = ({ data, title }) => {
                 <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: getColor(deriveLayer(selectedNode)).stroke, boxShadow: `0 0 10px ${getColor(deriveLayer(selectedNode)).stroke}` }} />
                 <h3 className="text-[10px] font-black uppercase tracking-tight leading-tight truncate text-white/90">{selectedNode.label}</h3>
               </div>
-              <button onClick={() => setSelectedNode(null)} className="text-[7px] font-bold uppercase text-white/20 hover:text-white/50 ml-1 shrink-0">✕</button>
+              <Button onClick={() => setSelectedNode(null)} className="text-[7px] font-bold uppercase text-white/20 hover:text-white/50 ml-1 shrink-0">✕</Button>
             </div>
             <div className="space-y-1.5 mb-3">
               <div className="flex items-center justify-between">

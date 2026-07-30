@@ -11,6 +11,7 @@ import { useStores } from '@/hooks/api/useStores';
 import { useDebounce } from '@/hooks/ui/useDebounce';
 import type { NavigationItem } from '@/hooks/ui/useTerminalNavigation';
 
+import { Button } from "@/components/ui/button";
 /**
  * F5-T02: Tab bar inferior fija para mobile (<768px).
  *
@@ -114,7 +115,7 @@ export function MobileTabBar({ navigationItems, currentView, onViewChange }: Mob
       {/* FIX (2026-07-22): Si está colapsada, mostrar solo un indicador vertical flotante.
           Cuando el usuario hace tap, se expande la tab bar completa. */}
       {collapsed ? (
-        <button
+        <Button
           type="button"
           onClick={() => setCollapsed(false)}
           aria-label="Expandir barra de navegación"
@@ -122,7 +123,7 @@ export function MobileTabBar({ navigationItems, currentView, onViewChange }: Mob
           style={{ bottom: 'calc(1rem + env(safe-area-inset-bottom))' }}
         >
           <ChevronDown className="w-5 h-5 rotate-180" />
-        </button>
+        </Button>
       ) : (
         <nav
           className="sm:hidden fixed bottom-0 left-0 right-0 z-30 bg-card/95 backdrop-blur-md border-t border-border flex items-center justify-around px-2 py-1"
@@ -149,7 +150,7 @@ export function MobileTabBar({ navigationItems, currentView, onViewChange }: Mob
             />
           )}
           {/* Botón colapsar — a la derecha de los tabs */}
-          <button
+          <Button
             type="button"
             onClick={() => setCollapsed(true)}
             aria-label="Colapsar barra de navegación"
@@ -157,7 +158,7 @@ export function MobileTabBar({ navigationItems, currentView, onViewChange }: Mob
           >
             <ChevronDown className="w-4 h-4" />
             <span className="text-[9px] font-bold uppercase">Ocultar</span>
-          </button>
+          </Button>
         </nav>
       )}
 
@@ -181,20 +182,20 @@ export function MobileTabBar({ navigationItems, currentView, onViewChange }: Mob
               autoComplete="off"
             />
             {storeSearch && (
-              <button
+              <Button
                 type="button"
                 onClick={() => setStoreSearch('')}
                 className="absolute right-7 top-1/2 -translate-y-1/2 p-1 hover:bg-muted rounded"
                 aria-label="Limpiar búsqueda"
               >
                 <X className="w-3.5 h-3.5 text-muted-foreground" />
-              </button>
+              </Button>
             )}
           </div>
           <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-1 max-h-[40vh]">
             {filteredStores.length > 0 ? (
               filteredStores.map(s => (
-                <button
+                <Button
                   key={s.id}
                   onClick={() => handleStoreSelect(s.id)}
                   className={cn(
@@ -209,7 +210,7 @@ export function MobileTabBar({ navigationItems, currentView, onViewChange }: Mob
                     <span className="text-sm font-black uppercase tracking-tight truncate">{s.name}</span>
                   </div>
                   {user?.activeStoreId === s.id && <Check className="w-4 h-4 text-primary shrink-0" />}
-                </button>
+                </Button>
               ))
             ) : (
               <div className="px-3 py-8 text-center text-xs text-muted-foreground">
@@ -231,7 +232,7 @@ export function MobileTabBar({ navigationItems, currentView, onViewChange }: Mob
           <div className="px-4 pt-2 pb-3">
             {/* M-4: acceso rápido al selector de tienda desde "Más" (admin/encargado). */}
             {storesToShow.length > 1 && (
-              <button
+              <Button
                 type="button"
                 onClick={() => {
                   setMoreSheetOpen(false);
@@ -248,14 +249,14 @@ export function MobileTabBar({ navigationItems, currentView, onViewChange }: Mob
                   </div>
                 </div>
                 <MoreHorizontal className="w-4 h-4 opacity-50" />
-              </button>
+              </Button>
             )}
           </div>
           <div className="grid grid-cols-3 gap-3 px-4 pb-6 pt-0">
             {moreItems.map(item => {
               const Icon = item.icon || MoreHorizontal;
               return (
-                <button
+                <Button
                   key={item.id}
                   onClick={() => {
                     onViewChange(item.id as ViewType);
@@ -272,7 +273,7 @@ export function MobileTabBar({ navigationItems, currentView, onViewChange }: Mob
                   <span className="text-xs font-black uppercase tracking-widest text-center leading-tight">
                     {item.label}
                   </span>
-                </button>
+                </Button>
               );
             })}
           </div>
@@ -296,7 +297,7 @@ function TabButton({
   onClick: () => void;
 }) {
   return (
-    <button
+    <Button
       type="button"
       onClick={onClick}
       className={cn(
@@ -313,7 +314,7 @@ function TabButton({
       )}>
         {label}
       </span>
-    </button>
+    </Button>
   );
 }
 

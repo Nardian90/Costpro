@@ -68,13 +68,13 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
             label: 'Regresar',
             onClick: () => setCurrentView('dashboard'),
             component: (
-                <button type="button"
+                <Button type="button"
                     onClick={() => setCurrentView('dashboard')}
                     className="neu-raised-sm w-11 h-11 flex items-center justify-center shrink-0 active:scale-95 transition-all text-foreground/70 hover:text-primary hover:bg-primary/10 rounded-xl border border-border/40"
                     aria-label="Regresar al tablero principal"
                 >
                     <ArrowLeft className="w-5 h-5" aria-hidden="true" />
-                </button>
+                </Button>
             ),
             tooltip: "Regresar"
         },
@@ -85,14 +85,14 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
             label: 'Exportar PDF',
             onClick: onExportPdf || (() => {}),
             component: (
-                <button type="button"
+                <Button type="button"
                     onClick={onExportPdf || (() => {})}
                     className="neu-raised-sm px-4 h-11 flex items-center justify-center gap-2 shrink-0 active:scale-95 transition-all text-primary font-black uppercase tracking-widest text-xs hover:bg-primary/10 rounded-xl"
                     aria-label="Exportar ficha de costo a PDF"
                 >
                     <FileText className="w-4 h-4" aria-hidden="true" />
                     <span className="hidden sm:inline">{isSaving ? 'Exportando...' : 'Exportar PDF'}</span>
-                </button>
+                </Button>
             ),
             tooltip: "Exportar PDF"
         },
@@ -119,13 +119,13 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
             label: 'Darian',
             onClick: () => setActiveSection('ai-chat'),
             component: (
-                <button type="button"
+                <Button type="button"
                     onClick={() => setActiveSection('ai-chat')}
                     className="neu-raised-sm w-11 h-11 flex items-center justify-center shrink-0 active:scale-95 transition-all text-primary hover:bg-primary/10 rounded-xl"
                     aria-label="Abrir asistente Darian AI"
                 >
                     <Bot className="w-5 h-5" aria-hidden="true" />
-                </button>
+                </Button>
             ),
             tooltip: "Darian AI Expert"
         },
@@ -144,13 +144,13 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
                     )}
                     <Popover>
                         <PopoverTrigger asChild>
-                            <button
+                            <Button
                                 className="neu-raised-sm w-11 h-11 flex items-center justify-center shrink-0 active:scale-95 transition-all text-muted-foreground hover:bg-muted/10 rounded-xl"
                                 aria-label="Historial de versiones autoguardadas"
                                 type="button"
                             >
                                 <Clock className="w-5 h-5" aria-hidden="true" />
-                            </button>
+                            </Button>
                         </PopoverTrigger>
                         <PopoverContent className="w-80 p-0 rounded-3xl border-sidebar-border overflow-hidden bg-card" align="end">
                             <div className="p-4 border-b border-sidebar-border/50 bg-sidebar/30">
@@ -162,7 +162,7 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
                                     <div className="p-8 text-center text-xs text-muted-foreground font-medium">No hay versiones aún</div>
                                 ) : (
                                     versions.map((v, i) => (
-                                        <button type="button"
+                                        <Button type="button"
                                             key={i}
                                             onClick={() => onRestoreVersion?.(v)}
                                             className="w-full text-left p-3 rounded-2xl hover:bg-muted/50 transition-colors flex items-center justify-between group"
@@ -177,7 +177,7 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
                                             <div className="opacity-0 group-hover:opacity-100 transition-opacity">
                                                 <Button variant="ghost" size="sm" className="h-7 text-xs font-black uppercase tracking-widest rounded-lg">Restaurar</Button>
                                             </div>
-                                        </button>
+                                        </Button>
                                     ))
                                 )}
                             </div>

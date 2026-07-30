@@ -263,7 +263,7 @@ export function BackupModal({ open, onOpenChange, storeId, storeName }: BackupMo
               const Icon = opt.icon;
               const isActive = format === opt.value;
               return (
-                <button
+                <Button
                   key={opt.value}
                   type="button"
                   onClick={() => setFormat(opt.value)}
@@ -288,7 +288,7 @@ export function BackupModal({ open, onOpenChange, storeId, storeName }: BackupMo
                   </div>
                   <p className="font-black text-sm uppercase tracking-wider">{opt.label}</p>
                   <p className="text-xs text-muted-foreground leading-relaxed">{opt.description}</p>
-                </button>
+                </Button>
               );
             })}
           </div>
@@ -303,7 +303,7 @@ export function BackupModal({ open, onOpenChange, storeId, storeName }: BackupMo
             {RANGE_OPTIONS.map((opt) => {
               const isActive = range === opt.value;
               return (
-                <button
+                <Button
                   key={opt.value}
                   type="button"
                   onClick={() => setRange(opt.value)}
@@ -320,7 +320,7 @@ export function BackupModal({ open, onOpenChange, storeId, storeName }: BackupMo
                 >
                   <p className="font-black text-xs uppercase tracking-wider">{opt.label}</p>
                   <p className="text-[11px] text-muted-foreground">{opt.hint}</p>
-                </button>
+                </Button>
               );
             })}
           </div>

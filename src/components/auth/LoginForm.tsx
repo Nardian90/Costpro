@@ -252,14 +252,14 @@ export default function LoginForm({ onBack, defaultTab }: LoginFormProps) {
           {/* Header */}
           <motion.div className="space-y-1" variants={itemVariants}>
             {onBack && (
-              <button
+              <Button
                 type="button"
                 onClick={onBack}
                 className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-4 group"
               >
                 <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
                 Volver
-              </button>
+              </Button>
             )}
             <h2 className="text-2xl font-bold tracking-tight bg-gradient-to-r from-[#15803d] to-[#22c55e] bg-clip-text text-transparent">
               Iniciar sesión
@@ -295,14 +295,14 @@ export default function LoginForm({ onBack, defaultTab }: LoginFormProps) {
                 <Label htmlFor="password" className="text-sm font-medium">
                   Contraseña
                 </Label>
-                <button
+                <Button
                   type="button"
                   onClick={handleForgotPassword}
                   aria-describedby="email"
                   className="text-xs font-medium text-primary hover:text-primary/80 transition-colors"
                 >
                   ¿Olvidaste tu contraseña?
-                </button>
+                </Button>
               </div>
               <div className="relative">
                 <Input
@@ -315,14 +315,14 @@ export default function LoginForm({ onBack, defaultTab }: LoginFormProps) {
                   autoComplete="current-password"
                   required
                 />
-                <button
+                <Button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                   aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
+                </Button>
               </div>
             </div>
 
@@ -390,23 +390,23 @@ export default function LoginForm({ onBack, defaultTab }: LoginFormProps) {
           {/* FIX #014: Terms & Conditions */}
           <motion.p className="text-center text-xs text-muted-foreground/60" variants={itemVariants}>
             Al continuar, aceptas los{' '}
-            <button type="button" className="text-primary hover:underline underline-offset-4" onClick={() => window.dispatchEvent(new CustomEvent('open-footer-modal', { detail: 'terminos' }))}>
+            <Button type="button" className="text-primary hover:underline underline-offset-4" onClick={() => window.dispatchEvent(new CustomEvent('open-footer-modal', { detail: 'terminos' }))}>
               Términos de Servicio
-            </button>{' '}y{' '}
-            <button type="button" className="text-primary hover:underline underline-offset-4" onClick={() => window.dispatchEvent(new CustomEvent('open-footer-modal', { detail: 'privacidad' }))}>
+            </Button>{' '}y{' '}
+            <Button type="button" className="text-primary hover:underline underline-offset-4" onClick={() => window.dispatchEvent(new CustomEvent('open-footer-modal', { detail: 'privacidad' }))}>
               Política de Privacidad
-            </button>
+            </Button>
           </motion.p>
           {/* Register Link */}
           <motion.p className="text-center text-sm text-muted-foreground" variants={itemVariants}>
             ¿No tienes una cuenta?{' '}
-            <button
+            <Button
               type="button"
               onClick={() => setIsRegistering(true)}
               className="text-[#22c55e] hover:text-[#16a34a] font-semibold transition-colors hover:underline underline-offset-4 decoration-green-500"
             >
               Regístrate aquí
-            </button>
+            </Button>
           </motion.p>
         </div>
       </motion.div>

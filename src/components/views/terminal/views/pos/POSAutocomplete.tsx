@@ -7,6 +7,7 @@ import { cn, formatCurrency } from "@/lib/utils";
 import ProductImage from "@/components/ui/ProductImage";
 import type { Product } from "@/types";
 
+import { Button } from "@/components/ui/button";
 interface POSAutocompleteProps {
   /** Lista completa de productos para sugerencias (cargada en POSView). */
   products: Product[];
@@ -182,7 +183,7 @@ export function POSAutocomplete({
             const matchType = getMatchType(product, query);
 
             return (
-              <button
+              <Button
                 key={product.id}
                 type="button"
                 role="option"
@@ -247,7 +248,7 @@ export function POSAutocomplete({
                     <ArrowRight className="w-3 h-3 text-primary ml-auto mt-1" aria-hidden="true" />
                   )}
                 </div>
-              </button>
+              </Button>
             );
           })}
         </div>

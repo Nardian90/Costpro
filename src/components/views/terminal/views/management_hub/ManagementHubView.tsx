@@ -25,6 +25,7 @@ import { Newspaper, Store, Building, Loader2, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/store';
 
+import { Button } from "@/components/ui/button";
 // Lazy-load de las sub-vistas
 const NewsView = dynamic(() => import('@/components/views/terminal/views/rss/NewsView'), { ssr: false });
 const StorefrontConfigView = dynamic(() => import('@/components/views/terminal/views/stores/StorefrontConfigView'), { ssr: false });
@@ -149,7 +150,7 @@ export default function ManagementHubView() {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
             return (
-              <button
+              <Button
                 key={tab.id}
                 type="button"
                 role="tab"
@@ -166,7 +167,7 @@ export default function ManagementHubView() {
               >
                 <Icon className="w-4 h-4" />
                 {tab.label}
-              </button>
+              </Button>
             );
           })}
         </div>

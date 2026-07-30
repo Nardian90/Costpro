@@ -4,6 +4,7 @@ import { motion, useReducedMotion } from 'framer-motion';
 import { ShoppingCart, ChevronUp } from 'lucide-react';
 import { formatCurrency, cn } from '@/lib/utils';
 
+import { Button } from "@/components/ui/button";
 interface StickyCartSummaryProps {
   itemCount: number;
   total: number;
@@ -30,7 +31,7 @@ export const StickyCartSummary = ({
         className
       )}
     >
-      <button
+      <Button
         type="button"
         onClick={onClick}
         className="w-full bg-primary text-primary-foreground p-4 rounded-2xl shadow-2xl flex items-center justify-between group active:scale-[0.98] transition-all overflow-hidden relative"
@@ -70,7 +71,7 @@ export const StickyCartSummary = ({
           <span className="text-xs font-black uppercase tracking-widest">Ver Caja</span>
           <ChevronUp className="w-4 h-4 animate-bounce" />
         </div>
-      </button>
+      </Button>
     </motion.div>
   );
 };

@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
+import { Button } from "@/components/ui/button";
 // ═══ Paleta coordinada con el resto del módulo ═══
 const COLOR_BCC = '#22c55e'; // verde
 const COLOR_ELTOQUE = '#f97316'; // naranja
@@ -39,13 +40,13 @@ function InfoTooltip({ title, children }: { title: string; children: React.React
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <button
+        <Button
           type="button"
           aria-label={`Más información sobre ${title}`}
           className="inline-flex items-center justify-center w-6 h-6 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
         >
           <Info className="w-4 h-4" />
-        </button>
+        </Button>
       </PopoverTrigger>
       <PopoverContent
         side="bottom"
@@ -180,7 +181,7 @@ function MiProductoTab({ historyData, informalUsd, officialUsd }: any) {
           {/* Toggle elToque / BCC */}
           <div className="flex items-center gap-1 p-1 rounded-xl bg-muted/50 border border-border">
             {RATE_SOURCES.map(r => (
-              <button
+              <Button
                 key={r.id}
                 onClick={() => setRateSource(r.id)}
                 className={cn(
@@ -191,7 +192,7 @@ function MiProductoTab({ historyData, informalUsd, officialUsd }: any) {
                 )}
               >
                 {r.label}
-              </button>
+              </Button>
             ))}
           </div>
         </div>
@@ -273,7 +274,7 @@ function MiProductoTab({ historyData, informalUsd, officialUsd }: any) {
         <div className="flex flex-wrap items-center gap-2 mt-3 pt-3 border-t border-border/50">
           <span className="text-xs font-black uppercase tracking-widest text-muted-foreground mr-1">Proyectar a:</span>
           {[3, 7, 14, 30].map(d => (
-            <button
+            <Button
               key={d}
               onClick={() => setForecastDays(d)}
               className={cn(
@@ -284,7 +285,7 @@ function MiProductoTab({ historyData, informalUsd, officialUsd }: any) {
               )}
             >
               +{d}d
-            </button>
+            </Button>
           ))}
           <input
             type="number"

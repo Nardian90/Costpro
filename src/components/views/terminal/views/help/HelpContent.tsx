@@ -29,6 +29,7 @@ import { cn } from '@/lib/utils';
 import { APP_DISPLAY_VERSION } from '@/config/app';
 import { CostProLoader } from '@/components/ui/CostProLoader';
 
+import { Button } from "@/components/ui/button";
 interface HelpContentProps {
   doc: any;
   loading: boolean;
@@ -97,10 +98,10 @@ class HelpRenderBoundary extends Component<{ children: ReactNode }, { hasError: 
           </div>
           <h3 className="text-sm font-bold mb-1">Error al renderizar documento</h3>
           <p className="text-xs text-muted-foreground/60 mb-4 max-w-md text-center">El documento contiene formato no compatible. Se mostrará como texto plano.</p>
-          <button type="button"
+          <Button type="button"
             onClick={() => this.setState({ hasError: false, error: null })}
             className="px-4 py-2 rounded-lg bg-primary/10 border border-primary/20 text-xs font-bold text-primary hover:bg-primary/15 transition-colors"
-          >Reintentar</button>
+          >Reintentar</Button>
           <pre className="mt-6 max-w-lg max-h-64 overflow-auto text-[10px] font-mono text-muted-foreground/40 bg-muted/30 rounded-lg p-4 whitespace-pre-wrap break-words">
             {this.state.error?.message?.slice(0, 300)}
           </pre>
@@ -150,12 +151,12 @@ export default function HelpContent({
               <span className="text-primary font-bold">&ldquo;{searchQuery}&rdquo;</span>
             </p>
           </div>
-          <button type="button"
+          <Button type="button"
             onClick={onClearSearch}
             className="w-10 h-10 rounded-xl bg-secondary/50 border border-border/50 flex items-center justify-center hover:bg-destructive/10 hover:text-destructive hover:border-destructive/20 transition-all shrink-0"
           >
             <X className="w-4 h-4" />
-          </button>
+          </Button>
         </div>
 
         {searchResults.length === 0 ? (
@@ -172,7 +173,7 @@ export default function HelpContent({
           <div className="grid gap-3">
             {searchResults.map((result: any, idx) => {
               return (
-                <button type="button"
+                <Button type="button"
                   key={`${result.path}-${idx}`}
                   onClick={() => {
                     onSelectResult(result.path);
@@ -193,7 +194,7 @@ export default function HelpContent({
                   <p className="text-xs text-muted-foreground/70 line-clamp-2 leading-relaxed">
                     &ldquo;{result.excerpt}&rdquo;
                   </p>
-                </button>
+                </Button>
               );
             })}
           </div>
@@ -251,12 +252,12 @@ export default function HelpContent({
             <React.Fragment key={idx}>
               {idx > 0 && <ChevronRight className="w-3 h-3 text-muted-foreground/30 shrink-0" />}
               {crumb.path && idx < breadcrumbs.length - 1 ? (
-                <button type="button"
+                <Button type="button"
                   onClick={() => onNavigate(crumb.path!)}
                   className="hover:text-primary transition-colors truncate max-w-[160px]"
                 >
                   {crumb.label}
-                </button>
+                </Button>
               ) : (
                 <span className={cn(
                   idx === breadcrumbs.length - 1 ? 'text-foreground font-bold' : 'truncate max-w-[160px]'
@@ -306,7 +307,7 @@ export default function HelpContent({
 
           {/* Quick actions */}
           <div className="flex items-center gap-2 pt-2">
-            <button type="button"
+            <Button type="button"
               aria-label="Volver al inicio del documento"
               onClick={() => {
                 (window as any).__helpScrollToTop?.();
@@ -315,7 +316,7 @@ export default function HelpContent({
             >
               <ArrowUp className="w-3 h-3" />
               Inicio
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -324,7 +325,7 @@ export default function HelpContent({
       {(adjacentDocs.prev || adjacentDocs.next) && (
         <div className="flex items-center justify-between gap-4 pt-6 border-t border-border/20">
           {adjacentDocs.prev ? (
-            <button type="button"
+            <Button type="button"
               onClick={() => onNavigate(adjacentDocs.prev!.path)}
               className="group flex-1 text-left p-4 rounded-xl bg-muted/20 border border-border/30 hover:border-primary/25 hover:bg-primary/5 transition-all"
             >
@@ -333,10 +334,10 @@ export default function HelpContent({
                 <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/50">Anterior</span>
               </div>
               <span className="text-xs font-bold text-muted-foreground group-hover:text-foreground transition-colors truncate block">{adjacentDocs.prev.title}</span>
-            </button>
+            </Button>
           ) : <div />}
           {adjacentDocs.next ? (
-            <button type="button"
+            <Button type="button"
               onClick={() => onNavigate(adjacentDocs.next!.path)}
               className="group flex-1 text-right p-4 rounded-xl bg-muted/20 border border-border/30 hover:border-primary/25 hover:bg-primary/5 transition-all"
             >
@@ -345,7 +346,7 @@ export default function HelpContent({
                 <ArrowRight className="w-3.5 h-3.5 text-primary/60 group-hover:text-primary transition-colors" />
             </div>
               <span className="text-xs font-bold text-muted-foreground group-hover:text-foreground transition-colors truncate block">{adjacentDocs.next.title}</span>
-            </button>
+            </Button>
           ) : <div />}
         </div>
       )}
@@ -361,14 +362,14 @@ export default function HelpContent({
           <div className="w-1 h-1 rounded-full bg-muted-foreground/20" />
           CostPro · Documentation System · ISO/IEC 26514
         </div>
-        <button type="button"
+        <Button type="button"
           aria-label="Volver arriba del documento"
           onClick={() => { (window as any).__helpScrollToTop?.(); }}
           className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-primary/70 hover:text-primary transition-colors"
         >
           Volver arriba
           <ArrowUp className="w-3 h-3" />
-        </button>
+        </Button>
       </div>
     </div>
   );

@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { PrimaryButton } from "@/components/ui/atomic";
+import { Button } from "@/components/ui/button";
 import { SaleQRCode } from "./SaleQRCode";
 import type { LastSale, POSCartSuccessViewProps } from "./POSCart.types";
 
@@ -91,7 +92,7 @@ export const POSCartSuccessView = ({
     )}
 
     <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-4">
-      <button
+      <Button
         type="button"
         onClick={onGeneratePDF}
         className="flex items-center justify-between p-6 rounded-2xl bg-primary text-primary-foreground shadow-xl shadow-primary/20 hover:scale-[1.02] transition-transform group"
@@ -103,9 +104,9 @@ export const POSCartSuccessView = ({
           <div className="text-xl font-black">Recibo PDF</div>
         </div>
         <FileText className="w-8 h-8 group-hover:rotate-12 transition-transform" />
-      </button>
+      </Button>
 
-      <button
+      <Button
         type="button"
         onClick={onShareWhatsApp}
         className="flex items-center justify-between p-6 rounded-2xl bg-primary text-primary-foreground shadow-xl shadow-primary/20 hover:scale-[1.02] transition-transform group"
@@ -117,9 +118,9 @@ export const POSCartSuccessView = ({
           <div className="text-xl font-black">WhatsApp</div>
         </div>
         <Send className="w-8 h-8 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
-      </button>
+      </Button>
 
-      <button
+      <Button
         type="button"
         onClick={onExportAsImage}
         className="flex items-center justify-between p-6 rounded-2xl bg-card text-primary-foreground shadow-xl shadow-border/20 hover:scale-[1.02] transition-transform group sm:col-span-2"
@@ -136,7 +137,7 @@ export const POSCartSuccessView = ({
         <div className="px-3 py-1 bg-primary-foreground/10 rounded-full text-xs font-black uppercase">
           Alta Calidad
         </div>
-      </button>
+      </Button>
     </div>
 
     <PrimaryButton

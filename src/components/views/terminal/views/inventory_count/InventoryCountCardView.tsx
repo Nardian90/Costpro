@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { cn } from '@/lib/utils';
+import { Button } from "@/components/ui/button";
 import { Package, Minus, Plus, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { ExtendedProduct } from './useInventoryCount';
@@ -81,7 +82,7 @@ export default function InventoryCountCard({
                       {diff === 0 ? 'Sin cambios' : diff > 0 ? `+${diff}` : diff}
                     </span>
                     {showRemoveButton && onRemoveProduct && (
-                      <button
+                      <Button
                         type="button"
                         onClick={() => onRemoveProduct(product.id)}
                         className="p-1.5 hover:bg-destructive/10 text-destructive rounded-lg transition-colors"
@@ -89,7 +90,7 @@ export default function InventoryCountCard({
                         title="Quitar del conteo"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
-                      </button>
+                      </Button>
                     )}
                   </div>
                 </div>
@@ -119,13 +120,13 @@ export default function InventoryCountCard({
               </div>
 
               <div className="mt-6 flex items-center gap-2">
-                <button
+                <Button
                   type="button"
                   onClick={() => onQuantityChange(product.id, Math.max(0, counted - 1))}
                   className="neu-btn h-12 w-12 !p-3 hover:bg-danger/10 hover:text-danger group-active:scale-90 transition-all"
                 >
                   <Minus className="w-5 h-5" />
-                </button>
+                </Button>
 
                 <div className="flex-1 relative">
                   <input
@@ -137,13 +138,13 @@ export default function InventoryCountCard({
                   />
                 </div>
 
-                <button
+                <Button
                   type="button"
                   onClick={() => onQuantityChange(product.id, counted + 1)}
                   className="neu-btn h-12 w-12 !p-3 hover:bg-success/10 hover:text-success group-active:scale-90 transition-all"
                 >
                   <Plus className="w-5 h-5" />
-                </button>
+                </Button>
               </div>
             </motion.div>
           );

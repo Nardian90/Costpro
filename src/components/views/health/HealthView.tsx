@@ -4,6 +4,7 @@ import React from 'react';
 import { useHealthData, HealthData } from './hooks/useHealthData';
 import { HealthLayout } from './HealthLayout';
 import { ViewLoadingSplash } from '@/components/ui/ViewLoadingSplash';
+import { Button } from "@/components/ui/button";
 import { AlertCircle, RefreshCw, Wifi, WifiOff, Server, Clock, ChevronDown } from 'lucide-react';
 
 export default function HealthView() {
@@ -87,13 +88,13 @@ function ErrorScreen({ error, onRetry }: { error: string | null; onRetry: () => 
 
       {/* Action Buttons */}
       <div className="flex items-center gap-4 mb-8">
-        <button
+        <Button
           onClick={onRetry}
           className="px-8 py-3 bg-primary text-primary-foreground font-black text-[10px] sm:text-xs uppercase tracking-[0.2em] rounded-2xl shadow-lg hover:scale-105 active:scale-95 transition-all flex items-center gap-3"
         >
           <RefreshCw className="w-4 h-4" />
           Reintentar Conexión
-        </button>
+        </Button>
       </div>
 
       {/* Status Info Cards */}
@@ -122,13 +123,13 @@ function ErrorScreen({ error, onRetry }: { error: string | null; onRetry: () => 
       {/* Technical Details (expandable) */}
       {error && (
         <div className="w-full max-w-2xl">
-          <button
+          <Button
             onClick={() => setShowDetails(!showDetails)}
             className="flex items-center gap-2 mx-auto text-[9px] font-bold uppercase tracking-widest text-muted-foreground/50 hover:text-muted-foreground transition-colors"
           >
             Detalles Técnicos
             <ChevronDown className={`w-3 h-3 transition-transform ${showDetails ? 'rotate-180' : ''}`} />
-          </button>
+          </Button>
           {showDetails && (
             <div className="mt-4 p-5 rounded-2xl bg-destructive/5 border border-destructive/10 font-mono text-[10px] text-destructive/60 overflow-auto max-h-32">
               <div className="mb-2">Categoría: {errorCategory.toUpperCase()}</div>

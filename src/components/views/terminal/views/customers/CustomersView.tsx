@@ -5,6 +5,7 @@ import { Plus, Search, RotateCcw, Loader2, Users, X, Phone, Mail, MapPin } from 
 import { cn } from '@/lib/utils';
 import { apiFetch } from '@/lib/api-fetch';
 import { useAuthStore } from '@/store';
+import { Button } from "@/components/ui/button";
 import { toast } from 'sonner';
 
 const touch = 'min-h-[44px]';
@@ -36,9 +37,9 @@ export function CustomersView() {
           <h1 className="text-xl font-black uppercase tracking-tight">Clientes</h1>
           <p className="text-xs text-muted-foreground">Gestión de clientes CRM</p>
         </div>
-        <button onClick={() => setShowCreate(true)} className={cn('flex items-center gap-2 px-4 rounded-xl bg-primary text-primary-foreground text-xs font-black uppercase hover:opacity-90', touch)}>
+        <Button onClick={() => setShowCreate(true)} className={cn('flex items-center gap-2 px-4 rounded-xl bg-primary text-primary-foreground text-xs font-black uppercase hover:opacity-90', touch)}>
           <Plus className="w-4 h-4" /> Nuevo Cliente
-        </button>
+        </Button>
       </div>
 
       <div className="flex items-center gap-2">
@@ -47,9 +48,9 @@ export function CustomersView() {
           <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar por nombre, CI, teléfono..."
             className={cn('w-full pl-10 pr-4 rounded-xl border border-border bg-background text-sm', touch)} />
         </div>
-        <button onClick={load} className={cn('p-2 rounded-xl border border-border hover:bg-muted', touch)} aria-label="Recargar">
+        <Button onClick={load} className={cn('p-2 rounded-xl border border-border hover:bg-muted', touch)} aria-label="Recargar">
           {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RotateCcw className="w-4 h-4" />}
-        </button>
+        </Button>
       </div>
 
       {loading ? (
@@ -109,7 +110,7 @@ function CreateCustomerModal({ onClose, onCreated, storeId }: { onClose: () => v
       <div className="w-full max-w-md bg-card border border-border rounded-2xl shadow-2xl p-5 space-y-3" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-black uppercase">Nuevo Cliente</h2>
-          <button onClick={onClose} className="p-2 rounded-lg hover:bg-muted"><X className="w-4 h-4" /></button>
+          <Button onClick={onClose} className="p-2 rounded-lg hover:bg-muted"><X className="w-4 h-4" /></Button>
         </div>
         {[
           { key: 'name', label: 'Nombre *', type: 'text' },
@@ -124,10 +125,10 @@ function CreateCustomerModal({ onClose, onCreated, storeId }: { onClose: () => v
               className={cn('w-full mt-1 px-3 rounded-xl border border-border bg-background text-sm', touch)} />
           </div>
         ))}
-        <button onClick={handleSubmit} disabled={submitting || !form.name.trim()}
+        <Button onClick={handleSubmit} disabled={submitting || !form.name.trim()}
           className={cn('w-full rounded-xl bg-primary text-primary-foreground text-sm font-black uppercase hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2', touch)}>
           {submitting ? <><Loader2 className="w-4 h-4 animate-spin" /> Guardando...</> : <><Plus className="w-4 h-4" /> Guardar Cliente</>}
-        </button>
+        </Button>
       </div>
     </div>
   );

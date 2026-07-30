@@ -4,6 +4,7 @@ import { ArrowLeft, AlertCircle, ArrowRight, TrendingUp, DollarSign, BarChart3 }
 import { cn, formatAccounting } from '@/lib/utils';
 import type { ValidationError } from '@/lib/cost-engine/types';
 
+import { Button } from "@/components/ui/button";
 import { useTranslations } from 'next-intl';
 interface CostSheetProblemsPanelProps {
   problems: ValidationError[];
@@ -60,14 +61,14 @@ export const CostSheetProblemsPanel = ({
 
         {/* Back button — only visible in Audit view */}
         {isAuditView && onGoBack && (
-          <button type="button"
+          <Button type="button"
             onClick={onGoBack}
             className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-foreground/70 hover:text-primary hover:bg-primary/10 transition-colors shrink-0"
             aria-label="Volver a la vista anterior"
           >
             <ArrowLeft className="w-4 h-4" />
             <span className="text-xs font-bold uppercase tracking-widest hidden sm:inline">Volver</span>
-          </button>
+          </Button>
         )}
 
         {isAuditView && <div className="w-px h-5 bg-border/40 shrink-0" />}
@@ -131,7 +132,7 @@ export const CostSheetProblemsPanel = ({
 
         {/* Alert badge — navigates to audit */}
         {!isAuditView && actionableProblems.length > 0 && (
-          <button type="button"
+          <Button type="button"
             onClick={onGoToAudit}
             className={cn(
               "flex items-center gap-1.5 px-3 py-2 rounded-lg transition-colors shrink-0",
@@ -146,7 +147,7 @@ export const CostSheetProblemsPanel = ({
               {critical > 0 ? critical : warnings}
             </span>
             <ArrowRight className="w-3.5 h-3.5 opacity-50" />
-          </button>
+          </Button>
         )}
       </div>
     </div>

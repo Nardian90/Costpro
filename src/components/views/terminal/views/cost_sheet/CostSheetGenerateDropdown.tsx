@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { Button } from "@/components/ui/button";
 import { Zap, DatabaseZap, Sparkles, ChevronDown } from 'lucide-react';
 import {
   DropdownMenu,
@@ -23,7 +24,7 @@ export function CostSheetGenerateDropdown({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button type="button"
+        <Button type="button"
           className="group relative flex items-center gap-2 px-3 h-10 rounded-xl bg-primary/10 border border-primary/20 hover:bg-primary/20 transition-all outline-none shrink-0 whitespace-nowrap"
         >
           <Sparkles className="w-3.5 h-3.5 text-primary" />
@@ -31,7 +32,7 @@ export function CostSheetGenerateDropdown({
             Generar
           </span>
           <ChevronDown className="w-3 h-3 text-primary opacity-30 group-hover:opacity-100 transition-opacity" />
-        </button>
+        </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56 p-2 rounded-2xl bg-card border-border shadow-2xl">
         <div className="px-2 py-1.5 text-xs font-black uppercase tracking-widest text-muted-foreground mb-1 border-b border-border/50 pb-2">

@@ -6,6 +6,7 @@ import { formatCurrency } from '@/lib/utils';
 import { BaseModal } from '@/components/ui/BaseModal';
 import { Product, ProductVariant } from '@/types';
 
+import { Button } from "@/components/ui/button";
 interface PriceSelectorModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -36,7 +37,7 @@ export default function PriceSelectorModal({ isOpen, onClose, product, onSelect 
     >
       <div className="py-4 space-y-2">
         {/* Base Unit Option — always available */}
-        <button
+        <Button
           type="button"
           onClick={() => onSelect(null)}
           className="w-full flex items-center justify-between p-4 rounded-xl border-2 border-primary hover:border-primary hover:bg-primary/5 active:scale-[0.99] transition-all text-left"
@@ -57,11 +58,11 @@ export default function PriceSelectorModal({ isOpen, onClose, product, onSelect 
           <span className="font-black text-sm text-primary ml-4 whitespace-nowrap">
             {formatCurrency(product.price)}
           </span>
-        </button>
+        </Button>
 
         {/* Variant Options */}
         {variants.map((variant) => (
-          <button
+          <Button
             key={variant.id}
             type="button"
             onClick={() => onSelect(variant)}
@@ -85,18 +86,18 @@ export default function PriceSelectorModal({ isOpen, onClose, product, onSelect 
             <span className="font-black text-sm text-primary ml-4 whitespace-nowrap">
               {formatCurrency(variant.price)}
             </span>
-          </button>
+          </Button>
         ))}
       </div>
 
       <div className="mt-4">
-        <button
+        <Button
           type="button"
           onClick={onClose}
           className="w-full py-2.5 rounded-xl border border-border text-xs font-black uppercase tracking-widest hover:bg-muted transition-colors"
         >
           Cancelar
-        </button>
+        </Button>
       </div>
     </BaseModal>
   );

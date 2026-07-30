@@ -154,33 +154,33 @@ export function BulkStoreAssignModal({
             autoComplete="off"
           />
           {search && (
-            <button
+            <Button
               type="button"
               onClick={() => setSearch('')}
               className="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-muted rounded"
               aria-label="Limpiar búsqueda"
             >
               <X className="w-3.5 h-3.5 text-muted-foreground" />
-            </button>
+            </Button>
           )}
         </div>
 
         {/* Acciones bulk */}
         <div className="flex items-center gap-2 text-xs">
-          <button
+          <Button
             type="button"
             onClick={selectAll}
             className="px-3 py-1.5 rounded-lg bg-primary/10 text-primary font-bold uppercase tracking-widest hover:bg-primary/20 transition-colors"
           >
             Seleccionar todas
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
             onClick={selectNone}
             className="px-3 py-1.5 rounded-lg bg-muted text-muted-foreground font-bold uppercase tracking-widest hover:bg-muted/80 transition-colors"
           >
             Limpiar
-          </button>
+          </Button>
           <span className="ml-auto text-muted-foreground">
             {filteredStores.length} {filteredStores.length === 1 ? 'tienda' : 'tiendas'}
           </span>

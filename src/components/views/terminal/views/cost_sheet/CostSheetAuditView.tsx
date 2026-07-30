@@ -16,6 +16,7 @@ import { ValidationError, AuditEntry } from '@/lib/cost-engine/types';
 import { CostSheetRow, CostSheetData, CostSheetHeader, CostSheetSection, CalculatedRowValue } from '@/types/cost-sheet';
 import reinicioTemplate from '@/lib/data/costpro-reinicio';
 
+import { Button } from "@/components/ui/button";
 import { useTranslations } from 'next-intl';
 interface CostSheetAuditViewProps {
     data: CostSheetData;
@@ -333,7 +334,7 @@ export const CostSheetAuditView: React.FC<CostSheetAuditViewProps> = ({
             {/* ── Navigation breadcrumb: back to FlatTable row ── */}
             {sourceRowId && sourceRowGroup && (
                 <div className="flex items-center gap-2 px-1 animate-in fade-in slide-in-from-top-2 duration-300">
-                    <button
+                    <Button
                         type="button"
                         onClick={handleBackToSheet}
                         className="flex items-center gap-1.5 text-xs font-bold text-muted-foreground hover:text-foreground uppercase tracking-widest transition-colors"
@@ -341,9 +342,9 @@ export const CostSheetAuditView: React.FC<CostSheetAuditViewProps> = ({
                     >
                         <ArrowRight className="w-3 h-3 rotate-180" />
                         Volver a Ficha
-                    </button>
+                    </Button>
                     <span className="text-muted-foreground/70">|</span>
-                    <button
+                    <Button
                         type="button"
                         onClick={handleClearRowFilter}
                         className="flex items-center gap-1 text-xs font-bold text-primary/70 hover:text-primary uppercase tracking-widest transition-colors"
@@ -351,7 +352,7 @@ export const CostSheetAuditView: React.FC<CostSheetAuditViewProps> = ({
                     >
                         <Layers className="w-3 h-3" />
                         Ver todas las filas
-                    </button>
+                    </Button>
                     <span className="text-muted-foreground/70">|</span>
                     <Badge variant="outline" className="text-xs font-bold rounded-full border-primary/30 text-primary bg-primary/5 px-2.5 gap-1">
                         <Eye className="w-2.5 h-2.5" />
@@ -376,20 +377,20 @@ export const CostSheetAuditView: React.FC<CostSheetAuditViewProps> = ({
                         <Badge variant="outline" className="text-xs font-bold uppercase rounded-full border-primary/30 text-primary bg-primary/5 px-2.5">
                             {SEVERITY_CONFIG[activeFilter as keyof typeof SEVERITY_CONFIG]?.label || activeFilter}
                         </Badge>
-                        <button type="button"
+                        <Button type="button"
                             onClick={() => { setActiveFilter('all'); if (sourceRowId) handleClearRowFilter(); }}
                             className="ml-auto flex items-center gap-1 text-xs font-bold text-muted-foreground hover:text-destructive uppercase tracking-widest transition-colors"
                             aria-label="Quitar filtro"
                         >
                             <FilterX className="w-3 h-3" />
                             Quitar filtro
-                        </button>
+                        </Button>
                     </div>
                 )}
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     {/* Critical Card */}
-                    <button
+                    <Button
                         type="button"
                         onClick={() => setActiveFilter(prev => prev === 'CRITICAL' ? 'all' : 'CRITICAL')}
                         className={cn(
@@ -419,10 +420,10 @@ export const CostSheetAuditView: React.FC<CostSheetAuditViewProps> = ({
                                 {totalCriticals === 0 && 'Sin errores'}
                             </p>
                         </CardContent>
-                    </button>
+                    </Button>
 
                     {/* Warnings Card */}
-                    <button
+                    <Button
                         type="button"
                         onClick={() => setActiveFilter(prev => prev === 'WARNING' ? 'all' : 'WARNING')}
                         className={cn(
@@ -447,10 +448,10 @@ export const CostSheetAuditView: React.FC<CostSheetAuditViewProps> = ({
                             <div className="text-4xl font-black text-warning">{totalWarnings}</div>
                             <p className="text-xs text-warning/70 font-bold uppercase mt-1">Revisión de Parámetros Sugerida</p>
                         </CardContent>
-                    </button>
+                    </Button>
 
                     {/* OK Card */}
-                    <button
+                    <Button
                         type="button"
                         onClick={() => setActiveFilter(prev => prev === 'INFO_SUCCESS' ? 'all' : 'INFO_SUCCESS')}
                         className={cn(
@@ -475,7 +476,7 @@ export const CostSheetAuditView: React.FC<CostSheetAuditViewProps> = ({
                             <div className="text-4xl font-black text-primary">{totalOk}</div>
                             <p className="text-xs text-primary/70 font-bold uppercase mt-1">Integridad de Datos Confirmada</p>
                         </CardContent>
-                    </button>
+                    </Button>
                 </div>
             </div>
 
@@ -525,14 +526,14 @@ export const CostSheetAuditView: React.FC<CostSheetAuditViewProps> = ({
                                         </Badge>
                                     )}
                                     {isFilterActive && (
-                                        <button type="button"
+                                        <Button type="button"
                                             onClick={() => { setActiveFilter('all'); if (sourceRowId) handleClearRowFilter(); }}
                                             className="flex items-center gap-1 text-xs font-bold text-muted-foreground hover:text-destructive uppercase tracking-widest transition-colors"
                                             aria-label="Quitar filtro"
                                         >
                                             <FilterX className="w-3.5 h-3.5" />
                                             Mostrar todos
-                                        </button>
+                                        </Button>
                                     )}
                                 </div>
                             </div>
@@ -556,7 +557,7 @@ export const CostSheetAuditView: React.FC<CostSheetAuditViewProps> = ({
                                         sourceRowId === group.rowId && "bg-primary/[0.06] ring-1 ring-inset ring-primary/20"
                                     )}>
                                         {/* ── Row Group Header (ISA 540: drill-down) ── */}
-                                        <button
+                                        <Button
                                             type="button"
                                             onClick={() => toggleRowExpand(group.rowId)}
                                             className={cn(
@@ -615,7 +616,7 @@ export const CostSheetAuditView: React.FC<CostSheetAuditViewProps> = ({
 
                                                 {/* Quick action: open first critical */}
                                                 {group.criticals > 0 && (
-                                                    <button
+                                                    <Button
                                                         type="button"
                                                         onClick={(e) => {
                                                             e.stopPropagation();
@@ -630,10 +631,10 @@ export const CostSheetAuditView: React.FC<CostSheetAuditViewProps> = ({
                                                         aria-label={`Ver detalle del error crítico en fila ${group.rowId}`}
                                                     >
                                                         <ShieldAlert className="w-4 h-4" />
-                                                    </button>
+                                                    </Button>
                                                 )}
                                             </div>
-                                        </button>
+                                        </Button>
 
                                         {/* ── Expanded: Individual errors for this row ── */}
                                         {isExpanded && (
@@ -646,7 +647,7 @@ export const CostSheetAuditView: React.FC<CostSheetAuditViewProps> = ({
                                                     const isSelected = selectedError?.rowId === err.rowId && selectedError?.code === err.code;
 
                                                     return (
-                                                        <button
+                                                        <Button
                                                             key={`${err.rowId}-${err.code}-${i}`}
                                                             type="button"
                                                             onClick={() => setSelectedError(err)}
@@ -692,7 +693,7 @@ export const CostSheetAuditView: React.FC<CostSheetAuditViewProps> = ({
                                                                 </div>
                                                                 <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/70 group-hover/err:text-muted-foreground shrink-0 mt-0.5 group-hover/err:translate-x-0.5 transition-transform" />
                                                             </div>
-                                                        </button>
+                                                        </Button>
                                                     );
                                                 })}
                                             </div>
@@ -717,13 +718,13 @@ export const CostSheetAuditView: React.FC<CostSheetAuditViewProps> = ({
                         <p className="text-xs text-muted-foreground mt-1">
                             No se encontraron hallazgos del tipo seleccionado.
                         </p>
-                        <button type="button"
+                        <Button type="button"
                             onClick={() => setActiveFilter('all')}
                             className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-primary bg-primary/10 hover:bg-primary/20 transition-colors"
                         >
                             <FilterX className="w-3.5 h-3.5" />
                             Mostrar todos
-                        </button>
+                        </Button>
                     </CardContent>
                 </Card>
             )}

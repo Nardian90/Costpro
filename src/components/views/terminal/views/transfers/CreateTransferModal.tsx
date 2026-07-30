@@ -23,6 +23,7 @@ import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import type { Product, Store } from '@/types';
 
+import { Button } from "@/components/ui/button";
 interface SelectedItem {
   product: Product;
   quantity: number;
@@ -297,15 +298,15 @@ export default function CreateTransferModal({ isOpen, onClose }: CreateTransferM
         maxWidth="sm:max-w-4xl"
         footer={
           <div className="flex flex-col sm:flex-row justify-end gap-3 w-full">
-            <button
+            <Button
               type="button"
               onClick={onClose}
               className="neu-btn px-6 py-2.5 text-xs font-black uppercase tracking-widest w-full sm:w-auto"
               aria-label="Cancelar y cerrar formulario de transferencia"
             >
               Cancelar
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
               onClick={handleCreate}
               disabled={hasStockErrors || createTransferMutation.isPending || !dateValidation.valid}
@@ -314,7 +315,7 @@ export default function CreateTransferModal({ isOpen, onClose }: CreateTransferM
             >
               <Save className="w-4 h-4" aria-hidden="true" />
               {createTransferMutation.isPending ? 'Guardando...' : 'Enviar Solicitud'}
-            </button>
+            </Button>
           </div>
         }
       >
@@ -403,7 +404,7 @@ export default function CreateTransferModal({ isOpen, onClose }: CreateTransferM
                 ref={fileInputRef}
                 aria-label="Importar productos desde Excel"
               />
-              <button
+              <Button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-dashed border-primary/40 bg-primary/5 hover:bg-primary/10 text-primary font-black text-xs uppercase tracking-widest transition-all active:scale-95"
@@ -411,8 +412,8 @@ export default function CreateTransferModal({ isOpen, onClose }: CreateTransferM
               >
                 <Upload className="w-3.5 h-3.5" />
                 Importar Excel
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
                 onClick={handleExportTemplate}
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-border hover:bg-muted text-muted-foreground hover:text-foreground font-black text-xs uppercase tracking-widest transition-all active:scale-95"
@@ -420,7 +421,7 @@ export default function CreateTransferModal({ isOpen, onClose }: CreateTransferM
               >
                 <Download className="w-3.5 h-3.5" />
                 Plantilla Excel
-              </button>
+              </Button>
             </div>
 
             {debouncedSearchTerm && (
@@ -513,14 +514,14 @@ export default function CreateTransferModal({ isOpen, onClose }: CreateTransferM
                           </span>
                         </div>
                       </div>
-                      <button
+                      <Button
                         type="button"
                         onClick={() => setItemToDelete(product.id)}
                         aria-label={`Quitar ${product.name} de la transferencia`}
                         className="min-w-[44px] min-h-[44px] p-2 hover:bg-destructive/10 text-destructive rounded-xl transition-colors mt-4"
                       >
                         <Trash2 className="w-4 h-4" aria-hidden="true" />
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 );

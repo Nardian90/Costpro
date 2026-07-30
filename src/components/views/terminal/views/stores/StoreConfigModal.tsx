@@ -317,14 +317,14 @@ export function StoreConfigModal({ isOpen, onClose, store }: StoreConfigModalPro
               <AlertCircle className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0 mt-0.5" />
               <p className="text-sm text-muted-foreground">
                 Pendiente: {completion.pending.map(p => (
-                  <button
+                  <Button
                     key={p}
                     type="button"
                     onClick={() => setActiveSection(p === 'Ficha de Costo' ? 'fc' : p === 'Tienda Pública' ? 'publica' : (p.toLowerCase() as Section))}
                     className="font-bold text-primary underline ml-1 hover:text-primary/80"
                   >
                     {p}
-                  </button>
+                  </Button>
                 ))}
               </p>
             </div>
@@ -345,7 +345,7 @@ export function StoreConfigModal({ isOpen, onClose, store }: StoreConfigModalPro
               return false;
             })();
             return (
-              <button
+              <Button
                 key={section.id}
                 type="button"
                 onClick={() => setActiveSection(section.id)}
@@ -364,7 +364,7 @@ export function StoreConfigModal({ isOpen, onClose, store }: StoreConfigModalPro
                 ) : (
                   <Circle className="w-2.5 h-2.5 shrink-0 opacity-50" />
                 )}
-              </button>
+              </Button>
             );
           })}
         </div>
@@ -410,7 +410,7 @@ export function StoreConfigModal({ isOpen, onClose, store }: StoreConfigModalPro
                       </span>
                     </label>
                     {form.logo_url && (
-                      <button
+                      <Button
                         type="button"
                         onClick={() => clearImage('logo_url')}
                         className="p-2.5 min-h-[44px] min-w-[44px] rounded-lg bg-destructive/10 text-destructive hover:bg-destructive hover:text-foreground transition-all"
@@ -418,7 +418,7 @@ export function StoreConfigModal({ isOpen, onClose, store }: StoreConfigModalPro
                         title={t('removeLogo')}
                       >
                         <X className="w-3.5 h-3.5" />
-                      </button>
+                      </Button>
                     )}
                   </div>
                 </div>
@@ -516,14 +516,14 @@ export function StoreConfigModal({ isOpen, onClose, store }: StoreConfigModalPro
                         </span>
                       </label>
                       {form.signature_url && (
-                        <button
+                        <Button
                           type="button"
                           onClick={() => clearImage('signature_url')}
                           className="p-1.5 rounded-lg bg-destructive/10 text-destructive hover:bg-destructive hover:text-foreground transition-all"
                           aria-label={t('removeSignature')}
                         >
                           <X className="w-3 h-3" />
-                        </button>
+                        </Button>
                       )}
                     </div>
                   </div>
@@ -561,14 +561,14 @@ export function StoreConfigModal({ isOpen, onClose, store }: StoreConfigModalPro
                         </span>
                       </label>
                       {form.stamp_url && (
-                        <button
+                        <Button
                           type="button"
                           onClick={() => clearImage('stamp_url')}
                           className="p-1.5 rounded-lg bg-destructive/10 text-destructive hover:bg-destructive hover:text-foreground transition-all"
                           aria-label={t('removeStamp')}
                         >
                           <X className="w-3 h-3" />
-                        </button>
+                        </Button>
                       )}
                     </div>
                   </div>

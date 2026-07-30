@@ -10,6 +10,7 @@ import ProductImage from '@/components/ui/ProductImage';
 import { FCStatusBadge } from '@/components/ui/FCStatusBadge';
 import { FCQuickIcon } from '@/components/ui/FCQuickIcon';
 
+import { Button } from "@/components/ui/button";
 type SortKey = 'name' | 'stock' | 'price' | 'cost';
 type SortDir = 'asc' | 'desc';
 
@@ -111,25 +112,25 @@ const ProductRow = React.forwardRef<HTMLTableRowElement, { product: Product; onA
                     </span>
                     <span className="w-px h-4 bg-border mx-0.5" />
                     {/* Kardex */}
-                    <button
+                    <Button
                         type="button"
                         onClick={() => onViewKardex?.(product)}
                         title="Kardex"
                         className="inline-flex items-center justify-center w-10 h-10 min-h-[40px] rounded-lg border bg-info/8 border-info/15 text-info hover:bg-info/15 transition-all active:scale-90"
                     >
                         <BookOpen className="w-4 h-4" />
-                    </button>
+                    </Button>
                     {/* Ajustar Stock */}
-                    <button
+                    <Button
                         type="button"
                         onClick={() => onAdjust?.(product)}
                         title="Ajustar stock"
                         className="inline-flex items-center justify-center w-10 h-10 min-h-[40px] rounded-lg border bg-warning/8 border-warning/15 text-warning hover:bg-warning/15 transition-all active:scale-90"
                     >
                         <Edit className="w-4 h-4" />
-                    </button>
+                    </Button>
                     {/* Visible en tienda */}
-                    <button
+                    <Button
                         type="button"
                         onClick={() => onToggleVisible?.(product, !product.visible_en_tienda)}
                         disabled={isTogglingVisible === product.id}
@@ -150,9 +151,9 @@ const ProductRow = React.forwardRef<HTMLTableRowElement, { product: Product; onA
                         ) : (
                             <EyeOff className="w-4 h-4" />
                         )}
-                    </button>
+                    </Button>
                     {/* Cambio 2: Precio visible en tienda (DollarSign) — verde si visible, tachado si no */}
-                    <button
+                    <Button
                         type="button"
                         onClick={() => onTogglePriceVisible?.(product)}
                         disabled={isTogglingPriceVisible === product.id}
@@ -171,9 +172,9 @@ const ProductRow = React.forwardRef<HTMLTableRowElement, { product: Product; onA
                         ) : (
                             <DollarSign className={cn('w-4 h-4', !product.price_visible && 'line-through opacity-60')} />
                         )}
-                    </button>
+                    </Button>
                     {/* Cambio 2: Stock visible en tienda (Package) — verde si visible, tachado si no */}
-                    <button
+                    <Button
                         type="button"
                         onClick={() => onToggleStockVisible?.(product)}
                         disabled={isTogglingStockVisible === product.id}
@@ -192,9 +193,9 @@ const ProductRow = React.forwardRef<HTMLTableRowElement, { product: Product; onA
                         ) : (
                             <Package className={cn('w-4 h-4', !product.stock_visible && 'line-through opacity-60')} />
                         )}
-                    </button>
+                    </Button>
                     {/* Cambio 2: En promoción (Tag) — amarillo si activa, gris si no */}
-                    <button
+                    <Button
                         type="button"
                         onClick={() => onTogglePromotion?.(product)}
                         disabled={isTogglingPromotion === product.id}
@@ -213,7 +214,7 @@ const ProductRow = React.forwardRef<HTMLTableRowElement, { product: Product; onA
                         ) : (
                             <Tag className="w-4 h-4" />
                         )}
-                    </button>
+                    </Button>
                 </div>
             </td>
         </tr>
@@ -278,12 +279,12 @@ export default function InventoryTableView({ products, loadMore, hasMore, isLoad
             <table className="w-full min-w-[860px] grid-table-inventory" aria-label="Tabla de productos del inventario">
                 <thead className="bg-muted/30 border-b sticky-header">
                     <tr className="text-left text-muted-foreground uppercase text-[10px] font-bold tracking-wider">
-                        <th className="p-3 pl-[60px]"><button type="button" onClick={() => handleSort('name')} className="inline-flex items-center gap-1 hover:text-foreground transition-colors">Producto <SortIcon col="name" sortKey={sortKey} sortDir={sortDir} /></button></th>
+                        <th className="p-3 pl-[60px]"><Button type="button" onClick={() => handleSort('name')} className="inline-flex items-center gap-1 hover:text-foreground transition-colors">Producto <SortIcon col="name" sortKey={sortKey} sortDir={sortDir} /></Button></th>
                         <th className="p-3">SKU</th>
-                        <th className="p-3 text-right"><button type="button" onClick={() => handleSort('stock')} className="inline-flex items-center gap-1 hover:text-foreground transition-colors">Stock <SortIcon col="stock" sortKey={sortKey} sortDir={sortDir} /></button></th>
-                        <th className="p-3 text-right"><button type="button" onClick={() => handleSort('price')} className="inline-flex items-center gap-1 hover:text-foreground transition-colors">Precio <SortIcon col="price" sortKey={sortKey} sortDir={sortDir} /></button></th>
+                        <th className="p-3 text-right"><Button type="button" onClick={() => handleSort('stock')} className="inline-flex items-center gap-1 hover:text-foreground transition-colors">Stock <SortIcon col="stock" sortKey={sortKey} sortDir={sortDir} /></Button></th>
+                        <th className="p-3 text-right"><Button type="button" onClick={() => handleSort('price')} className="inline-flex items-center gap-1 hover:text-foreground transition-colors">Precio <SortIcon col="price" sortKey={sortKey} sortDir={sortDir} /></Button></th>
                         <th className="p-3 text-right">Empresa</th>
-                        <th className="p-3 text-right"><button type="button" onClick={() => handleSort('cost')} className="inline-flex items-center gap-1 hover:text-foreground transition-colors">Costo <SortIcon col="cost" sortKey={sortKey} sortDir={sortDir} /></button></th>
+                        <th className="p-3 text-right"><Button type="button" onClick={() => handleSort('cost')} className="inline-flex items-center gap-1 hover:text-foreground transition-colors">Costo <SortIcon col="cost" sortKey={sortKey} sortDir={sortDir} /></Button></th>
                         <th className="p-3 text-center">FC</th>
                         <th className="p-3 text-center">Acciones</th>
                     </tr>

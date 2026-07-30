@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from 'framer-motion';
 import { Check, Share2, Link, MessageCircle } from 'lucide-react';
 import { toast } from 'sonner';
@@ -149,7 +150,7 @@ export default function TestimonialsSection({
         {/* Enhanced Pagination Dots */}
         <div className="flex items-center justify-center gap-3 mt-4">
           {testimonials.map((_, i) => (
-            <button
+            <Button
               key={i}
               onClick={() => { setCurrentTestimonial(i); setTestimonialProgress(0); }}
               className={`relative h-2 rounded-full transition-all duration-500 min-h-[44px] min-w-[44px] flex items-center justify-center`}
@@ -167,7 +168,7 @@ export default function TestimonialsSection({
                   transition={{ type: 'spring', stiffness: 300, damping: 30 }}
                 />
               )}
-            </button>
+            </Button>
           ))}
         </div>
         {/* Swipe indicator - visible on mobile only */}
