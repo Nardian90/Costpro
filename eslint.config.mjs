@@ -61,6 +61,18 @@ const eslintConfig = [
       "@typescript-eslint/no-unused-vars": "off",
       "@typescript-eslint/no-require-imports": "off",
       "prefer-const": "off",
+
+      // V2.12.25: Anti-fragmentación Design System
+      // Advierte (no bloquea) cuando se usa <button> crudo fuera de components/ui
+      // Esto guía el refactor incremental sin romper el build existente
+      "no-restricted-syntax": [
+        "warn",
+        {
+          // Detectar <button crudo (no importado de ui/button) en views/
+          selector: "JSXElement[openingElement.name.name='button']",
+          message: "V2.12.25: Considera usar <Button> de @/components/ui/button en vez de <button> crudo. Refactor incremental recomendado.",
+        },
+      ],
     },
   },
   {

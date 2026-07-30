@@ -26,6 +26,7 @@ import { useUIStore } from "@/store";
 import { usePOSCheckout } from "./usePOSCheckout";
 import { POSPortalModal } from "./POSPortalModal";
 import ProductImage from "@/components/ui/ProductImage";
+import { PaymentMethodSelector } from "./PaymentMethodSelector";
 
 interface POSExpressModeProps {
   products: Product[];
@@ -216,17 +217,11 @@ export function POSExpressMode({ products, onExit }: POSExpressModeProps) {
           <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground hidden sm:inline">
             Método
           </span>
-          <select
+          <PaymentMethodSelector
             value={selectedPayment}
-            onChange={(e) => setSelectedPayment(e.target.value as any)}
-            className="bg-background border border-border rounded-lg px-2 py-1.5 text-xs font-black uppercase tracking-widest focus:ring-1 focus:ring-primary outline-none"
-            aria-label="Seleccionar método de pago"
-          >
-            <option value="cash">Efectivo</option>
-            <option value="transfer">Transfer.</option>
-            <option value="zelle">Zelle</option>
-            <option value="mixed">Mixto</option>
-          </select>
+            onChange={setSelectedPayment}
+            variant="compact"
+          />
         </div>
       </header>
 
