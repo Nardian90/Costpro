@@ -223,9 +223,9 @@ export function POSExpressMode({ products, onExit }: POSExpressModeProps) {
             aria-label="Seleccionar método de pago"
           >
             <option value="cash">Efectivo</option>
-            <option value="card">Tarjeta</option>
             <option value="transfer">Transfer.</option>
-            <option value="wallet">Billetera</option>
+            <option value="zelle">Zelle</option>
+            <option value="mixed">Mixto</option>
           </select>
         </div>
       </header>
