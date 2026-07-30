@@ -79,18 +79,19 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
         // USD: usar zelle_amount si existe, sino total_amount
         day.usd += Number(tx.zelle_amount || tx.total_amount || 0);
       } else {
-        // CUP: si cash_amount o transfer_amount son 0 pero total_amount > 0,
-        // usar payment_method para decidir dónde poner el monto
+        // CUP: sumar efectivo y transferencia independientemente
+        // V2.12.27 fix: antes usaba if/else if, lo que hacia que
+        // en ventas mixtas (cash>0 AND transf>0) solo sumara el efectivo
+        // y ignorara la transferencia. Ahora sumamos ambos por separado.
         const cashAmt = Number(tx.cash_amount || 0);
         const transfAmt = Number(tx.transfer_amount || 0);
         const totalAmt = Number(tx.total_amount || 0);
 
-        if (cashAmt > 0) {
-          day.efectivo_cup += cashAmt;
-        } else if (transfAmt > 0) {
-          day.transf_cup += transfAmt;
-        } else if (totalAmt > 0) {
-          // Fallback: si no hay desglose, usar payment_method para clasificar
+        day.efectivo_cup += cashAmt;
+        day.transf_cup += transfAmt;
+
+        // Fallback: si ambos son 0 pero total > 0, clasificar por payment_method
+        if (cashAmt === 0 && transfAmt === 0 && totalAmt > 0) {
           const method = (tx as any).payment_method || 'cash';
           if (method === 'transfer') {
             day.transf_cup += totalAmt;
