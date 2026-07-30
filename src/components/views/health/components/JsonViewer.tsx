@@ -1,7 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 
-import { Button } from "@/components/ui/button";
 interface JsonViewerProps {
   data: any;
   title?: string;
@@ -40,12 +39,12 @@ export const JsonViewer: React.FC<JsonViewerProps> = ({ data, title }) => {
         </pre>
       </div>
       {isLarge && (
-        <Button
+        <button
           onClick={() => setExpanded(!expanded)}
           className="w-full px-6 py-3 border-t border-border/50 bg-muted/20 text-[9px] font-black uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors flex items-center justify-center gap-2"
         >
           {expanded ? 'Colapsar' : `Mostrar todo (${lineCount} líneas)`}
-        </Button>
+        </button>
       )}
     </div>
   );

@@ -15,7 +15,6 @@ import { motion, useReducedMotion } from 'framer-motion';
 import { generateLegalPdf } from './LegalPdfExporter';
 import { numeroALetras } from '@/lib/utils/number-to-words-es';
 
-import { Button } from "@/components/ui/button";
 interface LegalModelFormProps {
   model: any;
   onCancel: () => void;
@@ -157,26 +156,26 @@ export default function LegalModelForm({ model, onCancel }: LegalModelFormProps)
                       />
                     </div>
                     <div className="col-span-1 flex items-center justify-center">
-                      <Button
+                      <button
                         type="button"
                         onClick={() => remove(index)}
                         className="w-11 h-11 flex items-center justify-center text-danger hover:bg-danger/10 rounded-lg transition-colors"
                       >
                         <Trash2 className="w-4 h-4" />
-                      </Button>
+                      </button>
                     </div>
                   </div>
                 ))}
               </div>
             </div>
-            <Button
+            <button
               type="button"
               onClick={() => append({ concepto: '', importe: 0 })}
               className="flex items-center gap-2 px-4 h-11 text-xs font-black text-primary hover:bg-primary/5 rounded-xl transition-all uppercase tracking-widest border-2 border-dashed border-primary/20 hover:border-primary/40"
             >
               <Plus className="w-4 h-4" />
               Añadir Línea de Concepto
-            </Button>
+            </button>
           </div>
         );
       case 'textarea':
@@ -240,12 +239,12 @@ export default function LegalModelForm({ model, onCancel }: LegalModelFormProps)
             <h2 className="text-xl font-black uppercase tracking-tight">{model.name}</h2>
           </div>
         </div>
-        <Button type="button"
+        <button type="button"
           onClick={onCancel}
           className="w-10 h-10 rounded-full hover:bg-primary/10 flex items-center justify-center transition-colors"
         >
           <X className="w-5 h-5" />
-        </Button>
+        </button>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="p-6 md:p-8">
@@ -268,14 +267,14 @@ export default function LegalModelForm({ model, onCancel }: LegalModelFormProps)
         </div>
 
         <div className="mt-12 flex flex-col sm:flex-row items-center justify-end gap-4 border-t border-primary/5 pt-8">
-          <Button
+          <button
             type="button"
             onClick={onCancel}
             className="px-8 h-14 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-primary/5 transition-colors"
           >
             Cancelar
-          </Button>
-          <Button
+          </button>
+          <button
             type="submit"
             disabled={loading}
             className="w-full sm:w-auto px-8 h-14 bg-primary text-foreground rounded-xl text-xs font-black uppercase tracking-widest shadow-lg shadow-primary/20 hover:opacity-90 active:scale-95 transition-all flex items-center justify-center gap-3"
@@ -286,7 +285,7 @@ export default function LegalModelForm({ model, onCancel }: LegalModelFormProps)
               <Download className="w-4 h-4" />
             )}
             GENERAR Y EXPORTAR PDF
-          </Button>
+          </button>
         </div>
       </form>
     </motion.div>

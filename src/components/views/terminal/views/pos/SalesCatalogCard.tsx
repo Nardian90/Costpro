@@ -4,7 +4,6 @@ import React from 'react';
 import { Package, AlertTriangle, Percent, DollarSign } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
 import { Product, ProductVariant, PaymentMethod } from '@/types';
-import { Button } from "@/components/ui/button";
 import type { SalesCatalogRow } from './useSalesCatalog';
 import { PAYMENT_METHODS } from './useSalesCatalog';
 
@@ -178,7 +177,7 @@ export default function SalesCatalogCard({
       <div>
         <label className="text-xs font-black uppercase text-muted-foreground tracking-widest block mb-1">Cantidad</label>
         <div className="flex items-center gap-2">
-          <Button
+          <button
             type="button"
             onClick={() => handleSetQuantity(product, row.quantity - 1)}
             className="w-11 h-11 rounded-xl bg-muted/50 hover:bg-primary/10 flex items-center justify-center text-lg font-bold transition-all active:scale-90 border border-border/50 disabled:opacity-30 shrink-0"
@@ -186,7 +185,7 @@ export default function SalesCatalogCard({
             aria-label={`Reducir cantidad de ${product.name}`}
           >
             -
-          </Button>
+          </button>
           <input
             type="number"
             min="0"
@@ -197,7 +196,7 @@ export default function SalesCatalogCard({
             disabled={ro}
             aria-label={`Cantidad de ${product.name}`}
           />
-          <Button
+          <button
             type="button"
             onClick={() => handleSetQuantity(product, row.quantity + 1)}
             className="w-11 h-11 rounded-xl bg-primary/10 hover:bg-primary/20 flex items-center justify-center text-lg font-bold text-primary transition-all active:scale-90 border border-primary/20 shrink-0 disabled:opacity-30"
@@ -205,7 +204,7 @@ export default function SalesCatalogCard({
             aria-label={`Aumentar cantidad de ${product.name}`}
           >
             +
-          </Button>
+          </button>
         </div>
       </div>
 
@@ -213,7 +212,7 @@ export default function SalesCatalogCard({
       <div>
         <label className="text-xs font-black uppercase text-muted-foreground tracking-widest block mb-1">Descuento</label>
         <div className="flex items-center gap-2">
-          <Button
+          <button
             type="button"
             onClick={() => handleSetDiscountType(product)}
             className={cn(
@@ -231,7 +230,7 @@ export default function SalesCatalogCard({
             ) : (
               <DollarSign className="w-4 h-4" />
             )}
-          </Button>
+          </button>
           <input
             type="number"
             min="0"

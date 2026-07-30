@@ -4,7 +4,6 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { X, Camera, CameraOff, AlertTriangle, CheckCircle2, Loader2, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-import { Button } from "@/components/ui/button";
 /**
  * CameraBarcodeScanner — Escáner de códigos de barras con cámara.
  *
@@ -354,7 +353,7 @@ export default function CameraBarcodeScanner({ isOpen, onScan, onClose }: Camera
 
             {/* Botones según plataforma */}
             {status === 'denied' && platform === 'apk-twa' && (
-              <Button
+              <button
                 onClick={() => {
                   // Intentar abrir ajustes de la app en Android.
                   // Puede no funcionar en todos los dispositivos — el mensaje de texto
@@ -368,16 +367,16 @@ export default function CameraBarcodeScanner({ isOpen, onScan, onClose }: Camera
                 className="px-6 py-3 rounded-xl bg-green-500 text-white font-black text-xs uppercase tracking-widest hover:bg-green-600 transition-colors"
               >
                 Abrir ajustes de la app
-              </Button>
+              </button>
             )}
 
             {/* Reintentar — útil si el usuario ya activó el permiso manualmente */}
-            <Button
+            <button
               onClick={startCamera}
               className="px-6 py-3 rounded-xl bg-white/10 text-white font-black text-xs uppercase tracking-widest hover:bg-white/20 transition-colors"
             >
               Reintentar
-            </Button>
+            </button>
           </div>
         )}
 
@@ -389,18 +388,18 @@ export default function CameraBarcodeScanner({ isOpen, onScan, onClose }: Camera
               Escáner {method && <span className="text-green-400 text-xs">· {method}</span>}
             </span>
           </div>
-          <Button
+          <button
             onClick={onClose}
             className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center hover:bg-white/20 transition-colors"
             aria-label="Cerrar escáner"
           >
             <X className="w-5 h-5 text-white" />
-          </Button>
+          </button>
         </div>
 
         {/* Torch button */}
         {status === 'scanning' && torchSupported && (
-          <Button
+          <button
             onClick={toggleTorch}
             className={cn(
               "absolute top-20 right-4 w-12 h-12 rounded-full backdrop-blur-md flex items-center justify-center transition-colors",
@@ -409,7 +408,7 @@ export default function CameraBarcodeScanner({ isOpen, onScan, onClose }: Camera
             aria-label={torchOn ? 'Apagar linterna' : 'Encender linterna'}
           >
             <Zap className="w-5 h-5" />
-          </Button>
+          </button>
         )}
 
         {/* Scan counter */}
@@ -441,12 +440,12 @@ export default function CameraBarcodeScanner({ isOpen, onScan, onClose }: Camera
               : 'Esperando permiso de cámara'}
           </p>
         </div>
-        <Button
+        <button
           onClick={onClose}
           className="px-6 py-3 rounded-xl bg-white/10 text-white font-black text-xs uppercase tracking-widest hover:bg-white/20 transition-colors min-h-[44px]"
         >
           Cerrar
-        </Button>
+        </button>
       </div>
 
       {/* Animation styles */}

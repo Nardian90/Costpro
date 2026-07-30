@@ -4,7 +4,6 @@ import React, { useState } from 'react';
 import { Brain, Search, FileDown, ChevronRight, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-import { Button } from "@/components/ui/button";
 interface IntelligenceMapProps {
   components: any[];
 }
@@ -48,16 +47,16 @@ export const IntelligenceMap: React.FC<IntelligenceMapProps> = ({ components }) 
               className="pl-10 pr-4 py-2 rounded-xl bg-background/50 border border-border/50 text-xs font-bold focus:outline-none focus:border-primary/50 w-64"
             />
           </div>
-          <Button disabled title="Próximamente" aria-label="Exportar a Excel" className="flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500 text-white text-[10px] font-black uppercase opacity-50 cursor-not-allowed">
+          <button disabled title="Próximamente" aria-label="Exportar a Excel" className="flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500 text-white text-[10px] font-black uppercase opacity-50 cursor-not-allowed">
             <FileDown className="w-4 h-4" />
             EXCEL
-          </Button>
+          </button>
         </div>
       </div>
 
       <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
         {['ALL', 'COMPONENT', 'VIEW', 'HOOK', 'SERVICE'].map(f => (
-          <Button
+          <button
             key={f}
             onClick={() => setFilter(f)}
             className={cn(
@@ -66,7 +65,7 @@ export const IntelligenceMap: React.FC<IntelligenceMapProps> = ({ components }) 
             )}
           >
             {f}
-          </Button>
+          </button>
         ))}
       </div>
 

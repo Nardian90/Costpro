@@ -4,7 +4,6 @@ import { Plus, Search, RotateCcw, Loader2, Package, AlertTriangle, X } from 'luc
 import { cn } from '@/lib/utils';
 import { apiFetch } from '@/lib/api-fetch';
 import { useAuthStore } from '@/store';
-import { Button } from "@/components/ui/button";
 import { toast } from 'sonner';
 const touch = 'min-h-[44px]';
 
@@ -34,9 +33,9 @@ export function LotsView() {
           <h1 className="text-xl font-black uppercase tracking-tight">Lotes y Vencimientos</h1>
           <p className="text-xs text-muted-foreground">Control de lotes, series y fechas de vencimiento</p>
         </div>
-        <Button onClick={() => setShowCreate(true)} className={cn('flex items-center gap-2 px-4 rounded-xl bg-primary text-primary-foreground text-xs font-black uppercase hover:opacity-90', touch)}>
+        <button onClick={() => setShowCreate(true)} className={cn('flex items-center gap-2 px-4 rounded-xl bg-primary text-primary-foreground text-xs font-black uppercase hover:opacity-90', touch)}>
           <Plus className="w-4 h-4" /> Nuevo Lote
-        </Button>
+        </button>
       </div>
       {expiringSoon.length > 0 && (
         <div className="p-3 rounded-xl bg-amber-50 border border-amber-300 dark:bg-amber-950/30 dark:border-amber-800 flex items-center gap-2">
@@ -49,7 +48,7 @@ export function LotsView() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar por lote o producto..." className={cn('w-full pl-10 pr-4 rounded-xl border border-border bg-background text-sm', touch)} />
         </div>
-        <Button onClick={load} className={cn('p-2 rounded-xl border border-border hover:bg-muted', touch)}>{loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RotateCcw className="w-4 h-4" />}</Button>
+        <button onClick={load} className={cn('p-2 rounded-xl border border-border hover:bg-muted', touch)}>{loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RotateCcw className="w-4 h-4" />}</button>
       </div>
       {loading ? <div className="flex items-center justify-center py-20"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
       : filtered.length === 0 ? <div className="text-center py-20"><Package className="w-12 h-12 text-muted-foreground/30 mx-auto mb-3" /><p className="text-sm font-bold text-muted-foreground">No hay lotes registrados</p></div>
@@ -91,7 +90,7 @@ function CreateLotModal({ onClose, onCreated, storeId }: { onClose: () => void; 
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm" onClick={onClose}>
       <div className="w-full max-w-md bg-card border border-border rounded-2xl shadow-2xl p-5 space-y-3" onClick={e => e.stopPropagation()}>
-        <div className="flex items-center justify-between"><h2 className="text-lg font-black uppercase">Nuevo Lote</h2><Button onClick={onClose} className="p-2 rounded-lg hover:bg-muted"><X className="w-4 h-4" /></Button></div>
+        <div className="flex items-center justify-between"><h2 className="text-lg font-black uppercase">Nuevo Lote</h2><button onClick={onClose} className="p-2 rounded-lg hover:bg-muted"><X className="w-4 h-4" /></button></div>
         <div><label className="text-xs font-bold uppercase text-muted-foreground">Producto *</label><select value={form.product_id} onChange={e => setForm(prev => ({ ...prev, product_id: e.target.value }))} className={cn('w-full mt-1 px-3 rounded-xl border border-border bg-background text-sm', touch)}><option value="">Seleccionar...</option>{products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select></div>
         <div><label className="text-xs font-bold uppercase text-muted-foreground">Número de Lote *</label><input value={form.lot_number} onChange={e => setForm(prev => ({ ...prev, lot_number: e.target.value }))} className={cn('w-full mt-1 px-3 rounded-xl border border-border bg-background text-sm', touch)} /></div>
         <div><label className="text-xs font-bold uppercase text-muted-foreground">Fecha Vencimiento</label><input type="date" value={form.expiration_date} onChange={e => setForm(prev => ({ ...prev, expiration_date: e.target.value }))} className={cn('w-full mt-1 px-3 rounded-xl border border-border bg-background text-sm', touch)} /></div>
@@ -100,7 +99,7 @@ function CreateLotModal({ onClose, onCreated, storeId }: { onClose: () => void; 
           <div><label className="text-xs font-bold uppercase text-muted-foreground">Costo Unit.</label><input type="number" min="0" value={form.unit_cost} onChange={e => setForm(prev => ({ ...prev, unit_cost: Number(e.target.value) }))} className={cn('w-full mt-1 px-3 rounded-xl border border-border bg-background text-sm', touch)} /></div>
         </div>
         <div><label className="text-xs font-bold uppercase text-muted-foreground">Proveedor</label><input value={form.supplier} onChange={e => setForm(prev => ({ ...prev, supplier: e.target.value }))} className={cn('w-full mt-1 px-3 rounded-xl border border-border bg-background text-sm', touch)} /></div>
-        <Button onClick={handleSubmit} disabled={submitting || !form.product_id || !form.lot_number} className={cn('w-full rounded-xl bg-primary text-primary-foreground text-sm font-black uppercase hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2', touch)}>{submitting ? <><Loader2 className="w-4 h-4 animate-spin" /> Creando...</> : <><Plus className="w-4 h-4" /> Crear Lote</>}</Button>
+        <button onClick={handleSubmit} disabled={submitting || !form.product_id || !form.lot_number} className={cn('w-full rounded-xl bg-primary text-primary-foreground text-sm font-black uppercase hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2', touch)}>{submitting ? <><Loader2 className="w-4 h-4 animate-spin" /> Creando...</> : <><Plus className="w-4 h-4" /> Crear Lote</>}</button>
       </div>
     </div>
   );

@@ -20,7 +20,6 @@ import {
 import { useReceptionState, UNIT_OF_MEASURE_OPTIONS } from './useReceptionState';
 import type { Product } from '@/types';
 import { cn, formatCurrency } from '@/lib/utils';
-import { Button } from "@/components/ui/button";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
   DialogDescription, DialogFooter,
@@ -79,7 +78,7 @@ export default function ProductReceptionView({ onCancel, preselectedProduct }: P
           {/* EM-R7: Indicador offline/sync */}
           <ReceptionOfflineIndicator />
           {/* EM-R1: Toggle Modo Recepción Express */}
-          <Button
+          <button
             type="button"
             onClick={() => s.setExpressMode(true)}
             className="inline-flex items-center gap-1.5 px-3 py-2 min-h-[44px] rounded-xl border-2 border-primary/30 bg-primary/5 text-primary font-black text-xs uppercase tracking-widest hover:bg-primary/10 hover:border-primary/50 transition-all active:scale-95 focus:outline-none focus:ring-2 focus:ring-primary/30"
@@ -88,10 +87,10 @@ export default function ProductReceptionView({ onCancel, preselectedProduct }: P
           >
             <Zap className="w-4 h-4" />
             <span className="hidden sm:inline">Express</span>
-          </Button>
-          <Button onClick={onCancel} className="p-2 min-w-[44px] min-h-[44px] hover:bg-muted rounded-lg flex items-center justify-center" type="button" aria-label="Cancelar">
+          </button>
+          <button onClick={onCancel} className="p-2 min-w-[44px] min-h-[44px] hover:bg-muted rounded-lg flex items-center justify-center" type="button" aria-label="Cancelar">
             <X className="w-6 h-6" />
-          </Button>
+          </button>
         </div>
       </div>
 
@@ -161,30 +160,30 @@ export default function ProductReceptionView({ onCancel, preselectedProduct }: P
             <PrimaryButton label="Agregar Producto" onClick={s.handleOpenForm} icon={Plus} />
             <div className="w-px h-6 bg-border mx-1" />
             {/* EM-R4: OCR de factura */}
-            <Button
+            <button
               type="button"
               onClick={() => s.setShowOCR(true)}
               className="inline-flex items-center gap-2 px-4 py-2 min-h-[44px] rounded-xl border-2 border-primary/30 bg-primary/5 hover:bg-primary/10 text-primary font-black text-xs uppercase tracking-widest transition-all active:scale-95 focus:outline-none focus:ring-2 focus:ring-primary/30"
               title="Escanear factura con cámara y extraer items automáticamente"
             >
               <Camera className="w-3.5 h-3.5" /> Escanear Factura
-            </Button>
+            </button>
             {/* EM-R5: Recibir contra OC — selecciona una OC pendiente y carga sus items */}
-            <Button
+            <button
               type="button"
               onClick={() => setShowReceivePO(true)}
               className="inline-flex items-center gap-2 px-4 py-2 min-h-[44px] rounded-xl border-2 border-primary/30 bg-primary/5 hover:bg-primary/10 text-primary font-black text-xs uppercase tracking-widest transition-all active:scale-95 focus:outline-none focus:ring-2 focus:ring-primary/30"
               title="Cargar items desde una Orden de Compra pendiente"
             >
               <ClipboardList className="w-3.5 h-3.5" /> Recibir contra OC
-            </Button>
+            </button>
             <input ref={fileInputRef} type="file" accept=".xlsx,.xls" className="hidden" aria-label="Importar Excel" />
-            <Button type="button" onClick={s.handleOpenImport} className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-dashed border-primary/40 bg-primary/5 hover:bg-primary/10 text-primary font-black text-xs uppercase tracking-widest transition-all active:scale-95">
+            <button type="button" onClick={s.handleOpenImport} className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-dashed border-primary/40 bg-primary/5 hover:bg-primary/10 text-primary font-black text-xs uppercase tracking-widest transition-all active:scale-95">
               <Upload className="w-3.5 h-3.5" /> Importar Excel
-            </Button>
-            <Button type="button" onClick={s.handleExportExcel} className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-border hover:bg-muted text-muted-foreground hover:text-foreground font-black text-xs uppercase tracking-widest transition-all active:scale-95">
+            </button>
+            <button type="button" onClick={s.handleExportExcel} className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-border hover:bg-muted text-muted-foreground hover:text-foreground font-black text-xs uppercase tracking-widest transition-all active:scale-95">
               <Download className="w-3.5 h-3.5" /> Exportar Excel
-            </Button>
+            </button>
           </div>
         </div>
 
@@ -268,8 +267,8 @@ export default function ProductReceptionView({ onCancel, preselectedProduct }: P
                             <option value="MLC">MLC</option>
                           </select>
                         </div>
-                        <Button onClick={s.handleSaveEdit} className="px-2 py-1 text-[10px] font-black uppercase rounded-lg bg-primary/10 text-primary hover:bg-primary/20" type="button">OK</Button>
-                        <Button type="button" onClick={() => s.setEditingIndex(null)} className="px-2 py-1 text-[10px] font-bold uppercase rounded-lg bg-muted text-muted-foreground hover:bg-muted/80">X</Button>
+                        <button onClick={s.handleSaveEdit} className="px-2 py-1 text-[10px] font-black uppercase rounded-lg bg-primary/10 text-primary hover:bg-primary/20" type="button">OK</button>
+                        <button type="button" onClick={() => s.setEditingIndex(null)} className="px-2 py-1 text-[10px] font-bold uppercase rounded-lg bg-muted text-muted-foreground hover:bg-muted/80">X</button>
                       </div>
                     ) : (
                       <p className="text-xs text-muted-foreground ml-6">
@@ -282,13 +281,13 @@ export default function ProductReceptionView({ onCancel, preselectedProduct }: P
                   <div className="flex items-center gap-2">
                     <span className="font-black text-sm text-primary tabular-nums">{formatCurrency(item.quantity * item.unit_cost)}</span>
                     {s.editingIndex !== index && (
-                      <Button type="button" onClick={() => s.handleStartEdit(index)} className="p-1.5 min-w-[44px] min-h-[44px] flex items-center justify-center hover:bg-primary/10 rounded-lg text-muted-foreground hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary/30" aria-label={`Editar ${item.name}`}>
+                      <button type="button" onClick={() => s.handleStartEdit(index)} className="p-1.5 min-w-[44px] min-h-[44px] flex items-center justify-center hover:bg-primary/10 rounded-lg text-muted-foreground hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary/30" aria-label={`Editar ${item.name}`}>
                         <Package className="w-4 h-4" />
-                      </Button>
+                      </button>
                     )}
-                    <Button type="button" onClick={() => s.handleRequestRemove(item.local_id)} className="p-1.5 min-w-[44px] min-h-[44px] flex items-center justify-center hover:bg-destructive/10 rounded-lg text-destructive/70 hover:text-destructive focus:outline-none focus:ring-2 focus:ring-destructive/30" aria-label={`Eliminar ${item.name}`}>
+                    <button type="button" onClick={() => s.handleRequestRemove(item.local_id)} className="p-1.5 min-w-[44px] min-h-[44px] flex items-center justify-center hover:bg-destructive/10 rounded-lg text-destructive/70 hover:text-destructive focus:outline-none focus:ring-2 focus:ring-destructive/30" aria-label={`Eliminar ${item.name}`}>
                       <Trash2 className="w-4 h-4" />
-                    </Button>
+                    </button>
                   </div>
                 </div>
               );
@@ -320,8 +319,8 @@ export default function ProductReceptionView({ onCancel, preselectedProduct }: P
           <span className="text-xs font-bold text-muted-foreground">
             Eliminar &quot;{s.items.find(i => i.local_id === s.pendingDelete)?.name ?? 'item'}&quot;?
           </span>
-          <Button onClick={s.handleConfirmRemove} type="button" className="px-3 py-1.5 text-xs font-black uppercase rounded-lg bg-destructive text-destructive-foreground focus:outline-none focus:ring-2 focus:ring-destructive/30">Si, eliminar</Button>
-          <Button onClick={s.handleCancelRemove} type="button" className="px-3 py-1.5 text-xs font-bold uppercase rounded-lg bg-muted text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30">Cancelar</Button>
+          <button onClick={s.handleConfirmRemove} type="button" className="px-3 py-1.5 text-xs font-black uppercase rounded-lg bg-destructive text-destructive-foreground focus:outline-none focus:ring-2 focus:ring-destructive/30">Si, eliminar</button>
+          <button onClick={s.handleCancelRemove} type="button" className="px-3 py-1.5 text-xs font-bold uppercase rounded-lg bg-muted text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30">Cancelar</button>
         </div>
       )}
 
@@ -342,7 +341,7 @@ export default function ProductReceptionView({ onCancel, preselectedProduct }: P
       {/* Reception-Flow-Fix: 2 botones — "Guardar Pendiente" (no aplica stock)
           + "Registrar Recepción" (confirma y aplica stock). */}
       <div className="flex justify-end gap-2 flex-wrap">
-        <Button
+        <button
           type="button"
           onClick={s.handleSavePending}
           disabled={s.isSubmitting || s.items.length === 0}
@@ -352,7 +351,7 @@ export default function ProductReceptionView({ onCancel, preselectedProduct }: P
         >
           <Clock className="w-4 h-4" />
           {s.isSubmitting ? 'Guardando...' : 'Guardar Pendiente'}
-        </Button>
+        </button>
         <PrimaryButton
           label={s.isSubmitting || s.registerReceptionIsPending ? 'Registrando...' : 'Registrar Recepción'}
           onClick={s.handleSubmit}
@@ -609,23 +608,23 @@ export default function ProductReceptionView({ onCancel, preselectedProduct }: P
               <div className="py-4 text-center text-sm text-muted-foreground">Sin resultados</div>
             ) : (
               s.filteredFormProducts.slice(0, 50).map(product => (
-                <Button type="button" key={product.id} onClick={() => s.setSelectedProductId(product.id)} className={cn(
+                <button type="button" key={product.id} onClick={() => s.setSelectedProductId(product.id)} className={cn(
                   'w-full text-left px-4 py-2.5 text-sm transition-colors hover:bg-muted/50',
                   s.selectedProductId === product.id && 'bg-primary/10 ring-1 ring-primary/30'
                 )}>
                   <span className="font-bold">{product.name}</span>
                   <span className="ml-2 text-xs text-muted-foreground font-mono">{product.sku}</span>
                   {product.cost_price > 0 && <span className="ml-2 text-xs text-primary font-mono">{formatCurrency(product.cost_price)}</span>}
-                </Button>
+                </button>
               ))
             )}
           </div>
 
           {/* FIX-07: Load more */}
           {s.hasMoreProducts && (
-            <Button type="button" onClick={() => s.setSearchLimit(prev => prev + 20)} className="text-xs text-primary hover:underline mx-auto block">
+            <button type="button" onClick={() => s.setSearchLimit(prev => prev + 20)} className="text-xs text-primary hover:underline mx-auto block">
               Cargar mas productos...
-            </Button>
+            </button>
           )}
 
           {s.selectedProductId && (

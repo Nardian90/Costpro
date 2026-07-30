@@ -10,7 +10,6 @@ import { useIsMobile } from '@/hooks/ui/useMobile';
 import { useFocusTrap } from '@/hooks/ui/useFocusTrap';
 import type { CostSheetData } from '@/types/cost-sheet';
 
-import { Button } from "@/components/ui/button";
 import { useTranslations } from 'next-intl';
 interface CostSheetSidePanelProps {
   isOpen: boolean;
@@ -139,7 +138,7 @@ export const CostSheetSidePanel: React.FC<CostSheetSidePanelProps> = ({
             )}
           >
             <div className={cn("flex flex-col gap-4", isMobile ? "py-4 px-2" : "py-6 px-3")}>
-                <Button type="button"
+                <button type="button"
                     onClick={() => onOpen('calculator')}
                     className={cn(
                         "group flex items-center gap-3 transition-all",
@@ -157,9 +156,9 @@ export const CostSheetSidePanel: React.FC<CostSheetSidePanelProps> = ({
                     {isTriggerExpanded && (
                         <span className="text-xs font-black uppercase tracking-widest opacity-80 whitespace-nowrap">Calc</span>
                     )}
-                </Button>
+                </button>
 
-                <Button type="button"
+                <button type="button"
                     onClick={() => onOpen('ai')}
                     className={cn(
                         "group flex items-center gap-3 transition-all",
@@ -177,10 +176,10 @@ export const CostSheetSidePanel: React.FC<CostSheetSidePanelProps> = ({
                     {isTriggerExpanded && (
                         <span className="text-xs font-black uppercase tracking-widest opacity-80 whitespace-nowrap">Darian</span>
                     )}
-                </Button>
+                </button>
 
                 {!isMobile && (
-                    <Button type="button"
+                    <button type="button"
                         onClick={() => onOpen('both')}
                         className={cn(
                             "group flex items-center gap-3 transition-all",
@@ -197,7 +196,7 @@ export const CostSheetSidePanel: React.FC<CostSheetSidePanelProps> = ({
                         {isTriggerExpanded && (
                             <span className="text-xs font-black uppercase tracking-widest opacity-80 whitespace-nowrap">Dual</span>
                         )}
-                    </Button>
+                    </button>
                 )}
             </div>
 
@@ -268,7 +267,7 @@ export const CostSheetSidePanel: React.FC<CostSheetSidePanelProps> = ({
 
                 <div className="flex items-center gap-2">
                     {!isMobile && (
-                        <Button type="button"
+                        <button type="button"
                             onClick={onExpand ? onExpand : () => setIsFullView(!isFullView)}
                             className={cn(
                                 "p-2.5 rounded-2xl transition-all active:scale-90",
@@ -277,9 +276,9 @@ export const CostSheetSidePanel: React.FC<CostSheetSidePanelProps> = ({
                             title={onExpand ? "Ampliar a vista completa" : (isFullView ? "Reducir" : "Ampliar")}
                         >
                             {isFullView ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
-                        </Button>
+                        </button>
                     )}
-                    <Button type="button"
+                    <button type="button"
                         onClick={onClose}
                         className={cn(
                             "p-2.5 rounded-2xl transition-all active:scale-90",
@@ -287,7 +286,7 @@ export const CostSheetSidePanel: React.FC<CostSheetSidePanelProps> = ({
                         )}
                     >
                         <XIcon className="w-5 h-5" />
-                    </Button>
+                    </button>
                 </div>
               </div>
 

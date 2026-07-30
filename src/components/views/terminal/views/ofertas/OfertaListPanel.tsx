@@ -102,14 +102,14 @@ export default function OfertaListPanel({
             aria-label="Buscar ofertas"
           />
           {searchTerm && (
-            <Button
+            <button
               type="button"
               onClick={() => onSearchChange('')}
               className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
               aria-label="Limpiar búsqueda"
             >
               <X className="w-3 h-3" />
-            </Button>
+            </button>
           )}
         </div>
         <Select
@@ -185,7 +185,7 @@ export default function OfertaListPanel({
                   : 'border-border hover:border-primary/30 hover:bg-muted/30'
               )}
             >
-              <Button
+              <button
                 type="button"
                 onClick={() => onSelectOferta(oferta)}
                 className="w-full text-left"
@@ -218,10 +218,10 @@ export default function OfertaListPanel({
                     {displayTotal.toLocaleString('es-CU', { minimumFractionDigits: 2 })} {displayCurrency}
                   </span>
                 </div>
-              </Button>
+              </button>
 
               {/* Delete button — visible on hover or always on mobile */}
-              <Button
+              <button
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation();
@@ -236,7 +236,7 @@ export default function OfertaListPanel({
                 aria-label={`Eliminar oferta ${oferta.numero}`}
               >
                 <Trash2 className="w-3 h-3" />
-              </Button>
+              </button>
             </div>
           );
         })}

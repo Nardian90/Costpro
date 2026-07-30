@@ -6,7 +6,6 @@ import { cn } from "@/lib/utils";
 import { useSuppliers, useCreateSupplier, type Supplier } from "@/hooks/api/useSuppliers";
 import { useAuthStore } from "@/store";
 
-import { Button } from "@/components/ui/button";
 interface SupplierSelectorProps {
   value: string;
   onChange: (name: string, supplierId?: string | null) => void;
@@ -105,7 +104,7 @@ export function SupplierSelector({ value, onChange, className }: SupplierSelecto
           role="combobox"
         />
         {value && (
-          <Button
+          <button
             type="button"
             onClick={() => {
               onChange("", null);
@@ -115,7 +114,7 @@ export function SupplierSelector({ value, onChange, className }: SupplierSelecto
             aria-label="Limpiar"
           >
             <X className="w-4 h-4" />
-          </Button>
+          </button>
         )}
       </div>
 
@@ -128,7 +127,7 @@ export function SupplierSelector({ value, onChange, className }: SupplierSelecto
               <p className="text-xs text-muted-foreground">
                 {value ? `No hay proveedores que coincidan con "${value}"` : "Sin proveedores registrados"}
               </p>
-              <Button
+              <button
                 type="button"
                 onClick={() => {
                   setNewSupplierName(value);
@@ -138,13 +137,13 @@ export function SupplierSelector({ value, onChange, className }: SupplierSelecto
               >
                 <Plus className="w-3 h-3" />
                 Crear nuevo
-              </Button>
+              </button>
             </div>
           ) : (
             <>
               <div className="overflow-y-auto">
                 {filtered.map((s) => (
-                  <Button
+                  <button
                     key={s.id}
                     type="button"
                     onClick={() => handleSelect(s)}
@@ -162,10 +161,10 @@ export function SupplierSelector({ value, onChange, className }: SupplierSelecto
                       )}
                     </div>
                     {value === s.name && <Check className="w-4 h-4 text-primary shrink-0" aria-hidden="true" />}
-                  </Button>
+                  </button>
                 ))}
               </div>
-              <Button
+              <button
                 type="button"
                 onClick={() => {
                   setNewSupplierName(value);
@@ -175,7 +174,7 @@ export function SupplierSelector({ value, onChange, className }: SupplierSelecto
               >
                 <Plus className="w-3 h-3" />
                 Crear nuevo proveedor
-              </Button>
+              </button>
             </>
           )}
         </div>
@@ -214,21 +213,21 @@ export function SupplierSelector({ value, onChange, className }: SupplierSelecto
             />
           </div>
           <div className="flex gap-2 pt-1">
-            <Button
+            <button
               type="button"
               onClick={() => setShowCreateForm(false)}
               className="flex-1 h-9 rounded-lg border border-border text-xs font-black uppercase hover:bg-muted"
             >
               Cancelar
-            </Button>
-            <Button
+            </button>
+            <button
               type="button"
               onClick={handleCreateNew}
               disabled={!newSupplierName.trim() || createSupplier.isPending}
               className="flex-1 h-9 rounded-lg bg-primary text-primary-foreground text-xs font-black uppercase hover:opacity-90 disabled:opacity-50"
             >
               {createSupplier.isPending ? "Creando..." : "Crear"}
-            </Button>
+            </button>
           </div>
         </div>
       )}

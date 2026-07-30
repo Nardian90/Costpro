@@ -16,7 +16,6 @@ import { cn, getProductImageUrl } from '@/lib/utils';
 import { getIncompleteReasons } from '@/lib/product-completeness';
 import type { Product, ProductVariant, ProductFCStatus } from '@/types';
 
-import { Button } from "@/components/ui/button";
 export interface EditFormState {
   name: string;
   sku: string;
@@ -134,7 +133,7 @@ export default function EditProductModal({
               <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">
                 FC Auto
               </span>
-              <Button
+              <button
                 type="button"
                 role="switch"
                 aria-checked={fcAutoEnabled}
@@ -149,10 +148,10 @@ export default function EditProductModal({
                   'inline-block h-3 w-3 transform rounded-full bg-white transition-transform shadow-sm',
                   fcAutoEnabled ? 'translate-x-5' : 'translate-x-1'
                 )} />
-              </Button>
+              </button>
               {/* View/Generate FC Button */}
               {onViewFC && fcStatus !== 'sin_fc' && (
-                <Button
+                <button
                   type="button"
                   onClick={onViewFC}
                   className="flex items-center gap-1 px-2 py-1 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors text-[10px] font-black uppercase tracking-widest"
@@ -160,10 +159,10 @@ export default function EditProductModal({
                 >
                   <FileText className="w-3 h-3" />
                   {fcStatus === 'vigente' ? 'Ver FC' : 'Generar FC'}
-                </Button>
+                </button>
               )}
               {onViewFC && fcStatus === 'sin_fc' && (
-                <Button
+                <button
                   type="button"
                   onClick={onViewFC}
                   className="flex items-center gap-1 px-2 py-1 rounded-lg bg-muted/30 text-muted-foreground hover:bg-muted/50 transition-colors text-[10px] font-black uppercase tracking-widest"
@@ -171,7 +170,7 @@ export default function EditProductModal({
                 >
                   <FileText className="w-3 h-3" />
                   Sin FC
-                </Button>
+                </button>
               )}
             </div>
           </div>
@@ -201,50 +200,50 @@ export default function EditProductModal({
                     (e.target as HTMLImageElement).style.display = 'none';
                   }}
                 />
-                <Button
+                <button
                   type="button"
                   onClick={onRemoveImage}
                   className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center shadow-lg sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
                   aria-label="Eliminar imagen"
                 >
                   <X className="w-3.5 h-3.5" />
-                </Button>
+                </button>
               </div>
             ) : (
               <div className="flex items-center gap-2">
-                <Button
+                <button
                   type="button"
                   onClick={() => editCameraRef.current?.click()}
                   className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border bg-muted/50 hover:bg-muted text-xs font-bold transition-colors"
                 >
                   <Camera className="w-3.5 h-3.5" /> Cámara
-                </Button>
-                <Button
+                </button>
+                <button
                   type="button"
                   onClick={() => editGalleryRef.current?.click()}
                   className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border bg-muted/50 hover:bg-muted text-xs font-bold transition-colors"
                 >
                   <ImagePlus className="w-3.5 h-3.5" /> Galería
-                </Button>
+                </button>
               </div>
             )}
             {/* Show change-image buttons alongside the preview */}
             {editImagePreview && (
               <div className="flex items-center gap-2">
-                <Button
+                <button
                   type="button"
                   onClick={() => editCameraRef.current?.click()}
                   className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border bg-muted/50 hover:bg-muted text-xs font-bold transition-colors"
                 >
                   <Camera className="w-3.5 h-3.5" /> Cambiar
-                </Button>
-                <Button
+                </button>
+                <button
                   type="button"
                   onClick={() => editGalleryRef.current?.click()}
                   className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border bg-muted/50 hover:bg-muted text-xs font-bold transition-colors"
                 >
                   <ImagePlus className="w-3.5 h-3.5" /> Galería
-                </Button>
+                </button>
               </div>
             )}
           </div>
@@ -408,7 +407,7 @@ export default function EditProductModal({
 
         {/* ── Unit Variants Section ───────────────────────────────── */}
         <div className="border-t border-border pt-4">
-          <Button
+          <button
             type="button"
             onClick={onToggleVariants}
             className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors"
@@ -420,7 +419,7 @@ export default function EditProductModal({
                 {editVariants.length}
               </span>
             )}
-          </Button>
+          </button>
 
           {showVariants && (
             <div className="mt-3 space-y-3">
@@ -481,33 +480,33 @@ export default function EditProductModal({
                         placeholder="0.00"
                       />
                     </div>
-                    <Button
+                    <button
                       type="button"
                       onClick={() => onSaveVariant(index)}
                       className="mb-0.5 p-2 rounded-lg bg-success/10 text-success hover:bg-success/20 transition-colors"
                       title="Guardar variante"
                     >
                       <CheckCircle2 className="w-3.5 h-3.5" />
-                    </Button>
-                    <Button
+                    </button>
+                    <button
                       type="button"
                       onClick={() => onRemoveVariant(index)}
                       className="mb-0.5 p-2 rounded-lg bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors"
                       title="Eliminar variante"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
-                    </Button>
+                    </button>
                   </div>
                 </div>
               ))}
 
-              <Button
+              <button
                 type="button"
                 onClick={onAddVariant}
                 className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-dashed border-border hover:border-primary/40 hover:bg-primary/5 text-xs font-bold text-muted-foreground hover:text-primary transition-all w-full justify-center"
               >
                 <Plus className="w-3.5 h-3.5" /> Agregar Variante
-              </Button>
+              </button>
             </div>
           )}
         </div>

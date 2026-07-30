@@ -29,7 +29,6 @@ import { cn } from '@/lib/utils';
 import { UserContract } from '@/contracts/user';
 import { NavigationItem } from '@/hooks/ui/useTerminalNavigation';
 import { ViewType, SidebarState } from '@/store';
-import { Button } from "@/components/ui/button";
 import { HelpLauncher } from './views/help/HelpLauncher';
 
 interface HeaderProps {
@@ -90,13 +89,13 @@ export const Header = ({
     <header className="bg-background/80 backdrop-blur-xl p-1.5 sm:px-4 sm:py-2 sticky top-0 z-30 w-full pt-[env(safe-area-inset-top)] shrink-0 border-b border-border/50">
       <div className="flex items-center justify-between gap-2 sm:gap-4">
         <div className="flex items-center gap-2 sm:gap-4 flex-1 overflow-hidden">
-          <Button
+          <button
             onClick={toggleSidebar}
             className="w-11 h-11 flex items-center justify-center shrink-0 rounded-xl border border-border/50 bg-muted/50 hover:bg-muted active:scale-90 transition-all"
             aria-label="Cambiar estado del menú"
           >
             <SidebarIcon sidebarState={sidebarState} />
-          </Button>
+          </button>
 
           <div className="flex items-center gap-2 sm:gap-4 overflow-x-auto min-w-0 flex-1 no-scrollbar pr-2">
             <h1 className="text-[clamp(0.75rem,3.5vw,1.25rem)] font-label font-bold capitalize tracking-tight text-primary whitespace-nowrap shrink-0">
@@ -116,7 +115,7 @@ export const Header = ({
                     activeStoreName={activeStoreName}
                     onSelect={handleSetActiveStore}
                     trigger={
-                      <Button
+                      <button
                         className={cn(
                           "group relative flex items-center justify-center gap-1.5 px-2.5 h-11 rounded-xl transition-all outline-none border shrink-0 w-11 sm:w-auto sm:px-3 sm:gap-2 sm:min-w-0 sm:max-w-none",
                           storesToShow.length > 1
@@ -138,14 +137,14 @@ export const Header = ({
                         {storesToShow.length > 1 && (
                           <ChevronDown className="w-3.5 h-3.5 text-primary-foreground/70 shrink-0" />
                         )}
-                      </Button>
+                      </button>
                     }
                   />
                   {/* DropdownMenu original — solo visible en desktop (sm:block) */}
                   <div className="hidden sm:block">
                   <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button
+                    <button
                       className={cn(
                         "group relative flex items-center gap-2 px-3 h-11 rounded-xl transition-all outline-none border min-w-0 max-w-[130px] sm:max-w-none",
                         storesToShow.length > 1
@@ -168,7 +167,7 @@ export const Header = ({
                       {storesToShow.length > 1 && (
                         <div className="absolute inset-0 rounded-xl bg-primary-foreground/5 opacity-0 group-hover:opacity-100 transition-opacity" />
                       )}
-                    </Button>
+                    </button>
                   </DropdownMenuTrigger>
 
                   {storesToShow.length > 1 && (
@@ -254,12 +253,12 @@ export const Header = ({
           <div className="hidden sm:block">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button
+              <button
                 className="w-11 h-11 flex items-center justify-center rounded-full bg-primary text-primary-foreground text-xs sm:text-sm font-bold uppercase tracking-tight hover:ring-2 hover:ring-primary/30 hover:ring-offset-2 hover:ring-offset-background active:scale-90 transition-all shrink-0"
                 aria-label="Menú de usuario"
               >
                 {user?.fullName ? user.fullName.split(' ').map(n => n[0]).slice(0, 2).join('') : '?'}
-              </Button>
+              </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-64 sm:w-72 p-2 rounded-2xl bg-card border-border shadow-2xl z-50">
               <DropdownMenuLabel className="p-3">

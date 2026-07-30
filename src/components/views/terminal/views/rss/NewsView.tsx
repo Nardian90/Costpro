@@ -20,7 +20,6 @@ import { cn, formatDate, formatTime, safeFormatDate } from '@/lib/utils';
 import { useRSSNews } from '@/hooks/api/useRSS';
 import { StateRenderer } from '@/components/ui/StateRenderer';
 import { RSSNewsItem, RSSFeedCategory, RSS_FEED_CATEGORIES } from '@/types';
-import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 
 export default function NewsView() {
@@ -94,14 +93,14 @@ export default function NewsView() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <Button type="button"
+          <button type="button"
             onClick={() => refetch()}
             disabled={isRefetching}
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-border bg-card hover:bg-accent transition-all text-xs font-black uppercase tracking-widest disabled:opacity-50"
           >
             <RefreshCw className={cn("w-3.5 h-3.5", isRefetching && "animate-spin")} />
             {isRefetching ? 'Actualizando...' : 'Actualizar'}
-          </Button>
+          </button>
         </div>
       </div>
 
@@ -167,7 +166,7 @@ export default function NewsView() {
           />
         </div>
         {/* Priority + Scope + Count — todos compactos en una línea */}
-        <Button type="button"
+        <button type="button"
           onClick={() => setFilterPriority(!filterPriority)}
           className={cn(
             "flex items-center justify-center rounded-lg border-2 transition-all text-[10px] font-black uppercase min-h-[44px] px-2 sm:px-3 shrink-0",
@@ -177,7 +176,7 @@ export default function NewsView() {
           )}
         >
           {filterPriority ? '⚠️' : '📋'}
-        </Button>
+        </button>
         {/* Scope filter: compacto, sin separadores visibles */}
         <div className="flex rounded-lg border border-border overflow-hidden shrink-0">
           {([
@@ -185,7 +184,7 @@ export default function NewsView() {
             { key: 'national', label: '🇨🇺' },
             { key: 'international', label: '🌍' },
           ] as const).map(opt => (
-            <Button
+            <button
               key={opt.key}
               type="button"
               onClick={() => {
@@ -203,7 +202,7 @@ export default function NewsView() {
             >
               <span className="sm:hidden">{opt.label === 'Todos' ? '📋' : opt.label}</span>
               <span className="hidden sm:inline">{opt.label}</span>
-            </Button>
+            </button>
           ))}
         </div>
         {/* Results count — minimal */}
@@ -216,7 +215,7 @@ export default function NewsView() {
 
       {/* FIX (2026-07-23): Filtro por categoría temática — COLAPSABLE en móvil */}
       <div className="rounded-2xl border border-border bg-card overflow-hidden">
-        <Button
+        <button
           type="button"
           onClick={() => setShowTopicFilters(!showTopicFilters)}
           className="w-full flex items-center justify-between p-3 sm:p-4 hover:bg-muted/30 transition-colors min-h-[44px]"
@@ -235,23 +234,23 @@ export default function NewsView() {
           </div>
           <div className="flex items-center gap-2">
             {activeCategories.size > 0 && (
-              <Button type="button"
+              <button type="button"
                 onClick={(e) => { e.stopPropagation(); setActiveCategories(new Set()); }}
                 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-destructive transition-colors"
               >
                 Limpiar
-              </Button>
+              </button>
             )}
             <ChevronDown className={cn("w-4 h-4 text-muted-foreground transition-transform", showTopicFilters && "rotate-180")} />
           </div>
-        </Button>
+        </button>
         {showTopicFilters && (
         <div className="px-3 pb-3 sm:px-4 sm:pb-4 flex flex-wrap gap-2 border-t border-border/30 pt-3">
           {(Object.entries(RSS_FEED_CATEGORIES) as [RSSFeedCategory, { label: string; icon: string; description: string }][]).map(([catKey, catInfo]) => {
             const count = categoryCounts[catKey] || 0;
             const isActive = activeCategories.has(catKey);
             return (
-              <Button
+              <button
                 key={catKey}
                 type="button"
                 onClick={() => toggleCategory(catKey)}
@@ -274,7 +273,7 @@ export default function NewsView() {
                     {count}
                   </span>
                 )}
-              </Button>
+              </button>
             );
           })}
         </div>

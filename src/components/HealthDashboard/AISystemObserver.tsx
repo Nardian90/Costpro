@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import { Button } from "@/components/ui/button";
 import { Bot, RefreshCw } from 'lucide-react';
 
 export const AISystemObserver: React.FC = () => {
@@ -12,9 +11,9 @@ export const AISystemObserver: React.FC = () => {
             <Bot className="w-5 h-5 text-primary" />
             AI System Observer: Historial de Hallazgos
           </h2>
-          <Button disabled title="Próximamente" aria-label="Actualizar hallazgos" className="p-2 rounded-xl bg-background/50 border border-border/50 opacity-50 cursor-not-allowed">
+          <button disabled title="Próximamente" aria-label="Actualizar hallazgos" className="p-2 rounded-xl bg-background/50 border border-border/50 opacity-50 cursor-not-allowed">
             <RefreshCw className="w-4 h-4 text-muted-foreground" />
-          </Button>
+          </button>
        </div>
 
        <div className="space-y-4">

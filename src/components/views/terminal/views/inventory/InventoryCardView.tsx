@@ -12,7 +12,6 @@ import { ProductCard } from '@/components/ui/atomic';
 import { FCStatusBadge } from '@/components/ui/FCStatusBadge';
 import { ProductFCSync } from '@/components/ui/ProductFCSync';
 
-import { Button } from "@/components/ui/button";
 interface InventoryCardViewProps {
     products: Product[];
     loadMore: () => void;
@@ -116,7 +115,7 @@ export default function InventoryCardView({
                                     {/* ── Toggles de visibilidad en la parte inferior de la tarjeta ── */}
                                     <div className="flex items-center justify-center gap-1.5 mt-2 pb-1">
                                         {/* Visible en tienda */}
-                                        <Button
+                                        <button
                                             type="button"
                                             onClick={() => onToggleVisible?.(product, !product.visible_en_tienda)}
                                             disabled={isTogglingVisible === product.id}
@@ -137,10 +136,10 @@ export default function InventoryCardView({
                                             ) : (
                                                 <EyeOff className="w-3.5 h-3.5" />
                                             )}
-                                        </Button>
+                                        </button>
 
                                         {/* Precio visible */}
-                                        <Button
+                                        <button
                                             type="button"
                                             onClick={() => onTogglePriceVisible?.(product)}
                                             disabled={isTogglingPriceVisible === product.id}
@@ -158,10 +157,10 @@ export default function InventoryCardView({
                                             ) : (
                                                 <DollarSign className={cn('w-3.5 h-3.5', !product.price_visible && 'line-through opacity-60')} />
                                             )}
-                                        </Button>
+                                        </button>
 
                                         {/* Stock visible */}
-                                        <Button
+                                        <button
                                             type="button"
                                             onClick={() => onToggleStockVisible?.(product)}
                                             disabled={isTogglingStockVisible === product.id}
@@ -179,10 +178,10 @@ export default function InventoryCardView({
                                             ) : (
                                                 <Package className={cn('w-3.5 h-3.5', !product.stock_visible && 'line-through opacity-60')} />
                                             )}
-                                        </Button>
+                                        </button>
 
                                         {/* Promoción */}
-                                        <Button
+                                        <button
                                             type="button"
                                             onClick={() => onTogglePromotion?.(product)}
                                             disabled={isTogglingPromotion === product.id}
@@ -200,7 +199,7 @@ export default function InventoryCardView({
                                             ) : (
                                                 <Tag className="w-3.5 h-3.5" />
                                             )}
-                                        </Button>
+                                        </button>
                                     </div>
                                 </div>
                             </motion.div>

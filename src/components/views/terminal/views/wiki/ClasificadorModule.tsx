@@ -3,7 +3,6 @@
 import React, { useMemo } from 'react';
 import { Filter, ChevronRight, Hash, List, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Button } from "@/components/ui/button";
 import {
   ClasificadorData,
   WikiModule,
@@ -29,14 +28,14 @@ export const ClasificadorModule: React.FC<ClasificadorModuleProps> = ({ data, se
       return (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 pt-2">
           {node.map((codigo) => (
-            <Button type="button"
+            <button type="button"
               key={codigo}
               onClick={() => onNavigate('cuentas', codigo)}
               className="flex items-center gap-2 p-3 rounded-2xl bg-background border hover:border-primary/30 hover:bg-primary/[0.02] transition-all group shadow-sm active:scale-95"
             >
               <Hash className="h-3 w-3 text-primary/40 group-hover:text-primary transition-colors" />
               <span className="text-[10px] font-black font-mono tracking-widest">{codigo}</span>
-            </Button>
+            </button>
           ))}
         </div>
       );

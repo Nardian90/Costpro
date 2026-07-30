@@ -8,7 +8,6 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-import { Button } from "@/components/ui/button";
 interface KnowledgeTabProps {
   data: HealthData;
 }
@@ -124,7 +123,7 @@ export const KnowledgeTab: React.FC<KnowledgeTabProps> = ({ data }) => {
               {sections.map((section) => {
                 const Icon = section.icon;
                 return (
-                  <Button
+                  <button
                     key={section.id}
                     onClick={() => { setActiveTab(section.id as any); setPage(0); setSearchTerm(''); }}
                     className={cn(
@@ -148,7 +147,7 @@ export const KnowledgeTab: React.FC<KnowledgeTabProps> = ({ data }) => {
                     )}>
                       {section.count.toLocaleString()}
                     </span>
-                  </Button>
+                  </button>
                 );
               })}
             </div>
@@ -177,9 +176,9 @@ export const KnowledgeTab: React.FC<KnowledgeTabProps> = ({ data }) => {
                   <span className="text-[7px] font-bold text-muted-foreground uppercase tracking-widest">
                     {sortedData.length} resultado{sortedData.length !== 1 ? 's' : ''}
                   </span>
-                  <Button onClick={() => setSearchTerm('')} className="text-[7px] font-bold text-primary uppercase tracking-wider hover:underline">
+                  <button onClick={() => setSearchTerm('')} className="text-[7px] font-bold text-primary uppercase tracking-wider hover:underline">
                     Limpiar
-                  </Button>
+                  </button>
                 </div>
               )}
             </div>
@@ -331,9 +330,9 @@ export const KnowledgeTab: React.FC<KnowledgeTabProps> = ({ data }) => {
                         <Workflow className="w-4 h-4 text-orange-500" />
                         <h4 className="text-[10px] font-black uppercase tracking-widest">Procesos de Negocio Identificados</h4>
                       </div>
-                      <Button onClick={() => { setActiveTab('workflows'); setPage(0); }} className="text-[8px] font-bold text-primary uppercase tracking-wider hover:underline flex items-center gap-1">
+                      <button onClick={() => { setActiveTab('workflows'); setPage(0); }} className="text-[8px] font-bold text-primary uppercase tracking-wider hover:underline flex items-center gap-1">
                         Ver todos <ChevronRight className="w-3 h-3" />
-                      </Button>
+                      </button>
                     </div>
                     <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-2">
                       {workflows.map((w: any) => (
@@ -379,7 +378,7 @@ export const KnowledgeTab: React.FC<KnowledgeTabProps> = ({ data }) => {
                   <ArrowUpDown className="w-3 h-3 text-muted-foreground/40" />
                   <span className="text-[7px] font-bold uppercase tracking-widest text-muted-foreground/40">Ordenar:</span>
                   {(['name', 'fan_in', 'fan_out', 'coupling'] as const).map(field => (
-                    <Button
+                    <button
                       key={field}
                       onClick={() => toggleSort(field)}
                       className={cn(
@@ -391,7 +390,7 @@ export const KnowledgeTab: React.FC<KnowledgeTabProps> = ({ data }) => {
                     >
                       {field === 'fan_in' ? 'Entradas' : field === 'fan_out' ? 'Salidas' : field === 'coupling' ? 'Acoplamiento' : 'Nombre'}
                       {sortBy === field && <span className="ml-1">{sortDir === 'asc' ? '↑' : '↓'}</span>}
-                    </Button>
+                    </button>
                   ))}
                 </div>
 
@@ -473,16 +472,16 @@ export const KnowledgeTab: React.FC<KnowledgeTabProps> = ({ data }) => {
                 {/* Pagination */}
                 {totalPages > 1 && (
                   <div className="flex items-center justify-center gap-2 pt-4">
-                    <Button
+                    <button
                       onClick={() => setPage(p => Math.max(0, p - 1))}
                       disabled={page === 0}
                       className="px-3 py-1.5 rounded-lg text-[8px] font-bold uppercase tracking-wider border border-border/50 hover:bg-muted/50 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
                     >
                       ← Anterior
-                    </Button>
+                    </button>
                     <div className="flex items-center gap-1">
                       {Array.from({ length: totalPages }, (_, i) => (
-                        <Button
+                        <button
                           key={i}
                           onClick={() => setPage(i)}
                           className={cn(
@@ -493,16 +492,16 @@ export const KnowledgeTab: React.FC<KnowledgeTabProps> = ({ data }) => {
                           )}
                         >
                           {i + 1}
-                        </Button>
+                        </button>
                       ))}
                     </div>
-                    <Button
+                    <button
                       onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
                       disabled={page === totalPages - 1}
                       className="px-3 py-1.5 rounded-lg text-[8px] font-bold uppercase tracking-wider border border-border/50 hover:bg-muted/50 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
                     >
                       Siguiente →
-                    </Button>
+                    </button>
                   </div>
                 )}
               </div>

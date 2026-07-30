@@ -35,7 +35,6 @@ import { TEMPLATE_CONFIGS } from './catalog-templates/types';
 import { cn, formatCurrency } from '@/lib/utils';
 import { BackToVentaButton } from '@/components/ui/BackToVentaButton';
 
-import { Button } from "@/components/ui/button";
 // ── Constants ─────────────────────────────────────────────
 
 const STOCK_FILTERS: { value: StockFilter; label: string; group?: 'stock' | 'quantity' }[] = [
@@ -210,13 +209,13 @@ export default function SalesCatalogView() {
                 aria-label="Buscar productos por nombre o SKU"
               />
               {catalog.searchTerm && (
-                <Button
+                <button
                   type="button"
                   onClick={() => catalog.setSearchTerm('')}
                   className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-md text-muted-foreground/50 hover:text-foreground hover:bg-muted transition-colors"
                 >
                   <X className="w-3.5 h-3.5" />
-                </Button>
+                </button>
               )}
             </div>
           )}
@@ -224,14 +223,14 @@ export default function SalesCatalogView() {
           {/* ── Mobile: search toggle + filter pills ── */}
           {isMobile && (
             <>
-              <Button
+              <button
                 type="button"
                 onClick={() => setShowMobileFilters(!showMobileFilters)}
                 className="shrink-0 flex items-center gap-1.5 h-10 px-3 rounded-xl bg-muted/50 border border-border/30 text-xs font-bold text-muted-foreground"
               >
                 <Search className="w-4 h-4" />
                 {showMobileFilters ? 'Cerrar' : 'Filtros'}
-              </Button>
+              </button>
               <span className="shrink-0 text-[10px] font-black text-muted-foreground tabular-nums">
                 {catalog.filteredProducts.length}
               </span>
@@ -243,7 +242,7 @@ export default function SalesCatalogView() {
             <div className="flex items-center gap-1">
               {/* Stock filters */}
               <div className="flex items-center gap-0.5 bg-muted/40 rounded-xl p-0.5 border border-border/30">
-                <Button
+                <button
                   type="button"
                   onClick={() => catalog.setStockFilter(catalog.stockFilter === 'in_stock' ? 'all' : 'in_stock')}
                   className={cn(
@@ -255,8 +254,8 @@ export default function SalesCatalogView() {
                   title="Alternar: Con Stock / Todos"
                 >
                   Con Stock
-                </Button>
-                <Button
+                </button>
+                <button
                   type="button"
                   onClick={() => catalog.setStockFilter(catalog.stockFilter === 'out_of_stock' ? 'all' : 'out_of_stock')}
                   className={cn(
@@ -268,13 +267,13 @@ export default function SalesCatalogView() {
                   title="Alternar: Sin Stock / Todos"
                 >
                   Sin Stock
-                </Button>
+                </button>
               </div>
               {/* Divider */}
               <div className="w-px h-6 bg-border/50" />
               {/* Quantity filters */}
               <div className="flex items-center gap-0.5 bg-muted/40 rounded-xl p-0.5 border border-border/30">
-                <Button
+                <button
                   type="button"
                   onClick={() => catalog.setStockFilter(catalog.stockFilter === 'with_quantity' ? 'all' : 'with_quantity')}
                   className={cn(
@@ -286,8 +285,8 @@ export default function SalesCatalogView() {
                   title="Alternar: Con Cantidad / Todos"
                 >
                   Con Cant.
-                </Button>
-                <Button
+                </button>
+                <button
                   type="button"
                   onClick={() => catalog.setStockFilter(catalog.stockFilter === 'without_quantity' ? 'all' : 'without_quantity')}
                   className={cn(
@@ -299,10 +298,10 @@ export default function SalesCatalogView() {
                   title="Alternar: Sin Cantidad / Todos"
                 >
                   Sin Cant.
-                </Button>
+                </button>
               </div>
               {/* Movimientos */}
-              <Button
+              <button
                 type="button"
                 onClick={() => catalog.setStockFilter(catalog.stockFilter === 'with_movements' ? 'all' : 'with_movements')}
                 className={cn(
@@ -313,13 +312,13 @@ export default function SalesCatalogView() {
                 )}
               >
                 Mov.
-              </Button>
+              </button>
             </div>
           )}
 
           {/* ── Sort chip (desktop) ── */}
           {!isMobile && catalog.sortConfig && (
-            <Button
+            <button
               type="button"
               onClick={catalog.clearSort}
               className="shrink-0 flex items-center gap-1 h-9 px-2.5 rounded-lg bg-muted/40 border border-border/30 text-[10px] font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors"
@@ -327,7 +326,7 @@ export default function SalesCatalogView() {
               {catalog.sortConfig.direction === 'asc' ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
               {catalog.sortConfig.key}
               <X className="w-2.5 h-2.5 text-destructive/60 ml-0.5" />
-            </Button>
+            </button>
           )}
 
           {/* ── Spacer ── */}
@@ -336,23 +335,23 @@ export default function SalesCatalogView() {
           {/* ── Read-only: New + Export buttons ── */}
           {catalog.isReadOnly && (
             <>
-              <Button
+              <button
                 type="button"
                 onClick={catalog.handleNewIPV}
                 className="shrink-0 flex items-center gap-1.5 h-10 px-4 rounded-xl bg-success/90 border border-success/30 text-xs font-bold text-white dark:text-black hover:bg-success transition-colors"
               >
                 <PlusCircle className="w-4 h-4" />
                 <span className="hidden sm:inline">Nuevo</span>
-              </Button>
-              <Button
+              </button>
+              <button
                 type="button"
                 onClick={catalog.handleExportExcel}
                 className="shrink-0 flex items-center gap-1.5 h-10 px-4 rounded-xl bg-muted/50 border border-border/30 text-xs font-bold text-foreground hover:bg-muted transition-colors"
               >
                 <Download className="w-4 h-4" />
                 <span className="hidden sm:inline">Excel</span>
-              </Button>
-              <Button
+              </button>
+              <button
                 type="button"
                 onClick={catalog.handleExportPDF}
                 disabled={catalog.activeRows.length === 0}
@@ -360,7 +359,7 @@ export default function SalesCatalogView() {
               >
                 <FileCheck className="w-4 h-4" />
                 <span className="hidden sm:inline">PDF</span>
-              </Button>
+              </button>
             </>
           )}
 
@@ -368,7 +367,7 @@ export default function SalesCatalogView() {
           {!catalog.isReadOnly && (
             <>
               {/* Primary: Vender */}
-              <Button
+              <button
                 type="button"
                 onClick={catalog.handleCheckout}
                 disabled={catalog.isProcessing || !hasActiveItems || catalog.hasAnyDiscrepancy}
@@ -393,12 +392,12 @@ export default function SalesCatalogView() {
                     {catalog.totals.itemCount}
                   </span>
                 )}
-              </Button>
+              </button>
 
               {/* Reiniciar Vista — visible junto a Vender.
                   Ejecuta handleNewIPV (mismo efecto que "Nuevo" en modo lectura):
                   limpia filas + filtros + búsqueda + orden. Con confirmación si hay items. */}
-              <Button
+              <button
                 type="button"
                 onClick={handleResetView}
                 disabled={catalog.isProcessing}
@@ -408,18 +407,18 @@ export default function SalesCatalogView() {
               >
                 <RotateCcw className="w-3.5 h-3.5" />
                 <span className="hidden sm:inline">Reiniciar</span>
-              </Button>
+              </button>
 
               {/* Kebab: secondary actions */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button
+                  <button
                     type="button"
                     className="shrink-0 w-10 h-10 rounded-xl bg-muted/50 border border-border/30 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
                     aria-label="Más acciones"
                   >
                     <MoreHorizontal className="w-4 h-4" />
-                  </Button>
+                  </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56 rounded-xl p-1">
                   <DropdownMenuLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground px-2 py-1.5">
@@ -530,7 +529,7 @@ export default function SalesCatalogView() {
             {/* Filter pills — mobile: toggle style */}
             <div className="flex items-center gap-1 flex-wrap">
               {STOCK_FILTERS.filter(f => f.group === 'stock').map((opt) => (
-                <Button
+                <button
                   key={opt.value}
                   type="button"
                   onClick={() => catalog.setStockFilter(catalog.stockFilter === opt.value ? 'all' : opt.value)}
@@ -542,11 +541,11 @@ export default function SalesCatalogView() {
                   )}
                 >
                   {opt.label}
-                </Button>
+                </button>
               ))}
               <div className="w-px h-6 bg-border/50" />
               {STOCK_FILTERS.filter(f => f.group === 'quantity').map((opt) => (
-                <Button
+                <button
                   key={opt.value}
                   type="button"
                   onClick={() => catalog.setStockFilter(catalog.stockFilter === opt.value ? 'all' : opt.value)}
@@ -558,9 +557,9 @@ export default function SalesCatalogView() {
                   )}
                 >
                   {opt.label}
-                </Button>
+                </button>
               ))}
-              <Button
+              <button
                 type="button"
                 onClick={() => catalog.setStockFilter(catalog.stockFilter === 'with_movements' ? 'all' : 'with_movements')}
                 className={cn(
@@ -571,12 +570,12 @@ export default function SalesCatalogView() {
                 )}
               >
                 Mov.
-              </Button>
+              </button>
             </div>
             {/* View mode + sort */}
             <div className="flex items-center gap-2">
               <div className="flex items-center gap-0.5 bg-muted/40 rounded-lg p-0.5">
-                <Button
+                <button
                   type="button"
                   onClick={() => catalog.setViewMode('table')}
                   className={cn(
@@ -585,8 +584,8 @@ export default function SalesCatalogView() {
                   )}
                 >
                   <Table2 className="w-4 h-4" />
-                </Button>
-                <Button
+                </button>
+                <button
                   type="button"
                   onClick={() => catalog.setViewMode('card')}
                   className={cn(
@@ -595,10 +594,10 @@ export default function SalesCatalogView() {
                   )}
                 >
                   <LayoutGrid className="w-4 h-4" />
-                </Button>
+                </button>
               </div>
               {catalog.sortConfig && (
-                <Button
+                <button
                   type="button"
                   onClick={catalog.clearSort}
                   className="flex items-center gap-1 px-2.5 h-9 rounded-lg bg-muted/40 border border-border/30 text-[10px] font-bold uppercase tracking-wider text-muted-foreground"
@@ -606,7 +605,7 @@ export default function SalesCatalogView() {
                   {catalog.sortConfig.direction === 'asc' ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
                   {catalog.sortConfig.key}
                   <X className="w-2.5 h-2.5 text-destructive/60" />
-                </Button>
+                </button>
               )}
             </div>
           </div>
@@ -693,14 +692,14 @@ export default function SalesCatalogView() {
               </span>
             </div>
             <div className="flex items-center gap-2">
-              <Button
+              <button
                 type="button"
                 onClick={(e) => { e.stopPropagation(); catalog.clearImportWarnings(); }}
                 className="p-1 rounded-md text-warning/60 hover:text-warning hover:bg-warning/10 transition-colors"
                 title="Descartar advertencias"
               >
                 <X className="w-3.5 h-3.5" />
-              </Button>
+              </button>
               <ChevronRight className={cn('w-4 h-4 text-warning/60 transition-transform', showWarningsExpanded && 'rotate-90')} />
             </div>
           </div>
@@ -759,7 +758,7 @@ export default function SalesCatalogView() {
                 </div>
                 <div className="grid grid-cols-3 gap-1.5 max-h-40 overflow-y-auto rounded-xl border border-border/50 p-1.5 bg-muted/30">
                   {catalog.importSheetNames.map((name) => (
-                    <Button
+                    <button
                       key={name}
                       type="button"
                       onClick={() => catalog.setSelectedSheetName(name)}
@@ -771,7 +770,7 @@ export default function SalesCatalogView() {
                       )}
                     >
                       {name}
-                    </Button>
+                    </button>
                   ))}
                 </div>
                 <p className="text-[10px] text-muted-foreground/70">
@@ -780,20 +779,20 @@ export default function SalesCatalogView() {
               </div>
             )}
             <div className="flex gap-3">
-              <Button
+              <button
                 type="button"
                 onClick={catalog.handleImportCancel}
                 className="flex-1 px-4 py-2.5 rounded-xl border border-border text-sm font-bold text-muted-foreground hover:bg-muted/50 transition-colors"
               >
                 Cancelar
-              </Button>
-              <Button
+              </button>
+              <button
                 type="button"
                 onClick={catalog.handleImportConfirm}
                 className="flex-1 px-4 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-bold hover:bg-primary/90 transition-colors"
               >
                 Importar
-              </Button>
+              </button>
             </div>
           </div>
         </div>
@@ -861,14 +860,14 @@ export default function SalesCatalogView() {
               </p>
             </div>
             <div className="flex gap-3">
-              <Button
+              <button
                 type="button"
                 onClick={() => setShowResetConfirm(false)}
                 className="flex-1 px-4 py-2.5 rounded-xl border border-border text-sm font-bold text-muted-foreground hover:bg-muted/50 transition-colors"
               >
                 Cancelar
-              </Button>
-              <Button
+              </button>
+              <button
                 type="button"
                 onClick={confirmResetView}
                 className="flex-1 px-4 py-2.5 rounded-xl bg-warning text-warning-foreground text-sm font-bold hover:bg-warning/90 transition-colors"
@@ -877,7 +876,7 @@ export default function SalesCatalogView() {
                   <RotateCcw className="w-4 h-4" />
                   Reiniciar
                 </span>
-              </Button>
+              </button>
             </div>
           </div>
         </div>

@@ -424,7 +424,7 @@ export const CostSheetSummary: React.FC = () => {
                   </div>
                   <ScrollArea className="h-48">
                     {filteredTargetRows.map((r) => (
-                      <Button type="button"
+                      <button type="button"
                         key={r.id}
                         className="w-full text-left p-2 hover:bg-muted text-xs flex flex-col transition-colors"
                         onClick={() => {
@@ -434,7 +434,7 @@ export const CostSheetSummary: React.FC = () => {
                       >
                         <span className="font-bold font-mono text-xs">{r.cls}</span>
                         <span className="text-muted-foreground truncate text-xs">{r.label}</span>
-                      </Button>
+                      </button>
                     ))}
                   </ScrollArea>
                 </PopoverContent>
@@ -484,7 +484,7 @@ export const CostSheetSummary: React.FC = () => {
                 </div>
                 <ScrollArea className="h-48">
                   {filteredVariableRows.map((r) => (
-                    <Button type="button"
+                    <button type="button"
                       key={r.id}
                       className="w-full text-left p-2 hover:bg-muted text-xs flex flex-col transition-colors"
                       onClick={() => {
@@ -494,7 +494,7 @@ export const CostSheetSummary: React.FC = () => {
                     >
                       <span className="font-bold font-mono text-xs">{r.cls}</span>
                       <span className="text-muted-foreground truncate text-xs">{r.label}</span>
-                    </Button>
+                    </button>
                   ))}
                 </ScrollArea>
               </PopoverContent>

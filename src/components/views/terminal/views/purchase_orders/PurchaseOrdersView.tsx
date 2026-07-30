@@ -31,7 +31,6 @@ import {
   useUpdatePOStatus,
 } from '@/hooks/api/usePurchaseOrders';
 import { formatCurrency, formatDate, cn } from '@/lib/utils';
-import { Button } from "@/components/ui/button";
 import { toast } from 'sonner';
 import type {
   PurchaseOrder,
@@ -161,7 +160,7 @@ export default function PurchaseOrdersView() {
       <div className="rounded-2xl border border-border bg-card p-4 space-y-3">
         <div className="flex flex-wrap items-center gap-2">
           {STATUS_FILTERS.map((f) => (
-            <Button
+            <button
               key={f.value}
               type="button"
               onClick={() => setStatusFilter(f.value)}
@@ -174,7 +173,7 @@ export default function PurchaseOrdersView() {
               aria-pressed={statusFilter === f.value}
             >
               {f.label}
-            </Button>
+            </button>
           ))}
         </div>
         <div className="relative">
@@ -188,14 +187,14 @@ export default function PurchaseOrdersView() {
             className="w-full bg-muted/20 border border-border rounded-xl pl-10 pr-10 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
           />
           {search && (
-            <Button
+            <button
               type="button"
               onClick={() => setSearch('')}
               aria-label="Limpiar búsqueda"
               className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
             >
               <X className="w-3.5 h-3.5" />
-            </Button>
+            </button>
           )}
         </div>
       </div>
@@ -313,7 +312,7 @@ function OrderRow({ order, onView }: { order: PurchaseOrder; onView: () => void 
         <StatusBadge status={order.status} />
       </div>
       <div className="md:col-span-1 flex md:justify-end gap-1">
-        <Button
+        <button
           type="button"
           onClick={onView}
           className="p-2 min-w-[44px] min-h-[44px] rounded-lg hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors"
@@ -321,9 +320,9 @@ function OrderRow({ order, onView }: { order: PurchaseOrder; onView: () => void 
           title="Ver detalle"
         >
           <Eye className="w-4 h-4" />
-        </Button>
+        </button>
         {canCancel && (
-          <Button
+          <button
             type="button"
             onClick={handleCancel}
             disabled={updateStatus.isPending}
@@ -332,7 +331,7 @@ function OrderRow({ order, onView }: { order: PurchaseOrder; onView: () => void 
             title="Cancelar OC"
           >
             <XCircle className="w-4 h-4" />
-          </Button>
+          </button>
         )}
       </div>
     </div>
@@ -675,7 +674,7 @@ function CreatePOModal({ suppliers, onClose }: CreatePOModalProps) {
                   aria-label="Presupuesto máximo de compra"
                 />
               </div>
-              <Button
+              <button
                 type="button"
                 onClick={handleSuggest}
                 disabled={isSuggesting || !analytics}
@@ -685,7 +684,7 @@ function CreatePOModal({ suppliers, onClose }: CreatePOModalProps) {
               >
                 {isSuggesting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Zap className="w-3.5 h-3.5" />}
                 Sugerir
-              </Button>
+              </button>
             </div>
           </div>
           {budgetNum > 0 && (
@@ -772,7 +771,7 @@ function CreatePOModal({ suppliers, onClose }: CreatePOModalProps) {
                     ))}
                   </select>
                   {items.length > 1 && (
-                    <Button
+                    <button
                       type="button"
                       onClick={() => removeItem(idx)}
                       className="p-2 rounded-lg text-destructive hover:bg-destructive/10 transition-colors"
@@ -780,7 +779,7 @@ function CreatePOModal({ suppliers, onClose }: CreatePOModalProps) {
                       title="Eliminar item"
                     >
                       <Trash2 className="w-4 h-4" />
-                    </Button>
+                    </button>
                   )}
                 </div>
               </div>

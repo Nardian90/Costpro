@@ -351,7 +351,7 @@ export default function CosteoDinamicoView() {
               aria-label="Fuente de tasa"
             >
               {RATE_SOURCE_OPTIONS.map(opt => (
-                <Button
+                <button
                   key={opt.value}
                   type="button"
                   role="radio"
@@ -366,7 +366,7 @@ export default function CosteoDinamicoView() {
                   )}
                 >
                   {opt.shortLabel}
-                </Button>
+                </button>
               ))}
             </div>
           </div>
@@ -440,14 +440,14 @@ export default function CosteoDinamicoView() {
       {dashboard && (
         <div className="flex items-center gap-2 flex-wrap">
           {(['muy_bajo','bajo','medio','alto','critico'] as const).map(level => (
-            <Button key={level} onClick={() => setRiskFilter(riskFilter === level ? 'all' : level)}
+            <button key={level} onClick={() => setRiskFilter(riskFilter === level ? 'all' : level)}
               className={cn('px-3 py-1 rounded-full text-xs font-bold border transition-all',
                 riskFilter === level ? getRiskColor(level) : 'border-border text-muted-foreground hover:bg-muted/50')}>
               {getRiskLabel(level)}: {dashboard.products_by_risk[level]}
-            </Button>
+            </button>
           ))}
           {riskFilter !== 'all' && (
-            <Button onClick={() => setRiskFilter('all')} className="text-xs text-primary underline">Limpiar filtro</Button>
+            <button onClick={() => setRiskFilter('all')} className="text-xs text-primary underline">Limpiar filtro</button>
           )}
         </div>
       )}

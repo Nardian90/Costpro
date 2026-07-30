@@ -681,9 +681,9 @@ export default function WalletView() {
 
                 <div className="flex items-center gap-0.5 px-2 pb-2 overflow-x-auto no-scrollbar">
                     {([{'id':'home','l':'Inicio','i':Wallet},{'id':'movimientos','l':'Movimientos','i':BarChart3},{'id':'categorias','l':'Categorías','i':Tag},{'id':'reportes','l':'Reportes','i':Calendar},{'id':'analisis','l':'Análisis','i':PieChartIcon}] as const).map(t => (
-                        <Button key={t.id} onClick={() => setViewMode(t.id)} className={cn("flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase whitespace-nowrap shrink-0", viewMode === t.id ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground hover:bg-muted/50")} aria-current={viewMode === t.id ? 'page' : undefined}>
+                        <button key={t.id} onClick={() => setViewMode(t.id)} className={cn("flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase whitespace-nowrap shrink-0", viewMode === t.id ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground hover:bg-muted/50")} aria-current={viewMode === t.id ? 'page' : undefined}>
                             <t.i className="w-3.5 h-3.5" /> {t.l}
-                        </Button>
+                        </button>
                     ))}
                 </div>
                 {/* Input oculto para import Excel */}
@@ -773,8 +773,8 @@ export default function WalletView() {
                                 <input placeholder="Buscar..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="w-full pl-8 h-8 bg-muted/20 border border-border/30 rounded-lg text-xs" aria-label="Buscar transacciones" />
                             </div>
                             <div className="flex items-center gap-0.5 bg-muted/20 p-0.5 rounded-lg">
-                                <Button onClick={() => setFilterBank('all')} className={cn("px-2 py-1 rounded text-[9px] font-bold uppercase", filterBank === 'all' ? "bg-primary text-primary-foreground" : "text-muted-foreground")}>Todos</Button>
-                                {bankNames.map(b => <Button key={b} onClick={() => setFilterBank(b)} className={cn("px-2 py-1 rounded text-[9px] font-bold uppercase", filterBank === b ? "bg-primary text-primary-foreground" : "text-muted-foreground")}>{b}</Button>)}
+                                <button onClick={() => setFilterBank('all')} className={cn("px-2 py-1 rounded text-[9px] font-bold uppercase", filterBank === 'all' ? "bg-primary text-primary-foreground" : "text-muted-foreground")}>Todos</button>
+                                {bankNames.map(b => <button key={b} onClick={() => setFilterBank(b)} className={cn("px-2 py-1 rounded text-[9px] font-bold uppercase", filterBank === b ? "bg-primary text-primary-foreground" : "text-muted-foreground")}>{b}</button>)}
                             </div>
                             {/* FIX-FILTROS: botón Filtros avanzados (abanico desplegable) */}
                             <Button
@@ -793,12 +793,12 @@ export default function WalletView() {
                             </Button>
                             {/* FIX-EXCEL: toggle tarjeta/tabla estilo Excel */}
                             <div className="flex items-center gap-0.5 bg-muted/20 p-0.5 rounded-lg" role="group" aria-label="Vista de movimientos">
-                                <Button onClick={() => setMovimientosView('tarjeta')} className={cn("px-2 py-1 rounded text-[9px] font-bold uppercase flex items-center gap-1", movimientosView === 'tarjeta' ? "bg-primary text-primary-foreground" : "text-muted-foreground")} title="Vista tarjeta" aria-pressed={movimientosView === 'tarjeta'}>
+                                <button onClick={() => setMovimientosView('tarjeta')} className={cn("px-2 py-1 rounded text-[9px] font-bold uppercase flex items-center gap-1", movimientosView === 'tarjeta' ? "bg-primary text-primary-foreground" : "text-muted-foreground")} title="Vista tarjeta" aria-pressed={movimientosView === 'tarjeta'}>
                                     <LayoutGrid className="w-3 h-3" /> Tarjeta
-                                </Button>
-                                <Button onClick={() => setMovimientosView('tabla')} className={cn("px-2 py-1 rounded text-[9px] font-bold uppercase flex items-center gap-1", movimientosView === 'tabla' ? "bg-primary text-primary-foreground" : "text-muted-foreground")} title="Vista tabla" aria-pressed={movimientosView === 'tabla'}>
+                                </button>
+                                <button onClick={() => setMovimientosView('tabla')} className={cn("px-2 py-1 rounded text-[9px] font-bold uppercase flex items-center gap-1", movimientosView === 'tabla' ? "bg-primary text-primary-foreground" : "text-muted-foreground")} title="Vista tabla" aria-pressed={movimientosView === 'tabla'}>
                                     <TableIcon className="w-3 h-3" /> Tabla
-                                </Button>
+                                </button>
                             </div>
                         </div>
 
@@ -809,9 +809,9 @@ export default function WalletView() {
                                     <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
                                         <Filter className="w-3 h-3" /> Filtros Avanzados
                                     </h3>
-                                    <Button onClick={resetFilters} className="text-[9px] font-bold uppercase text-muted-foreground hover:text-destructive flex items-center gap-1" title="Limpiar filtros">
+                                    <button onClick={resetFilters} className="text-[9px] font-bold uppercase text-muted-foreground hover:text-destructive flex items-center gap-1" title="Limpiar filtros">
                                         <RotateCcw className="w-3 h-3" /> Limpiar
-                                    </Button>
+                                    </button>
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-3">
@@ -918,14 +918,14 @@ export default function WalletView() {
                                             )}
                                             <div className="flex items-center gap-1.5">
                                                 <span className="text-[8px] text-muted-foreground/60">{tx.service_type}</span>
-                                                <Button
+                                                <button
                                                     onClick={() => handleDeleteTransaction(tx.id)}
                                                     className="text-muted-foreground/50 hover:text-destructive transition-colors p-0.5"
                                                     aria-label="Eliminar transacción"
                                                     title="Eliminar"
                                                 >
                                                     <Trash2 className="w-3 h-3" />
-                                                </Button>
+                                                </button>
                                             </div>
                                         </div>
                                     </Card>
@@ -979,17 +979,17 @@ export default function WalletView() {
                                                                 {(tx.operation === 'CR' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES).map(c => <option key={c} value={c}>{c}</option>)}
                                                             </select>
                                                         ) : (
-                                                            <Button onClick={() => setEditingTxId(tx.id)} className="text-[8px] font-bold uppercase hover:text-primary">
+                                                            <button onClick={() => setEditingTxId(tx.id)} className="text-[8px] font-bold uppercase hover:text-primary">
                                                                 {tx.manual_category || tx.category}
-                                                            </Button>
+                                                            </button>
                                                         )}
                                                     </td>
                                                     <td className="p-2 text-muted-foreground tabular-nums">{tx.card || '—'}</td>
                                                     {!viewingOther && (
                                                         <td className="p-2 text-center">
-                                                            <Button onClick={() => handleDeleteTransaction(tx.id)} className="text-muted-foreground/50 hover:text-destructive" aria-label={`Eliminar transacción ${tx.service}`}>
+                                                            <button onClick={() => handleDeleteTransaction(tx.id)} className="text-muted-foreground/50 hover:text-destructive" aria-label={`Eliminar transacción ${tx.service}`}>
                                                                 <Trash2 className="w-3 h-3" />
-                                                            </Button>
+                                                            </button>
                                                         </td>
                                                     )}
                                                 </tr>
@@ -1082,7 +1082,7 @@ export default function WalletView() {
                                         <div className="flex-1 min-w-0"><p className="text-[9px] font-bold truncate">{tx.service}</p><p className="text-[7px] text-muted-foreground">{tx.date} · {fmt(parseFloat(tx.amount))}</p></div>
                                         {editingTxId === tx.id ? (
                                             <select className="text-[8px] font-bold rounded border border-border bg-background px-1 h-5" onChange={e => handleSetCategory(tx.id, e.target.value)} defaultValue=""><option value="" disabled>...</option>{(tx.operation === 'CR' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES).map(c => <option key={c} value={c}>{c}</option>)}</select>
-                                        ) : <Button onClick={() => setEditingTxId(tx.id)} className="text-muted-foreground hover:text-primary shrink-0"><Edit2 className="w-3 h-3" /></Button>}
+                                        ) : <button onClick={() => setEditingTxId(tx.id)} className="text-muted-foreground hover:text-primary shrink-0"><Edit2 className="w-3 h-3" /></button>}
                                     </div>
                                 ))}
                                 {data.transactions.filter((t: any) => { const c = t.manual_category || t.category; return c === 'Otros' || c === 'Otros Ingresos'; }).length === 0 && <p className="text-[9px] text-muted-foreground text-center py-2">✓ Todo clasificado</p>}
@@ -1097,12 +1097,12 @@ export default function WalletView() {
                         {/* Toggle Tarjeta/Tabla + resumen anual */}
                         <div className="flex flex-wrap items-center justify-between gap-2">
                             <div className="flex items-center gap-0.5 bg-muted/20 p-0.5 rounded-lg" role="group" aria-label="Vista de reportes">
-                                <Button onClick={() => setReportesView('tarjeta')} className={cn("px-3 py-1.5 rounded text-[9px] font-bold uppercase flex items-center gap-1", reportesView === 'tarjeta' ? "bg-primary text-primary-foreground" : "text-muted-foreground")} aria-pressed={reportesView === 'tarjeta'}>
+                                <button onClick={() => setReportesView('tarjeta')} className={cn("px-3 py-1.5 rounded text-[9px] font-bold uppercase flex items-center gap-1", reportesView === 'tarjeta' ? "bg-primary text-primary-foreground" : "text-muted-foreground")} aria-pressed={reportesView === 'tarjeta'}>
                                     <LayoutGrid className="w-3 h-3" /> Tarjetas KPI
-                                </Button>
-                                <Button onClick={() => setReportesView('tabla')} className={cn("px-3 py-1.5 rounded text-[9px] font-bold uppercase flex items-center gap-1", reportesView === 'tabla' ? "bg-primary text-primary-foreground" : "text-muted-foreground")} aria-pressed={reportesView === 'tabla'}>
+                                </button>
+                                <button onClick={() => setReportesView('tabla')} className={cn("px-3 py-1.5 rounded text-[9px] font-bold uppercase flex items-center gap-1", reportesView === 'tabla' ? "bg-primary text-primary-foreground" : "text-muted-foreground")} aria-pressed={reportesView === 'tabla'}>
                                     <TableIcon className="w-3 h-3" /> Tabla
-                                </Button>
+                                </button>
                             </div>
                             <p className="text-[9px] font-bold uppercase text-muted-foreground">{monthlyKPIs.length} meses · {data.transactions.length} txs totales</p>
                         </div>
@@ -1277,9 +1277,9 @@ export default function WalletView() {
                                                 <h2 className="text-sm font-black uppercase">{kpi.label}</h2>
                                                 <p className="text-[8px] text-muted-foreground font-bold uppercase">Detalle de gastos por categoría</p>
                                             </div>
-                                            <Button onClick={() => setKpiModalMonth(null)} className="text-muted-foreground hover:text-foreground" aria-label="Cerrar">
+                                            <button onClick={() => setKpiModalMonth(null)} className="text-muted-foreground hover:text-foreground" aria-label="Cerrar">
                                                 <X className="w-4 h-4" />
-                                            </Button>
+                                            </button>
                                         </div>
 
                                         {/* Resumen rápido */}
@@ -1360,7 +1360,7 @@ export default function WalletView() {
                     <Card className="w-full max-w-lg rounded-3xl border-border/30 shadow-2xl p-5" onClick={e => e.stopPropagation()}>
                         <div className="flex justify-between items-center mb-3">
                             <h2 className="text-sm font-black uppercase">Importar archivo</h2>
-                            <Button onClick={() => setIsImporting(false)} className="text-muted-foreground hover:text-foreground" aria-label="Cerrar"><X className="w-4 h-4" /></Button>
+                            <button onClick={() => setIsImporting(false)} className="text-muted-foreground hover:text-foreground" aria-label="Cerrar"><X className="w-4 h-4" /></button>
                         </div>
                         {/* FIX-IMPORT-CLICK: input fuera del div clickable */}
                         <input
@@ -1421,22 +1421,22 @@ export default function WalletView() {
                 FIX-ADMIN-VIEW: ocultar cuando el admin está viendo otra billetera (modo lectura). */}
             {data && !viewingOther && (
             <div className="fixed bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-3 z-50">
-                <Button onClick={() => { setAddType('DB'); setShowAddModal(true); }}
+                <button onClick={() => { setAddType('DB'); setShowAddModal(true); }}
                     className="w-14 h-14 rounded-full bg-red-500 text-white shadow-xl flex items-center justify-center hover:scale-110 transition-transform"
                     aria-label="Agregar gasto">
                     <span className="text-2xl font-black">−</span>
-                </Button>
+                </button>
                 <div className="px-4 py-2 rounded-full bg-card border border-border/30 shadow-lg">
                     <p className="text-[8px] font-bold uppercase text-muted-foreground text-center">Balance</p>
                     <p className={cn("text-sm font-black italic text-center", (data?.summary?.balance || 0) >= 0 ? "text-emerald-500" : "text-red-500")}>
                         {fmtShort(data?.summary?.balance || 0)}
                     </p>
                 </div>
-                <Button onClick={() => { setAddType('CR'); setShowAddModal(true); }}
+                <button onClick={() => { setAddType('CR'); setShowAddModal(true); }}
                     className="w-14 h-14 rounded-full bg-emerald-500 text-white shadow-xl flex items-center justify-center hover:scale-110 transition-transform"
                     aria-label="Agregar ingreso">
                     <span className="text-2xl font-black">+</span>
-                </Button>
+                </button>
             </div>
             )}
 
@@ -1446,7 +1446,7 @@ export default function WalletView() {
                     <Card className="w-full max-w-sm rounded-3xl border-border/30 shadow-2xl p-5" onClick={e => e.stopPropagation()}>
                         <div className="flex justify-between items-center mb-4">
                             <h2 className="text-sm font-black uppercase">{addType === 'CR' ? '🟢 Nuevo Ingreso' : '🔴 Nuevo Gasto'}</h2>
-                            <Button onClick={() => setShowAddModal(false)} className="text-muted-foreground hover:text-foreground"><X className="w-4 h-4" /></Button>
+                            <button onClick={() => setShowAddModal(false)} className="text-muted-foreground hover:text-foreground"><X className="w-4 h-4" /></button>
                         </div>
                         <div className="space-y-3">
                             <div>

@@ -36,7 +36,6 @@ import { DocumentStatusBadge, canReverse } from '@/components/ui/DocumentStatusB
 import { ReverseDocumentModal } from '@/components/ui/ReverseDocumentModal';
 import { DuplicateDocumentModal } from '@/components/ui/DuplicateDocumentModal';
 
-import { Button } from "@/components/ui/button";
 const STATUS_OPTIONS: { value: TransferStatus | 'TODOS'; label: string; icon: typeof Clock }[] = [
   { value: 'TODOS', label: 'Todos', icon: ArrowLeftRight },
   { value: 'PENDIENTE', label: 'Pendiente', icon: Clock },
@@ -237,7 +236,7 @@ export default function TransferenciasView() {
           onKeyDown={handleTabKeyDown}
         >
           {tabs.map((tab) => (
-            <Button
+            <button
               type="button"
               key={tab.id}
               id={`tab-${tab.id}`}
@@ -256,14 +255,14 @@ export default function TransferenciasView() {
             >
               <tab.icon className="w-4 h-4" />
               {tab.label}
-            </Button>
+            </button>
           ))}
         </div>
 
         {/* Filtro por estado */}
         <div className="flex gap-2 flex-wrap" role="radiogroup" aria-label="Filtrar por estado">
           {STATUS_OPTIONS.map((s) => (
-            <Button
+            <button
               type="button"
               key={s.value}
               role="radio"
@@ -278,7 +277,7 @@ export default function TransferenciasView() {
             >
               <s.icon className="w-3 h-3" />
               {s.label}
-            </Button>
+            </button>
           ))}
         </div>
       </div>
@@ -400,7 +399,7 @@ export default function TransferenciasView() {
 
                       {/* V2.2: botón Revertir transferencia confirmada */}
                       {canReverse('transfer', t.status) && activeTab === 'outgoing' && (
-                        <Button
+                        <button
                           type="button"
                           onClick={(e) => {
                             e.stopPropagation();
@@ -414,11 +413,11 @@ export default function TransferenciasView() {
                           aria-label="Revertir transferencia"
                         >
                           <Undo2 className="w-4 h-4" />
-                        </Button>
+                        </button>
                       )}
 
                       {/* V2.4: botón Duplicar transferencia — abre modal */}
-                      <Button
+                      <button
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation();
@@ -433,7 +432,7 @@ export default function TransferenciasView() {
                         aria-label="Duplicar transferencia"
                       >
                         <Copy className="w-4 h-4" />
-                      </Button>
+                      </button>
                     </div>
                   </div>
                 ))}

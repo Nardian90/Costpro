@@ -52,7 +52,6 @@ import { useMultiStoreDashboard } from '@/hooks/api/useMultiStoreDashboard';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { apiFetch } from '@/lib/api-fetch';
-import { Button } from "@/components/ui/button";
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 
@@ -239,7 +238,7 @@ export default function StoresManagementView({ onOpenDashboard }: { onOpenDashbo
                 { id: 'inactive' as const, label: 'Inactivas' },
                 { id: 'all' as const, label: 'Todas' },
               ]).map(f => (
-                <Button
+                <button
                   key={f.id}
                   onClick={() => setStatusFilter(f.id)}
                   className={cn(
@@ -254,7 +253,7 @@ export default function StoresManagementView({ onOpenDashboard }: { onOpenDashbo
                   )}
                 >
                   {f.label}
-                </Button>
+                </button>
               ))}
             </div>
           )}
@@ -302,9 +301,9 @@ export default function StoresManagementView({ onOpenDashboard }: { onOpenDashbo
             <div className="col-span-full py-24 flex flex-col items-center justify-center gap-3 border-2 border-destructive/30 rounded-xl bg-destructive/5">
               <AlertTriangle className="w-12 h-12 text-destructive/60" aria-hidden="true" />
               <p className="font-black uppercase text-sm text-destructive">Error al cargar tiendas</p>
-              <Button onClick={() => refetch()} className="min-h-[44px] px-4 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-black uppercase hover:opacity-90 flex items-center gap-2">
+              <button onClick={() => refetch()} className="min-h-[44px] px-4 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-black uppercase hover:opacity-90 flex items-center gap-2">
                 <RotateCcw className="w-4 h-4" /> Reintentar
-              </Button>
+              </button>
             </div>
           )}
 
@@ -365,56 +364,56 @@ export default function StoresManagementView({ onOpenDashboard }: { onOpenDashbo
                 {selectedCount} selec.
               </span>
               <div className="h-4 w-px bg-border" />
-              <Button
+              <button
                 type="button"
                 onClick={() => handleBulkAction('activate')}
                 disabled={bulkAction.isPending}
                 className="min-h-[44px] px-3 py-2.5 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-400 text-sm font-black uppercase tracking-widest transition-colors disabled:opacity-50"
               >
                 Activar
-              </Button>
-              <Button
+              </button>
+              <button
                 type="button"
                 onClick={() => handleBulkAction('deactivate')}
                 disabled={bulkAction.isPending}
                 className="min-h-[44px] px-3 py-2.5 rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-100 dark:bg-amber-950/40 dark:text-amber-400 text-sm font-black uppercase tracking-widest transition-colors disabled:opacity-50"
               >
                 Pausar
-              </Button>
+              </button>
               {/* F4-T03: aplicar plantilla FC a múltiples tiendas */}
-              <Button
+              <button
                 type="button"
                 onClick={() => setBulkTemplateOpen(true)}
                 disabled={bulkAction.isPending}
                 className="min-h-[44px] px-3 py-2.5 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 text-sm font-black uppercase tracking-widest transition-colors disabled:opacity-50"
               >
                 Aplicar FC
-              </Button>
-              <Button
+              </button>
+              <button
                 type="button"
                 onClick={() => handleBulkAction('delete')}
                 disabled={bulkAction.isPending}
                 className="min-h-[44px] px-3 py-2.5 rounded-lg bg-destructive/10 text-destructive hover:bg-destructive hover:text-foreground text-sm font-black uppercase tracking-widest transition-colors disabled:opacity-50"
               >
                 Eliminar
-              </Button>
+              </button>
               <div className="flex-1" />
-              <Button
+              <button
                 type="button"
                 onClick={selectAll}
                 className="px-2 py-1.5 text-sm font-black uppercase tracking-widest text-muted-foreground hover:text-foreground"
                 title={t('selectAllTitle')}
               >
                 {t('selectAll')}
-              </Button>
-              <Button
+              </button>
+              <button
                 type="button"
                 onClick={clearSelection}
                 className="p-2 rounded-lg hover:bg-muted text-muted-foreground"
                 aria-label={t('clearSelection')}
               >
                 <X className="w-4 h-4" />
-              </Button>
+              </button>
             </div>
           </div>
         )}

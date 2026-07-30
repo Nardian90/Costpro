@@ -68,7 +68,7 @@ const AccordionGroup = ({
 
   return (
     <div className="border-b border-sidebar-border/50 last:border-0">
-      <Button type="button"
+      <button type="button"
         onClick={onToggle}
         className={cn(
           "w-full flex items-center justify-between p-4 transition-colors",
@@ -86,7 +86,7 @@ const AccordionGroup = ({
         >
           <ChevronDown className="w-4 h-4 opacity-50" />
         </motion.div>
-      </Button>
+      </button>
       <AnimatePresence initial={false}>
         {(isOpen || isSearchActive) && (
           <motion.div
@@ -162,7 +162,7 @@ export const CostSheetActionsPanel: React.FC<CostSheetActionsPanelProps> = ({
     const finalVariant = variant || (action ? action.variant : 'outline');
 
     return (
-      <Button type="button"
+      <button type="button"
         key={id}
         onClick={() => handleAction(finalOnClick)}
         className={cn(
@@ -176,7 +176,7 @@ export const CostSheetActionsPanel: React.FC<CostSheetActionsPanelProps> = ({
       >
         <Icon className={cn("w-4.5 h-4.5", isActive ? "text-foreground" : "group-hover:text-sidebar-foreground transition-colors")} />
         <span className="text-xs font-bold uppercase tracking-widest">{label}</span>
-      </Button>
+      </button>
     );
   };
 
@@ -218,13 +218,13 @@ export const CostSheetActionsPanel: React.FC<CostSheetActionsPanelProps> = ({
                     <span className="text-xs font-bold uppercase tracking-[0.4em] text-sidebar-foreground/50">{APP_DISPLAY_VERSION}</span>
                 </div>
               </div>
-              <Button type="button"
+              <button type="button"
                 onClick={onClose}
                 className="p-2 rounded-xl hover:bg-primary/10 text-primary transition-colors active:scale-95"
                 aria-label="Cerrar panel de control"
               >
                 <XIcon className="w-5 h-5" />
-              </Button>
+              </button>
             </div>
 
             {/* Search Bar */}

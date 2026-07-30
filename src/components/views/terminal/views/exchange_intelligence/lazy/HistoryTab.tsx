@@ -154,13 +154,13 @@ function InfoTooltip({ title, children }: { title: string; children: React.React
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button
+        <button
           type="button"
           aria-label={`Más información sobre ${title}`}
           className="inline-flex items-center justify-center w-6 h-6 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
         >
           <Info className="w-4 h-4" />
-        </Button>
+        </button>
       </PopoverTrigger>
       <PopoverContent
         side="bottom"
@@ -525,7 +525,7 @@ function HistoryTab({ data }: any) {
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-xs font-black uppercase tracking-widest text-muted-foreground mr-1">Rango:</span>
           {presets.map(r => (
-            <Button
+            <button
               key={r.value}
               onClick={() => {
                 setPreset(r.value);
@@ -539,9 +539,9 @@ function HistoryTab({ data }: any) {
               )}
             >
               {r.label}
-            </Button>
+            </button>
           ))}
-          <Button
+          <button
             onClick={() => setUseCustomRange(!useCustomRange)}
             className={cn(
               'px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all min-h-[36px] border flex items-center gap-1.5',
@@ -552,10 +552,10 @@ function HistoryTab({ data }: any) {
           >
             <CalendarIcon className="w-3.5 h-3.5" />
             Personalizado
-          </Button>
+          </button>
 
           {/* Botón Avanzado colapsable */}
-          <Button
+          <button
             onClick={() => setAdvancedOpen(!advancedOpen)}
             className={cn(
               'ml-auto px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all min-h-[36px] border flex items-center gap-1.5',
@@ -568,7 +568,7 @@ function HistoryTab({ data }: any) {
             <Settings2 className="w-3.5 h-3.5" />
             Avanzado
             <ChevronDown className={cn('w-3.5 h-3.5 transition-transform', advancedOpen && 'rotate-180')} />
-          </Button>
+          </button>
         </div>
 
         {/* Date pickers (solo si custom range activo) */}
@@ -635,7 +635,7 @@ function HistoryTab({ data }: any) {
                 {CHART_MODES.map(m => {
                   const Icon = m.icon;
                   return (
-                    <Button
+                    <button
                       key={m.id}
                       onClick={() => setChartMode(m.id)}
                       title={`Modo ${m.label}`}
@@ -648,7 +648,7 @@ function HistoryTab({ data }: any) {
                     >
                       <Icon className="w-3.5 h-3.5" />
                       {m.label}
-                    </Button>
+                    </button>
                   );
                 })}
               </div>
@@ -679,7 +679,7 @@ function HistoryTab({ data }: any) {
                     : m.id === 'poly2' ? trendR2Info?.r2Poly2
                     : undefined;
                   return (
-                    <Button
+                    <button
                       key={m.id}
                       onClick={() => handleTrendMethodChange(m.id)}
                       title={m.description}
@@ -707,7 +707,7 @@ function HistoryTab({ data }: any) {
                           MEJOR
                         </span>
                       )}
-                    </Button>
+                    </button>
                   );
                 })}
               </div>
@@ -747,7 +747,7 @@ function HistoryTab({ data }: any) {
                   </p>
                 </InfoTooltip>
                 {[0, 3, 7, 14, 30].map(d => (
-                  <Button
+                  <button
                     key={d}
                     onClick={() => setForecastDays(d)}
                     className={cn(
@@ -758,7 +758,7 @@ function HistoryTab({ data }: any) {
                     )}
                   >
                     {d === 0 ? 'Sin proy.' : `+${d}d`}
-                  </Button>
+                  </button>
                 ))}
                 <input
                   type="number"
@@ -1053,7 +1053,7 @@ function HistoryTab({ data }: any) {
           <div className="flex items-center gap-2">
             <span className="text-xs text-muted-foreground italic mr-1">Fuente:</span>
             {VARIATION_SOURCES.map(s => (
-              <Button
+              <button
                 key={s.id}
                 onClick={() => setVariationSource(s.id)}
                 className={cn(
@@ -1064,7 +1064,7 @@ function HistoryTab({ data }: any) {
                 )}
               >
                 {s.label}
-              </Button>
+              </button>
             ))}
           </div>
         </div>
@@ -1169,7 +1169,7 @@ function HistoryTab({ data }: any) {
           {/* Toggle elToque / BCC */}
           <div className="flex items-center gap-1 p-1 rounded-xl bg-muted/50 border border-border">
             {RATE_SOURCES.map(r => (
-              <Button
+              <button
                 key={r.id}
                 onClick={() => setRateSource(r.id)}
                 title={r.description}
@@ -1183,7 +1183,7 @@ function HistoryTab({ data }: any) {
                 )}
               >
                 {r.label}
-              </Button>
+              </button>
             ))}
           </div>
         </div>

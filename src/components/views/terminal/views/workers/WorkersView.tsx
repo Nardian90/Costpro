@@ -406,14 +406,14 @@ export function WorkersView() {
             <span className="hidden sm:inline">Nuevo trabajador</span>
             <span className="sm:hidden">Nuevo</span>
           </Button>
-          <Button
+          <button
             onClick={fetchWorkers}
             disabled={loading}
             className="p-2.5 min-h-[44px] min-w-[44px] rounded-xl bg-muted hover:bg-primary/15 text-muted-foreground hover:text-primary transition-colors border border-border"
             aria-label="Refrescar"
           >
             <RefreshCw className={cn('w-5 h-5', loading && 'animate-spin')} />
-          </Button>
+          </button>
         </div>
       </div>
 
@@ -742,7 +742,7 @@ function WorkersTab({
       <div className="rounded-xl border-2 border-destructive/50 bg-destructive/15 p-4 flex items-start gap-3">
         <AlertTriangle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
         <p className="text-sm text-foreground flex-1">{error}</p>
-        <Button onClick={onRefresh} className="px-3 py-2 min-h-[44px] rounded-lg bg-destructive text-destructive-foreground text-xs font-bold uppercase tracking-widest" aria-label="Reintentar carga de trabajadores">Reintentar</Button>
+        <button onClick={onRefresh} className="px-3 py-2 min-h-[44px] rounded-lg bg-destructive text-destructive-foreground text-xs font-bold uppercase tracking-widest" aria-label="Reintentar carga de trabajadores">Reintentar</button>
       </div>
     );
   }
@@ -759,9 +759,9 @@ function WorkersTab({
           <label className="text-xs font-black uppercase tracking-widest text-muted-foreground block mb-1">Hasta</label>
           <input type="date" value={dateTo} onChange={(e) => onDateToChange(e.target.value)} className="h-11 px-3 rounded-xl border-2 border-border bg-background text-sm font-bold min-h-[44px] text-foreground" />
         </div>
-        <Button onClick={onRefresh} className="h-11 px-4 rounded-xl bg-primary text-primary-foreground text-sm font-black uppercase tracking-widest hover:bg-primary/90 min-h-[44px]">
+        <button onClick={onRefresh} className="h-11 px-4 rounded-xl bg-primary text-primary-foreground text-sm font-black uppercase tracking-widest hover:bg-primary/90 min-h-[44px]">
           Actualizar
-        </Button>
+        </button>
       </div>
 
       {/* Tabla */}
@@ -828,7 +828,7 @@ function WorkersTab({
                     <td className="py-2 px-2 sm:py-3 sm:px-4">
                       <div className="flex items-center justify-center gap-1 flex-wrap">
                         {/* Pagar comisión */}
-                        <Button
+                        <button
                           onClick={() => onPayCommission(w)}
                           disabled={w.status !== 'active'}
                           className="px-2 py-1.5 rounded-lg bg-primary text-primary-foreground text-[10px] font-black uppercase tracking-wider hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed min-h-[44px] flex items-center gap-1"
@@ -837,18 +837,18 @@ function WorkersTab({
                         >
                           <DollarSign className="w-3 h-3" />
                           <span className="hidden sm:inline">Pagar</span>
-                        </Button>
+                        </button>
                         {/* Editar */}
-                        <Button
+                        <button
                           onClick={() => onEditWorker(w)}
                           className="p-2 rounded-lg bg-muted/50 text-muted-foreground hover:bg-primary/10 hover:text-primary border border-border min-h-[44px] min-w-[44px] flex items-center justify-center"
                           title="Editar datos del trabajador"
                           aria-label={`Editar ${w.first_name}`}
                         >
                           <Edit3 className="w-3.5 h-3.5" />
-                        </Button>
+                        </button>
                         {/* Activar / Inactivar */}
-                        <Button
+                        <button
                           onClick={() => handleToggleStatus(w)}
                           disabled={togglingId === w.worker_id}
                           className={cn(
@@ -867,7 +867,7 @@ function WorkersTab({
                           ) : (
                             <UserCheck className="w-3.5 h-3.5" />
                           )}
-                        </Button>
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -1095,15 +1095,15 @@ function PayCommissionModal({ worker, onClose, onPaid }: {
       }
       footer={
         <div className="flex items-center justify-between gap-2 w-full">
-          <Button
+          <button
             onClick={() => step > 1 ? setStep(step - 1) : onClose()}
             className="px-4 py-2 rounded-xl bg-muted hover:bg-muted/80 text-foreground text-sm font-bold min-h-[44px]"
           >
             {step === 1 ? 'Cancelar' : <><ChevronLeft className="w-4 h-4 inline" /> Atrás</>}
-          </Button>
+          </button>
 
           {step === 1 && (
-            <Button
+            <button
               onClick={() => {
                 if (payMode === 'manual') {
                   setStep(2);
@@ -1117,13 +1117,13 @@ function PayCommissionModal({ worker, onClose, onPaid }: {
               className="px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-black uppercase tracking-widest hover:bg-primary/90 disabled:opacity-50 min-h-[44px]"
             >
               {payMode === 'manual' ? 'Cargar productos' : 'Calcular'} <ChevronRight className="w-4 h-4 inline" />
-            </Button>
+            </button>
           )}
           {step === 2 && (calculating || loadingProducts) && (
             <span className="text-sm text-muted-foreground">{payMode === 'manual' ? 'Cargando productos...' : 'Calculando...'}</span>
           )}
           {step === 3 && calculation && (
-            <Button
+            <button
               onClick={() => {
                 const finalAmt = parseFloat(finalAmount) || 0;
                 if (Math.abs(finalAmt - calculation.commission_suggested) > 0.01 && !adjustmentReason.trim()) {
@@ -1135,16 +1135,16 @@ function PayCommissionModal({ worker, onClose, onPaid }: {
               className="px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-black uppercase tracking-widest hover:bg-primary/90 min-h-[44px]"
             >
               Revisar <ChevronRight className="w-4 h-4 inline" />
-            </Button>
+            </button>
           )}
           {step === 4 && (
-            <Button
+            <button
               onClick={handleSave}
               disabled={saving}
               className="px-4 py-2 rounded-xl bg-success text-success-foreground text-sm font-black uppercase tracking-widest hover:bg-success/90 disabled:opacity-50 min-h-[44px]"
             >
               {saving ? 'Guardando...' : <><CheckCircle2 className="w-4 h-4 inline" /> Guardar</>}
-            </Button>
+            </button>
           )}
         </div>
       }
@@ -1203,7 +1203,7 @@ function PayCommissionModal({ worker, onClose, onPaid }: {
                   Modo de cálculo
                 </label>
                 <div className="grid grid-cols-2 gap-2">
-                  <Button
+                  <button
                     type="button"
                     onClick={() => setPayMode('rules')}
                     className={cn(
@@ -1218,8 +1218,8 @@ function PayCommissionModal({ worker, onClose, onPaid }: {
                       <span className="text-sm font-black uppercase tracking-wider text-foreground">Reglas</span>
                     </div>
                     <span className="text-xs text-muted-foreground">Cálculo automático según reglas configuradas</span>
-                  </Button>
-                  <Button
+                  </button>
+                  <button
                     type="button"
                     onClick={() => setPayMode('manual')}
                     className={cn(
@@ -1234,7 +1234,7 @@ function PayCommissionModal({ worker, onClose, onPaid }: {
                       <span className="text-sm font-black uppercase tracking-wider text-foreground">Manual</span>
                     </div>
                     <span className="text-xs text-muted-foreground">Comisión por producto, editable línea a línea</span>
-                  </Button>
+                  </button>
                 </div>
                 {payMode === 'manual' && (
                   <p className="text-xs text-warning mt-2 italic">
@@ -1618,17 +1618,17 @@ function RulesTab({ rules, storeId, onRefresh, onEdit, onNew }: any) {
         <h3 className="text-base font-black uppercase tracking-widest text-foreground">
           Reglas de comisión ({rules.length})
         </h3>
-        <Button
+        <button
           onClick={onNew}
           className="px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-black uppercase tracking-widest hover:bg-primary/90 min-h-[44px] flex items-center gap-2"
         >
           <Plus className="w-4 h-4" /> Nueva regla
-        </Button>
+        </button>
       </div>
 
       {/* Sub-tabs: Lista de reglas | Catálogo por producto — scroll horizontal en móvil */}
       <div className="flex gap-2 border-b border-border overflow-x-auto" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-        <Button
+        <button
           onClick={() => setSubTab('list')}
           className={cn(
             'px-4 py-2 text-xs font-black uppercase tracking-widest border-b-2 transition-colors min-h-[44px] flex items-center gap-2 whitespace-nowrap shrink-0',
@@ -1638,8 +1638,8 @@ function RulesTab({ rules, storeId, onRefresh, onEdit, onNew }: any) {
           )}
         >
           <Settings className="w-3.5 h-3.5" /> Lista
-        </Button>
-        <Button
+        </button>
+        <button
           onClick={() => setSubTab('catalog')}
           className={cn(
             'px-4 py-2 text-xs font-black uppercase tracking-widest border-b-2 transition-colors min-h-[44px] flex items-center gap-2 whitespace-nowrap shrink-0',
@@ -1649,7 +1649,7 @@ function RulesTab({ rules, storeId, onRefresh, onEdit, onNew }: any) {
           )}
         >
           <Package className="w-3.5 h-3.5" /> Por producto
-        </Button>
+        </button>
       </div>
 
       {subTab === 'list' ? (
@@ -1709,13 +1709,13 @@ function RulesTab({ rules, storeId, onRefresh, onEdit, onNew }: any) {
                       {formatDate(r.valid_from)} → {r.valid_to ? formatDate(r.valid_to) : '∞'}
                     </td>
                     <td className="py-2 px-2 sm:py-3 sm:px-4 text-center">
-                      <Button
+                      <button
                         onClick={() => onEdit(r)}
                         className="p-2.5 min-h-[44px] min-w-[44px] rounded-lg hover:bg-muted text-muted-foreground hover:text-primary flex items-center justify-center"
                         aria-label="Editar regla"
                       >
                         <Edit3 className="w-4 h-4" />
-                      </Button>
+                      </button>
                     </td>
                   </tr>
                 ))}
@@ -1980,7 +1980,7 @@ function ProductCommissionCatalog({ storeId, onRefresh }: { storeId: string; onR
       <div className="rounded-xl border-2 border-destructive/50 bg-destructive/15 p-4 flex items-start gap-3">
         <AlertTriangle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
         <p className="text-sm text-foreground flex-1">{error}</p>
-        <Button onClick={loadCatalog} className="px-3 py-2 min-h-[44px] rounded-lg bg-destructive text-destructive-foreground text-xs font-bold uppercase tracking-widest">Reintentar</Button>
+        <button onClick={loadCatalog} className="px-3 py-2 min-h-[44px] rounded-lg bg-destructive text-destructive-foreground text-xs font-bold uppercase tracking-widest">Reintentar</button>
       </div>
     );
   }
@@ -2006,7 +2006,7 @@ function ProductCommissionCatalog({ storeId, onRefresh }: { storeId: string; onR
           </span>
         </div>
         <div className="flex gap-2">
-          <Button
+          <button
             onClick={() => setShowRatesModal(true)}
             className="px-3 py-2 rounded-xl border border-primary/30 bg-primary/5 text-primary text-xs font-black uppercase tracking-widest hover:bg-primary/10 min-h-[44px] flex items-center gap-2 flex-1 sm:flex-initial justify-center"
             title="Configurar tasas de cambio de la tienda (USD, EUR, MLC → CUP)"
@@ -2014,23 +2014,23 @@ function ProductCommissionCatalog({ storeId, onRefresh }: { storeId: string; onR
           >
             <TrendingUp className="w-4 h-4" />
             <span className="hidden sm:inline">Tasas</span>
-          </Button>
-          <Button
+          </button>
+          <button
             onClick={() => setBulkOpen(!bulkOpen)}
             className="px-3 py-2 rounded-xl border border-border text-xs font-black uppercase tracking-widest hover:bg-muted min-h-[44px] flex items-center gap-2 flex-1 sm:flex-initial justify-center"
             aria-label="Aplicar comisión en masa"
           >
             <Layers className="w-4 h-4" />
             <span className="hidden sm:inline">En masa</span>
-          </Button>
-          <Button
+          </button>
+          <button
             onClick={handleSave}
             disabled={saving || productCount === 0}
             className="px-4 py-2 rounded-xl bg-primary text-primary-foreground text-xs font-black uppercase tracking-widest hover:bg-primary/90 disabled:opacity-50 min-h-[44px] flex items-center gap-2 flex-1 sm:flex-initial justify-center"
           >
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
             <span>{saving ? '...' : `Guardar (${productCount})`}</span>
-          </Button>
+          </button>
         </div>
       </div>
 
@@ -2148,8 +2148,8 @@ function ProductCommissionCatalog({ storeId, onRefresh }: { storeId: string; onR
             </div>
           )}
           <div className="flex gap-2 pt-1">
-            <Button onClick={() => setBulkOpen(false)} className="px-3 py-2 rounded-lg border border-border text-xs font-bold uppercase hover:bg-muted min-h-[44px] flex-1 sm:flex-initial">Cancelar</Button>
-            <Button onClick={applyBulk} className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-black uppercase hover:bg-primary/90 min-h-[44px] flex-1">Aplicar</Button>
+            <button onClick={() => setBulkOpen(false)} className="px-3 py-2 rounded-lg border border-border text-xs font-bold uppercase hover:bg-muted min-h-[44px] flex-1 sm:flex-initial">Cancelar</button>
+            <button onClick={applyBulk} className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-black uppercase hover:bg-primary/90 min-h-[44px] flex-1">Aplicar</button>
           </div>
         </div>
       )}
@@ -2372,30 +2372,30 @@ function PaymentsTab({ payments, onRefresh }: any) {
               {/* Acciones SIEMPRE visibles en móvil — incluso si están inactivas */}
               <div className="flex flex-wrap gap-1.5 pt-1 border-t border-border/20">
                 {p.status === 'draft' && (
-                  <Button
+                  <button
                     onClick={() => handleAction(p.id, 'approve')}
                     className="flex-1 min-h-[36px] px-2 py-1.5 rounded-lg text-[10px] font-black uppercase bg-primary/10 text-primary border border-primary/30 hover:bg-primary/20 active:scale-95 transition-transform"
                   >
                     ✓ Aprobar
-                  </Button>
+                  </button>
                 )}
                 {(p.status === 'draft' || p.status === 'approved') && (
-                  <Button
+                  <button
                     onClick={() => setPayingId(payingId === p.id ? null : p.id)}
                     className="flex-1 min-h-[36px] px-2 py-1.5 rounded-lg text-[10px] font-black uppercase bg-success/10 text-success border border-success/30 hover:bg-success/20 active:scale-95 transition-transform"
                   >
                     💰 Pagar
-                  </Button>
+                  </button>
                 )}
                 {/* Cancelar — visible para draft/approved (activo) y paid (como anular pago) */}
                 {p.status !== 'cancelled' ? (
-                  <Button
+                  <button
                     onClick={() => handleAction(p.id, 'cancel')}
                     className="min-h-[36px] w-9 px-2 py-1.5 rounded-lg text-[10px] font-black uppercase bg-destructive/10 text-destructive border border-destructive/30 hover:bg-destructive/20 active:scale-95 transition-transform"
                     title={p.status === 'paid' ? 'Anular pago' : 'Cancelar'}
                   >
                     ✕
-                  </Button>
+                  </button>
                 ) : (
                   <span className="flex-1 text-center text-[10px] font-black uppercase text-muted-foreground py-2">
                     Cancelado
@@ -2441,12 +2441,12 @@ function PaymentsTab({ payments, onRefresh }: any) {
                       className="h-9 bg-background border border-border/50 rounded px-2 text-xs font-bold min-h-[36px]"
                     />
                   )}
-                  <Button
+                  <button
                     onClick={() => handleAction(p.id, 'pay', payMethod, payCurrency, parseFloat(payRate) || 1.0)}
                     className="h-9 min-h-[36px] rounded-lg bg-success text-white text-[10px] font-black uppercase hover:opacity-90 active:scale-95 transition-transform"
                   >
                     Confirmar Pago
-                  </Button>
+                  </button>
                 </div>
               )}
             </div>
@@ -2493,30 +2493,30 @@ function PaymentsTab({ payments, onRefresh }: any) {
                     </td>
                     <td className="py-2 px-2 sm:py-3 sm:px-4">
                       {p.status === 'draft' && (
-                        <Button
+                        <button
                           onClick={() => handleAction(p.id, 'approve')}
                           className="px-2 py-1 rounded text-[10px] font-black uppercase bg-primary/10 text-primary border border-primary/30 hover:bg-primary/20 mr-1"
                         >
                           ✓ Aprobar
-                        </Button>
+                        </button>
                       )}
                       {(p.status === 'draft' || p.status === 'approved') && (
-                        <Button
+                        <button
                           onClick={() => setPayingId(payingId === p.id ? null : p.id)}
                           className="px-2 py-1 rounded text-[10px] font-black uppercase bg-success/10 text-success border border-success/30 hover:bg-success/20 mr-1"
                         >
                           💰 Pagar
-                        </Button>
+                        </button>
                       )}
                       {/* Cancelar — visible para draft/approved/paid (como anular pago) */}
                       {p.status !== 'cancelled' ? (
-                        <Button
+                        <button
                           onClick={() => handleAction(p.id, 'cancel')}
                           className="px-2 py-1 rounded text-[10px] font-black uppercase bg-destructive/10 text-destructive border border-destructive/30 hover:bg-destructive/20"
                           title={p.status === 'paid' ? 'Anular pago' : 'Cancelar'}
                         >
                           ✕
-                        </Button>
+                        </button>
                       ) : (
                         <span className="text-[10px] font-black uppercase text-muted-foreground">Cancelado</span>
                       )}
@@ -2533,9 +2533,9 @@ function PaymentsTab({ payments, onRefresh }: any) {
                           {payCurrency !== 'CUP' && (
                             <input type="number" inputMode="decimal" step="0.01" value={payRate} onChange={(e) => setPayRate(e.target.value)} placeholder="Tasa CUP" className="h-8 bg-background border border-border/50 rounded px-2 text-xs font-bold" />
                           )}
-                          <Button onClick={() => handleAction(p.id, 'pay', payMethod, payCurrency, parseFloat(payRate) || 1.0)} className="h-8 rounded bg-success text-white text-[10px] font-black uppercase hover:opacity-90">
+                          <button onClick={() => handleAction(p.id, 'pay', payMethod, payCurrency, parseFloat(payRate) || 1.0)} className="h-8 rounded bg-success text-white text-[10px] font-black uppercase hover:opacity-90">
                             Confirmar Pago
-                          </Button>
+                          </button>
                         </div>
                       )}
                     </td>
@@ -2759,29 +2759,29 @@ function RuleFormModal({
         <div className="flex items-center justify-between gap-2 w-full">
           <div>
             {editingRule && (
-              <Button
+              <button
                 onClick={handleDelete}
                 disabled={deleting}
                 className="px-4 py-2 rounded-xl bg-destructive/10 text-destructive border border-destructive/30 text-sm font-bold hover:bg-destructive/20 min-h-[44px]"
               >
                 {deleting ? 'Eliminando...' : 'Eliminar'}
-              </Button>
+              </button>
             )}
           </div>
           <div className="flex gap-2">
-            <Button
+            <button
               onClick={onClose}
               className="px-4 py-2 rounded-xl bg-muted hover:bg-muted/80 text-foreground text-sm font-bold min-h-[44px]"
             >
               Cancelar
-            </Button>
-            <Button
+            </button>
+            <button
               onClick={handleSave}
               disabled={saving}
               className="px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-black uppercase tracking-widest hover:bg-primary/90 disabled:opacity-50 min-h-[44px]"
             >
               {saving ? 'Guardando...' : (editingRule ? 'Actualizar' : 'Crear regla')}
-            </Button>
+            </button>
           </div>
         </div>
       }
@@ -2963,7 +2963,7 @@ function RuleFormModal({
                 {searchResults.length > 0 && (
                   <div className="bg-muted/30 rounded-lg border border-border max-h-40 overflow-y-auto mb-2">
                     {searchResults.map((p: any) => (
-                      <Button
+                      <button
                         key={p.id}
                         type="button"
                         onClick={() => {
@@ -2977,7 +2977,7 @@ function RuleFormModal({
                         <div className="text-xs text-muted-foreground">
                           SKU: {p.sku || '—'} · Precio: {formatCurrency(p.price || 0)}
                         </div>
-                      </Button>
+                      </button>
                     ))}
                   </div>
                 )}
@@ -2991,14 +2991,14 @@ function RuleFormModal({
                           <span className="text-sm font-bold text-foreground">
                             {prod?.name || `Producto ${pid.substring(0, 8)}...`}
                           </span>
-                          <Button
+                          <button
                             type="button"
                             onClick={() => toggleProduct(pid)}
                             className="p-1 rounded hover:bg-destructive/10 text-destructive"
                             aria-label="Quitar producto"
                           >
                             <X className="w-4 h-4" />
-                          </Button>
+                          </button>
                         </div>
                       );
                     })}
@@ -3250,20 +3250,20 @@ function EditWorkerModal({
       }
       footer={
         <div className="flex items-center justify-end gap-2 w-full">
-          <Button
+          <button
             onClick={onClose}
             className="px-4 py-2 rounded-xl bg-muted hover:bg-muted/80 text-foreground text-sm font-bold min-h-[44px]"
           >
             Cancelar
-          </Button>
-          <Button
+          </button>
+          <button
             onClick={handleSave}
             disabled={saving || !form.first_name.trim() || !form.last_name.trim() || form.ci.length !== 11}
             className="px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-black uppercase tracking-widest hover:bg-primary/90 disabled:opacity-50 min-h-[44px] flex items-center gap-2"
           >
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
             {saving ? 'Guardando...' : 'Guardar cambios'}
-          </Button>
+          </button>
         </div>
       }
     >
@@ -3402,7 +3402,7 @@ function EditWorkerModal({
           <div className="space-y-3">
             <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Estado del trabajador</p>
             <div className="grid grid-cols-2 gap-2">
-              <Button
+              <button
                 type="button"
                 onClick={() => updateForm('status', 'active')}
                 className={cn(
@@ -3414,8 +3414,8 @@ function EditWorkerModal({
               >
                 <UserCheck className="w-4 h-4" />
                 <span className="text-sm font-black uppercase tracking-wider">Activo</span>
-              </Button>
-              <Button
+              </button>
+              <button
                 type="button"
                 onClick={() => updateForm('status', 'inactive')}
                 className={cn(
@@ -3427,7 +3427,7 @@ function EditWorkerModal({
               >
                 <UserX className="w-4 h-4" />
                 <span className="text-sm font-black uppercase tracking-wider">Inactivo</span>
-              </Button>
+              </button>
             </div>
             <p className="text-xs text-muted-foreground italic">
               Un trabajador inactivo no aparece en cálculos de comisión ni puede recibir pagos nuevos, pero su histórico se conserva.
@@ -3445,14 +3445,14 @@ function ProductBreakdownHelp() {
   const [open, setOpen] = useState(false);
   return (
     <div className="relative inline-block">
-      <Button
+      <button
         onClick={() => setOpen(!open)}
         className="p-1 rounded-full hover:bg-muted text-muted-foreground hover:text-primary min-h-[28px] min-w-[28px] flex items-center justify-center"
         aria-label="Ayuda sobre el desglose por producto"
         aria-expanded={open}
       >
         <HelpCircle className="w-3.5 h-3.5" />
-      </Button>
+      </button>
       {open && (
         <>
           {/* Overlay para cerrar al hacer clic fuera */}
@@ -3461,9 +3461,9 @@ function ProductBreakdownHelp() {
           <div className="absolute top-full right-0 mt-1 z-50 w-[340px] max-w-[calc(100vw-2rem)] bg-card border-2 border-border rounded-xl shadow-2xl p-4 space-y-3 max-h-[400px] overflow-y-auto">
             <div className="flex items-center justify-between">
               <h5 className="text-xs font-black uppercase tracking-widest text-primary">¿Cómo funciona?</h5>
-              <Button onClick={() => setOpen(false)} className="text-muted-foreground hover:text-foreground p-1" aria-label="Cerrar ayuda">
+              <button onClick={() => setOpen(false)} className="text-muted-foreground hover:text-foreground p-1" aria-label="Cerrar ayuda">
                 <X className="w-3 h-3" />
-              </Button>
+              </button>
             </div>
 
             {/* TUTORIAL — qué hacer */}

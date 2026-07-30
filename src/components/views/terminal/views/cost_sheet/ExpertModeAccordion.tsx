@@ -49,7 +49,7 @@ export const ExpertModeAccordion: React.FC<ExpertModeAccordionProps> = ({
           isExpanded ? "bg-primary/5" : "hover:bg-muted/50"
         )}
       >
-        <Button
+        <button
           id={headerId}
           type="button"
           aria-expanded={isExpanded}
@@ -70,7 +70,7 @@ export const ExpertModeAccordion: React.FC<ExpertModeAccordionProps> = ({
               {hasErrors && <div className="w-2 h-2 rounded-full bg-destructive animate-pulse" />}
             </h3>
           </div>
-        </Button>
+        </button>
 
         <div className="flex items-center gap-2">
           <div className="text-xs font-black tracking-widest text-muted-foreground/70 mr-2">
@@ -90,7 +90,7 @@ export const ExpertModeAccordion: React.FC<ExpertModeAccordionProps> = ({
             <HelpCircle className="w-5 h-5" />
           </Button>
           {!icon && (
-            <Button
+            <button
               type="button"
               tabIndex={0}
               aria-label={`Expandir o contraer ${title}`}
@@ -98,7 +98,7 @@ export const ExpertModeAccordion: React.FC<ExpertModeAccordionProps> = ({
               onClick={onToggle}
             >
               <ChevronRight className={cn("w-5 h-5 text-muted-foreground/70 transition-transform duration-300", isExpanded && "rotate-90")} />
-            </Button>
+            </button>
           )}
         </div>
       </div>

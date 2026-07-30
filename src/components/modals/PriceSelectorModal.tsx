@@ -5,7 +5,6 @@ import { BaseModal } from '@/components/ui/BaseModal';
 import { PrimaryButton, SecondaryButton } from '@/components/ui/atomic';
 import { formatCurrency } from '@/lib/utils';
 import { Product } from '@/types';
-import { Button } from "@/components/ui/button";
 import { DollarSign, Tag, Package } from 'lucide-react';
 
 interface PriceSelectorModalProps {
@@ -38,7 +37,7 @@ export const PriceSelectorModal: React.FC<PriceSelectorModalProps> = ({
     >
       <div className="py-4 space-y-3">
         {/* Base Price Option */}
-        <Button
+        <button
           onClick={() => onSelect(null)}
           className="w-full p-4 rounded-2xl border-2 border-border hover:border-primary hover:bg-primary/5 transition-all text-left flex items-center justify-between group"
         >
@@ -54,11 +53,11 @@ export const PriceSelectorModal: React.FC<PriceSelectorModalProps> = ({
           <div className="text-lg font-black text-primary">
             {formatCurrency(product.price)}
           </div>
-        </Button>
+        </button>
 
         {/* Variants */}
         {variants.map((variant: any) => (
-          <Button
+          <button
             key={variant.id}
             onClick={() => onSelect(variant)}
             className="w-full p-4 rounded-2xl border-2 border-border hover:border-primary hover:bg-primary/5 transition-all text-left flex items-center justify-between group"
@@ -75,7 +74,7 @@ export const PriceSelectorModal: React.FC<PriceSelectorModalProps> = ({
             <div className="text-lg font-black text-primary">
               {formatCurrency(variant.price)}
             </div>
-          </Button>
+          </button>
         ))}
       </div>
 

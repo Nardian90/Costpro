@@ -4,7 +4,6 @@ import React from "react";
 import { AlertTriangle } from "lucide-react";
 import { BaseModal } from "@/components/ui/BaseModal";
 
-import { Button } from "@/components/ui/button";
 interface POSModalsProps {
   showPriceWarning: boolean;
   onPriceWarningChange: (open: boolean) => void;
@@ -29,20 +28,20 @@ export const POSModals = ({
       maxWidth="sm:max-w-md"
       footer={
         <>
-          <Button
+          <button
             type="button"
             onClick={() => onPriceWarningChange(false)}
             className="flex-1 py-2.5 rounded-xl border border-border font-black text-xs uppercase tracking-widest hover:bg-muted transition-colors"
           >
             Cancelar
-          </Button>
-          <Button
+          </button>
+          <button
             type="button"
             onClick={onConfirmUnpriced}
             className="flex-1 py-2.5 rounded-xl bg-warning text-primary-foreground font-black text-xs uppercase tracking-widest shadow-lg shadow-warning/20 active:scale-95 transition-all"
           >
             Confirmar Facturación
-          </Button>
+          </button>
         </>
       }
     >

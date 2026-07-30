@@ -22,7 +22,6 @@ import { formatCurrency, formatDate, cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import type { PurchaseOrder, PurchaseOrderItem } from '@/types';
 
-import { Button } from "@/components/ui/button";
 // ────────────────────────────────────────────────────────────
 // Public types
 // ────────────────────────────────────────────────────────────
@@ -189,14 +188,14 @@ function StepSelectPO({
           className="w-full bg-muted/20 border border-border rounded-xl pl-10 pr-10 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
         />
         {search && (
-          <Button
+          <button
             type="button"
             onClick={() => onSearch('')}
             aria-label="Limpiar búsqueda"
             className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
           >
             <X className="w-3.5 h-3.5" />
-          </Button>
+          </button>
         )}
       </div>
 
@@ -220,7 +219,7 @@ function StepSelectPO({
       ) : (
         <div className="flex-1 overflow-y-auto rounded-xl border border-border divide-y divide-border max-h-[55vh]">
           {orders.map((o) => (
-            <Button
+            <button
               key={o.id}
               type="button"
               onClick={() => onSelect(o.id)}
@@ -241,7 +240,7 @@ function StepSelectPO({
                   {formatDate(o.created_at)} · Total: {formatCurrency(o.total_amount)}
                 </p>
               </div>
-            </Button>
+            </button>
           ))}
         </div>
       )}
@@ -387,20 +386,20 @@ function StepReceiveItems({
                       className="w-24 px-2 py-1 text-sm font-bold rounded-lg border border-border bg-background"
                       aria-label={`Cantidad a recibir de ${it.product_name}`}
                     />
-                    <Button
+                    <button
                       type="button"
                       onClick={() => setQty(it.id, pending)}
                       className="text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-lg bg-primary/10 text-primary hover:bg-primary/20"
                     >
                       Todo
-                    </Button>
-                    <Button
+                    </button>
+                    <button
                       type="button"
                       onClick={() => setQty(it.id, 0)}
                       className="text-[10px] font-bold uppercase px-2 py-1 rounded-lg bg-muted text-muted-foreground hover:bg-muted/80"
                     >
                       0
-                    </Button>
+                    </button>
                   </div>
                 </div>
               );

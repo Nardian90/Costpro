@@ -32,7 +32,6 @@ import { DocumentStatusBadge, canReverse } from '@/components/ui/DocumentStatusB
 import { ReverseDocumentModal } from '@/components/ui/ReverseDocumentModal';
 import { useAuthStore } from '@/store';
 import { useUIStore } from '@/store';
-import { Button } from "@/components/ui/button";
 import { useReceptionsHistoryView } from './useReceptionsHistoryView';
 import { ReceptionDetailsModal } from './ReceptionDetailsModal';
 
@@ -152,7 +151,7 @@ export default function ReceptionsHistoryView() {
             Recepciones
           </h2>
           <div className="flex items-center gap-2 flex-wrap">
-            <Button
+            <button
               type="button"
               onClick={() => setCurrentView('recepcion')}
               className="inline-flex items-center gap-2 px-4 py-2.5 min-h-[44px] rounded-xl bg-primary text-primary-foreground font-black text-xs uppercase tracking-widest hover:opacity-90 transition-all active:scale-95 focus:outline-none focus:ring-2 focus:ring-primary/30"
@@ -160,8 +159,8 @@ export default function ReceptionsHistoryView() {
             >
               <Plus className="w-4 h-4" />
               Nueva
-            </Button>
-            <Button
+            </button>
+            <button
               type="button"
               onClick={() => {
                 sessionStorage.setItem('reception-express-auto', 'true');
@@ -173,10 +172,10 @@ export default function ReceptionsHistoryView() {
             >
               <Zap className="w-4 h-4" />
               <span className="hidden sm:inline">Express</span>
-            </Button>
+            </button>
             {/* FIX-WIZARD: Botón de wizard de backfill masivo */}
             {isAdmin && (
-              <Button
+              <button
                 type="button"
                 onClick={() => setShowBackfillWizard(true)}
                 className="inline-flex items-center gap-2 px-4 py-2.5 min-h-[44px] rounded-xl border-2 border-amber-400/40 bg-amber-400/10 text-amber-600 dark:text-amber-400 font-black text-xs uppercase tracking-widest hover:bg-amber-400/20 hover:border-amber-400/60 transition-all active:scale-95 focus:outline-none focus:ring-2 focus:ring-amber-400/30"
@@ -184,9 +183,9 @@ export default function ReceptionsHistoryView() {
               >
                 <DollarSign className="w-4 h-4" />
                 <span className="hidden sm:inline">Tasas históricas</span>
-              </Button>
+              </button>
             )}
-            <Button
+            <button
               type="button"
               onClick={handleExportAllExcel}
               className="inline-flex items-center gap-2 px-4 py-2.5 min-h-[44px] rounded-xl border border-border hover:bg-muted text-muted-foreground hover:text-foreground font-black text-xs uppercase tracking-widest transition-all active:scale-95"
@@ -194,7 +193,7 @@ export default function ReceptionsHistoryView() {
             >
               <Download className="w-4 h-4" />
               <span className="hidden sm:inline">Exportar</span>
-            </Button>
+            </button>
           </div>
         </div>
 
@@ -328,24 +327,24 @@ export default function ReceptionsHistoryView() {
                       </td>
                       <td className="p-4 text-center">
                         <div className="flex items-center justify-center gap-2">
-                          <Button type="button"
+                          <button type="button"
                             onClick={() => handleViewDetails(rec as any)}
                             className="w-11 h-11 inline-flex items-center justify-center rounded-lg border border-border hover:bg-primary hover:text-foreground transition-all active:scale-95"
                             title="Ver productos"
                           >
                             <Eye className="w-4 h-4" />
-                          </Button>
+                          </button>
                           {/* Reception-Flow-Fix: botón "Confirmar" solo para pendientes.
                               Aplica los cambios de stock y vuelve la recepción no editable. */}
                           {rec.status === 'pending' && (
-                            <Button type="button"
+                            <button type="button"
                               onClick={() => handleConfirmPendingRequest(rec)}
                               className="w-11 h-11 inline-flex items-center justify-center rounded-lg border-2 border-success/40 bg-success/90 text-white dark:text-black hover:bg-success transition-all active:scale-95"
                               title="Confirmar recepción (aplicar al inventario)"
                               disabled={isConfirmingPending}
                             >
                               <CheckCircle2 className={cn("w-4 h-4", isConfirmingPending && confirmingReceiptId === rec.id && "animate-pulse")} />
-                            </Button>
+                            </button>
                           )}
                           {/* ESTÁNDAR: para confirmadas (active) SOLO Revertir + Duplicar.
                               "Invertir" se eliminó — era redundante con Revertir y sin trazabilidad.
@@ -353,7 +352,7 @@ export default function ReceptionsHistoryView() {
                           {rec.status === 'active' && (
                             <>
                               {/* ESTÁNDAR: Revertir — única forma de deshacer recepción confirmada */}
-                              <Button type="button"
+                              <button type="button"
                                 onClick={() => setReverseTarget({
                                   id: rec.id,
                                   label: `Recepción ${rec.reference_doc || rec.id.split('-')[0]} • ${formatCurrency(rec.total_cost)}`,
@@ -363,37 +362,37 @@ export default function ReceptionsHistoryView() {
                                 aria-label="Revertir recepción"
                               >
                                 <Undo2 className="w-4 h-4" />
-                              </Button>
-                              <Button type="button"
+                              </button>
+                              <button type="button"
                                 onClick={() => { handleDuplicate(rec); setTimeout(() => setCurrentView('recepcion'), 500); }}
                                 className="w-11 h-11 inline-flex items-center justify-center rounded-lg border border-blue-500/40 bg-blue-500/5 text-blue-500 hover:bg-blue-500 hover:text-white transition-all active:scale-95"
                                 title="Duplicar Recepción (carga items en formulario)"
                               >
                                 <Copy className="w-4 h-4" />
-                              </Button>
+                              </button>
                             </>
                           )}
                           {/* Editar — SOLO para pendientes. Las confirmadas no son editables
                               (requiere Invertir + nueva recepción para corregir). */}
                           {rec.status === 'pending' && (
-                            <Button type="button"
+                            <button type="button"
                               onClick={() => handleEdit(rec)}
                               className="w-11 h-11 inline-flex items-center justify-center rounded-lg border border-border hover:bg-warning hover:text-foreground transition-all active:scale-95"
                               title="Editar"
                             >
                               <Pencil className="w-4 h-4" />
-                            </Button>
+                            </button>
                           )}
                           {/* Anular — SOLO para pendientes. Las confirmadas se invierten
                               (no se anulan directamente) para mantener trazabilidad. */}
                           {rec.status === 'pending' && (
-                            <Button type="button"
+                            <button type="button"
                               onClick={() => handleVoidRequest(rec)}
                               className="w-11 h-11 inline-flex items-center justify-center rounded-lg border border-border hover:bg-destructive hover:text-foreground transition-all active:scale-95"
                               title="Anular"
                             >
                               <Trash2 className="w-4 h-4" />
-                            </Button>
+                            </button>
                           )}
                         </div>
                       </td>
@@ -541,15 +540,15 @@ export default function ReceptionsHistoryView() {
           )}
 
           <div className="flex items-center justify-end gap-2 pt-2 border-t border-border/30">
-            <Button
+            <button
               type="button"
               onClick={() => setShowBackfillWizard(false)}
               disabled={backfillLoading}
               className="px-4 h-11 rounded-xl border border-border hover:bg-muted font-bold text-xs uppercase tracking-widest"
             >
               Cancelar
-            </Button>
-            <Button
+            </button>
+            <button
               type="button"
               onClick={handleBackfillApply}
               disabled={backfillLoading || !backfillForm.tasa || backfillForm.tasa <= 0}
@@ -560,7 +559,7 @@ export default function ReceptionsHistoryView() {
               ) : (
                 <><DollarSign className="w-4 h-4" /> Aplicar backfill</>
               )}
-            </Button>
+            </button>
           </div>
         </div>
       </BaseModal>

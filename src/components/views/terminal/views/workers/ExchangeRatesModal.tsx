@@ -5,7 +5,6 @@ import { X } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/store';
 
-import { Button } from "@/components/ui/button";
 /**
  * ExchangeRatesModal — Modal reutilizable para configurar tasas de cambio
  * globales de la tienda (USD, EUR, MLC → CUP).
@@ -119,9 +118,9 @@ export function ExchangeRatesModal({ open, onClose, storeId, onSaved }: Exchange
           <h2 id="exchange-rates-modal-title" className="text-sm font-black uppercase">
             Tasas de Cambio
           </h2>
-          <Button onClick={onClose} className="text-muted-foreground hover:text-foreground min-h-[44px] min-w-[44px] flex items-center justify-center" aria-label="Cerrar">
+          <button onClick={onClose} className="text-muted-foreground hover:text-foreground min-h-[44px] min-w-[44px] flex items-center justify-center" aria-label="Cerrar">
             <X className="w-4 h-4" />
-          </Button>
+          </button>
         </div>
         <p className="text-[10px] text-muted-foreground mb-3">
           Se guardan en la tienda y persisten hasta el próximo cambio.
@@ -151,13 +150,13 @@ export function ExchangeRatesModal({ open, onClose, storeId, onSaved }: Exchange
                 </div>
               ))}
             </div>
-            <Button
+            <button
               onClick={handleSave}
               disabled={saving}
               className="w-full h-11 rounded-xl bg-primary text-primary-foreground text-xs font-black uppercase hover:bg-primary/90 disabled:opacity-50 min-h-[44px]"
             >
               {saving ? 'Guardando...' : 'Guardar Tasas'}
-            </Button>
+            </button>
           </>
         )}
       </div>

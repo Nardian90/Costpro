@@ -18,7 +18,6 @@ import {
 import { cn, formatCurrency } from "@/lib/utils";
 import { toast } from "sonner";
 import { useCartStore, type CartItem } from "@/store/cart";
-import { Button } from "@/components/ui/button";
 import type { POSCartItemProps } from "./POSCart.types";
 
 // FIX-G5: helper local para recalcular subtotal al cambiar variante
@@ -150,7 +149,7 @@ export const POSCartItem = ({
         {/* Left: Quantity Controls & Stock */}
         <div className="flex flex-col items-center gap-1.5 shrink-0">
           <div className="flex items-center gap-1 bg-muted/50 rounded-2xl p-1 border border-border/50" role="group" aria-label={`Controles de cantidad para ${item.product.name}`}>
-            <Button
+            <button
               type="button"
               onClick={() =>
                 onUpdateQuantity(
@@ -167,7 +166,7 @@ export const POSCartItem = ({
               disabled={item.quantity <= 1}
             >
               <Minus className="w-5 h-5 sm:w-4 sm:h-4" />
-            </Button>
+            </button>
             {isEditingQty ? (
               <input
                 ref={qtyInputRef}
@@ -188,7 +187,7 @@ export const POSCartItem = ({
                 aria-label={`Editar cantidad de ${item.product.name}`}
               />
             ) : (
-              <Button
+              <button
                 type="button"
                 onClick={() => setIsEditingQty(true)}
                 className={cn(
@@ -206,9 +205,9 @@ export const POSCartItem = ({
               >
                 {item.quantity}
                 {item.variant && <span className="text-[9px] opacity-60 ml-0.5">{item.variant.name.substring(0, 3)}</span>}
-              </Button>
+              </button>
             )}
-            <Button
+            <button
               type="button"
               onClick={() =>
                 onUpdateQuantity(
@@ -225,7 +224,7 @@ export const POSCartItem = ({
               disabled={item.quantity >= maxStock}
             >
               <Plus className="w-4 h-4" />
-            </Button>
+            </button>
           </div>
           <div
             className={cn(
@@ -259,7 +258,7 @@ export const POSCartItem = ({
             </h4>
             {(item.product.public_image_url ||
               item.product.image_url) && (
-              <Button
+              <button
                 type="button"
                 onClick={() =>
                   onViewImage(
@@ -272,7 +271,7 @@ export const POSCartItem = ({
                 aria-label={`Ver imagen de ${item.product.name}`}
               >
                 <ImageIcon className="w-3.5 h-3.5 text-muted-foreground" />
-              </Button>
+              </button>
             )}
           </div>
           <span
@@ -287,14 +286,14 @@ export const POSCartItem = ({
 
         {/* Right: Subtotal */}
         <div className="flex flex-col items-end gap-3 sm:gap-2">
-          <Button
+          <button
             type="button"
             onClick={() => onRemoveItem(item.product_id, item.variant_id)}
             className="w-11 h-11 flex items-center justify-center text-muted-foreground/30 hover:text-destructive transition-all active:scale-95"
             aria-label={`Eliminar ${item.product.name} del carrito`}
           >
             <X className="w-6 h-6 sm:w-5 sm:h-5" />
-          </Button>
+          </button>
           <div className="text-right">
             <div
               className={cn(
@@ -309,14 +308,14 @@ export const POSCartItem = ({
       </div>
 
       {/* Opciones Avanzadas (Descuento, Pago Mixto y Moneda) */}
-      <Button
+      <button
         type="button"
         onClick={() => setShowAdvanced(!showAdvanced)}
         className="w-full mt-3 pt-2 border-t border-border/50 flex items-center justify-between text-xs font-black uppercase text-muted-foreground tracking-widest"
       >
         <span>Descuento / Pago Mixto / Moneda</span>
         <span className="text-primary">{showAdvanced ? '-' : '+'}</span>
-      </Button>
+      </button>
       {showAdvanced && (
       <div className="mt-3 space-y-2 pt-2 border-t border-border/50">
       {/* FIX-MULTI-MONEDA: selector de moneda y tasa por item + unidad de medida */}
@@ -570,7 +569,7 @@ export const POSCartItem = ({
               aria-label={`Tasa para ${item.product.name}`}
             />
           )}
-          <Button
+          <button
             type="button"
             onClick={async () => {
               const { useAuthStore } = await import('@/store');
@@ -595,7 +594,7 @@ export const POSCartItem = ({
             aria-label="Actualizar tasas"
           >
             Tasas
-          </Button>
+          </button>
         </div>
       </div>
       {/* FIX-PAYMENT-ROWS (2026-07-10): Pago Mixto dinámico — N filas.
@@ -705,7 +704,7 @@ export const POSCartItem = ({
                 )}
 
                 {/* Botón duplicar */}
-                <Button
+                <button
                   type="button"
                   onClick={() => useCartStore.getState().duplicateItemPayment(item.product_id, item.variant_id, p.id)}
                   className="bg-muted/30 hover:bg-muted border border-border/50 rounded px-1.5 py-2 min-h-[36px] text-[9px] font-bold shrink-0"
@@ -713,11 +712,11 @@ export const POSCartItem = ({
                   aria-label={`Duplicar fila ${idx + 1}`}
                 >
                   ⧉
-                </Button>
+                </button>
 
                 {/* Botón eliminar (solo si hay más de 1 fila) */}
                 {item.payments.length > 1 && (
-                  <Button
+                  <button
                     type="button"
                     onClick={() => useCartStore.getState().removeItemPayment(item.product_id, item.variant_id, p.id)}
                     className="bg-destructive/10 hover:bg-destructive/20 border border-destructive/30 text-destructive rounded px-1.5 py-2 min-h-[36px] text-[9px] font-bold shrink-0"
@@ -725,7 +724,7 @@ export const POSCartItem = ({
                     aria-label={`Eliminar fila ${idx + 1}`}
                   >
                     ✕
-                  </Button>
+                  </button>
                 )}
               </div>
               {/* Equivalente en CUP si la moneda no es CUP */}
@@ -740,13 +739,13 @@ export const POSCartItem = ({
 
         {/* Botón + Agregar Pago */}
         <div className="flex gap-1">
-          <Button
+          <button
             type="button"
             onClick={() => useCartStore.getState().addItemPayment(item.product_id, item.variant_id, 'cash')}
             className="flex-1 min-h-[36px] rounded-lg border-2 border-dashed border-primary/30 text-primary text-[10px] font-black uppercase hover:bg-primary/5 transition-colors flex items-center justify-center gap-1"
           >
             <Plus className="w-3.5 h-3.5" /> Agregar Pago
-          </Button>
+          </button>
         </div>
       </div>
       </div>
@@ -832,9 +831,9 @@ export const POSCartItem = ({
           >
             <div className="flex items-center justify-between mb-2">
               <h2 id="rates-modal-title" className="text-sm font-black uppercase">Tasas de Cambio</h2>
-              <Button onClick={() => setShowRatesModal(false)} className="text-muted-foreground hover:text-foreground" aria-label="Cerrar">
+              <button onClick={() => setShowRatesModal(false)} className="text-muted-foreground hover:text-foreground" aria-label="Cerrar">
                 <X className="w-4 h-4" />
-              </Button>
+              </button>
             </div>
             <p className="text-[10px] text-muted-foreground mb-3">
               Se guardan en la tienda y persisten hasta el próximo cambio. Presiona Enter para guardar, Esc para cancelar.
@@ -857,7 +856,7 @@ export const POSCartItem = ({
                 </div>
               ))}
             </div>
-            <Button
+            <button
               onClick={async () => {
                 const newRates: Record<string, number> = {};
                 for (const cur of ['USD', 'EUR', 'MLC']) {
@@ -918,7 +917,7 @@ export const POSCartItem = ({
               className="w-full h-10 rounded-xl bg-primary text-primary-foreground text-xs font-black uppercase hover:bg-primary/90"
             >
               Guardar Tasas
-            </Button>
+            </button>
           </div>
         </div>
       )}

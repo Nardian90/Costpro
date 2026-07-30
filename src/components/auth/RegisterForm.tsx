@@ -211,14 +211,14 @@ export default function RegisterForm({ onBackToLogin }: RegisterFormProps) {
       >
         {/* Header */}
         <motion.div variants={itemVariants} className="space-y-1">
-          <Button
+          <button
             type="button"
             onClick={onBackToLogin}
             className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-4 group"
           >
             <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
             Volver al login
-          </Button>
+          </button>
           <h2 className="text-2xl font-bold tracking-tight bg-gradient-to-r from-[#15803d] to-[#22c55e] bg-clip-text text-transparent">
             Crear cuenta
           </h2>
@@ -304,14 +304,14 @@ export default function RegisterForm({ onBackToLogin }: RegisterFormProps) {
                   autoComplete="new-password"
                   required
                 />
-                <Button
+                <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                   aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </Button>
+                </button>
               </div>
 
               {/* Password Strength Indicator */}
@@ -417,14 +417,14 @@ export default function RegisterForm({ onBackToLogin }: RegisterFormProps) {
                   autoComplete="new-password"
                   required
                 />
-                <Button
+                <button
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                   aria-label={showConfirmPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
                 >
                   {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </Button>
+                </button>
               </div>
             </div>
           </div>
@@ -447,19 +447,19 @@ export default function RegisterForm({ onBackToLogin }: RegisterFormProps) {
               className="text-xs text-muted-foreground leading-relaxed cursor-pointer"
             >
               Acepto los{' '}
-              <Button
+              <button
                 type="button"
                 className="text-[#22c55e] hover:text-[#16a34a] font-medium underline underline-offset-2 decoration-green-500/40 hover:decoration-green-500 transition-colors"
               >
                 términos y condiciones
-              </Button>{' '}
+              </button>{' '}
               y la{' '}
-              <Button
+              <button
                 type="button"
                 className="text-[#22c55e] hover:text-[#16a34a] font-medium underline underline-offset-2 decoration-green-500/40 hover:decoration-green-500 transition-colors"
               >
                 política de privacidad
-              </Button>
+              </button>
             </label>
           </motion.div>
 
@@ -511,13 +511,13 @@ export default function RegisterForm({ onBackToLogin }: RegisterFormProps) {
           className="text-center text-sm text-muted-foreground"
         >
           ¿Ya tienes una cuenta?{' '}
-          <Button
+          <button
             type="button"
             onClick={onBackToLogin}
             className="text-[#22c55e] hover:text-[#16a34a] font-semibold transition-colors hover:underline underline-offset-4 decoration-green-500"
           >
             Inicia sesión
-          </Button>
+          </button>
         </motion.p>
       </motion.div>
     </motion.div>

@@ -4,7 +4,6 @@ import { MarkdownViewer } from '../components/MarkdownViewer';
 import { Book, FileText, Info, Search, ChevronRight, Hash, FolderOpen, Clock, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-import { Button } from "@/components/ui/button";
 interface DocumentationTabProps {
   data: HealthData;
 }
@@ -119,7 +118,7 @@ export const DocumentationTab: React.FC<DocumentationTabProps> = ({ data }) => {
 
               <div className="flex-1 overflow-auto no-scrollbar space-y-4 pr-2">
                 {/* Help Explorer */}
-                <Button
+                <button
                   onClick={() => setSelectedDoc(null)}
                   className={cn(
                     "w-full flex items-center justify-between px-5 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all group",
@@ -133,7 +132,7 @@ export const DocumentationTab: React.FC<DocumentationTabProps> = ({ data }) => {
                      <span className="truncate">Explorador de Ayuda</span>
                   </div>
                   <ChevronRight className={cn("w-3 h-3 transition-transform", !selectedDoc ? "translate-x-1" : "opacity-0 group-hover:opacity-100")} />
-                </Button>
+                </button>
 
                 {/* Grouped docs */}
                 {Object.entries(groupedDocs).map(([category, items]) => (
@@ -144,7 +143,7 @@ export const DocumentationTab: React.FC<DocumentationTabProps> = ({ data }) => {
                         {category}
                       </div>
                       {items.map((doc) => (
-                        <Button
+                        <button
                           key={doc.id}
                           onClick={() => setSelectedDoc(doc.id)}
                           className={cn(
@@ -159,7 +158,7 @@ export const DocumentationTab: React.FC<DocumentationTabProps> = ({ data }) => {
                              <span className="truncate text-[9px]">{doc.title}</span>
                           </div>
                           <ChevronRight className={cn("w-3 h-3 transition-transform shrink-0", selectedDoc === doc.id ? "translate-x-1" : "opacity-0 group-hover:opacity-100")} />
-                        </Button>
+                        </button>
                       ))}
                     </div>
                   )

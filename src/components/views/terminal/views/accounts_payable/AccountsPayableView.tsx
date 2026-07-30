@@ -6,7 +6,6 @@ import { cn, formatCurrency } from '@/lib/utils';
 import { useAuthStore } from '@/store';
 import { apiFetch } from '@/lib/api-fetch';
 import { useAccountsPayable, type AgingTab, type GroupedPayable, type UnifiedPayable } from '@/hooks/api/useAccountsPayable';
-import { Button } from "@/components/ui/button";
 import PaymentModal, { type PayableDocument } from './PaymentModal';
 import PaymentHistoryRow from './PaymentHistoryRow';
 
@@ -170,7 +169,7 @@ export default function AccountsPayableView() {
         {/* View mode toggle + Export */}
         <div className="flex items-center gap-2">
           <div className="flex rounded-lg border border-border/40 overflow-hidden">
-            <Button
+            <button
               onClick={() => setViewMode('grouped')}
               className={cn(
                 "px-3 py-1.5 text-[10px] font-black uppercase flex items-center gap-1.5",
@@ -178,8 +177,8 @@ export default function AccountsPayableView() {
               )}
             >
               <Table2 className="w-3.5 h-3.5" /> Por Proveedor
-            </Button>
-            <Button
+            </button>
+            <button
               onClick={() => setViewMode('list')}
               className={cn(
                 "px-3 py-1.5 text-[10px] font-black uppercase flex items-center gap-1.5",
@@ -187,10 +186,10 @@ export default function AccountsPayableView() {
               )}
             >
               <List className="w-3.5 h-3.5" /> Detalle
-            </Button>
+            </button>
           </div>
 
-          <Button
+          <button
             onClick={handleExport}
             disabled={exporting || loading}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border/40 text-[10px] font-black uppercase hover:bg-muted disabled:opacity-50"
@@ -198,7 +197,7 @@ export default function AccountsPayableView() {
           >
             <Download className="w-3.5 h-3.5" />
             {exporting ? 'Exportando...' : 'Excel'}
-          </Button>
+          </button>
         </div>
       </div>
 
@@ -248,7 +247,7 @@ export default function AccountsPayableView() {
       {/* Aging Tabs */}
       <div className="flex flex-wrap gap-1.5">
         {AGING_TABS.map(t => (
-          <Button
+          <button
             key={t.id}
             onClick={() => setTab(t.id)}
             className={cn(
@@ -259,7 +258,7 @@ export default function AccountsPayableView() {
             )}
           >
             {t.label}
-          </Button>
+          </button>
         ))}
       </div>
 
@@ -337,19 +336,19 @@ export default function AccountsPayableView() {
             <option value="transfer">Transferencia</option>
             <option value="mixed">Mixto</option>
           </select>
-          <Button
+          <button
             onClick={handleBulkPay}
             disabled={bulkPaying}
             className="px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-[10px] font-black uppercase hover:bg-primary/90 disabled:opacity-50"
           >
             {bulkPaying ? 'Procesando...' : 'Marcar Pagadas'}
-          </Button>
-          <Button
+          </button>
+          <button
             onClick={() => { setSelectedIds(new Set()); setShowBulkBar(false); }}
             className="px-2 py-1.5 rounded-lg border border-border/40 text-[10px] font-black uppercase hover:bg-muted"
           >
             Cancelar
-          </Button>
+          </button>
         </div>
       )}
 
@@ -491,13 +490,13 @@ function ListView({
         <thead className="bg-muted/30">
           <tr className="text-[10px] font-black uppercase text-muted-foreground">
             <th className="p-3 text-center w-10">
-              <Button
+              <button
                 onClick={() => onToggleSelectAll(data)}
                 className="hover:text-primary"
                 aria-label="Seleccionar todos"
               >
                 {allSelected ? <CheckSquare className="w-4 h-4 text-primary" /> : <Square className="w-4 h-4" />}
-              </Button>
+              </button>
             </th>
             <th className="p-3 text-left">Proveedor</th>
             <th className="p-3 text-center">Tipo</th>
@@ -518,7 +517,7 @@ function ListView({
               )}>
                 <td className="p-3 text-center">
                   {p.payment_status !== 'paid' && (
-                    <Button
+                    <button
                       onClick={() => onToggleSelect(p.id)}
                       aria-label="Seleccionar"
                     >
@@ -526,7 +525,7 @@ function ListView({
                         ? <CheckSquare className="w-4 h-4 text-primary" />
                         : <Square className="w-4 h-4 text-muted-foreground" />
                       }
-                    </Button>
+                    </button>
                   )}
                 </td>
                 <td className="p-3">
@@ -583,7 +582,7 @@ function ListView({
                 <td className="p-3 text-center">
                   <div className="flex items-center justify-center gap-1">
                     {p.payment_status !== 'paid' && (
-                      <Button
+                      <button
                         onClick={() => onPay({
                           ref_type: p.ref_type,
                           ref_id: p.ref_id,
@@ -599,7 +598,7 @@ function ListView({
                         className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-primary text-primary-foreground text-[10px] font-black uppercase hover:bg-primary/90"
                       >
                         <CreditCard className="w-3 h-3" /> Pagar
-                      </Button>
+                      </button>
                     )}
                     <PaymentHistoryRow
                       refType={p.ref_type}

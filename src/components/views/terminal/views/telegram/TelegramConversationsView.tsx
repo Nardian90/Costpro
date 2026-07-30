@@ -257,7 +257,7 @@ export default function TelegramConversationsView() {
             </div>
           ) : (
             filteredConversations.map(conv => (
-              <Button
+              <button
                 key={conv.id}
                 onClick={() => setSelectedContact(conv)}
                 className={cn(
@@ -297,7 +297,7 @@ export default function TelegramConversationsView() {
                   )}
                 </div>
                 {conv.is_banned && <Ban className="w-3 h-3 text-destructive shrink-0" />}
-              </Button>
+              </button>
             ))
           )}
         </div>

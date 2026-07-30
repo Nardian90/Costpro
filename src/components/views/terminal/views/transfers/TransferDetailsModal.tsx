@@ -20,7 +20,6 @@ import { toast } from 'sonner';
 import { format } from 'date-fns';
 import type { Transfer, TransferItem, TransferStatus } from '@/types';
 
-import { Button } from "@/components/ui/button";
 interface TransferDetailsModalProps {
   transferId: string | null;
   onClose: () => void;
@@ -141,7 +140,7 @@ export default function TransferDetailsModal({ transferId, onClose }: TransferDe
           <div className="flex flex-col sm:flex-row justify-between gap-3 w-full">
             <div className="flex gap-2 flex-wrap">
               {transfer?.status === 'PENDIENTE' && (
-                <Button
+                <button
                   type="button"
                   onClick={() => setShowCancelDialog(true)}
                   disabled={cancelMutation.isPending}
@@ -150,27 +149,27 @@ export default function TransferDetailsModal({ transferId, onClose }: TransferDe
                 >
                   <XCircle className="w-4 h-4" />
                   Cancelar Transferencia
-                </Button>
+                </button>
               )}
-              <Button
+              <button
                 type="button"
                 onClick={handleExportPdf}
                 className="neu-btn px-4 py-2 text-xs font-black uppercase tracking-widest flex items-center gap-2"
               >
                 <FileDown className="w-4 h-4" />
                 Exportar PDF
-              </Button>
+              </button>
             </div>
             <div className="flex gap-3">
-              <Button
+              <button
                 type="button"
                 onClick={onClose}
                 className="neu-btn px-4 py-3 min-h-[44px] text-xs font-black uppercase tracking-widest"
               >
                 Cerrar
-              </Button>
+              </button>
               {canConfirm && (
-                <Button
+                <button
                   type="button"
                   onClick={() => setShowConfirmDialog(true)}
                   disabled={confirmMutation.isPending}
@@ -178,7 +177,7 @@ export default function TransferDetailsModal({ transferId, onClose }: TransferDe
                 >
                   <CheckCircle2 className="w-4 h-4" />
                   Confirmar Recepción
-                </Button>
+                </button>
               )}
             </div>
           </div>

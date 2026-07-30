@@ -7,7 +7,6 @@ import { BaseModal } from '@/components/ui/BaseModal';
 import { SecondaryButton } from '@/components/ui/atomic';
 import { OperationDatePicker, formatOperationDateForRPC, useOperationDateValidation } from '@/components/ui/OperationDatePicker';
 import { useAuthStore } from '@/store';
-import { Button } from "@/components/ui/button";
 import type { SalesCatalogRow } from './useSalesCatalog';
 import { calcSubtotal } from './useSalesCatalog';
 import { format } from 'date-fns';
@@ -73,7 +72,7 @@ export default function SalesCatalogCheckoutModal({
             onClick={() => onOpenChange(false)}
             className="flex-1"
           />
-          <Button
+          <button
             type="button"
             onClick={handleConfirm}
             disabled={isProcessing || !dateValidation.valid}
@@ -81,7 +80,7 @@ export default function SalesCatalogCheckoutModal({
             title={!dateValidation.valid ? dateValidation.error : undefined}
           >
             {isProcessing ? 'Procesando...' : 'Sí, Confirmar Venta'}
-          </Button>
+          </button>
         </>
       }
     >

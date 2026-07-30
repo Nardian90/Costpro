@@ -205,7 +205,7 @@ export function StoreTeamModal({ isOpen, onClose, store }: StoreTeamModalProps) 
                     </div>
 
                     {/* Botón remover — touch target ≥ 44px */}
-                    <Button
+                    <button
                       type="button"
                       onClick={() => handleRemoveClick(member)}
                       disabled={isRemoving}
@@ -214,7 +214,7 @@ export function StoreTeamModal({ isOpen, onClose, store }: StoreTeamModalProps) 
                       className="w-11 h-11 flex items-center justify-center rounded-lg bg-destructive/10 text-destructive hover:bg-destructive hover:text-foreground transition-all disabled:opacity-50"
                     >
                       {isRemoving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <UserX className="w-3.5 h-3.5" />}
-                    </Button>
+                    </button>
                   </div>
                 </div>
               );

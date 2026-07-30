@@ -256,7 +256,7 @@ export function PricingPage({ compact = false, onSuccess }: PricingPageProps) {
         <span className={cn("text-xs font-black uppercase", billingCycle === 'monthly' ? 'text-primary' : 'opacity-50')}>
           Mensual
         </span>
-        <Button
+        <button
           onClick={() => setBillingCycle(billingCycle === 'monthly' ? 'yearly' : 'monthly')}
           className={cn(
             "relative w-12 h-6 rounded-full transition-colors",
@@ -267,7 +267,7 @@ export function PricingPage({ compact = false, onSuccess }: PricingPageProps) {
             "absolute top-0.5 w-5 h-5 rounded-full bg-white transition-transform",
             billingCycle === 'yearly' ? 'translate-x-6' : 'translate-x-0.5'
           )} />
-        </Button>
+        </button>
         <span className={cn("text-xs font-black uppercase", billingCycle === 'yearly' ? 'text-primary' : 'opacity-50')}>
           Anual
         </span>

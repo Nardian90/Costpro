@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import {
@@ -111,13 +110,13 @@ export default function FloatingElements({
                     <span className="text-[10px] text-white/80">En línea</span>
                   </div>
                 </div>
-                <Button
+                <button
                   onClick={() => setShowChat(false)}
                   className="w-6 h-6 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
                   aria-label="Cerrar chat"
                 >
                   <X className="w-3.5 h-3.5 text-white" />
-                </Button>
+                </button>
               </div>
               <div className="p-4 space-y-3 max-h-60 overflow-y-auto">
                 <div className="flex items-start gap-2">
@@ -146,9 +145,9 @@ export default function FloatingElements({
                 </div>
               </div>
               <div className="px-4 pb-3 flex flex-wrap gap-1.5">
-                <Button onClick={() => setShowContactModal(true)} className="px-3 py-1.5 rounded-full bg-[#22c55e]/10 border border-[#22c55e]/20 text-[10px] font-semibold text-[#22c55e] hover:bg-[#22c55e]/20 transition-colors">Solicitar Demo</Button>
-                <Button onClick={() => toast.info('Soporte técnico disponible en Pro y Enterprise')} className="px-3 py-1.5 rounded-full bg-[#22c55e]/10 border border-[#22c55e]/20 text-[10px] font-semibold text-[#22c55e] hover:bg-[#22c55e]/20 transition-colors">Soporte Técnico</Button>
-                <Button onClick={() => scrollToSection(3)} className="px-3 py-1.5 rounded-full bg-[#22c55e]/10 border border-[#22c55e]/20 text-[10px] font-semibold text-[#22c55e] hover:bg-[#22c55e]/20 transition-colors">Planes y Precios</Button>
+                <button onClick={() => setShowContactModal(true)} className="px-3 py-1.5 rounded-full bg-[#22c55e]/10 border border-[#22c55e]/20 text-[10px] font-semibold text-[#22c55e] hover:bg-[#22c55e]/20 transition-colors">Solicitar Demo</button>
+                <button onClick={() => toast.info('Soporte técnico disponible en Pro y Enterprise')} className="px-3 py-1.5 rounded-full bg-[#22c55e]/10 border border-[#22c55e]/20 text-[10px] font-semibold text-[#22c55e] hover:bg-[#22c55e]/20 transition-colors">Soporte Técnico</button>
+                <button onClick={() => scrollToSection(3)} className="px-3 py-1.5 rounded-full bg-[#22c55e]/10 border border-[#22c55e]/20 text-[10px] font-semibold text-[#22c55e] hover:bg-[#22c55e]/20 transition-colors">Planes y Precios</button>
               </div>
               <div className="px-4 pb-4">
                 <div className="flex items-center gap-2 p-1 rounded-lg bg-muted border border-border">
@@ -161,13 +160,13 @@ export default function FloatingElements({
                     className="flex-1 px-2 py-1.5 bg-transparent text-xs text-foreground placeholder:text-muted-foreground focus:outline-none"
                     aria-label="Escribir mensaje"
                   />
-                  <Button
+                  <button
                     onClick={handleChatSend}
                     className="w-7 h-7 rounded-md bg-[#22c55e] hover:bg-[#16a34a] flex items-center justify-center transition-colors shrink-0"
                     aria-label="Enviar mensaje"
                   >
                     <Send className="w-3.5 h-3.5 text-white" />
-                  </Button>
+                  </button>
                 </div>
               </div>
             </motion.div>
@@ -265,14 +264,14 @@ export default function FloatingElements({
 
       {/* ─── Keyboard Shortcut Hint ─── */}
       {mounted && (
-        <Button
+        <button
           onClick={() => setShowShortcutsModal(true)}
           className="fixed bottom-6 left-6 z-40 hidden lg:flex items-center gap-1.5 px-2 py-1 rounded-md bg-muted/60 border border-border/50 text-[10px] text-muted-foreground hover:text-foreground hover:bg-muted transition-all group"
           aria-label="Mostrar atajos de teclado"
         >
           <Keyboard className="w-3 h-3" />
           <kbd className="font-mono">?</kbd>
-        </Button>
+        </button>
       )}
     </>
   );

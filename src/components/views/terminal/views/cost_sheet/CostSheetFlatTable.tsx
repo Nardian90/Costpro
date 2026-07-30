@@ -323,7 +323,7 @@ const RowHealthIndicator: React.FC<{ health: RowHealthStatus; rowId: string }> =
         `${health.infos} mensaje${health.infos > 1 ? 's' : ''} informativo${health.infos > 1 ? 's' : ''}`
       }
     >
-      <Button
+      <button
         type="button"
         onClick={handleClick}
         className={cn(
@@ -346,7 +346,7 @@ const RowHealthIndicator: React.FC<{ health: RowHealthStatus; rowId: string }> =
             {totalCount}
           </span>
         )}
-      </Button>
+      </button>
     </TTip>
   );
 };
@@ -431,13 +431,13 @@ const DataRow: React.FC<DataRowProps> = memo(({ item, calculatedValues, annexes,
         >
           <div className="flex items-center gap-1 min-w-0 group/row">
             {hasChildren ? (
-              <Button type="button"
+              <button type="button"
                 onClick={(e) => { e.stopPropagation(); onToggleExpand(); }}
                 className="min-h-[24px] min-w-[24px] flex items-center justify-center rounded hover:bg-primary/10 shrink-0"
                 aria-label={isExpanded ? `Contraer ${row.label}` : `Expandir ${row.label}`}
               >
                 <ChevronRight className={cn('w-3 h-3 transition-transform', isExpanded && 'rotate-90')} />
-              </Button>
+              </button>
             ) : (
               <CornerDownRight className="w-3 h-3 text-muted-foreground/70 shrink-0 ml-0.5" />
             )}
@@ -475,14 +475,14 @@ const DataRow: React.FC<DataRowProps> = memo(({ item, calculatedValues, annexes,
             {/* Annex navigation link — 44px minimum touch target */}
             {annexRef && onNavigateToAnnex && (
               <TTip term={`Ir al Anexo ${annexRef.id}`} description={`Abrir ${annexRef.title} (${annexRef.id})`}>
-                <Button
+                <button
                   type="button"
                   onClick={(e) => { e.stopPropagation(); onNavigateToAnnex(annexRef.id); }}
                   className="min-h-[28px] min-w-[28px] flex items-center justify-center rounded-md hover:bg-warning/10 shrink-0 text-warning/70 hover:text-warning transition-colors ml-1"
                   aria-label={`Ir al Anexo ${annexRef.id}: ${annexRef.title}`}
                 >
                   <ExternalLink className="w-3.5 h-3.5" />
-                </Button>
+                </button>
               </TTip>
             )}
 

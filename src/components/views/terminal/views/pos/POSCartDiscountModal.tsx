@@ -2,7 +2,6 @@
 
 import React from "react";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
 import type { POSCartDiscountProps } from "./POSCart.types";
 
 // FIX-BPOS-010: Contextual quick-select values per discount type
@@ -23,7 +22,7 @@ export const POSCartDiscountModal = ({
           Descuento
         </span>
         <div className="flex gap-1 bg-background p-0.5 rounded-lg border border-border">
-          <Button
+          <button
             type="button"
             onClick={() =>
               setDiscount({
@@ -40,8 +39,8 @@ export const POSCartDiscountModal = ({
             aria-pressed={isPercentage}
           >
             %
-          </Button>
-          <Button
+          </button>
+          <button
             type="button"
             onClick={() =>
               setDiscount({
@@ -58,7 +57,7 @@ export const POSCartDiscountModal = ({
             aria-pressed={!isPercentage}
           >
             $
-          </Button>
+          </button>
         </div>
       </div>
 
@@ -72,7 +71,7 @@ export const POSCartDiscountModal = ({
               ? `${d}%`
               : `$${d}`;
           return (
-            <Button
+            <button
               key={d}
               type="button"
               onClick={() =>
@@ -90,7 +89,7 @@ export const POSCartDiscountModal = ({
               aria-pressed={isActive}
             >
               {label}
-            </Button>
+            </button>
           );
         })}
       </div>

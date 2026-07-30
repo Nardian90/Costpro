@@ -100,12 +100,12 @@ const RowCard: React.FC<CostSheetRowCardProps> = memo(({
 
           <div className="flex items-center gap-1 shrink-0">
              {hasChildren && (
-                <Button type="button"
+                <button type="button"
                   onClick={handleToggle}
                   className="p-2 rounded-xl bg-muted/50 text-muted-foreground active:scale-95 transition-all"
                 >
                   <ChevronRight className={cn("w-4 h-4 transition-transform", isExpanded && "rotate-90")} />
-                </Button>
+                </button>
              )}
 
              <Popover>
@@ -336,13 +336,13 @@ const CostSheetCardView: React.FC<CostSheetCardViewProps> = memo(({
               {!hideHeader && (
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-3">
-                    <Button type="button"
+                    <button type="button"
                       onClick={() => toggleSection(section.id)}
                       className="p-1.5 rounded-lg hover:bg-primary/10 transition-colors group"
                       aria-label={collapsedSections[section.id] ? `Expandir sección ${section.label}` : `Contraer sección ${section.label}`}
                     >
                       <ChevronDown className={cn("w-4 h-4 text-primary transition-transform", collapsedSections[section.id] && "-rotate-90")} aria-hidden="true" />
-                    </Button>
+                    </button>
                     <Input
                       className="h-8 text-xs font-black uppercase tracking-[0.2em] text-foreground bg-transparent border-none focus-visible:ring-0 p-0 w-auto min-w-[200px]"
                       value={section.label}

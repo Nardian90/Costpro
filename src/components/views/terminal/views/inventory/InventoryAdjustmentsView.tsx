@@ -15,7 +15,6 @@ import { PrimaryButton, SecondaryButton } from '@/components/ui/atomic';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useDebounce } from '@/hooks/ui/useDebounce';
 
-import { Button } from "@/components/ui/button";
 // ──────────────────────────────────────────────────────────────────────────
 // Tipos (T1: sin `any`)
 // ──────────────────────────────────────────────────────────────────────────
@@ -146,9 +145,9 @@ export default function InventoryAdjustmentsView() {
           <h2 className="text-xl font-black uppercase tracking-tight">Ajustes Documentales</h2>
           <p className="text-xs text-muted-foreground">Documentos de ajuste de inventario (+/- stock y costo)</p>
         </div>
-        <Button onClick={() => setShowCreate(true)} className={cn('flex items-center gap-2 px-4 rounded-xl bg-primary text-primary-foreground text-xs font-black uppercase hover:opacity-90', touch)}>
+        <button onClick={() => setShowCreate(true)} className={cn('flex items-center gap-2 px-4 rounded-xl bg-primary text-primary-foreground text-xs font-black uppercase hover:opacity-90', touch)}>
           <Plus className="w-4 h-4" /> Nuevo Ajuste
-        </Button>
+        </button>
       </div>
 
       {/* Search + Filtro por estado (S1) */}
@@ -170,9 +169,9 @@ export default function InventoryAdjustmentsView() {
           <option value="reversed">Revertidos</option>
           <option value="voided">Anulados</option>
         </select>
-        <Button onClick={() => refetch()} className={cn('p-2 rounded-xl border border-border hover:bg-muted', touch)} aria-label="Recargar">
+        <button onClick={() => refetch()} className={cn('p-2 rounded-xl border border-border hover:bg-muted', touch)} aria-label="Recargar">
           {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCcw className="w-4 h-4" />}
-        </Button>
+        </button>
       </div>
 
       {/* List */}
@@ -208,48 +207,48 @@ export default function InventoryAdjustmentsView() {
                   <p className="text-sm font-bold truncate">{d.notes || d.reason}</p>
                   <p className="text-xs text-muted-foreground">{formatDate(d.created_at)} • {d.creator?.full_name || '—'}</p>
                   {d.items && d.items.length > 0 && (
-                    <Button
+                    <button
                       onClick={() => setExpandedDoc(expandedDoc === d.id ? null : d.id)}
                       className="text-xs text-primary font-bold mt-1 flex items-center gap-1"
                     >
                       {d.items.length} producto(s)
                       {expandedDoc === d.id ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-                    </Button>
+                    </button>
                   )}
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
                   {d.items && d.items.length > 0 && (
-                    <Button
+                    <button
                       onClick={() => setExpandedDoc(expandedDoc === d.id ? null : d.id)}
                       className="w-10 h-10 inline-flex items-center justify-center rounded-lg border border-border hover:bg-primary hover:text-foreground transition-all active:scale-95"
                       title="Ver items"
                       aria-label="Ver items del ajuste"
                     >
                       <Eye className="w-4 h-4" />
-                    </Button>
+                    </button>
                   )}
                   {d.status === 'pending' && (
                     <>
-                      <Button
+                      <button
                         onClick={() => setVoidTarget(d)}
                         className="w-10 h-10 inline-flex items-center justify-center rounded-lg border border-destructive/40 bg-destructive/5 text-destructive hover:bg-destructive hover:text-white transition-all active:scale-95"
                         title="Anular ajuste (sin efecto en stock)"
                         aria-label="Anular ajuste"
                       >
                         <Ban className="w-4 h-4" />
-                      </Button>
-                      <Button
+                      </button>
+                      <button
                         onClick={() => setConfirmTarget(d)}
                         className="w-10 h-10 inline-flex items-center justify-center rounded-lg border border-success/40 bg-success/5 text-success hover:bg-success hover:text-white transition-all active:scale-95"
                         title="Confirmar ajuste (aplica al inventario)"
                         aria-label="Confirmar ajuste"
                       >
                         <CheckCircle2 className="w-4 h-4" />
-                      </Button>
+                      </button>
                     </>
                   )}
                   {canReverse('adjustment', d.status) && (
-                    <Button
+                    <button
                       onClick={() => setReverseTarget({
                         id: d.id,
                         label: `Ajuste ${d.id.slice(0, 8)} • ${d.notes || d.reason}`,
@@ -259,9 +258,9 @@ export default function InventoryAdjustmentsView() {
                       aria-label="Revertir ajuste"
                     >
                       <Undo2 className="w-4 h-4" />
-                    </Button>
+                    </button>
                   )}
-                  <Button
+                  <button
                     onClick={() => setDuplicateTarget({
                       id: d.id,
                       label: `Ajuste ${d.id.slice(0, 8)} • ${d.notes || d.reason}`,
@@ -272,7 +271,7 @@ export default function InventoryAdjustmentsView() {
                     aria-label="Duplicar ajuste"
                   >
                     <Copy className="w-4 h-4" />
-                  </Button>
+                  </button>
                 </div>
               </div>
               {expandedDoc === d.id && d.items && (
@@ -496,7 +495,7 @@ function CreateAdjustmentModal({ storeId, userId, onClose, onCreated }: {
       <div className="w-full max-w-lg bg-card border border-border rounded-2xl shadow-2xl p-5 space-y-4 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-black uppercase">Nuevo Ajuste Documental</h2>
-          <Button onClick={onClose} className="p-2 rounded-lg hover:bg-muted" aria-label="Cerrar"><X className="w-4 h-4" /></Button>
+          <button onClick={onClose} className="p-2 rounded-lg hover:bg-muted" aria-label="Cerrar"><X className="w-4 h-4" /></button>
         </div>
 
         <div>
@@ -519,10 +518,10 @@ function CreateAdjustmentModal({ storeId, userId, onClose, onCreated }: {
             {searchResults.length > 0 && (
               <div className="absolute z-10 w-full mt-1 rounded-xl border border-border bg-card shadow-lg max-h-48 overflow-y-auto">
                 {searchResults.map(p => (
-                  <Button key={p.id} onClick={() => addProduct(p)} className="w-full text-left p-2 hover:bg-muted text-sm border-b border-border/30 last:border-0">
+                  <button key={p.id} onClick={() => addProduct(p)} className="w-full text-left p-2 hover:bg-muted text-sm border-b border-border/30 last:border-0">
                     <span className="font-bold">{p.name}</span>
                     <span className="text-xs text-muted-foreground ml-2">{p.sku} • Stock: {p.stock_current}</span>
-                  </Button>
+                  </button>
                 ))}
               </div>
             )}
@@ -538,7 +537,7 @@ function CreateAdjustmentModal({ storeId, userId, onClose, onCreated }: {
                 <div key={idx} className="p-3 rounded-lg border border-border bg-muted/20 space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-bold flex-1 truncate">{item.name}</span>
-                    <Button onClick={() => removeItem(idx)} className="text-destructive hover:bg-destructive/10 p-1 rounded"><X className="w-3 h-3" /></Button>
+                    <button onClick={() => removeItem(idx)} className="text-destructive hover:bg-destructive/10 p-1 rounded"><X className="w-3 h-3" /></button>
                   </div>
                   <div className="grid grid-cols-4 gap-2 text-xs">
                     <div>
@@ -580,14 +579,14 @@ function CreateAdjustmentModal({ storeId, userId, onClose, onCreated }: {
         )}
 
         <div className="flex gap-2 pt-2">
-          <Button onClick={onClose} className={cn('flex-1 px-4 rounded-xl border border-border font-black text-xs uppercase hover:bg-muted', touch)}>Cancelar</Button>
-          <Button
+          <button onClick={onClose} className={cn('flex-1 px-4 rounded-xl border border-border font-black text-xs uppercase hover:bg-muted', touch)}>Cancelar</button>
+          <button
             onClick={handleSubmit}
             disabled={submitting || !reason.trim() || items.length === 0}
             className={cn('flex-1 px-4 rounded-xl bg-primary text-primary-foreground font-black text-xs uppercase hover:opacity-90 disabled:opacity-40', touch)}
           >
             {submitting ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : 'Crear Ajuste'}
-          </Button>
+          </button>
         </div>
       </div>
     </div>

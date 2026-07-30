@@ -16,7 +16,6 @@ import { StoreHealthBadge } from './StoreHealthBadge';
 import { BackupModal } from './backup/BackupModal';
 import { RestoreBackupModal } from './backup/RestoreBackupModal';
 import { useAuthStore } from '@/store';
-import { Button } from "@/components/ui/button";
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 
@@ -248,7 +247,7 @@ export function StoreCard({
                 {fullUrl}
               </p>
             </div>
-            <Button
+            <button
               type="button"
               onClick={() => {
                 // FIX-SSR: Use computed fullUrl (already guarded for SSR)
@@ -266,7 +265,7 @@ export function StoreCard({
               title={t('copyLink')}
             >
               <Copy className="w-3.5 h-3.5" />
-            </Button>
+            </button>
             <a
               href={`/tienda/${slug}`}
               target="_blank"
@@ -312,7 +311,7 @@ export function StoreCard({
       <div className="space-y-2">
         {/* FIX-GESTION-UNIFICADA-V2: botón "Ver Dashboard" → dashboard avanzado por tienda */}
         {onOpenDashboard && (
-          <Button
+          <button
             type="button"
             onClick={() => onOpenDashboard(store)}
             aria-label={`Ver dashboard avanzado de ${store.name}`}
@@ -321,10 +320,10 @@ export function StoreCard({
           >
             <BarChart3 className="w-3.5 h-3.5" />
             Ver Dashboard
-          </Button>
+          </button>
         )}
         {activeStoreId !== store.id ? (
-          <Button
+          <button
             type="button"
             onClick={() => onSetActiveStore(store.id)}
             aria-label={`${t('selectStore')} ${store.name}`}
@@ -334,7 +333,7 @@ export function StoreCard({
           >
             <Target className="w-3.5 h-3.5" />
             {t('selectStore')}
-          </Button>
+          </button>
         ) : (
           <div
             role="status"
@@ -357,7 +356,7 @@ export function StoreCard({
           <div className="grid grid-cols-2 gap-2 p-2 border-t border-border/30">
             {/* Backup / Restore buttons — visible para admin global o encargado+ de la tienda */}
             {canBackup && (
-              <Button
+              <button
                 type="button"
                 onClick={() => setBackupOpen(true)}
                 aria-label={`Respaldo de tienda ${store.name}`}
@@ -365,10 +364,10 @@ export function StoreCard({
               >
                 <ShieldCheck className="w-3 h-3" />
                 Respaldo
-              </Button>
+              </button>
             )}
             {canBackup && (
-              <Button
+              <button
                 type="button"
                 onClick={() => setRestoreOpen(true)}
                 aria-label={`Importar respaldo en tienda ${store.name}`}
@@ -376,9 +375,9 @@ export function StoreCard({
               >
                 <ArchiveRestore className="w-3 h-3" />
                 Importar
-              </Button>
+              </button>
             )}
-            <Button
+            <button
               type="button"
               onClick={() => onConfigStore(store)}
               aria-label={`Configurar tienda ${store.name}`}
@@ -386,8 +385,8 @@ export function StoreCard({
             >
               <Settings className="w-3 h-3" />
               Configurar
-            </Button>
-            <Button
+            </button>
+            <button
               type="button"
               onClick={() => onEditStore(store)}
               aria-label={`${tc('edit')} ${store.name}`}
@@ -395,9 +394,9 @@ export function StoreCard({
             >
               <Edit className="w-3 h-3" />
               {t('info')}
-            </Button>
+            </button>
             {isAdmin && (
-              <Button
+              <button
                 type="button"
                 onClick={() => onTeamStore(store)}
                 aria-label={`Ver equipo de ${store.name}`}
@@ -405,10 +404,10 @@ export function StoreCard({
               >
                 <UserCog className="w-3 h-3" />
                 Equipo
-              </Button>
+              </button>
             )}
             {isAdmin && (
-              <Button
+              <button
                 type="button"
                 onClick={() => onResetStore(store)}
                 aria-label={`${t('resetStore')} ${store.name}`}
@@ -416,10 +415,10 @@ export function StoreCard({
               >
                 <RotateCcw className="w-3 h-3" />
                 {t('reset')}
-              </Button>
+              </button>
             )}
             {isAdmin && (
-              <Button
+              <button
                 type="button"
                 onClick={() => onToggleStatus(store)}
                 disabled={isTogglingStatus}
@@ -433,10 +432,10 @@ export function StoreCard({
               >
                 {isTogglingStatus ? <Loader2 className="w-3 h-3 animate-spin" /> : <Power className="w-3 h-3" />}
                 {store.is_active ? 'Pausar' : 'Activar'}
-              </Button>
+              </button>
             )}
             {isAdmin && store.is_active && (
-              <Button
+              <button
                 type="button"
                 onClick={() => onArchiveStore(store)}
                 disabled={archivingStoreId === store.id}
@@ -445,10 +444,10 @@ export function StoreCard({
               >
                 {archivingStoreId === store.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Archive className="w-3 h-3" />}
                 Archivar
-              </Button>
+              </button>
             )}
             {isAdmin && !store.is_active && (
-              <Button
+              <button
                 type="button"
                 onClick={() => onRestoreStore(store)}
                 disabled={archivingStoreId === store.id}
@@ -457,10 +456,10 @@ export function StoreCard({
               >
                 {archivingStoreId === store.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <ArchiveRestore className="w-3 h-3" />}
                 Restaurar
-              </Button>
+              </button>
             )}
             {isAdmin && (
-              <Button
+              <button
                 type="button"
                 onClick={() => onDeleteStore(store)}
                 aria-label={`${t('deleteStore')} ${store.name}`}
@@ -468,7 +467,7 @@ export function StoreCard({
               >
                 <Trash2 className="w-3 h-3" />
                 {t('erase')}
-              </Button>
+              </button>
             )}
           </div>
         </details>

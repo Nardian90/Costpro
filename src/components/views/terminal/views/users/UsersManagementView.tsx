@@ -187,29 +187,29 @@ export default function UsersManagementView() {
                   </td>
                   <td className="p-4">
                     <div className="flex justify-center gap-2">
-                      <Button type="button"
+                      <button type="button"
                         onClick={() => handleEditUser(u)}
                         className="w-11 h-11 sm:w-9 sm:h-9 flex items-center justify-center rounded-lg border border-border hover:bg-primary hover:text-foreground transition-all active:scale-95"
                         aria-label="Editar usuario"
                       >
                         <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button type="button"
+                      </button>
+                      <button type="button"
                         onClick={() => handleResetPassword(u.id)}
                         className="w-11 h-11 sm:w-9 sm:h-9 flex items-center justify-center rounded-lg border border-border hover:bg-warning hover:text-foreground transition-all active:scale-95"
                         aria-label="Reiniciar contraseña"
                         title="Reiniciar contraseña"
                       >
                         <Key className="w-4 h-4" />
-                      </Button>
-                      <Button type="button"
+                      </button>
+                      <button type="button"
                         onClick={() => handleDeleteUser(u.id)}
                         disabled={u.id === user?.id}
                         className="w-11 h-11 sm:w-9 sm:h-9 flex items-center justify-center rounded-lg border border-border hover:bg-destructive hover:text-foreground transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed"
                         aria-label="Eliminar usuario"
                       >
                         <Trash2 className="w-4 h-4" />
-                      </Button>
+                      </button>
                     </div>
                   </td>
                 </tr>

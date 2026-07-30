@@ -2,7 +2,6 @@
 
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { Button } from "@/components/ui/button";
 import { Package, Trash2 } from 'lucide-react';
 import { ExtendedProduct } from './useInventoryCount';
 
@@ -99,7 +98,7 @@ export default function InventoryCountTableView({
                   </td>
                   {showRemoveButton && onRemoveProduct && (
                     <td className="p-4 text-center">
-                      <Button
+                      <button
                         type="button"
                         onClick={(e) => { e.stopPropagation(); onRemoveProduct(product.id); }}
                         className="p-2 hover:bg-destructive/10 text-destructive rounded-xl transition-colors"
@@ -107,7 +106,7 @@ export default function InventoryCountTableView({
                         title="Quitar del conteo"
                       >
                         <Trash2 className="w-4 h-4" />
-                      </Button>
+                      </button>
                     </td>
                   )}
                 </tr>

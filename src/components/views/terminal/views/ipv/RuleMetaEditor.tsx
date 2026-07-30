@@ -182,7 +182,7 @@ export function RuleMetaEditor({ rule, onSave }: RuleMetaEditorProps) {
 
   return (
     <div className="space-y-2">
-      <Button type="button"
+      <button type="button"
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center gap-2 w-full px-3 py-2 rounded-lg hover:bg-muted/50 transition-colors text-sm font-medium"
       >
@@ -191,7 +191,7 @@ export function RuleMetaEditor({ rule, onSave }: RuleMetaEditorProps) {
         <Badge variant="outline" className="ml-auto text-xs">
           {Object.keys(meta || {}).length} configurados
         </Badge>
-      </Button>
+      </button>
 
       {isOpen && (
         <Card className="p-4 space-y-4 bg-muted/30 border-primary/20">

@@ -6,7 +6,6 @@ import { cn, formatCurrency } from '@/lib/utils';
 import { apiFetch } from '@/lib/api-fetch';
 import { useRegisterPayment, type PaymentRowInput } from '@/hooks/api/useRegisterPayment';
 
-import { Button } from "@/components/ui/button";
 export interface PayableDocument {
   ref_type: 'receipt' | 'service' | 'commission';
   ref_id: string;
@@ -195,13 +194,13 @@ export default function PaymentModal({ document: doc, onClose, onPaymentRegister
             <h3 className="text-lg font-black uppercase tracking-tight">Registrar Pago</h3>
             <p className="text-[10px] text-muted-foreground uppercase">{doc.supplier || 'Sin proveedor'}</p>
           </div>
-          <Button
+          <button
             onClick={onClose}
             className="w-8 h-8 rounded-lg hover:bg-muted flex items-center justify-center"
             aria-label="Cerrar"
           >
             <X className="w-4 h-4" />
-          </Button>
+          </button>
         </div>
 
         {/* Document info */}
@@ -255,7 +254,7 @@ export default function PaymentModal({ document: doc, onClose, onPaymentRegister
                   const Icon = m.icon;
                   const isSelected = rows[0]?.payment_method === m.id;
                   return (
-                    <Button
+                    <button
                       key={m.id}
                       onClick={() => updateRow(rows[0].id, { payment_method: m.id })}
                       className={cn(
@@ -267,10 +266,10 @@ export default function PaymentModal({ document: doc, onClose, onPaymentRegister
                     >
                       <Icon className="w-5 h-5" />
                       {m.label}
-                    </Button>
+                    </button>
                   );
                 })}
-                <Button
+                <button
                   onClick={() => {
                     // mixed: añadir segunda fila
                     if (rows.length === 1) addRow();
@@ -284,7 +283,7 @@ export default function PaymentModal({ document: doc, onClose, onPaymentRegister
                 >
                   <Banknote className="w-5 h-5" />
                   Mixto
-                </Button>
+                </button>
               </div>
             </div>
 
@@ -318,20 +317,20 @@ export default function PaymentModal({ document: doc, onClose, onPaymentRegister
             )}
 
             <div className="flex gap-2">
-              <Button
+              <button
                 onClick={onClose}
                 disabled={loading}
                 className="flex-1 py-2.5 rounded-lg border border-border/40 text-xs font-black uppercase hover:bg-muted disabled:opacity-50"
               >
                 Cancelar
-              </Button>
-              <Button
+              </button>
+              <button
                 onClick={handleSubmit}
                 disabled={loading}
                 className="flex-1 py-2.5 rounded-lg bg-primary text-primary-foreground text-xs font-black uppercase hover:bg-primary/90 disabled:opacity-50"
               >
                 {loading ? 'Procesando...' : 'Pagar Comisión'}
-              </Button>
+              </button>
             </div>
           </div>
         ) : (
@@ -342,12 +341,12 @@ export default function PaymentModal({ document: doc, onClose, onPaymentRegister
                 <p className="text-[10px] font-black uppercase text-muted-foreground">
                   Pagos ({rows.length})
                 </p>
-                <Button
+                <button
                   onClick={addRow}
                   className="flex items-center gap-1 px-2 py-1 rounded-lg border border-border/40 text-[10px] font-black uppercase hover:bg-muted"
                 >
                   <Plus className="w-3 h-3" /> Añadir
-                </Button>
+                </button>
               </div>
 
               {rows.map((row, idx) => (
@@ -355,13 +354,13 @@ export default function PaymentModal({ document: doc, onClose, onPaymentRegister
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] font-black uppercase text-muted-foreground">Pago #{idx + 1}</span>
                     {rows.length > 1 && (
-                      <Button
+                      <button
                         onClick={() => removeRow(row.id)}
                         className="text-destructive hover:bg-destructive/10 p-1 rounded"
                         aria-label="Eliminar pago"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
-                      </Button>
+                      </button>
                     )}
                   </div>
 
@@ -370,7 +369,7 @@ export default function PaymentModal({ document: doc, onClose, onPaymentRegister
                     {PAYMENT_METHODS.map(m => {
                       const Icon = m.icon;
                       return (
-                        <Button
+                        <button
                           key={m.id}
                           onClick={() => updateRow(row.id, { payment_method: m.id })}
                           className={cn(
@@ -382,7 +381,7 @@ export default function PaymentModal({ document: doc, onClose, onPaymentRegister
                         >
                           <Icon className="w-4 h-4" />
                           {m.label}
-                        </Button>
+                        </button>
                       );
                     })}
                   </div>
@@ -484,20 +483,20 @@ export default function PaymentModal({ document: doc, onClose, onPaymentRegister
 
             {/* Actions */}
             <div className="p-4 flex gap-2 border-t border-border/30">
-              <Button
+              <button
                 onClick={onClose}
                 disabled={loading}
                 className="flex-1 py-2.5 rounded-lg border border-border/40 text-xs font-black uppercase hover:bg-muted disabled:opacity-50"
               >
                 Cancelar
-              </Button>
-              <Button
+              </button>
+              <button
                 onClick={handleSubmit}
                 disabled={loading || isOverpay || totalThisPaymentCup <= 0}
                 className="flex-1 py-2.5 rounded-lg bg-primary text-primary-foreground text-xs font-black uppercase hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? 'Registrando...' : 'Registrar Pago'}
-              </Button>
+              </button>
             </div>
           </>
         )}

@@ -13,7 +13,6 @@ import { Transaction, TransactionItem, TaxConfiguration } from '@/types';
 import { useTaxes } from '@/hooks/api/useTaxes';
 import { useAuthStore } from '@/store';
 import { supabase } from '@/lib/supabaseClient';
-import { Button } from "@/components/ui/button";
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 import { Check, ShieldAlert } from 'lucide-react';
@@ -189,7 +188,7 @@ export function TransactionDetailsModal({ isOpen, onClose, transaction, items, i
                   </h3>
                   <div className="space-y-2">
                     {allTaxes.map(tax => (
-                      <Button type="button"
+                      <button type="button"
                         key={tax.id}
                         onClick={() => handleToggleTax(tax)}
                         className={cn(
@@ -206,7 +205,7 @@ export function TransactionDetailsModal({ isOpen, onClose, transaction, items, i
                         )}>
                           {appliedTaxes.some(t => t.id === tax.id) && <Check className="w-2.5 h-2.5 text-foreground" />}
                         </div>
-                      </Button>
+                      </button>
                     ))}
                   </div>
                 </div>

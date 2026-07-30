@@ -173,13 +173,13 @@ export default function EstructuraCostoView() {
           <Search className="w-4 h-4 text-muted-foreground" />
           <Input value={searchTerm} onChange={e => setSearchTerm(e.target.value)} placeholder="Buscar producto..." className="h-9 text-xs" />
         </div>
-        <Button
+        <button
           onClick={() => setOnlyWithStock(!onlyWithStock)}
           className={cn('px-3 py-1.5 rounded-lg text-xs font-bold border transition-all',
             onlyWithStock ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground')}
         >
           {onlyWithStock ? '✓ Solo con existencia' : 'Ver todos'}
-        </Button>
+        </button>
       </div>
 
       {/* Tabla */}

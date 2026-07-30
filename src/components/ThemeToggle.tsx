@@ -5,7 +5,6 @@ import { Moon, Sun, Zap, Shield } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { useUIStore } from '@/store';
 import { cn } from '@/lib/utils';
-import { Button } from "@/components/ui/button";
 import { toggleUIMode, getCurrentUIMode, type UIMode } from './IntelligentThemeHandler';
 import { toast } from 'sonner';
 
@@ -74,7 +73,7 @@ export function ThemeToggle() {
   return (
     <div className="flex items-center gap-1.5">
       {/* Light/Dark Toggle */}
-      <Button
+      <button
         onClick={handleToggleTheme}
         className="relative w-9 h-9 sm:w-11 sm:h-11 flex items-center justify-center rounded-xl border border-border/50 bg-muted/50 hover:bg-muted active:scale-90 transition-all outline-none focus-visible:ring-2 focus-visible:ring-ring"
         aria-label={isDark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
@@ -86,10 +85,10 @@ export function ThemeToggle() {
             <Moon className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
           )}
         </div>
-      </Button>
+      </button>
 
       {/* Performance / Enhanced Toggle — visible en móvil y desktop */}
-      <Button
+      <button
         onClick={handleToggleMode}
         className={cn(
           "relative w-9 h-9 sm:w-11 sm:h-11 flex items-center justify-center rounded-xl border active:scale-90 transition-all outline-none focus-visible:ring-2 focus-visible:ring-ring",
@@ -117,7 +116,7 @@ export function ThemeToggle() {
         )}>
           {isPerformance ? '⚡' : '✨'}
         </span>
-      </Button>
+      </button>
     </div>
   );
 }

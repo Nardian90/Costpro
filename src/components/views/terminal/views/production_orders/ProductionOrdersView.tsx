@@ -12,7 +12,6 @@ import { canReverse } from '@/components/ui/DocumentStatusBadge';
 import { ReverseDocumentModal } from '@/components/ui/ReverseDocumentModal';
 import { DuplicateDocumentModal } from '@/components/ui/DuplicateDocumentModal';
 
-import { Button } from "@/components/ui/button";
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: any }> = {
   draft:       { label: 'Borrador',     color: 'bg-muted text-muted-foreground border-border', icon: Clock },
   approved:    { label: 'Aprobada',     color: 'bg-primary/15 text-primary border-primary/30', icon: CheckCircle2 },
@@ -85,12 +84,12 @@ export default function ProductionOrdersView() {
           <h2 className="text-2xl font-black uppercase tracking-tight">Órdenes de Producción y Trabajo</h2>
           <p className="text-xs text-muted-foreground mt-1">Gestión de obras, servicios y producción con presupuesto</p>
         </div>
-        <Button
+        <button
           onClick={() => setShowCreate(true)}
           className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-xs font-black uppercase hover:opacity-90"
         >
           <Plus className="w-4 h-4" /> Nueva Orden
-        </Button>
+        </button>
       </div>
 
       {/* Filtros */}
@@ -103,11 +102,11 @@ export default function ProductionOrdersView() {
           <option value="work">📦 Trabajo</option>
         </select>
         {['all', 'draft', 'approved', 'in_progress', 'paused', 'completed', 'closed', 'voided', 'reversed'].map(s => (
-          <Button key={s} onClick={() => setFilter(s)}
+          <button key={s} onClick={() => setFilter(s)}
             className={cn("px-3 py-1.5 rounded-lg text-[10px] font-black uppercase border",
               filter === s ? "bg-primary text-primary-foreground border-primary" : "border-border/40 text-muted-foreground hover:bg-muted")}>
             {s === 'all' ? 'Todas' : STATUS_CONFIG[s]?.label || s}
-          </Button>
+          </button>
         ))}
       </div>
 
@@ -163,28 +162,28 @@ export default function ProductionOrdersView() {
                     </td>
                     <td className="p-3 text-center">
                       <div className="flex items-center justify-center gap-1">
-                        <Button onClick={() => setDetailOrder(order)} className="p-2 rounded-lg hover:bg-primary/10 text-primary" title="Ver detalle">
+                        <button onClick={() => setDetailOrder(order)} className="p-2 rounded-lg hover:bg-primary/10 text-primary" title="Ver detalle">
                           <Eye className="w-4 h-4" />
-                        </Button>
+                        </button>
                         {order.status === 'draft' && (
-                          <Button onClick={() => handleStatusChange(order.id, 'approved')} className="p-2 rounded-lg hover:bg-primary/10 text-primary" title="Aprobar">
+                          <button onClick={() => handleStatusChange(order.id, 'approved')} className="p-2 rounded-lg hover:bg-primary/10 text-primary" title="Aprobar">
                             <CheckCircle2 className="w-4 h-4" />
-                          </Button>
+                          </button>
                         )}
                         {order.status === 'approved' && (
-                          <Button onClick={() => handleStatusChange(order.id, 'in_progress')} className="p-2 rounded-lg hover:bg-blue-500/10 text-blue-500" title="Iniciar">
+                          <button onClick={() => handleStatusChange(order.id, 'in_progress')} className="p-2 rounded-lg hover:bg-blue-500/10 text-blue-500" title="Iniciar">
                             <Play className="w-4 h-4" />
-                          </Button>
+                          </button>
                         )}
                         {order.status === 'in_progress' && (
-                          <Button onClick={() => handleStatusChange(order.id, 'paused')} className="p-2 rounded-lg hover:bg-amber-500/10 text-amber-500" title="Pausar">
+                          <button onClick={() => handleStatusChange(order.id, 'paused')} className="p-2 rounded-lg hover:bg-amber-500/10 text-amber-500" title="Pausar">
                             <Pause className="w-4 h-4" />
-                          </Button>
+                          </button>
                         )}
                         {order.status === 'paused' && (
-                          <Button onClick={() => handleStatusChange(order.id, 'in_progress')} className="p-2 rounded-lg hover:bg-blue-500/10 text-blue-500" title="Reanudar">
+                          <button onClick={() => handleStatusChange(order.id, 'in_progress')} className="p-2 rounded-lg hover:bg-blue-500/10 text-blue-500" title="Reanudar">
                             <Play className="w-4 h-4" />
-                          </Button>
+                          </button>
                         )}
                       </div>
                     </td>
@@ -289,20 +288,20 @@ function CreateOrderModal({ onClose, onCreated }: { onClose: () => void; onCreat
       <div className="w-full max-w-lg max-h-[90vh] overflow-y-auto bg-card border border-border/50 rounded-2xl shadow-2xl" onClick={e => e.stopPropagation()}>
         <div className="sticky top-0 bg-card border-b border-border/30 p-4 flex items-center justify-between z-10">
           <h2 className="text-sm font-black uppercase tracking-widest">Nueva Orden</h2>
-          <Button onClick={onClose} className="p-2 rounded-lg hover:bg-muted"><X className="w-4 h-4" /></Button>
+          <button onClick={onClose} className="p-2 rounded-lg hover:bg-muted"><X className="w-4 h-4" /></button>
         </div>
         <div className="p-4 space-y-3">
           {/* Tipo */}
           <div className="grid grid-cols-3 gap-2">
-            <Button onClick={() => setOrderType('service')} className={cn("py-3 rounded-xl border-2 text-xs font-black uppercase flex flex-col items-center gap-1", orderType === 'service' ? "border-primary bg-primary/5 text-primary" : "border-border/30 text-muted-foreground")}>
+            <button onClick={() => setOrderType('service')} className={cn("py-3 rounded-xl border-2 text-xs font-black uppercase flex flex-col items-center gap-1", orderType === 'service' ? "border-primary bg-primary/5 text-primary" : "border-border/30 text-muted-foreground")}>
               <Wrench className="w-5 h-5" /> Servicio
-            </Button>
-            <Button onClick={() => setOrderType('work')} className={cn("py-3 rounded-xl border-2 text-xs font-black uppercase flex flex-col items-center gap-1", orderType === 'work' ? "border-primary bg-primary/5 text-primary" : "border-border/30 text-muted-foreground")}>
+            </button>
+            <button onClick={() => setOrderType('work')} className={cn("py-3 rounded-xl border-2 text-xs font-black uppercase flex flex-col items-center gap-1", orderType === 'work' ? "border-primary bg-primary/5 text-primary" : "border-border/30 text-muted-foreground")}>
               <Package className="w-5 h-5" /> Trabajo
-            </Button>
-            <Button onClick={() => setOrderType('production')} className={cn("py-3 rounded-xl border-2 text-xs font-black uppercase flex flex-col items-center gap-1", orderType === 'production' ? "border-primary bg-primary/5 text-primary" : "border-border/30 text-muted-foreground")}>
+            </button>
+            <button onClick={() => setOrderType('production')} className={cn("py-3 rounded-xl border-2 text-xs font-black uppercase flex flex-col items-center gap-1", orderType === 'production' ? "border-primary bg-primary/5 text-primary" : "border-border/30 text-muted-foreground")}>
               <Factory className="w-5 h-5" /> Producción
-            </Button>
+            </button>
           </div>
 
           {/* Cliente */}
@@ -348,10 +347,10 @@ function CreateOrderModal({ onClose, onCreated }: { onClose: () => void; onCreat
             {products.length > 0 && (
               <div className="border border-border/30 rounded-lg max-h-32 overflow-y-auto">
                 {products.map(p => (
-                  <Button key={p.id} onClick={() => addItem(p)} className="w-full text-left p-2 hover:bg-muted/30 border-b border-border/20 last:border-0">
+                  <button key={p.id} onClick={() => addItem(p)} className="w-full text-left p-2 hover:bg-muted/30 border-b border-border/20 last:border-0">
                     <span className="text-xs font-bold">{p.name}</span>
                     <span className="text-[10px] text-muted-foreground ml-2">Stock: {p.stock_current}</span>
-                  </Button>
+                  </button>
                 ))}
               </div>
             )}
@@ -360,7 +359,7 @@ function CreateOrderModal({ onClose, onCreated }: { onClose: () => void; onCreat
                 <span className="flex-1 text-xs font-bold">{item.name}</span>
                 <input type="number" value={item.budgeted_qty} onChange={(e) => { const n = [...items]; n[i].budgeted_qty = parseFloat(e.target.value) || 0; setItems(n); }} className="w-16 h-8 bg-background border border-border/50 rounded px-2 text-xs font-bold text-center" />
                 <span className="text-[10px] text-muted-foreground">×{item.budgeted_unit_cost}</span>
-                <Button onClick={() => setItems(items.filter((_, idx) => idx !== i))} className="text-destructive hover:bg-destructive/10 p-1 rounded"><X className="w-3 h-3" /></Button>
+                <button onClick={() => setItems(items.filter((_, idx) => idx !== i))} className="text-destructive hover:bg-destructive/10 p-1 rounded"><X className="w-3 h-3" /></button>
               </div>
             ))}
           </div>
@@ -368,8 +367,8 @@ function CreateOrderModal({ onClose, onCreated }: { onClose: () => void; onCreat
           <input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Descripción (opcional)" className="w-full h-10 bg-background border border-border/50 rounded-lg px-3 text-sm" />
 
           <div className="flex gap-2 pt-2">
-            <Button onClick={onClose} className="flex-1 h-10 rounded-lg border border-border/40 text-xs font-black uppercase hover:bg-muted">Cancelar</Button>
-            <Button onClick={handleSubmit} disabled={submitting} className="flex-1 h-10 rounded-lg bg-primary text-primary-foreground text-xs font-black uppercase hover:opacity-90 disabled:opacity-50">{submitting ? '...' : 'Crear Orden'}</Button>
+            <button onClick={onClose} className="flex-1 h-10 rounded-lg border border-border/40 text-xs font-black uppercase hover:bg-muted">Cancelar</button>
+            <button onClick={handleSubmit} disabled={submitting} className="flex-1 h-10 rounded-lg bg-primary text-primary-foreground text-xs font-black uppercase hover:opacity-90 disabled:opacity-50">{submitting ? '...' : 'Crear Orden'}</button>
           </div>
         </div>
       </div>
@@ -711,7 +710,7 @@ function OrderDetailModal({ order, onClose, onUpdate }: { order: ProductionOrder
             {/* ESTÁNDAR: Anular SOLO para draft/approved (sin stock movido).
                 Para in_progress+ usar Revertir (que reabastece insumos + descuenta output). */}
             {(order.status === 'draft' || order.status === 'approved') && (
-              <Button
+              <button
                 onClick={handleVoid}
                 disabled={voiding}
                 className="px-2 py-2 rounded-lg bg-destructive/10 text-destructive border border-destructive/30 text-[10px] font-black uppercase hover:bg-destructive/20 min-h-[44px] flex items-center gap-1"
@@ -720,11 +719,11 @@ function OrderDetailModal({ order, onClose, onUpdate }: { order: ProductionOrder
               >
                 <Ban className="w-3.5 h-3.5" />
                 <span className="hidden sm:inline">Anular</span>
-              </Button>
+              </button>
             )}
             {/* ESTÁNDAR: Revertir para in_progress+ (reabastece insumos + descuenta output + kardex) */}
             {canReverse('production_order', order.status) && (
-              <Button
+              <button
                 onClick={() => setShowReverseModal(true)}
                 className="px-2 py-2 rounded-lg bg-purple-500/10 text-purple-500 dark:text-purple-400 border border-purple-500/30 text-[10px] font-black uppercase hover:bg-purple-500/20 min-h-[44px] flex items-center gap-1"
                 title="Revertir orden (reabastece insumos + descuenta output)"
@@ -732,10 +731,10 @@ function OrderDetailModal({ order, onClose, onUpdate }: { order: ProductionOrder
               >
                 <Undo2 className="w-3.5 h-3.5" />
                 <span className="hidden sm:inline">Revertir</span>
-              </Button>
+              </button>
             )}
             {/* V2.4: botón Duplicar — abre modal de confirmación */}
-            <Button
+            <button
               onClick={() => setShowDuplicateModal(true)}
               className="px-2 py-2 rounded-lg bg-blue-500/10 text-blue-500 border border-blue-500/30 text-[10px] font-black uppercase hover:bg-blue-500/20 min-h-[44px] flex items-center gap-1"
               title="Duplicar orden (crea nueva con mismos items)"
@@ -743,9 +742,9 @@ function OrderDetailModal({ order, onClose, onUpdate }: { order: ProductionOrder
             >
               <Copy className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Duplicar</span>
-            </Button>
+            </button>
             {/* V2.12.15: botón Exportar PDF — descarga la OT como PDF */}
-            <Button
+            <button
               onClick={handleExportPDF}
               disabled={exportingPDF}
               className="px-2 py-2 rounded-lg bg-success/10 text-success border border-success/30 text-[10px] font-black uppercase hover:bg-success/20 min-h-[44px] flex items-center gap-1 disabled:opacity-50"
@@ -754,18 +753,18 @@ function OrderDetailModal({ order, onClose, onUpdate }: { order: ProductionOrder
             >
               <Download className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">{exportingPDF ? '...' : 'PDF'}</span>
-            </Button>
-            <Button onClick={onClose} className="p-2 rounded-lg hover:bg-muted min-h-[44px] min-w-[44px] flex items-center justify-center" aria-label="Cerrar">
+            </button>
+            <button onClick={onClose} className="p-2 rounded-lg hover:bg-muted min-h-[44px] min-w-[44px] flex items-center justify-center" aria-label="Cerrar">
               <X className="w-4 h-4" />
-            </Button>
+            </button>
           </div>
         </div>
 
         {/* Tabs */}
         <div className="flex border-b border-border/30 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
-          <Button onClick={() => setActiveTab('info')} className={cn("flex-1 py-3 px-4 text-xs font-black uppercase border-b-2 -mb-px whitespace-nowrap min-h-[44px]", activeTab === 'info' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground')}>Info</Button>
-          <Button onClick={() => setActiveTab('items')} className={cn("flex-1 py-3 px-4 text-xs font-black uppercase border-b-2 -mb-px whitespace-nowrap min-h-[44px]", activeTab === 'items' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground')}>Materiales ({items.length})</Button>
-          <Button onClick={() => setActiveTab('payments')} className={cn("flex-1 py-3 px-4 text-xs font-black uppercase border-b-2 -mb-px whitespace-nowrap min-h-[44px]", activeTab === 'payments' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground')}>Pagos ({payments.length})</Button>
+          <button onClick={() => setActiveTab('info')} className={cn("flex-1 py-3 px-4 text-xs font-black uppercase border-b-2 -mb-px whitespace-nowrap min-h-[44px]", activeTab === 'info' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground')}>Info</button>
+          <button onClick={() => setActiveTab('items')} className={cn("flex-1 py-3 px-4 text-xs font-black uppercase border-b-2 -mb-px whitespace-nowrap min-h-[44px]", activeTab === 'items' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground')}>Materiales ({items.length})</button>
+          <button onClick={() => setActiveTab('payments')} className={cn("flex-1 py-3 px-4 text-xs font-black uppercase border-b-2 -mb-px whitespace-nowrap min-h-[44px]", activeTab === 'payments' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground')}>Pagos ({payments.length})</button>
         </div>
 
         {/* Tab Info */}
@@ -808,12 +807,12 @@ function OrderDetailModal({ order, onClose, onUpdate }: { order: ProductionOrder
 
             {/* Fase 3: edición en borrador */}
             {canEdit && !isEditing && (
-              <Button
+              <button
                 onClick={() => setIsEditing(true)}
                 className="w-full px-3 py-2 rounded-lg border border-border text-xs font-black uppercase hover:bg-muted min-h-[44px] flex items-center justify-center gap-2"
               >
                 <Edit3 className="w-3.5 h-3.5" /> Editar información
-              </Button>
+              </button>
             )}
 
             {isEditing ? (
@@ -842,10 +841,10 @@ function OrderDetailModal({ order, onClose, onUpdate }: { order: ProductionOrder
                   <textarea value={editForm.description} onChange={(e) => setEditForm({ ...editForm, description: e.target.value })} rows={2} className="w-full px-3 py-2 rounded-lg border-2 border-border bg-background text-sm min-h-[44px]" placeholder="Descripción del trabajo" />
                 </div>
                 <div className="flex gap-2">
-                  <Button onClick={() => setIsEditing(false)} className="flex-1 h-11 rounded-lg border border-border text-xs font-black uppercase hover:bg-muted min-h-[44px]">Cancelar</Button>
-                  <Button onClick={handleSaveEdit} disabled={savingEdit} className="flex-1 h-11 rounded-lg bg-primary text-primary-foreground text-xs font-black uppercase hover:bg-primary/90 disabled:opacity-50 min-h-[44px]">
+                  <button onClick={() => setIsEditing(false)} className="flex-1 h-11 rounded-lg border border-border text-xs font-black uppercase hover:bg-muted min-h-[44px]">Cancelar</button>
+                  <button onClick={handleSaveEdit} disabled={savingEdit} className="flex-1 h-11 rounded-lg bg-primary text-primary-foreground text-xs font-black uppercase hover:bg-primary/90 disabled:opacity-50 min-h-[44px]">
                     {savingEdit ? 'Guardando...' : 'Guardar'}
-                  </Button>
+                  </button>
                 </div>
               </div>
             ) : (
@@ -881,9 +880,9 @@ function OrderDetailModal({ order, onClose, onUpdate }: { order: ProductionOrder
             {canEdit && !isEditing && (
               <div className="pt-2 border-t border-border/30">
                 {!showCloseForm ? (
-                  <Button onClick={() => setShowCloseForm(true)} className="w-full h-11 rounded-lg bg-success text-white text-xs font-black uppercase hover:opacity-90 flex items-center justify-center gap-2 min-h-[44px]">
+                  <button onClick={() => setShowCloseForm(true)} className="w-full h-11 rounded-lg bg-success text-white text-xs font-black uppercase hover:opacity-90 flex items-center justify-center gap-2 min-h-[44px]">
                     <CheckCircle2 className="w-4 h-4" /> Cerrar Orden
-                  </Button>
+                  </button>
                 ) : (
                   <div className="space-y-2 p-3 rounded-xl border border-success/30 bg-success/5">
                     <p className="text-[10px] font-black uppercase text-muted-foreground">Pago al cerrar</p>
@@ -904,8 +903,8 @@ function OrderDetailModal({ order, onClose, onUpdate }: { order: ProductionOrder
                       </div>
                     )}
                     <div className="flex gap-2">
-                      <Button onClick={() => setShowCloseForm(false)} className="flex-1 h-11 rounded-lg border border-border/40 text-[10px] font-black uppercase min-h-[44px]">Cancelar</Button>
-                      <Button onClick={handleClose} className="flex-1 h-11 rounded-lg bg-success text-white text-[10px] font-black uppercase min-h-[44px]">Confirmar Cierre</Button>
+                      <button onClick={() => setShowCloseForm(false)} className="flex-1 h-11 rounded-lg border border-border/40 text-[10px] font-black uppercase min-h-[44px]">Cancelar</button>
+                      <button onClick={handleClose} className="flex-1 h-11 rounded-lg bg-success text-white text-[10px] font-black uppercase min-h-[44px]">Confirmar Cierre</button>
                     </div>
                   </div>
                 )}
@@ -922,33 +921,33 @@ function OrderDetailModal({ order, onClose, onUpdate }: { order: ProductionOrder
               {/* Toggle vista tabla/tarjetas */}
               {items.length > 0 && (
                 <div className="flex rounded-lg border border-border/40 overflow-hidden shrink-0">
-                  <Button
+                  <button
                     onClick={() => setViewMode('table')}
                     className={cn("px-3 h-9 text-[10px] font-black uppercase transition-colors",
                       viewMode === 'table' ? "bg-primary text-primary-foreground" : "bg-background text-muted-foreground hover:bg-muted")}
                     aria-label="Vista tabla"
                   >
                     <Package className="w-3.5 h-3.5 inline mr-1" /> Tabla
-                  </Button>
-                  <Button
+                  </button>
+                  <button
                     onClick={() => setViewMode('cards')}
                     className={cn("px-3 h-9 text-[10px] font-black uppercase transition-colors border-l border-border/40",
                       viewMode === 'cards' ? "bg-primary text-primary-foreground" : "bg-background text-muted-foreground hover:bg-muted")}
                     aria-label="Vista tarjetas"
                   >
                     <Factory className="w-3.5 h-3.5 inline mr-1" /> Tarjetas
-                  </Button>
+                  </button>
                 </div>
               )}
 
               {/* Botón añadir material */}
               {canEdit && !showAddMaterial && (
-                <Button
+                <button
                   onClick={() => setShowAddMaterial(true)}
                   className="flex-1 px-3 py-2 rounded-lg border border-border text-xs font-black uppercase hover:bg-muted min-h-[44px] flex items-center justify-center gap-2"
                 >
                   <Plus className="w-3.5 h-3.5" /> Agregar material
-                </Button>
+                </button>
               )}
             </div>
 
@@ -968,7 +967,7 @@ function OrderDetailModal({ order, onClose, onUpdate }: { order: ProductionOrder
                 {materialResults.length > 0 && (
                   <div className="max-h-40 overflow-y-auto rounded-lg border border-border/30 bg-background">
                     {materialResults.map(p => (
-                      <Button
+                      <button
                         key={p.id}
                         onClick={() => handleAddMaterial(p.id, p.name)}
                         disabled={addingMaterial}
@@ -979,7 +978,7 @@ function OrderDetailModal({ order, onClose, onUpdate }: { order: ProductionOrder
                           <p className="text-[10px] text-muted-foreground">{p.sku || '—'} · Stock: {p.stock_current} · {formatCurrency(p.price)}</p>
                         </div>
                         <Plus className="w-3 h-3 text-primary shrink-0" />
-                      </Button>
+                      </button>
                     ))}
                   </div>
                 )}
@@ -994,7 +993,7 @@ function OrderDetailModal({ order, onClose, onUpdate }: { order: ProductionOrder
                     onChange={(e) => setNewMaterialQty(e.target.value)}
                     className="w-20 h-11 px-2 rounded-lg border-2 border-border bg-background text-sm font-mono font-bold min-h-[44px]"
                   />
-                  <Button onClick={() => setShowAddMaterial(false)} className="flex-1 h-11 rounded-lg border border-border text-xs font-bold uppercase hover:bg-muted min-h-[44px]">Cerrar</Button>
+                  <button onClick={() => setShowAddMaterial(false)} className="flex-1 h-11 rounded-lg border border-border text-xs font-bold uppercase hover:bg-muted min-h-[44px]">Cerrar</button>
                 </div>
               </div>
             )}
@@ -1066,23 +1065,23 @@ function OrderDetailModal({ order, onClose, onUpdate }: { order: ProductionOrder
                                   />
                                 </div>
                                 <div className="flex gap-0.5">
-                                  <Button
+                                  <button
                                     onClick={handleSaveBudget}
                                     disabled={savingBudget}
                                     className="flex-1 h-6 rounded bg-success text-white text-[9px] font-black uppercase hover:opacity-90 disabled:opacity-50"
                                   >
                                     {savingBudget ? '…' : 'OK'}
-                                  </Button>
-                                  <Button
+                                  </button>
+                                  <button
                                     onClick={() => setEditingBudget(null)}
                                     className="flex-1 h-6 rounded border border-border text-[9px] font-black uppercase hover:bg-muted"
                                   >
                                     ✕
-                                  </Button>
+                                  </button>
                                 </div>
                               </div>
                             ) : (
-                              <Button
+                              <button
                                 onClick={() => canEditBudget && handleEditBudget(item)}
                                 disabled={!canEditBudget}
                                 className={cn(
@@ -1094,7 +1093,7 @@ function OrderDetailModal({ order, onClose, onUpdate }: { order: ProductionOrder
                               >
                                 {bQty} × {formatCurrency(bCost)}
                                 {canEditBudget && <Edit3 className="w-2.5 h-2.5 inline ml-1 text-muted-foreground" />}
-                              </Button>
+                              </button>
                             )}
                           </td>
                           {/* Real */}
@@ -1138,33 +1137,33 @@ function OrderDetailModal({ order, onClose, onUpdate }: { order: ProductionOrder
                           <td className="p-2">
                             <div className="flex items-center justify-center gap-1">
                               {canWithdraw && (
-                                <Button
+                                <button
                                   onClick={() => handleWithdraw(item)}
                                   className="px-2 h-7 rounded bg-primary/10 text-primary text-[9px] font-black uppercase hover:bg-primary/20 flex items-center gap-0.5 whitespace-nowrap"
                                   title="Dar salida de inventario"
                                 >
                                   <ArrowDownToLine className="w-3 h-3" /> Salida
-                                </Button>
+                                </button>
                               )}
                               {canEditBudget && (
-                                <Button
+                                <button
                                   onClick={() => handleEditBudget(item)}
                                   className="p-1.5 h-7 rounded bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 flex items-center"
                                   title="Editar presupuesto"
                                   aria-label="Editar presupuesto"
                                 >
                                   <Edit3 className="w-3 h-3" />
-                                </Button>
+                                </button>
                               )}
                               {canEdit && aQty === 0 && (
-                                <Button
+                                <button
                                   onClick={() => handleDeleteItem(item.id, item.products?.name || 'Producto')}
                                   className="p-1.5 h-7 rounded bg-destructive/10 text-destructive hover:bg-destructive/20 flex items-center"
                                   title="Eliminar material"
                                   aria-label="Eliminar material"
                                 >
                                   <X className="w-3 h-3" />
-                                </Button>
+                                </button>
                               )}
                             </div>
                           </td>
@@ -1256,10 +1255,10 @@ function OrderDetailModal({ order, onClose, onUpdate }: { order: ProductionOrder
                           </div>
                         </div>
                         <div className="flex gap-1">
-                          <Button onClick={handleSaveBudget} disabled={savingBudget} className="flex-1 h-9 rounded bg-success text-white text-[10px] font-black uppercase hover:opacity-90 disabled:opacity-50">
+                          <button onClick={handleSaveBudget} disabled={savingBudget} className="flex-1 h-9 rounded bg-success text-white text-[10px] font-black uppercase hover:opacity-90 disabled:opacity-50">
                             {savingBudget ? 'Guardando...' : 'Guardar'}
-                          </Button>
-                          <Button onClick={() => setEditingBudget(null)} className="flex-1 h-9 rounded border border-border text-[10px] font-black uppercase hover:bg-muted">Cancelar</Button>
+                          </button>
+                          <button onClick={() => setEditingBudget(null)} className="flex-1 h-9 rounded border border-border text-[10px] font-black uppercase hover:bg-muted">Cancelar</button>
                         </div>
                       </div>
                     ) : (
@@ -1267,14 +1266,14 @@ function OrderDetailModal({ order, onClose, onUpdate }: { order: ProductionOrder
                         <div className="grid grid-cols-3 gap-2 text-[10px] font-bold">
                           <div className="text-center">
                             <span className="text-muted-foreground">Presup.</span><br />
-                            <Button
+                            <button
                               onClick={() => canEditBudget && handleEditBudget(item)}
                               disabled={!canEditBudget}
                               className={cn("font-mono", canEditBudget && "hover:text-primary hover:underline")}
                               title={canEditBudget ? "Click para editar" : "No editable: ya tiene salidas"}
                             >
                               {bQty} × {formatCurrency(bCost)}
-                            </Button>
+                            </button>
                           </div>
                           <div className="text-center">
                             <span className="text-muted-foreground">Real</span><br />
@@ -1294,19 +1293,19 @@ function OrderDetailModal({ order, onClose, onUpdate }: { order: ProductionOrder
                         </div>
                         <div className="flex gap-1 mt-2">
                           {canWithdraw && (
-                            <Button onClick={() => handleWithdraw(item)} className="flex-1 h-9 rounded-lg bg-primary/10 text-primary text-[10px] font-black uppercase hover:bg-primary/20 flex items-center justify-center gap-1 min-h-[36px]">
+                            <button onClick={() => handleWithdraw(item)} className="flex-1 h-9 rounded-lg bg-primary/10 text-primary text-[10px] font-black uppercase hover:bg-primary/20 flex items-center justify-center gap-1 min-h-[36px]">
                               <ArrowDownToLine className="w-3 h-3" /> Dar Salida
-                            </Button>
+                            </button>
                           )}
                           {canEditBudget && (
-                            <Button onClick={() => handleEditBudget(item)} className="px-2 h-9 rounded-lg bg-blue-500/10 text-blue-500 text-[10px] font-black uppercase hover:bg-blue-500/20 flex items-center justify-center min-h-[36px]" title="Editar presupuesto">
+                            <button onClick={() => handleEditBudget(item)} className="px-2 h-9 rounded-lg bg-blue-500/10 text-blue-500 text-[10px] font-black uppercase hover:bg-blue-500/20 flex items-center justify-center min-h-[36px]" title="Editar presupuesto">
                               <Edit3 className="w-3 h-3" />
-                            </Button>
+                            </button>
                           )}
                           {canEdit && aQty === 0 && (
-                            <Button onClick={() => handleDeleteItem(item.id, item.products?.name || 'Producto')} className="px-2 h-9 rounded-lg bg-destructive/10 text-destructive text-[10px] font-black uppercase hover:bg-destructive/20 flex items-center justify-center min-h-[36px]" aria-label="Eliminar material">
+                            <button onClick={() => handleDeleteItem(item.id, item.products?.name || 'Producto')} className="px-2 h-9 rounded-lg bg-destructive/10 text-destructive text-[10px] font-black uppercase hover:bg-destructive/20 flex items-center justify-center min-h-[36px]" aria-label="Eliminar material">
                               <X className="w-3 h-3" />
-                            </Button>
+                            </button>
                           )}
                         </div>
                       </>
@@ -1480,13 +1479,13 @@ function PaymentsTab({ order, payments, loading, onRefresh }: {
 
       {/* Botón registrar pago */}
       {canPay && (
-        <Button
+        <button
           onClick={() => setShowForm(!showForm)}
           className="w-full px-4 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-black uppercase tracking-widest hover:bg-primary/90 min-h-[44px] flex items-center justify-center gap-2"
         >
           <DollarSign className="w-4 h-4" />
           {showForm ? 'Cancelar' : 'Registrar pago'}
-        </Button>
+        </button>
       )}
 
       {/* Formulario de registro */}
@@ -1497,7 +1496,7 @@ function PaymentsTab({ order, payments, loading, onRefresh }: {
             <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground block mb-1">Tipo de pago</label>
             <div className="grid grid-cols-3 gap-1.5">
               {(['advance', 'partial', 'settlement'] as const).map(t => (
-                <Button
+                <button
                   key={t}
                   type="button"
                   onClick={() => setForm({ ...form, payment_type: t })}
@@ -1509,7 +1508,7 @@ function PaymentsTab({ order, payments, loading, onRefresh }: {
                   )}
                 >
                   {typeBadge[t].label}
-                </Button>
+                </button>
               ))}
             </div>
           </div>
@@ -1588,14 +1587,14 @@ function PaymentsTab({ order, payments, loading, onRefresh }: {
           </div>
 
           {/* Botón guardar */}
-          <Button
+          <button
             onClick={handleSave}
             disabled={saving || !form.amount}
             className="w-full px-4 py-2.5 rounded-xl bg-success text-success-foreground text-sm font-black uppercase tracking-widest hover:bg-success/90 disabled:opacity-50 min-h-[44px] flex items-center justify-center gap-2"
           >
             {saving ? <Clock className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
             {saving ? 'Guardando...' : 'Confirmar pago'}
-          </Button>
+          </button>
         </div>
       )}
 
@@ -1661,7 +1660,7 @@ function ProductSearchInput({ value, onChange, storeId }: { value: string; onCha
       {results.length > 0 && !value && (
         <div className="absolute z-10 w-full mt-1 border border-border/30 rounded-lg bg-card shadow-lg max-h-32 overflow-y-auto">
           {results.map(p => (
-            <Button key={p.id} onClick={() => { onChange(p.id); setSearch(p.name); setResults([]); }} className="w-full text-left p-2 hover:bg-muted/30 text-xs font-bold border-b border-border/20 last:border-0">{p.name}</Button>
+            <button key={p.id} onClick={() => { onChange(p.id); setSearch(p.name); setResults([]); }} className="w-full text-left p-2 hover:bg-muted/30 text-xs font-bold border-b border-border/20 last:border-0">{p.name}</button>
           ))}
         </div>
       )}
@@ -1730,9 +1729,9 @@ function WithdrawDialog({
               <p className="text-[10px] text-muted-foreground truncate">{item.products?.name || 'Producto'}</p>
             </div>
           </div>
-          <Button onClick={onCancel} className="p-2 rounded-lg hover:bg-muted min-h-[44px] min-w-[44px] flex items-center justify-center" aria-label="Cerrar">
+          <button onClick={onCancel} className="p-2 rounded-lg hover:bg-muted min-h-[44px] min-w-[44px] flex items-center justify-center" aria-label="Cerrar">
             <X className="w-4 h-4" />
-          </Button>
+          </button>
         </div>
 
         <div className="p-4 space-y-3">
@@ -1849,14 +1848,14 @@ function WithdrawDialog({
 
           {/* Acciones */}
           <div className="flex gap-2 pt-1">
-            <Button
+            <button
               onClick={onCancel}
               disabled={submitting}
               className="flex-1 h-11 rounded-lg border border-border text-xs font-black uppercase hover:bg-muted min-h-[44px] disabled:opacity-50"
             >
               Cancelar
-            </Button>
-            <Button
+            </button>
+            <button
               onClick={onConfirm}
               disabled={submitting || newQty <= 0}
               className="flex-1 h-11 rounded-lg bg-primary text-primary-foreground text-xs font-black uppercase hover:opacity-90 disabled:opacity-50 min-h-[44px] flex items-center justify-center gap-1"
@@ -1866,7 +1865,7 @@ function WithdrawDialog({
               ) : (
                 <><ArrowDownToLine className="w-3.5 h-3.5" /> Confirmar Salida</>
               )}
-            </Button>
+            </button>
           </div>
         </div>
       </div>

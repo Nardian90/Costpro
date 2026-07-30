@@ -3,7 +3,6 @@
 import React, { useRef } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { cn, formatCurrency } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
 import { Package, Trash2, Edit2 } from "lucide-react";
 
 interface VirtualizedReceptionItemsProps {
@@ -108,22 +107,22 @@ export function VirtualizedReceptionItems({
                 <span className="font-black text-sm text-primary tabular-nums">
                   {formatCurrency(item.quantity * item.unit_cost)}
                 </span>
-                <Button
+                <button
                   type="button"
                   onClick={() => onEdit(item.local_id)}
                   className="p-1.5 min-w-[44px] min-h-[44px] flex items-center justify-center hover:bg-primary/10 rounded-lg text-muted-foreground hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
                   aria-label={`Editar ${item.name}`}
                 >
                   <Package className="w-4 h-4" />
-                </Button>
-                <Button
+                </button>
+                <button
                   type="button"
                   onClick={() => onRemove(item.local_id)}
                   className="p-1.5 min-w-[44px] min-h-[44px] flex items-center justify-center hover:bg-destructive/10 rounded-lg text-destructive/70 hover:text-destructive focus:outline-none focus:ring-2 focus:ring-destructive/30"
                   aria-label={`Eliminar ${item.name}`}
                 >
                   <Trash2 className="w-4 h-4" />
-                </Button>
+                </button>
               </div>
             </div>
           );

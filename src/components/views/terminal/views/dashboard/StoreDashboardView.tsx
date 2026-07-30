@@ -23,7 +23,6 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { BaseModal } from '@/components/ui/BaseModal';
 import { useUIStore } from '@/store';
-import { Button } from "@/components/ui/button";
 import { toast } from 'sonner';
 import { format, subDays } from 'date-fns';
 import { useTranslations } from 'next-intl';
@@ -152,7 +151,7 @@ export default function StoreDashboardView({ storeId, storeName, onClose }: Stor
       <div className="sticky top-0 z-20 bg-background/85 backdrop-blur-xl border-b border-border/50">
         <div className="px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0 flex-1">
-            <Button
+            <button
               type="button"
               onClick={toggleSidebar}
               className="shrink-0 w-11 h-11 rounded-xl border border-border/50 bg-card hover:bg-muted transition-colors flex items-center justify-center text-muted-foreground hover:text-foreground"
@@ -164,7 +163,7 @@ export default function StoreDashboardView({ storeId, storeName, onClose }: Stor
               ) : (
                 <PanelLeftOpen className="w-4 h-4" />
               )}
-            </Button>
+            </button>
 
             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/20 flex items-center justify-center shrink-0">
               <BarChart3 className="w-4 h-4 text-primary" />
@@ -180,7 +179,7 @@ export default function StoreDashboardView({ storeId, storeName, onClose }: Stor
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
-            <Button
+            <button
               type="button"
               onClick={() => refetch()}
               disabled={isFetching}
@@ -189,7 +188,7 @@ export default function StoreDashboardView({ storeId, storeName, onClose }: Stor
               title="Refrescar"
             >
               <RefreshCw className={cn('w-3.5 h-3.5 text-muted-foreground', isFetching && 'animate-spin')} />
-            </Button>
+            </button>
 
             {/* ToggleGroup: solo visible cuando NO hay rango personalizado activo */}
             {!dateRange?.from && (
@@ -214,7 +213,7 @@ export default function StoreDashboardView({ storeId, storeName, onClose }: Stor
             {/* Date Range Picker */}
             <Popover>
               <PopoverTrigger asChild>
-                <Button
+                <button
                   type="button"
                   className={cn(
                     'h-11 px-3 rounded-xl border flex items-center gap-1.5 text-xs font-bold transition-colors',
@@ -227,31 +226,31 @@ export default function StoreDashboardView({ storeId, storeName, onClose }: Stor
                 >
                   <CalendarRange className="w-3.5 h-3.5" />
                   <span className="hidden sm:inline">{dateRange?.from ? 'Personalizado' : 'Rango'}</span>
-                </Button>
+                </button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0 border-border/50 bg-card shadow-sm rounded-2xl" align="end">
                 <div className="p-2 border-b border-border/30 flex items-center gap-1">
-                  <Button
+                  <button
                     type="button"
                     onClick={() => applyPreset(7)}
                     className="flex-1 px-2 py-1.5 rounded-lg text-sm font-black uppercase tracking-wider hover:bg-muted text-muted-foreground"
                   >
                     7d
-                  </Button>
-                  <Button
+                  </button>
+                  <button
                     type="button"
                     onClick={() => applyPreset(30)}
                     className="flex-1 px-2 py-1.5 rounded-lg text-sm font-black uppercase tracking-wider hover:bg-muted text-muted-foreground"
                   >
                     30d
-                  </Button>
-                  <Button
+                  </button>
+                  <button
                     type="button"
                     onClick={() => applyPreset(90)}
                     className="flex-1 px-2 py-1.5 rounded-lg text-sm font-black uppercase tracking-wider hover:bg-muted text-muted-foreground"
                   >
                     90d
-                  </Button>
+                  </button>
                 </div>
                 <Calendar
                   mode="range"
@@ -282,19 +281,19 @@ export default function StoreDashboardView({ storeId, storeName, onClose }: Stor
                     <span className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
                       {format(dateRange.from, 'dd/MM/yy')} → {format(dateRange.to, 'dd/MM/yy')}
                     </span>
-                    <Button
+                    <button
                       type="button"
                       onClick={() => setDateRange(undefined)}
                       className="text-sm font-black uppercase tracking-wider text-destructive hover:underline"
                     >
                       Limpiar
-                    </Button>
+                    </button>
                   </div>
                 )}
               </PopoverContent>
             </Popover>
 
-            <Button
+            <button
               type="button"
               onClick={onClose}
               className="w-11 h-11 rounded-xl border border-border/50 bg-card hover:bg-muted transition-colors flex items-center justify-center"
@@ -302,20 +301,20 @@ export default function StoreDashboardView({ storeId, storeName, onClose }: Stor
               title="Cerrar"
             >
               <X className="w-4 h-4" />
-            </Button>
+            </button>
           </div>
         </div>
 
         {/* Breadcrumb */}
         <div className="px-4 sm:px-6 lg:px-8 pb-2 flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-muted-foreground">
-          <Button
+          <button
             type="button"
             onClick={onClose}
             className="hover:text-primary transition-colors flex items-center gap-1"
           >
             <ArrowLeft className="w-3 h-3" />
             Tiendas
-          </Button>
+          </button>
           <ChevronRight className="w-3 h-3 opacity-50" />
           <span className="text-foreground">Dashboard {storeName}</span>
         </div>
@@ -350,7 +349,7 @@ export default function StoreDashboardView({ storeId, storeName, onClose }: Stor
                 const Icon = tab.icon;
                 const isActive = activeTab === tab.id;
                 return (
-                  <Button
+                  <button
                     key={tab.id}
                     type="button"
                     role="tab"
@@ -365,7 +364,7 @@ export default function StoreDashboardView({ storeId, storeName, onClose }: Stor
                   >
                     <Icon className="w-3.5 h-3.5 shrink-0" />
                     <span className="truncate">{tab.label}</span>
-                  </Button>
+                  </button>
                 );
               })}
             </div>
@@ -724,7 +723,7 @@ function SmartPurchaseOrderButton({ analytics, storeId }: {
             </p>
           </div>
         </div>
-        <Button
+        <button
           type="button"
           onClick={() => setShowModal(true)}
           className="shrink-0 px-5 py-3 min-h-[44px] rounded-xl bg-gradient-to-r from-primary to-primary/80 text-primary-foreground font-black text-sm uppercase tracking-widest hover:shadow-lg hover:shadow-primary/25 active:scale-95 transition-all flex items-center gap-2"
@@ -732,7 +731,7 @@ function SmartPurchaseOrderButton({ analytics, storeId }: {
         >
           <Zap className="w-4 h-4" />
           Generar OC
-        </Button>
+        </button>
       </div>
 
       {/* Modal con recomendaciones */}
@@ -759,31 +758,31 @@ function SmartPurchaseOrderButton({ analytics, storeId }: {
                 {recommendedItems.length} productos · {totalUnits} unidades · {criticalCount} críticos
               </p>
               <div className="flex gap-2">
-                <Button
+                <button
                   type="button"
                   onClick={() => { setShowModal(false); setGenerated(false); }}
                   className="px-4 min-h-[44px] py-2.5 border border-border rounded-xl font-bold text-sm uppercase tracking-widest hover:bg-muted transition-colors"
                 >
                   Cancelar
-                </Button>
+                </button>
                 {generated ? (
-                  <Button
+                  <button
                     type="button"
                     onClick={handleGoToPurchaseOrders}
                     className="px-4 min-h-[44px] py-2.5 bg-primary text-primary-foreground font-bold rounded-xl hover:bg-primary/90 transition-colors text-sm uppercase tracking-widest flex items-center gap-1.5"
                   >
                     Ver Órdenes de Compra
                     <ChevronRight className="w-3.5 h-3.5" />
-                  </Button>
+                  </button>
                 ) : (
-                  <Button
+                  <button
                     type="button"
                     onClick={handleGenerate}
                     className="px-4 min-h-[44px] py-2.5 bg-gradient-to-r from-primary to-primary/80 text-primary-foreground font-bold rounded-xl hover:shadow-lg hover:shadow-primary/25 transition-all text-sm uppercase tracking-widest flex items-center gap-1.5"
                   >
                     <Zap className="w-3.5 h-3.5" />
                     Confirmar OC
-                  </Button>
+                  </button>
                 )}
               </div>
             </div>
@@ -1068,7 +1067,7 @@ function InsightsPriorityPanel({ insights, onSelectInsight }: { insights: Insigh
           const config = SEVERITY_CONFIG[insight.severity];
           const Icon = config.icon;
           return (
-            <Button
+            <button
               key={insight.id}
               type="button"
               onClick={() => onSelectInsight?.(insight)}
@@ -1097,7 +1096,7 @@ function InsightsPriorityPanel({ insights, onSelectInsight }: { insights: Insigh
                   <span className="line-clamp-2">{insight.recommendation}</span>
                 </p>
               </div>
-            </Button>
+            </button>
           );
         })}
       </div>
@@ -1126,13 +1125,13 @@ function AllInsightsPanel({ insights, onSelectInsight }: { insights: Insight[]; 
           </div>
         </div>
         {insights.length > 8 && (
-          <Button
+          <button
             type="button"
             onClick={() => setExpanded(!expanded)}
             className="text-sm font-bold uppercase tracking-widest text-primary hover:underline"
           >
             {expanded ? 'Ver menos' : `Ver ${insights.length - 8} más`}
-          </Button>
+          </button>
         )}
       </div>
       <div className="divide-y divide-border/30">
@@ -1140,7 +1139,7 @@ function AllInsightsPanel({ insights, onSelectInsight }: { insights: Insight[]; 
           const config = SEVERITY_CONFIG[insight.severity];
           const Icon = config.icon;
           return (
-            <Button
+            <button
               key={insight.id}
               type="button"
               onClick={() => onSelectInsight?.(insight)}
@@ -1164,7 +1163,7 @@ function AllInsightsPanel({ insights, onSelectInsight }: { insights: Insight[]; 
                   <span>{insight.recommendation}</span>
                 </p>
               </div>
-            </Button>
+            </button>
           );
         })}
       </div>
@@ -1325,7 +1324,7 @@ function SalesTimeSeriesChart({ analytics }: { analytics: NonNullable<ReturnType
     <div className="relative">
       {/* Toggle línea/barras */}
       <div className="absolute top-2 right-2 z-10 flex items-center gap-1 bg-background/80 backdrop-blur-sm rounded-lg border border-border/40 p-0.5">
-        <Button
+        <button
           type="button"
           onClick={() => setChartType('line')}
           className={cn(
@@ -1337,8 +1336,8 @@ function SalesTimeSeriesChart({ analytics }: { analytics: NonNullable<ReturnType
         >
           <LineChart className="w-3 h-3" />
           Línea
-        </Button>
-        <Button
+        </button>
+        <button
           type="button"
           onClick={() => setChartType('bar')}
           className={cn(
@@ -1350,7 +1349,7 @@ function SalesTimeSeriesChart({ analytics }: { analytics: NonNullable<ReturnType
         >
           <BarChart3 className="w-3 h-3" />
           Barras
-        </Button>
+        </button>
       </div>
       <ECharts option={option} style={{ height: 300 }} />
     </div>
@@ -1992,7 +1991,7 @@ function StockAlertCard({
           </div>
         ) : (
           items.map((item) => (
-            <Button
+            <button
               key={item.id}
               type="button"
               onClick={() => setSelectedItem(item)}
@@ -2010,20 +2009,20 @@ function StockAlertCard({
                 <Lightbulb className="w-2.5 h-2.5" />
                 Clic para ver por qué
               </p>
-            </Button>
+            </button>
           ))
         )}
       </div>
       {items.length > 0 && (
         <div className="px-4 py-2.5 border-t border-border/50">
-          <Button
+          <button
             type="button"
             onClick={onAction}
             className="w-full min-h-[44px] py-2.5 rounded-lg bg-muted/40 hover:bg-muted text-sm font-black uppercase tracking-widest text-foreground transition-colors flex items-center justify-center gap-1.5"
           >
             {actionLabel}
             <ChevronRight className="w-3 h-3" />
-          </Button>
+          </button>
         </div>
       )}
 
@@ -2042,13 +2041,13 @@ function StockAlertCard({
           description="Fundamentación del análisis y recomendación logística"
           maxWidth="sm:max-w-lg"
           footer={
-            <Button
+            <button
               type="button"
               onClick={() => setSelectedItem(null)}
               className="px-4 min-h-[44px] py-2.5 bg-primary text-primary-foreground font-bold rounded-xl hover:opacity-90 transition-opacity text-sm uppercase tracking-widest"
             >
               Entendido
-            </Button>
+            </button>
           }
         >
           <div className="space-y-4">
@@ -2115,7 +2114,7 @@ function CategoryDrillDownPanel({ analytics }: { analytics: NonNullable<ReturnTy
         {/* Selector de categoría (chips) */}
         <div className="flex flex-wrap gap-1.5">
           {categories.map((c) => (
-            <Button
+            <button
               key={c.category}
               type="button"
               onClick={() => setSelectedCategory(c.category)}
@@ -2127,7 +2126,7 @@ function CategoryDrillDownPanel({ analytics }: { analytics: NonNullable<ReturnTy
               )}
             >
               {c.category.length > 18 ? c.category.slice(0, 18) + '…' : c.category}
-            </Button>
+            </button>
           ))}
         </div>
 
@@ -2268,14 +2267,14 @@ function ProductDrillDownPanel({
       subtitle="Selecciona un producto para ver su desempeño individual"
       icon={<Package className="w-4 h-4 text-purple-500" />}
       action={
-        <Button
+        <button
           type="button"
           onClick={onGoToCatalog}
           className="text-sm font-bold uppercase tracking-widest text-primary hover:underline flex items-center gap-1"
         >
           Ver catálogo
           <ChevronRight className="w-3 h-3" />
-        </Button>
+        </button>
       }
     >
       <div className="space-y-4">
@@ -2294,7 +2293,7 @@ function ProductDrillDownPanel({
         {/* Lista de productos seleccionable */}
         <div className="max-h-[200px] overflow-y-auto rounded-xl border border-border/30 divide-y divide-border/20">
           {filtered.map((p) => (
-            <Button
+            <button
               key={p.product_id}
               type="button"
               onClick={() => setSelectedId(p.product_id)}
@@ -2315,7 +2314,7 @@ function ProductDrillDownPanel({
                 <p className="font-black text-sm tabular-nums text-foreground">{formatCurrency(p.revenue)}</p>
                 <p className="text-sm text-muted-foreground">{p.quantity} uds</p>
               </div>
-            </Button>
+            </button>
           ))}
           {filtered.length === 0 && (
             <div className="px-3 py-6 text-center text-sm text-muted-foreground uppercase tracking-wider">
@@ -2656,14 +2655,14 @@ function InsightDetailModal({ insight, onClose }: { insight: Insight; onClose: (
               </p>
             </div>
           </div>
-          <Button
+          <button
             type="button"
             onClick={onClose}
             className="shrink-0 w-11 h-11 rounded-lg hover:bg-muted/60 transition-colors flex items-center justify-center"
             aria-label="Cerrar detalle"
           >
             <X className="w-4 h-4" />
-          </Button>
+          </button>
         </div>
 
         <div className="p-5 space-y-5">
@@ -3136,7 +3135,7 @@ function HelpTooltip({ alertType, title }: { alertType?: 'stock' | 'slow' | 'ove
 
   return (
     <div className="relative shrink-0">
-      <Button
+      <button
         ref={helpRef}
         type="button"
         onClick={() => setOpen(!open)}
@@ -3147,7 +3146,7 @@ function HelpTooltip({ alertType, title }: { alertType?: 'stock' | 'slow' | 'ove
         className="p-1 rounded-md hover:bg-muted text-muted-foreground/50 hover:text-primary cursor-help transition-colors focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 outline-none"
       >
         <HelpCircle className="w-4 h-4" />
-      </Button>
+      </button>
       {open && (
         <div
           role="tooltip"

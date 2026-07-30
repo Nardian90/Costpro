@@ -74,9 +74,9 @@ const CostSheetRow: React.FC<CostSheetRowTableProps> = memo(({ row, level, index
         <TableCell data-label="Concepto" style={{ paddingLeft: `${level * 16 + 8}px` }} className="px-2 py-0.5 font-medium text-foreground border-r border-border/10">
           <div className="flex items-center gap-1.5 min-w-0 group/row">
             {hasChildren && (
-              <Button type="button" onClick={() => setIsExpanded(!isExpanded)} className="p-1 rounded-full hover:bg-primary/10 shrink-0" aria-label={isExpanded ? `Contraer sección de ${row.label}` : `Expandir sección de ${row.label}`}>
+              <button type="button" onClick={() => setIsExpanded(!isExpanded)} className="p-1 rounded-full hover:bg-primary/10 shrink-0" aria-label={isExpanded ? `Contraer sección de ${row.label}` : `Expandir sección de ${row.label}`}>
                 <ChevronRight className={cn('w-3.5 h-3.5 sm:w-4 h-4 transition-transform', isExpanded && 'rotate-90')} aria-hidden="true" />
-              </Button>
+              </button>
             )}
             {!hasChildren && <CornerDownRight className="w-3.5 h-3.5 sm:w-4 h-4 text-muted-foreground shrink-0 ml-1" aria-hidden="true" />}
 
@@ -432,7 +432,7 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo
                   <div className="grid grid-cols-1 gap-4 pt-4">
                       {['Industrial', 'Gastronomía', 'Servicios', 'Construcción'].map((tpl, idx) => (
                           <div key={tpl} className="relative group">
-                              <Button type="button"
+                              <button type="button"
                                 className="w-full p-4 rounded-2xl border border-border bg-card hover:border-primary/50 hover:bg-primary/5 transition-all text-left flex items-center justify-between"
                                 onClick={() => {
                                     if (reinicioTemplate) {
@@ -447,7 +447,7 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo
                                       <span className="text-xs font-bold uppercase tracking-widest">{tpl}</span>
                                   </div>
                                   <ArrowRight className="w-4 h-4 text-muted-foreground transition-transform group-hover:translate-x-1" aria-hidden="true" />
-                              </Button>
+                              </button>
                           </div>
                       ))}
 

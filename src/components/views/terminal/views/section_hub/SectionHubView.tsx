@@ -46,7 +46,6 @@ import { BackToVentaButton } from '@/components/ui/BackToVentaButton';
 import { useTranslations } from 'next-intl';
 import { cn } from '@/lib/utils';
 
-import { Button } from "@/components/ui/button";
 // Vistas que se consideran "premium" (análisis avanzado, inteligencia)
 const PREMIUM_VIEWS: Set<ViewType> = new Set([
   'dashboard',
@@ -115,12 +114,12 @@ export default function SectionHubView({ submenuId }: SectionHubViewProps) {
         <p className="text-muted-foreground text-sm max-w-md">
           No se encontró la sección <code className="px-1.5 py-0.5 bg-muted rounded text-sm font-mono">{submenuId}</code>.
         </p>
-        <Button
+        <button
           onClick={() => setCurrentView('dashboard')}
           className="px-6 min-h-[44px] py-2.5 bg-primary text-primary-foreground font-bold rounded-xl hover:opacity-90 transition-opacity text-sm uppercase tracking-widest"
         >
           {t('sectionHub.goDashboard')}
-        </Button>
+        </button>
       </div>
     );
   }
@@ -226,7 +225,7 @@ export default function SectionHubView({ submenuId }: SectionHubViewProps) {
                 </p>
 
                 {/* Botón principal explícito (no solo icono) */}
-                <Button
+                <button
                   type="button"
                   onClick={() => setCurrentView(child.id as ViewType)}
                   className={cn(
@@ -239,12 +238,12 @@ export default function SectionHubView({ submenuId }: SectionHubViewProps) {
                 >
                   {isPremium ? 'Acceder al Dashboard' : 'Acceder'}
                   <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" aria-hidden="true" />
-                </Button>
+                </button>
 
                 {/* Botón secundario "Dashboard" — acceso rápido al dashboard KPI
                     de la tienda activa (solo para vistas premium de analítica) */}
                 {isPremium && child.id === 'dashboard' && (
-                  <Button
+                  <button
                     type="button"
                     onClick={() => setCurrentView('dashboard' as ViewType)}
                     className="w-full min-h-[40px] py-2 px-4 rounded-xl font-bold text-xs uppercase tracking-widest transition-all active:scale-[0.98] flex items-center justify-center gap-1.5 border-2 border-primary/30 bg-primary/5 text-primary hover:bg-primary/10 hover:border-primary/50"
@@ -252,7 +251,7 @@ export default function SectionHubView({ submenuId }: SectionHubViewProps) {
                   >
                     <LayoutGrid className="w-3.5 h-3.5" />
                     Dashboard
-                  </Button>
+                  </button>
                 )}
               </motion.div>
             );

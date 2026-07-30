@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import { Button } from "@/components/ui/button";
 import { motion } from 'framer-motion';
 import { Check, Minus, Sparkles, MessageCircle } from 'lucide-react';
 import { pricingPlans, comparisonRows } from './data';
@@ -105,12 +104,12 @@ export default function PricingSection({
 
                 {/* CTA Button */}
                 {plan.ctaType === 'signup' ? (
-                  <Button
+                  <button
                     onClick={onSignup}
                     className="mt-6 w-full py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider bg-gradient-to-r from-[#22c55e] to-emerald-400 text-white hover:from-[#16a34a] hover:to-emerald-500 shadow-lg shadow-[#22c55e]/20 transition-all duration-300"
                   >
                     {plan.cta}
-                  </Button>
+                  </button>
                 ) : (
                   <>
                     <a

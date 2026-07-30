@@ -23,7 +23,6 @@ import { getNavigationRoute } from '@/config/navigation/navigation-map';
 import { useDashboardView } from './useDashboardView';
 import { useProducts } from '@/hooks/api/useProducts';
 import { formatCurrency, cn } from '@/lib/utils';
-import { Button } from "@/components/ui/button";
 import { useTranslations } from 'next-intl';
 
 /** Format a timestamp to relative time in Spanish */
@@ -153,7 +152,7 @@ export default function OCCView() {
 
       {/* Command Layer */}
       <section>
-        <Button type="button"
+        <button type="button"
           onClick={() => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }))}
           className="w-full flex items-center px-6 py-4 bg-card border border-border/50 rounded-2xl text-left hover:border-primary/30 hover:bg-muted/50 transition-all active:scale-[0.99]"
           aria-label="Buscar o ejecutar acción"
@@ -163,7 +162,7 @@ export default function OCCView() {
           <kbd className="hidden sm:flex px-3 py-1.5 bg-muted rounded-xl text-sm font-semibold border border-border/50 items-center gap-2 text-muted-foreground uppercase tracking-wider">
             <Command className="w-3.5 h-3.5" /> K
           </kbd>
-        </Button>
+        </button>
       </section>
 
       {/* Quick Actions Grid */}
@@ -176,7 +175,7 @@ export default function OCCView() {
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {quickActions.map((action) => (
-            <Button type="button"
+            <button type="button"
               key={action.id}
               onClick={() => handleAction(action)}
               className="group flex flex-col items-center justify-center p-6 bg-card border border-border/50 rounded-2xl shadow-sm hover:border-primary/30 hover:bg-muted/50 transition-all active:scale-[0.98]"
@@ -185,9 +184,9 @@ export default function OCCView() {
                 <action.icon className="w-5 h-5" />
               </div>
               <span className="text-sm font-semibold uppercase tracking-wider text-center">{action.label}</span>
-            </Button>
+            </button>
           ))}
-          <Button type="button"
+          <button type="button"
             onClick={() => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }))}
             className="flex flex-col items-center justify-center p-6 bg-muted/30 border border-dashed border-border/50 rounded-2xl hover:bg-muted/50 transition-all opacity-60 hover:opacity-100"
             aria-label="Buscar más acciones"
@@ -196,7 +195,7 @@ export default function OCCView() {
               <Plus className="w-5 h-5 text-muted-foreground" />
             </div>
             <span className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Más...</span>
-          </Button>
+          </button>
         </div>
       </section>
 
@@ -209,7 +208,7 @@ export default function OCCView() {
             </h2>
             <div className="bg-card border border-border/50 rounded-2xl shadow-sm p-4 space-y-2">
               {recentActions.length > 0 ? recentActions.map(({ action, timestamp }) => (
-                <Button type="button"
+                <button type="button"
                   key={action.id}
                   onClick={() => handleAction(action)}
                   className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-muted transition-colors text-left group"
@@ -223,7 +222,7 @@ export default function OCCView() {
                     <div className="text-sm text-muted-foreground uppercase font-semibold tracking-wider">{formatRelativeTime(timestamp)}</div>
                   </div>
                   <ArrowUpRight className="w-4 h-4 text-muted-foreground opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity" />
-                </Button>
+                </button>
               )) : (
                 <div className="py-12 text-center">
                     <p className="text-sm font-semibold uppercase tracking-wider text-muted-foreground opacity-70">{t('occ.noActivity')}</p>
@@ -238,12 +237,12 @@ export default function OCCView() {
                 <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
                    Resumen Ejecutivo
                 </h2>
-                <Button type="button"
+                <button type="button"
                   onClick={() => setCurrentView('dashboard')}
                   className="text-sm font-semibold uppercase tracking-wider text-primary hover:underline flex items-center gap-1.5"
                 >
                   Ver Análisis <BarChart3 className="w-3 h-3" />
-                </Button>
+                </button>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {stats.map((stat, idx) => (

@@ -5,7 +5,6 @@ import { QrCode, ShoppingCart, Search, Camera } from 'lucide-react';
 import { BaseModal } from '@/components/ui/BaseModal';
 import { formatCurrency } from '@/lib/utils';
 import type { Product } from '@/types';
-import { Button } from "@/components/ui/button";
 import dynamic from 'next/dynamic';
 
 // Lazy load camera scanner (heavy ZXing dependency)
@@ -94,7 +93,7 @@ export default function BarcodeScanner({ isOpen, onClose, onScan, products = [] 
       <div className="space-y-4">
         {/* Search Mode Toggle */}
         <div className="flex gap-1 bg-muted p-0.5 rounded-lg border border-border">
-          <Button
+          <button
             type="button"
             onClick={() => { setSearchMode('sku'); setInputValue(''); }}
             className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md text-xs font-black uppercase transition-all ${
@@ -105,8 +104,8 @@ export default function BarcodeScanner({ isOpen, onClose, onScan, products = [] 
           >
             <QrCode className="w-3.5 h-3.5" />
             SKU / Código
-          </Button>
-          <Button
+          </button>
+          <button
             type="button"
             onClick={() => { setSearchMode('name'); setInputValue(''); }}
             className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md text-xs font-black uppercase transition-all ${
@@ -117,7 +116,7 @@ export default function BarcodeScanner({ isOpen, onClose, onScan, products = [] 
           >
             <Search className="w-3.5 h-3.5" />
             Nombre
-          </Button>
+          </button>
         </div>
 
         {/* Search Input */}
@@ -148,7 +147,7 @@ export default function BarcodeScanner({ isOpen, onClose, onScan, products = [] 
           {searchMode === 'name' && trimmed.length >= 1 && results.length > 0 && (
             <div className="border border-border rounded-xl overflow-hidden max-h-60 overflow-y-auto" role="listbox" aria-label="Resultados de búsqueda">
               {results.map((product) => (
-                <Button
+                <button
                   key={product.id}
                   type="button"
                   onClick={() => handleSelectProduct(product)}
@@ -167,7 +166,7 @@ export default function BarcodeScanner({ isOpen, onClose, onScan, products = [] 
                     <span className="text-sm font-black text-primary">{formatCurrency(product.price)}</span>
                     <ShoppingCart className="w-4 h-4 text-muted-foreground" />
                   </div>
-                </Button>
+                </button>
               ))}
             </div>
           )}
@@ -189,7 +188,7 @@ export default function BarcodeScanner({ isOpen, onClose, onScan, products = [] 
             </div>
           )}
 
-          <Button
+          <button
             type="submit"
             disabled={!inputValue.trim()}
             className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-black text-xs uppercase tracking-widest shadow-lg active:scale-[0.98] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
@@ -197,19 +196,19 @@ export default function BarcodeScanner({ isOpen, onClose, onScan, products = [] 
             {searchMode === 'name' && results.length > 0
               ? 'Buscar y Agregar'
               : 'Buscar Producto'}
-          </Button>
+          </button>
         </form>
 
         {/* ── Camera Scanner Button ── */}
         <div className="pt-2 border-t border-border">
-          <Button
+          <button
             type="button"
             onClick={() => setCameraOpen(true)}
             className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-green-500/10 border border-green-500/30 text-green-600 dark:text-green-400 font-black text-xs uppercase tracking-widest hover:bg-green-500/20 transition-colors min-h-[44px]"
           >
             <Camera className="w-4 h-4" />
             Escanear con Cámara
-          </Button>
+          </button>
         </div>
       </div>
 

@@ -10,7 +10,6 @@ interface AuditEventMetaProps {
 import { ArrowRight } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 
-import { Button } from "@/components/ui/button";
 export default function AuditEventMeta({ oldData, newData, metadata }: AuditEventMetaProps) {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -75,13 +74,13 @@ export default function AuditEventMeta({ oldData, newData, metadata }: AuditEven
 
   return (
     <div className="mt-2">
-      <Button type="button"
+      <button type="button"
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center gap-1 text-xs font-black uppercase text-muted-foreground hover:text-primary transition-colors"
       >
         {isOpen ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
         {isOpen ? 'Ocultar detalles' : 'Ver detalles'}
-      </Button>
+      </button>
 
       {isOpen && (
         <div className="mt-2 p-3 rounded-lg bg-muted/30 border border-border/50 font-mono text-xs space-y-3 overflow-hidden">

@@ -22,7 +22,6 @@ import {
 import { ModelValidationResult } from '@/services/pick3/backtest.engine';
 import { BettingConfig } from '@/types/pick3';
 import { cn } from '@/lib/utils';
-import { Button } from "@/components/ui/button";
 import {
   XAxis,
   YAxis,
@@ -548,7 +547,7 @@ export function Pick3SimulationDashboard({ result, initialBankroll, config, simC
                 { id: 'losses', label: 'Pérdidas', count: result.dailyHistory.filter(d => !d.win).length },
                 { id: 'all', label: 'Todos', count: result.dailyHistory.length },
               ] as const).map(f => (
-                <Button
+                <button
                   key={f.id}
                   onClick={() => setBitacoraFilter(f.id)}
                   className={cn(
@@ -559,7 +558,7 @@ export function Pick3SimulationDashboard({ result, initialBankroll, config, simC
                   )}
                 >
                   {f.label} <span className="opacity-60">({f.count})</span>
-                </Button>
+                </button>
               ))}
             </div>
           </div>

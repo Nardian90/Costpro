@@ -15,7 +15,6 @@ import { DocumentStatusBadge, canReverse } from '@/components/ui/DocumentStatusB
 import { ReverseDocumentModal } from '@/components/ui/ReverseDocumentModal';
 import { useUIStore, useAuthStore } from '@/store';
 
-import { Button } from "@/components/ui/button";
 // Helper para icono y etiqueta del método de pago
 function getPaymentMethodInfo(method: string | null | undefined): { icon: React.ElementType; label: string; color: string } {
     switch ((method || '').toLowerCase()) {
@@ -80,14 +79,14 @@ const PaginationFooter = ({ page, totalPages, totalItems, onPageChange }: { page
                 Mostrando {from}–{to} de {totalItems}
             </span>
             <div className="flex items-center gap-1">
-                <Button type="button"
+                <button type="button"
                     onClick={() => onPageChange(page - 1)}
                     disabled={page <= 1}
                     className="w-9 h-9 inline-flex items-center justify-center rounded-lg border border-border hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed transition-all"
                     aria-label="Pagina anterior"
                 >
                     <ChevronLeft className="w-4 h-4" />
-                </Button>
+                </button>
                 <div className="flex items-center gap-1 px-2">
                     {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                         let pageNum: number;
@@ -101,7 +100,7 @@ const PaginationFooter = ({ page, totalPages, totalItems, onPageChange }: { page
                             pageNum = page - 2 + i;
                         }
                         return (
-                            <Button type="button"
+                            <button type="button"
                                 key={pageNum}
                                 onClick={() => onPageChange(pageNum)}
                                 className={cn(
@@ -112,18 +111,18 @@ const PaginationFooter = ({ page, totalPages, totalItems, onPageChange }: { page
                                 )}
                             >
                                 {pageNum}
-                            </Button>
+                            </button>
                         );
                     })}
                 </div>
-                <Button type="button"
+                <button type="button"
                     onClick={() => onPageChange(page + 1)}
                     disabled={page >= totalPages}
                     className="w-9 h-9 inline-flex items-center justify-center rounded-lg border border-border hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed transition-all"
                     aria-label="Pagina siguiente"
                 >
                     <ChevronRight className="w-4 h-4" />
-                </Button>
+                </button>
             </div>
         </div>
     );
@@ -202,7 +201,7 @@ export default function SalesHistoryView() {
           <h2 className="text-[clamp(1.5rem,5vw,2.25rem)] font-black text-foreground tracking-tighter uppercase">Ventas</h2>
           <div className="flex items-center gap-2 flex-wrap">
             {/* Export CSV */}
-            <Button type="button"
+            <button type="button"
               onClick={handleExportCSV}
               className="flex items-center gap-2 px-4 h-11 border border-border rounded-xl font-black text-xs uppercase tracking-widest hover:bg-muted transition-all active:scale-95"
               title="Exportar a CSV"
@@ -210,16 +209,16 @@ export default function SalesHistoryView() {
             >
               <Download className="w-4 h-4" />
               {isMobile ? 'CSV' : 'Exportar CSV'}
-            </Button>
+            </button>
             {/* Tax Calc */}
             {selectedIds.size > 0 && (
-              <Button type="button"
+              <button type="button"
                 onClick={() => setIsTaxModalOpen(true)}
                 className="flex items-center gap-2 px-4 h-11 bg-primary text-foreground rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-primary/20 hover:scale-105 transition-all active:scale-95"
               >
                 <Calculator className="w-4 h-4" />
                 Impuestos ({selectedIds.size})
-              </Button>
+              </button>
             )}
           </div>
         </div>
@@ -280,20 +279,20 @@ export default function SalesHistoryView() {
                  <Filter className="w-3 h-3" />
                  <span>Filtros activos — {totalFilteredCount} resultado{totalFilteredCount !== 1 ? 's' : ''}</span>
                </div>
-               <Button type="button"
+               <button type="button"
                  onClick={handleClearFilters}
                  className="flex items-center gap-1 text-xs font-bold text-destructive hover:underline"
                >
                  <X className="w-3 h-3" />
                  Limpiar filtros
-               </Button>
+               </button>
              </div>
            )}
         </SearchBar>
 
         {/* V2.12.22: Tabs — Detalle | Resumen Consolidado */}
         <div className="flex border-b border-border overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
-          <Button
+          <button
             onClick={() => setActiveTab('detalle')}
             className={cn(
               "flex-1 py-3 px-4 text-xs font-black uppercase border-b-2 -mb-px whitespace-nowrap min-h-[44px] transition-colors",
@@ -301,8 +300,8 @@ export default function SalesHistoryView() {
             )}
           >
             <Eye className="w-3.5 h-3.5 inline mr-1" /> Detalle
-          </Button>
-          <Button
+          </button>
+          <button
             onClick={() => setActiveTab('resumen')}
             className={cn(
               "flex-1 py-3 px-4 text-xs font-black uppercase border-b-2 -mb-px whitespace-nowrap min-h-[44px] transition-colors",
@@ -310,7 +309,7 @@ export default function SalesHistoryView() {
             )}
           >
             <TrendingUp className="w-3.5 h-3.5 inline mr-1" /> Resumen Consolidado
-          </Button>
+          </button>
         </div>
 
         {/* Tab Resumen Consolidado */}
@@ -345,12 +344,12 @@ export default function SalesHistoryView() {
                   }
                 </p>
                 {hasActiveFilters && (
-                  <Button type="button"
+                  <button type="button"
                     onClick={handleClearFilters}
                     className="mt-3 text-xs font-black text-primary hover:underline"
                   >
                     Limpiar filtros
-                  </Button>
+                  </button>
                 )}
               </div>
             </div>
@@ -365,13 +364,13 @@ export default function SalesHistoryView() {
                   <tr className="bg-muted/30 text-muted-foreground font-black uppercase text-xs tracking-widest border-b border-border">
                     <th className="p-4 text-center w-10">
                       <div className="inline-flex min-w-[44px] min-h-[44px] items-center justify-center">
-                      <Button type="button"
+                      <button type="button"
                         onClick={() => toggleAll(allIds)}
                         className="text-primary hover:scale-110 transition-transform"
                         aria-label={isAllSelected ? 'Deseleccionar todas' : 'Seleccionar todas'}
                       >
                         {isAllSelected ? <CheckSquare className="w-4 h-4" /> : <Square className="w-4 h-4" />}
-                      </Button>
+                      </button>
                       </div>
                     </th>
                     <th className="p-4 text-left">Ref</th>
@@ -413,7 +412,7 @@ export default function SalesHistoryView() {
                             )}>
                               <td className="p-4 text-center">
                                 <div className="inline-flex min-w-[44px] min-h-[44px] items-center justify-center">
-                                <Button type="button"
+                                <button type="button"
                                   onClick={() => toggleSelection(txn.id)}
                                   className={cn(
                                     "transition-all",
@@ -422,7 +421,7 @@ export default function SalesHistoryView() {
                                   aria-label={selectedIds.has(txn.id) ? 'Deseleccionar venta' : 'Seleccionar venta'}
                                 >
                                   {selectedIds.has(txn.id) ? <CheckSquare className="w-4 h-4" /> : <Square className="w-4 h-4" />}
-                                </Button>
+                                </button>
                                 </div>
                               </td>
                               <td className="p-4 font-bold text-xs text-primary">{txn.id.split('-')[0]}</td>
@@ -453,20 +452,20 @@ export default function SalesHistoryView() {
                               </td>
                               <td className="p-4 text-center" aria-label="Acciones de la venta">
                                 <div className="flex items-center justify-center gap-1.5">
-                                  <Button type="button"
+                                  <button type="button"
                                     onClick={() => handleViewDetails(txn)}
                                     className="w-11 h-11 inline-flex items-center justify-center rounded-lg border border-border hover:bg-primary hover:text-foreground transition-all active:scale-95"
                                     title="Ver detalles"
                                     aria-label="Ver detalles de la venta"
                                   >
                                     <Eye className="w-4 h-4" />
-                                  </Button>
+                                  </button>
 
                                   {/* ESTÁNDAR: Revertir es la única forma de deshacer una venta completed.
                                       Anular (void) se eliminó porque era redundante y sin trazabilidad contable.
                                       Revertir invierte stock + crea kardex entries + pide motivo + audita. */}
                                   {canReverseTx && (
-                                    <Button type="button"
+                                    <button type="button"
                                       onClick={() => setReverseTarget({
                                         id: txn.id,
                                         label: `Venta ${txn.id.split('-')[0]} • ${formatCurrency(txn.total_amount)}`,
@@ -476,17 +475,17 @@ export default function SalesHistoryView() {
                                       aria-label="Revertir venta"
                                     >
                                       <Undo2 className="w-4 h-4" />
-                                    </Button>
+                                    </button>
                                   )}
 
-                                  <Button type="button"
+                                  <button type="button"
                                     onClick={() => handleDuplicateAndNavigate(txn)}
                                     className="w-11 h-11 inline-flex items-center justify-center rounded-lg border border-blue-500/40 bg-blue-500/5 text-blue-500 hover:bg-blue-500 hover:text-white transition-all active:scale-95"
                                     title="Duplicar Venta (carga items en POS)"
                                     aria-label="Duplicar venta"
                                   >
                                     <Copy className="w-4 h-4" />
-                                  </Button>
+                                  </button>
                                 </div>
                               </td>
                             </tr>

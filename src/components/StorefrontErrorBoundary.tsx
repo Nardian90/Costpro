@@ -1,7 +1,6 @@
 'use client';
 
 import React, { Component, type ReactNode, type ErrorInfo } from 'react';
-import { Button } from "@/components/ui/button";
 import { useTranslations } from 'next-intl';
 import { Package, RefreshCw, Home, Copy } from 'lucide-react';
 
@@ -77,30 +76,30 @@ function StorefrontErrorContent({
 
         {/* Action buttons */}
         <div className="flex flex-wrap gap-3 justify-center">
-          <Button
+          <button
             onClick={onReload}
             className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-stone-900 text-white text-xs font-black uppercase tracking-widest hover:bg-stone-800 transition-colors"
             aria-label={t('errorRetry')}
           >
             <RefreshCw className="w-4 h-4" />
             {t('errorRetry')}
-          </Button>
-          <Button
+          </button>
+          <button
             onClick={onGoHome}
             className="flex items-center gap-2 px-5 py-2.5 rounded-xl border-2 border-stone-200 bg-white text-stone-600 text-xs font-black uppercase tracking-widest hover:border-stone-400 transition-colors"
             aria-label={t('errorGoBack')}
           >
             <Home className="w-4 h-4" />
             {t('errorGoBack')}
-          </Button>
-          <Button
+          </button>
+          <button
             onClick={onCopyError}
             className="flex items-center gap-2 px-5 py-2.5 rounded-xl border-2 border-stone-200 bg-white text-stone-600 text-xs font-black uppercase tracking-widest hover:border-stone-400 transition-colors"
             aria-label={t('errorCopyDetails')}
           >
             <Copy className="w-4 h-4" />
             {t('errorCopyDetails')}
-          </Button>
+          </button>
         </div>
       </div>
     </div>

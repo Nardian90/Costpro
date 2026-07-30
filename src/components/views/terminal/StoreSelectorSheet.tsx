@@ -5,7 +5,6 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sh
 import { Building, Check, Search, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-import { Button } from "@/components/ui/button";
 /**
  * F5-T01: Bottom sheet para selector de tienda en mobile.
  *
@@ -76,14 +75,14 @@ export function StoreSelectorSheet({
               autoComplete="off"
             />
             {search && (
-              <Button
+              <button
                 type="button"
                 onClick={() => setSearch('')}
                 className="absolute right-7 top-1/2 -translate-y-1/2 p-1 hover:bg-muted rounded"
                 aria-label="Limpiar búsqueda"
               >
                 <X className="w-3.5 h-3.5 text-muted-foreground" />
-              </Button>
+              </button>
             )}
           </div>
 
@@ -91,7 +90,7 @@ export function StoreSelectorSheet({
           <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-1 max-h-[40vh]">
             {filteredStores.length > 0 ? (
               filteredStores.map(s => (
-                <Button
+                <button
                   key={s.id}
                   onClick={() => handleSelect(s.id)}
                   className={cn(
@@ -107,7 +106,7 @@ export function StoreSelectorSheet({
                     <span className="text-sm font-black uppercase tracking-tight truncate">{s.name}</span>
                   </div>
                   {activeStoreId === s.id && <Check className="w-4 h-4 text-primary shrink-0" />}
-                </Button>
+                </button>
               ))
             ) : (
               <div className="px-3 py-8 text-center text-xs text-muted-foreground">

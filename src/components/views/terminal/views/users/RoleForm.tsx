@@ -6,7 +6,6 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { cn } from '@/lib/utils';
 import { Role } from '@/types';
-import { Button } from "@/components/ui/button";
 import { Loader2, Save, Shield, CheckCircle2 } from 'lucide-react';
 
 const roleFormSchema = z.object({
@@ -137,7 +136,7 @@ export default function RoleForm({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {AVAILABLE_VIEWS.map(view => (
-              <Button
+              <button
                 key={view}
                 type="button"
                 disabled={allSelected}
@@ -156,28 +155,28 @@ export default function RoleForm({
                   <div className="w-4 h-4 rounded-full border border-muted-foreground/30 shrink-0" />
                 )}
                 <span className="text-xs font-bold uppercase tracking-tighter">{view}</span>
-              </Button>
+              </button>
             ))}
           </div>
         </div>
       </div>
 
       <div className="flex gap-3 pt-4 border-t border-border">
-        <Button
+        <button
           type="button"
           onClick={onCancel}
           className="flex-1 px-4 py-3 rounded-xl border border-border hover:bg-muted font-black text-xs uppercase tracking-widest transition-all active:scale-95"
         >
           Cancelar
-        </Button>
-        <Button
+        </button>
+        <button
           type="submit"
           disabled={isSubmitting}
           className="flex-1 px-4 py-3 rounded-xl bg-primary text-foreground font-black text-xs uppercase tracking-widest shadow-lg shadow-primary/20 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
         >
           {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
           {initialData ? 'Guardar Cambios' : 'Crear Rol'}
-        </Button>
+        </button>
       </div>
     </form>
   );

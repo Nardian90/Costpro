@@ -4,7 +4,6 @@ import AuditEventCard from './AuditEventCard';
 import { format, isToday, isYesterday } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { formatDate } from '@/lib/utils';
-import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 
 interface AuditTimelineProps {
@@ -87,12 +86,12 @@ export default function AuditTimeline({ logs }: AuditTimelineProps) {
 
       {visibleCount < logs.length && (
         <div className="flex justify-center mt-8 pb-10">
-          <Button type="button"
+          <button type="button"
             onClick={() => setVisibleCount(prev => prev + 50)}
             className="px-8 py-3 rounded-full bg-primary/10 text-primary border border-primary/20 font-black uppercase text-xs tracking-widest hover:bg-primary hover:text-foreground transition-all shadow-lg hover:shadow-primary/25"
           >
             Cargar más eventos (+{Math.min(50, logs.length - visibleCount)})
-          </Button>
+          </button>
         </div>
       )}
     </div>

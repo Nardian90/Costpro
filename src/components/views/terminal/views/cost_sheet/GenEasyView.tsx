@@ -2,7 +2,6 @@
 
 import React, { useState } from 'react';
 import { cn } from '@/lib/utils';
-import { Button } from "@/components/ui/button";
 import { Zap, Wand2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import CostSheetQuickMode from './CostSheetQuickMode';
@@ -83,7 +82,7 @@ export function GenEasyView({
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
             return (
-              <Button
+              <button
                 key={tab.id}
                 type="button"
                 role="tab"
@@ -98,7 +97,7 @@ export function GenEasyView({
               >
                 <Icon className="w-4 h-4" aria-hidden="true" />
                 <span>{tab.label}</span>
-              </Button>
+              </button>
             );
           })}
         </div>
@@ -114,7 +113,7 @@ export function GenEasyView({
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
             return (
-              <Button
+              <button
                 key={tab.id}
                 type="button"
                 role="tab"
@@ -129,7 +128,7 @@ export function GenEasyView({
               >
                 <Icon className="w-4 h-4" aria-hidden="true" />
                 <span>{tab.label}</span>
-              </Button>
+              </button>
             );
           })}
         </div>
@@ -147,13 +146,13 @@ export function GenEasyView({
             {isQuickModeGenerating ? (
               <div className="max-w-5xl mx-auto">
                 <div className="mb-4 flex justify-start">
-                  <Button
+                  <button
                     type="button"
                     onClick={() => setIsQuickModeGenerating(false)}
                     className="rounded-xl font-bold uppercase tracking-widest text-xs text-muted-foreground hover:text-primary h-11 min-h-[44px] px-4"
                   >
                     ← Volver a Lista
-                  </Button>
+                  </button>
                 </div>
                 <CostSheetMassiveGenerator
                   isSection={true}

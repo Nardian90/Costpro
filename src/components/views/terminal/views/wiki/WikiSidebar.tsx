@@ -8,7 +8,6 @@ import {
   Filter
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Button } from "@/components/ui/button";
 import { WikiModule } from './types';
 
 interface WikiSidebarProps {
@@ -31,7 +30,7 @@ export const WikiSidebar: React.FC<WikiSidebarProps> = ({ activeModule, onModule
           const Icon = item.icon;
           const isActive = activeModule === item.id;
           return (
-            <Button type="button"
+            <button type="button"
               key={item.id}
               onClick={() => onModuleChange(item.id)}
               className={cn(
@@ -43,7 +42,7 @@ export const WikiSidebar: React.FC<WikiSidebarProps> = ({ activeModule, onModule
             >
               <Icon className="h-4 w-4 shrink-0" />
               <span className="text-xs font-black uppercase tracking-widest">{item.label}</span>
-            </Button>
+            </button>
           );
         })}
       </div>
@@ -55,7 +54,7 @@ export const WikiSidebar: React.FC<WikiSidebarProps> = ({ activeModule, onModule
             const Icon = item.icon;
             const isActive = activeModule === item.id;
             return (
-              <Button type="button"
+              <button type="button"
                 key={item.id}
                 onClick={() => onModuleChange(item.id)}
                 className={cn(
@@ -67,7 +66,7 @@ export const WikiSidebar: React.FC<WikiSidebarProps> = ({ activeModule, onModule
               >
                 <Icon className={cn("h-5 w-5 shrink-0 transition-transform group-hover:scale-110", isActive && "scale-110")} />
                 <span className="text-xs font-black uppercase tracking-widest hidden lg:block">{item.label}</span>
-              </Button>
+              </button>
             );
           })}
         </nav>

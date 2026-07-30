@@ -10,7 +10,6 @@ import { Store, UserRole } from '@/types';
 import { Loader2, Save, Plus, Trash2, Building, Users, ChevronRight } from 'lucide-react';
 import { useIsMobile } from '@/hooks/ui/useMobile';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { Button } from "@/components/ui/button";
 import { BulkStoreAssignModal } from './BulkStoreAssignModal';
 
 const userFormSchema = z.object({
@@ -304,7 +303,7 @@ export default function UserForm({
                 const currentPlan = watch('plan');
                 const isSelected = currentPlan === p.id;
                 return (
-                  <Button
+                  <button
                     key={p.id}
                     type="button"
                     onClick={() => setValue('plan', p.id)}
@@ -317,7 +316,7 @@ export default function UserForm({
                   >
                     <p className={cn('text-sm font-black', isSelected ? 'text-primary' : p.color)}>{p.label}</p>
                     <p className="text-xs text-muted-foreground mt-0.5">{p.limit} tiendas</p>
-                  </Button>
+                  </button>
                 );
               })}
             </div>
@@ -337,7 +336,7 @@ export default function UserForm({
           <div className="flex items-center gap-2">
             {/* F2-T04: botón de asignación masiva con checkboxes.
                 Reemplaza el flujo one-by-one para despliegues con múltiples tiendas. */}
-            <Button
+            <button
               type="button"
               onClick={() => setBulkAssignOpen(true)}
               className={cn(
@@ -351,9 +350,9 @@ export default function UserForm({
             >
               <Users className="w-3 h-3" />
               Asignar Tiendas
-            </Button>
+            </button>
             {/* Botón "Añadir Tienda" one-by-one (mantenido para edición granular) */}
-            <Button
+            <button
               type="button"
               disabled={!canAddMoreStores}
               onClick={() => append({ store_id: '', role: 'clerk',
@@ -368,7 +367,7 @@ export default function UserForm({
             >
               <Plus className="w-3 h-3" />
               Añadir
-            </Button>
+            </button>
           </div>
         </div>
 
@@ -389,7 +388,7 @@ export default function UserForm({
           {isMobile ? (
             /* Mobile: botón "Ver N membresías" que abre sheet */
             <>
-              <Button
+              <button
                 type="button"
                 onClick={() => setMembershipsSheetOpen(true)}
                 className="w-full flex items-center justify-between p-4 rounded-xl border border-border bg-muted/20 hover:border-primary/30 transition-colors"
@@ -401,7 +400,7 @@ export default function UserForm({
                   </span>
                 </div>
                 <ChevronRight className="w-4 h-4 text-muted-foreground" />
-              </Button>
+              </button>
 
               {/* Bottom sheet con memberships scrollable — sin superposiciones */}
               <Sheet open={membershipsSheetOpen} onOpenChange={setMembershipsSheetOpen}>
@@ -422,14 +421,14 @@ export default function UserForm({
                         <div key={field.id} className="flex flex-col gap-3 bg-muted/20 p-3 rounded-xl border border-border/50">
                           <div className="flex items-center justify-between">
                             <span className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Tienda {index + 1}</span>
-                            <Button
+                            <button
                               type="button"
                               onClick={() => remove(index)}
                               className="w-9 h-9 flex items-center justify-center rounded-lg bg-destructive/10 text-destructive hover:bg-destructive hover:text-foreground transition-all"
                               title="Eliminar tienda"
                             >
                               <Trash2 className="w-4 h-4" />
-                            </Button>
+                            </button>
                           </div>
                           {/* Tienda selector — full width en mobile */}
                           <select
@@ -525,14 +524,14 @@ export default function UserForm({
                   </select>
                 </div>
               </div>
-              <Button
+              <button
                 type="button"
                 onClick={() => remove(index)}
                 className="absolute top-2 right-2 sm:relative sm:top-0 sm:right-0 w-11 h-11 flex items-center justify-center rounded-lg bg-destructive/10 text-destructive hover:bg-destructive hover:text-foreground transition-all mb-0.5"
                 title="Eliminar tienda"
               >
                 <Trash2 className="w-4 h-4" />
-              </Button>
+              </button>
             </div>
           ))}
           {fields.length === 0 && (
@@ -555,21 +554,21 @@ export default function UserForm({
       )}
 
       <div className="flex gap-3 pt-4">
-        <Button
+        <button
           type="button"
           onClick={onCancel}
           className="flex-1 px-4 py-3 rounded-xl border border-border hover:bg-muted font-black text-xs uppercase tracking-widest transition-all active:scale-95"
         >
           Cancelar
-        </Button>
-        <Button
+        </button>
+        <button
           type="submit"
           disabled={isSubmitting}
           className="flex-1 px-4 py-3 rounded-xl bg-primary text-foreground font-black text-xs uppercase tracking-widest shadow-lg shadow-primary/20 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
         >
           {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
           {mode === 'create' ? 'Crear Usuario' : 'Guardar Cambios'}
-        </Button>
+        </button>
       </div>
     </form>
 

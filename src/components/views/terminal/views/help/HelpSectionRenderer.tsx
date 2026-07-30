@@ -5,7 +5,6 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { sanitizeHtml } from '@/lib/sanitize';
 import { cn } from '@/lib/utils';
-import { Button } from "@/components/ui/button";
 import {
   Tooltip,
   TooltipContent,
@@ -985,7 +984,7 @@ export default function HelpSectionRenderer({ content, glossary }: HelpSectionRe
           pre: ({ node, children, ...props }) => (
             <div className="relative group my-8">
               <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                <Button type="button"
+                <button type="button"
                   onClick={(e) => {
                     const container = (e.currentTarget as HTMLElement).closest('pre');
                     const codeEl = container?.querySelector('code');
@@ -994,7 +993,7 @@ export default function HelpSectionRenderer({ content, glossary }: HelpSectionRe
                   className="w-7 h-7 rounded-md bg-muted/80 border border-border/50 flex items-center justify-center hover:bg-muted transition-colors"
                 >
                   <Copy className="w-3.5 h-3.5 text-muted-foreground" />
-                </Button>
+                </button>
               </div>
               <pre
                 className="rounded-xl bg-muted/50 border border-border/40 p-5 overflow-x-auto shadow-sm text-xs leading-[1.8]"

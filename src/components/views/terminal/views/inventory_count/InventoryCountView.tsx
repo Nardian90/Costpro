@@ -23,7 +23,6 @@ import { cn } from '@/lib/utils';
 import { SecurityScrollContainer } from '@/components/ui/SecurityScrollContainer';
 import { useIsMobile } from '@/hooks/ui/useMobile';
 import { useFocusTrap } from '@/hooks/ui/useFocusTrap';
-import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 
 import InventoryCountCardView from './InventoryCountCardView';
@@ -133,7 +132,7 @@ export default function InventoryCountView() {
               <SearchBar value={searchTerm} onChange={setSearchTerm} placeholder="Buscar por producto, SKU o categoría..." />
             </div>
             {countedProductIds.size > 0 && productsNotInCount.length > 0 && (
-              <Button
+              <button
                 type="button"
                 onClick={() => setShowAddDropdown(prev => !prev)}
                 className="inline-flex items-center gap-1.5 px-3 py-2.5 rounded-xl border border-dashed border-primary/40 bg-primary/5 hover:bg-primary/10 text-primary font-black text-xs uppercase tracking-widest transition-all active:scale-95 whitespace-nowrap"
@@ -141,7 +140,7 @@ export default function InventoryCountView() {
               >
                 <Plus className="w-3.5 h-3.5" />
                 Agregar
-              </Button>
+              </button>
             )}
           </div>
           {/* Dropdown: add product to count */}
@@ -151,9 +150,9 @@ export default function InventoryCountView() {
                 <span className="text-[10px] font-black uppercase tracking-widest text-primary">
                   Agregar al conteo ({productsNotInCount.length} disponibles)
                 </span>
-                <Button type="button" onClick={() => setShowAddDropdown(false)} className="text-muted-foreground hover:text-foreground">
+                <button type="button" onClick={() => setShowAddDropdown(false)} className="text-muted-foreground hover:text-foreground">
                   <X className="w-3 h-3" />
-                </Button>
+                </button>
               </div>
               <div className="max-h-52 overflow-y-auto">
                 {productsToAddDropdown.length > 0 ? (
@@ -199,7 +198,7 @@ export default function InventoryCountView() {
             ref={fileInputRef}
             aria-label="Importar conteo desde Excel"
           />
-          <Button
+          <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
             className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-dashed border-primary/40 bg-primary/5 hover:bg-primary/10 text-primary font-black text-xs uppercase tracking-widest transition-all active:scale-95"
@@ -207,7 +206,7 @@ export default function InventoryCountView() {
           >
             <Upload className="w-3.5 h-3.5" />
             Importar Excel
-          </Button>
+          </button>
         </div>
       </div>
 
@@ -230,14 +229,14 @@ export default function InventoryCountView() {
             />
           </div>
           {countedProductIds.size > 0 && (
-            <Button
+            <button
               type="button"
               onClick={resetCountToAll}
               className="text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors"
               title="Restablecer conteo a todos los productos"
             >
               <RotateCcw className="w-3 h-3" />
-            </Button>
+            </button>
           )}
         </div>
       </div>
@@ -313,9 +312,9 @@ export default function InventoryCountView() {
                   Resumen
                 </h3>
               </div>
-              <Button type="button" onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-danger/10 text-muted-foreground hover:text-danger rounded-full transition-colors">
+              <button type="button" onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-danger/10 text-muted-foreground hover:text-danger rounded-full transition-colors">
                 <X className="w-6 h-6 sm:w-8 sm:h-8" />
-              </Button>
+              </button>
             </div>
 
             <div className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-6 sm:space-y-8 no-scrollbar">
@@ -362,15 +361,15 @@ export default function InventoryCountView() {
             </div>
 
             <div className="p-6 sm:p-8 border-t border-white/5 bg-muted/10 flex flex-col sm:flex-row gap-4">
-              <Button
+              <button
                 type="button"
                 onClick={() => setIsModalOpen(false)}
                 className="neu-btn w-full sm:flex-1 !py-4 font-black uppercase text-xs sm:text-xs tracking-[0.2em]"
                 disabled={processing}
               >
                 Cancelar
-              </Button>
-              <Button
+              </button>
+              <button
                 type="button"
                 onClick={handleFinalSubmit}
                 className="neu-btn-primary w-full sm:flex-1 flex items-center justify-center gap-3 font-black uppercase text-xs sm:text-xs tracking-[0.2em] shadow-xl shadow-primary/20"
@@ -384,7 +383,7 @@ export default function InventoryCountView() {
                     Ejecutar Ajustes
                   </>
                 )}
-              </Button>
+              </button>
             </div>
           </div>
         </div>

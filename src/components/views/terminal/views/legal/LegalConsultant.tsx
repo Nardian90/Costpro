@@ -9,7 +9,6 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-import { Button } from "@/components/ui/button";
 interface LegalConsultantProps {
   resolutions: any[];
   loading: boolean;
@@ -60,7 +59,7 @@ export default function LegalConsultant({ resolutions, loading, onSelectModel }:
         <h2 className="text-xs font-black text-primary/60 uppercase tracking-[0.3em] px-4">Resoluciones Vigentes</h2>
         <div className="space-y-2">
           {resolutions.map(res => (
-            <Button type="button"
+            <button type="button"
               key={res.id}
               onClick={() => setActiveResId(res.id === activeResId ? null : res.id)}
               aria-label={`Resolución: ${res.title}`}
@@ -90,7 +89,7 @@ export default function LegalConsultant({ resolutions, loading, onSelectModel }:
                   {res.sub_system === 'Nóminas' ? <Briefcase className="w-5 h-5" /> : <ClipboardList className="w-5 h-5" />}
                 </div>
               </div>
-            </Button>
+            </button>
           ))}
         </div>
 
@@ -133,7 +132,7 @@ export default function LegalConsultant({ resolutions, loading, onSelectModel }:
                 <h3 className="text-xs font-black text-primary/60 uppercase tracking-[0.3em] px-4">Modelos Disponibles para Emitir</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {resolutions.find(r => r.id === activeResId)?.legal_models.map((model: any) => (
-                    <Button type="button"
+                    <button type="button"
                       key={model.id}
                       onClick={() => onSelectModel(model)}
                       className="group bg-background p-6 rounded-2xl border-2 border-primary/5 hover:border-primary/30 transition-all text-left flex items-center justify-between shadow-sm hover:shadow-md"
@@ -146,7 +145,7 @@ export default function LegalConsultant({ resolutions, loading, onSelectModel }:
                       <div className="w-8 h-8 rounded-lg bg-primary/5 flex items-center justify-center group-hover:bg-primary transition-colors">
                         <ChevronRight className="w-4 h-4 group-hover:text-foreground transition-colors" />
                       </div>
-                    </Button>
+                    </button>
                   ))}
                 </div>
               </div>

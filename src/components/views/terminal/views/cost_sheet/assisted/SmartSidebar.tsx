@@ -238,13 +238,13 @@ const SmartSidebar = React.memo(function SmartSidebar({
     <div className="relative shrink-0 h-full" aria-busy={overallProgress < 100}>
       {/* Toggle button — always visible when collapsed */}
       {!isOpen && (
-        <Button type="button"
+        <button type="button"
           onClick={onToggle}
           className="absolute top-3 left-3 z-30 w-11 h-11 min-h-[44px] min-w-[44px] rounded-lg bg-card border border-border/60 flex items-center justify-center hover:bg-primary/10 hover:border-primary/40 transition-all duration-200 shadow-sm hover:shadow-md"
           title="Abrir panel de navegacion"
         >
           <PanelLeftOpen className="w-4 h-4 text-muted-foreground" />
-        </Button>
+        </button>
       )}
 
       {/* Sidebar */}
@@ -290,7 +290,7 @@ const SmartSidebar = React.memo(function SmartSidebar({
 
           {/* Mode toggle: Flujo / Auditoria */}
           <div className="flex items-center gap-1 mt-2">
-            <Button type="button"
+            <button type="button"
               onClick={() => setSidebarMode('flow')}
               className={cn(
                 'px-2 py-1 rounded text-xs font-bold uppercase tracking-wider transition-colors',
@@ -300,8 +300,8 @@ const SmartSidebar = React.memo(function SmartSidebar({
               )}
             >
               Flujo
-            </Button>
-            <Button type="button"
+            </button>
+            <button type="button"
               onClick={() => setSidebarMode('audit')}
               className={cn(
                 'px-2 py-1 rounded text-xs font-bold uppercase tracking-wider transition-colors relative',
@@ -316,7 +316,7 @@ const SmartSidebar = React.memo(function SmartSidebar({
                   {auditCounts.totalCriticals}
                 </span>
               )}
-            </Button>
+            </button>
           </div>
         </div>
 
@@ -372,7 +372,7 @@ const SmartSidebar = React.memo(function SmartSidebar({
               {/* ── 3 Status Cards (same as dashboard) ── */}
               <div className="space-y-1.5">
                 {/* Critical Errors */}
-                <Button type="button"
+                <button type="button"
                   onClick={() => setActiveAuditFilter(prev => prev === 'CRITICAL' ? 'all' : 'CRITICAL')}
                   // P6-2: aria-pressed para que lectores de pantalla anuncien el estado del filtro.
                   aria-pressed={activeAuditFilter === 'CRITICAL'}
@@ -409,10 +409,10 @@ const SmartSidebar = React.memo(function SmartSidebar({
                       </span>
                     </div>
                   </div>
-                </Button>
+                </button>
 
                 {/* Warnings */}
-                <Button type="button"
+                <button type="button"
                   onClick={() => setActiveAuditFilter(prev => prev === 'WARNING' ? 'all' : 'WARNING')}
                   aria-pressed={activeAuditFilter === 'WARNING'}
                   aria-label={`Filtrar por advertencias. ${auditCounts.totalWarnings} encontradas.`}
@@ -445,10 +445,10 @@ const SmartSidebar = React.memo(function SmartSidebar({
                       </span>
                     </div>
                   </div>
-                </Button>
+                </button>
 
                 {/* Validations OK */}
-                <Button type="button"
+                <button type="button"
                   onClick={() => setActiveAuditFilter(prev => prev === 'INFO_SUCCESS' ? 'all' : 'INFO_SUCCESS')}
                   aria-pressed={activeAuditFilter === 'INFO_SUCCESS'}
                   aria-label={`Filtrar por validaciones correctas. ${auditCounts.totalOk} encontradas.`}
@@ -481,7 +481,7 @@ const SmartSidebar = React.memo(function SmartSidebar({
                       </span>
                     </div>
                   </div>
-                </Button>
+                </button>
               </div>
 
               {/* Health % bar */}
@@ -718,7 +718,7 @@ const SmartSidebar = React.memo(function SmartSidebar({
                       const isDone = completedNodes.has(node.id);
 
                       return (
-                        <Button type="button"
+                        <button type="button"
                           key={node.id}
                           onClick={() => handleSelect(node.id)}
                           className={cn(
@@ -755,7 +755,7 @@ const SmartSidebar = React.memo(function SmartSidebar({
                           {!isDone && !isActive && (
                             <span className="w-2 h-2 rounded-full bg-muted shrink-0" />
                           )}
-                        </Button>
+                        </button>
                       );
                     })}
                   </div>

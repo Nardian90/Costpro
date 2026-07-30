@@ -3,7 +3,6 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 
-import { Button } from "@/components/ui/button";
 /**
  * P3-5: UnifiedTabs — único componente de tabs para todo el módulo COSTOS.
  *
@@ -80,7 +79,7 @@ export function UnifiedTabs({
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
           return (
-            <Button
+            <button
               key={tab.id}
               type="button"
               role="tab"
@@ -116,7 +115,7 @@ export function UnifiedTabs({
                   {tab.badge}
                 </span>
               )}
-            </Button>
+            </button>
           );
         })}
       </div>
@@ -135,7 +134,7 @@ export function UnifiedTabs({
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
           return (
-            <Button
+            <button
               key={tab.id}
               type="button"
               role="tab"
@@ -171,7 +170,7 @@ export function UnifiedTabs({
                   {tab.badge}
                 </span>
               )}
-            </Button>
+            </button>
           );
         })}
       </div>

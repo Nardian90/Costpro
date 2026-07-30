@@ -9,7 +9,6 @@ import { cn, formatCurrency, formatDate, formatTime } from "@/lib/utils";
 import { toast } from "sonner";
 import { POSPortalModal } from "@/components/views/terminal/views/pos/POSPortalModal";
 
-import { Button } from "@/components/ui/button";
 interface ReceptionSuccessModalProps {
   open: boolean;
   onClose: () => void;
@@ -139,7 +138,7 @@ export function ReceptionSuccessModal({
               </p>
               <p className="text-xs font-mono text-foreground truncate">{receiptId}</p>
             </div>
-            <Button
+            <button
               type="button"
               onClick={handleCopyId}
               className="shrink-0 p-2 rounded-lg hover:bg-primary/10 text-primary transition-colors"
@@ -147,7 +146,7 @@ export function ReceptionSuccessModal({
               title="Copiar ID"
             >
               {copied ? <CheckCircle2 className="w-4 h-4" /> : <CopyIcon className="w-4 h-4" />}
-            </Button>
+            </button>
           </div>
         )}
 
@@ -190,23 +189,23 @@ export function ReceptionSuccessModal({
 
         {/* Acciones */}
         <div className="grid grid-cols-3 gap-2">
-          <Button
+          <button
             type="button"
             onClick={handleDownloadJson}
             className="flex flex-col items-center gap-1 p-3 rounded-xl border border-border hover:bg-muted transition-colors"
           >
             <Download className="w-5 h-5 text-primary" />
             <span className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">Comprobante</span>
-          </Button>
-          <Button
+          </button>
+          <button
             type="button"
             onClick={handleShareWhatsApp}
             className="flex flex-col items-center gap-1 p-3 rounded-xl border border-border hover:bg-muted transition-colors"
           >
             <Share2 className="w-5 h-5 text-success" />
             <span className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">WhatsApp</span>
-          </Button>
-          <Button
+          </button>
+          <button
             type="button"
             onClick={() => {
               handleDownloadJson();
@@ -216,25 +215,25 @@ export function ReceptionSuccessModal({
           >
             <Printer className="w-5 h-5 text-muted-foreground" />
             <span className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">Imprimir</span>
-          </Button>
+          </button>
         </div>
 
         {/* Cerrar + Nueva */}
         <div className="flex gap-2">
-          <Button
+          <button
             type="button"
             onClick={onClose}
             className="flex-1 h-12 rounded-xl border border-border text-xs font-black uppercase tracking-widest hover:bg-muted transition-colors"
           >
             Ver Historial
-          </Button>
-          <Button
+          </button>
+          <button
             type="button"
             onClick={onNewReception}
             className="flex-1 h-12 rounded-xl bg-primary text-primary-foreground text-xs font-black uppercase tracking-widest hover:opacity-90 transition-opacity"
           >
             Nueva Recepción
-          </Button>
+          </button>
         </div>
       </div>
     </POSPortalModal>

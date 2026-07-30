@@ -1014,7 +1014,7 @@ const handleExportCatalog = async () => {
               </div>
               <div className="flex bg-muted/50 p-1 rounded-xl border w-full sm:w-auto overflow-x-auto no-scrollbar">
                   {[{ id: 'all', label: 'Todos' }, { id: 'with_stock', label: 'Con Stock' }, { id: 'without_stock', label: 'Sin Stock' }, { id: 'negative_stock', label: 'Negativo' }].map((f) => (
-                      <Button type="button" key={f.id} onClick={() => setStockFilter(f.id as any)} className={`px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-tighter transition-all whitespace-nowrap flex-1 sm:flex-none ${stockFilter === f.id ? 'bg-background text-primary shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}>{f.label}</Button>
+                      <button type="button" key={f.id} onClick={() => setStockFilter(f.id as any)} className={`px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-tighter transition-all whitespace-nowrap flex-1 sm:flex-none ${stockFilter === f.id ? 'bg-background text-primary shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}>{f.label}</button>
                   ))}
               </div>
           </div>

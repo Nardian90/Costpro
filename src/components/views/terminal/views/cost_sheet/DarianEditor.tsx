@@ -7,7 +7,6 @@ import ReactMarkdown from 'react-markdown';
 import { sanitizeHtml } from '@/lib/sanitize';
 import { useCostSheetStore, useAuthStore } from '@/store';
 import type { CostSheetData } from '@/types/cost-sheet';
-import { Button } from "@/components/ui/button";
 import { useTheme } from 'next-themes';
 import { toast } from 'sonner';
 
@@ -200,13 +199,13 @@ export const DarianEditor: React.FC<DarianEditorProps> = ({ sheetData, isFullVie
                     </div>
                 </div>
                 {messages.length > 0 && (
-                    <Button type="button"
+                    <button type="button"
                         onClick={() => setMessages([])}
                         className="p-2 hover:bg-primary/10 rounded-xl transition-colors text-muted-foreground hover:text-primary"
                         title="Limpiar chat"
                     >
                         <RefreshCw className="w-4 h-4" />
-                    </Button>
+                    </button>
                 )}
             </div>
 
@@ -247,13 +246,13 @@ export const DarianEditor: React.FC<DarianEditorProps> = ({ sheetData, isFullVie
                                     <div className={cn("mt-2 w-full p-4 border rounded-2xl space-y-3 bg-primary/5", isDark ? "border-primary/20" : "border-primary/10")}>
                                         <p className="text-xs font-bold text-primary uppercase">{msg.hasSaved ? "¡Ficha persistida!" : "Propuesta Lista"}</p>
                                         {!msg.hasSaved ? (
-                                            <Button type="button" onClick={() => handleApplyUpdate(msg.updateData!, i)} disabled={isSaving} className="w-full py-3 bg-primary text-primary-foreground font-black uppercase text-xs rounded-xl shadow-lg active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50">
+                                            <button type="button" onClick={() => handleApplyUpdate(msg.updateData!, i)} disabled={isSaving} className="w-full py-3 bg-primary text-primary-foreground font-black uppercase text-xs rounded-xl shadow-lg active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50">
                                                 {isSaving ? <Loader2 className="w-3 h-3 animate-spin" /> : "Aplicar y Guardar"}
-                                            </Button>
+                                            </button>
                                         ) : (
-                                            <Button type="button" onClick={() => onSectionChange?.('all-content')} className="w-full py-3 bg-primary/20 text-primary font-black uppercase text-xs rounded-xl border border-primary/30 active:scale-95 flex items-center justify-center gap-2">
+                                            <button type="button" onClick={() => onSectionChange?.('all-content')} className="w-full py-3 bg-primary/20 text-primary font-black uppercase text-xs rounded-xl border border-primary/30 active:scale-95 flex items-center justify-center gap-2">
                                                 <ExternalLink className="w-3.5 h-3.5" /> Ver Ficha Completa
-                                            </Button>
+                                            </button>
                                         )}
                                     </div>
                                 )}
@@ -281,13 +280,13 @@ export const DarianEditor: React.FC<DarianEditorProps> = ({ sheetData, isFullVie
                             )}
                             placeholder="Ej: Generar ficha para 1kg de azúcar blanca..."
                         />
-                        <Button type="button"
+                        <button type="button"
                             onClick={() => handleSend()}
                             disabled={!input.trim() || isLoading}
                             className="bg-primary text-primary-foreground w-14 h-14 rounded-2xl flex items-center justify-center active:scale-90 transition-transform disabled:opacity-50 disabled:scale-100 shadow-lg shadow-primary/20"
                         >
                             <SendHorizontal className="w-6 h-6" />
-                        </Button>
+                        </button>
                     </div>
                 </div>
             </div>

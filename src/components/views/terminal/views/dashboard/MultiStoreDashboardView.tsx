@@ -34,7 +34,6 @@ import { useIsMobile } from '@/hooks/ui/useMobile';
 // Pull-to-refresh: gesto nativo mobile para refrescar datos
 import { usePullToRefresh } from '@/hooks/ui/usePullToRefresh';
 
-import { Button } from "@/components/ui/button";
 // Props de cada métrica mini dentro de la tarjeta
 interface MetricMiniProps {
   label: string;
@@ -102,7 +101,7 @@ const StoreKPICard = memo(function StoreKPICard({ kpi, onActivate, onConfig, onO
         </div>
         <div className="flex items-center gap-1.5 flex-shrink-0">
           {onOpenDashboard && (
-            <Button
+            <button
               type="button"
               onClick={() => onOpenDashboard(kpi.storeId, kpi.storeName)}
               aria-label={`Dashboard avanzado de ${kpi.storeName}`}
@@ -110,10 +109,10 @@ const StoreKPICard = memo(function StoreKPICard({ kpi, onActivate, onConfig, onO
               className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-primary/10 transition-colors group"
             >
               <BarChart3 className="w-3.5 h-3.5 text-muted-foreground group-hover:text-primary transition-colors" />
-            </Button>
+            </button>
           )}
           {onConfig && (
-            <Button
+            <button
               type="button"
               onClick={() => onConfig(kpi.storeId)}
               aria-label={t('configureStore', { name: kpi.storeName })}
@@ -121,7 +120,7 @@ const StoreKPICard = memo(function StoreKPICard({ kpi, onActivate, onConfig, onO
               className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-primary/10 transition-colors group"
             >
               <Settings className="w-3.5 h-3.5 text-muted-foreground group-hover:text-primary transition-colors" />
-            </Button>
+            </button>
           )}
           {kpi.isActive && (
             <span className="text-sm font-black uppercase tracking-widest px-2 py-0.5 rounded bg-primary/10 text-primary">
@@ -174,7 +173,7 @@ const StoreKPICard = memo(function StoreKPICard({ kpi, onActivate, onConfig, onO
             );
           })()}
           {!kpi.isActive && (
-            <Button type="button"
+            <button type="button"
               onClick={() => onActivate(kpi.storeId)}
               aria-label={t('activateAsWorkStore', { name: kpi.storeName })}
               className={cn(
@@ -183,13 +182,13 @@ const StoreKPICard = memo(function StoreKPICard({ kpi, onActivate, onConfig, onO
               )}
             >
               {t('activate')}
-            </Button>
+            </button>
           )}
         </div>
         {/* Botón premium "Dashboard" — acceso rápido al dashboard KPI avanzado de la tienda.
             Visible solo si onOpenDashboard está disponible (admin/manager). */}
         {onOpenDashboard && (
-          <Button
+          <button
             type="button"
             onClick={() => onOpenDashboard(kpi.storeId, kpi.storeName)}
             className="w-full py-2.5 min-h-[44px] rounded-xl font-black text-sm uppercase tracking-widest transition-all active:scale-[0.98] flex items-center justify-center gap-2 border-2 border-primary/30 bg-gradient-to-r from-primary/10 to-primary/5 text-primary hover:from-primary/20 hover:to-primary/10 hover:border-primary/50 hover:shadow-md hover:shadow-primary/10"
@@ -199,7 +198,7 @@ const StoreKPICard = memo(function StoreKPICard({ kpi, onActivate, onConfig, onO
             <Crown className="w-3.5 h-3.5" />
             <BarChart3 className="w-3.5 h-3.5" />
             Dashboard
-          </Button>
+          </button>
         )}
       </div>
     </div>
@@ -330,14 +329,14 @@ export default function MultiStoreDashboardView() {
           {/* Badge: Fecha de Operación Actual (política forward-only locking) */}
           <GlobalOperationDateBadge />
 
-          <Button
+          <button
             type="button"
             onClick={() => refetch()}
             aria-label={t('refreshData')}
             className="w-11 h-11 rounded-lg flex items-center justify-center hover:bg-muted transition-colors"
           >
             <RefreshCcw className="w-4 h-4 text-muted-foreground" />
-          </Button>
+          </button>
         </div>
       </div>
 

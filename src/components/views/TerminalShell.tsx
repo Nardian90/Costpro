@@ -44,7 +44,6 @@ import { NavigationBreadcrumb } from '@/components/ui/NavigationBreadcrumb';
 // on every TerminalShell re-render (was defined inside renderView, causing
 // React to treat it as a new component type each time, destroying child state).
 import { ErrorBoundary } from '@/components/ErrorBoundary';
-import { Button } from "@/components/ui/button";
 function ViewErrorBoundary({ children, viewName }: { children: React.ReactNode; viewName: string }) {
   return (
     <ErrorBoundary
@@ -52,9 +51,9 @@ function ViewErrorBoundary({ children, viewName }: { children: React.ReactNode; 
         <div className="flex-1 flex items-center justify-center p-8">
           <div className="text-center space-y-3">
             <p className="text-destructive font-medium">Error al cargar {viewName}</p>
-            <Button onClick={() => window.location.reload()} className="text-sm text-primary hover:underline">
+            <button onClick={() => window.location.reload()} className="text-sm text-primary hover:underline">
               Reintentar
-            </Button>
+            </button>
           </div>
         </div>
       }
@@ -355,12 +354,12 @@ export default function TerminalShell() {
             <p className="text-sm text-muted-foreground max-w-md">
               No tienes permisos para acceder a esta sección. Contacta al administrador si crees que es un error.
             </p>
-            <Button
+            <button
               onClick={() => setCurrentView('occ')}
               className="px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-black uppercase tracking-widest hover:bg-primary/90 min-h-[44px]"
             >
               Volver al Dashboard
-            </Button>
+            </button>
           </div>
         </ViewErrorBoundary>
       );
@@ -495,12 +494,12 @@ export default function TerminalShell() {
                   Si llegaste aquí desde un enlace externo, es posible que la vista haya sido renombrada o eliminada. Vuelve al Dashboard para continuar.
                 </p>
               </div>
-              <Button
+              <button
                 onClick={() => setCurrentView('dashboard')}
                 className="px-6 py-2.5 bg-primary text-primary-foreground font-bold rounded-xl hover:opacity-90 transition-opacity text-xs uppercase tracking-widest"
               >
                 Ir al Dashboard
-              </Button>
+              </button>
             </div>
           );
         }

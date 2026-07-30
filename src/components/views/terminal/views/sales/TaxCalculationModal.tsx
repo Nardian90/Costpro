@@ -17,7 +17,6 @@ import { useAuthStore } from '@/store';
 import { toast } from 'sonner';
 import { createPDFDocument } from '@/lib/export/lazy-pdf';
 
-import { Button } from "@/components/ui/button";
 interface TaxCalculationModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -193,7 +192,7 @@ export const TaxCalculationModal = ({
             </h4>
 
             <div className="space-y-3">
-              <Button type="button"
+              <button type="button"
                 onClick={() => setIncludeAnnex(!includeAnnex)}
                 className="flex items-center gap-3 w-full text-left group"
               >
@@ -207,10 +206,10 @@ export const TaxCalculationModal = ({
                   <div className="text-xs font-black uppercase tracking-tight">Incluir Anexo de Facturas</div>
                   <div className="text-xs font-bold text-muted-foreground uppercase">Lista detallada de números de referencia</div>
                 </div>
-              </Button>
+              </button>
 
               <div className="pt-2 grid grid-cols-2 gap-2">
-                <Button type="button"
+                <button type="button"
                   onClick={() => setExportMode('combined')}
                   className={cn(
                     "p-3 rounded-lg border text-center transition-all",
@@ -218,8 +217,8 @@ export const TaxCalculationModal = ({
                   )}
                 >
                   <div className="text-xs font-black uppercase">Conjunto</div>
-                </Button>
-                <Button type="button"
+                </button>
+                <button type="button"
                   onClick={() => setExportMode('separate')}
                   className={cn(
                     "p-3 rounded-lg border text-center transition-all",
@@ -227,18 +226,18 @@ export const TaxCalculationModal = ({
                   )}
                 >
                   <div className="text-xs font-black uppercase">Separado</div>
-                </Button>
+                </button>
               </div>
             </div>
           </div>
 
-          <Button type="button"
+          <button type="button"
             onClick={handleExportPDF}
             className="w-full py-4 bg-primary text-foreground rounded-xl font-black text-sm uppercase tracking-widest shadow-xl shadow-primary/20 flex items-center justify-center gap-3 hover:scale-[1.02] transition-all active:scale-95"
           >
             <FileDown className="w-5 h-5" />
             Exportar Reporte PDF
-          </Button>
+          </button>
         </div>
       </DialogContent>
     </Dialog>

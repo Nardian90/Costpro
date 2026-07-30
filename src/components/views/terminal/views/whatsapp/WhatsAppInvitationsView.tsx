@@ -222,7 +222,7 @@ export default function WhatsAppInvitationsView() {
       {/* Filter */}
       <div className="flex gap-1 flex-wrap overflow-x-auto no-scrollbar">
         {['all', 'pending', 'pre_message_sent', 'waiting_response', 'invited', 'rejected', 'expired', 'blocked'].map(s => (
-          <Button
+          <button
             key={s}
             onClick={() => setFilterStatus(s)}
             className={cn(
@@ -231,7 +231,7 @@ export default function WhatsAppInvitationsView() {
             )}
           >
             {s === 'all' ? 'Todos' : STATUS_CONFIG[s]?.label || s}
-          </Button>
+          </button>
         ))}
       </div>
 
@@ -263,9 +263,9 @@ export default function WhatsAppInvitationsView() {
                 {inv.sent_at ? new Date(inv.sent_at).toLocaleDateString('es-CU') : '—'}
               </span>
               {inv.status === 'pending' && (
-                <Button onClick={() => handleDelete(inv.id)} className="text-muted-foreground hover:text-destructive">
+                <button onClick={() => handleDelete(inv.id)} className="text-muted-foreground hover:text-destructive">
                   <Trash2 className="w-3.5 h-3.5" />
-                </Button>
+                </button>
               )}
             </div>
           ))}

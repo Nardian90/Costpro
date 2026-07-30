@@ -4,7 +4,6 @@ import React, { useState, useId } from 'react';
 import { useStoreHealth, type StoreHealth } from '@/hooks/api/useStoreHealth';
 import { Heart, CheckCircle2, XCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Button } from "@/components/ui/button";
 import {
   Popover,
   PopoverContent,
@@ -58,7 +57,7 @@ export function StoreHealthBadge({ storeId, health, compact = false }: StoreHeal
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button
+        <button
           type="button"
           className={cn(
             "inline-flex items-center gap-1 text-xs font-bold px-1.5 py-0.5 rounded border cursor-help min-h-[44px] focus:outline-none focus:ring-2 focus:ring-primary/30",
@@ -70,7 +69,7 @@ export function StoreHealthBadge({ storeId, health, compact = false }: StoreHeal
         >
           <Heart className="w-3 h-3" fill="currentColor" />
           {score}%
-        </Button>
+        </button>
       </PopoverTrigger>
       <PopoverContent
         className="w-64 p-3 rounded-xl bg-card border border-border shadow-xl"

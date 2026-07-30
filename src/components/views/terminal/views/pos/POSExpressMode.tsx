@@ -26,7 +26,6 @@ import { useUIStore } from "@/store";
 import { usePOSCheckout } from "./usePOSCheckout";
 import { POSPortalModal } from "./POSPortalModal";
 import ProductImage from "@/components/ui/ProductImage";
-import { Button } from "@/components/ui/button";
 import { PaymentMethodSelector } from "./PaymentMethodSelector";
 
 interface POSExpressModeProps {
@@ -199,7 +198,7 @@ export function POSExpressMode({ products, onExit }: POSExpressModeProps) {
     <div className="fixed inset-0 z-[9999] bg-background flex flex-col">
       {/* ── HEADER ── */}
       <header className="flex items-center justify-between p-4 border-b border-border bg-card shrink-0">
-        <Button
+        <button
           type="button"
           onClick={onExit}
           className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary/10 text-primary hover:bg-primary/20 transition-colors text-xs font-black uppercase tracking-widest border border-primary/20 active:scale-95"
@@ -207,7 +206,7 @@ export function POSExpressMode({ products, onExit }: POSExpressModeProps) {
         >
           <ArrowLeft className="w-4 h-4" />
           Salir
-        </Button>
+        </button>
         <div className="flex items-center gap-2">
           <Zap className="w-5 h-5 text-primary" />
           <h1 className="text-base sm:text-lg font-black uppercase tracking-widest text-foreground">
@@ -258,7 +257,7 @@ export function POSExpressMode({ products, onExit }: POSExpressModeProps) {
           {frequentProducts && frequentProducts.length > 0 ? (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
               {frequentProducts.slice(0, 12).map((fp) => (
-                <Button
+                <button
                   key={fp.product.id}
                   type="button"
                   onClick={() => addItem(fp.product)}
@@ -278,7 +277,7 @@ export function POSExpressMode({ products, onExit }: POSExpressModeProps) {
                   <p className="text-sm font-black text-primary tabular-nums mt-1">
                     {formatCurrency(fp.product.price || 0)}
                   </p>
-                </Button>
+                </button>
               ))}
             </div>
           ) : (
@@ -306,7 +305,7 @@ export function POSExpressMode({ products, onExit }: POSExpressModeProps) {
               )}
             </h2>
             {itemCount > 0 && (
-              <Button
+              <button
                 type="button"
                 onClick={() => {
                   clearCart();
@@ -317,7 +316,7 @@ export function POSExpressMode({ products, onExit }: POSExpressModeProps) {
                 title="Vaciar carrito"
               >
                 <Trash2 className="w-4 h-4" />
-              </Button>
+              </button>
             )}
           </div>
 
@@ -349,7 +348,7 @@ export function POSExpressMode({ products, onExit }: POSExpressModeProps) {
                       </p>
                     </div>
                     <div className="flex items-center gap-1 shrink-0">
-                      <Button
+                      <button
                         type="button"
                         onClick={() =>
                           updateQuantity(item.product_id, item.variant_id, item.quantity - 1)
@@ -358,11 +357,11 @@ export function POSExpressMode({ products, onExit }: POSExpressModeProps) {
                         aria-label="Reducir cantidad"
                       >
                         <Minus className="w-3 h-3" />
-                      </Button>
+                      </button>
                       <span className="w-8 text-center font-black tabular-nums">
                         {item.quantity}
                       </span>
-                      <Button
+                      <button
                         type="button"
                         onClick={() =>
                           updateQuantity(item.product_id, item.variant_id, item.quantity + 1)
@@ -371,16 +370,16 @@ export function POSExpressMode({ products, onExit }: POSExpressModeProps) {
                         aria-label="Aumentar cantidad"
                       >
                         <Plus className="w-3 h-3" />
-                      </Button>
+                      </button>
                     </div>
-                    <Button
+                    <button
                       type="button"
                       onClick={() => removeItem(item.product_id, item.variant_id)}
                       className="text-destructive hover:bg-destructive/10 p-1.5 rounded-lg transition-colors shrink-0"
                       aria-label="Quitar"
                     >
                       <X className="w-4 h-4" />
-                    </Button>
+                    </button>
                   </motion.div>
                 ))}
               </AnimatePresence>
@@ -397,7 +396,7 @@ export function POSExpressMode({ products, onExit }: POSExpressModeProps) {
                 {formatCurrency(total)}
               </span>
             </div>
-            <Button
+            <button
               type="button"
               onClick={() => setShowConfirm(true)}
               disabled={itemCount === 0 || isProcessingSale}
@@ -411,7 +410,7 @@ export function POSExpressMode({ products, onExit }: POSExpressModeProps) {
                   {formatCurrency(total)}
                 </span>
               )}
-            </Button>
+            </button>
           </div>
         </aside>
       </div>
@@ -435,28 +434,28 @@ export function POSExpressMode({ products, onExit }: POSExpressModeProps) {
             </p>
           </div>
           <div className="flex gap-2">
-            <Button
+            <button
               type="button"
               onClick={() => setShowConfirm(false)}
               className="flex-1 h-12 rounded-xl border border-border text-xs font-black uppercase tracking-widest hover:bg-muted transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30"
             >
               Cancelar
-            </Button>
-            <Button
+            </button>
+            <button
               type="button"
               onClick={handleConfirmSale}
               disabled={isProcessingSale}
               className="flex-1 h-12 rounded-xl bg-primary text-primary-foreground text-xs font-black uppercase tracking-widest hover:opacity-90 transition-opacity disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-primary/30"
             >
               {isProcessingSale ? "Procesando..." : "Confirmar"}
-            </Button>
+            </button>
           </div>
         </div>
       </POSPortalModal>
 
       {/* Audit-Fix: botón flotante de cerrar (X) en esquina superior derecha.
           Visible siempre, incluso si el header scrolla fuera de vista. */}
-      <Button
+      <button
         type="button"
         onClick={onExit}
         className="fixed top-4 right-4 z-[10000] w-12 h-12 rounded-full bg-destructive text-destructive-foreground shadow-2xl hover:bg-destructive/90 transition-all active:scale-90 flex items-center justify-center border-2 border-background"
@@ -464,7 +463,7 @@ export function POSExpressMode({ products, onExit }: POSExpressModeProps) {
         title="Cerrar modo Express"
       >
         <X className="w-5 h-5" />
-      </Button>
+      </button>
     </div>,
     document.body
   );

@@ -10,7 +10,6 @@ import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { apiFetch } from '@/lib/api-fetch';
 
-import { Button } from "@/components/ui/button";
 import { useTranslations } from 'next-intl';
 // ── Types ───────────────────────────────────────────────────────────
 
@@ -456,7 +455,7 @@ const CostSheetHeaderEditor: React.FC<CostSheetHeaderEditorProps> = ({
                             )}
                             {/* F4.1: Auto-fetch rate button */}
                             {field.id === 'exchangeRate' && !isEditing && (
-                              <Button
+                              <button
                                 type="button"
                                 onClick={(e) => { e.stopPropagation(); fetchLatestRate(); }}
                                 disabled={fetchingRate}
@@ -465,7 +464,7 @@ const CostSheetHeaderEditor: React.FC<CostSheetHeaderEditorProps> = ({
                                 aria-label="Obtener tasa actual"
                               >
                                 {fetchingRate ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
-                              </Button>
+                              </button>
                             )}
                           </div>
                         )}

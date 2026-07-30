@@ -4,7 +4,6 @@ import React from "react";
 import { Loader2, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-import { Button } from "@/components/ui/button";
 interface LoadMoreIndicatorProps {
   remainingCount: number;
   onLoadMore: () => void;
@@ -28,7 +27,7 @@ export function LoadMoreIndicator({
 
   return (
     <div className={cn("flex flex-col items-center justify-center py-6 gap-3", className)}>
-      <Button
+      <button
         type="button"
         onClick={onLoadMore}
         disabled={isLoading}
@@ -50,7 +49,7 @@ export function LoadMoreIndicator({
             Cargar {remainingCount} más
           </>
         )}
-      </Button>
+      </button>
       <p className="text-[10px] text-muted-foreground uppercase tracking-wider">
         Mostrando resultados parciales · {remainingCount} ocultos por paginación
       </p>

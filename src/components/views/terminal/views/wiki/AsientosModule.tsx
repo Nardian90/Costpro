@@ -102,12 +102,12 @@ export const AsientosModule: React.FC<AsientosModuleProps> = ({ data, selectedId
                         <td className="px-4 py-4 font-medium">
                           <div className="flex flex-col gap-1">
                              {linea.Codigo && (
-                                <Button type="button"
+                                <button type="button"
                                   onClick={() => onNavigate('cuentas', linea.Codigo)}
                                   className="text-primary hover:underline flex items-center gap-1 w-fit group-hover:translate-x-0.5 transition-transform font-mono text-[10px] font-bold"
                                 >
                                   {linea.Codigo} <ExternalLink className="h-2 w-2 opacity-50" />
-                                </Button>
+                                </button>
                              )}
                              <span className={cn(
                                "text-[11px] uppercase tracking-tight",
@@ -162,14 +162,14 @@ export const AsientosModule: React.FC<AsientosModuleProps> = ({ data, selectedId
                 </div>
                 <div className="flex flex-col gap-2">
                    {Array.from(new Set(selectedAsiento.lineas.map((l: AsientoLinea) => l.Codigo).filter(Boolean))).map((codigo: string) => (
-                     <Button type="button"
+                     <button type="button"
                        key={codigo}
                        onClick={() => onNavigate('cuentas', codigo)}
                        className="flex items-center justify-between p-3 rounded-2xl bg-background border hover:border-primary/30 hover:bg-primary/[0.02] transition-all group shadow-sm"
                      >
                        <span className="text-xs font-bold font-mono text-muted-foreground group-hover:text-primary transition-colors">{codigo}</span>
                        <ArrowRight className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-all -translate-x-2 group-hover:translate-x-0" />
-                     </Button>
+                     </button>
                    ))}
                 </div>
              </div>
@@ -202,7 +202,7 @@ export const AsientosModule: React.FC<AsientosModuleProps> = ({ data, selectedId
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {visibleAsientos.map((asiento: Asiento) => (
-          <Button type="button"
+          <button type="button"
             key={asiento.id}
             onClick={() => onNavigate('asientos', asiento.id)}
             className="group flex flex-col items-start gap-4 p-6 rounded-3xl border bg-card hover:bg-primary/[0.02] hover:border-primary/30 transition-all text-left shadow-sm active:scale-[0.98] border-b-4 hover:border-b-primary"
@@ -220,7 +220,7 @@ export const AsientosModule: React.FC<AsientosModuleProps> = ({ data, selectedId
                <span className="text-[9px] font-black tracking-widest text-muted-foreground/50 uppercase group-hover:text-primary transition-colors">Ver Estructura Tabular</span>
                <ArrowRight className="h-4 w-4 opacity-30 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
             </div>
-          </Button>
+          </button>
         ))}
       </div>
 

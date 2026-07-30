@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef, useMemo, Suspense } from 'react';
-import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from 'framer-motion';
 import { Play, Pause, RotateCcw, FileText, Brain, Store, User, Volume2, VolumeX, Music } from 'lucide-react';
 import { scenes, totalDemoDuration, type SceneConfig } from './demoData';
@@ -446,7 +445,7 @@ export default function InteractiveDemo() {
               {/* Scene navigation dots */}
               <div className="flex items-center gap-2">
                 {scenes.map((s, i) => (
-                  <Button
+                  <button
                     key={s.id}
                     onClick={() => seekToScene(i)}
                     className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-medium transition-all duration-200 cursor-pointer ${
@@ -458,7 +457,7 @@ export default function InteractiveDemo() {
                     {SCENE_ICONS[s.id]}
                     <span className="hidden sm:inline">{s.title}</span>
                     <span className="sm:hidden">{s.title.split(' ')[0]}</span>
-                  </Button>
+                  </button>
                 ))}
               </div>
 
@@ -467,18 +466,18 @@ export default function InteractiveDemo() {
                 <span className="text-[10px] text-white/25 font-mono tabular-nums">
                   {formatTime(elapsed)} / {formatTime(totalDemoDuration)}
                 </span>
-                <Button
+                <button
                   onClick={isPlaying ? pause : play}
                   className="w-7 h-7 rounded-lg bg-[#22c55e]/15 border border-[#22c55e]/25 flex items-center justify-center text-[#22c55e] hover:bg-[#22c55e]/25 transition-colors cursor-pointer"
                 >
                   {isPlaying ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3 ml-0.5" />}
-                </Button>
-                <Button
+                </button>
+                <button
                   onClick={restart}
                   className="w-7 h-7 rounded-lg bg-white/[0.04] border border-white/[0.06] flex items-center justify-center text-white/30 hover:text-white/50 hover:bg-white/[0.08] transition-colors cursor-pointer"
                 >
                   <RotateCcw className="w-3 h-3" />
-                </Button>
+                </button>
               </div>
             </div>
           </motion.div>

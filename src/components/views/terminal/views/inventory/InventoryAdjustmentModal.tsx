@@ -11,7 +11,6 @@ import { useIsMobile } from '@/hooks/ui/useMobile';
 import { useFocusTrap } from '@/hooks/ui/useFocusTrap';
 import { format } from 'date-fns';
 import { useAuthStore } from '@/store';
-import { Button } from "@/components/ui/button";
 import {
   Drawer,
   DrawerContent,
@@ -136,14 +135,14 @@ export default function InventoryAdjustmentModal({
           </div>
         </div>
         {!isMobile && (
-          <Button
+          <button
             onClick={onClose}
             className="p-2 hover:bg-danger/10 text-muted-foreground hover:text-danger rounded-full transition-colors"
             type="button"
             aria-label="Cerrar ajuste de inventario"
           >
             <X className="w-6 h-6" aria-hidden="true" />
-          </Button>
+          </button>
         )}
       </div>
 
@@ -194,20 +193,20 @@ export default function InventoryAdjustmentModal({
                   </div>
                 </div>
                 <div className="flex gap-1 shrink-0">
-                  <Button
+                  <button
                     type="button"
                     onClick={() => setAjusteUnidades(prev => prev - 1)}
                     className="w-12 h-12 flex items-center justify-center rounded-xl bg-muted border border-border active:scale-90 transition-transform"
                   >
                     <Minus className="w-5 h-5" />
-                  </Button>
-                  <Button
+                  </button>
+                  <button
                     type="button"
                     onClick={() => setAjusteUnidades(prev => prev + 1)}
                     className="w-12 h-12 flex items-center justify-center rounded-xl bg-muted border border-border active:scale-90 transition-transform"
                   >
                     <Plus className="w-5 h-5" />
-                  </Button>
+                  </button>
                 </div>
               </div>
             </div>
@@ -218,14 +217,14 @@ export default function InventoryAdjustmentModal({
                   Costo Unitario Ajuste
                 </label>
                 {ajusteValorUnitario !== '' && (
-                  <Button
+                  <button
                     type="button"
                     onClick={() => setAjusteValorUnitario('')}
                     className="text-xs font-bold text-primary hover:underline uppercase"
                     aria-label="Usar costo sugerido"
                   >
                     Usar sugerido
-                  </Button>
+                  </button>
                 )}
               </div>
               <div className="relative">
@@ -262,7 +261,7 @@ export default function InventoryAdjustmentModal({
               </label>
               <div className="flex flex-wrap gap-2 mb-2">
                 {['Merma', 'Error Conteo', 'Venta Omitida', 'Ajuste Manual'].map(r => (
-                  <Button
+                  <button
                     key={r}
                     type="button"
                     onClick={() => setReason(r)}
@@ -274,7 +273,7 @@ export default function InventoryAdjustmentModal({
                     )}
                   >
                     {r}
-                  </Button>
+                  </button>
                 ))}
               </div>
               <textarea
@@ -341,7 +340,7 @@ export default function InventoryAdjustmentModal({
         "p-6 border-t border-white/5 bg-muted/10 flex gap-4",
         isMobile && "fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-md z-10"
       )}>
-        <Button
+        <button
           onClick={onClose}
           className="neu-btn flex-1 !py-3 min-h-[44px] font-black uppercase text-xs tracking-widest"
           disabled={isProcessing}
@@ -349,8 +348,8 @@ export default function InventoryAdjustmentModal({
           aria-label="Cancelar ajuste de inventario"
         >
           Cancelar
-        </Button>
-        <Button
+        </button>
+        <button
           onClick={handleConfirm}
           className="neu-btn-primary flex-1 flex items-center justify-center gap-2 !py-3 min-h-[44px] font-black uppercase text-xs tracking-widest"
           disabled={isProcessing || !dateValidation.valid}
@@ -365,7 +364,7 @@ export default function InventoryAdjustmentModal({
               Confirmar
             </>
           )}
-        </Button>
+        </button>
       </div>
     </div>
   );

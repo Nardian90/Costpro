@@ -16,7 +16,6 @@ import type { Product, ProductFCStatus } from '@/types';
 import type { FCResolutionResult } from '@/lib/integration/fc-automation';
 import ProductImage from '@/components/ui/ProductImage';
 
-import { Button } from "@/components/ui/button";
 interface CatalogProductGridProps {
   layoutMode: 'grid' | 'table';
   products: Product[];
@@ -74,9 +73,9 @@ export default function CatalogProductGrid({
   const SortableTh = ({ col, label, className: cls }: { col: string; label: string; className?: string }) => (
     <th className={cls}>
       {onSort ? (
-        <Button type="button" onClick={() => onSort(col)} className="inline-flex items-center hover:text-foreground transition-colors">
+        <button type="button" onClick={() => onSort(col)} className="inline-flex items-center hover:text-foreground transition-colors">
           {label} <SortIcon col={col} />
-        </Button>
+        </button>
       ) : label}
     </th>
   );
@@ -118,9 +117,9 @@ export default function CatalogProductGrid({
               <thead className="bg-muted/50 text-[10px] font-black uppercase tracking-widest text-muted-foreground border-b border-border">
                 <tr>
                   <th className="px-3 py-4 w-8">
-                    <Button type="button" onClick={onToggleSelectAll} aria-label="Seleccionar todos">
+                    <button type="button" onClick={onToggleSelectAll} aria-label="Seleccionar todos">
                       {isAllSelected ? <CheckSquare className="w-4 h-4 text-primary" /> : <Square className="w-4 h-4" />}
-                    </Button>
+                    </button>
                   </th>
                   <th className="px-4 py-4">Imagen</th>
                   <SortableTh col="name" label="Producto" className="px-4 py-4" />
@@ -150,9 +149,9 @@ export default function CatalogProductGrid({
                       product.price < (product.cost_price || 0) && (product.cost_price || 0) > 0 && "bg-destructive/5",
                     )}>
                       <td className="px-3 py-4">
-                        <Button type="button" onClick={() => onToggleSelect(product.id)} aria-label={`Seleccionar ${product.name}`}>
+                        <button type="button" onClick={() => onToggleSelect(product.id)} aria-label={`Seleccionar ${product.name}`}>
                           {selectedIds.has(product.id) ? <CheckSquare className="w-4 h-4 text-primary" /> : <Square className="w-4 h-4 text-muted-foreground/30" />}
-                        </Button>
+                        </button>
                       </td>
                       <td className="px-4 py-4">
                         <ProductImage

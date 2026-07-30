@@ -9,7 +9,6 @@ import { cn } from '@/lib/utils';
 import type { ProductFCStatus } from '@/types';
 import type { FCCoverageData } from '@/hooks/ui/useProductFCStatus';
 
-import { Button } from "@/components/ui/button";
 /** Filtro de estado FC — extiende el filter type */
 export type FCFilterStatus = ProductFCStatus | 'all';
 
@@ -97,7 +96,7 @@ export default function CatalogSearchAndFilters({
               <div>
                 <label className="text-xs font-black text-muted-foreground uppercase mb-2 block">Categorías</label>
                 <div className="flex items-center gap-1 flex-wrap">
-                  <Button
+                  <button
                     type="button"
                     onClick={() => onCategoryChange('')}
                     className={cn(
@@ -108,9 +107,9 @@ export default function CatalogSearchAndFilters({
                     )}
                   >
                     Todas
-                  </Button>
+                  </button>
                   {categories.map(cat => (
-                    <Button
+                    <button
                       key={cat}
                       type="button"
                       onClick={() => onCategoryToggle?.(cat)}
@@ -122,7 +121,7 @@ export default function CatalogSearchAndFilters({
                       )}
                     >
                       {cat}
-                    </Button>
+                    </button>
                   ))}
                 </div>
               </div>
@@ -138,7 +137,7 @@ export default function CatalogSearchAndFilters({
                     { key: 'low', label: 'Bajo' },
                     { key: 'out', label: 'Agotado' },
                   ] as const).map(opt => (
-                    <Button
+                    <button
                       key={opt.key}
                       type="button"
                       onClick={() => onStockFilterChange(opt.key)}
@@ -150,7 +149,7 @@ export default function CatalogSearchAndFilters({
                       )}
                     >
                       {opt.label}
-                    </Button>
+                    </button>
                   ))}
                 </div>
               </div>
@@ -165,7 +164,7 @@ export default function CatalogSearchAndFilters({
                     { key: 'active', label: 'Activos' },
                     { key: 'inactive', label: 'Inactivos' },
                   ] as const).map(opt => (
-                    <Button
+                    <button
                       key={opt.key}
                       type="button"
                       onClick={() => onActiveFilterChange(opt.key)}
@@ -177,10 +176,10 @@ export default function CatalogSearchAndFilters({
                       )}
                     >
                       {opt.label}
-                    </Button>
+                    </button>
                   ))}
                   {incompleteCount > 0 && (
-                    <Button
+                    <button
                       type="button"
                       onClick={() => onToggleIncomplete?.()}
                       className={cn(
@@ -191,7 +190,7 @@ export default function CatalogSearchAndFilters({
                       )}
                     >
                       Incompletos ({incompleteCount})
-                    </Button>
+                    </button>
                   )}
                 </div>
               </div>
@@ -204,7 +203,7 @@ export default function CatalogSearchAndFilters({
       {hasFCData && (
         <div className="rounded-xl bg-card border border-border overflow-hidden">
           {/* Accordion Trigger */}
-          <Button
+          <button
             type="button"
             onClick={() => setFcPanelOpen(!fcPanelOpen)}
             className={cn(
@@ -250,7 +249,7 @@ export default function CatalogSearchAndFilters({
               'w-4 h-4 text-muted-foreground transition-transform',
               fcPanelOpen && 'rotate-180'
             )} />
-          </Button>
+          </button>
 
           {/* Accordion Content */}
           {fcPanelOpen && (
@@ -269,7 +268,7 @@ export default function CatalogSearchAndFilters({
                     fcSinFCCount;
 
                   return (
-                    <Button
+                    <button
                       key={option.value}
                       type="button"
                       onClick={() => onFCFilterChange(option.value)}
@@ -291,7 +290,7 @@ export default function CatalogSearchAndFilters({
                       )} />
                       {option.label}
                       <span className="text-[8px] font-bold opacity-60">{count}</span>
-                    </Button>
+                    </button>
                   );
                 })}
               </div>
@@ -308,13 +307,13 @@ export default function CatalogSearchAndFilters({
             <span className="font-bold text-warning">Mostrando {filteredCount} producto(s) incompleto(s)</span>
             <span className="text-muted-foreground">— No tienen precio de venta asignado y no aparecen en el punto de venta</span>
           </div>
-          <Button
+          <button
             type="button"
             onClick={onClearIncomplete}
             className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors"
           >
             <X className="w-3 h-3" /> Limpiar filtro
-          </Button>
+          </button>
         </div>
       )}
 
@@ -331,13 +330,13 @@ export default function CatalogSearchAndFilters({
               {' '}({filteredCount} producto{filteredCount !== 1 ? 's' : ''})
             </span>
           </div>
-          <Button
+          <button
             type="button"
             onClick={() => onFCFilterChange('all')}
             className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors"
           >
             <X className="w-3 h-3" /> Limpiar filtro FC
-          </Button>
+          </button>
         </div>
       )}
     </>

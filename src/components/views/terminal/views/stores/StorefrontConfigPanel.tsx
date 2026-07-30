@@ -536,29 +536,29 @@ export function StorefrontConfigPanel({ store, onSaved }: StorefrontConfigPanelP
                     ))}
                   </select>
                   <div className="flex gap-1">
-                    <Button
+                    <button
                       onClick={() => moveService(index, 'up')}
                       disabled={index === 0}
                       className="w-8 h-8 rounded-lg border border-border flex items-center justify-center hover:bg-muted/50 disabled:opacity-30 transition-colors"
                       aria-label={tS('moveUp')}
                     >
                       <ChevronUp className="w-3.5 h-3.5" />
-                    </Button>
-                    <Button
+                    </button>
+                    <button
                       onClick={() => moveService(index, 'down')}
                       disabled={index === services.length - 1}
                       className="w-8 h-8 rounded-lg border border-border flex items-center justify-center hover:bg-muted/50 disabled:opacity-30 transition-colors"
                       aria-label={tS('moveDown')}
                     >
                       <ChevronDown className="w-3.5 h-3.5" />
-                    </Button>
-                    <Button
+                    </button>
+                    <button
                       onClick={() => removeService(index)}
                       className="w-8 h-8 rounded-lg border border-destructive/30 text-destructive flex items-center justify-center hover:bg-destructive/10 transition-colors"
                       aria-label={t('erase')}
                     >
                       <Trash2 className="w-3.5 h-3.5" />
-                    </Button>
+                    </button>
                   </div>
                 </div>
                 <Input
@@ -619,29 +619,29 @@ export function StorefrontConfigPanel({ store, onSaved }: StorefrontConfigPanelP
                   {tS('slide')} {index + 1}
                 </span>
                 <div className="flex gap-1">
-                  <Button
+                  <button
                     onClick={() => movePromoImage(index, 'up')}
                     disabled={index === 0}
                     className="w-8 h-8 rounded-lg border border-border flex items-center justify-center hover:bg-muted/50 disabled:opacity-30 transition-colors"
                     aria-label={tS('moveUp')}
                   >
                     <ChevronUp className="w-3.5 h-3.5" />
-                  </Button>
-                  <Button
+                  </button>
+                  <button
                     onClick={() => movePromoImage(index, 'down')}
                     disabled={index === promoImages.length - 1}
                     className="w-8 h-8 rounded-lg border border-border flex items-center justify-center hover:bg-muted/50 disabled:opacity-30 transition-colors"
                     aria-label={tS('moveDown')}
                   >
                     <ChevronDown className="w-3.5 h-3.5" />
-                  </Button>
-                  <Button
+                  </button>
+                  <button
                     onClick={() => removePromoImage(index)}
                     className="w-8 h-8 rounded-lg border border-destructive/30 text-destructive flex items-center justify-center hover:bg-destructive/10 transition-colors"
                     aria-label={t('erase')}
                   >
                     <Trash2 className="w-3.5 h-3.5" />
-                  </Button>
+                  </button>
                 </div>
               </div>
 

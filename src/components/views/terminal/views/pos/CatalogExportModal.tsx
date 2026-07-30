@@ -24,7 +24,6 @@ import type { OrganizedProducts } from "./catalog-templates/shared";
 import { formatPrice } from "./catalog-templates/shared";
 import { cn } from "@/lib/utils";
 
-import { Button } from "@/components/ui/button";
 // ── Icon Map ────────────────────────────────────────────────
 
 const ICON_MAP: Record<string, React.ElementType> = {
@@ -235,7 +234,7 @@ export function CatalogExportModal({
           </div>
           <div className="flex gap-2 flex-wrap">
             {COLOR_THEMES.map((theme) => (
-              <Button
+              <button
                 key={theme.id}
                 type="button"
                 onClick={() => setSelectedTheme(theme)}
@@ -256,7 +255,7 @@ export function CatalogExportModal({
                 <span className="text-[11px] font-bold text-foreground">
                   {theme.name}
                 </span>
-              </Button>
+              </button>
             ))}
           </div>
         </div>
@@ -272,7 +271,7 @@ export function CatalogExportModal({
           </div>
           <div className="flex gap-3 flex-wrap">
             {/* None option */}
-            <Button
+            <button
               type="button"
               onClick={() => setSelectedAvatar(null)}
               className={cn(
@@ -286,9 +285,9 @@ export function CatalogExportModal({
                 <span className="text-xs text-muted-foreground font-bold">Sin</span>
               </div>
               <span className="text-[10px] text-muted-foreground">Ninguno</span>
-            </Button>
+            </button>
             {AVATAR_PRESETS.map((avatar) => (
-              <Button
+              <button
                 key={avatar.id}
                 type="button"
                 onClick={() => setSelectedAvatar(avatar)}
@@ -308,7 +307,7 @@ export function CatalogExportModal({
                   )}
                 />
                 <span className="text-[10px] text-muted-foreground">{avatar.name}</span>
-              </Button>
+              </button>
             ))}
           </div>
         </div>
@@ -316,7 +315,7 @@ export function CatalogExportModal({
         {/* Category filter chips */}
         <div className="flex gap-2 overflow-x-auto pb-1">
           {categories.map((cat) => (
-            <Button
+            <button
               key={cat}
               type="button"
               onClick={() => {
@@ -331,7 +330,7 @@ export function CatalogExportModal({
               )}
             >
               {cat === "all" ? "Todas" : CATEGORY_LABELS[cat]}
-            </Button>
+            </button>
           ))}
         </div>
 

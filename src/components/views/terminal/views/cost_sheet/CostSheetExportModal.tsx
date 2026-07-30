@@ -281,7 +281,7 @@ export const CostSheetExportModal: React.FC<CostSheetExportModalProps> = ({
       const Icon = fmt.icon;
       const isSelected = options.pdfFormat === fmt.id;
       return (
-        <Button
+        <button
           key={fmt.id}
           type="button"
           role="radio"
@@ -314,7 +314,7 @@ export const CostSheetExportModal: React.FC<CostSheetExportModalProps> = ({
               {fmt.description}
             </div>
           </div>
-        </Button>
+        </button>
       );
     })}
   </div>
@@ -443,7 +443,7 @@ export const CostSheetExportModal: React.FC<CostSheetExportModalProps> = ({
                             Disposición de Anexos
                         </div>
                         <div className="grid grid-cols-2 gap-2">
-                            <Button
+                            <button
                                 type="button"
                                 role="radio"
                                 aria-checked={options.annexLayout === 'together'}
@@ -475,8 +475,8 @@ export const CostSheetExportModal: React.FC<CostSheetExportModalProps> = ({
                                         Consecutivos en una o varias hojas
                                     </div>
                                 </div>
-                            </Button>
-                            <Button
+                            </button>
+                            <button
                                 type="button"
                                 role="radio"
                                 aria-checked={options.annexLayout === 'separate'}
@@ -508,7 +508,7 @@ export const CostSheetExportModal: React.FC<CostSheetExportModalProps> = ({
                                         Un anexo por hoja
                                     </div>
                                 </div>
-                            </Button>
+                            </button>
                         </div>
                     </div>
                 </div>

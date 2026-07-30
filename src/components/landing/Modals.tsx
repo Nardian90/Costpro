@@ -12,7 +12,6 @@ import {
 import { toast } from 'sonner';
 import DataDecryption from '@/components/ui/DataDecryption';
 import LoginForm from '@/components/auth/LoginForm';
-import { Button } from "@/components/ui/button";
 import { shortcutsList, demoSlides } from './data';
 
 /* ── Keyboard Shortcuts Modal ── */
@@ -85,7 +84,7 @@ export function ShortcutsModal({
           )}
         </div>
         <DialogFooter>
-          <Button onClick={() => { setShowShortcutsModal(false); setShortcutsSearch(''); }} className="px-4 py-2 rounded-lg bg-[#22c55e] text-white text-xs font-bold hover:bg-[#16a34a] transition-colors">Entendido</Button>
+          <button onClick={() => { setShowShortcutsModal(false); setShortcutsSearch(''); }} className="px-4 py-2 rounded-lg bg-[#22c55e] text-white text-xs font-bold hover:bg-[#16a34a] transition-colors">Entendido</button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -156,17 +155,17 @@ export function DemoModal({
             </div>
           </motion.div>
           {/* Close button overlay */}
-          <Button
+          <button
             onClick={() => setShowDemoModal(false)}
             className="absolute top-3 right-3 z-20 w-8 h-8 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center hover:bg-black/60 transition-colors"
             aria-label="Cerrar demo"
           >
             <X className="w-4 h-4 text-white/70" />
-          </Button>
+          </button>
           {/* Slide navigation dots with animated progress */}
           <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2.5">
             {demoSlides.map((slide, i) => (
-              <Button
+              <button
                 key={i}
                 onClick={() => setDemoSlideIndex(i)}
                 aria-label={`Slide ${i + 1}`}
@@ -183,7 +182,7 @@ export function DemoModal({
                     transition={{ type: 'spring', stiffness: 400, damping: 30 }}
                   />
                 )}
-              </Button>
+              </button>
             ))}
           </div>
         </div>
@@ -191,12 +190,12 @@ export function DemoModal({
           <p className="text-[11px] text-white/40">
             Demo interactiva — {demoSlideIndex + 1} de {demoSlides.length}
           </p>
-          <Button
+          <button
             onClick={() => setShowDemoModal(false)}
             className="px-4 py-1.5 rounded-lg bg-[#22c55e] text-white text-xs font-bold hover:bg-[#16a34a] transition-colors"
           >
             Comenzar gratis
-          </Button>
+          </button>
         </div>
       </DialogContent>
     </Dialog>
@@ -234,7 +233,7 @@ export function ContactModal({
           <Send className="w-3.5 h-3.5 text-[#22c55e] shrink-0" />
           <span className="text-xs text-muted-foreground">O escríbenos a</span>
           <span className="text-xs font-semibold text-foreground">adrianpompasantana@gmail.com</span>
-          <Button
+          <button
             onClick={() => {
               navigator.clipboard.writeText('adrianpompasantana@gmail.com');
               toast.success('Copiado!', { description: 'adrianpompasantana@gmail.com copiado al portapapeles' });
@@ -244,7 +243,7 @@ export function ContactModal({
           >
             <Copy className="w-3 h-3" />
             Copiar correo
-          </Button>
+          </button>
         </div>
         <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/50 border border-border">
           <Phone className="w-3.5 h-3.5 text-[#22c55e] shrink-0" />
@@ -274,8 +273,8 @@ export function ContactModal({
           </div>
         </div>
         <DialogFooter>
-          <Button onClick={() => setShowContactModal(false)} className="px-4 py-2 rounded-lg bg-muted border border-border text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors">Cancelar</Button>
-          <Button onClick={handleContactSubmit} className="px-4 py-2 rounded-lg bg-[#22c55e] text-white text-xs font-bold hover:bg-[#16a34a] shadow-lg shadow-[#22c55e]/20 transition-all">Enviar solicitud</Button>
+          <button onClick={() => setShowContactModal(false)} className="px-4 py-2 rounded-lg bg-muted border border-border text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors">Cancelar</button>
+          <button onClick={handleContactSubmit} className="px-4 py-2 rounded-lg bg-[#22c55e] text-white text-xs font-bold hover:bg-[#16a34a] shadow-lg shadow-[#22c55e]/20 transition-all">Enviar solicitud</button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -326,7 +325,7 @@ export function WhatsNewModal({
           ))}
         </div>
         <DialogFooter>
-          <Button onClick={() => setShowWhatsNew(false)} className="px-4 py-2 rounded-lg bg-[#22c55e] text-white text-xs font-bold hover:bg-[#16a34a] transition-colors">Entendido</Button>
+          <button onClick={() => setShowWhatsNew(false)} className="px-4 py-2 rounded-lg bg-[#22c55e] text-white text-xs font-bold hover:bg-[#16a34a] transition-colors">Entendido</button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

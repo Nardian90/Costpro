@@ -183,12 +183,12 @@ function DropZoneItem({
           ))}
         </select>
       )}
-      <Button
+      <button
         onClick={(e) => { e.stopPropagation(); onRemove(index); }}
         className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
       >
         <X className="w-3 h-3" />
-      </Button>
+      </button>
     </div>
   );
 }
@@ -844,15 +844,15 @@ export function DynamicAnalyticsCenter({
       {/* Export menu */}
       {showExportMenu && (
         <div className="absolute right-4 top-14 z-50 rounded-xl border border-border bg-card shadow-2xl p-1.5 space-y-0.5">
-          <Button onClick={exportExcel} className="w-full flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-muted text-xs font-medium">
+          <button onClick={exportExcel} className="w-full flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-muted text-xs font-medium">
             <FileSpreadsheet className="w-3.5 h-3.5 text-green-600" /> Excel
-          </Button>
-          <Button onClick={exportCSV} className="w-full flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-muted text-xs font-medium">
+          </button>
+          <button onClick={exportCSV} className="w-full flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-muted text-xs font-medium">
             <FileText className="w-3.5 h-3.5 text-blue-600" /> CSV
-          </Button>
-          <Button onClick={handlePrint} className="w-full flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-muted text-xs font-medium">
+          </button>
+          <button onClick={handlePrint} className="w-full flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-muted text-xs font-medium">
             <Printer className="w-3.5 h-3.3 text-muted-foreground" /> Imprimir
-          </Button>
+          </button>
         </div>
       )}
 
@@ -880,9 +880,9 @@ export function DynamicAnalyticsCenter({
                 <p className="text-xs font-medium truncate">{v.name}</p>
                 <p className="text-[9px] text-muted-foreground">{v.module}</p>
               </div>
-              <Button onClick={(e) => { e.stopPropagation(); handleDeleteView(v.id); }} className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive">
+              <button onClick={(e) => { e.stopPropagation(); handleDeleteView(v.id); }} className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive">
                 <Trash2 className="w-3 h-3" />
-              </Button>
+              </button>
             </div>
           ))}
         </div>
@@ -962,13 +962,13 @@ export function DynamicAnalyticsCenter({
                     className="text-left px-3 py-2 font-black uppercase tracking-widest text-[10px] text-muted-foreground min-w-[200px] relative group/th sticky left-0 z-[2] bg-card border-r border-border/30"
                     style={{ width: tableColumnWidths['__rows__'] ? `${tableColumnWidths['__rows__']}px` : undefined }}
                   >
-                    <Button onClick={() => {
+                    <button onClick={() => {
                       if (allExpanded) setExpandedGroups(new Set());
                       else setExpandedGroups(new Set(pivotResult.rowGroups.map(g => g.key)));
                     }} className="inline-flex items-center gap-1 hover:text-foreground">
                       {allExpanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
                       {config.rows.map(r => r.label).join(' / ') || 'Grupo'}
-                    </Button>
+                    </button>
                     {/* Resize handle for rows column */}
                     <div
                       onMouseDown={startColumnResize('__rows__')}
@@ -1025,7 +1025,7 @@ export function DynamicAnalyticsCenter({
                             className="absolute left-0 top-0 bottom-0 w-2 cursor-grab hover:bg-primary/20 opacity-0 group-hover/th:opacity-100 transition-opacity active:cursor-grabbing"
                             title="Arrastra para reordenar"
                           />
-                          <Button
+                          <button
                             onClick={() => !isPivotCol && handleSort(colKey)}
                             className="inline-flex items-center gap-1 hover:text-foreground transition-colors"
                             title={!isPivotCol ? "Click para ordenar" : ""}
@@ -1034,7 +1034,7 @@ export function DynamicAnalyticsCenter({
                             {agg && <span className="text-[8px] block text-muted-foreground/60">{AGGREGATION_LABELS[agg]}</span>}
                             {!isPivotCol && sortState[colKey] === 'asc' && <ArrowUp className="w-3 h-3 text-primary" />}
                             {!isPivotCol && sortState[colKey] === 'desc' && <ArrowDown className="w-3 h-3 text-primary" />}
-                          </Button>
+                          </button>
                           {/* Resize handle */}
                           <div
                             onMouseDown={startColumnResize(colKey)}
@@ -1061,10 +1061,10 @@ export function DynamicAnalyticsCenter({
                     <React.Fragment key={group.key}>
                       <tr className="border-b border-border/50 hover:bg-muted/30">
                         <td className="px-3 py-2 font-medium sticky left-0 z-[1] bg-card border-r border-border/30">
-                          <Button onClick={() => toggleGroup(group.key)} className="inline-flex items-center gap-1">
+                          <button onClick={() => toggleGroup(group.key)} className="inline-flex items-center gap-1">
                             {isExpanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
                             {group.label}
-                          </Button>
+                          </button>
                           <Badge variant="secondary" className="ml-2 h-4 text-[9px]">{group.items.length}</Badge>
                         </td>
                         {pivotResult.columnKeys.length > 0 ? (
@@ -1262,7 +1262,7 @@ export function DynamicAnalyticsCenter({
                     {config.filters.map(f => {
                       const filterLabel = fields.find(fl => fl.key === f.fieldKey)?.label || f.fieldKey;
                       return (
-                      <Button
+                      <button
                         key={f.fieldKey}
                         onClick={() => setOpenFilterField(openFilterField === f.fieldKey ? null : f.fieldKey)}
                         className={cn(
@@ -1280,7 +1280,7 @@ export function DynamicAnalyticsCenter({
                           )}
                           <Filter className="w-3 h-3" />
                         </span>
-                      </Button>
+                      </button>
                       );
                     })}
                   </div>
@@ -1295,7 +1295,7 @@ export function DynamicAnalyticsCenter({
               </p>
               <div className="flex flex-wrap gap-1">
                 {availableFields.slice(0, 8).map(field => (
-                  <Button
+                  <button
                     key={field.key}
                     onClick={() => {
                       // Auto-asign: strings→rows, numbers→values, dates→rows
@@ -1313,7 +1313,7 @@ export function DynamicAnalyticsCenter({
                     className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-muted/40 hover:bg-primary/10 hover:text-primary border border-border/40 transition-colors"
                   >
                     {field.label}
-                  </Button>
+                  </button>
                 ))}
               </div>
             </div>
@@ -1343,9 +1343,9 @@ export function DynamicAnalyticsCenter({
               </div>
               <div className="flex items-center gap-2">
                 <Badge variant="secondary">{drillDownGroup.items.length} registros</Badge>
-                <Button onClick={() => setDrillDownGroup(null)} className="w-7 h-7 rounded-lg hover:bg-muted flex items-center justify-center">
+                <button onClick={() => setDrillDownGroup(null)} className="w-7 h-7 rounded-lg hover:bg-muted flex items-center justify-center">
                   <X className="w-4 h-4" />
-                </Button>
+                </button>
               </div>
             </div>
             <div className="flex-1 overflow-auto p-2">
@@ -1387,9 +1387,9 @@ export function DynamicAnalyticsCenter({
           <Card className="w-56 max-h-64 overflow-y-auto p-2 shadow-2xl">
             <div className="flex items-center justify-between mb-2 px-1">
               <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Filtrar valores</span>
-              <Button onClick={() => setOpenFilterField(null)} className="w-5 h-5 rounded hover:bg-muted flex items-center justify-center">
+              <button onClick={() => setOpenFilterField(null)} className="w-5 h-5 rounded hover:bg-muted flex items-center justify-center">
                 <X className="w-3 h-3" />
-              </Button>
+              </button>
             </div>
             <div className="space-y-0.5">
               {getUniqueValues(openFilterField).map(val => (

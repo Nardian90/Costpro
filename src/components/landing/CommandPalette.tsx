@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search,
@@ -281,7 +280,7 @@ export default function CommandPalette({
                         const isSelected = safeSelectedIndex === globalIdx;
                         const Icon = item.icon;
                         return (
-                          <Button
+                          <button
                             key={item.id}
                             id={item.id}
                             role="option"
@@ -305,7 +304,7 @@ export default function CommandPalette({
                             {isSelected && (
                               <ArrowRight className="w-3.5 h-3.5 text-[#22c55e] shrink-0" />
                             )}
-                          </Button>
+                          </button>
                         );
                       })}
                     </div>

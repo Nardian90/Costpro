@@ -4,7 +4,6 @@ import React, { useEffect } from 'react';
 import { Package, AlertTriangle, Percent, DollarSign, ArrowUpDown, Eye, EyeOff, Store } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
 import { Product, ProductVariant, PaymentMethod } from '@/types';
-import { Button } from "@/components/ui/button";
 import type { SalesCatalogRow, SortConfig } from './useSalesCatalog';
 import { PAYMENT_METHODS } from './useSalesCatalog';
 
@@ -205,7 +204,7 @@ export default function SalesCatalogTable({
                     </div>
                     {/* Tienda visibility toggle */}
                     {onToggleVisible && (
-                      <Button
+                      <button
                         type="button"
                         onClick={() => onToggleVisible(product.id, !product.visible_en_tienda)}
                         disabled={togglingVisibleId === product.id}
@@ -225,7 +224,7 @@ export default function SalesCatalogTable({
                         ) : (
                           <EyeOff className="w-3.5 h-3.5" />
                         )}
-                      </Button>
+                      </button>
                     )}
                   </div>
                 </td>
@@ -299,7 +298,7 @@ export default function SalesCatalogTable({
                 {/* Quantity */}
                 <td className="p-3">
                   <div className="flex items-center justify-center gap-1.5">
-                    <Button
+                    <button
                       type="button"
                       onClick={() => handleSetQuantity(product, row.quantity - 1)}
                       className="w-8 h-8 rounded-lg bg-muted/50 hover:bg-primary/10 flex items-center justify-center text-sm font-bold transition-all active:scale-90 border border-border/50 disabled:opacity-30"
@@ -307,7 +306,7 @@ export default function SalesCatalogTable({
                       aria-label={`Reducir cantidad de ${product.name}`}
                     >
                       -
-                    </Button>
+                    </button>
                     <input
                       type="number"
                       min="0"
@@ -318,7 +317,7 @@ export default function SalesCatalogTable({
                       className="w-20 text-center px-1.5 py-1.5 rounded-lg border border-border/50 bg-background text-sm font-black focus:ring-1 focus:ring-primary outline-none disabled:opacity-70 disabled:cursor-not-allowed"
                       aria-label={`Cantidad de ${product.name}`}
                     />
-                    <Button
+                    <button
                       type="button"
                       onClick={() => handleSetQuantity(product, row.quantity + 1)}
                       className="w-8 h-8 rounded-lg bg-muted/50 hover:bg-primary/10 flex items-center justify-center text-sm font-bold transition-all active:scale-90 border border-border/50 disabled:opacity-30"
@@ -326,14 +325,14 @@ export default function SalesCatalogTable({
                       aria-label={`Aumentar cantidad de ${product.name}`}
                     >
                       +
-                    </Button>
+                    </button>
                   </div>
                 </td>
 
                 {/* Discount */}
                 <td className="p-3">
                   <div className="flex items-center gap-1">
-                    <Button
+                    <button
                       type="button"
                       onClick={() => handleSetDiscountType(product)}
                       className="w-7 h-7 rounded-lg bg-muted/50 hover:bg-primary/10 flex items-center justify-center transition-all border border-border/50 disabled:opacity-30"
@@ -346,7 +345,7 @@ export default function SalesCatalogTable({
                       ) : (
                         <DollarSign className="w-3 h-3 text-primary" />
                       )}
-                    </Button>
+                    </button>
                     <input
                       type="number"
                       min="0"

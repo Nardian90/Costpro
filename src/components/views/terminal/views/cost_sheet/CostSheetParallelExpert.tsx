@@ -142,13 +142,13 @@ const ParallelRow: React.FC<ParallelRowProps> = React.memo(({
         >
           <div className="flex items-center gap-1.5 min-w-0">
             {hasChildren ? (
-              <Button type="button"
+              <button type="button"
                 onClick={() => setIsExpanded(!isExpanded)}
                 className="p-1 rounded-full hover:bg-primary/10 shrink-0"
                 aria-label={isExpanded ? `Contraer ${row.label}` : `Expandir ${row.label}`}
               >
                 <ChevronRight className={cn('w-3.5 h-3.5 sm:w-4 sm:h-4 transition-transform', isExpanded && 'rotate-90')} />
-              </Button>
+              </button>
             ) : (
               <CornerDownRight className="w-3.5 h-3.5 sm:w-4 h-4 text-muted-foreground/70 shrink-0 ml-1" />
             )}

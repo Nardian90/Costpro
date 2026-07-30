@@ -653,7 +653,7 @@ export default function ArenaFC() {
               {categories.map(cat => {
                 const count = allOptions.filter(o => cat === 'all' || o.category === cat).length;
                 return (
-                  <Button type="button"
+                  <button type="button"
                     key={cat}
                     onClick={() => setSelectedCategory(cat)}
                     className={cn(
@@ -670,7 +670,7 @@ export default function ArenaFC() {
                     )}>
                       {count}
                     </span>
-                  </Button>
+                  </button>
                 );
               })}
             </div>

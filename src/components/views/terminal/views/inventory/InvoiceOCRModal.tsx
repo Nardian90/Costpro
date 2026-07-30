@@ -10,7 +10,6 @@ import { cn, formatCurrency } from "@/lib/utils";
 import { toast } from "sonner";
 import { POSPortalModal } from "@/components/views/terminal/views/pos/POSPortalModal";
 
-import { Button } from "@/components/ui/button";
 interface ExtractedItem {
   name: string;
   sku: string | null;
@@ -143,22 +142,22 @@ export function InvoiceOCRModal({ open, onClose, onImportItems }: InvoiceOCRModa
               Sube una foto de la factura impresa del proveedor. El sistema extraerá automáticamente los items.
             </p>
             <div className="grid grid-cols-2 gap-3">
-              <Button
+              <button
                 type="button"
                 onClick={() => cameraInputRef.current?.click()}
                 className="flex flex-col items-center gap-2 p-6 rounded-xl border-2 border-dashed border-primary/40 bg-primary/5 hover:bg-primary/10 transition-colors"
               >
                 <Camera className="w-8 h-8 text-primary" />
                 <span className="text-xs font-black uppercase tracking-widest text-primary">Tomar Foto</span>
-              </Button>
-              <Button
+              </button>
+              <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 className="flex flex-col items-center gap-2 p-6 rounded-xl border-2 border-dashed border-border hover:bg-muted transition-colors"
               >
                 <Upload className="w-8 h-8 text-muted-foreground" />
                 <span className="text-xs font-black uppercase tracking-widest text-muted-foreground">Subir Archivo</span>
-              </Button>
+              </button>
             </div>
             <input
               ref={fileInputRef}
@@ -193,26 +192,26 @@ export function InvoiceOCRModal({ open, onClose, onImportItems }: InvoiceOCRModa
                 alt="Factura"
                 className="w-full max-h-64 object-contain rounded-xl border border-border bg-muted/20"
               />
-              <Button
+              <button
                 type="button"
                 onClick={handleReset}
                 className="absolute top-2 right-2 p-2 rounded-lg bg-background/80 backdrop-blur hover:bg-background"
                 aria-label="Quitar imagen"
               >
                 <X className="w-4 h-4" />
-              </Button>
+              </button>
             </div>
 
             {/* Acciones */}
             {!result && !isProcessing && (
-              <Button
+              <button
                 type="button"
                 onClick={handleProcess}
                 className="w-full h-12 rounded-xl bg-primary text-primary-foreground font-black text-xs uppercase tracking-widest hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
               >
                 <FileText className="w-4 h-4" />
                 Extraer Items
-              </Button>
+              </button>
             )}
 
             {isProcessing && (
@@ -282,23 +281,23 @@ export function InvoiceOCRModal({ open, onClose, onImportItems }: InvoiceOCRModa
 
                 {/* Acciones */}
                 <div className="flex gap-2">
-                  <Button
+                  <button
                     type="button"
                     onClick={handleReset}
                     className="flex-1 h-10 rounded-lg border border-border text-xs font-black uppercase tracking-widest hover:bg-muted flex items-center justify-center gap-1.5"
                   >
                     <RotateCcw className="w-3.5 h-3.5" />
                     Otra foto
-                  </Button>
+                  </button>
                   {result.items.length > 0 && (
-                    <Button
+                    <button
                       type="button"
                       onClick={handleImport}
                       className="flex-1 h-10 rounded-lg bg-primary text-primary-foreground text-xs font-black uppercase tracking-widest hover:opacity-90 flex items-center justify-center gap-1.5"
                     >
                       <Plus className="w-3.5 h-3.5" />
                       Importar {result.items.length} items
-                    </Button>
+                    </button>
                   )}
                 </div>
               </div>

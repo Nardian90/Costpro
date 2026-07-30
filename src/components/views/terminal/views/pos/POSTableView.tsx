@@ -5,7 +5,6 @@ import { cn, resolveProductImage, formatCurrency } from '@/lib/utils';
 import { ShoppingCart } from 'lucide-react';
 import ProductImage from '@/components/ui/ProductImage';
 
-import { Button } from "@/components/ui/button";
 interface POSTableViewProps {
   products: Product[];
   onAddToCart: (product: Product) => void;
@@ -51,14 +50,14 @@ export default function POSTableView({ products, onAddToCart }: POSTableViewProp
               <td className="p-4 text-right font-black text-primary">{formatCurrency(product.price)}</td>
               <td className="p-4">
                 <div className="flex justify-center">
-                  <Button
+                  <button
                     type="button"
                     onClick={() => onAddToCart(product)}
                     className="neu-raised-sm w-11 h-11 flex items-center justify-center text-primary hover:bg-primary hover:text-primary-foreground border border-border/50 transition-all active:scale-90"
                     aria-label={`Agregar ${product.name} al carrito`}
                   >
                     <ShoppingCart className="w-5 h-5" />
-                  </Button>
+                  </button>
                 </div>
               </td>
             </tr>

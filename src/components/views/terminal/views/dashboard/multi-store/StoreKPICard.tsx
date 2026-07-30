@@ -13,7 +13,6 @@ import { cn, formatCurrency } from '@/lib/utils';
 import { useTranslations } from 'next-intl';
 import { StoreKPI } from '@/hooks/api/useMultiStoreDashboard';
 import { Store } from '@/types';
-import { Button } from "@/components/ui/button";
 import { MetricMini } from './MetricMini';
 
 export interface StoreKPICardProps {
@@ -58,7 +57,7 @@ export const StoreKPICard = memo(function StoreKPICard({ kpi, onActivate, onConf
         </div>
         <div className="flex items-center gap-1.5 flex-shrink-0">
           {onOpenDashboard && (
-            <Button
+            <button
               type="button"
               onClick={() => onOpenDashboard(kpi.storeId, kpi.storeName)}
               aria-label={`Dashboard avanzado de ${kpi.storeName}`}
@@ -66,10 +65,10 @@ export const StoreKPICard = memo(function StoreKPICard({ kpi, onActivate, onConf
               className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-primary/10 transition-colors group"
             >
               <BarChart3 className="w-3.5 h-3.5 text-muted-foreground group-hover:text-primary transition-colors" />
-            </Button>
+            </button>
           )}
           {onConfig && (
-            <Button
+            <button
               type="button"
               onClick={() => onConfig(kpi.storeId)}
               aria-label={t('configureStore', { name: kpi.storeName })}
@@ -77,7 +76,7 @@ export const StoreKPICard = memo(function StoreKPICard({ kpi, onActivate, onConf
               className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-primary/10 transition-colors group"
             >
               <Settings className="w-3.5 h-3.5 text-muted-foreground group-hover:text-primary transition-colors" />
-            </Button>
+            </button>
           )}
           {kpi.isActive && (
             <span className="text-sm font-black uppercase tracking-widest px-2 py-0.5 rounded bg-primary/10 text-primary">
@@ -130,7 +129,7 @@ export const StoreKPICard = memo(function StoreKPICard({ kpi, onActivate, onConf
             );
           })()}
           {!kpi.isActive && (
-            <Button type="button"
+            <button type="button"
               onClick={() => onActivate(kpi.storeId)}
               aria-label={t('activateAsWorkStore', { name: kpi.storeName })}
               className={cn(
@@ -139,12 +138,12 @@ export const StoreKPICard = memo(function StoreKPICard({ kpi, onActivate, onConf
               )}
             >
               {t('activate')}
-            </Button>
+            </button>
           )}
         </div>
         {/* Botón premium "Dashboard" — acceso rápido al dashboard KPI avanzado de la tienda. */}
         {onOpenDashboard && (
-          <Button
+          <button
             type="button"
             onClick={() => onOpenDashboard(kpi.storeId, kpi.storeName)}
             className="w-full py-2.5 min-h-[44px] rounded-xl font-black text-sm uppercase tracking-widest transition-all active:scale-[0.98] flex items-center justify-center gap-2 border-2 border-primary/30 bg-gradient-to-r from-primary/10 to-primary/5 text-primary hover:from-primary/20 hover:to-primary/10 hover:border-primary/50 hover:shadow-md hover:shadow-primary/10"
@@ -154,7 +153,7 @@ export const StoreKPICard = memo(function StoreKPICard({ kpi, onActivate, onConf
             <Crown className="w-3.5 h-3.5" />
             <BarChart3 className="w-3.5 h-3.5" />
             Dashboard
-          </Button>
+          </button>
         )}
       </div>
     </div>

@@ -38,7 +38,6 @@ import {
 } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 
-import { Button } from "@/components/ui/button";
 // ── Types ────────────────────────────────────────────────────────────
 
 type Method = 'markup' | 'fixed_increment';
@@ -362,7 +361,7 @@ export const BulkPriceIncrementModal: React.FC<BulkPriceIncrementModalProps> = (
           </h3>
           <div className="grid grid-cols-2 gap-2">
             {(['markup', 'fixed_increment'] as Method[]).map((m) => (
-              <Button
+              <button
                 key={m}
                 type="button"
                 onClick={() => setMethod(m)}
@@ -379,7 +378,7 @@ export const BulkPriceIncrementModal: React.FC<BulkPriceIncrementModalProps> = (
                   <DollarSign className="w-3.5 h-3.5" />
                 )}
                 {methodLabel(m)}
-              </Button>
+              </button>
             ))}
           </div>
         </section>
@@ -474,7 +473,7 @@ export const BulkPriceIncrementModal: React.FC<BulkPriceIncrementModalProps> = (
                   : []),
               ] as readonly { key: Scope; label: string; sub: string }[]
             ).map(({ key, label, sub }) => (
-              <Button
+              <button
                 key={key}
                 type="button"
                 onClick={() => setScope(key)}
@@ -506,7 +505,7 @@ export const BulkPriceIncrementModal: React.FC<BulkPriceIncrementModalProps> = (
                   </div>
                   <div className="text-[10px] text-muted-foreground mt-0.5">{sub}</div>
                 </div>
-              </Button>
+              </button>
             ))}
           </div>
 

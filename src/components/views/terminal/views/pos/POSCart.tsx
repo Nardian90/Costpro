@@ -20,7 +20,6 @@ import { useShallow } from "zustand/react/shallow";
 import { BaseModal } from "@/components/ui/BaseModal";
 import { SecondaryButton } from "@/components/ui/atomic";
 import { CostProLoader } from "@/components/ui/CostProLoader";
-import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { POSCartItem } from "./POSCartItem";
 import { POSCartSuccessView } from "./POSCartSuccessView";
@@ -142,7 +141,7 @@ export const POSCart = ({
             </span>
           </div>
           <div className="flex items-center gap-1.5 shrink-0">
-            <Button
+            <button
               type="button"
               onClick={() => setIsEasyReading(!isEasyReading)}
               className={cn(
@@ -157,15 +156,15 @@ export const POSCart = ({
               <div className="w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center border-2 border-current rounded">
                 A
               </div>
-            </Button>
-            <Button
+            </button>
+            <button
               type="button"
               onClick={onClose}
               className="p-2 sm:p-2.5 min-h-[44px] min-w-[44px] bg-primary-foreground/10 hover:bg-primary-foreground/20 rounded-lg sm:rounded-xl transition-colors active:scale-90 flex items-center justify-center"
               aria-label="Cerrar carrito"
             >
               <X className="w-5 h-5 sm:w-6 sm:h-6" />
-            </Button>
+            </button>
           </div>
         </div>
 
@@ -212,7 +211,7 @@ export const POSCart = ({
                   causando overflow y superposición. Ahora tabs funcionan igual
                   en mobile y desktop: solo una zona visible a la vez. */}
               <div className="flex border-b border-border bg-card shrink-0" role="tablist">
-                <Button
+                <button
                   type="button"
                   role="tab"
                   aria-selected={activeTab === "items"}
@@ -234,8 +233,8 @@ export const POSCart = ({
                       {itemCount}
                     </span>
                   )}
-                </Button>
-                <Button
+                </button>
+                <button
                   type="button"
                   role="tab"
                   aria-selected={activeTab === "checkout"}
@@ -257,7 +256,7 @@ export const POSCart = ({
                       {formatCurrency(expectedTotal)}
                     </span>
                   )}
-                </Button>
+                </button>
               </div>
 
               {/* ── ZONA 1: ITEMS (scroll independiente, solo visible cuando tab=items) ── */}
@@ -320,7 +319,7 @@ export const POSCart = ({
                   Sticky bottom dentro del sidebar, sin border-t-2 que rompía visual. */}
               <div className="shrink-0 border-t border-border bg-card p-3 sm:p-4">
                 <div className="flex gap-2">
-                  <Button
+                  <button
                     type="button"
                     onClick={() => {
                       // Si está en tab items, cambiar a checkout primero;
@@ -344,8 +343,8 @@ export const POSCart = ({
                         {formatCurrency(expectedTotal)}
                       </span>
                     )}
-                  </Button>
-                  <Button
+                  </button>
+                  <button
                     type="button"
                     onClick={() => setShowClearConfirm(true)}
                     className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl sm:rounded-2xl bg-destructive/10 text-destructive border-2 border-destructive/20 hover:bg-destructive/20 transition-all flex items-center justify-center active:scale-95 shrink-0"
@@ -353,7 +352,7 @@ export const POSCart = ({
                     aria-label="Anular carrito completo"
                   >
                     <Trash2 className="w-5 h-5 sm:w-6 sm:h-6" />
-                  </Button>
+                  </button>
                 </div>
               </div>
             </>
@@ -377,7 +376,7 @@ export const POSCart = ({
                 onClick={() => setShowClearConfirm(false)}
                 className="flex-1"
               />
-              <Button
+              <button
                 type="button"
                 onClick={() => {
                   onClearCart();
@@ -388,7 +387,7 @@ export const POSCart = ({
                 className="flex-1 h-11 rounded-xl bg-destructive text-primary-foreground text-xs font-black uppercase tracking-widest hover:bg-destructive/90 transition-colors"
               >
                 Sí, Anular Todo
-              </Button>
+              </button>
             </>
           }
         >

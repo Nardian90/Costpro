@@ -12,7 +12,6 @@ import { compressImage, validateImageFile } from '@/lib/image-compress';
 import { generateEAN13FromSKU } from '@/lib/barcode-utils';
 import { supabase } from '@/lib/supabaseClient';
 
-import { Button } from "@/components/ui/button";
 interface VariantForm {
   name: string;
   sku: string;
@@ -291,14 +290,14 @@ export const CreateProductModal = () => {
                   alt="Vista previa del producto"
                   className="w-full h-40 object-cover"
                 />
-                <Button
+                <button
                   type="button"
                   onClick={removeImage}
                   className="absolute top-2 right-2 w-7 h-7 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center shadow-lg opacity-80 hover:opacity-100 transition-opacity"
                   aria-label="Eliminar imagen"
                 >
                   <X className="w-4 h-4" />
-                </Button>
+                </button>
                 <div className="absolute bottom-2 left-2 flex gap-2">
                   <span className="px-2 py-1 bg-black/60 rounded-lg text-[10px] text-white font-semibold">
                     Original: {((selectedImage as any).size / 1024).toFixed(0)} KB
@@ -312,7 +311,7 @@ export const CreateProductModal = () => {
               </div>
             ) : (
               <div className="flex gap-2">
-                <Button
+                <button
                   type="button"
                   onClick={() => cameraInputRef.current?.click()}
                   className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-dashed border-border hover:border-primary/50 hover:bg-primary/5 transition-all"
@@ -320,8 +319,8 @@ export const CreateProductModal = () => {
                 >
                   <Camera className="w-4 h-4 text-primary" />
                   <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Cámara</span>
-                </Button>
-                <Button
+                </button>
+                <button
                   type="button"
                   onClick={() => galleryInputRef.current?.click()}
                   className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-dashed border-border hover:border-primary/50 hover:bg-primary/5 transition-all"
@@ -329,7 +328,7 @@ export const CreateProductModal = () => {
                 >
                   <ImagePlus className="w-4 h-4 text-primary" />
                   <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Galería</span>
-                </Button>
+                </button>
               </div>
             )}
 
@@ -358,7 +357,7 @@ export const CreateProductModal = () => {
               <label htmlFor="product-sku" className="text-xs font-black uppercase tracking-widest ml-1 flex justify-between">
                 <span>SKU</span>
                 {/* CM-4.4: Botón para autogenerar SKU secuencial */}
-                <Button
+                <button
                   type="button"
                   onClick={async () => {
                     if (!user?.activeStoreId) return;
@@ -380,7 +379,7 @@ export const CreateProductModal = () => {
                   className="text-xs text-primary hover:underline italic"
                 >
                   ↻ Auto-generar
-                </Button>
+                </button>
               </label>
               <input
                 id="product-sku"
@@ -395,7 +394,7 @@ export const CreateProductModal = () => {
             <div className="space-y-1.5">
               <label htmlFor="product-barcode" className="text-xs font-black uppercase tracking-widest ml-1 flex justify-between">
                 <span>Código Barras</span>
-                <Button
+                <button
                   type="button"
                   onClick={() => {
                     // FIX-BARCODE-AUTO (2026-07-06): botón para autogenerar barcode EAN-13
@@ -411,7 +410,7 @@ export const CreateProductModal = () => {
                   className="text-xs text-primary hover:underline italic font-bold"
                 >
                   ↻ Auto-generar
-                </Button>
+                </button>
               </label>
               <input
                 id="product-barcode"
@@ -519,14 +518,14 @@ export const CreateProductModal = () => {
           <div className="space-y-1.5">
             <div className="flex items-center justify-between ml-1">
               <label className="text-xs font-black uppercase tracking-widest">Variantes de Unidad</label>
-              <Button
+              <button
                 type="button"
                 onClick={() => { setShowVariants(!showVariants); if (!showVariants && variants.length === 0) addVariant(); }}
                 className="flex items-center gap-1 text-[10px] font-bold text-primary uppercase tracking-widest hover:underline"
               >
                 <Package className="w-3 h-3" />
                 {showVariants ? 'Ocultar' : 'Agregar'}
-              </Button>
+              </button>
             </div>
 
             {showVariants && (
@@ -569,25 +568,25 @@ export const CreateProductModal = () => {
                       step="0.01"
                       aria-label="Precio de esta variante"
                     />
-                    <Button
+                    <button
                       type="button"
                       onClick={() => removeVariant(index)}
                       className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center shadow-md hover:scale-110 transition-transform"
                       aria-label="Eliminar variante"
                     >
                       <Trash2 className="w-3 h-3" />
-                    </Button>
+                    </button>
                   </div>
                 ))}
 
-                <Button
+                <button
                   type="button"
                   onClick={addVariant}
                   className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg border border-dashed border-primary/30 text-primary/60 hover:bg-primary/5 hover:border-primary/50 transition-all text-xs font-bold uppercase tracking-wider"
                 >
                   <Plus className="w-3 h-3" />
                   Agregar Variante
-                </Button>
+                </button>
               </div>
             )}
           </div>

@@ -23,7 +23,6 @@ import { format } from 'date-fns';
 import { es as esLocale, enUS as enLocale } from 'date-fns/locale';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { Button } from "@/components/ui/button";
 import MultiStoreDashboardView from './MultiStoreDashboardView';
 
 // Lazy load heavy dashboard components to improve TBT and LCP
@@ -113,14 +112,14 @@ function DashboardViewImpl() {
 
             <Popover>
               <PopoverTrigger asChild>
-                <Button type="button" aria-label={t('selectDate')} className="flex items-center gap-2 min-h-[44px] py-2.5 px-4 rounded-xl border border-border/50 bg-card text-xs font-semibold uppercase tracking-wider text-muted-foreground min-w-[140px] justify-center hover:bg-muted/50 hover:text-foreground transition-colors w-full sm:w-auto">
+                <button type="button" aria-label={t('selectDate')} className="flex items-center gap-2 min-h-[44px] py-2.5 px-4 rounded-xl border border-border/50 bg-card text-xs font-semibold uppercase tracking-wider text-muted-foreground min-w-[140px] justify-center hover:bg-muted/50 hover:text-foreground transition-colors w-full sm:w-auto">
                   <CalendarIcon className="w-3.5 h-3.5" />
                   {timeRange === 'day'
                     ? formatDate(selectedDate)
                     : (timeRange === 'month'
                         ? format(selectedDate, 'MMMM yyyy', { locale: dateFnsLocale })
                         : format(selectedDate, 'yyyy'))}
-                </Button>
+                </button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0 border-border/50 bg-card shadow-sm rounded-2xl" align="end">
                 <Calendar
@@ -222,13 +221,13 @@ function DashboardViewImpl() {
 
               {/* Action Buttons — removed dead "Reporte" button, kept "Ajustes" */}
               <div className="flex justify-end">
-                <Button type="button"
+                <button type="button"
                   onClick={() => setCurrentView('settings')}
                   className="flex items-center justify-center gap-3 py-3 px-4 rounded-2xl border border-border/50 bg-card shadow-sm hover:bg-muted/50 active:scale-[0.98] transition-all"
                 >
                   <Settings2 className="w-4 h-4 text-muted-foreground" />
                   <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">{t('settings')}</span>
-                </Button>
+                </button>
               </div>
 
               {/* Alerts Section */}
@@ -282,12 +281,12 @@ function DashboardAlertsSection({ products, onViewInventory, onGoToCatalog }: { 
           </div>
         ))}
         {criticalProducts.length > 4 && (
-          <Button type="button"
+          <button type="button"
             onClick={onViewInventory}
             className="w-full py-3 min-h-[44px] text-sm font-semibold uppercase text-primary hover:underline mt-2"
           >
             {t('viewAllAlerts')} ({criticalProducts.length})
-          </Button>
+          </button>
         )}
       </div>
     </section>

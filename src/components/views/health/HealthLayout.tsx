@@ -23,7 +23,6 @@ import { PipelineTab } from './tabs/PipelineTab';
 import { HealthData } from './hooks/useHealthData';
 import { cn } from '@/lib/utils';
 
-import { Button } from "@/components/ui/button";
 interface HealthLayoutProps {
   data: HealthData;
   loading: boolean;
@@ -104,13 +103,13 @@ export const HealthLayout: React.FC<HealthLayoutProps> = ({ data, loading, error
                 )}>{health.integrityScore || 0}%</span>
              </div>
 
-             <Button
+             <button
                onClick={onRefresh}
                className="h-12 sm:h-16 px-6 sm:px-10 rounded-2xl sm:rounded-[32px] bg-primary text-primary-foreground font-black text-[10px] sm:text-[12px] uppercase tracking-widest shadow-2xl hover:scale-[1.05] active:scale-[0.95] transition-all duration-300 flex items-center gap-3 sm:gap-5 group"
              >
                 <RefreshCw className={cn("w-4 h-4 sm:w-5 sm:h-5", loading && "animate-spin")} />
                 <span className="whitespace-nowrap">{loading ? 'SINCRONIZANDO...' : 'REFRESCAR NÚCLEO'}</span>
-             </Button>
+             </button>
           </div>
         </div>
       </header>

@@ -29,7 +29,6 @@ import {
 import { cn, isDarkTheme } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/ui/useMobile';
 
-import { Button } from "@/components/ui/button";
 /**
  * CalculatorView — Vista integrada Pro Ultimate.
  *
@@ -128,7 +127,7 @@ export default function CalculatorView() {
         </div>
         <div className="flex items-center gap-1.5 shrink-0">
           {/* Config — botón al lado de Volver (abre modal) */}
-          <Button
+          <button
             type="button"
             onClick={() => setShowConfig(true)}
             className="px-2.5 sm:px-3 py-1.5 rounded-lg text-[10px] font-black uppercase border border-border/40 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors flex items-center gap-1"
@@ -136,27 +135,27 @@ export default function CalculatorView() {
             aria-label="Configuración"
           >
             <Settings2 className="w-3 h-3" /> <span className="hidden sm:inline">Config</span>
-          </Button>
+          </button>
           {/* Flotante — oculto en móvil */}
           {!isMobile && (
-            <Button
+            <button
               type="button"
               onClick={() => { setCurrentView('occ'); setIsCalculatorOpen(true); }}
               className="px-3 py-1.5 rounded-lg text-[10px] font-black uppercase border border-primary/20 text-primary hover:bg-primary/10 transition-colors flex items-center gap-1"
               title="Abrir como modal flotante"
             >
               <Maximize2 className="w-3 h-3" /> Flotante
-            </Button>
+            </button>
           )}
           {/* Volver */}
-          <Button
+          <button
             type="button"
             onClick={() => window.history.length > 1 ? window.history.back() : setCurrentView('occ')}
             className="px-2.5 sm:px-3 py-1.5 rounded-lg text-[10px] font-black uppercase border border-border/40 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors flex items-center gap-1"
             aria-label="Volver"
           >
             <ArrowLeft className="w-3 h-3" /> <span className="hidden sm:inline">Volver</span>
-          </Button>
+          </button>
         </div>
       </div>
 
@@ -290,14 +289,14 @@ export default function CalculatorView() {
                 <Settings2 className="w-4 h-4 text-primary" />
                 <h3 className="text-xs font-black uppercase tracking-widest">Configuración</h3>
               </div>
-              <Button
+              <button
                 type="button"
                 onClick={() => setShowConfig(false)}
                 className="p-1.5 rounded-full hover:bg-muted"
                 aria-label="Cerrar"
               >
                 <X className="w-4 h-4" />
-              </Button>
+              </button>
             </div>
             <div className="flex-1 overflow-y-auto no-scrollbar">
               <ConfigTabContent isDark={isDark} />

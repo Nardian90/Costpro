@@ -33,7 +33,6 @@ import { FormulaBuilder } from './FormulaBuilder';
 import { RESERVED_FORMULA_NAMES } from '@/lib/cost-engine/formula-utils';
 import { APP_DISPLAY_VERSION } from '@/config/app';
 
-import { Button } from "@/components/ui/button";
 import { useTranslations } from 'next-intl';
 interface FormulaEditorProps {
   initialValue: string;
@@ -164,13 +163,13 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
         )}
       >
         <div className="flex-1 flex items-center gap-1 pl-1.5 min-w-0">
-          <Button
+          <button
             type="button"
             onClick={() => setIsModalOpen(true)}
             className="p-1 hover:bg-primary/20 rounded-lg transition-colors shrink-0"
           >
             <Calculator className={cn("w-3.5 h-3.5", isFormula ? "text-primary" : "text-muted-foreground")} />
-          </Button>
+          </button>
           <input
             ref={inputRef}
             type="text"
@@ -196,9 +195,9 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
           <div className="flex items-center justify-end gap-0.5 pr-0.5 pb-0.5 sm:pb-0 animate-in fade-in slide-in-from-right-2 duration-200 shrink-0">
              <Popover>
                 <PopoverTrigger asChild>
-                  <Button type="button" className="p-1 hover:bg-primary/20 text-primary rounded" title="Ayuda">
+                  <button type="button" className="p-1 hover:bg-primary/20 text-primary rounded" title="Ayuda">
                     <HelpCircle className="w-3 h-3.5" />
-                  </Button>
+                  </button>
                 </PopoverTrigger>
                 <PopoverContent side="top" className="w-64 p-3 z-[250]">
                   <div className="space-y-3">
@@ -232,28 +231,28 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
                 </PopoverContent>
              </Popover>
 
-             <Button type="button"
+             <button type="button"
                onMouseDown={(e) => { e.preventDefault(); modalOpeningRef.current = true; setIsModalOpen(true); }}
                className="p-1 hover:bg-primary/20 text-primary rounded"
                title="Editor Avanzado"
              >
                 <Maximize2 className="w-3 h-3.5" />
-             </Button>
+             </button>
 
-             <Button type="button"
+             <button type="button"
                onMouseDown={(e) => { e.preventDefault(); handleSave(value); }}
                className="p-1 hover:bg-success/20 text-success rounded"
                title="Guardar (Enter)"
              >
                 <Check className="w-3 h-3.5" />
-             </Button>
-             <Button type="button"
+             </button>
+             <button type="button"
                onMouseDown={(e) => { e.preventDefault(); handleCancel(); }}
                className="p-1 hover:bg-destructive/20 text-destructive rounded"
                title="Cancelar (Esc)"
              >
                 <XIcon className="w-3 h-3.5" />
-             </Button>
+             </button>
           </div>
         )}
       </motion.div>
@@ -279,18 +278,18 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
               </div>
             </div>
 
-            <Button type="button"
+            <button type="button"
               onClick={() => setIsModalOpen(false)}
               className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-muted dark:bg-muted/50 flex items-center justify-center hover:bg-muted-foreground/10 dark:hover:bg-accent transition-colors shrink-0 ml-2"
             >
               <X className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground dark:text-muted-foreground" />
-            </Button>
+            </button>
           </div>
 
           {/* Subheader with Mode Switcher and Icons */}
           <div className="px-4 sm:px-6 py-2 flex items-center justify-between border-b border-border dark:border-white/5">
             <div className="flex items-center gap-3 sm:gap-4">
-              <Button type="button"
+              <button type="button"
                 onClick={() => setMode('assisted')}
                 className={cn(
                   "flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-xs font-black uppercase tracking-widest transition-all",
@@ -300,9 +299,9 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
               >
                 <Sparkles className="w-3 h-3" />
                 Asistido
-              </Button>
+              </button>
 
-              <Button type="button"
+              <button type="button"
                 onClick={() => setMode('expert')}
                 className={cn(
                   "p-2 rounded-lg transition-all",
@@ -310,11 +309,11 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
                 )}
               >
                 <Code className="w-4 h-4" />
-              </Button>
+              </button>
 
-              <Button type="button" className="p-2 rounded-lg text-muted-foreground dark:text-muted-foreground hover:text-foreground dark:hover:text-foreground transition-all">
+              <button type="button" className="p-2 rounded-lg text-muted-foreground dark:text-muted-foreground hover:text-foreground dark:hover:text-foreground transition-all">
                 <History className="w-4 h-4" />
-              </Button>
+              </button>
             </div>
           </div>
 
@@ -370,18 +369,18 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
 
           {/* Footer based on Design */}
           <div className="px-4 sm:px-6 py-4 sm:py-6 bg-muted/20 dark:bg-muted/20 flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3 sm:gap-4 border-t border-border dark:border-white/5 shrink-0">
-            <Button type="button"
+            <button type="button"
               onClick={() => setIsModalOpen(false)}
               className="px-4 sm:px-8 h-11 sm:h-12 rounded-2xl text-xs sm:text-xs font-black uppercase tracking-[0.2em] text-muted-foreground dark:text-muted-foreground hover:text-foreground dark:hover:text-foreground transition-all border border-border dark:border-border hover:border-muted-foreground/30 dark:hover:border-border"
             >
               Cancelar
-            </Button>
-            <Button type="button"
+            </button>
+            <button type="button"
               onClick={() => { handleSave(value); setIsModalOpen(false); }}
               className="px-6 sm:px-10 h-11 sm:h-12 rounded-2xl text-xs sm:text-xs font-black uppercase tracking-[0.2em] bg-primary text-primary-foreground dark:text-foreground shadow-lg dark:shadow-lg  transition-all "
             >
               Guardar Cambios
-            </Button>
+            </button>
           </div>
         </DialogContent>
       </Dialog>

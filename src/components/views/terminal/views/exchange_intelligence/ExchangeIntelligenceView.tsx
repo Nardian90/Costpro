@@ -37,7 +37,6 @@ import { useIntervalWhenVisible } from '@/hooks/ui/use-interval-when-visible';
 import { useAuthStore } from '@/store';
 import { BaseModal } from '@/components/ui/BaseModal';
 
-import { Button } from "@/components/ui/button";
 /**
  * IC-2: Inteligencia Cambiaria — AUDIT-2/3/5: Conectado a datos reales de Supabase.
  *
@@ -521,7 +520,7 @@ export function ExchangeIntelligenceView() {
 
         {/* Botón de refresh — los botones de carga están en el tab Configuración */}
         <div className="flex items-center gap-2 flex-wrap">
-          <Button
+          <button
             onClick={fetchRates}
             disabled={loading}
             className="p-2.5 min-h-[44px] min-w-[44px] rounded-xl bg-muted hover:bg-primary/15 text-muted-foreground hover:text-primary transition-colors border border-border"
@@ -529,7 +528,7 @@ export function ExchangeIntelligenceView() {
             title="Recargar datos desde Supabase"
           >
             <RefreshCw className={cn('w-5 h-5', loading && 'animate-spin')} />
-          </Button>
+          </button>
         </div>
       </div>
 
@@ -557,12 +556,12 @@ export function ExchangeIntelligenceView() {
           <div className="flex flex-col items-center justify-center py-24 gap-4">
             <AlertTriangle className="w-8 h-8 text-destructive" />
             <p className="text-sm text-muted-foreground">{error}</p>
-            <Button
+            <button
               onClick={fetchRates}
               className="px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-black uppercase tracking-widest"
             >
               Reintentar
-            </Button>
+            </button>
           </div>
         ) : (
           <>
@@ -630,21 +629,21 @@ export function ExchangeIntelligenceView() {
         maxWidth="sm:max-w-2xl"
         footer={
           <>
-            <Button
+            <button
               onClick={handleCloseExcelModal}
               disabled={uploading}
               className="px-4 py-2 min-h-[44px] rounded-xl bg-muted text-foreground hover:bg-muted/70 disabled:opacity-50 font-bold text-sm"
             >
               Cerrar
-            </Button>
-            <Button
+            </button>
+            <button
               onClick={handleUploadExcel}
               disabled={uploading || !selectedFile}
               className="flex items-center gap-2 px-4 py-2 min-h-[44px] rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed font-bold text-sm"
             >
               <Upload className={cn('w-4 h-4', uploading && 'animate-pulse')} />
               {uploading ? 'Procesando...' : 'Subir y procesar'}
-            </Button>
+            </button>
           </>
         }
       >
@@ -656,14 +655,14 @@ export function ExchangeIntelligenceView() {
               Excel con todas las fechas hábiles desde enero 2021 hasta hoy (lunes-viernes).
               Las columnas bcc e informal están vacías para que las llenes.
             </p>
-            <Button
+            <button
               onClick={handleDownloadTemplate}
               disabled={uploading}
               className="flex items-center gap-2 px-3 py-2 min-h-[44px] rounded-xl bg-primary/10 text-primary hover:bg-primary/20 disabled:opacity-50 font-bold text-sm border border-primary/30"
             >
               <Download className="w-4 h-4" />
               Descargar plantilla (.xlsx)
-            </Button>
+            </button>
           </div>
 
           {/* Paso 2: subir Excel lleno */}
@@ -689,7 +688,7 @@ export function ExchangeIntelligenceView() {
                 </p>
               </div>
               {selectedFile && (
-                <Button
+                <button
                   type="button"
                   onClick={(e) => {
                     e.preventDefault();
@@ -700,7 +699,7 @@ export function ExchangeIntelligenceView() {
                   aria-label="Quitar archivo"
                 >
                   <X className="w-4 h-4" />
-                </Button>
+                </button>
               )}
             </label>
             <input
@@ -764,13 +763,13 @@ export function ExchangeIntelligenceView() {
               <h3 className="text-base font-black uppercase tracking-widest text-foreground">
                 Cargar histórico
               </h3>
-              <Button
+              <button
                 onClick={() => !scrapingHist && setShowHistoricalModal(false)}
                 className="w-8 h-8 rounded-lg bg-muted/50 hover:bg-muted flex items-center justify-center"
                 aria-label="Cerrar"
               >
                 <X className="w-4 h-4" />
-              </Button>
+              </button>
             </div>
 
             <p className="text-xs text-muted-foreground mb-4 leading-relaxed">
@@ -783,7 +782,7 @@ export function ExchangeIntelligenceView() {
 
             <div className="space-y-3 mb-5">
               <label className="text-xs font-black uppercase tracking-widest text-foreground block mb-1.5">¿Qué cargar?</label>
-              <Button
+              <button
                 onClick={() => setHistSource('both')}
                 className={cn(
                   'w-full px-4 py-3 rounded-xl text-sm font-bold transition-all min-h-[48px] border-2 text-left',
@@ -799,8 +798,8 @@ export function ExchangeIntelligenceView() {
                 <p className={cn('text-xs mt-0.5', histSource === 'both' ? 'text-white/70' : 'text-muted-foreground')}>
                   USD + EUR + MLC de elToque (~380 días)
                 </p>
-              </Button>
-              <Button
+              </button>
+              <button
                 onClick={() => setHistSource('informal')}
                 className={cn(
                   'w-full px-4 py-3 rounded-xl text-sm font-bold transition-all min-h-[48px] border-2 text-left',
@@ -816,18 +815,18 @@ export function ExchangeIntelligenceView() {
                 <p className={cn('text-xs mt-0.5', histSource === 'informal' ? 'text-white/70' : 'text-muted-foreground')}>
                   Misma opción (el histórico no tiene BCC)
                 </p>
-              </Button>
+              </button>
             </div>
 
             <div className="flex gap-2">
-              <Button
+              <button
                 onClick={() => setShowHistoricalModal(false)}
                 disabled={scrapingHist}
                 className="flex-1 px-4 py-2.5 min-h-[44px] rounded-xl bg-muted text-foreground hover:bg-muted/70 disabled:opacity-50 transition-colors font-bold text-sm"
               >
                 Cancelar
-              </Button>
-              <Button
+              </button>
+              <button
                 onClick={handleScrapeHistorical}
                 disabled={scrapingHist}
                 className="flex-1 px-4 py-2.5 min-h-[44px] rounded-xl bg-purple-600 text-white hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-bold text-sm shadow-md flex items-center justify-center gap-2"
@@ -843,7 +842,7 @@ export function ExchangeIntelligenceView() {
                     Cargar histórico
                   </>
                 )}
-              </Button>
+              </button>
             </div>
           </div>
         </div>
@@ -1067,13 +1066,13 @@ function InfoTooltip({ title, children }: { title: string; children: React.React
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button
+        <button
           type="button"
           aria-label={`Más información sobre ${title}`}
           className="inline-flex items-center justify-center w-6 h-6 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
         >
           <Info className="w-4 h-4" />
-        </Button>
+        </button>
       </PopoverTrigger>
       <PopoverContent
         side="bottom"
@@ -1232,7 +1231,7 @@ function DashboardTab({
           {/* Selector de segmento */}
           <div className="flex flex-wrap gap-2">
             {(Object.entries(segmentLabels) as [string, string][]).map(([seg, label]) => (
-              <Button
+              <button
                 key={seg}
                 onClick={() => setBccSegment(seg)}
                 className={cn(
@@ -1244,7 +1243,7 @@ function DashboardTab({
                 aria-pressed={bccSegment === seg}
               >
                 {label}
-              </Button>
+              </button>
             ))}
           </div>
           {/* Botón Actualizar BD — solo admin */}
@@ -1254,14 +1253,14 @@ function DashboardTab({
                 <p className="text-xs font-black text-foreground">Actualizar BD (7 días)</p>
                 <p className="text-[10px] text-muted-foreground mt-0.5">BCC + solucionescuba.com</p>
               </div>
-              <Button
+              <button
                 onClick={() => onManualCapture(7)}
                 disabled={capturing}
                 className="flex items-center gap-1.5 px-3 py-2 min-h-[44px] rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors font-bold text-xs shrink-0"
               >
                 <Database className={cn('w-3.5 h-3.5', capturing && 'animate-pulse')} />
                 <span>{capturing ? '...' : 'Ejecutar'}</span>
-              </Button>
+              </button>
             </div>
           )}
         </div>
@@ -1719,7 +1718,7 @@ function ImpactTab({ officialUsd, informalUsd, historyData }: any) {
           </div>
           {/* ─── Toggle elToque / BCC ─── */}
           <div className="flex items-center gap-1 p-1 rounded-xl bg-muted/50 border border-border">
-            <Button
+            <button
               onClick={() => setRateSource('informal')}
               className={cn(
                 'px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all min-h-[32px]',
@@ -1729,8 +1728,8 @@ function ImpactTab({ officialUsd, informalUsd, historyData }: any) {
               )}
             >
               Informal
-            </Button>
-            <Button
+            </button>
+            <button
               onClick={() => setRateSource('oficial')}
               className={cn(
                 'px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all min-h-[32px]',
@@ -1740,7 +1739,7 @@ function ImpactTab({ officialUsd, informalUsd, historyData }: any) {
               )}
             >
               BCC (oficial)
-            </Button>
+            </button>
           </div>
         </div>
 
@@ -2265,7 +2264,7 @@ function SimulatorTab({ informalUsd, officialUsd, historyData }: any) {
           </div>
           {/* Toggle elToque / BCC */}
           <div className="flex items-center gap-1 p-1 rounded-xl bg-muted/50 border border-border">
-            <Button
+            <button
               onClick={() => setRateSource('informal')}
               className={cn(
                 'px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all min-h-[32px]',
@@ -2275,8 +2274,8 @@ function SimulatorTab({ informalUsd, officialUsd, historyData }: any) {
               )}
             >
               Informal
-            </Button>
-            <Button
+            </button>
+            <button
               onClick={() => setRateSource('oficial')}
               className={cn(
                 'px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all min-h-[32px]',
@@ -2286,7 +2285,7 @@ function SimulatorTab({ informalUsd, officialUsd, historyData }: any) {
               )}
             >
               BCC (oficial)
-            </Button>
+            </button>
           </div>
         </div>
 
@@ -2301,7 +2300,7 @@ function SimulatorTab({ informalUsd, officialUsd, historyData }: any) {
               Tipo de tasa inicial
             </label>
             <div className="flex gap-2">
-              <Button
+              <button
                 onClick={() => setStartMode('manual')}
                 className={cn(
                   'flex-1 px-3 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all min-h-[40px] border',
@@ -2309,8 +2308,8 @@ function SimulatorTab({ informalUsd, officialUsd, historyData }: any) {
                 )}
               >
                 Valor manual
-              </Button>
-              <Button
+              </button>
+              <button
                 onClick={() => setStartMode('date')}
                 className={cn(
                   'flex-1 px-3 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all min-h-[40px] border',
@@ -2318,7 +2317,7 @@ function SimulatorTab({ informalUsd, officialUsd, historyData }: any) {
                 )}
               >
                 Fecha histórica
-              </Button>
+              </button>
             </div>
           </div>
 
@@ -2391,7 +2390,7 @@ function SimulatorTab({ informalUsd, officialUsd, historyData }: any) {
               const isDefault = m.id === defaultModelId;
               const isSelected = m.id === selectedModel;
               return (
-                <Button
+                <button
                   key={m.id}
                   onClick={() => setSelectedModel(m.id)}
                   title={m.description}
@@ -2419,7 +2418,7 @@ function SimulatorTab({ informalUsd, officialUsd, historyData }: any) {
                   <p className={cn('text-xs font-mono mt-0.5', isSelected ? 'text-white' : 'text-foreground')}>
                     Proy. +7d: {proj?.rate7d != null ? proj.rate7d.toFixed(0) : '—'} CUP
                   </p>
-                </Button>
+                </button>
               );
             })}
           </div>
@@ -2629,14 +2628,14 @@ function ConfiguracionTab({
             <p className="text-sm font-black text-foreground">Actualizar BD (7 días)</p>
             <p className="text-xs text-muted-foreground mt-0.5">Captura los últimos 7 días desde la API del Banco Central de Cuba + solucionescuba.com</p>
           </div>
-          <Button
+          <button
             onClick={() => onManualCapture(7)}
             disabled={capturing || loading}
             className="flex items-center gap-2 px-4 py-2.5 min-h-[44px] rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-bold text-sm shadow-md shrink-0"
           >
             <Database className={cn('w-4 h-4', capturing && 'animate-pulse')} />
             <span>{capturing ? 'Capturando...' : 'Ejecutar'}</span>
-          </Button>
+          </button>
         </div>
 
         {/* Capturar tasa real */}
@@ -2645,14 +2644,14 @@ function ConfiguracionTab({
             <p className="text-sm font-black text-foreground">Capturar tasa real (hoy)</p>
             <p className="text-xs text-muted-foreground mt-0.5">Scrapea la tasa actual de USD/EUR/MLC desde solucionescuba.com</p>
           </div>
-          <Button
+          <button
             onClick={onScrapeRealRate}
             disabled={scraping || loading}
             className="flex items-center gap-2 px-4 py-2.5 min-h-[44px] rounded-xl bg-amber-500 text-white hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-bold text-sm shadow-md shrink-0"
           >
             <Globe className={cn('w-4 h-4', scraping && 'animate-pulse')} />
             <span>{scraping ? 'Capturando...' : 'Ejecutar'}</span>
-          </Button>
+          </button>
         </div>
 
         {/* Cargar histórico (admin) */}
@@ -2662,14 +2661,14 @@ function ConfiguracionTab({
               <p className="text-sm font-black text-foreground">Cargar histórico completo</p>
               <p className="text-xs text-muted-foreground mt-0.5">Scrapea ~380 días de histórico desde bolsa-divisas.php (solo admin)</p>
             </div>
-            <Button
+            <button
               onClick={onScrapeHistorical}
               disabled={scrapingHist || loading}
               className="flex items-center gap-2 px-4 py-2.5 min-h-[44px] rounded-xl bg-purple-600 text-white hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-bold text-sm shadow-md shrink-0"
             >
               <Database className={cn('w-4 h-4', scrapingHist && 'animate-pulse')} />
               <span>{scrapingHist ? 'Cargando...' : 'Ejecutar'}</span>
-            </Button>
+            </button>
           </div>
         )}
 
@@ -2680,14 +2679,14 @@ function ConfiguracionTab({
               <p className="text-sm font-black text-foreground">Cargar Excel (admin)</p>
               <p className="text-xs text-muted-foreground mt-0.5">Descarga plantilla, llénala con tasas y súbelo. Columnas: fecha | bcc | informal</p>
             </div>
-            <Button
+            <button
               onClick={onDownloadTemplate}
               disabled={loading}
               className="flex items-center gap-2 px-4 py-2.5 min-h-[44px] rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-bold text-sm shadow-md shrink-0"
             >
               <Download className="w-4 h-4" />
               <span>Descargar plantilla</span>
-            </Button>
+            </button>
           </div>
         )}
       </div>

@@ -10,7 +10,6 @@ import { resolveProductImage, getProductImageUrl, formatCurrency, formatDate } f
 import { cn } from '@/lib/utils';
 import { supabase } from '@/lib/supabaseClient';
 import { apiFetch } from '@/lib/api-fetch';
-import { Button } from "@/components/ui/button";
 import { toast } from 'sonner';
 
 interface ReceptionDetailsModalProps {
@@ -141,7 +140,7 @@ export function ReceptionDetailsModal({
         <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center w-full">
           <div className="flex items-center gap-4">
             {isConfirmPendingMode && (
-              <Button
+              <button
                 onClick={onConfirmPending}
                 disabled={isConfirmingPending}
                 className="flex items-center gap-2 px-4 py-3 bg-success text-white dark:text-black border border-success rounded-xl text-xs font-black uppercase tracking-widest hover:bg-success/90 transition-all active:scale-95 disabled:opacity-50"
@@ -150,10 +149,10 @@ export function ReceptionDetailsModal({
               >
                 <CheckCircle2 className="w-4 h-4" aria-hidden="true" />
                 {isConfirmingPending ? 'Confirmando...' : 'Confirmar Recepción'}
-              </Button>
+              </button>
             )}
             {!isEditMode && !isConfirmPendingMode && receipt?.status === 'pending' && onVoidRequest && (
-              <Button
+              <button
                 onClick={onVoidRequest}
                 disabled={isVoiding}
                 className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-destructive hover:underline disabled:opacity-50"
@@ -161,7 +160,7 @@ export function ReceptionDetailsModal({
                 aria-label="Anular recepción"
               >
                 {isVoiding ? 'Anulando...' : 'Anular recepción'}
-              </Button>
+              </button>
             )}
             {/* Reception-Flow-Restriction: para confirmadas (active) NO se muestra Anular.
                 El usuario debe usar "Invertir" desde el historial, que crea un documento
@@ -172,7 +171,7 @@ export function ReceptionDetailsModal({
               </p>
             )}
             {!isEditMode && !isConfirmPendingMode && (
-              <Button
+              <button
                 onClick={onExport}
                 className="flex items-center gap-2 px-4 py-3 bg-background border border-border rounded-xl text-xs font-black uppercase tracking-widest hover:bg-primary hover:text-foreground transition-all active:scale-95"
                 type="button"
@@ -180,21 +179,21 @@ export function ReceptionDetailsModal({
               >
                 <Download className="w-4 h-4" aria-hidden="true" />
                 Exportar Excel
-              </Button>
+              </button>
             )}
           </div>
 
           <div className="flex gap-2">
-            <Button
+            <button
               onClick={isConfirmPendingMode ? (onConfirmPendingCancel || onClose) : onClose}
               className="px-8 py-3 bg-background border border-border rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-muted transition-all active:scale-95"
               type="button"
               aria-label={isEditMode ? 'Cancelar edición de recepción' : isConfirmPendingMode ? 'Cancelar confirmación' : 'Cerrar detalle de recepción'}
             >
               {isEditMode ? 'Cancelar' : isConfirmPendingMode ? 'Cancelar' : 'Cerrar'}
-            </Button>
+            </button>
             {isEditMode && (
-              <Button type="button"
+              <button type="button"
                 onClick={() => {
                   const supplier = (document.getElementById('edit-supplier') as HTMLInputElement)?.value;
                   const referenceDoc = (document.getElementById('edit-reference-doc') as HTMLInputElement)?.value;
@@ -228,7 +227,7 @@ export function ReceptionDetailsModal({
                 aria-label="Guardar cambios de la recepción"
               >
                 {isUpdating ? 'Guardando...' : 'Guardar cambios'}
-              </Button>
+              </button>
             )}
           </div>
         </div>
@@ -238,7 +237,7 @@ export function ReceptionDetailsModal({
           {/* F3: Tab system — Productos | Costos Asociados */}
           {!isEditMode && (
             <div className="flex border-b border-border">
-              <Button
+              <button
                 type="button"
                 onClick={() => setActiveTab('items')}
                 className={cn("flex-1 py-3 text-xs font-black uppercase tracking-widest border-b-2 -mb-px transition-colors min-h-[44px]",
@@ -247,8 +246,8 @@ export function ReceptionDetailsModal({
                 role="tab"
               >
                 Productos
-              </Button>
-              <Button
+              </button>
+              <button
                 type="button"
                 onClick={() => setActiveTab('costs')}
                 className={cn("flex-1 py-3 text-xs font-black uppercase tracking-widest border-b-2 -mb-px transition-colors min-h-[44px] flex items-center justify-center gap-2",
@@ -258,9 +257,9 @@ export function ReceptionDetailsModal({
               >
                 <Truck className="w-4 h-4" />
                 Costos Asociados
-              </Button>
+              </button>
               {/* FIX-BATCH: Tab de Tasa de Cambio global */}
-              <Button
+              <button
                 type="button"
                 onClick={() => setActiveTab('tasa')}
                 className={cn("flex-1 py-3 text-xs font-black uppercase tracking-widest border-b-2 -mb-px transition-colors min-h-[44px] flex items-center justify-center gap-2",
@@ -270,9 +269,9 @@ export function ReceptionDetailsModal({
               >
                 <DollarSign className="w-4 h-4" />
                 Tasa de Cambio
-              </Button>
+              </button>
               {/* Tab Pagos proveedor */}
-              <Button
+              <button
                 type="button"
                 onClick={() => setActiveTab('payments')}
                 className={cn(
@@ -286,7 +285,7 @@ export function ReceptionDetailsModal({
               >
                 <Wallet className="w-4 h-4" />
                 Pagos
-              </Button>
+              </button>
             </div>
           )}
 
@@ -347,7 +346,7 @@ export function ReceptionDetailsModal({
                   </p>
                 </div>
               </div>
-              <Button
+              <button
                 type="button"
                 onClick={handleBatchApply}
                 disabled={batchLoading || !items || items.length === 0}
@@ -358,7 +357,7 @@ export function ReceptionDetailsModal({
                 ) : (
                   <><CheckCircle2 className="w-4 h-4" /> Aplicar a {items?.length || 0} productos</>
                 )}
-              </Button>
+              </button>
             </div>
           )}
 
@@ -626,7 +625,7 @@ export function ReceptionDetailsModal({
                             </td>
                             {isItemEditable && (
                               <td className="p-3 text-center">
-                                <Button
+                                <button
                                   type="button"
                                   onClick={() => {
                                     if (confirm(`¿Eliminar ${item.products?.name} de la recepción?`)) {
@@ -643,7 +642,7 @@ export function ReceptionDetailsModal({
                                   title="Eliminar item"
                                 >
                                   <Trash2 className="w-3.5 h-3.5" />
-                                </Button>
+                                </button>
                               </td>
                             )}
                           </tr>
@@ -833,20 +832,20 @@ function CostsAssociatedTab({ receiptId }: { receiptId: string }) {
         </h3>
         <div className="flex gap-2">
           {/* GAP-1: Vincular existente */}
-          <Button
+          <button
             onClick={() => { setShowLinkExisting(!showLinkExisting); if (!showLinkExisting) fetchAvailableServices(); }}
             className="flex items-center gap-2 px-3 py-2 rounded-xl bg-muted text-muted-foreground font-black text-xs uppercase tracking-widest hover:bg-muted/70 transition-colors min-h-[44px]"
           >
             <Link2 className="w-4 h-4" />
             Vincular Existente
-          </Button>
-          <Button
+          </button>
+          <button
             onClick={() => setShowCreate(!showCreate)}
             className="flex items-center gap-2 px-3 py-2 rounded-xl bg-primary/10 text-primary font-black text-xs uppercase tracking-widest hover:bg-primary/20 transition-colors min-h-[44px]"
           >
             <Plus className="w-4 h-4" />
             Nuevo
-          </Button>
+          </button>
         </div>
       </div>
 
@@ -870,13 +869,13 @@ function CostsAssociatedTab({ receiptId }: { receiptId: string }) {
                   </option>
                 ))}
               </select>
-              <Button
+              <button
                 onClick={handleLinkExisting}
                 disabled={!selectedServiceId || linking}
                 className="px-4 py-2 rounded-xl bg-primary text-primary-foreground font-black text-xs uppercase tracking-widest hover:bg-primary/90 transition-colors disabled:opacity-40 min-h-[44px]"
               >
                 {linking ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Link2 className="w-4 h-4" />}
-              </Button>
+              </button>
             </div>
           )}
         </div>
@@ -928,22 +927,22 @@ function CostsAssociatedTab({ receiptId }: { receiptId: string }) {
                     <td className="px-3 py-2 text-center">
                       <div className="flex items-center justify-center gap-1">
                         {/* GAP-2: Ver Distribución */}
-                        <Button
+                        <button
                           onClick={() => handleViewDistribution(svc.id)}
                           className={cn("p-2 rounded-lg transition-colors min-h-[44px] min-w-[44px]", showDistribution === svc.id ? "bg-primary/20 text-primary" : "hover:bg-primary/10 text-primary")}
                           aria-label="Ver distribución"
                           title="Ver distribución por línea"
                         >
                           <Eye className="w-4 h-4" />
-                        </Button>
-                        <Button
+                        </button>
+                        <button
                           onClick={() => handleRecalculate(svc.id)}
                           className="p-2 rounded-lg hover:bg-primary/10 text-primary transition-colors min-h-[44px] min-w-[44px]"
                           aria-label="Recalcular"
                           title="Recalcular distribución"
                         >
                           <RefreshCw className="w-4 h-4" />
-                        </Button>
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -967,9 +966,9 @@ function CostsAssociatedTab({ receiptId }: { receiptId: string }) {
         <div className="p-4 rounded-xl bg-muted/30 border border-border space-y-3">
           <div className="flex items-center justify-between">
             <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Distribución por Línea</p>
-            <Button onClick={() => setShowDistribution(null)} className="p-1 rounded-lg hover:bg-muted text-muted-foreground">
+            <button onClick={() => setShowDistribution(null)} className="p-1 rounded-lg hover:bg-muted text-muted-foreground">
               <X className="w-3.5 h-3.5" />
-            </Button>
+            </button>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
@@ -1018,12 +1017,12 @@ function QuickCreateRow({ type, onCreate }: { type: string; onCreate: (type: str
         placeholder="0.00"
         className="w-20 px-2 py-1.5 rounded-lg border border-border bg-background text-xs font-bold text-right min-h-[44px]"
       />
-      <Button
+      <button
         onClick={() => onCreate(type, amount)}
         className="px-2 py-1.5 rounded-lg bg-primary/10 text-primary text-xs font-black uppercase hover:bg-primary/20 transition-colors min-h-[44px] min-w-[44px]"
       >
         <Plus className="w-3.5 h-3.5" />
-      </Button>
+      </button>
     </div>
   );
 }
@@ -1124,13 +1123,13 @@ function PaymentsTab({ receiptId, totalCost }: { receiptId: string; totalCost: n
         <span className={cn("px-3 py-1 rounded-full text-[10px] font-black uppercase border", statusBadge.color)}>
           {statusBadge.label}
         </span>
-        <Button
+        <button
           type="button"
           onClick={() => setShowForm(!showForm)}
           className="px-3 py-2 min-h-[40px] rounded-lg bg-primary text-primary-foreground text-[10px] font-black uppercase hover:opacity-90 flex items-center gap-1"
         >
           <Plus className="w-3 h-3" /> Registrar Pago
-        </Button>
+        </button>
       </div>
 
       {/* Formulario de pago */}
@@ -1172,21 +1171,21 @@ function PaymentsTab({ receiptId, totalCost }: { receiptId: string; totalCost: n
             />
           </div>
           <div className="flex gap-2">
-            <Button
+            <button
               type="button"
               onClick={() => setShowForm(false)}
               className="flex-1 h-12 min-h-[44px] rounded-lg border border-border/40 text-[10px] font-black uppercase hover:bg-muted"
             >
               Cancelar
-            </Button>
-            <Button
+            </button>
+            <button
               type="button"
               onClick={handleSubmit}
               disabled={submitting}
               className="flex-1 h-12 min-h-[44px] rounded-lg bg-primary text-primary-foreground text-[10px] font-black uppercase hover:opacity-90 disabled:opacity-50"
             >
               {submitting ? 'Guardando...' : 'Confirmar Pago'}
-            </Button>
+            </button>
           </div>
         </div>
       )}
@@ -1226,7 +1225,7 @@ function PaymentsTab({ receiptId, totalCost }: { receiptId: string; totalCost: n
                 </div>
               </div>
               {/* FIX-DELETE-PAYMENT: botón para anular pago */}
-              <Button
+              <button
                 type="button"
                 onClick={async () => {
                   if (!confirm('¿Anular este pago? El saldo se recalculará automáticamente.')) return;
@@ -1245,7 +1244,7 @@ function PaymentsTab({ receiptId, totalCost }: { receiptId: string; totalCost: n
                 aria-label="Anular pago"
               >
                 <Trash2 className="w-3.5 h-3.5" />
-              </Button>
+              </button>
             </div>
           ))
         )}
