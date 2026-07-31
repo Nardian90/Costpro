@@ -6,6 +6,8 @@ import { cn, formatCurrency } from '@/lib/utils';
 import { Product, ProductVariant, PaymentMethod } from '@/types';
 import type { SalesCatalogRow } from './useSalesCatalog';
 import { PAYMENT_METHODS } from './useSalesCatalog';
+import { useDiscountAuthorization, DISCOUNT_SUPERVISOR_THRESHOLD } from './useDiscountAuthorization';
+import { SupervisorAuthModal } from './SupervisorAuthModal';
 
 // ── Payment Badge ─────────────────────────────────────────────
 
@@ -70,6 +72,51 @@ export default function SalesCatalogCard({
     updateRow,
   } = handlers;
   const ro = isReadOnly;
+
+  // V2.12.30: autorización de supervisor para descuentos por item que excedan el umbral.
+  // El % efectivo se calcula sobre el subtotal del item (precio × cantidad).
+  const {
+    showSupervisorAuth,
+    pendingDiscount,
+    pendingEffectivePercent,
+    checkDiscount,
+    cancelAuthorization,
+    confirmAuthorization,
+  } = useDiscountAuthorization();
+
+  // Ref para guardar el descuento pendiente (producto + valor) mientras
+  // esperamos autorización del supervisor.
+  const pendingDiscountRef = React.useRef<{ product: Product; value: number } | null>(null);
+
+  // Wrapper que verifica autorización antes de aplicar el descuento al item.
+  // referenceTotal = subtotal del item (antes del descuento).
+  const handleSetDiscountValueWithAuth = (p: Product, value: number) => {
+    const itemSubtotal = calcSubtotal(row) || subtotal;
+    const requiresAuth = checkDiscount({
+      type: row.discountType,
+      value,
+      referenceTotal: itemSubtotal,
+    });
+    if (requiresAuth) {
+      // Guardamos el valor pendiente para aplicarlo tras autorización.
+      pendingDiscountRef.current = { product: p, value };
+      return;
+    }
+    handleSetDiscountValue(p, value);
+  };
+
+  const handleSupervisorAuthorize = () => {
+    const authorized = confirmAuthorization();
+    if (authorized && pendingDiscountRef.current) {
+      handleSetDiscountValue(pendingDiscountRef.current.product, pendingDiscountRef.current.value);
+      pendingDiscountRef.current = null;
+    }
+  };
+
+  const handleSupervisorCancel = () => {
+    pendingDiscountRef.current = null;
+    cancelAuthorization();
+  };
 
   return (
     <div
@@ -236,7 +283,7 @@ export default function SalesCatalogCard({
             min="0"
             step="0.01"
             value={row.discountValue || ''}
-            onChange={(e) => handleSetDiscountValue(product, Number(e.target.value))}
+            onChange={(e) => handleSetDiscountValueWithAuth(product, Number(e.target.value))}
             className="flex-1 min-w-0 px-2 py-2 min-h-[44px] rounded-xl border border-border/50 bg-background text-xs font-bold focus:ring-1 focus:ring-primary outline-none disabled:opacity-70 disabled:cursor-not-allowed"
             disabled={ro}
             aria-label={`Valor de descuento para ${product.name}`}
@@ -306,6 +353,18 @@ export default function SalesCatalogCard({
           {formatCurrency(subtotal)}
         </span>
       </div>
+
+      {/* V2.12.30: Modal de autorización de supervisor para descuentos por item.
+          % efectivo = (value / itemSubtotal) * 100. Si >= 15%, pide PIN. */}
+      <SupervisorAuthModal
+        isOpen={showSupervisorAuth}
+        onClose={handleSupervisorCancel}
+        onAuthorize={handleSupervisorAuthorize}
+        discountPercent={pendingEffectivePercent}
+        discountValue={pendingDiscount?.value || 0}
+        maxAllowed={DISCOUNT_SUPERVISOR_THRESHOLD}
+        discountType={pendingDiscount?.type}
+      />
     </div>
   );
 }

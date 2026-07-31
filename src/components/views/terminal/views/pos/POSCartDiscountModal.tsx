@@ -1,13 +1,13 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import { cn } from "@/lib/utils";
 import type { POSCartDiscountProps } from "./POSCart.types";
 import { SupervisorAuthModal } from "./SupervisorAuthModal";
-
-// V2.12.26: umbral de descuento que requiere autorización de supervisor
-// Descuentos >= 15% requieren PIN de supervisor/manager
-const DISCOUNT_SUPERVISOR_THRESHOLD = 15;
+import {
+  useDiscountAuthorization,
+  DISCOUNT_SUPERVISOR_THRESHOLD,
+} from "./useDiscountAuthorization";
 
 // FIX-BPOS-010: Contextual quick-select values per discount type
 const PERCENTAGE_PRESETS = [0, 5, 10, 15, 20];
@@ -16,22 +16,39 @@ const FIXED_PRESETS = [0, 5, 10, 20, 50];
 export const POSCartDiscountModal = ({
   discount,
   setDiscount,
+  getTotal,
 }: POSCartDiscountProps) => {
   const isPercentage = discount?.type === "percentage";
   const presets = isPercentage ? PERCENTAGE_PRESETS : FIXED_PRESETS;
 
-  // V2.12.26: estado para modal de autorización de supervisor
-  const [showSupervisorAuth, setShowSupervisorAuth] = useState(false);
-  const [pendingDiscount, setPendingDiscount] = useState<typeof discount>(null);
+  // V2.12.30: hook reutilizable para autorización de supervisor.
+  // Cubre AMBOS tipos de descuento (percentage + fixed) calculando el
+  // % efectivo sobre el total del carrito para descuentos fijos.
+  const {
+    showSupervisorAuth,
+    pendingDiscount,
+    pendingEffectivePercent,
+    checkDiscount,
+    cancelAuthorization,
+    confirmAuthorization,
+  } = useDiscountAuthorization();
 
-  // V2.12.26: wrapper que verifica si el descuento requiere autorización
+  // V2.12.30: wrapper que verifica si el descuento requiere autorización.
+  // Antes solo cubría percentage >= threshold. Ahora también cubre fixed
+  // calculando el % efectivo sobre el total del carrito.
   const handleSetDiscount = (newDiscount: typeof discount) => {
     if (!newDiscount) { setDiscount(null); return; }
 
-    // Si es porcentaje y >= threshold, requerir supervisor
-    if (newDiscount.type === "percentage" && newDiscount.value >= DISCOUNT_SUPERVISOR_THRESHOLD) {
-      setPendingDiscount(newDiscount);
-      setShowSupervisorAuth(true);
+    const referenceTotal = getTotal ? getTotal() : 0;
+    const requiresAuth = checkDiscount({
+      type: newDiscount.type,
+      value: newDiscount.value,
+      referenceTotal,
+    });
+
+    if (requiresAuth) {
+      // El modal de supervisor se abrirá (estado interno del hook).
+      // El descuento se aplica solo si el supervisor autoriza.
       return;
     }
 
@@ -40,9 +57,14 @@ export const POSCartDiscountModal = ({
   };
 
   const handleSupervisorAuthorize = () => {
-    if (pendingDiscount) {
-      setDiscount(pendingDiscount);
-      setPendingDiscount(null);
+    const authorized = confirmAuthorization();
+    if (authorized && pendingDiscount) {
+      // Reconstruir el descuento original con el tipo/valor/moneda pendiente
+      setDiscount({
+        type: authorized.type as "percentage" | "fixed",
+        value: authorized.value,
+        currency: discount?.currency || 'CUP',
+      });
     }
   };
 
@@ -167,14 +189,17 @@ export const POSCartDiscountModal = ({
         )}
       </div>
 
-      {/* V2.12.26: Modal de autorización de supervisor para descuentos >= 15% */}
+      {/* V2.12.30: Modal de autorización de supervisor.
+          Ahora cubre AMBOS tipos de descuento (percentage + fixed).
+          El % mostrado es el efectivo (para fixed se calcula sobre getTotal). */}
       <SupervisorAuthModal
         isOpen={showSupervisorAuth}
-        onClose={() => { setShowSupervisorAuth(false); setPendingDiscount(null); }}
+        onClose={cancelAuthorization}
         onAuthorize={handleSupervisorAuthorize}
-        discountPercent={pendingDiscount?.type === 'percentage' ? pendingDiscount.value : 0}
+        discountPercent={pendingEffectivePercent}
         discountValue={pendingDiscount?.value || 0}
         maxAllowed={DISCOUNT_SUPERVISOR_THRESHOLD}
+        discountType={pendingDiscount?.type}
       />
     </div>
   );

@@ -143,6 +143,12 @@ export interface POSCartItemProps {
 export interface POSCartDiscountProps {
   discount: CartDiscount;
   setDiscount: (discount: CartDiscount) => void;
+  /**
+   * V2.12.30: Total del carrito para calcular el % efectivo de descuentos fijos.
+   * Si no se pasa, los descuentos fijos siempre requerirán autorización
+   * (comportamiento conservador — Infinite % efectivo).
+   */
+  getTotal?: () => number;
 }
 
 export interface POSCartSuccessViewProps {

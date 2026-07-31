@@ -25,9 +25,15 @@ interface SupervisorAuthModalProps {
   isOpen: boolean;
   onClose: () => void;
   onAuthorize: () => void;
+  /** % del descuento (para percentage) o % efectivo calculado (para fixed).
+   *  V2.12.30: antes solo se usaba para mostrar, ahora refleja el % efectivo
+   *  real cuando el descuento es fijo (ej: $50 sobre $60 = 83.3%). */
   discountPercent: number;
   discountValue: number;
   maxAllowed: number;
+  /** Tipo de descuento para mostrar el label correcto en el modal.
+   *  V2.12.30: 'fixed' muestra "Descuento fijo de $X (Y% efectivo)" */
+  discountType?: 'percentage' | 'fixed';
 }
 
 export function SupervisorAuthModal({
@@ -37,6 +43,7 @@ export function SupervisorAuthModal({
   discountPercent,
   discountValue,
   maxAllowed,
+  discountType = 'percentage',
 }: SupervisorAuthModalProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -123,12 +130,21 @@ export function SupervisorAuthModal({
             <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
             <div className="space-y-1">
               <p className="text-xs font-bold text-amber-500">
-                Descuento de {discountPercent.toFixed(1)}% excede el máximo permitido ({maxAllowed}%)
+                {discountType === 'fixed' ? (
+                  <>
+                    Descuento fijo de {discountValue.toFixed(2)} ({discountPercent.toFixed(1)}% efectivo)
+                    {' '}excede el máximo permitido ({maxAllowed}%)
+                  </>
+                ) : (
+                  <>
+                    Descuento de {discountPercent.toFixed(1)}% excede el máximo permitido ({maxAllowed}%)
+                  </>
+                )}
               </p>
               <p className="text-[10px] text-muted-foreground">
-                Monto del descuento: {discountValue.toFixed(2)} CUP
-              </p>
-              <p className="text-[10px] text-muted-foreground">
+                {discountType === 'fixed' && (
+                  <>Monto del descuento: {discountValue.toFixed(2)} CUP<br /></>
+                )}
                 Se requiere autorización de un supervisor o gerente.
               </p>
             </div>

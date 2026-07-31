@@ -6,6 +6,8 @@ import { cn, formatCurrency } from '@/lib/utils';
 import { Product, ProductVariant, PaymentMethod } from '@/types';
 import type { SalesCatalogRow, SortConfig } from './useSalesCatalog';
 import { PAYMENT_METHODS } from './useSalesCatalog';
+import { useDiscountAuthorization, DISCOUNT_SUPERVISOR_THRESHOLD } from './useDiscountAuthorization';
+import { SupervisorAuthModal } from './SupervisorAuthModal';
 
 // ── Sortable Header ───────────────────────────────────────────
 
@@ -94,6 +96,50 @@ export default function SalesCatalogTable({
     handleSetTransferPaid,
     updateRow,
   } = handlers;
+
+  // V2.12.30: autorización de supervisor para descuentos por item.
+  // Modal único a nivel tabla (no por fila) para evitar múltiples instancias.
+  const {
+    showSupervisorAuth,
+    pendingDiscount,
+    pendingEffectivePercent,
+    checkDiscount,
+    cancelAuthorization,
+    confirmAuthorization,
+  } = useDiscountAuthorization();
+
+  // Ref para guardar el descuento pendiente (producto + valor + tipo) mientras
+  // esperamos autorización del supervisor.
+  const pendingDiscountRef = React.useRef<{ product: Product; value: number } | null>(null);
+
+  // Wrapper que verifica autorización antes de aplicar el descuento al item.
+  // referenceTotal = subtotal del item (precio × cantidad).
+  const handleSetDiscountValueWithAuth = (p: Product, row: SalesCatalogRow, value: number) => {
+    const itemSubtotal = calcSubtotal(row);
+    const requiresAuth = checkDiscount({
+      type: row.discountType,
+      value,
+      referenceTotal: itemSubtotal,
+    });
+    if (requiresAuth) {
+      pendingDiscountRef.current = { product: p, value };
+      return;
+    }
+    handleSetDiscountValue(p, value);
+  };
+
+  const handleSupervisorAuthorize = () => {
+    const authorized = confirmAuthorization();
+    if (authorized && pendingDiscountRef.current) {
+      handleSetDiscountValue(pendingDiscountRef.current.product, pendingDiscountRef.current.value);
+      pendingDiscountRef.current = null;
+    }
+  };
+
+  const handleSupervisorCancel = () => {
+    pendingDiscountRef.current = null;
+    cancelAuthorization();
+  };
 
   // Inject CSS to hide number input spinners (cleaner professional look)
   useEffect(() => {
@@ -351,7 +397,7 @@ export default function SalesCatalogTable({
                       min="0"
                       step="0.01"
                       value={row.discountValue || ''}
-                      onChange={(e) => handleSetDiscountValue(product, Number(e.target.value))}
+                      onChange={(e) => handleSetDiscountValueWithAuth(product, row, Number(e.target.value))}
                       disabled={ro}
                       className="w-14 text-center px-1 py-1 rounded-lg border border-border/50 bg-background text-[11px] font-bold focus:ring-1 focus:ring-primary outline-none disabled:opacity-70 disabled:cursor-not-allowed"
                       aria-label={`Valor de descuento para ${product.name}`}
@@ -436,6 +482,19 @@ export default function SalesCatalogTable({
           })}
         </tbody>
       </table>
+
+      {/* V2.12.30: Modal de autorización de supervisor para descuentos por item.
+          Único modal a nivel tabla (mejor performance que uno por fila).
+          % efectivo = (value / itemSubtotal) * 100. Si >= 15%, pide PIN. */}
+      <SupervisorAuthModal
+        isOpen={showSupervisorAuth}
+        onClose={handleSupervisorCancel}
+        onAuthorize={handleSupervisorAuthorize}
+        discountPercent={pendingEffectivePercent}
+        discountValue={pendingDiscount?.value || 0}
+        maxAllowed={DISCOUNT_SUPERVISOR_THRESHOLD}
+        discountType={pendingDiscount?.type}
+      />
     </div>
   );
 }
