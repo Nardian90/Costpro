@@ -5,9 +5,9 @@ import { Package, AlertTriangle, Percent, DollarSign } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
 import { Product, ProductVariant, PaymentMethod } from '@/types';
 import type { SalesCatalogRow } from './useSalesCatalog';
-import { PAYMENT_METHODS } from './useSalesCatalog';
 import { useDiscountAuthorization, DISCOUNT_SUPERVISOR_THRESHOLD } from './useDiscountAuthorization';
 import { SupervisorAuthModal } from './SupervisorAuthModal';
+import { PaymentMethodSelector } from './PaymentMethodSelector';
 
 // ── Payment Badge ─────────────────────────────────────────────
 
@@ -292,20 +292,17 @@ export default function SalesCatalogCard({
         </div>
       </div>
 
-      {/* Payment method */}
+      {/* Payment method — V2.12.31: usa PaymentMethodSelector variante compact
+          (single source of truth) en vez de select crudo con PAYMENT_METHODS local. */}
       <div>
         <label className="text-xs font-black uppercase text-muted-foreground tracking-widest block mb-1">Forma de Pago</label>
-        <select
+        <PaymentMethodSelector
           value={row.paymentMethod}
-          onChange={(e) => handleSetPaymentMethod(product, e.target.value as PaymentMethod)}
-          className="w-full max-w-full min-w-0 px-3 py-2 min-h-[44px] rounded-xl border border-border/50 bg-background text-xs font-bold focus:ring-1 focus:ring-primary outline-none cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
-          disabled={ro}
-          aria-label={`Forma de pago para ${product.name}`}
-        >
-          {PAYMENT_METHODS.map((pm) => (
-            <option key={pm.value} value={pm.value}>{pm.label}</option>
-          ))}
-        </select>
+          onChange={(m) => handleSetPaymentMethod(product, m)}
+          variant="compact"
+          className="w-full min-h-[44px] text-xs"
+          ariaLabel={`Forma de pago para ${product.name}`}
+        />
       </div>
 
       {/* Mixed payment inputs (only show when mixed + active) */}

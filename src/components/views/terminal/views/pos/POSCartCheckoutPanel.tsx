@@ -14,6 +14,7 @@ import {
 import { cn, formatCurrency } from "@/lib/utils";
 import { useCartStore } from "@/store/cart";
 import { POSPortalModal } from "./POSPortalModal";
+import { PaymentMethodSelector, getPaymentLabel as getPaymentLabelUnified } from "./PaymentMethodSelector";
 import type { PaymentMethod } from "@/types";
 
 /**
@@ -64,24 +65,14 @@ interface POSCartCheckoutPanelProps {
   isMobile: boolean;
 }
 
-const PAYMENT_METHODS: Array<{
-  id: "cash" | "transfer" | "zelle";
-  label: string;
-  short: string;
-  icon: typeof DollarSign;
-}> = [
-  { id: "cash",     label: "Efectivo",      short: "Efectivo", icon: DollarSign },
-  { id: "transfer", label: "Transferencia", short: "Transf.",  icon: Smartphone },
-  { id: "zelle",    label: "Zelle",         short: "Zelle",    icon: CreditCard },
-];
-
-function getPaymentLabel(m: string) {
-  const found = PAYMENT_METHODS.find((p) => p.id === m);
-  if (found) return found.label;
-  if (m === "mixed") return "Mixto";
-  if (m === "other") return "Otro";
-  return m;
-}
+// V2.12.31: PAYMENT_METHODS local y getPaymentLabel eliminados.
+// Ahora usamos PaymentMethodSelector + getPaymentLabel de PaymentMethodSelector.tsx
+// (single source of truth). Esto resuelve la fragmentación de 3 flujos de checkout
+// que cada uno implementaba su propio array de métodos con look&feel diferente.
+//
+// Antes este archivo solo tenía 3 métodos (cash, transfer, zelle) — SIN 'mixed'.
+// Ahora hereda los 4 del PaymentMethodSelector (cash, transfer, zelle, mixed),
+// permitiendo ventas mixtas desde este flujo (antes solo posible en POSExpressMode).
 
 export function POSCartCheckoutPanel({
   items,
@@ -239,6 +230,30 @@ export function POSCartCheckoutPanel({
             </div>
           );
         })()}
+      </div>
+
+      {/* ── MÉTODO DE PAGO (V2.12.31) ──────────────────────────────
+          Antes este panel NO tenía UI para cambiar el método de pago — el cajero
+          solo podía usar el que venía por defecto. Ahora usa PaymentMethodSelector
+          variante 'full' (4 botones grandes con iconos: Efectivo, Transferencia,
+          Zelle, Mixto). 'mixed' antes no estaba disponible en este flujo. */}
+      <div className="px-4 sm:px-6 py-3 border-b border-border/50">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-[10px] sm:text-xs font-black uppercase text-muted-foreground tracking-widest">
+            Método de pago
+          </span>
+          {selectedPayment === 'mixed' && (
+            <span className="text-[10px] font-bold text-amber-500 uppercase">
+              {useCartStore.getState().isPaymentModeByProduct() ? 'Por producto' : 'Global'}
+            </span>
+          )}
+        </div>
+        <PaymentMethodSelector
+          value={selectedPayment}
+          onChange={onSetSelectedPayment}
+          variant="full"
+          ariaLabel="Seleccionar método de pago para la venta"
+        />
       </div>
 
       {/* ── EFECTIVO RECIBIDO + VUELTO ──────────────────────────────
@@ -510,7 +525,7 @@ export function POSCartCheckoutPanel({
             </p>
             <p className="text-xs text-muted-foreground mt-2">
               {itemCount} {itemCount === 1 ? "producto" : "productos"} ·{" "}
-              <strong className="text-foreground">{getPaymentLabel(selectedPayment)}</strong>
+              <strong className="text-foreground">{getPaymentLabelUnified(selectedPayment)}</strong>
             </p>
             {selectedPayment === "cash" && cashReceivedNum > 0 && change >= 0 && (
               <p className="text-xs text-success mt-1 font-bold">

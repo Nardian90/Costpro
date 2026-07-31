@@ -5,9 +5,9 @@ import { Package, AlertTriangle, Percent, DollarSign, ArrowUpDown, Eye, EyeOff, 
 import { cn, formatCurrency } from '@/lib/utils';
 import { Product, ProductVariant, PaymentMethod } from '@/types';
 import type { SalesCatalogRow, SortConfig } from './useSalesCatalog';
-import { PAYMENT_METHODS } from './useSalesCatalog';
 import { useDiscountAuthorization, DISCOUNT_SUPERVISOR_THRESHOLD } from './useDiscountAuthorization';
 import { SupervisorAuthModal } from './SupervisorAuthModal';
+import { PaymentMethodSelector } from './PaymentMethodSelector';
 
 // ── Sortable Header ───────────────────────────────────────────
 
@@ -406,19 +406,17 @@ export default function SalesCatalogTable({
                   </div>
                 </td>
 
-                {/* Payment Method */}
+                {/* Payment Method — V2.12.31: usa PaymentMethodSelector variante compact
+                    (select nativo estilizado, single source of truth) en vez de select crudo.
+                    Hereda los 4 métodos (cash, transfer, zelle, mixed) del selector unificado. */}
                 <td className="p-3 text-center">
-                  <select
+                  <PaymentMethodSelector
                     value={row.paymentMethod}
-                    onChange={(e) => handleSetPaymentMethod(product, e.target.value as PaymentMethod)}
-                    disabled={ro}
-                    className="w-full px-2 py-1.5 rounded-lg border border-border/50 bg-background text-[11px] font-bold focus:ring-1 focus:ring-primary outline-none cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
-                    aria-label={`Forma de pago para ${product.name}`}
-                  >
-                    {PAYMENT_METHODS.map((pm) => (
-                      <option key={pm.value} value={pm.value}>{pm.label}</option>
-                    ))}
-                  </select>
+                    onChange={(m) => handleSetPaymentMethod(product, m)}
+                    variant="compact"
+                    className="w-full min-h-[36px] text-[11px]"
+                    ariaLabel={`Forma de pago para ${product.name}`}
+                  />
                 </td>
 
                 {/* Cash Paid — only when some row is mixed */}
