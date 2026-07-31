@@ -128,6 +128,7 @@ async function patchHandler(request: NextRequest, session: AuthenticatedSession)
       }
 
       // C5: Si es orden de servicio, crear venta en transactions
+      // V2.12.32: pasar p_user_id para anti-spoofing (patrón consistente con otros RPCs)
       if (order.order_type === 'service') {
         const { error: saleError } = await supabase.rpc('close_service_order_as_sale', {
           p_order_id: orderId,
@@ -136,6 +137,7 @@ async function patchHandler(request: NextRequest, session: AuthenticatedSession)
           p_payment_method: final_method || 'cash',
           p_currency: final_currency || 'CUP',
           p_exchange_rate: exchange_rate || 1.0,
+          p_user_id: session_user.id,
         });
         if (saleError) {
           console.error('[production-orders/close] Sale creation error:', saleError);

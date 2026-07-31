@@ -38,6 +38,9 @@ const paymentSchema = z.object({
   payment_type: z.enum(['advance', 'partial', 'settlement']),
   reference: z.string().optional(),
   notes: z.string().optional(),
+  // V2.12.32: payment_date opcional para soportar fechas históricas.
+  // Si se omite, el RPC usa NOW(). Formato ISO 8601 (ej: "2026-07-20T12:00:00Z").
+  payment_date: z.string().datetime().optional(),
 });
 
 async function postHandler(request: NextRequest, session: AuthenticatedSession) {
@@ -55,7 +58,7 @@ async function postHandler(request: NextRequest, session: AuthenticatedSession) 
       );
     }
 
-    const { amount, payment_method, currency, exchange_rate, payment_type, reference, notes } = validated.data;
+    const { amount, payment_method, currency, exchange_rate, payment_type, reference, notes, payment_date } = validated.data;
 
     // Autenticación
     const session_user = session.user;
@@ -129,7 +132,8 @@ async function postHandler(request: NextRequest, session: AuthenticatedSession) 
     }
 
     // Registrar el pago via RPC register_supplier_payment
-    const { data: paymentId, error: payError } = await supabase.rpc('register_supplier_payment', {
+    // V2.12.32: pasar p_payment_date si se especificó (para fechas históricas)
+    const rpcParams: Record<string, unknown> = {
       p_store_id: userData.active_store_id,
       p_ref_type: ref_type,
       p_ref_id: orderId,
@@ -141,7 +145,12 @@ async function postHandler(request: NextRequest, session: AuthenticatedSession) 
       p_idempotency_key: idempotencyKey,
       p_reference: reference || null,
       p_notes: notes || `Pago tipo: ${payment_type}`,
-    });
+    };
+    if (payment_date) {
+      rpcParams.p_payment_date = payment_date;
+    }
+
+    const { data: paymentId, error: payError } = await supabase.rpc('register_supplier_payment', rpcParams);
 
     if (payError) {
       console.error('[production-orders/payments] RPC error:', payError);
@@ -237,9 +246,11 @@ async function getHandler(request: NextRequest, session: AuthenticatedSession) {
   }
 }
 
+// V2.12.32: rate limit aumentado de 10 a 30/min para soportar flujos de
+// múltiples pagos (anticipos + liquidaciones parciales) sin 429.
 export const POST = withAuth(withSecurity(postHandler, {
   rateLimitKey: 'po-payments:post',
-  maxRequests: 10,
+  maxRequests: 30,
 }));
 
 export const GET = withAuth(getHandler);
