@@ -153,6 +153,17 @@ const SECONDARY_CARDS: HubCard[] = [
     bgColor: "bg-destructive/5",
     borderColor: "border-destructive/20",
   },
+  // V2.12.36: Cobros por Antigüedad — espejo de Cuentas por Pagar para cobros a clientes
+  {
+    id: "accounts_receivable",
+    title: "Cobros por Antigüedad",
+    description: "Antigüedad de saldos de clientes: órdenes de producción/servicio con saldo pendiente. Filtra por vencimiento y exporta a CSV.",
+    icon: CreditCard,
+    view: "accounts_receivable",
+    color: "text-success",
+    bgColor: "bg-success/5",
+    borderColor: "border-success/20",
+  },
 ];
 
 export default function SalesHubView() {

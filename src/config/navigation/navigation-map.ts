@@ -326,6 +326,10 @@ export function getBreadcrumbForView(
   if (currentView === 'accounts-payable') {
     return [{ label: 'Cuentas por Pagar', isCurrent: true }];
   }
+  // V2.12.36: breadcrumb para accounts-receivable (Cobros por Antigüedad)
+  if (currentView === 'accounts_receivable') {
+    return [{ label: 'Cobros por Antigüedad', isCurrent: true }];
+  }
   // FIX-PRODUCTION (2026-07-12): breadcrumb para production-orders
   if (currentView === 'production-orders') {
     return [{ label: 'Órdenes de Producción', isCurrent: true }];

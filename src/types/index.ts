@@ -578,6 +578,11 @@ export interface ProductionOrderItem {
   withdrawn_at?: string | null;
   status: 'pending' | 'partial' | 'completed';
   notes?: string | null;
+  // V2.12.36: exceso facturable al cliente
+  exceso_qty?: number;
+  exceso_importe?: number;
+  exceso_moneda?: string;
+  facturar_exceso?: boolean;
   products?: { id: string; name: string; sku?: string | null; stock_current: number } | null;
 }
 

@@ -144,6 +144,8 @@ const ChatBot = dynamic(() => import('@/components/ui/ChatBot').then(m => m.Chat
 const CalculatorView = dynamic(() => import('@/components/views/terminal/views/calculator/CalculatorView'), { ssr: false });
 // FIX-PAYMENT-TRACKING (2026-07-12): dashboard de cuentas por pagar
 const AccountsPayableView = dynamic(() => import('@/components/views/terminal/views/accounts_payable/AccountsPayableView'), { ssr: false });
+// V2.12.36: Cobros por Antigüedad (espejo de Cuentas por Pagar para cobros)
+const AccountsReceivableView = dynamic(() => import('@/components/views/terminal/views/accounts_receivable/AccountsReceivableView'), { ssr: false });
 // FIX-CASH-REPORT (2026-07-14): modal de reporte de entrega desde SalesHub
 const CashReportModal = dynamic(() => import('@/components/views/terminal/views/cash/CashReportModal').then(m => ({ default: m.CashReportModal })), { ssr: false });
 // FIX-PRODUCTION (2026-07-12): órdenes de producción y trabajo
@@ -443,6 +445,7 @@ export default function TerminalShell() {
         // FIX-PAYMENT-TRACKING (2026-07-12): dashboard de cuentas por pagar
         case 'accounts-payable':
         case 'accounts_payable': return <ViewErrorBoundary viewName="Cuentas por Pagar"><AccountsPayableView /></ViewErrorBoundary>;
+        case 'accounts_receivable': return <ViewErrorBoundary viewName="Cobros por Antigüedad"><AccountsReceivableView /></ViewErrorBoundary>;
         // FIX-CASH-REPORT (2026-07-14): reporte de entrega como vista desde SalesHub
         case 'cash_report': return <ViewErrorBoundary viewName="Reporte de Entrega"><CashReportWrapper /></ViewErrorBoundary>;
         // FIX-PRODUCTION (2026-07-12): órdenes de producción y trabajo

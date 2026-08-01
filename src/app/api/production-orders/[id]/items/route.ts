@@ -139,8 +139,12 @@ async function deleteHandler(request: NextRequest, session: AuthenticatedSession
 // el presupuesto original debe preservarse para el análisis de desviación.
 const updateItemSchema = z.object({
   item_id: z.string().uuid(),
-  budgeted_qty: z.number().positive('La cantidad debe ser mayor a 0'),
-  budgeted_unit_cost: z.number().min(0),
+  budgeted_qty: z.number().positive('La cantidad debe ser mayor a 0').optional(),
+  budgeted_unit_cost: z.number().min(0).optional(),
+  // V2.12.36: toggle de facturación de exceso al cliente
+  facturar_exceso: z.boolean().optional(),
+  exceso_importe: z.number().min(0).optional(),
+  exceso_moneda: z.string().max(10).optional(),
 });
 
 async function patchHandler(request: NextRequest, session: AuthenticatedSession) {
@@ -152,8 +156,12 @@ async function patchHandler(request: NextRequest, session: AuthenticatedSession)
       return NextResponse.json({ error: 'Datos inválidos', details: validated.error.format() }, { status: 400 });
     }
 
-    const { item_id, budgeted_qty, budgeted_unit_cost } = validated.data;
+    const { item_id, budgeted_qty, budgeted_unit_cost, facturar_exceso, exceso_importe, exceso_moneda } = validated.data;
     const supabase = getSupabaseForSession(session);
+
+    // V2.12.36: si solo se está actualizando facturar_exceso (toggle), permitirlo
+    // incluso si actual_qty > 0 (el exceso se determina después del withdraw)
+    const isExcesoOnlyUpdate = facturar_exceso !== undefined && budgeted_qty === undefined && budgeted_unit_cost === undefined;
 
     // Verificar orden
     const { data: order } = await supabase
@@ -167,31 +175,37 @@ async function patchHandler(request: NextRequest, session: AuthenticatedSession)
       return NextResponse.json({ error: 'No se pueden editar items de una orden cerrada o anulada' }, { status: 400 });
     }
 
-    // Verificar que el item no tenga salidas reales
-    const { data: item } = await supabase
-      .from('production_order_items')
-      .select('actual_qty, budgeted_qty, budgeted_unit_cost')
-      .eq('id', item_id)
-      .eq('order_id', orderId)
-      .single();
+    // Verificar que el item no tenga salidas reales (solo si se edita el presupuesto)
+    if (!isExcesoOnlyUpdate) {
+      const { data: item } = await supabase
+        .from('production_order_items')
+        .select('actual_qty, budgeted_qty, budgeted_unit_cost')
+        .eq('id', item_id)
+        .eq('order_id', orderId)
+        .single();
 
-    if (!item) return NextResponse.json({ error: 'Item no encontrado' }, { status: 404 });
-    if (Number(item.actual_qty) > 0) {
-      return NextResponse.json({
-        error: 'No se puede editar el presupuesto de un item que ya tiene salidas de inventario. El presupuesto original debe preservarse para el análisis de desviación.',
-      }, { status: 400 });
+      if (!item) return NextResponse.json({ error: 'Item no encontrado' }, { status: 404 });
+      if (Number(item.actual_qty) > 0) {
+        return NextResponse.json({
+          error: 'No se puede editar el presupuesto de un item que ya tiene salidas de inventario. El presupuesto original debe preservarse para el análisis de desviación.',
+        }, { status: 400 });
+      }
     }
+
+    // Construir update dinámico
+    const updateData: Record<string, unknown> = { updated_at: new Date().toISOString() };
+    if (budgeted_qty !== undefined) updateData.budgeted_qty = budgeted_qty;
+    if (budgeted_unit_cost !== undefined) updateData.budgeted_unit_cost = budgeted_unit_cost;
+    if (facturar_exceso !== undefined) updateData.facturar_exceso = facturar_exceso;
+    if (exceso_importe !== undefined) updateData.exceso_importe = exceso_importe;
+    if (exceso_moneda !== undefined) updateData.exceso_moneda = exceso_moneda;
 
     const { data: updated, error } = await supabase
       .from('production_order_items')
-      .update({
-        budgeted_qty,
-        budgeted_unit_cost,
-        updated_at: new Date().toISOString(),
-      })
+      .update(updateData)
       .eq('id', item_id)
       .eq('order_id', orderId)
-      .select('id, budgeted_qty, budgeted_unit_cost, updated_at')
+      .select('id, budgeted_qty, budgeted_unit_cost, actual_qty, exceso_qty, exceso_importe, exceso_moneda, facturar_exceso, updated_at')
       .single();
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });

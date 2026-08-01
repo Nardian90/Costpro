@@ -585,6 +585,25 @@ function OrderDetailModal({ order, onClose, onUpdate }: { order: ProductionOrder
     finally { setSavingBudget(false); }
   };
 
+  // V2.12.36: toggle de facturar exceso al cliente
+  const handleToggleFacturarExceso = async (itemId: string, currentValue: boolean) => {
+    try {
+      const { token } = useAuthStore.getState();
+      const res = await fetch(`/api/production-orders/${order.id}/items`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify({ item_id: itemId, facturar_exceso: !currentValue }),
+      });
+      if (res.ok) {
+        toast.success(!currentValue ? 'Exceso se facturará al cliente' : 'Exceso no se facturará');
+        await fetchDetail();
+      } else {
+        const err = await res.json();
+        toast.error(err.error || 'Error');
+      }
+    } catch (e: any) { toast.error('Error: ' + e.message); }
+  };
+
   const handleClose = async () => {
     try {
       const { token } = useAuthStore.getState();
@@ -1017,6 +1036,7 @@ function OrderDetailModal({ order, onClose, onUpdate }: { order: ProductionOrder
                       <th className="p-2 text-center">Desv. Qty</th>
                       <th className="p-2 text-center">Desv. $</th>
                       <th className="p-2 text-center">Estado</th>
+                      <th className="p-2 text-center">Fact. Exceso</th>
                       <th className="p-2 text-center">Acciones</th>
                     </tr>
                   </thead>
@@ -1132,6 +1152,22 @@ function OrderDetailModal({ order, onClose, onUpdate }: { order: ProductionOrder
                               "bg-muted text-muted-foreground")}>
                               {item.status}
                             </span>
+                          </td>
+                          {/* V2.12.36: Facturar exceso toggle — solo visible si hay exceso (devQty > 0) */}
+                          <td className="p-2 text-center">
+                            {devQty > 0 ? (
+                              <label className="inline-flex items-center justify-center cursor-pointer" title={item.facturar_exceso ? 'Exceso se facturará al cliente' : 'Click para facturar exceso al cliente'}>
+                                <input
+                                  type="checkbox"
+                                  checked={!!item.facturar_exceso}
+                                  onChange={() => handleToggleFacturarExceso(item.id, !!item.facturar_exceso)}
+                                  className="w-4 h-4 rounded border-border accent-primary cursor-pointer"
+                                  aria-label={`Facturar exceso de ${item.products?.name || 'item'}`}
+                                />
+                              </label>
+                            ) : (
+                              <span className="text-[9px] text-muted-foreground/40">—</span>
+                            )}
                           </td>
                           {/* Acciones */}
                           <td className="p-2">
