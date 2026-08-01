@@ -94,6 +94,7 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
     const fechaUltimoPago = payments && payments.length > 0 ? payments[payments.length - 1].payment_date : null;
 
     // 6. Construir objeto OTData
+    // V2.12.35: incluir actual_qty, exceso, notas, supervisor
     const otData = {
       order_number: order.order_number,
       order_date: order.order_date,
@@ -111,13 +112,22 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
       status: order.status,
       closed_at: order.closed_at,
       paid_at: fechaUltimoPago || order.paid_at,
+      notas: order.notes || '',
+      supervisor_name: 'PEDRO INFANTE', // TODO: hacer dinámico desde user_store_memberships
       items: (items || []).map((it: any) => ({
         sku: it.products?.sku || it.products?.name || '',
         name: it.products?.name || it.notes || 'Material',
         unit_of_measure: it.products?.unit_of_measure || 'U',
         budgeted_qty: Number(it.budgeted_qty || 0),
         budgeted_unit_cost: Number(it.budgeted_unit_cost || 0),
+        actual_qty: it.actual_qty !== null ? Number(it.actual_qty) : undefined,
+        exceso_qty: Number(it.exceso_qty || 0),
+        exceso_importe: Number(it.exceso_importe || 0),
+        exceso_moneda: it.exceso_moneda || '',
+        facturar_exceso: it.facturar_exceso || false,
       })),
+      exceso_total: (items || []).reduce((sum: number, it: any) => sum + Number(it.exceso_importe || 0), 0),
+      exceso_moneda: 'USD',
       store_name: store?.name || 'Tienda',
       store_tagline: store?.store_tagline || '',
       store_address: store?.address || '',
