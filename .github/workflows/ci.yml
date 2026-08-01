@@ -159,3 +159,9 @@ jobs:
           else
             echo "No hardcoded secrets detected"
           fi
+
+      - name: BOLA contract test
+        run: node scripts/bola-contract-test.cjs
+        # V2.12.38: Verifica que TODOS los endpoints multi-tenant bajo
+        # /api/production-orders/ y /api/accounts-receivable tengan el guard
+        # explícito de store_id (defense-in-depth sobre RLS)

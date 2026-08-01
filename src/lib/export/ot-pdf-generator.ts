@@ -357,17 +357,17 @@ export function generateOTPDF(data: OTData): Uint8Array {
   // Foot con totales
   const foot = hasExceso
     ? [[
-        { content: 'Total', colSpan: 3, styles: { halign: 'right', fontStyle: 'bold' } },
-        { content: totalPresupuestado.toLocaleString('es-CU'), styles: { halign: 'right', fontStyle: 'bold' } },
-        { content: totalReal > 0 ? totalReal.toLocaleString('es-CU') : '', styles: { halign: 'right', fontStyle: 'bold' } },
-        { content: totalExcesoQty > 0 ? totalExcesoQty.toLocaleString('es-CU') : '', styles: { halign: 'right', fontStyle: 'bold' } },
-        { content: totalExcesoImp > 0 ? totalExcesoImp.toLocaleString('es-CU', { minimumFractionDigits: 2 }) : '', styles: { halign: 'right', fontStyle: 'bold' } },
-        { content: '', styles: { fontStyle: 'bold' } },
+        { content: 'Total', colSpan: 3, styles: { halign: 'right', fontStyle: 'bold' as const } },
+        { content: totalPresupuestado.toLocaleString('es-CU'), styles: { halign: 'right', fontStyle: 'bold' as const } },
+        { content: totalReal > 0 ? totalReal.toLocaleString('es-CU') : '', styles: { halign: 'right', fontStyle: 'bold' as const } },
+        { content: totalExcesoQty > 0 ? totalExcesoQty.toLocaleString('es-CU') : '', styles: { halign: 'right', fontStyle: 'bold' as const } },
+        { content: totalExcesoImp > 0 ? totalExcesoImp.toLocaleString('es-CU', { minimumFractionDigits: 2 }) : '', styles: { halign: 'right', fontStyle: 'bold' as const } },
+        { content: '', styles: { fontStyle: 'bold' as const } },
       ]]
     : [[
-        { content: 'Total', colSpan: 3, styles: { halign: 'right', fontStyle: 'bold' } },
-        { content: totalPresupuestado.toLocaleString('es-CU'), styles: { halign: 'right', fontStyle: 'bold' } },
-        { content: '', styles: { fontStyle: 'bold', colSpan: hasExceso ? 4 : (hasReal ? 3 : 2) } },
+        { content: 'Total', colSpan: 3, styles: { halign: 'right', fontStyle: 'bold' as const } },
+        { content: totalPresupuestado.toLocaleString('es-CU'), styles: { halign: 'right', fontStyle: 'bold' as const } },
+        { content: '', styles: { fontStyle: 'bold' as const, colSpan: hasExceso ? 4 : (hasReal ? 3 : 2) } },
       ]];
 
   autoTable(doc, {
@@ -379,7 +379,7 @@ export function generateOTPDF(data: OTData): Uint8Array {
     headStyles: {
       fillColor: [21, 128, 61],
       textColor: 255,
-      fontStyle: 'bold',
+      fontStyle: 'bold' as const,
       fontSize: 8,
       halign: 'center',
     },

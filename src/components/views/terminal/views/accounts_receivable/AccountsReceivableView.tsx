@@ -180,9 +180,8 @@ export default function AccountsReceivableView() {
       {/* Tabla */}
       <StateRenderer
         isLoading={loading}
-        error={error}
+        error={error ? new Error(error) : null}
         data={data}
-        onRetry={fetchData}
         emptyComponent={
           <div className="text-center py-12">
             <CheckCircle2 className="w-12 h-12 text-success mx-auto mb-3" />

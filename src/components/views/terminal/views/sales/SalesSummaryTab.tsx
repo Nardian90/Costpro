@@ -78,22 +78,40 @@ export function SalesSummaryTab({ dateFrom, dateTo, storeId }: SalesSummaryTabPr
   if (error) {
     return (
       <StateRenderer
-        state="error"
-        title="Error al cargar resumen"
-        message={error}
-        onRetry={fetchData}
-      />
+        isLoading={false}
+        error={new Error(error)}
+        data={[]}
+        errorComponent={
+          <div className="flex flex-col items-center justify-center py-20 gap-4 text-center w-full bg-destructive/5 border border-destructive/20 rounded-2xl p-8">
+            <p className="font-bold text-destructive">Error al cargar resumen</p>
+            <p className="text-sm text-destructive/80">{error}</p>
+            <button onClick={fetchData} className="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90">
+              Reintentar
+            </button>
+          </div>
+        }
+      >
+        {() => null}
+      </StateRenderer>
     );
   }
 
   if (data.length === 0) {
     return (
       <StateRenderer
-        state="empty"
-        title="Sin ventas en el período"
-        message="No hay ventas registradas en el rango de fechas seleccionado."
-        icon={Calendar}
-      />
+        isLoading={false}
+        data={[]}
+        isEmpty
+        emptyComponent={
+          <div className="flex flex-col items-center justify-center py-20 gap-4 text-center w-full bg-muted/20 border border-border rounded-2xl p-8">
+            <Calendar className="w-12 h-12 text-muted-foreground mx-auto mb-2" />
+            <p className="font-bold text-foreground">Sin ventas en el período</p>
+            <p className="text-sm text-muted-foreground">No hay ventas registradas en el rango de fechas seleccionado.</p>
+          </div>
+        }
+      >
+        {() => null}
+      </StateRenderer>
     );
   }
 
