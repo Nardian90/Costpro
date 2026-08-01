@@ -357,16 +357,16 @@ export function generateOTPDF(data: OTData): Uint8Array {
   // Foot con totales
   const foot = hasExceso
     ? [[
-        { content: 'Total', colSpan: 3, styles: { halign: 'right', fontStyle: 'bold' as const } },
-        { content: totalPresupuestado.toLocaleString('es-CU'), styles: { halign: 'right', fontStyle: 'bold' as const } },
-        { content: totalReal > 0 ? totalReal.toLocaleString('es-CU') : '', styles: { halign: 'right', fontStyle: 'bold' as const } },
-        { content: totalExcesoQty > 0 ? totalExcesoQty.toLocaleString('es-CU') : '', styles: { halign: 'right', fontStyle: 'bold' as const } },
-        { content: totalExcesoImp > 0 ? totalExcesoImp.toLocaleString('es-CU', { minimumFractionDigits: 2 }) : '', styles: { halign: 'right', fontStyle: 'bold' as const } },
+        { content: 'Total', colSpan: 3, styles: { halign: 'right' as const, fontStyle: 'bold' as const } },
+        { content: totalPresupuestado.toLocaleString('es-CU'), styles: { halign: 'right' as const, fontStyle: 'bold' as const } },
+        { content: totalReal > 0 ? totalReal.toLocaleString('es-CU') : '', styles: { halign: 'right' as const, fontStyle: 'bold' as const } },
+        { content: totalExcesoQty > 0 ? totalExcesoQty.toLocaleString('es-CU') : '', styles: { halign: 'right' as const, fontStyle: 'bold' as const } },
+        { content: totalExcesoImp > 0 ? totalExcesoImp.toLocaleString('es-CU', { minimumFractionDigits: 2 }) : '', styles: { halign: 'right' as const, fontStyle: 'bold' as const } },
         { content: '', styles: { fontStyle: 'bold' as const } },
       ]]
     : [[
-        { content: 'Total', colSpan: 3, styles: { halign: 'right', fontStyle: 'bold' as const } },
-        { content: totalPresupuestado.toLocaleString('es-CU'), styles: { halign: 'right', fontStyle: 'bold' as const } },
+        { content: 'Total', colSpan: 3, styles: { halign: 'right' as const, fontStyle: 'bold' as const } },
+        { content: totalPresupuestado.toLocaleString('es-CU'), styles: { halign: 'right' as const, fontStyle: 'bold' as const } },
         { content: '', styles: { fontStyle: 'bold' as const, colSpan: hasExceso ? 4 : (hasReal ? 3 : 2) } },
       ]];
 
@@ -381,7 +381,7 @@ export function generateOTPDF(data: OTData): Uint8Array {
       textColor: 255,
       fontStyle: 'bold' as const,
       fontSize: 8,
-      halign: 'center',
+      halign: 'center' as const,
     },
     bodyStyles: {
       fontSize: 8,
@@ -394,32 +394,32 @@ export function generateOTPDF(data: OTData): Uint8Array {
     },
     columnStyles: hasExceso
       ? {
-          0: { cellWidth: 10, halign: 'center' },
+          0: { cellWidth: 10, halign: 'center' as const },
           1: { cellWidth: 'auto' },
-          2: { cellWidth: 10, halign: 'center' },
-          3: { cellWidth: 18, halign: 'right' },
-          4: { cellWidth: 18, halign: 'right' },
-          5: { cellWidth: 18, halign: 'right' },
-          6: { cellWidth: 22, halign: 'right' },
-          7: { cellWidth: 16, halign: 'center' },
+          2: { cellWidth: 10, halign: 'center' as const },
+          3: { cellWidth: 18, halign: 'right' as const },
+          4: { cellWidth: 18, halign: 'right' as const },
+          5: { cellWidth: 18, halign: 'right' as const },
+          6: { cellWidth: 22, halign: 'right' as const },
+          7: { cellWidth: 16, halign: 'center' as const },
         }
       : hasReal
         ? {
-            0: { cellWidth: 12, halign: 'center' },
+            0: { cellWidth: 12, halign: 'center' as const },
             1: { cellWidth: 'auto' },
-            2: { cellWidth: 14, halign: 'center' },
-            3: { cellWidth: 24, halign: 'right' },
-            4: { cellWidth: 24, halign: 'right' },
-            5: { cellWidth: 28, halign: 'right' },
-            6: { cellWidth: 20, halign: 'center' },
+            2: { cellWidth: 14, halign: 'center' as const },
+            3: { cellWidth: 24, halign: 'right' as const },
+            4: { cellWidth: 24, halign: 'right' as const },
+            5: { cellWidth: 28, halign: 'right' as const },
+            6: { cellWidth: 20, halign: 'center' as const },
           }
         : {
-            0: { cellWidth: 15, halign: 'center' },
+            0: { cellWidth: 15, halign: 'center' as const },
             1: { cellWidth: 'auto' },
-            2: { cellWidth: 14, halign: 'center' },
-            3: { cellWidth: 22, halign: 'right' },
-            4: { cellWidth: 30, halign: 'right' },
-            5: { cellWidth: 32, halign: 'right' },
+            2: { cellWidth: 14, halign: 'center' as const },
+            3: { cellWidth: 22, halign: 'right' as const },
+            4: { cellWidth: 30, halign: 'right' as const },
+            5: { cellWidth: 32, halign: 'right' as const },
           },
     margin: { left: margin, right: margin },
     didDrawPage: () => {

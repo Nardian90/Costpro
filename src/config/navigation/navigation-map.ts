@@ -323,7 +323,8 @@ export function getBreadcrumbForView(
     return [{ label: 'Chat con Darian', isCurrent: true }];
   }
   // FIX-B9 (2026-07-12): breadcrumb para accounts-payable
-  if (currentView === 'accounts-payable') {
+  // V2.12.40: fix — el view registrado es 'accounts_payable' (underscore), no 'accounts-payable'
+  if (currentView === 'accounts-payable' || currentView === 'accounts_payable') {
     return [{ label: 'Cuentas por Pagar', isCurrent: true }];
   }
   // V2.12.36: breadcrumb para accounts-receivable (Cobros por Antigüedad)
