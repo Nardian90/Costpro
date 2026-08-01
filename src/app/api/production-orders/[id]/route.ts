@@ -33,6 +33,10 @@ async function getHandler(request: NextRequest, session: AuthenticatedSession) {
     const session_user = session.user;
     const supabase = getSupabaseForSession(session);
 
+    // V2.12.38: defense-in-depth — verificar active_store_id antes de devolver la orden
+    const { data: userData } = await supabase.from('profiles').select('active_store_id').eq('id', session_user.id).single();
+    if (!userData?.active_store_id) return NextResponse.json({ error: 'Tienda no configurada' }, { status: 400 });
+
     // Obtener orden + items
     const { data: order, error } = await supabase
       .from('production_orders')
@@ -40,6 +44,11 @@ async function getHandler(request: NextRequest, session: AuthenticatedSession) {
       .eq('id', orderId)
       .single();
     if (error) return NextResponse.json({ error: error.message }, { status: 404 });
+
+    // V2.12.38: BOLA guard — verificar que la orden pertenece a la tienda activa del usuario
+    if (order.store_id !== userData.active_store_id) {
+      return NextResponse.json({ error: 'No autorizado para esta OT' }, { status: 403 });
+    }
 
     const { data: items } = await supabase
       .from('production_order_items')
@@ -84,6 +93,11 @@ async function patchHandler(request: NextRequest, session: AuthenticatedSession)
 
     if (orderFetchError || !order) {
       return NextResponse.json({ error: 'Orden no encontrada' }, { status: 404 });
+    }
+
+    // V2.12.38: BOLA guard — verificar que la orden pertenece a la tienda activa del usuario
+    if (order.store_id !== userData.active_store_id) {
+      return NextResponse.json({ error: 'No autorizado para esta OT' }, { status: 403 });
     }
 
     // Si es acción de cerrar orden

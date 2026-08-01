@@ -115,6 +115,11 @@ export default function SalesCatalogTable({
   // Wrapper que verifica autorización antes de aplicar el descuento al item.
   // referenceTotal = subtotal del item (precio × cantidad).
   const handleSetDiscountValueWithAuth = (p: Product, row: SalesCatalogRow, value: number) => {
+    // V2.12.38: guard null — si no hay tipo de descuento elegido, no hay nada que autorizar.
+    if (!row.discountType) {
+      handleSetDiscountValue(p, value);
+      return;
+    }
     const itemSubtotal = calcSubtotal(row);
     const requiresAuth = checkDiscount({
       type: row.discountType,

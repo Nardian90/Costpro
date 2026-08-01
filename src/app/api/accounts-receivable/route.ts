@@ -69,6 +69,22 @@ async function getHandler(request: NextRequest, session: AuthenticatedSession) {
     const { store_id, tab, search, limit } = parsed.data;
     const supabase = getSupabaseForSession(session);
 
+    // V2.12.38: BOLA guard — validar que el store_id del query param coincide
+    // con el active_store_id del usuario autenticado (no confiar solo en el cliente)
+    const { data: userData } = await supabase
+      .from('profiles')
+      .select('active_store_id')
+      .eq('id', session.user.id)
+      .single();
+
+    if (!userData?.active_store_id) {
+      return NextResponse.json({ error: 'Tienda no configurada' }, { status: 400 });
+    }
+
+    if (store_id !== userData.active_store_id) {
+      return NextResponse.json({ error: 'No autorizado para esta tienda' }, { status: 403 });
+    }
+
     // Query production_orders with unpaid/partial balance
     let query = supabase
       .from('production_orders')
