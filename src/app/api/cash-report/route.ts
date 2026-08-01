@@ -18,6 +18,8 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
     const { searchParams } = new URL(req.url);
     const startDate = searchParams.get('start_date') || new Date(Date.now() - 86400000).toISOString();
     const endDate = searchParams.get('end_date') || new Date().toISOString();
+    // V2.12.37: soporte para incluir todos los pagos sin filtro de fecha
+    const includeAllDates = searchParams.get('include_all_dates') === 'true';
 
     const supabase = getSupabaseForSession(session);
 
@@ -37,6 +39,7 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
       p_store_id: userData.active_store_id,
       p_start_date: startDate,
       p_end_date: endDate,
+      p_include_all_dates: includeAllDates,
     });
 
     if (reportError) {

@@ -6,6 +6,7 @@ import { Plus, Factory, Wrench, Eye, Ban, Play, Pause, CheckCircle2, Clock, Doll
 import { cn, formatCurrency } from '@/lib/utils';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuthStore } from '@/store';
+import { useIsMobile } from '@/hooks/ui/useMobile';
 import { toast } from 'sonner';
 import type { ProductionOrder, ProductionOrderItem } from '@/types';
 import { canReverse } from '@/components/ui/DocumentStatusBadge';
@@ -31,6 +32,7 @@ const PAYMENT_BADGE: Record<string, { label: string; color: string }> = {
 
 export default function ProductionOrdersView() {
   const { user } = useAuthStore();
+  const isMobile = useIsMobile();
   const [orders, setOrders] = useState<ProductionOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string>('all');
@@ -78,45 +80,116 @@ export default function ProductionOrdersView() {
 
   return (
     <div className="space-y-4 p-4">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-black uppercase tracking-tight">Órdenes de Producción y Trabajo</h2>
-          <p className="text-xs text-muted-foreground mt-1">Gestión de obras, servicios y producción con presupuesto</p>
+      {/* Header — responsive */}
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <h2 className="text-[clamp(1.25rem,4vw,2rem)] font-black uppercase tracking-tight truncate">
+            Órdenes de Producción
+          </h2>
+          <p className="text-xs text-muted-foreground mt-1 hidden sm:block">Gestión de obras, servicios y producción con presupuesto</p>
         </div>
         <button
           onClick={() => setShowCreate(true)}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-xs font-black uppercase hover:opacity-90"
+          className="flex items-center gap-2 px-4 h-11 min-h-[44px] rounded-xl bg-primary text-primary-foreground text-xs font-black uppercase hover:opacity-90 shrink-0"
         >
-          <Plus className="w-4 h-4" /> Nueva Orden
+          <Plus className="w-4 h-4" /> <span className="hidden sm:inline">Nueva Orden</span>
+          <span className="sm:hidden">Nueva</span>
         </button>
       </div>
 
-      {/* Filtros */}
-      <div className="flex flex-wrap gap-2">
+      {/* Filtros — responsive con scroll horizontal en móvil */}
+      <div className="flex flex-col sm:flex-row gap-2">
         <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}
-          className="h-9 bg-background border border-border/50 rounded-lg px-3 text-xs font-bold">
+          className="h-11 min-h-[44px] bg-background border border-border/50 rounded-lg px-3 text-xs font-bold min-w-[140px]">
           <option value="all">Todos los tipos</option>
-          <option value="production">🏭 Producción</option>
-          <option value="service">🔧 Servicio</option>
-          <option value="work">📦 Trabajo</option>
+          <option value="production">Producción</option>
+          <option value="service">Servicio</option>
+          <option value="work">Trabajo</option>
         </select>
-        {['all', 'draft', 'approved', 'in_progress', 'paused', 'completed', 'closed', 'voided', 'reversed'].map(s => (
-          <button key={s} onClick={() => setFilter(s)}
-            className={cn("px-3 py-1.5 rounded-lg text-[10px] font-black uppercase border",
-              filter === s ? "bg-primary text-primary-foreground border-primary" : "border-border/40 text-muted-foreground hover:bg-muted")}>
-            {s === 'all' ? 'Todas' : STATUS_CONFIG[s]?.label || s}
-          </button>
-        ))}
+        <div className="flex gap-1.5 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+          {['all', 'draft', 'approved', 'in_progress', 'paused', 'completed', 'closed', 'voided', 'reversed'].map(s => (
+            <button key={s} onClick={() => setFilter(s)}
+              className={cn("px-3 py-2 min-h-[44px] rounded-lg text-[10px] font-black uppercase border whitespace-nowrap shrink-0",
+                filter === s ? "bg-primary text-primary-foreground border-primary" : "border-border/40 text-muted-foreground hover:bg-muted")}>
+              {s === 'all' ? 'Todas' : STATUS_CONFIG[s]?.label || s}
+            </button>
+          ))}
+        </div>
       </div>
 
-      {/* Tabla */}
+      {/* Lista — cards en móvil, tabla en desktop */}
       {loading ? (
         <p className="text-center py-8 text-muted-foreground">Cargando...</p>
       ) : filtered.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">
           <Factory className="w-8 h-8 mx-auto opacity-30 mb-2" />
           <p className="text-sm">Sin órdenes. Crea una nueva para comenzar.</p>
+        </div>
+      ) : isMobile ? (
+        /* ── Vista Cards (móvil) ── */
+        <div className="space-y-3">
+          {filtered.map((order, i) => {
+            const sc = STATUS_CONFIG[order.status] || STATUS_CONFIG.draft;
+            const StatusIcon = sc.icon;
+            const pc = PAYMENT_BADGE[order.payment_status] || PAYMENT_BADGE.unpaid;
+            return (
+              <motion.div key={order.id} initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.02 }}
+                className="rounded-xl border border-border/30 bg-card p-3 space-y-2">
+                {/* Fila 1: OT + estado */}
+                <div className="flex items-center justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="font-mono font-bold text-xs truncate">{order.order_number}</p>
+                    <p className="text-[10px] text-muted-foreground">{new Date(order.order_date).toLocaleDateString()}</p>
+                  </div>
+                  <span className={cn("inline-flex items-center gap-1 px-2 py-1 rounded text-[10px] font-black uppercase border shrink-0", sc.color)}>
+                    <StatusIcon className="w-3 h-3" /> {sc.label}
+                  </span>
+                </div>
+                {/* Fila 2: cliente */}
+                <div className="flex items-center gap-2">
+                  <span className="text-lg shrink-0">{order.order_type === 'production' ? '🏭' : order.order_type === 'work' ? '📦' : '🔧'}</span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-bold truncate">{order.customer_name || 'Sin cliente'}</p>
+                    {order.customer_phone && <p className="text-[10px] text-muted-foreground truncate">{order.customer_phone}</p>}
+                  </div>
+                </div>
+                {/* Fila 3: presupuesto + pago */}
+                <div className="flex items-center justify-between gap-2 pt-2 border-t border-border/20">
+                  <div>
+                    <p className="text-[10px] text-muted-foreground uppercase">Presupuesto</p>
+                    <p className="font-mono font-bold text-sm">{formatCurrency(order.budget_total)} {order.budget_currency}</p>
+                  </div>
+                  <span className={cn("px-2 py-1 rounded text-[10px] font-black", pc.color)}>{pc.label}</span>
+                </div>
+                {/* Fila 4: acciones */}
+                <div className="flex items-center gap-1.5 pt-2 border-t border-border/20">
+                  <button onClick={() => setDetailOrder(order)} className="flex-1 h-11 min-h-[44px] rounded-lg bg-primary/10 text-primary text-[10px] font-black uppercase flex items-center justify-center gap-1">
+                    <Eye className="w-3.5 h-3.5" /> Ver
+                  </button>
+                  {order.status === 'draft' && (
+                    <button onClick={() => handleStatusChange(order.id, 'approved')} className="h-11 min-h-[44px] min-w-[44px] rounded-lg bg-primary/10 text-primary flex items-center justify-center" title="Aprobar">
+                      <CheckCircle2 className="w-4 h-4" />
+                    </button>
+                  )}
+                  {order.status === 'approved' && (
+                    <button onClick={() => handleStatusChange(order.id, 'in_progress')} className="h-11 min-h-[44px] min-w-[44px] rounded-lg bg-blue-500/10 text-blue-500 flex items-center justify-center" title="Iniciar">
+                      <Play className="w-4 h-4" />
+                    </button>
+                  )}
+                  {order.status === 'in_progress' && (
+                    <button onClick={() => handleStatusChange(order.id, 'paused')} className="h-11 min-h-[44px] min-w-[44px] rounded-lg bg-amber-500/10 text-amber-500 flex items-center justify-center" title="Pausar">
+                      <Pause className="w-4 h-4" />
+                    </button>
+                  )}
+                  {order.status === 'paused' && (
+                    <button onClick={() => handleStatusChange(order.id, 'in_progress')} className="h-11 min-h-[44px] min-w-[44px] rounded-lg bg-blue-500/10 text-blue-500 flex items-center justify-center" title="Reanudar">
+                      <Play className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+              </motion.div>
+            );
+          })}
         </div>
       ) : (
         <div className="overflow-x-auto rounded-xl border border-border/30">
@@ -162,26 +235,26 @@ export default function ProductionOrdersView() {
                     </td>
                     <td className="p-3 text-center">
                       <div className="flex items-center justify-center gap-1">
-                        <button onClick={() => setDetailOrder(order)} className="p-2 rounded-lg hover:bg-primary/10 text-primary" title="Ver detalle">
+                        <button onClick={() => setDetailOrder(order)} className="p-2 min-h-[44px] min-w-[44px] rounded-lg hover:bg-primary/10 text-primary flex items-center justify-center" title="Ver detalle">
                           <Eye className="w-4 h-4" />
                         </button>
                         {order.status === 'draft' && (
-                          <button onClick={() => handleStatusChange(order.id, 'approved')} className="p-2 rounded-lg hover:bg-primary/10 text-primary" title="Aprobar">
+                          <button onClick={() => handleStatusChange(order.id, 'approved')} className="p-2 min-h-[44px] min-w-[44px] rounded-lg hover:bg-primary/10 text-primary flex items-center justify-center" title="Aprobar">
                             <CheckCircle2 className="w-4 h-4" />
                           </button>
                         )}
                         {order.status === 'approved' && (
-                          <button onClick={() => handleStatusChange(order.id, 'in_progress')} className="p-2 rounded-lg hover:bg-blue-500/10 text-blue-500" title="Iniciar">
+                          <button onClick={() => handleStatusChange(order.id, 'in_progress')} className="p-2 min-h-[44px] min-w-[44px] rounded-lg hover:bg-blue-500/10 text-blue-500 flex items-center justify-center" title="Iniciar">
                             <Play className="w-4 h-4" />
                           </button>
                         )}
                         {order.status === 'in_progress' && (
-                          <button onClick={() => handleStatusChange(order.id, 'paused')} className="p-2 rounded-lg hover:bg-amber-500/10 text-amber-500" title="Pausar">
+                          <button onClick={() => handleStatusChange(order.id, 'paused')} className="p-2 min-h-[44px] min-w-[44px] rounded-lg hover:bg-amber-500/10 text-amber-500 flex items-center justify-center" title="Pausar">
                             <Pause className="w-4 h-4" />
                           </button>
                         )}
                         {order.status === 'paused' && (
-                          <button onClick={() => handleStatusChange(order.id, 'in_progress')} className="p-2 rounded-lg hover:bg-blue-500/10 text-blue-500" title="Reanudar">
+                          <button onClick={() => handleStatusChange(order.id, 'in_progress')} className="p-2 min-h-[44px] min-w-[44px] rounded-lg hover:bg-blue-500/10 text-blue-500 flex items-center justify-center" title="Reanudar">
                             <Play className="w-4 h-4" />
                           </button>
                         )}
