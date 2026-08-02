@@ -16,6 +16,7 @@ export const API_ERRORS = {
   STORE_FETCH_FAILED: { key: 'apiErrors.storeFetchFailed', status: 500, defaultMessage: 'Error al cargar tiendas' },
   STORE_UPDATE_FAILED: { key: 'apiErrors.storeUpdateFailed', status: 500, defaultMessage: 'Error al actualizar tienda' },
   STORE_DELETE_FAILED: { key: 'apiErrors.storeDeleteFailed', status: 500, defaultMessage: 'Error al eliminar tienda' },
+  STORE_HAS_DEPENDENCIES: { key: 'apiErrors.storeHasDependencies', status: 409, defaultMessage: 'La tienda tiene dependencias pendientes que deben resolverse primero' },
   STORE_RESET_FAILED: { key: 'apiErrors.storeResetFailed', status: 500, defaultMessage: 'Error al reiniciar tienda' },
   AUDIT_QUERY_FAILED: { key: 'apiErrors.auditQueryFailed', status: 500, defaultMessage: 'Error al consultar el log de auditoría' },
   STORE_PLAN_REQUIRED: { key: 'apiErrors.storePlanRequired', status: 400, defaultMessage: 'User plan is required to manage stores' },

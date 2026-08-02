@@ -177,6 +177,7 @@ interface AuthState {
   token: string | null;
   loading: boolean;
   isMocked: boolean;
+  isSwitchingStore: boolean; // V2.12.41 H-023: bloquea operaciones durante switch de tienda
   status: 'loading' | 'unauthenticated' | 'authenticated_no_store' | 'authenticated_valid' | 'authenticated_invalid_profile';
   setUser: (user: UserContract | null) => void;
   setToken: (token: string | null) => void;
@@ -193,6 +194,7 @@ export const useAuthStore = create<AuthState>()((set) => ({
   token: null,
   loading: true,
   isMocked: false,
+  isSwitchingStore: false, // V2.12.41 H-023
   status: 'loading',
   setUser: (user: UserContract | null) => set({ user }),
   setToken: (token: string | null) => set({ token }),

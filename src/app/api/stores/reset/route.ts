@@ -166,10 +166,11 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
       idemKey,
       48 * 60 * 60, // 48h
       async () => {
-        // Execute the reset via RPC — pasamos p_keep_catalog a la nueva versión de la RPC
+        // Execute the reset via RPC — pasamos p_user_id para anti-spoofing (V2.12.41)
         const { error: rpcError } = await admin.rpc('reset_store_data', {
           target_store_id: storeId,
           p_keep_catalog: keepCatalog,
+          p_user_id: session.user.id,
         });
 
         if (rpcError) {

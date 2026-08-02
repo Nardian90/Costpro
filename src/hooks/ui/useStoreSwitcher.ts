@@ -11,12 +11,8 @@ import { logger } from '@/lib/logger';
  * Centralizes the store change flow with complete cache invalidation
  * to prevent stale data after switching stores.
  *
- * FIX-RES-3: Added concurrency guard (isSwitching ref) to prevent
- * double-click race conditions that could cause interleaved updates.
- *
- * Usage:
- *   const { switchStore, isSwitching } = useStoreSwitcher();
- *   await switchStore(newStoreId);
+ * V2.12.41 (H-023): isSwitching global flag para bloquear operaciones durante switch
+ * V2.12.41 (H-025): confirmación antes de limpiar carrito con items
  */
 export function useStoreSwitcher() {
   const { user, updateUser } = useAuthStore();
@@ -25,7 +21,13 @@ export function useStoreSwitcher() {
   // FIX-RES-3: Concurrency guard to prevent double-click / rapid switching
   const isSwitchingRef = useRef(false);
 
-  const switchStore = useCallback(async (storeId: string) => {
+  // V2.12.41 H-023: Flag global para bloquear operaciones durante switch
+  // Se setea en el auth store para que otros componentes puedan verificarlo
+  const setGlobalSwitching = (value: boolean) => {
+    useAuthStore.setState({ isSwitchingStore: value });
+  };
+
+  const switchStore = useCallback(async (storeId: string, options?: { skipCartConfirm?: boolean }) => {
     if (!user) return;
 
     // FIX-RES-3: Prevent concurrent switches
@@ -34,10 +36,21 @@ export function useStoreSwitcher() {
       return;
     }
 
+    // V2.12.41 H-025: Confirmar antes de limpiar carrito con items
+    const cartStore = useCartStore.getState();
+    if (!options?.skipCartConfirm && cartStore.storeId && cartStore.storeId !== storeId && cartStore.items.length > 0) {
+      const confirmed = window.confirm(
+        `Tienes ${cartStore.items.length} producto(s) en el carrito de la tienda actual. ` +
+        `Si cambias de tienda, el carrito se limpiará. ¿Continuar?`
+      );
+      if (!confirmed) return;
+    }
+
     isSwitchingRef.current = true;
+    setGlobalSwitching(true);
 
     try {
-      // 1. Clear cart if switching to a different store (prevents cross-store sales)
+      // 1. Clear cart if switching to a different store
       useCartStore.getState().clearCartOnStoreSwitch(storeId);
 
       // 2. Optimistic local update
@@ -72,6 +85,7 @@ export function useStoreSwitcher() {
       toast.error(message);
     } finally {
       isSwitchingRef.current = false;
+      setGlobalSwitching(false);
     }
   }, [user, updateUser, queryClient]);
 

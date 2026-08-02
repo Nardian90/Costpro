@@ -415,13 +415,21 @@ async function deleteHandler(req: NextRequest, session: AuthenticatedSession) {
 
     // FIX-DI-1: Atomic soft-delete via RPC — wraps store deactivation,
     // membership revocation, and profile cleanup in a single transaction
-    // to prevent the window where store is inactive but memberships remain active.
+    // V2.12.41: el RPC ahora valida dependencias (transfers, OTs, cajas) internamente
     const { error } = await admin.rpc('soft_delete_store', {
       p_store_id: storeId,
       p_deleted_by: session.user.id,
     });
 
     if (error) {
+      // V2.12.41: detectar error de dependencias y devolver 409 con detalles
+      const errMsg = error.message || '';
+      if (errMsg.includes('ERR_STORE_HAS_DEPENDENCIES')) {
+        return NextResponse.json(
+          { ...createApiError('STORE_HAS_DEPENDENCIES'), message: errMsg.replace('ERR_STORE_HAS_DEPENDENCIES: ', '') },
+          { status: 409 }
+        );
+      }
       // FIX-IDEMPOTENCY-LEAK (2026-07-13): no pasar error.message como details
       logger.error('DATABASE', 'STORE_DELETE_FAILED', { storeId: validated.data.storeId, error });
       return NextResponse.json(createApiError('STORE_DELETE_FAILED'), { status: 500 });
