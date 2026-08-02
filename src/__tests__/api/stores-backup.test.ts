@@ -44,8 +44,12 @@ vi.mock('@/lib/logger', () => ({
 // Mock supabase admin client
 const mockFrom = vi.fn();
 const mockInsert = vi.fn();
+// Mock rpc to return error so backup-service falls back to TABLE_CONFIGS_LEGACY
+// This keeps the test compatible with the legacy table list
+const mockRpc = vi.fn().mockResolvedValue({ error: { code: 'PGRST202', message: 'function not found' }, data: null });
 const mockAdminClient = {
   from: (table: string) => mockFrom(table),
+  rpc: mockRpc,
 };
 vi.mock('@/lib/supabase-admin', () => ({
   getSupabaseAdminSafe: vi.fn(() => mockAdminClient),
@@ -146,7 +150,7 @@ describe('GET /api/stores/[id]/backup', () => {
     expect(res.headers.get('Content-Type')).toBe('application/json; charset=utf-8');
     expect(res.headers.get('Content-Disposition')).toMatch(/^attachment; filename="backup_central_completo_.+\.json"$/);
     expect(res.headers.get('X-Backup-Total-Records')).toBe('2'); // 1 store + 1 product
-    expect(res.headers.get('X-Backup-Warnings-Count')).toBe('0');
+    expect(res.headers.get('X-Backup-Warnings-Count')).toBe('1'); // registry not available in test env
     expect(res.headers.get('Cache-Control')).toBe('no-store');
 
     // Body should be valid JSON with metadata
