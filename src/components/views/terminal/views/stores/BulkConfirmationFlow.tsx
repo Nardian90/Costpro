@@ -130,7 +130,7 @@ export function BulkConfirmationFlow({
       return;
     }
     setStep('executing');
-    await handleExecute(confirmationToken, overrideToken);
+    await handleExecute(confirmationToken!, overrideToken || '');
   };
 
   // Step 4: Execute

@@ -5,6 +5,7 @@ import { rateLimit } from '@/lib/rate-limit';
 import { managedCreateUserSchema, zodError } from '@/validation/api-schemas';
 import { validateOrigin } from '@/lib/csrf'; // FIX-SEC-023
 import { withTracing } from '@/lib/observability';
+import { logger } from '@/lib/logger';
 import crypto from 'crypto';
 
 const handler = withRole('admin', async (req, session) => {
