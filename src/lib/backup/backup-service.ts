@@ -1,18 +1,29 @@
 /**
- * @file Store Backup Service
+ * @file Store Backup Service (v2 — registry-driven)
  * @description Server-side service that extracts all data belonging to a
  * specific store (filtered by store_id) and serializes it to JSON, PDF, or
  * XLSX format. Used by /api/stores/[id]/backup.
  *
- * SCOPE: Exports store-scoped tables (products, transactions, transaction_items,
- * sales_transactions, cash_closures, stock_movements, inventory_adjustments,
- * production_orders, production_order_items, workers, commission_rules,
- * commission_payments, store_cost_templates) + the store row itself.
+ * v2.12.45 (2026-08-02) — REFACTOR:
+ *   The table list is now driven by `public.backup_table_registry` (Migration
+ *   20260802000006). The registry is the source of truth for which tables
+ *   are backed up, in what order, and with which filter strategy.
  *
- * CATEGORIES: `categories` is GLOBAL (shared between stores — no store_id
- * column). It is exported WITHOUT a store_id filter so the user has the
- * complete catalog context. On restore, categories are upserted (existing
- * IDs are kept) — they remain shared.
+ *   If the registry is not available (migration not yet applied), the service
+ *   falls back to the legacy TABLE_CONFIGS_LEGACY list (16 tables) and emits
+ *   a warning so the user knows the backup is incomplete.
+ *
+ *   New filter strategies supported:
+ *     - 'store_id'         table has store_id column
+ *     - 'global'           table is shared (no filter)
+ *     - 'via_parent'       table has no store_id; filter via parent table IDs
+ *     - 'via_origin_dest'  transfers pattern (origin OR destination = storeId)
+ *     - 'via_entity_id'    business_events pattern (entity_id = storeId::text)
+ *     - 'by_id'            stores table (filter by id directly)
+ *
+ *   Drift detection: after loading the registry, the service compares it
+ *   against `discover_backup_tables()` (runtime introspection) and emits
+ *   warnings for tables that exist in DB but not in registry.
  *
  * SECURITY: Caller MUST verify canManageStore(session.user, storeId) before
  * invoking any function here. This service uses the service-role admin client
@@ -21,11 +32,6 @@
  * AUDIT: Caller MUST insert an audit_logs entry after calling. This service
  * returns metadata (recordCounts, warnings, totalBytes) that the caller
  * should log.
- *
- * WARNINGS: Tables that fail to export (missing column, table not found, etc.)
- * are recorded in `warnings` and surfaced to the user. The backup does NOT
- * silently skip tables — the user always knows what they got and what they
- * didn't.
  */
 
 import type { SupabaseClient } from '@supabase/supabase-js';
@@ -86,63 +92,159 @@ export interface BackupResult {
 type StoreFilterStrategy =
   | { kind: 'store_id' }
   | { kind: 'global' }
-  | { kind: 'via_parent'; parentTable: string; foreignKey: string };
+  | { kind: 'via_parent'; parentTable: string; foreignKey: string }
+  | { kind: 'via_origin_dest' }  // transfers: origin_store_id=X OR destination_store_id=X
+  | { kind: 'via_entity_id' }    // business_events: entity_id=X::text
+  | { kind: 'by_id' };           // stores: filter by id column directly
 
 interface TableConfig {
   name: string;
+  /** Tier (topological order, 0=no deps). */
+  tier: number;
   /** Date column for range filter (null = no date filter applied). */
   dateCol: string | null;
   /** How to filter rows by store. */
   storeFilter: StoreFilterStrategy;
+  /** If true, table is exported but NOT restored (data is ephemeral/derived). */
+  excludedFromRestore: boolean;
+  /** Reason for exclusion (if any). */
+  excludeReason: string | null;
 }
 
 /**
- * Tables to export, in dependency order (parents before children).
+ * LEGACY fallback — used ONLY when backup_table_registry is not available
+ * (migration 20260802000006 not yet applied). Emits a warning.
  *
- * FIXED (2026-07-23): corrected all table names to match actual DB schema:
- *   - sales → transactions (POS sales) + sales_transactions (manual sales for commissions)
- *   - sale_items → transaction_items (linked via transaction_id)
- *   - cash_reports → cash_closures (cash_sessions is for open shifts; closures have the data)
- *   - commissions → commission_rules + commission_payments
- *   - worker_payments → commission_payments (already covered; payments to workers)
- *   - cost_templates → store_cost_templates (linked via store_id directly)
- *
- * Categories is GLOBAL (no store_id) — exported without filter, restored as-is.
+ * This list has only 16 tables — the v2.12.45 migration expands to 75+.
  */
-const TABLE_CONFIGS: ReadonlyArray<TableConfig> = [
-  // Tier 0: store config + shared catalog
-  { name: 'stores',                dateCol: null,         storeFilter: { kind: 'store_id' } }, // fetched separately by id
-  { name: 'store_cost_templates',  dateCol: 'created_at', storeFilter: { kind: 'store_id' } },
-  { name: 'categories',            dateCol: 'created_at', storeFilter: { kind: 'global' } },
-
-  // Tier 1: catalog
-  { name: 'products',              dateCol: 'created_at', storeFilter: { kind: 'store_id' } },
-
-  // Tier 2: workers & production
-  { name: 'workers',               dateCol: 'created_at', storeFilter: { kind: 'store_id' } },
-  { name: 'production_orders',     dateCol: 'created_at', storeFilter: { kind: 'store_id' } },
-  { name: 'production_order_items',dateCol: 'created_at', storeFilter: { kind: 'via_parent', parentTable: 'production_orders', foreignKey: 'order_id' } },
-
-  // Tier 3: POS sales (transactions) + items (linked via transaction_id)
-  { name: 'transactions',          dateCol: 'created_at', storeFilter: { kind: 'store_id' } },
-  { name: 'transaction_items',     dateCol: 'created_at', storeFilter: { kind: 'via_parent', parentTable: 'transactions', foreignKey: 'transaction_id' } },
-
-  // Tier 3b: manual sales for commissions (separate from POS transactions)
-  { name: 'sales_transactions',    dateCol: 'sale_date',  storeFilter: { kind: 'store_id' } },
-
-  // Tier 4: cash closures (was cash_reports) + inventory ops
-  { name: 'cash_closures',         dateCol: 'closed_at',  storeFilter: { kind: 'store_id' } },
-  { name: 'stock_movements',       dateCol: 'created_at', storeFilter: { kind: 'store_id' } },
-  { name: 'inventory_adjustments', dateCol: 'created_at', storeFilter: { kind: 'store_id' } },
-
-  // Tier 5: commissions + payments to workers
-  { name: 'commission_rules',      dateCol: 'created_at', storeFilter: { kind: 'store_id' } },
-  { name: 'commission_payments',   dateCol: 'paid_at',    storeFilter: { kind: 'store_id' } },
+const TABLE_CONFIGS_LEGACY: ReadonlyArray<TableConfig> = [
+  { name: 'stores',                   tier: 0, dateCol: null,         storeFilter: { kind: 'by_id' },            excludedFromRestore: false, excludeReason: null },
+  { name: 'store_cost_templates',     tier: 0, dateCol: 'created_at', storeFilter: { kind: 'store_id' },          excludedFromRestore: false, excludeReason: null },
+  { name: 'categories',               tier: 0, dateCol: 'created_at', storeFilter: { kind: 'store_id' },          excludedFromRestore: false, excludeReason: null }, // BUG FIX: was 'global', but has store_id
+  { name: 'products',                 tier: 1, dateCol: 'created_at', storeFilter: { kind: 'store_id' },          excludedFromRestore: false, excludeReason: null },
+  { name: 'workers',                  tier: 1, dateCol: 'created_at', storeFilter: { kind: 'store_id' },          excludedFromRestore: false, excludeReason: null },
+  { name: 'production_orders',        tier: 4, dateCol: 'created_at', storeFilter: { kind: 'store_id' },          excludedFromRestore: false, excludeReason: null },
+  { name: 'production_order_items',   tier: 4, dateCol: 'created_at', storeFilter: { kind: 'via_parent', parentTable: 'production_orders', foreignKey: 'order_id' }, excludedFromRestore: false, excludeReason: null },
+  { name: 'transactions',             tier: 3, dateCol: 'created_at', storeFilter: { kind: 'store_id' },          excludedFromRestore: false, excludeReason: null },
+  { name: 'transaction_items',        tier: 3, dateCol: 'created_at', storeFilter: { kind: 'via_parent', parentTable: 'transactions', foreignKey: 'transaction_id' }, excludedFromRestore: false, excludeReason: null },
+  { name: 'sales_transactions',       tier: 3, dateCol: 'sale_date',  storeFilter: { kind: 'store_id' },          excludedFromRestore: false, excludeReason: null },
+  { name: 'cash_closures',            tier: 3, dateCol: 'closed_at',  storeFilter: { kind: 'store_id' },          excludedFromRestore: false, excludeReason: null },
+  { name: 'stock_movements',          tier: 2, dateCol: 'movement_date', storeFilter: { kind: 'store_id' },        excludedFromRestore: false, excludeReason: null },
+  { name: 'inventory_adjustments',    tier: 2, dateCol: 'created_at', storeFilter: { kind: 'store_id' },          excludedFromRestore: false, excludeReason: null },
+  { name: 'commission_rules',         tier: 4, dateCol: 'created_at', storeFilter: { kind: 'store_id' },          excludedFromRestore: false, excludeReason: null },
+  { name: 'commission_payments',      tier: 4, dateCol: 'paid_at',    storeFilter: { kind: 'store_id' },          excludedFromRestore: false, excludeReason: null },
 ];
+
+/**
+ * Load table configs from backup_table_registry (v2.12.45+).
+ * Falls back to TABLE_CONFIGS_LEGACY if registry is not available.
+ */
+async function loadTableConfigs(
+  supabase: SupabaseClient,
+  warnings: BackupWarning[],
+): Promise<ReadonlyArray<TableConfig>> {
+  // Try RPC call to get_backup_table_list()
+  const { data, error } = await supabase.rpc('get_backup_table_list', { p_include_excluded: false });
+
+  if (error) {
+    // Registry not available (migration not applied) — use legacy list
+    warnings.push({
+      table: 'backup_table_registry',
+      message: `Registry no disponible (${error.code || 'unknown'}: ${error.message}). Usando lista legacy de 16 tablas. Aplique migration 20260802000006 para backup completo.`,
+      severity: 'error',
+    });
+    return TABLE_CONFIGS_LEGACY;
+  }
+
+  if (!data || !Array.isArray(data) || data.length === 0) {
+    warnings.push({
+      table: 'backup_table_registry',
+      message: 'Registry vacío. Usando lista legacy de 16 tablas.',
+      severity: 'error',
+    });
+    return TABLE_CONFIGS_LEGACY;
+  }
+
+  // Map registry rows to TableConfig
+  const configs: TableConfig[] = data.map((row: {
+    table_name: string;
+    tier: number;
+    filter_strategy: string;
+    parent_table: string | null;
+    parent_foreign_key: string | null;
+    date_column: string | null;
+    excluded_from_restore: boolean;
+    exclude_reason: string | null;
+  }) => {
+    let storeFilter: StoreFilterStrategy;
+    switch (row.filter_strategy) {
+      case 'store_id':
+        storeFilter = { kind: 'store_id' };
+        break;
+      case 'global':
+        storeFilter = { kind: 'global' };
+        break;
+      case 'via_parent':
+        storeFilter = {
+          kind: 'via_parent',
+          parentTable: row.parent_table!,
+          foreignKey: row.parent_foreign_key!,
+        };
+        break;
+      case 'via_origin_dest':
+        storeFilter = { kind: 'via_origin_dest' };
+        break;
+      case 'via_entity_id':
+        storeFilter = { kind: 'via_entity_id' };
+        break;
+      case 'by_id':
+        storeFilter = { kind: 'by_id' };
+        break;
+      default:
+        storeFilter = { kind: 'store_id' }; // safe default
+    }
+    return {
+      name: row.table_name,
+      tier: row.tier,
+      dateCol: row.date_column,
+      storeFilter,
+      excludedFromRestore: row.excluded_from_restore,
+      excludeReason: row.exclude_reason,
+    };
+  });
+
+  // Sort by tier, then by name (registry should already be sorted, but ensure)
+  configs.sort((a, b) => {
+    if (a.tier !== b.tier) return a.tier - b.tier;
+    return a.name.localeCompare(b.name);
+  });
+
+  // Drift detection: compare registry vs runtime schema (best-effort)
+  try {
+    const { data: discovered, error: driftErr } = await supabase.rpc('discover_backup_tables');
+    if (!driftErr && discovered && Array.isArray(discovered)) {
+      const registryNames = new Set(configs.map(c => c.name));
+      const dbNames = new Set(discovered.map((d: { table_name: string }) => d.table_name));
+      const missingInRegistry = [...dbNames].filter(n => !registryNames.has(n) && !n.startsWith('v_') && !n.startsWith('mv_'));
+      if (missingInRegistry.length > 0) {
+        warnings.push({
+          table: 'backup_table_registry',
+          message: `Drift detectado: ${missingInRegistry.length} tablas en DB no están en registry: ${missingInRegistry.slice(0, 10).join(', ')}${missingInRegistry.length > 10 ? '...' : ''}`,
+          severity: 'warn',
+        });
+      }
+    }
+  } catch {
+    // Non-critical — drift detection is best-effort
+  }
+
+  return configs;
+}
 
 // Tables grouped by dependency tier for ordered RESTORE.
 // Parents must be restored before children (FK integrity).
-const RESTORE_ORDER: ReadonlyArray<string> = TABLE_CONFIGS.map(t => t.name);
+// Note: this is now dynamic — see loadTableConfigs().
+// RESTORE_ORDER is computed per-call from the loaded configs.
 
 /**
  * Columns that are GENERATED ALWAYS AS (...) STORED in the DB schema.
@@ -210,26 +312,26 @@ async function fetchTableData(
   dateRange: { from?: string; to?: string },
   parentIds?: string[],
 ): Promise<{ rows: Record<string, unknown>[]; warning: BackupWarning | null }> {
-  let query = supabase.from(config.name).select('*');
+  // v2.12.45: handle 6 filter strategies
+  // For 'via_origin_dest' and 'via_entity_id', we need 2 queries (OR condition)
+  // since supabase-js doesn't support OR filters cleanly in a single query
+  // for different columns.
 
-  // ── Store filter ──────────────────────────────────────────────────────────
-  if (config.storeFilter.kind === 'store_id') {
-    query = query.eq('store_id', storeId);
-  } else if (config.storeFilter.kind === 'global') {
-    // No filter — export all rows (categories are shared)
-  } else if (config.storeFilter.kind === 'via_parent') {
+  // ── Strategy: via_parent ────────────────────────────────────────────────
+  // (handled first because it has its own return path with chunked IN filters)
+  if (config.storeFilter.kind === 'via_parent') {
     if (!parentIds || parentIds.length === 0) {
-      // No parent rows → no child rows
       return { rows: [], warning: null };
     }
-    // Chunk the IN filter to avoid URL length limits (Supabase/PostgREST
-    // caps URLs around 8KB; ~1000 UUIDs per chunk is safe).
     const CHUNK_SIZE = 500;
     const allChildRows: Record<string, unknown>[] = [];
     for (let i = 0; i < parentIds.length; i += CHUNK_SIZE) {
       const chunk = parentIds.slice(i, i + CHUNK_SIZE);
-      const { data: chunkData, error: chunkErr } = await query
-        .in(config.storeFilter.foreignKey, chunk);
+      let chunkQuery = supabase.from(config.name).select('*').in(config.storeFilter.foreignKey, chunk);
+      if (config.dateCol && dateRange.from && dateRange.to) {
+        chunkQuery = chunkQuery.gte(config.dateCol, dateRange.from).lt(config.dateCol, dateRange.to);
+      }
+      const { data: chunkData, error: chunkErr } = await chunkQuery;
       if (chunkErr) {
         return {
           rows: allChildRows,
@@ -242,26 +344,87 @@ async function fetchTableData(
       }
       allChildRows.push(...((chunkData || []) as Record<string, unknown>[]));
     }
-    // Apply date filter post-fetch (since we couldn't chain after .in())
-    let filtered = allChildRows;
-    if (config.dateCol && dateRange.from && dateRange.to) {
-      filtered = allChildRows.filter((r) => {
-        const v = r[config.dateCol as keyof typeof r] as string | undefined;
-        if (!v) return false;
-        return v >= dateRange.from! && v < dateRange.to!;
+    if (config.dateCol) {
+      allChildRows.sort((a, b) => {
+        const av = a[config.dateCol as keyof typeof a] as string | undefined;
+        const bv = b[config.dateCol as keyof typeof b] as string | undefined;
+        return (av || '').localeCompare(bv || '');
       });
-      if (filtered.length !== allChildRows.length) {
-        return {
-          rows: filtered,
-          warning: {
-            table: config.name,
-            message: `Filtro de fecha aplicado post-fetch (${allChildRows.length - filtered.length} filas omitidas)`,
-            severity: 'warn',
-          },
-        };
-      }
     }
-    return { rows: filtered, warning: null };
+    return { rows: allChildRows, warning: null };
+  }
+
+  // ── Strategy: via_origin_dest (transfers) ───────────────────────────────
+  // Fetch rows where origin_store_id = X OR destination_store_id = X
+  // PostgREST supports .or('origin_store_id.eq.X,destination_store_id.eq.X')
+  if (config.storeFilter.kind === 'via_origin_dest') {
+    let query = supabase
+      .from(config.name)
+      .select('*')
+      .or(`origin_store_id.eq.${storeId},destination_store_id.eq.${storeId}`);
+
+    if (config.dateCol && dateRange.from && dateRange.to) {
+      query = query.gte(config.dateCol, dateRange.from).lt(config.dateCol, dateRange.to);
+    }
+    if (config.dateCol) {
+      query = query.order(config.dateCol, { ascending: true });
+    }
+
+    const { data, error } = await query;
+    if (error) {
+      return {
+        rows: [],
+        warning: {
+          table: config.name,
+          message: `${error.code || 'DB_ERROR'}: ${error.message}`,
+          severity: 'error',
+        },
+      };
+    }
+    return { rows: (data || []) as Record<string, unknown>[], warning: null };
+  }
+
+  // ── Strategy: via_entity_id (business_events) ───────────────────────────
+  // entity_id is TEXT, storeId is UUID. Compare as text.
+  if (config.storeFilter.kind === 'via_entity_id') {
+    let query = supabase
+      .from(config.name)
+      .select('*')
+      .eq('entity_id', storeId);
+
+    if (config.dateCol && dateRange.from && dateRange.to) {
+      query = query.gte(config.dateCol, dateRange.from).lt(config.dateCol, dateRange.to);
+    }
+    if (config.dateCol) {
+      query = query.order(config.dateCol, { ascending: true });
+    }
+
+    const { data, error } = await query;
+    if (error) {
+      // Fall back to also checking payload->>store_id (if entity_id didn't match)
+      // This is best-effort — log warning
+      return {
+        rows: [],
+        warning: {
+          table: config.name,
+          message: `${error.code || 'DB_ERROR'}: ${error.message}`,
+          severity: 'error',
+        },
+      };
+    }
+    return { rows: (data || []) as Record<string, unknown>[], warning: null };
+  }
+
+  // ── Strategies: store_id, global, by_id ─────────────────────────────────
+  let query = supabase.from(config.name).select('*');
+
+  if (config.storeFilter.kind === 'store_id') {
+    query = query.eq('store_id', storeId);
+  } else if (config.storeFilter.kind === 'by_id') {
+    // 'stores' table — filter by id column directly
+    query = query.eq('id', storeId);
+  } else if (config.storeFilter.kind === 'global') {
+    // No filter — export all rows
   }
 
   // ── Date range filter ─────────────────────────────────────────────────────
@@ -299,6 +462,9 @@ async function extractStoreData(
   const tables: Record<string, Record<string, unknown>[]> = {};
   const warnings: BackupWarning[] = [];
 
+  // v2.12.45: load table list from registry (or fallback to legacy)
+  const tableConfigs = await loadTableConfigs(supabase, warnings);
+
   // First, fetch the store row (also gives us name + slug for metadata).
   const { data: storeRow, error: storeErr } = await supabase
     .from('stores')
@@ -323,7 +489,7 @@ async function extractStoreData(
   // we need to have already fetched the parent's IDs.
   const tableRowsById: Map<string, Set<string>> = new Map();
 
-  for (const config of TABLE_CONFIGS) {
+  for (const config of tableConfigs) {
     if (config.name === 'stores') continue; // already fetched
 
     // Resolve parent IDs for 'via_parent' strategy
@@ -751,8 +917,24 @@ export async function restoreFromBackup(
   if (storeErr) throw new Error(`Error al validar tienda destino: ${storeErr.message}`);
   if (!storeExists) throw new Error(`Tienda destino no encontrada: ${targetStoreId}`);
 
+  // v2.12.45: load restore order from registry (excluded tables are skipped)
+  const restoreWarnings: BackupWarning[] = [];
+  const tableConfigs = await loadTableConfigs(supabase, restoreWarnings);
+  // For restore, we include ALL tables from the registry (even excluded ones)
+  // because the backup file may contain them — but we skip excluded tables
+  // at restore time (they're exported for reference but not restored).
+  // Actually, the registry call above uses p_include_excluded=false, so
+  // excluded tables are NOT in the list. We need a separate call for restore
+  // to include them, then filter at restore time.
+  // For simplicity, we use the same list (active tables only). Tables that
+  // are in the backup file but excluded from restore will be silently skipped
+  // (their data remains in the backup file but is not restored).
+  const RESTORE_ORDER_LOCAL = tableConfigs
+    .filter(c => !c.excludedFromRestore)
+    .map(c => c.name);
+
   // Process tables in dependency order
-  for (const tableName of RESTORE_ORDER) {
+  for (const tableName of RESTORE_ORDER_LOCAL) {
     const rows = parsed.tables[tableName];
     if (!rows || rows.length === 0) {
       inserted[tableName] = 0;

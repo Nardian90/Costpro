@@ -1,0 +1,78 @@
+name: Security CI Gate
+
+on:
+  pull_request:
+    paths:
+      - 'supabase/migrations/**'
+      - 'src/app/api/**'
+      - 'ci-gate-allowlist.json'
+      - 'scripts/ci-gate-*.js'
+
+jobs:
+  ts-security-checks:
+    name: TypeScript Security Checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Run TypeScript security checks
+        run: node scripts/ci-gate-ts-checks.js
+
+  sql-security-checks:
+    name: SQL Security Checks
+    runs-on: ubuntu-latest
+    if: contains(github.event.pull_request.changed_files, 'supabase/migrations/')
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Generate SQL check file
+        run: node scripts/ci-gate-sql-checks.js
+
+      - name: Run SQL security checks
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo "⚠️ DATABASE_URL not set — skipping SQL checks"
+            exit 0
+          fi
+          psql "$DATABASE_URL" -f scripts/ci-gate-checks.sql -t -A -F '|' > /tmp/results.txt
+          node scripts/ci-gate-evaluate.js /tmp/results.txt
+
+  allowlist-review:
+    name: Allowlist Review
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check allowlist format
+        run: |
+          if [ ! -f ci-gate-allowlist.json ]; then
+            echo "❌ ci-gate-allowlist.json not found"
+            exit 1
+          fi
+          node -e "
+            const fs = require('fs');
+            const al = JSON.parse(fs.readFileSync('ci-gate-allowlist.json', 'utf-8'));
+            if (!al.version || !al.security_definer_without_auth_check || !al.tables_without_rls) {
+              console.error('❌ Allowlist missing required fields');
+              process.exit(1);
+            }
+            const now = new Date();
+            for (const item of al.security_definer_without_auth_check) {
+              if (item.expires && new Date(item.expires) < now) {
+                console.error('❌ Allowlist item expired: ' + item.function + ' (expired ' + item.expires + ')');
+                process.exit(1);
+              }
+              if (!item.reason || !item.added_by) {
+                console.error('❌ Allowlist item missing reason or added_by: ' + item.function);
+                process.exit(1);
+              }
+            }
+            console.log('✅ Allowlist valid');
+          "

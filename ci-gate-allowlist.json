@@ -1,0 +1,43 @@
+{
+  "version": 1,
+  "description": "Excepciones documentadas para el Security CI Gate. Cada excepción debe tener razón, autor y fecha de expiración.",
+  "security_definer_without_auth_check": [
+    {
+      "function": "validate_store_can_be_modified",
+      "reason": "STABLE read-only function. No modifica datos. REVOKE anon/PUBLIC aplicado.",
+      "added_by": "Iteración 9",
+      "expires": "2026-12-31"
+    },
+    {
+      "function": "check_bulk_ops_hourly_limit",
+      "reason": "STABLE read-only function. No modifica datos. REVOKE anon/PUBLIC aplicado.",
+      "added_by": "Iteración 9",
+      "expires": "2026-12-31"
+    },
+    {
+      "function": "get_table_writable_columns",
+      "reason": "STABLE read-only helper. No modifica datos. REVOKE anon/PUBLIC aplicado.",
+      "added_by": "Iteración 7",
+      "expires": "2026-12-31"
+    },
+    {
+      "function": "validate_backup_registry_drift",
+      "reason": "STABLE read-only function. No modifica datos. REVOKE anon/PUBLIC aplicado.",
+      "added_by": "Iteración 7",
+      "expires": "2026-12-31"
+    },
+    {
+      "function": "validate_post_restore",
+      "reason": "STABLE read-only function. No modifica datos. REVOKE anon/PUBLIC aplicado.",
+      "added_by": "Iteración 7",
+      "expires": "2026-12-31"
+    },
+    {
+      "function": "validate_pre_restore_fk_integrity",
+      "reason": "STABLE read-only function. No modifica datos. REVOKE anon/PUBLIC aplicado.",
+      "added_by": "Iteración 7",
+      "expires": "2026-12-31"
+    }
+  ],
+  "tables_without_rls": []
+}

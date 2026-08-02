@@ -61,6 +61,17 @@ export const API_ERRORS = {
   CONFIG_ERROR: { key: 'apiErrors.configError', status: 500, defaultMessage: 'Error de configuración' },
   RATE_LIMITED: { key: 'apiErrors.rateLimited', status: 429, defaultMessage: 'Demasiadas solicitudes' },
   UNKNOWN_ERROR: { key: 'apiErrors.unknownError', status: 500, defaultMessage: 'Error desconocido' },
+
+  // Bulk Store Operations (Iteración 8)
+  BULK_PERMISSION_DENIED: { key: 'apiErrors.bulkPermissionDenied', status: 403, defaultMessage: 'Permiso denegado para operación bulk' },
+  BULK_INVALID_CONFIRMATION_TOKEN: { key: 'apiErrors.bulkInvalidConfirmationToken', status: 400, defaultMessage: 'Token de confirmación inválido' },
+  BULK_TOKEN_EXPIRED: { key: 'apiErrors.bulkTokenExpired', status: 400, defaultMessage: 'Token expirado' },
+  BULK_OVERRIDE_REQUIRED: { key: 'apiErrors.bulkOverrideRequired', status: 403, defaultMessage: 'Se requiere token de override de otro admin para tiendas protegidas' },
+  BULK_SAME_USER_OVERRIDE: { key: 'apiErrors.bulkSameUserOverride', status: 403, defaultMessage: 'El override debe ser de un admin diferente' },
+  BULK_STORE_HAS_BLOCKERS: { key: 'apiErrors.bulkStoreHasBlockers', status: 409, defaultMessage: 'La tienda tiene dependencias pendientes' },
+  BULK_RATE_LIMIT_EXCEEDED: { key: 'apiErrors.bulkRateLimitExceeded', status: 429, defaultMessage: 'Límite de operaciones bulk por hora excedido' },
+  BULK_CONFIRMATION_TEXT_REQUIRED: { key: 'apiErrors.bulkConfirmationTextRequired', status: 400, defaultMessage: 'Texto de confirmación BULK_DELETE requerido' },
+  BULK_REASON_REQUIRED: { key: 'apiErrors.bulkReasonRequired', status: 400, defaultMessage: 'Motivo es requerido (mínimo 10 caracteres)' },
 } as const;
 
 export type ApiErrorKey = keyof typeof API_ERRORS;

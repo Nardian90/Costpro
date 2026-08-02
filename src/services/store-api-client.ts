@@ -226,12 +226,14 @@ export const storeApiClient = {
   /**
    * F4-T01: Operación bulk para activar/desactivar/eliminar múltiples tiendas.
    * Retorna el número de tiendas afectadas.
+   *
+   * @deprecated Use bulkPreview + bulkExecute for delete operations.
    */
   async bulkStoreAction(
     storeIds: string[],
     action: 'activate' | 'deactivate' | 'delete'
   ): Promise<{ affected: number; failed?: number }> {
-    const controller = timeoutController(30_000); // bulk ops pueden tardar más
+    const controller = timeoutController(30_000);
     const res = await fetch(`${API_BASE}/bulk`, {
       method: 'POST',
       headers: authHeaders(),
@@ -244,5 +246,137 @@ export const storeApiClient = {
     }
     const result = await res.json();
     return { affected: result.affected ?? 0, failed: result.failed };
+  },
+
+  // ==========================================================================
+  // Iteración 8 — Bulk Store Operations (preview → token → execute flow)
+  // ==========================================================================
+
+  /**
+   * Iteración 8: Preview de operación bulk.
+   * Valida dependencias y retorna información completa para la UI.
+   */
+  async bulkPreview(
+    storeIds: string[],
+    action: 'activate' | 'deactivate' | 'delete' | 'archive'
+  ): Promise<{
+    can_proceed: boolean;
+    action: string;
+    stores: Array<{
+      id: string;
+      name: string;
+      is_active: boolean;
+      backup_restore_protected: boolean;
+      has_blockers: boolean;
+    }>;
+    blockers: Array<{
+      store_id: string;
+      store_name: string;
+      blockers: Array<{ type: string; count: number; message: string }>;
+    }>;
+    protected_stores: string[];
+    requires_override: boolean;
+    requires_confirmation: boolean;
+    confirmation_text_required: string | null;
+    denied_count: number;
+  }> {
+    const controller = timeoutController(30_000);
+    const res = await fetch(`${API_BASE}/bulk/preview`, {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify({ storeIds, action }),
+      signal: controller.signal,
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: 'Error de conexión' }));
+      throw new Error(err.message || err.error || 'Error en preview bulk');
+    }
+    return res.json();
+  },
+
+  /**
+   * Iteración 8: Genera confirmation_token para bulk delete/archive.
+   */
+  async generateBulkToken(
+    storeIds: string[],
+    action: 'delete' | 'archive'
+  ): Promise<{
+    confirmation_token: string;
+    expires_at: string;
+    has_protected_stores: boolean;
+    action: string;
+    store_ids: string[];
+  }> {
+    const controller = timeoutController(15_000);
+    const res = await fetch(`${API_BASE}/bulk/generate-token`, {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify({ storeIds, action }),
+      signal: controller.signal,
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: 'Error de conexión' }));
+      throw new Error(err.message || err.error || 'Error al generar token');
+    }
+    return res.json();
+  },
+
+  /**
+   * Iteración 8: Genera override_token (doble confirmación para tiendas protegidas).
+   */
+  async generateBulkOverride(
+    confirmation_token: string,
+    reason?: string
+  ): Promise<{
+    override_token: string;
+    expires_at: string;
+    generated_by: string;
+  }> {
+    const controller = timeoutController(15_000);
+    const res = await fetch(`${API_BASE}/bulk/generate-override`, {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify({ confirmation_token, reason }),
+      signal: controller.signal,
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: 'Error de conexión' }));
+      throw new Error(err.message || err.error || 'Error al generar override');
+    }
+    return res.json();
+  },
+
+  /**
+   * Iteración 8: Execute bulk operation con validación server-side completa.
+   */
+  async bulkExecute(params: {
+    storeIds: string[];
+    action: 'activate' | 'deactivate' | 'delete' | 'archive';
+    confirmation_text?: string;
+    reason?: string;
+    confirmation_token?: string;
+    override_token?: string;
+  }): Promise<{
+    success: boolean;
+    action: string;
+    processed?: number;
+    affected?: number;
+    total_requested?: number;
+    failed?: number;
+    denied: number;
+    audit_log_id?: string;
+  }> {
+    const controller = timeoutController(60_000); // execute puede tardar más
+    const res = await fetch(`${API_BASE}/bulk/execute`, {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify(params),
+      signal: controller.signal,
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: 'Error de conexión' }));
+      throw new Error(err.message || err.error || `Error en execute bulk: ${params.action}`);
+    }
+    return res.json();
   },
 };

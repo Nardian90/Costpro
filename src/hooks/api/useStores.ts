@@ -115,6 +115,9 @@ export function useStores(userId: string, isAdmin: boolean, isEncargado: boolean
 /**
  * F4-T01: Mutation para operaciones bulk en tiendas (activar/desactivar/eliminar).
  * Invalida ['stores'], ['store-user-counts'], ['dashboard'] tras éxito.
+ *
+ * @deprecated Use useBulkPreview + useBulkExecute for delete operations.
+ *             This hook is kept for backward compatibility with activate/deactivate.
  */
 export function useBulkStoreAction() {
   const queryClient = useQueryClient();
@@ -136,6 +139,135 @@ export function useBulkStoreAction() {
     },
     onError: (error) => {
       logger.error('DATABASE', 'STORE_BULK_ACTION_FAILED', { error: error.message });
+    },
+  });
+}
+
+// ============================================================================
+// Iteración 8 — Bulk Store Operations (preview → token → execute flow)
+// ============================================================================
+
+export interface BulkPreviewResult {
+  can_proceed: boolean;
+  action: string;
+  stores: Array<{
+    id: string;
+    name: string;
+    is_active: boolean;
+    backup_restore_protected: boolean;
+    has_blockers: boolean;
+  }>;
+  blockers: Array<{
+    store_id: string;
+    store_name: string;
+    blockers: Array<{ type: string; count: number; message: string }>;
+  }>;
+  protected_stores: string[];
+  requires_override: boolean;
+  requires_confirmation: boolean;
+  confirmation_text_required: string | null;
+  denied_count: number;
+}
+
+export interface BulkTokenResult {
+  confirmation_token: string;
+  expires_at: string;
+  has_protected_stores: boolean;
+  action: string;
+  store_ids: string[];
+}
+
+export interface BulkOverrideResult {
+  override_token: string;
+  expires_at: string;
+  generated_by: string;
+}
+
+export interface BulkExecuteResult {
+  success: boolean;
+  action: string;
+  processed?: number;
+  affected?: number;
+  total_requested?: number;
+  failed?: number;
+  denied: number;
+  audit_log_id?: string;
+}
+
+/**
+ * Iteración 8: Preview de operación bulk.
+ * Valida dependencias y retorna información completa para la UI.
+ */
+export function useBulkPreview() {
+  return useMutation({
+    mutationFn: async (params: {
+      storeIds: string[];
+      action: 'activate' | 'deactivate' | 'delete' | 'archive';
+    }): Promise<BulkPreviewResult> => {
+      return storeApiClient.bulkPreview(params.storeIds, params.action);
+    },
+  });
+}
+
+/**
+ * Iteración 8: Genera confirmation_token para bulk delete/archive.
+ */
+export function useGenerateBulkToken() {
+  return useMutation({
+    mutationFn: async (params: {
+      storeIds: string[];
+      action: 'delete' | 'archive';
+    }): Promise<BulkTokenResult> => {
+      return storeApiClient.generateBulkToken(params.storeIds, params.action);
+    },
+  });
+}
+
+/**
+ * Iteración 8: Genera override_token (doble confirmación para tiendas protegidas).
+ * Requiere que el caller sea admin Y diferente al que generó el confirmation_token.
+ */
+export function useGenerateBulkOverride() {
+  return useMutation({
+    mutationFn: async (params: {
+      confirmation_token: string;
+      reason?: string;
+    }): Promise<BulkOverrideResult> => {
+      return storeApiClient.generateBulkOverride(params.confirmation_token, params.reason);
+    },
+  });
+}
+
+/**
+ * Iteración 8: Execute bulk operation con validación server-side completa.
+ */
+export function useBulkExecute() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (params: {
+      storeIds: string[];
+      action: 'activate' | 'deactivate' | 'delete' | 'archive';
+      confirmation_text?: string;
+      reason?: string;
+      confirmation_token?: string;
+      override_token?: string;
+    }): Promise<BulkExecuteResult> => {
+      return storeApiClient.bulkExecute(params);
+    },
+    onSuccess: (result, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['stores'] });
+      queryClient.invalidateQueries({ queryKey: ['store-user-counts'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['multi-store-dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['store-health'] });
+      logger.info('DATABASE', 'BULK_EXECUTE_SUCCESS', {
+        action: variables.action,
+        processed: result.processed || result.affected,
+        audit_log_id: result.audit_log_id,
+      });
+    },
+    onError: (error) => {
+      logger.error('DATABASE', 'BULK_EXECUTE_FAILED', { error: error.message });
     },
   });
 }

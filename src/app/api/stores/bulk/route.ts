@@ -34,7 +34,7 @@ import { withIdempotency } from '@/lib/idempotency';
 
 const bulkActionSchema = z.object({
   storeIds: z.array(z.string().uuid()).min(1).max(50),
-  action: z.enum(['activate', 'deactivate', 'delete']),
+  action: z.enum(['activate', 'deactivate']),
 });
 
 async function bulkHandler(req: NextRequest, session: AuthenticatedSession) {
@@ -172,6 +172,15 @@ async function bulkHandler(req: NextRequest, session: AuthenticatedSession) {
         }
 
         if (action === 'delete') {
+          // Iteración 9: Delete is no longer supported via this legacy endpoint.
+          // Use POST /api/stores/bulk/preview → /generate-token → /execute instead.
+          return {
+            status: 410,
+            body: {
+              error: 'Gone',
+              message: 'Use POST /api/stores/bulk/preview → /generate-token → /execute for delete operations',
+            },
+          };
           const results = await Promise.allSettled(
             allowedIds.map(async (storeId) => {
               const { error } = await admin.rpc('soft_delete_store', {

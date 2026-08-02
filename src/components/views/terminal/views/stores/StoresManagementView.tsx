@@ -46,6 +46,8 @@ import { useStoreHealth } from '@/hooks/api/useStoreHealth';
 import { VirtualizedStoreGrid } from './VirtualizedStoreGrid'; // B3
 import { StoreCard } from './StoreCard'; // FIX-AUDIT-7: extracted component
 import { DestructiveConfirmModal } from '@/components/ui/DestructiveConfirmModal';
+// Iteración 8: Nuevo flujo bulk delete con preview + token + override
+import { BulkDeleteDialog } from './BulkDeleteDialog';
 import { useAuthStore } from '@/store';
 import { useStoreUserCounts } from '@/hooks/api/useStoreUserCounts';
 import { useMultiStoreDashboard } from '@/hooks/api/useMultiStoreDashboard';
@@ -152,8 +154,10 @@ export default function StoresManagementView({ onOpenDashboard }: { onOpenDashbo
   const [configModalStore, setConfigModalStore] = useState<import('@/types').Store | null>(null);
   // F4-T01: state para selección múltiple de tiendas (bulk operations).
   const [selectedStoreIds, setSelectedStoreIds] = useState<Set<string>>(new Set());
-  // F4-T01: confirmación destructiva bulk (deactivate/delete).
-  const [bulkConfirm, setBulkConfirm] = useState<null | { action: 'activate' | 'deactivate' | 'delete'; storeIds: string[]; storeNames: string[] }>(null);
+  // F4-T01: confirmación destructiva bulk (deactivate — delete ahora usa BulkDeleteDialog).
+  const [bulkConfirm, setBulkConfirm] = useState<null | { action: 'activate' | 'deactivate'; storeIds: string[]; storeNames: string[] }>(null);
+  // Iteración 8: Nuevo dialog bulk delete con preview + token + override
+  const [bulkDeleteDialog, setBulkDeleteDialog] = useState<null | { action: 'delete' | 'archive'; storeIds: string[] }>(null);
   // F4-T03: modal para aplicar plantilla FC a múltiples tiendas.
   const [bulkTemplateOpen, setBulkTemplateOpen] = useState(false);
   // F4-T04: onboarding wizard de 3 pasos.
@@ -181,22 +185,26 @@ export default function StoresManagementView({ onOpenDashboard }: { onOpenDashbo
   const selectedCount = selectedStoreIds.size;
   const selectedStores = stores.filter(s => selectedStoreIds.has(s.id));
 
-  // F4-T01: ejecutar acción bulk (con confirmación previa para deactivate/delete).
-  const handleBulkAction = (action: 'activate' | 'deactivate' | 'delete') => {
+  // F4-T01: ejecutar acción bulk.
+  // Iteración 8: delete ahora usa BulkDeleteDialog (preview + token + override).
+  // activate es seguro — ejecutar directo. deactivate pide confirmación simple.
+  const handleBulkAction = (action: 'activate' | 'deactivate' | 'delete' | 'archive') => {
     const ids = Array.from(selectedStoreIds);
     const names = selectedStores.map(s => s.name);
-    // activate es seguro — ejecutar directo. deactivate/delete piden confirmación.
     if (action === 'activate') {
       void executeBulk(action, ids);
-    } else {
+    } else if (action === 'deactivate') {
       setBulkConfirm({ action, storeIds: ids, storeNames: names });
+    } else {
+      // delete/archive: usar nuevo BulkDeleteDialog con preview + token
+      setBulkDeleteDialog({ action, storeIds: ids });
     }
   };
 
-  const executeBulk = async (action: 'activate' | 'deactivate' | 'delete', ids: string[]) => {
+  const executeBulk = async (action: 'activate' | 'deactivate', ids: string[]) => {
     try {
       const result = await bulkAction.mutateAsync({ storeIds: ids, action });
-      const verb = action === 'activate' ? 'activadas' : action === 'deactivate' ? 'desactivadas' : 'eliminadas';
+      const verb = action === 'activate' ? 'activadas' : 'desactivadas';
       toast.success(`${result.affected} tienda${result.affected === 1 ? '' : 's'} ${verb}`);
       if (result.failed && result.failed > 0) {
         toast.warning(`${result.failed} tienda(s) no pudieron procesarse`);
@@ -562,28 +570,20 @@ export default function StoresManagementView({ onOpenDashboard }: { onOpenDashbo
           </label>
         }
       />
-      {/* F4-T01: DestructiveConfirmModal para bulk deactivate/delete.
-          Pide escribir "BULK" para confirmar (no el nombre de cada tienda — sería impracticable con 10+). */}
+      {/* F4-T01: DestructiveConfirmModal para bulk deactivate.
+          Iteración 8: bulk delete ahora usa BulkDeleteDialog (preview + token + override). */}
       {bulkConfirm && (
         <DestructiveConfirmModal
           key={`bulk-${bulkConfirm.action}-${bulkConfirm.storeIds.length}`}
           isOpen={!!bulkConfirm}
           onClose={() => !bulkAction.isPending && setBulkConfirm(null)}
-          title={
-            bulkConfirm.action === 'delete'
-              ? t('bulkDeleteTitle', { count: bulkConfirm.storeIds.length })
-              : t('bulkDeactivateTitle', { count: bulkConfirm.storeIds.length })
-          }
-          description={
-            bulkConfirm.action === 'delete'
-              ? t('confirmDescDelete')
-              : t('confirmDescDeactivate')
-          }
+          title={t('bulkDeactivateTitle', { count: bulkConfirm.storeIds.length })}
+          description={t('confirmDescDeactivate')}
           confirmName="BULK"
           confirmNameLabel={t('bulkConfirmNameLabel')}
           warningText={
             <>
-              Vas a {bulkConfirm.action === 'delete' ? 'eliminar' : 'desactivar'}{' '}
+              Vas a desactivar{' '}
               <strong>{bulkConfirm.storeIds.length} tiendas</strong>:
               <div className="mt-2 max-h-32 overflow-y-auto">
                 {bulkConfirm.storeNames.map((name, i) => (
@@ -592,16 +592,28 @@ export default function StoresManagementView({ onOpenDashboard }: { onOpenDashbo
               </div>
             </>
           }
-          itemsList={
-            bulkConfirm.action === 'delete'
-              ? ['Soft-delete con revocación de memberships', 'Datos históricos preservados', 'Irreversible']
-              : ['Usuarios pierden acceso', 'Configuración preservada', 'Reactivable en cualquier momento']
-          }
-          confirmLabel={
-            bulkConfirm.action === 'delete' ? t('bulkConfirmLabelDelete') : t('bulkConfirmLabelDeactivate')
-          }
+          itemsList={[
+            'Usuarios pierden acceso',
+            'Configuración preservada',
+            'Reactivable en cualquier momento'
+          ]}
+          confirmLabel={t('bulkConfirmLabelDeactivate')}
           onConfirm={() => executeBulk(bulkConfirm.action, bulkConfirm.storeIds)}
           isSubmitting={bulkAction.isPending}
+        />
+      )}
+      {/* Iteración 8: BulkDeleteDialog para bulk delete/archive.
+          Flujo: preview → confirmation_text=BULK_DELETE + reason → token → override (si protegida) → execute */}
+      {bulkDeleteDialog && (
+        <BulkDeleteDialog
+          open={!!bulkDeleteDialog}
+          onOpenChange={(open) => { if (!open) setBulkDeleteDialog(null); }}
+          storeIds={bulkDeleteDialog.storeIds}
+          action={bulkDeleteDialog.action}
+          onComplete={() => {
+            clearSelection();
+            setBulkDeleteDialog(null);
+          }}
         />
       )}
       {/* F4-T03: Modal para aplicar plantilla FC a múltiples tiendas seleccionadas. */}
