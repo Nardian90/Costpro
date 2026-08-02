@@ -542,6 +542,16 @@ DROP POLICY IF EXISTS "poi_insert_own_store" ON public.production_order_items;
 DROP POLICY IF EXISTS "poi_update_own_store" ON public.production_order_items;
 DROP POLICY IF EXISTS "poi_delete_own_store" ON public.production_order_items;
 
+-- V2.12.41 fix: también DROP las nuevas policies para idempotencia
+DROP POLICY IF EXISTS "po_select_has_store_access" ON public.production_orders;
+DROP POLICY IF EXISTS "po_insert_has_store_access" ON public.production_orders;
+DROP POLICY IF EXISTS "po_update_has_store_access" ON public.production_orders;
+DROP POLICY IF EXISTS "po_delete_has_store_access" ON public.production_orders;
+DROP POLICY IF EXISTS "poi_select_has_store_access" ON public.production_order_items;
+DROP POLICY IF EXISTS "poi_insert_has_store_access" ON public.production_order_items;
+DROP POLICY IF EXISTS "poi_update_has_store_access" ON public.production_order_items;
+DROP POLICY IF EXISTS "poi_delete_has_store_access" ON public.production_order_items;
+
 -- Create new policies using has_store_access() (H-024 fix)
 CREATE POLICY "po_select_has_store_access" ON public.production_orders
   FOR SELECT USING (
