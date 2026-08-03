@@ -26,22 +26,16 @@ export default function KardexModal({ product, isOpen, onClose }: KardexModalPro
     pageSize
   );
 
-  // Calculate running balance from current stock backwards
+  // FIX H-12 (Iteración 11.1): Usar running_balance directamente del RPC
+  // (balance_after), que es el saldo DESPUÉS de cada movimiento calculado
+  // server-side. Antes se recalculaba client-side partiendo de
+  // product.stock_current hacia atrás, lo que rompía en paginación
+  // (páginas 2+ mostraban saldos incorrectos porque solo usaba los items
+  // de la página actual).
   const entries: KardexEntry[] = useMemo(() => {
     if (!data?.data || data.data.length === 0) return [];
-
-    const items = [...data.data];
-    let balance = product?.stock_current || 0;
-
-    // Data comes newest first → reverse to oldest first
-    const reversed = [...items].reverse();
-    for (let i = 0; i < reversed.length; i++) {
-      balance -= reversed[i].quantity_change;
-      reversed[i].running_balance = balance;
-    }
-
-    return reversed.reverse();
-  }, [data, product?.stock_current]);
+    return data.data;
+  }, [data]);
 
   const totalPages = data?.pagination?.totalPages || 1;
   const totalItems = data?.pagination?.totalItems || 0;

@@ -371,6 +371,11 @@ export function useSalesCatalog() {
           cash_paid: r.cashPaid,
           transfer_paid: r.transferPaid,
         })),
+        // FIX H-16 (Iteración 11.1): Añadir p_idempotency_key para prevenir
+        // doble-submit. Antes se omitía, permitiendo que un doble-click o
+        // retry de red creara ventas duplicadas. La key se genera una vez
+        // por intento de checkout con crypto.randomUUID() (alta entropía).
+        p_idempotency_key: `sale-${crypto.randomUUID()}`,
         // Política de secuencia global: pasar la fecha de operación elegida.
         // Si es NULL, el backend usará NOW() (comportamiento legacy).
         // El backend valida que no sea anterior al MAX global (forward-only locking).
