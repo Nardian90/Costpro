@@ -6,6 +6,7 @@ import { withTracing } from '@/lib/observability';
 import { getSupabaseAdminSafe as getSupabaseAdmin } from '@/lib/supabase-admin';
 import { logger } from '@/lib/logger';
 import { z } from 'zod';
+import { uuidRegex } from '@/validation/schemas';
 
 /**
  * Iteración 11.2 — POST /api/pos/checkout
@@ -23,7 +24,7 @@ import { z } from 'zod';
  */
 
 const itemSchema = z.object({
-  product_id: z.string().uuid(),
+  product_id: z.string().regex(uuidRegex),
   variant_id: z.string().uuid().nullable().optional(),
   quantity: z.number().positive(),
   price: z.number().min(0),
@@ -48,8 +49,8 @@ const itemSchema = z.object({
 });
 
 const checkoutSchema = z.object({
-  store_id: z.string().uuid(),
-  seller_id: z.string().uuid(),
+  store_id: z.string().regex(uuidRegex),
+  seller_id: z.string().regex(uuidRegex),
   payment_method: z.enum(['cash', 'transfer', 'zelle', 'mixed']),
   discount_type: z.enum(['fixed', 'percentage']).default('fixed'),
   discount_value: z.number().min(0).default(0),
@@ -62,9 +63,9 @@ const checkoutSchema = z.object({
   zelle_amount: z.number().min(0).default(0),
   sale_currency: z.string().default('CUP'),
   sale_exchange_rate: z.number().default(1),
-  customer_id: z.string().uuid().nullable().optional(),
+  customer_id: z.string().regex(uuidRegex).nullable().optional(),
   customer_name: z.string().optional(),
-  supervisor_user_id: z.string().uuid().nullable().optional(),
+  supervisor_user_id: z.string().regex(uuidRegex).nullable().optional(),
   idempotency_key: z.string().min(1),
   operation_date: z.string().datetime().optional(),
   items: z.array(itemSchema).min(1),
