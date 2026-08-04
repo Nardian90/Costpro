@@ -118,7 +118,35 @@ const handler = withAuth(async (req, session) => {
       try {
         switch (op.entity) {
           case 'sale':
-            result = await supabase.rpc('create_sale', op.payload);
+            // Iteración 11.2 (TD-11.2.1 resolved): Use create_sale_v2 for offline sync.
+            // Map old payload to v2 format (v2 generates transaction_id internally,
+            // accepts customer_id/supervisor_user_id, doesn't accept p_transaction_id/p_warehouse_id).
+            {
+              const v2Payload = {
+                p_store_id: op.payload.p_store_id,
+                p_seller_id: op.payload.p_seller_id,
+                p_items: op.payload.p_items,
+                p_payment_method: op.payload.p_payment_method || 'cash',
+                p_discount_type: op.payload.p_discount_type || 'fixed',
+                p_discount_value: op.payload.p_discount_value || 0,
+                p_applied_taxes: op.payload.p_applied_taxes || [],
+                p_tax_amount: op.payload.p_tax_amount || 0,
+                p_total_amount: op.payload.p_total_amount || 0,
+                p_subtotal: op.payload.p_subtotal || 0,
+                p_cash_amount: op.payload.p_cash_amount || 0,
+                p_transfer_amount: op.payload.p_transfer_amount || 0,
+                p_zelle_amount: op.payload.p_zelle_amount || 0,
+                p_sale_currency: op.payload.p_sale_currency || 'CUP',
+                p_sale_exchange_rate: op.payload.p_sale_exchange_rate || 1,
+                p_customer_id: op.payload.p_customer_id || null,
+                p_customer_name: op.payload.p_customer_name || null,
+                p_supervisor_user_id: op.payload.p_supervisor_user_id || null,
+                p_idempotency_key: op.idempotencyKey,
+                p_operation_date: op.payload.p_operation_date || null,
+                p_user_id: session.user.id,
+              };
+              result = await supabase.rpc('create_sale_v2', v2Payload);
+            }
             break;
           case 'reception':
             result = await supabase.rpc('register_reception', op.payload);
