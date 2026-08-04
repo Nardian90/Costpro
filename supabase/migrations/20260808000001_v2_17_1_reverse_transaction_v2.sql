@@ -80,10 +80,10 @@ BEGIN
       p_store_id := v_tx.store_id,
       p_user_id := v_caller_uid,
       p_quantity := v_units_to_restore,
-      p_movement_type := 'sale_reverse',
-      p_reference_doc := p_transaction_id::text,
+      p_movement_type := 'sale_reverse'::text,
+      p_sale_id := p_transaction_id,
       p_unit_cost := v_item.cost_at_sale,
-      p_reason := 'Reverso de venta',
+      p_reason := 'Reverso de venta'::text,
       p_operation_date := NOW(),
       p_skip_access_check := TRUE
     );
@@ -108,7 +108,7 @@ BEGIN
 
   -- 5. Audit log atómico
   INSERT INTO public.audit_logs (action, table_name, record_id, store_id, user_id, metadata)
-  VALUES ('REVERSE_SALE_V2', 'transactions', p_transaction_id::text, v_tx.store_id, v_caller_uid,
+  VALUES ('REVERSE_SALE_V2', 'transactions', p_transaction_id, v_tx.store_id, v_caller_uid,
     jsonb_build_object('reason', p_reason, 'old_status', v_tx.status,
       'total_amount', v_tx.total_amount, 'payment_method', v_tx.payment_method,
       'v2_reverse', true));

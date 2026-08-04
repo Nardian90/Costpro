@@ -93,10 +93,10 @@ BEGIN
       p_store_id := p_store_id,
       p_user_id := v_caller_uid,
       p_quantity := v_qty,
-      p_movement_type := 'return',
-      p_reference_doc := v_devolution_id::text,
+      p_movement_type := 'return'::text,
+      p_sale_id := v_devolution_id,
       p_unit_cost := 0,
-      p_reason := 'Devolución: ' || COALESCE(p_reason, ''),
+      p_reason := ('Devolución: ' || COALESCE(p_reason, ''))::text,
       p_operation_date := NOW(),
       p_skip_access_check := TRUE
     );
@@ -119,7 +119,7 @@ BEGIN
 
   -- 8. Audit log atómico
   INSERT INTO public.audit_logs (action, table_name, record_id, store_id, user_id, metadata)
-  VALUES ('DEVOLUTION_CREATED_V2', 'devolutions', v_devolution_id::text, p_store_id, v_caller_uid,
+  VALUES ('DEVOLUTION_CREATED_V2', 'devolutions', v_devolution_id, p_store_id, v_caller_uid,
     jsonb_build_object('reason', p_reason, 'original_tx', p_original_transaction_id,
       'devolution_number', v_dev_number, 'item_count', jsonb_array_length(p_items),
       'v2_reverse', true));

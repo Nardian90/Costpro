@@ -60,10 +60,10 @@ BEGIN
         p_store_id := v_original.store_id,
         p_user_id := v_caller_uid,
         p_quantity := v_diff,
-        p_movement_type := 'adjustment',
-        p_reference_doc := v_new_id::text,
+        p_movement_type := 'adjustment'::text,
+        p_sale_id := v_new_id,
         p_unit_cost := 0,
-        p_reason := 'Duplicación de ajuste',
+        p_reason := 'Duplicación de ajuste'::text,
         p_operation_date := NOW(),
         p_skip_access_check := TRUE
       );
@@ -82,7 +82,7 @@ BEGIN
 
   -- 5. Audit log
   INSERT INTO public.audit_logs (action, table_name, record_id, store_id, user_id, metadata)
-  VALUES ('ADJUSTMENT_DUPLICATED_V2', 'inventory_adjustments', v_new_id::text, v_original.store_id, v_caller_uid,
+  VALUES ('ADJUSTMENT_DUPLICATED_V2', 'inventory_adjustments', v_new_id, v_original.store_id, v_caller_uid,
     jsonb_build_object('original_id', p_original_id, 'v2_reverse', true));
 
   RETURN jsonb_build_object('status','success','new_adjustment_id',v_new_id);

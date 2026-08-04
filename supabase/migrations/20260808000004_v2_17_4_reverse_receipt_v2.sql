@@ -80,10 +80,10 @@ BEGIN
       p_store_id := v_receipt.store_id,
       p_user_id := v_caller_uid,
       p_quantity := -v_item.quantity,
-      p_movement_type := 'purchase_reverse',
-      p_reference_doc := p_receipt_id::text,
+      p_movement_type := 'purchase_reverse'::text,
+      p_sale_id := p_receipt_id,
       p_unit_cost := v_item.unit_cost,
-      p_reason := 'Reverso de recepción: ' || COALESCE(p_reason, ''),
+      p_reason := ('Reverso de recepción: ' || COALESCE(p_reason, ''))::text,
       p_operation_date := NOW(),
       p_skip_access_check := TRUE
     );
@@ -121,7 +121,7 @@ BEGIN
 
   -- 6. Audit log atómico
   INSERT INTO public.audit_logs (action, table_name, record_id, store_id, user_id, metadata)
-  VALUES ('REVERSE_RECEIPT_V2', 'receipts', p_receipt_id::text, v_receipt.store_id, v_caller_uid,
+  VALUES ('REVERSE_RECEIPT_V2', 'receipts', p_receipt_id, v_receipt.store_id, v_caller_uid,
     jsonb_build_object('reason', p_reason, 'v2_reverse', true));
 
   RETURN jsonb_build_object('status','success','receipt_id',p_receipt_id);
