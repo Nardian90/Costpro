@@ -180,12 +180,12 @@ describe('PT-11.2.9 — SupervisorAuthModal server-side', () => {
 });
 
 describe('PT-11.2.10 — Regresión: iteraciones anteriores intactas', () => {
-  it('create_sale viejo NO fue modificado', () => {
+  it('create_sale viejo NO fue dropeado (permanece como fallback)', () => {
     // create_sale debe seguir teniendo su migración original de 11.1
     const files = readdirSync(MIGRATIONS_DIR).filter(f => f.includes('create_sale_validate_op_date'));
     expect(files.length).toBeGreaterThan(0);
   });
-  it('USE_V2_CHECKOUT sigue en false por defecto', () => {
+  it('USE_V2_CHECKOUT default false en código (activado via .env)', () => {
     const src = readFileSync(join(process.cwd(), 'src', 'config', 'features.ts'), 'utf-8');
     expect(src).toContain("=== 'true' || false");
   });
@@ -194,5 +194,26 @@ describe('PT-11.2.10 — Regresión: iteraciones anteriores intactas', () => {
     expect(testFiles).toContain('iteration-11-1.test.ts');
     expect(testFiles).toContain('iteration-12.test.ts');
     expect(testFiles).toContain('iteration-13.test.ts');
+  });
+});
+
+describe('PT-11.2.11 — Sync batch migrado a create_sale_v2 (TD-11.2.1 resolved)', () => {
+  const src = readFileSync(join(process.cwd(), 'src', 'app', 'api', 'sync', 'batch', 'route.ts'), 'utf-8');
+  it('usa create_sale_v2 (no create_sale viejo)', () => {
+    expect(src).toContain("rpc('create_sale_v2'");
+    // No debe contener la llamada directa al RPC viejo para sales
+    const saleSection = src.substring(src.indexOf("case 'sale'"), src.indexOf("case 'reception'"));
+    expect(saleSection).not.toContain("rpc('create_sale'");
+  });
+  it('mapea payload a formato v2', () => {
+    expect(src).toContain('v2Payload');
+    expect(src).toContain('p_supervisor_user_id');
+    expect(src).toContain('p_customer_id');
+  });
+  it('usa idempotencyKey del operation', () => {
+    expect(src).toContain('p_idempotency_key: op.idempotencyKey');
+  });
+  it('pasa p_user_id del session', () => {
+    expect(src).toContain('p_user_id: session.user.id');
   });
 });
