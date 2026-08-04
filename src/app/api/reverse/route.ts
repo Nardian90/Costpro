@@ -29,13 +29,23 @@ const reverseSchema = z.object({
 });
 
 /** V2.3: cada tipo mapea a (rpc_name, id_param_name). SÓLO ese param se envía. */
-const RPC_MAP: Record<string, { rpc: string; idParam: string }> = {
+const RPC_MAP_V1: Record<string, { rpc: string; idParam: string }> = {
   transaction:      { rpc: 'reverse_transaction',        idParam: 'p_transaction_id' },
   receipt:          { rpc: 'reverse_receipt',            idParam: 'p_receipt_id' },
   transfer:         { rpc: 'reverse_transfer',           idParam: 'p_transfer_id' },
   adjustment:       { rpc: 'reverse_adjustment',         idParam: 'p_adjustment_id' },
   devolution:       { rpc: 'reverse_devolution',         idParam: 'p_devolution_id' },
   production_order: { rpc: 'reverse_production_order',   idParam: 'p_order_id' },
+};
+
+/** Iteración 11.3: RPCs v2 para tipos que tienen refactor */
+const RPC_MAP_V2: Record<string, { rpc: string; idParam: string }> = {
+  transaction:      { rpc: 'reverse_transaction_v2',    idParam: 'p_transaction_id' },
+  receipt:          { rpc: 'reverse_receipt_v2',        idParam: 'p_receipt_id' },
+  transfer:         { rpc: 'reverse_transfer',           idParam: 'p_transfer_id' }, // sin cambio
+  adjustment:       { rpc: 'duplicate_inventory_adjustment_v2', idParam: 'p_original_id' }, // B-11: usa duplicate
+  devolution:       { rpc: 'reverse_devolution',         idParam: 'p_devolution_id' }, // sin cambio en reverse_devolution
+  production_order: { rpc: 'reverse_production_order',   idParam: 'p_order_id' }, // sin cambio
 };
 
 async function postHandler(req: NextRequest, session: AuthenticatedSession) {
@@ -63,7 +73,10 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
   const supabase = getSupabaseAdminSafe();
   if (!supabase) return NextResponse.json(createApiError('CONFIG_ERROR'), { status: 500 });
 
-  const mapping = RPC_MAP[parsed.data.type];
+  // Iteración 11.3: seleccionar RPC v1 o v2 según feature flag
+  const { FEATURES } = await import('@/config/features');
+  const rpcMap = FEATURES.USE_V2_REVERSE ? RPC_MAP_V2 : RPC_MAP_V1;
+  const mapping = rpcMap[parsed.data.type];
   if (!mapping) {
     return NextResponse.json({ error: 'Tipo de documento no soportado' }, { status: 400 });
   }

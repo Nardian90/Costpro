@@ -32,6 +32,18 @@ export const FEATURES = {
   V2_CHECKOUT_PILOT_STORES: (process.env.NEXT_PUBLIC_V2_CHECKOUT_PILOT_STORES || '')
     .split(',')
     .filter(Boolean),
+
+  /**
+   * USE_V2_REVERSE — Gates the new reverse/void/devolution RPCs:
+   *   - reverse_transaction_v2 (C-8)
+   *   - create_devolution_v2 (C-9)
+   *   - duplicate_inventory_adjustment_v2 (B-11)
+   *   - reverse_receipt_v2 (B-12)
+   *
+   * When false: uses old RPCs (UPDATE directo, no audit_logs, no idempotency)
+   * When true: uses v2 RPCs (register_stock_movement, audit_logs, idempotency)
+   */
+  USE_V2_REVERSE: process.env.NEXT_PUBLIC_USE_V2_REVERSE === 'true' || false,
 } as const;
 
 export type FeatureFlags = typeof FEATURES;
