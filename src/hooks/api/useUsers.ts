@@ -24,7 +24,8 @@ export function useUsers(currentUserId: string, isAdmin: boolean, isEncargado: b
           const profileColumns = 'id, full_name, email, role, role_id, roles, active_store_id, logo_url, is_active, store_id, created_at, plan';
 
           // Fetch profiles and memberships separately to avoid "memberships column not found" cache errors
-          let profilesQuery = supabase.from('profiles').select(profileColumns).order('full_name');
+          // Iteración 12 (Q6): Filtrar deleted_at IS NULL (no mostrar users soft-deleted)
+          let profilesQuery = supabase.from('profiles').select(profileColumns).is('deleted_at', null).order('full_name');
           if (isEncargado) {
             profilesQuery = profilesQuery.neq('role', 'admin');
           }
@@ -34,7 +35,7 @@ export function useUsers(currentUserId: string, isAdmin: boolean, isEncargado: b
           // Fallback if full column set fails
           if (profilesRes.error && profilesRes.error.code === '42703') {
              logger.warn('DATABASE', '[USEUSERS]_COLUMN_MISSING,_RETRYING_WITH_LIMITED_C')
-             let retryQuery = supabase.from('profiles').select('id, full_name, email, is_active, store_id, active_store_id, created_at').order('full_name');
+             let retryQuery = supabase.from('profiles').select('id, full_name, email, is_active, store_id, active_store_id, created_at').is('deleted_at', null).order('full_name');
              if (isEncargado) {
                retryQuery = retryQuery.neq('role', 'admin');
              }
@@ -215,17 +216,13 @@ export function useUpdateUser() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, ...rawUpdates }: { id: string } & Partial<z.input<typeof profileSchema>>) => {
-      // Validate partial profile updates - this also converts "" to null for UUIDs via resilientUuid
+      // Iteración 12 (Q3): Llamar a PATCH /api/users/[id] en vez de UPDATE directo.
+      // El RPC managed_update_user valida, ejecuta y audita atómicamente.
       const updates = profileSchema.partial().parse(rawUpdates);
 
-      // Omit virtual/related fields and sanitize payload
       const cleanUpdates: any = {};
       Object.entries(updates).forEach(([key, val]) => {
-        // Skip virtual fields, Primary Key and immutable fields
         if (['memberships', 'roles', 'id', 'created_at'].includes(key)) return;
-
-        // Hardening: Ensure empty strings are treated as null for UUID compatibility
-        // and to avoid 22P02 errors in PostgREST
         if (val === '') {
           cleanUpdates[key] = null;
         } else {
@@ -233,10 +230,18 @@ export function useUpdateUser() {
         }
       });
 
-      return await withTableLogging('update', 'profiles', () => supabase
-        .from('profiles')
-        .update(cleanUpdates)
-        .eq('id', id));
+      const response = await fetch(`/api/users/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(cleanUpdates),
+      });
+
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({ error: response.statusText }));
+        throw new Error(err.error || `HTTP ${response.status}`);
+      }
+
+      return await response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });

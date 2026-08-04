@@ -3,12 +3,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withRole } from '@/lib/auth-middleware';
 import { rateLimit } from '@/lib/rate-limit';
 import { resetPasswordSchema, zodError } from '@/validation/api-schemas';
-import { validateOrigin } from '@/lib/csrf'; // FIX-SEC-023
+import { validateOrigin } from '@/lib/csrf';
 import { withTracing } from '@/lib/observability';
-
+import { logger } from '@/lib/logger';
 
 const handler = withRole('admin', async (req, session) => {
-  // FIX-SEC-023: CSRF origin validation
   if (!validateOrigin(req)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
   const clientId = req.headers.get('x-forwarded-for') || session.user.id;
@@ -21,30 +20,6 @@ const handler = withRole('admin', async (req, session) => {
       return NextResponse.json({ error: 'Error de configuración del servidor' }, { status: 500 });
     }
 
-    const { data: requesterProfile } = await supabaseAdmin
-      .from('profiles')
-      .select('*, roles(name)')
-      .eq('id', session.user.id)
-      .single();
-
-    if (!requesterProfile) return NextResponse.json({ error: 'Perfil no encontrado' }, { status: 403 });
-
-    // Robust role check
-    const rawRoles = requesterProfile.roles;
-    const roleNames: string[] = [];
-    if (Array.isArray(rawRoles)) {
-      rawRoles.forEach(r => { if (r.name) roleNames.push(r.name.toLowerCase()); });
-    } else if (rawRoles && typeof rawRoles === 'object' && (rawRoles as any).name) {
-      roleNames.push((rawRoles as any).name.toLowerCase());
-    }
-    if (requesterProfile.role) {
-      roleNames.push(requesterProfile.role.toLowerCase());
-    }
-
-    if (!roleNames.includes('admin')) {
-      return NextResponse.json({ error: 'Solo los administradores pueden reiniciar contraseñas' }, { status: 403 });
-    }
-
     const rawBody = await req.json();
     const parsed = resetPasswordSchema.safeParse(rawBody);
     if (!parsed.success) {
@@ -52,27 +27,50 @@ const handler = withRole('admin', async (req, session) => {
     }
     const { user_id } = parsed.data;
 
-    // FIX-SEC-025: Prevent admin from resetting their own password via admin endpoint
-    const targetUserId = user_id;
-    if (targetUserId === session.user.id) {
+    if (user_id === session.user.id) {
       return NextResponse.json({ error: 'No puedes restablecer tu propia contraseña desde aquí' }, { status: 400 });
     }
 
-    const { data: targetUser, error: getUserError } = await supabaseAdmin.auth.admin.getUserById(user_id);
-    if (getUserError || !targetUser.user) return NextResponse.json({ error: 'Usuario no encontrado' }, { status: 404 });
+    // Iteración 12 (H-6): Audit log via RPC antes de generar link
+    const { data: rpcData, error: rpcError } = await supabaseAdmin.rpc('managed_reset_password', {
+      p_user_id: user_id,
+      p_caller_id: session.user.id,
+    });
+
+    if (rpcError) {
+      const msg = rpcError.message || '';
+      if (msg.includes('ERR_SELF_RESET_BLOCKED')) {
+        return NextResponse.json({ error: 'No puedes restablecer tu propia contraseña desde aquí' }, { status: 400 });
+      }
+      if (msg.includes('ERR_UNAUTHORIZED')) {
+        return NextResponse.json({ error: 'Solo los administradores pueden reiniciar contraseñas' }, { status: 403 });
+      }
+      if (msg.includes('ERR_USER_NOT_FOUND')) {
+        return NextResponse.json({ error: 'Usuario no encontrado' }, { status: 404 });
+      }
+      return NextResponse.json({ error: msg }, { status: 400 });
+    }
+
+    // Generar recovery link
+    const targetEmail = (rpcData as { email?: string } | null)?.email;
+    if (!targetEmail) {
+      return NextResponse.json({ error: 'No se pudo obtener el email del usuario' }, { status: 500 });
+    }
 
     const { error: resetError } = await supabaseAdmin.auth.admin.generateLink({
       type: 'recovery',
-      email: targetUser.user.email!,
+      email: targetEmail,
     });
 
-    if (resetError) return NextResponse.json({ error: resetError.message }, { status: 400 });
+    if (resetError) {
+      logger.error('AUTH', 'RECOVERY_LINK_FAILED', { userId: user_id, error: resetError.message });
+      return NextResponse.json({ error: resetError.message }, { status: 400 });
+    }
 
     return NextResponse.json({
       success: true,
       message: 'Se ha enviado un correo de recuperación al usuario.'
     });
-
   } catch (error: unknown) {
     return NextResponse.json({ error: (process.env.NODE_ENV !== 'production' || !!process.env.VITEST) ? (error instanceof Error ? error.message : String(error)) : 'Error interno del servidor' }, { status: 500 });
   }

@@ -106,15 +106,19 @@ export function useStoreTeam(storeId: string | null) {
     staleTime: 15_000,
   });
 
-  // Mutación para cambiar el rol de un miembro inline
+  // Iteración 12 (Q3 + H-5): Mutación via API endpoint PATCH
   const updateRoleMutation = useMutation({
     mutationFn: async ({ membershipId, newRole }: { membershipId: string; newRole: StoreTeamMember['role'] }) => {
-      if (!supabase) throw new Error('Supabase no disponible');
-      const { error } = await supabase
-        .from('user_store_memberships')
-        .update({ role: newRole, updated_at: new Date().toISOString() })
-        .eq('id', membershipId);
-      if (error) throw error;
+      const response = await fetch(`/api/users/_/memberships/${membershipId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role: newRole }),
+      });
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({ error: response.statusText }));
+        throw new Error(err.error || `HTTP ${response.status}`);
+      }
+      return await response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['store-team', storeId] });
@@ -123,15 +127,17 @@ export function useStoreTeam(storeId: string | null) {
     },
   });
 
-  // Mutación para remover un usuario de la tienda (revocar membership, no eliminar usuario)
+  // Iteración 12 (H-5): Mutación via API endpoint DELETE (revoke)
   const removeMemberMutation = useMutation({
     mutationFn: async (membershipId: string) => {
-      if (!supabase) throw new Error('Supabase no disponible');
-      const { error } = await supabase
-        .from('user_store_memberships')
-        .update({ status: 'revoked', updated_at: new Date().toISOString() })
-        .eq('id', membershipId);
-      if (error) throw error;
+      const response = await fetch(`/api/users/_/memberships/${membershipId}`, {
+        method: 'DELETE',
+      });
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({ error: response.statusText }));
+        throw new Error(err.error || `HTTP ${response.status}`);
+      }
+      return await response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['store-team', storeId] });
