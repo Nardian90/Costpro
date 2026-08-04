@@ -50,24 +50,31 @@ export function useCreateCashClosure() {
 
 export function useUpdateCashClosure() {
   const queryClient = useQueryClient();
-  const { user } = useAuthStore.getState();
   return useMutation({
-    mutationFn: ({ id, closure }: { id: string; closure: Partial<CashClosure> }) =>
-      cashService.updateClosure(id, closure),
-    onSuccess: async (_, variables) => {
-      // Q2 (Audit-Fix): log de auditoría al finalizar cierre de caja
-      if (user?.id && variables.closure.status === 'cerrado') {
-        await auditService.logCashClosureFinalized({
-          userId: user.id,
-          closureId: variables.id,
-          storeId: user.activeStoreId || '',
-          declaredCash: variables.closure.declared_cash || 0,
-          declaredVouchers: variables.closure.declared_vouchers || 0,
-          systemExpectedTotal: variables.closure.system_expected_total || 0,
-          difference: variables.closure.difference || 0,
-          status: variables.closure.status,
+    mutationFn: async ({ id, closure }: { id: string; closure: Partial<CashClosure> }) => {
+      // Iteración 11.4: si status='cerrado', usar RPC close_cash_shift via API
+      if (closure.status === 'cerrado') {
+        const response = await fetch('/api/cash-closures/close', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            closure_id: id,
+            declared_cash: closure.declared_cash || 0,
+            declared_vouchers: closure.declared_vouchers || 0,
+            notes: closure.notes || null,
+          }),
         });
+        if (!response.ok) {
+          const err = await response.json().catch(() => ({ error: response.statusText }));
+          throw new Error(err.error || `HTTP ${response.status}`);
+        }
+        return response.json();
       }
+      // Para updates no-cierre (declarar fondos en turno pendiente), usar path viejo
+      return cashService.updateClosure(id, closure);
+    },
+    onSuccess: () => {
+      // Iteración 11.4: audit ahora atómico en RPC — no llamar logCashClosureFinalized
       queryClient.invalidateQueries({ queryKey: ['cash-closures'] });
       queryClient.invalidateQueries({ queryKey: ['sales-since-last-closure'] });
       toast.success('Cierre de caja finalizado correctamente');

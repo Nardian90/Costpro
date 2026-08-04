@@ -34,6 +34,12 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
       return NextResponse.json({ error: 'Tienda no configurada' }, { status: 400 });
     }
 
+    // Iteración 11.4 (H-7): validar membresía del caller en el store
+    const { canManageStore } = await import('@/lib/roles');
+    if (!canManageStore(session.user, userData.active_store_id)) {
+      return NextResponse.json({ error: 'No tienes acceso a esta tienda' }, { status: 403 });
+    }
+
     // Llamar al RPC get_cash_report
     const { data: reportData, error: reportError } = await supabase.rpc('get_cash_report', {
       p_store_id: userData.active_store_id,

@@ -62,6 +62,12 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
     return NextResponse.json({ error: 'Forbidden — requiere rol admin o manager' }, { status: 403 });
   }
 
+  // Iteración 11.4 (H-8): validar membresía del caller en el store
+  const { canManageStore } = await import('@/lib/roles');
+  if (!canManageStore(session.user, store_id)) {
+    return NextResponse.json({ error: 'No tienes acceso a esta tienda' }, { status: 403 });
+  }
+
   const supabase = getSupabaseForSession(session);
 
   // FIX-A2 (2026-07-14): validar que worker pertenece a store
