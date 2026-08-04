@@ -74,7 +74,7 @@ export class SyncEngine {
     }
   }
 
-  private async processOperation(operation: { id?: string | null; idempotencyKey: string; entity: string; attempts: number; payload: unknown }): Promise<void> {
+  private async processOperation(operation: { id?: string | null; idempotencyKey: string; entity: string; operationType?: string; attempts: number; payload: unknown }): Promise<void> {
     const attempts = operation.attempts ?? 0;
 
     if (attempts >= MAX_RETRIES) {
@@ -117,26 +117,55 @@ export class SyncEngine {
     }
   }
 
-  private async executeOperation(operation: { entity: string; payload: unknown }): Promise<void> {
-    const endpoint = this.getEndpointForType(operation.entity);
-    if (!endpoint) {
-      throw new Error(`Unknown operation type: ${operation.entity}`);
-    }
-
+  private async executeOperation(operation: { entity: string; payload: unknown; idempotencyKey: string; operationType?: string }): Promise<void> {
+    // FIX C-4 (Iteración 11.1): Route ALL operations through /api/sync/batch.
+    // The previous per-entity endpoints (/api/pos/checkout, /api/pos/payment, etc.)
+    // did not exist, causing silent failures for offline sales.
+    // /api/sync/batch accepts an operations[] array and dispatches each to the
+    // correct RPC (create_sale, register_reception, etc.) with idempotency.
     const headers: HeadersInit = { 'Content-Type': 'application/json' };
     if (this.sessionToken) {
       headers['Authorization'] = `Bearer ${this.sessionToken}`;
     }
 
-    const response = await fetch(endpoint, {
+    const batchPayload = {
+      clientInfo: {
+        userId: 'sync-engine',
+        deviceId: typeof navigator !== 'undefined' ? navigator.userAgent : 'server',
+      },
+      operations: [{
+        idempotencyKey: operation.idempotencyKey,
+        entity: operation.entity,
+        operationType: operation.operationType || 'CREATE',
+        payload: operation.payload,
+      }],
+    };
+
+    const response = await fetch('/api/sync/batch', {
       method: 'POST',
       headers,
-      body: JSON.stringify(operation.payload),
+      body: JSON.stringify(batchPayload),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
       throw new Error(`HTTP ${response.status}: ${errorText}`);
+    }
+
+    const data = await response.json();
+    const results = data?.results ?? [];
+    const result = results[0];
+
+    if (!result) {
+      throw new Error('No result returned from sync batch');
+    }
+
+    if (result.status === 'conflict') {
+      throw new Error('Conflict: ' + (result.error || 'unknown conflict'));
+    }
+
+    if (result.status !== 'ok') {
+      throw new Error(result.error || `Sync failed with status: ${result.status}`);
     }
   }
 
@@ -174,20 +203,6 @@ export class SyncEngine {
     return failed.length;
   }
 
-  private getEndpointForType(type: string): string | null {
-    const endpoints: Record<string, string> = {
-      'sale':              '/api/pos/checkout',
-      'payment':           '/api/pos/payment',
-      'checkout':          '/api/pos/checkout',
-      'reception':         '/api/inventory/receptions',
-      'reception_create':  '/api/inventory/receptions',
-      'transfer_confirm':  '/api/transfers/confirm',
-      'transfer_create':   '/api/transfers',
-      'inventory_adjust':  '/api/inventory/adjust',
-      'inventory_count':   '/api/inventory/count',
-    };
-    return endpoints[type] ?? null;
-  }
 }
 
 export const syncEngine = new SyncEngine();

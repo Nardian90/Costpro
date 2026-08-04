@@ -51,7 +51,13 @@ export function useKardex(
         quantity_change: item.quantity_change || 0,
         entry: Math.max(0, item.quantity_change ?? 0),
         exit: Math.min(0, item.quantity_change ?? 0) * -1,
-        running_balance: 0,
+        // FIX H-12 (Iteración 11.1): Usar balance_after retornado por el RPC
+        // en vez de hardcoded 0. El RPC get_product_stock_ledger_paginated
+        // retorna balance_after en cada fila — es el saldo DESPUÉS de ese
+        // movimiento, calculado server-side. Antes se hardcodeaba a 0 y se
+        // recalculaba client-side en KardexModal, lo que rompía en paginación
+        // (páginas 2+ mostraban saldos incorrectos).
+        running_balance: item.balance_after ?? 0,
         reference_doc: item.reference_doc || null,
         reference_type: item.reference_type || null, // V2.2
       }));
