@@ -18,7 +18,8 @@ const userFormSchema = z.object({
   role: z.enum(['admin', 'encargado', 'usuario', 'manager', 'clerk', 'warehouse', 'costo'] as const),
   password: z.string().min(6, 'La contraseña debe tener al menos 6 caracteres').optional().or(z.literal('')),
   isActive: z.boolean(),
-  plan: z.enum(['basico', 'profesional', 'enterprise']).catch('basico'),
+  // Iteración 12 (Q5): plan alineado con enum plan_t ('free', 'pro', 'enterprise')
+  plan: z.enum(['free', 'pro', 'enterprise']).catch('free'),
   maxStoresLimit: z.number().min(0).catch(0),
   maxUsersLimit: z.number().min(0).catch(0),
   memberships: z.array(z.object({
@@ -85,7 +86,7 @@ export default function UserForm({
       email: initialData.email,
       role: initialData.role,
       isActive: initialData.isActive,
-      plan: (initialData as any).plan || 'basico',
+      plan: (initialData as any).plan || 'free',
       maxStoresLimit: initialData.maxStoresLimit ?? 0,
       maxUsersLimit: initialData.maxUsersLimit ?? 0,
       memberships: initialData.memberships?.map(m => ({
@@ -102,7 +103,7 @@ export default function UserForm({
       isActive: true,
       maxStoresLimit: 0,
       maxUsersLimit: 0,
-      plan: 'basico',
+      plan: 'free',
       memberships: [],
     },
   });
@@ -296,8 +297,8 @@ export default function UserForm({
             </label>
             <div className="grid grid-cols-3 gap-2">
               {([
-                { id: 'basico', label: 'Básico', limit: 1, color: 'text-muted-foreground' },
-                { id: 'profesional', label: 'Profesional', limit: 3, color: 'text-primary' },
+                { id: 'free', label: 'Free', limit: 1, color: 'text-muted-foreground' },
+                { id: 'pro', label: 'Pro', limit: 3, color: 'text-primary' },
                 { id: 'enterprise', label: 'Enterprise', limit: 10, color: 'text-amber-500' },
               ] as const).map(p => {
                 const currentPlan = watch('plan');

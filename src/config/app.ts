@@ -15,11 +15,17 @@ export const BRAND_NAME = 'CostPro';
  * Maximum number of active stores allowed per plan.
  * Shared between the API route (enforcement) and the frontend (UI hints).
  * The RPC `create_store_with_membership` also enforces these limits atomically.
+ *
+ * Iteración 12 (Q5): aligned with plan_t enum ('free', 'pro', 'enterprise').
+ * Legacy keys ('basico', 'profesional') kept as aliases for backward compat.
  */
 export const PLAN_STORE_LIMITS: Record<string, number> = {
+  free: 1,
+  pro: 3,
+  enterprise: 10,
+  // Legacy aliases (deprecated — will be removed in future cleanup)
   basico: 1,
   profesional: 3,
-  enterprise: 10,
 } as const;
 
 /** Store template identifiers — used in Zod schemas, forms, and storefront router */

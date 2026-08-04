@@ -93,11 +93,12 @@ const handler = withRole('admin', async (req, session) => {
 
     const userId = authUser.user.id;
 
-    // 5. Call managed_create_user RPC to sync profile and roles
-    const { data: rpcData, error: rpcError } = await supabaseAdmin.rpc('managed_create_user', {
+    // 5. Iteración 12 (Q3): Call managed_create_user_v2 RPC (con plan + audit atómico)
+    const { data: rpcData, error: rpcError } = await supabaseAdmin.rpc('managed_create_user_v2', {
       p_email,
       p_full_name,
       p_role,
+      p_plan: (rawBody as { p_plan?: string })?.p_plan || 'free',
       p_store_id,
       p_memberships,
       p_max_stores,
