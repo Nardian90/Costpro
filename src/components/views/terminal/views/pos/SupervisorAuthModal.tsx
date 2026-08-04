@@ -24,7 +24,7 @@ import { cn } from '@/lib/utils';
 interface SupervisorAuthModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onAuthorize: () => void;
+  onAuthorize: (supervisorUserId?: string) => void;
   /** % del descuento (para percentage) o % efectivo calculado (para fixed).
    *  V2.12.30: antes solo se usaba para mostrar, ahora refleja el % efectivo
    *  real cuando el descuento es fijo (ej: $50 sobre $60 = 83.3%). */
@@ -56,46 +56,37 @@ export function SupervisorAuthModal({
     setLoading(true);
     setError(null);
     try {
-      // Validar credenciales contra Supabase Auth
-      // V2.12.26 fix: supabaseClient.ts exporta `supabase` (no `createClient`)
+      // Iteración 11.2: Server-side supervisor auth (no expone credenciales en cliente)
       const { supabase } = await import('@/lib/supabaseClient');
-      const { data, error: authError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+      const { data: { session } } = await supabase.auth.getSession();
+      const response = await fetch('/api/auth/supervisor-check', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(session ? { 'Authorization': `Bearer ${session.access_token}` } : {}),
+        },
+        body: JSON.stringify({
+          email,
+          password,
+          store_id: typeof window !== 'undefined' ? localStorage.getItem('activeStoreId') || '' : '',
+        }),
       });
 
-      if (authError || !data.user) {
-        setError('Credenciales inválidas');
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({ error: 'Error de validación' }));
+        setError(err.error || 'Credenciales inválidas');
         return;
       }
 
-      // Verificar que el usuario tiene rol admin o manager en alguna store
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', data.user.id)
-        .single();
-
-      if (!profile || (profile.role !== 'admin' && profile.role !== 'superadmin')) {
-        // Verificar si es manager de alguna tienda
-        const { data: membership } = await supabase
-          .from('user_store_memberships')
-          .select('role')
-          .eq('user_id', data.user.id)
-          .eq('status', 'active')
-          .in('role', ['admin', 'manager'])
-          .limit(1);
-
-        if (!membership || membership.length === 0) {
-          setError('El usuario no tiene permisos de supervisor');
-          return;
-        }
+      const data = await response.json();
+      if (!data.valid) {
+        setError(data.error || 'El usuario no tiene permisos de supervisor');
+        return;
       }
 
-      // Autorización exitosa
-      onAuthorize();
+      // Autorización exitosa — pasar supervisor_user_id al caller
+      onAuthorize(data.supervisor_user_id);
       onClose();
-      // Limpiar
       setEmail('');
       setPassword('');
     } catch (e: any) {
