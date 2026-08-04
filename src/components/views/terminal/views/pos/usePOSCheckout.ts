@@ -8,6 +8,7 @@ import { useAuthStore } from "@/store";
 import { useCreateSale } from "@/hooks/api/useTransactions";
 import { useInvertDocument } from "@/hooks/api/useDocumentActions";
 import { supabase } from "@/lib/supabaseClient";
+import { shouldUseV2Checkout } from "@/config/features";
 import { PaymentMethod } from "@/types";
 import type { LastSale } from "./POSCart.types";
 
@@ -138,7 +139,70 @@ export function usePOSCheckout() {
           throw new Error(`Descuadre: efectivo (${cashAmountCup.toFixed(2)}) + transf (${transferAmountCup.toFixed(2)}) + zelle (${zelleAmountCup.toFixed(2)}) ≠ total (${totalAmountCup.toFixed(2)}) CUP`);
         }
 
-        const saleId = await createSale({
+        // Iteración 11.2: Feature flag — use v2 checkout (server-side) or v1 (RPC directo)
+        const useV2 = shouldUseV2Checkout(user.activeStoreId);
+        let saleId: string;
+
+        if (useV2) {
+          // ── Path v2: POST /api/pos/checkout (server-side recalculation + supervisor auth) ──
+          const response = await fetch('/api/pos/checkout', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              store_id: user.activeStoreId,
+              seller_id: user.id,
+              payment_method: paymentMethod,
+              discount_type: (checkoutDiscount || discount)?.type || 'fixed',
+              discount_value: getDiscountAmount(),
+              applied_taxes: useCartStore.getState().appliedTaxes || [],
+              tax_amount: useCartStore.getState().getTaxAmount(),
+              total_amount: useCartStore.getState().getExpectedTotalCup(),
+              subtotal: useCartStore.getState().getSubtotalCup(),
+              cash_amount: cashAmount,
+              transfer_amount: transferAmount,
+              zelle_amount: zelleAmount,
+              sale_currency: useCartStore.getState().saleCurrency || 'MIXED',
+              sale_exchange_rate: useCartStore.getState().saleExchangeRate || 1.0,
+              customer_id: safeCustomerId,
+              customer_name: customerName || null,
+              idempotency_key: `sale-${crypto.randomUUID()}`,
+              items: items.map((i) => ({
+                product_id: i.product_id,
+                variant_id: i.variant_id ?? null,
+                quantity: i.quantity,
+                price: i.price,
+                cost: i.cost,
+                cash_paid: i.cash_paid,
+                transfer_paid: i.transfer_paid,
+                zelle_paid: i.zelle_paid || 0,
+                currency: i.currency || 'CUP',
+                exchange_rate: i.exchange_rate || 1.0,
+                cash_currency: i.cash_currency || 'CUP',
+                transfer_currency: i.transfer_currency || 'CUP',
+                zelle_currency: i.zelle_currency || 'USD',
+                cash_discount_type: i.cash_discount_type || null,
+                cash_discount_value: i.cash_discount_value || 0,
+                cash_discount_currency: i.cash_discount_currency || 'CUP',
+                transfer_discount_type: i.transfer_discount_type || null,
+                transfer_discount_value: i.transfer_discount_value || 0,
+                transfer_discount_currency: i.transfer_discount_currency || 'CUP',
+                zelle_discount_type: i.zelle_discount_type || null,
+                zelle_discount_value: i.zelle_discount_value || 0,
+                zelle_discount_currency: i.zelle_discount_currency || 'USD',
+              })),
+            }),
+          });
+
+          if (!response.ok) {
+            const err = await response.json().catch(() => ({ error: response.statusText }));
+            throw new Error(err.error || `HTTP ${response.status}`);
+          }
+          const data = await response.json();
+          saleId = data.transaction_id;
+          // v2: customer_id is already persisted atomically — no UPDATE needed
+        } else {
+          // ── Path v1: RPC directo (create_sale viejo, sin cambios) ──
+          saleId = await createSale({
           p_store_id: user.activeStoreId,
           p_seller_id: user.id,
           p_payment_method: paymentMethod,
@@ -184,13 +248,12 @@ export function usePOSCheckout() {
             zelle_discount_currency: i.zelle_discount_currency || 'USD',
           })),
         });
+        } // end else (v1 path)
 
         // POS-3b audit P0.1: persistir customer_id y customer_name en transactions.
-        // create_sale RPC no acepta estos parámetros (no podemos modificarla sin romperla).
-        // Solución: UPDATE directo a la fila recién creada.
-        // FIX: customer update post-venta. Si falla, la venta YA está registrada
-        // (no se puede revertir sin anular). Mostrar warning honesto al usuario.
-        if (safeCustomerId || customerName) {
+        // Iteración 11.2: solo necesario en path v1 (v2 lo hace atómicamente).
+        // En path v2, saleId ya tiene customer_id persistido — skip UPDATE.
+        if (!useV2 && (safeCustomerId || customerName)) {
           try {
             const { error: custUpdateErr } = await supabase
               .from("transactions")
