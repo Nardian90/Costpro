@@ -163,18 +163,24 @@ export default function KardexModal({ product, isOpen, onClose }: KardexModalPro
                   const mt = entry.movement_type || '';
                   const isReversal = entry.reference_type === 'reversal';
                   const MOVEMENT_INFO: Record<string, { label: string; color: string }> = {
-                    sale:          { label: 'Venta',        color: 'text-primary' },
-                    purchase:      { label: 'Compra',       color: 'text-success' },
-                    adjustment:    { label: 'Ajuste',       color: 'text-warning' },
-                    return:        { label: 'Devolución',   color: 'text-blue-500' },
-                    initial:       { label: 'Inicial',      color: 'text-muted-foreground' },
-                    transfer:      { label: 'Transferencia',color: 'text-blue-500' },
-                    void:          { label: 'Anulación',    color: 'text-destructive' },
-                    devolution_in: { label: 'Dev. entrada', color: 'text-success' },
-                    transfer_in:   { label: 'Transf. ent.', color: 'text-success' },
-                    transfer_out:  { label: 'Transf. sal.', color: 'text-destructive' },
-                    out:           { label: 'Salida',       color: 'text-destructive' },
-                    production:    { label: 'Producción',   color: 'text-purple-500' },
+                    sale:            { label: 'Venta',             color: 'text-primary' },
+                    purchase:        { label: 'Compra',            color: 'text-success' },
+                    adjustment:      { label: 'Ajuste',            color: 'text-warning' },
+                    return:          { label: 'Devolución',        color: 'text-blue-500' },
+                    initial:         { label: 'Inicial',           color: 'text-muted-foreground' },
+                    transfer:        { label: 'Transferencia',     color: 'text-blue-500' },
+                    void:            { label: 'Anulación',         color: 'text-destructive' },
+                    devolution_in:   { label: 'Dev. entrada',      color: 'text-success' },
+                    transfer_in:     { label: 'Transf. ent.',      color: 'text-success' },
+                    transfer_out:    { label: 'Transf. sal.',      color: 'text-destructive' },
+                    out:             { label: 'Salida',            color: 'text-destructive' },
+                    production:      { label: 'Producción',        color: 'text-purple-500' },
+                    // Iteración 11.3 (Aclaración 2): nuevos movement types para reversos v2
+                    sale_reverse:    { label: 'Reverso de venta',    color: 'text-purple-500' },
+                    purchase_reverse:{ label: 'Reverso de recepción',color: 'text-purple-500' },
+                    sale_void:       { label: 'Anulación venta',     color: 'text-destructive' },
+                    production_in:   { label: 'Prod. entrada',       color: 'text-purple-500' },
+                    production_out:  { label: 'Prod. salida',        color: 'text-purple-500' },
                   };
                   const info = MOVEMENT_INFO[mt] || { label: mt || '—', color: 'text-muted-foreground' };
                   return (

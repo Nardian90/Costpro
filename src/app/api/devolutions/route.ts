@@ -68,7 +68,11 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
   const supabase = getSupabaseAdminSafe();
   if (!supabase) return NextResponse.json(createApiError('CONFIG_ERROR'), { status: 500 });
 
-  const { data, error } = await supabase.rpc('create_devolution', {
+  // Iteración 11.3: usar create_devolution_v2 si feature flag activo
+  const { FEATURES } = await import('@/config/features');
+  const rpcName = FEATURES.USE_V2_REVERSE ? 'create_devolution_v2' : 'create_devolution';
+
+  const rpcParams: Record<string, unknown> = {
     p_store_id: parsed.data.store_id,
     p_user_id: session.user.id,
     p_items: parsed.data.items,
@@ -78,7 +82,14 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
     p_customer_id: parsed.data.customer_id || null,
     p_customer_name: parsed.data.customer_name || null,
     p_notes: parsed.data.notes || null,
-  });
+  };
+
+  // v2: añadir idempotency_key
+  if (FEATURES.USE_V2_REVERSE) {
+    rpcParams.p_idempotency_key = `dev-${crypto.randomUUID()}`;
+  }
+
+  const { data, error } = await supabase.rpc(rpcName, rpcParams);
 
   if (error) {
     logger.error('DATABASE', 'CREATE_DEVOLUTION_FAILED', { error: error.message });
