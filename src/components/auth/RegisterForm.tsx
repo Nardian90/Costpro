@@ -4,7 +4,7 @@ import { useState, useMemo, useCallback, useEffect } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Loader2, UserPlus, ArrowLeft, Mail, Lock, User, Info, Eye, EyeOff, Chrome, Check, X } from 'lucide-react';
+import { Loader2, UserPlus, ArrowLeft, Mail, Lock, User, Info, Eye, EyeOff, Chrome, Check, X, Building2 } from 'lucide-react';
 import { logger } from '@/lib/logger';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -59,6 +59,8 @@ export default function RegisterForm({ onBackToLogin }: RegisterFormProps) {
   const [passwordFocused, setPasswordFocused] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  // Iteración 13 (N-C1 authorized): company_name for tenant creation
+  const [companyName, setCompanyName] = useState('');
 
   const passwordStrength = useMemo(() => {
     if (!password) return 0;
@@ -132,11 +134,13 @@ export default function RegisterForm({ onBackToLogin }: RegisterFormProps) {
     logger.info('AUTH', 'REGISTER_ATTEMPT', { email });
 
     try {
+      // Iteración 13 (N-C1 authorized): Send company_name for tenant creation.
+      // Role changed from 'costo' to 'tenant_admin' for self-signup users.
       const { data, error } = await supabase.auth.signUp({
         options: {
           data: {
             full_name: fullName.trim() || email.split('@')[0],
-            role: 'costo'
+            company_name: companyName.trim() || fullName.trim() || 'My Company',
           },
           emailRedirectTo: window.location.origin
         },
@@ -262,6 +266,25 @@ export default function RegisterForm({ onBackToLogin }: RegisterFormProps) {
                 className={`pl-10 ${inputFocusClasses}`}
                 placeholder="Tu nombre"
                 autoComplete="name"
+              />
+            </div>
+          </div>
+
+          {/* Iteración 13 (N-C1 authorized): Company name for tenant creation */}
+          <div className="space-y-2">
+            <Label htmlFor="companyName" className="text-sm font-medium">
+              Nombre de la empresa
+            </Label>
+            <div className="relative">
+              <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+              <Input
+                id="companyName"
+                type="text"
+                value={companyName}
+                onChange={(e) => setCompanyName(e.target.value)}
+                className={`pl-10 ${inputFocusClasses}`}
+                placeholder="Mi Empresa S.A."
+                autoComplete="organization"
               />
             </div>
           </div>
