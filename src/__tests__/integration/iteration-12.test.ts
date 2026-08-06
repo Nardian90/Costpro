@@ -16,7 +16,8 @@ describe('PT-12.1 — Migrations de esquema (1-6)', () => {
     const sql = readFileSync(join(MIGRATIONS_DIR, '20260805000001_v2_14_1_plan_enum.sql'), 'utf-8');
     expect(sql).toContain("CREATE TYPE plan_t AS ENUM ('free', 'pro', 'enterprise')");
     expect(sql).toContain('ADD COLUMN IF NOT EXISTS plan_new plan_t');
-    expect(sql).toContain('basico').toContain('free'); // backfill mapping
+    expect(sql).toContain('basico'); // backfill mapping basico → free
+    expect(sql).toContain('free'); // backfill target value
   });
 
   it('profiles_soft_delete migration añade columnas + trigger', () => {
