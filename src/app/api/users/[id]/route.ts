@@ -14,6 +14,9 @@ const updateUserSchema = z.object({
   max_stores_limit: z.number().int().min(0).max(1000).optional(),
   max_users_limit: z.number().int().min(0).max(10000).optional(),
   plan: z.enum(['free', 'pro', 'enterprise']).optional(),
+  // FIX RLS-B4 (v2.21.0): añadir activeStoreId para que el switch de tienda
+  // funcione vía API REST (antes solo funcionaba vía useStoreSwitcher hook).
+  activeStoreId: z.string().uuid().optional(),
 });
 
 async function patchHandler(req: NextRequest, session: { user: { id: string } }) {
@@ -57,6 +60,31 @@ async function patchHandler(req: NextRequest, session: { user: { id: string } })
     if (msg.includes('ERR_UNAUTHORIZED')) return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
     if (msg.includes('ERR_USER_NOT_FOUND')) return NextResponse.json({ error: 'Usuario no encontrado' }, { status: 404 });
     return NextResponse.json({ error: msg }, { status: 400 });
+  }
+
+  // FIX RLS-B4 (v2.21.0): Manejar activeStoreId separadamente (no va por managed_update_user).
+  // Validar membresía antes de actualizar active_store_id.
+  if (parsed.data.activeStoreId) {
+    const { data: membership } = await supabaseAdmin
+      .from('user_store_memberships')
+      .select('id, status')
+      .eq('user_id', userId)
+      .eq('store_id', parsed.data.activeStoreId)
+      .eq('status', 'active')
+      .limit(1);
+
+    if (!membership || membership.length === 0) {
+      return NextResponse.json({ error: 'El usuario no tiene membresía activa en esa tienda' }, { status: 403 });
+    }
+
+    const { error: updateError } = await supabaseAdmin
+      .from('profiles')
+      .update({ active_store_id: parsed.data.activeStoreId })
+      .eq('id', userId);
+
+    if (updateError) {
+      return NextResponse.json({ error: updateError.message }, { status: 500 });
+    }
   }
 
   return NextResponse.json({ success: true, ...(data as object || {}) });

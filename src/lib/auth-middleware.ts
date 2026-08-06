@@ -174,6 +174,18 @@ export function withAuth(handler: AuthHandler) {
       }
     }
 
+    // Iteración RLS (v2.21.0): Activar feature flag app.use_tenant_rls si está configurado.
+    // Best-effort — si falla, las policies viejas siguen funcionando.
+    try {
+      const { activateTenantRLS } = await import('@/lib/rls-middleware');
+      const activeStoreId = (enrichedUser as { activeStoreId?: string }).activeStoreId
+        || (enrichedUser.memberships?.[0]?.store_id)
+        || undefined;
+      await activateTenantRLS(session.user.id, activeStoreId ?? undefined);
+    } catch {
+      // best-effort — no bloquear el request
+    }
+
     return withAutoTracking(handler)(req, { ...session, user: enrichedUser });
   };
 }
