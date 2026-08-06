@@ -6,9 +6,14 @@
  *
  * Esto evita el bug "Expected 3 parts in JWT" cuando se usa dev-token-bypass
  * con getSupabaseAuthClient (que envía el token a Supabase como JWT real).
+ *
+ * Iteración 11.5 (hot-test patch): ambos clientes (admin y auth) se envuelven
+ * con wrapRpcWithTracing para que los spans OTel se generen para TODAS las
+ * llamadas rpc(), sin importar si el request usa dev-bypass o sesión real.
  */
 import { getSupabaseAuthClient } from '@/lib/supabaseClient';
 import { getSupabaseAdminSafe } from '@/lib/supabase-admin';
+import { wrapRpcWithTracing } from '@/lib/supabase-traced';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { AuthenticatedSession } from '@/lib/auth-middleware';
 
@@ -21,9 +26,10 @@ export function getSupabaseForSession(session: AuthenticatedSession): SupabaseCl
     if (!admin) {
       throw new Error('SUPABASE_SERVICE_ROLE_KEY not configured for dev-bypass');
     }
-    return admin;
+    return admin; // ya viene envuelto por getSupabaseAdminSafe()
   }
 
   // Sesión real: usar auth client con el JWT del usuario (respeta RLS)
-  return getSupabaseAuthClient(session.token);
+  // Iteración 11.5: envolver con wrapRpcWithTracing para spans OTel
+  return wrapRpcWithTracing(getSupabaseAuthClient(session.token));
 }

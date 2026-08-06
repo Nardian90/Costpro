@@ -37,7 +37,11 @@ export function withTracing<T extends RouteHandler>(
   // FIX-PERF (2026-07-13): en dev, bypass tracing y logging para reducir overhead.
   // withTracing se usa en TODAS las API routes — el logInfo por request genera
   // overhead innecesario en dev. En production, tracing está activo.
-  if (process.env.NODE_ENV === 'development') {
+  //
+  // Iteración 11.5 (hot-test patch): si OTEL_ENABLED=true está seteado explícitamente,
+  // activamos tracing incluso en dev (para hot tests con observabilidad).
+  const otelExplicitlyEnabled = process.env.OTEL_ENABLED === 'true';
+  if (process.env.NODE_ENV === 'development' && !otelExplicitlyEnabled) {
     return handler;
   }
 

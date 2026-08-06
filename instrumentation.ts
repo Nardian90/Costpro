@@ -24,9 +24,15 @@ export async function register() {
   // FIX-PERF (2026-07-13): desactivar Sentry y OTel en dev para reducir overhead.
   // El dev server consumía 2.8GB de RAM — Sentry y OTel contribuían al overhead
   // con tracing de cada request. En dev no necesitamos telemetría.
-  if (process.env.NODE_ENV === 'development') {
+  //
+  // Iteración 11.5 (hot-test patch): si OTEL_ENABLED=true está seteado explícitamente,
+  // NO saltamos el bloque de dev — permitimos inicializar OTel (manual tracing only,
+  // sin Sentry) para habilitar hot tests con observabilidad. Sentry sigue desactivado
+  // en dev (su overhead es el principal motivo del FIX-PERF).
+  const otelExplicitlyEnabled = process.env.OTEL_ENABLED === 'true';
+  if (process.env.NODE_ENV === 'development' && !otelExplicitlyEnabled) {
      
-    console.log('[Instrumentation] Dev mode — skipping Sentry and OpenTelemetry');
+    console.log('[Instrumentation] Dev mode — skipping Sentry and OpenTelemetry (set OTEL_ENABLED=true to enable OTel)');
     // Solo registrar process-level error handlers (sin overhead)
     try {
       if (typeof process !== 'undefined' && typeof process.on === 'function') {
@@ -43,8 +49,13 @@ export async function register() {
     return;
   }
 
-  // Initialize Sentry in server runtime (solo en production)
-  if (process.env.NEXT_RUNTIME === 'nodejs') {
+  if (process.env.NODE_ENV === 'development' && otelExplicitlyEnabled) {
+    console.log('[Instrumentation] Dev mode + OTEL_ENABLED=true — initializing OTel (Sentry still skipped)');
+  }
+
+  // Initialize Sentry in server runtime (solo en production — Sentry queda desactivado
+  // en dev incluso con OTEL_ENABLED=true, porque su overhead es el principal motivo del FIX-PERF)
+  if (process.env.NEXT_RUNTIME === 'nodejs' && process.env.NODE_ENV === 'production') {
     try {
       await import('./sentry.server.config');
     } catch (err) {
