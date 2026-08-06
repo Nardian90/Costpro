@@ -383,7 +383,36 @@ export function withStoreAccess(handler: AuthHandler) {
     }
 
     // Admins bypass store access check
+    // FIX RLS (v2.21.0): Cuando USE_TENANT_RLS=true, admin global solo puede
+    // acceder stores de su propio tenant. El bypass total solo aplica si
+    // el flag está desactivado (comportamiento legacy).
+    const useTenantRls = process.env.USE_TENANT_RLS === 'true';
     if (userRole === 'admin') {
+      if (useTenantRls) {
+        // Verificar que la store pertenece al tenant del admin
+        const { data: storeData } = await admin
+          .from('stores')
+          .select('tenant_id')
+          .eq('id', storeId)
+          .single();
+
+        const { data: profileData } = await admin
+          .from('profiles')
+          .select('tenant_id')
+          .eq('id', session.user.id)
+          .single();
+
+        const storeTenantId = storeData?.tenant_id;
+        const adminTenantId = profileData?.tenant_id;
+
+        if (storeTenantId && adminTenantId && storeTenantId !== adminTenantId) {
+          return NextResponse.json(
+            { error: 'Prohibido', message: 'No tienes acceso a tiendas de otro tenant' },
+            { status: 403 }
+          );
+        }
+      }
+
       const enrichedSession: AuthenticatedSession = {
         ...session,
         user: {
