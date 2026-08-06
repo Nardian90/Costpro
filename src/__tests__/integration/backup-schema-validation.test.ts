@@ -18,10 +18,27 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
-// Skip all tests if env vars not set
+// Skip all tests if env vars not set OR if using test/placeholder values
+// (CI passes 'https://test.supabase.co' as fallback which is not a real project)
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const SKIP = !SUPABASE_URL || !SUPABASE_KEY;
+const isRealSupabaseUrl = (url: string | undefined): boolean => {
+  if (!url) return false;
+  // Reject placeholder/test URLs
+  if (url.includes('test.supabase.co') || url.includes('localhost') || url.includes('example.com')) {
+    return false;
+  }
+  // Must match the real Supabase project URL pattern
+  return /^https:\/\/[a-z0-9]+\.supabase\.co$/.test(url);
+};
+const isRealKey = (key: string | undefined): boolean => {
+  if (!key) return false;
+  // Real service role keys are JWTs (3 parts separated by dots) or sb_secret_* format
+  if (key.startsWith('sb_secret_') && key.length > 20) return true;
+  const parts = key.split('.');
+  return parts.length === 3 && parts.every(p => p.length > 0);
+};
+const SKIP = !isRealSupabaseUrl(SUPABASE_URL) || !isRealKey(SUPABASE_KEY);
 
 const describeOrSkip = SKIP ? describe.skip : describe;
 
@@ -30,7 +47,7 @@ const describeOrSkip = SKIP ? describe.skip : describe;
 const EXPECTED_TABLES = [
   { name: 'stores',                 storeIdCol: false, dateCol: null },        // filtered by id
   { name: 'store_cost_templates',   storeIdCol: true,  dateCol: 'created_at' },
-  { name: 'categories',             storeIdCol: false, dateCol: 'created_at' }, // global
+  { name: 'categories',             storeIdCol: true,  dateCol: 'created_at' }, // has store_id (BUG FIX in backup-service)
   { name: 'products',               storeIdCol: true,  dateCol: 'created_at' },
   { name: 'workers',                storeIdCol: true,  dateCol: 'created_at' },
   { name: 'production_orders',      storeIdCol: true,  dateCol: 'created_at' },
