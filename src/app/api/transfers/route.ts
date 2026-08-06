@@ -113,11 +113,23 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
     userId: session.user.id,
     transferId,
   });
+  // FIX-ITER-13-HOT (2026-08-06): el RPC create_transfer retorna
+  // { status, transfer_id, total_cost } — NO un UUID directo.
+  // Extraer transfer_id del objeto jsonb.
+  const transferIdStr = (() => {
+    if (typeof transferId === 'string') return transferId;
+    if (transferId && typeof transferId === 'object') {
+      const obj = transferId as Record<string, unknown>;
+      if (typeof obj.transfer_id === 'string') return obj.transfer_id;
+      if (typeof obj.id === 'string') return obj.id;
+    }
+    return String(transferId ?? '');
+  })();
   return NextResponse.json({
-    id: transferId,
-    transfer_id: transferId,
+    id: transferIdStr,
+    transfer_id: transferIdStr,
     status: 'PENDIENTE',
-    transfer_number: (transferId as string)?.slice(0, 8) || '',
+    transfer_number: transferIdStr.slice(0, 8) || '',
   });
 }
 

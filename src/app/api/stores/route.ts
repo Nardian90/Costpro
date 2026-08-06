@@ -204,8 +204,9 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
     // Enforce max stores limit — plan limit is also enforced inside the RPC
     // for atomicity, but we need the profile plan to pass the limit parameter.
     // FIX-QC-2: No hardcoded 'basico' fallback — if profile has no plan, reject the request.
-    const profileResult = await admin.from('profiles').select('plan').eq('id', session.user.id).single();
-    const profile = profileResult.data as { plan: string } | null;
+    // FIX-ITER-13-HOT (2026-08-06): también necesitamos tenant_id para pasarlo al RPC.
+    const profileResult = await admin.from('profiles').select('plan, tenant_id').eq('id', session.user.id).single();
+    const profile = profileResult.data as { plan: string; tenant_id?: string | null } | null;
     if (!profile?.plan) {
       return NextResponse.json(createApiError('STORE_PLAN_REQUIRED'), { status: 400 });
     }
@@ -224,27 +225,32 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
     // P2-TRANSACTION: Atomic store creation with auto-membership via RPC.
     // BUG-FIX: Si el RPC falla por cualquier razón, hacer inserción directa
     // como fallback. El error del RPC se captura y se devuelve al cliente.
+    //
+    // FIX-ITER-13-HOT (2026-08-06): la firma actual del RPC es con parámetros
+    // planos (p_logo_url, p_reeup, ...), no con p_additional_data ni p_plan.
+    // Antes se llamaba con p_plan/p_additional_data que no existen → error
+    // "Could not find the function public.create_store_with_membership(
+    // p_additional_data, p_address, p_created_by, p_max_stores, p_name, p_plan)".
+    // Alineado con la firma real de la DB (parámetros planos + p_tenant_id).
     const { data: rpcData, error: rpcError } = await admin
       .rpc('create_store_with_membership', {
         p_name: validated.data.name,
         p_address: validated.data.address ?? '',
         p_created_by: session.user.id,
-        p_plan: profile.plan,
         p_max_stores: maxStores,
-        p_additional_data: {
-          logo_url: validated.data.logo_url,
-          reeup: validated.data.reeup,
-          nit: validated.data.nit,
-          bank_account: validated.data.bank_account,
-          phone: validated.data.phone,
-          email: validated.data.email,
-          slug: validated.data.slug,
-          plantilla: validated.data.plantilla,
-          signature_url: validated.data.signature_url,
-          stamp_url: validated.data.stamp_url,
-          latitude: validated.data.latitude,
-          longitude: validated.data.longitude,
-        },
+        p_logo_url: validated.data.logo_url ?? null,
+        p_reeup: validated.data.reeup ?? null,
+        p_nit: validated.data.nit ?? null,
+        p_bank_account: validated.data.bank_account ?? null,
+        p_phone: validated.data.phone ?? null,
+        p_email: validated.data.email ?? null,
+        p_slug: validated.data.slug ?? null,
+        p_plantilla: validated.data.plantilla ?? 'construccion',
+        p_signature_url: validated.data.signature_url ?? null,
+        p_stamp_url: validated.data.stamp_url ?? null,
+        p_latitude: validated.data.latitude ?? null,
+        p_longitude: validated.data.longitude ?? null,
+        p_tenant_id: profile.tenant_id ?? null,
       });
 
     if (rpcError) {
