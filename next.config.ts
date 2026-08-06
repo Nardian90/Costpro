@@ -4,11 +4,15 @@ import createNextIntlPlugin from 'next-intl/plugin';
 
 const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 
+const isVercel = !!process.env.VERCEL;
+
 const nextConfig: NextConfig = {
-  // FIX-DEPLOY (2026-07-10): output standalone para que Docker, Render y Vercel
-  // puedan generar builds optimizados. Sin esto, Dockerfile falla en COPY .next/standalone
-  // y Vercel no puede hacer cold starts eficientes.
-  output: 'standalone',
+  // FIX-DEPLOY (2026-07-10): output standalone para Docker/Render.
+  // FIX-VERCEL (2026-08-06): NO usar standalone en Vercel — causa
+  //   "ENOENT: .next/next-server.js.nft.json" porque Vercel tiene su propio
+  //   sistema de deployment y standalone no genera los archivos que Vercel espera.
+  //   Solo se activa cuando NO estamos en Vercel (Docker, Render, PM2, etc).
+  ...(isVercel ? {} : { output: 'standalone' as const }),
   typescript: {
     ignoreBuildErrors: false, // FIX-INF-017
   },
@@ -46,7 +50,7 @@ const nextConfig: NextConfig = {
     ],
   },
   experimental: {
-    optimizePackageImports: ['lodash', 'd3', 'xlsx'],
+    optimizePackageImports: ['lodash', 'd3', '@e965/xlsx'],
   },
 };
 
