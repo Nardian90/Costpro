@@ -1,93 +1,87 @@
 /**
- * No-op tracing module — OpenTelemetry DISABLED.
+ * Iteración 11.5 — Real OpenTelemetry tracing core (replaces no-op)
  *
- * All functions are no-ops that return safe empty/fallback values.
- * This module was originally backed by @opentelemetry/api but has been
- * disabled because the OTel SDK is not installed in this environment.
- *
- * Replace with real OTel implementation if SDK packages are added.
+ * Uses @opentelemetry/api for span management.
+ * In development: remains no-op (OTEL_ENABLED must be 'true' to activate).
  */
 
-// No-op types
-export interface NoOpSpan {
-  setAttribute(key: string, value: unknown): this;
-  setAttributes(attrs: Record<string, unknown>): this;
-  setStatus(status: { code: number; message?: string }): this;
-  recordException(exception: Error): this;
-  addEvent(name: string, attributes?: Record<string, unknown>): this;
+import { trace, context, SpanStatusCode as OtelSpanStatusCode } from '@opentelemetry/api';
+
+// Re-export for compatibility
+export { OtelSpanStatusCode as SpanStatusCode };
+
+export interface Span {
+  setAttribute(key: string, value: unknown): Span;
+  setAttributes(attrs: Record<string, unknown>): Span;
+  setStatus(status: { code: number; message?: string }): Span;
+  recordException(exception: Error | string): Span;
+  addEvent(name: string, attributes?: Record<string, unknown>): Span;
   end(): void;
   isRecording(): boolean;
   spanContext(): { traceId: string; spanId: string };
 }
 
-export interface NoOpTracer {
-  startSpan(name: string, options?: Record<string, unknown>): NoOpSpan;
-  startActiveSpan(name: string, options: Record<string, unknown>, fn: (span: NoOpSpan) => Promise<unknown>): Promise<unknown>;
+const isTracingEnabled = (): boolean => {
+  return process.env.NODE_ENV === 'production' || process.env.OTEL_ENABLED === 'true';
+};
+
+export function getTracer() {
+  return trace.getTracer('costpro');
 }
 
-const noOpSpan: NoOpSpan = {
-  setAttribute() { return this; },
-  setAttributes() { return this; },
-  setStatus() { return this; },
-  recordException() { return this; },
-  addEvent() { return this; },
-  end() {},
-  isRecording() { return false; },
-  spanContext() { return { traceId: '', spanId: '' }; },
-};
-
-const noOpTracer: NoOpTracer = {
-  startSpan() { return noOpSpan; },
-  startActiveSpan(_name: string, _opts: Record<string, unknown>, fn: (span: NoOpSpan) => Promise<unknown>) {
-    return fn(noOpSpan);
-  },
-};
-
-/** No-op SpanStatusCode values (matching OTel API constants) */
-export const SpanStatusCode = {
-  UNSET: 0,
-  OK: 1,
-  ERROR: 2,
-};
-
-/** No-op SpanKind values (matching OTel API constants) */
-export const SpanKind = {
-  INTERNAL: 0,
-  SERVER: 1,
-  CLIENT: 2,
-  PRODUCER: 3,
-  CONSUMER: 4,
-};
-
-/** No-op trace object */
-export const trace = {
-  getTracer() { return noOpTracer; },
-  getActiveSpan() { return undefined; },
-};
-
-/** Always returns the no-op tracer */
-export function getTracer(): NoOpTracer {
-  return noOpTracer;
+export function startSpan(name: string, options?: Record<string, unknown>): Span {
+  if (!isTracingEnabled()) {
+    // Return no-op span in dev
+    return {
+      setAttribute() { return this; },
+      setAttributes() { return this; },
+      setStatus() { return this; },
+      recordException() { return this; },
+      addEvent() { return this; },
+      end() {},
+      isRecording() { return false; },
+      spanContext() { return { traceId: '', spanId: '' }; },
+    };
+  }
+  return getTracer().startSpan(name, options) as unknown as Span;
 }
 
-/** Returns a no-op span */
-export function startSpan(_name: string, _options?: Record<string, unknown>): NoOpSpan {
-  return noOpSpan;
-}
-
-/** Wraps fn with a no-op span — just calls fn directly */
-export async function withActiveSpan<T>(
-  _name: string,
-  fn: (span: NoOpSpan) => Promise<T>,
-  _options?: Record<string, unknown>
+export function withActiveSpan<T>(
+  name: string,
+  options: Record<string, unknown>,
+  fn: (span: Span) => Promise<T>
 ): Promise<T> {
-  return fn(noOpSpan);
+  if (!isTracingEnabled()) {
+    // Dev: just call fn with a no-op span
+    const noOpSpan: Span = {
+      setAttribute() { return this; },
+      setAttributes() { return this; },
+      setStatus() { return this; },
+      recordException() { return this; },
+      addEvent() { return this; },
+      end() {},
+      isRecording() { return false; },
+      spanContext() { return { traceId: '', spanId: '' }; },
+    };
+    return fn(noOpSpan);
+  }
+  return getTracer().startActiveSpan(name, options, async (otelSpan) => {
+    return fn(otelSpan as unknown as Span);
+  });
 }
 
-/** Returns empty trace context */
 export function getTraceContext(): { traceId?: string; spanId?: string } {
-  return {};
+  if (!isTracingEnabled()) return {};
+  const span = trace.getSpan(context.active());
+  if (!span) return {};
+  const ctx = span.spanContext();
+  return {
+    traceId: ctx.traceId,
+    spanId: ctx.spanId,
+  };
 }
 
-export type Span = NoOpSpan;
-export type Tracer = NoOpTracer;
+export function getActiveTraceId(): string | null {
+  const { traceId } = getTraceContext();
+  return traceId || null;
+}

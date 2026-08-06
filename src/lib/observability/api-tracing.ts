@@ -45,8 +45,13 @@ export function withTracing<T extends RouteHandler>(
     const url = request.url || 'unknown';
     const method = request.method || 'UNKNOWN';
 
+    // Aclaración 3: Si el frontend envía x-costpro-trace-id, usarlo como atributo.
+    // Si no, el SDK genera uno automáticamente (trace root en backend).
+    const clientTraceId = request.headers.get('x-costpro-trace-id');
+
     return withActiveSpan(
       `${routeName}`,
+      {},
       async (span) => {
         // Set span attributes
         span.setAttributes({
@@ -57,6 +62,12 @@ export function withTracing<T extends RouteHandler>(
           'component': 'api-route',
           'route.name': routeName,
         });
+
+        // Aclaración 3: registrar traceId del frontend si existe
+        if (clientTraceId) {
+          span.setAttribute('trace.from_frontend', true);
+          span.setAttribute('trace.client_id', clientTraceId);
+        }
 
         const startTime = Date.now();
 
