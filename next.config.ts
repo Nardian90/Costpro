@@ -23,8 +23,9 @@ const nextConfig: NextConfig = {
   serverExternalPackages: [
     '@opentelemetry/api',
     '@opentelemetry/sdk-node',
-    '@opentelemetry/auto-instrumentations-node',
-    '@opentelemetry/exporter-trace-otlp-http',
+    '@opentelemetry/resources',
+    '@opentelemetry/sdk-trace-base',
+    '@opentelemetry/semantic-conventions',
     '@google/generative-ai',
     'z-ai-web-dev-sdk',
     '@whiskeysockets/baileys',
