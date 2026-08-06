@@ -19,16 +19,10 @@ import { canManageStore } from '@/lib/roles';
 import { validateOrigin } from '@/lib/csrf';
 import { rateLimit } from '@/lib/rate-limit';
 import { getSupabaseAdminSafe } from '@/lib/supabase-admin';
-import { z } from 'zod';
-
-const confirmSchema = z.object({
-  operation_date: z.string().datetime().optional(),
-});
 
 async function postHandler(
   req: NextRequest,
-  session: AuthenticatedSession,
-  context: { params: Promise<{ id: string }> }
+  session: AuthenticatedSession
 ) {
   if (!validateOrigin(req)) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
@@ -42,9 +36,11 @@ async function postHandler(
     return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
   }
 
-  const params = await context.params;
-  const transferId = params.id;
-  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(transferId)) {
+  // Extraer transferId de la URL (patrón /api/transfers/[transferId]/confirm)
+  const url = new URL(req.url);
+  const pathParts = url.pathname.split('/');
+  const transferId = pathParts[pathParts.length - 2]; // penúltimo segmento ([transferId])
+  if (!transferId || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(transferId)) {
     return NextResponse.json({ error: 'Invalid transfer_id' }, { status: 400 });
   }
 
@@ -75,23 +71,21 @@ async function postHandler(
   }
 
   // Parse body (opcional — operation_date)
-  let parsed: { success: true; data: z.infer<typeof confirmSchema> } | { success: false; error: unknown };
+  let operationDate: Date | undefined;
   try {
     const body = await req.json();
-    parsed = confirmSchema.safeParse(body) as typeof parsed;
+    if (body?.operation_date) {
+      operationDate = new Date(body.operation_date);
+    }
   } catch {
-    parsed = { success: true, data: {} };
-  }
-
-  if (!parsed.success) {
-    return NextResponse.json({ error: 'Invalid data' }, { status: 400 });
+    // body opcional
   }
 
   // Llamar al RPC confirm_transfer
   const { data, error } = await admin.rpc('confirm_transfer', {
     p_transfer_id: transferId,
     p_user_id: session.user.id,
-    p_operation_date: parsed.data.operation_date ? new Date(parsed.data.operation_date) : new Date(),
+    p_operation_date: operationDate || new Date(),
   });
 
   if (error) {

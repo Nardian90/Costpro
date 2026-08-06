@@ -167,8 +167,8 @@ describe('PT-RLS.4 — Bugs funcionales', () => {
     expect(sql).toContain('v_uid IS NOT NULL');
   });
 
-  it('PT-RLS.4.3: Fix B6 — endpoint /api/transfers/[id]/confirm existe', () => {
-    const path = join(process.cwd(), 'src', 'app', 'api', 'transfers', '[id]', 'confirm', 'route.ts');
+  it('PT-RLS.4.3: Fix B6 — endpoint /api/transfers/[transferId]/confirm existe', () => {
+    const path = join(process.cwd(), 'src', 'app', 'api', 'transfers', '[transferId]', 'confirm', 'route.ts');
     expect(existsSync(path)).toBe(true);
     const src = readFileSync(path, 'utf-8');
     expect(src).toContain('confirm_transfer');
