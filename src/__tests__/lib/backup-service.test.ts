@@ -73,6 +73,38 @@ function makeMockSupabase(storeId: string, tables: MockTableData): SupabaseClien
       }
       return chain(entry || [], null);
     },
+    // Iteración 11.6: mock rpc() — loadTableConfigs() calls get_backup_table_list
+    // and discover_backup_tables. Return null error + full registry data matching
+    // TABLE_CONFIGS_LEGACY (16 tables) so the service maps registry rows without
+    // falling back or emitting warnings.
+    rpc: (fn: string) => {
+      if (fn === 'get_backup_table_list') {
+        const registryData = [
+          { table_name: 'stores', tier: 0, filter_strategy: 'by_id', parent_table: null, parent_foreign_key: null, date_column: null, excluded_from_restore: false, exclude_reason: null },
+          { table_name: 'store_cost_templates', tier: 0, filter_strategy: 'store_id', parent_table: null, parent_foreign_key: null, date_column: 'created_at', excluded_from_restore: false, exclude_reason: null },
+          { table_name: 'categories', tier: 0, filter_strategy: 'store_id', parent_table: null, parent_foreign_key: null, date_column: 'created_at', excluded_from_restore: false, exclude_reason: null },
+          { table_name: 'products', tier: 1, filter_strategy: 'store_id', parent_table: null, parent_foreign_key: null, date_column: 'created_at', excluded_from_restore: false, exclude_reason: null },
+          { table_name: 'workers', tier: 1, filter_strategy: 'store_id', parent_table: null, parent_foreign_key: null, date_column: 'created_at', excluded_from_restore: false, exclude_reason: null },
+          { table_name: 'production_orders', tier: 4, filter_strategy: 'store_id', parent_table: null, parent_foreign_key: null, date_column: 'created_at', excluded_from_restore: false, exclude_reason: null },
+          { table_name: 'production_order_items', tier: 4, filter_strategy: 'via_parent', parent_table: 'production_orders', parent_foreign_key: 'order_id', date_column: 'created_at', excluded_from_restore: false, exclude_reason: null },
+          { table_name: 'transactions', tier: 3, filter_strategy: 'store_id', parent_table: null, parent_foreign_key: null, date_column: 'created_at', excluded_from_restore: false, exclude_reason: null },
+          { table_name: 'transaction_items', tier: 3, filter_strategy: 'via_parent', parent_table: 'transactions', parent_foreign_key: 'transaction_id', date_column: 'created_at', excluded_from_restore: false, exclude_reason: null },
+          { table_name: 'sales_transactions', tier: 3, filter_strategy: 'store_id', parent_table: null, parent_foreign_key: null, date_column: 'sale_date', excluded_from_restore: false, exclude_reason: null },
+          { table_name: 'cash_closures', tier: 3, filter_strategy: 'store_id', parent_table: null, parent_foreign_key: null, date_column: 'closed_at', excluded_from_restore: false, exclude_reason: null },
+          { table_name: 'stock_movements', tier: 2, filter_strategy: 'store_id', parent_table: null, parent_foreign_key: null, date_column: 'movement_date', excluded_from_restore: false, exclude_reason: null },
+          { table_name: 'inventory_adjustments', tier: 2, filter_strategy: 'store_id', parent_table: null, parent_foreign_key: null, date_column: 'created_at', excluded_from_restore: false, exclude_reason: null },
+          { table_name: 'commission_rules', tier: 4, filter_strategy: 'store_id', parent_table: null, parent_foreign_key: null, date_column: 'created_at', excluded_from_restore: false, exclude_reason: null },
+          { table_name: 'commission_payments', tier: 4, filter_strategy: 'store_id', parent_table: null, parent_foreign_key: null, date_column: 'paid_at', excluded_from_restore: false, exclude_reason: null },
+        ];
+        return Promise.resolve({ data: registryData, error: null });
+      }
+      if (fn === 'discover_backup_tables') {
+        // Return same set so drift detection finds no drift
+        const names = ['stores','store_cost_templates','categories','products','workers','production_orders','production_order_items','transactions','transaction_items','sales_transactions','cash_closures','stock_movements','inventory_adjustments','commission_rules','commission_payments'];
+        return Promise.resolve({ data: names.map(n => ({ table_name: n })), error: null });
+      }
+      return Promise.resolve({ data: null, error: { code: 'PGRST202', message: `Function ${fn} not mocked` } });
+    },
   };
 
   return mock as unknown as SupabaseClient;
@@ -319,6 +351,23 @@ describe('backup-service', () => {
           };
           return emptyApi;
         }),
+        // Iteración 11.6: mock rpc() para loadTableConfigs() — retornar registry válido
+        rpc: (fn: string) => {
+          if (fn === 'get_backup_table_list') {
+            return Promise.resolve({ data: [
+              { table_name: 'stores', tier: 0, filter_strategy: 'by_id', parent_table: null, parent_foreign_key: null, date_column: null, excluded_from_restore: false, exclude_reason: null },
+              { table_name: 'categories', tier: 0, filter_strategy: 'global', parent_table: null, parent_foreign_key: null, date_column: 'created_at', excluded_from_restore: false, exclude_reason: null },
+              { table_name: 'products', tier: 1, filter_strategy: 'store_id', parent_table: null, parent_foreign_key: null, date_column: 'created_at', excluded_from_restore: false, exclude_reason: null },
+              { table_name: 'transactions', tier: 3, filter_strategy: 'store_id', parent_table: null, parent_foreign_key: null, date_column: 'created_at', excluded_from_restore: false, exclude_reason: null },
+            ], error: null });
+          }
+          if (fn === 'discover_backup_tables') {
+            return Promise.resolve({ data: [
+              { table_name: 'stores' }, { table_name: 'categories' }, { table_name: 'products' }, { table_name: 'transactions' },
+            ], error: null });
+          }
+          return Promise.resolve({ data: null, error: { code: 'PGRST202', message: `Function ${fn} not mocked` } });
+        },
       };
 
       const result = await generateBackup(supabase as any, {
@@ -395,6 +444,25 @@ describe('backup-service', () => {
           };
           return emptyApi;
         }),
+        // Iteración 11.6: mock rpc() para loadTableConfigs() — retornar registry válido
+        // IMPORTANTE: transaction_items tiene tier 4 (mayor que transactions tier 3)
+        // porque el servicio ordena configs por tier y via_parent necesita que el
+        // parent ya esté procesado.
+        rpc: (fn: string) => {
+          if (fn === 'get_backup_table_list') {
+            return Promise.resolve({ data: [
+              { table_name: 'stores', tier: 0, filter_strategy: 'by_id', parent_table: null, parent_foreign_key: null, date_column: null, excluded_from_restore: false, exclude_reason: null },
+              { table_name: 'transactions', tier: 3, filter_strategy: 'store_id', parent_table: null, parent_foreign_key: null, date_column: 'created_at', excluded_from_restore: false, exclude_reason: null },
+              { table_name: 'transaction_items', tier: 4, filter_strategy: 'via_parent', parent_table: 'transactions', parent_foreign_key: 'transaction_id', date_column: 'created_at', excluded_from_restore: false, exclude_reason: null },
+            ], error: null });
+          }
+          if (fn === 'discover_backup_tables') {
+            return Promise.resolve({ data: [
+              { table_name: 'stores' }, { table_name: 'transactions' }, { table_name: 'transaction_items' },
+            ], error: null });
+          }
+          return Promise.resolve({ data: null, error: { code: 'PGRST202', message: `Function ${fn} not mocked` } });
+        },
       };
 
       const result = await generateBackup(supabase as any, {
@@ -456,6 +524,18 @@ describe('backup-service', () => {
             upsert: upsertSpy,
           };
         }),
+        rpc: (fn: string) => {
+          if (fn === 'get_backup_table_list') {
+            return Promise.resolve({ data: [
+              { table_name: 'products', tier: 1, filter_strategy: 'store_id', parent_table: null, parent_foreign_key: null, date_column: 'created_at', excluded_from_restore: false, exclude_reason: null },
+              { table_name: 'stores', tier: 0, filter_strategy: 'by_id', parent_table: null, parent_foreign_key: null, date_column: null, excluded_from_restore: false, exclude_reason: null },
+            ], error: null });
+          }
+          if (fn === 'discover_backup_tables') {
+            return Promise.resolve({ data: [{ table_name: 'products' }, { table_name: 'stores' }], error: null });
+          }
+          return Promise.resolve({ data: null, error: null });
+        },
       } as unknown as SupabaseClient;
 
       const backup = JSON.stringify({
@@ -508,6 +588,18 @@ describe('backup-service', () => {
             }),
           };
         }),
+        rpc: (fn: string) => {
+          if (fn === 'get_backup_table_list') {
+            return Promise.resolve({ data: [
+              { table_name: 'products', tier: 1, filter_strategy: 'store_id', parent_table: null, parent_foreign_key: null, date_column: 'created_at', excluded_from_restore: false, exclude_reason: null },
+              { table_name: 'stores', tier: 0, filter_strategy: 'by_id', parent_table: null, parent_foreign_key: null, date_column: null, excluded_from_restore: false, exclude_reason: null },
+            ], error: null });
+          }
+          if (fn === 'discover_backup_tables') {
+            return Promise.resolve({ data: [{ table_name: 'products' }, { table_name: 'stores' }], error: null });
+          }
+          return Promise.resolve({ data: null, error: null });
+        },
       } as unknown as SupabaseClient;
 
       const backup = JSON.stringify({
@@ -565,6 +657,18 @@ describe('backup-service', () => {
             upsert: vi.fn(() => Promise.resolve({ data: null, error: null })),
           };
         }),
+        rpc: (fn: string) => {
+          if (fn === 'get_backup_table_list') {
+            return Promise.resolve({ data: [
+              { table_name: 'products', tier: 1, filter_strategy: 'store_id', parent_table: null, parent_foreign_key: null, date_column: 'created_at', excluded_from_restore: false, exclude_reason: null },
+              { table_name: 'stores', tier: 0, filter_strategy: 'by_id', parent_table: null, parent_foreign_key: null, date_column: null, excluded_from_restore: false, exclude_reason: null },
+            ], error: null });
+          }
+          if (fn === 'discover_backup_tables') {
+            return Promise.resolve({ data: [{ table_name: 'products' }, { table_name: 'stores' }], error: null });
+          }
+          return Promise.resolve({ data: null, error: null });
+        },
       } as unknown as SupabaseClient;
 
       const backup = JSON.stringify({
@@ -610,6 +714,19 @@ describe('backup-service', () => {
             })),
           };
         }),
+        rpc: (fn: string) => {
+          if (fn === 'get_backup_table_list') {
+            return Promise.resolve({ data: [
+              { table_name: 'products', tier: 1, filter_strategy: 'store_id', parent_table: null, parent_foreign_key: null, date_column: 'created_at', excluded_from_restore: false, exclude_reason: null },
+              { table_name: 'transactions', tier: 3, filter_strategy: 'store_id', parent_table: null, parent_foreign_key: null, date_column: 'created_at', excluded_from_restore: false, exclude_reason: null },
+              { table_name: 'stores', tier: 0, filter_strategy: 'by_id', parent_table: null, parent_foreign_key: null, date_column: null, excluded_from_restore: false, exclude_reason: null },
+            ], error: null });
+          }
+          if (fn === 'discover_backup_tables') {
+            return Promise.resolve({ data: [{ table_name: 'products' }, { table_name: 'transactions' }, { table_name: 'stores' }], error: null });
+          }
+          return Promise.resolve({ data: null, error: null });
+        },
       } as unknown as SupabaseClient;
 
       const backup = JSON.stringify({

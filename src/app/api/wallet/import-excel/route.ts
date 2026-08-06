@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from '@/lib/auth';
 import { logger } from '@/lib/logger';
-import * as XLSX from 'xlsx';
+import * as XLSX from '@e965/xlsx';
 
 export const runtime = 'nodejs';
 export const maxDuration = 30;

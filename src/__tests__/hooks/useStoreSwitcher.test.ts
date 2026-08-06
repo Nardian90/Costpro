@@ -13,11 +13,16 @@ const mockClearCartOnStoreSwitch = vi.fn();
 const mockSetActiveStore = vi.fn();
 const mockInvalidateQueries = vi.fn();
 
+// Mock store — must include setState (zustand static API) and a callable useAuthStore
+const mockSetState = vi.fn();
 vi.mock('@/store', () => ({
-  useAuthStore: () => ({
-    user: { id: 'user-1', activeStoreId: 'store-old', storeId: 'store-old' },
-    updateUser: mockUpdateUser,
-  }),
+  useAuthStore: Object.assign(
+    () => ({
+      user: { id: 'user-1', activeStoreId: 'store-old', storeId: 'store-old' },
+      updateUser: mockUpdateUser,
+    }),
+    { setState: mockSetState }
+  ),
 }));
 
 vi.mock('@/store/cart', () => ({
@@ -58,6 +63,7 @@ describe('useStoreSwitcher', () => {
     mockClearCartOnStoreSwitch.mockReset();
     mockSetActiveStore.mockReset();
     mockInvalidateQueries.mockReset();
+    mockSetState.mockReset();
 
     // Import fresh each time
     const mod = await import('@/hooks/ui/useStoreSwitcher');

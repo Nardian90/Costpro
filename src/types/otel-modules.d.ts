@@ -25,12 +25,6 @@ declare module '@opentelemetry/semantic-conventions' {
   export const ATTR_SERVICE_VERSION: string;
 }
 
-declare module '@opentelemetry/exporter-trace-otlp-http' {
-  export class OTLPTraceExporter {
-    constructor(opts?: { url?: string });
-  }
-}
-
 declare module '@opentelemetry/sdk-trace-base' {
   export class ConsoleSpanExporter {}
   export class SimpleSpanProcessor {
@@ -39,10 +33,6 @@ declare module '@opentelemetry/sdk-trace-base' {
   export class BatchSpanProcessor {
     constructor(exporter: any);
   }
-}
-
-declare module '@opentelemetry/auto-instrumentations-node' {
-  export function getNodeAutoInstrumentations(opts?: Record<string, any>): any[];
 }
 
 /**
