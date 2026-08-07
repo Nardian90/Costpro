@@ -151,8 +151,15 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
     const msg = rpcError.message || '';
     logger.error('POS', 'CREATE_SALE_V2_FAILED', { error: msg, storeId: d.store_id });
 
+    // FIX Bug #6 (v2.21.6): Product not found → 400 (not 409)
+    if (msg.includes('ERR_PRODUCT_NOT_FOUND')) {
+      return NextResponse.json({ error: 'Producto no encontrado en esta tienda.' }, { status: 400 });
+    }
     if (msg.includes('ERR_INSUFFICIENT_STOCK')) {
       return NextResponse.json({ error: msg }, { status: 409 });
+    }
+    if (msg.includes('ERR_STORE_INACTIVE')) {
+      return NextResponse.json({ error: 'La tienda no está activa.' }, { status: 403 });
     }
     if (msg.includes('ERR_TOTAL_MISMATCH')) {
       return NextResponse.json({ error: 'Descuadre detectado. Recarga la página e intenta de nuevo.' }, { status: 422 });
