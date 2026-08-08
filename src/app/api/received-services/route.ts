@@ -6,9 +6,15 @@ import { withSecurity } from '@/lib/with-security';
 
 /**
  * GET /api/received-services?store_id=...&status=...&type=...
- * POST /api/received-services — Crear nuevo servicio
- * PATCH /api/received-services — Editar/anular servicio
+ * POST /api/received-services — Crear nuevo servicio (v2: RPC create_received_service_v2)
+ * PATCH /api/received-services — Editar/anular servicio (v2: RPC void_received_service_with_reversal / set_received_service_status)
+ *
+ * v2.25.0 — Feature flag USE_V2_RECEIVED_SERVICES:
+ *   true  → usa RPCs transaccionales (create_received_service_v2, void_received_service_with_reversal, set_received_service_status)
+ *   false → usa codigo TypeScript viejo (compatibilidad)
  */
+
+const USE_V2 = process.env.USE_V2_RECEIVED_SERVICES === 'true';
 
 async function getHandler(req: NextRequest, session: AuthenticatedSession) {
   try {
@@ -19,16 +25,9 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
     const admin = createClient(url, key, { auth: { autoRefreshToken: false, persistSession: false } });
 
     const { searchParams } = new URL(req.url);
-    // FIX-SERVICES-STORE-ID (2026-07-13): store_id es OBLIGATORIO.
-    // Antes se hacia fallback a session.user.id (un user UUID), lo que causaba
-    // que la API devolviera 200 con data vacía en vez de 400 cuando faltaba
-    // el parámetro. Esto ocultaba bugs en el frontend y dificultaba el debugging.
     const storeId = searchParams.get('store_id');
     if (!storeId) {
-      return NextResponse.json(
-        { error: 'store_id es requerido' },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: 'store_id es requerido' }, { status: 400 });
     }
     const status = searchParams.get('status');
 
@@ -48,23 +47,61 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
     const rl = await rateLimit(`services:post:${session.user.id}`, { windowMs: 60_000, maxRequests: 20 });
     if (!rl.allowed) return NextResponse.json(createApiError('RATE_LIMITED'), { status: 429 });
 
+    const body = await req.json();
+    const storeId = body.store_id;
+    if (!storeId) {
+      return NextResponse.json({ error: 'store_id es requerido' }, { status: 400 });
+    }
+
+    const userId = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(session.user.id || '') ? session.user.id : null;
+
+    if (USE_V2) {
+      // ─── v2.25.0: RPC transaccional ───
+      const { createClient } = await import('@supabase/supabase-js');
+      const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+      if (!url || !key) return NextResponse.json(createApiError('CONFIG_ERROR'), { status: 500 });
+      const admin = createClient(url, key, { auth: { autoRefreshToken: false, persistSession: false } });
+
+      const { data: rpcResult, error: rpcErr } = await admin.rpc('create_received_service_v2', {
+        p_store_id: storeId,
+        p_supplier: body.supplier,
+        p_total_amount: body.total_amount,
+        p_service_type_id: body.service_type_id || null,
+        p_service_type_name: body.service_type_name || 'Otro',
+        p_service_date: body.service_date || null,
+        p_currency: body.currency || 'CUP',
+        p_exchange_rate: body.exchange_rate || 1.0,
+        p_payment_terms_days: body.payment_terms_days || 30,
+        p_distribution_method: body.distribution_method || 'amount',
+        p_reference_doc: body.reference_doc || null,
+        p_observations: body.observations || null,
+        p_receipt_ids: body.receipt_ids || [],
+        p_created_by: userId,
+      });
+
+      if (rpcErr) {
+        const msg = rpcErr.message;
+        if (msg.includes('ERR_UNAUTHORIZED')) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+        if (msg.includes('ERR_SUPPLIER_REQUIRED')) return NextResponse.json({ error: 'Supplier requerido' }, { status: 400 });
+        if (msg.includes('ERR_INVALID_AMOUNT')) return NextResponse.json({ error: 'total_amount debe ser > 0' }, { status: 400 });
+        if (msg.includes('ERR_INVALID_EXCHANGE_RATE')) return NextResponse.json({ error: 'exchange_rate fuera de rango [0.01, 10000]' }, { status: 400 });
+        if (msg.includes('ERR_INVALID_PAYMENT_TERMS')) return NextResponse.json({ error: 'payment_terms_days fuera de rango [1, 365]' }, { status: 400 });
+        if (msg.includes('ERR_SERVICE_TYPE_NOT_FOUND')) return NextResponse.json({ error: 'Service type no encontrado' }, { status: 400 });
+        if (msg.includes('ERR_RECEIPT_INVALID')) return NextResponse.json({ error: 'Receipt invalido (cross-store o no activo)' }, { status: 400 });
+        return NextResponse.json({ error: msg }, { status: 500 });
+      }
+
+      return NextResponse.json({ data: { id: rpcResult.service_id, service_number: rpcResult.service_number } }, { status: 201 });
+    }
+
+    // ─── v2.24.x: codigo TypeScript viejo (compatibilidad) ───
     const { createClient } = await import('@supabase/supabase-js');
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
     if (!url || !key) return NextResponse.json(createApiError('CONFIG_ERROR'), { status: 500 });
     const admin = createClient(url, key, { auth: { autoRefreshToken: false, persistSession: false } });
 
-    const body = await req.json();
-    // FIX-SERVICES-STORE-ID: store_id obligatorio en POST también.
-    const storeId = body.store_id;
-    if (!storeId) {
-      return NextResponse.json(
-        { error: 'store_id es requerido' },
-        { status: 400 },
-      );
-    }
-
-    // Generar número de servicio
     const { count } = await admin.from('received_services').select('*', { count: 'exact', head: true }).eq('store_id', storeId);
     const serviceNumber = `SRV-${String((count || 0) + 1).padStart(4, '0')}`;
 
@@ -87,13 +124,11 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-    // Audit log
     await admin.from('service_audit_log').insert({
       service_id: data.id, user_id: session.user.id,
       action: 'created', details: { service_number: serviceNumber, total_amount: body.total_amount }
     });
 
-    // Si hay recepciones vinculadas, crear links
     if (body.receipt_ids && Array.isArray(body.receipt_ids) && body.receipt_ids.length > 0) {
       const totalReceipts = body.receipt_ids.length;
       const allocatedPerReceipt = body.total_amount / totalReceipts;
@@ -103,7 +138,6 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
         allocated_amount: allocatedPerReceipt,
       }));
       await admin.from('service_reception_links').insert(links);
-
       await admin.from('service_audit_log').insert({
         service_id: data.id, user_id: session.user.id,
         action: 'linked', details: { receipt_ids: body.receipt_ids }
@@ -126,23 +160,57 @@ async function patchHandler(req: NextRequest, session: AuthenticatedSession) {
 
     const body = await req.json();
     const { service_id, ...updates } = body;
+    const userId = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(session.user.id || '') ? session.user.id : null;
 
+    if (USE_V2) {
+      // ─── v2.25.0: RPCs transaccionales ───
+      if (body.action === 'void') {
+        const { data: rpcResult, error: rpcErr } = await admin.rpc('void_received_service_with_reversal', {
+          p_service_id: service_id,
+          p_user_id: userId,
+          p_reason: body.reason || 'Anulacion via API',
+        });
+        if (rpcErr) {
+          const msg = rpcErr.message;
+          if (msg.includes('ERR_SERVICE_NOT_FOUND_OR_NOT_ACTIVE')) return NextResponse.json({ error: 'Servicio no encontrado o no activo' }, { status: 404 });
+          if (msg.includes('ERR_UNAUTHORIZED')) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+          return NextResponse.json({ error: msg }, { status: 500 });
+        }
+        return NextResponse.json({ success: true, data: rpcResult });
+      }
+
+      // Edit = status change via RPC
+      if (body.status) {
+        const { data: rpcResult, error: rpcErr } = await admin.rpc('set_received_service_status', {
+          p_service_id: service_id,
+          p_new_status: body.status,
+          p_user_id: userId,
+          p_reason: body.reason || null,
+        });
+        if (rpcErr) {
+          const msg = rpcErr.message;
+          if (msg.includes('ERR_SERVICE_NOT_FOUND')) return NextResponse.json({ error: 'Servicio no encontrado' }, { status: 404 });
+          if (msg.includes('ERR_UNAUTHORIZED')) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+          if (msg.includes('ERR_INVALID_TRANSITION')) return NextResponse.json({ error: msg.replace(/^.*ERR_INVALID_TRANSITION:\s*/, '') }, { status: 400 });
+          return NextResponse.json({ error: msg }, { status: 500 });
+        }
+        return NextResponse.json({ success: true, data: rpcResult });
+      }
+
+      return NextResponse.json({ error: 'PATCH requiere action=void o status=...' }, { status: 400 });
+    }
+
+    // ─── v2.24.x: codigo TypeScript viejo ───
     if (body.action === 'void') {
-      // Anular servicio
       const { error } = await admin.from('received_services').update({ status: 'voided', updated_at: new Date().toISOString() }).eq('id', service_id);
       if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-
-      // Eliminar distribuciones
       await admin.from('service_cost_distributions').delete().eq('service_id', service_id);
-
       await admin.from('service_audit_log').insert({ service_id, user_id: session.user.id, action: 'voided', details: {} });
       return NextResponse.json({ success: true });
     }
 
-    // Editar
     const { data, error } = await admin.from('received_services').update({ ...updates, updated_at: new Date().toISOString() }).eq('id', service_id).select().single();
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-
     await admin.from('service_audit_log').insert({ service_id, user_id: session.user.id, action: 'edited', details: updates });
     return NextResponse.json({ data });
   } catch (e: any) {
@@ -151,8 +219,5 @@ async function patchHandler(req: NextRequest, session: AuthenticatedSession) {
 }
 
 export const GET = withAuth(getHandler);
-export const POST = withAuth(withSecurity(postHandler, {
-  rateLimitKey: 'received-services:post',
-  maxRequests: 10,
-}));
+export const POST = withAuth(withSecurity(postHandler, { rateLimitKey: 'received-services:post', maxRequests: 10 }));
 export const PATCH = withAuth(patchHandler);
