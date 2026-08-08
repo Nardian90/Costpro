@@ -59,66 +59,58 @@ async function patchHandler(req: NextRequest, session: AuthenticatedSession) {
   }
 
   const body = await req.json();
-  const { status: newStatus } = body;
+  const { status: newStatus, reason } = body;
 
-  // FIX: State machine — validar transiciones válidas
-  const validTransitions: Record<string, string[]> = {
-    'sent': ['partial', 'received', 'cancelled'],
-    'partial': ['received', 'cancelled'],
-    'received': [],
-    'cancelled': [],
-  };
+  if (!newStatus) {
+    return NextResponse.json({ error: 'status requerido en el body' }, { status: 400 });
+  }
 
   const supabase = getSupabaseForSession(session);
+  const userId = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(session.user.id || '') ? session.user.id : null;
 
-  // Cargar OC actual
-  const { data: order, error: loadErr } = await supabase
-    .from('purchase_orders')
-    .select('store_id, status')
-    .eq('id', id)
-    .single();
+  // v2.24.0 — Usar RPC set_purchase_order_status (state machine server-side + auditoría)
+  // Validaciones (state machine): draft→{sent,cancelled}, sent→{cancelled}, partial→{cancelled}
+  // received/cancelled son terminales. partial/received solo vía receive_against_po.
+  const { data: rpcResult, error: rpcErr } = await supabase.rpc('set_purchase_order_status', {
+    p_po_id: id,
+    p_new_status: newStatus,
+    p_user_id: userId,
+    p_reason: reason || null,
+  });
 
-  if (loadErr || !order) {
-    return NextResponse.json({ error: 'OC no encontrada' }, { status: 404 });
+  if (rpcErr) {
+    const msg = rpcErr.message;
+    if (msg.includes('ERR_PO_NOT_FOUND')) {
+      return NextResponse.json({ error: 'OC no encontrada' }, { status: 404 });
+    }
+    if (msg.includes('ERR_UNAUTHORIZED')) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+    if (msg.includes('ERR_INVALID_TRANSITION')) {
+      return NextResponse.json({ error: msg.replace(/^.*ERR_INVALID_TRANSITION:\s*/, '') }, { status: 400 });
+    }
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
 
-  // Verificar acceso
-  const hasStoreAccess = session.user.role === 'admin' ||
-    session.user.memberships?.some((m: any) => m.store_id === order.store_id && m.status === 'active');
-  if (!hasStoreAccess) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-  }
-
-  // Validar transición
-  const allowed = validTransitions[order.status] || [];
-  if (!allowed.includes(newStatus)) {
-    return NextResponse.json(
-      { error: `Transición inválida: ${order.status} → ${newStatus}. Permitidas: ${allowed.join(', ') || 'ninguna'}` },
-      { status: 400 },
-    );
-  }
-
-  // FIX TOCTOU: solo actualizar si el status no cambió desde que lo leímos
-  const { error: updateErr } = await supabase
-    .from('purchase_orders')
-    .update({
-      status: newStatus,
-      received_at: newStatus === 'received' ? new Date().toISOString() : null,
-    })
-    .eq('id', id)
-    .eq('status', order.status); // condición de optimismo
-
-  if (updateErr) return NextResponse.json({ error: updateErr.message }, { status: 500 });
-
-  return NextResponse.json({ success: true, status: newStatus });
+  return NextResponse.json({
+    success: true,
+    status: rpcResult.po_status,
+    previous_status: rpcResult.previous_status,
+  });
 }
 
 /**
  * POST /api/purchase-orders/[id] — Recibir contra OC
- * Body: { receivedItems: [{ poItemId, quantityReceived }] }
+ * Body: { receivedItems: [{ poItemId, quantityReceived }], receptionDate?, invoiceNumber? }
  *
- * FIX: Atómico — actualiza todos los items y recalcula status en una operación.
- * Antes: bucle secuencial con race condition.
+ * v2.24.0 — RPC transaccional atómico:
+ *   - Cast enum correcto (sin 42804)
+ *   - Llama a register_reception (8 validaciones B+C del v2.23.0)
+ *   - Actualiza inventario + WAC automáticamente
+ *   - Crea receipt vinculado con po_id
+ *   - Marca receipt con payment_status='unpaid' para CxP
+ *   - Items ordenados por po_item_id ASC (anti-deadlock)
+ *   - reference_doc NULL si no viene invoice_number (evita UNIQUE collision en partial receives)
  */
 async function postHandler(req: NextRequest, session: AuthenticatedSession) {
   const id = extractIdFromUrl(req);
@@ -129,7 +121,7 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
   }
 
   const body = await req.json();
-  const { receivedItems } = body;
+  const { receivedItems, receptionDate, invoiceNumber } = body;
 
   if (!receivedItems || !Array.isArray(receivedItems) || receivedItems.length === 0) {
     return NextResponse.json({ error: 'receivedItems requerido (array)' }, { status: 400 });
@@ -138,8 +130,6 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
   const supabase = getSupabaseForSession(session);
   const userId = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(session.user.id || '') ? session.user.id : null;
 
-  // FIX: RPC transaccional — receive_against_po suma atómicamente quantity_received
-  // y recalcula status global. No hay race conditions.
   const rpcItems = receivedItems.map((item: { poItemId: string; quantityReceived: number }) => ({
     po_item_id: item.poItemId,
     quantity_received: item.quantityReceived,
@@ -149,6 +139,8 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
     p_po_id: id,
     p_received_items: rpcItems,
     p_user_id: userId,
+    p_reception_date: receptionDate || new Date().toISOString(),
+    p_invoice_number: invoiceNumber || null,
   });
 
   if (rpcErr) {
@@ -162,10 +154,39 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
     if (msg.includes('ERR_PO_CANCELLED')) {
       return NextResponse.json({ error: 'OC cancelada, no se puede recibir' }, { status: 400 });
     }
+    if (msg.includes('ERR_PO_NOT_RECEIVABLE')) {
+      return NextResponse.json({ error: 'OC en estado terminal, no se puede recibir' }, { status: 400 });
+    }
+    if (msg.includes('ERR_EMPTY_ITEMS')) {
+      return NextResponse.json({ error: 'Items vacío' }, { status: 400 });
+    }
+    if (msg.includes('ERR_ITEM_ID_REQUIRED')) {
+      return NextResponse.json({ error: 'po_item_id requerido en todos los items' }, { status: 400 });
+    }
+    if (msg.includes('ERR_NEGATIVE_QTY')) {
+      return NextResponse.json({ error: 'quantity_received debe ser > 0' }, { status: 400 });
+    }
+    if (msg.includes('ERR_ITEM_NOT_FOUND')) {
+      return NextResponse.json({ error: 'Item no encontrado en esta OC' }, { status: 404 });
+    }
+    if (msg.includes('ERR_OVER_RECEIVE')) {
+      return NextResponse.json({ error: msg.replace(/^.*ERR_OVER_RECEIVE:\s*/, '') }, { status: 409 });
+    }
+    if (msg.includes('ERR_PRODUCT_ID_REQUIRED')) {
+      return NextResponse.json({ error: 'Item de OC sin product_id — no se puede recibir' }, { status: 400 });
+    }
+    if (msg.includes('ERR_PRODUCT_NOT_IN_STORE')) {
+      return NextResponse.json({ error: 'Producto no existe en la tienda' }, { status: 400 });
+    }
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 
-  return NextResponse.json({ success: true, status: rpcResult.po_status });
+  return NextResponse.json({
+    success: true,
+    status: rpcResult.po_status,
+    receipt_id: rpcResult.receipt_id,
+    items_received: rpcResult.items_received,
+  });
 }
 
 export const GET = withAuth(getHandler);
