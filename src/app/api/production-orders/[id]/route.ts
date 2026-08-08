@@ -102,66 +102,35 @@ async function patchHandler(request: NextRequest, session: AuthenticatedSession)
 
     // Si es acción de cerrar orden
     if (action === 'close') {
-      // C5: Si es orden de production, output product es obligatorio
-      if (order.order_type === 'production' && (!output_product_id || !output_quantity)) {
-        return NextResponse.json({ error: 'Las órdenes de producción requieren un producto terminado y cantidad' }, { status: 400 });
+      // v2.26.0 G9: Usar RPC transaccional close_production_order_v2 (atómico)
+      const closeIdempotencyKey = `close-${orderId}-${crypto.randomUUID()}`;
+      const { data: closeResult, error: closeError } = await supabase.rpc('close_production_order_v2', {
+        p_order_id: orderId,
+        p_store_id: userData.active_store_id,
+        p_seller_id: session_user.id,
+        p_final_amount: final_amount || 0,
+        p_final_method: final_method || null,
+        p_final_currency: final_currency || 'CUP',
+        p_exchange_rate: exchange_rate || 1.0,
+        p_output_product_id: output_product_id || null,
+        p_output_quantity: output_quantity || null,
+        p_user_id: session_user.id,
+        p_idempotency_key: closeIdempotencyKey,
+      });
+
+      if (closeError) {
+        console.error('[production-orders/close] RPC error:', closeError);
+        const msg = closeError.message;
+        if (msg.includes('ERR_UNAUTHORIZED')) return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
+        if (msg.includes('ERR_ORDER_NOT_FOUND')) return NextResponse.json({ error: 'Orden no encontrada' }, { status: 404 });
+        if (msg.includes('ERR_ORDER_NOT_CLOSABLE')) return NextResponse.json({ error: msg.replace(/^.*ERR_ORDER_NOT_CLOSABLE:\s*/, '') }, { status: 400 });
+        if (msg.includes('ERR_PRODUCTION_REQUIRES_OUTPUT')) return NextResponse.json({ error: 'Las órdenes de producción requieren un producto terminado y cantidad' }, { status: 400 });
+        if (msg.includes('ERR_ORDER_NOT_IN_PROGRESS')) return NextResponse.json({ error: 'La orden no está en progreso' }, { status: 400 });
+        if (msg.includes('ERR_IDEMPOTENCY_KEY_REUSE')) return NextResponse.json({ error: 'Idempotency key reutilizada' }, { status: 409 });
+        return NextResponse.json({ error: msg }, { status: 500 });
       }
 
-      // C6: Registrar pago final con inspección de errores (Fase 6: idempotency + ref_type dinámico)
-      if (final_amount && final_amount > 0 && final_method) {
-        const refType = order.order_type === 'work' ? 'work' : 'production_order';
-        const { error: payError } = await supabase.rpc('register_supplier_payment', {
-          p_store_id: userData.active_store_id,
-          p_ref_type: refType,
-          p_ref_id: orderId,
-          p_amount: final_amount,
-          p_payment_method: final_method,
-          p_paid_by: session_user.id,
-          p_currency: final_currency || 'CUP',
-          p_exchange_rate: exchange_rate || 1.0,
-          p_idempotency_key: `close-${orderId}-${crypto.randomUUID()}`,
-        });
-        if (payError) {
-          console.error('[production-orders/close] Payment error:', payError);
-          return NextResponse.json({ error: 'Error al registrar pago: ' + payError.message }, { status: 500 });
-        }
-      }
-
-      // C5: Si es orden de producción, recibir producto terminado
-      if (order.order_type === 'production' && output_product_id && output_quantity) {
-        const { error: recvError } = await supabase.rpc('receive_production_output', {
-          p_order_id: orderId,
-          p_product_id: output_product_id,
-          p_quantity: output_quantity,
-          p_store_id: userData.active_store_id,
-        });
-        if (recvError) {
-          console.error('[production-orders/close] Receive output error:', recvError);
-          return NextResponse.json({ error: 'Error al recibir producto: ' + recvError.message }, { status: 500 });
-        }
-      }
-
-      // C5: Si es orden de servicio, crear venta en transactions
-      // V2.12.32: pasar p_user_id para anti-spoofing (patrón consistente con otros RPCs)
-      if (order.order_type === 'service') {
-        const { error: saleError } = await supabase.rpc('close_service_order_as_sale', {
-          p_order_id: orderId,
-          p_store_id: userData.active_store_id,
-          p_seller_id: session_user.id,
-          p_payment_method: final_method || 'cash',
-          p_currency: final_currency || 'CUP',
-          p_exchange_rate: exchange_rate || 1.0,
-          p_user_id: session_user.id,
-        });
-        if (saleError) {
-          console.error('[production-orders/close] Sale creation error:', saleError);
-          return NextResponse.json({ error: 'Error al crear venta: ' + saleError.message }, { status: 500 });
-        }
-      }
-
-      (updateData as any).status = 'closed';
-      (updateData as any).closed_at = new Date().toISOString();
-      (updateData as any).payment_status = 'paid';
+      return NextResponse.json({ ...closeResult, status: 'closed' });
     }
 
     // Si es acción de recibir output (sin cerrar)

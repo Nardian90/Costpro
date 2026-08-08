@@ -95,61 +95,51 @@ async function postHandler(request: NextRequest, session: AuthenticatedSession) 
 
   const { items, ...orderData } = parsed.data;
 
-  // Crear orden
-  const { data: order, error: orderError } = await supabase.from('production_orders').insert({
-    ...orderData,
-    store_id: storeId,
-    created_by: session.user.id,
-    status: 'draft',
-    paid_amount: parsed.data.advance_amount || 0,
-    payment_status: (parsed.data.advance_amount || 0) > 0 ? 'partial' : 'unpaid',
-  }).select().single();
-
-  if (orderError) {
-    logger.error('DATABASE', 'CREATE_PO_FAILED', { error: orderError.message, userId: session.user.id });
-    return NextResponse.json({ error: orderError.message }, { status: 500 });
-  }
-
-  // Crear items del presupuesto
-  if (items.length > 0) {
-    const itemsData = items.map(item => ({
-      order_id: order.id,
+  // v2.26.0 G9: Usar RPC transaccional create_production_order_v2 (atómico)
+  const idempotencyKey = `po-create-${crypto.randomUUID()}`;
+  const { data: rpcResult, error: rpcError } = await supabase.rpc('create_production_order_v2', {
+    p_store_id: storeId,
+    p_order_type: orderData.order_type,
+    p_customer_name: orderData.customer_name || null,
+    p_customer_ci: orderData.customer_ci || null,
+    p_customer_phone: orderData.customer_phone || null,
+    p_customer_address: orderData.customer_address || null,
+    p_budget_total: orderData.budget_total,
+    p_budget_currency: orderData.budget_currency,
+    p_description: orderData.description || null,
+    p_notes: orderData.notes || null,
+    p_items: items.map(item => ({
       product_id: item.product_id,
       variant_id: item.variant_id || null,
       budgeted_qty: item.budgeted_qty,
       budgeted_unit_cost: item.budgeted_unit_cost,
-      status: 'pending',
-    }));
-    const { error: itemsError } = await supabase.from('production_order_items').insert(itemsData);
-    if (itemsError) {
-      logger.error('DATABASE', 'CREATE_PO_ITEMS_FAILED', { error: itemsError.message, orderId: order.id });
-      return NextResponse.json({ error: itemsError.message }, { status: 500 });
-    }
+    })),
+    p_advance_amount: orderData.advance_amount || 0,
+    p_advance_method: orderData.advance_method || null,
+    p_advance_currency: orderData.advance_currency,
+    p_created_by: session.user.id,
+    p_idempotency_key: idempotencyKey,
+  });
+
+  if (rpcError) {
+    logger.error('DATABASE', 'CREATE_PO_FAILED', { error: rpcError.message, userId: session.user.id });
+    const msg = rpcError.message;
+    if (msg.includes('ERR_UNAUTHORIZED')) return NextResponse.json(createApiError('FORBIDDEN'), { status: 403 });
+    if (msg.includes('ERR_PRODUCT_NOT_IN_STORE')) return NextResponse.json({ error: 'Producto no encontrado en esta tienda' }, { status: 400 });
+    if (msg.includes('ERR_IDEMPOTENCY_KEY_REUSE')) return NextResponse.json({ error: 'Idempotency key reutilizada con parámetros diferentes' }, { status: 409 });
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
 
-  // Registrar anticipo como pago (con idempotency_key anti doble-click)
-  if (parsed.data.advance_amount > 0 && parsed.data.advance_method) {
-    const { error: payError } = await supabase.rpc('register_supplier_payment', {
-      p_store_id: storeId,
-      p_ref_type: order.order_type === 'work' ? 'work' : 'production_order',
-      p_ref_id: order.id,
-      p_amount: parsed.data.advance_amount,
-      p_payment_method: parsed.data.advance_method,
-      p_paid_by: session.user.id,
-      p_currency: parsed.data.advance_currency,
-      p_idempotency_key: `advance-${order.id}-${crypto.randomUUID()}`,
-    });
-    if (payError) {
-      logger.error('DATABASE', 'CREATE_PO_PAYMENT_FAILED', {
-        error: payError.message,
-        orderId: order.id,
-        userId: session.user.id,
-      });
-      return NextResponse.json(
-        { error: 'Error al registrar anticipo: ' + payError.message },
-        { status: 500 },
-      );
-    }
+  // Fetch the created order for response
+  const { data: order, error: orderFetchError } = await supabase
+    .from('production_orders')
+    .select('*')
+    .eq('id', rpcResult.order_id)
+    .single();
+
+  if (orderFetchError) {
+    logger.error('DATABASE', 'CREATE_PO_FETCH_FAILED', { error: orderFetchError.message, orderId: rpcResult.order_id });
+    return NextResponse.json(rpcResult, { status: 201 });
   }
 
   logger.info('DATABASE', 'PRODUCTION_ORDER_CREATED', {
