@@ -45,7 +45,7 @@ BEGIN
     INTO v_existing_result
     FROM audit_logs
     WHERE action = 'PRODUCTION_OUTPUT_RECEIVED'
-      AND record_id = p_order_id::text
+      AND record_id = p_order_id
       AND metadata->>'idempotency_key' = p_idempotency_key
     LIMIT 1;
 
