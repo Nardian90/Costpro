@@ -155,7 +155,8 @@ export const auditService = {
     supplier: string;
     invoiceNumber: string;
     itemCount: number;
-    totalCost: number;
+    // PR-2 C2: totalCost puede ser null si algún item tenía tasa inválida
+    totalCost: number | null;
     autoCreatedSkus: string[];
     priceUpdatedSkus: string[];
   }): Promise<void> {

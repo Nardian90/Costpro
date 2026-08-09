@@ -149,7 +149,18 @@ const handler = withAuth(async (req, session) => {
             }
             break;
           case 'reception':
-            result = await supabase.rpc('register_reception', op.payload);
+            // PR-2 C6: enviar los 7 args explícitos a la firma C (register_reception 7-param TIMESTAMPTZ).
+            // p_user_id se toma de la sesión del servidor (no del payload encolado offline)
+            // para evitar suplantación de identidad. p_po_id se pasa tal cual del payload.
+            result = await supabase.rpc('register_reception', {
+              p_store_id: op.payload.p_store_id,
+              p_supplier: op.payload.p_supplier,
+              p_reception_date: op.payload.p_reception_date,
+              p_invoice_number: op.payload.p_invoice_number,
+              p_items: op.payload.p_items,
+              p_user_id: session.user.id,
+              p_po_id: op.payload.p_po_id ?? null,
+            });
             break;
           case 'adjustment':
             result = await supabase.rpc('perform_inventory_adjustment', op.payload);

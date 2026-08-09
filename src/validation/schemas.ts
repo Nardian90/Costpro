@@ -562,6 +562,12 @@ export const registerReceptionParamsSchema = z.object({
       tasa_cambio_recepcion: z.number().min(0).optional().default(1.0),
     }),
   ),
+  // PR-2 C10: parámetros 6 y 7 de la firma C (register_reception 7-param TIMESTAMPTZ).
+  // Ambos son nullable con default null para mantener backward-compat con callers
+  // que aún no envíen los 7 args explícitos (serán actualizados en C6 frontend).
+  // La RPC los acepta como DEFAULT NULL cuando el caller los omite.
+  p_user_id: z.string().regex(uuidRegex).nullable().default(null),
+  p_po_id: z.string().regex(uuidRegex).nullable().default(null),
 });
 
 export const adjustStockInputSchema = z.object({

@@ -100,9 +100,20 @@ async function postHandler(request: NextRequest, session: AuthenticatedSession) 
   }
 
   // Llamar a la RPC register_reception
+  // PR-2 C6: enviar los 7 args explícitos a la firma C (register_reception 7-param TIMESTAMPTZ).
+  // p_user_id se toma de la sesión del servidor (no del body del cliente) para evitar
+  // suplantación de identidad. p_po_id se pasa tal cual del body (puede ser null).
   const { data: receiptId, error: rpcErr } = await authClient.rpc(
     'register_reception',
-    params
+    {
+      p_store_id: params.p_store_id,
+      p_supplier: params.p_supplier,
+      p_reception_date: params.p_reception_date,
+      p_invoice_number: params.p_invoice_number,
+      p_items: params.p_items,
+      p_user_id: session.user.id,
+      p_po_id: params.p_po_id,
+    }
   );
 
   if (rpcErr) {

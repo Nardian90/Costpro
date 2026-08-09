@@ -68,7 +68,7 @@ export default function ProductReceptionView({ onCancel, preselectedProduct }: P
       <div aria-live="polite" aria-atomic="true" className="sr-only" role="status">
         {s.items.length === 0
           ? 'Recepción vacía'
-          : `${s.items.length} producto${s.items.length !== 1 ? 's' : ''} en la recepción. Total: ${formatCurrency(s.totalCost)}`}
+          : `${s.items.length} producto${s.items.length !== 1 ? 's' : ''} en la recepción. Total: ${s.totalCost === null ? 'no calculable (tasa inválida)' : formatCurrency(s.totalCost)}`}
       </div>
 
       {/* Header */}
@@ -307,7 +307,11 @@ export default function ProductReceptionView({ onCancel, preselectedProduct }: P
             </div>
             <div className="flex items-center gap-2">
               <span className="text-sm text-muted-foreground">Total:</span>
-              <span className="font-black text-lg text-primary tabular-nums">{formatCurrency(s.totalCost)}</span>
+              {s.totalCost === null ? (
+                <span className="font-black text-lg text-destructive tabular-nums">Tasa inválida</span>
+              ) : (
+                <span className="font-black text-lg text-primary tabular-nums">{formatCurrency(s.totalCost)}</span>
+              )}
             </div>
           </div>
         )}
@@ -835,7 +839,7 @@ export default function ProductReceptionView({ onCancel, preselectedProduct }: P
                 <div className="flex justify-between"><span className="text-muted-foreground">Proveedor:</span><span className="font-bold">{s.supplier}</span></div>
                 <div className="flex justify-between"><span className="text-muted-foreground">Factura:</span><span className="font-bold">{s.invoiceNumber}</span></div>
                 <div className="flex justify-between"><span className="text-muted-foreground">Productos:</span><span className="font-bold">{s.items.length}</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">Total:</span><span className="font-bold text-primary">{formatCurrency(s.totalCost)}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Total:</span><span className="font-bold text-primary">{s.totalCost === null ? 'No calculable' : formatCurrency(s.totalCost)}</span></div>
                 {s.items.some(i => i.is_new) && (
                   <div className="flex justify-between text-info"><span>{s.items.filter(i => i.is_new).length} producto(s) nuevo(s) se crearan</span></div>
                 )}

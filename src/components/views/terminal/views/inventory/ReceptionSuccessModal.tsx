@@ -17,7 +17,8 @@ interface ReceptionSuccessModalProps {
   supplier: string;
   invoiceNumber: string;
   itemCount: number;
-  totalCost: number;
+  // PR-2 C2: totalCost puede ser null si algún item tenía tasa inválida
+  totalCost: number | null;
   receptionDate: string;
   newProductsCount: number;
   priceUpdatedCount: number;
@@ -94,7 +95,7 @@ export function ReceptionSuccessModal({
       `*Factura:* ${invoiceNumber}%0A` +
       `*Fecha:* ${formatDate(receptionDate)} ${formatTime(receptionDate)}%0A` +
       `*Items:* ${itemCount}%0A` +
-      `*Total:* ${formatCurrency(totalCost)}%0A` +
+      `*Total:* ${totalCost === null ? 'No calculable' : formatCurrency(totalCost)}%0A` +
       (newProductsCount > 0 ? `*Productos nuevos:* ${newProductsCount}%0A` : "") +
       (priceUpdatedCount > 0 ? `*Precios actualizados:* ${priceUpdatedCount}%0A` : "");
     window.open(`https://wa.me/?text=${msg}`, "_blank");
@@ -167,7 +168,7 @@ export function ReceptionSuccessModal({
             </div>
             <div className="p-3">
               <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Total</p>
-              <p className="text-sm font-black text-primary tabular-nums">{formatCurrency(totalCost)}</p>
+              <p className="text-sm font-black text-primary tabular-nums">{totalCost === null ? 'No calculable' : formatCurrency(totalCost)}</p>
             </div>
           </div>
           {(newProductsCount > 0 || priceUpdatedCount > 0) && (

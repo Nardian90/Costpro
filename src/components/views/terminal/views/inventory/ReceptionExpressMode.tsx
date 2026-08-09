@@ -215,6 +215,10 @@ export function ReceptionExpressMode({ onExit }: ReceptionExpressModeProps) {
           // FIX-G11: enviar price_currency
           price_currency: i.moneda_recepcion,
         })),
+        // PR-2 C6: enviar los 7 args explícitos a la firma C (register_reception 7-param TIMESTAMPTZ).
+        // p_user_id se envía explícitamente. p_po_id=null porque este flujo no viene de OC.
+        p_user_id: user.id,
+        p_po_id: null,
       });
 
       // Audit

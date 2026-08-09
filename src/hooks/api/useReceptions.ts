@@ -304,7 +304,27 @@ export function useSavePendingReception() {
         throw new Error(`F-21: ${tasaValidation.error} — ${tasaValidation.details}`);
       }
 
-      const totalCost = allItems.reduce((s, i) => s + i.quantity * i.unit_cost, 0);
+      // PR-2 C1: calcular totalCost en CUP usando la tasa real de cada item.
+      // No usar || 1 (silent fallback). Si un item en moneda extranjera no tiene
+      // tasa válida, fallar explícitamente — el caller debe corregir antes de guardar.
+      // La validación F-21 (arriba) ya garantiza que los items FX tienen tasa > 1.5,
+      // pero este cálculo es defense-in-depth y sirve también para display.
+      const totalCost = allItems.reduce((s, i) => {
+        if ((i.moneda_recepcion || 'CUP') === 'CUP') {
+          // CUP: sin conversión (tasa efectiva = 1)
+          return s + i.quantity * i.unit_cost;
+        }
+        // Moneda extranjera: la tasa DEBE estar definida y ser > 1.5
+        // (validado por validateReceiptItemsTasa arriba, pero verificamos de nuevo
+        // para no inventar un valor silenciosamente si la validación se debilita).
+        if (!i.tasa_cambio_recepcion || i.tasa_cambio_recepcion <= 1.5) {
+          throw new Error(
+            `Tasa inválida para moneda ${i.moneda_recepcion} en item ${i.sku || '(sin sku)'}: ` +
+            `se requiere tasa > 1.5, recibido ${i.tasa_cambio_recepcion ?? 'null'}`
+          );
+        }
+        return s + i.quantity * i.unit_cost * i.tasa_cambio_recepcion;
+      }, 0);
 
       // 1. Insertar la recepción con status='pending'
       const { data: receipt, error: receiptErr } = await supabase

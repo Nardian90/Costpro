@@ -80,7 +80,9 @@ interface SuccessData {
   supplier: string;
   invoiceNumber: string;
   itemCount: number;
-  totalCost: number;
+  // PR-2 C2: totalCost puede ser null si algún item tenía tasa inválida
+  // (aunque handleSubmit valida antes de enviar, dejamos null como posibilidad)
+  totalCost: number | null;
   receptionDate: string;
   newProductsCount: number;
   priceUpdatedCount: number;
@@ -301,10 +303,28 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
   }, [selectedVariantId, selectedProductId, products]);
 
   // ── Computed ──────────────────────────────────────────────
-  const totalCost = useMemo(
-    () => items.reduce((s, i) => s + i.quantity * i.unit_cost, 0),
-    [items]
-  );
+  // PR-2 C2: calcular totalCost en CUP usando la tasa real de cada item.
+  // Si algún item en moneda extranjera no tiene tasa válida (> 1.5),
+  // retornar null = "no calculable" para que la UI muestre el estado
+  // de error en lugar de un valor incorrecto.
+  // No usar || 1 (silent fallback) — la DB es la autoridad, la UI es preview.
+  const totalCost = useMemo<number | null>(() => {
+    let total = 0;
+    for (const i of items) {
+      const moneda = (i.moneda_recepcion || 'CUP').toUpperCase();
+      if (moneda === 'CUP') {
+        // CUP: sin conversión (tasa efectiva = 1)
+        total += i.quantity * i.unit_cost;
+      } else if (i.tasa_cambio_recepcion && i.tasa_cambio_recepcion > 1.5) {
+        // Moneda extranjera con tasa válida: convertir a CUP
+        total += i.quantity * i.unit_cost * i.tasa_cambio_recepcion;
+      } else {
+        // Moneda extranjera sin tasa válida — no calculable
+        return null;
+      }
+    }
+    return total;
+  }, [items]);
 
   // REC-2 MM-R5: debounce del search input (200ms).
   const debouncedSearch = useDebounce(addItemSearch, 200);
@@ -1011,6 +1031,11 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
           price_currency: item.price_currency || 'CUP',
           tasa_cambio_recepcion: item.tasa_cambio_recepcion || 1.0,
         })),
+        // PR-2 C6: enviar los 7 args explícitos a la firma C (register_reception 7-param TIMESTAMPTZ).
+        // p_user_id se envía explícitamente (no dependemos de la resolución implícita
+        // de PostgreSQL entre overloads). p_po_id=null porque este flujo no viene de OC.
+        p_user_id: user!.id,
+        p_po_id: null,
       }).catch((err: unknown) => {
         // Política forward-only: detectar error de backdated y mostrar mensaje claro
         const msg = err instanceof Error ? err.message : String(err);
