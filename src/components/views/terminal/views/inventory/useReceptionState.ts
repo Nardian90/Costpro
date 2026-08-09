@@ -831,13 +831,19 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
       const workbook = XLSX.utils.book_new();
 
       if (items.length === 0) {
+        // R1: plantilla con columnas Moneda y Tasa (multi-moneda).
+        // El parser en handleImportFileSelect (lineas 677-678) ya acepta estas
+        // columnas; la plantilla oficial debe exponerlas para que el usuario
+        // pueda importar recepciones en USD/EUR/MLC sin perder la moneda
+        // original. El Costo Unitario se expresa en la moneda indicada en
+        // Moneda; la conversion a CUP la hace el sistema al confirmar.
         const exampleData = [
-          { 'SKU': 'PROD-001', 'Nombre': 'Arroz Integral 5kg', 'Cantidad': 50, 'Costo Unitario': 12.50, 'Unidad de Medida': 'unidad', 'Precio Venta': 20.00 },
-          { 'SKU': 'PROD-002', 'Nombre': 'Aceite de Oliva 1L', 'Cantidad': 30, 'Costo Unitario': 8.75, 'Unidad de Medida': 'unidad', 'Precio Venta': '' },
-          { 'SKU': 'PROD-003', 'Nombre': 'Clavos 1kg', 'Cantidad': 100, 'Costo Unitario': 3.20, 'Unidad de Medida': 'kg', 'Precio Venta': '' },
+          { 'SKU': 'PROD-001', 'Nombre': 'Arroz Integral 5kg', 'Cantidad': 50, 'Costo Unitario': 12.50, 'Unidad de Medida': 'unidad', 'Precio Venta': 20.00, 'Moneda': 'CUP', 'Tasa': 1 },
+          { 'SKU': 'PROD-002', 'Nombre': 'Aceite de Oliva 1L (ejemplo USD)', 'Cantidad': 30, 'Costo Unitario': 8.75, 'Unidad de Medida': 'unidad', 'Precio Venta': '', 'Moneda': 'USD', 'Tasa': 500 },
+          { 'SKU': 'PROD-003', 'Nombre': 'Clavos 1kg', 'Cantidad': 100, 'Costo Unitario': 3.20, 'Unidad de Medida': 'kg', 'Precio Venta': '', 'Moneda': '', 'Tasa': '' },
         ];
         const ws = XLSX.utils.json_to_sheet(exampleData);
-        ws['!cols'] = [{ wch: 20 }, { wch: 35 }, { wch: 12 }, { wch: 16 }, { wch: 18 }, { wch: 14 }];
+        ws['!cols'] = [{ wch: 20 }, { wch: 35 }, { wch: 12 }, { wch: 16 }, { wch: 18 }, { wch: 14 }, { wch: 10 }, { wch: 12 }];
         XLSX.utils.book_append_sheet(workbook, ws, 'Productos');
 
         const metaRows = [
@@ -850,6 +856,16 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
           ['   - Si el producto existe y "Precio Venta" difiere: se preguntara antes de actualizar.'],
           ['4. Las filas sin nombre ni SKU se omitiran automaticamente.'],
           [],
+          ['5. MONEDA Y TASA (multi-moneda):'],
+          ['   - "Costo Unitario" se expresa en la moneda indicada en "Moneda".'],
+          ['   - Para USD u otra moneda extranjera, "Tasa" representa la tasa'],
+          ['     de conversion a CUP utilizada por la recepcion.'],
+          ['   - Si "Moneda" esta vacia, se asume CUP con tasa 1.'],
+          ['   - Tasa = CUP por unidad de moneda extranjera (ej: 500 para USD).'],
+          ['     El valor 500 es SOLO un ejemplo; usa la tasa real de la compra.'],
+          ['   - El sistema calcula el costo en CUP al confirmar:'],
+          ['     costo_cup = unit_cost * tasa.'],
+          [],
           ['Proveedor', supplier || ''],
           ['N Factura', invoiceNumber || ''],
         ];
@@ -860,6 +876,8 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
         XLSX.writeFile(workbook, `plantilla-recepcion-${Date.now()}.xlsx`);
         toast.success('Plantilla descargada. Completa los datos e importa.', { id: toastId });
       } else {
+        // R1: incluir Moneda y Tasa al exportar items existentes (round-trip).
+        // El parser las lee al reimportar, preservando la moneda original.
         const exportData = items.map(item => ({
           'SKU': item.sku || '',
           'Nombre': item.name,
@@ -867,9 +885,11 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
           'Costo Unitario': Number(item.unit_cost.toFixed(2)),
           'Unidad de Medida': item.unit_of_measure,
           'Precio Venta': item.sale_price ? Number(item.sale_price.toFixed(2)) : '',
+          'Moneda': item.moneda_recepcion || 'CUP',
+          'Tasa': item.tasa_cambio_recepcion || 1,
         }));
         const ws = XLSX.utils.json_to_sheet(exportData);
-        ws['!cols'] = [{ wch: 20 }, { wch: 35 }, { wch: 12 }, { wch: 16 }, { wch: 18 }, { wch: 14 }];
+        ws['!cols'] = [{ wch: 20 }, { wch: 35 }, { wch: 12 }, { wch: 16 }, { wch: 18 }, { wch: 14 }, { wch: 10 }, { wch: 12 }];
         XLSX.utils.book_append_sheet(workbook, ws, 'Productos');
 
         const metaRows = [
