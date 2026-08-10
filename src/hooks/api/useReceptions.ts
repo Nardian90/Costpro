@@ -105,13 +105,17 @@ export function useUpdateReception() {
 }
 
 /**
- * Q1 (Audit-Fix): Anula una recepción CON reversión de inventario.
+ * PR-3: Anula una recepción de forma atómica via RPC.
  *
- * Para recepciones 'active' (confirmadas): llama a void_reception_with_reversal
- * que revierte stock + recalcula PMP + registra stock_movement.
+ * Para recepciones 'pending': llama a void_pending_reception que marca como
+ * 'voided' + resetea pagos + marca payment_transactions como REVERSED +
+ * inserta audit_logs. Preserva receipt_items (no los borra). No toca inventario.
  *
- * Para recepciones 'pending' (no confirmadas): simplemente marca como 'voided'
- * y elimina los items. No hay stock que revertir porque nunca se aplicó.
+ * Para recepciones 'active': llama a reverse_receipt_v2 (PR-2) que revierte
+ * stock + WAC + kardex + stock_movements + resetea pagos + marca REVERSED.
+ *
+ * Ya NO usa void_reception_with_reversal (RPC obsoleta sin payment reset).
+ * Ya NO hace DELETE client-side de receipt_items (destruye auditoría).
  */
 export function useVoidReception() {
   const queryClient = useQueryClient();
@@ -134,33 +138,22 @@ export function useVoidReception() {
       if (fetchErr) throw new Error(`Error al obtener recepción: ${fetchErr.message}`);
       if (!receipt) throw new Error('Recepción no encontrada');
 
-      const effectiveDate = params.operationDate || new Date().toISOString();
-
       if (receipt.status === 'pending') {
-        // Recepción pendiente: no hay stock que revertir.
-        // Solo marcar como voided y eliminar items.
-        const { error: itemsErr } = await supabase
-          .from('receipt_items')
-          .delete()
-          .eq('receipt_id', params.receiptId);
-
-        if (itemsErr) throw new Error(`Error al eliminar items: ${itemsErr.message}`);
-
-        const { error: statusErr } = await supabase
-          .from('receipts')
-          .update({ status: 'voided', updated_at: effectiveDate })
-          .eq('id', params.receiptId)
-          .eq('status', 'pending');
-
-        if (statusErr) throw new Error(`Error al anular: ${statusErr.message}`);
-      } else if (receipt.status === 'active') {
-        // Recepción confirmada: revertir stock via RPC con p_operation_date
-        const { error } = await supabase.rpc('void_reception_with_reversal', {
+        // PR-3: RPC transaccional atómica. Preserva items. Resetea pagos.
+        const { error } = await supabase.rpc('void_pending_reception', {
           p_receipt_id: params.receiptId,
-          p_user_id: user?.id || '',
-          p_reason: params.reason || 'Anulacion con reversion de inventario',
-          // Política forward-only: el RPC valida contra MAX global
-          p_operation_date: params.operationDate,
+          p_user_id: user?.id || null,
+          p_reason: params.reason || 'Anulada por encargado',
+          p_operation_date: params.operationDate || null,
+        });
+
+        if (error) throw error;
+      } else if (receipt.status === 'active') {
+        // PR-3: usar reverse_receipt_v2 (PR-2) en lugar de void_reception_with_reversal
+        const { error } = await supabase.rpc('reverse_receipt_v2', {
+          p_receipt_id: params.receiptId,
+          p_reason: params.reason || 'Anulada por encargado',
+          p_user_id: user?.id || null,
         });
 
         if (error) throw error;
