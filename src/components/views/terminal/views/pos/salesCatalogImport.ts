@@ -98,19 +98,51 @@ export function parseImportFile(
         const warnings: string[] = [];
         const nextRows = new Map(currentRows);
 
+        // PR-4.4D: constantes para importación histórica
+        const DEFAULT_USD_RATE = 680; // CUP/USD
+        const MAX_HISTORICAL_DAYS = 60; // 2 meses
+        const today = new Date();
+        const minDate = new Date(today.getTime() - MAX_HISTORICAL_DAYS * 24 * 60 * 60 * 1000);
+
+        // PR-4.4D: helper para parsear fecha dd/mm/yyyy → ISO
+        const parseDate = (dateStr: string): string | null => {
+          if (!dateStr || !dateStr.trim()) return null;
+          const s = dateStr.trim();
+          // dd/mm/yyyy
+          const m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+          if (m) {
+            const dd = m[1].padStart(2, '0');
+            const mm = m[2].padStart(2, '0');
+            const yyyy = m[3];
+            return `${yyyy}-${mm}-${dd}T12:00:00.000Z`;
+          }
+          // yyyy-mm-dd (ISO)
+          const m2 = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+          if (m2) return `${s}T12:00:00.000Z`;
+          return null;
+        };
+
+        // PR-4.4D: helper para parsear número que puede ser "-" o vacío
+        const parseNum = (val: unknown): number => {
+          if (val === null || val === undefined) return 0;
+          const s = String(val).trim();
+          if (s === '' || s === '-') return 0;
+          const n = Number(s.replace(/,/g, ''));
+          return Number.isFinite(n) ? n : 0;
+        };
+
         for (let i = 0; i < dataRows.length; i++) {
           const raw = dataRows[i];
-          const rowIdx = i + rangeStart + 2; // +2 because Excel row 1 = header, row 2 = first data
+          const rowIdx = i + rangeStart + 2;
 
-          // Skip separator column marker
           const sepMarker = String(raw['--- NO EDITAR DEBAJO ---'] ?? '').trim();
           if (sepMarker) continue;
 
-          // Resolve product: _product_id → SKU → name
+          // Resolve product
           let product: Product | undefined;
           const pid = String(raw['_product_id'] ?? '').trim();
-          const sku = String(raw['SKU'] ?? '').trim().toLowerCase();
-          const name = String(raw['Producto'] ?? '').trim().toLowerCase();
+          const sku = String(raw['SKU'] ?? raw['Código'] ?? '').trim().toLowerCase();
+          const name = String(raw['Producto'] ?? raw['Descripción'] ?? '').trim().toLowerCase();
 
           if (pid && productMap.has(pid)) product = productMap.get(pid)!;
           else if (sku && skuMap.has(sku)) product = skuMap.get(sku)!;
@@ -118,35 +150,73 @@ export function parseImportFile(
 
           if (!product) {
             skipped++;
-            warnings.push(`Fila ${rowIdx}: "${String(raw['Producto'] ?? `fila ${rowIdx}`)}" no encontrado en catálogo`);
+            warnings.push(`Fila ${rowIdx}: "${String(raw['Producto'] ?? raw['Descripción'] ?? `fila ${rowIdx}`)}" no encontrado en catálogo`);
             continue;
           }
 
-          // Parse quantity — supports up to 4 decimal places (e.g. 1.0835 kg, 0.5 m)
-          const rawQty = Number(raw['Cantidad'] ?? 0);
+          // PR-4.4D: parse quantity con soporte decimal (0.50, 65.50, etc.)
+          const rawQty = parseNum(raw['Cantidad']);
           let quantity = 0;
-          if (Number.isFinite(rawQty) && rawQty >= 0) {
-            // Clamp to 4 decimal places
+          if (rawQty >= 0) {
             quantity = Math.round(rawQty * 10000) / 10000;
-          }
-          if (!Number.isFinite(rawQty) || rawQty < 0) {
+          } else {
             warnings.push(`Fila ${rowIdx}: "${product.name}" cantidad inválida ("${raw['Cantidad']}"), tratada como 0`);
           }
 
-          // Parse sale price
-          const rawPrice = Number(raw['Precio Venta'] ?? (product.price || 0));
-          const price = Number.isFinite(rawPrice) ? Math.max(0, rawPrice) : (product.price || 0);
+          // PR-4.4D: parse fecha histórica (columna 'Fecha')
+          const dateStr = String(raw['Fecha'] ?? '').trim();
+          const operationDate = parseDate(dateStr);
+          if (dateStr && !operationDate) {
+            warnings.push(`Fila ${rowIdx}: "${product.name}" fecha inválida "${dateStr}", se usará fecha actual`);
+          }
+          if (operationDate) {
+            const opDate = new Date(operationDate);
+            if (opDate < minDate) {
+              warnings.push(`Fila ${rowIdx}: "${product.name}" fecha ${dateStr} fuera de ventana (mínimo ${minDate.toLocaleDateString()}), se usará fecha actual`);
+            } else if (opDate > today) {
+              warnings.push(`Fila ${rowIdx}: "${product.name}" fecha ${dateStr} futura, se usará fecha actual`);
+            }
+          }
 
-          // Validate price vs cost
+          // PR-4.4D: parse USD + Zelle + Tasa USD
+          const usdOriginal = Math.max(0, parseNum(raw['USD']));
+          const usdRateRaw = parseNum(raw['Tasa USD']);
+          const usdExchangeRate = usdRateRaw > 0 ? usdRateRaw : DEFAULT_USD_RATE;
+          const zelleDirect = Math.max(0, parseNum(raw['Zelle']));
+          // zellePaid total = zelle directo + USD convertido
+          const zellePaid = zelleDirect + (usdOriginal * usdExchangeRate);
+
+          // PR-4.4D: parse comisión (informativa, no altera total)
+          const commission = Math.max(0, parseNum(raw['Comisión']));
+
+          // PR-4.4D: parse documento (para agrupación)
+          const documentNumber = String(raw['Documento'] ?? '').trim() || null;
+
+          // PR-4.4D: parse price — si no viene en Excel, usar precio del catálogo
+          const rawPrice = parseNum(raw['Precio Venta']);
+          let price: number;
+          let priceDiffersFromCatalog = false;
+          if (rawPrice > 0) {
+            price = rawPrice;
+            // WARNING: precio histórico ≠ catálogo (no bloquea)
+            if (product.price > 0 && Math.abs(price - product.price) > 0.01) {
+              priceDiffersFromCatalog = true;
+              warnings.push(`Fila ${rowIdx}: "${product.name}" precio histórico (${price}) ≠ precio catálogo (${product.price}) — WARNING, venta permitida`);
+            }
+          } else {
+            price = product.price || 0;
+          }
+
+          // Validate price vs cost (warning, no bloquea)
           if (price > 0 && price < (product.cost_price || 0) * 0.5) {
-            warnings.push(`Fila ${rowIdx}: "${product.name}" precio ($${price}) < 50% del costo ($${product.cost_price})`);
+            warnings.push(`Fila ${rowIdx}: "${product.name}" precio (${price}) < 50% del costo (${product.cost_price})`);
           }
 
           // Parse discount
           const discountTypeStr = String(raw['Tipo Desc.'] ?? '').trim();
-          const rawDiscountVal = Number(raw['Descuento'] ?? 0);
+          const rawDiscountVal = parseNum(raw['Descuento']);
           let discountType: 'percentage' | 'fixed' | null = null;
-          let discountValue = Number.isFinite(rawDiscountVal) ? Math.max(0, rawDiscountVal) : 0;
+          let discountValue = Math.max(0, rawDiscountVal);
           if (discountTypeStr === '%') discountType = 'percentage';
           else if (discountTypeStr === '$') discountType = 'fixed';
           if (discountType === 'percentage' && discountValue > 100) {
@@ -154,31 +224,27 @@ export function parseImportFile(
             discountValue = 100;
           }
 
-          // Parse payment — smart detection
-          const rawCash = Number(raw['Efectivo'] ?? 0);
-          const rawTransfer = Number(raw['Transferencia'] ?? 0);
-          const cashPaid = Number.isFinite(rawCash) ? Math.max(0, rawCash) : 0;
-          const transferPaid = Number.isFinite(rawTransfer) ? Math.max(0, rawTransfer) : 0;
+          // PR-4.4D: parse payments con soporte USD/Zelle
+          const cashPaid = Math.max(0, parseNum(raw['Efectivo']));
+          const transferPaid = Math.max(0, parseNum(raw['Transferencia']));
 
+          // Determine payment method
           const formPagoLabel = String(raw['Forma Pago'] ?? '').trim().toLowerCase();
           let paymentMethod: PaymentMethod;
+          const paymentCount = [cashPaid > 0, transferPaid > 0, zellePaid > 0].filter(Boolean).length;
 
           if (quantity === 0) {
             paymentMethod = 'cash';
-          } else if (formPagoLabel.includes('efectivo') || formPagoLabel === 'cash') {
-            paymentMethod = 'cash';
-          } else if (formPagoLabel.includes('trans') || formPagoLabel === 'transfer') {
-            paymentMethod = 'transfer';
-          } else if (formPagoLabel.includes('zelle') || formPagoLabel === 'zelle') {
-            paymentMethod = 'zelle';
-          } else if (formPagoLabel.includes('mixto') || formPagoLabel === 'mixed') {
+          } else if (formPagoLabel.includes('mixto') || formPagoLabel === 'mixed' || paymentCount >= 2) {
             paymentMethod = 'mixed';
+          } else if (formPagoLabel.includes('zelle') || (zellePaid > 0 && paymentCount === 1)) {
+            paymentMethod = 'zelle';
+          } else if (formPagoLabel.includes('trans') || (transferPaid > 0 && paymentCount === 1)) {
+            paymentMethod = 'transfer';
+          } else if (formPagoLabel.includes('efectivo') || (cashPaid > 0 && paymentCount === 1)) {
+            paymentMethod = 'cash';
           } else {
-            // Infer from column values
-            if (cashPaid > 0 && transferPaid > 0) paymentMethod = 'mixed';
-            else if (cashPaid > 0) paymentMethod = 'cash';
-            else if (transferPaid > 0) paymentMethod = 'transfer';
-            else paymentMethod = 'cash';
+            paymentMethod = 'cash';
           }
 
           // Parse variant
@@ -194,10 +260,9 @@ export function parseImportFile(
             warnings.push(`Fila ${rowIdx}: "${product.name}" cantidad (${quantity}) > stock (${product.stock_current ?? 0}), ajustada a ${Math.round(stockLimit * 10000) / 10000}`);
           }
           const finalQty = Math.min(quantity, stockLimit);
-          // Round to 4 decimal places for storage
           const storedQty = Math.round(finalQty * 10000) / 10000;
 
-          // Build base row for subtotal calculation
+          // Build row with PR-4.4D fields
           const baseRow: SalesCatalogRow = {
             product,
             selectedVariantId: selectedVariant?.id || null,
@@ -210,28 +275,49 @@ export function parseImportFile(
             paymentMethod,
             cashPaid: 0,
             transferPaid: 0,
+            zellePaid: 0,
+            usdOriginal,
+            usdExchangeRate,
+            commission,
+            operationDate,
+            documentNumber,
+            priceDiffersFromCatalog,
           };
 
-          // Auto-assign cash/transfer for non-mixed methods
+          // Auto-assign for non-mixed methods
           let resolvedCashPaid = cashPaid;
           let resolvedTransferPaid = transferPaid;
+          let resolvedZellePaid = zellePaid;
           if (paymentMethod !== 'mixed' && finalQty > 0) {
             const sub = calcSubtotal(baseRow);
-            resolvedCashPaid = paymentMethod === 'cash' ? sub : 0;
-            resolvedTransferPaid = paymentMethod === 'transfer' ? sub : 0;
+            if (paymentMethod === 'cash') {
+              resolvedCashPaid = sub;
+              resolvedTransferPaid = 0;
+              resolvedZellePaid = 0;
+            } else if (paymentMethod === 'transfer') {
+              resolvedCashPaid = 0;
+              resolvedTransferPaid = sub;
+              resolvedZellePaid = 0;
+            } else if (paymentMethod === 'zelle') {
+              resolvedCashPaid = 0;
+              resolvedTransferPaid = 0;
+              resolvedZellePaid = sub;
+            }
           }
 
           const newRow: SalesCatalogRow = {
             ...baseRow,
             cashPaid: resolvedCashPaid,
             transferPaid: resolvedTransferPaid,
+            zellePaid: resolvedZellePaid,
           };
 
-          // Validate mixed payment discrepancy
+          // Validate mixed payment discrepancy (cash + transfer + zelle = subtotal)
           if (paymentMethod === 'mixed' && finalQty > 0) {
             const sub = calcSubtotal(newRow);
-            if (Math.abs(newRow.cashPaid + newRow.transferPaid - sub) > 0.01) {
-              warnings.push(`Fila ${rowIdx}: "${product.name}" pago mixto discrepancia: efectivo (${newRow.cashPaid}) + transfer (${newRow.transferPaid}) != subtotal (${sub.toFixed(2)})`);
+            const totalPaid = resolvedCashPaid + resolvedTransferPaid + resolvedZellePaid;
+            if (Math.abs(totalPaid - sub) > 0.01) {
+              warnings.push(`Fila ${rowIdx}: "${product.name}" pago mixto discrepancia: cash (${resolvedCashPaid}) + transfer (${resolvedTransferPaid}) + zelle (${resolvedZellePaid}) = ${totalPaid} ≠ subtotal (${sub.toFixed(2)})`);
             }
           }
 

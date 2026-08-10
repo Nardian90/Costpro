@@ -158,6 +158,13 @@ export function useSalesCatalog() {
         paymentMethod: 'cash',
         cashPaid: 0,
         transferPaid: 0,
+        zellePaid: 0,
+        usdOriginal: 0,
+        usdExchangeRate: 680,
+        commission: 0,
+        operationDate: null,
+        documentNumber: null,
+        priceDiffersFromCatalog: false,
       };
       return newRow;
     },
@@ -182,6 +189,13 @@ export function useSalesCatalog() {
             paymentMethod: 'cash',
             cashPaid: 0,
             transferPaid: 0,
+            zellePaid: 0,
+            usdOriginal: 0,
+            usdExchangeRate: 680,
+            commission: 0,
+            operationDate: null,
+            documentNumber: null,
+            priceDiffersFromCatalog: false,
           };
         }
         if (existing) {
@@ -230,6 +244,13 @@ export function useSalesCatalog() {
       paymentMethod: 'cash',
       cashPaid: 0,
       transferPaid: 0,
+      zellePaid: 0,
+      usdOriginal: 0,
+      usdExchangeRate: 680,
+      commission: 0,
+      operationDate: null,
+      documentNumber: null,
+      priceDiffersFromCatalog: false,
     };
     setActiveRow(product.id, newRow);
   }, [setActiveRow]);
@@ -283,6 +304,8 @@ export function useSalesCatalog() {
       subtotal: Number(subtotal.toFixed(2)),
       cashTotal: Number(activeRows.reduce((acc, r) => acc + (r.cashPaid || 0), 0).toFixed(2)),
       transferTotal: Number(activeRows.reduce((acc, r) => acc + (r.transferPaid || 0), 0).toFixed(2)),
+      // PR-4.4D: añadir zelleTotal (incluye USD convertido)
+      zelleTotal: Number(activeRows.reduce((acc, r) => acc + (r.zellePaid || 0), 0).toFixed(2)),
     };
   }, [activeRows]);
 
@@ -362,6 +385,10 @@ export function useSalesCatalog() {
         p_subtotal: totals.subtotal,
         p_discount_type: 'fixed',
         p_discount_value: 0,
+        // PR-4.4D: pasar cash/transfer/zelle amounts al RPC
+        p_cash_amount: totals.cashTotal,
+        p_transfer_amount: totals.transferTotal,
+        p_zelle_amount: totals.zelleTotal,
         p_items: activeRows.map((r) => ({
           product_id: r.product.id,
           variant_id: r.selectedVariantId ?? null,
@@ -370,16 +397,11 @@ export function useSalesCatalog() {
           cost: r.cost,
           cash_paid: r.cashPaid,
           transfer_paid: r.transferPaid,
+          zelle_paid: r.zellePaid,
         })),
-        // FIX H-16 (Iteración 11.1): Añadir p_idempotency_key para prevenir
-        // doble-submit. Antes se omitía, permitiendo que un doble-click o
-        // retry de red creara ventas duplicadas. La key se genera una vez
-        // por intento de checkout con crypto.randomUUID() (alta entropía).
         p_idempotency_key: `sale-${crypto.randomUUID()}`,
-        // Política de secuencia global: pasar la fecha de operación elegida.
-        // Si es NULL, el backend usará NOW() (comportamiento legacy).
-        // El backend valida que no sea anterior al MAX global (forward-only locking).
-        p_operation_date: operationDate || undefined,
+        // PR-4.4D: pasar operationDate (de la primera fila con fecha, o la del parámetro)
+        p_operation_date: operationDate || activeRows.find((r) => r.operationDate)?.operationDate || undefined,
       });
 
       clearCart();
