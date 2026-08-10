@@ -18,7 +18,6 @@ export interface SalesCatalogRow {
   zellePaid: number;            // Zelle en CUP (incluye USD convertido si aplica)
   usdOriginal: number;          // USD original del Excel (trazabilidad)
   usdExchangeRate: number;      // Tasa USD→CUP usada (default 680)
-  commission: number;           // Comisión informativa (no altera total)
   operationDate: string | null; // Fecha histórica ISO (null = usar NOW())
   documentNumber: string | null;// Documento para agrupar items en 1 venta
   priceDiffersFromCatalog: boolean; // WARNING: precio histórico ≠ catálogo

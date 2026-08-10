@@ -186,9 +186,6 @@ export function parseImportFile(
           // zellePaid total = zelle directo + USD convertido
           const zellePaid = zelleDirect + (usdOriginal * usdExchangeRate);
 
-          // PR-4.4D: parse comisión (informativa, no altera total)
-          const commission = Math.max(0, parseNum(raw['Comisión']));
-
           // PR-4.4D: parse documento (para agrupación)
           const documentNumber = String(raw['Documento'] ?? '').trim() || null;
 
@@ -278,7 +275,6 @@ export function parseImportFile(
             zellePaid: 0,
             usdOriginal,
             usdExchangeRate,
-            commission,
             operationDate,
             documentNumber,
             priceDiffersFromCatalog,

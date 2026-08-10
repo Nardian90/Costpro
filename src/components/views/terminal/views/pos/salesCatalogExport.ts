@@ -37,17 +37,17 @@ export function exportSalesCatalogExcel(params: ExportExcelParams): void {
     ? `ipv-confirmado-${Date.now()}.xlsx`
     : `ipv-en-proceso-${Date.now()}.xlsx`;
 
-  // ── Header names ── (PR-4.4D: añadidas columnas USD, Zelle, Tasa USD, Fecha, Comisión, Documento)
+  // ── Header names ── (PR-4.4F: eliminada Comisión; mantenidas USD, Zelle, Tasa USD, Fecha, Documento)
   const HEADERS = [
     'Producto', 'SKU', 'UM', 'Stock', 'Costo', 'Cantidad',
     'Precio Venta', 'Tipo Desc.', 'Descuento', 'Forma Pago',
     'Efectivo', 'Transferencia', 'USD', 'Tasa USD', 'Zelle', 'Valor Venta',
-    'Comisión', 'Fecha', 'Documento',
+    'Fecha', 'Documento',
     '--- NO EDITAR DEBAJO ---', '_product_id', '_variant_id',
   ];
 
   // Column color groups: 0=readonly, 1=editable, 2=mixed-only, 3=system
-  const COL_GROUP = [0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 0, 1, 1, 1, 3, 3, 3];
+  const COL_GROUP = [0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 0, 1, 1, 3, 3, 3];
 
   // Build data rows
   const dataRows = products.map((product) => {
@@ -67,7 +67,6 @@ export function exportSalesCatalogExcel(params: ExportExcelParams): void {
       zellePaid: 0,
       usdOriginal: 0,
       usdExchangeRate: 680,
-      commission: 0,
       operationDate: null,
       documentNumber: null,
       priceDiffersFromCatalog: false,
@@ -91,7 +90,6 @@ export function exportSalesCatalogExcel(params: ExportExcelParams): void {
       isMixed ? (row.usdExchangeRate || 680) : '',
       isMixed ? (row.zellePaid || '') : '',
       row.quantity > 0 ? sub : '',
-      row.commission || '',
       row.operationDate ? row.operationDate.substring(0, 10) : '',
       row.documentNumber || '',
       '',
