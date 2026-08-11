@@ -381,6 +381,14 @@ export interface Transaction {
   reversed_by?: string | null;
   reversal_reason?: string | null;
   original_transaction_id?: string | null;
+  // PR-4.4G: campos de pago para visualización USD/Zelle
+  cash_amount?: number | null;
+  transfer_amount?: number | null;
+  zelle_amount?: number | null;
+  sale_currency?: string | null;
+  sale_exchange_rate?: number | null;
+  customer_name?: string | null;
+  invoice_number?: string | null;
 }
 
 export interface TransactionItem {

@@ -342,6 +342,14 @@ export const transactionSchema = z.object({
   tax_amount: z.coerce.number().catch(0).default(0),
   applied_taxes: z.array(z.any()).catch([]).optional(),
   idempotency_key: z.string().nullable().optional(),
+  // PR-4.4G: payment amount fields for USD/Zelle display
+  cash_amount: z.coerce.number().catch(0).default(0).optional(),
+  transfer_amount: z.coerce.number().catch(0).default(0).optional(),
+  zelle_amount: z.coerce.number().catch(0).default(0).optional(),
+  sale_currency: z.string().catch("CUP").default("CUP").optional(),
+  sale_exchange_rate: z.coerce.number().catch(1).default(1).optional(),
+  customer_name: z.string().nullable().optional(),
+  invoice_number: z.string().nullable().optional(),
 });
 
 export const stockMovementSchema = z.object({

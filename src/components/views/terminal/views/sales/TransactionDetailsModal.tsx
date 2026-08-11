@@ -127,6 +127,7 @@ export function TransactionDetailsModal({ isOpen, onClose, transaction, items, i
                 if (m === 'transfer') return 'Transferencia';
                 if (m === 'mixed') return 'Mixto';
                 if (m === 'wallet') return 'Billetera';
+                if (m === 'zelle') return 'USD/Zelle';
                 if (m === 'other') return 'Otro';
                 return 'Sin especificar';
               })()}

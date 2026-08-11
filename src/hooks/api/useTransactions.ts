@@ -33,7 +33,7 @@ export function useTransactions(storeId?: string | null, isAdmin = false) {
         return await validateRPCArrayResponse(data, transactionSchema, rpcName);
       } catch (err) {
         logger.warn('DATABASE', '[TRANSACTIONS]_RPC_FAILED,_FALLING_BACK_TO_TABLE_Q', { data: err })
-        const columns = 'id, created_at, updated_at, total_amount, status, payment_method, subtotal, discount_value, discount_type, store_id, seller_id, completed_at, cancelled_at, void_reason';
+        const columns = 'id, created_at, updated_at, total_amount, status, payment_method, subtotal, discount_value, discount_type, store_id, seller_id, completed_at, cancelled_at, void_reason, cash_amount, transfer_amount, zelle_amount, sale_currency, sale_exchange_rate, customer_name, invoice_number';
         let query = supabase.from('transactions').select(columns);
         if (cleanStoreId) {
           query = query.eq('store_id', cleanStoreId);

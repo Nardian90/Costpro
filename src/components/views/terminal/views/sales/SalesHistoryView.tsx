@@ -23,6 +23,7 @@ function getPaymentMethodInfo(method: string | null | undefined): { icon: React.
         case 'transfer': return { icon: ArrowLeftRight, label: 'Transferencia', color: 'text-primary' };
         case 'mixed': return { icon: Wallet, label: 'Mixto', color: 'text-warning' };
         case 'wallet': return { icon: Wallet, label: 'Billetera', color: 'text-warning' };
+        case 'zelle': return { icon: DollarSign, label: 'USD/Zelle', color: 'text-blue-500' };
         case 'other': return { icon: CreditCard, label: 'Otro', color: 'text-muted-foreground' };
         default: return { icon: CreditCard, label: 'Sin especificar', color: 'text-muted-foreground' };
     }
@@ -439,6 +440,11 @@ export default function SalesHistoryView() {
                                   <span className="text-xs font-bold uppercase">
                                     {getPaymentMethodInfo(txn.payment_method).label}
                                   </span>
+                                  {(txn as any).zelle_amount > 0 && (
+                                    <span className="text-[10px] font-bold text-blue-500 bg-blue-500/10 px-1.5 py-0.5 rounded">
+                                      ${((txn as any).zelle_amount / 680).toFixed(1)} USD
+                                    </span>
+                                  )}
                                 </div>
                               </td>
                               <td className="p-4 text-right">

@@ -131,7 +131,7 @@ export function SalesSummaryTab({ dateFrom, dateTo, storeId }: SalesSummaryTabPr
         </div>
         <div className="rounded-xl bg-blue-500/5 border border-blue-500/10 p-3 text-center">
           <DollarSign className="w-5 h-5 text-blue-500 mx-auto mb-1" />
-          <p className="text-[10px] font-black uppercase text-muted-foreground">USD</p>
+          <p className="text-[10px] font-black uppercase text-muted-foreground">USD (CUP equiv.)</p>
           <p className="text-base sm:text-lg font-black text-blue-500 tabular-nums">$ {totals.usd.toFixed(2)}</p>
         </div>
         <div className="rounded-xl bg-amber-500/5 border border-amber-500/10 p-3 text-center">

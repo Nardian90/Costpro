@@ -18,6 +18,7 @@ function formatPaymentMethod(method: string | null | undefined): string {
         case 'transfer': return 'Transferencia';
         case 'mixed': return 'Mixto';
         case 'wallet': return 'Billetera';
+        case 'zelle': return 'USD/Zelle';
         case 'other': return 'Otro';
         default: return 'Sin especificar';
     }
