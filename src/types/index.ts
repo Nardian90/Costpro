@@ -404,6 +404,18 @@ export interface TransactionItem {
     name: string;
     sku: string | null;
   } | null;
+  // PR-4.4H: Currency fields for traceability (USD/Zelle vs CUP)
+  // These are NULL for historical sales but populated for new sales going forward
+  price_currency?: string | null;
+  price_at_sale_cup?: number | null;
+  cash_paid?: number | null;
+  transfer_paid?: number | null;
+  zelle_paid?: number | null;
+  currency?: string | null;
+  exchange_rate?: number | null;
+  cash_currency?: string | null;
+  transfer_currency?: string | null;
+  zelle_currency?: string | null;
 }
 
 export interface CartItem {

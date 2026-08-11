@@ -72,7 +72,8 @@ export function useTransactionDetails(transactionId?: string) {
     queryKey: ['transaction-items', transactionId],
     queryFn: async () => {
       if (!transactionId) return [];
-      const columns = 'id, transaction_id, product_id, variant_id, quantity, price_at_sale, cost_at_sale, created_at, products(name, sku)';
+      // PR-4.4H: fetch all currency-related columns for accurate USD/CUP display
+      const columns = 'id, transaction_id, product_id, variant_id, quantity, price_at_sale, cost_at_sale, created_at, price_currency, price_at_sale_cup, cash_paid, transfer_paid, zelle_paid, currency, exchange_rate, cash_currency, transfer_currency, zelle_currency, products(name, sku)';
       const data = await withTableLogging('select', 'transaction_items', () => supabase.from('transaction_items')
         .select(columns)
         .eq('transaction_id', transactionId));

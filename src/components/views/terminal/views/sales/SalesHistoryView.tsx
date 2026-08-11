@@ -3,7 +3,7 @@
 import React, { useState, useCallback } from 'react';
 import { useIsMobile } from '@/hooks/ui/useMobile';
 import { DollarSign, CreditCard, Eye, Undo2, Copy, Calculator, CheckSquare, Square, AlertTriangle, ShoppingCart, Download, ChevronLeft, ChevronRight, X, Filter, Wallet, ArrowLeftRight, TrendingUp } from 'lucide-react';
-import { cn, formatCurrency, formatDate, formatTime } from '@/lib/utils';
+import { cn, formatCurrency, formatDate, formatTime, usdFromCupEquiv } from '@/lib/utils';
 import SearchBar from '@/components/ui/SearchBar';
 import { StateRenderer } from '@/components/ui/StateRenderer';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -176,44 +176,54 @@ export default function SalesHistoryView() {
 
   const isMobile = useIsMobile();
 
-  // PR-4.4G: Export to Excel (.xlsx)
+  // PR-4.4H: Export to Excel (.xlsx) with USD column
   const handleExportExcel = useCallback(() => {
     if (!transactions || transactions.length === 0) return;
 
-    const headers = ['Ref', 'Fecha', 'Hora', 'Método', 'Total', 'Subtotal', 'Descuento', 'Impuestos', 'Estado', 'Efectivo', 'Transferencia', 'Zelle/USD(CUP)'];
-    const rows = transactions.map(t => [
-      t.id.split('-')[0],
-      formatDate(t.created_at),
-      new Date(t.created_at).toLocaleTimeString('es-CU', { hour: '2-digit', minute: '2-digit' }),
-      (() => {
-        const m = (t.payment_method || '').toLowerCase();
-        if (m === 'cash') return 'Efectivo';
-        if (m === 'transfer') return 'Transferencia';
-        if (m === 'mixed') return 'Mixto';
-        if (m === 'zelle') return 'USD/Zelle';
-        if (m === 'wallet') return 'Billetera';
-        if (m === 'other') return 'Otro';
-        return 'Sin especificar';
-      })(),
-      Number(t.total_amount || 0),
-      Number(t.subtotal || 0),
-      Number(t.discount_value || 0),
-      Number(t.tax_amount || 0),
-      t.status === 'completed' ? 'Completada' : t.status === 'pending' ? 'Pendiente' : 'Anulada',
-      Number((t as any).cash_amount || 0),
-      Number((t as any).transfer_amount || 0),
-      Number((t as any).zelle_amount || 0),
-    ]);
+    const headers = ['Ref', 'Fecha', 'Hora', 'Método', 'Moneda', 'Total CUP', 'USD Original', 'Subtotal CUP', 'Descuento', 'Impuestos', 'Estado', 'Efectivo CUP', 'Transferencia CUP', 'Zelle (CUP equiv.)'];
+    const rows = transactions.map(t => {
+      const zelleAmt = Number((t as any).zelle_amount || 0);
+      const usdOrig = zelleAmt > 0 ? zelleAmt / 680 : 0;
+      const hasZelle = zelleAmt > 0;
+      const cashA = Number((t as any).cash_amount || 0);
+      const transferA = Number((t as any).transfer_amount || 0);
+      const currencyLabel = hasZelle && cashA === 0 && transferA === 0 ? 'USD' : (hasZelle ? 'CUP+USD' : 'CUP');
+      return [
+        t.id.split('-')[0],
+        formatDate(t.created_at),
+        new Date(t.created_at).toLocaleTimeString('es-CU', { hour: '2-digit', minute: '2-digit' }),
+        (() => {
+          const m = (t.payment_method || '').toLowerCase();
+          if (m === 'cash') return 'Efectivo';
+          if (m === 'transfer') return 'Transferencia';
+          if (m === 'mixed') return 'Mixto';
+          if (m === 'zelle') return 'USD/Zelle';
+          if (m === 'wallet') return 'Billetera';
+          if (m === 'other') return 'Otro';
+          return 'Sin especificar';
+        })(),
+        currencyLabel,
+        Number(t.total_amount || 0),
+        usdOrig > 0 ? Number(usdOrig.toFixed(2)) : '',
+        Number(t.subtotal || 0),
+        Number(t.discount_value || 0),
+        Number(t.tax_amount || 0),
+        t.status === 'completed' ? 'Completada' : t.status === 'pending' ? 'Pendiente' : 'Anulada',
+        cashA,
+        transferA,
+        zelleAmt,
+      ];
+    });
 
     const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
     // Set column widths
     ws['!cols'] = [
-      { wch: 8 }, { wch: 12 }, { wch: 8 }, { wch: 14 }, { wch: 12 },
-      { wch: 12 }, { wch: 10 }, { wch: 10 }, { wch: 12 }, { wch: 12 },
+      { wch: 8 }, { wch: 12 }, { wch: 8 }, { wch: 14 }, { wch: 10 }, { wch: 12 },
+      { wch: 12 }, { wch: 12 }, { wch: 10 }, { wch: 10 }, { wch: 12 }, { wch: 12 },
       { wch: 14 }, { wch: 14 },
     ];
     // Add autofilter
-    ws['!autofilter'] = { ref: `A1:L${rows.length + 1}` };
+    ws['!autofilter'] = { ref: `A1:N${rows.length + 1}` };
 
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Ventas');
@@ -453,16 +463,21 @@ export default function SalesHistoryView() {
                               </span>
                               {(txn as any).zelle_amount > 0 && (
                                 <span className="text-[10px] font-bold text-blue-500 bg-blue-500/10 px-1.5 py-0.5 rounded">
-                                  ${((txn as any).zelle_amount / 680).toFixed(1)} USD
+                                  ${usdFromCupEquiv((txn as any).zelle_amount, (txn as any).sale_exchange_rate).toFixed(2)} USD
                                 </span>
                               )}
                             </div>
                           </td>
                           <td className="p-4 text-right">
-                            <span className={cn(
+                            <div className={cn(
                               "text-base font-black tabular-nums",
                               isVoided ? "line-through text-muted-foreground" : ""
-                            )}>{formatCurrency(txn.total_amount)}</span>
+                            )}>{formatCurrency(txn.total_amount)} <span className="text-[10px] font-bold text-muted-foreground">CUP</span></div>
+                            {(txn as any).zelle_amount > 0 && (
+                              <div className="text-[10px] font-bold text-blue-500 tabular-nums">
+                                ≈ ${usdFromCupEquiv((txn as any).zelle_amount, (txn as any).sale_exchange_rate).toFixed(2)} USD
+                              </div>
+                            )}
                           </td>
                           <td className="p-4 text-center priority-low hidden sm:table-cell">
                             <DocumentStatusBadge type="transaction" status={txn.status} />

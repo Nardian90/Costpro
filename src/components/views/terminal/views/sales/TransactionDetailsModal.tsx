@@ -6,16 +6,14 @@ import { BaseModal } from '@/components/ui/BaseModal';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { cn, formatCurrency, formatDate } from '@/lib/utils';
-import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { cn, formatCurrency, formatLabeledCurrency, USD_CUP_RATE, usdFromCupEquiv, formatDate } from '@/lib/utils';
 import { Transaction, TransactionItem, TaxConfiguration } from '@/types';
 import { useTaxes } from '@/hooks/api/useTaxes';
 import { useAuthStore } from '@/store';
 import { supabase } from '@/lib/supabaseClient';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
-import { Check, ShieldAlert } from 'lucide-react';
+import { Check, ShieldAlert, DollarSign, ArrowLeftRight, Banknote } from 'lucide-react';
 
 interface TransactionDetailsModalProps {
   isOpen: boolean;
@@ -39,6 +37,19 @@ const ItemsSkeleton = () => (
   </>
 );
 
+// ── Payment method label helper ──
+function getPaymentMethodLabel(method: string | null | undefined): string {
+  const m = (method || '').toLowerCase();
+  if (m === 'cash') return 'Efectivo';
+  if (m === 'card') return 'Tarjeta';
+  if (m === 'transfer') return 'Transferencia';
+  if (m === 'mixed') return 'Mixto';
+  if (m === 'wallet') return 'Billetera';
+  if (m === 'zelle') return 'USD/Zelle';
+  if (m === 'other') return 'Otro';
+  return 'Sin especificar';
+}
+
 export function TransactionDetailsModal({ isOpen, onClose, transaction, items, isLoading }: TransactionDetailsModalProps) {
   const { user } = useAuthStore();
   const queryClient = useQueryClient();
@@ -49,6 +60,36 @@ export function TransactionDetailsModal({ isOpen, onClose, transaction, items, i
   const canManageTaxes = user?.role === 'admin' || user?.role === 'encargado' || user?.role === 'manager';
   const appliedTaxes: TaxConfiguration[] = Array.isArray(transaction.applied_taxes) ? transaction.applied_taxes : [];
   const isVoided = transaction.status === 'voided';
+
+  // PR-4.4H: Currency traceability
+  // All monetary amounts in DB are stored in CUP. USD original is reconstructed
+  // from zelle_amount (which stores CUP equivalent of USD paid via Zelle).
+  const cashAmt = Number(transaction.cash_amount || 0);
+  const transferAmt = Number(transaction.transfer_amount || 0);
+  const zelleAmt = Number(transaction.zelle_amount || 0);
+  const totalAmt = Number(transaction.total_amount || 0);
+  const subtotalAmt = Number(transaction.subtotal || 0);
+  const discountAmt = Number(transaction.discount_value || 0);
+  const taxAmt = Number(transaction.tax_amount || 0);
+
+  // Use sale_exchange_rate from DB if > 1, otherwise fall back to USD_CUP_RATE (680)
+  const exchangeRate = (transaction.sale_exchange_rate && transaction.sale_exchange_rate > 1)
+    ? transaction.sale_exchange_rate
+    : USD_CUP_RATE;
+  const usdOriginal = usdFromCupEquiv(zelleAmt, transaction.sale_exchange_rate);
+  const hasZelleComponent = zelleAmt > 0;
+  const hasMixedComponents = (cashAmt > 0 ? 1 : 0) + (transferAmt > 0 ? 1 : 0) + (zelleAmt > 0 ? 1 : 0) > 1;
+
+  // Currency of the sale for display purposes
+  // - If zelle is the only payment method → "USD" (original currency)
+  // - If mixed → "CUP + USD"
+  // - Otherwise → "CUP"
+  const paymentMethod = (transaction.payment_method || '').toLowerCase();
+  const saleCurrencyLabel = hasZelleComponent && cashAmt === 0 && transferAmt === 0
+    ? 'USD'
+    : hasMixedComponents
+      ? 'CUP + USD'
+      : 'CUP';
 
   const handleToggleTax = async (tax: TaxConfiguration) => {
     if (!canManageTaxes) return;
@@ -100,8 +141,8 @@ export function TransactionDetailsModal({ isOpen, onClose, transaction, items, i
       open={isOpen}
       onOpenChange={(open) => !open && onClose()}
       title="Detalles de la Venta"
-      description={`ID de Transaccion: ${transaction.id}`}
-      maxWidth="sm:max-w-2xl"
+      description={`Factura: ${transaction.invoice_number || '—'} · Ref: ${transaction.id.split('-')[0]}`}
+      maxWidth="sm:max-w-3xl"
     >
         {/* Voided banner */}
         {isVoided && (
@@ -111,30 +152,26 @@ export function TransactionDetailsModal({ isOpen, onClose, transaction, items, i
           </div>
         )}
 
-        {/* Transaction metadata */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
+        {/* Transaction metadata — 4 columns: Fecha, Método, Moneda, Estado */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
           <div>
-            <p className="font-semibold text-muted-foreground">Fecha</p>
-            <p>{formatDate(transaction.created_at)}</p>
+            <p className="font-semibold text-muted-foreground text-[10px] uppercase tracking-widest">Fecha</p>
+            <p className="font-bold text-xs">{formatDate(transaction.created_at)}</p>
           </div>
           <div>
-            <p className="font-semibold text-muted-foreground">Metodo de Pago</p>
-            <p className="capitalize">
-              {(() => {
-                const m = (transaction.payment_method || '').toLowerCase();
-                if (m === 'cash') return 'Efectivo';
-                if (m === 'card') return 'Tarjeta';
-                if (m === 'transfer') return 'Transferencia';
-                if (m === 'mixed') return 'Mixto';
-                if (m === 'wallet') return 'Billetera';
-                if (m === 'zelle') return 'USD/Zelle';
-                if (m === 'other') return 'Otro';
-                return 'Sin especificar';
-              })()}
+            <p className="font-semibold text-muted-foreground text-[10px] uppercase tracking-widest">Método de Pago</p>
+            <p className="font-bold text-xs capitalize">{getPaymentMethodLabel(transaction.payment_method)}</p>
+          </div>
+          <div>
+            <p className="font-semibold text-muted-foreground text-[10px] uppercase tracking-widest">Moneda</p>
+            <p className="font-bold text-xs">
+              <span className={cn("inline-block px-1.5 py-0.5 rounded", hasZelleComponent ? "bg-blue-500/10 text-blue-600 dark:text-blue-400" : "bg-muted")}>
+                {saleCurrencyLabel}
+              </span>
             </p>
           </div>
           <div>
-            <p className="font-semibold text-muted-foreground">Estado</p>
+            <p className="font-semibold text-muted-foreground text-[10px] uppercase tracking-widest">Estado</p>
             <Badge variant={transaction.status === 'completed' ? 'default' : 'destructive'}>
               {transaction.status === 'completed' ? 'Completada' :
                transaction.status === 'pending' ? 'Pendiente' : 'Anulada'}
@@ -142,16 +179,72 @@ export function TransactionDetailsModal({ isOpen, onClose, transaction, items, i
           </div>
         </div>
 
+        {/* PR-4.4H: Payment breakdown panel — shows each payment component with currency */}
+        {(hasZelleComponent || cashAmt > 0 || transferAmt > 0) && (
+          <div className="mt-4 p-3 rounded-xl bg-muted/30 border border-border">
+            <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2">
+              Desglose de Pago
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+              {/* Cash CUP */}
+              <div className="flex items-center justify-between p-2 rounded-lg bg-success/5 border border-success/10">
+                <div className="flex items-center gap-1.5">
+                  <Banknote className="w-3 h-3 text-success" />
+                  <span className="font-bold text-success">Efectivo</span>
+                </div>
+                <span className="font-black tabular-nums text-success">
+                  {cashAmt > 0 ? formatLabeledCurrency(cashAmt, 'CUP') : '—'}
+                </span>
+              </div>
+              {/* Transfer CUP */}
+              <div className="flex items-center justify-between p-2 rounded-lg bg-primary/5 border border-primary/10">
+                <div className="flex items-center gap-1.5">
+                  <ArrowLeftRight className="w-3 h-3 text-primary" />
+                  <span className="font-bold text-primary">Transfer.</span>
+                </div>
+                <span className="font-black tabular-nums text-primary">
+                  {transferAmt > 0 ? formatLabeledCurrency(transferAmt, 'CUP') : '—'}
+                </span>
+              </div>
+              {/* Zelle/USD */}
+              <div className="flex items-center justify-between p-2 rounded-lg bg-blue-500/5 border border-blue-500/10">
+                <div className="flex items-center gap-1.5">
+                  <DollarSign className="w-3 h-3 text-blue-500" />
+                  <span className="font-bold text-blue-500">USD/Zelle</span>
+                </div>
+                <div className="text-right">
+                  {hasZelleComponent ? (
+                    <>
+                      <div className="font-black tabular-nums text-blue-500">{formatLabeledCurrency(usdOriginal, 'USD')}</div>
+                      <div className="text-[9px] text-muted-foreground font-bold">≡ {formatLabeledCurrency(zelleAmt, 'CUP')}</div>
+                    </>
+                  ) : (
+                    <span className="text-muted-foreground">—</span>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Exchange rate hint */}
+            {hasZelleComponent && (
+              <div className="mt-2 pt-2 border-t border-border/50 flex items-center justify-between text-[10px] text-muted-foreground">
+                <span className="font-bold uppercase tracking-widest">Tasa de cambio aplicada</span>
+                <span className="font-black text-blue-500">1 USD = {exchangeRate} CUP</span>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Items table with skeleton loading */}
         <div className="mt-4 overflow-x-auto">
-          <h3 className="font-semibold mb-2">Articulos{items.length > 0 && !isLoading && <span className="text-muted-foreground font-normal ml-2">({items.length})</span>}</h3>
+          <h3 className="font-semibold mb-2 text-sm">Artículos{items.length > 0 && !isLoading && <span className="text-muted-foreground font-normal ml-2">({items.length})</span>}</h3>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Producto</TableHead>
-                <TableHead className="text-right">Cantidad</TableHead>
-                <TableHead className="text-right">Precio Unit.</TableHead>
-                <TableHead className="text-right">Subtotal</TableHead>
+                <TableHead className="text-[10px] uppercase tracking-widest">Producto</TableHead>
+                <TableHead className="text-right text-[10px] uppercase tracking-widest">Cantidad</TableHead>
+                <TableHead className="text-right text-[10px] uppercase tracking-widest">Precio Unit. (CUP)</TableHead>
+                <TableHead className="text-right text-[10px] uppercase tracking-widest">Subtotal (CUP)</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -160,18 +253,24 @@ export function TransactionDetailsModal({ isOpen, onClose, transaction, items, i
               ) : items.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={4} className="text-center py-8 text-muted-foreground text-xs">
-                    No se encontraron articulos para esta venta.
+                    No se encontraron artículos para esta venta.
                   </TableCell>
                 </TableRow>
               ) : (
-                items.map(item => (
-                  <TableRow key={item.id}>
-                    <TableCell className="font-bold">{item.products?.name || 'Producto no disponible'}</TableCell>
-                    <TableCell className="text-right font-bold">{item.quantity}</TableCell>
-                    <TableCell className="text-right">{formatCurrency(item.price_at_sale)}</TableCell>
-                    <TableCell className="text-right font-bold">{formatCurrency(item.price_at_sale * item.quantity)}</TableCell>
-                  </TableRow>
-                ))
+                items.map(item => {
+                  // price_at_sale is ALWAYS stored in CUP (DB design)
+                  // price_at_sale_cup is the same (might be NULL for historical rows)
+                  const unitPriceCUP = Number(item.price_at_sale_cup ?? item.price_at_sale ?? 0);
+                  const lineSubtotalCUP = unitPriceCUP * Number(item.quantity || 0);
+                  return (
+                    <TableRow key={item.id}>
+                      <TableCell className="font-bold text-xs">{item.products?.name || 'Producto no disponible'}</TableCell>
+                      <TableCell className="text-right font-bold text-xs tabular-nums">{item.quantity}</TableCell>
+                      <TableCell className="text-right text-xs tabular-nums">{formatLabeledCurrency(unitPriceCUP, 'CUP')}</TableCell>
+                      <TableCell className="text-right font-bold text-xs tabular-nums">{formatLabeledCurrency(lineSubtotalCUP, 'CUP')}</TableCell>
+                    </TableRow>
+                  );
+                })
               )}
             </TableBody>
           </Table>
@@ -213,35 +312,57 @@ export function TransactionDetailsModal({ isOpen, onClose, transaction, items, i
               )}
             </div>
 
-            {/* Financial summary */}
+            {/* Financial summary — all values labeled with CUP */}
             <div className="text-right space-y-1">
                 <div className="flex justify-between items-center text-xs text-muted-foreground uppercase font-bold tracking-tight">
                   <span>Subtotal:</span>
-                  <span className="text-foreground">{formatCurrency(transaction.subtotal ?? 0)}</span>
+                  <span className="text-foreground tabular-nums">{formatLabeledCurrency(subtotalAmt, 'CUP')}</span>
                 </div>
-                {transaction.discount_value && transaction.discount_value > 0 ? (
+                {discountAmt > 0 ? (
                   <div className="flex justify-between items-center text-xs text-destructive uppercase font-bold tracking-tight">
                     <span>Descuento:</span>
-                    <span>-{formatCurrency(transaction.discount_value)}</span>
+                    <span className="tabular-nums">-{formatLabeledCurrency(discountAmt, 'CUP')}</span>
                   </div>
                 ) : null}
                 <div className="flex justify-between items-center text-xs text-primary uppercase font-black tracking-widest pt-1 border-t border-border/50">
                   <span>Base Imponible:</span>
-                  <span>{formatCurrency(Math.max(0, (transaction.subtotal || 0) - (transaction.discount_value || 0)))}</span>
+                  <span className="tabular-nums">{formatLabeledCurrency(Math.max(0, subtotalAmt - discountAmt), 'CUP')}</span>
                 </div>
-                {transaction.tax_amount && transaction.tax_amount > 0 ? (
+                {taxAmt > 0 ? (
                   <div className="flex justify-between items-center text-xs text-warning uppercase font-bold tracking-tight">
                     <span>Impuestos:</span>
-                    <span>+{formatCurrency(transaction.tax_amount)}</span>
+                    <span className="tabular-nums">+{formatLabeledCurrency(taxAmt, 'CUP')}</span>
                   </div>
                 ) : null}
                 <div className="flex justify-between items-center pt-2 mt-2 border-t-2 border-primary/20">
-                  <span className="text-sm font-black uppercase text-foreground">Total:</span>
+                  <span className="text-sm font-black uppercase text-foreground">Total (CUP):</span>
                   <span className={cn(
-                    "text-2xl font-black",
+                    "text-2xl font-black tabular-nums",
                     isVoided ? "line-through text-muted-foreground" : "text-primary"
-                  )}>{formatCurrency(transaction.total_amount)}</span>
+                  )}>{formatLabeledCurrency(totalAmt, 'CUP')}</span>
                 </div>
+
+                {/* PR-4.4H: USD original total — only if Zelle component exists */}
+                {hasZelleComponent && (
+                  <div className="mt-2 pt-2 border-t border-blue-500/20 flex justify-between items-center">
+                    <span className="text-xs font-black uppercase tracking-widest text-blue-500">
+                      Total USD Original:
+                    </span>
+                    <span className={cn(
+                      "text-lg font-black tabular-nums text-blue-500",
+                      isVoided && "line-through"
+                    )}>
+                      {formatLabeledCurrency(usdOriginal, 'USD')}
+                    </span>
+                  </div>
+                )}
+
+                {/* PR-4.4H: Equivalence hint */}
+                {hasZelleComponent && (
+                  <div className="text-[10px] text-muted-foreground font-bold pt-1">
+                    {usdOriginal.toFixed(2)} USD × {exchangeRate} = {formatCurrency(totalAmt, 'CUP')} CUP
+                  </div>
+                )}
             </div>
         </div>
     </BaseModal>

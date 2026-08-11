@@ -62,6 +62,47 @@ export const formatCurrency = (amount: number, currency: string = 'CUP'): string
 };
 
 /**
+ * PR-4.4H: Formats a number as currency with an EXPLICIT currency code suffix.
+ *
+ * Use this when currency ambiguity must be eliminated (e.g. sales detail modal
+ * where both CUP and USD can appear in the same view).
+ *
+ * Examples:
+ *   formatLabeledCurrency(15300, 'CUP') → "$15,300.00 CUP"
+ *   formatLabeledCurrency(22.5,  'USD') → "$22.50 USD"
+ */
+export const formatLabeledCurrency = (amount: number, currency: string = 'CUP'): string => {
+  const validCurrency = ['CUP', 'USD', 'EUR', 'MLC'].includes(currency) ? currency : 'CUP';
+  const formatted = new Intl.NumberFormat('es-CU', {
+    style: 'currency',
+    currency: validCurrency,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(amount);
+  return `${formatted} ${validCurrency}`;
+};
+
+/**
+ * PR-4.4H: Standard USD↔CUP conversion rate used across the app.
+ * Historical E2E imports used 680 CUP/USD. Future sales may store the rate
+ * explicitly in transactions.sale_exchange_rate, but the default fallback is 680.
+ */
+export const USD_CUP_RATE = 680;
+
+/**
+ * PR-4.4H: Reconstructs the USD original from a CUP-equivalent zelle_amount.
+ * Used when sale_exchange_rate is missing/1 (historical imports).
+ *
+ * If the transaction has an explicit sale_exchange_rate > 1, use that.
+ * Otherwise, fall back to USD_CUP_RATE (680).
+ */
+export const usdFromCupEquiv = (cupEquiv: number | null | undefined, exchangeRate?: number | null): number => {
+  if (!cupEquiv || cupEquiv <= 0) return 0;
+  const rate = exchangeRate && exchangeRate > 1 ? exchangeRate : USD_CUP_RATE;
+  return cupEquiv / rate;
+};
+
+/**
  * Formats a value in CENTS into a standard currency string (Pesos).
  */
 export const formatCurrencyCents = (cents: number): string => {

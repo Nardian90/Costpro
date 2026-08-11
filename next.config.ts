@@ -21,6 +21,8 @@ const nextConfig: NextConfig = {
     'http://localhost:3000', // FIX-INF-009
     'https://preview-chat-3d0c5abc-4abd-4c11-a041-35a333b52182.space-z.ai', // FIX-PREVIEW: dominio del preview del chat
     'https://preview-3d0c5abc-4abd-4c11-a041-35a333b52182.space-z.ai', // FIX-PREVIEW: variante sin prefijo chat
+    'https://preview-chat-3f4a5e22-10b0-4e84-b19a-febe51e7a60a.space-z.ai', // FIX-PREVIEW: nueva sesión chat
+    'https://preview-3f4a5e22-10b0-4e84-b19a-febe51e7a60a.space-z.ai', // FIX-PREVIEW: nueva sesión variante
     'https://space-z.ai', // FIX-PREVIEW: dominio raíz
     'https://*.space-z.ai', // FIX-PREVIEW: wildcard para cualquier subdominio
   ],

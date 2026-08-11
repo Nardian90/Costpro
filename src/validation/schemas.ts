@@ -470,6 +470,17 @@ export const transactionItemSchema = z.object({
     })
     .nullable()
     .optional(),
+  // PR-4.4H: Currency fields for traceability
+  price_currency: z.string().nullable().optional(),
+  price_at_sale_cup: z.coerce.number().nullable().optional(),
+  cash_paid: z.coerce.number().nullable().optional(),
+  transfer_paid: z.coerce.number().nullable().optional(),
+  zelle_paid: z.coerce.number().nullable().optional(),
+  currency: z.string().nullable().optional(),
+  exchange_rate: z.coerce.number().nullable().optional(),
+  cash_currency: z.string().nullable().optional(),
+  transfer_currency: z.string().nullable().optional(),
+  zelle_currency: z.string().nullable().optional(),
 });
 
 export const paginatedProductSchema = productSchema.extend({
