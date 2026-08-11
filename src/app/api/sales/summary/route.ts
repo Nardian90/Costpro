@@ -75,36 +75,31 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
       day.total_ventas++;
 
       // Separar por moneda y método de pago
-      // PR-4.4G fix: zelle_amount representa USD convertido a CUP (USD × 680)
-      // Debemos sumarlo a la columna USD del resumen
-      if (tx.sale_currency === 'USD') {
-        // USD: usar zelle_amount si existe, sino total_amount
-        day.usd += Number(tx.zelle_amount || tx.total_amount || 0);
-      } else {
-        // CUP: sumar efectivo y transferencia independientemente
-        const cashAmt = Number(tx.cash_amount || 0);
-        const transfAmt = Number(tx.transfer_amount || 0);
-        const totalAmt = Number(tx.total_amount || 0);
-        const zelleAmt = Number(tx.zelle_amount || 0);
+      // PR-4.4G: zelle_amount almacena USD convertido a CUP (USD × 680)
+      // El reporte USD debe mostrar el USD ORIGINAL (zelle_amount / 680), NO el CUP equivalente
+      const cashAmt = Number(tx.cash_amount || 0);
+      const transfAmt = Number(tx.transfer_amount || 0);
+      const totalAmt = Number(tx.total_amount || 0);
+      const zelleAmt = Number(tx.zelle_amount || 0);
 
-        day.efectivo_cup += cashAmt;
-        day.transf_cup += transfAmt;
+      day.efectivo_cup += cashAmt;
+      day.transf_cup += transfAmt;
 
-        // PR-4.4G: zelle_amount contiene USD convertido a CUP — sumarlo al USD del resumen
-        if (zelleAmt > 0) {
-          day.usd += zelleAmt;
-        }
+      // USD original = zelle_amount / 680 (la tasa usada al importar)
+      if (zelleAmt > 0) {
+        const USD_RATE = 680;
+        day.usd += zelleAmt / USD_RATE;
+      }
 
-        // Fallback: si ambos son 0 pero total > 0, clasificar por payment_method
-        if (cashAmt === 0 && transfAmt === 0 && zelleAmt === 0 && totalAmt > 0) {
-          const method = (tx as any).payment_method || 'cash';
-          if (method === 'transfer') {
-            day.transf_cup += totalAmt;
-          } else if (method === 'zelle') {
-            day.usd += totalAmt;
-          } else {
-            day.efectivo_cup += totalAmt;
-          }
+      // Fallback: si todo es 0 pero total > 0, clasificar por payment_method
+      if (cashAmt === 0 && transfAmt === 0 && zelleAmt === 0 && totalAmt > 0) {
+        const method = (tx as any).payment_method || 'cash';
+        if (method === 'transfer') {
+          day.transf_cup += totalAmt;
+        } else if (method === 'zelle') {
+          day.usd += totalAmt / 680;
+        } else {
+          day.efectivo_cup += totalAmt;
         }
       }
     }
