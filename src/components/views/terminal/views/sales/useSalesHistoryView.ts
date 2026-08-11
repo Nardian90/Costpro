@@ -117,10 +117,10 @@ export function useSalesHistoryView() {
         });
     }, [transactionsData, searchTerm, selectedStatus, dateFrom, dateTo]);
 
-    // Pagination — show batches of 50
-    const PAGE_SIZE = 50;
+    // Pagination — PR-4.4G: client-side pagination with configurable page size
+    const [pageSize, setPageSize] = useState(25);
     const [page, setPage] = useState(1);
-    const totalPages = Math.max(1, Math.ceil(filteredTransactions.length / PAGE_SIZE));
+    const totalPages = Math.max(1, Math.ceil(filteredTransactions.length / pageSize));
 
     // Reset page when filters change
     const effectivePage = useMemo(() => {
@@ -129,9 +129,9 @@ export function useSalesHistoryView() {
     }, [page, totalPages]);
 
     const paginatedTransactions = useMemo(() => {
-        const start = (effectivePage - 1) * PAGE_SIZE;
-        return filteredTransactions.slice(start, start + PAGE_SIZE);
-    }, [filteredTransactions, effectivePage]);
+        const start = (effectivePage - 1) * pageSize;
+        return filteredTransactions.slice(start, start + pageSize);
+    }, [filteredTransactions, effectivePage, pageSize]);
 
     // Fetching details for the modal
     const { data: transactionItems = [], isLoading: loadingDetails } = useTransactionDetails(selectedTransactionId || undefined);
@@ -195,22 +195,6 @@ export function useSalesHistoryView() {
             storeId: user?.activeStoreId,
         });
     }, [duplicateDocumentMutation, user?.activeStoreId]);
-
-    // ── CSV Export ──
-    const handleExportCSV = useCallback(() => {
-        if (filteredTransactions.length === 0) {
-            toast.info('No hay ventas para exportar con los filtros actuales.');
-            return;
-        }
-        try {
-            const csv = generateCSV(filteredTransactions);
-            const dateStr = new Date().toISOString().split('T')[0];
-            downloadCSV(csv, `ventas_${dateStr}.csv`);
-            toast.success(`${filteredTransactions.length} ventas exportadas a CSV.`);
-        } catch {
-            toast.error('Error al generar el archivo CSV.');
-        }
-    }, [filteredTransactions]);
 
     // ── Selection ──
     const toggleSelection = useCallback((id: string) => {
@@ -283,6 +267,8 @@ export function useSalesHistoryView() {
         page: effectivePage,
         setPage,
         totalPages,
+        pageSize,
+        setPageSize,
 
         // Modal State & Data
         selectedTransaction,
@@ -301,7 +287,6 @@ export function useSalesHistoryView() {
 
         // Other Actions
         handleDuplicate,
-        handleExportCSV,
         isInverting: invertDocumentMutation.isPending,
 
         // Selection Actions
