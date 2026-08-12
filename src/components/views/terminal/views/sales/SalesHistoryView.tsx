@@ -2,7 +2,7 @@
 
 import React, { useState, useCallback } from 'react';
 import { useIsMobile } from '@/hooks/ui/useMobile';
-import { DollarSign, CreditCard, Eye, Undo2, Copy, Calculator, CheckSquare, Square, AlertTriangle, ShoppingCart, Download, ChevronLeft, ChevronRight, X, Filter, Wallet, ArrowLeftRight, TrendingUp } from 'lucide-react';
+import { DollarSign, CreditCard, Eye, Undo2, Copy, Calculator, CheckSquare, Square, AlertTriangle, ShoppingCart, Download, ChevronLeft, ChevronRight, X, Filter, Wallet, ArrowLeftRight, TrendingUp, Package } from 'lucide-react';
 import { cn, formatCurrency, formatDate, formatTime } from '@/lib/utils';
 import SearchBar from '@/components/ui/SearchBar';
 import { StateRenderer } from '@/components/ui/StateRenderer';
@@ -16,6 +16,7 @@ import { ReverseDocumentModal } from '@/components/ui/ReverseDocumentModal';
 import { useUIStore, useAuthStore } from '@/store';
 import { TaxCalculationModal } from './TaxCalculationModal';
 import { SalesSummaryTab } from './SalesSummaryTab';
+import { SalesProductTab, exportProductTabToExcel } from './SalesProductTab';
 
 // Helper para icono y etiqueta del método de pago
 function getPaymentMethodInfo(method: string | null | undefined): { icon: React.ElementType; label: string; color: string } {
@@ -144,7 +145,7 @@ const PaginationFooter = ({ page, totalPages, totalItems, pageSize, onPageChange
 
 export default function SalesHistoryView() {
   const [reverseTarget, setReverseTarget] = useState<{ id: string; label: string } | null>(null);
-  const [activeTab, setActiveTab] = useState<'detalle' | 'resumen'>('detalle');
+  const [activeTab, setActiveTab] = useState<'detalle' | 'resumen' | 'producto'>('detalle');
   const { setCurrentView, setForceOpenCart } = useUIStore();
   const user = useAuthStore(s => s.user);
   const activeStoreId = user?.activeStoreId || '';
@@ -176,15 +177,36 @@ export default function SalesHistoryView() {
 
   const isMobile = useIsMobile();
 
-  // PR-4.4H: Export to Excel (.xlsx) with USD column
+  // Ref para datos del tab Producto (para exportación)
+  const productTabDataRef = React.useRef<any[]>([]);
+
+  // PR-4.4I: Export to Excel — tab-aware
   const handleExportExcel = useCallback(() => {
+    const storeName = activeStoreId ? 'tienda' : 'todas';
+    const dateStr = new Date().toISOString().slice(0, 10);
+
+    if (activeTab === 'producto') {
+      // Export product tab data
+      if (productTabDataRef.current.length === 0) return;
+      exportProductTabToExcel(productTabDataRef.current, `ventas_producto_${storeName}_${dateStr}.xlsx`);
+      return;
+    }
+
+    if (activeTab === 'resumen') {
+      // Export summary tab — handled by SalesSummaryTab internally
+      // For now, export the same as detalle (summary export can be added later)
+      // Actually, the summary tab has its own data; we should not export detalle data here
+      // Let's show a toast or just return
+      return;
+    }
+
+    // Default: detalle tab
     if (!transactions || transactions.length === 0) return;
 
     const headers = ['Ref', 'Fecha', 'Hora', 'Método', 'Moneda', 'Total CUP', 'USD Original', 'Subtotal CUP', 'Descuento', 'Impuestos', 'Estado', 'Efectivo CUP', 'Transferencia CUP', 'Zelle (CUP equiv.)'];
     const rows = transactions.map(t => {
       const zelleAmt = Number((t as any).zelle_amount || 0);
       const rate = Number((t as any).sale_exchange_rate || 1);
-      // PR-4.4I: USD solo si hay tasa persistida, sino vacío
       const usdOrig = zelleAmt > 0 && rate > 1 ? zelleAmt / rate : '';
       const hasZelle = zelleAmt > 0;
       const cashA = Number((t as any).cash_amount || 0);
@@ -220,23 +242,17 @@ export default function SalesHistoryView() {
     });
 
     const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
-    // Set column widths
     ws['!cols'] = [
       { wch: 8 }, { wch: 12 }, { wch: 8 }, { wch: 14 }, { wch: 10 }, { wch: 12 },
       { wch: 12 }, { wch: 12 }, { wch: 10 }, { wch: 10 }, { wch: 12 }, { wch: 12 },
       { wch: 14 }, { wch: 14 },
     ];
-    // Add autofilter
     ws['!autofilter'] = { ref: `A1:N${rows.length + 1}` };
 
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Ventas');
-
-    const storeName = activeStoreId ? 'tienda' : 'todas';
-    const dateStr = new Date().toISOString().slice(0, 10);
-    const filename = `ventas_${storeName}_${dateStr}.xlsx`;
-    XLSX.writeFile(wb, filename);
-  }, [transactions, activeStoreId]);
+    XLSX.writeFile(wb, `ventas_detalle_${storeName}_${dateStr}.xlsx`);
+  }, [transactions, activeStoreId, activeTab]);
 
   const allIds = transactions.map(t => t.id);
   const isAllSelected = allIds.length > 0 && selectedIds.size === allIds.length;
@@ -334,6 +350,15 @@ export default function SalesHistoryView() {
             <Eye className="w-3.5 h-3.5 inline mr-1" /> Detalle
           </button>
           <button
+            onClick={() => setActiveTab('producto')}
+            className={cn(
+              "flex-1 py-3 px-4 text-xs font-black uppercase border-b-2 -mb-px whitespace-nowrap min-h-[44px] transition-colors",
+              activeTab === 'producto' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'
+            )}
+          >
+            <Package className="w-3.5 h-3.5 inline mr-1" /> Producto
+          </button>
+          <button
             onClick={() => setActiveTab('resumen')}
             className={cn(
               "flex-1 py-3 px-4 text-xs font-black uppercase border-b-2 -mb-px whitespace-nowrap min-h-[44px] transition-colors",
@@ -350,6 +375,16 @@ export default function SalesHistoryView() {
             dateFrom={dateFrom || ''}
             dateTo={dateTo || ''}
             storeId={activeStoreId}
+          />
+        )}
+
+        {/* Tab Producto */}
+        {activeTab === 'producto' && (
+          <SalesProductTab
+            dateFrom={dateFrom || ''}
+            dateTo={dateTo || ''}
+            storeId={activeStoreId}
+            onDataLoaded={(data) => { productTabDataRef.current = data; }}
           />
         )}
 
