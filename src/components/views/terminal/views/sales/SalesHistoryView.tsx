@@ -3,7 +3,7 @@
 import React, { useState, useCallback } from 'react';
 import { useIsMobile } from '@/hooks/ui/useMobile';
 import { DollarSign, CreditCard, Eye, Undo2, Copy, Calculator, CheckSquare, Square, AlertTriangle, ShoppingCart, Download, ChevronLeft, ChevronRight, X, Filter, Wallet, ArrowLeftRight, TrendingUp } from 'lucide-react';
-import { cn, formatCurrency, formatDate, formatTime, usdFromCupEquiv } from '@/lib/utils';
+import { cn, formatCurrency, formatDate, formatTime } from '@/lib/utils';
 import SearchBar from '@/components/ui/SearchBar';
 import { StateRenderer } from '@/components/ui/StateRenderer';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -183,11 +183,15 @@ export default function SalesHistoryView() {
     const headers = ['Ref', 'Fecha', 'Hora', 'Método', 'Moneda', 'Total CUP', 'USD Original', 'Subtotal CUP', 'Descuento', 'Impuestos', 'Estado', 'Efectivo CUP', 'Transferencia CUP', 'Zelle (CUP equiv.)'];
     const rows = transactions.map(t => {
       const zelleAmt = Number((t as any).zelle_amount || 0);
-      const usdOrig = zelleAmt > 0 ? zelleAmt / 680 : 0;
+      const rate = Number((t as any).sale_exchange_rate || 1);
+      // PR-4.4I: USD solo si hay tasa persistida, sino vacío
+      const usdOrig = zelleAmt > 0 && rate > 1 ? zelleAmt / rate : '';
       const hasZelle = zelleAmt > 0;
       const cashA = Number((t as any).cash_amount || 0);
       const transferA = Number((t as any).transfer_amount || 0);
-      const currencyLabel = hasZelle && cashA === 0 && transferA === 0 ? 'USD' : (hasZelle ? 'CUP+USD' : 'CUP');
+      const currencyLabel = hasZelle && rate > 1
+        ? (cashA === 0 && transferA === 0 ? 'USD' : 'CUP+USD')
+        : (hasZelle ? 'CUP+USD?' : 'CUP');
       return [
         t.id.split('-')[0],
         formatDate(t.created_at),
@@ -204,7 +208,7 @@ export default function SalesHistoryView() {
         })(),
         currencyLabel,
         Number(t.total_amount || 0),
-        usdOrig > 0 ? Number(usdOrig.toFixed(2)) : '',
+        typeof usdOrig === 'number' && usdOrig > 0 ? Number(usdOrig.toFixed(2)) : '',
         Number(t.subtotal || 0),
         Number(t.discount_value || 0),
         Number(t.tax_amount || 0),
@@ -461,9 +465,14 @@ export default function SalesHistoryView() {
                               <span className="text-xs font-bold uppercase">
                                 {getPaymentMethodInfo(txn.payment_method).label}
                               </span>
-                              {(txn as any).zelle_amount > 0 && (
+                              {(txn as any).zelle_amount > 0 && (txn as any).sale_exchange_rate > 1 && (
                                 <span className="text-[10px] font-bold text-blue-500 bg-blue-500/10 px-1.5 py-0.5 rounded">
-                                  ${usdFromCupEquiv((txn as any).zelle_amount, (txn as any).sale_exchange_rate).toFixed(2)} USD
+                                  ${((txn as any).zelle_amount / (txn as any).sale_exchange_rate).toFixed(2)} USD
+                                </span>
+                              )}
+                              {(txn as any).zelle_amount > 0 && (!(txn as any).sale_exchange_rate || (txn as any).sale_exchange_rate <= 1) && (
+                                <span className="text-[10px] font-bold text-amber-500 bg-amber-500/10 px-1.5 py-0.5 rounded">
+                                  USD s/tasa
                                 </span>
                               )}
                             </div>
@@ -473,9 +482,9 @@ export default function SalesHistoryView() {
                               "text-base font-black tabular-nums",
                               isVoided ? "line-through text-muted-foreground" : ""
                             )}>{formatCurrency(txn.total_amount)} <span className="text-[10px] font-bold text-muted-foreground">CUP</span></div>
-                            {(txn as any).zelle_amount > 0 && (
+                            {(txn as any).zelle_amount > 0 && (txn as any).sale_exchange_rate > 1 && (
                               <div className="text-[10px] font-bold text-blue-500 tabular-nums">
-                                ≈ ${usdFromCupEquiv((txn as any).zelle_amount, (txn as any).sale_exchange_rate).toFixed(2)} USD
+                                ≈ ${((txn as any).zelle_amount / (txn as any).sale_exchange_rate).toFixed(2)} USD
                               </div>
                             )}
                           </td>

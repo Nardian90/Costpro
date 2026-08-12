@@ -83,6 +83,28 @@ export function useTransactionDetails(transactionId?: string) {
   });
 }
 
+/**
+ * PR-4.4I: Fetch payment_transactions for a sale (ref_type='sale', transaction_id=venta)
+ * These are the authoritative source for currency/rate data.
+ */
+export function useSalePayments(transactionId?: string) {
+  return useQuery({
+    queryKey: ['sale-payments', transactionId],
+    queryFn: async () => {
+      if (!transactionId) return [];
+      const { data, error } = await supabase
+        .from('payment_transactions')
+        .select('payment_method, amount, currency, exchange_rate, amount_cup')
+        .eq('transaction_id', transactionId)
+        .order('payment_date', { ascending: true });
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!transactionId,
+    staleTime: 30 * 1000,
+  });
+}
+
 export function useCreateSale() {
   const queryClient = useQueryClient();
   const { addToQueue } = useSyncContext();

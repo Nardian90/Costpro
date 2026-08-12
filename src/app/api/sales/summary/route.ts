@@ -1,14 +1,11 @@
 /**
  * GET /api/sales/summary?store_id=...&from=YYYY-MM-DD&to=YYYY-MM-DD
  *
- * Devuelve un resumen consolidado de ventas agrupado por día con:
- *   - efectivo_cup: total de cash_amount en CUP
- *   - transf_cup: total de transfer_amount en CUP
- *   - usd: total de ventas en USD (sale_currency='USD')
- *   - comision: total de comisiones pagadas (payment_transactions)
- *   - total_ventas: número de transacciones completadas ese día
+ * PR-4.4I v2.2.2-R7.2.1: Resumen consolidado de ventas.
  *
- * Respuesta: { days: [{ fecha, efectivo_cup, transf_cup, usd, comision, total_ventas }] }
+ * USD = SUM(payment_transactions.amount WHERE currency='USD') — venta por venta.
+ * NO usa /680 global. Si una venta no tiene payment_transactions, se marca como
+ * venta_sin_tasa y el CUP equivalente se suma a usd_sin_tasa_cup_equiv.
  */
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
@@ -27,7 +24,7 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
 
     const supabase = getSupabaseForSession(session);
 
-    // Construir query de transacciones completadas
+    // PR-4.4I: LEFT JOIN con payment_transactions (sin !inner para conservar históricos)
     let query = supabase
       .from('transactions')
       .select(`
@@ -39,7 +36,8 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
         transfer_amount,
         zelle_amount,
         total_amount,
-        status
+        status,
+        payment_transactions(amount, currency, exchange_rate, amount_cup, payment_method)
       `)
       .eq('store_id', storeId)
       .eq('status', 'completed')
@@ -54,12 +52,11 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
       return NextResponse.json({ error: txError.message }, { status: 500 });
     }
 
-    // Agrupar por día
     const dayMap = new Map<string, DaySummary>();
 
     for (const tx of transactions || []) {
       if (!tx.completed_at) continue;
-      const dateStr = tx.completed_at.split('T')[0]; // YYYY-MM-DD
+      const dateStr = tx.completed_at.split('T')[0];
 
       if (!dayMap.has(dateStr)) {
         dayMap.set(dateStr, {
@@ -69,42 +66,40 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
           usd: 0,
           comision: 0,
           total_ventas: 0,
+          ventas_sin_tasa: 0,
+          usd_sin_tasa_cup_equiv: 0,
         });
       }
       const day = dayMap.get(dateStr)!;
       day.total_ventas++;
 
-      // Separar por moneda y método de pago
-      // PR-4.4G: zelle_amount almacena USD convertido a CUP (USD × 680)
-      // El reporte USD debe mostrar el USD ORIGINAL (zelle_amount / 680), NO el CUP equivalente
-      const cashAmt = Number(tx.cash_amount || 0);
-      const transfAmt = Number(tx.transfer_amount || 0);
-      const totalAmt = Number(tx.total_amount || 0);
-      const zelleAmt = Number(tx.zelle_amount || 0);
+      const payments = (tx as any).payment_transactions || [];
 
-      day.efectivo_cup += cashAmt;
-      day.transf_cup += transfAmt;
-
-      // USD original = zelle_amount / 680 (la tasa usada al importar)
-      if (zelleAmt > 0) {
-        const USD_RATE = 680;
-        day.usd += zelleAmt / USD_RATE;
-      }
-
-      // Fallback: si todo es 0 pero total > 0, clasificar por payment_method
-      if (cashAmt === 0 && transfAmt === 0 && zelleAmt === 0 && totalAmt > 0) {
-        const method = (tx as any).payment_method || 'cash';
-        if (method === 'transfer') {
-          day.transf_cup += totalAmt;
-        } else if (method === 'zelle') {
-          day.usd += totalAmt / 680;
-        } else {
-          day.efectivo_cup += totalAmt;
+      if (payments.length === 0) {
+        // Venta histórica sin payment_transactions — fallback legacy
+        day.efectivo_cup += Number(tx.cash_amount) || 0;
+        day.transf_cup += Number(tx.transfer_amount) || 0;
+        if (Number(tx.zelle_amount) > 0) {
+          day.ventas_sin_tasa++;
+          day.usd_sin_tasa_cup_equiv += Number(tx.zelle_amount);
+        }
+      } else {
+        // Venta con payment_transactions — fuente autoritativa
+        for (const p of payments) {
+          if (p.payment_method === 'cash') {
+            day.efectivo_cup += Number(p.amount_cup) || 0;
+          } else if (p.payment_method === 'transfer') {
+            day.transf_cup += Number(p.amount_cup) || 0;
+          }
+          // USD original = amount WHERE currency='USD'
+          if (p.currency === 'USD') {
+            day.usd += Number(p.amount) || 0;
+          }
         }
       }
     }
 
-    // Cargar comisiones del período (payment_transactions con ref_type='commission')
+    // Comisiones
     let comQuery = supabase
       .from('payment_transactions')
       .select('amount, payment_date')
@@ -117,7 +112,6 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
 
     const { data: commissions } = await comQuery;
 
-    // Sumar comisiones por día
     for (const com of commissions || []) {
       if (!com.payment_date) continue;
       const dateStr = com.payment_date.split('T')[0];
@@ -126,7 +120,6 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
       }
     }
 
-    // Convertir a array ordenado por fecha
     const days = Array.from(dayMap.values()).sort((a, b) => a.fecha.localeCompare(b.fecha));
 
     return NextResponse.json({ days });
@@ -143,6 +136,8 @@ interface DaySummary {
   usd: number;
   comision: number;
   total_ventas: number;
+  ventas_sin_tasa: number;
+  usd_sin_tasa_cup_equiv: number;
 }
 
 export const GET = withAuth(getHandler);

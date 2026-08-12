@@ -161,8 +161,9 @@ export function usePOSCheckout() {
               cash_amount: cashAmount,
               transfer_amount: transferAmount,
               zelle_amount: zelleAmount,
-              sale_currency: useCartStore.getState().saleCurrency || 'MIXED',
-              sale_exchange_rate: useCartStore.getState().saleExchangeRate || 1.0,
+              // PR-4.4I: Zelle currency + rate (USD with rate, or CUP if no Zelle)
+              sale_currency: zelleAmount > 0 ? 'USD' : 'CUP',
+              sale_exchange_rate: zelleAmount > 0 ? (useCartStore.getState().saleExchangeRate > 1 ? useCartStore.getState().saleExchangeRate : 680) : 1.0,
               customer_id: safeCustomerId,
               customer_name: customerName || null,
               idempotency_key: `sale-${crypto.randomUUID()}`,
@@ -218,9 +219,9 @@ export function usePOSCheckout() {
           p_zelle_amount: zelleAmount,
           // FIX: idempotencia con crypto.randomUUID() para mayor entropía
           p_idempotency_key: `sale-${crypto.randomUUID()}`,
-          // FIX-MULTI-MONEDA: cada item lleva su propia moneda y tasa
-          p_sale_currency: useCartStore.getState().saleCurrency || 'MIXED',
-          p_sale_exchange_rate: useCartStore.getState().saleExchangeRate || 1.0,
+          // PR-4.4I: Zelle currency + rate
+          p_sale_currency: zelleAmount > 0 ? 'USD' : 'CUP',
+          p_sale_exchange_rate: zelleAmount > 0 ? (useCartStore.getState().saleExchangeRate > 1 ? useCartStore.getState().saleExchangeRate : 680) : 1.0,
           p_items: items.map((i) => ({
             product_id: i.product_id,
             variant_id: i.variant_id ?? null,

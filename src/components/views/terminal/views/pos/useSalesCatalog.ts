@@ -386,6 +386,11 @@ export function useSalesCatalog() {
         p_cash_amount: totals.cashTotal,
         p_transfer_amount: totals.transferTotal,
         p_zelle_amount: totals.zelleTotal,
+        // PR-4.4I: persist currency + exchange rate for Zelle component
+        p_sale_currency: totals.zelleTotal > 0 ? 'USD' : 'CUP',
+        p_sale_exchange_rate: totals.zelleTotal > 0
+          ? (activeRows.find(r => r.usdExchangeRate > 0)?.usdExchangeRate || 680)
+          : 1.0,
         p_items: activeRows.map((r) => ({
           product_id: r.product.id,
           variant_id: r.selectedVariantId ?? null,

@@ -6,9 +6,11 @@ import { BaseModal } from '@/components/ui/BaseModal';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { cn, formatCurrency, formatLabeledCurrency, USD_CUP_RATE, usdFromCupEquiv, formatDate } from '@/lib/utils';
+import { cn, formatCurrency, formatLabeledCurrency, formatDate } from '@/lib/utils';
+import { resolveSalePayments } from '@/lib/currency/sale-currency';
 import { Transaction, TransactionItem, TaxConfiguration } from '@/types';
 import { useTaxes } from '@/hooks/api/useTaxes';
+import { useSalePayments } from '@/hooks/api/useTransactions';
 import { useAuthStore } from '@/store';
 import { supabase } from '@/lib/supabaseClient';
 import { toast } from 'sonner';
@@ -55,35 +57,30 @@ export function TransactionDetailsModal({ isOpen, onClose, transaction, items, i
   const queryClient = useQueryClient();
   const { data: allTaxes = [] } = useTaxes(transaction?.store_id);
 
+  // PR-4.4I: Fetch authoritative payment data from payment_transactions
+  const { data: salePayments = [] } = useSalePayments(transaction?.id);
+
   if (!transaction) return null;
 
   const canManageTaxes = user?.role === 'admin' || user?.role === 'encargado' || user?.role === 'manager';
   const appliedTaxes: TaxConfiguration[] = Array.isArray(transaction.applied_taxes) ? transaction.applied_taxes : [];
   const isVoided = transaction.status === 'voided';
 
-  // PR-4.4H: Currency traceability
-  // All monetary amounts in DB are stored in CUP. USD original is reconstructed
-  // from zelle_amount (which stores CUP equivalent of USD paid via Zelle).
-  const cashAmt = Number(transaction.cash_amount || 0);
-  const transferAmt = Number(transaction.transfer_amount || 0);
-  const zelleAmt = Number(transaction.zelle_amount || 0);
-  const totalAmt = Number(transaction.total_amount || 0);
+  // PR-4.4I: Use resolveSalePayments for authoritative currency info
+  const saleInfo = resolveSalePayments(transaction, salePayments);
+  const cashAmt = saleInfo.cashPaid;
+  const transferAmt = saleInfo.transferPaid;
+  const zelleAmt = saleInfo.zellePaidCUP;
+  const totalAmt = saleInfo.totalAmount;
   const subtotalAmt = Number(transaction.subtotal || 0);
   const discountAmt = Number(transaction.discount_value || 0);
   const taxAmt = Number(transaction.tax_amount || 0);
-
-  // Use sale_exchange_rate from DB if > 1, otherwise fall back to USD_CUP_RATE (680)
-  const exchangeRate = (transaction.sale_exchange_rate && transaction.sale_exchange_rate > 1)
-    ? transaction.sale_exchange_rate
-    : USD_CUP_RATE;
-  const usdOriginal = usdFromCupEquiv(zelleAmt, transaction.sale_exchange_rate);
+  const exchangeRate = saleInfo.zelleExchangeRate;
+  const usdOriginal = saleInfo.zellePaidUSD;
   const hasZelleComponent = zelleAmt > 0;
-  const hasMixedComponents = (cashAmt > 0 ? 1 : 0) + (transferAmt > 0 ? 1 : 0) + (zelleAmt > 0 ? 1 : 0) > 1;
+  const hasMixedComponents = saleInfo.components.length > 1;
+  const hasIncompleteData = saleInfo.hasIncompleteData;
 
-  // Currency of the sale for display purposes
-  // - If zelle is the only payment method → "USD" (original currency)
-  // - If mixed → "CUP + USD"
-  // - Otherwise → "CUP"
   const paymentMethod = (transaction.payment_method || '').toLowerCase();
   const saleCurrencyLabel = hasZelleComponent && cashAmt === 0 && transferAmt === 0
     ? 'USD'
@@ -215,8 +212,13 @@ export function TransactionDetailsModal({ isOpen, onClose, transaction, items, i
                 <div className="text-right">
                   {hasZelleComponent ? (
                     <>
-                      <div className="font-black tabular-nums text-blue-500">{formatLabeledCurrency(usdOriginal, 'USD')}</div>
+                      <div className="font-black tabular-nums text-blue-500">
+                        {usdOriginal !== null ? formatLabeledCurrency(usdOriginal, 'USD') : 'USD no disponible'}
+                      </div>
                       <div className="text-[9px] text-muted-foreground font-bold">≡ {formatLabeledCurrency(zelleAmt, 'CUP')}</div>
+                      {hasIncompleteData && (
+                        <div className="text-[9px] text-amber-500 font-bold">⚠ Tasa no persistida</div>
+                      )}
                     </>
                   ) : (
                     <span className="text-muted-foreground">—</span>
@@ -226,7 +228,7 @@ export function TransactionDetailsModal({ isOpen, onClose, transaction, items, i
             </div>
 
             {/* Exchange rate hint */}
-            {hasZelleComponent && (
+            {hasZelleComponent && exchangeRate !== null && (
               <div className="mt-2 pt-2 border-t border-border/50 flex items-center justify-between text-[10px] text-muted-foreground">
                 <span className="font-bold uppercase tracking-widest">Tasa de cambio aplicada</span>
                 <span className="font-black text-blue-500">1 USD = {exchangeRate} CUP</span>
@@ -342,8 +344,8 @@ export function TransactionDetailsModal({ isOpen, onClose, transaction, items, i
                   )}>{formatLabeledCurrency(totalAmt, 'CUP')}</span>
                 </div>
 
-                {/* PR-4.4H: USD original total — only if Zelle component exists */}
-                {hasZelleComponent && (
+                {/* PR-4.4I: USD original total — only if Zelle component exists AND rate is known */}
+                {hasZelleComponent && usdOriginal !== null && (
                   <div className="mt-2 pt-2 border-t border-blue-500/20 flex justify-between items-center">
                     <span className="text-xs font-black uppercase tracking-widest text-blue-500">
                       Total USD Original:
@@ -357,8 +359,20 @@ export function TransactionDetailsModal({ isOpen, onClose, transaction, items, i
                   </div>
                 )}
 
-                {/* PR-4.4H: Equivalence hint */}
-                {hasZelleComponent && (
+                {/* PR-4.4I: USD sin tasa — warn when rate is unknown */}
+                {hasZelleComponent && usdOriginal === null && (
+                  <div className="mt-2 pt-2 border-t border-amber-500/20 flex justify-between items-center">
+                    <span className="text-xs font-black uppercase tracking-widest text-amber-500">
+                      USD Original no disponible
+                    </span>
+                    <span className="text-[10px] text-amber-500 font-bold">
+                      Tasa no persistida históricamente
+                    </span>
+                  </div>
+                )}
+
+                {/* PR-4.4I: Equivalence hint */}
+                {hasZelleComponent && usdOriginal !== null && exchangeRate !== null && (
                   <div className="text-[10px] text-muted-foreground font-bold pt-1">
                     {usdOriginal.toFixed(2)} USD × {exchangeRate} = {formatCurrency(totalAmt, 'CUP')} CUP
                   </div>
