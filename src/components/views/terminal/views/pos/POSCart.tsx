@@ -10,6 +10,8 @@ import {
   Settings,
   AlertTriangle,
   ChevronDown,
+  Package,
+  Tag,
 } from "lucide-react";
 import ProductImage from "@/components/ui/ProductImage";
 import { cn, formatCurrency } from "@/lib/utils";
@@ -26,6 +28,7 @@ import { POSCartSuccessView } from "./POSCartSuccessView";
 import { usePOSCartExports } from "./usePOSCartExports";
 import { CustomerSelector } from "./CustomerSelector";
 import { POSCartCheckoutPanel } from "./POSCartCheckoutPanel";
+import { ValeSalidaPanel } from "./ValeSalidaPanel";
 import type { POSCartProps } from "./POSCart.types";
 
 /**
@@ -63,9 +66,11 @@ export const POSCart = ({
   getTaxAmount,
 }: POSCartProps) => {
   const { user } = useAuthStore();
-  const { selectedPayment, setSelectedPayment } = useCartStore(useShallow((s) => ({
+  const { selectedPayment, setSelectedPayment, operationType, setOperationType } = useCartStore(useShallow((s) => ({
     selectedPayment: s.selectedPayment,
     setSelectedPayment: s.setSelectedPayment,
+    operationType: s.operationType,
+    setOperationType: s.setOperationType,
   })));
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [isEasyReading, setIsEasyReading] = useState(false);
@@ -121,7 +126,10 @@ export const POSCart = ({
         style={isMobile ? { paddingTop: "env(safe-area-inset-top, 0px)" } : undefined}
       >
         {/* ── HEADER (compacto) ─────────────────────────────────────── */}
-        <div className="bg-primary p-3 sm:p-4 flex items-center justify-between text-primary-foreground shrink-0">
+        <div className={cn(
+          "p-3 sm:p-4 flex items-center justify-between text-primary-foreground shrink-0",
+          operationType === 'issue_slip' ? "bg-amber-600" : "bg-primary",
+        )}>
           <div className="flex flex-col gap-0.5 min-w-0 flex-1">
             <h3
               className={cn(
@@ -129,15 +137,19 @@ export const POSCart = ({
                 isEasyReading ? "text-2xl" : "text-base sm:text-lg",
               )}
             >
-              <ShoppingCart className={cn(isEasyReading ? "w-7 h-7" : "w-5 h-5")} />
-              Caja
+              {operationType === 'issue_slip' ? (
+                <Package className={cn(isEasyReading ? "w-7 h-7" : "w-5 h-5")} />
+              ) : (
+                <ShoppingCart className={cn(isEasyReading ? "w-7 h-7" : "w-5 h-5")} />
+              )}
+              {operationType === 'issue_slip' ? 'Vale de Salida' : 'Caja'}
               <span className="bg-primary-foreground/20 px-2 py-0.5 rounded-full text-[10px] sm:text-xs tabular-nums">
                 {itemCount}
               </span>
             </h3>
             <span className="font-bold opacity-70 uppercase tracking-widest text-[10px] sm:text-xs truncate">
               {itemCount === 0 ? "Vacío" : `${itemCount} ${itemCount === 1 ? "producto" : "productos"}`}
-              {itemCount > 0 && ` · ${formatCurrency(expectedTotal)}`}
+              {itemCount > 0 && operationType === 'sale' && ` · ${formatCurrency(expectedTotal)}`}
             </span>
           </div>
           <div className="flex items-center gap-1.5 shrink-0">
@@ -189,27 +201,70 @@ export const POSCart = ({
             /* ── EMPTY STATE ── */
             <div className="flex-1 flex flex-col items-center justify-start pt-12 p-6 text-center space-y-4">
               <div className="w-32 h-32 bg-muted rounded-full flex items-center justify-center mb-4">
-                <ShoppingCart className="w-16 h-16 opacity-10" />
+                {operationType === 'issue_slip' ? (
+                  <Package className="w-16 h-16 opacity-10" />
+                ) : (
+                  <ShoppingCart className="w-16 h-16 opacity-10" />
+                )}
               </div>
               <p className="font-black uppercase tracking-widest text-xl text-foreground">
-                Carrito Vacío
+                {operationType === 'issue_slip' ? 'Vale Vacío' : 'Carrito Vacío'}
               </p>
               <p className="text-muted-foreground max-w-xs mx-auto">
-                Agrega productos del catálogo para comenzar una nueva venta.
+                {operationType === 'issue_slip'
+                  ? 'Agrega productos del catálogo para emitir un vale de salida de inventario.'
+                  : 'Agrega productos del catálogo para comenzar una nueva venta.'}
               </p>
               <SecondaryButton label="Ir al Catálogo" onClick={onClose} className="mt-4" />
             </div>
           ) : (
             <>
-              {/* ── CustomerSelector (siempre arriba, compacto) ── */}
-              <div className="px-3 sm:px-4 pt-3 pb-2 border-b border-border/50 bg-muted/20 shrink-0">
-                <CustomerSelector />
+              {/* ── Operation Type Toggle [Venta] [Vale de Salida] ──
+                  Visible solo si hay items. Cambiar de modo limpia el estado
+                  incompatible (pagos → vale, OT → venta) via setOperationType. */}
+              <div className="flex border-b border-border bg-muted/30 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setOperationType('sale')}
+                  className={cn(
+                    "flex-1 py-2 text-[10px] sm:text-xs font-black uppercase tracking-widest transition-colors flex items-center justify-center gap-1.5",
+                    operationType === 'sale'
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-transparent text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  <Tag className="w-3.5 h-3.5" />
+                  Venta
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setOperationType('issue_slip')}
+                  className={cn(
+                    "flex-1 py-2 text-[10px] sm:text-xs font-black uppercase tracking-widest transition-colors flex items-center justify-center gap-1.5",
+                    operationType === 'issue_slip'
+                      ? "bg-amber-600 text-white"
+                      : "bg-transparent text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  <Package className="w-3.5 h-3.5" />
+                  Vale de Salida
+                </button>
               </div>
+
+              {/* ── CustomerSelector (solo en modo sale) ── */}
+              {operationType === 'sale' && (
+                <div className="px-3 sm:px-4 pt-3 pb-2 border-b border-border/50 bg-muted/20 shrink-0">
+                  <CustomerSelector />
+                </div>
+              )}
 
               {/* ── TABS (mobile + desktop, mismo patrón) ──
                   POS-3a-v3: Antes en desktop ambas zonas se renderizaban juntas
                   causando overflow y superposición. Ahora tabs funcionan igual
-                  en mobile y desktop: solo una zona visible a la vez. */}
+                  en mobile y desktop: solo una zona visible a la vez.
+                  En modo issue_slip, los tabs se ocultan (el ValeSalidaPanel se
+                  muestra directamente sin intercambio items/pago). */}
+              {operationType === 'sale' && (
               <div className="flex border-b border-border bg-card shrink-0" role="tablist">
                 <button
                   type="button"
@@ -258,14 +313,16 @@ export const POSCart = ({
                   )}
                 </button>
               </div>
+              )}
 
-              {/* ── ZONA 1: ITEMS (scroll independiente, solo visible cuando tab=items) ── */}
+              {/* ── ZONA 1: ITEMS (scroll independiente, solo visible cuando tab=items) ──
+                  En modo issue_slip, los items siempre están visibles (no hay tab Pago). */}
               <div
                 id="pos-cart-items-zone"
                 role="tabpanel"
                 className={cn(
                   "flex-1 overflow-y-auto min-h-0 p-3 sm:p-4",
-                  activeTab !== "items" && "hidden",
+                  operationType === 'sale' && activeTab !== "items" && "hidden",
                 )}
               >
                 <div className="space-y-3 pb-4">
@@ -286,32 +343,43 @@ export const POSCart = ({
                 </div>
               </div>
 
-              {/* ── ZONA 2: CHECKOUT PANEL (solo visible cuando tab=checkout) ── */}
+              {/* ── ZONA 2: CHECKOUT PANEL ──
+                  En modo 'sale': tab Pago con POSCartCheckoutPanel
+                  En modo 'issue_slip': siempre visible, renderiza ValeSalidaPanel */}
               <div
                 id="pos-cart-checkout-zone"
                 role="tabpanel"
                 className={cn(
                   "flex-1 overflow-y-auto min-h-0",
-                  activeTab !== "checkout" && "hidden",
+                  operationType === 'sale' && activeTab !== "checkout" && "hidden",
                 )}
               >
-                <POSCartCheckoutPanel
-                  items={items}
-                  getSubtotal={getSubtotal}
-                  getDiscountAmount={getDiscountAmount}
-                  getTotal={getTotal}
-                  getTaxAmount={getTaxAmount}
-                  discount={discount}
-                  setDiscount={setDiscount}
-                  prorateGlobalPayment={prorateGlobalPayment}
-                  selectedPayment={selectedPayment}
-                  onSetSelectedPayment={setSelectedPayment}
-                  isProcessing={isProcessing}
-                  itemCount={itemCount}
-                  onCheckout={onCheckout}
-                  onClearCart={() => setShowClearConfirm(true)}
-                  isMobile={isMobile}
-                />
+                {operationType === 'issue_slip' ? (
+                  <ValeSalidaPanel
+                    items={items}
+                    isProcessing={isProcessing}
+                    onClearCart={() => setShowClearConfirm(true)}
+                    isMobile={isMobile}
+                  />
+                ) : (
+                  <POSCartCheckoutPanel
+                    items={items}
+                    getSubtotal={getSubtotal}
+                    getDiscountAmount={getDiscountAmount}
+                    getTotal={getTotal}
+                    getTaxAmount={getTaxAmount}
+                    discount={discount}
+                    setDiscount={setDiscount}
+                    prorateGlobalPayment={prorateGlobalPayment}
+                    selectedPayment={selectedPayment}
+                    onSetSelectedPayment={setSelectedPayment}
+                    isProcessing={isProcessing}
+                    itemCount={itemCount}
+                    onCheckout={onCheckout}
+                    onClearCart={() => setShowClearConfirm(true)}
+                    isMobile={isMobile}
+                  />
+                )}
               </div>
 
               {/* ── CTA FIJO ABAJO (siempre visible, sin importar el tab) ──
@@ -324,21 +392,35 @@ export const POSCart = ({
                     onClick={() => {
                       // Si está en tab items, cambiar a checkout primero;
                       // si ya está en checkout, disparar cobro.
-                      if (activeTab !== "checkout") {
+                      if (operationType === 'sale' && activeTab !== "checkout") {
                         setActiveTab("checkout");
                       } else {
                         // Trigger del modal de confirmación dentro del panel
+                        // (POSCartCheckoutPanel o ValeSalidaPanel exponen #pos-checkout-cta)
                         const btn = document.querySelector<HTMLButtonElement>('#pos-checkout-cta');
                         btn?.click();
                       }
                     }}
                     disabled={isProcessing || itemCount === 0}
-                    className="flex-1 h-14 sm:h-16 rounded-xl sm:rounded-2xl bg-primary text-primary-foreground font-black text-sm sm:text-base shadow-xl shadow-primary/20 disabled:opacity-50 flex items-center justify-center gap-3 transition-all active:scale-[0.98]"
-                    aria-label={`Cobrar ${itemCount} productos por ${formatCurrency(expectedTotal)}`}
+                    className={cn(
+                      "flex-1 h-14 sm:h-16 rounded-xl sm:rounded-2xl font-black text-sm sm:text-base shadow-xl disabled:opacity-50 flex items-center justify-center gap-3 transition-all active:scale-[0.98]",
+                      operationType === 'issue_slip'
+                        ? "bg-amber-600 text-white shadow-amber-600/20"
+                        : "bg-primary text-primary-foreground shadow-primary/20",
+                    )}
+                    aria-label={operationType === 'issue_slip'
+                      ? `Emitir vale por ${itemCount} productos`
+                      : `Cobrar ${itemCount} productos por ${formatCurrency(expectedTotal)}`}
                   >
-                    <Check className="w-6 h-6" />
-                    <span className="uppercase tracking-widest">Cobrar</span>
-                    {expectedTotal > 0 && (
+                    {operationType === 'issue_slip' ? (
+                      <Package className="w-6 h-6" />
+                    ) : (
+                      <Check className="w-6 h-6" />
+                    )}
+                    <span className="uppercase tracking-widest">
+                      {operationType === 'issue_slip' ? 'Emitir Vale' : 'Cobrar'}
+                    </span>
+                    {operationType === 'sale' && expectedTotal > 0 && (
                       <span className="bg-primary-foreground/20 px-2 py-1 rounded-md text-xs sm:text-sm tabular-nums">
                         {formatCurrency(expectedTotal)}
                       </span>

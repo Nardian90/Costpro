@@ -80,6 +80,8 @@ module.exports = {
         RLS_PILOT_STORES: process.env.RLS_PILOT_STORES,
         SENTRY_DSN: process.env.SENTRY_DSN,
         TELEGRAM_WEBHOOK_SECRET: process.env.TELEGRAM_WEBHOOK_SECRET,
+        NEXT_PUBLIC_USE_V2_CHECKOUT: process.env.NEXT_PUBLIC_USE_V2_CHECKOUT,
+        NEXT_PUBLIC_USE_V2_REVERSE: process.env.NEXT_PUBLIC_USE_V2_REVERSE,
       },
       // Logs centralizados por PM2
       out_file: './logs/costpro-out.log',

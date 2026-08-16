@@ -17,6 +17,11 @@ function notify(type: "warning" | "error", message: string) {
   _onCartNotification?.(type, message);
 }
 
+// ── Vale de Salida (issue slip) ─────────────────────────────────
+// Operación paralela a la venta comercial: descuenta stock sin generar pago.
+// Se activa con setOperationType('issue_slip') desde POSCart.
+export type CartOperationType = 'sale' | 'issue_slip';
+
 // FIX-PAYMENT-ROWS (2026-07-10): cada item puede tener N filas de pago,
 // permitiendo múltiples filas del mismo método (ej: 2 efectivos, uno CUP y otro USD).
 // Antes: 3 campos fijos (cash_paid/transfer_paid/zelle_paid) que no permitían
@@ -100,6 +105,18 @@ interface CartState {
   saleCurrency: string;
   saleExchangeRate: number;
   lastUpdated: number;
+  // ── Vale de Salida ──
+  // operationType: 'sale' (venta comercial, flujo normal con pagos)
+  //              | 'issue_slip' (vale de salida, sin pagos, descuenta stock + OT actual_qty)
+  operationType: CartOperationType;
+  // productionOrderId: OT seleccionada para el vale (nullable — vale puede no tener OT)
+  productionOrderId: string | null;
+  // valeNotes: notas del vale (REQUERIDAS en el RPC create_vale_salida, siempre presentes)
+  valeNotes: string;
+  // productionOrderItemIds: mapa item→línea de OT. Clave: `${product_id}|${variant_id ?? 'null'}`
+  // Valor: production_order_item_id. Permite asociar cada item del carrito con una
+  // línea específica de la OT para descuento de actual_qty.
+  productionOrderItemIds: Record<string, string | null>;
   // POS-2 MM-10: Moved from POSCart.tsx local state to global store to fix race condition
   // where the "Confirmar" button could fire with a stale selectedPayment value.
   selectedPayment: PaymentMethod;
@@ -171,6 +188,20 @@ interface CartState {
   // Usado por el modal "Efectivo Recibido" para validar contra el efectivo correcto
   // y para separar el desglose de billetes por moneda.
   getCashTotalsByCurrency: () => Record<string, number>;
+
+  // ── Vale de Salida actions ──
+  // setOperationType: alterna entre 'sale' y 'issue_slip'.
+  // ATÓMICO: al cambiar a 'issue_slip', limpia pagos y customer (no aplica a vales).
+  // Al cambiar a 'sale', limpia productionOrderId, valeNotes, productionOrderItemIds.
+  // Esto evita estado híbrido (ej: un vale con pagos legacy, o una venta con OT asociada).
+  setOperationType: (op: CartOperationType) => void;
+  setProductionOrderId: (orderId: string | null) => void;
+  setValeNotes: (notes: string) => void;
+  // setItemProductionOrderLine: asocia/desasocia un item del carrito con una línea de OT.
+  setItemProductionOrderLine: (productId: string, variantId: string | null, poItemId: string | null) => void;
+  // clearValeState: limpia solo los campos Vale (sin tocar items/payments). Útil tras
+  // un submit exitoso de vale, para resetear el formulario sin perder el catálogo cargado.
+  clearValeState: () => void;
 }
 
 const calculateItemSubtotal = (item: CartItem) => {
@@ -273,6 +304,69 @@ export const useCartStore = create<CartState>()(
       customerName: null,
       // FIX-GLOBAL-RATES: tasas manuales (default vacío, se llenan al editar)
       globalRates: {},
+      // ── Vale de Salida: defaults ──
+      operationType: 'sale' as CartOperationType,
+      productionOrderId: null,
+      valeNotes: '',
+      productionOrderItemIds: {},
+
+      // ── Vale de Salida actions ──
+      setOperationType: (op) =>
+        set(
+          produce((state: CartState) => {
+            state.operationType = op;
+            state.lastUpdated = Date.now();
+            if (op === 'issue_slip') {
+              // Limpiar campos incompatibles con vale: pagos por item, customer, moneda
+              for (const item of state.items) {
+                item.payments = [];
+                item.cash_paid = 0;
+                item.transfer_paid = 0;
+                item.zelle_paid = 0;
+                item.payment_manual_override = false;
+              }
+              state.customerId = null;
+              state.customerName = null;
+              state.discount = null;
+              state.appliedTaxes = [];
+              state.saleCurrency = 'CUP';
+              state.saleExchangeRate = 1.0;
+              state.globalRates = {};
+            } else {
+              // Volver a 'sale': limpiar campos Vale
+              state.productionOrderId = null;
+              state.valeNotes = '';
+              state.productionOrderItemIds = {};
+            }
+          }),
+        ),
+
+      setProductionOrderId: (orderId) =>
+        set({ productionOrderId: orderId, lastUpdated: Date.now() }),
+
+      setValeNotes: (notes) =>
+        set({ valeNotes: notes, lastUpdated: Date.now() }),
+
+      setItemProductionOrderLine: (productId, variantId, poItemId) =>
+        set(
+          produce((state: CartState) => {
+            const key = `${productId}|${variantId ?? 'null'}`;
+            if (poItemId === null) {
+              delete state.productionOrderItemIds[key];
+            } else {
+              state.productionOrderItemIds[key] = poItemId;
+            }
+            state.lastUpdated = Date.now();
+          }),
+        ),
+
+      clearValeState: () =>
+        set({
+          productionOrderId: null,
+          valeNotes: '',
+          productionOrderItemIds: {},
+          lastUpdated: Date.now(),
+        }),
 
       setSessionUserId: (sessionUserId) => set({ sessionUserId, lastUpdated: Date.now() }),
 
@@ -1079,6 +1173,11 @@ export const useCartStore = create<CartState>()(
         saleExchangeRate: 1.0,
         // FIX-GLOBAL-RATES: resetear tasas manuales
         globalRates: {},
+        // Vale de Salida: reset al limpiar carrito
+        operationType: 'sale',
+        productionOrderId: null,
+        valeNotes: '',
+        productionOrderItemIds: {},
         lastUpdated: Date.now(),
       }),
 
@@ -1100,6 +1199,12 @@ export const useCartStore = create<CartState>()(
         lastUpdated: state.lastUpdated,
         // POS-2 MM-10: persist selectedPayment so reloads during a sale keep the method.
         selectedPayment: state.selectedPayment,
+        // Vale de Salida: persistir operationType y campos del formulario para que
+        // un reload en medio de un vale no pierda el trabajo. NO persistimos
+        // productionOrderItemIds (la asociación puede quedar stale si la OT cambia).
+        operationType: state.operationType,
+        productionOrderId: state.productionOrderId,
+        valeNotes: state.valeNotes,
         // POS-2 MM-7: deliberately NOT persisting customerId — a stale customer on a
         // fresh session is worse than re-selecting.
       }),
@@ -1111,6 +1216,11 @@ export const useCartStore = create<CartState>()(
           state.selectedPayment = "cash";
           state.customerId = null;
           state.customerName = null;
+          // Vale: reset al expirar TTL
+          state.operationType = 'sale';
+          state.productionOrderId = null;
+          state.valeNotes = '';
+          state.productionOrderItemIds = {};
           state.lastUpdated = Date.now();
         }
         // FIX-PAYMENT-ROWS (2026-07-10): migrar items antiguos que no tienen payments[]
