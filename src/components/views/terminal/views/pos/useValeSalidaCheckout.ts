@@ -110,9 +110,15 @@ export function useValeSalidaCheckout(): UseValeSalidaCheckoutReturn {
 
       // Llamada al endpoint /api/vale-salida (NO directamente a Supabase).
       // El endpoint deriva store_id de profiles.active_store_id y user_id del JWT.
+      // withAuth requiere header Authorization: Bearer <token> — lo obtenemos
+      // del auth store (set por useAuthStore.login()).
+      const { token } = useAuthStore.getState();
       const response = await fetch('/api/vale-salida', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify(payload),
       });
 

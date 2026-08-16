@@ -39,12 +39,12 @@ interface ProductionOrder {
   order_number: string;
   order_type: string;
   status: string;
-  title?: string;
+  customer_name?: string | null;
 }
 
 interface ProductionOrderItem {
   id: string;
-  production_order_id: string;
+  order_id: string;
   product_id: string;
   variant_id: string | null;
   budgeted_qty: number;
@@ -102,7 +102,7 @@ export function ValeSalidaPanel({
     try {
       const { data, error } = await supabase
         .from('production_orders')
-        .select('id, order_number, order_type, status, title')
+        .select('id, order_number, order_type, status, customer_name')
         .eq('store_id', user.activeStoreId)
         .in('status', ['approved', 'in_progress', 'paused'])
         .order('created_at', { ascending: false });
@@ -127,8 +127,8 @@ export function ValeSalidaPanel({
       try {
         const { data, error } = await supabase
           .from('production_order_items')
-          .select('id, production_order_id, product_id, variant_id, budgeted_qty, actual_qty')
-          .eq('production_order_id', productionOrderId);
+          .select('id, order_id, product_id, variant_id, budgeted_qty, actual_qty')
+          .eq('order_id', productionOrderId);
         if (error) throw error;
         if (!cancelled) setPoItems(data || []);
       } catch {
@@ -225,7 +225,7 @@ export function ValeSalidaPanel({
             {productionOrders.map((po) => (
               <option key={po.id} value={po.id}>
                 {po.order_number} · {po.order_type} · {po.status}
-                {po.title ? ` · ${po.title}` : ''}
+                {po.customer_name ? ` · ${po.customer_name}` : ''}
               </option>
             ))}
           </select>
