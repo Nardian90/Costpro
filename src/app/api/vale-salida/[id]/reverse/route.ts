@@ -77,22 +77,31 @@ async function postHandler(
 
   if (rpcErr) {
     const msg = rpcErr.message || '';
-    if (msg.includes('ERR_UNAUTHENTICATED')) {
-      return NextResponse.json({ error: 'No autenticado' }, { status: 401 });
-    }
-    if (msg.includes('ERR_SLIP_NOT_FOUND')) {
-      return NextResponse.json({ error: 'Vale no encontrado' }, { status: 404 });
-    }
-    if (msg.includes('ERR_STORE_ACCESS_DENIED')) {
-      return NextResponse.json({ error: 'Sin acceso a la tienda del vale' }, { status: 403 });
-    }
-    if (msg.includes('ERR_SLIP_NOT_REVERSIBLE') || msg.includes('ERR_ALREADY_REVERSED')) {
-      return NextResponse.json({ error: 'El vale no está en estado reversible' }, { status: 409 });
-    }
-    return NextResponse.json({ error: msg }, { status: 500 });
+    const status = mapValeReverseErrorToHttpStatus(msg);
+    const userMessage = mapValeReverseErrorToUserMessage(msg);
+    return NextResponse.json({ error: userMessage, rpc_error: msg }, { status });
   }
 
   return NextResponse.json(result);
+}
+
+// =====================================================================
+// Canonical error mapping for reverse_vale_salida RPC errors.
+// =====================================================================
+function mapValeReverseErrorToHttpStatus(msg: string): number {
+  if (msg.includes('ERR_UNAUTHENTICATED')) return 401;
+  if (msg.includes('ERR_UNAUTHORIZED')) return 403;
+  if (msg.includes('ERR_SLIP_NOT_FOUND')) return 404;
+  if (msg.includes('ERR_SLIP_NOT_REVERSIBLE')) return 409;
+  return 500;
+}
+
+function mapValeReverseErrorToUserMessage(msg: string): string {
+  if (msg.includes('ERR_UNAUTHENTICATED')) return 'No autenticado';
+  if (msg.includes('ERR_UNAUTHORIZED')) return 'Sin acceso a la tienda del vale';
+  if (msg.includes('ERR_SLIP_NOT_FOUND')) return 'Vale no encontrado';
+  if (msg.includes('ERR_SLIP_NOT_REVERSIBLE')) return 'El vale no está en estado reversible (status must be completed)';
+  return msg;
 }
 
 export const POST = withAuth(withSecurity(postHandler, {
