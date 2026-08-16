@@ -382,58 +382,58 @@ export const POSCart = ({
                 )}
               </div>
 
-              {/* ── CTA FIJO ABAJO (siempre visible, sin importar el tab) ──
+              {/* ── CTA FIJO ABAJO ──
                   POS-3a-v3: El botón COBRAR nunca debe quedar oculto por scroll.
-                  Sticky bottom dentro del sidebar, sin border-t-2 que rompía visual. */}
+                  FIX DUPLICATE BUTTON: En modo issue_slip, ValeSalidaPanel ya tiene
+                  su propio botón "EMITIR VALE" con validación de notes. Renderizar
+                  aquí un segundo CTA "Emitir Vale" creaba un duplicado con estados
+                  inconsistentes (el del panel validaba notes, este no). Solución:
+                  en modo Vale solo se muestra el botón "Anular carrito" (el submit
+                  principal vive dentro del panel). */}
               <div className="shrink-0 border-t border-border bg-card p-3 sm:p-4">
                 <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      // Si está en tab items, cambiar a checkout primero;
-                      // si ya está en checkout, disparar cobro.
-                      if (operationType === 'sale' && activeTab !== "checkout") {
-                        setActiveTab("checkout");
-                      } else {
-                        // Trigger del modal de confirmación dentro del panel
-                        // (POSCartCheckoutPanel o ValeSalidaPanel exponen #pos-checkout-cta)
-                        const btn = document.querySelector<HTMLButtonElement>('#pos-checkout-cta');
-                        btn?.click();
-                      }
-                    }}
-                    disabled={isProcessing || itemCount === 0}
-                    className={cn(
-                      "flex-1 h-14 sm:h-16 rounded-xl sm:rounded-2xl font-black text-sm sm:text-base shadow-xl disabled:opacity-50 flex items-center justify-center gap-3 transition-all active:scale-[0.98]",
-                      operationType === 'issue_slip'
-                        ? "bg-amber-600 text-white shadow-amber-600/20"
-                        : "bg-primary text-primary-foreground shadow-primary/20",
-                    )}
-                    aria-label={operationType === 'issue_slip'
-                      ? `Emitir vale por ${itemCount} productos`
-                      : `Cobrar ${itemCount} productos por ${formatCurrency(expectedTotal)}`}
-                  >
-                    {operationType === 'issue_slip' ? (
-                      <Package className="w-6 h-6" />
-                    ) : (
+                  {operationType === 'sale' && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        // Si está en tab items, cambiar a checkout primero;
+                        // si ya está en checkout, disparar cobro.
+                        if (activeTab !== "checkout") {
+                          setActiveTab("checkout");
+                        } else {
+                          // Trigger del modal de confirmación dentro del POSCartCheckoutPanel
+                          const btn = document.querySelector<HTMLButtonElement>('#pos-checkout-cta');
+                          btn?.click();
+                        }
+                      }}
+                      disabled={isProcessing || itemCount === 0}
+                      className="flex-1 h-14 sm:h-16 rounded-xl sm:rounded-2xl bg-primary text-primary-foreground font-black text-sm sm:text-base shadow-xl shadow-primary/20 disabled:opacity-50 flex items-center justify-center gap-3 transition-all active:scale-[0.98]"
+                      aria-label={`Cobrar ${itemCount} productos por ${formatCurrency(expectedTotal)}`}
+                    >
                       <Check className="w-6 h-6" />
-                    )}
-                    <span className="uppercase tracking-widest">
-                      {operationType === 'issue_slip' ? 'Emitir Vale' : 'Cobrar'}
-                    </span>
-                    {operationType === 'sale' && expectedTotal > 0 && (
-                      <span className="bg-primary-foreground/20 px-2 py-1 rounded-md text-xs sm:text-sm tabular-nums">
-                        {formatCurrency(expectedTotal)}
-                      </span>
-                    )}
-                  </button>
+                      <span className="uppercase tracking-widest">Cobrar</span>
+                      {expectedTotal > 0 && (
+                        <span className="bg-primary-foreground/20 px-2 py-1 rounded-md text-xs sm:text-sm tabular-nums">
+                          {formatCurrency(expectedTotal)}
+                        </span>
+                      )}
+                    </button>
+                  )}
                   <button
                     type="button"
                     onClick={() => setShowClearConfirm(true)}
-                    className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl sm:rounded-2xl bg-destructive/10 text-destructive border-2 border-destructive/20 hover:bg-destructive/20 transition-all flex items-center justify-center active:scale-95 shrink-0"
+                    className={cn(
+                      "h-14 sm:h-16 rounded-xl sm:rounded-2xl bg-destructive/10 text-destructive border-2 border-destructive/20 hover:bg-destructive/20 transition-all flex items-center justify-center active:scale-95 shrink-0",
+                      // En modo Vale (sin CTA Cobrar), el botón Anular toma flex-1 para no quedar flotando
+                      operationType === 'issue_slip' ? "flex-1" : "w-14 sm:w-16",
+                    )}
                     title="Anular Carrito"
                     aria-label="Anular carrito completo"
                   >
                     <Trash2 className="w-5 h-5 sm:w-6 sm:h-6" />
+                    {operationType === 'issue_slip' && (
+                      <span className="ml-2 uppercase tracking-widest text-xs sm:text-sm font-black">Anular Vale</span>
+                    )}
                   </button>
                 </div>
               </div>
