@@ -180,6 +180,7 @@ export function POSCartCheckoutPanel({
   };
 
   const updateBreakdown = (denomValue: number, delta: number) => {
+    setExactoNotAvailable(false);
     setCashBreakdownByCurrency(prev => {
       const next = { ...prev };
       const curBd = { ...(next['CUP'] || {}) };
@@ -195,6 +196,7 @@ export function POSCartCheckoutPanel({
   };
 
   const setBreakdownQty = (denomValue: number, qty: number) => {
+    setExactoNotAvailable(false);
     setCashBreakdownByCurrency(prev => {
       const next = { ...prev };
       const curBd = { ...(next['CUP'] || {}) };
@@ -209,16 +211,21 @@ export function POSCartCheckoutPanel({
   };
 
   const clearBreakdown = () => {
+    setExactoNotAvailable(false);
     setCashBreakdownByCurrency(prev => ({ ...prev, CUP: {} }));
     setCashReceived("");
   };
 
   // FIX-EXACTO: algoritmo greedy para descomponer un importe en denominaciones
   // Prioriza denominaciones mayores primero: 1000 → 500 → 200 → 100 → 50 → 20 → 10 → 5 → 1
+  // Si el importe NO puede representarse exactamente con las denominaciones disponibles
+  // (ej. $3000.50 con denominacion minima $1), NO se redondea hacia arriba ni se
+  // genera un vuelto artificial. Se detecta y se notifica al usuario.
+  const [exactoNotAvailable, setExactoNotAvailable] = useState(false);
   const exactoBreakdown = () => {
-    const targetAmount = Math.floor(totalCashCup);
+    if (totalCashCup <= 0) return;
     const newBd: Record<string, number> = {};
-    let remaining = targetAmount;
+    let remaining = Math.floor(totalCashCup);
     for (const d of activeDenoms) {
       if (remaining <= 0) break;
       const count = Math.floor(remaining / d.value);
@@ -227,18 +234,21 @@ export function POSCartCheckoutPanel({
         remaining -= count * d.value;
       }
     }
-    // Si hay centavos que no se pueden representar con denominaciones disponibles,
-    // el total del desglose será ligeramente menor. En ese caso, redondear hacia
-    // arriba añadiendo 1 unidad de la denominación más pequeña disponible para
-    // garantizar que el efectivo recibido >= total a cobrar.
+    // Verificar si la representacion es exacta
     const breakdownSum = activeDenoms.reduce((s, d) => s + d.value * (newBd[String(d.value)] || 0), 0);
-    if (breakdownSum < totalCashCup && activeDenoms.length > 0) {
-      const smallest = activeDenoms[activeDenoms.length - 1];
-      newBd[String(smallest.value)] = (newBd[String(smallest.value)] || 0) + 1;
+    if (Math.abs(breakdownSum - totalCashCup) > 0.001) {
+      // No se puede representar exactamente con las denominaciones disponibles
+      setExactoNotAvailable(true);
+      // Aun asi seteamos el desglose greedy (sin redondear hacia arriba) para que
+      // el cajero vea la aproximacion mas cercana y pueda ajustar manualmente
+      setCashBreakdownByCurrency(prev => ({ ...prev, CUP: newBd }));
+      setCashReceived(breakdownSum > 0 ? String(breakdownSum.toFixed(2)) : "");
+      return;
     }
+    // Representacion exacta disponible
+    setExactoNotAvailable(false);
     setCashBreakdownByCurrency(prev => ({ ...prev, CUP: newBd }));
-    const finalTotal = activeDenoms.reduce((s, d) => s + d.value * (newBd[String(d.value)] || 0), 0);
-    setCashReceived(finalTotal > 0 ? String(finalTotal.toFixed(2)) : "");
+    setCashReceived(breakdownSum > 0 ? String(breakdownSum.toFixed(2)) : "");
   };
 
   const handleConfirmCheckout = () => {
@@ -511,6 +521,11 @@ export function POSCartCheckoutPanel({
                   </button>
                 )}
               </div>
+              {exactoNotAvailable && (
+                <div className="mt-1 px-2 py-1 rounded bg-amber-500/10 border border-amber-500/30 text-[9px] font-bold text-amber-600 dark:text-amber-400">
+                  ⚠ Exacto no disponible para este importe con las denominaciones configuradas. Ajuste manualmente.
+                </div>
+              )}
             </div>
           )}
 
