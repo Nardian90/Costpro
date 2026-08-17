@@ -10,6 +10,9 @@ import {
   TrendingUp,
   TrendingDown,
   Check,
+  Plus,
+  Minus,
+  RotateCcw,
 } from "lucide-react";
 import { cn, formatCurrency } from "@/lib/utils";
 import { useCartStore } from "@/store/cart";
@@ -268,68 +271,196 @@ export function POSCartCheckoutPanel({
           || (!i.payments && (i.cash_paid || 0) > 0)
         );
         if (!hasCash) return null;
+
+        // ── DENOMINATION BREAKDOWN (inline, not modal) ──
+        // Each denomination: tap label to increment, [-] to decrement, importe = denom × qty
+        // Total = Σ(denom × qty), Vuelto = total - totalCashCup, Faltante = totalCashCup - total
+        const inlineDenoms = denominations.filter(d => d.active);
+        const inlineBreakdown = cashBreakdownByCurrency['CUP'] || {};
+        const inlineTotal = inlineDenoms.reduce((s, d) => {
+          const count = inlineBreakdown[String(d.value)] || 0;
+          return s + d.value * count;
+        }, 0);
+        const inlineVuelto = inlineTotal - totalCashCup;
+        const inlineFaltante = totalCashCup - inlineTotal;
+
+        // Update cashReceived whenever breakdown changes
+        const updateBreakdown = (denomValue: number, delta: number) => {
+          setCashBreakdownByCurrency(prev => {
+            const next = { ...prev };
+            const curBd = { ...(next['CUP'] || {}) };
+            const key = String(denomValue);
+            const current = curBd[key] || 0;
+            const newVal = Math.max(0, current + delta);
+            if (newVal > 0) curBd[key] = newVal;
+            else delete curBd[key];
+            next['CUP'] = curBd;
+            // Recalculate total and update cashReceived
+            const newTotal = inlineDenoms.reduce((s, d) => {
+              const c = curBd[String(d.value)] || 0;
+              return s + d.value * c;
+            }, 0);
+            setCashReceived(newTotal > 0 ? String(newTotal.toFixed(2)) : "");
+            return next;
+          });
+        };
+
+        const setBreakdownQty = (denomValue: number, qty: number) => {
+          setCashBreakdownByCurrency(prev => {
+            const next = { ...prev };
+            const curBd = { ...(next['CUP'] || {}) };
+            const key = String(denomValue);
+            const val = Math.max(0, Math.floor(qty));
+            if (val > 0) curBd[key] = val;
+            else delete curBd[key];
+            next['CUP'] = curBd;
+            const newTotal = inlineDenoms.reduce((s, d) => {
+              const c = curBd[String(d.value)] || 0;
+              return s + d.value * c;
+            }, 0);
+            setCashReceived(newTotal > 0 ? String(newTotal.toFixed(2)) : "");
+            return next;
+          });
+        };
+
+        const clearBreakdown = () => {
+          setCashBreakdownByCurrency(prev => ({ ...prev, CUP: {} }));
+          setCashReceived("");
+        };
+
         return (
         <div className="px-4 sm:px-6 py-2 border-b border-border/50 bg-success/5">
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => {
-                // Inicializar la moneda activa del modal con la primera moneda cash
-                if (cashCurrencies.length > 0) setBreakdownCurrency(cashCurrencies[0]);
-                setShowCashBreakdown(true);
-              }}
-              className="flex-1 min-h-[36px] rounded-lg bg-success/90 text-white dark:text-black text-[10px] font-black uppercase hover:bg-success transition-colors flex items-center justify-center gap-1.5"
-            >
-              <DollarSign className="w-3.5 h-3.5" /> Efectivo Recibido
+          {/* Header: title + vuelto/faltante */}
+          <div className="flex items-center justify-between gap-2 mb-1.5">
+            <div className="flex items-center gap-1.5">
+              <DollarSign className="w-3.5 h-3.5 text-success" />
+              <span className="text-[10px] font-black uppercase text-success tracking-widest">Efectivo CUP</span>
+            </div>
+            {inlineTotal > 0 && (
+              <div className="text-right">
+                {inlineVuelto >= 0 ? (
+                  <>
+                    <p className="text-[8px] font-bold uppercase text-muted-foreground">Vuelto</p>
+                    <p className="text-sm font-black tabular-nums text-success">{formatCurrency(inlineVuelto)}</p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-[8px] font-bold uppercase text-destructive">Faltante</p>
+                    <p className="text-sm font-black tabular-nums text-destructive">{formatCurrency(inlineFaltante)}</p>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Denomination breakdown — inline grid */}
+          <div className="space-y-1 max-h-[200px] overflow-y-auto no-scrollbar">
+            {inlineDenoms.map(d => {
+              const denomKey = String(d.value);
+              const count = inlineBreakdown[denomKey] || 0;
+              const importe = d.value * count;
+              return (
+                <div key={d.value} className="flex items-center gap-1.5">
+                  {/* Tap denomination label to increment */}
+                  <button
+                    type="button"
+                    onClick={() => updateBreakdown(d.value, 1)}
+                    className={cn(
+                      "w-14 h-8 rounded-lg text-[10px] font-black flex items-center justify-center shrink-0 transition-all active:scale-95",
+                      count > 0
+                        ? "bg-success text-white"
+                        : "bg-success/10 text-success border border-success/20 hover:bg-success/20"
+                    )}
+                    aria-label={`Agregar billete de ${d.label}`}
+                  >
+                    {d.label}
+                  </button>
+                  {/* Decrement button */}
+                  <button
+                    type="button"
+                    onClick={() => updateBreakdown(d.value, -1)}
+                    disabled={count === 0}
+                    className="w-6 h-8 rounded bg-muted/50 flex items-center justify-center shrink-0 disabled:opacity-30"
+                    aria-label={`Quitar billete de ${d.label}`}
+                  >
+                    <Minus className="w-3 h-3" />
+                  </button>
+                  {/* Quantity (editable) */}
+                  <input
+                    type="number"
+                    min="0"
+                    step="1"
+                    value={count || ''}
+                    onChange={(e) => setBreakdownQty(d.value, parseInt(e.target.value) || 0)}
+                    className="w-10 h-8 bg-background border border-border/50 rounded text-[11px] font-bold text-center tabular-nums outline-none focus:border-success"
+                    placeholder="0"
+                    aria-label={`Cantidad de billetes de ${d.label}`}
+                  />
+                  {/* Increment button */}
+                  <button
+                    type="button"
+                    onClick={() => updateBreakdown(d.value, 1)}
+                    className="w-6 h-8 rounded bg-muted/50 flex items-center justify-center shrink-0"
+                    aria-label={`Agregar billete de ${d.label}`}
+                  >
+                    <Plus className="w-3 h-3" />
+                  </button>
+                  {/* Importe */}
+                  <span className="flex-1 text-[10px] font-bold text-muted-foreground text-right tabular-nums">
+                    {count > 0 ? `= ${formatCurrency(importe)}` : ''}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Totals + actions */}
+          <div className="mt-1.5 pt-1.5 border-t border-border/30 space-y-0.5">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-black uppercase text-muted-foreground">Total recibido:</span>
+              <span className="text-sm font-black text-success tabular-nums">{formatCurrency(inlineTotal)} CUP</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold text-muted-foreground">A cobrar:</span>
+              <span className="text-[10px] font-bold tabular-nums">{formatCurrency(totalCashCup)} CUP</span>
+            </div>
+            {inlineTotal > 0 && (
+              <div className="flex items-center justify-between">
+                {inlineVuelto >= 0 ? (
+                  <>
+                    <span className="text-[11px] font-black text-success">Vuelto:</span>
+                    <span className="text-[11px] font-black text-success tabular-nums">{formatCurrency(inlineVuelto)} CUP</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="text-[11px] font-black text-destructive">Faltante:</span>
+                    <span className="text-[11px] font-black text-destructive tabular-nums">{formatCurrency(inlineFaltante)} CUP</span>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Action buttons */}
+          <div className="flex gap-1 mt-1.5">
+            <button type="button" onClick={clearBreakdown}
+              className="flex-1 min-h-[28px] rounded bg-muted/50 text-muted-foreground text-[9px] font-black uppercase hover:bg-muted flex items-center justify-center gap-1">
+              <RotateCcw className="w-3 h-3" /> Limpiar
             </button>
-            {cashReceivedNum > 0 && (
-              <div className="text-right shrink-0">
-                <p className="text-[8px] font-bold uppercase text-muted-foreground">Vuelto</p>
-                <p className={cn("text-sm font-black tabular-nums", change >= 0 ? "text-success" : "text-destructive")}>
-                  {formatCurrency(Math.abs(change))}
-                  {change < 0 && " (insuf.)"}
-                </p>
-              </div>
-            )}
-          </div>
-          {/* FIX-CASH-BREAKDOWN: mostrar totales de efectivo por moneda */}
-          <div className="mt-1.5 space-y-0.5">
-            {cashCurrencies.map(cur => (
-              <div key={cur} className="flex items-center justify-between text-[10px] font-bold">
-                <span className="text-muted-foreground">Efectivo {cur}:</span>
-                <span className="text-success tabular-nums">{formatCurrency(cashTotalsByCurrency[cur])} {cur}</span>
-              </div>
-            ))}
-            {cashCurrencies.length > 1 && (
-              <div className="flex items-center justify-between text-[10px] font-black border-t border-border/30 pt-0.5 mt-0.5">
-                <span className="text-muted-foreground">Total efectivo (CUP):</span>
-                <span className="text-success tabular-nums">{formatCurrency(totalCashCup)}</span>
-              </div>
-            )}
-          </div>
-          <input
-            id="pos-cash-received"
-            type="number"
-            inputMode="decimal"
-            placeholder="0.00"
-            value={cashReceived}
-            onChange={(e) => setCashReceived(e.target.value)}
-            className="w-full h-9 mt-2 bg-background border border-success/30 rounded-lg px-3 text-sm font-bold text-success text-center tabular-nums outline-none focus:border-success"
-            aria-label="Efectivo recibido del cliente"
-          />
-          <div className="flex gap-1 mt-1">
-            {cashPresets.map((preset) => (
-              <button key={preset} type="button" onClick={() => setCashReceived(String(preset))}
-                className="flex-1 min-h-[32px] rounded bg-success/80 text-white text-[9px] font-black hover:bg-success">
-                ${preset}
-              </button>
-            ))}
-            {/* FIX-CASH-BREAKDOWN: "Exacto" ahora usa el total de efectivo (no el total de la venta) */}
             <button type="button" onClick={() => setCashReceived(totalCashCup.toFixed(2))}
-              className="flex-1 min-h-[32px] rounded bg-success text-white text-[9px] font-black hover:opacity-90">
+              className="flex-1 min-h-[28px] rounded bg-success text-white text-[9px] font-black uppercase hover:opacity-90">
               Exacto
             </button>
+            {cashCurrencies.length > 1 && (
+              <button type="button" onClick={() => { setBreakdownCurrency(cashCurrencies[0]); setShowCashBreakdown(true); }}
+                className="flex-1 min-h-[28px] rounded bg-success/20 text-success border border-success/30 text-[9px] font-black uppercase hover:bg-success/30">
+                Multi-moneda
+              </button>
+            )}
           </div>
+
+          {/* Hidden input for backward compat (cashReceived is still the source of truth) */}
+          <input type="hidden" id="pos-cash-received" value={cashReceived} />
         </div>
         );
       })()}
@@ -530,6 +661,11 @@ export function POSCartCheckoutPanel({
             {selectedPayment === "cash" && cashReceivedNum > 0 && change >= 0 && (
               <p className="text-xs text-success mt-1 font-bold">
                 Vuelto: {formatCurrency(change)}
+              </p>
+            )}
+            {selectedPayment === "cash" && cashReceivedNum > 0 && change < 0 && (
+              <p className="text-xs text-destructive mt-1 font-bold">
+                Faltante: {formatCurrency(Math.abs(change))}
               </p>
             )}
           </div>
