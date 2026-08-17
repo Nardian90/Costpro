@@ -19,7 +19,7 @@ import {
 import { cn, formatCurrency } from "@/lib/utils";
 import { useCartStore } from "@/store/cart";
 import { POSPortalModal } from "./POSPortalModal";
-import { PaymentMethodSelector, getPaymentLabel as getPaymentLabelUnified } from "./PaymentMethodSelector";
+import { getPaymentLabel as getPaymentLabelUnified, getPaymentIcon, getPaymentColor } from "./PaymentMethodSelector";
 import type { PaymentMethod } from "@/types";
 
 /**
@@ -253,8 +253,44 @@ export function POSCartCheckoutPanel({
 
   const handleConfirmCheckout = () => {
     setShowCheckoutConfirm(false);
-    onCheckout(selectedPayment, discount && discount.value > 0 ? discount : null);
+    onCheckout(derivedPaymentMethod, discount && discount.value > 0 ? discount : null);
   };
+
+  // ── AUTO-DETECT PAYMENT METHOD ──
+  // Derives the payment method from actual payment data, not from manual selection.
+  // Rules:
+  //   1. If items have per-product payment overrides → collect methods used
+  //      - 1 method → that method
+  //      - 2+ methods → 'mixed'
+  //   2. If no overrides → 'cash' (default — most common, supports denomination breakdown)
+  //   3. If cashReceived > 0 from breakdown → still 'cash'
+  // The derived method is used for both display and checkout.
+  const derivedPaymentMethod: PaymentMethod = (() => {
+    const cartItems = useCartStore.getState().items;
+    const hasManualOverride = cartItems.some(i => i.payment_manual_override === true);
+    if (!hasManualOverride) return 'cash';
+
+    const methodsUsed = new Set<string>();
+    cartItems.forEach(i => {
+      if (i.payments && i.payments.length > 0) {
+        i.payments.forEach(p => { if (p.amount > 0) methodsUsed.add(p.method); });
+      } else {
+        if ((i.cash_paid || 0) > 0) methodsUsed.add('cash');
+        if ((i.transfer_paid || 0) > 0) methodsUsed.add('transfer');
+        if ((i.zelle_paid || 0) > 0) methodsUsed.add('zelle');
+      }
+    });
+
+    if (methodsUsed.size === 0) return 'cash';
+    if (methodsUsed.size === 1) return Array.from(methodsUsed)[0] as PaymentMethod;
+    return 'mixed';
+  })();
+
+  // Auto-sync store's selectedPayment with derived method (for backward compat with usePOSCheckout)
+  // This ensures the store always reflects the real payment state.
+  if (selectedPayment !== derivedPaymentMethod) {
+    onSetSelectedPayment(derivedPaymentMethod);
+  }
 
   return (
     <div className="flex flex-col">
@@ -330,28 +366,36 @@ export function POSCartCheckoutPanel({
         })()}
       </div>
 
-      {/* ── MÉTODO DE PAGO (V2.12.31) ──────────────────────────────
-          Antes este panel NO tenía UI para cambiar el método de pago — el cajero
-          solo podía usar el que venía por defecto. Ahora usa PaymentMethodSelector
-          variante 'full' (4 botones grandes con iconos: Efectivo, Transferencia,
-          Zelle, Mixto). 'mixed' antes no estaba disponible en este flujo. */}
-      <div className="px-4 sm:px-6 py-3 border-b border-border/50">
-        <div className="flex items-center justify-between mb-2">
+      {/* ── MÉTODO DE PAGO (INFORMATIVO — auto-detectado) ─────────
+          No es un selector. El método se deriva automáticamente de los pagos
+          registrados en los items del carrito.
+          - Sin pagos manuales → 'cash' (default)
+          - 1 método → ese método
+          - 2+ métodos → 'mixed' */}
+      <div className="px-4 sm:px-6 py-2 border-b border-border/50">
+        <div className="flex items-center justify-between gap-2">
           <span className="text-[10px] sm:text-xs font-black uppercase text-muted-foreground tracking-widest">
             Método de pago
           </span>
-          {selectedPayment === 'mixed' && (
-            <span className="text-[10px] font-bold text-amber-500 uppercase">
-              {useCartStore.getState().isPaymentModeByProduct() ? 'Por producto' : 'Global'}
-            </span>
-          )}
+          <div className="flex items-center gap-1.5">
+            {(() => {
+              const Icon = getPaymentIcon(derivedPaymentMethod);
+              const color = getPaymentColor(derivedPaymentMethod);
+              const label = getPaymentLabelUnified(derivedPaymentMethod);
+              return (
+                <>
+                  <Icon className={cn("w-3.5 h-3.5", color)} />
+                  <span className={cn("text-xs font-black", color)}>{label}</span>
+                  {derivedPaymentMethod === 'mixed' && (
+                    <span className="text-[9px] font-bold text-muted-foreground uppercase ml-1">
+                      ({useCartStore.getState().isPaymentModeByProduct() ? 'por producto' : 'global'})
+                    </span>
+                  )}
+                </>
+              );
+            })()}
+          </div>
         </div>
-        <PaymentMethodSelector
-          value={selectedPayment}
-          onChange={onSetSelectedPayment}
-          variant="full"
-          ariaLabel="Seleccionar método de pago para la venta"
-        />
       </div>
 
       {/* ── EFECTIVO RECIBIDO + VUELTO (ACCORDION) ─────────────────
@@ -726,14 +770,14 @@ export function POSCartCheckoutPanel({
             </p>
             <p className="text-xs text-muted-foreground mt-2">
               {itemCount} {itemCount === 1 ? "producto" : "productos"} ·{" "}
-              <strong className="text-foreground">{getPaymentLabelUnified(selectedPayment)}</strong>
+              <strong className="text-foreground">{getPaymentLabelUnified(derivedPaymentMethod)}</strong>
             </p>
-            {selectedPayment === "cash" && cashReceivedNum > 0 && change >= 0 && (
+            {derivedPaymentMethod === "cash" && cashReceivedNum > 0 && change >= 0 && (
               <p className="text-xs text-success mt-1 font-bold">
                 Vuelto: {formatCurrency(change)}
               </p>
             )}
-            {selectedPayment === "cash" && cashReceivedNum > 0 && change < 0 && (
+            {derivedPaymentMethod === "cash" && cashReceivedNum > 0 && change < 0 && (
               <p className="text-xs text-destructive mt-1 font-bold">
                 Faltante: {formatCurrency(Math.abs(change))}
               </p>
