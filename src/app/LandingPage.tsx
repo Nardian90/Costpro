@@ -14,6 +14,7 @@ import { useCookieConsent, usePromoBanner } from '@/components/landing/hooks';
 
 // ── Extracted components ──
 import HeroSection from '@/components/landing/HeroSection';
+import { MultiStoreVisualSection } from '@/components/landing/MultiStoreVisualSection';
 import ServicesStorySection from '@/components/landing/ServicesStorySection';
 import FeaturesSection from '@/components/landing/FeaturesSection';
 import PricingSection from '@/components/landing/PricingSection';
@@ -336,7 +337,12 @@ export default function LandingPage() {
         handleDismissPromo={handleDismissPromo}
         onOpenDemo={() => setShowDemoModal(true)}
       >
-        {/* ── AHA MOMENT — Demo de ficha de costo ── */}
+        {/* ── MULTI-STORE VISUAL — Demostración visual del ecosistema ── */}
+        <MultiStoreVisualSection />
+
+        <SectionDivider />
+
+        {/* ── SERVICES STORY — Narrativa del producto ── */}
         <ServicesStorySection />
 
         <SectionDivider />
