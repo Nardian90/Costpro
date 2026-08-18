@@ -244,7 +244,7 @@ export function MultiStoreVisualSection() {
                 <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-blue-500/10 border border-blue-500/15">
                   <span className="text-[9px] font-bold text-blue-400">Telegram</span>
                 </div>
-                <span className="text-[8px] text-white/20 ml-auto">Los clientes ven tus productos y te contactan</span>
+                <span className="text-[8px] text-white/20 ml-auto">Los clientes ven tu catálogo y te contactan</span>
               </div>
             </div>
           </div>
@@ -258,8 +258,8 @@ export function MultiStoreVisualSection() {
           transition={{ duration: 0.5, delay: 0.4 }}
           className="text-center text-xs text-white/30 mt-4 max-w-md mx-auto"
         >
-          Lo que administras en CostPro se muestra en la vitrina digital de cada tienda.
-          Los clientes consultan productos, precios y disponibilidad antes de visitarte.
+          Publica en tu vitrina los productos que habilites para cada tienda.
+          Los clientes consultan precios y disponibilidad antes de visitarte.
         </motion.p>
       </div>
     </section>
