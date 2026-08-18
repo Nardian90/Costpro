@@ -14,9 +14,6 @@ import {
   BookOpen,
   DollarSign,
   HelpCircle,
-  Star,
-  Mail,
-  ChevronRight,
 } from 'lucide-react';
 
 export interface CommandPaletteProps {
@@ -91,19 +88,17 @@ export default function CommandPalette({
   const commands: CommandItem[] = useMemo(
     () => [
       { id: 'nav-hero', label: 'Ir a Inicio', group: 'Navegación', icon: Home, action: () => onNavigate('hero') },
+      { id: 'nav-plataforma', label: 'Ir a Plataforma Multi-Tienda', group: 'Navegación', icon: Layers, action: () => onNavigate('plataforma') },
       { id: 'nav-features', label: 'Ir a Funciones', group: 'Navegación', icon: Layers, action: () => onNavigate('features') },
-      { id: 'nav-howitworks', label: 'Ir a Cómo Funciona', group: 'Navegación', icon: BookOpen, action: () => onNavigate('how-it-works') },
-      { id: 'nav-pricing', label: 'Ir a Precios', group: 'Navegación', icon: DollarSign, action: () => onNavigate('pricing-section') },
+      { id: 'nav-como-funciona', label: 'Ir a Cómo Funciona', group: 'Navegación', icon: BookOpen, action: () => onNavigate('como-funciona') },
+      { id: 'nav-precios', label: 'Ir a Precios', group: 'Navegación', icon: DollarSign, action: () => onNavigate('precios') },
       { id: 'nav-faq', label: 'Ir a FAQ', group: 'Navegación', icon: HelpCircle, action: () => onNavigate('faq') },
-      { id: 'nav-testimonials', label: 'Ir a Testimonios', group: 'Navegación', icon: Star, action: () => onNavigate('testimonials-section') },
-      { id: 'nav-newsletter', label: 'Ir a Newsletter', group: 'Navegación', icon: Mail, action: () => onNavigate('newsletter-section') },
       { id: 'act-login', label: 'Iniciar Sesión', group: 'Acciones', icon: LogIn, shortcut: 'Enter', action: onLogin },
       { id: 'act-demo', label: 'Ver Demo', group: 'Acciones', icon: Play, action: onDemo },
       { id: 'act-contact', label: 'Contactar Ventas', group: 'Acciones', icon: MessageSquare, action: onContact },
-      { id: 'thm-toggle', label: 'Cambiar Tema', group: 'Tema', icon: ChevronRight, shortcut: 'T', action: onToggleTheme },
-      { id: 'thm-shortcuts', label: 'Atajos de Teclado', group: 'Tema', icon: Keyboard, shortcut: '?', action: onShortcuts },
+      { id: 'thm-shortcuts', label: 'Atajos de Teclado', group: 'Ayuda', icon: Keyboard, shortcut: '?', action: onShortcuts },
     ],
-    [onNavigate, onLogin, onDemo, onContact, onToggleTheme, onShortcuts],
+    [onNavigate, onLogin, onDemo, onContact, onShortcuts],
   );
 
   const filtered = useMemo(() => {

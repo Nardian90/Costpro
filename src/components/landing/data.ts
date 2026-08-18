@@ -152,14 +152,13 @@ export const comparisonRows = [
 
 export const shortcutsList = [
   { key: '?', desc: 'Mostrar / ocultar atajos', category: 'General' },
-  { key: 'T', desc: 'Cambiar tema claro / oscuro', category: 'General' },
   { key: '1', desc: 'Ir a Inicio', category: 'Navegación' },
-  { key: '2', desc: 'Ir a Funciones', category: 'Navegación' },
-  { key: '3', desc: 'Ir a Cómo Funciona', category: 'Navegación' },
+  { key: '2', desc: 'Ir a Cómo Funciona', category: 'Navegación' },
+  { key: '3', desc: 'Ir a Funciones', category: 'Navegación' },
   { key: '4', desc: 'Ir a Precios', category: 'Navegación' },
   { key: '5', desc: 'Ir a FAQ', category: 'Navegación' },
-  { key: 'N', desc: 'Ir a Newsletter', category: 'Navegación' },
   { key: 'C', desc: 'Contactar ventas', category: 'Acciones' },
+  { key: 'Ctrl + K', desc: 'Abrir paleta de comandos', category: 'Acciones' },
   { key: 'Esc', desc: 'Cerrar modal / chat', category: 'General' },
 ];
 

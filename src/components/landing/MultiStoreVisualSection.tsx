@@ -4,7 +4,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import {
   Building2, Check, Package, ShoppingCart, Globe,
-  TrendingUp, ArrowRight, Store,
+  TrendingUp, Store,
 } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
 
@@ -13,13 +13,16 @@ import { cn, formatCurrency } from '@/lib/utils';
  *
  * Muestra:
  * 1. Panel de administración CostPro con selector de tienda
- * 2. Múltiples tiendas conectadas (con datos reales del sistema)
+ * 2. Múltiples tiendas conectadas (datos de DEMOSTRACIÓN estáticos)
  * 3. Una tienda expandida mostrando su vitrina digital
  *
- * NO es un diagrama genérico. Usa datos y patrones de la UI real:
- * - StoreSelectorSheet (Building icon + store name + Check)
- * - StorefrontPage (banner, products, prices, inStock, WhatsApp)
- * - Dashboard KPIs
+ * NO es un diagrama genérico: usa los mismos patrones de UI que
+ * StoreSelectorSheet, StorefrontPage y el Dashboard real.
+ *
+ * AUDIT (2026-08-18): Todos los datos son MOCK estáticos definidos en
+ * este archivo. No consulta la DB. Los nombres de tiendas, KPIs,
+ * productos y URL son de demostración. La URL mostrada usa el dominio
+ * real del producto (costpro.onrender.com) con slug genérico.
  */
 export function MultiStoreVisualSection() {
   return (
@@ -40,6 +43,11 @@ export function MultiStoreVisualSection() {
             Administra cada tienda por separado y mira el negocio completo desde un solo panel.
             Lo que gestionas aquí alimenta la vitrina digital de cada tienda.
           </p>
+          {/* AUDIT: BadgeDemo — datos de demostración, no de producción */}
+          <span className="inline-flex items-center gap-1.5 mt-3 px-2.5 py-1 rounded-full bg-white/[0.04] border border-white/[0.08] text-[10px] font-bold text-white/40 uppercase tracking-wider">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-400/60" />
+            Mockup de demostración
+          </span>
         </motion.div>
 
         {/* ── Step 1: Administration Panel ── */}
@@ -60,7 +68,7 @@ export function MultiStoreVisualSection() {
             <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.04]">
               <div className="flex items-center gap-2">
                 <Building2 className="w-4 h-4 text-[#22c55e]" />
-                <span className="text-xs font-black text-white uppercase tracking-tight">TIENDA CENTRAL COSTPRO</span>
+                <span className="text-xs font-black text-white uppercase tracking-tight">Tienda Central</span>
                 <svg className="w-3 h-3 text-white/30" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
               </div>
               <span className="text-[10px] text-white/30 font-bold">CostPro Admin</span>
@@ -82,9 +90,9 @@ export function MultiStoreVisualSection() {
             {/* Store list mini (based on real StoreSelectorSheet pattern) */}
             <div className="px-3 pb-3 space-y-1">
               {[
-                { name: 'TIENDA CENTRAL COSTPRO', active: true, products: 34, sales: 12 },
-                { name: 'Puerto Padre VITALLCONS', active: false, products: 36, sales: 8 },
-                { name: 'ENERVIDA-VITALLCONS', active: false, products: 28, sales: 5 },
+                { name: 'Tienda Central', active: true, products: 34, sales: 12 },
+                { name: 'Sucursal Norte', active: false, products: 36, sales: 8 },
+                { name: 'Sucursal Centro', active: false, products: 28, sales: 5 },
               ].map(store => (
                 <div
                   key={store.name}
@@ -186,7 +194,7 @@ export function MultiStoreVisualSection() {
                 <div className="w-2.5 h-2.5 rounded-full bg-green-500/30" />
               </div>
               <div className="flex-1 mx-2 px-2 py-0.5 rounded bg-white/[0.03] text-[9px] text-white/30 font-mono truncate">
-                costpro.store/tienda-central-costpro
+                costpro.onrender.com/tienda/tienda_central
               </div>
               <Globe className="w-3 h-3 text-white/20" />
             </div>
@@ -198,9 +206,9 @@ export function MultiStoreVisualSection() {
                   <div className="w-6 h-6 rounded bg-[#22c55e]/20 flex items-center justify-center">
                     <Store className="w-3 h-3 text-[#22c55e]" />
                   </div>
-                  <span className="text-sm font-black text-white">Tienda Central CostPro</span>
+                  <span className="text-sm font-black text-white">Tienda Central</span>
                 </div>
-                <p className="text-[10px] text-white/40">Materiales de construcción · Puerto Padre, Cuba</p>
+                <p className="text-[10px] text-white/40">Materiales de construcción · La Habana, Cuba</p>
               </div>
               {/* Products grid (based on real storefront product card) */}
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
@@ -250,7 +258,7 @@ export function MultiStoreVisualSection() {
           transition={{ duration: 0.5, delay: 0.4 }}
           className="text-center text-xs text-white/30 mt-4 max-w-md mx-auto"
         >
-          Lo que administras en CostPro aparece automáticamente en la vitrina digital de cada tienda.
+          Lo que administras en CostPro se muestra en la vitrina digital de cada tienda.
           Los clientes consultan productos, precios y disponibilidad antes de visitarte.
         </motion.p>
       </div>

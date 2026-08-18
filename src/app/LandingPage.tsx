@@ -33,7 +33,6 @@ import CommandPalette from '@/components/landing/CommandPalette';
 /* ── Landing / Login Split Screen ── */
 export default function LandingPage() {
   // FIX (2026-07-18): landing SIEMPRE dark + enhanced — sin toggle de theme
-  const setTheme = (_v: any) => {}; // no-op: el landing siempre es dark
   const [mounted, setMounted] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
@@ -255,7 +254,7 @@ export default function LandingPage() {
       const target = e.target as HTMLElement;
       if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) return;
       if (e.key === '?') { e.preventDefault(); setShowShortcutsModal((prev) => !prev); }
-      if (e.key === 't' || e.key === 'T') handleToggleTheme();
+      // FIX (2026-07-18): 'T' theme toggle removed — landing is always dark.
       if (e.key >= '1' && e.key <= '5') { const idx = parseInt(e.key) - 1; sectionRefs[idx]?.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
       if ((e.key === 'c' || e.key === 'C') && !e.ctrlKey && !e.metaKey) { e.preventDefault(); setShowContactModal(true); }
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); setShowCommandPalette((prev) => !prev); }
@@ -263,7 +262,7 @@ export default function LandingPage() {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleToggleTheme]);
+  }, []);
 
   return (
     <div className="landing-tokens min-h-screen flex flex-col bg-[#020617] pb-[env(safe-area-inset-bottom)]">
