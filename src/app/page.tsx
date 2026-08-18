@@ -19,8 +19,8 @@ import HomePageClient from './HomePageClient';
  */
 
 export const metadata: Metadata = {
-  title: 'CostPro — Software de Gestión, Fichas de Costo e Inventario para MIPYMES en Cuba',
-  description: 'CostPro: sistema integral de gestión para MIPYMES cubanas. Fichas de costo Res. 148/2023, inventario en tiempo real, POS, vitrina online, inteligencia cambiaria y más. Prueba gratis.',
+  title: 'CostPro — Plataforma Multi-Tienda: Gestión, Inventario y Vitrina Digital',
+  description: 'CostPro: administra todas tus tiendas desde un solo lugar. Inventario, ventas, recepciones y vitrina digital propia para cada tienda. Fichas de costo Res. 148/2023 integradas. Escala tu negocio sin multiplicar sistemas. Prueba gratis.',
   robots: {
     index: true,
     follow: true,
@@ -36,29 +36,27 @@ export default function Page() {
           keywords principales. */}
       <noscript>
         <div style={{ padding: '2rem', maxWidth: '800px', margin: '0 auto', fontFamily: 'system-ui, sans-serif' }}>
-          <h1>CostPro — Software de Gestión para MIPYMES Cubanas</h1>
+          <h1>CostPro — Plataforma Multi-Tienda con Vitrina Digital</h1>
           <p>
-            CostPro es un sistema integral de gestión empresarial diseñado para MIPYMES en Cuba.
-            Cumple con la Resolución 148/2023 del MFP para la elaboración de fichas de costos y gastos.
+            CostPro es una plataforma integral para gestionar negocios con múltiples tiendas y presencia digital propia.
+            Administra inventario, ventas, recepciones y operaciones desde una única plataforma, mientras cada tienda
+            tiene su propia vitrina web con catálogo de productos. Incluye fichas de costo según Res. 148/2023 del MFP.
           </p>
-          <h2>Características principales</h2>
+          <h2>¿Qué puedes hacer con CostPro?</h2>
           <ul>
-            <li><strong>Fichas de costo Res. 148/2023</strong> — Genera fichas de costo y gastos cumpliendo la metodología oficial del MFP cubano.</li>
-            <li><strong>Gestión de inventario en tiempo real</strong> — Controla stock, recepciones, transferencias y ajustes de inventario con trazabilidad completa.</li>
-            <li><strong>Punto de venta (POS)</strong> — Terminal de venta rápida con escáner de código de barras, carrito, atajos de teclado y pago mixto.</li>
-            <li><strong>Vitrina online pública</strong> — Crea tu tienda online con banner personalizable, carrusel promocional, servicios y canales de WhatsApp/Telegram.</li>
-            <li><strong>Inteligencia cambiaria</strong> — Tasas del BCC (Banco Central de Cuba), elToque y solucionescuba.com con carry-forward y simulador de escenarios.</li>
-            <li><strong>Gestión multi-tienda</strong> — Administra múltiples sucursales con aislamiento de datos por tienda.</li>
-            <li><strong>Centro de análisis dinámico</strong> — Tabla dinámica tipo Excel PivotTable con drag & drop, filtros, gráficos y exportación a Excel.</li>
-            <li><strong>Bot de WhatsApp con IA</strong> — Responde consultas de clientes automáticamente con inteligencia artificial.</li>
-            <li><strong>Bot de Telegram con IA</strong> — Canal serverless-native compatible con Vercel.</li>
+            <li><strong>Gestión multi-tienda</strong> — Administra varias tiendas desde un solo panel sin multiplicar sistemas.</li>
+            <li><strong>Vitrina digital propia</strong> — Cada tienda tiene su propia web con catálogo, precios y disponibilidad.</li>
+            <li><strong>Inventario en tiempo real</strong> — Controla existencias de todas tus tiendas desde un mismo lugar.</li>
+            <li><strong>Punto de venta (POS)</strong> — Terminal de venta rápida con múltiples métodos de pago.</li>
+            <li><strong>Gestión de recepciones</strong> — Registra mercancía recibida con control de costos y proveedores.</li>
+            <li><strong>Fichas de costo Res. 148/2023</strong> — Herramienta integrada para analizar y controlar costos.</li>
+            <li><strong>Escalabilidad</strong> — Crece desde 1 tienda hasta múltiples establecimientos sin cambiar de sistema.</li>
             <li><strong>Exportación a Excel y PDF</strong> — Genera reportes profesionales en múltiples formatos.</li>
           </ul>
           <h2>¿Para quién es CostPro?</h2>
           <p>
-            CostPro está diseñado para MIPYMES, empresas estatales, cooperativas y trabajadores
-            por cuenta propia en Cuba que necesitan cumplir con la Resolución 148/2023 del MFP
-            y gestionar su inventario, ventas y costos de forma eficiente.
+            Dueños de pequeños y medianos negocios con varias tiendas, comercios que quieren digitalizar
+            sus catálogos, y empresas que necesitan controlar inventario y ventas de diferentes establecimientos.
           </p>
           <h2>Prueba gratis</h2>
           <p>

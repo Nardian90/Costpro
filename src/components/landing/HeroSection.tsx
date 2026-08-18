@@ -350,7 +350,7 @@ export default function HeroSection({
               <div className="absolute inset-0 promo-shimmer" />
               <div className="relative flex items-center justify-center px-4 h-8 gap-2">
                 <span className="text-xs font-bold text-white tracking-wide">
-                  Fichas de costo automáticas · Resolución 148/2023 · Gratis para empezar
+                  Plataforma multi-tienda con vitrina digital · Gestión integral · Gratis para empezar
                 </span>
                 <button
                   onClick={handleDismissPromo}
@@ -495,7 +495,7 @@ export default function HeroSection({
           >
             <p className="text-base sm:text-lg text-white/50 leading-relaxed" /* FIX-ACC-013 */>
               <TypewriterText
-                text="Fichas de costo oficiales · Res. 148/2023 · Gratis para empezar."
+                text="Administra todas tus tiendas desde un solo lugar. Inventario, ventas y vitrina digital."
                 start={heroInView}
                 className="text-base sm:text-lg text-white/50 leading-relaxed"
               />
@@ -555,7 +555,7 @@ export default function HeroSection({
             transition={{ delay: 1.0, duration: 0.5 }}
             className="mt-3 text-[11px] text-white/20"
           >
-            Crea fichas de costo sin límite · Exporta hasta 3 PDF al día · Gratis para siempre
+            Administra múltiples tiendas · Inventario y ventas · Vitrina digital propia · Gratis para empezar
           </motion.p>
 
           {/* Search bar — centered */}
@@ -573,7 +573,7 @@ export default function HeroSection({
               <Search className="w-4 h-4 text-white/25 shrink-0" />
               <input
                 type="text"
-                placeholder="¿Qué quieres gestionar hoy?"
+                placeholder="Busca productos, tiendas o funciones…"
                 className="flex-1 bg-transparent text-sm text-white/70 placeholder-white/25 outline-none"
                 onFocus={handleSearchFocus}
                 onBlur={handleSearchBlur}

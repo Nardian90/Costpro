@@ -4,7 +4,7 @@ import { useRef } from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import {
   Package, Truck, Users, Calculator, Shield, TrendingUp,
-  FileText, Store, Smartphone, Cloud, Lock, Zap,
+  FileText, Store, Smartphone, Cloud, Lock, Zap, Globe, ShoppingCart,
 } from 'lucide-react';
 
 /**
@@ -31,59 +31,59 @@ interface StorySection {
 
 const SECTIONS: StorySection[] = [
   {
+    id: 'multi-store',
+    icon: Store,
+    title: 'Administra varias tiendas desde un solo panel',
+    subtitle: 'Sin multiplicar sistemas de gestión.',
+    description: 'Gestiona cada tienda por separado con su propio catálogo, inventario y ventas. Mira el negocio completo desde un dashboard central. Cambia de sucursal en 1 clic con aislamiento de datos por tienda.',
+    gradient: 'from-emerald-500/10 to-transparent',
+  },
+  {
+    id: 'storefront',
+    icon: Globe,
+    title: 'Cada tienda con su propia vitrina digital',
+    subtitle: 'Tu tienda física tiene presencia online.',
+    description: 'Cada tienda tiene su propia web donde tus clientes ven productos, precios y disponibilidad. Catálogo público, banner personalizable, carrusel promocional y canales de WhatsApp y Telegram integrados.',
+    gradient: 'from-blue-500/10 to-transparent',
+  },
+  {
     id: 'inventory',
     icon: Package,
-    title: 'Inventario preciso',
+    title: 'Controla las existencias de todas tus tiendas',
     subtitle: 'Cada producto, cada movimiento, siempre.',
     description: 'Control total de tu almacén en tiempo real. Recepciones, transferencias entre tiendas, ajustes documentados y trazabilidad completa. Sabes qué tienes, dónde lo tienes y cuánto vale.',
-    gradient: 'from-blue-500/10 to-transparent',
+    gradient: 'from-cyan-500/10 to-transparent',
+  },
+  {
+    id: 'pos',
+    icon: ShoppingCart,
+    title: 'Vende rápido con un POS diseñado para cajeros',
+    subtitle: 'Pago mixto multi-moneda sin fricción.',
+    description: 'Terminal de venta intuitiva con escáner de código de barras, pago mixto (efectivo + transferencia + Zelle), desglose por denominaciones de billetes y ventas históricas con fecha personalizada.',
+    gradient: 'from-purple-500/10 to-transparent',
   },
   {
     id: 'costing',
     icon: Calculator,
-    title: 'Fichas de costo automáticas',
-    subtitle: 'Resolución 148/2023 MFP, sin que calcules nada.',
-    description: 'Escribes el producto y la ficha oficial aparece sola. Transporte, arrendamiento, salarios, seguridad social e impuestos correctamente distribuidos. Sin hojas de cálculo. Sin errores.',
-    gradient: 'from-emerald-500/10 to-transparent',
-  },
-  {
-    id: 'pos',
-    icon: Store,
-    title: 'Punto de venta inteligente',
-    subtitle: 'Vende en CUP, USD, EUR o MLC. Sin fricción.',
-    description: 'Terminal de venta rápida con pago mixto multi-moneda, escáner de código de barras, descuentos y promociones. Cada venta descuenta inventario y genera el comprobante fiscal al instante.',
-    gradient: 'from-purple-500/10 to-transparent',
-  },
-  {
-    id: 'production',
-    icon: Zap,
-    title: 'Órdenes de producción',
-    subtitle: 'Del material al producto terminado.',
-    description: 'Crea órdenes de producción, servicio o trabajo con presupuestos, anticipos y liquidaciones. Los materiales salen del inventario automáticamente y el producto terminado entra con su costo real calculado.',
+    title: 'Fichas de costo integradas',
+    subtitle: 'Resolución 148/2023 MFP, herramienta adicional.',
+    description: 'Además de gestionar tu negocio, CostPro incorpora herramientas para conocer y controlar tus costos. Transporte, arrendamiento, salarios e impuestos correctamente distribuidos según la metodología oficial.',
     gradient: 'from-orange-500/10 to-transparent',
-  },
-  {
-    id: 'commissions',
-    icon: Users,
-    title: 'Comisiones por producto',
-    subtitle: 'Cada producto, su comisión. Cada venta, su pago.',
-    description: 'Configura comisiones por unidad o por porcentaje, por producto o por escala de precio. El motor calcula todo: reglas, pro-rateo por cambio de regla, conversión de moneda. Tú solo confirmas el pago.',
-    gradient: 'from-pink-500/10 to-transparent',
   },
   {
     id: 'reports',
     icon: TrendingUp,
-    title: 'Reportes y análisis',
+    title: 'Ve cómo evoluciona tu negocio en cada tienda',
     subtitle: 'Decisiones con datos, no con intuición.',
     description: 'Dashboard en tiempo real, reportes de ventas, inventario y costos. KPIs automáticos, márgenes por producto, rentabilidad por tienda. Todo exportable a PDF y Excel.',
-    gradient: 'from-cyan-500/10 to-transparent',
+    gradient: 'from-pink-500/10 to-transparent',
   },
   {
     id: 'security',
     icon: Shield,
-    title: 'Seguridad y auditoría',
+    title: 'Seguridad y control por roles',
     subtitle: 'Cada acción queda registrada.',
-    description: 'Control de usuarios por roles, permisos granulares por tienda, auditoría completa de cada cambio. Row Level Security en Supabase: cada usuario solo ve lo que le corresponde.',
+    description: 'Control de usuarios por roles, permisos granulares por tienda, auditoría completa de cada cambio. Cada usuario solo ve lo que le corresponde.',
     gradient: 'from-red-500/10 to-transparent',
   },
 ];
@@ -236,8 +236,8 @@ export default function ServicesStorySection() {
           transition={{ duration: 0.6, delay: 0.2 }}
           className="text-base sm:text-lg text-white/50 max-w-2xl mx-auto"
         >
-          Desde el inventario hasta la ficha de costo. Desde el punto de venta hasta el pago de comisiones.
-          Una sola plataforma para gestionar todo el ciclo de tu negocio.
+          Desde la gestión multi-tienda hasta la vitrina digital. Desde el inventario hasta el punto de venta.
+          Una sola plataforma para gestionar todo tu negocio y darle presencia online a cada tienda.
         </motion.p>
       </div>
 

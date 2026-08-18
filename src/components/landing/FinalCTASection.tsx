@@ -36,11 +36,11 @@ export default function FinalCTASection({ onOpenDemo, onSignup }: FinalCTASectio
           transition={{ duration: 0.5, delay: 0.1 }}
           className="text-3xl md:text-4xl font-semibold tracking-tight mb-6 leading-tight text-white"
         >
-          Tu próxima venta puede ser
+          Administra todas tus tiendas
           <br />
-          la primera con la ficha
+          desde un solo lugar.
           <br />
-          de costo correcta.
+          Con vitrina digital incluida.
         </motion.h2>
 
         {/* Subtitle */}
@@ -51,8 +51,8 @@ export default function FinalCTASection({ onOpenDemo, onSignup }: FinalCTASectio
           transition={{ duration: 0.5, delay: 0.2 }}
           className="text-white/50 mb-10 text-base leading-relaxed"
         >
-          Da de alta tu primer producto. CostPro calcula la ficha según la Res. 148/2023 — con
-          el flete, el salario, el arrendamiento y todos los impuestos. Gratis. Sin tarjeta.
+          Crea tu primera tienda, gestiona inventario y ventas, y dale presencia digital a tu negocio.
+          Con fichas de costo Res. 148/2023 integradas. Gratis. Sin tarjeta.
         </motion.p>
 
         {/* CTAs */}
