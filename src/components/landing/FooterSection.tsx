@@ -68,7 +68,7 @@ export default function FooterSection({
               </span>
             </div>
             <p className="text-sm text-white/50 leading-relaxed">
-              Fichas de costo automáticas según la Resolución 148/2023 del MFP. Para MiPYMEs cubanas.
+              Plataforma multi-tienda para gestionar negocios con presencia digital. Inventario, ventas y vitrina digital para cada tienda.
             </p>
             {/* WhatsApp Link */}
             <div className="flex items-center gap-2 pt-1">
@@ -126,7 +126,7 @@ export default function FooterSection({
           <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-xs text-white/40 mb-4">
             <span className="flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-[#22c55e]" />
-              Ficha según Res. 148/2023 MFP
+              Multi-tienda con vitrina digital
             </span>
             <span className="flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-[#22c55e]" />

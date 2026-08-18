@@ -19,7 +19,7 @@ export default function InteractiveDemoModal({
       <DialogContent className="sm:max-w-5xl p-0 gap-0 overflow-hidden border-white/10 bg-[#0a0f1a]">
         <DialogTitle className="sr-only">Demo interactiva de CostPro</DialogTitle>
         <DialogDescription className="sr-only">
-          Mira cómo CostPro crea fichas de costo paso a paso según la Resolución 148/2023
+          Mira cómo CostPro gestiona tiendas, inventario y ventas desde una sola plataforma
         </DialogDescription>
         {/* Close button */}
         <button

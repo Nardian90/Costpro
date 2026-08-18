@@ -170,8 +170,8 @@ export default function PricingSection({
                 <tr className="border-b border-white/[0.06]">
                   <th className="text-left py-2.5 px-3 text-white/50 font-medium">Función</th>
                   <th className="py-2.5 px-2 text-white/40 font-medium text-center">Gratis</th>
-                  <th className="py-2.5 px-2 text-[#22c55e] font-bold text-center bg-[#22c55e]/[0.06]">Fichas Pro ✓</th>
-                  <th className="py-2.5 px-2 text-white/40 font-medium text-center">Multitienda</th>
+                  <th className="py-2.5 px-2 text-[#22c55e] font-bold text-center bg-[#22c55e]/[0.06]">Multi-Tienda ✓</th>
+                  <th className="py-2.5 px-2 text-white/40 font-medium text-center">Empresarial</th>
                 </tr>
               </thead>
               <tbody>

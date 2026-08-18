@@ -108,13 +108,13 @@ export const pricingPlans = [
 export const faqCategories = ['General', 'Precios', 'Técnico'] as const;
 
 export const faqItems = [
-  { q: '¿Necesito saber de contabilidad o costos para usar CostPro?', a: 'No. CostPro está diseñado exactamente para quien no tiene formación contable. Introduces el costo del producto, lo que pagas de salario, flete y arrendamiento — el sistema calcula solo la Contribución a la Seguridad Social, los impuestos y el precio sugerido según la Resolución 148/2023 del MFP. Tú no necesitas saber qué fila va cada concepto ni cómo se calculan los porcentajes.', category: 'General' },
-  { q: '¿El plan gratuito es gratis de verdad? ¿Sin trampa?', a: 'Sí, completamente. No pedimos tarjeta de crédito ni ningún dato de pago. El plan gratuito incluye fichas de costo ilimitadas y exportación de hasta 3 PDF por día, siempre, sin fecha de expiración. Si en algún momento necesitas más funcionalidades, tú decides si quieres un plan de pago. No hay letra chica ni sorpresas.', category: 'Precios' },
-  { q: '¿La ficha que genera CostPro cumple con la Resolución 148/2023?', a: 'Sí. CostPro genera la Ficha de Costos y Gastos según el formato estándar del Ministerio de Finanzas y Precios con todos sus conceptos: gasto material (fila 1), salario directo con vacaciones (fila 2), depreciaciones (fila 3), gastos asociados al producto (fila 4), gastos generales y de administración (fila 6), contribución a la seguridad social al 14% (fila 10.1), impuesto sobre la fuerza de trabajo al 5% (fila 10.2), e impuesto sobre ventas y servicios (fila 13.3). Todos estos valores se calculan automáticamente a partir de los datos base que tú introduces.', category: 'Técnico' },
-  { q: '¿Cómo funciona el pago si me interesa un plan de pago?', a: 'El precio se negocia directamente contigo por WhatsApp o teléfono según lo que necesite tu negocio. No hay botón de pago automático ni suscripción forzada — preferimos hablar contigo y asegurarnos de que el plan que eliges te conviene de verdad. Escríbenos al +53 53183215 y lo evaluamos juntos.', category: 'Precios' },
-  { q: '¿El módulo de tiendas y catálogo para clientes está en el plan gratuito?', a: 'No. El módulo de tiendas virtuales, el catálogo de exhibición para clientes y el panel de decisiones con métricas en tiempo real son parte de los planes de pago (Multitienda). Si te interesa, escríbenos por WhatsApp al +53 53183215 y lo evaluamos juntos sin compromiso.', category: 'General' },
-  { q: '¿Puedo usar CostPro desde el teléfono?', a: 'Sí. CostPro funciona desde cualquier navegador: computadora, tablet o teléfono. Está diseñado para funcionar incluso con conexiones lentas, que es la realidad en muchos lugares de Cuba. No necesitas descargar nada.', category: 'Técnico' },
-  { q: '¿Qué pasa con mis datos si pierdo conexión a internet?', a: 'Puedes seguir trabajando sin internet. Cuando recuperes conexión, los datos se sincronizan automáticamente con el servidor. Tus datos están respaldados en la nube de forma segura.', category: 'Técnico' },
+  { q: '¿Puedo administrar varias tiendas desde CostPro?', a: 'Sí. CostPro está diseñado para gestionar múltiples tiendas desde un solo panel. Cada tienda tiene su propio catálogo, inventario, ventas y operaciones independientes, mientras tú ves el negocio completo desde un dashboard central. Cambias de sucursal en 1 clic.', category: 'General' },
+  { q: '¿Qué es la vitrina digital de cada tienda?', a: 'Cada tienda puede tener su propia página web pública donde tus clientes ven los productos, precios y disponibilidad. No es una tienda online con checkout: es un catálogo de exhibición que da presencia digital a tu negocio. Los clientes pueden ver qué hay disponible antes de visitar la tienda o contactarte.', category: 'General' },
+  { q: '¿El plan gratuito es gratis de verdad?', a: 'Sí. No pedimos tarjeta de crédito ni datos de pago. El plan gratuito incluye 1 tienda con inventario, ventas, POS completo y fichas de costo Res. 148/2023, sin fecha de expiración. Si necesitas múltiples tiendas o vitrina digital, puedes pasar a un plan de pago cuando quieras.', category: 'Precios' },
+  { q: '¿Cómo funciona el pago si me interesa un plan de pago?', a: 'El precio se negocia directamente contigo por WhatsApp según lo que necesite tu negocio. No hay botón de pago automático ni suscripción forzada. Escríbenos al +53 53183215 y lo evaluamos juntos.', category: 'Precios' },
+  { q: '¿Las fichas de costo cumplen con la Resolución 148/2023?', a: 'Sí. CostPro genera fichas de costo y gastos según el formato del MFP con todos los conceptos calculados automáticamente: gasto material, salarios, depreciaciones, seguros, impuestos y contribuciones. Es una herramienta integrada dentro de la plataforma, no un producto separado.', category: 'Técnico' },
+  { q: '¿Puedo usar CostPro desde el teléfono?', a: 'Sí. Funciona desde cualquier navegador: computadora, tablet o teléfono. Está optimizado para conexiones lentas. No necesitas descargar nada.', category: 'Técnico' },
+  { q: '¿Qué pasa con mis datos si pierdo conexión a internet?', a: 'Puedes seguir trabajando sin internet. Cuando recuperes conexión, los datos se sincronizan automáticamente. Tus datos están respaldados en la nube de forma segura.', category: 'Técnico' },
 ];
 
 // DEPRECATED: will be removed in LandingPage refactor
@@ -137,15 +137,16 @@ export const integrationPartners = [
 ];
 
 export const comparisonRows = [
-  { feature: 'Fichas de costo ilimitadas', starter: true, pro: true, enterprise: true },
-  { feature: 'Generación automática (Res. 148/2023)', starter: true, pro: true, enterprise: true },
-  { feature: 'Cálculo automático de impuestos', starter: true, pro: true, enterprise: true },
+  { feature: 'Número de tiendas', starter: '1', pro: 'Múltiples', enterprise: 'Múltiples' },
+  { feature: 'Vitrina digital por tienda', starter: false, pro: true, enterprise: true },
+  { feature: 'Catálogo público para clientes', starter: false, pro: true, enterprise: true },
+  { feature: 'Inventario y recepciones', starter: true, pro: true, enterprise: true },
+  { feature: 'Punto de venta (POS)', starter: true, pro: true, enterprise: true },
+  { feature: 'Panel de decisiones', starter: false, pro: true, enterprise: true },
+  { feature: 'Fichas de costo (Res. 148/2023)', starter: true, pro: true, enterprise: true },
   { feature: 'Exportar PDF', starter: '3/día', pro: 'Ilimitado', enterprise: 'Ilimitado' },
-  { feature: 'Generación masiva de fichas', starter: false, pro: true, enterprise: true },
-  { feature: 'Importación por lotes', starter: false, pro: true, enterprise: true },
-  { feature: 'Tiendas virtuales', starter: false, pro: false, enterprise: true },
-  { feature: 'Catálogo público para clientes', starter: false, pro: false, enterprise: true },
-  { feature: 'Panel de decisiones', starter: false, pro: false, enterprise: true },
+  { feature: 'Generación masiva de fichas', starter: false, pro: false, enterprise: true },
+  { feature: 'Importación por lotes', starter: false, pro: false, enterprise: true },
   { feature: 'Soporte WhatsApp', starter: false, pro: true, enterprise: true },
 ];
 

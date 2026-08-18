@@ -486,19 +486,15 @@ export default function HeroSection({
             </h1>
           </motion.div>
 
-          {/* Subtle tagline with typewriter */}
+          {/* Tagline — static text, no typewriter effect */}
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4, duration: 0.6 }}
             className="mt-6 max-w-lg"
           >
-            <p className="text-base sm:text-lg text-white/50 leading-relaxed" /* FIX-ACC-013 */>
-              <TypewriterText
-                text="Administra todas tus tiendas desde un solo lugar. Inventario, ventas y vitrina digital."
-                start={heroInView}
-                className="text-base sm:text-lg text-white/50 leading-relaxed"
-              />
+            <p className="text-base sm:text-lg text-white/50 leading-relaxed">
+              Administra todas tus tiendas desde un solo lugar. Inventario, ventas y vitrina digital.
             </p>
           </motion.div>
 
