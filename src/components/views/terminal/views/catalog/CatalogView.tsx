@@ -3,11 +3,14 @@
 import React, { useState, useMemo, useRef, useCallback, useEffect } from 'react';
 import { useUpdateProduct, useDeleteProduct, useToggleProductActive, useCreateProduct, useUpdateVariant, useDeleteVariant, useAddVariant } from '@/hooks/api/useProducts';
 import { useInventory } from '@/hooks/api/useInventory';
+import { useCatalogProductsInfinite, useCatalogProductsPage } from '@/hooks/api/useCatalogProducts';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { useAuthStore, useUIStore } from '@/store';
 import { supabase } from '@/lib/supabaseClient';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, AlertCircle, RefreshCw } from 'lucide-react';
 import { SecondaryButton } from '@/components/ui/atomic';
+import { Button } from '@/components/ui/button';
+import { TablePagination } from '@/components/views/terminal/views/catalog/TablePagination';
 import { toast } from 'sonner';
 import { BulkPriceIncrementModal } from '@/components/modals/BulkPriceIncrementModal';
 import { catalogService } from '@/services/catalog-service';
@@ -94,6 +97,9 @@ export default function CatalogView() {
     if (typeof window === 'undefined') return 24;
     return parseInt(localStorage.getItem('catalog_pageSize') || '24', 10);
   });
+  // v2 pagination: page number for table mode (1-indexed)
+  // Infinite scroll (cards) doesn't use this — it uses useInfiniteQuery pageParam
+  const [tablePage, setTablePage] = useState(1);
 
   // Edit modal state
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -156,6 +162,12 @@ export default function CatalogView() {
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
+  // v2: Reset table page to 1 when any filter/search/sort/pageSize changes
+  // Prevents "page 4 + new search = empty results" bug
+  useEffect(() => {
+    setTablePage(1);
+  }, [debouncedSearch, rpcCategory, sortKey, sortDir, stockFilter, activeFilter, pageSize, user?.activeStoreId]);
+
   // CM-1.1: Cablear búsqueda server-side al RPC (antes pasaba '' hardcoded)
   // CM-1.6: La búsqueda ahora también filtra por barcode en el RPC
   const {
@@ -168,11 +180,64 @@ export default function CatalogView() {
     refetch: refetchInventory,
   } = useInventory(user?.activeStoreId, debouncedSearch, rpcCategory, pageSize);
 
+  // v2: Dual hooks for server-side sort + filter + pagination
+  // - Infinite (cards): uses get_paginated_products_v2 with all filters
+  // - Page (table): uses same RPC with offset = (page-1) * pageSize
+  // Both share the same filter/sort params → consistent results
+  const catalogInfinite = useCatalogProductsInfinite({
+    storeId: user?.activeStoreId,
+    searchTerm: debouncedSearch,
+    category: rpcCategory,
+    sortKey: sortKey,
+    sortDir: sortDir,
+    stockFilter: stockFilter,
+    activeFilter: activeFilter,
+    pageSize: layoutMode === 'grid' ? 30 : pageSize, // larger batch for infinite scroll
+    mode: 'infinite',
+    enabled: layoutMode === 'grid',
+  });
+
+  const catalogPage = useCatalogProductsPage({
+    storeId: user?.activeStoreId,
+    searchTerm: debouncedSearch,
+    category: rpcCategory,
+    sortKey: sortKey,
+    sortDir: sortDir,
+    stockFilter: stockFilter,
+    activeFilter: activeFilter,
+    pageSize: pageSize,
+    mode: 'page',
+    page: tablePage,
+    enabled: layoutMode === 'table',
+  });
+
   // Fetch all product_variants for loaded products (RPC doesn't include them)
+  // v2: choose which source of products we're rendering based on layoutMode
+  const v2Products = useMemo(() => {
+    if (layoutMode === 'grid') {
+      // Infinite scroll: flatten all loaded pages
+      const allPages = (catalogInfinite.data?.pages || []).flatMap(p => p.products);
+      return allPages;
+    }
+    // Table mode: single page
+    return catalogPage.data?.products || [];
+  }, [layoutMode, catalogInfinite.data, catalogPage.data]);
+
+  const v2TotalCount = useMemo(() => {
+    if (layoutMode === 'grid') {
+      return catalogInfinite.data?.pages?.[0]?.total ?? 0;
+    }
+    return catalogPage.data?.total ?? 0;
+  }, [layoutMode, catalogInfinite.data, catalogPage.data]);
+
+  const v2IsLoading = layoutMode === 'grid' ? catalogInfinite.isLoading : catalogPage.isLoading;
+  const v2IsFetchingMore = layoutMode === 'grid' ? catalogInfinite.isFetchingNextPage : false;
+  const v2Error = layoutMode === 'grid' ? catalogInfinite.error : catalogPage.error;
+  const v2HasNextPage = layoutMode === 'grid' ? catalogInfinite.hasNextPage : false;
+
   const productIds = useMemo(() => {
-    const allProducts = (inventoryPages?.pages || []).flatMap(p => p.products);
-    return allProducts.map(p => p.id);
-  }, [inventoryPages]);
+    return v2Products.map(p => p.id);
+  }, [v2Products]);
 
   const { data: allVariants } = useQuery({
     queryKey: ['product-variants-batch', productIds],
@@ -207,13 +272,13 @@ export default function CatalogView() {
   }, [allVariants]);
 
   const products = useMemo(() => {
-    const rawProducts = (inventoryPages?.pages || []).flatMap(p => p.products);
-    return rawProducts.map(p => ({
+    // v2: use v2Products (from get_paginated_products_v2 with server-side sort/filter)
+    return v2Products.map(p => ({
       ...p,
       product_variants: variantsByProduct.get(p.id) || [],
     }));
-  }, [inventoryPages, variantsByProduct]);
-  const totalCount = inventoryPages?.pages?.[0]?.total ?? 0;
+  }, [v2Products, variantsByProduct]);
+  const totalCount = v2TotalCount;
   const updateProductMutation = useUpdateProduct();
   const deleteProductMutation = useDeleteProduct();
   const toggleActiveMutation = useToggleProductActive();
@@ -225,6 +290,7 @@ export default function CatalogView() {
   const invalidateAndRefetch = () => {
     queryClient.invalidateQueries({ queryKey: ['products'] });
     queryClient.invalidateQueries({ queryKey: ['inventory'] });
+    queryClient.invalidateQueries({ queryKey: ['catalog-products-v2'] }); // v2 pagination
     refetchInventory();
   };
 
@@ -252,15 +318,21 @@ export default function CatalogView() {
 
   const loadMoreRef = useRef<HTMLDivElement>(null);
 
-  // Infinite scroll via IntersectionObserver (WCAG-friendly: still shows manual button as fallback)
+  // v2: Infinite scroll solo en modo GRID (tarjetas)
+  // En modo TABLE, se usa TablePagination (paginación tradicional)
+  const infiniteFetchNextPage = catalogInfinite.fetchNextPage;
+  const infiniteHasNextPage = catalogInfinite.hasNextPage;
+  const infiniteIsFetchingNextPage = catalogInfinite.isFetchingNextPage;
+
   useEffect(() => {
+    if (layoutMode !== 'grid') return; // Solo infinite scroll en grid
     const el = loadMoreRef.current;
-    if (!el || !hasNextPage || isFetchingNextPage) return;
+    if (!el || !infiniteHasNextPage || infiniteIsFetchingNextPage) return;
 
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting && hasNextPage && !isFetchingNextPage) {
-          fetchNextPage();
+        if (entry.isIntersecting && infiniteHasNextPage && !infiniteIsFetchingNextPage) {
+          infiniteFetchNextPage();
         }
       },
       { rootMargin: '200px', threshold: 0 }
@@ -268,7 +340,7 @@ export default function CatalogView() {
 
     observer.observe(el);
     return () => observer.disconnect();
-  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+  }, [layoutMode, infiniteHasNextPage, infiniteIsFetchingNextPage, infiniteFetchNextPage]);
 
   // UX-01: Count incomplete products
   const incompleteCount = useMemo(() => {
@@ -343,50 +415,22 @@ export default function CatalogView() {
   }, [queryClient]);
 
   // ── Filtering ──────────────────────────────────────────────────
-  // CM-1.1: La búsqueda por nombre/SKU/barcode y categoría ahora se hace server-side
-  // CM-2.5: Filtros combinables de stock, activo/inactivo
-  // CM-3.8: Multi-categoría con Set (client-side cuando hay 2+ categorías)
+  // v2: stockFilter, activeFilter, sort, search, category are now server-side (RPC).
+  // Client-side filters that REMAIN: fcFilter, showIncompleteOnly, multi-category (2+).
   const filteredProducts = useMemo(() => {
     let result = products.filter(p => {
       const matchesIncomplete = !showIncompleteOnly || p.is_complete === false;
       const matchesFC = fcFilter === 'all' || getFCStatus(p.id) === fcFilter;
-      // CM-2.5: Filtro de stock
-      const stock = p.stock_current ?? 0;
-      const minStock = p.min_stock ?? 0;
-      const matchesStock =
-        stockFilter === 'all' ||
-        (stockFilter === 'out' && stock <= 0) ||
-        (stockFilter === 'low' && stock > 0 && stock <= minStock) ||
-        (stockFilter === 'ok' && stock > minStock);
-      // CM-2.5: Filtro activo/inactivo
-      const matchesActive =
-        activeFilter === 'all' ||
-        (activeFilter === 'active' && p.is_active) ||
-        (activeFilter === 'inactive' && !p.is_active);
       // CM-3.8: Multi-categoría (solo filtrar client-side si hay 2+ seleccionadas)
       const matchesCategory =
         selectedCategories.size === 0 ||
         selectedCategories.size === 1 ||
         selectedCategories.has(p.category || '');
-      return matchesIncomplete && matchesFC && matchesStock && matchesActive && matchesCategory;
+      return matchesIncomplete && matchesFC && matchesCategory;
     });
-
-    // CM-2.4: Sort client-side (el RPC no soporta sort dinámico)
-    if (sortKey) {
-      result = [...result].sort((a: any, b: any) => {
-        let valA = a[sortKey];
-        let valB = b[sortKey];
-        if (typeof valA === 'string') valA = valA.toLowerCase();
-        if (typeof valB === 'string') valB = valB.toLowerCase();
-        if (valA == null) valA = '';
-        if (valB == null) valB = '';
-        const cmp = valA < valB ? -1 : valA > valB ? 1 : 0;
-        return sortDir === 'asc' ? cmp : -cmp;
-      });
-    }
-
+    // v2: NO client-side sort — server handles it via p_sort_key/p_sort_dir
     return result;
-  }, [products, showIncompleteOnly, fcFilter, stockFilter, activeFilter, sortKey, sortDir, getFCStatus]);
+  }, [products, showIncompleteOnly, fcFilter, getFCStatus, selectedCategories]);
 
   // CM-2.4: Handler de sort — toggle asc/desc
   const handleSort = useCallback((key: string) => {
@@ -910,8 +954,8 @@ export default function CatalogView() {
       <CatalogProductGrid
         layoutMode={layoutMode}
         products={filteredProducts}
-        isLoading={isLoading}
-        error={error as Error | null}
+        isLoading={v2IsLoading}
+        error={v2Error as Error | null}
         selectedIds={selectedIds}
         isAllSelected={isAllSelected}
         onToggleSelect={toggleSelect}
@@ -946,16 +990,39 @@ export default function CatalogView() {
         categories={categories}
       />
 
-      {/* Load More Pagination */}
-      {hasNextPage && (
-        <div ref={loadMoreRef} className="flex justify-center pt-4">
-          <SecondaryButton
-            label={isFetchingNextPage ? 'Cargando...' : `Cargar más (${totalCount - products.length} restantes)`}
-            icon={ChevronDown}
-            onClick={() => fetchNextPage()}
-            disabled={isFetchingNextPage}
-          />
-        </div>
+      {/* v2: Pagination — different per mode */}
+      {layoutMode === 'grid' ? (
+        // Infinite scroll (cards): Load More button + IntersectionObserver sentinel
+        <>
+          {infiniteHasNextPage && (
+            <div ref={loadMoreRef} className="flex justify-center pt-4">
+              <SecondaryButton
+                label={infiniteIsFetchingNextPage ? 'Cargando más productos...' : `Cargar más (${v2TotalCount - products.length} restantes)`}
+                icon={ChevronDown}
+                onClick={() => infiniteFetchNextPage()}
+                disabled={infiniteIsFetchingNextPage}
+              />
+            </div>
+          )}
+          {!infiniteHasNextPage && products.length > 0 && (
+            <div className="flex justify-center pt-4 text-xs text-muted-foreground">
+              Has llegado al final del catálogo ({products.length} productos)
+            </div>
+          )}
+        </>
+      ) : (
+        // Traditional pagination (table): Anterior/Siguiente + Página X de Y
+        <TablePagination
+          page={tablePage}
+          pageSize={pageSize}
+          totalCount={v2TotalCount}
+          isLoading={catalogPage.isLoading || catalogPage.isFetching}
+          onPageChange={setTablePage}
+          onPageSizeChange={(size) => {
+            setPageSize(size);
+            setTablePage(1); // reset to page 1 on size change
+          }}
+        />
       )}
 
       {/* Edit Product Modal */}
