@@ -288,6 +288,17 @@ export interface ImportError {
 // ============================================
 
 export const catalogService = {
+  /**
+   * Upload a new product image and UPDATE products.image_url.
+   *
+   * Garbage collection: after a successful UPDATE, the previously-referenced
+   * file (if any) is removed from the `product-images` bucket so we don't
+   * accumulate orphan files. If the delete fails (e.g. RLS, network), we
+   * log a warning but DO NOT throw — the DB is already consistent with the
+   * new file, so leaving an orphan is preferable to rolling back.
+   *
+   * @returns the new filename stored in products.image_url
+   */
   async uploadProductImage(productId: string, file: File) {
     // The compression pipeline (compressImage) already ensures the file is
     // under 200KB and max 1024px. We keep a generous 5MB safety net in case
@@ -301,23 +312,104 @@ export const catalogService = {
       );
     }
 
-    const fileExt = file.name.split('.').pop();
+    // Audit defect #1 (orphan files): fetch previous image_url BEFORE upload
+    // so we can delete it from storage after a successful UPDATE.
+    const { data: prevProduct, error: prevErr } = await supabase
+      .from('products')
+      .select('image_url')
+      .eq('id', productId)
+      .maybeSingle();
+    if (prevErr) throw prevErr;
+    const previousFileName = prevProduct?.image_url || null;
+
+    const fileExt = (file.name.split('.').pop() || 'webp').toLowerCase();
     const fileName = `${productId}-${crypto.randomUUID()}.${fileExt}`;
 
+    // Step 1: upload new file to storage
     const { error: uploadError } = await supabase.storage
       .from('product-images')
       .upload(fileName, file);
 
     if (uploadError) throw uploadError;
 
+    // Step 2: UPDATE products.image_url to point to the new file
     const { error: updateError } = await supabase
       .from('products')
       .update({ image_url: fileName })
       .eq('id', productId);
 
-    if (updateError) throw updateError;
+    if (updateError) {
+      // Rollback the upload — the DB is the source of truth, so if UPDATE
+      // fails we must remove the just-uploaded file to avoid orphans.
+      try {
+        await supabase.storage.from('product-images').remove([fileName]);
+      } catch (cleanupErr) {
+        console.warn('[uploadProductImage] failed to cleanup orphan after UPDATE failure:', cleanupErr);
+      }
+      throw updateError;
+    }
+
+    // Step 3: garbage-collect the previous file (if any).
+    // Best-effort: don't fail the whole operation if cleanup fails.
+    if (previousFileName && previousFileName !== fileName) {
+      try {
+        const { error: removeErr } = await supabase.storage
+          .from('product-images')
+          .remove([previousFileName]);
+        if (removeErr) {
+          console.warn(`[uploadProductImage] orphan cleanup failed for ${previousFileName}:`, removeErr.message);
+        }
+      } catch (cleanupErr) {
+        console.warn('[uploadProductImage] orphan cleanup threw:', cleanupErr);
+      }
+    }
 
     return fileName;
+  },
+
+  /**
+   * Delete a product image: null out products.image_url AND remove the file
+   * from the `product-images` bucket. Both operations must succeed for the
+   * function to return successfully.
+   *
+   * @throws if either the storage delete or the DB update fails.
+   */
+  async deleteProductImage(productId: string): Promise<void> {
+    // Fetch current image_url BEFORE we null it (so we know which file to remove)
+    const { data: product, error: fetchErr } = await supabase
+      .from('products')
+      .select('image_url')
+      .eq('id', productId)
+      .maybeSingle();
+    if (fetchErr) throw fetchErr;
+    const fileName = product?.image_url || null;
+
+    if (!fileName) {
+      // No image to delete — nothing to do. Idempotent.
+      return;
+    }
+
+    // Step 1: null out products.image_url FIRST.
+    // If storage delete fails after this, we have an orphan file but the DB
+    // is consistent (image_url=null). That's preferable to the inverse
+    // (DB still points to a file that no longer exists → broken image).
+    const { error: updateError } = await supabase
+      .from('products')
+      .update({ image_url: null })
+      .eq('id', productId);
+    if (updateError) throw updateError;
+
+    // Step 2: remove the file from storage (best-effort, log on failure)
+    try {
+      const { error: removeErr } = await supabase.storage
+        .from('product-images')
+        .remove([fileName]);
+      if (removeErr) {
+        console.warn(`[deleteProductImage] storage remove failed for ${fileName}:`, removeErr.message);
+      }
+    } catch (removeErr) {
+      console.warn('[deleteProductImage] storage remove threw:', removeErr);
+    }
   },
 };
 

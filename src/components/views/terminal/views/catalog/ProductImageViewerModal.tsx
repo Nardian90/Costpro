@@ -7,23 +7,32 @@
  *
  * Funciones:
  *   - Ver imagen ampliada
- *   - Recortar (selección visual, aspect ratio 1:1 para catálogo, previsualización)
+ *   - Recortar (selección visual, aspect ratio 1:1, previsualización)
  *   - Cambiar imagen (cargar nueva, opcionalmente recortar antes de guardar)
- *   - Guardar cambios (upload a bucket existente + UPDATE products.image_url)
+ *   - Guardar cambios (upload a bucket + UPDATE products.image_url + GC archivo anterior)
  *   - Cancelar (sin modificar)
- *   - Eliminar imagen (acción destructiva, separada)
+ *   - Eliminar imagen (acción destructiva: null + remove del bucket)
  *
  * NO reemplaza EditProductModal — es una vía rápida para gestionar solo la imagen.
  * Reutiliza:
- *   - catalogService.uploadProductImage() (servicio existente)
+ *   - catalogService.uploadProductImage() (servicio existente, con GC)
+ *   - catalogService.deleteProductImage() (nuevo, con storage cleanup)
  *   - compressImage() (lib/image-compress)
- *   - cropImage() (lib/image-crop — nuevo, Canvas-based, sin dependencias)
+ *   - cropImage() (lib/image-crop — Canvas-based, sin dependencias)
  *   - getProductImageUrl() (lib/utils)
+ *
+ * Aspect ratio 1:1: el catálogo renderiza imágenes en contenedores
+ * `aspect-square sm:aspect-video` con `object-cover` (ver ProductCard y table).
+ * `object-cover` recorta al aspect del contenedor. Para consistencia entre
+ * grid y table, y para evitar que el crop final se deforme en cualquier
+ * contenedor, el output del recorte es cuadrado 1024×1024px. Las imágenes
+ * verticales/horizontales se centran con `object-contain` en el modal y
+ * `object-cover` en el catálogo — no se deforman.
  *
  * Patrón de modal: BaseModal (sticky header/footer + focus trap + mobile-first)
  */
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { BaseModal } from '@/components/ui/BaseModal';
 import { Button } from '@/components/ui/button';
 import {
@@ -32,9 +41,9 @@ import {
 } from 'lucide-react';
 import { cn, getProductImageUrl } from '@/lib/utils';
 import { catalogService } from '@/services/catalog-service';
-import { compressImage, validateImageFile } from '@/lib/image-compress';
+import { compressImage } from '@/lib/image-compress';
 import {
-  cropImage, cropImageElement, loadImageFromFile, loadImageFromUrl,
+  cropImageElement, loadImageFromFile, loadImageFromUrl,
   constrainCropArea, defaultCropArea, type CropArea,
 } from '@/lib/image-crop';
 import { toast } from 'sonner';
@@ -59,9 +68,55 @@ interface DragState {
   mode: 'move' | 'resize-se'; // which handle is being dragged
 }
 
-const ASPECT = 1; // square (catalog thumbnail convention)
+const ASPECT = 1; // square (catalog renders object-cover in square/video containers)
 const CROP_OUTPUT_PX = 1024;
 const MIN_CROP_PX = 64; // minimum crop size in image-natural pixels
+const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024; // 10MB
+const ACCEPTED_MIME_TYPES = new Set(['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif', 'image/bmp']);
+
+/**
+ * Validate image file by inspecting its actual content (magic bytes),
+ * not just the MIME type reported by the browser (which is extension-based).
+ *
+ * This catches attacks where a non-image file is renamed to .jpg.
+ */
+function validateImageFileContent(file: File): string | null {
+  if (!file.type.startsWith('image/')) {
+    return 'Solo se permiten archivos de imagen (JPG, PNG, WebP, GIF, BMP)';
+  }
+  if (!ACCEPTED_MIME_TYPES.has(file.type.toLowerCase())) {
+    return `Formato no soportado: ${file.type}. Usa JPG, PNG, WebP, GIF o BMP.`;
+  }
+  if (file.size === 0) return 'El archivo de imagen está vacío';
+  if (file.size > MAX_FILE_SIZE_BYTES) return `La imagen no debe superar los 10 MB`;
+  return null;
+}
+
+/**
+ * Deeper content-based validation: read the first few bytes of the file and
+ * check against known image magic bytes. This is the ONLY way to be sure
+ * the file is actually an image (browser MIME is just extension-based).
+ */
+async function validateImageMagicBytes(file: File): Promise<string | null> {
+  // Read first 16 bytes
+  const header = new Uint8Array(await file.slice(0, 16).arrayBuffer());
+  // JPEG: FFD8FF
+  const isJpeg = header[0] === 0xFF && header[1] === 0xD8 && header[2] === 0xFF;
+  // PNG: 89504E470D0A1A0A
+  const isPng = header[0] === 0x89 && header[1] === 0x50 && header[2] === 0x4E && header[3] === 0x47;
+  // WebP: RIFF....WEBP
+  const isWebp = header[0] === 0x52 && header[1] === 0x49 && header[2] === 0x46 && header[3] === 0x46 &&
+    header[8] === 0x57 && header[9] === 0x45 && header[10] === 0x42 && header[11] === 0x50;
+  // GIF: GIF87a or GIF89a
+  const isGif = header[0] === 0x47 && header[1] === 0x49 && header[2] === 0x46 && (header[3] === 0x38);
+  // BMP: 424D (BM)
+  const isBmp = header[0] === 0x42 && header[1] === 0x4D;
+
+  if (!isJpeg && !isPng && !isWebp && !isGif && !isBmp) {
+    return 'El archivo no contiene una imagen válida (magic bytes no reconocidos).';
+  }
+  return null;
+}
 
 export function ProductImageViewerModal({
   product,
@@ -92,6 +147,12 @@ export function ProductImageViewerModal({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const imgWrapperRef = useRef<HTMLDivElement | null>(null);
   const dragStateRef = useRef<DragState | null>(null);
+  // === Ref for race condition prevention (double-click on Save) ===
+  // We use a ref in addition to the isSaving state because state updates are
+  // async — between the first click and setIsSaving(true), a second click
+  // could slip through. The ref is set synchronously.
+  const isSavingRef = useRef<boolean>(false);
+  const isDeletingRef = useRef<boolean>(false);
 
   // === Reset state when modal opens or product changes ===
   useEffect(() => {
@@ -103,6 +164,8 @@ export function ProductImageViewerModal({
     setSourceFile(null);
     setIsSaving(false);
     setIsDeleting(false);
+    isSavingRef.current = false;
+    isDeletingRef.current = false;
     const persistedUrl = product.image_url
       ? getProductImageUrl(product.image_url)
       : product.public_image_url
@@ -113,12 +176,28 @@ export function ProductImageViewerModal({
     setImageNaturalSize(null);
   }, [open, product]);
 
-  // === Revoke object URLs on unmount/close to avoid leaks ===
+  // === Revoke object URLs when sourceUrl changes OR on unmount ===
+  // We track the previous blob URL in a ref so we can revoke it on the
+  // NEXT change (not on the current render, which would break the visible image).
+  const prevBlobUrlRef = useRef<string | null>(null);
+  useEffect(() => {
+    // If we had a previous blob URL and we're switching to a different one,
+    // revoke the previous one.
+    if (prevBlobUrlRef.current && prevBlobUrlRef.current !== sourceUrl) {
+      URL.revokeObjectURL(prevBlobUrlRef.current);
+    }
+    prevBlobUrlRef.current = sourceUrl && sourceUrl.startsWith('blob:') ? sourceUrl : null;
+  }, [sourceUrl]);
+
+  // On unmount: revoke any lingering blob URL
   useEffect(() => {
     return () => {
-      if (sourceUrl && sourceUrl.startsWith('blob:')) URL.revokeObjectURL(sourceUrl);
+      if (prevBlobUrlRef.current) {
+        URL.revokeObjectURL(prevBlobUrlRef.current);
+        prevBlobUrlRef.current = null;
+      }
     };
-  }, [sourceUrl]);
+  }, []);
 
   // === Image onLoad: capture natural dimensions for crop math ===
   const handleImageLoad = useCallback((e: React.SyntheticEvent<HTMLImageElement>) => {
@@ -129,14 +208,22 @@ export function ProductImageViewerModal({
   // === Pick a new file (replace flow) ===
   const handlePickFile = useCallback(async (file: File) => {
     setError(null);
-    const validationError = validateImageFile(file, 10);
-    if (validationError) {
-      setError(validationError);
-      toast.error(validationError);
+    // Step 1: extension/MIME/size validation (fast)
+    const fastErr = validateImageFileContent(file);
+    if (fastErr) {
+      setError(fastErr);
+      toast.error(fastErr);
+      return;
+    }
+    // Step 2: magic-bytes content validation (slow but secure)
+    const contentErr = await validateImageMagicBytes(file);
+    if (contentErr) {
+      setError(contentErr);
+      toast.error(contentErr);
       return;
     }
     try {
-      // Revoke previous blob URL
+      // Revoke previous blob URL (defensive — the effect also does this)
       if (sourceUrl && sourceUrl.startsWith('blob:')) URL.revokeObjectURL(sourceUrl);
       const url = URL.createObjectURL(file);
       setSourceUrl(url);
@@ -145,6 +232,7 @@ export function ProductImageViewerModal({
       setMode('view');
       setZoom(1);
       setCrop(null);
+      setImageNaturalSize(null);
       toast.success('Imagen cargada. Recorta si quieres y guarda.');
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'No se pudo cargar la imagen.';
@@ -200,8 +288,7 @@ export function ProductImageViewerModal({
         mimeType: 'image/webp',
         quality: 0.85,
       });
-      // Revoke old blob URL if we had one
-      if (sourceUrl.startsWith('blob:')) URL.revokeObjectURL(sourceUrl);
+      // Note: prevBlobUrlRef effect will revoke the old blob URL on next render
       const newUrl = URL.createObjectURL(cropped);
       setSourceFile(cropped);
       setSourceUrl(newUrl);
@@ -221,8 +308,15 @@ export function ProductImageViewerModal({
   }, [crop, sourceUrl, sourceFile]);
 
   // === Save: compress + upload to Supabase + UPDATE product ===
+  // Race condition prevention: isSavingRef is set synchronously BEFORE any
+  // async work, so a second click on Save (before React re-renders with the
+  // disabled state) will see isSavingRef=true and bail out.
   const handleSave = useCallback(async () => {
     if (!product) return;
+    if (isSavingRef.current) {
+      // Already saving — ignore the second click
+      return;
+    }
     if (sourceIsPersisted) {
       // Nothing to save (image already persisted).
       onClose();
@@ -234,10 +328,12 @@ export function ProductImageViewerModal({
       return;
     }
     setError(null);
+    isSavingRef.current = true;
     setIsSaving(true);
     try {
       // Compress before upload (matches existing EditProductModal flow)
       const compressed = await compressImage(sourceFile);
+      // uploadProductImage now also GCs the previous file from storage
       const newFileName = await catalogService.uploadProductImage(product.id, compressed);
       toast.success('Imagen guardada correctamente');
       onImageChanged?.(product.id, newFileName);
@@ -250,38 +346,38 @@ export function ProductImageViewerModal({
       setError(msg);
       toast.error('No se pudo guardar. La imagen anterior se conserva.');
       // Restore source to persisted (previous) image
+      // prevBlobUrlRef effect will revoke the failed blob URL on next render
       const prevUrl = product.image_url
         ? getProductImageUrl(product.image_url)
         : product.public_image_url
           ? getProductImageUrl(product.public_image_url)
           : null;
-      if (sourceUrl && sourceUrl.startsWith('blob:')) URL.revokeObjectURL(sourceUrl);
       setSourceUrl(prevUrl);
       setSourceFile(null);
       setSourceIsPersisted(true);
       setMode('view');
       setCrop(null);
     } finally {
+      isSavingRef.current = false;
       setIsSaving(false);
     }
   }, [product, sourceIsPersisted, sourceFile, sourceUrl, onClose, onImageChanged]);
 
-  // === Delete: remove image_url from product (destructive, separated) ===
+  // === Delete: remove image_url + remove file from Storage (destructive, separated) ===
   const handleDelete = useCallback(async () => {
     if (!product) return;
+    if (isDeletingRef.current) return;
     if (!window.confirm('¿Eliminar la imagen del producto? Esta acción no se puede deshacer.')) {
       return;
     }
     setError(null);
+    isDeletingRef.current = true;
     setIsDeleting(true);
     try {
-      // Use updateProductMutation pattern: direct UPDATE on products table
-      const { supabase } = await import('@/lib/supabaseClient');
-      const { error: updateError } = await supabase
-        .from('products')
-        .update({ image_url: null })
-        .eq('id', product.id);
-      if (updateError) throw updateError;
+      // Use catalogService.deleteProductImage which:
+      //   1. nulls products.image_url
+      //   2. removes the file from the product-images bucket (GC)
+      await catalogService.deleteProductImage(product.id);
       toast.success('Imagen eliminada');
       onImageChanged?.(product.id, null);
       onClose();
@@ -290,6 +386,7 @@ export function ProductImageViewerModal({
       setError(msg);
       toast.error(msg);
     } finally {
+      isDeletingRef.current = false;
       setIsDeleting(false);
     }
   }, [product, onClose, onImageChanged]);
@@ -362,7 +459,7 @@ export function ProductImageViewerModal({
   // === Restore original (revert to persisted image, discarding local edits) ===
   const handleRestore = useCallback(() => {
     if (!product) return;
-    if (sourceUrl && sourceUrl.startsWith('blob:')) URL.revokeObjectURL(sourceUrl);
+    // prevBlobUrlRef effect will revoke the old blob URL on next render
     const prevUrl = product.image_url
       ? getProductImageUrl(product.image_url)
       : product.public_image_url
@@ -377,7 +474,7 @@ export function ProductImageViewerModal({
     setError(null);
     setImageNaturalSize(null);
     toast.info('Imagen original restaurada (sin guardar cambios)');
-  }, [product, sourceUrl]);
+  }, [product]);
 
   const hasImage = !!sourceUrl;
   const canSave = !sourceIsPersisted && !!sourceFile && !isSaving;
