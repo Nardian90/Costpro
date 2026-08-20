@@ -24,6 +24,7 @@ import {
   Copy,
   AlertTriangle,
   Info,
+  ZoomIn,
 } from 'lucide-react';
 import { cn, formatCurrency, getProductImageUrl, resolveProductImage as utilsResolveProductImage } from '@/lib/utils';
 import { isProductIncomplete, getIncompleteSummary } from '@/lib/product-completeness';
@@ -233,7 +234,7 @@ export const CategoryChips: React.FC<{
 
 export const ProductCard: React.FC<any> = ({
   product, onEdit, onViewPrices, onDelete, onToggleActive, onPrintLabel, onClick, className, variant = 'catalog',
-  fcStatus, onViewFC, onClone
+  fcStatus, onViewFC, onClone, onImageClick
 }) => {
   const isOutOfStock = product.stock_current <= 0;
   const isLowStock = product.stock_current <= (product.min_stock || 0);
@@ -297,15 +298,34 @@ export const ProductCard: React.FC<any> = ({
     )}>
       <div className={cn(
         "rounded-xl overflow-hidden bg-background/50 flex items-center justify-center shrink-0 relative group transition-all",
-        hasImage ? "w-full aspect-square sm:aspect-video" : "w-10 h-10 self-start"
+        hasImage ? "w-full aspect-square sm:aspect-video" : "w-10 h-10 self-start",
+        hasImage && onImageClick && "cursor-zoom-in"
       )}>
         {hasImage ? (
-          <ProductImage
-            src={resolveProductImage(product)}
-            alt={product.name}
-            name={product.name}
-            className="w-full h-full"
-          />
+          <>
+            <ProductImage
+              src={resolveProductImage(product)}
+              alt={product.name}
+              name={product.name}
+              className="w-full h-full"
+            />
+            {onImageClick && (
+              <button
+                type="button"
+                onClick={(e: React.MouseEvent) => {
+                  e.stopPropagation();
+                  onImageClick(product);
+                }}
+                className="absolute inset-0 w-full h-full bg-transparent hover:bg-black/10 dark:hover:bg-white/10 transition-colors flex items-center justify-center group-hover:opacity-100 opacity-0"
+                aria-label={`Ver imagen de ${product.name}`}
+                title="Ver imagen"
+              >
+                <span className="bg-black/60 text-white rounded-full p-2 backdrop-blur-sm">
+                  <ZoomIn className="w-4 h-4" />
+                </span>
+              </button>
+            )}
+          </>
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-muted text-muted-foreground">
             <Tag className="w-5 h-5" />
@@ -408,10 +428,17 @@ export const ProductCard: React.FC<any> = ({
             </div>
             {!hasImage && (
               <button
-                onClick={() => onEdit?.(product)}
+                onClick={(e: React.MouseEvent) => {
+                  e.stopPropagation();
+                  if (onImageClick) {
+                    onImageClick(product);
+                  } else {
+                    onEdit?.(product);
+                  }
+                }}
                 className="p-2 rounded-lg bg-primary/10 text-primary hover:bg-primary hover:text-foreground transition-all active:scale-90 shadow-sm"
-                title="Adjuntar Imagen"
-                aria-label="Adjuntar imagen"
+                title="Agregar imagen"
+                aria-label="Agregar imagen"
               >
                 <Camera className="w-4 h-4" />
               </button>

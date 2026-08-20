@@ -21,6 +21,7 @@ import type { FCFilterStatus } from '@/components/views/terminal/views/catalog/C
 import CatalogProductGrid from '@/components/views/terminal/views/catalog/CatalogProductGrid';
 import EditProductModal from '@/components/views/terminal/views/catalog/EditProductModal';
 import type { EditFormState, EditVariant } from '@/components/views/terminal/views/catalog/EditProductModal';
+import { ProductImageViewerModal } from '@/components/views/terminal/views/catalog/ProductImageViewerModal';
 import DeleteProductDialog from '@/components/views/terminal/views/catalog/DeleteProductDialog';
 import BulkSelectionBar from '@/components/views/terminal/views/catalog/BulkSelectionBar';
 import { useProductFCStatus } from '@/hooks/ui/useProductFCStatus';
@@ -96,6 +97,8 @@ export default function CatalogView() {
 
   // Edit modal state
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  // Image viewer modal state (clic directo en la imagen del catálogo)
+  const [viewerProduct, setViewerProduct] = useState<Product | null>(null);
   const [editForm, setEditForm] = useState<EditFormState>({
     name: '',
     sku: '',
@@ -917,6 +920,7 @@ export default function CatalogView() {
         onEdit={handleOpenEdit}
         onToggleActive={handleToggleActive}
         onDelete={handleOpenDelete}
+        onImageClick={setViewerProduct}
         fcStatusMap={fcStatusMap}
         fcResolutionMap={fcResolutionMap}
         onViewFC={handleViewFC}
@@ -981,6 +985,14 @@ export default function CatalogView() {
           const info = fcInfoMap.get(editingProduct.id);
           if (info) handleViewFC(editingProduct, info.resolution);
         } : undefined}
+      />
+
+      {/* Product Image Viewer Modal — clic directo en la imagen del catálogo */}
+      <ProductImageViewerModal
+        product={viewerProduct}
+        open={!!viewerProduct}
+        onClose={() => setViewerProduct(null)}
+        onImageChanged={invalidateAndRefetch}
       />
 
       {/* Delete Confirmation Dialog */}

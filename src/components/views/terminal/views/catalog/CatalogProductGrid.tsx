@@ -29,6 +29,8 @@ interface CatalogProductGridProps {
   onEdit: (product: Product) => void;
   onToggleActive: (product: Product) => void;
   onDelete: (product: Product) => void;
+  /** Abre el visor/editor de imagen del producto (clic directo en la imagen). */
+  onImageClick?: (product: Product) => void;
   /** FC status map: productId → FCStatus */
   fcStatusMap?: Map<string, ProductFCStatus>;
   /** FC resolution map: productId → FCResolutionResult */
@@ -56,6 +58,7 @@ export default function CatalogProductGrid({
   onEdit,
   onToggleActive,
   onDelete,
+  onImageClick,
   fcStatusMap,
   fcResolutionMap,
   onViewFC,
@@ -103,6 +106,7 @@ export default function CatalogProductGrid({
                 onClone={onClone}
                 onDelete={onDelete}
                 onToggleActive={onToggleActive}
+                onImageClick={onImageClick}
                 fcStatus={fcStatusMap?.get(product.id)}
                 onViewFC={fcResolutionMap?.get(product.id) && onViewFC ? () => {
                   const resolution = fcResolutionMap!.get(product.id)!;
@@ -154,15 +158,35 @@ export default function CatalogProductGrid({
                         </button>
                       </td>
                       <td className="px-4 py-4">
-                        <ProductImage
-                          src={product.public_image_url || product.image_url}
-                          name={product.name}
-                          alt={product.name}
-                          width={32}
-                          height={32}
-                          className="rounded-lg border border-border"
-                          forceShow
-                        />
+                        {onImageClick ? (
+                          <button
+                            type="button"
+                            onClick={() => onImageClick(product)}
+                            className="block cursor-zoom-in hover:opacity-80 transition-opacity"
+                            aria-label={`Ver imagen de ${product.name}`}
+                            title="Ver imagen"
+                          >
+                            <ProductImage
+                              src={product.public_image_url || product.image_url}
+                              name={product.name}
+                              alt={product.name}
+                              width={32}
+                              height={32}
+                              className="rounded-lg border border-border"
+                              forceShow
+                            />
+                          </button>
+                        ) : (
+                          <ProductImage
+                            src={product.public_image_url || product.image_url}
+                            name={product.name}
+                            alt={product.name}
+                            width={32}
+                            height={32}
+                            className="rounded-lg border border-border"
+                            forceShow
+                          />
+                        )}
                       </td>
                       <td className="px-4 py-4 font-bold">
                         <div className="flex items-center gap-2 flex-wrap">
