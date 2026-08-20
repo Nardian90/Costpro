@@ -158,14 +158,9 @@ export default function CatalogProductGrid({
                         </button>
                       </td>
                       <td className="px-4 py-4">
-                        {onImageClick ? (
-                          <button
-                            type="button"
-                            onClick={() => onImageClick(product)}
-                            className="block cursor-zoom-in hover:opacity-80 transition-opacity"
-                            aria-label={`Ver imagen de ${product.name}`}
-                            title="Ver imagen"
-                          >
+                        {(() => {
+                          const hasImage = !!(product.public_image_url || product.image_url);
+                          const imgEl = (
                             <ProductImage
                               src={product.public_image_url || product.image_url}
                               name={product.name}
@@ -175,18 +170,36 @@ export default function CatalogProductGrid({
                               className="rounded-lg border border-border"
                               forceShow
                             />
-                          </button>
-                        ) : (
-                          <ProductImage
-                            src={product.public_image_url || product.image_url}
-                            name={product.name}
-                            alt={product.name}
-                            width={32}
-                            height={32}
-                            className="rounded-lg border border-border"
-                            forceShow
-                          />
-                        )}
+                          );
+                          if (hasImage && onImageClick) {
+                            return (
+                              <button
+                                type="button"
+                                onClick={() => onImageClick(product)}
+                                className="block cursor-zoom-in hover:opacity-80 transition-opacity"
+                                aria-label={`Ver imagen de ${product.name}`}
+                                title="Ver imagen"
+                              >
+                                {imgEl}
+                              </button>
+                            );
+                          }
+                          if (!hasImage && onImageClick) {
+                            // Sin imagen: botón "Agregar imagen" abre el visor (que permite subir)
+                            return (
+                              <button
+                                type="button"
+                                onClick={() => onImageClick(product)}
+                                className="block cursor-pointer hover:opacity-80 transition-opacity"
+                                aria-label={`Agregar imagen a ${product.name}`}
+                                title="Agregar imagen"
+                              >
+                                {imgEl}
+                              </button>
+                            );
+                          }
+                          return imgEl;
+                        })()}
                       </td>
                       <td className="px-4 py-4 font-bold">
                         <div className="flex items-center gap-2 flex-wrap">

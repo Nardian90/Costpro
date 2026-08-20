@@ -490,7 +490,12 @@ export function ProductImageViewerModal({
   return (
     <BaseModal
       open={open}
-      onOpenChange={(o) => { if (!o) onClose(); }}
+      onOpenChange={(o) => {
+        // Opción A: bloquear cierre del modal mientras se guarda/elimina.
+        // Esto previene estados React inconsistentes y uploads silenciosos.
+        if (!o && (isSavingRef.current || isDeletingRef.current)) return;
+        if (!o) onClose();
+      }}
       title={product ? `Imagen — ${product.name}` : 'Imagen del producto'}
       description={
         mode === 'crop'
@@ -498,6 +503,7 @@ export function ProductImageViewerModal({
           : 'Visualiza, recorta o cambia la imagen del producto'
       }
       maxWidth="sm:max-w-3xl"
+      showCloseButton={!isSaving && !isDeleting}
       footer={
         <div className="flex flex-wrap items-center justify-end gap-2 w-full">
           {mode === 'crop' ? (
@@ -517,7 +523,7 @@ export function ProductImageViewerModal({
                   <RotateCcw className="w-4 h-4 mr-1" /> Restaurar original
                 </Button>
               )}
-              <Button variant="ghost" onClick={onClose} disabled={isSaving}>
+              <Button variant="ghost" onClick={onClose} disabled={isSaving || isDeleting}>
                 <X className="w-4 h-4 mr-1" /> Cerrar
               </Button>
               {hasImage && (
