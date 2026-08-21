@@ -310,6 +310,29 @@ export default function InventoryView() {
         }
     };
 
+    // FIX: Auto-load next pages when filteredProducts is empty but hasNextPage is true.
+    // This handles the case where the first N pages have stock=0 products and the
+    // 'with_stock' filter hides them all. Without this, the user sees "Inventario Vacío"
+    // even though products with stock exist in later pages.
+    const autoLoadRef = useRef(false);
+    useEffect(() => {
+        if (
+            inventoryTab === 'stock' &&
+            filteredProducts.length === 0 &&
+            hasNextPage &&
+            !isFetchingNextPage &&
+            !isLoading &&
+            !autoLoadRef.current
+        ) {
+            autoLoadRef.current = true;
+            fetchNextPage();
+        }
+        // Reset the guard when products appear or when we run out of pages
+        if (filteredProducts.length > 0 || !hasNextPage) {
+            autoLoadRef.current = false;
+        }
+    }, [filteredProducts.length, hasNextPage, isFetchingNextPage, isLoading, inventoryTab, fetchNextPage]);
+
     const handleExportExcel = useCallback(async () => {
         if (products.length === 0) {
             toast.error('No hay productos para exportar');

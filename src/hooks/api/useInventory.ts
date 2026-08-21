@@ -44,7 +44,11 @@ export function useSuspenseInventory(storeId?: string | null, searchTerm = '', c
       );
 
       const products = validatedData || [];
-      const total = products.length > 0 ? products[0].total_count || 0 : 0;
+      // FIX: el RPC en producción devuelve `total` (no `total_count`).
+      // Leemos ambos para compatibilidad con versiones nuevas y antiguas.
+      const total = products.length > 0
+        ? (products[0] as any).total_count || (products[0] as any).total || 0
+        : 0;
       const nextOffset = (pageParam as number + products.length) < total ? pageParam as number + products.length : null;
 
       return { products, total, nextOffset };
@@ -79,7 +83,11 @@ export function useInventory(storeId?: string | null, searchTerm = '', category 
       );
 
       const products = validatedData || [];
-      const total = products.length > 0 ? products[0].total_count || 0 : 0;
+      // FIX: el RPC en producción devuelve `total` (no `total_count`).
+      // Leemos ambos para compatibilidad con versiones nuevas y antiguas.
+      const total = products.length > 0
+        ? (products[0] as any).total_count || (products[0] as any).total || 0
+        : 0;
       const nextOffset = (pageParam as number + products.length) < total ? pageParam as number + products.length : null;
 
       return { products, total, nextOffset };

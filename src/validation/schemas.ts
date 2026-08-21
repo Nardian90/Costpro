@@ -484,7 +484,10 @@ export const transactionItemSchema = z.object({
 });
 
 export const paginatedProductSchema = productSchema.extend({
+  // FIX: el RPC en producción devuelve `total` (no `total_count`).
+  // Aceptamos ambos para compatibilidad con versiones nuevas y antiguas.
   total_count: z.number().optional(),
+  total: z.coerce.number().optional(),
   is_complete: z.boolean().optional().default(true),
 });
 
