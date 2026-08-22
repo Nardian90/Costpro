@@ -291,9 +291,15 @@ export const updateProductInputSchema = productSchema.partial().omit({
   has_movements: true,
 }).refine(
   // Q6: prevenir precio < costo (margen negativo en edición)
+  // FIX: Solo validar cuando el precio está en CUP. Si el precio está en
+  // USD/EUR/MLC, la comparación numérica con cost_price (que está en CUP)
+  // es incorrecta y produciría falsos positivos.
   (data) => {
     // Solo validar si ambos campos están presentes en el update
     if (data.cost_price === undefined || data.price === undefined) return true;
+    // Si el precio está en moneda extranjera, no comparar con costo en CUP
+    const currency = data.price_currency || 'CUP';
+    if (currency !== 'CUP') return true;
     return data.price >= data.cost_price;
   },
   { message: "El precio de venta no puede ser menor que el costo (margen negativo)", path: ["price"] }
