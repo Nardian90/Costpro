@@ -2,6 +2,7 @@ import { Metadata } from 'next';
 import { notFound, redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 import { createServerClient } from '@/lib/supabaseClient';
+import { getSupabaseAdminSafe } from '@/lib/supabase-admin';
 import { headers } from 'next/headers';
 import { StorefrontPage } from './StorefrontPage';
 import { StorefrontErrorBoundary } from '@/components/StorefrontErrorBoundary';
@@ -138,19 +139,53 @@ export default async function TiendaPublicPage({ params }: PageProps) {
 
   // Single fetch: RPC returns all product fields with accurate stock_current
   // (computed from stock_movements in real-time), avoiding a duplicate query.
+  // FIX: Use service_role client because get_paginated_products requires
+  // auth.uid() — the anon client (createServerClient) has no auth context,
+  // causing the RPC to throw "Authentication required" silently.
   let rpcProducts: Array<Record<string, unknown>> = [];
   try {
-    const { data, error: rpcError } = await supabase.rpc('get_paginated_products', {
-      p_limit: 1000,
-      p_offset: 0,
-      p_store_id: store.id,
-      p_search_term: '',
-      p_category: ''
-    });
-    if (rpcError) throw rpcError;
-    rpcProducts = (data || []) as Array<Record<string, unknown>>;
+    const adminClient = getSupabaseAdminSafe();
+    if (adminClient) {
+      const { data, error: rpcError } = await adminClient.rpc('get_paginated_products', {
+        p_limit: 1000,
+        p_offset: 0,
+        p_store_id: store.id,
+        p_search_term: '',
+        p_category: ''
+      });
+      if (rpcError) throw rpcError;
+      rpcProducts = (data || []) as Array<Record<string, unknown>>;
+    } else {
+      // Fallback: direct query with anon client (no auth needed for public products)
+      const { data: fallbackData, error: fallbackErr } = await supabase
+        .from('products')
+        .select('id, name, description, sku, price, price_currency, image_url, public_image_url, category, unit_of_measure, price_visible, stock_visible, on_promotion, visible_en_tienda, is_active, cost_price, cost_average, min_stock, store_id, created_at, updated_at, barcode, barcode_type')
+        .eq('store_id', store.id)
+        .eq('is_active', true)
+        .eq('visible_en_tienda', true)
+        .order('name');
+      if (fallbackErr) throw fallbackErr;
+      // Compute stock_current from inventory
+      const productIds = (fallbackData || []).map(p => p.id);
+      if (productIds.length > 0) {
+        const { data: invData } = await supabase
+          .from('inventory')
+          .select('product_id, quantity')
+          .eq('store_id', store.id)
+          .in('product_id', productIds);
+        const invMap = new Map<string, number>();
+        for (const inv of (invData || [])) {
+          invMap.set(inv.product_id, Number(inv.quantity));
+        }
+        rpcProducts = (fallbackData || []).map(p => ({
+          ...p,
+          stock_current: invMap.get(p.id) ?? 0,
+          has_movements: false,
+        }));
+      }
+    }
   } catch (e) {
-    console.warn('[Tienda] RPC product fetch failed:', e);
+    console.warn('[Tienda] Product fetch failed:', e);
   }
 
   // Filter for storefront-visible, active products and sort by name
