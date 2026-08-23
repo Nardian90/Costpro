@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils';
 import { StorefrontConfigPanel } from '@/components/views/terminal/views/stores/StorefrontConfigPanel';
 import { CatalogExportModal } from '@/components/views/terminal/views/pos/CatalogExportModal';
 import { useCatalogExport } from '@/hooks/logic/useCatalogExport';
+import type { BrandConfig } from '@/components/views/terminal/views/pos/catalog-templates/types';
 import type { Store, StoreTemplate, Product } from '@/types';
 
 /**
@@ -51,7 +52,7 @@ export default function StorefrontConfigView() {
       try {
         const { data } = await supabase
           .from('products')
-          .select('id, name, description, sku, price, price_currency, image_url, public_image_url, category, unit_of_measure, cost_price, stock_current, min_stock, store_id, is_active, visible_en_tienda, created_at, updated_at, barcode, barcode_type')
+          .select('id, name, description, sku, price, price_currency, image_url, public_image_url, category, unit_of_measure, cost_price, stock_current, min_stock, store_id, is_active, visible_en_tienda, price_visible, stock_visible, on_promotion, created_at, updated_at, barcode, barcode_type')
           .eq('store_id', activeStoreId)
           .eq('is_active', true)
           .eq('visible_en_tienda', true)
@@ -247,8 +248,70 @@ export default function StorefrontConfigView() {
         templates={templates}
         organized={organizedProducts}
         isExporting={false}
-        onExport={(templateId, themeColor, avatarPath) => {
-          exportCatalog(templateId, store?.name || 'Tienda', themeColor, avatarPath);
+        onExport={async (templateId: string, themeColor?: [number, number, number], avatarPath?: string) => {
+          // Build BrandConfig from the REAL store data — not just store.name
+          const brand: BrandConfig = {
+            name: store.name || 'Tienda',
+            phone: store.phone || undefined,
+            email: store.email || undefined,
+            address: store.address || undefined,
+            whatsapp: (store as any).whatsapp_group_url || undefined,
+            website: store.slug ? `${typeof window !== 'undefined' ? window.location.origin : 'https://costpro4.vercel.app'}/tienda/${store.slug}` : undefined,
+            logo: store.logo_url || undefined,
+            primaryColor: [21, 128, 61], // green-700 fallback; overridden by themeColor below
+          };
+          // Override primary color with theme picker selection
+          if (themeColor) brand.primaryColor = themeColor;
+          if (avatarPath) brand.avatar = avatarPath;
+
+          // Use the hook's exportCatalog but pass the pre-built brand
+          const config = templates.find((t: any) => t.id === templateId);
+          if (!config) { toast.error('Plantilla no encontrada'); return; }
+
+          const toastId = toast.loading(`Generando ${config.name}...`);
+          try {
+            const { organizeProducts } = await import('@/components/views/terminal/views/pos/catalog-templates/shared');
+            const catalogProducts = storefrontProducts.map((p: Product) => ({
+              id: p.id, name: p.name, sku: p.sku ?? undefined,
+              price: (p as any).price_visible === false ? 0 : (p.price || 0),
+              price_currency: (p as any).price_currency ?? undefined,
+              price_visible: (p as any).price_visible ?? undefined,
+              stock_visible: (p as any).stock_visible ?? undefined,
+              on_promotion: (p as any).on_promotion ?? undefined,
+              cost_price: p.cost_price ?? undefined,
+              stock_current: p.stock_current ?? undefined,
+              public_image_url: p.public_image_url ?? undefined,
+              image_url: p.image_url ?? undefined,
+              category: p.category ?? undefined,
+              description: p.description ?? undefined,
+              unit_of_measure: p.unit_of_measure ?? undefined,
+            }));
+            const organized = organizeProducts(catalogProducts);
+            if (organized.total === 0) { toast.error('No hay productos para exportar', { id: toastId }); return; }
+
+            const RENDERERS: Record<string, any> = {};
+            if (templateId === 'whatsapp') {
+              const m = await import('@/components/views/terminal/views/pos/catalog-templates/WhatsAppTemplate');
+              RENDERERS.whatsapp = m.renderWhatsAppTemplate;
+            } else if (templateId === 'instagram') {
+              const m = await import('@/components/views/terminal/views/pos/catalog-templates/InstagramTemplate');
+              RENDERERS.instagram = m.renderInstagramTemplate;
+            } else if (templateId === 'price-list') {
+              const m = await import('@/components/views/terminal/views/pos/catalog-templates/PriceListTemplate');
+              RENDERERS['price-list'] = m.renderPriceListTemplate;
+            } else if (templateId === 'elegant') {
+              const m = await import('@/components/views/terminal/views/pos/catalog-templates/ElegantCatalogTemplate');
+              RENDERERS.elegant = m.renderElegantCatalogTemplate;
+            }
+
+            const renderer = RENDERERS[templateId];
+            if (!renderer) { toast.error('Renderizador no disponible', { id: toastId }); return; }
+            await renderer(catalogProducts, brand);
+            toast.success(`${config.name} generado correctamente`, { id: toastId });
+          } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : 'Error al generar el catálogo';
+            toast.error(message, { id: toastId });
+          }
         }}
       />
     </div>

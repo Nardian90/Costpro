@@ -12,6 +12,10 @@ export interface CatalogProduct {
   name: string;
   sku?: string;
   price: number;
+  price_currency?: string;
+  price_visible?: boolean;
+  stock_visible?: boolean;
+  on_promotion?: boolean;
   cost_price?: number;
   stock_current?: number;
   public_image_url?: string;
