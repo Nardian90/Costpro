@@ -83,7 +83,8 @@ export default function InventoryCardView({
                                     <ProductCard
                                         product={product}
                                         variant="inventory"
-                                        onEdit={() => (onEdit ?? onAdjust)?.(product)}
+                                        onAdjust={onAdjust ? (p: Product) => onAdjust(p) : undefined}
+                                        onEdit={onEdit ? (p: Product) => onEdit(p) : undefined}
                                     />
                                     {/* FC status badge */}
                                     {fcStatus && (

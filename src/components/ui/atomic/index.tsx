@@ -234,7 +234,7 @@ export const CategoryChips: React.FC<{
 
 export const ProductCard: React.FC<any> = ({
   product, onEdit, onViewPrices, onDelete, onToggleActive, onPrintLabel, onClick, className, variant = 'catalog',
-  fcStatus, onViewFC, onClone, onImageClick
+  fcStatus, onViewFC, onClone, onImageClick, onAdjust
 }) => {
   const isOutOfStock = product.stock_current <= 0;
   const isLowStock = product.stock_current <= (product.min_stock || 0);
@@ -484,11 +484,26 @@ export const ProductCard: React.FC<any> = ({
 
         <div className="flex flex-col gap-2">
           {variant === 'inventory' ? (
-             <PrimaryButton
-                label="Ajustar Stock"
-                icon={Edit}
-                onClick={() => onEdit?.(product)}
-             />
+             <>
+               {/* SEPARATION FIX: "Ajustar" opens the stock/cost adjustment modal,
+                   "Editar" opens EditProductModal. They are distinct actions. */}
+               <div className="flex gap-2">
+                 <PrimaryButton
+                    label="Ajustar"
+                    icon={Edit}
+                    onClick={() => onAdjust?.(product)}
+                    className="flex-1"
+                 />
+                 {onEdit && (
+                   <SecondaryButton
+                      label="Editar"
+                      icon={Edit}
+                      onClick={() => onEdit(product)}
+                      className="flex-1"
+                   />
+                 )}
+               </div>
+             </>
           ) : (
             <>
               {onEdit && (
