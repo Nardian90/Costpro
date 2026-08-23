@@ -1028,10 +1028,6 @@ export default function CatalogView() {
         onCreateProduct={handleOpenCreate}
         pageSize={pageSize}
         onPageSizeChange={setPageSize}
-        stockFilter={stockFilter}
-        onStockFilterChange={setStockFilter}
-        activeFilter={activeFilter}
-        onActiveFilterChange={setActiveFilter}
         savedFilters={savedFilters}
         onSaveFilter={saveCurrentFilter}
         onApplyFilter={(name) => {
@@ -1039,12 +1035,6 @@ export default function CatalogView() {
           if (filter) applySavedFilter(filter);
         }}
         onDeleteFilter={deleteSavedFilter}
-        categories={categories}
-        selectedCategories={selectedCategories}
-        onCategoryToggle={toggleCategory}
-        onCategoryChange={(cat) => {
-          setSelectedCategories(cat ? new Set([cat]) : new Set());
-        }}
       />
 
       {/* Product Grid / Table */}
