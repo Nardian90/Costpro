@@ -1,50 +1,38 @@
 'use client';
 
 /**
- * PanImageViewer
- *
- * Visor de imagen con soporte de arrastre/pan para el modal de detalle
+ * PanImageViewer — visor de imagen con zoom y pan para el modal de detalle
  * de producto en la vitrina pública.
  *
  * Características:
- *   - Estado inicial: imagen centrada, sin zoom, con object-fit: contain.
- *   - Arrastre con pointer events (mouse, touch, stylus) — una sola API.
- *   - Bounds: la imagen no puede desaparecer completamente del viewport.
- *   - Cursor indicando que se puede arrastrar (grab / grabbing).
- *   - Reset automático al cambiar la imagen.
- *   - Sin scroll accidental de la página (preventDefault en pointermove).
- *   - Sin selección de texto durante el arrastre (user-select: none).
- *   - No interfiere con el cierre del modal (clic fuera, botón X).
- *   - Sin zoom añadido — la imagen ya está completa y el pan es suficiente
- *     para explorar partes ocultas en imágenes verticales/panorámicas.
- *
- * Por qué NO zoom:
- *   - El modal de detalle usa object-fit: contain que ya muestra toda la
- *     imagen dentro del viewport. Las imágenes que "no caben" son aquellas
- *     cuyo aspect ratio difiere del viewport — pero contain las encaja
- *     totalmente (con whitespace). El problema reportado por el usuario
- *     es imágenes con contenido desplazado dentro del encuadre inicial.
- *   - El pan resuelve ese caso: el usuario arrastra para ver otras zonas.
- *   - Añadir zoom multiplicaría la complejidad (otro gesto, otros bounds,
- *     botones +/-, etc.) sin aportar valor al caso de uso real.
+ *   - Estado inicial: imagen centrada, zoom=1 (100%), object-fit: contain.
+ *   - Zoom in/out con botones +/− y rueda del mouse (Ctrl+rueda).
+ *   - Pan con pointer events (mouse, touch, stylus) — una sola API.
+ *   - Bounds recalculados dinámicamente según zoom, viewport, e imagen.
+ *   - Cursor: grab/grabbing cuando hay pan disponible; default cuando no.
+ *   - Reset con botón o doble-clic.
+ *   - Reset automático al cambiar de producto (src).
+ *   - Sin scroll accidental de la página (touch-action: none).
+ *   - Sin selección de texto (user-select: none).
  *
  * Uso:
- *   <PanImageViewer src={url} alt={name} className="aspect-[4/3] w-full" />
- *
- * El componente renderiza un div (viewport) con overflow-hidden que
- * contiene un <img> posicionada absolutamente. El usuario arrastra la
- * imagen dentro del viewport.
+ *   <PanImageViewer src={url} alt={name} aspect="4/3" className="w-full" />
  */
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { ZoomIn, ZoomOut, RotateCcw } from 'lucide-react';
 
 interface PanImageViewerProps {
   src: string;
   alt: string;
   className?: string;
-  /** Aspect ratio del viewport. Default: '4/3'. */
   aspect?: string;
 }
+
+const MIN_ZOOM = 1;   // 100%
+const MAX_ZOOM = 3;   // 300%
+const ZOOM_STEP = 0.25; // 25%
+const WHEEL_ZOOM_STEP = 0.1; // 10% per wheel notch
 
 interface DragState {
   pointerId: number;
@@ -63,40 +51,32 @@ export default function PanImageViewer({
   const viewportRef = useRef<HTMLDivElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
   const [loaded, setLoaded] = useState(false);
+  const [zoom, setZoom] = useState(1);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const [dragging, setDragging] = useState(false);
   const dragStateRef = useRef<DragState | null>(null);
 
-  // Reset offset when src changes (new product)
-  useEffect(() => {
+  // Reset when src changes
+  const reset = useCallback(() => {
+    setZoom(1);
     setOffset({ x: 0, y: 0 });
+  }, []);
+
+  useEffect(() => {
     setLoaded(false);
-  }, [src]);
+    reset();
+  }, [src, reset]);
 
   /**
-   * Calcula los límites máximos de desplazamiento permitidos.
+   * Calcula los límites máximos de desplazamiento para el zoom actual.
    *
-   * La imagen se muestra con object-fit: contain — esto significa que la
-   * imagen se escala para caber íntegramente dentro del viewport, respetando
-   * su aspect ratio. Si la imagen es más ancha que alta y el viewport es
-   * más alto que ancho, la imagen ocupa todo el ancho y queda whitespace
-   * arriba/abajo. Viceversa para imágenes verticales.
+   * Con object-contain a zoom=1, la imagen cabe dentro del viewport.
+   * A zoom>1, la imagen crece más allá del viewport y el pan permite
+   * explorar las zonas ocultas.
    *
-   * Con contain, NUNCA hay contenido fuera del viewport — todo el contenido
-   * de la imagen es visible. ¿Por qué entonces necesitamos pan?
-   *
-   * Realidad: en algunos navegadores (especialmente móviles), y cuando la
-   * imagen tiene un aspect muy diferente al viewport, el centrado puede
-   * dejar zonas relevantes cerca de los bordes que son difíciles de ver
-   * sin hacer scroll en el modal completo. El pan permite al usuario
-   * "re-centrar" manualmente.
-   *
-   * También: si en el futuro se añade zoom, los bounds aquí calculados
-   * seguirán siendo válidos (multiplicados por el factor de zoom).
-   *
-   * Lógica: la imagen puede desplazarse hasta que cualquiera de sus bordes
-   * alcance el borde opuesto del viewport. Es decir: como mínimo, la mitad
-   * de la imagen (o del viewport, el menor) debe permanecer visible.
+   * Lógica: maxX = (renderedW * zoom - vw) / 2
+   *   - Si el resultado es <= 0, no hay contenido oculto → pan innecesario.
+   *   - Pero permitimos un pequeño slack (5% del viewport) para feedback táctil.
    */
   const getBounds = useCallback(() => {
     const viewport = viewportRef.current;
@@ -105,38 +85,83 @@ export default function PanImageViewer({
 
     const vw = viewport.clientWidth;
     const vh = viewport.clientHeight;
-    // naturalWidth/naturalHeight dan las dimensiones reales de la imagen
-    // sin escala. Pero la imagen se está renderizando con object-contain,
-    // así que las dimensiones renderizadas se calculan así:
     const nw = img.naturalWidth || vw;
     const nh = img.naturalHeight || vh;
 
-    // Escala para que la imagen quepa con contain (respeta aspect ratio)
-    const scale = Math.min(vw / nw, vh / nh);
-    const renderedW = nw * scale;
-    const renderedH = nh * scale;
+    // Escala base (contain) — la imagen cabe dentro del viewport
+    const baseScale = Math.min(vw / nw, vh / nh);
+    // Dimensiones renderizadas con zoom aplicado
+    const renderedW = nw * baseScale * zoom;
+    const renderedH = nh * baseScale * zoom;
 
-    // Si la imagen renderizada es menor o igual al viewport, no hay
-    // contenido que explorar — el pan no debería permitir movimiento.
-    // Pero permitimos un pequeño margen (10% del viewport) para que el
-    // usuario perciba feedback al arrastrar imágenes que ya caben.
-    const slack = 0.1;
+    const slack = 0.05;
     const maxX = renderedW > vw ? (renderedW - vw) / 2 : (vw * slack) / 2;
     const maxY = renderedH > vh ? (renderedH - vh) / 2 : (vh * slack) / 2;
 
     return { maxX, maxY };
+  }, [zoom]);
+
+  // Clamp offset to current bounds
+  const clampOffset = useCallback((x: number, y: number) => {
+    const { maxX, maxY } = getBounds();
+    return {
+      x: Math.max(-maxX, Math.min(maxX, x)),
+      y: Math.max(-maxY, Math.min(maxY, y)),
+    };
+  }, [getBounds]);
+
+  // Zoom helpers — conservan el centro del viewport
+  const zoomIn = useCallback(() => {
+    setZoom(z => {
+      const newZoom = Math.min(MAX_ZOOM, Math.round((z + ZOOM_STEP) * 100) / 100);
+      return newZoom;
+    });
   }, []);
 
-  const handlePointerDown = useCallback((e: React.PointerEvent<HTMLImageElement>) => {
-    // Solo botón primario (left click o touch)
-    if (e.button !== 0 && e.pointerType === 'mouse') return;
+  const zoomOut = useCallback(() => {
+    setZoom(z => {
+      const newZoom = Math.max(MIN_ZOOM, Math.round((z - ZOOM_STEP) * 100) / 100);
+      if (newZoom === 1) {
+        // Al volver a 100%, resetear offset
+        setOffset({ x: 0, y: 0 });
+      }
+      return newZoom;
+    });
+  }, []);
 
+  const resetZoom = useCallback(() => {
+    setZoom(1);
+    setOffset({ x: 0, y: 0 });
+  }, []);
+
+  // Cuando cambia el zoom, re-clamp el offset para que no salga de bounds
+  useEffect(() => {
+    setOffset(prev => clampOffset(prev.x, prev.y));
+  }, [zoom, clampOffset]);
+
+  // Wheel zoom (Ctrl+rueda o rueda directa sobre el visor)
+  const handleWheel = useCallback((e: React.WheelEvent<HTMLDivElement>) => {
+    // Solo zoom si Ctrl está presionado (evita conflicto con scroll del modal)
+    if (!e.ctrlKey && !e.metaKey) return;
     e.preventDefault();
     e.stopPropagation();
+    if (e.deltaY < 0) {
+      setZoom(z => Math.min(MAX_ZOOM, Math.round((z + WHEEL_ZOOM_STEP) * 100) / 100));
+    } else {
+      setZoom(z => {
+        const nz = Math.max(MIN_ZOOM, Math.round((z - WHEEL_ZOOM_STEP) * 100) / 100);
+        if (nz === 1) setOffset({ x: 0, y: 0 });
+        return nz;
+      });
+    }
+  }, []);
 
-    const img = e.currentTarget;
-    img.setPointerCapture(e.pointerId);
-
+  // Pan handlers
+  const handlePointerDown = useCallback((e: React.PointerEvent<HTMLImageElement>) => {
+    if (e.button !== 0 && e.pointerType === 'mouse') return;
+    e.preventDefault();
+    e.stopPropagation();
+    e.currentTarget.setPointerCapture(e.pointerId);
     dragStateRef.current = {
       pointerId: e.pointerId,
       startX: e.clientX,
@@ -150,48 +175,46 @@ export default function PanImageViewer({
   const handlePointerMove = useCallback((e: React.PointerEvent<HTMLImageElement>) => {
     const drag = dragStateRef.current;
     if (!drag || drag.pointerId !== e.pointerId) return;
-
     e.preventDefault();
     e.stopPropagation();
-
     const dx = e.clientX - drag.startX;
     const dy = e.clientY - drag.startY;
-
-    const { maxX, maxY } = getBounds();
-    const newX = Math.max(-maxX, Math.min(maxX, drag.originX + dx));
-    const newY = Math.max(-maxY, Math.min(maxY, drag.originY + dy));
-
-    setOffset({ x: newX, y: newY });
-  }, [getBounds]);
+    const clamped = clampOffset(drag.originX + dx, drag.originY + dy);
+    setOffset(clamped);
+  }, [clampOffset]);
 
   const handlePointerUp = useCallback((e: React.PointerEvent<HTMLImageElement>) => {
     const drag = dragStateRef.current;
     if (!drag || drag.pointerId !== e.pointerId) return;
-
     e.preventDefault();
     e.stopPropagation();
-
     try { e.currentTarget.releasePointerCapture(e.pointerId); } catch {}
     dragStateRef.current = null;
     setDragging(false);
   }, []);
 
-  // Reset on escape
   const handleDoubleClick = useCallback((e: React.MouseEvent<HTMLImageElement>) => {
     e.preventDefault();
     e.stopPropagation();
-    setOffset({ x: 0, y: 0 });
-  }, []);
+    resetZoom();
+  }, [resetZoom]);
+
+  const zoomPercent = Math.round(zoom * 100);
+  const canPan = zoom > 1;
 
   return (
     <div
       ref={viewportRef}
       className={`relative overflow-hidden bg-muted ${className || ''}`}
       style={{ aspectRatio: aspect.replace('/', ' / ') }}
+      onWheel={handleWheel}
     >
+      {/* Loading skeleton */}
       {!loaded && (
         <div className="absolute inset-0 animate-pulse bg-muted/50" />
       )}
+
+      {/* The image — positioned absolute, transformed with translate+scale */}
       <img
         ref={imgRef}
         src={src}
@@ -206,12 +229,58 @@ export default function PanImageViewer({
         onDoubleClick={handleDoubleClick}
         className={`absolute inset-0 w-full h-full object-contain transition-opacity duration-300 select-none ${loaded ? 'opacity-100' : 'opacity-0'}`}
         style={{
-          transform: `translate(${offset.x}px, ${offset.y}px)`,
-          cursor: dragging ? 'grabbing' : 'grab',
-          touchAction: 'none', // CRITICAL: prevents browser touch gestures (scroll/zoom) from interfering
+          transform: `translate(${offset.x}px, ${offset.y}px) scale(${zoom})`,
+          cursor: canPan ? (dragging ? 'grabbing' : 'grab') : 'default',
+          touchAction: 'none',
           willChange: 'transform',
+          transformOrigin: 'center center',
         }}
       />
+
+      {/* Zoom controls — positioned bottom-right, semi-transparent, compact */}
+      {loaded && (
+        <div
+          className="absolute bottom-2 right-2 flex items-center gap-1 bg-black/60 backdrop-blur-sm rounded-lg p-1 z-10"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <button
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); zoomOut(); }}
+            disabled={zoom <= MIN_ZOOM}
+            className="w-7 h-7 flex items-center justify-center text-white hover:bg-white/20 rounded disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+            aria-label="Alejar"
+            title="Alejar"
+          >
+            <ZoomOut className="w-4 h-4" />
+          </button>
+          <button
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); resetZoom(); }}
+            className="px-2 h-7 flex items-center justify-center text-white text-xs font-bold hover:bg-white/20 rounded transition-colors min-w-[3rem]"
+            aria-label="Resetear zoom"
+            title="Resetear zoom"
+          >
+            {zoomPercent}%
+          </button>
+          <button
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); zoomIn(); }}
+            disabled={zoom >= MAX_ZOOM}
+            className="w-7 h-7 flex items-center justify-center text-white hover:bg-white/20 rounded disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+            aria-label="Acercar"
+            title="Acercar"
+          >
+            <ZoomIn className="w-4 h-4" />
+          </button>
+          {zoom !== 1 && (
+            <button
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); resetZoom(); }}
+              className="w-7 h-7 flex items-center justify-center text-white hover:bg-white/20 rounded transition-colors"
+              aria-label="Resetear"
+              title="Resetear"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 }
