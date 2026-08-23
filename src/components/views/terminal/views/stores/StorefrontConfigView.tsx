@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils';
 import { StorefrontConfigPanel } from '@/components/views/terminal/views/stores/StorefrontConfigPanel';
 import { CatalogExportModal } from '@/components/views/terminal/views/pos/CatalogExportModal';
 import { useCatalogExport } from '@/hooks/logic/useCatalogExport';
+import { getSupabaseUrl } from '@/lib/utils';
 import type { BrandConfig } from '@/components/views/terminal/views/pos/catalog-templates/types';
 import type { Store, StoreTemplate, Product } from '@/types';
 
@@ -57,7 +58,17 @@ export default function StorefrontConfigView() {
           .eq('is_active', true)
           .eq('visible_en_tienda', true)
           .order('name');
-        if (!cancelled && data) setStorefrontProducts(data as Product[]);
+        if (!cancelled && data) {
+          // CRITICAL: image_url in BD is a FILENAME, not a full URL.
+          // The catalog templates call fetch(url) which needs an absolute URL.
+          // useProducts.ts (POS) already does this transformation via getSupabaseUrl().
+          // We must do the same here so the PDF/JPG templates can load images.
+          const productsWithUrls = (data as Product[]).map(p => ({
+            ...p,
+            public_image_url: p.image_url ? getSupabaseUrl('product-images', p.image_url) : null,
+          }));
+          setStorefrontProducts(productsWithUrls);
+        }
       } catch { /* silent */ }
     })();
     return () => { cancelled = true; };
@@ -273,7 +284,9 @@ export default function StorefrontConfigView() {
             const { organizeProducts } = await import('@/components/views/terminal/views/pos/catalog-templates/shared');
             const catalogProducts = storefrontProducts.map((p: Product) => ({
               id: p.id, name: p.name, sku: p.sku ?? undefined,
-              price: (p as any).price_visible === false ? 0 : (p.price || 0),
+              // price_visible: if false, set price to -1 to signal "hidden" to renderers
+              // (renderers that check price > 0 will skip it; -1 is NOT a valid price)
+              price: (p as any).price_visible === false ? -1 : (p.price || 0),
               price_currency: (p as any).price_currency ?? undefined,
               price_visible: (p as any).price_visible ?? undefined,
               stock_visible: (p as any).stock_visible ?? undefined,
