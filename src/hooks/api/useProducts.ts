@@ -188,6 +188,51 @@ export function useUpdateProduct() {
         .update(updates)
         .eq('id', id));
     },
+    // HARDENING-CATALOG-EDIT: optimistic update to prevent stale-cache UX bug.
+    //
+    // PROBLEM: After PATCH returned 200, onSuccess called invalidateQueries.
+    // But invalidateQueries only marks the cache as stale — it does NOT
+    // immediately replace cached data. The background refetch is async and
+    // may not complete before the user reopens the EditProductModal.
+    // When the user reopened the modal, handleOpenEdit(product) used the
+    // OLD cached product object, so the form showed the OLD name even
+    // though the BD had the NEW name. The user saw "Guardado correctamente"
+    // but the modal showed the old value → perceived as "didn't persist".
+    //
+    // FIX: onMutate cancels outgoing refetches, snapshots the current cache,
+    // and immediately updates ALL cached 'products' queries with the new
+    // values. If the PATCH fails, onError rolls back to the snapshot.
+    // This way, when the user reopens the modal, handleOpenEdit(product)
+    // gets the UPDATED product from cache, not the stale one.
+    onMutate: async ({ id, ...updates }) => {
+      // Cancel any outgoing refetches so they don't overwrite our optimistic update
+      await queryClient.cancelQueries({ queryKey: ['products'] });
+
+      // Snapshot all cached 'products' queries (there can be multiple: different store/search/category combos)
+      const previousDataMap = new Map<unknown, unknown>();
+      const queries = queryClient.getQueriesData<unknown[]>({ queryKey: ['products'] });
+      for (const [queryKey, data] of queries) {
+        if (!Array.isArray(data)) continue;
+        previousDataMap.set(queryKey, data);
+        // Replace the matching product in this cache entry with the updated fields
+        const newData = data.map((p: any) =>
+          p?.id === id ? { ...p, ...Object.fromEntries(
+            Object.entries(updates).filter(([_, v]) => v !== undefined)
+          ) } : p
+        );
+        queryClient.setQueryData(queryKey, newData);
+      }
+
+      return { previousDataMap };
+    },
+    onError: (err, _variables, context) => {
+      // Rollback on error: restore the previous cache state
+      if (context?.previousDataMap) {
+        for (const [queryKey, data] of context.previousDataMap) {
+          (queryClient as any).setQueryData(queryKey, data);
+        }
+      }
+    },
     onSuccess: async (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
       queryClient.invalidateQueries({ queryKey: ['inventory'] });
