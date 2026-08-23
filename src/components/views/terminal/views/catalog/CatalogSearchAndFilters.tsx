@@ -40,6 +40,9 @@ interface CatalogSearchAndFiltersProps {
   activeFilter?: 'all' | 'active' | 'inactive';
   onActiveFilterChange?: (v: 'all' | 'active' | 'inactive') => void;
   onToggleIncomplete?: () => void;
+  /** External control of the filters modal open state */
+  filtersOpen?: boolean;
+  onFiltersOpenChange?: (open: boolean) => void;
 }
 
 const FC_FILTER_OPTIONS: Array<{ value: FCFilterStatus; label: string; color: string }> = [
@@ -72,8 +75,12 @@ export default function CatalogSearchAndFilters({
   fcPendienteCount,
   fcSinFCCount,
   fcCoverage,
+  filtersOpen: externalFiltersOpen,
+  onFiltersOpenChange,
 }: CatalogSearchAndFiltersProps) {
-  const [filtersOpen, setFiltersOpen] = React.useState(false);
+  const [internalFiltersOpen, setInternalFiltersOpen] = React.useState(false);
+  const filtersOpen = externalFiltersOpen ?? internalFiltersOpen;
+  const setFiltersOpen = onFiltersOpenChange ?? setInternalFiltersOpen;
   const hasFCData = fcCoverage && fcCoverage.total > 0;
   const isFCFiltering = fcFilter !== 'all';
 
@@ -145,77 +152,9 @@ export default function CatalogSearchAndFilters({
           showSettings={false}
           aria-label="Buscar productos del catálogo por nombre o código SKU"
         />
-
-        {/* Fila de filtros: botón "Filtros" + quick-clear chips */}
-        <div className="flex items-center gap-2 flex-wrap">
-          <button
-            type="button"
-            onClick={() => setFiltersOpen(true)}
-            className={cn(
-              'inline-flex items-center gap-2 px-3 py-2 min-h-[40px] rounded-xl border text-xs font-bold uppercase transition-all active:scale-95',
-              activeFilterCount > 0
-                ? 'border-primary/30 bg-primary/10 text-primary'
-                : 'border-border bg-card text-muted-foreground hover:bg-muted/50'
-            )}
-            aria-label={`Configurar filtros${activeFilterCount > 0 ? ` (${activeFilterCount} activos)` : ''}`}
-          >
-            <SlidersHorizontal className="w-4 h-4" />
-            Filtros
-            {activeFilterCount > 0 && (
-              <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-primary text-primary-foreground text-[10px] font-black">
-                {activeFilterCount}
-              </span>
-            )}
-          </button>
-
-          {/* Quick-clear chips — click X para limpiar cada filtro */}
-          {renderCategoryChip()}
-          {stockFilter !== 'all' && onStockFilterChange && (
-            <button
-              type="button"
-              onClick={() => onStockFilterChange('all')}
-              className="inline-flex items-center gap-1 px-2.5 py-1 min-h-[28px] rounded-full bg-primary/10 text-primary text-[10px] font-bold uppercase border border-primary/20 hover:bg-primary/15 transition-colors"
-              title="Quitar filtro de stock"
-            >
-              Stock: {stockLabel(stockFilter)}
-              <X className="w-3 h-3" />
-            </button>
-          )}
-          {activeFilter !== 'all' && onActiveFilterChange && (
-            <button
-              type="button"
-              onClick={() => onActiveFilterChange('all')}
-              className="inline-flex items-center gap-1 px-2.5 py-1 min-h-[28px] rounded-full bg-primary/10 text-primary text-[10px] font-bold uppercase border border-primary/20 hover:bg-primary/15 transition-colors"
-              title="Quitar filtro de estado"
-            >
-              {activeFilter === 'active' ? 'Activos' : 'Inactivos'}
-              <X className="w-3 h-3" />
-            </button>
-          )}
-          {showIncompleteOnly && onToggleIncomplete && (
-            <button
-              type="button"
-              onClick={() => onToggleIncomplete()}
-              className="inline-flex items-center gap-1 px-2.5 py-1 min-h-[28px] rounded-full bg-warning/15 text-warning text-[10px] font-bold uppercase border border-warning/30 hover:bg-warning/20 transition-colors"
-              title="Quitar filtro de incompletos"
-            >
-              Incompletos ({incompleteCount})
-              <X className="w-3 h-3" />
-            </button>
-          )}
-          {isFCFiltering && (
-            <button
-              type="button"
-              onClick={() => onFCFilterChange('all')}
-              className="inline-flex items-center gap-1 px-2.5 py-1 min-h-[28px] rounded-full bg-primary/10 text-primary text-[10px] font-bold uppercase border border-primary/20 hover:bg-primary/15 transition-colors"
-              title="Quitar filtro de FC"
-            >
-              FC: {fcLabel(fcFilter)}
-              <X className="w-3 h-3" />
-            </button>
-          )}
-        </div>
       </div>
+
+      {/* Filtros button + quick-clear chips se renderizan en CatalogHeader */}
 
       {/* UX-01: Active filter indicator — incompletos */}
       {showIncompleteOnly && incompleteCount > 0 && (

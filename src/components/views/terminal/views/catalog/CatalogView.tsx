@@ -145,6 +145,7 @@ export default function CatalogView() {
 
   // Bulk price modal state
   const [isBulkPriceOpen, setIsBulkPriceOpen] = useState(false);
+  const [catalogFiltersOpen, setCatalogFiltersOpen] = useState(false);
 
   // Cleanup image preview URL on unmount
   useEffect(() => {
@@ -986,7 +987,7 @@ export default function CatalogView() {
 
   return (
     <div className="space-y-3 sm:space-y-4">
-      {/* ESTÁNDAR: Buscador PRIMERO (con filtros colapsables Settings2) */}
+      {/* SearchBar + filtros modal (el botón Filtros se renderiza en CatalogHeader) */}
       <CatalogSearchAndFilters
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
@@ -1012,9 +1013,11 @@ export default function CatalogView() {
         activeFilter={activeFilter}
         onActiveFilterChange={setActiveFilter}
         onToggleIncomplete={() => setShowIncompleteOnly(prev => !prev)}
+        filtersOpen={catalogFiltersOpen}
+        onFiltersOpenChange={setCatalogFiltersOpen}
       />
 
-      {/* Header Row — DESPUÉS del buscador (botones Export/Import/Crear + ViewSwitcher) */}
+      {/* Header Row — Filtros button + ViewSwitcher en la misma línea */}
       <CatalogHeader
         totalCount={totalCount}
         incompleteCount={incompleteCount}
@@ -1035,6 +1038,14 @@ export default function CatalogView() {
           if (filter) applySavedFilter(filter);
         }}
         onDeleteFilter={deleteSavedFilter}
+        onOpenFilters={() => setCatalogFiltersOpen(true)}
+        activeFilterCount={
+          (stockFilter !== 'all' ? 1 : 0) +
+          (selectedCategories?.size || 0) +
+          (activeFilter !== 'all' ? 1 : 0) +
+          (showIncompleteOnly ? 1 : 0) +
+          (fcFilter !== 'all' ? 1 : 0)
+        }
       />
 
       {/* Product Grid / Table */}
