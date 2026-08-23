@@ -24,6 +24,7 @@ export interface EditFormState {
   category: string;
   price: number;
   precio_empresa: number;
+  precio_empresa_currency: string;
   cost_price: number;
   unit_of_measure: string;
   description: string;
@@ -425,7 +426,11 @@ export default function EditProductModal({
             )}
           </div>
 
-          {/* Precio Empresa (venta mayorista) — DEBAJO de Precio Minorista */}
+          {/* Precio Empresa (venta mayorista) — DEBAJO de Precio Minorista
+              HARDENING-PRECIO-EMPRESA: el selector de moneda ahora es INDEPENDIENTE
+              del de Precio Minorista. Antes este select estaba conectado a `price_currency`
+              (el mismo campo que Precio Minorista), lo que impedía tener precios en monedas
+              distintas. Ahora usa `precio_empresa_currency` (columna nueva en BD). */}
           <div className="space-y-1.5">
             <label htmlFor="edit-product-precio-empresa" className="text-xs font-black uppercase tracking-widest ml-1">
               Precio Empresa <span className="font-normal normal-case tracking-normal text-muted-foreground">(venta mayorista)</span>
@@ -436,15 +441,22 @@ export default function EditProductModal({
                 type="number"
                 aria-label="Precio de venta empresa/mayorista"
                 value={editForm.precio_empresa || ''}
-                onChange={(e) => onFormChange({ ...editForm, precio_empresa: parseFloat(e.target.value) || 0 })}
+                onChange={(e) => onFormChange({
+                  ...editForm,
+                  precio_empresa: parseFloat(e.target.value) || 0,
+                  // Si el usuario ingresa un precio empresa pero no había seleccionado moneda,
+                  // asignar por defecto la misma moneda que el precio minorista (comportamiento
+                  // anterior). El usuario puede cambiarla después con el select.
+                  precio_empresa_currency: editForm.precio_empresa_currency || editForm.price_currency || 'CUP',
+                })}
                 className="neu-input flex-1 font-bold"
                 placeholder="0.00"
               />
               <select
-                value={editForm.price_currency || 'CUP'}
-                onChange={(e) => onFormChange({ ...editForm, price_currency: e.target.value })}
+                value={editForm.precio_empresa_currency || editForm.price_currency || 'CUP'}
+                onChange={(e) => onFormChange({ ...editForm, precio_empresa_currency: e.target.value })}
                 className="neu-input w-24 font-bold"
-                aria-label="Moneda del precio empresa"
+                aria-label="Moneda del precio empresa (independiente del precio minorista)"
               >
                 <option value="CUP">CUP</option>
                 <option value="USD">USD</option>
@@ -452,6 +464,16 @@ export default function EditProductModal({
                 <option value="MLC">MLC</option>
               </select>
             </div>
+            {/* Mostrar advertencia si la moneda empresa difiere de la minorista */}
+            {editForm.precio_empresa > 0 && editForm.precio_empresa_currency && editForm.precio_empresa_currency !== editForm.price_currency && (
+              <div className="flex items-start gap-2 p-2 rounded-lg border border-info/30 bg-info/10 text-info">
+                <Info className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                <div className="text-[10px] leading-relaxed">
+                  Precio Empresa en <strong>{editForm.precio_empresa_currency}</strong> — distinto del Precio Minorista ({editForm.price_currency}).
+                  Son dos precios comerciales independientes; no se convierte automáticamente.
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -604,6 +626,8 @@ function ProductCompletenessChecklist({
     name: editForm.name,
     category: editForm.category,
     price: editForm.price,
+    precio_empresa: editForm.precio_empresa,
+    precio_empresa_currency: editForm.precio_empresa_currency || editForm.price_currency || 'CUP',
     cost_price: editForm.cost_price,
     unit_of_measure: editForm.unit_of_measure,
     description: editForm.description,

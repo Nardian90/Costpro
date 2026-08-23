@@ -120,6 +120,7 @@ export default function CatalogView() {
     category: '',
     price: 0,
     precio_empresa: 0,
+    precio_empresa_currency: 'CUP',
     cost_price: 0,
     unit_of_measure: 'unidad',
     description: '',
@@ -734,6 +735,9 @@ export default function CatalogView() {
       category: product.category || '',
       price: product.price || 0,
       precio_empresa: product.precio_empresa || 0,
+      // HARDENING-PRECIO-EMPRESA: moneda independiente. Si el producto no la tiene
+      // (porque fue creado antes de la migración), usar price_currency como fallback.
+      precio_empresa_currency: (product as any).precio_empresa_currency || product.price_currency || 'CUP',
       cost_price: product.cost_price || 0,
       unit_of_measure: product.unit_of_measure || 'unidad',
       description: product.description || '',
@@ -799,6 +803,9 @@ export default function CatalogView() {
         category: editForm.category || null,
         price: editForm.price,
         precio_empresa: editForm.precio_empresa || null,
+        // HARDENING-PRECIO-EMPRESA: enviar moneda empresa independiente.
+        // Si precio_empresa es null, enviamos null también para la moneda.
+        precio_empresa_currency: editForm.precio_empresa > 0 ? (editForm.precio_empresa_currency || editForm.price_currency || 'CUP') : null,
         cost_price: editForm.cost_price,
         unit_of_measure: editForm.unit_of_measure,
         description: editForm.description || null,

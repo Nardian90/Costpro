@@ -235,6 +235,9 @@ export interface Product {
   barcode_type?: BarcodeType | null;
   price: number;
   precio_empresa?: number | null;
+  // HARDENING-PRECIO-EMPRESA: moneda independiente para precio_empresa (venta mayorista).
+  // Puede diferir de price_currency. NULL cuando precio_empresa es NULL.
+  precio_empresa_currency?: string | null;
   cost_price: number;
   price_currency?: string;
   image_url?: string | null;

@@ -195,6 +195,9 @@ export const productSchema = z.object({
   barcode_type: z.string().nullable().optional(),
   price: z.coerce.number().min(0).optional().default(0),
   precio_empresa: z.coerce.number().nullable().optional().default(null),
+  // HARDENING-PRECIO-EMPRESA: moneda independiente para precio_empresa (venta mayorista).
+  // Puede diferir de price_currency. NULL cuando precio_empresa es NULL.
+  precio_empresa_currency: z.string().nullable().optional(),
   cost_price: z.coerce.number().min(0).optional().default(0),
   price_currency: z.string().optional().default('CUP'),
   image_url: z.string().nullable().optional(),
@@ -314,6 +317,16 @@ export const updateProductInputSchema = productSchema
   .extend({
     price: z.coerce.number().min(0).optional(),
     precio_empresa: z.coerce.number().nullable().optional(),
+    // HARDENING-PRECIO-EMPRESA: moneda independiente para precio_empresa.
+    // Solo se envía cuando precio_empresa también se envía. Si precio_empresa es NULL,
+    // precio_empresa_currency también debe ser NULL (regla de coherencia).
+    precio_empresa_currency: z.string()
+      .refine(
+        (s) => s === null || s === undefined || ['CUP', 'USD', 'EUR', 'MLC'].includes((s || '').toUpperCase()),
+        { message: "Moneda de precio empresa inválida (debe ser CUP, USD, EUR o MLC)" }
+      )
+      .nullable()
+      .optional(),
     cost_price: z.coerce.number().min(0).optional(),
     price_currency: z.string()
       .refine(
