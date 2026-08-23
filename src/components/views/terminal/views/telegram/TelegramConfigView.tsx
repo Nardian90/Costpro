@@ -62,7 +62,7 @@ interface Config {
   } | null;
   // Phase 1
   auto_publish_enabled?: boolean;
-  auto_publish_interval_hours?: number;
+  auto_publish_interval_minutes?: number;
   last_publish_at?: string | null;
   last_product_id?: string | null;
   last_publish_status?: string | null;
@@ -104,11 +104,19 @@ interface PostHistoryItem {
   created_at: string;
 }
 
-const INTERVAL_OPTIONS = [1, 2, 4, 6, 12, 24] as const;
+const INTERVAL_OPTIONS = [5, 10, 15, 30, 45, 60, 90, 120, 180, 240, 360, 720, 1440] as const;
 const SHOW_PRICE_OPTIONS = [
   { value: 'according_to_storefront' as const, label: 'Según Vitrina', hint: 'Recomendado · Respeta la configuración de Vitrina' },
   { value: 'hide' as const, label: 'Ocultar siempre', hint: 'Nunca mostrar precio en Telegram' },
 ];
+
+/** Formats an interval (in minutes) as a human-readable label like '5 min', '6 h'. */
+function formatIntervalLabel(min: number): string {
+  if (min < 60) return `${min} min`;
+  const h = min / 60;
+  if (Number.isInteger(h)) return `${h} h`;
+  return `${(min / 60).toFixed(1).replace('.0', '')} h`;
+}
 
 export default function TelegramConfigView() {
   const { user, token: authToken } = useAuthStore();
@@ -134,7 +142,9 @@ export default function TelegramConfigView() {
 
   // ── Phase 1: Auto-publish state ──
   const [autoPublishEnabled, setAutoPublishEnabled] = useState(false);
-  const [autoPublishInterval, setAutoPublishInterval] = useState<number>(6);
+  const [autoPublishInterval, setAutoPublishInterval] = useState<number>(360); // minutes (6h default)
+  const [customIntervalMode, setCustomIntervalMode] = useState(false);
+  const [customIntervalValue, setCustomIntervalValue] = useState<string>('360');
 
   // ── Phase 2: Publication content state ──
   const [showPrice, setShowPrice] = useState<'according_to_storefront' | 'show' | 'hide'>('according_to_storefront');
@@ -174,9 +184,14 @@ export default function TelegramConfigView() {
         setWelcomeEnabled(json.data.welcome_enabled ?? true);
         setWelcomeMessage(json.data.welcome_message || '¡Bienvenido al grupo de ventas!');
         setGroupChatId(json.data.group_chat_id ? String(json.data.group_chat_id) : '');
-        // Phase 1
+        // Phase 1 — minutes (migration 20260824000003)
         setAutoPublishEnabled(json.data.auto_publish_enabled === true);
-        setAutoPublishInterval(json.data.auto_publish_interval_hours ?? 6);
+        const minutes = json.data.auto_publish_interval_minutes ?? 360;
+        setAutoPublishInterval(minutes);
+        // If the value matches one of the predefined options, hide custom input
+        const isPredefined = (INTERVAL_OPTIONS as readonly number[]).includes(minutes);
+        setCustomIntervalMode(!isPredefined);
+        setCustomIntervalValue(String(minutes));
         // Phase 2
         setShowPrice(json.data.show_price ?? 'according_to_storefront');
         setShowPhysicalUnits(json.data.show_physical_units === true);
@@ -271,6 +286,32 @@ export default function TelegramConfigView() {
 
   const handleSave = async () => {
     if (!storeId) return;
+    // Validate custom interval if in custom mode
+    let intervalToSave = autoPublishInterval;
+    if (customIntervalMode) {
+      const parsed = parseInt(customIntervalValue, 10);
+      if (!Number.isFinite(parsed) || isNaN(parsed) || parsed <= 0) {
+        toast.error('Intervalo personalizado inválido: debe ser un número entero > 0');
+        return;
+      }
+      if (parsed < 5) {
+        toast.error('Intervalo mínimo: 5 minutos');
+        return;
+      }
+      if (parsed > 10080) {
+        toast.error('Intervalo máximo: 10080 minutos (7 días)');
+        return;
+      }
+      intervalToSave = parsed;
+    } else {
+      // Ensure predefined value is valid
+      if (!(INTERVAL_OPTIONS as readonly number[]).includes(autoPublishInterval)) {
+        toast.error('Intervalo inválido');
+        return;
+      }
+      intervalToSave = autoPublishInterval;
+    }
+
     setSaving(true);
     try {
       const keywords = triggerKeywords.split(',').map(k => k.trim()).filter(Boolean);
@@ -279,9 +320,6 @@ export default function TelegramConfigView() {
         headers: { 'Content-Type': 'application/json', ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}) },
         body: JSON.stringify({
           store_id: storeId,
-          // FIX TELEGRAM-SEC-2: solo enviamos bot_token si el usuario
-          // escribió uno nuevo. Si el input está vacío, no tocamos el
-          // token existente (lo dejamos tal cual en BD).
           bot_token: botToken.trim() ? botToken : undefined,
           system_prompt: systemPrompt,
           model_name: modelName,
@@ -293,10 +331,10 @@ export default function TelegramConfigView() {
           welcome_enabled: welcomeEnabled,
           welcome_message: welcomeMessage,
           group_chat_id: groupChatId ? parseInt(groupChatId, 10) : undefined,
-          // Phase 1
+          // Phase 1 — minutes (Phase 2: back-end stores auto_publish_interval_minutes)
           auto_publish_enabled: autoPublishEnabled,
-          auto_publish_interval_hours: autoPublishInterval,
-          // Phase 2
+          auto_publish_interval_minutes: intervalToSave,
+          // Phase 2 — Vitrina fidelity
           show_price: showPrice,
           show_physical_units: showPhysicalUnits,
         }),
@@ -668,28 +706,76 @@ export default function TelegramConfigView() {
           </div>
 
           {autoPublishEnabled && (
-            <div className="space-y-1">
-              <Label className="text-[10px]">Intervalo entre publicaciones</Label>
-              <div className="grid grid-cols-6 gap-1">
-                {INTERVAL_OPTIONS.map(h => (
+            <div className="space-y-2">
+              <Label className="text-[10px]">Intervalo entre publicaciones (minutos)</Label>
+
+              {/* Predefined options grid */}
+              <div className="grid grid-cols-4 gap-1">
+                {INTERVAL_OPTIONS.map(m => (
                   <Button
-                    key={h}
+                    key={m}
                     type="button"
                     variant="ghost"
-                    onClick={() => setAutoPublishInterval(h)}
+                    onClick={() => {
+                      setAutoPublishInterval(m);
+                      setCustomIntervalMode(false);
+                    }}
                     className={cn(
                       'h-9 rounded-md text-[10px] font-bold uppercase transition-colors p-0',
-                      autoPublishInterval === h
+                      !customIntervalMode && autoPublishInterval === m
                         ? 'bg-blue-600 text-white hover:bg-blue-600'
                         : 'bg-muted text-muted-foreground hover:bg-muted/80',
                     )}
                   >
-                    {h}h
+                    {formatIntervalLabel(m)}
                   </Button>
                 ))}
               </div>
+
+              {/* Custom input toggle */}
+              <div className="flex items-center gap-2 mt-2">
+                <input
+                  type="checkbox"
+                  id="customInterval"
+                  checked={customIntervalMode}
+                  onChange={e => {
+                    setCustomIntervalMode(e.target.checked);
+                    if (e.target.checked) {
+                      // Initialize with current value
+                      setCustomIntervalValue(String(autoPublishInterval));
+                    }
+                  }}
+                  className="w-3.5 h-3.5"
+                />
+                <Label htmlFor="customInterval" className="text-[10px]">Personalizado</Label>
+              </div>
+
+              {customIntervalMode && (
+                <div className="space-y-1 mt-1">
+                  <Label className="text-[10px]">Cada</Label>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="number"
+                      min={5}
+                      max={10080}
+                      step={1}
+                      value={customIntervalValue}
+                      onChange={e => setCustomIntervalValue(e.target.value)}
+                      className="text-xs h-9 w-32"
+                    />
+                    <span className="text-[10px] text-muted-foreground">minutos</span>
+                  </div>
+                  <p className="text-[9px] text-muted-foreground">
+                    Mínimo 5 min · Máximo 10080 min (7 días).
+                  </p>
+                </div>
+              )}
+
               <p className="text-[10px] text-muted-foreground mt-1">
-                El cron corre cada hora; cada tienda respeta su propio intervalo.
+                El cron corre cada 5 minutos; cada tienda respeta su propio intervalo.
+                {!customIntervalMode && (
+                  <> Intervalo actual: <strong>{formatIntervalLabel(autoPublishInterval)}</strong>.</>
+                )}
               </p>
             </div>
           )}

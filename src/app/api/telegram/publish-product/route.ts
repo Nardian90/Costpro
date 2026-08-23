@@ -43,7 +43,12 @@ async function handler(req: NextRequest, session: AuthenticatedSession) {
     });
 
     if (result.skipped) {
-      return NextResponse.json({ skipped: true, reason: result.reason, hoursSince: result.hoursSince });
+      return NextResponse.json({
+        skipped: true,
+        reason: result.reason,
+        minutesSince: result.minutesSince,
+        intervalMinutes: result.intervalMinutes,
+      });
     }
     if (!result.success) {
       return NextResponse.json(

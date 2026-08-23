@@ -31,7 +31,7 @@ export async function GET() {
     // 1. Find all stores with auto-publish enabled
     const { data: configs, error } = await adminClient
       .from('telegram_configs')
-      .select('store_id, auto_publish_interval_hours, last_publish_at')
+      .select('store_id, auto_publish_interval_minutes, last_publish_at')
       .eq('is_active', true)
       .eq('auto_publish_enabled', true)
       .not('bot_token', 'is', null)
@@ -44,17 +44,18 @@ export async function GET() {
     const results = [];
 
     for (const config of configs) {
-      // 2. Check if interval has elapsed (idempotency — also checked inside helper,
-      //    but we pre-check here so we don't even wake up publishProductToTelegram)
+      // 2. Check if interval has elapsed (idempotency — in MINUTES)
       if (config.last_publish_at) {
-        const hoursSince =
-          (Date.now() - new Date(config.last_publish_at).getTime()) / 3600000;
-        if (hoursSince < config.auto_publish_interval_hours) {
+        const minutesSince =
+          (Date.now() - new Date(config.last_publish_at).getTime()) / 60000;
+        const intervalMinutes: number = config.auto_publish_interval_minutes ?? 360;
+        if (minutesSince < intervalMinutes) {
           results.push({
             storeId: config.store_id,
             skipped: true,
             reason: 'interval_not_elapsed',
-            hoursSince: Math.round(hoursSince * 100) / 100,
+            minutesSince: Math.round(minutesSince * 100) / 100,
+            intervalMinutes,
           });
           continue;
         }
@@ -73,7 +74,8 @@ export async function GET() {
             storeId: config.store_id,
             skipped: true,
             reason: result.reason,
-            hoursSince: result.hoursSince,
+            minutesSince: result.minutesSince,
+            intervalMinutes: result.intervalMinutes,
           });
         } else if (result.success) {
           results.push({

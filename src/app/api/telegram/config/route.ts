@@ -82,9 +82,9 @@ const putSchema = z.object({
   trigger_keywords: z.array(z.string()).optional(),
   group_chat_id: z.number().optional(),
   group_title: z.string().optional(),
-  // ── Auto-publish (Phase 1) ──
+  // ── Auto-publish (Phase 1 + Phase 2 — minutes) ──
   auto_publish_enabled: z.boolean().optional(),
-  auto_publish_interval_hours: z.number().min(1).max(168).optional(),
+  auto_publish_interval_minutes: z.number().int().min(5).max(10080).optional(),
   // ── Publication content (Phase 2 — Vitrina fidelity) ──
   show_price: z.enum(['according_to_storefront', 'show', 'hide']).optional(),
   show_physical_units: z.boolean().optional(),

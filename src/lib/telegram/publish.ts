@@ -49,7 +49,10 @@ export interface PublishResult {
   success: boolean;
   skipped?: boolean;
   reason?: 'disabled' | 'interval' | 'no_products' | 'not_configured' | 'no_eligible';
-  hoursSince?: number;
+  /** Minutes since the last publish (when reason='interval'). */
+  minutesSince?: number;
+  /** The store's configured interval in minutes (when reason='interval'). */
+  intervalMinutes?: number;
   product?: { id: string; name: string };
   telegram_message_id?: number | null;
   chat_title?: string;
@@ -226,7 +229,7 @@ export async function publishProductToTelegram(
   const { data: config, error: configErr } = await adminClient
     .from('telegram_configs')
     .select(
-      'bot_token, group_chat_id, auto_publish_enabled, auto_publish_interval_hours, last_publish_at, show_price, show_physical_units',
+      'bot_token, group_chat_id, auto_publish_enabled, auto_publish_interval_minutes, last_publish_at, show_price, show_physical_units',
     )
     .eq('store_id', ctx.storeId)
     .eq('is_active', true)
@@ -249,14 +252,18 @@ export async function publishProductToTelegram(
       return { success: false, skipped: true, reason: 'disabled', text: '', imageUrl: null };
     }
     if (config.last_publish_at && !ctx.skipIdempotency) {
-      const hoursSince =
-        (Date.now() - new Date(config.last_publish_at).getTime()) / 3600000;
-      if (hoursSince < config.auto_publish_interval_hours) {
+      const minutesSince =
+        (Date.now() - new Date(config.last_publish_at).getTime()) / 60000;
+      // ── Interval is now in MINUTES (migration 20260824000003) ──
+      const intervalMinutes: number =
+        (config as any).auto_publish_interval_minutes ?? 360;
+      if (minutesSince < intervalMinutes) {
         return {
           success: false,
           skipped: true,
           reason: 'interval',
-          hoursSince: Math.round(hoursSince * 100) / 100,
+          minutesSince: Math.round(minutesSince * 100) / 100,
+          intervalMinutes,
           text: '',
           imageUrl: null,
         };
