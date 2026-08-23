@@ -33,6 +33,7 @@ import {
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { cn, formatCurrency, getProductImageUrl } from '@/lib/utils';
+import PanImageViewer from '@/components/storefront/PanImageViewer';
 
 // ── Shared Types ─────────────────────────────────────────────────
 
@@ -299,7 +300,12 @@ function ProductDetailModal({
           <ChevronLeft className="w-5 h-5" />
         </button>
         {imageUrl ? (
-          <ProductImage src={imageUrl} alt={product.name} className="aspect-[4/3] w-full rounded-t-2xl" />
+          <PanImageViewer
+            src={imageUrl}
+            alt={product.name}
+            aspect="4/3"
+            className="w-full rounded-t-2xl"
+          />
         ) : (
           <div className="aspect-[4/3] w-full bg-stone-100 rounded-t-2xl flex items-center justify-center">
             <Package className="w-16 h-16 text-stone-200" />
@@ -1320,10 +1326,15 @@ function QuickViewModal({
         className="relative bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden max-h-[90vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header con imagen */}
-        <div className="relative aspect-[4/3] bg-stone-100 shrink-0">
+        {/* Header con imagen — pan-enabled para explorar detalles ocultos */}
+        <div className="relative aspect-[4/3] bg-stone-100 shrink-0 overflow-hidden">
           {image ? (
-            <img src={image} alt={product.name} className="w-full h-full object-cover" />
+            <PanImageViewer
+              src={image}
+              alt={product.name}
+              aspect="4/3"
+              className="w-full h-full"
+            />
           ) : (
             <div className="w-full h-full flex items-center justify-center">
               <Package className="w-16 h-16 text-stone-200" />
@@ -1332,7 +1343,7 @@ function QuickViewModal({
           {/* Close button */}
           <button
             onClick={onClose}
-            className="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-black/70 transition-colors"
+            className="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-black/70 transition-colors z-10"
             aria-label={t('close')}
           >
             <X className="w-4 h-4" />
