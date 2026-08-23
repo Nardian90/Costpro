@@ -1285,20 +1285,59 @@ export default function InventoryView() {
                         <InventoryKPIs products={products} fcCoverage={fcCoverage} className="[&>button]:hidden [&>div]:!grid-rows-[1fr] [&>div]:!opacity-100 [&>div]:!pointer-events-auto" />
                     )}
 
-                    {/* NIVEL 3: Alertas de stock */}
+                    {/* NIVEL 3: Alertas de stock — INLINE, no slide-in panel */}
                     {stockAlerts.length > 0 ? (
                         <div className="space-y-2">
                             <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Alertas de Stock</p>
-                            <StockAlertsPanel
-                                alerts={stockAlerts}
-                                isOpen={true}
-                                onClose={() => {}}
-                                onReceive={(product) => {
-                                    setShowSaludInventario(false);
-                                    setPreselectedProduct(product);
-                                    setCurrentView('reception');
-                                }}
-                            />
+                            <div className="space-y-2">
+                                {stockAlerts.map(alert => (
+                                    <div
+                                        key={alert.product.id}
+                                        className={cn(
+                                            'p-3 rounded-xl border flex items-center justify-between gap-2',
+                                            alert.severity === 'critical'
+                                                ? 'bg-destructive/5 border-destructive/20'
+                                                : 'bg-warning/5 border-warning/20'
+                                        )}
+                                    >
+                                        <div className="flex items-center gap-2 min-w-0">
+                                            <Package className={cn(
+                                                'w-4 h-4 shrink-0',
+                                                alert.severity === 'critical' ? 'text-destructive' : 'text-warning'
+                                            )} />
+                                            <div className="min-w-0">
+                                                <p className="font-bold text-xs uppercase tracking-tight line-clamp-1">{alert.product.name}</p>
+                                                <p className="text-[10px] text-muted-foreground">
+                                                    Stock: <strong className="tabular-nums">{alert.currentStock}</strong>
+                                                    {alert.minStock > 0 && <span> / Mín: <strong className="tabular-nums">{alert.minStock}</strong></span>}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-2 shrink-0">
+                                            <span className={cn(
+                                                'text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded',
+                                                alert.severity === 'critical'
+                                                    ? 'bg-destructive/10 text-destructive'
+                                                    : 'bg-warning/10 text-warning'
+                                            )}>
+                                                {alert.severity === 'critical' ? 'Agotado' : 'En mínimo'}
+                                            </span>
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setShowSaludInventario(false);
+                                                    setPreselectedProduct(alert.product);
+                                                    setCurrentView('reception');
+                                                }}
+                                                className="flex items-center gap-1 text-xs font-black uppercase tracking-widest text-primary hover:underline min-h-[44px] px-2"
+                                                aria-label={`Recibir mercancía para ${alert.product.name}`}
+                                            >
+                                                Recibir
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
                     ) : (
                         <div className="text-center py-4 text-muted-foreground">
