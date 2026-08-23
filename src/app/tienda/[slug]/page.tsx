@@ -80,6 +80,11 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   return {
     title,
     description,
+    icons: {
+      // Generic storefront favicon — NOT the admin app logo
+      icon: '/storefront-favicon.svg',
+      shortcut: '/storefront-favicon.svg',
+    },
     alternates: {
       canonical: storeUrl,
     },
