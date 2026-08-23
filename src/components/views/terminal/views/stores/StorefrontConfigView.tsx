@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, useCallback } from 'react';
-import { Loader2, Store as StoreIcon, AlertCircle, ExternalLink, RefreshCw, Save, Check, X } from 'lucide-react';
+import { Loader2, Store as StoreIcon, AlertCircle, ExternalLink, RefreshCw, Save, Check, X, FileDown } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuthStore } from '@/store';
 import { useQueryClient } from '@tanstack/react-query';
@@ -9,7 +9,9 @@ import { toast } from 'sonner';
 import { storeApiClient } from '@/services/store-api-client';
 import { cn } from '@/lib/utils';
 import { StorefrontConfigPanel } from '@/components/views/terminal/views/stores/StorefrontConfigPanel';
-import type { Store, StoreTemplate } from '@/types';
+import { CatalogExportModal } from '@/components/views/terminal/views/pos/CatalogExportModal';
+import { useCatalogExport } from '@/hooks/logic/useCatalogExport';
+import type { Store, StoreTemplate, Product } from '@/types';
 
 /**
  * StorefrontConfigView (2026-07-04)
@@ -36,8 +38,31 @@ export default function StorefrontConfigView() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [revalidating, setRevalidating] = useState(false);
+  const [showCatalogExport, setShowCatalogExport] = useState(false);
+  const [storefrontProducts, setStorefrontProducts] = useState<Product[]>([]);
 
   const activeStoreId = user?.activeStoreId;
+
+  // Fetch visible-en-tienda products for catalog export
+  useEffect(() => {
+    if (!activeStoreId) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data } = await supabase
+          .from('products')
+          .select('id, name, description, sku, price, price_currency, image_url, public_image_url, category, unit_of_measure, cost_price, stock_current, min_stock, store_id, is_active, visible_en_tienda, created_at, updated_at, barcode, barcode_type')
+          .eq('store_id', activeStoreId)
+          .eq('is_active', true)
+          .eq('visible_en_tienda', true)
+          .order('name');
+        if (!cancelled && data) setStorefrontProducts(data as Product[]);
+      } catch { /* silent */ }
+    })();
+    return () => { cancelled = true; };
+  }, [activeStoreId]);
+
+  const { exportCatalog, organizedProducts, templates } = useCatalogExport(storefrontProducts);
 
   useEffect(() => {
     if (!activeStoreId) {
@@ -157,6 +182,15 @@ export default function StorefrontConfigView() {
         actions={
           <div className="flex items-center gap-2">
             <button
+              onClick={() => setShowCatalogExport(true)}
+              disabled={storefrontProducts.length === 0}
+              className="inline-flex items-center gap-1.5 px-3 py-2 min-h-[40px] rounded-xl border border-border bg-card text-xs font-black uppercase tracking-widest hover:bg-muted transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              title="Generar catálogo PDF de los productos visibles en la vitrina"
+            >
+              <FileDown className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Catálogo PDF</span>
+            </button>
+            <button
               onClick={handleRevalidate}
               disabled={revalidating}
               className="inline-flex items-center gap-1.5 px-3 py-2 min-h-[40px] rounded-xl border border-border bg-card text-xs font-black uppercase tracking-widest hover:bg-muted transition-colors disabled:opacity-60"
@@ -205,6 +239,18 @@ export default function StorefrontConfigView() {
       <div className="mt-6">
         <StorefrontConfigPanel store={store} onSaved={(updated) => setStore(updated)} />
       </div>
+
+      {/* Catalog Export Modal — reuses the SAME modal + hook + templates as POS */}
+      <CatalogExportModal
+        open={showCatalogExport}
+        onOpenChange={setShowCatalogExport}
+        templates={templates}
+        organized={organizedProducts}
+        isExporting={false}
+        onExport={(templateId, themeColor, avatarPath) => {
+          exportCatalog(templateId, store?.name || 'Tienda', themeColor, avatarPath);
+        }}
+      />
     </div>
   );
 }
