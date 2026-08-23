@@ -21,7 +21,7 @@ import { useState, useEffect, useMemo, useTransition, useCallback, useRef } from
 import type { ProductFCStatus } from '@/types';
 import { useAuthStore } from '@/store';
 import { useInventory, useAdjustStock } from '@/hooks/api/useInventory';
-import { Download, Plus, X, LayoutList, Table as TableIcon, Package, BarChart3, FileSpreadsheet, Filter, Eye, EyeOff, Store, CheckCircle2, Calculator, DollarSign, Tag, Pencil, Settings2, SlidersHorizontal } from 'lucide-react';
+import { Download, Plus, X, LayoutList, Table as TableIcon, Package, BarChart3, FileSpreadsheet, Filter, Eye, EyeOff, Store, CheckCircle2, Calculator, DollarSign, Tag, Pencil, Settings2, SlidersHorizontal, HeartPulse, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabaseClient';
 import { useQueryClient } from '@tanstack/react-query';
@@ -190,6 +190,8 @@ export default function InventoryView() {
     // en un modal dedicado en vez de un panel colapsable dentro del SearchBar.
     // El botón de ajustes muestra un badge con la cantidad de filtros activos.
     const [showSearchConfig, setShowSearchConfig] = useState(false);
+    const [showSaludInventario, setShowSaludInventario] = useState(false);
+    const [showFCModal, setShowFCModal] = useState(false);
 
     const { mutateAsync: adjustStock } = useAdjustStock();
 
@@ -881,6 +883,45 @@ export default function InventoryView() {
                                 <X className="w-3 h-3" />
                             </button>
                         )}
+
+                        {/* Salud del inventario — botón que abre modal con KPIs + alertas */}
+                        <button
+                            type="button"
+                            onClick={() => setShowSaludInventario(true)}
+                            className="inline-flex items-center gap-2 px-3 py-2 min-h-[40px] rounded-xl border border-border bg-card text-muted-foreground hover:bg-muted/50 text-xs font-bold uppercase transition-all active:scale-95"
+                            aria-label="Ver salud del inventario"
+                        >
+                            <HeartPulse className="w-4 h-4" />
+                            <span className="hidden sm:inline">Salud del inventario</span>
+                            <span className="sm:hidden">Salud</span>
+                            {stockAlerts.length > 0 && (
+                                <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-destructive text-destructive-foreground text-[10px] font-black">
+                                    {stockAlerts.length}
+                                </span>
+                            )}
+                        </button>
+
+                        {/* Ficha de costo (FC) — botón que abre modal con coverage accordion */}
+                        <button
+                            type="button"
+                            onClick={() => setShowFCModal(true)}
+                            className="inline-flex items-center gap-2 px-3 py-2 min-h-[40px] rounded-xl border border-border bg-card text-muted-foreground hover:bg-muted/50 text-xs font-bold uppercase transition-all active:scale-95"
+                            aria-label="Ver ficha de costo (FC)"
+                        >
+                            <FileText className="w-4 h-4" />
+                            <span className="hidden sm:inline">Ficha de costo (FC)</span>
+                            <span className="sm:hidden">FC</span>
+                            {fcCoverage.total > 0 && (
+                                <span className={cn(
+                                    "inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full text-[10px] font-black",
+                                    fcCoverage.coverage >= 50
+                                        ? "bg-success/20 text-success"
+                                        : "bg-warning/20 text-warning"
+                                )}>
+                                    {fcCoverage.vigente}/{fcCoverage.total}
+                                </span>
+                            )}
+                        </button>
                     </div>
 
                     {/* Right: ViewSwitcher + ActionMenu */}
@@ -895,23 +936,8 @@ export default function InventoryView() {
                     </div>
                 </div>
 
-            {/* FC Coverage Accordion — replaces separate FC bar + FC filter tabs */}
-            {fcCoverage.total > 0 && (
-              <FCCoverageAccordion
-                vigente={fcCoverage.vigente}
-                pendiente={fcCoverage.pendiente}
-                sin_fc={fcCoverage.sin_fc}
-                total={fcCoverage.total}
-                coverage={fcCoverage.coverage}
-                fcFilter={fcFilter}
-                onFcFilterChange={setFcFilter}
-              />
-            )}
-
-            {/* KPI Dashboard */}
-            {products.length > 0 && (
-              <InventoryKPIs products={products} fcCoverage={fcCoverage} />
-            )}
+            {/* Salud del inventario y FC Coverage ya NO ocupan espacio permanente.
+                Se acceden mediante botones que abren modales más arriba. */}
 
             <div className={cn(isPending && "opacity-50 transition-opacity")} role="list" aria-label="Lista de productos del inventario">
                 <StateRenderer
@@ -1221,6 +1247,68 @@ export default function InventoryView() {
                             </button>
                         </div>
                     </div>
+                </div>
+            </BaseModal>
+
+            {/* Modal: Salud del inventario — contiene KPIs + alertas que antes ocupaban espacio permanente */}
+            <BaseModal
+                open={showSaludInventario}
+                onOpenChange={(open) => setShowSaludInventario(open)}
+                title="Salud del inventario"
+                maxWidth="sm:max-w-2xl"
+            >
+                <div className="space-y-4 max-h-[70vh] overflow-y-auto">
+                    {/* KPI Dashboard */}
+                    {products.length > 0 && (
+                        <InventoryKPIs products={products} fcCoverage={fcCoverage} />
+                    )}
+                    {/* Stock alerts panel (inline, no overlay) */}
+                    {stockAlerts.length > 0 ? (
+                        <StockAlertsPanel
+                            alerts={stockAlerts}
+                            isOpen={true}
+                            onClose={() => {}}
+                            onReceive={(product) => {
+                                setShowSaludInventario(false);
+                                setPreselectedProduct(product);
+                                setCurrentView('reception');
+                            }}
+                        />
+                    ) : (
+                        <div className="text-center py-8 text-muted-foreground">
+                            <CheckCircle2 className="w-12 h-12 mx-auto mb-2 text-success/50" />
+                            <p className="text-sm font-bold uppercase tracking-widest">Sin alertas</p>
+                            <p className="text-xs mt-1">Todos los productos tienen stock saludable</p>
+                        </div>
+                    )}
+                </div>
+            </BaseModal>
+
+            {/* Modal: Ficha de costo (FC) — contiene el accordion que antes estaba permanente */}
+            <BaseModal
+                open={showFCModal}
+                onOpenChange={(open) => setShowFCModal(open)}
+                title="Ficha de costo (FC)"
+                maxWidth="sm:max-w-2xl"
+            >
+                <div className="space-y-4 max-h-[70vh] overflow-y-auto">
+                    {fcCoverage.total > 0 ? (
+                        <FCCoverageAccordion
+                            vigente={fcCoverage.vigente}
+                            pendiente={fcCoverage.pendiente}
+                            sin_fc={fcCoverage.sin_fc}
+                            total={fcCoverage.total}
+                            coverage={fcCoverage.coverage}
+                            fcFilter={fcFilter}
+                            onFcFilterChange={setFcFilter}
+                        />
+                    ) : (
+                        <div className="text-center py-8 text-muted-foreground">
+                            <FileText className="w-12 h-12 mx-auto mb-2 opacity-30" />
+                            <p className="text-sm font-bold uppercase tracking-widest">Sin productos</p>
+                            <p className="text-xs mt-1">No hay productos para mostrar cobertura de FC</p>
+                        </div>
+                    )}
                 </div>
             </BaseModal>
 
