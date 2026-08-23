@@ -27,7 +27,7 @@ import React, { useRef, useCallback, useEffect, useState, useMemo } from 'react'
 import type { Product, ProductFCStatus } from '@/types';
 import type { FCResolutionResult } from '@/lib/integration/fc-automation';
 import { cn, resolveProductImage, formatCurrency } from '@/lib/utils';
-import { Package, Edit, BookOpen, Eye, EyeOff, DollarSign, Tag, ChevronDown, ChevronRight } from 'lucide-react';
+import { Package, Edit, BookOpen, Eye, EyeOff, DollarSign, Tag, ChevronDown, ChevronRight, Pencil } from 'lucide-react';
 import { CostProLoader } from '@/components/ui/CostProLoader';
 import ProductImage from '@/components/ui/ProductImage';
 import { FCStatusBadge } from '@/components/ui/FCStatusBadge';
@@ -41,6 +41,9 @@ interface InventoryMobileTableProps {
   hasMore: boolean;
   isLoading: boolean;
   onAdjust?: (product: Product) => void;
+  /** NEW: Opens EditProductModal (full product editor). Distinct from onAdjust,
+   * which opens the stock-only adjustment modal. */
+  onEdit?: (product: Product) => void;
   onViewKardex?: (product: Product) => void;
   onToggleVisible?: (product: Product, visible: boolean) => void;
   isTogglingVisible?: string | null;
@@ -63,7 +66,7 @@ function SortIcon({ col, sortKey, sortDir }: { col: SortKey; sortKey: SortKey; s
 }
 
 export default function InventoryMobileTable({
-  products, loadMore, hasMore, isLoading, onAdjust, onViewKardex,
+  products, loadMore, hasMore, isLoading, onAdjust, onEdit, onViewKardex,
   onToggleVisible, isTogglingVisible,
   onTogglePriceVisible, isTogglingPriceVisible,
   onToggleStockVisible, isTogglingStockVisible,
@@ -159,7 +162,7 @@ export default function InventoryMobileTable({
           const min = Number(product.min_stock ?? 0);
           const fcStatus = fcStatusMap?.get(product.id);
           const isExpanded = expandedId === product.id;
-          const hasActions = onAdjust || onViewKardex || onToggleVisible || onTogglePriceVisible || onToggleStockVisible || onTogglePromotion;
+          const hasActions = onAdjust || onEdit || onViewKardex || onToggleVisible || onTogglePriceVisible || onToggleStockVisible || onTogglePromotion;
           const monoStyle = { fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Courier New", monospace' };
 
           return (
@@ -227,11 +230,21 @@ export default function InventoryMobileTable({
               {isExpanded && hasActions && (
                 <div className="px-2 pb-2 pt-1 bg-muted/10 border-t border-border/10">
                   <div className="flex flex-wrap items-center gap-1">
+                    {onEdit && (
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); onEdit(product); }}
+                        className="inline-flex items-center gap-1 px-2 py-1.5 min-h-[36px] rounded-lg bg-primary/10 text-primary text-[10px] font-bold uppercase border border-primary/20 active:scale-95 transition-transform"
+                        aria-label="Editar producto"
+                      >
+                        <Pencil className="w-3 h-3" /> Editar
+                      </button>
+                    )}
                     {onAdjust && (
                       <button
                         type="button"
                         onClick={(e) => { e.stopPropagation(); onAdjust(product); }}
-                        className="inline-flex items-center gap-1 px-2 py-1.5 min-h-[36px] rounded-lg bg-primary/10 text-primary text-[10px] font-bold uppercase border border-primary/20 active:scale-95 transition-transform"
+                        className="inline-flex items-center gap-1 px-2 py-1.5 min-h-[36px] rounded-lg bg-warning/10 text-warning text-[10px] font-bold uppercase border border-warning/20 active:scale-95 transition-transform"
                         aria-label="Ajustar stock"
                       >
                         <Edit className="w-3 h-3" /> Ajustar

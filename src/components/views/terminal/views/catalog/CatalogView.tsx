@@ -128,6 +128,10 @@ export default function CatalogView() {
     price_currency: 'CUP',
     barcode: '',
     barcode_type: 'EAN13',
+    visible_en_tienda: false,
+    price_visible: true,
+    stock_visible: true,
+    on_promotion: false,
   });
 
   // Image state for edit modal
@@ -736,8 +740,6 @@ export default function CatalogView() {
       category: product.category || '',
       price: product.price || 0,
       precio_empresa: product.precio_empresa || 0,
-      // HARDENING-PRECIO-EMPRESA: moneda independiente. Si el producto no la tiene
-      // (porque fue creado antes de la migración), usar price_currency como fallback.
       precio_empresa_currency: (product as any).precio_empresa_currency || product.price_currency || 'CUP',
       cost_price: product.cost_price || 0,
       unit_of_measure: product.unit_of_measure || 'unidad',
@@ -745,6 +747,11 @@ export default function CatalogView() {
       price_currency: (product as any).price_currency || 'CUP',
       barcode: (product as any).barcode || '',
       barcode_type: (product as any).barcode_type || 'EAN13',
+      // Vitrine config — initialize from product with sensible defaults
+      visible_en_tienda: (product as any).visible_en_tienda ?? false,
+      price_visible: (product as any).price_visible ?? true,
+      stock_visible: (product as any).stock_visible ?? true,
+      on_promotion: (product as any).on_promotion ?? false,
     });
     setEditImage(null);
     setEditImagePreview(product.public_image_url || product.image_url || null);
@@ -804,15 +811,17 @@ export default function CatalogView() {
         category: editForm.category || null,
         price: editForm.price,
         precio_empresa: editForm.precio_empresa || null,
-        // HARDENING-PRECIO-EMPRESA: enviar moneda empresa independiente.
-        // Si precio_empresa es null, enviamos null también para la moneda.
         precio_empresa_currency: editForm.precio_empresa > 0 ? (editForm.precio_empresa_currency || editForm.price_currency || 'CUP') : null,
         cost_price: editForm.cost_price,
         unit_of_measure: editForm.unit_of_measure,
         description: editForm.description || null,
         price_currency: editForm.price_currency || 'CUP',
+        // Vitrine config — always include so useUpdateProduct persists them
+        visible_en_tienda: editForm.visible_en_tienda,
+        price_visible: editForm.price_visible,
+        stock_visible: editForm.stock_visible,
+        on_promotion: editForm.on_promotion,
         // Only include barcode if user explicitly entered one.
-        // If empty, leave BD value untouched (the auto-generation trigger will handle it).
         ...(editForm.barcode && editForm.barcode.trim() ? {
           barcode: editForm.barcode.trim(),
           barcode_type: editForm.barcode_type || 'EAN13',

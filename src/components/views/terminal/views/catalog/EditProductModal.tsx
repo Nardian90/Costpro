@@ -5,6 +5,7 @@ import {
   Plus, Trash2, CheckCircle2, X,
   Package, Camera, ImagePlus, Info,
   FileText, AlertCircle, AlertTriangle,
+  Eye, EyeOff, DollarSign, Tag,
 } from 'lucide-react';
 import {
   PrimaryButton, SecondaryButton,
@@ -31,6 +32,11 @@ export interface EditFormState {
   price_currency: string;
   barcode: string;
   barcode_type: string;
+  // Vitrine config — 4 independent toggles for public storefront visibility
+  visible_en_tienda: boolean;
+  price_visible: boolean;
+  stock_visible: boolean;
+  on_promotion: boolean;
 }
 
 export type EditVariant = ProductVariant & { _isNew?: boolean };
@@ -487,6 +493,83 @@ export default function EditProductModal({
             className="neu-input w-full min-h-[80px] text-sm"
             placeholder="Detalles adicionales del producto..."
           />
+        </div>
+
+        {/* ── Vitrine Config Section — 4 toggles for public storefront ── */}
+        <div className="border-t border-border pt-4 space-y-3">
+          <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">
+            Configuración de Vitrina
+          </p>
+          <div className="grid grid-cols-2 gap-2">
+            {/* Visible en tienda */}
+            <button
+              type="button"
+              role="switch"
+              aria-checked={editForm.visible_en_tienda}
+              aria-label="Visible en tienda pública"
+              onClick={() => onFormChange({ ...editForm, visible_en_tienda: !editForm.visible_en_tienda })}
+              className={cn(
+                'flex items-center gap-2 px-3 py-2 rounded-lg border text-xs font-bold transition-colors',
+                editForm.visible_en_tienda
+                  ? 'bg-success/10 text-success border-success/30'
+                  : 'bg-muted/50 text-muted-foreground border-muted'
+              )}
+            >
+              {editForm.visible_en_tienda ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+              {editForm.visible_en_tienda ? 'Visible' : 'Oculto'}
+            </button>
+            {/* Precio visible */}
+            <button
+              type="button"
+              role="switch"
+              aria-checked={editForm.price_visible}
+              aria-label="Precio visible en tienda"
+              onClick={() => onFormChange({ ...editForm, price_visible: !editForm.price_visible })}
+              className={cn(
+                'flex items-center gap-2 px-3 py-2 rounded-lg border text-xs font-bold transition-colors',
+                editForm.price_visible
+                  ? 'bg-success/10 text-success border-success/30'
+                  : 'bg-muted/50 text-muted-foreground border-muted'
+              )}
+            >
+              <DollarSign className={cn('w-3.5 h-3.5', !editForm.price_visible && 'opacity-40 line-through')} />
+              Precio
+            </button>
+            {/* Stock visible */}
+            <button
+              type="button"
+              role="switch"
+              aria-checked={editForm.stock_visible}
+              aria-label="Stock visible en tienda"
+              onClick={() => onFormChange({ ...editForm, stock_visible: !editForm.stock_visible })}
+              className={cn(
+                'flex items-center gap-2 px-3 py-2 rounded-lg border text-xs font-bold transition-colors',
+                editForm.stock_visible
+                  ? 'bg-success/10 text-success border-success/30'
+                  : 'bg-muted/50 text-muted-foreground border-muted'
+              )}
+            >
+              <Package className={cn('w-3.5 h-3.5', !editForm.stock_visible && 'opacity-40 line-through')} />
+              Stock
+            </button>
+            {/* En promoción */}
+            <button
+              type="button"
+              role="switch"
+              aria-checked={editForm.on_promotion}
+              aria-label="Marcar como promoción"
+              onClick={() => onFormChange({ ...editForm, on_promotion: !editForm.on_promotion })}
+              className={cn(
+                'flex items-center gap-2 px-3 py-2 rounded-lg border text-xs font-bold transition-colors',
+                editForm.on_promotion
+                  ? 'bg-warning/10 text-warning border-warning/30'
+                  : 'bg-muted/50 text-muted-foreground border-muted'
+              )}
+            >
+              <Tag className="w-3.5 h-3.5" />
+              Promoción
+            </button>
+          </div>
         </div>
 
         {/* ── Unit Variants Section ───────────────────────────────── */}

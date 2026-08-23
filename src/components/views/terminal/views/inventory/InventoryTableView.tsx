@@ -4,7 +4,7 @@ import React, { useRef, useCallback, useEffect, useState, useMemo } from 'react'
 import type { Product, ProductFCStatus } from '@/types';
 import type { FCResolutionResult } from '@/lib/integration/fc-automation';
 import { cn, resolveProductImage, formatCurrency } from '@/lib/utils';
-import { Package, Edit, BookOpen, ArrowUpDown, ArrowUp, ArrowDown, Store, Eye, EyeOff, DollarSign, Tag } from 'lucide-react';
+import { Package, Edit, BookOpen, ArrowUpDown, ArrowUp, ArrowDown, Store, Eye, EyeOff, DollarSign, Tag, Pencil } from 'lucide-react';
 import { CostProLoader } from '@/components/ui/CostProLoader';
 import ProductImage from '@/components/ui/ProductImage';
 import { FCStatusBadge } from '@/components/ui/FCStatusBadge';
@@ -19,6 +19,9 @@ interface InventoryTableViewProps {
     hasMore: boolean;
     isLoading: boolean;
     onAdjust?: (product: Product) => void;
+    /** NEW: Opens EditProductModal (full product editor). Distinct from onAdjust,
+     * which opens the stock-only adjustment modal. */
+    onEdit?: (product: Product) => void;
     onViewKardex?: (product: Product) => void;
     onToggleVisible?: (product: Product, visible: boolean) => void;
     isTogglingVisible?: string | null;
@@ -39,7 +42,7 @@ interface InventoryTableViewProps {
     onViewFC?: (product: Product, resolution: FCResolutionResult) => void;
 }
 
-const ProductRow = React.forwardRef<HTMLTableRowElement, { product: Product; onAdjust?: (product: Product) => void; onViewKardex?: (product: Product) => void; onToggleVisible?: (product: Product, visible: boolean) => void; isTogglingVisible?: string | null; onTogglePriceVisible?: (product: Product) => void; isTogglingPriceVisible?: string | null; onToggleStockVisible?: (product: Product) => void; isTogglingStockVisible?: string | null; onTogglePromotion?: (product: Product) => void; isTogglingPromotion?: string | null; fcStatus?: ProductFCStatus; fcResolution?: FCResolutionResult; onViewFC?: (product: Product, resolution: FCResolutionResult) => void }>(({ product, onAdjust, onViewKardex, onToggleVisible, isTogglingVisible, onTogglePriceVisible, isTogglingPriceVisible, onToggleStockVisible, isTogglingStockVisible, onTogglePromotion, isTogglingPromotion, fcStatus, fcResolution, onViewFC }, ref) => {
+const ProductRow = React.forwardRef<HTMLTableRowElement, { product: Product; onAdjust?: (product: Product) => void; onEdit?: (product: Product) => void; onViewKardex?: (product: Product) => void; onToggleVisible?: (product: Product, visible: boolean) => void; isTogglingVisible?: string | null; onTogglePriceVisible?: (product: Product) => void; isTogglingPriceVisible?: string | null; onToggleStockVisible?: (product: Product) => void; isTogglingStockVisible?: string | null; onTogglePromotion?: (product: Product) => void; isTogglingPromotion?: string | null; fcStatus?: ProductFCStatus; fcResolution?: FCResolutionResult; onViewFC?: (product: Product, resolution: FCResolutionResult) => void }>(({ product, onAdjust, onEdit, onViewKardex, onToggleVisible, isTogglingVisible, onTogglePriceVisible, isTogglingPriceVisible, onToggleStockVisible, isTogglingStockVisible, onTogglePromotion, isTogglingPromotion, fcStatus, fcResolution, onViewFC }, ref) => {
     const isLowStock = product.stock_current <= (product.min_stock ?? 0);
     return (
         <tr ref={ref} className="border-b last:border-0 hover:bg-accent/5 transition-colors">
@@ -118,6 +121,16 @@ const ProductRow = React.forwardRef<HTMLTableRowElement, { product: Product; onA
                         className="inline-flex items-center justify-center w-10 h-10 min-h-[40px] rounded-lg border bg-info/8 border-info/15 text-info hover:bg-info/15 transition-all active:scale-90"
                     >
                         <BookOpen className="w-4 h-4" />
+                    </button>
+                    {/* Editar Producto — abre EditProductModal (mismo editor que Catálogo) */}
+                    <button
+                        type="button"
+                        onClick={() => onEdit?.(product)}
+                        title="Editar producto"
+                        aria-label="Editar producto"
+                        className="inline-flex items-center justify-center w-10 h-10 min-h-[40px] rounded-lg border bg-primary/8 border-primary/15 text-primary hover:bg-primary/15 transition-all active:scale-90"
+                    >
+                        <Pencil className="w-4 h-4" />
                     </button>
                     {/* Ajustar Stock */}
                     <button
@@ -228,7 +241,7 @@ function SortIcon({ col, sortKey, sortDir }: { col: SortKey; sortKey: SortKey; s
         : <ArrowDown className="w-3 h-3 text-primary" />;
 }
 
-export default function InventoryTableView({ products, loadMore, hasMore, isLoading, onAdjust, onViewKardex, onToggleVisible, isTogglingVisible, onTogglePriceVisible, isTogglingPriceVisible, onToggleStockVisible, isTogglingStockVisible, onTogglePromotion, isTogglingPromotion, fcStatusMap, fcResolutionMap, onViewFC }: InventoryTableViewProps) {
+export default function InventoryTableView({ products, loadMore, hasMore, isLoading, onAdjust, onEdit, onViewKardex, onToggleVisible, isTogglingVisible, onTogglePriceVisible, isTogglingPriceVisible, onToggleStockVisible, isTogglingStockVisible, onTogglePromotion, isTogglingPromotion, fcStatusMap, fcResolutionMap, onViewFC }: InventoryTableViewProps) {
     const [sortKey, setSortKey] = useState<SortKey>('name');
     const [sortDir, setSortDir] = useState<SortDir>('asc');
 
@@ -294,6 +307,7 @@ export default function InventoryTableView({ products, loadMore, hasMore, isLoad
                             key={product.id}
                             product={product}
                             onAdjust={onAdjust}
+                            onEdit={onEdit}
                             onViewKardex={onViewKardex}
                             onToggleVisible={onToggleVisible}
                             isTogglingVisible={isTogglingVisible}

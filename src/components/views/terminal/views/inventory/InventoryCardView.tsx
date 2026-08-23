@@ -18,6 +18,9 @@ interface InventoryCardViewProps {
     hasMore: boolean;
     isLoading: boolean;
     onAdjust?: (product: Product) => void;
+    /** NEW: Opens EditProductModal (full product editor). Distinct from onAdjust,
+     * which opens the stock-only adjustment modal. */
+    onEdit?: (product: Product) => void;
     /** FC status map: productId → ProductFCStatus */
     fcStatusMap?: Map<string, ProductFCStatus>;
     /** Callback cuando el usuario quiere ver/generar FC de un producto */
@@ -33,7 +36,7 @@ interface InventoryCardViewProps {
 }
 
 export default function InventoryCardView({
-    products, loadMore, hasMore, isLoading, onAdjust, fcStatusMap, onViewFC,
+    products, loadMore, hasMore, isLoading, onAdjust, onEdit, fcStatusMap, onViewFC,
     onToggleVisible, isTogglingVisible,
     onTogglePriceVisible, isTogglingPriceVisible,
     onToggleStockVisible, isTogglingStockVisible,
@@ -80,7 +83,7 @@ export default function InventoryCardView({
                                     <ProductCard
                                         product={product}
                                         variant="inventory"
-                                        onEdit={() => onAdjust?.(product)}
+                                        onEdit={() => (onEdit ?? onAdjust)?.(product)}
                                     />
                                     {/* FC status badge */}
                                     {fcStatus && (
