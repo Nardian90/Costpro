@@ -32,7 +32,16 @@ import { FCPreviewModal } from '@/components/ui/FCPreviewModal';
 import type { ProductFCStatus } from '@/contracts/product-cost-sheet';
 
 function getErrorMsg(err: unknown): string {
-  return err instanceof Error ? err.message : 'Error desconocido';
+  // HARDENING-LOGGING: extract useful message from any error shape.
+  // PostgREST errors have { message, code, details, hint, status }.
+  if (!err) return 'Error desconocido';
+  if (err instanceof Error) return err.message;
+  const obj = err as Record<string, unknown>;
+  const parts: string[] = [];
+  if (typeof obj.message === 'string') parts.push(obj.message);
+  if (typeof obj.code === 'string' || typeof obj.code === 'number') parts.push(`(código: ${obj.code})`);
+  if (typeof obj.hint === 'string' && obj.hint) parts.push(`pista: ${obj.hint}`);
+  return parts.length > 0 ? parts.join(' — ') : 'Error desconocido';
 }
 
 export default function CatalogView() {
@@ -115,6 +124,8 @@ export default function CatalogView() {
     unit_of_measure: 'unidad',
     description: '',
     price_currency: 'CUP',
+    barcode: '',
+    barcode_type: 'EAN13',
   });
 
   // Image state for edit modal
@@ -727,6 +738,8 @@ export default function CatalogView() {
       unit_of_measure: product.unit_of_measure || 'unidad',
       description: product.description || '',
       price_currency: (product as any).price_currency || 'CUP',
+      barcode: (product as any).barcode || '',
+      barcode_type: (product as any).barcode_type || 'EAN13',
     });
     setEditImage(null);
     setEditImagePreview(product.public_image_url || product.image_url || null);
@@ -777,7 +790,9 @@ export default function CatalogView() {
       return;
     }
     try {
-      await updateProductMutation.mutateAsync({
+      // build payload — include barcode/barcode_type explicitly so they persist
+      // (HARDENING-CATALOG-EDIT: before these fields were not editable from the modal).
+      const editPayload = {
         id: editingProduct.id,
         name: editForm.name,
         sku: editForm.sku,
@@ -788,7 +803,14 @@ export default function CatalogView() {
         unit_of_measure: editForm.unit_of_measure,
         description: editForm.description || null,
         price_currency: editForm.price_currency || 'CUP',
-      });
+        // Only include barcode if user explicitly entered one.
+        // If empty, leave BD value untouched (the auto-generation trigger will handle it).
+        ...(editForm.barcode && editForm.barcode.trim() ? {
+          barcode: editForm.barcode.trim(),
+          barcode_type: editForm.barcode_type || 'EAN13',
+        } : {}),
+      };
+      await updateProductMutation.mutateAsync(editPayload);
 
       // Upload image if selected
       if (editImage) {

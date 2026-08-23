@@ -1,10 +1,10 @@
 'use client';
 
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   Plus, Trash2, CheckCircle2, X,
   Package, Camera, ImagePlus, Info,
-  FileText, AlertCircle,
+  FileText, AlertCircle, AlertTriangle,
 } from 'lucide-react';
 import {
   PrimaryButton, SecondaryButton,
@@ -14,6 +14,8 @@ import { FCStatusBadge } from '@/components/ui/FCStatusBadge';
 import { cn, getProductImageUrl } from '@/lib/utils';
 // Accessibility-Fix: helper para detectar campos faltantes del producto.
 import { getIncompleteReasons } from '@/lib/product-completeness';
+import { generateEAN13FromSKU } from '@/lib/barcode-utils';
+import { toast } from 'sonner';
 import type { Product, ProductVariant, ProductFCStatus } from '@/types';
 
 export interface EditFormState {
@@ -26,6 +28,8 @@ export interface EditFormState {
   unit_of_measure: string;
   description: string;
   price_currency: string;
+  barcode: string;
+  barcode_type: string;
 }
 
 export type EditVariant = ProductVariant & { _isNew?: boolean };
@@ -305,6 +309,46 @@ export default function EditProductModal({
           </div>
         </div>
 
+        {/* Código de Barras — HARDENING-CATALOG-EDIT: antes no se podía editar
+            desde el modal de edición, lo que era inconsistente con el modal
+            de creación. Ahora se puede editar y auto-generar. */}
+        <div className="space-y-1.5">
+          <label htmlFor="edit-product-barcode" className="text-xs font-black uppercase tracking-widest ml-1 flex justify-between">
+            <span>Código de Barras</span>
+            <button
+              type="button"
+              onClick={() => {
+                const sku = editForm.sku?.trim();
+                if (!sku) {
+                  toast.error('Primero ingresa un SKU para autogenerar el código de barras');
+                  return;
+                }
+                const generated = generateEAN13FromSKU(sku);
+                onFormChange({ ...editForm, barcode: generated, barcode_type: 'EAN13' });
+                toast.success(`Código de barras generado: ${generated}`);
+              }}
+              className="text-xs text-primary hover:underline italic font-bold"
+              aria-label="Auto-generar código de barras desde SKU"
+            >
+              ↻ Auto-generar
+            </button>
+          </label>
+          <input
+            id="edit-product-barcode"
+            type="text"
+            aria-label="Código de barras del producto"
+            value={editForm.barcode || ''}
+            onChange={(e) => onFormChange({
+              ...editForm,
+              barcode: e.target.value,
+              barcode_type: e.target.value ? 'CODE128' : 'EAN13',
+            })}
+            className="neu-input w-full"
+            placeholder="Auto-generado si está vacío al guardar"
+          />
+          <p className="text-[10px] text-muted-foreground italic ml-1">Si lo dejas vacío, se genera automáticamente al guardar.</p>
+        </div>
+
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-1.5">
             <label htmlFor="edit-product-um" className="text-xs font-black uppercase tracking-widest ml-1">Unidad de Medida</label>
@@ -361,6 +405,24 @@ export default function EditProductModal({
                 <option value="MLC">MLC</option>
               </select>
             </div>
+            {/* HARDENING-MULTICURRENCY: advertir al usuario si cambia la moneda.
+                El valor numérico NO se convierte automáticamente a la nueva moneda.
+                El usuario es responsable de verificar que el precio sea correcto
+                en la nueva moneda antes de guardar. */}
+            {product && (product as any).price_currency
+              && (product as any).price_currency !== (editForm.price_currency || 'CUP') && (
+              <div className="flex items-start gap-2 p-2.5 rounded-lg border border-warning/30 bg-warning/10 text-warning">
+                <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+                <div className="text-[11px] leading-relaxed">
+                  <strong>Cambio de moneda detectado:</strong> el precio pasará de
+                  <span className="font-mono mx-1">{(product as any).price} {(product as any).price_currency}</span>
+                  a
+                  <span className="font-mono mx-1">{editForm.price} {editForm.price_currency}</span>.
+                  El valor numérico no se convierte automáticamente. Verifica que el precio
+                  sea correcto en la nueva moneda antes de guardar.
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Precio Empresa (venta mayorista) — DEBAJO de Precio Minorista */}
@@ -546,6 +608,8 @@ function ProductCompletenessChecklist({
     unit_of_measure: editForm.unit_of_measure,
     description: editForm.description,
     price_currency: editForm.price_currency || 'CUP',
+    barcode: editForm.barcode || (product as any)?.barcode || null,
+    barcode_type: editForm.barcode_type || (product as any)?.barcode_type || 'EAN13',
   };
 
   const reasons = getIncompleteReasons(combinedProduct);

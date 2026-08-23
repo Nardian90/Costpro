@@ -205,7 +205,12 @@ export const productSchema = z.object({
   updated_at: z.string().nullable().optional(),
   stock_current: z.coerce.number().optional().default(0),
   cost_average: z.coerce.number().nullable().optional().default(0),
-  min_stock: z.coerce.number().optional().default(0),
+  // HARDENING-CATALOG-EDIT: min_stock has BD CHECK (>= 1) and NOT NULL.
+  // Defaulting to 0 caused HTTP 400 when the user edited only `description`
+  // (the schema filled min_stock=0 via .default(0), then PostgREST rejected
+  // the UPDATE because 0 violates the CHECK constraint min_stock >= 1).
+  // Default is now 1 (matches the BD DEFAULT and satisfies the CHECK).
+  min_stock: z.coerce.number().optional().default(1),
   store_id: optionalResilientUuid,
   public_image_url: z.string().nullable().optional(),
   is_active: z
@@ -278,32 +283,76 @@ export const createProductInputSchema = productSchema.omit({
   public_image_url: true,
   has_movements: true,
 }).refine(
-  // Q6: prevenir precio < costo (margen negativo en creación)
-  (data) => !data.cost_price || !data.price || data.price >= data.cost_price,
-  { message: "El precio de venta no puede ser menor que el costo (margen negativo)", path: ["price"] }
-);
-
-export const updateProductInputSchema = productSchema.partial().omit({
-  id: true,
-  created_at: true,
-  updated_at: true,
-  public_image_url: true,
-  has_movements: true,
-}).refine(
-  // Q6: prevenir precio < costo (margen negativo en edición)
-  // FIX: Solo validar cuando el precio está en CUP. Si el precio está en
-  // USD/EUR/MLC, la comparación numérica con cost_price (que está en CUP)
-  // es incorrecta y produciría falsos positivos.
+  // Q6+HARDENING: prevenir precio < costo SOLO cuando ambas magnitudes están
+  // en la misma moneda (CUP). En USD/EUR/MLC la comparación numérica directa
+  // es inválida porque cost_price siempre está en CUP.
   (data) => {
-    // Solo validar si ambos campos están presentes en el update
-    if (data.cost_price === undefined || data.price === undefined) return true;
-    // Si el precio está en moneda extranjera, no comparar con costo en CUP
-    const currency = data.price_currency || 'CUP';
+    if (data.cost_price === undefined || data.cost_price === null) return true;
+    if (data.price === undefined || data.price === null) return true;
+    const currency = (data.price_currency || 'CUP').toUpperCase();
     if (currency !== 'CUP') return true;
-    return data.price >= data.cost_price;
+    return Number(data.price) >= Number(data.cost_price);
   },
   { message: "El precio de venta no puede ser menor que el costo (margen negativo)", path: ["price"] }
 );
+
+export const updateProductInputSchema = productSchema
+  .omit({
+    id: true,
+    created_at: true,
+    updated_at: true,
+    public_image_url: true,
+    has_movements: true,
+  })
+  .partial()
+  // IMPORTANT: re-declare price/cost/currency WITHOUT defaults so that missing
+  // fields are reported as `undefined` (not 0/'CUP') to the refine validator.
+  // Otherwise a partial update like { cost_price: 500 } would be parsed as
+  // { cost_price: 500, price: 0, price_currency: 'CUP' } and the refine would
+  // reject it as "0 < 500 (negative margin)" — a false positive that blocks
+  // editing a product's cost without touching price.
+  .extend({
+    price: z.coerce.number().min(0).optional(),
+    precio_empresa: z.coerce.number().nullable().optional(),
+    cost_price: z.coerce.number().min(0).optional(),
+    price_currency: z.string()
+      .refine(
+        (s) => ['CUP', 'USD', 'EUR', 'MLC'].includes((s || '').toUpperCase()),
+        { message: "Moneda inválida (debe ser CUP, USD, EUR o MLC)" }
+      )
+      .optional(),
+    description: z.string().nullable().optional(),
+    barcode: z.string().nullable().optional(),
+    barcode_type: z.string().nullable().optional(),
+    // HARDENING-CATALOG-EDIT: re-declare these WITHOUT defaults so that
+    // missing fields are NOT auto-filled. The .default(1) on the underlying
+    // productSchema WOULD have sent min_stock=1 on every PATCH (overwriting
+    // the existing value). For partial updates, we want these to remain
+    // `undefined` so Supabase doesn't touch them.
+    min_stock: z.coerce.number().min(1).optional(),
+    stock_current: z.coerce.number().min(0).optional(),
+    cost_average: z.coerce.number().nullable().optional(),
+    is_active: z.boolean().optional(),
+    visible_en_tienda: z.boolean().optional(),
+    on_promotion: z.boolean().optional(),
+    fc_auto_enabled: z.boolean().optional(),
+    price_visible: z.boolean().optional(),
+    stock_visible: z.boolean().optional(),
+  })
+  .refine(
+    // Q6+HARDENING: misma regla que en create. Solo comparar price vs cost_price
+    // cuando price_currency == 'CUP'. Si la moneda del precio es USD/EUR/MLC
+    // no se puede comparar contra cost_price (CUP) sin una tasa determinística,
+    // y no inventamos tasas aquí.
+    (data) => {
+      if (data.price === undefined || data.price === null) return true;
+      if (data.cost_price === undefined || data.cost_price === null) return true;
+      const currency = (data.price_currency || 'CUP').toUpperCase();
+      if (currency !== 'CUP') return true;
+      return Number(data.price) >= Number(data.cost_price);
+    },
+    { message: "El precio de venta no puede ser menor que el costo (margen negativo)", path: ["price"] }
+  );
 
 export const createProductVariantInputSchema = productVariantSchema.omit({
   id: true,
