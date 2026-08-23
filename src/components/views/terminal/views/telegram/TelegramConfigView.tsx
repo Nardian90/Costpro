@@ -6,33 +6,36 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
-import { Loader2, Send, CheckCircle2, XCircle, ExternalLink, Webhook, Bot, AlertCircle } from 'lucide-react';
+import {
+  Loader2, Send, CheckCircle2, XCircle, ExternalLink, Webhook, Bot,
+  AlertCircle, Clock, Rocket, History, Eye, Package, Lock, Info, Zap,
+} from 'lucide-react';
 import { useAuthStore } from '@/store';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
 /**
- * TelegramConfigView — Fase T5
+ * TelegramConfigView — Fase T5 + Fase 2 (Vitrina fidelity)
  *
- * Vista de configuración del bot de Telegram. Diferencias con WhatsApp:
- *   - Sin QR (Telegram usa token de BotFather)
- *   - Botón "Validar token" → llama a getMe y muestra @username del bot
- *   - Botón "Registrar webhook" → llama a /api/telegram/setup
- *   - Sección grupo → input chat_id + botón "Verificar membresía"
+ * Secciones:
+ *   0. Status
+ *   1. Token del bot
+ *   2. Webhook
+ *   3. Grupo de ventas
+ *   4. Configuración GLM
+ *   5. Publicación automática        ← Phase 1 (added)
+ *   6. Contenido de publicaciones     ← Phase 2 (Vitrina fidelity)
+ *   7. Vista previa                   ← Phase 2
+ *   8. Historial                      ← Phase 2
  *
- * Pasos para el usuario:
- *   1. Crear bot en @BotFather (/newbot), copiar token
- *   2. Pegar token aquí → "Validar token"
- *   3. "Registrar webhook" → Telegram empieza a mandar updates
- *   4. (Opcional) Añadir bot a grupo, promover a admin
- *   5. Configurar system_prompt, modelo, trigger_mode
- *   6. Activar bot (is_active = true)
+ * REGLA DE ORO:
+ *   "Telegram puede publicar lo que Vitrina puede mostrar.
+ *    Nunca debe mostrar información que Vitrina haya decidido ocultar."
  */
 
 interface Config {
   configured: boolean;
   // FIX TELEGRAM-SEC-2: bot_token ya no se devuelve en GET (write-only).
-  // El backend devuelve bot_token_masked + has_bot_token en su lugar.
   bot_token_masked?: string | null;
   has_bot_token?: boolean;
   bot_username?: string | null;
@@ -57,7 +60,55 @@ interface Config {
     last_error_message?: string | null;
     last_error_date?: number;
   } | null;
+  // Phase 1
+  auto_publish_enabled?: boolean;
+  auto_publish_interval_hours?: number;
+  last_publish_at?: string | null;
+  last_product_id?: string | null;
+  last_publish_status?: string | null;
+  last_publish_error?: string | null;
+  // Phase 2 — Vitrina fidelity
+  show_price?: 'according_to_storefront' | 'show' | 'hide';
+  show_physical_units?: boolean;
 }
+
+interface VitrinaProduct {
+  id: string;
+  name: string;
+  sku: string | null;
+  eligible: boolean;
+  priceVisible: boolean;
+  formattedPrice: string | null;
+  currency: string;
+  stockVisible: boolean;
+  stockQuantity: number | null;
+  unitOfMeasure: string;
+  hasImage: boolean;
+  price_visible_in_vitrina: boolean;
+  stock_visible_in_vitrina: boolean;
+  on_promotion: boolean;
+}
+
+interface PostHistoryItem {
+  id: string;
+  product_id: string;
+  product_name: string;
+  product_price: number | null;
+  product_currency: string | null;
+  telegram_chat_id: number;
+  telegram_message_id: number | null;
+  status: string;
+  error: string | null;
+  publish_type: string;
+  published_by: string | null;
+  created_at: string;
+}
+
+const INTERVAL_OPTIONS = [1, 2, 4, 6, 12, 24] as const;
+const SHOW_PRICE_OPTIONS = [
+  { value: 'according_to_storefront' as const, label: 'Según Vitrina', hint: 'Recomendado · Respeta la configuración de Vitrina' },
+  { value: 'hide' as const, label: 'Ocultar siempre', hint: 'Nunca mostrar precio en Telegram' },
+];
 
 export default function TelegramConfigView() {
   const { user, token: authToken } = useAuthStore();
@@ -80,6 +131,24 @@ export default function TelegramConfigView() {
   const [welcomeEnabled, setWelcomeEnabled] = useState(true);
   const [welcomeMessage, setWelcomeMessage] = useState('¡Bienvenido al grupo de ventas!');
   const [groupChatId, setGroupChatId] = useState('');
+
+  // ── Phase 1: Auto-publish state ──
+  const [autoPublishEnabled, setAutoPublishEnabled] = useState(false);
+  const [autoPublishInterval, setAutoPublishInterval] = useState<number>(6);
+
+  // ── Phase 2: Publication content state ──
+  const [showPrice, setShowPrice] = useState<'according_to_storefront' | 'show' | 'hide'>('according_to_storefront');
+  const [showPhysicalUnits, setShowPhysicalUnits] = useState(false);
+
+  // ── Phase 2: Preview + history state ──
+  const [vitrinaProducts, setVitrinaProducts] = useState<VitrinaProduct[]>([]);
+  const [previewProductId, setPreviewProductId] = useState<string | null>(null);
+  const [previewText, setPreviewText] = useState<string>('');
+  const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [publishing, setPublishing] = useState(false);
+  const [posts, setPosts] = useState<PostHistoryItem[]>([]);
+  const [postsLoading, setPostsLoading] = useState(false);
 
   const loadConfig = useCallback(async () => {
     if (!storeId) return;
@@ -105,12 +174,98 @@ export default function TelegramConfigView() {
         setWelcomeEnabled(json.data.welcome_enabled ?? true);
         setWelcomeMessage(json.data.welcome_message || '¡Bienvenido al grupo de ventas!');
         setGroupChatId(json.data.group_chat_id ? String(json.data.group_chat_id) : '');
+        // Phase 1
+        setAutoPublishEnabled(json.data.auto_publish_enabled === true);
+        setAutoPublishInterval(json.data.auto_publish_interval_hours ?? 6);
+        // Phase 2
+        setShowPrice(json.data.show_price ?? 'according_to_storefront');
+        setShowPhysicalUnits(json.data.show_physical_units === true);
       }
     } catch {
       toast.error('Error al cargar config');
     }
     setLoading(false);
   }, [storeId]);
+
+  const loadVitrinaProducts = useCallback(async () => {
+    if (!storeId || !authToken) return;
+    try {
+      const res = await fetch(`/api/telegram/products?store_id=${storeId}`, {
+        headers: { Authorization: `Bearer ${authToken}` },
+      });
+      const json = await res.json();
+      if (Array.isArray(json.products)) {
+        setVitrinaProducts(json.products);
+        // Auto-select the first product if none is selected
+        if (json.products.length > 0 && !previewProductId) {
+          setPreviewProductId(json.products[0].id);
+        }
+      }
+    } catch {
+      // silent
+    }
+  }, [storeId, authToken, previewProductId]);
+
+  const loadPreview = useCallback(async () => {
+    if (!storeId || !authToken || !previewProductId) {
+      setPreviewText('');
+      setPreviewImageUrl(null);
+      return;
+    }
+    setPreviewLoading(true);
+    try {
+      const res = await fetch('/api/telegram/preview-product', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authToken}` },
+        body: JSON.stringify({
+          storeId,
+          productId: previewProductId,
+          showPrice,
+          showPhysicalUnits,
+        }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        setPreviewText(json.text || '');
+        setPreviewImageUrl(json.imageUrl || null);
+      } else {
+        setPreviewText('');
+        setPreviewImageUrl(null);
+      }
+    } catch {
+      setPreviewText('');
+      setPreviewImageUrl(null);
+    }
+    setPreviewLoading(false);
+  }, [storeId, authToken, previewProductId, showPrice, showPhysicalUnits]);
+
+  const loadPosts = useCallback(async () => {
+    if (!storeId || !authToken) return;
+    setPostsLoading(true);
+    try {
+      const res = await fetch(`/api/telegram/posts?store_id=${storeId}&limit=20`, {
+        headers: { Authorization: `Bearer ${authToken}` },
+      });
+      const json = await res.json();
+      setPosts(Array.isArray(json.posts) ? json.posts : []);
+    } catch {
+      setPosts([]);
+    }
+    setPostsLoading(false);
+  }, [storeId, authToken]);
+
+  // Reload preview whenever previewProductId / showPrice / showPhysicalUnits changes
+  useEffect(() => {
+    if (previewProductId) loadPreview();
+  }, [previewProductId, showPrice, showPhysicalUnits, loadPreview]);
+
+  // Load vitrina products + history once config is loaded
+  useEffect(() => {
+    if (config?.configured) {
+      loadVitrinaProducts();
+      loadPosts();
+    }
+  }, [config?.configured, loadVitrinaProducts, loadPosts]);
 
   useEffect(() => { loadConfig(); }, [loadConfig]);
 
@@ -138,6 +293,12 @@ export default function TelegramConfigView() {
           welcome_enabled: welcomeEnabled,
           welcome_message: welcomeMessage,
           group_chat_id: groupChatId ? parseInt(groupChatId, 10) : undefined,
+          // Phase 1
+          auto_publish_enabled: autoPublishEnabled,
+          auto_publish_interval_hours: autoPublishInterval,
+          // Phase 2
+          show_price: showPrice,
+          show_physical_units: showPhysicalUnits,
         }),
       });
       const json = await res.json();
@@ -151,6 +312,36 @@ export default function TelegramConfigView() {
       toast.error('Error de red');
     }
     setSaving(false);
+  };
+
+  // ── Phase 2: Publish now (uses the same endpoint as auto) ──
+  const handlePublishNow = async () => {
+    if (!storeId) return;
+    setPublishing(true);
+    try {
+      const res = await fetch('/api/telegram/publish-product', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}) },
+        body: JSON.stringify({
+          storeId,
+          publishType: 'manual',
+          productId: previewProductId || undefined,
+        }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        toast.success(`Publicado: ${json.product?.name ?? ''}`);
+        loadPosts();
+        loadConfig();
+      } else if (json.skipped) {
+        toast.info(`Omitido: ${json.reason ?? ''}`);
+      } else {
+        toast.error(json.error || 'Error al publicar');
+      }
+    } catch {
+      toast.error('Error de red');
+    }
+    setPublishing(false);
   };
 
   const handleRegisterWebhook = async () => {
@@ -436,6 +627,272 @@ export default function TelegramConfigView() {
           </div>
           {welcomeEnabled && (
             <Input value={welcomeMessage} onChange={e => setWelcomeMessage(e.target.value)} className="text-xs h-10" placeholder="¡Bienvenido!" />
+          )}
+        </CardContent>
+      </Card>
+
+      {/* ─────────── Step 5: Publicación automática (Phase 1) ─────────── */}
+      <Card>
+        <CardContent className="p-4 space-y-3">
+          <div className="flex items-center gap-2">
+            <Clock className="w-4 h-4 text-blue-600" />
+            <h3 className="text-xs font-black uppercase">5. Publicación automática</h3>
+          </div>
+          <p className="text-[10px] text-muted-foreground">
+            Publica un producto de tu Vitrina automáticamente en el grupo de Telegram, sin repetir productos.
+          </p>
+
+          <div className="flex items-center justify-between gap-3 p-3 rounded-lg bg-muted/40 border border-border">
+            <div className="flex-1">
+              <p className="text-xs font-bold">Publicación automática</p>
+              <p className="text-[10px] text-muted-foreground">
+                {autoPublishEnabled ? 'Activada — el cron publicará cada intervalo' : 'Desactivada'}
+              </p>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setAutoPublishEnabled(!autoPublishEnabled)}
+              className={cn(
+                'relative inline-flex h-6 w-11 items-center rounded-full transition-colors shrink-0 p-0 border-0',
+                autoPublishEnabled ? 'bg-emerald-500 hover:bg-emerald-500' : 'bg-muted-foreground/30 hover:bg-muted-foreground/30',
+              )}
+              aria-label="Toggle auto publish"
+            >
+              <span className={cn(
+                'inline-block h-4 w-4 transform rounded-full bg-white transition-transform',
+                autoPublishEnabled ? 'translate-x-6' : 'translate-x-1',
+              )} />
+            </Button>
+          </div>
+
+          {autoPublishEnabled && (
+            <div className="space-y-1">
+              <Label className="text-[10px]">Intervalo entre publicaciones</Label>
+              <div className="grid grid-cols-6 gap-1">
+                {INTERVAL_OPTIONS.map(h => (
+                  <Button
+                    key={h}
+                    type="button"
+                    variant="ghost"
+                    onClick={() => setAutoPublishInterval(h)}
+                    className={cn(
+                      'h-9 rounded-md text-[10px] font-bold uppercase transition-colors p-0',
+                      autoPublishInterval === h
+                        ? 'bg-blue-600 text-white hover:bg-blue-600'
+                        : 'bg-muted text-muted-foreground hover:bg-muted/80',
+                    )}
+                  >
+                    {h}h
+                  </Button>
+                ))}
+              </div>
+              <p className="text-[10px] text-muted-foreground mt-1">
+                El cron corre cada hora; cada tienda respeta su propio intervalo.
+              </p>
+            </div>
+          )}
+
+          {config?.last_publish_at && (
+            <div className="text-[10px] text-muted-foreground border-t border-border pt-2 mt-1">
+              <span className="font-bold">Última publicación:</span>{' '}
+              {new Date(config.last_publish_at).toLocaleString('es-CU')}
+              {config.last_publish_status && (
+                <Badge variant="secondary" className="ml-2 text-[9px]">{config.last_publish_status}</Badge>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* ─────────── Step 6: Contenido de publicaciones (Phase 2 — Vitrina fidelity) ─────────── */}
+      <Card>
+        <CardContent className="p-4 space-y-3">
+          <div className="flex items-center gap-2">
+            <Lock className="w-4 h-4 text-amber-600" />
+            <h3 className="text-xs font-black uppercase">6. Contenido de publicaciones</h3>
+          </div>
+
+          {/* Warning callout — must be very clear */}
+          <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-50 border border-amber-200 text-amber-900 dark:bg-amber-950/30 dark:text-amber-200 dark:border-amber-900">
+            <Info className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+            <p className="text-[10px] leading-relaxed">
+              <strong>El precio respeta la configuración de Vitrina.</strong>{' '}
+              Si Vitrina oculta el precio (price_visible=false) o el precio es 0, Telegram tampoco lo mostrará.
+              Esta regla no se puede sobrescribir desde aquí.
+            </p>
+          </div>
+
+          {/* Precio */}
+          <div className="space-y-1">
+            <Label className="text-[10px]">Precio</Label>
+            <select
+              value={showPrice === 'show' ? 'according_to_storefront' : showPrice}
+              onChange={e => setShowPrice(e.target.value as any)}
+              className="w-full text-xs h-10 rounded-lg border border-border bg-background px-2"
+            >
+              {SHOW_PRICE_OPTIONS.map(opt => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
+            <p className="text-[9px] text-muted-foreground">
+              {SHOW_PRICE_OPTIONS.find(o => o.value === (showPrice === 'show' ? 'according_to_storefront' : showPrice))?.hint}
+            </p>
+          </div>
+
+          {/* Unidades físicas */}
+          <div className="space-y-1">
+            <Label className="text-[10px]">Unidades físicas</Label>
+            <select
+              value={showPhysicalUnits ? 'show' : 'hide'}
+              onChange={e => setShowPhysicalUnits(e.target.value === 'show')}
+              className="w-full text-xs h-10 rounded-lg border border-border bg-background px-2"
+            >
+              <option value="hide">No mostrar</option>
+              <option value="show">Mostrar</option>
+            </select>
+            <p className="text-[9px] text-muted-foreground">
+              Si se activa, se mostrará «Disponibles: N unidades» — pero solo si Vitrina también permite mostrar stock.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* ─────────── Step 7: Vista previa (Phase 2) ─────────── */}
+      <Card>
+        <CardContent className="p-4 space-y-3">
+          <div className="flex items-center gap-2">
+            <Eye className="w-4 h-4 text-blue-600" />
+            <h3 className="text-xs font-black uppercase">7. Vista previa</h3>
+          </div>
+          <p className="text-[10px] text-muted-foreground">
+            Esta es la versión exacta del mensaje que se enviará a Telegram. La vista previa y la publicación real usan el mismo formatter.
+          </p>
+
+          {/* Product picker */}
+          <div className="space-y-1">
+            <Label className="text-[10px]">Producto de la vitrina</Label>
+            <select
+              value={previewProductId ?? ''}
+              onChange={e => setPreviewProductId(e.target.value)}
+              className="w-full text-xs h-10 rounded-lg border border-border bg-background px-2"
+              disabled={vitrinaProducts.length === 0}
+            >
+              {vitrinaProducts.length === 0 && <option value="">No hay productos en la vitrina</option>}
+              {vitrinaProducts.map(p => (
+                <option key={p.id} value={p.id}>
+                  {p.name}{p.formattedPrice ? ` — ${p.formattedPrice}` : ' (sin precio visible)'}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Preview bubble */}
+          <div className="rounded-xl bg-blue-500/5 border border-blue-200 dark:border-blue-900 dark:bg-blue-950/20 p-3">
+            {previewLoading ? (
+              <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+                <Loader2 className="w-3 h-3 animate-spin" />
+                Cargando vista previa…
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                {previewImageUrl ? (
+                  <div className="w-16 h-16 rounded-md overflow-hidden bg-muted shrink-0">
+                    <img src={previewImageUrl} alt="producto" className="w-full h-full object-cover" />
+                  </div>
+                ) : (
+                  <div className="w-16 h-16 rounded-md bg-muted shrink-0 flex items-center justify-center">
+                    <Package className="w-6 h-6 text-muted-foreground" />
+                  </div>
+                )}
+                <pre className="flex-1 text-[10px] leading-relaxed whitespace-pre-wrap font-mono text-foreground overflow-hidden">
+{previewText || '(sin contenido)'}
+                </pre>
+              </div>
+            )}
+          </div>
+
+          {/* Indicators */}
+          {previewProductId && (() => {
+            const p = vitrinaProducts.find(x => x.id === previewProductId);
+            if (!p) return null;
+            return (
+              <div className="flex flex-wrap gap-1.5">
+                {p.price_visible_in_vitrina ? (
+                  <Badge variant="secondary" className="text-[9px] bg-emerald-100 text-emerald-700">Precio visible en Vitrina</Badge>
+                ) : (
+                  <Badge variant="secondary" className="text-[9px] bg-amber-100 text-amber-700">Precio oculto en Vitrina</Badge>
+                )}
+                {p.stock_visible_in_vitrina ? (
+                  <Badge variant="secondary" className="text-[9px] bg-emerald-100 text-emerald-700">Stock visible en Vitrina</Badge>
+                ) : (
+                  <Badge variant="secondary" className="text-[9px] bg-amber-100 text-amber-700">Stock oculto en Vitrina</Badge>
+                )}
+                {p.on_promotion && (
+                  <Badge variant="secondary" className="text-[9px] bg-amber-100 text-amber-700"><Zap className="w-2.5 h-2.5 inline mr-0.5" />En promoción</Badge>
+                )}
+              </div>
+            );
+          })()}
+
+          <Button
+            onClick={handlePublishNow}
+            disabled={publishing || !previewProductId || !isConfigured}
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white h-12"
+          >
+            {publishing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Rocket className="w-4 h-4" />}
+            Publicar ahora
+          </Button>
+        </CardContent>
+      </Card>
+
+      {/* ─────────── Step 8: Historial (Phase 2) ─────────── */}
+      <Card>
+        <CardContent className="p-4 space-y-3">
+          <div className="flex items-center gap-2">
+            <History className="w-4 h-4 text-blue-600" />
+            <h3 className="text-xs font-black uppercase">8. Historial de publicaciones</h3>
+          </div>
+
+          {postsLoading ? (
+            <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+              <Loader2 className="w-3 h-3 animate-spin" />
+              Cargando…
+            </div>
+          ) : posts.length === 0 ? (
+            <p className="text-[10px] text-muted-foreground">Aún no hay publicaciones.</p>
+          ) : (
+            <div className="space-y-2 max-h-72 overflow-y-auto">
+              {posts.map(post => (
+                <div key={post.id} className="border border-border rounded-md p-2 text-[10px]">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-bold truncate">{post.product_name}</span>
+                    <Badge variant="secondary" className={cn(
+                      'text-[9px] shrink-0',
+                      post.status === 'success' ? 'bg-emerald-100 text-emerald-700' :
+                      post.status === 'failed' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700',
+                    )}>
+                      {post.status}
+                    </Badge>
+                  </div>
+                  <div className="text-[9px] text-muted-foreground mt-0.5 flex items-center gap-2">
+                    <span>{new Date(post.created_at).toLocaleString('es-CU')}</span>
+                    <span>·</span>
+                    <span>{post.publish_type === 'automatic' ? 'auto' : 'manual'}</span>
+                    {post.product_price != null && (
+                      <>
+                        <span>·</span>
+                        <span>{post.product_price} {post.product_currency || ''}</span>
+                      </>
+                    )}
+                  </div>
+                  {post.error && (
+                    <p className="text-[9px] text-red-600 mt-1">{post.error}</p>
+                  )}
+                </div>
+              ))}
+            </div>
           )}
         </CardContent>
       </Card>
