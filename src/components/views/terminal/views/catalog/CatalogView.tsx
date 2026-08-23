@@ -15,6 +15,7 @@ import { toast } from 'sonner';
 import { BulkPriceIncrementModal } from '@/components/modals/BulkPriceIncrementModal';
 import { catalogService } from '@/services/catalog-service';
 import { compressImage, validateImageFile } from '@/lib/image-compress';
+import { getSupabaseUrl } from '@/lib/utils';
 import type { ProductVariant, Product, UserStoreMembership } from '@/types';
 import { exportCatalogToExcel } from '@/services/catalog-service';
 import CatalogImportDialog from '@/components/views/terminal/views/catalog/CatalogImportDialog';
@@ -824,8 +825,66 @@ export default function CatalogView() {
         setIsUploadingEditImage(true);
         try {
           const compressed = await compressImage(editImage);
-          await catalogService.uploadProductImage(editingProduct.id, compressed);
+          const newFileName = await catalogService.uploadProductImage(editingProduct.id, compressed);
           toast.success('Imagen actualizada');
+
+          // HARDENING-CATALOG-IMAGE: catalogService.uploadProductImage bypasses
+          // our useUpdateProduct mutation, so the optimistic update didn't fire
+          // for image_url. The internal UPDATE in uploadProductImage persisted
+          // the new filename to the BD, but the React Query cache still has
+          // the OLD image_url. We need to manually update the cache so the new
+          // image appears immediately in cards/table views without a manual refresh.
+          //
+          // Each upload generates a unique filename (productId-uuid.ext), so
+          // there's NO CDN/browser cache issue — the URL is genuinely new.
+          const newPublicUrl = getSupabaseUrl('product-images', newFileName);
+          const imagePatch = { image_url: newFileName, public_image_url: newPublicUrl };
+          const patchProduct = (p: any) =>
+            p && typeof p === 'object' && p.id === editingProduct.id
+              ? { ...p, ...imagePatch }
+              : p;
+
+          // Update ['products', ...] queries (flat array)
+          for (const [queryKey, data] of queryClient.getQueriesData({ queryKey: ['products'] })) {
+            if (Array.isArray(data)) {
+              queryClient.setQueryData(queryKey, data.map(patchProduct));
+            }
+          }
+          // Update ['inventory', ...] queries (flat array)
+          for (const [queryKey, data] of queryClient.getQueriesData({ queryKey: ['inventory'] })) {
+            if (Array.isArray(data)) {
+              queryClient.setQueryData(queryKey, data.map(patchProduct));
+            }
+          }
+          // Update ['catalog-products-v2', ...] queries (nested: infinite has pages[], page has products[])
+          for (const [queryKey, data] of queryClient.getQueriesData({ queryKey: ['catalog-products-v2'] })) {
+            if (!data || typeof data !== 'object') continue;
+            // Infinite mode: { pages: [{ products: [...] }, ...], pageParams: [...] }
+            if (Array.isArray((data as any).pages)) {
+              const newData = {
+                ...(data as any),
+                pages: (data as any).pages.map((page: any) =>
+                  page && Array.isArray(page.products)
+                    ? { ...page, products: page.products.map(patchProduct) }
+                    : page
+                ),
+              };
+              queryClient.setQueryData(queryKey, newData);
+              continue;
+            }
+            // Page mode: { products: [...], total: N }
+            if (Array.isArray((data as any).products)) {
+              queryClient.setQueryData(queryKey, {
+                ...(data as any),
+                products: (data as any).products.map(patchProduct),
+              });
+              continue;
+            }
+          }
+          // Also invalidate so any other open tabs/components refetch consistently
+          queryClient.invalidateQueries({ queryKey: ['catalog-products-v2'] });
+          queryClient.invalidateQueries({ queryKey: ['inventory'] });
+          queryClient.invalidateQueries({ queryKey: ['products'] });
         } catch {
           toast.warning('No se pudo subir la imagen');
         } finally {

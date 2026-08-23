@@ -190,43 +190,112 @@ export function useUpdateProduct() {
     },
     // HARDENING-CATALOG-EDIT: optimistic update to prevent stale-cache UX bug.
     //
-    // PROBLEM: After PATCH returned 200, onSuccess called invalidateQueries.
-    // But invalidateQueries only marks the cache as stale — it does NOT
-    // immediately replace cached data. The background refetch is async and
-    // may not complete before the user reopens the EditProductModal.
-    // When the user reopened the modal, handleOpenEdit(product) used the
-    // OLD cached product object, so the form showed the OLD name even
-    // though the BD had the NEW name. The user saw "Guardado correctamente"
-    // but the modal showed the old value → perceived as "didn't persist".
+    // PROBLEM (original): After PATCH returned 200, onSuccess called
+    // invalidateQueries(['products']). But invalidateQueries only marks the
+    // cache as stale — it does NOT immediately replace cached data. The
+    // background refetch is async and may not complete before the user
+    // reopens the EditProductModal, so the form showed the OLD values.
     //
-    // FIX: onMutate cancels outgoing refetches, snapshots the current cache,
-    // and immediately updates ALL cached 'products' queries with the new
-    // values. If the PATCH fails, onError rolls back to the snapshot.
-    // This way, when the user reopens the modal, handleOpenEdit(product)
-    // gets the UPDATED product from cache, not the stale one.
+    // PROBLEM (now): The previous fix only updated queries with key
+    // ['products', ...]. But CatalogView actually uses THREE different
+    // query keys:
+    //   - ['inventory', storeId, searchTerm, category, limit]  (stock view)
+    //   - ['catalog-products-v2', 'infinite', ...]              (cards view)
+    //   - ['catalog-products-v2', 'page', ...]                  (table view)
+    //
+    // NONE of these was being touched by the optimistic update, so the UI
+    // continued showing stale data until a manual page refresh.
+    //
+    // FIX: onMutate now optimistically updates ALL THREE query families.
+    // For each query, we walk the cached structure (array / paginated /
+    // infinite) and replace the matching product with the new fields.
+    // If the PATCH fails, onError rolls back to the snapshot.
     onMutate: async ({ id, ...updates }) => {
-      // Cancel any outgoing refetches so they don't overwrite our optimistic update
-      await queryClient.cancelQueries({ queryKey: ['products'] });
+      // Build the patch object (only fields that are explicitly set)
+      const patchFields = Object.fromEntries(
+        Object.entries(updates).filter(([_, v]) => v !== undefined)
+      );
 
-      // Snapshot all cached 'products' queries (there can be multiple: different store/search/category combos)
+      // Cancel any outgoing refetches for ALL affected query families
+      await Promise.all([
+        queryClient.cancelQueries({ queryKey: ['products'] }),
+        queryClient.cancelQueries({ queryKey: ['inventory'] }),
+        queryClient.cancelQueries({ queryKey: ['catalog-products-v2'] }),
+      ]);
+
       const previousDataMap = new Map<unknown, unknown>();
-      const queries = queryClient.getQueriesData<unknown[]>({ queryKey: ['products'] });
-      for (const [queryKey, data] of queries) {
-        if (!Array.isArray(data)) continue;
+
+      // Helper: apply the patch to a single product object
+      const patchProduct = (p: any) =>
+        p && typeof p === 'object' && p.id === id ? { ...p, ...patchFields } : p;
+
+      // Helper: process a flat array of products (used by ['products'] and ['inventory'] queries)
+      const processArrayQuery = (queryKey: unknown) => {
+        const data = (queryClient as any).getQueryData(queryKey);
+        if (!Array.isArray(data)) return;
         previousDataMap.set(queryKey, data);
-        // Replace the matching product in this cache entry with the updated fields
-        const newData = data.map((p: any) =>
-          p?.id === id ? { ...p, ...Object.fromEntries(
-            Object.entries(updates).filter(([_, v]) => v !== undefined)
-          ) } : p
-        );
-        queryClient.setQueryData(queryKey, newData);
+        const newData = data.map(patchProduct);
+        (queryClient as any).setQueryData(queryKey, newData);
+      };
+
+      // Helper: process paginated/infinite structures where products live in nested pages
+      // - useQuery (page mode): { products: [...], total: N }
+      // - useInfiniteQuery (cards mode): { pages: [{ products: [...], total, nextOffset }, ...], pageParams: [...] }
+      const processNestedQuery = (queryKey: unknown) => {
+        const data = (queryClient as any).getQueryData(queryKey);
+        if (!data || typeof data !== 'object') return;
+        previousDataMap.set(queryKey, data);
+
+        // Case A: useInfiniteQuery — has `pages` array
+        if (Array.isArray((data as any).pages)) {
+          const newData = {
+            ...(data as any),
+            pages: (data as any).pages.map((page: any) => {
+              if (!page || !Array.isArray(page.products)) return page;
+              return { ...page, products: page.products.map(patchProduct) };
+            }),
+          };
+          (queryClient as any).setQueryData(queryKey, newData);
+          return;
+        }
+
+        // Case B: useQuery page mode — has `products` array directly
+        if (Array.isArray((data as any).products)) {
+          const newData = {
+            ...(data as any),
+            products: (data as any).products.map(patchProduct),
+          };
+          (queryClient as any).setQueryData(queryKey, newData);
+          return;
+        }
+
+        // Case C: legacy — flat array (some old queries)
+        if (Array.isArray(data)) {
+          const newData = data.map(patchProduct);
+          (queryClient as any).setQueryData(queryKey, newData);
+        }
+      };
+
+      // 1. Update ['products', ...] queries (used by useProducts — flat array)
+      for (const [queryKey] of queryClient.getQueriesData({ queryKey: ['products'] })) {
+        processArrayQuery(queryKey);
+      }
+
+      // 2. Update ['inventory', ...] queries (used by useInventory — flat array)
+      for (const [queryKey] of queryClient.getQueriesData({ queryKey: ['inventory'] })) {
+        processArrayQuery(queryKey);
+      }
+
+      // 3. Update ['catalog-products-v2', ...] queries (used by useCatalogProductsInfinite
+      //    and useCatalogProductsPage — nested products structure)
+      for (const [queryKey] of queryClient.getQueriesData({ queryKey: ['catalog-products-v2'] })) {
+        processNestedQuery(queryKey);
       }
 
       return { previousDataMap };
     },
     onError: (err, _variables, context) => {
-      // Rollback on error: restore the previous cache state
+      // Rollback on error: restore the previous cache state for ALL queries we touched
       if (context?.previousDataMap) {
         for (const [queryKey, data] of context.previousDataMap) {
           (queryClient as any).setQueryData(queryKey, data);
@@ -234,8 +303,12 @@ export function useUpdateProduct() {
       }
     },
     onSuccess: async (_data, variables) => {
+      // Invalidate ALL affected query families so the background refetch
+      // confirms consistency with the BD. The optimistic update already
+      // shows the new values immediately; this just validates.
       queryClient.invalidateQueries({ queryKey: ['products'] });
       queryClient.invalidateQueries({ queryKey: ['inventory'] });
+      queryClient.invalidateQueries({ queryKey: ['catalog-products-v2'] });
       queryClient.invalidateQueries({ queryKey: ['product-cost-sheets'] });
 
       // R2-4 (M7): log price change if price or cost changed
