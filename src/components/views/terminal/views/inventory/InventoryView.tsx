@@ -50,7 +50,7 @@ import StockAlertsPanel from './StockAlertsPanel';
 import InventoryKPIs from './InventoryKPIs';
 import { AlertTriangle, ArrowUp } from 'lucide-react';
 import { useProductFCStatus, type FCCoverageData } from '@/hooks/ui/useProductFCStatus';
-import { FCStatusBadge, FCCoverageBar, FCCoverageAccordion } from '@/components/ui/FCStatusBadge';
+import { FCStatusBadge, FCCoverageBar } from '@/components/ui/FCStatusBadge';
 import { FCQuickIcon } from '@/components/ui/FCQuickIcon';
 import { FCPreviewModal } from '@/components/ui/FCPreviewModal';
 import { ProductFCSync } from '@/components/ui/ProductFCSync';
@@ -901,16 +901,16 @@ export default function InventoryView() {
                             )}
                         </button>
 
-                        {/* Ficha de costo (FC) — botón que abre modal con coverage accordion */}
+                        {/* Ficha de costo (FC) — botón que abre modal con coverage */}
                         <button
                             type="button"
                             onClick={() => setShowFCModal(true)}
                             className="inline-flex items-center gap-2 px-3 py-2 min-h-[40px] rounded-xl border border-border bg-card text-muted-foreground hover:bg-muted/50 text-xs font-bold uppercase transition-all active:scale-95"
-                            aria-label="Ver ficha de costo (FC)"
+                            aria-label="Ficha de costo (FC)"
+                            title="Ficha de costo"
                         >
                             <FileText className="w-4 h-4" />
-                            <span className="hidden sm:inline">Ficha de costo (FC)</span>
-                            <span className="sm:hidden">FC</span>
+                            FC
                             {fcCoverage.total > 0 && (
                                 <span className={cn(
                                     "inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full text-[10px] font-black",
@@ -1250,58 +1250,125 @@ export default function InventoryView() {
                 </div>
             </BaseModal>
 
-            {/* Modal: Salud del inventario — contiene KPIs + alertas que antes ocupaban espacio permanente */}
+            {/* Modal: Salud del inventario — panel de análisis con jerarquía visual clara */}
             <BaseModal
                 open={showSaludInventario}
                 onOpenChange={(open) => setShowSaludInventario(open)}
                 title="Salud del inventario"
-                maxWidth="sm:max-w-2xl"
+                maxWidth="sm:max-w-4xl"
             >
-                <div className="space-y-4 max-h-[70vh] overflow-y-auto">
-                    {/* KPI Dashboard */}
+                <div className="space-y-6 max-h-[75vh] overflow-y-auto">
+                    {/* NIVEL 1: Resumen visual de salud global — aparece PRIMERO */}
+                    {products.length > 0 && (() => {
+                        const validProducts = products.filter(p => p.id && p.id.length > 0);
+                        const total = validProducts.length;
+                        const healthy = validProducts.filter(p => (p.stock_current || 0) > (p.min_stock || 0)).length;
+                        const healthPercent = total > 0 ? Math.round((healthy / total) * 100) : 100;
+                        const status = healthPercent >= 80 ? 'Saludable' : healthPercent >= 50 ? 'Atención requerida' : 'Crítico';
+                        const statusColor = healthPercent >= 80 ? 'text-success' : healthPercent >= 50 ? 'text-warning' : 'text-destructive';
+                        const barColor = healthPercent >= 80 ? 'bg-success' : healthPercent >= 50 ? 'bg-warning' : 'bg-destructive';
+                        return (
+                            <div className="text-center py-6 px-4 rounded-2xl bg-gradient-to-b from-muted/30 to-transparent border border-border">
+                                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground mb-2">Salud del Inventario</p>
+                                <p className={cn('text-5xl font-black tabular-nums mb-3', statusColor)}>{healthPercent}%</p>
+                                <div className="max-w-[300px] mx-auto h-3 rounded-full bg-muted/50 overflow-hidden mb-3">
+                                    <div className={cn('h-full rounded-full transition-all duration-700', barColor)} style={{ width: `${healthPercent}%` }} />
+                                </div>
+                                <p className={cn('text-sm font-black uppercase tracking-widest', statusColor)}>{status}</p>
+                                <p className="text-xs text-muted-foreground mt-1">{healthy} de {total} productos con stock saludable</p>
+                            </div>
+                        );
+                    })()}
+
+                    {/* NIVEL 2: Tarjetas de detalle KPI */}
                     {products.length > 0 && (
-                        <InventoryKPIs products={products} fcCoverage={fcCoverage} />
+                        <InventoryKPIs products={products} fcCoverage={fcCoverage} className="[&>button]:hidden [&>div]:!grid-rows-[1fr] [&>div]:!opacity-100 [&>div]:!pointer-events-auto" />
                     )}
-                    {/* Stock alerts panel (inline, no overlay) */}
+
+                    {/* NIVEL 3: Alertas de stock */}
                     {stockAlerts.length > 0 ? (
-                        <StockAlertsPanel
-                            alerts={stockAlerts}
-                            isOpen={true}
-                            onClose={() => {}}
-                            onReceive={(product) => {
-                                setShowSaludInventario(false);
-                                setPreselectedProduct(product);
-                                setCurrentView('reception');
-                            }}
-                        />
+                        <div className="space-y-2">
+                            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Alertas de Stock</p>
+                            <StockAlertsPanel
+                                alerts={stockAlerts}
+                                isOpen={true}
+                                onClose={() => {}}
+                                onReceive={(product) => {
+                                    setShowSaludInventario(false);
+                                    setPreselectedProduct(product);
+                                    setCurrentView('reception');
+                                }}
+                            />
+                        </div>
                     ) : (
-                        <div className="text-center py-8 text-muted-foreground">
-                            <CheckCircle2 className="w-12 h-12 mx-auto mb-2 text-success/50" />
-                            <p className="text-sm font-bold uppercase tracking-widest">Sin alertas</p>
-                            <p className="text-xs mt-1">Todos los productos tienen stock saludable</p>
+                        <div className="text-center py-4 text-muted-foreground">
+                            <CheckCircle2 className="w-8 h-8 mx-auto mb-2 text-success/50" />
+                            <p className="text-xs font-bold uppercase tracking-widest">Sin alertas de stock</p>
                         </div>
                     )}
                 </div>
             </BaseModal>
 
-            {/* Modal: Ficha de costo (FC) — contiene el accordion que antes estaba permanente */}
+            {/* Modal: Ficha de costo (FC) — contenido directo, SIN abanico/accordion */}
             <BaseModal
                 open={showFCModal}
                 onOpenChange={(open) => setShowFCModal(open)}
                 title="Ficha de costo (FC)"
                 maxWidth="sm:max-w-2xl"
             >
-                <div className="space-y-4 max-h-[70vh] overflow-y-auto">
+                <div className="space-y-4 max-h-[75vh] overflow-y-auto">
                     {fcCoverage.total > 0 ? (
-                        <FCCoverageAccordion
-                            vigente={fcCoverage.vigente}
-                            pendiente={fcCoverage.pendiente}
-                            sin_fc={fcCoverage.sin_fc}
-                            total={fcCoverage.total}
-                            coverage={fcCoverage.coverage}
-                            fcFilter={fcFilter}
-                            onFcFilterChange={setFcFilter}
-                        />
+                        <>
+                            {/* Resumen de cobertura FC — mostrado DIRECTAMENTE, sin accordion */}
+                            <div className="space-y-3">
+                                {/* Barra de cobertura */}
+                                <FCCoverageBar
+                                    vigente={fcCoverage.vigente}
+                                    pendiente={fcCoverage.pendiente}
+                                    sin_fc={fcCoverage.sin_fc}
+                                    total={fcCoverage.total}
+                                    coverage={fcCoverage.coverage}
+                                />
+                                {/* Resumen textual */}
+                                <div className="flex items-center justify-between text-xs">
+                                    <span className="text-muted-foreground">
+                                        {fcCoverage.vigente} vigente · {fcCoverage.pendiente} pendiente · {fcCoverage.sin_fc} sin FC
+                                    </span>
+                                    <span className={cn(
+                                        'font-black',
+                                        fcCoverage.coverage >= 80 ? 'text-success' : fcCoverage.coverage >= 50 ? 'text-warning' : 'text-destructive'
+                                    )}>
+                                        {fcCoverage.coverage.toFixed(1)}% cobertura
+                                    </span>
+                                </div>
+                            </div>
+
+                            {/* Filtros FC — chips directos, NO dentro de un accordion */}
+                            <div className="flex items-center gap-2 flex-wrap pt-2 border-t border-border">
+                                <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground shrink-0 mr-1">Filtrar productos</span>
+                                {[
+                                    { key: 'all' as const, label: 'Todos', count: fcCoverage.total, dotColor: 'bg-primary' },
+                                    { key: 'vigente' as const, label: 'Vigente', count: fcCoverage.vigente, dotColor: 'bg-success' },
+                                    { key: 'pendiente' as const, label: 'Pendiente', count: fcCoverage.pendiente, dotColor: 'bg-warning' },
+                                    { key: 'sin_fc' as const, label: 'Sin FC', count: fcCoverage.sin_fc, dotColor: 'bg-muted-foreground/30' },
+                                ].map(opt => (
+                                    <button
+                                        key={opt.key}
+                                        type="button"
+                                        onClick={() => setFcFilter(opt.key)}
+                                        className={cn(
+                                            'inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-[10px] font-bold uppercase border transition-all active:scale-95',
+                                            fcFilter === opt.key
+                                                ? 'bg-primary text-primary-foreground border-primary shadow-sm'
+                                                : 'bg-muted/50 text-muted-foreground border-border hover:bg-muted'
+                                        )}
+                                    >
+                                        <span className={cn('w-2 h-2 rounded-full', opt.dotColor)} />
+                                        {opt.label}({opt.count})
+                                    </button>
+                                ))}
+                            </div>
+                        </>
                     ) : (
                         <div className="text-center py-8 text-muted-foreground">
                             <FileText className="w-12 h-12 mx-auto mb-2 opacity-30" />
