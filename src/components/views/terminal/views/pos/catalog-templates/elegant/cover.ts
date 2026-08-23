@@ -475,7 +475,9 @@ export async function drawCover(
       galY + 4,
     );
     // Total price hint on right
-    const bannerStr = `Precios desde ${formatPrice(Math.min(...allProducts.filter(p => p.price > 0).map(p => p.price), 0))}`;
+    const validPrices = allProducts.filter(p => p.price != null && p.price > 0).map(p => p.price as number);
+    const minPrice = validPrices.length > 0 ? Math.min(...validPrices) : 0;
+    const bannerStr = `Precios desde ${formatPrice(minPrice)}`;
     doc.setFontSize(6);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(...lightenColor(pc, 0.3));

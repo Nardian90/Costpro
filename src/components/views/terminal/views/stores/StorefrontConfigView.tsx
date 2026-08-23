@@ -284,9 +284,10 @@ export default function StorefrontConfigView() {
             const { organizeProducts } = await import('@/components/views/terminal/views/pos/catalog-templates/shared');
             const catalogProducts = storefrontProducts.map((p: Product) => ({
               id: p.id, name: p.name, sku: p.sku ?? undefined,
-              // price_visible: if false, set price to -1 to signal "hidden" to renderers
-              // (renderers that check price > 0 will skip it; -1 is NOT a valid price)
-              price: (p as any).price_visible === false ? -1 : (p.price || 0),
+              // price_visible: if false, set price to null (same as StorefrontPage which
+              // sets price=null when price_visible===false, showing 'Consultar').
+              // Using -1 was a bug: formatPrice(-1) rendered as '$-1.00' in the PDF.
+              price: (p as any).price_visible === false ? null : (p.price || 0),
               price_currency: (p as any).price_currency ?? undefined,
               price_visible: (p as any).price_visible ?? undefined,
               stock_visible: (p as any).stock_visible ?? undefined,

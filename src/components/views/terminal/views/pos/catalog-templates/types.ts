@@ -11,7 +11,7 @@ export interface CatalogProduct {
   id: string;
   name: string;
   sku?: string;
-  price: number;
+  price: number | null;
   price_currency?: string;
   price_visible?: boolean;
   stock_visible?: boolean;

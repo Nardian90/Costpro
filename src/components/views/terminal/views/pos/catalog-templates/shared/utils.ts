@@ -85,8 +85,8 @@ export function buildBrandConfig(storeName: string): BrandConfig {
 
 // ── Formatting ──────────────────────────────────────────────
 
-export function formatPrice(price: number): string {
-  if (price === 0 || price == null) {
+export function formatPrice(price: number | null | undefined): string {
+  if (price == null || price === 0 || price < 0) {
     return "Precio a confirmar";
   }
   return new Intl.NumberFormat("es-CU", {

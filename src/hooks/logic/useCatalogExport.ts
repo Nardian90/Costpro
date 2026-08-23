@@ -34,7 +34,8 @@ function toCatalogProduct(p: Product): CatalogProduct {
     id: p.id,
     name: p.name,
     sku: p.sku ?? undefined,
-    price: p.price || 0,
+    // Same logic as StorefrontPage: price_visible === false → price = null
+    price: (p as any).price_visible === false ? null : (p.price || 0),
     price_currency: (p as any).price_currency ?? undefined,
     price_visible: (p as any).price_visible ?? undefined,
     stock_visible: (p as any).stock_visible ?? undefined,
