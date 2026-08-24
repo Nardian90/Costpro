@@ -6,13 +6,16 @@ import { logger } from '@/lib/logger';
 /**
  * GET /api/cron/telegram-auto-publish
  *
- * Cron job that runs every 5 minutes (see vercel.json + local PM2 poller
- * in scripts/telegram-cron-poller.sh). Finds stores with auto-publish
- * enabled, checks if their interval has elapsed, and publishes a product
- * to Telegram.
+ * Cron job — runs DAILY at 08:00 UTC on Vercel Hobby plan (free tier
+ * limit: only daily crons allowed). For sub-daily frequencies (5/15/30/60 min),
+ * the local PM2 poller in scripts/telegram-cron-poller.sh is the primary
+ * scheduler — it hits this endpoint every 5 min from the dev machine.
  *
- * This endpoint is PUBLIC (no auth) — it relies on the cron being internal.
- * If you need to call it from outside, consider adding a CRON_SECRET.
+ * To enable a 5-minute cron here, upgrade to Vercel Pro.
+ *
+ * This endpoint is idempotent: each store only publishes when its own
+ * interval_minutes has elapsed since last_publish_at. Calling this more
+ * often than necessary is safe — it returns "skipped: interval_not_elapsed".
  *
  * Critical: this uses the SAME publishProductToTelegram() helper as the
  * manual /api/telegram/publish-product endpoint, so the message body and

@@ -10,7 +10,7 @@
     },
     {
       "path": "/api/cron/telegram-auto-publish",
-      "schedule": "*/5 * * * *"
+      "schedule": "0 8 * * *"
     }
   ],
   "functions": {

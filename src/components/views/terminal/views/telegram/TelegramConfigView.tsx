@@ -834,11 +834,18 @@ export default function TelegramConfigView() {
               )}
 
               <p className="text-[10px] text-muted-foreground mt-1">
-                El cron corre cada 5 minutos; cada tienda respeta su propio intervalo.
+                Cron diario en Vercel (Hobby) + poller local PM2 cada 5 min.
+                Cada tienda respeta su propio intervalo.
                 {!customIntervalMode && (
                   <> Intervalo actual: <strong>{formatIntervalLabel(autoPublishInterval)}</strong>.</>
                 )}
               </p>
+              {autoPublishInterval < 1440 && (
+                <p className="text-[9px] text-amber-600 dark:text-amber-400 mt-1">
+                  ⚠ Intervalo &lt; 24h requiere que el poller local (PM2) esté corriendo.
+                  Vercel Hobby solo soporta cron diario. Upgrade a Vercel Pro para cron cada 5 min en la nube.
+                </p>
+              )}
             </div>
           )}
 
