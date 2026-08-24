@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Loader2, X, Package, Shuffle, Download, AlertTriangle, CheckCircle2, ImageOff } from 'lucide-react';
 import { BaseModal } from '@/components/ui/BaseModal';
@@ -33,6 +33,13 @@ import type { ProductPresentationInput } from '@/lib/storefront/product-presenta
  *   - ZIP containing one JPG per product
  *   - Filenames: {NN}-{slug}.jpg where NN is the index (avoids overwrites)
  *   - Sanitized for Windows/macOS/Linux
+ *
+ * Production safeguards:
+ *   - AbortController cancels the render loop mid-flight when modal closes
+ *   - "Generar ZIP" button disabled while rendering (no concurrent exports)
+ *   - "Descargar ZIP" button disabled for 1s after click (no double download)
+ *   - ZIP blob + state reset on every new export (no stale state leak)
+ *   - Real error messages from html2canvas (CORS / network / unknown)
  */
 
 export interface ExportTelegramCatalogModalProps {
@@ -62,23 +69,55 @@ export function ExportTelegramCatalogModal({
   const [progress, setProgress] = useState<{ current: number; total: number; name: string } | null>(null);
   const [results, setResults] = useState<RenderedTelegramImageWithError[] | null>(null);
   const [zipBlob, setZipBlob] = useState<Blob | null>(null);
-  const abortRef = useRef(false);
+  const [downloading, setDownloading] = useState(false);
+
+  // AbortController ref — survives re-renders, allows mid-flight cancel
+  const abortRef = useRef<AbortController | null>(null);
 
   const totalProducts = products.length;
   const randomCountNum = parseInt(randomCount, 10) || 0;
   const tooMany = mode === 'random' && randomCountNum > totalProducts;
-  const canExport = totalProducts > 0 && !tooMany && (mode === 'todos' || randomCountNum > 0);
+  const canExport = totalProducts > 0 && !tooMany && (mode === 'todos' || randomCountNum > 0) && stage !== 'rendering';
+
+  // Compute "will export N" preview for the config stage
+  const willExportCount = mode === 'todos'
+    ? totalProducts
+    : Math.min(randomCountNum, totalProducts);
+
+  // Cleanup on unmount or modal close: cancel any in-flight render
+  const cancelInFlight = useCallback(() => {
+    if (abortRef.current) {
+      abortRef.current.abort();
+      abortRef.current = null;
+    }
+  }, []);
+
+  // When modal closes (open=false), cancel any in-flight render
+  useEffect(() => {
+    if (!open) {
+      cancelInFlight();
+    }
+  }, [open, cancelInFlight]);
+
+  // On unmount
+  useEffect(() => {
+    return () => { cancelInFlight(); };
+  }, [cancelInFlight]);
 
   const reset = useCallback(() => {
-    abortRef.current = true;
+    cancelInFlight();
     setStage('config');
     setProgress(null);
     setResults(null);
     setZipBlob(null);
-  }, []);
+  }, [cancelInFlight]);
 
   const handleExport = useCallback(async () => {
     if (!canExport) return;
+
+    // Cancel any prior in-flight export (defensive — shouldn't happen since
+    // button is disabled, but guards against programmatic triggers)
+    cancelInFlight();
 
     // Build the selected products list
     let selected: ProductPresentationInput[];
@@ -94,7 +133,10 @@ export function ExportTelegramCatalogModal({
       selected = shuffled.slice(0, Math.min(randomCountNum, totalProducts));
     }
 
-    abortRef.current = false;
+    // Fresh AbortController for this export
+    const controller = new AbortController();
+    abortRef.current = controller;
+
     setStage('rendering');
     setProgress({ current: 0, total: selected.length, name: '' });
     setResults(null);
@@ -105,12 +147,16 @@ export function ExportTelegramCatalogModal({
         selected,
         telegramOptions,
         (p) => {
-          if (abortRef.current) return;
+          if (controller.signal.aborted) return;
           setProgress({ current: p.current, total: p.total, name: p.productName });
         },
+        { signal: controller.signal },
       );
 
-      if (abortRef.current) return;
+      // If aborted, drop everything and reset
+      if (controller.signal.aborted) {
+        return;
+      }
 
       setResults(renderResults);
 
@@ -155,25 +201,40 @@ export function ExportTelegramCatalogModal({
       const blob = await zip.generateAsync({ type: 'blob' });
       setZipBlob(blob);
       setStage('done');
-      toast.success(`${successCount} imágenes generadas correctamente`);
+      const failMsg = renderResults.length - successCount;
+      toast.success(`${successCount} imágenes generadas correctamente${failMsg > 0 ? ` (${failMsg} con error)` : ''}`);
     } catch (e: any) {
+      if (controller.signal.aborted) return; // silently — user canceled
       setStage('error');
-      toast.error(`Error al generar: ${e?.message ?? String(e)}`);
+      const msg = e?.message ?? String(e);
+      toast.error(`Error al generar: ${msg}`);
+    } finally {
+      // Clear the abort controller — export finished (one way or another)
+      if (abortRef.current === controller) {
+        abortRef.current = null;
+      }
     }
-  }, [canExport, mode, products, randomCountNum, totalProducts, telegramOptions]);
+  }, [canExport, cancelInFlight, mode, products, randomCountNum, totalProducts, telegramOptions]);
 
-  const handleDownload = useCallback(() => {
-    if (!zipBlob) return;
-    const filename = `catalogo-telegram-${storeId.slice(0, 8)}-${new Date().toISOString().slice(0, 10)}.zip`;
-    const url = URL.createObjectURL(zipBlob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-  }, [zipBlob, storeId]);
+  const handleDownload = useCallback(async () => {
+    if (!zipBlob || downloading) return;
+    setDownloading(true);
+    try {
+      const filename = `catalogo-telegram-${storeId.slice(0, 8)}-${new Date().toISOString().slice(0, 10)}.zip`;
+      const url = URL.createObjectURL(zipBlob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      // Revoke after a delay to ensure the download has started
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
+    } finally {
+      // Re-enable after 1s to prevent double-click
+      setTimeout(() => setDownloading(false), 1000);
+    }
+  }, [zipBlob, storeId, downloading]);
 
   const successCount = results?.filter((r) => r.ok).length ?? 0;
   const failCount = results?.filter((r) => !r.ok).length ?? 0;
@@ -189,7 +250,7 @@ export function ExportTelegramCatalogModal({
               <Package className="w-5 h-5 text-primary shrink-0 mt-0.5" />
               <div>
                 <p className="text-xs font-black uppercase tracking-widest">
-                  {totalProducts} producto{totalProducts !== 1 ? 's' : ''} elegible{totalProducts !== 1 ? 's' : ''}
+                  Productos disponibles: {totalProducts}
                 </p>
                 <p className="text-[10px] text-muted-foreground mt-0.5">
                   Solo se incluyen productos activos visibles en la vitrina (las mismas reglas
@@ -291,6 +352,15 @@ export function ExportTelegramCatalogModal({
               )}
             </AnimatePresence>
 
+            {/* Summary of what will be exported */}
+            {totalProducts > 0 && (
+              <div className="rounded-lg bg-primary/5 border border-primary/20 px-3 py-2 text-xs">
+                <span className="font-black uppercase tracking-widest text-primary">Se exportarán:</span>{' '}
+                <span className="font-bold">{willExportCount} JPG{willExportCount !== 1 ? 's' : ''}</span>{' '}
+                <span className="text-muted-foreground">→ 1 ZIP</span>
+              </div>
+            )}
+
             {/* Design note */}
             <div className="rounded-xl border border-primary/30 bg-primary/5 p-3 text-[10px] text-muted-foreground">
               <p>
@@ -332,6 +402,9 @@ export function ExportTelegramCatalogModal({
             <p className="text-[10px] text-muted-foreground text-center">
               {Math.round((progress.current / progress.total) * 100)}%
             </p>
+            <div className="flex justify-center pt-2">
+              <SecondaryButton onClick={reset}>Cancelar</SecondaryButton>
+            </div>
           </div>
         )}
 
@@ -341,7 +414,10 @@ export function ExportTelegramCatalogModal({
               <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
               <div>
                 <p className="text-xs font-black uppercase tracking-widest text-emerald-800 dark:text-emerald-200">
-                  {successCount} imágenes generadas correctamente
+                  Exportación completada
+                </p>
+                <p className="text-[11px] text-emerald-700 dark:text-emerald-300 mt-1">
+                  {successCount} producto{successCount !== 1 ? 's' : ''} → {successCount} imagen{successCount !== 1 ? 'es' : ''} JPG
                 </p>
                 {failCount > 0 && (
                   <p className="text-[10px] text-amber-700 dark:text-amber-300 mt-1">
@@ -355,7 +431,7 @@ export function ExportTelegramCatalogModal({
             {failCount > 0 && (
               <div className="rounded-xl border border-amber-300 bg-amber-50 dark:bg-amber-950/30 p-3 space-y-1">
                 <p className="text-[10px] font-black uppercase tracking-widest text-amber-800 dark:text-amber-200 mb-1">
-                  Errores
+                  Errores ({failCount})
                 </p>
                 <div className="max-h-32 overflow-y-auto space-y-1">
                   {failItems.map((r) => (
@@ -369,9 +445,12 @@ export function ExportTelegramCatalogModal({
 
             <div className="flex items-center justify-end gap-2">
               <SecondaryButton onClick={reset}>Generar otro</SecondaryButton>
-              <PrimaryButton onClick={handleDownload} disabled={successCount === 0}>
-                <Download className="w-4 h-4 mr-1" />
-                Descargar ZIP ({successCount} JPG{successCount !== 1 ? 's' : ''})
+              <PrimaryButton onClick={handleDownload} disabled={successCount === 0 || downloading}>
+                {downloading ? (
+                  <><Loader2 className="w-4 h-4 mr-1 animate-spin" /> Descargando…</>
+                ) : (
+                  <><Download className="w-4 h-4 mr-1" /> Descargar ZIP ({successCount} JPG{successCount !== 1 ? 's' : ''})</>
+                )}
               </PrimaryButton>
             </div>
           </div>
@@ -386,7 +465,8 @@ export function ExportTelegramCatalogModal({
                   Error al generar imágenes
                 </p>
                 <p className="text-[10px] text-red-700 dark:text-red-300 mt-1">
-                  Revisa la consola para más detalles. Puede ser por problemas de CORS en las imágenes.
+                  Revisa la consola para más detalles. Causas comunes: problemas de CORS en las imágenes,
+                  timeout al cargar imágenes, o errores de html2canvas.
                 </p>
               </div>
             </div>

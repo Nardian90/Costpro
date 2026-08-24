@@ -392,8 +392,11 @@ function truncate(s: string, max: number): string {
  *   • units like kg/g/ml/l/m/cm/mm/km → never pluralize
  *
  * Unknown units fall through unchanged — we never invent units.
+ *
+ * EXPORTED so the Telegram image renderer can reuse it — no duplicate
+ * logic in telegram-image-renderer.ts.
  */
-function pluralizeUnit(unit: string, qty: number): string {
+export function pluralizeUnit(unit: string, qty: number): string {
   const u = unit.trim().toLowerCase();
   if (qty === 1) return unit;
 

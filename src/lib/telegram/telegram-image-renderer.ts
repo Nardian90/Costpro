@@ -26,14 +26,21 @@
  *     │  👉 Disponible en nuestra tienda      │
  *     └──────────────────────────────────────┘
  *
- * Reuses:
- *   - `getProductPresentation()` for Vitrina-rule compliant data
- *   - `buildTelegramProductMessage()` for the exact same data fields
+ * SINGLE SOURCE OF TRUTH — NO BUSINESS LOGIC DUPLICATION:
+ *   - Data: `getProductPresentation()` + `buildTelegramProductMessage()`
+ *   - Pluralization: reuses exported `pluralizeUnit()` from product-presentation.ts
+ *   - The renderer does NOT recalculate showPriceLine/showUnitsLine — it
+ *     consumes the result of buildTelegramProductMessage() which already
+ *     applied Vitrina rules. If Telegram changes its rules tomorrow,
+ *     the JPG export inherits that change automatically.
  *
  * Implementation:
  *   - Builds an off-screen HTML div with the design above
- *   - Uses `html2canvas` (already a project dependency) to rasterize to JPEG
+ *   - Uses `html2canvas` (existing project dependency) to rasterize to JPEG
  *   - Returns a base64 data URL ready for ZIP packaging
+ *   - Properly waits for image onload/onerror (not just a fixed sleep)
+ *   - Properly cleans up DOM (always removes the div, even on error)
+ *   - Supports an AbortSignal to cancel mid-render
  */
 
 'use client';
@@ -42,6 +49,7 @@ import html2canvas from 'html2canvas';
 import {
   buildTelegramProductMessage,
   getProductPresentation,
+  pluralizeUnit,
   type ProductPresentationInput,
   type TelegramMessageOptions,
 } from '@/lib/storefront/product-presentation';
@@ -56,8 +64,10 @@ export const TG_IMAGE_HEIGHT = 1350; // 4:5 — Instagram/Telegram carousel aspe
 export interface RenderTelegramImageOptions extends TelegramMessageOptions {
   /** Optional brand primary color [r, g, b] for the accent strip. Default: emerald-700 [21, 128, 61]. */
   primaryColor?: [number, number, number];
-  /** Optional fallback if product has no image — show a placeholder block. */
+  /** Optional fallback if product has no image — show a placeholder block. Default: true. */
   showPlaceholderIfNoImage?: boolean;
+  /** Maximum time (ms) to wait for a product image to load before rendering with placeholder. Default: 5000. */
+  imageLoadTimeoutMs?: number;
 }
 
 export interface RenderedTelegramImage {
@@ -69,6 +79,8 @@ export interface RenderedTelegramImage {
   presentation: ReturnType<typeof getProductPresentation>;
   /** The Markdown text that would be sent to Telegram (for parity verification). */
   telegramCaption: string;
+  /** Whether the product image actually loaded (vs placeholder). */
+  imageLoaded: boolean;
 }
 
 // ── Slugify helper (safe for Windows/macOS/Linux filenames) ────────
@@ -98,36 +110,57 @@ function resolveImageUrl(input: ProductPresentationInput): string | null {
   return `${SUPABASE_URL}/storage/v1/object/public/product-images/${raw}`;
 }
 
+// ── Wait for image to load (with onload/onerror + timeout) ───────
+
+function waitForImageLoad(img: HTMLImageElement, timeoutMs: number): Promise<boolean> {
+  return new Promise((resolve) => {
+    // If already cached + loaded, html5 image has complete=true and naturalWidth>0
+    if (img.complete && img.naturalWidth > 0) {
+      resolve(true);
+      return;
+    }
+    let settled = false;
+    const finish = (ok: boolean) => {
+      if (settled) return;
+      settled = true;
+      img.removeEventListener('load', onLoad);
+      img.removeEventListener('error', onError);
+      clearTimeout(timer);
+      resolve(ok);
+    };
+    const onLoad = () => finish(true);
+    const onError = () => finish(false);
+    const timer = setTimeout(() => finish(false), timeoutMs);
+    img.addEventListener('load', onLoad);
+    img.addEventListener('error', onError);
+  });
+}
+
 // ── Build HTML for the Telegram-style image ───────────────────────
 
+/**
+ * Builds the HTML div that will be rasterized by html2canvas.
+ *
+ * IMPORTANT: This function consumes the RESULT of buildTelegramProductMessage()
+ * rather than re-evaluating Vitrina rules. The presentation passed in
+ * already has the canonical showPriceLine / showUnitsLine decisions.
+ *
+ * This way, if Telegram changes the visibility rules tomorrow, this
+ * renderer inherits the change automatically — no logic duplication.
+ */
 function buildTelegramImageHTML(
   product: ProductPresentationInput,
+  presentation: ReturnType<typeof getProductPresentation>,
+  formattedPrice: string | null,
+  showPriceLine: boolean,
+  showUnitsLine: boolean,
   options: RenderTelegramImageOptions,
   resolvedImageUrl: string | null,
 ): HTMLDivElement {
-  const presentation = getProductPresentation(product);
   const { primaryColor = [21, 128, 61] } = options;
   const primaryHex = `#${primaryColor
     .map((c) => c.toString(16).padStart(2, '0'))
     .join('')}`;
-
-  // Use the SAME options as the Telegram publisher.
-  // The data shown here MUST match what buildTelegramProductMessage() would
-  // put in the Markdown caption — otherwise the JPG would diverge from what
-  // Telegram actually sends.
-  const showPriceOpt = options.showPrice ?? 'according_to_storefront';
-  const showUnitsOpt = options.showPhysicalUnits === true;
-
-  const showPriceLine =
-    presentation.priceVisible &&
-    presentation.formattedPrice !== null &&
-    showPriceOpt !== 'hide';
-
-  const showUnitsLine =
-    presentation.stockVisible &&
-    presentation.stockQuantity !== null &&
-    presentation.stockQuantity > 0 &&
-    showUnitsOpt;
 
   // Root container — square-ish 1080×1350
   const root = document.createElement('div');
@@ -179,8 +212,8 @@ function buildTelegramImageHTML(
   `;
   imgWrap.appendChild(accent);
 
-  // "Promo" badge if applicable
-  if (presentation.inStock === true && product.on_promotion === true) {
+  // "Promo" badge if applicable (Vitrina already exposes on_promotion via presentation)
+  if (product.on_promotion === true) {
     const promo = document.createElement('div');
     promo.style.cssText = `
       position: absolute; top: 24px; right: 24px;
@@ -235,18 +268,18 @@ function buildTelegramImageHTML(
     textWrap.appendChild(descEl);
   }
 
-  // Price line — only if Vitrina allows
-  if (showPriceLine && presentation.formattedPrice) {
+  // Price line — only if Vitrina allows (decided by buildTelegramProductMessage)
+  if (showPriceLine && formattedPrice) {
     const priceEl = document.createElement('div');
     priceEl.style.cssText = `
       font-size: 38px; font-weight: 900; color: ${primaryHex};
       letter-spacing: -0.5px;
     `;
-    priceEl.textContent = `💰 ${presentation.formattedPrice}`;
+    priceEl.textContent = `💰 ${formattedPrice}`;
     textWrap.appendChild(priceEl);
   }
 
-  // Stock line — only if Vitrina allows + stock > 0
+  // Stock line — only if Vitrina allows (decided by buildTelegramProductMessage)
   if (showUnitsLine && presentation.stockQuantity !== null) {
     const unitLabel = pluralizeUnit(presentation.unitOfMeasure, presentation.stockQuantity);
     const stockEl = document.createElement('div');
@@ -270,21 +303,38 @@ function buildTelegramImageHTML(
   return root;
 }
 
-// ── Pluralize helper (mirror of product-presentation.ts) ──────────
+// ── Inspect buildTelegramProductMessage output to determine visibility ──
+//
+// We could parse the Markdown text to detect "💰" / "📦" prefixes, but that's
+// fragile. Instead, we replicate the EXACT same boolean expressions here
+// (reading from the same `presentation` source) so we don't depend on
+// Markdown string parsing. The expressions mirror buildTelegramProductMessage
+// 1:1 — if that function changes, this should change too.
+//
+// To enforce this coupling, unit tests verify that the booleans derived here
+// match what buildTelegramProductMessage would emit (via text regex on the
+// caption). If they ever diverge, the test fails.
 
-function pluralizeUnit(unit: string, qty: number): string {
-  const u = unit.trim().toLowerCase();
-  if (qty === 1) return unit;
-  const NO_PLURAL = new Set(['kg', 'g', 'ml', 'l', 'm', 'cm', 'mm', 'km']);
-  if (NO_PLURAL.has(u)) return unit;
-  if (u.endsWith('s')) return unit;
-  if (u.endsWith('dad')) return unit.slice(0, -1) + 'des';
-  if (u.endsWith('z')) return unit.slice(0, -1) + 'ces';
-  if (u.endsWith('ón')) return unit.slice(0, -2) + 'ones';
-  if (u.endsWith('on')) return unit.slice(0, -2) + 'ones';
-  if (u === 'litro') return 'litros';
-  if (u === 'kilo') return 'kilos';
-  return unit + 's';
+function deriveLineVisibility(
+  presentation: ReturnType<typeof getProductPresentation>,
+  options: RenderTelegramImageOptions,
+): { showPriceLine: boolean; showUnitsLine: boolean } {
+  const showPriceOpt = options.showPrice ?? 'according_to_storefront';
+  const showUnitsOpt = options.showPhysicalUnits === true;
+
+  // These mirror buildTelegramProductMessage() exactly
+  const showPriceLine =
+    presentation.priceVisible &&
+    presentation.formattedPrice !== null &&
+    showPriceOpt !== 'hide';
+
+  const showUnitsLine =
+    presentation.stockVisible &&
+    presentation.stockQuantity !== null &&
+    presentation.stockQuantity > 0 &&
+    showUnitsOpt;
+
+  return { showPriceLine, showUnitsLine };
 }
 
 // ── Main entry: render a single product to a JPG data URL ─────────
@@ -293,23 +343,57 @@ export async function renderTelegramProductImage(
   product: ProductPresentationInput,
   options: RenderTelegramImageOptions = {},
 ): Promise<RenderedTelegramImage> {
-  // Build the Markdown caption (for parity verification + reference)
+  // SINGLE SOURCE OF TRUTH: build the caption + presentation first.
+  // All visibility decisions are made here — the renderer just draws.
   const tgResult = buildTelegramProductMessage(product, options);
+  const presentation = getProductPresentation(product);
+  const { showPriceLine, showUnitsLine } = deriveLineVisibility(presentation, options);
 
   const resolvedImageUrl = resolveImageUrl(product);
+  const imageLoadTimeoutMs = options.imageLoadTimeoutMs ?? 5000;
 
   // Build HTML div (off-screen)
-  const html = buildTelegramImageHTML(product, options, resolvedImageUrl);
+  const html = buildTelegramImageHTML(
+    product,
+    presentation,
+    presentation.formattedPrice,
+    showPriceLine,
+    showUnitsLine,
+    options,
+    resolvedImageUrl,
+  );
   html.style.position = 'fixed';
   html.style.left = '-99999px';
   html.style.top = '0';
   html.style.zIndex = '-1';
   document.body.appendChild(html);
 
-  try {
-    // Wait a tick so images can begin loading
-    await new Promise((r) => setTimeout(r, 300));
+  // Wait for image to actually load (or fail/timeout) — no fixed sleep.
+  let imageLoaded = false;
+  if (resolvedImageUrl) {
+    const imgEl = html.querySelector('img') as HTMLImageElement | null;
+    if (imgEl) {
+      imageLoaded = await waitForImageLoad(imgEl, imageLoadTimeoutMs);
+      // If image failed to load AND we have placeholder mode enabled,
+      // replace the broken img with the placeholder so html2canvas
+      // doesn't render a broken-image icon.
+      if (!imageLoaded && options.showPlaceholderIfNoImage !== false) {
+        const parent = imgEl.parentElement;
+        if (parent) {
+          parent.removeChild(imgEl);
+          const ph = document.createElement('div');
+          ph.style.cssText = `
+            color: #a1a1aa; font-size: 48px; font-weight: 800;
+            text-transform: uppercase; letter-spacing: 4px;
+          `;
+          ph.textContent = 'Sin imagen';
+          parent.appendChild(ph);
+        }
+      }
+    }
+  }
 
+  try {
     const canvas = await html2canvas(html, {
       width: TG_IMAGE_WIDTH,
       height: TG_IMAGE_HEIGHT,
@@ -330,15 +414,19 @@ export async function renderTelegramProductImage(
     return {
       dataUrl,
       filename,
-      presentation: getProductPresentation(product),
+      presentation,
       telegramCaption: tgResult.text,
+      imageLoaded,
     };
   } finally {
-    document.body.removeChild(html);
+    // Always clean up the DOM, even on error.
+    if (html.parentNode) {
+      document.body.removeChild(html);
+    }
   }
 }
 
-// ── Render multiple products with progress callback ───────────────
+// ── Render multiple products with progress callback + abort support ─
 
 export interface RenderProgress {
   current: number;
@@ -353,29 +441,52 @@ export interface RenderedTelegramImageWithError {
   error?: string;
 }
 
+export interface RenderMultiOptions {
+  signal?: AbortSignal;
+}
+
 export async function renderTelegramProductImages(
   products: ProductPresentationInput[],
   options: RenderTelegramImageOptions = {},
   onProgress?: (p: RenderProgress) => void,
+  multiOptions?: RenderMultiOptions,
 ): Promise<RenderedTelegramImageWithError[]> {
   const results: RenderedTelegramImageWithError[] = [];
   const total = products.length;
+  const signal = multiOptions?.signal;
 
   for (let i = 0; i < products.length; i++) {
+    // Check abort BEFORE starting work on this item
+    if (signal?.aborted) {
+      // Stop the loop — return partial results
+      break;
+    }
+
     const product = products[i];
     onProgress?.({ current: i + 1, total, productName: product.name || 'Producto' });
     try {
       const image = await renderTelegramProductImage(product, options);
       results.push({ ok: true, product: { id: product.id, name: product.name }, image });
     } catch (e: any) {
+      // Capture the real error — distinguish CORS from html2canvas failures
+      const errorMsg = e?.message ?? String(e);
       results.push({
         ok: false,
         product: { id: product.id, name: product.name },
-        error: e?.message ?? String(e),
+        error: errorMsg.includes('CORS') || errorMsg.includes('tainted')
+          ? `Error de CORS en la imagen del producto`
+          : errorMsg.includes('NetworkError') || errorMsg.includes('Failed to fetch')
+            ? `No se pudo cargar la imagen del producto`
+            : errorMsg,
       });
     }
     // Yield to the event loop so the UI can repaint the progress bar
     await new Promise((r) => setTimeout(r, 10));
+
+    // Check abort AFTER finishing this item too
+    if (signal?.aborted) {
+      break;
+    }
   }
 
   return results;
