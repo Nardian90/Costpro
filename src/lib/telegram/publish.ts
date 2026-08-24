@@ -26,6 +26,7 @@ import {
   type ProductPresentationInput,
   type TelegramShowPrice,
 } from '@/lib/storefront/product-presentation';
+import { logger } from '@/lib/logger';
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 
@@ -225,6 +226,15 @@ export async function publishProductToTelegram(
 ): Promise<PublishResult> {
   const adminClient = makeAdminClient();
 
+  logger.info('DATABASE', 'PUBLISH_FLOW_START', {
+    storeId: ctx.storeId,
+    publishType: ctx.publishType,
+    productIdOverride: ctx.productId ?? null,
+    showPriceOverride: ctx.showPriceOverride ?? null,
+    showPhysicalUnitsOverride: ctx.showPhysicalUnitsOverride ?? null,
+    skipIdempotency: ctx.skipIdempotency ?? false,
+  });
+
   // 1. Load config
   const { data: config, error: configErr } = await adminClient
     .from('telegram_configs')
@@ -235,8 +245,21 @@ export async function publishProductToTelegram(
     .eq('is_active', true)
     .maybeSingle();
 
-  if (configErr) throw configErr;
+  if (configErr) {
+    logger.error('DATABASE', 'PUBLISH_CONFIG_QUERY_ERROR', {
+      storeId: ctx.storeId,
+      error: configErr.message,
+    });
+    throw configErr;
+  }
+
   if (!config || !config.bot_token || !config.group_chat_id) {
+    logger.warn('DATABASE', 'PUBLISH_NOT_CONFIGURED', {
+      storeId: ctx.storeId,
+      hasConfig: !!config,
+      hasToken: !!config?.bot_token,
+      hasChatId: !!config?.group_chat_id,
+    });
     return {
       success: false,
       reason: 'not_configured',
@@ -246,9 +269,24 @@ export async function publishProductToTelegram(
     };
   }
 
+  logger.info('DATABASE', 'PUBLISH_CONFIG_LOADED', {
+    storeId: ctx.storeId,
+    hasToken: true,
+    chatId: String(config.group_chat_id),
+    autoPublishEnabled: config.auto_publish_enabled,
+    intervalMinutes: config.auto_publish_interval_minutes,
+    lastPublishAt: config.last_publish_at,
+    showPrice: config.show_price,
+    showPhysicalUnits: config.show_physical_units,
+  });
+
   // 2. Idempotency (automatic only)
   if (ctx.publishType === 'automatic') {
     if (!config.auto_publish_enabled) {
+      logger.info('DATABASE', 'PUBLISH_SKIP_DISABLED', {
+        storeId: ctx.storeId,
+        reason: 'auto_publish_enabled = false',
+      });
       return { success: false, skipped: true, reason: 'disabled', text: '', imageUrl: null };
     }
     if (config.last_publish_at && !ctx.skipIdempotency) {
@@ -258,6 +296,14 @@ export async function publishProductToTelegram(
       const intervalMinutes: number =
         (config as any).auto_publish_interval_minutes ?? 360;
       if (minutesSince < intervalMinutes) {
+        logger.info('DATABASE', 'PUBLISH_SKIP_INTERVAL', {
+          storeId: ctx.storeId,
+          minutesSince: Math.round(minutesSince * 100) / 100,
+          intervalMinutes,
+          nextEligibleAt: new Date(
+            new Date(config.last_publish_at).getTime() + intervalMinutes * 60000,
+          ).toISOString(),
+        });
         return {
           success: false,
           skipped: true,
@@ -273,7 +319,15 @@ export async function publishProductToTelegram(
 
   // 3. Fetch products + filter eligible (Vitrina rules)
   const products = await fetchVitrinaProducts(adminClient, ctx.storeId);
+  logger.info('DATABASE', 'PUBLISH_PRODUCTS_FETCHED', {
+    storeId: ctx.storeId,
+    eligibleCount: products.length,
+  });
+
   if (products.length === 0) {
+    logger.warn('DATABASE', 'PUBLISH_NO_PRODUCTS', {
+      storeId: ctx.storeId,
+    });
     await adminClient
       .from('telegram_configs')
       .update({
@@ -299,6 +353,10 @@ export async function publishProductToTelegram(
     ctx.productId,
   );
   if (!selected) {
+    logger.warn('DATABASE', 'PUBLISH_NO_PRODUCT_SELECTED', {
+      storeId: ctx.storeId,
+      productIdOverride: ctx.productId ?? null,
+    });
     return {
       success: false,
       skipped: true,
@@ -307,6 +365,13 @@ export async function publishProductToTelegram(
       imageUrl: null,
     };
   }
+
+  logger.info('DATABASE', 'PUBLISH_PRODUCT_SELECTED', {
+    storeId: ctx.storeId,
+    productId: selected.id,
+    productName: selected.name,
+    hasImage: !!(selected.image_url || selected.public_image_url),
+  });
 
   // 5. Build message (single source of truth — also used by preview)
   const showPrice: TelegramShowPrice =
@@ -321,6 +386,17 @@ export async function publishProductToTelegram(
 
   const resolvedImageUrl = resolveImageUrl(rawImageUrl);
 
+  logger.info('DATABASE', 'PUBLISH_MESSAGE_BUILT', {
+    storeId: ctx.storeId,
+    productId: selected.id,
+    textPreview: text.slice(0, 100),
+    hasImage: !!resolvedImageUrl,
+    priceVisible: presentation.priceVisible,
+    formattedPrice: presentation.formattedPrice,
+    stockVisible: presentation.stockVisible,
+    stockQuantity: presentation.stockQuantity,
+  });
+
   // 6. Send to Telegram
   const tgResult = await sendToTelegram(
     config.bot_token,
@@ -328,6 +404,15 @@ export async function publishProductToTelegram(
     text,
     resolvedImageUrl,
   );
+
+  logger.info('DATABASE', 'PUBLISH_TELEGRAM_RESULT', {
+    storeId: ctx.storeId,
+    productId: selected.id,
+    ok: tgResult.ok,
+    messageId: tgResult.message_id,
+    chatTitle: tgResult.chat_title,
+    error: tgResult.error ?? null,
+  });
 
   const status = tgResult.ok ? 'success' : 'failed';
   const errorMsg = tgResult.ok ? null : tgResult.error ?? null;
@@ -357,6 +442,15 @@ export async function publishProductToTelegram(
       last_publish_error: errorMsg,
     })
     .eq('store_id', ctx.storeId);
+
+  logger.info('DATABASE', 'PUBLISH_FLOW_END', {
+    storeId: ctx.storeId,
+    productId: selected.id,
+    productName: selected.name,
+    status,
+    messageId,
+    nextEligibleAt: new Date(Date.now() + (config.auto_publish_interval_minutes ?? 360) * 60000).toISOString(),
+  });
 
   if (status === 'success') {
     return {

@@ -473,23 +473,85 @@ export default function TelegramConfigView() {
 
       {/* Status badge */}
       <Card>
-        <CardContent className="p-3 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            {isConfigured && webhookRegistered && config?.is_active ? (
-              <CheckCircle2 className="w-4 h-4 text-green-500" />
-            ) : (
-              <AlertCircle className="w-4 h-4 text-amber-500" />
+        <CardContent className="p-3 space-y-2">
+          {/* Top row: status icon + label + toggle */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              {isConfigured && webhookRegistered && config?.is_active ? (
+                <CheckCircle2 className="w-4 h-4 text-green-500" />
+              ) : (
+                <AlertCircle className="w-4 h-4 text-amber-500" />
+              )}
+              <span className="text-xs font-bold">
+                {(() => {
+                  // Derive a precise status label based on actual state
+                  if (!isConfigured) return 'Sin token';
+                  if (!webhookRegistered) return 'Sin webhook';
+                  if (!config?.group_chat_id) return 'Sin chat_id';
+                  if (!config.is_active) return 'Pausado';
+                  if (config.last_publish_status === 'failed') return 'Error al publicar';
+                  if (config.last_publish_status === 'no_products') return 'Sin productos';
+                  if (config.last_publish_at) return 'Publicando';
+                  return 'Activo (sin publicar aún)';
+                })()}
+              </span>
+              {config?.auto_publish_enabled && config?.is_active && (
+                <Badge variant="secondary" className="text-[9px] bg-emerald-100 text-emerald-700">
+                  Auto: ON
+                </Badge>
+              )}
+            </div>
+            {isConfigured && webhookRegistered && (
+              <Button size="sm" variant="outline" onClick={handleToggleActive} className="text-xs h-8">
+                {config?.is_active ? 'Pausar' : 'Activar'} bot
+              </Button>
             )}
-            <span className="text-xs font-bold">
-              {isConfigured && webhookRegistered && config?.is_active
-                ? 'Bot activo'
-                : 'Configuración incompleta'}
-            </span>
           </div>
-          {isConfigured && webhookRegistered && (
-            <Button size="sm" variant="outline" onClick={handleToggleActive} className="text-xs h-8">
-              {config?.is_active ? 'Pausar' : 'Activar'} bot
-            </Button>
+
+          {/* Detailed publication status — only if auto-publish is enabled */}
+          {config?.auto_publish_enabled && config?.last_publish_at && (
+            <div className="text-[10px] text-muted-foreground border-t border-border pt-2 grid grid-cols-2 gap-x-2 gap-y-0.5">
+              <span>Última publicación:</span>
+              <span className="font-mono text-right">
+                {new Date(config.last_publish_at).toLocaleString('es-CU')}
+              </span>
+              <span>Último estado:</span>
+              <span className={cn(
+                'text-right font-bold',
+                config.last_publish_status === 'success' && 'text-emerald-600',
+                config.last_publish_status === 'failed' && 'text-red-600',
+                config.last_publish_status === 'no_products' && 'text-amber-600',
+              )}>
+                {config.last_publish_status ?? '—'}
+              </span>
+              <span>Próxima publicación:</span>
+              <span className="font-mono text-right">
+                {(() => {
+                  const lastMs = new Date(config.last_publish_at!).getTime();
+                  const interval = (config.auto_publish_interval_minutes ?? 60) * 60_000;
+                  const nextAt = new Date(lastMs + interval);
+                  const now = Date.now();
+                  const remaining = nextAt.getTime() - now;
+                  if (remaining <= 0) return 'ya elegible';
+                  const minLeft = Math.ceil(remaining / 60000);
+                  return `${nextAt.toLocaleString('es-CU')} (en ${minLeft} min)`;
+                })()}
+              </span>
+              {config.last_publish_error && (
+                <>
+                  <span className="col-span-2 text-red-600 font-mono break-all">
+                    ⚠ {config.last_publish_error}
+                  </span>
+                </>
+              )}
+            </div>
+          )}
+
+          {/* Group info */}
+          {config?.group_title && (
+            <div className="text-[10px] text-muted-foreground border-t border-border pt-1">
+              Grupo: <span className="font-bold">{config.group_title}</span>
+            </div>
           )}
         </CardContent>
       </Card>
