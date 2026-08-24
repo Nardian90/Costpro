@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, useCallback } from 'react';
-import { Loader2, Store as StoreIcon, AlertCircle, ExternalLink, RefreshCw, Save, Check, X, FileDown } from 'lucide-react';
+import { Loader2, Store as StoreIcon, AlertCircle, ExternalLink, RefreshCw, Save, Check, X, FileDown, Send } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuthStore } from '@/store';
 import { useQueryClient } from '@tanstack/react-query';
@@ -10,10 +10,12 @@ import { storeApiClient } from '@/services/store-api-client';
 import { cn } from '@/lib/utils';
 import { StorefrontConfigPanel } from '@/components/views/terminal/views/stores/StorefrontConfigPanel';
 import { CatalogExportModal } from '@/components/views/terminal/views/pos/CatalogExportModal';
+import { ExportTelegramCatalogModal } from '@/components/views/terminal/views/telegram/ExportTelegramCatalogModal';
 import { useCatalogExport } from '@/hooks/logic/useCatalogExport';
 import { getSupabaseUrl } from '@/lib/utils';
 import type { BrandConfig } from '@/components/views/terminal/views/pos/catalog-templates/types';
 import type { Store, StoreTemplate, Product } from '@/types';
+import type { ProductPresentationInput } from '@/lib/storefront/product-presentation';
 
 /**
  * StorefrontConfigView (2026-07-04)
@@ -41,6 +43,7 @@ export default function StorefrontConfigView() {
   const [error, setError] = useState<string | null>(null);
   const [revalidating, setRevalidating] = useState(false);
   const [showCatalogExport, setShowCatalogExport] = useState(false);
+  const [showTelegramExport, setShowTelegramExport] = useState(false);
   const [storefrontProducts, setStorefrontProducts] = useState<Product[]>([]);
 
   const activeStoreId = user?.activeStoreId;
@@ -194,6 +197,15 @@ export default function StorefrontConfigView() {
         actions={
           <div className="flex items-center gap-2">
             <button
+              onClick={() => setShowTelegramExport(true)}
+              disabled={storefrontProducts.length === 0}
+              className="inline-flex items-center gap-1.5 px-3 py-2 min-h-[40px] rounded-xl border border-border bg-card text-xs font-black uppercase tracking-widest hover:bg-muted transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              title="Exportar JPGs individuales (uno por producto) con el diseño de Telegram — ZIP"
+            >
+              <Send className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Exportar catálogo</span>
+            </button>
+            <button
               onClick={() => setShowCatalogExport(true)}
               disabled={storefrontProducts.length === 0}
               className="inline-flex items-center gap-1.5 px-3 py-2 min-h-[40px] rounded-xl border border-border bg-card text-xs font-black uppercase tracking-widest hover:bg-muted transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
@@ -326,6 +338,19 @@ export default function StorefrontConfigView() {
             const message = err instanceof Error ? err.message : 'Error al generar el catálogo';
             toast.error(message, { id: toastId });
           }
+        }}
+      />
+
+      {/* Telegram Catalog Export — ZIP of individual JPGs (one per product),
+          visually identical to what the Telegram auto-publisher would send */}
+      <ExportTelegramCatalogModal
+        open={showTelegramExport}
+        onOpenChange={setShowTelegramExport}
+        products={storefrontProducts as unknown as ProductPresentationInput[]}
+        storeId={activeStoreId || ''}
+        telegramOptions={{
+          showPrice: 'according_to_storefront',
+          showPhysicalUnits: false,
         }}
       />
     </div>
