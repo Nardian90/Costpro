@@ -7,15 +7,23 @@
  *   - Mismo fix WA-3: historial filtra por store_id + contact_id (no solo contact_id)
  *   - Diferencia: telegram_user_id es BIGINT (number), no phone_number (string)
  *
+ * FIX (2026-08-25): se reemplazó z-ai-web-dev-sdk por Vercel AI SDK
+ * (getGLMModel + generateText). Esto es lo mismo que usa /api/bot/chat
+ * (el chat web). Antes, el bot de Telegram fallaba en producción porque
+ * z-ai-web-dev-sdk requiere /etc/.z-ai-config (que solo existe en la
+ * máquina de desarrollo local, no en Vercel/Render). El chat web
+ * funcionaba porque ya usaba getGLMModel() que tiene fallback a env vars.
+ *
  * Flujo:
  *   1. Cargar config del bot (system_prompt, modelo, temperatura, contexto)
  *   2. Cargar últimos N mensajes como historial (filtrado por store_id + contact_id)
- *   3. Llamar a GLM via z-ai-web-dev-sdk
+ *   3. Llamar a GLM via Vercel AI SDK (getGLMModel + generateText)
  *   4. Guardar respuesta en BD con tokens y tiempo de respuesta
  *   5. Retornar texto para enviar por Telegram
  */
 
-import ZAI from 'z-ai-web-dev-sdk';
+import { generateText, type ModelMessage } from 'ai';
+import { getGLMModel } from '@/lib/ai/vercel-provider';
 import { logger } from '@/lib/logger';
 import { getSupabaseAdminSafe } from '@/lib/supabase-admin';
 import type { TelegramMediaType } from '@/types/telegram';
@@ -53,15 +61,6 @@ interface BotConfig {
 interface ChatMessage {
   direction: string; // 'incoming' | 'outgoing'
   content: string;
-}
-
-let zaiClient: any = null;
-
-async function getZAIClient() {
-  if (!zaiClient) {
-    zaiClient = await ZAI.create();
-  }
-  return zaiClient;
 }
 
 /**
@@ -153,37 +152,55 @@ export async function generateResponse(
     }
   }
 
-  const messages: Array<{ role: string; content: string }> = [
-    { role: 'system', content: systemContent },
-    ...history.map(m => ({
-      role: m.direction === 'incoming' ? 'user' : 'assistant',
-      content: m.content,
-    })),
-    { role: 'user', content: userContent },
-  ];
+  // Build ModelMessage[] for Vercel AI SDK (NO system message — use the
+  // `system:` option in generateText instead, which is the correct way).
+  // The Vercel AI SDK throws AI_InvalidPromptError if you include a system
+  // message in `messages` for some models.
+  const messages: ModelMessage[] = history.map((m): ModelMessage => ({
+    role: m.direction === 'incoming' ? 'user' : 'assistant',
+    content: m.content,
+  })).concat([{ role: 'user', content: userContent }]);
 
-  // 4. Llamar a GLM
+  // 4. Llamar a GLM via Vercel AI SDK (same path as /api/bot/chat)
   try {
-    const client = await getZAIClient();
-    const response = await client.chat.completions.create({
-      model: config.model_name,
+    const model = getGLMModel(config.model_name);
+    const result = await generateText({
+      model,
+      system: systemContent,
       messages,
       temperature: config.temperature,
-      max_tokens: config.max_tokens,
     });
 
-    const text = response.choices?.[0]?.message?.content || 'Lo siento, no pude procesar tu mensaje.';
-    const tokensUsed = response.usage?.total_tokens || 0;
+    const text = result.text || 'Lo siento, no pude procesar tu mensaje.';
+    const tokensUsed = result.usage?.totalTokens ?? 0;
     const responseTimeMs = Date.now() - startTime;
 
     logger.info('DATABASE', 'TELEGRAM_GLM_RESPONSE', {
       storeId, telegramUserId, tokensUsed, responseTimeMs,
+      textPreview: text.slice(0, 80),
+      provider: 'glm',
+      model: config.model_name,
     });
 
     return { text, tokensUsed, responseTimeMs };
   } catch (error: any) {
+    // Capture the real error — don't hide it behind a generic message.
+    // The user-facing message stays the same, but the logs now show:
+    //   - error name
+    //   - error message (without secrets)
+    //   - error cause if any
+    //   - stack trace (first 3 lines)
     logger.error('DATABASE', 'TELEGRAM_GLM_FAILED', {
-      storeId, telegramUserId, error: error.message,
+      storeId,
+      telegramUserId,
+      errorName: error?.name ?? 'Unknown',
+      errorMessage: error?.message ?? String(error),
+      errorCause: error?.cause ? String(error.cause).slice(0, 300) : null,
+      stackTop: error?.stack ? error.stack.split('\n').slice(0, 3).join(' | ') : null,
+      model: config.model_name,
+      messageCount: messages.length,
+      historyLength: history.length,
+      responseTimeMs: Date.now() - startTime,
     });
 
     return {

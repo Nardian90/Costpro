@@ -77,15 +77,20 @@ export async function handleMessageIncoming(
   const senderName = [fromUser.first_name, fromUser.last_name].filter(Boolean).join(' ') || fromUser.username || String(telegramUserId);
 
   logger.info('DATABASE', 'TELEGRAM_MESSAGE_INCOMING', {
-    storeId, telegramUserId, isGroup,
+    storeId, telegramUserId, isGroup, chatId: chat.id, chatType: chat.type,
     textPreview: text.substring(0, 50),
     mediaType: media?.type || null,
     hasCaption: !!media?.caption,
+    botUsername: config.bot_username,
+    triggerMode: config.trigger_mode,
   });
 
   // 3. Buscar/crear contacto
   const admin = getSupabaseAdminSafe();
-  if (!admin) return;
+  if (!admin) {
+    logger.error('DATABASE', 'TELEGRAM_NO_ADMIN_CLIENT', { storeId, telegramUserId });
+    return;
+  }
 
   let contactId: string | null = null;
   const { data: contact } = await admin
@@ -114,6 +119,7 @@ export async function handleMessageIncoming(
       .select()
       .single();
     contactId = newContact?.id || null;
+    logger.info('DATABASE', 'TELEGRAM_CONTACT_CREATED', { storeId, telegramUserId, contactId });
   }
 
   // 4. Guardar mensaje entrante
@@ -231,11 +237,16 @@ export async function handleMessageIncoming(
   try {
     await sendMessage(botToken, chat.id, response.text);
     logger.info('DATABASE', 'TELEGRAM_MESSAGE_OUTGOING', {
-      storeId, telegramUserId, tokensUsed: response.tokensUsed,
+      storeId, telegramUserId, chatId: chat.id, tokensUsed: response.tokensUsed,
+      responseTimeMs: response.responseTimeMs,
+      textPreview: response.text.slice(0, 80),
     });
   } catch (error: any) {
     logger.error('DATABASE', 'TELEGRAM_SEND_FAILED', {
-      storeId, telegramUserId, error: error.message,
+      storeId, telegramUserId, chatId: chat.id,
+      errorName: error?.name ?? 'Unknown',
+      errorMessage: error?.message ?? String(error),
+      textLength: response.text.length,
     });
   }
 }
