@@ -31,6 +31,62 @@ export const LIMITS = {
   preMessageTimeoutHours: 24,
 };
 
+/**
+ * Business timezone — Havana (America/Havana) per user session setting.
+ *
+ * FIX (2026-08-25): previously, canInviteNow used new Date().getHours() which
+ * returns the SERVER's local hour (UTC in production). The 9 AM - 9 PM window
+ * was effectively 9 AM - 9 PM UTC = 5 AM - 5 PM Havana time, blocking legitimate
+ * evening use.
+ *
+ * Solution: format the current time in the business timezone using Intl API
+ * (no external deps) and parse the hour back. This works in Node 18+ and
+ * modern browsers. If the timezone can't be determined, falls back to UTC
+ * (worst-case, never crashes).
+ *
+ * The timezone is read from process.env.WHATSAPP_BUSINESS_TZ at module load.
+ * Default: 'America/Havana' (matches the user's session timezone setting).
+ */
+const BUSINESS_TZ = process.env.WHATSAPP_BUSINESS_TZ || 'America/Havana';
+
+/**
+ * Returns the current hour (0-23) in the business timezone.
+ * Falls back to UTC hour if Intl fails (should never happen on Node 18+).
+ */
+function getBusinessHour(now: Date = new Date()): number {
+  try {
+    const fmt = new Intl.DateTimeFormat('en-US', {
+      timeZone: BUSINESS_TZ,
+      hour: 'numeric',
+      hour12: false,
+    });
+    const hourStr = fmt.format(now);
+    const hour = parseInt(hourStr, 10);
+    // Intl can return "24" for midnight in some TZs — normalize to 0
+    return isNaN(hour) ? now.getUTCHours() : (hour === 24 ? 0 : hour);
+  } catch {
+    return now.getUTCHours();
+  }
+}
+
+/**
+ * Returns the next time the business hours window opens (start of workingHoursStart
+ * in the business timezone). Used to compute nextAllowedAt when outside the window.
+ */
+function getNextBusinessWindowStart(now: Date = new Date()): Date {
+  // Build a Date for "today at workingHoursStart:00" in business TZ, then if that's
+  // already past, advance to tomorrow. We use Intl to format and parse — robust across
+  // DST transitions.
+  const tzNow = new Date(now.toLocaleString('en-US', { timeZone: BUSINESS_TZ }));
+  const candidate = new Date(tzNow);
+  candidate.setHours(LIMITS.workingHoursStart, 0, 0, 0);
+  // If start time has already passed today (in business TZ), advance to tomorrow
+  if (candidate.getTime() <= tzNow.getTime()) {
+    candidate.setDate(candidate.getDate() + 1);
+  }
+  return candidate;
+}
+
 export interface InviteCheckResult {
   allowed: boolean;
   reason?: string;
@@ -65,13 +121,14 @@ export function canInviteNow(
     }
   }
 
-  // 4. Verificar horario laboral (9 AM - 9 PM hora local)
-  const hour = new Date().getHours();
+  // 4. Verificar horario laboral (9 AM - 9 PM hora de Cuba / business TZ)
+  // FIX (2026-08-25): previously used new Date().getHours() which returns
+  // server-local hour (UTC in production). Now uses getBusinessHour() which
+  // formats in the WHATSAPP_BUSINESS_TZ timezone (default America/Havana).
+  const hour = getBusinessHour();
   if (hour < LIMITS.workingHoursStart || hour >= LIMITS.workingHoursEnd) {
-    const nextStart = new Date();
-    nextStart.setHours(LIMITS.workingHoursStart, 0, 0, 0);
-    if (nextStart < new Date()) nextStart.setDate(nextStart.getDate() + 1);
-    return { allowed: false, reason: 'Fuera de horario laboral (9 AM - 9 PM)', nextAllowedAt: nextStart };
+    const nextStart = getNextBusinessWindowStart();
+    return { allowed: false, reason: 'Fuera de horario laboral (9 AM - 9 PM hora Cuba)', nextAllowedAt: nextStart };
   }
 
   return { allowed: true };

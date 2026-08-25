@@ -4,12 +4,22 @@
  * Flujo:
  * 1. Cargar config del bot (system prompt, modelo, temperatura, contexto)
  * 2. Cargar últimos N mensajes como historial
- * 3. Llamar a GLM via z-ai-web-dev-sdk
+ * 3. Llamar a GLM via Vercel AI SDK (same path as /api/bot/chat web chat)
  * 4. Guardar respuesta en BD con tokens y tiempo de respuesta
  * 5. Retornar texto para enviar por WhatsApp
+ *
+ * FIX (2026-08-25): se reemplazó z-ai-web-dev-sdk por Vercel AI SDK
+ * (getGLMModel + generateText). Esto es lo mismo que usa /api/bot/chat
+ * (el chat web) y /lib/telegram/glm-orchestrator.ts (el bot de Telegram).
+ *
+ * Antes, el bot de WhatsApp fallaba en producción (Vercel) porque
+ * z-ai-web-dev-sdk requiere /etc/.z-ai-config (que solo existe en la
+ * máquina de desarrollo local). El chat web funcionaba porque ya usaba
+ * getGLMModel() que tiene fallback a env vars.
  */
 
-import ZAI from 'z-ai-web-dev-sdk';
+import { generateText, type ModelMessage } from 'ai';
+import { getGLMModel } from '@/lib/ai/vercel-provider';
 import { logger } from '@/lib/logger';
 import { getSupabaseAdminSafe } from '@/lib/supabase-admin';
 
@@ -30,15 +40,6 @@ interface BotConfig {
 interface ChatMessage {
   direction: string; // 'incoming' | 'outgoing'
   content: string;
-}
-
-let zaiClient: any = null;
-
-async function getZAIClient() {
-  if (!zaiClient) {
-    zaiClient = await ZAI.create();
-  }
-  return zaiClient;
 }
 
 export async function generateResponse(
@@ -69,12 +70,6 @@ export async function generateResponse(
 
   // 2. Cargar historial de mensajes (últimos N)
   // FIX-AUDIT-WA-3: Filtrar SIEMPRE por store_id además de contact_id.
-  // Antes solo se filtraba por contact_id, lo que permitía cross-tenant poisoning:
-  // si un contacto de la Tienda A tenía el mismo UUID que otro (imposible por FK,
-  // pero defensivo), o si un mensaje se insertaba con contact_id de otra tienda
-  // (ver FIX-AUDIT-WA-2 en saveMessage/send route), ese mensaje contaminaba el
-  // contexto del bot. Ahora el filtro compuesto store_id+contact_id garantiza
-  // aislamiento incluso ante un bug upstream.
   let history: ChatMessage[] = [];
   if (contactId) {
     const { data: messages } = await admin
@@ -93,37 +88,48 @@ export async function generateResponse(
     .replace('{negocio_name}', contactName || 'la tienda')
     .replace('{contacto_name}', contactName || 'cliente');
 
-  const messages: Array<{ role: string; content: string }> = [
-    { role: 'system', content: systemContent },
-    ...history.map(m => ({
-      role: m.direction === 'incoming' ? 'user' : 'assistant',
-      content: m.content,
-    })),
-    { role: 'user', content: incomingMessage },
-  ];
+  // Build ModelMessage[] for Vercel AI SDK (NO system message — use `system:` option)
+  // Same pattern as Telegram orchestrator — avoids AI_InvalidPromptError.
+  const messages: ModelMessage[] = history.map((m): ModelMessage => ({
+    role: m.direction === 'incoming' ? 'user' : 'assistant',
+    content: m.content,
+  })).concat([{ role: 'user', content: incomingMessage }]);
 
-  // 4. Llamar a GLM
+  // 4. Llamar a GLM via Vercel AI SDK (same path as /api/bot/chat)
   try {
-    const client = await getZAIClient();
-    const response = await client.chat.completions.create({
-      model: config.model_name,
+    const model = getGLMModel(config.model_name);
+    const result = await generateText({
+      model,
+      system: systemContent,
       messages,
       temperature: config.temperature,
-      max_tokens: config.max_tokens,
     });
 
-    const text = response.choices?.[0]?.message?.content || 'Lo siento, no pude procesar tu mensaje.';
-    const tokensUsed = response.usage?.total_tokens || 0;
+    const text = result.text || 'Lo siento, no pude procesar tu mensaje.';
+    const tokensUsed = result.usage?.totalTokens ?? 0;
     const responseTimeMs = Date.now() - startTime;
 
-    logger.info('DATABASE', 'GLM_RESPONSE_GENERATED', {
+    logger.info('DATABASE', 'WHATSAPP_GLM_RESPONSE', {
       storeId, phoneNumber, tokensUsed, responseTimeMs,
+      textPreview: text.slice(0, 80),
+      provider: 'glm',
+      model: config.model_name,
     });
 
     return { text, tokensUsed, responseTimeMs };
   } catch (error: any) {
-    logger.error('DATABASE', 'GLM_RESPONSE_FAILED', {
-      storeId, phoneNumber, error: error.message,
+    // Capture the real error — same pattern as Telegram orchestrator.
+    logger.error('DATABASE', 'WHATSAPP_GLM_FAILED', {
+      storeId,
+      phoneNumber,
+      errorName: error?.name ?? 'Unknown',
+      errorMessage: error?.message ?? String(error),
+      errorCause: error?.cause ? String(error.cause).slice(0, 300) : null,
+      stackTop: error?.stack ? error.stack.split('\n').slice(0, 3).join(' | ') : null,
+      model: config.model_name,
+      messageCount: messages.length,
+      historyLength: history.length,
+      responseTimeMs: Date.now() - startTime,
     });
 
     return {

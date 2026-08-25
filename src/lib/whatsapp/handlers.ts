@@ -23,7 +23,10 @@ interface StoreContext {
 export async function handleIncomingMessage(ctx: StoreContext, message: WAMessage): Promise<void> {
   const { storeId, sock } = ctx;
   const admin = getSupabaseAdminSafe();
-  if (!admin) return;
+  if (!admin) {
+    logger.error('DATABASE', 'WHATSAPP_NO_ADMIN_CLIENT', { storeId });
+    return;
+  }
 
   // Extraer info del mensaje
   const remoteJid = message.key.remoteJid;
@@ -47,7 +50,10 @@ export async function handleIncomingMessage(ctx: StoreContext, message: WAMessag
   const senderName = message.pushName || phoneNumber;
 
   logger.info('DATABASE', 'WHATSAPP_MESSAGE_INCOMING', {
-    storeId, phoneNumber, isGroup, textPreview: text.substring(0, 50),
+    storeId, phoneNumber, isGroup, jid: remoteJid,
+    textPreview: text.substring(0, 80),
+    hasMedia: !!(messageContent?.imageMessage || messageContent?.videoMessage || messageContent?.audioMessage),
+    senderName,
   });
 
   // Buscar o crear contacto
@@ -62,7 +68,7 @@ export async function handleIncomingMessage(ctx: StoreContext, message: WAMessag
   if (contact) {
     contactId = contact.id;
     if (contact.is_banned) {
-      logger.info('DATABASE', 'WHATSAPP_MESSAGE_SKIPPED_BANNED', { storeId, phoneNumber });
+      logger.info('DATABASE', 'WHATSAPP_MESSAGE_SKIPPED_BANNED', { storeId, phoneNumber, contactId });
       return; // No responder a contactos baneados
     }
   } else {
@@ -72,6 +78,7 @@ export async function handleIncomingMessage(ctx: StoreContext, message: WAMessag
       .select()
       .single();
     contactId = newContact?.id || null;
+    logger.info('DATABASE', 'WHATSAPP_CONTACT_CREATED', { storeId, phoneNumber, contactId });
   }
 
   // Guardar mensaje entrante
@@ -158,11 +165,16 @@ export async function handleIncomingMessage(ctx: StoreContext, message: WAMessag
   try {
     await sock.sendMessage(remoteJid, { text: response.text });
     logger.info('DATABASE', 'WHATSAPP_MESSAGE_OUTGOING', {
-      storeId, phoneNumber, tokensUsed: response.tokensUsed,
+      storeId, phoneNumber, jid: remoteJid, tokensUsed: response.tokensUsed,
+      responseTimeMs: response.responseTimeMs,
+      textPreview: response.text.slice(0, 80),
     });
   } catch (error: any) {
     logger.error('DATABASE', 'WHATSAPP_SEND_FAILED', {
-      storeId, phoneNumber, error: error.message,
+      storeId, phoneNumber, jid: remoteJid,
+      errorName: error?.name ?? 'Unknown',
+      errorMessage: error?.message ?? String(error),
+      textLength: response.text.length,
     });
   }
 }
