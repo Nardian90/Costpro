@@ -23,6 +23,12 @@ const configSchema = z.object({
   is_active: z.boolean().optional(),
   trigger_mode: z.enum(['mention', 'always', 'keyword']).optional(),
   trigger_keywords: z.string().optional(),
+  // ── Auto-publish (Phase 2 — parity with Telegram) ──
+  auto_publish_enabled: z.boolean().optional(),
+  auto_publish_interval_minutes: z.number().int().min(5).max(10080).optional(),
+  // ── Publication content (Phase 2 — Vitrina fidelity) ──
+  show_price: z.enum(['according_to_storefront', 'show', 'hide']).optional(),
+  show_physical_units: z.boolean().optional(),
 });
 
 async function getHandler(req: NextRequest, session: AuthenticatedSession) {

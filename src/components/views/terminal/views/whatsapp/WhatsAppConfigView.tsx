@@ -15,9 +15,10 @@ import { useAuthStore } from '@/store';
 import { supabase } from '@/lib/supabaseClient';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { WhatsAppAutoPublishSection } from './WhatsAppAutoPublishSection';
 
 export default function WhatsAppConfigView() {
-  const { user } = useAuthStore();
+  const { user, token: authToken } = useAuthStore();
   const storeId = user?.activeStoreId;
   const [config, setConfig] = useState<any>(null);
   const [sessionInfo, setSessionInfo] = useState<any>(null);
@@ -335,6 +336,14 @@ export default function WhatsAppConfigView() {
           Guardar Configuración
         </Button>
       </div>
+
+      {/* ── Auto-publish + Content + Preview + History sections (Phase 2) ── */}
+      <WhatsAppAutoPublishSection
+        storeId={storeId || ''}
+        config={config}
+        onConfigChanged={loadConfig}
+        authToken={authToken || null}
+      />
     </div>
   );
 }

@@ -128,5 +128,32 @@ module.exports = {
       merge_logs: true,
       time: true,
     },
+    // ───────────────────────────────────────────────────────────
+    // WhatsApp auto-publish local poller (Phase 2 — parity with Telegram)
+    // Same pattern as telegram-cron-poller but for WhatsApp.
+    // ───────────────────────────────────────────────────────────
+    {
+      name: 'whatsapp-cron-poller',
+      script: 'scripts/whatsapp-cron-poller.sh',
+      interpreter: 'none',
+      cwd: __dirname,
+      autorestart: true,
+      restart_delay: 5000,
+      max_restarts: 10,
+      restart_time: 60_000,
+      min_uptime: '10s',
+      watch: false,
+      kill_timeout: 3000,
+      env: {
+        POLL_INTERVAL_SECONDS: 60,
+        CRON_HIT_INTERVAL_SECONDS: 300, // 5 minutes — same as Telegram
+        TARGET_URL: 'http://localhost:3000/api/cron/whatsapp-auto-publish',
+        STATE_FILE: '/tmp/whatsapp-cron-poller-last-run',
+      },
+      out_file: './logs/whatsapp-cron-poller-out.log',
+      error_file: './logs/whatsapp-cron-poller-error.log',
+      merge_logs: true,
+      time: true,
+    },
   ],
 }

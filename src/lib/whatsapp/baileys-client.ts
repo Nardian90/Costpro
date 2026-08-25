@@ -55,30 +55,60 @@ const qrCodes = new Map<string, string>();
 // Map<storeId, connection status>
 const connectionStatus = new Map<string, 'disconnected' | 'connecting' | 'connected'>();
 
+// Map<storeId, reconnect attempt count> — for exponential backoff
+const reconnectAttempts = new Map<string, number>();
+
+// Maximum reconnect attempts before giving up (prevents infinite loops)
+const MAX_RECONNECT_ATTEMPTS = 10;
+
+// Base delay for exponential backoff (1 second)
+const RECONNECT_BASE_DELAY_MS = 1000;
+
+// Maximum backoff delay (5 minutes)
+const RECONNECT_MAX_DELAY_MS = 5 * 60 * 1000;
+
 export interface WhatsAppSessionInfo {
   status: 'disconnected' | 'connecting' | 'connected';
   qrCode: string | null;
   phoneNumber?: string;
   lastConnectedAt?: string;
+  reconnectAttempts?: number;
 }
 
 export function getSessionInfo(storeId: string): WhatsAppSessionInfo {
   return {
     status: connectionStatus.get(storeId) || 'disconnected',
     qrCode: qrCodes.get(storeId) || null,
+    reconnectAttempts: reconnectAttempts.get(storeId) || 0,
   };
 }
 
+/**
+ * Computes exponential backoff delay for reconnect attempts.
+ * delay = min(base * 2^attempt, max) + jitter (0-25%)
+ */
+function getReconnectDelay(attempt: number): number {
+  const baseDelay = Math.min(
+    RECONNECT_BASE_DELAY_MS * Math.pow(2, attempt),
+    RECONNECT_MAX_DELAY_MS,
+  );
+  const jitter = Math.random() * baseDelay * 0.25;
+  return Math.round(baseDelay + jitter);
+}
+
 export async function connectStore(storeId: string): Promise<void> {
+  // Prevent duplicate sessions — critical for multi-tenant isolation
   if (sessions.has(storeId)) {
     logger.info('DATABASE', 'SESSION_ALREADY_ACTIVE', { storeId });
     return;
   }
 
   connectionStatus.set(storeId, 'connecting');
-  logger.info('DATABASE', 'SESSION_CONNECTING', { storeId });
+  logger.info('DATABASE', 'SESSION_CONNECTING', {
+    storeId,
+    attempt: reconnectAttempts.get(storeId) || 0,
+  });
 
-   
   const { state, saveCreds } = await useMultiFileAuthState(`./baileys-sessions/${storeId}`);
   const { version } = await fetchLatestBaileysVersion();
 
@@ -107,29 +137,86 @@ export async function connectStore(storeId: string): Promise<void> {
     }
 
     if (connection === 'close') {
-      const shouldReconnect = (lastDisconnect?.error as Boom)?.output?.statusCode !== DisconnectReason.loggedOut;
+      const statusCode = (lastDisconnect?.error as Boom)?.output?.statusCode;
+      const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
+
+      // Clean up the dead socket before reconnecting
+      sessions.delete(storeId);
+      qrCodes.delete(storeId);
 
       if (shouldReconnect) {
-        logger.info('DATABASE', 'SESSION_RECONNECTING', { storeId });
-        sessions.delete(storeId);
+        const attempt = (reconnectAttempts.get(storeId) || 0) + 1;
+        reconnectAttempts.set(storeId, attempt);
+
+        if (attempt > MAX_RECONNECT_ATTEMPTS) {
+          logger.error('DATABASE', 'SESSION_RECONNECT_GIVE_UP', {
+            storeId,
+            attempts: attempt,
+            maxAttempts: MAX_RECONNECT_ATTEMPTS,
+            lastStatusCode: statusCode,
+          });
+          connectionStatus.set(storeId, 'disconnected');
+          reconnectAttempts.delete(storeId);
+          emitToStore(storeId, 'connection_status', {
+            status: 'disconnected',
+            reason: 'max_reconnect_attempts_exceeded',
+            ts: Date.now(),
+          });
+          return;
+        }
+
+        const delay = getReconnectDelay(attempt);
+        logger.warn('DATABASE', 'SESSION_RECONNECTING_WITH_BACKOFF', {
+          storeId,
+          attempt,
+          maxAttempts: MAX_RECONNECT_ATTEMPTS,
+          delayMs: delay,
+          lastStatusCode: statusCode,
+        });
         connectionStatus.set(storeId, 'connecting');
-        await connectStore(storeId);
-      } else {
-        logger.info('DATABASE', 'SESSION_LOGGED_OUT', { storeId });
-        sessions.delete(storeId);
-        connectionStatus.set(storeId, 'disconnected');
-        qrCodes.delete(storeId);
-        // FASE 5: Notificar desconexión a los clientes conectados.
         emitToStore(storeId, 'connection_status', {
-          status: 'disconnected',
+          status: 'connecting',
+          attempt,
           ts: Date.now(),
         });
+
+        // Schedule reconnect with exponential backoff
+        setTimeout(() => {
+          connectStore(storeId).catch(err => {
+            logger.error('DATABASE', 'SESSION_RECONNECT_ERROR', {
+              storeId, error: err.message,
+            });
+          });
+        }, delay);
+      } else {
+        logger.info('DATABASE', 'SESSION_LOGGED_OUT', { storeId });
+        connectionStatus.set(storeId, 'disconnected');
+        reconnectAttempts.delete(storeId);
+        emitToStore(storeId, 'connection_status', {
+          status: 'disconnected',
+          reason: 'logged_out',
+          ts: Date.now(),
+        });
+
+        // Actualizar estado en BD
+        const admin = getSupabaseAdminSafe();
+        if (admin) {
+          await admin
+            .from('whatsapp_configs')
+            .update({ connection_status: 'disconnected' })
+            .eq('store_id', storeId);
+        }
       }
     } else if (connection === 'open') {
+      // Successful connection — reset attempt counter
+      reconnectAttempts.delete(storeId);
       connectionStatus.set(storeId, 'connected');
       qrCodes.delete(storeId); // limpiar QR ya conectado
       const phoneNumber = sock.user?.id?.split(':')[0];
-      logger.info('DATABASE', 'SESSION_CONNECTED', { storeId, phoneNumber });
+      logger.info('DATABASE', 'SESSION_CONNECTED', {
+        storeId, phoneNumber,
+        previousAttempts: reconnectAttempts.get(storeId) || 0,
+      });
 
       // FASE 5: Emitir evento realtime 'connection_status' para que el
       // dashboard actualice el badge sin polling.
