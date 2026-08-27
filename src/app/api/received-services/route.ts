@@ -3,6 +3,7 @@ import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
 import { rateLimit } from '@/lib/rate-limit';
 import { createApiError } from '@/lib/api-errors';
 import { withSecurity } from '@/lib/with-security';
+import { canManageStore, canViewStore } from '@/lib/roles';
 
 /**
  * GET /api/received-services?store_id=...&status=...&type=...
@@ -15,6 +16,18 @@ import { withSecurity } from '@/lib/with-security';
  */
 
 const USE_V2 = process.env.USE_V2_RECEIVED_SERVICES === 'true';
+
+/* ────────────────────────────────────────────────────────────────────────
+ * FIX F3-P0-02 (auditoría multitienda):
+ * Estas rutas usaban el cliente service-role SIN validación de membresía.
+ * El store_id que envía el cliente NO es autorización. Ahora:
+ *   JWT válido → identidad server-side → gate por tienda → operación
+ * privilegiada. DENY por defecto para actores sin membership en la tienda
+ * objetivo (admin global pasa por diseño, ver src/lib/roles.ts).
+ * ──────────────────────────────────────────────────────────────────────── */
+function forbidden() {
+  return NextResponse.json(createApiError('FORBIDDEN'), { status: 403 });
+}
 
 async function getHandler(req: NextRequest, session: AuthenticatedSession) {
   try {
@@ -29,6 +42,10 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
     if (!storeId) {
       return NextResponse.json({ error: 'store_id es requerido' }, { status: 400 });
     }
+
+    // FIX F3-P0-02: lectura cross-store prohibida sin membership activa
+    if (!canViewStore(session.user, storeId)) return forbidden();
+
     const status = searchParams.get('status');
 
     let query = admin.from('received_services').select('*').eq('store_id', storeId).order('created_at', { ascending: false });
@@ -52,6 +69,9 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
     if (!storeId) {
       return NextResponse.json({ error: 'store_id es requerido' }, { status: 400 });
     }
+
+    // FIX F3-P0-02: creación requiere rol de gestión en la tienda objetivo
+    if (!canManageStore(session.user, storeId)) return forbidden();
 
     const userId = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(session.user.id || '') ? session.user.id : null;
 
@@ -160,7 +180,28 @@ async function patchHandler(req: NextRequest, session: AuthenticatedSession) {
 
     const body = await req.json();
     const { service_id, ...updates } = body;
+    if (!service_id || typeof service_id !== 'string') {
+      return NextResponse.json({ error: 'service_id es requerido' }, { status: 400 });
+    }
     const userId = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(session.user.id || '') ? session.user.id : null;
+
+    const { createClient: createClientEarly } = await import('@supabase/supabase-js');
+    const urlE = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const keyE = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (!urlE || !keyE) return NextResponse.json(createApiError('CONFIG_ERROR'), { status: 500 });
+    const adminEarly = createClientEarly(urlE, keyE, { auth: { autoRefreshToken: false, persistSession: false } });
+
+    // FIX F3-P0-02: resolver la tienda REAL del servicio server-side y validar
+    // gestión ANTES de ejecutar cualquier RPC/UPDATE privilegiado.
+    const { data: svcRow, error: svcErr } = await adminEarly
+      .from('received_services')
+      .select('id,store_id')
+      .eq('id', service_id)
+      .single();
+    if (svcErr || !svcRow?.store_id) {
+      return NextResponse.json({ error: 'Servicio no encontrado' }, { status: 404 });
+    }
+    if (!canManageStore(session.user, svcRow.store_id)) return forbidden();
 
     if (USE_V2) {
       // ─── v2.25.0: RPCs transaccionales ───
@@ -218,6 +259,8 @@ async function patchHandler(req: NextRequest, session: AuthenticatedSession) {
   }
 }
 
+// * PATCH ya no confía en el cliente: resuelve service→store_id y aplica
+// * canManageStore antes de cualquier operación privilegiada.
 export const GET = withAuth(getHandler);
 export const POST = withAuth(withSecurity(postHandler, { rateLimitKey: 'received-services:post', maxRequests: 10 }));
 export const PATCH = withAuth(patchHandler);
