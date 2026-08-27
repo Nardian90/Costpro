@@ -10,13 +10,6 @@ import { validateOrigin } from '@/lib/csrf';
  * Permite al usuario ingresar manualmente la tasa REAL de elToque (vista en
  * eltoque.com) cuando el scraping automático falla (Cloudflare bloquea).
  *
- * La tasa se persiste con:
- *   - source: 'elToque'
- *   - capture_method: 'real'  (no 'estimated' como el fallback BCC×1.15)
- *   - rate_date: hoy (o fecha especificada)
- *
- * Si ya existe un registro para esa fecha+source+currency, se hace upsert.
- *
  * Body:
  *   {
  *     "currency": "USD" | "EUR" | "MLC",
@@ -32,23 +25,30 @@ const manualSchema = z.object({
 });
 
 /* ────────────────────────────────────────────────────────────────────────
- * DECISION-FX-01 (FIX F3-P1-01, auditoría multitienda):
+ * DECISION-FX-01 (FIX F3-P1-01) + DECISION-AUD-02 (enmienda H1/E3 del gate):
  * La tasa de cambio es un dato GLOBAL que alimenta la conversión contable de
- * todas las tiendas. Definición de autoridad aprobada para este fix:
- *   SOLO rol global 'admin' puede introducir/ajustar manualmente la tasa.
- * Cualquier otro rol (incl. manager/clerk) recibe 403. Si el dueño del
- * negocio quiere delegar en 'manager', debe ratificarlo expresamente y se
- * ampliará este check con membership + canManageStore — NO por mero rol.
+ * todas las tiendas. Autoridad: SOLO rol global 'admin'. Cualquier otro rol
+ * (incl. manager/clerk) recibe 403.
  *
- * Se añade además:
- *   - validateOrigin (CSRF) — alineado con memberships/bulk y stores/bulk.
- *   - Persistencia de auditoría en exchange_rate_audit (quién cambió qué,
- *     cuándo y desde qué origen), migración 20260827000006.
+ * Diseño definitivo (ratificado por el dueño — NO best-effort):
+ *   La mutación NO se hace aquí con upsert directo + insert separado de
+ *   auditoría. TODO pasa por la RPC SECURITY DEFINER
+ *   upsert_manual_exchange_rate_with_audit(), que dentro de UNA transacción:
+ *       revalida que p_actor_id sea admin (profiles.role en BD)
+ *       → bloquea la fila anterior (FOR UPDATE)
+ *       → upserea la nueva tasa
+ *       → inserta la pista old_rate/new_rate/old_rate_date/source_ip/actor
+ *   Cualquier fallo ⇒ ROLLBACK conjunto: es imposible (por construcción)
+ *   cambiar la tasa sin pista o dejar pista sin cambio real.
+ *
+ * La tabla exchange_rate_audit tiene RLS FORCE y CERO políticas para clientes;
+ * EXECUTE de la RPC existe solo para service_role ⇒ la pista no es legible ni
+ * falsificable por usuarios autenticados vía REST.
  * ──────────────────────────────────────────────────────────────────────── */
 
 async function postHandler(req: NextRequest, _session: AuthenticatedSession) {
   try {
-    // FIX F3-P1-01: CSRF por validación de origen
+    // F3-P1-01: CSRF por validación de origen
     if (!validateOrigin(req)) {
       return NextResponse.json(
         { error: 'INVALID_ORIGIN' },
@@ -56,7 +56,8 @@ async function postHandler(req: NextRequest, _session: AuthenticatedSession) {
       );
     }
 
-    // FIX F3-P1-01 / DECISION-FX-01: solo admin global muta tasas globales
+    // DECISION-FX-01: solo admin global muta tasas globales (gate rápido por JWT;
+    // la RPC revalida contra BD como defensa en profundidad).
     if (_session.user.role !== 'admin') {
       logger.warn('AUTH', 'EXCHANGE_RATE_MANUAL_DENIED_BY_ROLE', {
         actorId: _session.user.id,
@@ -79,7 +80,13 @@ async function postHandler(req: NextRequest, _session: AuthenticatedSession) {
 
     const { currency, rate, rate_date } = parsed.data;
     const today = rate_date || new Date().toISOString().split('T')[0];
-    const now = new Date().toISOString();
+
+    // Identidad server-side tipada como uuid (la RPC exige uuid real; un id no
+    // uuid nunca debería ocurrir tras withAuth, pero el fallo debe ser 403 y no
+    // un error postgres crudo).
+    if (!_session.user.id || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(_session.user.id)) {
+      return NextResponse.json({ error: 'INVALID_IDENTITY' }, { status: 403 });
+    }
 
     const { createClient } = await import('@supabase/supabase-js');
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -89,79 +96,61 @@ async function postHandler(req: NextRequest, _session: AuthenticatedSession) {
     }
     const admin = createClient(url, key, { auth: { autoRefreshToken: false, persistSession: false } });
 
-    // FIX: capturar si la columna capture_method no existe aún (migración pendiente).
-    // En ese caso, hacer el upsert SIN capture_method (la fila se guardará con NULL
-    // o con el default de la BD, y la UI la mostrará como 'estimated' por defecto).
-    // Cuando el usuario aplique la migración 20260703000004, las nuevas filas
-    // tendrán capture_method='real' correctamente.
-    const payload: Record<string, unknown> = {
-      rate_date: today,
-      captured_at: now,
-      currency,
-      source: 'elToque',
-      segment: '3',
-      rate,
-      capture_method: 'real',
-    };
-
-    let { data, error } = await admin
-      .from('exchange_rates')
-      .upsert(payload, { onConflict: 'rate_date,source,currency,segment' })
-      .select()
-      .single();
-
-    // Si el error es por la columna capture_method inexistente, reintentar sin ella
-    if (error && /capture_method/.test(error.message)) {
-      logger.warn('DATABASE', 'EXCHANGE_RATES_CAPTURE_METHOD_MISSING', {
-        error: error.message,
-        hint: 'Aplica la migración 20260703000004_exchange_rates_capture_method.sql en Supabase Dashboard',
-      });
-      const { capture_method, ...payloadWithoutMethod } = payload;
-      void capture_method;
-      const retry = await admin
-        .from('exchange_rates')
-        .upsert(payloadWithoutMethod, { onConflict: 'rate_date,source,currency,segment' })
-        .select()
-        .single();
-      data = retry.data;
-      error = retry.error;
-    }
+    // FIX H1/E3: única escritura = RPC atómica (tasa + auditoría old/new juntos).
+    const { data, error } = await admin.rpc('upsert_manual_exchange_rate_with_audit', {
+      p_actor_id: _session.user.id,
+      p_currency: currency,
+      p_rate: rate,
+      p_rate_date: today,
+      p_source_ip: req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || null,
+    });
 
     if (error) {
-      logger.error('DATABASE', 'EXCHANGE_RATES_MANUAL_UPSERT_ERROR', { error: error.message });
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      const msg = error.message || '';
+      // Defensa en profundidad: la sesión afirmó admin pero la BD lo desmiente.
+      if (msg.includes('ERR_FORBIDDEN_ACTOR_NOT_ADMIN')) {
+        logger.warn('AUTH', 'EXCHANGE_RATE_MANUAL_DENIED_BY_DB_ACTOR_CHECK', {
+          actorId: _session.user.id,
+          error: msg,
+        });
+        return NextResponse.json(
+          { error: 'FORBIDDEN', message: 'Solo un administrador puede modificar la tasa de cambio' },
+          { status: 403 }
+        );
+      }
+      logger.error('DATABASE', 'EXCHANGE_RATES_MANUAL_UPSERT_ERROR', { error: msg });
+      return NextResponse.json({ error: msg }, { status: 500 });
     }
 
-    // FIX F3-P1-01: auditoría persistente del cambio de tasa (best-effort;
-    // si falla NO invalida la mutación ya aplicada pero queda registrada como
-    // CRÍTICA en logs para revisión).
-    try {
-      await admin.from('exchange_rate_audit').insert({
-        actor_id: _session.user.id,
-        action: 'manual_upsert',
-        currency,
-        new_rate: rate,
-        rate_date: today,
-        source_ip: req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || null,
-      });
-    } catch (auditErr: unknown) {
-      logger.error('AUDIT', 'EXCHANGE_RATE_AUDIT_WRITE_FAILED', {
-        error: auditErr instanceof Error ? auditErr.message : String(auditErr),
-        currency, rate, rate_date: today, actor: _session.user.id,
-      });
-    }
+    const result = (data ?? {}) as Record<string, unknown>;
 
-    logger.info('DATABASE', 'EXCHANGE_RATES_MANUAL_SAVED', {
+    logger.info('AUDIT', 'EXCHANGE_RATE_MANUAL_MUTATION_AUDITED', {
       currency,
-      rate,
+      new_rate: rate,
+      old_rate: result.old_rate ?? null,
+      old_rate_date: result.old_rate_date ?? null,
       rate_date: today,
-      capture_method: 'real',
-      user: _session.user.id,
+      actor: _session.user.id,
+      audit_id: result.audit_id ?? null,
+      source_ip: req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || null,
     });
 
     return NextResponse.json({
       success: true,
-      data,
+      saved: {
+        currency,
+        rate,
+        rate_date: today,
+        capture_method: 'real',
+        source: 'elToque',
+      },
+      audit: {
+        audit_id: result.audit_id ?? null,
+        old_rate: result.old_rate ?? null,
+        old_rate_date: result.old_rate_date ?? null,
+        new_rate: rate,
+        actor_id: _session.user.id,
+      },
       message: `Tasa ${currency} = ${rate} CUP guardada como REAL para ${today}`,
     });
   } catch (error: unknown) {
