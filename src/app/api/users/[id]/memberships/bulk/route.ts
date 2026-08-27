@@ -4,6 +4,7 @@ import { withTracing } from '@/lib/observability';
 import { validateOrigin } from '@/lib/csrf';
 import { rateLimit } from '@/lib/rate-limit';
 import { createApiError } from '@/lib/api-errors';
+import { canManageStore } from '@/lib/roles';
 import { z } from 'zod';
 import { logger } from '@/lib/logger';
 
@@ -54,10 +55,23 @@ async function bulkMembershipsHandler(
       );
     }
 
-    // FIX-DEUDA: solo admin/manager pueden asignar memberships — validación explícita
-    // (antes usaba withAuth + check manual; ahora check directo, consistente con F4-T01)
-    if (session.user.role !== 'admin' && session.user.role !== 'manager') {
-      return NextResponse.json(createApiError('FORBIDDEN'), { status: 403 });
+    // FIX F3-P1-02: autorización por tienda, no por mero rol global.
+    //   admin global → puede asignar (by design, roles.ts).
+    //   Cualquier otro rol global (incl. manager) → necesita membership activa
+    //   con rol de gestión EN CADA tienda objetivo de los assignments.
+    if (session.user.role !== 'admin') {
+      const targets = validated.data.assignments.map(a => a.store_id);
+      const allAuthorized = targets.every(sid => canManageStore(session.user, sid));
+      if (!allAuthorized) {
+        logger.warn('AUTH', 'MEMBERSHIPS_BULK_DENIED_BY_STORE', {
+          userId,
+          actorId: session.user.id,
+          actorRole: session.user.role,
+          requestedStores: targets,
+          membershipsHeld: session.user.memberships?.map(m => ({ store_id: m.store_id, role: m.role })) ?? [],
+        });
+        return NextResponse.json(createApiError('FORBIDDEN'), { status: 403 });
+      }
     }
 
     // Usar service role para invocar el RPC transaccional
@@ -105,10 +119,26 @@ async function bulkMembershipsHandler(
   }
 }
 
-// FIX-DEUDA: estandarizado a withAuth + check admin/manager (consistente con F4-T01
-// que usa withRole('admin')). Aquí permitimos manager también porque los managers
-// pueden asignar memberships a tiendas que gestionan.
+// FIX F3-P1-02 (crash runtime): el wrapper conAuth del middleware propaga
+// SOLO (req, session) y descarta el contexto de ruta de Next 16. Antes, el
+// handler recibía context=undefined y "await context.params" reventaba.
+// Ahora la export captura el contexto real de Next cuando existe; si un mock
+// de test inyecta el contexto como tercer argumento, se respeta como fallback.
+type RouteContext = { params: Promise<{ id: string }> };
+async function postRoute(req: NextRequest, routeContext?: RouteContext): Promise<Response> {
+  // Cast deliberado: el contrato real interno soporta 3 args (req, session, ctx)
+  // aunque el tipo público AuthHandler declare 2. El tercer argumento llega en
+  // mocks de tests; en runtime Next lo entrega vía el segundo parámetro de
+  // postRoute (routeContext), que tiene prioridad.
+  const wrapped = withAuth(((rq: NextRequest, session: AuthenticatedSession, ctxFromCaller?: RouteContext) =>
+    bulkMembershipsHandler(
+      rq,
+      session,
+      routeContext ?? ctxFromCaller ?? ({ params: Promise.resolve({ id: '' }) } as RouteContext)
+    )) as Parameters<typeof withAuth>[0]);
+  return wrapped(req);
+}
 export const POST = withTracing(
-  withAuth(bulkMembershipsHandler as Parameters<typeof withAuth>[0]) as Parameters<typeof withTracing>[0],
+  postRoute as Parameters<typeof withTracing>[0],
   'POST /api/users/[id]/memberships/bulk'
 );

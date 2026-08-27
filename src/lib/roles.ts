@@ -104,3 +104,21 @@ export const canManageStore = (user: StoreAccessUser | null, storeId: string): b
     m.status === 'active'
   ) || false;
 };
+
+/**
+ * FIX F3-P0-02 — Autorización de LECTURA scoped por tienda.
+ *
+ * Semántica: el usuario puede LEER recursos de una tienda si es admin global
+ * o tiene CUALQUIER membership activa en esa tienda (clerk incluido). Las
+ * rutas service-role legacy (p.ej. /api/received-services) deben usar esta
+ * función ANTES de ejecutar operaciones privilegiadas; el store_id enviado
+ * por el cliente NUNCA se convierte en autorización por sí mismo.
+ */
+export const canViewStore = (user: StoreAccessUser | null, storeId: string): boolean => {
+  if (!user || !storeId) return false;
+  if (user.role === 'admin') return true;
+  return user.memberships?.some(m =>
+    m.store_id === storeId &&
+    m.status === 'active'
+  ) || false;
+};

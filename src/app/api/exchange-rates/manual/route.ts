@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
 import { z } from 'zod';
 import { logger } from '@/lib/logger';
+import { validateOrigin } from '@/lib/csrf';
 
 /**
  * POST /api/exchange-rates/manual
@@ -30,8 +31,43 @@ const manualSchema = z.object({
   rate_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
 });
 
+/* ────────────────────────────────────────────────────────────────────────
+ * DECISION-FX-01 (FIX F3-P1-01, auditoría multitienda):
+ * La tasa de cambio es un dato GLOBAL que alimenta la conversión contable de
+ * todas las tiendas. Definición de autoridad aprobada para este fix:
+ *   SOLO rol global 'admin' puede introducir/ajustar manualmente la tasa.
+ * Cualquier otro rol (incl. manager/clerk) recibe 403. Si el dueño del
+ * negocio quiere delegar en 'manager', debe ratificarlo expresamente y se
+ * ampliará este check con membership + canManageStore — NO por mero rol.
+ *
+ * Se añade además:
+ *   - validateOrigin (CSRF) — alineado con memberships/bulk y stores/bulk.
+ *   - Persistencia de auditoría en exchange_rate_audit (quién cambió qué,
+ *     cuándo y desde qué origen), migración 20260827000006.
+ * ──────────────────────────────────────────────────────────────────────── */
+
 async function postHandler(req: NextRequest, _session: AuthenticatedSession) {
   try {
+    // FIX F3-P1-01: CSRF por validación de origen
+    if (!validateOrigin(req)) {
+      return NextResponse.json(
+        { error: 'INVALID_ORIGIN' },
+        { status: 403 }
+      );
+    }
+
+    // FIX F3-P1-01 / DECISION-FX-01: solo admin global muta tasas globales
+    if (_session.user.role !== 'admin') {
+      logger.warn('AUTH', 'EXCHANGE_RATE_MANUAL_DENIED_BY_ROLE', {
+        actorId: _session.user.id,
+        actorRole: _session.user.role,
+      });
+      return NextResponse.json(
+        { error: 'FORBIDDEN', message: 'Solo un administrador puede modificar la tasa de cambio' },
+        { status: 403 }
+      );
+    }
+
     const body = await req.json();
     const parsed = manualSchema.safeParse(body);
     if (!parsed.success) {
@@ -94,6 +130,25 @@ async function postHandler(req: NextRequest, _session: AuthenticatedSession) {
     if (error) {
       logger.error('DATABASE', 'EXCHANGE_RATES_MANUAL_UPSERT_ERROR', { error: error.message });
       return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    // FIX F3-P1-01: auditoría persistente del cambio de tasa (best-effort;
+    // si falla NO invalida la mutación ya aplicada pero queda registrada como
+    // CRÍTICA en logs para revisión).
+    try {
+      await admin.from('exchange_rate_audit').insert({
+        actor_id: _session.user.id,
+        action: 'manual_upsert',
+        currency,
+        new_rate: rate,
+        rate_date: today,
+        source_ip: req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || null,
+      });
+    } catch (auditErr: unknown) {
+      logger.error('AUDIT', 'EXCHANGE_RATE_AUDIT_WRITE_FAILED', {
+        error: auditErr instanceof Error ? auditErr.message : String(auditErr),
+        currency, rate, rate_date: today, actor: _session.user.id,
+      });
     }
 
     logger.info('DATABASE', 'EXCHANGE_RATES_MANUAL_SAVED', {

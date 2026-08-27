@@ -103,4 +103,76 @@ describe('POST /api/users/[id]/memberships/bulk (F4-T02)', () => {
     const res = await POST(req as any);
     expect(res.status).toBe(500);
   });
+
+  // ── FIX F3-P1-02: autorización por tienda + fix del crash context.params ──
+
+  it('FIX F3-P1-02: manager global SIN membership de gestión en la tienda objetivo → 403 sin RPC', async () => {
+    mockSession.value = {
+      user: { id: 'mgr-global', role: 'manager', memberships: [] },
+    };
+    const req = makeRequest({
+      assignments: [
+        { store_id: 'a1111111-1111-4111-8111-111111111111', role: 'clerk' },
+      ],
+    });
+    const res = await POST(req as any);
+    expect(res.status).toBe(403);
+    expect(mockRpc).not.toHaveBeenCalled();
+  });
+
+  it('FIX F3-P1-02: manager global CON membership activa de gestión en TODAS las tiendas objetivo → RPC llamado', async () => {
+    mockSession.value = {
+      user: {
+        id: 'mgr-multi',
+        role: 'manager',
+        memberships: [
+          { store_id: 'a1111111-1111-4111-8111-111111111111', role: 'encargado', status: 'active' },
+          { store_id: 'b2222222-2222-4222-8222-222222222222', role: 'manager', status: 'active' },
+        ],
+      },
+    };
+    const req = makeRequest({
+      assignments: [
+        { store_id: 'a1111111-1111-4111-8111-111111111111', role: 'clerk' },
+        { store_id: 'b2222222-2222-4222-8222-222222222222', role: 'warehouse' },
+      ],
+    });
+    const res = await POST(req as any);
+    expect(res.status).toBe(200);
+    expect(mockRpc).toHaveBeenCalledTimes(1);
+  });
+
+  it('FIX F3-P1-02: membership revoked NO autoriza al manager sobre esa tienda', async () => {
+    mockSession.value = {
+      user: {
+        id: 'mgr-revoked',
+        role: 'manager',
+        memberships: [
+          { store_id: 'a1111111-1111-4111-8111-111111111111', role: 'manager', status: 'revoked' },
+        ],
+      },
+    };
+    const req = makeRequest({
+      assignments: [
+        { store_id: 'a1111111-1111-4111-8111-111111111111', role: 'clerk' },
+      ],
+    });
+    const res = await POST(req as any);
+    expect(res.status).toBe(403);
+    expect(mockRpc).not.toHaveBeenCalled();
+  });
+
+  it('FIX F3-P1-02: contexto real de Next (2º argumento) define p_user_id y no crashea', async () => {
+    mockSession.value = { user: { id: 'admin-1', role: 'admin', memberships: [] } };
+    const req = makeRequest({
+      assignments: [{ store_id: 'a1111111-1111-4111-8111-111111111111', role: 'clerk' }],
+    });
+    // Invocación con firma REAL de Next 16: (req, { params })
+    const res = await POST(req as any, { params: Promise.resolve({ id: 'usuario-x' }) } as any);
+    expect(res.status).toBe(200);
+    expect(mockRpc).toHaveBeenCalledWith(
+      'bulk_assign_memberships',
+      expect.objectContaining({ p_user_id: 'usuario-x' })
+    );
+  });
 });
