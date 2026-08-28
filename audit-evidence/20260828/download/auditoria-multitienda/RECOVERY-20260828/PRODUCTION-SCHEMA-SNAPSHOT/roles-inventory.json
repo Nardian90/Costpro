@@ -1,0 +1,32 @@
+{
+  "referenced": [
+    "anon",
+    "authenticated",
+    "costpro_snapshot_restorer",
+    "costpro_transaction_adjuster",
+    "dashboard_user",
+    "pg_database_owner",
+    "postgres",
+    "public",
+    "service_role",
+    "supabase_admin",
+    "supabase_auth_admin",
+    "warehouse_staff"
+  ],
+  "shim_create": [
+    "costpro_snapshot_restorer",
+    "costpro_transaction_adjuster",
+    "dashboard_user",
+    "pg_database_owner",
+    "supabase_admin",
+    "supabase_auth_admin",
+    "warehouse_staff"
+  ],
+  "preexisting_lab": [
+    "postgres",
+    "anon",
+    "authenticated",
+    "service_role",
+    "authenticator"
+  ]
+}

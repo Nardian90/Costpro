@@ -1,0 +1,1 @@
+[{"sig":"adjust_total_amount(uuid,numeric,text)","acl":"{costpro_transaction_adjuster=X/costpro_transaction_adjuster,authenticated=X/costpro_transaction_adjuster}"},{"sig":"get_global_max_operation_date(uuid)","acl":"{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}"}]

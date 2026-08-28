@@ -1,0 +1,1 @@
+[{"line":"F2C\u001fadjustment_item\u001fproduct_id:uuid,expected_quantity:numeric(12,4),counted_quantity:numeric(12,4),decomposition:variant_decomposition[]"},{"line":"F2C\u001fvariant_decomposition\u001fvariant_id:uuid,quantity:numeric(12,4)"}]

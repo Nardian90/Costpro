@@ -1,0 +1,1 @@
+[{"extname":"btree_gist","nspname":"public"},{"extname":"pg_stat_statements","nspname":"extensions"},{"extname":"pgcrypto","nspname":"extensions"},{"extname":"plpgsql","nspname":"pg_catalog"},{"extname":"supabase_vault","nspname":"vault"},{"extname":"uuid-ossp","nspname":"extensions"}]

@@ -1,0 +1,926 @@
+{
+ "added": {
+  "F1": [
+   "F1\u001ffc_automation_config\u001fr\u001f\u001ftrue\u001ffalse",
+   "F1\u001ffc_generation_log\u001fr\u001f\u001ftrue\u001ffalse",
+   "F1\u001ffc_pdf_cache\u001fr\u001f\u001ftrue\u001ffalse"
+  ],
+  "F11": [
+   "F11\u001fv_stock_discrepancies\u001fv\u001f\u001f SELECT p.id AS product_id,\u001e    p.name AS product_name,\u001e    p.store_id,\u001e    s.name AS store_name,\u001e    p.stock_current AS current_stock,\u001e    COALESCE(sum(sm.quantity_change), 0::numeric) AS expected_stock,\u001e    p.stock_current - COALESCE(sum(sm.quantity_change), 0::numeric) AS discrepancy\u001e   FROM products p\u001e     LEFT JOIN stock_movements sm ON sm.product_id = p.id AND sm.store_id = p.store_id\u001e     LEFT JOIN stores s ON s.id = p.store_id\u001e  WHERE p.is_active = true\u001e  GROUP BY p.id, p.name, p.store_id, s.name, p.stock_current\u001e HAVING abs(p.stock_current - COALESCE(sum(sm.quantity_change), 0::numeric)) > 0.001;"
+  ],
+  "F3": [
+   "F3\u001fcash_closures\u001fcash_movements_total\u001f15\u001fnumeric\u001ffalse\u001f0\u001f\u001f\u001f\u001f",
+   "F3\u001fcash_closures\u001fdifference\u001f16\u001fnumeric\u001ffalse\u001f0\u001f\u001f\u001f\u001f",
+   "F3\u001fcash_closures\u001fopening_balance\u001f14\u001fnumeric\u001ffalse\u001f0\u001f\u001f\u001f\u001f",
+   "F3\u001ffc_automation_config\u001fauto_generate_on_create\u001f7\u001fboolean\u001ftrue\u001ftrue\u001f\u001f\u001f\u001f",
+   "F3\u001ffc_automation_config\u001fauto_recalculate_on_price_change\u001f8\u001fboolean\u001ftrue\u001ftrue\u001f\u001f\u001f\u001f",
+   "F3\u001ffc_automation_config\u001fbatch_generation_enabled\u001f10\u001fboolean\u001ftrue\u001ffalse\u001f\u001f\u001f\u001f",
+   "F3\u001ffc_automation_config\u001fbatch_schedule_cron\u001f11\u001ftext\u001ffalse\u001f\u001f\u001f\u001f\u001f",
+   "F3\u001ffc_automation_config\u001fcreated_at\u001f14\u001ftimestamp with time zone\u001ftrue\u001fnow()\u001f\u001f\u001f\u001f",
+   "F3\u001ffc_automation_config\u001fdefault_modalidad\u001f5\u001ftext\u001ffalse\u001f\u001f\u001f\u001f\u001f",
+   "F3\u001ffc_automation_config\u001fdefault_pdf_format\u001f6\u001ftext\u001ffalse\u001f'res148'::text\u001f\u001f\u001f\u001f",
+   "F3\u001ffc_automation_config\u001fdefault_template_id\u001f4\u001ftext\u001ffalse\u001f\u001f\u001f\u001f\u001f",
+   "F3\u001ffc_automation_config\u001ffc_auto_enabled\u001f3\u001fboolean\u001ftrue\u001ftrue\u001f\u001f\u001f\u001f",
+   "F3\u001ffc_automation_config\u001fid\u001f1\u001fuuid\u001ftrue\u001fgen_random_uuid()\u001f\u001f\u001f\u001f",
+   "F3\u001ffc_automation_config\u001fmax_retries\u001f13\u001finteger\u001ftrue\u001f3\u001f\u001f\u001f\u001f",
+   "F3\u001ffc_automation_config\u001fnotification_on_failure\u001f12\u001fboolean\u001ftrue\u001ftrue\u001f\u001f\u001f\u001f",
+   "F3\u001ffc_automation_config\u001fprice_change_threshold\u001f9\u001fnumeric(8,4)\u001ffalse\u001f0.0001\u001f\u001f\u001f\u001f",
+   "F3\u001ffc_automation_config\u001fstore_id\u001f2\u001fuuid\u001ftrue\u001f\u001f\u001f\u001f\u001f",
+   "F3\u001ffc_automation_config\u001fupdated_at\u001f15\u001ftimestamp with time zone\u001ftrue\u001fnow()\u001f\u001f\u001f\u001f",
+   "F3\u001ffc_generation_log\u001factor_id\u001f12\u001fuuid\u001ffalse\u001f\u001f\u001f\u001f\u001f",
+   "F3\u001ffc_generation_log\u001fcost_price_after\u001f8\u001fnumeric(12,2)\u001ffalse\u001f\u001f\u001f\u001f\u001f",
+   "F3\u001ffc_generation_log\u001fcost_price_before\u001f7\u001fnumeric(12,2)\u001ffalse\u001f\u001f\u001f\u001f\u001f",
+   "F3\u001ffc_generation_log\u001fcreated_at\u001f13\u001ftimestamp with time zone\u001ftrue\u001fnow()\u001f\u001f\u001f\u001f",
+   "F3\u001ffc_generation_log\u001ferror_message\u001f9\u001ftext\u001ffalse\u001f\u001f\u001f\u001f\u001f",
+   "F3\u001ffc_generation_log\u001fgeneration_time_ms\u001f10\u001finteger\u001ffalse\u001f\u001f\u001f\u001f\u001f",
+   "F3\u001ffc_generation_log\u001fid\u001f1\u001fuuid\u001ftrue\u001fgen_random_uuid()\u001f\u001f\u001f\u001f",
+   "F3\u001ffc_generation_log\u001fmodalidad\u001f5\u001ftext\u001ftrue\u001f\u001f\u001f\u001f\u001f",
+   "F3\u001ffc_generation_log\u001fproduct_id\u001f2\u001fuuid\u001ftrue\u001f\u001f\u001f\u001f\u001f",
+   "F3\u001ffc_generation_log\u001fstatus\u001f6\u001ftext\u001ftrue\u001f\u001f\u001f\u001f\u001f",
+   "F3\u001ffc_generation_log\u001fstore_id\u001f3\u001fuuid\u001ftrue\u001f\u001f\u001f\u001f\u001f",
+   "F3\u001ffc_generation_log\u001ftemplate_id\u001f4\u001ftext\u001ftrue\u001f\u001f\u001f\u001f\u001f",
+   "F3\u001ffc_generation_log\u001ftriggered_by\u001f11\u001ftext\u001ftrue\u001f\u001f\u001f\u001f\u001f",
+   "F3\u001ffc_pdf_cache\u001fcache_key\u001f5\u001ftext\u001ftrue\u001f\u001f\u001f\u001f\u001f",
+   "F3\u001ffc_pdf_cache\u001fchecksum\u001f9\u001ftext\u001ffalse\u001f\u001f\u001f\u001f\u001f",
+   "F3\u001ffc_pdf_cache\u001fcontent_type\u001f7\u001ftext\u001ftrue\u001f'application/pdf'::text\u001f\u001f\u001f\u001f",
+   "F3\u001ffc_pdf_cache\u001fcreated_at\u001f13\u001ftimestamp with time zone\u001ftrue\u001fnow()\u001f\u001f\u001f\u001f",
+   "F3\u001ffc_pdf_cache\u001fexpires_at\u001f12\u001ftimestamp with time zone\u001ftrue\u001f\u001f\u001f\u001f\u001f",
+   "F3\u001ffc_pdf_cache\u001ffile_size_bytes\u001f8\u001finteger\u001ffalse\u001f\u001f\u001f\u001f\u001f",
+   "F3\u001ffc_pdf_cache\u001fhit_count\u001f10\u001finteger\u001ftrue\u001f0\u001f\u001f\u001f\u001f",
+   "F3\u001ffc_pdf_cache\u001fid\u001f1\u001fuuid\u001ftrue\u001fgen_random_uuid()\u001f\u001f\u001f\u001f",
+   "F3\u001ffc_pdf_cache\u001flast_hit_at\u001f11\u001ftimestamp with time zone\u001ffalse\u001f\u001f\u001f\u001f\u001f",
+   "F3\u001ffc_pdf_cache\u001fpdf_format\u001f4\u001ftext\u001ftrue\u001f'res148'::text\u001f\u001f\u001f\u001f",
+   "F3\u001ffc_pdf_cache\u001fproduct_id\u001f3\u001fuuid\u001ftrue\u001f\u001f\u001f\u001f\u001f",
+   "F3\u001ffc_pdf_cache\u001fstorage_path\u001f6\u001ftext\u001ffalse\u001f\u001f\u001f\u001f\u001f",
+   "F3\u001ffc_pdf_cache\u001fstore_id\u001f2\u001fuuid\u001ftrue\u001f\u001f\u001f\u001f\u001f",
+   "F3\u001ffc_pdf_cache\u001fupdated_at\u001f14\u001ftimestamp with time zone\u001ftrue\u001fnow()\u001f\u001f\u001f\u001f",
+   "F3\u001fprofiles\u001fdeleted_at\u001f19\u001ftimestamp with time zone\u001ffalse\u001f\u001f\u001f\u001f\u001f",
+   "F3\u001fprofiles\u001fdeleted_by\u001f21\u001fuuid\u001ffalse\u001f\u001f\u001f\u001f\u001f",
+   "F3\u001fprofiles\u001fdeletion_reason\u001f20\u001ftext\u001ffalse\u001f\u001f\u001f\u001f\u001f",
+   "F3\u001fprofiles\u001fplan\u001f22\u001fplan_t\u001ftrue\u001f'free'::plan_t\u001f\u001f\u001f\u001f",
+   "F3\u001ftelegram_configs\u001fauto_publish_interval_hours\u001f32\u001finteger\u001ffalse\u001f6\u001f\u001f\u001f\u001f"
+  ],
+  "F4": [
+   "F4\u001ffc_automation_config\u001ffc_automation_config_default_modalidad_check\u001fc\u001fCHECK ((default_modalidad = ANY (ARRAY['produccion'::text, 'servicios'::text, 'comercializacion'::text])))\u001ffalse\u001ffalse\u001ftrue",
+   "F4\u001ffc_automation_config\u001ffc_automation_config_max_retries_check\u001fc\u001fCHECK (((max_retries >= 0) AND (max_retries <= 10)))\u001ffalse\u001ffalse\u001ftrue",
+   "F4\u001ffc_automation_config\u001ffc_automation_config_pkey\u001fp\u001fPRIMARY KEY (id)\u001ffalse\u001ffalse\u001ftrue",
+   "F4\u001ffc_automation_config\u001ffc_automation_config_store_id_fkey\u001ff\u001fFOREIGN KEY (store_id) REFERENCES stores(id) ON DELETE CASCADE\u001ffalse\u001ffalse\u001ftrue",
+   "F4\u001ffc_automation_config\u001ffc_automation_config_store_id_key\u001fu\u001fUNIQUE (store_id)\u001ffalse\u001ffalse\u001ftrue",
+   "F4\u001ffc_generation_log\u001ffc_generation_log_actor_id_fkey\u001ff\u001fFOREIGN KEY (actor_id) REFERENCES auth.users(id)\u001ffalse\u001ffalse\u001ftrue",
+   "F4\u001ffc_generation_log\u001ffc_generation_log_modalidad_check\u001fc\u001fCHECK ((modalidad = ANY (ARRAY['produccion'::text, 'servicios'::text, 'comercializacion'::text])))\u001ffalse\u001ffalse\u001ftrue",
+   "F4\u001ffc_generation_log\u001ffc_generation_log_pkey\u001fp\u001fPRIMARY KEY (id)\u001ffalse\u001ffalse\u001ftrue",
+   "F4\u001ffc_generation_log\u001ffc_generation_log_product_id_fkey\u001ff\u001fFOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE\u001ffalse\u001ffalse\u001ftrue",
+   "F4\u001ffc_generation_log\u001ffc_generation_log_status_check\u001fc\u001fCHECK ((status = ANY (ARRAY['success'::text, 'failed'::text, 'skipped'::text])))\u001ffalse\u001ffalse\u001ftrue",
+   "F4\u001ffc_generation_log\u001ffc_generation_log_store_id_fkey\u001ff\u001fFOREIGN KEY (store_id) REFERENCES stores(id) ON DELETE CASCADE\u001ffalse\u001ffalse\u001ftrue",
+   "F4\u001ffc_generation_log\u001ffc_generation_log_triggered_by_check\u001fc\u001fCHECK ((triggered_by = ANY (ARRAY['manual'::text, 'auto_price_change'::text, 'auto_new_product'::text, 'auto_template_change'::text, 'batch_recalculation'::text])))\u001ffalse\u001ffalse\u001ftrue",
+   "F4\u001ffc_pdf_cache\u001ffc_pdf_cache_pkey\u001fp\u001fPRIMARY KEY (id)\u001ffalse\u001ffalse\u001ftrue",
+   "F4\u001ffc_pdf_cache\u001ffc_pdf_cache_product_id_fkey\u001ff\u001fFOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE\u001ffalse\u001ffalse\u001ftrue",
+   "F4\u001ffc_pdf_cache\u001ffc_pdf_cache_store_id_fkey\u001ff\u001fFOREIGN KEY (store_id) REFERENCES stores(id) ON DELETE CASCADE\u001ffalse\u001ffalse\u001ftrue",
+   "F4\u001finventory\u001finventory_quantity_check\u001fc\u001fCHECK ((quantity >= (0)::numeric))\u001ffalse\u001ffalse\u001ftrue",
+   "F4\u001finventory\u001finventory_quantity_non_negative\u001fc\u001fCHECK ((quantity >= (0)::numeric))\u001ffalse\u001ffalse\u001ftrue",
+   "F4\u001finventory\u001finventory_store_product_unique\u001fu\u001fUNIQUE (store_id, product_id)\u001ffalse\u001ffalse\u001ftrue",
+   "F4\u001fproducts\u001fproducts_stock_current_non_negative\u001fc\u001fCHECK ((stock_current >= (0)::numeric))\u001ffalse\u001ffalse\u001ftrue",
+   "F4\u001fproducts\u001fproducts_store_sku_unique\u001fu\u001fUNIQUE (store_id, sku)\u001ffalse\u001ffalse\u001ftrue",
+   "F4\u001fproducts\u001fproducts_store_sku_unit_unique\u001fu\u001fUNIQUE (store_id, sku, unit_of_measure)\u001ffalse\u001ffalse\u001ftrue",
+   "F4\u001freceipt_items\u001freceipt_items_quantity_positive\u001fc\u001fCHECK ((quantity > (0)::numeric))\u001ffalse\u001ffalse\u001ftrue",
+   "F4\u001fstock_movements\u001fstock_movements_balance_non_negative\u001fc\u001fCHECK (((balance_after IS NULL) OR (balance_after = (0)::numeric) OR (balance_after >= (0)::numeric)))\u001ffalse\u001ffalse\u001ftrue",
+   "F4\u001ftransaction_items\u001ftransaction_items_quantity_positive\u001fc\u001fCHECK ((quantity > (0)::numeric))\u001ffalse\u001ffalse\u001ftrue"
+  ],
+  "F5": [
+   "F5\u001fCREATE INDEX idx_exchange_rates_source_date ON public.exchange_rates USING btree (source, rate_date DESC)",
+   "F5\u001fCREATE INDEX idx_fc_automation_config_store_id ON public.fc_automation_config USING btree (store_id)",
+   "F5\u001fCREATE INDEX idx_fc_generation_log_created_at ON public.fc_generation_log USING btree (created_at DESC)",
+   "F5\u001fCREATE INDEX idx_fc_generation_log_product_id ON public.fc_generation_log USING btree (product_id)",
+   "F5\u001fCREATE INDEX idx_fc_generation_log_status ON public.fc_generation_log USING btree (status) WHERE (status = 'failed'::text)",
+   "F5\u001fCREATE INDEX idx_fc_generation_log_store_id ON public.fc_generation_log USING btree (store_id)",
+   "F5\u001fCREATE INDEX idx_fc_pdf_cache_store_product ON public.fc_pdf_cache USING btree (store_id, product_id)",
+   "F5\u001fCREATE UNIQUE INDEX fc_automation_config_pkey ON public.fc_automation_config USING btree (id)",
+   "F5\u001fCREATE UNIQUE INDEX fc_automation_config_store_id_key ON public.fc_automation_config USING btree (store_id)",
+   "F5\u001fCREATE UNIQUE INDEX fc_generation_log_pkey ON public.fc_generation_log USING btree (id)",
+   "F5\u001fCREATE UNIQUE INDEX fc_pdf_cache_pkey ON public.fc_pdf_cache USING btree (id)",
+   "F5\u001fCREATE UNIQUE INDEX idx_fc_pdf_cache_key ON public.fc_pdf_cache USING btree (cache_key)",
+   "F5\u001fCREATE UNIQUE INDEX inventory_store_product_unique ON public.inventory USING btree (store_id, product_id)",
+   "F5\u001fCREATE UNIQUE INDEX products_store_sku_unique ON public.products USING btree (store_id, sku)",
+   "F5\u001fCREATE UNIQUE INDEX products_store_sku_unit_unique ON public.products USING btree (store_id, sku, unit_of_measure)",
+   "F5\u001fCREATE UNIQUE INDEX z_reports_z_report_number_idx ON public.z_reports USING btree (z_report_number)"
+  ],
+  "F6": [
+   "F6\u001faudit_user_store_memberships_changes()\u001ff\u001fd507c3a19a2c907db3ec9339758f8890",
+   "F6\u001fclose_fiscal_period(uuid,integer,integer)\u001ff\u001f14efc329f2ab7e88ec1cf6599b5c9e93",
+   "F6\u001fclose_service_order_as_sale(uuid,uuid,uuid,text,text,numeric)\u001ff\u001f3c5e3760742e0e9c2d559e8c3ff58392",
+   "F6\u001fcreate_sale(uuid,uuid,numeric,jsonb,numeric,text,numeric,text,numeric,jsonb,uuid,timestamp with time zone,numeric,numeric,text,text,numeric)\u001ff\u001fb7c9da6ea8d2e387b914cd17fc29ccfa",
+   "F6\u001fcreate_sale(uuid,uuid,numeric,jsonb,numeric,text,numeric,text,numeric,jsonb,uuid,timestamp with time zone,numeric,numeric,text,text,numeric,numeric)\u001ff\u001f85ca4793d9725e83d3dbefd7494a349a",
+   "F6\u001fcreate_sale(uuid,uuid,numeric,jsonb,numeric,text,numeric,text,numeric,jsonb,uuid,timestamp with time zone,numeric,numeric,text,uuid)\u001ff\u001f4fedf380e744ee5a93224db25b359571",
+   "F6\u001fcreate_transfer(uuid,uuid,jsonb,text)\u001ff\u001ff4d8f80c2bf911e897c1ef622f606664",
+   "F6\u001fdeduct_stock(uuid,uuid,integer)\u001ff\u001fb41153250649c3367659370af13d69b9",
+   "F6\u001ffn_audit_stock_reception()\u001ff\u001f7dcf761bfed2f9e54659c43ac158d657",
+   "F6\u001ffn_audit_transaction_voiding()\u001ff\u001fbf5848c534073b5146db079ac2258fc2",
+   "F6\u001ffn_user_preferences_set_updated_at()\u001ff\u001f75a5ce0d5a0d89dd2539e786c09d8c05",
+   "F6\u001ffn_validate_document_transition(text)\u001ff\u001f898f2ae4b252b176b9d87264c8f15849",
+   "F6\u001fget_fc_generation_stats(uuid,integer)\u001ff\u001f3dec1fcd3bdfea9bf77d24ef37c11ed1",
+   "F6\u001fget_latest_rate(text,text)\u001ff\u001f7bddb7d2d2f52cb4d8f1b6f21ce49236",
+   "F6\u001fget_paginated_products(integer,integer,uuid,text,text)\u001ff\u001fe704fb1ac08fc11b5d787193513c085f",
+   "F6\u001fget_rate_history(text,text,integer)\u001ff\u001ffb3d6b7402da651c054513f32a997964",
+   "F6\u001fmanaged_create_user(text,text,text,uuid,jsonb,integer,integer,uuid,uuid)\u001ff\u001f88cdb0755fd5c2a5a4acc79cca4ec45f",
+   "F6\u001fmanaged_create_user(text,text,user_role,uuid,integer,integer)\u001ff\u001f52323509ee93800176fe734c50e0400c",
+   "F6\u001fmanaged_create_user(text,text,user_role,uuid,jsonb,integer,integer)\u001ff\u001f2af39aac63f37b71e20d85fae77af819",
+   "F6\u001fmanaged_create_user(text,text,user_role,uuid,jsonb,integer,integer,uuid)\u001ff\u001f8211b4c5d003d61dd68964efe3aa28ac",
+   "F6\u001fperform_inventory_adjustment(uuid,uuid,uuid,integer,numeric,text)\u001ff\u001f5a91b6ab098b17efde76a20744d6bea3",
+   "F6\u001fprocess_initial_stock(uuid,uuid,integer,text,timestamp with time zone)\u001ff\u001f4e125efee9e23aa941f4b8ddb8c81154",
+   "F6\u001fprocess_stock_adjustment(uuid,uuid,integer,text,uuid)\u001ff\u001f6abfecb48cb87e6b0c3222587172768a",
+   "F6\u001fpurge_expired_fc_pdf_cache()\u001ff\u001f0882402affaed6c2f69a35eda10ea484",
+   "F6\u001freceive_against_po(uuid,jsonb,uuid)\u001ff\u001f2c5ea1efb3495726e72558af3e27a4d8",
+   "F6\u001fregister_reception(uuid,text,date,text,jsonb)\u001ff\u001f585d0b3ac7df014b7479873632533882",
+   "F6\u001frestore_store_backup(uuid,jsonb,text)\u001ff\u001ffd53227538c0fc666f958ad318e341f6",
+   "F6\u001fwithdraw_production_item(uuid,numeric,numeric,uuid)\u001ff\u001f370398efab6b9313423da3338b39ab71"
+  ],
+  "F7": [
+   "F7\u001fCREATE TRIGGER set_fc_automation_config_updated_at BEFORE UPDATE ON public.fc_automation_config FOR EACH ROW EXECUTE FUNCTION update_updated_at_column()",
+   "F7\u001fCREATE TRIGGER set_fc_pdf_cache_updated_at BEFORE UPDATE ON public.fc_pdf_cache FOR EACH ROW EXECUTE FUNCTION update_updated_at_column()",
+   "F7\u001fCREATE TRIGGER tr_audit_stock_reception AFTER INSERT ON public.stock_movements FOR EACH ROW WHEN ((new.movement_type = 'purchase'::movement_type)) EXECUTE FUNCTION fn_audit_stock_reception()",
+   "F7\u001fCREATE TRIGGER tr_audit_transaction_voiding AFTER UPDATE ON public.transactions FOR EACH ROW WHEN (((new.status = 'voided'::transaction_status) AND (old.status <> 'voided'::transaction_status))) EXECUTE FUNCTION fn_audit_transaction_voiding()",
+   "F7\u001fCREATE TRIGGER trg_user_preferences_set_updated_at BEFORE UPDATE ON public.user_preferences FOR EACH ROW EXECUTE FUNCTION fn_user_preferences_set_updated_at()",
+   "F7\u001fCREATE TRIGGER trigger_audit_product_changes AFTER UPDATE ON public.products FOR EACH ROW WHEN (((old.name IS DISTINCT FROM new.name) OR (old.price IS DISTINCT FROM new.price) OR (old.cost_price IS DISTINCT FROM new.cost_price) OR (old.sku IS DISTINCT FROM new.sku))) EXECUTE FUNCTION audit_product_changes()",
+   "F7\u001fCREATE TRIGGER trigger_audit_user_store_memberships_changes AFTER INSERT OR DELETE OR UPDATE ON public.user_store_memberships FOR EACH ROW EXECUTE FUNCTION audit_user_store_memberships_changes()"
+  ],
+  "F8": [
+   "F8\u001faudit_logs\u001fAllow admins to read all audit logs\u001fPERMISSIVE\u001fSELECT\u001f{authenticated}\u001fis_admin()\u001f",
+   "F8\u001faudit_logs\u001fAllow managers and encargados to read their store audit logs\u001fPERMISSIVE\u001fSELECT\u001f{authenticated}\u001f((has_role('manager'::user_role) OR has_role('encargado'::user_role)) AND ((store_id IS NULL) OR has_store_access(store_id)))\u001f",
+   "F8\u001faudit_logs\u001fDeny direct deletes to audit logs\u001fPERMISSIVE\u001fDELETE\u001f{public}\u001ffalse\u001f",
+   "F8\u001faudit_logs\u001fDeny direct inserts to audit logs\u001fPERMISSIVE\u001fINSERT\u001f{public}\u001f\u001ffalse",
+   "F8\u001faudit_logs\u001fDeny direct updates to audit logs\u001fPERMISSIVE\u001fUPDATE\u001f{public}\u001ffalse\u001f",
+   "F8\u001faudit_logs\u001fDeny direct writes to audit_logs\u001fPERMISSIVE\u001fINSERT\u001f{public}\u001f\u001ffalse",
+   "F8\u001fcash_closures\u001fManagers and Admins can update closures\u001fPERMISSIVE\u001fUPDATE\u001f{authenticated}\u001fhas_any_role(ARRAY['admin'::user_role, 'manager'::user_role, 'encargado'::user_role])\u001f",
+   "F8\u001fcash_closures\u001fUsers can insert own closures\u001fPERMISSIVE\u001fINSERT\u001f{authenticated}\u001f\u001f((auth.uid() = user_id) AND has_store_access(store_id))",
+   "F8\u001fcash_closures\u001fUsers can view assigned store closures\u001fPERMISSIVE\u001fSELECT\u001f{authenticated}\u001fhas_store_access(store_id)\u001f",
+   "F8\u001ffc_automation_config\u001ffc_automation_config_delete_admin\u001fPERMISSIVE\u001fDELETE\u001f{authenticated}\u001fis_global_admin()\u001f",
+   "F8\u001ffc_automation_config\u001ffc_automation_config_insert_roles\u001fPERMISSIVE\u001fINSERT\u001f{authenticated}\u001f\u001f(is_global_admin() OR has_store_role(store_id, ARRAY['admin'::text, 'manager'::text, 'encargado'::text]))",
+   "F8\u001ffc_automation_config\u001ffc_automation_config_select_authenticated\u001fPERMISSIVE\u001fSELECT\u001f{authenticated}\u001f(is_global_admin() OR is_store_member(store_id))\u001f",
+   "F8\u001ffc_automation_config\u001ffc_automation_config_update_roles\u001fPERMISSIVE\u001fUPDATE\u001f{authenticated}\u001f(is_global_admin() OR has_store_role(store_id, ARRAY['admin'::text, 'manager'::text, 'encargado'::text]))\u001f(is_global_admin() OR has_store_role(store_id, ARRAY['admin'::text, 'manager'::text, 'encargado'::text]))",
+   "F8\u001ffc_generation_log\u001ffc_generation_log_delete_admin\u001fPERMISSIVE\u001fDELETE\u001f{authenticated}\u001fis_global_admin()\u001f",
+   "F8\u001ffc_generation_log\u001ffc_generation_log_insert_roles\u001fPERMISSIVE\u001fINSERT\u001f{authenticated}\u001f\u001f(is_global_admin() OR has_store_role(store_id, ARRAY['admin'::text, 'manager'::text, 'encargado'::text, 'costo'::text]))",
+   "F8\u001ffc_generation_log\u001ffc_generation_log_select_authenticated\u001fPERMISSIVE\u001fSELECT\u001f{authenticated}\u001f(is_global_admin() OR is_store_member(store_id))\u001f",
+   "F8\u001ffc_pdf_cache\u001ffc_pdf_cache_delete_admin\u001fPERMISSIVE\u001fDELETE\u001f{authenticated}\u001fis_global_admin()\u001f",
+   "F8\u001ffc_pdf_cache\u001ffc_pdf_cache_insert_roles\u001fPERMISSIVE\u001fINSERT\u001f{authenticated}\u001f\u001f(is_global_admin() OR has_store_role(store_id, ARRAY['admin'::text, 'manager'::text, 'encargado'::text, 'costo'::text]))",
+   "F8\u001ffc_pdf_cache\u001ffc_pdf_cache_select_authenticated\u001fPERMISSIVE\u001fSELECT\u001f{authenticated}\u001f(is_global_admin() OR is_store_member(store_id))\u001f",
+   "F8\u001ffc_pdf_cache\u001ffc_pdf_cache_update_roles\u001fPERMISSIVE\u001fUPDATE\u001f{authenticated}\u001f(is_global_admin() OR has_store_role(store_id, ARRAY['admin'::text, 'manager'::text, 'encargado'::text, 'costo'::text]))\u001f(is_global_admin() OR has_store_role(store_id, ARRAY['admin'::text, 'manager'::text, 'encargado'::text, 'costo'::text]))",
+   "F8\u001fprofiles\u001fAdmin full access\u001fPERMISSIVE\u001fALL\u001f{authenticated}\u001fis_admin()\u001f",
+   "F8\u001fprofiles\u001fProfiles viewable by admin, owner, and store manager\u001fPERMISSIVE\u001fSELECT\u001f{authenticated}\u001f(is_admin() OR (id = auth.uid()) OR (has_role('encargado'::user_role) AND (id IN ( SELECT g.user_id\u001e   FROM get_users_for_encargado(auth.uid()) g(user_id)))))\u001f",
+   "F8\u001fprofiles\u001fProfiles visibility\u001fPERMISSIVE\u001fSELECT\u001f{authenticated}\u001f((id = auth.uid()) OR (get_my_role() = 'admin'::text) OR (created_by = auth.uid()) OR is_managed_user(id))\u001f",
+   "F8\u001fprofiles\u001fSelf profile update\u001fPERMISSIVE\u001fUPDATE\u001f{authenticated}\u001f(id = auth.uid())\u001f((id = auth.uid()) AND (is_admin() OR (role = ( SELECT profiles_1.role\u001e   FROM profiles profiles_1\u001e  WHERE (profiles_1.id = auth.uid())))))",
+   "F8\u001fprofiles\u001fprofiles_admin_full_access\u001fPERMISSIVE\u001fALL\u001f{public}\u001fis_admin()\u001fis_admin()",
+   "F8\u001freceipt_items\u001fallow_select_authenticated\u001fPERMISSIVE\u001fSELECT\u001f{public}\u001f(auth.role() IS NOT NULL)\u001f",
+   "F8\u001freceipt_items\u001fdeny_client_writes\u001fPERMISSIVE\u001fALL\u001f{public}\u001ftrue\u001ffalse",
+   "F8\u001freceipt_items\u001freceipt_items_access\u001fPERMISSIVE\u001fSELECT\u001f{public}\u001f(EXISTS ( SELECT 1\u001e   FROM (receipts r\u001e     JOIN profiles p ON ((p.id = r.user_id)))\u001e  WHERE ((r.id = receipt_items.receipt_id) AND ((p.store_id = ( SELECT profiles.store_id\u001e           FROM profiles\u001e          WHERE (profiles.id = auth.uid()))) OR is_admin()))))\u001f",
+   "F8\u001freceipt_items\u001freceipt_items_insert\u001fPERMISSIVE\u001fINSERT\u001f{public}\u001f\u001f(EXISTS ( SELECT 1\u001e   FROM (receipts r\u001e     JOIN profiles p ON ((p.id = r.user_id)))\u001e  WHERE ((r.id = receipt_items.receipt_id) AND ((p.store_id = ( SELECT profiles.store_id\u001e           FROM profiles\u001e          WHERE (profiles.id = auth.uid()))) OR is_admin()))))",
+   "F8\u001freceipts\u001fallow_select_authenticated\u001fPERMISSIVE\u001fSELECT\u001f{public}\u001f(auth.role() IS NOT NULL)\u001f",
+   "F8\u001freceipts\u001fdeny_client_writes\u001fPERMISSIVE\u001fALL\u001f{public}\u001ftrue\u001ffalse",
+   "F8\u001freport_definitions\u001fUsers can create their own report definitions\u001fPERMISSIVE\u001fINSERT\u001f{public}\u001f\u001f(auth.uid() = created_by)",
+   "F8\u001freport_definitions\u001fUsers can update their own report definitions\u001fPERMISSIVE\u001fUPDATE\u001f{public}\u001f(auth.uid() = created_by)\u001f",
+   "F8\u001freport_definitions\u001fUsers can view their own report definitions\u001fPERMISSIVE\u001fSELECT\u001f{public}\u001f((auth.uid() = created_by) OR (EXISTS ( SELECT 1\u001e   FROM user_store_memberships\u001e  WHERE ((user_store_memberships.user_id = auth.uid()) AND (user_store_memberships.store_id = report_definitions.store_id) AND (user_store_memberships.role = ANY (ARRAY['admin'::user_role, 'manager'::user_role, 'encargado'::user_role]))))))\u001f",
+   "F8\u001frss_feeds\u001fAdmins can manage feeds\u001fPERMISSIVE\u001fALL\u001f{authenticated}\u001fhas_role('admin'::user_role)\u001f",
+   "F8\u001frss_feeds\u001fFeeds are viewable by authenticated users\u001fPERMISSIVE\u001fSELECT\u001f{authenticated}\u001ftrue\u001f",
+   "F8\u001frss_settings\u001fAdmins can manage settings\u001fPERMISSIVE\u001fALL\u001f{authenticated}\u001fhas_role('admin'::user_role)\u001f",
+   "F8\u001frss_settings\u001fSettings are viewable by authenticated users\u001fPERMISSIVE\u001fSELECT\u001f{authenticated}\u001ftrue\u001f",
+   "F8\u001fstock_movements\u001fdeny_client_writes\u001fPERMISSIVE\u001fALL\u001f{public}\u001ftrue\u001ffalse",
+   "F8\u001fstores\u001fstores_delete_admin\u001fPERMISSIVE\u001fDELETE\u001f{authenticated}\u001fis_admin()\u001f",
+   "F8\u001fstores\u001fstores_insert_admin_or_encargado\u001fPERMISSIVE\u001fINSERT\u001f{authenticated}\u001f\u001f(is_admin() OR ((created_by = auth.uid()) AND (EXISTS ( SELECT 1\u001e   FROM profiles p\u001e  WHERE ((p.id = auth.uid()) AND ((p.role)::text = 'encargado'::text) AND (NOT (stores.tenant_id IS DISTINCT FROM p.tenant_id)))))))",
+   "F8\u001fstores\u001fstores_select_admin_or_member\u001fPERMISSIVE\u001fSELECT\u001f{authenticated}\u001f(is_admin() OR (EXISTS ( SELECT 1\u001e   FROM (user_store_memberships m\u001e     JOIN profiles p ON ((p.id = m.user_id)))\u001e  WHERE ((m.store_id = stores.id) AND (m.user_id = auth.uid()) AND ((m.status)::text = 'active'::text) AND ((p.tenant_id IS NULL) OR (stores.tenant_id IS NULL) OR (p.tenant_id = stores.tenant_id))))))\u001f",
+   "F8\u001fstores\u001fstores_update_admin_or_encargado_creator\u001fPERMISSIVE\u001fUPDATE\u001f{authenticated}\u001f(is_admin() OR ((created_by = auth.uid()) AND has_store_access(id) AND (EXISTS ( SELECT 1\u001e   FROM profiles p\u001e  WHERE ((p.id = auth.uid()) AND ((p.role)::text = 'encargado'::text))))))\u001f(is_admin() OR ((created_by = auth.uid()) AND has_store_access(id) AND (EXISTS ( SELECT 1\u001e   FROM profiles p\u001e  WHERE ((p.id = auth.uid()) AND ((p.role)::text = 'encargado'::text) AND (NOT (stores.tenant_id IS DISTINCT FROM p.tenant_id)))))))",
+   "F8\u001ftransfer_items\u001ftransfer_items_insert_policy\u001fPERMISSIVE\u001fINSERT\u001f{public}\u001f\u001f((EXISTS ( SELECT 1\u001e   FROM transfers t\u001e  WHERE ((t.id = transfer_items.transfer_id) AND (t.created_by = auth.uid())))) OR has_role('admin'::user_role))",
+   "F8\u001ftransfers\u001ftransfers_insert_policy\u001fPERMISSIVE\u001fINSERT\u001f{public}\u001f\u001f((EXISTS ( SELECT 1\u001e   FROM user_store_memberships\u001e  WHERE ((user_store_memberships.user_id = auth.uid()) AND (user_store_memberships.store_id = transfers.origin_store_id)))) OR has_role('admin'::user_role))",
+   "F8\u001ftransfers\u001ftransfers_view_policy\u001fPERMISSIVE\u001fSELECT\u001f{public}\u001f((EXISTS ( SELECT 1\u001e   FROM user_store_memberships\u001e  WHERE ((user_store_memberships.user_id = auth.uid()) AND (user_store_memberships.store_id = ANY (ARRAY[transfers.origin_store_id, transfers.destination_store_id]))))) OR has_role('admin'::user_role))\u001f",
+   "F8\u001fuser_store_memberships\u001fMemberships management\u001fPERMISSIVE\u001fALL\u001f{authenticated}\u001f((get_my_role() = 'admin'::text) OR is_store_manager(store_id))\u001f",
+   "F8\u001fuser_store_memberships\u001fMemberships visibility\u001fPERMISSIVE\u001fSELECT\u001f{authenticated}\u001f(is_admin() OR (user_id = auth.uid()) OR (EXISTS ( SELECT 1\u001e   FROM user_store_memberships m\u001e  WHERE ((m.user_id = auth.uid()) AND (m.role = 'encargado'::user_role) AND (m.store_id = m.store_id)))))\u001f"
+  ],
+  "F9F": [
+   "F9F\u001faudit_user_store_memberships_changes()\u001fanon\u001fEXECUTE\u001ffalse",
+   "F9F\u001faudit_user_store_memberships_changes()\u001fauthenticated\u001fEXECUTE\u001ffalse",
+   "F9F\u001faudit_user_store_memberships_changes()\u001fpostgres\u001fEXECUTE\u001ffalse",
+   "F9F\u001faudit_user_store_memberships_changes()\u001fservice_role\u001fEXECUTE\u001ffalse",
+   "F9F\u001fcan_safely_delete_user(uuid)\u001fanon\u001fEXECUTE\u001ffalse",
+   "F9F\u001fclose_fiscal_period(uuid,integer,integer)\u001fanon\u001fEXECUTE\u001ffalse",
+   "F9F\u001fclose_fiscal_period(uuid,integer,integer)\u001fauthenticated\u001fEXECUTE\u001ffalse",
+   "F9F\u001fclose_fiscal_period(uuid,integer,integer)\u001fpostgres\u001fEXECUTE\u001ffalse",
+   "F9F\u001fclose_fiscal_period(uuid,integer,integer)\u001fservice_role\u001fEXECUTE\u001ffalse",
+   "F9F\u001fclose_service_order_as_sale(uuid,uuid,uuid,text,text,numeric)\u001fanon\u001fEXECUTE\u001ffalse",
+   "F9F\u001fclose_service_order_as_sale(uuid,uuid,uuid,text,text,numeric)\u001fauthenticated\u001fEXECUTE\u001ffalse",
+   "F9F\u001fclose_service_order_as_sale(uuid,uuid,uuid,text,text,numeric)\u001fpostgres\u001fEXECUTE\u001ffalse",
+   "F9F\u001fclose_service_order_as_sale(uuid,uuid,uuid,text,text,numeric)\u001fservice_role\u001fEXECUTE\u001ffalse",
+   "F9F\u001fcreate_sale(uuid,uuid,numeric,jsonb,numeric,text,numeric,text,numeric,jsonb,uuid,timestamp with time zone,numeric,numeric,text,text,numeric)\u001fanon\u001fEXECUTE\u001ffalse",
+   "F9F\u001fcreate_sale(uuid,uuid,numeric,jsonb,numeric,text,numeric,text,numeric,jsonb,uuid,timestamp with time zone,numeric,numeric,text,text,numeric)\u001fauthenticated\u001fEXECUTE\u001ffalse",
+   "F9F\u001fcreate_sale(uuid,uuid,numeric,jsonb,numeric,text,numeric,text,numeric,jsonb,uuid,timestamp with time zone,numeric,numeric,text,text,numeric)\u001fpostgres\u001fEXECUTE\u001ffalse",
+   "F9F\u001fcreate_sale(uuid,uuid,numeric,jsonb,numeric,text,numeric,text,numeric,jsonb,uuid,timestamp with time zone,numeric,numeric,text,text,numeric)\u001fservice_role\u001fEXECUTE\u001ffalse",
+   "F9F\u001fcreate_sale(uuid,uuid,numeric,jsonb,numeric,text,numeric,text,numeric,jsonb,uuid,timestamp with time zone,numeric,numeric,text,text,numeric,numeric)\u001fanon\u001fEXECUTE\u001ffalse",
+   "F9F\u001fcreate_sale(uuid,uuid,numeric,jsonb,numeric,text,numeric,text,numeric,jsonb,uuid,timestamp with time zone,numeric,numeric,text,text,numeric,numeric)\u001fauthenticated\u001fEXECUTE\u001ffalse",
+   "F9F\u001fcreate_sale(uuid,uuid,numeric,jsonb,numeric,text,numeric,text,numeric,jsonb,uuid,timestamp with time zone,numeric,numeric,text,text,numeric,numeric)\u001fpostgres\u001fEXECUTE\u001ffalse",
+   "F9F\u001fcreate_sale(uuid,uuid,numeric,jsonb,numeric,text,numeric,text,numeric,jsonb,uuid,timestamp with time zone,numeric,numeric,text,text,numeric,numeric)\u001fservice_role\u001fEXECUTE\u001ffalse",
+   "F9F\u001fcreate_sale(uuid,uuid,numeric,jsonb,numeric,text,numeric,text,numeric,jsonb,uuid,timestamp with time zone,numeric,numeric,text,uuid)\u001fanon\u001fEXECUTE\u001ffalse",
+   "F9F\u001fcreate_sale(uuid,uuid,numeric,jsonb,numeric,text,numeric,text,numeric,jsonb,uuid,timestamp with time zone,numeric,numeric,text,uuid)\u001fauthenticated\u001fEXECUTE\u001ffalse",
+   "F9F\u001fcreate_sale(uuid,uuid,numeric,jsonb,numeric,text,numeric,text,numeric,jsonb,uuid,timestamp with time zone,numeric,numeric,text,uuid)\u001fpostgres\u001fEXECUTE\u001ffalse",
+   "F9F\u001fcreate_sale(uuid,uuid,numeric,jsonb,numeric,text,numeric,text,numeric,jsonb,uuid,timestamp with time zone,numeric,numeric,text,uuid)\u001fservice_role\u001fEXECUTE\u001ffalse",
+   "F9F\u001fcreate_transfer(uuid,uuid,jsonb,text)\u001fanon\u001fEXECUTE\u001ffalse",
+   "F9F\u001fcreate_transfer(uuid,uuid,jsonb,text)\u001fauthenticated\u001fEXECUTE\u001ffalse",
+   "F9F\u001fcreate_transfer(uuid,uuid,jsonb,text)\u001fpostgres\u001fEXECUTE\u001ffalse",
+   "F9F\u001fcreate_transfer(uuid,uuid,jsonb,text)\u001fservice_role\u001fEXECUTE\u001ffalse",
+   "F9F\u001fdeduct_stock(uuid,uuid,integer)\u001fanon\u001fEXECUTE\u001ffalse",
+   "F9F\u001fdeduct_stock(uuid,uuid,integer)\u001fauthenticated\u001fEXECUTE\u001ffalse",
+   "F9F\u001fdeduct_stock(uuid,uuid,integer)\u001fpostgres\u001fEXECUTE\u001ffalse",
+   "F9F\u001fdeduct_stock(uuid,uuid,integer)\u001fservice_role\u001fEXECUTE\u001ffalse",
+   "F9F\u001ffn_audit_stock_reception()\u001fanon\u001fEXECUTE\u001ffalse",
+   "F9F\u001ffn_audit_stock_reception()\u001fauthenticated\u001fEXECUTE\u001ffalse",
+   "F9F\u001ffn_audit_stock_reception()\u001fpostgres\u001fEXECUTE\u001ffalse",
+   "F9F\u001ffn_audit_stock_reception()\u001fservice_role\u001fEXECUTE\u001ffalse",
+   "F9F\u001ffn_audit_transaction_voiding()\u001fanon\u001fEXECUTE\u001ffalse",
+   "F9F\u001ffn_audit_transaction_voiding()\u001fauthenticated\u001fEXECUTE\u001ffalse",
+   "F9F\u001ffn_audit_transaction_voiding()\u001fpostgres\u001fEXECUTE\u001ffalse",
+   "F9F\u001ffn_audit_transaction_voiding()\u001fservice_role\u001fEXECUTE\u001ffalse",
+   "F9F\u001ffn_user_preferences_set_updated_at()\u001fanon\u001fEXECUTE\u001ffalse",
+   "F9F\u001ffn_user_preferences_set_updated_at()\u001fauthenticated\u001fEXECUTE\u001ffalse",
+   "F9F\u001ffn_user_preferences_set_updated_at()\u001fpostgres\u001fEXECUTE\u001ffalse",
+   "F9F\u001ffn_user_preferences_set_updated_at()\u001fservice_role\u001fEXECUTE\u001ffalse",
+   "F9F\u001ffn_validate_document_transition(text)\u001fanon\u001fEXECUTE\u001ffalse",
+   "F9F\u001ffn_validate_document_transition(text)\u001fauthenticated\u001fEXECUTE\u001ffalse",
+   "F9F\u001ffn_validate_document_transition(text)\u001fpostgres\u001fEXECUTE\u001ffalse",
+   "F9F\u001ffn_validate_document_transition(text)\u001fservice_role\u001fEXECUTE\u001ffalse",
+   "F9F\u001fget_audit_logs(uuid,text,timestamp without time zone,timestamp without time zone,integer)\u001fanon\u001fEXECUTE\u001ffalse",
+   "F9F\u001fget_batch_store_daily_kpis(uuid[],date)\u001fanon\u001fEXECUTE\u001ffalse",
+   "F9F\u001fget_cash_report(uuid,timestamp with time zone,timestamp with time zone,boolean)\u001fanon\u001fEXECUTE\u001ffalse",
+   "F9F\u001fget_fc_generation_stats(uuid,integer)\u001fauthenticated\u001fEXECUTE\u001ffalse",
+   "F9F\u001fget_fc_generation_stats(uuid,integer)\u001fpostgres\u001fEXECUTE\u001ffalse",
+   "F9F\u001fget_fc_generation_stats(uuid,integer)\u001fservice_role\u001fEXECUTE\u001ffalse",
+   "F9F\u001fget_global_max_operation_date(uuid)\u001fanon\u001fEXECUTE\u001ffalse",
+   "F9F\u001fget_latest_rate(text,text)\u001fanon\u001fEXECUTE\u001ffalse",
+   "F9F\u001fget_latest_rate(text,text)\u001fauthenticated\u001fEXECUTE\u001ffalse",
+   "F9F\u001fget_latest_rate(text,text)\u001fpostgres\u001fEXECUTE\u001ffalse",
+   "F9F\u001fget_latest_rate(text,text)\u001fservice_role\u001fEXECUTE\u001ffalse",
+   "F9F\u001fget_low_stock_count(uuid)\u001fanon\u001fEXECUTE\u001ffalse",
+   "F9F\u001fget_paginated_products(integer,integer,uuid,text,text)\u001fanon\u001fEXECUTE\u001ffalse",
+   "F9F\u001fget_paginated_products(integer,integer,uuid,text,text)\u001fauthenticated\u001fEXECUTE\u001ffalse",
+   "F9F\u001fget_paginated_products(integer,integer,uuid,text,text)\u001fpostgres\u001fEXECUTE\u001ffalse",
+   "F9F\u001fget_paginated_products(integer,integer,uuid,text,text)\u001fservice_role\u001fEXECUTE\u001ffalse",
+   "F9F\u001fget_product_stock_ledger_paginated(uuid,uuid,integer,integer)\u001fanon\u001fEXECUTE\u001ffalse",
+   "F9F\u001fget_rate_history(text,text,integer)\u001fanon\u001fEXECUTE\u001ffalse",
+   "F9F\u001fget_rate_history(text,text,integer)\u001fauthenticated\u001fEXECUTE\u001ffalse",
+   "F9F\u001fget_rate_history(text,text,integer)\u001fpostgres\u001fEXECUTE\u001ffalse",
+   "F9F\u001fget_rate_history(text,text,integer)\u001fservice_role\u001fEXECUTE\u001ffalse",
+   "F9F\u001fget_store_analytics_advanced(uuid,date,date,integer)\u001fanon\u001fEXECUTE\u001ffalse",
+   "F9F\u001fget_worker_commission_summary(uuid,date,date)\u001fanon\u001fEXECUTE\u001ffalse",
+   "F9F\u001fmanaged_create_user(text,text,text,uuid,jsonb,integer,integer,uuid,uuid)\u001fanon\u001fEXECUTE\u001ffalse",
+   "F9F\u001fmanaged_create_user(text,text,text,uuid,jsonb,integer,integer,uuid,uuid)\u001fauthenticated\u001fEXECUTE\u001ffalse",
+   "F9F\u001fmanaged_create_user(text,text,text,uuid,jsonb,integer,integer,uuid,uuid)\u001fpostgres\u001fEXECUTE\u001ffalse",
+   "F9F\u001fmanaged_create_user(text,text,text,uuid,jsonb,integer,integer,uuid,uuid)\u001fservice_role\u001fEXECUTE\u001ffalse",
+   "F9F\u001fmanaged_create_user(text,text,user_role,uuid,integer,integer)\u001fanon\u001fEXECUTE\u001ffalse",
+   "F9F\u001fmanaged_create_user(text,text,user_role,uuid,integer,integer)\u001fauthenticated\u001fEXECUTE\u001ffalse",
+   "F9F\u001fmanaged_create_user(text,text,user_role,uuid,integer,integer)\u001fpostgres\u001fEXECUTE\u001ffalse",
+   "F9F\u001fmanaged_create_user(text,text,user_role,uuid,integer,integer)\u001fservice_role\u001fEXECUTE\u001ffalse",
+   "F9F\u001fmanaged_create_user(text,text,user_role,uuid,jsonb,integer,integer)\u001fanon\u001fEXECUTE\u001ffalse",
+   "F9F\u001fmanaged_create_user(text,text,user_role,uuid,jsonb,integer,integer)\u001fauthenticated\u001fEXECUTE\u001ffalse",
+   "F9F\u001fmanaged_create_user(text,text,user_role,uuid,jsonb,integer,integer)\u001fpostgres\u001fEXECUTE\u001ffalse",
+   "F9F\u001fmanaged_create_user(text,text,user_role,uuid,jsonb,integer,integer)\u001fservice_role\u001fEXECUTE\u001ffalse",
+   "F9F\u001fmanaged_create_user(text,text,user_role,uuid,jsonb,integer,integer,uuid)\u001fanon\u001fEXECUTE\u001ffalse",
+   "F9F\u001fmanaged_create_user(text,text,user_role,uuid,jsonb,integer,integer,uuid)\u001fauthenticated\u001fEXECUTE\u001ffalse",
+   "F9F\u001fmanaged_create_user(text,text,user_role,uuid,jsonb,integer,integer,uuid)\u001fpostgres\u001fEXECUTE\u001ffalse",
+   "F9F\u001fmanaged_create_user(text,text,user_role,uuid,jsonb,integer,integer,uuid)\u001fservice_role\u001fEXECUTE\u001ffalse",
+   "F9F\u001fmanaged_delete_user(uuid)\u001fanon\u001fEXECUTE\u001ffalse",
+   "F9F\u001fperform_inventory_adjustment(uuid,uuid,uuid,integer,numeric,text)\u001fanon\u001fEXECUTE\u001ffalse",
+   "F9F\u001fperform_inventory_adjustment(uuid,uuid,uuid,integer,numeric,text)\u001fauthenticated\u001fEXECUTE\u001ffalse",
+   "F9F\u001fperform_inventory_adjustment(uuid,uuid,uuid,integer,numeric,text)\u001fpostgres\u001fEXECUTE\u001ffalse",
+   "F9F\u001fperform_inventory_adjustment(uuid,uuid,uuid,integer,numeric,text)\u001fservice_role\u001fEXECUTE\u001ffalse",
+   "F9F\u001fprocess_initial_stock(uuid,uuid,integer,text,timestamp with time zone)\u001fanon\u001fEXECUTE\u001ffalse",
+   "F9F\u001fprocess_initial_stock(uuid,uuid,integer,text,timestamp with time zone)\u001fauthenticated\u001fEXECUTE\u001ffalse",
+   "F9F\u001fprocess_initial_stock(uuid,uuid,integer,text,timestamp with time zone)\u001fpostgres\u001fEXECUTE\u001ffalse",
+   "F9F\u001fprocess_initial_stock(uuid,uuid,integer,text,timestamp with time zone)\u001fservice_role\u001fEXECUTE\u001ffalse",
+   "F9F\u001fprocess_inventory_adjustment(uuid,uuid,adjustment_item[],timestamp with time zone)\u001fanon\u001fEXECUTE\u001ffalse",
+   "F9F\u001fprocess_stock_adjustment(uuid,uuid,integer,text,uuid)\u001fanon\u001fEXECUTE\u001ffalse",
+   "F9F\u001fprocess_stock_adjustment(uuid,uuid,integer,text,uuid)\u001fauthenticated\u001fEXECUTE\u001ffalse",
+   "F9F\u001fprocess_stock_adjustment(uuid,uuid,integer,text,uuid)\u001fpostgres\u001fEXECUTE\u001ffalse",
+   "F9F\u001fprocess_stock_adjustment(uuid,uuid,integer,text,uuid)\u001fservice_role\u001fEXECUTE\u001ffalse",
+   "F9F\u001fprocess_stock_adjustment(uuid,uuid,numeric,text,uuid,timestamp with time zone)\u001fanon\u001fEXECUTE\u001ffalse",
+   "F9F\u001fpurge_expired_fc_pdf_cache()\u001fauthenticated\u001fEXECUTE\u001ffalse",
+   "F9F\u001fpurge_expired_fc_pdf_cache()\u001fpostgres\u001fEXECUTE\u001ffalse",
+   "F9F\u001fpurge_expired_fc_pdf_cache()\u001fservice_role\u001fEXECUTE\u001ffalse",
+   "F9F\u001freceive_against_po(uuid,jsonb,uuid)\u001fanon\u001fEXECUTE\u001ffalse",
+   "F9F\u001freceive_against_po(uuid,jsonb,uuid)\u001fauthenticated\u001fEXECUTE\u001ffalse",
+   "F9F\u001freceive_against_po(uuid,jsonb,uuid)\u001fpostgres\u001fEXECUTE\u001ffalse",
+   "F9F\u001freceive_against_po(uuid,jsonb,uuid)\u001fservice_role\u001fEXECUTE\u001ffalse",
+   "F9F\u001fregister_reception(uuid,text,date,text,jsonb)\u001fanon\u001fEXECUTE\u001ffalse",
+   "F9F\u001fregister_reception(uuid,text,date,text,jsonb)\u001fauthenticated\u001fEXECUTE\u001ffalse",
+   "F9F\u001fregister_reception(uuid,text,date,text,jsonb)\u001fpostgres\u001fEXECUTE\u001ffalse",
+   "F9F\u001fregister_reception(uuid,text,date,text,jsonb)\u001fservice_role\u001fEXECUTE\u001ffalse",
+   "F9F\u001frestore_store_backup(uuid,jsonb,text)\u001fanon\u001fEXECUTE\u001ffalse",
+   "F9F\u001frestore_store_backup(uuid,jsonb,text)\u001fauthenticated\u001fEXECUTE\u001ffalse",
+   "F9F\u001frestore_store_backup(uuid,jsonb,text)\u001fpostgres\u001fEXECUTE\u001ffalse",
+   "F9F\u001frestore_store_backup(uuid,jsonb,text)\u001fservice_role\u001fEXECUTE\u001ffalse",
+   "F9F\u001fvalidate_transfer_operation_date(timestamp with time zone,uuid,uuid)\u001fanon\u001fEXECUTE\u001ffalse",
+   "F9F\u001fwithdraw_production_item(uuid,numeric,numeric,uuid)\u001fanon\u001fEXECUTE\u001ffalse",
+   "F9F\u001fwithdraw_production_item(uuid,numeric,numeric,uuid)\u001fauthenticated\u001fEXECUTE\u001ffalse",
+   "F9F\u001fwithdraw_production_item(uuid,numeric,numeric,uuid)\u001fpostgres\u001fEXECUTE\u001ffalse",
+   "F9F\u001fwithdraw_production_item(uuid,numeric,numeric,uuid)\u001fservice_role\u001fEXECUTE\u001ffalse"
+  ],
+  "F9R": [
+   "F9R\u001fr\u001ffc_automation_config\u001fanon\u001fDELETE\u001ffalse",
+   "F9R\u001fr\u001ffc_automation_config\u001fanon\u001fINSERT\u001ffalse",
+   "F9R\u001fr\u001ffc_automation_config\u001fanon\u001fMAINTAIN\u001ffalse",
+   "F9R\u001fr\u001ffc_automation_config\u001fanon\u001fREFERENCES\u001ffalse",
+   "F9R\u001fr\u001ffc_automation_config\u001fanon\u001fSELECT\u001ffalse",
+   "F9R\u001fr\u001ffc_automation_config\u001fanon\u001fTRIGGER\u001ffalse",
+   "F9R\u001fr\u001ffc_automation_config\u001fanon\u001fTRUNCATE\u001ffalse",
+   "F9R\u001fr\u001ffc_automation_config\u001fanon\u001fUPDATE\u001ffalse",
+   "F9R\u001fr\u001ffc_automation_config\u001fauthenticated\u001fDELETE\u001ffalse",
+   "F9R\u001fr\u001ffc_automation_config\u001fauthenticated\u001fINSERT\u001ffalse",
+   "F9R\u001fr\u001ffc_automation_config\u001fauthenticated\u001fMAINTAIN\u001ffalse",
+   "F9R\u001fr\u001ffc_automation_config\u001fauthenticated\u001fREFERENCES\u001ffalse",
+   "F9R\u001fr\u001ffc_automation_config\u001fauthenticated\u001fSELECT\u001ffalse",
+   "F9R\u001fr\u001ffc_automation_config\u001fauthenticated\u001fTRIGGER\u001ffalse",
+   "F9R\u001fr\u001ffc_automation_config\u001fauthenticated\u001fTRUNCATE\u001ffalse",
+   "F9R\u001fr\u001ffc_automation_config\u001fauthenticated\u001fUPDATE\u001ffalse",
+   "F9R\u001fr\u001ffc_automation_config\u001fpostgres\u001fDELETE\u001ffalse",
+   "F9R\u001fr\u001ffc_automation_config\u001fpostgres\u001fINSERT\u001ffalse",
+   "F9R\u001fr\u001ffc_automation_config\u001fpostgres\u001fMAINTAIN\u001ffalse",
+   "F9R\u001fr\u001ffc_automation_config\u001fpostgres\u001fREFERENCES\u001ffalse",
+   "F9R\u001fr\u001ffc_automation_config\u001fpostgres\u001fSELECT\u001ffalse",
+   "F9R\u001fr\u001ffc_automation_config\u001fpostgres\u001fTRIGGER\u001ffalse",
+   "F9R\u001fr\u001ffc_automation_config\u001fpostgres\u001fTRUNCATE\u001ffalse",
+   "F9R\u001fr\u001ffc_automation_config\u001fpostgres\u001fUPDATE\u001ffalse",
+   "F9R\u001fr\u001ffc_automation_config\u001fservice_role\u001fDELETE\u001ffalse",
+   "F9R\u001fr\u001ffc_automation_config\u001fservice_role\u001fINSERT\u001ffalse",
+   "F9R\u001fr\u001ffc_automation_config\u001fservice_role\u001fMAINTAIN\u001ffalse",
+   "F9R\u001fr\u001ffc_automation_config\u001fservice_role\u001fREFERENCES\u001ffalse",
+   "F9R\u001fr\u001ffc_automation_config\u001fservice_role\u001fSELECT\u001ffalse",
+   "F9R\u001fr\u001ffc_automation_config\u001fservice_role\u001fTRIGGER\u001ffalse",
+   "F9R\u001fr\u001ffc_automation_config\u001fservice_role\u001fTRUNCATE\u001ffalse",
+   "F9R\u001fr\u001ffc_automation_config\u001fservice_role\u001fUPDATE\u001ffalse",
+   "F9R\u001fr\u001ffc_generation_log\u001fanon\u001fDELETE\u001ffalse",
+   "F9R\u001fr\u001ffc_generation_log\u001fanon\u001fINSERT\u001ffalse",
+   "F9R\u001fr\u001ffc_generation_log\u001fanon\u001fMAINTAIN\u001ffalse",
+   "F9R\u001fr\u001ffc_generation_log\u001fanon\u001fREFERENCES\u001ffalse",
+   "F9R\u001fr\u001ffc_generation_log\u001fanon\u001fSELECT\u001ffalse",
+   "F9R\u001fr\u001ffc_generation_log\u001fanon\u001fTRIGGER\u001ffalse",
+   "F9R\u001fr\u001ffc_generation_log\u001fanon\u001fTRUNCATE\u001ffalse",
+   "F9R\u001fr\u001ffc_generation_log\u001fanon\u001fUPDATE\u001ffalse",
+   "F9R\u001fr\u001ffc_generation_log\u001fauthenticated\u001fDELETE\u001ffalse",
+   "F9R\u001fr\u001ffc_generation_log\u001fauthenticated\u001fINSERT\u001ffalse",
+   "F9R\u001fr\u001ffc_generation_log\u001fauthenticated\u001fMAINTAIN\u001ffalse",
+   "F9R\u001fr\u001ffc_generation_log\u001fauthenticated\u001fREFERENCES\u001ffalse",
+   "F9R\u001fr\u001ffc_generation_log\u001fauthenticated\u001fSELECT\u001ffalse",
+   "F9R\u001fr\u001ffc_generation_log\u001fauthenticated\u001fTRIGGER\u001ffalse",
+   "F9R\u001fr\u001ffc_generation_log\u001fauthenticated\u001fTRUNCATE\u001ffalse",
+   "F9R\u001fr\u001ffc_generation_log\u001fauthenticated\u001fUPDATE\u001ffalse",
+   "F9R\u001fr\u001ffc_generation_log\u001fpostgres\u001fDELETE\u001ffalse",
+   "F9R\u001fr\u001ffc_generation_log\u001fpostgres\u001fINSERT\u001ffalse",
+   "F9R\u001fr\u001ffc_generation_log\u001fpostgres\u001fMAINTAIN\u001ffalse",
+   "F9R\u001fr\u001ffc_generation_log\u001fpostgres\u001fREFERENCES\u001ffalse",
+   "F9R\u001fr\u001ffc_generation_log\u001fpostgres\u001fSELECT\u001ffalse",
+   "F9R\u001fr\u001ffc_generation_log\u001fpostgres\u001fTRIGGER\u001ffalse",
+   "F9R\u001fr\u001ffc_generation_log\u001fpostgres\u001fTRUNCATE\u001ffalse",
+   "F9R\u001fr\u001ffc_generation_log\u001fpostgres\u001fUPDATE\u001ffalse",
+   "F9R\u001fr\u001ffc_generation_log\u001fservice_role\u001fDELETE\u001ffalse",
+   "F9R\u001fr\u001ffc_generation_log\u001fservice_role\u001fINSERT\u001ffalse",
+   "F9R\u001fr\u001ffc_generation_log\u001fservice_role\u001fMAINTAIN\u001ffalse",
+   "F9R\u001fr\u001ffc_generation_log\u001fservice_role\u001fREFERENCES\u001ffalse",
+   "F9R\u001fr\u001ffc_generation_log\u001fservice_role\u001fSELECT\u001ffalse",
+   "F9R\u001fr\u001ffc_generation_log\u001fservice_role\u001fTRIGGER\u001ffalse",
+   "F9R\u001fr\u001ffc_generation_log\u001fservice_role\u001fTRUNCATE\u001ffalse",
+   "F9R\u001fr\u001ffc_generation_log\u001fservice_role\u001fUPDATE\u001ffalse",
+   "F9R\u001fr\u001ffc_pdf_cache\u001fanon\u001fDELETE\u001ffalse",
+   "F9R\u001fr\u001ffc_pdf_cache\u001fanon\u001fINSERT\u001ffalse",
+   "F9R\u001fr\u001ffc_pdf_cache\u001fanon\u001fMAINTAIN\u001ffalse",
+   "F9R\u001fr\u001ffc_pdf_cache\u001fanon\u001fREFERENCES\u001ffalse",
+   "F9R\u001fr\u001ffc_pdf_cache\u001fanon\u001fSELECT\u001ffalse",
+   "F9R\u001fr\u001ffc_pdf_cache\u001fanon\u001fTRIGGER\u001ffalse",
+   "F9R\u001fr\u001ffc_pdf_cache\u001fanon\u001fTRUNCATE\u001ffalse",
+   "F9R\u001fr\u001ffc_pdf_cache\u001fanon\u001fUPDATE\u001ffalse",
+   "F9R\u001fr\u001ffc_pdf_cache\u001fauthenticated\u001fDELETE\u001ffalse",
+   "F9R\u001fr\u001ffc_pdf_cache\u001fauthenticated\u001fINSERT\u001ffalse",
+   "F9R\u001fr\u001ffc_pdf_cache\u001fauthenticated\u001fMAINTAIN\u001ffalse",
+   "F9R\u001fr\u001ffc_pdf_cache\u001fauthenticated\u001fREFERENCES\u001ffalse",
+   "F9R\u001fr\u001ffc_pdf_cache\u001fauthenticated\u001fSELECT\u001ffalse",
+   "F9R\u001fr\u001ffc_pdf_cache\u001fauthenticated\u001fTRIGGER\u001ffalse",
+   "F9R\u001fr\u001ffc_pdf_cache\u001fauthenticated\u001fTRUNCATE\u001ffalse",
+   "F9R\u001fr\u001ffc_pdf_cache\u001fauthenticated\u001fUPDATE\u001ffalse",
+   "F9R\u001fr\u001ffc_pdf_cache\u001fpostgres\u001fDELETE\u001ffalse",
+   "F9R\u001fr\u001ffc_pdf_cache\u001fpostgres\u001fINSERT\u001ffalse",
+   "F9R\u001fr\u001ffc_pdf_cache\u001fpostgres\u001fMAINTAIN\u001ffalse",
+   "F9R\u001fr\u001ffc_pdf_cache\u001fpostgres\u001fREFERENCES\u001ffalse",
+   "F9R\u001fr\u001ffc_pdf_cache\u001fpostgres\u001fSELECT\u001ffalse",
+   "F9R\u001fr\u001ffc_pdf_cache\u001fpostgres\u001fTRIGGER\u001ffalse",
+   "F9R\u001fr\u001ffc_pdf_cache\u001fpostgres\u001fTRUNCATE\u001ffalse",
+   "F9R\u001fr\u001ffc_pdf_cache\u001fpostgres\u001fUPDATE\u001ffalse",
+   "F9R\u001fr\u001ffc_pdf_cache\u001fservice_role\u001fDELETE\u001ffalse",
+   "F9R\u001fr\u001ffc_pdf_cache\u001fservice_role\u001fINSERT\u001ffalse",
+   "F9R\u001fr\u001ffc_pdf_cache\u001fservice_role\u001fMAINTAIN\u001ffalse",
+   "F9R\u001fr\u001ffc_pdf_cache\u001fservice_role\u001fREFERENCES\u001ffalse",
+   "F9R\u001fr\u001ffc_pdf_cache\u001fservice_role\u001fSELECT\u001ffalse",
+   "F9R\u001fr\u001ffc_pdf_cache\u001fservice_role\u001fTRIGGER\u001ffalse",
+   "F9R\u001fr\u001ffc_pdf_cache\u001fservice_role\u001fTRUNCATE\u001ffalse",
+   "F9R\u001fr\u001ffc_pdf_cache\u001fservice_role\u001fUPDATE\u001ffalse"
+  ]
+ },
+ "modified": {
+  "F4": [
+   {
+    "key": "F4kardex_entries|kardex_entries_movement_type_check",
+    "prod": "F4\u001fkardex_entries\u001fkardex_entries_movement_type_check\u001fc\u001fCHECK ((movement_type = ANY (ARRAY['in'::text, 'out'::text, 'adjustment'::text, 'transfer_in'::text, 'transfer_out'::text, 'devolution_in'::text, 'devolution_out'::text, 'sale_reverse'::text, 'purchase_reverse'::text, 'production_reverse'::text])))\u001ffalse\u001ffalse\u001ftrue",
+    "lab": "F4\u001fkardex_entries\u001fkardex_entries_movement_type_check\u001fc\u001fCHECK ((movement_type = ANY (ARRAY['in'::text, 'out'::text, 'adjustment'::text, 'transfer_in'::text, 'transfer_out'::text, 'devolution_in'::text, 'devolution_out'::text, 'sale_reverse'::text, 'purchase_reverse'::text])))\u001ffalse\u001ffalse\u001ftrue"
+   }
+  ],
+  "F6": [
+   {
+    "key": "F6adjust_total_amount(uuid,numeric,text)",
+    "prod": "F6\u001fadjust_total_amount(uuid,numeric,text)\u001ff\u001fd33f03f3ad9ac83d1739ed9e3825b607",
+    "lab": "F6\u001fadjust_total_amount(uuid,numeric,text)\u001ff\u001f254a96c75512786d24dbc90a58750e8e"
+   },
+   {
+    "key": "F6apply_physical_count(uuid,uuid,boolean)",
+    "prod": "F6\u001fapply_physical_count(uuid,uuid,boolean)\u001ff\u001fe6935d97239e5ad29c7ffaf19ad01a98",
+    "lab": "F6\u001fapply_physical_count(uuid,uuid,boolean)\u001ff\u001fee5c3a7affb67f6a7c73f9a6185ce4da"
+   },
+   {
+    "key": "F6approve_transfer(uuid,uuid)",
+    "prod": "F6\u001fapprove_transfer(uuid,uuid)\u001ff\u001fc5ad3bdaf498a9f8ac3612e46eb44d15",
+    "lab": "F6\u001fapprove_transfer(uuid,uuid)\u001ff\u001f9c13bd084b3d6653a2dd971442a76f59"
+   },
+   {
+    "key": "F6audit_cash_closures_changes()",
+    "prod": "F6\u001faudit_cash_closures_changes()\u001ff\u001fc90c803ccf8b7dbc6330fa256e33c163",
+    "lab": "F6\u001faudit_cash_closures_changes()\u001ff\u001f0fc92e9c6dab54dcce6d0975dba1767e"
+   },
+   {
+    "key": "F6audit_product_changes()",
+    "prod": "F6\u001faudit_product_changes()\u001ff\u001f5f1fd0f694f2baf499e9c3e2b2a1a617",
+    "lab": "F6\u001faudit_product_changes()\u001ff\u001f68cdf510be82af9bb75ae71bad60f7c0"
+   },
+   {
+    "key": "F6audit_profile_changes()",
+    "prod": "F6\u001faudit_profile_changes()\u001ff\u001f5aef0227ac2cb4f1d8f680af7ad0353a",
+    "lab": "F6\u001faudit_profile_changes()\u001ff\u001f6aae56b1015c02c0d1ea7cd516997cb0"
+   },
+   {
+    "key": "F6audit_role_changes()",
+    "prod": "F6\u001faudit_role_changes()\u001ff\u001fa3287ba45816816ac9baa63069e0f62b",
+    "lab": "F6\u001faudit_role_changes()\u001ff\u001ffb99bde6a8ee81fa81ec62cd5bcaa47b"
+   },
+   {
+    "key": "F6audit_store_access_changes()",
+    "prod": "F6\u001faudit_store_access_changes()\u001ff\u001f58eabe0eaefc40afd8cb17eb79106cb7",
+    "lab": "F6\u001faudit_store_access_changes()\u001ff\u001f2251a02d5b0c685d52ba40be5139e2e1"
+   },
+   {
+    "key": "F6audit_store_changes()",
+    "prod": "F6\u001faudit_store_changes()\u001ff\u001f005a05d0178a35dd37f65d8a039b3def",
+    "lab": "F6\u001faudit_store_changes()\u001ff\u001f7b74439b7b52f5b079595c6f5313c580"
+   },
+   {
+    "key": "F6auto_assign_store_to_creator()",
+    "prod": "F6\u001fauto_assign_store_to_creator()\u001ff\u001f976fcabcb7866f67586bfc68d8dcea00",
+    "lab": "F6\u001fauto_assign_store_to_creator()\u001ff\u001f2baad23fe5513e7f023e045c83ebc3a5"
+   },
+   {
+    "key": "F6auto_match_bank_items(uuid,uuid)",
+    "prod": "F6\u001fauto_match_bank_items(uuid,uuid)\u001ff\u001f85d2c211139c3adb6af686900eface6d",
+    "lab": "F6\u001fauto_match_bank_items(uuid,uuid)\u001ff\u001fd87f696b258b93faf0edba6e214ac5ad"
+   },
+   {
+    "key": "F6bulk_update_products(jsonb)",
+    "prod": "F6\u001fbulk_update_products(jsonb)\u001ff\u001f846932ad1e68e90674cea7bc971203e1",
+    "lab": "F6\u001fbulk_update_products(jsonb)\u001ff\u001fa8dbad859a35a2f9f1f00e8cc9d4386c"
+   },
+   {
+    "key": "F6calculate_abc(uuid,integer,integer,uuid)",
+    "prod": "F6\u001fcalculate_abc(uuid,integer,integer,uuid)\u001ff\u001f7cd4ae14f5eff2ff9be71396fd047e10",
+    "lab": "F6\u001fcalculate_abc(uuid,integer,integer,uuid)\u001ff\u001fbd6d0c417a48f7adfc4c2635052fc8c7"
+   },
+   {
+    "key": "F6can_create_user_with_role(uuid,text)",
+    "prod": "F6\u001fcan_create_user_with_role(uuid,text)\u001ff\u001f21166810957debe468097c9bbc8032fa",
+    "lab": "F6\u001fcan_create_user_with_role(uuid,text)\u001ff\u001fd741bbc9b28bf9d4245cacdb8250bea9"
+   },
+   {
+    "key": "F6cancel_reception(uuid)",
+    "prod": "F6\u001fcancel_reception(uuid)\u001ff\u001ffef70e490c836815ab18cae8a11c29dc",
+    "lab": "F6\u001fcancel_reception(uuid)\u001ff\u001faed87ae2b9784bcade9ff3f62375b955"
+   },
+   {
+    "key": "F6cancel_transfer(uuid,uuid)",
+    "prod": "F6\u001fcancel_transfer(uuid,uuid)\u001ff\u001ffe7b526d452f1c3f456486cbcd3db1cc",
+    "lab": "F6\u001fcancel_transfer(uuid,uuid)\u001ff\u001f1d537c9d48bd32bb9df51d8648e89265"
+   },
+   {
+    "key": "F6check_idempotency(text,text,uuid,text)",
+    "prod": "F6\u001fcheck_idempotency(text,text,uuid,text)\u001ff\u001f8558af9a7d5e98b8fbb965c096868a15",
+    "lab": "F6\u001fcheck_idempotency(text,text,uuid,text)\u001ff\u001f946109fb9e8ce79344ae013b6baa9929"
+   },
+   {
+    "key": "F6check_reception_cost_variation()",
+    "prod": "F6\u001fcheck_reception_cost_variation()\u001ff\u001fdbbc887a98762939bedf1508a5ee59f2",
+    "lab": "F6\u001fcheck_reception_cost_variation()\u001ff\u001f7baeb02ea2677f4c85d08fc9b584c0a4"
+   },
+   {
+    "key": "F6compensate_inventory_error(uuid,uuid,text,uuid)",
+    "prod": "F6\u001fcompensate_inventory_error(uuid,uuid,text,uuid)\u001ff\u001f68ea01f387e94479e83b8e9a88fe1877",
+    "lab": "F6\u001fcompensate_inventory_error(uuid,uuid,text,uuid)\u001ff\u001ff56840e712a6eb0c1ceaef58ba19b64a"
+   },
+   {
+    "key": "F6confirm_inventory_adjustment(uuid,uuid)",
+    "prod": "F6\u001fconfirm_inventory_adjustment(uuid,uuid)\u001ff\u001f221daac90dcd1e4c48bc1dc0ddc897db",
+    "lab": "F6\u001fconfirm_inventory_adjustment(uuid,uuid)\u001ff\u001f89da9120b55b5b71d3a0d498a77f48a0"
+   },
+   {
+    "key": "F6confirm_pending_reception(uuid,uuid,timestamp with time zone)",
+    "prod": "F6\u001fconfirm_pending_reception(uuid,uuid,timestamp with time zone)\u001ff\u001fd2a2a5bef7695dbddcf9ab75586b1af1",
+    "lab": "F6\u001fconfirm_pending_reception(uuid,uuid,timestamp with time zone)\u001ff\u001fd6d794525d71eac6519cf0cdbc738f97"
+   },
+   {
+    "key": "F6confirm_transfer(uuid,uuid,timestamp with time zone)",
+    "prod": "F6\u001fconfirm_transfer(uuid,uuid,timestamp with time zone)\u001ff\u001f4c8ac116ab04bd4d76b17bb86fb68cd1",
+    "lab": "F6\u001fconfirm_transfer(uuid,uuid,timestamp with time zone)\u001ff\u001f05a8168bba3b2e27e670e5310e8c1ff2"
+   },
+   {
+    "key": "F6create_devolution(uuid,jsonb,text,uuid,text,uuid,text,text,text,numeric)",
+    "prod": "F6\u001fcreate_devolution(uuid,jsonb,text,uuid,text,uuid,text,text,text,numeric)\u001ff\u001fa29663db9c60681d4f71fd49dd29b7c4",
+    "lab": "F6\u001fcreate_devolution(uuid,jsonb,text,uuid,text,uuid,text,text,text,numeric)\u001ff\u001f46cd4180dd7fe7a00c3e8a45cd1cd9d0"
+   },
+   {
+    "key": "F6create_physical_count(uuid,uuid,text)",
+    "prod": "F6\u001fcreate_physical_count(uuid,uuid,text)\u001ff\u001fdc2526aad4e92351d5fa58d2a5779e40",
+    "lab": "F6\u001fcreate_physical_count(uuid,uuid,text)\u001ff\u001f270cb6f51101fa1fb1d153b995024476"
+   },
+   {
+    "key": "F6create_pre_restore_snapshot(uuid)",
+    "prod": "F6\u001fcreate_pre_restore_snapshot(uuid)\u001ff\u001f0454bcab2af23b41704bf8134830ea7a",
+    "lab": "F6\u001fcreate_pre_restore_snapshot(uuid)\u001ff\u001f9aa3e09239958dc56e1f43433df1632c"
+   },
+   {
+    "key": "F6create_production_order_v2(uuid,text,text,text,text,text,numeric,text,text,text,jsonb,numeric,text,text,uuid,text)",
+    "prod": "F6\u001fcreate_production_order_v2(uuid,text,text,text,text,text,numeric,text,text,text,jsonb,numeric,text,text,uuid,text)\u001ff\u001fb6ead1fdd813d2750207dcdc103b8414",
+    "lab": "F6\u001fcreate_production_order_v2(uuid,text,text,text,text,text,numeric,text,text,text,jsonb,numeric,text,text,uuid,text)\u001ff\u001f992dd2eff98b8a4d4c88e76c3d8b5a1d"
+   },
+   {
+    "key": "F6create_quotation(uuid,jsonb,uuid,uuid,text,text,text,numeric,text,date)",
+    "prod": "F6\u001fcreate_quotation(uuid,jsonb,uuid,uuid,text,text,text,numeric,text,date)\u001ff\u001fb0c2a664c5180810ff137d99bbc3a728",
+    "lab": "F6\u001fcreate_quotation(uuid,jsonb,uuid,uuid,text,text,text,numeric,text,date)\u001ff\u001f5ed8c590cfc0c0818b50847830f9250d"
+   },
+   {
+    "key": "F6create_store_with_membership(text,text,uuid,integer,text,text,text,text,text,text,text,text,text,text,double precision,double precision,uuid)",
+    "prod": "F6\u001fcreate_store_with_membership(text,text,uuid,integer,text,text,text,text,text,text,text,text,text,text,double precision,double precision,uuid)\u001ff\u001f4c6270d50e339eced1f28ebe6b0ae2cb",
+    "lab": "F6\u001fcreate_store_with_membership(text,text,uuid,integer,text,text,text,text,text,text,text,text,text,text,double precision,double precision,uuid)\u001ff\u001ff642a1068329afb8efbafe8ff1c51bc2"
+   },
+   {
+    "key": "F6current_user_store_id()",
+    "prod": "F6\u001fcurrent_user_store_id()\u001ff\u001f4ce1369b213f5c14bd4116df77c2c971",
+    "lab": "F6\u001fcurrent_user_store_id()\u001ff\u001fba4b7686005947444316da4470c13140"
+   },
+   {
+    "key": "F6current_user_store_ids()",
+    "prod": "F6\u001fcurrent_user_store_ids()\u001ff\u001fce73be358d508a009004abdf705df130",
+    "lab": "F6\u001fcurrent_user_store_ids()\u001ff\u001feaef0db4f1eed4b13c4c17ffedf174a4"
+   },
+   {
+    "key": "F6duplicate_inventory_adjustment(uuid,uuid)",
+    "prod": "F6\u001fduplicate_inventory_adjustment(uuid,uuid)\u001ff\u001f5a1c68b4cb0548c6f732e7f1258ffff5",
+    "lab": "F6\u001fduplicate_inventory_adjustment(uuid,uuid)\u001ff\u001fe9ca471ee645b000e145ab1bbc14a09b"
+   },
+   {
+    "key": "F6enforce_encargado_store_limit()",
+    "prod": "F6\u001fenforce_encargado_store_limit()\u001ff\u001ff12ecd40e622996133f6911e62a5a171",
+    "lab": "F6\u001fenforce_encargado_store_limit()\u001ff\u001f6121aacaa407e61c3c4d42bfabf84ef4"
+   },
+   {
+    "key": "F6enforce_encargado_user_limit()",
+    "prod": "F6\u001fenforce_encargado_user_limit()\u001ff\u001fce5a0d9a6df3091ffc62f0b165c7875c",
+    "lab": "F6\u001fenforce_encargado_user_limit()\u001ff\u001f2316ad6fa379e7d713affaba03ba8033"
+   },
+   {
+    "key": "F6ensure_product_barcode()",
+    "prod": "F6\u001fensure_product_barcode()\u001ff\u001f8a7d863afbeccf6c25902e18a580b788",
+    "lab": "F6\u001fensure_product_barcode()\u001ff\u001fb5dcbb701d289dfac1592383318a4021"
+   },
+   {
+    "key": "F6fn_process_receipt(jsonb,uuid,text)",
+    "prod": "F6\u001ffn_process_receipt(jsonb,uuid,text)\u001ff\u001f9fdd72fcd9c713bcded15cbfecfbf837",
+    "lab": "F6\u001ffn_process_receipt(jsonb,uuid,text)\u001ff\u001fb63f0f7afa7470f32aaef7ba182abc81"
+   },
+   {
+    "key": "F6fn_validate_document_transition()",
+    "prod": "F6\u001ffn_validate_document_transition()\u001ff\u001f7ec72a149a1797978fdbe746ef174e38",
+    "lab": "F6\u001ffn_validate_document_transition()\u001ff\u001f1bf613a60b0d60de4d2d5b323b612fb5"
+   },
+   {
+    "key": "F6get_audit_logs(uuid,text,timestamp without time zone,timestamp without time zone,integer)",
+    "prod": "F6\u001fget_audit_logs(uuid,text,timestamp without time zone,timestamp without time zone,integer)\u001ff\u001f8277df840c532bfb00837d82e6c51815",
+    "lab": "F6\u001fget_audit_logs(uuid,text,timestamp without time zone,timestamp without time zone,integer)\u001ff\u001f9afcb8d704ae282699814a6524705590"
+   },
+   {
+    "key": "F6get_current_user_store_id()",
+    "prod": "F6\u001fget_current_user_store_id()\u001ff\u001f425e8d60d85257bb053cc462154bc151",
+    "lab": "F6\u001fget_current_user_store_id()\u001ff\u001f8b00e4eae367315572de263bbc5acde5"
+   },
+   {
+    "key": "F6get_dashboard_kpis(uuid,timestamp with time zone,timestamp with time zone)",
+    "prod": "F6\u001fget_dashboard_kpis(uuid,timestamp with time zone,timestamp with time zone)\u001ff\u001f147d4adc42f6edd296f8ea20ae90029e",
+    "lab": "F6\u001fget_dashboard_kpis(uuid,timestamp with time zone,timestamp with time zone)\u001ff\u001f15fae3af9dce3539309421d22411c935"
+   },
+   {
+    "key": "F6get_low_stock_count(uuid)",
+    "prod": "F6\u001fget_low_stock_count(uuid)\u001ff\u001f960aee6691d917757ff52c3212923b35",
+    "lab": "F6\u001fget_low_stock_count(uuid)\u001ff\u001f3f3b531caef6febd9b13b8f0bb46f768"
+   },
+   {
+    "key": "F6get_my_role()",
+    "prod": "F6\u001fget_my_role()\u001ff\u001f071f47df00ee8cbeba83253b0c17ca66",
+    "lab": "F6\u001fget_my_role()\u001ff\u001fe046cf282cf9bfa82caf80b83688c740"
+   },
+   {
+    "key": "F6get_paginated_products_v2(integer,integer,uuid,text,text,text,text,text,text)",
+    "prod": "F6\u001fget_paginated_products_v2(integer,integer,uuid,text,text,text,text,text,text)\u001ff\u001f4e9d8693cc340dc78c9fcb06e9c3265c",
+    "lab": "F6\u001fget_paginated_products_v2(integer,integer,uuid,text,text,text,text,text,text)\u001ff\u001f9577f766ebcdb75aa6157ef6fa56688e"
+   },
+   {
+    "key": "F6get_product_stock_ledger_paginated(uuid,uuid,integer,integer)",
+    "prod": "F6\u001fget_product_stock_ledger_paginated(uuid,uuid,integer,integer)\u001ff\u001f89f487c2da56a6da8a12f38b49aef9a4",
+    "lab": "F6\u001fget_product_stock_ledger_paginated(uuid,uuid,integer,integer)\u001ff\u001f603606085af59d80acce19620f2aacc8"
+   },
+   {
+    "key": "F6get_products_for_pos(uuid,text,text,integer,integer)",
+    "prod": "F6\u001fget_products_for_pos(uuid,text,text,integer,integer)\u001ff\u001fb66e639eefe56ff3b30a4cf2f1c30b78",
+    "lab": "F6\u001fget_products_for_pos(uuid,text,text,integer,integer)\u001ff\u001f3a7f202954a09c57220402f1e1f16173"
+   },
+   {
+    "key": "F6get_reorder_suggestions(uuid,uuid)",
+    "prod": "F6\u001fget_reorder_suggestions(uuid,uuid)\u001ff\u001f933cecb7df5b8e647c7ffc95e88133fb",
+    "lab": "F6\u001fget_reorder_suggestions(uuid,uuid)\u001ff\u001f8a05f1a09eeaa173d3796fec76df4028"
+   },
+   {
+    "key": "F6get_sales_since_last_closure(uuid)",
+    "prod": "F6\u001fget_sales_since_last_closure(uuid)\u001ff\u001f8fbabbe91cab0e22e89bf6948056c3e1",
+    "lab": "F6\u001fget_sales_since_last_closure(uuid)\u001ff\u001f69b8401e62aa783593022e5edce554c1"
+   },
+   {
+    "key": "F6get_tenant_sales_summary(uuid,integer)",
+    "prod": "F6\u001fget_tenant_sales_summary(uuid,integer)\u001ff\u001fea784e65830c977643c5e87da1e1a065",
+    "lab": "F6\u001fget_tenant_sales_summary(uuid,integer)\u001ff\u001ffb8feb994533c754ecaaeb4b1c44cd7e"
+   },
+   {
+    "key": "F6get_usage_forecast()",
+    "prod": "F6\u001fget_usage_forecast()\u001ff\u001fcb7421754677ea013901af6a04f71b87",
+    "lab": "F6\u001fget_usage_forecast()\u001ff\u001fa501e4d0b5f4de05b457af6ae534272b"
+   },
+   {
+    "key": "F6get_users_for_encargado(uuid)",
+    "prod": "F6\u001fget_users_for_encargado(uuid)\u001ff\u001f70ce610615adc9eb172be9e80132a9f0",
+    "lab": "F6\u001fget_users_for_encargado(uuid)\u001ff\u001f45f348d44ba30f80230ca4a3739e68be"
+   },
+   {
+    "key": "F6has_any_role(user_role[])",
+    "prod": "F6\u001fhas_any_role(user_role[])\u001ff\u001f0d8cce0c9e0007c518fae35f12012e69",
+    "lab": "F6\u001fhas_any_role(user_role[])\u001ff\u001ffdf3429534149e4cc5e88e02d4ee3d8d"
+   },
+   {
+    "key": "F6has_management_access_as(uuid,uuid)",
+    "prod": "F6\u001fhas_management_access_as(uuid,uuid)\u001ff\u001f9fc4fe08e9181932bb60a5104c1fb133",
+    "lab": "F6\u001fhas_management_access_as(uuid,uuid)\u001ff\u001f4a6480cb715cc093d71adc616d6655c3"
+   },
+   {
+    "key": "F6has_role(uuid,user_role)",
+    "prod": "F6\u001fhas_role(uuid,user_role)\u001ff\u001fa3931add8d222d20b8f2f8b95d3d80d4",
+    "lab": "F6\u001fhas_role(uuid,user_role)\u001ff\u001fe01e9a89c26b99c16dfacbf049fc7d62"
+   },
+   {
+    "key": "F6has_store_access_as(uuid,uuid)",
+    "prod": "F6\u001fhas_store_access_as(uuid,uuid)\u001ff\u001f7bd255169148c5c87bf00e6a96f29d3f",
+    "lab": "F6\u001fhas_store_access_as(uuid,uuid)\u001ff\u001f4154a4a36c3a06b41bd72cb5c3588f69"
+   },
+   {
+    "key": "F6is_admin_with_access(uuid)",
+    "prod": "F6\u001fis_admin_with_access(uuid)\u001ff\u001f4973faf6563c98577425cc6e61e91d07",
+    "lab": "F6\u001fis_admin_with_access(uuid)\u001ff\u001f9b77c507b9dd840427de1f3ddb3407dd"
+   },
+   {
+    "key": "F6is_managed_user(uuid)",
+    "prod": "F6\u001fis_managed_user(uuid)\u001ff\u001f9e92d53752af5f6e90549b63c935e8e4",
+    "lab": "F6\u001fis_managed_user(uuid)\u001ff\u001fc6ba871dade44580e1206d6d45df3de5"
+   },
+   {
+    "key": "F6is_store_manager(uuid)",
+    "prod": "F6\u001fis_store_manager(uuid)\u001ff\u001f471cfcc9d6dc7645028415c49f7782ee",
+    "lab": "F6\u001fis_store_manager(uuid)\u001ff\u001fb9845114f8bfe53864421fe6bf0b9721"
+   },
+   {
+    "key": "F6is_user_creator(uuid)",
+    "prod": "F6\u001fis_user_creator(uuid)\u001ff\u001f38e5041bfe9829b28b756d9a636a5f90",
+    "lab": "F6\u001fis_user_creator(uuid)\u001ff\u001f0c4eac10cc2f219151e01ef20196efc6"
+   },
+   {
+    "key": "F6log_transaction_changes()",
+    "prod": "F6\u001flog_transaction_changes()\u001ff\u001f3c852f340528891f438982fe027619e6",
+    "lab": "F6\u001flog_transaction_changes()\u001ff\u001f0ca672fcc6ac9c3f986b345912b4b1a6"
+   },
+   {
+    "key": "F6manage_user_memberships(uuid,jsonb)",
+    "prod": "F6\u001fmanage_user_memberships(uuid,jsonb)\u001ff\u001f17b3beaba6c2287ccbfd68d2fc03176d",
+    "lab": "F6\u001fmanage_user_memberships(uuid,jsonb)\u001ff\u001feb2fc14ef6665b93dec941e69933ca58"
+   },
+   {
+    "key": "F6managed_create_store(text,text)",
+    "prod": "F6\u001fmanaged_create_store(text,text)\u001ff\u001f2546c54a4da13b8a9c4b38ff1c2a9f53",
+    "lab": "F6\u001fmanaged_create_store(text,text)\u001ff\u001f90e341f1127afe0077e233d2377ff519"
+   },
+   {
+    "key": "F6managed_delete_product(uuid)",
+    "prod": "F6\u001fmanaged_delete_product(uuid)\u001ff\u001f3e034c8e8b0bf91f900daf5d05e23449",
+    "lab": "F6\u001fmanaged_delete_product(uuid)\u001ff\u001f1db4de6685b99b1680066e81248bd6a3"
+   },
+   {
+    "key": "F6managed_delete_user(uuid)",
+    "prod": "F6\u001fmanaged_delete_user(uuid)\u001ff\u001f634509e836e7ad37d6db36942aaf86e3",
+    "lab": "F6\u001fmanaged_delete_user(uuid)\u001ff\u001fa7f9d3d6f1908f428edb2fbbf04ae783"
+   },
+   {
+    "key": "F6managed_toggle_product_active(uuid,boolean)",
+    "prod": "F6\u001fmanaged_toggle_product_active(uuid,boolean)\u001ff\u001f59641aa593f4b74b73e022e3f98bec34",
+    "lab": "F6\u001fmanaged_toggle_product_active(uuid,boolean)\u001ff\u001fa85dae1f4302cbda7e3335667df23330"
+   },
+   {
+    "key": "F6perform_inventory_adjustment(uuid,uuid,numeric,text,uuid,numeric,timestamp with time zone)",
+    "prod": "F6\u001fperform_inventory_adjustment(uuid,uuid,numeric,text,uuid,numeric,timestamp with time zone)\u001ff\u001f30d2b34fa02297c65f7b83683918ad3b",
+    "lab": "F6\u001fperform_inventory_adjustment(uuid,uuid,numeric,text,uuid,numeric,timestamp with time zone)\u001ff\u001f6882ecd3e21c8fa40b8af041308cb479"
+   },
+   {
+    "key": "F6record_counted_quantity(uuid,uuid,numeric,uuid,text)",
+    "prod": "F6\u001frecord_counted_quantity(uuid,uuid,numeric,uuid,text)\u001ff\u001f9290badee5c690252028d3485662784b",
+    "lab": "F6\u001frecord_counted_quantity(uuid,uuid,numeric,uuid,text)\u001ff\u001f471e099515b61d0c2759bb9d6ad230e9"
+   },
+   {
+    "key": "F6record_sale_movement(uuid,uuid,uuid,integer,text)",
+    "prod": "F6\u001frecord_sale_movement(uuid,uuid,uuid,integer,text)\u001ff\u001f1d53d40620dae8fd14d45aeab8c56f71",
+    "lab": "F6\u001frecord_sale_movement(uuid,uuid,uuid,integer,text)\u001ff\u001f6c3b0621df51c328dad835a6bd206a71"
+   },
+   {
+    "key": "F6register_idempotency(text,text,uuid,text,jsonb)",
+    "prod": "F6\u001fregister_idempotency(text,text,uuid,text,jsonb)\u001ff\u001f7fd6c1f404bad1beaf0ab6c61c2135d5",
+    "lab": "F6\u001fregister_idempotency(text,text,uuid,text,jsonb)\u001ff\u001f724c8655f8113c5234949089aa1aca98"
+   },
+   {
+    "key": "F6register_stock_movement(uuid,uuid,numeric,text,text,uuid,uuid,uuid,numeric,text,timestamp with time zone,boolean)",
+    "prod": "F6\u001fregister_stock_movement(uuid,uuid,numeric,text,text,uuid,uuid,uuid,numeric,text,timestamp with time zone,boolean)\u001ff\u001fbec3b16423fc6450d2d8aa3ff6c0ce49",
+    "lab": "F6\u001fregister_stock_movement(uuid,uuid,numeric,text,text,uuid,uuid,uuid,numeric,text,timestamp with time zone,boolean)\u001ff\u001fdae68e523f88128c57fb4319f9003649"
+   },
+   {
+    "key": "F6reject_transfer(uuid,text,uuid)",
+    "prod": "F6\u001freject_transfer(uuid,text,uuid)\u001ff\u001f515f3b9c948f0396ef4acc9e9b70c8d9",
+    "lab": "F6\u001freject_transfer(uuid,text,uuid)\u001ff\u001f99a9b15aa064c4d619fdf650d1aae80d"
+   },
+   {
+    "key": "F6release_expired_reservations()",
+    "prod": "F6\u001frelease_expired_reservations()\u001ff\u001f2aed6c4624150a25e7d16643e11d4d7a",
+    "lab": "F6\u001frelease_expired_reservations()\u001ff\u001f28417584c0e1b38dbdcebe6f155c6691"
+   },
+   {
+    "key": "F6reset_store_data(uuid,boolean,uuid)",
+    "prod": "F6\u001freset_store_data(uuid,boolean,uuid)\u001ff\u001f812617907244c6073b3ef9d82dea7e2f",
+    "lab": "F6\u001freset_store_data(uuid,boolean,uuid)\u001ff\u001f4148a22f403c01e3acdadcbc988d9de9"
+   },
+   {
+    "key": "F6restore_store_backup(uuid,jsonb,text,text)",
+    "prod": "F6\u001frestore_store_backup(uuid,jsonb,text,text)\u001ff\u001fca3178d0930b66278bf245abd31cc94e",
+    "lab": "F6\u001frestore_store_backup(uuid,jsonb,text,text)\u001ff\u001f423ac01ed7000b7d22d8d6629e4410e9"
+   },
+   {
+    "key": "F6reverse_adjustment(uuid,text,uuid)",
+    "prod": "F6\u001freverse_adjustment(uuid,text,uuid)\u001ff\u001f43b309a97339f8c3a737d6f895af53d7",
+    "lab": "F6\u001freverse_adjustment(uuid,text,uuid)\u001ff\u001f10ba198fe639afb6fd3782de6dd26ff6"
+   },
+   {
+    "key": "F6reverse_devolution(uuid,text,uuid)",
+    "prod": "F6\u001freverse_devolution(uuid,text,uuid)\u001ff\u001f7374c7ad99d5d830b8de3da48dfa0c61",
+    "lab": "F6\u001freverse_devolution(uuid,text,uuid)\u001ff\u001f4823315c81cd03cb9a5e848eee08d501"
+   },
+   {
+    "key": "F6reverse_receipt(uuid,text,uuid)",
+    "prod": "F6\u001freverse_receipt(uuid,text,uuid)\u001ff\u001fa2dd36ed6fac87a031c7bc5c8e514129",
+    "lab": "F6\u001freverse_receipt(uuid,text,uuid)\u001ff\u001f3a46bb3f8f89419c4ae9538ca8b64f47"
+   },
+   {
+    "key": "F6reverse_transaction(uuid,text,uuid)",
+    "prod": "F6\u001freverse_transaction(uuid,text,uuid)\u001ff\u001ffd19ca454af79a5ad6614820bded5fca",
+    "lab": "F6\u001freverse_transaction(uuid,text,uuid)\u001ff\u001fd53bb554f52033551653f7de9cbf7bb6"
+   },
+   {
+    "key": "F6reverse_transfer(uuid,text,uuid)",
+    "prod": "F6\u001freverse_transfer(uuid,text,uuid)\u001ff\u001f462bd8de487ca9d840b6b34f68d87051",
+    "lab": "F6\u001freverse_transfer(uuid,text,uuid)\u001ff\u001fd2a64519a95f9396b7860964b505cf64"
+   },
+   {
+    "key": "F6soft_delete_store(uuid,uuid)",
+    "prod": "F6\u001fsoft_delete_store(uuid,uuid)\u001ff\u001f375e51cc69c4181f8baec8964a6ddec8",
+    "lab": "F6\u001fsoft_delete_store(uuid,uuid)\u001ff\u001f697d5d627b42251709741a6a38ca8459"
+   },
+   {
+    "key": "F6update_transaction_taxes(uuid,jsonb,numeric,numeric)",
+    "prod": "F6\u001fupdate_transaction_taxes(uuid,jsonb,numeric,numeric)\u001ff\u001fa46ef62186fc0e5e94cde033ef941da8",
+    "lab": "F6\u001fupdate_transaction_taxes(uuid,jsonb,numeric,numeric)\u001ff\u001f2c63d2175847067b2753cbc709fdabc3"
+   },
+   {
+    "key": "F6validate_payment_transactions_invariants()",
+    "prod": "F6\u001fvalidate_payment_transactions_invariants()\u001ff\u001f2d93bdd7d20a9827280852fb2d74de53",
+    "lab": "F6\u001fvalidate_payment_transactions_invariants()\u001ff\u001f4151cd1e9feba996db207c43780d2646"
+   },
+   {
+    "key": "F6validate_store_can_be_modified(uuid,text)",
+    "prod": "F6\u001fvalidate_store_can_be_modified(uuid,text)\u001ff\u001f03371752c43bde123578535ca5d9665d",
+    "lab": "F6\u001fvalidate_store_can_be_modified(uuid,text)\u001ff\u001fcf808ae659737f1bb0b1d679daa72246"
+   },
+   {
+    "key": "F6validate_transfer_stores()",
+    "prod": "F6\u001fvalidate_transfer_stores()\u001ff\u001fa02ad6423cfddc38525202d70b68b23d",
+    "lab": "F6\u001fvalidate_transfer_stores()\u001ff\u001fc0dbbef7a8c4036b3874891d4e4d44cd"
+   },
+   {
+    "key": "F6void_inventory_adjustment(uuid,uuid)",
+    "prod": "F6\u001fvoid_inventory_adjustment(uuid,uuid)\u001ff\u001f998cc64949d6cce1a26256fb1809af91",
+    "lab": "F6\u001fvoid_inventory_adjustment(uuid,uuid)\u001ff\u001f739c959bda50ce4c0cbf36471579b308"
+   },
+   {
+    "key": "F6void_reception_with_reversal(uuid,uuid,text,timestamp with time zone)",
+    "prod": "F6\u001fvoid_reception_with_reversal(uuid,uuid,text,timestamp with time zone)\u001ff\u001fd973de447c6dcaf506f806fc3ddf2fa4",
+    "lab": "F6\u001fvoid_reception_with_reversal(uuid,uuid,text,timestamp with time zone)\u001ff\u001f6059fcebe4d36bdd5226f2d3fc009be2"
+   },
+   {
+    "key": "F6withdraw_production_item(uuid,numeric,numeric,uuid,uuid,text)",
+    "prod": "F6\u001fwithdraw_production_item(uuid,numeric,numeric,uuid,uuid,text)\u001ff\u001fc67d45eeacd5a9033f0a5da5d60052b5",
+    "lab": "F6\u001fwithdraw_production_item(uuid,numeric,numeric,uuid,uuid,text)\u001ff\u001f69607f6505abcd43489059b19b713ee2"
+   }
+  ],
+  "F8": [
+   {
+    "key": "F8cost_sheet_templates|Templates update",
+    "prod": "F8\u001fcost_sheet_templates\u001fTemplates update\u001fPERMISSIVE\u001fUPDATE\u001f{authenticated}\u001fis_admin()\u001fis_admin()",
+    "lab": "F8\u001fcost_sheet_templates\u001fTemplates update\u001fPERMISSIVE\u001fUPDATE\u001f{authenticated}\u001fis_admin()\u001f"
+   },
+   {
+    "key": "F8cost_sheet_templates|Templates visibility",
+    "prod": "F8\u001fcost_sheet_templates\u001fTemplates visibility\u001fPERMISSIVE\u001fSELECT\u001f{public}\u001f((type = 'system'::text) OR is_admin() OR ((type = 'public'::text) AND ((store_id IS NULL) OR has_store_access(store_id))) OR ((type = 'private'::text) AND (created_by = auth.uid())))\u001f",
+    "lab": "F8\u001fcost_sheet_templates\u001fTemplates visibility\u001fPERMISSIVE\u001fSELECT\u001f{authenticated}\u001f((type = 'system'::text) OR ((type = 'public'::text) AND ((store_id IS NULL) OR (store_id IN ( SELECT profiles.active_store_id\u001e   FROM profiles\u001e  WHERE (profiles.id = auth.uid()))))) OR ((type = 'private'::text) AND (created_by = auth.uid())))\u001f"
+   },
+   {
+    "key": "F8inventory_adjustments|Allow all access to own store data",
+    "prod": "F8\u001finventory_adjustments\u001fAllow all access to own store data\u001fPERMISSIVE\u001fALL\u001f{public}\u001f(store_id IN ( SELECT get_current_user_store_id() AS get_current_user_store_id))\u001f(store_id IN ( SELECT get_current_user_store_id() AS get_current_user_store_id))",
+    "lab": "F8\u001finventory_adjustments\u001fAllow all access to own store data\u001fPERMISSIVE\u001fALL\u001f{authenticated}\u001f(store_id IN ( SELECT get_current_user_store_id() AS get_current_user_store_id))\u001f"
+   },
+   {
+    "key": "F8ofertas|Admin/manager can delete ofertas",
+    "prod": "F8\u001fofertas\u001fAdmin/manager can delete ofertas\u001fPERMISSIVE\u001fDELETE\u001f{public}\u001f((EXISTS ( SELECT 1\u001e   FROM profiles\u001e  WHERE ((profiles.id = auth.uid()) AND (profiles.role = 'admin'::user_role)))) OR (store_id IN ( SELECT user_store_memberships.store_id\u001e   FROM user_store_memberships\u001e  WHERE ((user_store_memberships.user_id = auth.uid()) AND (user_store_memberships.status = 'active'::membership_status) AND (user_store_memberships.role = 'manager'::user_role)))))\u001f",
+    "lab": "F8\u001fofertas\u001fAdmin/manager can delete ofertas\u001fPERMISSIVE\u001fDELETE\u001f{authenticated}\u001f((EXISTS ( SELECT 1\u001e   FROM profiles\u001e  WHERE ((profiles.id = auth.uid()) AND (profiles.role = 'admin'::user_role)))) OR (store_id IN ( SELECT user_store_memberships.store_id\u001e   FROM user_store_memberships\u001e  WHERE ((user_store_memberships.user_id = auth.uid()) AND (user_store_memberships.status = 'active'::membership_status) AND (user_store_memberships.role = 'manager'::user_role)))))\u001f"
+   },
+   {
+    "key": "F8ofertas|Admin/manager/encargado can insert ofertas",
+    "prod": "F8\u001fofertas\u001fAdmin/manager/encargado can insert ofertas\u001fPERMISSIVE\u001fINSERT\u001f{public}\u001f\u001f((store_id IN ( SELECT user_store_memberships.store_id\u001e   FROM user_store_memberships\u001e  WHERE ((user_store_memberships.user_id = auth.uid()) AND (user_store_memberships.status = 'active'::membership_status) AND (user_store_memberships.role = ANY (ARRAY['admin'::user_role, 'manager'::user_role, 'encargado'::user_role]))))) OR (EXISTS ( SELECT 1\u001e   FROM profiles\u001e  WHERE ((profiles.id = auth.uid()) AND (profiles.role = 'admin'::user_role)))))",
+    "lab": "F8\u001fofertas\u001fAdmin/manager/encargado can insert ofertas\u001fPERMISSIVE\u001fINSERT\u001f{authenticated}\u001f\u001f((store_id IN ( SELECT user_store_memberships.store_id\u001e   FROM user_store_memberships\u001e  WHERE ((user_store_memberships.user_id = auth.uid()) AND (user_store_memberships.status = 'active'::membership_status) AND (user_store_memberships.role = ANY (ARRAY['admin'::user_role, 'manager'::user_role, 'encargado'::user_role]))))) OR (EXISTS ( SELECT 1\u001e   FROM profiles\u001e  WHERE ((profiles.id = auth.uid()) AND (profiles.role = 'admin'::user_role)))))"
+   },
+   {
+    "key": "F8ofertas|Users can view ofertas from their stores",
+    "prod": "F8\u001fofertas\u001fUsers can view ofertas from their stores\u001fPERMISSIVE\u001fSELECT\u001f{public}\u001f((store_id IN ( SELECT user_store_memberships.store_id\u001e   FROM user_store_memberships\u001e  WHERE ((user_store_memberships.user_id = auth.uid()) AND (user_store_memberships.status = 'active'::membership_status)))) OR (EXISTS ( SELECT 1\u001e   FROM profiles\u001e  WHERE ((profiles.id = auth.uid()) AND (profiles.role = 'admin'::user_role)))))\u001f",
+    "lab": "F8\u001fofertas\u001fUsers can view ofertas from their stores\u001fPERMISSIVE\u001fSELECT\u001f{authenticated}\u001f((store_id IN ( SELECT user_store_memberships.store_id\u001e   FROM user_store_memberships\u001e  WHERE ((user_store_memberships.user_id = auth.uid()) AND (user_store_memberships.status = 'active'::membership_status)))) OR (EXISTS ( SELECT 1\u001e   FROM profiles\u001e  WHERE ((profiles.id = auth.uid()) AND (profiles.role = 'admin'::user_role)))))\u001f"
+   },
+   {
+    "key": "F8sale_items|sale_items_selective_read",
+    "prod": "F8\u001fsale_items\u001fsale_items_selective_read\u001fPERMISSIVE\u001fSELECT\u001f{authenticated}\u001f(is_admin() OR (EXISTS ( SELECT 1\u001e   FROM sales s\u001e  WHERE ((s.id = sale_items.sale_id) AND ((s.cashier_id = auth.uid()) OR is_admin())))) OR (EXISTS ( SELECT 1\u001e   FROM products p\u001e  WHERE ((p.id = sale_items.product_id) AND has_store_access(p.store_id)))))\u001f",
+    "lab": "F8\u001fsale_items\u001fsale_items_selective_read\u001fPERMISSIVE\u001fSELECT\u001f{authenticated}\u001f(is_admin() OR (EXISTS ( SELECT 1\u001e   FROM sales s\u001e  WHERE ((s.id = sale_items.sale_id) AND (s.cashier_id = auth.uid())))) OR (EXISTS ( SELECT 1\u001e   FROM products p\u001e  WHERE ((p.id = sale_items.product_id) AND has_store_access(p.store_id)))))\u001f"
+   }
+  ]
+ },
+ "removed": {
+  "F11": [
+   "F11\u001fv_stock_discrepancies\u001fv\u001f{security_invoker=true}\u001f SELECT p.id AS product_id,\u001e    p.name AS product_name,\u001e    p.store_id,\u001e    s.name AS store_name,\u001e    p.stock_current AS current_stock,\u001e    COALESCE(sum(sm.quantity_change), 0::numeric) AS expected_stock,\u001e    p.stock_current - COALESCE(sum(sm.quantity_change), 0::numeric) AS discrepancy\u001e   FROM products p\u001e     LEFT JOIN stock_movements sm ON sm.product_id = p.id AND sm.store_id = p.store_id\u001e     LEFT JOIN stores s ON s.id = p.store_id\u001e  WHERE p.is_active = true AND has_store_access(p.store_id)\u001e  GROUP BY p.id, p.name, p.store_id, s.name, p.stock_current\u001e HAVING abs(p.stock_current - COALESCE(sum(sm.quantity_change), 0::numeric)) > 0.001;"
+  ],
+  "F3": [
+   "F3\u001fcash_closures\u001fcash_movements_total\u001f16\u001fnumeric\u001ffalse\u001f0\u001f\u001f\u001f\u001f",
+   "F3\u001fcash_closures\u001fdifference\u001f14\u001fnumeric\u001ffalse\u001f0\u001f\u001f\u001f\u001f",
+   "F3\u001fcash_closures\u001fopening_balance\u001f15\u001fnumeric\u001ffalse\u001f0\u001f\u001f\u001f\u001f",
+   "F3\u001fprofiles\u001fdeleted_at\u001f20\u001ftimestamp with time zone\u001ffalse\u001f\u001f\u001f\u001f\u001f",
+   "F3\u001fprofiles\u001fdeleted_by\u001f22\u001fuuid\u001ffalse\u001f\u001f\u001f\u001f\u001f",
+   "F3\u001fprofiles\u001fdeletion_reason\u001f21\u001ftext\u001ffalse\u001f\u001f\u001f\u001f\u001f",
+   "F3\u001fprofiles\u001fplan\u001f19\u001fplan_t\u001ftrue\u001f'free'::plan_t\u001f\u001f\u001f\u001f"
+  ],
+  "F7": [
+   "F7\u001fCREATE TRIGGER trg_maintain_product_completeness BEFORE INSERT OR UPDATE OF price ON public.products FOR EACH ROW EXECUTE FUNCTION fn_maintain_product_completeness()",
+   "F7\u001fCREATE TRIGGER trigger_audit_product_changes AFTER UPDATE ON public.products FOR EACH ROW WHEN (((old.name IS DISTINCT FROM new.name) OR (old.price IS DISTINCT FROM new.price) OR (old.cost_price IS DISTINCT FROM new.cost_price) OR (old.sku IS DISTINCT FROM new.sku) OR (old.price_currency IS DISTINCT FROM new.price_currency))) EXECUTE FUNCTION audit_product_changes()"
+  ],
+  "F8": [
+   "F8\u001fcash_closures\u001fcash_closures_update_rls\u001fPERMISSIVE\u001fUPDATE\u001f{authenticated}\u001f(EXISTS ( SELECT 1\u001e   FROM user_store_memberships m\u001e  WHERE ((m.user_id = auth.uid()) AND (m.status = 'active'::membership_status) AND (m.store_id = cash_closures.store_id))))\u001f",
+   "F8\u001fcash_sessions\u001fcash_sessions_update\u001fPERMISSIVE\u001fUPDATE\u001f{authenticated}\u001f(EXISTS ( SELECT 1\u001e   FROM user_store_memberships m\u001e  WHERE ((m.user_id = auth.uid()) AND (m.status = 'active'::membership_status) AND (m.store_id = cash_sessions.store_id))))\u001f",
+   "F8\u001finventory_adjustments\u001finventory_adjustments_update_rls\u001fPERMISSIVE\u001fUPDATE\u001f{authenticated}\u001f(EXISTS ( SELECT 1\u001e   FROM user_store_memberships m\u001e  WHERE ((m.user_id = auth.uid()) AND (m.status = 'active'::membership_status) AND (m.store_id = inventory_adjustments.store_id))))\u001f",
+   "F8\u001fofertas\u001fAdmin/manager/encargado can update ofertas\u001fPERMISSIVE\u001fUPDATE\u001f{public}\u001f((store_id IN ( SELECT user_store_memberships.store_id\u001e   FROM user_store_memberships\u001e  WHERE ((user_store_memberships.user_id = auth.uid()) AND (user_store_memberships.status = 'active'::membership_status) AND (user_store_memberships.role = ANY (ARRAY['admin'::user_role, 'manager'::user_role, 'encargado'::user_role]))))) OR (EXISTS ( SELECT 1\u001e   FROM profiles\u001e  WHERE ((profiles.id = auth.uid()) AND (profiles.role = 'admin'::user_role)))))\u001f",
+   "F8\u001fproducts\u001fproducts_update_rls\u001fPERMISSIVE\u001fUPDATE\u001f{authenticated}\u001f(EXISTS ( SELECT 1\u001e   FROM user_store_memberships m\u001e  WHERE ((m.user_id = auth.uid()) AND (m.status = 'active'::membership_status) AND (m.store_id = products.store_id))))\u001f",
+   "F8\u001fpurchase_orders\u001fpo_upd\u001fPERMISSIVE\u001fUPDATE\u001f{authenticated}\u001f((store_id IN ( SELECT user_store_memberships.store_id\u001e   FROM user_store_memberships\u001e  WHERE (user_store_memberships.user_id = auth.uid()))) OR (EXISTS ( SELECT 1\u001e   FROM profiles\u001e  WHERE ((profiles.id = auth.uid()) AND (profiles.role = 'admin'::user_role)))))\u001f",
+   "F8\u001fpurchase_orders\u001fpo_update_authenticated\u001fPERMISSIVE\u001fUPDATE\u001f{authenticated}\u001f((store_id IN ( SELECT user_store_memberships.store_id\u001e   FROM user_store_memberships\u001e  WHERE ((user_store_memberships.user_id = auth.uid()) AND (user_store_memberships.role = ANY (ARRAY['admin'::user_role, 'manager'::user_role, 'encargado'::user_role]))))) OR (EXISTS ( SELECT 1\u001e   FROM profiles\u001e  WHERE ((profiles.id = auth.uid()) AND (profiles.role = 'admin'::user_role)))))\u001f",
+   "F8\u001freceipts\u001freceipts_update_rls\u001fPERMISSIVE\u001fUPDATE\u001f{authenticated}\u001f(EXISTS ( SELECT 1\u001e   FROM user_store_memberships m\u001e  WHERE ((m.user_id = auth.uid()) AND (m.status = 'active'::membership_status) AND (m.store_id = receipts.store_id))))\u001f",
+   "F8\u001ftransactions\u001ftransactions_update_rls\u001fPERMISSIVE\u001fUPDATE\u001f{authenticated}\u001f(EXISTS ( SELECT 1\u001e   FROM user_store_memberships m\u001e  WHERE ((m.user_id = auth.uid()) AND (m.status = 'active'::membership_status) AND (m.store_id = transactions.store_id))))\u001f"
+  ],
+  "F9F": [
+   "F9F\u001fclose_service_order_as_sale(uuid,uuid,uuid,text,text,numeric,uuid)\u001fanon\u001fEXECUTE\u001ffalse",
+   "F9F\u001freverse_production_order(uuid,text,uuid)\u001fanon\u001fEXECUTE\u001ffalse"
+  ]
+ }
+}
