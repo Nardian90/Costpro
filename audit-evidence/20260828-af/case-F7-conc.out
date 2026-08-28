@@ -1,0 +1,24 @@
+════ F7 — PREPARACIÓN CLON EFÍMERO ════
+NOTICE:  database "costpro_audit_v2_conc" does not exist, skipping
+clon creado: costpro_audit_v2_conc (TEMPLATE costpro_audit_v2)
+ confirm_pending_reception 
+---------------------------
+ 
+(1 row)
+
+                                                                                       venta                                                                                       
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ {"status": "success", "calculated_tax": 0, "transaction_id": "7b0ac8b9-4e51-4ce0-9bf2-349d1a789f5a", "discount_amount": 0, "calculated_total": 1000, "calculated_subtotal": 1000}
+(1 row)
+
+── fixture F7 COMMITIDO ──
+════ F7 — RONDA 1: claves DISTINTAS (K1 qty4 vs K2 qty4) concurrentes ════
+sesión A (K1 qty4) exit=0 → {"status": "success", "total_amount": 800, "devolution_id": "c1e2cbb6-2973-416b-9226-bd0d1eb180c2", "devolution_number": "NC-000001-2026"}
+sesión B (K2 qty4) exit=0 → {"status": "success", "total_amount": 800, "devolution_id": "d38305e7-59e3-42d1-a652-48356b66c8ed", "devolution_number": "NC-000002-2026"}
+F7|R1|devoluciones_creadas=2|stock_final=13.0000|vendida=5|stock_recibido=10
+════ F7 — RONDA 2: MISMA clave (K3 qty1 ×2) concurrente ════
+sesión A (K3) exit=0 → {"status": "success", "total_amount": 200, "devolution_id": "ee1a0e52-2ab7-4a56-81ba-28e28eeb0d8f", "devolution_number": "NC-000003-2026"}
+sesión B (K3) exit=0 → {"status": "idempotent", "devolution_id": "ee1a0e52-2ab7-4a56-81ba-28e28eeb0d8f"}
+F7|R2|devoluciones_con_clave_K3=1 (esperado exactamente 1)
+════ F7 — DESTRUCCIÓN DEL CLON ════
+clon destruido; v2 nunca fue mutado

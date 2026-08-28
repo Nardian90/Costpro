@@ -1,0 +1,87 @@
+── fixture listo ──
+════ CASO B — SEGUNDA RECEPCIÓN (D-01) ════
+── 1ª recepción 10 @ 100 ──
+              receipt_1               
+--------------------------------------
+ 8d462c0b-0d78-48d3-8ec0-8fb56d938bba
+(1 row)
+
+                        ?column?                        
+--------------------------------------------------------
+ EVID|B|after_r1|stock=10.0000|wac=100.0000000000000000
+(1 row)
+
+── STATE hash inicial (pre-acción del caso: 2ª recepción) ──
+                   state_hash                   
+------------------------------------------------
+ STATE|B|start|998695a374e228c603196d47e636e889
+(1 row)
+
+── ACCIÓN: 2ª recepción 5 @ 200 ──
+              receipt_2               
+--------------------------------------
+ 698190fd-6ca9-4506-935d-d19736123a0e
+(1 row)
+
+── EVIDENCIA ──
+                                  ?column?                                  
+----------------------------------------------------------------------------
+ EVID|B|product|stock_current=15.0000|cost_average=133.33333333333333333333
+(1 row)
+
+                        ?column?                         
+---------------------------------------------------------
+ EVID|B|movement|purchase|qty=10.0000|unit_cost=100.0000
+ EVID|B|movement|purchase|qty=5.0000|unit_cost=200.0000
+(2 rows)
+
+── Recalculo canónico independiente de D-01 (identidad del dueño) ──
+                                                    ?column?                                                    
+----------------------------------------------------------------------------------------------------------------
+ EVID|B|D01_identity|(stock_prev×WAC_prev + qty×cost)/(stock_prev+qty) = 133.333333 | WAC_servidor = 133.333333
+(1 row)
+
+── ASSERTIONS (canon B) ──
+                                        af_assert                                        
+-----------------------------------------------------------------------------------------
+ ASSERT|B.1|WAC = D-01 (2000/15 = 133.333333)|expected=133.333333|actual=133.333333|PASS
+(1 row)
+
+                            af_assert                            
+-----------------------------------------------------------------
+ ASSERT|B.2|Stock acumulado = 15|expected=15|actual=15.0000|PASS
+(1 row)
+
+                                   af_assert_bool                                   
+------------------------------------------------------------------------------------
+ ASSERT|B.3|2 movimientos purchase (+10@100, +5@200)|expected=true|actual=true|PASS
+(1 row)
+
+                                  af_assert_bool                                  
+----------------------------------------------------------------------------------
+ ASSERT|B.4|Recepción B-R2 activa (pending→active)|expected=true|actual=true|PASS
+(1 row)
+
+── STATE hash final ──
+                  state_hash                  
+----------------------------------------------
+ STATE|B|end|192f74ad6cb5f9266bc0fdf238e0cc05
+(1 row)
+
+── RESIDUO ──
+       ?column?       
+----------------------
+ RESIDUE|B|products=0
+(1 row)
+
+       ?column?        
+-----------------------
+ RESIDUE|B|movements=0
+(1 row)
+
+       ?column?       
+----------------------
+ RESIDUE|B|receipts=0
+(1 row)
+
+════ FIN CASO B ════

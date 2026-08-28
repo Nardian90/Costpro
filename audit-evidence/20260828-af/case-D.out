@@ -1,0 +1,97 @@
+── fixture listo ──
+════ CASO D — VENTA + RECEPCIÓN (D-01 vs histórico) ════
+              receipt_1               
+--------------------------------------
+ 2174d6c0-09c7-484a-bb9d-2e976586c725
+(1 row)
+
+── STATE hash inicial (pre-acción: antes de la venta) ──
+                   state_hash                   
+------------------------------------------------
+ STATE|D|start|998695a374e228c603196d47e636e889
+(1 row)
+
+── ACCIÓN 1: venta de 4 @ 150 (costo cliente 100 = WAC real, para aislar dinámica WAC) ──
+                                                                                     sale_1                                                                                      
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ {"status": "success", "calculated_tax": 0, "transaction_id": "e591c0ec-a95e-47ec-997e-1e089b3258e5", "discount_amount": 0, "calculated_total": 600, "calculated_subtotal": 600}
+(1 row)
+
+                        ?column?                         
+---------------------------------------------------------
+ EVID|D|post_venta|stock=6.0000|wac=100.0000000000000000
+(1 row)
+
+── ACCIÓN 2: 2ª recepción 6 @ 200 (confirm D-01) ──
+              receipt_2               
+--------------------------------------
+ 5b7fff85-3f56-4469-a7a7-8e84e58f36aa
+(1 row)
+
+                                   ?column?                                    
+-------------------------------------------------------------------------------
+ EVID|D|post_r2|stock=12.0000|wac=150.00000000000000000000 (D-01 esperado 150)
+(1 row)
+
+── ACCIÓN 3: recepción 3 PENDIENTE 1 @ 150 (solo creación, dispara trigger sobre receipt_items) ──
+                                             ?column?                                             
+--------------------------------------------------------------------------------------------------
+ EVID|D|post_r3_pendiente|stock=12.0000|wac=137.5000000000000000 (operativo 150; histórico 137.5)
+(1 row)
+
+── Recalculo independiente de ambas fórmulas ──
+                                              ?column?                                              
+----------------------------------------------------------------------------------------------------
+ EVID|D|formulas|D01_operativo=(6×100+6×200)/12=150.000000 | historico=(10×100+6×200)/16=137.500000
+(1 row)
+
+── ASSERTIONS (canon D) ──
+                                             af_assert                                             
+---------------------------------------------------------------------------------------------------
+ ASSERT|D.1|Venta no destruye WAC (post-venta = 100)|expected=100|actual=100.0000000000000000|PASS
+(1 row)
+
+                                                 af_assert                                                 
+-----------------------------------------------------------------------------------------------------------
+ ASSERT|D.2|WAC tras R2 = D-01 operativo (1800/12 = 150)|expected=150|actual=150.00000000000000000000|PASS
+(1 row)
+
+                                                                af_assert                                                                
+-----------------------------------------------------------------------------------------------------------------------------------------
+ ASSERT|D.3|WAC tras R3-pendiente debe seguir 150 (canon D-01); histórico escribiría 137.5|expected=150|actual=137.5000000000000000|FAIL
+(1 row)
+
+                                             af_assert                                              
+----------------------------------------------------------------------------------------------------
+ ASSERT|D.4|Stock final = 6+6 = 12 (R3 no confirmada no suma stock)|expected=12|actual=12.0000|PASS
+(1 row)
+
+── DIVERGENCIA WAC operativo vs promedio histórico (registro §14-D) ──
+                                         ?column?                                          
+-------------------------------------------------------------------------------------------
+ EVID|D|divergencia|operativo=150|historico=137.5|delta=12.500000|sobrescrito=SI (defecto)
+(1 row)
+
+── STATE hash final ──
+                  state_hash                  
+----------------------------------------------
+ STATE|D|end|41e35e8c4bd25f66b03774b44d3c8185
+(1 row)
+
+── RESIDUO ──
+       ?column?       
+----------------------
+ RESIDUE|D|products=0
+(1 row)
+
+         ?column?         
+--------------------------
+ RESIDUE|D|transactions=0
+(1 row)
+
+       ?column?       
+----------------------
+ RESIDUE|D|receipts=0
+(1 row)
+
+════ FIN CASO D ════
