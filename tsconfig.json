@@ -41,6 +41,7 @@
     "examples",
     "skills",
     "e2e",
+    "audit-evidence",
     "scripts/analyze-*.ts",
     "scripts/check-*.ts",
     "scripts/analyze-header.ts",
