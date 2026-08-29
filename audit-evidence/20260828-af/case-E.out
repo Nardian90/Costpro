@@ -1,0 +1,149 @@
+── fixture listo ──
+════ CASO E — PRODUCCIÓN ════
+              receipt_mp              
+--------------------------------------
+ 7c56f7d7-1cec-4c3e-887f-36c7f8baf766
+(1 row)
+
+── STATE hash inicial (MP) ──
+                    state_hash                     
+---------------------------------------------------
+ STATE|E|start_mp|63081f59cb53dfa8e16bbb26b168abf2
+(1 row)
+
+── Órdenes de producción (in_progress) ──
+── E1 ATAQUE (semántica legacy server_side=false): withdraw 5 MP con costo cliente 0 ──
+                                     withdraw_legacy_costo0                                     
+------------------------------------------------------------------------------------------------
+ {"status": "success", "order_id": "55555555-5555-5555-5555-55555555e001", "unit_cost_used": 0}
+(1 row)
+
+                   ?column?                    
+-----------------------------------------------
+ EVID|E|E1_legacy_costo0|actual_unit_cost=0.00
+(1 row)
+
+── E1b VARIANTE ENDURECIDA (server_side=true): costo lo fija el servidor ──
+                                               withdraw_server_side                                               
+------------------------------------------------------------------------------------------------------------------
+ {"status": "success", "order_id": "55555555-5555-5555-5555-55555555e002", "unit_cost_used": 50.0000000000000000}
+(1 row)
+
+                              ?column?                              
+--------------------------------------------------------------------
+ EVID|E|E1b_server_side|actual_unit_cost=50.00 (canon: 50 = WAC MP)
+(1 row)
+
+── EVIDENCIA movimientos production_out ──
+                                                       ?column?                                                        
+-----------------------------------------------------------------------------------------------------------------------
+ EVID|E|production_out|production_order:55555555-5555-5555-5555-55555555e001|qty=-5.0000|unit_cost=0
+ EVID|E|production_out|production_order:55555555-5555-5555-5555-55555555e002|qty=-5.0000|unit_cost=50.0000000000000000
+(2 rows)
+
+── E2 CIERRE ORD1 (MP al costo 0 del cliente) → PT ──
+                                              close_1                                              
+---------------------------------------------------------------------------------------------------
+ {"status": "success", "order_id": "55555555-5555-5555-5555-55555555e001", "transaction_id": null}
+(1 row)
+
+                                             ?column?                                              
+---------------------------------------------------------------------------------------------------
+ EVID|E|post_close1|PT_cost_average=0.00000000000000000000 (canon: 50; contaminado por costo-0: 0)
+(1 row)
+
+── E3 CIERRE ORD2 (MP server-side 50) → PT blend sobre PT contaminado ──
+                                              close_2                                              
+---------------------------------------------------------------------------------------------------
+ {"status": "success", "order_id": "55555555-5555-5555-5555-55555555e002", "transaction_id": null}
+(1 row)
+
+                                                                 ?column?                                                                 
+------------------------------------------------------------------------------------------------------------------------------------------
+ EVID|E|post_close2|PT_stock=10.0000|PT_cost_average=25.000000000000000000000000 (canon sin contaminación: 50; blend con PT=0 previo: 25)
+(1 row)
+
+                               ?column?                                
+-----------------------------------------------------------------------
+ EVID|E|production_in|qty=5.0000|unit_cost=0.00000000000000000000
+ EVID|E|production_in|qty=5.0000|unit_cost=25.000000000000000000000000
+(2 rows)
+
+                            ?column?                            
+----------------------------------------------------------------
+ EVID|E|MP_post_withdraws|stock=10.0000|wac=50.0000000000000000
+(1 row)
+
+── E7 CIERRE CON idempotency_key (drift uuid=text en audit_logs) ──
+psql:af-case-E.sql:107: ERROR:  operator does not exist: uuid = text
+LINE 2: ... action = 'PRODUCTION_ORDER_CLOSED' AND record_id = p_order_...
+                                                             ^
+HINT:  No operator matches the given name and argument types. You might need to add explicit type casts.
+QUERY:  SELECT metadata->>'result'                            FROM audit_logs
+    WHERE action = 'PRODUCTION_ORDER_CLOSED' AND record_id = p_order_id::text
+      AND metadata->>'idempotency_key' = p_idempotency_key LIMIT 1
+CONTEXT:  PL/pgSQL function close_production_order_v2(uuid,uuid,uuid,numeric,text,text,numeric,uuid,numeric,uuid,text) line 18 at SQL statement
+                                             ?column?                                             
+--------------------------------------------------------------------------------------------------
+ EVID|E|E7_close_con_key|resultado=ERROR_operator_uuid_text (ver log) | estado_orden3=in_progress
+(1 row)
+
+── ASSERTIONS (canon E) ──
+                                                              af_assert_bool                                                              
+------------------------------------------------------------------------------------------------------------------------------------------
+ ASSERT|E.1|Legacy (server_side=false): servidor rechaza/sustituye costo 0 (canon: bloquear 0 silencioso)|expected=false|actual=true|FAIL
+(1 row)
+
+                                                    af_assert                                                     
+------------------------------------------------------------------------------------------------------------------
+ ASSERT|E.1b|Variante endurecida server_side=true: costo impuesto por servidor = 50|expected=50|actual=50.00|PASS
+(1 row)
+
+                                                     af_assert                                                      
+--------------------------------------------------------------------------------------------------------------------
+ ASSERT|E.2|PT valúo tras ORD1 con MP info válida WAC=50 (canon: 50)|expected=50|actual=0.00000000000000000000|FAIL
+(1 row)
+
+                                        af_assert_bool                                         
+-----------------------------------------------------------------------------------------------
+ ASSERT|E.3|ORD2 con costo server-side 50 aceptado y registrado|expected=true|actual=true|PASS
+(1 row)
+
+                                                          af_assert                                                           
+------------------------------------------------------------------------------------------------------------------------------
+ ASSERT|E.4|PT WAC final tras ambos cierres (canon sin contaminación: 50)|expected=50|actual=25.000000000000000000000000|FAIL
+(1 row)
+
+                                            af_assert_bool                                             
+-------------------------------------------------------------------------------------------------------
+ ASSERT|E.5|MP WAC intacto tras withdrawals (salidas no alteran WAC=50)|expected=true|actual=true|PASS
+(1 row)
+
+                                                          af_assert_bool                                                           
+-----------------------------------------------------------------------------------------------------------------------------------
+ ASSERT|E.7|close_production_order_v2 CON idempotency_key funciona (canon: idempotencia soportada)|expected=true|actual=false|FAIL
+(1 row)
+
+── STATE hash final (MP) ──
+                   state_hash                    
+-------------------------------------------------
+ STATE|E|end_mp|ffd3459fc325436364d3de6450448c9b
+(1 row)
+
+── RESIDUO ──
+       ?column?       
+----------------------
+ RESIDUE|E|products=0
+(1 row)
+
+      ?column?      
+--------------------
+ RESIDUE|E|orders=0
+(1 row)
+
+       ?column?        
+-----------------------
+ RESIDUE|E|movements=0
+(1 row)
+
+════ FIN CASO E ════

@@ -1,0 +1,85 @@
+adjust_total_amount(uuid,numeric,text)  prod=d33f03f3ad9ac83d1739ed9e3825b607  repo=254a96c75512786d24dbc90a58750e8e
+apply_physical_count(uuid,uuid,boolean)  prod=e6935d97239e5ad29c7ffaf19ad01a98  repo=ee5c3a7affb67f6a7c73f9a6185ce4da
+approve_transfer(uuid,uuid)  prod=c5ad3bdaf498a9f8ac3612e46eb44d15  repo=9c13bd084b3d6653a2dd971442a76f59
+audit_cash_closures_changes()  prod=c90c803ccf8b7dbc6330fa256e33c163  repo=0fc92e9c6dab54dcce6d0975dba1767e
+audit_product_changes()  prod=5f1fd0f694f2baf499e9c3e2b2a1a617  repo=68cdf510be82af9bb75ae71bad60f7c0
+audit_profile_changes()  prod=5aef0227ac2cb4f1d8f680af7ad0353a  repo=6aae56b1015c02c0d1ea7cd516997cb0
+audit_role_changes()  prod=a3287ba45816816ac9baa63069e0f62b  repo=fb99bde6a8ee81fa81ec62cd5bcaa47b
+audit_store_access_changes()  prod=58eabe0eaefc40afd8cb17eb79106cb7  repo=2251a02d5b0c685d52ba40be5139e2e1
+audit_store_changes()  prod=005a05d0178a35dd37f65d8a039b3def  repo=7b74439b7b52f5b079595c6f5313c580
+auto_assign_store_to_creator()  prod=976fcabcb7866f67586bfc68d8dcea00  repo=2baad23fe5513e7f023e045c83ebc3a5
+auto_match_bank_items(uuid,uuid)  prod=85d2c211139c3adb6af686900eface6d  repo=d87f696b258b93faf0edba6e214ac5ad
+bulk_update_products(jsonb)  prod=846932ad1e68e90674cea7bc971203e1  repo=a8dbad859a35a2f9f1f00e8cc9d4386c
+calculate_abc(uuid,integer,integer,uuid)  prod=7cd4ae14f5eff2ff9be71396fd047e10  repo=bd6d0c417a48f7adfc4c2635052fc8c7
+can_create_user_with_role(uuid,text)  prod=21166810957debe468097c9bbc8032fa  repo=d741bbc9b28bf9d4245cacdb8250bea9
+cancel_reception(uuid)  prod=fef70e490c836815ab18cae8a11c29dc  repo=aed87ae2b9784bcade9ff3f62375b955
+cancel_transfer(uuid,uuid)  prod=fe7b526d452f1c3f456486cbcd3db1cc  repo=1d537c9d48bd32bb9df51d8648e89265
+check_idempotency(text,text,uuid,text)  prod=8558af9a7d5e98b8fbb965c096868a15  repo=946109fb9e8ce79344ae013b6baa9929
+check_reception_cost_variation()  prod=dbbc887a98762939bedf1508a5ee59f2  repo=7baeb02ea2677f4c85d08fc9b584c0a4
+compensate_inventory_error(uuid,uuid,text,uuid)  prod=68ea01f387e94479e83b8e9a88fe1877  repo=f56840e712a6eb0c1ceaef58ba19b64a
+confirm_inventory_adjustment(uuid,uuid)  prod=221daac90dcd1e4c48bc1dc0ddc897db  repo=89da9120b55b5b71d3a0d498a77f48a0
+confirm_pending_reception(uuid,uuid,timestamp with time zone)  prod=d2a2a5bef7695dbddcf9ab75586b1af1  repo=d6d794525d71eac6519cf0cdbc738f97
+confirm_transfer(uuid,uuid,timestamp with time zone)  prod=4c8ac116ab04bd4d76b17bb86fb68cd1  repo=05a8168bba3b2e27e670e5310e8c1ff2
+create_devolution(uuid,jsonb,text,uuid,text,uuid,text,text,text,numeric)  prod=a29663db9c60681d4f71fd49dd29b7c4  repo=46cd4180dd7fe7a00c3e8a45cd1cd9d0
+create_physical_count(uuid,uuid,text)  prod=dc2526aad4e92351d5fa58d2a5779e40  repo=270cb6f51101fa1fb1d153b995024476
+create_pre_restore_snapshot(uuid)  prod=0454bcab2af23b41704bf8134830ea7a  repo=9aa3e09239958dc56e1f43433df1632c
+create_production_order_v2(uuid,text,text,text,text,text,numeric,text,text,text,jsonb,numeric,text,text,uuid,text)  prod=b6ead1fdd813d2750207dcdc103b8414  repo=992dd2eff98b8a4d4c88e76c3d8b5a1d
+create_quotation(uuid,jsonb,uuid,uuid,text,text,text,numeric,text,date)  prod=b0c2a664c5180810ff137d99bbc3a728  repo=5ed8c590cfc0c0818b50847830f9250d
+create_store_with_membership(text,text,uuid,integer,text,text,text,text,text,text,text,text,text,text,double precision,double precision,uuid)  prod=4c6270d50e339eced1f28ebe6b0ae2cb  repo=f642a1068329afb8efbafe8ff1c51bc2
+current_user_store_id()  prod=4ce1369b213f5c14bd4116df77c2c971  repo=ba4b7686005947444316da4470c13140
+current_user_store_ids()  prod=ce73be358d508a009004abdf705df130  repo=eaef0db4f1eed4b13c4c17ffedf174a4
+duplicate_inventory_adjustment(uuid,uuid)  prod=5a1c68b4cb0548c6f732e7f1258ffff5  repo=e9ca471ee645b000e145ab1bbc14a09b
+enforce_encargado_store_limit()  prod=f12ecd40e622996133f6911e62a5a171  repo=6121aacaa407e61c3c4d42bfabf84ef4
+enforce_encargado_user_limit()  prod=ce5a0d9a6df3091ffc62f0b165c7875c  repo=2316ad6fa379e7d713affaba03ba8033
+ensure_product_barcode()  prod=8a7d863afbeccf6c25902e18a580b788  repo=b5dcbb701d289dfac1592383318a4021
+fn_process_receipt(jsonb,uuid,text)  prod=9fdd72fcd9c713bcded15cbfecfbf837  repo=b63f0f7afa7470f32aaef7ba182abc81
+fn_validate_document_transition()  prod=7ec72a149a1797978fdbe746ef174e38  repo=1bf613a60b0d60de4d2d5b323b612fb5
+get_audit_logs(uuid,text,timestamp without time zone,timestamp without time zone,integer)  prod=8277df840c532bfb00837d82e6c51815  repo=9afcb8d704ae282699814a6524705590
+get_current_user_store_id()  prod=425e8d60d85257bb053cc462154bc151  repo=8b00e4eae367315572de263bbc5acde5
+get_dashboard_kpis(uuid,timestamp with time zone,timestamp with time zone)  prod=147d4adc42f6edd296f8ea20ae90029e  repo=15fae3af9dce3539309421d22411c935
+get_low_stock_count(uuid)  prod=960aee6691d917757ff52c3212923b35  repo=3f3b531caef6febd9b13b8f0bb46f768
+get_my_role()  prod=071f47df00ee8cbeba83253b0c17ca66  repo=e046cf282cf9bfa82caf80b83688c740
+get_paginated_products_v2(integer,integer,uuid,text,text,text,text,text,text)  prod=4e9d8693cc340dc78c9fcb06e9c3265c  repo=9577f766ebcdb75aa6157ef6fa56688e
+get_product_stock_ledger_paginated(uuid,uuid,integer,integer)  prod=89f487c2da56a6da8a12f38b49aef9a4  repo=603606085af59d80acce19620f2aacc8
+get_products_for_pos(uuid,text,text,integer,integer)  prod=b66e639eefe56ff3b30a4cf2f1c30b78  repo=3a7f202954a09c57220402f1e1f16173
+get_reorder_suggestions(uuid,uuid)  prod=933cecb7df5b8e647c7ffc95e88133fb  repo=8a05f1a09eeaa173d3796fec76df4028
+get_sales_since_last_closure(uuid)  prod=8fbabbe91cab0e22e89bf6948056c3e1  repo=69b8401e62aa783593022e5edce554c1
+get_tenant_sales_summary(uuid,integer)  prod=ea784e65830c977643c5e87da1e1a065  repo=fb8feb994533c754ecaaeb4b1c44cd7e
+get_usage_forecast()  prod=cb7421754677ea013901af6a04f71b87  repo=a501e4d0b5f4de05b457af6ae534272b
+get_users_for_encargado(uuid)  prod=70ce610615adc9eb172be9e80132a9f0  repo=45f348d44ba30f80230ca4a3739e68be
+has_any_role(user_role[])  prod=0d8cce0c9e0007c518fae35f12012e69  repo=fdf3429534149e4cc5e88e02d4ee3d8d
+has_management_access_as(uuid,uuid)  prod=9fc4fe08e9181932bb60a5104c1fb133  repo=4a6480cb715cc093d71adc616d6655c3
+has_role(uuid,user_role)  prod=a3931add8d222d20b8f2f8b95d3d80d4  repo=e01e9a89c26b99c16dfacbf049fc7d62
+has_store_access_as(uuid,uuid)  prod=7bd255169148c5c87bf00e6a96f29d3f  repo=4154a4a36c3a06b41bd72cb5c3588f69
+is_admin_with_access(uuid)  prod=4973faf6563c98577425cc6e61e91d07  repo=9b77c507b9dd840427de1f3ddb3407dd
+is_managed_user(uuid)  prod=9e92d53752af5f6e90549b63c935e8e4  repo=c6ba871dade44580e1206d6d45df3de5
+is_store_manager(uuid)  prod=471cfcc9d6dc7645028415c49f7782ee  repo=b9845114f8bfe53864421fe6bf0b9721
+is_user_creator(uuid)  prod=38e5041bfe9829b28b756d9a636a5f90  repo=0c4eac10cc2f219151e01ef20196efc6
+log_transaction_changes()  prod=3c852f340528891f438982fe027619e6  repo=0ca672fcc6ac9c3f986b345912b4b1a6
+manage_user_memberships(uuid,jsonb)  prod=17b3beaba6c2287ccbfd68d2fc03176d  repo=eb2fc14ef6665b93dec941e69933ca58
+managed_create_store(text,text)  prod=2546c54a4da13b8a9c4b38ff1c2a9f53  repo=90e341f1127afe0077e233d2377ff519
+managed_delete_product(uuid)  prod=3e034c8e8b0bf91f900daf5d05e23449  repo=1db4de6685b99b1680066e81248bd6a3
+managed_delete_user(uuid)  prod=634509e836e7ad37d6db36942aaf86e3  repo=a7f9d3d6f1908f428edb2fbbf04ae783
+managed_toggle_product_active(uuid,boolean)  prod=59641aa593f4b74b73e022e3f98bec34  repo=a85dae1f4302cbda7e3335667df23330
+perform_inventory_adjustment(uuid,uuid,numeric,text,uuid,numeric,timestamp with time zone)  prod=30d2b34fa02297c65f7b83683918ad3b  repo=6882ecd3e21c8fa40b8af041308cb479
+record_counted_quantity(uuid,uuid,numeric,uuid,text)  prod=9290badee5c690252028d3485662784b  repo=471e099515b61d0c2759bb9d6ad230e9
+record_sale_movement(uuid,uuid,uuid,integer,text)  prod=1d53d40620dae8fd14d45aeab8c56f71  repo=6c3b0621df51c328dad835a6bd206a71
+register_idempotency(text,text,uuid,text,jsonb)  prod=7fd6c1f404bad1beaf0ab6c61c2135d5  repo=724c8655f8113c5234949089aa1aca98
+register_stock_movement(uuid,uuid,numeric,text,text,uuid,uuid,uuid,numeric,text,timestamp with time zone,boolean)  prod=bec3b16423fc6450d2d8aa3ff6c0ce49  repo=dae68e523f88128c57fb4319f9003649
+reject_transfer(uuid,text,uuid)  prod=515f3b9c948f0396ef4acc9e9b70c8d9  repo=99a9b15aa064c4d619fdf650d1aae80d
+release_expired_reservations()  prod=2aed6c4624150a25e7d16643e11d4d7a  repo=28417584c0e1b38dbdcebe6f155c6691
+reset_store_data(uuid,boolean,uuid)  prod=812617907244c6073b3ef9d82dea7e2f  repo=4148a22f403c01e3acdadcbc988d9de9
+restore_store_backup(uuid,jsonb,text,text)  prod=ca3178d0930b66278bf245abd31cc94e  repo=423ac01ed7000b7d22d8d6629e4410e9
+reverse_adjustment(uuid,text,uuid)  prod=43b309a97339f8c3a737d6f895af53d7  repo=10ba198fe639afb6fd3782de6dd26ff6
+reverse_devolution(uuid,text,uuid)  prod=7374c7ad99d5d830b8de3da48dfa0c61  repo=4823315c81cd03cb9a5e848eee08d501
+reverse_receipt(uuid,text,uuid)  prod=a2dd36ed6fac87a031c7bc5c8e514129  repo=3a46bb3f8f89419c4ae9538ca8b64f47
+reverse_transaction(uuid,text,uuid)  prod=fd19ca454af79a5ad6614820bded5fca  repo=d53bb554f52033551653f7de9cbf7bb6
+reverse_transfer(uuid,text,uuid)  prod=462bd8de487ca9d840b6b34f68d87051  repo=d2a64519a95f9396b7860964b505cf64
+soft_delete_store(uuid,uuid)  prod=375e51cc69c4181f8baec8964a6ddec8  repo=697d5d627b42251709741a6a38ca8459
+update_transaction_taxes(uuid,jsonb,numeric,numeric)  prod=a46ef62186fc0e5e94cde033ef941da8  repo=2c63d2175847067b2753cbc709fdabc3
+validate_payment_transactions_invariants()  prod=2d93bdd7d20a9827280852fb2d74de53  repo=4151cd1e9feba996db207c43780d2646
+validate_store_can_be_modified(uuid,text)  prod=03371752c43bde123578535ca5d9665d  repo=cf808ae659737f1bb0b1d679daa72246
+validate_transfer_stores()  prod=a02ad6423cfddc38525202d70b68b23d  repo=c0dbbef7a8c4036b3874891d4e4d44cd
+void_inventory_adjustment(uuid,uuid)  prod=998cc64949d6cce1a26256fb1809af91  repo=739c959bda50ce4c0cbf36471579b308
+void_reception_with_reversal(uuid,uuid,text,timestamp with time zone)  prod=d973de447c6dcaf506f806fc3ddf2fa4  repo=6059fcebe4d36bdd5226f2d3fc009be2
+withdraw_production_item(uuid,numeric,numeric,uuid,uuid,text)  prod=c67d45eeacd5a9033f0a5da5d60052b5  repo=69607f6505abcd43489059b19b713ee2

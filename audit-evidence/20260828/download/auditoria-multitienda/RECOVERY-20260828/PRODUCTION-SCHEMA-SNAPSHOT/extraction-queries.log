@@ -1,0 +1,2194 @@
+-- [inv-schemas] 2026-08-28T02:05:06Z http=400
+-- inventario de alcance: SOLO catálogos (metadatos, cero datos de negocio)
+select n.nspname as schema,
+       case when n.nspname = 'public' then 'public'
+            when n.nspname in ('auth','storage','supabase_functions','supabase_migrations',
+                               'extensions','graphql','graphql_public','pgsodium','pgsodium_masks',
+                               'vault','net','pgtle','realtime','cron','pgbouncer','analytics')
+            then 'platform' else 'other' end as class,
+       count(distinct c.oid) filter (where c.relkind in ('r','p')) as tables,
+       count(distinct c.oid) filter (where c.relkind in ('v','m')) as views,
+       count(distinct p.oid) as routines,
+       count(distinct t.oid) filter (where t.typtype='e') as enums,
+       count(distinct d.oid) as domains,
+       count(distinct c2.oid) as composite_types
+from pg_namespace n
+left join pg_class c on c.relnamespace = n.oid
+left join pg_proc p on p.pronamespace = n.oid
+left join pg_type t on t.typnamespace = n.oid and t.typtype='e'
+left join pg_type d on d.typnamespace = n.oid and d.typtype='d'
+left join pg_type c2 on c2.typnamespace = n.oid and c2.typtype='c'
+where n.nspname not in ('information_schema','pg_catalog')
+  and n.nspname not like 'pg_toast%' and n.nspname not like 'pg_temp%'
+group by n.nspname
+order by n.nspname;
+
+-- [inv-census] 2026-08-28T02:05:09Z http=201
+-- extensiones instaladas + tipos standalone + agregados + event triggers + default acls (metadatos)
+select
+  (select count(*) from pg_extension) as extensions_n,
+  (select string_agg(extname||'@'||extversion, ', ' order by extname) from pg_extension) as extensions,
+  (select count(*) from pg_type t join pg_namespace n on n.oid=t.typnamespace
+     where t.typtype='c' and n.nspname='public'
+       and not exists (select 1 from pg_class c where c.reltype = t.oid)) as standalone_composites,
+  (select count(*) from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+     where p.prokind='a' and n.nspname='public') as aggregates_public,
+  (select count(*) from pg_event_trigger) as event_triggers,
+  (select count(*) from pg_default_acl) as default_acls,
+  (select count(*) from pg_policy pol join pg_class c on c.oid=pol.polrelid
+     join pg_namespace n on n.oid=c.relnamespace where n.nspname='public') as policies_public,
+  (select count(*) from pg_class c join pg_namespace n on n.oid=c.relnamespace
+     where n.nspname='public' and c.relkind in ('r','p')) as tables_public,
+  (select count(*) from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+     where n.nspname='public' and p.prokind in ('f','p','w')) as routines_public;
+
+-- [inv-schemas2] 2026-08-28T02:06:16Z http=201
+-- esquemas no-plataforma (lista simple, sin joins)
+select n.nspname
+from pg_namespace n
+where n.nspname not in ('information_schema','pg_catalog','auth','storage','supabase_functions',
+      'supabase_migrations','extensions','graphql','graphql_public','pgsodium','pgsodium_masks',
+      'vault','net','pgtle','realtime','cron','pgbouncer','analytics')
+  and n.nspname not like 'pg_toast%' and n.nspname not like 'pg_temp%'
+order by 1;
+
+-- [inv-counts] 2026-08-28T02:06:18Z http=400
+-- conteos por categoría en public (cada count es trivial, sin joins cartesianos)
+select
+ (select count(*) from pg_type t join pg_namespace n on n.oid=t.typnamespace where n.nspname='public' and t.typtype='e') as enums,
+ (select count(*) from pg_type t join pg_namespace n on n.oid=t.typnamespace where n.nspname='public' and t.typtype='d') as domains,
+ (select count(*) from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='public' and c.relkind='v') as views,
+ (select count(*) from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='public' and c.relkind='m') as matviews,
+ (select count(*) from pg_sequence s join pg_namespace n on n.oid=s.seqnamespace where n.nspname='public') as sequences,
+ (select count(*) from pg_constraint c join pg_namespace n on n.oid=c.connamespace where n.nspname='public' and c.contype in ('p','u','f','c','x')) as constraints,
+ (select count(*) from pg_index i join pg_class c on c.oid=i.indexrelid join pg_namespace n on n.oid=c.relnamespace
+    where n.nspname='public' and not i.indisprimary and not exists
+      (select 1 from pg_constraint k where k.conindid=c.oid)) as indexes_nc,
+ (select count(*) from pg_trigger t join pg_class c on c.oid=t.tgrelid join pg_namespace n on n.oid=c.relnamespace
+    where n.nspname='public' and not t.tgisinternal) as triggers,
+ (select count(*) from pg_event_trigger where not tgisinternal) as event_triggers_ni;
+
+-- [inv-counts] 2026-08-28T02:06:32Z http=400
+-- conteos por categoría en public (cada count es trivial)
+select
+ (select count(*) from pg_type t join pg_namespace n on n.oid=t.typnamespace where n.nspname='public' and t.typtype='e') as enums,
+ (select count(*) from pg_type t join pg_namespace n on n.oid=t.typnamespace where n.nspname='public' and t.typtype='d') as domains,
+ (select count(*) from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='public' and c.relkind='v') as views,
+ (select count(*) from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='public' and c.relkind='m') as matviews,
+ (select count(*) from pg_sequence s join pg_class cs on cs.oid=s.seqrelid join pg_namespace n on n.oid=cs.relnamespace where n.nspname='public') as sequences,
+ (select count(*) from pg_constraint c join pg_namespace n on n.oid=c.connamespace where n.nspname='public' and c.contype in ('p','u','f','c','x')) as constraints,
+ (select count(*) from pg_index i join pg_class c on c.oid=i.indexrelid join pg_namespace n on n.oid=c.relnamespace
+    where n.nspname='public' and not i.indisprimary and not exists
+      (select 1 from pg_constraint k where k.conindid=c.oid)) as indexes_nc,
+ (select count(*) from pg_trigger t join pg_class c on c.oid=t.tgrelid join pg_namespace n on n.oid=c.relnamespace
+    where n.nspname='public' and not t.tgisinternal) as triggers,
+ (select count(*) from pg_event_trigger where not tgisinternal) as event_triggers_ni;
+
+-- [inv-counts] 2026-08-28T02:06:41Z http=201
+-- conteos por categoría en public (cada count es trivial)
+select
+ (select count(*) from pg_type t join pg_namespace n on n.oid=t.typnamespace where n.nspname='public' and t.typtype='e') as enums,
+ (select count(*) from pg_type t join pg_namespace n on n.oid=t.typnamespace where n.nspname='public' and t.typtype='d') as domains,
+ (select count(*) from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='public' and c.relkind='v') as views,
+ (select count(*) from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='public' and c.relkind='m') as matviews,
+ (select count(*) from pg_sequence s join pg_class cs on cs.oid=s.seqrelid join pg_namespace n on n.oid=cs.relnamespace where n.nspname='public') as sequences,
+ (select count(*) from pg_constraint c join pg_namespace n on n.oid=c.connamespace where n.nspname='public' and c.contype in ('p','u','f','c','x')) as constraints,
+ (select count(*) from pg_index i join pg_class c on c.oid=i.indexrelid join pg_namespace n on n.oid=c.relnamespace
+    where n.nspname='public' and not i.indisprimary and not exists
+      (select 1 from pg_constraint k where k.conindid=c.oid)) as indexes_nc,
+ (select count(*) from pg_trigger t join pg_class c on c.oid=t.tgrelid join pg_namespace n on n.oid=c.relnamespace
+    where n.nspname='public' and not t.tgisinternal) as triggers,
+ (select count(*) from pg_event_trigger) as event_triggers_ni;
+
+-- [enums] 2026-08-28T02:09:51Z http=201
+select t.typname as name,
+       (select string_agg(e.enumlabel, chr(31) order by e.enumsortorder) from pg_enum e where e.enumtypid=t.oid) as labels
+from pg_type t join pg_namespace n on n.oid=t.typnamespace
+where n.nspname='public' and t.typtype='e' order by t.typname;
+
+-- [sequences] 2026-08-28T02:09:53Z http=400
+select cs.relname as name, s.seqstart, s.seqincrement, s.seqmax, s.seqmin, s.seqcache, s.seqcycle,
+       format_type(s.seqtypid, null) as seqtype,
+       tn.nspname||'.'||ca.attname as owned_by
+from pg_sequence s
+join pg_class cs on cs.oid=s.seqrelid
+join pg_namespace n on n.oid=cs.relnamespace
+left join pg_depend d on d.objid=s.seqrelid and d.deptype='a'
+left join pg_class tn on tn.oid=d.refobjid
+left join pg_attribute ca on ca.attrelid=d.refobjid and ca.attnum=d.refobjsubid
+where n.nspname='public' order by cs.relname;
+
+-- [event-triggers] 2026-08-28T02:09:57Z http=201
+select e.evtname as name, e.evtevent as event, e.evtenabled as enabled,
+       e.evtfoid::regprocedure::text as handler,
+       (select array_to_string(array_agg(t order by t), chr(31)) from unnest(e.evttags) t) as tags,
+       pg_get_userbyid(e.evtowner) as owner
+from pg_event_trigger e order by e.evtname;
+
+-- [misc-part-pub] 2026-08-28T02:09:59Z http=201
+select
+ (select count(*) from pg_class c join pg_namespace n on n.oid=c.relnamespace
+   where n.nspname='public' and c.relkind='p') as partitioned_tables,
+ (select count(*) from pg_inherits i join pg_class p on p.oid=i.inhparent join pg_namespace n on n.oid=p.relnamespace
+   where n.nspname='public') as inherits_n,
+ (select count(*) from pg_publication) as publications,
+ (select count(*) from pg_publication_rel pr join pg_class c on c.oid=pr.prrelid join pg_namespace n on n.oid=c.relnamespace
+   where n.nspname='public') as pub_rels_public;
+
+-- [tables-000] 2026-08-28T02:10:01Z http=201
+select c.relname as name, c.relkind as kind,
+       pg_get_userbyid(c.relowner) as owner,
+       c.relrowsecurity as rls, c.relforcerowsecurity as rls_force,
+       c.reloptions::text as reloptions,
+       (select json_agg(json_build_object(
+          'n', a.attname,
+          't', format_type(a.atttypid, a.atttypmod),
+          'nn', a.attnotnull,
+          'd', case when coalesce(a.attgenerated,'')<>'' then null else pg_get_expr(ad.adbin, ad.adrelid) end,
+          'i', case when a.attidentity='a' then 'always' when a.attidentity='d' then 'by default' else null end,
+          'g', case when a.attgenerated='s' then pg_get_expr(ad.adbin, ad.adrelid) else null end,
+          's', case when a.attstorage <> t.typstorage then a.attstorage::text else null end,
+          'c', case when a.attcollation <> t.typcollation and t.typcollation <> 0 then a.attcollation::regcollation::text else null end)
+          order by a.attnum)
+        from pg_attribute a
+        left join pg_attrdef ad on ad.adrelid=a.attrelid and ad.adnum=a.attnum
+        join pg_type t on t.oid=a.atttypid
+        where a.attrelid=c.oid and a.attnum>0 and not a.attisdropped) as cols
+from pg_class c
+join pg_namespace n on n.oid=c.relnamespace
+where n.nspname='public' and c.relkind in ('r','p')
+order by c.relname limit 12 offset 0;
+
+-- [tables-001] 2026-08-28T02:10:03Z http=201
+select c.relname as name, c.relkind as kind,
+       pg_get_userbyid(c.relowner) as owner,
+       c.relrowsecurity as rls, c.relforcerowsecurity as rls_force,
+       c.reloptions::text as reloptions,
+       (select json_agg(json_build_object(
+          'n', a.attname,
+          't', format_type(a.atttypid, a.atttypmod),
+          'nn', a.attnotnull,
+          'd', case when coalesce(a.attgenerated,'')<>'' then null else pg_get_expr(ad.adbin, ad.adrelid) end,
+          'i', case when a.attidentity='a' then 'always' when a.attidentity='d' then 'by default' else null end,
+          'g', case when a.attgenerated='s' then pg_get_expr(ad.adbin, ad.adrelid) else null end,
+          's', case when a.attstorage <> t.typstorage then a.attstorage::text else null end,
+          'c', case when a.attcollation <> t.typcollation and t.typcollation <> 0 then a.attcollation::regcollation::text else null end)
+          order by a.attnum)
+        from pg_attribute a
+        left join pg_attrdef ad on ad.adrelid=a.attrelid and ad.adnum=a.attnum
+        join pg_type t on t.oid=a.atttypid
+        where a.attrelid=c.oid and a.attnum>0 and not a.attisdropped) as cols
+from pg_class c
+join pg_namespace n on n.oid=c.relnamespace
+where n.nspname='public' and c.relkind in ('r','p')
+order by c.relname limit 12 offset 12;
+
+-- [tables-002] 2026-08-28T02:10:06Z http=201
+select c.relname as name, c.relkind as kind,
+       pg_get_userbyid(c.relowner) as owner,
+       c.relrowsecurity as rls, c.relforcerowsecurity as rls_force,
+       c.reloptions::text as reloptions,
+       (select json_agg(json_build_object(
+          'n', a.attname,
+          't', format_type(a.atttypid, a.atttypmod),
+          'nn', a.attnotnull,
+          'd', case when coalesce(a.attgenerated,'')<>'' then null else pg_get_expr(ad.adbin, ad.adrelid) end,
+          'i', case when a.attidentity='a' then 'always' when a.attidentity='d' then 'by default' else null end,
+          'g', case when a.attgenerated='s' then pg_get_expr(ad.adbin, ad.adrelid) else null end,
+          's', case when a.attstorage <> t.typstorage then a.attstorage::text else null end,
+          'c', case when a.attcollation <> t.typcollation and t.typcollation <> 0 then a.attcollation::regcollation::text else null end)
+          order by a.attnum)
+        from pg_attribute a
+        left join pg_attrdef ad on ad.adrelid=a.attrelid and ad.adnum=a.attnum
+        join pg_type t on t.oid=a.atttypid
+        where a.attrelid=c.oid and a.attnum>0 and not a.attisdropped) as cols
+from pg_class c
+join pg_namespace n on n.oid=c.relnamespace
+where n.nspname='public' and c.relkind in ('r','p')
+order by c.relname limit 12 offset 24;
+
+-- [tables-003] 2026-08-28T02:10:08Z http=201
+select c.relname as name, c.relkind as kind,
+       pg_get_userbyid(c.relowner) as owner,
+       c.relrowsecurity as rls, c.relforcerowsecurity as rls_force,
+       c.reloptions::text as reloptions,
+       (select json_agg(json_build_object(
+          'n', a.attname,
+          't', format_type(a.atttypid, a.atttypmod),
+          'nn', a.attnotnull,
+          'd', case when coalesce(a.attgenerated,'')<>'' then null else pg_get_expr(ad.adbin, ad.adrelid) end,
+          'i', case when a.attidentity='a' then 'always' when a.attidentity='d' then 'by default' else null end,
+          'g', case when a.attgenerated='s' then pg_get_expr(ad.adbin, ad.adrelid) else null end,
+          's', case when a.attstorage <> t.typstorage then a.attstorage::text else null end,
+          'c', case when a.attcollation <> t.typcollation and t.typcollation <> 0 then a.attcollation::regcollation::text else null end)
+          order by a.attnum)
+        from pg_attribute a
+        left join pg_attrdef ad on ad.adrelid=a.attrelid and ad.adnum=a.attnum
+        join pg_type t on t.oid=a.atttypid
+        where a.attrelid=c.oid and a.attnum>0 and not a.attisdropped) as cols
+from pg_class c
+join pg_namespace n on n.oid=c.relnamespace
+where n.nspname='public' and c.relkind in ('r','p')
+order by c.relname limit 12 offset 36;
+
+-- [tables-004] 2026-08-28T02:10:11Z http=201
+select c.relname as name, c.relkind as kind,
+       pg_get_userbyid(c.relowner) as owner,
+       c.relrowsecurity as rls, c.relforcerowsecurity as rls_force,
+       c.reloptions::text as reloptions,
+       (select json_agg(json_build_object(
+          'n', a.attname,
+          't', format_type(a.atttypid, a.atttypmod),
+          'nn', a.attnotnull,
+          'd', case when coalesce(a.attgenerated,'')<>'' then null else pg_get_expr(ad.adbin, ad.adrelid) end,
+          'i', case when a.attidentity='a' then 'always' when a.attidentity='d' then 'by default' else null end,
+          'g', case when a.attgenerated='s' then pg_get_expr(ad.adbin, ad.adrelid) else null end,
+          's', case when a.attstorage <> t.typstorage then a.attstorage::text else null end,
+          'c', case when a.attcollation <> t.typcollation and t.typcollation <> 0 then a.attcollation::regcollation::text else null end)
+          order by a.attnum)
+        from pg_attribute a
+        left join pg_attrdef ad on ad.adrelid=a.attrelid and ad.adnum=a.attnum
+        join pg_type t on t.oid=a.atttypid
+        where a.attrelid=c.oid and a.attnum>0 and not a.attisdropped) as cols
+from pg_class c
+join pg_namespace n on n.oid=c.relnamespace
+where n.nspname='public' and c.relkind in ('r','p')
+order by c.relname limit 12 offset 48;
+
+-- [tables-005] 2026-08-28T02:10:13Z http=201
+select c.relname as name, c.relkind as kind,
+       pg_get_userbyid(c.relowner) as owner,
+       c.relrowsecurity as rls, c.relforcerowsecurity as rls_force,
+       c.reloptions::text as reloptions,
+       (select json_agg(json_build_object(
+          'n', a.attname,
+          't', format_type(a.atttypid, a.atttypmod),
+          'nn', a.attnotnull,
+          'd', case when coalesce(a.attgenerated,'')<>'' then null else pg_get_expr(ad.adbin, ad.adrelid) end,
+          'i', case when a.attidentity='a' then 'always' when a.attidentity='d' then 'by default' else null end,
+          'g', case when a.attgenerated='s' then pg_get_expr(ad.adbin, ad.adrelid) else null end,
+          's', case when a.attstorage <> t.typstorage then a.attstorage::text else null end,
+          'c', case when a.attcollation <> t.typcollation and t.typcollation <> 0 then a.attcollation::regcollation::text else null end)
+          order by a.attnum)
+        from pg_attribute a
+        left join pg_attrdef ad on ad.adrelid=a.attrelid and ad.adnum=a.attnum
+        join pg_type t on t.oid=a.atttypid
+        where a.attrelid=c.oid and a.attnum>0 and not a.attisdropped) as cols
+from pg_class c
+join pg_namespace n on n.oid=c.relnamespace
+where n.nspname='public' and c.relkind in ('r','p')
+order by c.relname limit 12 offset 60;
+
+-- [tables-006] 2026-08-28T02:10:15Z http=201
+select c.relname as name, c.relkind as kind,
+       pg_get_userbyid(c.relowner) as owner,
+       c.relrowsecurity as rls, c.relforcerowsecurity as rls_force,
+       c.reloptions::text as reloptions,
+       (select json_agg(json_build_object(
+          'n', a.attname,
+          't', format_type(a.atttypid, a.atttypmod),
+          'nn', a.attnotnull,
+          'd', case when coalesce(a.attgenerated,'')<>'' then null else pg_get_expr(ad.adbin, ad.adrelid) end,
+          'i', case when a.attidentity='a' then 'always' when a.attidentity='d' then 'by default' else null end,
+          'g', case when a.attgenerated='s' then pg_get_expr(ad.adbin, ad.adrelid) else null end,
+          's', case when a.attstorage <> t.typstorage then a.attstorage::text else null end,
+          'c', case when a.attcollation <> t.typcollation and t.typcollation <> 0 then a.attcollation::regcollation::text else null end)
+          order by a.attnum)
+        from pg_attribute a
+        left join pg_attrdef ad on ad.adrelid=a.attrelid and ad.adnum=a.attnum
+        join pg_type t on t.oid=a.atttypid
+        where a.attrelid=c.oid and a.attnum>0 and not a.attisdropped) as cols
+from pg_class c
+join pg_namespace n on n.oid=c.relnamespace
+where n.nspname='public' and c.relkind in ('r','p')
+order by c.relname limit 12 offset 72;
+
+-- [tables-007] 2026-08-28T02:10:17Z http=201
+select c.relname as name, c.relkind as kind,
+       pg_get_userbyid(c.relowner) as owner,
+       c.relrowsecurity as rls, c.relforcerowsecurity as rls_force,
+       c.reloptions::text as reloptions,
+       (select json_agg(json_build_object(
+          'n', a.attname,
+          't', format_type(a.atttypid, a.atttypmod),
+          'nn', a.attnotnull,
+          'd', case when coalesce(a.attgenerated,'')<>'' then null else pg_get_expr(ad.adbin, ad.adrelid) end,
+          'i', case when a.attidentity='a' then 'always' when a.attidentity='d' then 'by default' else null end,
+          'g', case when a.attgenerated='s' then pg_get_expr(ad.adbin, ad.adrelid) else null end,
+          's', case when a.attstorage <> t.typstorage then a.attstorage::text else null end,
+          'c', case when a.attcollation <> t.typcollation and t.typcollation <> 0 then a.attcollation::regcollation::text else null end)
+          order by a.attnum)
+        from pg_attribute a
+        left join pg_attrdef ad on ad.adrelid=a.attrelid and ad.adnum=a.attnum
+        join pg_type t on t.oid=a.atttypid
+        where a.attrelid=c.oid and a.attnum>0 and not a.attisdropped) as cols
+from pg_class c
+join pg_namespace n on n.oid=c.relnamespace
+where n.nspname='public' and c.relkind in ('r','p')
+order by c.relname limit 12 offset 84;
+
+-- [tables-008] 2026-08-28T02:10:20Z http=201
+select c.relname as name, c.relkind as kind,
+       pg_get_userbyid(c.relowner) as owner,
+       c.relrowsecurity as rls, c.relforcerowsecurity as rls_force,
+       c.reloptions::text as reloptions,
+       (select json_agg(json_build_object(
+          'n', a.attname,
+          't', format_type(a.atttypid, a.atttypmod),
+          'nn', a.attnotnull,
+          'd', case when coalesce(a.attgenerated,'')<>'' then null else pg_get_expr(ad.adbin, ad.adrelid) end,
+          'i', case when a.attidentity='a' then 'always' when a.attidentity='d' then 'by default' else null end,
+          'g', case when a.attgenerated='s' then pg_get_expr(ad.adbin, ad.adrelid) else null end,
+          's', case when a.attstorage <> t.typstorage then a.attstorage::text else null end,
+          'c', case when a.attcollation <> t.typcollation and t.typcollation <> 0 then a.attcollation::regcollation::text else null end)
+          order by a.attnum)
+        from pg_attribute a
+        left join pg_attrdef ad on ad.adrelid=a.attrelid and ad.adnum=a.attnum
+        join pg_type t on t.oid=a.atttypid
+        where a.attrelid=c.oid and a.attnum>0 and not a.attisdropped) as cols
+from pg_class c
+join pg_namespace n on n.oid=c.relnamespace
+where n.nspname='public' and c.relkind in ('r','p')
+order by c.relname limit 12 offset 96;
+
+-- [tables-009] 2026-08-28T02:10:22Z http=201
+select c.relname as name, c.relkind as kind,
+       pg_get_userbyid(c.relowner) as owner,
+       c.relrowsecurity as rls, c.relforcerowsecurity as rls_force,
+       c.reloptions::text as reloptions,
+       (select json_agg(json_build_object(
+          'n', a.attname,
+          't', format_type(a.atttypid, a.atttypmod),
+          'nn', a.attnotnull,
+          'd', case when coalesce(a.attgenerated,'')<>'' then null else pg_get_expr(ad.adbin, ad.adrelid) end,
+          'i', case when a.attidentity='a' then 'always' when a.attidentity='d' then 'by default' else null end,
+          'g', case when a.attgenerated='s' then pg_get_expr(ad.adbin, ad.adrelid) else null end,
+          's', case when a.attstorage <> t.typstorage then a.attstorage::text else null end,
+          'c', case when a.attcollation <> t.typcollation and t.typcollation <> 0 then a.attcollation::regcollation::text else null end)
+          order by a.attnum)
+        from pg_attribute a
+        left join pg_attrdef ad on ad.adrelid=a.attrelid and ad.adnum=a.attnum
+        join pg_type t on t.oid=a.atttypid
+        where a.attrelid=c.oid and a.attnum>0 and not a.attisdropped) as cols
+from pg_class c
+join pg_namespace n on n.oid=c.relnamespace
+where n.nspname='public' and c.relkind in ('r','p')
+order by c.relname limit 12 offset 108;
+
+-- [tables-010] 2026-08-28T02:10:25Z http=201
+select c.relname as name, c.relkind as kind,
+       pg_get_userbyid(c.relowner) as owner,
+       c.relrowsecurity as rls, c.relforcerowsecurity as rls_force,
+       c.reloptions::text as reloptions,
+       (select json_agg(json_build_object(
+          'n', a.attname,
+          't', format_type(a.atttypid, a.atttypmod),
+          'nn', a.attnotnull,
+          'd', case when coalesce(a.attgenerated,'')<>'' then null else pg_get_expr(ad.adbin, ad.adrelid) end,
+          'i', case when a.attidentity='a' then 'always' when a.attidentity='d' then 'by default' else null end,
+          'g', case when a.attgenerated='s' then pg_get_expr(ad.adbin, ad.adrelid) else null end,
+          's', case when a.attstorage <> t.typstorage then a.attstorage::text else null end,
+          'c', case when a.attcollation <> t.typcollation and t.typcollation <> 0 then a.attcollation::regcollation::text else null end)
+          order by a.attnum)
+        from pg_attribute a
+        left join pg_attrdef ad on ad.adrelid=a.attrelid and ad.adnum=a.attnum
+        join pg_type t on t.oid=a.atttypid
+        where a.attrelid=c.oid and a.attnum>0 and not a.attisdropped) as cols
+from pg_class c
+join pg_namespace n on n.oid=c.relnamespace
+where n.nspname='public' and c.relkind in ('r','p')
+order by c.relname limit 12 offset 120;
+
+-- [tables-011] 2026-08-28T02:10:28Z http=201
+select c.relname as name, c.relkind as kind,
+       pg_get_userbyid(c.relowner) as owner,
+       c.relrowsecurity as rls, c.relforcerowsecurity as rls_force,
+       c.reloptions::text as reloptions,
+       (select json_agg(json_build_object(
+          'n', a.attname,
+          't', format_type(a.atttypid, a.atttypmod),
+          'nn', a.attnotnull,
+          'd', case when coalesce(a.attgenerated,'')<>'' then null else pg_get_expr(ad.adbin, ad.adrelid) end,
+          'i', case when a.attidentity='a' then 'always' when a.attidentity='d' then 'by default' else null end,
+          'g', case when a.attgenerated='s' then pg_get_expr(ad.adbin, ad.adrelid) else null end,
+          's', case when a.attstorage <> t.typstorage then a.attstorage::text else null end,
+          'c', case when a.attcollation <> t.typcollation and t.typcollation <> 0 then a.attcollation::regcollation::text else null end)
+          order by a.attnum)
+        from pg_attribute a
+        left join pg_attrdef ad on ad.adrelid=a.attrelid and ad.adnum=a.attnum
+        join pg_type t on t.oid=a.atttypid
+        where a.attrelid=c.oid and a.attnum>0 and not a.attisdropped) as cols
+from pg_class c
+join pg_namespace n on n.oid=c.relnamespace
+where n.nspname='public' and c.relkind in ('r','p')
+order by c.relname limit 12 offset 132;
+
+-- [constraints-000] 2026-08-28T02:10:30Z http=400
+select con.conname as name, con.conrelid::regclass::text as tbl, con.contype as type,
+       pg_get_constraintdef(con.oid, true) as def,
+       con.condeferrable, con.condeferred, con.convalidated,
+       pg_get_userbyid(con.conowner) as owner
+from pg_constraint con join pg_namespace n on n.oid=con.connamespace
+where n.nspname='public' and con.contype in ('p','u','f','c','x')
+order by con.conrelid::regclass::text, con.conname
+limit 60 offset 0;
+
+-- [indexes-000] 2026-08-28T02:10:32Z http=201
+select c.relname as name, c.relkind as kind,
+       pg_get_userbyid(c.relowner) as owner,
+       pg_get_indexdef(i.indexrelid, 0, true) as def
+from pg_index i join pg_class c on c.oid=i.indexrelid join pg_namespace n on n.oid=c.relnamespace
+where n.nspname='public' and not i.indisprimary
+  and not exists (select 1 from pg_constraint k where k.conindid=i.indexrelid)
+order by pg_get_indexdef(i.indexrelid,0,true) limit 60 offset 0;
+
+-- [indexes-001] 2026-08-28T02:10:34Z http=201
+select c.relname as name, c.relkind as kind,
+       pg_get_userbyid(c.relowner) as owner,
+       pg_get_indexdef(i.indexrelid, 0, true) as def
+from pg_index i join pg_class c on c.oid=i.indexrelid join pg_namespace n on n.oid=c.relnamespace
+where n.nspname='public' and not i.indisprimary
+  and not exists (select 1 from pg_constraint k where k.conindid=i.indexrelid)
+order by pg_get_indexdef(i.indexrelid,0,true) limit 60 offset 60;
+
+-- [indexes-002] 2026-08-28T02:10:36Z http=201
+select c.relname as name, c.relkind as kind,
+       pg_get_userbyid(c.relowner) as owner,
+       pg_get_indexdef(i.indexrelid, 0, true) as def
+from pg_index i join pg_class c on c.oid=i.indexrelid join pg_namespace n on n.oid=c.relnamespace
+where n.nspname='public' and not i.indisprimary
+  and not exists (select 1 from pg_constraint k where k.conindid=i.indexrelid)
+order by pg_get_indexdef(i.indexrelid,0,true) limit 60 offset 120;
+
+-- [indexes-003] 2026-08-28T02:10:38Z http=201
+select c.relname as name, c.relkind as kind,
+       pg_get_userbyid(c.relowner) as owner,
+       pg_get_indexdef(i.indexrelid, 0, true) as def
+from pg_index i join pg_class c on c.oid=i.indexrelid join pg_namespace n on n.oid=c.relnamespace
+where n.nspname='public' and not i.indisprimary
+  and not exists (select 1 from pg_constraint k where k.conindid=i.indexrelid)
+order by pg_get_indexdef(i.indexrelid,0,true) limit 60 offset 180;
+
+-- [indexes-004] 2026-08-28T02:10:40Z http=201
+select c.relname as name, c.relkind as kind,
+       pg_get_userbyid(c.relowner) as owner,
+       pg_get_indexdef(i.indexrelid, 0, true) as def
+from pg_index i join pg_class c on c.oid=i.indexrelid join pg_namespace n on n.oid=c.relnamespace
+where n.nspname='public' and not i.indisprimary
+  and not exists (select 1 from pg_constraint k where k.conindid=i.indexrelid)
+order by pg_get_indexdef(i.indexrelid,0,true) limit 60 offset 240;
+
+-- [indexes-005] 2026-08-28T02:10:42Z http=201
+select c.relname as name, c.relkind as kind,
+       pg_get_userbyid(c.relowner) as owner,
+       pg_get_indexdef(i.indexrelid, 0, true) as def
+from pg_index i join pg_class c on c.oid=i.indexrelid join pg_namespace n on n.oid=c.relnamespace
+where n.nspname='public' and not i.indisprimary
+  and not exists (select 1 from pg_constraint k where k.conindid=i.indexrelid)
+order by pg_get_indexdef(i.indexrelid,0,true) limit 60 offset 300;
+
+-- [indexes-006] 2026-08-28T02:10:44Z http=201
+select c.relname as name, c.relkind as kind,
+       pg_get_userbyid(c.relowner) as owner,
+       pg_get_indexdef(i.indexrelid, 0, true) as def
+from pg_index i join pg_class c on c.oid=i.indexrelid join pg_namespace n on n.oid=c.relnamespace
+where n.nspname='public' and not i.indisprimary
+  and not exists (select 1 from pg_constraint k where k.conindid=i.indexrelid)
+order by pg_get_indexdef(i.indexrelid,0,true) limit 60 offset 360;
+
+-- [triggers-000] 2026-08-28T02:10:46Z http=400
+select t.tgname as name, c.relname as tbl,
+       pg_get_userbyid(t.tgowner) as owner,
+       pg_get_triggerdef(t.oid, true) as def
+from pg_trigger t join pg_class c on c.oid=t.tgrelid join pg_namespace n on n.oid=c.relnamespace
+where n.nspname='public' and not t.tgisinternal
+order by c.relname, t.tgname limit 40 offset 0;
+
+-- [func-anchor] 2026-08-28T02:10:48Z http=201
+select p.prokind as kind, count(*) as n
+from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+where n.nspname='public' and p.prokind in ('f','p','w','a')
+group by p.prokind order by p.prokind;
+
+-- [functions-000] 2026-08-28T02:10:50Z http=201
+select p.oid::bigint as oid, p.oid::regprocedure::text as sig, p.prokind as kind,
+       pg_get_userbyid(p.proowner) as owner,
+       pg_get_functiondef(p.oid) as def
+from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+where n.nspname='public' and p.prokind in ('f','p','w')
+order by p.oid limit 15 offset 0;
+
+-- [functions-001] 2026-08-28T02:10:52Z http=201
+select p.oid::bigint as oid, p.oid::regprocedure::text as sig, p.prokind as kind,
+       pg_get_userbyid(p.proowner) as owner,
+       pg_get_functiondef(p.oid) as def
+from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+where n.nspname='public' and p.prokind in ('f','p','w')
+order by p.oid limit 15 offset 15;
+
+-- [functions-002] 2026-08-28T02:10:54Z http=201
+select p.oid::bigint as oid, p.oid::regprocedure::text as sig, p.prokind as kind,
+       pg_get_userbyid(p.proowner) as owner,
+       pg_get_functiondef(p.oid) as def
+from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+where n.nspname='public' and p.prokind in ('f','p','w')
+order by p.oid limit 15 offset 30;
+
+-- [functions-003] 2026-08-28T02:10:57Z http=201
+select p.oid::bigint as oid, p.oid::regprocedure::text as sig, p.prokind as kind,
+       pg_get_userbyid(p.proowner) as owner,
+       pg_get_functiondef(p.oid) as def
+from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+where n.nspname='public' and p.prokind in ('f','p','w')
+order by p.oid limit 15 offset 45;
+
+-- [functions-004] 2026-08-28T02:10:59Z http=201
+select p.oid::bigint as oid, p.oid::regprocedure::text as sig, p.prokind as kind,
+       pg_get_userbyid(p.proowner) as owner,
+       pg_get_functiondef(p.oid) as def
+from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+where n.nspname='public' and p.prokind in ('f','p','w')
+order by p.oid limit 15 offset 60;
+
+-- [functions-005] 2026-08-28T02:11:01Z http=201
+select p.oid::bigint as oid, p.oid::regprocedure::text as sig, p.prokind as kind,
+       pg_get_userbyid(p.proowner) as owner,
+       pg_get_functiondef(p.oid) as def
+from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+where n.nspname='public' and p.prokind in ('f','p','w')
+order by p.oid limit 15 offset 75;
+
+-- [functions-006] 2026-08-28T02:11:04Z http=201
+select p.oid::bigint as oid, p.oid::regprocedure::text as sig, p.prokind as kind,
+       pg_get_userbyid(p.proowner) as owner,
+       pg_get_functiondef(p.oid) as def
+from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+where n.nspname='public' and p.prokind in ('f','p','w')
+order by p.oid limit 15 offset 90;
+
+-- [functions-007] 2026-08-28T02:11:06Z http=201
+select p.oid::bigint as oid, p.oid::regprocedure::text as sig, p.prokind as kind,
+       pg_get_userbyid(p.proowner) as owner,
+       pg_get_functiondef(p.oid) as def
+from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+where n.nspname='public' and p.prokind in ('f','p','w')
+order by p.oid limit 15 offset 105;
+
+-- [functions-008] 2026-08-28T02:11:08Z http=201
+select p.oid::bigint as oid, p.oid::regprocedure::text as sig, p.prokind as kind,
+       pg_get_userbyid(p.proowner) as owner,
+       pg_get_functiondef(p.oid) as def
+from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+where n.nspname='public' and p.prokind in ('f','p','w')
+order by p.oid limit 15 offset 120;
+
+-- [functions-009] 2026-08-28T02:11:10Z http=201
+select p.oid::bigint as oid, p.oid::regprocedure::text as sig, p.prokind as kind,
+       pg_get_userbyid(p.proowner) as owner,
+       pg_get_functiondef(p.oid) as def
+from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+where n.nspname='public' and p.prokind in ('f','p','w')
+order by p.oid limit 15 offset 135;
+
+-- [functions-010] 2026-08-28T02:11:13Z http=201
+select p.oid::bigint as oid, p.oid::regprocedure::text as sig, p.prokind as kind,
+       pg_get_userbyid(p.proowner) as owner,
+       pg_get_functiondef(p.oid) as def
+from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+where n.nspname='public' and p.prokind in ('f','p','w')
+order by p.oid limit 15 offset 150;
+
+-- [functions-011] 2026-08-28T02:11:15Z http=201
+select p.oid::bigint as oid, p.oid::regprocedure::text as sig, p.prokind as kind,
+       pg_get_userbyid(p.proowner) as owner,
+       pg_get_functiondef(p.oid) as def
+from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+where n.nspname='public' and p.prokind in ('f','p','w')
+order by p.oid limit 15 offset 165;
+
+-- [functions-012] 2026-08-28T02:11:17Z http=201
+select p.oid::bigint as oid, p.oid::regprocedure::text as sig, p.prokind as kind,
+       pg_get_userbyid(p.proowner) as owner,
+       pg_get_functiondef(p.oid) as def
+from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+where n.nspname='public' and p.prokind in ('f','p','w')
+order by p.oid limit 15 offset 180;
+
+-- [functions-013] 2026-08-28T02:11:19Z http=201
+select p.oid::bigint as oid, p.oid::regprocedure::text as sig, p.prokind as kind,
+       pg_get_userbyid(p.proowner) as owner,
+       pg_get_functiondef(p.oid) as def
+from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+where n.nspname='public' and p.prokind in ('f','p','w')
+order by p.oid limit 15 offset 195;
+
+-- [functions-014] 2026-08-28T02:11:21Z http=201
+select p.oid::bigint as oid, p.oid::regprocedure::text as sig, p.prokind as kind,
+       pg_get_userbyid(p.proowner) as owner,
+       pg_get_functiondef(p.oid) as def
+from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+where n.nspname='public' and p.prokind in ('f','p','w')
+order by p.oid limit 15 offset 210;
+
+-- [functions-015] 2026-08-28T02:11:23Z http=201
+select p.oid::bigint as oid, p.oid::regprocedure::text as sig, p.prokind as kind,
+       pg_get_userbyid(p.proowner) as owner,
+       pg_get_functiondef(p.oid) as def
+from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+where n.nspname='public' and p.prokind in ('f','p','w')
+order by p.oid limit 15 offset 225;
+
+-- [functions-016] 2026-08-28T02:11:26Z http=201
+select p.oid::bigint as oid, p.oid::regprocedure::text as sig, p.prokind as kind,
+       pg_get_userbyid(p.proowner) as owner,
+       pg_get_functiondef(p.oid) as def
+from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+where n.nspname='public' and p.prokind in ('f','p','w')
+order by p.oid limit 15 offset 240;
+
+-- [functions-017] 2026-08-28T02:11:28Z http=201
+select p.oid::bigint as oid, p.oid::regprocedure::text as sig, p.prokind as kind,
+       pg_get_userbyid(p.proowner) as owner,
+       pg_get_functiondef(p.oid) as def
+from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+where n.nspname='public' and p.prokind in ('f','p','w')
+order by p.oid limit 15 offset 255;
+
+-- [functions-018] 2026-08-28T02:11:30Z http=201
+select p.oid::bigint as oid, p.oid::regprocedure::text as sig, p.prokind as kind,
+       pg_get_userbyid(p.proowner) as owner,
+       pg_get_functiondef(p.oid) as def
+from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+where n.nspname='public' and p.prokind in ('f','p','w')
+order by p.oid limit 15 offset 270;
+
+-- [functions-019] 2026-08-28T02:11:32Z http=201
+select p.oid::bigint as oid, p.oid::regprocedure::text as sig, p.prokind as kind,
+       pg_get_userbyid(p.proowner) as owner,
+       pg_get_functiondef(p.oid) as def
+from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+where n.nspname='public' and p.prokind in ('f','p','w')
+order by p.oid limit 15 offset 285;
+
+-- [functions-020] 2026-08-28T02:11:34Z http=201
+select p.oid::bigint as oid, p.oid::regprocedure::text as sig, p.prokind as kind,
+       pg_get_userbyid(p.proowner) as owner,
+       pg_get_functiondef(p.oid) as def
+from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+where n.nspname='public' and p.prokind in ('f','p','w')
+order by p.oid limit 15 offset 300;
+
+-- [functions-021] 2026-08-28T02:11:36Z http=201
+select p.oid::bigint as oid, p.oid::regprocedure::text as sig, p.prokind as kind,
+       pg_get_userbyid(p.proowner) as owner,
+       pg_get_functiondef(p.oid) as def
+from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+where n.nspname='public' and p.prokind in ('f','p','w')
+order by p.oid limit 15 offset 315;
+
+-- [functions-022] 2026-08-28T02:11:38Z http=201
+select p.oid::bigint as oid, p.oid::regprocedure::text as sig, p.prokind as kind,
+       pg_get_userbyid(p.proowner) as owner,
+       pg_get_functiondef(p.oid) as def
+from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+where n.nspname='public' and p.prokind in ('f','p','w')
+order by p.oid limit 15 offset 330;
+
+-- [functions-023] 2026-08-28T02:11:41Z http=201
+select p.oid::bigint as oid, p.oid::regprocedure::text as sig, p.prokind as kind,
+       pg_get_userbyid(p.proowner) as owner,
+       pg_get_functiondef(p.oid) as def
+from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+where n.nspname='public' and p.prokind in ('f','p','w')
+order by p.oid limit 15 offset 345;
+
+-- [functions-024] 2026-08-28T02:11:43Z http=201
+select p.oid::bigint as oid, p.oid::regprocedure::text as sig, p.prokind as kind,
+       pg_get_userbyid(p.proowner) as owner,
+       pg_get_functiondef(p.oid) as def
+from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+where n.nspname='public' and p.prokind in ('f','p','w')
+order by p.oid limit 15 offset 360;
+
+-- [functions-025] 2026-08-28T02:11:46Z http=201
+select p.oid::bigint as oid, p.oid::regprocedure::text as sig, p.prokind as kind,
+       pg_get_userbyid(p.proowner) as owner,
+       pg_get_functiondef(p.oid) as def
+from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+where n.nspname='public' and p.prokind in ('f','p','w')
+order by p.oid limit 15 offset 375;
+
+-- [functions-026] 2026-08-28T02:11:48Z http=201
+select p.oid::bigint as oid, p.oid::regprocedure::text as sig, p.prokind as kind,
+       pg_get_userbyid(p.proowner) as owner,
+       pg_get_functiondef(p.oid) as def
+from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+where n.nspname='public' and p.prokind in ('f','p','w')
+order by p.oid limit 15 offset 390;
+
+-- [functions-027] 2026-08-28T02:11:53Z http=201
+select p.oid::bigint as oid, p.oid::regprocedure::text as sig, p.prokind as kind,
+       pg_get_userbyid(p.proowner) as owner,
+       pg_get_functiondef(p.oid) as def
+from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+where n.nspname='public' and p.prokind in ('f','p','w')
+order by p.oid limit 15 offset 405;
+
+-- [functions-028] 2026-08-28T02:11:55Z http=201
+select p.oid::bigint as oid, p.oid::regprocedure::text as sig, p.prokind as kind,
+       pg_get_userbyid(p.proowner) as owner,
+       pg_get_functiondef(p.oid) as def
+from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+where n.nspname='public' and p.prokind in ('f','p','w')
+order by p.oid limit 15 offset 420;
+
+-- [functions-029] 2026-08-28T02:11:57Z http=201
+select p.oid::bigint as oid, p.oid::regprocedure::text as sig, p.prokind as kind,
+       pg_get_userbyid(p.proowner) as owner,
+       pg_get_functiondef(p.oid) as def
+from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+where n.nspname='public' and p.prokind in ('f','p','w')
+order by p.oid limit 15 offset 435;
+
+-- [functions-030] 2026-08-28T02:12:00Z http=201
+select p.oid::bigint as oid, p.oid::regprocedure::text as sig, p.prokind as kind,
+       pg_get_userbyid(p.proowner) as owner,
+       pg_get_functiondef(p.oid) as def
+from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+where n.nspname='public' and p.prokind in ('f','p','w')
+order by p.oid limit 15 offset 450;
+
+-- [functions-031] 2026-08-28T02:12:03Z http=201
+select p.oid::bigint as oid, p.oid::regprocedure::text as sig, p.prokind as kind,
+       pg_get_userbyid(p.proowner) as owner,
+       pg_get_functiondef(p.oid) as def
+from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+where n.nspname='public' and p.prokind in ('f','p','w')
+order by p.oid limit 15 offset 465;
+
+-- [policies-000] 2026-08-28T02:12:06Z http=201
+select schemaname, tablename, policyname, permissive, roles, cmd, qual, with_check
+from pg_policies where schemaname='public'
+order by tablename, policyname limit 50 offset 0;
+
+-- [policies-001] 2026-08-28T02:12:08Z http=201
+select schemaname, tablename, policyname, permissive, roles, cmd, qual, with_check
+from pg_policies where schemaname='public'
+order by tablename, policyname limit 50 offset 50;
+
+-- [policies-002] 2026-08-28T02:12:10Z http=201
+select schemaname, tablename, policyname, permissive, roles, cmd, qual, with_check
+from pg_policies where schemaname='public'
+order by tablename, policyname limit 50 offset 100;
+
+-- [policies-003] 2026-08-28T02:12:12Z http=201
+select schemaname, tablename, policyname, permissive, roles, cmd, qual, with_check
+from pg_policies where schemaname='public'
+order by tablename, policyname limit 50 offset 150;
+
+-- [policies-004] 2026-08-28T02:12:14Z http=201
+select schemaname, tablename, policyname, permissive, roles, cmd, qual, with_check
+from pg_policies where schemaname='public'
+order by tablename, policyname limit 50 offset 200;
+
+-- [policies-005] 2026-08-28T02:12:16Z http=201
+select schemaname, tablename, policyname, permissive, roles, cmd, qual, with_check
+from pg_policies where schemaname='public'
+order by tablename, policyname limit 50 offset 250;
+
+-- [policies-006] 2026-08-28T02:12:18Z http=201
+select schemaname, tablename, policyname, permissive, roles, cmd, qual, with_check
+from pg_policies where schemaname='public'
+order by tablename, policyname limit 50 offset 300;
+
+-- [policies-007] 2026-08-28T02:12:20Z http=201
+select schemaname, tablename, policyname, permissive, roles, cmd, qual, with_check
+from pg_policies where schemaname='public'
+order by tablename, policyname limit 50 offset 350;
+
+-- [views-000] 2026-08-28T02:12:22Z http=201
+select c.relname as name, c.relkind as kind,
+       pg_get_userbyid(c.relowner) as owner,
+       pg_get_viewdef(c.oid, true) as def,
+       c.reloptions::text as reloptions
+from pg_class c join pg_namespace n on n.oid=c.relnamespace
+where n.nspname='public' and c.relkind in ('v','m')
+order by c.relname limit 6 offset 0;
+
+-- [views-001] 2026-08-28T02:12:24Z http=201
+select c.relname as name, c.relkind as kind,
+       pg_get_userbyid(c.relowner) as owner,
+       pg_get_viewdef(c.oid, true) as def,
+       c.reloptions::text as reloptions
+from pg_class c join pg_namespace n on n.oid=c.relnamespace
+where n.nspname='public' and c.relkind in ('v','m')
+order by c.relname limit 6 offset 6;
+
+-- [grants-rel-000] 2026-08-28T02:12:26Z http=201
+select c.relname::text as obj, c.relkind as kind, r.rolname as grantee,
+       a.privilege_type as priv, a.is_grantable as grantable,
+       gr.rolname as grantor
+from pg_class c join pg_namespace n on n.oid=c.relnamespace,
+     aclexplode(c.relacl) a
+     join pg_roles r on r.oid=a.grantee
+     join pg_roles gr on gr.oid=a.grantor
+where n.nspname='public' and c.relkind in ('r','p','v','m','S')
+order by c.relname, r.rolname, a.privilege_type limit 200 offset 0;
+
+-- [grants-rel-001] 2026-08-28T02:12:28Z http=201
+select c.relname::text as obj, c.relkind as kind, r.rolname as grantee,
+       a.privilege_type as priv, a.is_grantable as grantable,
+       gr.rolname as grantor
+from pg_class c join pg_namespace n on n.oid=c.relnamespace,
+     aclexplode(c.relacl) a
+     join pg_roles r on r.oid=a.grantee
+     join pg_roles gr on gr.oid=a.grantor
+where n.nspname='public' and c.relkind in ('r','p','v','m','S')
+order by c.relname, r.rolname, a.privilege_type limit 200 offset 200;
+
+-- [grants-rel-002] 2026-08-28T02:12:31Z http=201
+select c.relname::text as obj, c.relkind as kind, r.rolname as grantee,
+       a.privilege_type as priv, a.is_grantable as grantable,
+       gr.rolname as grantor
+from pg_class c join pg_namespace n on n.oid=c.relnamespace,
+     aclexplode(c.relacl) a
+     join pg_roles r on r.oid=a.grantee
+     join pg_roles gr on gr.oid=a.grantor
+where n.nspname='public' and c.relkind in ('r','p','v','m','S')
+order by c.relname, r.rolname, a.privilege_type limit 200 offset 400;
+
+-- [grants-rel-003] 2026-08-28T02:12:33Z http=201
+select c.relname::text as obj, c.relkind as kind, r.rolname as grantee,
+       a.privilege_type as priv, a.is_grantable as grantable,
+       gr.rolname as grantor
+from pg_class c join pg_namespace n on n.oid=c.relnamespace,
+     aclexplode(c.relacl) a
+     join pg_roles r on r.oid=a.grantee
+     join pg_roles gr on gr.oid=a.grantor
+where n.nspname='public' and c.relkind in ('r','p','v','m','S')
+order by c.relname, r.rolname, a.privilege_type limit 200 offset 600;
+
+-- [grants-rel-004] 2026-08-28T02:12:36Z http=201
+select c.relname::text as obj, c.relkind as kind, r.rolname as grantee,
+       a.privilege_type as priv, a.is_grantable as grantable,
+       gr.rolname as grantor
+from pg_class c join pg_namespace n on n.oid=c.relnamespace,
+     aclexplode(c.relacl) a
+     join pg_roles r on r.oid=a.grantee
+     join pg_roles gr on gr.oid=a.grantor
+where n.nspname='public' and c.relkind in ('r','p','v','m','S')
+order by c.relname, r.rolname, a.privilege_type limit 200 offset 800;
+
+-- [grants-rel-005] 2026-08-28T02:12:38Z http=201
+select c.relname::text as obj, c.relkind as kind, r.rolname as grantee,
+       a.privilege_type as priv, a.is_grantable as grantable,
+       gr.rolname as grantor
+from pg_class c join pg_namespace n on n.oid=c.relnamespace,
+     aclexplode(c.relacl) a
+     join pg_roles r on r.oid=a.grantee
+     join pg_roles gr on gr.oid=a.grantor
+where n.nspname='public' and c.relkind in ('r','p','v','m','S')
+order by c.relname, r.rolname, a.privilege_type limit 200 offset 1000;
+
+-- [grants-rel-006] 2026-08-28T02:12:40Z http=201
+select c.relname::text as obj, c.relkind as kind, r.rolname as grantee,
+       a.privilege_type as priv, a.is_grantable as grantable,
+       gr.rolname as grantor
+from pg_class c join pg_namespace n on n.oid=c.relnamespace,
+     aclexplode(c.relacl) a
+     join pg_roles r on r.oid=a.grantee
+     join pg_roles gr on gr.oid=a.grantor
+where n.nspname='public' and c.relkind in ('r','p','v','m','S')
+order by c.relname, r.rolname, a.privilege_type limit 200 offset 1200;
+
+-- [grants-rel-007] 2026-08-28T02:12:43Z http=201
+select c.relname::text as obj, c.relkind as kind, r.rolname as grantee,
+       a.privilege_type as priv, a.is_grantable as grantable,
+       gr.rolname as grantor
+from pg_class c join pg_namespace n on n.oid=c.relnamespace,
+     aclexplode(c.relacl) a
+     join pg_roles r on r.oid=a.grantee
+     join pg_roles gr on gr.oid=a.grantor
+where n.nspname='public' and c.relkind in ('r','p','v','m','S')
+order by c.relname, r.rolname, a.privilege_type limit 200 offset 1400;
+
+-- [grants-rel-008] 2026-08-28T02:12:45Z http=201
+select c.relname::text as obj, c.relkind as kind, r.rolname as grantee,
+       a.privilege_type as priv, a.is_grantable as grantable,
+       gr.rolname as grantor
+from pg_class c join pg_namespace n on n.oid=c.relnamespace,
+     aclexplode(c.relacl) a
+     join pg_roles r on r.oid=a.grantee
+     join pg_roles gr on gr.oid=a.grantor
+where n.nspname='public' and c.relkind in ('r','p','v','m','S')
+order by c.relname, r.rolname, a.privilege_type limit 200 offset 1600;
+
+-- [grants-rel-009] 2026-08-28T02:12:47Z http=201
+select c.relname::text as obj, c.relkind as kind, r.rolname as grantee,
+       a.privilege_type as priv, a.is_grantable as grantable,
+       gr.rolname as grantor
+from pg_class c join pg_namespace n on n.oid=c.relnamespace,
+     aclexplode(c.relacl) a
+     join pg_roles r on r.oid=a.grantee
+     join pg_roles gr on gr.oid=a.grantor
+where n.nspname='public' and c.relkind in ('r','p','v','m','S')
+order by c.relname, r.rolname, a.privilege_type limit 200 offset 1800;
+
+-- [grants-rel-010] 2026-08-28T02:12:50Z http=201
+select c.relname::text as obj, c.relkind as kind, r.rolname as grantee,
+       a.privilege_type as priv, a.is_grantable as grantable,
+       gr.rolname as grantor
+from pg_class c join pg_namespace n on n.oid=c.relnamespace,
+     aclexplode(c.relacl) a
+     join pg_roles r on r.oid=a.grantee
+     join pg_roles gr on gr.oid=a.grantor
+where n.nspname='public' and c.relkind in ('r','p','v','m','S')
+order by c.relname, r.rolname, a.privilege_type limit 200 offset 2000;
+
+-- [grants-rel-011] 2026-08-28T02:12:53Z http=201
+select c.relname::text as obj, c.relkind as kind, r.rolname as grantee,
+       a.privilege_type as priv, a.is_grantable as grantable,
+       gr.rolname as grantor
+from pg_class c join pg_namespace n on n.oid=c.relnamespace,
+     aclexplode(c.relacl) a
+     join pg_roles r on r.oid=a.grantee
+     join pg_roles gr on gr.oid=a.grantor
+where n.nspname='public' and c.relkind in ('r','p','v','m','S')
+order by c.relname, r.rolname, a.privilege_type limit 200 offset 2200;
+
+-- [grants-rel-012] 2026-08-28T02:12:56Z http=201
+select c.relname::text as obj, c.relkind as kind, r.rolname as grantee,
+       a.privilege_type as priv, a.is_grantable as grantable,
+       gr.rolname as grantor
+from pg_class c join pg_namespace n on n.oid=c.relnamespace,
+     aclexplode(c.relacl) a
+     join pg_roles r on r.oid=a.grantee
+     join pg_roles gr on gr.oid=a.grantor
+where n.nspname='public' and c.relkind in ('r','p','v','m','S')
+order by c.relname, r.rolname, a.privilege_type limit 200 offset 2400;
+
+-- [grants-rel-013] 2026-08-28T02:12:59Z http=201
+select c.relname::text as obj, c.relkind as kind, r.rolname as grantee,
+       a.privilege_type as priv, a.is_grantable as grantable,
+       gr.rolname as grantor
+from pg_class c join pg_namespace n on n.oid=c.relnamespace,
+     aclexplode(c.relacl) a
+     join pg_roles r on r.oid=a.grantee
+     join pg_roles gr on gr.oid=a.grantor
+where n.nspname='public' and c.relkind in ('r','p','v','m','S')
+order by c.relname, r.rolname, a.privilege_type limit 200 offset 2600;
+
+-- [grants-rel-014] 2026-08-28T02:13:02Z http=201
+select c.relname::text as obj, c.relkind as kind, r.rolname as grantee,
+       a.privilege_type as priv, a.is_grantable as grantable,
+       gr.rolname as grantor
+from pg_class c join pg_namespace n on n.oid=c.relnamespace,
+     aclexplode(c.relacl) a
+     join pg_roles r on r.oid=a.grantee
+     join pg_roles gr on gr.oid=a.grantor
+where n.nspname='public' and c.relkind in ('r','p','v','m','S')
+order by c.relname, r.rolname, a.privilege_type limit 200 offset 2800;
+
+-- [grants-rel-015] 2026-08-28T02:13:04Z http=201
+select c.relname::text as obj, c.relkind as kind, r.rolname as grantee,
+       a.privilege_type as priv, a.is_grantable as grantable,
+       gr.rolname as grantor
+from pg_class c join pg_namespace n on n.oid=c.relnamespace,
+     aclexplode(c.relacl) a
+     join pg_roles r on r.oid=a.grantee
+     join pg_roles gr on gr.oid=a.grantor
+where n.nspname='public' and c.relkind in ('r','p','v','m','S')
+order by c.relname, r.rolname, a.privilege_type limit 200 offset 3000;
+
+-- [grants-rel-016] 2026-08-28T02:13:06Z http=201
+select c.relname::text as obj, c.relkind as kind, r.rolname as grantee,
+       a.privilege_type as priv, a.is_grantable as grantable,
+       gr.rolname as grantor
+from pg_class c join pg_namespace n on n.oid=c.relnamespace,
+     aclexplode(c.relacl) a
+     join pg_roles r on r.oid=a.grantee
+     join pg_roles gr on gr.oid=a.grantor
+where n.nspname='public' and c.relkind in ('r','p','v','m','S')
+order by c.relname, r.rolname, a.privilege_type limit 200 offset 3200;
+
+-- [grants-rel-017] 2026-08-28T02:13:08Z http=201
+select c.relname::text as obj, c.relkind as kind, r.rolname as grantee,
+       a.privilege_type as priv, a.is_grantable as grantable,
+       gr.rolname as grantor
+from pg_class c join pg_namespace n on n.oid=c.relnamespace,
+     aclexplode(c.relacl) a
+     join pg_roles r on r.oid=a.grantee
+     join pg_roles gr on gr.oid=a.grantor
+where n.nspname='public' and c.relkind in ('r','p','v','m','S')
+order by c.relname, r.rolname, a.privilege_type limit 200 offset 3400;
+
+-- [grants-rel-018] 2026-08-28T02:13:11Z http=201
+select c.relname::text as obj, c.relkind as kind, r.rolname as grantee,
+       a.privilege_type as priv, a.is_grantable as grantable,
+       gr.rolname as grantor
+from pg_class c join pg_namespace n on n.oid=c.relnamespace,
+     aclexplode(c.relacl) a
+     join pg_roles r on r.oid=a.grantee
+     join pg_roles gr on gr.oid=a.grantor
+where n.nspname='public' and c.relkind in ('r','p','v','m','S')
+order by c.relname, r.rolname, a.privilege_type limit 200 offset 3600;
+
+-- [grants-rel-019] 2026-08-28T02:13:13Z http=201
+select c.relname::text as obj, c.relkind as kind, r.rolname as grantee,
+       a.privilege_type as priv, a.is_grantable as grantable,
+       gr.rolname as grantor
+from pg_class c join pg_namespace n on n.oid=c.relnamespace,
+     aclexplode(c.relacl) a
+     join pg_roles r on r.oid=a.grantee
+     join pg_roles gr on gr.oid=a.grantor
+where n.nspname='public' and c.relkind in ('r','p','v','m','S')
+order by c.relname, r.rolname, a.privilege_type limit 200 offset 3800;
+
+-- [grants-rel-020] 2026-08-28T02:13:15Z http=201
+select c.relname::text as obj, c.relkind as kind, r.rolname as grantee,
+       a.privilege_type as priv, a.is_grantable as grantable,
+       gr.rolname as grantor
+from pg_class c join pg_namespace n on n.oid=c.relnamespace,
+     aclexplode(c.relacl) a
+     join pg_roles r on r.oid=a.grantee
+     join pg_roles gr on gr.oid=a.grantor
+where n.nspname='public' and c.relkind in ('r','p','v','m','S')
+order by c.relname, r.rolname, a.privilege_type limit 200 offset 4000;
+
+-- [grants-rel-021] 2026-08-28T02:13:17Z http=201
+select c.relname::text as obj, c.relkind as kind, r.rolname as grantee,
+       a.privilege_type as priv, a.is_grantable as grantable,
+       gr.rolname as grantor
+from pg_class c join pg_namespace n on n.oid=c.relnamespace,
+     aclexplode(c.relacl) a
+     join pg_roles r on r.oid=a.grantee
+     join pg_roles gr on gr.oid=a.grantor
+where n.nspname='public' and c.relkind in ('r','p','v','m','S')
+order by c.relname, r.rolname, a.privilege_type limit 200 offset 4200;
+
+-- [grants-rel-022] 2026-08-28T02:13:20Z http=201
+select c.relname::text as obj, c.relkind as kind, r.rolname as grantee,
+       a.privilege_type as priv, a.is_grantable as grantable,
+       gr.rolname as grantor
+from pg_class c join pg_namespace n on n.oid=c.relnamespace,
+     aclexplode(c.relacl) a
+     join pg_roles r on r.oid=a.grantee
+     join pg_roles gr on gr.oid=a.grantor
+where n.nspname='public' and c.relkind in ('r','p','v','m','S')
+order by c.relname, r.rolname, a.privilege_type limit 200 offset 4400;
+
+-- [grants-rel-023] 2026-08-28T02:13:23Z http=201
+select c.relname::text as obj, c.relkind as kind, r.rolname as grantee,
+       a.privilege_type as priv, a.is_grantable as grantable,
+       gr.rolname as grantor
+from pg_class c join pg_namespace n on n.oid=c.relnamespace,
+     aclexplode(c.relacl) a
+     join pg_roles r on r.oid=a.grantee
+     join pg_roles gr on gr.oid=a.grantor
+where n.nspname='public' and c.relkind in ('r','p','v','m','S')
+order by c.relname, r.rolname, a.privilege_type limit 200 offset 4600;
+
+-- [grants-rel-024] 2026-08-28T02:13:25Z http=201
+select c.relname::text as obj, c.relkind as kind, r.rolname as grantee,
+       a.privilege_type as priv, a.is_grantable as grantable,
+       gr.rolname as grantor
+from pg_class c join pg_namespace n on n.oid=c.relnamespace,
+     aclexplode(c.relacl) a
+     join pg_roles r on r.oid=a.grantee
+     join pg_roles gr on gr.oid=a.grantor
+where n.nspname='public' and c.relkind in ('r','p','v','m','S')
+order by c.relname, r.rolname, a.privilege_type limit 200 offset 4800;
+
+-- [grants-func-000] 2026-08-28T02:13:28Z http=201
+select p.oid::regprocedure::text as obj, r.rolname as grantee,
+       a.privilege_type as priv, a.is_grantable as grantable,
+       gr.rolname as grantor
+from pg_proc p join pg_namespace n on n.oid=p.pronamespace,
+     aclexplode(p.proacl) a
+     join pg_roles r on r.oid=a.grantee
+     join pg_roles gr on gr.oid=a.grantor
+where n.nspname='public'
+order by p.oid::regprocedure::text, r.rolname, a.privilege_type limit 200 offset 0;
+
+-- [grants-func-001] 2026-08-28T02:13:30Z http=201
+select p.oid::regprocedure::text as obj, r.rolname as grantee,
+       a.privilege_type as priv, a.is_grantable as grantable,
+       gr.rolname as grantor
+from pg_proc p join pg_namespace n on n.oid=p.pronamespace,
+     aclexplode(p.proacl) a
+     join pg_roles r on r.oid=a.grantee
+     join pg_roles gr on gr.oid=a.grantor
+where n.nspname='public'
+order by p.oid::regprocedure::text, r.rolname, a.privilege_type limit 200 offset 200;
+
+-- [grants-func-002] 2026-08-28T02:13:32Z http=201
+select p.oid::regprocedure::text as obj, r.rolname as grantee,
+       a.privilege_type as priv, a.is_grantable as grantable,
+       gr.rolname as grantor
+from pg_proc p join pg_namespace n on n.oid=p.pronamespace,
+     aclexplode(p.proacl) a
+     join pg_roles r on r.oid=a.grantee
+     join pg_roles gr on gr.oid=a.grantor
+where n.nspname='public'
+order by p.oid::regprocedure::text, r.rolname, a.privilege_type limit 200 offset 400;
+
+-- [grants-func-003] 2026-08-28T02:13:34Z http=201
+select p.oid::regprocedure::text as obj, r.rolname as grantee,
+       a.privilege_type as priv, a.is_grantable as grantable,
+       gr.rolname as grantor
+from pg_proc p join pg_namespace n on n.oid=p.pronamespace,
+     aclexplode(p.proacl) a
+     join pg_roles r on r.oid=a.grantee
+     join pg_roles gr on gr.oid=a.grantor
+where n.nspname='public'
+order by p.oid::regprocedure::text, r.rolname, a.privilege_type limit 200 offset 600;
+
+-- [grants-func-004] 2026-08-28T02:13:37Z http=201
+select p.oid::regprocedure::text as obj, r.rolname as grantee,
+       a.privilege_type as priv, a.is_grantable as grantable,
+       gr.rolname as grantor
+from pg_proc p join pg_namespace n on n.oid=p.pronamespace,
+     aclexplode(p.proacl) a
+     join pg_roles r on r.oid=a.grantee
+     join pg_roles gr on gr.oid=a.grantor
+where n.nspname='public'
+order by p.oid::regprocedure::text, r.rolname, a.privilege_type limit 200 offset 800;
+
+-- [grants-func-005] 2026-08-28T02:13:40Z http=201
+select p.oid::regprocedure::text as obj, r.rolname as grantee,
+       a.privilege_type as priv, a.is_grantable as grantable,
+       gr.rolname as grantor
+from pg_proc p join pg_namespace n on n.oid=p.pronamespace,
+     aclexplode(p.proacl) a
+     join pg_roles r on r.oid=a.grantee
+     join pg_roles gr on gr.oid=a.grantor
+where n.nspname='public'
+order by p.oid::regprocedure::text, r.rolname, a.privilege_type limit 200 offset 1000;
+
+-- [grants-func-006] 2026-08-28T02:13:43Z http=201
+select p.oid::regprocedure::text as obj, r.rolname as grantee,
+       a.privilege_type as priv, a.is_grantable as grantable,
+       gr.rolname as grantor
+from pg_proc p join pg_namespace n on n.oid=p.pronamespace,
+     aclexplode(p.proacl) a
+     join pg_roles r on r.oid=a.grantee
+     join pg_roles gr on gr.oid=a.grantor
+where n.nspname='public'
+order by p.oid::regprocedure::text, r.rolname, a.privilege_type limit 200 offset 1200;
+
+-- [grants-func-007] 2026-08-28T02:13:45Z http=201
+select p.oid::regprocedure::text as obj, r.rolname as grantee,
+       a.privilege_type as priv, a.is_grantable as grantable,
+       gr.rolname as grantor
+from pg_proc p join pg_namespace n on n.oid=p.pronamespace,
+     aclexplode(p.proacl) a
+     join pg_roles r on r.oid=a.grantee
+     join pg_roles gr on gr.oid=a.grantor
+where n.nspname='public'
+order by p.oid::regprocedure::text, r.rolname, a.privilege_type limit 200 offset 1400;
+
+-- [grants-func-008] 2026-08-28T02:13:47Z http=201
+select p.oid::regprocedure::text as obj, r.rolname as grantee,
+       a.privilege_type as priv, a.is_grantable as grantable,
+       gr.rolname as grantor
+from pg_proc p join pg_namespace n on n.oid=p.pronamespace,
+     aclexplode(p.proacl) a
+     join pg_roles r on r.oid=a.grantee
+     join pg_roles gr on gr.oid=a.grantor
+where n.nspname='public'
+order by p.oid::regprocedure::text, r.rolname, a.privilege_type limit 200 offset 1600;
+
+-- [grants-func-009] 2026-08-28T02:13:49Z http=201
+select p.oid::regprocedure::text as obj, r.rolname as grantee,
+       a.privilege_type as priv, a.is_grantable as grantable,
+       gr.rolname as grantor
+from pg_proc p join pg_namespace n on n.oid=p.pronamespace,
+     aclexplode(p.proacl) a
+     join pg_roles r on r.oid=a.grantee
+     join pg_roles gr on gr.oid=a.grantor
+where n.nspname='public'
+order by p.oid::regprocedure::text, r.rolname, a.privilege_type limit 200 offset 1800;
+
+-- [grants-schema] 2026-08-28T02:13:51Z http=201
+select n.nspname as obj, r.rolname as grantee, a.privilege_type as priv, a.is_grantable as grantable, gr.rolname as grantor
+from pg_namespace n, aclexplode(n.nspacl) a
+join pg_roles r on r.oid=a.grantee join pg_roles gr on gr.oid=a.grantor
+where n.nspname='public' order by 1,2,3;
+
+-- [default-acls] 2026-08-28T02:13:53Z http=201
+select d.defaclrole::regrole::text as target_role,
+       coalesce(d.defaclnamespace::regnamespace::text,'') as ns,
+       d.defaclobjtype as objtype,
+       r.rolname as grantee, a.privilege_type as priv, a.is_grantable as grantable,
+       gr.rolname as grantor
+from pg_default_acl d,
+     aclexplode(d.defaclacl) a
+join pg_roles r on r.oid=a.grantee join pg_roles gr on gr.oid=a.grantor
+order by 1,2,3,4,5;
+
+-- [publications] 2026-08-28T02:13:55Z http=201
+select p.pubname as name, p.pubowner::regrole::text as owner,
+       p.pubinsert as ins, p.pubupdate as upd, p.pubdelete as del, p.pubtruncate as trunc,
+       p.pubviaroot as viaroot, p.puballtables as alltables
+from pg_publication p order by p.pubname;
+
+-- [pub-rels] 2026-08-28T02:13:57Z http=400
+select pr.prpubid::regpublication::text as pub, c.relname as tbl
+from pg_publication_rel pr join pg_class c on c.oid=pr.prrelid join pg_namespace n on n.oid=c.relnamespace
+where n.nspname='public' order by 1,2;
+
+-- [pub-rels] 2026-08-28T02:14:17Z http=201
+select p.pubname as pub, c.relname as tbl
+from pg_publication_rel pr
+join pg_publication p on p.oid=pr.prpubid
+join pg_class c on c.oid=pr.prrelid join pg_namespace n on n.oid=c.relnamespace
+where n.nspname='public' order by 1,2;
+
+-- [constraints-000] 2026-08-28T02:14:52Z http=201
+select con.conname as name, con.conrelid::regclass::text as tbl, con.contype as type,
+       pg_get_constraintdef(con.oid, true) as def,
+       con.condeferrable, con.condeferred, con.convalidated
+from pg_constraint con join pg_namespace n on n.oid=con.connamespace
+where n.nspname='public' and con.contype in ('p','u','f','c','x')
+order by con.conrelid::regclass::text, con.conname
+limit 60 offset 0;
+
+-- [constraints-001] 2026-08-28T02:14:54Z http=201
+select con.conname as name, con.conrelid::regclass::text as tbl, con.contype as type,
+       pg_get_constraintdef(con.oid, true) as def,
+       con.condeferrable, con.condeferred, con.convalidated
+from pg_constraint con join pg_namespace n on n.oid=con.connamespace
+where n.nspname='public' and con.contype in ('p','u','f','c','x')
+order by con.conrelid::regclass::text, con.conname
+limit 60 offset 60;
+
+-- [constraints-002] 2026-08-28T02:14:56Z http=201
+select con.conname as name, con.conrelid::regclass::text as tbl, con.contype as type,
+       pg_get_constraintdef(con.oid, true) as def,
+       con.condeferrable, con.condeferred, con.convalidated
+from pg_constraint con join pg_namespace n on n.oid=con.connamespace
+where n.nspname='public' and con.contype in ('p','u','f','c','x')
+order by con.conrelid::regclass::text, con.conname
+limit 60 offset 120;
+
+-- [constraints-003] 2026-08-28T02:14:58Z http=201
+select con.conname as name, con.conrelid::regclass::text as tbl, con.contype as type,
+       pg_get_constraintdef(con.oid, true) as def,
+       con.condeferrable, con.condeferred, con.convalidated
+from pg_constraint con join pg_namespace n on n.oid=con.connamespace
+where n.nspname='public' and con.contype in ('p','u','f','c','x')
+order by con.conrelid::regclass::text, con.conname
+limit 60 offset 180;
+
+-- [constraints-004] 2026-08-28T02:15:00Z http=201
+select con.conname as name, con.conrelid::regclass::text as tbl, con.contype as type,
+       pg_get_constraintdef(con.oid, true) as def,
+       con.condeferrable, con.condeferred, con.convalidated
+from pg_constraint con join pg_namespace n on n.oid=con.connamespace
+where n.nspname='public' and con.contype in ('p','u','f','c','x')
+order by con.conrelid::regclass::text, con.conname
+limit 60 offset 240;
+
+-- [constraints-005] 2026-08-28T02:15:03Z http=201
+select con.conname as name, con.conrelid::regclass::text as tbl, con.contype as type,
+       pg_get_constraintdef(con.oid, true) as def,
+       con.condeferrable, con.condeferred, con.convalidated
+from pg_constraint con join pg_namespace n on n.oid=con.connamespace
+where n.nspname='public' and con.contype in ('p','u','f','c','x')
+order by con.conrelid::regclass::text, con.conname
+limit 60 offset 300;
+
+-- [constraints-006] 2026-08-28T02:15:05Z http=201
+select con.conname as name, con.conrelid::regclass::text as tbl, con.contype as type,
+       pg_get_constraintdef(con.oid, true) as def,
+       con.condeferrable, con.condeferred, con.convalidated
+from pg_constraint con join pg_namespace n on n.oid=con.connamespace
+where n.nspname='public' and con.contype in ('p','u','f','c','x')
+order by con.conrelid::regclass::text, con.conname
+limit 60 offset 360;
+
+-- [constraints-007] 2026-08-28T02:15:07Z http=201
+select con.conname as name, con.conrelid::regclass::text as tbl, con.contype as type,
+       pg_get_constraintdef(con.oid, true) as def,
+       con.condeferrable, con.condeferred, con.convalidated
+from pg_constraint con join pg_namespace n on n.oid=con.connamespace
+where n.nspname='public' and con.contype in ('p','u','f','c','x')
+order by con.conrelid::regclass::text, con.conname
+limit 60 offset 420;
+
+-- [constraints-008] 2026-08-28T02:15:09Z http=201
+select con.conname as name, con.conrelid::regclass::text as tbl, con.contype as type,
+       pg_get_constraintdef(con.oid, true) as def,
+       con.condeferrable, con.condeferred, con.convalidated
+from pg_constraint con join pg_namespace n on n.oid=con.connamespace
+where n.nspname='public' and con.contype in ('p','u','f','c','x')
+order by con.conrelid::regclass::text, con.conname
+limit 60 offset 480;
+
+-- [constraints-009] 2026-08-28T02:15:12Z http=201
+select con.conname as name, con.conrelid::regclass::text as tbl, con.contype as type,
+       pg_get_constraintdef(con.oid, true) as def,
+       con.condeferrable, con.condeferred, con.convalidated
+from pg_constraint con join pg_namespace n on n.oid=con.connamespace
+where n.nspname='public' and con.contype in ('p','u','f','c','x')
+order by con.conrelid::regclass::text, con.conname
+limit 60 offset 540;
+
+-- [triggers-000] 2026-08-28T02:15:14Z http=201
+select t.tgname as name, c.relname as tbl,
+       pg_get_triggerdef(t.oid, true) as def
+from pg_trigger t join pg_class c on c.oid=t.tgrelid join pg_namespace n on n.oid=c.relnamespace
+where n.nspname='public' and not t.tgisinternal
+order by c.relname, t.tgname limit 40 offset 0;
+
+-- [triggers-001] 2026-08-28T02:15:16Z http=201
+select t.tgname as name, c.relname as tbl,
+       pg_get_triggerdef(t.oid, true) as def
+from pg_trigger t join pg_class c on c.oid=t.tgrelid join pg_namespace n on n.oid=c.relnamespace
+where n.nspname='public' and not t.tgisinternal
+order by c.relname, t.tgname limit 40 offset 40;
+
+-- [triggers-002] 2026-08-28T02:15:18Z http=201
+select t.tgname as name, c.relname as tbl,
+       pg_get_triggerdef(t.oid, true) as def
+from pg_trigger t join pg_class c on c.oid=t.tgrelid join pg_namespace n on n.oid=c.relnamespace
+where n.nspname='public' and not t.tgisinternal
+order by c.relname, t.tgname limit 40 offset 80;
+
+-- [sequences] 2026-08-28T02:17:49Z http=201
+select cs.relname as name, s.seqstart, s.seqincrement, s.seqmax, s.seqmin, s.seqcache, s.seqcycle,
+       format_type(s.seqtypid, null) as seqtype,
+       tn.nspname||'.'||tc.relname||'.'||ca.attname as owned_by
+from pg_sequence s
+join pg_class cs on cs.oid=s.seqrelid
+join pg_namespace n on n.oid=cs.relnamespace
+left join pg_depend d on d.objid=s.seqrelid and d.deptype='a'
+left join pg_class tc on tc.oid=d.refobjid
+left join pg_namespace tn on tn.oid=tc.relnamespace
+left join pg_attribute ca on ca.attrelid=d.refobjid and ca.attnum=d.refobjsubid
+where n.nspname='public' order by cs.relname;
+
+-- [evt-handlers] 2026-08-28T02:22:44Z http=201
+select e.evtname, n.nspname as handler_schema, p.proname, a.rolname as proowner
+from pg_event_trigger e
+join pg_proc p on p.oid=e.evtfoid
+join pg_namespace n on n.oid=p.pronamespace
+join pg_roles a on a.oid=p.proowner;
+
+-- [adj-type] 2026-08-28T02:22:46Z http=201
+select t.typname, t.typtype, n.nspname, c.relkind
+from pg_type t join pg_namespace n on n.oid=t.typnamespace
+left join pg_class c on c.reltype=t.oid
+where t.typname in ('adjustment_item','adjustment_items');
+
+-- [composites] 2026-08-28T02:23:11Z http=201
+select t.typname as name,
+ (select string_agg(a.attname||chr(31)||format_type(a.atttypid,a.atttypmod), chr(30) order by a.attnum)
+  from pg_attribute a where a.attrelid=t.typrelid and a.attnum>0 and not a.attisdropped) as attrs
+from pg_type t join pg_namespace n on n.oid=t.typnamespace
+where n.nspname='public' and t.typtype='c'
+  and exists (select 1 from pg_class c where c.oid=t.typrelid and c.relkind='c')
+order by t.typname;
+
+-- [fp-prod--1] 2026-08-28T02:25:36Z http=201
+-- fingerprint.sql — huella canónica del esquema (misma SQL para prod y lab)
+
+-- [fp-prod-F-0] 2026-08-28T02:25:39Z http=201
+-- Cada SELECT produce líneas 'Fxx<US>payload'. Todo con coalesce('') para simetría psql/API.
+
+-- [fp-prod--0] 2026-08-28T02:25:42Z http=201
+-- Alcance paridad: esquema public. Exclusiones declaradas: extensiones pg_stat_statements/
+
+-- [fp-prod--1] 2026-08-28T02:25:44Z http=201
+-- supabase_vault;
+
+-- [fp-prod--2] 2026-08-28T02:25:46Z http=400
+default-privileges en esquemas de plataforma.
+
+-- [fp-00] 2026-08-28T02:31:10Z http=400
+select 'F1' || chr(31) || c.relname || chr(31) || c.relkind || chr(31) || coalesce(c.reloptions::text,'') || chr(31) || c.relrowsecurity::text || chr(31) || c.relforcerowsecurity::text as line
+from pg_class c join pg_namespace n on n.oid=c.relnamespace
+where n.nspname='public' and c.relkind in ('r','p') order by 1;
+-- [fp-00] 2026-08-28T02:31:32Z http=201
+select 'F1' || chr(31) || c.relname || chr(31) || c.relkind::text || chr(31) || coalesce(c.reloptions::text,'') || chr(31) || c.relrowsecurity::text || chr(31) || c.relforcerowsecurity::text as line
+from pg_class c join pg_namespace n on n.oid=c.relnamespace
+where n.nspname='public' and c.relkind in ('r','p') order by 1;
+-- [fp-01] 2026-08-28T02:31:35Z http=201
+select 'F2' || chr(31) || t.typname || chr(31) || coalesce((select string_agg(e.enumlabel, ',' order by e.enumsortorder) from pg_enum e where e.enumtypid=t.oid),'') as line
+from pg_type t join pg_namespace n on n.oid=t.typnamespace
+where n.nspname='public' and t.typtype='e' order by 1;
+-- [fp-02] 2026-08-28T02:31:37Z http=201
+select 'F2C' || chr(31) || t.typname || chr(31) || coalesce((select string_agg(a.attname||':'||format_type(a.atttypid,a.atttypmod), ',' order by a.attnum) from pg_attribute a where a.attrelid=t.typrelid and a.attnum>0 and not a.attisdropped),'') as line
+from pg_type t join pg_namespace n on n.oid=t.typnamespace
+where n.nspname='public' and t.typtype='c'
+  and exists (select 1 from pg_class cc where cc.oid=t.typrelid and cc.relkind='c') order by 1;
+-- [fp-03] 2026-08-28T02:31:40Z http=201
+select 'F3' || chr(31) || c.relname || chr(31) || a.attname || chr(31) || a.attnum::text || chr(31) || format_type(a.atttypid, a.atttypmod) || chr(31) || a.attnotnull::text
+  || chr(31) || coalesce(case when coalesce(a.attgenerated,'')='' then pg_get_expr(ad.adbin, ad.adrelid) end, '')
+  || chr(31) || coalesce(nullif(a.attidentity,'')::text, '')
+  || chr(31) || coalesce(case when a.attgenerated='s' then pg_get_expr(ad.adbin, ad.adrelid) end, '')
+  || chr(31) || coalesce(case when a.attstorage <> t.typstorage then a.attstorage::text end, '')
+  || chr(31) || coalesce(case when a.attcollation <> t.typcollation and t.typcollation <> 0 then a.attcollation::regcollation::text end, '') as line
+from pg_class c join pg_namespace n on n.oid=c.relnamespace
+join pg_attribute a on a.attrelid=c.oid and a.attnum>0 and not a.attisdropped
+join pg_type t on t.oid=a.atttypid
+left join pg_attrdef ad on ad.adrelid=a.attrelid and ad.adnum=a.attnum
+where n.nspname='public' and c.relkind in ('r','p') order by 1;
+-- [fp-04] 2026-08-28T02:31:42Z http=201
+select 'F4' || chr(31) || con.conrelid::regclass::text || chr(31) || con.conname || chr(31) || con.contype::text || chr(31) || pg_get_constraintdef(con.oid, false) || chr(31) || con.condeferrable::text || chr(31) || con.condeferred::text || chr(31) || con.convalidated::text as line
+from pg_constraint con join pg_namespace n on n.oid=con.connamespace
+where n.nspname='public' and con.contype in ('p','u','f','c','x') order by 1;
+-- [fp-05] 2026-08-28T02:31:45Z http=201
+select 'F5' || chr(31) || pg_get_indexdef(i.indexrelid, 0, false) as line
+from pg_index i join pg_class c on c.oid=i.indexrelid join pg_namespace n on n.oid=c.relnamespace
+where n.nspname='public' order by 1;
+-- [fp-06] 2026-08-28T02:31:48Z http=201
+select 'F6' || chr(31) || p.oid::regprocedure::text || chr(31) || p.prokind::text || chr(31) || md5(coalesce(pg_get_functiondef(p.oid),'')) as line
+from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+where n.nspname='public' and p.prokind in ('f','p','w','a') order by 1;
+-- [fp-07] 2026-08-28T02:31:50Z http=201
+select 'F7' || chr(31) || pg_get_triggerdef(t.oid, false) as line
+from pg_trigger t join pg_class c on c.oid=t.tgrelid join pg_namespace n on n.oid=c.relnamespace
+where n.nspname='public' and not t.tgisinternal order by 1;
+-- [fp-08] 2026-08-28T02:31:53Z http=201
+select 'F8' || chr(31) || pol.tablename || chr(31) || pol.policyname || chr(31) || pol.permissive || chr(31) || pol.cmd || chr(31) || pol.roles::text || chr(31) || coalesce(pol.qual,'') || chr(31) || coalesce(pol.with_check,'') as line
+from pg_policies pol where pol.schemaname='public' order by 1;
+-- [fp-09] 2026-08-28T02:31:56Z http=201
+select 'F9R' || chr(31) || c.relkind::text || chr(31) || c.relname || chr(31) || r.rolname || chr(31) || a.privilege_type || chr(31) || a.is_grantable::text as line
+from pg_class c join pg_namespace n on n.oid=c.relnamespace, aclexplode(c.relacl) a join pg_roles r on r.oid=a.grantee
+where n.nspname='public' and c.relkind in ('r','p','v','m','S') order by 1;
+-- [fp-10] 2026-08-28T02:31:59Z http=201
+select 'F9F' || chr(31) || p.oid::regprocedure::text || chr(31) || r.rolname || chr(31) || a.privilege_type || chr(31) || a.is_grantable::text as line
+from pg_proc p join pg_namespace n on n.oid=p.pronamespace, aclexplode(p.proacl) a join pg_roles r on r.oid=a.grantee
+where n.nspname='public' order by 1;
+-- [fp-11] 2026-08-28T02:32:01Z http=201
+select 'F9S' || chr(31) || r.rolname || chr(31) || a.privilege_type || chr(31) || a.is_grantable::text as line
+from pg_namespace n, aclexplode(n.nspacl) a join pg_roles r on r.oid=a.grantee
+where n.nspname='public' order by 1;
+-- [fp-12] 2026-08-28T02:32:03Z http=201
+select 'F10' || chr(31) || cs.relname || chr(31) || s.seqtypid::regtype::text || chr(31) || s.seqstart::text || chr(31) || s.seqincrement::text || chr(31) || s.seqmin::text || chr(31) || s.seqmax::text || chr(31) || s.seqcache::text || chr(31) || s.seqcycle::text
+  || chr(31) || coalesce((select tn.nspname||'.'||tc.relname||'.'||ca.attname from pg_depend d join pg_class tc on tc.oid=d.refobjid join pg_namespace tn on tn.oid=tc.relnamespace join pg_attribute ca on ca.attrelid=d.refobjid and ca.attnum=d.refobjsubid where d.objid=s.seqrelid and d.deptype='a'),'') as line
+from pg_sequence s join pg_class cs on cs.oid=s.seqrelid join pg_namespace n on n.oid=cs.relnamespace
+where n.nspname='public' order by 1;
+-- [fp-13] 2026-08-28T02:32:06Z http=201
+select 'F11' || chr(31) || c.relname || chr(31) || c.relkind::text || chr(31) || coalesce(c.reloptions::text,'') || chr(31) || pg_get_viewdef(c.oid, false) as line
+from pg_class c join pg_namespace n on n.oid=c.relnamespace
+where n.nspname='public' and c.relkind in ('v','m') order by 1;
+-- [fp-14] 2026-08-28T02:32:08Z http=201
+select 'F12' || chr(31) || e.evtname || chr(31) || e.evtevent || chr(31) || e.evtenabled::text || chr(31) || coalesce(array_to_string(array_agg(x order by x), ','),'') || chr(31) || hn.nspname || '.' || hp.proname as line
+from pg_event_trigger e left join unnest(e.evttags) x on true
+join pg_proc hp on hp.oid=e.evtfoid join pg_namespace hn on hn.oid=hp.pronamespace
+group by e.evtname, e.evtevent, e.evtenabled, hn.nspname, hp.proname order by 1;
+-- [fp-15] 2026-08-28T02:32:10Z http=201
+select 'F13' || chr(31) || d.defaclrole::regrole::text || chr(31) || coalesce(d.defaclnamespace::regnamespace::text,'') || chr(31) || d.defaclobjtype::text || chr(31) || r.rolname || chr(31) || a.privilege_type || chr(31) || a.is_grantable::text as line
+from pg_default_acl d, aclexplode(d.defaclacl) a join pg_roles r on r.oid=a.grantee
+where coalesce(d.defaclnamespace::regnamespace::text,'') not in ('graphql','graphql_public','realtime','storage','auth','extensions','supabase_functions','supabase_migrations','pgsodium','pgsodium_masks','net','vault','cron','pgbouncer','analytics')
+order by 1;
+-- [fp-16] 2026-08-28T02:32:12Z http=201
+select 'F14' || chr(31) || p.pubname || chr(31) || p.pubinsert::text || chr(31) || p.pubupdate::text || chr(31) || p.pubdelete::text || chr(31) || p.pubtruncate::text || chr(31) || p.pubviaroot::text as line
+from pg_publication p order by 1;
+-- [fp-17] 2026-08-28T02:32:14Z http=201
+select 'F14R' || chr(31) || p.pubname || chr(31) || c.relname as line
+from pg_publication_rel pr join pg_publication p on p.oid=pr.prpubid
+join pg_class c on c.oid=pr.prrelid join pg_namespace n on n.oid=c.relnamespace
+where n.nspname='public' order by 1;
+-- [fp-18] 2026-08-28T02:32:15Z http=201
+select 'F15' || chr(31) || e.extname || chr(31) || e.extversion as line
+from pg_extension e
+where e.extname not in ('pg_stat_statements','supabase_vault') order by 1;
+-- [sequences] 2026-08-28T02:33:49Z http=201
+select cs.relname as name, s.seqstart, s.seqincrement, s.seqmax, s.seqmin, s.seqcache, s.seqcycle,
+       format_type(s.seqtypid, null) as seqtype,
+       tn.nspname||'.'||tc.relname||'.'||ca.attname as owned_by
+from pg_sequence s
+join pg_class cs on cs.oid=s.seqrelid
+join pg_namespace n on n.oid=cs.relnamespace
+left join pg_depend d on d.objid=s.seqrelid and d.deptype in ('a','i')
+left join pg_class tc on tc.oid=d.refobjid
+left join pg_namespace tn on tn.oid=tc.relnamespace
+left join pg_attribute ca on ca.attrelid=d.refobjid and ca.attnum=d.refobjsubid
+where n.nspname='public' order by cs.relname;
+
+-- [fp-00] 2026-08-28T02:34:51Z http=201
+select 'F1' || chr(31) || c.relname || chr(31) || c.relkind::text || chr(31) || coalesce(c.reloptions::text,'') || chr(31) || c.relrowsecurity::text || chr(31) || c.relforcerowsecurity::text as line
+from pg_class c join pg_namespace n on n.oid=c.relnamespace
+where n.nspname='public' and c.relkind in ('r','p') order by 1;
+-- [fp-01] 2026-08-28T02:34:52Z http=201
+select 'F2' || chr(31) || t.typname || chr(31) || coalesce((select string_agg(e.enumlabel, ',' order by e.enumsortorder) from pg_enum e where e.enumtypid=t.oid),'') as line
+from pg_type t join pg_namespace n on n.oid=t.typnamespace
+where n.nspname='public' and t.typtype='e' order by 1;
+-- [fp-02] 2026-08-28T02:34:54Z http=201
+select 'F2C' || chr(31) || t.typname || chr(31) || coalesce((select string_agg(a.attname||':'||format_type(a.atttypid,a.atttypmod), ',' order by a.attnum) from pg_attribute a where a.attrelid=t.typrelid and a.attnum>0 and not a.attisdropped),'') as line
+from pg_type t join pg_namespace n on n.oid=t.typnamespace
+where n.nspname='public' and t.typtype='c'
+  and exists (select 1 from pg_class cc where cc.oid=t.typrelid and cc.relkind='c') order by 1;
+-- [fp-03] 2026-08-28T02:34:57Z http=201
+select 'F3' || chr(31) || c.relname || chr(31) || a.attname || chr(31) || a.attnum::text || chr(31) || format_type(a.atttypid, a.atttypmod) || chr(31) || a.attnotnull::text
+  || chr(31) || coalesce(case when coalesce(a.attgenerated,'')='' then pg_get_expr(ad.adbin, ad.adrelid) end, '')
+  || chr(31) || coalesce(nullif(a.attidentity,'')::text, '')
+  || chr(31) || coalesce(case when a.attgenerated='s' then pg_get_expr(ad.adbin, ad.adrelid) end, '')
+  || chr(31) || coalesce(case when a.attstorage <> t.typstorage then a.attstorage::text end, '')
+  || chr(31) || coalesce(case when a.attcollation <> t.typcollation and t.typcollation <> 0 then a.attcollation::regcollation::text end, '') as line
+from pg_class c join pg_namespace n on n.oid=c.relnamespace
+join pg_attribute a on a.attrelid=c.oid and a.attnum>0 and not a.attisdropped
+join pg_type t on t.oid=a.atttypid
+left join pg_attrdef ad on ad.adrelid=a.attrelid and ad.adnum=a.attnum
+where n.nspname='public' and c.relkind in ('r','p') order by 1;
+-- [fp-04] 2026-08-28T02:35:00Z http=201
+select 'F4' || chr(31) || con.conrelid::regclass::text || chr(31) || con.conname || chr(31) || con.contype::text || chr(31) || pg_get_constraintdef(con.oid, false) || chr(31) || con.condeferrable::text || chr(31) || con.condeferred::text || chr(31) || con.convalidated::text as line
+from pg_constraint con join pg_namespace n on n.oid=con.connamespace
+where n.nspname='public' and con.contype in ('p','u','f','c','x') order by 1;
+-- [fp-05] 2026-08-28T02:35:02Z http=201
+select 'F5' || chr(31) || pg_get_indexdef(i.indexrelid, 0, false) as line
+from pg_index i join pg_class c on c.oid=i.indexrelid join pg_namespace n on n.oid=c.relnamespace
+where n.nspname='public' order by 1;
+-- [fp-06] 2026-08-28T02:35:05Z http=201
+select 'F6' || chr(31) || p.oid::regprocedure::text || chr(31) || p.prokind::text || chr(31) || md5(coalesce(pg_get_functiondef(p.oid),'')) as line
+from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+where n.nspname='public' and p.prokind in ('f','p','w','a') order by 1;
+-- [fp-07] 2026-08-28T02:35:07Z http=201
+select 'F7' || chr(31) || pg_get_triggerdef(t.oid, false) as line
+from pg_trigger t join pg_class c on c.oid=t.tgrelid join pg_namespace n on n.oid=c.relnamespace
+where n.nspname='public' and not t.tgisinternal order by 1;
+-- [fp-08] 2026-08-28T02:35:10Z http=201
+select 'F8' || chr(31) || pol.tablename || chr(31) || pol.policyname || chr(31) || pol.permissive || chr(31) || pol.cmd || chr(31) || pol.roles::text || chr(31) || coalesce(pol.qual,'') || chr(31) || coalesce(pol.with_check,'') as line
+from pg_policies pol where pol.schemaname='public' order by 1;
+-- [fp-09] 2026-08-28T02:35:13Z http=201
+select 'F9R' || chr(31) || c.relkind::text || chr(31) || c.relname || chr(31) || r.rolname || chr(31) || a.privilege_type || chr(31) || a.is_grantable::text as line
+from pg_class c join pg_namespace n on n.oid=c.relnamespace, aclexplode(c.relacl) a join pg_roles r on r.oid=a.grantee
+where n.nspname='public' and c.relkind in ('r','p','v','m','S') order by 1;
+-- [fp-10] 2026-08-28T02:35:15Z http=201
+select 'F9F' || chr(31) || p.oid::regprocedure::text || chr(31) || r.rolname || chr(31) || a.privilege_type || chr(31) || a.is_grantable::text as line
+from pg_proc p join pg_namespace n on n.oid=p.pronamespace, aclexplode(p.proacl) a join pg_roles r on r.oid=a.grantee
+where n.nspname='public' order by 1;
+-- [fp-11] 2026-08-28T02:35:17Z http=201
+select 'F9S' || chr(31) || r.rolname || chr(31) || a.privilege_type || chr(31) || a.is_grantable::text as line
+from pg_namespace n, aclexplode(n.nspacl) a join pg_roles r on r.oid=a.grantee
+where n.nspname='public' order by 1;
+-- [fp-12] 2026-08-28T02:35:19Z http=201
+select 'F10' || chr(31) || cs.relname || chr(31) || s.seqtypid::regtype::text || chr(31) || s.seqstart::text || chr(31) || s.seqincrement::text || chr(31) || s.seqmin::text || chr(31) || s.seqmax::text || chr(31) || s.seqcache::text || chr(31) || s.seqcycle::text
+  || chr(31) || coalesce((select tn.nspname||'.'||tc.relname||'.'||ca.attname from pg_depend d join pg_class tc on tc.oid=d.refobjid join pg_namespace tn on tn.oid=tc.relnamespace join pg_attribute ca on ca.attrelid=d.refobjid and ca.attnum=d.refobjsubid where d.objid=s.seqrelid and d.deptype='a'),'') as line
+from pg_sequence s join pg_class cs on cs.oid=s.seqrelid join pg_namespace n on n.oid=cs.relnamespace
+where n.nspname='public' order by 1;
+-- [fp-13] 2026-08-28T02:35:21Z http=201
+select 'F11' || chr(31) || c.relname || chr(31) || c.relkind::text || chr(31) || coalesce(c.reloptions::text,'') || chr(31) || pg_get_viewdef(c.oid, true) as line
+from pg_class c join pg_namespace n on n.oid=c.relnamespace
+where n.nspname='public' and c.relkind in ('v','m') order by 1;
+-- [fp-14] 2026-08-28T02:35:23Z http=201
+select 'F12' || chr(31) || e.evtname || chr(31) || e.evtevent || chr(31) || e.evtenabled::text || chr(31) || coalesce(array_to_string(array_agg(x order by x), ','),'') || chr(31) || hn.nspname || '.' || hp.proname as line
+from pg_event_trigger e left join unnest(e.evttags) x on true
+join pg_proc hp on hp.oid=e.evtfoid join pg_namespace hn on hn.oid=hp.pronamespace
+group by e.evtname, e.evtevent, e.evtenabled, hn.nspname, hp.proname order by 1;
+-- [fp-15] 2026-08-28T02:35:25Z http=201
+select 'F13' || chr(31) || d.defaclrole::regrole::text || chr(31) || coalesce(d.defaclnamespace::regnamespace::text,'') || chr(31) || d.defaclobjtype::text || chr(31) || r.rolname || chr(31) || a.privilege_type || chr(31) || a.is_grantable::text as line
+from pg_default_acl d, aclexplode(d.defaclacl) a join pg_roles r on r.oid=a.grantee
+where coalesce(d.defaclnamespace::regnamespace::text,'') not in ('graphql','graphql_public','realtime','storage','auth','extensions','supabase_functions','supabase_migrations','pgsodium','pgsodium_masks','net','vault','cron','pgbouncer','analytics')
+order by 1;
+-- [fp-16] 2026-08-28T02:35:27Z http=201
+select 'F14' || chr(31) || p.pubname || chr(31) || p.pubinsert::text || chr(31) || p.pubupdate::text || chr(31) || p.pubdelete::text || chr(31) || p.pubtruncate::text || chr(31) || p.pubviaroot::text as line
+from pg_publication p order by 1;
+-- [fp-17] 2026-08-28T02:35:29Z http=201
+select 'F14R' || chr(31) || p.pubname || chr(31) || c.relname as line
+from pg_publication_rel pr join pg_publication p on p.oid=pr.prpubid
+join pg_class c on c.oid=pr.prrelid join pg_namespace n on n.oid=c.relnamespace
+where n.nspname='public' order by 1;
+-- [fp-18] 2026-08-28T02:35:31Z http=201
+select 'F15' || chr(31) || e.extname || chr(31) || e.extversion as line
+from pg_extension e
+where e.extname not in ('pg_stat_statements','supabase_vault') order by 1;
+-- [v-prod-pretty] 2026-08-28T02:36:20Z http=201
+select pg_get_viewdef('public.v_rls_tenant_backfill_audit'::regclass, true) as line;
+
+-- [v-prod-canon] 2026-08-28T02:36:22Z http=201
+select pg_get_viewdef('public.v_rls_tenant_backfill_audit'::regclass, false) as line;
+
+-- [fp-00] 2026-08-28T02:36:53Z http=201
+select 'F1' || chr(31) || c.relname || chr(31) || c.relkind::text || chr(31) || coalesce(c.reloptions::text,'') || chr(31) || c.relrowsecurity::text || chr(31) || c.relforcerowsecurity::text as line
+from pg_class c join pg_namespace n on n.oid=c.relnamespace
+where n.nspname='public' and c.relkind in ('r','p') order by 1;
+-- [fp-01] 2026-08-28T02:36:55Z http=201
+select 'F2' || chr(31) || t.typname || chr(31) || coalesce((select string_agg(e.enumlabel, ',' order by e.enumsortorder) from pg_enum e where e.enumtypid=t.oid),'') as line
+from pg_type t join pg_namespace n on n.oid=t.typnamespace
+where n.nspname='public' and t.typtype='e' order by 1;
+-- [fp-02] 2026-08-28T02:36:57Z http=201
+select 'F2C' || chr(31) || t.typname || chr(31) || coalesce((select string_agg(a.attname||':'||format_type(a.atttypid,a.atttypmod), ',' order by a.attnum) from pg_attribute a where a.attrelid=t.typrelid and a.attnum>0 and not a.attisdropped),'') as line
+from pg_type t join pg_namespace n on n.oid=t.typnamespace
+where n.nspname='public' and t.typtype='c'
+  and exists (select 1 from pg_class cc where cc.oid=t.typrelid and cc.relkind='c') order by 1;
+-- [fp-03] 2026-08-28T02:37:00Z http=201
+select 'F3' || chr(31) || c.relname || chr(31) || a.attname || chr(31) || a.attnum::text || chr(31) || format_type(a.atttypid, a.atttypmod) || chr(31) || a.attnotnull::text
+  || chr(31) || coalesce(case when coalesce(a.attgenerated,'')='' then pg_get_expr(ad.adbin, ad.adrelid) end, '')
+  || chr(31) || coalesce(nullif(a.attidentity,'')::text, '')
+  || chr(31) || coalesce(case when a.attgenerated='s' then pg_get_expr(ad.adbin, ad.adrelid) end, '')
+  || chr(31) || coalesce(case when a.attstorage <> t.typstorage then a.attstorage::text end, '')
+  || chr(31) || coalesce(case when a.attcollation <> t.typcollation and t.typcollation <> 0 then a.attcollation::regcollation::text end, '') as line
+from pg_class c join pg_namespace n on n.oid=c.relnamespace
+join pg_attribute a on a.attrelid=c.oid and a.attnum>0 and not a.attisdropped
+join pg_type t on t.oid=a.atttypid
+left join pg_attrdef ad on ad.adrelid=a.attrelid and ad.adnum=a.attnum
+where n.nspname='public' and c.relkind in ('r','p') order by 1;
+-- [fp-04] 2026-08-28T02:37:02Z http=201
+select 'F4' || chr(31) || con.conrelid::regclass::text || chr(31) || con.conname || chr(31) || con.contype::text || chr(31) || pg_get_constraintdef(con.oid, false) || chr(31) || con.condeferrable::text || chr(31) || con.condeferred::text || chr(31) || con.convalidated::text as line
+from pg_constraint con join pg_namespace n on n.oid=con.connamespace
+where n.nspname='public' and con.contype in ('p','u','f','c','x') order by 1;
+-- [fp-05] 2026-08-28T02:37:05Z http=201
+select 'F5' || chr(31) || pg_get_indexdef(i.indexrelid, 0, false) as line
+from pg_index i join pg_class c on c.oid=i.indexrelid join pg_namespace n on n.oid=c.relnamespace
+where n.nspname='public' order by 1;
+-- [fp-06] 2026-08-28T02:37:08Z http=201
+select 'F6' || chr(31) || p.oid::regprocedure::text || chr(31) || p.prokind::text || chr(31) || md5(coalesce(pg_get_functiondef(p.oid),'')) as line
+from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+where n.nspname='public' and p.prokind in ('f','p','w','a') order by 1;
+-- [fp-07] 2026-08-28T02:37:09Z http=201
+select 'F7' || chr(31) || pg_get_triggerdef(t.oid, false) as line
+from pg_trigger t join pg_class c on c.oid=t.tgrelid join pg_namespace n on n.oid=c.relnamespace
+where n.nspname='public' and not t.tgisinternal order by 1;
+-- [fp-08] 2026-08-28T02:37:12Z http=201
+select 'F8' || chr(31) || pol.tablename || chr(31) || pol.policyname || chr(31) || pol.permissive || chr(31) || pol.cmd || chr(31) || pol.roles::text || chr(31) || replace(coalesce(pol.qual,''), E'\n', chr(30)) || chr(31) || replace(coalesce(pol.with_check,''), E'\n', chr(30)) as line
+from pg_policies pol where pol.schemaname='public' order by 1;
+-- [fp-09] 2026-08-28T02:37:15Z http=201
+select 'F9R' || chr(31) || c.relkind::text || chr(31) || c.relname || chr(31) || r.rolname || chr(31) || a.privilege_type || chr(31) || a.is_grantable::text as line
+from pg_class c join pg_namespace n on n.oid=c.relnamespace, aclexplode(c.relacl) a join pg_roles r on r.oid=a.grantee
+where n.nspname='public' and c.relkind in ('r','p','v','m','S') order by 1;
+-- [fp-10] 2026-08-28T02:37:17Z http=201
+select 'F9F' || chr(31) || p.oid::regprocedure::text || chr(31) || r.rolname || chr(31) || a.privilege_type || chr(31) || a.is_grantable::text as line
+from pg_proc p join pg_namespace n on n.oid=p.pronamespace, aclexplode(p.proacl) a join pg_roles r on r.oid=a.grantee
+where n.nspname='public' order by 1;
+-- [fp-11] 2026-08-28T02:37:21Z http=201
+select 'F9S' || chr(31) || r.rolname || chr(31) || a.privilege_type || chr(31) || a.is_grantable::text as line
+from pg_namespace n, aclexplode(n.nspacl) a join pg_roles r on r.oid=a.grantee
+where n.nspname='public' order by 1;
+-- [fp-12] 2026-08-28T02:37:24Z http=201
+select 'F10' || chr(31) || cs.relname || chr(31) || s.seqtypid::regtype::text || chr(31) || s.seqstart::text || chr(31) || s.seqincrement::text || chr(31) || s.seqmin::text || chr(31) || s.seqmax::text || chr(31) || s.seqcache::text || chr(31) || s.seqcycle::text
+  || chr(31) || coalesce((select tn.nspname||'.'||tc.relname||'.'||ca.attname from pg_depend d join pg_class tc on tc.oid=d.refobjid join pg_namespace tn on tn.oid=tc.relnamespace join pg_attribute ca on ca.attrelid=d.refobjid and ca.attnum=d.refobjsubid where d.objid=s.seqrelid and d.deptype='a'),'') as line
+from pg_sequence s join pg_class cs on cs.oid=s.seqrelid join pg_namespace n on n.oid=cs.relnamespace
+where n.nspname='public' order by 1;
+-- [fp-13] 2026-08-28T02:37:26Z http=201
+select 'F11' || chr(31) || c.relname || chr(31) || c.relkind::text || chr(31) || coalesce(c.reloptions::text,'') || chr(31) || replace(pg_get_viewdef(c.oid, true), E'\n', chr(30)) as line
+from pg_class c join pg_namespace n on n.oid=c.relnamespace
+where n.nspname='public' and c.relkind in ('v','m') order by 1;
+-- [fp-14] 2026-08-28T02:37:28Z http=201
+select 'F12' || chr(31) || e.evtname || chr(31) || e.evtevent || chr(31) || e.evtenabled::text || chr(31) || coalesce(array_to_string(array_agg(x order by x), ','),'') || chr(31) || hn.nspname || '.' || hp.proname as line
+from pg_event_trigger e left join unnest(e.evttags) x on true
+join pg_proc hp on hp.oid=e.evtfoid join pg_namespace hn on hn.oid=hp.pronamespace
+group by e.evtname, e.evtevent, e.evtenabled, hn.nspname, hp.proname order by 1;
+-- [fp-15] 2026-08-28T02:37:30Z http=201
+select 'F13' || chr(31) || d.defaclrole::regrole::text || chr(31) || coalesce(d.defaclnamespace::regnamespace::text,'') || chr(31) || d.defaclobjtype::text || chr(31) || r.rolname || chr(31) || a.privilege_type || chr(31) || a.is_grantable::text as line
+from pg_default_acl d, aclexplode(d.defaclacl) a join pg_roles r on r.oid=a.grantee
+where coalesce(d.defaclnamespace::regnamespace::text,'') not in ('graphql','graphql_public','realtime','storage','auth','extensions','supabase_functions','supabase_migrations','pgsodium','pgsodium_masks','net','vault','cron','pgbouncer','analytics')
+order by 1;
+-- [fp-16] 2026-08-28T02:37:32Z http=201
+select 'F14' || chr(31) || p.pubname || chr(31) || p.pubinsert::text || chr(31) || p.pubupdate::text || chr(31) || p.pubdelete::text || chr(31) || p.pubtruncate::text || chr(31) || p.pubviaroot::text as line
+from pg_publication p order by 1;
+-- [fp-17] 2026-08-28T02:37:35Z http=201
+select 'F14R' || chr(31) || p.pubname || chr(31) || c.relname as line
+from pg_publication_rel pr join pg_publication p on p.oid=pr.prpubid
+join pg_class c on c.oid=pr.prrelid join pg_namespace n on n.oid=c.relnamespace
+where n.nspname='public' order by 1;
+-- [fp-18] 2026-08-28T02:37:37Z http=201
+select 'F15' || chr(31) || e.extname || chr(31) || e.extversion as line
+from pg_extension e
+where e.extname not in ('pg_stat_statements','supabase_vault') order by 1;
+-- [fp-00] 2026-08-28T02:38:02Z http=201
+select 'F1' || chr(31) || c.relname || chr(31) || c.relkind::text || chr(31) || coalesce(c.reloptions::text,'') || chr(31) || c.relrowsecurity::text || chr(31) || c.relforcerowsecurity::text as line
+from pg_class c join pg_namespace n on n.oid=c.relnamespace
+where n.nspname='public' and c.relkind in ('r','p') order by 1;
+-- [fp-01] 2026-08-28T02:38:04Z http=201
+select 'F2' || chr(31) || t.typname || chr(31) || coalesce((select string_agg(e.enumlabel, ',' order by e.enumsortorder) from pg_enum e where e.enumtypid=t.oid),'') as line
+from pg_type t join pg_namespace n on n.oid=t.typnamespace
+where n.nspname='public' and t.typtype='e' order by 1;
+-- [fp-02] 2026-08-28T02:38:06Z http=201
+select 'F2C' || chr(31) || t.typname || chr(31) || coalesce((select string_agg(a.attname||':'||format_type(a.atttypid,a.atttypmod), ',' order by a.attnum) from pg_attribute a where a.attrelid=t.typrelid and a.attnum>0 and not a.attisdropped),'') as line
+from pg_type t join pg_namespace n on n.oid=t.typnamespace
+where n.nspname='public' and t.typtype='c'
+  and exists (select 1 from pg_class cc where cc.oid=t.typrelid and cc.relkind='c') order by 1;
+-- [fp-03] 2026-08-28T02:38:11Z http=201
+select 'F3' || chr(31) || c.relname || chr(31) || a.attname || chr(31) || (row_number() over (partition by c.oid order by a.attnum))::text || chr(31) || format_type(a.atttypid, a.atttypmod) || chr(31) || a.attnotnull::text
+  || chr(31) || coalesce(case when coalesce(a.attgenerated,'')='' then pg_get_expr(ad.adbin, ad.adrelid) end, '')
+  || chr(31) || coalesce(nullif(a.attidentity,'')::text, '')
+  || chr(31) || coalesce(case when a.attgenerated='s' then pg_get_expr(ad.adbin, ad.adrelid) end, '')
+  || chr(31) || coalesce(case when a.attstorage <> t.typstorage then a.attstorage::text end, '')
+  || chr(31) || coalesce(case when a.attcollation <> t.typcollation and t.typcollation <> 0 then a.attcollation::regcollation::text end, '') as line
+from pg_class c join pg_namespace n on n.oid=c.relnamespace
+join pg_attribute a on a.attrelid=c.oid and a.attnum>0 and not a.attisdropped
+join pg_type t on t.oid=a.atttypid
+left join pg_attrdef ad on ad.adrelid=a.attrelid and ad.adnum=a.attnum
+where n.nspname='public' and c.relkind in ('r','p') order by 1;
+-- [fp-04] 2026-08-28T02:38:13Z http=201
+select 'F4' || chr(31) || con.conrelid::regclass::text || chr(31) || con.conname || chr(31) || con.contype::text || chr(31) || pg_get_constraintdef(con.oid, false) || chr(31) || con.condeferrable::text || chr(31) || con.condeferred::text || chr(31) || con.convalidated::text as line
+from pg_constraint con join pg_namespace n on n.oid=con.connamespace
+where n.nspname='public' and con.contype in ('p','u','f','c','x') order by 1;
+-- [fp-05] 2026-08-28T02:38:16Z http=201
+select 'F5' || chr(31) || pg_get_indexdef(i.indexrelid, 0, false) as line
+from pg_index i join pg_class c on c.oid=i.indexrelid join pg_namespace n on n.oid=c.relnamespace
+where n.nspname='public' order by 1;
+-- [fp-06] 2026-08-28T02:38:19Z http=201
+select 'F6' || chr(31) || p.oid::regprocedure::text || chr(31) || p.prokind::text || chr(31) || md5(coalesce(pg_get_functiondef(p.oid),'')) as line
+from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+where n.nspname='public' and p.prokind in ('f','p','w','a') order by 1;
+-- [fp-07] 2026-08-28T02:38:21Z http=201
+select 'F7' || chr(31) || pg_get_triggerdef(t.oid, false) as line
+from pg_trigger t join pg_class c on c.oid=t.tgrelid join pg_namespace n on n.oid=c.relnamespace
+where n.nspname='public' and not t.tgisinternal order by 1;
+-- [fp-08] 2026-08-28T02:38:24Z http=201
+select 'F8' || chr(31) || pol.tablename || chr(31) || pol.policyname || chr(31) || pol.permissive || chr(31) || pol.cmd || chr(31) || pol.roles::text || chr(31) || replace(coalesce(pol.qual,''), E'\n', chr(30)) || chr(31) || replace(coalesce(pol.with_check,''), E'\n', chr(30)) as line
+from pg_policies pol where pol.schemaname='public' order by 1;
+-- [fp-09] 2026-08-28T02:38:27Z http=201
+select 'F9R' || chr(31) || c.relkind::text || chr(31) || c.relname || chr(31) || r.rolname || chr(31) || a.privilege_type || chr(31) || a.is_grantable::text as line
+from pg_class c join pg_namespace n on n.oid=c.relnamespace, aclexplode(c.relacl) a join pg_roles r on r.oid=a.grantee
+where n.nspname='public' and c.relkind in ('r','p','v','m','S') order by 1;
+-- [fp-10] 2026-08-28T02:38:29Z http=201
+select 'F9F' || chr(31) || p.oid::regprocedure::text || chr(31) || r.rolname || chr(31) || a.privilege_type || chr(31) || a.is_grantable::text as line
+from pg_proc p join pg_namespace n on n.oid=p.pronamespace, aclexplode(p.proacl) a join pg_roles r on r.oid=a.grantee
+where n.nspname='public' order by 1;
+-- [fp-11] 2026-08-28T02:38:32Z http=201
+select 'F9S' || chr(31) || r.rolname || chr(31) || a.privilege_type || chr(31) || a.is_grantable::text as line
+from pg_namespace n, aclexplode(n.nspacl) a join pg_roles r on r.oid=a.grantee
+where n.nspname='public' order by 1;
+-- [fp-12] 2026-08-28T02:38:33Z http=201
+select 'F10' || chr(31) || cs.relname || chr(31) || s.seqtypid::regtype::text || chr(31) || s.seqstart::text || chr(31) || s.seqincrement::text || chr(31) || s.seqmin::text || chr(31) || s.seqmax::text || chr(31) || s.seqcache::text || chr(31) || s.seqcycle::text
+  || chr(31) || coalesce((select tn.nspname||'.'||tc.relname||'.'||ca.attname from pg_depend d join pg_class tc on tc.oid=d.refobjid join pg_namespace tn on tn.oid=tc.relnamespace join pg_attribute ca on ca.attrelid=d.refobjid and ca.attnum=d.refobjsubid where d.objid=s.seqrelid and d.deptype='a'),'') as line
+from pg_sequence s join pg_class cs on cs.oid=s.seqrelid join pg_namespace n on n.oid=cs.relnamespace
+where n.nspname='public' order by 1;
+-- [fp-13] 2026-08-28T02:38:36Z http=201
+select 'F11' || chr(31) || c.relname || chr(31) || c.relkind::text || chr(31) || coalesce(c.reloptions::text,'') || chr(31) || replace(pg_get_viewdef(c.oid, true), E'\n', chr(30)) as line
+from pg_class c join pg_namespace n on n.oid=c.relnamespace
+where n.nspname='public' and c.relkind in ('v','m') order by 1;
+-- [fp-14] 2026-08-28T02:38:38Z http=201
+select 'F12' || chr(31) || e.evtname || chr(31) || e.evtevent || chr(31) || e.evtenabled::text || chr(31) || coalesce(array_to_string(array_agg(x order by x), ','),'') || chr(31) || hn.nspname || '.' || hp.proname as line
+from pg_event_trigger e left join unnest(e.evttags) x on true
+join pg_proc hp on hp.oid=e.evtfoid join pg_namespace hn on hn.oid=hp.pronamespace
+group by e.evtname, e.evtevent, e.evtenabled, hn.nspname, hp.proname order by 1;
+-- [fp-15] 2026-08-28T02:38:40Z http=201
+select 'F13' || chr(31) || d.defaclrole::regrole::text || chr(31) || coalesce(d.defaclnamespace::regnamespace::text,'') || chr(31) || d.defaclobjtype::text || chr(31) || r.rolname || chr(31) || a.privilege_type || chr(31) || a.is_grantable::text as line
+from pg_default_acl d, aclexplode(d.defaclacl) a join pg_roles r on r.oid=a.grantee
+where coalesce(d.defaclnamespace::regnamespace::text,'') not in ('graphql','graphql_public','realtime','storage','auth','extensions','supabase_functions','supabase_migrations','pgsodium','pgsodium_masks','net','vault','cron','pgbouncer','analytics')
+order by 1;
+-- [fp-16] 2026-08-28T02:38:42Z http=201
+select 'F14' || chr(31) || p.pubname || chr(31) || p.pubinsert::text || chr(31) || p.pubupdate::text || chr(31) || p.pubdelete::text || chr(31) || p.pubtruncate::text || chr(31) || p.pubviaroot::text as line
+from pg_publication p order by 1;
+-- [fp-17] 2026-08-28T02:38:44Z http=201
+select 'F14R' || chr(31) || p.pubname || chr(31) || c.relname as line
+from pg_publication_rel pr join pg_publication p on p.oid=pr.prpubid
+join pg_class c on c.oid=pr.prrelid join pg_namespace n on n.oid=c.relnamespace
+where n.nspname='public' order by 1;
+-- [fp-18] 2026-08-28T02:38:46Z http=201
+select 'F15' || chr(31) || e.extname || chr(31) || e.extversion as line
+from pg_extension e
+where e.extname not in ('pg_stat_statements','supabase_vault') order by 1;
+-- [acl-check] 2026-08-28T02:39:55Z http=201
+select p.oid::regprocedure::text as sig, coalesce(p.proacl::text,'NULL') as acl from pg_proc p where p.oid::regprocedure::text in ('adjust_total_amount(uuid,numeric,text)','get_global_max_operation_date(uuid)');
+-- [fp-00] 2026-08-28T02:42:14Z http=201
+select 'F1' || chr(31) || c.relname || chr(31) || c.relkind::text || chr(31) || coalesce(c.reloptions::text,'') || chr(31) || c.relrowsecurity::text || chr(31) || c.relforcerowsecurity::text as line
+from pg_class c join pg_namespace n on n.oid=c.relnamespace
+where n.nspname='public' and c.relkind in ('r','p') order by 1;
+-- [fp-01] 2026-08-28T02:42:17Z http=201
+select 'F2' || chr(31) || t.typname || chr(31) || coalesce((select string_agg(e.enumlabel, ',' order by e.enumsortorder) from pg_enum e where e.enumtypid=t.oid),'') as line
+from pg_type t join pg_namespace n on n.oid=t.typnamespace
+where n.nspname='public' and t.typtype='e' order by 1;
+-- [fp-02] 2026-08-28T02:42:19Z http=201
+select 'F2C' || chr(31) || t.typname || chr(31) || coalesce((select string_agg(a.attname||':'||format_type(a.atttypid,a.atttypmod), ',' order by a.attnum) from pg_attribute a where a.attrelid=t.typrelid and a.attnum>0 and not a.attisdropped),'') as line
+from pg_type t join pg_namespace n on n.oid=t.typnamespace
+where n.nspname='public' and t.typtype='c'
+  and exists (select 1 from pg_class cc where cc.oid=t.typrelid and cc.relkind='c') order by 1;
+-- [fp-03] 2026-08-28T02:42:22Z http=201
+select 'F3' || chr(31) || c.relname || chr(31) || a.attname || chr(31) || (row_number() over (partition by c.oid order by a.attnum))::text || chr(31) || format_type(a.atttypid, a.atttypmod) || chr(31) || a.attnotnull::text
+  || chr(31) || replace(coalesce(case when coalesce(a.attgenerated,'')='' then pg_get_expr(ad.adbin, ad.adrelid) end, ''), E'\n', chr(30))
+  || chr(31) || coalesce(nullif(a.attidentity,'')::text, '')
+  || chr(31) || replace(coalesce(case when a.attgenerated='s' then pg_get_expr(ad.adbin, ad.adrelid) end, ''), E'\n', chr(30))
+  || chr(31) || coalesce(case when a.attstorage <> t.typstorage then a.attstorage::text end, '')
+  || chr(31) || coalesce(case when a.attcollation <> t.typcollation and t.typcollation <> 0 then a.attcollation::regcollation::text end, '') as line
+from pg_class c join pg_namespace n on n.oid=c.relnamespace
+join pg_attribute a on a.attrelid=c.oid and a.attnum>0 and not a.attisdropped
+join pg_type t on t.oid=a.atttypid
+left join pg_attrdef ad on ad.adrelid=a.attrelid and ad.adnum=a.attnum
+where n.nspname='public' and c.relkind in ('r','p') order by 1;
+-- [fp-04] 2026-08-28T02:42:24Z http=201
+select 'F4' || chr(31) || con.conrelid::regclass::text || chr(31) || con.conname || chr(31) || con.contype::text || chr(31) || pg_get_constraintdef(con.oid, false) || chr(31) || con.condeferrable::text || chr(31) || con.condeferred::text || chr(31) || con.convalidated::text as line
+from pg_constraint con join pg_namespace n on n.oid=con.connamespace
+where n.nspname='public' and con.contype in ('p','u','f','c','x') order by 1;
+-- [fp-05] 2026-08-28T02:42:27Z http=201
+select 'F5' || chr(31) || pg_get_indexdef(i.indexrelid, 0, false) as line
+from pg_index i join pg_class c on c.oid=i.indexrelid join pg_namespace n on n.oid=c.relnamespace
+where n.nspname='public' order by 1;
+-- [fp-06] 2026-08-28T02:42:29Z http=201
+select 'F6' || chr(31) || p.oid::regprocedure::text || chr(31) || p.prokind::text || chr(31) || md5(coalesce(pg_get_functiondef(p.oid),'')) as line
+from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+where n.nspname='public' and p.prokind in ('f','p','w','a') order by 1;
+-- [fp-07] 2026-08-28T02:42:31Z http=201
+select 'F7' || chr(31) || pg_get_triggerdef(t.oid, false) as line
+from pg_trigger t join pg_class c on c.oid=t.tgrelid join pg_namespace n on n.oid=c.relnamespace
+where n.nspname='public' and not t.tgisinternal order by 1;
+-- [fp-08] 2026-08-28T02:42:34Z http=201
+select 'F8' || chr(31) || pol.tablename || chr(31) || pol.policyname || chr(31) || pol.permissive || chr(31) || pol.cmd || chr(31) || pol.roles::text || chr(31) || replace(coalesce(pol.qual,''), E'\n', chr(30)) || chr(31) || replace(coalesce(pol.with_check,''), E'\n', chr(30)) as line
+from pg_policies pol where pol.schemaname='public' order by 1;
+-- [fp-09] 2026-08-28T02:42:38Z http=201
+select 'F9R' || chr(31) || c.relkind::text || chr(31) || c.relname || chr(31) || r.rolname || chr(31) || a.privilege_type || chr(31) || a.is_grantable::text as line
+from pg_class c join pg_namespace n on n.oid=c.relnamespace, aclexplode(c.relacl) a join pg_roles r on r.oid=a.grantee
+where n.nspname='public' and c.relkind in ('r','p','v','m','S') order by 1;
+-- [fp-10] 2026-08-28T02:42:40Z http=201
+select 'F9F' || chr(31) || p.oid::regprocedure::text || chr(31) || r.rolname || chr(31) || a.privilege_type || chr(31) || a.is_grantable::text as line
+from pg_proc p join pg_namespace n on n.oid=p.pronamespace, aclexplode(p.proacl) a join pg_roles r on r.oid=a.grantee
+where n.nspname='public' order by 1;
+-- [fp-11] 2026-08-28T02:42:42Z http=201
+select 'F9S' || chr(31) || r.rolname || chr(31) || a.privilege_type || chr(31) || a.is_grantable::text as line
+from pg_namespace n, aclexplode(n.nspacl) a join pg_roles r on r.oid=a.grantee
+where n.nspname='public' order by 1;
+-- [fp-12] 2026-08-28T02:42:44Z http=201
+select 'F10' || chr(31) || cs.relname || chr(31) || s.seqtypid::regtype::text || chr(31) || s.seqstart::text || chr(31) || s.seqincrement::text || chr(31) || s.seqmin::text || chr(31) || s.seqmax::text || chr(31) || s.seqcache::text || chr(31) || s.seqcycle::text
+  || chr(31) || coalesce((select tn.nspname||'.'||tc.relname||'.'||ca.attname from pg_depend d join pg_class tc on tc.oid=d.refobjid join pg_namespace tn on tn.oid=tc.relnamespace join pg_attribute ca on ca.attrelid=d.refobjid and ca.attnum=d.refobjsubid where d.objid=s.seqrelid and d.deptype='a'),'') as line
+from pg_sequence s join pg_class cs on cs.oid=s.seqrelid join pg_namespace n on n.oid=cs.relnamespace
+where n.nspname='public' order by 1;
+-- [fp-13] 2026-08-28T02:42:47Z http=201
+select 'F11' || chr(31) || c.relname || chr(31) || c.relkind::text || chr(31) || coalesce(c.reloptions::text,'') || chr(31) || replace(pg_get_viewdef(c.oid, true), E'\n', chr(30)) as line
+from pg_class c join pg_namespace n on n.oid=c.relnamespace
+where n.nspname='public' and c.relkind in ('v','m') order by 1;
+-- [fp-14] 2026-08-28T02:42:49Z http=201
+select 'F12' || chr(31) || e.evtname || chr(31) || e.evtevent || chr(31) || e.evtenabled::text || chr(31) || coalesce(array_to_string(array_agg(x order by x), ','),'') || chr(31) || hn.nspname || '.' || hp.proname as line
+from pg_event_trigger e left join unnest(e.evttags) x on true
+join pg_proc hp on hp.oid=e.evtfoid join pg_namespace hn on hn.oid=hp.pronamespace
+group by e.evtname, e.evtevent, e.evtenabled, hn.nspname, hp.proname order by 1;
+-- [fp-15] 2026-08-28T02:42:51Z http=201
+select 'F13' || chr(31) || d.defaclrole::regrole::text || chr(31) || coalesce(d.defaclnamespace::regnamespace::text,'') || chr(31) || d.defaclobjtype::text || chr(31) || r.rolname || chr(31) || a.privilege_type || chr(31) || a.is_grantable::text as line
+from pg_default_acl d, aclexplode(d.defaclacl) a join pg_roles r on r.oid=a.grantee
+where coalesce(d.defaclnamespace::regnamespace::text,'') not in ('graphql','graphql_public','realtime','storage','auth','extensions','supabase_functions','supabase_migrations','pgsodium','pgsodium_masks','net','vault','cron','pgbouncer','analytics')
+order by 1;
+-- [fp-16] 2026-08-28T02:42:53Z http=201
+select 'F14' || chr(31) || p.pubname || chr(31) || p.pubinsert::text || chr(31) || p.pubupdate::text || chr(31) || p.pubdelete::text || chr(31) || p.pubtruncate::text || chr(31) || p.pubviaroot::text as line
+from pg_publication p order by 1;
+-- [fp-17] 2026-08-28T02:42:55Z http=201
+select 'F14R' || chr(31) || p.pubname || chr(31) || c.relname as line
+from pg_publication_rel pr join pg_publication p on p.oid=pr.prpubid
+join pg_class c on c.oid=pr.prrelid join pg_namespace n on n.oid=c.relnamespace
+where n.nspname='public' order by 1;
+-- [fp-18] 2026-08-28T02:42:57Z http=201
+select 'F15' || chr(31) || e.extname || chr(31) || e.extversion as line
+from pg_extension e
+where e.extname not in ('pg_stat_statements','supabase_vault') order by 1;
+-- [ext-ns] 2026-08-28T02:43:46Z http=201
+select e.extname, n.nspname from pg_extension e join pg_namespace n on n.oid=e.extnamespace order by 1;
+-- [fp-00] 2026-08-28T02:44:31Z http=201
+select 'F1' || chr(31) || c.relname || chr(31) || c.relkind::text || chr(31) || coalesce(c.reloptions::text,'') || chr(31) || c.relrowsecurity::text || chr(31) || c.relforcerowsecurity::text as line
+from pg_class c join pg_namespace n on n.oid=c.relnamespace
+where n.nspname='public' and c.relkind in ('r','p') order by 1;
+-- [fp-01] 2026-08-28T02:44:33Z http=201
+select 'F2' || chr(31) || t.typname || chr(31) || coalesce((select string_agg(e.enumlabel, ',' order by e.enumsortorder) from pg_enum e where e.enumtypid=t.oid),'') as line
+from pg_type t join pg_namespace n on n.oid=t.typnamespace
+where n.nspname='public' and t.typtype='e' order by 1;
+-- [fp-02] 2026-08-28T02:44:35Z http=201
+select 'F2C' || chr(31) || t.typname || chr(31) || coalesce((select string_agg(a.attname||':'||format_type(a.atttypid,a.atttypmod), ',' order by a.attnum) from pg_attribute a where a.attrelid=t.typrelid and a.attnum>0 and not a.attisdropped),'') as line
+from pg_type t join pg_namespace n on n.oid=t.typnamespace
+where n.nspname='public' and t.typtype='c'
+  and exists (select 1 from pg_class cc where cc.oid=t.typrelid and cc.relkind='c') order by 1;
+-- [fp-03] 2026-08-28T02:44:39Z http=201
+select 'F3' || chr(31) || c.relname || chr(31) || a.attname || chr(31) || (row_number() over (partition by c.oid order by a.attnum))::text || chr(31) || format_type(a.atttypid, a.atttypmod) || chr(31) || a.attnotnull::text
+  || chr(31) || replace(coalesce(case when coalesce(a.attgenerated,'')='' then pg_get_expr(ad.adbin, ad.adrelid) end, ''), E'\n', chr(30))
+  || chr(31) || coalesce(nullif(a.attidentity,'')::text, '')
+  || chr(31) || replace(coalesce(case when a.attgenerated='s' then pg_get_expr(ad.adbin, ad.adrelid) end, ''), E'\n', chr(30))
+  || chr(31) || coalesce(case when a.attstorage <> t.typstorage then a.attstorage::text end, '')
+  || chr(31) || coalesce(case when a.attcollation <> t.typcollation and t.typcollation <> 0 then a.attcollation::regcollation::text end, '') as line
+from pg_class c join pg_namespace n on n.oid=c.relnamespace
+join pg_attribute a on a.attrelid=c.oid and a.attnum>0 and not a.attisdropped
+join pg_type t on t.oid=a.atttypid
+left join pg_attrdef ad on ad.adrelid=a.attrelid and ad.adnum=a.attnum
+where n.nspname='public' and c.relkind in ('r','p') order by 1;
+-- [fp-04] 2026-08-28T02:44:41Z http=201
+select 'F4' || chr(31) || con.conrelid::regclass::text || chr(31) || con.conname || chr(31) || con.contype::text || chr(31) || pg_get_constraintdef(con.oid, false) || chr(31) || con.condeferrable::text || chr(31) || con.condeferred::text || chr(31) || con.convalidated::text as line
+from pg_constraint con join pg_namespace n on n.oid=con.connamespace
+where n.nspname='public' and con.contype in ('p','u','f','c','x') order by 1;
+-- [fp-05] 2026-08-28T02:44:45Z http=201
+select 'F5' || chr(31) || pg_get_indexdef(i.indexrelid, 0, false) as line
+from pg_index i join pg_class c on c.oid=i.indexrelid join pg_namespace n on n.oid=c.relnamespace
+where n.nspname='public' order by 1;
+-- [fp-06] 2026-08-28T02:44:48Z http=201
+select 'F6' || chr(31) || p.oid::regprocedure::text || chr(31) || p.prokind::text || chr(31) || md5(coalesce(pg_get_functiondef(p.oid),'')) as line
+from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+where n.nspname='public' and p.prokind in ('f','p','w','a') order by 1;
+-- [fp-07] 2026-08-28T02:44:51Z http=201
+select 'F7' || chr(31) || pg_get_triggerdef(t.oid, false) as line
+from pg_trigger t join pg_class c on c.oid=t.tgrelid join pg_namespace n on n.oid=c.relnamespace
+where n.nspname='public' and not t.tgisinternal order by 1;
+-- [fp-08] 2026-08-28T02:44:53Z http=201
+select 'F8' || chr(31) || pol.tablename || chr(31) || pol.policyname || chr(31) || pol.permissive || chr(31) || pol.cmd || chr(31) || pol.roles::text || chr(31) || replace(coalesce(pol.qual,''), E'\n', chr(30)) || chr(31) || replace(coalesce(pol.with_check,''), E'\n', chr(30)) as line
+from pg_policies pol where pol.schemaname='public' order by 1;
+-- [fp-09] 2026-08-28T02:44:56Z http=201
+select 'F9R' || chr(31) || c.relkind::text || chr(31) || c.relname || chr(31) || r.rolname || chr(31) || a.privilege_type || chr(31) || a.is_grantable::text as line
+from pg_class c join pg_namespace n on n.oid=c.relnamespace, aclexplode(c.relacl) a join pg_roles r on r.oid=a.grantee
+where n.nspname='public' and c.relkind in ('r','p','v','m','S') order by 1;
+-- [fp-10] 2026-08-28T02:44:59Z http=201
+select 'F9F' || chr(31) || p.oid::regprocedure::text || chr(31) || r.rolname || chr(31) || a.privilege_type || chr(31) || a.is_grantable::text as line
+from pg_proc p join pg_namespace n on n.oid=p.pronamespace, aclexplode(p.proacl) a join pg_roles r on r.oid=a.grantee
+where n.nspname='public' order by 1;
+-- [fp-11] 2026-08-28T02:45:01Z http=201
+select 'F9S' || chr(31) || r.rolname || chr(31) || a.privilege_type || chr(31) || a.is_grantable::text as line
+from pg_namespace n, aclexplode(n.nspacl) a join pg_roles r on r.oid=a.grantee
+where n.nspname='public' order by 1;
+-- [fp-12] 2026-08-28T02:45:03Z http=201
+select 'F10' || chr(31) || cs.relname || chr(31) || s.seqtypid::regtype::text || chr(31) || s.seqstart::text || chr(31) || s.seqincrement::text || chr(31) || s.seqmin::text || chr(31) || s.seqmax::text || chr(31) || s.seqcache::text || chr(31) || s.seqcycle::text
+  || chr(31) || coalesce((select tn.nspname||'.'||tc.relname||'.'||ca.attname from pg_depend d join pg_class tc on tc.oid=d.refobjid join pg_namespace tn on tn.oid=tc.relnamespace join pg_attribute ca on ca.attrelid=d.refobjid and ca.attnum=d.refobjsubid where d.objid=s.seqrelid and d.deptype='a'),'') as line
+from pg_sequence s join pg_class cs on cs.oid=s.seqrelid join pg_namespace n on n.oid=cs.relnamespace
+where n.nspname='public' order by 1;
+-- [fp-13] 2026-08-28T02:45:06Z http=201
+select 'F11' || chr(31) || c.relname || chr(31) || c.relkind::text || chr(31) || coalesce(c.reloptions::text,'') || chr(31) || replace(pg_get_viewdef(c.oid, true), E'\n', chr(30)) as line
+from pg_class c join pg_namespace n on n.oid=c.relnamespace
+where n.nspname='public' and c.relkind in ('v','m') order by 1;
+-- [fp-14] 2026-08-28T02:45:07Z http=201
+select 'F12' || chr(31) || e.evtname || chr(31) || e.evtevent || chr(31) || e.evtenabled::text || chr(31) || coalesce(array_to_string(array_agg(x order by x), ','),'') || chr(31) || hn.nspname || '.' || hp.proname as line
+from pg_event_trigger e left join unnest(e.evttags) x on true
+join pg_proc hp on hp.oid=e.evtfoid join pg_namespace hn on hn.oid=hp.pronamespace
+group by e.evtname, e.evtevent, e.evtenabled, hn.nspname, hp.proname order by 1;
+-- [fp-15] 2026-08-28T02:45:10Z http=201
+select 'F13' || chr(31) || d.defaclrole::regrole::text || chr(31) || coalesce(d.defaclnamespace::regnamespace::text,'') || chr(31) || d.defaclobjtype::text || chr(31) || r.rolname || chr(31) || a.privilege_type || chr(31) || a.is_grantable::text as line
+from pg_default_acl d, aclexplode(d.defaclacl) a join pg_roles r on r.oid=a.grantee
+where coalesce(d.defaclnamespace::regnamespace::text,'') not in ('graphql','graphql_public','realtime','storage','auth','extensions','supabase_functions','supabase_migrations','pgsodium','pgsodium_masks','net','vault','cron','pgbouncer','analytics')
+order by 1;
+-- [fp-16] 2026-08-28T02:45:11Z http=201
+select 'F14' || chr(31) || p.pubname || chr(31) || p.pubinsert::text || chr(31) || p.pubupdate::text || chr(31) || p.pubdelete::text || chr(31) || p.pubtruncate::text || chr(31) || p.pubviaroot::text as line
+from pg_publication p order by 1;
+-- [fp-17] 2026-08-28T02:45:14Z http=201
+select 'F14R' || chr(31) || p.pubname || chr(31) || c.relname as line
+from pg_publication_rel pr join pg_publication p on p.oid=pr.prpubid
+join pg_class c on c.oid=pr.prrelid join pg_namespace n on n.oid=c.relnamespace
+where n.nspname='public' order by 1;
+-- [fp-18] 2026-08-28T02:45:16Z http=201
+select 'F15' || chr(31) || e.extname || chr(31) || e.extversion as line
+from pg_extension e
+where e.extname not in ('pg_stat_statements','supabase_vault') order by 1;
+-- [fp-00] 2026-08-28T02:46:42Z http=201
+select 'F1' || chr(31) || c.relname || chr(31) || c.relkind::text || chr(31) || coalesce(c.reloptions::text,'') || chr(31) || c.relrowsecurity::text || chr(31) || c.relforcerowsecurity::text as line
+from pg_class c join pg_namespace n on n.oid=c.relnamespace
+where n.nspname='public' and c.relkind in ('r','p') order by 1;
+-- [fp-01] 2026-08-28T02:46:45Z http=201
+select 'F2' || chr(31) || t.typname || chr(31) || coalesce((select string_agg(e.enumlabel, ',' order by e.enumsortorder) from pg_enum e where e.enumtypid=t.oid),'') as line
+from pg_type t join pg_namespace n on n.oid=t.typnamespace
+where n.nspname='public' and t.typtype='e' order by 1;
+-- [fp-02] 2026-08-28T02:46:47Z http=201
+select 'F2C' || chr(31) || t.typname || chr(31) || coalesce((select string_agg(a.attname||':'||format_type(a.atttypid,a.atttypmod), ',' order by a.attnum) from pg_attribute a where a.attrelid=t.typrelid and a.attnum>0 and not a.attisdropped),'') as line
+from pg_type t join pg_namespace n on n.oid=t.typnamespace
+where n.nspname='public' and t.typtype='c'
+  and exists (select 1 from pg_class cc where cc.oid=t.typrelid and cc.relkind='c') order by 1;
+-- [fp-03] 2026-08-28T02:46:50Z http=201
+select 'F3' || chr(31) || c.relname || chr(31) || a.attname || chr(31) || (row_number() over (partition by c.oid order by a.attnum))::text || chr(31) || format_type(a.atttypid, a.atttypmod) || chr(31) || a.attnotnull::text
+  || chr(31) || replace(coalesce(case when coalesce(a.attgenerated,'')='' then pg_get_expr(ad.adbin, ad.adrelid) end, ''), E'\n', chr(30))
+  || chr(31) || coalesce(nullif(a.attidentity,'')::text, '')
+  || chr(31) || replace(coalesce(case when a.attgenerated='s' then pg_get_expr(ad.adbin, ad.adrelid) end, ''), E'\n', chr(30))
+  || chr(31) || coalesce(case when a.attstorage <> t.typstorage then a.attstorage::text end, '')
+  || chr(31) || coalesce(case when a.attcollation <> t.typcollation and t.typcollation <> 0 then a.attcollation::regcollation::text end, '') as line
+from pg_class c join pg_namespace n on n.oid=c.relnamespace
+join pg_attribute a on a.attrelid=c.oid and a.attnum>0 and not a.attisdropped
+join pg_type t on t.oid=a.atttypid
+left join pg_attrdef ad on ad.adrelid=a.attrelid and ad.adnum=a.attnum
+where n.nspname='public' and c.relkind in ('r','p') order by 1;
+-- [fp-04] 2026-08-28T02:46:52Z http=201
+select 'F4' || chr(31) || con.conrelid::regclass::text || chr(31) || con.conname || chr(31) || con.contype::text || chr(31) || pg_get_constraintdef(con.oid, false) || chr(31) || con.condeferrable::text || chr(31) || con.condeferred::text || chr(31) || con.convalidated::text as line
+from pg_constraint con join pg_namespace n on n.oid=con.connamespace
+where n.nspname='public' and con.contype in ('p','u','f','c','x') order by 1;
+-- [fp-05] 2026-08-28T02:46:55Z http=201
+select 'F5' || chr(31) || pg_get_indexdef(i.indexrelid, 0, false) as line
+from pg_index i join pg_class c on c.oid=i.indexrelid join pg_namespace n on n.oid=c.relnamespace
+where n.nspname='public' order by 1;
+-- [fp-06] 2026-08-28T02:46:57Z http=201
+select 'F6' || chr(31) || p.oid::regprocedure::text || chr(31) || p.prokind::text || chr(31) || md5(coalesce(pg_get_functiondef(p.oid),'')) as line
+from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+where n.nspname='public' and p.prokind in ('f','p','w','a') order by 1;
+-- [fp-07] 2026-08-28T02:47:00Z http=201
+select 'F7' || chr(31) || pg_get_triggerdef(t.oid, false) as line
+from pg_trigger t join pg_class c on c.oid=t.tgrelid join pg_namespace n on n.oid=c.relnamespace
+where n.nspname='public' and not t.tgisinternal order by 1;
+-- [fp-08] 2026-08-28T02:47:02Z http=201
+select 'F8' || chr(31) || pol.tablename || chr(31) || pol.policyname || chr(31) || pol.permissive || chr(31) || pol.cmd || chr(31) || pol.roles::text || chr(31) || replace(coalesce(pol.qual,''), E'\n', chr(30)) || chr(31) || replace(coalesce(pol.with_check,''), E'\n', chr(30)) as line
+from pg_policies pol where pol.schemaname='public' order by 1;
+-- [fp-09] 2026-08-28T02:47:05Z http=201
+select 'F9R' || chr(31) || c.relkind::text || chr(31) || c.relname || chr(31) || r.rolname || chr(31) || a.privilege_type || chr(31) || a.is_grantable::text as line
+from pg_class c join pg_namespace n on n.oid=c.relnamespace, aclexplode(c.relacl) a join pg_roles r on r.oid=a.grantee
+where n.nspname='public' and c.relkind in ('r','p','v','m','S') order by 1;
+-- [fp-10] 2026-08-28T02:47:08Z http=201
+select 'F9F' || chr(31) || p.oid::regprocedure::text || chr(31) || r.rolname || chr(31) || a.privilege_type || chr(31) || a.is_grantable::text as line
+from pg_proc p join pg_namespace n on n.oid=p.pronamespace, aclexplode(p.proacl) a join pg_roles r on r.oid=a.grantee
+where n.nspname='public' order by 1;
+-- [fp-11] 2026-08-28T02:47:09Z http=201
+select 'F9S' || chr(31) || r.rolname || chr(31) || a.privilege_type || chr(31) || a.is_grantable::text as line
+from pg_namespace n, aclexplode(n.nspacl) a join pg_roles r on r.oid=a.grantee
+where n.nspname='public' order by 1;
+-- [fp-12] 2026-08-28T02:47:12Z http=201
+select 'F10' || chr(31) || cs.relname || chr(31) || s.seqtypid::regtype::text || chr(31) || s.seqstart::text || chr(31) || s.seqincrement::text || chr(31) || s.seqmin::text || chr(31) || s.seqmax::text || chr(31) || s.seqcache::text || chr(31) || s.seqcycle::text
+  || chr(31) || coalesce((select tn.nspname||'.'||tc.relname||'.'||ca.attname from pg_depend d join pg_class tc on tc.oid=d.refobjid join pg_namespace tn on tn.oid=tc.relnamespace join pg_attribute ca on ca.attrelid=d.refobjid and ca.attnum=d.refobjsubid where d.objid=s.seqrelid and d.deptype='a'),'') as line
+from pg_sequence s join pg_class cs on cs.oid=s.seqrelid join pg_namespace n on n.oid=cs.relnamespace
+where n.nspname='public' order by 1;
+-- [fp-13] 2026-08-28T02:47:14Z http=201
+select 'F11' || chr(31) || c.relname || chr(31) || c.relkind::text || chr(31) || coalesce(c.reloptions::text,'') || chr(31) || replace(pg_get_viewdef(c.oid, true), E'\n', chr(30)) as line
+from pg_class c join pg_namespace n on n.oid=c.relnamespace
+where n.nspname='public' and c.relkind in ('v','m') order by 1;
+-- [fp-14] 2026-08-28T02:47:17Z http=201
+select 'F12' || chr(31) || e.evtname || chr(31) || e.evtevent || chr(31) || e.evtenabled::text || chr(31) || coalesce(array_to_string(array_agg(x order by x), ','),'') || chr(31) || hn.nspname || '.' || hp.proname as line
+from pg_event_trigger e left join unnest(e.evttags) x on true
+join pg_proc hp on hp.oid=e.evtfoid join pg_namespace hn on hn.oid=hp.pronamespace
+group by e.evtname, e.evtevent, e.evtenabled, hn.nspname, hp.proname order by 1;
+-- [fp-15] 2026-08-28T02:47:19Z http=201
+select 'F13' || chr(31) || d.defaclrole::regrole::text || chr(31) || coalesce(d.defaclnamespace::regnamespace::text,'') || chr(31) || d.defaclobjtype::text || chr(31) || r.rolname || chr(31) || a.privilege_type || chr(31) || a.is_grantable::text as line
+from pg_default_acl d, aclexplode(d.defaclacl) a join pg_roles r on r.oid=a.grantee
+where coalesce(d.defaclnamespace::regnamespace::text,'') not in ('graphql','graphql_public','realtime','storage','auth','extensions','supabase_functions','supabase_migrations','pgsodium','pgsodium_masks','net','vault','cron','pgbouncer','analytics')
+order by 1;
+-- [fp-16] 2026-08-28T02:47:21Z http=201
+select 'F14' || chr(31) || p.pubname || chr(31) || p.pubinsert::text || chr(31) || p.pubupdate::text || chr(31) || p.pubdelete::text || chr(31) || p.pubtruncate::text || chr(31) || p.pubviaroot::text as line
+from pg_publication p order by 1;
+-- [fp-17] 2026-08-28T02:47:23Z http=201
+select 'F14R' || chr(31) || p.pubname || chr(31) || c.relname as line
+from pg_publication_rel pr join pg_publication p on p.oid=pr.prpubid
+join pg_class c on c.oid=pr.prrelid join pg_namespace n on n.oid=c.relnamespace
+where n.nspname='public' order by 1;
+-- [fp-18] 2026-08-28T02:47:25Z http=201
+select 'F15' || chr(31) || e.extname || chr(31) || e.extversion as line
+from pg_extension e
+where e.extname not in ('pg_stat_statements','supabase_vault') order by 1;
+-- [grants-func2-000] 2026-08-28T02:50:24Z http=201
+select p.oid::regprocedure::text as obj, coalesce(r.rolname,'public') as grantee,
+       a.privilege_type as priv, a.is_grantable as grantable
+from pg_proc p join pg_namespace n on n.oid=p.pronamespace,
+     aclexplode(p.proacl) a left join pg_roles r on r.oid=a.grantee
+where n.nspname='public' and p.proacl is not null
+order by p.oid::regprocedure::text, 2, 3 limit 300 offset 0;
+
+-- [grants-func2-001] 2026-08-28T02:50:26Z http=201
+select p.oid::regprocedure::text as obj, coalesce(r.rolname,'public') as grantee,
+       a.privilege_type as priv, a.is_grantable as grantable
+from pg_proc p join pg_namespace n on n.oid=p.pronamespace,
+     aclexplode(p.proacl) a left join pg_roles r on r.oid=a.grantee
+where n.nspname='public' and p.proacl is not null
+order by p.oid::regprocedure::text, 2, 3 limit 300 offset 300;
+
+-- [grants-func2-002] 2026-08-28T02:50:29Z http=201
+select p.oid::regprocedure::text as obj, coalesce(r.rolname,'public') as grantee,
+       a.privilege_type as priv, a.is_grantable as grantable
+from pg_proc p join pg_namespace n on n.oid=p.pronamespace,
+     aclexplode(p.proacl) a left join pg_roles r on r.oid=a.grantee
+where n.nspname='public' and p.proacl is not null
+order by p.oid::regprocedure::text, 2, 3 limit 300 offset 600;
+
+-- [grants-func2-003] 2026-08-28T02:50:31Z http=201
+select p.oid::regprocedure::text as obj, coalesce(r.rolname,'public') as grantee,
+       a.privilege_type as priv, a.is_grantable as grantable
+from pg_proc p join pg_namespace n on n.oid=p.pronamespace,
+     aclexplode(p.proacl) a left join pg_roles r on r.oid=a.grantee
+where n.nspname='public' and p.proacl is not null
+order by p.oid::regprocedure::text, 2, 3 limit 300 offset 900;
+
+-- [grants-func2-004] 2026-08-28T02:50:33Z http=201
+select p.oid::regprocedure::text as obj, coalesce(r.rolname,'public') as grantee,
+       a.privilege_type as priv, a.is_grantable as grantable
+from pg_proc p join pg_namespace n on n.oid=p.pronamespace,
+     aclexplode(p.proacl) a left join pg_roles r on r.oid=a.grantee
+where n.nspname='public' and p.proacl is not null
+order by p.oid::regprocedure::text, 2, 3 limit 300 offset 1200;
+
+-- [grants-func2-005] 2026-08-28T02:50:36Z http=201
+select p.oid::regprocedure::text as obj, coalesce(r.rolname,'public') as grantee,
+       a.privilege_type as priv, a.is_grantable as grantable
+from pg_proc p join pg_namespace n on n.oid=p.pronamespace,
+     aclexplode(p.proacl) a left join pg_roles r on r.oid=a.grantee
+where n.nspname='public' and p.proacl is not null
+order by p.oid::regprocedure::text, 2, 3 limit 300 offset 1500;
+
+-- [grants-func2-006] 2026-08-28T02:50:38Z http=201
+select p.oid::regprocedure::text as obj, coalesce(r.rolname,'public') as grantee,
+       a.privilege_type as priv, a.is_grantable as grantable
+from pg_proc p join pg_namespace n on n.oid=p.pronamespace,
+     aclexplode(p.proacl) a left join pg_roles r on r.oid=a.grantee
+where n.nspname='public' and p.proacl is not null
+order by p.oid::regprocedure::text, 2, 3 limit 300 offset 1800;
+
+-- [grants-func2-007] 2026-08-28T02:50:41Z http=201
+select p.oid::regprocedure::text as obj, coalesce(r.rolname,'public') as grantee,
+       a.privilege_type as priv, a.is_grantable as grantable
+from pg_proc p join pg_namespace n on n.oid=p.pronamespace,
+     aclexplode(p.proacl) a left join pg_roles r on r.oid=a.grantee
+where n.nspname='public' and p.proacl is not null
+order by p.oid::regprocedure::text, 2, 3 limit 300 offset 2100;
+
+-- [fp-00] 2026-08-28T02:52:07Z http=201
+select 'F1' || chr(31) || c.relname || chr(31) || c.relkind::text || chr(31) || coalesce(c.reloptions::text,'') || chr(31) || c.relrowsecurity::text || chr(31) || c.relforcerowsecurity::text as line
+from pg_class c join pg_namespace n on n.oid=c.relnamespace
+where n.nspname='public' and c.relkind in ('r','p') order by 1;
+-- [fp-01] 2026-08-28T02:52:09Z http=201
+select 'F2' || chr(31) || t.typname || chr(31) || coalesce((select string_agg(e.enumlabel, ',' order by e.enumsortorder) from pg_enum e where e.enumtypid=t.oid),'') as line
+from pg_type t join pg_namespace n on n.oid=t.typnamespace
+where n.nspname='public' and t.typtype='e' order by 1;
+-- [fp-02] 2026-08-28T02:52:11Z http=201
+select 'F2C' || chr(31) || t.typname || chr(31) || coalesce((select string_agg(a.attname||':'||format_type(a.atttypid,a.atttypmod), ',' order by a.attnum) from pg_attribute a where a.attrelid=t.typrelid and a.attnum>0 and not a.attisdropped),'') as line
+from pg_type t join pg_namespace n on n.oid=t.typnamespace
+where n.nspname='public' and t.typtype='c'
+  and exists (select 1 from pg_class cc where cc.oid=t.typrelid and cc.relkind='c') order by 1;
+-- [fp-03] 2026-08-28T02:52:14Z http=201
+select 'F3' || chr(31) || c.relname || chr(31) || a.attname || chr(31) || (row_number() over (partition by c.oid order by a.attnum))::text || chr(31) || format_type(a.atttypid, a.atttypmod) || chr(31) || a.attnotnull::text
+  || chr(31) || replace(coalesce(case when coalesce(a.attgenerated,'')='' then pg_get_expr(ad.adbin, ad.adrelid) end, ''), E'\n', chr(30))
+  || chr(31) || coalesce(nullif(a.attidentity,'')::text, '')
+  || chr(31) || replace(coalesce(case when a.attgenerated='s' then pg_get_expr(ad.adbin, ad.adrelid) end, ''), E'\n', chr(30))
+  || chr(31) || coalesce(case when a.attstorage <> t.typstorage then a.attstorage::text end, '')
+  || chr(31) || coalesce(case when a.attcollation <> t.typcollation and t.typcollation <> 0 then a.attcollation::regcollation::text end, '') as line
+from pg_class c join pg_namespace n on n.oid=c.relnamespace
+join pg_attribute a on a.attrelid=c.oid and a.attnum>0 and not a.attisdropped
+join pg_type t on t.oid=a.atttypid
+left join pg_attrdef ad on ad.adrelid=a.attrelid and ad.adnum=a.attnum
+where n.nspname='public' and c.relkind in ('r','p') order by 1;
+-- [fp-04] 2026-08-28T02:52:17Z http=201
+select 'F4' || chr(31) || con.conrelid::regclass::text || chr(31) || con.conname || chr(31) || con.contype::text || chr(31) || pg_get_constraintdef(con.oid, false) || chr(31) || con.condeferrable::text || chr(31) || con.condeferred::text || chr(31) || con.convalidated::text as line
+from pg_constraint con join pg_namespace n on n.oid=con.connamespace
+where n.nspname='public' and con.contype in ('p','u','f','c','x') order by 1;
+-- [fp-05] 2026-08-28T02:52:19Z http=201
+select 'F5' || chr(31) || pg_get_indexdef(i.indexrelid, 0, false) as line
+from pg_index i join pg_class c on c.oid=i.indexrelid join pg_namespace n on n.oid=c.relnamespace
+where n.nspname='public' order by 1;
+-- [fp-06] 2026-08-28T02:52:22Z http=201
+select 'F6' || chr(31) || p.oid::regprocedure::text || chr(31) || p.prokind::text || chr(31) || md5(coalesce(pg_get_functiondef(p.oid),'')) as line
+from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+where n.nspname='public' and p.prokind in ('f','p','w','a') order by 1;
+-- [fp-07] 2026-08-28T02:52:23Z http=201
+select 'F7' || chr(31) || pg_get_triggerdef(t.oid, false) as line
+from pg_trigger t join pg_class c on c.oid=t.tgrelid join pg_namespace n on n.oid=c.relnamespace
+where n.nspname='public' and not t.tgisinternal order by 1;
+-- [fp-08] 2026-08-28T02:52:26Z http=201
+select 'F8' || chr(31) || pol.tablename || chr(31) || pol.policyname || chr(31) || pol.permissive || chr(31) || pol.cmd || chr(31) || pol.roles::text || chr(31) || replace(coalesce(pol.qual,''), E'\n', chr(30)) || chr(31) || replace(coalesce(pol.with_check,''), E'\n', chr(30)) as line
+from pg_policies pol where pol.schemaname='public' order by 1;
+-- [fp-09] 2026-08-28T02:52:29Z http=201
+select 'F9R' || chr(31) || c.relkind::text || chr(31) || c.relname || chr(31) || r.rolname || chr(31) || a.privilege_type || chr(31) || a.is_grantable::text as line
+from pg_class c join pg_namespace n on n.oid=c.relnamespace, aclexplode(c.relacl) a join pg_roles r on r.oid=a.grantee
+where n.nspname='public' and c.relkind in ('r','p','v','m','S') order by 1;
+-- [fp-10] 2026-08-28T02:52:32Z http=201
+select 'F9F' || chr(31) || p.oid::regprocedure::text || chr(31) || r.rolname || chr(31) || a.privilege_type || chr(31) || a.is_grantable::text as line
+from pg_proc p join pg_namespace n on n.oid=p.pronamespace, aclexplode(p.proacl) a join pg_roles r on r.oid=a.grantee
+where n.nspname='public' order by 1;
+-- [fp-11] 2026-08-28T02:52:34Z http=201
+select 'F9S' || chr(31) || r.rolname || chr(31) || a.privilege_type || chr(31) || a.is_grantable::text as line
+from pg_namespace n, aclexplode(n.nspacl) a join pg_roles r on r.oid=a.grantee
+where n.nspname='public' order by 1;
+-- [fp-12] 2026-08-28T02:52:36Z http=201
+select 'F10' || chr(31) || cs.relname || chr(31) || s.seqtypid::regtype::text || chr(31) || s.seqstart::text || chr(31) || s.seqincrement::text || chr(31) || s.seqmin::text || chr(31) || s.seqmax::text || chr(31) || s.seqcache::text || chr(31) || s.seqcycle::text
+  || chr(31) || coalesce((select tn.nspname||'.'||tc.relname||'.'||ca.attname from pg_depend d join pg_class tc on tc.oid=d.refobjid join pg_namespace tn on tn.oid=tc.relnamespace join pg_attribute ca on ca.attrelid=d.refobjid and ca.attnum=d.refobjsubid where d.objid=s.seqrelid and d.deptype='a'),'') as line
+from pg_sequence s join pg_class cs on cs.oid=s.seqrelid join pg_namespace n on n.oid=cs.relnamespace
+where n.nspname='public' order by 1;
+-- [fp-13] 2026-08-28T02:52:38Z http=201
+select 'F11' || chr(31) || c.relname || chr(31) || c.relkind::text || chr(31) || coalesce(c.reloptions::text,'') || chr(31) || replace(pg_get_viewdef(c.oid, true), E'\n', chr(30)) as line
+from pg_class c join pg_namespace n on n.oid=c.relnamespace
+where n.nspname='public' and c.relkind in ('v','m') order by 1;
+-- [fp-14] 2026-08-28T02:52:40Z http=201
+select 'F12' || chr(31) || e.evtname || chr(31) || e.evtevent || chr(31) || e.evtenabled::text || chr(31) || coalesce(array_to_string(array_agg(x order by x), ','),'') || chr(31) || hn.nspname || '.' || hp.proname as line
+from pg_event_trigger e left join unnest(e.evttags) x on true
+join pg_proc hp on hp.oid=e.evtfoid join pg_namespace hn on hn.oid=hp.pronamespace
+group by e.evtname, e.evtevent, e.evtenabled, hn.nspname, hp.proname order by 1;
+-- [fp-15] 2026-08-28T02:52:42Z http=201
+select 'F13' || chr(31) || d.defaclrole::regrole::text || chr(31) || coalesce(d.defaclnamespace::regnamespace::text,'') || chr(31) || d.defaclobjtype::text || chr(31) || r.rolname || chr(31) || a.privilege_type || chr(31) || a.is_grantable::text as line
+from pg_default_acl d, aclexplode(d.defaclacl) a join pg_roles r on r.oid=a.grantee
+where coalesce(d.defaclnamespace::regnamespace::text,'') not in ('graphql','graphql_public','realtime','storage','auth','extensions','supabase_functions','supabase_migrations','pgsodium','pgsodium_masks','net','vault','cron','pgbouncer','analytics')
+order by 1;
+-- [fp-16] 2026-08-28T02:52:44Z http=201
+select 'F14' || chr(31) || p.pubname || chr(31) || p.pubinsert::text || chr(31) || p.pubupdate::text || chr(31) || p.pubdelete::text || chr(31) || p.pubtruncate::text || chr(31) || p.pubviaroot::text as line
+from pg_publication p order by 1;
+-- [fp-17] 2026-08-28T02:52:46Z http=201
+select 'F14R' || chr(31) || p.pubname || chr(31) || c.relname as line
+from pg_publication_rel pr join pg_publication p on p.oid=pr.prpubid
+join pg_class c on c.oid=pr.prrelid join pg_namespace n on n.oid=c.relnamespace
+where n.nspname='public' order by 1;
+-- [fp-18] 2026-08-28T02:52:48Z http=201
+select 'F15' || chr(31) || e.extname || chr(31) || e.extversion as line
+from pg_extension e
+where e.extname not in ('pg_stat_statements','supabase_vault') order by 1;

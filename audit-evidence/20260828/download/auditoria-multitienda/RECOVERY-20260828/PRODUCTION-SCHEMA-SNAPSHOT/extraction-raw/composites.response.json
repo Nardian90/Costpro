@@ -1,0 +1,1 @@
+[{"name":"adjustment_item","attrs":"product_id\u001fuuid\u001eexpected_quantity\u001fnumeric(12,4)\u001ecounted_quantity\u001fnumeric(12,4)\u001edecomposition\u001fvariant_decomposition[]"},{"name":"variant_decomposition","attrs":"variant_id\u001fuuid\u001equantity\u001fnumeric(12,4)"}]

@@ -1,0 +1,143 @@
+── fixture listo ──
+════ CASO F — DEVOLUCIÓN ════
+            receipt_setup             
+--------------------------------------
+ c968b477-8c76-4e74-ad34-f565b53c5b9d
+(1 row)
+
+── Venta original: 5 @ 200 (costo servidor/cliente 100) ──
+                                                                                  venta_original                                                                                   
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ {"status": "success", "calculated_tax": 0, "transaction_id": "2d999ea1-41ed-411e-80fb-9c1086bdd43d", "discount_amount": 0, "calculated_total": 1000, "calculated_subtotal": 1000}
+(1 row)
+
+                                ?column?                                
+------------------------------------------------------------------------
+ EVID|F|venta|tx=2d999ea1-41ed-411e-80fb-9c1086bdd43d|stock_post=5.0000
+(1 row)
+
+── STATE hash inicial (pre-acciones de devolución) ──
+                   state_hash                   
+------------------------------------------------
+ STATE|F|start|0112ce6ceb53869167053b3297f85e49
+(1 row)
+
+── F1/F4: devolución PARCIAL 2 de 5 (referenciando venta original) ──
+                                                                devolucion_1                                                                
+--------------------------------------------------------------------------------------------------------------------------------------------
+ {"status": "success", "total_amount": 400, "devolution_id": "4164ba96-c943-47fe-8748-3edcb995767a", "devolution_number": "NC-000001-2026"}
+(1 row)
+
+                     ?column?                      
+---------------------------------------------------
+ EVID|F|dev1|stock=7.0000|wac=100.0000000000000000
+(1 row)
+
+                                 ?column?                                  
+---------------------------------------------------------------------------
+ EVID|F|kardex_return|qty=2.0000|unit_cost=100|costo_esperado_original=100
+(1 row)
+
+── F3/F8 ATAQUE sobre-devolución: devolver 4 más (acumulado 6 > vendida 5) ──
+                                                             devolucion_ataque                                                              
+--------------------------------------------------------------------------------------------------------------------------------------------
+ {"status": "success", "total_amount": 800, "devolution_id": "a4cab237-7428-451e-a601-6ffd8058eb94", "devolution_number": "NC-000002-2026"}
+(1 row)
+
+                                ?column?                                 
+-------------------------------------------------------------------------
+ EVID|F|dev2_ataque|stock=11.0000|invariante_stock<=recibido(10)=VIOLADO
+(1 row)
+
+── F6: reenvío con MISMA clave AF-F-DEV-2 (debe ser idempotente) ──
+                                devolucion_reenvio                                 
+-----------------------------------------------------------------------------------
+ {"status": "idempotent", "devolution_id": "a4cab237-7428-451e-a601-6ffd8058eb94"}
+(1 row)
+
+── F5: búsqueda de contra-asiento financiero (reembolso) ──
+                       ?column?                        
+-------------------------------------------------------
+ EVID|F|contra_asiento|cash_movements_ref_devolucion=0
+(1 row)
+
+                                                     ?column?                                                      
+-------------------------------------------------------------------------------------------------------------------
+ EVID|F|contra_asiento|refunds_registrados=2 (existen devoluciones con monto; ¿existe asiento financiero inverso?)
+(1 row)
+
+── EVIDENCIA agregada ──
+                                ?column?                                 
+-------------------------------------------------------------------------
+ EVID|F|devolutions|n=2|total=1200.00|nums=NC-000001-2026,NC-000002-2026
+(1 row)
+
+                                          ?column?                                          
+--------------------------------------------------------------------------------------------
+ EVID|F|product_final|stock=11.0000|wac=100.0000000000000000 (recibido total=10; vendido=5)
+(1 row)
+
+── ASSERTIONS (canon F) ──
+                                              af_assert                                              
+-----------------------------------------------------------------------------------------------------
+ ASSERT|F.1|Reversión COGS al costo original: return @ cost_at_sale=100|expected=100|actual=100|PASS
+(1 row)
+
+                                                af_assert                                                 
+----------------------------------------------------------------------------------------------------------
+ ASSERT|F.2|Conservación costo histórico: WAC intacto (100)|expected=100|actual=100.0000000000000000|PASS
+(1 row)
+
+                                        af_assert_bool                                         
+-----------------------------------------------------------------------------------------------
+ ASSERT|F.3|Límite acumulado: sobre-devolución (6>5) RECHAZADA|expected=false|actual=true|FAIL
+(1 row)
+
+                                 af_assert_bool                                  
+---------------------------------------------------------------------------------
+ ASSERT|F.4|Devolución parcial (2 de 5) procesada|expected=true|actual=true|PASS
+(1 row)
+
+                                            af_assert_bool                                             
+-------------------------------------------------------------------------------------------------------
+ ASSERT|F.5|Contra-asiento financiero existe (reembolso/cash reversal)|expected=false|actual=true|FAIL
+(1 row)
+
+                                           af_assert_bool                                           
+----------------------------------------------------------------------------------------------------
+ ASSERT|F.6|Idempotencia: clave AF-F-DEV-2 tiene UNA sola devolución|expected=true|actual=true|PASS
+(1 row)
+
+                                            af_assert_bool                                            
+------------------------------------------------------------------------------------------------------
+ ASSERT|F.8|Ausencia de sobre-devolución: stock final ≤ recibido (10)|expected=false|actual=true|FAIL
+(1 row)
+
+── STATE hash final ──
+                  state_hash                  
+----------------------------------------------
+ STATE|F|end|6234e4695a8aa7e74064118c69e9a77c
+(1 row)
+
+── RESIDUO ──
+       ?column?       
+----------------------
+ RESIDUE|F|products=0
+(1 row)
+
+         ?column?         
+--------------------------
+ RESIDUE|F|transactions=0
+(1 row)
+
+        ?column?         
+-------------------------
+ RESIDUE|F|devolutions=0
+(1 row)
+
+       ?column?        
+-----------------------
+ RESIDUE|F|movements=0
+(1 row)
+
+════ FIN CASO F (F7 en clon: af-case-F7-conc.sql) ════

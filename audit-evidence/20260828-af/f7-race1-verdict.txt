@@ -1,0 +1,1 @@
+F7|R1|devoluciones_creadas=2|stock_final=13.0000|vendida=5|stock_recibido=10

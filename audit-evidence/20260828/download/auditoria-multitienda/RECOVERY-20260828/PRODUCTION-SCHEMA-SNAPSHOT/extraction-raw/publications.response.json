@@ -1,0 +1,1 @@
+[{"name":"supabase_realtime","owner":"postgres","ins":true,"upd":true,"del":true,"trunc":true,"viaroot":false,"alltables":false},{"name":"supabase_realtime_messages_publication","owner":"supabase_admin","ins":true,"upd":true,"del":true,"trunc":true,"viaroot":false,"alltables":false}]

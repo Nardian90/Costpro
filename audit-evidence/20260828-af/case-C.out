@@ -1,0 +1,99 @@
+── fixture listo ──
+════ CASO C — VENTA (costo server-side) ════
+            receipt_setup             
+--------------------------------------
+ ba127b8f-fc90-4e67-a12a-ed68925b9ead
+(1 row)
+
+── STATE hash inicial ──
+                   state_hash                   
+------------------------------------------------
+ STATE|C|start|998695a374e228c603196d47e636e889
+(1 row)
+
+── ATAQUE 1: cliente impone cost_at_sale=7777 (venta de 3 @ 150, total server-validado 450) ──
+                                                                                     sale_1                                                                                      
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ {"status": "success", "calculated_tax": 0, "transaction_id": "3a0617b9-8de6-4c9b-a32c-2c57a4993b01", "discount_amount": 0, "calculated_total": 450, "calculated_subtotal": 450}
+(1 row)
+
+── ATAQUE 2: venta SIN claves de costo (2 @ 150, total 300) ──
+                                                                                     sale_2                                                                                      
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ {"status": "success", "calculated_tax": 0, "transaction_id": "46deb4aa-009a-408b-a0b8-d43f0a06db11", "discount_amount": 0, "calculated_total": 300, "calculated_subtotal": 300}
+(1 row)
+
+── EVIDENCIA ──
+                       ?column?                        
+-------------------------------------------------------
+ EVID|C|tx|idem=AF-C-SALE-1|total=450|status=completed
+ EVID|C|tx|idem=AF-C-SALE-2|total=300|status=completed
+(2 rows)
+
+                         ?column?                          
+-----------------------------------------------------------
+ EVID|C|item|idem=AF-C-SALE-1|qty=3.0000|cost_at_sale=7777
+ EVID|C|item|idem=AF-C-SALE-2|qty=2.0000|cost_at_sale=0
+(2 rows)
+
+                              ?column?                              
+--------------------------------------------------------------------
+ EVID|C|movement|purchase|qty=10.0000|unit_cost_registrado=100.0000
+ EVID|C|movement|sale|qty=-3.0000|unit_cost_registrado=7777
+ EVID|C|movement|sale|qty=-2.0000|unit_cost_registrado=0
+(3 rows)
+
+                       ?column?                       
+------------------------------------------------------
+ EVID|C|product|stock=5.0000|wac=100.0000000000000000
+(1 row)
+
+── ASSERTIONS (canon C: el servidor impone WAC=100) ──
+                                                af_assert                                                 
+----------------------------------------------------------------------------------------------------------
+ ASSERT|C.1|Ataque 7777 ignorado: cost_at_sale venta 1 = 100 (WAC servidor)|expected=100|actual=7777|FAIL
+(1 row)
+
+                                           af_assert                                            
+------------------------------------------------------------------------------------------------
+ ASSERT|C.2|Sin costo del cliente: cost_at_sale venta 2 = 100 (no 0)|expected=100|actual=0|FAIL
+(1 row)
+
+                                         af_assert                                         
+-------------------------------------------------------------------------------------------
+ ASSERT|C.3|Kardex venta 1 al costo servidor (unit_cost=100)|expected=100|actual=7777|FAIL
+(1 row)
+
+                               af_assert_bool                                
+-----------------------------------------------------------------------------
+ ASSERT|C.4|WAC no alterado por ventas (=100)|expected=true|actual=true|PASS
+(1 row)
+
+                              af_assert                               
+----------------------------------------------------------------------
+ ASSERT|C.5|Stock tras ventas (3+2) = 5|expected=5|actual=5.0000|PASS
+(1 row)
+
+── STATE hash final ──
+                  state_hash                  
+----------------------------------------------
+ STATE|C|end|8905af0fe540e8c5817cf552de73b4ae
+(1 row)
+
+── RESIDUO ──
+       ?column?       
+----------------------
+ RESIDUE|C|products=0
+(1 row)
+
+         ?column?         
+--------------------------
+ RESIDUE|C|transactions=0
+(1 row)
+
+       ?column?        
+-----------------------
+ RESIDUE|C|movements=0
+(1 row)
+
+════ FIN CASO C ════

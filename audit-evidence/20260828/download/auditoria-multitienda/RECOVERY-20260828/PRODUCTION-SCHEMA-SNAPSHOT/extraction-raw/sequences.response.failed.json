@@ -1,0 +1,1 @@
+{"message":"Failed to run sql query: ERROR:  42703: column tn.nspname does not exist\nLINE 3:        tn.nspname||'.'||ca.attname as owned_by\n               ^\nHINT:  Perhaps you meant to reference the column \"n.nspname\".\n"}

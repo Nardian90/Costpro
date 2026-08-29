@@ -1,0 +1,1 @@
+[{"name":"prevent_z_report_edit","tbl":"z_reports","def":"CREATE TRIGGER prevent_z_report_edit BEFORE DELETE OR UPDATE ON z_reports FOR EACH ROW EXECUTE FUNCTION prevent_z_report_edit()"}]

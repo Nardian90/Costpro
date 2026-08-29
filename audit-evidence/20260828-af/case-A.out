@@ -1,0 +1,84 @@
+── fixture listo ──
+════ CASO A — RECEPCIÓN ════
+── STATE hash inicial (post-fixture, pre-acción) ──
+                   state_hash                   
+------------------------------------------------
+ STATE|A|start|74c319b3781cc1a6404ec736742856f3
+(1 row)
+
+── ACCIÓN: recepción canónica 10 @ 100 CUP (pending → confirm) ──
+              receipt_id              
+--------------------------------------
+ 46bc5511-d230-4508-9877-2db58caa354c
+(1 row)
+
+── EVIDENCIA: estado resultante ──
+                                      ?column?                                       
+-------------------------------------------------------------------------------------
+ EVID|A|product|stock_current=10.0000|cost_average=100.0000000000000000|cost_price=0
+(1 row)
+
+                                ?column?                                 
+-------------------------------------------------------------------------
+ EVID|A|movement|purchase|qty=10.0000|unit_cost=100.0000|balance=10.0000
+(1 row)
+
+                       ?column?                        
+-------------------------------------------------------
+ EVID|A|receipt_status=active|total_cost=1000.00000000
+(1 row)
+
+        ?column?         
+-------------------------
+ EVID|A|kardex_entries=1
+(1 row)
+
+── ASSERTIONS (canon A) ──
+                                       af_assert                                        
+----------------------------------------------------------------------------------------
+ ASSERT|A.1|WAC inicial = unit_cost (100)|expected=100|actual=100.0000000000000000|PASS
+(1 row)
+
+                                    af_assert                                     
+----------------------------------------------------------------------------------
+ ASSERT|A.2|Inventario creado: stock_current = 10|expected=10|actual=10.0000|PASS
+(1 row)
+
+                                      af_assert_bool                                       
+-------------------------------------------------------------------------------------------
+ ASSERT|A.3|Movimiento de inventario tipo purchase +10 @100|expected=true|actual=true|PASS
+(1 row)
+
+                                      af_assert_bool                                       
+-------------------------------------------------------------------------------------------
+ ASSERT|A.4|Receipt queda status=active con total_cost=1000|expected=true|actual=true|PASS
+(1 row)
+
+                               af_assert_bool                               
+----------------------------------------------------------------------------
+ ASSERT|A.5|Kardex generada para el producto|expected=true|actual=true|PASS
+(1 row)
+
+── STATE hash final (pre-rollback) ──
+                  state_hash                  
+----------------------------------------------
+ STATE|A|end|998695a374e228c603196d47e636e889
+(1 row)
+
+── RESIDUO (post-rollback, debe ser cero) ──
+       ?column?       
+----------------------
+ RESIDUE|A|products=0
+(1 row)
+
+          ?column?           
+-----------------------------
+ RESIDUE|A|stock_movements=0
+(1 row)
+
+       ?column?       
+----------------------
+ RESIDUE|A|receipts=0
+(1 row)
+
+════ FIN CASO A ════

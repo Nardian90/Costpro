@@ -1,0 +1,1 @@
+{"message":"Failed to run sql query: ERROR:  42601: syntax error at or near \"default\"\nLINE 1: default-privileges en esquemas de plataforma.\n        ^\n"}

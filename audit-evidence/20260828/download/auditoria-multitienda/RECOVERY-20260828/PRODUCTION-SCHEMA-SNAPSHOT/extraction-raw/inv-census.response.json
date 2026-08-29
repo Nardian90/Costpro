@@ -1,0 +1,1 @@
+[{"extensions_n":6,"extensions":"btree_gist@1.7, pg_stat_statements@1.11, pgcrypto@1.3, plpgsql@1.0, supabase_vault@0.3.1, uuid-ossp@1.1","standalone_composites":0,"aggregates_public":0,"event_triggers":6,"default_acls":24,"policies_public":390,"tables_public":141,"routines_public":478}]

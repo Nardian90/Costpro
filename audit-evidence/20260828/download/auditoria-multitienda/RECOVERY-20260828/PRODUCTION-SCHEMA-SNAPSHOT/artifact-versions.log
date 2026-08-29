@@ -1,0 +1,6 @@
+v1_20260828T0220Z  9e0abd5a8675bb7cce989f8b70c363a42efea70a2c6658060c9b0b5d8aa14e3a
+v2_20260828T0223Z  b36d754bbc923c07aab6f4af0a9c394932da9b237ae6a35bcf59c902a7f7e9f1  (fix: GRANT matview→ON TABLE, handlers→extensions.<sch>, +2 composite types)
+v3_20260828T0234Z  91406a6d2aee67e3fad1dd2d0866d7db6097f363388fbe80bc72bfbc037a976a  (fix: identity-owned sequence skip, F11 pretty)
+v4_20260828T0241Z  572e2a4c0139d4bfbb0452fb3c731e0e789835f1f13a5c6f471e8b7a77fdcf63  (fix: extensions→SCHEMA extensions, default-privs tras objetos, F3 newline-encode)
+v5_20260828T0244Z  8a0e691a2f65e61d2f9bd67fc513b4f8611bca99e26b2a70157f6a6ccaf87d63  (fix: btree_gist sin SCHEMA; loader elimina pgcrypto de shims)
+v6_20260828T0251Z  351efa11be5f7f2962aa81dcd80385e7b1138ef417726d250c832613f295f3af  (fix: normalización ACL funciones REVOKE-first + grants-func2 con PUBLIC)
