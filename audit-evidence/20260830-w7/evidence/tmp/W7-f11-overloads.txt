@@ -1,0 +1,14 @@
+EVID|F11|close_production_order_v2 → 1 firma(s): close_production_order_v2(uuid,uuid,uuid,numeric,text,text,numeric,uuid,numeric,uuid,text)
+EVID|F11|create_devolution → 2 firma(s): create_devolution(uuid,jsonb,text,uuid,text,uuid,text,text,text,numeric) ## create_devolution(uuid,jsonb,text,uuid,uuid,text,uuid,text,text)
+EVID|F11|create_devolution_v2 → 1 firma(s): create_devolution_v2(uuid,jsonb,text,uuid,uuid,text,uuid,text,text,text)
+EVID|F11|create_vale_salida → 2 firma(s): create_vale_salida(uuid,jsonb,uuid,text,text,uuid) ## create_vale_salida(uuid,jsonb,uuid,text,text)
+EVID|F11|receive_production_output → 1 firma(s): receive_production_output(uuid,uuid,numeric,uuid,uuid,text)
+EVID|F11|receive_production_output_deprecated_4arg → 1 firma(s): receive_production_output_deprecated_4arg(uuid,uuid,numeric,uuid)
+EVID|F11|withdraw_production_item_deprecated_6arg → 1 firma(s): withdraw_production_item_deprecated_6arg(uuid,numeric,numeric,uuid,uuid,text)
+EVID|F11|withdraw_production_item_deprecated_9arg → 1 firma(s): withdraw_production_item_deprecated_9arg(uuid,numeric,numeric,uuid,uuid,text,uuid,text,boolean)
+EVID|F11|withdraw_production_item_v3 → 1 firma(s): withdraw_production_item_v3(uuid,numeric,uuid,uuid,text,uuid,text)
+EVID|F11-ACL|withdraw_production_item_v3 :: anon=false authed=true service=true
+EVID|F11-ACL|receive_production_output 6-arg :: anon=false authed=true service=true
+EVID|F11-ACL|close_production_order_v2 :: anon=false authed=true service=true
+EVID|F11-ACL|create_vale_salida 5-arg :: anon=false authed=true service=true
+EVID|F11-ACL|create_vale_salida 6-arg :: anon=false authed=true service=true

@@ -1,0 +1,19 @@
+SETUP-OK|pid=33333333-3333-3333-3333-ad9910000001
+════ ADV-CONC-1: dos transferencias CONCURRENTES de 8u sobre stock 10 ════
+transfer A exit=0 → {"status": "success", "total_cost": 800, "transfer_id": "da6a3113-e960-4d3a-9107-c199b5cb0699"}
+transfer B exit=1 → ERROR:  ERR_INSUFFICIENT_STOCK: producto Adv conc, disponible 2.0000, solicitado 8
+CONTEXT:  PL/pgSQL function create_transfer(uuid,uuid,jsonb,text,uu
+ADV|C1|transferencias concurrentes 8+8 sobre 10|creadas=1 (reserva serializa; confirm valida stock; stock origen nunca negativo)|OK (INV-01 preservada)
+════ ADV-CONC-2: dos withdraws CONCURRENTES que juntos exceden budget (6) ════
+withdraw A (4) exit=0 → {"status": "success", "order_id": "55555555-5555-5555-5555-555555199901", "unit_cost_used": 100}
+withdraw B (4) exit=1 → ERROR:  ERR_OVERCONSUMPTION: actual_qty 4.00 + qty 4 > budgeted_qty 6.00
+CONTEXT:  PL/pgSQL function withdraw_production_item_v3(uuid,numeric,uuid,uuid,text,uuid,text) line 40 at RAISE
+ADV|C2|producción concurrente 4+4 sobre budget 6|actual_qty=4.00|OK (overconsumption serializado)
+════ ADV-CONC-3: WAC stale — venta + recepción simultáneas mismo producto ════
+SETUP-WAC-OK|pid=33333333-3333-3333-3333-ad9910010001|receipt=ff85c17f-940b-422b-bc8f-5615c890309f
+venta (2u, cost 7777) exit=0 → {"status": "success", "calculated_tax": 0, "transaction_id": "c1dcfee8-7b13-40c7-b81a-8a1ddd1a1ca7", "discount_amount": 0, "calculated_total": 400, "c
+recepción confirm (10@200) exit=0 → 
+W62 fixture base listo
+ADV|C3|venta+recepción concurrentes|COGS_venta=100|veneno_7777_presente=false|OK (server-side sin stale)
+ADV|C3b|valoración final consistente: stock×WAC = 1000−2·COGS+2000 (±0.01)|OK conservación
+ADVERSARIAL-CONC completado

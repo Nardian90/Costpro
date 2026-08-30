@@ -1,0 +1,29 @@
+# W7-RELEASE-MANIFEST.sha256 — W7 FINAL CLOSURE (2026-08-30)
+# Sección A · RELEASE CANDIDATE (W7-RELEASE/) — parche W7-D1 incorporado a 01
+876e3545ded11302ec9430312a9b2ebb43da00ea8639ca8d34ef366bd91a4863  README.md
+1fdd827ccae0486671e6501967b0f2bdaaf1240d5e60c17ef639f73281c7515a  sql/01-df01-wac-singleton.sql
+c80d286e97c8a92648ecab00b5edd63e217f9a9747d6beb741461ea5066fe5cb  sql/02-df02-cogs.sql
+ea1e1f118a2db16387dc83c84c58cd33e8a8a6a3fdd2217a8b5e7e6744d531b2  sql/03-df05-production.sql
+8f3dcec356b0986f5c74f15525a4c6b4986f6264d8105de88908c09d12e2d324  sql/04-df09-overloads.sql
+7c7d34540b94f0e202cc0954dc7de5f52a2a1ef51d8709ae731ca9bad31ff8a6  sql/05-df06-transfer.sql
+cac5e844e36e62ae41da8d1b3d04bcd6f30f130d106114a543446eee9a711d1d  sql/06-df07-devolution-cap.sql
+f79043e7da5c98c73cdca6f183e98e873f2d9866074c5c2d420797e58b0c6461  sql/07-df08-close-fix.sql
+1bbb7c6eee338d887089090e95bab30ab4f2b08b4cec3b70e8fe661707b96b62  sql/08-df03-devolution-finance.sql
+00bd69af91187d59ba84a02943d792812f2baa1b7cd147d6de969402e0409db4  sql/09-df04-design-only.sql
+25229d6ac325d76997e6882a0a95c59e0db185834897ae39dd6d96e7dad1388a  rollback/w7-rollback.sql
+339bfcd67f86b8fd13f269d0f729c42b42180cefc1f55b2d8fbc3532fe9e123b  rollback/w7d1-rollback-complement.sql
+e6ae101bc2e7e0a632f64059810a1502e8c3891307e687db63c4f8f4130a4adf  patch/w7d1-acl-patch.sql
+# Sección B · ORIGINALES HISTÓRICOS w62-remediation/sql/ (sin modificar — provenance; rutas relativas a W7-RELEASE/)
+2a56d645c2296cc11c4bad2bafff1a18c8397b4ac5bfe5a5438bf7d798911689  ../w62-remediation/sql/01-df01-wac-singleton.sql
+c80d286e97c8a92648ecab00b5edd63e217f9a9747d6beb741461ea5066fe5cb  ../w62-remediation/sql/02-df02-cogs.sql
+ea1e1f118a2db16387dc83c84c58cd33e8a8a6a3fdd2217a8b5e7e6744d531b2  ../w62-remediation/sql/03-df05-production.sql
+8f3dcec356b0986f5c74f15525a4c6b4986f6264d8105de88908c09d12e2d324  ../w62-remediation/sql/04-df09-overloads.sql
+7c7d34540b94f0e202cc0954dc7de5f52a2a1ef51d8709ae731ca9bad31ff8a6  ../w62-remediation/sql/05-df06-transfer.sql
+cac5e844e36e62ae41da8d1b3d04bcd6f30f130d106114a543446eee9a711d1d  ../w62-remediation/sql/06-df07-devolution-cap.sql
+f79043e7da5c98c73cdca6f183e98e873f2d9866074c5c2d420797e58b0c6461  ../w62-remediation/sql/07-df08-close-fix.sql
+1bbb7c6eee338d887089090e95bab30ab4f2b08b4cec3b70e8fe661707b96b62  ../w62-remediation/sql/08-df03-devolution-finance.sql
+00bd69af91187d59ba84a02943d792812f2baa1b7cd147d6de969402e0409db4  ../w62-remediation/sql/09-df04-design-only.sql
+# Sección C · parche y complemento fuente en w7-readiness/ (provenance)
+e6ae101bc2e7e0a632f64059810a1502e8c3891307e687db63c4f8f4130a4adf  ../w7-readiness/w7d1-acl-patch.sql
+339bfcd67f86b8fd13f269d0f729c42b42180cefc1f55b2d8fbc3532fe9e123b  ../w7-readiness/w7d1-rollback-complement.sql
+25229d6ac325d76997e6882a0a95c59e0db185834897ae39dd6d96e7dad1388a  ../w7-readiness/tmp/w7-rollback.sql

@@ -1,0 +1,94 @@
+NB|N1|RPC-SURFACE|anon=248|authenticated=398
+NB|N2|EXPOSED-WAC-TOUCHER|apply_physical_count(p_count_id uuid, p_user_id uuid, p_apply_zero_diffs boolean)|secdef=true|owner=postgres|calls_writer=false
+NB|N2|EXPOSED-WAC-TOUCHER|cancel_reception(p_reception_id uuid)|secdef=true|owner=postgres|calls_writer=true
+NB|N2|EXPOSED-WAC-TOUCHER|confirm_inventory_adjustment(p_adjustment_id uuid, p_user_id uuid)|secdef=true|owner=postgres|calls_writer=false
+NB|N2|EXPOSED-WAC-TOUCHER|confirm_transfer(p_transfer_id uuid, p_user_id uuid, p_operation_date timestamp with time zone)|secdef=true|owner=postgres|calls_writer=true
+NB|N2|EXPOSED-WAC-TOUCHER|create_devolution_v2(p_store_id uuid, p_items jsonb, p_reason text, p_user_id uuid, p_original_transaction_id uuid, p_payment_method text, p_customer_id uuid, p_customer_name text, p_notes text, p_idempotency_key text)|secdef=true|owner=postgres|calls_writer=false
+NB|N2|EXPOSED-WAC-TOUCHER|create_physical_count(p_store_id uuid, p_user_id uuid, p_notes text)|secdef=true|owner=postgres|calls_writer=false
+NB|N2|EXPOSED-WAC-TOUCHER|create_pre_restore_snapshot(p_store_id uuid)|secdef=true|owner=postgres|calls_writer=false
+NB|N2|EXPOSED-WAC-TOUCHER|create_sale_v2(p_store_id uuid, p_seller_id uuid, p_items jsonb, p_payment_method text, p_discount_type text, p_discount_value numeric, p_applied_taxes jsonb, p_tax_amount numeric, p_total_amount numeric, p_subtotal numeric, p_cash_amount numeric, p_transfer_amount numeric, p_zelle_amount numeric, p_sale_currency text, p_sale_exchange_rate numeric, p_customer_id uuid, p_customer_name text, p_supervisor_user_id uuid, p_idempotency_key text, p_operation_date timestamp with time zone, p_user_id uuid)|secdef=true|owner=postgres|calls_writer=false
+NB|N2|EXPOSED-WAC-TOUCHER|create_transfer(p_origin_store_id uuid, p_destination_store_id uuid, p_items jsonb, p_notes text, p_transaction_id uuid, p_operation_date timestamp with time zone, p_user_id uuid)|secdef=true|owner=postgres|calls_writer=false
+NB|N2|EXPOSED-WAC-TOUCHER|create_vale_salida(p_store_id uuid, p_items jsonb, p_production_order_id uuid, p_notes text, p_idempotency_key text, p_user_id uuid)|secdef=true|owner=postgres|calls_writer=false
+NB|N2|EXPOSED-WAC-TOUCHER|duplicate_inventory_adjustment(p_original_id uuid, p_user_id uuid)|secdef=true|owner=postgres|calls_writer=false
+NB|N2|EXPOSED-WAC-TOUCHER|fn_process_receipt(p_items jsonb, p_user_id uuid, p_reference text)|secdef=true|owner=postgres|calls_writer=true
+NB|N2|EXPOSED-WAC-TOUCHER|fn_process_receipt(p_items jsonb, p_user_id uuid, p_store_id uuid, p_reference text)|secdef=true|owner=postgres|calls_writer=true
+NB|N2|EXPOSED-WAC-TOUCHER|fn_process_sale(p_items jsonb, p_cashier_id uuid, p_payment_method text)|secdef=true|owner=postgres|calls_writer=false
+NB|N2|EXPOSED-WAC-TOUCHER|fn_void_receipt(p_receipt_id uuid, p_user_id uuid)|secdef=true|owner=postgres|calls_writer=false
+NB|N2|EXPOSED-WAC-TOUCHER|get_available_stock(p_store_id uuid, p_product_id uuid)|secdef=true|owner=postgres|calls_writer=false
+NB|N2|EXPOSED-WAC-TOUCHER|get_batch_store_daily_kpis(p_store_ids uuid[], p_date date)|secdef=true|owner=postgres|calls_writer=false
+NB|N2|EXPOSED-WAC-TOUCHER|get_inventory_report(p_from_date timestamp with time zone, p_to_date timestamp with time zone)|secdef=true|owner=postgres|calls_writer=false
+NB|N2|EXPOSED-WAC-TOUCHER|get_low_stock_count(p_store_id uuid)|secdef=true|owner=postgres|calls_writer=false
+NB|N2|EXPOSED-WAC-TOUCHER|get_paginated_products(p_store_id uuid, p_search_term text, p_category text, p_limit integer, p_offset integer)|secdef=true|owner=postgres|calls_writer=false
+NB|N2|EXPOSED-WAC-TOUCHER|get_paginated_products_v2(p_limit integer, p_offset integer, p_store_id uuid, p_search_term text, p_category text, p_sort_key text, p_sort_dir text, p_stock_filter text, p_active_filter text)|secdef=true|owner=postgres|calls_writer=false
+NB|N2|EXPOSED-WAC-TOUCHER|get_products_for_pos(p_store_id uuid, p_search_term text, p_category text, p_limit integer, p_offset integer)|secdef=true|owner=postgres|calls_writer=false
+NB|N2|EXPOSED-WAC-TOUCHER|get_products_for_reception(p_store_id uuid, p_search_term text, p_page integer, p_page_size integer)|secdef=true|owner=postgres|calls_writer=false
+NB|N2|EXPOSED-WAC-TOUCHER|get_reorder_suggestions(p_store_id uuid, p_user_id uuid)|secdef=true|owner=postgres|calls_writer=false
+NB|N2|EXPOSED-WAC-TOUCHER|get_store_analytics_advanced(p_store_id uuid, p_start_date date, p_end_date date, p_days integer)|secdef=true|owner=postgres|calls_writer=false
+NB|N2|EXPOSED-WAC-TOUCHER|perform_inventory_adjustment(p_store_id uuid, p_product_id uuid, p_quantity_delta numeric, p_reason text, p_user_id uuid, p_unit_cost_adjustment numeric, p_operation_date timestamp with time zone)|secdef=true|owner=postgres|calls_writer=true
+NB|N2|EXPOSED-WAC-TOUCHER|receive_production_output(p_order_id uuid, p_product_id uuid, p_quantity numeric, p_store_id uuid, p_user_id uuid, p_idempotency_key text)|secdef=true|owner=postgres|calls_writer=true
+NB|N2|EXPOSED-WAC-TOUCHER|receive_to_warehouse(p_store_id uuid, p_product_id uuid, p_quantity numeric, p_unit_cost numeric, p_warehouse_id uuid, p_lot_number text, p_expiration_date date, p_user_id uuid, p_reason text)|secdef=true|owner=postgres|calls_writer=false
+NB|N2|EXPOSED-WAC-TOUCHER|reconcile_stock(p_store_id uuid, p_fix boolean, p_user_id uuid)|secdef=true|owner=postgres|calls_writer=false
+NB|N2|EXPOSED-WAC-TOUCHER|reset_store_data(p_store_id uuid, p_keep_catalog boolean)|secdef=true|owner=postgres|calls_writer=false
+NB|N2|EXPOSED-WAC-TOUCHER|reset_store_data(target_store_id uuid, p_keep_catalog boolean, p_user_id uuid)|secdef=true|owner=postgres|calls_writer=false
+NB|N2|EXPOSED-WAC-TOUCHER|reverse_adjustment(p_adjustment_id uuid, p_reason text, p_user_id uuid)|secdef=true|owner=postgres|calls_writer=false
+NB|N2|EXPOSED-WAC-TOUCHER|reverse_devolution(p_devolution_id uuid, p_reason text, p_user_id uuid)|secdef=true|owner=postgres|calls_writer=false
+NB|N2|EXPOSED-WAC-TOUCHER|reverse_production_order(p_order_id uuid, p_reason text, p_user_id uuid)|secdef=true|owner=postgres|calls_writer=true
+NB|N2|EXPOSED-WAC-TOUCHER|reverse_receipt(p_receipt_id uuid, p_reason text, p_user_id uuid)|secdef=true|owner=postgres|calls_writer=false
+NB|N2|EXPOSED-WAC-TOUCHER|reverse_receipt_v2(p_receipt_id uuid, p_reason text, p_user_id uuid)|secdef=true|owner=postgres|calls_writer=true
+NB|N2|EXPOSED-WAC-TOUCHER|reverse_transaction(p_transaction_id uuid, p_reason text, p_user_id uuid)|secdef=true|owner=postgres|calls_writer=false
+NB|N2|EXPOSED-WAC-TOUCHER|reverse_transfer(p_transfer_id uuid, p_reason text, p_user_id uuid)|secdef=true|owner=postgres|calls_writer=true
+NB|N2|EXPOSED-WAC-TOUCHER|sync_inventory_from_products(p_store_id uuid)|secdef=true|owner=postgres|calls_writer=false
+NB|N2|EXPOSED-WAC-TOUCHER|validate_post_restore(p_store_id uuid, p_backup_payload jsonb)|secdef=true|owner=postgres|calls_writer=false
+NB|N2|EXPOSED-WAC-TOUCHER|void_closed_production_order(p_order_id uuid, p_reason text, p_user_id uuid)|secdef=true|owner=postgres|calls_writer=true
+NB|N2|EXPOSED-WAC-TOUCHER|withdraw_production_item_v3(p_item_id uuid, p_qty numeric, p_store_id uuid, p_user_id uuid, p_idempotency_key text, p_reference_id uuid, p_reference_doc text)|secdef=true|owner=postgres|calls_writer=false
+NB|N3|DIRECT-UPDATE-PRODUCTS|create_devolution(p_store_id uuid, p_items jsonb, p_reason text, p_user_id uuid, p_original_transaction_id uuid, p_payment_method text, p_customer_id uuid, p_customer_name text, p_notes text)|exposed_auth=false|exposed_anon=false|calls_writer=false|secdef=true|owner=postgres
+NB|N3|DIRECT-UPDATE-PRODUCTS|create_devolution_v2(p_store_id uuid, p_items jsonb, p_reason text, p_user_id uuid, p_original_transaction_id uuid, p_payment_method text, p_customer_id uuid, p_customer_name text, p_notes text, p_idempotency_key text)|exposed_auth=true|exposed_anon=true|calls_writer=false|secdef=true|owner=postgres
+NB|N3|DIRECT-UPDATE-PRODUCTS|create_pre_restore_snapshot(p_store_id uuid)|exposed_auth=true|exposed_anon=false|calls_writer=false|secdef=true|owner=postgres
+NB|N3|DIRECT-UPDATE-PRODUCTS|create_sale_v2(p_store_id uuid, p_seller_id uuid, p_items jsonb, p_payment_method text, p_discount_type text, p_discount_value numeric, p_applied_taxes jsonb, p_tax_amount numeric, p_total_amount numeric, p_subtotal numeric, p_cash_amount numeric, p_transfer_amount numeric, p_zelle_amount numeric, p_sale_currency text, p_sale_exchange_rate numeric, p_customer_id uuid, p_customer_name text, p_supervisor_user_id uuid, p_idempotency_key text, p_operation_date timestamp with time zone, p_user_id uuid)|exposed_auth=true|exposed_anon=true|calls_writer=false|secdef=true|owner=postgres
+NB|N3|DIRECT-UPDATE-PRODUCTS|create_transfer(p_origin_store_id uuid, p_destination_store_id uuid, p_items jsonb, p_notes text, p_transaction_id uuid, p_operation_date timestamp with time zone, p_user_id uuid)|exposed_auth=true|exposed_anon=false|calls_writer=false|secdef=true|owner=postgres
+NB|N3|DIRECT-UPDATE-PRODUCTS|duplicate_inventory_adjustment(p_original_id uuid, p_user_id uuid)|exposed_auth=true|exposed_anon=false|calls_writer=false|secdef=true|owner=postgres
+NB|N3|DIRECT-UPDATE-PRODUCTS|fn_process_receipt(p_items jsonb, p_user_id uuid, p_reference text)|exposed_auth=true|exposed_anon=false|calls_writer=true|secdef=true|owner=postgres
+NB|N3|DIRECT-UPDATE-PRODUCTS|fn_process_sale(p_items jsonb, p_cashier_id uuid, p_payment_method text)|exposed_auth=true|exposed_anon=false|calls_writer=false|secdef=true|owner=postgres
+NB|N3|DIRECT-UPDATE-PRODUCTS|get_paginated_products(p_store_id uuid, p_search_term text, p_category text, p_limit integer, p_offset integer)|exposed_auth=true|exposed_anon=false|calls_writer=false|secdef=true|owner=postgres
+NB|N3|DIRECT-UPDATE-PRODUCTS|get_paginated_products_v2(p_limit integer, p_offset integer, p_store_id uuid, p_search_term text, p_category text, p_sort_key text, p_sort_dir text, p_stock_filter text, p_active_filter text)|exposed_auth=true|exposed_anon=true|calls_writer=false|secdef=true|owner=postgres
+NB|N3|DIRECT-UPDATE-PRODUCTS|get_products_for_pos(p_store_id uuid, p_search_term text, p_category text, p_limit integer, p_offset integer)|exposed_auth=true|exposed_anon=true|calls_writer=false|secdef=true|owner=postgres
+NB|N3|DIRECT-UPDATE-PRODUCTS|perform_inventory_adjustment(p_store_id uuid, p_product_id uuid, p_quantity_delta numeric, p_reason text, p_user_id uuid, p_unit_cost_adjustment numeric, p_operation_date timestamp with time zone)|exposed_auth=true|exposed_anon=false|calls_writer=true|secdef=true|owner=postgres
+NB|N3|DIRECT-UPDATE-PRODUCTS|receive_production_output(p_order_id uuid, p_product_id uuid, p_quantity numeric, p_store_id uuid, p_user_id uuid, p_idempotency_key text)|exposed_auth=true|exposed_anon=false|calls_writer=true|secdef=true|owner=postgres
+NB|N3|DIRECT-UPDATE-PRODUCTS|register_stock_movement(p_product_id uuid, p_store_id uuid, p_quantity numeric, p_movement_type text, p_reason text, p_user_id uuid, p_variant_id uuid, p_sale_id uuid, p_unit_cost numeric, p_notes text, p_operation_date timestamp with time zone, p_skip_access_check boolean)|exposed_auth=false|exposed_anon=false|calls_writer=false|secdef=true|owner=postgres
+NB|N3|DIRECT-UPDATE-PRODUCTS|reset_store_data(p_store_id uuid, p_keep_catalog boolean)|exposed_auth=true|exposed_anon=true|calls_writer=false|secdef=true|owner=postgres
+NB|N3|DIRECT-UPDATE-PRODUCTS|reset_store_data(target_store_id uuid, p_keep_catalog boolean, p_user_id uuid)|exposed_auth=true|exposed_anon=false|calls_writer=false|secdef=true|owner=postgres
+NB|N3|DIRECT-UPDATE-PRODUCTS|reverse_adjustment(p_adjustment_id uuid, p_reason text, p_user_id uuid)|exposed_auth=true|exposed_anon=false|calls_writer=false|secdef=true|owner=postgres
+NB|N3|DIRECT-UPDATE-PRODUCTS|reverse_devolution(p_devolution_id uuid, p_reason text, p_user_id uuid)|exposed_auth=true|exposed_anon=false|calls_writer=false|secdef=true|owner=postgres
+NB|N3|DIRECT-UPDATE-PRODUCTS|reverse_production_order(p_order_id uuid, p_reason text, p_user_id uuid)|exposed_auth=true|exposed_anon=true|calls_writer=true|secdef=true|owner=postgres
+NB|N3|DIRECT-UPDATE-PRODUCTS|reverse_receipt(p_receipt_id uuid, p_reason text, p_user_id uuid)|exposed_auth=true|exposed_anon=false|calls_writer=false|secdef=true|owner=postgres
+NB|N3|DIRECT-UPDATE-PRODUCTS|reverse_transaction(p_transaction_id uuid, p_reason text, p_user_id uuid)|exposed_auth=true|exposed_anon=false|calls_writer=false|secdef=true|owner=postgres
+NB|N3|DIRECT-UPDATE-PRODUCTS|void_closed_production_order(p_order_id uuid, p_reason text, p_user_id uuid)|exposed_auth=true|exposed_anon=true|calls_writer=true|secdef=true|owner=postgres
+NB|N3|DIRECT-UPDATE-PRODUCTS|withdraw_production_item_deprecated_9arg(p_item_id uuid, p_qty numeric, p_unit_cost numeric, p_store_id uuid, p_user_id uuid, p_idempotency_key text, p_reference_id uuid, p_reference_doc text, p_server_side_cost boolean)|exposed_auth=false|exposed_anon=false|calls_writer=false|secdef=true|owner=postgres
+NB|N3|DIRECT-UPDATE-PRODUCTS|withdraw_production_item_v3(p_item_id uuid, p_qty numeric, p_store_id uuid, p_user_id uuid, p_idempotency_key text, p_reference_id uuid, p_reference_doc text)|exposed_auth=true|exposed_anon=false|calls_writer=false|secdef=true|owner=postgres
+NB|N4|OVERLOADS|fn_recalc_wac|count=1|fn_recalc_wac(uuid,uuid,text,numeric,numeric,jsonb)
+NB|N4|OVERLOADS|reset_store_data|count=2|reset_store_data(uuid,boolean,uuid) ;; reset_store_data(uuid,boolean)
+NB|N4|OVERLOADS|reverse_receipt_v2|count=1|reverse_receipt_v2(uuid,text,uuid)
+NB|N5|SECDEF-SIN-SEARCHPATH|count=18
+NB|N5b|SECDEF-SEARCHPATH-SIN-PGCATALOG|count=224
+NB|N7|TRG-PRODUCTS|trg_ensure_product_barcode|fn=ensure_product_barcode|touches_costavg=false|calls_writer=false
+NB|N7|TRG-PRODUCTS|trg_guard_wac_writer|fn=w62_guard_wac_writer|touches_costavg=true|calls_writer=true
+NB|N7|TRG-PRODUCTS|trg_maintain_product_completeness|fn=fn_maintain_product_completeness|touches_costavg=false|calls_writer=false
+NB|N7|TRG-PRODUCTS|trigger_audit_product_changes|fn=audit_product_changes|touches_costavg=false|calls_writer=false
+NB|N8|LEGACY|create_devolution(uuid,jsonb,text,uuid,text,uuid,text,text,text,numeric)|anon=false|auth=false
+NB|N8|LEGACY|create_devolution(uuid,jsonb,text,uuid,uuid,text,uuid,text,text)|anon=false|auth=false
+NB|N8|LEGACY|create_vale_salida(uuid,jsonb,uuid,text,text)|anon=false|auth=true
+NB|N8|LEGACY|create_vale_salida(uuid,jsonb,uuid,text,text,uuid)|anon=false|auth=true
+NB|N8|LEGACY|fn_process_receipt(jsonb,uuid,text)|anon=false|auth=true
+NB|N8|LEGACY|fn_process_receipt(jsonb,uuid,uuid,text)|anon=false|auth=true
+NB|N8|LEGACY|receive_production_output(uuid,uuid,numeric,uuid,uuid,text)|anon=false|auth=true
+NB|N8|LEGACY|receive_production_output_deprecated_4arg(uuid,uuid,numeric,uuid)|anon=false|auth=false
+NB|N8|LEGACY|reset_store_data(uuid,boolean)|anon=true|auth=true
+NB|N8|LEGACY|reset_store_data(uuid,boolean,uuid)|anon=false|auth=true
+NB|N8|LEGACY|reverse_receipt(uuid,text,uuid)|anon=false|auth=true
+NB|N8|LEGACY|withdraw_production_item_deprecated_6arg(uuid,numeric,numeric,uuid,uuid,text)|anon=false|auth=false
+NB|N8|LEGACY|withdraw_production_item_deprecated_9arg(uuid,numeric,numeric,uuid,uuid,text,uuid,text,boolean)|anon=false|auth=false
+NB|N9|MOTOR-B-GUARD|w62_guard_wac_writer|exists=true|anon=true|auth=true
+NB|N10|PUBLIC-WRAPPER|reverse_production_order(p_order_id uuid, p_reason text, p_user_id uuid)|trigger_fn=false
+NB|N10|PUBLIC-WRAPPER|reverse_receipt_v2(p_receipt_id uuid, p_reason text, p_user_id uuid)|trigger_fn=false
+NB|N10|PUBLIC-WRAPPER|void_closed_production_order(p_order_id uuid, p_reason text, p_user_id uuid)|trigger_fn=false
+NB|N10|PUBLIC-WRAPPER|w62_guard_wac_writer()|trigger_fn=true

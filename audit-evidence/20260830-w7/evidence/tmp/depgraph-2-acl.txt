@@ -1,0 +1,21 @@
+                                                     signature                                                     |                                             acl_expanded                                             
+-------------------------------------------------------------------------------------------------------------------+------------------------------------------------------------------------------------------------------
+ update_product_wac()                                                                                              | postgres=X/postgres, authenticated=X/postgres, service_role=X/postgres
+ register_stock_movement(uuid,uuid,numeric,text,text,uuid,uuid,uuid,numeric,text,timestamp with time zone,boolean) | postgres=X/postgres, service_role=X/postgres
+ confirm_transfer(uuid,uuid,timestamp with time zone)                                                              | postgres=X/postgres, authenticated=X/postgres, service_role=X/postgres
+ receive_production_output(uuid,uuid,numeric,uuid)                                                                 | postgres=X/postgres, authenticated=X/postgres, service_role=X/postgres
+ create_devolution(uuid,jsonb,text,uuid,uuid,text,uuid,text,text)                                                  | postgres=X/postgres, authenticated=X/postgres, service_role=X/postgres
+ reverse_transfer(uuid,text,uuid)                                                                                  | postgres=X/postgres, authenticated=X/postgres, service_role=X/postgres
+ reverse_adjustment(uuid,text,uuid)                                                                                | postgres=X/postgres, authenticated=X/postgres, service_role=X/postgres
+ reverse_devolution(uuid,text,uuid)                                                                                | postgres=X/postgres, authenticated=X/postgres, service_role=X/postgres
+ create_devolution(uuid,jsonb,text,uuid,text,uuid,text,text,text,numeric)                                          | postgres=X/postgres, authenticated=X/postgres, service_role=X/postgres
+ create_transfer(uuid,uuid,jsonb,text,uuid,timestamp with time zone,uuid)                                          | postgres=X/postgres, authenticated=X/postgres, service_role=X/postgres
+ receive_production_output(uuid,uuid,numeric,uuid,uuid,text)                                                       | =X/postgres, postgres=X/postgres, anon=X/postgres, authenticated=X/postgres, service_role=X/postgres
+ withdraw_production_item(uuid,numeric,numeric,uuid,uuid,text)                                                     | postgres=X/postgres, service_role=X/postgres
+ close_production_order_v2(uuid,uuid,uuid,numeric,text,text,numeric,uuid,numeric,uuid,text)                        | =X/postgres, postgres=X/postgres, anon=X/postgres, authenticated=X/postgres, service_role=X/postgres
+ create_devolution_v2(uuid,jsonb,text,uuid,uuid,text,uuid,text,text,text)                                          | =X/postgres, postgres=X/postgres, authenticated=X/postgres, service_role=X/postgres
+ withdraw_production_item(uuid,numeric,numeric,uuid,uuid,text,uuid,text,boolean)                                   | postgres=X/postgres, service_role=X/postgres
+ create_vale_salida(uuid,jsonb,uuid,text,text)                                                                     | postgres=X/postgres, authenticated=X/postgres, service_role=X/postgres
+ create_vale_salida(uuid,jsonb,uuid,text,text,uuid)                                                                | postgres=X/postgres, authenticated=X/postgres, service_role=X/postgres
+(17 rows)
+

@@ -1,0 +1,22 @@
+W62 fixture base listo
+EVID|F4|1|escritores cost_average post-migración: fn_recalc_wac(uuid,uuid,text,numeric,numeric,jsonb) ; reset_store_data(uuid,boolean) ; reset_store_data(uuid,boolean,uuid)
+EVID|F4|2|motor B update_product_wac existe: 0
+EVID|F4|3|trigger motor B trg_update_product_wac existe: 0
+EVID|F4|4|guard trg_guard_wac_writer existe: 1
+EVID|F4|5|funciones que fijan token app.wac_writer: NINGUNA fuera de fn_recalc_wac
+EVID|F4|6|fn_recalc_wac SECURITY DEFINER + search_path fijado: true
+EVID|F4|7|EXECUTE fn_recalc_wac → service_role only: false
+EVID|F4|8|UPDATE directo cost_average sin token → guard BLOQUEA (excepción ERR_WAC_SINGLE_WRITER_VIOLATION registrada arriba)
+ASSERT|F4-9|UPDATE de columna no-WAC NO bloqueado por guard (scope correcto)|expected=true|actual=true|PASS
+EVID|F18: stock 10@100 → venta total → stock=0 → recepción 5@200
+ASSERT|F18-1|tras venta total: stock=0|expected=0|actual=0.0000|PASS
+ASSERT|F18-2|tras venta total: WAC RETAINED (=100, NO reset, NO NULL)|expected=100|actual=100|PASS
+ASSERT|F18-3|COGS de la venta total = 10×WAC_prev = 1000|expected=1000|actual=1000.0000|PASS
+psql:/home/z/my-project/w7-readiness/tmp/w7-ext-matrix-stockzero.sql:93: ERROR:  ERR_INSUFFICIENT_STOCK: product 33333333-3333-3333-3333-f18010000001, stock 0.0000, requested 1
+CONTEXT:  PL/pgSQL function create_sale_v2(uuid,uuid,jsonb,text,text,numeric,jsonb,numeric,numeric,numeric,numeric,numeric,numeric,text,numeric,uuid,text,uuid,text,timestamp with time zone,uuid) line 108 at RAISE
+ASSERT|F18-4|venta con stock=0 → RECHAZADA (ERR_INSUFFICIENT_STOCK)|expected=true|actual=true|PASS
+ffee904f-6f8c-4950-9917-f76c812715cf
+ASSERT|F18-5|recepción sobre stock=0: WAC=200 EXACTO (blend S=0 ⇒ ca_prev peso 0)|expected=200|actual=200.000000|PASS
+ASSERT|F18-6|stock tras recepción = 5|expected=5|actual=5.0000|PASS
+ASSERT|F18-7|conservación frontera: valor post = uc×q = 1000 (0 valor creado/destruido)|expected=1000|actual=1000.000000|PASS
+w7-ext-matrix-stockzero: FIN

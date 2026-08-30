@@ -1,0 +1,11 @@
+SETUP-OK|pid=33333333-3333-3333-3333-df0290010001
+════ DF02-CONC: 2 ventas simultáneas de 3u sobre stock 10@100 ════
+sesión A exit=0 → {"status": "success", "calculated_tax": 0, "transaction_id": "2bad1ce9-eae6-4c55-a7e4-9c049914fe85", "discount_amount": 0, "calculated_total": 600, "calculated_subtotal": 600}
+sesión B exit=0 → {"status": "success", "calculated_tax": 0, "transaction_id": "d5bbbf71-ffa8-4523-b325-0186d82d71ad", "discount_amount": 0, "calculated_total": 600, "calculated_subtotal": 600}
+W62 fixture base listo
+ASSERT|DF02-C1|Conc: ambas ventas aceptadas (stock suficiente)|expected=2|actual=2|PASS
+ASSERT|DF02-C2|Conc: COGS ambas = WAC 100 (cliente 5555 ignorado ×2)|expected=200|actual=200|PASS
+ASSERT|DF02-C3|INV-01: stock final 10-3-3=4 (sin oversell)|expected=4|actual=4.0000|PASS
+ASSERT|DF02-C4|Conc: WAC invariante 100 (salidas puras)|expected=100|actual=100|PASS
+ASSERT|DF02-C5|Conc: valor restante 4×100=400 (=1000−600 COGS)|expected=400|actual=400.0000|PASS
+DF02-CONC completado

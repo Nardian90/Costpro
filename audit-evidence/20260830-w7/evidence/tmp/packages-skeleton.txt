@@ -1,0 +1,299 @@
+##### PACKAGE 01-df01-wac-singleton #####
+1:-- ============================================================================
+6:-- ============================================================================
+8:-- ─── S1.1 Tabla de trazabilidad WAC (INV-15, additive) ───
+9:CREATE TABLE IF NOT EXISTS public.wac_change_log (
+22:CREATE INDEX IF NOT EXISTS wac_change_log_prod_idx ON public.wac_change_log (store_id, product_id, created_at);
+24:-- ─── S1.2 ESCRITOR ÚNICO fn_recalc_wac (W62-01 §4) ───
+25:CREATE OR REPLACE FUNCTION public.fn_recalc_wac(
+43:    RAISE EXCEPTION 'ERR_WAC_RECALC_ARGS: store/product/event obligatorios';
+53:    RAISE EXCEPTION 'ERR_PRODUCT_NOT_FOUND: % store %', p_product_id, p_store_id;
+68:      RAISE EXCEPTION 'ERR_WAC_REVERSE_NEGATIVE_STOCK: S=% q=%', v_S, p_qty_in;
+73:  -- Token de escritor: válido SOLO durante este UPDATE (re-sellado tras él)
+75:  UPDATE products
+80:  INSERT INTO public.wac_change_log
+89:-- ─── S2. CONVERSIONES (todas las rutas escritoras → fn_recalc_wac; espejo cp eliminado en 5) ───
+92:CREATE OR REPLACE FUNCTION public.confirm_pending_reception(p_receipt_id uuid, p_user_id uuid DEFAULT NULL::uuid, p_operation_date timestamp with time zone DEFAULT NULL::timestamp with time zone)
+108:  IF NOT FOUND THEN RAISE EXCEPTION 'ERR_RECEIPT_NOT_FOUND'; END IF;
+109:  IF v_receipt.status <> 'pending' THEN RAISE EXCEPTION 'ERR_RECEIPT_ALREADY_CONFIRMED: status=%', v_receipt.status; END IF;
+113:    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+125:    UPDATE products SET updated_at = v_effective_date WHERE id = v_item.product_id AND store_id = v_store_id;
+127:    INSERT INTO stock_movements (product_id, store_id, movement_type, quantity_change, unit_cost, reference_doc, created_at, created_by, movement_date)
+131:  UPDATE receipts
+138:CREATE OR REPLACE FUNCTION public.fn_process_receipt(p_items jsonb, p_user_id uuid DEFAULT NULL::uuid, p_reference text DEFAULT NULL::text)
+160:        RAISE EXCEPTION 'ERR_UNAUTHORIZED: Identity mismatch. p_user_id (%) does not match auth.uid() (%)', p_user_id, v_auth_user_id;
+163:    INSERT INTO public.receipts (user_id, status, reference_doc)
+176:            INSERT INTO public.products (name, sku, cost_price, price, unit_of_measure, supplier, image_url, stock_current, cost_average, store_id)
+186:                RAISE EXCEPTION 'ERR_PRODUCT_NOT_FOUND: %', v_sku;
+195:        INSERT INTO public.receipt_items (receipt_id, product_id, quantity, unit_cost, tasa_cambio_recepcion)
+211:    UPDATE public.receipts SET total_cost = v_total_receipt WHERE id = v_receipt_id;
+216:CREATE OR REPLACE FUNCTION public.fn_process_receipt(p_items jsonb, p_user_id uuid DEFAULT NULL::uuid, p_store_id uuid DEFAULT NULL::uuid, p_reference text DEFAULT NULL::text)
+238:        RAISE EXCEPTION 'ERR_UNAUTHORIZED: Identity mismatch. p_user_id (%) does not match auth.uid() (%)', p_user_id, v_auth_user_id;
+241:    INSERT INTO public.receipts (user_id, store_id, status, reference_doc)
+253:            INSERT INTO public.products (name, sku, cost_price, price, unit_of_measure, supplier, image_url, stock_current, cost_average, store_id)
+266:                RAISE EXCEPTION 'ERR_PRODUCT_NOT_FOUND: %', v_sku;
+275:        INSERT INTO public.receipt_items (receipt_id, product_id, quantity, unit_cost, tasa_cambio_recepcion)
+290:    UPDATE public.receipts SET total_cost = v_total_receipt WHERE id = v_receipt_id;
+297:CREATE OR REPLACE FUNCTION public.perform_inventory_adjustment(p_store_id uuid, p_product_id uuid, p_quantity_delta numeric, p_reason text, p_user_id uuid, p_unit_cost_adjustment numeric DEFAULT NULL::numeric, p_operation_date timestamp with time zone DEFAULT NULL::timestamp with time zone)
+312:    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+322:    RAISE EXCEPTION 'ERR_PRODUCT_NOT_FOUND_IN_STORE';
+336:  UPDATE public.products
+357:CREATE OR REPLACE FUNCTION public.cancel_reception(p_reception_id uuid)
+403:    UPDATE public.receipts SET status = 'voided', updated_at = now() WHERE id = p_reception_id;
+407:CREATE OR REPLACE FUNCTION public.reverse_receipt_v2(p_receipt_id uuid, p_reason text, p_user_id uuid DEFAULT NULL::uuid)
+422:  IF NOT FOUND THEN RAISE EXCEPTION 'ERR_RECEIPT_NOT_FOUND'; END IF;
+423:  IF v_receipt.status <> 'active' THEN RAISE EXCEPTION 'ERR_RECEIPT_NOT_ACTIVE: status=%', v_receipt.status; END IF;
+437:    UPDATE public.products SET stock_current = v_new_stock, updated_at = now()
+440:    INSERT INTO stock_movements (product_id, store_id, movement_type, quantity_change, unit_cost, reference_doc, created_at, created_by, movement_date)
+446:  UPDATE public.receipts SET status='reversed', reversed_at=now(), reversed_by=p_user_id, reversal_reason=p_reason WHERE id=p_receipt_id;
+448:  INSERT INTO public.audit_logs (user_id, store_id, action, table_name, record_id, metadata)
+456:CREATE OR REPLACE FUNCTION public.void_reception_with_reversal(p_receipt_id uuid, p_user_id uuid DEFAULT NULL::uuid, p_reason text DEFAULT 'Anulacion con reversion'::text, p_operation_date timestamp with time zone DEFAULT NULL::timestamp with time zone)
+471:  IF NOT FOUND THEN RAISE EXCEPTION 'ERR_RECEIPT_NOT_FOUND'; END IF;
+472:  IF v_receipt.status NOT IN ('active') THEN RAISE EXCEPTION 'ERR_RECEIPT_NOT_ACTIVE: %', v_receipt.status; END IF;
+486:    UPDATE products SET stock_current = v_new_stock, updated_at = v_effective_date
+489:    INSERT INTO stock_movements (product_id, store_id, movement_type, quantity_change, unit_cost, reference_doc, created_at, created_by, movement_date)
+493:  UPDATE receipts SET status='voided', reversed_at=v_effective_date, reversed_by=p_user_id, reversal_reason=p_reason WHERE id=p_receipt_id;
+495:  INSERT INTO public.audit_logs (user_id, store_id, action, table_name, record_id, metadata)
+503:CREATE OR REPLACE FUNCTION public.receive_production_output(p_order_id uuid, p_product_id uuid, p_quantity numeric, p_store_id uuid, p_user_id uuid DEFAULT NULL::uuid, p_idempotency_key text DEFAULT NULL::text)
+531:        RAISE EXCEPTION 'ERR_IDEMPOTENCY_KEY_REUSE: key % was used with different parameters', p_idempotency_key;
+539:  IF NOT FOUND THEN RAISE EXCEPTION 'ERR_ORDER_NOT_FOUND'; END IF;
+541:    RAISE EXCEPTION 'ERR_ORDER_NOT_IN_PROGRESS: status % is not in_progress', v_order_status;
+545:    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+549:    RAISE EXCEPTION 'ERR_PRODUCT_NOT_IN_STORE';
+551:  IF p_quantity <= 0 THEN RAISE EXCEPTION 'ERR_INVALID_QUANTITY: p_quantity must be > 0'; END IF;
+559:    RAISE EXCEPTION 'ERR_PRODUCT_COST_UNAVAILABLE: sin materiales server-side validos para orden %', p_order_id;
+575:  UPDATE production_orders SET
+598:  INSERT INTO audit_logs (user_id, store_id, action, table_name, record_id, metadata)
+615:CREATE OR REPLACE FUNCTION public.receive_production_output(p_order_id uuid, p_product_id uuid, p_quantity numeric, p_store_id uuid)
+626:CREATE OR REPLACE FUNCTION public.reverse_production_order(p_order_id uuid, p_reason text, p_user_id uuid DEFAULT NULL::uuid)
+642:  IF NOT FOUND THEN RAISE EXCEPTION 'ERR_ORDER_NOT_FOUND'; END IF;
+643:  IF v_order.status <> 'closed' THEN RAISE EXCEPTION 'ERR_ORDER_NOT_CLOSED'; END IF;
+645:    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+647:  IF v_order.output_product_id IS NULL THEN RAISE EXCEPTION 'ERR_NO_OUTPUT_TO_REVERSE'; END IF;
+664:  UPDATE products SET stock_current = GREATEST(0, v_new_stock), updated_at = now()
+667:  INSERT INTO stock_movements (product_id, store_id, movement_type, quantity_change, unit_cost, reference_doc, created_at, created_by, movement_date)
+672:  UPDATE production_orders SET status='reversed', reversed_at=now(), reversed_by=v_caller_uid, reversal_reason=p_reason WHERE id=p_order_id;
+674:  INSERT INTO public.audit_logs (user_id, store_id, action, table_name, record_id, metadata)
+684:CREATE OR REPLACE FUNCTION public.void_closed_production_order(p_order_id uuid, p_reason text DEFAULT 'Anulación'::text, p_user_id uuid DEFAULT NULL::uuid)
+700:  IF NOT FOUND THEN RAISE EXCEPTION 'ERR_ORDER_NOT_FOUND'; END IF;
+701:  IF v_order.status <> 'closed' THEN RAISE EXCEPTION 'ERR_ORDER_NOT_CLOSED'; END IF;
+703:    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+705:  IF v_order.output_product_id IS NULL THEN RAISE EXCEPTION 'ERR_NO_OUTPUT_TO_VOID'; END IF;
+722:  UPDATE products SET stock_current = GREATEST(0, v_new_stock), updated_at = now()
+725:  INSERT INTO stock_movements (product_id, store_id, movement_type, quantity_change, unit_cost, reference_doc, created_at, created_by, movement_date)
+730:  UPDATE production_orders SET status='voided', reversed_at=now(), reversed_by=v_caller_uid, reversal_reason=p_reason WHERE id=p_order_id;
+732:  INSERT INTO public.audit_logs (user_id, store_id, action, table_name, record_id, metadata)
+741:CREATE OR REPLACE FUNCTION public.create_devolution(p_store_id uuid, p_items jsonb, p_reason text, p_original_transaction_id uuid DEFAULT NULL::uuid, p_payment_method text DEFAULT 'cash'::text, p_customer_id uuid DEFAULT NULL::uuid, p_customer_name text DEFAULT NULL::text, p_notes text DEFAULT NULL::text, p_currency text DEFAULT 'CUP'::text, p_exchange_rate numeric DEFAULT 1.0)
+759:    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+764:  INSERT INTO public.devolutions (
+777:    INSERT INTO public.devolution_items (devolution_id, product_id, quantity, unit_price, total, reason)
+803:  UPDATE public.devolutions SET total_amount = v_total WHERE id = v_devolution_id;
+805:  INSERT INTO public.audit_logs (user_id, store_id, action, table_name, record_id, metadata)
+814:-- ─── S3. MOTOR B ELIMINADO ───
+815:DROP TRIGGER IF EXISTS trg_update_product_wac ON public.receipt_items;
+816:DROP FUNCTION IF EXISTS public.update_product_wac();
+818:-- ─── S4. GUARD: escritor único exigido (W62-01 §5) ───
+819:CREATE OR REPLACE FUNCTION public.w62_guard_wac_writer()
+826:    RAISE EXCEPTION 'ERR_WAC_SINGLE_WRITER_VIOLATION: UPDATE cost_average sin token (OLD=% NEW=%). Unico escritor: fn_recalc_wac', OLD.cost_average, NEW.cost_average
+832:DROP TRIGGER IF EXISTS trg_guard_wac_writer ON public.products;
+833:CREATE TRIGGER trg_guard_wac_writer
+834:  BEFORE UPDATE OF cost_average ON public.products
+837:GRANT SELECT ON public.wac_change_log TO authenticated, service_role;
+838:GRANT EXECUTE ON FUNCTION public.fn_recalc_wac(uuid,uuid,text,numeric,numeric,jsonb) TO service_role;
+
+##### PACKAGE 02-df02-cogs #####
+1:-- ============================================================================
+5:--   WAC_prev = cost_average leído bajo FOR UPDATE → COGS = units × WAC_prev.
+8:-- ============================================================================
+11:CREATE TABLE IF NOT EXISTS public.w62_zero_cost_flags (
+21:CREATE OR REPLACE FUNCTION public.create_sale_v2(p_store_id uuid, p_seller_id uuid, p_items jsonb, p_payment_method text DEFAULT 'cash'::text, p_discount_type text DEFAULT 'fixed'::text, p_discount_value numeric DEFAULT 0, p_applied_taxes jsonb DEFAULT '[]'::jsonb, p_tax_amount numeric DEFAULT 0, p_total_amount numeric DEFAULT 0, p_subtotal numeric DEFAULT 0, p_cash_amount numeric DEFAULT 0, p_transfer_amount numeric DEFAULT 0, p_zelle_amount numeric DEFAULT 0, p_sale_currency text DEFAULT 'CUP'::text, p_sale_exchange_rate numeric DEFAULT 1, p_customer_id uuid DEFAULT NULL::uuid, p_customer_name text DEFAULT NULL::text, p_supervisor_user_id uuid DEFAULT NULL::uuid, p_idempotency_key text DEFAULT NULL::text, p_operation_date timestamp with time zone DEFAULT NULL::timestamp with time zone, p_user_id uuid DEFAULT NULL::uuid)
+73:    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+93:  --    FOR UPDATE de la fila del producto (serializa stock+WAC) + validaciones.
+121:      RAISE EXCEPTION 'ERR_PRODUCT_COST_UNAVAILABLE: %', v_pid;
+126:        RAISE EXCEPTION 'ERR_PRODUCT_ZERO_WAC_NOT_DOCUMENTED: %', v_pid;
+133:        RAISE EXCEPTION 'ERR_INSUFFICIENT_STOCK: product %, stock %, requested %', v_pid, v_stock, v_units;
+179:    RAISE EXCEPTION 'ERR_TOTAL_MISMATCH: calculated=%, client=%', v_calculated_total, p_total_amount;
+189:      RAISE EXCEPTION 'ERR_SUPERVISOR_REQUIRED: discount_pct=%', v_effective_discount_pct;
+192:      RAISE EXCEPTION 'ERR_SUPERVISOR_UNAUTHORIZED';
+199:      RAISE EXCEPTION 'ERR_PAYMENT_MISMATCH: cash=%, transfer=%, zelle=%, total=%',
+210:  -- 13. INSERT transactions
+211:  INSERT INTO public.transactions (
+250:    -- DF-02: re-lectura bajo FOR UPDATE (misma TX; sin ventana TOCTOU)
+259:      RAISE EXCEPTION 'ERR_PRODUCT_COST_UNAVAILABLE: %', v_pid;
+272:    INSERT INTO public.transaction_items (
+308:    INSERT INTO public.payment_transactions (
+320:    INSERT INTO public.payment_transactions (
+333:      RAISE EXCEPTION 'ERR_ZELLE_REQUIRES_RATE: zelle payment requires p_sale_currency != CUP and p_sale_exchange_rate > 1. Got: currency=%, rate=%',
+337:      RAISE EXCEPTION 'ERR_INVALID_CURRENCY: p_sale_currency must be USD, EUR, or MLC. Got: %',
+341:    INSERT INTO public.payment_transactions (
+357:    RAISE EXCEPTION 'ERR_PAYMENT_INVARIANT_VIOLATED: SUM(amount_cup)=% != total_amount=% (POS requires full payment)',
+362:  INSERT INTO public.audit_logs (action, table_name, record_id, store_id, user_id, metadata)
+
+##### PACKAGE 03-df05-production #####
+1:-- ============================================================================
+8:-- ============================================================================
+10:CREATE OR REPLACE FUNCTION public.withdraw_production_item_v3(p_item_id uuid, p_qty numeric, p_store_id uuid, p_user_id uuid DEFAULT NULL::uuid, p_idempotency_key text DEFAULT NULL::text, p_reference_id uuid DEFAULT NULL::uuid, p_reference_doc text DEFAULT NULL::text)
+27:    RAISE EXCEPTION 'ERR_UNAUTHENTICATED';
+39:  IF v_order_id IS NULL THEN RAISE EXCEPTION 'ERR_ITEM_NOT_FOUND'; END IF;
+43:  IF NOT FOUND THEN RAISE EXCEPTION 'ERR_ORDER_NOT_FOUND'; END IF;
+45:    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+48:    RAISE EXCEPTION 'ERR_ORDER_NOT_EDITABLE: status % no permite withdraw', v_order_status;
+50:  IF p_qty <= 0 THEN RAISE EXCEPTION 'ERR_INVALID_QUANTITY'; END IF;
+54:    RAISE EXCEPTION 'ERR_OVERCONSUMPTION: actual_qty % + qty % > budgeted_qty %', v_actual, p_qty, v_budgeted;
+63:    RAISE EXCEPTION 'ERR_PRODUCT_NOT_FOUND: %', v_product_id;
+66:    RAISE EXCEPTION 'ERR_PRODUCT_COST_UNAVAILABLE: %', v_product_id;
+74:      RAISE EXCEPTION 'ERR_PRODUCT_ZERO_WAC_NOT_DOCUMENTED: %', v_product_id;
+81:  UPDATE production_order_items SET
+109:  INSERT INTO audit_logs (user_id, store_id, action, table_name, record_id, metadata)
+119:REVOKE ALL ON FUNCTION public.withdraw_production_item_v3(uuid,numeric,uuid,uuid,text,uuid,text) FROM PUBLIC, anon;
+120:GRANT EXECUTE ON FUNCTION public.withdraw_production_item_v3(uuid,numeric,uuid,uuid,text,uuid,text) TO authenticated, service_role;
+
+##### PACKAGE 04-df09-overloads #####
+1:-- ============================================================================
+5:--   F2 bloqueo explícito: REVOKE + RENAME de la 6-arg legacy y de la 9-arg
+11:-- ============================================================================
+13:-- ─── F1. Caller interno migrado: create_vale_salida 6-arg (con p_user_id) ───
+14:CREATE OR REPLACE FUNCTION public.create_vale_salida(p_store_id uuid, p_items jsonb, p_production_order_id uuid DEFAULT NULL::uuid, p_notes text DEFAULT NULL::text, p_idempotency_key text DEFAULT NULL::text, p_user_id uuid DEFAULT NULL::uuid)
+40:  IF v_caller_uid IS NULL THEN RAISE EXCEPTION 'ERR_UNAUTHENTICATED'; END IF;
+41:  IF NOT public.has_store_access_as(v_caller_uid, p_store_id) THEN RAISE EXCEPTION 'ERR_UNAUTHORIZED'; END IF;
+51:  INSERT INTO issue_slips (id, store_id, slip_number, production_order_id, notes, total_cost, created_by)
+60:    IF v_quantity IS NULL OR v_quantity <= 0 THEN RAISE EXCEPTION 'ERR_INVALID_QUANTITY'; END IF;
+63:      IF v_po_item_id IS NULL THEN RAISE EXCEPTION 'ERR_PO_ITEM_REQUIRED'; END IF;
+64:      IF v_po_item_id = ANY(v_seen_po_items) THEN RAISE EXCEPTION 'ERR_DUPLICATE_PO_ITEM: %', v_po_item_id; END IF;
+69:      IF NOT FOUND THEN RAISE EXCEPTION 'ERR_PO_ITEM_NOT_FOUND'; END IF;
+70:      IF v_po_product IS DISTINCT FROM v_product_id THEN RAISE EXCEPTION 'ERR_PRODUCT_MISMATCH'; END IF;
+71:      IF v_po_variant IS DISTINCT FROM v_variant_id THEN RAISE EXCEPTION 'ERR_VARIANT_MISMATCH'; END IF;
+85:          RAISE EXCEPTION 'ERR_VARIANT_NOT_BELONG_TO_PRODUCT';
+90:      IF NOT FOUND THEN RAISE EXCEPTION 'ERR_PRODUCT_NOT_FOUND: %', v_product_id; END IF;
+91:      IF v_unit_cost IS NULL THEN RAISE EXCEPTION 'ERR_PRODUCT_COST_UNAVAILABLE: %', v_product_id; END IF;
+102:    INSERT INTO issue_slip_items (slip_id, product_id, variant_id, production_order_item_id, quantity, unit_cost, total_cost)
+108:  UPDATE issue_slips SET total_cost = v_total_cost WHERE id = v_slip_id;
+115:  INSERT INTO audit_logs (action, table_name, record_id, store_id, user_id, metadata)
+124:CREATE OR REPLACE FUNCTION public.create_vale_salida(p_store_id uuid, p_items jsonb, p_production_order_id uuid DEFAULT NULL::uuid, p_notes text DEFAULT NULL::text, p_idempotency_key text DEFAULT NULL::text)
+134:-- ─── F2. Bloqueo explícito del par withdraw legacy ───
+135:ALTER FUNCTION public.withdraw_production_item(uuid,numeric,numeric,uuid,uuid,text) RENAME TO withdraw_production_item_deprecated_6arg;
+136:REVOKE ALL ON FUNCTION public.withdraw_production_item_deprecated_6arg(uuid,numeric,numeric,uuid,uuid,text) FROM PUBLIC, anon, authenticated, service_role;
+138:ALTER FUNCTION public.withdraw_production_item(uuid,numeric,numeric,uuid,uuid,text,uuid,text,boolean) RENAME TO withdraw_production_item_deprecated_9arg;
+139:REVOKE ALL ON FUNCTION public.withdraw_production_item_deprecated_9arg(uuid,numeric,numeric,uuid,uuid,text,uuid,text,boolean) FROM PUBLIC, anon, authenticated, service_role;
+142:ALTER FUNCTION public.receive_production_output(uuid,uuid,numeric,uuid) RENAME TO receive_production_output_deprecated_4arg;
+143:REVOKE ALL ON FUNCTION public.receive_production_output_deprecated_4arg(uuid,uuid,numeric,uuid) FROM PUBLIC, anon, authenticated;
+146:-- el REVOKE a anon es insuficiente; se revoca PUBLIC y se conceden roles explícitos.
+147:REVOKE ALL ON FUNCTION public.close_production_order_v2(uuid,uuid,uuid,numeric,text,text,numeric,uuid,numeric,uuid,text) FROM PUBLIC, anon;
+148:GRANT EXECUTE ON FUNCTION public.close_production_order_v2(uuid,uuid,uuid,numeric,text,text,numeric,uuid,numeric,uuid,text) TO authenticated, service_role;
+149:REVOKE ALL ON FUNCTION public.receive_production_output(uuid,uuid,numeric,uuid,uuid,text) FROM PUBLIC, anon;
+150:GRANT EXECUTE ON FUNCTION public.receive_production_output(uuid,uuid,numeric,uuid,uuid,text) TO authenticated, service_role;
+
+##### PACKAGE 05-df06-transfer #####
+1:-- ============================================================================
+9:-- ============================================================================
+11:CREATE OR REPLACE FUNCTION public.confirm_transfer(p_transfer_id uuid, p_user_id uuid, p_operation_date timestamp with time zone DEFAULT now())
+32:  IF v_transfer.status <> 'PENDIENTE' THEN RAISE EXCEPTION 'ERR_TRANSFER_NOT_PENDING'; END IF;
+35:    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+39:    RAISE EXCEPTION 'ERR_TRANSFER_REQUIRES_APPROVAL';
+45:      RAISE EXCEPTION 'ERR_PRODUCT_NOT_FOUND_AT_CONFIRM: %', v_item.product_id;
+49:      RAISE EXCEPTION 'ERR_INSUFFICIENT_STOCK_AT_CONFIRM: producto %, disponible=%, solicitado=%',
+66:  UPDATE public.transfers
+73:    UPDATE public.inventory_reservations
+79:      RAISE EXCEPTION 'ERR_RESERVATION_NOT_FOUND: transferencia % producto %', p_transfer_id, v_item.product_id;
+108:  INSERT INTO public.audit_logs (user_id, store_id, action, table_name, record_id, metadata)
+118:CREATE OR REPLACE FUNCTION public.reverse_transfer(p_transfer_id uuid, p_reason text, p_user_id uuid DEFAULT NULL::uuid)
+135:  IF v_transfer IS NULL THEN RAISE EXCEPTION 'ERR_TRANSFER_NOT_FOUND'; END IF;
+136:  IF v_transfer.status = 'REVERSADA' THEN RAISE EXCEPTION 'ERR_ALREADY_REVERSED'; END IF;
+138:    RAISE EXCEPTION 'ERR_NOT_CONFIRMED: estado actual: %', v_transfer.status;
+142:    RAISE EXCEPTION 'ERR_UNAUTHORIZED_ORIGIN';
+145:    RAISE EXCEPTION 'ERR_UNAUTHORIZED_DESTINATION';
+152:      RAISE EXCEPTION 'ERR_DEST_PRODUCT_NULL: item %', v_item.id;
+183:  UPDATE public.transfers
+187:  INSERT INTO public.audit_logs (user_id, store_id, action, table_name, record_id, metadata)
+
+##### PACKAGE 06-df07-devolution-cap #####
+1:-- ============================================================================
+5:--   1. LOCK de la fila de la VENTA ORIGINAL (transactions FOR UPDATE) — PRIMER
+11:-- ============================================================================
+13:CREATE OR REPLACE FUNCTION public.create_devolution_v2(p_store_id uuid, p_items jsonb, p_reason text, p_user_id uuid DEFAULT NULL::uuid, p_original_transaction_id uuid DEFAULT NULL::uuid, p_payment_method text DEFAULT 'cash'::text, p_customer_id uuid DEFAULT NULL::uuid, p_customer_name text DEFAULT NULL::text, p_notes text DEFAULT NULL::text, p_idempotency_key text DEFAULT NULL::text)
+44:    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+47:  -- ═══ DF-07: LOCK DE LA VENTA ORIGINAL — PRIMERO, ANTES DE LEER ACUMULADOS ═══
+50:    RAISE EXCEPTION 'ERR_DEVOLUTION_NO_ORIGINAL: tope acumulado exige venta original';
+56:    RAISE EXCEPTION 'ERR_CROSS_STORE: original_transaction_id does not belong to store_id';
+64:      RAISE EXCEPTION 'ERR_INVALID_QUANTITY: qty=%', v_qty;
+80:      RAISE EXCEPTION 'ERR_DEVOLUTION_CAP_EXCEEDED: producto % vendido=% devuelto=% solicitado=% (tope acumulado, lock de venta adquirido)',
+88:  INSERT INTO public.devolutions (
+103:    INSERT INTO public.devolution_items (devolution_id, product_id, quantity, unit_price, total, reason)
+128:  UPDATE public.devolutions SET total_amount = v_total WHERE id = v_devolution_id;
+130:  INSERT INTO public.audit_logs (user_id, store_id, action, table_name, record_id, metadata)
+152:REVOKE EXECUTE ON FUNCTION public.create_devolution(uuid,jsonb,text,uuid,uuid,text,uuid,text,text) FROM anon, authenticated;
+154:REVOKE EXECUTE ON FUNCTION public.create_devolution(uuid,jsonb,text,uuid,text,uuid,text,text,text,numeric) FROM anon, authenticated;
+
+##### PACKAGE 07-df08-close-fix #####
+1:-- ============================================================================
+6:-- ============================================================================
+8:CREATE OR REPLACE FUNCTION public.close_production_order_v2(p_order_id uuid, p_store_id uuid, p_seller_id uuid, p_final_amount numeric DEFAULT 0, p_final_method text DEFAULT NULL::text, p_final_currency text DEFAULT 'CUP'::text, p_exchange_rate numeric DEFAULT 1.0, p_output_product_id uuid DEFAULT NULL::uuid, p_output_quantity numeric DEFAULT NULL::numeric, p_user_id uuid DEFAULT NULL::uuid, p_idempotency_key text DEFAULT NULL::text)
+36:        RAISE EXCEPTION 'ERR_IDEMPOTENCY_KEY_REUSE';
+42:  -- ─── 1. SELECT FOR UPDATE ───
+44:  IF NOT FOUND THEN RAISE EXCEPTION 'ERR_ORDER_NOT_FOUND'; END IF;
+53:    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+58:    RAISE EXCEPTION 'ERR_ORDER_NOT_CLOSABLE: status %', v_order.status;
+63:    UPDATE production_orders SET status = 'approved' WHERE id = p_order_id;
+64:    UPDATE production_orders SET status = 'in_progress' WHERE id = p_order_id;
+66:    UPDATE production_orders SET status = 'in_progress' WHERE id = p_order_id;
+87:      RAISE EXCEPTION 'ERR_PRODUCTION_REQUIRES_OUTPUT: product_id y quantity > 0 son obligatorios';
+122:    INSERT INTO transactions (
+135:    INSERT INTO transaction_items (
+141:    UPDATE public.payment_transactions
+151:      RAISE EXCEPTION 'ERR_OT_OVERPAID: payments=% > budget_total=%', v_sum_payments, v_order.budget_total;
+155:      INSERT INTO public.audit_logs (action, table_name, record_id, store_id, user_id, metadata)
+165:  UPDATE production_orders SET status = 'completed', completion_date = CURRENT_DATE WHERE id = p_order_id;
+166:  UPDATE production_orders SET
+174:  INSERT INTO audit_logs (user_id, store_id, action, table_name, record_id, metadata)
+
+##### PACKAGE 08-df03-devolution-finance #####
+1:-- ============================================================================
+13:-- ============================================================================
+15:-- ─── S1. ref_type + 'devolution' ───
+16:ALTER TABLE public.payment_transactions DROP CONSTRAINT IF EXISTS payment_transactions_ref_type_check;
+17:ALTER TABLE public.payment_transactions ADD CONSTRAINT payment_transactions_ref_type_check
+20:-- ─── S2. Columna direction (additive) ───
+21:ALTER TABLE public.payment_transactions ADD COLUMN IF NOT EXISTS direction text NOT NULL DEFAULT 'in';
+22:ALTER TABLE public.payment_transactions DROP CONSTRAINT IF EXISTS payment_transactions_direction_check;
+23:ALTER TABLE public.payment_transactions ADD CONSTRAINT payment_transactions_direction_check
+26:-- ─── S3. CHECK análoga a sale_ref_check para devolution ───
+27:ALTER TABLE public.payment_transactions DROP CONSTRAINT IF EXISTS payment_transactions_devolution_ref_check;
+28:ALTER TABLE public.payment_transactions ADD CONSTRAINT payment_transactions_devolution_ref_check
+31:-- ─── S4. store_credit_ledger (pasivo visible, CR-W6-7) ───
+32:CREATE TABLE IF NOT EXISTS public.store_credit_ledger (
+44:-- ─── S5. Invariante I1 enmendar: refunds se NETEAN (hallazgo de laboratorio) ───
+45:CREATE OR REPLACE FUNCTION public.validate_payment_transactions_invariants()
+49:AS $fn$ BEGIN IF current_setting('app.restore_mode', true) = 'true' AND current_user IN ('costpro_snapshot_restorer', 'postgres') THEN RETURN CASE WHEN TG_OP = 'DELETE' THEN OLD ELSE NEW END; END IF; IF TG_OP = 'DELETE' THEN RAISE EXCEPTION 'ERR_PAYMENT_DELETE_FORBIDDEN' USING ERRCODE = 'PT007'; END IF; IF NEW.currency = 'CUP' AND NEW.exchange_rate != 1 THEN RAISE EXCEPTION 'ERR_PAYMENT_CUP_RATE_MUST_BE_1' USING ERRCODE = 'PT003'; END IF; IF NEW.currency != 'CUP' AND NEW.exchange_rate <= 1 THEN RAISE EXCEPTION 'ERR_PAYMENT_FOREIGN_RATE_MUST_EXCEED_1' USING ERRCODE = 'PT004'; END IF; IF NEW.payment_method = 'zelle' AND NEW.currency = 'CUP' THEN RAISE EXCEPTION 'ERR_ZELLE_NOT_FOR_CUP' USING ERRCODE = 'PT005'; END IF; IF TG_OP = 'UPDATE' AND OLD.transaction_id IS DISTINCT FROM NEW.transaction_id THEN PERFORM pg_advisory_xact_lock(hashtextextended(COALESCE(OLD.transaction_id::text, ''), 0)); PERFORM pg_advisory_xact_lock(hashtextextended(COALESCE(NEW.transaction_id::text, ''), 0)); ELSIF NEW.transaction_id IS NOT NULL THEN PERFORM pg_advisory_xact_lock(hashtextextended(NEW.transaction_id::text, 0)); END IF; /* DF-03: los refunds (direction='refund') son contra-asientos de trazabilidad — NO se suman como pago hacia el total del documento */ IF NEW.transaction_id IS NOT NULL AND NEW.direction <> 'refund' THEN DECLARE v_total_amount numeric; v_sum_payments numeric; v_existing_rate numeric; BEGIN SELECT total_amount INTO v_total_amount FROM public.transactions WHERE id = NEW.transaction_id; SELECT COALESCE(SUM(amount_cup), 0) INTO v_sum_payments FROM public.payment_transactions WHERE transaction_id = NEW.transaction_id AND id != NEW.id AND direction <> 'refund'; IF v_sum_payments + NEW.amount_cup > v_total_amount + 0.01 THEN RAISE EXCEPTION 'ERR_PAYMENT_EXCEEDS_TOTAL' USING ERRCODE = 'PT001'; END IF; SELECT exchange_rate INTO v_existing_rate FROM public.payment_transactions WHERE transaction_id = NEW.transaction_id AND payment_method = NEW.payment_method AND currency = NEW.currency AND id != NEW.id AND direction <> 'refund' LIMIT 1; IF FOUND AND ABS(v_existing_rate - NEW.exchange_rate) > 0.000001 THEN RAISE EXCEPTION 'ERR_MULTIPLE_EXCHANGE_RATES' USING ERRCODE = 'PT006'; END IF; END; END IF; RETURN NEW; END $fn$;
+51:-- ─── S6. create_devolution_v2: tope DF-07 + contra-asiento DF-03 en MISMA TX ───
+52:CREATE OR REPLACE FUNCTION public.create_devolution_v2(p_store_id uuid, p_items jsonb, p_reason text, p_user_id uuid DEFAULT NULL::uuid, p_original_transaction_id uuid DEFAULT NULL::uuid, p_payment_method text DEFAULT 'cash'::text, p_customer_id uuid DEFAULT NULL::uuid, p_customer_name text DEFAULT NULL::text, p_notes text DEFAULT NULL::text, p_idempotency_key text DEFAULT NULL::text)
+83:    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+86:  -- DF-07: LOCK venta original PRIMERO
+88:    RAISE EXCEPTION 'ERR_DEVOLUTION_NO_ORIGINAL: tope acumulado exige venta original';
+94:    RAISE EXCEPTION 'ERR_CROSS_STORE: original_transaction_id does not belong to store_id';
+102:      RAISE EXCEPTION 'ERR_INVALID_QUANTITY: qty=%', v_qty;
+117:      RAISE EXCEPTION 'ERR_DEVOLUTION_CAP_EXCEEDED: producto % vendido=% devuelto=% solicitado=% (tope acumulado, lock de venta adquirido)',
+124:    RAISE EXCEPTION 'ERR_DEVOLUTION_INVALID_METHOD: %', p_payment_method;
+129:  INSERT INTO public.devolutions (
+144:    INSERT INTO public.devolution_items (devolution_id, product_id, quantity, unit_price, total, reason)
+169:  UPDATE public.devolutions SET total_amount = v_total WHERE id = v_devolution_id;
+173:    RAISE EXCEPTION 'ERR_DEVOLUTION_AMOUNT_POSITIVE';
+182:      INSERT INTO public.cash_register_sessions (store_id, cashier_id, opening_cash, opened_at, status)
+188:    INSERT INTO public.cash_movements (session_id, movement_type, method, amount, reason, store_id)
+193:    INSERT INTO public.payment_transactions (
+205:      RAISE EXCEPTION 'ERR_STORE_CREDIT_REQUIRES_CUSTOMER';
+208:    INSERT INTO public.store_credit_ledger
+215:  INSERT INTO public.audit_logs (user_id, store_id, action, table_name, record_id, metadata)
+
+##### PACKAGE 09-df04-design-only #####
+1:-- ============================================================================
+7:-- ============================================================================
+9:-- ─── D1. Parámetros del diseño (artefacto, no ejecución) ───
+10:CREATE TABLE IF NOT EXISTS public.w62_df04_design_params (
+15:INSERT INTO public.w62_df04_design_params (param, value, source) VALUES
+28:-- ─── D2. Fixtures 100% sintéticos (tabla propia; NINGÚN dato real tocado) ───
+29:CREATE TABLE IF NOT EXISTS public.w62_df04_synthetic_rows (
+38:TRUNCATE public.w62_df04_synthetic_rows;
+39:INSERT INTO public.w62_df04_synthetic_rows VALUES
+50:-- ─── D3. Clasificador determinista del DISEÑO (función pura, sin mutación) ───
+51:CREATE OR REPLACE FUNCTION public.w62_df04_classify(
+

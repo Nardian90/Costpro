@@ -1,0 +1,12 @@
+W62 fixture base listo
+EVID|DF04: parámetros del diseño registrados (T_canon=placeholder W8, ventana, elegibilidad, CR-W6-6)
+ASSERT|DF04-A1|parámetros de diseño definidos|expected=10|actual=10|PASS
+ASSERT|DF04-A2|clasificación EXACTA de las 8 filas sintéticas (ENTRA/EXCLYE)|expected=8|actual=8|PASS
+EVID|ENTRAN: filas 1,5,8 (costo válido documentado, pre-T) | NO ENTRAN: 2 (NULL→recon_gap), 3 (0→recon_gap), 4 (sin doc), 6 (post-T), 7 (qty 0)
+ASSERT|DF04-A3|determinismo: 2 pasadas byte-idénticas|expected=true|actual=true|PASS
+ASSERT|DF04-A4|CR-W6-6: costo 0 pre-T → EXCLYE con recon_gap (nunca ingesta de cero)|expected=EXCLYE:CR-W6-6_COSTO_CERO_RECON_GAP|actual=EXCLYE:CR-W6-6_COSTO_CERO_RECON_GAP|PASS
+ASSERT|DF04-A5|WAC NULL → recon_gap (no 0 fingido)|expected=EXCLYE:CR-W6-6_COSTO_NULO_RECON_GAP|actual=EXCLYE:CR-W6-6_COSTO_NULO_RECON_GAP|PASS
+ASSERT|DF04-A6|NO BACKFILL: el clasificador es puro — su definición no contiene UPDATE/INSERT/DELETE sobre tablas reales|expected=true|actual=true|PASS
+ASSERT|DF04-A7|NO BACKFILL: 0 products.cost_average modificados por DF-04 (wac_change_log solo de DF-01..03 fixtures)|expected=0|actual=0|PASS
+ASSERT|DF04-A8|clasificador es IMMUTABLE/puro (sin efectos secundarios)|expected=1|actual=1|PASS
+EVID|RESULTADO: DESIGN-ONLY · NO DATA MUTATION — el backfill real queda FUERA de W6.2 (W8 con ventanas aprobadas por el dueño)

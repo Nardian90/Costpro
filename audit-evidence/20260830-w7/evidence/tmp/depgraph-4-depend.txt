@@ -1,0 +1,19 @@
+ referenced_object | dependent_function | deptype 
+-------------------+--------------------+---------
+(0 rows)
+
+         tgname         |   on_table    |     trigger_fn     
+------------------------+---------------+--------------------
+ trg_update_product_wac | receipt_items | update_product_wac
+(1 row)
+
+  table_name   |               tgname               |                fn                |                                                                                                                                                                                       def                                                                                                                                                                                        
+---------------+------------------------------------+----------------------------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ products      | trg_ensure_product_barcode         | ensure_product_barcode           | CREATE TRIGGER trg_ensure_product_barcode BEFORE INSERT OR UPDATE OF barcode ON public.products FOR EACH ROW EXECUTE FUNCTION ensure_product_barcode()
+ products      | trg_maintain_product_completeness  | fn_maintain_product_completeness | CREATE TRIGGER trg_maintain_product_completeness BEFORE INSERT OR UPDATE OF price ON public.products FOR EACH ROW EXECUTE FUNCTION fn_maintain_product_completeness()
+ products      | trigger_audit_product_changes      | audit_product_changes            | CREATE TRIGGER trigger_audit_product_changes AFTER UPDATE ON public.products FOR EACH ROW WHEN (((old.name IS DISTINCT FROM new.name) OR (old.price IS DISTINCT FROM new.price) OR (old.cost_price IS DISTINCT FROM new.cost_price) OR (old.sku IS DISTINCT FROM new.sku) OR (old.price_currency IS DISTINCT FROM new.price_currency))) EXECUTE FUNCTION audit_product_changes()
+ receipt_items | trg_check_reception_cost_variation | check_reception_cost_variation   | CREATE TRIGGER trg_check_reception_cost_variation BEFORE INSERT ON public.receipt_items FOR EACH ROW EXECUTE FUNCTION check_reception_cost_variation()
+ receipt_items | trg_sync_has_movements_receipt     | sync_product_has_movements       | CREATE TRIGGER trg_sync_has_movements_receipt AFTER INSERT ON public.receipt_items FOR EACH ROW EXECUTE FUNCTION sync_product_has_movements()
+ receipt_items | trg_update_product_wac             | update_product_wac               | CREATE TRIGGER trg_update_product_wac AFTER INSERT ON public.receipt_items FOR EACH ROW EXECUTE FUNCTION update_product_wac()
+(6 rows)
+

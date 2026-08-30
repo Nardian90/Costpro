@@ -1,0 +1,9 @@
+W62 fixture base listo
+psql:/home/z/my-project/scripts/w62-lab/cases/case-inv12-rollback.sql:23: ERROR:  INV12_FORCED_FAILURE: rollback intencional del laboratorio
+CONTEXT:  PL/pgSQL function inline_code_block line 3 at RAISE
+ASSERT|INV12-R1|INV-12: STATE hash tras rollback = pre (stock+WAC+movimientos)|expected=478b7f1365bf6a5da30cc01b778079be|actual=478b7f1365bf6a5da30cc01b778079be|PASS
+ASSERT|INV12-R2|INV-12: 0 transacciones huérfanas de la TX fallida|expected=true|actual=true|PASS
+ASSERT|INV12-R3|INV-12: 0 stock_movements huérfanos|expected=true|actual=true|PASS
+ASSERT|INV12-R4|INV-12: 0 audit_logs huérfanos (CREATE_SALE_V2)|expected=true|actual=true|PASS
+ASSERT|INV12-R5|INV-12: 0 payment_transactions huérfanas|expected=true|actual=true|PASS
+EVID|INV-12: rollback forzado → hash STATE idéntico al pre; sin filas huérfanas en movements/kardex/audit/payments

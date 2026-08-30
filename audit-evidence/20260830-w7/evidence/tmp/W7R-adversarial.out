@@ -1,0 +1,86 @@
+W62 fixture base listo
+psql:/home/z/my-project/scripts/w62-lab/cases/case-adversarial.sql:14: ERROR:  new row for relation "transaction_items" violates check constraint "transaction_items_quantity_check"
+DETAIL:  Failing row contains (04faf421-1d61-43c7-af43-04317a8c43ca, 044993f1-21de-4200-89b0-5f6295c4c77c, 33333333-3333-3333-3333-ad9900100001, null, -3.0000, 200, 2026-08-30 03:53:36.880125+00, 100, fixed, -600, null, null, CUP, 200.00, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null).
+CONTEXT:  SQL statement "INSERT INTO public.transaction_items (
+      transaction_id, product_id, variant_id, quantity, price_at_sale, cost_at_sale, created_at,
+      cash_paid, transfer_paid, zelle_paid, currency, exchange_rate,
+      cash_currency, transfer_currency, zelle_currency,
+      cash_discount_type, cash_discount_value, cash_discount_currency,
+      transfer_discount_type, transfer_discount_value, transfer_discount_currency,
+      zelle_discount_type, zelle_discount_value, zelle_discount_currency,
+      discount_type, discount_value, price_currency, price_at_sale_cup
+    ) VALUES (
+      v_tx_id, v_pid, v_variant_id, v_qty, v_price, v_cost, v_eff,
+      COALESCE(NULLIF(v_item->>'cash_paid','')::numeric, NULL),
+      COALESCE(NULLIF(v_item->>'transfer_paid','')::numeric, NULL),
+      COALESCE(NULLIF(v_item->>'zelle_paid','')::numeric, NULL),
+      v_item->>'currency',
+      COALESCE(NULLIF(v_item->>'exchange_rate','')::numeric, NULL),
+      v_item->>'cash_currency',
+      v_item->>'transfer_currency',
+      v_item->>'zelle_currency',
+      v_item->>'cash_discount_type',
+      COALESCE(NULLIF(v_item->>'cash_discount_value','')::numeric, NULL),
+      v_item->>'cash_discount_currency',
+      v_item->>'transfer_discount_type',
+      COALESCE(NULLIF(v_item->>'transfer_discount_value','')::numeric, NULL),
+      v_item->>'transfer_discount_currency',
+      v_item->>'zelle_discount_type',
+      COALESCE(NULLIF(v_item->>'zelle_discount_value','')::numeric, NULL),
+      v_item->>'zelle_discount_currency',
+      p_discount_type::public.discount_type_enum,
+      v_discount_amount,
+      p_sale_currency,
+      v_price * p_sale_exchange_rate
+    )"
+PL/pgSQL function create_sale_v2(uuid,uuid,jsonb,text,text,numeric,jsonb,numeric,numeric,numeric,numeric,numeric,numeric,text,numeric,uuid,text,uuid,text,timestamp with time zone,uuid) line 247 at SQL statement
+ADV|A1|venta quantity=-3|ERROR-CORRECT (rechazada)|OK
+ADV|A2|venta cost_at_sale=-999|BLOCKED (servidor impuso WAC 100, veneno ignorado)|OK
+psql:/home/z/my-project/scripts/w62-lab/cases/case-adversarial.sql:51: ERROR:  ERR_INVALID_QUANTITY: qty=-2
+CONTEXT:  PL/pgSQL function create_devolution_v2(uuid,jsonb,text,uuid,uuid,text,uuid,text,text,text) line 46 at RAISE
+ADV|A3|devolución quantity=-2|ERROR-CORRECT (ERR_INVALID_QUANTITY)|OK
+psql:/home/z/my-project/scripts/w62-lab/cases/case-adversarial.sql:74: ERROR:  ERR_INVALID_QUANTITY
+CONTEXT:  PL/pgSQL function withdraw_production_item_v3(uuid,numeric,uuid,uuid,text,uuid,text) line 36 at RAISE
+ADV|A4|withdraw qty=-1|ERROR-CORRECT (ERR_INVALID_QUANTITY)|OK
+psql:/home/z/my-project/scripts/w62-lab/cases/case-adversarial.sql:92: ERROR:  ERR_DEVOLUTION_CAP_EXCEEDED: producto 33333333-3333-3333-3333-ad9900100001 vendido=0 devuelto=0 solicitado=1 (tope acumulado, lock de venta adquirido)
+CONTEXT:  PL/pgSQL function create_devolution_v2(uuid,jsonb,text,uuid,uuid,text,uuid,text,text,text) line 61 at RAISE
+ADV|A5|store_credit sin customer_id|ERROR-CORRECT (ERR_STORE_CREDIT_REQUIRES_CUSTOMER)|OK
+psql:/home/z/my-project/scripts/w62-lab/cases/case-adversarial.sql:108: ERROR:  ERR_UNAUTHORIZED
+CONTEXT:  PL/pgSQL function create_sale_v2(uuid,uuid,jsonb,text,text,numeric,jsonb,numeric,numeric,numeric,numeric,numeric,numeric,text,numeric,uuid,text,uuid,text,timestamp with time zone,uuid) line 48 at RAISE
+ADV|A6|anon ejecuta create_sale_v2|BLOCKED (ACL/permiso denegado o ERR_UNAUTHORIZED por sin identidad)|OK
+psql:/home/z/my-project/scripts/w62-lab/cases/case-adversarial.sql:117: WARNING:  there is already a transaction in progress
+psql:/home/z/my-project/scripts/w62-lab/cases/case-adversarial.sql:126: ERROR:  ERR_INSUFFICIENT_STOCK: product 33333333-3333-3333-3333-ad9900100001, stock 9.0000, requested 9999
+CONTEXT:  PL/pgSQL function create_sale_v2(uuid,uuid,jsonb,text,text,numeric,jsonb,numeric,numeric,numeric,numeric,numeric,numeric,text,numeric,uuid,text,uuid,text,timestamp with time zone,uuid) line 108 at RAISE
+ADV|A7|venta 9999u sobre stock 10|ERROR-CORRECT (ERR_INSUFFICIENT_STOCK)|OK
+psql:/home/z/my-project/scripts/w62-lab/cases/case-adversarial.sql:143: ERROR:  Stock negativo no permitido | product_id=33333333-3333-3333-3333-ad9900100001 | store_id=22222222-2222-2222-2222-222222222222
+CONTEXT:  PL/pgSQL function prevent_negative_inventory() line 9 at RAISE
+SQL statement "UPDATE public.inventory
+    SET quantity = public.inventory.quantity + NEW.quantity_change,
+        version = public.inventory.version + 1,
+        updated_at = now()
+    WHERE store_id = NEW.store_id AND product_id = NEW.product_id
+    RETURNING quantity"
+PL/pgSQL function fn_sync_inventory_on_movement() line 46 at SQL statement
+SQL statement "INSERT INTO public.stock_movements (
+    product_id, store_id, created_by, variant_id, quantity_change,
+    movement_type, reference_id, reference_doc, unit_cost, notes, movement_date, created_at
+  ) VALUES (
+    p_product_id, p_store_id, p_user_id, p_variant_id, p_quantity,
+    LOWER(p_movement_type)::public.movement_type, p_sale_id::text, p_reason,
+    COALESCE(p_unit_cost,0), p_notes, v_eff, v_eff
+  ) RETURNING balance_after"
+PL/pgSQL function register_stock_movement(uuid,uuid,numeric,text,text,uuid,uuid,uuid,numeric,text,timestamp with time zone,boolean) line 12 at SQL statement
+ADV|A8|movement -999 sin access check (skip=false)|ERROR-CORRECT (validación stock/acceso)|OK
+psql:/home/z/my-project/scripts/w62-lab/cases/case-adversarial.sql:157: ERROR:  ERR_WAC_SINGLE_WRITER_VIOLATION: UPDATE cost_average sin token (OLD=100 NEW=1). Unico escritor: fn_recalc_wac
+CONTEXT:  PL/pgSQL function w62_guard_wac_writer() line 4 at RAISE
+ADV|A9|UPDATE directo cost_average=1|BLOCKED (ERR_WAC_SINGLE_WRITER_VIOLATION)|OK
+psql:/home/z/my-project/scripts/w62-lab/cases/case-adversarial.sql:182: ERROR:  ERR_PRODUCT_COST_UNAVAILABLE: 33333333-3333-3333-3333-ad9900300001
+CONTEXT:  PL/pgSQL function withdraw_production_item_v3(uuid,numeric,uuid,uuid,text,uuid,text) line 52 at RAISE
+ADV|A10|withdraw material WAC NULL|ERROR-CORRECT (ERR_PRODUCT_COST_UNAVAILABLE — sin fallback a 0)|OK
+psql:/home/z/my-project/scripts/w62-lab/cases/case-adversarial.sql:200: ERROR:  ERR_DEVOLUTION_NO_ORIGINAL: tope acumulado exige venta original
+CONTEXT:  PL/pgSQL function create_devolution_v2(uuid,jsonb,text,uuid,uuid,text,uuid,text,text,text) line 32 at RAISE
+ADV|A11|devolución sin venta original|ERROR-CORRECT (ERR_DEVOLUTION_NO_ORIGINAL)|OK
+psql:/home/z/my-project/scripts/w62-lab/cases/case-adversarial.sql:218: ERROR:  ERR_DEVOLUTION_CAP_EXCEEDED: producto 33333333-3333-3333-3333-ad9900200001 vendido=0 devuelto=0 solicitado=1 (tope acumulado, lock de venta adquirido)
+CONTEXT:  PL/pgSQL function create_devolution_v2(uuid,jsonb,text,uuid,uuid,text,uuid,text,text,text) line 61 at RAISE
+ADV|A12|devolución de producto no vendido|ERROR-CORRECT (tope: vendido=0)|OK
+ADV|RESUMEN|0 ACCEPTED-INCORRECTLY = adversarial PASS|

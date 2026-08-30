@@ -1,0 +1,11 @@
+SETUP-OK|pid=33333333-3333-3333-3333-df0790010001|sale=d76d1091-e53f-4058-b50c-a882e1097475
+════ F7' RACE: TX-A y TX-B devuelven 4u cada una, CONCURRENTES, venta de 5 ════
+sesión A (dev 4) exit=0 → {"status": "success", "total_amount": 800, "devolution_id": "5d4156ee-41c1-4fa6-a3b3-2609ec2da5b4", "financial_effect": "cash_out_and_refund", "devolution_number": "NC-000008-2026"}
+sesión B (dev 4) exit=1 → ERROR:  ERR_DEVOLUTION_CAP_EXCEEDED: producto 33333333-3333-3333-3333-df0790010001 vendido=5.0000 devuelto=4.00 solicitado=4 (tope acumulado, lock de venta adquirido)
+CONTEXT:  PL/pgSQL function create_devolution_v2(uuid,jsonb,text,uuid,uuid,text,uuid,text,text,text) line 61 at RAISE
+W62 fixture base listo
+ASSERT|F7-R1|RACE: exactamente 1 devolución aceptada|expected=1|actual=1|PASS
+ASSERT|F7-R2|RACE: total devuelto = 4 (4 ≤ 5, NUNCA 8)|expected=4|actual=4.00|PASS
+ASSERT|F7-R3|RACE: stock 20-5+4 = 19 (efecto único)|expected=19|actual=19.0000|PASS
+EVID|lock: la sesión perdedora leyó el acumulado FRESCO post-lock y rechazó con ERR_DEVOLUTION_CAP_EXCEEDED
+F7-RACE completado

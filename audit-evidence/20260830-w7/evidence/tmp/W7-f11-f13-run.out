@@ -1,0 +1,23 @@
+W62 fixture base listo
+EVID|F13|withdraw 6-arg resolución: NO EXISTE (42883 para clientes legacy)
+EVID|F13|receive 4-arg resolución: NO EXISTE (42883 para clientes legacy)
+psql:/home/z/my-project/w7-readiness/tmp/w7-ext-f11-f13.sql:41: ERROR:  SAVEPOINT can only be used in transaction blocks
+psql:/home/z/my-project/w7-readiness/tmp/w7-ext-f11-f13.sql:45: ERROR:  function public.create_vale_salida(p_store_id => uuid, p_items => jsonb, p_production_order_id => uuid, p_notes => unknown, p_idempotency_key => text) is not unique
+LINE 1: SELECT public.create_vale_salida(
+               ^
+HINT:  Could not choose a best candidate function. You might need to add explicit type casts.
+psql:/home/z/my-project/w7-readiness/tmp/w7-ext-f11-f13.sql:46: ERROR:  ROLLBACK TO SAVEPOINT can only be used in transaction blocks
+EVID|F13|vale_salida 5-named-params: ver error arriba (42725 = ambigüedad residual conocida)
+psql:/home/z/my-project/w7-readiness/tmp/w7-ext-f11-f13.sql:59: ERROR:  invalid input syntax for type json
+LINE 4: ...t_id":"'||'33333333-3333-3333-3333-f13010000001'||'","quanti...
+                                                             ^
+DETAIL:  Token "quantity" is invalid.
+CONTEXT:  JSON data, line 1: ","quantity...
+psql:/home/z/my-project/w7-readiness/tmp/w7-ext-f11-f13.sql:62: ERROR:  current transaction is aborted, commands ignored until end of transaction block
+{"total": 0, "status": "success", "devolution_id": "c74e3722-70b0-4785-ad57-3c728c4a670e", "devolution_number": "DEV-2026-061317"}
+EVID|F13|create_devolution v1 como authenticated: ver error arriba (42501 = v1 bloqueada, BREAKING controlado)
+EVID|F13: close sin key (CLIENT_OLD) y con key (CLIENT_NEW) — ver df08-after 10 asserts
+psql:/home/z/my-project/w7-readiness/tmp/w7-ext-f11-f13.sql:92: ERROR:  ERR_UNAUTHORIZED
+CONTEXT:  PL/pgSQL function create_devolution_v2(uuid,jsonb,text,uuid,uuid,text,uuid,text,text,text) line 27 at RAISE
+EVID|F13|create_devolution_v2 como anon: ver error arriba (ERR_UNAUTHORIZED/ERR_DEVOLUTION_NO_ORIGINAL = superficie expuesta, defensa interna activa)
+w7-ext-f11-f13: FIN

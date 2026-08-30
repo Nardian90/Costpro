@@ -1,0 +1,17 @@
+W62 fixture base listo
+EVID|F19: ciclo completo 10@100 → +5@200 → venta3 → +5@300 → devolución1
+EVID|F19|apertura: stock=10, WAC=100, V0=1000
+4a9212f0-c9b4-4236-9df3-ce489475f9e1
+ASSERT|F19-1|WAC tras +5@200 = 133.333333|expected=133.333333|actual=133.333333|PASS
+ASSERT|F19-2|COGS venta = 3×133.3333 = 400 (WAC_prev vigente)|expected=400|actual=400.000000|PASS
+ASSERT|F19-3|WAC invariante tras venta (133.333333)|expected=133.333333|actual=133.333333|PASS
+psql:/home/z/my-project/w7-readiness/tmp/w7-ext-fase19.sql:44: NOTICE:  Critical cost variation for product 33333333-3333-3333-3333-f19010000001: 300 vs average 100
+f9d2a751-96f4-4b9b-a10b-93689bda196a
+ASSERT|F19-4|WAC tras +5@300 = 182.352941 (blend exacto)|expected=182.352941|actual=182.352941|PASS
+ASSERT|F19-5|COGS_revertido = COGS_original (uc del movement return = 133.333333)|expected=133.333333|actual=133.333333|PASS
+ASSERT|F19-6|LEDGER: V0 1000 + in 2500 − out 400 = 3100 + reversión 133.333333 = 3233.333333|expected=3233.333333|actual=3233.333333|PASS
+ASSERT|F19-7|WAC basis: stock 18 × WAC 182.352941 = 3282.352941|expected=3282.352941|actual=3282.352941|PASS
+ASSERT|F19-8|A1 basis mismatch MATERIALIZADA = 1×(182.352941−133.333333) = 49.019608|expected=49.019608|actual=49.019608|PASS
+ASSERT|F19-9|A1 trazable: existe movement return con uc ≠ WAC vigente (línea de auditoría)|expected=true|actual=true|PASS
+ASSERT|F19-10|Σ transaction_items.COGS = Σ stock_movements(sale).unit_cost×|qty| (exacto)|expected=0|actual=0.000000|PASS
+w7-ext-fase19: FIN

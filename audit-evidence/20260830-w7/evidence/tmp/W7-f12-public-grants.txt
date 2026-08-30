@@ -1,0 +1,17 @@
+EVID|PUB|close_production_order_v2(uuid,uuid,uuid,numeric,text,text,numeric,uuid,numeric,uuid,text) :: postgres=X/postgres , authenticated=X/postgres , service_role=X/postgres
+EVID|PUB|confirm_pending_reception(uuid,uuid,timestamp with time zone) :: postgres=X/postgres , authenticated=X/postgres , service_role=X/postgres
+EVID|PUB|confirm_transfer(uuid,uuid,timestamp with time zone) :: postgres=X/postgres , authenticated=X/postgres , service_role=X/postgres
+EVID|PUB|create_devolution_v2(uuid,jsonb,text,uuid,uuid,text,uuid,text,text,text) :: =X/postgres , postgres=X/postgres , authenticated=X/postgres , service_role=X/postgres
+EVID|PUB|create_sale_v2(uuid,uuid,jsonb,text,text,numeric,jsonb,numeric,numeric,numeric,numeric,numeric,numeric,text,numeric,uuid,text,uuid,text,timestamp with time zone,uuid) :: =X/postgres , postgres=X/postgres , authenticated=X/postgres , service_role=X/postgres
+EVID|PUB|create_vale_salida(uuid,jsonb,uuid,text,text) :: postgres=X/postgres , authenticated=X/postgres , service_role=X/postgres
+EVID|PUB|create_vale_salida(uuid,jsonb,uuid,text,text,uuid) :: postgres=X/postgres , authenticated=X/postgres , service_role=X/postgres
+EVID|PUB|fn_recalc_wac(uuid,uuid,text,numeric,numeric,jsonb) :: =X/postgres , postgres=X/postgres , anon=X/postgres , authenticated=X/postgres , service_role=X/postgres
+EVID|PUB|receive_production_output(uuid,uuid,numeric,uuid,uuid,text) :: postgres=X/postgres , authenticated=X/postgres , service_role=X/postgres
+EVID|PUB|reverse_transfer(uuid,text,uuid) :: postgres=X/postgres , authenticated=X/postgres , service_role=X/postgres
+EVID|PUB|w62_df04_classify(timestamp with time zone,numeric,numeric,boolean) :: =X/postgres , postgres=X/postgres , anon=X/postgres , authenticated=X/postgres , service_role=X/postgres
+EVID|PUB|w62_guard_wac_writer() :: =X/postgres , postgres=X/postgres , anon=X/postgres , authenticated=X/postgres , service_role=X/postgres
+EVID|PUB|withdraw_production_item_v3(uuid,numeric,uuid,uuid,text,uuid,text) :: postgres=X/postgres , authenticated=X/postgres , service_role=X/postgres
+EVID|PRIV|fn_recalc_wac :: anon=true authenticated=true
+EVID|PRIV|withdraw_production_item_v3 :: anon=false authenticated=true
+EVID|PRIV|create_devolution_v2 :: anon=true authenticated=true
+EVID|PRIV|w62_df04_classify :: anon=true authenticated=true

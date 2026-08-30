@@ -1,0 +1,11 @@
+W62 fixture base listo
+ASSERT|W7D1-B1|anon→create_sale_v2 (wrapper PUBLIC): identidad no verificada → bloqueado|expected=ERR:P0001:ERR_UNAUTHORIZED|actual=ERR:P0001:ERR_UNAUTHORIZED|PASS
+ASSERT|W7D1-B2|anon→create_devolution_v2 (wrapper PUBLIC): ERR_UNAUTHORIZED (defensa interna)|expected=ERR:P0001:ERR_UNAUTHORIZED|actual=ERR:P0001:ERR_UNAUTHORIZED|PASS
+ASSERT|W7D1-B3|anon→reset_store_data (2-arg, notación named): ERR_UNAUTHORIZED (has_management_access_as)|expected=ERR:P0001:ERR_UNAUTHORIZED: Caller must be admin, manager or encargado of the store.|actual=ERR:P0001:ERR_UNAUTHORIZED: Caller must be admin, manager or encargado of the store.|PASS
+EVID|FASE6|d|authenticated-ADMIN→reset_store_data (esperado guard ERR_WAC_SINGLE_WRITER_VIOLATION): ERR:42703:column "store_id" does not exist
+EVID|FASE6|e|authenticated→w62_guard_wac_writer() directa: ERR:0A000:trigger functions can only be called as triggers
+EVID|FASE6|f|escritores cost_average (prosrc) fuera de fn_recalc_wac: NINGUNO
+EVID|FASE6|g|funciones que fijan token app.wac_writer: fn_recalc_wac, w62_guard_wac_writer
+psql:/home/z/my-project/w7-readiness/tmp/w7d1-case-f6-nobypass.sql:67: ERROR:  function "public.restore_store_backup(uuid)" does not exist
+psql:/home/z/my-project/w7-readiness/tmp/w7d1-case-f6-nobypass.sql:70: ERROR:  current transaction is aborted, commands ignored until end of transaction block
+EVID|FASE6|hygiene|productos de prueba restantes: 0 (esperado 0)

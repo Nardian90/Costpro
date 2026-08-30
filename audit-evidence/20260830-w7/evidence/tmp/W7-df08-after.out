@@ -1,0 +1,12 @@
+W62 fixture base listo
+ASSERT|DF08-A0|materiales server-side listos (2@50)|expected=success|actual=success|PASS
+ASSERT|DF08-A1|close CON key → success (fix uuid=uuid)|expected=success|actual=success|PASS
+ASSERT|DF08-A2|close: PT valuation server-side (2×50=100 → unit 50)|expected=50|actual=50.0000000000000000|PASS
+ASSERT|DF08-A3|close: exactamente 1 fila PRODUCTION_ORDER_CLOSED|expected=1|actual=1|PASS
+ASSERT|DF08-A4|replay misma key → respuesta original re-emitida|expected=success|actual=success|PASS
+ASSERT|DF08-A5|replay: sigue habiendo EXACTAMENTE 1 fila de cierre|expected=1|actual=1|PASS
+ASSERT|DF08-A6|replay: PT stock NO duplicado (sigue 2)|expected=2|actual=2.0000|PASS
+ASSERT|DF08-A7|key distinta sobre orden closed → already_closed|expected=already_closed|actual=already_closed|PASS
+ASSERT|DF08-A8|misma key con param_hash distinto → ERR_IDEMPOTENCY_KEY_REUSE|expected=true|actual=true|PASS
+ASSERT|DF08-A9|close sin key (puente) sigue operativo|expected=success|actual=success|PASS
+EVID|DF08-AFTER: close con key OK; replay idempotente; already_closed; REUSE detectado; puente sin key intacto — workaround RECHAZADO como permanente

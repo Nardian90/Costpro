@@ -1,0 +1,29 @@
+                                             fn                                             | exec_public | exec_anon | exec_authed | exec_service 
+--------------------------------------------------------------------------------------------+-------------+-----------+-------------+--------------
+ confirm_transfer(uuid,uuid,timestamp with time zone)                                       | f           | f         | t           | t
+ receive_production_output(uuid,uuid,numeric,uuid)                                          | f           | f         | t           | t
+ create_devolution(uuid,jsonb,text,uuid,uuid,text,uuid,text,text)                           | f           | f         | t           | t
+ reverse_transfer(uuid,text,uuid)                                                           | f           | f         | t           | t
+ reverse_adjustment(uuid,text,uuid)                                                         | f           | f         | t           | t
+ reverse_devolution(uuid,text,uuid)                                                         | f           | f         | t           | t
+ create_devolution(uuid,jsonb,text,uuid,text,uuid,text,text,text,numeric)                   | f           | f         | t           | t
+ receive_production_output(uuid,uuid,numeric,uuid,uuid,text)                                | t           | t         | t           | t
+ withdraw_production_item(uuid,numeric,numeric,uuid,uuid,text)                              | f           | f         | f           | t
+ close_production_order_v2(uuid,uuid,uuid,numeric,text,text,numeric,uuid,numeric,uuid,text) | t           | t         | t           | t
+ create_devolution_v2(uuid,jsonb,text,uuid,uuid,text,uuid,text,text,text)                   | t           | f         | t           | t
+ withdraw_production_item(uuid,numeric,numeric,uuid,uuid,text,uuid,text,boolean)            | f           | f         | f           | t
+ create_vale_salida(uuid,jsonb,uuid,text,text)                                              | f           | f         | t           | t
+ create_vale_salida(uuid,jsonb,uuid,text,text,uuid)                                         | f           | f         | t           | t
+(14 rows)
+
+                  conname                  |                                                                     def                                                                      
+-------------------------------------------+----------------------------------------------------------------------------------------------------------------------------------------------
+ payment_transactions_amount_check         | CHECK ((amount > (0)::numeric))
+ payment_transactions_currency_check       | CHECK ((currency = ANY (ARRAY['CUP'::text, 'USD'::text, 'EUR'::text, 'MLC'::text])))
+ payment_transactions_payment_method_check | CHECK ((payment_method = ANY (ARRAY['cash'::text, 'transfer'::text, 'zelle'::text])))
+ payment_transactions_pkey                 | PRIMARY KEY (id)
+ payment_transactions_ref_type_check       | CHECK ((ref_type = ANY (ARRAY['receipt'::text, 'service'::text, 'production_order'::text, 'work'::text, 'sale'::text, 'commission'::text])))
+ payment_transactions_sale_ref_check       | CHECK (((ref_type <> 'sale'::text) OR ((transaction_id IS NOT NULL) AND (ref_id = transaction_id))))
+ payment_transactions_transaction_id_fkey  | FOREIGN KEY (transaction_id) REFERENCES transactions(id) ON DELETE RESTRICT
+(7 rows)
+

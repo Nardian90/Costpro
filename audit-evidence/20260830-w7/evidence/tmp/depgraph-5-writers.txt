@@ -1,0 +1,32 @@
+                                      writer_function                                       | updates_products | sets_cost_average | inserts_products | updates_other |  sec   
+--------------------------------------------------------------------------------------------+------------------+-------------------+------------------+---------------+--------
+ fn_process_receipt(jsonb,uuid,text)                                                        | t                | t                 | t                | f             | SECDEF
+ cancel_reception(uuid)                                                                     | t                | t                 | f                | f             | SECDEF
+ update_product_wac()                                                                       | t                | t                 | f                | f             | SECDEF
+ fn_process_receipt(jsonb,uuid,uuid,text)                                                   | t                | t                 | t                | f             | SECDEF
+ receive_production_output(uuid,uuid,numeric,uuid)                                          | t                | t                 | f                | f             | SECDEF
+ perform_inventory_adjustment(uuid,uuid,numeric,text,uuid,numeric,timestamp with time zone) | t                | t                 | f                | f             | SECDEF
+ confirm_pending_reception(uuid,uuid,timestamp with time zone)                              | t                | t                 | f                | f             | SECDEF
+ void_reception_with_reversal(uuid,uuid,text,timestamp with time zone)                      | t                | t                 | f                | f             | SECDEF
+ create_devolution(uuid,jsonb,text,uuid,text,uuid,text,text,text,numeric)                   | t                | t                 | f                | f             | SECDEF
+ reset_store_data(uuid,boolean,uuid)                                                        | t                | t                 | f                | f             | SECDEF
+ reverse_receipt_v2(uuid,text,uuid)                                                         | t                | t                 | f                | f             | SECDEF
+ receive_production_output(uuid,uuid,numeric,uuid,uuid,text)                                | t                | t                 | f                | f             | SECDEF
+ void_closed_production_order(uuid,text,uuid)                                               | t                | t                 | f                | f             | SECDEF
+ reverse_production_order(uuid,text,uuid)                                                   | t                | t                 | f                | f             | SECDEF
+ reset_store_data(uuid,boolean)                                                             | t                | t                 | f                | f             | SECDEF
+(15 rows)
+
+ guard_triggers_preexisting 
+----------------------------
+                          0
+(1 row)
+
+                     fn                     
+--------------------------------------------
+ validate_pre_restore_fk_integrity(uuid)
+ create_pre_restore_snapshot(uuid)
+ restore_store_backup(uuid,jsonb,text,text)
+ restore_transaction_snapshot(text,uuid)
+(4 rows)
+

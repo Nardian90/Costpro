@@ -1,0 +1,13 @@
+SETUP-OK|pid=33333333-3333-3333-3333-df0199010001|receipt_A=45e61aa0-0c36-418e-bf72-922bdfb58eaf|receipt_B=29ab85e2-92d0-49e8-a59b-41f543e84807
+════ DF01-CONC: confirmaciones concurrentes A(2@200) y B(3@300) sobre stock 10@100 ════
+sesión A (2@200) exit=0 → 
+sesión B (3@300) exit=0 → 
+W62 fixture base listo
+ASSERT|DF01-C1|Concurrencia: stock final 10+2+3=15|expected=15|actual=15.0000|PASS
+ASSERT|DF01-C2|INV-15 conservación: stock×WAC = 1000+400+900 = 2300|expected=2300|actual=2300.000000000000000400000000|PASS
+ASSERT|DF01-C3|INV-15: 2 filas wac_change_log (blends serializados)|expected=2|actual=2|PASS
+ASSERT|DF01-C4|Concurrencia: sin lost update (WAC final = 2300/15)|expected=153.333333333333333|actual=153.33333333333333336000|PASS
+psql:<stdin>:14: ERROR:  column reference "created_at" is ambiguous
+LINE 1: ...efore,3)||'→'||round(wac_after,3), ' ; ' ORDER BY created_at...
+                                                             ^
+DF01-CONC completado

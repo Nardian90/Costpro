@@ -1,0 +1,17 @@
+W62 fixture base listo
+ASSERT|DF03-A1|venta: payment_transactions in = 1000 (I1b intacta)|expected=1000|actual=1000|PASS
+ASSERT|DF03-A2|cash OUT exacto 400 (tolerancia 0, escoped a esta devolución)|expected=400|actual=400|PASS
+ASSERT|DF03-A3|payment_transactions refund: amount=400, direction=refund|expected=400|actual=400|PASS
+ASSERT|DF03-A4|TR-2: refund.transaction_id = venta original|expected=MATCH|actual=MATCH|PASS
+ASSERT|DF03-A5|TR-1: refund.ref_id = devolution_id|expected=MATCH|actual=MATCH|PASS
+ASSERT|DF03-A6|TR-3: Σ reembolsos = devolutions.total_amount (tolerancia 0)|expected=400|actual=400.00|PASS
+ASSERT|DF03-A7|kardex/inventario: stock restaurado 5+2=7|expected=7|actual=7.0000|PASS
+EVID|triángulo demostrado: inventario↔devolución↔movimiento financiero (stock 5, caja out 400, refund 400 trazable a la venta)
+ASSERT|DF03-A8|misma key → idempotente|expected=idempotent|actual=idempotent|PASS
+ASSERT|DF03-A9|misma key → 1 solo contra-asiento financiero (refund rows de esta devolución)|expected=1|actual=1|PASS
+ASSERT|DF03-A10|store_credit: fila de pasivo en ledger por 400|expected=400|actual=400|PASS
+ASSERT|DF03-A11|store_credit: 0 movimientos de caja para esta devolución|expected=0|actual=0|PASS
+ASSERT|DF03-A12|store_credit: effect declarado = store_credit_ledger|expected=store_credit_ledger|actual=store_credit_ledger|PASS
+ASSERT|DF03-A13|INV-11: 0 devoluciones completed sin contra-asiento (caja o ledger)|expected=0|actual=0|PASS
+ASSERT|DF03-A14|caja cuadra: out 400 + refund 400 por esta devolución (par exacto)|expected=800|actual=800|PASS
+EVID|DF03-AFTER: contra-asiento completo con trazabilidad TR-1..TR-4; store_credit como pasivo; INV-11 demostrada; caja cuadra

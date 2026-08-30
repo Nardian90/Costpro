@@ -1,0 +1,44 @@
+FP|cmp|FUNC|cancel_reception(uuid)|529d9515419f4d6f61b129639a952dee|postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres|true
+FP|cmp|FUNC|close_production_order_v2(uuid,uuid,uuid,numeric,text,text,numeric,uuid,numeric,uuid,text)|90292839721178aeb8b8a35af30ccf3f|postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres|true
+FP|cmp|FUNC|confirm_pending_reception(uuid,uuid,timestamp with time zone)|6c5b10f97f8bb1d1c0eb83cd2c3d3c19|postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres|true
+FP|cmp|FUNC|confirm_transfer(uuid,uuid,timestamp with time zone)|91cb7a90d2775859ce1d42b09da160cc|postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres|true
+FP|cmp|FUNC|create_devolution(uuid,jsonb,text,uuid,text,uuid,text,text,text,numeric)|5676c618180f37db1cca680043bebaf4|postgres=X/postgres,service_role=X/postgres|true
+FP|cmp|FUNC|create_devolution(uuid,jsonb,text,uuid,uuid,text,uuid,text,text)|92a0d6d20925b93d525226981c7278a9|postgres=X/postgres,service_role=X/postgres|true
+FP|cmp|FUNC|create_devolution_v2(uuid,jsonb,text,uuid,uuid,text,uuid,text,text,text)|75c4b5bdc1e106149d877a0d036c7f16|=X/postgres,postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres|true
+FP|cmp|FUNC|create_sale_v2(uuid,uuid,jsonb,text,text,numeric,jsonb,numeric,numeric,numeric,numeric,numeric,numeric,text,numeric,uuid,text,uuid,text,timestamp with time zone,uuid)|7edb09b6b6f83b6d943e6171acf3412c|=X/postgres,postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres|true
+FP|cmp|FUNC|create_vale_salida(uuid,jsonb,uuid,text,text)|9916fa048d2cb95d48b77cc2d3b0c610|postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres|true
+FP|cmp|FUNC|create_vale_salida(uuid,jsonb,uuid,text,text,uuid)|655e93defaa49cf53696525700573c87|postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres|true
+FP|cmp|FUNC|fn_process_receipt(jsonb,uuid,text)|99a3aed010e600b0e613f988ace09589|postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres|true
+FP|cmp|FUNC|fn_process_receipt(jsonb,uuid,uuid,text)|ee57bdfc693da29eee6bd8987a2cd119|postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres|true
+FP|cmp|FUNC|fn_recalc_wac(uuid,uuid,text,numeric,numeric,jsonb)|8857360458027a77421aa793efb4bf3f|postgres=X/postgres,service_role=X/postgres|true
+FP|cmp|FUNC|perform_inventory_adjustment(uuid,uuid,numeric,text,uuid,numeric,timestamp with time zone)|067685e8c5b503d7573bf821bee89731|postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres|true
+FP|cmp|FUNC|receive_production_output(uuid,uuid,numeric,uuid,uuid,text)|dbbce0cb2408595bc1155590ee28ad85|postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres|true
+FP|cmp|FUNC|reverse_production_order(uuid,text,uuid)|ad9079c5cca3690bec5492ebd8be562a|=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres|true
+FP|cmp|FUNC|reverse_receipt_v2(uuid,text,uuid)|09cc0c2cfc02d9a4275c7782bf3e3621|=X/postgres,postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres|true
+FP|cmp|FUNC|reverse_transfer(uuid,text,uuid)|4e95eb75b22f38736720f860854b30ea|postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres|true
+FP|cmp|FUNC|validate_payment_transactions_invariants()|c95512f62fd75d2a0cf446485d920079|=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres|false
+FP|cmp|FUNC|void_closed_production_order(uuid,text,uuid)|2a4299f1be35c9109969dd9e8cc78554|=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres|true
+FP|cmp|FUNC|void_reception_with_reversal(uuid,uuid,text,timestamp with time zone)|e86eae10b3f09939ad6c1ab9c4996217|postgres=X/postgres,service_role=X/postgres|true
+FP|cmp|FUNC|withdraw_production_item_v3(uuid,numeric,uuid,uuid,text,uuid,text)|99cf3b60813493beb8558ab7823e904a|postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres|true
+FP|cmp|TRG|payment_transactions|trg_validate_payment_invariants|validate_payment_transactions_invariants|c5b9bcc6547acfae99edf5e5d2d00a1e
+FP|cmp|TRG|products|trg_ensure_product_barcode|ensure_product_barcode|f93ebb89812172c220f1ced7d8baddee
+FP|cmp|TRG|products|trg_guard_wac_writer|w62_guard_wac_writer|7f119fe94d0082c08f274996edaf94b3
+FP|cmp|TRG|products|trg_maintain_product_completeness|fn_maintain_product_completeness|20599832d1527da0d8395c0e000ea302
+FP|cmp|TRG|products|trigger_audit_product_changes|audit_product_changes|2370e0fc10e9d2a293f3408be417953a
+FP|cmp|TRG|receipt_items|trg_check_reception_cost_variation|check_reception_cost_variation|405e8463ff05ea43039fe8f148e895ae
+FP|cmp|TRG|receipt_items|trg_sync_has_movements_receipt|sync_product_has_movements|c7fff365a56cf673950fb4bf1e305f93
+FP|cmp|CON|payment_transactions|payment_transactions_amount_check|ff7f8fc527686422d3a0e8676a5dee99
+FP|cmp|CON|payment_transactions|payment_transactions_currency_check|d3f33f5b683756cb12ce6d67d5f20006
+FP|cmp|CON|payment_transactions|payment_transactions_devolution_ref_check|6dcdb505497ba86fe25168e69239b597
+FP|cmp|CON|payment_transactions|payment_transactions_direction_check|7ad0f5b9c7e788b4126613d992ab6e37
+FP|cmp|CON|payment_transactions|payment_transactions_payment_method_check|a7826f3e33a1e0975079015cdb602da1
+FP|cmp|CON|payment_transactions|payment_transactions_pkey|4c6419b3704337bbfe50f018842a9ad3
+FP|cmp|CON|payment_transactions|payment_transactions_ref_type_check|f5b875881dd1a582fe8200d90eec748c
+FP|cmp|CON|payment_transactions|payment_transactions_sale_ref_check|e0de22bb3870e260a155c846282c0f1c
+FP|cmp|CON|payment_transactions|payment_transactions_transaction_id_fkey|1f64d00be01827076f2f1bf81b5a696a
+FP|cmp|TAB|store_credit_ledger|store_credit_ledger_idempotency_key_key,store_credit_ledger_pkey
+FP|cmp|TAB|w62_df04_design_params|w62_df04_design_params_pkey
+FP|cmp|TAB|w62_df04_synthetic_rows|w62_df04_synthetic_rows_pkey
+FP|cmp|TAB|w62_zero_cost_flags|w62_zero_cost_flags_pkey
+FP|cmp|TAB|wac_change_log|wac_change_log_pkey,wac_change_log_prod_idx
+FP|cmp|COL|payment_transactions|direction

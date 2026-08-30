@@ -1,0 +1,30 @@
+W62 fixture base listo
+EVID|DF01-AFTER: escenario D.3 remediated — producto 3u @150 + motor B ELIMINADO
+ASSERT|DF01-A1|D'.1 INSERT posterior NO altera WAC (150 estable)|expected=150|actual=150|PASS
+ASSERT|DF01-A2|D'.1b INSERT pendiente NO altera WAC|expected=150|actual=150|PASS
+
+ASSERT|DF01-A3|D'.2 blend confirmación (3·150+5·125)/8=134.375|expected=134.375|actual=134.3750000000000000|PASS
+ASSERT|DF01-A4|D'.2 stock tras confirmación 3+5|expected=8|actual=8.0000|PASS
+ASSERT|DF01-A5|D'.4 filas wac_change_log del producto|expected=1|actual=1|PASS
+ASSERT|DF01-A6|D'.4 log event=reception_in after=134.375|expected=134.375|actual=134.3750000000000000|PASS
+ASSERT|DF01-A7|D'.4 log before de la confirmación=150|expected=150|actual=150|PASS
+psql:/home/z/my-project/scripts/w62-lab/cases/case-df01-after.sql:51: ERROR:  ERR_WAC_SINGLE_WRITER_VIOLATION: UPDATE cost_average sin token (OLD=134.3750000000000000 NEW=999). Unico escritor: fn_recalc_wac
+CONTEXT:  PL/pgSQL function w62_guard_wac_writer() line 4 at RAISE
+ASSERT|DF01-A8|D'.3 UPDATE directo sin token → ERR_WAC_SINGLE_WRITER_VIOLATION y WAC intacto|expected=true|actual=true|PASS
+ASSERT|DF01-A9|Venta: WAC invariante tras salida (100)|expected=100|actual=100|PASS
+ASSERT|DF01-A10|Venta: stock 10-2|expected=8|actual=8.0000|PASS
+ASSERT|DF01-A11|Venta: 0 llamadas a escritor (route 4 no toca WAC)|expected=0|actual=0|PASS
+ASSERT|DF01-A12|Devolución A1: WAC invariante (100)|expected=100|actual=100|PASS
+ASSERT|DF01-A13|Devolución A1: stock 8+1|expected=9|actual=9.0000|PASS
+ASSERT|DF01-A14|Devolución A1: 0 escrituras WAC|expected=0|actual=0|PASS
+ASSERT|DF01-A15|Ajuste Δ>0: blend (5·80+3·40)/8=65|expected=65|actual=65.0000000000000000|PASS
+ASSERT|DF01-A16|Ajuste Δ>0: 1 fila log event=adjustment_plus|expected=1|actual=1|PASS
+ASSERT|DF01-A17|Ingesta directa: blend (4·50+2·70)/6=56.6667|expected=56.666666666666667|actual=56.6666666666666667|PASS
+ASSERT|DF01-A18|Ingesta directa: cost_price SIN espejo (queda 50, D-02)|expected=50|actual=50|PASS
+ASSERT|DF01-A19|Ingesta directa: stock 4+2|expected=6|actual=6.0000|PASS
+ASSERT|DF01-A20|Recepción añadida: stock 6+2=8|expected=8|actual=8.0000|PASS
+ASSERT|DF01-A20b|Recepción añadida: WAC (6·56.6667+2·70)/8=60|expected=60|actual=60.00000000000000002500|PASS
+ASSERT|DF01-A21|Reversa: stock vuelve a 6|expected=6|actual=6.0000|PASS
+ASSERT|DF01-A22|Reversa: WAC vuelve a 56.6667 (inversa exacta)|expected=56.666666666666667|actual=56.666666666666666700000000|PASS
+ASSERT|DF01-A23|Reversa: log event=reception_reverse|expected=1|actual=1|PASS
+EVID|DF01-AFTER: guard=escritor único; motor B eliminado; espejo cp eliminado; log INV-15 operativo; 6 rutas demostradas

@@ -1,0 +1,5 @@
+W62 fixture base listo
+EVID|EXPLOIT|WAC antes: 100
+EVID|EXPLOIT|WAC después de llamada authenticated directa (esperado legítimo=100; si ≠100 ⇒ mutación arbitraria): 399.6666666666666667
+EVID|EXPLOIT|wac_change_log registró el evento: 1
+w7-ext-acl-public: FIN

@@ -1,0 +1,23 @@
+W62 fixture base listo
+ASSERT|DF05-A1|E'.1 actual_unit_cost = WAC server 50 (ignora intento de cliente)|expected=50|actual=50.00|PASS
+ASSERT|DF05-A2|E'.1 qty 1.5 SIN truncar (D-11)|expected=1.5|actual=1.50|PASS
+ASSERT|DF05-A3|E'.1 production_out a 50 (costo legítimo)|expected=50|actual=50|PASS
+ASSERT|DF05-A4|E'.1 audit_logs PRODUCTION_ITEM_WITHDRAWN con costo server|expected=1|actual=1|PASS
+ASSERT|DF05-A5|E'.1b replay misma key → resultado original|expected=success|actual=success|PASS
+ASSERT|DF05-A6|E'.1b actual_qty = 1.5+2 (replay NO duplicó)|expected=3.5|actual=3.50|PASS
+psql:/home/z/my-project/scripts/w62-lab/cases/case-df05-after.sql:49: ERROR:  ERR_OVERCONSUMPTION: actual_qty 3.50 + qty 7 > budgeted_qty 10.00
+CONTEXT:  PL/pgSQL function withdraw_production_item_v3(uuid,numeric,uuid,uuid,text,uuid,text) line 40 at RAISE
+ASSERT|DF05-A7|E'.1c overconsumption → RECHAZADO (ERR_OVERCONSUMPTION)|expected=true|actual=true|PASS
+EVID|PT seeded con WAC 0 (sin costo inicial — lo impone el insumo server-side)
+ASSERT|DF05-A8|E'.2 PT: costo unit = materiales server (3.5u×50)/2 = 87.5|expected=87.5|actual=87.5000000000000000|PASS
+ASSERT|DF05-A9|E'.2 PT WAC tras blend: (0·0 + 2·87.5)/2 = 87.5 (NUNCA 0 contaminado)|expected=87.5|actual=87.5000000000000000|PASS
+ASSERT|DF05-A10|E'.2 cost_price SIN espejo (queda 0 semilla, D-02)|expected=0|actual=0|PASS
+ASSERT|DF05-A11|E'.2 PT stock = 2|expected=2|actual=2.0000|PASS
+EVID|ACL: authenticated ejecutó v3 sin error (ver arriba: sin permission denied)
+psql:/home/z/my-project/scripts/w62-lab/cases/case-df05-after.sql:102: ERROR:  permission denied for function withdraw_production_item_v3
+EVID|ACL: anon debe haber recibido permission denied (ver ERROR arriba)
+psql:/home/z/my-project/scripts/w62-lab/cases/case-df05-after.sql:123: ERROR:  ERR_PRODUCT_ZERO_WAC_NOT_DOCUMENTED: 33333333-3333-3333-3333-df0501030001
+CONTEXT:  PL/pgSQL function withdraw_production_item_v3(uuid,numeric,uuid,uuid,text,uuid,text) line 60 at RAISE
+ASSERT|DF05-A12|E'.5a WAC=0 sin bandera → RECHAZADO (ERR_PRODUCT_ZERO_WAC_NOT_DOCUMENTED)|expected=true|actual=true|PASS
+ASSERT|DF05-A13|E'.5b WAC=0 CON bandera auditada → permitido, costo 0 documentado|expected=0|actual=0.00|PASS
+EVID|DF05-AFTER: costo producción 100% server-side; qty numérica; PT sin contaminación 0; ACL INV-13; bandera CR-W6-2

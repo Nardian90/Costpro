@@ -1,0 +1,11 @@
+W62 fixture base listo
+EVID|F20: sync_product_stock — created_at idéntico en una TX
+ASSERT|F20-1|inventory (ledger incremental) = 11 EXACTO (inmune al orden)|expected=11|actual=11.0000|PASS
+ASSERT|F20-2|balance_after de los movimientos: A=12, B=11 (secuencia correcta en el ledger)|expected=true|actual=true|PASS
+EVID|F20|stock_current post-tie (puede ser 12 = STALE, o 11): 12.0000 | inventory=11.0000
+ASSERT|F20-3|divergencia cache↔ledger POSIBLE con tie (stock_current ∈ {11,12} vs inventory=11)|expected=true|actual=true|PASS
+ASSERT|F20-4|ruta RPC venta 2 líneas mismo SKU: stock_final CORRECTO = 5 (register_stock_movement corrige tras cada INSERT)|expected=5|actual=5.0000|PASS
+ASSERT|F20-5|ruta RPC: inventory = 5 (ledger exacto)|expected=5|actual=5.0000|PASS
+ASSERT|F20-6|ruta RPC: WAC invariante 100 (sync_product_stock NO toca WAC)|expected=100|actual=100|PASS
+ASSERT|F20-7|INV-01/02 no violadas: cache==ledger tras ruta RPC (register corrige el pick ambiguo del trigger)|expected=true|actual=true|PASS
+w7-ext-fase20: FIN

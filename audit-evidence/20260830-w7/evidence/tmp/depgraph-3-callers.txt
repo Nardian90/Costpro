@@ -1,0 +1,40 @@
+          target           |                                                                            caller_function                                                                             | secdef 
+---------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------+--------
+ receive_production_output | close_production_order_v2(uuid,uuid,uuid,numeric,text,text,numeric,uuid,numeric,uuid,text)                                                                             | SECDEF
+ register_stock_movement   | record_sale_movement(uuid,uuid,uuid,integer,text)                                                                                                                      | SECDEF
+ register_stock_movement   | cancel_reception(uuid)                                                                                                                                                 | SECDEF
+ register_stock_movement   | process_sale_transaction(uuid,uuid,jsonb,numeric,numeric,text,text,numeric,text)                                                                                       | 
+ register_stock_movement   | process_initial_stock(uuid,uuid,numeric,text,timestamp with time zone)                                                                                                 | 
+ register_stock_movement   | process_bulk_import(uuid,uuid,jsonb)                                                                                                                                   | 
+ register_stock_movement   | deduct_stock(uuid,uuid,numeric)                                                                                                                                        | SECDEF
+ register_stock_movement   | process_inventory_adjustment(uuid,uuid,adjustment_item[],timestamp with time zone)                                                                                     | SECDEF
+ register_stock_movement   | process_stock_adjustment(uuid,uuid,numeric,text,uuid,timestamp with time zone)                                                                                         | SECDEF
+ register_stock_movement   | confirm_transfer(uuid,uuid,timestamp with time zone)                                                                                                                   | SECDEF
+ register_stock_movement   | receive_production_output(uuid,uuid,numeric,uuid)                                                                                                                      | SECDEF
+ register_stock_movement   | create_sale(uuid,uuid,numeric,jsonb,numeric,text,numeric,text,numeric,jsonb,uuid,timestamp with time zone,numeric,numeric,text,text,numeric,numeric,uuid,uuid)         | SECDEF
+ register_stock_movement   | reverse_transfer(uuid,text,uuid)                                                                                                                                       | SECDEF
+ register_stock_movement   | perform_inventory_adjustment(uuid,uuid,numeric,text,uuid,numeric,timestamp with time zone)                                                                             | SECDEF
+ register_stock_movement   | void_reception_with_reversal(uuid,uuid,text,timestamp with time zone)                                                                                                  | SECDEF
+ register_stock_movement   | compensate_inventory_error(uuid,uuid,text,uuid)                                                                                                                        | SECDEF
+ register_stock_movement   | apply_physical_count(uuid,uuid,boolean)                                                                                                                                | SECDEF
+ register_stock_movement   | confirm_inventory_adjustment(uuid,uuid)                                                                                                                                | SECDEF
+ register_stock_movement   | receive_to_warehouse(uuid,uuid,numeric,numeric,uuid,text,date,uuid,text)                                                                                               | SECDEF
+ register_stock_movement   | void_transaction(uuid,text,timestamp with time zone,uuid)                                                                                                              | SECDEF
+ register_stock_movement   | reverse_transaction_v2(uuid,text,uuid)                                                                                                                                 | SECDEF
+ register_stock_movement   | reverse_receipt_v2(uuid,text,uuid)                                                                                                                                     | SECDEF
+ register_stock_movement   | register_reception(uuid,text,timestamp with time zone,text,jsonb,uuid,uuid)                                                                                            | SECDEF
+ register_stock_movement   | receive_production_output(uuid,uuid,numeric,uuid,uuid,text)                                                                                                            | SECDEF
+ register_stock_movement   | withdraw_production_item(uuid,numeric,numeric,uuid,uuid,text)                                                                                                          | SECDEF
+ register_stock_movement   | void_closed_production_order(uuid,text,uuid)                                                                                                                           | SECDEF
+ register_stock_movement   | reverse_production_order(uuid,text,uuid)                                                                                                                               | SECDEF
+ register_stock_movement   | create_devolution_v2(uuid,jsonb,text,uuid,uuid,text,uuid,text,text,text)                                                                                               | SECDEF
+ register_stock_movement   | duplicate_inventory_adjustment_v2(uuid,uuid)                                                                                                                           | SECDEF
+ register_stock_movement   | create_sale_v2(uuid,uuid,jsonb,text,text,numeric,jsonb,numeric,numeric,numeric,numeric,numeric,numeric,text,numeric,uuid,text,uuid,text,timestamp with time zone,uuid) | SECDEF
+ register_stock_movement   | withdraw_production_item(uuid,numeric,numeric,uuid,uuid,text,uuid,text,boolean)                                                                                        | SECDEF
+ register_stock_movement   | create_vale_salida(uuid,jsonb,uuid,text,text)                                                                                                                          | SECDEF
+ register_stock_movement   | create_vale_salida(uuid,jsonb,uuid,text,text,uuid)                                                                                                                     | SECDEF
+ register_stock_movement   | reverse_vale_salida(uuid,text,uuid)                                                                                                                                    | SECDEF
+ withdraw_production_item  | create_vale_salida(uuid,jsonb,uuid,text,text)                                                                                                                          | SECDEF
+ withdraw_production_item  | create_vale_salida(uuid,jsonb,uuid,text,text,uuid)                                                                                                                     | SECDEF
+(36 rows)
+

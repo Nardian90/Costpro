@@ -1,0 +1,255 @@
+===== 01-df01-wac-singleton.sql =====
+9:CREATE TABLE IF NOT EXISTS public.wac_change_log (
+22:CREATE INDEX IF NOT EXISTS wac_change_log_prod_idx ON public.wac_change_log (store_id, product_id, created_at);
+25:CREATE OR REPLACE FUNCTION public.fn_recalc_wac(
+34:SECURITY DEFINER
+35:SET search_path TO 'public', 'extensions'
+73:  -- Token de escritor: válido SOLO durante este UPDATE (re-sellado tras él)
+75:  UPDATE products
+80:  INSERT INTO public.wac_change_log
+92:CREATE OR REPLACE FUNCTION public.confirm_pending_reception(p_receipt_id uuid, p_user_id uuid DEFAULT NULL::uuid, p_operation_date timestamp with time zone DEFAULT NULL::timestamp with time zone)
+95: SECURITY DEFINER
+96: SET search_path TO 'public'
+125:    UPDATE products SET updated_at = v_effective_date WHERE id = v_item.product_id AND store_id = v_store_id;
+127:    INSERT INTO stock_movements (product_id, store_id, movement_type, quantity_change, unit_cost, reference_doc, created_at, created_by, movement_date)
+131:  UPDATE receipts
+138:CREATE OR REPLACE FUNCTION public.fn_process_receipt(p_items jsonb, p_user_id uuid DEFAULT NULL::uuid, p_reference text DEFAULT NULL::text)
+141: SECURITY DEFINER
+142: SET search_path TO 'public', 'extensions'
+163:    INSERT INTO public.receipts (user_id, status, reference_doc)
+176:            INSERT INTO public.products (name, sku, cost_price, price, unit_of_measure, supplier, image_url, stock_current, cost_average, store_id)
+195:        INSERT INTO public.receipt_items (receipt_id, product_id, quantity, unit_cost, tasa_cambio_recepcion)
+211:    UPDATE public.receipts SET total_cost = v_total_receipt WHERE id = v_receipt_id;
+216:CREATE OR REPLACE FUNCTION public.fn_process_receipt(p_items jsonb, p_user_id uuid DEFAULT NULL::uuid, p_store_id uuid DEFAULT NULL::uuid, p_reference text DEFAULT NULL::text)
+219: SECURITY DEFINER
+220: SET search_path TO 'public', 'extensions'
+241:    INSERT INTO public.receipts (user_id, store_id, status, reference_doc)
+253:            INSERT INTO public.products (name, sku, cost_price, price, unit_of_measure, supplier, image_url, stock_current, cost_average, store_id)
+275:        INSERT INTO public.receipt_items (receipt_id, product_id, quantity, unit_cost, tasa_cambio_recepcion)
+290:    UPDATE public.receipts SET total_cost = v_total_receipt WHERE id = v_receipt_id;
+297:CREATE OR REPLACE FUNCTION public.perform_inventory_adjustment(p_store_id uuid, p_product_id uuid, p_quantity_delta numeric, p_reason text, p_user_id uuid, p_unit_cost_adjustment numeric DEFAULT NULL::numeric, p_operation_date timestamp with time zone DEFAULT NULL::timestamp with time zone)
+300: SECURITY DEFINER
+301: SET search_path TO 'public'
+336:  UPDATE public.products
+357:CREATE OR REPLACE FUNCTION public.cancel_reception(p_reception_id uuid)
+360: SECURITY DEFINER
+361: SET search_path TO 'public', 'pg_temp'
+397:            p_reason := 'Cancelación de recepción: ' || p_reception_id::TEXT,
+403:    UPDATE public.receipts SET status = 'voided', updated_at = now() WHERE id = p_reception_id;
+407:CREATE OR REPLACE FUNCTION public.reverse_receipt_v2(p_receipt_id uuid, p_reason text, p_user_id uuid DEFAULT NULL::uuid)
+410: SECURITY DEFINER
+411: SET search_path TO 'public', 'extensions'
+437:    UPDATE public.products SET stock_current = v_new_stock, updated_at = now()
+440:    INSERT INTO stock_movements (product_id, store_id, movement_type, quantity_change, unit_cost, reference_doc, created_at, created_by, movement_date)
+446:  UPDATE public.receipts SET status='reversed', reversed_at=now(), reversed_by=p_user_id, reversal_reason=p_reason WHERE id=p_receipt_id;
+448:  INSERT INTO public.audit_logs (user_id, store_id, action, table_name, record_id, metadata)
+456:CREATE OR REPLACE FUNCTION public.void_reception_with_reversal(p_receipt_id uuid, p_user_id uuid DEFAULT NULL::uuid, p_reason text DEFAULT 'Anulacion con reversion'::text, p_operation_date timestamp with time zone DEFAULT NULL::timestamp with time zone)
+459: SECURITY DEFINER
+460: SET search_path TO 'public', 'extensions'
+486:    UPDATE products SET stock_current = v_new_stock, updated_at = v_effective_date
+489:    INSERT INTO stock_movements (product_id, store_id, movement_type, quantity_change, unit_cost, reference_doc, created_at, created_by, movement_date)
+493:  UPDATE receipts SET status='voided', reversed_at=v_effective_date, reversed_by=p_user_id, reversal_reason=p_reason WHERE id=p_receipt_id;
+495:  INSERT INTO public.audit_logs (user_id, store_id, action, table_name, record_id, metadata)
+503:CREATE OR REPLACE FUNCTION public.receive_production_output(p_order_id uuid, p_product_id uuid, p_quantity numeric, p_store_id uuid, p_user_id uuid DEFAULT NULL::uuid, p_idempotency_key text DEFAULT NULL::text)
+506: SECURITY DEFINER
+507: SET search_path TO 'public', 'extensions'
+524:    v_param_hash := md5(p_order_id::text || p_product_id::text || p_quantity::text || p_store_id::text);
+575:  UPDATE production_orders SET
+590:    p_reason := 'Entrada de producto terminado de orden ' || p_order_id::text,
+593:    p_notes := 'production_order:' || p_order_id::text,
+598:  INSERT INTO audit_logs (user_id, store_id, action, table_name, record_id, metadata)
+615:CREATE OR REPLACE FUNCTION public.receive_production_output(p_order_id uuid, p_product_id uuid, p_quantity numeric, p_store_id uuid)
+618: SECURITY DEFINER
+619: SET search_path TO 'public', 'extensions'
+626:CREATE OR REPLACE FUNCTION public.reverse_production_order(p_order_id uuid, p_reason text, p_user_id uuid DEFAULT NULL::uuid)
+629: SECURITY DEFINER
+630: SET search_path TO 'public', 'extensions'
+664:  UPDATE products SET stock_current = GREATEST(0, v_new_stock), updated_at = now()
+667:  INSERT INTO stock_movements (product_id, store_id, movement_type, quantity_change, unit_cost, reference_doc, created_at, created_by, movement_date)
+672:  UPDATE production_orders SET status='reversed', reversed_at=now(), reversed_by=v_caller_uid, reversal_reason=p_reason WHERE id=p_order_id;
+674:  INSERT INTO public.audit_logs (user_id, store_id, action, table_name, record_id, metadata)
+684:CREATE OR REPLACE FUNCTION public.void_closed_production_order(p_order_id uuid, p_reason text DEFAULT 'Anulación'::text, p_user_id uuid DEFAULT NULL::uuid)
+687: SECURITY DEFINER
+688: SET search_path TO 'public', 'extensions'
+722:  UPDATE products SET stock_current = GREATEST(0, v_new_stock), updated_at = now()
+725:  INSERT INTO stock_movements (product_id, store_id, movement_type, quantity_change, unit_cost, reference_doc, created_at, created_by, movement_date)
+730:  UPDATE production_orders SET status='voided', reversed_at=now(), reversed_by=v_caller_uid, reversal_reason=p_reason WHERE id=p_order_id;
+732:  INSERT INTO public.audit_logs (user_id, store_id, action, table_name, record_id, metadata)
+741:CREATE OR REPLACE FUNCTION public.create_devolution(p_store_id uuid, p_items jsonb, p_reason text, p_original_transaction_id uuid DEFAULT NULL::uuid, p_payment_method text DEFAULT 'cash'::text, p_customer_id uuid DEFAULT NULL::uuid, p_customer_name text DEFAULT NULL::text, p_notes text DEFAULT NULL::text, p_currency text DEFAULT 'CUP'::text, p_exchange_rate numeric DEFAULT 1.0)
+744: SECURITY DEFINER
+745: SET search_path TO 'public', 'pg_temp'
+764:  INSERT INTO public.devolutions (
+777:    INSERT INTO public.devolution_items (devolution_id, product_id, quantity, unit_price, total, reason)
+798:      p_reason := ('Devolución: ' || COALESCE(p_reason, ''))::text,
+803:  UPDATE public.devolutions SET total_amount = v_total WHERE id = v_devolution_id;
+805:  INSERT INTO public.audit_logs (user_id, store_id, action, table_name, record_id, metadata)
+815:DROP TRIGGER IF EXISTS trg_update_product_wac ON public.receipt_items;
+816:DROP FUNCTION IF EXISTS public.update_product_wac();
+819:CREATE OR REPLACE FUNCTION public.w62_guard_wac_writer()
+822: SET search_path TO 'public', 'pg_temp'
+826:    RAISE EXCEPTION 'ERR_WAC_SINGLE_WRITER_VIOLATION: UPDATE cost_average sin token (OLD=% NEW=%). Unico escritor: fn_recalc_wac', OLD.cost_average, NEW.cost_average
+832:DROP TRIGGER IF EXISTS trg_guard_wac_writer ON public.products;
+833:CREATE TRIGGER trg_guard_wac_writer
+834:  BEFORE UPDATE OF cost_average ON public.products
+837:GRANT SELECT ON public.wac_change_log TO authenticated, service_role;
+838:GRANT EXECUTE ON FUNCTION public.fn_recalc_wac(uuid,uuid,text,numeric,numeric,jsonb) TO service_role;
+--- counts: DROP=3 ALTER=0 CR_OR_REPLACE=14 GRANT=0 REVOKE=0 INSERT=20 UPDATE=20 DELETE=0 TRUNCATE=0
+
+===== 02-df02-cogs.sql =====
+5:--   WAC_prev = cost_average leído bajo FOR UPDATE → COGS = units × WAC_prev.
+11:CREATE TABLE IF NOT EXISTS public.w62_zero_cost_flags (
+21:CREATE OR REPLACE FUNCTION public.create_sale_v2(p_store_id uuid, p_seller_id uuid, p_items jsonb, p_payment_method text DEFAULT 'cash'::text, p_discount_type text DEFAULT 'fixed'::text, p_discount_value numeric DEFAULT 0, p_applied_taxes jsonb DEFAULT '[]'::jsonb, p_tax_amount numeric DEFAULT 0, p_total_amount numeric DEFAULT 0, p_subtotal numeric DEFAULT 0, p_cash_amount numeric DEFAULT 0, p_transfer_amount numeric DEFAULT 0, p_zelle_amount numeric DEFAULT 0, p_sale_currency text DEFAULT 'CUP'::text, p_sale_exchange_rate numeric DEFAULT 1, p_customer_id uuid DEFAULT NULL::uuid, p_customer_name text DEFAULT NULL::text, p_supervisor_user_id uuid DEFAULT NULL::uuid, p_idempotency_key text DEFAULT NULL::text, p_operation_date timestamp with time zone DEFAULT NULL::timestamp with time zone, p_user_id uuid DEFAULT NULL::uuid)
+24: SECURITY DEFINER
+25: SET search_path TO 'public', 'pg_temp'
+59:  -- 1. Advisory lock por store (serializa ventas concurrentes)
+60:  PERFORM pg_advisory_xact_lock(hashtext(p_store_id::text));
+93:  --    FOR UPDATE de la fila del producto (serializa stock+WAC) + validaciones.
+211:  INSERT INTO public.transactions (
+250:    -- DF-02: re-lectura bajo FOR UPDATE (misma TX; sin ventana TOCTOU)
+272:    INSERT INTO public.transaction_items (
+308:    INSERT INTO public.payment_transactions (
+315:      v_eff, v_uid, 'pay-cash-' || v_tx_id::text
+320:    INSERT INTO public.payment_transactions (
+327:      v_eff, v_uid, 'pay-transfer-' || v_tx_id::text
+341:    INSERT INTO public.payment_transactions (
+348:      v_eff, v_uid, 'pay-zelle-' || v_tx_id::text
+362:  INSERT INTO public.audit_logs (action, table_name, record_id, store_id, user_id, metadata)
+--- counts: DROP=0 ALTER=0 CR_OR_REPLACE=1 GRANT=0 REVOKE=0 INSERT=6 UPDATE=3 DELETE=0 TRUNCATE=0
+
+===== 03-df05-production.sql =====
+10:CREATE OR REPLACE FUNCTION public.withdraw_production_item_v3(p_item_id uuid, p_qty numeric, p_store_id uuid, p_user_id uuid DEFAULT NULL::uuid, p_idempotency_key text DEFAULT NULL::text, p_reference_id uuid DEFAULT NULL::uuid, p_reference_doc text DEFAULT NULL::text)
+13: SECURITY DEFINER
+14: SET search_path TO 'public', 'extensions'
+31:    v_param_hash := md5(p_item_id::text || '|' || p_qty::text || '|' || p_store_id::text || '|' || COALESCE(p_reference_id::text,'') || '|' || COALESCE(p_reference_doc,''));
+81:  UPDATE production_order_items SET
+94:    p_reason := COALESCE(p_reference_doc, 'Salida para orden ' || v_order_id::text),
+97:    p_notes := 'production_order:' || v_order_id::text,
+109:  INSERT INTO audit_logs (user_id, store_id, action, table_name, record_id, metadata)
+119:REVOKE ALL ON FUNCTION public.withdraw_production_item_v3(uuid,numeric,uuid,uuid,text,uuid,text) FROM PUBLIC, anon;
+120:GRANT EXECUTE ON FUNCTION public.withdraw_production_item_v3(uuid,numeric,uuid,uuid,text,uuid,text) TO authenticated, service_role;
+--- counts: DROP=0 ALTER=0 CR_OR_REPLACE=1 GRANT=0 REVOKE=0 INSERT=1 UPDATE=1 DELETE=0 TRUNCATE=0
+
+===== 04-df09-overloads.sql =====
+5:--   F2 bloqueo explícito: REVOKE + RENAME de la 6-arg legacy y de la 9-arg
+14:CREATE OR REPLACE FUNCTION public.create_vale_salida(p_store_id uuid, p_items jsonb, p_production_order_id uuid DEFAULT NULL::uuid, p_notes text DEFAULT NULL::text, p_idempotency_key text DEFAULT NULL::text, p_user_id uuid DEFAULT NULL::uuid)
+17: SECURITY DEFINER
+18: SET search_path TO 'public', 'extensions'
+44:    v_param_hash := md5(p_store_id::text || '|' || COALESCE(p_production_order_id::text,'') || '|' || COALESCE(p_notes,''));
+51:  INSERT INTO issue_slips (id, store_id, slip_number, production_order_id, notes, total_cost, created_by)
+102:    INSERT INTO issue_slip_items (slip_id, product_id, variant_id, production_order_item_id, quantity, unit_cost, total_cost)
+108:  UPDATE issue_slips SET total_cost = v_total_cost WHERE id = v_slip_id;
+115:  INSERT INTO audit_logs (action, table_name, record_id, store_id, user_id, metadata)
+124:CREATE OR REPLACE FUNCTION public.create_vale_salida(p_store_id uuid, p_items jsonb, p_production_order_id uuid DEFAULT NULL::uuid, p_notes text DEFAULT NULL::text, p_idempotency_key text DEFAULT NULL::text)
+127: SECURITY DEFINER
+128: SET search_path TO 'public', 'extensions'
+135:ALTER FUNCTION public.withdraw_production_item(uuid,numeric,numeric,uuid,uuid,text) RENAME TO withdraw_production_item_deprecated_6arg;
+136:REVOKE ALL ON FUNCTION public.withdraw_production_item_deprecated_6arg(uuid,numeric,numeric,uuid,uuid,text) FROM PUBLIC, anon, authenticated, service_role;
+138:ALTER FUNCTION public.withdraw_production_item(uuid,numeric,numeric,uuid,uuid,text,uuid,text,boolean) RENAME TO withdraw_production_item_deprecated_9arg;
+139:REVOKE ALL ON FUNCTION public.withdraw_production_item_deprecated_9arg(uuid,numeric,numeric,uuid,uuid,text,uuid,text,boolean) FROM PUBLIC, anon, authenticated, service_role;
+142:ALTER FUNCTION public.receive_production_output(uuid,uuid,numeric,uuid) RENAME TO receive_production_output_deprecated_4arg;
+143:REVOKE ALL ON FUNCTION public.receive_production_output_deprecated_4arg(uuid,uuid,numeric,uuid) FROM PUBLIC, anon, authenticated;
+146:-- el REVOKE a anon es insuficiente; se revoca PUBLIC y se conceden roles explícitos.
+147:REVOKE ALL ON FUNCTION public.close_production_order_v2(uuid,uuid,uuid,numeric,text,text,numeric,uuid,numeric,uuid,text) FROM PUBLIC, anon;
+148:GRANT EXECUTE ON FUNCTION public.close_production_order_v2(uuid,uuid,uuid,numeric,text,text,numeric,uuid,numeric,uuid,text) TO authenticated, service_role;
+149:REVOKE ALL ON FUNCTION public.receive_production_output(uuid,uuid,numeric,uuid,uuid,text) FROM PUBLIC, anon;
+150:GRANT EXECUTE ON FUNCTION public.receive_production_output(uuid,uuid,numeric,uuid,uuid,text) TO authenticated, service_role;
+--- counts: DROP=0 ALTER=3 CR_OR_REPLACE=2 GRANT=0 REVOKE=0 INSERT=3 UPDATE=1 DELETE=0 TRUNCATE=0
+
+===== 05-df06-transfer.sql =====
+11:CREATE OR REPLACE FUNCTION public.confirm_transfer(p_transfer_id uuid, p_user_id uuid, p_operation_date timestamp with time zone DEFAULT now())
+14: SECURITY DEFINER
+15: SET search_path TO 'public', 'pg_temp'
+54:  -- DF-06: lock determinista de filas de producto (origen y destino) antes de mover valor
+66:  UPDATE public.transfers
+70:  v_ref_doc := 'TRANSFERENCIA ' || UPPER(left(v_transfer.id::text, 8));
+73:    UPDATE public.inventory_reservations
+108:  INSERT INTO public.audit_logs (user_id, store_id, action, table_name, record_id, metadata)
+118:CREATE OR REPLACE FUNCTION public.reverse_transfer(p_transfer_id uuid, p_reason text, p_user_id uuid DEFAULT NULL::uuid)
+121: SECURITY DEFINER
+122: SET search_path TO 'public', 'pg_temp'
+148:  v_ref_doc := 'REVERSIÓN ' || UPPER(left(v_transfer.id::text, 8)) || ' [' || left(p_reason, 50) || ']';
+183:  UPDATE public.transfers
+187:  INSERT INTO public.audit_logs (user_id, store_id, action, table_name, record_id, metadata)
+--- counts: DROP=0 ALTER=0 CR_OR_REPLACE=2 GRANT=0 REVOKE=0 INSERT=2 UPDATE=3 DELETE=0 TRUNCATE=0
+
+===== 06-df07-devolution-cap.sql =====
+5:--   1. LOCK de la fila de la VENTA ORIGINAL (transactions FOR UPDATE) — PRIMER
+13:CREATE OR REPLACE FUNCTION public.create_devolution_v2(p_store_id uuid, p_items jsonb, p_reason text, p_user_id uuid DEFAULT NULL::uuid, p_original_transaction_id uuid DEFAULT NULL::uuid, p_payment_method text DEFAULT 'cash'::text, p_customer_id uuid DEFAULT NULL::uuid, p_customer_name text DEFAULT NULL::text, p_notes text DEFAULT NULL::text, p_idempotency_key text DEFAULT NULL::text)
+16: SECURITY DEFINER
+17: SET search_path TO 'public', 'pg_temp'
+47:  -- ═══ DF-07: LOCK DE LA VENTA ORIGINAL — PRIMERO, ANTES DE LEER ACUMULADOS ═══
+59:  -- ═══ DF-07: TOPE ACUMULADO por (venta, producto) — leído DESPUÉS del lock ═══
+80:      RAISE EXCEPTION 'ERR_DEVOLUTION_CAP_EXCEEDED: producto % vendido=% devuelto=% solicitado=% (tope acumulado, lock de venta adquirido)',
+88:  INSERT INTO public.devolutions (
+103:    INSERT INTO public.devolution_items (devolution_id, product_id, quantity, unit_price, total, reason)
+123:      p_reason := ('Devolución: ' || COALESCE(p_reason, ''))::text,
+128:  UPDATE public.devolutions SET total_amount = v_total WHERE id = v_devolution_id;
+130:  INSERT INTO public.audit_logs (user_id, store_id, action, table_name, record_id, metadata)
+152:REVOKE EXECUTE ON FUNCTION public.create_devolution(uuid,jsonb,text,uuid,uuid,text,uuid,text,text) FROM anon, authenticated;
+154:REVOKE EXECUTE ON FUNCTION public.create_devolution(uuid,jsonb,text,uuid,text,uuid,text,text,text,numeric) FROM anon, authenticated;
+156:\echo '06: DF-07 aplicado — lock venta original ANTES de leer acumulado + tope por producto; v1 bloqueadas'
+--- counts: DROP=0 ALTER=0 CR_OR_REPLACE=1 GRANT=0 REVOKE=0 INSERT=3 UPDATE=1 DELETE=0 TRUNCATE=0
+
+===== 07-df08-close-fix.sql =====
+4:--   idempotencia: WHERE ... record_id = p_order_id (uuid = uuid, SIN ::text)
+8:CREATE OR REPLACE FUNCTION public.close_production_order_v2(p_order_id uuid, p_store_id uuid, p_seller_id uuid, p_final_amount numeric DEFAULT 0, p_final_method text DEFAULT NULL::text, p_final_currency text DEFAULT 'CUP'::text, p_exchange_rate numeric DEFAULT 1.0, p_output_product_id uuid DEFAULT NULL::uuid, p_output_quantity numeric DEFAULT NULL::numeric, p_user_id uuid DEFAULT NULL::uuid, p_idempotency_key text DEFAULT NULL::text)
+11: SECURITY DEFINER
+12: SET search_path TO 'public', 'extensions'
+27:  -- ─── 0. Idempotencia — DF-08 FIX: record_id = p_order_id (uuid=uuid, sin ::text) ───
+29:    v_param_hash := md5(p_order_id::text || COALESCE(p_output_product_id::text, '') || COALESCE(p_output_quantity::text, '') || p_final_amount::text);
+42:  -- ─── 1. SELECT FOR UPDATE ───
+63:    UPDATE production_orders SET status = 'approved' WHERE id = p_order_id;
+64:    UPDATE production_orders SET status = 'in_progress' WHERE id = p_order_id;
+66:    UPDATE production_orders SET status = 'in_progress' WHERE id = p_order_id;
+80:      p_idempotency_key := 'close-' || p_order_id::text
+96:      p_idempotency_key := 'recv-' || p_order_id::text
+122:    INSERT INTO transactions (
+135:    INSERT INTO transaction_items (
+141:    UPDATE public.payment_transactions
+155:      INSERT INTO public.audit_logs (action, table_name, record_id, store_id, user_id, metadata)
+165:  UPDATE production_orders SET status = 'completed', completion_date = CURRENT_DATE WHERE id = p_order_id;
+166:  UPDATE production_orders SET
+174:  INSERT INTO audit_logs (user_id, store_id, action, table_name, record_id, metadata)
+197:\echo '07: DF-08 aplicado — idempotencia uuid=uuid (sin cast ::text); workaround sin key queda como puente NO permanente'
+--- counts: DROP=0 ALTER=0 CR_OR_REPLACE=1 GRANT=0 REVOKE=0 INSERT=4 UPDATE=7 DELETE=0 TRUNCATE=0
+
+===== 08-df03-devolution-finance.sql =====
+16:ALTER TABLE public.payment_transactions DROP CONSTRAINT IF EXISTS payment_transactions_ref_type_check;
+17:ALTER TABLE public.payment_transactions ADD CONSTRAINT payment_transactions_ref_type_check
+21:ALTER TABLE public.payment_transactions ADD COLUMN IF NOT EXISTS direction text NOT NULL DEFAULT 'in';
+22:ALTER TABLE public.payment_transactions DROP CONSTRAINT IF EXISTS payment_transactions_direction_check;
+23:ALTER TABLE public.payment_transactions ADD CONSTRAINT payment_transactions_direction_check
+27:ALTER TABLE public.payment_transactions DROP CONSTRAINT IF EXISTS payment_transactions_devolution_ref_check;
+28:ALTER TABLE public.payment_transactions ADD CONSTRAINT payment_transactions_devolution_ref_check
+32:CREATE TABLE IF NOT EXISTS public.store_credit_ledger (
+45:CREATE OR REPLACE FUNCTION public.validate_payment_transactions_invariants()
+48: SET search_path TO 'public', 'pg_temp'
+49:AS $fn$ BEGIN IF current_setting('app.restore_mode', true) = 'true' AND current_user IN ('costpro_snapshot_restorer', 'postgres') THEN RETURN CASE WHEN TG_OP = 'DELETE' THEN OLD ELSE NEW END; END IF; IF TG_OP = 'DELETE' THEN RAISE EXCEPTION 'ERR_PAYMENT_DELETE_FORBIDDEN' USING ERRCODE = 'PT007'; END IF; IF NEW.currency = 'CUP' AND NEW.exchange_rate != 1 THEN RAISE EXCEPTION 'ERR_PAYMENT_CUP_RATE_MUST_BE_1' USING ERRCODE = 'PT003'; END IF; IF NEW.currency != 'CUP' AND NEW.exchange_rate <= 1 THEN RAISE EXCEPTION 'ERR_PAYMENT_FOREIGN_RATE_MUST_EXCEED_1' USING ERRCODE = 'PT004'; END IF; IF NEW.payment_method = 'zelle' AND NEW.currency = 'CUP' THEN RAISE EXCEPTION 'ERR_ZELLE_NOT_FOR_CUP' USING ERRCODE = 'PT005'; END IF; IF TG_OP = 'UPDATE' AND OLD.transaction_id IS DISTINCT FROM NEW.transaction_id THEN PERFORM pg_advisory_xact_lock(hashtextextended(COALESCE(OLD.transaction_id::text, ''), 0)); PERFORM pg_advisory_xact_lock(hashtextextended(COALESCE(NEW.transaction_id::text, ''), 0)); ELSIF NEW.transaction_id IS NOT NULL THEN PERFORM pg_advisory_xact_lock(hashtextextended(NEW.transaction_id::text, 0)); END IF; /* DF-03: los refunds (direction='refund') son contra-asientos de trazabilidad — NO se suman como pago hacia el total del documento */ IF NEW.transaction_id IS NOT NULL AND NEW.direction <> 'refund' THEN DECLARE v_total_amount numeric; v_sum_payments numeric; v_existing_rate numeric; BEGIN SELECT total_amount INTO v_total_amount FROM public.transactions WHERE id = NEW.transaction_id; SELECT COALESCE(SUM(amount_cup), 0) INTO v_sum_payments FROM public.payment_transactions WHERE transaction_id = NEW.transaction_id AND id != NEW.id AND direction <> 'refund'; IF v_sum_payments + NEW.amount_cup > v_total_amount + 0.01 THEN RAISE EXCEPTION 'ERR_PAYMENT_EXCEEDS_TOTAL' USING ERRCODE = 'PT001'; END IF; SELECT exchange_rate INTO v_existing_rate FROM public.payment_transactions WHERE transaction_id = NEW.transaction_id AND payment_method = NEW.payment_method AND currency = NEW.currency AND id != NEW.id AND direction <> 'refund' LIMIT 1; IF FOUND AND ABS(v_existing_rate - NEW.exchange_rate) > 0.000001 THEN RAISE EXCEPTION 'ERR_MULTIPLE_EXCHANGE_RATES' USING ERRCODE = 'PT006'; END IF; END; END IF; RETURN NEW; END $fn$;
+52:CREATE OR REPLACE FUNCTION public.create_devolution_v2(p_store_id uuid, p_items jsonb, p_reason text, p_user_id uuid DEFAULT NULL::uuid, p_original_transaction_id uuid DEFAULT NULL::uuid, p_payment_method text DEFAULT 'cash'::text, p_customer_id uuid DEFAULT NULL::uuid, p_customer_name text DEFAULT NULL::text, p_notes text DEFAULT NULL::text, p_idempotency_key text DEFAULT NULL::text)
+55: SECURITY DEFINER
+56: SET search_path TO 'public', 'pg_temp'
+86:  -- DF-07: LOCK venta original PRIMERO
+117:      RAISE EXCEPTION 'ERR_DEVOLUTION_CAP_EXCEEDED: producto % vendido=% devuelto=% solicitado=% (tope acumulado, lock de venta adquirido)',
+129:  INSERT INTO public.devolutions (
+144:    INSERT INTO public.devolution_items (devolution_id, product_id, quantity, unit_price, total, reason)
+164:      p_reason := ('Devolución: ' || COALESCE(p_reason, ''))::text,
+169:  UPDATE public.devolutions SET total_amount = v_total WHERE id = v_devolution_id;
+182:      INSERT INTO public.cash_register_sessions (store_id, cashier_id, opening_cash, opened_at, status)
+188:    INSERT INTO public.cash_movements (session_id, movement_type, method, amount, reason, store_id)
+193:    INSERT INTO public.payment_transactions (
+200:      NOW(), 'refund', v_caller_uid, 'dev-' || v_devolution_id::text || '-refund'
+208:    INSERT INTO public.store_credit_ledger
+212:       'dev-' || v_devolution_id::text || '-credit', v_caller_uid);
+215:  INSERT INTO public.audit_logs (user_id, store_id, action, table_name, record_id, metadata)
+227:          'idempotency_key', 'dev-' || v_devolution_id::text || '-refund')
+--- counts: DROP=0 ALTER=7 CR_OR_REPLACE=2 GRANT=0 REVOKE=0 INSERT=7 UPDATE=1 DELETE=0 TRUNCATE=0
+
+===== 09-df04-design-only.sql =====
+10:CREATE TABLE IF NOT EXISTS public.w62_df04_design_params (
+15:INSERT INTO public.w62_df04_design_params (param, value, source) VALUES
+29:CREATE TABLE IF NOT EXISTS public.w62_df04_synthetic_rows (
+38:TRUNCATE public.w62_df04_synthetic_rows;
+39:INSERT INTO public.w62_df04_synthetic_rows VALUES
+51:CREATE OR REPLACE FUNCTION public.w62_df04_classify(
+--- counts: DROP=0 ALTER=0 CR_OR_REPLACE=1 GRANT=0 REVOKE=0 INSERT=2 UPDATE=0 DELETE=0 TRUNCATE=1
+

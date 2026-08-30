@@ -1,0 +1,242 @@
+# W7-11 — REGRESIÓN GLOBAL en clon limpio (FASE 17)
+# Clon fresco desde v3-template, paquetes 01..09 aplicados, suite C'/D'/E'/E-T/F'/F7 completa re-ejecutada.
+# Evidencia cruda concatenada desde tmp/W7R-*.out (164 asserts PASS / 0 FAIL).
+
+===== tmp/W7R-df01-D-prime.out =====
+W62 fixture base listo
+EVID|DF01-AFTER: escenario D.3 remediated — producto 3u @150 + motor B ELIMINADO
+ASSERT|DF01-A1|D'.1 INSERT posterior NO altera WAC (150 estable)|expected=150|actual=150|PASS
+ASSERT|DF01-A2|D'.1b INSERT pendiente NO altera WAC|expected=150|actual=150|PASS
+
+ASSERT|DF01-A3|D'.2 blend confirmación (3·150+5·125)/8=134.375|expected=134.375|actual=134.3750000000000000|PASS
+ASSERT|DF01-A4|D'.2 stock tras confirmación 3+5|expected=8|actual=8.0000|PASS
+ASSERT|DF01-A5|D'.4 filas wac_change_log del producto|expected=1|actual=1|PASS
+ASSERT|DF01-A6|D'.4 log event=reception_in after=134.375|expected=134.375|actual=134.3750000000000000|PASS
+ASSERT|DF01-A7|D'.4 log before de la confirmación=150|expected=150|actual=150|PASS
+psql:/home/z/my-project/scripts/w62-lab/cases/case-df01-after.sql:51: ERROR:  ERR_WAC_SINGLE_WRITER_VIOLATION: UPDATE cost_average sin token (OLD=134.3750000000000000 NEW=999). Unico escritor: fn_recalc_wac
+CONTEXT:  PL/pgSQL function w62_guard_wac_writer() line 4 at RAISE
+ASSERT|DF01-A8|D'.3 UPDATE directo sin token → ERR_WAC_SINGLE_WRITER_VIOLATION y WAC intacto|expected=true|actual=true|PASS
+ASSERT|DF01-A9|Venta: WAC invariante tras salida (100)|expected=100|actual=100|PASS
+ASSERT|DF01-A10|Venta: stock 10-2|expected=8|actual=8.0000|PASS
+ASSERT|DF01-A11|Venta: 0 llamadas a escritor (route 4 no toca WAC)|expected=0|actual=0|PASS
+ASSERT|DF01-A12|Devolución A1: WAC invariante (100)|expected=100|actual=100|PASS
+ASSERT|DF01-A13|Devolución A1: stock 8+1|expected=9|actual=9.0000|PASS
+ASSERT|DF01-A14|Devolución A1: 0 escrituras WAC|expected=0|actual=0|PASS
+ASSERT|DF01-A15|Ajuste Δ>0: blend (5·80+3·40)/8=65|expected=65|actual=65.0000000000000000|PASS
+ASSERT|DF01-A16|Ajuste Δ>0: 1 fila log event=adjustment_plus|expected=1|actual=1|PASS
+ASSERT|DF01-A17|Ingesta directa: blend (4·50+2·70)/6=56.6667|expected=56.666666666666667|actual=56.6666666666666667|PASS
+ASSERT|DF01-A18|Ingesta directa: cost_price SIN espejo (queda 50, D-02)|expected=50|actual=50|PASS
+ASSERT|DF01-A19|Ingesta directa: stock 4+2|expected=6|actual=6.0000|PASS
+ASSERT|DF01-A20|Recepción añadida: stock 6+2=8|expected=8|actual=8.0000|PASS
+ASSERT|DF01-A20b|Recepción añadida: WAC (6·56.6667+2·70)/8=60|expected=60|actual=60.00000000000000002500|PASS
+ASSERT|DF01-A21|Reversa: stock vuelve a 6|expected=6|actual=6.0000|PASS
+ASSERT|DF01-A22|Reversa: WAC vuelve a 56.6667 (inversa exacta)|expected=56.666666666666667|actual=56.666666666666666700000000|PASS
+ASSERT|DF01-A23|Reversa: log event=reception_reverse|expected=1|actual=1|PASS
+EVID|DF01-AFTER: guard=escritor único; motor B eliminado; espejo cp eliminado; log INV-15 operativo; 6 rutas demostradas
+
+===== tmp/W7R-df01-conc.out =====
+SETUP-OK|pid=33333333-3333-3333-3333-df0199010001|receipt_A=45048460-d68c-4c59-a707-8228558a50e6|receipt_B=98411a97-d8fb-402e-9cd3-9b7f095acc4a
+════ DF01-CONC: confirmaciones concurrentes A(2@200) y B(3@300) sobre stock 10@100 ════
+sesión A (2@200) exit=0 → 
+sesión B (3@300) exit=0 → 
+W62 fixture base listo
+ASSERT|DF01-C1|Concurrencia: stock final 10+2+3=15|expected=15|actual=15.0000|PASS
+ASSERT|DF01-C2|INV-15 conservación: stock×WAC = 1000+400+900 = 2300|expected=2300|actual=2300.000000000000000400000000|PASS
+ASSERT|DF01-C3|INV-15: 2 filas wac_change_log (blends serializados)|expected=2|actual=2|PASS
+ASSERT|DF01-C4|Concurrencia: sin lost update (WAC final = 2300/15)|expected=153.333333333333333|actual=153.33333333333333336000|PASS
+psql:<stdin>:14: ERROR:  column reference "created_at" is ambiguous
+LINE 1: ...efore,3)||'→'||round(wac_after,3), ' ; ' ORDER BY created_at...
+                                                             ^
+DF01-CONC completado
+
+===== tmp/W7R-df02-C-prime.out =====
+W62 fixture base listo
+ASSERT|DF02-A1|C'.1 cost_at_sale almacenado = WAC server 100 (no 7777)|expected=100|actual=100|PASS
+ASSERT|DF02-A2|C'.1 movement unit_cost = 100 (COGS server-side)|expected=100|actual=100|PASS
+ASSERT|DF02-A3|C'.1 stock 10-2|expected=8|actual=8.0000|PASS
+ASSERT|DF02-A4|C'.1 WAC invariante tras venta (100)|expected=100|actual=100|PASS
+ASSERT|DF02-A5|C'.2 sin costo en request → COGS = WAC 100|expected=100|actual=100|PASS
+psql:/home/z/my-project/scripts/w62-lab/cases/case-df02-after.sql:52: ERROR:  ERR_PRODUCT_COST_UNAVAILABLE: 33333333-3333-3333-3333-df0202010001
+CONTEXT:  PL/pgSQL function create_sale_v2(uuid,uuid,jsonb,text,text,numeric,jsonb,numeric,numeric,numeric,numeric,numeric,numeric,text,numeric,uuid,text,uuid,text,timestamp with time zone,uuid) line 96 at RAISE
+ASSERT|DF02-A6|C'.3 WAC NULL → venta RECHAZADA (0 transacciones con esa key)|expected=true|actual=true|PASS
+EVID|C'.3: el intento previo debió fallar con ERR_PRODUCT_COST_UNAVAILABLE (ver ERROR en salida)
+psql:/home/z/my-project/scripts/w62-lab/cases/case-df02-after.sql:70: ERROR:  ERR_PRODUCT_ZERO_WAC_NOT_DOCUMENTED: 33333333-3333-3333-3333-df0203010001
+CONTEXT:  PL/pgSQL function create_sale_v2(uuid,uuid,jsonb,text,text,numeric,jsonb,numeric,numeric,numeric,numeric,numeric,numeric,text,numeric,uuid,text,uuid,text,timestamp with time zone,uuid) line 101 at RAISE
+ASSERT|DF02-A7|C'.4a WAC=0 sin bandera → RECHAZADO (ERR_PRODUCT_ZERO_WAC_NOT_DOCUMENTED)|expected=true|actual=true|PASS
+ASSERT|DF02-A8|C'.4b WAC=0 CON bandera auditada → permitido|expected=true|actual=true|PASS
+ASSERT|DF02-A9|C'.5 misma key → respuesta idempotente|expected=idempotent|actual=idempotent|PASS
+ASSERT|DF02-A10|C'.5 exactamente 1 transacción para la key|expected=1|actual=1|PASS
+ASSERT|DF02-A11|Venta 1: COGS = WAC_prev 80|expected=80|actual=80|PASS
+ASSERT|DF02-A12|Recepción intermedia: blend (4·80+4·120)/8=100|expected=100|actual=100.0000000000000000|PASS
+ASSERT|DF02-A13|Venta 2: COGS = WAC_prev NUEVO 100 (blend aplicado)|expected=100|actual=100.0000000000000000|PASS
+EVID|DF02-AFTER: COGS 100% server-side (WAC bajo FOR UPDATE); cliente ignorado; bandera CR-W6-2 operativa; idempotencia intacta
+
+===== tmp/W7R-df02-conc.out =====
+SETUP-OK|pid=33333333-3333-3333-3333-df0290010001
+════ DF02-CONC: 2 ventas simultáneas de 3u sobre stock 10@100 ════
+sesión A exit=0 → {"status": "success", "calculated_tax": 0, "transaction_id": "2bad1ce9-eae6-4c55-a7e4-9c049914fe85", "discount_amount": 0, "calculated_total": 600, "calculated_subtotal": 600}
+sesión B exit=0 → {"status": "success", "calculated_tax": 0, "transaction_id": "d5bbbf71-ffa8-4523-b325-0186d82d71ad", "discount_amount": 0, "calculated_total": 600, "calculated_subtotal": 600}
+W62 fixture base listo
+ASSERT|DF02-C1|Conc: ambas ventas aceptadas (stock suficiente)|expected=2|actual=2|PASS
+ASSERT|DF02-C2|Conc: COGS ambas = WAC 100 (cliente 5555 ignorado ×2)|expected=200|actual=200|PASS
+ASSERT|DF02-C3|INV-01: stock final 10-3-3=4 (sin oversell)|expected=4|actual=4.0000|PASS
+ASSERT|DF02-C4|Conc: WAC invariante 100 (salidas puras)|expected=100|actual=100|PASS
+ASSERT|DF02-C5|Conc: valor restante 4×100=400 (=1000−600 COGS)|expected=400|actual=400.0000|PASS
+DF02-CONC completado
+
+===== tmp/W7R-df03-finance.out =====
+W62 fixture base listo
+ASSERT|DF03-A1|venta: payment_transactions in = 1000 (I1b intacta)|expected=1000|actual=1000|PASS
+ASSERT|DF03-A2|cash OUT exacto 400 (tolerancia 0, escoped a esta devolución)|expected=400|actual=400|PASS
+ASSERT|DF03-A3|payment_transactions refund: amount=400, direction=refund|expected=400|actual=400|PASS
+ASSERT|DF03-A4|TR-2: refund.transaction_id = venta original|expected=MATCH|actual=MATCH|PASS
+ASSERT|DF03-A5|TR-1: refund.ref_id = devolution_id|expected=MATCH|actual=MATCH|PASS
+ASSERT|DF03-A6|TR-3: Σ reembolsos = devolutions.total_amount (tolerancia 0)|expected=400|actual=400.00|PASS
+ASSERT|DF03-A7|kardex/inventario: stock restaurado 5+2=7|expected=7|actual=7.0000|PASS
+EVID|triángulo demostrado: inventario↔devolución↔movimiento financiero (stock 5, caja out 400, refund 400 trazable a la venta)
+ASSERT|DF03-A8|misma key → idempotente|expected=idempotent|actual=idempotent|PASS
+ASSERT|DF03-A9|misma key → 1 solo contra-asiento financiero (refund rows de esta devolución)|expected=1|actual=1|PASS
+ASSERT|DF03-A10|store_credit: fila de pasivo en ledger por 400|expected=400|actual=400|PASS
+ASSERT|DF03-A11|store_credit: 0 movimientos de caja para esta devolución|expected=0|actual=0|PASS
+ASSERT|DF03-A12|store_credit: effect declarado = store_credit_ledger|expected=store_credit_ledger|actual=store_credit_ledger|PASS
+ASSERT|DF03-A13|INV-11: 0 devoluciones completed sin contra-asiento (caja o ledger)|expected=0|actual=0|PASS
+ASSERT|DF03-A14|caja cuadra: out 400 + refund 400 por esta devolución (par exacto)|expected=800|actual=800|PASS
+EVID|DF03-AFTER: contra-asiento completo con trazabilidad TR-1..TR-4; store_credit como pasivo; INV-11 demostrada; caja cuadra
+
+===== tmp/W7R-df04-design.out =====
+W62 fixture base listo
+EVID|DF04: parámetros del diseño registrados (T_canon=placeholder W8, ventana, elegibilidad, CR-W6-6)
+ASSERT|DF04-A1|parámetros de diseño definidos|expected=10|actual=10|PASS
+ASSERT|DF04-A2|clasificación EXACTA de las 8 filas sintéticas (ENTRA/EXCLYE)|expected=8|actual=8|PASS
+EVID|ENTRAN: filas 1,5,8 (costo válido documentado, pre-T) | NO ENTRAN: 2 (NULL→recon_gap), 3 (0→recon_gap), 4 (sin doc), 6 (post-T), 7 (qty 0)
+ASSERT|DF04-A3|determinismo: 2 pasadas byte-idénticas|expected=true|actual=true|PASS
+ASSERT|DF04-A4|CR-W6-6: costo 0 pre-T → EXCLYE con recon_gap (nunca ingesta de cero)|expected=EXCLYE:CR-W6-6_COSTO_CERO_RECON_GAP|actual=EXCLYE:CR-W6-6_COSTO_CERO_RECON_GAP|PASS
+ASSERT|DF04-A5|WAC NULL → recon_gap (no 0 fingido)|expected=EXCLYE:CR-W6-6_COSTO_NULO_RECON_GAP|actual=EXCLYE:CR-W6-6_COSTO_NULO_RECON_GAP|PASS
+ASSERT|DF04-A6|NO BACKFILL: el clasificador es puro — su definición no contiene UPDATE/INSERT/DELETE sobre tablas reales|expected=true|actual=true|PASS
+ASSERT|DF04-A7|NO BACKFILL: 0 products.cost_average modificados por DF-04 (wac_change_log solo de DF-01..03 fixtures)|expected=0|actual=0|PASS
+ASSERT|DF04-A8|clasificador es IMMUTABLE/puro (sin efectos secundarios)|expected=1|actual=1|PASS
+EVID|RESULTADO: DESIGN-ONLY · NO DATA MUTATION — el backfill real queda FUERA de W6.2 (W8 con ventanas aprobadas por el dueño)
+
+===== tmp/W7R-df05-production.out =====
+W62 fixture base listo
+ASSERT|DF05-A1|E'.1 actual_unit_cost = WAC server 50 (ignora intento de cliente)|expected=50|actual=50.00|PASS
+ASSERT|DF05-A2|E'.1 qty 1.5 SIN truncar (D-11)|expected=1.5|actual=1.50|PASS
+ASSERT|DF05-A3|E'.1 production_out a 50 (costo legítimo)|expected=50|actual=50|PASS
+ASSERT|DF05-A4|E'.1 audit_logs PRODUCTION_ITEM_WITHDRAWN con costo server|expected=1|actual=1|PASS
+ASSERT|DF05-A5|E'.1b replay misma key → resultado original|expected=success|actual=success|PASS
+ASSERT|DF05-A6|E'.1b actual_qty = 1.5+2 (replay NO duplicó)|expected=3.5|actual=3.50|PASS
+psql:/home/z/my-project/scripts/w62-lab/cases/case-df05-after.sql:49: ERROR:  ERR_OVERCONSUMPTION: actual_qty 3.50 + qty 7 > budgeted_qty 10.00
+CONTEXT:  PL/pgSQL function withdraw_production_item_v3(uuid,numeric,uuid,uuid,text,uuid,text) line 40 at RAISE
+ASSERT|DF05-A7|E'.1c overconsumption → RECHAZADO (ERR_OVERCONSUMPTION)|expected=true|actual=true|PASS
+EVID|PT seeded con WAC 0 (sin costo inicial — lo impone el insumo server-side)
+ASSERT|DF05-A8|E'.2 PT: costo unit = materiales server (3.5u×50)/2 = 87.5|expected=87.5|actual=87.5000000000000000|PASS
+ASSERT|DF05-A9|E'.2 PT WAC tras blend: (0·0 + 2·87.5)/2 = 87.5 (NUNCA 0 contaminado)|expected=87.5|actual=87.5000000000000000|PASS
+ASSERT|DF05-A10|E'.2 cost_price SIN espejo (queda 0 semilla, D-02)|expected=0|actual=0|PASS
+ASSERT|DF05-A11|E'.2 PT stock = 2|expected=2|actual=2.0000|PASS
+EVID|ACL: authenticated ejecutó v3 sin error (ver arriba: sin permission denied)
+psql:/home/z/my-project/scripts/w62-lab/cases/case-df05-after.sql:102: ERROR:  permission denied for function withdraw_production_item_v3
+EVID|ACL: anon debe haber recibido permission denied (ver ERROR arriba)
+psql:/home/z/my-project/scripts/w62-lab/cases/case-df05-after.sql:123: ERROR:  ERR_PRODUCT_ZERO_WAC_NOT_DOCUMENTED: 33333333-3333-3333-3333-df0501030001
+CONTEXT:  PL/pgSQL function withdraw_production_item_v3(uuid,numeric,uuid,uuid,text,uuid,text) line 60 at RAISE
+ASSERT|DF05-A12|E'.5a WAC=0 sin bandera → RECHAZADO (ERR_PRODUCT_ZERO_WAC_NOT_DOCUMENTED)|expected=true|actual=true|PASS
+ASSERT|DF05-A13|E'.5b WAC=0 CON bandera auditada → permitido, costo 0 documentado|expected=0|actual=0.00|PASS
+EVID|DF05-AFTER: costo producción 100% server-side; qty numérica; PT sin contaminación 0; ACL INV-13; bandera CR-W6-2
+
+===== tmp/W7R-df06-ET.out =====
+W62 fixture base listo
+ASSERT|DF06-A1|CASO1 stock origen 10-3=7|expected=7|actual=7.0000|PASS
+ASSERT|DF06-A2|CASO1 WAC origen invariante 100 (salida pura)|expected=100|actual=100|PASS
+ASSERT|DF06-A3|CASO1 stock destino 4+3=7|expected=7|actual=7.0000|PASS
+ASSERT|DF06-A4|CASO1 WAC destino blend (4·60+3·100)/7 = 77.142857|expected=77.142857142857143|actual=77.1428571428571429|PASS
+ASSERT|DF06-A5|E-T: valor_origen_antes 1000 = restante 700 + transferido 300|expected=1000|actual=1000|PASS
+ASSERT|DF06-A6|E-T: valor destino 240+300 = 540 (blend exacto, 0 valor creado/destruido)|expected=540|actual=540.00000000000000030000|PASS
+ASSERT|DF06-A7|E-T: wac_change_log transfer_in con uc congelado 100|expected=1|actual=1|PASS
+ASSERT|DF06-A8|CASO2 producto destino creado con ca = uc_transfer = 100 (blend S=0)|expected=100|actual=100.0000000000000000|PASS
+ASSERT|DF06-A9|CASO2 stock destino = 5|expected=5|actual=5.0000|PASS
+ASSERT|DF06-A10|CASO2 origen conservado (3 restantes, WAC 100)|expected=100|actual=100|PASS
+ASSERT|DF06-A11|CASO3 reversa: stock origen vuelve a 10|expected=10|actual=10.0000|PASS
+ASSERT|DF06-A12|CASO3 reversa: WAC origen 100|expected=100|actual=100|PASS
+ASSERT|DF06-A13|CASO3 reversa: stock destino vuelve a 4|expected=4|actual=4.0000|PASS
+ASSERT|DF06-A14|CASO3 reversa: WAC destino vuelve a 60 (inversa exacta del blend)|expected=60|actual=60.00000000000000007500|PASS
+ASSERT|DF06-A15|CASO3: par de eventos simétricos en wac_change_log (transfer_in + transfer_reverse)|expected=1|actual=1|PASS
+psql:/home/z/my-project/scripts/w62-lab/cases/case-df06-after.sql:102: ERROR:  ERR_INSUFFICIENT_STOCK: producto P E-T2 origen, disponible 3.0000, solicitado 99
+CONTEXT:  PL/pgSQL function create_transfer(uuid,uuid,jsonb,text,uuid,timestamp with time zone,uuid) line 64 at RAISE
+psql:/home/z/my-project/scripts/w62-lab/cases/case-df06-after.sql:111: ERROR:  Transfer not found
+CONTEXT:  PL/pgSQL function confirm_transfer(uuid,uuid,timestamp with time zone) line 16 at RAISE
+ASSERT|DF06-A16|NEG: create_transfer con stock insuficiente → RECHAZADO (origen intacto 3@100)|expected=300|actual=300.0000|PASS
+psql:/home/z/my-project/scripts/w62-lab/cases/case-df06-after.sql:117: ERROR:  syntax error at or near ";"
+LINE 1: ...casos + negativo; reversa simétrica con log de eventos par';
+                                                                      ^
+
+===== tmp/W7R-df07-F-prime.out =====
+W62 fixture base listo
+ASSERT|DF07-A1|Venta base 5u (stock 10-5=5)|expected=5|actual=5.0000|PASS
+psql:/home/z/my-project/scripts/w62-lab/cases/case-df07-after.sql:27: ERROR:  ERR_DEVOLUTION_CAP_EXCEEDED: producto 33333333-3333-3333-3333-df0701010001 vendido=5.0000 devuelto=0 solicitado=6 (tope acumulado, lock de venta adquirido)
+CONTEXT:  PL/pgSQL function create_devolution_v2(uuid,jsonb,text,uuid,uuid,text,uuid,text,text,text) line 61 at RAISE
+ASSERT|DF07-A2|devolución 6 > vendido 5 → RECHAZADA (ERR_DEVOLUTION_CAP_EXCEEDED)|expected=true|actual=true|PASS
+ASSERT|DF07-A3|3+2 = 5 → ambas aceptadas (tope exacto)|expected=5|actual=5.00|PASS
+psql:/home/z/my-project/scripts/w62-lab/cases/case-df07-after.sql:58: ERROR:  ERR_DEVOLUTION_CAP_EXCEEDED: producto 33333333-3333-3333-3333-df0701010001 vendido=5.0000 devuelto=5.00 solicitado=1 (tope acumulado, lock de venta adquirido)
+CONTEXT:  PL/pgSQL function create_devolution_v2(uuid,jsonb,text,uuid,uuid,text,uuid,text,text,text) line 61 at RAISE
+ASSERT|DF07-A4|3+2+1 → la tercera RECHAZADA (8>5 imposible)|expected=true|actual=true|PASS
+ASSERT|DF07-A5|misma key ×2 → segunda es idempotente|expected=idempotent|actual=idempotent|PASS
+ASSERT|DF07-A6|misma key → exactamente 1 devolución|expected=1|actual=1|PASS
+ASSERT|DF07-A7|void libera tope → nueva devolución 2u aceptada|expected=success|actual=success|PASS
+psql:/home/z/my-project/scripts/w62-lab/cases/case-df07-after.sql:119: ERROR:  ERR_DEVOLUTION_CAP_EXCEEDED: producto 33333333-3333-3333-3333-df0701020001 vendido=0 devuelto=0 solicitado=1 (tope acumulado, lock de venta adquirido)
+CONTEXT:  PL/pgSQL function create_devolution_v2(uuid,jsonb,text,uuid,uuid,text,uuid,text,text,text) line 61 at RAISE
+ASSERT|DF07-A8|producto no vendido → RECHAZADA (tope: vendido=0)|expected=true|actual=true|PASS
+EVID|DF07-AFTER: tope acumulado con lock de venta demostrado (6>5 rech, 3+2=5 ok, +1 rech, replay 1 efecto, void libera, ajeno rech)
+
+===== tmp/W7R-df07-F7-race.out =====
+SETUP-OK|pid=33333333-3333-3333-3333-df0790010001|sale=e64fae91-2caa-4f88-83cc-a8304bc86fce
+════ F7' RACE: TX-A y TX-B devuelven 4u cada una, CONCURRENTES, venta de 5 ════
+sesión A (dev 4) exit=0 → {"status": "success", "total_amount": 800, "devolution_id": "82dc6d8e-356b-4846-adb6-a65daa4710b8", "financial_effect": "cash_out_and_refund", "devolution_number": "NC-000008-2026"}
+sesión B (dev 4) exit=1 → ERROR:  ERR_DEVOLUTION_CAP_EXCEEDED: producto 33333333-3333-3333-3333-df0790010001 vendido=5.0000 devuelto=4.00 solicitado=4 (tope acumulado, lock de venta adquirido)
+CONTEXT:  PL/pgSQL function create_devolution_v2(uuid,jsonb,text,uuid,uuid,text,uuid,text,text,text) line 61 at RAISE
+W62 fixture base listo
+ASSERT|F7-R1|RACE: exactamente 1 devolución aceptada|expected=1|actual=1|PASS
+ASSERT|F7-R2|RACE: total devuelto = 4 (4 ≤ 5, NUNCA 8)|expected=4|actual=4.00|PASS
+ASSERT|F7-R3|RACE: stock 20-5+4 = 19 (efecto único)|expected=19|actual=19.0000|PASS
+EVID|lock: la sesión perdedora leyó el acumulado FRESCO post-lock y rechazó con ERR_DEVOLUTION_CAP_EXCEEDED
+F7-RACE completado
+
+===== tmp/W7R-df08-E-prime.out =====
+W62 fixture base listo
+ASSERT|DF08-A0|materiales server-side listos (2@50)|expected=success|actual=success|PASS
+ASSERT|DF08-A1|close CON key → success (fix uuid=uuid)|expected=success|actual=success|PASS
+ASSERT|DF08-A2|close: PT valuation server-side (2×50=100 → unit 50)|expected=50|actual=50.0000000000000000|PASS
+ASSERT|DF08-A3|close: exactamente 1 fila PRODUCTION_ORDER_CLOSED|expected=1|actual=1|PASS
+ASSERT|DF08-A4|replay misma key → respuesta original re-emitida|expected=success|actual=success|PASS
+ASSERT|DF08-A5|replay: sigue habiendo EXACTAMENTE 1 fila de cierre|expected=1|actual=1|PASS
+ASSERT|DF08-A6|replay: PT stock NO duplicado (sigue 2)|expected=2|actual=2.0000|PASS
+ASSERT|DF08-A7|key distinta sobre orden closed → already_closed|expected=already_closed|actual=already_closed|PASS
+ASSERT|DF08-A8|misma key con param_hash distinto → ERR_IDEMPOTENCY_KEY_REUSE|expected=true|actual=true|PASS
+ASSERT|DF08-A9|close sin key (puente) sigue operativo|expected=success|actual=success|PASS
+EVID|DF08-AFTER: close con key OK; replay idempotente; already_closed; REUSE detectado; puente sin key intacto — workaround RECHAZADO como permanente
+
+===== tmp/W7R-df09-overloads.out =====
+W62 fixture base listo
+ASSERT|DF09-A1|0 funciones llamadas withdraw_production_item (solo v3 + deprecated)|expected=0|actual=0|PASS
+ASSERT|DF09-A2|v3 existe como firma pública única|expected=1|actual=1|PASS
+ASSERT|DF09-A3|deprecated 6-arg renombrada + sin EXECUTE a nadie|expected=true|actual=true|PASS
+psql:/home/z/my-project/scripts/w62-lab/cases/case-df09-after.sql:19: ERROR:  function public.withdraw_production_item(p_item_id => uuid, p_qty => integer, p_unit_cost => integer, p_store_id => uuid, p_user_id => uuid) does not exist
+LINE 1: SELECT public.withdraw_production_item(
+               ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+EVID|INV-14: la llamada debe haber fallado con «function withdraw_production_item(...) does not exist» (42883 DEFINIDO) — ver ERROR arriba
+ASSERT|DF09-A4|v3 EXECUTE: authenticated SÍ|expected=1|actual=1|PASS
+ASSERT|DF09-A5|v3 EXECUTE: anon NO|expected=0|actual=0|PASS
+ASSERT|DF09-A6|close_v2: anon sin EXECUTE (INV-13)|expected=0|actual=0|PASS
+ASSERT|DF09-A7|create_vale_salida funcional vía v3|expected=success|actual=success|PASS
+ASSERT|DF09-A8|vale: unit_cost server-side = WAC 40|expected=40|actual=40.0000|PASS
+ASSERT|DF09-A9|vale: withdraw v3 registrado en production_order_items|expected=2|actual=2.00|PASS
+ASSERT|DF09-A10|vale: audit con firma v3|expected=1|actual=1|PASS
+ASSERT|DF09-A11|stock descontado 10-2=8|expected=8|actual=8.0000|PASS
+psql:/home/z/my-project/scripts/w62-lab/cases/case-df09-after.sql:70: ERROR:  function public.fn_process_receipt(jsonb, uuid) is not unique
+LINE 1: SELECT public.fn_process_receipt('[{"sku":"W62-df0901010001"...
+               ^
+HINT:  Could not choose a best candidate function. You might need to add explicit type casts.
+EVID|INV-14: fn_process_receipt 3-arg resuelve determinista (sin 42725)
+EVID|INV-14: fn_process_receipt 4-arg resuelve determinista
+ASSERT|DF09-A12|receive_production_output pública: solo 6-arg (4-arg retirada)|expected=1|actual=1|PASS
+EVID|DF09-AFTER: transición legacy→deprecated completada; v3 única firma; ACL canónica; vale migrado sin regresión; INV-14 con resolución definida
+

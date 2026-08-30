@@ -1,0 +1,38 @@
+FP|cmp|CON|payment_transactions|payment_transactions_amount_check|ff7f8fc527686422d3a0e8676a5dee99
+FP|cmp|CON|payment_transactions|payment_transactions_currency_check|d3f33f5b683756cb12ce6d67d5f20006
+FP|cmp|CON|payment_transactions|payment_transactions_payment_method_check|a7826f3e33a1e0975079015cdb602da1
+FP|cmp|CON|payment_transactions|payment_transactions_pkey|4c6419b3704337bbfe50f018842a9ad3
+FP|cmp|CON|payment_transactions|payment_transactions_ref_type_check|c2c2c238041e001b8b2a549ed1e17f5c
+FP|cmp|CON|payment_transactions|payment_transactions_sale_ref_check|e0de22bb3870e260a155c846282c0f1c
+FP|cmp|CON|payment_transactions|payment_transactions_transaction_id_fkey|1f64d00be01827076f2f1bf81b5a696a
+FP|cmp|FUNC|cancel_reception(uuid)|8e26bc205465b903ddd5274f8a14aaef|postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres|true
+FP|cmp|FUNC|close_production_order_v2(uuid,uuid,uuid,numeric,text,text,numeric,uuid,numeric,uuid,text)|0cddb3f77453ea3a45b4bc582598bdb0|=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres|true
+FP|cmp|FUNC|confirm_pending_reception(uuid,uuid,timestamp with time zone)|7da535fb32dbcd0d48d36393e9ca5b54|postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres|true
+FP|cmp|FUNC|confirm_transfer(uuid,uuid,timestamp with time zone)|9d12507ac7eedff864e83a0b17093364|postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres|true
+FP|cmp|FUNC|create_devolution(uuid,jsonb,text,uuid,text,uuid,text,text,text,numeric)|8485f73fd7ff83039a1516b1688e71ac|postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres|true
+FP|cmp|FUNC|create_devolution(uuid,jsonb,text,uuid,uuid,text,uuid,text,text)|92a0d6d20925b93d525226981c7278a9|postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres|true
+FP|cmp|FUNC|create_devolution_v2(uuid,jsonb,text,uuid,uuid,text,uuid,text,text,text)|bcc6bc3fd29b1d8e2febef6e3cc176f1|=X/postgres,postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres|true
+FP|cmp|FUNC|create_sale_v2(uuid,uuid,jsonb,text,text,numeric,jsonb,numeric,numeric,numeric,numeric,numeric,numeric,text,numeric,uuid,text,uuid,text,timestamp with time zone,uuid)|8743baec2d4b0412ed758d0d52171186|=X/postgres,postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres|true
+FP|cmp|FUNC|create_vale_salida(uuid,jsonb,uuid,text,text)|0003f41804d9ed014be68eb3218d88f5|postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres|true
+FP|cmp|FUNC|create_vale_salida(uuid,jsonb,uuid,text,text,uuid)|7820e82dc0cf485d69a554b05d671b55|postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres|true
+FP|cmp|FUNC|fn_process_receipt(jsonb,uuid,text)|4962e71c3e5780f2d721d880a3365ebc|postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres|true
+FP|cmp|FUNC|fn_process_receipt(jsonb,uuid,uuid,text)|8efed5e9685de48574289ba25d7707d0|postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres|true
+FP|cmp|FUNC|perform_inventory_adjustment(uuid,uuid,numeric,text,uuid,numeric,timestamp with time zone)|dbe5fc5b5ce9dd5d7605be51972adccf|postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres|true
+FP|cmp|FUNC|receive_production_output(uuid,uuid,numeric,uuid)|728e18b47098365c7d3f6ef30efe4291|postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres|true
+FP|cmp|FUNC|receive_production_output(uuid,uuid,numeric,uuid,uuid,text)|8a2d1840b51a6c57b0ae08ec03c56225|=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres|true
+FP|cmp|FUNC|reverse_production_order(uuid,text,uuid)|d61be6d80a650ae4b6e19c5057e6fa52|=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres|true
+FP|cmp|FUNC|reverse_receipt_v2(uuid,text,uuid)|d227aaae60e641342176a0f83337aab1|=X/postgres,postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres|true
+FP|cmp|FUNC|reverse_transfer(uuid,text,uuid)|8649b5714f6cc31ebdfcb96cea574293|postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres|true
+FP|cmp|FUNC|update_product_wac()|2f38220b694928d724066f31351bf642|postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres|true
+FP|cmp|FUNC|validate_payment_transactions_invariants()|56bd3791e2b9baf7d21093da9a926dfc|=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres|false
+FP|cmp|FUNC|void_closed_production_order(uuid,text,uuid)|db934a8af3cddf91e1d2f47571678b33|=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres|true
+FP|cmp|FUNC|void_reception_with_reversal(uuid,uuid,text,timestamp with time zone)|7c00c2eaa369b7e8c0fc1b61145f7912|postgres=X/postgres,service_role=X/postgres|true
+FP|cmp|FUNC|withdraw_production_item(uuid,numeric,numeric,uuid,uuid,text)|95821b3203e0f5cfdfb0f91afa84bef7|postgres=X/postgres,service_role=X/postgres|true
+FP|cmp|FUNC|withdraw_production_item(uuid,numeric,numeric,uuid,uuid,text,uuid,text,boolean)|119f9521fa7043654d535d7a9352a209|postgres=X/postgres,service_role=X/postgres|true
+FP|cmp|TRG|payment_transactions|trg_validate_payment_invariants|validate_payment_transactions_invariants|c5b9bcc6547acfae99edf5e5d2d00a1e
+FP|cmp|TRG|products|trg_ensure_product_barcode|ensure_product_barcode|f93ebb89812172c220f1ced7d8baddee
+FP|cmp|TRG|products|trg_maintain_product_completeness|fn_maintain_product_completeness|20599832d1527da0d8395c0e000ea302
+FP|cmp|TRG|products|trigger_audit_product_changes|audit_product_changes|2370e0fc10e9d2a293f3408be417953a
+FP|cmp|TRG|receipt_items|trg_check_reception_cost_variation|check_reception_cost_variation|405e8463ff05ea43039fe8f148e895ae
+FP|cmp|TRG|receipt_items|trg_sync_has_movements_receipt|sync_product_has_movements|c7fff365a56cf673950fb4bf1e305f93
+FP|cmp|TRG|receipt_items|trg_update_product_wac|update_product_wac|669d90ac12f082d3f074c8444e79960d

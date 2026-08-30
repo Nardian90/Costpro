@@ -1,0 +1,31 @@
+F1|IDENT|public.fn_recalc_wac(p_store_id uuid, p_product_id uuid, p_event text, p_qty_in numeric, p_uc_in numeric, p_source_ref jsonb)|ret=numeric|secdef=true|owner=postgres|search_path={"search_path=public, extensions"}|proacl==X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres
+F1|OVERLOADS|count=1|fn_recalc_wac(uuid,uuid,text,numeric,numeric,jsonb)
+F1|ROUTINE_PRIV|grantee=PUBLIC|priv=EXECUTE
+F1|ROUTINE_PRIV|grantee=anon|priv=EXECUTE
+F1|ROUTINE_PRIV|grantee=authenticated|priv=EXECUTE
+F1|ROUTINE_PRIV|grantee=postgres|priv=EXECUTE
+F1|ROUTINE_PRIV|grantee=service_role|priv=EXECUTE
+F1|HFP|anon=true|authenticated=true|service_role=true|postgres(owner)=true
+F1|ROLE|anon|canlogin=false|super=false
+F1|ROLE|authenticated|canlogin=false|super=false
+F1|ROLE|authenticator|canlogin=false|super=false
+F1|ROLE|postgres|canlogin=true|super=true
+F1|ROLE|service_role|canlogin=false|super=false
+F1|CALLER|cancel_reception(p_reception_id uuid)|secdef=true|acl=postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres
+F1|CALLER|confirm_pending_reception(p_receipt_id uuid, p_user_id uuid, p_operation_date timestamp with time zone)|secdef=true|acl=postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres
+F1|CALLER|confirm_transfer(p_transfer_id uuid, p_user_id uuid, p_operation_date timestamp with time zone)|secdef=true|acl=postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres
+F1|CALLER|fn_process_receipt(p_items jsonb, p_user_id uuid, p_reference text)|secdef=true|acl=postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres
+F1|CALLER|fn_process_receipt(p_items jsonb, p_user_id uuid, p_store_id uuid, p_reference text)|secdef=true|acl=postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres
+F1|CALLER|perform_inventory_adjustment(p_store_id uuid, p_product_id uuid, p_quantity_delta numeric, p_reason text, p_user_id uuid, p_unit_cost_adjustment numeric, p_operation_date timestamp with time zone)|secdef=true|acl=postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres
+F1|CALLER|receive_production_output(p_order_id uuid, p_product_id uuid, p_quantity numeric, p_store_id uuid, p_user_id uuid, p_idempotency_key text)|secdef=true|acl=postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres
+F1|CALLER|reverse_production_order(p_order_id uuid, p_reason text, p_user_id uuid)|secdef=true|acl==X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres
+F1|CALLER|reverse_receipt_v2(p_receipt_id uuid, p_reason text, p_user_id uuid)|secdef=true|acl==X/postgres,postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres
+F1|CALLER|reverse_transfer(p_transfer_id uuid, p_reason text, p_user_id uuid)|secdef=true|acl=postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres
+F1|CALLER|void_closed_production_order(p_order_id uuid, p_reason text, p_user_id uuid)|secdef=true|acl==X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres
+F1|CALLER|void_reception_with_reversal(p_receipt_id uuid, p_user_id uuid, p_reason text, p_operation_date timestamp with time zone)|secdef=true|acl=postgres=X/postgres,service_role=X/postgres
+F1|CALLER|w62_guard_wac_writer()|secdef=false|acl==X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres
+F1|PUBLIC_WRAPPER|reverse_receipt_v2(p_receipt_id uuid, p_reason text, p_user_id uuid)|trigger_fn=false
+F1|PUBLIC_WRAPPER|void_closed_production_order(p_order_id uuid, p_reason text, p_user_id uuid)|trigger_fn=false
+F1|PUBLIC_WRAPPER|reverse_production_order(p_order_id uuid, p_reason text, p_user_id uuid)|trigger_fn=false
+F1|PUBLIC_WRAPPER|w62_guard_wac_writer()|trigger_fn=true
+F1|PUBLIC_WRAPPERS|count=4

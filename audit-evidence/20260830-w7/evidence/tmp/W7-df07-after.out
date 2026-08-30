@@ -1,0 +1,16 @@
+W62 fixture base listo
+ASSERT|DF07-A1|Venta base 5u (stock 10-5=5)|expected=5|actual=5.0000|PASS
+psql:/home/z/my-project/scripts/w62-lab/cases/case-df07-after.sql:27: ERROR:  ERR_DEVOLUTION_CAP_EXCEEDED: producto 33333333-3333-3333-3333-df0701010001 vendido=5.0000 devuelto=0 solicitado=6 (tope acumulado, lock de venta adquirido)
+CONTEXT:  PL/pgSQL function create_devolution_v2(uuid,jsonb,text,uuid,uuid,text,uuid,text,text,text) line 61 at RAISE
+ASSERT|DF07-A2|devolución 6 > vendido 5 → RECHAZADA (ERR_DEVOLUTION_CAP_EXCEEDED)|expected=true|actual=true|PASS
+ASSERT|DF07-A3|3+2 = 5 → ambas aceptadas (tope exacto)|expected=5|actual=5.00|PASS
+psql:/home/z/my-project/scripts/w62-lab/cases/case-df07-after.sql:58: ERROR:  ERR_DEVOLUTION_CAP_EXCEEDED: producto 33333333-3333-3333-3333-df0701010001 vendido=5.0000 devuelto=5.00 solicitado=1 (tope acumulado, lock de venta adquirido)
+CONTEXT:  PL/pgSQL function create_devolution_v2(uuid,jsonb,text,uuid,uuid,text,uuid,text,text,text) line 61 at RAISE
+ASSERT|DF07-A4|3+2+1 → la tercera RECHAZADA (8>5 imposible)|expected=true|actual=true|PASS
+ASSERT|DF07-A5|misma key ×2 → segunda es idempotente|expected=idempotent|actual=idempotent|PASS
+ASSERT|DF07-A6|misma key → exactamente 1 devolución|expected=1|actual=1|PASS
+ASSERT|DF07-A7|void libera tope → nueva devolución 2u aceptada|expected=success|actual=success|PASS
+psql:/home/z/my-project/scripts/w62-lab/cases/case-df07-after.sql:119: ERROR:  ERR_DEVOLUTION_CAP_EXCEEDED: producto 33333333-3333-3333-3333-df0701020001 vendido=0 devuelto=0 solicitado=1 (tope acumulado, lock de venta adquirido)
+CONTEXT:  PL/pgSQL function create_devolution_v2(uuid,jsonb,text,uuid,uuid,text,uuid,text,text,text) line 61 at RAISE
+ASSERT|DF07-A8|producto no vendido → RECHAZADA (tope: vendido=0)|expected=true|actual=true|PASS
+EVID|DF07-AFTER: tope acumulado con lock de venta demostrado (6>5 rech, 3+2=5 ok, +1 rech, replay 1 efecto, void libera, ajeno rech)

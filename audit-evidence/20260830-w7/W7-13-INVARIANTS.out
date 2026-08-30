@@ -1,0 +1,46 @@
+# W7-13 — INVARIANTS INV-01..15 en clon limpio (FASE 17)
+# Matriz completa 29 asserts + INV-12 rollback 5 asserts = 34 PASS / 0 FAIL (INV-12 INFO referenciada).
+
+===== tmp/W7R-inv-matrix.out =====
+W62 fixture base listo
+INV-01|stock negativo en products|0|esperado=0|PASS
+INV-01|stock negativo en inventory|0|esperado=0|PASS
+INV-02|transaccion_items con cost_at_sale != WAC server (ventas DF02-C1/C2/B1/B2)|0|esperado=0|PASS
+INV-02|paridad kardex: unit_cost de movimientos de venta = cost_at_sale|0|esperado=0|PASS
+INV-03|funciones que UPDATE products.cost_average fuera de fn_recalc_wac|0|esperado=0 (excluido admin reset_store_data declarado)|PASS
+INV-03|trigger motor B (update_product_wac) eliminado|1|esperado=1|PASS
+INV-03|guard trg_guard_wac_writer activo|1|esperado=1|PASS
+INV-03|escrituras WAC sin trazabilidad (wac_change_log) — eventos distintos de log|7|esperado>=6 rutas|PASS
+INV-04|log reception_in con blend exacto (before 150 → after 134.375)|1|esperado=1|PASS
+INV-05|withdraws v3 con costo server (audit unit_cost_used=50)|5|esperado>=2|PASS
+INV-05|0 producciones con costo 0 sin bandera (actual_unit_cost=0 solo item bandera)|0|esperado=0|PASS
+INV-06|PT valuation = Σ materiales/qty (output_unit_cost=87.5 de insumos 3.5×50)|1|esperado=1|PASS
+INV-07|blend destino transfer_in exacto (4·60+3·100 → 77.142857)|1|esperado=1|PASS
+INV-08|devoluciones que exceden su venta (por venta/producto)|0|esperado=0|PASS
+INV-09|F7: total devuelto en race 4+4 = 4 (≤5)|4.00|esperado=4|PASS
+INV-10|ventas: 0 keys con más de 1 transacción|0|esperado=0|PASS
+INV-10|devoluciones: 0 keys con más de 1 devolución|0|esperado=0|PASS
+INV-10|cierre: 0 órdenes con más de 1 fila PRODUCTION_ORDER_CLOSED|0|esperado=0|PASS
+INV-11|devoluciones completed sin contra-asiento (caja o ledger)|0|esperado=0|PASS
+INV-11|TR-3: Σ reembolsos por devolución == total_amount (tolerancia 0)|0|esperado=0|PASS
+INV-12|ver evidencia W62-20 sección INV-12 (case-inv12-rollback)|0|INFO|INFO
+INV-13|withdraw_v3: authenticated SÍ|1|esperado=1|PASS
+INV-13|withdraw_v3: anon NO|0|esperado=0|PASS
+INV-13|close_v2: anon NO (PUBLIC revocado)|0|esperado=0|PASS
+INV-13|receive 6-arg: anon NO|0|esperado=0|PASS
+INV-13|create_devolution v1 ×2: authenticated NO (bloqueadas)|0|esperado=0|PASS
+INV-14|0 funciones llamadas withdraw_production_item (legacy fuera del catálogo)|0|esperado=0|PASS
+INV-14|receive_production_output pública: 1 firma|1|esperado=1|PASS
+INV-15|eventos WAC trazados (reception_in, direct_ingest, adjustment_plus, production_in, transfer_in, reception_cancel/reverse/void, production_reverse/void)|7|esperado>=6|PASS
+INV-15|100% filas del log con before/after/event/source_ref completos|0|esperado=0 filas incompletas|PASS
+
+===== tmp/W7R-inv12-rollback.out =====
+W62 fixture base listo
+psql:/home/z/my-project/scripts/w62-lab/cases/case-inv12-rollback.sql:23: ERROR:  INV12_FORCED_FAILURE: rollback intencional del laboratorio
+CONTEXT:  PL/pgSQL function inline_code_block line 3 at RAISE
+ASSERT|INV12-R1|INV-12: STATE hash tras rollback = pre (stock+WAC+movimientos)|expected=478b7f1365bf6a5da30cc01b778079be|actual=478b7f1365bf6a5da30cc01b778079be|PASS
+ASSERT|INV12-R2|INV-12: 0 transacciones huérfanas de la TX fallida|expected=true|actual=true|PASS
+ASSERT|INV12-R3|INV-12: 0 stock_movements huérfanos|expected=true|actual=true|PASS
+ASSERT|INV12-R4|INV-12: 0 audit_logs huérfanos (CREATE_SALE_V2)|expected=true|actual=true|PASS
+ASSERT|INV12-R5|INV-12: 0 payment_transactions huérfanas|expected=true|actual=true|PASS
+EVID|INV-12: rollback forzado → hash STATE idéntico al pre; sin filas huérfanas en movements/kardex/audit/payments

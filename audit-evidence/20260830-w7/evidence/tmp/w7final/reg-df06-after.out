@@ -1,0 +1,24 @@
+W62 fixture base listo
+ASSERT|DF06-A1|CASO1 stock origen 10-3=7|expected=7|actual=7.0000|PASS
+ASSERT|DF06-A2|CASO1 WAC origen invariante 100 (salida pura)|expected=100|actual=100|PASS
+ASSERT|DF06-A3|CASO1 stock destino 4+3=7|expected=7|actual=7.0000|PASS
+ASSERT|DF06-A4|CASO1 WAC destino blend (4·60+3·100)/7 = 77.142857|expected=77.142857142857143|actual=77.1428571428571429|PASS
+ASSERT|DF06-A5|E-T: valor_origen_antes 1000 = restante 700 + transferido 300|expected=1000|actual=1000|PASS
+ASSERT|DF06-A6|E-T: valor destino 240+300 = 540 (blend exacto, 0 valor creado/destruido)|expected=540|actual=540.00000000000000030000|PASS
+ASSERT|DF06-A7|E-T: wac_change_log transfer_in con uc congelado 100|expected=1|actual=1|PASS
+ASSERT|DF06-A8|CASO2 producto destino creado con ca = uc_transfer = 100 (blend S=0)|expected=100|actual=100.0000000000000000|PASS
+ASSERT|DF06-A9|CASO2 stock destino = 5|expected=5|actual=5.0000|PASS
+ASSERT|DF06-A10|CASO2 origen conservado (3 restantes, WAC 100)|expected=100|actual=100|PASS
+ASSERT|DF06-A11|CASO3 reversa: stock origen vuelve a 10|expected=10|actual=10.0000|PASS
+ASSERT|DF06-A12|CASO3 reversa: WAC origen 100|expected=100|actual=100|PASS
+ASSERT|DF06-A13|CASO3 reversa: stock destino vuelve a 4|expected=4|actual=4.0000|PASS
+ASSERT|DF06-A14|CASO3 reversa: WAC destino vuelve a 60 (inversa exacta del blend)|expected=60|actual=60.00000000000000007500|PASS
+ASSERT|DF06-A15|CASO3: par de eventos simétricos en wac_change_log (transfer_in + transfer_reverse)|expected=1|actual=1|PASS
+psql:/home/z/my-project/scripts/w62-lab/cases/case-df06-after.sql:102: ERROR:  ERR_INSUFFICIENT_STOCK: producto P E-T2 origen, disponible 3.0000, solicitado 99
+CONTEXT:  PL/pgSQL function create_transfer(uuid,uuid,jsonb,text,uuid,timestamp with time zone,uuid) line 64 at RAISE
+psql:/home/z/my-project/scripts/w62-lab/cases/case-df06-after.sql:111: ERROR:  Transfer not found
+CONTEXT:  PL/pgSQL function confirm_transfer(uuid,uuid,timestamp with time zone) line 16 at RAISE
+ASSERT|DF06-A16|NEG: create_transfer con stock insuficiente → RECHAZADO (origen intacto 3@100)|expected=300|actual=300.0000|PASS
+psql:/home/z/my-project/scripts/w62-lab/cases/case-df06-after.sql:117: ERROR:  syntax error at or near ";"
+LINE 1: ...casos + negativo; reversa simétrica con log de eventos par';
+                                                                      ^

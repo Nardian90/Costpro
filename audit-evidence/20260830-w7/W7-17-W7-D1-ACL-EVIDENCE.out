@@ -1,0 +1,195 @@
+# W7-17 — W7-D1 ACL EVIDENCE (concatenación de evidencia cruda)
+# Orden de secciones: F1 pre-parche · F2 exploit · F3 parche+post · F5 ACL · F6 no-bypass · regresión F7/F8/F9 (resúmenes)
+
+════════ 1. FASE 1 — forense PRE-parche (tmp/w7d1-f1-forensic.out) ════════
+F1|IDENT|public.fn_recalc_wac(p_store_id uuid, p_product_id uuid, p_event text, p_qty_in numeric, p_uc_in numeric, p_source_ref jsonb)|ret=numeric|secdef=true|owner=postgres|search_path={"search_path=public, extensions"}|proacl==X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres
+F1|OVERLOADS|count=1|fn_recalc_wac(uuid,uuid,text,numeric,numeric,jsonb)
+F1|ROUTINE_PRIV|grantee=PUBLIC|priv=EXECUTE
+F1|ROUTINE_PRIV|grantee=anon|priv=EXECUTE
+F1|ROUTINE_PRIV|grantee=authenticated|priv=EXECUTE
+F1|ROUTINE_PRIV|grantee=postgres|priv=EXECUTE
+F1|ROUTINE_PRIV|grantee=service_role|priv=EXECUTE
+F1|HFP|anon=true|authenticated=true|service_role=true|postgres(owner)=true
+F1|ROLE|anon|canlogin=false|super=false
+F1|ROLE|authenticated|canlogin=false|super=false
+F1|ROLE|authenticator|canlogin=false|super=false
+F1|ROLE|postgres|canlogin=true|super=true
+F1|ROLE|service_role|canlogin=false|super=false
+F1|CALLER|cancel_reception(p_reception_id uuid)|secdef=true|acl=postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres
+F1|CALLER|confirm_pending_reception(p_receipt_id uuid, p_user_id uuid, p_operation_date timestamp with time zone)|secdef=true|acl=postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres
+F1|CALLER|confirm_transfer(p_transfer_id uuid, p_user_id uuid, p_operation_date timestamp with time zone)|secdef=true|acl=postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres
+F1|CALLER|fn_process_receipt(p_items jsonb, p_user_id uuid, p_reference text)|secdef=true|acl=postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres
+F1|CALLER|fn_process_receipt(p_items jsonb, p_user_id uuid, p_store_id uuid, p_reference text)|secdef=true|acl=postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres
+F1|CALLER|perform_inventory_adjustment(p_store_id uuid, p_product_id uuid, p_quantity_delta numeric, p_reason text, p_user_id uuid, p_unit_cost_adjustment numeric, p_operation_date timestamp with time zone)|secdef=true|acl=postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres
+F1|CALLER|receive_production_output(p_order_id uuid, p_product_id uuid, p_quantity numeric, p_store_id uuid, p_user_id uuid, p_idempotency_key text)|secdef=true|acl=postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres
+F1|CALLER|reverse_production_order(p_order_id uuid, p_reason text, p_user_id uuid)|secdef=true|acl==X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres
+F1|CALLER|reverse_receipt_v2(p_receipt_id uuid, p_reason text, p_user_id uuid)|secdef=true|acl==X/postgres,postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres
+F1|CALLER|reverse_transfer(p_transfer_id uuid, p_reason text, p_user_id uuid)|secdef=true|acl=postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres
+F1|CALLER|void_closed_production_order(p_order_id uuid, p_reason text, p_user_id uuid)|secdef=true|acl==X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres
+F1|CALLER|void_reception_with_reversal(p_receipt_id uuid, p_user_id uuid, p_reason text, p_operation_date timestamp with time zone)|secdef=true|acl=postgres=X/postgres,service_role=X/postgres
+F1|CALLER|w62_guard_wac_writer()|secdef=false|acl==X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres
+F1|PUBLIC_WRAPPER|reverse_receipt_v2(p_receipt_id uuid, p_reason text, p_user_id uuid)|trigger_fn=false
+F1|PUBLIC_WRAPPER|void_closed_production_order(p_order_id uuid, p_reason text, p_user_id uuid)|trigger_fn=false
+F1|PUBLIC_WRAPPER|reverse_production_order(p_order_id uuid, p_reason text, p_user_id uuid)|trigger_fn=false
+F1|PUBLIC_WRAPPER|w62_guard_wac_writer()|trigger_fn=true
+F1|PUBLIC_WRAPPERS|count=4
+
+════════ 2. FASE 2 — exploit PRE-parche (tmp/w7d1-f2-exploit.out) ════════
+W62 fixture base listo
+EVID|FASE2|ATAQUE-1|rol=anon|producto 10u WAC=100 (S=10)
+ASSERT|W7D1-X1|BEFORE: WAC=100|expected=100|actual=100|PASS
+ASSERT|W7D1-X2|ATTACK anon: llamada ACEPTADA, retorno=WAC mutado|expected=399.666667|actual=399.6666666666666667|PASS
+ASSERT|W7D1-X3|AFTER: WAC en products ≠ 100 (mutación arbitraria alcanzable)|expected=399.666667|actual=399.6666666666666667|PASS
+ASSERT|W7D1-X4|bitácora wac_change_log registró el evento (trazable, pero mutación ya ocurrida)|expected=manual_injected|actual=manual_injected|PASS
+EVID|FASE2|ATAQUE-2|rol=authenticated|producto 10u WAC=100
+ASSERT|W7D1-X5|ATTACK authenticated: llamada ACEPTADA, retorno=WAC mutado|expected=399.666667|actual=399.6666666666666667|PASS
+ASSERT|W7D1-X6|AFTER: WAC en products ≠ 100|expected=399.666667|actual=399.6666666666666667|PASS
+EVID|FASE2|hygiene|productos de ataque eliminados por ROLLBACK: 0 restantes (esperado 0)
+
+════════ 3. FASE 3 — parche + forense POST (w7d1-acl-patch.sql + tmp/w7d1-f3-post-patch.out) ════════
+-- ============================================================================
+-- w7d1-acl-patch.sql — W7-D1 ACL REMEDIATION (enmienda al paquete 01)
+-- Orden: GO W7-D1 ACL REMEDIATION + RE-GATE (sesión de laboratorio, clon efímero)
+-- PRODUCCIÓN CONGELADA: este parche NUNCA se aplica a producción sin orden
+--   explícita del dueño; su aplicación aquí es exclusivamente en clon de prueba.
+--
+-- Problema (W7-03 §12.2): CREATE FUNCTION otorga EXECUTE a PUBLIC por defecto;
+-- el paquete 01 añadió GRANT a service_role pero nunca revocó PUBLIC/anon/
+-- authenticated → mutación arbitraria de WAC reproducible por roles de cliente.
+--
+-- Firma verificada en pg_proc ANTES de este parche (FASE 1, sin overloads):
+--   public.fn_recalc_wac(p_store_id uuid, p_product_id uuid, p_event text,
+--                        p_qty_in numeric, p_uc_in numeric,
+--                        p_source_ref jsonb DEFAULT NULL) RETURNS numeric
+--   SECURITY DEFINER, SET search_path TO 'public','extensions', owner postgres
+--
+-- Principio de mínimo privilegio (FASE 4):
+--   PUBLIC        = DENY   (nunca fue intención; default de PostgreSQL)
+--   anon          = DENY   (rol de identidad anónima de PostgREST)
+--   authenticated = DENY   (el writer se invoca INTERNAMENTE por 12 rutinas
+--                           SECURITY DEFINER owner postgres — la cadena
+--                           consumer→canonical writer no necesita EXECUTE
+--                           directo del rol cliente)
+--   service_role  = KEEP   (rol de confianza server-side; GRANT ya emitido por
+--                           pkg 01 L838; único caso de uso externo legítimo:
+--                           recalculo administrativo vía RPC server-side)
+--   postgres      = KEEP   (owner; bypass intrínseco)
+-- ============================================================================
+
+BEGIN;
+
+REVOKE EXECUTE ON FUNCTION public.fn_recalc_wac(uuid,uuid,text,numeric,numeric,jsonb) FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.fn_recalc_wac(uuid,uuid,text,numeric,numeric,jsonb) FROM anon;
+REVOKE EXECUTE ON FUNCTION public.fn_recalc_wac(uuid,uuid,text,numeric,numeric,jsonb) FROM authenticated;
+
+COMMIT;
+--- post-patch ---
+F1|IDENT|public.fn_recalc_wac(p_store_id uuid, p_product_id uuid, p_event text, p_qty_in numeric, p_uc_in numeric, p_source_ref jsonb)|ret=numeric|secdef=true|owner=postgres|search_path={"search_path=public, extensions"}|proacl=postgres=X/postgres,service_role=X/postgres
+F1|OVERLOADS|count=1|fn_recalc_wac(uuid,uuid,text,numeric,numeric,jsonb)
+F1|ROUTINE_PRIV|grantee=postgres|priv=EXECUTE
+F1|ROUTINE_PRIV|grantee=service_role|priv=EXECUTE
+F1|HFP|anon=false|authenticated=false|service_role=true|postgres(owner)=true
+F1|ROLE|anon|canlogin=false|super=false
+F1|ROLE|authenticated|canlogin=false|super=false
+F1|ROLE|authenticator|canlogin=false|super=false
+F1|ROLE|postgres|canlogin=true|super=true
+F1|ROLE|service_role|canlogin=false|super=false
+F1|CALLER|cancel_reception(p_reception_id uuid)|secdef=true|acl=postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres
+F1|CALLER|confirm_pending_reception(p_receipt_id uuid, p_user_id uuid, p_operation_date timestamp with time zone)|secdef=true|acl=postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres
+F1|CALLER|confirm_transfer(p_transfer_id uuid, p_user_id uuid, p_operation_date timestamp with time zone)|secdef=true|acl=postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres
+F1|CALLER|fn_process_receipt(p_items jsonb, p_user_id uuid, p_reference text)|secdef=true|acl=postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres
+F1|CALLER|fn_process_receipt(p_items jsonb, p_user_id uuid, p_store_id uuid, p_reference text)|secdef=true|acl=postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres
+F1|CALLER|perform_inventory_adjustment(p_store_id uuid, p_product_id uuid, p_quantity_delta numeric, p_reason text, p_user_id uuid, p_unit_cost_adjustment numeric, p_operation_date timestamp with time zone)|secdef=true|acl=postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres
+F1|CALLER|receive_production_output(p_order_id uuid, p_product_id uuid, p_quantity numeric, p_store_id uuid, p_user_id uuid, p_idempotency_key text)|secdef=true|acl=postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres
+F1|CALLER|reverse_production_order(p_order_id uuid, p_reason text, p_user_id uuid)|secdef=true|acl==X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres
+F1|CALLER|reverse_receipt_v2(p_receipt_id uuid, p_reason text, p_user_id uuid)|secdef=true|acl==X/postgres,postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres
+F1|CALLER|reverse_transfer(p_transfer_id uuid, p_reason text, p_user_id uuid)|secdef=true|acl=postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres
+F1|CALLER|void_closed_production_order(p_order_id uuid, p_reason text, p_user_id uuid)|secdef=true|acl==X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres
+F1|CALLER|void_reception_with_reversal(p_receipt_id uuid, p_user_id uuid, p_reason text, p_operation_date timestamp with time zone)|secdef=true|acl=postgres=X/postgres,service_role=X/postgres
+F1|CALLER|w62_guard_wac_writer()|secdef=false|acl==X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres
+F1|PUBLIC_WRAPPER|reverse_receipt_v2(p_receipt_id uuid, p_reason text, p_user_id uuid)|trigger_fn=false
+F1|PUBLIC_WRAPPER|void_closed_production_order(p_order_id uuid, p_reason text, p_user_id uuid)|trigger_fn=false
+F1|PUBLIC_WRAPPER|reverse_production_order(p_order_id uuid, p_reason text, p_user_id uuid)|trigger_fn=false
+F1|PUBLIC_WRAPPER|w62_guard_wac_writer()|trigger_fn=true
+F1|PUBLIC_WRAPPERS|count=4
+
+════════ 4. FASE 5 — pruebas ACL (tmp/w7d1-f5-acltests.out) ════════
+W62 fixture base listo
+ASSERT|W7D1-N1|anon ejecuta fn_recalc_wac → DENEGADA|expected=DENIED(42501)|actual=DENIED(42501)|PASS
+ASSERT|W7D1-N2|anon: WAC permanece idéntico (100)|expected=100|actual=100|PASS
+ASSERT|W7D1-N3|authenticated ejecuta fn_recalc_wac → DENEGADA|expected=DENIED(42501)|actual=DENIED(42501)|PASS
+ASSERT|W7D1-N4|authenticated: WAC permanece idéntico (100)|expected=100|actual=100|PASS
+ASSERT|W7D1-N5|PUBLIC: has_function_privilege(anon)=false (anon hereda de PUBLIC)|expected=false|actual=false|PASS
+ASSERT|W7D1-N6|PUBLIC: has_function_privilege(authenticated)=false|expected=false|actual=false|PASS
+ASSERT|W7D1-P1|service_role (rol de confianza, GRANT pkg01 L838) → EXECUTED|expected=EXECUTED|actual=EXECUTED|PASS
+ASSERT|W7D1-P2|service_role: WAC mutado (autorizado por diseño W62-01 §6)|expected=399.666667|actual=399.6666666666666667|PASS
+ASSERT|W7D1-P3|postgres (owner, bypass intrínseco) → EXECUTED|expected=EXECUTED|actual=EXECUTED|PASS
+ASSERT|W7D1-P4|consumidor real authenticated: blend (10·100+5·125)/15 = 108.333333 vía fn_recalc_wac interna|expected=108.333333|actual=108.3333333333333333|PASS
+ASSERT|W7D1-P5|cadena consumer→canonical writer→WAC trazada en wac_change_log|expected=reception_in|actual=reception_in|PASS
+ASSERT|W7D1-P6|clave del diseño: authenticated SIN EXECUTE directo PERO consumidor legítimo FUNCIONA (SECURITY DEFINER interno)|expected=true|actual=true|PASS
+EVID|FASE5|hygiene|productos de prueba eliminados por ROLLBACK: 0 restantes (esperado 0)
+
+════════ 5. FASE 6 — no-bypass (tmp/w7d1-f6-nobypass.out) ════════
+W62 fixture base listo
+ASSERT|W7D1-B1|anon→create_sale_v2 (wrapper PUBLIC): identidad no verificada → bloqueado|expected=ERR:P0001:ERR_UNAUTHORIZED|actual=ERR:P0001:ERR_UNAUTHORIZED|PASS
+ASSERT|W7D1-B2|anon→create_devolution_v2 (wrapper PUBLIC): ERR_UNAUTHORIZED (defensa interna)|expected=ERR:P0001:ERR_UNAUTHORIZED|actual=ERR:P0001:ERR_UNAUTHORIZED|PASS
+ASSERT|W7D1-B3|anon→reset_store_data (2-arg, notación named): ERR_UNAUTHORIZED (has_management_access_as)|expected=ERR:P0001:ERR_UNAUTHORIZED: Caller must be admin, manager or encargado of the store.|actual=ERR:P0001:ERR_UNAUTHORIZED: Caller must be admin, manager or encargado of the store.|PASS
+EVID|FASE6|d|authenticated-ADMIN→reset_store_data (esperado guard ERR_WAC_SINGLE_WRITER_VIOLATION): ERR:42703:column "store_id" does not exist
+EVID|FASE6|e|authenticated→w62_guard_wac_writer() directa: ERR:0A000:trigger functions can only be called as triggers
+EVID|FASE6|f|escritores cost_average (prosrc) fuera de fn_recalc_wac: NINGUNO
+EVID|FASE6|g|funciones que fijan token app.wac_writer: fn_recalc_wac, w62_guard_wac_writer
+psql:/home/z/my-project/w7-readiness/tmp/w7d1-case-f6-nobypass.sql:67: ERROR:  function "public.restore_store_backup(uuid)" does not exist
+psql:/home/z/my-project/w7-readiness/tmp/w7d1-case-f6-nobypass.sql:70: ERROR:  current transaction is aborted, commands ignored until end of transaction block
+EVID|FASE6|hygiene|productos de prueba restantes: 0 (esperado 0)
+
+
+════════ 6. FASE 7-9 — regresión/concurrencia/INV sobre clon FRESCO con parche integrado ════════
+# Resumen por suite (evidencia cruda completa en tmp/*.out, SHA al final de cada línea):
+  w7d1-reg-df01-after: 24 PASS / 0
+0 FAIL — sha256=7f6073002543337b…
+  w7d1-reg-df02-after: 13 PASS / 0
+0 FAIL — sha256=f9a9c129ec7e26a9…
+  w7d1-reg-df03-after: 14 PASS / 0
+0 FAIL — sha256=356e12b17f219214…
+  w7d1-reg-df04: 8 PASS / 0
+0 FAIL — sha256=1172f7e2b6cecce8…
+  w7d1-reg-df05-after: 13 PASS / 0
+0 FAIL — sha256=a834ea3402731bab…
+  w7d1-reg-df06-after: 16 PASS / 0
+0 FAIL — sha256=e6dc0f3326e1410a…
+  w7d1-reg-df07-after: 8 PASS / 0
+0 FAIL — sha256=fe503cce533b3d71…
+  w7d1-reg-df08-after: 10 PASS / 0
+0 FAIL — sha256=be933f93ba6a983a…
+  w7d1-reg-df09-after: 12 PASS / 0
+0 FAIL — sha256=cf9e128b9660b989…
+  w7d1-reg-inv-matrix-2: 29 PASS / 0
+0 FAIL — sha256=ab999adfa0e2b43a…
+  w7d1-reg-inv12: 5 PASS / 0
+0 FAIL — sha256=daca1f04c4a36079…
+  w7d1-reg-f19: 10 PASS / 0
+0 FAIL — sha256=d01212ba84ad12f5…
+  w7d1-reg-f4f18: 8 PASS / 0
+0 FAIL — sha256=ef9680c4eb375c62…
+  w7d1-reg-df01-conc: 4 PASS / 0
+0 FAIL — sha256=855c72dc6dc2d7a6…
+  w7d1-reg-df02-conc: 5 PASS / 0
+0 FAIL — sha256=a17f92581b611f25…
+  w7d1-reg-df07-race: 3 PASS / 0
+0 FAIL — sha256=f1771b2cc78b5d9e…
+  w7d1-reg-adversarial: 0
+0 PASS / 0
+0 FAIL — sha256=de3130990f10becf…
+  w7d1-reg-advconc: 0
+0 PASS / 0
+0 FAIL — sha256=ada6a2f84778d61e…
+
+# INV-09 (2ª pasada, tras artefactos del race): INV-09|F7: total devuelto en race 4+4 = 4 (≤5)|4.00|esperado=4|PASS
+# Adversarial RESUMEN: ADV|RESUMEN|0 ACCEPTED-INCORRECTLY = adversarial PASS|
+# Adversarial-conc: 4 de 4 casos OK
+
+════════ 7. Rollback re-verify con parche + complemento ════════
+# BASELINE(v2) scoped == POST_ROLLBACK: 7d9c984d5a909d6a5f3cb1147774f02ecf2c78316017723baa1ddbb9064752c6
+# POST2 (con complemento) == BASELINE: 7d9c984d5a909d6a5f3cb1147774f02ecf2c78316017723baa1ddbb9064752c6
+# Residuos W6.2 post-rollback+complemento: 0 (verificado pg_proc)
+# Complemento: w7d1-rollback-complement.sql (DROP FUNCTION w62_guard_wac_writer)

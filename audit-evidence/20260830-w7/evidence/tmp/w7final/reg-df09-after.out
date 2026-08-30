@@ -1,0 +1,25 @@
+W62 fixture base listo
+ASSERT|DF09-A1|0 funciones llamadas withdraw_production_item (solo v3 + deprecated)|expected=0|actual=0|PASS
+ASSERT|DF09-A2|v3 existe como firma pública única|expected=1|actual=1|PASS
+ASSERT|DF09-A3|deprecated 6-arg renombrada + sin EXECUTE a nadie|expected=true|actual=true|PASS
+psql:/home/z/my-project/scripts/w62-lab/cases/case-df09-after.sql:19: ERROR:  function public.withdraw_production_item(p_item_id => uuid, p_qty => integer, p_unit_cost => integer, p_store_id => uuid, p_user_id => uuid) does not exist
+LINE 1: SELECT public.withdraw_production_item(
+               ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+EVID|INV-14: la llamada debe haber fallado con «function withdraw_production_item(...) does not exist» (42883 DEFINIDO) — ver ERROR arriba
+ASSERT|DF09-A4|v3 EXECUTE: authenticated SÍ|expected=1|actual=1|PASS
+ASSERT|DF09-A5|v3 EXECUTE: anon NO|expected=0|actual=0|PASS
+ASSERT|DF09-A6|close_v2: anon sin EXECUTE (INV-13)|expected=0|actual=0|PASS
+ASSERT|DF09-A7|create_vale_salida funcional vía v3|expected=success|actual=success|PASS
+ASSERT|DF09-A8|vale: unit_cost server-side = WAC 40|expected=40|actual=40.0000|PASS
+ASSERT|DF09-A9|vale: withdraw v3 registrado en production_order_items|expected=2|actual=2.00|PASS
+ASSERT|DF09-A10|vale: audit con firma v3|expected=1|actual=1|PASS
+ASSERT|DF09-A11|stock descontado 10-2=8|expected=8|actual=8.0000|PASS
+psql:/home/z/my-project/scripts/w62-lab/cases/case-df09-after.sql:70: ERROR:  function public.fn_process_receipt(jsonb, uuid) is not unique
+LINE 1: SELECT public.fn_process_receipt('[{"sku":"W62-df0901010001"...
+               ^
+HINT:  Could not choose a best candidate function. You might need to add explicit type casts.
+EVID|INV-14: fn_process_receipt 3-arg resuelve determinista (sin 42725)
+EVID|INV-14: fn_process_receipt 4-arg resuelve determinista
+ASSERT|DF09-A12|receive_production_output pública: solo 6-arg (4-arg retirada)|expected=1|actual=1|PASS
+EVID|DF09-AFTER: transición legacy→deprecated completada; v3 única firma; ACL canónica; vale migrado sin regresión; INV-14 con resolución definida

@@ -1,0 +1,14 @@
+W62 fixture base listo
+ASSERT|W7D1-N1|anon ejecuta fn_recalc_wac → DENEGADA|expected=DENIED(42501)|actual=DENIED(42501)|PASS
+ASSERT|W7D1-N2|anon: WAC permanece idéntico (100)|expected=100|actual=100|PASS
+ASSERT|W7D1-N3|authenticated ejecuta fn_recalc_wac → DENEGADA|expected=DENIED(42501)|actual=DENIED(42501)|PASS
+ASSERT|W7D1-N4|authenticated: WAC permanece idéntico (100)|expected=100|actual=100|PASS
+ASSERT|W7D1-N5|PUBLIC: has_function_privilege(anon)=false (anon hereda de PUBLIC)|expected=false|actual=false|PASS
+ASSERT|W7D1-N6|PUBLIC: has_function_privilege(authenticated)=false|expected=false|actual=false|PASS
+ASSERT|W7D1-P1|service_role (rol de confianza, GRANT pkg01 L838) → EXECUTED|expected=EXECUTED|actual=EXECUTED|PASS
+ASSERT|W7D1-P2|service_role: WAC mutado (autorizado por diseño W62-01 §6)|expected=399.666667|actual=399.6666666666666667|PASS
+ASSERT|W7D1-P3|postgres (owner, bypass intrínseco) → EXECUTED|expected=EXECUTED|actual=EXECUTED|PASS
+ASSERT|W7D1-P4|consumidor real authenticated: blend (10·100+5·125)/15 = 108.333333 vía fn_recalc_wac interna|expected=108.333333|actual=108.3333333333333333|PASS
+ASSERT|W7D1-P5|cadena consumer→canonical writer→WAC trazada en wac_change_log|expected=reception_in|actual=reception_in|PASS
+ASSERT|W7D1-P6|clave del diseño: authenticated SIN EXECUTE directo PERO consumidor legítimo FUNCIONA (SECURITY DEFINER interno)|expected=true|actual=true|PASS
+EVID|FASE5|hygiene|productos de prueba eliminados por ROLLBACK: 0 restantes (esperado 0)

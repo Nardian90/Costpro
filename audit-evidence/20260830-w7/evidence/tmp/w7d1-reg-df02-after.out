@@ -1,0 +1,20 @@
+W62 fixture base listo
+ASSERT|DF02-A1|C'.1 cost_at_sale almacenado = WAC server 100 (no 7777)|expected=100|actual=100|PASS
+ASSERT|DF02-A2|C'.1 movement unit_cost = 100 (COGS server-side)|expected=100|actual=100|PASS
+ASSERT|DF02-A3|C'.1 stock 10-2|expected=8|actual=8.0000|PASS
+ASSERT|DF02-A4|C'.1 WAC invariante tras venta (100)|expected=100|actual=100|PASS
+ASSERT|DF02-A5|C'.2 sin costo en request → COGS = WAC 100|expected=100|actual=100|PASS
+psql:/home/z/my-project/scripts/w62-lab/cases/case-df02-after.sql:52: ERROR:  ERR_PRODUCT_COST_UNAVAILABLE: 33333333-3333-3333-3333-df0202010001
+CONTEXT:  PL/pgSQL function create_sale_v2(uuid,uuid,jsonb,text,text,numeric,jsonb,numeric,numeric,numeric,numeric,numeric,numeric,text,numeric,uuid,text,uuid,text,timestamp with time zone,uuid) line 96 at RAISE
+ASSERT|DF02-A6|C'.3 WAC NULL → venta RECHAZADA (0 transacciones con esa key)|expected=true|actual=true|PASS
+EVID|C'.3: el intento previo debió fallar con ERR_PRODUCT_COST_UNAVAILABLE (ver ERROR en salida)
+psql:/home/z/my-project/scripts/w62-lab/cases/case-df02-after.sql:70: ERROR:  ERR_PRODUCT_ZERO_WAC_NOT_DOCUMENTED: 33333333-3333-3333-3333-df0203010001
+CONTEXT:  PL/pgSQL function create_sale_v2(uuid,uuid,jsonb,text,text,numeric,jsonb,numeric,numeric,numeric,numeric,numeric,numeric,text,numeric,uuid,text,uuid,text,timestamp with time zone,uuid) line 101 at RAISE
+ASSERT|DF02-A7|C'.4a WAC=0 sin bandera → RECHAZADO (ERR_PRODUCT_ZERO_WAC_NOT_DOCUMENTED)|expected=true|actual=true|PASS
+ASSERT|DF02-A8|C'.4b WAC=0 CON bandera auditada → permitido|expected=true|actual=true|PASS
+ASSERT|DF02-A9|C'.5 misma key → respuesta idempotente|expected=idempotent|actual=idempotent|PASS
+ASSERT|DF02-A10|C'.5 exactamente 1 transacción para la key|expected=1|actual=1|PASS
+ASSERT|DF02-A11|Venta 1: COGS = WAC_prev 80|expected=80|actual=80|PASS
+ASSERT|DF02-A12|Recepción intermedia: blend (4·80+4·120)/8=100|expected=100|actual=100.0000000000000000|PASS
+ASSERT|DF02-A13|Venta 2: COGS = WAC_prev NUEVO 100 (blend aplicado)|expected=100|actual=100.0000000000000000|PASS
+EVID|DF02-AFTER: COGS 100% server-side (WAC bajo FOR UPDATE); cliente ignorado; bandera CR-W6-2 operativa; idempotencia intacta
