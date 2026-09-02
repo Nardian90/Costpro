@@ -1,0 +1,2748 @@
+{
+ "adjust_sale_payment": {
+  "files": {
+   "src/app/api/transactions/[id]/adjust/route.ts": {
+    "file_ctx": [
+     "session"
+    ],
+    "receivers": {
+     "supabase": [
+      "browser"
+     ]
+    },
+    "roles": [
+     "browser",
+     "session"
+    ]
+   }
+  },
+  "roles": [
+   "browser",
+   "session"
+  ]
+ },
+ "auto_match_bank_items": {
+  "files": {
+   "src/app/api/bank-reconciliation/match/route.ts": {
+    "file_ctx": [
+     "service"
+    ],
+    "receivers": {
+     "supabase": [
+      "browser"
+     ]
+    },
+    "roles": [
+     "browser",
+     "service"
+    ]
+   }
+  },
+  "roles": [
+   "browser",
+   "service"
+  ]
+ },
+ "bulk_assign_memberships": {
+  "files": {
+   "src/app/api/users/[id]/memberships/bulk/route.ts": {
+    "file_ctx": [
+     "service"
+    ],
+    "receivers": {
+     "admin": [
+      "indirect"
+     ]
+    },
+    "roles": [
+     "indirect",
+     "service"
+    ]
+   }
+  },
+  "roles": [
+   "indirect",
+   "service"
+  ]
+ },
+ "bulk_soft_delete_stores": {
+  "files": {
+   "src/app/api/stores/bulk/execute/route.ts": {
+    "file_ctx": [
+     "service"
+    ],
+    "receivers": {
+     "supabase": [
+      "browser"
+     ]
+    },
+    "roles": [
+     "browser",
+     "service"
+    ]
+   }
+  },
+  "roles": [
+   "browser",
+   "service"
+  ]
+ },
+ "calculate_abc": {
+  "files": {
+   "src/app/api/abc-analysis/route.ts": {
+    "file_ctx": [
+     "service"
+    ],
+    "receivers": {
+     "supabase": [
+      "browser"
+     ]
+    },
+    "roles": [
+     "browser",
+     "service"
+    ]
+   }
+  },
+  "roles": [
+   "browser",
+   "service"
+  ]
+ },
+ "calculate_service_distribution": {
+  "files": {
+   "src/app/api/received-services/distribute/route.ts": {
+    "file_ctx": [
+     "service"
+    ],
+    "receivers": {
+     "admin": [
+      "indirect"
+     ]
+    },
+    "roles": [
+     "indirect",
+     "service"
+    ]
+   }
+  },
+  "roles": [
+   "indirect",
+   "service"
+  ]
+ },
+ "cancel_transfer": {
+  "files": {
+   "src/services/transfer-service.ts": {
+    "file_ctx": [
+     "browser"
+    ],
+    "receivers": {
+     "supabase": [
+      "browser"
+     ]
+    },
+    "roles": [
+     "browser"
+    ]
+   }
+  },
+  "roles": [
+   "browser"
+  ]
+ },
+ "check_bulk_ops_hourly_limit": {
+  "files": {
+   "src/app/api/stores/bulk/execute/route.ts": {
+    "file_ctx": [
+     "service"
+    ],
+    "receivers": {
+     "supabase": [
+      "browser"
+     ]
+    },
+    "roles": [
+     "browser",
+     "service"
+    ]
+   }
+  },
+  "roles": [
+   "browser",
+   "service"
+  ]
+ },
+ "cleanup_old_aggregates": {
+  "files": {
+   "src/app/api/cron/usage-sync/route.ts": {
+    "file_ctx": [
+     "service"
+    ],
+    "receivers": {
+     "admin": [
+      "indirect"
+     ]
+    },
+    "roles": [
+     "indirect",
+     "service"
+    ]
+   }
+  },
+  "roles": [
+   "indirect",
+   "service"
+  ]
+ },
+ "close_cash_shift": {
+  "files": {
+   "src/app/api/cash-closures/close/route.ts": {
+    "file_ctx": [
+     "service"
+    ],
+    "receivers": {
+     "supabaseAdmin": [
+      "service"
+     ]
+    },
+    "roles": [
+     "service"
+    ]
+   }
+  },
+  "roles": [
+   "service"
+  ]
+ },
+ "close_fiscal_period": {
+  "files": {
+   "src/app/api/fiscal-close/route.ts": {
+    "file_ctx": [
+     "service"
+    ],
+    "receivers": {
+     "supabase": [
+      "browser"
+     ]
+    },
+    "roles": [
+     "browser",
+     "service"
+    ]
+   }
+  },
+  "roles": [
+   "browser",
+   "service"
+  ]
+ },
+ "close_production_order_v2": {
+  "files": {
+   "src/app/api/production-orders/[id]/route.ts": {
+    "file_ctx": [
+     "session"
+    ],
+    "receivers": {
+     "supabase": [
+      "browser"
+     ]
+    },
+    "roles": [
+     "browser",
+     "session"
+    ]
+   }
+  },
+  "roles": [
+   "browser",
+   "session"
+  ]
+ },
+ "confirm_inventory_adjustment": {
+  "files": {
+   "src/components/views/terminal/views/inventory/InventoryAdjustmentsView.tsx": {
+    "file_ctx": [
+     "browser"
+    ],
+    "receivers": {
+     "supabase": [
+      "browser"
+     ]
+    },
+    "roles": [
+     "browser"
+    ]
+   }
+  },
+  "roles": [
+   "browser"
+  ]
+ },
+ "confirm_pending_reception": {
+  "files": {
+   "src/hooks/api/useReceptions.ts": {
+    "file_ctx": [
+     "browser"
+    ],
+    "receivers": {
+     "supabase": [
+      "browser"
+     ]
+    },
+    "roles": [
+     "browser"
+    ]
+   }
+  },
+  "roles": [
+   "browser"
+  ]
+ },
+ "confirm_transfer": {
+  "files": {
+   "src/app/api/transfers/[transferId]/confirm/route.ts": {
+    "file_ctx": [
+     "service"
+    ],
+    "receivers": {
+     "admin": [
+      "service"
+     ]
+    },
+    "roles": [
+     "service"
+    ]
+   },
+   "src/services/transfer-service.ts": {
+    "file_ctx": [
+     "browser"
+    ],
+    "receivers": {
+     "supabase": [
+      "browser"
+     ]
+    },
+    "roles": [
+     "browser"
+    ]
+   }
+  },
+  "roles": [
+   "browser",
+   "service"
+  ]
+ },
+ "create_devolution": {
+  "files": {
+   "src/app/api/devolutions/route.ts": {
+    "file_ctx": [
+     "service"
+    ],
+    "receivers": {
+     "supabase": [
+      "browser"
+     ]
+    },
+    "roles": [
+     "browser",
+     "service"
+    ]
+   }
+  },
+  "roles": [
+   "browser",
+   "service"
+  ]
+ },
+ "create_devolution_v2": {
+  "files": {
+   "src/app/api/devolutions/route.ts": {
+    "file_ctx": [
+     "service"
+    ],
+    "receivers": {
+     "supabase": [
+      "browser"
+     ]
+    },
+    "roles": [
+     "browser",
+     "service"
+    ]
+   }
+  },
+  "roles": [
+   "browser",
+   "service"
+  ]
+ },
+ "create_production_order_v2": {
+  "files": {
+   "src/app/api/production-orders/route.ts": {
+    "file_ctx": [
+     "service",
+     "session"
+    ],
+    "receivers": {
+     "supabase": [
+      "browser"
+     ]
+    },
+    "roles": [
+     "browser",
+     "service",
+     "session"
+    ]
+   }
+  },
+  "roles": [
+   "browser",
+   "service",
+   "session"
+  ]
+ },
+ "create_purchase_order": {
+  "files": {
+   "src/app/api/purchase-orders/route.ts": {
+    "file_ctx": [
+     "session"
+    ],
+    "receivers": {
+     "supabase": [
+      "browser"
+     ]
+    },
+    "roles": [
+     "browser",
+     "session"
+    ]
+   }
+  },
+  "roles": [
+   "browser",
+   "session"
+  ]
+ },
+ "create_quotation": {
+  "files": {
+   "src/app/api/quotations/route.ts": {
+    "file_ctx": [
+     "service"
+    ],
+    "receivers": {
+     "supabase": [
+      "browser"
+     ]
+    },
+    "roles": [
+     "browser",
+     "service"
+    ]
+   }
+  },
+  "roles": [
+   "browser",
+   "service"
+  ]
+ },
+ "create_received_service_v2": {
+  "files": {
+   "src/app/api/received-services/route.ts": {
+    "file_ctx": [
+     "service"
+    ],
+    "receivers": {
+     "admin": [
+      "indirect"
+     ]
+    },
+    "roles": [
+     "indirect",
+     "service"
+    ]
+   }
+  },
+  "roles": [
+   "indirect",
+   "service"
+  ]
+ },
+ "create_sale": {
+  "files": {
+   "src/hooks/api/useTransactions.ts": {
+    "file_ctx": [
+     "browser"
+    ],
+    "receivers": {
+     "supabase": [
+      "browser"
+     ]
+    },
+    "roles": [
+     "browser"
+    ]
+   }
+  },
+  "roles": [
+   "browser"
+  ]
+ },
+ "create_sale_v2": {
+  "files": {
+   "src/app/api/pos/checkout/route.ts": {
+    "file_ctx": [
+     "service"
+    ],
+    "receivers": {
+     "supabaseAdmin": [
+      "service"
+     ]
+    },
+    "roles": [
+     "service"
+    ]
+   },
+   "src/app/api/sync/batch/route.ts": {
+    "file_ctx": [
+     "browser",
+     "user"
+    ],
+    "receivers": {
+     "supabase": [
+      "browser"
+     ]
+    },
+    "roles": [
+     "browser",
+     "user"
+    ]
+   }
+  },
+  "roles": [
+   "browser",
+   "service",
+   "user"
+  ]
+ },
+ "create_store_with_membership": {
+  "files": {
+   "src/app/api/stores/route.ts": {
+    "file_ctx": [
+     "service"
+    ],
+    "receivers": {
+     "admin": [
+      "service"
+     ]
+    },
+    "roles": [
+     "service"
+    ]
+   }
+  },
+  "roles": [
+   "service"
+  ]
+ },
+ "create_transfer": {
+  "files": {
+   "src/app/api/sync/batch/route.ts": {
+    "file_ctx": [
+     "browser",
+     "user"
+    ],
+    "receivers": {
+     "supabase": [
+      "browser"
+     ]
+    },
+    "roles": [
+     "browser",
+     "user"
+    ]
+   },
+   "src/app/api/transfers/route.ts": {
+    "file_ctx": [
+     "service"
+    ],
+    "receivers": {
+     "supabase": [
+      "browser"
+     ]
+    },
+    "roles": [
+     "browser",
+     "service"
+    ]
+   },
+   "src/services/transfer-service.ts": {
+    "file_ctx": [
+     "browser"
+    ],
+    "receivers": {
+     "supabase": [
+      "browser"
+     ]
+    },
+    "roles": [
+     "browser"
+    ]
+   }
+  },
+  "roles": [
+   "browser",
+   "service",
+   "user"
+  ]
+ },
+ "create_vale_salida": {
+  "files": {
+   "src/app/api/vale-salida/route.ts": {
+    "file_ctx": [
+     "service"
+    ],
+    "receivers": {
+     "admin": [
+      "service"
+     ]
+    },
+    "roles": [
+     "service"
+    ]
+   }
+  },
+  "roles": [
+   "service"
+  ]
+ },
+ "detect_orphan_users": {
+  "files": {
+   "src/app/api/users/orphans/route.ts": {
+    "file_ctx": [
+     "service"
+    ],
+    "receivers": {
+     "supabaseAdmin": [
+      "service"
+     ]
+    },
+    "roles": [
+     "service"
+    ]
+   }
+  },
+  "roles": [
+   "service"
+  ]
+ },
+ "discover_backup_tables": {
+  "files": {
+   "src/lib/backup/backup-service.ts": {
+    "file_ctx": [
+     "unknown"
+    ],
+    "receivers": {
+     "supabase": [
+      "browser"
+     ]
+    },
+    "roles": [
+     "browser",
+     "unknown"
+    ]
+   }
+  },
+  "roles": [
+   "browser",
+   "unknown"
+  ]
+ },
+ "distribute_service_cost_v2": {
+  "files": {
+   "src/app/api/received-services/distribute/route.ts": {
+    "file_ctx": [
+     "service"
+    ],
+    "receivers": {
+     "admin": [
+      "indirect"
+     ]
+    },
+    "roles": [
+     "indirect",
+     "service"
+    ]
+   }
+  },
+  "roles": [
+   "indirect",
+   "service"
+  ]
+ },
+ "duplicate_inventory_adjustment": {
+  "files": {
+   "src/app/api/inventory/adjustments/duplicate/route.ts": {
+    "file_ctx": [
+     "service"
+    ],
+    "receivers": {
+     "supabase": [
+      "browser"
+     ]
+    },
+    "roles": [
+     "browser",
+     "service"
+    ]
+   }
+  },
+  "roles": [
+   "browser",
+   "service"
+  ]
+ },
+ "duplicate_inventory_adjustment_v2": {
+  "files": {
+   "src/app/api/reverse/route.ts": {
+    "file_ctx": [
+     "service"
+    ],
+    "receivers": {
+     "supabase": [
+      "browser"
+     ]
+    },
+    "roles": [
+     "browser",
+     "service"
+    ]
+   }
+  },
+  "roles": [
+   "browser",
+   "service"
+  ]
+ },
+ "generate_bulk_confirmation_token": {
+  "files": {
+   "src/app/api/stores/bulk/generate-token/route.ts": {
+    "file_ctx": [
+     "service"
+    ],
+    "receivers": {
+     "supabase": [
+      "browser"
+     ]
+    },
+    "roles": [
+     "browser",
+     "service"
+    ]
+   }
+  },
+  "roles": [
+   "browser",
+   "service"
+  ]
+ },
+ "generate_bulk_override_token": {
+  "files": {
+   "src/app/api/stores/bulk/generate-override/route.ts": {
+    "file_ctx": [
+     "service"
+    ],
+    "receivers": {
+     "supabase": [
+      "browser"
+     ]
+    },
+    "roles": [
+     "browser",
+     "service"
+    ]
+   }
+  },
+  "roles": [
+   "browser",
+   "service"
+  ]
+ },
+ "get_audit_logs": {
+  "files": {
+   "src/lib/reports/data-fetcher.ts": {
+    "file_ctx": [
+     "unknown"
+    ],
+    "receivers": {
+     "supabase": [
+      "browser"
+     ]
+    },
+    "roles": [
+     "browser",
+     "unknown"
+    ]
+   }
+  },
+  "roles": [
+   "browser",
+   "unknown"
+  ]
+ },
+ "get_backup_table_list": {
+  "files": {
+   "src/lib/backup/backup-service.ts": {
+    "file_ctx": [
+     "unknown"
+    ],
+    "receivers": {
+     "supabase": [
+      "browser"
+     ]
+    },
+    "roles": [
+     "browser",
+     "unknown"
+    ]
+   }
+  },
+  "roles": [
+   "browser",
+   "unknown"
+  ]
+ },
+ "get_batch_store_daily_kpis": {
+  "files": {
+   "src/hooks/api/useMultiStoreDashboard.ts": {
+    "file_ctx": [
+     "browser"
+    ],
+    "receivers": {
+     "supabase": [
+      "browser"
+     ]
+    },
+    "roles": [
+     "browser"
+    ]
+   }
+  },
+  "roles": [
+   "browser"
+  ]
+ },
+ "get_cash_closures": {
+  "files": {
+   "src/lib/reports/data-fetcher.ts": {
+    "file_ctx": [
+     "unknown"
+    ],
+    "receivers": {
+     "supabase": [
+      "browser"
+     ]
+    },
+    "roles": [
+     "browser",
+     "unknown"
+    ]
+   }
+  },
+  "roles": [
+   "browser",
+   "unknown"
+  ]
+ },
+ "get_cash_report": {
+  "files": {
+   "src/app/api/cash-report/route.ts": {
+    "file_ctx": [
+     "session"
+    ],
+    "receivers": {
+     "supabase": [
+      "browser"
+     ]
+    },
+    "roles": [
+     "browser",
+     "session"
+    ]
+   }
+  },
+  "roles": [
+   "browser",
+   "session"
+  ]
+ },
+ "get_daily_expenses_aggregated": {
+  "files": {
+   "src/lib/reports/data-fetcher.ts": {
+    "file_ctx": [
+     "unknown"
+    ],
+    "receivers": {
+     "supabase": [
+      "browser"
+     ]
+    },
+    "roles": [
+     "browser",
+     "unknown"
+    ]
+   }
+  },
+  "roles": [
+   "browser",
+   "unknown"
+  ]
+ },
+ "get_daily_income_aggregated": {
+  "files": {
+   "src/lib/reports/data-fetcher.ts": {
+    "file_ctx": [
+     "unknown"
+    ],
+    "receivers": {
+     "supabase": [
+      "browser"
+     ]
+    },
+    "roles": [
+     "browser",
+     "unknown"
+    ]
+   }
+  },
+  "roles": [
+   "browser",
+   "unknown"
+  ]
+ },
+ "get_dashboard_kpis": {
+  "files": {
+   "src/hooks/api/useDashboard.ts": {
+    "file_ctx": [
+     "browser"
+    ],
+    "receivers": {
+     "supabase": [
+      "browser"
+     ]
+    },
+    "roles": [
+     "browser"
+    ]
+   }
+  },
+  "roles": [
+   "browser"
+  ]
+ },
+ "get_global_max_operation_date": {
+  "files": {
+   "src/hooks/api/useGlobalOperationDate.ts": {
+    "file_ctx": [
+     "browser"
+    ],
+    "receivers": {
+     "supabase": [
+      "browser"
+     ]
+    },
+    "roles": [
+     "browser"
+    ]
+   }
+  },
+  "roles": [
+   "browser"
+  ]
+ },
+ "get_low_stock_count": {
+  "files": {
+   "src/components/views/terminal/views/sales_hub/SalesHubView.tsx": {
+    "file_ctx": [
+     "browser"
+    ],
+    "receivers": {
+     "supabase": [
+      "browser"
+     ]
+    },
+    "roles": [
+     "browser"
+    ]
+   },
+   "src/hooks/api/useStoreNotifications.ts": {
+    "file_ctx": [
+     "browser"
+    ],
+    "receivers": {
+     "supabase": [
+      "browser"
+     ]
+    },
+    "roles": [
+     "browser"
+    ]
+   }
+  },
+  "roles": [
+   "browser"
+  ]
+ },
+ "get_new_academy_cards": {
+  "files": {
+   "src/app/api/academy/review/route.ts": {
+    "file_ctx": [
+     "browser"
+    ],
+    "receivers": {
+     "supabase": [
+      "browser"
+     ]
+    },
+    "roles": [
+     "browser"
+    ]
+   }
+  },
+  "roles": [
+   "browser"
+  ]
+ },
+ "get_paginated_products": {
+  "files": {
+   "src/app/tienda/[slug]/page.tsx": {
+    "file_ctx": [
+     "anon",
+     "browser",
+     "service"
+    ],
+    "receivers": {
+     "adminClient": [
+      "service"
+     ]
+    },
+    "roles": [
+     "anon",
+     "browser",
+     "service"
+    ]
+   },
+   "src/hooks/api/useInventory.ts": {
+    "file_ctx": [
+     "browser"
+    ],
+    "receivers": {
+     "supabase": [
+      "browser"
+     ]
+    },
+    "roles": [
+     "browser"
+    ]
+   },
+   "src/lib/reports/data-fetcher.ts": {
+    "file_ctx": [
+     "unknown"
+    ],
+    "receivers": {
+     "supabase": [
+      "browser"
+     ]
+    },
+    "roles": [
+     "browser",
+     "unknown"
+    ]
+   }
+  },
+  "roles": [
+   "anon",
+   "browser",
+   "service",
+   "unknown"
+  ]
+ },
+ "get_paginated_products_v2": {
+  "files": {
+   "src/hooks/api/useCatalogProducts.ts": {
+    "file_ctx": [
+     "browser"
+    ],
+    "receivers": {
+     "supabase": [
+      "browser"
+     ]
+    },
+    "roles": [
+     "browser"
+    ]
+   }
+  },
+  "roles": [
+   "browser"
+  ]
+ },
+ "get_product_cost_analysis": {
+  "files": {
+   "src/app/api/received-services/analysis/route.ts": {
+    "file_ctx": [
+     "service"
+    ],
+    "receivers": {
+     "admin": [
+      "indirect"
+     ]
+    },
+    "roles": [
+     "indirect",
+     "service"
+    ]
+   }
+  },
+  "roles": [
+   "indirect",
+   "service"
+  ]
+ },
+ "get_product_stock_ledger_paginated": {
+  "files": {
+   "src/app/api/inventory/[productId]/history/route.ts": {
+    "file_ctx": [
+     "browser",
+     "user"
+    ],
+    "receivers": {
+     "authClient": [
+      "user"
+     ]
+    },
+    "roles": [
+     "browser",
+     "user"
+    ]
+   },
+   "src/hooks/api/useKardex.ts": {
+    "file_ctx": [
+     "browser"
+    ],
+    "receivers": {
+     "supabase": [
+      "browser"
+     ]
+    },
+    "roles": [
+     "browser"
+    ]
+   },
+   "src/lib/reports/data-fetcher.ts": {
+    "file_ctx": [
+     "unknown"
+    ],
+    "receivers": {
+     "supabase": [
+      "browser"
+     ]
+    },
+    "roles": [
+     "browser",
+     "unknown"
+    ]
+   }
+  },
+  "roles": [
+   "browser",
+   "unknown",
+   "user"
+  ]
+ },
+ "get_products_for_pos": {
+  "files": {
+   "src/app/api/inventory/products/route.ts": {
+    "file_ctx": [
+     "browser",
+     "user"
+    ],
+    "receivers": {
+     "authClient": [
+      "user"
+     ]
+    },
+    "roles": [
+     "browser",
+     "user"
+    ]
+   },
+   "src/components/views/terminal/views/ipv/CatalogTable.tsx": {
+    "file_ctx": [
+     "browser"
+    ],
+    "receivers": {
+     "supabase": [
+      "browser"
+     ]
+    },
+    "roles": [
+     "browser"
+    ]
+   },
+   "src/hooks/api/useProducts.ts": {
+    "file_ctx": [
+     "browser"
+    ],
+    "receivers": {
+     "supabase": [
+      "browser"
+     ]
+    },
+    "roles": [
+     "browser"
+    ]
+   }
+  },
+  "roles": [
+   "browser",
+   "user"
+  ]
+ },
+ "get_products_for_reception": {
+  "files": {
+   "src/hooks/api/useReceptionProductSearch.ts": {
+    "file_ctx": [
+     "browser"
+    ],
+    "receivers": {
+     "supabase": [
+      "browser"
+     ]
+    },
+    "roles": [
+     "browser"
+    ]
+   }
+  },
+  "roles": [
+   "browser"
+  ]
+ },
+ "get_profit_report": {
+  "files": {
+   "src/lib/reports/data-fetcher.ts": {
+    "file_ctx": [
+     "unknown"
+    ],
+    "receivers": {
+     "supabase": [
+      "browser"
+     ]
+    },
+    "roles": [
+     "browser",
+     "unknown"
+    ]
+   }
+  },
+  "roles": [
+   "browser",
+   "unknown"
+  ]
+ },
+ "get_purchases_book": {
+  "files": {
+   "src/app/api/fiscal/purchases-book/route.ts": {
+    "file_ctx": [
+     "service"
+    ],
+    "receivers": {
+     "supabaseAdmin": [
+      "service"
+     ]
+    },
+    "roles": [
+     "service"
+    ]
+   }
+  },
+  "roles": [
+   "service"
+  ]
+ },
+ "get_reorder_suggestions": {
+  "files": {
+   "src/app/api/reorder-suggestions/route.ts": {
+    "file_ctx": [
+     "service"
+    ],
+    "receivers": {
+     "supabase": [
+      "browser"
+     ]
+    },
+    "roles": [
+     "browser",
+     "service"
+    ]
+   }
+  },
+  "roles": [
+   "browser",
+   "service"
+  ]
+ },
+ "get_sales_book": {
+  "files": {
+   "src/app/api/fiscal/sales-book/route.ts": {
+    "file_ctx": [
+     "service"
+    ],
+    "receivers": {
+     "supabaseAdmin": [
+      "service"
+     ]
+    },
+    "roles": [
+     "service"
+    ]
+   }
+  },
+  "roles": [
+   "service"
+  ]
+ },
+ "get_sales_since_last_closure": {
+  "files": {
+   "src/services/cash-service.ts": {
+    "file_ctx": [
+     "browser"
+    ],
+    "receivers": {
+     "supabase": [
+      "browser"
+     ]
+    },
+    "roles": [
+     "browser"
+    ]
+   }
+  },
+  "roles": [
+   "browser"
+  ]
+ },
+ "get_store_analytics_advanced": {
+  "files": {
+   "src/hooks/api/useStoreAnalytics.ts": {
+    "file_ctx": [
+     "browser"
+    ],
+    "receivers": {
+     "supabase": [
+      "browser"
+     ]
+    },
+    "roles": [
+     "browser"
+    ]
+   }
+  },
+  "roles": [
+   "browser"
+  ]
+ },
+ "get_tax_report": {
+  "files": {
+   "src/app/api/fiscal/tax-report/route.ts": {
+    "file_ctx": [
+     "service"
+    ],
+    "receivers": {
+     "supabaseAdmin": [
+      "service"
+     ]
+    },
+    "roles": [
+     "service"
+    ]
+   }
+  },
+  "roles": [
+   "service"
+  ]
+ },
+ "get_tenant_cash_report": {
+  "files": {
+   "src/app/api/tenants/[id]/reports/cash/route.ts": {
+    "file_ctx": [
+     "service"
+    ],
+    "receivers": {
+     "supabaseAdmin": [
+      "service"
+     ]
+    },
+    "roles": [
+     "service"
+    ]
+   }
+  },
+  "roles": [
+   "service"
+  ]
+ },
+ "get_tenant_sales_summary": {
+  "files": {
+   "src/app/api/tenants/[id]/reports/sales/route.ts": {
+    "file_ctx": [
+     "service"
+    ],
+    "receivers": {
+     "supabaseAdmin": [
+      "service"
+     ]
+    },
+    "roles": [
+     "service"
+    ]
+   }
+  },
+  "roles": [
+   "service"
+  ]
+ },
+ "get_transactions": {
+  "files": {
+   "src/hooks/api/useTransactions.ts": {
+    "file_ctx": [
+     "browser"
+    ],
+    "receivers": {
+     "supabase": [
+      "browser"
+     ]
+    },
+    "roles": [
+     "browser"
+    ]
+   },
+   "src/lib/reports/data-fetcher.ts": {
+    "file_ctx": [
+     "unknown"
+    ],
+    "receivers": {
+     "supabase": [
+      "browser"
+     ]
+    },
+    "roles": [
+     "browser",
+     "unknown"
+    ]
+   }
+  },
+  "roles": [
+   "browser",
+   "unknown"
+  ]
+ },
+ "get_transferable_stores": {
+  "files": {
+   "src/services/transfer-service.ts": {
+    "file_ctx": [
+     "browser"
+    ],
+    "receivers": {
+     "supabase": [
+      "browser"
+     ]
+    },
+    "roles": [
+     "browser"
+    ]
+   }
+  },
+  "roles": [
+   "browser"
+  ]
+ },
+ "get_transfers": {
+  "files": {
+   "src/lib/reports/data-fetcher.ts": {
+    "file_ctx": [
+     "unknown"
+    ],
+    "receivers": {
+     "supabase": [
+      "browser"
+     ]
+    },
+    "roles": [
+     "browser",
+     "unknown"
+    ]
+   }
+  },
+  "roles": [
+   "browser",
+   "unknown"
+  ]
+ },
+ "get_usage_summary": {
+  "files": {
+   "src/app/api/usage/summary/route.ts": {
+    "file_ctx": [
+     "service"
+    ],
+    "receivers": {
+     "admin": [
+      "indirect"
+     ]
+    },
+    "roles": [
+     "indirect",
+     "service"
+    ]
+   }
+  },
+  "roles": [
+   "indirect",
+   "service"
+  ]
+ },
+ "get_user_audit_history": {
+  "files": {
+   "src/app/api/users/[id]/audit-history/route.ts": {
+    "file_ctx": [
+     "service"
+    ],
+    "receivers": {
+     "supabaseAdmin": [
+      "service"
+     ]
+    },
+    "roles": [
+     "service"
+    ]
+   }
+  },
+  "roles": [
+   "service"
+  ]
+ },
+ "get_worker_commission_summary": {
+  "files": {
+   "src/app/api/commissions/summary/route.ts": {
+    "file_ctx": [
+     "session",
+     "user"
+    ],
+    "receivers": {
+     "supabase": [
+      "browser"
+     ]
+    },
+    "roles": [
+     "browser",
+     "session",
+     "user"
+    ]
+   }
+  },
+  "roles": [
+   "browser",
+   "session",
+   "user"
+  ]
+ },
+ "increment_user_usage": {
+  "files": {
+   "src/services/usage-service.ts": {
+    "file_ctx": [
+     "browser"
+    ],
+    "receivers": {
+     "supabase": [
+      "browser"
+     ]
+    },
+    "roles": [
+     "browser"
+    ]
+   }
+  },
+  "roles": [
+   "browser"
+  ]
+ },
+ "lock_fiscal_period": {
+  "files": {
+   "src/app/api/fiscal-close/route.ts": {
+    "file_ctx": [
+     "service"
+    ],
+    "receivers": {
+     "supabase": [
+      "browser"
+     ]
+    },
+    "roles": [
+     "browser",
+     "service"
+    ]
+   }
+  },
+  "roles": [
+   "browser",
+   "service"
+  ]
+ },
+ "manage_user_memberships": {
+  "files": {
+   "src/hooks/api/useUsers.ts": {
+    "file_ctx": [
+     "browser"
+    ],
+    "receivers": {
+     "supabase": [
+      "browser"
+     ]
+    },
+    "roles": [
+     "browser"
+    ]
+   }
+  },
+  "roles": [
+   "browser"
+  ]
+ },
+ "managed_create_user_v2": {
+  "files": {
+   "src/app/api/users/managed-create/route.ts": {
+    "file_ctx": [
+     "service"
+    ],
+    "receivers": {
+     "supabaseAdmin": [
+      "service"
+     ]
+    },
+    "roles": [
+     "service"
+    ]
+   }
+  },
+  "roles": [
+   "service"
+  ]
+ },
+ "managed_delete_product": {
+  "files": {
+   "src/hooks/api/useProducts.ts": {
+    "file_ctx": [
+     "browser"
+    ],
+    "receivers": {
+     "supabase": [
+      "browser"
+     ]
+    },
+    "roles": [
+     "browser"
+    ]
+   }
+  },
+  "roles": [
+   "browser"
+  ]
+ },
+ "managed_reset_password": {
+  "files": {
+   "src/app/api/users/reset-password/route.ts": {
+    "file_ctx": [
+     "service"
+    ],
+    "receivers": {
+     "supabaseAdmin": [
+      "service"
+     ]
+    },
+    "roles": [
+     "service"
+    ]
+   }
+  },
+  "roles": [
+   "service"
+  ]
+ },
+ "managed_revoke_membership": {
+  "files": {
+   "src/app/api/users/[id]/memberships/[membershipId]/route.ts": {
+    "file_ctx": [
+     "service"
+    ],
+    "receivers": {
+     "admin": [
+      "service"
+     ]
+    },
+    "roles": [
+     "service"
+    ]
+   }
+  },
+  "roles": [
+   "service"
+  ]
+ },
+ "managed_soft_delete_user": {
+  "files": {
+   "src/app/api/users/delete/route.ts": {
+    "file_ctx": [
+     "service"
+    ],
+    "receivers": {
+     "supabaseAdmin": [
+      "service"
+     ]
+    },
+    "roles": [
+     "service"
+    ]
+   }
+  },
+  "roles": [
+   "service"
+  ]
+ },
+ "managed_toggle_product_active": {
+  "files": {
+   "src/hooks/api/useProducts.ts": {
+    "file_ctx": [
+     "browser"
+    ],
+    "receivers": {
+     "supabase": [
+      "browser"
+     ]
+    },
+    "roles": [
+     "browser"
+    ]
+   }
+  },
+  "roles": [
+   "browser"
+  ]
+ },
+ "managed_toggle_user_status": {
+  "files": {
+   "src/app/api/users/toggle-status/route.ts": {
+    "file_ctx": [
+     "service"
+    ],
+    "receivers": {
+     "supabaseAdmin": [
+      "service"
+     ]
+    },
+    "roles": [
+     "service"
+    ]
+   }
+  },
+  "roles": [
+   "service"
+  ]
+ },
+ "managed_update_membership": {
+  "files": {
+   "src/app/api/users/[id]/memberships/[membershipId]/route.ts": {
+    "file_ctx": [
+     "service"
+    ],
+    "receivers": {
+     "admin": [
+      "service"
+     ]
+    },
+    "roles": [
+     "service"
+    ]
+   }
+  },
+  "roles": [
+   "service"
+  ]
+ },
+ "managed_update_tenant_plan": {
+  "files": {
+   "src/app/api/billing/webhook/route.ts": {
+    "file_ctx": [
+     "service"
+    ],
+    "receivers": {
+     "supabaseAdmin": [
+      "service"
+     ]
+    },
+    "roles": [
+     "service"
+    ]
+   }
+  },
+  "roles": [
+   "service"
+  ]
+ },
+ "managed_update_user": {
+  "files": {
+   "src/app/api/users/[id]/route.ts": {
+    "file_ctx": [
+     "service"
+    ],
+    "receivers": {
+     "supabaseAdmin": [
+      "service"
+     ]
+    },
+    "roles": [
+     "service"
+    ]
+   }
+  },
+  "roles": [
+   "service"
+  ]
+ },
+ "perform_inventory_adjustment": {
+  "files": {
+   "src/app/api/sync/batch/route.ts": {
+    "file_ctx": [
+     "browser",
+     "user"
+    ],
+    "receivers": {
+     "supabase": [
+      "browser"
+     ]
+    },
+    "roles": [
+     "browser",
+     "user"
+    ]
+   },
+   "src/hooks/api/useDocumentActions.ts": {
+    "file_ctx": [
+     "browser"
+    ],
+    "receivers": {
+     "supabase": [
+      "browser"
+     ]
+    },
+    "roles": [
+     "browser"
+    ]
+   },
+   "src/hooks/api/useInventory.ts": {
+    "file_ctx": [
+     "browser"
+    ],
+    "receivers": {
+     "supabase": [
+      "browser"
+     ]
+    },
+    "roles": [
+     "browser"
+    ]
+   }
+  },
+  "roles": [
+   "browser",
+   "user"
+  ]
+ },
+ "process_inventory_adjustment": {
+  "files": {
+   "src/app/api/inventory/adjustments/route.ts": {
+    "file_ctx": [
+     "browser",
+     "user"
+    ],
+    "receivers": {
+     "authClient": [
+      "user"
+     ]
+    },
+    "roles": [
+     "browser",
+     "user"
+    ]
+   }
+  },
+  "roles": [
+   "browser",
+   "user"
+  ]
+ },
+ "process_pick3_transaction": {
+  "files": {
+   "src/components/views/terminal/views/pick3/BetEntryDialog.tsx": {
+    "file_ctx": [
+     "browser"
+    ],
+    "receivers": {
+     "supabase": [
+      "browser"
+     ]
+    },
+    "roles": [
+     "browser"
+    ]
+   }
+  },
+  "roles": [
+   "browser"
+  ]
+ },
+ "purge_old_reset_snapshots": {
+  "files": {
+   "src/app/api/cron/purge-snapshots/route.ts": {
+    "file_ctx": [
+     "service"
+    ],
+    "receivers": {
+     "supabase": [
+      "browser"
+     ]
+    },
+    "roles": [
+     "browser",
+     "service"
+    ]
+   }
+  },
+  "roles": [
+   "browser",
+   "service"
+  ]
+ },
+ "receive_against_po": {
+  "files": {
+   "src/app/api/purchase-orders/[id]/route.ts": {
+    "file_ctx": [
+     "session"
+    ],
+    "receivers": {
+     "supabase": [
+      "browser"
+     ]
+    },
+    "roles": [
+     "browser",
+     "session"
+    ]
+   }
+  },
+  "roles": [
+   "browser",
+   "session"
+  ]
+ },
+ "receive_production_output": {
+  "files": {
+   "src/app/api/production-orders/[id]/route.ts": {
+    "file_ctx": [
+     "session"
+    ],
+    "receivers": {
+     "supabase": [
+      "browser"
+     ]
+    },
+    "roles": [
+     "browser",
+     "session"
+    ]
+   }
+  },
+  "roles": [
+   "browser",
+   "session"
+  ]
+ },
+ "receive_to_warehouse": {
+  "files": {
+   "src/app/api/receive-to-warehouse/route.ts": {
+    "file_ctx": [
+     "service"
+    ],
+    "receivers": {
+     "supabase": [
+      "browser"
+     ]
+    },
+    "roles": [
+     "browser",
+     "service"
+    ]
+   }
+  },
+  "roles": [
+   "browser",
+   "service"
+  ]
+ },
+ "reconcile_orphan_user": {
+  "files": {
+   "src/app/api/users/[id]/reconcile/route.ts": {
+    "file_ctx": [
+     "service"
+    ],
+    "receivers": {
+     "supabaseAdmin": [
+      "service"
+     ]
+    },
+    "roles": [
+     "service"
+    ]
+   }
+  },
+  "roles": [
+   "service"
+  ]
+ },
+ "register_reception": {
+  "files": {
+   "src/app/api/inventory/receptions/route.ts": {
+    "file_ctx": [
+     "browser",
+     "user"
+    ],
+    "receivers": {
+     "authClient": [
+      "user"
+     ]
+    },
+    "roles": [
+     "browser",
+     "user"
+    ]
+   },
+   "src/app/api/sync/batch/route.ts": {
+    "file_ctx": [
+     "browser",
+     "user"
+    ],
+    "receivers": {
+     "supabase": [
+      "browser"
+     ]
+    },
+    "roles": [
+     "browser",
+     "user"
+    ]
+   },
+   "src/hooks/api/useInventory.ts": {
+    "file_ctx": [
+     "browser"
+    ],
+    "receivers": {
+     "supabase": [
+      "browser"
+     ]
+    },
+    "roles": [
+     "browser"
+    ]
+   }
+  },
+  "roles": [
+   "browser",
+   "user"
+  ]
+ },
+ "register_stock_movement": {
+  "files": {
+   "src/app/api/inventory/adjust/route.ts": {
+    "file_ctx": [
+     "browser",
+     "user"
+    ],
+    "receivers": {
+     "authClient": [
+      "user"
+     ]
+    },
+    "roles": [
+     "browser",
+     "user"
+    ]
+   }
+  },
+  "roles": [
+   "browser",
+   "user"
+  ]
+ },
+ "register_supplier_payment": {
+  "files": {
+   "src/app/api/accounts-payable/bulk-pay/route.ts": {
+    "file_ctx": [
+     "session"
+    ],
+    "receivers": {
+     "supabase": [
+      "browser"
+     ]
+    },
+    "roles": [
+     "browser",
+     "session"
+    ]
+   },
+   "src/app/api/payments/route.ts": {
+    "file_ctx": [
+     "session"
+    ],
+    "receivers": {
+     "supabase": [
+      "browser"
+     ]
+    },
+    "roles": [
+     "browser",
+     "session"
+    ]
+   },
+   "src/app/api/production-orders/[id]/payments/route.ts": {
+    "file_ctx": [
+     "session"
+    ],
+    "receivers": {
+     "supabase": [
+      "browser"
+     ]
+    },
+    "roles": [
+     "browser",
+     "session"
+    ]
+   }
+  },
+  "roles": [
+   "browser",
+   "session"
+  ]
+ },
+ "reopen_cash_shift": {
+  "files": {
+   "src/app/api/cash-closures/reopen/route.ts": {
+    "file_ctx": [
+     "service"
+    ],
+    "receivers": {
+     "supabaseAdmin": [
+      "service"
+     ]
+    },
+    "roles": [
+     "service"
+    ]
+   }
+  },
+  "roles": [
+   "service"
+  ]
+ },
+ "reset_store_data": {
+  "files": {
+   "src/app/api/stores/reset/route.ts": {
+    "file_ctx": [
+     "service"
+    ],
+    "receivers": {
+     "admin": [
+      "service"
+     ]
+    },
+    "roles": [
+     "service"
+    ]
+   }
+  },
+  "roles": [
+   "service"
+  ]
+ },
+ "reverse_adjustment": {
+  "files": {
+   "src/app/api/reverse/route.ts": {
+    "file_ctx": [
+     "service"
+    ],
+    "receivers": {
+     "supabase": [
+      "browser"
+     ]
+    },
+    "roles": [
+     "browser",
+     "service"
+    ]
+   }
+  },
+  "roles": [
+   "browser",
+   "service"
+  ]
+ },
+ "reverse_devolution": {
+  "files": {
+   "src/app/api/reverse/route.ts": {
+    "file_ctx": [
+     "service"
+    ],
+    "receivers": {
+     "supabase": [
+      "browser"
+     ]
+    },
+    "roles": [
+     "browser",
+     "service"
+    ]
+   }
+  },
+  "roles": [
+   "browser",
+   "service"
+  ]
+ },
+ "reverse_production_order": {
+  "files": {
+   "src/app/api/reverse/route.ts": {
+    "file_ctx": [
+     "service"
+    ],
+    "receivers": {
+     "supabase": [
+      "browser"
+     ]
+    },
+    "roles": [
+     "browser",
+     "service"
+    ]
+   }
+  },
+  "roles": [
+   "browser",
+   "service"
+  ]
+ },
+ "reverse_receipt": {
+  "files": {
+   "src/app/api/reverse/route.ts": {
+    "file_ctx": [
+     "service"
+    ],
+    "receivers": {
+     "supabase": [
+      "browser"
+     ]
+    },
+    "roles": [
+     "browser",
+     "service"
+    ]
+   }
+  },
+  "roles": [
+   "browser",
+   "service"
+  ]
+ },
+ "reverse_receipt_v2": {
+  "files": {
+   "src/app/api/reverse/route.ts": {
+    "file_ctx": [
+     "service"
+    ],
+    "receivers": {
+     "supabase": [
+      "browser"
+     ]
+    },
+    "roles": [
+     "browser",
+     "service"
+    ]
+   },
+   "src/hooks/api/useReceptions.ts": {
+    "file_ctx": [
+     "browser"
+    ],
+    "receivers": {
+     "supabase": [
+      "browser"
+     ]
+    },
+    "roles": [
+     "browser"
+    ]
+   }
+  },
+  "roles": [
+   "browser",
+   "service"
+  ]
+ },
+ "reverse_transaction": {
+  "files": {
+   "src/app/api/reverse/route.ts": {
+    "file_ctx": [
+     "service"
+    ],
+    "receivers": {
+     "supabase": [
+      "browser"
+     ]
+    },
+    "roles": [
+     "browser",
+     "service"
+    ]
+   }
+  },
+  "roles": [
+   "browser",
+   "service"
+  ]
+ },
+ "reverse_transaction_v2": {
+  "files": {
+   "src/app/api/reverse/route.ts": {
+    "file_ctx": [
+     "service"
+    ],
+    "receivers": {
+     "supabase": [
+      "browser"
+     ]
+    },
+    "roles": [
+     "browser",
+     "service"
+    ]
+   }
+  },
+  "roles": [
+   "browser",
+   "service"
+  ]
+ },
+ "reverse_transfer": {
+  "files": {
+   "src/app/api/reverse/route.ts": {
+    "file_ctx": [
+     "service"
+    ],
+    "receivers": {
+     "supabase": [
+      "browser"
+     ]
+    },
+    "roles": [
+     "browser",
+     "service"
+    ]
+   }
+  },
+  "roles": [
+   "browser",
+   "service"
+  ]
+ },
+ "reverse_vale_salida": {
+  "files": {
+   "src/app/api/vale-salida/[id]/reverse/route.ts": {
+    "file_ctx": [
+     "service"
+    ],
+    "receivers": {
+     "admin": [
+      "service"
+     ]
+    },
+    "roles": [
+     "service"
+    ]
+   }
+  },
+  "roles": [
+   "service"
+  ]
+ },
+ "save_product_cost_sheet": {
+  "files": {
+   "src/app/api/product-cost-sheets/auto-generate/route.ts": {
+    "file_ctx": [
+     "service"
+    ],
+    "receivers": {
+     "admin": [
+      "service"
+     ]
+    },
+    "roles": [
+     "service"
+    ]
+   }
+  },
+  "roles": [
+   "service"
+  ]
+ },
+ "set_config": {
+  "files": {
+   "src/lib/rls-middleware.ts": {
+    "file_ctx": [
+     "service"
+    ],
+    "receivers": {
+     "admin": [
+      "service"
+     ]
+    },
+    "roles": [
+     "service"
+    ]
+   }
+  },
+  "roles": [
+   "service"
+  ]
+ },
+ "set_purchase_order_status": {
+  "files": {
+   "src/app/api/purchase-orders/[id]/route.ts": {
+    "file_ctx": [
+     "session"
+    ],
+    "receivers": {
+     "supabase": [
+      "browser"
+     ]
+    },
+    "roles": [
+     "browser",
+     "session"
+    ]
+   }
+  },
+  "roles": [
+   "browser",
+   "session"
+  ]
+ },
+ "set_received_service_status": {
+  "files": {
+   "src/app/api/received-services/route.ts": {
+    "file_ctx": [
+     "service"
+    ],
+    "receivers": {
+     "admin": [
+      "indirect"
+     ]
+    },
+    "roles": [
+     "indirect",
+     "service"
+    ]
+   }
+  },
+  "roles": [
+   "indirect",
+   "service"
+  ]
+ },
+ "soft_delete_store": {
+  "files": {
+   "src/app/api/stores/bulk/route.ts": {
+    "file_ctx": [
+     "service"
+    ],
+    "receivers": {
+     "admin": [
+      "indirect"
+     ]
+    },
+    "roles": [
+     "indirect",
+     "service"
+    ]
+   },
+   "src/app/api/stores/route.ts": {
+    "file_ctx": [
+     "service"
+    ],
+    "receivers": {
+     "admin": [
+      "service"
+     ]
+    },
+    "roles": [
+     "service"
+    ]
+   }
+  },
+  "roles": [
+   "indirect",
+   "service"
+  ]
+ },
+ "update_reception_items": {
+  "files": {
+   "src/app/api/inventory/receptions/[id]/route.ts": {
+    "file_ctx": [
+     "session"
+    ],
+    "receivers": {
+     "supabase": [
+      "browser"
+     ]
+    },
+    "roles": [
+     "browser",
+     "session"
+    ]
+   }
+  },
+  "roles": [
+   "browser",
+   "session"
+  ]
+ },
+ "update_transaction_taxes": {
+  "files": {
+   "src/components/views/terminal/views/sales/TransactionDetailsModal.tsx": {
+    "file_ctx": [
+     "browser"
+    ],
+    "receivers": {
+     "supabase": [
+      "browser"
+     ]
+    },
+    "roles": [
+     "browser"
+    ]
+   }
+  },
+  "roles": [
+   "browser"
+  ]
+ },
+ "upsert_manual_exchange_rate_with_audit": {
+  "files": {
+   "src/app/api/exchange-rates/manual/route.ts": {
+    "file_ctx": [
+     "service"
+    ],
+    "receivers": {
+     "admin": [
+      "indirect"
+     ]
+    },
+    "roles": [
+     "indirect",
+     "service"
+    ]
+   }
+  },
+  "roles": [
+   "indirect",
+   "service"
+  ]
+ },
+ "upsert_usage_aggregate": {
+  "files": {
+   "src/lib/usage-tracker.ts": {
+    "file_ctx": [
+     "service"
+    ],
+    "receivers": {
+     "supabaseAdmin": [
+      "indirect"
+     ]
+    },
+    "roles": [
+     "indirect",
+     "service"
+    ]
+   }
+  },
+  "roles": [
+   "indirect",
+   "service"
+  ]
+ },
+ "validate_store_can_be_modified": {
+  "files": {
+   "src/app/api/stores/bulk/preview/route.ts": {
+    "file_ctx": [
+     "service"
+    ],
+    "receivers": {
+     "supabase": [
+      "browser"
+     ]
+    },
+    "roles": [
+     "browser",
+     "service"
+    ]
+   }
+  },
+  "roles": [
+   "browser",
+   "service"
+  ]
+ },
+ "void_closed_production_order": {
+  "files": {
+   "src/app/api/production-orders/[id]/void/route.ts": {
+    "file_ctx": [
+     "session"
+    ],
+    "receivers": {
+     "supabase": [
+      "browser"
+     ]
+    },
+    "roles": [
+     "browser",
+     "session"
+    ]
+   }
+  },
+  "roles": [
+   "browser",
+   "session"
+  ]
+ },
+ "void_inventory_adjustment": {
+  "files": {
+   "src/components/views/terminal/views/inventory/InventoryAdjustmentsView.tsx": {
+    "file_ctx": [
+     "browser"
+    ],
+    "receivers": {
+     "supabase": [
+      "browser"
+     ]
+    },
+    "roles": [
+     "browser"
+    ]
+   }
+  },
+  "roles": [
+   "browser"
+  ]
+ },
+ "void_pending_reception": {
+  "files": {
+   "src/hooks/api/useReceptions.ts": {
+    "file_ctx": [
+     "browser"
+    ],
+    "receivers": {
+     "supabase": [
+      "browser"
+     ]
+    },
+    "roles": [
+     "browser"
+    ]
+   }
+  },
+  "roles": [
+   "browser"
+  ]
+ },
+ "void_received_service_with_reversal": {
+  "files": {
+   "src/app/api/received-services/route.ts": {
+    "file_ctx": [
+     "service"
+    ],
+    "receivers": {
+     "admin": [
+      "indirect"
+     ]
+    },
+    "roles": [
+     "indirect",
+     "service"
+    ]
+   }
+  },
+  "roles": [
+   "indirect",
+   "service"
+  ]
+ },
+ "void_transaction": {
+  "files": {
+   "src/hooks/api/useDocumentActions.ts": {
+    "file_ctx": [
+     "browser"
+    ],
+    "receivers": {
+     "supabase": [
+      "browser"
+     ]
+    },
+    "roles": [
+     "browser"
+    ]
+   }
+  },
+  "roles": [
+   "browser"
+  ]
+ },
+ "withdraw_production_item": {
+  "files": {
+   "src/app/api/production-orders/[id]/withdraw/route.ts": {
+    "file_ctx": [
+     "session"
+    ],
+    "receivers": {
+     "supabase": [
+      "browser"
+     ]
+    },
+    "roles": [
+     "browser",
+     "session"
+    ]
+   }
+  },
+  "roles": [
+   "browser",
+   "session"
+  ]
+ }
+}

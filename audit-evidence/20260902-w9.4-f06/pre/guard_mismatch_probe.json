@@ -1,0 +1,1 @@
+[{"oid":138783,"args":"p_receipt_id uuid","owner":"postgres","prosecdef":true,"pub":true,"anon":true,"auth":true,"svc":true,"proacl":"{=X/postgres,postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}"}]

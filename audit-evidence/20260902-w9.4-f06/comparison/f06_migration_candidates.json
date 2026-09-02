@@ -1,0 +1,6529 @@
+[
+ {
+  "oid": 136803,
+  "signature": "public.apply_physical_count(p_count_id uuid, p_user_id uuid, p_apply_zero_diffs boolean)",
+  "name": "apply_physical_count",
+  "set": "R3_C4_revoke",
+  "class": "C4",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [],
+   "trigger": false,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": true,
+   "sensitive": [],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 136851,
+  "signature": "public.approve_transfer(p_transfer_id uuid, p_user_id uuid)",
+  "name": "approve_transfer",
+  "set": "R3_C4_revoke",
+  "class": "C4",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [],
+   "trigger": false,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": true,
+   "sensitive": [],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 38098,
+  "signature": "public.audit_store_access_changes()",
+  "name": "audit_store_access_changes",
+  "set": "R3_C4_revoke",
+  "class": "C4",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [],
+   "trigger": false,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": true,
+   "sensitive": [
+    "audit_logs"
+   ],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 142629,
+  "signature": "public.bulk_update_products(_products jsonb)",
+  "name": "bulk_update_products",
+  "set": "R3_C4_revoke",
+  "class": "C4",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "-",
+   "anon",
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "-",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "anon",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [],
+   "trigger": false,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": true,
+   "sensitive": [],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 70047,
+  "signature": "public.can_create_user_with_role(p_creator_id uuid, p_role_name text)",
+  "name": "can_create_user_with_role",
+  "set": "R3_C4_revoke",
+  "class": "C4",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [],
+   "trigger": false,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": false,
+   "sensitive": [],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 28123,
+  "signature": "public.can_void_receipt(p_receipt_id uuid)",
+  "name": "can_void_receipt",
+  "set": "R3_C4_revoke",
+  "class": "C4",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [],
+   "trigger": false,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": false,
+   "sensitive": [],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 34760,
+  "signature": "public.cancel_reception(p_reception_id uuid)",
+  "name": "cancel_reception",
+  "set": "R3_C4_revoke",
+  "class": "C4",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [],
+   "trigger": false,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": true,
+   "sensitive": [],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 138145,
+  "signature": "public.check_tenant_store_quota(p_tenant_id uuid, p_plan plan_t)",
+  "name": "check_tenant_store_quota",
+  "set": "R3_C4_revoke",
+  "class": "C4",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "-",
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "-",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [],
+   "trigger": false,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": false,
+   "sensitive": [],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 21756,
+  "signature": "public.cleanup_expired_idempotency_keys()",
+  "name": "cleanup_expired_idempotency_keys",
+  "set": "R3_C4_revoke",
+  "class": "C4",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [],
+   "trigger": false,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": true,
+   "sensitive": [
+    "idempotency_keys"
+   ],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 138627,
+  "signature": "public.close_service_order_as_sale(p_order_id uuid, p_store_id uuid, p_seller_id uuid, p_payment_method text, p_currency text, p_exchange_rate numeric, p_user_id uuid)",
+  "name": "close_service_order_as_sale",
+  "set": "R3_C4_revoke",
+  "class": "C4",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "-",
+   "anon",
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "-",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "anon",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [],
+   "trigger": false,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": true,
+   "sensitive": [
+    "audit_logs"
+   ],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 136719,
+  "signature": "public.compensate_inventory_error(p_store_id uuid, p_original_movement_id uuid, p_reason text, p_user_id uuid)",
+  "name": "compensate_inventory_error",
+  "set": "R3_C4_revoke",
+  "class": "C4",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [],
+   "trigger": false,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": false,
+   "sensitive": [],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 136801,
+  "signature": "public.create_physical_count(p_store_id uuid, p_user_id uuid, p_notes text)",
+  "name": "create_physical_count",
+  "set": "R3_C4_revoke",
+  "class": "C4",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [],
+   "trigger": false,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": true,
+   "sensitive": [],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 131395,
+  "signature": "public.deduct_stock(p_store_id uuid, p_product_id uuid, p_quantity numeric)",
+  "name": "deduct_stock",
+  "set": "R3_C4_revoke",
+  "class": "C4",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [],
+   "trigger": false,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": false,
+   "sensitive": [],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 136259,
+  "signature": "public.ensure_fiscal_period(p_store_id uuid, p_year integer, p_month integer)",
+  "name": "ensure_fiscal_period",
+  "set": "R3_C4_revoke",
+  "class": "C4",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [],
+   "trigger": false,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": true,
+   "sensitive": [],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 131041,
+  "signature": "public.fn_log_system_health(p_payload jsonb)",
+  "name": "fn_log_system_health",
+  "set": "R3_C4_revoke",
+  "class": "C4",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [],
+   "trigger": false,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": true,
+   "sensitive": [],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 26950,
+  "signature": "public.fn_process_receipt(p_items jsonb, p_user_id uuid, p_reference text)",
+  "name": "fn_process_receipt",
+  "set": "R3_C4_revoke",
+  "class": "C4",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [],
+   "trigger": false,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": true,
+   "sensitive": [],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 130964,
+  "signature": "public.fn_process_receipt(p_items jsonb, p_user_id uuid, p_store_id uuid, p_reference text)",
+  "name": "fn_process_receipt",
+  "set": "R3_C4_revoke",
+  "class": "C4",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [],
+   "trigger": false,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": true,
+   "sensitive": [],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 26951,
+  "signature": "public.fn_process_sale(p_items jsonb, p_cashier_id uuid, p_payment_method text)",
+  "name": "fn_process_sale",
+  "set": "R3_C4_revoke",
+  "class": "C4",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [],
+   "trigger": false,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": true,
+   "sensitive": [
+    "audit_logs"
+   ],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 26952,
+  "signature": "public.fn_void_receipt(p_receipt_id uuid, p_user_id uuid)",
+  "name": "fn_void_receipt",
+  "set": "R3_C4_revoke",
+  "class": "C4",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [],
+   "trigger": false,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": true,
+   "sensitive": [
+    "audit_logs"
+   ],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 137574,
+  "signature": "public.generate_confirmation_token(p_session_id uuid)",
+  "name": "generate_confirmation_token",
+  "set": "R3_C4_revoke",
+  "class": "C4",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [],
+   "trigger": false,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": true,
+   "sensitive": [
+    "restore_sessions"
+   ],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 20172,
+  "signature": "public.generate_inventory_snapshot(p_store_id uuid)",
+  "name": "generate_inventory_snapshot",
+  "set": "R3_C4_revoke",
+  "class": "C4",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [],
+   "trigger": false,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": true,
+   "sensitive": [
+    "inventory_snapshots"
+   ],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 131405,
+  "signature": "public.get_ai_api_key(p_user_id uuid, p_provider text)",
+  "name": "get_ai_api_key",
+  "set": "R3_C4_revoke",
+  "class": "C4",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [],
+   "trigger": false,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": false,
+   "sensitive": [],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 28149,
+  "signature": "public.get_inventory_report(p_from_date timestamp with time zone, p_to_date timestamp with time zone)",
+  "name": "get_inventory_report",
+  "set": "R3_C4_revoke",
+  "class": "C4",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [],
+   "trigger": false,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": false,
+   "sensitive": [],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 28171,
+  "signature": "public.get_inventory_report(p_store_id uuid, p_from_date timestamp with time zone, p_to_date timestamp with time zone)",
+  "name": "get_inventory_report",
+  "set": "R3_C4_revoke",
+  "class": "C4",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [],
+   "trigger": false,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": false,
+   "sensitive": [],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 28152,
+  "signature": "public.get_inventory_with_costs(p_store_id uuid)",
+  "name": "get_inventory_with_costs",
+  "set": "R3_C4_revoke",
+  "class": "C4",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [],
+   "trigger": false,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": false,
+   "sensitive": [],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 23014,
+  "signature": "public.get_my_sales(p_search_query text, p_status text, p_date_from timestamp with time zone, p_date_to timestamp with time zone, p_min_amount numeric, p_max_amount numeric, p_sort_column text, p_sort_direction text, p_limit integer, p_offset integer)",
+  "name": "get_my_sales",
+  "set": "R3_C4_revoke",
+  "class": "C4",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [],
+   "trigger": false,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": false,
+   "sensitive": [],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 28159,
+  "signature": "public.get_my_sales(p_search_query text, p_status text, p_payment_method text, p_date_from timestamp with time zone, p_date_to timestamp with time zone, p_min_amount numeric, p_max_amount numeric, p_sort_column text, p_sort_direction text, p_limit integer, p_offset integer)",
+  "name": "get_my_sales",
+  "set": "R3_C4_revoke",
+  "class": "C4",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [],
+   "trigger": false,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": false,
+   "sensitive": [],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 28160,
+  "signature": "public.get_my_sales_summary(p_period text)",
+  "name": "get_my_sales_summary",
+  "set": "R3_C4_revoke",
+  "class": "C4",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [],
+   "trigger": false,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": false,
+   "sensitive": [],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 132041,
+  "signature": "public.get_or_create_product_cost_sheet(p_product_id uuid, p_store_id uuid, p_template_id text, p_modalidad text, p_pdf_format text)",
+  "name": "get_or_create_product_cost_sheet",
+  "set": "R3_C4_revoke",
+  "class": "C4",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [],
+   "trigger": false,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": false,
+   "sensitive": [],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 28163,
+  "signature": "public.get_product_stock_ledger(p_product_id uuid, p_store_id uuid)",
+  "name": "get_product_stock_ledger",
+  "set": "R3_C4_revoke",
+  "class": "C4",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [],
+   "trigger": false,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": false,
+   "sensitive": [],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 24207,
+  "signature": "public.get_product_variants_counts()",
+  "name": "get_product_variants_counts",
+  "set": "R3_C4_revoke",
+  "class": "C4",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [],
+   "trigger": false,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": false,
+   "sensitive": [],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 59842,
+  "signature": "public.get_transactions_with_profit(p_store_id uuid, p_search_term text, p_date_from timestamp without time zone, p_date_to timestamp without time zone, p_limit integer)",
+  "name": "get_transactions_with_profit",
+  "set": "R3_C4_revoke",
+  "class": "C4",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [],
+   "trigger": false,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": false,
+   "sensitive": [],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 132940,
+  "signature": "public.get_usage_forecast()",
+  "name": "get_usage_forecast",
+  "set": "R3_C4_revoke",
+  "class": "C4",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [],
+   "trigger": false,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": false,
+   "sensitive": [],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 21751,
+  "signature": "public.get_user_role()",
+  "name": "get_user_role",
+  "set": "R3_C4_revoke",
+  "class": "C4",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [],
+   "trigger": false,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": false,
+   "sensitive": [],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 76874,
+  "signature": "public.is_admin_check(p_user_id uuid)",
+  "name": "is_admin_check",
+  "set": "R3_C4_revoke",
+  "class": "C4",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [],
+   "trigger": false,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": false,
+   "sensitive": [],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 47064,
+  "signature": "public.is_manager_of_store(p_store_id uuid)",
+  "name": "is_manager_of_store",
+  "set": "R3_C4_revoke",
+  "class": "C4",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [],
+   "trigger": false,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": false,
+   "sensitive": [],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 75761,
+  "signature": "public.is_role_not_changed(p_user_id uuid, p_new_role user_role, p_new_role_id uuid)",
+  "name": "is_role_not_changed",
+  "set": "R3_C4_revoke",
+  "class": "C4",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [],
+   "trigger": false,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": false,
+   "sensitive": [],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 53941,
+  "signature": "public.is_user_creator(p_target_user_id uuid)",
+  "name": "is_user_creator",
+  "set": "R3_C4_revoke",
+  "class": "C4",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [],
+   "trigger": false,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": false,
+   "sensitive": [],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 138598,
+  "signature": "public.link_receipts_to_service(p_service_id uuid, p_receipt_ids jsonb, p_user_id uuid)",
+  "name": "link_receipts_to_service",
+  "set": "R3_C4_revoke",
+  "class": "C4",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "-",
+   "anon",
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "-",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "anon",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [],
+   "trigger": false,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": true,
+   "sensitive": [
+    "audit_logs"
+   ],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 88135,
+  "signature": "public.log_audit_event(p_action text, p_payload jsonb, p_store_id uuid)",
+  "name": "log_audit_event",
+  "set": "R3_C4_revoke",
+  "class": "C4",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [],
+   "trigger": false,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": true,
+   "sensitive": [
+    "audit_events"
+   ],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 38673,
+  "signature": "public.managed_create_store(p_name text, p_address text)",
+  "name": "managed_create_store",
+  "set": "R3_C4_revoke",
+  "class": "C4",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [],
+   "trigger": false,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": true,
+   "sensitive": [
+    "stores"
+   ],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 88184,
+  "signature": "public.managed_create_user(p_max_users integer, p_max_stores integer, p_role text, p_full_name text, p_email text, p_creator_id uuid, p_target_user_id uuid, p_store_id uuid, p_memberships jsonb)",
+  "name": "managed_create_user",
+  "set": "R3_C4_revoke",
+  "class": "C4",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [],
+   "trigger": false,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": true,
+   "sensitive": [
+    "profiles",
+    "user_store_memberships"
+   ],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 79083,
+  "signature": "public.managed_delete_user(p_user_id uuid)",
+  "name": "managed_delete_user",
+  "set": "R3_C4_revoke",
+  "class": "C4",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [],
+   "trigger": false,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": true,
+   "sensitive": [
+    "profiles",
+    "user_store_memberships"
+   ],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 136485,
+  "signature": "public.mark_expired_lots(p_store_id uuid)",
+  "name": "mark_expired_lots",
+  "set": "R3_C4_revoke",
+  "class": "C4",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [],
+   "trigger": false,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": true,
+   "sensitive": [],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 132504,
+  "signature": "public.process_stock_adjustment(p_store_id uuid, p_product_id uuid, p_quantity_delta numeric, p_reason text, p_user_id uuid, p_operation_date timestamp with time zone)",
+  "name": "process_stock_adjustment",
+  "set": "R3_C4_revoke",
+  "class": "C4",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [],
+   "trigger": false,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": false,
+   "sensitive": [],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 137078,
+  "signature": "public.reconcile_stock(p_store_id uuid, p_fix boolean, p_user_id uuid)",
+  "name": "reconcile_stock",
+  "set": "R3_C4_revoke",
+  "class": "C4",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [],
+   "trigger": false,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": true,
+   "sensitive": [
+    "audit_logs"
+   ],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 136802,
+  "signature": "public.record_counted_quantity(p_count_id uuid, p_product_id uuid, p_counted_quantity numeric, p_user_id uuid, p_notes text)",
+  "name": "record_counted_quantity",
+  "set": "R3_C4_revoke",
+  "class": "C4",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [],
+   "trigger": false,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": true,
+   "sensitive": [],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 21401,
+  "signature": "public.record_sale_movement(p_store_id uuid, p_product_id uuid, p_variant_id uuid, p_quantity integer, p_reference text)",
+  "name": "record_sale_movement",
+  "set": "R3_C4_revoke",
+  "class": "C4",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [],
+   "trigger": false,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": false,
+   "sensitive": [],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 136852,
+  "signature": "public.reject_transfer(p_transfer_id uuid, p_reason text, p_user_id uuid)",
+  "name": "reject_transfer",
+  "set": "R3_C4_revoke",
+  "class": "C4",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [],
+   "trigger": false,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": true,
+   "sensitive": [],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 137974,
+  "signature": "public.release_expired_reservations()",
+  "name": "release_expired_reservations",
+  "set": "R3_C4_revoke",
+  "class": "C4",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "-",
+   "anon",
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "-",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "anon",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [],
+   "trigger": false,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": true,
+   "sensitive": [
+    "audit_logs"
+   ],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 131406,
+  "signature": "public.save_ai_api_key(p_provider text, p_api_key text, p_label text)",
+  "name": "save_ai_api_key",
+  "set": "R3_C4_revoke",
+  "class": "C4",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [],
+   "trigger": false,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": true,
+   "sensitive": [
+    "ai_api_keys"
+   ],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 137075,
+  "signature": "public.set_transfer_approval_rule(p_tenant_id uuid, p_store_id uuid, p_threshold_amount numeric, p_threshold_quantity numeric, p_approver_roles text[], p_is_active boolean, p_user_id uuid)",
+  "name": "set_transfer_approval_rule",
+  "set": "R3_C4_revoke",
+  "class": "C4",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [],
+   "trigger": false,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": true,
+   "sensitive": [
+    "audit_logs"
+   ],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 131719,
+  "signature": "public.sync_inventory_from_products(p_store_id uuid)",
+  "name": "sync_inventory_from_products",
+  "set": "R3_C4_revoke",
+  "class": "C4",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [],
+   "trigger": false,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": true,
+   "sensitive": [],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 136850,
+  "signature": "public.transfer_requires_approval(p_origin_store_id uuid, p_destination_store_id uuid, p_items jsonb)",
+  "name": "transfer_requires_approval",
+  "set": "R3_C4_revoke",
+  "class": "C4",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [],
+   "trigger": false,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": false,
+   "sensitive": [],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 138785,
+  "signature": "public.update_receipt_item_tasa(p_receipt_item_id uuid, p_new_tasa_cambio_recepcion numeric, p_new_moneda_recepcion text, p_motivo text, p_user_id uuid)",
+  "name": "update_receipt_item_tasa",
+  "set": "R3_C4_revoke",
+  "class": "C4",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "-",
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "-",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [],
+   "trigger": false,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": true,
+   "sensitive": [
+    "audit_logs",
+    "receipt_tasa_audit"
+   ],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 131996,
+  "signature": "public.upsert_store_cost_template(p_store_id uuid, p_template_id text, p_template_data jsonb, p_modalidad text, p_pdf_format text, p_created_by uuid)",
+  "name": "upsert_store_cost_template",
+  "set": "R3_C4_revoke",
+  "class": "C4",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [],
+   "trigger": false,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": true,
+   "sensitive": [
+    "store_cost_templates"
+   ],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 137560,
+  "signature": "public.validate_backup_registry_drift()",
+  "name": "validate_backup_registry_drift",
+  "set": "R3_C4_revoke",
+  "class": "C4",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [],
+   "trigger": false,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": false,
+   "sensitive": [],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 138148,
+  "signature": "public.validate_tenant_access(p_user_id uuid, p_store_id uuid)",
+  "name": "validate_tenant_access",
+  "set": "R3_C4_revoke",
+  "class": "C4",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "-",
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "-",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [],
+   "trigger": false,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": false,
+   "sensitive": [],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 132487,
+  "signature": "public.validate_transfer_operation_date(p_new_date timestamp with time zone, p_origin_store_id uuid, p_destination_store_id uuid)",
+  "name": "validate_transfer_operation_date",
+  "set": "R3_C4_revoke",
+  "class": "C4",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [],
+   "trigger": false,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": false,
+   "sensitive": [],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 88196,
+  "signature": "public.verify_audit_chain()",
+  "name": "verify_audit_chain",
+  "set": "R3_C4_revoke",
+  "class": "C4",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [],
+   "trigger": false,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": false,
+   "sensitive": [],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 137780,
+  "signature": "public.audit_backup_restore_protected_change()",
+  "name": "audit_backup_restore_protected_change",
+  "set": "R4_C1B_revoke",
+  "class": "C1B",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role (consumidor BD interno/trigger)",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [],
+   "trigger": true,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": true,
+   "sensitive": [
+    "audit_logs"
+   ],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 138218,
+  "signature": "public.audit_cash_closures_changes()",
+  "name": "audit_cash_closures_changes",
+  "set": "R4_C1B_revoke",
+  "class": "C1B",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "-",
+   "anon",
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "-",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "anon",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role (consumidor BD interno/trigger)",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [],
+   "trigger": true,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": true,
+   "sensitive": [
+    "audit_logs"
+   ],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 138220,
+  "signature": "public.audit_commission_payments_changes()",
+  "name": "audit_commission_payments_changes",
+  "set": "R4_C1B_revoke",
+  "class": "C1B",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "-",
+   "anon",
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "-",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "anon",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role (consumidor BD interno/trigger)",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [],
+   "trigger": true,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": true,
+   "sensitive": [
+    "audit_logs"
+   ],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 138222,
+  "signature": "public.audit_fiscal_closings_changes()",
+  "name": "audit_fiscal_closings_changes",
+  "set": "R4_C1B_revoke",
+  "class": "C1B",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "-",
+   "anon",
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "-",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "anon",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role (consumidor BD interno/trigger)",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [],
+   "trigger": true,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": true,
+   "sensitive": [
+    "audit_logs"
+   ],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 138224,
+  "signature": "public.audit_payment_transactions_changes()",
+  "name": "audit_payment_transactions_changes",
+  "set": "R4_C1B_revoke",
+  "class": "C1B",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "-",
+   "anon",
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "-",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "anon",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role (consumidor BD interno/trigger)",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [],
+   "trigger": true,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": true,
+   "sensitive": [
+    "audit_logs"
+   ],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 52507,
+  "signature": "public.audit_product_changes()",
+  "name": "audit_product_changes",
+  "set": "R4_C1B_revoke",
+  "class": "C1B",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role (consumidor BD interno/trigger)",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [],
+   "trigger": true,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": true,
+   "sensitive": [
+    "audit_logs"
+   ],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 38096,
+  "signature": "public.audit_profile_changes()",
+  "name": "audit_profile_changes",
+  "set": "R4_C1B_revoke",
+  "class": "C1B",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role (consumidor BD interno/trigger)",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [],
+   "trigger": true,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": true,
+   "sensitive": [
+    "audit_logs"
+   ],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 70045,
+  "signature": "public.audit_role_changes()",
+  "name": "audit_role_changes",
+  "set": "R4_C1B_revoke",
+  "class": "C1B",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role (consumidor BD interno/trigger)",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [],
+   "trigger": true,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": true,
+   "sensitive": [
+    "user_audit_log"
+   ],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 52509,
+  "signature": "public.audit_store_changes()",
+  "name": "audit_store_changes",
+  "set": "R4_C1B_revoke",
+  "class": "C1B",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role (consumidor BD interno/trigger)",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [],
+   "trigger": true,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": true,
+   "sensitive": [
+    "audit_logs"
+   ],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 136257,
+  "signature": "public.auto_kardex_on_stock_movement()",
+  "name": "auto_kardex_on_stock_movement",
+  "set": "R4_C1B_revoke",
+  "class": "C1B",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role (consumidor BD interno/trigger)",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [],
+   "trigger": true,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": true,
+   "sensitive": [],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 138783,
+  "signature": "public.calculate_receipt_total_cup(p_receipt_id uuid)",
+  "name": "calculate_receipt_total_cup",
+  "set": "R4_C1B_revoke",
+  "class": "C1B",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "-",
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "-",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role (consumidor BD interno/trigger)",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [
+    "confirm_pending_reception",
+    "update_receipt_item_tasa",
+    "update_reception_items"
+   ],
+   "trigger": false,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": false,
+   "sensitive": [],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 79082,
+  "signature": "public.can_safely_delete_user(p_user_id uuid)",
+  "name": "can_safely_delete_user",
+  "set": "R4_C1B_revoke",
+  "class": "C1B",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role (consumidor BD interno/trigger)",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [
+    "managed_delete_user"
+   ],
+   "trigger": false,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": false,
+   "sensitive": [],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 137570,
+  "signature": "public.create_pre_restore_snapshot(p_store_id uuid)",
+  "name": "create_pre_restore_snapshot",
+  "set": "R4_C1B_revoke",
+  "class": "C1B",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role (consumidor BD interno/trigger)",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [
+    "restore_store_backup"
+   ],
+   "trigger": false,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": false,
+   "sensitive": [],
+   "dynamic_sql": true,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 142220,
+  "signature": "public.enforce_ledger_append_only()",
+  "name": "enforce_ledger_append_only",
+  "set": "R4_C1B_revoke",
+  "class": "C1B",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "-",
+   "anon",
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "-",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "anon",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role (consumidor BD interno/trigger)",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [],
+   "trigger": true,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": false,
+   "sensitive": [],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 142600,
+  "signature": "public.ensure_product_barcode()",
+  "name": "ensure_product_barcode",
+  "set": "R4_C1B_revoke",
+  "class": "C1B",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "-",
+   "anon",
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "-",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "anon",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role (consumidor BD interno/trigger)",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [],
+   "trigger": true,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": false,
+   "sensitive": [],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 26677,
+  "signature": "public.fn_sync_inventory_on_movement()",
+  "name": "fn_sync_inventory_on_movement",
+  "set": "R4_C1B_revoke",
+  "class": "C1B",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role (consumidor BD interno/trigger)",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [],
+   "trigger": true,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": true,
+   "sensitive": [],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 142598,
+  "signature": "public.generate_internal_barcode()",
+  "name": "generate_internal_barcode",
+  "set": "R4_C1B_revoke",
+  "class": "C1B",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "-",
+   "anon",
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "-",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "anon",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role (consumidor BD interno/trigger)",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [
+    "ensure_product_barcode"
+   ],
+   "trigger": false,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": false,
+   "sensitive": [],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 137493,
+  "signature": "public.get_available_stock(p_store_id uuid, p_product_id uuid)",
+  "name": "get_available_stock",
+  "set": "R4_C1B_revoke",
+  "class": "C1B",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role (consumidor BD interno/trigger)",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [
+    "confirm_transfer"
+   ],
+   "trigger": false,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": false,
+   "sensitive": [],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 142421,
+  "signature": "public.has_management_access_as(p_user_id uuid, p_store_id uuid)",
+  "name": "has_management_access_as",
+  "set": "R4_C1B_revoke",
+  "class": "C1B",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "-",
+   "anon",
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "-",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "anon",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role (consumidor BD interno/trigger)",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [
+    "reset_store_data"
+   ],
+   "trigger": false,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": false,
+   "sensitive": [],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 136268,
+  "signature": "public.has_store_access_as(p_user_id uuid, p_store_id uuid)",
+  "name": "has_store_access_as",
+  "set": "R4_C1B_revoke",
+  "class": "C1B",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role (consumidor BD interno/trigger)",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [
+    "adjust_sale_payment",
+    "apply_physical_count",
+    "approve_transfer",
+    "auto_match_bank_items",
+    "calculate_abc",
+    "cancel_transfer",
+    "close_cash_shift",
+    "close_fiscal_period",
+    "close_production_order_v2",
+    "close_service_order_as_sale",
+    "compensate_inventory_error",
+    "confirm_inventory_adjustment",
+    "confirm_pending_reception",
+    "confirm_transfer",
+    "create_devolution",
+    "create_devolution_v2",
+    "create_physical_count",
+    "create_production_order_v2",
+    "create_quotation",
+    "create_sale",
+    "create_sale_v2",
+    "create_transfer",
+    "create_vale_salida",
+    "duplicate_inventory_adjustment",
+    "duplicate_inventory_adjustment_v2",
+    "get_reorder_suggestions",
+    "get_transferable_stores",
+    "perform_inventory_adjustment",
+    "receive_production_output",
+    "receive_to_warehouse",
+    "record_counted_quantity",
+    "register_reception",
+    "reject_transfer",
+    "reset_store_data",
+    "reverse_adjustment",
+    "reverse_devolution",
+    "reverse_production_order",
+    "reverse_receipt",
+    "reverse_transaction",
+    "reverse_transaction_v2",
+    "reverse_transfer",
+    "reverse_vale_salida",
+    "set_transfer_approval_rule",
+    "update_receipt_item_tasa",
+    "update_reception_items",
+    "void_closed_production_order",
+    "void_inventory_adjustment",
+    "void_pending_reception",
+    "void_transaction",
+    "withdraw_production_item_deprecated_6arg",
+    "withdraw_production_item_deprecated_9arg",
+    "withdraw_production_item_v3"
+   ],
+   "trigger": false,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": false,
+   "sensitive": [],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 47076,
+  "signature": "public.is_store_manager(p_store_id uuid)",
+  "name": "is_store_manager",
+  "set": "R4_C1B_revoke",
+  "class": "C1B",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role (consumidor BD interno/trigger)",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [
+    "manage_user_memberships"
+   ],
+   "trigger": false,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": false,
+   "sensitive": [],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 28126,
+  "signature": "public.log_transaction_changes()",
+  "name": "log_transaction_changes",
+  "set": "R4_C1B_revoke",
+  "class": "C1B",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role (consumidor BD interno/trigger)",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [],
+   "trigger": true,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": true,
+   "sensitive": [
+    "audit_logs"
+   ],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 70049,
+  "signature": "public.on_auth_user_created()",
+  "name": "on_auth_user_created",
+  "set": "R4_C1B_revoke",
+  "class": "C1B",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role (consumidor BD interno/trigger)",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [],
+   "trigger": false,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": true,
+   "sensitive": [
+    "profiles",
+    "user_audit_log"
+   ],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 119653,
+  "signature": "public.on_pick3_profile_initial_bankroll()",
+  "name": "on_pick3_profile_initial_bankroll",
+  "set": "R4_C1B_revoke",
+  "class": "C1B",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role (consumidor BD interno/trigger)",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [],
+   "trigger": true,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": false,
+   "sensitive": [],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 21754,
+  "signature": "public.prevent_direct_inventory_modification()",
+  "name": "prevent_direct_inventory_modification",
+  "set": "R4_C1B_revoke",
+  "class": "C1B",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role (consumidor BD interno/trigger)",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [],
+   "trigger": true,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": false,
+   "sensitive": [],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 138589,
+  "signature": "public.prevent_received_service_edit()",
+  "name": "prevent_received_service_edit",
+  "set": "R4_C1B_revoke",
+  "class": "C1B",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "-",
+   "anon",
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "-",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "anon",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role (consumidor BD interno/trigger)",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [],
+   "trigger": true,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": false,
+   "sensitive": [],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 138690,
+  "signature": "public.register_idempotency(p_key text, p_operation text, p_record_id uuid, p_param_hash text, p_result jsonb)",
+  "name": "register_idempotency",
+  "set": "R4_C1B_revoke",
+  "class": "C1B",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "-",
+   "anon",
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "-",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "anon",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role (consumidor BD interno/trigger)",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [
+    "create_production_order_v2",
+    "create_vale_salida",
+    "withdraw_production_item_deprecated_6arg",
+    "withdraw_production_item_deprecated_9arg",
+    "withdraw_production_item_v3"
+   ],
+   "trigger": false,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": true,
+   "sensitive": [],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 138210,
+  "signature": "public.reverse_commissions_on_sale_void()",
+  "name": "reverse_commissions_on_sale_void",
+  "set": "R4_C1B_revoke",
+  "class": "C1B",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "-",
+   "anon",
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "-",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "anon",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role (consumidor BD interno/trigger)",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [],
+   "trigger": true,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": true,
+   "sensitive": [
+    "audit_logs"
+   ],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 133149,
+  "signature": "public.snapshot_commission_rule()",
+  "name": "snapshot_commission_rule",
+  "set": "R4_C1B_revoke",
+  "class": "C1B",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role (consumidor BD interno/trigger)",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [],
+   "trigger": true,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": true,
+   "sensitive": [],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 131044,
+  "signature": "public.sync_product_has_movements()",
+  "name": "sync_product_has_movements",
+  "set": "R4_C1B_revoke",
+  "class": "C1B",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role (consumidor BD interno/trigger)",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [],
+   "trigger": true,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": true,
+   "sensitive": [],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 131067,
+  "signature": "public.sync_product_stock()",
+  "name": "sync_product_stock",
+  "set": "R4_C1B_revoke",
+  "class": "C1B",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role (consumidor BD interno/trigger)",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [],
+   "trigger": true,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": true,
+   "sensitive": [],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 133144,
+  "signature": "public.touch_updated_at()",
+  "name": "touch_updated_at",
+  "set": "R4_C1B_revoke",
+  "class": "C1B",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role (consumidor BD interno/trigger)",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [],
+   "trigger": true,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": false,
+   "sensitive": [],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 38664,
+  "signature": "public.validate_active_store()",
+  "name": "validate_active_store",
+  "set": "R4_C1B_revoke",
+  "class": "C1B",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role (consumidor BD interno/trigger)",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [],
+   "trigger": true,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": false,
+   "sensitive": [],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 138292,
+  "signature": "public.validate_operation_date(p_new_date timestamp with time zone, p_store_id uuid)",
+  "name": "validate_operation_date",
+  "set": "R4_C1B_revoke",
+  "class": "C1B",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "-",
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "-",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role (consumidor BD interno/trigger)",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [
+    "create_received_service_v2",
+    "create_sale",
+    "create_sale_v2",
+    "perform_inventory_adjustment",
+    "prevent_received_service_edit",
+    "process_inventory_adjustment",
+    "process_stock_adjustment",
+    "register_reception",
+    "void_pending_reception",
+    "void_received_service_with_reversal"
+   ],
+   "trigger": false,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": false,
+   "sensitive": [],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 137561,
+  "signature": "public.validate_post_restore(p_store_id uuid, p_backup_payload jsonb)",
+  "name": "validate_post_restore",
+  "set": "R4_C1B_revoke",
+  "class": "C1B",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role (consumidor BD interno/trigger)",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [
+    "restore_store_backup"
+   ],
+   "trigger": false,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": false,
+   "sensitive": [],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 137569,
+  "signature": "public.validate_pre_restore_fk_integrity(p_store_id uuid)",
+  "name": "validate_pre_restore_fk_integrity",
+  "set": "R4_C1B_revoke",
+  "class": "C1B",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "authenticated",
+   "costpro_snapshot_restorer",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "costpro_snapshot_restorer",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role (consumidor BD interno/trigger)",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [
+    "restore_store_backup"
+   ],
+   "trigger": false,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": false,
+   "sensitive": [],
+   "dynamic_sql": true,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 142921,
+  "signature": "public.withdraw_production_item_v3(p_item_id uuid, p_qty numeric, p_store_id uuid, p_user_id uuid, p_idempotency_key text, p_reference_id uuid, p_reference_doc text)",
+  "name": "withdraw_production_item_v3",
+  "set": "R4_C1B_revoke",
+  "class": "C1B",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role (consumidor BD interno/trigger)",
+  "consumers": {
+   "src": [],
+   "scripts": [],
+   "db": [
+    "create_vale_salida"
+   ],
+   "trigger": false,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": true,
+   "sensitive": [
+    "audit_logs"
+   ],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 138285,
+  "signature": "public.close_cash_shift(p_closure_id uuid, p_declared_cash numeric, p_declared_vouchers numeric, p_notes text, p_user_id uuid)",
+  "name": "close_cash_shift",
+  "set": "R5_C2_service_proven",
+  "class": "C2",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "-",
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "-",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role (consumidor 100% service)",
+  "consumers": {
+   "src": [
+    "src/app/api/cash-closures/close/route.ts"
+   ],
+   "scripts": [],
+   "db": [],
+   "trigger": false,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": true,
+   "sensitive": [
+    "audit_logs"
+   ],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 138143,
+  "signature": "public.create_store_with_membership(p_name text, p_address text, p_created_by uuid, p_max_stores integer, p_logo_url text, p_reeup text, p_nit text, p_bank_account text, p_phone text, p_email text, p_slug text, p_plantilla text, p_signature_url text, p_stamp_url text, p_latitude double precision, p_longitude double precision, p_tenant_id uuid)",
+  "name": "create_store_with_membership",
+  "set": "R5_C2_service_proven",
+  "class": "C2",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "-",
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "-",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role (consumidor 100% service)",
+  "consumers": {
+   "src": [
+    "src/app/api/stores/route.ts"
+   ],
+   "scripts": [],
+   "db": [],
+   "trigger": false,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": true,
+   "sensitive": [
+    "audit_logs",
+    "profiles",
+    "stores",
+    "user_store_memberships"
+   ],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 142308,
+  "signature": "public.create_vale_salida(p_store_id uuid, p_items jsonb, p_production_order_id uuid, p_notes text, p_idempotency_key text)",
+  "name": "create_vale_salida",
+  "set": "R5_C2_service_proven",
+  "class": "C2",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role (consumidor 100% service)",
+  "consumers": {
+   "src": [
+    "src/app/api/vale-salida/route.ts"
+   ],
+   "scripts": [],
+   "db": [],
+   "trigger": false,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": false,
+   "sensitive": [],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 142325,
+  "signature": "public.create_vale_salida(p_store_id uuid, p_items jsonb, p_production_order_id uuid, p_notes text, p_idempotency_key text, p_user_id uuid)",
+  "name": "create_vale_salida",
+  "set": "R5_C2_service_proven",
+  "class": "C2",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role (consumidor 100% service)",
+  "consumers": {
+   "src": [
+    "src/app/api/vale-salida/route.ts"
+   ],
+   "scripts": [],
+   "db": [],
+   "trigger": false,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": true,
+   "sensitive": [
+    "audit_logs"
+   ],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 138109,
+  "signature": "public.detect_orphan_users()",
+  "name": "detect_orphan_users",
+  "set": "R5_C2_service_proven",
+  "class": "C2",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "-",
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "-",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role (consumidor 100% service)",
+  "consumers": {
+   "src": [
+    "src/app/api/users/orphans/route.ts"
+   ],
+   "scripts": [],
+   "db": [],
+   "trigger": false,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": true,
+   "sensitive": [
+    "orphaned_users_log"
+   ],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 138306,
+  "signature": "public.get_purchases_book(p_store_id uuid, p_year integer, p_month integer)",
+  "name": "get_purchases_book",
+  "set": "R5_C2_service_proven",
+  "class": "C2",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "-",
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "-",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role (consumidor 100% service)",
+  "consumers": {
+   "src": [
+    "src/app/api/fiscal/purchases-book/route.ts"
+   ],
+   "scripts": [],
+   "db": [],
+   "trigger": false,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": false,
+   "sensitive": [],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 138305,
+  "signature": "public.get_sales_book(p_store_id uuid, p_year integer, p_month integer)",
+  "name": "get_sales_book",
+  "set": "R5_C2_service_proven",
+  "class": "C2",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "-",
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "-",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role (consumidor 100% service)",
+  "consumers": {
+   "src": [
+    "src/app/api/fiscal/sales-book/route.ts"
+   ],
+   "scripts": [],
+   "db": [],
+   "trigger": false,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": false,
+   "sensitive": [],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 138307,
+  "signature": "public.get_tax_report(p_store_id uuid, p_year integer, p_month integer)",
+  "name": "get_tax_report",
+  "set": "R5_C2_service_proven",
+  "class": "C2",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "-",
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "-",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role (consumidor 100% service)",
+  "consumers": {
+   "src": [
+    "src/app/api/fiscal/tax-report/route.ts"
+   ],
+   "scripts": [],
+   "db": [],
+   "trigger": false,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": false,
+   "sensitive": [],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 138146,
+  "signature": "public.get_tenant_cash_report(p_tenant_id uuid, p_start_date timestamp with time zone, p_end_date timestamp with time zone)",
+  "name": "get_tenant_cash_report",
+  "set": "R5_C2_service_proven",
+  "class": "C2",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "-",
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "-",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role (consumidor 100% service)",
+  "consumers": {
+   "src": [
+    "src/app/api/tenants/[id]/reports/cash/route.ts"
+   ],
+   "scripts": [],
+   "db": [],
+   "trigger": false,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": false,
+   "sensitive": [],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 138147,
+  "signature": "public.get_tenant_sales_summary(p_tenant_id uuid, p_days integer)",
+  "name": "get_tenant_sales_summary",
+  "set": "R5_C2_service_proven",
+  "class": "C2",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "-",
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "-",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role (consumidor 100% service)",
+  "consumers": {
+   "src": [
+    "src/app/api/tenants/[id]/reports/sales/route.ts"
+   ],
+   "scripts": [],
+   "db": [],
+   "trigger": false,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": false,
+   "sensitive": [],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 138111,
+  "signature": "public.get_user_audit_history(p_user_id uuid, p_limit integer, p_offset integer)",
+  "name": "get_user_audit_history",
+  "set": "R5_C2_service_proven",
+  "class": "C2",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "-",
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "-",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role (consumidor 100% service)",
+  "consumers": {
+   "src": [
+    "src/app/api/users/[id]/audit-history/route.ts"
+   ],
+   "scripts": [],
+   "db": [],
+   "trigger": false,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": false,
+   "sensitive": [],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 138098,
+  "signature": "public.managed_create_user_v2(p_email text, p_full_name text, p_role user_role, p_plan plan_t, p_store_id uuid, p_memberships jsonb, p_max_stores integer, p_max_users integer, p_target_user_id uuid, p_creator_id uuid)",
+  "name": "managed_create_user_v2",
+  "set": "R5_C2_service_proven",
+  "class": "C2",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "-",
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "-",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role (consumidor 100% service)",
+  "consumers": {
+   "src": [
+    "src/app/api/users/managed-create/route.ts"
+   ],
+   "scripts": [],
+   "db": [],
+   "trigger": false,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": true,
+   "sensitive": [
+    "profiles",
+    "user_audit_log",
+    "user_store_memberships"
+   ],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 138105,
+  "signature": "public.managed_reset_password(p_user_id uuid, p_caller_id uuid)",
+  "name": "managed_reset_password",
+  "set": "R5_C2_service_proven",
+  "class": "C2",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "-",
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "-",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role (consumidor 100% service)",
+  "consumers": {
+   "src": [
+    "src/app/api/users/reset-password/route.ts"
+   ],
+   "scripts": [],
+   "db": [],
+   "trigger": false,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": true,
+   "sensitive": [
+    "user_audit_log"
+   ],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 138108,
+  "signature": "public.managed_revoke_membership(p_membership_id uuid, p_caller_id uuid)",
+  "name": "managed_revoke_membership",
+  "set": "R5_C2_service_proven",
+  "class": "C2",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "-",
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "-",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role (consumidor 100% service)",
+  "consumers": {
+   "src": [
+    "src/app/api/users/[id]/memberships/[membershipId]/route.ts"
+   ],
+   "scripts": [],
+   "db": [],
+   "trigger": false,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": true,
+   "sensitive": [
+    "profiles",
+    "user_audit_log",
+    "user_store_memberships"
+   ],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 138106,
+  "signature": "public.managed_soft_delete_user(p_user_id uuid, p_reason text, p_caller_id uuid)",
+  "name": "managed_soft_delete_user",
+  "set": "R5_C2_service_proven",
+  "class": "C2",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "-",
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "-",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role (consumidor 100% service)",
+  "consumers": {
+   "src": [
+    "src/app/api/users/delete/route.ts"
+   ],
+   "scripts": [],
+   "db": [],
+   "trigger": false,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": true,
+   "sensitive": [
+    "profiles",
+    "user_audit_log",
+    "user_store_memberships"
+   ],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 138104,
+  "signature": "public.managed_toggle_user_status(p_user_id uuid, p_is_active boolean, p_caller_id uuid)",
+  "name": "managed_toggle_user_status",
+  "set": "R5_C2_service_proven",
+  "class": "C2",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "-",
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "-",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role (consumidor 100% service)",
+  "consumers": {
+   "src": [
+    "src/app/api/users/toggle-status/route.ts"
+   ],
+   "scripts": [],
+   "db": [],
+   "trigger": false,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": true,
+   "sensitive": [
+    "profiles",
+    "user_audit_log"
+   ],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 138107,
+  "signature": "public.managed_update_membership(p_membership_id uuid, p_role user_role, p_status text, p_caller_id uuid)",
+  "name": "managed_update_membership",
+  "set": "R5_C2_service_proven",
+  "class": "C2",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "-",
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "-",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role (consumidor 100% service)",
+  "consumers": {
+   "src": [
+    "src/app/api/users/[id]/memberships/[membershipId]/route.ts"
+   ],
+   "scripts": [],
+   "db": [],
+   "trigger": false,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": true,
+   "sensitive": [
+    "user_audit_log",
+    "user_store_memberships"
+   ],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 138144,
+  "signature": "public.managed_update_tenant_plan(p_tenant_id uuid, p_plan plan_t, p_subscription_status text, p_caller_id uuid)",
+  "name": "managed_update_tenant_plan",
+  "set": "R5_C2_service_proven",
+  "class": "C2",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "-",
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "-",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role (consumidor 100% service)",
+  "consumers": {
+   "src": [
+    "src/app/api/billing/webhook/route.ts"
+   ],
+   "scripts": [],
+   "db": [],
+   "trigger": false,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": true,
+   "sensitive": [
+    "profiles",
+    "user_audit_log"
+   ],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 138103,
+  "signature": "public.managed_update_user(p_user_id uuid, p_full_name text, p_role user_role, p_role_id uuid, p_is_active boolean, p_max_stores_limit integer, p_max_users_limit integer, p_plan plan_t, p_caller_id uuid)",
+  "name": "managed_update_user",
+  "set": "R5_C2_service_proven",
+  "class": "C2",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "-",
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "-",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role (consumidor 100% service)",
+  "consumers": {
+   "src": [
+    "src/app/api/users/[id]/route.ts"
+   ],
+   "scripts": [],
+   "db": [],
+   "trigger": false,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": true,
+   "sensitive": [
+    "profiles",
+    "user_audit_log"
+   ],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 138110,
+  "signature": "public.reconcile_orphan_user(p_auth_user_id uuid, p_action text, p_reason text, p_caller_id uuid)",
+  "name": "reconcile_orphan_user",
+  "set": "R5_C2_service_proven",
+  "class": "C2",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "-",
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "-",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role (consumidor 100% service)",
+  "consumers": {
+   "src": [
+    "src/app/api/users/[id]/reconcile/route.ts"
+   ],
+   "scripts": [],
+   "db": [],
+   "trigger": false,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": true,
+   "sensitive": [
+    "orphaned_users_log",
+    "profiles",
+    "user_audit_log"
+   ],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 138208,
+  "signature": "public.reopen_cash_shift(p_closure_id uuid, p_reason text, p_user_id uuid)",
+  "name": "reopen_cash_shift",
+  "set": "R5_C2_service_proven",
+  "class": "C2",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "-",
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "-",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role (consumidor 100% service)",
+  "consumers": {
+   "src": [
+    "src/app/api/cash-closures/reopen/route.ts"
+   ],
+   "scripts": [],
+   "db": [],
+   "trigger": false,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": true,
+   "sensitive": [
+    "audit_logs"
+   ],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ },
+ {
+  "oid": 142337,
+  "signature": "public.reverse_vale_salida(p_slip_id uuid, p_reason text, p_user_id uuid)",
+  "name": "reverse_vale_salida",
+  "set": "R5_C2_service_proven",
+  "class": "C2",
+  "owner": "postgres",
+  "uses_default_acl": false,
+  "pre_acl_grantees": [
+   "authenticated",
+   "postgres",
+   "service_role"
+  ],
+  "pre_acl_detail": [
+   {
+    "grantee": "authenticated",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "postgres",
+    "grantor": "postgres",
+    "grantable": false
+   },
+   {
+    "grantee": "service_role",
+    "grantor": "postgres",
+    "grantable": false
+   }
+  ],
+  "post_target": [
+   "postgres",
+   "service_role"
+  ],
+  "reason": "REVOKE PUBLIC/anon/auth + GRANT service_role (consumidor 100% service)",
+  "consumers": {
+   "src": [
+    "src/app/api/vale-salida/[id]/reverse/route.ts"
+   ],
+   "scripts": [],
+   "db": [],
+   "trigger": false,
+   "policies": false,
+   "views": false
+  },
+  "caps_flags": {
+   "mutating": true,
+   "sensitive": [
+    "audit_logs"
+   ],
+   "dynamic_sql": false,
+   "ddl": false
+  }
+ }
+]

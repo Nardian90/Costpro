@@ -1,0 +1,19 @@
+src/app/api/fiscal-close/route.ts:75:  const { data, error } = await supabase.rpc(rpcName, {
+src/app/api/devolutions/route.ts:92:  const { data, error } = await supabase.rpc(rpcName, rpcParams);
+src/app/api/reverse/route.ts:91:  const { data: rpcResult, error: rpcError } = await supabase.rpc(mapping.rpc, rpcParams);
+src/hooks/api/useCatalogProducts.ts:57:  const { data, error } = await supabase.rpc(rpcName, {
+src/hooks/api/useDashboard.ts:34:      const data = await withLogging(rpcName, params, () => supabase.rpc(rpcName, params), 'dashboard');
+src/hooks/api/useDashboard.ts:92:      const data = await withLogging(rpcName, params, () => supabase.rpc(rpcName, params), 'dashboard');
+src/hooks/api/useDashboard.ts:149:      const data = await withLogging(rpcName, params, () => supabase.rpc(rpcName, params), 'dashboard');
+src/hooks/api/useTransactions.ts:32:        const data = await withLogging(rpcName, params, () => supabase.rpc(rpcName, params));
+src/hooks/api/useTransactions.ts:120:      const data = await withLogging<string>(rpcName, params, () => supabase.rpc(rpcName, params));
+src/hooks/api/useUsers.ts:157:      const data = await withLogging(rpcName, params, () => supabase.rpc(rpcName, params));
+src/hooks/api/useProducts.ts:37:        const data = await withLogging(rpcName, params, () => supabase.rpc(rpcName, params));
+src/hooks/api/useProducts.ts:75:        const data = await withLogging(rpcName, params, () => supabase.rpc(rpcName, params));
+src/hooks/api/useProducts.ts:116:      const data = await withLogging(rpcName, params, () => supabase.rpc(rpcName, params));
+src/hooks/api/useProducts.ts:379:        supabase.rpc(rpcName, { p_product_id: productId })
+src/hooks/api/useProducts.ts:398:        supabase.rpc(rpcName, { p_product_id: productId, p_is_active: isActive })
+src/hooks/api/useInventory.ts:38:      const data = await withLogging(rpcName, params, () => supabase.rpc(rpcName, params));
+src/hooks/api/useInventory.ts:77:      const data = await withLogging(rpcName, params, () => supabase.rpc(rpcName, params));
+src/hooks/api/useInventory.ts:122:      const data = await withLogging<string>(rpcName, params, () => supabase.rpc(rpcName, params));
+src/hooks/api/useInventory.ts:157:      const data = await withLogging<any>(rpcName, params, () => supabase.rpc(rpcName, params));

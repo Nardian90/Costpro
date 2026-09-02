@@ -1,0 +1,1 @@
+[{"args":"p_store_id uuid, p_keep_catalog boolean","public_exec":false,"anon_exec":false,"authenticated_exec":false,"service_role_exec":true,"postgres_exec":true},{"args":"target_store_id uuid, p_keep_catalog boolean, p_user_id uuid","public_exec":false,"anon_exec":false,"authenticated_exec":false,"service_role_exec":true,"postgres_exec":true}]

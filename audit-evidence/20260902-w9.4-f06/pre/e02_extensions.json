@@ -1,0 +1,1 @@
+[{"extname":"btree_gist","extversion":"1.7"},{"extname":"pg_stat_statements","extversion":"1.11"},{"extname":"pgcrypto","extversion":"1.3"},{"extname":"plpgsql","extversion":"1.0"},{"extname":"supabase_vault","extversion":"0.3.1"},{"extname":"uuid-ossp","extversion":"1.1"}]

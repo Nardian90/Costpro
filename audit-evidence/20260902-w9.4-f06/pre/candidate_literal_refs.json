@@ -1,0 +1,300 @@
+{
+ "apply_physical_count": [
+  "audit-evidence/20260828/download/auditoria-multitienda/RECOVERY-20260828/72-rharness-02-parity-gate-verdict.md",
+  "scripts/test_contract_rpcs_store_access.mjs"
+ ],
+ "approve_transfer": [
+  "audit-evidence/20260828/download/auditoria-multitienda/RECOVERY-20260828/72-rharness-02-parity-gate-verdict.md",
+  "scripts/test_contract_rpcs_store_access.mjs"
+ ],
+ "audit_backup_restore_protected_change": [
+  "docs/ITERATION_8_FINAL_HANDOFF.md"
+ ],
+ "audit_product_changes": [
+  "docs/audits/audit_v3_multi_store.md"
+ ],
+ "auto_kardex_on_stock_movement": [
+  "docs/BACKUP_RESTORE_FINAL.md"
+ ],
+ "bulk_update_products": [
+  "audit-evidence/20260828/download/auditoria-multitienda/RECOVERY-20260828/72-rharness-02-parity-gate-verdict.md"
+ ],
+ "can_create_user_with_role": [
+  "docs/ITERATION_9_AUTH_MODEL_AUDIT.md"
+ ],
+ "close_cash_shift": [
+  "src/__tests__/integration/iteration-11-4.test.ts",
+  "src/app/api/cash-closures/close/route.ts",
+  "src/lib/supabase-traced.ts"
+ ],
+ "close_service_order_as_sale": [
+  "knowledge/help/03-referencia/09-estados-orden-produccion.md",
+  "scripts/test_contract_rpcs_store_access.mjs"
+ ],
+ "compensate_inventory_error": [
+  "scripts/test_contract_rpcs_store_access.mjs"
+ ],
+ "create_physical_count": [
+  "scripts/test_contract_rpcs_store_access.mjs"
+ ],
+ "create_pre_restore_snapshot": [
+  "audit-evidence/20260830-w7/W7-02-DEPENDENCY-GRAPH.md",
+  "docs/BACKUP_RESTORE_FINAL.md"
+ ],
+ "create_store_with_membership": [
+  "docs/ITERATION_8_BULK_STORE_AUDIT.md",
+  "docs/ITERATION_8_FREEZE.md",
+  "docs/ITERATION_9_DEEP_AUDIT.md",
+  "docs/ITERATION_9_FINAL_MATRIX.md",
+  "src/app/api/stores/route.ts",
+  "src/config/app.ts"
+ ],
+ "create_vale_salida": [
+  "audit-evidence/20260830-w7/W7-01-MIGRATION-AUDIT.md",
+  "audit-evidence/20260830-w7/W7-02-DEPENDENCY-GRAPH.md",
+  "audit-evidence/20260830-w7/W7-04-BACKWARD-COMPATIBILITY.md",
+  "audit-evidence/20260830-w7/W7-05-MIGRATION-ORDER.md",
+  "audit-evidence/20260830-w7/W7-14-GO-NOGO-MATRIX.md",
+  "src/app/api/vale-salida/route.ts"
+ ],
+ "deduct_stock": [
+  "scripts/test_contract_rpcs_store_access.mjs"
+ ],
+ "detect_orphan_users": [
+  "src/__tests__/integration/iteration-12.test.ts",
+  "src/app/api/users/orphans/route.ts"
+ ],
+ "enforce_ledger_append_only": [
+  "audit-evidence/20260902-w9.3-f01/W9.3-F01-PROPOSAL.md",
+  "audit-evidence/20260902-w9.3-f01/pre/b10_fn_refs.json",
+  "audit-evidence/20260902-w9.3-f01/pre/b10b_fn_table_map.json",
+  "audit-evidence/20260902-w9.3-f01/pre/b9_triggers.json"
+ ],
+ "ensure_fiscal_period": [
+  "scripts/test_contract_rpcs_store_access.mjs"
+ ],
+ "fn_sync_inventory_on_movement": [
+  "audit-evidence/20260830-w7/W7-10-SYNC-STOCK-AUDIT.md",
+  "docs/audits/audit_v3_multi_store.md"
+ ],
+ "generate_inventory_snapshot": [
+  "scripts/test_contract_rpcs_store_access.mjs"
+ ],
+ "get_available_stock": [
+  "docs/REGRESSION_SMOKE_TEST_REPORT.md"
+ ],
+ "get_inventory_report": [
+  "scripts/test_contract_rpcs_store_access.mjs"
+ ],
+ "get_inventory_with_costs": [
+  "scripts/test_contract_rpcs_store_access.mjs"
+ ],
+ "get_or_create_product_cost_sheet": [
+  "scripts/test_contract_rpcs_store_access.mjs"
+ ],
+ "get_product_stock_ledger": [
+  "scripts/test_contract_rpcs_store_access.mjs"
+ ],
+ "get_products_for_reception": [
+  "scripts/test_contract_rpcs_store_access.mjs",
+  "src/hooks/api/useReceptionProductSearch.ts"
+ ],
+ "get_purchases_book": [
+  "src/__tests__/integration/iteration-fiscal.test.ts",
+  "src/app/api/fiscal/purchases-book/route.ts"
+ ],
+ "get_sales_book": [
+  "src/__tests__/integration/iteration-fiscal.test.ts",
+  "src/app/api/fiscal/sales-book/route.ts"
+ ],
+ "get_tax_report": [
+  "src/__tests__/integration/iteration-fiscal.test.ts",
+  "src/app/api/fiscal/tax-report/route.ts"
+ ],
+ "get_tenant_cash_report": [
+  "src/__tests__/integration/iteration-13.test.ts",
+  "src/app/api/tenants/[id]/reports/cash/route.ts"
+ ],
+ "get_tenant_sales_summary": [
+  "src/__tests__/integration/iteration-13.test.ts",
+  "src/app/api/tenants/[id]/reports/sales/route.ts"
+ ],
+ "get_user_audit_history": [
+  "src/__tests__/integration/iteration-12.test.ts",
+  "src/app/api/users/[id]/audit-history/route.ts"
+ ],
+ "has_store_access_as": [
+  "docs/audits/audit_h1_h7_spoofing_validation.md",
+  "docs/audits/audit_self_evaluation_v2_12_9_10_11.md",
+  "e2e/security.spec.ts",
+  "scripts/test_contract_rpcs_store_access.mjs"
+ ],
+ "has_store_role_as": [
+  "src/__tests__/integration/iteration-11-2.test.ts"
+ ],
+ "is_manager_of_store": [
+  "scripts/test_contract_rpcs_store_access.mjs"
+ ],
+ "is_role_not_changed": [
+  "docs/ITERATION_9_AUTH_FUNCTIONS_INVENTORY.md",
+  "docs/ITERATION_9_AUTH_MODEL_AUDIT.md"
+ ],
+ "is_store_manager": [
+  "docs/ITERATION_9_FINAL_MATRIX.md",
+  "scripts/test_contract_rpcs_store_access.mjs"
+ ],
+ "is_tenant_member": [
+  "src/__tests__/integration/iteration-rls.test.ts"
+ ],
+ "log_audit_event": [
+  "scripts/test_contract_rpcs_store_access.mjs"
+ ],
+ "managed_create_user": [
+  "docs/AUDIT_CLOSURE_REPORT_v1.md",
+  "docs/ITERATION_9_AUTH_FUNCTIONS_INVENTORY.md",
+  "docs/ITERATION_9_AUTH_MODEL_AUDIT.md",
+  "docs/ITERATION_9_CREATE_USER_AUDIT.md",
+  "docs/ITERATION_9_DEEP_AUDIT.md",
+  "docs/ITERATION_9_FINAL_MATRIX.md",
+  "docs/ITERATION_9_MANAGED_CREATE_USER_AUDIT.md",
+  "docs/PT_9_5_FINAL_SECURITY_VERIFICATION.md",
+  "docs/SECURITY_BASELINE_SNAPSHOT_v1.md",
+  "docs/TENANT_ARCHITECTURE_DECISION.md"
+ ],
+ "managed_create_user_v2": [
+  "src/__tests__/integration/iteration-12.test.ts",
+  "src/app/api/users/managed-create/route.ts"
+ ],
+ "managed_delete_user": [
+  "docs/ITERATION_9_AUTH_FUNCTIONS_INVENTORY.md",
+  "docs/ITERATION_9_CREATE_USER_AUDIT.md",
+  "docs/ITERATION_9_DEEP_AUDIT.md",
+  "docs/ITERATION_9_FINAL_MATRIX.md",
+  "docs/ITERATION_9_MANAGED_CREATE_USER_AUDIT.md",
+  "docs/PT_9_5_FINAL_SECURITY_VERIFICATION.md",
+  "docs/USER_RECONCILIATION_DESIGN.md"
+ ],
+ "managed_reset_password": [
+  "src/__tests__/integration/iteration-12.test.ts",
+  "src/app/api/users/reset-password/route.ts"
+ ],
+ "managed_revoke_membership": [
+  "src/__tests__/api/memberships-single-authz.test.ts",
+  "src/__tests__/integration/iteration-12.test.ts",
+  "src/app/api/users/[id]/memberships/[membershipId]/route.ts"
+ ],
+ "managed_soft_delete_user": [
+  "src/__tests__/integration/iteration-12.test.ts",
+  "src/app/api/users/delete/route.ts"
+ ],
+ "managed_toggle_user_status": [
+  "src/__tests__/integration/iteration-12.test.ts",
+  "src/app/api/users/toggle-status/route.ts"
+ ],
+ "managed_update_membership": [
+  "src/__tests__/api/memberships-single-authz.test.ts",
+  "src/__tests__/integration/iteration-12.test.ts",
+  "src/app/api/users/[id]/memberships/[membershipId]/route.ts"
+ ],
+ "managed_update_tenant_plan": [
+  "src/app/api/billing/webhook/route.ts"
+ ],
+ "managed_update_user": [
+  "src/__tests__/integration/iteration-12.test.ts",
+  "src/app/api/users/[id]/route.ts"
+ ],
+ "mark_expired_lots": [
+  "scripts/test_contract_rpcs_store_access.mjs"
+ ],
+ "on_auth_user_created": [
+  "docs/ITERATION_9_AUTH_FUNCTIONS_INVENTORY.md",
+  "docs/ITERATION_9_AUTH_MODEL_AUDIT.md",
+  "docs/ITERATION_9_DEEP_AUDIT.md"
+ ],
+ "process_stock_adjustment": [
+  "scripts/test_contract_rpcs_store_access.mjs"
+ ],
+ "reconcile_orphan_user": [
+  "src/__tests__/integration/iteration-12.test.ts",
+  "src/app/api/users/[id]/reconcile/route.ts"
+ ],
+ "reconcile_stock": [
+  "docs/audits/audit_h1_h7_spoofing_validation.md"
+ ],
+ "record_counted_quantity": [
+  "scripts/test_contract_rpcs_store_access.mjs"
+ ],
+ "record_sale_movement": [
+  "scripts/test_contract_rpcs_store_access.mjs"
+ ],
+ "reject_transfer": [
+  "scripts/test_contract_rpcs_store_access.mjs"
+ ],
+ "reopen_cash_shift": [
+  "src/__tests__/integration/iteration-11-4.test.ts",
+  "src/app/api/cash-closures/reopen/route.ts"
+ ],
+ "reverse_commissions_on_sale_void": [
+  "audit-evidence/20260828/download/auditoria-multitienda/RECOVERY-20260828/PRODUCTION-SCHEMA-SNAPSHOT/extraction-raw/triggers-001.response.json"
+ ],
+ "reverse_vale_salida": [
+  "src/app/api/vale-salida/[id]/reverse/route.ts"
+ ],
+ "set_transfer_approval_rule": [
+  "scripts/test_contract_rpcs_store_access.mjs"
+ ],
+ "sync_inventory_from_products": [
+  "scripts/test_contract_rpcs_store_access.mjs"
+ ],
+ "sync_product_stock": [
+  "audit-evidence/20260830-w7/W7-10-SYNC-STOCK-AUDIT.md",
+  "audit-evidence/20260830-w7/W7-14-GO-NOGO-MATRIX.md",
+  "audit-evidence/20260830-w7/W7-20-W7-RE-GATE-MATRIX.md",
+  "audit-evidence/20260830-w7/W7-FINAL-GO-NOGO.md"
+ ],
+ "touch_updated_at": [
+  "docs/PT_9_5_FINAL_SECURITY_VERIFICATION.md"
+ ],
+ "transfer_requires_approval": [
+  "scripts/test_contract_rpcs_store_access.mjs"
+ ],
+ "upsert_store_cost_template": [
+  "scripts/test_contract_rpcs_store_access.mjs"
+ ],
+ "validate_active_store": [
+  "docs/ITERATION_9_AUTH_FUNCTIONS_INVENTORY.md",
+  "scripts/test_contract_rpcs_store_access.mjs"
+ ],
+ "validate_backup_registry_drift": [
+  "ci-gate-allowlist.json"
+ ],
+ "validate_operation_date": [
+  "docs/audits/audit_v3_multi_store.md",
+  "scripts/test_contract_rpcs_store_access.mjs"
+ ],
+ "validate_post_restore": [
+  "ci-gate-allowlist.json",
+  "docs/BACKUP_RESTORE_FINAL.md",
+  "docs/BACKUP_RESTORE_INVENTORY_TRUTH_MODEL.md",
+  "docs/BACKUP_RESTORE_RISK_REVIEW.md",
+  "docs/BR2_DESIGN_FINAL.md",
+  "docs/REGRESSION_SMOKE_TEST_REPORT.md"
+ ],
+ "validate_pre_restore_fk_integrity": [
+  "audit-evidence/20260830-w7/W7-02-DEPENDENCY-GRAPH.md",
+  "ci-gate-allowlist.json"
+ ],
+ "validate_transfer_operation_date": [
+  "scripts/test_contract_rpcs_store_access.mjs"
+ ],
+ "withdraw_production_item_v3": [
+  "audit-evidence/20260830-w7/W7-01-MIGRATION-AUDIT.md",
+  "audit-evidence/20260830-w7/W7-02-DEPENDENCY-GRAPH.md",
+  "audit-evidence/20260830-w7/W7-05-MIGRATION-ORDER.md",
+  "audit-evidence/20260830-w7/W7-06-ROLLBACK-PLAN.md",
+  "audit-evidence/20260902-w9.3-f01/W9.3-F01-PROPOSAL.md",
+  "audit-evidence/20260902-w9.3-f01/W9.3-F01-REPORT.md",
+  "audit-evidence/20260902-w9.3-f01/pre/b10_fn_refs.json",
+  "audit-evidence/20260902-w9.3-f01/pre/b10b_fn_table_map.json"
+ ]
+}

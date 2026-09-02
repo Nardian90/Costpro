@@ -1,0 +1,1 @@
+[{"oid":142582,"proname":"reset_store_data","args":"p_store_id uuid, p_keep_catalog boolean","owner":"postgres","prosecdef":true,"proconfig":["search_path=public, pg_temp"]},{"oid":137399,"proname":"reset_store_data","args":"target_store_id uuid, p_keep_catalog boolean, p_user_id uuid","owner":"postgres","prosecdef":true,"proconfig":["search_path=public, pg_temp"]}]

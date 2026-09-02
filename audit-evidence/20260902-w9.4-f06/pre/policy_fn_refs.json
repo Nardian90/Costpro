@@ -1,0 +1,1650 @@
+{
+ "has_store_access": [
+  {
+   "policy": "abc_delete",
+   "table": "abc_classifications",
+   "roles": "{authenticated}",
+   "cmd": "d"
+  },
+  {
+   "policy": "abc_insert",
+   "table": "abc_classifications",
+   "roles": "{authenticated}",
+   "cmd": "a"
+  },
+  {
+   "policy": "abc_select",
+   "table": "abc_classifications",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "bsi_insert",
+   "table": "bank_statement_items",
+   "roles": "{authenticated}",
+   "cmd": "a"
+  },
+  {
+   "policy": "bsi_select",
+   "table": "bank_statement_items",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "bsi_update",
+   "table": "bank_statement_items",
+   "roles": "{authenticated}",
+   "cmd": "w"
+  },
+  {
+   "policy": "bs_delete",
+   "table": "bank_statements",
+   "roles": "{authenticated}",
+   "cmd": "d"
+  },
+  {
+   "policy": "bs_insert",
+   "table": "bank_statements",
+   "roles": "{authenticated}",
+   "cmd": "a"
+  },
+  {
+   "policy": "bs_select",
+   "table": "bank_statements",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "bs_update",
+   "table": "bank_statements",
+   "roles": "{authenticated}",
+   "cmd": "w"
+  },
+  {
+   "policy": "Cash closures unified",
+   "table": "cash_closures",
+   "roles": "{authenticated}",
+   "cmd": "*"
+  },
+  {
+   "policy": "Cash movements access",
+   "table": "cash_movements",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "Cash movements insert",
+   "table": "cash_movements",
+   "roles": "{authenticated}",
+   "cmd": "a"
+  },
+  {
+   "policy": "Cash sessions unified",
+   "table": "cash_register_sessions",
+   "roles": "{authenticated}",
+   "cmd": "*"
+  },
+  {
+   "policy": "categories_store_access",
+   "table": "categories",
+   "roles": "{authenticated}",
+   "cmd": "*"
+  },
+  {
+   "policy": "Templates visibility",
+   "table": "cost_sheet_templates",
+   "roles": "{-}",
+   "cmd": "r"
+  },
+  {
+   "policy": "customers_delete_own_store",
+   "table": "customers",
+   "roles": "{authenticated}",
+   "cmd": "d"
+  },
+  {
+   "policy": "customers_insert_own_store",
+   "table": "customers",
+   "roles": "{authenticated}",
+   "cmd": "a"
+  },
+  {
+   "policy": "customers_select_own_store",
+   "table": "customers",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "customers_update_own_store",
+   "table": "customers",
+   "roles": "{authenticated}",
+   "cmd": "w"
+  },
+  {
+   "policy": "devolution_items_insert",
+   "table": "devolution_items",
+   "roles": "{authenticated}",
+   "cmd": "a"
+  },
+  {
+   "policy": "devolution_items_select",
+   "table": "devolution_items",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "devolutions_insert_own_store",
+   "table": "devolutions",
+   "roles": "{authenticated}",
+   "cmd": "a"
+  },
+  {
+   "policy": "devolutions_select_own_store",
+   "table": "devolutions",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "devolutions_update_own_store",
+   "table": "devolutions",
+   "roles": "{authenticated}",
+   "cmd": "w"
+  },
+  {
+   "policy": "document_sequences_select_admin",
+   "table": "document_sequences",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "fiscal_closings_insert",
+   "table": "fiscal_closings",
+   "roles": "{authenticated}",
+   "cmd": "a"
+  },
+  {
+   "policy": "fiscal_closings_select",
+   "table": "fiscal_closings",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "fiscal_closings_update",
+   "table": "fiscal_closings",
+   "roles": "{authenticated}",
+   "cmd": "w"
+  },
+  {
+   "policy": "inventory_tenant_select",
+   "table": "inventory",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "Inventory batches access",
+   "table": "inventory_batches",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "inventory_movements_selective_read",
+   "table": "inventory_movements",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "inv_res_access",
+   "table": "inventory_reservations",
+   "roles": "{authenticated}",
+   "cmd": "*"
+  },
+  {
+   "policy": "Inventory snapshots access",
+   "table": "inventory_snapshots",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "kardex_insert_own_store",
+   "table": "kardex_entries",
+   "roles": "{authenticated}",
+   "cmd": "a"
+  },
+  {
+   "policy": "kardex_select_own_store",
+   "table": "kardex_entries",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "payment_transactions_delete_own_store",
+   "table": "payment_transactions",
+   "roles": "{authenticated}",
+   "cmd": "d"
+  },
+  {
+   "policy": "payment_transactions_insert_own_store",
+   "table": "payment_transactions",
+   "roles": "{authenticated}",
+   "cmd": "a"
+  },
+  {
+   "policy": "payment_transactions_select_own_store",
+   "table": "payment_transactions",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "payment_transactions_update_own_store",
+   "table": "payment_transactions",
+   "roles": "{authenticated}",
+   "cmd": "w"
+  },
+  {
+   "policy": "physical_count_items_via_count",
+   "table": "physical_count_items",
+   "roles": "{authenticated}",
+   "cmd": "*"
+  },
+  {
+   "policy": "physical_counts_store_isolation",
+   "table": "physical_counts",
+   "roles": "{authenticated}",
+   "cmd": "*"
+  },
+  {
+   "policy": "lots_delete",
+   "table": "product_lots",
+   "roles": "{authenticated}",
+   "cmd": "d"
+  },
+  {
+   "policy": "lots_insert",
+   "table": "product_lots",
+   "roles": "{authenticated}",
+   "cmd": "a"
+  },
+  {
+   "policy": "lots_select",
+   "table": "product_lots",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "lots_update",
+   "table": "product_lots",
+   "roles": "{authenticated}",
+   "cmd": "w"
+  },
+  {
+   "policy": "Variants delete - member access",
+   "table": "product_variants",
+   "roles": "{authenticated}",
+   "cmd": "d"
+  },
+  {
+   "policy": "Variants insert - member access",
+   "table": "product_variants",
+   "roles": "{authenticated}",
+   "cmd": "a"
+  },
+  {
+   "policy": "Variants store isolation",
+   "table": "product_variants",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "Variants update - member access",
+   "table": "product_variants",
+   "roles": "{authenticated}",
+   "cmd": "w"
+  },
+  {
+   "policy": "poi_delete_has_store_access",
+   "table": "production_order_items",
+   "roles": "{-}",
+   "cmd": "d"
+  },
+  {
+   "policy": "poi_insert_has_store_access",
+   "table": "production_order_items",
+   "roles": "{-}",
+   "cmd": "a"
+  },
+  {
+   "policy": "poi_select_has_store_access",
+   "table": "production_order_items",
+   "roles": "{-}",
+   "cmd": "r"
+  },
+  {
+   "policy": "poi_update_has_store_access",
+   "table": "production_order_items",
+   "roles": "{-}",
+   "cmd": "w"
+  },
+  {
+   "policy": "po_delete_has_store_access",
+   "table": "production_orders",
+   "roles": "{-}",
+   "cmd": "d"
+  },
+  {
+   "policy": "po_insert_has_store_access",
+   "table": "production_orders",
+   "roles": "{-}",
+   "cmd": "a"
+  },
+  {
+   "policy": "po_update_has_store_access",
+   "table": "production_orders",
+   "roles": "{-}",
+   "cmd": "w"
+  },
+  {
+   "policy": "products_tenant_select",
+   "table": "products",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "Purchase items access",
+   "table": "purchase_items",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "Purchases unified",
+   "table": "purchase_orders",
+   "roles": "{authenticated}",
+   "cmd": "*"
+  },
+  {
+   "policy": "quotation_items_insert",
+   "table": "quotation_items",
+   "roles": "{authenticated}",
+   "cmd": "a"
+  },
+  {
+   "policy": "quotation_items_select",
+   "table": "quotation_items",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "quotations_delete_own_store",
+   "table": "quotations",
+   "roles": "{authenticated}",
+   "cmd": "d"
+  },
+  {
+   "policy": "quotations_insert_own_store",
+   "table": "quotations",
+   "roles": "{authenticated}",
+   "cmd": "a"
+  },
+  {
+   "policy": "quotations_select_own_store",
+   "table": "quotations",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "quotations_update_own_store",
+   "table": "quotations",
+   "roles": "{authenticated}",
+   "cmd": "w"
+  },
+  {
+   "policy": "receipt_items_select_isolated",
+   "table": "receipt_items",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "receipts_tenant_select",
+   "table": "receipts",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "receipts_tenant_update",
+   "table": "receipts",
+   "roles": "{authenticated}",
+   "cmd": "w"
+  },
+  {
+   "policy": "received_services_delete_auth",
+   "table": "received_services",
+   "roles": "{-}",
+   "cmd": "d"
+  },
+  {
+   "policy": "received_services_select_authenticated",
+   "table": "received_services",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "received_services_update_auth",
+   "table": "received_services",
+   "roles": "{-}",
+   "cmd": "w"
+  },
+  {
+   "policy": "restore_sessions_store_access",
+   "table": "restore_sessions",
+   "roles": "{authenticated}",
+   "cmd": "*"
+  },
+  {
+   "policy": "sale_items_selective_read",
+   "table": "sale_items",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "sales_selective_read",
+   "table": "sales",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "sal_select_authenticated",
+   "table": "service_audit_log",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "scd_insert_authenticated",
+   "table": "service_cost_distributions",
+   "roles": "{authenticated}",
+   "cmd": "a"
+  },
+  {
+   "policy": "scd_select_authenticated",
+   "table": "service_cost_distributions",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "srl_insert_authenticated",
+   "table": "service_reception_links",
+   "roles": "{authenticated}",
+   "cmd": "a"
+  },
+  {
+   "policy": "srl_select_authenticated",
+   "table": "service_reception_links",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "stock_movements_tenant_select",
+   "table": "stock_movements",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "stores_tenant_update",
+   "table": "stores",
+   "roles": "{authenticated}",
+   "cmd": "w"
+  },
+  {
+   "policy": "Tax unified",
+   "table": "tax_configurations",
+   "roles": "{authenticated}",
+   "cmd": "*"
+  },
+  {
+   "policy": "tx_lots_select",
+   "table": "transaction_item_lots",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "Transaction items select",
+   "table": "transaction_items",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "transactions_tenant_select",
+   "table": "transactions",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "transactions_tenant_update",
+   "table": "transactions",
+   "roles": "{authenticated}",
+   "cmd": "w"
+  },
+  {
+   "policy": "transfer_items_insert_v2",
+   "table": "transfer_items",
+   "roles": "{-}",
+   "cmd": "a"
+  },
+  {
+   "policy": "transfer_items_view_v2",
+   "table": "transfer_items",
+   "roles": "{-}",
+   "cmd": "r"
+  },
+  {
+   "policy": "whs_delete",
+   "table": "warehouse_stock",
+   "roles": "{authenticated}",
+   "cmd": "d"
+  },
+  {
+   "policy": "whs_insert",
+   "table": "warehouse_stock",
+   "roles": "{authenticated}",
+   "cmd": "a"
+  },
+  {
+   "policy": "whs_select",
+   "table": "warehouse_stock",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "whs_update",
+   "table": "warehouse_stock",
+   "roles": "{authenticated}",
+   "cmd": "w"
+  },
+  {
+   "policy": "wh_delete",
+   "table": "warehouses",
+   "roles": "{authenticated}",
+   "cmd": "d"
+  },
+  {
+   "policy": "wh_insert",
+   "table": "warehouses",
+   "roles": "{authenticated}",
+   "cmd": "a"
+  },
+  {
+   "policy": "wh_select",
+   "table": "warehouses",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "wh_update",
+   "table": "warehouses",
+   "roles": "{authenticated}",
+   "cmd": "w"
+  }
+ ],
+ "current_user_tenant_id": [
+  {
+   "policy": "audit_events_tenant_select",
+   "table": "audit_events",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "bulk_ops_log_tenant_select",
+   "table": "bulk_ops_log",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "commission_payments_tenant_select",
+   "table": "commission_payments",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "commission_rules_tenant_select",
+   "table": "commission_rules",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "inventory_tenant_select",
+   "table": "inventory",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "price_change_history_tenant_insert_with_check",
+   "table": "price_change_history",
+   "roles": "{authenticated}",
+   "cmd": "a"
+  },
+  {
+   "policy": "price_change_history_tenant_select",
+   "table": "price_change_history",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "production_orders_tenant_select",
+   "table": "production_orders",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "products_tenant_delete",
+   "table": "products",
+   "roles": "{authenticated}",
+   "cmd": "d"
+  },
+  {
+   "policy": "products_tenant_insert",
+   "table": "products",
+   "roles": "{authenticated}",
+   "cmd": "a"
+  },
+  {
+   "policy": "products_tenant_select",
+   "table": "products",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "products_tenant_update",
+   "table": "products",
+   "roles": "{authenticated}",
+   "cmd": "w"
+  },
+  {
+   "policy": "profiles_tenant_select",
+   "table": "profiles",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "profiles_tenant_update",
+   "table": "profiles",
+   "roles": "{authenticated}",
+   "cmd": "w"
+  },
+  {
+   "policy": "receipts_tenant_select",
+   "table": "receipts",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "receipts_tenant_update",
+   "table": "receipts",
+   "roles": "{authenticated}",
+   "cmd": "w"
+  },
+  {
+   "policy": "sales_transactions_tenant_select",
+   "table": "sales_transactions",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "stock_movements_tenant_delete",
+   "table": "stock_movements",
+   "roles": "{authenticated}",
+   "cmd": "d"
+  },
+  {
+   "policy": "stock_movements_tenant_select",
+   "table": "stock_movements",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "stores_tenant_delete",
+   "table": "stores",
+   "roles": "{authenticated}",
+   "cmd": "d"
+  },
+  {
+   "policy": "stores_tenant_select",
+   "table": "stores",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "stores_tenant_update",
+   "table": "stores",
+   "roles": "{authenticated}",
+   "cmd": "w"
+  },
+  {
+   "policy": "transactions_tenant_delete",
+   "table": "transactions",
+   "roles": "{authenticated}",
+   "cmd": "d"
+  },
+  {
+   "policy": "transactions_tenant_insert_with_check",
+   "table": "transactions",
+   "roles": "{authenticated}",
+   "cmd": "a"
+  },
+  {
+   "policy": "transactions_tenant_select",
+   "table": "transactions",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "transactions_tenant_update",
+   "table": "transactions",
+   "roles": "{authenticated}",
+   "cmd": "w"
+  },
+  {
+   "policy": "transfer_approval_rules_tenant_select",
+   "table": "transfer_approval_rules",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "transfers_tenant_select",
+   "table": "transfers",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "workers_tenant_select",
+   "table": "workers",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  }
+ ],
+ "has_store_role": [
+  {
+   "policy": "audit_logs_select_own_and_managed",
+   "table": "audit_logs",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "commission_reception_links_delete_admin",
+   "table": "commission_reception_links",
+   "roles": "{authenticated}",
+   "cmd": "d"
+  },
+  {
+   "policy": "commission_reception_links_insert_admin",
+   "table": "commission_reception_links",
+   "roles": "{authenticated}",
+   "cmd": "a"
+  },
+  {
+   "policy": "price_commit_log_insert_admin",
+   "table": "price_commit_log",
+   "roles": "{authenticated}",
+   "cmd": "a"
+  },
+  {
+   "policy": "product_cost_sheets_insert_roles",
+   "table": "product_cost_sheets",
+   "roles": "{authenticated}",
+   "cmd": "a"
+  },
+  {
+   "policy": "product_cost_sheets_update_roles",
+   "table": "product_cost_sheets",
+   "roles": "{authenticated}",
+   "cmd": "w"
+  },
+  {
+   "policy": "receipt_tasa_audit_insert_admin",
+   "table": "receipt_tasa_audit",
+   "roles": "{authenticated}",
+   "cmd": "a"
+  },
+  {
+   "policy": "store_cost_templates_delete_admin",
+   "table": "store_cost_templates",
+   "roles": "{authenticated}",
+   "cmd": "d"
+  },
+  {
+   "policy": "store_cost_templates_insert_roles",
+   "table": "store_cost_templates",
+   "roles": "{authenticated}",
+   "cmd": "a"
+  },
+  {
+   "policy": "store_cost_templates_update_roles",
+   "table": "store_cost_templates",
+   "roles": "{authenticated}",
+   "cmd": "w"
+  },
+  {
+   "policy": "stores_delete_admin_only",
+   "table": "stores",
+   "roles": "{authenticated}",
+   "cmd": "d"
+  },
+  {
+   "policy": "stores_update_member_roles",
+   "table": "stores",
+   "roles": "{authenticated}",
+   "cmd": "w"
+  },
+  {
+   "policy": "user_invitations_insert_admin_manager",
+   "table": "user_invitations",
+   "roles": "{authenticated}",
+   "cmd": "a"
+  },
+  {
+   "policy": "user_invitations_select_own_managed",
+   "table": "user_invitations",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "user_invitations_update_admin_manager",
+   "table": "user_invitations",
+   "roles": "{authenticated}",
+   "cmd": "w"
+  },
+  {
+   "policy": "memberships_delete_admin",
+   "table": "user_store_memberships",
+   "roles": "{authenticated}",
+   "cmd": "d"
+  },
+  {
+   "policy": "memberships_insert_admin_manager",
+   "table": "user_store_memberships",
+   "roles": "{authenticated}",
+   "cmd": "a"
+  },
+  {
+   "policy": "memberships_select_own_and_managed",
+   "table": "user_store_memberships",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "memberships_update_admin",
+   "table": "user_store_memberships",
+   "roles": "{authenticated}",
+   "cmd": "w"
+  },
+  {
+   "policy": "z_reports_select_own",
+   "table": "z_reports",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  }
+ ],
+ "is_global_admin": [
+  {
+   "policy": "audit_logs_select_own_and_managed",
+   "table": "audit_logs",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "commission_reception_links_delete_admin",
+   "table": "commission_reception_links",
+   "roles": "{authenticated}",
+   "cmd": "d"
+  },
+  {
+   "policy": "commission_reception_links_insert_admin",
+   "table": "commission_reception_links",
+   "roles": "{authenticated}",
+   "cmd": "a"
+  },
+  {
+   "policy": "commission_reception_links_select_authenticated",
+   "table": "commission_reception_links",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "price_commit_log_insert_admin",
+   "table": "price_commit_log",
+   "roles": "{authenticated}",
+   "cmd": "a"
+  },
+  {
+   "policy": "price_commit_log_select_authenticated",
+   "table": "price_commit_log",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "price_commit_log_update_admin",
+   "table": "price_commit_log",
+   "roles": "{authenticated}",
+   "cmd": "w"
+  },
+  {
+   "policy": "product_cost_sheets_delete_admin",
+   "table": "product_cost_sheets",
+   "roles": "{authenticated}",
+   "cmd": "d"
+  },
+  {
+   "policy": "product_cost_sheets_insert_roles",
+   "table": "product_cost_sheets",
+   "roles": "{authenticated}",
+   "cmd": "a"
+  },
+  {
+   "policy": "product_cost_sheets_select_authenticated",
+   "table": "product_cost_sheets",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "product_cost_sheets_update_roles",
+   "table": "product_cost_sheets",
+   "roles": "{authenticated}",
+   "cmd": "w"
+  },
+  {
+   "policy": "receipt_tasa_audit_insert_admin",
+   "table": "receipt_tasa_audit",
+   "roles": "{authenticated}",
+   "cmd": "a"
+  },
+  {
+   "policy": "receipt_tasa_audit_select_authenticated",
+   "table": "receipt_tasa_audit",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "store_cost_templates_delete_admin",
+   "table": "store_cost_templates",
+   "roles": "{authenticated}",
+   "cmd": "d"
+  },
+  {
+   "policy": "store_cost_templates_insert_roles",
+   "table": "store_cost_templates",
+   "roles": "{authenticated}",
+   "cmd": "a"
+  },
+  {
+   "policy": "store_cost_templates_select_authenticated",
+   "table": "store_cost_templates",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "store_cost_templates_update_roles",
+   "table": "store_cost_templates",
+   "roles": "{authenticated}",
+   "cmd": "w"
+  },
+  {
+   "policy": "stores_delete_admin_only",
+   "table": "stores",
+   "roles": "{authenticated}",
+   "cmd": "d"
+  },
+  {
+   "policy": "stores_select_authenticated",
+   "table": "stores",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "stores_update_member_roles",
+   "table": "stores",
+   "roles": "{authenticated}",
+   "cmd": "w"
+  },
+  {
+   "policy": "transfer_approval_rules_tenant_select",
+   "table": "transfer_approval_rules",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "memberships_delete_admin",
+   "table": "user_store_memberships",
+   "roles": "{authenticated}",
+   "cmd": "d"
+  },
+  {
+   "policy": "memberships_insert_admin_manager",
+   "table": "user_store_memberships",
+   "roles": "{authenticated}",
+   "cmd": "a"
+  },
+  {
+   "policy": "memberships_select_own_and_managed",
+   "table": "user_store_memberships",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "memberships_update_admin",
+   "table": "user_store_memberships",
+   "roles": "{authenticated}",
+   "cmd": "w"
+  }
+ ],
+ "is_admin": [
+  {
+   "policy": "bulk_ops_log_tenant_select",
+   "table": "bulk_ops_log",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "commission_payments_tenant_select",
+   "table": "commission_payments",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "commission_rules_tenant_select",
+   "table": "commission_rules",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "Templates delete",
+   "table": "cost_sheet_templates",
+   "roles": "{authenticated}",
+   "cmd": "d"
+  },
+  {
+   "policy": "Templates insert",
+   "table": "cost_sheet_templates",
+   "roles": "{authenticated}",
+   "cmd": "a"
+  },
+  {
+   "policy": "Templates update",
+   "table": "cost_sheet_templates",
+   "roles": "{authenticated}",
+   "cmd": "w"
+  },
+  {
+   "policy": "Templates visibility",
+   "table": "cost_sheet_templates",
+   "roles": "{-}",
+   "cmd": "r"
+  },
+  {
+   "policy": "cost_sheets_selective_read",
+   "table": "cost_sheets",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "document_sequences_select_admin",
+   "table": "document_sequences",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "inventory_tenant_select",
+   "table": "inventory",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "inventory_movements_selective_read",
+   "table": "inventory_movements",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "learning_cards_delete",
+   "table": "learning_cards",
+   "roles": "{authenticated}",
+   "cmd": "d"
+  },
+  {
+   "policy": "learning_cards_insert",
+   "table": "learning_cards",
+   "roles": "{authenticated}",
+   "cmd": "a"
+  },
+  {
+   "policy": "learning_cards_update",
+   "table": "learning_cards",
+   "roles": "{authenticated}",
+   "cmd": "w"
+  },
+  {
+   "policy": "orphaned_users_log_insert_admin",
+   "table": "orphaned_users_log",
+   "roles": "{authenticated}",
+   "cmd": "a"
+  },
+  {
+   "policy": "orphaned_users_log_select_admin",
+   "table": "orphaned_users_log",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "orphaned_users_log_update_admin",
+   "table": "orphaned_users_log",
+   "roles": "{authenticated}",
+   "cmd": "w"
+  },
+  {
+   "policy": "pick3_history_admin_manage",
+   "table": "pick3_history",
+   "roles": "{authenticated}",
+   "cmd": "*"
+  },
+  {
+   "policy": "price_change_history_tenant_select",
+   "table": "price_change_history",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "production_orders_tenant_select",
+   "table": "production_orders",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "products_tenant_delete",
+   "table": "products",
+   "roles": "{authenticated}",
+   "cmd": "d"
+  },
+  {
+   "policy": "products_tenant_select",
+   "table": "products",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "products_tenant_update",
+   "table": "products",
+   "roles": "{authenticated}",
+   "cmd": "w"
+  },
+  {
+   "policy": "profiles_delete_admin",
+   "table": "profiles",
+   "roles": "{authenticated}",
+   "cmd": "d"
+  },
+  {
+   "policy": "profiles_insert_admin",
+   "table": "profiles",
+   "roles": "{authenticated}",
+   "cmd": "a"
+  },
+  {
+   "policy": "profiles_tenant_select",
+   "table": "profiles",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "profiles_tenant_update",
+   "table": "profiles",
+   "roles": "{authenticated}",
+   "cmd": "w"
+  },
+  {
+   "policy": "receipt_items_select_isolated",
+   "table": "receipt_items",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "receipts_tenant_select",
+   "table": "receipts",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "receipts_tenant_update",
+   "table": "receipts",
+   "roles": "{authenticated}",
+   "cmd": "w"
+  },
+  {
+   "policy": "Roles manage",
+   "table": "roles",
+   "roles": "{authenticated}",
+   "cmd": "*"
+  },
+  {
+   "policy": "sale_items_selective_read",
+   "table": "sale_items",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "sales_selective_read",
+   "table": "sales",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "sales_transactions_tenant_select",
+   "table": "sales_transactions",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "stock_movements_tenant_delete",
+   "table": "stock_movements",
+   "roles": "{authenticated}",
+   "cmd": "d"
+  },
+  {
+   "policy": "stock_movements_tenant_select",
+   "table": "stock_movements",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "stores_tenant_delete",
+   "table": "stores",
+   "roles": "{authenticated}",
+   "cmd": "d"
+  },
+  {
+   "policy": "stores_tenant_select",
+   "table": "stores",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "stores_tenant_update",
+   "table": "stores",
+   "roles": "{authenticated}",
+   "cmd": "w"
+  },
+  {
+   "policy": "system_config_admin_manage",
+   "table": "system_config",
+   "roles": "{authenticated}",
+   "cmd": "*"
+  },
+  {
+   "policy": "system_config_read_authenticated",
+   "table": "system_config",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "tenants_delete_admin_only",
+   "table": "tenants",
+   "roles": "{authenticated}",
+   "cmd": "d"
+  },
+  {
+   "policy": "tenants_insert_admin_only",
+   "table": "tenants",
+   "roles": "{authenticated}",
+   "cmd": "a"
+  },
+  {
+   "policy": "tenants_select_own_or_admin",
+   "table": "tenants",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "tenants_select_own_or_store_member",
+   "table": "tenants",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "tenants_update_own_or_admin",
+   "table": "tenants",
+   "roles": "{authenticated}",
+   "cmd": "w"
+  },
+  {
+   "policy": "transactions_tenant_delete",
+   "table": "transactions",
+   "roles": "{authenticated}",
+   "cmd": "d"
+  },
+  {
+   "policy": "transactions_tenant_select",
+   "table": "transactions",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "transactions_tenant_update",
+   "table": "transactions",
+   "roles": "{authenticated}",
+   "cmd": "w"
+  },
+  {
+   "policy": "transfer_approval_rules_tenant_select",
+   "table": "transfer_approval_rules",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "transfers_tenant_select",
+   "table": "transfers",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "Admins and managers can view user audit logs",
+   "table": "user_audit_log",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "user_invitations_insert_admin_manager",
+   "table": "user_invitations",
+   "roles": "{authenticated}",
+   "cmd": "a"
+  },
+  {
+   "policy": "user_invitations_select_own_managed",
+   "table": "user_invitations",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "user_invitations_update_admin_manager",
+   "table": "user_invitations",
+   "roles": "{authenticated}",
+   "cmd": "w"
+  },
+  {
+   "policy": "user_progress_delete",
+   "table": "user_progress",
+   "roles": "{authenticated}",
+   "cmd": "d"
+  },
+  {
+   "policy": "user_progress_select",
+   "table": "user_progress",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "workers_tenant_select",
+   "table": "workers",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "z_reports_select_own",
+   "table": "z_reports",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  }
+ ],
+ "current_user_store_ids": [
+  {
+   "policy": "cash_closures_tenant_insert_with_check",
+   "table": "cash_closures",
+   "roles": "{authenticated}",
+   "cmd": "a"
+  },
+  {
+   "policy": "commission_payments_tenant_select",
+   "table": "commission_payments",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "commission_rules_tenant_select",
+   "table": "commission_rules",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "devolutions_tenant_insert_with_check",
+   "table": "devolutions",
+   "roles": "{authenticated}",
+   "cmd": "a"
+  },
+  {
+   "policy": "inventory_tenant_select",
+   "table": "inventory",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "inventory_adjustments_tenant_insert_with_check",
+   "table": "inventory_adjustments",
+   "roles": "{authenticated}",
+   "cmd": "a"
+  },
+  {
+   "policy": "issue_slip_items_store_isolation",
+   "table": "issue_slip_items",
+   "roles": "{authenticated}",
+   "cmd": "*"
+  },
+  {
+   "policy": "issue_slips_store_isolation",
+   "table": "issue_slips",
+   "roles": "{authenticated}",
+   "cmd": "*"
+  },
+  {
+   "policy": "kardex_entries_tenant_insert_with_check",
+   "table": "kardex_entries",
+   "roles": "{authenticated}",
+   "cmd": "a"
+  },
+  {
+   "policy": "payment_transactions_tenant_insert_with_check",
+   "table": "payment_transactions",
+   "roles": "{authenticated}",
+   "cmd": "a"
+  },
+  {
+   "policy": "price_change_history_tenant_insert_with_check",
+   "table": "price_change_history",
+   "roles": "{authenticated}",
+   "cmd": "a"
+  },
+  {
+   "policy": "price_change_history_tenant_select",
+   "table": "price_change_history",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "production_orders_tenant_select",
+   "table": "production_orders",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "products_tenant_insert",
+   "table": "products",
+   "roles": "{authenticated}",
+   "cmd": "a"
+  },
+  {
+   "policy": "products_tenant_select",
+   "table": "products",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "products_tenant_update",
+   "table": "products",
+   "roles": "{authenticated}",
+   "cmd": "w"
+  },
+  {
+   "policy": "receipts_tenant_select",
+   "table": "receipts",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "receipts_tenant_update",
+   "table": "receipts",
+   "roles": "{authenticated}",
+   "cmd": "w"
+  },
+  {
+   "policy": "sales_transactions_tenant_select",
+   "table": "sales_transactions",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "stock_movements_tenant_select",
+   "table": "stock_movements",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "stores_tenant_select",
+   "table": "stores",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "transactions_tenant_insert_with_check",
+   "table": "transactions",
+   "roles": "{authenticated}",
+   "cmd": "a"
+  },
+  {
+   "policy": "transactions_tenant_select",
+   "table": "transactions",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "transactions_tenant_update",
+   "table": "transactions",
+   "roles": "{authenticated}",
+   "cmd": "w"
+  },
+  {
+   "policy": "transfers_tenant_select",
+   "table": "transfers",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "workers_tenant_select",
+   "table": "workers",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  }
+ ],
+ "get_my_role": [
+  {
+   "policy": "Categories unified",
+   "table": "categories",
+   "roles": "{authenticated}",
+   "cmd": "*"
+  }
+ ],
+ "is_store_member": [
+  {
+   "policy": "commission_reception_links_select_authenticated",
+   "table": "commission_reception_links",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "price_commit_log_select_authenticated",
+   "table": "price_commit_log",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "product_cost_sheets_select_authenticated",
+   "table": "product_cost_sheets",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "receipt_tasa_audit_select_authenticated",
+   "table": "receipt_tasa_audit",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "store_cost_templates_select_authenticated",
+   "table": "store_cost_templates",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "stores_select_authenticated",
+   "table": "stores",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  }
+ ],
+ "get_current_user_store_id": [
+  {
+   "policy": "Allow all access to own store data",
+   "table": "inventory_adjustments",
+   "roles": "{-}",
+   "cmd": "*"
+  }
+ ],
+ "is_managed_user": [
+  {
+   "policy": "profiles_tenant_select",
+   "table": "profiles",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  }
+ ],
+ "is_admin_with_access": [
+  {
+   "policy": "profiles_tenant_select",
+   "table": "profiles",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  }
+ ],
+ "current_user_store_id": [
+  {
+   "policy": "Warehouse can insert stock movements",
+   "table": "stock_movements",
+   "roles": "{authenticated}",
+   "cmd": "a"
+  }
+ ],
+ "has_any_role": [
+  {
+   "policy": "Warehouse can insert stock movements",
+   "table": "stock_movements",
+   "roles": "{authenticated}",
+   "cmd": "a"
+  }
+ ],
+ "has_role": [
+  {
+   "policy": "system_config_read_authenticated",
+   "table": "system_config",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  },
+  {
+   "policy": "Admins and managers can view user audit logs",
+   "table": "user_audit_log",
+   "roles": "{authenticated}",
+   "cmd": "r"
+  }
+ ]
+}

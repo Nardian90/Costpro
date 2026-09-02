@@ -1,0 +1,746 @@
+{
+ "apply_physical_count": [
+  {
+   "loc": "audit-evidence/20260828/download/auditoria-multitienda/RECOVERY-20260828/72-rharness-02-parity-gate-verdict.md",
+   "cat": "DOCS"
+  },
+  {
+   "loc": "scripts/test_contract_rpcs_store_access.mjs",
+   "cat": "SCRIPTS"
+  }
+ ],
+ "approve_transfer": [
+  {
+   "loc": "audit-evidence/20260828/download/auditoria-multitienda/RECOVERY-20260828/72-rharness-02-parity-gate-verdict.md",
+   "cat": "DOCS"
+  },
+  {
+   "loc": "scripts/test_contract_rpcs_store_access.mjs",
+   "cat": "SCRIPTS"
+  }
+ ],
+ "audit_backup_restore_protected_change": [
+  {
+   "loc": "docs/ITERATION_8_FINAL_HANDOFF.md",
+   "cat": "DOCS"
+  }
+ ],
+ "audit_product_changes": [
+  {
+   "loc": "docs/audits/audit_v3_multi_store.md",
+   "cat": "DOCS"
+  }
+ ],
+ "auto_kardex_on_stock_movement": [
+  {
+   "loc": "docs/BACKUP_RESTORE_FINAL.md",
+   "cat": "DOCS"
+  }
+ ],
+ "bulk_update_products": [
+  {
+   "loc": "audit-evidence/20260828/download/auditoria-multitienda/RECOVERY-20260828/72-rharness-02-parity-gate-verdict.md",
+   "cat": "DOCS"
+  }
+ ],
+ "can_create_user_with_role": [
+  {
+   "loc": "docs/ITERATION_9_AUTH_MODEL_AUDIT.md",
+   "cat": "DOCS"
+  }
+ ],
+ "close_cash_shift": [
+  {
+   "loc": "src/__tests__/integration/iteration-11-4.test.ts",
+   "cat": "TEST_SRC"
+  },
+  {
+   "loc": "src/app/api/cash-closures/close/route.ts",
+   "cat": "EXEC_SRC"
+  },
+  {
+   "loc": "src/lib/supabase-traced.ts",
+   "cat": "TRACE_MAP"
+  }
+ ],
+ "close_service_order_as_sale": [
+  {
+   "loc": "knowledge/help/03-referencia/09-estados-orden-produccion.md",
+   "cat": "DOCS"
+  },
+  {
+   "loc": "scripts/test_contract_rpcs_store_access.mjs",
+   "cat": "SCRIPTS"
+  }
+ ],
+ "compensate_inventory_error": [
+  {
+   "loc": "scripts/test_contract_rpcs_store_access.mjs",
+   "cat": "SCRIPTS"
+  }
+ ],
+ "create_physical_count": [
+  {
+   "loc": "scripts/test_contract_rpcs_store_access.mjs",
+   "cat": "SCRIPTS"
+  }
+ ],
+ "create_pre_restore_snapshot": [
+  {
+   "loc": "audit-evidence/20260830-w7/W7-02-DEPENDENCY-GRAPH.md",
+   "cat": "DOCS"
+  },
+  {
+   "loc": "docs/BACKUP_RESTORE_FINAL.md",
+   "cat": "DOCS"
+  }
+ ],
+ "create_store_with_membership": [
+  {
+   "loc": "docs/ITERATION_8_BULK_STORE_AUDIT.md",
+   "cat": "DOCS"
+  },
+  {
+   "loc": "docs/ITERATION_8_FREEZE.md",
+   "cat": "DOCS"
+  },
+  {
+   "loc": "docs/ITERATION_9_DEEP_AUDIT.md",
+   "cat": "DOCS"
+  },
+  {
+   "loc": "docs/ITERATION_9_FINAL_MATRIX.md",
+   "cat": "DOCS"
+  },
+  {
+   "loc": "src/app/api/stores/route.ts",
+   "cat": "EXEC_SRC"
+  },
+  {
+   "loc": "src/config/app.ts",
+   "cat": "EXEC_SRC"
+  }
+ ],
+ "create_vale_salida": [
+  {
+   "loc": "audit-evidence/20260830-w7/W7-01-MIGRATION-AUDIT.md",
+   "cat": "DOCS"
+  },
+  {
+   "loc": "audit-evidence/20260830-w7/W7-02-DEPENDENCY-GRAPH.md",
+   "cat": "DOCS"
+  },
+  {
+   "loc": "audit-evidence/20260830-w7/W7-04-BACKWARD-COMPATIBILITY.md",
+   "cat": "DOCS"
+  },
+  {
+   "loc": "audit-evidence/20260830-w7/W7-05-MIGRATION-ORDER.md",
+   "cat": "DOCS"
+  },
+  {
+   "loc": "audit-evidence/20260830-w7/W7-14-GO-NOGO-MATRIX.md",
+   "cat": "DOCS"
+  },
+  {
+   "loc": "src/app/api/vale-salida/route.ts",
+   "cat": "EXEC_SRC"
+  }
+ ],
+ "deduct_stock": [
+  {
+   "loc": "scripts/test_contract_rpcs_store_access.mjs",
+   "cat": "SCRIPTS"
+  }
+ ],
+ "detect_orphan_users": [
+  {
+   "loc": "src/__tests__/integration/iteration-12.test.ts",
+   "cat": "TEST_SRC"
+  },
+  {
+   "loc": "src/app/api/users/orphans/route.ts",
+   "cat": "EXEC_SRC"
+  }
+ ],
+ "enforce_ledger_append_only": [
+  {
+   "loc": "audit-evidence/20260902-w9.3-f01/W9.3-F01-PROPOSAL.md",
+   "cat": "DOCS"
+  },
+  {
+   "loc": "audit-evidence/20260902-w9.3-f01/pre/b10_fn_refs.json",
+   "cat": "DOCS"
+  },
+  {
+   "loc": "audit-evidence/20260902-w9.3-f01/pre/b10b_fn_table_map.json",
+   "cat": "DOCS"
+  },
+  {
+   "loc": "audit-evidence/20260902-w9.3-f01/pre/b9_triggers.json",
+   "cat": "DOCS"
+  }
+ ],
+ "ensure_fiscal_period": [
+  {
+   "loc": "scripts/test_contract_rpcs_store_access.mjs",
+   "cat": "SCRIPTS"
+  }
+ ],
+ "fn_sync_inventory_on_movement": [
+  {
+   "loc": "audit-evidence/20260830-w7/W7-10-SYNC-STOCK-AUDIT.md",
+   "cat": "DOCS"
+  },
+  {
+   "loc": "docs/audits/audit_v3_multi_store.md",
+   "cat": "DOCS"
+  }
+ ],
+ "generate_inventory_snapshot": [
+  {
+   "loc": "scripts/test_contract_rpcs_store_access.mjs",
+   "cat": "SCRIPTS"
+  }
+ ],
+ "get_available_stock": [
+  {
+   "loc": "docs/REGRESSION_SMOKE_TEST_REPORT.md",
+   "cat": "DOCS"
+  }
+ ],
+ "get_inventory_report": [
+  {
+   "loc": "scripts/test_contract_rpcs_store_access.mjs",
+   "cat": "SCRIPTS"
+  }
+ ],
+ "get_inventory_with_costs": [
+  {
+   "loc": "scripts/test_contract_rpcs_store_access.mjs",
+   "cat": "SCRIPTS"
+  }
+ ],
+ "get_or_create_product_cost_sheet": [
+  {
+   "loc": "scripts/test_contract_rpcs_store_access.mjs",
+   "cat": "SCRIPTS"
+  }
+ ],
+ "get_product_stock_ledger": [
+  {
+   "loc": "scripts/test_contract_rpcs_store_access.mjs",
+   "cat": "SCRIPTS"
+  }
+ ],
+ "get_purchases_book": [
+  {
+   "loc": "src/__tests__/integration/iteration-fiscal.test.ts",
+   "cat": "TEST_SRC"
+  },
+  {
+   "loc": "src/app/api/fiscal/purchases-book/route.ts",
+   "cat": "EXEC_SRC"
+  }
+ ],
+ "get_sales_book": [
+  {
+   "loc": "src/__tests__/integration/iteration-fiscal.test.ts",
+   "cat": "TEST_SRC"
+  },
+  {
+   "loc": "src/app/api/fiscal/sales-book/route.ts",
+   "cat": "EXEC_SRC"
+  }
+ ],
+ "get_tax_report": [
+  {
+   "loc": "src/__tests__/integration/iteration-fiscal.test.ts",
+   "cat": "TEST_SRC"
+  },
+  {
+   "loc": "src/app/api/fiscal/tax-report/route.ts",
+   "cat": "EXEC_SRC"
+  }
+ ],
+ "get_tenant_cash_report": [
+  {
+   "loc": "src/__tests__/integration/iteration-13.test.ts",
+   "cat": "TEST_SRC"
+  },
+  {
+   "loc": "src/app/api/tenants/[id]/reports/cash/route.ts",
+   "cat": "EXEC_SRC"
+  }
+ ],
+ "get_tenant_sales_summary": [
+  {
+   "loc": "src/__tests__/integration/iteration-13.test.ts",
+   "cat": "TEST_SRC"
+  },
+  {
+   "loc": "src/app/api/tenants/[id]/reports/sales/route.ts",
+   "cat": "EXEC_SRC"
+  }
+ ],
+ "get_user_audit_history": [
+  {
+   "loc": "src/__tests__/integration/iteration-12.test.ts",
+   "cat": "TEST_SRC"
+  },
+  {
+   "loc": "src/app/api/users/[id]/audit-history/route.ts",
+   "cat": "EXEC_SRC"
+  }
+ ],
+ "has_store_access_as": [
+  {
+   "loc": "docs/audits/audit_h1_h7_spoofing_validation.md",
+   "cat": "DOCS"
+  },
+  {
+   "loc": "docs/audits/audit_self_evaluation_v2_12_9_10_11.md",
+   "cat": "DOCS"
+  },
+  {
+   "loc": "e2e/security.spec.ts",
+   "cat": "E2E"
+  },
+  {
+   "loc": "scripts/test_contract_rpcs_store_access.mjs",
+   "cat": "SCRIPTS"
+  }
+ ],
+ "has_store_role_as": [
+  {
+   "loc": "src/__tests__/integration/iteration-11-2.test.ts",
+   "cat": "TEST_SRC"
+  }
+ ],
+ "is_manager_of_store": [
+  {
+   "loc": "scripts/test_contract_rpcs_store_access.mjs",
+   "cat": "SCRIPTS"
+  }
+ ],
+ "is_role_not_changed": [
+  {
+   "loc": "docs/ITERATION_9_AUTH_FUNCTIONS_INVENTORY.md",
+   "cat": "DOCS"
+  },
+  {
+   "loc": "docs/ITERATION_9_AUTH_MODEL_AUDIT.md",
+   "cat": "DOCS"
+  }
+ ],
+ "is_store_manager": [
+  {
+   "loc": "docs/ITERATION_9_FINAL_MATRIX.md",
+   "cat": "DOCS"
+  },
+  {
+   "loc": "scripts/test_contract_rpcs_store_access.mjs",
+   "cat": "SCRIPTS"
+  }
+ ],
+ "is_tenant_member": [
+  {
+   "loc": "src/__tests__/integration/iteration-rls.test.ts",
+   "cat": "TEST_SRC"
+  }
+ ],
+ "log_audit_event": [
+  {
+   "loc": "scripts/test_contract_rpcs_store_access.mjs",
+   "cat": "SCRIPTS"
+  }
+ ],
+ "managed_create_user": [
+  {
+   "loc": "docs/AUDIT_CLOSURE_REPORT_v1.md",
+   "cat": "DOCS"
+  },
+  {
+   "loc": "docs/ITERATION_9_AUTH_FUNCTIONS_INVENTORY.md",
+   "cat": "DOCS"
+  },
+  {
+   "loc": "docs/ITERATION_9_AUTH_MODEL_AUDIT.md",
+   "cat": "DOCS"
+  },
+  {
+   "loc": "docs/ITERATION_9_CREATE_USER_AUDIT.md",
+   "cat": "DOCS"
+  },
+  {
+   "loc": "docs/ITERATION_9_DEEP_AUDIT.md",
+   "cat": "DOCS"
+  },
+  {
+   "loc": "docs/ITERATION_9_FINAL_MATRIX.md",
+   "cat": "DOCS"
+  },
+  {
+   "loc": "docs/ITERATION_9_MANAGED_CREATE_USER_AUDIT.md",
+   "cat": "DOCS"
+  },
+  {
+   "loc": "docs/PT_9_5_FINAL_SECURITY_VERIFICATION.md",
+   "cat": "DOCS"
+  },
+  {
+   "loc": "docs/SECURITY_BASELINE_SNAPSHOT_v1.md",
+   "cat": "DOCS"
+  },
+  {
+   "loc": "docs/TENANT_ARCHITECTURE_DECISION.md",
+   "cat": "DOCS"
+  }
+ ],
+ "managed_create_user_v2": [
+  {
+   "loc": "src/__tests__/integration/iteration-12.test.ts",
+   "cat": "TEST_SRC"
+  },
+  {
+   "loc": "src/app/api/users/managed-create/route.ts",
+   "cat": "EXEC_SRC"
+  }
+ ],
+ "managed_delete_user": [
+  {
+   "loc": "docs/ITERATION_9_AUTH_FUNCTIONS_INVENTORY.md",
+   "cat": "DOCS"
+  },
+  {
+   "loc": "docs/ITERATION_9_CREATE_USER_AUDIT.md",
+   "cat": "DOCS"
+  },
+  {
+   "loc": "docs/ITERATION_9_DEEP_AUDIT.md",
+   "cat": "DOCS"
+  },
+  {
+   "loc": "docs/ITERATION_9_FINAL_MATRIX.md",
+   "cat": "DOCS"
+  },
+  {
+   "loc": "docs/ITERATION_9_MANAGED_CREATE_USER_AUDIT.md",
+   "cat": "DOCS"
+  },
+  {
+   "loc": "docs/PT_9_5_FINAL_SECURITY_VERIFICATION.md",
+   "cat": "DOCS"
+  },
+  {
+   "loc": "docs/USER_RECONCILIATION_DESIGN.md",
+   "cat": "DOCS"
+  }
+ ],
+ "managed_reset_password": [
+  {
+   "loc": "src/__tests__/integration/iteration-12.test.ts",
+   "cat": "TEST_SRC"
+  },
+  {
+   "loc": "src/app/api/users/reset-password/route.ts",
+   "cat": "EXEC_SRC"
+  }
+ ],
+ "managed_revoke_membership": [
+  {
+   "loc": "src/__tests__/api/memberships-single-authz.test.ts",
+   "cat": "TEST_SRC"
+  },
+  {
+   "loc": "src/__tests__/integration/iteration-12.test.ts",
+   "cat": "TEST_SRC"
+  },
+  {
+   "loc": "src/app/api/users/[id]/memberships/[membershipId]/route.ts",
+   "cat": "EXEC_SRC"
+  }
+ ],
+ "managed_soft_delete_user": [
+  {
+   "loc": "src/__tests__/integration/iteration-12.test.ts",
+   "cat": "TEST_SRC"
+  },
+  {
+   "loc": "src/app/api/users/delete/route.ts",
+   "cat": "EXEC_SRC"
+  }
+ ],
+ "managed_toggle_user_status": [
+  {
+   "loc": "src/__tests__/integration/iteration-12.test.ts",
+   "cat": "TEST_SRC"
+  },
+  {
+   "loc": "src/app/api/users/toggle-status/route.ts",
+   "cat": "EXEC_SRC"
+  }
+ ],
+ "managed_update_membership": [
+  {
+   "loc": "src/__tests__/api/memberships-single-authz.test.ts",
+   "cat": "TEST_SRC"
+  },
+  {
+   "loc": "src/__tests__/integration/iteration-12.test.ts",
+   "cat": "TEST_SRC"
+  },
+  {
+   "loc": "src/app/api/users/[id]/memberships/[membershipId]/route.ts",
+   "cat": "EXEC_SRC"
+  }
+ ],
+ "managed_update_tenant_plan": [
+  {
+   "loc": "src/app/api/billing/webhook/route.ts",
+   "cat": "EXEC_SRC"
+  }
+ ],
+ "managed_update_user": [
+  {
+   "loc": "src/__tests__/integration/iteration-12.test.ts",
+   "cat": "TEST_SRC"
+  },
+  {
+   "loc": "src/app/api/users/[id]/route.ts",
+   "cat": "EXEC_SRC"
+  }
+ ],
+ "mark_expired_lots": [
+  {
+   "loc": "scripts/test_contract_rpcs_store_access.mjs",
+   "cat": "SCRIPTS"
+  }
+ ],
+ "on_auth_user_created": [
+  {
+   "loc": "docs/ITERATION_9_AUTH_FUNCTIONS_INVENTORY.md",
+   "cat": "DOCS"
+  },
+  {
+   "loc": "docs/ITERATION_9_AUTH_MODEL_AUDIT.md",
+   "cat": "DOCS"
+  },
+  {
+   "loc": "docs/ITERATION_9_DEEP_AUDIT.md",
+   "cat": "DOCS"
+  }
+ ],
+ "process_stock_adjustment": [
+  {
+   "loc": "scripts/test_contract_rpcs_store_access.mjs",
+   "cat": "SCRIPTS"
+  }
+ ],
+ "reconcile_orphan_user": [
+  {
+   "loc": "src/__tests__/integration/iteration-12.test.ts",
+   "cat": "TEST_SRC"
+  },
+  {
+   "loc": "src/app/api/users/[id]/reconcile/route.ts",
+   "cat": "EXEC_SRC"
+  }
+ ],
+ "reconcile_stock": [
+  {
+   "loc": "docs/audits/audit_h1_h7_spoofing_validation.md",
+   "cat": "DOCS"
+  }
+ ],
+ "record_counted_quantity": [
+  {
+   "loc": "scripts/test_contract_rpcs_store_access.mjs",
+   "cat": "SCRIPTS"
+  }
+ ],
+ "record_sale_movement": [
+  {
+   "loc": "scripts/test_contract_rpcs_store_access.mjs",
+   "cat": "SCRIPTS"
+  }
+ ],
+ "reject_transfer": [
+  {
+   "loc": "scripts/test_contract_rpcs_store_access.mjs",
+   "cat": "SCRIPTS"
+  }
+ ],
+ "reopen_cash_shift": [
+  {
+   "loc": "src/__tests__/integration/iteration-11-4.test.ts",
+   "cat": "TEST_SRC"
+  },
+  {
+   "loc": "src/app/api/cash-closures/reopen/route.ts",
+   "cat": "EXEC_SRC"
+  }
+ ],
+ "reverse_commissions_on_sale_void": [
+  {
+   "loc": "audit-evidence/20260828/download/auditoria-multitienda/RECOVERY-20260828/PRODUCTION-SCHEMA-SNAPSHOT/extraction-raw/triggers-001.response.json",
+   "cat": "DOCS"
+  }
+ ],
+ "reverse_vale_salida": [
+  {
+   "loc": "src/app/api/vale-salida/[id]/reverse/route.ts",
+   "cat": "EXEC_SRC"
+  }
+ ],
+ "set_transfer_approval_rule": [
+  {
+   "loc": "scripts/test_contract_rpcs_store_access.mjs",
+   "cat": "SCRIPTS"
+  }
+ ],
+ "sync_inventory_from_products": [
+  {
+   "loc": "scripts/test_contract_rpcs_store_access.mjs",
+   "cat": "SCRIPTS"
+  }
+ ],
+ "sync_product_stock": [
+  {
+   "loc": "audit-evidence/20260830-w7/W7-10-SYNC-STOCK-AUDIT.md",
+   "cat": "DOCS"
+  },
+  {
+   "loc": "audit-evidence/20260830-w7/W7-14-GO-NOGO-MATRIX.md",
+   "cat": "DOCS"
+  },
+  {
+   "loc": "audit-evidence/20260830-w7/W7-20-W7-RE-GATE-MATRIX.md",
+   "cat": "DOCS"
+  },
+  {
+   "loc": "audit-evidence/20260830-w7/W7-FINAL-GO-NOGO.md",
+   "cat": "DOCS"
+  }
+ ],
+ "touch_updated_at": [
+  {
+   "loc": "docs/PT_9_5_FINAL_SECURITY_VERIFICATION.md",
+   "cat": "DOCS"
+  }
+ ],
+ "transfer_requires_approval": [
+  {
+   "loc": "scripts/test_contract_rpcs_store_access.mjs",
+   "cat": "SCRIPTS"
+  }
+ ],
+ "upsert_store_cost_template": [
+  {
+   "loc": "scripts/test_contract_rpcs_store_access.mjs",
+   "cat": "SCRIPTS"
+  }
+ ],
+ "validate_active_store": [
+  {
+   "loc": "docs/ITERATION_9_AUTH_FUNCTIONS_INVENTORY.md",
+   "cat": "DOCS"
+  },
+  {
+   "loc": "scripts/test_contract_rpcs_store_access.mjs",
+   "cat": "SCRIPTS"
+  }
+ ],
+ "validate_backup_registry_drift": [
+  {
+   "loc": "ci-gate-allowlist.json",
+   "cat": "CI_ALLOWLIST"
+  }
+ ],
+ "validate_operation_date": [
+  {
+   "loc": "docs/audits/audit_v3_multi_store.md",
+   "cat": "DOCS"
+  },
+  {
+   "loc": "scripts/test_contract_rpcs_store_access.mjs",
+   "cat": "SCRIPTS"
+  }
+ ],
+ "validate_post_restore": [
+  {
+   "loc": "ci-gate-allowlist.json",
+   "cat": "CI_ALLOWLIST"
+  },
+  {
+   "loc": "docs/BACKUP_RESTORE_FINAL.md",
+   "cat": "DOCS"
+  },
+  {
+   "loc": "docs/BACKUP_RESTORE_INVENTORY_TRUTH_MODEL.md",
+   "cat": "DOCS"
+  },
+  {
+   "loc": "docs/BACKUP_RESTORE_RISK_REVIEW.md",
+   "cat": "DOCS"
+  },
+  {
+   "loc": "docs/BR2_DESIGN_FINAL.md",
+   "cat": "DOCS"
+  },
+  {
+   "loc": "docs/REGRESSION_SMOKE_TEST_REPORT.md",
+   "cat": "DOCS"
+  }
+ ],
+ "validate_pre_restore_fk_integrity": [
+  {
+   "loc": "audit-evidence/20260830-w7/W7-02-DEPENDENCY-GRAPH.md",
+   "cat": "DOCS"
+  },
+  {
+   "loc": "ci-gate-allowlist.json",
+   "cat": "CI_ALLOWLIST"
+  }
+ ],
+ "validate_transfer_operation_date": [
+  {
+   "loc": "scripts/test_contract_rpcs_store_access.mjs",
+   "cat": "SCRIPTS"
+  }
+ ],
+ "withdraw_production_item_v3": [
+  {
+   "loc": "audit-evidence/20260830-w7/W7-01-MIGRATION-AUDIT.md",
+   "cat": "DOCS"
+  },
+  {
+   "loc": "audit-evidence/20260830-w7/W7-02-DEPENDENCY-GRAPH.md",
+   "cat": "DOCS"
+  },
+  {
+   "loc": "audit-evidence/20260830-w7/W7-05-MIGRATION-ORDER.md",
+   "cat": "DOCS"
+  },
+  {
+   "loc": "audit-evidence/20260830-w7/W7-06-ROLLBACK-PLAN.md",
+   "cat": "DOCS"
+  },
+  {
+   "loc": "audit-evidence/20260902-w9.3-f01/W9.3-F01-PROPOSAL.md",
+   "cat": "DOCS"
+  },
+  {
+   "loc": "audit-evidence/20260902-w9.3-f01/W9.3-F01-REPORT.md",
+   "cat": "DOCS"
+  },
+  {
+   "loc": "audit-evidence/20260902-w9.3-f01/pre/b10_fn_refs.json",
+   "cat": "DOCS"
+  },
+  {
+   "loc": "audit-evidence/20260902-w9.3-f01/pre/b10b_fn_table_map.json",
+   "cat": "DOCS"
+  }
+ ]
+}

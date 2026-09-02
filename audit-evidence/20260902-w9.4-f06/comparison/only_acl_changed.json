@@ -1,0 +1,15 @@
+{
+ "total_pre": 481,
+ "total_post": 481,
+ "identity_changes": [],
+ "unexpected_acl_changes": [],
+ "errors": [],
+ "matrix_violations": [],
+ "restorer_grant_preserved": true,
+ "candidates_total": 119,
+ "candidates_acl_changed": 119,
+ "others_total": 362,
+ "others_unchanged": 362,
+ "prosrc_md5_verified": 481,
+ "verdict": "PASS"
+}

@@ -1,0 +1,426 @@
+{
+ "adjust_sale_payment": [
+  "browser",
+  "session"
+ ],
+ "auto_match_bank_items": [
+  "browser",
+  "service"
+ ],
+ "bulk_assign_memberships": [
+  "indirect",
+  "service"
+ ],
+ "bulk_soft_delete_stores": [
+  "browser",
+  "service"
+ ],
+ "calculate_abc": [
+  "browser",
+  "service"
+ ],
+ "calculate_service_distribution": [
+  "indirect",
+  "service"
+ ],
+ "cancel_transfer": [
+  "browser"
+ ],
+ "check_bulk_ops_hourly_limit": [
+  "browser",
+  "service"
+ ],
+ "cleanup_old_aggregates": [
+  "indirect",
+  "service"
+ ],
+ "close_cash_shift": [
+  "service"
+ ],
+ "close_fiscal_period": [
+  "browser",
+  "service"
+ ],
+ "close_production_order_v2": [
+  "browser",
+  "session"
+ ],
+ "confirm_inventory_adjustment": [
+  "browser"
+ ],
+ "confirm_pending_reception": [
+  "browser"
+ ],
+ "confirm_transfer": [
+  "browser",
+  "service"
+ ],
+ "create_devolution": [
+  "browser",
+  "service"
+ ],
+ "create_devolution_v2": [
+  "browser",
+  "service"
+ ],
+ "create_production_order_v2": [
+  "browser",
+  "service",
+  "session"
+ ],
+ "create_purchase_order": [
+  "browser",
+  "session"
+ ],
+ "create_quotation": [
+  "browser",
+  "service"
+ ],
+ "create_received_service_v2": [
+  "indirect",
+  "service"
+ ],
+ "create_sale": [
+  "browser"
+ ],
+ "create_sale_v2": [
+  "browser",
+  "service",
+  "user"
+ ],
+ "create_store_with_membership": [
+  "service"
+ ],
+ "create_transfer": [
+  "browser",
+  "service",
+  "user"
+ ],
+ "create_vale_salida": [
+  "service"
+ ],
+ "detect_orphan_users": [
+  "service"
+ ],
+ "discover_backup_tables": [
+  "browser",
+  "unknown"
+ ],
+ "distribute_service_cost_v2": [
+  "indirect",
+  "service"
+ ],
+ "duplicate_inventory_adjustment": [
+  "browser",
+  "service"
+ ],
+ "duplicate_inventory_adjustment_v2": [
+  "browser",
+  "service"
+ ],
+ "generate_bulk_confirmation_token": [
+  "browser",
+  "service"
+ ],
+ "generate_bulk_override_token": [
+  "browser",
+  "service"
+ ],
+ "get_audit_logs": [
+  "browser",
+  "unknown"
+ ],
+ "get_backup_table_list": [
+  "browser",
+  "unknown"
+ ],
+ "get_batch_store_daily_kpis": [
+  "browser"
+ ],
+ "get_cash_closures": [
+  "browser",
+  "unknown"
+ ],
+ "get_cash_report": [
+  "browser",
+  "session"
+ ],
+ "get_daily_expenses_aggregated": [
+  "browser",
+  "unknown"
+ ],
+ "get_daily_income_aggregated": [
+  "browser",
+  "unknown"
+ ],
+ "get_dashboard_kpis": [
+  "browser"
+ ],
+ "get_global_max_operation_date": [
+  "browser"
+ ],
+ "get_low_stock_count": [
+  "browser"
+ ],
+ "get_new_academy_cards": [
+  "browser"
+ ],
+ "get_paginated_products": [
+  "anon",
+  "browser",
+  "service",
+  "unknown"
+ ],
+ "get_paginated_products_v2": [
+  "browser"
+ ],
+ "get_product_cost_analysis": [
+  "indirect",
+  "service"
+ ],
+ "get_product_stock_ledger_paginated": [
+  "browser",
+  "unknown",
+  "user"
+ ],
+ "get_products_for_pos": [
+  "browser",
+  "user"
+ ],
+ "get_products_for_reception": [
+  "browser"
+ ],
+ "get_profit_report": [
+  "browser",
+  "unknown"
+ ],
+ "get_purchases_book": [
+  "service"
+ ],
+ "get_reorder_suggestions": [
+  "browser",
+  "service"
+ ],
+ "get_sales_book": [
+  "service"
+ ],
+ "get_sales_since_last_closure": [
+  "browser"
+ ],
+ "get_store_analytics_advanced": [
+  "browser"
+ ],
+ "get_tax_report": [
+  "service"
+ ],
+ "get_tenant_cash_report": [
+  "service"
+ ],
+ "get_tenant_sales_summary": [
+  "service"
+ ],
+ "get_transactions": [
+  "browser",
+  "unknown"
+ ],
+ "get_transferable_stores": [
+  "browser"
+ ],
+ "get_transfers": [
+  "browser",
+  "unknown"
+ ],
+ "get_usage_summary": [
+  "indirect",
+  "service"
+ ],
+ "get_user_audit_history": [
+  "service"
+ ],
+ "get_worker_commission_summary": [
+  "browser",
+  "session",
+  "user"
+ ],
+ "increment_user_usage": [
+  "browser"
+ ],
+ "lock_fiscal_period": [
+  "browser",
+  "service"
+ ],
+ "manage_user_memberships": [
+  "browser"
+ ],
+ "managed_create_user_v2": [
+  "service"
+ ],
+ "managed_delete_product": [
+  "browser"
+ ],
+ "managed_reset_password": [
+  "service"
+ ],
+ "managed_revoke_membership": [
+  "service"
+ ],
+ "managed_soft_delete_user": [
+  "service"
+ ],
+ "managed_toggle_product_active": [
+  "browser"
+ ],
+ "managed_toggle_user_status": [
+  "service"
+ ],
+ "managed_update_membership": [
+  "service"
+ ],
+ "managed_update_tenant_plan": [
+  "service"
+ ],
+ "managed_update_user": [
+  "service"
+ ],
+ "perform_inventory_adjustment": [
+  "browser",
+  "user"
+ ],
+ "process_inventory_adjustment": [
+  "browser",
+  "user"
+ ],
+ "process_pick3_transaction": [
+  "browser"
+ ],
+ "purge_old_reset_snapshots": [
+  "browser",
+  "service"
+ ],
+ "receive_against_po": [
+  "browser",
+  "session"
+ ],
+ "receive_production_output": [
+  "browser",
+  "session"
+ ],
+ "receive_to_warehouse": [
+  "browser",
+  "service"
+ ],
+ "reconcile_orphan_user": [
+  "service"
+ ],
+ "register_reception": [
+  "browser",
+  "user"
+ ],
+ "register_stock_movement": [
+  "browser",
+  "user"
+ ],
+ "register_supplier_payment": [
+  "browser",
+  "session"
+ ],
+ "reopen_cash_shift": [
+  "service"
+ ],
+ "reset_store_data": [
+  "service"
+ ],
+ "reverse_adjustment": [
+  "browser",
+  "service"
+ ],
+ "reverse_devolution": [
+  "browser",
+  "service"
+ ],
+ "reverse_production_order": [
+  "browser",
+  "service"
+ ],
+ "reverse_receipt": [
+  "browser",
+  "service"
+ ],
+ "reverse_receipt_v2": [
+  "browser",
+  "service"
+ ],
+ "reverse_transaction": [
+  "browser",
+  "service"
+ ],
+ "reverse_transaction_v2": [
+  "browser",
+  "service"
+ ],
+ "reverse_transfer": [
+  "browser",
+  "service"
+ ],
+ "reverse_vale_salida": [
+  "service"
+ ],
+ "save_product_cost_sheet": [
+  "service"
+ ],
+ "set_config": [
+  "service"
+ ],
+ "set_purchase_order_status": [
+  "browser",
+  "session"
+ ],
+ "set_received_service_status": [
+  "indirect",
+  "service"
+ ],
+ "soft_delete_store": [
+  "indirect",
+  "service"
+ ],
+ "update_reception_items": [
+  "browser",
+  "session"
+ ],
+ "update_transaction_taxes": [
+  "browser"
+ ],
+ "upsert_manual_exchange_rate_with_audit": [
+  "indirect",
+  "service"
+ ],
+ "upsert_usage_aggregate": [
+  "indirect",
+  "service"
+ ],
+ "validate_store_can_be_modified": [
+  "browser",
+  "service"
+ ],
+ "void_closed_production_order": [
+  "browser",
+  "session"
+ ],
+ "void_inventory_adjustment": [
+  "browser"
+ ],
+ "void_pending_reception": [
+  "browser"
+ ],
+ "void_received_service_with_reversal": [
+  "indirect",
+  "service"
+ ],
+ "void_transaction": [
+  "browser"
+ ],
+ "withdraw_production_item": [
+  "browser",
+  "session"
+ ]
+}

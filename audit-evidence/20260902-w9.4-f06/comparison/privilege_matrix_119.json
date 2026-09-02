@@ -1,0 +1,1073 @@
+[
+ {
+  "oid": 136803,
+  "signature": "public.apply_physical_count(p_count_id uuid, p_user_id uuid, p_apply_zero_diffs boolean)",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 136851,
+  "signature": "public.approve_transfer(p_transfer_id uuid, p_user_id uuid)",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 137780,
+  "signature": "public.audit_backup_restore_protected_change()",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 138218,
+  "signature": "public.audit_cash_closures_changes()",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 138220,
+  "signature": "public.audit_commission_payments_changes()",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 138222,
+  "signature": "public.audit_fiscal_closings_changes()",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 138224,
+  "signature": "public.audit_payment_transactions_changes()",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 52507,
+  "signature": "public.audit_product_changes()",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 38096,
+  "signature": "public.audit_profile_changes()",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 70045,
+  "signature": "public.audit_role_changes()",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 38098,
+  "signature": "public.audit_store_access_changes()",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 52509,
+  "signature": "public.audit_store_changes()",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 136257,
+  "signature": "public.auto_kardex_on_stock_movement()",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 142629,
+  "signature": "public.bulk_update_products(_products jsonb)",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 138783,
+  "signature": "public.calculate_receipt_total_cup(p_receipt_id uuid)",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 70047,
+  "signature": "public.can_create_user_with_role(p_creator_id uuid, p_role_name text)",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 79082,
+  "signature": "public.can_safely_delete_user(p_user_id uuid)",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 28123,
+  "signature": "public.can_void_receipt(p_receipt_id uuid)",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 34760,
+  "signature": "public.cancel_reception(p_reception_id uuid)",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 138145,
+  "signature": "public.check_tenant_store_quota(p_tenant_id uuid, p_plan plan_t)",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 21756,
+  "signature": "public.cleanup_expired_idempotency_keys()",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 138285,
+  "signature": "public.close_cash_shift(p_closure_id uuid, p_declared_cash numeric, p_declared_vouchers numeric, p_notes text, p_user_id uuid)",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 138627,
+  "signature": "public.close_service_order_as_sale(p_order_id uuid, p_store_id uuid, p_seller_id uuid, p_payment_method text, p_currency text, p_exchange_rate numeric, p_user_id uuid)",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 136719,
+  "signature": "public.compensate_inventory_error(p_store_id uuid, p_original_movement_id uuid, p_reason text, p_user_id uuid)",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 136801,
+  "signature": "public.create_physical_count(p_store_id uuid, p_user_id uuid, p_notes text)",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 137570,
+  "signature": "public.create_pre_restore_snapshot(p_store_id uuid)",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 138143,
+  "signature": "public.create_store_with_membership(p_name text, p_address text, p_created_by uuid, p_max_stores integer, p_logo_url text, p_reeup text, p_nit text, p_bank_account text, p_phone text, p_email text, p_slug text, p_plantilla text, p_signature_url text, p_stamp_url text, p_latitude double precision, p_longitude double precision, p_tenant_id uuid)",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 142308,
+  "signature": "public.create_vale_salida(p_store_id uuid, p_items jsonb, p_production_order_id uuid, p_notes text, p_idempotency_key text)",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 142325,
+  "signature": "public.create_vale_salida(p_store_id uuid, p_items jsonb, p_production_order_id uuid, p_notes text, p_idempotency_key text, p_user_id uuid)",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 131395,
+  "signature": "public.deduct_stock(p_store_id uuid, p_product_id uuid, p_quantity numeric)",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 138109,
+  "signature": "public.detect_orphan_users()",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 142220,
+  "signature": "public.enforce_ledger_append_only()",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 136259,
+  "signature": "public.ensure_fiscal_period(p_store_id uuid, p_year integer, p_month integer)",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 142600,
+  "signature": "public.ensure_product_barcode()",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 131041,
+  "signature": "public.fn_log_system_health(p_payload jsonb)",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 26950,
+  "signature": "public.fn_process_receipt(p_items jsonb, p_user_id uuid, p_reference text)",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 130964,
+  "signature": "public.fn_process_receipt(p_items jsonb, p_user_id uuid, p_store_id uuid, p_reference text)",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 26951,
+  "signature": "public.fn_process_sale(p_items jsonb, p_cashier_id uuid, p_payment_method text)",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 26677,
+  "signature": "public.fn_sync_inventory_on_movement()",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 26952,
+  "signature": "public.fn_void_receipt(p_receipt_id uuid, p_user_id uuid)",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 137574,
+  "signature": "public.generate_confirmation_token(p_session_id uuid)",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 142598,
+  "signature": "public.generate_internal_barcode()",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 20172,
+  "signature": "public.generate_inventory_snapshot(p_store_id uuid)",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 131405,
+  "signature": "public.get_ai_api_key(p_user_id uuid, p_provider text)",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 137493,
+  "signature": "public.get_available_stock(p_store_id uuid, p_product_id uuid)",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 28149,
+  "signature": "public.get_inventory_report(p_from_date timestamp with time zone, p_to_date timestamp with time zone)",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 28171,
+  "signature": "public.get_inventory_report(p_store_id uuid, p_from_date timestamp with time zone, p_to_date timestamp with time zone)",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 28152,
+  "signature": "public.get_inventory_with_costs(p_store_id uuid)",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 23014,
+  "signature": "public.get_my_sales(p_search_query text, p_status text, p_date_from timestamp with time zone, p_date_to timestamp with time zone, p_min_amount numeric, p_max_amount numeric, p_sort_column text, p_sort_direction text, p_limit integer, p_offset integer)",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 28159,
+  "signature": "public.get_my_sales(p_search_query text, p_status text, p_payment_method text, p_date_from timestamp with time zone, p_date_to timestamp with time zone, p_min_amount numeric, p_max_amount numeric, p_sort_column text, p_sort_direction text, p_limit integer, p_offset integer)",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 28160,
+  "signature": "public.get_my_sales_summary(p_period text)",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 132041,
+  "signature": "public.get_or_create_product_cost_sheet(p_product_id uuid, p_store_id uuid, p_template_id text, p_modalidad text, p_pdf_format text)",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 28163,
+  "signature": "public.get_product_stock_ledger(p_product_id uuid, p_store_id uuid)",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 24207,
+  "signature": "public.get_product_variants_counts()",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 138306,
+  "signature": "public.get_purchases_book(p_store_id uuid, p_year integer, p_month integer)",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 138305,
+  "signature": "public.get_sales_book(p_store_id uuid, p_year integer, p_month integer)",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 138307,
+  "signature": "public.get_tax_report(p_store_id uuid, p_year integer, p_month integer)",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 138146,
+  "signature": "public.get_tenant_cash_report(p_tenant_id uuid, p_start_date timestamp with time zone, p_end_date timestamp with time zone)",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 138147,
+  "signature": "public.get_tenant_sales_summary(p_tenant_id uuid, p_days integer)",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 59842,
+  "signature": "public.get_transactions_with_profit(p_store_id uuid, p_search_term text, p_date_from timestamp without time zone, p_date_to timestamp without time zone, p_limit integer)",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 132940,
+  "signature": "public.get_usage_forecast()",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 138111,
+  "signature": "public.get_user_audit_history(p_user_id uuid, p_limit integer, p_offset integer)",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 21751,
+  "signature": "public.get_user_role()",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 142421,
+  "signature": "public.has_management_access_as(p_user_id uuid, p_store_id uuid)",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 136268,
+  "signature": "public.has_store_access_as(p_user_id uuid, p_store_id uuid)",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 76874,
+  "signature": "public.is_admin_check(p_user_id uuid)",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 47064,
+  "signature": "public.is_manager_of_store(p_store_id uuid)",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 75761,
+  "signature": "public.is_role_not_changed(p_user_id uuid, p_new_role user_role, p_new_role_id uuid)",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 47076,
+  "signature": "public.is_store_manager(p_store_id uuid)",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 53941,
+  "signature": "public.is_user_creator(p_target_user_id uuid)",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 138598,
+  "signature": "public.link_receipts_to_service(p_service_id uuid, p_receipt_ids jsonb, p_user_id uuid)",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 88135,
+  "signature": "public.log_audit_event(p_action text, p_payload jsonb, p_store_id uuid)",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 28126,
+  "signature": "public.log_transaction_changes()",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 38673,
+  "signature": "public.managed_create_store(p_name text, p_address text)",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 88184,
+  "signature": "public.managed_create_user(p_max_users integer, p_max_stores integer, p_role text, p_full_name text, p_email text, p_creator_id uuid, p_target_user_id uuid, p_store_id uuid, p_memberships jsonb)",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 138098,
+  "signature": "public.managed_create_user_v2(p_email text, p_full_name text, p_role user_role, p_plan plan_t, p_store_id uuid, p_memberships jsonb, p_max_stores integer, p_max_users integer, p_target_user_id uuid, p_creator_id uuid)",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 79083,
+  "signature": "public.managed_delete_user(p_user_id uuid)",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 138105,
+  "signature": "public.managed_reset_password(p_user_id uuid, p_caller_id uuid)",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 138108,
+  "signature": "public.managed_revoke_membership(p_membership_id uuid, p_caller_id uuid)",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 138106,
+  "signature": "public.managed_soft_delete_user(p_user_id uuid, p_reason text, p_caller_id uuid)",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 138104,
+  "signature": "public.managed_toggle_user_status(p_user_id uuid, p_is_active boolean, p_caller_id uuid)",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 138107,
+  "signature": "public.managed_update_membership(p_membership_id uuid, p_role user_role, p_status text, p_caller_id uuid)",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 138144,
+  "signature": "public.managed_update_tenant_plan(p_tenant_id uuid, p_plan plan_t, p_subscription_status text, p_caller_id uuid)",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 138103,
+  "signature": "public.managed_update_user(p_user_id uuid, p_full_name text, p_role user_role, p_role_id uuid, p_is_active boolean, p_max_stores_limit integer, p_max_users_limit integer, p_plan plan_t, p_caller_id uuid)",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 136485,
+  "signature": "public.mark_expired_lots(p_store_id uuid)",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 70049,
+  "signature": "public.on_auth_user_created()",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 119653,
+  "signature": "public.on_pick3_profile_initial_bankroll()",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 21754,
+  "signature": "public.prevent_direct_inventory_modification()",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 138589,
+  "signature": "public.prevent_received_service_edit()",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 132504,
+  "signature": "public.process_stock_adjustment(p_store_id uuid, p_product_id uuid, p_quantity_delta numeric, p_reason text, p_user_id uuid, p_operation_date timestamp with time zone)",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 138110,
+  "signature": "public.reconcile_orphan_user(p_auth_user_id uuid, p_action text, p_reason text, p_caller_id uuid)",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 137078,
+  "signature": "public.reconcile_stock(p_store_id uuid, p_fix boolean, p_user_id uuid)",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 136802,
+  "signature": "public.record_counted_quantity(p_count_id uuid, p_product_id uuid, p_counted_quantity numeric, p_user_id uuid, p_notes text)",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 21401,
+  "signature": "public.record_sale_movement(p_store_id uuid, p_product_id uuid, p_variant_id uuid, p_quantity integer, p_reference text)",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 138690,
+  "signature": "public.register_idempotency(p_key text, p_operation text, p_record_id uuid, p_param_hash text, p_result jsonb)",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 136852,
+  "signature": "public.reject_transfer(p_transfer_id uuid, p_reason text, p_user_id uuid)",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 137974,
+  "signature": "public.release_expired_reservations()",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 138208,
+  "signature": "public.reopen_cash_shift(p_closure_id uuid, p_reason text, p_user_id uuid)",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 138210,
+  "signature": "public.reverse_commissions_on_sale_void()",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 142337,
+  "signature": "public.reverse_vale_salida(p_slip_id uuid, p_reason text, p_user_id uuid)",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 131406,
+  "signature": "public.save_ai_api_key(p_provider text, p_api_key text, p_label text)",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 137075,
+  "signature": "public.set_transfer_approval_rule(p_tenant_id uuid, p_store_id uuid, p_threshold_amount numeric, p_threshold_quantity numeric, p_approver_roles text[], p_is_active boolean, p_user_id uuid)",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 133149,
+  "signature": "public.snapshot_commission_rule()",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 131719,
+  "signature": "public.sync_inventory_from_products(p_store_id uuid)",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 131044,
+  "signature": "public.sync_product_has_movements()",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 131067,
+  "signature": "public.sync_product_stock()",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 133144,
+  "signature": "public.touch_updated_at()",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 136850,
+  "signature": "public.transfer_requires_approval(p_origin_store_id uuid, p_destination_store_id uuid, p_items jsonb)",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 138785,
+  "signature": "public.update_receipt_item_tasa(p_receipt_item_id uuid, p_new_tasa_cambio_recepcion numeric, p_new_moneda_recepcion text, p_motivo text, p_user_id uuid)",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 131996,
+  "signature": "public.upsert_store_cost_template(p_store_id uuid, p_template_id text, p_template_data jsonb, p_modalidad text, p_pdf_format text, p_created_by uuid)",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 38664,
+  "signature": "public.validate_active_store()",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 137560,
+  "signature": "public.validate_backup_registry_drift()",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 138292,
+  "signature": "public.validate_operation_date(p_new_date timestamp with time zone, p_store_id uuid)",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 137561,
+  "signature": "public.validate_post_restore(p_store_id uuid, p_backup_payload jsonb)",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 137569,
+  "signature": "public.validate_pre_restore_fk_integrity(p_store_id uuid)",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 138148,
+  "signature": "public.validate_tenant_access(p_user_id uuid, p_store_id uuid)",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 132487,
+  "signature": "public.validate_transfer_operation_date(p_new_date timestamp with time zone, p_origin_store_id uuid, p_destination_store_id uuid)",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 88196,
+  "signature": "public.verify_audit_chain()",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ },
+ {
+  "oid": 142921,
+  "signature": "public.withdraw_production_item_v3(p_item_id uuid, p_qty numeric, p_store_id uuid, p_user_id uuid, p_idempotency_key text, p_reference_id uuid, p_reference_doc text)",
+  "public": false,
+  "anon": false,
+  "auth": false,
+  "service_role": true,
+  "postgres": true
+ }
+]
