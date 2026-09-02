@@ -1,0 +1,13 @@
+W9.4.5 — H-4 | FASE 15 — DRY RUN (CREATE OR REPLACE dentro de BEGIN/ROLLBACK)
+
+raw/post no aplica; resultado en raw/pre__h4_dryrun_result.json:
+  oid=138196 (preservado) identity_args='p_receipt_id uuid, p_reason text, p_user_id uuid'
+  return_type=jsonb owner=postgres security_definer=true
+  proconfig={"search_path=public, pg_temp"}
+  proacl={=X/postgres,postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}  (IDÉNTICO al PRE)
+  prosrc_len=4041 has_caller_guard=true has_store_check=true has_clamp=false
+  audit_unified=true has_payment_reset=true uses_auth_uid=true dependents=0
+
+Veredicto: PASS — único cambio = prosrc + search_path (autorizados por H-4);
+firma/owner/SECURITY DEFINER/ACL/dependencias intactas. Rollback = ROLLBACK de la
+transacción (no persistió nada).

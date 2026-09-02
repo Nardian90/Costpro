@@ -1,0 +1,23 @@
+W9.4.5 — H-4 | FASE 18 — REGRESIÓN RPC DE SEGURIDAD (todo BEGIN/ROLLBACK, 0 persistencia)
+
+Contexto: receipt fd9d6c88 (101 ítems) y escenario sintético con product real de la
+store del miembro (raw/post__h4_rpc_*.json).
+
+| # | Caso | Resultado | Veredicto |
+|---|---|---|---|
+| 1 | Miembro de OTRA store (store/tenant incorrecto) | denied: ERR_UNAUTHORIZED | PASS |
+| 2 | anon | denied: ERR_UNAUTHORIZED | PASS |
+| 3 | Identidad manipulada (p_user_id=admin por miembro) | éxito PERO reversed_by/audit=auth.uid() real (falsificación neutralizada) | PASS |
+| 4 | Miembro honesto — flujo completo | success; status='reversed'; payment_status='unpaid'; paid_amount=0; payment_transactions marcado (1); stock_movements purchase_reverse=1; WAC exacto 200→200.2004008 ((S·ca+q·uc)/(S+q)); audit REVERSE_RECEIPT_V2 con user_id real | PASS |
+| 5 | Doble reversión | denied: ERR_RECEIPT_NOT_ACTIVE: status=reversed | PASS |
+| 6 | service_role (vía /api/reverse) | allowed (p_user_id server-side, store check también aplicado) | PASS |
+| 7 | Admin global | allowed (semántica has_store_access_as: admin→true, por diseño) | PASS |
+| 8 | Stock insuficiente (datos reales S=18 < q=19) | denied: ERR_WAC_REVERSE_NEGATIVE_STOCK: S=18.0000 q=-19.0000 (detección, no silencio) | PASS |
+
+Auditoría escrita verificada como owner (diagnóstico raw/post__h4_audit_diag.json):
+audit_rows_by_action('REVERSE_RECEIPT_V2')=1 por reversión (+1 fila del trigger
+trg_audit_receipt_changes por el cambio de status). Lecturas como authenticated
+devuelven [] por RLS preexistente de audit_logs — condición preexistente, no H-4.
+
+Reversión persistente sobre datos reales: NO EXECUTED (todas las pruebas en
+transacciones con ROLLBACK; métricas finales idénticas — ver 19_data_integrity).

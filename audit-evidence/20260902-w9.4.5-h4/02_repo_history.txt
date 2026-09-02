@@ -1,0 +1,45 @@
+W9.4.5 — H-4 | FASE 2 — HISTORIA CANÓNICA RECONSTRUIDA
+
+Versiones de reverse_receipt_v2 en el repo (supabase/migrations/):
+  M1  20260808000004_v2_17_4_reverse_receipt_v2.sql   (iteración 11.3, fix B-12)
+      guard v_caller_uid (service_role-aware), sin clamp (RAISE ERR_INSUFFICIENT_STOCK),
+      register_stock_movement + kardex directo, audit 'REVERSE_RECEIPT_V2',
+      search_path 'public, pg_temp'
+  M2  20260810000020_pr2_migracion_b_schema.sql        (PR-2)
+      mantiene v_caller_uid; reorganización C5 (idempotencia por status)
+  M3  20260810000040_pr4_kardex_fix.sql                (PR-4 — última migración del repo)
+      v_caller_uid + has_store_access_as (ERR_UNAUTHORIZED), idempotencia voided,
+      RAISE ERR_INSUFFICIENT_STOCK (sin clamp), register_stock_movement,
+      WAC inline (UPDATE cost_average directo), reset de pagos
+      (receipts.payment_status='unpaid', paid_amount=0, paid_at=NULL +
+      payment_transactions notes '[REVERSED by ...]'), status='voided',
+      audit 'REVERSE_RECEIPT_V2', search_path 'public, pg_temp',
+      return {status, receipt_id, payments_reversed}
+
+Versión canónica POSTERIOR (fuera de supabase/migrations/):
+  W7  audit-evidence/20260830-w7/release/sql/01-df01-wac-singleton.sql — sección S2.6
+      Reescritura DF-01 "WAC single writer": las 12 rutas de WAC pasan por fn_recalc_wac
+      (+ trigger guard trg_guard_wac_writer que RECHAZA todo UPDATE de cost_average
+      sin token app.wac_writer='fn_recalc_wac').
+      Cuerpo = EXACTAMENTE el vivo en producción (diff byte-a-byte: idéntico).
+      search_path 'public, extensions'; clamp GREATEST(0); sin guard; sin reset de pagos;
+      audit 'RECEIPT_REVERSED_V2'; return {status, receipt_id, items_processed}.
+
+FORENSE GIT:
+  git log --all -S 'RECEIPT_REVERSED_V2'  → 1c204d1e (feat(w7) consolidate audited
+  migration release, 2026-08-30 05:50 UTC) y 7b1bafcd (solo evidencia W9.4.1).
+  El cuerpo vivo NO existe en supabase/migrations/ en ningún commit: vive únicamente
+  en la release consolidada W7 dentro de audit-evidence/.
+
+FORENSE DE APLICACIÓN:
+  supabase_migrations.schema_migrations se detiene en 20260615000003 → NINGUNA
+  migración de julio/agosto (B-12, PR-2, PR-4, W7) pasó por el sistema de migraciones;
+  toda la producción reciente se aplicó OUT-OF-BAND (Management API/dashboard).
+  Ejecuciones históricas registradas: 36 audit_logs 'REVERSE_RECEIPT_V2'
+  (huella PR-4) en la noche 2026-08-09T23:32Z → 2026-08-10T04:04Z.
+  wac_change_log = 0 filas (sin eventos WAC desde la aplicación W7).
+
+CONCLUSIÓN: el repo (supabase/migrations) está OBSOLETO respecto a producción.
+La autoridad de facto de producción es la release W7 (audit-evidence/20260830-w7).
+Gobernanza defectuosa: la definición que define producción vive como 'evidencia',
+no como migración versionada.

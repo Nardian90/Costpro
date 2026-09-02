@@ -1,0 +1,8 @@
+W9.4.5 — H-4 | FASE 16 — APLICACIÓN
+
+Canal: Management API https://api.supabase.com/v1/projects/wthkddeleylijmonclxg/database/query
+Migración: supabase/migrations/20260902231200_w9_f45_h4_reverse_receipt_v2_reconcile.sql
+Inicio:  2026-09-02T23:0x:xxZ (raw/pre__apply_start.txt)
+Fin:     2026-09-02T23:0x:xxZ (raw/pre__apply_end.txt)
+Respuesta: HTTP 201, body [] (sin errores; guards RAISE NOTICE no visibles en respuesta)
+Duración: inmediata. No hubo error; aplicación monolítica atómica (batch único).

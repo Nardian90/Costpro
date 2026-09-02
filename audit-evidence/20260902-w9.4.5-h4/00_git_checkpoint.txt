@@ -1,0 +1,15 @@
+W9.4.5 — H-4 | FASE 0 — GIT CHECKPOINT
+Fecha: 2026-09-02T22:44:00Z (UTC)
+
+HEAD        = 2f7af7dbd0507c28892bb6795b9c84ef0561bcc0
+origin/main = 2f7af7dbd0507c28892bb6795b9c84ef0561bcc0
+working tree = CLEAN (pre-ejecución)
+
+git log -5:
+2f7af7db (HEAD -> main, origin/main, origin/HEAD) security(w9): harden SECURITY DEFINER search_path
+033e05d9 security: harden mixed-context security definer functions
+7b1bafcd security(w9): harden exposed security definer functions
+2787b22c security(w9): harden RLS for F-01
+70f978b6 w9(f07): revoke PUBLIC/anon/authenticated EXECUTE on reset_store_data (W9.2)
+
+CHECKPOINT OK. Continúa directamente desde W9.4.4 — H-2 (BACKLOG).

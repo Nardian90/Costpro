@@ -1,0 +1,18 @@
+W9.4.5 — H-4 | FASE 19 — REGRESIÓN DE APLICACIÓN
+
+Código de aplicación: SIN CAMBIOS (git: solo migración H-4 + evidencia).
+Rutas activas verificadas estáticamente:
+  src/app/api/reverse/route.ts:44 → rpc 'reverse_receipt_v2' (flag ON en .env)
+  src/hooks/api/useReceptions.ts:153 → rpc 'reverse_receipt_v2' (PostgREST directo)
+  Ambos consumen la MISMA firma/JSON contract → compatibles (return aditivo).
+
+lint (eslint):  EXIT 0 — 0 errores (1291 warnings preexistentes)          → PASS
+vitest suite completa: 1892 passed / 24 skipped (90 files) EXIT 0         → PASS
+  (incluye iteration-11-3 contract tests: 63/63 PASS)
+typecheck (tsc --noEmit): exit 137 KILLED — OOM ambiental                 → INCONCLUSIVE — ENVIRONMENTAL OOM
+build (next build): exit 137 KILLED — OOM ambiental                       → INCONCLUSIVE — ENVIRONMENTAL OOM
+
+Route smoke runtime: no ejecutado (sin servidor en este entorno); la matriz FASE 18
+ejercitó el contrato RPC exacto por ambos roles efectivos (service_role y
+authenticated), incluyendo el caso de éxito y los de rechazo.
+Regla del mandato respetada: OOM ≠ PASS; se reporta INCONCLUSIVE — ENVIRONMENTAL OOM.

@@ -1,0 +1,1 @@
+{"message":"Failed to run sql query: ERROR:  42803: subquery uses ungrouped column \"r.store_id\" from outer query\nLINE 3:   JOIN public.products p ON p.id=ri.product_id AND p.store_id=r.store_id\n                                                                      ^\n"}

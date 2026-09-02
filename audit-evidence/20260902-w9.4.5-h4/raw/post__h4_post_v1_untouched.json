@@ -1,0 +1,1 @@
+[{"oid":136654,"proname":"reverse_receipt","identity_args":"p_receipt_id uuid, p_reason text, p_user_id uuid","owner":"postgres","prosecdef":true,"proconfig":"{search_path=public}","proacl":"{postgres=X/postgres,service_role=X/postgres}","prosrc_md5":"8dd39ad2b08111026eb69e40c57d168d"}]

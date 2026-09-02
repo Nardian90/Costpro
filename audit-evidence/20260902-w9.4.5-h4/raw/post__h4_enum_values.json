@@ -1,0 +1,1 @@
+[{"directions":"in","methods":"cash,transfer,zelle","receipts_cols":"id,created_at,user_id,status,total_cost,reference_doc,notes,store_id,supplier,reception_date,updated_at,tenant_id,payment_status,payment_method,paid_amount,due_date,paid_at,payment_terms_days,confirmed_at,confirmed_by,reversed_at,reversed_by,reversal_reason,original_receipt_id,po_id"}]

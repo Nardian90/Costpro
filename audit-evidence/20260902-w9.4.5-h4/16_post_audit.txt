@@ -1,0 +1,14 @@
+W9.4.5 — H-4 | FASE 17 — POST-AUDIT (raw/post__h4_post_catalog.json, …_diff_check.json)
+
+  oid=138196 (preservado) owner=postgres secdef=true volatility=v
+  proconfig={"search_path=public, pg_temp"}
+  proacl={=X/postgres,postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+  prosrc_len=4041 (idéntico al dry-run: md5 verificado)
+
+Reparaciones presentes: has_caller_guard=true has_store_check=true has_clamp=false
+  audit_unified=true has_payment_reset=true uses_auth_uid=true resets_payment_status=true
+
+V1 SIN CAMBIOS: oid=136654 owner=postgres secdef=true config={search_path=public}
+  acl={postgres=X,service_role=X} — intacta (H-2 permanece BACKLOG).
+Otros objetos: 0 dependientes; no desapareció ningún objeto ajeno (métricas globales
+de tablas idénticas — ver 19_data_integrity).

@@ -1,0 +1,24 @@
+W9.4.5 — H-4 | FASE 1 — DEFINICIÓN VIVA (snapshot pre-cambio, catálogo)
+
+Fuente completa: raw/pre__h4_live_catalog.json (pg_get_functiondef completo).
+Resumen del estado capturado 2026-09-02T22:47:05Z:
+
+  oid             = 138196
+  schema.name     = public.reverse_receipt_v2
+  signature       = (p_receipt_id uuid, p_reason text, p_user_id uuid) -> jsonb
+  owner           = postgres
+  language        = plpgsql
+  SECURITY DEFINER= true
+  volatility      = v (VOLATILE)
+  proconfig       = {search_path=public, extensions}
+  proacl          = {=X/postgres, postgres=X/postgres, authenticated=X/postgres, service_role=X/postgres}
+                    (=X → EXECUTE a PUBLIC; anon y authenticated heredan vía PUBLIC+grant explícito)
+  prosrc length   = 2201 chars
+
+Rasgos del cuerpo vivo (verificados por análisis de prosrc):
+  - SIN auth.uid() / auth.role() / has_store_access_as  → sin guard de autorización
+  - usa p_user_id directamente en created_by, reversed_by, audit_logs.user_id
+  - clamp GREATEST(0, ...) y saltó de fn_recalc_wac cuando new_stock=0
+  - INSERT directo en stock_movements (kardex vía trg_auto_kardex)
+  - sin reset de pagos (payment_status/paid_amount/paid_at/payment_transactions intactos)
+  - audit action 'RECEIPT_REVERSED_V2'

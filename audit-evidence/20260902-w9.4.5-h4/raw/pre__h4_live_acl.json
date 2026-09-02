@@ -1,0 +1,1 @@
+{"message":"Failed to run sql query: ERROR:  42P01: missing FROM-clause entry for table \"n\"\nLINE 5: WHERE n.nspname IS NULL OR p.oid = 'public.reverse_receipt_v2(uuid,text,uuid)'::regprocedure;\n              ^\n"}

@@ -1,0 +1,18 @@
+W9.4.5 — H-4 | FASE 13 — BASELINE PRE-CAMBIO (capturado 2026-09-02T22:58:58Z)
+
+Objeto (raw/pre__h4_live_catalog.json):
+  oid=138196 owner=postgres secdef=true volatility=v
+  proconfig={search_path=public, extensions}
+  proacl={=X/postgres,postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+  prosrc_len=2201  definición completa en raw/pre__h4_live_catalog.json
+Dependencias: pg_depend=0; triggers sobre la función=0; policies/views=0 (W9.4.4/FASE 3).
+
+Métricas de datos (PRE):
+  products_n=323  products_sum_stock=12094.6289  products_sum_wac=6852321.2457  null_wac=0
+  receipts_n=6 (active=6, reversed=0, voided=0, pending=0)
+  stock_movements_n=702 (purchase_reverse=0)
+  wac_log_n=0  audit_logs_n=7375  payment_tx_n=366  kardex_n=702
+
+Usuarios para matriz de autorización (raw/pre__h4_auth_matrix_users.json):
+  receipt objetivo fd9d6c88-… store 5e6fe821-…
+  member_in_store=28ebdfa1-… member_other_store=225dfa4b-… admin=051c6157-…
