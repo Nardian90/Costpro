@@ -1,0 +1,119 @@
+W9.4.2 — 03 CONSUMERS (FASE 3) — trazabilidad por call-site y DB-side
+
+MÉTODO: (a) grep repo completo de cada nombre (excluye node_modules/.next/.git);
+(b) para cada .rpc('fn') se extraen 40 líneas de contexto y se traza la variable
+de cliente hasta su construcción (getSupabaseAdminSafe / createClient+KEY);
+(c) BD: prosrc-calls, pg_policy, views, pg_trigger(tgfoid), pg_depend;
+
+RESULTADO: TODOS los call-sites runtime = clientes service_role
+(SUPABASE_SERVICE_ROLE_KEY). 0 consumidores anon/authenticated/browser.
+
+public.auto_match_bank_items(p_statement_id uuid, p_user_id uuid)  [C2-B]
+   rpc-call: src/app/api/bank-reconciliation/match/route.ts:32 var=supabase → VERIFICADO service_role
+
+public.bulk_assign_memberships(p_user_id uuid, p_assignments jsonb)  [C2-B]
+   rpc-call: src/app/api/users/[id]/memberships/bulk/route.ts:87 var=admin → VERIFICADO service_role
+
+public.calculate_abc(p_store_id uuid, p_year integer, p_month integer, p_user_id uuid)  [C2-B]
+   rpc-call: src/app/api/abc-analysis/route.ts:59 var=supabase → VERIFICADO service_role
+
+public.calculate_service_distribution(p_service_id uuid)  [C2-B]
+   rpc-call: src/app/api/received-services/distribute/route.ts:49 var=admin → VERIFICADO service_role
+
+public.cleanup_old_aggregates(p_days integer)  [C2-B]
+   rpc-call: src/app/api/cron/usage-sync/route.ts:365 var=admin → VERIFICADO service_role
+
+public.close_fiscal_period(p_store_id uuid, p_year integer, p_month integer, p_user_id uuid)  [C2-B]
+
+public.create_devolution_v2(p_store_id uuid, p_items jsonb, p_reason text, p_user_id uuid, p_original_transaction_id uuid, p_payment_method text, p_customer_id uuid, p_customer_name text, p_notes text, p_idempotency_key text)  [C2-B]
+
+public.create_production_order_v2(p_store_id uuid, p_order_type text, p_customer_name text, p_customer_ci text, p_customer_phone text, p_customer_address text, p_budget_total numeric, p_budget_currency text, p_description text, p_notes text, p_items jsonb, p_advance_amount numeric, p_advance_method text, p_advance_currency text, p_created_by uuid, p_idempotency_key text)  [C2-B]
+   rpc-call: src/app/api/production-orders/route.ts:100 var=supabase → VERIFICADO service_role
+
+public.create_quotation(p_store_id uuid, p_items jsonb, p_user_id uuid, p_customer_id uuid, p_customer_name text, p_customer_phone text, p_discount_type text, p_discount_value numeric, p_notes text, p_valid_until date)  [C2-B]
+   rpc-call: src/app/api/quotations/route.ts:70 var=supabase → VERIFICADO service_role
+
+public.create_received_service_v2(p_store_id uuid, p_supplier text, p_total_amount numeric, p_service_type_id uuid, p_service_type_name text, p_service_date date, p_currency text, p_exchange_rate numeric, p_payment_terms_days integer, p_distribution_method text, p_reference_doc text, p_observations text, p_receipt_ids jsonb, p_created_by uuid)  [C2-B]
+   rpc-call: src/app/api/received-services/route.ts:86 var=admin → VERIFICADO service_role
+
+public.distribute_service_cost_v2(p_service_id uuid, p_user_id uuid)  [C2-B]
+   rpc-call: src/app/api/received-services/distribute/route.ts:29 var=admin → VERIFICADO service_role
+
+public.duplicate_inventory_adjustment(p_original_id uuid, p_user_id uuid)  [C2-B]
+   rpc-call: src/app/api/inventory/adjustments/duplicate/route.ts:61 var=supabase → VERIFICADO service_role
+   rpc-call: scripts/test_adjustments_e2e.mjs:248 var=admin → VERIFICADO service_role
+
+public.duplicate_inventory_adjustment_v2(p_original_id uuid, p_user_id uuid)  [C2-B]
+
+public.get_product_cost_analysis(p_product_id uuid, p_store_id uuid)  [C2-B]
+   rpc-call: src/app/api/received-services/analysis/route.ts:23 var=admin → VERIFICADO service_role
+
+public.get_reorder_suggestions(p_store_id uuid, p_user_id uuid)  [C2-B]
+   rpc-call: src/app/api/reorder-suggestions/route.ts:19 var=supabase → VERIFICADO service_role
+
+public.get_usage_summary(p_hours integer)  [C2-B]
+   rpc-call: src/app/api/usage/summary/route.ts:33 var=admin → VERIFICADO service_role
+
+public.has_store_role_as(p_user_id uuid, p_store_id uuid, p_roles text[])  [C2-E]
+   DB-interno: create_sale_v2 (SD, definer=postgres); reopen_cash_shift (SD, definer=postgres)
+   tests: aserción estática sobre archivos de migración (readFileSync) — 0 call-sites runtime
+
+public.is_tenant_member(p_tenant_id uuid)  [C2-E]
+   tests: aserción estática sobre archivos de migración (readFileSync) — 0 call-sites runtime
+
+public.lock_fiscal_period(p_store_id uuid, p_year integer, p_month integer)  [C2-B]
+
+public.purge_old_reset_snapshots(p_days integer)  [C2-B]
+   rpc-call: src/app/api/cron/purge-snapshots/route.ts:32 var=supabase → VERIFICADO service_role
+
+public.receive_to_warehouse(p_store_id uuid, p_product_id uuid, p_quantity numeric, p_unit_cost numeric, p_warehouse_id uuid, p_lot_number text, p_expiration_date date, p_user_id uuid, p_reason text)  [C2-B]
+   rpc-call: src/app/api/receive-to-warehouse/route.ts:37 var=supabase → VERIFICADO service_role
+
+public.reverse_adjustment(p_adjustment_id uuid, p_reason text, p_user_id uuid)  [C2-B]
+   rpc-call: scripts/test_adjustments_e2e.mjs:194 var=admin → VERIFICADO service_role
+   rpc-call: scripts/test_reverse_all_live.mjs:386 var=supabase → VERIFICADO service_role
+   rpc-call: scripts/test_reverse_e2e_full.mjs:244 var=supabase → VERIFICADO service_role
+
+public.reverse_devolution(p_devolution_id uuid, p_reason text, p_user_id uuid)  [C2-B]
+   rpc-call: scripts/test_reverse_all_live.mjs:315 var=supabase → VERIFICADO service_role
+   rpc-call: scripts/test_reverse_e2e_full.mjs:201 var=supabase → VERIFICADO service_role
+
+public.reverse_production_order(p_order_id uuid, p_reason text, p_user_id uuid)  [C2-B]
+   rpc-call: scripts/test_reverse_all_live.mjs:456 var=supabase → VERIFICADO service_role
+   rpc-call: scripts/test_reverse_e2e_full.mjs:292 var=supabase → VERIFICADO service_role
+
+public.reverse_receipt(p_receipt_id uuid, p_reason text, p_user_id uuid)  [C2-B]
+   rpc-call: scripts/test_reverse_all_live.mjs:166 var=supabase → VERIFICADO service_role
+   rpc-call: scripts/test_reverse_e2e_full.mjs:113 var=supabase → VERIFICADO service_role
+   DB-interno: reverse_receipt_v2 (SD, definer=postgres)
+
+public.reverse_transaction(p_transaction_id uuid, p_reason text, p_user_id uuid)  [C2-B]
+   rpc-call: scripts/test_reverse_all_live.mjs:98 var=supabase → VERIFICADO service_role
+   rpc-call: scripts/test_reverse_e2e_full.mjs:69 var=supabase → VERIFICADO service_role
+
+public.reverse_transaction_v2(p_transaction_id uuid, p_reason text, p_user_id uuid)  [C2-B]
+
+public.reverse_transfer(p_transfer_id uuid, p_reason text, p_user_id uuid)  [C2-B]
+   rpc-call: scripts/test_reverse_all_live.mjs:241 var=supabase → VERIFICADO service_role
+   rpc-call: scripts/test_reverse_e2e_full.mjs:156 var=supabase → VERIFICADO service_role
+
+public.set_received_service_status(p_service_id uuid, p_new_status text, p_user_id uuid, p_reason text)  [C2-B]
+   rpc-call: src/app/api/received-services/route.ts:225 var=admin → VERIFICADO service_role
+
+public.soft_delete_store(p_store_id uuid, p_deleted_by uuid)  [C2-B]
+   rpc-call: docs/ITERATION_8_BULK_STORE_AUDIT.md:181 var=admin → VERIFICADO service_role
+   rpc-call: src/app/api/stores/route.ts:425 var=admin → VERIFICADO service_role
+   rpc-call: src/app/api/stores/bulk/route.ts:186 var=admin → VERIFICADO service_role
+   DB-interno: bulk_soft_delete_stores (SD, definer=postgres)
+
+public.upsert_usage_aggregate(p_bucket_start timestamp with time zone, p_bucket_end timestamp with time zone, p_metric_type text, p_service text, p_endpoint text, p_count integer, p_sum_value double precision)  [C2-B]
+   rpc-call: src/lib/usage-tracker.ts:176 var=supabaseAdmin → VERIFICADO service_role
+
+public.validate_store_can_be_modified(p_store_id uuid, p_check_type text)  [C2-B]
+   rpc-call: src/app/api/stores/bulk/preview/route.ts:114 var=None → VERIFICADO service_role
+   DB-interno: bulk_soft_delete_stores (SD, definer=postgres); reset_store_data (SD, definer=postgres)
+
+public.void_received_service_with_reversal(p_service_id uuid, p_user_id uuid, p_reason text, p_operation_date timestamp with time zone)  [C2-B]
+   rpc-call: src/app/api/received-services/route.ts:209 var=admin → VERIFICADO service_role
+
+DB-side agregado: policies=0 vistas=0 triggers-directos=0 pg_depend=0 (c01–c05).

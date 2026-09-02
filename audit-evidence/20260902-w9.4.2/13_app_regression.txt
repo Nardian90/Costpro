@@ -1,0 +1,37 @@
+W9.4.2 — 13 APP REGRESSION (FASE 16)
+
+pm2: 3/3 online (costpro, telegram-cron-poller, whatsapp-cron-poller)
+GET /            → 200
+GET /api/health  → 200 {"status":"ok",...}
+
+Rutas consumidoras de las 33, sin sesión (esperado 401/403/405 — jamás 500):
+
+POST /api/reverse → 401 | GET → 405
+POST /api/abc-analysis → 401 | GET → 401
+POST /api/devolutions → 401 | GET → 401
+POST /api/quotations → 401 | GET → 401
+POST /api/receive-to-warehouse → 401 | GET → 405
+POST /api/reorder-suggestions → 405 | GET → 401
+POST /api/fiscal-close → 401 | GET → 401
+POST /api/bank-reconciliation/match → 401 | GET → 405
+POST /api/received-services → 401 | GET → 401
+POST /api/stores/bulk/preview → 401 | GET → 405
+POST /api/stores/bulk → 401 | GET → 405
+POST /api/usage/summary → 405 | GET → 401
+POST /api/cron/usage-sync → 405 | GET → 401
+POST /api/cron/purge-snapshots → 405 | GET → 200
+POST /api/users/00000000-0000-0000-0000-000000000000/memberships/bulk → 401 | GET → 405
+POST /api/inventory/adjustments/duplicate → 401 | GET → 405
+POST /api/production-orders → 401 | GET → 401
+POST /api/stores → 401 | GET → 401
+
+Resultado: 0 respuestas 500. Rutas vivas; withAuth corta antes de tocar BD.
+
+npx tsc --noEmit: INCONCLUSIVE / ENVIRONMENT LIMITATION
+  kill -9 (rc=137, OOM) con heap 2560MB — sandbox 4GB, costpro 1.9GB residente.
+  Mismo comportamiento que W9.4.1 (documentado, NO ocultado).
+Mitigación compensatoria:
+  - git diff src/ = 0 archivos (src/ byte-idéntico; working tree solo + migración)
+  - FASE 12: 0 cambios no-ACL en BD; cambio W9.4.2 = 1 archivo .sql
+  - servidor y 18 rutas consumidoras operativas (ver arriba)
+  - probes svc positivos 200 (FASE 14)

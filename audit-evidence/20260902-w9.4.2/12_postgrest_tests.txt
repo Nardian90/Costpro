@@ -1,0 +1,18 @@
+W9.4.2 — 12 POSTGREST TESTS (FASE 13/14)
+
+NEGATIVAS (anon, {} no satisface firmas → imposible ejecución):
+  POST /rpc/bulk_assign_memberships        → 404 PGRST202
+  POST /rpc/create_devolution_v2           → 404 PGRST202
+  POST /rpc/is_tenant_member               → 404 PGRST202
+  POST /rpc/has_store_role_as              → 404 PGRST202
+  POST /rpc/validate_store_can_be_modified → 404 PGRST202
+  POST /rpc/calculate_abc                  → 404 PGRST202
+  POST /rpc/reverse_transaction_v2         → 404 PGRST202
+  → 7/7 rechazadas: las revocadas salen del schema cache de anon (EXECUTE ya no pertenece al rol).
+
+POSITIVAS (service_role, READ-ONLY):
+  POST /rpc/validate_store_can_be_modified(zero-uuid, soft_delete) → 200 {"blockers": [], "can_delete": true, "can_modify": true}
+  POST /rpc/get_usage_summary(1) → 200 (agregados reales)
+  OpenAPI svc: 219 rpc visibles; 33/33 de W9.4.2 presentes (openapi_33_presence.txt)
+
+CONTROL: anon GET /rest/v1/stores?limit=1 → 200 (gateway sin regresión).

@@ -1,0 +1,139 @@
+W9.4.2 — 06 DRY RUN (FASE 10) — GATE C2-2
+
+Método: bloque GUARD de la migración (solo lectura de catálogo) ejecutado
+aisladamente contra producción ANTES de mutar.
+Verifica: W9.2 intacto (reset_store_data ×2), W9.3 intacto (RLS OFF=0),
+deriva global (SD PUBLIC=26/anon=26/auth=103), 0 de las 33 en policies,
+33/33 firmas exactas con owner=postgres y patrón PRE esperado.
+
+HTTP=201 response=[]
+DRY-RUN GUARD = PASS (GATE C2-2) @ 2026-09-02T20:09Z
+
+Bloque SQL ejecutado en dry-run:
+DO $guard$
+DECLARE
+  v_cnt int;
+  v_oid oid;
+  v_own name;
+  r record;
+BEGIN
+  -- 1) W9.2 intacto: reset_store_data sigue service/postgres-only (2 overloads)
+  SELECT count(*) INTO v_cnt
+  FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+  WHERE n.nspname='public' AND p.proname='reset_store_data'
+    AND NOT has_function_privilege('public', p.oid, 'EXECUTE')
+    AND NOT has_function_privilege('anon', p.oid, 'EXECUTE')
+    AND NOT has_function_privilege('authenticated', p.oid, 'EXECUTE')
+    AND has_function_privilege('service_role', p.oid, 'EXECUTE')
+    AND has_function_privilege('postgres', p.oid, 'EXECUTE');
+  IF v_cnt <> 2 THEN
+    RAISE EXCEPTION 'W9.4.2 GUARD: estado W9.2 de reset_store_data alterado (%)', v_cnt;
+  END IF;
+
+  -- 2) W9.3 intacto: cero tablas public con RLS OFF
+  SELECT count(*) INTO v_cnt
+  FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+  WHERE n.nspname='public' AND c.relkind='r' AND NOT c.relrowsecurity;
+  IF v_cnt <> 0 THEN
+    RAISE EXCEPTION 'W9.4.2 GUARD: RLS OFF en % tablas public (W9.3 alterado)', v_cnt;
+  END IF;
+
+  -- 3) W9.4.1 intacto: exposición SD global = PRE de W9.4.2 (PUBLIC=26, anon=26, auth=103)
+  SELECT count(*) INTO v_cnt FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+  WHERE n.nspname='public' AND p.prosecdef
+    AND has_function_privilege('public', p.oid, 'EXECUTE');
+  IF v_cnt <> 26 THEN
+    RAISE EXCEPTION 'W9.4.2 GUARD: exposición SD PUBLIC=% (esperado 26)', v_cnt;
+  END IF;
+  SELECT count(*) INTO v_cnt FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+  WHERE n.nspname='public' AND p.prosecdef
+    AND has_function_privilege('anon', p.oid, 'EXECUTE');
+  IF v_cnt <> 26 THEN
+    RAISE EXCEPTION 'W9.4.2 GUARD: exposición SD anon=% (esperado 26)', v_cnt;
+  END IF;
+  SELECT count(*) INTO v_cnt FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+  WHERE n.nspname='public' AND p.prosecdef
+    AND has_function_privilege('authenticated', p.oid, 'EXECUTE');
+  IF v_cnt <> 103 THEN
+    RAISE EXCEPTION 'W9.4.2 GUARD: exposición SD authenticated=% (esperado 103)', v_cnt;
+  END IF;
+
+  -- 4) PROTECCIÓN GUARD-LAYER RLS: ninguna de las 33 puede estar referenciada
+  --    por expresiones de policies (protección C2-1 permanente en apply-time)
+  FOR r IN
+    SELECT unnest(ARRAY['auto_match_bank_items','bulk_assign_memberships','calculate_abc',
+      'calculate_service_distribution','cleanup_old_aggregates','close_fiscal_period',
+      'create_devolution_v2','create_production_order_v2','create_quotation',
+      'create_received_service_v2','distribute_service_cost_v2','duplicate_inventory_adjustment',
+      'duplicate_inventory_adjustment_v2','get_product_cost_analysis','get_reorder_suggestions',
+      'get_usage_summary','lock_fiscal_period','purge_old_reset_snapshots','receive_to_warehouse',
+      'reverse_adjustment','reverse_devolution','reverse_production_order','reverse_receipt',
+      'reverse_transaction','reverse_transaction_v2','reverse_transfer','set_received_service_status',
+      'soft_delete_store','upsert_usage_aggregate','validate_store_can_be_modified',
+      'void_received_service_with_reversal','is_tenant_member','has_store_role_as']) AS name
+  LOOP
+    SELECT count(*) INTO v_cnt
+    FROM pg_policy pol
+    WHERE pg_get_expr(pol.polqual, pol.polrelid) LIKE '%' || r.name || '%'
+       OR pg_get_expr(pol.polwithcheck, pol.polrelid) LIKE '%' || r.name || '%';
+    IF v_cnt <> 0 THEN
+      RAISE EXCEPTION 'W9.4.2 GUARD: % referenciada por % policy(ies) RLS — función guard-layer', r.name, v_cnt;
+    END IF;
+  END LOOP;
+
+  -- 5) Verificación PRE por firma completa: existencia, owner y patrón de exposición
+  FOR r IN
+    SELECT * FROM (VALUES
+      ('public.auto_match_bank_items(uuid,uuid)', false, false, true),
+      ('public.bulk_assign_memberships(uuid,jsonb)', true, true, true),
+      ('public.calculate_abc(uuid,integer,integer,uuid)', false, false, true),
+      ('public.calculate_service_distribution(uuid)', false, false, true),
+      ('public.cleanup_old_aggregates(integer)', false, false, true),
+      ('public.close_fiscal_period(uuid,integer,integer,uuid)', false, false, true),
+      ('public.create_devolution_v2(uuid,jsonb,text,uuid,uuid,text,uuid,text,text,text)', true, true, true),
+      ('public.create_production_order_v2(uuid,text,text,text,text,text,numeric,text,text,text,jsonb,numeric,text,text,uuid,text)', true, true, true),
+      ('public.create_quotation(uuid,jsonb,uuid,uuid,text,text,text,numeric,text,date)', false, false, true),
+      ('public.create_received_service_v2(uuid,text,numeric,uuid,text,date,text,numeric,integer,text,text,text,jsonb,uuid)', true, true, true),
+      ('public.distribute_service_cost_v2(uuid,uuid)', true, true, true),
+      ('public.duplicate_inventory_adjustment(uuid,uuid)', false, false, true),
+      ('public.duplicate_inventory_adjustment_v2(uuid,uuid)', true, true, true),
+      ('public.get_product_cost_analysis(uuid,uuid)', false, false, true),
+      ('public.get_reorder_suggestions(uuid,uuid)', false, false, true),
+      ('public.get_usage_summary(integer)', false, false, true),
+      ('public.has_store_role_as(uuid,uuid,text[])', true, true, true),
+      ('public.is_tenant_member(uuid)', true, true, true),
+      ('public.lock_fiscal_period(uuid,integer,integer)', false, false, true),
+      ('public.purge_old_reset_snapshots(integer)', false, false, true),
+      ('public.receive_to_warehouse(uuid,uuid,numeric,numeric,uuid,text,date,uuid,text)', false, false, true),
+      ('public.reverse_adjustment(uuid,text,uuid)', false, false, true),
+      ('public.reverse_devolution(uuid,text,uuid)', false, false, true),
+      ('public.reverse_production_order(uuid,text,uuid)', true, true, true),
+      ('public.reverse_receipt(uuid,text,uuid)', false, false, true),
+      ('public.reverse_transaction(uuid,text,uuid)', false, false, true),
+      ('public.reverse_transaction_v2(uuid,text,uuid)', true, true, true),
+      ('public.reverse_transfer(uuid,text,uuid)', false, false, true),
+      ('public.set_received_service_status(uuid,text,uuid,text)', true, true, true),
+      ('public.soft_delete_store(uuid,uuid)', false, false, true),
+      ('public.upsert_usage_aggregate(timestamp with time zone,timestamp with time zone,text,text,text,integer,double precision)', false, false, true),
+      ('public.validate_store_can_be_modified(uuid,text)', false, false, true),
+      ('public.void_received_service_with_reversal(uuid,uuid,text,timestamp with time zone)', true, true, true)
+    ) AS t(sig, e_pub, e_anon, e_auth)
+  LOOP
+    v_oid := to_regprocedure(r.sig);
+    IF v_oid IS NULL THEN
+      RAISE EXCEPTION 'W9.4.2 GUARD: firma PRE no encontrada: %', r.sig;
+    END IF;
+    SELECT proowner::regrole::text INTO v_own FROM pg_proc WHERE oid = v_oid;
+    IF v_own <> 'postgres' THEN
+      RAISE EXCEPTION 'W9.4.2 GUARD: % owner=% (esperado postgres)', r.sig, v_own;
+    END IF;
+    IF has_function_privilege('public', v_oid, 'EXECUTE') <> r.e_pub
+       OR has_function_privilege('anon', v_oid, 'EXECUTE') <> r.e_anon
+       OR has_function_privilege('authenticated', v_oid, 'EXECUTE') <> r.e_auth
+       OR NOT has_function_privilege('service_role', v_oid, 'EXECUTE')
+       OR NOT has_function_privilege('postgres', v_oid, 'EXECUTE') THEN
+      RAISE EXCEPTION 'W9.4.2 GUARD: patrón de exposición PRE inesperado: %', r.sig;
+    END IF;
+  END LOOP;
+END
+$guard$;

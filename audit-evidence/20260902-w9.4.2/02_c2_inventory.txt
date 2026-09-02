@@ -1,0 +1,201 @@
+W9.4.2 — 02 C2 INVENTORY (FASE 2) — 31 C2 + 2 test-only, ficha por función
+
+expected=33 found=33 missing=0
+
+OID 136514 | public.auto_match_bank_items(p_statement_id uuid, p_user_id uuid)
+  owner=postgres SD=True volatility=v lang=plpgsql
+  proconfig=['search_path=public']
+  proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+  PUBLIC=False anon=False authenticated=True service_role=True postgres=True
+
+OID 138112 | public.bulk_assign_memberships(p_user_id uuid, p_assignments jsonb)
+  owner=postgres SD=True volatility=v lang=plpgsql
+  proconfig=['search_path=public, pg_temp']
+  proacl={=X/postgres,postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+  PUBLIC=True anon=True authenticated=True service_role=True postgres=True
+
+OID 136484 | public.calculate_abc(p_store_id uuid, p_year integer, p_month integer, p_user_id uuid)
+  owner=postgres SD=True volatility=v lang=plpgsql
+  proconfig=['search_path=public']
+  proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+  PUBLIC=False anon=False authenticated=True service_role=True postgres=True
+
+OID 132722 | public.calculate_service_distribution(p_service_id uuid)
+  owner=postgres SD=True volatility=v lang=plpgsql
+  proconfig=None
+  proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+  PUBLIC=False anon=False authenticated=True service_role=True postgres=True
+
+OID 132926 | public.cleanup_old_aggregates(p_days integer)
+  owner=postgres SD=True volatility=v lang=plpgsql
+  proconfig=None
+  proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+  PUBLIC=False anon=False authenticated=True service_role=True postgres=True
+
+OID 137076 | public.close_fiscal_period(p_store_id uuid, p_year integer, p_month integer, p_user_id uuid)
+  owner=postgres SD=True volatility=v lang=plpgsql
+  proconfig=['search_path=public, pg_temp']
+  proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+  PUBLIC=False anon=False authenticated=True service_role=True postgres=True
+
+OID 138865 | public.create_devolution_v2(p_store_id uuid, p_items jsonb, p_reason text, p_user_id uuid, p_original_transaction_id uuid, p_payment_method text, p_customer_id uuid, p_customer_name text, p_notes text, p_idempotency_key text)
+  owner=postgres SD=True volatility=v lang=plpgsql
+  proconfig=['search_path=public, pg_temp']
+  proacl={=X/postgres,postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+  PUBLIC=True anon=True authenticated=True service_role=True postgres=True
+
+OID 138630 | public.create_production_order_v2(p_store_id uuid, p_order_type text, p_customer_name text, p_customer_ci text, p_customer_phone text, p_customer_address text, p_budget_total numeric, p_budget_currency text, p_description text, p_notes text, p_items jsonb, p_advance_amount numeric, p_advance_method text, p_advance_currency text, p_created_by uuid, p_idempotency_key text)
+  owner=postgres SD=True volatility=v lang=plpgsql
+  proconfig=['search_path=public, extensions']
+  proacl={=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+  PUBLIC=True anon=True authenticated=True service_role=True postgres=True
+
+OID 136270 | public.create_quotation(p_store_id uuid, p_items jsonb, p_user_id uuid, p_customer_id uuid, p_customer_name text, p_customer_phone text, p_discount_type text, p_discount_value numeric, p_notes text, p_valid_until date)
+  owner=postgres SD=True volatility=v lang=plpgsql
+  proconfig=['search_path=public']
+  proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+  PUBLIC=False anon=False authenticated=True service_role=True postgres=True
+
+OID 138592 | public.create_received_service_v2(p_store_id uuid, p_supplier text, p_total_amount numeric, p_service_type_id uuid, p_service_type_name text, p_service_date date, p_currency text, p_exchange_rate numeric, p_payment_terms_days integer, p_distribution_method text, p_reference_doc text, p_observations text, p_receipt_ids jsonb, p_created_by uuid)
+  owner=postgres SD=True volatility=v lang=plpgsql
+  proconfig=['search_path=public, extensions']
+  proacl={=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+  PUBLIC=True anon=True authenticated=True service_role=True postgres=True
+
+OID 138597 | public.distribute_service_cost_v2(p_service_id uuid, p_user_id uuid)
+  owner=postgres SD=True volatility=v lang=plpgsql
+  proconfig=['search_path=public, extensions']
+  proacl={=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+  PUBLIC=True anon=True authenticated=True service_role=True postgres=True
+
+OID 136705 | public.duplicate_inventory_adjustment(p_original_id uuid, p_user_id uuid)
+  owner=postgres SD=True volatility=v lang=plpgsql
+  proconfig=['search_path=public']
+  proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+  PUBLIC=False anon=False authenticated=True service_role=True postgres=True
+
+OID 138870 | public.duplicate_inventory_adjustment_v2(p_original_id uuid, p_user_id uuid)
+  owner=postgres SD=True volatility=v lang=plpgsql
+  proconfig=['search_path=public, pg_temp']
+  proacl={=X/postgres,postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+  PUBLIC=True anon=True authenticated=True service_role=True postgres=True
+
+OID 132723 | public.get_product_cost_analysis(p_product_id uuid, p_store_id uuid)
+  owner=postgres SD=True volatility=v lang=sql
+  proconfig=None
+  proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+  PUBLIC=False anon=False authenticated=True service_role=True postgres=True
+
+OID 136513 | public.get_reorder_suggestions(p_store_id uuid, p_user_id uuid)
+  owner=postgres SD=True volatility=v lang=plpgsql
+  proconfig=['search_path=public']
+  proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+  PUBLIC=False anon=False authenticated=True service_role=True postgres=True
+
+OID 132924 | public.get_usage_summary(p_hours integer)
+  owner=postgres SD=True volatility=v lang=plpgsql
+  proconfig=None
+  proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+  PUBLIC=False anon=False authenticated=True service_role=True postgres=True
+
+OID 138149 | public.has_store_role_as(p_user_id uuid, p_store_id uuid, p_roles text[])
+  owner=postgres SD=True volatility=s lang=plpgsql
+  proconfig=['search_path=public, pg_temp']
+  proacl={=X/postgres,postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+  PUBLIC=True anon=True authenticated=True service_role=True postgres=True
+
+OID 138375 | public.is_tenant_member(p_tenant_id uuid)
+  owner=postgres SD=True volatility=s lang=sql
+  proconfig=['search_path=public']
+  proacl={=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+  PUBLIC=True anon=True authenticated=True service_role=True postgres=True
+
+OID 136256 | public.lock_fiscal_period(p_store_id uuid, p_year integer, p_month integer)
+  owner=postgres SD=True volatility=v lang=plpgsql
+  proconfig=['search_path=public']
+  proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+  PUBLIC=False anon=False authenticated=True service_role=True postgres=True
+
+OID 135446 | public.purge_old_reset_snapshots(p_days integer)
+  owner=postgres SD=True volatility=v lang=plpgsql
+  proconfig=None
+  proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+  PUBLIC=False anon=False authenticated=True service_role=True postgres=True
+
+OID 137077 | public.receive_to_warehouse(p_store_id uuid, p_product_id uuid, p_quantity numeric, p_unit_cost numeric, p_warehouse_id uuid, p_lot_number text, p_expiration_date date, p_user_id uuid, p_reason text)
+  owner=postgres SD=True volatility=v lang=plpgsql
+  proconfig=['search_path=public, pg_temp']
+  proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+  PUBLIC=False anon=False authenticated=True service_role=True postgres=True
+
+OID 136656 | public.reverse_adjustment(p_adjustment_id uuid, p_reason text, p_user_id uuid)
+  owner=postgres SD=True volatility=v lang=plpgsql
+  proconfig=['search_path=public']
+  proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+  PUBLIC=False anon=False authenticated=True service_role=True postgres=True
+
+OID 136657 | public.reverse_devolution(p_devolution_id uuid, p_reason text, p_user_id uuid)
+  owner=postgres SD=True volatility=v lang=plpgsql
+  proconfig=['search_path=public']
+  proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+  PUBLIC=False anon=False authenticated=True service_role=True postgres=True
+
+OID 138622 | public.reverse_production_order(p_order_id uuid, p_reason text, p_user_id uuid)
+  owner=postgres SD=True volatility=v lang=plpgsql
+  proconfig=['search_path=public, extensions']
+  proacl={=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+  PUBLIC=True anon=True authenticated=True service_role=True postgres=True
+
+OID 136654 | public.reverse_receipt(p_receipt_id uuid, p_reason text, p_user_id uuid)
+  owner=postgres SD=True volatility=v lang=plpgsql
+  proconfig=['search_path=public']
+  proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+  PUBLIC=False anon=False authenticated=True service_role=True postgres=True
+
+OID 136653 | public.reverse_transaction(p_transaction_id uuid, p_reason text, p_user_id uuid)
+  owner=postgres SD=True volatility=v lang=plpgsql
+  proconfig=['search_path=public']
+  proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+  PUBLIC=False anon=False authenticated=True service_role=True postgres=True
+
+OID 138188 | public.reverse_transaction_v2(p_transaction_id uuid, p_reason text, p_user_id uuid)
+  owner=postgres SD=True volatility=v lang=plpgsql
+  proconfig=['search_path=public, pg_temp']
+  proacl={=X/postgres,postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+  PUBLIC=True anon=True authenticated=True service_role=True postgres=True
+
+OID 136655 | public.reverse_transfer(p_transfer_id uuid, p_reason text, p_user_id uuid)
+  owner=postgres SD=True volatility=v lang=plpgsql
+  proconfig=['search_path=public, pg_temp']
+  proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+  PUBLIC=False anon=False authenticated=True service_role=True postgres=True
+
+OID 138596 | public.set_received_service_status(p_service_id uuid, p_new_status text, p_user_id uuid, p_reason text)
+  owner=postgres SD=True volatility=v lang=plpgsql
+  proconfig=['search_path=public, extensions']
+  proacl={=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+  PUBLIC=True anon=True authenticated=True service_role=True postgres=True
+
+OID 131945 | public.soft_delete_store(p_store_id uuid, p_deleted_by uuid)
+  owner=postgres SD=True volatility=v lang=plpgsql
+  proconfig=['search_path=public']
+  proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+  PUBLIC=False anon=False authenticated=True service_role=True postgres=True
+
+OID 132923 | public.upsert_usage_aggregate(p_bucket_start timestamp with time zone, p_bucket_end timestamp with time zone, p_metric_type text, p_service text, p_endpoint text, p_count integer, p_sum_value double precision)
+  owner=postgres SD=True volatility=v lang=plpgsql
+  proconfig=None
+  proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+  PUBLIC=False anon=False authenticated=True service_role=True postgres=True
+
+OID 137398 | public.validate_store_can_be_modified(p_store_id uuid, p_check_type text)
+  owner=postgres SD=True volatility=s lang=plpgsql
+  proconfig=['search_path=public']
+  proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+  PUBLIC=False anon=False authenticated=True service_role=True postgres=True
+
+OID 138595 | public.void_received_service_with_reversal(p_service_id uuid, p_user_id uuid, p_reason text, p_operation_date timestamp with time zone)
+  owner=postgres SD=True volatility=v lang=plpgsql
+  proconfig=['search_path=public, extensions']
+  proacl={=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+  PUBLIC=True anon=True authenticated=True service_role=True postgres=True

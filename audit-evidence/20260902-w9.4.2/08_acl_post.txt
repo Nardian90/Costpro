@@ -1,0 +1,68 @@
+W9.4.2 — 08 ACL POST (33 candidatos) @ inventario 20:10:56Z
+
+public.auto_match_bank_items(p_statement_id uuid, p_user_id uuid)
+  proacl={postgres=X/postgres,service_role=X/postgres}  effective: PUB=False anon=False auth=False svc=True pg=True
+public.bulk_assign_memberships(p_user_id uuid, p_assignments jsonb)
+  proacl={postgres=X/postgres,service_role=X/postgres}  effective: PUB=False anon=False auth=False svc=True pg=True
+public.calculate_abc(p_store_id uuid, p_year integer, p_month integer, p_user_id uuid)
+  proacl={postgres=X/postgres,service_role=X/postgres}  effective: PUB=False anon=False auth=False svc=True pg=True
+public.calculate_service_distribution(p_service_id uuid)
+  proacl={postgres=X/postgres,service_role=X/postgres}  effective: PUB=False anon=False auth=False svc=True pg=True
+public.cleanup_old_aggregates(p_days integer)
+  proacl={postgres=X/postgres,service_role=X/postgres}  effective: PUB=False anon=False auth=False svc=True pg=True
+public.close_fiscal_period(p_store_id uuid, p_year integer, p_month integer, p_user_id uuid)
+  proacl={postgres=X/postgres,service_role=X/postgres}  effective: PUB=False anon=False auth=False svc=True pg=True
+public.create_devolution_v2(p_store_id uuid, p_items jsonb, p_reason text, p_user_id uuid, p_original_transaction_id uuid, p_payment_method text, p_customer_id uuid, p_customer_name text, p_notes text, p_idempotency_key text)
+  proacl={postgres=X/postgres,service_role=X/postgres}  effective: PUB=False anon=False auth=False svc=True pg=True
+public.create_production_order_v2(p_store_id uuid, p_order_type text, p_customer_name text, p_customer_ci text, p_customer_phone text, p_customer_address text, p_budget_total numeric, p_budget_currency text, p_description text, p_notes text, p_items jsonb, p_advance_amount numeric, p_advance_method text, p_advance_currency text, p_created_by uuid, p_idempotency_key text)
+  proacl={postgres=X/postgres,service_role=X/postgres}  effective: PUB=False anon=False auth=False svc=True pg=True
+public.create_quotation(p_store_id uuid, p_items jsonb, p_user_id uuid, p_customer_id uuid, p_customer_name text, p_customer_phone text, p_discount_type text, p_discount_value numeric, p_notes text, p_valid_until date)
+  proacl={postgres=X/postgres,service_role=X/postgres}  effective: PUB=False anon=False auth=False svc=True pg=True
+public.create_received_service_v2(p_store_id uuid, p_supplier text, p_total_amount numeric, p_service_type_id uuid, p_service_type_name text, p_service_date date, p_currency text, p_exchange_rate numeric, p_payment_terms_days integer, p_distribution_method text, p_reference_doc text, p_observations text, p_receipt_ids jsonb, p_created_by uuid)
+  proacl={postgres=X/postgres,service_role=X/postgres}  effective: PUB=False anon=False auth=False svc=True pg=True
+public.distribute_service_cost_v2(p_service_id uuid, p_user_id uuid)
+  proacl={postgres=X/postgres,service_role=X/postgres}  effective: PUB=False anon=False auth=False svc=True pg=True
+public.duplicate_inventory_adjustment(p_original_id uuid, p_user_id uuid)
+  proacl={postgres=X/postgres,service_role=X/postgres}  effective: PUB=False anon=False auth=False svc=True pg=True
+public.duplicate_inventory_adjustment_v2(p_original_id uuid, p_user_id uuid)
+  proacl={postgres=X/postgres,service_role=X/postgres}  effective: PUB=False anon=False auth=False svc=True pg=True
+public.get_product_cost_analysis(p_product_id uuid, p_store_id uuid)
+  proacl={postgres=X/postgres,service_role=X/postgres}  effective: PUB=False anon=False auth=False svc=True pg=True
+public.get_reorder_suggestions(p_store_id uuid, p_user_id uuid)
+  proacl={postgres=X/postgres,service_role=X/postgres}  effective: PUB=False anon=False auth=False svc=True pg=True
+public.get_usage_summary(p_hours integer)
+  proacl={postgres=X/postgres,service_role=X/postgres}  effective: PUB=False anon=False auth=False svc=True pg=True
+public.has_store_role_as(p_user_id uuid, p_store_id uuid, p_roles text[])
+  proacl={postgres=X/postgres,service_role=X/postgres}  effective: PUB=False anon=False auth=False svc=True pg=True
+public.is_tenant_member(p_tenant_id uuid)
+  proacl={postgres=X/postgres,service_role=X/postgres}  effective: PUB=False anon=False auth=False svc=True pg=True
+public.lock_fiscal_period(p_store_id uuid, p_year integer, p_month integer)
+  proacl={postgres=X/postgres,service_role=X/postgres}  effective: PUB=False anon=False auth=False svc=True pg=True
+public.purge_old_reset_snapshots(p_days integer)
+  proacl={postgres=X/postgres,service_role=X/postgres}  effective: PUB=False anon=False auth=False svc=True pg=True
+public.receive_to_warehouse(p_store_id uuid, p_product_id uuid, p_quantity numeric, p_unit_cost numeric, p_warehouse_id uuid, p_lot_number text, p_expiration_date date, p_user_id uuid, p_reason text)
+  proacl={postgres=X/postgres,service_role=X/postgres}  effective: PUB=False anon=False auth=False svc=True pg=True
+public.reverse_adjustment(p_adjustment_id uuid, p_reason text, p_user_id uuid)
+  proacl={postgres=X/postgres,service_role=X/postgres}  effective: PUB=False anon=False auth=False svc=True pg=True
+public.reverse_devolution(p_devolution_id uuid, p_reason text, p_user_id uuid)
+  proacl={postgres=X/postgres,service_role=X/postgres}  effective: PUB=False anon=False auth=False svc=True pg=True
+public.reverse_production_order(p_order_id uuid, p_reason text, p_user_id uuid)
+  proacl={postgres=X/postgres,service_role=X/postgres}  effective: PUB=False anon=False auth=False svc=True pg=True
+public.reverse_receipt(p_receipt_id uuid, p_reason text, p_user_id uuid)
+  proacl={postgres=X/postgres,service_role=X/postgres}  effective: PUB=False anon=False auth=False svc=True pg=True
+public.reverse_transaction(p_transaction_id uuid, p_reason text, p_user_id uuid)
+  proacl={postgres=X/postgres,service_role=X/postgres}  effective: PUB=False anon=False auth=False svc=True pg=True
+public.reverse_transaction_v2(p_transaction_id uuid, p_reason text, p_user_id uuid)
+  proacl={postgres=X/postgres,service_role=X/postgres}  effective: PUB=False anon=False auth=False svc=True pg=True
+public.reverse_transfer(p_transfer_id uuid, p_reason text, p_user_id uuid)
+  proacl={postgres=X/postgres,service_role=X/postgres}  effective: PUB=False anon=False auth=False svc=True pg=True
+public.set_received_service_status(p_service_id uuid, p_new_status text, p_user_id uuid, p_reason text)
+  proacl={postgres=X/postgres,service_role=X/postgres}  effective: PUB=False anon=False auth=False svc=True pg=True
+public.soft_delete_store(p_store_id uuid, p_deleted_by uuid)
+  proacl={postgres=X/postgres,service_role=X/postgres}  effective: PUB=False anon=False auth=False svc=True pg=True
+public.upsert_usage_aggregate(p_bucket_start timestamp with time zone, p_bucket_end timestamp with time zone, p_metric_type text, p_service text, p_endpoint text, p_count integer, p_sum_value double precision)
+  proacl={postgres=X/postgres,service_role=X/postgres}  effective: PUB=False anon=False auth=False svc=True pg=True
+public.validate_store_can_be_modified(p_store_id uuid, p_check_type text)
+  proacl={postgres=X/postgres,service_role=X/postgres}  effective: PUB=False anon=False auth=False svc=True pg=True
+public.void_received_service_with_reversal(p_service_id uuid, p_user_id uuid, p_reason text, p_operation_date timestamp with time zone)
+  proacl={postgres=X/postgres,service_role=X/postgres}  effective: PUB=False anon=False auth=False svc=True pg=True

@@ -1,0 +1,16 @@
+W9.4.2 — 00 GIT BASELINE (FASE 0) @ 2026-09-02T19:45Z
+
+$ git status --short            → (vacío: working tree clean)
+$ git branch --show-current     → main
+$ git rev-parse HEAD            → 7b1bafcd1051a2bcb4a190ff62a5e97b40c4818a
+$ git log -1 --oneline          → 7b1bafcd security(w9): harden exposed security definer functions
+$ git fetch origin && git rev-parse origin/main → 7b1bafcd1051a2bcb4a190ff62a5e97b40c4818a
+$ git merge-base HEAD origin/main → 7b1bafcd1051a2bcb4a190ff62a5e97b40c4818a
+$ git rev-list --left-right --count HEAD...origin/main → 0 0
+$ git stash list | wc -l        → 0
+$ git diff --check              → (sin errores)
+
+Migraciones W9 previas verificadas:
+d979b01538c30f93... 20260831000001_w9_f07_reset_store_data_acl.sql (W9.2)
+21ed6d3120cd7b55... 20260902000001_w9_f01_rls_hardening.sql (W9.3)
+c4aa55101ab30306... 20260902000002_w9_f06_secdef_execute_hardening.sql (W9.4.1)

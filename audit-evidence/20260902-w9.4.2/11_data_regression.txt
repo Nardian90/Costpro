@@ -1,0 +1,22 @@
+W9.4.2 — 11 DATA REGRESSION (FASE 15)
+
+== REGRESIÓN DE DATOS (23 métricas) ==
+  data_integrity: IDÉNTICO (1)
+== REGRESIÓN DE ESTRUCTURA (only-ACL-changed demo) ==
+  prosrc md5 (481): IDÉNTICO (481)
+  proconfig (481): IDÉNTICO (481)
+  secdef+owner (481): IDÉNTICO (481)
+  triggers (81): IDÉNTICO (81)
+  policies (391): IDÉNTICO (391)
+  views (11): IDÉNTICO (11)
+  pg_depend count: IDÉNTICO (1)
+
+REGRESIÓN TOTAL: PASS — 0 cambios inesperados
+
+Ventana: PRE=2026-09-02T20:08:29Z POST=2026-09-02T20:13:20Z (≈5 min).
+Métricas: 23 (products, transactions, transaction_items, stock_movements,
+inventory, payment_transactions, devolutions, receipts, cash_closures,
+production_orders, inventory_qty_sum, products_stock_sum, products_wac_sum,
+products_wac_zero, products_wac_negative, wac_change_log, store_credit_ledger,
+transaction_recovery_ledger, w62_design_params, w62_synthetic_rows,
+w62_zero_cost_flags, audit_logs, total_tables_public).

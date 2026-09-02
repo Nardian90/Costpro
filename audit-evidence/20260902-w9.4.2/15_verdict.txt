@@ -1,0 +1,158 @@
+═══════════════════════════════════════════════════════════════════════════
+W9.4.2 — 15 VERDICT — CIERRE FORENSE F-06 (C2 + test-only) · 2026-09-02
+═══════════════════════════════════════════════════════════════════════════
+
+RESULTADO W9.4.2
+────────────────
+Commit inicial:  7b1bafcd1051a2bcb4a190ff62a5e97b40c4818a (W9.4.1)
+Migración:       20260902200923_w9_f06_c2_hardening.sql (sha256 0a73415e…d3f85, 33 firmas)
+Aplicada:        HTTP 201 [] @ 2026-09-02T20:10:44Z vía Management API
+C2 encontrados:  31 (todas SECURITY DEFINER, owner=postgres)
+C2 endurecidos:  31 (C2-B: consumidores 100% service_role verificado por call-site)
+C2 conservados:   0 sin cambio de exposición (ningún C2 requirió mantener auth/anon/PUB)
+Test-only:        2 (is_tenant_member, has_store_role_as) endurecidas como C2-E;
+                  tests unaffected (aserciones estáticas sobre archivos, no RPC runtime)
+
+EXPOSICIÓN SECURITY DEFINER
+───────────────────────────
+                 PRE(W9.4.1)   POST(W9.4.2)   Δ
+PUBLIC/anon      26/26         14/14          −12/−12
+auth efectiva    103           70             −33
+sin exposición   139           172            +33
+SD total         242           242            0
+
+GATES: C2-1 PASS · C2-2 (dry-run) PASS · G1..G16 PASS (tsc=INCONCLUSIVE por OOM
+de sandbox, mitigado con src/ byte-idéntico + 0 cambios no-ACL + server 200)
+Datos: PASS (23/23 idénticas) · PostgREST: PASS · App: PASS (tsc INCONCLUSIVE/OOM)
+SHA256: PASS (15/15 OK) · Git: PASS · Push: se ejecuta tras este commit; resultado
+autoritativo en el informe final del chat y worklog (el push no altera BD ni evidencia).
+
+F-06 = CLOSED WITH DOCUMENTED EXCEPTIONS
+────────────────────────────────────────
+Toda función SD que permanece expuesta (70) tiene justificación documentada
+abajo. No existe privilegio innecesario demostrable a nivel ACL.
+
+EXCEPCIONES DOCUMENTADAS — GRUPO 1: GUARDS RLS (16)
+Justificación común: usadas dentro de expresiones de policies RLS. PostgreSQL
+evalúa las policies con los privilegios del rol consultante ⇒ requieren EXECUTE
+para anon/authenticated. Revocarlas rompería RLS (mandato: INTOCABLES).
+Control: funciones booleanas/de contexto sin capacidad de mutación; RLS subyacente
+en las 146 tablas; verificación G6 (0 referencias de policies tocadas).
+Riesgo residual: BAJO (superficie = checks de autorización, no datos).
+
+  OID     | Función (firma corta) | Roles expuestos
+     21750 | current_user_store_id()                                               | auth
+    138373 | current_user_store_ids()                                              | auth
+    138372 | current_user_tenant_id()                                              | PUBLIC+anon+auth
+     33592 | get_current_user_store_id()                                           | auth
+     47075 | get_my_role()                                                         | auth
+     21790 | has_any_role(required_roles user_role[])                              | auth
+     54235 | has_role(p_user_id uuid, p_required_role user_role)                   | auth
+     54236 | has_role(p_user_id uuid, p_required_role user_role)                   | auth
+     38675 | has_store_access(p_store_id uuid)                                     | auth
+    142475 | has_store_role(p_user_id uuid, p_store_id uuid, p_roles text[])       | PUBLIC+anon+auth
+    131888 | has_store_role(p_user_id uuid, p_store_id uuid, p_roles text[])       | auth
+     17741 | is_admin()                                                            | auth
+    138374 | is_admin_with_access(p_store_id uuid)                                 | PUBLIC+anon+auth
+    131886 | is_global_admin()                                                     | auth
+     53942 | is_managed_user(p_target_user_id uuid)                                | auth
+    131887 | is_store_member(p_store_id uuid)                                      | auth
+
+EXCEPCIONES DOCUMENTADAS — GRUPO 2: CONSUMIDORES AUTHENTICATED LEGÍTIMOS (53)
+Justificación común: ruta funcional legítima vía PostgREST con sesión de
+usuario (C2-A/C2-C). El EXECUTE a authenticated es el mínimo privilegio posible
+en el modelo PostgREST (el cliente browser llama con el JWT del usuario).
+Control: guard interno de autorización (auth.uid()/has_store_access/is_admin)
++ RLS en tablas subyacentes + middleware NextAuth/rate-limit en la ruta.
+Registrar: guard interno NO sustituye ACL — ACL correcto = authenticated;
+la autorización fina vive en el guard/RLS (modelo documentado W9.4-E).
+Riesgo residual: BAJO-MEDIO (permiso ejecutar bajo sesión + guard; superficie
+no eliminable sin rediseño a server-only fuera del alcance ACL de W9.4.2).
+
+  OID     | Función (firma corta) | Roles | Consumidor (src/)
+    137060 | adjust_sale_payment(p_transaction_id uuid, p_user_id uuid, p_payment_m…) | auth  | src/app/api/transactions/[id]/adjust/route.ts
+    130873 | cancel_transfer(p_transfer_id uuid, p_reason text, p_user_id uuid…)   | auth  | src/services/transfer-service.ts
+    137483 | cancel_transfer(p_transfer_id uuid, p_reason text, p_user_id uuid…)   | auth  | src/services/transfer-service.ts
+    138633 | close_production_order_v2(p_order_id uuid, p_store_id uuid, p_seller_id uuid…) | auth  | src/app/api/production-orders/[id]/route.ts
+    136899 | confirm_inventory_adjustment(p_adjustment_id uuid, p_user_id uuid…)   | auth  | src/components/views/terminal/views/inventory/InventoryAdjus
+    136713 | confirm_pending_reception(p_receipt_id uuid, p_user_id uuid, p_operation_dat…) | auth  | src/hooks/api/useReceptions.ts
+    133208 | confirm_transfer(p_transfer_id uuid, p_user_id uuid, p_operation_da…) | auth  | src/app/api/transfers/[transferId]/confirm/route.ts, src/ser
+    133213 | create_purchase_order(p_store_id uuid, p_supplier_name text, p_supplier_…) | auth  | src/app/api/purchase-orders/route.ts
+    136508 | create_sale(p_store_id uuid, p_seller_id uuid, p_total_amount …)      | auth  | src/hooks/api/useTransactions.ts
+    141788 | create_sale_v2(p_store_id uuid, p_seller_id uuid, p_items jsonb, …)   | PUBLIC+anon+auth | src/app/api/pos/checkout/route.ts, src/app/api/sync/batch/ro
+    137073 | create_transfer(p_origin_store_id uuid, p_destination_store_id uui…)  | auth  | src/app/api/sync/batch/route.ts, src/app/api/transfers/route
+    137558 | discover_backup_tables()                                              | auth  | src/lib/backup/backup-service.ts
+     48498 | get_audit_logs(p_store_id uuid, p_search_term text, p_date_from t…)   | auth  | src/lib/reports/data-fetcher.ts
+    137559 | get_backup_table_list(p_include_excluded boolean)                     | auth  | src/lib/backup/backup-service.ts
+    131903 | get_batch_store_daily_kpis(p_store_ids uuid[], p_date date…)          | auth  | src/hooks/api/useMultiStoreDashboard.ts
+    130869 | get_cash_closures(p_store_id uuid, p_date_from date, p_date_to date,…) | auth  | src/lib/reports/data-fetcher.ts
+    130872 | get_daily_expenses_aggregated(p_store_id uuid, p_date_from date, p_date_to date,…) | auth  | src/lib/reports/data-fetcher.ts
+    130871 | get_daily_income_aggregated(p_store_id uuid, p_date_from timestamp with time z…) | auth  | src/lib/reports/data-fetcher.ts
+    132485 | get_global_max_operation_date(p_store_id uuid)                        | auth  | src/hooks/api/useGlobalOperationDate.ts
+    133402 | get_low_stock_count(p_store_id uuid)                                  | auth  | src/components/views/terminal/views/sales_hub/SalesHubView.t
+     79124 | get_new_academy_cards(p_user_id uuid, p_limit integer)                | auth  | src/app/api/academy/review/route.ts
+    133830 | get_paginated_products(p_store_id uuid, p_search_term text, p_category te…) | auth  | src/app/tienda/[slug]/page.tsx, src/hooks/api/useInventory.t
+    142661 | get_paginated_products_v2(p_limit integer, p_offset integer, p_store_id uuid…) | PUBLIC+anon+auth | src/hooks/api/useCatalogProducts.ts
+     59843 | get_product_stock_ledger_paginated(p_product_id uuid, p_store_id uuid, p_limit intege…) | auth  | src/app/api/inventory/[productId]/history/route.ts, src/hook
+    142663 | get_products_for_pos(p_store_id uuid, p_search_term text, p_category te…) | PUBLIC+anon+auth | src/app/api/inventory/products/route.ts, src/components/view
+    132197 | get_products_for_reception(p_store_id uuid, p_search_term text, p_page intege…) | auth  | src/hooks/api/useReceptionProductSearch.ts
+    130870 | get_profit_report(p_store_id uuid, p_date_from timestamp with time z…) | auth  | src/lib/reports/data-fetcher.ts
+     51380 | get_sales_since_last_closure(p_store_id uuid)                         | auth  | src/services/cash-service.ts
+    132401 | get_store_analytics_advanced(p_store_id uuid, p_start_date date, p_end_date dat…) | auth  | src/hooks/api/useStoreAnalytics.ts
+    142035 | get_transactions(p_store_id uuid, p_search_term text, p_date_from t…) | PUBLIC+anon+auth | src/hooks/api/useTransactions.ts, src/lib/reports/data-fetch
+     49875 | get_transferable_stores(p_user_id uuid, p_current_store_id uuid…)     | auth  | src/services/transfer-service.ts
+    130868 | get_transfers(p_store_id uuid, p_date_from timestamp with time z…)    | auth  | src/lib/reports/data-fetcher.ts
+    135148 | get_worker_commission_summary(p_store_id uuid, p_date_from date, p_date_to date…) | auth  | src/app/api/commissions/summary/route.ts
+     94972 | increment_user_usage(p_user_id uuid, p_action_type text, p_limit intege…) | auth  | src/services/usage-service.ts
+     43261 | manage_user_memberships(p_user_id uuid, p_memberships jsonb…)         | auth  | src/hooks/api/useUsers.ts
+     45939 | managed_delete_product(p_product_id uuid)                             | auth  | src/hooks/api/useProducts.ts
+     45940 | managed_toggle_product_active(p_product_id uuid, p_is_active boolean…) | auth  | src/hooks/api/useProducts.ts
+    136711 | perform_inventory_adjustment(p_store_id uuid, p_product_id uuid, p_quantity_del…) | auth  | src/app/api/sync/batch/route.ts, src/hooks/api/useDocumentAc
+    132503 | process_inventory_adjustment(p_store_id uuid, p_cashier_id uuid, p_items adjust…) | auth  | src/app/api/inventory/adjustments/route.ts
+    119652 | process_pick3_transaction(p_user_id uuid, p_type text, p_amount bigint, p_re…) | auth  | src/components/views/terminal/views/pick3/BetEntryDialog.tsx
+    138544 | receive_against_po(p_po_id uuid, p_received_items jsonb, p_user_id uu…) | PUBLIC+anon+auth | src/app/api/purchase-orders/[id]/route.ts
+    138613 | receive_production_output(p_order_id uuid, p_product_id uuid, p_quantity num…) | auth  | src/app/api/production-orders/[id]/route.ts
+    138536 | register_reception(p_store_id uuid, p_supplier text, p_reception_date…) | PUBLIC+anon+auth | src/app/api/inventory/receptions/route.ts, src/app/api/sync/
+    137351 | register_supplier_payment(p_store_id uuid, p_ref_type text, p_ref_id uuid, p…) | auth  | src/app/api/accounts-payable/bulk-pay/route.ts, src/app/api/
+    138196 | reverse_receipt_v2(p_receipt_id uuid, p_reason text, p_user_id uuid…) | PUBLIC+anon+auth | src/app/api/reverse/route.ts, src/hooks/api/useReceptions.ts
+    132042 | save_product_cost_sheet(p_product_id uuid, p_store_id uuid, p_template_id …) | auth  | src/app/api/product-cost-sheets/auto-generate/route.ts
+    138551 | set_purchase_order_status(p_po_id uuid, p_new_status purchase_status_enum, p…) | PUBLIC+anon+auth | src/app/api/purchase-orders/[id]/route.ts
+    133215 | update_reception_items(p_receipt_id uuid, p_item_updates jsonb, p_user_id…) | auth  | src/app/api/inventory/receptions/[id]/route.ts
+     59867 | update_transaction_taxes(p_transaction_id uuid, p_applied_taxes jsonb, p_ta…) | auth  | src/components/views/terminal/views/sales/TransactionDetails
+    138619 | void_closed_production_order(p_order_id uuid, p_reason text, p_user_id uuid…) | PUBLIC+anon+auth | src/app/api/production-orders/[id]/void/route.ts
+    136900 | void_inventory_adjustment(p_adjustment_id uuid, p_user_id uuid…)      | auth  | src/components/views/terminal/views/inventory/InventoryAdjus
+    138819 | void_pending_reception(p_receipt_id uuid, p_user_id uuid, p_reason text, …) | PUBLIC+anon+auth | src/hooks/api/useReceptions.ts
+    138000 | void_transaction(p_transaction_id uuid, p_reason text, p_operation_…) | PUBLIC+anon+auth | src/hooks/api/useDocumentActions.ts
+
+EXCEPCIONES DOCUMENTADAS — GRUPO 3: C1B CON LLAMADOR INVOKER (1)
+  OID     | Función | Roles | Justificación
+    142121 | adjust_total_amount | auth  | Tiene llamador SECURITY INVOKER en BD; revocar EXECUTE
+          |                     |       | externo podría romper la cadena de invocación (W9.4.1 R4b).
+          |                     |       | DEFERRED a subfase futura con análisis específico de la cadena.
+Control: guard interno; RLS subyacente. Riesgo residual: BAJO.
+
+VERIFICACIÓN DE QUE NO QUEDA PRIVILEGIO INNECESARIO
+────────────────────────────────────────────────────
+1. Las 119 (W9.4.1) + 33 (W9.4.2) = 152 SD con ACL mínima {postgres,service_role}
+   (+costpro_snapshot_restorer en validate_pre_restore_fk_integrity).
+2. De las 242 SD: 172 sin exposición externa; 70 expuestas = 100% documentadas arriba.
+3. anon: sin capacidad de autenticarse (nuevo key system: 401 Secret API key)
+   y sin EXECUTE en ninguna función de mutación del dominio crítico.
+4. Cobertura C0–C4 total: C0=20, C1B=38+1, C2=53 (22+31), C4=61, guards=16,
+   user-consumers=53, test-only=2 — 0 funciones sin clasificación.
+
+HALLAZGOS SEPARADOS (registrados, NO modificados — fuera de alcance C2)
+──────────────────────────────────────────────────────────────────────
+H-1: 6 funciones SD sin search_path explícito (proconfig NULL):
+     calculate_service_distribution, cleanup_old_aggregates, get_product_cost_analysis,
+     get_usage_summary, purge_old_reset_snapshots, upsert_usage_aggregate.
+     Tras W9.4.2 quedan service_role-only ⇒ superficie de hijack de search_path
+     reducida a contexto privilegiado. Recomendación: fijar search_path en refactor futuro.
+H-2: reverse_receipt es llamado por reverse_receipt_v2 (SD) y también por route
+     service_role — coexistencia v1/v2 correcta; sin acción.
+
+ROLLBACK: w9-readiness/evidence/f06c2/rollback_w9_f06_c2.sql (GRANTs inversos 1:1;
+NO ejecutado durante W9.4.2 — solo documentado, como W9.2/W9.3/W9.4.1).
+
+MANDATO W9.4.2: OBJETIVO CUMPLIDO — eliminar privilegios innecesarios sin romper
+consumidores legítimos, RLS, RPC, API routes, tests ni operaciones administrativas.

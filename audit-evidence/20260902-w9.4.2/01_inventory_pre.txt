@@ -1,0 +1,24 @@
+W9.4.2 — 01 INVENTARIO PRE (FASE 1) — pg_proc public @ 2026-09-02T19:46Z
+
+Reconciliación con W9.4.1 (post): PERFECTA — 481 funciones, SD=242,
+PUBLIC=26, anon=26, auth efectiva=103 (26+77), sin exposición=139.
+
+total_fns=481 secdef_total=242
+secdef_public_exec=26 secdef_anon_exec=26
+secdef_auth_only_exec=77 secdef_no_exposure=139
+nonsecdef_anon_exec=200
+
+Formas de ACL SD (proacl explícito):
+  n=135  {postgres=X/postgres,service_role=X/postgres}
+  n= 75  {postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+  n= 15  {=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+  n= 11  {=X/postgres,postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+  n=  2  {postgres=X/postgres,service_role=X/postgres,costpro_snapshot_restorer=X/postgres}
+  n=  2  {postgres=X/postgres}
+  n=  1  {costpro_transaction_adjuster=X/costpro_transaction_adjuster,authenticated=X/costpro_transaction_adjuster}
+  n=  1  {postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres,costpro_transaction_adjuster=X/postgres}
+
+Campo-set por función: oid/schema/function_name/identity_args/return_type/
+owner/security_definer/volatility/language/prokind/proconfig/proacl_raw/
+uses_default_acl/EXECUTE×5 (public,anon,authenticated,service_role,postgres).
+Fuente JSON completa: w9-readiness/evidence/f06c2/pre/i01_inventory.json (481).

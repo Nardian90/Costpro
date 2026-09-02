@@ -1,0 +1,49 @@
+W9.4.2 — 09 ACL DIFF PRE→POST (matriz de exposición)
+
+                 PRE        POST       Δ
+SD PUBLIC        26         14         -12
+SD anon          26         14         -12
+SD auth efectiva 103        70         -33
+SD sin exposición 139       172        +33
+SD total         242        242        0
+total funciones  481        481        0
+
+Cambios ACL por función: 33; cambios NO-ACL: 0 (ONLY-ACL-CHANGED demostrado).
+Entradas explícitas removidas: 52 (33 authenticated + 12 PUBLIC + 7 anon;
+las otras 5 anon eran efectivas-vía-PUBLIC, cubiertas por REVOKE PUBLIC).
+Entradas añadidas: 0 (33 GRANT service_role ya existían — idempotentes).
+POST por función: {postgres(owner), service_role}.
+
+auto_match_bank_items                      PUB no→no  anon no→no  auth sí→no  svc sí→sí
+bulk_assign_memberships                    PUB sí→no  anon sí→no  auth sí→no  svc sí→sí
+calculate_abc                              PUB no→no  anon no→no  auth sí→no  svc sí→sí
+calculate_service_distribution             PUB no→no  anon no→no  auth sí→no  svc sí→sí
+cleanup_old_aggregates                     PUB no→no  anon no→no  auth sí→no  svc sí→sí
+close_fiscal_period                        PUB no→no  anon no→no  auth sí→no  svc sí→sí
+create_devolution_v2                       PUB sí→no  anon sí→no  auth sí→no  svc sí→sí
+create_production_order_v2                 PUB sí→no  anon sí→no  auth sí→no  svc sí→sí
+create_quotation                           PUB no→no  anon no→no  auth sí→no  svc sí→sí
+create_received_service_v2                 PUB sí→no  anon sí→no  auth sí→no  svc sí→sí
+distribute_service_cost_v2                 PUB sí→no  anon sí→no  auth sí→no  svc sí→sí
+duplicate_inventory_adjustment             PUB no→no  anon no→no  auth sí→no  svc sí→sí
+duplicate_inventory_adjustment_v2          PUB sí→no  anon sí→no  auth sí→no  svc sí→sí
+get_product_cost_analysis                  PUB no→no  anon no→no  auth sí→no  svc sí→sí
+get_reorder_suggestions                    PUB no→no  anon no→no  auth sí→no  svc sí→sí
+get_usage_summary                          PUB no→no  anon no→no  auth sí→no  svc sí→sí
+has_store_role_as                          PUB sí→no  anon sí→no  auth sí→no  svc sí→sí
+is_tenant_member                           PUB sí→no  anon sí→no  auth sí→no  svc sí→sí
+lock_fiscal_period                         PUB no→no  anon no→no  auth sí→no  svc sí→sí
+purge_old_reset_snapshots                  PUB no→no  anon no→no  auth sí→no  svc sí→sí
+receive_to_warehouse                       PUB no→no  anon no→no  auth sí→no  svc sí→sí
+reverse_adjustment                         PUB no→no  anon no→no  auth sí→no  svc sí→sí
+reverse_devolution                         PUB no→no  anon no→no  auth sí→no  svc sí→sí
+reverse_production_order                   PUB sí→no  anon sí→no  auth sí→no  svc sí→sí
+reverse_receipt                            PUB no→no  anon no→no  auth sí→no  svc sí→sí
+reverse_transaction                        PUB no→no  anon no→no  auth sí→no  svc sí→sí
+reverse_transaction_v2                     PUB sí→no  anon sí→no  auth sí→no  svc sí→sí
+reverse_transfer                           PUB no→no  anon no→no  auth sí→no  svc sí→sí
+set_received_service_status                PUB sí→no  anon sí→no  auth sí→no  svc sí→sí
+soft_delete_store                          PUB no→no  anon no→no  auth sí→no  svc sí→sí
+upsert_usage_aggregate                     PUB no→no  anon no→no  auth sí→no  svc sí→sí
+validate_store_can_be_modified             PUB no→no  anon no→no  auth sí→no  svc sí→sí
+void_received_service_with_reversal        PUB sí→no  anon sí→no  auth sí→no  svc sí→sí

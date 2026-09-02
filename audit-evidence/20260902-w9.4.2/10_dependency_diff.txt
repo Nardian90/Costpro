@@ -1,0 +1,11 @@
+W9.4.2 — 10 DEPENDENCY DIFF PRE→POST
+
+prosrc md5 (481):   IDÉNTICO (comparación exacta por oid)
+proconfig (481):    IDÉNTICO (search_path inalterado)
+prosecdef+owner:    IDÉNTICO (242 SD, owner postgres)
+triggers:           IDÉNTICO (81; canónico order-independent)
+policies:           IDÉNTICO (391; canónico order-independent)
+views:              IDÉNTICO (11)
+pg_depend:          IDÉNTICO (4671)
+
+Conclusión: la migración W9.4.2 solo alteró proacl de 33 funciones.
