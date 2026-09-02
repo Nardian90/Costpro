@@ -1,0 +1,14 @@
+W9.4.3 — FASE 10 — REGRESSION DATA (ANTES == DESPUÉS)
+
+pre:  2026-09-02T20:45:53Z  (pre/h5c_data_integrity.json)
+post: 2026-09-02T20:55:54Z  (post/h5c_data_integrity.json)
+
+Métricas (23) — pre vs post:
+{
+  "metrics": 23,
+  "diffs": {},
+  "verdict": "PASS \u2014 23/23 m\u00e9tricas id\u00e9nticas (ANTES == DESPU\u00c9S)"
+}
+
+Conclusión: PASS — 23/23 métricas idénticas (ANTES == DESPUÉS)
+Ninguna modificación de datos (la migración solo ejecuta ALTER FUNCTION ... SET).

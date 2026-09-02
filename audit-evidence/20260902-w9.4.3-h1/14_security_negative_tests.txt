@@ -1,0 +1,32 @@
+W9.4.3 — FASE 13 — SEGURIDAD NEGATIVA
+
+1. ACL_after == ACL_before para las 18 funciones: PASS (40/40 filas idénticas,
+   ver 09_acl_comparison.txt y compare/forensic_diff.json sección 13_acl18).
+
+2. Comparación de exposición global SD (h5b pre vs post):
+   functions_secdef_no_searchpath: 18 → 0 (único cambio permitido)
+   functions_public_total: 481 → 481
+   functions_secdef_total: 242 → 242
+   triggers_public:  81 → 81
+   policies_public:  391 → 391
+   views_public:     11 → 11
+
+3. Probes de no-ampliación (FASE 11):
+   - get_products_for_reception via anon → 404 PGRST202 (no hay grant anon)
+   - ninguna ACL añadida/eliminada (catálogo byte-idéntico)
+   - no se ejecutó ningún GRANT/REVOKE en la migración (ver 05_migration.sql)
+
+4. Superficie de ataque H-1 reducida:
+   - 4 funciones (Clase C) con refs sin cualificar ahora resuelven SIEMPRE
+     pg_catalog primero y pg_temp al FINAL → shadowing de relaciones/tipos
+     vía schema temporal eliminado.
+   - 14 funciones (Clase B) con cuerpo cualificado: search_path congelado a
+     pg_catalog, public → proconfig ya no hereda el path del llamador y builtins
+     no son sombreables.
+
+5. Mutaciones ejecutadas en toda la sesión H-1:
+   - 18 × ALTER FUNCTION ... SET search_path (única escritura)
+   - sondas BEGIN/ROLLBACK (sin persistencia)
+   - probes POSTGREST: 2 llamadas con cuerpo vacío o zero-uuid que no ejecutan escritura
+     (mark_expired_lots(zero-uuid) → WHERE filtra → 0 filas afectadas)
+   AMPLIACIÓN DE PRIVILEGIOS: 0 · CAMBIOS DE ACL: 0 · CAMBIOS DE DATOS: 0

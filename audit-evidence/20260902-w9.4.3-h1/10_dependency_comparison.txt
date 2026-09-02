@@ -1,0 +1,16 @@
+W9.4.3 — FASE 7/9 — DEPENDENCY COMPARISON
+
+Dependencias de las 18 funciones (pg_depend / pg_rewrite / pg_trigger / pg_policies):
+  triggers que las usan:      8 pre → 8 post  (idénticos: pre/h5g_triggers18.json == post/h5g_triggers18.json)
+  policies que las referencian: 0 pre → 0 post (pre/h2d_policies.json)
+  vistas que las referencian:   0 pre → 0 post (pre/h2f_views.json)
+  llamadores internos BD:       0 pre → 0 post (pre/h2e_internal_callers.json)
+  pg_depend total:            12441 pre → 12441 post
+
+Call-sites en repositorio (HEAD=033e05d9):
+  7 rutas API (service_role), 2 consumidores frontend authenticated,
+  1 script test de contrato, 0 cambios requeridos en consumidores
+  (ver 03_consumer_map.md)
+
+Contrato PostgREST: OpenAPI service_role rpc=219 pre (W9.4.2) → 219 post
+Cambios de firma: 0 · Cambios de owner: 0 · Cambios de cuerpo: 0

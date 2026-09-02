@@ -1,0 +1,16 @@
+W9.4.3 — FASE 0 checkpoint git (pre-trabajo)
+ejecutado_utc: 2026-09-02T20:34:20Z
+HEAD:         033e05d96a6c965fbf0bbd97aa9ddc55071d35e5
+origin/main:  033e05d96a6c965fbf0bbd97aa9ddc55071d35e5
+branch:       main
+ahead/behind: 0/0
+working_tree: CLEAN (verificado antes de crear la migración)
+stash:        0
+log -5:
+033e05d9 (HEAD -> main, origin/main, origin/HEAD) security: harden mixed-context security definer functions
+7b1bafcd security(w9): harden exposed security definer functions
+2787b22c security(w9): harden RLS for F-01
+70f978b6 w9(f07): revoke PUBLIC/anon/authenticated EXECUTE on reset_store_data (W9.2)
+1c204d1e feat(w7): consolidate audited migration release
+
+Post-commit checkpoint se añade al final en 15_final_verdict.md

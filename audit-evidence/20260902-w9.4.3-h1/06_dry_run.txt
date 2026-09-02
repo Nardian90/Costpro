@@ -1,0 +1,23 @@
+W9.4.3 — FASE 7 — DRY RUN (2026-09-02T20:53–20:55Z, sin mutación persistente)
+
+D1 — Sonda de sintaxis (BEGIN/ROLLBACK):
+  ALTER FUNCTION public.__h1_syntax_probe_nonexistent__() SET search_path = pg_catalog, public;
+  → ERROR 42883 "function ... does not exist" (NO syntax error) → sintaxis ALTER ... SET válida
+  evidencia: pre/dry1 (p11 log + queries.log)
+
+D2 — Normalización de proconfig (BEGIN/ALTER/SELECT/ROLLBACK):
+  forma string-literal  'pg_catalog, public'      → proconfig: search_path="pg_catalog, public"  (CON comillas)
+  forma lista           pg_catalog, public        → proconfig: search_path=pg_catalog, public      (SIN comillas)
+  → DECISIÓN: usar forma LISTA (idéntica a la convención de las 224 Clase A ya existentes)
+  evidencia: pre/dry2_proconfig_norm.json
+
+D3 — Guard 1 (18 firmas: existencia + SECURITY DEFINER + owner + proconfig):
+  HTTP 201, respuesta [] → PASS   (pre/dry3_guard1.sql → dry3_guard1_final.json)
+D4 — Guard 2 (deriva global 481/242/18):
+  HTTP 201, respuesta [] → PASS   (pre/dry3_guard2.sql)
+D5 — Post-check (bloque auto-verificador dentro de la migración):
+  pre-apply falla como se espera: ERROR P0001 "H1-POSTCHECK: ... search_path=<NULL> (esperado ...)"
+  → sintaxis y lógica validadas; pasará in-transaction tras los 18 ALTERs
+  (pre/dry3_postcheck.sql)
+
+GATE DRY-RUN: PASS — proceder a aplicar

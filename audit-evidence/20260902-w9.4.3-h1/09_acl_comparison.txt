@@ -1,0 +1,22 @@
+W9.4.3 — FASE 13 — ACL COMPARISON (seguridad negativa)
+
+Comparación byte a byte de la ACL expandida de las 18 funciones
+(aclexplode(coalesce(proacl, acldefault('f', proowner)))):
+
+pre:  pre/h5a_acl18.json  (40 filas, 2026-09-02T20:45:53Z)
+post: post/h5a_acl18.json (40 filas, 2026-09-02T20:55:54Z)
+
+Resultado: IDENTICAL — ACL_after == ACL_before
+
+Desglose por rol (idéntico pre/post):
+  postgres      18 grants X
+  service_role  18 grants X
+  authenticated 3 grants X
+  anon          0 grants X
+  public(PUBLIC)0 grants X
+
+Ampliación accidental de privilegios: NINGUNA
+  - PUBLIC/anon/authenticated/service_role/postgres: 0 cambios
+  - exposición global SD (post): PUBLIC 14, anon 14, auth efectiva 70 (sin cambios vs W9.4.2)
+
+Detalle completo por OID en compare/forensic_diff.json (sección 13_acl18).

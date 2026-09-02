@@ -1,0 +1,37 @@
+W9.4.3 — FASE 5 — BASELINE PRE-CAMBIO (2026-09-02T20:45:53Z, READ-ONLY)
+
+Estructura global (pre):
+{
+  "triggers_public": 81,
+  "policies_public": 391,
+  "views_public": 11,
+  "pg_depend_total": 12441,
+  "functions_public_total": 481,
+  "functions_secdef_total": 242,
+  "functions_secdef_no_searchpath": 18
+}
+
+Conteos (pre):
+{
+  "total_functions": 481,
+  "security_definer": 242,
+  "sd_without_search_path": 18,
+  "sd_with_search_path": 224
+}
+
+ACL expandida de las 18 (40 filas): pre/h5a_acl18.json
+  resumen: 18 postgres,
+           18 service_role,
+           3 authenticated,
+           0 anon,
+           0 public(=PUBLIC)
+
+Definiciones completas (18): pre/h5f_defs18.json (incluye proconfig=NULL)
+md5(prosrc) de las 481: pre/h5d_all_prosrc_md5.json
+proconfig de las 481:   pre/h5e_all_proconfig.json
+Triggers de las 4 trigger-fns: pre/h5g_triggers18.json (8 filas)
+Datos 23 métricas (pre 20:45:53Z): pre/h5c_data_integrity.json
+
+call-sites repo: pre/h3_repo_consumers.txt
+dependencias DB: pre/h2b_triggers.json (8), pre/h2c_depend.json, pre/h2d_policies.json (0),
+                 pre/h2e_internal_callers.json (0), pre/h2f_views.json (0)

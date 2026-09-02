@@ -1,0 +1,6 @@
+timestamp_utc: 2026-09-02T20:55:35Z
+migration: supabase/migrations/20260902205210_w9_f06_h1_security_definer_search_path.sql
+migration_sha256: b199cceba8f4883dbeca8eb7bf1d2a5669437f164f646aa8b134f4b0bff645e4
+endpoint: POST /v1/projects/wthkddeleylijmonclxg/database/query
+http_status: 201
+database_response: []

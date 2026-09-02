@@ -1,0 +1,67 @@
+W9.4.3 — FASE 11 — POSTGREST / RPC REGRESSION (2026-09-02T20:59:49Z)
+
+Log completo de probes:
+svc_usage_summary | get_usage_summary | HTTP=200 | expect=200 data | [{"metric_type":"api_request","service":"api","total_count":16,"total_sum":0,"bucket_count":9,"first_bucket":"2026-09-02T20:00:00+00:00","last_bucket":"2026-09-02T20:50:00+00:00"},   {"metric_type":"function_ms","service
+svc_usage_forecast | get_usage_forecast | HTTP=404 | expect=200 data | {"code":"42883","details":null,"hint":"No function matches the given name and argument types. You might need to add explicit type casts.","message":"function round(double precision, integer) does not exist"}
+svc_worker_comm_summary | get_worker_commission_summary | HTTP=200 | expect=200 data/empty | []
+svc_cost_analysis | get_product_cost_analysis | HTTP=200 | expect=200 empty | []
+svc_products_reception | get_products_for_reception | HTTP=200 | expect=200 empty | []
+svc_service_distribution | calculate_service_distribution | HTTP=200 | expect=200 empty | []
+svc_mark_expired_lots_probe | mark_expired_lots | HTTP=200 | expect=200 int | 0
+anon_products_reception | get_products_for_reception | HTTP=404 | expect=404 PGRST202 (sin grant anon) | {"code":"PGRST202","details":"Searched for the function public.get_products_for_reception without parameters or with a single unnamed json/jsonb parameter, but no matches were found in the schema cache.","hint":null,"mes
+anon_void_transaction | void_transaction | HTTP=404 | expect=400/404 resolvible, sin ejecución | {"code":"PGRST202","details":"Searched for the function public.void_transaction without parameters or with a single unnamed json/jsonb parameter, but no matches were found in the schema cache.","hint":null,"message":"Cou
+openapi_svc | HTTP=200 | rpc_in_openapi=219
+openapi_contains audit_cash_closures_changes=false
+openapi_contains calculate_service_distribution=true
+openapi_contains cleanup_old_aggregates=true
+openapi_contains close_cash_shift=true
+openapi_contains create_store_with_membership=true
+openapi_contains ensure_fiscal_period=true
+openapi_contains get_product_cost_analysis=true
+openapi_contains get_products_for_reception=true
+openapi_contains get_usage_forecast=true
+openapi_contains get_usage_summary=true
+openapi_contains get_worker_commission_summary=true
+openapi_contains mark_expired_lots=true
+openapi_contains purge_old_reset_snapshots=true
+openapi_contains snapshot_commission_rule=false
+openapi_contains touch_updated_at=false
+openapi_contains upsert_usage_aggregate=true
+openapi_contains validate_active_store=false
+openapi_contains void_transaction=true
+
+Análisis:
+1. service_role positivos READ-ONLY:
+   - get_usage_summary(1)            → 200 CON DATOS reales
+   - get_worker_commission_summary(zero-uuid) → 200 []
+   - get_product_cost_analysis(0,0)  → 200 []  (resuelve receipt_items/receipts/
+     service_cost_distributions/received_services/service_types con el nuevo path)
+   - get_products_for_reception(0,'',1,1) → 200 []  (resuelve products)
+   - calculate_service_distribution(0) → 200 []  (resuelve received_services,
+     service_reception_links, receipt_items + %ROWTYPE con pg_temp al final)
+   - mark_expired_lots(zero-uuid)    → 200, retorno 0 (0 filas cumplen WHERE —
+     probe de ejecución sin mutación efectiva)
+2. get_usage_forecast → HTTP 404 code 42883 "function round(double precision,
+   integer) does not exist":
+   DIAGNÓSTICO — DEFECTO LATENTE PRE-EXISTENTE, NO es regresión H-1:
+   a) round existe SOLO en pg_catalog con overloads (double precision),
+      (numeric), (numeric, integer) — round(float8, integer) NO existe en
+      NINGÚN schema del cluster (probe: round_dp_int=0).
+   b) Es un fallo de resolución por TIPOS de argumento, no por path: incluso
+      con search_path=pg_catalog, public, extensions, vault, auth, storage el
+      error es idéntico (probe ejecutado).
+   c) Antes de H-1 (sin proconfig) la función ejecutaba bajo el path del
+      llamador: ninguno de los paths posibles (postgres: "$user", public,
+      extensions; service_role: default; anon/auth: default) contenía un
+      round(float8,int) — la función era inejecutable desde su creación
+      (migración 20260626000001_usage_tracking.sql).
+   d) Cero consumidores runtime (mapa FASE 3: solo un comentario en
+      src/app/api/cron/usage-sync/route.ts L283). OpenAPI la sigue listando.
+   REGISTRADO COMO HALLAZGO NUEVO (H-3) — fuera del alcance H-1, no bloquea.
+3. ACL negativa: get_products_for_reception anon → 404 PGRST202 (sin grant
+   anon, ACL intacta). void_transaction anon (cuerpo vacío) → 404 PGRST202
+   (requiere p_transaction_id; grant PUBLIC/anon histórico intacto en catálogo).
+4. Contrato: OpenAPI service_role rpc=219 (idéntico a W9.4.2). 14/14 funciones
+   no-trigger visibles; 4 trigger-fns ocultas (comportamiento estándar).
+
+VEREDICTO FASE 11: PASS (con H-3 documentado como pre-existente)

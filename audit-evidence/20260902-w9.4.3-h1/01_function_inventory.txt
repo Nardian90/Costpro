@@ -1,0 +1,40 @@
+W9.4.3 — FASE 1/9 — INVENTARIO SECURITY DEFINER sin search_path
+Fuente: catálogo PostgreSQL (pg_proc/pg_namespace/pg_roles) vía Management API.
+Campos por función: oid, schema, name, identity_arguments, return_type, owner,
+security_definer, proconfig, search_path, proacl, language, volatility, parallel
+(pre/h1a_sd_full.json + pre/h1b_sd_missing.json; detalles por función en
+pre/h2a_functiondefs.json y pre/h5f_defs18.json).
+
+CONTADORES
+                                    ANTES      DESPUÉS
+total funciones public              481        481
+SECURITY DEFINER                    242        242
+SD con search_path explícito        224        242
+SD sin search_path (vulnerables)     18          0
+
+Funciones vulnerables ANTES (Clase B/C, 18):
+
+  oid= 138218  audit_cash_closures_changes()  owner=postgres  exposure: pub=- anon=- auth=- svc=X
+  oid= 132722  calculate_service_distribution(p_service_id uuid)  owner=postgres  exposure: pub=- anon=- auth=- svc=X
+  oid= 132926  cleanup_old_aggregates(p_days integer)  owner=postgres  exposure: pub=- anon=- auth=- svc=X
+  oid= 138285  close_cash_shift(p_closure_id uuid, p_declared_cash numeric, p_declared_vouchers numeric, p_notes text, p_user_id uuid)  owner=postgres  exposure: pub=- anon=- auth=- svc=X
+  oid= 138143  create_store_with_membership(p_name text, p_address text, p_created_by uuid, p_max_stores integer, p_logo_url text, p_reeup text, p_nit text, p_bank_account text, p_phone text, p_email text, p_slug text, p_plantilla text, p_signature_url text, p_stamp_url text, p_latitude double precision, p_longitude double precision, p_tenant_id uuid)  owner=postgres  exposure: pub=- anon=- auth=- svc=X
+  oid= 136259  ensure_fiscal_period(p_store_id uuid, p_year integer, p_month integer)  owner=postgres  exposure: pub=- anon=- auth=- svc=X
+  oid= 132723  get_product_cost_analysis(p_product_id uuid, p_store_id uuid)  owner=postgres  exposure: pub=- anon=- auth=- svc=X
+  oid= 132197  get_products_for_reception(p_store_id uuid, p_search_term text, p_page integer, p_page_size integer)  owner=postgres  exposure: pub=- anon=- auth=X svc=X
+  oid= 132940  get_usage_forecast()  owner=postgres  exposure: pub=- anon=- auth=- svc=X
+  oid= 132924  get_usage_summary(p_hours integer)  owner=postgres  exposure: pub=- anon=- auth=- svc=X
+  oid= 135148  get_worker_commission_summary(p_store_id uuid, p_date_from date, p_date_to date)  owner=postgres  exposure: pub=- anon=- auth=X svc=X
+  oid= 136485  mark_expired_lots(p_store_id uuid)  owner=postgres  exposure: pub=- anon=- auth=- svc=X
+  oid= 135446  purge_old_reset_snapshots(p_days integer)  owner=postgres  exposure: pub=- anon=- auth=- svc=X
+  oid= 133149  snapshot_commission_rule()  owner=postgres  exposure: pub=- anon=- auth=- svc=X
+  oid= 133144  touch_updated_at()  owner=postgres  exposure: pub=- anon=- auth=- svc=X
+  oid= 132923  upsert_usage_aggregate(p_bucket_start timestamp with time zone, p_bucket_end timestamp with time zone, p_metric_type text, p_service text, p_endpoint text, p_count integer, p_sum_value double precision)  owner=postgres  exposure: pub=- anon=- auth=- svc=X
+  oid=  38664  validate_active_store()  owner=postgres  exposure: pub=- anon=- auth=- svc=X
+  oid= 138000  void_transaction(p_transaction_id uuid, p_reason text, p_operation_date timestamp with time zone, p_user_id uuid)  owner=postgres  exposure: pub=- anon=- auth=X svc=X
+
+Funciones vulnerables DESPUÉS: 0 (objetivo del trabajo: 0)
+Nota de reconstrucción: el re-run de inventario a las 20:56:09Z (post-apply)
+sobrescribió pre/h1a-h1e; el estado PRE fue reconstruido 1:1 desde h5d/h5e/h5f
+(capturados 2026-09-02T20:45:53Z, PRE-apply) — verificado: los 18 nombres
+reconstruidos coinciden con h5f_defs18 y los contadores con h5b_structure.

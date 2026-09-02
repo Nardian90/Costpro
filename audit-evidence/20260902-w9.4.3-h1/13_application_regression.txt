@@ -1,0 +1,59 @@
+W9.4.3 — FASE 12 — APPLICATION REGRESSION (2026-09-02T21:02Z)
+
+1) Lint (npm run lint / eslint .): PASS rc=0
+   utton> de @/components/ui/button en vez de <button> crudo. Refactor incremental recomendado  no-restricted-syntax
+  3464:15  warning  V2.12.25: Considera usar <Button> de @/components/ui/button en vez de <button> crudo. Refactor incremental recomendado  no-restricted-syntax
+
+✖ 1291 problems (0 errors, 1291 warnings)
+  0 errors and 2 warnings potentially fixable with the `--fix` option.
+
+LINT rc=0
+
+2) Tests (npm test / vitest run): PASS rc=0
+   89 test files passed | 1 skipped
+   1892 tests passed | 24 skipped
+   /__tests__/lib/receipt-items-validation.test.ts (12 tests) 6ms
+ ✓ src/__tests__/hooks/useStoreEdit.test.tsx (4 tests) 27ms
+ ✓ src/__tests__/hooks/useStoreInactivityMonitor.test.tsx (2 tests | 1 skipped) 3ms
+ ✓ src/__tests__/components/StorefrontErrorBoundary.test.tsx (8 tests) 6ms
+ ✓ src/__tests__/hooks/useBulkAssignMemberships.test.tsx (3 tests) 31ms
+ ✓ src/__tests__/hooks/useBulkStoreAction.test.tsx (3 tests) 36ms
+ ✓ src/__tests__/store/session-store.test.ts (5 tests) 4ms
+
+ Test Files  89 passed | 1 skipped (90)
+      Tests  1892 passed | 24 skipped (1916)
+   Start at  21:03:07
+   Duration  211.62s (transform 3.87s, setup 5.43s, import 9.86s, tests 127.22s, environment 56.68s)
+
+TESTS rc=0
+
+3) Typecheck (npx tsc --noEmit, NODE_OPTIONS heap 4608MB): INCONCLUSIVE
+   rc=137 (OOM Kill) — MISMA LIMITACIÓN AMBIENTAL que W9.4.1/W9.4.2
+   (entorno sandbox no soporta el heap requerido).
+   Killed
+TSC rc=137
+
+   Mitigación triple: (a) src/ byte-idéntico — git status src/ = 0 cambios;
+   (b) 1892/1892 tests PASS; (c) rutas 10/10 sin 500.
+4) Route smoke (sin sesión):
+== W9.4.3 FASE 12 route smoke 2026-09-02T21:02:26Z ==
+/ → 200
+/api/health → 200
+/api/received-services/distribute → 405
+/api/received-services/analysis → 401
+/api/cron/usage-sync → 401
+/api/cash-closures/close → 405
+/api/stores → 401
+/api/usage/summary → 401
+/api/commissions/summary → 401
+/api/cron/purge-snapshots → 200
+
+   Resultado: 200/401/405 según diseño — 0 errores 500.
+
+NOTA: la migración H-1 no toca código de aplicación (ALTER FUNCTION ... SET
+sobre proconfig únicamente); ningún test de integración sobre migraciones
+resultó afectado (1892 PASS incluyen las suites iteration-* que escanean
+migraciones).
+
+VEREDICTO FASE 12: PASS (typecheck INCONCLUSIVE por entorno, documentado con
+evidencia y mitigado — patrón idéntico a los cierres W9.4.1/W9.4.2)
