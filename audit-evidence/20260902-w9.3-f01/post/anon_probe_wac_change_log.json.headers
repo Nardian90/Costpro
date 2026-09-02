@@ -1,0 +1,19 @@
+HTTP/2 401 
+date: Wed, 02 Sep 2026 18:25:13 GMT
+content-type: application/json; charset=utf-8
+content-length: 98
+cf-ray: a34e8e59df46dba0-HKG
+cf-cache-status: DYNAMIC
+server: cloudflare
+strict-transport-security: max-age=31536000; includeSubDomains; preload
+www-authenticate: Bearer
+proxy-status: PostgREST; error=42501
+x-content-type-options: nosniff
+sb-gateway-version: 1
+sb-project-ref: wthkddeleylijmonclxg
+sb-request-id: 01a0635e-342e-7263-bc24-43963712cb64
+x-envoy-attempt-count: 1
+x-envoy-upstream-service-time: 52
+set-cookie: __cf_bm=VPYB3uISMw.lsxH2GGDrS2XiaauUklRweXGxO84iqmQ-1788373513.2591798-1.0.1.1-cfO.RdLsoEQyO1lEjBeJpue3nfIheNDQ2avRu8Mn4tYQnwRwyCaYd5_d8fz8PPd2TMGacY8SQoZnkRbGc5MmBLhxapoBeNLUU.uqERagdwsRFOYE6D5HG.qSr_s2neVJ; HttpOnly; SameSite=None; Secure; Path=/; Domain=supabase.co; Expires=Wed, 02 Sep 2026 18:55:13 GMT
+alt-svc: h3=":443"; ma=86400
+

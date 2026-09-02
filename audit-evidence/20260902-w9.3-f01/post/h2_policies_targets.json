@@ -1,0 +1,1 @@
+[{"tablename":"transaction_recovery_ledger","policyname":"f01_snapshot_restorer_access","roles":"{costpro_snapshot_restorer}","cmd":"ALL","permissive":"PERMISSIVE","qual":"true","with_check":"true"}]

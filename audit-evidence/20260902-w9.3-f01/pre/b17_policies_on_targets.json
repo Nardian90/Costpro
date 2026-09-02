@@ -1,0 +1,1 @@
+[{"relname":"store_credit_ledger","existing_policies":0},{"relname":"transaction_recovery_ledger","existing_policies":0},{"relname":"w62_df04_design_params","existing_policies":0},{"relname":"w62_df04_synthetic_rows","existing_policies":0},{"relname":"w62_zero_cost_flags","existing_policies":0},{"relname":"wac_change_log","existing_policies":0}]

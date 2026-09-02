@@ -1,0 +1,21 @@
+HTTP/2 200 
+date: Wed, 02 Sep 2026 18:15:59 GMT
+content-type: application/json; charset=utf-8
+content-length: 2
+content-range: */0
+cf-ray: a34e80d21e6a850f-HKG
+cf-cache-status: DYNAMIC
+content-location: /store_credit_ledger?limit=1&select=%2A
+server: cloudflare
+strict-transport-security: max-age=31536000; includeSubDomains; preload
+x-content-type-options: nosniff
+content-profile: public
+preference-applied: count=exact
+sb-gateway-version: 1
+sb-project-ref: wthkddeleylijmonclxg
+sb-request-id: 01a06355-bf56-7f36-8483-fcbf58505776
+x-envoy-attempt-count: 1
+x-envoy-upstream-service-time: 154
+set-cookie: __cf_bm=kBBjmVnjCUrM4K2lEmdmHprdBbMBzzOJhQRrRMvkt_Q-1788372959.0569596-1.0.1.1-UuFLsHXrCPDQf9XWgMzIAPONbDfIXwjiBqbaDCytcelKbT0FG7jpReHXjCNV5vlSmygZhBWYyKzbDg1eNVXH_ZxUhmvX8wqAQZxEDdCYRyziF62Y3n6X.e4A.PGgM0Mp; HttpOnly; SameSite=None; Secure; Path=/; Domain=supabase.co; Expires=Wed, 02 Sep 2026 18:45:59 GMT
+alt-svc: h3=":443"; ma=86400
+

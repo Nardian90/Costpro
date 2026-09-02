@@ -1,0 +1,1 @@
+[{"table_name":"transaction_recovery_ledger","tgname":"trg_ledger_append_only","function_name":"enforce_ledger_append_only","tgenabled":"O"}]

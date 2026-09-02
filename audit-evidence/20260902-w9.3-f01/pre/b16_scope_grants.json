@@ -1,0 +1,1 @@
+[{"relname":"audit_events","anon_select":true,"auth_select":true,"auth_insert":true,"auth_update":true,"auth_delete":true},{"relname":"idempotency_registry","anon_select":false,"auth_select":true,"auth_insert":false,"auth_update":false,"auth_delete":false}]
