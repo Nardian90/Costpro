@@ -1,0 +1,22 @@
+{
+  "V1_live_vs_V2_12_12": {
+    "identical_normalized": true,
+    "live_len": 2593,
+    "repo_len": 2593
+  },
+  "V2_live_vs_PR4": {
+    "identical_normalized": true,
+    "live_len": 2057,
+    "repo_len": 2057
+  },
+  "V2_live_vs_V2_17_1_orig": {
+    "identical_normalized": false,
+    "live_len": 2057,
+    "repo_len": 2878
+  },
+  "V1_live_vs_V2_2_orig": {
+    "identical_normalized": false,
+    "live_len": 2593,
+    "repo_len": 0
+  }
+}

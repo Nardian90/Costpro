@@ -1,0 +1,2 @@
+[{"probe":"audit_written","action":"REVERSE_TRANSACTION_V2","user_id":"28ebdfa1-f012-4de3-b5da-137ae9b764c9","store_id":"5e6fe821-5465-48b1-b3f1-3aa3182edc38","metadata":{"reason":"audit-probe-authorized","units_restored":10}}]
+HTTP_STATUS:201

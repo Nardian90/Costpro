@@ -1,0 +1,38 @@
+{
+  "audit": "W9.4.6-H5",
+  "captured": "2026-09-03T02:45Z",
+  "functions": {
+    "reverse_transaction": {"oid": 136653, "schema": "public"},
+    "reverse_transaction_v2": {"oid": 138188, "schema": "public"}
+  },
+  "pg_depend": {
+    "raw": "raw/f2_deps.json",
+    "summary": "Solo dependencias normales a plpgsql language (oid 13573) y schema public (oid 2200). Cero dependencias de tipo caller/callée.",
+    "internal_db_callers": 0
+  },
+  "triggers_calling_functions": 0,
+  "views_matviews_mentioning": 0,
+  "other_functions_mentioning": 0,
+  "trigger_map_relevant_tables": {
+    "payment_transactions": ["trg_audit_payment_transactions", "trg_update_payment_status", "trg_validate_payment_invariants"],
+    "products": ["trg_ensure_product_barcode", "trg_guard_wac_writer (fn w62_guard_wac_writer, BEFORE UPDATE OF cost_average)", "trg_maintain_product_completeness", "trigger_audit_product_changes"],
+    "stock_movements": ["tr_sync_inventory_after_movement (fn_sync_inventory_on_movement, BEFORE INSERT)", "trg_auto_kardex (auto_kardex_on_stock_movement, AFTER INSERT)", "trg_sync_product_stock (sync_product_stock, AFTER INSERT)"],
+    "transactions": ["reverse_commissions_on_sale_void (AFTER UPDATE OF status)", "trg_audit_transaction_changes (log_transaction_changes)", "trg_check_active_user", "trg_protect_transactions_total_amount", "trg_validate_tx_transition (fn_validate_document_transition('transactions'), BEFORE UPDATE OF status)"]
+  },
+  "call_chain_V2": "reverse_transaction_v2 → register_stock_movement → INSERT stock_movements → [BEFORE] fn_sync_inventory_on_movement (inventory sync + ERR_INSUFFICIENT_STOCK + store mismatch) → [AFTER] auto_kardex_on_stock_movement (kardex 'sale_reverse') + sync_product_stock (products.stock_current desde balance_after)",
+  "call_chain_V1": "reverse_transaction → UPDATE directo products.stock_current + UPDATE product_lots + INSERT directo kardex_entries('devolution_in') — SIN stock_movements, SIN inventory, SIN triggers de pipeline",
+  "supporting_functions": {
+    "register_stock_movement": "secdef, search_path=public; sin recálculo WAC (A2 hotfix v2.22.0: cost_average intacto salvo trg_update_product_wac para receipt_items)",
+    "has_store_access_as(uuid,uuid)": "secdef; admin OR user_store_memberships active",
+    "w62_guard_wac_writer": "trigger BEFORE UPDATE OF cost_average ON products; exige token app.wac_writer='fn_recalc_wac'",
+    "fn_recalc_wac": "secdef, search_path=public,extensions; único escritor legal de cost_average; log wac_change_log",
+    "fn_validate_document_transition('transactions')": "pending→[completed,voided]; completed→[voided,reversed]; voided/reversed terminales",
+    "reverse_commissions_on_sale_void": "AFTER UPDATE OF status cuando NEW IN (voided,reversed) → flaggea commission_payments",
+    "log_transaction_changes": "AFTER UPDATE status→audit_logs 'UPDATE_STATUS' (user_id=COALESCE(auth.uid(), seller_id))"
+  },
+  "tables_written": {
+    "reverse_transaction_v1": ["products.stock_current (directo)", "product_lots", "kardex_entries (directo)", "transactions (status/reversed_*)"],
+    "reverse_transaction_v2": ["transactions (status/updated_at)", "stock_movements (via rsm)", "inventory (via trigger)", "products (via trigger)", "kardex_entries (via trigger)", "audit_logs", "business_events"]
+  },
+  "tables_NOT_touched_by_any_version": ["payment_transactions"]
+}

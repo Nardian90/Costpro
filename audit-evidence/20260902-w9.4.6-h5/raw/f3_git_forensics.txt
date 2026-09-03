@@ -1,0 +1,54 @@
+=== W9.4.6 FASE 3 — GIT FORENSICS reverse_transaction ===
+
+--- git log --all --oneline -- '*reverse_transaction*' ---
+5e2fa2a fix(inventory): RPC lee stock de inventory.quantity (fuente de verdad) en vez de products.stock_current
+
+--- git log -S'reverse_transaction' --all --oneline ---
+e7959b4 fix(w9): reconcile reverse_receipt_v2 drift (W9.4.5 H-4)
+033e05d security: harden mixed-context security definer functions
+7b1bafc security(w9): harden exposed security definer functions
+1c204d1 feat(w7): consolidate audited migration release
+b125152 audit: record W6 canonical cases A-F evidence
+f628e5e audit: freeze W6 harness parity recovery checkpoint
+5e2fa2a fix(inventory): RPC lee stock de inventory.quantity (fuente de verdad) en vez de products.stock_current
+
+--- git log -G'reverse_transaction' --all --oneline ---
+e7959b4 fix(w9): reconcile reverse_receipt_v2 drift (W9.4.5 H-4)
+033e05d security: harden mixed-context security definer functions
+7b1bafc security(w9): harden exposed security definer functions
+1c204d1 feat(w7): consolidate audited migration release
+b125152 audit: record W6 canonical cases A-F evidence
+f628e5e audit: freeze W6 harness parity recovery checkpoint
+5e2fa2a fix(inventory): RPC lee stock de inventory.quantity (fuente de verdad) en vez de products.stock_current
+
+--- migrations containing reverse_transaction ---
+supabase/migrations/20260726000006_v2_3_production_reversal_and_validation.sql
+supabase/migrations/20260727000009_v2_12_13_revoke_anon_grants_comments.sql
+supabase/migrations/20260726000005_v2_2_accounting_flow_reversal.sql
+supabase/migrations/20260808000001_v2_17_1_reverse_transaction_v2.sql
+supabase/migrations/20260902200923_w9_f06_c2_hardening.sql
+supabase/migrations/20260727000006_v2_12_9_spoofing_p_user_id.sql
+supabase/migrations/20260727000008_v2_12_12_fix_is_not_null_pattern.sql
+supabase/migrations/20260810000040_pr4_kardex_fix.sql
+
+--- any file mentioning reverse_transaction_v2 ---
+e7959b41e9fa3255654b284f692498ffcb10763c:audit-evidence/20260828-af/checkpoint-validation/lab-v2-fingerprint-s1-LIVE-20260828.txt
+e7959b41e9fa3255654b284f692498ffcb10763c:audit-evidence/20260828/download/auditoria-multitienda/R-HARNESS-02/fingerprint/lab-v2-fingerprint-s1.txt
+e7959b41e9fa3255654b284f692498ffcb10763c:audit-evidence/20260828/download/auditoria-multitienda/R-HARNESS-02/fingerprint/lab-v3-fingerprint-s2.txt
+e7959b41e9fa3255654b284f692498ffcb10763c:audit-evidence/20260828/download/auditoria-multitienda/R-HARNESS-02/fingerprint/prod-fingerprint.txt
+e7959b41e9fa3255654b284f692498ffcb10763c:audit-evidence/20260828/download/auditoria-multitienda/R-HARNESS-02/replay/migration-errors-v3.log
+e7959b41e9fa3255654b284f692498ffcb10763c:audit-evidence/20260828/download/auditoria-multitienda/R-HARNESS-02/replay/migration-ledger-v1-virgin.txt
+e7959b41e9fa3255654b284f692498ffcb10763c:audit-evidence/20260828/download/auditoria-multitienda/R-HARNESS-02/replay/migration-ledger-v3.txt
+e7959b41e9fa3255654b284f692498ffcb10763c:audit-evidence/20260828/download/auditoria-multitienda/RECOVERY-20260828/PRODUCTION-SCHEMA-SNAPSHOT/extraction-raw/fp-06.response.json
+e7959b41e9fa3255654b284f692498ffcb10763c:audit-evidence/20260828/download/auditoria-multitienda/RECOVERY-20260828/PRODUCTION-SCHEMA-SNAPSHOT/extraction-raw/fp-10.response.json
+e7959b41e9fa3255654b284f692498ffcb10763c:audit-evidence/20260828/download/auditoria-multitienda/RECOVERY-20260828/PRODUCTION-SCHEMA-SNAPSHOT/extraction-raw/functions-027.response.json
+e7959b41e9fa3255654b284f692498ffcb10763c:audit-evidence/20260828/download/auditoria-multitienda/RECOVERY-20260828/PRODUCTION-SCHEMA-SNAPSHOT/extraction-raw/grants-func-008.response.json
+e7959b41e9fa3255654b284f692498ffcb10763c:audit-evidence/20260828/download/auditoria-multitienda/RECOVERY-20260828/PRODUCTION-SCHEMA-SNAPSHOT/extraction-raw/grants-func2-006.response.json
+e7959b41e9fa3255654b284f692498ffcb10763c:audit-evidence/20260828/download/auditoria-multitienda/RECOVERY-20260828/PRODUCTION-SCHEMA-SNAPSHOT/fingerprint/lab-v2-fingerprint-s1.txt
+e7959b41e9fa3255654b284f692498ffcb10763c:audit-evidence/20260828/download/auditoria-multitienda/RECOVERY-20260828/PRODUCTION-SCHEMA-SNAPSHOT/fingerprint/prod-fingerprint.txt
+e7959b41e9fa3255654b284f692498ffcb10763c:audit-evidence/20260828/download/auditoria-multitienda/RECOVERY-20260828/PRODUCTION-SCHEMA-SNAPSHOT/production-schema-snapshot-20260828.sql
+e7959b41e9fa3255654b284f692498ffcb10763c:audit-evidence/20260828/download/auditoria-multitienda/RECOVERY-20260828/PRODUCTION-SCHEMA-SNAPSHOT/statements.json
+e7959b41e9fa3255654b284f692498ffcb10763c:audit-evidence/20260828/harness/logs/migration-errors-v3.log
+e7959b41e9fa3255654b284f692498ffcb10763c:audit-evidence/20260828/harness/logs/migration-errors.log
+e7959b41e9fa3255654b284f692498ffcb10763c:audit-evidence/20260828/harness/logs/migration-ledger-v3.txt
+e7959b41e9fa3255654b284f692498ffcb10763c:audit-evidence/20260828/harness/logs/migration-ledger.txt

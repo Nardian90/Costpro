@@ -1,0 +1,2 @@
+{"message":"Failed to run sql query: ERROR:  P0001: ERR_UNAUTHORIZED\nCONTEXT:  PL/pgSQL function reverse_transaction_v2(uuid,text,uuid) line 23 at RAISE\n"}
+HTTP_STATUS:400

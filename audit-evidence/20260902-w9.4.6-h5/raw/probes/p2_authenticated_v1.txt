@@ -1,0 +1,2 @@
+{"message":"Failed to run sql query: ERROR:  42501: permission denied for function reverse_transaction\n"}
+HTTP_STATUS:400

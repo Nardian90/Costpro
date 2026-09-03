@@ -1,0 +1,64 @@
+[
+  {
+    "catalog": [
+      {
+        "oid": "138188",
+        "schema": "public",
+        "proname": "reverse_transaction_v2",
+        "owner": "postgres",
+        "prokind": "f",
+        "prosecdef": true,
+        "provolatile": "v",
+        "proparallel": "u",
+        "proconfig": [
+          "search_path=public, pg_temp"
+        ],
+        "proacl": [
+          "postgres=X/postgres",
+          "service_role=X/postgres"
+        ],
+        "ident_args": "p_transaction_id uuid, p_reason text, p_user_id uuid",
+        "args": "p_transaction_id uuid, p_reason text, p_user_id uuid DEFAULT NULL::uuid",
+        "result": "jsonb",
+        "prosrc_len": 2251,
+        "signature": "reverse_transaction_v2(uuid,text,uuid)",
+        "proconfig_jsonb": [
+          "search_path=public, pg_temp"
+        ],
+        "proacl_jsonb": [
+          "postgres=X/postgres",
+          "service_role=X/postgres"
+        ]
+      },
+      {
+        "oid": "136653",
+        "schema": "public",
+        "proname": "reverse_transaction",
+        "owner": "postgres",
+        "prokind": "f",
+        "prosecdef": true,
+        "provolatile": "v",
+        "proparallel": "u",
+        "proconfig": [
+          "search_path=public"
+        ],
+        "proacl": [
+          "postgres=X/postgres",
+          "service_role=X/postgres"
+        ],
+        "ident_args": "p_transaction_id uuid, p_reason text, p_user_id uuid",
+        "args": "p_transaction_id uuid, p_reason text, p_user_id uuid DEFAULT NULL::uuid",
+        "result": "jsonb",
+        "prosrc_len": 2802,
+        "signature": "reverse_transaction(uuid,text,uuid)",
+        "proconfig_jsonb": [
+          "search_path=public"
+        ],
+        "proacl_jsonb": [
+          "postgres=X/postgres",
+          "service_role=X/postgres"
+        ]
+      }
+    ]
+  }
+]

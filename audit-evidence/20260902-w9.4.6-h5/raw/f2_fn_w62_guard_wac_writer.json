@@ -1,0 +1,2 @@
+[{"fn":"w62_guard_wac_writer","def":"CREATE OR REPLACE FUNCTION public.w62_guard_wac_writer()\n RETURNS trigger\n LANGUAGE plpgsql\n SET search_path TO 'public', 'pg_temp'\nAS $function$\nBEGIN\n  IF coalesce(current_setting('app.wac_writer', true), '') <> 'fn_recalc_wac' THEN\n    RAISE EXCEPTION 'ERR_WAC_SINGLE_WRITER_VIOLATION: UPDATE cost_average sin token (OLD=% NEW=%). Unico escritor: fn_recalc_wac', OLD.cost_average, NEW.cost_average\n      USING ERRCODE = 'P0001';\n  END IF;\n  RETURN NEW;\nEND $function$\n"}]
+HTTP_STATUS:201

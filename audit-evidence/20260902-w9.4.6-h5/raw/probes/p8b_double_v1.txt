@@ -1,0 +1,2 @@
+{"message":"Failed to run sql query: ERROR:  P0001: ERR_ALREADY_REVERSED\nCONTEXT:  PL/pgSQL function reverse_transaction(uuid,text,uuid) line 12 at RAISE\n"}
+HTTP_STATUS:400

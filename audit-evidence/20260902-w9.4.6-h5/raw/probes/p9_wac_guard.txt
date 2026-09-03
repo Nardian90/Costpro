@@ -1,0 +1,2 @@
+{"message":"Failed to run sql query: ERROR:  P0001: ERR_WAC_SINGLE_WRITER_VIOLATION: UPDATE cost_average sin token (OLD=0 NEW=1). Unico escritor: fn_recalc_wac\nCONTEXT:  PL/pgSQL function w62_guard_wac_writer() line 4 at RAISE\n"}
+HTTP_STATUS:400

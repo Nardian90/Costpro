@@ -1,0 +1,20 @@
+=== W9.4.6 FASE 0 — GIT CHECKPOINT ===
+date_utc: 2026-09-03T02:26:53Z
+
+--- git status --short ---
+?? audit-evidence/20260902-w9.4.6-h5/
+--- HEAD ---
+e7959b41e9fa3255654b284f692498ffcb10763c
+--- REMOTE (main) ---
+e7959b41e9fa3255654b284f692498ffcb10763c
+--- git log -10 --oneline ---
+e7959b4 fix(w9): reconcile reverse_receipt_v2 drift (W9.4.5 H-4)
+2f7af7d security(w9): harden SECURITY DEFINER search_path
+033e05d security: harden mixed-context security definer functions
+7b1bafc security(w9): harden exposed security definer functions
+2787b22 security(w9): harden RLS for F-01
+70f978b w9(f07): revoke PUBLIC/anon/authenticated EXECUTE on reset_store_data (W9.2)
+1c204d1 feat(w7): consolidate audited migration release
+b7b9dec Merge pull request #1320 from Nardian90/audit/w6-harness-parity-checkpoint-20260828
+408757d ci(audit): exclude audit evidence from TypeScript build
+1dd3e6c audit(wac): freeze W6.1 defect resolution and decision gate
