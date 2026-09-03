@@ -1,0 +1,1 @@
+[{"enum_name":"cash_session_status_enum","values":"open,closed"},{"enum_name":"discount_type_enum","values":"fixed,percentage"},{"enum_name":"payment_method_enum","values":"cash,card,transfer,wallet,other,mixed,zelle"},{"enum_name":"transaction_status","values":"pending,completed,failed,compensated,cancelled,refunded,voided,reversed"}]

@@ -1,0 +1,12 @@
+=== W9.4.8 H5-B2 CHECKPOINT 2026-09-03T04:18:29Z ===
+-- git status --short --
+?? audit-evidence/20260903-w9-h5b2/
+-- HEAD --
+6aee29fea648f4e00c4d1d39bc542898c10e08b9
+-- log -1 --
+6aee29f refactor(w9): retire legacy reverse_transaction v1 (W9.4.7 H5-B1) — guarded DROP, V2 untouched, 0 consumers
+-- branch --
+main
+-- diff --stat --
+-- remote main --
+6aee29fea648f4e00c4d1d39bc542898c10e08b9	refs/heads/main

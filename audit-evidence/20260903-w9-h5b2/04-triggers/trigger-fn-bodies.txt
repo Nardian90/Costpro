@@ -1,0 +1,272 @@
+
+=== audit_payment_transactions_changes (oid 138224) ===
+CREATE OR REPLACE FUNCTION public.audit_payment_transactions_changes()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
+AS $function$
+BEGIN
+  IF current_setting('app.restore_mode', true) = 'true' AND current_user IN ('costpro_snapshot_restorer', 'postgres') THEN
+    RETURN NEW;
+  END IF;
+  INSERT INTO public.audit_logs (action, table_name, record_id, store_id, user_id, metadata)
+  VALUES (
+    CASE WHEN TG_OP = 'INSERT' THEN 'SUPPLIER_PAYMENT_REGISTERED' ELSE 'PAYMENT_TRANSACTION_UPDATED' END,
+    'payment_transactions',
+    NEW.id,
+    NEW.store_id,
+    NEW.paid_by,
+    jsonb_build_object(
+      'tg_op', TG_OP,
+      'ref_type', NEW.ref_type,
+      'ref_id', NEW.ref_id,
+      'amount', NEW.amount,
+      'amount_cup', NEW.amount_cup,
+      'payment_method', NEW.payment_method,
+      'currency', NEW.currency
+    )
+  );
+  RETURN NEW;
+END;
+$function$
+
+
+=== check_active_user (oid 25491) ===
+CREATE OR REPLACE FUNCTION public.check_active_user()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SET search_path TO 'public', 'extensions'
+AS $function$
+BEGIN
+  -- FIX: Use NEW.seller_id instead of NEW.user_id
+  IF NOT EXISTS (SELECT 1 FROM public.profiles p WHERE p.id = NEW.seller_id AND p.is_active) THEN
+    RAISE EXCEPTION 'Usuario inactivo no puede crear transacción';
+  END IF;
+  RETURN NEW;
+END; 
+$function$
+
+
+=== log_transaction_changes (oid 28126) ===
+CREATE OR REPLACE FUNCTION public.log_transaction_changes()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'extensions'
+AS $function$
+DECLARE
+    v_user_id uuid;
+BEGIN
+    IF TG_OP = 'UPDATE' AND OLD.status != NEW.status THEN
+        -- Handle different user column names
+        IF TG_TABLE_NAME = 'transactions' THEN
+            v_user_id := NEW.seller_id;
+        ELSIF TG_TABLE_NAME = 'receipts' THEN
+            v_user_id := NEW.user_id;
+        END IF;
+
+        INSERT INTO audit_logs (user_id, action, table_name, record_id, old_data, new_data, store_id)
+        VALUES (
+            COALESCE(auth.uid(), v_user_id), 
+            'UPDATE_STATUS', 
+            TG_TABLE_NAME, 
+            NEW.id, 
+            jsonb_build_object('old', OLD.status), 
+            jsonb_build_object('new', NEW.status),
+            NEW.store_id
+        );
+    END IF;
+    RETURN NEW;
+END;
+$function$
+
+
+=== protect_transactions_total_amount (oid 142117) ===
+CREATE OR REPLACE FUNCTION public.protect_transactions_total_amount()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SET search_path TO 'public', 'pg_temp'
+AS $function$
+BEGIN
+  IF NEW.total_amount IS DISTINCT FROM OLD.total_amount THEN
+    IF current_user <> 'costpro_transaction_adjuster' THEN
+      RAISE EXCEPTION 'ERR_TOTAL_AMOUNT_IMMUTABLE: transactions.total_amount cannot be modified directly (current_user=%). Use adjust_total_amount() RPC.',
+        current_user
+        USING ERRCODE = 'PT008';
+    END IF;
+  END IF;
+  RETURN NEW;
+END;
+$function$
+
+
+=== reverse_commissions_on_sale_void (oid 138210) ===
+CREATE OR REPLACE FUNCTION public.reverse_commissions_on_sale_void()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
+AS $function$
+DECLARE
+  v_payment RECORD;
+  v_flagged_count int := 0;
+BEGIN
+  -- Solo disparar cuando status cambia a voided o reversed
+  IF NEW.status NOT IN ('voided', 'reversed') THEN
+    RETURN NEW;
+  END IF;
+  IF OLD.status = NEW.status THEN
+    RETURN NEW;
+  END IF;
+
+  -- Buscar commission_payments cuyo período incluye la transacción
+  FOR v_payment IN
+    SELECT cp.*
+    FROM public.commission_payments cp
+    WHERE cp.store_id = NEW.store_id
+      AND cp.status IN ('approved', 'paid')
+      AND cp.period_start <= NEW.created_at
+      AND cp.period_end >= NEW.created_at
+  LOOP
+    -- Opción A: marcar como flagged_for_review (NO cancelar)
+    UPDATE public.commission_payments SET
+      status = 'flagged_for_review',
+      manual_adjustment_reason = COALESCE(manual_adjustment_reason, '') ||
+        E'\n[FLAGGED] Contains sale ' || NEW.id || ' (' || NEW.status || '). Manual review required.',
+      updated_at = NOW()
+    WHERE id = v_payment.id;
+
+    v_flagged_count := v_flagged_count + 1;
+
+    -- Audit log
+    INSERT INTO public.audit_logs (action, table_name, record_id, store_id, user_id, metadata)
+    VALUES ('COMMISSION_FLAGGED_FOR_REVIEW', 'commission_payments', v_payment.id::text,
+      v_payment.store_id, NEW.seller_id,
+      jsonb_build_object(
+        'original_payment_id', v_payment.id,
+        'voided_sale_id', NEW.id,
+        'sale_status', NEW.status,
+        'original_amount', v_payment.final_amount,
+        'original_status', v_payment.status,
+        'reason', 'Sale voided/reversed — manual review required'
+      ));
+  END LOOP;
+
+  -- Si no se flaggeó ninguna comisión, no es error (puede que no haya comisión para ese período)
+  RETURN NEW;
+END;
+$function$
+
+
+=== sync_product_has_movements (oid 131044) ===
+CREATE OR REPLACE FUNCTION public.sync_product_has_movements()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
+AS $function$
+BEGIN
+    -- Bypass durante restauración
+    IF current_setting('app.restore_mode', true) = 'true' THEN
+        RETURN NEW;
+    END IF;
+
+    UPDATE public.products
+    SET has_movements = true
+    WHERE id = NEW.product_id AND has_movements = false;
+
+    RETURN NEW;
+END;
+$function$
+
+
+=== update_payment_status (oid 134235) ===
+CREATE OR REPLACE FUNCTION public.update_payment_status()
+ RETURNS trigger
+ LANGUAGE plpgsql
+AS $function$
+DECLARE
+  v_ref_type TEXT;
+  v_ref_id UUID;
+  v_total NUMERIC;
+  v_paid NUMERIC;
+  v_method TEXT;
+  v_status TEXT;
+  v_doc_status TEXT;
+BEGIN
+  v_ref_type := CASE WHEN TG_OP = 'DELETE' THEN OLD.ref_type ELSE NEW.ref_type END;
+  v_ref_id := CASE WHEN TG_OP = 'DELETE' THEN OLD.ref_id ELSE NEW.ref_id END;
+
+  IF v_ref_type = 'receipt' THEN
+    -- BUG #1 FIX: skip if receipt is voided
+    SELECT status INTO v_doc_status FROM receipts WHERE id = v_ref_id;
+    IF v_doc_status = 'voided' THEN
+      RETURN COALESCE(NEW, OLD);
+    END IF;
+
+    SELECT total_cost INTO v_total FROM receipts WHERE id = v_ref_id;
+    SELECT COALESCE(SUM(amount_cup), 0) INTO v_paid
+    FROM payment_transactions WHERE ref_type = 'receipt' AND ref_id = v_ref_id;
+
+    v_status := CASE WHEN v_paid >= v_total THEN 'paid' WHEN v_paid > 0 THEN 'partial' ELSE 'unpaid' END;
+    v_method := CASE WHEN v_status = 'paid' THEN
+      (SELECT payment_method FROM payment_transactions WHERE ref_type = 'receipt' AND ref_id = v_ref_id ORDER BY payment_date DESC LIMIT 1)
+    ELSE NULL END;
+
+    UPDATE receipts SET paid_amount = v_paid, payment_status = v_status, payment_method = v_method,
+      paid_at = CASE WHEN v_status = 'paid' THEN now() ELSE NULL END
+    WHERE id = v_ref_id;
+
+  ELSIF v_ref_type = 'service' THEN
+    -- BUG #1 FIX: skip if received_services is voided
+    SELECT status INTO v_doc_status FROM received_services WHERE id = v_ref_id;
+    IF v_doc_status = 'voided' THEN
+      RETURN COALESCE(NEW, OLD);
+    END IF;
+
+    SELECT total_amount INTO v_total FROM received_services WHERE id = v_ref_id;
+    SELECT COALESCE(SUM(amount_cup), 0) INTO v_paid
+    FROM payment_transactions WHERE ref_type = 'service' AND ref_id = v_ref_id;
+
+    v_status := CASE WHEN v_paid >= v_total THEN 'paid' WHEN v_paid > 0 THEN 'partial' ELSE 'unpaid' END;
+    v_method := CASE WHEN v_status = 'paid' THEN
+      (SELECT payment_method FROM payment_transactions WHERE ref_type = 'service' AND ref_id = v_ref_id ORDER BY payment_date DESC LIMIT 1)
+    ELSE NULL END;
+
+    UPDATE received_services SET paid_amount = v_paid, payment_status = v_status, payment_method = v_method,
+      paid_at = CASE WHEN v_status = 'paid' THEN now() ELSE NULL END
+    WHERE id = v_ref_id;
+
+  ELSIF v_ref_type IN ('production_order', 'work') THEN
+    SELECT status INTO v_doc_status FROM production_orders WHERE id = v_ref_id;
+    IF v_doc_status IN ('cancelled', 'voided') THEN
+      RETURN COALESCE(NEW, OLD);
+    END IF;
+
+    SELECT budget_total INTO v_total FROM production_orders WHERE id = v_ref_id;
+    SELECT COALESCE(SUM(amount_cup), 0) INTO v_paid
+    FROM payment_transactions WHERE ref_type IN ('production_order', 'work') AND ref_id = v_ref_id;
+
+    v_status := CASE WHEN v_paid >= v_total THEN 'paid' WHEN v_paid > 0 THEN 'partial' ELSE 'unpaid' END;
+    v_method := CASE WHEN v_status = 'paid' THEN
+      (SELECT payment_method FROM payment_transactions WHERE ref_type IN ('production_order', 'work') AND ref_id = v_ref_id ORDER BY payment_date DESC LIMIT 1)
+    ELSE NULL END;
+
+    UPDATE production_orders SET paid_amount = v_paid, payment_status = v_status, payment_method = v_method,
+      paid_at = CASE WHEN v_status = 'paid' THEN now() ELSE NULL END
+    WHERE id = v_ref_id;
+  END IF;
+
+  RETURN COALESCE(NEW, OLD);
+END;
+$function$
+
+
+=== validate_payment_transactions_invariants (oid 142115) ===
+CREATE OR REPLACE FUNCTION public.validate_payment_transactions_invariants()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SET search_path TO 'public', 'pg_temp'
+AS $function$ BEGIN IF current_setting('app.restore_mode', true) = 'true' AND current_user IN ('costpro_snapshot_restorer', 'postgres') THEN RETURN CASE WHEN TG_OP = 'DELETE' THEN OLD ELSE NEW END; END IF; IF TG_OP = 'DELETE' THEN RAISE EXCEPTION 'ERR_PAYMENT_DELETE_FORBIDDEN' USING ERRCODE = 'PT007'; END IF; IF NEW.currency = 'CUP' AND NEW.exchange_rate != 1 THEN RAISE EXCEPTION 'ERR_PAYMENT_CUP_RATE_MUST_BE_1' USING ERRCODE = 'PT003'; END IF; IF NEW.currency != 'CUP' AND NEW.exchange_rate <= 1 THEN RAISE EXCEPTION 'ERR_PAYMENT_FOREIGN_RATE_MUST_EXCEED_1' USING ERRCODE = 'PT004'; END IF; IF NEW.payment_method = 'zelle' AND NEW.currency = 'CUP' THEN RAISE EXCEPTION 'ERR_ZELLE_NOT_FOR_CUP' USING ERRCODE = 'PT005'; END IF; IF TG_OP = 'UPDATE' AND OLD.transaction_id IS DISTINCT FROM NEW.transaction_id THEN PERFORM pg_advisory_xact_lock(hashtextextended(COALESCE(OLD.transaction_id::text, ''), 0)); PERFORM pg_advisory_xact_lock(hashtextextended(COALESCE(NEW.transaction_id::text, ''), 0)); ELSIF NEW.transaction_id IS NOT NULL THEN PERFORM pg_advisory_xact_lock(hashtextextended(NEW.transaction_id::text, 0)); END IF; /* DF-03: los refunds (direction='refund') son contra-asientos de trazabilidad — NO se suman como pago hacia el total del documento */ IF NEW.transaction_id IS NOT NULL AND NEW.direction <> 'refund' THEN DECLARE v_total_amount numeric; v_sum_payments numeric; v_existing_rate numeric; BEGIN SELECT total_amount INTO v_total_amount FROM public.transactions WHERE id = NEW.transaction_id; SELECT COALESCE(SUM(amount_cup), 0) INTO v_sum_payments FROM public.payment_transactions WHERE transaction_id = NEW.transaction_id AND id != NEW.id AND direction <> 'refund'; IF v_sum_payments + NEW.amount_cup > v_total_amount + 0.01 THEN RAISE EXCEPTION 'ERR_PAYMENT_EXCEEDS_TOTAL' USING ERRCODE = 'PT001'; END IF; SELECT exchange_rate INTO v_existing_rate FROM public.payment_transactions WHERE transaction_id = NEW.transaction_id AND payment_method = NEW.payment_method AND currency = NEW.currency AND id != NEW.id AND direction <> 'refund' LIMIT 1; IF FOUND AND ABS(v_existing_rate - NEW.exchange_rate) > 0.000001 THEN RAISE EXCEPTION 'ERR_MULTIPLE_EXCHANGE_RATES' USING ERRCODE = 'PT006'; END IF; END; END IF; RETURN NEW; END $function$
+
