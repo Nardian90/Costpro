@@ -1,0 +1,50 @@
+=== W9.4.7 H5-B1 FASE 4 — Git forensia ===
+date: Thu Sep  3 03:19:21 UTC 2026
+
+## A. commits que tocaron archivos con nombre reverse_transaction* (log --all)
+24f89e4 fix(w9): audit reverse_transaction v1 v2 (W9.4.6 H-5) — verdict BACKLOG, no drift, no P1
+5e2fa2a fix(inventory): RPC lee stock de inventory.quantity (fuente de verdad) en vez de products.stock_current
+
+## B. log -S'reverse_transaction' --all (pickaxe contenido, oneline)
+24f89e4 fix(w9): audit reverse_transaction v1 v2 (W9.4.6 H-5) — verdict BACKLOG, no drift, no P1
+e7959b4 fix(w9): reconcile reverse_receipt_v2 drift (W9.4.5 H-4)
+033e05d security: harden mixed-context security definer functions
+7b1bafc security(w9): harden exposed security definer functions
+1c204d1 feat(w7): consolidate audited migration release
+b125152 audit: record W6 canonical cases A-F evidence
+f628e5e audit: freeze W6 harness parity recovery checkpoint
+5e2fa2a fix(inventory): RPC lee stock de inventory.quantity (fuente de verdad) en vez de products.stock_current
+
+## C. log -S'reverse_transaction_v2' --all --oneline
+24f89e4 fix(w9): audit reverse_transaction v1 v2 (W9.4.6 H-5) — verdict BACKLOG, no drift, no P1
+e7959b4 fix(w9): reconcile reverse_receipt_v2 drift (W9.4.5 H-4)
+033e05d security: harden mixed-context security definer functions
+7b1bafc security(w9): harden exposed security definer functions
+1c204d1 feat(w7): consolidate audited migration release
+b125152 audit: record W6 canonical cases A-F evidence
+f628e5e audit: freeze W6 harness parity recovery checkpoint
+5e2fa2a fix(inventory): RPC lee stock de inventory.quantity (fuente de verdad) en vez de products.stock_current
+
+## D. log -G'reverse_transaction' --all --oneline (regex diffs)
+24f89e4 fix(w9): audit reverse_transaction v1 v2 (W9.4.6 H-5) — verdict BACKLOG, no drift, no P1
+e7959b4 fix(w9): reconcile reverse_receipt_v2 drift (W9.4.5 H-4)
+033e05d security: harden mixed-context security definer functions
+7b1bafc security(w9): harden exposed security definer functions
+1c204d1 feat(w7): consolidate audited migration release
+b125152 audit: record W6 canonical cases A-F evidence
+f628e5e audit: freeze W6 harness parity recovery checkpoint
+5e2fa2a fix(inventory): RPC lee stock de inventory.quantity (fuente de verdad) en vez de products.stock_current
+
+## E. log -G'reverse_transaction_v2' --all --oneline
+24f89e4 fix(w9): audit reverse_transaction v1 v2 (W9.4.6 H-5) — verdict BACKLOG, no drift, no P1
+e7959b4 fix(w9): reconcile reverse_receipt_v2 drift (W9.4.5 H-4)
+033e05d security: harden mixed-context security definer functions
+7b1bafc security(w9): harden exposed security definer functions
+1c204d1 feat(w7): consolidate audited migration release
+b125152 audit: record W6 canonical cases A-F evidence
+f628e5e audit: freeze W6 harness parity recovery checkpoint
+5e2fa2a fix(inventory): RPC lee stock de inventory.quantity (fuente de verdad) en vez de products.stock_current
+
+## F. commits con 'DROP FUNCTION' en diffs -G';(DROP FUNCTION'
+24f89e4 fix(w9): audit reverse_transaction v1 v2 (W9.4.6 H-5) — verdict BACKLOG, no drift, no P1
+5e2fa2a fix(inventory): RPC lee stock de inventory.quantity (fuente de verdad) en vez de products.stock_current

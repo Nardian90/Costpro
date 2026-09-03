@@ -1,0 +1,9 @@
+=== FASE 18 — SNAPSHOT PRE-APPLY ===
+ts: 2026-09-03T03:44:37Z
+
+--- SHA256 archivos de la entrega ---
+c3cff46b5d2c7d31e58ba7f3ae54434241cc38573b494c5ef1cbabe5f5f18e1d  supabase/migrations/20260903030000_w9_h5b1_retire_reverse_transaction_v1.sql
+ac3982c1a85a1723e9ec92bd9a94028e98796359f570fe6a2af19f4b5a12fbd1  src/app/api/reverse/route.ts
+38623c4f41572308c66bedb82cd4289eb3f9a6397ea951e87229dd503b176e23  src/hooks/api/useReverseDocument.ts
+8ed34c96e4be81a0efc96a6d8f0032d467369d618c67cfd17a1e59f7072c10e9  scripts/test_reverse_all_live.mjs
+3dfa3f93faa7f44f5030e5d0c78d8f654c5380ab7f26fe6fb4c1e6ee910d8def  scripts/test_reverse_e2e_full.mjs

@@ -95,9 +95,10 @@ async function testReverseTransaction() {
   const stockBefore = await getStock(item.product_id, tx.store_id);
   info(`Producto ${item.product_id} | stock antes: ${stockBefore} | vendió: ${item.quantity}`);
 
-  const { data: result, error: rpcError } = await supabase.rpc('reverse_transaction', {
+  // W9.4.7 H5-B1: V1 retirada — RPC V2 canónica
+  const { data: result, error: rpcError } = await supabase.rpc('reverse_transaction_v2', {
     p_transaction_id: tx.id,
-    p_reason: 'TEST LIVE V2.3 — reversión de venta',
+    p_reason: 'TEST LIVE — reversión de venta',
     p_user_id: null,
   });
 
@@ -107,18 +108,19 @@ async function testReverseTransaction() {
   const stockAfter = await getStock(item.product_id, tx.store_id);
   const kardexCount = await getKardexCount(tx.id);
 
+  // V2 marca 'voided' y no escribe reversed_at/reversal_reason (H5-B1)
   const { data: txAfter } = await supabase
     .from('transactions')
-    .select('status, reversed_at, reversal_reason')
+    .select('status')
     .eq('id', tx.id)
     .single();
 
   const stockOk = Math.abs((stockAfter - stockBefore) - item.quantity) < 0.001;
-  const statusOk = txAfter?.status === 'reversed';
+  const statusOk = txAfter?.status === 'voided';
   const kardexOk = kardexCount > 0;
 
   stockOk ? ok(`Stock: ${stockBefore} → ${stockAfter} (Δ=+${item.quantity})`) : fail(`Stock mal: ${stockBefore} → ${stockAfter}`);
-  statusOk ? ok(`Status: reversed @ ${txAfter.reversed_at}`) : fail(`Status mal: ${txAfter?.status}`);
+  statusOk ? ok(`Status: voided (v2)`) : fail(`Status mal: ${txAfter?.status}`);
   kardexOk ? ok(`Kardex entries: ${kardexCount}`) : fail('Sin kardex entries');
 
   return stockOk && statusOk && kardexOk;

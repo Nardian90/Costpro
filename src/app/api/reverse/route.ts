@@ -10,6 +10,9 @@
  * - Registra quien revirtió y por qué (reversed_at, reversed_by, reversal_reason)
  *
  * V2.3: añadido soporte para production_order + limpiado código muerto.
+ * W9.4.7 H5-B1: RPC `reverse_transaction` (V1) retirada de la DB; el entry
+ * `transaction` de AMBOS mapas resuelve a `reverse_transaction_v2` (migración
+ * 20260903030000). Ningún camino de ejecución puede alcanzar la V1.
  */
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, type AuthenticatedSession } from '@/lib/auth-middleware';
@@ -30,7 +33,7 @@ const reverseSchema = z.object({
 
 /** V2.3: cada tipo mapea a (rpc_name, id_param_name). SÓLO ese param se envía. */
 const RPC_MAP_V1: Record<string, { rpc: string; idParam: string }> = {
-  transaction:      { rpc: 'reverse_transaction',        idParam: 'p_transaction_id' },
+  transaction:      { rpc: 'reverse_transaction_v2',    idParam: 'p_transaction_id' }, // W9.4.7 H5-B1: V1 retirada — fallback resuelve a V2
   receipt:          { rpc: 'reverse_receipt',            idParam: 'p_receipt_id' },
   transfer:         { rpc: 'reverse_transfer',           idParam: 'p_transfer_id' },
   adjustment:       { rpc: 'reverse_adjustment',         idParam: 'p_adjustment_id' },

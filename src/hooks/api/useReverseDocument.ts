@@ -11,7 +11,7 @@ import { logger } from '@/lib/logger';
  *
  * V2.2/V2.3: Reemplaza al legacy `useInvertDocument` (que llamaba void_transaction RPC).
  * Llama al endpoint POST /api/reverse que despacha a la RPC reverse_* correspondiente:
- *   - transaction       -> reverse_transaction      (devuelve stock + kardex devolution_in)
+ *   - transaction       -> reverse_transaction_v2   (pipeline W7: stock_movements + kardex + audit)  [H5-B1: V1 retirada]
  *   - receipt           -> reverse_receipt          (descuenta stock + kardex out)
  *   - transfer          -> reverse_transfer         (devuelve a origen + descuenta destino)
  *   - adjustment        -> reverse_adjustment       (invierte quantity_change)

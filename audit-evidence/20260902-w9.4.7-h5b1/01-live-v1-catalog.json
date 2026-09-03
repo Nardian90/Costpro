@@ -1,0 +1,57 @@
+{
+"captured_at": "2026-09-03T03:15:47Z",
+"query_1_all_overloads_v1_v2":
+[
+  {
+    "schema": "public",
+    "proname": "reverse_transaction",
+    "oid": 136653,
+    "owner": "postgres",
+    "prokind": "f",
+    "prosecdef": true,
+    "provolatile": "v",
+    "proparallel": "u",
+    "proconfig": [
+      "search_path=public"
+    ],
+    "arguments": "p_transaction_id uuid, p_reason text, p_user_id uuid DEFAULT NULL::uuid",
+    "return_type": "jsonb",
+    "acl_text": "postgres=X/postgres,service_role=X/postgres"
+  },
+  {
+    "schema": "public",
+    "proname": "reverse_transaction_v2",
+    "oid": 138188,
+    "owner": "postgres",
+    "prokind": "f",
+    "prosecdef": true,
+    "provolatile": "v",
+    "proparallel": "u",
+    "proconfig": [
+      "search_path=public, pg_temp"
+    ],
+    "arguments": "p_transaction_id uuid, p_reason text, p_user_id uuid DEFAULT NULL::uuid",
+    "return_type": "jsonb",
+    "acl_text": "postgres=X/postgres,service_role=X/postgres"
+  }
+]
+,
+"query_2_full_definitions_v1":
+[
+  {
+    "oid": 136653,
+    "schema": "public",
+    "proname": "reverse_transaction",
+    "identity_args": "p_transaction_id uuid, p_reason text, p_user_id uuid",
+    "full_definition": "CREATE OR REPLACE FUNCTION public.reverse_transaction(p_transaction_id uuid, p_reason text, p_user_id uuid DEFAULT NULL::uuid)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nDECLARE\n  v_tx RECORD;\n  v_item RECORD;\n  v_uid UUID := CASE WHEN auth.role() = 'service_role' THEN COALESCE(p_user_id, auth.uid()) ELSE auth.uid() END;\n  v_count INTEGER := 0;\n  v_store_id UUID;\nBEGIN\n  -- 1. Obtener transacci\u00f3n (incluye store_id)\n  SELECT * INTO v_tx FROM public.transactions WHERE id = p_transaction_id;\n  IF v_tx IS NULL THEN RAISE EXCEPTION 'ERR_TX_NOT_FOUND'; END IF;\n  IF v_tx.status = 'reversed' THEN RAISE EXCEPTION 'ERR_ALREADY_REVERSED'; END IF;\n  IF v_tx.status = 'voided' THEN RAISE EXCEPTION 'ERR_ALREADY_VOIDED: use reverse_transaction solo en tx completas'; END IF;\n\n  -- 2. Validar acceso a la tienda (FIX V2.3: v_tx.store_id, NO p_transaction_id).\n  -- Si v_uid es NULL significa que el caller es service_role (API server-side) \u2192 bypass.\n  v_store_id := v_tx.store_id;\n  IF v_uid IS NULL OR NOT public.has_store_access_as(v_uid, v_store_id) THEN\n    RAISE EXCEPTION 'ERR_UNAUTHORIZED';\n  END IF;\n\n  -- 3. Devolver stock por cada item + revertir lote + kardex\n  FOR v_item IN\n    SELECT product_id, quantity, variant_id FROM public.transaction_items WHERE transaction_id = p_transaction_id\n  LOOP\n    -- Devolver stock al producto\n    UPDATE public.products\n      SET stock_current = stock_current + v_item.quantity, updated_at = now()\n      WHERE id = v_item.product_id;\n\n    -- Devolver stock al lote si estaba vinculado\n    UPDATE public.product_lots\n      SET quantity_remaining = quantity_remaining + v_item.quantity,\n          status = CASE WHEN quantity_remaining + v_item.quantity > 0 THEN 'active' ELSE status END\n      FROM public.transaction_item_lots til\n      WHERE til.transaction_item_id IN (\n        SELECT id FROM public.transaction_items\n        WHERE transaction_id = p_transaction_id AND product_id = v_item.product_id\n      ) AND til.lot_id = product_lots.id;\n\n    -- Kardex: devolution_in (reversi\u00f3n de salida por venta)\n    INSERT INTO public.kardex_entries (store_id, product_id, movement_type, quantity, unit_cost, total_value,\n      balance_quantity, balance_unit_cost, balance_total_value, reference_type, reference_id, reference_description, created_by)\n    SELECT v_store_id, v_item.product_id, 'devolution_in', v_item.quantity, 0, 0,\n      p.stock_current, p.cost_average, p.stock_current * p.cost_average,\n      'reversal', p_transaction_id, 'Reversi\u00f3n de venta ' || p_transaction_id, v_uid\n    FROM public.products p WHERE p.id = v_item.product_id;\n\n    v_count := v_count + 1;\n  END LOOP;\n\n  -- 4. Marcar transacci\u00f3n como reversed\n  UPDATE public.transactions\n    SET status = 'reversed',\n        reversed_at = now(),\n        reversed_by = v_uid,\n        reversal_reason = p_reason\n    WHERE id = p_transaction_id;\n\n  RETURN jsonb_build_object('status', 'success', 'items_reversed', v_count, 'transaction_id', p_transaction_id);\nEND;\n$function$\n"
+  }
+]
+,
+"query_3_overload_counts":
+[
+  {
+    "schema": "public",
+    "overloads_same_name": 1
+  }
+]
+}

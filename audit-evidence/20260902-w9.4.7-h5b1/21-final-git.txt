@@ -1,0 +1,31 @@
+=== W9.4.7 H5-B1 FASE 25 — GIT FINAL ===
+ts: 2026-09-03T04:04:16Z
+
+--- pre-commit: git status --short ---
+ M scripts/test_reverse_all_live.mjs
+ M scripts/test_reverse_e2e_full.mjs
+ M src/app/api/reverse/route.ts
+ M src/hooks/api/useReverseDocument.ts
+?? audit-evidence/20260902-w9.4.7-h5b1/
+?? supabase/migrations/20260903030000_w9_h5b1_retire_reverse_transaction_v1.sql
+
+--- git diff --stat (tracked) ---
+ scripts/test_reverse_all_live.mjs   | 12 +++++++-----
+ scripts/test_reverse_e2e_full.mjs   |  9 +++++----
+ src/app/api/reverse/route.ts        |  5 ++++-
+ src/hooks/api/useReverseDocument.ts |  2 +-
+ 4 files changed, 17 insertions(+), 11 deletions(-)
+
+--- HEAD base (pre-commit) ---
+24f89e449d026e770dabafcf6a5d112ec9f296c2
+
+--- archivos nuevos (untracked, a incluir en el commit) ---
+?? audit-evidence/20260902-w9.4.7-h5b1/
+?? supabase/migrations/20260903030000_w9_h5b1_retire_reverse_transaction_v1.sql
+
+--- commit previsto ---
+refactor(w9): retire legacy reverse_transaction v1
+
+--- verificación post-push ---
+se ejecuta tras el commit+push: git rev-parse HEAD == git rev-parse origin/main
+resultado: (reportado en el veredicto final y worklog; el hash del commit no puede autoincluirse en su propio commit)

@@ -1,0 +1,8 @@
+=== W9.4.7 H5-B1 FASE 16 — DRY RUN DROP (BEGIN...ROLLBACK) ===
+ts: 2026-09-03T03:43:43Z
+http_status: 201
+response: [{"v1_inside_tx": 0, "v2_inside_tx": 1, "v2_identity_args": "p_transaction_id uuid, p_reason text, p_user_id uuid", "v2_owner": "postgres", "v2_secdef": true, "v2_acl": "postgres=X/postgres,service_role=X/postgres", "v2_def_hash": "6468aa648231f8e2a9ff82509587bce646d7609a428cfd454edbd71fd53b82ed", "v1_rows_any_schema": 0}]
+
+lectura: v1_inside_tx=0 (V1 desaparece dentro de la transacción),
+v2_inside_tx=1 + v2_* inmutables (OID/args/owner/secdef/ACL/hash),
+ROLLBACK restaura V1 (verificado en FASE 17).

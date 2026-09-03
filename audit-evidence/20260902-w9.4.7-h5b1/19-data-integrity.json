@@ -1,0 +1,83 @@
+{
+  "captured_at": "2026-09-03T03:46:55Z",
+  "diffs": {
+    "tx_total": {
+      "pre": 520,
+      "post": 520,
+      "equal": true
+    },
+    "tx_by_status": {
+      "pre": {
+        "completed": 520
+      },
+      "post": {
+        "completed": 520
+      },
+      "equal": true
+    },
+    "tx_items_total": {
+      "pre": 555,
+      "post": 555,
+      "equal": true
+    },
+    "products_count": {
+      "pre": 323,
+      "post": 323,
+      "equal": true
+    },
+    "products_stock_sum": {
+      "pre": 12094.6289,
+      "post": 12094.6289,
+      "equal": true
+    },
+    "lots_qty_sum": {
+      "pre": 0,
+      "post": 0,
+      "equal": true
+    },
+    "kardex_total": {
+      "pre": 702,
+      "post": 702,
+      "equal": true
+    },
+    "stock_movements_total": {
+      "pre": 702,
+      "post": 702,
+      "equal": true
+    },
+    "wac_change_log_total": {
+      "pre": 0,
+      "post": 0,
+      "equal": true
+    },
+    "audit_logs_total": {
+      "pre": 7375,
+      "post": 7375,
+      "equal": true
+    },
+    "audit_reverse_v2_total": {
+      "pre": 10,
+      "post": 10,
+      "equal": true
+    },
+    "payments_total": {
+      "pre": 366,
+      "post": 366,
+      "equal": true
+    }
+  },
+  "checks": {
+    "v1 eliminada": true,
+    "v2 intacta": true,
+    "transactions unchanged": true,
+    "transaction_items unchanged": true,
+    "stock unchanged": true,
+    "kardex unchanged": true,
+    "stock_movements unchanged": true,
+    "wac unchanged": true,
+    "payments unchanged": true,
+    "audit unchanged": true
+  },
+  "zero_persistent_test_artifacts": true,
+  "DATA INTEGRITY PRE==POST": "PASS"
+}

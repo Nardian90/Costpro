@@ -1,0 +1,56 @@
+{
+  "captured_at": "2026-09-03T03:16:45Z",
+  "q1_pg_depend_direct_oid_136653": [
+    {
+      "dep_class": "pg_proc",
+      "objid": 136653,
+      "objsubid": 0,
+      "ref_class": "pg_language",
+      "refobjid": 13573,
+      "deptype": "n"
+    },
+    {
+      "dep_class": "pg_proc",
+      "objid": 136653,
+      "objsubid": 0,
+      "ref_class": "pg_namespace",
+      "refobjid": 2200,
+      "deptype": "n"
+    }
+  ],
+  "q2_triggers_referencing": [],
+  "q3_policies_referencing": [],
+  "q4_views_matviews_referencing": [],
+  "q5_functions_whose_body_mentions_reverse_transaction": [],
+  "q6_pg_depend_both_v1_v2": [
+    {
+      "dep_class": "pg_proc",
+      "objid": 136653,
+      "ref_class": "pg_language",
+      "refobjid": 13573,
+      "deptype": "n"
+    },
+    {
+      "dep_class": "pg_proc",
+      "objid": 136653,
+      "ref_class": "pg_namespace",
+      "refobjid": 2200,
+      "deptype": "n"
+    },
+    {
+      "dep_class": "pg_proc",
+      "objid": 138188,
+      "ref_class": "pg_language",
+      "refobjid": 13573,
+      "deptype": "n"
+    },
+    {
+      "dep_class": "pg_proc",
+      "objid": 138188,
+      "ref_class": "pg_namespace",
+      "refobjid": 2200,
+      "deptype": "n"
+    }
+  ],
+  "q5_note": "first attempt errored (pg_get_functiondef over aggregates, 42809); corrected query with prokind='f' + prosrc scan returned 0 rows. Verified separately (see f2 rerun log)."
+}

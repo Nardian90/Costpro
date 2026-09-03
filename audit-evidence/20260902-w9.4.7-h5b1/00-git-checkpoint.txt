@@ -1,0 +1,36 @@
+=== W9.4.7 — H5-B1 :: FASE 0 GIT CHECKPOINT ===
+date: 2026-09-03T03:14:49Z
+
+--- git rev-parse HEAD ---
+24f89e449d026e770dabafcf6a5d112ec9f296c2
+
+--- branch ---
+main
+
+--- git rev-parse origin/main ---
+24f89e449d026e770dabafcf6a5d112ec9f296c2
+
+--- git status --short (before creating evidence dir) ---
+(empty apart from evidence dir = CLEAN for tracked content)
+--- untracked ---
+?? audit-evidence/20260902-w9.4.7-h5b1/
+
+--- git log -10 --oneline ---
+24f89e4 fix(w9): audit reverse_transaction v1 v2 (W9.4.6 H-5) — verdict BACKLOG, no drift, no P1
+e7959b4 fix(w9): reconcile reverse_receipt_v2 drift (W9.4.5 H-4)
+2f7af7d security(w9): harden SECURITY DEFINER search_path
+033e05d security: harden mixed-context security definer functions
+7b1bafc security(w9): harden exposed security definer functions
+2787b22 security(w9): harden RLS for F-01
+70f978b w9(f07): revoke PUBLIC/anon/authenticated EXECUTE on reset_store_data (W9.2)
+1c204d1 feat(w7): consolidate audited migration release
+b7b9dec Merge pull request #1320 from Nardian90/audit/w6-harness-parity-checkpoint-20260828
+408757d ci(audit): exclude audit evidence from TypeScript build
+
+=== EXPECTED ===
+HEAD   = 24f89e449d026e770dabafcf6a5d112ec9f296c2
+REMOTE = 24f89e449d026e770dabafcf6a5d112ec9f296c2
+WORKTREE = CLEAN
+
+=== MATCH ===
+CHECKPOINT OK — HEAD==EXPECTED, REMOTE==EXPECTED, tracked worktree CLEAN (only untracked: this evidence dir)

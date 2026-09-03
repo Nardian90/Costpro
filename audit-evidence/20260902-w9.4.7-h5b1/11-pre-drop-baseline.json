@@ -1,0 +1,36 @@
+{
+  "captured_at": "2026-09-03T03:36:48Z",
+  "http_status": 201,
+  "metrics": {
+    "v1_acl": "postgres=X/postgres,service_role=X/postgres",
+    "v1_oid": 136653,
+    "v2_acl": "postgres=X/postgres,service_role=X/postgres",
+    "v2_oid": 138188,
+    "tx_total": 520,
+    "v1_exists": 1,
+    "v2_exists": 1,
+    "views_ref": 0,
+    "kardex_total": 702,
+    "lots_qty_sum": 0,
+    "policies_ref": 0,
+    "triggers_ref": 0,
+    "tx_by_status": {
+      "completed": 520
+    },
+    "v1_def_sha256": "aa9c8e3072748b3998d74c3c3500070910a03dba753ca2ea848bba3e45214557",
+    "v2_def_sha256": "6468aa648231f8e2a9ff82509587bce646d7609a428cfd454edbd71fd53b82ed",
+    "payments_total": 366,
+    "products_count": 323,
+    "tx_items_total": 555,
+    "v1_search_path": "{search_path=public}",
+    "v2_search_path": "{\"search_path=public, pg_temp\"}",
+    "fn_body_refs_v1": 0,
+    "audit_logs_total": 7375,
+    "pg_depend_ext_v1": 0,
+    "products_stock_sum": 12094.6289,
+    "wac_change_log_total": 0,
+    "stock_movements_total": 702,
+    "audit_reverse_v2_total": 10
+  },
+  "metric_count": 27
+}

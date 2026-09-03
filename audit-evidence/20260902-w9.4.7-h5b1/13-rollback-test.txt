@@ -1,0 +1,25 @@
+=== W9.4.7 H5-B1 FASE 17 — PRUEBA DE ROLLBACK ===
+ts_in_tx: ver f16 log; post_rollback capturado
+tx_http: 201 tx_response: [{"v1_inside": 0, "v2_inside": 1}]
+post_rollback_http: 201
+post_rollback: {
+ "v1_exists": 1,
+ "v1_oid": 136653,
+ "v1_def_hash": "aa9c8e3072748b3998d74c3c3500070910a03dba753ca2ea848bba3e45214557",
+ "v1_acl": "postgres=X/postgres,service_role=X/postgres",
+ "v1_args": "p_transaction_id uuid, p_reason text, p_user_id uuid",
+ "v1_secdef": true,
+ "v2_exists": 1,
+ "v2_def_hash": "6468aa648231f8e2a9ff82509587bce646d7609a428cfd454edbd71fd53b82ed"
+}
+{
+ "tx_executed (V1 droppable)": true,
+ "v1_gone_inside_tx": true,
+ "v1_restored_same_oid": true,
+ "v1_def_identical": true,
+ "v1_acl_identical": true,
+ "v1_args_identical": true,
+ "v1_secdef_identical": true,
+ "v2_untouched": true
+}
+ROLLBACK TEST: PASS

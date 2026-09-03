@@ -65,8 +65,8 @@ async function testTransaction() {
   const stockMid = await getStock(p.id, STORE_ID);
   info(`Stock después de venta: ${stockMid} (esperado ${stockBefore - 2})`);
 
-  // Revertir
-  const { data: rev, error: e2 } = await supabase.rpc('reverse_transaction', {
+  // Revertir (W9.4.7 H5-B1: V1 retirada — se usa la RPC V2 canónica)
+  const { data: rev, error: e2 } = await supabase.rpc('reverse_transaction_v2', {
     p_transaction_id: txId, p_reason: 'TEST E2E', p_user_id: null,
   });
   if (e2) return bad(`reverse: ${e2.message}`);
@@ -77,9 +77,10 @@ async function testTransaction() {
 
   const stockOk = Math.abs((stockAfter - stockBefore)) < 0.001;
   stockOk ? ok(`Stock restaurado: ${stockBefore} → ${stockAfter}`) : bad(`Stock mal: ${stockBefore} → ${stockAfter}`);
-  txAfter?.status === 'reversed' ? ok('Status: reversed') : bad('Status mal');
+  // V2 marca 'voided' (no 'reverted'); aserción migrada con H5-B1
+  txAfter?.status === 'voided' ? ok('Status: voided (v2)') : bad('Status mal');
   kardex > 0 ? ok(`Kardex: ${kardex} entries`) : bad('Sin kardex');
-  return stockOk && txAfter?.status === 'reversed' && kardex > 0;
+  return stockOk && txAfter?.status === 'voided' && kardex > 0;
 }
 
 // ──────────────────────────────────────────────────────────────────────

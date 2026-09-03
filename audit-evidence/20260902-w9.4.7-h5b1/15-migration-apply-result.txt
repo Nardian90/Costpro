@@ -1,0 +1,9 @@
+=== W9.4.7 H5-B1 FASE 19 — APLICACIÓN ===
+migration: supabase/migrations/20260903030000_w9_h5b1_retire_reverse_transaction_v1.sql
+migration id (version): 20260903030000
+aplicada vía: Supabase Management API /database/query (convención W7/W9 — fuera de band; schema_migrations legacy congelado en 20260615, condición PRE-existente)
+ts_start: 2026-09-03T03:45:04Z
+ts_end:   2026-09-03T03:45:06Z
+http_status: 201
+result: []
+APPLY: OK

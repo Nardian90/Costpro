@@ -1,0 +1,37 @@
+{
+  "captured_at": "2026-09-03T03:45:32Z",
+  "http_status": 201,
+  "metrics": {
+    "v2_acl": "postgres=X/postgres,service_role=X/postgres",
+    "v2_oid": 138188,
+    "v2_args": "p_transaction_id uuid, p_reason text, p_user_id uuid",
+    "v2_owner": "postgres",
+    "v2_exists": 1,
+    "v2_secdef": true,
+    "views_ref": 0,
+    "triggers_ref": 0,
+    "v2_def_sha256": "6468aa648231f8e2a9ff82509587bce646d7609a428cfd454edbd71fd53b82ed",
+    "v2_search_path": "{\"search_path=public, pg_temp\"}",
+    "v1_rows_same_name": 0,
+    "overload_collision": 1,
+    "v1_rows_any_schema": 0,
+    "v1_oid_136653_alive": 0,
+    "v2_definer_callers_unchanged": 0
+  },
+  "checks": {
+    "V1 NO existe (public)": true,
+    "V1 NO existe (ning\u00fan schema)": true,
+    "OID 136653 liberado": true,
+    "V2 existe": true,
+    "V2 OID intacto": true,
+    "V2 firma intacta": true,
+    "V2 owner intacto": true,
+    "V2 SECURITY DEFINER intacto": true,
+    "V2 ACL intacta": true,
+    "V2 search_path intacto": true,
+    "V2 prosrc intacto (hash)": true,
+    "0 dependencias nuevas": true,
+    "sin overload collision": true
+  },
+  "POST-AUDIT": "PASS"
+}
