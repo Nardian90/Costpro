@@ -1,0 +1,20 @@
+--- /home/z/my-project/scripts/old_body.sql	2026-09-04 22:43:27.272627779 +0000
++++ /home/z/my-project/scripts/new_body.sql	2026-09-04 22:43:27.272627779 +0000
+@@ -21,7 +21,7 @@
+   FROM (
+     SELECT payment_method, sale_currency AS currency, COUNT(*) AS transaction_count,
+       SUM(total_amount) AS total,
+-      SUM(CASE WHEN sale_currency = 'CUP' THEN total_amount ELSE total_amount * COALESCE(sale_exchange_rate, 1) END) AS total_cup
++      SUM(total_amount) AS total_cup
+     FROM transactions
+     WHERE store_id = p_store_id AND created_at >= p_start_date AND created_at <= p_end_date AND status != 'voided'
+     GROUP BY payment_method, sale_currency ORDER BY payment_method, sale_currency
+@@ -62,7 +62,7 @@
+   ) t;
+ 
+   -- Totales
+-  SELECT COALESCE(SUM(CASE WHEN sale_currency = 'CUP' THEN total_amount ELSE total_amount * COALESCE(sale_exchange_rate, 1) END), 0)
++  SELECT COALESCE(SUM(total_amount), 0)
+   INTO v_sales_total_cup FROM transactions
+   WHERE store_id = p_store_id AND created_at >= p_start_date AND created_at <= p_end_date AND status != 'voided';
+ 

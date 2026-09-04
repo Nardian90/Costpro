@@ -1,0 +1,5 @@
+=== §12 DATA INTEGRITY PRE vs POST (22:47:30Z) ===
+PRE == POST : IDÉNTICO — payments (n/sums/moneda/método/tienda), transactions (n/sums/estado/moneda), stock, stock_movements, WAC fingerprint, reversals/audit_logs, invariante de pagos: SIN MUTACIONES por el fix.
+
+Método: métricas §3-§15 del baseline PRE vs re-medición POST (raw: 09-pre-post-integrity-raw-post.txt); normalizadas líneas en blanco, sufijo de encabezado y artefacto de extracción §16.
+Cambio esperado y único: resultado del cash report (§16/§17) — corregido de 926,861,999.9994 a 6,463,919.9994 CUP (agosto-2026).

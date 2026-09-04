@@ -1,0 +1,4 @@
+?? audit-evidence/20260904-w9-obs1/
+fd877a5338b82ebb48b385b65d6846246607dc0c
+fd877a5338b82ebb48b385b65d6846246607dc0c
+CHECKPOINT OK: HEAD == origin/main == fd877a5, worktree limpio

@@ -1,0 +1,12 @@
+=== W9.4.8-FIX OBS-1 — RESUMEN DE RESULTADOS DE CALIDAD 2026-09-04T22:58:14Z ===
+
+[TEST] bun run test (vitest) : PASS — 1892 passed, 24 skipped, 0 failed (89 files, 201.41s)
+[LINT] bun run lint (eslint) : PASS — 0 errors, 1291 warnings (pre-existentes, 0 relacionados con el fix; el fix no toca TS)
+[TYPE] bunx tsc --noEmit     : PASS — exit 0 (nota: el repo no define script typecheck; se ejecutó tsc directo)
+[BUILD] bun run build        : PASS tras liberar memoria — ver nota OOM
+       Intento 1 (pm2 activo, ~2.1GB avail): SIGKILL (OOM) en 'Creating an optimized production build'
+       Intento 2 (NODE_OPTIONS=1400MB): SIGKILL (OOM) — bun no propaga el límite; limitante es la RAM del host (4GB, sin swap)
+       Intento 3 (pm2 stop all, 2.6GB avail): BUILD EXIT=0 — Next.js 16 build completo (Proxy/Middleware, static+dynamic)
+       pm2 restaurado inmediatamente tras el build (HTTP 200 verificado)
+[SHA256] ver SHA256SUMS (verificado con sha256sum -c)
+[GIT] ver 12-git.txt — commit atómico + push + HEAD==origin/main

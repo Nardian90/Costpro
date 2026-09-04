@@ -1,0 +1,185 @@
+=== W9.4.8-FIX OBS-1 — DATA INTEGRITY POST-FIX 2026-09-04T22:46:36Z ===
+Las secciones siguen la numeración del baseline (01-baseline.txt §3-§15).
+REGLA: todo debe ser idéntico a PRE; el único cambio permitido es el resultado del cash report (§16/§17).
+
+── 3. PAYMENT_TRANSACTIONS: totales globales ──
+HTTP 201
+[
+ {
+  "n": 366,
+  "sum_amount": "8120033.4999999999465733",
+  "sum_amount_cup": "24937845.0001999999465732999999970"
+ }
+]
+── 4. PAYMENT_TRANSACTIONS por moneda ──
+HTTP 201
+[
+ {
+  "currency": "CUP",
+  "n": 242,
+  "sum_amount": "8095264.9999999999465733",
+  "sum_amount_cup": "8095264.9999999999465733"
+ },
+ {
+  "currency": "USD",
+  "n": 124,
+  "sum_amount": "24768.5",
+  "sum_amount_cup": "16842580.0001999999999999999999970"
+ }
+]
+── 5. PAYMENT_TRANSACTIONS por método ──
+HTTP 201
+[
+ {
+  "payment_method": "cash",
+  "n": 240,
+  "sum_amount_cup": "8083964.9999999999465733"
+ },
+ {
+  "payment_method": "transfer",
+  "n": 2,
+  "sum_amount_cup": "11300"
+ },
+ {
+  "payment_method": "zelle",
+  "n": 124,
+  "sum_amount_cup": "16842580.0001999999999999999999970"
+ }
+]
+── 6. PAYMENT_TRANSACTIONS por tienda ──
+HTTP 201
+[
+ {
+  "store_id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+  "n": 212,
+  "sum_amount_cup": "7180484.9999999999465733"
+ },
+ {
+  "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+  "n": 154,
+  "sum_amount_cup": "17757360.0001999999999999999999970"
+ }
+]
+── 7. TRANSACTIONS: totales globales ──
+HTTP 201
+[
+ {
+  "n": 520,
+  "sum_total": "28100954.9979999999465733"
+ }
+]
+── 8. TRANSACTIONS por estado ──
+HTTP 201
+[
+ {
+  "status": "completed",
+  "n": 520,
+  "sum_total": "28100954.9979999999465733"
+ }
+]
+── 9. TRANSACTIONS por moneda ──
+HTTP 201
+[
+ {
+  "sale_currency": "CUP",
+  "n": 506,
+  "sum_total": "26745434.9979999999465733"
+ },
+ {
+  "sale_currency": "USD",
+  "n": 14,
+  "sum_total": "1355520"
+ }
+]
+── 10. STOCK (products) ──
+HTTP 201
+[
+ {
+  "n_products": 323,
+  "sum_stock_current": "12094.6289"
+ }
+]
+── 11. STOCK_MOVEMENTS ──
+HTTP 201
+[
+ {
+  "n_movements": 702,
+  "sum_quantity_change": "4978.6289"
+ }
+]
+── 12. WAC (products.cost_average) fingerprint ──
+HTTP 201
+[
+ {
+  "n": 323,
+  "sum_cost_average": "6852321.24573270332877630000",
+  "sum_wac_value": "31177794.344161854687156000000000"
+ }
+]
+── 13. REVERSALS / VOIDED (audit_logs) ──
+HTTP 201
+[
+ {
+  "action": "PRODUCTION_REVERSED",
+  "n": 4
+ },
+ {
+  "action": "PRODUCTION_VOIDED",
+  "n": 10
+ },
+ {
+  "action": "RECEPTION_VOIDED",
+  "n": 3
+ },
+ {
+  "action": "RECEPTION_VOIDED_PENDING",
+  "n": 4
+ },
+ {
+  "action": "REVERSE_RECEIPT_V2",
+  "n": 36
+ },
+ {
+  "action": "REVERSE_SALE_V2",
+  "n": 12
+ },
+ {
+  "action": "REVERSE_TRANSACTION_V2",
+  "n": 10
+ },
+ {
+  "action": "REVERSE_VALE_SALIDA",
+  "n": 15
+ },
+ {
+  "action": "SERVICE_VOIDED",
+  "n": 21
+ },
+ {
+  "action": "transfer_reversed",
+  "n": 6
+ },
+ {
+  "action": "VOID_SALE",
+  "n": 6
+ }
+]
+── 14. TRANSACTIONS voided/reversed ──
+HTTP 201
+[]
+── 15. INVARIANTE total_amount == SUM(amount_cup) por venta ──
+HTTP 201
+[
+ {
+  "sale_currency": "CUP",
+  "n": 506,
+  "invariant_ok": 341,
+  "invariant_violated": 165
+ },
+ {
+  "sale_currency": "USD",
+  "n": 14,
+  "invariant_ok": 14,
+  "invariant_violated": 0
+ }
+]

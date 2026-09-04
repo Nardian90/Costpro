@@ -1,0 +1,265 @@
+=== W9.4.8-FIX OBS-1 — REGRESSION TESTS POST-FIX 2026-09-04T22:45:08Z ===
+FIX aplicado: 20260904030000_w9_obs1_fix_cash_report_double_conversion.sql
+
+── §0 PRUEBA MATEMÁTICA PRE-FIX (casos A-D sobre fórmula antigua) ──
+(capturada pre-fix; ver 05-mathematical-proof.md)
+
+── §0b CASOS A-D POST-FIX (fórmula nueva = total_cup es SUM(total_amount); la tasa ya no interviene) ──
+HTTP 201
+[
+ {
+  "titulo": "A: venta CUP 1000",
+  "amount_stored": "1000",
+  "formula_antigua": "1000",
+  "formula_nueva_total_cup": "1000",
+  "error_formula_antigua": "0",
+  "error_formula_nueva": "0"
+ },
+ {
+  "titulo": "B: venta USD total CUP 4000",
+  "amount_stored": "4000",
+  "formula_antigua": "1600000.0",
+  "formula_nueva_total_cup": "4000",
+  "error_formula_antigua": "1596000.0",
+  "error_formula_nueva": "0"
+ },
+ {
+  "titulo": "C: venta USD con rate=1",
+  "amount_stored": "10",
+  "formula_antigua": "10.0",
+  "formula_nueva_total_cup": "10",
+  "error_formula_antigua": "0.0",
+  "error_formula_nueva": "0"
+ },
+ {
+  "titulo": "D1: venta USD 5000 CUP",
+  "amount_stored": "5000",
+  "formula_antigua": "3400000.0",
+  "formula_nueva_total_cup": "5000",
+  "error_formula_antigua": "3395000.0",
+  "error_formula_nueva": "0"
+ },
+ {
+  "titulo": "D2: venta CUP 2000",
+  "amount_stored": "2000",
+  "formula_antigua": "2000",
+  "formula_nueva_total_cup": "2000",
+  "error_formula_antigua": "0",
+  "error_formula_nueva": "0"
+ }
+]
+T1/T2/T5/T6: formula_nueva elimina el error en todos los casos (error_formula_nueva=0).
+
+── T1 — CUP unchanged: filas CUP PRE vs POST (agosto-2026) ──
+PRE (baseline §16): cash/CUP total_cup=1659799.9994 | transfer/CUP=51760 | mixed/CUP=476580 | zelle/CUP=2920260
+POST:
+[{"payment_method":"cash","currency":"CUP","transaction_count":89,"total":1659799.9994,"total_cup":1659799.9994},{"payment_method":"transfer","currency":"CUP","transaction_count":5,"total":51760,"total_cup":51760},{"payment_method":"mixed","currency":"CUP","transaction_count":13,"total":476580,"total_cup":476580},{"payment_method":"mixed","currency":"USD","transaction_count":7,"total":1164440,"total_cup":1164440},{"payment_method":"zelle","currency":"CUP","transaction_count":52,"total":2920260,"total_cup":2920260},{"payment_method":"zelle","currency":"USD","transaction_count":7,"total":191080,"total_cup":191080}]
+totals: {"sales_total_cup":6463919.9994,"payments_total_cup":0,"commissions_total_cup":0,"production_total_cup":0,"balance_cup":6463919.9994}
+
+── T2 — USD exactly one conversion: total_cup == total (ya CUP) ──
+  mixed/USD: total=1164440 total_cup=1164440 => PASS
+  zelle/USD: total=191080 total_cup=191080 => PASS
+T2 RESULT: PASS
+
+── T3 — Mixed currency: totals.sales_total_cup == SUM(total_amount) independiente ──
+HTTP 201
+[
+ {
+  "independent_sales_total_cup": "6463919.99940"
+ }
+]
+get_cash_report totals.sales_total_cup: 6463919.9994
+
+── T4 — Multiple payments: payments/commissions/production (amount_cup) sin cambios + aggregación multi-grupo ──
+Baseline PRE (§17, include_all_dates): payments_total_cup y filas payments/commissions/production
+POST include_all_dates totals: {"sales_total_cup":20920469.998,"payments_total_cup":0,"commissions_total_cup":0,"production_total_cup":0,"balance_cup":20920469.998}
+POST payments rows: []
+POST commissions rows: []
+POST production rows: []
+Independiente:
+HTTP 201
+[
+ {
+  "payments_total_cup": "0",
+  "commissions_total_cup": "0",
+  "production_total_cup": "0"
+ }
+]
+
+── T5/T6 — rate=1 y rate≠1: la fórmula nueva NO referencia sale_exchange_rate (imposible ×rate×rate) ──
+HTTP 201
+[
+ {
+  "formula_still_uses_rate": false
+ }
+]
+T5/T6 RESULT: false => PASS (la conversión ocurre una sola vez, en escritura)
+
+── T7 — Null/zero rate: la fórmula nueva es inmune (política contractual: total_amount es la autoridad) ──
+HTTP 201
+[
+ {
+  "rate": null,
+  "amount_usd_stored_cup": "4000",
+  "total_cup_nuevo_inmune": "4000"
+ },
+ {
+  "rate": "0",
+  "amount_usd_stored_cup": "4000",
+  "total_cup_nuevo_inmune": "4000"
+ },
+ {
+  "rate": "1",
+  "amount_usd_stored_cup": "4000",
+  "total_cup_nuevo_inmune": "4000"
+ },
+ {
+  "rate": "680",
+  "amount_usd_stored_cup": "4000",
+  "total_cup_nuevo_inmune": "4000"
+ }
+]
+T7 RESULT: PASS — total_cup no depende de rate; se preserva la política actual (total_amount SIEMPRE CUP).
+
+── T8 — Determinismo: 3 ejecuciones idénticas (hash del JSON) ──
+HTTP 201
+[
+ {
+  "run_1": "b08e23abd18da8367a3e01e8ce153f40"
+ }
+]
+HTTP 201
+[
+ {
+  "run_2": "b08e23abd18da8367a3e01e8ce153f40"
+ }
+]
+HTTP 201
+[
+ {
+  "run_3": "b08e23abd18da8367a3e01e8ce153f40"
+ }
+]
+
+── T9 — Store isolation: reporte por tienda solo agrega su store_id ──
+Tiendas:
+HTTP 201
+[
+ {
+  "id": "2dabe459-4b37-4be2-b8f4-d102047cc18a",
+  "name": "   "
+ },
+ {
+  "id": "7aedc55d-f7e8-4938-8d98-8330c358e8d9",
+  "name": "E2E Extra extra-mrioqepf"
+ },
+ {
+  "id": "fa2c0fe5-d4b8-4a3d-929a-0c9ee8363000",
+  "name": "E2E Multi arch-mrip86q3"
+ },
+ {
+  "id": "85a2cba5-09b2-4b14-9051-4bff31892f25",
+  "name": "E2E Multi dup-mrip3468"
+ },
+ {
+  "id": "45f46ded-bd3f-4659-848d-cb0cd9cec1d8",
+  "name": "E2E Multi mrip2zpuztfw"
+ },
+ {
+  "id": "4bcb61e4-be93-44cd-ba10-a54d771cd393",
+  "name": "E2E No Addr noaddr-mrip32ho"
+ }
+]
+Reporte por tienda (include_all_dates) vs agregado independiente por tienda:
+HTTP 201
+[
+ {
+  "id": "2dabe459-4b37-4be2-b8f4-d102047cc18a",
+  "name": "   ",
+  "indep_sales_all_dates": "0",
+  "rpc_sales_all_dates": "0"
+ },
+ {
+  "id": "7aedc55d-f7e8-4938-8d98-8330c358e8d9",
+  "name": "E2E Extra extra-mrioqepf",
+  "indep_sales_all_dates": "0",
+  "rpc_sales_all_dates": "0"
+ },
+ {
+  "id": "fa2c0fe5-d4b8-4a3d-929a-0c9ee8363000",
+  "name": "E2E Multi arch-mrip86q3",
+  "indep_sales_all_dates": "0",
+  "rpc_sales_all_dates": "0"
+ },
+ {
+  "id": "85a2cba5-09b2-4b14-9051-4bff31892f25",
+  "name": "E2E Multi dup-mrip3468",
+  "indep_sales_all_dates": "0",
+  "rpc_sales_all_dates": "0"
+ },
+ {
+  "id": "45f46ded-bd3f-4659-848d-cb0cd9cec1d8",
+  "name": "E2E Multi mrip2zpuztfw",
+  "indep_sales_all_dates": "0",
+  "rpc_sales_all_dates": "0"
+ },
+ {
+  "id": "4bcb61e4-be93-44cd-ba10-a54d771cd393",
+  "name": "E2E No Addr noaddr-mrip32ho",
+  "indep_sales_all_dates": "0",
+  "rpc_sales_all_dates": "0"
+ }
+]
+T9 RESULT: PASS si rpc==indep para cada tienda (sin mezcla entre tiendas).
+Nota código: /api/cash-report valida canManageStore(session.user, store) (route.ts:39) — aislamiento en capa API.
+
+── T10 — Date boundaries: inicio/fin exactos, día anterior, día posterior ──
+Independiente por rangos:
+HTTP 201
+[
+ {
+  "nombre": "dia_anterior_2026-08-11",
+  "indep": "621020",
+  "rpc": "621020"
+ },
+ {
+  "nombre": "dia_exacto_2026-08-12",
+  "indep": "128160",
+  "rpc": "128160"
+ },
+ {
+  "nombre": "dia_posterior_2026-08-13",
+  "indep": "356160",
+  "rpc": "356160"
+ }
+]
+T10 RESULT: PASS si rpc==indep en cada límite.
+
+── T11 — Frontend no reconvierte (verificación de código + cadena completa) ──
+route.ts (src/app/api/cash-report/route.ts):
+  · L44: supabase.rpc('get_cash_report', ...) — pasa los datos tal cual
+  · L66/70/75: suma p.total SOLO para grupos cash+CUP (desglose billetes) — sin conversión
+  · L87-92: devuelve {...reportData, cash_breakdown, cash_balance_cup} — sin multiplicar por tasa
+CashReportModal.tsx:
+  · L383-390: usa x.total de grupos currency==='CUP' — sin conversión
+  · L621: sección USD usa x.total — sin conversión
+  · L1514/1519: muestra totals.sales_total_cup/payments_total_cup con formatCurrency — sin conversión
+rg 'exchange_rate' en los 2 consumidores del reporte: 0 referencias a multiplicación por tasa (ver 10-security-regression.txt §frontend)
+T11 RESULT: PASS — la única conversión de la cadena está en escritura (create_sale_v2); el fix del RPC elimina la única re-conversión.
+HTTP 201
+[
+ {
+  "name": "ENERVIDA-VITALLCONS",
+  "n_tx": 308,
+  "indep_sales_all_dates": "20920469.99800",
+  "rpc_sales_all_dates": "20920469.99800",
+  "isolation_ok": true
+ },
+ {
+  "name": "Puerto Padre VITALLCONS",
+  "n_tx": 212,
+  "indep_sales_all_dates": "7180484.9999999999465733",
+  "rpc_sales_all_dates": "7180484.9999999999465733",
+  "isolation_ok": true
+ }
+]

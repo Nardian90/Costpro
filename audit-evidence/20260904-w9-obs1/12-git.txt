@@ -1,0 +1,38 @@
+=== W9.4.8-FIX OBS-1 — GIT (registro en momento del commit) ===
+
+Baseline de partida: fd877a5 (HEAD == origin/main verificado en 00-checkpoint.txt)
+
+── Pre-commit ──
+git status --short:
+?? audit-evidence/20260904-w9-obs1/
+?? supabase/migrations/20260904030000_w9_obs1_fix_cash_report_double_conversion.sql
+→ 0 archivos tracked modificados; el fix es una NUEVA migración (el código existente no se toca).
+git diff --check: limpio (exit 0).
+Alcance exclusivo OBS-1: migración get_cash_report (2 expresiones) + evidencia de auditoría.
+Sin cambios en: ledger, H5-B2, reverse_*, WAC, inventario, stock, RLS, ACL de otros objetos.
+
+── Commit ──
+Mensaje: fix(w9): correct double USD conversion in cash report (W9.4.8-FIX OBS-1)
+Incluye: supabase/migrations/20260904030000_w9_obs1_fix_cash_report_double_conversion.sql
+         audit-evidence/20260904-w9-obs1/ (00-12 + SHA256SUMS)
+Commit inicial creado: 6b7e4358a1b89eaf3622c9322ebd638e06fae676 (16 files, +1336)
+Este manifest se completa con el resultado del intento de push vía amend único
+(permitido: el commit aún no está en el remoto; no se reescribe historia publicada).
+
+── Push y verificación ──
+Comando: git push origin main
+RESULTADO DEL PRIMER INTENTO (registrado tal cual, sin fabricar): FALLO —
+  "fatal: could not read Username for 'https://github.com': No such device or address"
+  Causa: el entorno no dispone de credenciales GitHub (sin ~/.git-credentials,
+  sin credential helper, sin gh CLI, sin GITHUB_TOKEN). El clone fue anónimo
+  (repo público, lectura) pero el push requiere autenticación.
+Estado en el momento de este manifest:
+  LOCAL HEAD     = 6b7e4358... (commit del fix, completo y verificado)
+  origin/main    = fd877a5...  (pendiente de actualizar)
+  ⇒ PUSH PENDIENTE de credenciales (PAT). El commit local está íntegro;
+     el push + verificación LOCAL HEAD == origin/main se ejecutarán en cuanto
+     se disponga de credenciales y se confirmará en el informe final/worklog
+     (convención W9.4.6/W9.4.7/H5-B2: la verificación se documenta al ejecutarse).
+
+Nota: SHA256SUMS se genera sobre el árbol de evidencia en el momento del commit;
+cualquier re-ejecución posterior se registra en el worklog del proyecto.

@@ -1,0 +1,68 @@
+=== W9.4.8-FIX OBS-1 — SECURITY REGRESSION 2026-09-04T22:58:07Z ===
+
+── 1. Metadatos de seguridad de get_cash_report POST-fix (comparar con 01-baseline.txt §1/§2) ──
+HTTP 201
+[
+ {
+  "oid": 137379,
+  "owner": "postgres",
+  "security_definer": false,
+  "search_path": null,
+  "args": "p_store_id uuid, p_start_date timestamp with time zone, p_end_date timestamp with time zone, p_include_all_dates boolean"
+ }
+]
+Baseline PRE:  oid=137379, owner=postgres, security_definer=false, search_path=null, args=(uuid,timestamptz,timestamptz,boolean)
+=> IDENTIDAD PRESERVADA (mismo OID; CREATE OR REPLACE no alteró owner/INVOKER/search_path/firma)
+
+── 2. ACL POST-fix ──
+HTTP 201
+[
+ {
+  "rolname": "authenticated",
+  "privilege_type": "EXECUTE"
+ },
+ {
+  "rolname": "postgres",
+  "privilege_type": "EXECUTE"
+ },
+ {
+  "rolname": "service_role",
+  "privilege_type": "EXECUTE"
+ }
+]
+Baseline PRE: authenticated/postgres/service_role EXECUTE => ACL IDÉNTICA (PUBLIC sigue sin EXECUTE)
+
+── 3. RLS de tablas subyacentes (no tocadas por el fix — verificación) ──
+HTTP 201
+[
+ {
+  "relname": "commission_payments",
+  "rls_enabled": true,
+  "rls_forced": false
+ },
+ {
+  "relname": "payment_transactions",
+  "rls_enabled": true,
+  "rls_forced": false
+ },
+ {
+  "relname": "transactions",
+  "rls_enabled": true,
+  "rls_forced": false
+ }
+]
+El fix (CREATE OR REPLACE FUNCTION) no puede alterar RLS; se documenta el estado vigente como referencia.
+
+── 4. Store isolation (remisión) ──
+T9 en 08-regression-tests.txt: ENERVIDA-VITALLCONS y Puerto Padre VITALLCONS: rpc==indep y sin mezcla entre tiendas (isolation_ok=true).
+Capa API: route.ts:39 canManageStore(session.user, store) — el usuario solo consulta su tienda activa.
+
+── 5. Sin bypass accidental ──
+La función es SECURITY INVOKER: ejecuta bajo el rol del caller y las RLS de las tablas aplican.
+No se añadió p_skip_access_check, ni SET search_path, ni SECURITY DEFINER en el fix.
+
+── 6. Frontend — sin reconversión (T11, verificación rg, rutas absolutas) ──
+rg 'exchange_rate' en los 3 consumidores del cash report:
+(0 coincidencias — ningún consumidor re-convierte importes del reporte)
+rg 'rate' multiplicando importes (patrón '* rate' o '*rate'):
+(0 coincidencias)
