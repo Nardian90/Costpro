@@ -1,0 +1,387 @@
+W9.4.9 — H5-B3 — GATE 1: ESTADO LIVE DE FUNCIONES DE REVERSIÓN
+Fuente: introspección PostgreSQL en vivo vía Supabase Management API (database/query)
+Fecha: 2026-09-04 | Baseline: git 3d03afbc
+
+================================================================================
+1. EXISTENCIA / METADATOS (pg_proc)
+================================================================================
+Query: SELECT p.proname, p.oid, p.prokind, p.prosecdef, p.proconfig,
+              pg_get_userbyid(p.proowner), pg_get_function_identity_arguments(p.oid)
+       FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace
+       WHERE n.nspname='public' AND p.proname IN
+       ('reverse_transaction','reverse_transaction_v2','reverse_receipt','reverse_receipt_v2')
+
+RESULTADO (4 filas,Orden por proname):
+  proname                 | oid    | kind | SECURITY | search_path     | owner    | firma
+  ------------------------+--------+------+----------+-----------------+----------+----------------------------------
+  reverse_receipt         | 136654 | func | DEFINER  | public          | postgres | (p_receipt_id uuid, p_reason text, p_user_id uuid)
+  reverse_receipt_v2      | 138196 | func | DEFINER  | public, pg_temp | postgres | (p_receipt_id uuid, p_reason text, p_user_id uuid)
+  reverse_transaction     |  *** AUSENTE — 0 filas ***  (V1 retirada por H5-B1, migración 20260903030000)
+  reverse_transaction_v2  | 138188 | func | DEFINER  | public, pg_temp | postgres | (p_transaction_id uuid, p_reason text, p_user_id uuid)
+
+CONFIRMACIÓN CLAVE DEL CHECKPOINT:
+  ✔ reverse_transaction (V1) PERMANECE RETIRADA de la BD live (0 filas en pg_proc).
+  ✔ No fue recreada. Única referencia en repo: migración de retiro + migraciones históricas.
+
+Funciones adicionales relacionadas detectadas (rutas alternativas de anulación):
+  void_transaction          | 138000 | SECURITY DEFINER | search_path=pg_catalog, public
+                            | firma: (p_transaction_id uuid, p_reason text, p_operation_date timestamptz DEFAULT now(), p_user_id uuid DEFAULT NULL)
+  (inventario completo de mutadores en 02-reversal-chain.md §5)
+
+================================================================================
+2. ACL / PRIVILEGIOS EXECUTE (pg_roles resueltos)
+================================================================================
+  función                  | EXECUTE concedido a
+  -------------------------+------------------------------------------------------
+  reverse_transaction_v2   | postgres, service_role            ← NO expuesta a anon/authenticated
+  reverse_receipt          | postgres, service_role            ← NO expuesta a anon/authenticated
+  reverse_receipt_v2       | PUBLIC, postgres, authenticated, service_role  ← expuesta a clientes autenticados
+  void_transaction         | PUBLIC, postgres, authenticated, service_role  ← expuesta a clientes autenticados
+  register_stock_movement  | postgres, service_role
+  fn_recalc_wac            | postgres, service_role
+
+Nota: la ruta autorizada de la aplicación para reversión de ventas es la ruta de
+servidor /api/reverse → RPC con service_role. void_transaction y reverse_receipt_v2
+aceptan EXECUTE de authenticated (PostgREST directo) — ver análisis GATE 10.
+
+================================================================================
+3. DEFINICIÓN LIVE EXACTA — reverse_transaction_v2 (OID 138188)
+================================================================================
+
+CREATE OR REPLACE FUNCTION public.reverse_transaction_v2(p_transaction_id uuid, p_reason text, p_user_id uuid DEFAULT NULL::uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
+AS $function$
+DECLARE
+  v_tx RECORD;
+  v_item RECORD;
+  v_caller_uid uuid := CASE WHEN auth.role() = 'service_role' THEN COALESCE(p_user_id, auth.uid()) ELSE auth.uid() END;
+  v_units_to_restore numeric;
+  v_total_restored numeric := 0;
+BEGIN
+  SELECT * INTO v_tx FROM public.transactions WHERE id = p_transaction_id FOR UPDATE;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'ERR_TRANSACTION_NOT_FOUND';
+  END IF;
+
+  IF v_tx.status = 'voided' THEN
+    RETURN jsonb_build_object('status', 'idempotent', 'transaction_id', p_transaction_id);
+  END IF;
+
+  IF v_tx.status <> 'completed' THEN
+    RAISE EXCEPTION 'ERR_INVALID_STATUS: only completed transactions can be reversed (status=%)', v_tx.status;
+  END IF;
+
+  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, v_tx.store_id) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+  END IF;
+
+  FOR v_item IN
+    SELECT ti.product_id, ti.quantity, ti.cost_at_sale
+    FROM public.transaction_items ti
+    WHERE ti.transaction_id = p_transaction_id AND ti.product_id IS NOT NULL
+  LOOP
+    v_units_to_restore := v_item.quantity;
+
+    -- register_stock_movement genera el stock_movement → trigger genera kardex
+    PERFORM public.register_stock_movement(
+      p_product_id := v_item.product_id,
+      p_store_id := v_tx.store_id,
+      p_user_id := v_caller_uid,
+      p_quantity := v_units_to_restore,
+      p_movement_type := 'sale_reverse'::text,
+      p_sale_id := p_transaction_id,
+      p_unit_cost := v_item.cost_at_sale,
+      p_reason := 'Reverso de venta'::text,
+      p_operation_date := NOW(),
+      p_skip_access_check := TRUE
+    );
+
+    -- PR-4.3: INSERT directo a kardex_entries ELIMINADO
+
+    v_total_restored := v_total_restored + v_units_to_restore;
+  END LOOP;
+
+  UPDATE public.transactions
+  SET status = 'voided',
+      updated_at = NOW()
+  WHERE id = p_transaction_id;
+
+  INSERT INTO public.audit_logs (action, table_name, record_id, store_id, user_id, metadata)
+  VALUES ('REVERSE_TRANSACTION_V2', 'transactions', p_transaction_id, v_tx.store_id, v_caller_uid,
+    jsonb_build_object('reason', p_reason, 'units_restored', v_total_restored));
+
+  RETURN jsonb_build_object(
+    'status', 'success',
+    'transaction_id', p_transaction_id,
+    'units_restored', v_total_restored
+  );
+END;
+$function$
+
+
+
+================================================================================
+4. DEFINICIÓN LIVE EXACTA — void_transaction (OID 138000)
+================================================================================
+ACL: EXECUTE:PUBLIC, postgres, authenticated, service_role
+
+CREATE OR REPLACE FUNCTION public.void_transaction(p_transaction_id uuid, p_reason text, p_operation_date timestamp with time zone DEFAULT now(), p_user_id uuid DEFAULT NULL::uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'pg_catalog', 'public'
+AS $function$
+
+DECLARE
+  v_tx RECORD;
+  v_item RECORD;
+  v_caller_uid UUID := CASE WHEN auth.role() = 'service_role' THEN COALESCE(p_user_id, auth.uid()) ELSE auth.uid() END;
+  v_eff TIMESTAMP WITH TIME ZONE := COALESCE(p_operation_date, NOW());
+  v_conversion_factor integer := 1;
+  v_units_to_restore numeric;
+BEGIN
+  SELECT * INTO v_tx FROM public.transactions WHERE id = p_transaction_id FOR UPDATE;
+  IF NOT FOUND THEN RAISE EXCEPTION 'ERR_TX_NOT_FOUND'; END IF;
+
+  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, v_tx.store_id) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+  END IF;
+
+  IF v_tx.status = 'voided' THEN RAISE EXCEPTION 'ERR_ALREADY_VOIDED'; END IF;
+
+  UPDATE public.transactions
+    SET status = 'voided', void_reason = p_reason, cancelled_at = v_eff, updated_at = NOW()
+    WHERE id = p_transaction_id;
+
+  -- FIX C-7: Restaurar stock considerando conversion_factor de variantes.
+  -- Si transaction_items.variant_id está poblado, buscar conversion_factor.
+  -- Si variant_id es NULL (ventas legacy), usar 1 (sin conversión) para
+  -- mantener simetría con create_sale legacy.
+  FOR v_item IN SELECT * FROM public.transaction_items WHERE transaction_id = p_transaction_id LOOP
+    v_conversion_factor := 1;
+    IF v_item.variant_id IS NOT NULL THEN
+      SELECT conversion_factor INTO v_conversion_factor
+        FROM public.product_variants WHERE id = v_item.variant_id;
+      v_conversion_factor := COALESCE(v_conversion_factor, 1);
+    END IF;
+
+    v_units_to_restore := v_item.quantity * v_conversion_factor;
+
+    PERFORM public.register_stock_movement(
+      p_product_id := v_item.product_id,
+      p_store_id := v_tx.store_id,
+      p_user_id := v_caller_uid,
+      p_quantity := v_units_to_restore,
+      p_movement_type := 'sale_void',
+      p_notes := p_transaction_id::text,
+      p_unit_cost := v_item.cost_at_sale,
+      p_reason := 'Void de venta',
+      p_operation_date := v_eff,
+      p_skip_access_check := TRUE
+    );
+  END LOOP;
+
+  INSERT INTO public.audit_logs (action, table_name, record_id, store_id, user_id, metadata)
+  VALUES ('VOID_SALE', 'transactions', p_transaction_id, v_tx.store_id, v_caller_uid,
+    jsonb_build_object('reason', p_reason, 'old_status', v_tx.status));
+
+  RETURN jsonb_build_object('status', 'success', 'transaction_id', p_transaction_id);
+END;
+
+$function$
+
+
+
+================================================================================
+5. DEFINICIÓN LIVE EXACTA — reverse_receipt (V1, OID 136654) [SIN retirar]
+================================================================================
+⚠ H5-B3 OBSERVACIÓN: esta función V1 de recepciones NO fue retirada por H5-B1
+  (H5-B1 retiró SOLO reverse_transaction V1). NO tiene FOR UPDATE y su UPDATE de
+  receipts carece de guard atómico de estado. En este despliegue USE_V2_REVERSE=true
+  hace que /api/reverse use reverse_receipt_v2 (que SÍ tiene FOR UPDATE), por lo que
+  la V1 de receipts está SIN CONSUMIDORES en la ruta activa. Registrada en
+  02-reversal-chain.md §7 (BACKLOG de superficie latente, fuera del alcance H5-B3).
+
+CREATE OR REPLACE FUNCTION public.reverse_receipt(p_receipt_id uuid, p_reason text, p_user_id uuid DEFAULT NULL::uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_receipt RECORD;
+  v_item RECORD;
+  v_uid UUID := CASE WHEN auth.role() = 'service_role' THEN COALESCE(p_user_id, auth.uid()) ELSE auth.uid() END;
+  v_count INTEGER := 0;
+BEGIN
+  SELECT * INTO v_receipt FROM public.receipts WHERE id = p_receipt_id;
+  IF v_receipt IS NULL THEN RAISE EXCEPTION 'ERR_RECEIPT_NOT_FOUND'; END IF;
+  IF v_receipt.status = 'reversed' THEN RAISE EXCEPTION 'ERR_ALREADY_REVERSED'; END IF;
+  IF v_receipt.status = 'voided' THEN RAISE EXCEPTION 'ERR_ALREADY_VOIDED'; END IF;
+  IF v_uid IS NULL OR NOT public.has_store_access_as(v_uid, v_receipt.store_id) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+  END IF;
+
+  FOR v_item IN
+    SELECT product_id, quantity FROM public.receipt_items WHERE receipt_id = p_receipt_id
+  LOOP
+    UPDATE public.products
+      SET stock_current = GREATEST(0, stock_current - v_item.quantity), updated_at = now()
+      WHERE id = v_item.product_id AND store_id = v_receipt.store_id;
+
+    INSERT INTO public.kardex_entries (store_id, product_id, movement_type, quantity, unit_cost, total_value,
+      balance_quantity, balance_unit_cost, balance_total_value, reference_type, reference_id, reference_description, created_by)
+    SELECT v_receipt.store_id, v_item.product_id, 'out', v_item.quantity, 0, 0,
+      p.stock_current, p.cost_average, p.stock_current * p.cost_average,
+      'reversal', p_receipt_id, 'Reversión de recepción', v_uid
+    FROM public.products p WHERE p.id = v_item.product_id;
+
+    v_count := v_count + 1;
+  END LOOP;
+
+  UPDATE public.receipts
+    SET status = 'reversed', reversed_at = now(), reversed_by = v_uid, reversal_reason = p_reason
+    WHERE id = p_receipt_id;
+
+  RETURN jsonb_build_object('status', 'success', 'items_reversed', v_count, 'receipt_id', p_receipt_id);
+END;
+$function$
+
+
+
+================================================================================
+6. DEFINICIÓN LIVE — reverse_receipt_v2 (OID 138196) [referencia, con FOR UPDATE]
+================================================================================
+
+CREATE OR REPLACE FUNCTION public.reverse_receipt_v2(p_receipt_id uuid, p_reason text, p_user_id uuid DEFAULT NULL::uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
+AS $function$
+DECLARE
+  v_receipt RECORD;
+  v_item RECORD;
+  -- R1/R6: real caller identity. service_role callers are server-side actors
+  -- (/api/reverse injects session.user.id); every other role is pinned to
+  -- auth.uid() so p_user_id cannot forge authorship.
+  v_caller_uid uuid := CASE WHEN auth.role() = 'service_role'
+                            THEN COALESCE(p_user_id, auth.uid())
+                            ELSE auth.uid() END;
+  v_current_stock numeric;
+  v_new_stock numeric;
+  v_unit_cost_cup numeric;
+  v_items_processed int := 0;
+  v_reversed_payments int := 0;
+BEGIN
+  SELECT * INTO v_receipt FROM public.receipts WHERE id = p_receipt_id FOR UPDATE;
+  IF NOT FOUND THEN RAISE EXCEPTION 'ERR_RECEIPT_NOT_FOUND'; END IF;
+  IF v_receipt.status <> 'active' THEN
+    RAISE EXCEPTION 'ERR_RECEIPT_NOT_ACTIVE: status=%', v_receipt.status;
+  END IF;
+
+  -- R1 [P1]: tenant/store isolation. Mirrors V1 model + PR-4 guard.
+  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, v_receipt.store_id) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+  END IF;
+
+  FOR v_item IN SELECT * FROM public.receipt_items WHERE receipt_id = p_receipt_id LOOP
+    v_unit_cost_cup := v_item.unit_cost * COALESCE(v_item.tasa_cambio_recepcion, 1.0);
+
+    SELECT stock_current INTO v_current_stock
+    FROM public.products
+    WHERE id = v_item.product_id AND store_id = v_receipt.store_id
+    FOR UPDATE;
+    v_current_stock := COALESCE(v_current_stock, 0);
+
+    -- R2: exact inverse. fn_recalc_wac raises ERR_WAC_REVERSE_NEGATIVE_STOCK
+    -- when S + q <= 0 (detection over silence — W7 D-01 / PR-4 / B-12 contract).
+    -- fn_recalc_wac locks the product row and updates cost_average with the
+    -- app.wac_writer token (single writer).
+    PERFORM public.fn_recalc_wac(
+      v_receipt.store_id, v_item.product_id, 'reception_reverse',
+      -v_item.quantity, v_unit_cost_cup,
+      jsonb_build_object('rpc', 'reverse_receipt_v2', 'receipt_id', p_receipt_id));
+
+    v_new_stock := v_current_stock - v_item.quantity;
+
+    UPDATE public.products
+    SET stock_current = v_new_stock, updated_at = now()
+    WHERE id = v_item.product_id AND store_id = v_receipt.store_id;
+
+    INSERT INTO public.stock_movements
+      (product_id, store_id, movement_type, quantity_change, unit_cost,
+       reference_doc, created_at, created_by, movement_date)
+    VALUES
+      (v_item.product_id, v_receipt.store_id, 'purchase_reverse'::movement_type,
+       -v_item.quantity, v_unit_cost_cup,
+       'Reversión recepción: ' || COALESCE(p_reason, ''), now(), v_caller_uid, now());
+
+    v_items_processed := v_items_processed + 1;
+  END LOOP;
+
+  UPDATE public.receipts
+  SET status = 'reversed',
+      reversed_at = now(),
+      reversed_by = v_caller_uid,
+      reversal_reason = p_reason,
+      -- R3: payment reset (PR-4 / void_pending_reception canonical pattern)
+      payment_status = 'unpaid',
+      paid_amount = 0,
+      paid_at = NULL
+  WHERE id = p_receipt_id;
+
+  -- R3: mark related payment transactions (notes marker, canonical pattern)
+  UPDATE public.payment_transactions
+  SET notes = COALESCE(notes, '') || ' [REVERSED by reverse_receipt_v2 '
+              || p_receipt_id::text || ' at ' || now()::text || ']'
+  WHERE ref_type = 'receipt' AND ref_id = p_receipt_id;
+  GET DIAGNOSTICS v_reversed_payments = ROW_COUNT;
+
+  -- R4/R6: unified historical action string + real caller identity
+  INSERT INTO public.audit_logs
+    (user_id, store_id, action, table_name, record_id, metadata)
+  VALUES
+    (v_caller_uid, v_receipt.store_id, 'REVERSE_RECEIPT_V2', 'receipts', p_receipt_id,
+     jsonb_build_object('reason', p_reason,
+                        'items_processed', v_items_processed,
+                        'payments_reversed', v_reversed_payments,
+                        'v2_reverse', true));
+
+  RETURN jsonb_build_object('status', 'success',
+                            'receipt_id', p_receipt_id,
+                            'items_processed', v_items_processed,
+                            'payments_reversed', v_reversed_payments);
+END
+$function$
+
+
+
+================================================================================
+7. DEPENDENCIAS DE LAS FUNCIONES DE REVERSIÓN DE TRANSACCIONES
+================================================================================
+reverse_transaction_v2 depende de:
+  - public.transactions (SELECT FOR UPDATE / UPDATE status)
+  - public.transaction_items (SELECT items)
+  - public.register_stock_movement (PERFORM — OID 133204, SECURITY DEFINER)
+  - public.has_store_access_as (autorización — OID ver 02-reversal-chain.md)
+  - public.audit_logs (INSERT auditoría)
+  Triggers afectados indirectamente al mutar stock_movements/products:
+  - fn_sync_inventory_on_movement (BEFORE INSERT stock_movements → UPDATE inventory)
+  - sync_product_stock (AFTER INSERT stock_movements → UPDATE products.stock_current)
+  - auto_kardex_on_stock_movement (AFTER INSERT stock_movements → INSERT kardex_entries)
+  - trg_validate_tx_transition (máquina de estados: completed→voided ✓, voided→[] terminal)
+  - log_transaction_changes (UPDATE_STATUS audit)
+  - reverse_commissions_on_sale_void (marca commission_payments flagged; no-op si no hay comisiones)
+
+void_transaction depende de:
+  - mismas primitivas de stock (register_stock_movement con movement_type='sale_void')
+  - public.product_variants (conversion_factor)
+  - mismo conjunto de triggers sobre transactions/stock_movements
+
+EVIDENCE-CAPTURE: outputs JSON crudos en /home/z/my-project/scripts/w9h5b3_*.json
+Queries reproducibles: /home/z/my-project/scripts/w9h5b3_q1_fundefs.sql, q2_acl.sql,
+q3_voidtx.sql, q4_mutators.sql, q5_stockchain.sql, q7_access.sql, q7b.sql

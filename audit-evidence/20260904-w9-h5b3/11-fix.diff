@@ -1,0 +1,18 @@
+# W9.4.9 — H5-B3 — 11-fix.diff
+
+N/A — No se requirió ninguna modificación de código.
+
+Justificación (ver 02-reversal-chain.md, 03-lock-analysis.md, 05-race-test.md,
+06-idempotency-test.md):
+1. `reverse_transaction` V1 permanece retirada (confirmado live: 0 filas en pg_proc).
+2. La ruta activa V2 (`reverse_transaction_v2`, OID 138188) adquiere `SELECT … FOR UPDATE`
+   sobre la fila de `transactions` como PRIMERA sentencia y re-valida el estado bajo lock.
+3. La segunda ruta viva (`void_transaction`, OID 138000) usa el mismo mecanismo.
+4. La prueba concurrente con dos sesiones reales demostró: 1 winner + 1 idempotent,
+   1 stock movement, bloqueo físico observado (`wait_event='transactionid'`), 0 efectos del
+   perdedor.
+5. La máquina de estados en trigger (`trg_validate_tx_transition`: `voided → []` terminal)
+   aporta una segunda barrera independiente.
+
+El objetivo del protocolo en Caso A (V2 ya serializa correctamente) es NO modificar nada:
+`git status` limpio en todo el checkpoint; BASELINE 3d03afbc intacto; NO COMMIT REQUIRED.

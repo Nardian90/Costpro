@@ -1,0 +1,28 @@
+W9.4.9 — H5-B3 — FASE 0: CHECKPOINT OBLIGATORIO
+Fecha: 2026-09-04 (hora local America/Havana)
+Repositorio: /home/z/my-project/Costpro (origin: https://github.com/Nardian90/Costpro.git)
+
+COMANDOS EJECUTADOS:
+  $ git status --short
+  (salida vacía — worktree limpio)
+  $ git rev-parse HEAD
+  3d03afbca9893b3b04f347a873a9869edcd87569
+  $ git rev-parse origin/main
+  3d03afbca9893b3b04f347a873a9869edcd87569
+  $ git fetch origin  # verificación contra remoto real
+  (sin nuevas referencias)
+  $ git rev-list --left-right --count HEAD...origin/main
+  0	0
+
+VALIDACIÓN:
+  HEAD == origin/main == 3d03afbca9893b3b04f347a873a9869edcd87569 (3d03afbc)  ✓
+  Worktree limpio                                                              ✓
+  Divergencia con remoto: 0 commits detrás / 0 adelante                        ✓
+
+ÚLTIMOS 3 COMMITS (contexto de checkpoints cerrados):
+  3d03afbc fix(w9): correct double USD conversion in cash report (W9.4.8-FIX OBS-1)
+  fd877a53 audit(w9): financial integrity audit of reverse_transaction_v2 payments (W9.4.8 H5-B2) — verdict CLOSED/NO ISSUE
+  6aee29fe refactor(w9): retire legacy reverse_transaction v1 (W9.4.7 H5-B1) — guarded DROP, V2 untouched, 0 consumers
+
+RESULTADO: CHECKPOINT OK — BASELINE 3d03afbc CONFIRMADO
+El auditor procede a GATE 1.

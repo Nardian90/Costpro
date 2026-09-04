@@ -1,0 +1,33 @@
+W9.4.9 — H5-B3 — §12 REGRESSION SUITE
+Fecha: 2026-09-04 23:35–23:45 (hora local) | No hubo modificación de código (auditoría pura).
+
+Comando 1: bun run lint
+  Salida:  "1291 problems (0 errors, 1291 warnings)"  (warnings pre-existentes de estilo)
+  exit code: 0                                  → PASS
+
+Comando 2: bunx tsc --noEmit
+  Salida:  (vacía — sin errores de tipos)
+  exit code: 0                                  → PASS
+
+Comando 3: bun run test (vitest run)
+  Test Files  89 passed | 1 skipped (90)
+  Tests       1892 passed | 24 skipped (1916)
+  Duration    204.79s
+  exit code: 0                                  → PASS
+
+Comando 4: bun run build (next build)
+  Preparación: pm2 stop all (para liberar RAM — protocolo anti-OOM de auditorías previas)
+  Memoria disponible al iniciar: 3505 MB (total 4041 MB)
+  Resultado: COMPLETADO — exit code 0, sin OOM, en el INTENTO 1
+  Rutas generadas: listado completo en scripts/w9h5b3_build.log (termina en ƒ Proxy (Middleware))
+  Medición de RSS: monitoreo del proceso padre bun (ps rss cada 2 s) — pico reportado 7 MB en el
+    proceso wrapper (next build corre como proceso hijo; la métrica del padre no captura el hijo;
+    el dato determinante de OOM es el exit code 0 y la finalización completa del build).
+  Nota de comparación: en W9.4.8-FIX el build requirió 3 intentos (OOM en 1-2 con pm2 activo);
+    en este checkpoint, con pm2 detenido y 3.5 GB disponibles, PASS al primer intento.
+  Restauración: pm2 restart all → 3 procesos online (costpro 2.4 GB, telegram/whatsapp pollers)
+  Verificación de servicio: HTTP 200 en http://localhost:3000 (intento 2 de polling; el intento 1
+    cayó durante el arranque del servidor dev).
+
+RESUMEN: lint PASS · typecheck PASS · vitest 1892 PASS · build PASS (sin OOM, intento 1) ·
+pm2 restaurado HTTP 200. No se ocultó ningún fallo (no hubo fallos).

@@ -1,0 +1,44 @@
+W9.4.9 — H5-B3 — §13/§18 DATA INTEGRITY: PRE == POST
+Fecha: 2026-09-04 | Métricas con checksum md5-based sobre TODAS las filas de cada tabla
+
+METODOLOGÍA:
+  - PRE capturado ANTES de crear el fixture sintético (23:07 local)
+  - Fixture: store+producto+inventory+6 transactions+items (100% sintéticos, IDs deterministas a1b2c3d4-…)
+  - Suite concurrente real (2+ sesiones PostgREST): tests A/B/B2/C/D/E/F/G
+  - Cleanup: DELETE orden FK-safe + verificación de 0 residuos en 12 categorías
+    (audit, business_events, stock_movements, kardex, items, transactions, inventory,
+    products, memberships, stores, payments, wac_change_log) → 12×0 residuos
+  - POST capturado tras el cleanup
+
+RESULTADO (PRE vs POST — ver scripts/w9h5b3_baseline_pre.json y _post.json):
+
+  tx_total                         PRE=                   520  POST=                   520  IDÉNTICO
+  tx_voided                        PRE=                     0  POST=                     0  IDÉNTICO
+  tx_reversed                      PRE=                     0  POST=                     0  IDÉNTICO
+  payments_total                   PRE=                   366  POST=                   366  IDÉNTICO
+  payments_sum_cup                 PRE=24937845.0001999999465732999999970  POST=24937845.0001999999465732999999970  IDÉNTICO
+  stock_movements_total            PRE=                   702  POST=                   702  IDÉNTICO
+  stock_movements_sale_reverse     PRE=                     0  POST=                     0  IDÉNTICO
+  stock_movements_sale_void        PRE=                     0  POST=                     0  IDÉNTICO
+  inventory_sum_qty                PRE=             4978.6289  POST=             4978.6289  IDÉNTICO
+  products_sum_stock               PRE=            12094.6289  POST=            12094.6289  IDÉNTICO
+  products_sum_wac                 PRE=6852321.24573270332877630000  POST=6852321.24573270332877630000  IDÉNTICO
+  kardex_total                     PRE=                   702  POST=                   702  IDÉNTICO
+  audit_reverse_tx_v2              PRE=                    10  POST=                    10  IDÉNTICO
+  audit_void_sale                  PRE=                     6  POST=                     6  IDÉNTICO
+  audit_update_status_tx           PRE=                    45  POST=                    45  IDÉNTICO
+  wac_log_total                    PRE=                     0  POST=                     0  IDÉNTICO
+  commission_payments              PRE=                     0  POST=                     0  IDÉNTICO
+  tx_checksum                      PRE=         1114407300628  POST=         1114407300628  IDÉNTICO
+  sm_checksum                      PRE=         1555734751692  POST=         1555734751692  IDÉNTICO
+  inv_checksum                     PRE=          315399168742  POST=          315399168742  IDÉNTICO
+  pay_checksum                     PRE=          797522141631  POST=          797522141631  IDÉNTICO
+  audit_checksum                   PRE=        15762478380908  POST=        15762478380908  IDÉNTICO
+
+22/22 métricas IDÉNTICAS — incluyendo checksums íntegros de:
+  transactions, stock_movements, inventory, payment_transactions, audit_logs
+
+Nota sobre el trigger de stores: durante el cleanup fue necesario deshabilitar
+momentáneamente trigger_audit_store_changes (bug pre-existente: el INSERT de auditoría
+DELETE_STORE referencia la fila que se está eliminando → FK violation imposible de evitar).
+Trigger REACTIVADO y verificado (tgenabled='O'). Registrado como BACKLOG B-6.

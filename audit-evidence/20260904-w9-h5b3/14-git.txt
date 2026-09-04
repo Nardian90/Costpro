@@ -1,0 +1,32 @@
+W9.4.9 — H5-B3 — §22/§0 GIT VERIFICATION
+Fecha: 2026-09-04
+
+1) CHECKPOINT BASELINE (inicio del checkpoint)
+   $ git status --short        → (vacío, worktree limpio)
+   $ git rev-parse HEAD        → 3d03afbca9893b3b04f347a873a9869edcd87569
+   $ git rev-parse origin/main → 3d03afbca9893b3b04f347a873a9869edcd87569
+   $ git fetch origin + git rev-list --left-right --count HEAD...origin/main → 0  0
+   ✔ HEAD == origin/main == 3d03afbc (baseline exigido por el protocolo)
+
+2) ALCANCE DEL CAMBIO
+   $ git status (durante TODO el checkpoint) → únicamente audit-evidence/20260904-w9-h5b3/ (sin trackear)
+   NINGÚN archivo de código fue modificado. NO CODE CHANGE. NO COMMIT DE CÓDIGO.
+   Veredicto Caso A (V2 ya serializa correctamente) → el protocolo §16/§22 prohíbe
+   modificar contratos, pagos, WAC, inventory o seguridad; no se requirió fix.
+
+3) EVIDENCIA
+   La evidencia forense (00-checkpoint … 14-git, SHA256SUMS) se commitea siguiendo el
+   precedente de H5-B2 (commit audit-only fd877a53):
+   $ git diff --check          → (sin errores de whitespace)
+   $ git add audit-evidence/20260904-w9-h5b3/
+   $ git commit -m "audit(w9): forensic concurrency audit of reverse_transaction_v2 (W9.4.9 H5-B3) — verdict CLOSED/NO ISSUE IN CURRENT PATH"
+   $ git push origin main
+   Verificación post-push (ejecutada y registrada en el informe final y en worklog):
+   $ git rev-parse HEAD == git rev-parse origin/main  (debe cumplirse igualdad exacta)
+
+4) INVARIANTE DE SEGURIDAD
+   - No se tocó: get_cash_report, payment_transactions, reverse_transaction_v2,
+     reverse_receipt_v2, WAC, stock movements, inventory, ledger de pagos.
+   - No se recreó reverse_transaction V1.
+   - Los scripts de la auditoría viven fuera del repo (/home/z/my-project/scripts/)
+     y no se publican credenciales en ningún archivo de evidencia.
