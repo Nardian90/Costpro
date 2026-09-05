@@ -1,0 +1,21 @@
+════════════════════════════════════════════════════════════════════
+W9.5 — B-10 · 15-git.txt (estado pre-commit)
+════════════════════════════════════════════════════════════════════
+HEAD pre-commit: dd3f32765795bf7187e6c995d3f5587493f08340 (== origin/main)
+
+git status --short (pre-commit):
+ M knowledge/help/04-configuracion/roles-y-permisos.md
+ M src/__tests__/integration/iteration-11-3.test.ts
+ M src/__tests__/integration/iteration-14-b8-modelo-c.test.ts
+ M src/app/api/reverse/route.ts
+ M src/components/views/terminal/views/devolutions/DevolutionsView.tsx
+ M src/components/views/terminal/views/inventory/InventoryAdjustmentsView.tsx
+ M src/components/views/terminal/views/production_orders/ProductionOrdersView.tsx
+ M src/components/views/terminal/views/receptions/ReceptionsHistoryView.tsx
+ M src/components/views/terminal/views/transfers/TransferenciasView.tsx
+ M src/hooks/api/useReverseDocument.ts
+ M src/lib/roles.ts
+?? audit-evidence/20260905-w9-b10/
+?? src/__tests__/integration/iteration-15-b10-reverse-authorization.test.ts
+?? supabase/migrations/20260905000002_w9_b10_reverse_document_authorization.sql
+

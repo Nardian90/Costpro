@@ -1,0 +1,25 @@
+════════════════════════════════════════════════════════════════════
+W9.5 — B-10 · 08-state-machine.txt
+Máquina de estados por operación (GATE G) — estados reversibles únicos
+════════════════════════════════════════════════════════════════════
+
+| type | Estado reversible | Otros estados → error | Prueba |
+|---|---|---|---|
+| receipt | 'active' | reversed → ERR_RECEIPT_NOT_ACTIVE | RC11 |
+| transfer | 'CONFIRMADA' | REVERSADA → ERR_ALREADY_REVERSED | TR05/TR06 |
+| adjustment | 'confirmed' | reversed → ERR_ALREADY_REVERSED | AD10 |
+| devolution | 'completed' (NUEVO guard) | pending → ERR_INVALID_STATUS; reversed → ERR_ALREADY_REVERSED | DV06/DV07 |
+| production_order | 'closed' | in_progress → ERR_ORDER_NOT_CLOSED; reversed → idem | PR07/PR08 |
+| transaction | 'completed' (B-8) | — | B-8 |
+
+NUEVO: guard de estado explícito en reverse_devolution (antes solo checaba
+'reversed' — cualquier otro estado habría pasado; live 12 completed/1 reversed,
+por lo que el guard es preservador de comportamiento). Divergencia
+UI-más-ancha-que-DB en production_order (canReverse ofrece in_progress/paused/
+completed → DB responde ERR_ORDER_NOT_CLOSED): dirección segura, el gate de UI
+nuevo además oculta el botón sin rol. Estados post de TODA la batería:
+{"b10d0000-0000-4000-8000-00000000e101": "reversed", "b10d0000-0000-4000-8000-00000000e102": "reversed", "b10d0000-0000-4000-8000-00000000e103": "reversed", "b10d0000-0000-4000-8000-00000000e104": "reversed", "b10d0000-0000-4000-8000-00000000e105": "reversed", "b10d0000-0000-4000-8000-00000000e106": "active", "b10d0000-0000-4000-8000-00000000e107": "reversed", "b10d0000-0000-4000-8000-00000000e108": "active"}
+{"b10d0000-0000-4000-8000-00000000e201": "REVERSADA", "b10d0000-0000-4000-8000-00000000e202": "REVERSADA", "b10d0000-0000-4000-8000-00000000e203": "CONFIRMADA", "b10d0000-0000-4000-8000-00000000e204": "REVERSADA"}
+{"b10d0000-0000-4000-8000-00000000e301": "reversed", "b10d0000-0000-4000-8000-00000000e302": "reversed", "b10d0000-0000-4000-8000-00000000e303": "confirmed", "b10d0000-0000-4000-8000-00000000e304": "reversed", "b10d0000-0000-4000-8000-00000000e305": "reversed"}
+{"b10d0000-0000-4000-8000-00000000e401": "reversed", "b10d0000-0000-4000-8000-00000000e402": "reversed", "b10d0000-0000-4000-8000-00000000e403": "reversed", "b10d0000-0000-4000-8000-00000000e404": "reversed", "b10d0000-0000-4000-8000-00000000e405": "reversed", "b10d0000-0000-4000-8000-00000000e406": "completed", "b10d0000-0000-4000-8000-00000000e407": "pending"}
+{"b10d0000-0000-4000-8000-00000000e501": "reversed", "b10d0000-0000-4000-8000-00000000e502": "reversed", "b10d0000-0000-4000-8000-00000000e503": "reversed", "b10d0000-0000-4000-8000-00000000e504": "closed", "b10d0000-0000-4000-8000-00000000e505": "in_progress"}

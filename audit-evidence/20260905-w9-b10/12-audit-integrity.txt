@@ -1,0 +1,23 @@
+════════════════════════════════════════════════════════════════════
+W9.5 — B-10 · 12-audit-integrity.txt
+Auditoría (GATE J) — rastro del fixture (q20/q22/q23)
+════════════════════════════════════════════════════════════════════
+
+| action | metadata.operation | n | atribuidas a fixture users | old/new_status |
+|---|---|---|---|---|
+| REVERSE_RECEIPT_V2 | ADMIN_REVERSE_RECEIPT | 8 | 6 (+1 API admin real) | 8/8 |
+| transfer_reversed | ADMIN_REVERSE_TRANSFER | 3 (2 store A + 1 store B=origen de T2) | 3 | 3/3 |
+| REVERSE_ADJUSTMENT_V2 | ADMIN_REVERSE_ADJUSTMENT | 5 | 4 (+1 API admin real) | 5/5 |
+| REVERSE_DEVOLUTION | ADMIN_REVERSE_DEVOLUTION | 5 | 5 | 5/5 |
+| PRODUCTION_ORDER_REVERSED | ADMIN_REVERSE_PRODUCTION_ORDER | 3 | 3 | 3/3 |
+
+· REVERSE_DEVOLUTION es NUEVO: antes la reversión de devoluciones NO dejaba
+  ningún rastro en audit_logs (GATE J fallaría sin él).
+· Cada entrada responde: quién (user_id = caller real, incluida la prueba con
+  p_user_id forjado → atribución al admin real), qué (action + operation),
+  cuándo (created_at), entidad (table_name + record_id), tienda (store_id),
+  estado anterior y nuevo (metadata old_status/new_status), motivo (reason).
+· Contrato histórico de acciones conservado (sin renombrar); metadata.operation
+  es aditivo y distingue la operación por tipo.
+· UPDATE_STATUS (trigger preexistente): solo cubre transactions+receipts; bajo
+  service_role atribuye a seller — preexistente, registrado en backlog.

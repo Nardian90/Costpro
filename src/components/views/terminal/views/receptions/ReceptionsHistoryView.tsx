@@ -29,6 +29,7 @@ import { BaseModal } from '@/components/ui/BaseModal';
 import { apiFetch } from '@/lib/api-fetch';
 import { toast } from 'sonner';
 import { DocumentStatusBadge, canReverse } from '@/components/ui/DocumentStatusBadge';
+import { canReverseDocumentInStore } from '@/lib/roles';
 import { ReverseDocumentModal } from '@/components/ui/ReverseDocumentModal';
 import { useAuthStore } from '@/store';
 import { useUIStore } from '@/store';
@@ -91,6 +92,8 @@ export default function ReceptionsHistoryView() {
   // FIX-WIZARD: Estado del wizard de backfill masivo
   const user = useAuthStore((s) => s.user);
   const storeId = (user as any)?.activeStoreId;
+  // W9.5 B-10: gate de rol (espejo de can_reverse_document) — operadores de recepciones
+  const canReverseReceipt = canReverseDocumentInStore(user, storeId, 'receipt');
   const isAdmin = (user as any)?.role === 'admin' || (user as any)?.role === 'manager';
   const [showBackfillWizard, setShowBackfillWizard] = useState(false);
   const [backfillLoading, setBackfillLoading] = useState(false);
@@ -349,7 +352,7 @@ export default function ReceptionsHistoryView() {
                           {/* ESTÁNDAR: para confirmadas (active) SOLO Revertir + Duplicar.
                               "Invertir" se eliminó — era redundante con Revertir y sin trazabilidad.
                               Revertir descuenta stock + crea kardex entries + pide motivo + audita. */}
-                          {rec.status === 'active' && (
+                          {rec.status === 'active' && canReverseReceipt && (
                             <>
                               {/* ESTÁNDAR: Revertir — única forma de deshacer recepción confirmada */}
                               <button type="button"

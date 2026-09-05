@@ -1,0 +1,85 @@
+{
+  "pre_b10_original_14": {
+    "ts": "2026-09-05T04:37:29.090748+00:00",
+    "t_stores": {
+      "n": 44,
+      "md5": "a392683e6dc2774ca2abc7c2abdbe1d7"
+    },
+    "t_payments": {
+      "n": 366,
+      "md5": "0bb7a1c042b30674c3d182091211f4f9",
+      "sum_amt": 8120033.5
+    },
+    "t_products": {
+      "n": 323,
+      "md5": "01d0d27bbe27190b5e97f0c29c0659fb",
+      "sum_wac": 6852321.245732703,
+      "sum_stock": 12094.6289
+    },
+    "t_profiles": {
+      "n": 26,
+      "md5": "6931e024ca2432db90110d5ccd1f23ef"
+    },
+    "t_tx_items": {
+      "n": 555,
+      "md5": "48c3299a2918b8520b6d1fe996cfd8e9"
+    },
+    "t_inventory": {
+      "n": 141,
+      "md5": "be798146744da4445c82a84e16d94f41",
+      "sum_qty": 4978.6289
+    },
+    "t_audit_logs": {
+      "n": 7376,
+      "md5": "880dd0dd7bd7be07b85ca849e5c2a4a0"
+    },
+    "kardex_exists": 1,
+    "t_commissions": {
+      "n": 0,
+      "md5": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "t_memberships": {
+      "n": 51,
+      "md5": "3f6911f50605c0002ec644701b9d0edc"
+    },
+    "movement_types": [
+      "sale",
+      "purchase",
+      "adjustment",
+      "return",
+      "initial",
+      "transfer",
+      "void",
+      "transfer_in",
+      "transfer_out",
+      "sale_void",
+      "production_out",
+      "production_in",
+      "sale_reverse",
+      "purchase_reverse",
+      "production_reverse",
+      "issue_slip_out",
+      "issue_slip_reverse"
+    ],
+    "t_transactions": {
+      "n": 520,
+      "md5": "c0312d72b6c7afad78a1df0eced1b178",
+      "sum_total": 28100954.998
+    },
+    "t_business_events": {
+      "n": 10553,
+      "md5": "d4760c36848ea3d1bdf844a860d3d30e"
+    },
+    "t_stock_movements": {
+      "n": 702,
+      "md5": "87594c422eb77d9652d2f44fde6f09fb"
+    }
+  },
+  "pre_b10_extra_tables": {
+    "receipts": "active=6",
+    "transfers": "empty",
+    "adjustments": "confirmed=5",
+    "devolutions": "reversed=1, completed=12",
+    "production_orders": "empty"
+  }
+}

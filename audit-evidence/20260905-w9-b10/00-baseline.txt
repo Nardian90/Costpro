@@ -1,0 +1,11 @@
+════════════════════════════════════════════════════════════════════
+W9.5 — B-10 · 00-baseline.txt (FASE 0)
+════════════════════════════════════════════════════════════════════
+fecha: 2026-09-05 (AST) · baseline OBLIGATORIO: dd3f3276
+
+$ git status --short   → (vacío — WORKTREE CLEAN)
+$ git rev-parse HEAD   → dd3f32765795bf7187e6c995d3f5587493f08340
+$ git rev-parse origin/main → dd3f32765795bf7187e6c995d3f5587493f08340
+
+HEAD == origin/main == dd3f3276 ✓ · WORKTREE CLEAN ✓ · GATE 0: PASS
+════════════════════════════════════════════════════════════════════

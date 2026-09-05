@@ -211,8 +211,12 @@ describe('PT-B8.5 — API /api/reverse: authorization boundary para ventas', () 
     expect(route).toContain('ERR_INSUFFICIENT_ROLE');
   });
 
-  it('los demás tipos conservan su política (fuera de alcance B-8)', () => {
-    expect(route).toContain('Alcance B-8: solo type');
+  it('los demás tipos: boundary extendida por B-10 (can_reverse_document por tipo)', () => {
+    // W9.5 B-10 ejecutó el backlog que este test registraba: la boundary ahora
+    // cubre receipt/transfer/adjustment/devolution/production_order vía
+    // can_reverse_document(actor, store, type).
+    expect(route).toContain("'can_reverse_document'");
+    expect(route).toContain('REVERSE_ENTITY');
   });
 });
 

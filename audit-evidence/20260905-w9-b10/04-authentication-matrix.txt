@@ -1,0 +1,18 @@
+════════════════════════════════════════════════════════════════════
+W9.5 — B-10 · 04-authentication-matrix.txt
+Identidad y canal (GATE 13) — cada RPC de la familia
+════════════════════════════════════════════════════════════════════
+Identidad autoritativa (línea común en los 4 RPC + nuevo):
+  v_caller_uid := CASE WHEN auth.role()='service_role'
+                       THEN COALESCE(p_user_id, auth.uid())
+                       ELSE auth.uid() END
+
+| Canal | p_user_id | Actor efectivo | Prueba |
+|---|---|---|---|
+| /api/reverse (service_role) | session.user.id (inyectado server-side) | usuario autenticado | API_receipt_admin 200; API 404; raw-probes (service+p_user_id por actor) |
+| PostgREST directo authenticated (receipt_v2: EXECUTE authenticated+PUBLIC) | ignorado | auth.uid() | DIRECT_authenticated_forged: token admin real + p_user_id=clerk → SUCCESS con audit.user_id=ADMIN (051c6157), p_user_id IGNORADO |
+| PostgREST directo anon | n/a | auth.uid()=NULL → DENIED | ANON_* ×5 → 400/401 |
+| PostgREST directo service_role | p_user_id (server-only) | identidad inyectada | RC09/AD09 identity_resolved: p_user_id=clerk → política evalúa clerk → DENIED |
+
+CONCLUSIÓN (GATE E): la identidad del actor NUNCA puede ser forjada por el
+cliente; la atribución de auditoría siempre es al caller real.

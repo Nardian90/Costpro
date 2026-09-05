@@ -148,6 +148,27 @@ CostPro distingue **dos operaciones distintas** para revertir una venta:
 
 > **Principio**: la membresía de tienda responde "¿puede este usuario operar en esta tienda?"; el rol responde "¿puede este usuario realizar esta operación administrativa?". Un clerk puede deshacer SU venta recién hecha, pero no puede revertir ventas ajenas: eso es una operación administrativa reservada a admin/manager/encargado.
 
+### Reversión de otros documentos (MODELO B-10)
+
+Cada módulo define quién puede revertir sus documentos (botón "Revertir" del
+historial correspondiente). El rol se evalúa como **membresía activa en la
+tienda del documento** (no como rol global), y el admin global tiene alcance
+transversal. Autorización server-side en `/api/reverse` + `can_reverse_document`
+en base de datos — el frontend solo refleja la política:
+
+| Documento | Vista | Quién puede revertir (membresía) | Estados reversibles |
+|---|---|---|---|
+| Recepción | Recepciones | admin, manager, encargado, warehouse | active |
+| Transferencia | Transferencias (salientes) | admin, manager, encargado, warehouse en la tienda de ORIGEN (+ acceso a destino) | CONFIRMADA |
+| Ajuste documental | Ajustes Doc. | admin, manager, encargado | confirmed |
+| Devolución | (sin entrada de navegación) | cualquier membresía activa de la tienda (igual que su creación) | completed |
+| Orden de producción | Costo → Órdenes de Producción | admin, manager, costo | closed |
+| Venta | Historial | admin, manager, encargado (ver MODELO C) | completed |
+
+> Nota: revertir un ajuste documental crea un **contra-ajuste** (invierte el
+> efecto del conteo en stock y kardex) y marca el original como "Revertido".
+> Duplicar un ajuste es una operación distinta (copia el conteo tal cual).
+
 ## 4. Seguridad
 
 ### Autenticación

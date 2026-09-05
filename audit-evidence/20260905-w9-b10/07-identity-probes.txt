@@ -1,0 +1,17 @@
+════════════════════════════════════════════════════════════════════
+W9.5 — B-10 · 07-identity-probes.txt
+Identidad forjada (GATE E)
+════════════════════════════════════════════════════════════════════
+
+1) service_role + p_user_id (la vía del API — identidad la inyecta el server):
+   RC09_identity_resolved_clerk: p_user_id=clerkA sobre receipt → política
+     evalúa CLERK → DENIED (la identidad inyectada gobierna, no el canal)
+   AD09_identity_resolved_clerk: p_user_id=clerkA sobre adjustment → DENIED
+2) authenticated EXECUTE directo (solo receipt_v2 la tiene) + p_user_id forjado:
+   token REAL admin + p_user_id=clerkA → 200 SUCCESS pero
+   audit.user_id = ADMIN real (051c6157…) — p_user_id IGNORADO para
+   no-service_role; atribución al caller real (raw-api-probes.json, línea final)
+3) anon ×5 RPC → 400/401 sin efectos (raw-probes.json ANON_*)
+4) seller_id/store_id: no son parámetros de ningún RPC de la familia; el
+   store_id del documento lo fija su tabla, no el cliente.
+CONCLUSIÓN: el cliente no puede convertir actor en sujeto ni viceversa.

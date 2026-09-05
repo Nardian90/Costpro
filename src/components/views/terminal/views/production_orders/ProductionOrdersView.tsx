@@ -10,6 +10,7 @@ import { useIsMobile } from '@/hooks/ui/useMobile';
 import { toast } from 'sonner';
 import type { ProductionOrder, ProductionOrderItem } from '@/types';
 import { canReverse } from '@/components/ui/DocumentStatusBadge';
+import { canReverseDocumentInStore } from '@/lib/roles';
 import { ReverseDocumentModal } from '@/components/ui/ReverseDocumentModal';
 import { DuplicateDocumentModal } from '@/components/ui/DuplicateDocumentModal';
 
@@ -453,6 +454,7 @@ function CreateOrderModal({ onClose, onCreated }: { onClose: () => void; onCreat
 // Modal de Detalle
 // ============================================================================
 function OrderDetailModal({ order, onClose, onUpdate }: { order: ProductionOrder; onClose: () => void; onUpdate: () => void }) {
+  const { user } = useAuthStore();
   const [activeTab, setActiveTab] = useState<'info' | 'items' | 'payments'>('info');
   const [items, setItems] = useState<ProductionOrderItem[]>([]);
   const [payments, setPayments] = useState<any[]>([]);
@@ -814,7 +816,8 @@ function OrderDetailModal({ order, onClose, onUpdate }: { order: ProductionOrder
               </button>
             )}
             {/* ESTÁNDAR: Revertir para in_progress+ (reabastece insumos + descuenta output + kardex) */}
-            {canReverse('production_order', order.status) && (
+            {/* W9.5 B-10: gate de rol (espejo can_reverse_document) — admin/manager/costo */}
+            {canReverse('production_order', order.status) && canReverseDocumentInStore(user, user?.activeStoreId ?? '', 'production_order') && (
               <button
                 onClick={() => setShowReverseModal(true)}
                 className="px-2 py-2 rounded-lg bg-purple-500/10 text-purple-500 dark:text-purple-400 border border-purple-500/30 text-[10px] font-black uppercase hover:bg-purple-500/20 min-h-[44px] flex items-center gap-1"

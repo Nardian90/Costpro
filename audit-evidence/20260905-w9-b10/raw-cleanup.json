@@ -1,0 +1,45 @@
+[
+  {
+    "cleanup": [
+      {
+        "step": "B6_GUARD_RESTORED",
+        "detail": {
+          "trigger_audit_store_changes_tgenabled": "O"
+        }
+      },
+      {
+        "step": "GUARD_RESTORED",
+        "detail": {
+          "profiles_fixture": 0,
+          "auth_users_fixture": 0,
+          "prevent_hard_delete_profile_tgenabled": "O"
+        }
+      },
+      {
+        "step": "RESIDUE_CHECK",
+        "detail": {
+          "stores": 0,
+          "products": 0,
+          "profiles": 0,
+          "receipts": 0,
+          "inventory": 0,
+          "transfers": 0,
+          "audit_logs": 0,
+          "auth_users": 0,
+          "adjustments": 0,
+          "devolutions": 0,
+          "memberships": 0,
+          "receipt_items": 0,
+          "kardex_entries": "0",
+          "transfer_items": 0,
+          "user_audit_log": 0,
+          "business_events": 0,
+          "stock_movements": 0,
+          "adjustment_items": 0,
+          "devolution_items": 0,
+          "production_orders": 0
+        }
+      }
+    ]
+  }
+]

@@ -1,0 +1,20 @@
+════════════════════════════════════════════════════════════════════
+W9.5 — B-10 · 06-store-probes.txt
+Cross-store (GATE D) — usuario tienda B sobre entidad tienda A
+════════════════════════════════════════════════════════════════════
+
+| Probe | Actor (solo tienda B) | Entidad (tienda A) | Resultado |
+|---|---|---|---|
+| RC08_deny_cross_clerkB | clerkB | receipt R6 (A) | DENIED ERR_UNAUTHORIZED (has_store_access_as) |
+| AD08_deny_cross_clerkB | clerkB | adjustment ADJ3 (A) | DENIED ERR_UNAUTHORIZED |
+| DV05_deny_cross_clerkB | clerkB | devolution DEV6 (A) | DENIED ERR_UNAUTHORIZED |
+| PR06_deny_cross_clerkB | clerkB | production PO4 (A) | DENIED ERR_UNAUTHORIZED |
+| TR04_deny_managerA_dest | managerA (sin B) | transfer T3 A→B | DENIED ERR_UNAUTHORIZED_DESTINATION |
+| TR05_deny_cross_clerkB | clerkB | transfer T1 (ya REVERSADA) | DENIED ERR_ALREADY_REVERSED |
+
+TRANSFER = caso especial: el documento vive entre DOS tiendas; el helper resuelve
+el ROL en la tienda ORIGEN y la DB exige además acceso activo al DESTINO
+(has_store_access_as ×2, preexistente, intacto). Un actor con rol válido en
+origen pero sin membership en destino → DENIED (TR04).
+Admin global (profiles.role='admin') = transversal (*) — probado B-8/B-2 P5 y
+aquí vía RC04/AD03/DV04 (adminGlobal sin memberships → SUCCESS).

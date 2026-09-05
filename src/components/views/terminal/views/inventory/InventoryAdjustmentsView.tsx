@@ -7,6 +7,7 @@ import { supabase } from '@/lib/supabaseClient';
 import { useAuthStore } from '@/store';
 import { toast } from 'sonner';
 import { DocumentStatusBadge, canReverse } from '@/components/ui/DocumentStatusBadge';
+import { canReverseDocumentInStore } from '@/lib/roles';
 import { ReverseDocumentModal } from '@/components/ui/ReverseDocumentModal';
 import { DuplicateDocumentModal } from '@/components/ui/DuplicateDocumentModal';
 import { DestructiveConfirmModal } from '@/components/ui/DestructiveConfirmModal';
@@ -67,6 +68,8 @@ function mapReasonToEnum(text: string): 'STOCKTAKE_SHRINKAGE' | 'STOCKTAKE_SURPL
 export default function InventoryAdjustmentsView() {
   const { user } = useAuthStore();
   const storeId = user?.activeStoreId;
+  // W9.5 B-10: gate de rol (espejo de can_reverse_document) — admin/manager/encargado
+  const canReverseAdj = canReverseDocumentInStore(user, storeId ?? '', 'adjustment');
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'confirmed' | 'reversed' | 'voided'>('all');
@@ -247,7 +250,7 @@ export default function InventoryAdjustmentsView() {
                       </button>
                     </>
                   )}
-                  {canReverse('adjustment', d.status) && (
+                  {canReverse('adjustment', d.status) && canReverseAdj && (
                     <button
                       onClick={() => setReverseTarget({
                         id: d.id,

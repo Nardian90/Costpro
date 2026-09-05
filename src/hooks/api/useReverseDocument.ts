@@ -14,7 +14,8 @@ import { logger } from '@/lib/logger';
  *   - transaction       -> reverse_transaction_v2   (pipeline W7: stock_movements + kardex + audit)  [H5-B1: V1 retirada]
  *   - receipt           -> reverse_receipt          (descuenta stock + kardex out)
  *   - transfer          -> reverse_transfer         (devuelve a origen + descuenta destino)
- *   - adjustment        -> reverse_adjustment       (invierte quantity_change)
+ *   - adjustment        -> reverse_inventory_adjustment_v2 (W9.5 B-10: inversión
+ *                          verdadera vía contra-documento; antes duplicate B-11)
  *   - devolution        -> reverse_devolution       (descuenta stock restaurado)
  *   - production_order  -> reverse_production_order (reabastece insumos + descuenta output)
  *

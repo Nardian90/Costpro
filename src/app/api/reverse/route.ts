@@ -46,9 +46,17 @@ const RPC_MAP_V2: Record<string, { rpc: string; idParam: string }> = {
   transaction:      { rpc: 'reverse_transaction_v2',    idParam: 'p_transaction_id' },
   receipt:          { rpc: 'reverse_receipt_v2',        idParam: 'p_receipt_id' },
   transfer:         { rpc: 'reverse_transfer',           idParam: 'p_transfer_id' }, // sin cambio
-  adjustment:       { rpc: 'duplicate_inventory_adjustment_v2', idParam: 'p_original_id' }, // B-11: usa duplicate
+  adjustment:       { rpc: 'reverse_inventory_adjustment_v2', idParam: 'p_adjustment_id' }, // W9.5 B-10: inversión verdadera (antes duplicate B-11 — ver 02-policy-matrix ADJ-1)
   devolution:       { rpc: 'reverse_devolution',         idParam: 'p_devolution_id' }, // sin cambio en reverse_devolution
   production_order: { rpc: 'reverse_production_order',   idParam: 'p_order_id' }, // sin cambio
+};
+/** W9.5 B-10: entidad y columna de tienda por tipo (para el boundary). */
+const REVERSE_ENTITY: Record<string, { table: string; storeCol: string }> = {
+  receipt:          { table: 'receipts',                storeCol: 'store_id' },
+  transfer:         { table: 'transfers',               storeCol: 'origin_store_id' },
+  adjustment:       { table: 'inventory_adjustments',   storeCol: 'store_id' },
+  devolution:       { table: 'devolutions',             storeCol: 'store_id' },
+  production_order: { table: 'production_orders',       storeCol: 'store_id' },
 };
 
 async function postHandler(req: NextRequest, session: AuthenticatedSession) {
@@ -76,16 +84,12 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
   const supabase = getSupabaseAdminSafe();
   if (!supabase) return NextResponse.json(createApiError('CONFIG_ERROR'), { status: 500 });
 
-  // W9.5 B-8 (MODELO C Nivel 2): API authorization boundary para VENTAS.
-  // La reversión administrativa de una venta exige rol admin/manager/
-  // encargado en la tienda de la venta (o admin global transversal).
-  // La evaluación usa la MISMA función normativa de la DB
-  // (can_admin_reverse_transaction) — el API NO es una segunda
-  // implementación de autorización; la DB (reverse_transaction_v2)
-  // sigue siendo la última barrera.
-  // Alcance B-8: solo type='transaction'. Los demás tipos (recepciones,
-  // transferencias, ajustes, devoluciones, producción) conservan su
-  // política vigente (backlog B-10).
+  // W9.5 B-8/B-10: API authorization boundary para TODOS los tipos. Cada
+  // operación resuelve su propia semántica vía la MISMA función normativa DB:
+  //   transaction      → can_admin_reverse_transaction (B-8, MODELO C ventas)
+  //   receipt/transfer/adjustment/devolution/production_order
+  //                    → can_reverse_document(actor, store, type) (B-10)
+  // La DB sigue siendo la última barrera; el API no reimplementa reglas.
   if (parsed.data.type === 'transaction') {
     const { data: txRow, error: txErr } = await supabase
       .from('transactions')
@@ -115,6 +119,41 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
       });
       return NextResponse.json(
         { error: 'ERR_INSUFFICIENT_ROLE: la reversión administrativa requiere rol admin/manager/encargado en la tienda de la venta' },
+        { status: 403 },
+      );
+    }
+  } else {
+    // W9.5 B-10: boundary de los 5 tipos restantes (política por tipo en DB).
+    const entity = REVERSE_ENTITY[parsed.data.type];
+    const { data: docRow, error: docErr } = await supabase
+      .from(entity.table)
+      .select(entity.storeCol)
+      .eq('id', parsed.data.id)
+      .single();
+
+    if (docErr || !docRow) {
+      return NextResponse.json({ error: `ERR_${parsed.data.type.toUpperCase()}_NOT_FOUND` }, { status: 404 });
+    }
+
+    const storeId = (docRow as unknown as Record<string, unknown>)[entity.storeCol] as string;
+    const { data: allowed, error: authzErr } = await supabase.rpc(
+      'can_reverse_document',
+      { p_actor: session.user.id, p_store_id: storeId, p_operation: parsed.data.type },
+    );
+
+    if (authzErr) {
+      logger.error('DATABASE', 'REVERSE_AUTHZ_CHECK_FAILED', {
+        type: parsed.data.type, id: parsed.data.id, userId: session.user.id, error: authzErr.message,
+      });
+      return NextResponse.json(createApiError('INTERNAL_ERROR'), { status: 500 });
+    }
+
+    if (allowed !== true) {
+      logger.warn('DATABASE', 'REVERSE_FORBIDDEN_ROLE', {
+        type: parsed.data.type, id: parsed.data.id, userId: session.user.id, storeId,
+      });
+      return NextResponse.json(
+        { error: `ERR_INSUFFICIENT_ROLE: la reversión de ${parsed.data.type} requiere el rol operativo de su módulo en la tienda del documento` },
         { status: 403 },
       );
     }

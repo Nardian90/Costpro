@@ -1,0 +1,16 @@
+════════════════════════════════════════════════════════════════════
+W9.5 — B-10 · 11-financial-integrity.txt
+Integridad financiera (GATE I)
+════════════════════════════════════════════════════════════════════
+
+· payment_transactions: PRE == POST (sentinels t_payments n=366 bit a bit).
+  Único efecto de la familia: reverse_receipt_v2 resetea payment_status de la
+  RECEPCIÓN y marca notas "[REVERSED...]" en sus payment rows (comportamiento
+  preexistente R3, intacto — no crea ni duplica pagos; probes: payments_reversed=0
+  en fixtures sin pagos). 0 double refund / 0 double payment reversal.
+· commissions: PRE == POST (n=0 tabla commission_payments, sentinel bit a bit).
+· cash report: get_cash_report NO tocado (W9.4.8 congelado); las entidades B-10
+  no alimentan cash_report de ventas.
+· transaction totals: t_transactions n=520 + md5 idénticos (B-10 no toca ventas).
+· WAC: fn_recalc_wac con token single-writer (app.wac_writer) intacto;
+  qty=0 → WAC invariante (verificado en probes de denials con output 0).

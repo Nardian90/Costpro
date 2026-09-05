@@ -7,6 +7,7 @@ import { apiFetch } from '@/lib/api-fetch';
 import { useAuthStore } from '@/store';
 import { toast } from 'sonner';
 import { DocumentStatusBadge, canReverse } from '@/components/ui/DocumentStatusBadge';
+import { canReverseDocumentInStore } from '@/lib/roles';
 import { ReverseDocumentModal } from '@/components/ui/ReverseDocumentModal';
 import { DuplicateDocumentModal } from '@/components/ui/DuplicateDocumentModal';
 
@@ -92,7 +93,8 @@ export function DevolutionsView() {
                     <p className="text-[10px] text-muted-foreground uppercase">{d.payment_method}</p>
                   </div>
                   {/* V2.2: botón Revertir devolución completada */}
-                  {canReverse('devolution', d.status) && (
+                  {/* W9.5 B-10: gate de rol (espejo can_reverse_document) — membresía activa */}
+                  {canReverse('devolution', d.status) && canReverseDocumentInStore(user, storeId ?? '', 'devolution') && (
                     <button
                       type="button"
                       onClick={() => setReverseTarget({

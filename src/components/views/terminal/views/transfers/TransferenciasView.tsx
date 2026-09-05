@@ -33,6 +33,7 @@ import { useDebounce } from '@/hooks/ui/useDebounce';
 import { toast } from 'sonner';
 import { useCallback } from 'react';
 import { DocumentStatusBadge, canReverse } from '@/components/ui/DocumentStatusBadge';
+import { canReverseDocumentInStore } from '@/lib/roles';
 import { ReverseDocumentModal } from '@/components/ui/ReverseDocumentModal';
 import { DuplicateDocumentModal } from '@/components/ui/DuplicateDocumentModal';
 
@@ -398,7 +399,8 @@ export default function TransferenciasView() {
                       <ArrowLeftRight className="w-5 h-5 text-muted-foreground hidden sm:flex sm:opacity-0 sm:group-hover:opacity-100 opacity-100 transition-opacity" />
 
                       {/* V2.2: botón Revertir transferencia confirmada */}
-                      {canReverse('transfer', t.status) && activeTab === 'outgoing' && (
+                      {/* W9.5 B-10: rol en tienda ORIGEN (espejo can_reverse_document) */}
+                      {canReverse('transfer', t.status) && activeTab === 'outgoing' && canReverseDocumentInStore(user, user?.activeStoreId ?? '', 'transfer') && (
                         <button
                           type="button"
                           onClick={(e) => {

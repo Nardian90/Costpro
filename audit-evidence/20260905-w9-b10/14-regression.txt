@@ -1,0 +1,21 @@
+════════════════════════════════════════════════════════════════════
+W9.5 — B-10 · 14-regression.txt (fecha: 2026-09-05)
+════════════════════════════════════════════════════════════════════
+bun run test (vitest) → PASS  1947 passed | 24 skipped (1971) · 92 archivos
+  · iteration-15-b10-reverse-authorization.test.ts: 25/25 NUEVOS
+    (matriz espejo 7 roles × 5 tipos + migración + API + UI gates + docs)
+  · 2 aserciones de políticas SUPERSEDED actualizadas con nota de evolución:
+      iteration-11-3 "v2 usa duplicate..." → ahora exige
+        reverse_inventory_adjustment_v2 (B-10 ADJ-1, decisión documentada)
+      iteration-14 "los demás tipos fuera de alcance B-8" → ahora exige
+        la boundary extendida can_reverse_document (backlog B-10 ejecutado)
+bun run lint  → PASS 0 errors, 1291 warnings (pre-existentes)
+bunx tsc --noEmit → PASS (exit 0; verificado durante implementación y pre-build)
+bun run build → PASS (PM2 stop ×3, patrón anti-OOM; exit 0)
+PM2 RESTORE → 3/3 online (costpro, telegram, whatsapp) + pm2 save
+HTTP GET /            → 200
+HTTP GET /api/health  → 200
+
+CONGELADOS intactos: get_cash_report (W9.4.8), payment ledger (H5-B2), núcleo
+financiero de reverse_transaction_v2 + void_transaction (GATE 14 / B-8),
+trigger de máquina de estados, RLS, B-1/B-3/B-4/B-6/B-7 sin cambios.

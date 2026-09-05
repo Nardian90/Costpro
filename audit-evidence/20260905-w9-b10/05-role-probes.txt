@@ -1,0 +1,74 @@
+════════════════════════════════════════════════════════════════════
+W9.5 — B-10 · 05-role-probes.txt
+Probes de rol por operación (ruta exacta /api/reverse: service+p_user_id)
+Fixture b10…: 11 usuarios, memberships por tienda (raw-fixture.json)
+════════════════════════════════════════════════════════════════════
+
+RESULTADO GLOBAL: 38/38 conformes a 02-policy-matrix.md (0 mismatch reales;
+los 5 "mismatches" del clasificador automático eran el formato de concurrencia
+200/400 = 1 ganador + 1 rechazado — ver 09-concurrency.txt).
+
+RECEIPT (allow: warehouse/manager/encargado/admin; deny: clerk/usuario/costo):
+
+  RC01_allow_warehouse             SUCCESS      http=200  {"status":"success","receipt_id":"b10d0000-0000-4000-8000-00000000e101","items_p
+  RC02_allow_manager               SUCCESS      http=200  {"status":"success","receipt_id":"b10d0000-0000-4000-8000-00000000e103","items_p
+  RC03_allow_encargado             SUCCESS      http=200  {"status":"success","receipt_id":"b10d0000-0000-4000-8000-00000000e104","items_p
+  RC04_allow_adminG                SUCCESS      http=200  {"status":"success","receipt_id":"b10d0000-0000-4000-8000-00000000e105","items_p
+  RC05_deny_clerk                  DENIED       http=400  {"code":"P0001","details":null,"hint":null,"message":"ERR_UNAUTHORIZED: reversio
+  RC06_deny_usuario                DENIED       http=400  {"code":"P0001","details":null,"hint":null,"message":"ERR_UNAUTHORIZED: reversio
+  RC07_deny_costo                  DENIED       http=400  {"code":"P0001","details":null,"hint":null,"message":"ERR_UNAUTHORIZED: reversio
+  RC08_deny_cross_clerkB           DENIED       http=400  {"code":"P0001","details":null,"hint":null,"message":"ERR_UNAUTHORIZED"}
+  RC09_identity_resolved_clerk     DENIED       http=400  {"code":"P0001","details":null,"hint":null,"message":"ERR_UNAUTHORIZED: reversio
+  RC10_attribution_wh              SUCCESS      http=200  {"status":"success","receipt_id":"b10d0000-0000-4000-8000-00000000e107","items_p
+  RC11_already_reversed            DENIED       http=400  {"code":"P0001","details":null,"hint":null,"message":"ERR_RECEIPT_NOT_ACTIVE: st
+
+TRANSFER (allow: warehouse con acceso dual; deny: clerkAB-rol, managerA-sin-destino):
+
+  TR01_allow_whAB_AtoB             SUCCESS      http=200  {"status":"success","transfer_id":"b10d0000-0000-4000-8000-00000000e201","items_
+  TR02_allow_whAB_BtoA             SUCCESS      http=200  {"status":"success","transfer_id":"b10d0000-0000-4000-8000-00000000e202","items_
+  TR03_deny_clerkAB_role           DENIED       http=400  {"code":"P0001","details":null,"hint":null,"message":"ERR_UNAUTHORIZED: reversio
+  TR04_deny_managerA_dest          DENIED       http=400  {"code":"P0001","details":null,"hint":null,"message":"ERR_UNAUTHORIZED_DESTINATI
+  TR05_deny_cross_clerkB           DENIED       http=400  {"code":"P0001","details":null,"hint":null,"message":"ERR_ALREADY_REVERSED"}
+  TR06_already_reversed            DENIED       http=400  {"code":"P0001","details":null,"hint":null,"message":"ERR_ALREADY_REVERSED"}
+
+ADJUSTMENT (allow: manager/encargado/admin; deny: warehouse/clerk/usuario/costo —
+la exclusión de warehouse congela la puerta real de la vista, contradicción docs
+registrada en 02-policy-matrix §1):
+
+  AD01_allow_manager               SUCCESS      http=200  {"status":"success","adjustment_id":"b10d0000-0000-4000-8000-00000000e301","item
+  AD02_allow_encargado             SUCCESS      http=200  {"status":"success","adjustment_id":"b10d0000-0000-4000-8000-00000000e304","item
+  AD03_allow_adminG                SUCCESS      http=200  {"status":"success","adjustment_id":"b10d0000-0000-4000-8000-00000000e305","item
+  AD04_deny_warehouse              DENIED       http=400  {"code":"P0001","details":null,"hint":null,"message":"ERR_UNAUTHORIZED: reversio
+  AD05_deny_clerk                  DENIED       http=400  {"code":"P0001","details":null,"hint":null,"message":"ERR_UNAUTHORIZED: reversio
+  AD06_deny_usuario                DENIED       http=400  {"code":"P0001","details":null,"hint":null,"message":"ERR_UNAUTHORIZED: reversio
+  AD07_deny_costo                  DENIED       http=400  {"code":"P0001","details":null,"hint":null,"message":"ERR_UNAUTHORIZED: reversio
+  AD08_deny_cross_clerkB           DENIED       http=400  {"code":"P0001","details":null,"hint":null,"message":"ERR_UNAUTHORIZED"}
+  AD09_identity_resolved_clerk     DENIED       http=400  {"code":"P0001","details":null,"hint":null,"message":"ERR_UNAUTHORIZED: reversio
+  AD10_already_reversed            DENIED       http=400  {"code":"P0001","details":null,"hint":null,"message":"ERR_ALREADY_REVERSED"}
+
+DEVOLUTION (C conservar: cualquier membresía activa — clerk/warehouse/usuario/admin):
+
+  DV01_allow_clerk                 SUCCESS      http=200  {"status":"success","devolution_id":"b10d0000-0000-4000-8000-00000000e401","item
+  DV02_allow_warehouse             SUCCESS      http=200  {"status":"success","devolution_id":"b10d0000-0000-4000-8000-00000000e403","item
+  DV03_allow_usuario               SUCCESS      http=200  {"status":"success","devolution_id":"b10d0000-0000-4000-8000-00000000e404","item
+  DV04_allow_adminG                SUCCESS      http=200  {"status":"success","devolution_id":"b10d0000-0000-4000-8000-00000000e405","item
+  DV05_deny_cross_clerkB           DENIED       http=400  {"code":"P0001","details":null,"hint":null,"message":"ERR_UNAUTHORIZED"}
+  DV06_state_pending               DENIED       http=400  {"code":"P0001","details":null,"hint":null,"message":"ERR_INVALID_STATUS: revers
+  DV07_already_reversed            DENIED       http=400  {"code":"P0001","details":null,"hint":null,"message":"ERR_ALREADY_REVERSED"}
+
+PRODUCTION_ORDER (allow: costo/manager; deny: encargado/clerk/warehouse —
+congela la puerta real Costo: admin/manager/costo):
+
+  PR01_allow_costo                 SUCCESS      http=200  {"status":"success","order_id":"b10d0000-0000-4000-8000-00000000e501","wac_after
+  PR02_allow_manager               SUCCESS      http=200  {"status":"success","order_id":"b10d0000-0000-4000-8000-00000000e503","wac_after
+  PR03_deny_encargado              DENIED       http=400  {"code":"P0001","details":null,"hint":null,"message":"ERR_UNAUTHORIZED: reversio
+  PR04_deny_clerk                  DENIED       http=400  {"code":"P0001","details":null,"hint":null,"message":"ERR_UNAUTHORIZED: reversio
+  PR05_deny_warehouse              DENIED       http=400  {"code":"P0001","details":null,"hint":null,"message":"ERR_UNAUTHORIZED: reversio
+  PR06_deny_cross_clerkB           DENIED       http=400  {"code":"P0001","details":null,"hint":null,"message":"ERR_UNAUTHORIZED"}
+  PR07_state_in_progress           DENIED       http=400  {"code":"P0001","details":null,"hint":null,"message":"ERR_ORDER_NOT_CLOSED"}
+  PR08_already_reversed            DENIED       http=400  {"code":"P0001","details":null,"hint":null,"message":"ERR_ORDER_NOT_CLOSED"}
+
+Leyenda de errores: "ERR_UNAUTHORIZED: reversion de X requiere rol..." = capa
+normativa nueva; "ERR_UNAUTHORIZED" plano = STORE ACCESS (has_store_access_as);
+"ERR_UNAUTHORIZED_DESTINATION" = requisito dual de transferencias;
+"ERR_ALREADY_REVERSED/NOT_ACTIVE/NOT_CLOSED/INVALID_STATUS" = máquina de estados.

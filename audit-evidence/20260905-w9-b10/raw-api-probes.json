@@ -1,0 +1,33 @@
+[
+  {
+    "probe": "ADMIN_LOGIN",
+    "status": 200,
+    "body": "OK",
+    "expect": "OK"
+  },
+  {
+    "probe": "API_receipt_admin",
+    "status": 200,
+    "body": "{\"status\":\"success\",\"receipt_id\":\"b10d0000-0000-4000-8000-00000000e108\",\"items_processed\":1,\"payments_reversed\":0}",
+    "expect": "200"
+  },
+  {
+    "probe": "API_adjustment_admin",
+    "status": 200,
+    "body": "{\"status\":\"success\",\"adjustment_id\":\"b10d0000-0000-4000-8000-00000000e303\",\"items_reversed\":0,\"counter_adjustment_id\":\"0",
+    "expect": "200"
+  },
+  {
+    "probe": "API_transfer_404",
+    "status": 404,
+    "body": "{\"error\":\"ERR_TRANSFER_NOT_FOUND\"}",
+    "expect": "404"
+  },
+  {
+    "probe": "DIRECT_authenticated_forged",
+    "status": 400,
+    "body": "{\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_RECEIPT_NOT_ACTIVE: status=reversed\"}",
+    "expect": "non-200 (R7 reversed) o 200 atribuido a admin"
+  }
+]
+// forged-identity live: audit actor=051c6157-600b-425e-b8c0-72388bacf541 op=ADMIN_REVERSE_RECEIPT attributedToAdmin=true

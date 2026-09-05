@@ -148,6 +148,45 @@ export const canUndoSaleInStore = (user: StoreAccessUser | null, storeId: string
  * Espejo de canManageStore acotado a la operación de reversión de ventas;
  * idéntico a la DB can_admin_reverse_transaction.
  */
+// ─────────────────────────────────────────────────────────────────────
+// W9.5 B-10 — Política de reversión de los 5 tipos restantes de /api/reverse
+// ─────────────────────────────────────────────────────────────────────
+// Fuente normativa DB (espejo EXACTO): can_reverse_document(actor, store, op).
+// Rol de MEMBERSHIP en la tienda del documento; admin global transversal (*).
+// Congelada en audit-evidence/20260905-w9-b10/02-policy-matrix.md.
+const DOCUMENT_REVERSE_ROLES: Record<string, UserRole[]> = {
+  receipt: ['admin', 'manager', 'encargado', 'warehouse'],
+  transfer: ['admin', 'manager', 'encargado', 'warehouse'],
+  adjustment: ['admin', 'manager', 'encargado'],
+  devolution: ['admin', 'manager', 'encargado', 'clerk', 'warehouse', 'usuario', 'costo'], // membresía activa basta (simétrica a su creación)
+  production_order: ['admin', 'manager', 'costo'],
+};
+
+/**
+ * MODELO B-10 — el usuario puede ejecutar la reversión de un documento
+ * (receipt/transfer/adjustment/devolution/production_order) de la tienda
+ * indicada si es admin global transversal, o tiene membership ACTIVA con el
+ * rol operativo del módulo del documento EN ESA TIENDA.
+ *
+ * Para transfer el rol se resuelve en la tienda ORIGEN (el botón solo existe
+ * en la pestaña saliente); el acceso al destino lo re-valida el RPC.
+ */
+export const canReverseDocumentInStore = (
+  user: StoreAccessUser | null,
+  storeId: string,
+  docType: keyof typeof DOCUMENT_REVERSE_ROLES | string,
+): boolean => {
+  if (!user || !storeId) return false;
+  if (user.role === 'admin') return true;
+  const roles = DOCUMENT_REVERSE_ROLES[docType];
+  if (!roles) return false;
+  return user.memberships?.some(m =>
+    m.store_id === storeId &&
+    roles.includes(m.role) &&
+    m.status === 'active'
+  ) || false;
+};
+
 export const canAdminReverseSaleInStore = (user: StoreAccessUser | null, storeId: string): boolean => {
   if (!user || !storeId) return false;
   if (user.role === 'admin') return true;

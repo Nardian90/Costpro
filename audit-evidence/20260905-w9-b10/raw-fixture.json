@@ -1,0 +1,60 @@
+[
+  {
+    "fixture": [
+      {
+        "step": "stores",
+        "detail": {
+          "n": 2
+        }
+      },
+      {
+        "step": "profiles",
+        "detail": {
+          "n": 10
+        }
+      },
+      {
+        "step": "memberships",
+        "detail": {
+          "n": 10
+        }
+      },
+      {
+        "step": "products",
+        "detail": {
+          "n": 29
+        }
+      },
+      {
+        "step": "receipts",
+        "detail": {
+          "n": 8
+        }
+      },
+      {
+        "step": "transfers",
+        "detail": {
+          "n": 4
+        }
+      },
+      {
+        "step": "adjustments",
+        "detail": {
+          "n": 5
+        }
+      },
+      {
+        "step": "devolutions",
+        "detail": {
+          "n": 7
+        }
+      },
+      {
+        "step": "production_orders",
+        "detail": {
+          "n": 5
+        }
+      }
+    ]
+  }
+]

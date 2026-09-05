@@ -1,0 +1,79 @@
+[
+  {
+    "fn": "duplicate_inventory_adjustment_v2",
+    "oid": 138870,
+    "owner": "postgres",
+    "secdef": true,
+    "config": "search_path=public, pg_temp",
+    "acl": "postgres=X/postgres,service_role=X/postgres",
+    "args": "p_original_id uuid, p_user_id uuid",
+    "lang": "plpgsql",
+    "def_md5": "8c7eee602251f5fce4f56a03c0ac2cfc"
+  },
+  {
+    "fn": "reverse_adjustment",
+    "oid": 136656,
+    "owner": "postgres",
+    "secdef": true,
+    "config": "search_path=public",
+    "acl": "postgres=X/postgres,service_role=X/postgres",
+    "args": "p_adjustment_id uuid, p_reason text, p_user_id uuid",
+    "lang": "plpgsql",
+    "def_md5": "43b309a97339f8c3a737d6f895af53d7"
+  },
+  {
+    "fn": "reverse_devolution",
+    "oid": 136657,
+    "owner": "postgres",
+    "secdef": true,
+    "config": "search_path=public",
+    "acl": "postgres=X/postgres,service_role=X/postgres",
+    "args": "p_devolution_id uuid, p_reason text, p_user_id uuid",
+    "lang": "plpgsql",
+    "def_md5": "7374c7ad99d5d830b8de3da48dfa0c61"
+  },
+  {
+    "fn": "reverse_production_order",
+    "oid": 138622,
+    "owner": "postgres",
+    "secdef": true,
+    "config": "search_path=public, extensions",
+    "acl": "postgres=X/postgres,service_role=X/postgres",
+    "args": "p_order_id uuid, p_reason text, p_user_id uuid",
+    "lang": "plpgsql",
+    "def_md5": "c3108e8a5ad23d890dc0bde91c9aedb6"
+  },
+  {
+    "fn": "reverse_receipt",
+    "oid": 136654,
+    "owner": "postgres",
+    "secdef": true,
+    "config": "search_path=public",
+    "acl": "postgres=X/postgres,service_role=X/postgres",
+    "args": "p_receipt_id uuid, p_reason text, p_user_id uuid",
+    "lang": "plpgsql",
+    "def_md5": "a2dd36ed6fac87a031c7bc5c8e514129"
+  },
+  {
+    "fn": "reverse_receipt_v2",
+    "oid": 138196,
+    "owner": "postgres",
+    "secdef": true,
+    "config": "search_path=public, pg_temp",
+    "acl": "=X/postgres,postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres",
+    "args": "p_receipt_id uuid, p_reason text, p_user_id uuid",
+    "lang": "plpgsql",
+    "def_md5": "d13a05b0bc4a5e665e812edb2b35d52b"
+  },
+  {
+    "fn": "reverse_transfer",
+    "oid": 136655,
+    "owner": "postgres",
+    "secdef": true,
+    "config": "search_path=public, pg_temp",
+    "acl": "postgres=X/postgres,service_role=X/postgres",
+    "args": "p_transfer_id uuid, p_reason text, p_user_id uuid",
+    "lang": "plpgsql",
+    "def_md5": "8bd79925ba8f86ecb9ddc53ea826bcd6"
+  }
+]

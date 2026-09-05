@@ -1,0 +1,38 @@
+════════════════════════════════════════════════════════════════════
+W9.5 — B-10 · 13-pre-post.txt
+GATE K — datos reales: PRE == POST
+════════════════════════════════════════════════════════════════════
+
+[OK ] t_stores               n=44  md5_idénticos=True
+[OK ] t_payments             n=366  md5_idénticos=True
+[OK ] t_products             n=323  md5_idénticos=True
+[OK ] t_profiles             n=26  md5_idénticos=True
+[OK ] t_tx_items             n=555  md5_idénticos=True
+[OK ] t_inventory            n=141  md5_idénticos=True
+[OK ] t_audit_logs           n=7376  md5_idénticos=True
+[OK ] kardex_exists          n=1  md5_idénticos=True
+[OK ] t_commissions          n=0  md5_idénticos=True
+[OK ] t_memberships          n=51  md5_idénticos=True
+[OK ] movement_types         n=['sale', 'purchase', 'adjustment', 'return', 'initial', 'transfer', 'void', 'transfer_in', 'transfer_out', 'sale_void', 'production_out', 'production_in', 'sale_reverse', 'purchase_reverse', 'production_reverse', 'issue_slip_out', 'issue_slip_reverse']  md5_idénticos=True
+[OK ] t_transactions         n=520  md5_idénticos=True
+[OK ] t_business_events      n=10553  md5_idénticos=True
+[OK ] t_stock_movements      n=702  md5_idénticos=True
+
+Tablas nuevas (PRE capturado en q11 antes del fixture → POST tras cleanup):
+[OK ] receipts               PRE=active=6  POST.n=6
+[OK ] transfers              PRE=empty  POST.n=0
+[OK ] adjustments            PRE=confirmed=5  POST.n=5
+[OK ] devolutions            PRE=reversed=1, completed=12  POST.n=13
+[OK ] production_orders      PRE=empty  POST.n=0
+
+INCIDENTE audit_logs +22 (11×CREATE_USER + 11×DELETE_USER, store_id NULL —
+rastro auth del PROPIO fixture): identificado (q24) y purgado por acción+ventana
+(q25) → POST re-capturado: 14/14 idénticos + 6 tablas nuevas conformes.
+
+CLEANUP (raw-cleanup.json): 20 criterios de residuos = 0 (incluye counter-
+adjustments borrados por store — ids aleatorios). Guards restaurados:
+prevent_hard_delete_profile tgenabled='O' ✓ · trigger_audit_store_changes
+tgenabled='O' ✓ · app.restore_mode RESET ✓ · 0 cuentas reales creadas.
+
+DATOS REALES MODIFICADOS: NINGUNO (solo fixture b10a/b10b/b10c/b10d…).
+VEREDICTO PRE==POST: 20/20 PASS

@@ -1,0 +1,21 @@
+════════════════════════════════════════════════════════════════════
+W9.5 — B-10 · 10-inventory-integrity.txt
+Integridad de inventario (GATE I) — solo fixture, deltas exactos
+════════════════════════════════════════════════════════════════════
+
+Stocks POST por producto (raw-probes.json 'stocks') vs expectativa:
+  receipt:      P1 13→10 ✓  P11 12→10 ✓  P12 12→10 ✓  P13 11→10 ✓  P14 12 (denials) ✓  P15 11→10 ✓ (API)  P16 10 ✓ (attribution)  P7 10 ✓ (conc)
+  transfer:     T1: P2 8→10 + P3 12→10 ✓ · T2: P3 10→12 + P2 10→8 ✓ (cada reversión deshace SU transfer) · T4 conc: P17 10, P18 10 ✓ · T3 denials: sin efecto ✓
+  adjustment:   P4 13→10 ✓ (contra-doc: movimiento −diff, original reversed) · P25 10 ✓ · P26 10 ✓ · P24 10 (diff 0) ✓ · P8 10 ✓ (conc)
+  devolution:   P5 12→10 ✓ · P19 10 ✓ · P20 10 ✓ · P21 10 ✓ · P22 12 (denials) ✓ · P9 10 ✓ (conc)
+  production:   P6 14→10 ✓ · P27 10 ✓ · P28 14 (deny, output 0) ✓ · P29 14 (in_progress) ✓ · P10 10 ✓ (conc)
+
+CADENA: register_stock_movement → balance_after → products.stock_current +
+inventory.quantity coherentes en TODAS las mutaciones (29/29 productos exactos).
+fn_recalc_wac aplica en receipt/transfer/production (WAC invariante en qty=0).
+
+DIVERGENCIA ARQUITECTÓNICA REGISTRADA (preexistente, NO tocada — backlog B-10b):
+reverse_devolution hace UPDATE directo de products.stock_current + INSERT directo
+a kardex_entries, SIN stock_movements (patrón legacy igual que reverse_receipt V1
+y reverse_adjustment V1). La reversión de ajustes NUEVA sí usa
+register_stock_movement (arquitectura canónica).

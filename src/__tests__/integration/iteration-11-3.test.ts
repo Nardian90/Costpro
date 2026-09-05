@@ -119,7 +119,10 @@ describe('PT-11.3.9 — API /api/reverse branch v1/v2', () => {
   it('tiene RPC_MAP_V2', () => expect(src).toContain('RPC_MAP_V2'));
   it('v2 usa reverse_transaction_v2', () => expect(src).toContain("'reverse_transaction_v2'"));
   it('v2 usa reverse_receipt_v2', () => expect(src).toContain("'reverse_receipt_v2'"));
-  it('v2 usa duplicate_inventory_adjustment_v2', () => expect(src).toContain("'duplicate_inventory_adjustment_v2'"));
+  // W9.5 B-10 (ADJ-1): el mapeo B-11 (duplicate) fue supersesado por
+  // reverse_inventory_adjustment_v2 — el botón 'Revertir' invierte (contra-documento);
+  // duplicate_inventory_adjustment_v2 sigue vivo para el botón 'Duplicar'.
+  it('v2 usa reverse_inventory_adjustment_v2 (B-10 ADJ-1)', () => expect(src).toContain("'reverse_inventory_adjustment_v2'"));
   it('selecciona según FEATURES.USE_V2_REVERSE', () => expect(src).toContain('FEATURES.USE_V2_REVERSE'));
   it('transfer sin cambio en v2', () => expect(src).toContain("'reverse_transfer'"));
 });

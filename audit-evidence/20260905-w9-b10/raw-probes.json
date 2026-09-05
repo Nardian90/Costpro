@@ -1,0 +1,595 @@
+{
+  "probes": [
+    {
+      "probe": "RC01_allow_warehouse",
+      "outcome": "SUCCESS",
+      "expected": "SUCCESS",
+      "http": 200,
+      "err": "{\"status\":\"success\",\"receipt_id\":\"b10d0000-0000-4000-8000-00000000e101\",\"items_processed\":1,\"payments_reversed\":0}"
+    },
+    {
+      "probe": "RC02_allow_manager",
+      "outcome": "SUCCESS",
+      "expected": "SUCCESS",
+      "http": 200,
+      "err": "{\"status\":\"success\",\"receipt_id\":\"b10d0000-0000-4000-8000-00000000e103\",\"items_processed\":1,\"payments_reversed\":0}"
+    },
+    {
+      "probe": "RC03_allow_encargado",
+      "outcome": "SUCCESS",
+      "expected": "SUCCESS",
+      "http": 200,
+      "err": "{\"status\":\"success\",\"receipt_id\":\"b10d0000-0000-4000-8000-00000000e104\",\"items_processed\":1,\"payments_reversed\":0}"
+    },
+    {
+      "probe": "RC04_allow_adminG",
+      "outcome": "SUCCESS",
+      "expected": "SUCCESS",
+      "http": 200,
+      "err": "{\"status\":\"success\",\"receipt_id\":\"b10d0000-0000-4000-8000-00000000e105\",\"items_processed\":1,\"payments_reversed\":0}"
+    },
+    {
+      "probe": "RC05_deny_clerk",
+      "outcome": "DENIED",
+      "expected": "DENIED",
+      "http": 400,
+      "err": "{\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_UNAUTHORIZED: reversion de recepcion requiere rol admin/manager/encargado/warehouse en la tienda\"}"
+    },
+    {
+      "probe": "RC06_deny_usuario",
+      "outcome": "DENIED",
+      "expected": "DENIED",
+      "http": 400,
+      "err": "{\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_UNAUTHORIZED: reversion de recepcion requiere rol admin/manager/encargado/warehouse en la tienda\"}"
+    },
+    {
+      "probe": "RC07_deny_costo",
+      "outcome": "DENIED",
+      "expected": "DENIED",
+      "http": 400,
+      "err": "{\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_UNAUTHORIZED: reversion de recepcion requiere rol admin/manager/encargado/warehouse en la tienda\"}"
+    },
+    {
+      "probe": "RC08_deny_cross_clerkB",
+      "outcome": "DENIED",
+      "expected": "DENIED",
+      "http": 400,
+      "err": "{\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_UNAUTHORIZED\"}"
+    },
+    {
+      "probe": "RC09_identity_resolved_clerk",
+      "outcome": "DENIED",
+      "expected": "DENIED",
+      "http": 400,
+      "err": "{\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_UNAUTHORIZED: reversion de recepcion requiere rol admin/manager/encargado/warehouse en la tienda\"}"
+    },
+    {
+      "probe": "RC10_attribution_wh",
+      "outcome": "SUCCESS",
+      "expected": "SUCCESS",
+      "http": 200,
+      "err": "{\"status\":\"success\",\"receipt_id\":\"b10d0000-0000-4000-8000-00000000e107\",\"items_processed\":1,\"payments_reversed\":0}"
+    },
+    {
+      "probe": "RC11_already_reversed",
+      "outcome": "DENIED",
+      "expected": "DENIED",
+      "http": 400,
+      "err": "{\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_RECEIPT_NOT_ACTIVE: status=reversed\"}"
+    },
+    {
+      "probe": "TR01_allow_whAB_AtoB",
+      "outcome": "SUCCESS",
+      "expected": "SUCCESS",
+      "http": 200,
+      "err": "{\"status\":\"success\",\"transfer_id\":\"b10d0000-0000-4000-8000-00000000e201\",\"items_reversed\":1}"
+    },
+    {
+      "probe": "TR02_allow_whAB_BtoA",
+      "outcome": "SUCCESS",
+      "expected": "SUCCESS",
+      "http": 200,
+      "err": "{\"status\":\"success\",\"transfer_id\":\"b10d0000-0000-4000-8000-00000000e202\",\"items_reversed\":1}"
+    },
+    {
+      "probe": "TR03_deny_clerkAB_role",
+      "outcome": "DENIED",
+      "expected": "DENIED",
+      "http": 400,
+      "err": "{\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_UNAUTHORIZED: reversion de transferencia requiere rol admin/manager/encargado/warehouse en la tienda d"
+    },
+    {
+      "probe": "TR04_deny_managerA_dest",
+      "outcome": "DENIED",
+      "expected": "DENIED",
+      "http": 400,
+      "err": "{\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_UNAUTHORIZED_DESTINATION\"}"
+    },
+    {
+      "probe": "TR05_deny_cross_clerkB",
+      "outcome": "DENIED",
+      "expected": "DENIED",
+      "http": 400,
+      "err": "{\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_ALREADY_REVERSED\"}"
+    },
+    {
+      "probe": "TR06_already_reversed",
+      "outcome": "DENIED",
+      "expected": "DENIED",
+      "http": 400,
+      "err": "{\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_ALREADY_REVERSED\"}"
+    },
+    {
+      "probe": "AD01_allow_manager",
+      "outcome": "SUCCESS",
+      "expected": "SUCCESS",
+      "http": 200,
+      "err": "{\"status\":\"success\",\"adjustment_id\":\"b10d0000-0000-4000-8000-00000000e301\",\"items_reversed\":1,\"counter_adjustment_id\":\"2e123090-5cca-470e-8035-b8418a211b5d\"}"
+    },
+    {
+      "probe": "AD02_allow_encargado",
+      "outcome": "SUCCESS",
+      "expected": "SUCCESS",
+      "http": 200,
+      "err": "{\"status\":\"success\",\"adjustment_id\":\"b10d0000-0000-4000-8000-00000000e304\",\"items_reversed\":1,\"counter_adjustment_id\":\"0cc2ca76-32d5-4e9f-b13d-5a847777bd38\"}"
+    },
+    {
+      "probe": "AD03_allow_adminG",
+      "outcome": "SUCCESS",
+      "expected": "SUCCESS",
+      "http": 200,
+      "err": "{\"status\":\"success\",\"adjustment_id\":\"b10d0000-0000-4000-8000-00000000e305\",\"items_reversed\":1,\"counter_adjustment_id\":\"9bbfecdf-1479-40a7-879f-fb69512cc441\"}"
+    },
+    {
+      "probe": "AD04_deny_warehouse",
+      "outcome": "DENIED",
+      "expected": "DENIED",
+      "http": 400,
+      "err": "{\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_UNAUTHORIZED: reversion de ajuste requiere rol admin/manager/encargado en la tienda\"}"
+    },
+    {
+      "probe": "AD05_deny_clerk",
+      "outcome": "DENIED",
+      "expected": "DENIED",
+      "http": 400,
+      "err": "{\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_UNAUTHORIZED: reversion de ajuste requiere rol admin/manager/encargado en la tienda\"}"
+    },
+    {
+      "probe": "AD06_deny_usuario",
+      "outcome": "DENIED",
+      "expected": "DENIED",
+      "http": 400,
+      "err": "{\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_UNAUTHORIZED: reversion de ajuste requiere rol admin/manager/encargado en la tienda\"}"
+    },
+    {
+      "probe": "AD07_deny_costo",
+      "outcome": "DENIED",
+      "expected": "DENIED",
+      "http": 400,
+      "err": "{\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_UNAUTHORIZED: reversion de ajuste requiere rol admin/manager/encargado en la tienda\"}"
+    },
+    {
+      "probe": "AD08_deny_cross_clerkB",
+      "outcome": "DENIED",
+      "expected": "DENIED",
+      "http": 400,
+      "err": "{\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_UNAUTHORIZED\"}"
+    },
+    {
+      "probe": "AD09_identity_resolved_clerk",
+      "outcome": "DENIED",
+      "expected": "DENIED",
+      "http": 400,
+      "err": "{\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_UNAUTHORIZED: reversion de ajuste requiere rol admin/manager/encargado en la tienda\"}"
+    },
+    {
+      "probe": "AD10_already_reversed",
+      "outcome": "DENIED",
+      "expected": "DENIED",
+      "http": 400,
+      "err": "{\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_ALREADY_REVERSED\"}"
+    },
+    {
+      "probe": "DV01_allow_clerk",
+      "outcome": "SUCCESS",
+      "expected": "SUCCESS",
+      "http": 200,
+      "err": "{\"status\":\"success\",\"devolution_id\":\"b10d0000-0000-4000-8000-00000000e401\",\"items_reversed\":1}"
+    },
+    {
+      "probe": "DV02_allow_warehouse",
+      "outcome": "SUCCESS",
+      "expected": "SUCCESS",
+      "http": 200,
+      "err": "{\"status\":\"success\",\"devolution_id\":\"b10d0000-0000-4000-8000-00000000e403\",\"items_reversed\":1}"
+    },
+    {
+      "probe": "DV03_allow_usuario",
+      "outcome": "SUCCESS",
+      "expected": "SUCCESS",
+      "http": 200,
+      "err": "{\"status\":\"success\",\"devolution_id\":\"b10d0000-0000-4000-8000-00000000e404\",\"items_reversed\":1}"
+    },
+    {
+      "probe": "DV04_allow_adminG",
+      "outcome": "SUCCESS",
+      "expected": "SUCCESS",
+      "http": 200,
+      "err": "{\"status\":\"success\",\"devolution_id\":\"b10d0000-0000-4000-8000-00000000e405\",\"items_reversed\":1}"
+    },
+    {
+      "probe": "DV05_deny_cross_clerkB",
+      "outcome": "DENIED",
+      "expected": "DENIED",
+      "http": 400,
+      "err": "{\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_UNAUTHORIZED\"}"
+    },
+    {
+      "probe": "DV06_state_pending",
+      "outcome": "DENIED",
+      "expected": "DENIED",
+      "http": 400,
+      "err": "{\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_INVALID_STATUS: reverse_devolution solo permite completed (status=pending)\"}"
+    },
+    {
+      "probe": "DV07_already_reversed",
+      "outcome": "DENIED",
+      "expected": "DENIED",
+      "http": 400,
+      "err": "{\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_ALREADY_REVERSED\"}"
+    },
+    {
+      "probe": "PR01_allow_costo",
+      "outcome": "SUCCESS",
+      "expected": "SUCCESS",
+      "http": 200,
+      "err": "{\"status\":\"success\",\"order_id\":\"b10d0000-0000-4000-8000-00000000e501\",\"wac_after\":4,\"wac_before\":10}"
+    },
+    {
+      "probe": "PR02_allow_manager",
+      "outcome": "SUCCESS",
+      "expected": "SUCCESS",
+      "http": 200,
+      "err": "{\"status\":\"success\",\"order_id\":\"b10d0000-0000-4000-8000-00000000e503\",\"wac_after\":4,\"wac_before\":10}"
+    },
+    {
+      "probe": "PR03_deny_encargado",
+      "outcome": "DENIED",
+      "expected": "DENIED",
+      "http": 400,
+      "err": "{\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_UNAUTHORIZED: reversion de orden de produccion requiere rol admin/manager/costo en la tienda\"}"
+    },
+    {
+      "probe": "PR04_deny_clerk",
+      "outcome": "DENIED",
+      "expected": "DENIED",
+      "http": 400,
+      "err": "{\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_UNAUTHORIZED: reversion de orden de produccion requiere rol admin/manager/costo en la tienda\"}"
+    },
+    {
+      "probe": "PR05_deny_warehouse",
+      "outcome": "DENIED",
+      "expected": "DENIED",
+      "http": 400,
+      "err": "{\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_UNAUTHORIZED: reversion de orden de produccion requiere rol admin/manager/costo en la tienda\"}"
+    },
+    {
+      "probe": "PR06_deny_cross_clerkB",
+      "outcome": "DENIED",
+      "expected": "DENIED",
+      "http": 400,
+      "err": "{\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_UNAUTHORIZED\"}"
+    },
+    {
+      "probe": "PR07_state_in_progress",
+      "outcome": "DENIED",
+      "expected": "DENIED",
+      "http": 400,
+      "err": "{\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_ORDER_NOT_CLOSED\"}"
+    },
+    {
+      "probe": "PR08_already_reversed",
+      "outcome": "DENIED",
+      "expected": "DENIED",
+      "http": 400,
+      "err": "{\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_ORDER_NOT_CLOSED\"}"
+    },
+    {
+      "probe": "CC1_receipt_vs_receipt",
+      "outcome": "200/400",
+      "expected": "200/(400|409)"
+    },
+    {
+      "probe": "CC2_adjustment_vs_adjustment",
+      "outcome": "200/400",
+      "expected": "200/(400|409)"
+    },
+    {
+      "probe": "CC3_devolution_vs_devolution",
+      "outcome": "400/200",
+      "expected": "200/(400|409)"
+    },
+    {
+      "probe": "CC4_production_vs_production",
+      "outcome": "400/200",
+      "expected": "200/(400|409)"
+    },
+    {
+      "probe": "CC5_transfer_vs_transfer",
+      "outcome": "200/400",
+      "expected": "200/(400|409)"
+    },
+    {
+      "probe": "ANON_reverse_receipt_v2",
+      "outcome": "http=400",
+      "expected": "non-200"
+    },
+    {
+      "probe": "ANON_reverse_transfer",
+      "outcome": "http=401",
+      "expected": "non-200"
+    },
+    {
+      "probe": "ANON_reverse_devolution",
+      "outcome": "http=401",
+      "expected": "non-200"
+    },
+    {
+      "probe": "ANON_reverse_production_order",
+      "outcome": "http=401",
+      "expected": "non-200"
+    },
+    {
+      "probe": "ANON_reverse_inventory_adjustment_v2",
+      "outcome": "http=401",
+      "expected": "non-200"
+    }
+  ],
+  "concurrency": [
+    {
+      "probe": "CC1_receipt_vs_receipt",
+      "a": 200,
+      "b": 400
+    },
+    {
+      "probe": "CC2_adjustment_vs_adjustment",
+      "a": 200,
+      "b": 400
+    },
+    {
+      "probe": "CC3_devolution_vs_devolution",
+      "a": 400,
+      "b": 200
+    },
+    {
+      "probe": "CC4_production_vs_production",
+      "a": 400,
+      "b": 200
+    },
+    {
+      "probe": "CC5_transfer_vs_transfer",
+      "a": 200,
+      "b": 400
+    }
+  ],
+  "post": {
+    "audits": [
+      {
+        "op": null,
+        "user": null,
+        "action": "CREATE_STORE"
+      },
+      {
+        "op": null,
+        "user": null,
+        "action": "CREATE_STORE"
+      },
+      {
+        "op": null,
+        "user": null,
+        "action": "UPDATE_STATUS"
+      },
+      {
+        "op": "ADMIN_REVERSE_RECEIPT",
+        "user": "b10b0000-0000-4000-8000-000000000005",
+        "action": "REVERSE_RECEIPT_V2"
+      },
+      {
+        "op": null,
+        "user": null,
+        "action": "UPDATE_STATUS"
+      },
+      {
+        "op": "ADMIN_REVERSE_RECEIPT",
+        "user": "b10b0000-0000-4000-8000-000000000002",
+        "action": "REVERSE_RECEIPT_V2"
+      },
+      {
+        "op": null,
+        "user": null,
+        "action": "UPDATE_STATUS"
+      },
+      {
+        "op": "ADMIN_REVERSE_RECEIPT",
+        "user": "b10b0000-0000-4000-8000-000000000003",
+        "action": "REVERSE_RECEIPT_V2"
+      },
+      {
+        "op": null,
+        "user": null,
+        "action": "UPDATE_STATUS"
+      },
+      {
+        "op": "ADMIN_REVERSE_RECEIPT",
+        "user": "b10b0000-0000-4000-8000-000000000001",
+        "action": "REVERSE_RECEIPT_V2"
+      },
+      {
+        "op": null,
+        "user": null,
+        "action": "UPDATE_STATUS"
+      },
+      {
+        "op": "ADMIN_REVERSE_RECEIPT",
+        "user": "b10b0000-0000-4000-8000-000000000005",
+        "action": "REVERSE_RECEIPT_V2"
+      },
+      {
+        "op": "ADMIN_REVERSE_TRANSFER",
+        "user": "b10b0000-0000-4000-8000-000000000008",
+        "action": "transfer_reversed"
+      },
+      {
+        "op": "ADMIN_REVERSE_TRANSFER",
+        "user": "b10b0000-0000-4000-8000-000000000008",
+        "action": "transfer_reversed"
+      },
+      {
+        "op": "ADMIN_REVERSE_ADJUSTMENT",
+        "user": "b10b0000-0000-4000-8000-000000000002",
+        "action": "REVERSE_ADJUSTMENT_V2"
+      },
+      {
+        "op": "ADMIN_REVERSE_ADJUSTMENT",
+        "user": "b10b0000-0000-4000-8000-000000000003",
+        "action": "REVERSE_ADJUSTMENT_V2"
+      },
+      {
+        "op": "ADMIN_REVERSE_ADJUSTMENT",
+        "user": "b10b0000-0000-4000-8000-000000000001",
+        "action": "REVERSE_ADJUSTMENT_V2"
+      },
+      {
+        "op": "ADMIN_REVERSE_DEVOLUTION",
+        "user": "b10b0000-0000-4000-8000-000000000004",
+        "action": "REVERSE_DEVOLUTION"
+      },
+      {
+        "op": "ADMIN_REVERSE_DEVOLUTION",
+        "user": "b10b0000-0000-4000-8000-000000000005",
+        "action": "REVERSE_DEVOLUTION"
+      },
+      {
+        "op": "ADMIN_REVERSE_DEVOLUTION",
+        "user": "b10b0000-0000-4000-8000-000000000006",
+        "action": "REVERSE_DEVOLUTION"
+      },
+      {
+        "op": "ADMIN_REVERSE_DEVOLUTION",
+        "user": "b10b0000-0000-4000-8000-000000000001",
+        "action": "REVERSE_DEVOLUTION"
+      },
+      {
+        "op": "ADMIN_REVERSE_PRODUCTION_ORDER",
+        "user": "b10b0000-0000-4000-8000-000000000007",
+        "action": "PRODUCTION_ORDER_REVERSED"
+      },
+      {
+        "op": "ADMIN_REVERSE_PRODUCTION_ORDER",
+        "user": "b10b0000-0000-4000-8000-000000000002",
+        "action": "PRODUCTION_ORDER_REVERSED"
+      },
+      {
+        "op": null,
+        "user": null,
+        "action": "UPDATE_STATUS"
+      },
+      {
+        "op": "ADMIN_REVERSE_RECEIPT",
+        "user": "b10b0000-0000-4000-8000-000000000005",
+        "action": "REVERSE_RECEIPT_V2"
+      },
+      {
+        "op": "ADMIN_REVERSE_ADJUSTMENT",
+        "user": "b10b0000-0000-4000-8000-000000000002",
+        "action": "REVERSE_ADJUSTMENT_V2"
+      },
+      {
+        "op": "ADMIN_REVERSE_DEVOLUTION",
+        "user": "b10b0000-0000-4000-8000-000000000005",
+        "action": "REVERSE_DEVOLUTION"
+      },
+      {
+        "op": "ADMIN_REVERSE_PRODUCTION_ORDER",
+        "user": "b10b0000-0000-4000-8000-000000000002",
+        "action": "PRODUCTION_ORDER_REVERSED"
+      },
+      {
+        "op": "ADMIN_REVERSE_TRANSFER",
+        "user": "b10b0000-0000-4000-8000-000000000008",
+        "action": "transfer_reversed"
+      }
+    ],
+    "stocks": {
+      "b10c0000-0000-4000-8000-000000000001": 10,
+      "b10c0000-0000-4000-8000-000000000002": 8,
+      "b10c0000-0000-4000-8000-000000000003": 12,
+      "b10c0000-0000-4000-8000-000000000004": 10,
+      "b10c0000-0000-4000-8000-000000000005": 10,
+      "b10c0000-0000-4000-8000-000000000006": 10,
+      "b10c0000-0000-4000-8000-000000000007": 10,
+      "b10c0000-0000-4000-8000-000000000008": 10,
+      "b10c0000-0000-4000-8000-000000000009": 10,
+      "b10c0000-0000-4000-8000-00000000000a": 10,
+      "b10c0000-0000-4000-8000-00000000000b": 10,
+      "b10c0000-0000-4000-8000-00000000000c": 10,
+      "b10c0000-0000-4000-8000-00000000000d": 10,
+      "b10c0000-0000-4000-8000-00000000000e": 12,
+      "b10c0000-0000-4000-8000-00000000000f": 11,
+      "b10c0000-0000-4000-8000-000000000010": 10,
+      "b10c0000-0000-4000-8000-000000000011": 10,
+      "b10c0000-0000-4000-8000-000000000012": 10,
+      "b10c0000-0000-4000-8000-000000000013": 10,
+      "b10c0000-0000-4000-8000-000000000014": 10,
+      "b10c0000-0000-4000-8000-000000000015": 10,
+      "b10c0000-0000-4000-8000-000000000016": 12,
+      "b10c0000-0000-4000-8000-000000000017": 11,
+      "b10c0000-0000-4000-8000-000000000018": 10,
+      "b10c0000-0000-4000-8000-000000000019": 10,
+      "b10c0000-0000-4000-8000-00000000001a": 10,
+      "b10c0000-0000-4000-8000-00000000001b": 10,
+      "b10c0000-0000-4000-8000-00000000001c": 14,
+      "b10c0000-0000-4000-8000-00000000001d": 14
+    },
+    "prod_statuses": {
+      "b10d0000-0000-4000-8000-00000000e501": "reversed",
+      "b10d0000-0000-4000-8000-00000000e502": "reversed",
+      "b10d0000-0000-4000-8000-00000000e503": "reversed",
+      "b10d0000-0000-4000-8000-00000000e504": "closed",
+      "b10d0000-0000-4000-8000-00000000e505": "in_progress"
+    },
+    "receipt_statuses": {
+      "b10d0000-0000-4000-8000-00000000e101": "reversed",
+      "b10d0000-0000-4000-8000-00000000e102": "reversed",
+      "b10d0000-0000-4000-8000-00000000e103": "reversed",
+      "b10d0000-0000-4000-8000-00000000e104": "reversed",
+      "b10d0000-0000-4000-8000-00000000e105": "reversed",
+      "b10d0000-0000-4000-8000-00000000e106": "active",
+      "b10d0000-0000-4000-8000-00000000e107": "reversed",
+      "b10d0000-0000-4000-8000-00000000e108": "active"
+    },
+    "transfer_statuses": {
+      "b10d0000-0000-4000-8000-00000000e201": "REVERSADA",
+      "b10d0000-0000-4000-8000-00000000e202": "REVERSADA",
+      "b10d0000-0000-4000-8000-00000000e203": "CONFIRMADA",
+      "b10d0000-0000-4000-8000-00000000e204": "REVERSADA"
+    },
+    "adjustment_statuses": {
+      "b10d0000-0000-4000-8000-00000000e301": "reversed",
+      "b10d0000-0000-4000-8000-00000000e302": "reversed",
+      "b10d0000-0000-4000-8000-00000000e303": "confirmed",
+      "b10d0000-0000-4000-8000-00000000e304": "reversed",
+      "b10d0000-0000-4000-8000-00000000e305": "reversed"
+    },
+    "counter_adjustments": 1,
+    "devolution_statuses": {
+      "b10d0000-0000-4000-8000-00000000e401": "reversed",
+      "b10d0000-0000-4000-8000-00000000e402": "reversed",
+      "b10d0000-0000-4000-8000-00000000e403": "reversed",
+      "b10d0000-0000-4000-8000-00000000e404": "reversed",
+      "b10d0000-0000-4000-8000-00000000e405": "reversed",
+      "b10d0000-0000-4000-8000-00000000e406": "completed",
+      "b10d0000-0000-4000-8000-00000000e407": "pending"
+    }
+  }
+}
