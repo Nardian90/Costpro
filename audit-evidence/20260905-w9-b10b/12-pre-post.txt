@@ -1,0 +1,23 @@
+PASS counts.products: 323 → 323
+PASS counts.inventory: 141 → 141
+PASS counts.audit_logs: 7376 → 7376
+PASS counts.devolutions: 13 → 13
+PASS counts.kardex_entries: 702 → 702
+PASS counts.wac_change_log: 14 → 14
+PASS counts.business_events: 10553 → 10553
+PASS counts.stock_movements: 702 → 702
+PASS counts.commission_rules: 62 → 62
+PASS counts.devolution_items: 13 → 13
+PASS counts.document_sequences: 16 → 16
+PASS counts.commission_payments: 0 → 0
+PASS counts.payment_transactions: 366 → 366
+PASS products_sum_stock
+PASS inventory_sum_qty
+PASS movements_sum_delta
+PASS products_max_updated_at
+PASS inventory_max_updated_at
+PASS devolutions_max_created
+PASS audit_max_created
+PASS movements_max_created
+INFO by_status: {"reversed":1,"completed":12} → {"reversed":1,"completed":12}
+PRE==POST: ALL PASS

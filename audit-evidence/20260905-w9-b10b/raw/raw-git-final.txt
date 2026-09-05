@@ -1,0 +1,6 @@
+commit B-10b: el hash exacto es el HEAD de este repositorio (ver git log -1); este archivo no auto-referencia el hash (imposible por construcción)
+
+push: git push origin main
+resultado: fatal: could not read Username for 'https://github.com': No such device or address
+causa: entorno reconstruido sin credenciales GitHub (wipe del host); el repo es público (clone OK) pero el push requiere PAT
+estado: COMMIT LOCAL COMPLETO, worktree clean; push PENDIENTE de credenciales

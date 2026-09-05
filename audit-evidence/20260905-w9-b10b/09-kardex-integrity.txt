@@ -1,0 +1,15 @@
+# W9.5 — B-10b · 09-kardex-integrity.txt
+# GATE 13: kardex 100% derivado del trigger auto_kardex_on_stock_movement (ya sin INSERT manual).
+
+P1: [{"q":3,"t":"devolution_in","uc":4.8},{"q":3,"t":"devolution_out","uc":4.8}] — devolution_in(3@4.8) + devolution_out(3@4.8) COMPLEMENTARIOS
+P2: [{"q":2,"t":"devolution_in","uc":3.2},{"q":2,"t":"devolution_out","uc":3.2}] — complementarios a cero
+
+Trazabilidad estructurada (GATE 8), query canónica:
+  stock_movements.reference_id = devolutions.id (TEXT) → traceability_D1: {"movs_by_ref":2,"kardex_via_mov":2}
+  kardex_entries.reference_type='stock_movement' + reference_id=<movement id> → cadena
+  kardex → movimiento → devolución navegable sin depender de notes.
+
+Invariante de plataforma: kardex_entries (702) == stock_movements (702) PRE y POST
+(12-pre-post.txt) — 1:1, el INSERT manual del reverse viejo rompía esta relación.
+Tipo kardex 'devolution_out': YA sancionado por kardex_entries_movement_type_check
+(el contrato lo anticipaba); sin modificar la constraint.

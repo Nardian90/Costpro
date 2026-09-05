@@ -1,0 +1,11 @@
+# W9.5 — B-10b · 10-concurrency.txt
+# GATE 15: dos POST simultáneos vía PostgREST service_role (canal exacto de /api/reverse).
+
+pre : {"inv":5,"movs":1,"stock":5,"audits":0,"status":"completed"}
+callA: HTTP 400 {"code":"P0001","details":null,"hint":null,"message":"ERR_ALREADY_REVERSED"}
+callB: HTTP 200 {"status": "success", "devolution_id": "c144f0c8-2ef4-44ed-8e87-aa4bac254e20", "items_reversed": 1}
+post: {"inv":3,"movs":2,"stock":3,"audits":1,"status":"reversed","reverse_movs":1}
+
+EXACTAMENTE: 1 éxito + 1 ERR_ALREADY_REVERSED · 1 movement devolution_reverse ·
+1 transición completed→reversed · 1 audit primario. El FOR UPDATE de la devolución
+serializa; el perdedor ve status=reversed y muere antes de mutar nada.

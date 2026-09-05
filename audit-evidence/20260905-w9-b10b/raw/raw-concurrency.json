@@ -1,0 +1,25 @@
+{
+  "pre": {
+    "inv": 5,
+    "movs": 1,
+    "stock": 5,
+    "audits": 0,
+    "status": "completed"
+  },
+  "callA": {
+    "status": 400,
+    "body": "{\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_ALREADY_REVERSED\"}"
+  },
+  "callB": {
+    "status": 200,
+    "body": "{\"status\": \"success\", \"devolution_id\": \"c144f0c8-2ef4-44ed-8e87-aa4bac254e20\", \"items_reversed\": 1}"
+  },
+  "post": {
+    "inv": 3,
+    "movs": 2,
+    "stock": 3,
+    "audits": 1,
+    "status": "reversed",
+    "reverse_movs": 1
+  }
+}

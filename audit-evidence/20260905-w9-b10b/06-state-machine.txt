@@ -1,0 +1,14 @@
+# W9.5 — B-10b · 06-state-machine.txt
+# Estado reversible ÚNICO: completed → reversed (terminal). Congelado B-10, intacto B-10b.
+
+R1 happy D1: SUCCESS · status completed → reversed
+R3 idempotent D1(2nd): ERR_ALREADY_REVERSED · status reversed → reversed
+R4a pending D4: ERR_INVALID_STATUS: reverse_devolution solo permite completed (status=pending) · status pending → pending
+R4b voided D5: ERR_INVALID_STATUS: reverse_devolution solo permite completed (status=voided) · status voided → voided
+R5 insufficient D3: Stock negativo no permitido | product_id=b10b0000-0000-4000-8000-0000000002a3 | store_id=b · status completed → completed
+
+- devolutions NO está en el mapa de fn_validate_document_transition (rama NULL →
+  permisiva a nivel trigger); el state machine REAL lo imponen los guards del RPC:
+  ERR_ALREADY_REVERSED (idempotencia) + ERR_INVALID_STATUS (solo completed).
+- No se inventaron estados: pending/voided/failed → ERR_INVALID_STATUS; reversed → ERR_ALREADY_REVERSED.
+- Segundo reverse (R3): DENIED, cero efectos (movs/audits/WAC/stock idénticos al post de R1).

@@ -1,0 +1,17 @@
+# W9.5 — B-10b · 00-baseline.txt
+# GATE 0 · fecha: 2026-09-06
+
+Comando: git status --short; git rev-parse HEAD; git rev-parse origin/main
+Resultado:
+  (worktree limpio — sin salida en git status --short)
+  HEAD        = c892b055ad21768eccde978c29b96a1c98c5db63
+  origin/main = c892b055ad21768eccde978c29b96a1c98c5db63
+
+Verificación: HEAD == origin/main == c892b055 ✓ WORKTREE CLEAN ✓
+Baseline B-10 congelado (feat(w9): B-10 — per-type authorization for the 5
+remaining /api/reverse types). GATE 0: PASS.
+
+Entorno de ejecución:
+- Repo local: /home/z/my-project/Costpro (clonado desde https://github.com/Nardian90/Costpro)
+- DB live: Supabase proyecto wthkddeleylijmonclxg (PostgreSQL, acceso vía Management API)
+- Servidor: PM2 3/3 online (costpro dev + 2 pollers), http://localhost:3000

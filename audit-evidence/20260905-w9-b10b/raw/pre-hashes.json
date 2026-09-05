@@ -1,0 +1,11 @@
+{
+  "reverse_devolution_oid": "136657",
+  "reverse_devolution_sha256": "767d6fe43c11df0b953ffd8c4236416869fa63d20c11d26e260ca8caca899919",
+  "register_stock_movement_sha256": "0c4bf01bd09e5a45ff93554e23129ed5f8d5d4f4b48721f6f1bb60c9770a7a0e",
+  "auto_kardex_on_stock_movement_sha256": "690fe63227197451e6e22c2873282513576031d99464d711e982b0620cbae2d1",
+  "fn_recalc_wac_sha256": "bd55147f943c4c58cd2f6e391806e73dccd494538286d028a706e5567a20c968",
+  "fn_sync_inventory_on_movement_sha256": "422dd7a4dd2024ef2049230c7992c94fd7c3d7355b3f869c406c2f202b574bf4",
+  "sync_product_stock_sha256": "ebef4685f58464801a3307f4b1b2d8af2256a069547c4c0f902e6bb4cf9ef95b",
+  "auto_kardex_trigger_def_sha256": "1eee1e500e5e736c944268efd790bbeb51e629134e3c1cec4c341b6058a49cc9",
+  "can_reverse_document_sha256": "959d8195483027ac98eb970c49decbffcb9118422c84bb91e082db332d31fc72"
+}

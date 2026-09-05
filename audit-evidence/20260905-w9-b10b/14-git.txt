@@ -1,0 +1,86 @@
+A  audit-evidence/20260905-w9-b10b/01-current-semantics.md
+A  audit-evidence/20260905-w9-b10b/02-function-pre.md
+A  audit-evidence/20260905-w9-b10b/03-register-stock-movement.md
+A  audit-evidence/20260905-w9-b10b/04-migration-review.txt
+A  audit-evidence/20260905-w9-b10b/05-authorization-probes.txt
+A  audit-evidence/20260905-w9-b10b/06-state-machine.txt
+A  audit-evidence/20260905-w9-b10b/07-stock-integrity.txt
+A  audit-evidence/20260905-w9-b10b/08-wac-integrity.txt
+A  audit-evidence/20260905-w9-b10b/09-kardex-integrity.txt
+A  audit-evidence/20260905-w9-b10b/10-concurrency.txt
+A  audit-evidence/20260905-w9-b10b/11-audit.txt
+A  audit-evidence/20260905-w9-b10b/12-pre-post.txt
+A  audit-evidence/20260905-w9-b10b/13-regression.txt
+A  audit-evidence/20260905-w9-b10b/raw/auto_kardex_post_body.sql
+A  audit-evidence/20260905-w9-b10b/raw/create_devolution_v2_live.sql
+A  audit-evidence/20260905-w9-b10b/raw/pre-hashes.json
+A  audit-evidence/20260905-w9-b10b/raw/raw-apply-migration.json
+A  audit-evidence/20260905-w9-b10b/raw/raw-cleanup-post.json
+A  audit-evidence/20260905-w9-b10b/raw/raw-cleanup-pre.json
+A  audit-evidence/20260905-w9-b10b/raw/raw-cleanup-random.json
+A  audit-evidence/20260905-w9-b10b/raw/raw-concurrency.json
+A  audit-evidence/20260905-w9-b10b/raw/raw-fixture-a.json
+A  audit-evidence/20260905-w9-b10b/raw/raw-fixture.json
+A  audit-evidence/20260905-w9-b10b/raw/raw-gate1-live.json
+A  audit-evidence/20260905-w9-b10b/raw/raw-gate1b.json
+A  audit-evidence/20260905-w9-b10b/raw/raw-p01_happy_D1.json
+A  audit-evidence/20260905-w9-b10b/raw/raw-p02_zero_D2.json
+A  audit-evidence/20260905-w9-b10b/raw/raw-p03_idempotent_D1.json
+A  audit-evidence/20260905-w9-b10b/raw/raw-p04a_pending_D4.json
+A  audit-evidence/20260905-w9-b10b/raw/raw-p04b_voided_D5.json
+A  audit-evidence/20260905-w9-b10b/raw/raw-p05_insufficient_D3.json
+A  audit-evidence/20260905-w9-b10b/raw/raw-p06_crossstore_L2.json
+A  audit-evidence/20260905-w9-b10b/raw/raw-p06b_nomember_L2.json
+A  audit-evidence/20260905-w9-b10b/raw/raw-p07_forged_L1.json
+A  audit-evidence/20260905-w9-b10b/raw/raw-p09_legacy_wac_L2.json
+A  audit-evidence/20260905-w9-b10b/raw/raw-p10_global_admin_D6.json
+A  audit-evidence/20260905-w9-b10b/raw/raw-p13.json
+A  audit-evidence/20260905-w9-b10b/raw/raw-post-fnstate.json
+A  audit-evidence/20260905-w9-b10b/raw/raw-post-sentinels.json
+A  audit-evidence/20260905-w9-b10b/raw/raw-pre-sentinels.json
+A  audit-evidence/20260905-w9-b10b/raw/raw-shapes.json
+A  audit-evidence/20260905-w9-b10b/raw/reverse_devolution_post_body.sql
+A  audit-evidence/20260905-w9-b10b/rollback_reverse_devolution.sql
+A  audit-evidence/20260905-w9-b10b/scripts/b10b_query.js
+A  audit-evidence/20260905-w9-b10b/scripts/g1_capture_pre.sql
+A  audit-evidence/20260905-w9-b10b/scripts/g1b_state_linkage.sql
+A  audit-evidence/20260905-w9-b10b/scripts/g1c_shapes.sql
+A  audit-evidence/20260905-w9-b10b/scripts/g22_capture_post.sql
+A  audit-evidence/20260905-w9-b10b/scripts/gen_evidence.js
+A  audit-evidence/20260905-w9-b10b/scripts/gen_migration.js
+A  audit-evidence/20260905-w9-b10b/scripts/gen_probes.js
+A  audit-evidence/20260905-w9-b10b/scripts/p00_fixture.sql
+A  audit-evidence/20260905-w9-b10b/scripts/p00b_fixture_dynamic.sql
+A  audit-evidence/20260905-w9-b10b/scripts/p01_happy_D1.sql
+A  audit-evidence/20260905-w9-b10b/scripts/p02_zero_D2.sql
+A  audit-evidence/20260905-w9-b10b/scripts/p03_idempotent_D1.sql
+A  audit-evidence/20260905-w9-b10b/scripts/p04a_pending_D4.sql
+A  audit-evidence/20260905-w9-b10b/scripts/p04b_voided_D5.sql
+A  audit-evidence/20260905-w9-b10b/scripts/p05_insufficient_D3.sql
+A  audit-evidence/20260905-w9-b10b/scripts/p06_crossstore_L2.sql
+A  audit-evidence/20260905-w9-b10b/scripts/p06b_nomember_L2.sql
+A  audit-evidence/20260905-w9-b10b/scripts/p07_cleanup.sql
+A  audit-evidence/20260905-w9-b10b/scripts/p07_forged_L1.sql
+A  audit-evidence/20260905-w9-b10b/scripts/p07b_cleanup_random_ids.sql
+A  audit-evidence/20260905-w9-b10b/scripts/p09_legacy_wac_L2.sql
+A  audit-evidence/20260905-w9-b10b/scripts/p10_global_admin_D6.sql
+A  audit-evidence/20260905-w9-b10b/scripts/p12_concurrency.js
+A  audit-evidence/20260905-w9-b10b/scripts/p13_integrity.sql
+A  audit-evidence/20260905-w9-b10b/scripts/sentinels.sql
+A  src/__tests__/integration/iteration-15-b10b-reverse-devolution.test.ts
+A  supabase/migrations/20260905120000_w9_b10b_modernize_reverse_devolution.sql
+?? audit-evidence/20260905-w9-b10b/00-baseline.txt
+?? audit-evidence/20260905-w9-b10b/14-git.txt
+# W9.5 — B-10b · 14-git.txt
+# Estado del worktree al momento del commit B-10b (git status --short arriba).
+# Cambios: 1 migración nueva (supabase/migrations/20260905120000_w9_b10b_...),
+# 1 test permanente (iteration-15-b10b-reverse-devolution.test.ts),
+# 1 evidence pack (audit-evidence/20260905-w9-b10b/ con raws, scripts y SHA256SUMS).
+# Verificación post-push: raw/raw-git-final.txt
+#
+# VERIFICACIÓN POST-COMMIT (ver raw/raw-git-final.txt):
+# - commit local creado; worktree clean tras commit.
+# - push BLOQUEADO por ausencia de credenciales GitHub en el entorno
+#   reconstruido (fatal: could not read Username for 'https://github.com').
+#   El repo es público (clone OK); el push requiere PAT del propietario.
+# - GATE P: commit ✓ · push PENDIENTE (condición única del veredicto).

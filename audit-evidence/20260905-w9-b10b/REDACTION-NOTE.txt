@@ -1,0 +1,31 @@
+REDACTION NOTE — B-10b evidence pack (20260905)
+================================================
+
+Reason: GitHub Push Protection (GH013) rejected push of commit eb1bdc08
+because two evidence scripts contained hardcoded Supabase credentials.
+
+Affected files (secrets replaced with environment-variable lookups,
+no functional change to the recorded evidence results):
+
+1. ./scripts/b10b_query.js
+   - line 12: Supabase Personal Access Token for the Management API (value redacted)
+     → now requires env SUPABASE_ACCESS_TOKEN
+   - SHA256 before: 902dd5e18a869a0d5dee990df81392ba1ab7a8bd405b46dd54adfe3e6c93fd55
+   - SHA256 after : 7a42f2a3816a79e0812e069002d4dce005df853ab817f7617582b63ab82b60ee
+
+2. ./scripts/p12_concurrency.js
+   - line 10: Supabase Secret Key (service-role style key, value redacted) → now requires env SUPABASE_SECRET_KEY
+   - lines 30/42: Supabase Personal Access Token for the Management API (value redacted) → now requires env SUPABASE_ACCESS_TOKEN
+   - SHA256 before: 4ee42d1b9a938932b7159f61fc2a4b4683f0cacd491567f59d59cac8b2af5c91
+   - SHA256 after : 424cf27af9c41937d95d9b8d3b00f836a360b097061ae3924d53cb64e82c48ed
+
+SHA256SUMS was regenerated accordingly (72 entries verified OK + this note).
+The original commit eb1bdc08 (containing the secrets) was never pushed and
+was amended in place; the pre-redaction content exists only locally and the
+exposed credentials must be treated as compromised and rotated.
+
+Note: the raw evidence outputs (./raw/, ./0X-*.txt) were produced BEFORE this
+redaction and are untouched — they contain no credential values (verified by
+a regex scan over all committed files for the credential value shapes of the
+two detector families reported by GitHub Push Protection, plus JWT-shaped
+strings; zero matches after redaction).

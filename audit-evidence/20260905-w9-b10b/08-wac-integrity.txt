@@ -1,0 +1,50 @@
+# W9.5 — B-10b · 08-wac-integrity.txt
+# GATE 14: WAC invariante (la devolución original no altera cost_average — hotfix A2 v2.22.0 —
+# y el reverse conserva esa invariancia vía rama q=0 de fn_recalc_wac: "Salida pura /
+# devolución A1 / evento neutro: WAC INVARIANTE").
+
+wac_change_log del fixture (event=devolution_reverse): TODAS qty_in=0 y wac_before==wac_after:
+[
+ {
+  "qty": 0,
+  "after": 5,
+  "before": 5,
+  "product": "b10b0000-0000-4000-8000-0000000002a1"
+ },
+ {
+  "qty": 0,
+  "after": 3,
+  "before": 3,
+  "product": "b10b0000-0000-4000-8000-0000000002a2"
+ },
+ {
+  "qty": 0,
+  "after": 7,
+  "before": 7,
+  "product": "b10b0000-0000-4000-8000-0000000002a4"
+ },
+ {
+  "qty": 0,
+  "after": 7,
+  "before": 7,
+  "product": "b10b0000-0000-4000-8000-0000000002a4"
+ },
+ {
+  "qty": 0,
+  "after": 1,
+  "before": 1,
+  "product": "b10b0000-0000-4000-8000-0000000002a5"
+ },
+ {
+  "qty": 0,
+  "after": 1,
+  "before": 1,
+  "product": "b10b0000-0000-4000-8000-0000000002a6"
+ }
+]
+
+Caso stock>0 (P1: 13→10) y caso stock→0 (P2: 2→0): sin división por cero, sin WAC corrupto.
+NO se usó la inversa exacta (-q, uc): invertiría un blend que nunca ocurrió (corrupción).
+products.cost_average de todos los productos fixture: idéntico PRE/POST por operación.
+Único escritor de cost_average: fn_recalc_wac (token app.wac_writer, guard w62 intacto,
+hash PRE==POST en 04-migration-review.txt).

@@ -1,0 +1,17 @@
+PASS reverse_devolution (cuerpo) hash=CAMBIA
+PASS register_stock_movement hash=IGUAL
+PASS fn_recalc_wac hash=IGUAL
+PASS auto_kardex_on_stock_movement hash=CAMBIA
+PASS can_reverse_document hash=IGUAL
+PASS fn_sync_inventory_on_movement hash=IGUAL
+PASS sync_product_stock hash=IGUAL
+PASS auto_kardex líneas añadidas=1
+PASS rama devolution_reverse presente
+PASS OID preservado=136657 (correccion: comparacion tipo-safe string; ver raw-post-fnstate.json)
+PASS owner=postgres
+PASS SECURITY DEFINER=true
+PASS search_path=["search_path=public"]
+PASS ACL=["postgres=X/postgres","service_role=X/postgres"]
+PASS enum valores=18
+PASS devolution_reverse en enum (orden 18)
+PASS triggers stock_movements habilitados=3

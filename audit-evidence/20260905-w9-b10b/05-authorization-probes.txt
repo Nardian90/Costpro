@@ -1,0 +1,35 @@
+# W9.5 — B-10b · 05-authorization-probes.txt
+# Política B-10 CONGELADA y sin cambios: can_reverse_document(actor, store, 'devolution')
+# = membresía ACTIVA en la tienda (cualquier rol) o admin global (profiles.role='admin').
+# B-10b NO toca autorización. Verificación empírica sobre fixture (claims JWT sintéticos):
+
+[U1 (clerk, membership store A) → D1 (store A)]
+  error : (SUCCESS)
+  status: reversed · audit.user_id=b10b0000-0000-4000-8000-0000000001a1
+
+[U2 (membership SOLO store B) → L2 (store A)]
+  error : ERR_UNAUTHORIZED
+  status: completed · audit.user_id=n/a
+
+[U3 (SIN memberships) → L2 (store A)]
+  error : ERR_UNAUTHORIZED
+  status: completed · audit.user_id=n/a
+
+[U1 con p_user_id=GA forjado → L1]
+  error : (SUCCESS)
+  status: reversed · audit.user_id=b10b0000-0000-4000-8000-0000000001a1
+
+[admin global REAL e2e (051c6157…) → D6 (store A)]
+  error : (SUCCESS)
+  status: reversed · audit.user_id=051c6157-600b-425e-b8c0-72388bacf541
+
+CONCLUSIONES:
+- Membresía activa en tienda → ALLOW (R1).
+- Cross-store (sin membresía en la tienda del doc) → ERR_UNAUTHORIZED (R6).
+- Sin membresía alguna → ERR_UNAUTHORIZED (R6b).
+- p_user_id forjado en canal NO-service_role → IGNORADO: v_uid=auth.uid() (claims);
+  audit registra al actor real (R7: audit.user_id=U1, no GA).
+- Admin global transversal → ALLOW en tienda ajena (R10, admin real e2e).
+- Canal service_role (HTTP /api/reverse): p_user_id lo inyecta el servidor con
+  session.user.id (withAuth); confianza service_role congelada por B-8/B-10.
+- can_reverse_document / has_store_access_as: hash PRE==POST (04-migration-review.txt).

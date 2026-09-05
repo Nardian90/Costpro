@@ -1,0 +1,30 @@
+# W9.5 — B-10b · 13-regression.txt
+# GATE 25 · fecha: 2026-09-06 · baseline c892b055
+
+## Suite permanente (vitest)
+- `bun run test` → 92 archivos passed | 1 skipped; **1967 tests passed | 24 skipped | 0 failed**
+- Incluye el test permanente NUEVO: src/__tests__/integration/iteration-15-b10b-reverse-devolution.test.ts (**20/20 PASS**)
+  Congela: movement_type, kardex devolution_out, reference_id, restauración de stock (signo),
+  WAC invariante, state machine, idempotencia, autorización B-10 congelada, audit, prohibiciones §29, rollback.
+- Suite previa B-10 (iteration-15-b10-reverse-authorization) sigue verde: sin regresión de política.
+
+## Lint
+- `bun run lint` → **0 errors**, 1291 warnings (baseline preexistente desde B-8, sin deltas)
+
+## TypeScript
+- `tsc --noEmit` → **exit 0** (sin errores)
+
+## Build
+- `next build` → **Compiled successfully** (78s compile + TypeScript OK + páginas generadas)
+- NOTA DE ENTORNO: la fase tsc interna del build requirió ejecución con heap acotado
+  (NODE_OPTIONS=--max-old-space-size=2048) por límite de RAM del host (3.9GB, OOM killer
+  en primeros intentos con heap por defecto). Equivalencia verificación: tsc standalone
+  exit 0. Sin relación con B-10b (limitación física del entorno).
+
+## Runtime (PM2)
+- pm2: **3/3 online** — costpro + telegram-cron-poller + whatsapp-cron-poller
+- HTTP GET /            → 200
+- HTTP GET /api/health  → 200 {"status":"ok","service":"costpro-enterprise"}
+
+## Conclusión
+Regression PASS en los 5 frentes (tests, lint, tsc, build, runtime).

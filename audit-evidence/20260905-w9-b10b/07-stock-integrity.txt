@@ -1,0 +1,52 @@
+# W9.5 — B-10b · 07-stock-integrity.txt
+# GATE 3: signo · GATE 12: restauración exacta · pipeline canónico
+
+R1 (D1, P1): pre {"inv":13,"wac":5,"stock":13,"dev_status":"completed"} → post {"inv":10,"wac":5,"stock":10,"movs_n":2,"wac_log":[{"qty":0,"after":5,"event":"devolution_reverse","before":5}],"last_mov":{"by":"b10b0000-0000-4000-8000-0000000001a1","uc":4.8,"bal":10,"doc":"Reversión devolución NC-000001-2026","ref":"deafe436-ab12-404c-9975-b519623a8da9","type":"devolution_reverse","delta":-3},"movs_dev":2,"audit_last":{"meta":{"reason":"R1 happy D1","pipeline":"register_stock_movement","operation":"ADMIN_REVERSE_DEVOLUTION","new_status":"reversed","old_status":"completed","movement_type":"devolution_reverse","items_reversed":1},"store":"b10b0000-0000-4000-8000-00000000000a","user_id":"b10b0000-0000-4000-8000-0000000001a1"},"audits_dev":1,"dev_status":"reversed","kardex_last":{"uc":4.8,"qty":3,"type":"devolution_out","ref_id":"291223db-be4d-45f8-8e5b-54ec022b17ff","bal_qty":10,"ref_type":"stock_movement"}}
+  movement: {"by":"b10b0000-0000-4000-8000-0000000001a1","uc":4.8,"bal":10,"doc":"Reversión devolución NC-000001-2026","ref":"deafe436-ab12-404c-9975-b519623a8da9","type":"devolution_reverse","delta":-3}
+R2 (D2, P2 — reverse lleva a CERO, §14): pre {"inv":2,"wac":3,"stock":2,"dev_status":"completed"} → post {"inv":0,"wac":3,"stock":0,"movs_n":2,"wac_log":[{"qty":0,"after":3,"event":"devolution_reverse","before":3}],"last_mov":{"by":"b10b0000-0000-4000-8000-0000000001a1","uc":3.2,"bal":0,"doc":"Reversión devolución NC-000002-2026","ref":"0d504a04-d888-4711-8094-9f0773006514","type":"devolution_reverse","delta":-2},"movs_dev":2,"audit_last":{"meta":{"reason":"R2 zero D2","pipeline":"register_stock_movement","operation":"ADMIN_REVERSE_DEVOLUTION","new_status":"reversed","old_status":"completed","movement_type":"devolution_reverse","items_reversed":1},"store":"b10b0000-0000-4000-8000-00000000000a","user_id":"b10b0000-0000-4000-8000-0000000001a1"},"audits_dev":1,"dev_status":"reversed","kardex_last":{"uc":3.2,"qty":2,"type":"devolution_out","ref_id":"35dbfd77-a984-4337-b001-c42e9753923a","bal_qty":0,"ref_type":"stock_movement"}}
+R5 (D3, P3 stock 0): Stock negativo no permitido | product_id=b10b0000-0000-4000-8000-0000000002a3 | store_id=b10b0000-0000-4000-8000-00000000000a — rollback ATÓMICO: movs/audits/status/WAC intactos
+
+Cadena P1 (pipeline-native, baseline fixture 10):
+  movs: [{"d":3,"t":"return","uc":4.8,"ref":"deafe436-ab12-404c-9975-b519623a8da9"},{"d":-3,"t":"devolution_reverse","uc":4.8,"ref":"deafe436-ab12-404c-9975-b519623a8da9"}]
+  Σdelta=0 · stock=10 · inv=10 (baseline 10 + Σdelta = stock ✓)
+Cadena P2 (creada desde stock 0): Σdelta=0 · stock=0
+
+INVARIANTE products.stock_current == inventory.quantity tras TODAS las operaciones:
+[
+ {
+  "ok": true,
+  "inv": 10,
+  "stock": 10,
+  "product": "b10b0000-0000-4000-8000-0000000002a1"
+ },
+ {
+  "ok": true,
+  "inv": 3,
+  "stock": 3,
+  "product": "b10b0000-0000-4000-8000-0000000002a4"
+ },
+ {
+  "ok": true,
+  "inv": 2,
+  "stock": 2,
+  "product": "b10b0000-0000-4000-8000-0000000002a5"
+ },
+ {
+  "ok": true,
+  "inv": 3,
+  "stock": 3,
+  "product": "b10b0000-0000-4000-8000-0000000002a6"
+ },
+ {
+  "ok": true,
+  "inv": 0,
+  "stock": 0,
+  "product": "b10b0000-0000-4000-8000-0000000002a2"
+ }
+]
+
+CONCLUSIÓN: signo correcto (reverse = -q exacto, sin clamp); restauración exacta
+stock+inventory; caso stock→0 funciona SIN clamp ni error; stock insuficiente
+falla ruidosamente (trg_prevent_negative_inventory / fn_sync_inventory_on_movement)
+con rollback total. Prohibiciones §29: reverse_devolution ya NO hace UPDATE directo
+de products.stock_current ni INSERT directo de kardex (04-migration-review.txt).

@@ -1,0 +1,1 @@
+[{"payload":{"pre":{"inv":5,"wac":7,"stock":5,"dev_status":"completed"},"post":{"inv":5,"wac":7,"stock":5,"movs_n":0,"wac_log":[],"last_mov":null,"movs_dev":0,"audit_last":null,"audits_dev":0,"dev_status":"completed","kardex_last":null},"error":"ERR_UNAUTHORIZED","probe":"R6b no-member U3→L2","result":null,"expected":"ERR_UNAUTHORIZED"}}]
