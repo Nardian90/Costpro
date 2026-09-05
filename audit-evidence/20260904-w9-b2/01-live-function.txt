@@ -1,0 +1,105 @@
+════════════════════════════════════════════════════════════════════
+W9.5 — B-2 · 01-live-function.txt
+GATE 1 — Introspección LIVE de public.void_transaction
+════════════════════════════════════════════════════════════════════
+Fuente: pg_proc / pg_get_functiondef contra la base LIVE (no migraciones).
+
+IDENTIDAD
+  OID:                138000
+  Schema:             public
+  Nombre:             void_transaction
+  Owner:              postgres
+  SECURITY DEFINER:   true   (prosecdef = t)
+  search_path:        search_path=pg_catalog, public   (endurecido — commits 033e05d9 / 2f7af7db)
+  Volatilidad:        volatile
+  Return type:        jsonb
+  Argumentos:         p_transaction_id uuid,
+                      p_reason text,
+                      p_operation_date timestamp with time zone DEFAULT now(),
+                      p_user_id uuid DEFAULT NULL
+
+proacl (crudo):
+  {=X/postgres,postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+  ⇒ El primer elemento (=X/postgres) es PUBLIC: EXECUTE concedido a PUBLIC,
+    que INCLUYE anon. Ver 02-acl-security.txt.
+
+DEFINICIÓN COMPLETA EN VIVO (pg_get_functiondef(138000)):
+--------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.void_transaction(p_transaction_id uuid, p_reason text, p_operation_date timestamp with time zone DEFAULT now(), p_user_id uuid DEFAULT NULL::uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'pg_catalog', 'public'
+AS $function$
+DECLARE
+  v_tx RECORD;
+  v_item RECORD;
+  v_caller_uid UUID := CASE WHEN auth.role() = 'service_role' THEN COALESCE(p_user_id, auth.uid()) ELSE auth.uid() END;
+  v_eff TIMESTAMP WITH TIME ZONE := COALESCE(p_operation_date, NOW());
+  v_conversion_factor integer := 1;
+  v_units_to_restore numeric;
+BEGIN
+  SELECT * INTO v_tx FROM public.transactions WHERE id = p_transaction_id FOR UPDATE;
+  IF NOT FOUND THEN RAISE EXCEPTION 'ERR_TX_NOT_FOUND'; END IF;
+
+  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, v_tx.store_id) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+  END IF;
+
+  IF v_tx.status = 'voided' THEN RAISE EXCEPTION 'ERR_ALREADY_VOIDED'; END IF;
+
+  UPDATE public.transactions
+    SET status = 'voided', void_reason = p_reason, cancelled_at = v_eff, updated_at = NOW()
+    WHERE id = p_transaction_id;
+
+  -- FIX C-7: Restaurar stock considerando conversion_factor de variantes.
+  FOR v_item IN SELECT * FROM public.transaction_items WHERE transaction_id = p_transaction_id LOOP
+    v_conversion_factor := 1;
+    IF v_item.variant_id IS NOT NULL THEN
+      SELECT conversion_factor INTO v_conversion_factor
+        FROM public.product_variants WHERE id = v_item.variant_id;
+      v_conversion_factor := COALESCE(v_conversion_factor, 1);
+    END IF;
+    v_units_to_restore := v_item.quantity * v_conversion_factor;
+    PERFORM public.register_stock_movement(
+      p_product_id := v_item.product_id,
+      p_store_id := v_tx.store_id,
+      p_user_id := v_caller_uid,
+      p_quantity := v_units_to_restore,
+      p_movement_type := 'sale_void',
+      p_notes := p_transaction_id::text,
+      p_unit_cost := v_item.cost_at_sale,
+      p_reason := 'Void de venta',
+      p_operation_date := v_eff,
+      p_skip_access_check := TRUE
+    );
+  END LOOP;
+
+  INSERT INTO public.audit_logs (action, table_name, record_id, store_id, user_id, metadata)
+  VALUES ('VOID_SALE', 'transactions', p_transaction_id, v_tx.store_id, v_caller_uid,
+    jsonb_build_object('reason', p_reason, 'old_status', v_tx.status));
+
+  RETURN jsonb_build_object('status', 'success', 'transaction_id', p_transaction_id);
+END;
+$function$
+--------------------------------------------------------------------------
+
+DEPENDENCIAS (llamadas/tablas tocadas):
+  - public.has_store_access_as (OID 136268, SECURITY DEFINER, search_path=public)
+  - public.register_stock_movement (SECURITY DEFINER; genera stock_movements → trigger genera kardex_entries)
+  - auth.uid() / auth.role() (esquema auth — claims del JWT verificado por PostgREST)
+  - Tablas: transactions (SELECT FOR UPDATE, UPDATE), transaction_items (SELECT),
+    product_variants (SELECT), audit_logs (INSERT) + efectos de register_stock_movement.
+
+TRIGGERS DE transactions AFECTADOS por el UPDATE interno (todos 'O'=enabled):
+  - reverse_commissions_on_sale_void   (reversión de comisiones al voidar)
+  - trg_audit_transaction_changes      (auditoría de cambios de fila)
+  - trg_check_active_user
+  - trg_protect_transactions_total_amount
+  - trg_validate_tx_transition         (máquina de estados; completed→voided y pending→voided observados en probes)
+
+HISTORIAL DE RETIRO/OVERLOADS (migraciones, referencia):
+  - 20260622000004: 2 sobrecargas legacy (3 y 2 args) con GRANT authenticated
+  - 20260727000009 / 20260727000012: REVOKE anon + reconstrucción 4-args
+  - 20260702000008 / 20260803000002: conversion_factor (FIX C-7)
+  Solo la sobrecarga 4-args (uuid, text, timestamptz, uuid) existe hoy en vivo (OID 138000).

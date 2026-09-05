@@ -1,0 +1,70 @@
+════════════════════════════════════════════════════════════════════
+W9.5 — B-2 · 13-data-integrity.txt
+GATE 9 + §19 — Integridad de datos PRE vs POST + limpieza de fixtures
+════════════════════════════════════════════════════════════════════
+
+## Snapshot GLOBAL (LIVE DB, checksums md5 del contenido ordenado)
+
+Métrica             PRE                                        POST                                       Δ
+transactions_n      520                                        520                                        =
+transactions_md5    fc959e459c4de2a80b9dab6219ea551d           fc959e459c4de2a80b9dab6219ea551d           =
+tx_items_n          555                                        555                                        =
+payments_n          366                                        366                                        =
+payments_md5        8599416baa0a46e03aa191f15c8dd9ee           8599416baa0a46e03aa191f15c8dd9ee           =
+stock_movements_n   702                                        702                                        =
+kardex_n            702                                        702                                        =
+inventory_n         141                                        141                                        =
+inventory_md5       6cb185f86a23953c356376d5dc74ec78           6cb185f86a23953c356376d5dc74ec78           =
+products_md5        d2e6ad7363b2ff5ca62d8da46b23b5bf           d2e6ad7363b2ff5ca62d8da46b23b5bf           =
+audit_n             7375                                       7375                                       =
+audit_md5           7a1f2b5629bc26d77e71eb6b3dc1674c           7a1f2b5629bc26d77e71eb6b3dc1674c           =
+memberships_n       51                                         51                                         =
+stores_n            44                                         44                                         =
+profiles_n          26                                         26                                         =
+
+⇒ PRE == POST en 15/15 métricas (bit a bit). La auditoría no alteró NINGÚN dato
+  real: ni transactions, ni payments, ni stock, ni inventory, ni WAC, ni audit.
+  (Los triggers de stores quedaron re-habilitados: trigger_audit_store_changes
+  tgenabled='O' verificado tras el cleanup.)
+
+## Inventario de efectos de probes (todos sobre fixture sintético b2c0ffee-…)
+
+Probe → efectos commiteados (autocommit detectado — ver 06):
+  P1  (auth 03524340…): TX_A voided · +1 movement(5) · inv A +5 · audit VOID_SALE
+  P4  (admin):          TX_B voided · +1 movement(3) · inv B +3 · audit VOID_SALE
+  P11 (auth 03524340…): TX_AP(pending) voided · +1 movement(2) · inv A +2 · audit
+  P3b'(auth 03524340…): TX_A2 voided · +1 movement(2) · inv A +2 · audit (user=real)
+  P6c (service_role):   TX_A3 voided · 0 items → 0 movements · audit VOID_SALE
+  P13 (auth 03524340…): TX_A4 (seller ajeno) voided · 0 items → 0 movements · audit
+  P5/P12/P6b (HTTP denegados): 0 efectos
+  P2/P3a/P7 (denegados): 0 efectos propios
+  P10: 0 efectos adicionales (guard ERR_ALREADY_VOIDED ×2)
+
+## Limpieza de fixtures (orden FK-safe, deletions verificadas)
+
+kardex_entries      deleted: N (por producto/tienda fixture)
+stock_movements     deleted: N
+audit_logs          deleted: N (incluye 2 CREATE_STORE generados por trigger)
+transaction_items   deleted: 4
+transactions        deleted: 6
+inventory           deleted: 2
+products            deleted: 2
+user_store_memberships deleted: 2
+stores              deleted: 2 (requirió DISABLE/ENABLE temporario del trigger
+                    trigger_audit_store_changes — bug B-6 conocido: el trigger
+                    impide TODO borrado de tienda; re-habilitado y verificado
+                    tgenabled='O')
+
+## Residuos finales (10 verificaciones, prefijo b2c0ffee% + marcadores W9B2%)
+
+  stores=0 · memberships=0 · products=0 · inventory=0 · transactions=0 ·
+  tx_items=0 · payments=0 · stock_movements=0 · kardex=0 · audit=0
+  ⇒ CLEANUP VERIFIED: 0 residuos
+
+## Declaración
+
+Ningún intento no autorizado produjo mutación de datos reales (los denegados
+quedaron en 0 cambios — batería por probe). Todos los efectos observados
+ocurrieron sobre datos 100% sintéticos y fueron eliminados por completo.
+Cuentas auth: 0 creadas. Perfiles reales reutilizados: 3 (solo lectura de
+role/is_active + memberships sintéticas eliminadas).

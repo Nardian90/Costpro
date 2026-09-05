@@ -1,0 +1,37 @@
+════════════════════════════════════════════════════════════════════
+W9.5 — B-2 · 00-checkpoint.txt
+Auditoría forense de AUTORIZACIÓN — void_transaction (superficie cliente → RPC)
+════════════════════════════════════════════════════════════════════
+
+Fecha: 2026-09-05 (UTC-5) · Agente: Super Z · Task ID: W9.5-B2
+
+BASELINE REQUERIDO: 3d609f45
+COMANDOS (FASE 0):
+  $ git status --short
+  (sin salida — worktree limpio)
+  $ git rev-parse HEAD
+  3d609f45983635c6179936da9b4b356643d16278
+  $ git rev-parse origin/main
+  3d609f45983635c6179936da9b4b356643d16278
+
+VEREDICTO CHECKPOINT:
+  HEAD == origin/main == 3d609f45  →  CUMPLE
+  Worktree limpio                  →  CUMPLE
+  Estado: PASS — se procede con la auditoría
+
+CONTEXTO PREVIO (heredado):
+  - W9.4.9 / H5-B3 concluyó: CLOSED / NO ISSUE IN CURRENT PATH (commit 3d609f45).
+  - Dos rutas ejecutables hacia anulación:
+      · Canónica: ReverseDocumentModal → useReverseDocument → POST /api/reverse → reverse_transaction_v2 (ACL: postgres,service_role)
+      · Legacy/directa: POS "Deshacer" (30s) + SalesHistory → useInvertDocument → supabase.rpc('void_transaction') DESDE EL CLIENTE (ACL incluye authenticated y PUBLIC)
+  - B-2 evalúa exclusivamente AUTORIZACIÓN (no concurrencia; H5-B3 ya cerró locking).
+
+ALCANCE:
+  B-2 — void_transaction EXECUTE TO authenticated (además se detecta EXECUTE TO PUBLIC).
+  Fuera de alcance (solo BACKLOG): B-1, B-3..B-7, OBS-2, OBS-3.
+
+MÉTODO:
+  LIVE DB (Management API SQL) + CODE TRACE + ACL + AUTHORIZATION LOGIC +
+  DIRECT RPC PROBES (SET LOCAL ROLE authenticated + request.jwt.claims simulado,
+  y PostgREST real con anon/service_role) + CROSS-STORE TEST + FORGED INPUT TEST +
+  DATA INTEGRITY (PRE/POST con checksums) + REGRESSION + SHA256 + GIT.

@@ -1,0 +1,40 @@
+W9.5 — B-2 — §23/§0 GIT VERIFICATION
+Fecha: 2026-09-05
+
+1) CHECKPOINT BASELINE (inicio del checkpoint)
+   $ git status --short        → (vacío, worktree limpio)
+   $ git rev-parse HEAD        → 3d609f45983635c6179936da9b4b356643d16278
+   $ git rev-parse origin/main → 3d609f45983635c6179936da9b4b356643d16278
+   ✔ HEAD == origin/main == 3d609f45 (baseline exigido por el protocolo W9.5-B2)
+
+2) ALCANCE DEL CAMBIO
+   $ git status (durante TODO el checkpoint) → únicamente audit-evidence/20260904-w9-b2/
+   NINGÚN archivo de código fue modificado. NO CODE CHANGE. NO COMMIT DE CÓDIGO.
+   Veredicto CASO A (autorización correctamente implementada a nivel
+   identidad+tienda, probada con 12 probes live) → el protocolo §16/§24 prohíbe
+   endurecer/retirar void_transaction sin decisión de política sistémica; los
+   gaps de rol/ownership/status se registran como BACKLOG (B-8/B-9) en 11-fix.diff.
+   Invariantes verificados PRE==POST (13-data-integrity.txt): 15/15 métricas con
+   checksums md5 idénticos (transactions/payments/stock/kardex/inventory/WAC/audit).
+
+3) EVIDENCIA
+   La evidencia forense (00…15 + SHA256SUMS) se commitea siguiendo el precedente
+   de H5-B2 (fd877a53) y H5-B3 (3d609f45):
+   $ git diff --check          → (sin errores de whitespace)
+   $ sha256sum audit-evidence/20260904-w9-b2/* > audit-evidence/20260904-w9-b2/SHA256SUMS
+   $ sha256sum -c audit-evidence/20260904-w9-b2/SHA256SUMS  → ALL OK
+   $ git add audit-evidence/20260904-w9-b2/
+   $ git commit -m "audit(w9): forensic authorization audit of void_transaction (W9.5 B-2) — verdict CLOSED/NO ISSUE"
+   $ git push origin main
+   Verificación post-push (ejecutada y registrada en el informe final y worklog):
+   $ git rev-parse HEAD == git rev-parse origin/main  (igualdad exacta exigida)
+
+4) INVARIANTE DE SEGURIDAD
+   - No se tocó: void_transaction (DB ni migraciones), reverse_transaction_v2,
+     /api/reverse, useInvertDocument, payment ledger, WAC, inventory, RLS/policies,
+     ACLs de funciones, triggers (trigger_audit_store_changes solo DISABLE/ENABLE
+     temporario durante cleanup con verificación de re-habilitación tgenabled='O').
+   - No se crearon cuentas auth (0). No se crearon usuarios.
+   - Los scripts de la auditoría viven fuera del repo (/home/z/my-project/scripts/)
+     y NO se publican credenciales ni tokens en ningún archivo de evidencia.
+     UUIDs de usuarios reales enmascarados a 8 chars en toda la evidencia.

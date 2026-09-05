@@ -1,0 +1,53 @@
+════════════════════════════════════════════════════════════════════
+W9.5 — B-2 · 12-regression.txt
+§20 — Test Suite (post-auditoría, sin fix de código)
+════════════════════════════════════════════════════════════════════
+
+Comandos ejecutados desde /home/z/my-project/Costpro (baseline 3d609f45, sin
+modificaciones de código durante la auditoría — solo se añadió audit-evidence/).
+
+1) TEST SUITE — runner del proyecto
+$ bun run test        (script package.json → "vitest run")
+EXIT=0
+  Test Files   89 passed | 1 skipped (90)
+  Tests        1892 passed | 24 skipped (1916)
+  Duration     201.06s
+VEREDICTO: PASS — 0 fallos. Idéntico al baseline de auditorías previas
+(W9.4.8-FIX y W9.4.9: 1892 pass).
+
+NOTA sobre el literal "bun test" del checkpoint:
+$ bun test  (runner NATIVO de bun, NO configurado por el proyecto)
+  1502 pass / 18 skip / 292 fail / 41 errors — [148.56s]
+Los 292 "failures" son artefactos del runner incorrecto (bun:test no implementa
+el API vitest con el que está escrita la suite; p.ej. mocks de NextRequest,
+vi.mock de Supabase, fixtures de entorno). El proyecto declara "test": "vitest
+run" (package.json) y ese es el criterio autoritativo usado por las auditorías
+previas. Se documenta AMBOS resultados por transparencia.
+
+2) LINT
+$ bun run lint
+EXIT=0 — 1291 problems (0 errors, 1291 warnings)
+VEREDICTO: PASS (0 errors; warnings pre-existentes, sin cambios vs baseline).
+
+3) TYPECHECK (no existe script "typecheck"; comando directo como en auditorías previas)
+$ bunx tsc --noEmit
+EXIT=0, sin output
+VEREDICTO: PASS
+
+4) BUILD (requiere memoria; protocolo del checkpoint §20 aplicado)
+Memoria libre pre-build: 1.7Gi free / 2.9Gi available (insuficiente) →
+$ pm2 stop all  (costpro, telegram-cron-poller, whatsapp-cron-poller → stopped)
+$ bun run build  (timeout 570s)
+EXIT=0 — build completado, generación de rutas y middleware OK.
+  Sin OOM · Sin SIGKILL · Sin timeout (intento 1, 3.4Gi disponibles tras stop).
+$ pm2 start all
+  costpro online · telegram-cron-poller online · whatsapp-cron-poller online
+Verificación HTTP:
+$ curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/
+  → HTTP 200 (polling con recompilación dev inicial; intento 1 del loop)
+VEREDICTO: PASS — servicio restaurado y operativo.
+
+5) DECLARACIÓN
+Ningún comando terminó por SIGKILL/OOM/timeout con resultado declarado PASS.
+pm2 fue detenido SOLO para el build y restaurado INMEDIATAMENTE después,
+verificando HTTP 200 (§20).

@@ -1,0 +1,47 @@
+════════════════════════════════════════════════════════════════════
+W9.5 — B-2 · 02-acl-security.txt
+GATE 1/7 — ACL resueltos por rol + comparación con la familia void/reverse
+════════════════════════════════════════════════════════════════════
+Fuente: aclexplode(pg_proc.proacl) — LIVE DB. Permisos reales, NO inferidos del frontend.
+
+void_transaction (OID 138000) — EXECUTE:
+  GRANTEE        GRANTOR     PRIVILEGE   GRANTABLE
+  PUBLIC         postgres    EXECUTE     no     ← incluye anon (grant por defecto de CREATE FUNCTION)
+  postgres       postgres    EXECUTE     no
+  authenticated  postgres    EXECUTE     no
+  service_role   postgres    EXECUTE     no
+
+  NOTA: las migraciones 20260727000009/12 hicieron REVOKE a anon, pero el grant
+  PUBLIC (acldefault('f', owner)) persiste ⇒ anon ALCANZA la función vía PostgREST.
+  Consecuencia probada (06/07): el CUERPO rechaza a anon (auth.uid() NULL →
+  ERR_UNAUTHORIZED, HTTP 400 P0001). Defensa en profundidad = cuerpo, no ACL.
+
+COMPARACIÓN — familia void/reverse EXECUTE (LIVE):
+  función                        grantees EXECUTE                 usa auth.uid()  usa has_store_access_as
+  reverse_transaction_v2         postgres,service_role            sí              sí
+  reverse_receipt_v2             PUBLIC,authenticated,service_role,postgres  sí   sí
+  reverse_receipt (V1, sin consumers activos)  postgres,service_role  sí          sí
+  void_inventory_adjustment      authenticated,service_role,postgres      sí    sí
+  void_pending_reception         PUBLIC,authenticated,service_role,postgres  sí  sí
+  void_closed_production_order   PUBLIC,anon,authenticated,service_role,postgres sí sí
+  void_transaction               PUBLIC,authenticated,service_role,postgres  sí  sí
+
+  ⇒ void_transaction NO es un outlier: toda la familia comparte el patrón
+    auth.uid() + has_store_access_as. La diferencia OPERATIVA es quién llega al RPC:
+    reverse_transaction_v2 SOLO es invocable por service_role (la ruta /api/reverse
+    inyecta p_user_id del session server-side); void_transaction es invocable
+    directamente por cualquier authenticated (y PUBLIC→anon, rechazado por cuerpo).
+
+DISTINCIÓN authenticated vs service_role (GATE 7):
+  - authenticated: sesión JWT de usuario real (PostgREST verifica firma; auth.uid()
+    proviene SIEMPRE del JWT verificado, no de parámetros del cliente).
+  - service_role: clave estática de servidor (nunca en el cliente); es la identidad
+    que usan las API routes (supabase-admin) y por contrato DEBE suministrar
+    p_user_id (probe P12: service_role sin p_user_id → ERR_UNAUTHORIZED, HTTP 400).
+  El hecho de que service_role pueda ejecutar NO implica que authenticated deba —
+  se probaron AMBOS por separado (P5 anon, P1/P13 authenticated, P6c service_role).
+
+RLS (resumen; detalle en 09-rls-definer-analysis.txt):
+  12/12 tablas tocadas: owner=postgres, RLS enabled, FORCE solo en stock_movements.
+  SECURITY DEFINER ejecuta como owner ⇒ bypass de RLS por diseño; la autorización
+  real vive en el cuerpo (has_store_access_as), idéntico al resto de la familia.

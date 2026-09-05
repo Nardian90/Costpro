@@ -1,0 +1,54 @@
+════════════════════════════════════════════════════════════════════
+W9.5 — B-2 · 11-fix.diff
+════════════════════════════════════════════════════════════════════
+
+## ESTADO: NO CODE CHANGE
+
+No se generó ningún fix porque el veredicto de la auditoría es:
+
+    B-2 — CLOSED / NO ISSUE
+
+La pregunta crítica de B-2 era:
+
+  ¿void_transaction verifica EN SERVIDOR que el caller autenticado tenga
+  autorización para anular esa transacción concreta?
+
+RESPUESTA (probada, no teórica):
+  SÍ — a nivel de identidad y de tienda:
+    - caller identity = auth.uid() real (JWT verificado); p_user_id ignorado
+      para clientes (P3a/P3b').
+    - autorización = membresía ACTIVA en la tienda de la transacción (o admin
+      global) evaluada contra el store_id de LA FILA objetivo (P1/P2/P7).
+    - cross-store → DENIED (P2/P7) · forged → DENIED/sin efecto (P3a/P3b') ·
+      anon → DENIED (P5) · service sin identidad → DENIED (P12).
+    - SECURITY DEFINER bypassa RLS por diseño (patrón común a toda la familia
+      void/reverse, incluida la ruta canónica) — no constituye vector adicional
+      (09-rls-definer-analysis.md).
+
+## Por qué NO se endureció (ni se retiró) void_transaction
+
+1. GATE 4: existe razón funcional legítima y activa — POS "Deshacer" (30s) y
+   SalesHistory invert dependen de que un vendedor (rol usuario/clerk) pueda
+   anular SU venta sin rol manager. Un chequeo de rol server-side rompería
+   POS-undo tal como está diseñado.
+2. El gap de ROL (gating frontend-only) y de PROPIEDAD no es diferencial de
+   void_transaction: la ruta canónica /api/reverse → reverse_transaction_v2
+   comparte el MISMO has_store_access_as (sin chequeo de rol). Corregirlo exige
+   una decisión de política de producto y un cambio SISTÉMICO en la familia +
+   route + UX — fuera del alcance B-2 (scope control §24).
+3. §16 del checkpoint prohíbe escoger un fix antes de demostrar cuál corresponde
+   al contrato; el contrato server-side vigente (rutas + familia RPC) ES el
+   membership-model verificado.
+
+## Registro de hallazgos nuevos (BACKLOG — no corregidos aquí)
+
+  B-8: Autorización por ROL (manager/encargado) y por PROPIEDAD solo existe en
+       el frontend (canVoidTransactions). Server-side la familia void/reverse
+       (y /api/reverse) valida solo membresía+identidad. Requiere decisión de
+       política y fix consistente en AMBAS rutas.
+  B-9: void_transaction acepta status≠'completed' (pending→voided, probe P11);
+       reverse_transaction_v2 exige 'completed'. Diferencia funcional a revisar.
+  B-6 (pre-existente, confirmado en cleanup): trigger trigger_audit_store_changes
+       hace imposible DELETE_STORE (FK violation en su propio INSERT de audit).
+       Cleanup usó DISABLE/ENABLE temporario del trigger como workaround
+       documentado, con verificación de re-habilitación (tgenabled='O').
