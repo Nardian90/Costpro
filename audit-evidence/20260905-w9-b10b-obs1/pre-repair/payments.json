@@ -1,0 +1,8 @@
+{
+ "payments_for_devolutions": null,
+ "payments_ref_types": [
+  "sale"
+ ],
+ "payments_for_orig_tx": null,
+ "orig_tx_of_reversed_dev": null
+}

@@ -1,0 +1,2 @@
+scope,payment_transactions_devolution_refs,payment_ref_types_live,orig_tx_exists,orig_tx_payments,commission_impact,verdict
+dev 0b7213e9 + 12 completed + orig_tx edb274bd,0,"[""sale""]",NO (purgada por reset de tienda),0,commission_payments es period-based (worker/period) sin referencia a devoluciones; las reglas ligan ventas/recepciones ya purgadas,FINANCIAL_DRIFT=0 ✓ (drift = únicamente el inventario histórico ya analizado)

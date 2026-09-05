@@ -1,0 +1,4 @@
+scope,store,kardex_rows,finding,unit_cost_anomaly,classification
+da1c4090-3e10-4120-a2bc-24da53cffe16,da1c4090,0,kardex del producto: 0 filas — creación pipeline (devolution_in) y reversión (out cost0) fueron purgadas junto con la tienda,,N/A
+GLOBAL,todos,702,kardex live es proyección 1:1 de movimientos supervivientes (451+251=702; min 2026-08-11T22:49 y 2026-08-16T23:22 — regeneración post-PR4/reset),,rows_kardex_out_reversal_cost0=0
+GLOBAL,d1c4ba0e,0,tienda de la devolución SIN kardex — purga total (reset_store_data),,SEPARATE_FINDING

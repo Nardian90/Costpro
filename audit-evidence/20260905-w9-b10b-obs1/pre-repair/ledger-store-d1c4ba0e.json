@@ -1,0 +1,38 @@
+{
+ "movements_by_store": [
+  {
+   "cnt": 451,
+   "max": "2026-08-17T04:00:00+00:00",
+   "min": "2026-07-01T12:00:00+00:00",
+   "store": "5e6fe821-5465-48b1-b3f1-3aa3182edc38"
+  },
+  {
+   "cnt": 251,
+   "max": "2026-07-11T12:00:00+00:00",
+   "min": "2026-05-01T09:00:00+00:00",
+   "store": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1"
+  }
+ ],
+ "kardex_by_store": [
+  {
+   "cnt": 451,
+   "max": "2026-08-18T04:03:41.899063+00:00",
+   "min": "2026-08-11T22:49:19.266205+00:00",
+   "store": "5e6fe821-5465-48b1-b3f1-3aa3182edc38"
+  },
+  {
+   "cnt": 251,
+   "max": "2026-08-16T23:49:39.270608+00:00",
+   "min": "2026-08-16T23:22:36.324314+00:00",
+   "store": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1"
+  }
+ ],
+ "store_orphans": {
+  "sum_stock": 6553,
+  "inventory_rows": 0,
+  "movements_rows": 0,
+  "products_total": 124,
+  "transactions_rows": 0,
+  "products_stock_nonzero": 108
+ }
+}

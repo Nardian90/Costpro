@@ -1,0 +1,2 @@
+product_id,wac_current,wac_change_log_rows,old_reverse_writes_wac,pair_wac_effect,verdict
+da1c4090-3e10-4120-a2bc-24da53cffe16,11.919422583856775,0,NO (cuerpo PRE no escribe cost_average; único escritor fn_recalc_wac + guard trg_guard_wac_writer),0 — devolución original (movement 'return') es WAC-invariante (hotfix A2 v2.22.0) y el reverse antiguo tampoco tocaba WAC,WAC_INVARIANTE ✓

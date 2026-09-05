@@ -1,0 +1,2 @@
+product_id,store_id,stock_movements_count,sum_delta_movements,kardex_count,ledger_derived_stock,anchor,note
+da1c4090-3e10-4120-a2bc-24da53cffe16,d1c4ba0e-5767-4ba0-e576-7d1c4ba0e576,0,0 (sin movimientos para el producto),0,UNDETERMINABLE (0 filas de ledger — purga de tienda documentada),N/A,"Tienda d1c4ba0e-5767-4ba0-e576-7d1c4ba0e576: 108/124 productos con stock<>0 y 0 movimientos; sum_stock=6553; inventory_rows=0; transactions_rows=0. Par devolución 0b7213e9: productos +1-1=0, inventory +1 (creación pipeline) — fila inventory purgada posteriormente."

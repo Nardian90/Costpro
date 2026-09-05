@@ -1,0 +1,160 @@
+{
+ "devolution": {
+  "id": "0b7213e9-344a-4aa0-876d-316be9c6ff2e",
+  "notes": null,
+  "reason": "Hot dev reverse 1786058841",
+  "status": "reversed",
+  "currency": "CUP",
+  "store_id": "d1c4ba0e-5767-4ba0-e576-7d1c4ba0e576",
+  "voided_at": null,
+  "voided_by": null,
+  "created_at": "2026-08-06T23:27:41.661518+00:00",
+  "updated_at": "2026-08-06T23:27:41.661518+00:00",
+  "customer_id": null,
+  "reversed_at": "2026-08-06T23:27:43.117368+00:00",
+  "reversed_by": "a1111111-1111-1111-1111-111111111111",
+  "void_reason": null,
+  "processed_at": "2026-08-06T23:27:41.661518+00:00",
+  "processed_by": "a1111111-1111-1111-1111-111111111111",
+  "total_amount": 350,
+  "customer_name": "Dev Reverse Customer",
+  "exchange_rate": 1,
+  "payment_method": "cash",
+  "idempotency_key": "dev-29ff2fd9-8e4b-4146-858c-7fcdaa2e913b",
+  "reversal_reason": "Reverse dev 1786058841",
+  "devolution_number": "NC-000007-2026",
+  "original_transaction_id": null
+ },
+ "items": [
+  {
+   "id": "a494198b-6449-42bb-8111-e59b4278f8da",
+   "total": 350,
+   "reason": "Hot test dev",
+   "quantity": 1,
+   "created_at": "2026-08-06T23:12:11.580593+00:00",
+   "product_id": "da1c4090-3e10-4120-a2bc-24da53cffe16",
+   "unit_price": 350,
+   "devolution_id": "0778b5d5-bf72-4d9b-b9f7-e4192a29d33f"
+  },
+  {
+   "id": "16fe02b9-3c28-44cf-aebe-8b2fdc5faac1",
+   "total": 350,
+   "reason": "Dev for reverse test",
+   "quantity": 1,
+   "created_at": "2026-08-06T23:27:41.661518+00:00",
+   "product_id": "da1c4090-3e10-4120-a2bc-24da53cffe16",
+   "unit_price": 350,
+   "devolution_id": "0b7213e9-344a-4aa0-876d-316be9c6ff2e"
+  },
+  {
+   "id": "8d804939-2d85-463d-b522-c004a5e64729",
+   "total": 350,
+   "reason": "Smoke test devolución",
+   "quantity": 1,
+   "created_at": "2026-08-06T04:40:22.560617+00:00",
+   "product_id": "da1c4090-3e10-4120-a2bc-24da53cffe16",
+   "unit_price": 350,
+   "devolution_id": "2a7934b7-9503-48cd-9240-c7606b486eb7"
+  },
+  {
+   "id": "99f7c38f-35bc-4b94-a6b5-1f9526f44436",
+   "total": 350,
+   "reason": "Hot test dev",
+   "quantity": 1,
+   "created_at": "2026-08-04T07:30:51.150879+00:00",
+   "product_id": "da1c4090-3e10-4120-a2bc-24da53cffe16",
+   "unit_price": 350,
+   "devolution_id": "379122c3-ceab-4e51-8ac3-5cf0de8beb28"
+  },
+  {
+   "id": "5606e455-e6ec-4479-accd-c42872037db0",
+   "total": 349650,
+   "reason": "Too many",
+   "quantity": 999,
+   "created_at": "2026-08-06T23:29:21.463226+00:00",
+   "product_id": "da1c4090-3e10-4120-a2bc-24da53cffe16",
+   "unit_price": 350,
+   "devolution_id": "42f89372-a76c-4e45-b2c7-a14252723f3e"
+  },
+  {
+   "id": "9a660f43-a105-4365-831b-c19558a6f9cd",
+   "total": 350,
+   "reason": "No original",
+   "quantity": 1,
+   "created_at": "2026-08-06T23:27:29.313767+00:00",
+   "product_id": "da1c4090-3e10-4120-a2bc-24da53cffe16",
+   "unit_price": 350,
+   "devolution_id": "6c051892-b5ac-4fd6-be9b-546458119b96"
+  },
+  {
+   "id": "018f7924-9681-49b6-9e98-cec6ec27d557",
+   "total": 350,
+   "reason": "Hot test devolution",
+   "quantity": 1,
+   "created_at": "2026-08-06T03:30:00.537152+00:00",
+   "product_id": "da1c4090-3e10-4120-a2bc-24da53cffe16",
+   "unit_price": 350,
+   "devolution_id": "74cfd314-45c3-47a0-bd48-5e6f16b58b44"
+  },
+  {
+   "id": "25aba8b6-e9f9-45f0-96f2-24a6b9542b3d",
+   "total": 350,
+   "reason": "Hot test dev",
+   "quantity": 1,
+   "created_at": "2026-08-06T23:10:25.820118+00:00",
+   "product_id": "da1c4090-3e10-4120-a2bc-24da53cffe16",
+   "unit_price": 350,
+   "devolution_id": "8bb4cfe5-2abf-4c4d-81fe-4ac33de732eb"
+  },
+  {
+   "id": "285d4cd1-a9be-436a-a664-9db672876932",
+   "total": 350,
+   "reason": "Lifecycle dev",
+   "quantity": 1,
+   "created_at": "2026-08-07T00:00:54.348822+00:00",
+   "product_id": "da1c4090-3e10-4120-a2bc-24da53cffe16",
+   "unit_price": 350,
+   "devolution_id": "903269d5-e624-4e52-958d-48e8bb84bde1"
+  },
+  {
+   "id": "b17751b9-7140-439b-8e1b-27202e3cb805",
+   "total": 350,
+   "reason": "Hot test dev",
+   "quantity": 1,
+   "created_at": "2026-08-06T23:22:10.228564+00:00",
+   "product_id": "da1c4090-3e10-4120-a2bc-24da53cffe16",
+   "unit_price": 350,
+   "devolution_id": "a11e7aa5-863a-4e61-a041-04d33d1f66d2"
+  },
+  {
+   "id": "7d5d235a-f54e-4770-984b-9bb5c25a6941",
+   "total": 350,
+   "reason": "Audit dev",
+   "quantity": 1,
+   "created_at": "2026-08-07T00:58:01.627486+00:00",
+   "product_id": "da1c4090-3e10-4120-a2bc-24da53cffe16",
+   "unit_price": 350,
+   "devolution_id": "c249cdcc-e0f8-43d6-b9c4-10e16daab9f3"
+  },
+  {
+   "id": "eaff7847-de4d-46be-a159-4aeccdb8672c",
+   "total": 350,
+   "reason": "Seq dev",
+   "quantity": 1,
+   "created_at": "2026-08-06T23:42:58.886691+00:00",
+   "product_id": "da1c4090-3e10-4120-a2bc-24da53cffe16",
+   "unit_price": 350,
+   "devolution_id": "def14222-1dc4-469d-9053-ddfbd28db7e8"
+  },
+  {
+   "id": "c89bfdb7-686f-46ed-ab38-61ec411442bf",
+   "total": 350,
+   "reason": "Hot test dev",
+   "quantity": 1,
+   "created_at": "2026-08-06T23:50:11.908653+00:00",
+   "product_id": "da1c4090-3e10-4120-a2bc-24da53cffe16",
+   "unit_price": 350,
+   "devolution_id": "fb98424e-cf04-4fcf-ba65-099696179e2c"
+  }
+ ]
+}
