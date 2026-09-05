@@ -1,0 +1,33 @@
+[
+  {
+    "log": [
+      {
+        "probe": "BASELINE_C2",
+        "detail": {
+          "inventory": 5,
+          "stock_current": 5
+        },
+        "outcome": "STATE"
+      },
+      {
+        "probe": "POST_C2",
+        "detail": {
+          "esperado": "10 / 10 (restauración exacta)",
+          "inventory": 10,
+          "stock_current": 10,
+          "movements_sale": 1,
+          "movements_sale_void": 1
+        },
+        "outcome": "STATE"
+      },
+      {
+        "probe": "S11r_void_completed_con_deduccion",
+        "detail": {
+          "status": "success",
+          "transaction_id": "b8d00000-0000-4000-8000-00000000c00b"
+        },
+        "outcome": "SUCCESS"
+      }
+    ]
+  }
+]

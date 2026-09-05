@@ -1,0 +1,170 @@
+════════════════════════════════════════════════════════════════════
+W9.5 — B-8 · 03-role-policy.txt
+GATE 2 — Reconstrucción de la política de roles REAL
+════════════════════════════════════════════════════════════════════
+fecha/hora: 2026-09-05 (AST)
+método: rg sobre src/ + lectura directa de fuentes + docs de producto
+        (knowledge/help) + migraciones. Cada afirmación cita fuente.
+
+A) DEFINICIÓN DE ROLES (código)
+────────────────────────────────
+src/types/index.ts:5
+  export type UserRole = 'admin' | 'encargado' | 'usuario' | 'manager'
+                       | 'clerk' | 'warehouse' | 'costo';
+DB enum user_role (live): admin, superadmin, manager, clerk, warehouse,
+  encargado, usuario, costo, tenant_admin  (2 roles DB extra sin uso en UI).
+
+B) MATRIZ ROLE_PERMISSIONS (frontend estático) — src/types/index.ts:989-1116
+────────────────────────────────
+  rol        canVoidTransactions  (línea)
+  admin      TRUE                 (1000)
+  encargado  TRUE                 (1018)
+  usuario    FALSE                (1036)
+  manager    TRUE                 (1054)
+  clerk      FALSE                (1072)
+  warehouse  FALSE                (1090)
+  costo      FALSE                (1108)
+
+getMergedPermissions (1118-1148): OR entre roles múltiples (profiles.roles[]).
+
+C) ¿DÓNDE SE CONSUME canVoidTransactions? (rg sobre src/)
+────────────────────────────────
+  ÚNICO consumo: src/components/views/terminal/views/sales/useSalesHistoryView.ts:88
+      const canVoid = (() => {
+          if (!user?.roles) return false;
+          return user.roles.some(r => ROLE_PERMISSIONS[r]?.canVoidTransactions === true);
+      })();
+
+  HALLAZGO DE TRAZABILIDAD: `canVoid`, `handleRequestVoid`, `handleConfirmVoid`
+  y `voidTarget` se devuelven del hook (líneas 282-289) PERO SalesHistoryView
+  (líneas 153-170) NO los destructure. rg de handleRequestVoid|handleConfirmVoid|
+  canVoid|voidTarget en todo src/ (excluyendo el hook): 0 consumidores UI.
+  ⇒ El role-gate canVoidTransactions es CÓDIGO MUERTO en el flujo activo:
+     hoy NO existe ningún botón de anulación de ventas gobernado por rol.
+
+  El flujo void del hook, si se invocara, llamaría useInvertDocument →
+  supabase.rpc('void_transaction') DESDE EL CLIENTE (líneas 74-78 de
+  useDocumentActions.ts) — es decir, el gate de UI nunca protegió el RPC.
+
+D) SISTEMA DINÁMICO DE ROLES (tabla roles, roles.permissions jsonb)
+────────────────────────────────
+  Existe infraestructura (profiles.role_id → roles.id; RolesManagementView;
+  useRoles.ts) pero rg de roles.permissions / getRolePermissions no muestra
+  NINGÚN consumo para decisiones de anulación. La matriz efectiva es la
+  estática ROLE_PERMISSIONS (hoy, además, muerta para void).
+
+E) POLÍTICA DOCUMENTADA DE PRODUCTO (GATE 4 — evidencia histórica)
+────────────────────────────────
+E.1 knowledge/help/04-configuracion/roles-y-permisos.md (7 roles, vigente):
+    "El sistema RBAC de CostPro utiliza 17 banderas de permisos granulares…
+     Estas banderas se evalúan en el frontend y en el backend para garantizar
+     la seguridad en ambas capas."
+    | canVoidTransactions | Permite anular transacciones ya realizadas.
+      | admin, manager, encargado, clerk |
+    ⚠ CONTRADICCIÓN 1 (docs vs código): los docs dan canVoidTransactions a
+      clerk; el código (ROLE_PERMISSIONS) lo pone en FALSE.
+    ⚠ CONTRADICCIÓN 2 (docs vs realidad): la afirmación "se evalúan en el
+      backend" es FALSA para la anulación: ningún RPC ni API route evalúa
+      rol (ver 04-code-trace.txt §D y 01-live-functions.txt §E).
+
+E.2 knowledge/help/03-referencia/02-roles-permisos.md (versión previa, 6 roles):
+    | Anular ventas (< 24h) | usuario ❌ | almacen ❌ | clerk ✅ | encargado ✅
+      | manager ✅ | admin ✅ |
+    | Anular ventas (> 24h) | SOLO admin ✅ |
+    "clerk: Puede anular sus ventas dentro de 24h."
+    "encargado: …puede anular ventas de cualquier cajero de su tienda."
+    → Política documentada = MODELO C (diferenciada: rol + ventana temporal
+      + propiedad + alcance de tienda). NUNCA "cualquier miembro puede
+      anular cualquier cosa".
+
+E.3 Migración 20260726000015_v2_5_4_void_transaction_voided_status.sql:
+    "  -- V2.5 H2b: autorización por tienda  " (comentario de diseño en el
+    cuerpo histórico de void_transaction al introducir su autorización).
+    → La autorización DB fue concebida EXPLÍCITAMENTE como "por tienda"
+      (membresía), no por rol. Es una decisión registrada en el código SQL.
+
+E.4 Migración 20260727000006_v2_12_9_spoofing_p_user_id.sql:
+    Endurece identidad en 31 funciones (incl. void_transaction y toda la
+    familia) pero NO añade chequeo de rol a ninguna: el endurecimiento
+    histórico fue identidad+tienda, jamás rol.
+
+F) POLÍTICA EFECTIVA DEMOSTRADA (síntesis de B-2 + GATE 1/2 de B-8)
+────────────────────────────────
+  CAPA      | POLÍTICA REAL DE ANULACIÓN DE VENTAS
+  ----------|----------------------------------------------------------
+  DB (RPC)  | has_store_access_as(caller, store): admin global OR
+            | membresía 'active'. ROL NUNCA consultado. Ownership NO.
+            | Ventana temporal NO. (01-live-functions.txt §E)
+  API       | /api/reverse: autenticación + CSRF + rate-limit +
+            | inyección service_role de session.user.id. ROL NO
+            | evaluado server-side (route.ts completo).
+  UI        | POS-undo (30s): SIN role-gate (por diseño MM-9).
+            | SalesHistory: role-gate EXISTE PERO ESTÁ MUERTO (no se
+            | destructure); el botón activo "Revertir" solo consulta
+            | status (canReverse). ReverseDocumentModal: sin role-gate.
+
+G) MATRIZ GATE 2 (rellenada con evidencia; "RPC" = llamada directa del
+   cliente a void_transaction / canónica vía /api/reverse→V2)
+────────────────────────────────
+| Rol       | UI puede anular            | API puede anular | RPC puede anular | Propia venta | Venta ajena (misma tienda) | Otra tienda |
+|-----------|----------------------------|------------------|------------------|--------------|---------------------------|-------------|
+| admin     | SÍ (botón muerto; vía "Revertir" SÍ) | SÍ | SÍ (client-RPC y V2 vía API) | SÍ | SÍ | SÍ (bypass admin global — P5) |
+| manager   | SÍ-teórico (botón muerto; "Revertir" SÍ) | SÍ | SÍ | SÍ | SÍ | NO |
+| encargado | SÍ-teórico (idem)          | SÍ | SÍ | SÍ | SÍ | NO |
+| clerk     | NO-gate (muerto); "Revertir" SÍ; POS-undo SÍ | SÍ | SÍ | SÍ | SÍ | NO |
+| warehouse | SIN acceso POS/ventas; "Revertir" si viera la vista SÍ | SÍ | SÍ | SÍ (si tuviera tx) | SÍ (si tuviera tx) | NO |
+| usuario   | idem warehouse             | SÍ | SÍ | SÍ (si tuviera tx) | SÍ (si tuviera tx) | NO |
+| costo     | idem (B-2 P1 demostró costo → SUCCESS en su tienda) | SÍ | SÍ | SÍ | SÍ | NO |
+
+  (UI=teórico: el gate rol-existe-pero-muerto; los valores "API/RPC" son los
+   que prueban los probes de 06-role-probes.txt sobre cada rol.)
+
+H) RESPUESTAS A GATE 4 (Q1-Q8) con clasificación de certeza
+────────────────────────────────
+Q1 ¿La anulación está concebida como operación administrativa?
+   PARCIALMENTE — PROBADO que docs la tratan como privilegio por rol con
+   ventana (>24h solo admin); PROBADO que el servidor la trató siempre como
+   operación por-tienda (H2b). Dos concepciones coexisten.
+Q2 ¿POS Undo representa una excepción funcional distinta?
+   SÍ — PROBADO: MM-9 (toast 30s, sin role-gate, items snapshot);
+   cualquier usuario de POS deshace SU venta recién creada.
+Q3 ¿El usuario debe poder anular solamente su propia venta?
+   NO como regla general — PROBADO por docs (encargado anula ventas de
+   cajeros de su tienda; admin >24h) y por DB (sin ownership check).
+   Solo clerk tendría límite <24h según docs previos; no implementado.
+Q4 ¿Existe explícitamente una ventana de 30 segundos para POS Undo?
+   SÍ — PROBADO: usePOSCheckout.ts:323 duration: 30000 + comentarios
+   "POS-2 MM-9". La ventana es SOLO client-side (el servidor no tiene
+   ventana temporal — B-2).
+Q5 ¿clerk/usuario/warehouse/costo deben poder anular desde UI?
+   AMBIGUO con gradiente: docs vigentes dicen clerk SÍ y los otros NO
+   (canVoidTransactions: admin/manager/encargado/clerk); docs previos
+   dan clerk con límite 24h; código estático da clerk/usuario/warehouse/
+   costo = FALSE. Tres fuentes, tres respuestas para clerk.
+Q6 ¿Por qué ROLE_PERMISSIONS pone canVoidTransactions=true solo para
+   determinados roles?
+   FUERTEMENTE SOPORTADO que refleja la intención de política por rol de
+   los docs RBAC; NINGUNA evidencia de que alguna vez haya gobernado el
+   servidor (el RPC nació con autorización por tienda, H2b). Hoy además
+   es código muerto (no hay consumidor).
+Q7 ¿Existe evidencia que contradiga esa matriz?
+   SÍ — PROBADO: (i) docs dan clerk=true vs código false; (ii) POS-undo
+   concede deshacer a cualquier vendedor sin pasar por la matriz;
+   (iii) el botón activo "Revertir" (V2) ignora la matriz por completo;
+   (iv) el servidor no evalúa rol en NINGUNA ruta.
+Q8 ¿void_transaction fue diseñado deliberadamente para usar membresía
+   en vez de rol?
+   SÍ — PROBADO: comentario de diseño "V2.5 H2b: autorización por tienda"
+   en la migración que introdujo su autorización + el endurecimiento
+   V2.12.9 mantuvo el modelo membresía para 31 funciones. La ausencia de
+   rol es una decisión documentada en código, no un olvido puntual.
+   (Que la POLÍTICA de producto documentada pida roles es otra cuestión:
+   la contradicción docs-vs-DB es real y sistémica.)
+
+I) CLASIFICACIÓN DEL MODELO EFECTIVO
+────────────────────────────────
+  DB/API  = MODELO A (membresía) — deliberado (H2b), probado en B-2.
+  UI/docs = MODELO C (rol + ventana) — documentado, NUNCA implementado
+            server-side; su único gate de código está muerto.
+  ⇒ Coexisten DOS políticas para la misma operación (cruce con GATE 10).
+════════════════════════════════════════════════════════════════════

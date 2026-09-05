@@ -1,0 +1,86 @@
+════════════════════════════════════════════════════════════════════
+W9.5 — B-8 · 08-status-state-machine.txt
+GATE 9 — B-9 (independiente): ¿void_transaction acepta status≠completed?
+════════════════════════════════════════════════════════════════════
+fecha/hora: 2026-09-05 02:30–02:36 AST
+
+A) MÁQUINA DE ESTADOS REAL (fn_validate_document_transition, live):
+   transactions:
+     pending   → [completed, voided]
+     completed → [voided, reversed]
+     voided    → []  (terminal)
+     reversed  → []  (terminal)
+   Estados del enum SIN entrada en el mapa (failed, compensated,
+   cancelled, refunded): CUALQUIER transición → ERR_INVALID_TRANSITION
+   (el trigger exige que old_status exista en el mapa).
+   El trigger es BEFORE UPDATE sobre transactions (aplica a TODO camino,
+   incluidos void_transaction, V2 y UPDATEs directos).
+
+B) GUARDS DE void_transaction: SOLO `status='voided' →
+   ERR_ALREADY_VOIDED`. NO exige completed. La validez del resto de
+   estados la impone el TRIGGER de máquina de estados, no la función.
+
+C) BATERÍA DE PROBES (raw-probes-b9.json; caller=miembro encargado):
+
+| Estado actual | void permitido | debería permitirse | efecto observado |
+|---------------|---------------:|-------------------:|------------------|
+| pending       | SÍ (S1 SUCCESS)| AMBIGUO (ver D)    | status→voided · +1 movement sale_void · audit old_status=pending |
+| completed     | SÍ (S2 SUCCESS)| SÍ (uso principal) | status→voided · +1 movement · restauración exacta (ver E) |
+| failed        | NO (S3 DENIED ERR_INVALID_TRANSITION) | NO | 0 efectos |
+| compensated   | NO (S4 DENIED) | NO                 | 0 efectos |
+| cancelled     | NO (S5 DENIED) | NO                 | 0 efectos |
+| refunded      | NO (S6 DENIED) | NO                 | 0 efectos |
+| voided        | NO (S7 DENIED ERR_ALREADY_VOIDED) | NO (idempotencia) | 0 efectos |
+| reversed      | NO (S8 DENIED ERR_INVALID_TRANSITION) | NO | 0 efectos |
+| double void (S9, sobre S2) | NO DENIED ERR_ALREADY_VOIDED | NO | 0 efectos extra (1 solo movement) |
+
+   (Los nombres "paid/partial/draft" de la spec NO existen: el enum real
+    es pending/completed/failed/compensated/cancelled/refunded/voided/
+    reversed. Distribución live: 520/520 completed.)
+
+D) ANÁLISIS DEL CASO pending (único estado ≠ completed alcanzable):
+   - ¿Es necesario para POS? NO — create_sale_v2 SIEMPRE crea
+     status='completed' con stock descontado y pago completo (def live
+     líneas 190-204; la venta pendiente no es producida por POS).
+   - ¿Es compatible con la state machine? SÍ — pending→voided está en
+     el mapa (probado S1 SUCCESS).
+   - ¿Puede generar stock fantasma? SÍ, MECÁNICAMENTE PROBADO (S10):
+     TX pending SIN deducción previa (qty 5) → void → inventario
+     10→15 y products.stock_current 10→15 con 1 movement sale_void.
+     El stock restaurado NUNCA fue descontado: inflación neta de +5.
+   - ¿Puede duplicar movimientos? NO (S9: 1 solo movement por tx).
+   - ¿Puede alterar cash? El void NO toca payment_transactions
+     (capturado: 1 fila intacta). Riesgo real: si una tx pending
+     tuviera pagos registrados, el void NO los revierte (gap
+     contable, heredado del diseño "void no toca payments").
+   - ¿Puede alterar comisiones? El trigger reverse_commissions_on_
+     sale_void dispara igual para pending→voided (escanea por
+     período de created_at) — flaggearía comisiones que contengan
+     la venta pendiente. Sin comisiones en fixture: no-op.
+   - ¿Auditoría incorrecta? El audit registra old_status=pending
+     (correcto y trazable). No es incorrecto, pero anula una venta
+     que "no existía operativamente".
+
+E) RESTAURACIÓN EXACTA PARA completed (S11-retry, raw-probes-b9-retry.json):
+   baseline tras venta simulada: inventory 5 / stock_current 5
+   → void → inventory 10 / stock_current 10 (movements: 1 sale, 1
+   sale_void). Restauración EXACTA — el mecanismo de stock es correcto
+   para el uso principal (completed).
+
+F) VEREDICTO B-9 (independiente):
+   B-9 — CLOSED / NO ISSUE (con nota BACKLOG)
+   Justificación: el guard debilitado NO es explotable contra datos
+   reales del estado actual: (1) create_sale_v2 solo produce completed;
+   (2) live: 520/520 transacciones completed — no existe ninguna tx
+   pending/failed/etc. que pueda atravesar el guard; (3) los estados
+   corruptos (failed/compensated/cancelled/refunded/voided/reversed)
+   están BLOQUEADOS por el trigger de máquina de estados con 0 efectos;
+   (4) double-void idempotente (1 movimiento).
+   NOTA BACKLOG (B-9a): hardenar void_transaction con
+   `IF status NOT IN ('completed','pending') RAISE` eliminaría la
+   superficie teórica del caso pending (stock fantasma si una tx
+   pending sin deducción existiera algún día). Cambio de 1 línea, BAJO
+   riesgo, pero NO se aplica en B-8 porque: (i) ningún dato real está
+   expuesto hoy; (ii) toda modificación del family-core exige el fix
+   sistémico de B-8 (GATE 13); (iii) principio de mínimo cambio.
+════════════════════════════════════════════════════════════════════

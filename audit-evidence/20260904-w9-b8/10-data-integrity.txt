@@ -1,0 +1,69 @@
+════════════════════════════════════════════════════════════════════
+W9.5 — B-8 · 10-data-integrity.txt
+GATE 15 — Integridad PRE/POST (sentinelas) + limpieza del fixture
+════════════════════════════════════════════════════════════════════
+fecha/hora: PRE 02:23:04 AST · POST 02:39 AST
+método: 13 tablas centinela con count(*) + checksum md5 del set de ids
+(+ sumas financieras en payments/products/transactions), capturadas
+ANTES del fixture y DESPUÉS del cleanup. Raw: raw-pre-sentinels.json,
+raw-post-sentinels.json, raw-cleanup.json.
+
+RESULTADO PRE == POST:
+  t_transactions     PASS  n=520  md5=c0312d72b6c7afad78a1df0eced1b178  sum_total=28,100,954.998
+  t_tx_items         PASS  n=555
+  t_payments         PASS  n=366  sum_amt=8,120,033.5
+  t_stock_movements  PASS  n=702
+  t_inventory        PASS  n=141  sum_qty=4,978.6289
+  t_products         PASS  n=323  sum_stock=12,094.6289  sum_wac=6,852,321.2457
+  t_stores           PASS  n=44
+  t_profiles         PASS  n=26
+  t_memberships      PASS  n=51
+  t_audit_logs       PASS  n=7375  (ver nota de incidente abajo)
+  t_commissions      PASS  n=0
+  t_business_events  PASS  n=10553
+  kardex_exists      PASS  (tabla presente, sin cambios)
+  ⇒ 14/14 PASS — checksums bit a bit idénticos en TODOS los datos reales.
+
+INCIDENTE AUDIT_LOGS (+20 → RESUELTO):
+  Tras el cleanup la tabla quedó en 7395 (+20). Investigación
+  (/tmp/b8_auditdiff2.sql, raw del proceso): 10× CREATE_USER +
+  10× DELETE_USER con table_name='profiles', record_id=perfiles
+  SINTÉTICOS b8b00000…, user_id=NULL, store_id=NULL — el rastro de
+  auditoría del PROPIO fixture generado por trigger_audit_profile_
+  changes (fuera del alcance del cleanup por-store, user_id NULL).
+  PURGA QUIRÚRGICA (DELETE ... WHERE table_name='profiles' AND
+  record_id LIKE 'b8b00000%'): total restaurado a 7375, residual
+  del fixture en audit_logs = 0 (todas las patterns b8…).
+  Ningún dato real fue tocado en ningún momento.
+
+LIMPIEZA DEL FIXTURE (raw-cleanup.json):
+  Orden FK-safe: business_events → audit_logs → user_audit_log →
+  payment_transactions → transaction_items → transactions →
+  kardex_entries → stock_movements → inventory → products →
+  user_store_memberships → profiles → auth.users → stores.
+  RESIDUE_CHECK 14/14 = 0 (stores, profiles, auth_users, memberships,
+  products, inventory, transactions, transaction_items, payments,
+  stock_movements, audit_logs, user_audit_log, business_events,
+  kardex_entries).
+
+GUARDS DE PRODUCCIÓN ENCONTRADOS Y RESPETADOS (documentados):
+  1. trg_validate_payment_invariants → ERR_PAYMENT_DELETE_FORBIDDEN
+     (ledger de pagos inmutable — herencia H5-B2). Vía oficial usada
+     para el DELETE de pagos del FIXTURE: app.restore_mode='true' +
+     current_user=postgres (mecanismo de restauración del propio
+     producto), SET y RESET dentro de la misma request.
+  2. prevent_hard_delete_profile → ERR_HARD_DELETE_BLOCKED (Iteración
+     12, soft-delete). Trigger INCONDICIONAL: workaround precedentado
+     en B-2/B-6 — DISABLE temporal + DELETE fixture + ENABLE +
+     verificación tgenabled='O' (GUARD_RESTORED: 'O', 0 filas).
+  3. trigger_audit_store_changes en DELETE → BACKLOG B-6 RECONFIRMADO
+     (FK imposible al auditar DELETE_STORE). Mismo workaround
+     DISABLE/ENABLE + verificación (B6_GUARD_RESTORED: 'O').
+  Ningún guard quedó deshabilitado tras el cleanup (tgenabled='O' ×2
+  verificado en raw-cleanup.json).
+
+PROBES DE ESCRITURA: ejecutados EXCLUSIVAMENTE sobre el fixture
+sintético (UUIDs b8…). Los probes DENIED no produjeron efectos
+(verificado: tx_status intacto, 0 movements, 0 audit en cada _POST).
+No se ejecutó ningún COMMIT de datos de prueba fuera del fixture.
+════════════════════════════════════════════════════════════════════

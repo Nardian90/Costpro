@@ -1,0 +1,197 @@
+[
+  {
+    "log": [
+      {
+        "probe": "PAYMENTS_TXS_COMPLETED",
+        "detail": [
+          {
+            "amount": 200,
+            "status": "-"
+          }
+        ],
+        "outcome": "STATE"
+      },
+      {
+        "probe": "S1_POST",
+        "detail": {
+          "movements": 1,
+          "tx_status": "voided",
+          "old_status_in_audit": "pending"
+        },
+        "outcome": "STATE"
+      },
+      {
+        "probe": "S1_void_status_pending",
+        "detail": {
+          "status": "success",
+          "transaction_id": "b8d00000-0000-4000-8000-00000000c001"
+        },
+        "outcome": "SUCCESS"
+      },
+      {
+        "probe": "S10_void_pending_sin_deduccion",
+        "detail": {
+          "status": "success",
+          "transaction_id": "b8d00000-0000-4000-8000-00000000c009"
+        },
+        "outcome": "SUCCESS"
+      },
+      {
+        "probe": "S11_void_completed_con_deduccion",
+        "detail": {
+          "status": "success",
+          "transaction_id": "b8d00000-0000-4000-8000-00000000c00a"
+        },
+        "outcome": "SUCCESS"
+      },
+      {
+        "probe": "S2_POST",
+        "detail": {
+          "movements": 1,
+          "tx_status": "voided",
+          "old_status_in_audit": "completed"
+        },
+        "outcome": "STATE"
+      },
+      {
+        "probe": "S2_void_status_completed",
+        "detail": {
+          "status": "success",
+          "transaction_id": "b8d00000-0000-4000-8000-00000000c002"
+        },
+        "outcome": "SUCCESS"
+      },
+      {
+        "probe": "S3_POST",
+        "detail": {
+          "movements": 0,
+          "tx_status": "failed",
+          "old_status_in_audit": null
+        },
+        "outcome": "STATE"
+      },
+      {
+        "probe": "S3_void_status_failed",
+        "detail": {
+          "err": "ERR_INVALID_TRANSITION: transactions no puede pasar de failed a voided",
+          "code": "P0001"
+        },
+        "outcome": "DENIED"
+      },
+      {
+        "probe": "S4_POST",
+        "detail": {
+          "movements": 0,
+          "tx_status": "compensated",
+          "old_status_in_audit": null
+        },
+        "outcome": "STATE"
+      },
+      {
+        "probe": "S4_void_status_compensated",
+        "detail": {
+          "err": "ERR_INVALID_TRANSITION: transactions no puede pasar de compensated a voided",
+          "code": "P0001"
+        },
+        "outcome": "DENIED"
+      },
+      {
+        "probe": "S5_POST",
+        "detail": {
+          "movements": 0,
+          "tx_status": "cancelled",
+          "old_status_in_audit": null
+        },
+        "outcome": "STATE"
+      },
+      {
+        "probe": "S5_void_status_cancelled",
+        "detail": {
+          "err": "ERR_INVALID_TRANSITION: transactions no puede pasar de cancelled a voided",
+          "code": "P0001"
+        },
+        "outcome": "DENIED"
+      },
+      {
+        "probe": "S6_POST",
+        "detail": {
+          "movements": 0,
+          "tx_status": "refunded",
+          "old_status_in_audit": null
+        },
+        "outcome": "STATE"
+      },
+      {
+        "probe": "S6_void_status_refunded",
+        "detail": {
+          "err": "ERR_INVALID_TRANSITION: transactions no puede pasar de refunded a voided",
+          "code": "P0001"
+        },
+        "outcome": "DENIED"
+      },
+      {
+        "probe": "S7_POST",
+        "detail": {
+          "movements": 0,
+          "tx_status": "voided",
+          "old_status_in_audit": null
+        },
+        "outcome": "STATE"
+      },
+      {
+        "probe": "S7_void_status_already_voided",
+        "detail": {
+          "err": "ERR_ALREADY_VOIDED",
+          "code": "P0001"
+        },
+        "outcome": "DENIED"
+      },
+      {
+        "probe": "S8_POST",
+        "detail": {
+          "movements": 0,
+          "tx_status": "reversed",
+          "old_status_in_audit": null
+        },
+        "outcome": "STATE"
+      },
+      {
+        "probe": "S8_void_status_reversed",
+        "detail": {
+          "err": "ERR_INVALID_TRANSITION: transactions no puede pasar de reversed a voided",
+          "code": "P0001"
+        },
+        "outcome": "DENIED"
+      },
+      {
+        "probe": "S9_double_void_completed",
+        "detail": {
+          "err": "ERR_ALREADY_VOIDED",
+          "code": "P0001"
+        },
+        "outcome": "DENIED"
+      },
+      {
+        "probe": "STOCK_C_COMPLETED",
+        "detail": {
+          "movements_sale": 1,
+          "movements_total": 2,
+          "inventory_quantity": 5,
+          "movements_sale_void": 1,
+          "product_stock_current": 5
+        },
+        "outcome": "STATE"
+      },
+      {
+        "probe": "STOCK_P_PENDING",
+        "detail": {
+          "movements_total": 1,
+          "inventory_quantity": 15,
+          "movements_sale_void": 1,
+          "product_stock_current": 15
+        },
+        "outcome": "STATE"
+      }
+    ]
+  }
+]

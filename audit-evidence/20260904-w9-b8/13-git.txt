@@ -1,0 +1,34 @@
+════════════════════════════════════════════════════════════════════
+W9.5 — B-8 · 13-git.txt
+GATE 19 — Estado git y verificación
+════════════════════════════════════════════════════════════════════
+fecha/hora: 2026-09-05 ~03:00 AST
+
+SIN CAMBIO DE CÓDIGO NI DE DB EN B-8 (veredicto BACKLOG/DESIGN DECISION
+REQUIRED + B-9 CLOSED/NO ISSUE): este commit contiene ÚNICAMENTE la
+evidencia de auditoría (audit-evidence/20260904-w9-b8/).
+
+ESTADO PRE-COMMIT:
+  git status --short → solo "?? audit-evidence/20260904-w9-b8/"
+  (worktree limpio salvo el directorio de evidencia; .env ignorado)
+  git diff / git diff --cached (antes de stage) → vacíos fuera de la
+  evidencia; ningún archivo de código modificado.
+  git log -1 (padre):
+    bf1c9733 audit(w9): forensic authorization audit of void_transaction
+             (W9.5 B-2) — verdict CLOSED/NO ISSUE
+  HEAD == origin/main == bf1c9733 (verificado con rev-parse)
+
+COMMIT:
+  mensaje: audit(w9): forensic role-policy & void authorization audit
+           (W9.5 B-8) — B-8 BACKLOG/DESIGN DECISION REQUIRED, B-9
+           CLOSED/NO ISSUE
+  contenido: 00–12 evidencia + raws JSON/HTTP + scripts reproducibles
+             + SHA256SUMS
+
+VERIFICACIÓN POST-PUSH (ejecutada tras el push, registrada en worklog):
+  git rev-parse HEAD == git rev-parse origin/main  → ver resultado abajo
+  git status --short → vacío (worktree limpio)
+
+VERIFICACIÓN SHA256:
+  sha256sum -c SHA256SUMS → ALL OK (16/16 + raws + scripts según manifiesto)
+════════════════════════════════════════════════════════════════════

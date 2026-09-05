@@ -1,0 +1,52 @@
+════════════════════════════════════════════════════════════════════
+W9.5 — B-8 · 00-checkpoint.txt
+GATE 0 — Checkpoint obligatorio de baseline
+════════════════════════════════════════════════════════════════════
+fecha/hora (UTC-5): 2026-09-05 ~02:00 AST
+
+COMANDO:
+  cd /home/z/my-project/Costpro
+  git status --short
+  git rev-parse HEAD
+  git rev-parse origin/main
+  git log --oneline -5
+
+RESULTADO:
+  git status --short   → (vacío, worktree limpio)
+  HEAD        = bf1c9733c189c9f93e95f76dd96b02639cb1d93a
+  origin/main = bf1c9733c189c9f93e95f76dd96b02639cb1d93a
+
+  Últimos commits:
+    bf1c9733 audit(w9): forensic authorization audit of void_transaction
+             (W9.5 B-2) — verdict CLOSED/NO ISSUE
+    3d609f45 audit(w9): forensic concurrency audit of reverse_transaction_v2
+             (W9.4.9 H5-B3) — verdict CLOSED/NO ISSUE IN CURRENT PATH
+    3d03afbc fix(w9): correct double USD conversion in cash report
+             (W9.4.8-FIX OBS-1)
+    fd877a53 audit(w9): financial integrity audit of reverse_transaction_v2
+             payments (W9.4.8 H5-B2) — verdict CLOSED/NO ISSUE
+    6aee29fe refactor(w9): retire legacy reverse_transaction v1
+             (W9.4.7 H5-B1) — guarded DROP, V2 untouched, 0 consumers
+
+INTERPRETACIÓN:
+  HEAD == origin/main == bf1c9733  ⇒ CUMPLE (baseline exigido por la spec B-8).
+  Worktree limpio ⇒ CUMPLE.
+  No hay divergencia con el remoto (0 adelantados / 0 atrasados).
+
+CONTEXTO HEREDADO (worklog.md, entradas W9.5-B2):
+  - B-2 CERRADO: CLOSED / NO ISSUE @ bf1c9733.
+  - Contrato DB demostrado en B-2: void_transaction (OID 138000, SECURITY
+    DEFINER owner postgres, args (tx_id, reason, op_date, p_user_id))
+    autoriza con has_store_access_as(caller, store) = admin global O
+    membresía activa; SIN chequeo de rol, SIN ownership, SIN ventana
+    temporal; guard de estado SOLO para 'voided' (P11: pending→voided OK).
+  - B-8 y B-9 fueron registrados como BACKLOG en B-2: esta auditoría
+    resuelve ambos.
+  - Herencias contractuales respetadas: H5-B2 payment ledger inmutable
+    (no reabrir); H5-B3 FOR UPDATE de reverse_transaction_v2 confirmado
+    (no reabrir); OBS-1 get_cash_report corregido (no tocar).
+
+DECISIÓN:
+  GO — se continúa con GATE 1. Directorio de evidencia creado:
+  audit-evidence/20260904-w9-b8/
+════════════════════════════════════════════════════════════════════

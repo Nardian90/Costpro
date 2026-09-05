@@ -1,0 +1,130 @@
+════════════════════════════════════════════════════════════════════
+W9.5 — B-8 · 12-verdict.txt
+GATE 12 + GATE 23 — Decisión y veredicto final obligatorio
+════════════════════════════════════════════════════════════════════
+fecha de cierre: 2026-09-05 (AST) · baseline bf1c9733
+
+╔══════════════════════════════════════════════════════════════════╗
+║  VEREDICTOS                                                        ║
+║                                                                    ║
+║  B-8 — BACKLOG / DESIGN DECISION REQUIRED   (GATE 12, opción D)    ║
+║  B-9 — CLOSED / NO ISSUE                                           ║
+╚══════════════════════════════════════════════════════════════════╝
+
+RESPUESTAS EXPLÍCITAS (GATE 23):
+
+B-8: ¿Existe realmente un bypass de autorización por rol?
+  EXISTE UN BYPASS RESPECTO DE LA POLÍTICA DOCUMENTADA (RBAC), y está
+  PROBADO con ejecución real (no inferencia): los 4 elementos del
+  GATE 11 se cumplen — (1) roles NO autorizados por ROLE_PERMISSIONS
+  (clerk/usuario/warehouse/costo), (2) operación no autorizada según
+  el contrato documentado (anular venta ajena; docs afirman "se evalúa
+  en el backend"), (3) llamada directa server-side/DB, (4) efecto real
+  (tx voided + stock restaurado + audit). Lo que NO existe es un bypass
+  del contrato que la DB implementó DELIBERADAMENTE (identidad+tienda,
+  comentario de diseño "V2.5 H2b"). El defecto demostrado es la
+  CONTRADICCIÓN SISTÉMICA entre 3 definiciones de política coexistentes
+  (docs-RBAC con clerk=TRUE, docs-legacy con clerk+ventana 24h,
+  DB-membresía) y un gate de UI MUERTO — no una función mal protegida.
+
+B-9: ¿Existe realmente un bypass de state machine?
+  NO. La máquina de estados (fn_validate_document_transition) BLOQUEA
+  failed/compensated/cancelled/refunded/voided/reversed → voided con
+  ERR_INVALID_TRANSITION / ERR_ALREADY_VOIDED (probes S3–S9, 0 efectos).
+  El único estado ≠ completed alcanzable es pending (S1 SUCCESS), que
+  el POS no puede producir (create_sale_v2 crea SIEMPRE completed) y
+  que NO EXISTE en datos live (520/520 completed). Double-void
+  idempotente (1 solo movement). Restauración de stock EXACTA para
+  completed (S11-retry: 5/5 → 10/10). Riesgo teórico único (stock
+  fantasma S10) requiere una tx pending inexistente hoy → registrado
+  como BACKLOG B-9a (hardening de 1 línea) sin fix inmediato.
+
+¿Puede un clerk anular?            SÍ (RPC y vía V2/API) — P1/P2 SUCCESS
+¿Puede un usuario anular?          SÍ — SUCCESS
+¿Puede costo anular?               SÍ — SUCCESS (coherente con B-2 P1)
+¿Puede warehouse anular?           SÍ — SUCCESS
+¿Puede un miembro anular una venta ajena (misma tienda)?  SÍ — SUCCESS ×6
+¿Puede un miembro actuar sobre otra tienda?  NO — DENIED ×6 (+P4b)
+¿Puede falsificarse p_user_id?     NO — ignorado para no-service_role;
+                                   atribución al caller real (P4a/P4b)
+¿POS Undo tiene una política distinta?  SÍ — excepción funcional por
+   diseño (MM-9): sin role-gate, ventana 30s SOLO client-side
+¿La ruta canónica y la legacy aplican exactamente la misma política?
+   En autorización: SÍ (identidad+tienda, has_store_access_as, sin rol).
+   En guards funcionales: NO (status, superficie, detalles de stock) —
+   09-void-vs-reverse.txt.
+
+¿La política actual es INTENCIONAL o DEFECTUOSA?
+   La capa DB es INTENCIONAL (diseño registrado "autorización por
+   tienda" + endurecimiento V2.12.9 uniforme en 31 funciones + POS-undo
+   sin rol). El SISTEMA COMO PRODUCTO es DEFECTUOSO en coherencia:
+   la política de roles documentada nunca se implementó server-side y
+   su único gate de UI quedó muerto; los docs afirman un backend que
+   no existe y contradicen al código en clerk. Esta contradicción no
+   es resoluble con evidencia: exige DECISIÓN DE PRODUCTO (qué modelo
+   es el correcto: A membresía, B roles, C diferenciado).
+
+¿Existe FIX?  SÍ, diseñado pero NO aplicado (opción D ⇒ NO HACER FIX):
+  ROOT CAUSE: dos políticas deliberadas nunca reconciliadas
+    (DB-membresía H2b vs docs/ROLE_PERMISSIONS por rol) + gate UI muerto.
+  IMPACT: cualquier miembro activo puede anular cualquier venta de su
+    tienda vía RPC directo (y vía /api/reverse); rol irrelevante en
+    todas las capas activas; docs engañan ("se evalúa en el backend").
+  AFFECTED PATHS: void_transaction, reverse_transaction_v2, /api/reverse,
+    useInvertDocument, POS-undo, SalesHistory, ReverseDocumentModal,
+    cancel_transfer/void_inventory_adjustment (misma filosofía).
+  MINIMAL SAFE FIX (opciones para la decisión — NO implementadas):
+    Opción 1 (modelo A): docs+UI alineados a membresía; borrar el gate
+      muerto; corregir roles-y-permisos.md. Riesgo bajo, sin cambio DB.
+    Opción 2 (modelo B/C): has_store_access_void(caller, store) que
+      exija membresía con rol ∈ {admin,manager,encargado} ∪ POS-undo
+      (ventana server-side ≤5min sobre ventas propias); aplicar en
+      void_transaction Y V2 Y /api/reverse (single authorization policy).
+      Riesgo medio-alto: rompe POS-undo si se aplica ingenuamente.
+    Opción 3: enforcement solo en /api/reverse + revoca EXECUTE de
+      authenticated en void_transaction migrando POS-undo a la API.
+      Riesgo medio: cambia la superficie legacy.
+  REGRESSION SURFACE (si se aplicara 2/3): POS-undo (clerk), SalesHistory,
+    ReverseDocumentModal 6 vistas, e2e reverse-duplicate-ui.spec.ts,
+    tests de permisos, stores de auth con roles[] múltiples.
+  ROLLBACK PLAN (para el fix futuro): migración idempotente inversa +
+    REVOKE/GRANT exactos capturados en 02-acl.txt + feature flag
+    (patrón USE_V2_REVERSE) + verificación con la batería de probes de
+    06-role-probes.txt (AUTHORIZED→ALLOWED, DENIED→DENIED).
+
+¿Es necesario cambiar DB?  Solo si el producto elige modelo B/C.
+¿Es necesario cambiar API? Solo en opciones 2/3.
+¿Es necesario cambiar UI?  SÍ en todos los escenarios: eliminar o
+   reconectar el gate muerto y corregir la documentación RBAC.
+¿Es necesario consolidar las rutas?  La consolidación autorizacional
+   (single policy) es REQUISITO de cualquier fix (GATE 13).
+
+¿Se modificaron datos reales?      NO (solo fixture sintético b8…)
+¿PRE == POST?                      SÍ — 14/14 sentinels, checksums md5
+                                   bit a bit idénticos (10-data-integrity.txt)
+¿Fixture = 0 residuos?             SÍ — 14/14 criterios = 0
+¿Vitest PASS?  ¿Lint PASS?  ¿TS PASS?  ¿Build PASS?  ¿HTTP 200?
+   SÍ ×5 (11-regression.txt)
+¿SHA PASS?                         SÍ — SHA256SUMS ALL OK (verificado)
+¿HEAD == origin/main?              SÍ — tras commit/push (13-git.txt)
+
+CRITERIO DE CIERRE (§22): se demostró la política funcional, server-side,
+DB, todos los roles, cross-store, forged identity, ownership, status,
+POS Undo, SalesHistory, /api/reverse, reverse_transaction_v2,
+integridad, regresión y evidencia reproducible. El hallazgo (divergencia
+de política) NO se parchea porque la política correcta no es
+demostrable desde la evidencia — es una decisión funcional pendiente
+(GATE 12-D). Categorías A/B/C descartadas: A y C contradichas por
+docs/existencia de política formal; B exige dar por demostrado cuál
+política es la correcta, lo que la contradicción clerk impide.
+
+BACKLOG REGISTRADO (sin tocar en este checkpoint):
+  B-8  decisión de producto: unificar política de anulación (A/B/C) en
+       DB+API+UI+docs y reconectar o eliminar el gate muerto.
+  B-9a hardening de 1 línea en void_transaction: rechazar status NOT IN
+       ('completed','pending') — tras la decisión B-8.
+  B-6  RECONFIRMADO en vivo durante cleanup (trigger_audit_store_changes
+       DELETE_STORE FK imposible; workaround DISABLE/ENABLE aplicado).
+  DOC-1 roles-y-permisos.md: corregir "se evalúan en el frontend y en
+       el backend" y la fila canVoidTransactions (clerk).
+════════════════════════════════════════════════════════════════════

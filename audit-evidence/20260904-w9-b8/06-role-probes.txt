@@ -1,0 +1,94 @@
+════════════════════════════════════════════════════════════════════
+W9.5 — B-8 · 06-role-probes.txt
+GATE 6+7 — Matriz de pruebas por rol (probes LIVE)
+════════════════════════════════════════════════════════════════════
+fecha/hora: 2026-09-05 02:24–02:38 AST
+método: fixture sintético (b8_fixture.sql: stores A/B, 10 usuarios, 9
+membresías, 4+1 productos, 29+1 transacciones — TODO UUID sintético b8…)
++ Management API con SET ROLE authenticated + request.jwt.claims
+(mismo mecanismo B-2; sanity de identidad incluido en cada SET).
+Raws: raw-probes-members.json / raw-probes-admin-forged.json /
+raw-probes-http.txt / raw-cleanup.json.
+
+FIXTURE (GATE 6):
+  STORE_A (…a001) con usuarios: manager, encargado, clerk, warehouse,
+    usuario, costo (membresía active con SU rol) + sellerX (encargado)
+    + svc (encargado). admin global SIN membership.
+  STORE_B (…b002) con sellerB (encargado).
+  TX-OWN-<rol>   (tienda A, seller = el propio usuario del rol)
+  TX-OTHER-<rol> (tienda A, seller = sellerX)   ← venta ajena
+  TX-B-OTHER     (tienda B, seller = sellerB)
+  TX-ADMIN-A/B, TX-FORGED, TX-H (para HTTP), batería TXS_* para B-9.
+
+═══ GATE 7 — RESULTADOS POR ROL ═══
+
+P1 — propia venta (rol → TX-OWN-<rol>, tienda A):
+  manager     → SUCCESS  tx=voided  audit user=…0002 old=completed
+  encargado   → SUCCESS  tx=voided  audit user=…0003 old=completed
+  clerk       → SUCCESS  tx=voided  audit user=…0004 old=completed
+  warehouse   → SUCCESS  tx=voided  audit user=…0005 old=completed
+  usuario     → SUCCESS  tx=voided  audit user=…0006 old=completed
+  costo       → SUCCESS  tx=voided  audit user=…0007 old=completed
+  ⇒ TODOS los roles con membresía activa anulan SU venta (incluidos los
+    4 con canVoidTransactions=false en ROLE_PERMISSIONS).
+
+P2 — venta ajena, misma tienda (rol → TX-OTHER-<rol>, seller=sellerX):
+  manager     → SUCCESS  tx=voided  audit user=…0002 (el caller)
+  encargado   → SUCCESS  audit user=…0003
+  clerk       → SUCCESS  audit user=…0004
+  warehouse   → SUCCESS  audit user=…0005
+  usuario     → SUCCESS  audit user=…0006
+  costo       → SUCCESS  audit user=…0007
+  ⇒ TODOS anulan la venta de OTRO vendedor de su tienda. Sin ownership.
+
+P3 — otra tienda (rol → TX-B-OTHER, tienda B):
+  manager/encargado/clerk/warehouse/usuario/costo → TODOS DENIED
+    ERR_UNAUTHORIZED (P0001) · tx intacta (status=completed, 0 movements,
+    0 audit) en los 6 casos.
+  ⇒ El aislamiento por tienda es REAL y se aplica a todos los roles.
+
+P4 — forged p_user_id (caller real = clerk …0004):
+  P4a clerk + p_user_id=ADMIN(…0001) sobre TX-FORGED (tienda A):
+      SUCCESS · audit user = …0004 (CALLER REAL, no el admin forjado)
+      movement by = …0004 → identidad forjada IGNORADA en acceso y
+      atribución (confirma B-2 P3b').
+  P4b clerk + p_user_id=sellerB(…0009, miembro de B) sobre TX-B-OTHER:
+      DENIED ERR_UNAUTHORIZED · tx intacta → el id forjado NO confiere
+      acceso cross-store.
+
+P5 — admin global (profiles.role='admin', SIN ninguna membership):
+  P5a TX-ADMIN-A (tienda A): SUCCESS · audit user=…0001
+  P5b TX-ADMIN-B (tienda B): SUCCESS · audit user=…0001
+  ⇒ El admin global puede anular en CUALQUIER tienda: la rama
+     `profiles.role='admin'` de has_store_access_as ignora memberships.
+     (Bypass de membresía por diseño — no exige rol de la membresía.)
+
+P6 — service_role (PostgREST REAL, clave service, TX-H):
+  P6c con p_user_id=svc (miembro tienda A): HTTP 200 {"status":"success"}
+      → tx voided · audit user=…000a (identidad inyectada) · 1 movement
+      · payment intacto (1 fila). — La ruta que usa /api/reverse.
+  P12 sin p_user_id: HTTP 400 ERR_UNAUTHORIZED → service_role DEBE
+      suministrar identidad (contrato de confianza interna).
+P7 — anon (PostgREST REAL, clave anon, TX-H):
+  HTTP 400 {"code":"P0001","message":"ERR_UNAUTHORIZED"} → el grant
+  PUBLIC deja llegar a la función, pero el cuerpo rechaza sin identidad.
+  (tx permanece completed tras el probe.)
+
+═══ MATRIZ FINAL (evidencia de ejecución, no inferencia) ═══
+
+| Rol       | RPC void directa | Propia | Ajena misma tienda | Otra tienda |
+|-----------|------------------|--------|--------------------|-------------|
+| admin     | SÍ               | SÍ     | SÍ                 | SÍ (global) |
+| manager   | SÍ               | SÍ     | SÍ                 | NO          |
+| encargado | SÍ               | SÍ     | SÍ                 | NO          |
+| clerk     | SÍ               | SÍ     | SÍ                 | NO          |
+| warehouse | SÍ               | SÍ     | SÍ                 | NO          |
+| usuario   | SÍ               | SÍ     | SÍ                 | NO          |
+| costo     | SÍ               | SÍ     | SÍ                 | NO          |
+| anon      | NO (ERR_UNAUTHORIZED)                                            |
+| service_role | SÓLO con identidad inyectada (p_user_id de miembro/admin)     |
+
+REGISTROS POR PROBE (GATE 7): HTTP/RPC result, transaction status,
+stock movement count, audit actor, audit action — capturados en los
+_POST de raw-probes-*.json y volcados arriba.
+════════════════════════════════════════════════════════════════════

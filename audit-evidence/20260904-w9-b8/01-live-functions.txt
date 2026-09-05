@@ -1,0 +1,374 @@
+════════════════════════════════════════════════════════════════════
+W9.5 — B-8 · 01-live-functions.txt
+GATE 1 — Inventario LIVE de la familia void/reverse/cancel/annul
+════════════════════════════════════════════════════════════════════
+fecha/hora: 2026-09-05 (AST)
+fuente: pg_proc / pg_get_functiondef contra base LIVE (Management API).
+query: ver scripts b8_g1_inventory.sql (raw en raw-gate1.json).
+
+A) INVENTARIO — 20 funciones en public que coinciden con
+   void/reverse/cancel/annul (TODAS SECURITY DEFINER, owner postgres):
+
+  OID 28123  public.can_void_receipt(p_receipt_id uuid)
+      DEFINER:true  owner:postgres  vol:v
+      search_path:["search_path=public, extensions"]
+      EXECUTE→ postgres,service_role
+
+  OID 34760  public.cancel_reception(p_reception_id uuid)
+      DEFINER:true  owner:postgres  vol:v
+      search_path:["search_path=public, pg_temp"]
+      EXECUTE→ postgres,service_role
+
+  OID 130873  public.cancel_transfer(p_transfer_id uuid, p_user_id uuid)
+      DEFINER:true  owner:postgres  vol:v
+      search_path:["search_path=public"]
+      EXECUTE→ postgres,authenticated,service_role
+
+  OID 137483  public.cancel_transfer(p_transfer_id uuid, p_reason text, p_user_id uuid)
+      DEFINER:true  owner:postgres  vol:v
+      search_path:["search_path=public, pg_temp"]
+      EXECUTE→ postgres,authenticated,service_role
+
+  OID 26952  public.fn_void_receipt(p_receipt_id uuid, p_user_id uuid)
+      DEFINER:true  owner:postgres  vol:v
+      search_path:["search_path=public, extensions"]
+      EXECUTE→ postgres,service_role
+
+  OID 136656  public.reverse_adjustment(p_adjustment_id uuid, p_reason text, p_user_id uuid)
+      DEFINER:true  owner:postgres  vol:v
+      search_path:["search_path=public"]
+      EXECUTE→ postgres,service_role
+
+  OID 138210  public.reverse_commissions_on_sale_void()
+      DEFINER:true  owner:postgres  vol:v
+      search_path:["search_path=public, pg_temp"]
+      EXECUTE→ postgres,service_role
+
+  OID 136657  public.reverse_devolution(p_devolution_id uuid, p_reason text, p_user_id uuid)
+      DEFINER:true  owner:postgres  vol:v
+      search_path:["search_path=public"]
+      EXECUTE→ postgres,service_role
+
+  OID 138622  public.reverse_production_order(p_order_id uuid, p_reason text, p_user_id uuid)
+      DEFINER:true  owner:postgres  vol:v
+      search_path:["search_path=public, extensions"]
+      EXECUTE→ postgres,service_role
+
+  OID 136654  public.reverse_receipt(p_receipt_id uuid, p_reason text, p_user_id uuid)
+      DEFINER:true  owner:postgres  vol:v
+      search_path:["search_path=public"]
+      EXECUTE→ postgres,service_role
+
+  OID 138196  public.reverse_receipt_v2(p_receipt_id uuid, p_reason text, p_user_id uuid)
+      DEFINER:true  owner:postgres  vol:v
+      search_path:["search_path=public, pg_temp"]
+      EXECUTE→ PUBLIC,postgres,authenticated,service_role
+
+  OID 138188  public.reverse_transaction_v2(p_transaction_id uuid, p_reason text, p_user_id uuid)
+      DEFINER:true  owner:postgres  vol:v
+      search_path:["search_path=public, pg_temp"]
+      EXECUTE→ postgres,service_role
+
+  OID 136655  public.reverse_transfer(p_transfer_id uuid, p_reason text, p_user_id uuid)
+      DEFINER:true  owner:postgres  vol:v
+      search_path:["search_path=public, pg_temp"]
+      EXECUTE→ postgres,service_role
+
+  OID 142337  public.reverse_vale_salida(p_slip_id uuid, p_reason text, p_user_id uuid)
+      DEFINER:true  owner:postgres  vol:v
+      search_path:["search_path=public, pg_temp"]
+      EXECUTE→ postgres,service_role
+
+  OID 138619  public.void_closed_production_order(p_order_id uuid, p_reason text, p_user_id uuid)
+      DEFINER:true  owner:postgres  vol:v
+      search_path:["search_path=public, extensions"]
+      EXECUTE→ PUBLIC,postgres,anon,authenticated,service_role
+
+  OID 136900  public.void_inventory_adjustment(p_adjustment_id uuid, p_user_id uuid)
+      DEFINER:true  owner:postgres  vol:v
+      search_path:["search_path=public"]
+      EXECUTE→ postgres,authenticated,service_role
+
+  OID 138819  public.void_pending_reception(p_receipt_id uuid, p_user_id uuid, p_reason text, p_operation_date timestamp with time zone)
+      DEFINER:true  owner:postgres  vol:v
+      search_path:["search_path=public, pg_temp"]
+      EXECUTE→ PUBLIC,postgres,authenticated,service_role
+
+  OID 138595  public.void_received_service_with_reversal(p_service_id uuid, p_user_id uuid, p_reason text, p_operation_date timestamp with time zone)
+      DEFINER:true  owner:postgres  vol:v
+      search_path:["search_path=public, extensions"]
+      EXECUTE→ postgres,service_role
+
+  OID 136714  public.void_reception_with_reversal(p_receipt_id uuid, p_user_id uuid, p_reason text, p_operation_date timestamp with time zone)
+      DEFINER:true  owner:postgres  vol:v
+      search_path:["search_path=public, extensions"]
+      EXECUTE→ postgres,service_role
+
+  OID 138000  public.void_transaction(p_transaction_id uuid, p_reason text, p_operation_date timestamp with time zone, p_user_id uuid)
+      DEFINER:true  owner:postgres  vol:v
+      search_path:["search_path=pg_catalog, public"]
+      EXECUTE→ PUBLIC,postgres,authenticated,service_role
+
+B) OBSERVACIONES CLAVE (resueltas desde proacl crudo):
+  - void_transaction (138000): EXECUTE a PUBLIC (incluye anon) + authenticated
+    + service_role + postgres. ACL idéntico al capturado en B-2 (sin cambios).
+  - reverse_transaction_v2 (138188): EXECUTE solo postgres + service_role.
+    (Ruta canónica pasa por /api/reverse con cliente service_role.)
+  - Hermanas con EXECUTE a authenticated alcanzable por cliente directo:
+    cancel_transfer (ambas overloads), void_inventory_adjustment,
+    reverse_receipt_v2 (con PUBLIC residual), void_pending_reception (con PUBLIC),
+    void_closed_production_order (PUBLIC+anon+authenticated).
+    → registradas como superficie de la familia; solo void_transaction tiene
+      consumidores de anulación de VENTAS activos (uso en POS-undo).
+  - reverse_receipt (V1, 136654): sin EXECUTE a authenticated (postgres+service).
+
+C) DEFINICIÓN COMPLETA EN VIVO — public.void_transaction (138000):
+
+  CREATE OR REPLACE FUNCTION public.void_transaction(p_transaction_id uuid, p_reason text, p_operation_date timestamp with time zone DEFAULT now(), p_user_id uuid DEFAULT NULL::uuid)
+   RETURNS jsonb
+   LANGUAGE plpgsql
+   SECURITY DEFINER
+   SET search_path TO 'pg_catalog', 'public'
+  AS $function$
+  
+  DECLARE
+    v_tx RECORD;
+    v_item RECORD;
+    v_caller_uid UUID := CASE WHEN auth.role() = 'service_role' THEN COALESCE(p_user_id, auth.uid()) ELSE auth.uid() END;
+    v_eff TIMESTAMP WITH TIME ZONE := COALESCE(p_operation_date, NOW());
+    v_conversion_factor integer := 1;
+    v_units_to_restore numeric;
+  BEGIN
+    SELECT * INTO v_tx FROM public.transactions WHERE id = p_transaction_id FOR UPDATE;
+    IF NOT FOUND THEN RAISE EXCEPTION 'ERR_TX_NOT_FOUND'; END IF;
+  
+    IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, v_tx.store_id) THEN
+      RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+    END IF;
+  
+    IF v_tx.status = 'voided' THEN RAISE EXCEPTION 'ERR_ALREADY_VOIDED'; END IF;
+  
+    UPDATE public.transactions
+      SET status = 'voided', void_reason = p_reason, cancelled_at = v_eff, updated_at = NOW()
+      WHERE id = p_transaction_id;
+  
+    -- FIX C-7: Restaurar stock considerando conversion_factor de variantes.
+    -- Si transaction_items.variant_id está poblado, buscar conversion_factor.
+    -- Si variant_id es NULL (ventas legacy), usar 1 (sin conversión) para
+    -- mantener simetría con create_sale legacy.
+    FOR v_item IN SELECT * FROM public.transaction_items WHERE transaction_id = p_transaction_id LOOP
+      v_conversion_factor := 1;
+      IF v_item.variant_id IS NOT NULL THEN
+        SELECT conversion_factor INTO v_conversion_factor
+          FROM public.product_variants WHERE id = v_item.variant_id;
+        v_conversion_factor := COALESCE(v_conversion_factor, 1);
+      END IF;
+  
+      v_units_to_restore := v_item.quantity * v_conversion_factor;
+  
+      PERFORM public.register_stock_movement(
+        p_product_id := v_item.product_id,
+        p_store_id := v_tx.store_id,
+        p_user_id := v_caller_uid,
+        p_quantity := v_units_to_restore,
+        p_movement_type := 'sale_void',
+        p_notes := p_transaction_id::text,
+        p_unit_cost := v_item.cost_at_sale,
+        p_reason := 'Void de venta',
+        p_operation_date := v_eff,
+        p_skip_access_check := TRUE
+      );
+    END LOOP;
+  
+    INSERT INTO public.audit_logs (action, table_name, record_id, store_id, user_id, metadata)
+    VALUES ('VOID_SALE', 'transactions', p_transaction_id, v_tx.store_id, v_caller_uid,
+      jsonb_build_object('reason', p_reason, 'old_status', v_tx.status));
+  
+    RETURN jsonb_build_object('status', 'success', 'transaction_id', p_transaction_id);
+  END;
+  
+  $function$
+  
+
+D) DEFINICIÓN COMPLETA EN VIVO — public.reverse_transaction_v2 (138188):
+
+  CREATE OR REPLACE FUNCTION public.reverse_transaction_v2(p_transaction_id uuid, p_reason text, p_user_id uuid DEFAULT NULL::uuid)
+   RETURNS jsonb
+   LANGUAGE plpgsql
+   SECURITY DEFINER
+   SET search_path TO 'public', 'pg_temp'
+  AS $function$
+  DECLARE
+    v_tx RECORD;
+    v_item RECORD;
+    v_caller_uid uuid := CASE WHEN auth.role() = 'service_role' THEN COALESCE(p_user_id, auth.uid()) ELSE auth.uid() END;
+    v_units_to_restore numeric;
+    v_total_restored numeric := 0;
+  BEGIN
+    SELECT * INTO v_tx FROM public.transactions WHERE id = p_transaction_id FOR UPDATE;
+    IF NOT FOUND THEN
+      RAISE EXCEPTION 'ERR_TRANSACTION_NOT_FOUND';
+    END IF;
+  
+    IF v_tx.status = 'voided' THEN
+      RETURN jsonb_build_object('status', 'idempotent', 'transaction_id', p_transaction_id);
+    END IF;
+  
+    IF v_tx.status <> 'completed' THEN
+      RAISE EXCEPTION 'ERR_INVALID_STATUS: only completed transactions can be reversed (status=%)', v_tx.status;
+    END IF;
+  
+    IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, v_tx.store_id) THEN
+      RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+    END IF;
+  
+    FOR v_item IN
+      SELECT ti.product_id, ti.quantity, ti.cost_at_sale
+      FROM public.transaction_items ti
+      WHERE ti.transaction_id = p_transaction_id AND ti.product_id IS NOT NULL
+    LOOP
+      v_units_to_restore := v_item.quantity;
+  
+      -- register_stock_movement genera el stock_movement → trigger genera kardex
+      PERFORM public.register_stock_movement(
+        p_product_id := v_item.product_id,
+        p_store_id := v_tx.store_id,
+        p_user_id := v_caller_uid,
+        p_quantity := v_units_to_restore,
+        p_movement_type := 'sale_reverse'::text,
+        p_sale_id := p_transaction_id,
+        p_unit_cost := v_item.cost_at_sale,
+        p_reason := 'Reverso de venta'::text,
+        p_operation_date := NOW(),
+        p_skip_access_check := TRUE
+      );
+  
+      -- PR-4.3: INSERT directo a kardex_entries ELIMINADO
+  
+      v_total_restored := v_total_restored + v_units_to_restore;
+    END LOOP;
+  
+    UPDATE public.transactions
+    SET status = 'voided',
+        updated_at = NOW()
+    WHERE id = p_transaction_id;
+  
+    INSERT INTO public.audit_logs (action, table_name, record_id, store_id, user_id, metadata)
+    VALUES ('REVERSE_TRANSACTION_V2', 'transactions', p_transaction_id, v_tx.store_id, v_caller_uid,
+      jsonb_build_object('reason', p_reason, 'units_restored', v_total_restored));
+  
+    RETURN jsonb_build_object(
+      'status', 'success',
+      'transaction_id', p_transaction_id,
+      'units_restored', v_total_restored
+    );
+  END;
+  $function$
+  
+
+E) DEFINICIÓN COMPLETA EN VIVO — public.has_store_access_as (autorizador):
+
+  CREATE OR REPLACE FUNCTION public.has_store_access_as(p_user_id uuid, p_store_id uuid)
+   RETURNS boolean
+   LANGUAGE plpgsql
+   SECURITY DEFINER
+   SET search_path TO 'public'
+  AS $function$
+  DECLARE
+      v_role TEXT;
+  BEGIN
+      IF p_user_id IS NULL OR p_store_id IS NULL THEN RETURN false; END IF;
+      
+      -- Check if admin
+      SELECT role INTO v_role FROM public.profiles WHERE id = p_user_id;
+      IF v_role = 'admin' THEN RETURN true; END IF;
+      
+      -- Check membership
+      RETURN EXISTS (
+          SELECT 1 FROM public.user_store_memberships
+          WHERE user_id = p_user_id AND store_id = p_store_id AND status = 'active'
+      );
+  END;
+  $function$
+  
+
+F) TRIGGERS SOBRE transactions (todos tgenabled=O):
+  - reverse_commissions_on_sale_void [O]
+      CREATE TRIGGER reverse_commissions_on_sale_void AFTER UPDATE OF status ON public.transactions FOR EACH ROW EXECUTE FUNCTION reverse_commissions_on_sale_void()
+  - trg_audit_transaction_changes [O]
+      CREATE TRIGGER trg_audit_transaction_changes AFTER UPDATE ON public.transactions FOR EACH ROW EXECUTE FUNCTION log_transaction_changes()
+  - trg_check_active_user [O]
+      CREATE TRIGGER trg_check_active_user BEFORE INSERT OR UPDATE ON public.transactions FOR EACH ROW EXECUTE FUNCTION check_active_user()
+  - trg_protect_transactions_total_amount [O]
+      CREATE TRIGGER trg_protect_transactions_total_amount BEFORE UPDATE ON public.transactions FOR EACH ROW EXECUTE FUNCTION protect_transactions_total_amount()
+  - trg_validate_tx_transition [O]
+      CREATE TRIGGER trg_validate_tx_transition BEFORE UPDATE OF status ON public.transactions FOR EACH ROW EXECUTE FUNCTION fn_validate_document_transition('transactions')
+
+G) MÁQUINA DE ESTADOS (fn_validate_document_transition, extraído live):
+  transactions: pending   → [completed, voided]
+                completed → [voided, reversed]
+                voided    → [] (terminal)
+                reversed  → [] (terminal)
+  Estados FUERA del mapa (failed, compensated, cancelled, refunded):
+    `map ? old_status` = false ⇒ RAISE ERR_INVALID_TRANSITION en CUALQUIER
+    cambio de estado (incluido → voided). Bloqueados por trigger.
+
+H) TRIGGER reverse_commissions_on_sale_void (live):
+  Al pasar status a voided/reversed: marca commission_payments
+  (approved/paid, período que contenga created_at de la tx) como
+  flagged_for_review + audit COMMISSION_FLAGGED_FOR_REVIEW. No cancela pagos.
+
+I) COLUMNAS/CONSTRAINTS relevantes de transactions (live):
+  - id: uuid (uuid) null=NO def=gen_random_uuid()
+  - store_id: uuid (uuid) null=NO def=-
+  - seller_id: uuid (uuid) null=NO def=-
+  - total_amount: numeric (numeric) null=NO def=-
+  - status: USER-DEFINED (transaction_status) null=NO def='completed'::transaction_status
+  - cancelled_at: timestamp with time zone (timestamptz) null=YES def=-
+  - void_reason: text (text) null=YES def=-
+  - reversed_at: timestamp with time zone (timestamptz) null=YES def=-
+  - chk_mixed_payment_consistency: CHECK (((payment_method <> 'mixed'::payment_method_enum) OR (abs((((cash_amount + transfer_amount) + zelle_amount) - total_amount)) <= 1.00)))
+  - transactions_idempotency_key_key: UNIQUE (idempotency_key)
+  - transactions_original_transaction_id_fkey: FOREIGN KEY (original_transaction_id) REFERENCES transactions(id)
+  - transactions_pkey: PRIMARY KEY (id)
+  - transactions_reversed_by_fkey: FOREIGN KEY (reversed_by) REFERENCES profiles(id)
+  - transactions_store_id_fkey: FOREIGN KEY (store_id) REFERENCES stores(id) ON DELETE CASCADE
+  - transactions_tenant_id_fkey: FOREIGN KEY (tenant_id) REFERENCES tenants(id)
+  - transactions_total_amount_check: CHECK ((total_amount >= (0)::numeric))
+  - transactions_user_id_fkey: FOREIGN KEY (seller_id) REFERENCES profiles(id) ON DELETE CASCADE
+
+J) ENUMS REALES (live):
+  transaction_status: pending, completed, failed, compensated, cancelled,
+                      refunded, voided, reversed
+  user_role: admin, superadmin, manager, clerk, warehouse, encargado,
+             usuario, costo, tenant_admin
+  membership_status: active, revoked
+  (NO existen los estados "paid/partial/draft" hipotetizados en la spec —
+   la matriz B-9 usa los enum reales de arriba.)
+
+K) TABLAS DE IDENTIDAD/ROLES (live):
+  profiles: id (FK auth.users), role user_role, roles user_role[], is_active,
+            store_id, active_store_id, role_id (FK roles), tenant_id, deleted_at…
+  user_store_memberships: user_id FK profiles, store_id FK stores,
+            role user_role, status membership_status, UNIQUE(user_id,store_id)
+  roles (dinámico): id, name, permissions jsonb — no consumido por gating
+            de anulación (ver 03-role-policy.txt §D).
+
+L) DISTRIBUCIÓN LIVE (read-only):
+  transactions por status: [{"n":520,"status":"completed"}] — todas completed.
+  memberships por rol: [{"n":41,"role":"admin"},{"n":6,"role":"clerk"},{"n":2,"role":"costo"},{"n":1,"role":"warehouse"},{"n":1,"role":"encargado"}]
+  (no hay perfiles manager/usuario activos en live; manager/usuario existen
+   solo en el enum user_role y en ROLE_PERMISSIONS del código.)
+
+M) HISTORIAL EN MIGRACIONES (void_transaction):
+  20260622000004 (op_date), 20260726000012 (V2.5.1 drop legacy),
+  20260726000015 (V2.5.4 status voided + "V2.5 H2b: autorización por tienda"),
+  20260727000006 (V2.12.9 anti-spoofing p_user_id — 31 funciones),
+  20260727000009 (V2.12.13 revoke anon), 20260803000002 (V2.13.2 conv factor),
+  20260811000004 (V2.20.4 reference_doc). Definición live == última versión.
+
+INTERPRETACIÓN:
+  - El autorizador server-side de la familia (has_store_access_as) resuelve
+    "admin global (profiles.role=admin) OR membresía active" — el ROL de la
+    membresía NO se consulta. La política DB de anulación de ventas es
+    membresía+tienda por DISEÑO (comentario de migración "V2.5 H2b").

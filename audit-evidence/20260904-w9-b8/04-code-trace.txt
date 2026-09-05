@@ -1,0 +1,121 @@
+════════════════════════════════════════════════════════════════════
+W9.5 — B-8 · 04-code-trace.txt
+GATE 3 — Trazabilidad de TODAS las rutas de anulación de ventas
+════════════════════════════════════════════════════════════════════
+fecha/hora: 2026-09-05 (AST)
+método: rg + lectura de fuentes (líneas citadas). Verificado en bf1c9733.
+
+A) GRAFO RUTA 1 — POS Undo (legacy, void_transaction, client-RPC)
+────────────────────────────────
+  POS (usePOSCheckout.ts)
+    └─ checkout exitoso → toast "Venta registrada"
+       duration: 30000 (línea 323; comentario "POS-2 MM-9", líneas 315-317)
+       action.label "Deshacer" (325) → onClick:
+         └─ invertSale({type:'sale', id:saleId, items:snapshot, storeId})
+            (useInvertDocument — SIN role-gate, SIN check de propiedad)
+            └─ useDocumentActions.ts:74-78
+               supabase.rpc('void_transaction',
+                 { p_transaction_id, p_reason, p_operation_date })   ← CLIENTE
+               └─ PostgREST /rest/v1/rpc/void_transaction (JWT usuario)
+                  └─ public.void_transaction (SECURITY DEFINER)
+                     auth.uid() → has_store_access_as(caller, tx.store_id)
+                     → UPDATE transactions.status='voided'
+                     → register_stock_movement(sale_void) por ítem
+                     → audit_logs VOID_SALE
+                     → trigger reverse_commissions_on_sale_void
+
+  GATES DE ESTA RUTA:
+    UI:  NINGUNO por rol — cualquier usuario que completó una venta en POS
+         (admin/manager/encargado/clerk según docs de acceso POS) ve "Deshacer".
+    API: N/A (no pasa por Next API).
+    RPC: autorización = identidad+tienda (B-2). Sin rol, sin ownership,
+         sin ventana temporal server-side (los 30s viven SOLO en el toast).
+
+B) GRAFO RUTA 2 — SalesHistory "Revertir" (canónica, V2 vía API)
+────────────────────────────────
+  SalesHistoryView.tsx:539-551
+    botón "Revertir venta" — gate = canReverse('transaction', txn.status)
+    (DocumentStatusBadge.tsx:175 — SOLO status, SIN rol)
+    └─ setReverseTarget → ReverseDocumentModal (sin role-gate; solo
+       disabled por UI de formulario, líneas 178/191)
+       └─ useReverseDocument.ts:50 → apiFetch('/api/reverse', …)
+          └─ POST /api/reverse (route.ts):
+             withAuth (autenticación NextAuth) → validateOrigin (CSRF)
+             → rateLimit 5/min → Zod {type,id,reason}
+             → getSupabaseAdminSafe() = cliente SERVICE_ROLE
+             → rpc('reverse_transaction_v2', { p_transaction_id, p_reason,
+               p_user_id: session.user.id })     ← identidad server-injected
+             └─ public.reverse_transaction_v2 (SECURITY DEFINER)
+                auth.uid() es NULL bajo service_role → usa p_user_id
+                → has_store_access_as(p_user_id, tx.store_id)
+                → exige status='completed' (ERR_INVALID_STATUS)
+                → FOR UPDATE, stock sale_reverse, audit REVERSE_TRANSACTION_V2
+
+  GATES DE ESTA RUTA:
+    UI:  SOLO status del documento (canReverse). NINGÚN rol.
+    API: autenticación+CSRF+rate-limit; ROL NO evaluado server-side.
+    RPC: identidad+tienda+status (V2). Sin rol, sin ownership.
+
+C) GRAFO RUTA 3 — flujo void LEGADO del hook SalesHistory (MUERTO)
+────────────────────────────────
+  useSalesHistoryView.ts:86-88 computa canVoid (ROLE_PERMISSIONS)
+  handleRequestVoid/handleConfirmVoid (153-188) llamarían
+  invertDocumentMutation (→ void_transaction client-RPC, ruta A).
+  PERO SalesHistoryView NO destructure esos campos (153-170) y rg no
+  encuentra otro consumidor ⇒ flujo sin botón activo hoy.
+  (B-2 lo documentó como activo; el estado actual de bf1c9733 es muerto —
+   el único botón de reversión de ventas en SalesHistory es "Revertir" V2.)
+
+D) GRAFO RUTA 4 — resto de vistas con ReverseDocumentModal (familia V2)
+────────────────────────────────
+  DevolutionsView / InventoryAdjustmentsView (void propio de ajustes) /
+  ReceptionsHistoryView / ProductionOrdersView / TransferenciasView
+    └─ canReverse(type, status) (SOLO status) → ReverseDocumentModal
+       → /api/reverse → reverse_receipt_v2 | reverse_transfer |
+         duplicate_inventory_adjustment_v2 | reverse_devolution |
+         reverse_production_order (todos service_role vía API).
+  TransferDetailsModal.tsx:117:
+    canCancel = (isOutgoing || user?.role==='admin' || user?.role==='manager')
+                && status==='PENDIENTE'   ← role-gate UI para CANCELAR
+    transferencias (no ventas): cancel_transfer RPC (EXECUTE authenticated,
+    autorización membresía en cuerpo — misma filosofía por tienda).
+
+E) ¿QUIÉN PUEDE FALSIFICAR QUÉ? (síntesis autorizacional)
+────────────────────────────────
+  - Ruta A (client-RPC): cualquier JWT de usuario válido puede INVOCAR
+    void_transaction directamente (ACL authenticated+PUBLIC). Lo que decide
+    el efecto es el cuerpo: identidad real + membresía activa de la tienda
+    de la tx (o admin global). Los 30s / rol / propiedad NO existen ahí.
+  - Ruta B (API): cualquier usuario autenticado con sesión válida puede
+    llamar /api/reverse; el rate-limit y CSRF son técnicos, no de política.
+    El rol NO se evalúa; la RPC filtra por tienda+status.
+  - B-2 ya probó con probes live: cross-store DENIED, forged p_user_id
+    ignorado (atribución al caller real), anon DENIED, service_role sin
+    identidad DENIED, miembro 'costo' con canVoid=false en su tienda
+    SUCCESS (P1). Esta auditoría re-ejecuta la batería por rol (06).
+
+F) ¿DÓNDE OCURRE CADA AUTORIZACIÓN? (pregunta GATE 3)
+────────────────────────────────
+    Decisión            | Ruta A (POS-undo)        | Ruta B (V2/API)
+    --------------------+--------------------------+------------------------
+    Identidad           | DB (auth.uid())          | API (withAuth) + DB
+    Tienda/membresía    | DB (has_store_access_as) | DB (idem vía p_user_id)
+    Rol                 | NINGUNA capa             | NINGUNA capa
+    Propiedad (seller)  | NINGUNA capa             | NINGUNA capa
+    Ventana temporal    | SOLO UI (toast 30s)      | NINGUNA capa
+    Status válido       | SOLO guard voided (DB)   | DB (exige completed)
+    Rate-limit/CSRF     | N/A                      | API (técnico)
+
+G) ¿DEPENDEN DE LA UI? ¿EXISTE SEGUNDA BARRERA SERVER-SIDE?
+────────────────────────────────
+  - La ÚNICA barrera server-side de política es identidad+tienda (+status
+    en V2). El rol y la propiedad viven (vivían) solo en UI, y el único
+    gate de rol del código está muerto — la UI hoy NO restringe por rol
+    ninguna anulación de ventas.
+  - Escenario "UI=DENY / SERVER=ALLOW": se materializa para cualquier rol
+    con canVoid=false que llame directo (o que use "Revertir" V2, que la
+    UI le muestra igualmente si la vista es accesible).
+  - Escenario "UI=ALLOW / SERVER=DENY": cross-store (UI permitiría pulsar
+    un botón de otra tienda si se viera; DB rechaza) — incoherencia menor,
+    protectiva.
+════════════════════════════════════════════════════════════════════

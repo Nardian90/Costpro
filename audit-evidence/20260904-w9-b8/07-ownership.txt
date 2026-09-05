@@ -1,0 +1,46 @@
+════════════════════════════════════════════════════════════════════
+W9.5 — B-8 · 07-ownership.txt
+GATE 8 — ¿Existe política de propiedad (seller_id = auth.uid())?
+════════════════════════════════════════════════════════════════════
+fecha/hora: 2026-09-05 (AST)
+
+A) EVIDENCIA DE CÓDIGO (live, 01-live-functions.txt §C):
+   void_transaction NO consulta seller_id en ninguna decisión:
+     1. SELECT * FROM transactions WHERE id=p_transaction_id FOR UPDATE
+     2. IF NOT has_store_access_as(v_caller_uid, v_tx.store_id) → DENY
+     3. IF status='voided' → ERR_ALREADY_VOIDED
+   No existe `seller_id = auth.uid()` ni equivalente en el cuerpo.
+   reverse_transaction_v2: idéntico (no consulta seller_id).
+
+B) EVIDENCIA DE EJECUCIÓN (06-role-probes.txt P2):
+   Los 6 roles con membresía anularon TX-OTHER-<rol> cuyo seller es
+   sellerX (…0008): SUCCESS ×6, audit atribuido al CALLER.
+   ⇒ membership ≠ ownership: la membresía confiere anulación de ventas
+     ajenas. PROBADO por segunda vez (B-2 P13 ya lo había demostrado).
+
+C) ¿ES INTENCIONAL O DEFECTO? — evidencia de diseño (GATE 4):
+   INTENCIONAL en la capa DB:
+   - Migración V2.5.4: comentario de diseño "V2.5 H2b: autorización por
+     tienda" — el modelo elegido explícitamente fue tienda, no propiedad.
+   - V2.12.9 endureció identidad en 31 funciones SIN introducir ownership:
+     el endurecimiento deliberado no consideró seller_id como criterio.
+   - La doc de producto (02-roles-permisos.md) describe permisos
+     ascendentes por rol: encargado "anula ventas de cualquier cajero de
+     su tienda" — la anulación ajena ES parte del contrato funcional.
+   AMBIGUO en la capa UI/docs para los roles bajos:
+   - Los docs previos limitan al clerk a "sus ventas dentro de 24h" —
+     una política de propiedad+ventana para clerk que NUNCA se
+     implementó en ninguna capa (ni UI ni API ni DB).
+   - ROLE_PERMISSIONS (hoy muerto) nunca codificó ownership.
+
+D) CONCLUSIÓN:
+   - Política DB: NO hay ownership; es decisión de diseño registrada
+     (PROBADO por comentarios de migración + arquitectura uniforme de
+     31 funciones).
+   - La ausencia de ownership NO es un defecto introducido por descuido
+     en void_transaction: es la política común de toda la familia
+     (incluida la canónica V2 vía /api/reverse).
+   - La política por rol+ventana+propiedad descrita en docs para clerk
+     quedó sin implementar en TODAS las capas (brecha docs-vs-sistema,
+     sistémica — se decide en GATE 12).
+════════════════════════════════════════════════════════════════════

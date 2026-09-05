@@ -1,0 +1,402 @@
+[
+  {
+    "log": [
+      {
+        "probe": "P1_clerk",
+        "detail": {
+          "status": "success",
+          "transaction_id": "b8d00000-0000-4000-8000-00000000a004"
+        },
+        "outcome": "SUCCESS"
+      },
+      {
+        "probe": "P1_clerk_POST",
+        "detail": {
+          "audit": {
+            "user_id": "b8b00000-0000-4000-8000-000000000004",
+            "metadata": {
+              "reason": "b8-P1-clerk",
+              "old_status": "completed"
+            }
+          },
+          "tx_status": "voided",
+          "void_reason": "b8-P1-clerk",
+          "movements_of_tx": 1
+        },
+        "outcome": "STATE"
+      },
+      {
+        "probe": "P1_costo",
+        "detail": {
+          "status": "success",
+          "transaction_id": "b8d00000-0000-4000-8000-00000000a007"
+        },
+        "outcome": "SUCCESS"
+      },
+      {
+        "probe": "P1_costo_POST",
+        "detail": {
+          "audit": {
+            "user_id": "b8b00000-0000-4000-8000-000000000007",
+            "metadata": {
+              "reason": "b8-P1-costo",
+              "old_status": "completed"
+            }
+          },
+          "tx_status": "voided",
+          "void_reason": "b8-P1-costo",
+          "movements_of_tx": 1
+        },
+        "outcome": "STATE"
+      },
+      {
+        "probe": "P1_encargado",
+        "detail": {
+          "status": "success",
+          "transaction_id": "b8d00000-0000-4000-8000-00000000a003"
+        },
+        "outcome": "SUCCESS"
+      },
+      {
+        "probe": "P1_encargado_POST",
+        "detail": {
+          "audit": {
+            "user_id": "b8b00000-0000-4000-8000-000000000003",
+            "metadata": {
+              "reason": "b8-P1-encargado",
+              "old_status": "completed"
+            }
+          },
+          "tx_status": "voided",
+          "void_reason": "b8-P1-encargado",
+          "movements_of_tx": 1
+        },
+        "outcome": "STATE"
+      },
+      {
+        "probe": "P1_manager",
+        "detail": {
+          "status": "success",
+          "transaction_id": "b8d00000-0000-4000-8000-00000000a002"
+        },
+        "outcome": "SUCCESS"
+      },
+      {
+        "probe": "P1_manager_POST",
+        "detail": {
+          "audit": {
+            "user_id": "b8b00000-0000-4000-8000-000000000002",
+            "metadata": {
+              "reason": "b8-P1-manager",
+              "old_status": "completed"
+            }
+          },
+          "tx_status": "voided",
+          "void_reason": "b8-P1-manager",
+          "movements_of_tx": 1
+        },
+        "outcome": "STATE"
+      },
+      {
+        "probe": "P1_usuario",
+        "detail": {
+          "status": "success",
+          "transaction_id": "b8d00000-0000-4000-8000-00000000a006"
+        },
+        "outcome": "SUCCESS"
+      },
+      {
+        "probe": "P1_usuario_POST",
+        "detail": {
+          "audit": {
+            "user_id": "b8b00000-0000-4000-8000-000000000006",
+            "metadata": {
+              "reason": "b8-P1-usuario",
+              "old_status": "completed"
+            }
+          },
+          "tx_status": "voided",
+          "void_reason": "b8-P1-usuario",
+          "movements_of_tx": 1
+        },
+        "outcome": "STATE"
+      },
+      {
+        "probe": "P1_warehouse",
+        "detail": {
+          "status": "success",
+          "transaction_id": "b8d00000-0000-4000-8000-00000000a005"
+        },
+        "outcome": "SUCCESS"
+      },
+      {
+        "probe": "P1_warehouse_POST",
+        "detail": {
+          "audit": {
+            "user_id": "b8b00000-0000-4000-8000-000000000005",
+            "metadata": {
+              "reason": "b8-P1-warehouse",
+              "old_status": "completed"
+            }
+          },
+          "tx_status": "voided",
+          "void_reason": "b8-P1-warehouse",
+          "movements_of_tx": 1
+        },
+        "outcome": "STATE"
+      },
+      {
+        "probe": "P2_clerk",
+        "detail": {
+          "status": "success",
+          "transaction_id": "b8d00000-0000-4000-8000-00000000b004"
+        },
+        "outcome": "SUCCESS"
+      },
+      {
+        "probe": "P2_clerk_POST",
+        "detail": {
+          "audit": {
+            "user_id": "b8b00000-0000-4000-8000-000000000004",
+            "metadata": {
+              "reason": "b8-P2-clerk",
+              "old_status": "completed"
+            }
+          },
+          "tx_status": "voided",
+          "void_reason": "b8-P2-clerk",
+          "movements_of_tx": 1
+        },
+        "outcome": "STATE"
+      },
+      {
+        "probe": "P2_costo",
+        "detail": {
+          "status": "success",
+          "transaction_id": "b8d00000-0000-4000-8000-00000000b007"
+        },
+        "outcome": "SUCCESS"
+      },
+      {
+        "probe": "P2_costo_POST",
+        "detail": {
+          "audit": {
+            "user_id": "b8b00000-0000-4000-8000-000000000007",
+            "metadata": {
+              "reason": "b8-P2-costo",
+              "old_status": "completed"
+            }
+          },
+          "tx_status": "voided",
+          "void_reason": "b8-P2-costo",
+          "movements_of_tx": 1
+        },
+        "outcome": "STATE"
+      },
+      {
+        "probe": "P2_encargado",
+        "detail": {
+          "status": "success",
+          "transaction_id": "b8d00000-0000-4000-8000-00000000b003"
+        },
+        "outcome": "SUCCESS"
+      },
+      {
+        "probe": "P2_encargado_POST",
+        "detail": {
+          "audit": {
+            "user_id": "b8b00000-0000-4000-8000-000000000003",
+            "metadata": {
+              "reason": "b8-P2-encargado",
+              "old_status": "completed"
+            }
+          },
+          "tx_status": "voided",
+          "void_reason": "b8-P2-encargado",
+          "movements_of_tx": 1
+        },
+        "outcome": "STATE"
+      },
+      {
+        "probe": "P2_manager",
+        "detail": {
+          "status": "success",
+          "transaction_id": "b8d00000-0000-4000-8000-00000000b002"
+        },
+        "outcome": "SUCCESS"
+      },
+      {
+        "probe": "P2_manager_POST",
+        "detail": {
+          "audit": {
+            "user_id": "b8b00000-0000-4000-8000-000000000002",
+            "metadata": {
+              "reason": "b8-P2-manager",
+              "old_status": "completed"
+            }
+          },
+          "tx_status": "voided",
+          "void_reason": "b8-P2-manager",
+          "movements_of_tx": 1
+        },
+        "outcome": "STATE"
+      },
+      {
+        "probe": "P2_usuario",
+        "detail": {
+          "status": "success",
+          "transaction_id": "b8d00000-0000-4000-8000-00000000b006"
+        },
+        "outcome": "SUCCESS"
+      },
+      {
+        "probe": "P2_usuario_POST",
+        "detail": {
+          "audit": {
+            "user_id": "b8b00000-0000-4000-8000-000000000006",
+            "metadata": {
+              "reason": "b8-P2-usuario",
+              "old_status": "completed"
+            }
+          },
+          "tx_status": "voided",
+          "void_reason": "b8-P2-usuario",
+          "movements_of_tx": 1
+        },
+        "outcome": "STATE"
+      },
+      {
+        "probe": "P2_warehouse",
+        "detail": {
+          "status": "success",
+          "transaction_id": "b8d00000-0000-4000-8000-00000000b005"
+        },
+        "outcome": "SUCCESS"
+      },
+      {
+        "probe": "P2_warehouse_POST",
+        "detail": {
+          "audit": {
+            "user_id": "b8b00000-0000-4000-8000-000000000005",
+            "metadata": {
+              "reason": "b8-P2-warehouse",
+              "old_status": "completed"
+            }
+          },
+          "tx_status": "voided",
+          "void_reason": "b8-P2-warehouse",
+          "movements_of_tx": 1
+        },
+        "outcome": "STATE"
+      },
+      {
+        "probe": "P3_clerk",
+        "detail": {
+          "err": "ERR_UNAUTHORIZED",
+          "code": "P0001"
+        },
+        "outcome": "DENIED"
+      },
+      {
+        "probe": "P3_clerk_POST",
+        "detail": {
+          "audit": null,
+          "tx_status": "completed",
+          "void_reason": null,
+          "movements_of_tx": 0
+        },
+        "outcome": "STATE"
+      },
+      {
+        "probe": "P3_costo",
+        "detail": {
+          "err": "ERR_UNAUTHORIZED",
+          "code": "P0001"
+        },
+        "outcome": "DENIED"
+      },
+      {
+        "probe": "P3_costo_POST",
+        "detail": {
+          "audit": null,
+          "tx_status": "completed",
+          "void_reason": null,
+          "movements_of_tx": 0
+        },
+        "outcome": "STATE"
+      },
+      {
+        "probe": "P3_encargado",
+        "detail": {
+          "err": "ERR_UNAUTHORIZED",
+          "code": "P0001"
+        },
+        "outcome": "DENIED"
+      },
+      {
+        "probe": "P3_encargado_POST",
+        "detail": {
+          "audit": null,
+          "tx_status": "completed",
+          "void_reason": null,
+          "movements_of_tx": 0
+        },
+        "outcome": "STATE"
+      },
+      {
+        "probe": "P3_manager",
+        "detail": {
+          "err": "ERR_UNAUTHORIZED",
+          "code": "P0001"
+        },
+        "outcome": "DENIED"
+      },
+      {
+        "probe": "P3_manager_POST",
+        "detail": {
+          "audit": null,
+          "tx_status": "completed",
+          "void_reason": null,
+          "movements_of_tx": 0
+        },
+        "outcome": "STATE"
+      },
+      {
+        "probe": "P3_usuario",
+        "detail": {
+          "err": "ERR_UNAUTHORIZED",
+          "code": "P0001"
+        },
+        "outcome": "DENIED"
+      },
+      {
+        "probe": "P3_usuario_POST",
+        "detail": {
+          "audit": null,
+          "tx_status": "completed",
+          "void_reason": null,
+          "movements_of_tx": 0
+        },
+        "outcome": "STATE"
+      },
+      {
+        "probe": "P3_warehouse",
+        "detail": {
+          "err": "ERR_UNAUTHORIZED",
+          "code": "P0001"
+        },
+        "outcome": "DENIED"
+      },
+      {
+        "probe": "P3_warehouse_POST",
+        "detail": {
+          "audit": null,
+          "tx_status": "completed",
+          "void_reason": null,
+          "movements_of_tx": 0
+        },
+        "outcome": "STATE"
+      }
+    ]
+  }
+]

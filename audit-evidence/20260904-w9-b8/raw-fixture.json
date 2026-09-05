@@ -1,0 +1,48 @@
+[
+  {
+    "fixture": [
+      {
+        "step": "stores",
+        "detail": {
+          "n": 2
+        }
+      },
+      {
+        "step": "profiles",
+        "detail": {
+          "n": 10
+        }
+      },
+      {
+        "step": "memberships",
+        "detail": {
+          "n": 9
+        }
+      },
+      {
+        "step": "products+inventory",
+        "detail": {
+          "n": 4
+        }
+      },
+      {
+        "step": "transactions",
+        "detail": {
+          "n": 29
+        }
+      },
+      {
+        "step": "items",
+        "detail": {
+          "n": 29
+        }
+      },
+      {
+        "step": "payments",
+        "detail": {
+          "n": 29
+        }
+      }
+    ]
+  }
+]

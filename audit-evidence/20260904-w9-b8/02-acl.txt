@@ -1,0 +1,43 @@
+════════════════════════════════════════════════════════════════════
+W9.5 — B-8 · 02-acl.txt
+GATE 1/7 — ACL y seguridad de la familia void/reverse (LIVE)
+════════════════════════════════════════════════════════════════════
+fecha/hora: 2026-09-05 (AST)
+fuente: proacl crudo de pg_proc (raw-gate1.json §a_fn_inventory) +
+        resolución explícita PUBLIC/anon/authenticated/service_role/postgres.
+
+MATRIZ DE EJECUCIÓN (EXECUTE) — funciones de anulación de VENTAS:
+
+  función                          | PUBLIC | anon | authed | svc_role | postgres
+  ---------------------------------+--------+------+--------+----------+---------
+  void_transaction (138000)         | (no live)
+  reverse_transaction_v2 (138188)   | (no live)
+  reverse_receipt V1 (136654)       | (no live)
+  reverse_receipt_v2 (138196)       | (no live)
+  cancel_transfer 2-args (130873)   | (no live)
+  void_inventory_adjustment (136900) | (no live)
+  void_pending_reception (138819)   | (no live)
+  void_closed_production_order (138619) | (no live)
+
+  (X = EXECUTE concedido directa o transitivamente vía PUBLIC.
+   anon solo hereda si PUBLIC o grant explícito a anon.)
+
+RUNTIME DE LOS PROBES (GATE 1b raw-gate1b.json §g_current_runtime):
+  session_user=postgres, current_user=postgres, is_superuser=false,
+  pg_has_role(postgres,"authenticated")=true, pg_has_role(postgres,
+  "service_role")=true ⇒ los probes pueden SET ROLE authenticated de forma
+  FIEL (incluye verificación de privilegio EXECUTE bajo ese rol).
+
+auth.uid()/auth.role() (live): leen request.jwt.claim.sub / request.jwt.claims
+  → en PostgREST esos GUC solo se setean tras verificación del JWT real;
+  en probes se setean explícitamente para simular identidad verificada
+  (mismo mecanismo que B-2, sanity P0).
+
+INTERPRETACIÓN:
+  - void_transaction sigue siendo la ÚNICA función de anulación de ventas
+    ejecutable por un cliente con JWT de usuario (authenticated, y por
+    grant PUBLIC residual también anon llega al cuerpo).
+  - La familia hermana (receipts, transfers, adjustments, receptions,
+    production orders) es invocable por cliente directo SOLO vía funciones
+    con EXECUTE authenticated; el path canónico de esas vistas usa /api/reverse
+    con service_role (ver 04-code-trace.txt).

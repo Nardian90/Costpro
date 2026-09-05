@@ -1,0 +1,45 @@
+════════════════════════════════════════════════════════════════════
+W9.5 — B-8 · 09-void-vs-reverse.txt
+GATE 10 — Comparación campo a campo: void_transaction vs reverse_transaction_v2
+════════════════════════════════════════════════════════════════════
+fecha/hora: 2026-09-05 (AST)
+fuente: pg_get_functiondef LIVE de ambos (raw-gate1.json §b_fn_defs).
+
+| Control          | void_transaction (138000)              | reverse_transaction_v2 (138188)           |
+|------------------|----------------------------------------|-------------------------------------------|
+| Caller identity  | auth.uid() (p_user_id solo si auth.role()='service_role') | idéntico (misma expresión CASE) |
+| Store membership | has_store_access_as(caller, v_tx.store_id) | idéntico (misma función, OID 136268)  |
+| Role             | NINGUNO                                | NINGUNO                                   |
+| Ownership        | NINGUNO (seller_id no consultado)      | NINGUNO                                   |
+| Status           | SOLO guard voided (ERR_ALREADY_VOIDED); pending/partial/… pasan si la state machine lo permite (S1: pending→voided OK) | voided → return idempotent; status≠'completed' → ERR_INVALID_STATUS (doble guard) |
+| FOR UPDATE       | ✅ 1ª sentencia                         | ✅ 1ª sentencia                            |
+| Orden de checks  | 1º lock → 2º auth → 3º voided-guard    | 1º lock → 2º voided-guard → 3º status-guard → 4º auth (auth al final: filtra menos pronto) |
+| Stock            | restaura quantity × conversion_factor de la variante (sale_void) | restaura quantity simple, SIN conversion_factor (sale_reverse) |
+| reference_id     | NULL (p_sale_id no se pasa — BACKLOG B-7) | p_sale_id=p_transaction_id (trazable en stock_movements.reference_id) |
+| WAC              | no recalcula cost_average (ruta venta) | idéntico                                  |
+| Payments         | NO toca (probe: fila intacta)          | NO toca                                   |
+| Commissions      | trigger reverse_commissions_on_sale_void (tabla, ambas rutas) | idéntico                          |
+| Audit            | INSERT VOID_SALE (reason, old_status)  | INSERT REVERSE_TRANSACTION_V2 (reason, units_restored) |
+| Status final     | 'voided'                               | 'voided' (también, pese a su nombre)      |
+| Idempotence      | excepción (ERR_ALREADY_VOIDED)         | graciosa (return 'idempotent')            |
+| Error codes      | ERR_TX_NOT_FOUND / ERR_UNAUTHORIZED / ERR_ALREADY_VOIDED | ERR_TRANSACTION_NOT_FOUND / ERR_UNAUTHORIZED / ERR_INVALID_STATUS |
+| search_path      | pg_catalog, public                     | public, pg_temp                           |
+| ACL              | PUBLIC+authenticated+service_role+postgres (client-callable) | postgres+service_role (solo servidor) |
+| Vía de entrada   | cliente directo (useInvertDocument → PostgREST) | /api/reverse (withAuth+CSRF+rate-limit, service_role + p_user_id=session.user.id) |
+| Consumers UI     | POS "Deshacer" 30s (sin rol); hook SalesHistory void (MUERTO) | SalesHistory "Revertir" + ReverseDocumentModal (6 vistas, sin rol) |
+
+¿EXISTEN DOS POLÍTICAS DISTINTAS PARA LA MISMA OPERACIÓN?
+  EN LA DB: NO — el núcleo autorizacional (identidad real + membresía
+  activa o admin global) es EXACTAMENTE el mismo en ambas funciones y
+  en las 31 funciones endurecidas por V2.12.9. El ROL no existe como
+  concepto autorizacional en NINGUNA de las dos rutas.
+  EN LA SUPERFICIE: SÍ, en 3 dimensiones funcionales (no de política):
+    1. status-guard (void: solo voided-terminal; V2: exige completed);
+    2. superficie de entrada (client-RPC directa vs API con defensas);
+    3. detalles de stock (variants conversion_factor vs simple;
+       reference_id NULL vs trazable).
+  EN LA UI: hay un POLIMORFISMO residual: el gate por rol canVoid
+  (muerto) apuntaba a la ruta void; el botón activo "Revertir" (V2)
+  no aplica ningún rol. Es decir, la política por rol nunca llegó al
+  servidor y hoy ni siquiera gobierna la UI.
+════════════════════════════════════════════════════════════════════

@@ -1,0 +1,58 @@
+[
+  {
+    "cleanup": [
+      {
+        "step": "B6_GUARD_RESTORED",
+        "detail": {
+          "trigger_audit_store_changes_tgenabled": "O"
+        }
+      },
+      {
+        "step": "CLEANUP_DONE",
+        "detail": {
+          "orders": "business_events→audit→user_audit→payments→items→tx→kardex→movements→inventory→products→memberships→profiles→auth.users→stores",
+          "restore_mode": "activado solo para DELETE de payments del fixture; RESET inmediato"
+        }
+      },
+      {
+        "step": "GUARD_RESTORED",
+        "detail": {
+          "profiles_fixture": 0,
+          "auth_users_fixture": 0,
+          "prevent_hard_delete_profile_tgenabled": "O"
+        }
+      },
+      {
+        "step": "RESIDUE_CHECK",
+        "detail": {
+          "stores": 0,
+          "payments": 0,
+          "products": 0,
+          "profiles": 0,
+          "inventory": 0,
+          "audit_logs": 0,
+          "auth_users": 0,
+          "memberships": 0,
+          "transactions": 0,
+          "kardex_entries": "0",
+          "user_audit_log": 0,
+          "business_events": 0,
+          "stock_movements": 0,
+          "transaction_items": 0
+        }
+      },
+      {
+        "step": "TXH_POST_STATE",
+        "detail": {
+          "audit": {
+            "action": "VOID_SALE",
+            "user_id": "b8b00000-0000-4000-8000-00000000000a"
+          },
+          "movements": 1,
+          "tx_status": "voided",
+          "payment_rows": 1
+        }
+      }
+    ]
+  }
+]

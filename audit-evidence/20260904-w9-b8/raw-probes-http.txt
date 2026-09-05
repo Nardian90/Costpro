@@ -1,0 +1,12 @@
+=== P7 — ANON (JWT anon real, sin identidad) ===
+--- POST /rest/v1/rpc/void_transaction {p_transaction_id: TX-H, p_reason: b8-anon-probe}
+HTTP 400
+{"code":"P0001","details":null,"hint":null,"message":"ERR_UNAUTHORIZED"}
+
+=== P12 — SERVICE_ROLE SIN p_user_id ===
+HTTP 400
+{"code":"P0001","details":null,"hint":null,"message":"ERR_UNAUTHORIZED"}
+
+=== P6c — SERVICE_ROLE CON p_user_id (identidad inyectada, miembro de la tienda) ===
+HTTP 200
+{"status": "success", "transaction_id": "b8d00000-0000-4000-8000-00000000d001"}

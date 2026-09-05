@@ -1,0 +1,166 @@
+[
+  {
+    "gate1b": {
+      "a_enums": {
+        "user_role": [
+          "admin",
+          "superadmin",
+          "manager",
+          "clerk",
+          "warehouse",
+          "encargado",
+          "usuario",
+          "costo",
+          "tenant_admin"
+        ],
+        "membership_status": [
+          "active",
+          "revoked"
+        ],
+        "transaction_status": [
+          "pending",
+          "completed",
+          "failed",
+          "compensated",
+          "cancelled",
+          "refunded",
+          "voided",
+          "reversed"
+        ],
+        "payment_method_enum": [
+          "cash",
+          "card",
+          "transfer",
+          "wallet",
+          "other",
+          "mixed",
+          "zelle"
+        ]
+      },
+      "c_usm_constraints": [
+        {
+          "def": "FOREIGN KEY (user_id) REFERENCES profiles(id) ON DELETE CASCADE",
+          "conname": "profiles_memberships_fkey"
+        },
+        {
+          "def": "PRIMARY KEY (id)",
+          "conname": "user_store_memberships_pkey"
+        },
+        {
+          "def": "FOREIGN KEY (store_id) REFERENCES stores(id) ON DELETE CASCADE",
+          "conname": "user_store_memberships_store_id_fkey"
+        },
+        {
+          "def": "FOREIGN KEY (user_id) REFERENCES profiles(id) ON DELETE CASCADE",
+          "conname": "user_store_memberships_user_id_fkey"
+        },
+        {
+          "def": "UNIQUE (user_id, store_id)",
+          "conname": "user_store_memberships_user_id_store_id_key"
+        }
+      ],
+      "g_current_runtime": {
+        "current_user": "postgres",
+        "is_superuser": false,
+        "session_user": "postgres",
+        "server_version": "17.6",
+        "has_service_role_member": true,
+        "has_authenticated_member": true
+      },
+      "b_profiles_constraints": [
+        {
+          "def": "FOREIGN KEY (active_store_id) REFERENCES stores(id) ON DELETE SET NULL",
+          "conname": "profiles_active_store_id_fkey"
+        },
+        {
+          "def": "FOREIGN KEY (created_by) REFERENCES auth.users(id)",
+          "conname": "profiles_created_by_fkey"
+        },
+        {
+          "def": "FOREIGN KEY (deleted_by) REFERENCES profiles(id) ON DELETE SET NULL",
+          "conname": "profiles_deleted_by_fkey"
+        },
+        {
+          "def": "CHECK (((deleted_at IS NULL) OR (is_active = false)))",
+          "conname": "profiles_deleted_implies_inactive_check"
+        },
+        {
+          "def": "FOREIGN KEY (id) REFERENCES auth.users(id)",
+          "conname": "profiles_id_fkey"
+        },
+        {
+          "def": "PRIMARY KEY (id)",
+          "conname": "profiles_pkey"
+        },
+        {
+          "def": "FOREIGN KEY (role_id) REFERENCES roles(id)",
+          "conname": "profiles_role_id_fkey"
+        },
+        {
+          "def": "FOREIGN KEY (store_id) REFERENCES stores(id)",
+          "conname": "profiles_store_id_fkey"
+        },
+        {
+          "def": "FOREIGN KEY (tenant_id) REFERENCES tenants(id)",
+          "conname": "profiles_tenant_id_fkey"
+        }
+      ],
+      "e_usm_status_distribution": [
+        {
+          "n": 9,
+          "status": "active"
+        },
+        {
+          "n": 42,
+          "status": "revoked"
+        }
+      ],
+      "f_has_store_access_as_users": {
+        "uses_usm": 1,
+        "uses_profiles": 1
+      },
+      "d_profiles_role_distribution": [
+        {
+          "n": 7,
+          "role": "costo",
+          "is_active": false
+        },
+        {
+          "n": 5,
+          "role": "encargado",
+          "is_active": true
+        },
+        {
+          "n": 4,
+          "role": "costo",
+          "is_active": true
+        },
+        {
+          "n": 4,
+          "role": "tenant_admin",
+          "is_active": true
+        },
+        {
+          "n": 3,
+          "role": "admin",
+          "is_active": true
+        },
+        {
+          "n": 1,
+          "role": "admin",
+          "is_active": false
+        },
+        {
+          "n": 1,
+          "role": "warehouse",
+          "is_active": true
+        },
+        {
+          "n": 1,
+          "role": "clerk",
+          "is_active": true
+        }
+      ]
+    }
+  }
+]

@@ -1,0 +1,1261 @@
+[
+  {
+    "gate1c": {
+      "b_required_cols": {
+        "stores": [
+          {
+            "col": "id",
+            "def": "gen_random_uuid()",
+            "type": "uuid",
+            "notnull": true
+          },
+          {
+            "col": "name",
+            "def": null,
+            "type": "text",
+            "notnull": true
+          },
+          {
+            "col": "address",
+            "def": null,
+            "type": "text",
+            "notnull": false
+          },
+          {
+            "col": "created_at",
+            "def": "timezone('utc'::text, now())",
+            "type": "timestamp with time zone",
+            "notnull": true
+          },
+          {
+            "col": "is_active",
+            "def": "true",
+            "type": "boolean",
+            "notnull": false
+          },
+          {
+            "col": "created_by",
+            "def": null,
+            "type": "uuid",
+            "notnull": false
+          },
+          {
+            "col": "logo_url",
+            "def": null,
+            "type": "text",
+            "notnull": false
+          },
+          {
+            "col": "tenant_id",
+            "def": null,
+            "type": "uuid",
+            "notnull": false
+          },
+          {
+            "col": "reeup",
+            "def": null,
+            "type": "text",
+            "notnull": false
+          },
+          {
+            "col": "bank_account",
+            "def": null,
+            "type": "text",
+            "notnull": false
+          },
+          {
+            "col": "phone",
+            "def": null,
+            "type": "text",
+            "notnull": false
+          },
+          {
+            "col": "email",
+            "def": null,
+            "type": "text",
+            "notnull": false
+          },
+          {
+            "col": "slug",
+            "def": null,
+            "type": "text",
+            "notnull": false
+          },
+          {
+            "col": "plantilla",
+            "def": "'construccion'::text",
+            "type": "text",
+            "notnull": false
+          },
+          {
+            "col": "nit",
+            "def": null,
+            "type": "text",
+            "notnull": false
+          },
+          {
+            "col": "signature_url",
+            "def": null,
+            "type": "text",
+            "notnull": false
+          },
+          {
+            "col": "stamp_url",
+            "def": null,
+            "type": "text",
+            "notnull": false
+          },
+          {
+            "col": "latitude",
+            "def": null,
+            "type": "double precision",
+            "notnull": false
+          },
+          {
+            "col": "longitude",
+            "def": null,
+            "type": "double precision",
+            "notnull": false
+          },
+          {
+            "col": "is_archived",
+            "def": "false",
+            "type": "boolean",
+            "notnull": true
+          },
+          {
+            "col": "archived_at",
+            "def": null,
+            "type": "timestamp with time zone",
+            "notnull": false
+          },
+          {
+            "col": "archived_by",
+            "def": null,
+            "type": "uuid",
+            "notnull": false
+          },
+          {
+            "col": "banner_url",
+            "def": null,
+            "type": "text",
+            "notnull": false
+          },
+          {
+            "col": "store_tagline",
+            "def": null,
+            "type": "text",
+            "notnull": false
+          },
+          {
+            "col": "whatsapp_group_url",
+            "def": null,
+            "type": "text",
+            "notnull": false
+          },
+          {
+            "col": "telegram_url",
+            "def": null,
+            "type": "text",
+            "notnull": false
+          },
+          {
+            "col": "services",
+            "def": "'[]'::jsonb",
+            "type": "jsonb",
+            "notnull": false
+          },
+          {
+            "col": "promo_images",
+            "def": "'[]'::jsonb",
+            "type": "jsonb",
+            "notnull": false
+          },
+          {
+            "col": "opening_hours",
+            "def": null,
+            "type": "text",
+            "notnull": false
+          },
+          {
+            "col": "banner_cta_text",
+            "def": null,
+            "type": "text",
+            "notnull": false
+          },
+          {
+            "col": "banner_cta_link",
+            "def": null,
+            "type": "text",
+            "notnull": false
+          },
+          {
+            "col": "backup_restore_protected",
+            "def": "true",
+            "type": "boolean",
+            "notnull": true
+          }
+        ],
+        "products": [
+          {
+            "col": "id",
+            "def": "gen_random_uuid()",
+            "type": "uuid",
+            "notnull": true
+          },
+          {
+            "col": "name",
+            "def": null,
+            "type": "text",
+            "notnull": true
+          },
+          {
+            "col": "description",
+            "def": null,
+            "type": "text",
+            "notnull": false
+          },
+          {
+            "col": "sku",
+            "def": null,
+            "type": "text",
+            "notnull": true
+          },
+          {
+            "col": "price",
+            "def": "0",
+            "type": "numeric",
+            "notnull": true
+          },
+          {
+            "col": "cost_price",
+            "def": "0",
+            "type": "numeric",
+            "notnull": false
+          },
+          {
+            "col": "image_url",
+            "def": null,
+            "type": "text",
+            "notnull": false
+          },
+          {
+            "col": "category",
+            "def": null,
+            "type": "text",
+            "notnull": false
+          },
+          {
+            "col": "unit_of_measure",
+            "def": null,
+            "type": "text",
+            "notnull": false
+          },
+          {
+            "col": "supplier",
+            "def": null,
+            "type": "text",
+            "notnull": false
+          },
+          {
+            "col": "created_at",
+            "def": "timezone('utc'::text, now())",
+            "type": "timestamp with time zone",
+            "notnull": true
+          },
+          {
+            "col": "updated_at",
+            "def": "timezone('utc'::text, now())",
+            "type": "timestamp with time zone",
+            "notnull": true
+          },
+          {
+            "col": "stock_current",
+            "def": "0",
+            "type": "numeric(12,4)",
+            "notnull": false
+          },
+          {
+            "col": "cost_average",
+            "def": "0",
+            "type": "numeric",
+            "notnull": false
+          },
+          {
+            "col": "min_stock",
+            "def": "1",
+            "type": "numeric(12,4)",
+            "notnull": true
+          },
+          {
+            "col": "store_id",
+            "def": null,
+            "type": "uuid",
+            "notnull": true
+          },
+          {
+            "col": "is_active",
+            "def": "true",
+            "type": "boolean",
+            "notnull": false
+          },
+          {
+            "col": "public_image_url",
+            "def": null,
+            "type": "text",
+            "notnull": false
+          },
+          {
+            "col": "category_id",
+            "def": null,
+            "type": "uuid",
+            "notnull": false
+          },
+          {
+            "col": "status",
+            "def": "'ACTIVE'::product_status",
+            "type": "product_status",
+            "notnull": false
+          },
+          {
+            "col": "tenant_id",
+            "def": null,
+            "type": "uuid",
+            "notnull": false
+          },
+          {
+            "col": "barcode",
+            "def": null,
+            "type": "text",
+            "notnull": false
+          },
+          {
+            "col": "barcode_type",
+            "def": "'EAN13'::text",
+            "type": "text",
+            "notnull": false
+          },
+          {
+            "col": "is_complete",
+            "def": "true",
+            "type": "boolean",
+            "notnull": true
+          },
+          {
+            "col": "visible_en_tienda",
+            "def": "false",
+            "type": "boolean",
+            "notnull": false
+          },
+          {
+            "col": "precio_empresa",
+            "def": "NULL::numeric",
+            "type": "numeric(12,2)",
+            "notnull": false
+          },
+          {
+            "col": "has_movements",
+            "def": "false",
+            "type": "boolean",
+            "notnull": true
+          },
+          {
+            "col": "cost_sheet_id",
+            "def": null,
+            "type": "uuid",
+            "notnull": false
+          },
+          {
+            "col": "fc_auto_enabled",
+            "def": "true",
+            "type": "boolean",
+            "notnull": true
+          },
+          {
+            "col": "search_vector",
+            "def": "to_tsvector('spanish'::regconfig, ((((((((COALESCE(name, ''::text) || ' '::text) || COALESCE(sku, ''::text)) || ' '::text) || COALESCE(barcode, ''::text)) || ' '::text) || COALESCE(description, ''::text)) || ' '::text) || COALESCE(category, ''::text)))",
+            "type": "tsvector",
+            "notnull": false
+          },
+          {
+            "col": "price_currency",
+            "def": "'CUP'::text",
+            "type": "text",
+            "notnull": true
+          },
+          {
+            "col": "price_visible",
+            "def": "true",
+            "type": "boolean",
+            "notnull": false
+          },
+          {
+            "col": "stock_visible",
+            "def": "true",
+            "type": "boolean",
+            "notnull": false
+          },
+          {
+            "col": "on_promotion",
+            "def": "false",
+            "type": "boolean",
+            "notnull": false
+          },
+          {
+            "col": "is_service",
+            "def": "false",
+            "type": "boolean",
+            "notnull": true
+          },
+          {
+            "col": "precio_empresa_currency",
+            "def": null,
+            "type": "text",
+            "notnull": false
+          }
+        ],
+        "inventory": [
+          {
+            "col": "id",
+            "def": "gen_random_uuid()",
+            "type": "uuid",
+            "notnull": true
+          },
+          {
+            "col": "store_id",
+            "def": null,
+            "type": "uuid",
+            "notnull": true
+          },
+          {
+            "col": "product_id",
+            "def": null,
+            "type": "uuid",
+            "notnull": true
+          },
+          {
+            "col": "quantity",
+            "def": "0",
+            "type": "numeric(12,4)",
+            "notnull": true
+          },
+          {
+            "col": "low_stock_threshold",
+            "def": "10",
+            "type": "numeric(12,4)",
+            "notnull": false
+          },
+          {
+            "col": "updated_at",
+            "def": "timezone('utc'::text, now())",
+            "type": "timestamp with time zone",
+            "notnull": true
+          },
+          {
+            "col": "version",
+            "def": "0",
+            "type": "integer",
+            "notnull": true
+          },
+          {
+            "col": "created_at",
+            "def": "now()",
+            "type": "timestamp with time zone",
+            "notnull": false
+          },
+          {
+            "col": "tenant_id",
+            "def": null,
+            "type": "uuid",
+            "notnull": false
+          }
+        ],
+        "audit_logs": [
+          {
+            "col": "id",
+            "def": "uuid_generate_v4()",
+            "type": "uuid",
+            "notnull": true
+          },
+          {
+            "col": "created_at",
+            "def": "now()",
+            "type": "timestamp with time zone",
+            "notnull": false
+          },
+          {
+            "col": "user_id",
+            "def": null,
+            "type": "uuid",
+            "notnull": false
+          },
+          {
+            "col": "table_name",
+            "def": null,
+            "type": "text",
+            "notnull": false
+          },
+          {
+            "col": "record_id",
+            "def": null,
+            "type": "uuid",
+            "notnull": false
+          },
+          {
+            "col": "action",
+            "def": null,
+            "type": "text",
+            "notnull": false
+          },
+          {
+            "col": "old_data",
+            "def": null,
+            "type": "jsonb",
+            "notnull": false
+          },
+          {
+            "col": "new_data",
+            "def": null,
+            "type": "jsonb",
+            "notnull": false
+          },
+          {
+            "col": "metadata",
+            "def": null,
+            "type": "jsonb",
+            "notnull": false
+          },
+          {
+            "col": "updated_at",
+            "def": "now()",
+            "type": "timestamp with time zone",
+            "notnull": false
+          },
+          {
+            "col": "store_id",
+            "def": null,
+            "type": "uuid",
+            "notnull": false
+          },
+          {
+            "col": "trace_id",
+            "def": null,
+            "type": "text",
+            "notnull": false
+          }
+        ],
+        "stock_movements": [
+          {
+            "col": "id",
+            "def": "gen_random_uuid()",
+            "type": "uuid",
+            "notnull": true
+          },
+          {
+            "col": "store_id",
+            "def": null,
+            "type": "uuid",
+            "notnull": true
+          },
+          {
+            "col": "product_id",
+            "def": null,
+            "type": "uuid",
+            "notnull": true
+          },
+          {
+            "col": "variant_id",
+            "def": null,
+            "type": "uuid",
+            "notnull": false
+          },
+          {
+            "col": "quantity_change",
+            "def": null,
+            "type": "numeric(12,4)",
+            "notnull": true
+          },
+          {
+            "col": "movement_type",
+            "def": null,
+            "type": "movement_type",
+            "notnull": true
+          },
+          {
+            "col": "reference_id",
+            "def": null,
+            "type": "text",
+            "notnull": false
+          },
+          {
+            "col": "reference_doc",
+            "def": null,
+            "type": "text",
+            "notnull": false
+          },
+          {
+            "col": "movement_date",
+            "def": "now()",
+            "type": "timestamp with time zone",
+            "notnull": true
+          },
+          {
+            "col": "created_by",
+            "def": null,
+            "type": "uuid",
+            "notnull": false
+          },
+          {
+            "col": "created_at",
+            "def": "timezone('utc'::text, now())",
+            "type": "timestamp with time zone",
+            "notnull": true
+          },
+          {
+            "col": "unit_cost",
+            "def": "0",
+            "type": "numeric",
+            "notnull": false
+          },
+          {
+            "col": "unit_price",
+            "def": "0",
+            "type": "numeric",
+            "notnull": false
+          },
+          {
+            "col": "cost_value_change",
+            "def": "0",
+            "type": "numeric",
+            "notnull": false
+          },
+          {
+            "col": "balance_after",
+            "def": null,
+            "type": "numeric(12,4)",
+            "notnull": false
+          },
+          {
+            "col": "notes",
+            "def": null,
+            "type": "text",
+            "notnull": false
+          },
+          {
+            "col": "tenant_id",
+            "def": null,
+            "type": "uuid",
+            "notnull": false
+          }
+        ],
+        "transaction_items": [
+          {
+            "col": "id",
+            "def": "gen_random_uuid()",
+            "type": "uuid",
+            "notnull": true
+          },
+          {
+            "col": "transaction_id",
+            "def": null,
+            "type": "uuid",
+            "notnull": true
+          },
+          {
+            "col": "product_id",
+            "def": null,
+            "type": "uuid",
+            "notnull": false
+          },
+          {
+            "col": "variant_id",
+            "def": null,
+            "type": "uuid",
+            "notnull": false
+          },
+          {
+            "col": "quantity",
+            "def": null,
+            "type": "numeric(12,4)",
+            "notnull": true
+          },
+          {
+            "col": "price_at_sale",
+            "def": null,
+            "type": "numeric",
+            "notnull": true
+          },
+          {
+            "col": "created_at",
+            "def": "timezone('utc'::text, now())",
+            "type": "timestamp with time zone",
+            "notnull": true
+          },
+          {
+            "col": "cost_at_sale",
+            "def": "0",
+            "type": "numeric",
+            "notnull": false
+          },
+          {
+            "col": "discount_type",
+            "def": null,
+            "type": "discount_type_enum",
+            "notnull": false
+          },
+          {
+            "col": "discount_value",
+            "def": "0",
+            "type": "numeric",
+            "notnull": false
+          },
+          {
+            "col": "cash_paid",
+            "def": "0",
+            "type": "numeric",
+            "notnull": false
+          },
+          {
+            "col": "transfer_paid",
+            "def": "0",
+            "type": "numeric",
+            "notnull": false
+          },
+          {
+            "col": "price_currency",
+            "def": "'CUP'::text",
+            "type": "text",
+            "notnull": true
+          },
+          {
+            "col": "price_at_sale_cup",
+            "def": "0",
+            "type": "numeric(12,2)",
+            "notnull": true
+          },
+          {
+            "col": "zelle_paid",
+            "def": null,
+            "type": "numeric",
+            "notnull": false
+          },
+          {
+            "col": "currency",
+            "def": null,
+            "type": "text",
+            "notnull": false
+          },
+          {
+            "col": "exchange_rate",
+            "def": null,
+            "type": "numeric",
+            "notnull": false
+          },
+          {
+            "col": "cash_currency",
+            "def": null,
+            "type": "text",
+            "notnull": false
+          },
+          {
+            "col": "transfer_currency",
+            "def": null,
+            "type": "text",
+            "notnull": false
+          },
+          {
+            "col": "zelle_currency",
+            "def": null,
+            "type": "text",
+            "notnull": false
+          },
+          {
+            "col": "cash_discount_type",
+            "def": null,
+            "type": "text",
+            "notnull": false
+          },
+          {
+            "col": "cash_discount_value",
+            "def": null,
+            "type": "numeric",
+            "notnull": false
+          },
+          {
+            "col": "cash_discount_currency",
+            "def": null,
+            "type": "text",
+            "notnull": false
+          },
+          {
+            "col": "transfer_discount_type",
+            "def": null,
+            "type": "text",
+            "notnull": false
+          },
+          {
+            "col": "transfer_discount_value",
+            "def": null,
+            "type": "numeric",
+            "notnull": false
+          },
+          {
+            "col": "transfer_discount_currency",
+            "def": null,
+            "type": "text",
+            "notnull": false
+          },
+          {
+            "col": "zelle_discount_type",
+            "def": null,
+            "type": "text",
+            "notnull": false
+          },
+          {
+            "col": "zelle_discount_value",
+            "def": null,
+            "type": "numeric",
+            "notnull": false
+          },
+          {
+            "col": "zelle_discount_currency",
+            "def": null,
+            "type": "text",
+            "notnull": false
+          }
+        ],
+        "payment_transactions": [
+          {
+            "col": "id",
+            "def": "gen_random_uuid()",
+            "type": "uuid",
+            "notnull": true
+          },
+          {
+            "col": "store_id",
+            "def": null,
+            "type": "uuid",
+            "notnull": true
+          },
+          {
+            "col": "ref_type",
+            "def": null,
+            "type": "text",
+            "notnull": true
+          },
+          {
+            "col": "ref_id",
+            "def": null,
+            "type": "uuid",
+            "notnull": true
+          },
+          {
+            "col": "amount",
+            "def": null,
+            "type": "numeric",
+            "notnull": true
+          },
+          {
+            "col": "payment_method",
+            "def": null,
+            "type": "text",
+            "notnull": true
+          },
+          {
+            "col": "currency",
+            "def": "'CUP'::text",
+            "type": "text",
+            "notnull": true
+          },
+          {
+            "col": "exchange_rate",
+            "def": "1.0",
+            "type": "numeric",
+            "notnull": true
+          },
+          {
+            "col": "amount_cup",
+            "def": "\nCASE\n    WHEN (currency = 'CUP'::text) THEN amount\n    ELSE (amount * exchange_rate)\nEND",
+            "type": "numeric",
+            "notnull": true
+          },
+          {
+            "col": "payment_date",
+            "def": "now()",
+            "type": "timestamp with time zone",
+            "notnull": true
+          },
+          {
+            "col": "reference",
+            "def": null,
+            "type": "text",
+            "notnull": false
+          },
+          {
+            "col": "notes",
+            "def": null,
+            "type": "text",
+            "notnull": false
+          },
+          {
+            "col": "paid_by",
+            "def": null,
+            "type": "uuid",
+            "notnull": false
+          },
+          {
+            "col": "created_at",
+            "def": "now()",
+            "type": "timestamp with time zone",
+            "notnull": true
+          },
+          {
+            "col": "updated_at",
+            "def": "now()",
+            "type": "timestamp with time zone",
+            "notnull": true
+          },
+          {
+            "col": "idempotency_key",
+            "def": null,
+            "type": "text",
+            "notnull": false
+          },
+          {
+            "col": "transaction_id",
+            "def": null,
+            "type": "uuid",
+            "notnull": false
+          },
+          {
+            "col": "direction",
+            "def": "'in'::text",
+            "type": "text",
+            "notnull": true
+          }
+        ]
+      },
+      "g_sample_payment": [
+        {
+          "id": "5647c5dc-032d-4332-b181-f8f43a01f29e",
+          "notes": null,
+          "amount": 13600,
+          "ref_id": "3ab47c5e-a575-474d-ac80-818e4613a2b8",
+          "paid_by": "a1111111-1111-1111-1111-111111111111",
+          "currency": "CUP",
+          "ref_type": "sale",
+          "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+          "direction": "in",
+          "reference": null,
+          "amount_cup": 13600,
+          "created_at": "2026-08-18T04:06:40.429502+00:00",
+          "updated_at": "2026-08-18T04:06:40.429502+00:00",
+          "payment_date": "2026-08-17T04:00:00+00:00",
+          "exchange_rate": 1,
+          "payment_method": "cash",
+          "transaction_id": "3ab47c5e-a575-474d-ac80-818e4613a2b8",
+          "idempotency_key": "pay-cash-3ab47c5e-a575-474d-ac80-818e4613a2b8"
+        }
+      ],
+      "h_sample_product": [
+        {
+          "id": "11ca852e-4d72-4be5-8ee6-6777ebaba5df",
+          "name": "Losa aporcelanada 60x60 con defectos",
+          "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+          "cost_average": 0,
+          "stock_current": 0
+        }
+      ],
+      "d_store_min_shape": [
+        {
+          "id": "1384d4af-210a-4809-8374-466c3667af5f",
+          "name": "TEST-REGRESION-1785629886030",
+          "slug": "test-reg-1785629886030"
+        },
+        {
+          "id": "8a471be5-cf43-4667-ace8-229b31f3a1b1",
+          "name": "TEST-REGRESION-1785629953259",
+          "slug": "test-reg-1785629953259"
+        }
+      ],
+      "f_sample_tx_items": [
+        {
+          "id": "4029b487-440e-450b-b8a1-fe258bd35381",
+          "currency": null,
+          "quantity": 1,
+          "cash_paid": 0,
+          "created_at": "2026-08-17T04:00:00+00:00",
+          "product_id": "158ffb1e-ac5e-4b44-a52a-edcca969cf1e",
+          "variant_id": null,
+          "zelle_paid": null,
+          "cost_at_sale": 0,
+          "cash_currency": null,
+          "discount_type": null,
+          "exchange_rate": null,
+          "price_at_sale": 81600,
+          "transfer_paid": 0,
+          "discount_value": 0,
+          "price_currency": "CUP",
+          "transaction_id": "3ab47c5e-a575-474d-ac80-818e4613a2b8",
+          "zelle_currency": null,
+          "price_at_sale_cup": 0,
+          "transfer_currency": null,
+          "cash_discount_type": null,
+          "cash_discount_value": null,
+          "zelle_discount_type": null,
+          "zelle_discount_value": null,
+          "cash_discount_currency": null,
+          "transfer_discount_type": null,
+          "transfer_discount_value": null,
+          "zelle_discount_currency": null,
+          "transfer_discount_currency": null
+        },
+        {
+          "id": "2ee68df1-3985-4a37-a345-0a045522c030",
+          "currency": null,
+          "quantity": 1,
+          "cash_paid": 0,
+          "created_at": "2026-08-17T04:00:00+00:00",
+          "product_id": "e46b0164-5f65-40b9-8c48-a8154138e2be",
+          "variant_id": null,
+          "zelle_paid": null,
+          "cost_at_sale": 251600,
+          "cash_currency": null,
+          "discount_type": null,
+          "exchange_rate": null,
+          "price_at_sale": 224400,
+          "transfer_paid": 0,
+          "discount_value": 0,
+          "price_currency": "CUP",
+          "transaction_id": "3ab47c5e-a575-474d-ac80-818e4613a2b8",
+          "zelle_currency": null,
+          "price_at_sale_cup": 0,
+          "transfer_currency": null,
+          "cash_discount_type": null,
+          "cash_discount_value": null,
+          "zelle_discount_type": null,
+          "zelle_discount_value": null,
+          "cash_discount_currency": null,
+          "transfer_discount_type": null,
+          "transfer_discount_value": null,
+          "zelle_discount_currency": null,
+          "transfer_discount_currency": null
+        }
+      ],
+      "a_sale_creator_fns": [
+        {
+          "oid": "136508",
+          "args": "p_store_id uuid, p_seller_id uuid, p_total_amount numeric, p_items jsonb, p_subtotal numeric, p_discount_type text, p_discount_value numeric, p_payment_method text, p_tax_amount numeric, p_applied_taxes jsonb, p_transaction_id uuid, p_operation_date timestamp with time zone, p_cash_amount numeric, p_transfer_amount numeric, p_idempotency_key text, p_sale_currency text, p_sale_exchange_rate numeric, p_zelle_amount numeric, p_warehouse_id uuid, p_user_id uuid",
+          "proname": "create_sale",
+          "prosecdef": true
+        },
+        {
+          "oid": "141788",
+          "args": "p_store_id uuid, p_seller_id uuid, p_items jsonb, p_payment_method text, p_discount_type text, p_discount_value numeric, p_applied_taxes jsonb, p_tax_amount numeric, p_total_amount numeric, p_subtotal numeric, p_cash_amount numeric, p_transfer_amount numeric, p_zelle_amount numeric, p_sale_currency text, p_sale_exchange_rate numeric, p_customer_id uuid, p_customer_name text, p_supervisor_user_id uuid, p_idempotency_key text, p_operation_date timestamp with time zone, p_user_id uuid",
+          "proname": "create_sale_v2",
+          "prosecdef": true
+        }
+      ],
+      "e_a_sample_tx_shape": [
+        {
+          "id": "3ab47c5e-a575-474d-ac80-818e4613a2b8",
+          "status": "completed",
+          "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+          "seller_id": "a1111111-1111-1111-1111-111111111111",
+          "created_at": "2026-08-17T04:00:00+00:00",
+          "cancelled_at": null,
+          "total_amount": 319600,
+          "payment_method": "mixed"
+        }
+      ],
+      "i_sample_membership": [
+        {
+          "id": "673d09b1-7b39-4942-8155-ae0674c5c9ec",
+          "role": "clerk",
+          "status": "active",
+          "user_id": "28ebdfa1-f012-4de3-b5da-137ae9b764c9",
+          "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+          "created_at": "2026-07-15T14:26:04.152353+00:00",
+          "updated_at": "2026-08-19T23:52:37.895788+00:00"
+        }
+      ],
+      "c_auth_users_required": [
+        {
+          "col": "instance_id",
+          "def": null,
+          "notnull": false
+        },
+        {
+          "col": "id",
+          "def": null,
+          "notnull": true
+        },
+        {
+          "col": "aud",
+          "def": null,
+          "notnull": false
+        },
+        {
+          "col": "role",
+          "def": null,
+          "notnull": false
+        },
+        {
+          "col": "email",
+          "def": null,
+          "notnull": false
+        },
+        {
+          "col": "encrypted_password",
+          "def": null,
+          "notnull": false
+        },
+        {
+          "col": "email_confirmed_at",
+          "def": null,
+          "notnull": false
+        },
+        {
+          "col": "invited_at",
+          "def": null,
+          "notnull": false
+        },
+        {
+          "col": "confirmation_token",
+          "def": null,
+          "notnull": false
+        },
+        {
+          "col": "confirmation_sent_at",
+          "def": null,
+          "notnull": false
+        },
+        {
+          "col": "recovery_token",
+          "def": null,
+          "notnull": false
+        },
+        {
+          "col": "recovery_sent_at",
+          "def": null,
+          "notnull": false
+        },
+        {
+          "col": "email_change_token_new",
+          "def": null,
+          "notnull": false
+        },
+        {
+          "col": "email_change",
+          "def": null,
+          "notnull": false
+        },
+        {
+          "col": "email_change_sent_at",
+          "def": null,
+          "notnull": false
+        },
+        {
+          "col": "last_sign_in_at",
+          "def": null,
+          "notnull": false
+        },
+        {
+          "col": "raw_app_meta_data",
+          "def": null,
+          "notnull": false
+        },
+        {
+          "col": "raw_user_meta_data",
+          "def": null,
+          "notnull": false
+        },
+        {
+          "col": "is_super_admin",
+          "def": null,
+          "notnull": false
+        },
+        {
+          "col": "created_at",
+          "def": null,
+          "notnull": false
+        },
+        {
+          "col": "updated_at",
+          "def": null,
+          "notnull": false
+        },
+        {
+          "col": "phone",
+          "def": "NULL::character varying",
+          "notnull": false
+        },
+        {
+          "col": "phone_confirmed_at",
+          "def": null,
+          "notnull": false
+        },
+        {
+          "col": "phone_change",
+          "def": "''::character varying",
+          "notnull": false
+        },
+        {
+          "col": "phone_change_token",
+          "def": "''::character varying",
+          "notnull": false
+        },
+        {
+          "col": "phone_change_sent_at",
+          "def": null,
+          "notnull": false
+        },
+        {
+          "col": "confirmed_at",
+          "def": "LEAST(email_confirmed_at, phone_confirmed_at)",
+          "notnull": false
+        },
+        {
+          "col": "email_change_token_current",
+          "def": "''::character varying",
+          "notnull": false
+        },
+        {
+          "col": "email_change_confirm_status",
+          "def": "0",
+          "notnull": false
+        },
+        {
+          "col": "banned_until",
+          "def": null,
+          "notnull": false
+        },
+        {
+          "col": "reauthentication_token",
+          "def": "''::character varying",
+          "notnull": false
+        },
+        {
+          "col": "reauthentication_sent_at",
+          "def": null,
+          "notnull": false
+        },
+        {
+          "col": "is_sso_user",
+          "def": "false",
+          "notnull": true
+        },
+        {
+          "col": "deleted_at",
+          "def": null,
+          "notnull": false
+        },
+        {
+          "col": "is_anonymous",
+          "def": "false",
+          "notnull": true
+        }
+      ]
+    }
+  }
+]

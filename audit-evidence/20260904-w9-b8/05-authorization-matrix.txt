@@ -1,0 +1,43 @@
+════════════════════════════════════════════════════════════════════
+W9.5 — B-8 · 05-authorization-matrix.txt
+GATE 5 — Matriz de autorización UI vs API vs RPC vs DB
+════════════════════════════════════════════════════════════════════
+fecha/hora: 2026-09-05 (AST)
+fuentes: 03-role-policy.txt (UI), 04-code-trace.txt (API/RPC),
+         01-live-functions.txt (DB), probes 06-role-probes.txt (ejecución).
+
+| Acción                    | UI                          | API                         | RPC (client)               | DB                          |
+|---------------------------|-----------------------------|-----------------------------|----------------------------|-----------------------------|
+| POS Undo (void_transaction) | SIN gate de rol (toast 30s, MM-9) | N/A (no pasa por API)  | supabase.rpc directo       | identidad+tienda (membresía/admin); SIN rol, SIN ownership, SIN ventana |
+| SalesHistory Void (flujo hook) | gate por rol EXISTE pero MUERTO (no destructure) | N/A | useInvertDocument → rpc    | idem                        |
+| SalesHistory "Revertir" (V2) | SOLO status (canReverse)    | /api/reverse: auth+CSRF+rate | N/A (service_role server)  | identidad+tienda+status='completed'; SIN rol |
+| ReverseDocument (otros docs) | SOLO status (canReverse)    | /api/reverse: auth+CSRF+rate | N/A                        | idem por tipo de documento  |
+| Direct RPC (cualquier rol) | N/A                         | N/A                         | EXECUTE concedido          | identidad+tienda (void) / exige completed (V2) |
+
+BÚSQUEDA 1 — situaciones UI=DENY / SERVER=ALLOW / DB=ALLOW (bypass de
+control de acceso aunque la UI oculte el botón):
+  ENCONTRADAS Y PROBADAS (06-role-probes.txt):
+  - clerk / usuario / warehouse / costo (canVoidTransactions=false en
+    ROLE_PERMISSIONS) llamando void_transaction directo:
+    UI=DENY · SERVER=ALLOW · DB=ALLOW  → P1/P2 SUCCESS para los 6 roles.
+  - B-2 P1 ya lo había demostrado para 'costo'; B-8 lo generaliza a los
+    7 roles con probes dedicados.
+  - SalesHistory: hoy la UI ni siquiera aplica el gate (código muerto):
+    el botón activo "Revertir" (V2) se muestra a CUALQUIER rol que acceda
+    a la vista — UI=ALLOW(sin rol) / SERVER=ALLOW(sin rol) / DB=ALLOW(sin rol).
+
+BÚSQUEDA 2 — situaciones UI=ALLOW / SERVER=DENY / DB=ALLOW
+  (incoherencia funcional, protectiva):
+  - Cross-store: un botón de otra tienda (si existiera) se podría pulsar;
+    DB rechaza (P3 DENIED ×6). Incoherencia teórica, no explotable.
+  - V2 status≠completed: UI canReverse ya filtra por status; DB re-verifica
+    (ERR_INVALID_STATUS). Coherente.
+
+CONCLUSIÓN GATE 5:
+  La frontera de seguridad REAL de la anulación de ventas es y solo es
+  la capa DB (identidad+tienda[+status en V2]). La capa UI no impone la
+  política de roles (gate muerto / botones sin rol), y la capa API solo
+  añade controles técnicos (auth, CSRF, rate-limit), NO de política.
+  Cualquier política por rol es hoy BYPASABLE desde el cliente con un JWT
+  válido — demostrado por ejecución directa (no por lectura de código).
+════════════════════════════════════════════════════════════════════

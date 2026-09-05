@@ -1,0 +1,71 @@
+[
+  {
+    "log": [
+      {
+        "probe": "P4a_clerk_forged_admin",
+        "detail": {
+          "status": "success",
+          "transaction_id": "b8d00000-0000-4000-8000-00000000b013"
+        },
+        "outcome": "SUCCESS"
+      },
+      {
+        "probe": "P4a_POST",
+        "detail": {
+          "tx_status": "voided",
+          "audit_user": "b8b00000-0000-4000-8000-000000000004",
+          "movement_by": "b8b00000-0000-4000-8000-000000000004"
+        },
+        "outcome": "STATE"
+      },
+      {
+        "probe": "P4b_clerk_forged_sellerB_cross_store",
+        "detail": {
+          "err": "ERR_UNAUTHORIZED",
+          "code": "P0001"
+        },
+        "outcome": "DENIED"
+      },
+      {
+        "probe": "P4b_POST",
+        "detail": {
+          "tx_status": "completed",
+          "audit_user": null
+        },
+        "outcome": "STATE"
+      },
+      {
+        "probe": "P5a_admin_global_tienda_A",
+        "detail": {
+          "status": "success",
+          "transaction_id": "b8d00000-0000-4000-8000-00000000b011"
+        },
+        "outcome": "SUCCESS"
+      },
+      {
+        "probe": "P5a_POST",
+        "detail": {
+          "tx_status": "voided",
+          "audit_user": "b8b00000-0000-4000-8000-000000000001"
+        },
+        "outcome": "STATE"
+      },
+      {
+        "probe": "P5b_admin_global_tienda_B",
+        "detail": {
+          "status": "success",
+          "transaction_id": "b8d00000-0000-4000-8000-00000000b012"
+        },
+        "outcome": "SUCCESS"
+      },
+      {
+        "probe": "P5b_POST",
+        "detail": {
+          "tx_status": "voided",
+          "audit_user": "b8b00000-0000-4000-8000-000000000001"
+        },
+        "outcome": "STATE"
+      }
+    ]
+  }
+]

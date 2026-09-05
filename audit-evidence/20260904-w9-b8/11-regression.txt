@@ -1,0 +1,28 @@
+════════════════════════════════════════════════════════════════════
+W9.5 — B-8 · 11-regression.txt
+GATE 16 — Regresión (vitest · lint · tsc · build · PM2 · HTTP)
+════════════════════════════════════════════════════════════════════
+fecha/hora: 2026-09-05 02:40–02:55 AST
+entorno: bf1c9733 (worktree limpio, sin cambios de código en B-8)
+
+  vitest (bun run test = vitest run — NO se usó bun test nativo):
+    PASS — 89 archivos | 1892 tests passed | 24 skipped | 0 failed
+    (203.65s; salida completa en /tmp/b8_vitest.txt del proceso)
+  lint (eslint .):
+    PASS — 0 errors, 1291 warnings (pre-existentes, sin cambios vs baseline)
+  tsc (bunx tsc --noEmit):
+    PASS — exit 0
+  build (next build):
+    PASS — exit 0, intento 1
+    Nota operacional: pm2 stop de los 3 procesos ANTES del build por
+    límite de RAM del entorno (3.9Gi; precedente documentado en
+    W9.4.8-FIX y H5-B3). Restauración INMEDIATA tras el build.
+  PM2:
+    PASS — costpro + telegram-cron-poller + whatsapp-cron-poller online
+    tras restore (uptime reiniciado, 0 restarts anómalos)
+  HTTP 200:
+    PASS — GET / → 200 · GET /api/health → 200
+
+  CONCLUSIÓN: sin cambios de código/DB en B-8 (veredicto sin fix), la
+  suite completa permanece verde en bf1c9733. Ningún OOM/SIGKILL.
+════════════════════════════════════════════════════════════════════
