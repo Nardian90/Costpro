@@ -1,0 +1,40 @@
+════════════════════════════════════════════════════════════════════
+W9.5 — B-8 · MODELO C · 03-db-functions.txt
+Estado live de funciones — PRE (c57e8de1) vs POST (migración 20260905000001)
+════════════════════════════════════════════════════════════════════
+
+── void_transaction ──
+  PRE : oid=138000 owner=postgres secdef=True config=search_path=pg_catalog, public acl==X/postgres,postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres
+        def_md5=79f9ccd4110b627becde36f514ca92b0
+  POST: oid=138000 owner=postgres secdef=True config=search_path=pg_catalog, public acl==X/postgres,postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres
+        def_md5=31c8db5d1d059338bda124165002c6ee  cambio=SÍ (esperado)
+
+── reverse_transaction_v2 ──
+  PRE : oid=138188 owner=postgres secdef=True config=search_path=public, pg_temp acl=postgres=X/postgres,service_role=X/postgres
+        def_md5=ad7d2ce77dbf035c1801f458fd403b68
+  POST: oid=138188 owner=postgres secdef=True config=search_path=public, pg_temp acl=postgres=X/postgres,service_role=X/postgres
+        def_md5=0b32a9797b1302f123c8e8a868ed6aca  cambio=SÍ (esperado)
+
+── has_store_access_as ──
+  PRE : oid=136268 owner=postgres secdef=True config=search_path=public acl=postgres=X/postgres,service_role=X/postgres
+        def_md5=7bd255169148c5c87bf00e6a96f29d3f
+  POST: oid=136268 owner=postgres secdef=True config=search_path=public acl=postgres=X/postgres,service_role=X/postgres
+        def_md5=7bd255169148c5c87bf00e6a96f29d3f  cambio=NO
+
+── can_pos_undo_transaction ──
+  POST: oid=143448 owner=postgres secdef=True config=search_path=pg_catalog, public acl=postgres=X/postgres,service_role=X/postgres
+        def_md5=ef880c8e1f912d90a2e5de689da00db3  cambio=NUEVA (helper normativo)
+
+── can_admin_reverse_transaction ──
+  POST: oid=143447 owner=postgres secdef=True config=search_path=pg_catalog, public acl=postgres=X/postgres,service_role=X/postgres
+        def_md5=de2ef0a937b332a8c103ebd45029e5cd  cambio=NUEVA (helper normativo)
+
+NOTAS:
+- CREATE OR REPLACE preserva oid/owner/ACL → ACLs de void_transaction (PUBLIC+
+  authenticated+service_role+postgres) y V2 (postgres+service_role) intactas.
+- has_store_access_as: byte-idéntica (md5 sin cambio) — capa STORE ACCESS intacta.
+- Helpers nuevos: SECURITY DEFINER, search_path pg_catalog,public, ACL endurecido
+  (REVOKE PUBLIC/anon/authenticated; GRANT service_role) — patrón F06 del repo.
+- COALESCE añadido a ambos helpers tras detectar (matriz p01) retorno NULL cuando
+  no existe membership (NULL IN (...) → NULL; IF NOT NULL no dispara en plpgsql).
+  Contrato booleano total: siempre true/false.

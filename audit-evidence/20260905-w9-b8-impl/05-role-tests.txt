@@ -1,0 +1,58 @@
+════════════════════════════════════════════════════════════════════
+W9.5 — B-8 · MODELO C · 05-role-tests.txt
+Matriz de autorización por rol — 40/40 evaluaciones de helpers + probes de mutación
+(método: helpers directos + SET ROLE authenticated + request.jwt.claims; fixture b8c…)
+════════════════════════════════════════════════════════════════════
+
+[OK ] admin_reverse  adminGlobal    store_A                            → True (esperado ALLOW(transversal))
+[OK ] admin_reverse  adminGlobal    store_B                            → True (esperado ALLOW(transversal))
+[OK ] admin_reverse  adminMemberA   store_A                            → True (esperado ALLOW(membership-admin))
+[OK ] admin_reverse  clerkA         store_A                            → False (esperado DENY(role))
+[OK ] admin_reverse  clerkA         store_B                            → False (esperado DENY(role+cross))
+[OK ] admin_reverse  clerkB         store_B                            → False (esperado DENY(role))
+[OK ] admin_reverse  costoA         store_A                            → False (esperado DENY(role))
+[OK ] admin_reverse  encargadoA     store_A                            → True (esperado ALLOW)
+[OK ] admin_reverse  encargadoA     store_B                            → False (esperado DENY(cross-store))
+[OK ] admin_reverse  managerA       store_A                            → True (esperado ALLOW)
+[OK ] admin_reverse  managerA       store_B                            → False (esperado DENY(cross-store))
+[OK ] admin_reverse  NULL_actor     store_A                            → False (esperado DENY(null))
+[OK ] admin_reverse  sellerX        store_A                            → True (esperado ALLOW(encargado))
+[OK ] admin_reverse  usuarioA       store_A                            → False (esperado DENY(role))
+[OK ] admin_reverse  warehouseA     store_A                            → False (esperado DENY(role))
+[OK ] pos_undo       adminGlobal    tx_aged_own_clerk(b001)            → False (esperado DENY(window))
+[OK ] pos_undo       adminGlobal    tx_fresh_own_adminMember(a008)     → False (esperado DENY(ownership))
+[OK ] pos_undo       adminGlobal    tx_fresh_own_clerk(a004)           → False (esperado DENY(ownership-not-his))
+[OK ] pos_undo       adminGlobal    tx_fresh_other_sellerX(b002)       → False (esperado DENY(ownership))
+[OK ] pos_undo       adminGlobal    tx_fresh_own_warehouse(a005)       → False (esperado DENY(ownership))
+[OK ] pos_undo       adminMemberA   tx_fresh_own_adminMember(a008)     → True (esperado ALLOW(membership-admin-own))
+[OK ] pos_undo       adminMemberA   tx_fresh_own_clerk(a004)           → False (esperado DENY(no-own))
+[OK ] pos_undo       clerkA         NULL_tx                            → False (esperado DENY(null))
+[OK ] pos_undo       clerkA         tx_storeB_own_clerkB(a009)         → False (esperado DENY(cross-store-ownership))
+[OK ] pos_undo       clerkA         tx_fresh_other_sellerX(b002)       → False (esperado DENY(ownership))
+[OK ] pos_undo       clerkA         tx_aged_own_clerk(b001)            → False (esperado DENY(window))
+[OK ] pos_undo       clerkA         tx_fresh_own_clerk(a004)           → True (esperado ALLOW(own))
+[OK ] pos_undo       clerkB         tx_storeB_own_clerkB(a009)         → True (esperado ALLOW(own-storeB))
+[OK ] pos_undo       costoA         tx_fresh_own_costo(a007)           → False (esperado DENY(role))
+[OK ] pos_undo       costoA         tx_fresh_own_clerk(a004)           → False (esperado DENY(role+no-own))
+[OK ] pos_undo       encargadoA     tx_fresh_own_clerk(a004)           → False (esperado DENY(no-own))
+[OK ] pos_undo       encargadoA     tx_fresh_other_sellerX(b002)       → False (esperado DENY(ownership-POS))
+[OK ] pos_undo       managerA       tx_fresh_other_sellerX(b002)       → False (esperado DENY(ownership-POS))
+[OK ] pos_undo       managerA       tx_fresh_own_clerk(a004)           → False (esperado DENY(no-own))
+[OK ] pos_undo       sellerX        tx_fresh_other_sellerX(b002)       → True (esperado ALLOW(own-fresh))
+[OK ] pos_undo       sellerX        tx_fresh_own_clerk(a004)           → False (esperado DENY(not-owner))
+[OK ] pos_undo       usuarioA       tx_fresh_own_costo(a007)           → False (esperado DENY(role+no-own))
+[OK ] pos_undo       usuarioA       tx_fresh_own_clerk(a004)           → False (esperado DENY(role+no-own))
+[OK ] pos_undo       warehouseA     tx_fresh_own_clerk(a004)           → False (esperado DENY(role+no-own))
+[OK ] pos_undo       warehouseA     tx_fresh_own_warehouse(a005)       → False (esperado DENY(role))
+
+RESULTADO: 40/40 evaluaciones conforme a la matriz congelada 01-policy-matrix.md
+
+PROBES DE MUTACIÓN POS UNDO (void_transaction) — 15/15 (raw-pos-undo-probes.json):
+  SUCCESS ×6 : clerk/encargado/manager/adminMember(membership-admin)/adminGlobal/clerkB
+               — venta PROPIA, fresh, tienda propia (V01,V08,V09,V10,V11,V13)
+  DENIED  ×7 : ventana expirada (V02), ajena-clerk (V03), ajena-manager-POS-estricto (V04),
+               warehouse (V05), usuario (V06), costo (V07), cross-store (V12)
+  FORGED  ×2 : warehouse+p_user_id=admin → DENIED (V14); clerk+p_user_id=admin → SUCCESS
+               con audit.user_id = CLERK real (V15, audit_user_id_is_clerk=true)
+POST-STATE: cada SUCCESS = status voided + 1 movement + audit VOID_SAFE operation=POS_UNDO
+  old=completed new=voided (raw-audit-metadata.json: 7/7 con operation=POS_UNDO)

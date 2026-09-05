@@ -105,6 +105,60 @@ export const canManageStore = (user: StoreAccessUser | null, storeId: string): b
   ) || false;
 };
 
+// ─────────────────────────────────────────────────────────────────────
+// W9.5 B-8 — MODELO C: autorización diferenciada de anulaciones/reversiones
+// ─────────────────────────────────────────────────────────────────────
+// Fuente normativa DB (espejo EXACTO — no divergir):
+//   - can_pos_undo_transaction(tx_id, actor)   → Nivel 1 (POS Undo)
+//   - can_admin_reverse_transaction(actor, store) → Nivel 2 (Reversión admin)
+// STORE ACCESS (membresía) responde "¿puede operar en la tienda?";
+// OPERATION AUTHORIZATION (estas funciones + los RPC) responde
+// "¿puede realizar ESTA operación?". La UI es conveniencia: la última
+// barrera SIEMPRE es la DB.
+// ─────────────────────────────────────────────────────────────────────
+
+const POS_UNDO_ROLES = ['admin', 'manager', 'encargado', 'clerk'];
+const ADMIN_REVERSE_ROLES = ['admin', 'manager', 'encargado'];
+
+/**
+ * MODELO C Nivel 1 — el usuario puede deshacer (POS undo) una venta en la
+ * tienda indicada si es operador POS: admin global transversal, o membership
+ * activa con rol admin/manager/encargado/clerk EN ESA TIENDA.
+ *
+ * La ventana (30s) y la propiedad (venta propia) las aplica el toast del POS
+ * por construcción (solo ofrece la última venta de la sesión) y las re-valida
+ * server-side void_transaction + can_pos_undo_transaction.
+ */
+export const canUndoSaleInStore = (user: StoreAccessUser | null, storeId: string): boolean => {
+  if (!user || !storeId) return false;
+  if (user.role === 'admin') return true;
+  return user.memberships?.some(m =>
+    m.store_id === storeId &&
+    POS_UNDO_ROLES.includes(m.role) &&
+    m.status === 'active'
+  ) || false;
+};
+
+/**
+ * MODELO C Nivel 2 — el usuario puede ejecutar la REVERSIÓN ADMINISTRATIVA de
+ * una venta de la tienda indicada: admin global transversal, o membership
+ * activa con rol admin/manager/encargado EN ESA TIENDA.
+ *
+ * clerk/warehouse/usuario/costo NO pueden (aunque sean miembros de la tienda).
+ * Espejo de canManageStore acotado a la operación de reversión de ventas;
+ * idéntico a la DB can_admin_reverse_transaction.
+ */
+export const canAdminReverseSaleInStore = (user: StoreAccessUser | null, storeId: string): boolean => {
+  if (!user || !storeId) return false;
+  if (user.role === 'admin') return true;
+  return user.memberships?.some(m =>
+    m.store_id === storeId &&
+    ADMIN_REVERSE_ROLES.includes(m.role) &&
+    m.status === 'active'
+  ) || false;
+};
+
+
 /**
  * FIX F3-P0-02 — Autorización de LECTURA scoped por tienda.
  *

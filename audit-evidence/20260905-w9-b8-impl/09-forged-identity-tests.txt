@@ -1,0 +1,27 @@
+════════════════════════════════════════════════════════════════════
+W9.5 — B-8 · MODELO C · 09-forged-identity-tests.txt
+Identidad forjada — neutralizada en todas las capas
+════════════════════════════════════════════════════════════════════
+
+1) p_user_id falsificado vía RPC directo (authenticated):
+   V14 warehouse + p_user_id=admin sobre venta propia → DENIED
+      (p_user_id ignorado para no-service_role; identidad real=warehouse → rol DENY)
+   V15 clerk + p_user_id=admin sobre venta propia → SUCCESS pero
+      audit.user_id = CLERK (audit_user_id_is_clerk=true) — atribución al caller real
+   R11 clerk + p_user_id=admin vía service_role sobre venta AJENA → DENIED
+      (identidad resuelta=clerk → policy can_admin_reverse=false)
+
+2) p_user_id falsificado vía /api/reverse (body extra):
+   H7 body {…, p_user_id: clerkA} con token REAL de admin → 200 SUCCESS y
+      audit REVERSE_TRANSACTION_V2.user_id = admin REAL (…f541)
+      (raw-h7-attribution.json; zod schema solo acepta type/id/reason; el API
+       inyecta p_user_id = session.user.id server-side — el cliente no puede
+       convertir actor en vendedor ni viceversa)
+
+3) seller_id / created_by: columnas DB fijadas por create_sale_v2 (server-side);
+   void_transaction/reverse_transaction_v2 no aceptan parámetro seller.
+
+4) anon: H1 void → 400 ERR_UNAUTHORIZED ; H2 V2 → 401/403 permission denied.
+
+5) service_role sin identidad: comportamiento conservado (B-2 P12) — la política
+   evalúa la identidad resuelta (NULL → has_store_access_as=false → DENIED).

@@ -1,0 +1,79 @@
+[
+  {
+    "tx": "b8cd0000-0000-4000-8000-00000000a004",
+    "action": "VOID_SALE",
+    "actor": "b8cb0000-0000-4000-8000-000000000004",
+    "metadata": {
+      "reason": "b8c-probe-V01_clerk_own_fresh",
+      "operation": "POS_UNDO",
+      "new_status": "voided",
+      "old_status": "completed"
+    }
+  },
+  {
+    "tx": "b8cd0000-0000-4000-8000-00000000a003",
+    "action": "VOID_SALE",
+    "actor": "b8cb0000-0000-4000-8000-000000000003",
+    "metadata": {
+      "reason": "b8c-probe-V08_encargado_own_fresh",
+      "operation": "POS_UNDO",
+      "new_status": "voided",
+      "old_status": "completed"
+    }
+  },
+  {
+    "tx": "b8cd0000-0000-4000-8000-00000000a002",
+    "action": "VOID_SALE",
+    "actor": "b8cb0000-0000-4000-8000-000000000002",
+    "metadata": {
+      "reason": "b8c-probe-V09_manager_own_fresh",
+      "operation": "POS_UNDO",
+      "new_status": "voided",
+      "old_status": "completed"
+    }
+  },
+  {
+    "tx": "b8cd0000-0000-4000-8000-00000000a008",
+    "action": "VOID_SALE",
+    "actor": "b8cb0000-0000-4000-8000-000000000008",
+    "metadata": {
+      "reason": "b8c-probe-V10_adminMember_own_fresh",
+      "operation": "POS_UNDO",
+      "new_status": "voided",
+      "old_status": "completed"
+    }
+  },
+  {
+    "tx": "b8cd0000-0000-4000-8000-00000000a001",
+    "action": "VOID_SALE",
+    "actor": "b8cb0000-0000-4000-8000-000000000001",
+    "metadata": {
+      "reason": "b8c-probe-V11_adminGlobal_own_fresh",
+      "operation": "POS_UNDO",
+      "new_status": "voided",
+      "old_status": "completed"
+    }
+  },
+  {
+    "tx": "b8cd0000-0000-4000-8000-00000000a009",
+    "action": "VOID_SALE",
+    "actor": "b8cb0000-0000-4000-8000-00000000000a",
+    "metadata": {
+      "reason": "b8c-probe-V13_clerkB_own_fresh",
+      "operation": "POS_UNDO",
+      "new_status": "voided",
+      "old_status": "completed"
+    }
+  },
+  {
+    "tx": "b8cd0000-0000-4000-8000-00000000b012",
+    "action": "VOID_SALE",
+    "actor": "b8cb0000-0000-4000-8000-000000000004",
+    "metadata": {
+      "reason": "b8c-probe-V15_clerk_forge_admin",
+      "operation": "POS_UNDO",
+      "new_status": "voided",
+      "old_status": "completed"
+    }
+  }
+]

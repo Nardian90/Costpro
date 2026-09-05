@@ -1,0 +1,97 @@
+{
+  "probes": [
+    {
+      "probe": "S_void_pending",
+      "tx": "b8cd0000-0000-4000-8000-00000000d001",
+      "outcome": "DENIED",
+      "err": "Failed to run sql query: ERROR:  P0001: t|ERR_INVALID_TRANSITION: void_transaction (POS undo) solo permite completed (status=pendi"
+    },
+    {
+      "probe": "S_void_failed",
+      "tx": "b8cd0000-0000-4000-8000-00000000d002",
+      "outcome": "DENIED",
+      "err": "Failed to run sql query: ERROR:  P0001: t|ERR_INVALID_TRANSITION: void_transaction (POS undo) solo permite completed (status=faile"
+    },
+    {
+      "probe": "S_void_compensated",
+      "tx": "b8cd0000-0000-4000-8000-00000000d003",
+      "outcome": "DENIED",
+      "err": "Failed to run sql query: ERROR:  P0001: t|ERR_INVALID_TRANSITION: void_transaction (POS undo) solo permite completed (status=compe"
+    },
+    {
+      "probe": "S_void_cancelled",
+      "tx": "b8cd0000-0000-4000-8000-00000000d004",
+      "outcome": "DENIED",
+      "err": "Failed to run sql query: ERROR:  P0001: t|ERR_INVALID_TRANSITION: void_transaction (POS undo) solo permite completed (status=cance"
+    },
+    {
+      "probe": "S_void_refunded",
+      "tx": "b8cd0000-0000-4000-8000-00000000d005",
+      "outcome": "DENIED",
+      "err": "Failed to run sql query: ERROR:  P0001: t|ERR_INVALID_TRANSITION: void_transaction (POS undo) solo permite completed (status=refun"
+    },
+    {
+      "probe": "S_void_voided",
+      "tx": "b8cd0000-0000-4000-8000-00000000d006",
+      "outcome": "DENIED",
+      "err": "Failed to run sql query: ERROR:  P0001: t|ERR_ALREADY_VOIDED\nCONTEXT:  PL/pgSQL function inline_code_block line 11 at RAISE\n"
+    },
+    {
+      "probe": "S_void_reversed",
+      "tx": "b8cd0000-0000-4000-8000-00000000d007",
+      "outcome": "DENIED",
+      "err": "Failed to run sql query: ERROR:  P0001: t|ERR_INVALID_TRANSITION: void_transaction (POS undo) solo permite completed (status=rever"
+    },
+    {
+      "probe": "S_rev_pending",
+      "tx": "b8cd0000-0000-4000-8000-00000000d001",
+      "outcome": "DENIED",
+      "err": "{\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_INVALID_STATUS: only completed transactions can be reversed (status=pend"
+    },
+    {
+      "probe": "S_rev_failed",
+      "tx": "b8cd0000-0000-4000-8000-00000000d002",
+      "outcome": "DENIED",
+      "err": "{\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_INVALID_STATUS: only completed transactions can be reversed (status=fail"
+    },
+    {
+      "probe": "S_rev_compensated",
+      "tx": "b8cd0000-0000-4000-8000-00000000d003",
+      "outcome": "DENIED",
+      "err": "{\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_INVALID_STATUS: only completed transactions can be reversed (status=comp"
+    },
+    {
+      "probe": "S_rev_cancelled",
+      "tx": "b8cd0000-0000-4000-8000-00000000d004",
+      "outcome": "DENIED",
+      "err": "{\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_INVALID_STATUS: only completed transactions can be reversed (status=canc"
+    },
+    {
+      "probe": "S_rev_refunded",
+      "tx": "b8cd0000-0000-4000-8000-00000000d005",
+      "outcome": "DENIED",
+      "err": "{\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_INVALID_STATUS: only completed transactions can be reversed (status=refu"
+    },
+    {
+      "probe": "S_rev_voided",
+      "tx": "b8cd0000-0000-4000-8000-00000000d006",
+      "outcome": "IDEMPOTENT",
+      "err": "{\"status\":\"idempotent\",\"transaction_id\":\"b8cd0000-0000-4000-8000-00000000d006\"}"
+    },
+    {
+      "probe": "S_rev_reversed",
+      "tx": "b8cd0000-0000-4000-8000-00000000d007",
+      "outcome": "DENIED",
+      "err": "{\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_INVALID_STATUS: only completed transactions can be reversed (status=reve"
+    }
+  ],
+  "statesPost": {
+    "b8cd0000-0000-4000-8000-00000000d001": "pending",
+    "b8cd0000-0000-4000-8000-00000000d002": "failed",
+    "b8cd0000-0000-4000-8000-00000000d003": "compensated",
+    "b8cd0000-0000-4000-8000-00000000d004": "cancelled",
+    "b8cd0000-0000-4000-8000-00000000d005": "refunded",
+    "b8cd0000-0000-4000-8000-00000000d006": "voided",
+    "b8cd0000-0000-4000-8000-00000000d007": "reversed"
+  }
+}

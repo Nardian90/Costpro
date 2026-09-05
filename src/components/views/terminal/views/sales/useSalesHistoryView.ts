@@ -4,11 +4,16 @@ import { useState, useMemo, useCallback } from 'react';
 import { useAuthStore } from '@/store';
 import { useTransactionDetails } from '@/hooks/api/useTransactions';
 import { useTransactions } from '@/hooks/api/useTransactions';
-import { Transaction, ROLE_PERMISSIONS, TransactionItem } from '@/types';
-import { useInvertDocument } from '@/hooks/api/useDocumentActions';
+import { Transaction, TransactionItem } from '@/types';
 import { useDuplicateDocumentV2 } from '@/hooks/api/useDuplicateDocumentV2';
-import { toast } from 'sonner';
 import { formatCurrency, formatDate } from '@/lib/utils';
+// W9.5 B-8 (MODELO C): el flujo void legacy de este hook (useInvertDocument →
+// void_transaction) era CÓDIGO MUERTO (SalesHistoryView nunca lo destructuró)
+// y divergía de la política real: la anulación/reversión de ventas desde el
+// historial es la REVERSIÓN ADMINISTRATIVA (Revertir → /api/reverse →
+// reverse_transaction_v2), gated por rol admin/manager/encargado. Aquí solo
+// queda el flujo activo. POS Undo vive exclusivamente en el flujo POS
+// (usePOSCheckout, ventana 30s, venta propia).
 
 // ── CSV Export Utility ──
 function formatPaymentMethod(method: string | null | undefined): string {
@@ -75,18 +80,8 @@ export function useSalesHistoryView() {
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
     const [isTaxModalOpen, setIsTaxModalOpen] = useState(false);
 
-    // Confirmation modal state for void
-    const [voidTarget, setVoidTarget] = useState<Transaction | null>(null);
-
     // Document Actions Hooks
-    const invertDocumentMutation = useInvertDocument();
     const duplicateDocumentMutation = useDuplicateDocumentV2();
-
-    // Permission check — merge all user roles to determine void capability
-    const canVoid = (() => {
-        if (!user?.roles) return false;
-        return user.roles.some(r => ROLE_PERMISSIONS[r]?.canVoidTransactions === true);
-    })();
 
     // Data Fetching
     const { data: transactionsData = [], isLoading: isLoadingTransactions } = useTransactions(user?.activeStoreId, user?.role === 'admin');
@@ -147,44 +142,6 @@ export function useSalesHistoryView() {
 
     const handleCloseDetails = useCallback(() => {
         setSelectedTransactionId(null);
-    }, []);
-
-    // ── Void confirmation flow ──
-    const handleRequestVoid = useCallback((txn: Transaction) => {
-        if (txn.status === 'voided') {
-            toast.error('Esta venta ya ha sido anulada.');
-            return;
-        }
-        setSelectedTransactionId(txn.id);
-        setVoidTarget(txn);
-    }, []);
-
-    const handleConfirmVoid = async () => {
-        if (!voidTarget) return;
-        const txn = voidTarget;
-        setVoidTarget(null);
-
-        if (!user?.activeStoreId) {
-            toast.error('No hay tienda activa');
-            return;
-        }
-
-        try {
-            await invertDocumentMutation.mutateAsync({
-                type: 'sale',
-                id: txn.id,
-                items: transactionItems.length > 0 && selectedTransactionId === txn.id ? transactionItems : undefined,
-                storeId: user.activeStoreId
-            });
-            setSelectedTransactionId(null);
-        } catch (error: unknown) {
-            const msg = (error instanceof Error ? error.message : String(error)) || 'Error al anular la venta';
-            toast.error(msg);
-        }
-    };
-
-    const handleCancelVoid = useCallback(() => {
-        setVoidTarget(null);
     }, []);
 
     // ── Duplicate ── V2.4.4: usa useDuplicateDocumentV2 (carga items en carrito sin setTimeout)
@@ -278,16 +235,8 @@ export function useSalesHistoryView() {
         handleViewDetails,
         handleCloseDetails,
 
-        // Void actions
-        voidTarget,
-        handleRequestVoid,
-        handleConfirmVoid,
-        handleCancelVoid,
-        canVoid,
-
         // Other Actions
         handleDuplicate,
-        isInverting: invertDocumentMutation.isPending,
 
         // Selection Actions
         toggleSelection,

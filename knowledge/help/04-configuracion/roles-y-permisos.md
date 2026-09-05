@@ -112,7 +112,8 @@ El sistema RBAC de CostPro utiliza **17 banderas de permisos granulares** que co
 | `canCreateSales` | Permite iniciar y procesar transacciones en la terminal POS. | admin, manager, encargado, clerk |
 | `canViewSales` | Permite consultar el historial de ventas propias. | admin, manager, encargado, clerk |
 | `canViewAllSales` | Permite consultar el historial completo de ventas de la tienda, sin restricción por vendedor. | admin, manager, encargado |
-| `canVoidTransactions` | Permite anular transacciones ya realizadas. | admin, manager, encargado, clerk |
+| `canUndoSales` | **POS Undo (MODELO C Nivel 1)**: permite deshacer desde el POS la venta que el usuario ACABA de realizar (botón "Deshacer" del toast, ventana de 30 segundos, venta propia, misma tienda). Server-side lo valida `void_transaction` + `can_pos_undo_transaction`. | admin, manager, encargado, clerk |
+| `canReverseSales` | **Reversión administrativa (MODELO C Nivel 2)**: permite revertir cualquier venta de la tienda desde Historial (botón "Revertir", sin ventana temporal, incluye ventas ajenas). Server-side lo validan `/api/reverse` + `reverse_transaction_v2` + `can_admin_reverse_transaction`. El admin global tiene alcance transversal en todas las tiendas. | admin, manager, encargado |
 | `canCloseCashRegister` | Permite ejecutar el cierre de caja al finalizar el turno. | admin, manager, encargado, clerk |
 
 ### Dashboard y Administración
@@ -130,7 +131,22 @@ El sistema RBAC de CostPro utiliza **17 banderas de permisos granulares** que co
 | `canViewAudits` | Permite acceder a los registros de auditoría del sistema. | admin, manager |
 | `canPerformInventoryCount` | Permite ejecutar conteos físicos de inventario y registrar discrepancias. | admin, manager, encargado, warehouse |
 
-> **Nota**: Las banderas granulares son la capa de autorización final. Incluso si la interfaz no muestra un botón o enlace, el backend valida estas banderas en cada solicitud, por lo que ningún permiso puede ser eludido mediante manipulación del cliente.
+> **Nota**: Las banderas granulares son la capa de autorización final. La anulación/reversión de ventas (`canUndoSales`, `canReverseSales`) se evalúa en el frontend (visibilidad de botones) Y en el backend (API `/api/reverse` + RPC `void_transaction`/`reverse_transaction_v2` + funciones de autorización en base de datos), por lo que ninguna de estas operaciones puede ser eludida mediante manipulación del cliente. Para el resto de banderas, la visibilidad en la interfaz puede no coincidir con validaciones server-side específicas de cada endpoint.
+
+### Anulación y reversión de ventas (MODELO C)
+
+CostPro distingue **dos operaciones distintas** para revertir una venta:
+
+| | POS Undo ("Deshacer") | Reversión administrativa ("Revertir") |
+|---|---|---|
+| **Dónde** | Toast del POS, inmediatamente tras vender | Historial de ventas (terminal → ventas) |
+| **Qué permite** | Deshacer la venta que el usuario ACABA de realizar | Revertir cualquier venta de la tienda (incluidas ventas ajenas) |
+| **Ventana** | 30 segundos (validada en servidor) | Sin restricción temporal |
+| **Roles** | admin, manager, encargado, clerk (operadores POS) | admin, manager, encargado |
+| **Alcance** | Misma tienda, venta propia | Misma tienda; el admin global en todas las tiendas |
+| **Canal técnico** | RPC `void_transaction` → `can_pos_undo_transaction` | API `/api/reverse` → RPC `reverse_transaction_v2` → `can_admin_reverse_transaction` |
+
+> **Principio**: la membresía de tienda responde "¿puede este usuario operar en esta tienda?"; el rol responde "¿puede este usuario realizar esta operación administrativa?". Un clerk puede deshacer SU venta recién hecha, pero no puede revertir ventas ajenas: eso es una operación administrativa reservada a admin/manager/encargado.
 
 ## 4. Seguridad
 

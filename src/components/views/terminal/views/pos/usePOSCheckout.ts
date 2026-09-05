@@ -7,6 +7,7 @@ import { useCartStore } from "@/store/cart";
 import { useAuthStore } from "@/store";
 import { useCreateSale } from "@/hooks/api/useTransactions";
 import { useInvertDocument } from "@/hooks/api/useDocumentActions";
+import { canUndoSaleInStore } from "@/lib/roles";
 import { supabase } from "@/lib/supabaseClient";
 import { shouldUseV2Checkout } from "@/config/features";
 import { PaymentMethod } from "@/types";
@@ -315,36 +316,45 @@ export function usePOSCheckout() {
         // POS-2 MM-9: Toast con acción "Deshacer" (30s).
         // Si el usuario hace clic, llamamos a useInvertDocument con los items
         // snapshotados (evita un round-trip extra al servidor).
+        // W9.5 B-8 (MODELO C Nivel 1): el toast "Deshacer" solo se ofrece a
+        // operadores POS (admin/manager/encargado/clerk en la tienda). La DB
+        // re-valida ownership + ventana 30s + rol en void_transaction.
         if (undoToastIdRef.current !== null) {
           toast.dismiss(undoToastIdRef.current);
         }
-        undoToastIdRef.current = toast("Venta registrada", {
-          description: "¿Te equivocaste? Tienes 30s para deshacerla.",
-          duration: 30000,
-          action: {
-            label: "Deshacer",
-            onClick: async () => {
-              try {
-                toast.loading("Deshaciendo venta...", { id: "undo-loading" });
-                await invertSale({
-                  type: "sale",
-                  id: saleId,
-                  items: soldItemsSnapshot,
-                  storeId: storeIdForUndo,
-                });
-                toast.dismiss("undo-loading");
-                setLastSale(null);
-                toast.success("Venta deshecha y stock restaurado");
-              } catch (err: unknown) {
-                toast.dismiss("undo-loading");
-                toast.error(
-                  "No se pudo deshacer: " + (err instanceof Error ? err.message : "error desconocido"),
-                  { duration: 6000 },
-                );
-              }
+        if (canUndoSaleInStore(user, storeIdForUndo)) {
+          undoToastIdRef.current = toast("Venta registrada", {
+            description: "¿Te equivocaste? Tienes 30s para deshacerla.",
+            duration: 30000,
+            action: {
+              label: "Deshacer",
+              onClick: async () => {
+                try {
+                  toast.loading("Deshaciendo venta...", { id: "undo-loading" });
+                  await invertSale({
+                    type: "sale",
+                    id: saleId,
+                    items: soldItemsSnapshot,
+                    storeId: storeIdForUndo,
+                  });
+                  toast.dismiss("undo-loading");
+                  setLastSale(null);
+                  toast.success("Venta deshecha y stock restaurado");
+                } catch (err: unknown) {
+                  toast.dismiss("undo-loading");
+                  const rawMsg = err instanceof Error ? err.message : "error desconocido";
+                  const friendly = rawMsg.includes("ERR_UNAUTHORIZED")
+                    ? "No puedes deshacer esta venta: debe ser propia, dentro de los 30s y con rol de operador POS."
+                    : rawMsg;
+                  toast.error(
+                    "No se pudo deshacer: " + friendly,
+                    { duration: 6000 },
+                  );
+                }
+              },
             },
-          },
-        });
+          });
+        }
       } catch (err: unknown) {
         // FIX-B9 (2026-07-10): traducir errores crudos de Postgres/Supabase
         const rawMsg = err instanceof Error ? err.message : 'Error desconocido';

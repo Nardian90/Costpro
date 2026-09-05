@@ -1,0 +1,36 @@
+════════════════════════════════════════════════════════════════════
+W9.5 — B-8 · MODELO C · 13-data-integrity-pre-post.txt
+GATE J — datos reales: PRE == POST (checksums md5 bit a bit)
+════════════════════════════════════════════════════════════════════
+
+[OK ] t_stores               PRE.n=44  POST.n=44  md5_iguales=True
+[OK ] t_payments             PRE.n=366  POST.n=366  md5_iguales=True
+[OK ] t_products             PRE.n=323  POST.n=323  md5_iguales=True
+[OK ] t_profiles             PRE.n=26  POST.n=26  md5_iguales=True
+[OK ] t_tx_items             PRE.n=555  POST.n=555  md5_iguales=True
+[OK ] t_inventory            PRE.n=141  POST.n=141  md5_iguales=True
+[OK ] t_audit_logs           PRE.n=7376  POST.n=7376  md5_iguales=True
+[OK ] kardex_exists          PRE.n=1  POST.n=1  md5_iguales=True
+[OK ] t_commissions          PRE.n=0  POST.n=0  md5_iguales=True
+[OK ] t_memberships          PRE.n=51  POST.n=51  md5_iguales=True
+[OK ] movement_types         PRE.n=['sale', 'purchase', 'adjustment', 'return', 'initial', 'transfer', 'void', 'transfer_in', 'transfer_out', 'sale_void', 'production_out', 'production_in', 'sale_reverse', 'purchase_reverse', 'production_reverse', 'issue_slip_out', 'issue_slip_reverse']  POST.n=['sale', 'purchase', 'adjustment', 'return', 'initial', 'transfer', 'void', 'transfer_in', 'transfer_out', 'sale_void', 'production_out', 'production_in', 'sale_reverse', 'purchase_reverse', 'production_reverse', 'issue_slip_out', 'issue_slip_reverse']  md5_iguales=True
+[OK ] t_transactions         PRE.n=520  POST.n=520  md5_iguales=True
+[OK ] t_business_events      PRE.n=10553  POST.n=10553  md5_iguales=True
+[OK ] t_stock_movements      PRE.n=702  POST.n=702  md5_iguales=True
+
+INCIDENTE AUDIT_LOGS +20 (10×CREATE_USER + 10×DELETE_USER con store_id NULL —
+rastro auth del PROPIO fixture generado por triggers de auth.users): identificado
+(c35), purgado con DELETE acotado por action + ventana temporal + store_id NULL
+(c36) → POST re-capturado: 14/14 idénticos.
+
+CLEANUP (raw-cleanup.json): residuos 14/14 criterios = 0
+  (stores/profiles/auth_users/memberships/products/inventory/transactions/
+   transaction_items/payments/stock_movements/audit_logs/user_audit_log/
+   business_events/kardex_entries = 0)
+GUARDS RESTAURADOS:
+  prevent_hard_delete_profile  tgenabled='O' ✓
+  trigger_audit_store_changes  tgenabled='O' ✓ (B-6 workaround aplicado y revertido)
+  app.restore_mode             RESET tras el DELETE de payments del fixture ✓
+DATOS REALES MODIFICADOS: NINGUNO (solo fixture sintético b8ca/b8cb/b8cc/b8cd…)
+
+VEREDICTO PRE==POST: 14/14 PASS

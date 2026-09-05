@@ -1,0 +1,286 @@
+[
+  {
+    "matrix": [
+      {
+        "op": "admin_reverse",
+        "actor": "adminGlobal",
+        "result": true,
+        "target": "store_A",
+        "expected": "ALLOW(transversal)"
+      },
+      {
+        "op": "admin_reverse",
+        "actor": "adminGlobal",
+        "result": true,
+        "target": "store_B",
+        "expected": "ALLOW(transversal)"
+      },
+      {
+        "op": "admin_reverse",
+        "actor": "adminMemberA",
+        "result": true,
+        "target": "store_A",
+        "expected": "ALLOW(membership-admin)"
+      },
+      {
+        "op": "admin_reverse",
+        "actor": "clerkA",
+        "result": false,
+        "target": "store_A",
+        "expected": "DENY(role)"
+      },
+      {
+        "op": "admin_reverse",
+        "actor": "clerkA",
+        "result": false,
+        "target": "store_B",
+        "expected": "DENY(role+cross)"
+      },
+      {
+        "op": "admin_reverse",
+        "actor": "clerkB",
+        "result": false,
+        "target": "store_B",
+        "expected": "DENY(role)"
+      },
+      {
+        "op": "admin_reverse",
+        "actor": "costoA",
+        "result": false,
+        "target": "store_A",
+        "expected": "DENY(role)"
+      },
+      {
+        "op": "admin_reverse",
+        "actor": "encargadoA",
+        "result": true,
+        "target": "store_A",
+        "expected": "ALLOW"
+      },
+      {
+        "op": "admin_reverse",
+        "actor": "encargadoA",
+        "result": false,
+        "target": "store_B",
+        "expected": "DENY(cross-store)"
+      },
+      {
+        "op": "admin_reverse",
+        "actor": "managerA",
+        "result": true,
+        "target": "store_A",
+        "expected": "ALLOW"
+      },
+      {
+        "op": "admin_reverse",
+        "actor": "managerA",
+        "result": false,
+        "target": "store_B",
+        "expected": "DENY(cross-store)"
+      },
+      {
+        "op": "admin_reverse",
+        "actor": "NULL_actor",
+        "result": false,
+        "target": "store_A",
+        "expected": "DENY(null)"
+      },
+      {
+        "op": "admin_reverse",
+        "actor": "sellerX",
+        "result": true,
+        "target": "store_A",
+        "expected": "ALLOW(encargado)"
+      },
+      {
+        "op": "admin_reverse",
+        "actor": "usuarioA",
+        "result": false,
+        "target": "store_A",
+        "expected": "DENY(role)"
+      },
+      {
+        "op": "admin_reverse",
+        "actor": "warehouseA",
+        "result": false,
+        "target": "store_A",
+        "expected": "DENY(role)"
+      },
+      {
+        "op": "pos_undo",
+        "actor": "adminGlobal",
+        "result": false,
+        "target": "tx_aged_own_clerk(b001)",
+        "expected": "DENY(window)"
+      },
+      {
+        "op": "pos_undo",
+        "actor": "adminGlobal",
+        "result": false,
+        "target": "tx_fresh_own_adminMember(a008)",
+        "expected": "DENY(ownership)"
+      },
+      {
+        "op": "pos_undo",
+        "actor": "adminGlobal",
+        "result": false,
+        "target": "tx_fresh_own_clerk(a004)",
+        "expected": "DENY(ownership-not-his)"
+      },
+      {
+        "op": "pos_undo",
+        "actor": "adminGlobal",
+        "result": false,
+        "target": "tx_fresh_other_sellerX(b002)",
+        "expected": "DENY(ownership)"
+      },
+      {
+        "op": "pos_undo",
+        "actor": "adminGlobal",
+        "result": false,
+        "target": "tx_fresh_own_warehouse(a005)",
+        "expected": "DENY(ownership)"
+      },
+      {
+        "op": "pos_undo",
+        "actor": "adminMemberA",
+        "result": true,
+        "target": "tx_fresh_own_adminMember(a008)",
+        "expected": "ALLOW(membership-admin-own)"
+      },
+      {
+        "op": "pos_undo",
+        "actor": "adminMemberA",
+        "result": false,
+        "target": "tx_fresh_own_clerk(a004)",
+        "expected": "DENY(no-own)"
+      },
+      {
+        "op": "pos_undo",
+        "actor": "clerkA",
+        "result": false,
+        "target": "NULL_tx",
+        "expected": "DENY(null)"
+      },
+      {
+        "op": "pos_undo",
+        "actor": "clerkA",
+        "result": false,
+        "target": "tx_storeB_own_clerkB(a009)",
+        "expected": "DENY(cross-store-ownership)"
+      },
+      {
+        "op": "pos_undo",
+        "actor": "clerkA",
+        "result": false,
+        "target": "tx_fresh_other_sellerX(b002)",
+        "expected": "DENY(ownership)"
+      },
+      {
+        "op": "pos_undo",
+        "actor": "clerkA",
+        "result": false,
+        "target": "tx_aged_own_clerk(b001)",
+        "expected": "DENY(window)"
+      },
+      {
+        "op": "pos_undo",
+        "actor": "clerkA",
+        "result": true,
+        "target": "tx_fresh_own_clerk(a004)",
+        "expected": "ALLOW(own)"
+      },
+      {
+        "op": "pos_undo",
+        "actor": "clerkB",
+        "result": true,
+        "target": "tx_storeB_own_clerkB(a009)",
+        "expected": "ALLOW(own-storeB)"
+      },
+      {
+        "op": "pos_undo",
+        "actor": "costoA",
+        "result": false,
+        "target": "tx_fresh_own_costo(a007)",
+        "expected": "DENY(role)"
+      },
+      {
+        "op": "pos_undo",
+        "actor": "costoA",
+        "result": false,
+        "target": "tx_fresh_own_clerk(a004)",
+        "expected": "DENY(role+no-own)"
+      },
+      {
+        "op": "pos_undo",
+        "actor": "encargadoA",
+        "result": false,
+        "target": "tx_fresh_own_clerk(a004)",
+        "expected": "DENY(no-own)"
+      },
+      {
+        "op": "pos_undo",
+        "actor": "encargadoA",
+        "result": false,
+        "target": "tx_fresh_other_sellerX(b002)",
+        "expected": "DENY(ownership-POS)"
+      },
+      {
+        "op": "pos_undo",
+        "actor": "managerA",
+        "result": false,
+        "target": "tx_fresh_other_sellerX(b002)",
+        "expected": "DENY(ownership-POS)"
+      },
+      {
+        "op": "pos_undo",
+        "actor": "managerA",
+        "result": false,
+        "target": "tx_fresh_own_clerk(a004)",
+        "expected": "DENY(no-own)"
+      },
+      {
+        "op": "pos_undo",
+        "actor": "sellerX",
+        "result": true,
+        "target": "tx_fresh_other_sellerX(b002)",
+        "expected": "ALLOW(own-fresh)"
+      },
+      {
+        "op": "pos_undo",
+        "actor": "sellerX",
+        "result": false,
+        "target": "tx_fresh_own_clerk(a004)",
+        "expected": "DENY(not-owner)"
+      },
+      {
+        "op": "pos_undo",
+        "actor": "usuarioA",
+        "result": false,
+        "target": "tx_fresh_own_costo(a007)",
+        "expected": "DENY(role+no-own)"
+      },
+      {
+        "op": "pos_undo",
+        "actor": "usuarioA",
+        "result": false,
+        "target": "tx_fresh_own_clerk(a004)",
+        "expected": "DENY(role+no-own)"
+      },
+      {
+        "op": "pos_undo",
+        "actor": "warehouseA",
+        "result": false,
+        "target": "tx_fresh_own_clerk(a004)",
+        "expected": "DENY(role+no-own)"
+      },
+      {
+        "op": "pos_undo",
+        "actor": "warehouseA",
+        "result": false,
+        "target": "tx_fresh_own_warehouse(a005)",
+        "expected": "DENY(role)"
+      }
+    ]
+  }
+]

@@ -12,6 +12,7 @@ import * as XLSX from '@e965/xlsx';
 import { useSalesHistoryView } from './useSalesHistoryView';
 import { TransactionDetailsModal } from './TransactionDetailsModal';
 import { DocumentStatusBadge, canReverse } from '@/components/ui/DocumentStatusBadge';
+import { canAdminReverseSaleInStore } from '@/lib/roles';
 import { ReverseDocumentModal } from '@/components/ui/ReverseDocumentModal';
 import { useUIStore, useAuthStore } from '@/store';
 import { TaxCalculationModal } from './TaxCalculationModal';
@@ -149,6 +150,11 @@ export default function SalesHistoryView() {
   const { setCurrentView, setForceOpenCart } = useUIStore();
   const user = useAuthStore(s => s.user);
   const activeStoreId = user?.activeStoreId || '';
+  // W9.5 B-8 (MODELO C Nivel 2): el botón "Revertir" del historial ES la
+  // reversión administrativa → requiere rol admin/manager/encargado EN la
+  // tienda activa (o admin global). Espejo de la boundary server-side
+  // (/api/reverse) y de la DB (can_admin_reverse_transaction).
+  const canAdminReverseTx = canAdminReverseSaleInStore(user, activeStoreId);
 
   const {
     searchTerm, setSearchTerm,
@@ -536,7 +542,7 @@ export default function SalesHistoryView() {
                               >
                                 <Eye className="w-4 h-4" />
                               </button>
-                              {canReverseTx && (
+                              {canReverseTx && canAdminReverseTx && (
                                 <button type="button"
                                   onClick={() => setReverseTarget({
                                     id: txn.id,

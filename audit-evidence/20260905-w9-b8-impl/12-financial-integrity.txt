@@ -1,0 +1,27 @@
+════════════════════════════════════════════════════════════════════
+W9.5 — B-8 · MODELO C · 12-financial-integrity.txt
+Integridad financiera de las mutaciones autorizadas (solo fixture)
+════════════════════════════════════════════════════════════════════
+
+MECÁNICA PRESERVADA (byte-comparación de cuerpos: solo guards añadidos):
+  - register_stock_movement idéntico en ambos RPC (sale_void / sale_reverse)
+  - UPDATE inventory / products vía balance_after — sin cambios
+  - WAC: sale paths no recalculan cost_average (comentario A2 v2.22.0 intacto)
+  - payment_transactions: ledger inmutable — 0 filas tocadas por los RPC
+  - kardex: generado por trigger de stock_movements — 1:1 movements↔kardex
+
+EVIDENCIA CUANTITATIVA (fixture):
+  · Producto 1 (tienda A): stock 10 → 22 = 10 + 6 voids×(+2) EXACTO;
+    6 movements sale_void con notes=tx_id; audit VOID_SALE operation=POS_UNDO ×6
+  · Producto 2 (tienda B): stock 10 → 12 = +1 void×(+2) EXACTO
+  · e001 (V2): units_restored=5; movements [sale −5 (pre-fixture), sale_reverse +5];
+    balance_after 0 → 5; stock=inventory=balance (cadena consistente);
+    audit REVERSE_TRANSACTION_V2 operation=ADMIN_REVERSE units=5 old=completed new=voided
+  · Concurrency f004/f005/f006: exactamente 1 movement y 1 audit primario por tx
+  · cost_average del fixture invariante (40.0000) tras todas las mutaciones
+
+NOTA DE BOOKKEEPING DEL FIXTURE (documentada, sin impacto): el trigger de
+stock_movements aplica quantity_change al insertar; la inserción de movimientos
+"sale previos" del fixture duplicó la deducción simulada (stock 5→0/7→4). El
+sistema se comportó consistentemente (stock = base + Σmovements en todo momento);
+la corrección del fixture (UPDATE stock=5) re-alineó la cadena antes de R12.

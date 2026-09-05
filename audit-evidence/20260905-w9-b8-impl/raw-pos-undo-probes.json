@@ -1,0 +1,187 @@
+[
+  {
+    "probes": [
+      {
+        "probe": "V01_clerk_own_fresh",
+        "detail": {
+          "status": "success",
+          "transaction_id": "b8cd0000-0000-4000-8000-00000000a004"
+        },
+        "outcome": "SUCCESS"
+      },
+      {
+        "probe": "V01::POST",
+        "detail": {
+          "audit": null,
+          "movements": 1,
+          "tx_status": "voided"
+        },
+        "outcome": "STATE"
+      },
+      {
+        "probe": "V02_clerk_own_aged_window",
+        "detail": {
+          "err": "ERR_UNAUTHORIZED: POS undo requiere venta propia, dentro de la ventana de 30s y rol operativo POS en la tienda",
+          "code": "P0001"
+        },
+        "outcome": "DENIED"
+      },
+      {
+        "probe": "V03_clerk_other_ownership",
+        "detail": {
+          "err": "ERR_UNAUTHORIZED: POS undo requiere venta propia, dentro de la ventana de 30s y rol operativo POS en la tienda",
+          "code": "P0001"
+        },
+        "outcome": "DENIED"
+      },
+      {
+        "probe": "V04_manager_other_POSstrict",
+        "detail": {
+          "err": "ERR_UNAUTHORIZED: POS undo requiere venta propia, dentro de la ventana de 30s y rol operativo POS en la tienda",
+          "code": "P0001"
+        },
+        "outcome": "DENIED"
+      },
+      {
+        "probe": "V05_warehouse_own_role",
+        "detail": {
+          "err": "ERR_UNAUTHORIZED: POS undo requiere venta propia, dentro de la ventana de 30s y rol operativo POS en la tienda",
+          "code": "P0001"
+        },
+        "outcome": "DENIED"
+      },
+      {
+        "probe": "V06_usuario_own_role",
+        "detail": {
+          "err": "ERR_UNAUTHORIZED: POS undo requiere venta propia, dentro de la ventana de 30s y rol operativo POS en la tienda",
+          "code": "P0001"
+        },
+        "outcome": "DENIED"
+      },
+      {
+        "probe": "V07_costo_own_role",
+        "detail": {
+          "err": "ERR_UNAUTHORIZED: POS undo requiere venta propia, dentro de la ventana de 30s y rol operativo POS en la tienda",
+          "code": "P0001"
+        },
+        "outcome": "DENIED"
+      },
+      {
+        "probe": "V08_encargado_own_fresh",
+        "detail": {
+          "status": "success",
+          "transaction_id": "b8cd0000-0000-4000-8000-00000000a003"
+        },
+        "outcome": "SUCCESS"
+      },
+      {
+        "probe": "V08::POST",
+        "detail": {
+          "audit": null,
+          "movements": 1,
+          "tx_status": "voided"
+        },
+        "outcome": "STATE"
+      },
+      {
+        "probe": "V09_manager_own_fresh",
+        "detail": {
+          "status": "success",
+          "transaction_id": "b8cd0000-0000-4000-8000-00000000a002"
+        },
+        "outcome": "SUCCESS"
+      },
+      {
+        "probe": "V09::POST",
+        "detail": {
+          "audit": null,
+          "movements": 1,
+          "tx_status": "voided"
+        },
+        "outcome": "STATE"
+      },
+      {
+        "probe": "V10_adminMember_own_fresh",
+        "detail": {
+          "status": "success",
+          "transaction_id": "b8cd0000-0000-4000-8000-00000000a008"
+        },
+        "outcome": "SUCCESS"
+      },
+      {
+        "probe": "V10::POST",
+        "detail": {
+          "audit": null,
+          "movements": 1,
+          "tx_status": "voided"
+        },
+        "outcome": "STATE"
+      },
+      {
+        "probe": "V11_adminGlobal_own_fresh",
+        "detail": {
+          "status": "success",
+          "transaction_id": "b8cd0000-0000-4000-8000-00000000a001"
+        },
+        "outcome": "SUCCESS"
+      },
+      {
+        "probe": "V11::POST",
+        "detail": {
+          "audit": null,
+          "movements": 1,
+          "tx_status": "voided"
+        },
+        "outcome": "STATE"
+      },
+      {
+        "probe": "V12_clerkA_cross_store",
+        "detail": {
+          "err": "ERR_UNAUTHORIZED",
+          "code": "P0001"
+        },
+        "outcome": "DENIED"
+      },
+      {
+        "probe": "V13_clerkB_own_fresh",
+        "detail": {
+          "status": "success",
+          "transaction_id": "b8cd0000-0000-4000-8000-00000000a009"
+        },
+        "outcome": "SUCCESS"
+      },
+      {
+        "probe": "V14_warehouse_forge_admin",
+        "detail": {
+          "err": "ERR_UNAUTHORIZED: POS undo requiere venta propia, dentro de la ventana de 30s y rol operativo POS en la tienda",
+          "code": "P0001"
+        },
+        "outcome": "DENIED"
+      },
+      {
+        "probe": "V15_ATTRIBUTION",
+        "detail": {
+          "audit_user_id_is_clerk": true
+        },
+        "outcome": "CHECK"
+      },
+      {
+        "probe": "V15_clerk_forge_admin",
+        "detail": {
+          "status": "success",
+          "transaction_id": "b8cd0000-0000-4000-8000-00000000b012"
+        },
+        "outcome": "SUCCESS"
+      },
+      {
+        "probe": "V15::POST",
+        "detail": {
+          "audit": null,
+          "movements": 1,
+          "tx_status": "voided"
+        },
+        "outcome": "STATE"
+      }
+    ]
+  }
+]

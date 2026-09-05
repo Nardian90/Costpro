@@ -1,5 +1,14 @@
 # Referencia: Roles y Permisos del Sistema
 
+> ⚠️ **DOCUMENTO HISTÓRICO — SUPERSEDADO (2026-09-05, W9.5 B-8).**
+> La política vigente de anulación/reversión de ventas es el **MODELO C**
+> descrito en `knowledge/help/04-configuracion/roles-y-permisos.md`
+> (`canUndoSales` POS Undo 30s venta propia; `canReverseSales` reversión
+> administrativa admin/manager/encargado). La ventana de 24h y la regla
+> ">24h SOLO admin" de este documento NUNCA llegaron a implementarse
+> server-side y quedan **supersesadas**. Este archivo se conserva como
+> referencia histórica del diseño original de 6 roles.
+
 > **Use esta tabla** cuando quiera saber qué puede hacer cada tipo de usuario.
 
 ## Los 6 roles del sistema

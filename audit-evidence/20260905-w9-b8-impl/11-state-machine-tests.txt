@@ -1,0 +1,28 @@
+════════════════════════════════════════════════════════════════════
+W9.5 — B-8 · MODELO C · 11-state-machine-tests.txt
+Batería de estados (§14 C) — void_transaction + reverse_transaction_v2
+════════════════════════════════════════════════════════════════════
+
+[DENIED    ] S_void_pending     err/resp: Failed to run sql query: ERROR:  P0001: t|ERR_INVALID_TRANSITION: void_transaction (POS undo) s
+[DENIED    ] S_void_failed      err/resp: Failed to run sql query: ERROR:  P0001: t|ERR_INVALID_TRANSITION: void_transaction (POS undo) s
+[DENIED    ] S_void_compensated err/resp: Failed to run sql query: ERROR:  P0001: t|ERR_INVALID_TRANSITION: void_transaction (POS undo) s
+[DENIED    ] S_void_cancelled   err/resp: Failed to run sql query: ERROR:  P0001: t|ERR_INVALID_TRANSITION: void_transaction (POS undo) s
+[DENIED    ] S_void_refunded    err/resp: Failed to run sql query: ERROR:  P0001: t|ERR_INVALID_TRANSITION: void_transaction (POS undo) s
+[DENIED    ] S_void_voided      err/resp: Failed to run sql query: ERROR:  P0001: t|ERR_ALREADY_VOIDED
+CONTEXT:  PL/pgSQL function inline
+[DENIED    ] S_void_reversed    err/resp: Failed to run sql query: ERROR:  P0001: t|ERR_INVALID_TRANSITION: void_transaction (POS undo) s
+[DENIED    ] S_rev_pending      err/resp: {"code":"P0001","details":null,"hint":null,"message":"ERR_INVALID_STATUS: only completed transa
+[DENIED    ] S_rev_failed       err/resp: {"code":"P0001","details":null,"hint":null,"message":"ERR_INVALID_STATUS: only completed transa
+[DENIED    ] S_rev_compensated  err/resp: {"code":"P0001","details":null,"hint":null,"message":"ERR_INVALID_STATUS: only completed transa
+[DENIED    ] S_rev_cancelled    err/resp: {"code":"P0001","details":null,"hint":null,"message":"ERR_INVALID_STATUS: only completed transa
+[DENIED    ] S_rev_refunded     err/resp: {"code":"P0001","details":null,"hint":null,"message":"ERR_INVALID_STATUS: only completed transa
+[IDEMPOTENT] S_rev_voided       err/resp: {"status":"idempotent","transaction_id":"b8cd0000-0000-4000-8000-00000000d006"}
+[DENIED    ] S_rev_reversed     err/resp: {"code":"P0001","details":null,"hint":null,"message":"ERR_INVALID_STATUS: only completed transa
+
+ESTADOS POST (0 efectos laterales): {"b8cd0000-0000-4000-8000-00000000d001": "pending", "b8cd0000-0000-4000-8000-00000000d002": "failed", "b8cd0000-0000-4000-8000-00000000d003": "compensated", "b8cd0000-0000-4000-8000-00000000d004": "cancelled", "b8cd0000-0000-4000-8000-00000000d005": "refunded", "b8cd0000-0000-4000-8000-00000000d006": "voided", "b8cd0000-0000-4000-8000-00000000d007": "reversed"}
+
+HARDENING B-9a IMPLEMENTADO: pending → voided AHORA pre-bloqueado en
+void_transaction (ERR_INVALID_TRANSITION) — antes alcanzaba voided (B-9 S1).
+La máquina de estados del trigger (trg_validate_tx_transition) permanece como
+2ª barrera. voided → ERR_ALREADY_VOIDED (void) / idempotente (V2).
+14/14 probes conforme; estados intactos tras cada denegación.

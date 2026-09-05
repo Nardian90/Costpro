@@ -1,0 +1,22 @@
+════════════════════════════════════════════════════════════════════
+W9.5 — B-8 · MODELO C · 00-baseline.txt (FASE 0 — checkpoint)
+════════════════════════════════════════════════════════════════════
+fecha/hora: 2026-09-05 (UTC-5 AST) · baseline OBLIGATORIO: c57e8de1
+
+$ git status --short
+  (vacío — WORKTREE CLEAN)
+$ git rev-parse HEAD
+  c57e8de118a821d28269a0af67440d0fb1663637
+$ git rev-parse origin/main
+  c57e8de118a821d28269a0af67440d0fb1663637
+
+HEAD == origin/main == c57e8de1  ✓
+WORKTREE CLEAN                   ✓
+GATE 0: PASS
+
+NOTA DE ALCANCE: el directorio audit-evidence/20260904-w9-b8/ ya contiene
+la evidencia comprometida de la auditoría forense B-8 (veredicto BACKLOG /
+DESIGN DECISION REQUIRED, 40 archivos, commit c57e8de1). Este pack de
+IMPLEMENTACIÓN vive en audit-evidence/20260905-w9-b8-impl/ para no
+sobrescribir evidencia histórica. La numeración 00..15 sigue §21 del spec.
+════════════════════════════════════════════════════════════════════

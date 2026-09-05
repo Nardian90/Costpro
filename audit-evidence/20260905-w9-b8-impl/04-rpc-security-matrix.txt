@@ -1,0 +1,28 @@
+════════════════════════════════════════════════════════════════════
+W9.5 — B-8 · MODELO C · 04-rpc-security-matrix.txt
+Matriz de seguridad RPC/funciones (post-implementación, live)
+════════════════════════════════════════════════════════════════════
+
+| Propiedad                          | void_transaction            | reverse_transaction_v2       | can_pos_undo     | can_admin_reverse |
+|------------------------------------|-----------------------------|------------------------------|------------------|-------------------|
+| LANGUAGE                           | plpgsql                     | plpgsql                      | plpgsql          | plpgsql           |
+| SECURITY                           | DEFINER (postgres)          | DEFINER (postgres)           | DEFINER (postgres)| DEFINER (postgres)|
+| search_path                        | pg_catalog,public           | public,pg_temp               | pg_catalog,public| pg_catalog,public |
+| FOR UPDATE 1ª lectura              | SÍ (conservado)             | SÍ (conservado)              | n/a (sin lock)   | n/a (sin lock)    |
+| EXECUTE                            | PUBLIC+authenticated+service| postgres+service_role (API)  | service_role     | service_role      |
+| Identidad actor                    | auth.uid() (p_user_id solo service_role) | ídem            | parámetro p_actor | parámetros        |
+| STORE ACCESS (has_store_access_as) | SÍ                          | SÍ                           | (vía RPC)        | (vía RPC/API)     |
+| OPERATION AUTHORIZATION            | can_pos_undo_transaction    | can_admin_reverse_transaction| —                | —                 |
+| Ownership                          | OBLIGATORIO (venta propia)  | NO (venta ajena permitida)   | aplica           | no aplica         |
+| Ventana temporal                   | 30s server-side             | sin restricción              | aplica           | no aplica         |
+| Rol POS                            | membership admin/manager/encargado/clerk ∨ admin global | membership admin/manager/encargado ∨ admin global | ídem | ídem |
+| Estados                            | completed solo; voided→ERR_ALREADY_VOIDED; resto→ERR_INVALID_TRANSITION | completed solo; voided→idempotente; resto→ERR_INVALID_STATUS | completed | completed (validado en RPC) |
+| Idempotencia                       | ERR_ALREADY_VOIDED          | idempotente (200)            | —                | —                 |
+| Máquina de estados (trigger)       | 2ª barrera intacta          | 2ª barrera intacta           | —                | —                 |
+| Audit (action + metadata)          | VOID_SALE + {operation:POS_UNDO, old_status, new_status, reason} | REVERSE_TRANSACTION_V2 + {operation:ADMIN_REVERSE, old_status, new_status, units_restored, reason} | — | — |
+| Mecánica stock/WAC/pagos/kardex    | intacta (sale_void)         | intacta (sale_reverse)       | —                | —                 |
+| Superficie cliente                 | RPC directo (POS undo)      | SOLO vía /api/reverse (service_role) | interna | interna + API boundary |
+
+GATES GATE 14 (protección de reverse_transaction_v2): las 14 exigencias del
+spec §8 se preservan — cada una verificada en 03-db-functions.txt, probes
+(05-11) y prueba de regresión (14-regression.txt).

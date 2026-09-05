@@ -1,0 +1,27 @@
+════════════════════════════════════════════════════════════════════
+W9.5 — B-8 · MODELO C · 06-ownership-tests.txt
+Ownership (venta propia vs ajena) — evidencia de probes
+════════════════════════════════════════════════════════════════════
+
+POS UNDO (void_transaction): ownership OBLIGATORIO para TODOS los roles.
+  V03 clerk sobre venta de sellerX (misma tienda, fresh)  → DENIED ERR_UNAUTHORIZED
+  V04 manager sobre venta de sellerX (misma tienda, fresh) → DENIED ERR_UNAUTHORIZED
+      (la "venta ajena" ya NO es alcanzable por POS Undo ni siquiera para
+       admin/manager/encargado: es territorio de la reversión administrativa)
+  V14 warehouse con p_user_id=admin sobre venta propia → DENIED (rol)
+  can_pos_undo_transaction: helper matrix fila "tx_fresh_other_sellerX" DENY para
+  clerk/manager/encargado/adminGlobal ✓ (raw-helpers-matrix.json)
+
+REVERSIÓN ADMINISTRATIVA (reverse_transaction_v2): ownership NO requerido.
+  R01 manager sobre venta ajena (sellerX) → SUCCESS
+  R02 encargado sobre venta ajena         → SUCCESS
+  R03 adminMember sobre venta ajena       → SUCCESS
+  R04 adminGlobal (sin membership) sobre venta ajena → SUCCESS
+  R10 manager sobre venta ajena de hace 2 días       → SUCCESS (sin ventana)
+  H3 admin REAL (token firmado) void de venta ajena vía PostgREST → DENIED
+      (el admin tampoco puede POS-undo ventas ajenas — ownership de Nivel 1)
+
+HALLAZGO B-2 RECLASIFICADO: "miembro puede anular venta ajena" era el MODELO A
+vígente en DB. Bajo MODELO C, la venta ajena SOLO es anulable por la reversión
+administrativa con rol admin/manager/encargado en la tienda (o admin global).
+La capacidad POS-undo de otros roles sobre ventas ajenas quedó eliminada.

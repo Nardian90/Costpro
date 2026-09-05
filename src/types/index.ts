@@ -977,7 +977,10 @@ export interface RolePermissions {
   canCreateSales: boolean;
   canViewSales: boolean;
   canViewAllSales: boolean;
-  canVoidTransactions: boolean;
+  /** MODELO C Nivel 1: deshacer (POS undo) la venta propia recién creada (ventana 30s). */
+  canUndoSales: boolean;
+  /** MODELO C Nivel 2: reversión administrativa de ventas de la tienda (rol admin/manager/encargado). */
+  canReverseSales: boolean;
   canCloseCashRegister: boolean;
   canViewDashboard: boolean;
   canManageUsers: boolean;
@@ -997,7 +1000,8 @@ export const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
     canCreateSales: true,
     canViewSales: true,
     canViewAllSales: true,
-    canVoidTransactions: true,
+    canUndoSales: true,
+    canReverseSales: true,
     canCloseCashRegister: true,
     canViewDashboard: true,
     canManageUsers: true,
@@ -1015,7 +1019,8 @@ export const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
     canCreateSales: true,
     canViewSales: true,
     canViewAllSales: true,
-    canVoidTransactions: true,
+    canUndoSales: true,
+    canReverseSales: true,
     canCloseCashRegister: true,
     canViewDashboard: true,
     canManageUsers: true,
@@ -1033,7 +1038,8 @@ export const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
     canCreateSales: true,
     canViewSales: true,
     canViewAllSales: false,
-    canVoidTransactions: false,
+    canUndoSales: false,
+    canReverseSales: false,
     canCloseCashRegister: false,
     canViewDashboard: true,
     canManageUsers: false,
@@ -1051,7 +1057,8 @@ export const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
     canCreateSales: true,
     canViewSales: true,
     canViewAllSales: true,
-    canVoidTransactions: true,
+    canUndoSales: true,
+    canReverseSales: true,
     canCloseCashRegister: true,
     canViewDashboard: true,
     canManageUsers: false,
@@ -1069,7 +1076,8 @@ export const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
     canCreateSales: true,
     canViewSales: true,
     canViewAllSales: false,
-    canVoidTransactions: false,
+    canUndoSales: true,
+    canReverseSales: false,
     canCloseCashRegister: false,
     canViewDashboard: true,
     canManageUsers: false,
@@ -1087,7 +1095,8 @@ export const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
     canCreateSales: false,
     canViewSales: false,
     canViewAllSales: false,
-    canVoidTransactions: false,
+    canUndoSales: false,
+    canReverseSales: false,
     canCloseCashRegister: false,
     canViewDashboard: false,
     canManageUsers: false,
@@ -1105,7 +1114,8 @@ export const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
     canCreateSales: false,
     canViewSales: false,
     canViewAllSales: false,
-    canVoidTransactions: false,
+    canUndoSales: false,
+    canReverseSales: false,
     canCloseCashRegister: false,
     canViewDashboard: false,
     canManageUsers: false,
@@ -1126,7 +1136,8 @@ export function getMergedPermissions(roles: UserRole[]): RolePermissions {
     canCreateSales: false,
     canViewSales: false,
     canViewAllSales: false,
-    canVoidTransactions: false,
+    canUndoSales: false,
+    canReverseSales: false,
     canCloseCashRegister: false,
     canViewDashboard: false,
     canManageUsers: false,

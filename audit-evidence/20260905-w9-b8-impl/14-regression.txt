@@ -1,0 +1,25 @@
+════════════════════════════════════════════════════════════════════
+W9.5 — B-8 · MODELO C · 14-regression.txt
+Regresión completa (fecha: 2026-09-05)
+════════════════════════════════════════════════════════════════════
+
+bun run test  (vitest)     → PASS  1922 passed | 24 skipped (1946) · 91 archivos
+                             (incluye iteration-14-b8-modelo-c.test.ts: 30/30 nuevos
+                              — congela la política en las 5 capas)
+bun run lint               → PASS  0 errors, 1291 warnings (pre-existentes)
+bunx tsc --noEmit          → PASS  (exit 0)
+bun run build              → PASS  (Next.js production build, exit 0)
+                             PM2 STOP antes del build (patrón anti-OOM, 3 apps)
+PM2 RESTORE                → 3/3 procesos online (costpro, telegram, whatsapp)
+pm2 save                   → OK (dump.pm2)
+HTTP GET /                 → 200
+HTTP GET /api/health       → 200
+
+e2e Playwright (reverse-duplicate-ui.spec.ts): NO ejecutado en este checkpoint
+(requiere navegador + usuario admin e2e; el usuario que usa, admin@costpro.com,
+cumple el gate canAdminReverseSaleInStore → el botón Revertir sigue visible).
+Compatibilidad verificada por análisis: admin global → true.
+
+CERO modificaciones a: get_cash_report (W9.4.8 congelado), payment ledger
+(H5-B2 congelado), reverse_transaction_v2 núcleo financiero (GATE 14),
+trigger de máquina de estados, RLS de tablas.

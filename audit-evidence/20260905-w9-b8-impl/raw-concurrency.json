@@ -1,0 +1,35 @@
+{
+  "probes": [
+    {
+      "probe": "C1_pos_vs_pos_f004",
+      "a": "OTHER",
+      "b": "ALREADY_VOIDED",
+      "rawA": "[{\"set_config\":\"authenticated\",\"result\":{\"status\":\"success\",\"transaction_id\":\"b8cd0000-0000-4000-8000-00000000f004\"}}]",
+      "rawB": "{\"message\":\"Failed to run sql query: ERROR:  P0001: ERR_ALREADY_VOIDED\\nCONTEXT:  PL/pgSQL function void_transaction(uui"
+    },
+    {
+      "probe": "C2_pos_vs_admin_f005",
+      "a": "ALREADY_VOIDED",
+      "b": "IDEMPOTENT",
+      "rawA": "{\"message\":\"Failed to run sql query: ERROR:  P0001: ERR_ALREADY_VOIDED\\nCONTEXT:  PL/pgSQL function void_transaction(uui",
+      "rawB": "{\"status\":\"idempotent\",\"transaction_id\":\"b8cd0000-0000-4000-8000-00000000f005\"}"
+    },
+    {
+      "probe": "C3_admin_vs_admin",
+      "a": "IDEMPOTENT",
+      "b": "SUCCESS",
+      "rawA": "{\"status\":\"idempotent\",\"transaction_id\":\"b8cd0000-0000-4000-8000-00000000f006\"}",
+      "rawB": "{\"status\":\"success\",\"transaction_id\":\"b8cd0000-0000-4000-8000-00000000f006\",\"units_restored\":2}"
+    }
+  ],
+  "post": {
+    "f004_movs": 1,
+    "f005_movs": 1,
+    "f006_movs": 1,
+    "f004_status": "voided",
+    "f005_status": "voided",
+    "f006_status": "voided",
+    "f005_prim_audit": 1,
+    "f006_prim_audit": 1
+  }
+}

@@ -1,0 +1,22 @@
+════════════════════════════════════════════════════════════════════
+W9.5 — B-8 · MODELO C · 07-time-window-tests.txt
+Ventana temporal — 30s POS Undo server-side; sin ventana en reversión admin
+════════════════════════════════════════════════════════════════════
+
+RESOLUCIÓN 30s vs 24h (detallada en 01-policy-matrix.md §1):
+  30s = ventana POS Undo (MM-9, usePOSCheckout duration:30000) → AHORA server-side
+  24h = doc previa superseda (nunca implementada; doc vigente no define ventana)
+
+PROBES:
+  V02 clerk venta propia con created_at = now()-5min  → DENIED (ventana expirada)
+      helper: can_pos_undo_transaction=false (own ✓, window ✗)
+  V11-equivalente adminGlobal venta propia aged → DENY(window) en matriz (fila b001)
+  R10 manager reversión administrativa sobre venta ajena de hace 2 días → SUCCESS
+      (sin ventana — coherente con doc vigente y comportamiento V2 preexistente)
+  V01/V08/V09/V10/V11/V13/H4 ventas propias dentro de 30s → SUCCESS
+
+NOTA DE DISEÑO: la ventana se mide desde transactions.created_at (server time).
+El toast cliente dura 30000ms desde la respuesta de create_sale_v2 → solape
+residual ≤ ~0.5s en el borde; si el usuario hace clic justo al expirar, el
+servidor responde ERR_UNAUTHORIZED y el UI muestra el mensaje amigable
+("No puedes deshacer esta venta…"). Comportamiento de frontera documentado.

@@ -1,0 +1,19 @@
+════════════════════════════════════════════════════════════════════
+W9.5 — B-8 · MODELO C · 08-cross-store-tests.txt
+Aislamiento por tienda
+════════════════════════════════════════════════════════════════════
+
+POS UNDO:
+  V12 clerkA sobre venta de tienda B (seller clerkB, fresh) → DENIED ERR_UNAUTHORIZED
+  Matriz: clerkA/tx_storeB_own_clerkB → false ✓ ; clerkB/propia en B → true ✓
+REVERSIÓN ADMINISTRATIVA:
+  R09 managerA sobre venta de tienda B → DENIED ERR_UNAUTHORIZED
+  Matriz: managerA/encargadoA/clerkA sobre store_B → false ✓ (cross-store)
+  R04 adminGlobal sobre venta de tienda A (sin membership) → SUCCESS
+  H8 admin REAL vía /api/reverse sobre venta de tienda B → SUCCESS (transversal *,
+  política de admin global confirmada por has_store_access_as + canManageStore + B-2 P5)
+  Matriz: adminGlobal store_A=true, store_B=true ✓
+HALLAZGO DE SEGURIDAD CORREGIDO EN VUELO (latente): can_admin_reverse_transaction
+  retornaba NULL (no false) cuando el actor no tiene membership → con COALESCE(…,false)
+  el contrato es total. Cerrado vía capa has_store_access_as en los RPC, pero el
+  helper ahora es seguro ante cualquier uso futuro (p.ej. RLS/policies).

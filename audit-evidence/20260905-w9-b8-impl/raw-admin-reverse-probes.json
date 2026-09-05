@@ -1,0 +1,100 @@
+{
+  "probes": [
+    {
+      "probe": "R01_manager_other",
+      "outcome": "SUCCESS",
+      "expected": "SUCCESS",
+      "http": 200,
+      "detail": "{\"status\":\"success\",\"transaction_id\":\"b8cd0000-0000-4000-8000-00000000b003\",\"units_restored\":2}"
+    },
+    {
+      "probe": "R02_encargado_other",
+      "outcome": "SUCCESS",
+      "expected": "SUCCESS",
+      "http": 200,
+      "detail": "{\"status\":\"success\",\"transaction_id\":\"b8cd0000-0000-4000-8000-00000000b004\",\"units_restored\":2}"
+    },
+    {
+      "probe": "R03_adminMember_other",
+      "outcome": "SUCCESS",
+      "expected": "SUCCESS",
+      "http": 200,
+      "detail": "{\"status\":\"success\",\"transaction_id\":\"b8cd0000-0000-4000-8000-00000000b005\",\"units_restored\":2}"
+    },
+    {
+      "probe": "R04_adminGlobal_other",
+      "outcome": "SUCCESS",
+      "expected": "SUCCESS",
+      "http": 200,
+      "detail": "{\"status\":\"success\",\"transaction_id\":\"b8cd0000-0000-4000-8000-00000000b006\",\"units_restored\":2}"
+    },
+    {
+      "probe": "R05_clerk_denied",
+      "outcome": "DENIED",
+      "expected": "DENIED",
+      "http": 400,
+      "detail": "{\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_UNAUTHORIZED: reversion administrativa requiere rol admin/manager/encargado en la tienda de la venta\"}"
+    },
+    {
+      "probe": "R06_warehouse_denied",
+      "outcome": "DENIED",
+      "expected": "DENIED",
+      "http": 400,
+      "detail": "{\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_UNAUTHORIZED: reversion administrativa requiere rol admin/manager/encargado en la tienda de la venta\"}"
+    },
+    {
+      "probe": "R07_usuario_denied",
+      "outcome": "DENIED",
+      "expected": "DENIED",
+      "http": 400,
+      "detail": "{\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_UNAUTHORIZED: reversion administrativa requiere rol admin/manager/encargado en la tienda de la venta\"}"
+    },
+    {
+      "probe": "R08_costo_denied",
+      "outcome": "DENIED",
+      "expected": "DENIED",
+      "http": 400,
+      "detail": "{\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_UNAUTHORIZED: reversion administrativa requiere rol admin/manager/encargado en la tienda de la venta\"}"
+    },
+    {
+      "probe": "R09_managerA_cross_store",
+      "outcome": "DENIED",
+      "expected": "DENIED",
+      "http": 400,
+      "detail": "{\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_UNAUTHORIZED\"}"
+    },
+    {
+      "probe": "R10_manager_aged2d",
+      "outcome": "SUCCESS",
+      "expected": "SUCCESS",
+      "http": 200,
+      "detail": "{\"status\":\"success\",\"transaction_id\":\"b8cd0000-0000-4000-8000-00000000c002\",\"units_restored\":2}"
+    },
+    {
+      "probe": "R11_clerk_forge_admin",
+      "outcome": "DENIED",
+      "expected": "DENIED",
+      "http": 400,
+      "detail": "{\"code\":\"P0001\",\"details\":null,\"hint\":null,\"message\":\"ERR_UNAUTHORIZED: reversion administrativa requiere rol admin/manager/encargado en la tienda de la venta\"}"
+    },
+    {
+      "probe": "R12_e001_stock_check",
+      "outcome": "SUCCESS",
+      "expected": "SUCCESS",
+      "http": 200,
+      "detail": "{\"status\":\"success\",\"transaction_id\":\"b8cd0000-0000-4000-8000-00000000e001\",\"units_restored\":5}"
+    },
+    {
+      "probe": "R13_v2_on_voided_idempotent",
+      "outcome": "SUCCESS",
+      "expected": "SUCCESS",
+      "http": 200,
+      "detail": "{\"status\":\"idempotent\",\"transaction_id\":\"b8cd0000-0000-4000-8000-00000000a004\"}"
+    },
+    {
+      "probe": "POST_STATE",
+      "outcome": "STATE",
+      "detail": "{\"p3_inv\":5,\"p3_movs\":[\"sale\"],\"p3_stock\":5,\"a004_movs\":1,\"audit_e001\":{\"new\":\"voided\",\"old\":\"completed\",\"units\":\"5.0000\",\"user_id\":\"b8cb0000-0000-4000-8000-000000000002\",\"operation\":\"ADMIN_REVERSE\"}}"
+    }
+  ]
+}

@@ -1,0 +1,47 @@
+[
+  {
+    "fn": "can_admin_reverse_transaction",
+    "oid": 143447,
+    "owner": "postgres",
+    "secdef": true,
+    "config": "search_path=pg_catalog, public",
+    "acl": "postgres=X/postgres,service_role=X/postgres",
+    "def_md5": "de2ef0a937b332a8c103ebd45029e5cd"
+  },
+  {
+    "fn": "can_pos_undo_transaction",
+    "oid": 143448,
+    "owner": "postgres",
+    "secdef": true,
+    "config": "search_path=pg_catalog, public",
+    "acl": "postgres=X/postgres,service_role=X/postgres",
+    "def_md5": "ef880c8e1f912d90a2e5de689da00db3"
+  },
+  {
+    "fn": "has_store_access_as",
+    "oid": 136268,
+    "owner": "postgres",
+    "secdef": true,
+    "config": "search_path=public",
+    "acl": "postgres=X/postgres,service_role=X/postgres",
+    "def_md5": "7bd255169148c5c87bf00e6a96f29d3f"
+  },
+  {
+    "fn": "reverse_transaction_v2",
+    "oid": 138188,
+    "owner": "postgres",
+    "secdef": true,
+    "config": "search_path=public, pg_temp",
+    "acl": "postgres=X/postgres,service_role=X/postgres",
+    "def_md5": "0b32a9797b1302f123c8e8a868ed6aca"
+  },
+  {
+    "fn": "void_transaction",
+    "oid": 138000,
+    "owner": "postgres",
+    "secdef": true,
+    "config": "search_path=pg_catalog, public",
+    "acl": "=X/postgres,postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres",
+    "def_md5": "31c8db5d1d059338bda124165002c6ee"
+  }
+]

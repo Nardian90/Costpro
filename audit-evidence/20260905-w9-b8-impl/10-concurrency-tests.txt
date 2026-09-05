@@ -1,0 +1,30 @@
+════════════════════════════════════════════════════════════════════
+W9.5 — B-8 · MODELO C · 10-concurrency-tests.txt
+Concurrencia (§14 D) — sesiones paralelas reales
+════════════════════════════════════════════════════════════════════
+
+C1_pos_vs_pos_f004: a=OTHER | b=ALREADY_VOIDED
+   rawA: [{"set_config":"authenticated","result":{"status":"success","transaction_id":"b8cd0000-0000-4000-8000-00000000
+   rawB: {"message":"Failed to run sql query: ERROR:  P0001: ERR_ALREADY_VOIDED\nCONTEXT:  PL/pgSQL function void_trans
+C2_pos_vs_admin_f005: a=ALREADY_VOIDED | b=IDEMPOTENT
+   rawA: {"message":"Failed to run sql query: ERROR:  P0001: ERR_ALREADY_VOIDED\nCONTEXT:  PL/pgSQL function void_trans
+   rawB: {"status":"idempotent","transaction_id":"b8cd0000-0000-4000-8000-00000000f005"}
+C3_admin_vs_admin: a=IDEMPOTENT | b=SUCCESS
+   rawA: {"status":"idempotent","transaction_id":"b8cd0000-0000-4000-8000-00000000f006"}
+   rawB: {"status":"success","transaction_id":"b8cd0000-0000-4000-8000-00000000f006","units_restored":2}
+
+POST-STATE (raw-concurrency.json):
+  f004: status=voided, movements=1  (C1: 1 SUCCESS + 1 ERR_ALREADY_VOIDED)
+  f005: status=voided, movements=1, prim_audit=1  (C2: V2 ganó; void perdedor ALREADY_VOIDED;
+        re-run posterior: void ALREADY_VOIDED + V2 idempotente — replay coherente)
+  f006: status=voided, movements=1, prim_audit=1  (C3: 1 SUCCESS + 1 IDEMPOTENT)
+
+NOTA DE MÉTODO: en el 1er intento de C1 se usó un wrapper DO…RAISE que hacía
+ROLLBACK del éxito (ambas sesiones "SUCCESS" sin efecto, 0 movements) — artefacto
+del método de probe, corregido con llamadas directas sobre f004. Clasificador
+inicial no reconocía HTTP 201 del Management API (rawA muestra result.status=success
+= SUCCESS real). Raw bodies = verdad; clasificación corregida en este documento.
+
+CONCLUSIÓN (GATE H): FOR UPDATE + re-validación bajo lock + máquina de estados →
+exactamente 1 mutación válida por transacción en las 3 formas de carrera
+(POS∥POS, POS∥Admin, Admin∥Admin); 0 doble stock, 0 doble WAC, 0 doble devolución.

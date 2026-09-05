@@ -1,0 +1,54 @@
+[
+  {
+    "fixture": [
+      {
+        "step": "stores",
+        "detail": {
+          "n": 2
+        }
+      },
+      {
+        "step": "profiles",
+        "detail": {
+          "n": 10
+        }
+      },
+      {
+        "step": "memberships",
+        "detail": {
+          "n": 9
+        }
+      },
+      {
+        "step": "products+inventory",
+        "detail": {
+          "n": 4
+        }
+      },
+      {
+        "step": "transactions",
+        "detail": {
+          "n": 37
+        }
+      },
+      {
+        "step": "items",
+        "detail": {
+          "n": 37
+        }
+      },
+      {
+        "step": "payments",
+        "detail": {
+          "n": 37
+        }
+      },
+      {
+        "step": "prior-sale-movements",
+        "detail": {
+          "n": 2
+        }
+      }
+    ]
+  }
+]

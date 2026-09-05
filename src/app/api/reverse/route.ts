@@ -76,6 +76,50 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
   const supabase = getSupabaseAdminSafe();
   if (!supabase) return NextResponse.json(createApiError('CONFIG_ERROR'), { status: 500 });
 
+  // W9.5 B-8 (MODELO C Nivel 2): API authorization boundary para VENTAS.
+  // La reversión administrativa de una venta exige rol admin/manager/
+  // encargado en la tienda de la venta (o admin global transversal).
+  // La evaluación usa la MISMA función normativa de la DB
+  // (can_admin_reverse_transaction) — el API NO es una segunda
+  // implementación de autorización; la DB (reverse_transaction_v2)
+  // sigue siendo la última barrera.
+  // Alcance B-8: solo type='transaction'. Los demás tipos (recepciones,
+  // transferencias, ajustes, devoluciones, producción) conservan su
+  // política vigente (backlog B-10).
+  if (parsed.data.type === 'transaction') {
+    const { data: txRow, error: txErr } = await supabase
+      .from('transactions')
+      .select('store_id')
+      .eq('id', parsed.data.id)
+      .single();
+
+    if (txErr || !txRow) {
+      return NextResponse.json({ error: 'ERR_TRANSACTION_NOT_FOUND' }, { status: 404 });
+    }
+
+    const { data: canReverse, error: authzErr } = await supabase.rpc(
+      'can_admin_reverse_transaction',
+      { p_actor: session.user.id, p_store_id: txRow.store_id },
+    );
+
+    if (authzErr) {
+      logger.error('DATABASE', 'REVERSE_AUTHZ_CHECK_FAILED', {
+        id: parsed.data.id, userId: session.user.id, error: authzErr.message,
+      });
+      return NextResponse.json(createApiError('INTERNAL_ERROR'), { status: 500 });
+    }
+
+    if (canReverse !== true) {
+      logger.warn('DATABASE', 'REVERSE_FORBIDDEN_ROLE', {
+        id: parsed.data.id, userId: session.user.id, storeId: txRow.store_id,
+      });
+      return NextResponse.json(
+        { error: 'ERR_INSUFFICIENT_ROLE: la reversión administrativa requiere rol admin/manager/encargado en la tienda de la venta' },
+        { status: 403 },
+      );
+    }
+  }
+
   // Iteración 11.3: seleccionar RPC v1 o v2 según feature flag
   const { FEATURES } = await import('@/config/features');
   const rpcMap = FEATURES.USE_V2_REVERSE ? RPC_MAP_V2 : RPC_MAP_V1;

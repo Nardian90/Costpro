@@ -1,0 +1,88 @@
+[
+  {
+    "probe": "H1_anon_void",
+    "status": 400,
+    "body": {
+      "code": "P0001",
+      "details": null,
+      "hint": null,
+      "message": "ERR_UNAUTHORIZED"
+    },
+    "expect": "DENIED(400 ERR_UNAUTHORIZED)"
+  },
+  {
+    "probe": "H2_anon_v2",
+    "status": 401,
+    "body": {
+      "code": "42501",
+      "details": null,
+      "hint": null,
+      "message": "permission denied for function reverse_transaction_v2"
+    },
+    "expect": "DENIED(404/no-EXECUTE)"
+  },
+  {
+    "probe": "ADMIN_UID",
+    "status": 0,
+    "body": "051c6157-600b-425e-b8c0-72388bacf541",
+    "expect": "info"
+  },
+  {
+    "probe": "H3_admin_real_void_other",
+    "status": 400,
+    "body": {
+      "code": "P0001",
+      "details": null,
+      "hint": null,
+      "message": "ERR_UNAUTHORIZED: POS undo requiere venta propia, dentro de la ventana de 30s y rol operativo POS en la tienda"
+    },
+    "expect": "DENIED(ownership: POS undo ajena)"
+  },
+  {
+    "probe": "H4_admin_real_void_own",
+    "status": 200,
+    "body": {
+      "status": "success",
+      "transaction_id": "b8cd0000-0000-4000-8000-00000000b027"
+    },
+    "expect": "SUCCESS(propia fresh)"
+  },
+  {
+    "probe": "H5_admin_real_v2_direct",
+    "status": 403,
+    "body": {
+      "code": "42501",
+      "details": null,
+      "hint": null,
+      "message": "permission denied for function reverse_transaction_v2"
+    },
+    "expect": "DENIED(404: authenticated sin EXECUTE)"
+  },
+  {
+    "probe": "H6_admin_api_reverse",
+    "status": 200,
+    "body": {
+      "status": "idempotent",
+      "transaction_id": "b8cd0000-0000-4000-8000-00000000b024"
+    },
+    "expect": "SUCCESS(200 API end-to-end)"
+  },
+  {
+    "probe": "H7_forged_p_user_id_api",
+    "status": 200,
+    "body": {
+      "status": "idempotent",
+      "transaction_id": "b8cd0000-0000-4000-8000-00000000b025"
+    },
+    "expect": "SUCCESS(p_user_id ignorado; identidad=admin)"
+  },
+  {
+    "probe": "H8_admin_api_cross_store",
+    "status": 200,
+    "body": {
+      "status": "idempotent",
+      "transaction_id": "b8cd0000-0000-4000-8000-00000000b026"
+    },
+    "expect": "SUCCESS(transversal *)"
+  }
+]

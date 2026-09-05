@@ -1,0 +1,20 @@
+════════════════════════════════════════════════════════════════════
+W9.5 — B-8 · MODELO C · 15-git-status.txt
+Estado git pre-commit (fecha: 2026-09-05)
+════════════════════════════════════════════════════════════════════
+HEAD pre-commit: c57e8de118a821d28269a0af67440d0fb1663637
+(git rev-parse HEAD == git rev-parse origin/main == c57e8de1… verificado en 00-baseline)
+
+ARCHIVOS MODIFICADOS/NUevOS (git status --short):
+ M knowledge/help/03-referencia/02-roles-permisos.md
+ M knowledge/help/04-configuracion/roles-y-permisos.md
+ M src/app/api/reverse/route.ts
+ M src/components/views/terminal/views/pos/usePOSCheckout.ts
+ M src/components/views/terminal/views/sales/SalesHistoryView.tsx
+ M src/components/views/terminal/views/sales/useSalesHistoryView.ts
+ M src/lib/roles.ts
+ M src/types/index.ts
+?? audit-evidence/20260905-w9-b8-impl/
+?? src/__tests__/integration/iteration-14-b8-modelo-c.test.ts
+?? supabase/migrations/20260905000001_w9_b8_modelo_c_undo_reverse_authorization.sql
+
