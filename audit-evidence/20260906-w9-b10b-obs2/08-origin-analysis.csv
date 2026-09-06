@@ -1,0 +1,125 @@
+product_id,sku,name,stock_current,origin,backup_stock_0802,backup_inventory_0802,origin_class,stock_reality,evidence
+d097619e,CAT-0029,Expansiones 8x80,532,bulk_import_20260730_ledger_backfill,532,532,FROZEN_FROM_BACKUP,REAL_STOCK_SUPPORTED,stock_current == backup.products.stock_current == backup.inventory.quantity
+f648c3f8,CAT-0081,Bridas de 4x8 400mm,497,bulk_import_20260730 + ops_post_08-02,501,501,MUTATED_POST_BACKUP,REAL_STOCK_SUPPORTED,delta post-08-02 no reconstruible (audit sin items)
+20113ad5,CAT-0106,Tornillo con arandela,496,bulk_import_20260730_ledger_backfill,496,496,FROZEN_FROM_BACKUP,REAL_STOCK_SUPPORTED,stock_current == backup.products.stock_current == backup.inventory.quantity
+c8b1ce8a,CAT-0078,Tornillo con tuerca 4.8,322,bulk_import_20260730_ledger_backfill,322,322,FROZEN_FROM_BACKUP,REAL_STOCK_SUPPORTED,stock_current == backup.products.stock_current == backup.inventory.quantity
+64551ca6,CAT-0012,Cable Conductor electrico 10,289,bulk_import_20260730_ledger_backfill,289,289,FROZEN_FROM_BACKUP,REAL_STOCK_SUPPORTED,stock_current == backup.products.stock_current == backup.inventory.quantity
+69e4f894,CAT-0013,Cable Conductor electrico 8,274,bulk_import_20260730_ledger_backfill,274,274,FROZEN_FROM_BACKUP,REAL_STOCK_SUPPORTED,stock_current == backup.products.stock_current == backup.inventory.quantity
+5d7b5973,CAT-0110,Intermedio,217,bulk_import_20260730_ledger_backfill,217,217,FROZEN_FROM_BACKUP,REAL_STOCK_SUPPORTED,stock_current == backup.products.stock_current == backup.inventory.quantity
+e05066d4,CAT-0096,Barrena 5mm Madera,212,bulk_import_20260730_ledger_backfill,212,212,FROZEN_FROM_BACKUP,REAL_STOCK_SUPPORTED,stock_current == backup.products.stock_current == backup.inventory.quantity
+4af0518f,CAT-0022,Conectores MC4,204,bulk_import_20260730_ledger_backfill,204,204,FROZEN_FROM_BACKUP,REAL_STOCK_SUPPORTED,stock_current == backup.products.stock_current == backup.inventory.quantity
+53a5555e,CAT-0113,Goma Termo Retractil,200,bulk_import_20260730_ledger_backfill,200,200,FROZEN_FROM_BACKUP,REAL_STOCK_SUPPORTED,stock_current == backup.products.stock_current == backup.inventory.quantity
+402c85ed,CAT-0065,Terminales eléctricas,130,bulk_import_20260730_ledger_backfill,130,130,FROZEN_FROM_BACKUP,REAL_STOCK_SUPPORTED,stock_current == backup.products.stock_current == backup.inventory.quantity
+c24ad180,CAT-0097,Disco de corte,122,bulk_import_20260730_ledger_backfill,122,122,FROZEN_FROM_BACKUP,REAL_STOCK_SUPPORTED,stock_current == backup.products.stock_current == backup.inventory.quantity
+5c57135f,CAT-0071,Uniones de media/Niple macho,106,bulk_import_20260730_ledger_backfill,106,106,FROZEN_FROM_BACKUP,REAL_STOCK_SUPPORTED,stock_current == backup.products.stock_current == backup.inventory.quantity
+7f77f10d,CAT-0099,Electrodo 4mm,100,bulk_import_20260730_ledger_backfill,100,100,FROZEN_FROM_BACKUP,REAL_STOCK_SUPPORTED,stock_current == backup.products.stock_current == backup.inventory.quantity
+0a1bce2e,CAT-0112,Grapas metalicas 3/4 con torni,100,bulk_import_20260730_ledger_backfill,100,100,FROZEN_FROM_BACKUP,REAL_STOCK_SUPPORTED,stock_current == backup.products.stock_current == backup.inventory.quantity
+bc4498c8,CAT-0066,Tornillo M10,98,bulk_import_20260730_ledger_backfill,98,98,FROZEN_FROM_BACKUP,REAL_STOCK_SUPPORTED,stock_current == backup.products.stock_current == backup.inventory.quantity
+983e5726,CAT-0087,Cable Solar Negro 4mm,95.5,bulk_import_20260730_ledger_backfill,95.5,95.5,FROZEN_FROM_BACKUP,REAL_STOCK_SUPPORTED,stock_current == backup.products.stock_current == backup.inventory.quantity
+670a4628,CAT-0109,inicio Z,94,bulk_import_20260730_ledger_backfill,94,94,FROZEN_FROM_BACKUP,REAL_STOCK_SUPPORTED,stock_current == backup.products.stock_current == backup.inventory.quantity
+99885245,CAT-0088,Cable Solar Rojo 4mm,91.5,bulk_import_20260730_ledger_backfill,91.5,91.5,FROZEN_FROM_BACKUP,REAL_STOCK_SUPPORTED,stock_current == backup.products.stock_current == backup.inventory.quantity
+0ce83da7,CAT-0058,Rosca Chapa,90,bulk_import_20260730_ledger_backfill,90,90,FROZEN_FROM_BACKUP,REAL_STOCK_SUPPORTED,stock_current == backup.products.stock_current == backup.inventory.quantity
+52a00c8f,CAT-0070,Unión universal de media,82,bulk_import_20260730_ledger_backfill,82,82,FROZEN_FROM_BACKUP,REAL_STOCK_SUPPORTED,stock_current == backup.products.stock_current == backup.inventory.quantity
+ce3b523f,CAT-0041,Latiguillo MC4,72,bulk_import_20260730_ledger_backfill,72,72,FROZEN_FROM_BACKUP,REAL_STOCK_SUPPORTED,stock_current == backup.products.stock_current == backup.inventory.quantity
+2a822efb,CAT-0011,Cabilla 70 Cm,70,bulk_import_20260730_ledger_backfill,70,70,FROZEN_FROM_BACKUP,REAL_STOCK_SUPPORTED,stock_current == backup.products.stock_current == backup.inventory.quantity
+af42b21f,CAT-0035,Fuete eléctrico,68,bulk_import_20260730_ledger_backfill,68,68,FROZEN_FROM_BACKUP,REAL_STOCK_SUPPORTED,stock_current == backup.products.stock_current == backup.inventory.quantity
+45f4a79c,CAT-0030,Expansiones anaranjada 6*40mm ,50,bulk_import_20260730_ledger_backfill,50,50,FROZEN_FROM_BACKUP,REAL_STOCK_SUPPORTED,stock_current == backup.products.stock_current == backup.inventory.quantity
+f9fa0dbc,CAT-0111,Grapas plasticas con clavo de ,49,bulk_import_20260730_ledger_backfill,49,49,FROZEN_FROM_BACKUP,REAL_STOCK_SUPPORTED,stock_current == backup.products.stock_current == backup.inventory.quantity
+32ac0c01,CAT-0098,Limpia parabrisa,42,bulk_import_20260730_ledger_backfill,42,42,FROZEN_FROM_BACKUP,REAL_STOCK_SUPPORTED,stock_current == backup.products.stock_current == backup.inventory.quantity
+4b15ea41,CAT-0047,Mortero,40,bulk_import_20260730_ledger_backfill,40,40,FROZEN_FROM_BACKUP,REAL_STOCK_SUPPORTED,stock_current == backup.products.stock_current == backup.inventory.quantity
+d96b0781,CAT-0052,Pintura Verde 4L,39,bulk_import_20260730_ledger_backfill,39,39,FROZEN_FROM_BACKUP,REAL_STOCK_SUPPORTED,stock_current == backup.products.stock_current == backup.inventory.quantity
+08c9acfd,CAT-0009,Brecker D63 A,38,bulk_import_20260730_ledger_backfill,38,38,FROZEN_FROM_BACKUP,REAL_STOCK_SUPPORTED,stock_current == backup.products.stock_current == backup.inventory.quantity
+8d81d8dc,CAT-0048,Nudo de media,38,bulk_import_20260730_ledger_backfill,38,38,FROZEN_FROM_BACKUP,REAL_STOCK_SUPPORTED,stock_current == backup.products.stock_current == backup.inventory.quantity
+435fb1f5,CAT-0095,Barrena 34mm Madera,36,bulk_import_20260730_ledger_backfill,36,36,FROZEN_FROM_BACKUP,REAL_STOCK_SUPPORTED,stock_current == backup.products.stock_current == backup.inventory.quantity
+8d4c7a66,CAT-0028,Espejo,36,bulk_import_20260730_ledger_backfill,36,36,FROZEN_FROM_BACKUP,REAL_STOCK_SUPPORTED,stock_current == backup.products.stock_current == backup.inventory.quantity
+da1c4090,CAT-0002,Abrazade metálica de 1 pulgada,966,bulk_import_20260730 + ops_post_08-02,32,32,MUTATED_POST_BACKUP,REAL_STOCK_SUPPORTED,delta post-08-02 no reconstruible (audit sin items)
+194cfc6d,CAT-0019,Codo de 90,29,bulk_import_20260730_ledger_backfill,29,29,FROZEN_FROM_BACKUP,REAL_STOCK_SUPPORTED,stock_current == backup.products.stock_current == backup.inventory.quantity
+2999d90d,CAT-0075,Espigas de 15 AMP,28,bulk_import_20260730_ledger_backfill,28,28,FROZEN_FROM_BACKUP,REAL_STOCK_SUPPORTED,stock_current == backup.products.stock_current == backup.inventory.quantity
+f5c8fd29,CAT-0103,Perfiles para brecker,27,bulk_import_20260730_ledger_backfill,27,27,FROZEN_FROM_BACKUP,REAL_STOCK_SUPPORTED,stock_current == backup.products.stock_current == backup.inventory.quantity
+017b2f62,CAT-0037,J de techo,26,bulk_import_20260730_ledger_backfill,26,26,FROZEN_FROM_BACKUP,REAL_STOCK_SUPPORTED,stock_current == backup.products.stock_current == backup.inventory.quantity
+2d706d15,CAT-0061,T de media,26,bulk_import_20260730_ledger_backfill,26,26,FROZEN_FROM_BACKUP,REAL_STOCK_SUPPORTED,stock_current == backup.products.stock_current == backup.inventory.quantity
+2babc6c7,CAT-0038,Lampara de 20,25,bulk_import_20260730_ledger_backfill,25,25,FROZEN_FROM_BACKUP,REAL_STOCK_SUPPORTED,stock_current == backup.products.stock_current == backup.inventory.quantity
+dd469f07,CAT-0017,Césped Artificial,24,bulk_import_20260730_ledger_backfill,24,24,FROZEN_FROM_BACKUP,REAL_STOCK_SUPPORTED,stock_current == backup.products.stock_current == backup.inventory.quantity
+721b1217,CAT-0114,Combustible,20,bulk_import_20260730_ledger_backfill,20,20,FROZEN_FROM_BACKUP,REAL_STOCK_SUPPORTED,stock_current == backup.products.stock_current == backup.inventory.quantity
+e47421ea,CAT-0001,Abrazade metálica de 3/4,19,bulk_import_20260730_ledger_backfill,19,19,FROZEN_FROM_BACKUP,REAL_STOCK_SUPPORTED,stock_current == backup.products.stock_current == backup.inventory.quantity
+887141dc,CAT-0104,Terminales cubanas,18,bulk_import_20260730_ledger_backfill,18,18,FROZEN_FROM_BACKUP,REAL_STOCK_SUPPORTED,stock_current == backup.products.stock_current == backup.inventory.quantity
+60e81773,CAT-0014,Distribuidor de corriente 4 sa,16,bulk_import_20260730_ledger_backfill,16,16,FROZEN_FROM_BACKUP,REAL_STOCK_SUPPORTED,stock_current == backup.products.stock_current == backup.inventory.quantity
+bc972d77,CAT-0015,Cemento Cola,16,bulk_import_20260730_ledger_backfill,16,16,FROZEN_FROM_BACKUP,REAL_STOCK_SUPPORTED,stock_current == backup.products.stock_current == backup.inventory.quantity
+0f0f9cc8,CAT-0051,Pintura Casa Blanca 14L,15,bulk_import_20260730_ledger_backfill,15,15,FROZEN_FROM_BACKUP,REAL_STOCK_SUPPORTED,stock_current == backup.products.stock_current == backup.inventory.quantity
+5585361e,CAT-0020,Codos de 45 grado,14,bulk_import_20260730_ledger_backfill,14,14,FROZEN_FROM_BACKUP,REAL_STOCK_SUPPORTED,stock_current == backup.products.stock_current == backup.inventory.quantity
+3b68e6e7,CAT-0031,Expansiones con tornillos M6,14,bulk_import_20260730_ledger_backfill,14,14,FROZEN_FROM_BACKUP,REAL_STOCK_SUPPORTED,stock_current == backup.products.stock_current == backup.inventory.quantity
+207b1d1e,CAT-0039,Tubo de Lampara de 40,14,bulk_import_20260730_ledger_backfill,14,14,FROZEN_FROM_BACKUP,REAL_STOCK_SUPPORTED,stock_current == backup.products.stock_current == backup.inventory.quantity
+2a59f5e1,CAT-0032,Expansiones con tornillos M8,10,bulk_import_20260730_ledger_backfill,10,10,FROZEN_FROM_BACKUP,REAL_STOCK_SUPPORTED,stock_current == backup.products.stock_current == backup.inventory.quantity
+3f108b20,CAT-0027,Escobas,10,bulk_import_20260730_ledger_backfill,10,10,FROZEN_FROM_BACKUP,REAL_STOCK_SUPPORTED,stock_current == backup.products.stock_current == backup.inventory.quantity
+fc605995,CAT-0102,Cajas eléctricas,10,bulk_import_20260730_ledger_backfill,10,10,FROZEN_FROM_BACKUP,REAL_STOCK_SUPPORTED,stock_current == backup.products.stock_current == backup.inventory.quantity
+e533e794,CAT-0079,Interruptor y toma corriente,10,bulk_import_20260730_ledger_backfill,10,10,FROZEN_FROM_BACKUP,REAL_STOCK_SUPPORTED,stock_current == backup.products.stock_current == backup.inventory.quantity
+8b626748,CAT-0073,Interruptor doble,9,bulk_import_20260730_ledger_backfill,9,9,FROZEN_FROM_BACKUP,REAL_STOCK_SUPPORTED,stock_current == backup.products.stock_current == backup.inventory.quantity
+b06c20ed,CAT-0050,Nudos de 50,9,bulk_import_20260730_ledger_backfill,9,9,FROZEN_FROM_BACKUP,REAL_STOCK_SUPPORTED,stock_current == backup.products.stock_current == backup.inventory.quantity
+de015bd9,CAT-0085,Panel 585,8,bulk_import_20260730_ledger_backfill,8,8,FROZEN_FROM_BACKUP,REAL_STOCK_SUPPORTED,stock_current == backup.products.stock_current == backup.inventory.quantity
+0d95ec26,CAT-0057,Rodillo,7,bulk_import_20260730_ledger_backfill,7,7,FROZEN_FROM_BACKUP,REAL_STOCK_SUPPORTED,stock_current == backup.products.stock_current == backup.inventory.quantity
+6ac93fb5,CAT-0040,Latiguillo de media por 3/8,7,bulk_import_20260730_ledger_backfill,7,7,FROZEN_FROM_BACKUP,REAL_STOCK_SUPPORTED,stock_current == backup.products.stock_current == backup.inventory.quantity
+55f7eb2b,CAT-0049,Nudos de 3/4,7,bulk_import_20260730_ledger_backfill,7,7,FROZEN_FROM_BACKUP,REAL_STOCK_SUPPORTED,stock_current == backup.products.stock_current == backup.inventory.quantity
+3006ba3e,CAT-0077,Teipe negro,7,bulk_import_20260730_ledger_backfill,7,7,FROZEN_FROM_BACKUP,REAL_STOCK_SUPPORTED,stock_current == backup.products.stock_current == backup.inventory.quantity
+2b2f28e3,CAT-0043,Losa aporcelanada 60x60,6,bulk_import_20260730_ledger_backfill,6,6,FROZEN_FROM_BACKUP,REAL_STOCK_SUPPORTED,stock_current == backup.products.stock_current == backup.inventory.quantity
+868d3a72,CAT-0072,Yee de 50,6,bulk_import_20260730_ledger_backfill,6,6,FROZEN_FROM_BACKUP,REAL_STOCK_SUPPORTED,stock_current == backup.products.stock_current == backup.inventory.quantity
+2dbfb550,CAT-0076,Toma corriente con tapa,6,bulk_import_20260730_ledger_backfill,6,6,FROZEN_FROM_BACKUP,REAL_STOCK_SUPPORTED,stock_current == backup.products.stock_current == backup.inventory.quantity
+e1c23a92,CAT-0092,Juego de pata,5,bulk_import_20260730_ledger_backfill,5,5,FROZEN_FROM_BACKUP,REAL_STOCK_SUPPORTED,stock_current == backup.products.stock_current == backup.inventory.quantity
+7a73a85b,CAT-0090,Cable Solar Rojo 6mm,5,bulk_import_20260730_ledger_backfill,5,5,FROZEN_FROM_BACKUP,REAL_STOCK_SUPPORTED,stock_current == backup.products.stock_current == backup.inventory.quantity
+ac868bd7,CAT-0056,Reducido de 3/4,5,bulk_import_20260730_ledger_backfill,5,5,FROZEN_FROM_BACKUP,REAL_STOCK_SUPPORTED,stock_current == backup.products.stock_current == backup.inventory.quantity
+0c2fcc6c,CAT-0034,Fregadero,4,bulk_import_20260730_ledger_backfill,4,4,FROZEN_FROM_BACKUP,REAL_STOCK_SUPPORTED,stock_current == backup.products.stock_current == backup.inventory.quantity
+d640bf18,CAT-0044,Losa aporcelanada 60x60 con de,4,bulk_import_20260730_ledger_backfill,4,4,FROZEN_FROM_BACKUP,REAL_STOCK_SUPPORTED,stock_current == backup.products.stock_current == backup.inventory.quantity
+892b2bb1,CAT-0069,Unión universal de 3/4,4,bulk_import_20260730_ledger_backfill,4,4,FROZEN_FROM_BACKUP,REAL_STOCK_SUPPORTED,stock_current == backup.products.stock_current == backup.inventory.quantity
+9da60d14,CAT-0018,Cheques metálicos,4,bulk_import_20260730_ledger_backfill,4,4,FROZEN_FROM_BACKUP,REAL_STOCK_SUPPORTED,stock_current == backup.products.stock_current == backup.inventory.quantity
+69824282,CAT-0005,Brecker 16A Sencillo,4,bulk_import_20260730_ledger_backfill,4,4,FROZEN_FROM_BACKUP,REAL_STOCK_SUPPORTED,stock_current == backup.products.stock_current == backup.inventory.quantity
+5d6de612,CAT-0107,Caja de distribución TRIC,4,bulk_import_20260730_ledger_backfill,4,4,FROZEN_FROM_BACKUP,REAL_STOCK_SUPPORTED,stock_current == backup.products.stock_current == backup.inventory.quantity
+7d0751af,CAT-0004,Bisagra,4,bulk_import_20260730_ledger_backfill,4,4,FROZEN_FROM_BACKUP,REAL_STOCK_SUPPORTED,stock_current == backup.products.stock_current == backup.inventory.quantity
+c4870c06,CAT-0003,Araganes,4,bulk_import_20260730_ledger_backfill,4,4,FROZEN_FROM_BACKUP,REAL_STOCK_SUPPORTED,stock_current == backup.products.stock_current == backup.inventory.quantity
+df97049c,CAT-0083,Cripiadora Roja con 6 dabas ro,3,bulk_import_20260730_ledger_backfill,3,3,FROZEN_FROM_BACKUP,REAL_STOCK_SUPPORTED,stock_current == backup.products.stock_current == backup.inventory.quantity
+f13436c1,CAT-0046,Masilla interior blanca,3,bulk_import_20260730_ledger_backfill,3,3,FROZEN_FROM_BACKUP,REAL_STOCK_SUPPORTED,stock_current == backup.products.stock_current == backup.inventory.quantity
+8d00b701,CAT-0094,Barrena 6mm Madera,3,bulk_import_20260730_ledger_backfill,3,3,FROZEN_FROM_BACKUP,REAL_STOCK_SUPPORTED,stock_current == backup.products.stock_current == backup.inventory.quantity
+5288a38f,CAT-0045,Malla perli,3,bulk_import_20260730_ledger_backfill,3,3,FROZEN_FROM_BACKUP,REAL_STOCK_SUPPORTED,stock_current == backup.products.stock_current == backup.inventory.quantity
+54f03982,CAT-0108,Cajita Breckera sencilla gris,3,bulk_import_20260730_ledger_backfill,3,3,FROZEN_FROM_BACKUP,REAL_STOCK_SUPPORTED,stock_current == backup.products.stock_current == backup.inventory.quantity
+70ad936d,CAT-0074,Controlador de línea,3,bulk_import_20260730_ledger_backfill,3,3,FROZEN_FROM_BACKUP,REAL_STOCK_SUPPORTED,stock_current == backup.products.stock_current == backup.inventory.quantity
+470847a9,CAT-0042,Llave de lavamano,3,bulk_import_20260730_ledger_backfill,3,3,FROZEN_FROM_BACKUP,REAL_STOCK_SUPPORTED,stock_current == backup.products.stock_current == backup.inventory.quantity
+43370837,CAT-0026,Disco de esmeril,3,bulk_import_20260730_ledger_backfill,3,3,FROZEN_FROM_BACKUP,REAL_STOCK_SUPPORTED,stock_current == backup.products.stock_current == backup.inventory.quantity
+0e9d781a,CAT-0006,Brecker 25 A Sencillo,2,bulk_import_20260730_ledger_backfill,2,2,FROZEN_FROM_BACKUP,REAL_STOCK_SUPPORTED,stock_current == backup.products.stock_current == backup.inventory.quantity
+6e7331fa,CAT-0033,Extensiones 5M,1,bulk_import_20260730_ledger_backfill,1,1,FROZEN_FROM_BACKUP,REAL_STOCK_SUPPORTED,stock_current == backup.products.stock_current == backup.inventory.quantity
+26fdac16,CAT-0080,Brecker C32A Sencillo,1,bulk_import_20260730_ledger_backfill,1,1,FROZEN_FROM_BACKUP,REAL_STOCK_SUPPORTED,stock_current == backup.products.stock_current == backup.inventory.quantity
+1a571786,CAT-0082,Cripiadora con pela cable Anar,1,bulk_import_20260730_ledger_backfill,1,1,FROZEN_FROM_BACKUP,REAL_STOCK_SUPPORTED,stock_current == backup.products.stock_current == backup.inventory.quantity
+bb1b6fd0,CAT-0025,Cuchilla 3P 100A,1,bulk_import_20260730_ledger_backfill,1,1,FROZEN_FROM_BACKUP,REAL_STOCK_SUPPORTED,stock_current == backup.products.stock_current == backup.inventory.quantity
+6a64f76b,CAT-0064,Tanqueta de antioxidante gris ,1,bulk_import_20260730_ledger_backfill,1,1,FROZEN_FROM_BACKUP,REAL_STOCK_SUPPORTED,stock_current == backup.products.stock_current == backup.inventory.quantity
+d6c8fb13,CAT-0063,Tanqueta de Aceite negro 20 L,1,bulk_import_20260730_ledger_backfill,1,1,FROZEN_FROM_BACKUP,REAL_STOCK_SUPPORTED,stock_current == backup.products.stock_current == backup.inventory.quantity
+5dd7ff57,CAT-0010,Brida 58,2,bulk_import_20260730 + ops_post_08-02,1,1,MUTATED_POST_BACKUP,REAL_STOCK_SUPPORTED,delta post-08-02 no reconstruible (audit sin items)
+e65916ea,CAT-0007,Brecker 32A Trifasico,1,bulk_import_20260730_ledger_backfill,1,1,FROZEN_FROM_BACKUP,REAL_STOCK_SUPPORTED,stock_current == backup.products.stock_current == backup.inventory.quantity
+6de05641,CAT-0101,Canal de media,1,bulk_import_20260730_ledger_backfill,1,1,FROZEN_FROM_BACKUP,REAL_STOCK_SUPPORTED,stock_current == backup.products.stock_current == backup.inventory.quantity
+63f0eeea,CAT-0105,Cajita breckera sencilla,1,bulk_import_20260730_ledger_backfill,1,1,FROZEN_FROM_BACKUP,REAL_STOCK_SUPPORTED,stock_current == backup.products.stock_current == backup.inventory.quantity
+b3e54ebe,CAT-0036,Impermeable verde 20Kg,1,bulk_import_20260730_ledger_backfill,1,1,FROZEN_FROM_BACKUP,REAL_STOCK_SUPPORTED,stock_current == backup.products.stock_current == backup.inventory.quantity
+14fcc881,CAT-0068,Transfer trifásico,1,bulk_import_20260730_ledger_backfill,1,1,FROZEN_FROM_BACKUP,REAL_STOCK_SUPPORTED,stock_current == backup.products.stock_current == backup.inventory.quantity
+85a6c248,CAT-0059,Soporte de papel higiénico,1,bulk_import_20260730_ledger_backfill,1,1,FROZEN_FROM_BACKUP,REAL_STOCK_SUPPORTED,stock_current == backup.products.stock_current == backup.inventory.quantity
+b0aa4eaa,CAT-0115,Estación solar,0,bulk_import_20260730_ledger_backfill,0,0,FROZEN_FROM_BACKUP,NO_STOCK,stock_current == backup.products.stock_current == backup.inventory.quantity
+53d9c964,CAT-0024,Cuchilla 2P 63A,0,bulk_import_20260730_ledger_backfill,0,0,FROZEN_FROM_BACKUP,NO_STOCK,stock_current == backup.products.stock_current == backup.inventory.quantity
+2b394fa4,CAT-0060,Supresores de sobretensiones,0,bulk_import_20260730_ledger_backfill,0,0,FROZEN_FROM_BACKUP,NO_STOCK,stock_current == backup.products.stock_current == backup.inventory.quantity
+dea47824,CAT-0054,Porta Fusibles,0,bulk_import_20260730_ledger_backfill,0,0,FROZEN_FROM_BACKUP,NO_STOCK,stock_current == backup.products.stock_current == backup.inventory.quantity
+a010153a,CAT-0023,Cuchilla 2P 100A,0,bulk_import_20260730_ledger_backfill,0,0,FROZEN_FROM_BACKUP,NO_STOCK,stock_current == backup.products.stock_current == backup.inventory.quantity
+2fbd9764,CAT-0117,Inversor,0,bulk_import_20260730_ledger_backfill,0,0,FROZEN_FROM_BACKUP,NO_STOCK,stock_current == backup.products.stock_current == backup.inventory.quantity
+dfe95aa3,CAT-0008,Brecker C32 A Trible,0,bulk_import_20260730_ledger_backfill,0,0,FROZEN_FROM_BACKUP,NO_STOCK,stock_current == backup.products.stock_current == backup.inventory.quantity
+aab1bd0b,CAT-0084,Conector XT60,0,bulk_import_20260730_ledger_backfill,0,0,FROZEN_FROM_BACKUP,NO_STOCK,stock_current == backup.products.stock_current == backup.inventory.quantity
+9fb22bdf,CAT-0089,Cable Solar Negro 6mm,0,bulk_import_20260730_ledger_backfill,0,0,FROZEN_FROM_BACKUP,NO_STOCK,stock_current == backup.products.stock_current == backup.inventory.quantity
+10a6cca7,CAT-0116,Pintura Blanca 5L,0,bulk_import_20260730_ledger_backfill,0,0,FROZEN_FROM_BACKUP,NO_STOCK,stock_current == backup.products.stock_current == backup.inventory.quantity
+366f2263,CAT-0053,Planchas de zinc,0,bulk_import_20260730_ledger_backfill,0,0,FROZEN_FROM_BACKUP,NO_STOCK,stock_current == backup.products.stock_current == backup.inventory.quantity
+e8210228,CAT-0067,Transfer monofásico 220,0,bulk_import_20260730_ledger_backfill,0,0,FROZEN_FROM_BACKUP,NO_STOCK,stock_current == backup.products.stock_current == backup.inventory.quantity
+2bd13c85,CAT-0086,Panel 630,0,bulk_import_20260730_ledger_backfill,0,0,FROZEN_FROM_BACKUP,NO_STOCK,stock_current == backup.products.stock_current == backup.inventory.quantity
+01301a54,CAT-0021,Colchón Milexus,1,bulk_import_20260730 + ops_post_08-02,0,0,MUTATED_POST_BACKUP,REAL_STOCK_SUPPORTED,delta post-08-02 no reconstruible (audit sin items)
+f483daf8,CAT-0016,Cemento P425 Tudella,0,bulk_import_20260730_ledger_backfill,0,0,FROZEN_FROM_BACKUP,NO_STOCK,stock_current == backup.products.stock_current == backup.inventory.quantity
+94931dba,CAT-0062,T de pulgada a 3/4,0,bulk_import_20260730_ledger_backfill,0,0,FROZEN_FROM_BACKUP,NO_STOCK,stock_current == backup.products.stock_current == backup.inventory.quantity
+1594070e,CAT-0055,Purles,0,bulk_import_20260730_ledger_backfill,0,0,FROZEN_FROM_BACKUP,NO_STOCK,stock_current == backup.products.stock_current == backup.inventory.quantity
+7049d300,WAC-1786067683,WAC Test Product 1786067683,15,test_scripts_20260807,,,TEST_PRODUCT_POST_BACKUP,TEST_DATA,creados por seed/test scripts con stock directo service_role (ver 05-stock-writers.md §TEST)
+aa5e148b,TASA-EXT-1786067764,Tasa Extrema Test,11,test_scripts_20260807,,,TEST_PRODUCT_POST_BACKUP,TEST_DATA,creados por seed/test scripts con stock directo service_role (ver 05-stock-writers.md §TEST)
+94e53fd4,VOID-1786067801,Void WAC Test,10,test_scripts_20260807,,,TEST_PRODUCT_POST_BACKUP,TEST_DATA,creados por seed/test scripts con stock directo service_role (ver 05-stock-writers.md §TEST)
+5bf782be,CONC-1786067801,Concurrent Recv Test,15,test_scripts_20260807,,,TEST_PRODUCT_POST_BACKUP,TEST_DATA,creados por seed/test scripts con stock directo service_role (ver 05-stock-writers.md §TEST)
+8f4e2708,WACTRACE-1786068302,WAC Trace Test 1786068302,15,test_scripts_20260807,,,TEST_PRODUCT_POST_BACKUP,TEST_DATA,creados por seed/test scripts con stock directo service_role (ver 05-stock-writers.md §TEST)
+185f1c6f,VOIDTRACE-1786068382,VOID Trace Test 1786068382,10,test_scripts_20260807,,,TEST_PRODUCT_POST_BACKUP,TEST_DATA,creados por seed/test scripts con stock directo service_role (ver 05-stock-writers.md §TEST)
+b7bd618c,WACFIX-1786068956,WAC Fix Test 1786068956,15,test_scripts_20260807,,,TEST_PRODUCT_POST_BACKUP,TEST_DATA,creados por seed/test scripts con stock directo service_role (ver 05-stock-writers.md §TEST)
+7dbff68e,WACFINAL-1786069134,WAC Final Test 1786069134,15,test_scripts_20260807,,,TEST_PRODUCT_POST_BACKUP,TEST_DATA,creados por seed/test scripts con stock directo service_role (ver 05-stock-writers.md §TEST)
+e9541bb4,WACFN-1786069224,WAC FINAL 1786069224,10,test_scripts_20260807,,,TEST_PRODUCT_POST_BACKUP,TEST_DATA,creados por seed/test scripts con stock directo service_role (ver 05-stock-writers.md §TEST)
+530e198c,PRODWAC-1786069598,PROD WAC Verify 1786069598,10,test_scripts_20260807,,,TEST_PRODUCT_POST_BACKUP,TEST_DATA,creados por seed/test scripts con stock directo service_role (ver 05-stock-writers.md §TEST)

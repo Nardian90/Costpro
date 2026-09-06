@@ -1,0 +1,132 @@
+seccion,momento_o_dia,clave,conteo
+store_audit_by_day,2026-07-30T00:00:00+00:00,,23
+store_audit_by_day,2026-08-01T00:00:00+00:00,,5
+store_audit_by_day,2026-08-02T00:00:00+00:00,,77
+store_audit_by_day,2026-08-04T00:00:00+00:00,,8
+store_audit_by_day,2026-08-06T00:00:00+00:00,,134
+store_audit_by_day,2026-08-07T00:00:00+00:00,,49
+store_audit_by_day,2026-08-08T00:00:00+00:00,,2
+store_audit_by_day,2026-08-12T00:00:00+00:00,,22
+store_audit_by_day,2026-08-16T00:00:00+00:00,,41
+store_audit_by_day,2026-08-17T00:00:00+00:00,,4
+store_audit_by_table,,transactions,151
+store_audit_by_table,,transfers,81
+store_audit_by_table,,issue_slips,35
+store_audit_by_table,,receipts,31
+store_audit_by_table,,payment_transactions,22
+store_audit_by_table,,cash_closures,13
+store_audit_by_table,,devolutions,13
+store_audit_by_table,,z_reports,6
+store_audit_by_table,,stores,5
+store_audit_by_table,,production_order_items,4
+store_audit_by_table,,production_orders,2
+store_audit_by_table,,inventory_reservations,1
+store_audit_by_table,,profiles,1
+store_audit_by_action,,CREATE_SALE_V2,85
+store_audit_by_action,,CREATE_TRANSFER,42
+store_audit_by_action,,UPDATE_STATUS,29
+store_audit_by_action,,CREATE_SALE,23
+store_audit_by_action,,REGISTER_RECEPTION,23
+store_audit_by_action,,PAYMENT_TRANSACTION_UPDATED,22
+store_audit_by_action,,CREATE_VALE_SALIDA,20
+store_audit_by_action,,transfer_cancelled,18
+store_audit_by_action,,transfer_confirmed,15
+store_audit_by_action,,REVERSE_VALE_SALIDA,15
+store_audit_by_action,,DEVOLUTION_CREATED_V2,13
+store_audit_by_action,,REVERSE_SALE_V2,12
+store_audit_by_action,,CASH_CLOSURE_CREATED,7
+store_audit_by_action,,transfer_reversed,6
+store_audit_by_action,,Z_REPORT_GENERATED,6
+store_audit_by_action,,VOID_SALE,6
+store_audit_by_action,,CASH_CLOSURE_FINALIZED,6
+store_audit_by_action,,PRODUCTION_ITEM_WITHDRAWN,4
+store_audit_by_action,,UPDATE_STORE_CONFIG,4
+store_audit_by_action,,RECEPTION_VOIDED,3
+store_audit_by_action,,PRODUCTION_ORDER_CREATED,2
+store_audit_by_action,,CHANGE_ACTIVE_STORE,1
+store_audit_by_action,,sale_below_cost,1
+store_audit_by_action,,RESERVATION_EXPIRED,1
+store_audit_by_action,,TEST_DIRECT,1
+global_reset_restore_event,2026-07-23T03:49:04.707409+00:00,STORE_BACKUP_EXPORT store=null user=a1111111,1
+global_reset_restore_event,2026-07-23T03:49:09.417262+00:00,STORE_BACKUP_EXPORT store=null user=a1111111,1
+global_reset_restore_event,2026-07-23T03:49:13.996359+00:00,STORE_BACKUP_EXPORT store=null user=a1111111,1
+global_reset_restore_event,2026-07-23T03:49:16.101117+00:00,STORE_BACKUP_RESTORE_DRYRUN store=null user=a1111111,1
+global_reset_restore_event,2026-07-23T03:50:54.302635+00:00,STORE_BACKUP_RESTORE store=null user=a1111111,1
+global_reset_restore_event,2026-07-23T03:52:46.794936+00:00,STORE_BACKUP_RESTORE store=null user=a1111111,1
+global_reset_restore_event,2026-07-23T03:54:40.281298+00:00,STORE_BACKUP_EXPORT store=null user=a1111111,1
+global_reset_restore_event,2026-07-23T03:54:46.111445+00:00,STORE_BACKUP_EXPORT store=null user=a1111111,1
+global_reset_restore_event,2026-07-23T03:54:50.671182+00:00,STORE_BACKUP_EXPORT store=null user=a1111111,1
+global_reset_restore_event,2026-07-23T03:54:52.686581+00:00,STORE_BACKUP_RESTORE_DRYRUN store=null user=a1111111,1
+global_reset_restore_event,2026-07-23T23:02:48.858577+00:00,STORE_BACKUP_EXPORT store=null user=a1111111,1
+global_reset_restore_event,2026-07-23T23:02:54.060496+00:00,STORE_BACKUP_EXPORT store=null user=a1111111,1
+global_reset_restore_event,2026-07-23T23:02:58.778942+00:00,STORE_BACKUP_EXPORT store=null user=a1111111,1
+global_reset_restore_event,2026-07-23T23:03:00.932786+00:00,STORE_BACKUP_RESTORE_DRYRUN store=null user=a1111111,1
+global_reset_restore_event,2026-07-23T23:03:07.304313+00:00,STORE_BACKUP_RESTORE store=null user=a1111111,1
+global_reset_restore_event,2026-07-23T23:38:48.208731+00:00,STORE_BACKUP_EXPORT store=null user=a1111111,1
+global_reset_restore_event,2026-07-23T23:38:53.115313+00:00,STORE_BACKUP_RESTORE_DRYRUN store=null user=a1111111,1
+global_reset_restore_event,2026-07-23T23:39:00.569173+00:00,STORE_BACKUP_RESTORE store=null user=a1111111,1
+global_reset_restore_event,2026-07-23T23:39:05.50211+00:00,STORE_BACKUP_EXPORT store=null user=a1111111,1
+global_reset_restore_event,2026-07-23T23:39:10.279824+00:00,STORE_BACKUP_EXPORT store=null user=a1111111,1
+global_reset_restore_event,2026-07-25T03:41:00.122373+00:00,STORE_BACKUP_EXPORT store=null user=a1111111,1
+global_reset_restore_event,2026-07-25T03:41:05.087481+00:00,STORE_BACKUP_EXPORT store=null user=a1111111,1
+global_reset_restore_event,2026-07-25T03:41:05.256024+00:00,STORE_BACKUP_EXPORT store=null user=a1111111,1
+global_reset_restore_event,2026-07-25T03:41:10.491791+00:00,STORE_BACKUP_RESTORE_DRYRUN store=null user=a1111111,1
+global_reset_restore_event,2026-07-25T03:41:14.751724+00:00,STORE_BACKUP_EXPORT store=null user=a1111111,1
+global_reset_restore_event,2026-07-25T03:45:01.400139+00:00,STORE_BACKUP_EXPORT store=null user=a1111111,1
+global_reset_restore_event,2026-07-25T03:45:06.369151+00:00,STORE_BACKUP_EXPORT store=null user=a1111111,1
+global_reset_restore_event,2026-07-25T03:45:07.048599+00:00,STORE_BACKUP_EXPORT store=null user=a1111111,1
+global_reset_restore_event,2026-07-25T03:45:11.571568+00:00,STORE_BACKUP_RESTORE_DRYRUN store=null user=a1111111,1
+global_reset_restore_event,2026-07-25T03:45:15.791164+00:00,STORE_BACKUP_EXPORT store=null user=a1111111,1
+global_reset_restore_event,2026-07-25T03:46:27.1059+00:00,STORE_BACKUP_EXPORT store=null user=a1111111,1
+global_reset_restore_event,2026-07-25T03:46:31.530402+00:00,STORE_BACKUP_RESTORE_DRYRUN store=null user=a1111111,1
+global_reset_restore_event,2026-07-25T03:50:43.700723+00:00,STORE_BACKUP_EXPORT store=null user=e2222222,1
+global_reset_restore_event,2026-07-25T03:51:42.287751+00:00,STORE_BACKUP_EXPORT store=null user=e2222222,1
+global_reset_restore_event,2026-07-25T22:27:31.76693+00:00,STORE_BACKUP_EXPORT store=null user=a1111111,1
+global_reset_restore_event,2026-07-25T22:27:41.942807+00:00,STORE_BACKUP_RESTORE_DRYRUN store=null user=a1111111,1
+global_reset_restore_event,2026-07-25T23:15:13.014353+00:00,STORE_BACKUP_EXPORT store=null user=a1111111,1
+global_reset_restore_event,2026-07-25T23:15:19.129586+00:00,STORE_BACKUP_EXPORT store=null user=a1111111,1
+global_reset_restore_event,2026-07-25T23:15:24.651963+00:00,STORE_BACKUP_EXPORT store=null user=a1111111,1
+global_reset_restore_event,2026-07-25T23:15:30.67587+00:00,STORE_BACKUP_EXPORT store=null user=a1111111,1
+global_reset_restore_event,2026-07-25T23:15:37.200373+00:00,STORE_BACKUP_EXPORT store=null user=a1111111,1
+global_reset_restore_event,2026-07-25T23:22:46.816773+00:00,STORE_BACKUP_EXPORT store=null user=a1111111,1
+global_reset_restore_event,2026-07-25T23:23:53.895302+00:00,STORE_BACKUP_EXPORT store=null user=a1111111,1
+global_reset_restore_event,2026-07-25T23:23:59.300452+00:00,STORE_BACKUP_EXPORT store=null user=a1111111,1
+global_reset_restore_event,2026-07-25T23:24:04.659531+00:00,STORE_BACKUP_EXPORT store=null user=a1111111,1
+global_reset_restore_event,2026-07-25T23:24:10.045087+00:00,STORE_BACKUP_EXPORT store=null user=a1111111,1
+global_reset_restore_event,2026-07-26T00:05:23.822917+00:00,STORE_BACKUP_EXPORT store=null user=a1111111,1
+global_reset_restore_event,2026-08-06T23:59:12.573026+00:00,STORE_BACKUP_EXPORT store=null user=a1111111,1
+global_reset_restore_event,2026-08-07T00:58:44.180643+00:00,STORE_BACKUP_EXPORT store=null user=a1111111,1
+global_reset_restore_event,2026-08-09T01:43:58.200024+00:00,store_reset_initiated store=5e6fe821 user=null,1
+global_reset_restore_event,2026-08-09T01:48:18.214559+00:00,store_reset_completed store=5e6fe821 user=null,1
+global_reset_restore_event,2026-08-09T01:49:47.250409+00:00,store_reset_initiated store=5e6fe821 user=null,1
+global_reset_restore_event,2026-08-09T01:49:47.462192+00:00,store_reset_completed store=5e6fe821 user=null,1
+global_reset_restore_event,2026-08-09T01:49:47.658801+00:00,store_reset_completed store=5e6fe821 user=null,1
+global_reset_restore_event,2026-08-10T05:07:55.425441+00:00,store_reset_initiated store=5e6fe821 user=null,1
+global_reset_restore_event,2026-08-10T05:07:57.576443+00:00,store_reset_completed store=5e6fe821 user=null,1
+global_reset_restore_event,2026-08-10T05:07:58.302868+00:00,store_reset_completed store=5e6fe821 user=null,1
+global_reset_restore_event,2026-08-10T06:50:17.288191+00:00,store_reset_initiated store=5e6fe821 user=null,1
+global_reset_restore_event,2026-08-10T06:50:18.713492+00:00,store_reset_completed store=5e6fe821 user=null,1
+global_reset_restore_event,2026-08-10T06:50:19.466009+00:00,store_reset_completed store=5e6fe821 user=null,1
+global_reset_restore_event,2026-08-10T07:05:57.122058+00:00,store_reset_initiated store=5e6fe821 user=null,1
+global_reset_restore_event,2026-08-10T07:06:00.041431+00:00,store_reset_completed store=5e6fe821 user=null,1
+global_reset_restore_event,2026-08-10T07:06:01.046872+00:00,store_reset_completed store=5e6fe821 user=null,1
+global_reset_restore_event,2026-08-10T07:41:11.430183+00:00,store_reset_initiated store=5e6fe821 user=null,1
+global_reset_restore_event,2026-08-10T07:41:14.188595+00:00,store_reset_completed store=5e6fe821 user=null,1
+global_reset_restore_event,2026-08-10T07:41:15.302606+00:00,store_reset_completed store=5e6fe821 user=null,1
+global_reset_restore_event,2026-08-11T01:03:46.461891+00:00,store_reset_initiated store=5e6fe821 user=null,1
+global_reset_restore_event,2026-08-11T01:03:49.446438+00:00,store_reset_completed store=5e6fe821 user=null,1
+global_reset_restore_event,2026-08-11T01:03:50.924087+00:00,store_reset_completed store=5e6fe821 user=null,1
+global_reset_restore_event,2026-08-11T21:58:31.340431+00:00,store_reset_initiated store=5e6fe821 user=null,1
+global_reset_restore_event,2026-08-11T21:58:32.680852+00:00,store_reset_completed store=5e6fe821 user=null,1
+global_reset_restore_event,2026-08-11T21:58:34.232185+00:00,store_reset_completed store=5e6fe821 user=null,1
+global_reset_restore_event,2026-08-11T22:45:55.67757+00:00,store_reset_initiated store=5e6fe821 user=null,1
+global_reset_restore_event,2026-08-11T22:45:58.858501+00:00,store_reset_completed store=5e6fe821 user=null,1
+global_reset_restore_event,2026-08-11T22:45:59.88944+00:00,store_reset_completed store=5e6fe821 user=null,1
+global_reset_restore_event,2026-08-16T23:05:31.158271+00:00,store_reset_initiated store=43a4dabc user=null,1
+global_reset_restore_event,2026-08-16T23:08:38.965096+00:00,store_reset_initiated store=43a4dabc user=null,1
+global_reset_restore_event,2026-08-16T23:10:37.899745+00:00,store_reset_initiated store=43a4dabc user=null,1
+global_reset_restore_event,2026-08-16T23:10:54.507157+00:00,store_reset_initiated store=43a4dabc user=null,1
+global_reset_restore_event,2026-08-16T23:12:39.916356+00:00,store_reset_initiated store=43a4dabc user=null,1
+global_reset_restore_event,2026-08-16T23:15:36.073732+00:00,store_reset_initiated store=43a4dabc user=null,1
+global_reset_restore_event,2026-08-16T23:15:37.549746+00:00,store_reset_completed store=43a4dabc user=null,1
+global_reset_restore_event,2026-08-16T23:15:38.62881+00:00,store_reset_completed store=43a4dabc user=null,1

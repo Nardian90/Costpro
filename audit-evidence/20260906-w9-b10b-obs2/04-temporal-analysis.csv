@@ -1,0 +1,41 @@
+tipo,momento_utc,detalle,fuente
+evento,2026-07-16T12:00:00Z,movement_date/updated_at FIJOS de mediodía en datos importados (firma seed externo),g10 sm_date_range min / g5 burst
+evento,2026-07-30T03:00:03Z,IMPORT masivo: 114 products creados en 29s (created_at 03:00:03-03:00:32),g3 products_by_created_day + g10 prod_created_range
+evento,2026-07-30T03:00:32Z,primer audit_log de la tienda + burst 66 products updated_at EXACTO en ese segundo,g3/g5
+products_created,2026-07-30T00:00:00+00:00,114,g3
+products_created,2026-08-07T00:00:00+00:00,10,g3
+products_updated,2026-07-16T00:00:00+00:00,2,g5
+products_updated,2026-07-17T00:00:00+00:00,3,g5
+products_updated,2026-07-20T00:00:00+00:00,4,g5
+products_updated,2026-07-21T00:00:00+00:00,3,g5
+products_updated,2026-07-22T00:00:00+00:00,3,g5
+products_updated,2026-07-23T00:00:00+00:00,3,g5
+products_updated,2026-07-24T00:00:00+00:00,2,g5
+products_updated,2026-07-25T00:00:00+00:00,3,g5
+products_updated,2026-07-27T00:00:00+00:00,8,g5
+products_updated,2026-07-28T00:00:00+00:00,4,g5
+products_updated,2026-07-30T00:00:00+00:00,71,g5
+products_updated,2026-08-02T00:00:00+00:00,3,g5
+products_updated,2026-08-07T00:00:00+00:00,10,g5
+products_updated,2026-08-16T00:00:00+00:00,5,g5
+audit_logs,2026-07-30T00:00:00+00:00,23,g3
+audit_logs,2026-08-01T00:00:00+00:00,5,g3
+audit_logs,2026-08-02T00:00:00+00:00,77,g3
+audit_logs,2026-08-04T00:00:00+00:00,8,g3
+audit_logs,2026-08-06T00:00:00+00:00,134,g3
+audit_logs,2026-08-07T00:00:00+00:00,49,g3
+audit_logs,2026-08-08T00:00:00+00:00,2,g3
+audit_logs,2026-08-12T00:00:00+00:00,22,g3
+audit_logs,2026-08-16T00:00:00+00:00,41,g3
+audit_logs,2026-08-17T00:00:00+00:00,4,g3
+evento,2026-08-02T02:25:31Z,"STORE_BACKUP_EXPORT de d1c4ba0e (payload 650KB, ledger consistente 114/114/242/242/20)",g9 meta
+evento,2026-08-02T02:40:25Z,restore DRY_RUN (preview) con ese payload — única sesión; NUNCA ejecutada,g9 sessions
+evento,2026-08-06/07,"sesión de pruebas: 13 devoluciones, 3 Hot test adj, 10 productos Test creados",g3
+evento,2026-08-09..08-11,resets AUDITADOS (keep_catalog=false) de OTRA tienda 5e6fe821 ×7,g9 audit_store_reset_events
+evento,2026-08-16T22:01Z,última modificación de products de la tienda (5 productos),g5 products_updated_by_day
+evento,2026-08-16T23:15Z,reset AUDITADO de OTRA tienda 43a4dabc (keep_catalog=false),g9
+evento,2026-08-17T02:36-37Z,autovacuum receipts/receipt_items tras borrado masivo (del=80/2433) → ventana del PURGE,g11 pg_stat
+evento,2026-08-17T02:48:46Z,último audit_log de la tienda — después: silencio total,g3 audit_logs_range
+evento,post-08-17,PURGE SQL directo store-scoped: inventory/movements/kardex/transactions/items/receipts/transfers/payments borrados; products+stock_current/devolutions/audit/warehouses/commission_rules PRESERVADOS,g13 survival + pg_stat
+evento,2026-08-20,migración repo 20260820000004 (sync global stock=inventory) NO tocó estos productos (updated_at ≤ 08-16),g5 + código
+evento,2026-09-05,OBS-1 documenta la tienda huérfana como SEPARATE_FINDING,OBS-1/16-final-verdict.md

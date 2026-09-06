@@ -1,0 +1,39 @@
+capa,valor,nota,fuente_raw
+store_id,TIENDA CENTRAL COSTPRO,id d1c4ba0e-5767-4ba0-e576-7d1c4ba0e576 tenant 5364ccf8-e6cd-4c38-aea8-b167b3b5576f creada 2026-02-09T03:29:06.069828+00:00,g1c
+U products_total,124,productos de la tienda,g1c
+U1 stock_gt0_count,108,productos con stock_current>0,g1c
+U1 stock_gt0_units,6553,unidades declaradas sin ledger,g1c
+U1 stock_gt0_active,108,todos ACTIVE,g1c
+U1 stock_eq0,16,stock 0,g1c
+U1 stock_lt0,0,stock negativo,g1c
+U2 inventory_rows,0,INEXISTENTE,g1c
+U3 stock_movements,0,INEXISTENTE,g1c
+U4 kardex_entries,0,INEXISTENTE,g1c
+U5 transactions,0,INEXISTENTE,g1c
+U5 transaction_items,0,INEXISTENTE,g1c
+U5 devolutions,13,SOBREVIVIERON al purge (13),g1c
+U6 receipts,0,INEXISTENTE,g1c
+U6 purchase_orders,0,INEXISTENTE,g1c
+U7 production_orders,0,INEXISTENTE,g1c
+U8 adjustments,3,"3 ""Hot test adj"" 08-06 (test)",g1c
+U8 physical_counts,0,INEXISTENTE,g1c
+U9 transfers_origin,0,INEXISTENTE,g1c
+U9 transfers_dest,0,INEXISTENTE,g1c
+extra lots,0,0,g1c
+extra batches,0,0,g1c
+extra inventory_snapshots,0,0,g1c
+extra store_reset_snapshots,0,NINGUNO (global=0),g1c
+extra audit_logs_store,365,sobrevivieron al purge,g1c
+extra audit_events_store,0,0,g1c
+extra warehouses,3,sobrevivieron,g1c
+matrix with_inventory,0,"de los 108, productos CON inventory",g1c
+matrix with_movements,0,"de los 108, CON movements",g1c
+matrix with_kardex,0,"de los 108, CON kardex",g1c
+matrix with_transactions,0,"de los 108, CON transacciones",g1c
+matrix with_receipts,0,"de los 108, CON recepciones",g1c
+matrix with_production,0,"de los 108, CON producción",g1c
+matrix with_adjustments,0,"de los 108, CON ajustes",g1c
+matrix with_transfers,0,"de los 108, CON transferencias",g1c
+matrix with_physcounts,0,"de los 108, CON conteos físicos",g1c
+matrix with_quotations,0,"de los 108, CON cotizaciones",g1c
+has_movements_flag gt0,"[{""n"":5,""stock_gt0"":false,""has_movements"":false},{""n"":108,""stock_gt0"":true,""has_movements"":true},{""n"":11,""stock_gt0"":false,""has_movements"":true}]",los 108 tienen flag true con 0 movimientos reales,g1c
