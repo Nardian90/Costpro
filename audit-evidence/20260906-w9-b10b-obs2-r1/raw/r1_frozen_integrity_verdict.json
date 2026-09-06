@@ -1,0 +1,58 @@
+{
+  "checked_at": "2026-09-06T20:09:20.201Z",
+  "total_checks": 10,
+  "fails": 0,
+  "abort_criteria": [],
+  "results": [
+    {
+      "name": "func:register_stock_movement",
+      "pass": true,
+      "detail": "identical to design frozen def"
+    },
+    {
+      "name": "func:fn_recalc_wac",
+      "pass": true,
+      "detail": "identical to design frozen def"
+    },
+    {
+      "name": "func:fn_sync_inventory_on_movement",
+      "pass": true,
+      "detail": "identical to design frozen def"
+    },
+    {
+      "name": "func:reverse_devolution (B-10b)",
+      "pass": true,
+      "detail": "markers=true preB10bPatternAbsent=true migrationIntact=true sha256=bb8f3c09cbf5d376… frozen->raw/r1_reverse_devolution_frozen.txt"
+    },
+    {
+      "name": "func:is_admin",
+      "pass": true,
+      "detail": "identical"
+    },
+    {
+      "name": "func:has_store_access",
+      "pass": true,
+      "detail": "captured for reference (length 863)"
+    },
+    {
+      "name": "triggers:all-frozen-identical-enabled",
+      "pass": true,
+      "detail": "11/11 identical & enabled"
+    },
+    {
+      "name": "triggers:outside-frozen-orbit (informational)",
+      "pass": true,
+      "detail": "audit_logs.trg_set_audit_log_trace_id, audit_logs.update_audit_logs_updated_at — pre-existing infrastructure triggers (documented in 20260828-af / 20260830-w7 evidence); design captured only: inventory,products,stock_movements"
+    },
+    {
+      "name": "trgfn:fn_sync_inventory_on_movement",
+      "pass": true,
+      "detail": "captured (length 2395)"
+    },
+    {
+      "name": "pre-snapshot:34-metrics-vs-frozen",
+      "pass": true,
+      "detail": "34 metrics identical to design frozen PRE"
+    }
+  ]
+}

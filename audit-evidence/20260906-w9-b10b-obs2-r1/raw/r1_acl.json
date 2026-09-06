@@ -1,0 +1,1 @@
+[{"acl":{"fn_sync_acl":"{postgres=X/postgres,service_role=X/postgres}","current_role_now":"postgres","fn_recalc_wac_acl":"{postgres=X/postgres,service_role=X/postgres}","has_store_access_acl":"{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}","register_stock_movement_acl":"{postgres=X/postgres,service_role=X/postgres}"}}]

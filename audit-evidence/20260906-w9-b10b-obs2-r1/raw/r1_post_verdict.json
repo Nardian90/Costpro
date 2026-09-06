@@ -1,0 +1,158 @@
+{
+  "checked_at": "2026-09-06T20:30:12.365Z",
+  "batch": "B10B-OBS2-RECON-OPENING:20260906T201637Z-S2HW",
+  "total": 29,
+  "fails": 0,
+  "results": [
+    {
+      "name": "§21: 98 opening movements",
+      "pass": true,
+      "detail": "movements=98 family=98 distinct_docs=1"
+    },
+    {
+      "name": "§21: Σ units = 6427",
+      "pass": true,
+      "detail": "Σ=6427"
+    },
+    {
+      "name": "§21: movement_type = initial (all)",
+      "pass": true,
+      "detail": "[\"initial\"]"
+    },
+    {
+      "name": "§21: 98 inventory rows in store",
+      "pass": true,
+      "detail": "rows=98"
+    },
+    {
+      "name": "§21: 98 kardex rows (batch)",
+      "pass": true,
+      "detail": "rows=98"
+    },
+    {
+      "name": "§21: 98 business_events",
+      "pass": true,
+      "detail": "events=98"
+    },
+    {
+      "name": "§21: products==inventory Σ (store)",
+      "pass": true,
+      "detail": "stock Σ=6553 (declared 6553 = 6427 repaired + 126 Test residue)"
+    },
+    {
+      "name": "I1/I4: triada canónica 98/98 (inventory==stock==Σmovements, n=1, version=1)",
+      "pass": true,
+      "detail": "all 98 exact"
+    },
+    {
+      "name": "I5f: kardex 1:1 per product (98/98)",
+      "pass": true,
+      "detail": "all 98 exact"
+    },
+    {
+      "name": "I3: cost_average preserved vs frozen (98/98)",
+      "pass": true,
+      "detail": "bit-for-bit identical"
+    },
+    {
+      "name": "I5: stock_current unchanged vs frozen (98/98)",
+      "pass": true,
+      "detail": "opening recognized, not rewritten"
+    },
+    {
+      "name": "I3 store-wide: Σ cost_average == PRE",
+      "pass": true,
+      "detail": "6132624.960555917 -> 6132624.960555917"
+    },
+    {
+      "name": "I5 store-wide: Σ stock_current == PRE",
+      "pass": true,
+      "detail": "6553 -> 6553"
+    },
+    {
+      "name": "I4: wac_change_log still 0",
+      "pass": true,
+      "detail": "rows=0"
+    },
+    {
+      "name": "§19/I7: store transactions = 0",
+      "pass": true,
+      "detail": "all=520 store=0"
+    },
+    {
+      "name": "§19/I8: payments 366 → 366",
+      "pass": true,
+      "detail": "payments=366"
+    },
+    {
+      "name": "§19/I9: commissions = 0",
+      "pass": true,
+      "detail": "comm=0"
+    },
+    {
+      "name": "§19/I10: transaction_items 555 / devolutions 13 / receipts 0",
+      "pass": true,
+      "detail": "ti=555 dev=13 rec=0 tr=0"
+    },
+    {
+      "name": "I7 isolation: other stores identical to PRE",
+      "pass": true,
+      "detail": "inv=141 mov=702 kar=702 Σ=4978.6289"
+    },
+    {
+      "name": "I10: audit delta = +1 batch row only; 0 UPDATE_PRODUCT new",
+      "pass": true,
+      "detail": "all 7376->7377 · new UPDATE_PRODUCT=0"
+    },
+    {
+      "name": "I12: exactly one repair batch (audit row = 1)",
+      "pass": true,
+      "detail": "audit rows=1"
+    },
+    {
+      "name": "I13: exactly 98 opening movements",
+      "pass": true,
+      "detail": "=98/98"
+    },
+    {
+      "name": "I15: created_by = actor on all 98",
+      "pass": true,
+      "detail": "[\"051c6157-600b-425e-b8c0-72388bacf541\"]"
+    },
+    {
+      "name": "I16: kardex reference_description = batch (98)",
+      "pass": true,
+      "detail": "traceable=98"
+    },
+    {
+      "name": "§25: 10 Test products intact, 126 u, 0 ledger rows, excluded",
+      "pass": true,
+      "detail": "Σ=126 (all outside batch)"
+    },
+    {
+      "name": "§25: 0 Test products in batch universe",
+      "pass": true,
+      "detail": "in batch=0"
+    },
+    {
+      "name": "§27: ZERO UNEXPECTED MUTATION (34 metrics, only batch deltas)",
+      "pass": true,
+      "detail": "all deltas as designed"
+    },
+    {
+      "name": "§28: Σ(qty × WAC) exact == 9,932,216.938816005",
+      "pass": true,
+      "detail": "exact=9932216.938816005"
+    },
+    {
+      "name": "§28: published figure 9,932,216.94 = rounding (Δ documented)",
+      "pass": true,
+      "detail": "|exact − published| = 0.001183994 (2-dp display rounding; no silent rounding: exact value recorded in movement rows + audit metadata)"
+    }
+  ],
+  "economic": {
+    "exact": 9932216.938816005,
+    "published": 9932216.94,
+    "kardex_2dp_sum": 9932216.94
+  }
+}

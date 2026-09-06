@@ -1,0 +1,82 @@
+{
+  "checked_at": "2026-09-06T20:12:04.395Z",
+  "total": 14,
+  "fails": 0,
+  "results": [
+    {
+      "name": "A1/A8: frozen universe 124/124 identical",
+      "pass": true,
+      "detail": "ids, stock, wac, status, is_active, updated_at all identical (0 writes since freeze)"
+    },
+    {
+      "name": "A9: 98/98 opening_qty & opening_unit_cost match DB",
+      "pass": true,
+      "detail": "all 98 rows exact (WAC > 0, not NULL)"
+    },
+    {
+      "name": "Σ opening_qty == 6427",
+      "pass": true,
+      "detail": "Σ = 6427"
+    },
+    {
+      "name": "Σ(qty×WAC) == simulation 9,932,216.938816005",
+      "pass": true,
+      "detail": "Σ = 9932216.938816005 (Δ=0.000e+0; published 2-dp figure 9,932,216.94)"
+    },
+    {
+      "name": "Σ(qty×WAC) rounds to approved 9,932,216.94",
+      "pass": true,
+      "detail": "|Σ − 9,932,216.94| = 0.0011839941143989563"
+    },
+    {
+      "name": "§5: 10 Test excluded from batch, stock intact",
+      "pass": true,
+      "detail": "126 u intact outside batch (Σ=126)"
+    },
+    {
+      "name": "§5: 0 inventory rows for Test products",
+      "pass": true,
+      "detail": "rows=0"
+    },
+    {
+      "name": "§5: 0 movement rows for Test products",
+      "pass": true,
+      "detail": "rows=0"
+    },
+    {
+      "name": "§6: ledger empty (inventory/movements/kardex/transactions = 0)",
+      "pass": true,
+      "detail": "test inv/mov = 0/0; store ledger from PRE snapshot: inventory_store=0 movements_store=0 kardex_store=0 transactions_store=0 (34-metric PRE verified)"
+    },
+    {
+      "name": "§8: B1 barrier — 0 opening movements",
+      "pass": true,
+      "detail": "count=0"
+    },
+    {
+      "name": "§8: B1 barrier — 0 rollback movements",
+      "pass": true,
+      "detail": "count=0"
+    },
+    {
+      "name": "§8: B4 barrier — 0 STOCK_RECONCILIATION_OPENING audit rows",
+      "pass": true,
+      "detail": "count=0"
+    },
+    {
+      "name": "A12: actor session probe",
+      "pass": true,
+      "detail": "auth.uid=051c6157-600b-425e-b8c0-72388bacf541 is_admin=true has_store_access=true"
+    },
+    {
+      "name": "A12: profile row valid",
+      "pass": true,
+      "detail": "email=admin@costpro.com role=admin tenant=5364ccf8-e6cd-4c38-aea8-b167b3b5576f"
+    }
+  ],
+  "sums": {
+    "opening_qty": 6427,
+    "opening_value_exact": 9932216.938816005,
+    "published": 9932216.94
+  }
+}
