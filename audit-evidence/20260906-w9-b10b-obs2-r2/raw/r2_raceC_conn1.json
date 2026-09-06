@@ -1,0 +1,1 @@
+[{"race":{"ts":"2026-09-06T21:19:05.643013+00:00","conn1":[{"step":"sale_ok","detail":{"status":"success","calculated_tax":0,"transaction_id":"67d1fbcc-5b85-42b5-ac58-03052cab4191","discount_amount":0,"calculated_total":350,"calculated_subtotal":350}},{"step":"void_ok","detail":{"status":"success","transaction_id":"67d1fbcc-5b85-42b5-ac58-03052cab4191"}}]}}]

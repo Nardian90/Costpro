@@ -1,0 +1,1 @@
+[{"w":{"wac_update_triggers":[{"fn":"w62_guard_wac_writer","table":"products","tgname":"trg_guard_wac_writer"}],"receipt_items_triggers":[{"fn":"check_reception_cost_variation","tgname":"trg_check_reception_cost_variation"},{"fn":"sync_product_has_movements","tgname":"trg_sync_has_movements_receipt"}]}}]

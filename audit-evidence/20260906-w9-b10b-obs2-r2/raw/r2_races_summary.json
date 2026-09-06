@@ -1,0 +1,173 @@
+{
+ "raceA": {
+  "a": [
+   {
+    "race": {
+     "ts": "2026-09-06T21:18:37.108392+00:00",
+     "conn1": [
+      {
+       "step": "conn1_sale_ok",
+       "detail": {
+        "status": "success",
+        "calculated_tax": 0,
+        "transaction_id": "6fe2e202-e436-4458-b465-e70bb42c4d98",
+        "discount_amount": 0,
+        "calculated_total": 4200,
+        "calculated_subtotal": 4200
+       }
+      }
+     ],
+     "stock_seen_in_tx": 7
+    }
+   }
+  ],
+  "b": [
+   {
+    "race": {
+     "ts": "2026-09-06T21:18:38.443364+00:00",
+     "conn2": [
+      {
+       "step": "conn2_sale_rejected",
+       "detail": {
+        "sqlerrm": "canceling statement due to lock timeout"
+       }
+      }
+     ],
+     "stock_seen": 19
+    }
+   }
+  ]
+ },
+ "raceA2": {
+  "a": [
+   {
+    "race": {
+     "ts": "2026-09-06T21:18:48.018721+00:00",
+     "conn1": [
+      {
+       "step": "conn1_sale2_ok",
+       "detail": {
+        "status": "success",
+        "calculated_tax": 0,
+        "transaction_id": "a1afcebe-9d24-47a5-9305-b7d289c7f994",
+        "discount_amount": 0,
+        "calculated_total": 700,
+        "calculated_subtotal": 700
+       }
+      }
+     ],
+     "stock_seen_in_tx": 17
+    }
+   }
+  ],
+  "b": [
+   {
+    "race": {
+     "ts": "2026-09-06T21:18:49.64123+00:00",
+     "conn2": [
+      {
+       "step": "conn2_sale1_ok",
+       "detail": {
+        "status": "success",
+        "calculated_tax": 0,
+        "transaction_id": "f3deb1c7-df1d-47ff-8ab6-d23e7743129f",
+        "discount_amount": 0,
+        "calculated_total": 350,
+        "calculated_subtotal": 350
+       }
+      }
+     ],
+     "stock_seen_in_tx": 18
+    }
+   }
+  ]
+ },
+ "raceB": {
+  "a": [
+   {
+    "race": {
+     "ts": "2026-09-06T21:18:57.162127+00:00",
+     "conn1": [
+      {
+       "step": "sale_ok",
+       "detail": {
+        "status": "success",
+        "calculated_tax": 0,
+        "transaction_id": "39ee2e45-b625-4235-9bb2-2bd78cdedc9a",
+        "discount_amount": 0,
+        "calculated_total": 350,
+        "calculated_subtotal": 350
+       }
+      },
+      {
+       "step": "void_ok",
+       "detail": {
+        "status": "success",
+        "transaction_id": "39ee2e45-b625-4235-9bb2-2bd78cdedc9a"
+       }
+      }
+     ]
+    }
+   }
+  ],
+  "b": [
+   {
+    "race": {
+     "ts": "2026-09-06T21:18:57.923135+00:00",
+     "conn2": [
+      {
+       "step": "void_rejected",
+       "detail": {
+        "sqlerrm": "ERR_TX_NOT_FOUND"
+       }
+      }
+     ]
+    }
+   }
+  ]
+ },
+ "raceC": {
+  "a": [
+   {
+    "race": {
+     "ts": "2026-09-06T21:19:05.643013+00:00",
+     "conn1": [
+      {
+       "step": "sale_ok",
+       "detail": {
+        "status": "success",
+        "calculated_tax": 0,
+        "transaction_id": "67d1fbcc-5b85-42b5-ac58-03052cab4191",
+        "discount_amount": 0,
+        "calculated_total": 350,
+        "calculated_subtotal": 350
+       }
+      },
+      {
+       "step": "void_ok",
+       "detail": {
+        "status": "success",
+        "transaction_id": "67d1fbcc-5b85-42b5-ac58-03052cab4191"
+       }
+      }
+     ]
+    }
+   }
+  ],
+  "b": [
+   {
+    "race": {
+     "ts": "2026-09-06T21:19:06.660812+00:00",
+     "conn2": [
+      {
+       "step": "reverse_rejected",
+       "detail": {
+        "sqlerrm": "ERR_TRANSACTION_NOT_FOUND"
+       }
+      }
+     ]
+    }
+   }
+  ]
+ }
+}

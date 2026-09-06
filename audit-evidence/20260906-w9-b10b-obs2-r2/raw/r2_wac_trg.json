@@ -1,0 +1,1 @@
+[{"w":{"wac_triggers_anywhere":[{"def":"CREATE TRIGGER trg_guard_wac_writer BEFORE UPDATE OF cost_average ON public.products FOR EACH ROW EXECUTE FUNCTION w62_guard_wac_writer()","table":"products","tgname":"trg_guard_wac_writer"}]}}]
