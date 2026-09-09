@@ -1,0 +1,58 @@
+REM-F4-04 DB AFTER 2026-09-09T01:48:29Z
+===== B1. live register_reception definition post-apply =====
+[
+    {
+        "def": "CREATE OR REPLACE FUNCTION public.register_reception(p_store_id uuid, p_supplier text, p_reception_date timestamp with time zone DEFAULT now(), p_invoice_number text DEFAULT ''::text, p_items jsonb DEFAULT '[]'::jsonb, p_user_id uuid DEFAULT NULL::uuid, p_po_id uuid DEFAULT NULL::uuid)\n RETURNS uuid\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nDECLARE\n  v_receipt_id UUID := gen_random_uuid();\n  v_caller_uid UUID := CASE\n    WHEN auth.role() = 'service_role' THEN COALESCE(p_user_id, auth.uid())\n    ELSE auth.uid()\n  END;\n  v_user_id UUID := COALESCE(v_caller_uid, '00000000-0000-0000-0000-000000000000'::uuid);\n  v_total_cost NUMERIC := 0;\n  v_item JSONB;\n  v_product_id UUID;\n  v_quantity NUMERIC;\n  v_unit_cost NUMERIC;\n  v_moneda TEXT;\n  v_tasa NUMERIC;\n  v_unit_cost_cup NUMERIC;\n  v_variant_id UUID;\n  v_conversion_factor NUMERIC := 1;\n  v_units_to_add NUMERIC;\n  v_effective_date TIMESTAMP WITH TIME ZONE := COALESCE(p_reception_date, NOW());\n  v_uc_base NUMERIC;\nBEGIN\n  PERFORM public.validate_operation_date(p_reception_date, p_store_id);\n\n  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, p_store_id) THEN\n    RAISE EXCEPTION 'Unauthorized store access';\n  END IF;\n\n  -- B2 (v2.23.0): Supplier is required\n  IF p_supplier IS NULL OR p_supplier = '' THEN\n    RAISE EXCEPTION 'ERR_SUPPLIER_REQUIRED: supplier is mandatory';\n  END IF;\n\n  -- B3 (v2.23.0): Items array must not be empty\n  IF p_items IS NULL OR jsonb_array_length(p_items) = 0 THEN\n    RAISE EXCEPTION 'ERR_EMPTY_ITEMS: at least one item is required';\n  END IF;\n\n  INSERT INTO public.receipts (\n    id, store_id, user_id, supplier, reception_date,\n    reference_doc, total_cost, status, created_at, updated_at,\n    po_id   -- \u2190 nueva columna\n  ) VALUES (\n    v_receipt_id, p_store_id, v_user_id, p_supplier,\n    v_effective_date, p_invoice_number, 0, 'active', v_effective_date, v_effective_date,\n    p_po_id   -- \u2190 pasa NULL si no viene\n  );\n\n  FOR v_item IN SELECT * FROM jsonb_array_elements(p_items)\n  LOOP\n    v_product_id := (v_item->>'product_id')::UUID;\n    v_quantity := (v_item->>'quantity')::NUMERIC;\n    v_unit_cost := COALESCE((v_item->>'unit_cost')::NUMERIC, 0);\n\n    -- B4 (v2.23.0): Reject items with unit_cost <= 0\n    IF v_unit_cost <= 0 THEN\n      RAISE EXCEPTION 'ERR_INVALID_UNIT_COST: unit_cost must be > 0 for product %', v_product_id;\n    END IF;\n    v_moneda := COALESCE(v_item->>'moneda_recepcion', 'CUP');\n    v_tasa := COALESCE((v_item->>'tasa_cambio_recepcion')::NUMERIC, 1.0);\n\n    -- C1 (v2.23.0): Validate exchange rate is within reasonable range\n    IF v_tasa < 0.01 OR v_tasa > 10000 THEN\n      RAISE EXCEPTION 'ERR_INVALID_EXCHANGE_RATE: tasa_cambio_recepcion % is out of range [0.01, 10000]', v_tasa;\n    END IF;\n\n    v_variant_id := NULLIF(v_item->>'variant_id', '')::uuid;\n    v_conversion_factor := 1.0;\n    IF v_variant_id IS NOT NULL THEN\n      SELECT conversion_factor INTO v_conversion_factor FROM public.product_variants WHERE id = v_variant_id;\n      v_conversion_factor := COALESCE(v_conversion_factor, 1.0);\n    END IF;\n\n    -- C2 (v2.23.0): Warning if product has expired lots (non-blocking)\n    IF EXISTS (\n      SELECT 1 FROM public.product_lots\n      WHERE product_id = v_product_id AND store_id = p_store_id\n        AND expiration_date IS NOT NULL\n        AND expiration_date < v_effective_date\n        AND quantity_remaining > 0\n    ) THEN\n      RAISE WARNING 'C2: Product % has expired lots in store %', v_product_id, p_store_id;\n    END IF;\n\n    v_units_to_add := v_quantity * v_conversion_factor;\n    v_unit_cost_cup := v_unit_cost * v_tasa;\n\n    -- B5 (v2.23.0): Product must exist in store \u2014 RAISE EXCEPTION (not CONTINUE)\n    IF NOT EXISTS (\n      SELECT 1 FROM public.products\n      WHERE id = v_product_id AND store_id = p_store_id\n    ) THEN\n      RAISE EXCEPTION 'ERR_PRODUCT_NOT_IN_STORE: product % does not exist in store %', v_product_id, p_store_id;\n    END IF;\n\n    INSERT INTO public.receipt_items (\n      receipt_id, product_id, variant_id, quantity, unit_cost,\n      moneda_recepcion, tasa_cambio_recepcion,\n      created_at, updated_at\n    ) VALUES (\n      v_receipt_id, v_product_id, v_variant_id, v_quantity, v_unit_cost,\n      v_moneda, v_tasa,\n      v_effective_date, v_effective_date\n    );\n\n    -- REM-F4-04 (gate 20260908-rem-f4-04): el camino real de recepci\u00f3n termina\n    -- en el escritor can\u00f3nico. El trigger trg_update_product_wac (referenciado\n    -- por el comentario A1 v2.22.0) NO existe en la BD viva y\n    -- register_stock_movement ya no escribe WAC (A2 v2.22.0).\n    -- Orden doctrina W62-01 \u00a76 (id\u00e9ntico a confirm_pending_reception):\n    -- WAC primero \u2192 movimiento despu\u00e9s (kardex ve ca_new).\n    -- Costo por unidad BASE para el blend can\u00f3nico:\n    --   q\u00b7uc = units_to_add \u00b7 (unit_cost_cup/factor) = unit_cost_cup \u00b7 quantity\n    v_uc_base := CASE WHEN COALESCE(v_conversion_factor, 1.0) > 0\n                      THEN v_unit_cost_cup / COALESCE(v_conversion_factor, 1.0)\n                      ELSE v_unit_cost_cup END;\n    PERFORM public.fn_recalc_wac(\n      p_store_id   := p_store_id,\n      p_product_id := v_product_id,\n      p_event      := 'reception_in',\n      p_qty_in     := v_units_to_add,\n      p_uc_in      := v_uc_base,\n      p_source_ref := jsonb_build_object('rpc','register_reception','receipt_id',v_receipt_id)\n    );\n\n    PERFORM public.register_stock_movement(\n      p_product_id := v_product_id,\n      p_store_id := p_store_id,\n      p_quantity := v_units_to_add,\n      p_movement_type := 'purchase',\n      p_reason := 'Recepci\u00f3n de mercanc\u00eda',\n      p_user_id := v_caller_uid,\n      p_variant_id := NULL,\n      p_sale_id := NULL,\n      p_unit_cost := v_unit_cost_cup,\n      p_notes := v_receipt_id::text,\n      p_operation_date := v_effective_date,\n      p_skip_access_check := TRUE\n    );\n\n\n    v_total_cost := v_total_cost + (v_unit_cost_cup * v_quantity);\n  END LOOP;\n\n  UPDATE public.receipts SET total_cost = v_total_cost WHERE id = v_receipt_id;\n\n  INSERT INTO public.audit_logs (action, table_name, record_id, store_id, user_id, metadata)\n  VALUES ('REGISTER_RECEPTION', 'receipts', v_receipt_id, p_store_id, v_caller_uid,\n    jsonb_build_object(\n      'supplier', p_supplier,\n      'total_cost', v_total_cost,\n      'items_count', jsonb_array_length(p_items),\n      'po_id', p_po_id\n    ));\n\n  RETURN v_receipt_id;\nEND\n$function$\n"
+    }
+]
+
+===== B2. trigger inventory on products/receipt_items (trg_update_product_wac must be ABSENT) =====
+[
+    {
+        "table_name": "products",
+        "tgname": "trg_ensure_product_barcode"
+    },
+    {
+        "table_name": "products",
+        "tgname": "trg_guard_wac_writer"
+    },
+    {
+        "table_name": "products",
+        "tgname": "trg_maintain_product_completeness"
+    },
+    {
+        "table_name": "products",
+        "tgname": "trigger_audit_product_changes"
+    },
+    {
+        "table_name": "receipt_items",
+        "tgname": "trg_check_reception_cost_variation"
+    },
+    {
+        "table_name": "receipt_items",
+        "tgname": "trg_sync_has_movements_receipt"
+    }
+]
+
+===== B3. guard still present =====
+[
+    {
+        "tgname": "trg_guard_wac_writer",
+        "pg_get_triggerdef": "CREATE TRIGGER trg_guard_wac_writer BEFORE UPDATE OF cost_average ON public.products FOR EACH ROW EXECUTE FUNCTION w62_guard_wac_writer()"
+    }
+]
+
+===== B4. ACL unchanged on register_reception =====
+[
+    {
+        "proacl": "{=X/postgres,postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+    }
+]
+
+===== B5. other overloads of register_reception (must be none) =====
+[
+    {
+        "overloads": 1
+    }
+]
+

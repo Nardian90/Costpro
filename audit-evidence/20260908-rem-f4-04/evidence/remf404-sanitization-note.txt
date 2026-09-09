@@ -1,0 +1,1 @@
+SANITIZATION 2026-09-09: MGMT_TOKEN hardcodeado en tests/f4_04_tests.mjs externalizado a env var SUPABASE_MGMT_TOKEN antes del commit (directive §29: no incluir tokens). Lógica del harness intacta (node --check OK). ANON_KEY publishable se mantiene (pública por diseño).

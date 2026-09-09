@@ -1,0 +1,1 @@
+ATTEMPT1: detached process killed by sandbox infra at ~2min, no OOM signature, last line = PASS. Classified INFRASTRUCTURE FAILURE per directive §23.

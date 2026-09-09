@@ -1,0 +1,6 @@
+command: NODE_OPTIONS=--max-old-space-size=2560 npx vitest run --no-file-parallelism --maxWorkers 1 --pool=forks
+environment: PM2 stopped (controlled, state PRE registered: 3/3 online 0 restarts health 200 @ 2026-09-09T03:05:39Z)
+start_at: 2026-09-09T03:15:23Z
+result: Test Files 96 passed | 1 skipped (97); Tests 2058 passed | 24 skipped (2082); Duration 208.20s
+baseline_comparison: 2058/0/24 == REQUIRED BASELINE (EXACT MATCH)
+attempt_1: INFRASTRUCTURE FAILURE (detached process killed by sandbox ~2min, no OOM signature; preserved in remf404-vitest-run.ATTEMPT1-INFRA-KILLED.log)

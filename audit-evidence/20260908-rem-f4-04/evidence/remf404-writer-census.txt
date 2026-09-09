@@ -1,0 +1,76 @@
+
+===== auto_kardex_on_stock_movement (read, token=False) =====
+
+===== create_devolution (read, token=False) =====
+
+===== create_devolution (read, token=False) =====
+
+===== create_devolution_v2 (read, token=False) =====
+
+===== create_physical_count (read, token=False) =====
+
+===== create_pre_restore_snapshot (read, token=False) =====
+
+===== create_sale_v2 (read, token=False) =====
+
+===== create_transfer (read, token=False) =====
+
+===== create_vale_salida (read, token=False) =====
+
+===== duplicate_inventory_adjustment (read, token=False) =====
+
+===== fn_process_receipt (DELEG, token=False) =====
+  calls fn_recalc_wac
+
+===== fn_process_receipt (DELEG, token=False) =====
+  calls fn_recalc_wac
+
+===== fn_process_sale (read, token=False) =====
+
+===== fn_recalc_wac (HYBRID, token=True) =====
+  WRITE-LINE: SET cost_average = v_ca_new, updated_at = now()
+  calls fn_recalc_wac
+
+===== get_inventory_report (read, token=False) =====
+
+===== get_paginated_products (read, token=False) =====
+
+===== get_paginated_products_v2 (read, token=False) =====
+
+===== get_products_for_pos (read, token=False) =====
+
+===== perform_inventory_adjustment (DELEG, token=False) =====
+  calls fn_recalc_wac
+
+===== receive_production_output (DELEG, token=False) =====
+  calls fn_recalc_wac
+
+===== register_stock_movement (read, token=False) =====
+
+===== reset_store_data (read, token=False) =====
+
+===== reset_store_data (read, token=False) =====
+  WRITE-LINE: UPDATE products SET stock_current = 0, cost_average = 0, updated_at = NOW() WHERE store_id = target_store_id;
+
+===== reverse_adjustment (read, token=False) =====
+
+===== reverse_devolution (DELEG, token=False) =====
+  calls fn_recalc_wac
+
+===== reverse_production_order (DELEG, token=False) =====
+  calls fn_recalc_wac
+
+===== reverse_receipt (read, token=False) =====
+
+===== reverse_receipt_v2 (DELEG, token=True) =====
+  calls fn_recalc_wac
+
+===== void_closed_production_order (DELEG, token=False) =====
+  calls fn_recalc_wac
+
+===== w62_guard_wac_writer (DELEG, token=True) =====
+  calls fn_recalc_wac
+
+===== withdraw_production_item_deprecated_9arg (read, token=False) =====
+
+===== withdraw_production_item_v3 (read, token=False) =====

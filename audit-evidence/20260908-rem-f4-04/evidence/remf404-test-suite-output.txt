@@ -1,0 +1,133 @@
+# F4-04 TEST SUITE RUN 2026-09-09T02:08:15.779Z
+# Baseline: HTTP reception path must end at canonical writer fn_recalc_wac
+
+== P0. Preconditions ==
+  [PASS] P0 login ok
+  [PASS] P0 guard trg_guard_wac_writer present: actual=1 expected=1
+  [PASS] P0 trg_update_product_wac absent (by design, not recreated): actual=0 expected=0
+
+== P1. F4-04.1 receipt → movement → WAC (REAL HTTP PATH, repro of original defect scenario) ==
+  fixture product Arena2=da654886-30b7-4d16-97fc-e116b0cca43a
+  PRE  stock=0 wac=0
+  [PASS] P1 HTTP 2xx on reception — status=201
+  [PASS] P1 receipt id returned
+  [PASS] P1 stock 0 → 10 — stock=10
+  [PASS] P1 WAC 0 → 100 (BEFORE fix: stayed 0) — wac=100
+  [PASS] P1 movement created (purchase) — {"movement_type":"purchase","quantity_change":"10.0000","unit_cost":"100","reference_doc":"Recepción de mercancía"}
+  [PASS] P1 movement quantity 10: actual=10 expected=10
+  [PASS] P1 movement unit_cost 100: actual=100 expected=100
+  [PASS] P1 receipt active
+  [PASS] P1 receipt total_cost 1000: actual=1000 expected=1000
+  [PASS] P1 wac_change_log events = 1 (single contribution): actual=1 expected=1
+  [PASS] P1 wac_change_log reception_in 0→100 — {"event":"reception_in","qty_in":"10.0","uc_in":"100.0000000000000000","wac_before":"0","wac_after":"100.00000000000000000"}
+
+== P2. F4-04.2 math invariant: (99×800 + 1×1000)/100 = 802 ==
+  fixture product Probe=0e536acc-cd1f-46dc-b06a-2cecd074b4ab
+  [PASS] P2 seed reception 99@800 HTTP 2xx — status=201
+  [PASS] P2 intermediate stock 99: actual=99 expected=99
+  [PASS] P2 intermediate WAC 800 (exact oracle): actual=800 expected=800 (tol 0.000001)
+  [PASS] P2 test reception 1@1000 HTTP 2xx — status=201
+  [PASS] P2 stock 99 → 100 — stock=100
+  [PASS] P2 WAC == (99*800 + 1*1000)/100 == 802: actual=802 expected=802 (tol 0.000001)
+
+== P3. F4-04.3 stock>0 ⇒ WAC valid (fixtures post-fix + global census) ==
+  fixture rows with stock>0 & WAC=0: 4 (pre-fix audit artifacts, historical)
+    - AUDIT Arena Lavada m3 (sku=AUDIT-ARENA-4f0d1e) stock=10.0000 wac=0
+    - AUDIT Bloque de Concreto (sku=AUDIT-BLOQ-4f0d1e) stock=500.0000 wac=0
+    - AUDIT Cemento Gris 50kg (sku=AUDIT-CEM-4f0d1e) stock=100.0000 wac=0
+    - AUDIT Viga de Acero 6m (sku=AUDIT-VIGA-4f0d1e) stock=20.0000 wac=0
+  [PASS] P3 NO new stock>0&WAC=0 created by post-fix flows (no F404-* fixture in violation list)
+  GLOBAL census (historical debt, informational — backlog F-08):
+    - AUDIT F4E1 STORE A 4f0d1e: 4 products
+    - ENERVIDA-VITALLCONS: 67 products
+    - HOT R6B Store A 1786059504: 1 products
+    - Tienda Auditor: 4 products
+
+== P4. F4-04.4 canonical path (confirm_pending_reception → fn_recalc_wac) ==
+  fixture product Canon=f42fbc65-ea9a-4e90-b495-df8dfc9e3a97
+  [PASS] P4 seed via real HTTP reception 99@800
+  [PASS] P4 seed state stock=99 wac=800 — stock=99 wac=800
+  pending receipt fixture=1db85429-fb4d-461f-999e-9c0ec75b3ad7 (documented service harness, same pattern as RECON)
+  [PASS] P4 confirm_pending_reception HTTP 2xx — status=204
+  [PASS] P4 stock 99 → 100 — stock=100
+  [PASS] P4 WAC == 802 via canonical path: actual=802 expected=802 (tol 0.000001)
+  [PASS] P4 wac_change_log events = 2 (no double update): actual=2 expected=2
+  [PASS] P4 events both reception_in — ["reception_in","reception_in"]
+
+== P5. F4-04.5 sale after receipt (COGS = qty × WAC) ==
+  VIGA2 PRE stock=19 wac=1800
+  [PASS] P5 checkout HTTP 2xx — status=200 body={"success":true,"status":"success","calculated_tax":0,"transaction_id":"b553960c-a168-4ad3-990a-00cb6f98fd81","discount_amount":0,"calculated_total":2500,"calculated_subtotal":2500}
+  [PASS] P5 transactionId returned — b553960c-a168-4ad3-990a-00cb6f98fd81
+  [PASS] P5 sale movement type — {"movement_type":"sale","quantity_change":"-1.0000","unit_cost":"1800.0000000000000000"}
+  [PASS] P5 sale movement qty -1: actual=-1 expected=-1
+  [PASS] P5 COGS == qty × WAC == 1800 (server-side, NOT 0): actual=1800 expected=1800 (tol 0.000001)
+  [PASS] P5 product stock decremented by 1: actual=18 expected=18
+  [PASS] P5 WAC invariant on sale (1800): actual=1800 expected=1800 (tol 0.000001)
+
+== P6. F4-04.6 reverse after sale (stock/ledger restored) ==
+  [PASS] P6 reverse HTTP 2xx — status=200 body={"status":"success","transaction_id":"b553960c-a168-4ad3-990a-00cb6f98fd81","units_restored":1}
+  [PASS] P6 stock restored: actual=19 expected=19
+  [PASS] P6 WAC unchanged 1800 after reverse: actual=1800 expected=1800 (tol 0.000001)
+  [PASS] P6 transaction voided — status=voided
+  [PASS] P6 reversal movement recorded (+1) — [{"movement_type":"sale_reverse","quantity_change":"1.0000"},{"movement_type":"sale","quantity_change":"-1.0000"}]
+
+== P7. F4-04.7 security: anon DENY, non-member DENY, no RLS bypass ==
+  [PASS] P7 anon POST reception DENIED (401/403) — status=401
+  [PASS] P7 anon checkout DENIED — status=401
+  [PASS] P7 non-member register_reception on STORE B DENIED (Unauthorized store access) — status=400 text={"message":"Failed to run sql query: ERROR:  P0001: Unauthorized store access\nCONTEXT:  PL/pgSQL function register_reception(uuid,text,timestamp with time zone
+  note: admin@demo.com is global role=admin → cross-store allowed BY DESIGN (D6, documented; not a defect)
+
+== P8. F4-04.8 idempotency: official retry mechanism documentation ==
+  [PASS] P8 first reception 201 — status=201
+  [PASS] P8 duplicate retry REJECTED (500, unique invoice per store — official mechanism) — status=500 body={"error":"RPC Error","message":"duplicate key value violates unique constraint \"idx_receipts_store_reference_doc\"","co
+  [PASS] P8 no duplicate effects: stock stays 5, WAC stays 100 — stock=5 wac=100
+  [PASS] P8 receipts for supplier = 1 (no duplicate receipt): actual=1 expected=1
+  [PASS] P8 single stock movement: actual=1 expected=1
+  [PASS] P8 single WAC contribution: actual=1 expected=1
+
+== P9. §19 multimoneda: USD @ tasa 120 → single normalization to CUP ==
+  [PASS] P9 reception 2@10USD@120 HTTP 2xx — status=201
+  [PASS] P9 stock 0 → 2 — stock=2
+  [PASS] P9 WAC == unit_cost × tasa == 1200 (single conversion, no double-apply): actual=1200 expected=1200 (tol 0.000001)
+  [PASS] P9 movement unit_cost_cup 1200: actual=1200 expected=1200
+  [PASS] P9 receipt total_cost = 2 × (10×120) = 2400 CUP: actual=2400 expected=2400
+
+== SUMMARY ==
+{
+  "run_at": "2026-09-09T02:09:52.901Z",
+  "exit_clean": true,
+  "results": {
+    "P1": "PASS",
+    "P2": "PASS",
+    "P3": "PASS",
+    "P3_census": [
+      {
+        "name": "AUDIT F4E1 STORE A 4f0d1e",
+        "n": 4
+      },
+      {
+        "name": "ENERVIDA-VITALLCONS",
+        "n": 67
+      },
+      {
+        "name": "HOT R6B Store A 1786059504",
+        "n": 1
+      },
+      {
+        "name": "Tienda Auditor",
+        "n": 4
+      }
+    ],
+    "P4": "PASS",
+    "P5": "PASS",
+    "P5_txid": "b553960c-a168-4ad3-990a-00cb6f98fd81",
+    "P5_pre": {
+      "preSaleStock": 19,
+      "preSaleWac": 1800
+    },
+    "P6": "PASS",
+    "P7": "PASS",
+    "P8": "PASS (idempotency via unique idx_receipts_store_reference_doc: duplicate retry → 500, zero state change; documented)",
+    "P9": "PASS"
+  }
+}

@@ -1,0 +1,32 @@
+25a26
+>   v_uc_base NUMERIC;
+109a111,130
+>     -- REM-F4-04 (gate 20260908-rem-f4-04): el camino real de recepción termina
+>     -- en el escritor canónico. El trigger trg_update_product_wac (referenciado
+>     -- por el comentario A1 v2.22.0) NO existe en la BD viva y
+>     -- register_stock_movement ya no escribe WAC (A2 v2.22.0).
+>     -- Orden doctrina W62-01 §6 (idéntico a confirm_pending_reception):
+>     -- WAC primero → movimiento después (kardex ve ca_new).
+>     -- Costo por unidad BASE para el blend canónico:
+>     --   q·uc = units_to_add · (unit_cost_cup/factor) = unit_cost_cup · quantity
+>     v_uc_base := CASE WHEN COALESCE(v_conversion_factor, 1.0) > 0
+>                       THEN v_unit_cost_cup / COALESCE(v_conversion_factor, 1.0)
+>                       ELSE v_unit_cost_cup END;
+>     PERFORM public.fn_recalc_wac(
+>       p_store_id   := p_store_id,
+>       p_product_id := v_product_id,
+>       p_event      := 'reception_in',
+>       p_qty_in     := v_units_to_add,
+>       p_uc_in      := v_uc_base,
+>       p_source_ref := jsonb_build_object('rpc','register_reception','receipt_id',v_receipt_id)
+>     );
+> 
+125,127d145
+<     -- A1 WAC HOTFIX (v2.22.0): Path 3 eliminado.
+<     -- El WAC lo calcula register_stock_movement (Path 2, corregido en A2)
+<     -- y el trigger trg_update_product_wac (Path 1).
+145c163
+< $function$
+---
+> $function$
+\ No newline at end of file
