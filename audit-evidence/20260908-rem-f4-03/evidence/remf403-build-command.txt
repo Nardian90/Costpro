@@ -1,0 +1,8 @@
+command: NEXT_TELEMETRY_DISABLED=1 npm run build
+exit_code: 137 (SIGKILL)
+compiled_successfully: YES (79s, Turbopack)
+failed_phase: "Running TypeScript" (type-checker integrado) -> Killed
+memory: 3.9Gi total / 0 swap / PM2 stopped (controlled)
+classification: INFRASTRUCTURE OOM (no code fail; identical to REM-F4-04 and RECON precedent)
+corroboration: npx tsc --noEmit independent = EXIT 0 (0 TypeScript errors) [remf403-tsc-run.log]
+config_untouched: next.config NOT modified (per directive §26)

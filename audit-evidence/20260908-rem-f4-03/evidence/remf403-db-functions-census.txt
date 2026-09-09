@@ -1,0 +1,2 @@
+HTTP 201
+[{"proname":"fn_recalc_wac","prosecdef":true,"owner":"postgres","proconfig":["search_path=public, extensions"],"acl":"postgres=X/postgres,service_role=X/postgres"},{"proname":"register_reception","prosecdef":true,"owner":"postgres","proconfig":["search_path=public"],"acl":"=X/postgres,postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres"},{"proname":"withdraw_production_item_v3","prosecdef":true,"owner":"postgres","proconfig":["search_path=public, extensions"],"acl":"postgres=X/postgres,service_role=X/postgres,authenticated=X/postgres"}]

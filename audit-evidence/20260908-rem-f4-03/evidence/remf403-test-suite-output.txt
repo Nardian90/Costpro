@@ -1,0 +1,116 @@
+# F4-03 TEST SUITE RUN 2026-09-09T04:08:19.023Z
+# Baseline: production withdrawal must use server-side cost authority (client p_unit_cost must never reach accounting)
+
+  [PASS] P0 admin login ok
+  [PASS] P0 v3 exists with exact 7-arg signature
+  [PASS] P0 v3 SECURITY DEFINER owned by postgres — owner=postgres
+  [PASS] P0 v3 search_path pinned
+  [PASS] P0 v3 ACL post-migration: auth=EXECUTE, anon=NO, svc=EXECUTE
+  [PASS] P0 REM-F4-04 functions still present (no F4-04 regression): actual=2 expected=2
+
+== P1. F4-03.1 valid withdrawal (REAL HTTP PATH) + server-side cost ==
+  [PASS] P1 seed WAC == 100 (server-side via canonical reception): actual=100 expected=100 (tol 0.000001)
+  [PASS] P1 seed stock == 10: actual=10 expected=10
+  fixture order=0e749525-ef23-49c9-8224-2c33acdaec37 item=ab02202f-9cae-4394-a313-4cbad36f98dc (budgeted_qty=5)
+  [PASS] P1 withdraw HTTP 2xx — status=200 body={"success":true,"orderId":"0e749525-ef23-49c9-8224-2c33acdaec37","result":{"status":"success","order_id":"0e749525-ef23-49c9-8224-2c33acdaec37","unit_cost_used"
+  [PASS] P1 result.unit_cost_used present (server-side) — {"status":"success","order_id":"0e749525-ef23-49c9-8224-2c33acdaec37","unit_cost_used":100}
+  [PASS] P1 unit_cost_used == 100 (WAC, NOT client 0.01): actual=100 expected=100 (tol 0.000001)
+  [PASS] P1 item actual_qty == 1: actual=1 expected=1
+  [PASS] P1 item actual_unit_cost == 100 (server-side): actual=100 expected=100 (tol 0.000001)
+  [PASS] P1 item withdrawn_at set
+  [PASS] P1 movement production_out recorded — [{"movement_type":"production_out","quantity_change":"-1.0000","unit_cost":"100.00000000000000000"}]
+  [PASS] P1 movement quantity_change == -1: actual=-1 expected=-1
+  [PASS] P1 movement unit_cost == 100 (server-side, NOT 0.01): actual=100 expected=100 (tol 0.000001)
+  [PASS] P1 stock 10 → 9: actual=9 expected=9
+
+== P2. F4-03.2 cost authority == server-side products.cost_average ==
+  [PASS] P2 result.unit_cost_used == products.cost_average (1:1): actual=100 expected=100 (tol 0.000001)
+
+== P3. F4-03.3 forged LOW cost (unit_cost=0.01 in body) ignored ==
+  [PASS] P3 withdraw HTTP 2xx (with forged 0.01) — status=200
+  [PASS] P3 unit_cost_used STILL 100 (client cost ignored): actual=100 expected=100 (tol 0.000001)
+  [PASS] P3 newest movement unit_cost == 100 (NOT 0.01): actual=100 expected=100 (tol 0.000001)
+  [PASS] P3 zero movements carry forged cost 0.01: actual=0 expected=0
+
+== P4. F4-03.4 forged HIGH cost (unit_cost=999999999 in body) ignored ==
+  [PASS] P4 withdraw HTTP 2xx (with forged 999999999) — status=200
+  [PASS] P4 unit_cost_used STILL 100 (client cost ignored): actual=100 expected=100 (tol 0.000001)
+  [PASS] P4 newest movement unit_cost == 100 (NOT 999999999): actual=100 expected=100 (tol 0.000001)
+  [PASS] P4 zero movements carry forged cost 999999999: actual=0 expected=0
+
+== P5. F4-03.5 cross-store: clerk of STORE A attempts withdrawal on STORE B order ==
+  [PASS] P5 clerk login ok
+  [PASS] P5 cross-store withdrawal DENIED (403) — status=403 body={"error":"No autorizado"}
+  [PASS] P5 STORE B stock unchanged: actual=10 expected=10
+  [PASS] P5 STORE B WAC unchanged: actual=50 expected=50 (tol 0.000001)
+  [PASS] P5 STORE B ledger unchanged (0 new movements): actual=0 expected=0
+  [PASS] P5 STORE B item actual_qty unchanged: actual=0 expected=0
+
+== P6. F4-03.6 non-member authenticated (no membership) DENIED ==
+  [PASS] P6 non-member withdraw DENIED (ERR_UNAUTHORIZED) — status=400 text={"message":"Failed to run sql query: ERROR:  P0001: ERR_UNAUTHORIZED\nCONTEXT:  PL/pgSQL function withdraw_production_item_v3(uuid,numeric,uuid,uuid,text,uuid,t
+  [PASS] P6 STORE A stock unchanged after deny: actual=7 expected=7
+  [PASS] P6 item actual_qty unchanged after deny: actual=3 expected=3
+
+== P7. F4-03.7 anonymous DENY (no auth) ==
+  [PASS] P7 anon HTTP withdraw DENIED (401/403) — status=401
+  [PASS] P7 anon RPC DENIED (no EXECUTE privilege) — status=400 text={"message":"Failed to run sql query: ERROR:  42501: permission denied for function withdraw_production_item_v3\n"}
+
+== P8. F4-03.8 quantity invariant: stock_after = stock_before - qty ==
+  [PASS] P8 withdraw qty=2 HTTP 2xx — status=200
+  [PASS] P8 stock_after == stock_before - 2: actual=5 expected=5
+  [PASS] P8 item actual_qty == 5 (1+1+1+2): actual=5 expected=5
+  [PASS] P8 item status == completed (actual >= budgeted): actual="completed" expected="completed"
+
+== P9. F4-03.9 accounting invariant: every accounting row uses server-side WAC ==
+  [PASS] P9 four production_out movements recorded: actual=4 expected=4
+  [PASS] P9 ALL movement unit_cost == 100 (server-side WAC) — [{"unit_cost":"100.00000000000000000","quantity_change":"-1.0000"},{"unit_cost":"100.00000000000000000","quantity_change":"-1.0000"},{"unit_cost":"100.00000000000000000","quantity_change":"-1.0000"},{"unit_cost":"100.00000000000000000","quantity_change":"-2.0000"}]
+  [PASS] P9 total withdrawn == 5: actual=5 expected=5
+  [PASS] P9 WAC unchanged by withdrawals (100 — withdrawals do not re-price): actual=100 expected=100 (tol 0.000001)
+  [PASS] P9 wac_change_log == 1 (only the seed reception; withdrawals contribute none): actual=1 expected=1
+  [PASS] P9 audit_logs PRODUCTION_ITEM_WITHDRAWN == 4: actual=4 expected=4
+  [PASS] P9 ALL audits declare cost_authority=server_side_wac_v3
+  [PASS] P9 ALL audits unit_cost_used == 100 (procedencia server-side)
+
+== P10. F4-03.10 idempotency: same idempotency_key replays same result, zero double effects ==
+  [PASS] P10 first withdraw HTTP 2xx — status=200
+  [PASS] P10 idempotency_registry row registered: actual=1 expected=1
+  [PASS] P10 retry with same key HTTP 2xx (replayed) — status=200
+  [PASS] P10 retry returns SAME result payload — {"status":"success","order_id":"b0537360-83f5-40e2-9b27-865d982ddfa4","unit_cost_used":250} vs {"status":"success","order_id":"b0537360-83f5-40e2-9b27-865d982ddfa4","unit_cost_used":250}
+  [PASS] P10 no double stock decrement: actual=5 expected=5
+  [PASS] P10 no double movement: actual=0 expected=0
+  [PASS] P10 item actual_qty still 1 (no double consumption): actual=1 expected=1
+  [PASS] P10 registry still has exactly 1 row for key: actual=1 expected=1
+
+== P11. F4-03.11 concurrency: two parallel withdrawals over budgeted ceiling ==
+  [PASS] P11 exactly 1 of 2 parallel withdrawals succeeded: actual=1 expected=1
+  [PASS] P11 exactly 1 of 2 parallel withdrawals denied: actual=1 expected=1
+  [PASS] P11 denial is overconsumption/budget guard — {"error":"Cantidad excede lo presupuestado del item"}
+  [PASS] P11 item actual_qty == 2 (budgeted ceiling, no lost update): actual=2 expected=2
+  [PASS] P11 stock decremented exactly 2 (no double consumption): actual=8 expected=8
+  [PASS] P11 exactly 1 production_out movement: actual=1 expected=1
+
+== P12. F4-03.12 overconsumption guard explicit (qty beyond budgeted) ==
+  [PASS] P12 withdraw beyond budgeted DENIED (400) — status=400 body={"error":"Cantidad excede lo presupuestado del item"}
+  [PASS] P12 error mentions budget ceiling — {"error":"Cantidad excede lo presupuestado del item"}
+  [PASS] P12 item actual_qty unchanged (2): actual=2 expected=2
+
+== SUMMARY ==
+{
+  "run_at": "2026-09-09T04:11:01.327Z",
+  "exit_clean": true,
+  "failures": 0,
+  "results": {
+    "P1": "PASS",
+    "P2": "PASS",
+    "P3": "PASS",
+    "P4": "PASS",
+    "P5": "PASS",
+    "P6": "PASS",
+    "P7": "PASS",
+    "P8": "PASS",
+    "P9": "PASS",
+    "P10": "PASS",
+    "P11": "PASS",
+    "P12": "PASS"
+  }
+}

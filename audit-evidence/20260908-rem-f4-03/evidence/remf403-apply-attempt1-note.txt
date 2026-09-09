@@ -1,0 +1,1 @@
+ATTEMPT1: guard PRE abortó correctamente (falso negativo del LIKE por espacio en proconfig). BD sin cambios. Preservado como evidencia del guard activo.

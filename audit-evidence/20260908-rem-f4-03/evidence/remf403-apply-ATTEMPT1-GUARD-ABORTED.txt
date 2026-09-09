@@ -1,0 +1,7 @@
+APPLY_START 2026-09-09T03:54:30.296Z
+migration_sha256: dd282d680428ec9e6411d106a90051796536995aa5378e349d813cc5c2a6d120
+HTTP status: 400
+response head:
+{"message":"Failed to run sql query: ERROR:  P0001: REM-F4-03 GUARD: v3 search_path not pinned (refusing to expose)\nCONTEXT:  PL/pgSQL function inline_code_block line 23 at RAISE\n"}
+applied_at: 2026-09-09T03:54:32.565Z
+APPLY_END 2026-09-09T03:54:32.565Z
