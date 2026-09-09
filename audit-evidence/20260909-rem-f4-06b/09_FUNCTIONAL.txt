@@ -1,0 +1,32 @@
+# REM-F4-06b POST-FIX FUNCTIONAL SUITE — 2026-09-09T22:51:47.767Z
+
+== P1. INSERT fiscal_closings (BD, ctx authenticated fixture, trigger ACTIVO) ==
+  fixture F2 preexistente (re-run) = a2592dd4-e39f-4616-996a-172a9fa4c922 — INSERT original ya certificado
+  [PASS] P1 audit row FISCAL_CLOSING_CREATED creada — [{"id":"ce7561bf-d3af-4d7f-9182-ab554db9ea96","action":"FISCAL_CLOSING_CREATED","record_id":"a2592dd4-e39f-4616-996a-172a9fa4c922","store_id":"f91b0e17-ac23-42ba-b08e-8159a6b57d83","user_id":"a1111111-1111-1111-1111-111111111111","metadata":{"year":2026,"month":9,"tg_op":"INSERT","status":"open"},"rid_type":"uuid"}]
+  [PASS] P1 audit.record_id = fiscal_closings.id — a2592dd4-e39f-4616-996a-172a9fa4c922
+  [PASS] P1 pg_typeof(record_id) = uuid — uuid
+  [PASS] P1 audit.store_id = STORE_A — f91b0e17-ac23-42ba-b08e-8159a6b57d83
+  [PASS] P1 audit.user_id = fixture uid (auth.uid()) — a1111111-1111-1111-1111-111111111111
+  [PASS] P1 metadata tg_op=INSERT year=2026 month=9 status=open — {"year":2026,"month":9,"tg_op":"INSERT","status":"open"}
+
+== P2. UPDATE F2 open→closed (BD, ctx authenticated) ==
+  audit UPDATE de F2 preexistente (re-run) — UPDATE original ya certificado
+  [PASS] P2 audit row FISCAL_CLOSING_UPDATED creada — [{"id":"e33956f9-8ac4-4e4e-9e4d-631e68b8ff6c","action":"FISCAL_CLOSING_UPDATED","record_id":"a2592dd4-e39f-4616-996a-172a9fa4c922","metadata":{"year":2026,"month":9,"tg_op":"UPDATE","status":"closed"},"rid_type":"uuid"}]
+  [PASS] P2 audit.record_id = F2.id (uuid→uuid) — a2592dd4-e39f-4616-996a-172a9fa4c922 / uuid
+  [PASS] P2 metadata tg_op=UPDATE status(closed) year=2026 month=9 — {"year":2026,"month":9,"tg_op":"UPDATE","status":"closed"}
+
+== P3. UPDATE F1 closed→locked (operación EXACTA de lock_fiscal_period, BD) ==
+  audit UPDATE de F1 preexistente (re-run) — lock original ya certificado
+  [PASS] P3 audit row FISCAL_CLOSING_UPDATED para F1 — [{"id":"c1e1e237-26a9-4b8e-bdfc-af22ae2a9685","action":"FISCAL_CLOSING_UPDATED","record_id":"17558101-2d1e-498b-b995-542717735e93","metadata":{"year":2026,"month":8,"tg_op":"UPDATE","status":"locked"},"rid_type":"uuid","user_id":"a1111111-1111-1111-1111-111111111111"}]
+  [PASS] P3 audit.record_id = F1.id (uuid→uuid) — 17558101-2d1e-498b-b995-542717735e93 / uuid
+  [PASS] P3 metadata status=locked year=2026 month=8 — {"year":2026,"month":8,"tg_op":"UPDATE","status":"locked"}
+
+== P4. Integridad UUID global (§12): toda fila fiscal de auditoría ==
+  filas de auditoría fiscal totales: 3 (pre-gate: 0)
+  [PASS] P4 todas las filas con record_id = fiscal_closings.id
+  [PASS] P4 pg_typeof(record_id) = uuid en TODAS
+  [PASS] P4 sin UUID cruzados (metadata de cada audit row == periodo del cierre unido) — mismatches=0
+  [PASS] P4 0 huérfanos (record_id sin fila de negocio) — [{"n":0}]
+
+== P1-P4 RESULT: ALL PASS ==
+Fixtures: F1=17558101-2d1e-498b-b995-542717735e93 (locked) F2=a2592dd4-e39f-4616-996a-172a9fa4c922 (closed)

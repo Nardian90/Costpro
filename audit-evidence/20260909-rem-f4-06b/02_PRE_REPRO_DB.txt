@@ -1,0 +1,92 @@
+# 02 — PRE REPRODUCCIÓN DB-LEVEL — REM-F4-06b (§4A)
+# Raw completo: raw/out_p1.txt, raw/out_p2.txt, raw/out_p3.txt, raw/out_p4.txt, raw/out_p6.txt
+# REPRODUCIDO EN VIVO contra la BD real antes de aplicar cualquier migración.
+
+## DESCUBRIMIENTO CLAVE: el defecto es COMPUESTO dentro del mismo objeto
+
+La función audit_fiscal_closings_changes() tiene DOS defectos que se
+enmascaran en cadena. El error observado al INSERT/UPDATE es:
+
+    ERROR:  42703: record "new" has no field "year"
+    PL/pgSQL function audit_fiscal_closings_changes() line 11 at SQL statement
+
+El trigger referencia NEW.year / NEW.month en jsonb_build_object(...), pero
+fiscal_closings NUNCA tuvo esas columnas (desde su creación: period_year /
+period_month — migration 20260726000002_v1_2, línea 146-147). La evaluación
+de NEW.year ocurre ANTES de la asignación de record_id, por lo que el 42703
+ENMASCARA al 42804 previsto por la directiva.
+
+El 42804 (defecto D2 — el objetivo nominal de este gate) fue demostrado
+aparte, en aislamiento, con el mismo mecanismo exacto (ver PRE-A3).
+
+## PRE-A — INSERT real (contexto authenticated, fixture user, txn+rollback)
+
+Operación:
+  BEGIN; SET LOCAL ROLE authenticated;
+  SET LOCAL request.jwt.claims = '{"sub":"a1111111-...-111111111111",...}';
+  INSERT INTO public.fiscal_closings (store_id, period_year, period_month, status)
+  VALUES (STORE_A, 2026, 8, 'open'); ROLLBACK;
+
+Resultado: ERROR 42703 record "new" has no field "year" (raw/out_p1.txt)
+Persistencia posterior: 0 filas en fiscal_closings para el periodo, 0 filas
+en audit_logs (0 estado parcial). ROLLBACK efectivo.
+
+## PRE-A3 — Demostración aislada del mecanismo 42804 (D2)
+
+Operación: INSERT en audit_logs con record_id de tipo text
+  ('11111111-1111-1111-1111-111111111111'::text) en txn con ROLLBACK.
+
+Resultado (raw/out_p2.txt):
+  ERROR:  42804: column "record_id" is of type uuid but expression is of type text
+  LINE 8:   '11111111-1111-1111-1111-111111111111'::text,
+  HINT:  You will need to rewrite or cast the expression.
+Persistencia: 0 filas (audit_rows_mechanism_proof = 0).
+
+Este es EXACTAMENTE el SQLSTATE y el mensaje previsto por la directiva para
+el defecto NEW.id::text → audit_logs.record_id (uuid). En el trigger real,
+este error es el SEGUNDO en dispararse (enmascarado por el 42703 de D1).
+
+## PRE-B — Fixture F1 (fila status='closed' para pruebas de UPDATE/lock)
+
+Mecanismo documentado: trigger deshabilitado SOLO para sembrar el fixture,
+batch atómico (DISABLE + INSERT + ENABLE en txn implícita única):
+  F1 = 17558101-2d1e-498b-b995-542717735e93
+       STORE_A (f91b0e17-...), period 2026-08, status='closed'
+Verificación posterior (raw/out_p3b, p3b_trigger_check.sql): AMBOS triggers
+(prevent_fiscal_closing_edit, trg_audit_fiscal_closings) tgenabled='O'.
+
+Nota: el propio hecho de necesitar deshabilitar el trigger para poder crear
+cualquier fila ES evidencia del defecto: fiscal_closings tenía 0 filas
+porque todo INSERT/UPDATE ha fallado desde la creación del trigger (20260809).
+
+## PRE-C — UPDATE real (la operación EXACTA de lock_fiscal_period)
+
+Operación (txn + rollback, contexto authenticated fixture):
+  UPDATE fiscal_closings SET status='locked', locked_by=<uid>, locked_at=now()
+  WHERE id=F1 AND status='closed';
+
+Resultado (raw/out_p4.txt): ERROR 42703 record "new" has no field "year"
+(mismo punto de la función). Persistencia: fila F1 intacta (status='closed',
+locked_by NULL, locked_at NULL), 0 audit rows. ROLLBACK efectivo.
+
+## PRE-D — Contrato DELETE (documentación de diferencia)
+
+trg_audit_fiscal_closings = AFTER INSERT OR UPDATE (SIN evento DELETE).
+Prueba aislada (txn + rollback): DELETE de F1 como owner procede SIN generar
+ninguna fila de auditoría (audit_rows_during_delete_window = 0); ROLLBACK
+restaura la fila (rows_restored = 1). Adicionalmente: la RLS de
+fiscal_closings no define política DELETE (denegado para roles no-propietario)
+y el único DELETE real en BD es reset_store_data (utilitario admin).
+CONTRATO: DELETE de fiscal_closings NO es operación auditada ni de aplicación.
+No aplica prueba DELETE funcional post-fix (diferencia documentada, directiva §11).
+
+## RESUMEN PRE-FIX
+
+  cadena observada (live):
+    fiscal_closings INSERT/UPDATE
+      → trigger trg_audit_fiscal_closings
+        → audit_fiscal_closings_changes()
+          → NEW.year (inexistente)      → SQLSTATE 42703  ← error visible
+          → (nunca alcanzado) NEW.id::text → SQLSTATE 42804 ← demostrado aislado (PRE-A3)
+    → transacción abortada
+    → 0 persistencia (fiscal y audit), HTTP 500 (ver 03)

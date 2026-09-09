@@ -1,0 +1,81 @@
+# 00 — BASELINE — REM-F4-06b
+# Gate: Corrección quirúrgica del defecto UUID→TEXT en audit_fiscal_closings_changes
+# Capturado: 2026-09-09T22:19Z (UTC) / 2026-09-09 hora local sandbox
+
+## 1. ESTADO GIT (§1)
+
+Repositorio: https://github.com/Nardian90/Costpro
+Clone fresco en sandbox nuevo: /home/z/my-project/Costpro
+
+  git rev-parse HEAD      = 35f326caa701414d6ecb8bbdb439004adfcd6fc5
+  git rev-parse origin/main = 35f326caa701414d6ecb8bbdb439004adfcd6fc5
+  git status --short      = (vacío — worktree LIMPIO)
+  git fetch origin        = sin cambios
+
+  git log -5 --oneline:
+    35f326ca fix(audit): remediate F4-03 production withdrawal
+    b94ca369 fix(audit): remediate F4-04 canonical WAC path
+    310fad7d audit(w9): verify post-repair operational integrity
+    90450273 audit(w9): execute orphan inventory reconciliation
+    b923dfaf audit(w9): design orphan inventory reconciliation
+
+## 2. NOTA ADMINISTRATIVA SOBRE REM-F4-06 (importante, documentada — NO corregida aquí)
+
+La directiva REM-F4-06b anticipa: "El gate anterior terminó con REM-F4-06
+technical PASS, LOCAL == REMOTE pendiente" y ordena "NO asumir que 87cd4a49
+está remoto".
+
+Estado REAL verificado:
+  - El commit 87cd4a49 (REM-F4-06) NO existe en origin/main ni localmente.
+    origin/main HEAD = 35f326ca = REM-F4-03. La migración
+    20260909000002_rem_f4_06_*.sql NO está en supabase/migrations/ y el
+    evidence pack 20260909-rem-f4-06/ NO está en audit-evidence/.
+  - SIN EMBARGO, el EFECTO de REM-F4-06 SÍ está vivo en la base de datos:
+    audit_commission_payments_changes() NO contiene NEW.id::text ni
+    OLD.id::text (verificación en vivo, ver 01_OBJECT_FORENSICS y raw/out_q01).
+  - Consecuencia: el artefacto git de REM-F4-06 (migración + evidencia) quedó
+    fuera del historial (sandbox anterior destruido antes del push). Esto es
+    un HALLAZGO ADMINISTRATIVO de trazabilidad, NO un defecto de código ni de
+    BD. Se registra como OPEN FINDING administrativo. REM-F4-06b NO lo
+    corrige (fuera de alcance quirúrgico).
+
+## 3. ACCESO A BASE DE DATOS
+
+Mecanismo: Supabase Management API
+  POST https://api.supabase.com/v1/projects/<ref>/database/query
+Autenticación: SUPABASE_ACCESS_TOKEN leído del .env del repo — NUNCA impreso
+en logs, evidencia ni commits. Runner en /home/z/my-project/gate-f406b/
+(FUERA del repo, no se commitea).
+
+## 4. LÍNEA BASE DE REGRESIÓN CONOCIDA (§18)
+
+  Vitest: 2058 PASS / 0 FAIL / 24 SKIP
+  TSC: 0 errores
+  Lint: 0 errores / 1291 warnings
+  PM2: 3/3 online
+  Health: HTTP 200
+  Build: antecedente INFRA OOM (exit 137 en type-checker, dmesg OOM, TSC
+  independiente 0) clasificable solo si se repiten las 5 condiciones §18.
+
+## 5. SERVIDOR LOCAL
+
+PM2 arrancado al inicio de esta sesión (clone fresco + bun install +
+ecosystem.config.js):
+  costpro (bun server.ts) + telegram-cron-poller + whatsapp-cron-poller = 3/3
+  GET /api/health → 200, GET / → 200
+
+## 6. STORES
+
+  PRODUCCIÓN (READ ONLY ABSOLUTO):
+    ENERVIDA-VITALLCONS     = 5e6fe821-5465-48b1-b3f1-3aa3182edc38
+    Puerto Padre VITALLCONS = 43a4dabc-b8b4-4b66-82b3-0c75335ca5d1
+  FIXTURE AUDIT (usados por gates previos, reutilizados aquí):
+    AUDIT F4E1 STORE A 4f0d1e = f91b0e17-ac23-42ba-b08e-8159a6b57d83
+    AUDIT F4E1 STORE B 4f0d1e = 9e308fcd-391f-4b91-9866-f0155d8d5cbe
+  Usuario fixture: admin@demo.com (uid a1111111-1111-1111-1111-111111111111,
+  role=admin) — patrón idéntico al gate REM-F4-04 (evidence commiteado).
+
+## 7. TABLA OBJETIVO — ESTADO INICIAL
+
+  fiscal_closings: 0 filas (la tabla está VACÍA — consistente con el defecto:
+  todo INSERT ha fallado con 42804 desde la creación del trigger).

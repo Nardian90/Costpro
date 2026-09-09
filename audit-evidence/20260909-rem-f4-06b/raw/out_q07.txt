@@ -1,0 +1,64 @@
+# SQL RUN — 2026-09-09T22:25:27.843Z
+# file: q07_grants_sec2.sql
+# endpoint: Management API query (project ********************)
+
+===== STATEMENT: execute_grants_fiscal_rpcs =====
+HTTP 201
+[]
+
+===== STATEMENT: commission_trigger_full (REM-F4-06 §2 verification) =====
+HTTP 201
+[
+  {
+    "tgname": "commission_payments_touch_updated_at",
+    "def": "CREATE TRIGGER commission_payments_touch_updated_at BEFORE UPDATE ON public.commission_payments FOR EACH ROW EXECUTE FUNCTION touch_updated_at()",
+    "tgenabled": "O"
+  },
+  {
+    "tgname": "trg_audit_commission_payments",
+    "def": "CREATE TRIGGER trg_audit_commission_payments AFTER INSERT OR DELETE OR UPDATE ON public.commission_payments FOR EACH ROW EXECUTE FUNCTION audit_commission_payments_changes()",
+    "tgenabled": "O"
+  },
+  {
+    "tgname": "trg_calc_commission_cup",
+    "def": "CREATE TRIGGER trg_calc_commission_cup BEFORE INSERT OR UPDATE ON public.commission_payments FOR EACH ROW EXECUTE FUNCTION calculate_commission_amount_cup()",
+    "tgenabled": "O"
+  },
+  {
+    "tgname": "trg_set_default_due_date_commission",
+    "def": "CREATE TRIGGER trg_set_default_due_date_commission BEFORE INSERT OR UPDATE OF period_end ON public.commission_payments FOR EACH ROW EXECUTE FUNCTION set_default_due_date_commission()",
+    "tgenabled": "O"
+  }
+]
+
+===== STATEMENT: commission_payments_id_type =====
+HTTP 201
+[
+  {
+    "column_name": "id",
+    "data_type": "uuid"
+  }
+]
+
+===== STATEMENT: commission_fn_full_def =====
+HTTP 201
+[
+  {
+    "def": "CREATE OR REPLACE FUNCTION public.audit_commission_payments_changes()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$\nDECLARE\n  v_action text;\nBEGIN\n  IF TG_OP = 'INSERT' THEN\n    v_action := 'COMMISSION_PAYMENT_CREATED';\n  ELSIF TG_OP = 'UPDATE' THEN\n    -- Skip si el cambio viene del trigger de flag (ya tiene su propio audit)\n    IF NEW.status = 'flagged_for_review' AND OLD.status IN ('approved', 'paid') THEN\n      RETURN NEW;\n    END IF;\n    v_action := 'COMMISSION_PAYMENT_UPDATED';\n  ELSIF TG_OP = 'DELETE' THEN\n    v_action := 'COMMISSION_PAYMENT_DELETED';\n  END IF;\n\n  INSERT INTO public.audit_logs (action, table_name, record_id, store_id, user_id, metadata)\n  VALUES (v_action, 'commission_payments',\n    CASE WHEN TG_OP != 'DELETE' THEN NEW.id ELSE OLD.id END,\n    CASE WHEN TG_OP != 'DELETE' THEN NEW.store_id ELSE OLD.store_id END,\n    auth.uid(),\n    jsonb_build_object(\n      'tg_op', TG_OP,\n      'worker_id', CASE WHEN TG_OP != 'DELETE' THEN NEW.worker_id ELSE OLD.worker_id END,\n      'old_status', CASE WHEN TG_OP = 'UPDATE' THEN OLD.status ELSE NULL END,\n      'new_status', CASE WHEN TG_OP != 'DELETE' THEN NEW.status ELSE NULL END,\n      'amount', CASE WHEN TG_OP != 'DELETE' THEN NEW.final_amount ELSE OLD.final_amount END\n    ));\n\n  RETURN CASE WHEN TG_OP = 'DELETE' THEN OLD ELSE NEW END;\nEND;\n$function$\n"
+  }
+]
+
+===== STATEMENT: has_store_access_helpers_exist =====
+HTTP 201
+[
+  {
+    "proname": "has_store_access",
+    "signature": "has_store_access(uuid)"
+  },
+  {
+    "proname": "has_store_access_as",
+    "signature": "has_store_access_as(uuid,uuid)"
+  }
+]
+
+===== RUN RESULT: OK =====

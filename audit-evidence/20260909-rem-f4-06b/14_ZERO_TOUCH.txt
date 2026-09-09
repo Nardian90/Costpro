@@ -1,0 +1,38 @@
+# 14 — ZERO-TOUCH PRODUCCIÓN (§17) — REM-F4-06b
+# Raw: raw/ztx_PRE.json, raw/ztx_POST.json (snapshots completos)
+# Producción READ ONLY: ENERVIDA-VITALLCONS y Puerto Padre VITALLCONS.
+
+Ventana de comparación: snapshot PRE capturado INMEDIATAMENTE ANTES de aplicar
+la migración; snapshot POST capturado al cierre de TODAS las pruebas
+mutativas del gate (funcional, atomicidad, idempotencia, concurrencia,
+seguridad). Determinismo del snapshot verificado con doble captura PRE
+idéntica antes del gate.
+
+Métricas por tienda (13): products (n, stock, valor WAC, precio, hash de
+contenido), stock_movements (n, qty, valor, hash), receipts, receipt_items,
+transactions (n, monto, hash), payment_transactions, commission_payments
+(n, monto, hash), cash_closures, cash_movements, fiscal_closings,
+fiscal_period_closures (ausente por diseño — OF-3, determinista), audit_logs
+(n + hash de contenido por tienda), wac_change_log, inventory.
+
+## RESULTADO
+
+  ENERVIDA:     PRE == POST (13/13 métricas idénticas)
+  PUERTO PADRE: PRE == POST (13/13 métricas idénticas)
+
+  md5 canónico PRE  = 427e64eb0806e812a207e3e554945ba8
+  md5 canónico POST = 427e64eb0806e812a207e3e554945ba8
+
+  → Cero mutaciones en producción: ni filas, ni valores monetarios, ni
+    hashes de contenido. La actividad del gate quedó confinada a los stores
+    fixture AUDIT F4E1 (STORE_A/B). El único cambio de esquema en toda la BD
+    es el cuerpo de la función objetivo de este gate (ver 08_POST_FIX).
+
+## CONTEOS DE REFERENCIA (PRE, idénticos en POST)
+
+  ENERVIDA:     products=125, stock_movements=451, receipts=4, receipt_items=110,
+                transactions=308, payment_transactions=154, audit_logs=5437,
+                commission_payments=0, cash_closures=0, fiscal_closings=0
+  PUERTO PADRE: products=36, stock_movements=251, receipts=2, receipt_items=39,
+                transactions=212, payment_transactions=212, audit_logs=1136,
+                commission_payments=0, cash_closures=0, fiscal_closings=0

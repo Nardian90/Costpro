@@ -1,0 +1,71 @@
+# 05 — SIBLING CENSUS (solo inventario — §7, §25) — REM-F4-06b
+# Raw: raw/out_q03.txt (censo), raw/out_q04.txt (escritores), raw/out_q07.txt
+
+## CENSO 1 — Funciones audit_* (todas las del esquema public)
+
+| Función | NEW.id::text / OLD.id::text | ::text en cuerpo |
+|---|---|---|
+| audit_backup_restore_protected_change | NO | NO |
+| audit_cash_closures_changes (canónico) | NO | NO |
+| audit_commission_payments_changes (REM-F4-06) | NO | NO |
+| **audit_fiscal_closings_changes** | **SÍ (NEW.id::text)** | **SÍ** |
+| audit_payment_transactions_changes | NO | NO |
+| audit_product_changes | NO | NO |
+| audit_profile_changes | NO | NO |
+| audit_role_changes | NO | NO |
+| audit_store_access_changes | NO | NO |
+| audit_store_changes | NO | NO |
+
+→ ÚNICA función audit_* con el patrón: audit_fiscal_closings_changes
+  (objeto objetivo de este gate — corregida en 07_MIGRATION).
+
+## CENSO 2 — Barrido global (todas las funciones public cuyo cuerpo
+menciona record_id y contiene '::text')
+
+Funciones escaneadas (muestra amplia por el filtro record_id+::text):
+adjust_sale_payment, adjust_total_amount, audit_fiscal_closings_changes,
+bulk_soft_delete_stores, cancel_transfer, close_cash_shift,
+close_fiscal_period, close_production_order_v2, close_service_order_as_sale,
+confirm_transfer, create_devolution, create_devolution_v2,
+create_production_order_v2, create_purchase_order, create_received_service_v2,
+create_sale, create_sale_v2, create_store_with_membership, create_transfer,
+create_vale_salida, distribute_service_cost_v2,
+duplicate_inventory_adjustment_v2, generate_bulk_override_token,
+get_audit_logs, link_receipts_to_service, receive_against_po,
+receive_production_output, (resto en raw/out_q03.txt)
+
+Análisis por función: en TODAS las demás, el '::text' presente corresponde a
+cast legítimos NO destinados a columnas uuid de audit_logs (p.ej.
+LPAD(p_month::text,...), concatenaciones, serializaciones). La única con
+asignación uuid→record_id mediante ::text es audit_fiscal_closings_changes.
+
+## HALLAZGOS ADICIONALES REGISTRADOS (NO corregidos — §25)
+
+### OF-1 (documentado en 03_PRE_REPRO_HTTP) — defecto de wiring ruta→RPC
+  Objeto: src/app/api/fiscal-close/route.ts (POST handler) vs
+          public.lock_fiscal_period
+  Causa: la ruta pasa p_user_id; el RPC no acepta ese parámetro →
+         PostgREST no resuelve lock_fiscal_period(...) → HTTP 500.
+  Impacto: acción 'lock' de fiscal-close SIEMPRE 500 por HTTP (independiente
+           del trigger de auditoría).
+  Evidencia: raw/pre_http_out.txt (reproducción viva).
+  Severidad: ALTA (función lock inaccesible por HTTP).
+  Recomendación: gate de seguimiento (REM-F4-06c) — alinear llamada de ruta
+  con la firma RPC (o añadir parámetro con default) + E2E HTTP lock.
+  Estado: OPEN — fuera del alcance quirúrgico F4-06b.
+
+### OF-2 (administrativo — trazabilidad REM-F4-06) — documentado en 00_BASELINE
+  El commit 87cd4a49 (REM-F4-06) no alcanzó origin/main; su efecto en BD
+  SÍ está vivo y verificado intacto (audit_commission_payments_changes sin
+  casts). La migración/evidencia de REM-F4-06 no están en el historial git.
+  Severidad: MEDIA (trazabilidad, no comportamiento).
+  Recomendación: reconstruir el artefacto administrativo de REM-F4-06 en un
+  gate administrativo dedicado (fuera de F4-06b).
+  Estado: OPEN.
+
+## DECLARACIÓN DE ALCANCE
+
+REM-F4-06b corrige EXCLUSIVamente
+public.audit_fiscal_closings_changes() (incluido D1 intra-objeto necesario
+para que la corrección D2 sea operativa — ver 04_ROOT_CAUSE). Ningún otro
+trigger audit_* fue tocado, aunque se registran OF-1 y OF-2.

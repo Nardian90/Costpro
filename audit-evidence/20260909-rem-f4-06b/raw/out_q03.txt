@@ -1,0 +1,645 @@
+# SQL RUN — 2026-09-09T22:22:09.817Z
+# file: q03_rpcs_census.sql
+# endpoint: Management API query (project ********************)
+
+===== STATEMENT: close_fiscal_period_def =====
+HTTP 201
+[
+  {
+    "def": "CREATE OR REPLACE FUNCTION public.close_fiscal_period(p_store_id uuid, p_year integer, p_month integer, p_user_id uuid DEFAULT NULL::uuid)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$\nDECLARE\n  v_uid UUID := CASE WHEN auth.role() = 'service_role' THEN COALESCE(p_user_id, auth.uid()) ELSE auth.uid() END;\n  v_period_start DATE := make_date(p_year, p_month, 1);\n  v_period_end DATE := (v_period_start + INTERVAL '1 month' - INTERVAL '1 day')::date;\n  v_tx_count INTEGER;\n  v_revenue NUMERIC := 0;\n  v_closed_id UUID;\nBEGIN\n  -- V2.12.18: patrón IS NULL OR NOT explícito (antes: IF NOT has_store_access_as(v_uid, ...))\n  IF v_uid IS NULL OR NOT public.has_store_access_as(v_uid, p_store_id) THEN\n    RAISE EXCEPTION 'ERR_UNAUTHORIZED';\n  END IF;\n\n  -- Verificar que no esté ya cerrado\n  IF EXISTS (SELECT 1 FROM public.fiscal_period_closures WHERE store_id = p_store_id AND year = p_year AND month = p_month) THEN\n    RAISE EXCEPTION 'ERR_PERIOD_ALREADY_CLOSED';\n  END IF;\n\n  -- Calcular revenue del período\n  SELECT COUNT(*), COALESCE(SUM(total_amount), 0) INTO v_tx_count, v_revenue\n  FROM public.transactions\n  WHERE store_id = p_store_id\n    AND status = 'completed'\n    AND completed_at >= v_period_start\n    AND completed_at <= v_period_end + INTERVAL '1 day';\n\n  -- Insertar cierre\n  INSERT INTO public.fiscal_period_closures (store_id, year, month, period_start, period_end, transaction_count, total_revenue, closed_by, closed_at)\n  VALUES (p_store_id, p_year, p_month, v_period_start, v_period_end, v_tx_count, v_revenue, v_uid, NOW())\n  RETURNING id INTO v_closed_id;\n\n  INSERT INTO public.audit_logs (action, table_name, record_id, store_id, user_id, metadata)\n  VALUES ('CLOSE_FISCAL_PERIOD', 'fiscal_period_closures', v_closed_id, p_store_id, v_uid,\n    jsonb_build_object('period', p_year || '-' || LPAD(p_month::text, 2, '0'), 'tx_count', v_tx_count, 'revenue', v_revenue));\n\n  RETURN jsonb_build_object('status', 'success', 'closure_id', v_closed_id, 'tx_count', v_tx_count, 'revenue', v_revenue);\nEND;\n$function$\n",
+    "owner": "postgres",
+    "secdef": true,
+    "spcfg": [
+      "search_path=public, pg_temp"
+    ]
+  }
+]
+
+===== STATEMENT: lock_fiscal_period_def =====
+HTTP 201
+[
+  {
+    "def": "CREATE OR REPLACE FUNCTION public.lock_fiscal_period(p_store_id uuid, p_year integer, p_month integer)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nDECLARE\n    v_role TEXT;\nBEGIN\n    SELECT role INTO v_role FROM public.profiles WHERE id = auth.uid();\n    IF v_role != 'admin' THEN\n        RAISE EXCEPTION 'ERR_ADMIN_ONLY: Solo admin puede bloquear periodos fiscales';\n    END IF;\n\n    UPDATE public.fiscal_closings\n    SET status = 'locked', locked_by = auth.uid(), locked_at = now(), updated_at = now()\n    WHERE store_id = p_store_id AND period_year = p_year AND period_month = p_month AND status = 'closed';\n\n    IF NOT FOUND THEN\n        RAISE EXCEPTION 'ERR_NOT_CLOSED: El periodo debe estar cerrado antes de bloquearse';\n    END IF;\n\n    RETURN jsonb_build_object('status', 'success', 'message', 'Periodo bloqueado');\nEND;\n$function$\n",
+    "owner": "postgres",
+    "secdef": true,
+    "spcfg": [
+      "search_path=public"
+    ]
+  }
+]
+
+===== STATEMENT: sibling_census_record_id_text_casts =====
+HTTP 201
+[
+  {
+    "function_name": "adjust_sale_payment",
+    "signature": "adjust_sale_payment(uuid,uuid,text,numeric,numeric,numeric,text,numeric,jsonb,text,numeric,text)",
+    "trigger_table": null,
+    "text_cast_targets": null
+  },
+  {
+    "function_name": "adjust_total_amount",
+    "signature": "adjust_total_amount(uuid,numeric,text)",
+    "trigger_table": null,
+    "text_cast_targets": null
+  },
+  {
+    "function_name": "audit_fiscal_closings_changes",
+    "signature": "audit_fiscal_closings_changes()",
+    "trigger_table": "fiscal_closings",
+    "text_cast_targets": [
+      "NEW.id"
+    ]
+  },
+  {
+    "function_name": "bulk_soft_delete_stores",
+    "signature": "bulk_soft_delete_stores(uuid[],uuid,text,text,text)",
+    "trigger_table": null,
+    "text_cast_targets": null
+  },
+  {
+    "function_name": "cancel_transfer",
+    "signature": "cancel_transfer(uuid,text,uuid)",
+    "trigger_table": null,
+    "text_cast_targets": null
+  },
+  {
+    "function_name": "close_cash_shift",
+    "signature": "close_cash_shift(uuid,numeric,numeric,text,uuid)",
+    "trigger_table": null,
+    "text_cast_targets": null
+  },
+  {
+    "function_name": "close_fiscal_period",
+    "signature": "close_fiscal_period(uuid,integer,integer,uuid)",
+    "trigger_table": null,
+    "text_cast_targets": null
+  },
+  {
+    "function_name": "close_production_order_v2",
+    "signature": "close_production_order_v2(uuid,uuid,uuid,numeric,text,text,numeric,uuid,numeric,uuid,text)",
+    "trigger_table": null,
+    "text_cast_targets": null
+  },
+  {
+    "function_name": "close_service_order_as_sale",
+    "signature": "close_service_order_as_sale(uuid,uuid,uuid,text,text,numeric,uuid)",
+    "trigger_table": null,
+    "text_cast_targets": null
+  },
+  {
+    "function_name": "confirm_transfer",
+    "signature": "confirm_transfer(uuid,uuid,timestamp with time zone)",
+    "trigger_table": null,
+    "text_cast_targets": null
+  },
+  {
+    "function_name": "create_devolution",
+    "signature": "create_devolution(uuid,jsonb,text,uuid,text,uuid,text,text,text,numeric)",
+    "trigger_table": null,
+    "text_cast_targets": null
+  },
+  {
+    "function_name": "create_devolution_v2",
+    "signature": "create_devolution_v2(uuid,jsonb,text,uuid,uuid,text,uuid,text,text,text)",
+    "trigger_table": null,
+    "text_cast_targets": null
+  },
+  {
+    "function_name": "create_production_order_v2",
+    "signature": "create_production_order_v2(uuid,text,text,text,text,text,numeric,text,text,text,jsonb,numeric,text,text,uuid,text)",
+    "trigger_table": null,
+    "text_cast_targets": null
+  },
+  {
+    "function_name": "create_purchase_order",
+    "signature": "create_purchase_order(uuid,text,uuid,text,text,date,uuid,jsonb)",
+    "trigger_table": null,
+    "text_cast_targets": null
+  },
+  {
+    "function_name": "create_received_service_v2",
+    "signature": "create_received_service_v2(uuid,text,numeric,uuid,text,date,text,numeric,integer,text,text,text,jsonb,uuid)",
+    "trigger_table": null,
+    "text_cast_targets": null
+  },
+  {
+    "function_name": "create_sale",
+    "signature": "create_sale(uuid,uuid,numeric,jsonb,numeric,text,numeric,text,numeric,jsonb,uuid,timestamp with time zone,numeric,numeric,text,text,numeric,numeric,uuid,uuid)",
+    "trigger_table": null,
+    "text_cast_targets": null
+  },
+  {
+    "function_name": "create_sale_v2",
+    "signature": "create_sale_v2(uuid,uuid,jsonb,text,text,numeric,jsonb,numeric,numeric,numeric,numeric,numeric,numeric,text,numeric,uuid,text,uuid,text,timestamp with time zone,uuid)",
+    "trigger_table": null,
+    "text_cast_targets": null
+  },
+  {
+    "function_name": "create_store_with_membership",
+    "signature": "create_store_with_membership(text,text,uuid,integer,text,text,text,text,text,text,text,text,text,text,double precision,double precision,uuid)",
+    "trigger_table": null,
+    "text_cast_targets": null
+  },
+  {
+    "function_name": "create_transfer",
+    "signature": "create_transfer(uuid,uuid,jsonb,text,uuid,timestamp with time zone,uuid)",
+    "trigger_table": null,
+    "text_cast_targets": null
+  },
+  {
+    "function_name": "create_vale_salida",
+    "signature": "create_vale_salida(uuid,jsonb,uuid,text,text,uuid)",
+    "trigger_table": null,
+    "text_cast_targets": null
+  },
+  {
+    "function_name": "distribute_service_cost_v2",
+    "signature": "distribute_service_cost_v2(uuid,uuid)",
+    "trigger_table": null,
+    "text_cast_targets": null
+  },
+  {
+    "function_name": "duplicate_inventory_adjustment_v2",
+    "signature": "duplicate_inventory_adjustment_v2(uuid,uuid)",
+    "trigger_table": null,
+    "text_cast_targets": null
+  },
+  {
+    "function_name": "generate_bulk_override_token",
+    "signature": "generate_bulk_override_token(text,uuid,text)",
+    "trigger_table": null,
+    "text_cast_targets": null
+  },
+  {
+    "function_name": "get_audit_logs",
+    "signature": "get_audit_logs(uuid,text,timestamp without time zone,timestamp without time zone,integer)",
+    "trigger_table": null,
+    "text_cast_targets": null
+  },
+  {
+    "function_name": "link_receipts_to_service",
+    "signature": "link_receipts_to_service(uuid,jsonb,uuid)",
+    "trigger_table": null,
+    "text_cast_targets": null
+  },
+  {
+    "function_name": "receive_against_po",
+    "signature": "receive_against_po(uuid,jsonb,uuid,timestamp with time zone,text)",
+    "trigger_table": null,
+    "text_cast_targets": null
+  },
+  {
+    "function_name": "receive_production_output",
+    "signature": "receive_production_output(uuid,uuid,numeric,uuid,uuid,text)",
+    "trigger_table": null,
+    "text_cast_targets": null
+  },
+  {
+    "function_name": "receive_to_warehouse",
+    "signature": "receive_to_warehouse(uuid,uuid,numeric,numeric,uuid,text,date,uuid,text)",
+    "trigger_table": null,
+    "text_cast_targets": null
+  },
+  {
+    "function_name": "reconcile_stock",
+    "signature": "reconcile_stock(uuid,boolean,uuid)",
+    "trigger_table": null,
+    "text_cast_targets": null
+  },
+  {
+    "function_name": "register_reception",
+    "signature": "register_reception(uuid,text,timestamp with time zone,text,jsonb,uuid,uuid)",
+    "trigger_table": null,
+    "text_cast_targets": null
+  },
+  {
+    "function_name": "reopen_cash_shift",
+    "signature": "reopen_cash_shift(uuid,text,uuid)",
+    "trigger_table": null,
+    "text_cast_targets": null
+  },
+  {
+    "function_name": "restore_transaction_snapshot",
+    "signature": "restore_transaction_snapshot(text,uuid)",
+    "trigger_table": null,
+    "text_cast_targets": null
+  },
+  {
+    "function_name": "reverse_commissions_on_sale_void",
+    "signature": "reverse_commissions_on_sale_void()",
+    "trigger_table": "transactions",
+    "text_cast_targets": null
+  },
+  {
+    "function_name": "reverse_devolution",
+    "signature": "reverse_devolution(uuid,text,uuid)",
+    "trigger_table": null,
+    "text_cast_targets": null
+  },
+  {
+    "function_name": "reverse_inventory_adjustment_v2",
+    "signature": "reverse_inventory_adjustment_v2(uuid,text,uuid)",
+    "trigger_table": null,
+    "text_cast_targets": null
+  },
+  {
+    "function_name": "reverse_receipt_v2",
+    "signature": "reverse_receipt_v2(uuid,text,uuid)",
+    "trigger_table": null,
+    "text_cast_targets": null
+  },
+  {
+    "function_name": "reverse_transaction_v2",
+    "signature": "reverse_transaction_v2(uuid,text,uuid)",
+    "trigger_table": null,
+    "text_cast_targets": null
+  },
+  {
+    "function_name": "reverse_transfer",
+    "signature": "reverse_transfer(uuid,text,uuid)",
+    "trigger_table": null,
+    "text_cast_targets": null
+  },
+  {
+    "function_name": "reverse_vale_salida",
+    "signature": "reverse_vale_salida(uuid,text,uuid)",
+    "trigger_table": null,
+    "text_cast_targets": null
+  },
+  {
+    "function_name": "set_purchase_order_status",
+    "signature": "set_purchase_order_status(uuid,purchase_status_enum,uuid,text)",
+    "trigger_table": null,
+    "text_cast_targets": null
+  },
+  {
+    "function_name": "set_received_service_status",
+    "signature": "set_received_service_status(uuid,text,uuid,text)",
+    "trigger_table": null,
+    "text_cast_targets": null
+  },
+  {
+    "function_name": "set_transfer_approval_rule",
+    "signature": "set_transfer_approval_rule(uuid,uuid,numeric,numeric,text[],boolean,uuid)",
+    "trigger_table": null,
+    "text_cast_targets": null
+  },
+  {
+    "function_name": "update_receipt_item_tasa",
+    "signature": "update_receipt_item_tasa(uuid,numeric,text,text,uuid)",
+    "trigger_table": null,
+    "text_cast_targets": null
+  },
+  {
+    "function_name": "void_closed_production_order",
+    "signature": "void_closed_production_order(uuid,text,uuid)",
+    "trigger_table": null,
+    "text_cast_targets": null
+  },
+  {
+    "function_name": "void_pending_reception",
+    "signature": "void_pending_reception(uuid,uuid,text,timestamp with time zone)",
+    "trigger_table": null,
+    "text_cast_targets": null
+  },
+  {
+    "function_name": "void_received_service_with_reversal",
+    "signature": "void_received_service_with_reversal(uuid,uuid,text,timestamp with time zone)",
+    "trigger_table": null,
+    "text_cast_targets": null
+  },
+  {
+    "function_name": "void_reception_with_reversal",
+    "signature": "void_reception_with_reversal(uuid,uuid,text,timestamp with time zone)",
+    "trigger_table": null,
+    "text_cast_targets": null
+  },
+  {
+    "function_name": "void_transaction",
+    "signature": "void_transaction(uuid,text,timestamp with time zone,uuid)",
+    "trigger_table": null,
+    "text_cast_targets": null
+  },
+  {
+    "function_name": "withdraw_production_item_deprecated_6arg",
+    "signature": "withdraw_production_item_deprecated_6arg(uuid,numeric,numeric,uuid,uuid,text)",
+    "trigger_table": null,
+    "text_cast_targets": null
+  },
+  {
+    "function_name": "withdraw_production_item_deprecated_9arg",
+    "signature": "withdraw_production_item_deprecated_9arg(uuid,numeric,numeric,uuid,uuid,text,uuid,text,boolean)",
+    "trigger_table": null,
+    "text_cast_targets": null
+  },
+  {
+    "function_name": "withdraw_production_item_v3",
+    "signature": "withdraw_production_item_v3(uuid,numeric,uuid,uuid,text,uuid,text)",
+    "trigger_table": null,
+    "text_cast_targets": null
+  }
+]
+
+===== STATEMENT: full_audit_function_census =====
+HTTP 201
+[
+  {
+    "function_name": "audit_backup_restore_protected_change",
+    "has_id_text_cast": false,
+    "has_any_text_cast": false
+  },
+  {
+    "function_name": "audit_cash_closures_changes",
+    "has_id_text_cast": false,
+    "has_any_text_cast": false
+  },
+  {
+    "function_name": "audit_commission_payments_changes",
+    "has_id_text_cast": false,
+    "has_any_text_cast": false
+  },
+  {
+    "function_name": "audit_fiscal_closings_changes",
+    "has_id_text_cast": true,
+    "has_any_text_cast": true
+  },
+  {
+    "function_name": "audit_payment_transactions_changes",
+    "has_id_text_cast": false,
+    "has_any_text_cast": false
+  },
+  {
+    "function_name": "audit_product_changes",
+    "has_id_text_cast": false,
+    "has_any_text_cast": false
+  },
+  {
+    "function_name": "audit_profile_changes",
+    "has_id_text_cast": false,
+    "has_any_text_cast": false
+  },
+  {
+    "function_name": "audit_role_changes",
+    "has_id_text_cast": false,
+    "has_any_text_cast": false
+  },
+  {
+    "function_name": "audit_store_access_changes",
+    "has_id_text_cast": false,
+    "has_any_text_cast": false
+  },
+  {
+    "function_name": "audit_store_changes",
+    "has_id_text_cast": false,
+    "has_any_text_cast": false
+  }
+]
+
+===== STATEMENT: fiscal_closings_indexes =====
+HTTP 201
+[
+  {
+    "indexname": "fiscal_closings_pkey",
+    "indexdef": "CREATE UNIQUE INDEX fiscal_closings_pkey ON public.fiscal_closings USING btree (id)"
+  },
+  {
+    "indexname": "uq_fiscal_closings_store_period",
+    "indexdef": "CREATE UNIQUE INDEX uq_fiscal_closings_store_period ON public.fiscal_closings USING btree (store_id, period_year, period_month)"
+  },
+  {
+    "indexname": "idx_fiscal_closings_store_period",
+    "indexdef": "CREATE INDEX idx_fiscal_closings_store_period ON public.fiscal_closings USING btree (store_id, period_year, period_month)"
+  }
+]
+
+===== STATEMENT: fiscal_closings_constraints =====
+HTTP 201
+[
+  {
+    "conname": "fiscal_closings_closed_by_fkey",
+    "contype": "f",
+    "def": "FOREIGN KEY (closed_by) REFERENCES profiles(id)"
+  },
+  {
+    "conname": "fiscal_closings_locked_by_fkey",
+    "contype": "f",
+    "def": "FOREIGN KEY (locked_by) REFERENCES profiles(id)"
+  },
+  {
+    "conname": "fiscal_closings_period_month_check",
+    "contype": "c",
+    "def": "CHECK (((period_month >= 1) AND (period_month <= 12)))"
+  },
+  {
+    "conname": "fiscal_closings_pkey",
+    "contype": "p",
+    "def": "PRIMARY KEY (id)"
+  },
+  {
+    "conname": "fiscal_closings_status_check",
+    "contype": "c",
+    "def": "CHECK ((status = ANY (ARRAY['open'::text, 'closed'::text, 'locked'::text])))"
+  },
+  {
+    "conname": "fiscal_closings_store_id_fkey",
+    "contype": "f",
+    "def": "FOREIGN KEY (store_id) REFERENCES stores(id) ON DELETE CASCADE"
+  },
+  {
+    "conname": "uq_fiscal_closings_store_period",
+    "contype": "u",
+    "def": "UNIQUE (store_id, period_year, period_month)"
+  }
+]
+
+===== STATEMENT: stores_fixture_and_production =====
+HTTP 201
+[
+  {
+    "id": "2dabe459-4b37-4be2-b8f4-d102047cc18a",
+    "name": "   "
+  },
+  {
+    "id": "f91b0e17-ac23-42ba-b08e-8159a6b57d83",
+    "name": "AUDIT F4E1 STORE A 4f0d1e"
+  },
+  {
+    "id": "9e308fcd-391f-4b91-9866-f0155d8d5cbe",
+    "name": "AUDIT F4E1 STORE B 4f0d1e"
+  },
+  {
+    "id": "7aedc55d-f7e8-4938-8d98-8330c358e8d9",
+    "name": "E2E Extra extra-mrioqepf"
+  },
+  {
+    "id": "fa2c0fe5-d4b8-4a3d-929a-0c9ee8363000",
+    "name": "E2E Multi arch-mrip86q3"
+  },
+  {
+    "id": "85a2cba5-09b2-4b14-9051-4bff31892f25",
+    "name": "E2E Multi dup-mrip3468"
+  },
+  {
+    "id": "45f46ded-bd3f-4659-848d-cb0cd9cec1d8",
+    "name": "E2E Multi mrip2zpuztfw"
+  },
+  {
+    "id": "4bcb61e4-be93-44cd-ba10-a54d771cd393",
+    "name": "E2E No Addr noaddr-mrip32ho"
+  },
+  {
+    "id": "2f69abc4-2fe1-425c-8cbb-3ccdb7136645",
+    "name": "E2E Slug Sanitize mrioqg7v"
+  },
+  {
+    "id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+    "name": "ENERVIDA-VITALLCONS"
+  },
+  {
+    "id": "b3345abc-eb45-4c7f-9c25-76d1e31179a3",
+    "name": "HOT Archive Test 1786059177"
+  },
+  {
+    "id": "c3a45a39-28d9-417f-a8d4-7237ca11729e",
+    "name": "HOT Cross Store 1786059177"
+  },
+  {
+    "id": "10fecc6a-58c2-433c-94eb-330dbb7fb7f4",
+    "name": "HOT FE Archive 1786060255"
+  },
+  {
+    "id": "2d861da3-7b02-449d-bfcb-23e52b269fd3",
+    "name": "HOT Integral A 1786057681"
+  },
+  {
+    "id": "50865d50-e187-410c-a0d2-fcbf43aaa57b",
+    "name": "HOT Integral A 1786057783"
+  },
+  {
+    "id": "bbb7d9e6-a8b3-44da-bfa7-0179ac0995fb",
+    "name": "HOT Integral A 1786057888"
+  },
+  {
+    "id": "e4cfe601-7239-4f64-aadd-2c32132d5901",
+    "name": "HOT Integral A UPDATED 1786058486"
+  },
+  {
+    "id": "beacb645-e77e-4f7b-800b-fa2c8f958541",
+    "name": "HOT Integral A UPDATED 1786060163"
+  },
+  {
+    "id": "1e5c49e9-3607-4f17-b1b7-5b07921e1fcf",
+    "name": "HOT Integral B 1786057681"
+  },
+  {
+    "id": "58e9f839-e1de-43d6-823c-e7e073f8b0c3",
+    "name": "HOT Integral B 1786057783"
+  },
+  {
+    "id": "1f44ac81-c165-483b-acb8-3eceb2229612",
+    "name": "HOT Integral B 1786057888"
+  },
+  {
+    "id": "9a46d5c7-6a1a-4276-83e0-cd616c85c00f",
+    "name": "HOT Integral B 1786058486"
+  },
+  {
+    "id": "68d301f2-8f4e-4577-a350-b2b01799fb7f",
+    "name": "HOT Integral B 1786060163"
+  },
+  {
+    "id": "c3d20f20-a4e0-472e-8680-5cd821377543",
+    "name": "HOT R2 Store A 1786058718"
+  },
+  {
+    "id": "50e7ad25-25cb-412c-8b59-5df50f2be8bf",
+    "name": "HOT R2 Store B 1786058718"
+  },
+  {
+    "id": "9fcc7ca2-bf06-4b46-b96f-75e510ad69eb",
+    "name": "HOT R3 Store A 1786058841"
+  },
+  {
+    "id": "fe4a1ce9-4cf5-48f3-9400-9f31bd3308b6",
+    "name": "HOT R6 Store A 1786059359"
+  },
+  {
+    "id": "b73e5467-11c8-466d-9a9f-208570e9ea06",
+    "name": "HOT R6 Store B 1786059359"
+  },
+  {
+    "id": "007a3c33-a150-4442-85b9-be24c0f4b1cb",
+    "name": "HOT R6B Store A 1786059504"
+  },
+  {
+    "id": "c135c50a-c2ff-4476-ac66-c1a698aec1e6",
+    "name": "HOT R6B Store B 1786059504"
+  },
+  {
+    "id": "aad38a68-8214-4ee5-8239-2232312ae787",
+    "name": "HOT R6C Store A 1786059605"
+  },
+  {
+    "id": "fd058f2c-a3c9-475c-9eff-e107f327d965",
+    "name": "HOT R6C Store B 1786059605"
+  },
+  {
+    "id": "0fed91c9-8a15-44b6-877c-1c1e561715c4",
+    "name": "HOT R6D Store A 1786059736"
+  },
+  {
+    "id": "40f651f4-2993-4d46-8459-6e3bbbb17b55",
+    "name": "HOT R6D Store B 1786059736"
+  },
+  {
+    "id": "4ceef696-788b-4b3d-b0ff-0b0f0af14946",
+    "name": "HOT Sucursal A 1785995943"
+  },
+  {
+    "id": "67ac1e6d-56d4-42a1-98cd-4950e3090a65",
+    "name": "HOT Sucursal B 1785995943"
+  },
+  {
+    "id": "20d080d5-65ae-4f9c-87da-5575bbffe27b",
+    "name": "HOT Transfer Test 1786060918"
+  },
+  {
+    "id": "2ef293a3-23b4-4816-aa2b-9752627a1175",
+    "name": "No Address"
+  },
+  {
+    "id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+    "name": "Puerto Padre VITALLCONS"
+  },
+  {
+    "id": "dcfd74bf-ebfa-4630-b532-ebbd4c5b42a2",
+    "name": "Store Tenant 2"
+  },
+  {
+    "id": "1384d4af-210a-4809-8374-466c3667af5f",
+    "name": "TEST-REGRESION-1785629886030"
+  },
+  {
+    "id": "8a471be5-cf43-4667-ace8-229b31f3a1b1",
+    "name": "TEST-REGRESION-1785629953259"
+  },
+  {
+    "id": "9bc060c2-1a39-4cb5-aff1-1512e7b7b1f7",
+    "name": "TEST-REGRESION-1785631731646"
+  },
+  {
+    "id": "568bd7a1-f47d-44a3-8c35-fd1ad3dc9944",
+    "name": "TEST-TRANSFER-DEST"
+  },
+  {
+    "id": "11111111-1111-1111-1111-111111111111",
+    "name": "Tienda Auditor"
+  },
+  {
+    "id": "d1c4ba0e-5767-4ba0-e576-7d1c4ba0e576",
+    "name": "TIENDA CENTRAL COSTPRO"
+  }
+]
+
+===== RUN RESULT: OK =====

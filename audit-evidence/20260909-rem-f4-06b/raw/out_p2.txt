@@ -1,0 +1,20 @@
+# SQL RUN — 2026-09-09T22:37:12.695Z
+# file: p2_pre_mechanism.sql
+# endpoint: Management API query (project ********************)
+
+===== STATEMENT: PRE_A3_42804_mechanism_proof_isolated =====
+HTTP 400
+{
+  "message": "Failed to run sql query: ERROR:  42804: column \"record_id\" is of type uuid but expression is of type text\nLINE 8:   '11111111-1111-1111-1111-111111111111'::text,\n          ^\nHINT:  You will need to rewrite or cast the expression.\n"
+}
+
+===== STATEMENT: PRE_A4_zero_persistence_after_mechanism_proof =====
+HTTP 201
+[
+  {
+    "audit_rows_mechanism_proof": 0
+  }
+]
+
+===== RUN RESULT: FAILED =====
+

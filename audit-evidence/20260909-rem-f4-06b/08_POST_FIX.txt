@@ -1,0 +1,36 @@
+# 08 — POST FIX (verificación inmediata POST-migración, §10) — REM-F4-06b
+# Raw: raw/post_migration_verify.txt, raw/migration_apply_log.txt
+
+## APLICACIÓN
+
+Migración: supabase/migrations/20260909000003_rem_f4_06b_audit_fiscal_closing_record_id_uuid.sql
+Aplicada en una sola transacción implícita vía Management API (HTTP 201):
+guard PRE (7 verificaciones) → CREATE OR REPLACE FUNCTION → guard POST
+(9 verificaciones). Sin excepciones ⇒ sin rollback. Log: raw/migration_apply_log.txt
+
+## COMPARACIÓN PRE vs POST
+
+| Propiedad                        | PRE                          | POST                         | == |
+|----------------------------------|------------------------------|------------------------------|----|
+| owner                            | postgres                     | postgres                     | ✓  |
+| SECURITY DEFINER (prosecdef)     | true                         | true                         | ✓  |
+| proconfig (search_path)          | search_path=public, pg_temp  | search_path=public, pg_temp  | ✓  |
+| firma                            | audit_fiscal_closings_changes() | idéntica                  | ✓  |
+| identity arguments               | (vacío)                      | (vacío)                      | ✓  |
+| tipo de retorno                  | trigger                      | trigger                      | ✓  |
+| trigger trg_audit_fiscal_closings| AFTER INSERT OR UPDATE, 'O'  | idéntico, 'O'                | ✓  |
+| prevent_fiscal_closing_edit      | BEFORE DELETE OR UPDATE, 'O' | idéntico, 'O'                | ✓  |
+| ACL función (EXECUTE)            | postgres, service_role       | (sin GRANT/REVOKE ejecutado — intacto) | ✓ |
+
+## ELIMINACIÓN DEL DEFECTO (pruebas booleanas sobre el cuerpo POST)
+
+  has_any_text_cast  = false   ← NEW.id::text / OLD.id::text eliminados
+  has_new_year       = false   ← D1 eliminado
+  has_new_month      = false   ← D1 eliminado
+  has_period_year    = true    ← referencia correcta presente
+  has_period_month   = true    ← referencia correcta presente
+  assigns_new_id     = true    ← record_id = NEW.id (uuid→uuid) presente
+
+Objeto funcionalmente equivalente al PRE excepto por el cast defectuoso y
+las referencias de metadata D1 (mismo objeto, misma firma, misma semántica
+de auditoría, mismas propiedades de seguridad).

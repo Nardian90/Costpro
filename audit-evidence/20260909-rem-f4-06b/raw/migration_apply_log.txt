@@ -1,0 +1,9 @@
+# SQL RUN — 2026-09-09T22:47:47.945Z
+# file: /home/z/my-project/Costpro/supabase/migrations/20260909000003_rem_f4_06b_audit_fiscal_closing_record_id_uuid.sql
+# endpoint: Management API query (project ********************)
+
+===== STATEMENT: single =====
+HTTP 201
+[]
+
+===== RUN RESULT: OK =====

@@ -1,0 +1,26 @@
+# SQL RUN — 2026-09-09T22:37:30.983Z
+# file: p6_f1_state.sql
+# endpoint: Management API query (project ********************)
+
+===== STATEMENT: F1_STATE_AFTER_HTTP_500 =====
+HTTP 201
+[
+  {
+    "id": "17558101-2d1e-498b-b995-542717735e93",
+    "status": "closed",
+    "locked_by_null": true,
+    "locked_at_null": true,
+    "updated_at": "2026-09-09 22:34:07.868658+00"
+  }
+]
+
+===== STATEMENT: AUDIT_ROWS_AFTER_HTTP_500 =====
+HTTP 201
+[
+  {
+    "audit_fiscal_rows": 0
+  }
+]
+
+===== RUN RESULT: OK =====
+

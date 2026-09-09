@@ -1,0 +1,25 @@
+# SQL RUN — 2026-09-09T22:37:17.135Z
+# file: p3_pre_fixture.sql
+# endpoint: Management API query (project ********************)
+
+===== STATEMENT: PRE_B_fixture_row_with_trigger_disabled =====
+HTTP 400
+{
+  "message": "Failed to run sql query: ERROR:  23505: duplicate key value violates unique constraint \"uq_fiscal_closings_store_period\"\nDETAIL:  Key (store_id, period_year, period_month)=(f91b0e17-ac23-42ba-b08e-8159a6b57d83, 2026, 8) already exists.\n"
+}
+
+===== STATEMENT: PRE_B2_verify_triggers_enabled_and_row_exists =====
+HTTP 201
+[
+  {
+    "id": "17558101-2d1e-498b-b995-542717735e93",
+    "store_id": "f91b0e17-ac23-42ba-b08e-8159a6b57d83",
+    "period_year": 2026,
+    "period_month": 8,
+    "status": "closed",
+    "closing_notes": "REM-F4-06b fixture F1 — HTTP lock test subject"
+  }
+]
+
+===== RUN RESULT: FAILED =====
+

@@ -1,0 +1,32 @@
+# 15 — REGRESIÓN (§18) — REM-F4-06b
+# Comparación estricta contra baseline conocido. Raw: raw/f406b-build-output.txt,
+# raw/f406b-build-oom-kernel-signature.txt
+
+| Check   | Baseline esperado          | Remediación F4-06b            | Veredicto |
+|---------|----------------------------|-------------------------------|-----------|
+| Vitest  | 2058 PASS / 0 FAIL / 24 SKIP | 2058 PASS / 0 FAIL / 24 SKIP (96 files passed, 1 skipped) | ✓ IGUAL |
+| TSC     | 0 errores                  | 0 errores (exit 0)            | ✓ IGUAL  |
+| Lint    | 0 errores / 1291 warnings  | 0 errores / 1291 warnings     | ✓ IGUAL  |
+| Build   | compila; type-checker exit 137 por OOM del kernel (precedente F4-03/04/06) | MISMO FENÓMENO — clasificado INFRASTRUCTURE OOM (ver abajo) | ✓ CLASIFICADO |
+| PM2     | 3/3 online                 | 3/3 online, 0 restarts (uptime >72m durante todo el gate) | ✓ IGUAL |
+| Health  | HTTP 200                   | /api/health 200, / 200        | ✓ IGUAL  |
+
+## CLASIFICACIÓN DEL BUILD — INFRASTRUCTURE OOM (5 condiciones, todas demostradas)
+
+1. El build COMPILA: `▲ Next.js 16.3.0 (Turbopack)` + `Creating an optimized
+   production build ...` (raw/f406b-build-output.txt).
+2. TSC independiente = 0 errores (ejecutado antes del build, exit 0).
+3. dmesg DEMUESTRA OOM del kernel (raw/f406b-build-oom-kernel-signature.txt):
+     tokio-rt-worker invoked oom-killer: gfp_mask=0x100dca(...)
+     oom-kill:constraint=CONSTRAINT_NONE,...global_oom,task=next-build (v16,pid=7788
+     Out of memory: Killed process 7788 (next-build (v16)
+       total-vm:40737060kB, anon-rss:2521136kB, file-rss:88748kB
+   (≈2.4GB anon-rss sobre host de ~4GB con el dev-server PM2 activo —
+   mismo fenómeno y magnitud que los antecedentes F4-03/04/06)
+4. SIN error de código en el log: grep de error/type/failed = solo "Killed".
+5. Config SIN ALTERAR: git status sobre next.config.ts / package.json vacío.
+
+→ Clasificación: INFRASTRUCTURE OOM (no defecto de código). Ninguna
+  diferencia convertida en PASS sin explicación: Vitest/TSC/Lint/PM2/Health
+  son IGUALES al baseline; el build repite EXACTAMENTE el antecedente
+  documentado de los gates previos.

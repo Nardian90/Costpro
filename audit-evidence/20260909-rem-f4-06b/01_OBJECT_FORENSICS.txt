@@ -1,0 +1,142 @@
+# 01 — OBJECT FORENSICS — REM-F4-06b
+# Reconocimiento forense completo (§2, §3, §5). Raw: raw/out_q01..out_q08
+
+## A. FUNCIÓN OBJETIVO (estado PRE-fix, capturado en vivo)
+
+Nombre:     public.audit_fiscal_closings_changes()
+Firma:      audit_fiscal_closings_changes() RETURNS trigger
+Owner:      postgres
+prosecdef:  true (SECURITY DEFINER)
+proconfig:  search_path=public, pg_temp
+Trigger:    trg_audit_fiscal_closings
+            AFTER INSERT OR UPDATE ON public.fiscal_closings
+            FOR EACH ROW EXECUTE FUNCTION audit_fiscal_closings_changes()
+            tgenabled = 'O' (habilitado)
+
+Definición PRE (pg_get_functiondef, textual):
+
+CREATE OR REPLACE FUNCTION public.audit_fiscal_closings_changes()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
+AS $function$
+DECLARE
+  v_action text;
+BEGIN
+  IF TG_OP = 'INSERT' THEN
+    v_action := 'FISCAL_CLOSING_CREATED';
+  ELSIF TG_OP = 'UPDATE' THEN
+    v_action := 'FISCAL_CLOSING_UPDATED';
+  END IF;
+
+  INSERT INTO public.audit_logs (action, table_name, record_id, store_id, user_id, metadata)
+  VALUES (v_action, 'fiscal_closings',
+    CASE WHEN TG_OP = 'INSERT' THEN NEW.id::text ELSE NEW.id::text END,   -- ← DEFECTO (42804)
+    CASE WHEN TG_OP = 'INSERT' THEN NEW.store_id ELSE NEW.store_id END,
+    auth.uid(),
+    jsonb_build_object(
+      'tg_op', TG_OP,
+      'year', CASE WHEN TG_OP != 'DELETE' THEN NEW.year ELSE NULL END,
+      'month', CASE WHEN TG_OP != 'DELETE' THEN NEW.month ELSE NULL END,
+      'status', CASE WHEN TG_OP != 'DELETE' THEN NEW.status ELSE NULL END
+    ));
+
+  RETURN NEW;
+END;
+$function$
+
+Columnas de audit_logs que escribe (NO se cambian): action, table_name,
+record_id, store_id, user_id, metadata. Único cambio autorizado: eliminar el
+cast ::text en record_id.
+
+## B. TRIGGERS SOBRE fiscal_closings (ambos capturados)
+
+  trg_audit_fiscal_closings   AFTER INSERT OR UPDATE FOR EACH ROW → audit_fiscal_closings_changes()  [tgenabled O]
+  prevent_fiscal_closing_edit BEFORE DELETE OR UPDATE FOR EACH ROW → prevent_fiscal_closing_edit()   [tgenabled O]
+
+Contrato de eventos del trigger de auditoría: INSERT y UPDATE únicamente.
+NO hay evento DELETE en trg_audit_fiscal_closings (la función tampoco tiene
+rama DELETE: v_action quedaría NULL y asignaría NEW.id). El DELETE de
+fiscal_closings NO genera auditoría POR DISEÑO. Único writer DELETE en BD:
+reset_store_data (utilitario admin, SECURITY DEFINER). RLS de fiscal_closings
+NO tiene política DELETE → para roles no-propietario el DELETE está denegado
+por RLS (0 filas). Documentado en 04_ROOT_CAUSE (contrato) y probado en
+09_FUNCTIONAL (diferencia de contrato).
+
+## C. TIPOS EXACTOS (§3)
+
+  fiscal_closings.id      → data_type uuid, udt_name uuid, NOT NULL,
+                            default gen_random_uuid()
+  audit_logs.record_id    → data_type uuid, udt_name uuid
+  Expectativa canónica:   uuid → uuid  (NO uuid → text → uuid)
+
+## D. TABLA fiscal_closings — columnas relevantes
+
+  id             uuid NOT NULL DEFAULT gen_random_uuid()
+  store_id       uuid (FK → stores ON DELETE CASCADE)
+  period_year    (entero; FK-less), period_month integer CHECK 1..12
+  status         text DEFAULT 'open' CHECK (status IN ('open','closed','locked'))
+  total_sales/total_devolutions/total_purchases/total_commissions/
+  total_cash_balance  numeric DEFAULT 0
+  closed_by/locked_by uuid (FK → profiles), closed_at/locked_at timestamptz
+  created_at/updated_at timestamptz NOT NULL DEFAULT now()
+
+Constraints:
+  fiscal_closings_pkey            PRIMARY KEY (id)
+  uq_fiscal_closings_store_period UNIQUE (store_id, period_year, period_month)
+  idx_fiscal_closings_store_period (no único)
+  FKs: store_id→stores, closed_by→profiles, locked_by→profiles
+  CHECKs: period_month 1..12, status IN (open, closed, locked)
+
+RLS: ENABLED, owner postgres. Políticas:
+  fiscal_closings_insert (INSERT) with_check has_store_access(store_id)
+  fiscal_closings_select (SELECT) using has_store_access(store_id)
+  fiscal_closings_update (UPDATE) using+with_check has_store_access(store_id)
+  (NO política DELETE — denegado por RLS para roles no-propietario)
+
+ACL de tabla (resumen): privilegios completos para postgres, anon,
+authenticated, service_role — SIN CAMBIO en este gate. La escritura efectiva
+está disciplinada por RLS + guardas de los RPCs.
+
+## E. ESCRITORES DE fiscal_closings EN BD (censo completo, §3/§7 contexto)
+
+  ensure_fiscal_period(uuid,integer,integer)  → INSERT ... ON CONFLICT DO NOTHING (idempotente por diseño)
+  lock_fiscal_period(uuid,integer,integer)    → UPDATE status='locked' WHERE status='closed'
+  reset_store_data(uuid,boolean,uuid)         → DELETE (utilitario admin)
+  audit_fiscal_closings_changes()             → trigger function (objetivo del gate)
+
+Mapa HTTP (src/):
+  POST /api/fiscal-close {action:'close'} → close_fiscal_period → escribe
+      fiscal_period_closures (TABLA DISTINTA) + audit_logs con record_id uuid
+      directo (SIN defecto). NO toca fiscal_closings.
+  POST /api/fiscal-close {action:'lock'} → lock_fiscal_period → UPDATE
+      fiscal_closings → DISPARA el trigger defectuoso → HTTP 500.
+  GET  /api/fiscal-close → solo SELECT (no dispara trigger).
+  ensure_fiscal_period: RPC expuesto, sin callers en src/ (capa de soporte).
+  reset_store_data: utilitario administrativo.
+
+## F. RPCs FISCALES — seguridad (capturada PRE, se re-verifica POST)
+
+  close_fiscal_period  SECURITY DEFINER, search_path=public, pg_temp, owner postgres
+                       ACL EXECUTE: postgres, service_role (NO anon/authenticated)
+  lock_fiscal_period   SECURITY DEFINER, search_path=public, owner postgres
+                       ACL EXECUTE: postgres, service_role (NO anon/authenticated)
+  ensure_fiscal_period SECURITY DEFINER, search_path=pg_catalog, public, owner postgres
+                       ACL EXECUTE: postgres, service_role (NO anon/authenticated)
+
+## G. GATES PREVIOS INTACTOS (§2 — verificación en vivo)
+
+  F4-04: register_reception (SECDEF, owner postgres, cuerpo llama
+         fn_recalc_wac ✓) + fn_recalc_wac (SECDEF, owner postgres ✓) +
+         trigger guardián trg_guard_wac_writer presente y habilitado ('O') ✓
+  F4-03: withdraw_production_item_v3 (SECDEF, owner postgres ✓)
+  F4-06: audit_commission_payments_changes() — SECURITY DEFINER, owner
+         postgres, search_path=public, pg_temp; SIN '::text' en todo el
+         cuerpo; asignación canónica:
+           CASE WHEN TG_OP != 'DELETE' THEN NEW.id ELSE OLD.id END
+         Trigger trg_audit_commission_payments AFTER INSERT OR DELETE OR
+         UPDATE, habilitado. commission_payments.id = uuid ✓
+         → REM-F4-06 INTACTO en BD (nota administrativa del commit en 00).
+  Canónico de referencia (§6): audit_cash_closures_changes() usa
+         v_record_id := NEW.id (asignación directa uuid, 0 casts ::text) ✓

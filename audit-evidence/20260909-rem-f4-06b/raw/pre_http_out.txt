@@ -1,0 +1,18 @@
+# REM-F4-06b PRE-FIX HTTP REPRODUCTION — 2026-09-09T22:36:34.413Z
+# Path: POST /api/fiscal-close {action:'lock'} (camino REAL de la UI FiscalCloseView)
+[ok] login fixture user admin@demo.com (uid a1111111-1111-1111-1111-111111111111)
+
+== Estado PRE (DB) ==
+[{"n":0}]
+
+== Control: GET /api/fiscal-close (solo SELECT) ==
+HTTP 200 — {"store_id":"f91b0e17-ac23-42ba-b08e-8159a6b57d83","year":2026,"month":8,"status":"closed","closing":{"id":"17558101-2d1e-498b-b995-542717735e93","store_id":"f91b0e17-ac23-42ba-b08e-8159a6b57d83","period_year":2026,"period_month":8,"status":"closed","total_sales":0,"total_devolutions":0,"total_purchases":0,"total_commissions":0,"total_cash_balance":0,"closing_notes":"REM-F4-06b fixture F1 — HTTP lock test subject","closed_by":null,"closed_at":null,"locked_by":null,"locked_at":null,"created_at":"2026-09-09T22:34:07.868658+00:00","updated_at":"2026-09-09T22:34:07.868658+00:00"}}
+
+== REPRO: POST /api/fiscal-close {action:'lock'} ==
+HTTP 500
+body: {"error":"Could not find the function public.lock_fiscal_period(p_month, p_store_id, p_user_id, p_year) in the schema cache"}
+
+== Estado POST-intento (DB) — demostrar 0 estado parcial ==
+[{"n":0}]
+
+# CONCLUSIÓN PRE: HTTP 500 (o distinto de 2xx) en lock; fila intacta; 0 audit rows.

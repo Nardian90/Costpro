@@ -1,0 +1,85 @@
+# SQL RUN — 2026-09-09T23:09:35.835Z
+# file: q01_object_state.sql
+# endpoint: Management API query (project ********************)
+
+===== STATEMENT: commission_trigger_function_state (REM-F4-06 verification) =====
+HTTP 201
+[
+  {
+    "proname": "audit_commission_payments_changes",
+    "signature": "audit_commission_payments_changes()",
+    "security_definer": true,
+    "search_path_cfg": [
+      "search_path=public, pg_temp"
+    ],
+    "owner": "postgres",
+    "has_text_cast": false,
+    "has_new_id_text": false,
+    "has_old_id_text": false
+  }
+]
+
+===== STATEMENT: fiscal_trigger_function_state (target of F4-06b) =====
+HTTP 201
+[
+  {
+    "proname": "audit_fiscal_closings_changes",
+    "signature": "audit_fiscal_closings_changes()",
+    "security_definer": true,
+    "search_path_cfg": [
+      "search_path=public, pg_temp"
+    ],
+    "owner": "postgres",
+    "has_new_id_text": false,
+    "has_old_id_text": false
+  }
+]
+
+===== STATEMENT: fiscal_closings_id_type =====
+HTTP 201
+[
+  {
+    "table_name": "fiscal_closings",
+    "column_name": "id",
+    "data_type": "uuid",
+    "udt_name": "uuid"
+  }
+]
+
+===== STATEMENT: audit_logs_record_id_type =====
+HTTP 201
+[
+  {
+    "table_name": "audit_logs",
+    "column_name": "record_id",
+    "data_type": "uuid",
+    "udt_name": "uuid"
+  }
+]
+
+===== STATEMENT: fiscal_closings_trigger =====
+HTTP 201
+[
+  {
+    "tgname": "prevent_fiscal_closing_edit",
+    "definition": "CREATE TRIGGER prevent_fiscal_closing_edit BEFORE DELETE OR UPDATE ON public.fiscal_closings FOR EACH ROW EXECUTE FUNCTION prevent_fiscal_closing_edit()",
+    "tgenabled": "O"
+  },
+  {
+    "tgname": "trg_audit_fiscal_closings",
+    "definition": "CREATE TRIGGER trg_audit_fiscal_closings AFTER INSERT OR UPDATE ON public.fiscal_closings FOR EACH ROW EXECUTE FUNCTION audit_fiscal_closings_changes()",
+    "tgenabled": "O"
+  }
+]
+
+===== STATEMENT: cash_closures_canonical_reference =====
+HTTP 201
+[
+  {
+    "proname": "audit_cash_closures_changes",
+    "uses_direct_uuid": true,
+    "has_any_text_cast": false
+  }
+]
+
+===== RUN RESULT: OK =====

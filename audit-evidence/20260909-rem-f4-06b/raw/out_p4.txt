@@ -1,0 +1,36 @@
+# SQL RUN — 2026-09-09T22:37:22.260Z
+# file: p4_pre_update_delete.sql
+# endpoint: Management API query (project ********************)
+
+===== STATEMENT: PRE_C_update_repro_42703_masks_42804 =====
+HTTP 400
+{
+  "message": "Failed to run sql query: ERROR:  42703: record \"new\" has no field \"year\"\nCONTEXT:  SQL statement \"INSERT INTO public.audit_logs (action, table_name, record_id, store_id, user_id, metadata)\n  VALUES (v_action, 'fiscal_closings',\n    CASE WHEN TG_OP = 'INSERT' THEN NEW.id::text ELSE NEW.id::text END,\n    CASE WHEN TG_OP = 'INSERT' THEN NEW.store_id ELSE NEW.store_id END,\n    auth.uid(),\n    jsonb_build_object(\n      'tg_op', TG_OP,\n      'year', CASE WHEN TG_OP != 'DELETE' THEN NEW.year ELSE NULL END,\n      'month', CASE WHEN TG_OP != 'DELETE' THEN NEW.month ELSE NULL END,\n      'status', CASE WHEN TG_OP != 'DELETE' THEN NEW.status ELSE NULL END\n    ))\"\nPL/pgSQL function audit_fiscal_closings_changes() line 11 at SQL statement\n"
+}
+
+===== STATEMENT: PRE_C2_zero_persistence_update =====
+HTTP 201
+[
+  {
+    "audit_rows_after_update_attempt": 0
+  }
+]
+
+===== STATEMENT: PRE_D_delete_contract_documentation =====
+HTTP 201
+[
+  {
+    "audit_rows_during_delete_window": 0
+  }
+]
+
+===== STATEMENT: PRE_D2_row_restored_after_rollback =====
+HTTP 201
+[
+  {
+    "rows_restored": 1
+  }
+]
+
+===== RUN RESULT: FAILED =====
+

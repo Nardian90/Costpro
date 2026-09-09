@@ -1,0 +1,39 @@
+# 16 — GIT (§21-§23) — REM-F4-06b
+# Estado capturado ANTES del commit (sin hash auto-referencial, §20)
+
+## ESTADO PRE-COMMIT
+
+  git rev-parse HEAD (padre del commit de este gate)
+      = 35f326caa701414d6ecb8bbdb439004adfcd6fc5  (fix(audit): remediate F4-03)
+  git rev-parse origin/main
+      = 35f326caa701414d6ecb8bbdb439004adfcd6fc5
+  git status --short → SOLO dos entradas no rastreadas (alcance quirúrgico):
+      ?? audit-evidence/20260909-rem-f4-06b/
+      ?? supabase/migrations/20260909000003_rem_f4_06b_audit_fiscal_closing_record_id_uuid.sql
+  Total de archivos a commitear: 59 (1 migración + evidence pack 00-17 + raws)
+
+## CONTENIDO DEL COMMIT (exclusivo de este gate — §21)
+
+  1. supabase/migrations/20260909000003_rem_f4_06b_audit_fiscal_closing_record_id_uuid.sql
+     (migración F4-06b con guards PRE/POST)
+  2. audit-evidence/20260909-rem-f4-06b/00…17 + SHA256SUMS (evidence pack)
+  3. Nada más: sin .env, sin credenciales, sin temporales, sin builds,
+     sin dumps, sin cambios en src/ (OF-1 documentado, no corregido).
+
+## VERIFICACIONES REALIZADAS
+
+  git status       → limpio tras el commit (se re-verifica en el reporte final)
+  git diff         → solo migración nueva + pack (no modificaciones a
+                     archivos existentes)
+  secret scan      → LIMPIO (rg patterns sbp_/PAT/service_role: 0 matches)
+
+## PUSH (§23)
+
+  git push origin main — se ejecuta tras el commit.
+  El resultado del push y la verificación LOCAL == REMOTE
+  (git rev-parse HEAD == git rev-parse origin/main) se registran en el
+  reporte final del gate y en worklog.md — NO dentro de este pack
+  (§20: prohibida la cadena hash → evidencia → hash).
+
+  Mensaje de commit (§22):
+    fix(db): remediate fiscal closing audit uuid integrity

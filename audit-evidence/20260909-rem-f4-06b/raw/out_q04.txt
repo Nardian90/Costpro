@@ -1,0 +1,30 @@
+# SQL RUN — 2026-09-09T23:09:49.302Z
+# file: q04_writers.sql
+# endpoint: Management API query (project ********************)
+
+===== STATEMENT: writers_of_fiscal_closings =====
+HTTP 201
+[
+  {
+    "proname": "audit_fiscal_closings_changes",
+    "signature": "audit_fiscal_closings_changes()",
+    "ops": ""
+  },
+  {
+    "proname": "ensure_fiscal_period",
+    "signature": "ensure_fiscal_period(uuid,integer,integer)",
+    "ops": "INSERT"
+  },
+  {
+    "proname": "lock_fiscal_period",
+    "signature": "lock_fiscal_period(uuid,integer,integer)",
+    "ops": " UPDATE"
+  },
+  {
+    "proname": "reset_store_data",
+    "signature": "reset_store_data(uuid,boolean,uuid)",
+    "ops": " DELETE"
+  }
+]
+
+===== RUN RESULT: OK =====

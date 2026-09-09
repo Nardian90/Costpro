@@ -1,0 +1,21 @@
+# REM-F4-06b ATOMICITY SUITE — 2026-09-09T22:52:47.079Z
+  audit rows pre: 3
+
+== 5a. Fallo forzado tras generar auditoría (txn única con DDL transitorio) ==
+  resultado del lote: HTTP 400
+  {"message":"Failed to run sql query: ERROR:  P0001: F4-06B-ATOMICITY-PROBE: forced failure AFTER audit trigger\nCONTEXT:  PL/pgSQL function f406b_force_fail() line 2 at RAISE\n"}
+  [PASS] 5a INSERT abortado por el fallo forzado — HTTP 400
+  post-aborto: audit=3 fiscal_period_2026_03=0 trigger_leftover=0 fn_leftover=0
+  [PASS] 5a fiscal_closing = NOT PERSISTED
+  [PASS] 5a audit_log = NOT PERSISTED (count inalterado) — 3 → 3
+  [PASS] 5a 0 residuo de DDL transitorio (trigger+fn eliminados por rollback)
+
+== 5b. Caso de éxito: negocio + auditoría persistidos ==
+  [PASS] 5b fiscal_closing = persisted — {"fiscal_n":1,"audit_n":2}
+  [PASS] 5b audit_log = persisted (CREATED+UPDATED) — {"fiscal_n":1,"audit_n":2}
+
+== 5c. INSERT duplicado (uq_fiscal_closings_store_period) → sin auditoría ==
+  [PASS] 5c duplicate rechazado (23505) — HTTP 400
+  [PASS] 5c 0 auditoría generada por operación fallida — 3 → 3
+
+== ATOMICITY RESULT: ALL PASS ==

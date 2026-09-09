@@ -1,0 +1,410 @@
+# SQL RUN — 2026-09-09T22:20:19.089Z
+# file: q02_contract.sql
+# endpoint: Management API query (project ********************)
+
+===== STATEMENT: full_function_def_fiscal =====
+HTTP 201
+[
+  {
+    "def": "CREATE OR REPLACE FUNCTION public.audit_fiscal_closings_changes()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$\nDECLARE\n  v_action text;\nBEGIN\n  IF TG_OP = 'INSERT' THEN\n    v_action := 'FISCAL_CLOSING_CREATED';\n  ELSIF TG_OP = 'UPDATE' THEN\n    v_action := 'FISCAL_CLOSING_UPDATED';\n  END IF;\n\n  INSERT INTO public.audit_logs (action, table_name, record_id, store_id, user_id, metadata)\n  VALUES (v_action, 'fiscal_closings',\n    CASE WHEN TG_OP = 'INSERT' THEN NEW.id::text ELSE NEW.id::text END,\n    CASE WHEN TG_OP = 'INSERT' THEN NEW.store_id ELSE NEW.store_id END,\n    auth.uid(),\n    jsonb_build_object(\n      'tg_op', TG_OP,\n      'year', CASE WHEN TG_OP != 'DELETE' THEN NEW.year ELSE NULL END,\n      'month', CASE WHEN TG_OP != 'DELETE' THEN NEW.month ELSE NULL END,\n      'status', CASE WHEN TG_OP != 'DELETE' THEN NEW.status ELSE NULL END\n    ));\n\n  RETURN NEW;\nEND;\n$function$\n"
+  }
+]
+
+===== STATEMENT: full_function_def_prevent =====
+HTTP 201
+[
+  {
+    "def": "CREATE OR REPLACE FUNCTION public.prevent_fiscal_closing_edit()\n RETURNS trigger\n LANGUAGE plpgsql\nAS $function$\nBEGIN\n  IF OLD.status = 'locked' AND current_setting('app.bypass_fiscal_lock', true) <> 'true' THEN\n    RAISE EXCEPTION 'ERR_FISCAL_CLOSING_LOCKED: Cannot modify locked fiscal closing.';\n  END IF;\n  RETURN NEW;\nEND;\n$function$\n"
+  }
+]
+
+===== STATEMENT: fiscal_closings_columns =====
+HTTP 201
+[
+  {
+    "column_name": "id",
+    "data_type": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()"
+  },
+  {
+    "column_name": "store_id",
+    "data_type": "uuid",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "column_name": "period_year",
+    "data_type": "integer",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "column_name": "period_month",
+    "data_type": "integer",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "column_name": "status",
+    "data_type": "text",
+    "is_nullable": "NO",
+    "column_default": "'open'::text"
+  },
+  {
+    "column_name": "total_sales",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": "0"
+  },
+  {
+    "column_name": "total_devolutions",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": "0"
+  },
+  {
+    "column_name": "total_purchases",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": "0"
+  },
+  {
+    "column_name": "total_commissions",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": "0"
+  },
+  {
+    "column_name": "total_cash_balance",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": "0"
+  },
+  {
+    "column_name": "closing_notes",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "column_name": "closed_by",
+    "data_type": "uuid",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "column_name": "closed_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "column_name": "locked_by",
+    "data_type": "uuid",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "column_name": "locked_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "NO",
+    "column_default": "now()"
+  },
+  {
+    "column_name": "updated_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "NO",
+    "column_default": "now()"
+  }
+]
+
+===== STATEMENT: fiscal_closings_rls_policies =====
+HTTP 201
+[
+  {
+    "policy": "fiscal_closings_insert",
+    "using_expr": null,
+    "with_check_expr": "has_store_access(store_id)",
+    "cmd": "INSERT"
+  },
+  {
+    "policy": "fiscal_closings_select",
+    "using_expr": "has_store_access(store_id)",
+    "with_check_expr": null,
+    "cmd": "SELECT"
+  },
+  {
+    "policy": "fiscal_closings_update",
+    "using_expr": "has_store_access(store_id)",
+    "with_check_expr": "has_store_access(store_id)",
+    "cmd": "UPDATE"
+  }
+]
+
+===== STATEMENT: fiscal_closings_rls_enabled_and_grants =====
+HTTP 201
+[
+  {
+    "rls_enabled": true,
+    "owner": "postgres"
+  }
+]
+
+===== STATEMENT: fiscal_closings_acl =====
+HTTP 201
+[
+  {
+    "privilege_type": "DELETE",
+    "grantee_role": "postgres"
+  },
+  {
+    "privilege_type": "INSERT",
+    "grantee_role": "postgres"
+  },
+  {
+    "privilege_type": "REFERENCES",
+    "grantee_role": "postgres"
+  },
+  {
+    "privilege_type": "SELECT",
+    "grantee_role": "postgres"
+  },
+  {
+    "privilege_type": "TRIGGER",
+    "grantee_role": "postgres"
+  },
+  {
+    "privilege_type": "TRUNCATE",
+    "grantee_role": "postgres"
+  },
+  {
+    "privilege_type": "UPDATE",
+    "grantee_role": "postgres"
+  },
+  {
+    "privilege_type": "DELETE",
+    "grantee_role": "anon"
+  },
+  {
+    "privilege_type": "INSERT",
+    "grantee_role": "anon"
+  },
+  {
+    "privilege_type": "REFERENCES",
+    "grantee_role": "anon"
+  },
+  {
+    "privilege_type": "SELECT",
+    "grantee_role": "anon"
+  },
+  {
+    "privilege_type": "TRIGGER",
+    "grantee_role": "anon"
+  },
+  {
+    "privilege_type": "TRUNCATE",
+    "grantee_role": "anon"
+  },
+  {
+    "privilege_type": "UPDATE",
+    "grantee_role": "anon"
+  },
+  {
+    "privilege_type": "DELETE",
+    "grantee_role": "authenticated"
+  },
+  {
+    "privilege_type": "INSERT",
+    "grantee_role": "authenticated"
+  },
+  {
+    "privilege_type": "REFERENCES",
+    "grantee_role": "authenticated"
+  },
+  {
+    "privilege_type": "SELECT",
+    "grantee_role": "authenticated"
+  },
+  {
+    "privilege_type": "TRIGGER",
+    "grantee_role": "authenticated"
+  },
+  {
+    "privilege_type": "TRUNCATE",
+    "grantee_role": "authenticated"
+  },
+  {
+    "privilege_type": "UPDATE",
+    "grantee_role": "authenticated"
+  },
+  {
+    "privilege_type": "DELETE",
+    "grantee_role": "service_role"
+  },
+  {
+    "privilege_type": "INSERT",
+    "grantee_role": "service_role"
+  },
+  {
+    "privilege_type": "REFERENCES",
+    "grantee_role": "service_role"
+  },
+  {
+    "privilege_type": "SELECT",
+    "grantee_role": "service_role"
+  },
+  {
+    "privilege_type": "TRIGGER",
+    "grantee_role": "service_role"
+  },
+  {
+    "privilege_type": "TRUNCATE",
+    "grantee_role": "service_role"
+  },
+  {
+    "privilege_type": "UPDATE",
+    "grantee_role": "service_role"
+  }
+]
+
+===== STATEMENT: audit_logs_rls_and_grants_summary =====
+HTTP 201
+[
+  {
+    "privilege_type": "DELETE",
+    "grantee_role": "postgres"
+  },
+  {
+    "privilege_type": "INSERT",
+    "grantee_role": "postgres"
+  },
+  {
+    "privilege_type": "REFERENCES",
+    "grantee_role": "postgres"
+  },
+  {
+    "privilege_type": "SELECT",
+    "grantee_role": "postgres"
+  },
+  {
+    "privilege_type": "TRIGGER",
+    "grantee_role": "postgres"
+  },
+  {
+    "privilege_type": "TRUNCATE",
+    "grantee_role": "postgres"
+  },
+  {
+    "privilege_type": "UPDATE",
+    "grantee_role": "postgres"
+  },
+  {
+    "privilege_type": "DELETE",
+    "grantee_role": "anon"
+  },
+  {
+    "privilege_type": "INSERT",
+    "grantee_role": "anon"
+  },
+  {
+    "privilege_type": "REFERENCES",
+    "grantee_role": "anon"
+  },
+  {
+    "privilege_type": "SELECT",
+    "grantee_role": "anon"
+  },
+  {
+    "privilege_type": "TRIGGER",
+    "grantee_role": "anon"
+  },
+  {
+    "privilege_type": "TRUNCATE",
+    "grantee_role": "anon"
+  },
+  {
+    "privilege_type": "UPDATE",
+    "grantee_role": "anon"
+  },
+  {
+    "privilege_type": "DELETE",
+    "grantee_role": "authenticated"
+  },
+  {
+    "privilege_type": "INSERT",
+    "grantee_role": "authenticated"
+  },
+  {
+    "privilege_type": "REFERENCES",
+    "grantee_role": "authenticated"
+  },
+  {
+    "privilege_type": "SELECT",
+    "grantee_role": "authenticated"
+  },
+  {
+    "privilege_type": "TRIGGER",
+    "grantee_role": "authenticated"
+  },
+  {
+    "privilege_type": "TRUNCATE",
+    "grantee_role": "authenticated"
+  },
+  {
+    "privilege_type": "UPDATE",
+    "grantee_role": "authenticated"
+  },
+  {
+    "privilege_type": "DELETE",
+    "grantee_role": "service_role"
+  },
+  {
+    "privilege_type": "INSERT",
+    "grantee_role": "service_role"
+  },
+  {
+    "privilege_type": "REFERENCES",
+    "grantee_role": "service_role"
+  },
+  {
+    "privilege_type": "SELECT",
+    "grantee_role": "service_role"
+  },
+  {
+    "privilege_type": "TRIGGER",
+    "grantee_role": "service_role"
+  },
+  {
+    "privilege_type": "TRUNCATE",
+    "grantee_role": "service_role"
+  },
+  {
+    "privilege_type": "UPDATE",
+    "grantee_role": "service_role"
+  },
+  {
+    "privilege_type": "INSERT",
+    "grantee_role": "costpro_transaction_adjuster"
+  },
+  {
+    "privilege_type": "INSERT",
+    "grantee_role": "costpro_snapshot_restorer"
+  }
+]
+
+===== STATEMENT: fiscal_closings_row_count_and_sample =====
+HTTP 201
+[
+  {
+    "total_rows": 0
+  }
+]
+
+===== RUN RESULT: OK =====

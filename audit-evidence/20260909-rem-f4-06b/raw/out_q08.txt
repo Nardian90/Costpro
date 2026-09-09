@@ -1,0 +1,79 @@
+# SQL RUN — 2026-09-09T22:28:32.235Z
+# file: q08_sec2b.sql
+# endpoint: Management API query (project ********************)
+
+===== STATEMENT: f404_f403_intact_check =====
+HTTP 201
+[
+  {
+    "proname": "fn_recalc_wac",
+    "secdef": true,
+    "spcfg": [
+      "search_path=public, extensions"
+    ],
+    "owner": "postgres",
+    "calls_recalc_wac": null
+  },
+  {
+    "proname": "register_reception",
+    "secdef": true,
+    "spcfg": [
+      "search_path=public"
+    ],
+    "owner": "postgres",
+    "calls_recalc_wac": true
+  },
+  {
+    "proname": "withdraw_production_item_v3",
+    "secdef": true,
+    "spcfg": [
+      "search_path=public, extensions"
+    ],
+    "owner": "postgres",
+    "calls_recalc_wac": null
+  }
+]
+
+===== STATEMENT: wac_guard_trigger_present =====
+HTTP 201
+[
+  {
+    "tgname": "trg_guard_wac_writer",
+    "tgenabled": "O"
+  }
+]
+
+===== STATEMENT: fiscal_rpc_execute_acl_real =====
+HTTP 201
+[
+  {
+    "proname": "close_fiscal_period",
+    "acl": "postgres:EXECUTE, service_role:EXECUTE"
+  },
+  {
+    "proname": "ensure_fiscal_period",
+    "acl": "postgres:EXECUTE, service_role:EXECUTE"
+  },
+  {
+    "proname": "lock_fiscal_period",
+    "acl": "postgres:EXECUTE, service_role:EXECUTE"
+  }
+]
+
+===== STATEMENT: admin_demo_profile =====
+HTTP 201
+[
+  {
+    "id": "a1111111-1111-1111-1111-111111111111",
+    "email": "admin@demo.com",
+    "role": "admin"
+  }
+]
+
+===== STATEMENT: admin_demo_memberships =====
+HTTP 400
+{
+  "message": "Failed to run sql query: ERROR:  42P01: relation \"store_access\" does not exist\nLINE 1: SELECT store_id, role FROM store_access WHERE user_id=(SELECT id FROM profiles WHERE email='admin@demo.com');\n                                   ^\n"
+}
+
+===== RUN RESULT: FAILED =====

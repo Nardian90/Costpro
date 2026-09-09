@@ -1,0 +1,54 @@
+# SQL RUN — 2026-09-09T22:48:06.557Z
+# file: p8_post_verify.sql
+# endpoint: Management API query (project ********************)
+
+===== STATEMENT: POST_function_definition =====
+HTTP 201
+[
+  {
+    "post_definition": "CREATE OR REPLACE FUNCTION public.audit_fiscal_closings_changes()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$\nDECLARE\n  v_action text;\nBEGIN\n  IF TG_OP = 'INSERT' THEN\n    v_action := 'FISCAL_CLOSING_CREATED';\n  ELSIF TG_OP = 'UPDATE' THEN\n    v_action := 'FISCAL_CLOSING_UPDATED';\n  END IF;\n\n  INSERT INTO public.audit_logs (action, table_name, record_id, store_id, user_id, metadata)\n  VALUES (v_action, 'fiscal_closings',\n    NEW.id,\n    CASE WHEN TG_OP = 'INSERT' THEN NEW.store_id ELSE NEW.store_id END,\n    auth.uid(),\n    jsonb_build_object(\n      'tg_op', TG_OP,\n      'year', CASE WHEN TG_OP != 'DELETE' THEN NEW.period_year ELSE NULL END,\n      'month', CASE WHEN TG_OP != 'DELETE' THEN NEW.period_month ELSE NULL END,\n      'status', CASE WHEN TG_OP != 'DELETE' THEN NEW.status ELSE NULL END\n    ));\n\n  RETURN NEW;\nEND;\n$function$\n"
+  }
+]
+
+===== STATEMENT: POST_properties_vs_pre =====
+HTTP 201
+[
+  {
+    "owner": "postgres",
+    "security_definer": true,
+    "config": "search_path=public, pg_temp",
+    "signature": "audit_fiscal_closings_changes()",
+    "identity_args": "",
+    "result_type": "trigger"
+  }
+]
+
+===== STATEMENT: POST_trigger_state =====
+HTTP 201
+[
+  {
+    "tgname": "prevent_fiscal_closing_edit",
+    "definition": "CREATE TRIGGER prevent_fiscal_closing_edit BEFORE DELETE OR UPDATE ON public.fiscal_closings FOR EACH ROW EXECUTE FUNCTION prevent_fiscal_closing_edit()",
+    "tgenabled": "O"
+  },
+  {
+    "tgname": "trg_audit_fiscal_closings",
+    "definition": "CREATE TRIGGER trg_audit_fiscal_closings AFTER INSERT OR UPDATE ON public.fiscal_closings FOR EACH ROW EXECUTE FUNCTION audit_fiscal_closings_changes()",
+    "tgenabled": "O"
+  }
+]
+
+===== STATEMENT: POST_cast_absence_proofs =====
+HTTP 201
+[
+  {
+    "has_any_text_cast": false,
+    "has_new_year": false,
+    "has_new_month": false,
+    "has_period_year": true,
+    "has_period_month": true,
+    "assigns_new_id": true
+  }
+]
+
+===== RUN RESULT: OK =====

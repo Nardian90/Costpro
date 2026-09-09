@@ -1,0 +1,19 @@
+# REM-F4-06b CONCURRENCY SUITE — 2026-09-09T22:56:54.017Z
+
+== C-A. Dos lock-UPDATE concurrentes sobre el MISMO cierre (F6, 2026-10) ==
+  fixture F6=3f410a7a-150f-43d7-9198-555678d60f99 (preexistente de run anterior — verificación)
+  [PASS] C-A (re-run) 1 audit row UPDATE para F6 ya certificado — [{"n":1}]
+  [PASS] C-A (re-run) estado locked persistente
+
+== C-B. Dos lock-UPDATE concurrentes sobre cierres DISTINTOS (F7=2026-11, F8=2026-12) ==
+  fixtures F7=789cc69c-f563-445f-81a6-44c82c797861 (preexistente) F8=05b9c35e-e1a0-4bb4-83f9-0359870e2b6f (preexistente)
+  [PASS] C-B (re-run) 2 audit rows con SU uuid ya certificadas — [{"record_id":"05b9c35e-e1a0-4bb4-83f9-0359870e2b6f","t":"uuid"},{"record_id":"789cc69c-f563-445f-81a6-44c82c797861","t":"uuid"}]
+
+== C-C. ensure_fiscal_period concurrente sobre periodo NUEVO (2027-01) ==
+  resultados: d504be62-f668-46ba-812c-7783ad3cf724 | d504be62-f668-46ba-812c-7783ad3cf724
+  [PASS] C-C exactamente 1 fila creada bajo carrera — [{"n":1}]
+  [PASS] C-C exactamente 1 audit CREATED bajo carrera — [{"n":1}]
+  [PASS] C-C sin corrupción (los ids devueltos son null o el mismo)
+
+== CONCURRENCY RESULT: ALL PASS ==
+Fixtures: F6=3f410a7a-150f-43d7-9198-555678d60f99 F7=789cc69c-f563-445f-81a6-44c82c797861 F8=05b9c35e-e1a0-4bb4-83f9-0359870e2b6f

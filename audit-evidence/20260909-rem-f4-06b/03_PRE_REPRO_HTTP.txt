@@ -1,0 +1,60 @@
+# 03 — PRE REPRODUCCIÓN HTTP-LEVEL — REM-F4-06b (§4B)
+# Raw: raw/pre_http_out.txt (script raw/p5_pre_http_repro.mjs)
+# Camino REAL de la UI (FiscalCloseView.tsx): POST /api/fiscal-close
+# Ejecutado contra el servidor PM2 local (bun server.ts, puerto 3000).
+
+## SECUENCIA (2026-09-09T22:35Z)
+
+1. Login real vía Supabase Auth REST (usuario fixture admin@demo.com,
+   patrón del gate REM-F4-04) → access_token OK.
+
+2. CONTROL POSITIVO: GET /api/fiscal-close?store_id=STORE_A&year=2026&month=8
+   → HTTP 200 con el closing F1 (status='closed'). El endpoint y la sesión
+   funcionan; el SELECT no dispara triggers.
+
+3. REPRO: POST /api/fiscal-close
+      Origin: http://localhost:3000, Authorization: Bearer <token>
+      body: {"store_id":"f91b0e17-ac23-42ba-b08e-8159a6b57d83",
+             "year":2026,"month":8,"action":"lock"}
+   → HTTP 500
+     body: {"error":"Could not find the function
+            public.lock_fiscal_period(p_month, p_store_id, p_user_id, p_year)
+            in the schema cache"}
+
+4. ESTADO POST-INTENTO (0 estado parcial):
+   F1: status='closed', locked_by NULL, locked_at NULL,
+       updated_at SIN CAMBIO (2026-09-09 22:34:07.868658+00)
+   audit_logs table_name='fiscal_closings': 0 filas.
+
+## ANÁLISIS DEL RESULTADO (hallazgo adicional — OPEN FINDING OF-1)
+
+El HTTP 500 previsto por la directiva se demostró. Sin embargo, el error que
+llega a la respuesta HTTP NO es el del trigger de auditoría: la ruta
+(src/app/api/fiscal-close/route.ts, líneas 75-80) invoca SIEMPRE
+  supabase.rpc('lock_fiscal_period', { p_store_id, p_user_id, p_year, p_month })
+pero la firma REAL del RPC es
+  lock_fiscal_period(p_store_id uuid, p_year integer, p_month integer)
+— NO acepta p_user_id → PostgREST no resuelve la función → 500.
+
+Esto significa que el camino HTTP del lock está roto a NIVEL DE RUTA de forma
+independiente del trigger de auditoría: incluso con el trigger corregido, el
+lock HTTP seguiría en 500 hasta corregir ese desajuste (en ruta o firma RPC).
+
+CLASIFICACIÓN (directiva §0/§25):
+  OF-1 (OPEN FINDING) — defecto de wiring ruta→RPC, en src/, clase hermana,
+  FUERA del alcance quirúrgico de REM-F4-06b (cuya solución esperada es
+  DB/migración; "NO modifiques src/ salvo que sea estrictamente necesario
+  para esta remediación"). NO se corrige en este gate. Recomendación: gate de
+  seguimiento (REM-F4-06c) para alinear la llamada de ruta con la firma RPC
+  o ampliar la firma, más pruebas HTTP lock de extremo a extremo.
+
+CONSECUENCIA PARA LA SUITE FUNCIONAL (§11):
+  - El UPDATE funcional post-fix se certifica a NIVEL BD (contexto
+    authenticated con jwt claims del usuario fixture, misma operación SQL
+    que ejecuta lock_fiscal_period), que la directiva §11 admite
+    explícitamente ("HTTP/DB success") al documentar la diferencia.
+  - El INSERT funcional post-fix se certifica a nivel BD por el mismo
+    criterio: el único INSERT de aplicación en fiscal_closings es el RPC
+    ensure_fiscal_period (sin caller HTTP en src/).
+  - La cadena de enmascaramiento HTTP (OF-1) queda documentada con esta
+    reproducción viva PRE-fix.

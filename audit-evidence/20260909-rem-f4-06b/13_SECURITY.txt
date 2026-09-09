@@ -1,0 +1,24 @@
+# REM-F4-06b SECURITY SUITE — 2026-09-09T22:57:51.895Z
+
+== S1. ANON (sin sesión) → 401 DENY ==
+  [PASS] S1 anon POST /api/fiscal-close DENIED — status=401
+  [PASS] S1 anon GET /api/fiscal-close DENIED — status=401
+
+== S2. Usuario SIN membresía (RLS) → 0 filas / 0 updates ==
+  [PASS] S2 non-member SELECT fiscal_closings = 0 filas (RLS) — [{"visible_rows":0}]
+  [PASS] S2 non-member UPDATE fiscal_closings = 0 filas (RLS update policy) — HTTP 201 rows=[]
+
+== S3. CROSS-STORE ==
+  [PASS] S3 has_store_access_as(non-member, STORE_B) = false — [{"has_access":false}]
+  [PASS] S3 authenticated sin EXECUTE en close_fiscal_period → permission DENIED — HTTP 400 {"message":"Failed to run sql query: ERROR:  42501: permission denied for function close_fiscal_period\n"}
+  [PASS] S3 authenticated sin EXECUTE en lock_fiscal_period → permission DENIED — HTTP 400
+
+== S4. RLS / ACL / SECDEF / ownership POST (debe ser idéntico a PRE) ==
+  [PASS] S4 fiscal_closings RLS sigue ENABLED — [{"rls":true,"force_rls":false}]
+  [PASS] S4 políticas RLS de fiscal_closings intactas (3: insert/select/update) — [{"n":3}]
+  [PASS] S4 función objetivo: SECDEF + search_path + owner preservados — [{"prosecdef":true,"cfg":"search_path=public, pg_temp","owner":"postgres"}]
+  grants de tabla fiscal_closings (referencia POST): [{"n":28}]
+  ACL función objetivo (referencia POST): [{"acl":"postgres:EXECUTE, service_role:EXECUTE"}]
+  [PASS] S4 sin cambios no autorizados detectados
+
+== SECURITY RESULT: ALL PASS ==

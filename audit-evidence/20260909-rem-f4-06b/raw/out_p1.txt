@@ -1,0 +1,20 @@
+# SQL RUN — 2026-09-09T22:37:08.573Z
+# file: p1_pre_repro_insert.sql
+# endpoint: Management API query (project ********************)
+
+===== STATEMENT: PRE_A_insert_repro_authenticated_42804 =====
+HTTP 400
+{
+  "message": "Failed to run sql query: ERROR:  23505: duplicate key value violates unique constraint \"uq_fiscal_closings_store_period\"\n"
+}
+
+===== STATEMENT: PRE_A2_zero_persistence_proof =====
+HTTP 201
+[
+  {
+    "audit_rows_after_insert_attempt": 0
+  }
+]
+
+===== RUN RESULT: FAILED =====
+

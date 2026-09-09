@@ -1,0 +1,16 @@
+# REM-F4-06b IDEMPOTENCY SUITE — 2026-09-09T22:56:39.413Z
+
+== I1. ensure_fiscal_period ×2 (idempotencia del contrato, ON CONFLICT DO NOTHING) ==
+  llamada 1 → a2592dd4-e39f-4616-996a-172a9fa4c922
+  llamada 2 → a2592dd4-e39f-4616-996a-172a9fa4c922
+  [PASS] I1 mismo id en ambas llamadas
+  [PASS] I1 exactamente 1 fila del periodo — [{"n":1}]
+  [PASS] I1 sin auditoría duplicada para el periodo (1 CREATED) — [{"n":1}]
+
+== I2. Lock repetido sobre F1 (UPDATE ... WHERE status='closed' ya no matchea) ==
+  retry lock → filas afectadas: 0 (contrato RPC: NOT FOUND → ERR_NOT_CLOSED)
+  [PASS] I2 retry no modifica nada (0 filas)
+  [PASS] I2 sin auditoría adicional — 1 → 1
+  [PASS] I2 estado final intacto (locked)
+
+== IDEMPOTENCY RESULT: ALL PASS ==
