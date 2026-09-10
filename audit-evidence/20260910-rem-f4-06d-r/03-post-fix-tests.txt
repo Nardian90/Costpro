@@ -1,0 +1,28 @@
+REM-F4-06d-R — PRUEBAS POST-FIX (§14) + CONSISTENCIA GET/POST (§8)
+==================================================================
+RAW COMPLETO: raws/postfix_tests.json, raws/get_vs_post_status.json
+Método idéntico al PRE (HTTP real, JWT reales, store fixture ALPHA).
+Servidor reiniciado tras aplicar el fix (pm2 restart costpro; health 200).
+
+S1 — OPEN (2026-12, período OPEN fresco):
+  HTTP 200 {"store_id":"...","year":2026,"month":12,"status":"open","closing":{...}}
+  fiscal_closings: open → open   ✓ SIN MUTACIÓN
+  audit_logs     : 1 → 1          ✓ SIN AUDITORÍA
+  RESPUESTA = formato de lectura (idéntico a GET), NO de close_fiscal_period
+
+S2 — CLOSED (2026-08): HTTP 200 status="closed" | fila estable | audit 1→1 ✓
+S3 — LOCKED (2026-09): HTTP 200 status="locked" | fila estable | audit 1→1 ✓
+S4 — MISSING (2026-02, limpio): HTTP 200 status="open", closing=null,
+     fila creada=false ✓ (NO auto-crea cierre; caso crítico PASS)
+S5 — ACCIÓN INVÁLIDA ('bogus'): HTTP 400 (Zod) | sin mutación ✓
+
+CONSISTENCIA CANÓNICA (§8): GET /api/fiscal-close?store_id=..&year=2026&month=8
+vs POST action=status → RESPUESTAS JSON IDÉNTICAS (raws/get_vs_post_status.json,
+"identical": true). La vía POST status reutiliza la misma fuente canónica de
+lectura (fiscal_closings por store/año/mes) que GET; no se creó RPC nuevo ni
+lógica duplicada (principio anti-duplicación del §8).
+
+NOTA OPERATIVA: la primera comparación GET/POST de la corrida principal dio
+HTTP 429 en el POST — era el rate-limiter (5 req/min/usuario) agotado por las
+mutaciones de regresión del admin; se re-verificó con usuario fresco (s23)
+obteniendo idénticos=true. El rate-limiter se comporta según diseño.

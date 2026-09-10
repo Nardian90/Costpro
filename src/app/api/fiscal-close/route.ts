@@ -65,11 +65,49 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
   const supabase = getSupabaseAdminSafe();
   if (!supabase) return NextResponse.json(createApiError('CONFIG_ERROR'), { status: 500 });
 
-  let rpcName = 'close_fiscal_period';
+  // REM-F4-06d-R (NF-1): `status` es estrictamente READ-ONLY. Ejecuta la misma
+  // vía canónica de lectura que GET (SELECT sobre fiscal_closings): sin RPC,
+  // sin INSERT/UPDATE/DELETE, sin auditoría, sin efectos persistentes.
+  // Se resuelve ANTES de cualquier selección de RPC de mutación para que ninguna
+  // acción de lectura pueda caer en el flujo de cierre (fallback destructivo).
+  if (parsed.data.action === 'status') {
+    const { data, error } = await supabase
+      .from('fiscal_closings')
+      .select('*')
+      .eq('store_id', parsed.data.store_id)
+      .eq('period_year', parsed.data.year)
+      .eq('period_month', parsed.data.month)
+      .maybeSingle();
+
+    if (error) {
+      logger.error('DATABASE', 'FISCAL_STATUS_READ_FAILED', { error: error.message });
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    // Misma forma de respuesta que GET (fuente canónica de estado).
+    return NextResponse.json({
+      store_id: parsed.data.store_id,
+      year: parsed.data.year,
+      month: parsed.data.month,
+      status: data?.status || 'open',
+      closing: data || null,
+    });
+  }
+
+  // Solo acciones de MUTACIÓN llegan aquí ('close' | 'lock'; Zod rechaza
+  // acciones desconocidas con 400). Sin fallback destructivo: la intención
+  // queda explícita por rama.
+  let rpcName: string;
   if (parsed.data.action === 'lock') {
     // Only admin can lock
     if (session.user.role !== 'admin') return NextResponse.json(createApiError('FORBIDDEN'), { status: 403 });
     rpcName = 'lock_fiscal_period';
+  } else if (parsed.data.action === 'close') {
+    rpcName = 'close_fiscal_period';
+  } else {
+    // Fail-safe inalcanzable en práctica (enum Zod + rama status anterior):
+    // ninguna acción no reconocida puede convertirse en cierre.
+    return NextResponse.json(createApiError('BAD_REQUEST'), { status: 400 });
   }
 
   const { data, error } = await supabase.rpc(rpcName, {

@@ -1,0 +1,57 @@
+{
+  "get": {
+    "store_id": "e9a943d8-27c8-48de-88dd-b0d0763aa83e",
+    "year": 2026,
+    "month": 8,
+    "status": "closed",
+    "closing": {
+      "id": "61a81133-ad51-4263-a162-9763764bb198",
+      "store_id": "e9a943d8-27c8-48de-88dd-b0d0763aa83e",
+      "period_year": 2026,
+      "period_month": 8,
+      "status": "closed",
+      "total_sales": 0,
+      "total_devolutions": 0,
+      "total_purchases": 0,
+      "total_commissions": 0,
+      "total_cash_balance": 0,
+      "closing_notes": "REM-F4-06d-R fixture",
+      "closed_by": "42a357a9-b6b9-46d6-9877-4096d3971ce3",
+      "closed_at": "2026-09-10T20:29:07.105+00:00",
+      "locked_by": null,
+      "locked_at": null,
+      "created_at": "2026-09-10T20:29:09.519216+00:00",
+      "updated_at": "2026-09-10T20:29:09.519216+00:00"
+    }
+  },
+  "post": {
+    "store_id": "e9a943d8-27c8-48de-88dd-b0d0763aa83e",
+    "year": 2026,
+    "month": 8,
+    "status": "closed",
+    "closing": {
+      "id": "61a81133-ad51-4263-a162-9763764bb198",
+      "store_id": "e9a943d8-27c8-48de-88dd-b0d0763aa83e",
+      "period_year": 2026,
+      "period_month": 8,
+      "status": "closed",
+      "total_sales": 0,
+      "total_devolutions": 0,
+      "total_purchases": 0,
+      "total_commissions": 0,
+      "total_cash_balance": 0,
+      "closing_notes": "REM-F4-06d-R fixture",
+      "closed_by": "42a357a9-b6b9-46d6-9877-4096d3971ce3",
+      "closed_at": "2026-09-10T20:29:07.105+00:00",
+      "locked_by": null,
+      "locked_at": null,
+      "created_at": "2026-09-10T20:29:09.519216+00:00",
+      "updated_at": "2026-09-10T20:29:09.519216+00:00"
+    }
+  },
+  "identical": true,
+  "http": {
+    "get": 200,
+    "post": 200
+  }
+}

@@ -1,0 +1,28 @@
+REM-F4-06d-R — GIT (§27, §31, §33, §34)
+========================================
+PRE-COMMIT:
+  git status --short: solo route.ts modificado + evidence pack nuevo
+  git diff --check  : limpio (sin errores de whitespace)
+  git diff --stat   : 1 archivo, +39/-1 (src/app/api/fiscal-close/route.ts)
+  Scope audit       : commit contiene ÚNICAMENTE NF-1 (route.ts) +
+                      evidence pack 20260910-rem-f4-06d-r (evidencia estrictamente
+                      necesaria para el resultado del gate). Sin cambios ajenos,
+                      sin mezclas, sin refactors, sin cambios de DB/SQL.
+
+MENSAJE DE COMMIT: fix(fiscal): restore read-only status action
+  (nuevo hash; NO se presenta como el commit histórico 73b2022c)
+
+PUSH (§32):
+  Mecanismo: PAT de GitHub suministrado por el operador para esta ejecución,
+  inyectado por credencial efímera de sesión (credential helper de una sola
+  ejecución, sin escribirse en archivos del proyecto, sin aparecer en el
+  evidence pack, sin incluirse en URLs remotas persistentes).
+  git push origin main — fast-forward, sin --force ni --force-with-lease (§34).
+
+VERIFICACIÓN REMOTA (§33): git fetch origin; HEAD == origin/main == <nuevo commit>;
+worktree clean. (El hash definitivo queda en el reporte final y worklog,
+fuera del evidence pack, para no requerir re-hash del pack tras el commit.)
+
+HISTORIAL (§34): sin reescritura. La pérdida de 73b2022c queda documentada en
+00-baseline.txt y 12-verdict.txt; el nuevo commit es descendiente directo de
+af23aa15 (fast-forward sobre origin/main).

@@ -1,0 +1,25 @@
+REM-F4-06d-R — SEGURIDAD (§18)
+===============================
+RAW COMPLETO: raws/postfix_tests.json → sections.security
+Modelo de autorización verificado: withAuth → supabase.auth.getUser (fail-closed,
+sin fallback local) + canManageStore (admin global O membership activa
+encargado/manager/admin en la tienda). ENABLE_DEV_BYPASS=false en .env.
+
+RESULTADOS (HTTP sobre POST action=status salvo indicación):
+
+  authorized            : 200  (s06, membership encargado en ALPHA)
+  non_member            : 403  (usuario sin memberships)
+  cross_store           : 403  (miembro SOLO de BETA, solicita ALPHA)
+  anonymous             : 401  (sin Bearer token)
+  cross en SU tienda (BETA): 200 (correcto: acceso legítimo a lo propio)
+  non_member sobre BETA : 403
+
+  SPOOFING (identidad inyectada en body — nunca confiable):
+  - non-member envía p_user_id=<admin> + user_id=<admin>  → 403
+  - cross-member envía p_user_id=<admin> + membership_role='admin' → 403
+  - non-member intenta action=close con p_user_id=<admin> → 403
+  La identidad del actor se resuelve SIEMPRE server-side (session.user.id vía
+  Supabase Auth); los campos del body son ignorados (Zod strip + uso de
+  session en route.ts; los RPC usan el patrón anti-spoofing v2_12_9).
+
+  Nota: GET también exige withAuth + canManageStore (mismas garantías).

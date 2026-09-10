@@ -1,0 +1,52 @@
+REM-F4-06d-R — BASELINE (§5) + PÉRDIDA HISTÓRICA DOCUMENTADA (§1, §39)
+========================================================================
+
+GATE: REM-F4-06d-R — Reconstrucción controlada + recertificación NF-1
+FECHA DE EJECUCIÓN (UTC): 2026-09-10
+BASELINE GATE:
+
+  git fetch origin
+  HEAD:         af23aa151a97a3eebdb3a0dbd226ba0bd5f3f9d3
+  ORIGIN/MAIN:  af23aa151a97a3eebdb3a0dbd226ba0bd5f3f9d3
+  WORKTREE:     CLEAN (git status --short vacío)
+  git log -10 --oneline --decorate:
+    af23aa15 (HEAD -> main, origin/main, origin/HEAD) fix(fiscal): repair fiscal close RPC wiring and persistence
+    5c6239e0 fix(db): remediate fiscal closing audit uuid integrity
+    35f326ca fix(audit): remediate F4-03 production withdrawal
+    b94ca369 fix(audit): remediate F4-04 canonical WAC path
+    310fad7d audit(w9): verify post-repair operational integrity
+    90450273 audit(w9): execute orphan inventory reconciliation
+    b923dfaf audit(w9): design orphan inventory reconciliation
+    7dfcaeea audit(w9): forensic analysis of orphan inventory ledger
+    48f24c73 fix(w9): repair historical reverse_devolution inventory drift
+    031b0ced feat(w9): B-10b — reverse_devolution migrated to canonical inventory pipeline
+
+  CONCLUSIÓN: HEAD == origin/main == af23aa15 → GATE DE BASELINE: PASS
+
+HISTORICAL COMMIT PERDIDO (NO falsificado, NO recuperado):
+
+  Commit: 73b2022c fix(fiscal): make status action strictly read-only
+  Existencia previa: sesión anterior (certificado TECHNICAL PASS / ADMIN CLOSURE PENDING)
+  Nunca pusheado (origin/main permaneció en af23aa15).
+
+  Verificación forense de inexistencia (sesión actual, entorno reseteado):
+    - git cat-file -t 73b2022c        → "fatal: Not a valid object name"
+    - git reflog                      → solo el clone inicial
+    - git stash list                  → vacío
+    - git ls-remote origin (2354 refs)→ ninguna ref contiene 73b2022c
+    - otros repos en disco: /app/.git corrupto; /home/z/my-project/.git es el
+      skeleton del sandbox sin el commit
+  RECOVERED: NO. El nuevo commit de este gate tendrá un hash NUEVO y no se
+  presentará como el histórico.
+
+  Evidence pack histórico de REM-F4-06d (20260909-rem-f4-06d): TAMBIÉN perdido
+  con el workspace (formaba parte del commit no-pusheado). Packs existentes en
+  este baseline: hasta 20260909-rem-f4-06c. Usados solo como contexto histórico.
+
+PRECONDICIONES OPERATIVAS:
+
+  - Servidor local reactivado: PM2 3/3 online (costpro, telegram-cron-poller,
+    whatsapp-cron-poller); / y /api/health → HTTP 200.
+  - .env restaurado por el operador (DATABASE_URL=file:./db/custom.db, Supabase,
+    NEXTAUTH, CSRF_ALLOWED_DOMAINS=.space-z.ai,localhost, ENABLE_DEV_BYPASS=false).
+  - NOTA: PM2 fue reinstalado y el repo re-clonado tras el reset del entorno.

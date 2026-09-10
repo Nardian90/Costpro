@@ -1,0 +1,30 @@
+REM-F4-06d-R — INTEGRIDAD CONTABLE / DE DATOS (§19)
+====================================================
+RAW COMPLETO: raws/accounting_integrity_window.json
+
+Método: barrido completo de audit_logs desde el inicio del gate
+(2026-09-10T20:25Z) — cualquier mutación persistente en el proyecto genera
+fila de auditoría (triggers w9/F4-06b). Desglose por tabla:
+
+  stores          : 2    → creación de las tiendas fixture ALPHA/BETA (esperado)
+  profiles        : 69   → creación de perfiles de usuarios fixture (esperado)
+  fiscal_closings : 14   → 8 INSERT de fixtures + transiciones close/lock de
+                           las pruebas (S1 PRE-FIX ×1, close 05, close 04,
+                           close 06, lock 06) — TODAS del store fixture ALPHA
+                           (verificación: fiscalByStore = {ALPHA: 8 filas únicas})
+  CUALQUIER OTRA TABLA (transactions, devolutions, receipts,
+  commission_payments, products, inventory, cash_closures, ...): 0 filas ✓
+
+DEMOSTRACIÓN EXPLÍCITA de que status no altera:
+  - fiscal_closings  → 04-purity.txt: Δ=0 en ×100 llamadas
+  - audit_logs       → Δaudit GLOBAL = 0 en ×100 llamadas
+  - cuentas/movimientos/saldos → 0 filas de auditoría en tablas contables
+    durante TODO el gate; los totales (total_sales/devolutions/purchases/
+    commissions/cash_balance) de las filas fixture permanecen inalterados en
+    los snapshots db_pre/db_post (raws/prefix_reproduction.json,
+    raws/postfix_tests.json)
+  - inventario → 0 filas de auditoría en tablas de inventario
+  - cierres → status no produce transiciones (open permanece open)
+
+El store BETA (68b08d4d) ni siquiera recibió escrituras fiscales.
+Producción (ENERVIDA-VITALLCONS, Puerto Padre VITALLCONS): ver 09-zero-touch.

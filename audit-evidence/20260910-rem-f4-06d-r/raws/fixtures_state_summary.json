@@ -1,0 +1,173 @@
+{
+  "alpha": "e9a943d8-27c8-48de-88dd-b0d0763aa83e",
+  "beta": "68b08d4d-8ba1-4adc-b362-b909cba9dc57",
+  "users": {
+    "admin": {
+      "id": "42a357a9-b6b9-46d6-9877-4096d3971ce3",
+      "role": "admin"
+    },
+    "nonmember": {
+      "id": "c52cab6b-2cc3-4de3-92a5-2f150bf679e7",
+      "role": "clerk"
+    },
+    "cross": {
+      "id": "e5ad0d19-823d-49aa-ade7-69ff00190e87",
+      "role": "clerk"
+    },
+    "s01": {
+      "id": "980c44c1-c85a-4fdb-b7c6-7627dc4054f2",
+      "role": "clerk"
+    },
+    "s02": {
+      "id": "52eb9c00-4b5b-4b89-8f52-cf621cbe35f3",
+      "role": "clerk"
+    },
+    "s03": {
+      "id": "7fb76450-def1-434a-9b3f-2b45134fd3b5",
+      "role": "clerk"
+    },
+    "s04": {
+      "id": "6b5015f1-9b46-478c-87b4-43df74a46b43",
+      "role": "clerk"
+    },
+    "s05": {
+      "id": "e79f6f91-e3ed-4634-8ae8-9e420505a287",
+      "role": "clerk"
+    },
+    "s06": {
+      "id": "90b5af2e-fea6-4fe1-a5f8-aa9cb0c37b15",
+      "role": "clerk"
+    },
+    "s07": {
+      "id": "4045d557-606e-455f-8b04-4079503c0014",
+      "role": "clerk"
+    },
+    "s08": {
+      "id": "e5cbc23e-622e-42fb-a9f5-74484c715d12",
+      "role": "clerk"
+    },
+    "s09": {
+      "id": "0ce58fbc-44ad-4b9d-94bc-b40523bdb276",
+      "role": "clerk"
+    },
+    "s10": {
+      "id": "046de9b6-9f23-4113-a47a-3321c569dbc1",
+      "role": "clerk"
+    },
+    "s11": {
+      "id": "66ac3e27-f826-4670-9e9c-80b23ed7fa25",
+      "role": "clerk"
+    },
+    "s12": {
+      "id": "7061b800-c186-499e-bcc3-9e4942d1559b",
+      "role": "clerk"
+    },
+    "s13": {
+      "id": "d1e4e255-821b-4656-8d9a-37fd077937d3",
+      "role": "clerk"
+    },
+    "s14": {
+      "id": "7e295799-6561-4c8f-b4cf-941a6556b39a",
+      "role": "clerk"
+    },
+    "s15": {
+      "id": "9592930d-ce1c-4a54-b95b-f1fa9d8ce2ea",
+      "role": "clerk"
+    },
+    "s16": {
+      "id": "0d500cc6-61ea-4f87-9f75-e0524cd8a8fe",
+      "role": "clerk"
+    },
+    "s17": {
+      "id": "f5f8144b-68a5-4f86-b10d-b4e5a0ecbdcc",
+      "role": "clerk"
+    },
+    "s18": {
+      "id": "2daa15b3-29a0-4853-aa0c-c6f000f9a6ab",
+      "role": "clerk"
+    },
+    "s19": {
+      "id": "e03af8db-c2e3-4c77-b19f-8203d6ec4357",
+      "role": "clerk"
+    },
+    "s20": {
+      "id": "88d91ee2-d39e-4416-8978-e0b223a18708",
+      "role": "clerk"
+    },
+    "s21": {
+      "id": "fafcbab2-4db6-46b6-a710-bc8d285af310",
+      "role": "clerk"
+    },
+    "s22": {
+      "id": "b9a10c49-853b-4064-a78b-7bb01c7358d7",
+      "role": "clerk"
+    },
+    "s23": {
+      "id": "8067119a-4020-4770-a288-a2f127e13e5b",
+      "role": "clerk"
+    },
+    "s24": {
+      "id": "2e2e9081-11eb-49b6-9813-8bf9a70d3aa1",
+      "role": "clerk"
+    },
+    "s25": {
+      "id": "dbdd7621-e11b-4288-8a94-28112da49099",
+      "role": "clerk"
+    },
+    "s26": {
+      "id": "7d1c83d5-c002-4c52-acd8-035ed3851dea",
+      "role": "clerk"
+    },
+    "s27": {
+      "id": "dbac1438-a0e5-4bdc-bb36-82c1c8d8f1de",
+      "role": "clerk"
+    },
+    "s28": {
+      "id": "6fab31db-c14a-4108-a818-d3ec1cdb92ae",
+      "role": "clerk"
+    },
+    "s29": {
+      "id": "fc17e42d-2f3e-413b-b97a-06ca1aee2374",
+      "role": "clerk"
+    },
+    "s30": {
+      "id": "9c31cb43-dfab-4038-852e-8d86e4295f98",
+      "role": "clerk"
+    }
+  },
+  "tokens_obtained": [
+    "admin",
+    "nonmember",
+    "cross",
+    "s01",
+    "s02",
+    "s03",
+    "s04",
+    "s05",
+    "s06",
+    "s07",
+    "s08",
+    "s09",
+    "s10",
+    "s11",
+    "s12",
+    "s13",
+    "s14",
+    "s15",
+    "s16",
+    "s17",
+    "s18",
+    "s19",
+    "s20",
+    "s21",
+    "s22",
+    "s23",
+    "s24",
+    "s25",
+    "s26",
+    "s27",
+    "s28",
+    "s29",
+    "s30"
+  ]
+}

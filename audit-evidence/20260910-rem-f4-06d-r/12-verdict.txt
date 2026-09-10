@@ -1,0 +1,70 @@
+REM-F4-06d-R — VEREDICTO (§35, §36, §38)
+=========================================
+NF-1: POST /api/fiscal-close con action='status' caía al fallback destructivo
+      (let rpcName='close_fiscal_period') ejecutando close_fiscal_period:
+      OPEN→CLOSED, creación de cierres sobre períodos MISSING, generación de
+      auditoría — todo mediante una acción de LECTURA.
+
+REPRODUCIDO PRE-FIX  : SÍ (HTTP real: S1 mutó open→closed + 1 audit;
+                       S4 creó un cierre completo sobre MISSING + 1 audit;
+                       S2/S3 devolvían 500 ERR_PERIOD_LOCKED como "lectura").
+FIX                  : rama status explícita READ-ONLY en route.ts que reutiliza
+                       la fuente canónica de lectura (la misma de GET);
+                       mutaciones con intención explícita por rama (close/lock),
+                       sin fallback destructivo; acciones no reconocidas → 400.
+NF-1 POST-FIX        : PASS
+STATUS PURITY        : ×1 / ×10 / ×100 → 0 INSERT / 0 UPDATE / 0 DELETE /
+                       0 audit (fila y GLOBAL) / 0 transiciones / 0 side effects
+OPEN                 : 200, status=open, sin mutación
+CLOSED               : 200, status=closed, sin mutación
+LOCKED               : 200, status=locked, sin mutación
+MISSING              : 200, status=open + closing=null, NO crea cierre
+INVALID ACTION       : 400, sin mutación
+CONCURRENCY          : status||status PASS (0 mutaciones) · status||close PASS
+                       (final=closed, Δaudit=1 solo close) · status||lock PASS
+                       (final=locked, Δaudit=1 solo lock) — sin deadlocks ni
+                       dobles transiciones
+SECURITY             : authorized 200 · non-member 403 · cross-store 403 ·
+                       anonymous 401 · spoofing (body identity ×3) 403 ·
+                       acceso legítimo a tienda propia 200
+AUDIT                : status → 0 · close → +1 esperada · lock → +1 esperada
+ACCOUNTING INTEGRITY : PASS (0 auditorías en tablas contables/inventario;
+                       solo stores/profiles de fixtures + fiscal_closings de ALPHA)
+ZERO-TOUCH           : PASS — PRE == POST (SHA-256 idénticos ENERVIDA-VITALLCONS
+                       y Puerto Padre VITALLCONS; 0 filas tocadas)
+REGRESSION           : Vitest 2058/0/24 (exacto al histórico) · TSC 0 ·
+                       ESLint 0 errores/1291 warnings (exacto) · fiscal 53/53 ·
+                       PM2 3/3 · health 200
+BUILD OOM            : SÍ → clasificado INFRASTRUCTURE LIMITATION / OOM
+                       (exit 137, host 4GB sin swap), no disfrazado
+SECRET SCAN          : PASS — 0 secretos introducidos (ver SHA256SUMS.report)
+EVIDENCE             : audit-evidence/20260910-rem-f4-06d-r/ — 13 archivos +
+                       13 raws + SHA256SUMS
+
+NEW FINDINGS: ninguno crítico para NF-1.
+  (operativo: el rate-limiter de diseño limita a 5 req/min/usuario —
+   comportamiento correcto, documentado en 03-post-fix-tests.txt)
+
+INHERITED FINDINGS (heredados, NO introducidos por este gate, NO remediados
+aquí por estar fuera del alcance NF-1 — §4.1, §36):
+  IF-06dR-1 (P3, DB/fixture-infra): prevent_fiscal_closing_edit() ejecuta
+    RETURN NEW en un trigger BEFORE DELETE; en contexto DELETE NEW es NULL, por
+    lo que PostgreSQL cancela SILENCIOSAMENTE todo DELETE en fiscal_closings
+    (no solo rows 'locked' como declara F-H2/20260810000005). Efecto observado:
+    la limpieza del residuo S4 PRE-FIX no pudo eliminar la fila (DELETE 204 sin
+    efecto). Impacto productivo: filas fiscales no eliminables por ninguna vía
+    (silenciosamente). Recomendado para un gate futuro: RETURN OLD en rama
+    DELETE o separar triggers UPDATE/DELETE. No bloquea este gate.
+  IF-06dR-2 (P3, histórico): residuo de fixture en PROYECTO DE PRUEBAS: fila
+    fiscal_closings (ALPHA, 2026-11, status=closed, id 7912c49c, closing_notes
+    NULL) creada por la reproducción PRE-FIX de S4, no eliminable por IF-06dR-1.
+    Documentada y acotada al store fixture.
+
+OUT OF SCOPE: E2E-2, FASE 7/8/9/11, cualquier refactor fiscal, cambios de UI,
+cambios de RPC/DB, findings heredados de gates anteriores.
+
+FINAL VERDICT: (sellado tras commit/push — ver reporte final del gate)
+  Técnico: PASS completo de todos los gates funcionales.
+  Administrativo: CERTIFIED / ADMINISTRATIVELY CLOSED si HEAD==origin/main tras
+  push verificado; TECHNICAL PASS / ADMINISTRATIVE CLOSURE PENDING si el push
+  no fuera posible.

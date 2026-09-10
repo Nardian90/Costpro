@@ -1,0 +1,857 @@
+{
+  "phase": "POST-FIX",
+  "started_at": "2026-09-10T20:37:52.000Z",
+  "sections": {
+    "S1_open": {
+      "http_status": 200,
+      "body": {
+        "store_id": "e9a943d8-27c8-48de-88dd-b0d0763aa83e",
+        "year": 2026,
+        "month": 12,
+        "status": "open",
+        "closing": {
+          "id": "9944b184-6e16-420b-8f85-30e02a8a6f81",
+          "store_id": "e9a943d8-27c8-48de-88dd-b0d0763aa83e",
+          "period_year": 2026,
+          "period_month": 12,
+          "status": "open",
+          "total_sales": 0,
+          "total_devolutions": 0,
+          "total_purchases": 0,
+          "total_commissions": 0,
+          "total_cash_balance": 0,
+          "closing_notes": "REM-F4-06d-R fixture",
+          "closed_by": null,
+          "closed_at": null,
+          "locked_by": null,
+          "locked_at": null,
+          "created_at": "2026-09-10T20:29:11.0164+00:00",
+          "updated_at": "2026-09-10T20:29:11.0164+00:00"
+        }
+      },
+      "db_pre": {
+        "id": "9944b184-6e16-420b-8f85-30e02a8a6f81",
+        "store_id": "e9a943d8-27c8-48de-88dd-b0d0763aa83e",
+        "period_year": 2026,
+        "period_month": 12,
+        "status": "open",
+        "total_sales": 0,
+        "total_devolutions": 0,
+        "total_purchases": 0,
+        "total_commissions": 0,
+        "total_cash_balance": 0,
+        "closing_notes": "REM-F4-06d-R fixture",
+        "closed_by": null,
+        "closed_at": null,
+        "locked_by": null,
+        "locked_at": null,
+        "created_at": "2026-09-10T20:29:11.0164+00:00",
+        "updated_at": "2026-09-10T20:29:11.0164+00:00"
+      },
+      "db_post": {
+        "id": "9944b184-6e16-420b-8f85-30e02a8a6f81",
+        "store_id": "e9a943d8-27c8-48de-88dd-b0d0763aa83e",
+        "period_year": 2026,
+        "period_month": 12,
+        "status": "open",
+        "total_sales": 0,
+        "total_devolutions": 0,
+        "total_purchases": 0,
+        "total_commissions": 0,
+        "total_cash_balance": 0,
+        "closing_notes": "REM-F4-06d-R fixture",
+        "closed_by": null,
+        "closed_at": null,
+        "locked_by": null,
+        "locked_at": null,
+        "created_at": "2026-09-10T20:29:11.0164+00:00",
+        "updated_at": "2026-09-10T20:29:11.0164+00:00"
+      },
+      "audit_pre": 1,
+      "audit_post": 1,
+      "mutated": false
+    },
+    "S2_closed": {
+      "http_status": 200,
+      "body": {
+        "store_id": "e9a943d8-27c8-48de-88dd-b0d0763aa83e",
+        "year": 2026,
+        "month": 8,
+        "status": "closed",
+        "closing": {
+          "id": "61a81133-ad51-4263-a162-9763764bb198",
+          "store_id": "e9a943d8-27c8-48de-88dd-b0d0763aa83e",
+          "period_year": 2026,
+          "period_month": 8,
+          "status": "closed",
+          "total_sales": 0,
+          "total_devolutions": 0,
+          "total_purchases": 0,
+          "total_commissions": 0,
+          "total_cash_balance": 0,
+          "closing_notes": "REM-F4-06d-R fixture",
+          "closed_by": "42a357a9-b6b9-46d6-9877-4096d3971ce3",
+          "closed_at": "2026-09-10T20:29:07.105+00:00",
+          "locked_by": null,
+          "locked_at": null,
+          "created_at": "2026-09-10T20:29:09.519216+00:00",
+          "updated_at": "2026-09-10T20:29:09.519216+00:00"
+        }
+      },
+      "status_pre": "closed",
+      "status_post": "closed",
+      "audit_pre": 1,
+      "audit_post": 1,
+      "mutated": false
+    },
+    "S3_locked": {
+      "http_status": 200,
+      "body": {
+        "store_id": "e9a943d8-27c8-48de-88dd-b0d0763aa83e",
+        "year": 2026,
+        "month": 9,
+        "status": "locked",
+        "closing": {
+          "id": "b6c5aef9-bd2f-404e-b886-a585498d60c7",
+          "store_id": "e9a943d8-27c8-48de-88dd-b0d0763aa83e",
+          "period_year": 2026,
+          "period_month": 9,
+          "status": "locked",
+          "total_sales": 0,
+          "total_devolutions": 0,
+          "total_purchases": 0,
+          "total_commissions": 0,
+          "total_cash_balance": 0,
+          "closing_notes": "REM-F4-06d-R fixture",
+          "closed_by": "42a357a9-b6b9-46d6-9877-4096d3971ce3",
+          "closed_at": "2026-09-10T20:29:07.105+00:00",
+          "locked_by": "42a357a9-b6b9-46d6-9877-4096d3971ce3",
+          "locked_at": "2026-09-10T20:29:07.105+00:00",
+          "created_at": "2026-09-10T20:29:10.010012+00:00",
+          "updated_at": "2026-09-10T20:29:10.010012+00:00"
+        }
+      },
+      "status_pre": "locked",
+      "status_post": "locked",
+      "audit_pre": 1,
+      "audit_post": 1,
+      "mutated": false
+    },
+    "S4_missing": {
+      "http_status": 200,
+      "body": {
+        "store_id": "e9a943d8-27c8-48de-88dd-b0d0763aa83e",
+        "year": 2026,
+        "month": 2,
+        "status": "open",
+        "closing": null
+      },
+      "db_pre": null,
+      "db_post": null,
+      "row_created": false
+    },
+    "S5_invalid": {
+      "http_status": 400,
+      "body_keys": [
+        "error",
+        "key",
+        "details"
+      ],
+      "mutated": false
+    },
+    "purity_x10": {
+      "calls": [
+        {
+          "n": 2,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 3,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 4,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 5,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 6,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 7,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 8,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 9,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 10,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 11,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 12,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 13,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 14,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 15,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 16,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 17,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 18,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 19,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 20,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 21,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 22,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 23,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 24,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 25,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 26,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 27,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 28,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 29,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 30,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 31,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 32,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 33,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 34,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 35,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 36,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 37,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 38,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 39,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 40,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 41,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 42,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 43,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 44,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 45,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 46,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 47,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 48,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 49,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 50,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 51,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 52,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 53,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 54,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 55,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 56,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 57,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 58,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 59,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 60,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 61,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 62,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 63,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 64,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 65,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 66,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 67,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 68,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 69,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 70,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 71,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 72,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 73,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 74,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 75,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 76,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 77,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 78,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 79,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 80,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 81,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 82,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 83,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 84,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 85,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 86,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 87,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 88,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 89,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 90,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 91,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 92,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 93,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 94,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 95,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 96,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 97,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 98,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 99,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 100,
+          "http": 200,
+          "status_field": "open"
+        },
+        {
+          "n": 101,
+          "http": 200,
+          "status_field": "open"
+        }
+      ],
+      "mutated": false,
+      "audit_delta": 0
+    },
+    "purity_x100": {
+      "total_calls": 100,
+      "http_code_histogram": {
+        "200": 100
+      },
+      "db_status_before": "open",
+      "db_status_after": "open",
+      "closing_unchanged": true,
+      "audit_delta_row": 0,
+      "audit_delta_global": 0,
+      "mutated": false
+    },
+    "conc_status_status": {
+      "https": [
+        200,
+        200,
+        200
+      ],
+      "statuses": [
+        "open",
+        "open",
+        "open"
+      ],
+      "row_pre": "open",
+      "row_post": "open",
+      "audit_delta": 0,
+      "mutated": false
+    },
+    "conc_status_close": {
+      "https": [
+        200,
+        200,
+        200
+      ],
+      "close_body": {
+        "status": "success",
+        "closing_id": "0c6250b8-dcb3-418e-bb0b-fe371dfff6d7",
+        "total_sales": 0,
+        "total_purchases": 0,
+        "total_commissions": 0,
+        "total_devolutions": 0
+      },
+      "status_bodies": [
+        "open",
+        "closed"
+      ],
+      "row_pre": "open",
+      "row_post": "closed",
+      "audit_delta": 1,
+      "final_is_closed": true,
+      "status_after_final": "closed"
+    },
+    "conc_status_lock": {
+      "close_http": 200,
+      "mid_status": "closed",
+      "https": [
+        200,
+        200,
+        200
+      ],
+      "bodies": [
+        "closed",
+        "success",
+        "closed"
+      ],
+      "row_pre_lock": "closed",
+      "row_post": "locked",
+      "audit_delta_lock_phase": 1,
+      "final_is_locked": true,
+      "locked_by_set": true,
+      "locked_at_set": true,
+      "closed_by_from_close_phase": true
+    },
+    "security": {
+      "authorized": 200,
+      "non_member": 403,
+      "cross_store": 403,
+      "anonymous": 401,
+      "spoofing_body_identity": {
+        "http": 403,
+        "admin_used_body_fields": [
+          "p_user_id",
+          "user_id"
+        ]
+      },
+      "spoofing_cross_member": {
+        "http": 403
+      },
+      "spoofing_close": {
+        "http": 403
+      },
+      "cross_own_store_beta": 200,
+      "non_member_beta": 403
+    },
+    "close_regression": {
+      "http": 200,
+      "body": {
+        "status": "success",
+        "closing_id": "9eb13250-fbfc-4cac-b725-98e268335f7e",
+        "total_sales": 0,
+        "total_purchases": 0,
+        "total_commissions": 0,
+        "total_devolutions": 0
+      },
+      "status_pre": "open",
+      "status_post": "closed",
+      "closed_by_set": true,
+      "closed_at_set": true,
+      "audit_delta": 1,
+      "new_audit": [
+        {
+          "id": "b6316de3-d5e4-4687-b81d-c634f77e4069",
+          "created_at": "2026-09-10T20:40:02.751843+00:00",
+          "user_id": "42a357a9-b6b9-46d6-9877-4096d3971ce3",
+          "table_name": "fiscal_closings",
+          "record_id": "9eb13250-fbfc-4cac-b725-98e268335f7e",
+          "action": "FISCAL_CLOSING_UPDATED",
+          "old_data": null,
+          "new_data": null,
+          "metadata": {
+            "year": 2026,
+            "month": 6,
+            "tg_op": "UPDATE",
+            "status": "closed"
+          },
+          "updated_at": "2026-09-10T20:40:02.751843+00:00",
+          "store_id": "e9a943d8-27c8-48de-88dd-b0d0763aa83e",
+          "trace_id": null
+        }
+      ],
+      "status_read_after": {
+        "http": 200,
+        "status": "closed"
+      }
+    },
+    "lock_regression": {
+      "http": 200,
+      "body": {
+        "status": "success",
+        "message": "Periodo bloqueado"
+      },
+      "status_pre": "closed",
+      "status_post": "locked",
+      "locked_by_set": true,
+      "locked_at_set": true,
+      "audit_delta": 1,
+      "status_read_after": {
+        "http": 200,
+        "status": "locked"
+      }
+    },
+    "lock_non_admin": {
+      "http": 403,
+      "unchanged": true
+    },
+    "get_vs_post_status": {
+      "get": {
+        "store_id": "e9a943d8-27c8-48de-88dd-b0d0763aa83e",
+        "year": 2026,
+        "month": 8,
+        "status": "closed",
+        "closing": {
+          "id": "61a81133-ad51-4263-a162-9763764bb198",
+          "store_id": "e9a943d8-27c8-48de-88dd-b0d0763aa83e",
+          "period_year": 2026,
+          "period_month": 8,
+          "status": "closed",
+          "total_sales": 0,
+          "total_devolutions": 0,
+          "total_purchases": 0,
+          "total_commissions": 0,
+          "total_cash_balance": 0,
+          "closing_notes": "REM-F4-06d-R fixture",
+          "closed_by": "42a357a9-b6b9-46d6-9877-4096d3971ce3",
+          "closed_at": "2026-09-10T20:29:07.105+00:00",
+          "locked_by": null,
+          "locked_at": null,
+          "created_at": "2026-09-10T20:29:09.519216+00:00",
+          "updated_at": "2026-09-10T20:29:09.519216+00:00"
+        }
+      },
+      "post": {
+        "error": "Demasiadas solicitudes",
+        "key": "apiErrors.rateLimited"
+      },
+      "equal": false
+    }
+  },
+  "finished_at": "2026-09-10T20:40:10.831Z"
+}

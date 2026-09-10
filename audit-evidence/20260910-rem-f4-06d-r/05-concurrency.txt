@@ -1,0 +1,28 @@
+REM-F4-06d-R — CONCURRENCIA (§16)
+=================================
+RAW COMPLETO: raws/postfix_tests.json → sections.conc_*
+Todas las fases contra store fixture ALPHA con HTTP real y tokens reales.
+
+status || status (2026-10, OPEN):
+  3 POST status paralelos → HTTP [200,200,200], status="open" ×3
+  fila: open → open | Δaudit = 0 | mutado = false
+  ✓ Ambos/as leen; ninguno modifica.
+
+status || close (2026-05, OPEN):
+  Paralelo: [status s15, close admin, status s16] → HTTP [200,200,200]
+  fila: open → closed | Δaudit = 1 (UNA fila — la del close)
+  ✓ El resultado final corresponde exclusivamente al close; status no
+    aportó ninguna mutación. status posterior → "closed".
+
+status || lock (2026-04):
+  Fase 1: close (admin) → open→closed (HTTP 200)
+  Fase 2 paralela: [status s18, lock admin, status s19] → HTTP [200,200,200]
+  fila: closed → locked | Δaudit fase lock = 1 (UNA fila — la del lock)
+  locked_by y locked_at establecidos por el lock ✓
+  ✓ El resultado final corresponde exclusivamente al lock.
+
+INVARIANTES ADICIONALES VERIFICADOS:
+  - Sin doble-close ni doble-lock: exactamente 1 fila de auditoría por
+    transición; la constraint UNIQUE uq_fiscal_closings_store_period y la
+    guardas ERR_PERIOD_LOCKED/ERR_NOT_CLOSED de los RPC se mantuvieron.
+  - Sin deadlocks ni errores 5xx en las fases paralelas.

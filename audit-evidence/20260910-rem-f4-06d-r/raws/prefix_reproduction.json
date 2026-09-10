@@ -1,0 +1,248 @@
+{
+  "phase": "PRE-FIX",
+  "started_at": "2026-09-10T20:30:26.351Z",
+  "scenarios": {
+    "S1_open": {
+      "http": {
+        "status": 200,
+        "json": {
+          "status": "success",
+          "closing_id": "b758887c-9f9e-425f-b236-c4ff1cc920f3",
+          "total_sales": 0,
+          "total_purchases": 0,
+          "total_commissions": 0,
+          "total_devolutions": 0
+        }
+      },
+      "db_pre": {
+        "id": "b758887c-9f9e-425f-b236-c4ff1cc920f3",
+        "store_id": "e9a943d8-27c8-48de-88dd-b0d0763aa83e",
+        "period_year": 2026,
+        "period_month": 7,
+        "status": "open",
+        "total_sales": 0,
+        "total_devolutions": 0,
+        "total_purchases": 0,
+        "total_commissions": 0,
+        "total_cash_balance": 0,
+        "closing_notes": "REM-F4-06d-R fixture",
+        "closed_by": null,
+        "closed_at": null,
+        "locked_by": null,
+        "locked_at": null,
+        "created_at": "2026-09-10T20:29:08.994269+00:00",
+        "updated_at": "2026-09-10T20:29:08.994269+00:00"
+      },
+      "db_post": {
+        "id": "b758887c-9f9e-425f-b236-c4ff1cc920f3",
+        "store_id": "e9a943d8-27c8-48de-88dd-b0d0763aa83e",
+        "period_year": 2026,
+        "period_month": 7,
+        "status": "closed",
+        "total_sales": 0,
+        "total_devolutions": 0,
+        "total_purchases": 0,
+        "total_commissions": 0,
+        "total_cash_balance": 0,
+        "closing_notes": "REM-F4-06d-R fixture",
+        "closed_by": "980c44c1-c85a-4fdb-b7c6-7627dc4054f2",
+        "closed_at": "2026-09-10T20:30:30.369705+00:00",
+        "locked_by": null,
+        "locked_at": null,
+        "created_at": "2026-09-10T20:29:08.994269+00:00",
+        "updated_at": "2026-09-10T20:30:30.369705+00:00"
+      },
+      "audit_pre_count": 1,
+      "audit_post_count": 2,
+      "audit_new": [
+        {
+          "id": "3847645a-6044-47a6-9a33-ae2fdf393e5a",
+          "created_at": "2026-09-10T20:30:30.369705+00:00",
+          "user_id": "980c44c1-c85a-4fdb-b7c6-7627dc4054f2",
+          "table_name": "fiscal_closings",
+          "record_id": "b758887c-9f9e-425f-b236-c4ff1cc920f3",
+          "action": "FISCAL_CLOSING_UPDATED",
+          "old_data": null,
+          "new_data": null,
+          "metadata": {
+            "year": 2026,
+            "month": 7,
+            "tg_op": "UPDATE",
+            "status": "closed"
+          },
+          "updated_at": "2026-09-10T20:30:30.369705+00:00",
+          "store_id": "e9a943d8-27c8-48de-88dd-b0d0763aa83e",
+          "trace_id": null
+        }
+      ],
+      "mutated": true
+    },
+    "S2_closed": {
+      "http": {
+        "status": 500,
+        "json": {
+          "error": "ERR_PERIOD_LOCKED"
+        }
+      },
+      "db_status_pre": "closed",
+      "db_status_post": "closed",
+      "audit_pre_count": 1,
+      "audit_post_count": 1,
+      "mutated": false
+    },
+    "S3_locked": {
+      "http": {
+        "status": 500,
+        "json": {
+          "error": "ERR_PERIOD_LOCKED"
+        }
+      },
+      "db_status_pre": "locked",
+      "db_status_post": "locked",
+      "audit_pre_count": 1,
+      "audit_post_count": 1,
+      "mutated": false
+    },
+    "S4_missing": {
+      "http": {
+        "status": 200,
+        "json": {
+          "status": "success",
+          "closing_id": "7912c49c-a327-4eb8-8f57-05f1aac94441",
+          "total_sales": 0,
+          "total_purchases": 0,
+          "total_commissions": 0,
+          "total_devolutions": 0
+        }
+      },
+      "db_pre": null,
+      "db_post": {
+        "id": "7912c49c-a327-4eb8-8f57-05f1aac94441",
+        "store_id": "e9a943d8-27c8-48de-88dd-b0d0763aa83e",
+        "period_year": 2026,
+        "period_month": 11,
+        "status": "closed",
+        "total_sales": 0,
+        "total_devolutions": 0,
+        "total_purchases": 0,
+        "total_commissions": 0,
+        "total_cash_balance": 0,
+        "closing_notes": null,
+        "closed_by": "6b5015f1-9b46-478c-87b4-43df74a46b43",
+        "closed_at": "2026-09-10T20:30:36.24922+00:00",
+        "locked_by": null,
+        "locked_at": null,
+        "created_at": "2026-09-10T20:30:36.24922+00:00",
+        "updated_at": "2026-09-10T20:30:36.24922+00:00"
+      },
+      "audit_rows_created": 1,
+      "created_closing": true,
+      "cleaned_back_to_missing": false
+    },
+    "S5_invalid": {
+      "http": {
+        "status": 400,
+        "json": {
+          "error": "Datos inválidos",
+          "key": "apiErrors.invalidData",
+          "details": {
+            "_errors": [],
+            "action": {
+              "_errors": [
+                "Invalid option: expected one of \"close\"|\"lock\"|\"status\""
+              ]
+            }
+          }
+        }
+      },
+      "db_status_pre": "closed",
+      "db_status_post": "closed",
+      "mutated": false
+    },
+    "purity_pre_x10": {
+      "results": [
+        {
+          "i": 1,
+          "http": 500,
+          "body": {
+            "error": "ERR_PERIOD_LOCKED"
+          }
+        },
+        {
+          "i": 2,
+          "http": 500,
+          "body": {
+            "error": "ERR_PERIOD_LOCKED"
+          }
+        },
+        {
+          "i": 3,
+          "http": 500,
+          "body": {
+            "error": "ERR_PERIOD_LOCKED"
+          }
+        },
+        {
+          "i": 4,
+          "http": 500,
+          "body": {
+            "error": "ERR_PERIOD_LOCKED"
+          }
+        },
+        {
+          "i": 5,
+          "http": 500,
+          "body": {
+            "error": "ERR_PERIOD_LOCKED"
+          }
+        },
+        {
+          "i": 6,
+          "http": 500,
+          "body": {
+            "error": "ERR_PERIOD_LOCKED"
+          }
+        },
+        {
+          "i": 7,
+          "http": 500,
+          "body": {
+            "error": "ERR_PERIOD_LOCKED"
+          }
+        },
+        {
+          "i": 8,
+          "http": 500,
+          "body": {
+            "error": "ERR_PERIOD_LOCKED"
+          }
+        },
+        {
+          "i": 9,
+          "http": 500,
+          "body": {
+            "error": "ERR_PERIOD_LOCKED"
+          }
+        },
+        {
+          "i": 10,
+          "http": 500,
+          "body": {
+            "error": "ERR_PERIOD_LOCKED"
+          }
+        }
+      ],
+      "db_status_before": "closed",
+      "db_status_after": "closed",
+      "audit_before": 2,
+      "audit_after": 2,
+      "mutated": false
+    }
+  },
+  "fixture_baseline": {
+    "closings_count": 8,
+    "closings_sha256": "cb33c2a147127a831245317e5042b7c6ef9a908d0dbde11ac7c4d44d48f4a80f",
+    "audit_global_count": 7616
+  },
+  "finished_at": "2026-09-10T20:30:50.447Z"
+}

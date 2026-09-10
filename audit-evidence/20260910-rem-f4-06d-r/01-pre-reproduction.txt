@@ -1,0 +1,62 @@
+REM-F4-06d-R — REPRODUCCIÓN PRE-FIX (§7, §11, §12)
+===================================================
+Método: HTTP REAL contra el servidor local (PM2, código baseline af23aa15,
+sin modificar). Bearer JWT real (Supabase Auth, signInWithPassword de usuarios
+fixture dedicados). Store fixture: ALPHA e9a943d8-27c8-48de-88dd-b0d0763aa83e
+("REM-F4-06dR FIXTURE ALPHA"). Producción intacta (ver 09-zero-touch).
+
+RAW COMPLETO: raws/prefix_reproduction.json
+
+DEFECTO EN CÓDIGO (src/app/api/fiscal-close/route.ts @ af23aa15):
+
+  let rpcName = 'close_fiscal_period';            // línea 68 — default destructivo
+  if (parsed.data.action === 'lock') {
+    ...
+    rpcName = 'lock_fiscal_period';
+  }
+  // sin rama 'status' → status ejecuta close_fiscal_period
+
+  Schema Zod (línea 19): action: z.enum(['close','lock','status']).default('status')
+  → status es un valor VÁLIDO del enum que cae al flujo de cierre.
+
+S1 — OPEN (período 2026-07, fixture OPEN):
+  POST /api/fiscal-close {action:'status'}  (usuario fixture s01)
+  HTTP            : 200
+  body            : {"status":"success","closing_id":"b758887c-...","total_sales":0,...}
+                    ← respuesta de close_fiscal_period, NO de una lectura
+  fiscal_closings : status open → closed   ❌ MUTACIÓN
+  audit_logs      : 1 → 2 filas (trigger trg_audit_fiscal_closings) ❌ AUDITORÍA
+  VEREDICTO S1: DEFECTO REPRODUCIDO (mutación + auditoría por una lectura)
+
+S2 — CLOSED (2026-08):
+  HTTP 500 {"error":"ERR_PERIOD_LOCKED"}   ← una LECTURA que falla con error de mutación
+  fila: closed → closed (sin doble mutación; el RPC rechaza re-cierre)
+  audit: 1 → 1
+
+S3 — LOCKED (2026-09):
+  HTTP 500 {"error":"ERR_PERIOD_LOCKED"}
+  fila: locked → locked | audit: 1 → 1
+
+S4 — MISSING (2026-11): CASO CRÍTICO
+  HTTP 200 {"status":"success","closing_id":"7912c49c-..."}
+  fiscal_closings: FILA CREADA AUTOMÁTICAMENTE (status='closed') ❌
+  audit_logs     : 1 fila de auditoría generada ❌
+  → una consulta de estado CREÓ un cierre fiscal completo.
+  Limpieza de fixture: la fila no pudo eliminarse — ver FINDING HEREDADO
+  IF-06dR-1 (prevent_fiscal_closing_edit cancela DELETEs silenciosamente).
+  El residuo (id 7912c49c, notes NULL) queda documentado; S4 post-fix usó
+  el período 2026-02 (MISSING limpio).
+
+S5 — ACCIÓN INVÁLIDA (action:'bogus'):
+  HTTP 400 INVALID_DATA (Zod enum) — comportamiento correcto PRE-fix también.
+  fila sin mutación.
+
+PUREZA PRE-FIX ×10 (2026-07, ya CLOSED tras S1; usuarios s02..s10):
+  HTTP: [500 ×10] (ERR_PERIOD_LOCKED por cada intento de lectura)
+  fila: closed → closed | audit: 2 → 2 (sin mutación adicional solo porque
+  el defecto ya no puede doble-cerrar; la mutación ocurrió en la ×1 de S1)
+
+CONSUMIDORES (§8): el frontend (FiscalCloseView.tsx) usa GET para leer y POST
+solo con action 'close'/'lock' — nunca envía 'status' por POST.
+
+CONCLUSIÓN PRE-FIX: NF-1 presente y reproducido por HTTP real.

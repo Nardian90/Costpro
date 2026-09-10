@@ -1,0 +1,27 @@
+REM-F4-06d-R — INTEGRIDAD DE AUDITORÍA (§22)
+=============================================
+RAW COMPLETO: raws/postfix_tests.json (audit_pre/audit_post por escenario)
+
+Conteo de filas de auditoría (audit_logs, table_name='fiscal_closings',
+record_id = id de la fila fiscal) alrededor de cada operación:
+
+  status (POST)          → Δaudit = 0  (S1/S2/S3 y ×100 pureza: 0 en todas)
+  status ×100            → Δaudit GLOBAL del sistema = 0
+  close (2026-06 regresión) → Δaudit = +1 (fila de auditoría del UPDATE
+                             open→closed con actor; autoral vía trigger
+                             F4-06b, record_id UUID)
+  close (concurrencia 2026-05) → Δaudit = +1 (solo la del close)
+  lock  (2026-06 regresión) → Δaudit = +1 (fila del UPDATE closed→locked)
+  lock no-admin (403)    → Δaudit = 0 (rechazo a nivel de ruta, sin tocar DB)
+
+RESULTADO INEQUÍVOCO:
+  status → 0 audit mutations  ✓ (obligatorio)
+  close  → auditoría esperada (+1 por cierre)  ✓
+  lock   → auditoría esperada (+1 por bloqueo)  ✓
+
+Cadenas de auditoría del store ALPHA durante el gate:
+  - 8 INSERT (fixtures) + 5 transiciones legítimas (S1-PRE ×1 defectuosa,
+    close 05, close 04, close 06, lock 06) — todas atribuibles y documentadas.
+  - El intento PRE-FIX de S4 (creación de cierre por status) generó 1 fila de
+    auditoría que fue eliminada durante la limpieza del fixture (audit_logs no
+    tiene trigger inmutable); la fila fiscal residuo permanece (IF-06dR-1).

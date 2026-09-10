@@ -1,0 +1,36 @@
+REM-F4-06d-R — REGRESIÓN DEL PROYECTO (§24, §25)
+=================================================
+Referencia histórica (REM-F4-06d sesión anterior):
+  Vitest 2058 PASS / 0 FAIL / 24 SKIP · TSC 0 · ESLint 0 errores / 1291 warnings
+
+RESULTADOS DE ESTA EJECUCIÓN (post-fix, sobre el diff NF-1):
+
+  Vitest (suite completa, foreground):
+    Test Files  96 passed | 1 skipped (97)
+    Tests       2058 passed | 24 skipped (2082)
+    FAIL        : 0
+    Duración    : 213.94s
+    ✓ COINCIDE EXACTO con el baseline histórico (2058/0/24)
+
+  TypeScript (npx tsc --noEmit): 0 errores (exit 0)
+
+  ESLint (npx eslint .): 0 errores, 1291 warnings (exit 0)
+    ✓ COINCIDE EXACTO con el baseline histórico (0/1291)
+    (los warnings son pre-existentes; sin regresión introducida)
+
+  Specs fiscales (src/__tests__/integration/iteration-fiscal.test.ts):
+    53 passed / 53 (1.16s)
+
+  Build (npx next build):
+    BUILD_EXIT: 137 ("Killed" durante "Creating an optimized production build")
+    Memoria del host: 4041 MB total, ~2665 MB available, Swap: 0
+    Clasificación: INFRASTRUCTURE LIMITATION / OOM (global_oom)
+    - NO es un error funcional de compilación (muerre por el OOM killer del SO)
+    - Mismo patrón ya documentado en la sesión histórica (exit 137 → global_oom)
+    - No se realizaron optimizaciones oportunistas del proyecto (§25)
+    - Evidencia: salida de build + free -m antes/después (logs de ejecución)
+
+  PM2: 3/3 online (costpro, telegram-cron-poller, whatsapp-cron-poller)
+  Health: /api/health → HTTP 200 · / → HTTP 200
+
+CONCLUSIÓN: REGRESIÓN = PASS (build por límite de infraestructura, no funcional).

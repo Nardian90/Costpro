@@ -1,0 +1,22 @@
+REM-F4-06d-R — PUREZA DE STATUS (§15) + IDEMPOTENCIA (§17)
+==========================================================
+RAW COMPLETO: raws/postfix_tests.json → sections.purity_x10 / purity_x100
+Período: 2026-12 (OPEN). Store fixture ALPHA. Usuarios fixture rotados
+(s12..s30) para respetar el rate-limit de diseño (5 req/min/usuario).
+
+status ×1   (S1):  HTTP 200 | fila open→open | Δaudit fila = 0
+status ×10      :  HTTP [200×10] | mutado=false | Δaudit fila = 0
+status ×100 (total, incluye ×1):
+  Histograma HTTP          : {"200": 100}
+  Estado fila              : open → open
+  Contenido fila (sin updated_at): SIN CAMBIO
+  Δaudit fila (audit_logs WHERE record_id=<id>)     : 0
+  Δaudit GLOBAL (toda la tabla audit_logs del sistema): 0
+  Mutación total           : false
+
+RESULTADO: 0 INSERT, 0 UPDATE, 0 DELETE, 0 mutaciones de auditoría,
+0 transiciones de estado fiscal, 0 efectos laterales.
+La pureza queda demostrada A NIVEL DE DATOS (no solo HTTP 200).
+
+IDEMPOTENCIA (§17): N lecturas = N respuestas 200 con el mismo estado;
+0 filas de auditoría por N consultas (N=100).

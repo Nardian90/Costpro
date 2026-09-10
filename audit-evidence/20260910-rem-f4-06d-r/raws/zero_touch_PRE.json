@@ -1,0 +1,12 @@
+{
+  "taken_at": "2026-09-10T20:24:52.522Z",
+  "prod_closings": {
+    "count": 0,
+    "rows": []
+  },
+  "prod_audit": {
+    "count": 0,
+    "rows": []
+  },
+  "audit_logs_global_count": 7537
+}

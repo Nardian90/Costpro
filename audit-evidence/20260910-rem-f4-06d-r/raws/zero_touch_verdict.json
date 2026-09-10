@@ -1,0 +1,21 @@
+{
+  "pre": {
+    "prod_closings_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "prod_audit_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "audit_logs_global_count": 7537
+  },
+  "post": {
+    "prod_closings_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "prod_audit_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "prod_closings_count": 0,
+    "prod_audit_count": 0
+  },
+  "prod_closings_equal": true,
+  "prod_audit_equal": true,
+  "zero_touch_pass": true,
+  "verified_at": "2026-09-10T20:41:30.050Z",
+  "prod_stores": [
+    "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+    "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1"
+  ]
+}

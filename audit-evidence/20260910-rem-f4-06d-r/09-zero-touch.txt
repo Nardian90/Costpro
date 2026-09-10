@@ -1,0 +1,29 @@
+REM-F4-06d-R — ZERO-TOUCH PRODUCTION (§23)
+===========================================
+RAW COMPLETO: raws/zero_touch_PRE.json, raws/zero_touch_POST.json,
+              raws/zero_touch_verdict.json
+
+ENTIDADES PRODUCTIVAS PROTEGIDAS (READ ONLY):
+  ENERVIDA-VITALLCONS    : 5e6fe821-5465-48b1-b3f1-3aa3182edc38
+  Puerto Padre VITALLCONS: 43a4dabc-b8b4-4b66-82b3-0c75335ca5d1
+
+Método: snapshot determinista (orden fijo por id) de fiscal_closings y
+audit_logs (record_id ∈ cierres de PROD) con hash SHA-256 del conjunto,
+PRE (antes de cualquier prueba) y POST (después de todas las pruebas).
+
+PRE  (2026-09-10T20:26Z aprox):
+  prod_closings_sha256 : 4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945
+  prod_audit_sha256    : 4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945
+  (hash del conjunto vacío: PROD no tiene filas en fiscal_closings)
+
+POST (2026-09-10T20:41Z):
+  prod_closings_sha256 : 4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945
+  prod_audit_sha256    : 4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945
+  prod_closings_count  : 0
+  prod_audit_count     : 0
+
+EQUAL: YES  → zero_touch_pass: true
+
+Todas las pruebas mutativas se ejecutaron EXCLUSIVAMENTE contra los stores
+fixture "REM-F4-06dR FIXTURE ALPHA/BETA" y períodos 2026 creados para este
+gate. Ninguna prueba tocó ENER-VIDA/VITALLCONS ni PUERTO PADRE.
