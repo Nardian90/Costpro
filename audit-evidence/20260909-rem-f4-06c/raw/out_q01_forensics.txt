@@ -1,0 +1,441 @@
+# SQL RUN — 2026-09-09T23:27:48.562Z
+# file: q01_f406c_forensics.sql
+# endpoint: Management API query (project ********************)
+
+===== STATEMENT: s01_fiscal_rpcs_census =====
+HTTP 201
+[
+  {
+    "proname": "audit_fiscal_closings_changes",
+    "signature": "audit_fiscal_closings_changes()",
+    "identity_args": "",
+    "arg_names": null,
+    "secdef": true,
+    "cfg": [
+      "search_path=public, pg_temp"
+    ],
+    "owner": "postgres",
+    "acl": "postgres=X/postgres,service_role=X/postgres",
+    "vol": "v"
+  },
+  {
+    "proname": "close_cash_session",
+    "signature": "close_cash_session(uuid,numeric)",
+    "identity_args": "p_session_id uuid, p_counted_cash numeric",
+    "arg_names": [
+      "p_session_id",
+      "p_counted_cash"
+    ],
+    "secdef": false,
+    "cfg": [
+      "search_path=public, extensions"
+    ],
+    "owner": "postgres",
+    "acl": "postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres",
+    "vol": "v"
+  },
+  {
+    "proname": "close_cash_shift",
+    "signature": "close_cash_shift(uuid,numeric,numeric,text,uuid)",
+    "identity_args": "p_closure_id uuid, p_declared_cash numeric, p_declared_vouchers numeric, p_notes text, p_user_id uuid",
+    "arg_names": [
+      "p_closure_id",
+      "p_declared_cash",
+      "p_declared_vouchers",
+      "p_notes",
+      "p_user_id"
+    ],
+    "secdef": true,
+    "cfg": [
+      "search_path=pg_catalog, public"
+    ],
+    "owner": "postgres",
+    "acl": "postgres=X/postgres,service_role=X/postgres",
+    "vol": "v"
+  },
+  {
+    "proname": "close_fiscal_period",
+    "signature": "close_fiscal_period(uuid,integer,integer,uuid)",
+    "identity_args": "p_store_id uuid, p_year integer, p_month integer, p_user_id uuid",
+    "arg_names": [
+      "p_store_id",
+      "p_year",
+      "p_month",
+      "p_user_id"
+    ],
+    "secdef": true,
+    "cfg": [
+      "search_path=public, pg_temp"
+    ],
+    "owner": "postgres",
+    "acl": "postgres=X/postgres,service_role=X/postgres",
+    "vol": "v"
+  },
+  {
+    "proname": "close_production_order_v2",
+    "signature": "close_production_order_v2(uuid,uuid,uuid,numeric,text,text,numeric,uuid,numeric,uuid,text)",
+    "identity_args": "p_order_id uuid, p_store_id uuid, p_seller_id uuid, p_final_amount numeric, p_final_method text, p_final_currency text, p_exchange_rate numeric, p_output_product_id uuid, p_output_quantity numeric, p_user_id uuid, p_idempotency_key text",
+    "arg_names": [
+      "p_order_id",
+      "p_store_id",
+      "p_seller_id",
+      "p_final_amount",
+      "p_final_method",
+      "p_final_currency",
+      "p_exchange_rate",
+      "p_output_product_id",
+      "p_output_quantity",
+      "p_user_id",
+      "p_idempotency_key"
+    ],
+    "secdef": true,
+    "cfg": [
+      "search_path=public, extensions"
+    ],
+    "owner": "postgres",
+    "acl": "postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres",
+    "vol": "v"
+  },
+  {
+    "proname": "close_service_order_as_sale",
+    "signature": "close_service_order_as_sale(uuid,uuid,uuid,text,text,numeric,uuid)",
+    "identity_args": "p_order_id uuid, p_store_id uuid, p_seller_id uuid, p_payment_method text, p_currency text, p_exchange_rate numeric, p_user_id uuid",
+    "arg_names": [
+      "p_order_id",
+      "p_store_id",
+      "p_seller_id",
+      "p_payment_method",
+      "p_currency",
+      "p_exchange_rate",
+      "p_user_id"
+    ],
+    "secdef": true,
+    "cfg": [
+      "search_path=public, extensions"
+    ],
+    "owner": "postgres",
+    "acl": "postgres=X/postgres,service_role=X/postgres",
+    "vol": "v"
+  },
+  {
+    "proname": "ensure_fiscal_period",
+    "signature": "ensure_fiscal_period(uuid,integer,integer)",
+    "identity_args": "p_store_id uuid, p_year integer, p_month integer",
+    "arg_names": [
+      "p_store_id",
+      "p_year",
+      "p_month"
+    ],
+    "secdef": true,
+    "cfg": [
+      "search_path=pg_catalog, public"
+    ],
+    "owner": "postgres",
+    "acl": "postgres=X/postgres,service_role=X/postgres",
+    "vol": "v"
+  },
+  {
+    "proname": "lock_fiscal_period",
+    "signature": "lock_fiscal_period(uuid,integer,integer)",
+    "identity_args": "p_store_id uuid, p_year integer, p_month integer",
+    "arg_names": [
+      "p_store_id",
+      "p_year",
+      "p_month"
+    ],
+    "secdef": true,
+    "cfg": [
+      "search_path=public"
+    ],
+    "owner": "postgres",
+    "acl": "postgres=X/postgres,service_role=X/postgres",
+    "vol": "v"
+  },
+  {
+    "proname": "prevent_fiscal_closing_edit",
+    "signature": "prevent_fiscal_closing_edit()",
+    "identity_args": "",
+    "arg_names": null,
+    "secdef": false,
+    "cfg": null,
+    "owner": "postgres",
+    "acl": "=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres",
+    "vol": "v"
+  },
+  {
+    "proname": "void_closed_production_order",
+    "signature": "void_closed_production_order(uuid,text,uuid)",
+    "identity_args": "p_order_id uuid, p_reason text, p_user_id uuid",
+    "arg_names": [
+      "p_order_id",
+      "p_reason",
+      "p_user_id"
+    ],
+    "secdef": true,
+    "cfg": [
+      "search_path=public, extensions"
+    ],
+    "owner": "postgres",
+    "acl": "=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres",
+    "vol": "v"
+  }
+]
+
+===== STATEMENT: s02_lock_fiscal_period_def =====
+HTTP 201
+[
+  {
+    "def": "CREATE OR REPLACE FUNCTION public.lock_fiscal_period(p_store_id uuid, p_year integer, p_month integer)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nDECLARE\n    v_role TEXT;\nBEGIN\n    SELECT role INTO v_role FROM public.profiles WHERE id = auth.uid();\n    IF v_role != 'admin' THEN\n        RAISE EXCEPTION 'ERR_ADMIN_ONLY: Solo admin puede bloquear periodos fiscales';\n    END IF;\n\n    UPDATE public.fiscal_closings\n    SET status = 'locked', locked_by = auth.uid(), locked_at = now(), updated_at = now()\n    WHERE store_id = p_store_id AND period_year = p_year AND period_month = p_month AND status = 'closed';\n\n    IF NOT FOUND THEN\n        RAISE EXCEPTION 'ERR_NOT_CLOSED: El periodo debe estar cerrado antes de bloquearse';\n    END IF;\n\n    RETURN jsonb_build_object('status', 'success', 'message', 'Periodo bloqueado');\nEND;\n$function$\n"
+  }
+]
+
+===== STATEMENT: s03_close_fiscal_period_def =====
+HTTP 201
+[
+  {
+    "def": "CREATE OR REPLACE FUNCTION public.close_fiscal_period(p_store_id uuid, p_year integer, p_month integer, p_user_id uuid DEFAULT NULL::uuid)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$\nDECLARE\n  v_uid UUID := CASE WHEN auth.role() = 'service_role' THEN COALESCE(p_user_id, auth.uid()) ELSE auth.uid() END;\n  v_period_start DATE := make_date(p_year, p_month, 1);\n  v_period_end DATE := (v_period_start + INTERVAL '1 month' - INTERVAL '1 day')::date;\n  v_tx_count INTEGER;\n  v_revenue NUMERIC := 0;\n  v_closed_id UUID;\nBEGIN\n  -- V2.12.18: patrón IS NULL OR NOT explícito (antes: IF NOT has_store_access_as(v_uid, ...))\n  IF v_uid IS NULL OR NOT public.has_store_access_as(v_uid, p_store_id) THEN\n    RAISE EXCEPTION 'ERR_UNAUTHORIZED';\n  END IF;\n\n  -- Verificar que no esté ya cerrado\n  IF EXISTS (SELECT 1 FROM public.fiscal_period_closures WHERE store_id = p_store_id AND year = p_year AND month = p_month) THEN\n    RAISE EXCEPTION 'ERR_PERIOD_ALREADY_CLOSED';\n  END IF;\n\n  -- Calcular revenue del período\n  SELECT COUNT(*), COALESCE(SUM(total_amount), 0) INTO v_tx_count, v_revenue\n  FROM public.transactions\n  WHERE store_id = p_store_id\n    AND status = 'completed'\n    AND completed_at >= v_period_start\n    AND completed_at <= v_period_end + INTERVAL '1 day';\n\n  -- Insertar cierre\n  INSERT INTO public.fiscal_period_closures (store_id, year, month, period_start, period_end, transaction_count, total_revenue, closed_by, closed_at)\n  VALUES (p_store_id, p_year, p_month, v_period_start, v_period_end, v_tx_count, v_revenue, v_uid, NOW())\n  RETURNING id INTO v_closed_id;\n\n  INSERT INTO public.audit_logs (action, table_name, record_id, store_id, user_id, metadata)\n  VALUES ('CLOSE_FISCAL_PERIOD', 'fiscal_period_closures', v_closed_id, p_store_id, v_uid,\n    jsonb_build_object('period', p_year || '-' || LPAD(p_month::text, 2, '0'), 'tx_count', v_tx_count, 'revenue', v_revenue));\n\n  RETURN jsonb_build_object('status', 'success', 'closure_id', v_closed_id, 'tx_count', v_tx_count, 'revenue', v_revenue);\nEND;\n$function$\n"
+  }
+]
+
+===== STATEMENT: s04_ensure_fiscal_period_def =====
+HTTP 201
+[
+  {
+    "def": "CREATE OR REPLACE FUNCTION public.ensure_fiscal_period(p_store_id uuid, p_year integer, p_month integer)\n RETURNS uuid\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nDECLARE\n    v_id UUID;\nBEGIN\n    SELECT id INTO v_id FROM public.fiscal_closings\n    WHERE store_id = p_store_id AND period_year = p_year AND period_month = p_month;\n\n    IF v_id IS NULL THEN\n        INSERT INTO public.fiscal_closings (store_id, period_year, period_month, status)\n        VALUES (p_store_id, p_year, p_month, 'open')\n        ON CONFLICT (store_id, period_year, period_month) DO NOTHING\n        RETURNING id INTO v_id;\n    END IF;\n\n    RETURN v_id;\nEND;\n$function$\n"
+  }
+]
+
+===== STATEMENT: s05_fiscal_period_closures_existence_all_relkinds =====
+HTTP 201
+[
+  {
+    "kind": "ANY_RELKIND_ALL",
+    "relname": "fiscal_closings_pkey",
+    "relkind": "i"
+  },
+  {
+    "kind": "ANY_RELKIND_ALL",
+    "relname": "uq_fiscal_closings_store_period",
+    "relkind": "i"
+  },
+  {
+    "kind": "ANY_RELKIND_ALL",
+    "relname": "idx_fiscal_closings_store_period",
+    "relkind": "i"
+  },
+  {
+    "kind": "ANY_RELKIND_ALL",
+    "relname": "fiscal_closings",
+    "relkind": "r"
+  }
+]
+
+===== STATEMENT: s06_fiscal_closings_schema =====
+HTTP 201
+[
+  {
+    "column_name": "id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()"
+  },
+  {
+    "column_name": "store_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "column_name": "period_year",
+    "data_type": "integer",
+    "udt_name": "int4",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "column_name": "period_month",
+    "data_type": "integer",
+    "udt_name": "int4",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "column_name": "status",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": "'open'::text"
+  },
+  {
+    "column_name": "total_sales",
+    "data_type": "numeric",
+    "udt_name": "numeric",
+    "is_nullable": "YES",
+    "column_default": "0"
+  },
+  {
+    "column_name": "total_devolutions",
+    "data_type": "numeric",
+    "udt_name": "numeric",
+    "is_nullable": "YES",
+    "column_default": "0"
+  },
+  {
+    "column_name": "total_purchases",
+    "data_type": "numeric",
+    "udt_name": "numeric",
+    "is_nullable": "YES",
+    "column_default": "0"
+  },
+  {
+    "column_name": "total_commissions",
+    "data_type": "numeric",
+    "udt_name": "numeric",
+    "is_nullable": "YES",
+    "column_default": "0"
+  },
+  {
+    "column_name": "total_cash_balance",
+    "data_type": "numeric",
+    "udt_name": "numeric",
+    "is_nullable": "YES",
+    "column_default": "0"
+  },
+  {
+    "column_name": "closing_notes",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "column_name": "closed_by",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "column_name": "closed_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "column_name": "locked_by",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "column_name": "locked_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()"
+  },
+  {
+    "column_name": "updated_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()"
+  }
+]
+
+===== STATEMENT: s07_fiscal_closings_constraints_rls =====
+HTTP 201
+[
+  {
+    "conname": "fiscal_closings_closed_by_fkey",
+    "def": "FOREIGN KEY (closed_by) REFERENCES profiles(id)"
+  },
+  {
+    "conname": "fiscal_closings_locked_by_fkey",
+    "def": "FOREIGN KEY (locked_by) REFERENCES profiles(id)"
+  },
+  {
+    "conname": "fiscal_closings_period_month_check",
+    "def": "CHECK (((period_month >= 1) AND (period_month <= 12)))"
+  },
+  {
+    "conname": "fiscal_closings_pkey",
+    "def": "PRIMARY KEY (id)"
+  },
+  {
+    "conname": "fiscal_closings_status_check",
+    "def": "CHECK ((status = ANY (ARRAY['open'::text, 'closed'::text, 'locked'::text])))"
+  },
+  {
+    "conname": "fiscal_closings_store_id_fkey",
+    "def": "FOREIGN KEY (store_id) REFERENCES stores(id) ON DELETE CASCADE"
+  },
+  {
+    "conname": "uq_fiscal_closings_store_period",
+    "def": "UNIQUE (store_id, period_year, period_month)"
+  }
+]
+
+===== STATEMENT: s07b_fiscal_closings_rls_grants =====
+HTTP 201
+[
+  {
+    "relname": "fiscal_closings",
+    "rls_on": true,
+    "rls_force": false
+  }
+]
+
+===== STATEMENT: s08_fixtures_state =====
+HTTP 400
+{
+  "message": "Failed to run sql query: ERROR:  42703: column \"total_expenses\" does not exist\nLINE 1: SELECT id, store_id, period_year, period_month, status, total_sales, total_expenses,\n                                                                             ^\n"
+}
+
+===== STATEMENT: s08b_audit_rows_fiscal =====
+HTTP 400
+{
+  "message": "Failed to run sql query: ERROR:  42703: column \"operation\" does not exist\nLINE 1: SELECT id, operation, table_name, record_id::text, store_id, actor_id, created_at\n                   ^\n"
+}
+
+===== STATEMENT: s09_has_store_access_sig =====
+HTTP 201
+[
+  {
+    "signature": "has_store_access(uuid)",
+    "def": "CREATE OR REPLACE FUNCTION public.has_store_access(p_store_id uuid)\n RETURNS boolean\n LANGUAGE plpgsql\n STABLE SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$\nDECLARE\n  v_user_id uuid := auth.uid();\nBEGIN\n  IF v_user_id IS NULL OR p_store_id IS NULL THEN\n    RETURN false;\n  END IF;\n\n  -- Admin global tiene acceso a todo\n  IF public.is_admin() THEN\n    RETURN true;\n  END IF;\n\n  -- Verificar membership activa en la tienda\n  RETURN EXISTS (\n    SELECT 1\n    FROM public.user_store_memberships m\n    JOIN public.stores s\n      ON s.id = m.store_id\n    JOIN public.profiles p\n      ON p.id = m.user_id\n    WHERE m.user_id = v_user_id\n      AND m.store_id = p_store_id\n      AND m.status::text = 'active'\n      AND (\n        p.tenant_id IS NULL\n        OR s.tenant_id IS NULL\n        OR p.tenant_id = s.tenant_id\n      )\n  );\nEND;\n$function$\n"
+  }
+]
+
+===== STATEMENT: s10_rpc_grants_execute =====
+HTTP 201
+[
+  {
+    "proname": "close_fiscal_period",
+    "signature": "close_fiscal_period(uuid,integer,integer,uuid)",
+    "acl": "postgres=X/postgres,service_role=X/postgres"
+  },
+  {
+    "proname": "ensure_fiscal_period",
+    "signature": "ensure_fiscal_period(uuid,integer,integer)",
+    "acl": "postgres=X/postgres,service_role=X/postgres"
+  },
+  {
+    "proname": "lock_fiscal_period",
+    "signature": "lock_fiscal_period(uuid,integer,integer)",
+    "acl": "postgres=X/postgres,service_role=X/postgres"
+  }
+]
+
+===== RUN RESULT: FAILED =====

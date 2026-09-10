@@ -1,0 +1,107 @@
+# SQL RUN — 2026-09-09T23:50:25.368Z
+# file: q03_post_object_state.sql
+# endpoint: Management API query (project ********************)
+
+===== STATEMENT: p1_rpc_signatures_properties =====
+HTTP 201
+[
+  {
+    "proname": "close_fiscal_period",
+    "signature": "close_fiscal_period(uuid,integer,integer,uuid)",
+    "identity_args": "p_store_id uuid, p_year integer, p_month integer, p_user_id uuid",
+    "secdef": true,
+    "cfg": [
+      "search_path=public, pg_temp"
+    ],
+    "owner": "postgres",
+    "acl": "postgres=X/postgres,service_role=X/postgres",
+    "comment": "V2.12.18: patrón IS NULL OR NOT explícito (consistencia V2.12.12). V2.12.9: anti-spoofing. REM-F4-06c (OF-3): restaurado cuerpo canónico V2.12.9 — escribe el modelo único fiscal_closings (la referencia a fiscal_period_closures era regresión de V2.12.18); auditoría vía trigger (record_id uuid)."
+  },
+  {
+    "proname": "lock_fiscal_period",
+    "signature": "lock_fiscal_period(uuid,integer,integer,uuid)",
+    "identity_args": "p_store_id uuid, p_year integer, p_month integer, p_user_id uuid",
+    "secdef": true,
+    "cfg": [
+      "search_path=public"
+    ],
+    "owner": "postgres",
+    "acl": "postgres=X/postgres,service_role=X/postgres",
+    "comment": "REM-F4-06c (OF-1): p_user_id opcional con patrón canónico anti-spoofing V2.12.9 (service_role ← identidad server-side de route.ts; authenticated ← auth.uid()). locked_by = admin resuelto."
+  }
+]
+
+===== STATEMENT: p2_lock_def =====
+HTTP 201
+[
+  {
+    "def": "CREATE OR REPLACE FUNCTION public.lock_fiscal_period(p_store_id uuid, p_year integer, p_month integer, p_user_id uuid DEFAULT NULL::uuid)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nDECLARE\n    v_role TEXT;\n    -- Patrón canónico anti-spoofing v2_12_9: bajo service_role la identidad la\n    -- provee el código servidor (route.ts ← sesión NextAuth); bajo authenticated,\n    -- el JWT del propio usuario. Nunca confianza en identidad enviada por cliente.\n    v_admin_id UUID := CASE WHEN auth.role() = 'service_role'\n                            THEN COALESCE(p_user_id, auth.uid())\n                            ELSE auth.uid() END;\nBEGIN\n    -- REM-F4-06c (§19): puente de identidad transaccional para que la auditoría\n    -- por trigger (audit_fiscal_closings_changes → auth.uid()) registre el ACTOR\n    -- real también en la vía HTTP service_role (canónico del codebase:\n    -- CREATE_SALE_V2 audit 100% con actor). Valor SOLO server-side; local a la txn.\n    IF v_admin_id IS NOT NULL THEN\n        PERFORM set_config('request.jwt.claims',\n            json_build_object('sub', v_admin_id, 'role', 'authenticated')::text, true);\n    END IF;\n\n    SELECT role INTO v_role FROM public.profiles WHERE id = v_admin_id;\n    IF v_role != 'admin' THEN\n        RAISE EXCEPTION 'ERR_ADMIN_ONLY: Solo admin puede bloquear periodos fiscales';\n    END IF;\n\n    UPDATE public.fiscal_closings\n    SET status = 'locked', locked_by = v_admin_id, locked_at = now(), updated_at = now()\n    WHERE store_id = p_store_id AND period_year = p_year AND period_month = p_month AND status = 'closed';\n\n    IF NOT FOUND THEN\n        RAISE EXCEPTION 'ERR_NOT_CLOSED: El periodo debe estar cerrado antes de bloquearse';\n    END IF;\n\n    RETURN jsonb_build_object('status', 'success', 'message', 'Periodo bloqueado');\nEND;\n$function$\n"
+  }
+]
+
+===== STATEMENT: p3_close_def =====
+HTTP 201
+[
+  {
+    "def": "CREATE OR REPLACE FUNCTION public.close_fiscal_period(p_store_id uuid, p_year integer, p_month integer, p_user_id uuid DEFAULT NULL::uuid)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$\nDECLARE v_closing_id UUID; v_total_sales NUMERIC := 0; v_total_devolutions NUMERIC := 0;\n    v_total_purchases NUMERIC := 0; v_total_commissions NUMERIC := 0;\n    v_date_from TIMESTAMPTZ; v_date_to TIMESTAMPTZ;\n    v_uid UUID := CASE WHEN auth.role() = 'service_role' THEN COALESCE(p_user_id, auth.uid()) ELSE auth.uid() END;\nBEGIN\n    -- REM-F4-06c (§19): puente de identidad transaccional (actor real en auditoría\n    -- por trigger en la vía HTTP service_role). Aditivo; no altera lógica de negocio.\n    IF v_uid IS NOT NULL THEN\n      PERFORM set_config('request.jwt.claims', json_build_object('sub', v_uid, 'role', 'authenticated')::text, true);\n    END IF;\n    IF NOT public.has_store_access_as(v_uid, p_store_id) THEN RAISE EXCEPTION 'ERR_UNAUTHORIZED'; END IF;\n    v_date_from := make_date(p_year, p_month, 1);\n    v_date_to := make_date(p_year, p_month, 1) + INTERVAL '1 month';\n    SELECT id INTO v_closing_id FROM public.fiscal_closings WHERE store_id = p_store_id AND period_year = p_year AND period_month = p_month;\n    IF v_closing_id IS NOT NULL THEN\n        UPDATE public.fiscal_closings SET status = 'closed', closed_by = v_uid, closed_at = now(), updated_at = now()\n        WHERE id = v_closing_id AND status = 'open';\n        IF NOT FOUND THEN RAISE EXCEPTION 'ERR_PERIOD_LOCKED'; END IF;\n    ELSE\n        SELECT COALESCE(SUM(total_amount), 0) INTO v_total_sales FROM public.transactions WHERE store_id = p_store_id AND status = 'completed' AND created_at >= v_date_from AND created_at < v_date_to;\n        SELECT COALESCE(SUM(total_amount), 0) INTO v_total_devolutions FROM public.devolutions WHERE store_id = p_store_id AND status = 'completed' AND processed_at >= v_date_from AND processed_at < v_date_to;\n        SELECT COALESCE(SUM(total_cost), 0) INTO v_total_purchases FROM public.receipts WHERE store_id = p_store_id AND status = 'active' AND created_at >= v_date_from AND created_at < v_date_to;\n        SELECT COALESCE(SUM(final_amount), 0) INTO v_total_commissions FROM public.commission_payments WHERE store_id = p_store_id AND status = 'paid' AND paid_at >= v_date_from AND paid_at < v_date_to;\n        INSERT INTO public.fiscal_closings (store_id, period_year, period_month, status, total_sales, total_devolutions, total_purchases, total_commissions, total_cash_balance, closed_by, closed_at)\n        VALUES (p_store_id, p_year, p_month, 'closed', v_total_sales, v_total_devolutions, v_total_purchases, v_total_commissions, v_total_sales - v_total_devolutions - v_total_commissions, v_uid, now())\n        RETURNING id INTO v_closing_id;\n    END IF;\n    RETURN jsonb_build_object('status', 'success', 'closing_id', v_closing_id, 'total_sales', v_total_sales, 'total_devolutions', v_total_devolutions, 'total_purchases', v_total_purchases, 'total_commissions', v_total_commissions);\nEND;\n$function$\n"
+  }
+]
+
+===== STATEMENT: p4_phantom_absence_post =====
+HTTP 201
+[]
+
+===== STATEMENT: p5_triggers_types_f406b_intact =====
+HTTP 201
+[
+  {
+    "tgname": "prevent_fiscal_closing_edit",
+    "tgenabled": "O"
+  },
+  {
+    "tgname": "trg_audit_fiscal_closings",
+    "tgenabled": "O"
+  }
+]
+
+===== STATEMENT: p6_uuid_types_post =====
+HTTP 201
+[
+  {
+    "table_name": "audit_logs",
+    "column_name": "record_id",
+    "udt_name": "uuid"
+  },
+  {
+    "table_name": "fiscal_closings",
+    "column_name": "id",
+    "udt_name": "uuid"
+  }
+]
+
+===== STATEMENT: p7_f406b_trigger_no_regression =====
+HTTP 201
+[
+  {
+    "has_text_cast": false,
+    "has_new_id_text": false,
+    "secdef": true,
+    "owner": "postgres",
+    "cfg": [
+      "search_path=public, pg_temp"
+    ],
+    "acl": "postgres=X/postgres,service_role=X/postgres"
+  }
+]
+
+===== STATEMENT: p8_fiscal_closings_rls_post =====
+HTTP 201
+[
+  {
+    "relname": "fiscal_closings",
+    "rls_on": true,
+    "rls_force": false
+  }
+]
+
+===== RUN RESULT: OK =====

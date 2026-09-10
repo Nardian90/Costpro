@@ -1,0 +1,20 @@
+# REM-F4-06c SECURITY SUITE — 2026-09-10T00:07:54.966Z
+  [PASS] S1 anon POST → 401 DENY — status=401
+  [PASS] S1 anon GET → 401 DENY — status=401
+  [PASS] S2 non-member SELECT fiscal_closings = 0 (RLS) — [{"visible_rows":0}]
+  [PASS] S2 non-member UPDATE = 0 filas (RLS update policy) — HTTP 201
+  [PASS] S3 EXECUTE lock_fiscal_period denegado a authenticated (42501) — {"message":"Failed to run sql query: ERROR:  42501: permission denied for function lock_fiscal_period\n"}
+  [PASS] S3 EXECUTE close_fiscal_period denegado a authenticated (42501) — {"message":"Failed to run sql query: ERROR:  42501: permission denied for function close_fiscal_period\n"}
+  [PASS] S4 has_store_access_as(non-member, STORE_B) = false — [{"has_access":false}]
+  [PASS] S4 close sobre STORE_B sin membresía → ERR_UNAUTHORIZED (0 estado) — {"message":"Failed to run sql query: ERROR:  P0001: ERR_UNAUTHORIZED\nCONTEXT:  PL/pgSQL function close_fiscal_period(uu
+  [PASS] S4 STORE_B sin filas fiscales creadas — n=0
+  [PASS] S5 close_fiscal_period: SECDEF + owner postgres + ACL postgres/service_role — secdef=true owner=postgres acl=postgres=X/postgres,service_role=X/postgres cfg=["search_path=public, pg_temp"]
+  [PASS] S5 lock_fiscal_period: SECDEF + owner postgres + ACL postgres/service_role — secdef=true owner=postgres acl=postgres=X/postgres,service_role=X/postgres cfg=["search_path=public"]
+  [PASS] S5 search_path preservados (lock=public, close=public+pg_temp) — lock=["search_path=public"] close=["search_path=public, pg_temp"]
+  [PASS] S5 ningún RPC referencia fiscal_period_closures — [false,false]
+  [PASS] S5 RLS fiscal_closings activa (on, no-force) — {"rls_on":true,"rls_force":false}
+  [PASS] S5 triggers intactos y habilitados (audit + prevent) — [{"tgname":"prevent_fiscal_closing_edit","tgenabled":"O"},{"tgname":"trg_audit_fiscal_closings","tgenabled":"O"}]
+  [PASS] S5 tipos uuid intactos (id y record_id) — [{"table_name":"audit_logs","udt_name":"uuid"},{"table_name":"fiscal_closings","udt_name":"uuid"}]
+  [PASS] S5 F4-06b sin regresión (audit trigger sin ::text) — {"clean":true}
+
+# RESULTADO SECURITY: ALL PASS

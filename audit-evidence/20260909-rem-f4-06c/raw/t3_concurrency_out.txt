@@ -1,0 +1,16 @@
+# REM-F4-06c CONCURRENCY SUITE — 2026-09-10T00:06:39.531Z
+  [PASS] C-A exactamente 1 close exitoso — ok=1 errs=23505
+  [PASS] C-A el otro falla con 23505/ERR_PERIOD_LOCKED (sin doble inserción) — 23505
+  [PASS] C-A estado final: 1 fila closed — [{"id":"fd527c86-9287-4d13-a2a2-954e62bb095f","status":"closed"}]
+  [PASS] C-A auditoría: exactamente 1 CREATED, record_id = fila única, actor ok — [{"action":"FISCAL_CLOSING_CREATED","st":"closed","record_id":"fd527c86-9287-4d13-a2a2-954e62bb095f","actor":true}]
+  [PASS] C-B prep close 2029-05 OK — [{"close_fiscal_period":{"status":"success","closing_id":"d674faaf-df2b-4134-9e22-76ae02eb5dc9","tot
+  [PASS] C-B exactamente 1 lock exitoso — ok=1 errs=ERR_NOT_CLOSED
+  [PASS] C-B estado final: 1 fila locked — [{"id":"d674faaf-df2b-4134-9e22-76ae02eb5dc9","status":"locked"}]
+  [PASS] C-B auditoría: 1 CREATED + 1 UPDATED:locked (sin duplicados), uuids = fila única — [{"action":"FISCAL_CLOSING_CREATED","st":"closed","record_id":"d674faaf-df2b-4134-9e22-76ae02eb5dc9","actor":true},{"action":"FISCAL_CLOSING_UPDATED","st":"locked","record_id":"d674faaf-df2b-4134-9e22-76ae02eb5dc9","actor":true}]
+  [PASS] C-C prep ensure 2029-06 open — [{"id":"a8283fd0-cdaf-4afe-8438-431750b83a39"}]
+  [PASS] C-C estado final válido (closed o locked, nunca abierto/imposible) — status=locked ok=2 errs=
+  [PASS] C-C si lock ganó, existió cierre previo (sin lock-violar-cerrado)
+  [PASS] C-C auditoría consistente (sin duplicados, uuid = fila única, actor ok) — ["FISCAL_CLOSING_CREATED:open","FISCAL_CLOSING_UPDATED:closed","FISCAL_CLOSING_UPDATED:locked"]
+  [PASS] C-C sin estados imposibles (no coexisten CREATED:locked ni lock-sin-close) — verificado arriba
+
+# RESULTADO CONCURRENCY: ALL PASS

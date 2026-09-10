@@ -1,0 +1,24 @@
+# REM-F4-06c PRE-FIX HTTP REPRODUCTION — 2026-09-09T23:36:06.641Z
+# Path: POST /api/fiscal-close {action:'close'|'lock'} (camino REAL de FiscalCloseView)
+
+== Fixture user profile ==
+[{"id":"a1111111-1111-1111-1111-111111111111","role":"admin"}]
+
+== Control: GET /api/fiscal-close (solo SELECT) ==
+HTTP 200 — {"store_id":"f91b0e17-ac23-42ba-b08e-8159a6b57d83","year":2026,"month":9,"status":"closed","closing":{"id":"a2592dd4-e39f-4616-996a-172a9fa4c922","store_id":"f91b0e17-ac23-42ba-b08e-8159a6b57d83","period_year":2026,"period_month":9,"status":"closed","total_sales":0,"total_devolutions":0,"total_purchases":0,"total_commissions":0,"total_cash_balance":0,"closing_notes":"F4-06b UPDATE test closed","cl
+
+== Estado PRE (DB) ==
+[{"n_audit_fiscal":10}]
+
+== REPRO OF-3: POST {action:'close'} period 2026-10 (sin fila previa) ==
+HTTP 500
+body: {"error":"relation \"public.fiscal_period_closures\" does not exist"}
+
+== REPRO OF-1: POST {action:'lock'} period 2026-09 (F2 status='closed') ==
+HTTP 500
+body: {"error":"Could not find the function public.lock_fiscal_period(p_month, p_store_id, p_user_id, p_year) in the schema cache"}
+
+== Estado POST-intento (DB) — demostrar 0 estado parcial ==
+[{"status":"closed","locked_by_null":true}]
+
+# CONCLUSIÓN PRE: close → 500 (42P01 fiscal_period_closures); lock → 500 (PGRST202 firma); fila F2 intacta; 0 filas 2026-10; 0 audit nuevas.

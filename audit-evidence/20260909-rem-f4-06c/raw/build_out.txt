@@ -1,0 +1,16 @@
+$ next build
+▲ Next.js 16.3.0 (Turbopack)
+- Environments: .env
+✓ Running next.config.ts took 1002ms
+- Experiments (use with caution):
+  · clientTraceMetadata
+  · optimizePackageImports
+
+  Creating an optimized production build ...
+error: script "build" was terminated by signal SIGKILL (Forced quit)
+/bin/bash: line 1:  9787 Killed                  bun run build
+
+real	0m48.171s
+user	1m0.277s
+sys	0m3.824s
+BUILD EXIT: 137

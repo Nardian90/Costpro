@@ -1,0 +1,21 @@
+# REM-F4-06c IDEMPOTENCY + ATOMICITY SUITE — 2026-09-10T00:03:56.100Z
+  [PASS] I1 close retry (closed) → error ERR_PERIOD_LOCKED — {"message":"Failed to run sql query: ERROR:  P0001: ERR_PERIOD_LOCKED\nCONTEXT:  PL/pgSQL function c
+  [PASS] I1 0 audit rows nuevas — before=16
+  [PASS] I2 close (locked) → ERR_PERIOD_LOCKED — {"message":"Failed to run sql query: ERROR:  P0001: ERR_PERIOD_LOCKED\nCONTEXT:  PL/pgSQL function c
+  [PASS] I3 lock retry (locked) → ERR_NOT_CLOSED — {"message":"Failed to run sql query: ERROR:  P0001: ERR_NOT_CLOSED: El periodo debe estar cerrado an
+  [PASS] I3 0 audit rows nuevas — after=16
+  ensure 2028-05 → 31594941-37c7-4ecd-b618-eedd7b8bcc77
+  [PASS] I4 lock (open) → ERR_NOT_CLOSED — {"message":"Failed to run sql query: ERROR:  P0001: ERR_NOT_CLOSED: El periodo debe estar cerrado an
+  [PASS] I4 2028-05 sigue open — status=open
+  [PASS] I5 close non-member → ERR_UNAUTHORIZED — {"message":"Failed to run sql query: ERROR:  P0001: ERR_UNAUTHORIZED\nCONTEXT:  PL/pgSQL function cl
+  [PASS] I5 0 filas creadas para 2028-06 — n=0
+  [PASS] I6 ensure×2 mismo id y 1 fila — a=9596aa4b-dce9-431a-a651-93a1d0f47ecf b=9596aa4b-dce9-431a-a651-93a1d0f47ecf n=1
+  [PASS] A1 txn abortada por fallo forzado post-RPC — {"message":"Failed to run sql query: ERROR:  P0001: FORCED_AFTER_AUDIT_A1\nCONTEXT:  PL/pgSQL functi
+  [PASS] A1 negocio revertido (0 filas 2028-07) — n=0
+  [PASS] A1 auditoría revertida (0 deltas) — before=18
+  [PASS] A2 prep close 2028-08 OK — [{"close_fiscal_period":{"status":"success","closing_id":"460678c9-7cea-40e3-83ab-2726975a49bd","tot
+  [PASS] A2 txn de lock abortada — {"message":"Failed to run sql query: ERROR:  P0001: FORCED_AFTER_AUDIT_A2\nCONTEXT:  PL/pgSQL functi
+  [PASS] A2 negocio revertido (sigue closed, NO locked) — status=closed
+  [PASS] A2 auditoría revertida (0 deltas) — after=19
+
+# RESULTADO IDEMPOTENCY+ATOMICITY: ALL PASS

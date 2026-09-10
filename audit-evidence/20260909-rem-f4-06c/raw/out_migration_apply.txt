@@ -1,0 +1,9 @@
+# SQL RUN — 2026-09-09T23:48:45.749Z
+# file: supabase/migrations/20260909000004_rem_f4_06c_fiscal_close_rpc_contract.sql
+# endpoint: Management API query (project ********************)
+
+===== STATEMENT: single =====
+HTTP 201
+[]
+
+===== RUN RESULT: OK =====

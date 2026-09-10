@@ -1,0 +1,135 @@
+{
+ "label": "pre",
+ "captured_at": "2026-09-09T23:36:39.609Z",
+ "stores": {
+  "ENERVIDA": {
+   "products": {
+    "n": 125,
+    "stock_sum": 4012.5,
+    "wac_value_sum": 1264284,
+    "price_sum": 415100,
+    "hash": "9202bd9f0ec6b01b80d788000e3a8c7b"
+   },
+   "stock_movements": {
+    "n": 451,
+    "qty_sum": 4012.5,
+    "value_sum": 192195249.33333334,
+    "hash": "9969e36831b1c7e5f34159148f7e60f6"
+   },
+   "receipts": {
+    "n": 4,
+    "total_sum": 194005696
+   },
+   "receipt_items": {
+    "n": 110,
+    "qty_sum": 6041.5,
+    "value_sum": 7370833.25
+   },
+   "transactions": {
+    "n": 308,
+    "amount_sum": 20920469.998,
+    "hash": "584f7d4082746457de7bfaeb4b4f1419"
+   },
+   "payment_transactions": {
+    "n": 154,
+    "amount_sum": 939548.5,
+    "amount_cup_sum": 17757360.0002
+   },
+   "commission_payments": {
+    "n": 0,
+    "amount_sum": 0,
+    "hash": null
+   },
+   "cash_closures": {
+    "n": 0,
+    "system_total_sum": 0,
+    "declared_total_sum": 0
+   },
+   "cash_movements": {
+    "n": 0,
+    "amount_sum": 0
+   },
+   "fiscal_closings": {
+    "n": 0
+   },
+   "fiscal_period_closures": {
+    "absent": 1
+   },
+   "audit_logs": {
+    "n": 5437,
+    "hash": "0da0d9e1451a3eecc63d0de62c319b88"
+   },
+   "wac_change_log": {
+    "n": 0
+   },
+   "inventory": {
+    "n": 106
+   }
+  },
+  "PUERTO_PADRE": {
+   "products": {
+    "n": 36,
+    "stock_sum": 966.1289,
+    "wac_value_sum": 7955629.678620165,
+    "price_sum": 605000,
+    "hash": "0202f220379116567c5621013bab7224"
+   },
+   "stock_movements": {
+    "n": 251,
+    "qty_sum": 966.1289,
+    "value_sum": 12257963.67,
+    "hash": "0c58d68836254e33b5947cc3c9f99155"
+   },
+   "receipts": {
+    "n": 2,
+    "total_sum": 12257963.67
+   },
+   "receipt_items": {
+    "n": 39,
+    "qty_sum": 1711.3533,
+    "value_sum": 12257963.67
+   },
+   "transactions": {
+    "n": 212,
+    "amount_sum": 7180485,
+    "hash": "061f1e54b84112e5220c029072b62df1"
+   },
+   "payment_transactions": {
+    "n": 212,
+    "amount_sum": 7180485,
+    "amount_cup_sum": 7180485
+   },
+   "commission_payments": {
+    "n": 0,
+    "amount_sum": 0,
+    "hash": null
+   },
+   "cash_closures": {
+    "n": 0,
+    "system_total_sum": 0,
+    "declared_total_sum": 0
+   },
+   "cash_movements": {
+    "n": 0,
+    "amount_sum": 0
+   },
+   "fiscal_closings": {
+    "n": 0
+   },
+   "fiscal_period_closures": {
+    "absent": 1
+   },
+   "audit_logs": {
+    "n": 1136,
+    "hash": "4d0a7e4f9ec845458cb0b8f07cd8fbcc"
+   },
+   "wac_change_log": {
+    "n": 0
+   },
+   "inventory": {
+    "n": 35
+   }
+  }
+ },
+ "overall_md5": "427e64eb0806e812a207e3e554945ba8"
+}

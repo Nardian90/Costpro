@@ -1,0 +1,286 @@
+# SQL RUN — 2026-09-09T23:34:26.511Z
+# file: q02_f406b_intact.sql
+# endpoint: Management API query (project ********************)
+
+===== STATEMENT: v1_f406b_trigger_state =====
+HTTP 201
+[
+  {
+    "proname": "audit_fiscal_closings_changes",
+    "signature": "audit_fiscal_closings_changes()",
+    "secdef": true,
+    "cfg": [
+      "search_path=public, pg_temp"
+    ],
+    "owner": "postgres",
+    "has_text_cast": false,
+    "has_new_id_text": false,
+    "acl": "postgres=X/postgres,service_role=X/postgres"
+  }
+]
+
+===== STATEMENT: v2_f406b_trigger_on_table =====
+HTTP 201
+[
+  {
+    "tgname": "prevent_fiscal_closing_edit",
+    "tgenabled": "O",
+    "def": "CREATE TRIGGER prevent_fiscal_closing_edit BEFORE DELETE OR UPDATE ON public.fiscal_closings FOR EACH ROW EXECUTE FUNCTION prevent_fiscal_closing_edit()"
+  },
+  {
+    "tgname": "trg_audit_fiscal_closings",
+    "tgenabled": "O",
+    "def": "CREATE TRIGGER trg_audit_fiscal_closings AFTER INSERT OR UPDATE ON public.fiscal_closings FOR EACH ROW EXECUTE FUNCTION audit_fiscal_closings_changes()"
+  }
+]
+
+===== STATEMENT: v3_uuid_types =====
+HTTP 201
+[
+  {
+    "table_name": "audit_logs",
+    "column_name": "record_id",
+    "udt_name": "uuid"
+  },
+  {
+    "table_name": "fiscal_closings",
+    "column_name": "id",
+    "udt_name": "uuid"
+  }
+]
+
+===== STATEMENT: v4_f406_commission_trigger_no_regression =====
+HTTP 201
+[
+  {
+    "proname": "audit_commission_payments_changes",
+    "secdef": true,
+    "cfg": [
+      "search_path=public, pg_temp"
+    ],
+    "owner": "postgres",
+    "has_text_cast": false,
+    "has_new_id_text": false,
+    "acl": "postgres=X/postgres,service_role=X/postgres"
+  }
+]
+
+===== STATEMENT: v5_fixtures_and_audit =====
+HTTP 201
+[
+  {
+    "id": "17558101-2d1e-498b-b995-542717735e93",
+    "store_id": "f91b0e17-ac23-42ba-b08e-8159a6b57d83",
+    "period_year": 2026,
+    "period_month": 8,
+    "status": "locked",
+    "closed_by_null": true,
+    "locked_by_null": false,
+    "created_at": "2026-09-09 22:34:07.868658+00"
+  },
+  {
+    "id": "a2592dd4-e39f-4616-996a-172a9fa4c922",
+    "store_id": "f91b0e17-ac23-42ba-b08e-8159a6b57d83",
+    "period_year": 2026,
+    "period_month": 9,
+    "status": "closed",
+    "closed_by_null": true,
+    "locked_by_null": true,
+    "created_at": "2026-09-09 22:50:16.234842+00"
+  }
+]
+
+===== STATEMENT: v6_audit_logs_recent_fiscal =====
+HTTP 201
+[
+  {
+    "id": "8d78810c-939e-4185-9322-5fcf9fb7e856",
+    "action": "FISCAL_CLOSING_CREATED",
+    "table_name": "fiscal_closings",
+    "record_id": "d504be62-f668-46ba-812c-7783ad3cf724",
+    "store_id": "f91b0e17-ac23-42ba-b08e-8159a6b57d83",
+    "user_id": null,
+    "created_at": "2026-09-09 22:54:22.139798+00"
+  },
+  {
+    "id": "5137c660-4850-4db3-86c3-50670c63c8b9",
+    "action": "FISCAL_CLOSING_UPDATED",
+    "table_name": "fiscal_closings",
+    "record_id": "789cc69c-f563-445f-81a6-44c82c797861",
+    "store_id": "f91b0e17-ac23-42ba-b08e-8159a6b57d83",
+    "user_id": "a1111111-1111-1111-1111-111111111111",
+    "created_at": "2026-09-09 22:54:18.1033+00"
+  },
+  {
+    "id": "32c64e63-c999-43eb-847a-4927fba08a55",
+    "action": "FISCAL_CLOSING_UPDATED",
+    "table_name": "fiscal_closings",
+    "record_id": "05b9c35e-e1a0-4bb4-83f9-0359870e2b6f",
+    "store_id": "f91b0e17-ac23-42ba-b08e-8159a6b57d83",
+    "user_id": "a1111111-1111-1111-1111-111111111111",
+    "created_at": "2026-09-09 22:54:17.746804+00"
+  },
+  {
+    "id": "6e3504f1-0915-4412-b1d6-25153ce9f52b",
+    "action": "FISCAL_CLOSING_CREATED",
+    "table_name": "fiscal_closings",
+    "record_id": "05b9c35e-e1a0-4bb4-83f9-0359870e2b6f",
+    "store_id": "f91b0e17-ac23-42ba-b08e-8159a6b57d83",
+    "user_id": "a1111111-1111-1111-1111-111111111111",
+    "created_at": "2026-09-09 22:54:15.801077+00"
+  },
+  {
+    "id": "a1cb55c3-ffe3-479a-a3b9-655de210c3b9",
+    "action": "FISCAL_CLOSING_CREATED",
+    "table_name": "fiscal_closings",
+    "record_id": "789cc69c-f563-445f-81a6-44c82c797861",
+    "store_id": "f91b0e17-ac23-42ba-b08e-8159a6b57d83",
+    "user_id": "a1111111-1111-1111-1111-111111111111",
+    "created_at": "2026-09-09 22:54:13.818243+00"
+  },
+  {
+    "id": "d23f12d8-78f4-4775-a337-ec75f4e3e983",
+    "action": "FISCAL_CLOSING_UPDATED",
+    "table_name": "fiscal_closings",
+    "record_id": "3f410a7a-150f-43d7-9198-555678d60f99",
+    "store_id": "f91b0e17-ac23-42ba-b08e-8159a6b57d83",
+    "user_id": "a1111111-1111-1111-1111-111111111111",
+    "created_at": "2026-09-09 22:54:07.772028+00"
+  },
+  {
+    "id": "fec52c30-35fc-422b-9d24-49d76d82534f",
+    "action": "FISCAL_CLOSING_CREATED",
+    "table_name": "fiscal_closings",
+    "record_id": "3f410a7a-150f-43d7-9198-555678d60f99",
+    "store_id": "f91b0e17-ac23-42ba-b08e-8159a6b57d83",
+    "user_id": "a1111111-1111-1111-1111-111111111111",
+    "created_at": "2026-09-09 22:54:05.400199+00"
+  },
+  {
+    "id": "c1e1e237-26a9-4b8e-bdfc-af22ae2a9685",
+    "action": "FISCAL_CLOSING_UPDATED",
+    "table_name": "fiscal_closings",
+    "record_id": "17558101-2d1e-498b-b995-542717735e93",
+    "store_id": "f91b0e17-ac23-42ba-b08e-8159a6b57d83",
+    "user_id": "a1111111-1111-1111-1111-111111111111",
+    "created_at": "2026-09-09 22:50:26.164794+00"
+  },
+  {
+    "id": "e33956f9-8ac4-4e4e-9e4d-631e68b8ff6c",
+    "action": "FISCAL_CLOSING_UPDATED",
+    "table_name": "fiscal_closings",
+    "record_id": "a2592dd4-e39f-4616-996a-172a9fa4c922",
+    "store_id": "f91b0e17-ac23-42ba-b08e-8159a6b57d83",
+    "user_id": "a1111111-1111-1111-1111-111111111111",
+    "created_at": "2026-09-09 22:50:22.082468+00"
+  },
+  {
+    "id": "ce7561bf-d3af-4d7f-9182-ab554db9ea96",
+    "action": "FISCAL_CLOSING_CREATED",
+    "table_name": "fiscal_closings",
+    "record_id": "a2592dd4-e39f-4616-996a-172a9fa4c922",
+    "store_id": "f91b0e17-ac23-42ba-b08e-8159a6b57d83",
+    "user_id": "a1111111-1111-1111-1111-111111111111",
+    "created_at": "2026-09-09 22:50:16.234842+00"
+  },
+  {
+    "id": "ee8c0dac-ab11-47bd-b574-66711afb601e",
+    "action": "COMMISSION_PAYMENT_CREATED",
+    "table_name": "commission_payments",
+    "record_id": "6f8de564-1504-4cca-a94f-567c2eec69db",
+    "store_id": "f91b0e17-ac23-42ba-b08e-8159a6b57d83",
+    "user_id": "9adf2009-9828-4d82-b923-f84d77f63a44",
+    "created_at": "2026-09-09 05:28:46.264093+00"
+  },
+  {
+    "id": "d56c20e8-d1f6-482f-9295-c19c15e7ae31",
+    "action": "COMMISSION_PAYMENT_CREATED",
+    "table_name": "commission_payments",
+    "record_id": "78bc776f-9899-463a-b351-52214db770f0",
+    "store_id": "f91b0e17-ac23-42ba-b08e-8159a6b57d83",
+    "user_id": "9adf2009-9828-4d82-b923-f84d77f63a44",
+    "created_at": "2026-09-09 05:28:46.134966+00"
+  },
+  {
+    "id": "00a87702-29ba-4126-9d85-d84ef636051e",
+    "action": "COMMISSION_PAYMENT_CREATED",
+    "table_name": "commission_payments",
+    "record_id": "2947d17f-72bc-4379-a25f-f22e1b8f2d17",
+    "store_id": "f91b0e17-ac23-42ba-b08e-8159a6b57d83",
+    "user_id": "9adf2009-9828-4d82-b923-f84d77f63a44",
+    "created_at": "2026-09-09 05:28:40.441031+00"
+  },
+  {
+    "id": "3d6098e6-c47f-4977-b7c2-0e70ef5e8d83",
+    "action": "COMMISSION_PAYMENT_CREATED",
+    "table_name": "commission_payments",
+    "record_id": "c11ac7d7-892e-4a90-8d99-045701ae7847",
+    "store_id": "f91b0e17-ac23-42ba-b08e-8159a6b57d83",
+    "user_id": "9adf2009-9828-4d82-b923-f84d77f63a44",
+    "created_at": "2026-09-09 05:27:34.355415+00"
+  },
+  {
+    "id": "51d018ae-a0d6-49fc-8be2-02390cbca076",
+    "action": "COMMISSION_PAYMENT_CREATED",
+    "table_name": "commission_payments",
+    "record_id": "7535037e-2bf8-407e-b590-359775342e26",
+    "store_id": "f91b0e17-ac23-42ba-b08e-8159a6b57d83",
+    "user_id": "9adf2009-9828-4d82-b923-f84d77f63a44",
+    "created_at": "2026-09-09 05:27:34.289533+00"
+  }
+]
+
+===== STATEMENT: v7_audit_logs_columns =====
+HTTP 201
+[
+  {
+    "column_name": "id",
+    "udt_name": "uuid"
+  },
+  {
+    "column_name": "created_at",
+    "udt_name": "timestamptz"
+  },
+  {
+    "column_name": "user_id",
+    "udt_name": "uuid"
+  },
+  {
+    "column_name": "table_name",
+    "udt_name": "text"
+  },
+  {
+    "column_name": "record_id",
+    "udt_name": "uuid"
+  },
+  {
+    "column_name": "action",
+    "udt_name": "text"
+  },
+  {
+    "column_name": "old_data",
+    "udt_name": "jsonb"
+  },
+  {
+    "column_name": "new_data",
+    "udt_name": "jsonb"
+  },
+  {
+    "column_name": "metadata",
+    "udt_name": "jsonb"
+  },
+  {
+    "column_name": "updated_at",
+    "udt_name": "timestamptz"
+  },
+  {
+    "column_name": "store_id",
+    "udt_name": "uuid"
+  },
+  {
+    "column_name": "trace_id",
+    "udt_name": "text"
+  }
+]
+
+===== RUN RESULT: OK =====

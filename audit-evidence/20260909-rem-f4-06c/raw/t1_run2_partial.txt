@@ -1,0 +1,69 @@
+# REM-F4-06c FUNCTIONAL SUITE RUN2 (HTTP real) — 2026-09-09T23:53:18.424Z
+ensure 2027-11 → OK id=eeb1e7c2-a974-4e69-ac6e-7f58ca7cfce0
+  [PASS] P0 GET 2027-11 status=open (preparación) — {"store_id":"f91b0e17-ac23-42ba-b08e-8159a6b57d83","year":2027,"month":11,"status":"open","closing":
+  [PASS] P1 close 2027-11 (UPDATE path) HTTP 200 — {"status":"success","closing_id":"cb3e9594-2265-4367-b8cd-1a590fe958df","total_sales":0,"total_purchases":0,"total_commissions":0,"total_devolutions":0}
+  [PASS] P1 DB status=closed — {"id":"cb3e9594-2265-4367-b8cd-1a590fe958df","status":"closed","closed_by":"a1111111-1111-1111-1111-111111111111"}
+  [PASS] P1 DB closed_by = actor de sesión (server-side) — closed_by=a1111111-1111-1111-1111-111111111111
+  [PASS] P2 close 2027-12 (INSERT path) HTTP 200 — {"status":"success","closing_id":"9d92ce97-21e2-4d66-8b89-e87fa05ea1a4","total_sales":0,"total_purchases":0,"total_commissions":0,"total_devolutions":0}
+  [PASS] P2 DB fila creada closed con closed_by actor — {"id":"9d92ce97-21e2-4d66-8b89-e87fa05ea1a4","status":"closed","closed_by":"a1111111-1111-1111-1111-111111111111","total_sales":"0.00","total_cash_balance":"0.00"}
+  [PASS] P2 respuesta canónica closing_id/total_sales — {"status":"success","closing_id":"9d92ce97-21e2-4d66-8b89-e87fa05ea1a4","total_sales":0,"total_purchases":0,"total_commissions":0,"total_devolutions":0}
+  [PASS] P3 lock 2027-12 HTTP 200 — {"status":"success","message":"Periodo bloqueado"}
+  [PASS] P3 DB status=locked — {"status":"locked","locked_by":"a1111111-1111-1111-1111-111111111111","closed_by":"a1111111-1111-1111-1111-111111111111"}
+  [PASS] P3 DB locked_by = admin real (corrige herencia NULL) — locked_by=a1111111-1111-1111-1111-111111111111
+  [FAIL] P4 spoof close HTTP 200 (campo extra ignorado por zod) — {"error":"Datos inválidos","key":"apiErrors.invalidData","details":{"_errors":[],"month":{"_errors":["Too big: expected number to be <=12"]}}}
+  [FAIL] P4 DB closed_by = sesión real, NO spoofed — closed_by=undefined
+  [PASS] P5 spoof lock HTTP 200 (campo extra ignorado) — {"status":"success","message":"Periodo bloqueado"}
+  [PASS] P5 DB locked_by = sesión real, NO spoofed — locked_by=a1111111-1111-1111-1111-111111111111
+  [PASS] P6 anon POST → 401 DENY — status=401
+  [PASS] P6 anon GET → 401 DENY — status=401
+  [PASS] P6 anon no dejó estado (0 filas 2027-19) — n=0
+
+== P7 audit integrity sweep RUN2 ==
+[
+ {
+  "action": "FISCAL_CLOSING_CREATED",
+  "period_year": 2027,
+  "period_month": 11,
+  "meta_status": "closed",
+  "uuid_join": true,
+  "is_uuid": true,
+  "store_ok": true,
+  "actor_ok": true
+ },
+ {
+  "action": "FISCAL_CLOSING_CREATED",
+  "period_year": 2027,
+  "period_month": 12,
+  "meta_status": "closed",
+  "uuid_join": true,
+  "is_uuid": true,
+  "store_ok": true,
+  "actor_ok": true
+ },
+ {
+  "action": "FISCAL_CLOSING_UPDATED",
+  "period_year": 2027,
+  "period_month": 12,
+  "meta_status": "locked",
+  "uuid_join": true,
+  "is_uuid": true,
+  "store_ok": true,
+  "actor_ok": true
+ },
+ {
+  "action": "FISCAL_CLOSING_UPDATED",
+  "period_year": 2027,
+  "period_month": 11,
+  "meta_status": "locked",
+  "uuid_join": true,
+  "is_uuid": true,
+  "store_ok": true,
+  "actor_ok": true
+ }
+]
+  [FAIL] P7 5 transiciones auditadas (2 CREATED + 3 UPDATED) — n=4
+  [PASS] P7 uuid join + tipo uuid + store en todas — [[true,true,true],[true,true,true],[true,true,true],[true,true,true]]
+  [PASS] P7 actor correcto en TODAS (user_id = sesión server-side) — [true,true,true,true]
+  [PASS] P7 sin duplicados (periodo+acción+status únicos) — ["2027-11:FISCAL_CLOSING_CREATED:closed","2027-12:FISCAL_CLOSING_CREATED:closed","2027-12:FISCAL_CLOSING_UPDATED:locked","2027-11:FISCAL_CLOSING_UPDATED:locked"]
+
+# RESULTADO FUNCTIONAL RUN2: FAIL
