@@ -1,0 +1,26 @@
+E2E-2 §8 — FLUJO E2E-01: LOGIN + STORE ISOLATION
+============================================================
+PASS | login válido ALPHA_ADMIN | HTTP 200 uid_match=true
+PASS | login válido ALPHA_MANAGER | HTTP 200 uid_match=true
+PASS | login válido ALPHA_CLERK | HTTP 200 uid_match=true
+PASS | login válido BETA_MANAGER | HTTP 200 uid_match=true
+PASS | login válido BETA_CLERK | HTTP 200 uid_match=true
+PASS | login válido OUTSIDER | HTTP 200 uid_match=true
+PASS | password incorrecta → rechazo | HTTP 400
+PASS | usuario inexistente → rechazo | HTTP 400
+PASS | anonymous GET /api/stores → 401 | HTTP 401
+PASS | anonymous GET products → 401 | HTTP 401
+PASS | anonymous POST fiscal-close → 401 | HTTP 401
+PASS | token forjado → 401 | HTTP 401
+PASS | ALPHA_CLERK lee productos de ALPHA → 200 | HTTP 200 n=5
+PASS | BETA_CLERK lee productos de BETA → 200 | HTTP 200
+PASS | ALPHA_CLERK lee BETA → 403 | HTTP 403
+PASS | BETA_CLERK lee ALPHA → 403 | HTTP 403
+PASS | ALPHA_MANAGER lee transfers BETA → 403 | HTTP 403
+FAIL | ALPHA_CLERK lee receptions BETA → 403 | HTTP 405
+PASS | ALPHA_MANAGER lee servicios BETA → 403 | HTTP 403
+PASS | OUTSIDER lee ALPHA → 403 | HTTP 403
+PASS | OUTSIDER lee BETA → 403 | HTTP 403
+PASS | ALPHA_ADMIN (global) GET /api/stores → 200 | HTTP 200 n=10
+
+RESUMEN: 21 PASS / 1 FAIL de 22

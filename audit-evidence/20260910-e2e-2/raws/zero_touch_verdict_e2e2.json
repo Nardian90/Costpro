@@ -1,0 +1,256 @@
+{
+  "stores": {
+    "ENERVIDA": {
+      "tables": {
+        "products": {
+          "pre": "125/ff52ceddf411",
+          "post": "125/ff52ceddf411",
+          "equal": true
+        },
+        "inventory": {
+          "pre": "106/ecfee4b8f1b2",
+          "post": "106/ecfee4b8f1b2",
+          "equal": true
+        },
+        "kardex_entries": {
+          "pre": "451/af70045e5658",
+          "post": "451/af70045e5658",
+          "equal": true
+        },
+        "transactions": {
+          "pre": "308/efbb3a442350",
+          "post": "308/efbb3a442350",
+          "equal": true
+        },
+        "receipts": {
+          "pre": "4/bb640a25474c",
+          "post": "4/bb640a25474c",
+          "equal": true
+        },
+        "devolutions": {
+          "pre": "0/null",
+          "post": "0/null",
+          "equal": true
+        },
+        "received_services": {
+          "pre": "0/null",
+          "post": "0/null",
+          "equal": true
+        },
+        "purchase_orders": {
+          "pre": "0/null",
+          "post": "0/null",
+          "equal": true
+        },
+        "production_orders": {
+          "pre": "0/null",
+          "post": "0/null",
+          "equal": true
+        },
+        "commission_payments": {
+          "pre": "0/null",
+          "post": "0/null",
+          "equal": true
+        },
+        "commission_rules": {
+          "pre": "0/null",
+          "post": "0/null",
+          "equal": true
+        },
+        "cash_closures": {
+          "pre": "0/null",
+          "post": "0/null",
+          "equal": true
+        },
+        "cash_movements": {
+          "pre": "0/null",
+          "post": "0/null",
+          "equal": true
+        },
+        "cash_sessions": {
+          "pre": "0/null",
+          "post": "0/null",
+          "equal": true
+        },
+        "payment_transactions": {
+          "pre": "154/cc98347860db",
+          "post": "154/cc98347860db",
+          "equal": true
+        },
+        "fiscal_closings": {
+          "pre": "0/null",
+          "post": "0/null",
+          "equal": true
+        },
+        "workers": {
+          "pre": "0/null",
+          "post": "0/null",
+          "equal": true
+        },
+        "stock_movements": {
+          "pre": "451/aba2f238e9d0",
+          "post": "451/aba2f238e9d0",
+          "equal": true
+        },
+        "inventory_adjustments": {
+          "pre": "0/null",
+          "post": "0/null",
+          "equal": true
+        },
+        "transaction_items": {
+          "pre": "343/f5545b6754b1",
+          "post": "343/f5545b6754b1",
+          "equal": true
+        },
+        "receipt_items": {
+          "pre": "110/5bca1d7a9e9f",
+          "post": "110/5bca1d7a9e9f",
+          "equal": true
+        },
+        "transfer_items": {
+          "pre": "0/null",
+          "post": "0/null",
+          "equal": true
+        },
+        "devolution_items": {
+          "pre": "0/null",
+          "post": "0/null",
+          "equal": true
+        }
+      },
+      "equal": true,
+      "equal_count": 23,
+      "total": 23
+    },
+    "PUERTO_PADRE": {
+      "tables": {
+        "products": {
+          "pre": "36/f75da266381c",
+          "post": "36/f75da266381c",
+          "equal": true
+        },
+        "inventory": {
+          "pre": "35/79366b87f788",
+          "post": "35/79366b87f788",
+          "equal": true
+        },
+        "kardex_entries": {
+          "pre": "251/8eda0664a438",
+          "post": "251/8eda0664a438",
+          "equal": true
+        },
+        "transactions": {
+          "pre": "212/98fdb2aed9b5",
+          "post": "212/98fdb2aed9b5",
+          "equal": true
+        },
+        "receipts": {
+          "pre": "2/56c0333270ce",
+          "post": "2/56c0333270ce",
+          "equal": true
+        },
+        "devolutions": {
+          "pre": "0/null",
+          "post": "0/null",
+          "equal": true
+        },
+        "received_services": {
+          "pre": "0/null",
+          "post": "0/null",
+          "equal": true
+        },
+        "purchase_orders": {
+          "pre": "0/null",
+          "post": "0/null",
+          "equal": true
+        },
+        "production_orders": {
+          "pre": "0/null",
+          "post": "0/null",
+          "equal": true
+        },
+        "commission_payments": {
+          "pre": "0/null",
+          "post": "0/null",
+          "equal": true
+        },
+        "commission_rules": {
+          "pre": "0/null",
+          "post": "0/null",
+          "equal": true
+        },
+        "cash_closures": {
+          "pre": "0/null",
+          "post": "0/null",
+          "equal": true
+        },
+        "cash_movements": {
+          "pre": "0/null",
+          "post": "0/null",
+          "equal": true
+        },
+        "cash_sessions": {
+          "pre": "0/null",
+          "post": "0/null",
+          "equal": true
+        },
+        "payment_transactions": {
+          "pre": "212/55083c3058f5",
+          "post": "212/55083c3058f5",
+          "equal": true
+        },
+        "fiscal_closings": {
+          "pre": "0/null",
+          "post": "0/null",
+          "equal": true
+        },
+        "workers": {
+          "pre": "0/null",
+          "post": "0/null",
+          "equal": true
+        },
+        "stock_movements": {
+          "pre": "251/a9996a907fe8",
+          "post": "251/a9996a907fe8",
+          "equal": true
+        },
+        "inventory_adjustments": {
+          "pre": "0/null",
+          "post": "0/null",
+          "equal": true
+        },
+        "transaction_items": {
+          "pre": "212/d995656f28a8",
+          "post": "212/d995656f28a8",
+          "equal": true
+        },
+        "receipt_items": {
+          "pre": "39/f9e44d9de71b",
+          "post": "39/f9e44d9de71b",
+          "equal": true
+        },
+        "transfer_items": {
+          "pre": "0/null",
+          "post": "0/null",
+          "equal": true
+        },
+        "devolution_items": {
+          "pre": "0/null",
+          "post": "0/null",
+          "equal": true
+        }
+      },
+      "equal": true,
+      "equal_count": 23,
+      "total": 23
+    }
+  },
+  "global": {
+    "audit_pre": "7622 filas / hash 3a9155e1a518",
+    "audit_post": "7920 filas / hash 35cde4969d13",
+    "delta_rows": 298,
+    "fiscal_all": "37 → 41",
+    "note": "audit_logs es GLOBAL (incluye fixtures E2E2); el delta positivo corresponde a auditoría de operaciones fixture, NO a producción. Las tablas productivas de tiendas PROD (30 tablas × 2) son bit-a-bit idénticas."
+  },
+  "verdict": "PASS — PROD PRE == POST (30/30 tablas por tienda)"
+}

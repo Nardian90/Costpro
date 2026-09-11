@@ -1,0 +1,25 @@
+E2E-2 §10-12 — FLUJO E2E-03: RECEPCIÓN (+ IDEMPOTENCIA + ERROR PARCIAL)
+============================================================
+Vía UI canónica: RPC register_reception con JWT de usuario (useReceptionState.ts:1003)
+Vía offline: POST /api/sync/batch → register_reception (idempotencia sync_log)
+PASS | A: register_reception (JWT usuario) → receipt uuid | HTTP 200 "f63f673a-8c98-414e-bd06-65b159b31a88"
+PASS | A: Δstock A1+10 A2+5 A3+8 | A1 30.0000→40.0000; A2 14.0000→19.0000; A3 17.0000→25.0000
+PASS | A: WAC A2 se mantiene 150 (mezcla mismo costo) | WAC A2=150.000000000000000000000000000000000
+PASS | A: audit REGISTER_RECEPTION +1 / receipts +1 | audit 7→8, receipts 7→8
+PASS | B: WAC A1 = blend canónico esperado | esperado=70.0000 obtenido=70.0000000000000000000000000000000000000
+PASS | B: stock A1 incrementa +5 | stock 40.0000→45.0000
+PASS | F: [FINDING EF2-01] /api/receive-to-warehouse → 500 reproducido | HTTP 500
+PASS | C: sync batch ×2 misma key → 1 recepción efectiva | receipts 9→10, qty 19→21
+PASS | C2: misma factura ×2 → 1 recepción efectiva (2ª rechazada 409 por UNIQUE store_id+reference_doc) | HTTP [200,409], receipts 10→11
+PASS | D: item inexistente → rechazo | HTTP 400
+PASS | D: atomicidad FAIL→rollback total | receipts 11→11, qty 26→26
+PASS | E: ALPHA user recepciona en BETA (RPC) → denegado sin mutación | HTTP 400 inv 0→0
+PASS | E: BETA user recepciona en ALPHA (RPC) → denegado | HTTP 400
+PASS | E: ALPHA clerk recepciona en BETA (API) → denegado | HTTP 403
+
+RESUMEN: 14 PASS / 0 FAIL de 14
+
+HALLAZGO EF2-01 (P2): /api/receive-to-warehouse → 500 SIEMPRE (firma register_stock_movement
+desactualizada: p_reference_doc no existe en la firma actual). Endpoint huérfano sin consumidores UI.
+
+P3 EF2-03a/b: ver raws e2e03_reception.json findings_p3.

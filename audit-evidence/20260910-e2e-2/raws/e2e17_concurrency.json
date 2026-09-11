@@ -1,0 +1,73 @@
+{
+  "cc1": {
+    "before": 40,
+    "after": 38,
+    "delta": -2,
+    "txs": 2
+  },
+  "cc2": {
+    "before": 20,
+    "after": 19,
+    "delta": -1,
+    "r1": 200,
+    "r2": 200
+  },
+  "cc3_errors": [
+    "37320732-3404-44d1-9333-1509088fb1f0",
+    "1402a713-e5a4-42e9-ba5b-12659e29879f"
+  ],
+  "cc3": {
+    "before": 36,
+    "after": 44,
+    "delta": 8
+  },
+  "cc4": {
+    "before": 44,
+    "after": 44,
+    "r1": 500,
+    "r2": 200,
+    "ids": [
+      "ffb91466-f348-4a2e-ab61-3b2b1ac09ed8"
+    ],
+    "cancelled": 1
+  },
+  "cc5_errors": [
+    {
+      "error": "ERR_DEVOLUTION_CAP_EXCEEDED: producto fec4d491-d0a0-4123-8d19-c7716f8172c8 vendido=1.0000 devuelto=1.00 solicitado=1 (tope acumulado, lock de venta adquirido)"
+    },
+    {
+      "status": "success",
+      "total_amount": 80,
+      "devolution_id": "0874c70f-6515-42f5-ae10-97dbdd770fda",
+      "financial_effect": "cash_out_and_refund",
+      "devolution_number": "NC-000011-2026"
+    }
+  ],
+  "cc5": {
+    "before": 37,
+    "after": 38,
+    "delta": 1,
+    "okDevs": 1
+  },
+  "cc6": {
+    "p1": 409,
+    "p2": 403
+  },
+  "cc6_note": "ambos 409 con rows=1: el perdedor recibe 409 correcto; el ganador insertó y también respondió 409 (respuesta no representativa) — P3",
+  "cc6b": {
+    "q1": 409,
+    "q2": 409,
+    "rows": 1
+  },
+  "cc7": {
+    "before": 19,
+    "after": 15,
+    "delta": -4,
+    "okW": 2
+  },
+  "cc8": {
+    "aAfter": 37,
+    "bBefore": 4,
+    "bAfter": 3
+  }
+}

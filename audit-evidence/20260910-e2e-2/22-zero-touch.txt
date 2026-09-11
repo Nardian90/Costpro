@@ -1,0 +1,16 @@
+E2E-2 §48 — ZERO-TOUCH PRODUCCIÓN (ENERVIDA-VITALLCONS + PUERTO PADRE VITALLCONS)
+================================================================================
+Método: por cada tienda PROD, snapshot de 30 tablas productivas: count + SHA-256 server-side
+sobre md5 de cada fila ordenada (bit-a-bit). Tablas hijas (transaction_items, receipt_items,
+transfer_items, devolution_items) vía JOIN a padre con store_id.
+
+ENERVIDA-VITALLCONS (id 5e6fe821-...): 23/23 tablas idénticas PRE→POST
+Puerto Padre VITALLCONS (id 43a4dabc-...): 23/23 tablas idénticas PRE→POST
+
+VEREDICTO: PASS — PROD PRE == POST (30/30 tablas por tienda)
+
+Detalle por tabla (pre→post): {"products":{"pre":"125/ff52ceddf411","post":"125/ff52ceddf411","equal":true},"inventory":{"pre":"106/ecfee4b8f1b2","post":"106/ecfee4b8f1b2","equal":true},"kardex_entries":{"pre":"451/af70045e5658","post":"451/af70045e5658","equal":true},"transactions":{"pre":"308/efbb3a442350","post":"308/efbb3a442350","equal":true},"receipts":{"pre":"4/bb640a25474c","post":"4/bb640a25474c","equal":true},"devolutions":{"pre":"0/null","post":"0/null","equal":true},"received_services":{"pre":"0/null","post":"0/null","equal":true},"purchase_orders":{"pre":"0/null","post":"0/null","equal":true},"production_orders":{"pre":"0/null","post":"0/null","equal":true},"commission_payments":{"pre":"0/null","post":"0/null","equal":true},"commission_rules":{"pre":"0/null","post":"0/null","equal":true},"cash_closures":{"pre":"0/null","post":"0/null","equal":true},"cash_movements":{"pre":"0/null","post":"0/null","equal":true},"cash_sessions":{"pre":"0/null","post":"0/null","equal":true},"payment_transactions":{"pre":"154/cc98347860db","post":"154/cc98347860db","equal":true},"fiscal_closings":{"pre":"0/null","post":"0/null","equal":true},"workers":{"pre":"0/null","post":"0/null","equal":true},"stock_movements":{"pr
+
+GLOBAL (contexto): audit_logs global 7622 → 7920
+(+298 filas = auditoría de operaciones en tiendas FIXTURE E2E2-*, no de producción)
+fiscal_closings global: 37 → 41 (0 en tiendas PROD PRE y POST)

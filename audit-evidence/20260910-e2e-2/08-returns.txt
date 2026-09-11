@@ -1,0 +1,20 @@
+E2E-2 §17 — FLUJO E2E-06: DEVOLUCIÓN (+ TOPE ACUMULADO + IDEMPOTENCIA)
+============================================================
+PASS | PRE: venta original localizada (3 uds A3) | tx=6322c13e-8018-41d6-8965-3c85fc45c5a0 qty=3
+PASS | D: POST /api/devolutions → 200 + devolution_id | HTTP 200 dev=d5ba664a-a85b-4b4f-be1c-09828746224a
+PASS | D: devolution vinculada a venta original, tienda correcta | {"store_id":"e1ede2fd-e7d3-4fc0-ba1f-476633c5591a","original_transaction_id":"6322c13e-8018-41d6-8965-3c85fc45c5a0","total_amount":"80.00","status":"completed","processed_by":"4c71ba55-d2a5-499e-a34e-ccf508b8df7f"}
+PASS | D: stock +1 | 17.0000→18.0000
+PASS | D: stock_movements return +1 | {"quantity_change":"1.0000","movement_type":"return"}
+PASS | D: audit DEVOLUTION_CREATED_V2 +1 | audit 6→7
+PASS | D: items de devolución persistidos (1@80) | [{"product_id":"15343379-56d8-4977-8e79-e94ae4e3add8","quantity":"1.00","unit_price":"80.00"}]
+PASS | E: devolución acumulada > vendida → rechazada | HTTP 500 {"error":"ERR_DEVOLUTION_CAP_EXCEEDED: producto 15343379-56d8-4977-8e79-e94ae4e3add8 vendido=3.0000 devuelto=1.00 solici
+PASS | E: sin mutación de stock | stock constante
+PASS | F: devolver 2 restantes → OK, stock restaurado completo | 18.0000→20.0000
+PASS | F: repetir devolución (cap agotado) → rechazada sin mutación | HTTP 500
+PASS | F: total devuelto = vendido | returned=3 sold=3
+PASS | G: BETA manager devuelve venta de ALPHA → denegado | HTTP 403
+PASS | H: RPC misma idempotency_key ×2 → 2ª retorna idempotent sin doble stock | h2.status=idempotent, stock 19→20
+
+RESUMEN: 14 PASS / 0 FAIL de 14
+
+P3 EF2-06a: ver raws e2e06_return.json finding_p3.

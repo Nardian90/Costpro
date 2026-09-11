@@ -1,0 +1,14 @@
+{
+  "create": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "count": 1,
+      "inserted": 1
+    }
+  },
+  "cross": {
+    "status": 403,
+    "inserted": 0
+  }
+}

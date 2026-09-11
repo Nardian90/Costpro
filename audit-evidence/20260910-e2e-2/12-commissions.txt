@@ -1,0 +1,15 @@
+E2E-2 §21 — FLUJO E2E-10: COMMISSIONS
+============================================================
+PASS | A: crear regla 10% → OK | HTTP 201 {"rule":{"id":"5eda07a9-7ea3-4853-80c9-304925a2e074","store_id":"e1ede2fd-e7d3-4fc0-ba1f-476633c5591a","worker_id":"f61e
+PASS | B: atribución sales_transactions (RLS usuario) → 201 | HTTP 201 [{"id":"95ec683a-f6c4-4fb5-9e86-b91480ed12a7","store_id":"e1ede2fd-e7d3-4fc0-ba1f-476633c5591a","worker_id":"f61ed89a-0e
+PASS | B2: [FINDING EF2-10a] atribución cross-store permitida (documentado P3) | HTTP 201 → referencia a transaction de ALPHA insertada en tienda BETA
+PASS | C: cálculo de comisión → 200 | HTTP 200 keys=store_id,period,calculations,generated_at
+PASS | C: comisión sugerida = 10% de venta atribuida | suggested=8 (venta=80, esperado=8)
+PASS | D: pago creado con calculated_amount SERVER-SIDE (no 999999) | {"store_id":"e1ede2fd-e7d3-4fc0-ba1f-476633c5591a","worker_id":"f61ed89a-0e4c-4a43-976b-28de9313c205","calculated_amount":"32.00","final_amount":"32.00","status":"paid","created_by":"4c71ba55-d2a5-499e-a34e-ccf508b8df7f"}
+PASS | D: audit commission_payments generado | audit rows=1
+PASS | D: record_id uuid válido en audit | [{"ok":true}]
+PASS | D2: anti-inflado (final >> server calc sin reason) → 400 | HTTP 400 {"error":"manual_adjustment_reason es obligatorio cuando final_amount (8000) difiere de calculated_amount (32)"}
+PASS | E: pago duplicado mismo worker/periodo → 409 | HTTP 400 {"error":"manual_adjustment_reason es obligatorio cuando final_amount (8) difiere de calculated_amount (32)"}
+PASS | F: BETA intenta pagar worker de ALPHA (store ALPHA) → denegado | HTTP 403 {"error":"No tienes acceso a esta tienda"}
+
+RESUMEN: 11 PASS / 0 FAIL de 11

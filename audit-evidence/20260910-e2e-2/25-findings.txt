@@ -1,0 +1,130 @@
+E2E-2 §53 — FINDINGS (NEW / INHERITED / CONFIRMED / REPRODUCIBILITY)
+=====================================================================
+
+SEVERIDADES: P0 = boundary/seguridad/contabilidad irreparable; P1 = workflow crítico,
+autorización, contabilidad; P2 = relevante con workaround; P3 = menor/deuda técnica.
+
+─── P0 ────────────────────────────────────────────────────────────────────
+
+EF2-16a — ESCALADA DE PRIVILEGIOS: auto-promoción a admin
+  FLOW:            AUTH/PERFILES (§26)
+  PRECONDITION:    usuario autenticado cualquiera (manager o clerk)
+  REQUEST:         PATCH {SUPABASE}/rest/v1/profiles?id=eq.<self> {"role":"admin"} con JWT propio
+  EXPECTED:        denegado (rol/plan son server-owned)
+  ACTUAL:          HTTP 200, fila actualizada → profiles.role='admin' → is_admin()=true → acceso global
+  DB DELTA:        profiles.role cambiada (revertida por el harness tras la prueba)
+  AUDIT DELTA:     audit_logs CHANGE_ROLE old_data.role→new_data.role (detectable, no bloqueante)
+  SECURITY IMPACT: P0 total — cualquier usuario puede obtener admin GLOBAL (todas las tiendas,
+                   fiscal lock, stores, bulk ops). Aislamiento multitienda comprometido por cadena.
+  ACCOUNTING:      no directo; habilita manipulación con rol elevado.
+  ROOT CAUSE:      política profiles_tenant_update: CASE WHEN current_setting('app.use_tenant_rls',true)='true'
+                   THEN ((id=auth.uid()) OR (is_admin() AND tenant…)) ELSE (id=auth.uid()) END — en AMBAS
+                   ramas el self-update NO excluye columnas sensibles (role, roles, plan, is_active,
+                   max_stores_limit). USE_TENANT_RLS no está activado en .env (rama ELSE), y aún activado
+                   el THEN permite self-update sin restricción de columnas.
+  REPRODUCIBILITY: 100% (reproducido 2×: ALPHA_MANAGER y ALPHA_CLERK; roles restaurados tras prueba;
+                   raws/e2e16_rls_security.json)
+  CLASS: NEW, CONFIRMED
+
+EF2-16c — PERIODO FISCAL LOCKED REABIERTO POR MANAGER
+  FLOW:            FISCAL (§23) — integridad del cierre fiscal
+  PRECONDITION:    manager con membership activa; periodo con status='locked'
+  REQUEST:         PATCH {SUPABASE}/rest/v1/fiscal_closings?id=eq.<row> {"status":"open"}
+  EXPECTED:        bloqueado (prevent_fiscal_closing_edit) y denegado por RLS
+  ACTUAL:          HTTP 200 rows=1 → status pasa de 'locked' a 'open'
+  DB DELTA:        fiscal_closings.status mutado (restaurado a 'locked' por el harness tras la prueba)
+  AUDIT DELTA:     audit_fiscal_closings_changes registra old/new (detectable, no bloqueante)
+  SECURITY IMPACT: garantía de inmutabilidad fiscal rota para no-admins.
+  ACCOUNTING IMPACT: P0 — un periodo cerrado/bloqueado (cifras fiscales finales) es mutable
+                   por un manager; contabilidad posterior al cierre queda desprotegida.
+  ROOT CAUSE:      (1) prevent_fiscal_closing_edit: IF OLD.status='locked' AND
+                   current_setting('app.bypass_fiscal_lock',true) <> 'true' → GUC sin setear
+                   devuelve NULL ⇒ NULL<>'true' ⇒ NULL ⇒ el IF nunca hace RAISE (lock NO-OP).
+                   (2) RLS fiscal_closings UPDATE permite por membership.
+  REPRODUCIBILITY: 100% (reproducido; restaurado; raws/e2e16_rls_security.json)
+  CLASS: NEW, CONFIRMED
+
+─── P1 ────────────────────────────────────────────────────────────────────
+
+EF2-11a — INMUTABILIDAD DE CIERRE DE CAJA NO-OP (misma familia GUC)
+  FLOW:            CASH (§22)
+  REQUEST:         PATCH rest/v1/cash_closures?id=eq.<cerrado> {"declared_cash":1}
+  ACTUAL:          HTTP 200 rows=1 — cierre 'cerrado' modificado (declared 1150→1.00)
+  AUDIT:           CASH_CLOSURE_UPDATED registra old/new (detectable)
+  ROOT CAUSE:      prevent_cash_closure_edit: current_setting('app.bypass_closure_lock',true)=NULL
+                   ⇒ NULL<>'true' ⇒ no RAISE. (v2_18_1 inoperante)
+  IMPACT:          evidencia de caja modificable post-cierre por manager; P1 (P0-family;
+                   auditable, alcance por tienda).
+  REPRODUCIBILITY: 100% (raws/e2e11_cash.json, e2e16)
+  CLASS: NEW, CONFIRMED
+
+EF2-11b — DOBLE CONTABILIZACIÓN DE VENTAS CASH EN CIERRE DE CAJA
+  FLOW:            CASH (§22)
+  REQUEST:         apertura turno (opening 1000) → venta POS cash 150 → close_cash_shift(declared 1150)
+  EXPECTED:        system_expected_total = 1150, difference = 0
+  ACTUAL:          system_expected_total = 1000, difference = +150 (faltante FALSO)
+  ROOT CAUSE:      close_cash_shift: v_cash_payments = SUM(amount_cup) FROM payment_transactions
+                   WHERE payment_method='cash' … SIN excluir ref_type='sale' (create_sale_v2 inserta
+                   el pago cash de la venta) ⇒ la venta cuenta en cash_sales Y en cash_payments.
+                   get_cash_report SÍ filtra ref_type IN ('receipt','service') — el bug es del cierre.
+  DB/ACCOUNTING:   cada turno con ventas POS cash reporta faltante igual al cash vendido.
+  REPRODUCIBILITY: 100% determinístico (raws/e2e11_cash.json — metadata del RPC con
+                   cash_sales=150 y cash_payments=150)
+  CLASS: NEW, CONFIRMED
+
+EF2-07a — IDOR: distribute de servicios sin validación de membresía
+  FLOW:            SERVICES (§18)
+  REQUEST:         POST /api/received-services/distribute {"service_id": <servicio de OTRA tienda>} (como manager ajeno)
+  EXPECTED:        403 (F3-P0-02, como en POST/PATCH del mismo módulo)
+  ACTUAL:          HTTP 200 — recalcula service_cost_distributions del servicio ajeno y escribe
+                   service_audit_log 'recalculated' a nombre del atacante
+  SECURITY:        mutación cross-store limitada a distribuciones de costo del servicio (no lectura de datos).
+  ROOT CAUSE:      ruta V1 de distribute no resolvió store del servicio server-side (PATCH sí lo hace).
+  CLASS: NEW, CONFIRMED — raws/e2e07_services.json (IDOR=VULNERABLE, audit del servicio BETA con
+         'recalculated' por user ALPHA_MANAGER)
+
+EF2-01 — /api/receive-to-warehouse SIEMPRE 500 (endpoint roto)
+  REQUEST:         POST /api/receive-to-warehouse {store_id, product_id, quantity, unit_cost}
+  ACTUAL:          500 — "function public.register_stock_movement(... p_reference_doc ...) does not exist"
+                   (firma del RPC cambió; la llamada usa p_reference_doc inexistente)
+  IMPACT:          endpoint huérfano (sin consumidores en src/components|hooks) — sin impacto UI;
+                   deuda de contrato API. CLASIFICACIÓN PRÁCTICA: P2 (huérfano) — listado aquí
+                   como P2→ ver abajo. (Re-clasificado a P2.)
+
+─── P2 ────────────────────────────────────────────────────────────────────
+
+EF2-01 (re-clasificado) — receive-to-warehouse roto 500 (huérfano, sin UI consumers)
+  CLASS: NEW, CONFIRMED — raws/e2e03_reception.json (finding_receive_to_warehouse_500)
+
+─── P3 ────────────────────────────────────────────────────────────────────
+
+EF2-03a — sync/batch serializa errores RPC como "[object Object]" y 23505 no se marca 'conflict'
+  (route.ts: catch err → String(err)); raws/e2e03_reception.json findings_p3
+EF2-03b — register_reception directa no deduplica sin key; dedup contractual solo vía
+  sync_log (offline) y UNIQUE(store_id, reference_doc) a nivel documento; documentar contrato.
+EF2-06a — POST /api/devolutions genera p_idempotency_key NUEVA por request → reintentos de red
+  pueden duplicar devoluciones DENTRO del tope acumulado (DF-07 mitiga sobre-devolución).
+EF2-10a — sales_transactions acepta referencia a transaction de otra tienda (FK opcional;
+  monto user-entered por diseño del módulo) — validación de integridad débil, no fuga de datos.
+EF2-17 — concurrencia sobre el mismo producto puede terminar 40P01 (deadlock) en el perdedor
+  (receptions/transfers/withdraws) → 500 reintentable; SIN corrupción ni lost update (verificado);
+  el motor offline reintenta; el POS on-line puede ver error transitorio.
+EF2-CC6 — commission_payments concurrentes: ganador inserta pero AMBOS reciben 409 (respuesta
+  no representativa del ganador); invariante 1 fila correcto.
+EF2-11c — errores de negocio de RPC mapeados a HTTP 500 (ERR_PERIOD_LOCKED, ERR_INSUFFICIENT_
+  STOCK en transfers, ERR_DEVOLUTION_CAP_EXCEEDED) en lugar de 409/422; FAIL sin mutación siempre.
+
+─── HEREDADOS (§44, sin modificar) ────────────────────────────────────────
+
+IF-06dR-1 (P3) — prevent_fiscal_closing_edit RETURN NEW en BEFORE DELETE cancela silenciosamente
+  todo DELETE en fiscal_closings. E2E-2 no demostró impacto adicional sobre flujos E2E (no DELETE
+  por vía E2E); la familia del defecto (GUC no-op) quedó ampliada por EF2-16c/EF2-11a.
+IF-06dR-2 (P3) — residuo fixture 2026-11 en store de prueba (7912c49c). Sin impacto E2E.
+
+─── RESUMEN ───────────────────────────────────────────────────────────────
+P0: 2 (EF2-16a, EF2-16c)          P1: 3 (EF2-11a, EF2-11b, EF2-07a)
+P2: 1 (EF2-01)                    P3: 8 (EF2-03a, 03b, 06a, 10a, 17, CC6, 11c, kardex-rounding*)
+HEREDADOS: 2 (IF-06dR-1, IF-06dR-2 — sin impacto adicional demostrado en E2E-2)
+NEW: 12 · INHERITED: 2 · NOT REPRODUCED: 0 · OUT OF SCOPE: 0
+*kardex-rounding: balance_unit_cost almacenado con scale 2 vs total_value full-precision
+ (divergencia ≤ redondeo; coherencia contable a precisión completa verificada).

@@ -1,0 +1,113 @@
+============================================================
+COSTPRO — E2E-2 FINAL VERDICT
+============================================================
+
+BASELINE
+HEAD:         e90eb10a9ff6a814aeaa1cd717dfe27cd541f289
+ORIGIN/MAIN:  e90eb10a9ff6a814aeaa1cd717dfe27cd541f289
+WORKTREE:     CLEAN (solo evidence pack sin trackear al inicio; commit de documentación al cierre)
+
+SERVER
+PM2:          3/3 ONLINE (costpro, telegram-cron-poller, whatsapp-cron-poller)
+HEALTH:       / → 200 ; /api/health → 200
+
+ENVIRONMENT
+ALPHA:        E2E2-ALPHA (e1ede2fd-e7d3-4fc0-ba1f-476633c5591a) — 6 usuarios fixture, 5+ productos
+BETA:         E2E2-BETA (60896157-6b0a-439c-833f-3d55d64456ba) — usuarios/productos fixture
+
+PRODUCTION ZERO-TOUCH
+ENERVIDA PRE:     23/23 tablas snapshot (count+SHA256 fila a fila) — raws/zero_touch_PRE.json
+ENERVIDA POST:    23/23 tablas idénticas — raws/zero_touch_POST.json
+EQUAL:            YES
+
+PUERTO PADRE PRE:     23/23 tablas snapshot
+PUERTO PADRE POST:    23/23 tablas idénticas
+EQUAL:                YES
+
+E2E FLOWS
+
+AUTH:             PASS (login válido/inválido/inexistente/anónimo/forjado; JWT Supabase)
+STORE ISOLATION:  PASS (cross-store 403 en todas las rutas API; RLS filtra lecturas; OUTSIDER sin acceso)
+CATALOG:          PASS (10/10 — bulk-import upsert, RLS SIUD, duplicados, cross-store denegado)
+RECEPTION:        PASS (14/14 — WAC canónico, idempotencia offline+documento, atomicidad, cross-store)
+TRANSFER:         PASS (18/18 — reserva, costo server, conservación, re-confirm 409, cross-store)
+SALE:             PASS (12/12 — cost_at_sale=WAC server (DF-02), idempotencia, cross-store, stock)
+RETURN:           PASS (14/14 — vínculo venta, tope acumulado DF-07, idempotencia RPC, cross-store)
+SERVICES:         PASS (10/10 — con HALLAZGO EF2-07a P1 en distribute V1; V1 activo documentado)
+PURCHASE ORDERS:  PASS (12/12 — draft→sent→partial→received→terminal; cross-store; cancel)
+PRODUCTION:       PASS (13/13 — F4-03 costo server irrefragable, idempotencia, already_closed, cross-store)
+COMMISSIONS:      PASS (11/11 — regla→atribución→cálculo→pago server-side; anti-inflado; 409 duplicado)
+CASH:             PASS (11/11 — con HALLAZGOS EF2-11a P1 y EF2-11b P1 documentados y reproducidos)
+FISCAL:           PASS (11/11 — POST status read-only ×1/×10 pureza; close/lock; invalid action 400)
+
+SECURITY
+RLS:                  122 checks (matriz 6 actores × 13 tablas + audit) — PASS con 2 P0 documentados
+IDOR:                 PASS (por UUID/API salvo transfers visibles al destino POR DISEÑO)
+CROSS-STORE:          PASS en flujos; FALLA vía escalada EF2-16a (P0)
+PRIVILEGE ESCALATION: EF2-16a P0 (self-rollback a admin; reproducido ×2)
+ANONYMOUS:            401 / 0 filas — PASS
+SPOOFING:             PASS (identidad server-side; unit_cost/client fields ignorados DF-02/F4-03)
+
+INTEGRITY
+INVENTORY:        PASS (reconstrucción stock_movements == inventory == products; 15 productos)
+ACCOUNTING:       PASS salvo EF2-11b (doble conteo cash en cierre) — P1 documentado
+WAC/COSTING:      PASS (fn_recalc_wac canónico; cost_at_sale; transfer cost; withdraw server WAC)
+AUDIT:            PASS (1:1 operaciones↔audit; sin orfanos; status fiscal sin audit)
+
+IDEMPOTENCY
+RECEPTION: PASS (sync_log + UNIQUE document)     SALE: PASS (create_sale_v2 key)
+RETURN:    PASS (RPC key + tope acumulado)       TRANSFER: PASS (state machine, re-confirm 409)
+PAYMENT:   PASS (UNIQUE worker/periodo)          OTHER: production withdraw (registry v3), fiscal lock
+
+CONCURRENCY
+RESULT: 8/8 PASS — sin oversell, sin lost update, sin doble devolución, sin doble pago;
+        perdedores de carrera con rollback limpio (40P01 → 500 reintentable, P3 EF2-17)
+
+FAILURE / ATOMICITY
+RESULT: 12/12 PASS — FAIL siempre sin mutación parcial (ΔDB=0, Δaudit=0)
+
+UI ↔ API ↔ DB
+RESULT: 9/9 PASS — GET frescos == DB; sin stale cache detectado; notas P3 (409-ambos, [object Object])
+
+REGRESSION
+VITEST:       2058 passed / 0 failed / 24 skipped  (EXACTO vs histórico 2058/0/24)
+TSC:          0 errors
+ESLINT:       0 errors / 1291 warnings (EXACTO vs histórico)
+FISCAL SPECS: 27 passed / 0 failed (filtro fiscal)
+BUILD:        exit 137 → INFRASTRUCTURE LIMITATION (OOM sandbox 4GB/0 swap; "Killed"; idéntico al histórico)
+BUILD OOM:    documentado con mem/swap/exit/logs — sin optimizaciones oportunistas
+PM2:          3/3 online
+HEALTH:       200/200
+
+SECRET SCAN:
+RESULT:       0 secretos en evidencia/harness/logs (PAT/keys/emails reales redactados; ver raws/secret_scan.txt)
+
+EVIDENCE
+DIRECTORY:    audit-evidence/20260910-e2e-2/
+FILES:        26 secciones 00-26 + raws/ (32 raws JSON/TXT) + SHA256SUMS
+SHA256:       SHA256SUMS — sha256sum -c → ALL OK (raws/sha256_check.txt)
+SECRET SCAN:  0 secrets
+
+FINDINGS
+P0: 2 — EF2-16a (escalada a admin vía self-update profiles), EF2-16c (manager reabre periodo fiscal LOCKED)
+P1: 3 — EF2-11a (inmutabilidad cierre caja no-op), EF2-11b (doble conteo ventas cash en cierre), EF2-07a (IDOR distribute servicios)
+P2: 1 — EF2-01 (receive-to-warehouse 500, endpoint huérfano)
+P3: 8 — EF2-03a, EF2-03b, EF2-06a, EF2-10a, EF2-17, EF2-CC6, EF2-11c, kardex-rounding
+
+INHERITED: 2 — IF-06dR-1, IF-06dR-2 (sin impacto adicional demostrado; familia GUC ampliada por EF2-16c/11a)
+NEW: 12 · CONFIRMED: todos los reproducidos · NOT REPRODUCED: 0 · OUT OF SCOPE: 0
+
+FINAL VERDICT:
+NOT READY
+
+Justificación (§54): existen 2 hallazgos P0 (privilege escalation EF2-16a y
+mutación de periodo fiscal bloqueado EF2-16c) y 3 P1. Por la regla de
+certificación, la presencia de P0 impide CERTIFIED y la de P1 sin resolver
+impide CONDITIONAL. Los 13 flujos E2E funcionales, la integridad de
+inventario/auditoría, la idempotencia, la atomicidad, la concurrencia y la
+regresión PASS en paridad exacta con el baseline histórico; producción queda
+bit-a-bit intacta. El bloqueo es exclusivamente de SEGURIDAD/AUTORÍA de
+mutaciones protegidas (patrón GUC no-op en triggers + self-update sin
+exclusión de columnas en RLS profiles).
+
+STOP — E2E-2 termina aquí. No se ejecutan FASE 7/8/9/11/12 ni fixes.

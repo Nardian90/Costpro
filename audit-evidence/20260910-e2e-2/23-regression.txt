@@ -1,0 +1,29 @@
+E2E-2 §45-47 — REGRESIÓN / BUILD / INFRAESTRUCTURA / PM2
+=========================================================
+Vitest (completo, foreground):
+  Test Files  96 passed | 1 skipped (97)
+  Tests       2058 passed | 24 skipped (2082)   ← EXACTO vs baseline histórico 2058/0/24
+  VITEST_EXIT=0
+  raws/vitest_output.txt
+
+Fiscal specs (filtro -t fiscal): 27 passed | 2055 skipped → 0 fallos en specs fiscales.
+
+TSC:  npx tsc --noEmit → TSC_EXIT=0 (0 errores)          raws/tsc_output.txt
+ESLint: 0 errors / 1291 warnings                          ← EXACTO vs baseline 0/1291
+  raws/eslint_output.txt
+
+BUILD (§45):
+  npm run build → "Creating an optimized production build ..." → Killed
+  BUILD_EXIT=137 (SIGKILL)
+  Memoria del host: 4041 MB total / 0 swap / ~2142 MB libres antes del build
+  Proceso mayor en host: costpro (bun) RSS ~810 MB (PM2)
+  Clasificación: INFRASTRUCTURE LIMITATION — OOM del sandbox (4 GB, sin swap).
+  Idéntico al comportamiento del baseline histórico (REM-F4-06d-R: exit 137).
+  No se modificó arquitectura/configuración para ocultarlo.
+  raws/build_output.txt
+
+PM2 (§47): 3/3 online (costpro online 3h+, pollers online) — tras TODA la batería E2E.
+Health: GET / → 200 ; GET /api/health → 200 (verificado antes y después del gate).
+
+Conclusión regresión: PASS (paridad exacta con baseline histórico; limitación de
+infraestructura aislada y documentada, sin optimizaciones oportunistas).

@@ -1,0 +1,573 @@
+{
+  "matrix": [
+    {
+      "actor": "ALPHA_ADMIN",
+      "table": "products",
+      "select_own": "200 rows=3",
+      "select_other": "200 rows=3",
+      "update_other": "rows=0"
+    },
+    {
+      "actor": "ALPHA_MANAGER",
+      "table": "products",
+      "select_own": "200 rows=3",
+      "select_other": "200 rows=0",
+      "update_other": "rows=0"
+    },
+    {
+      "actor": "ALPHA_CLERK",
+      "table": "products",
+      "select_own": "200 rows=3",
+      "select_other": "200 rows=0",
+      "update_other": "rows=0"
+    },
+    {
+      "actor": "BETA_MANAGER",
+      "table": "products",
+      "select_own": "200 rows=3",
+      "select_other": "200 rows=0",
+      "update_other": "rows=0"
+    },
+    {
+      "actor": "OUTSIDER",
+      "table": "products",
+      "select_own": "200 rows=0",
+      "select_other": "200 rows=0",
+      "update_other": "rows=0"
+    },
+    {
+      "actor": "anonymous",
+      "table": "products",
+      "select_alpha": "200 rows=0",
+      "insert": "401"
+    },
+    {
+      "actor": "ALPHA_ADMIN",
+      "table": "inventory",
+      "select_own": "200 rows=3",
+      "select_other": "200 rows=1",
+      "update_other": "rows=0"
+    },
+    {
+      "actor": "ALPHA_MANAGER",
+      "table": "inventory",
+      "select_own": "200 rows=3",
+      "select_other": "200 rows=0",
+      "update_other": "rows=0"
+    },
+    {
+      "actor": "ALPHA_CLERK",
+      "table": "inventory",
+      "select_own": "200 rows=3",
+      "select_other": "200 rows=0",
+      "update_other": "rows=0"
+    },
+    {
+      "actor": "BETA_MANAGER",
+      "table": "inventory",
+      "select_own": "200 rows=1",
+      "select_other": "200 rows=0",
+      "update_other": "rows=0"
+    },
+    {
+      "actor": "OUTSIDER",
+      "table": "inventory",
+      "select_own": "200 rows=0",
+      "select_other": "200 rows=0",
+      "update_other": "rows=0"
+    },
+    {
+      "actor": "anonymous",
+      "table": "inventory",
+      "select_alpha": "200 rows=0",
+      "insert": "401"
+    },
+    {
+      "actor": "ALPHA_ADMIN",
+      "table": "receipts",
+      "select_own": "200 rows=3",
+      "select_other": "200 rows=0",
+      "update_other": "no-row"
+    },
+    {
+      "actor": "ALPHA_MANAGER",
+      "table": "receipts",
+      "select_own": "200 rows=3",
+      "select_other": "200 rows=0",
+      "update_other": "no-row"
+    },
+    {
+      "actor": "ALPHA_CLERK",
+      "table": "receipts",
+      "select_own": "200 rows=3",
+      "select_other": "200 rows=0",
+      "update_other": "no-row"
+    },
+    {
+      "actor": "BETA_MANAGER",
+      "table": "receipts",
+      "select_own": "200 rows=0",
+      "select_other": "200 rows=0",
+      "update_other": "rows=0"
+    },
+    {
+      "actor": "OUTSIDER",
+      "table": "receipts",
+      "select_own": "200 rows=0",
+      "select_other": "200 rows=0",
+      "update_other": "no-row"
+    },
+    {
+      "actor": "anonymous",
+      "table": "receipts",
+      "select_alpha": "200 rows=0",
+      "insert": "401"
+    },
+    {
+      "actor": "ALPHA_ADMIN",
+      "table": "transfers",
+      "select_own": "200 rows=2",
+      "select_other": "200 rows=0",
+      "update_other": "no-row"
+    },
+    {
+      "actor": "ALPHA_MANAGER",
+      "table": "transfers",
+      "select_own": "200 rows=2",
+      "select_other": "200 rows=0",
+      "update_other": "no-row"
+    },
+    {
+      "actor": "ALPHA_CLERK",
+      "table": "transfers",
+      "select_own": "200 rows=2",
+      "select_other": "200 rows=0",
+      "update_other": "no-row"
+    },
+    {
+      "actor": "BETA_MANAGER",
+      "table": "transfers",
+      "select_own": "200 rows=0",
+      "select_other": "200 rows=2",
+      "update_other": "rows=0"
+    },
+    {
+      "actor": "OUTSIDER",
+      "table": "transfers",
+      "select_own": "200 rows=0",
+      "select_other": "200 rows=0",
+      "update_other": "no-row"
+    },
+    {
+      "actor": "anonymous",
+      "table": "transfers",
+      "select_alpha": "200 rows=0",
+      "insert": "401"
+    },
+    {
+      "actor": "ALPHA_ADMIN",
+      "table": "transactions",
+      "select_own": "200 rows=3",
+      "select_other": "200 rows=0",
+      "update_other": "no-row"
+    },
+    {
+      "actor": "ALPHA_MANAGER",
+      "table": "transactions",
+      "select_own": "200 rows=3",
+      "select_other": "200 rows=0",
+      "update_other": "no-row"
+    },
+    {
+      "actor": "ALPHA_CLERK",
+      "table": "transactions",
+      "select_own": "200 rows=3",
+      "select_other": "200 rows=0",
+      "update_other": "no-row"
+    },
+    {
+      "actor": "BETA_MANAGER",
+      "table": "transactions",
+      "select_own": "200 rows=0",
+      "select_other": "200 rows=0",
+      "update_other": "rows=0"
+    },
+    {
+      "actor": "OUTSIDER",
+      "table": "transactions",
+      "select_own": "200 rows=0",
+      "select_other": "200 rows=0",
+      "update_other": "no-row"
+    },
+    {
+      "actor": "anonymous",
+      "table": "transactions",
+      "select_alpha": "200 rows=0",
+      "insert": "400"
+    },
+    {
+      "actor": "ALPHA_ADMIN",
+      "table": "devolutions",
+      "select_own": "200 rows=3",
+      "select_other": "200 rows=0",
+      "update_other": "no-row"
+    },
+    {
+      "actor": "ALPHA_MANAGER",
+      "table": "devolutions",
+      "select_own": "200 rows=3",
+      "select_other": "200 rows=0",
+      "update_other": "no-row"
+    },
+    {
+      "actor": "ALPHA_CLERK",
+      "table": "devolutions",
+      "select_own": "200 rows=3",
+      "select_other": "200 rows=0",
+      "update_other": "no-row"
+    },
+    {
+      "actor": "BETA_MANAGER",
+      "table": "devolutions",
+      "select_own": "200 rows=0",
+      "select_other": "200 rows=0",
+      "update_other": "rows=0"
+    },
+    {
+      "actor": "OUTSIDER",
+      "table": "devolutions",
+      "select_own": "200 rows=0",
+      "select_other": "200 rows=0",
+      "update_other": "no-row"
+    },
+    {
+      "actor": "anonymous",
+      "table": "devolutions",
+      "select_alpha": "200 rows=0",
+      "insert": "401"
+    },
+    {
+      "actor": "ALPHA_ADMIN",
+      "table": "received_services",
+      "select_own": "200 rows=1",
+      "select_other": "200 rows=1",
+      "update_other": "rows=1"
+    },
+    {
+      "actor": "ALPHA_MANAGER",
+      "table": "received_services",
+      "select_own": "200 rows=1",
+      "select_other": "200 rows=0",
+      "update_other": "rows=0"
+    },
+    {
+      "actor": "ALPHA_CLERK",
+      "table": "received_services",
+      "select_own": "200 rows=1",
+      "select_other": "200 rows=0",
+      "update_other": "rows=0"
+    },
+    {
+      "actor": "BETA_MANAGER",
+      "table": "received_services",
+      "select_own": "200 rows=1",
+      "select_other": "200 rows=0",
+      "update_other": "rows=0"
+    },
+    {
+      "actor": "OUTSIDER",
+      "table": "received_services",
+      "select_own": "200 rows=0",
+      "select_other": "200 rows=0",
+      "update_other": "rows=0"
+    },
+    {
+      "actor": "anonymous",
+      "table": "received_services",
+      "select_alpha": "200 rows=0",
+      "insert": "401"
+    },
+    {
+      "actor": "ALPHA_ADMIN",
+      "table": "purchase_orders",
+      "select_own": "200 rows=3",
+      "select_other": "200 rows=0",
+      "update_other": "no-row"
+    },
+    {
+      "actor": "ALPHA_MANAGER",
+      "table": "purchase_orders",
+      "select_own": "200 rows=3",
+      "select_other": "200 rows=0",
+      "update_other": "no-row"
+    },
+    {
+      "actor": "ALPHA_CLERK",
+      "table": "purchase_orders",
+      "select_own": "200 rows=3",
+      "select_other": "200 rows=0",
+      "update_other": "no-row"
+    },
+    {
+      "actor": "BETA_MANAGER",
+      "table": "purchase_orders",
+      "select_own": "200 rows=0",
+      "select_other": "200 rows=0",
+      "update_other": "rows=0"
+    },
+    {
+      "actor": "OUTSIDER",
+      "table": "purchase_orders",
+      "select_own": "200 rows=0",
+      "select_other": "200 rows=0",
+      "update_other": "no-row"
+    },
+    {
+      "actor": "anonymous",
+      "table": "purchase_orders",
+      "select_alpha": "200 rows=0",
+      "insert": "401"
+    },
+    {
+      "actor": "ALPHA_ADMIN",
+      "table": "production_orders",
+      "select_own": "200 rows=3",
+      "select_other": "200 rows=0",
+      "update_other": "no-row"
+    },
+    {
+      "actor": "ALPHA_MANAGER",
+      "table": "production_orders",
+      "select_own": "200 rows=3",
+      "select_other": "200 rows=0",
+      "update_other": "no-row"
+    },
+    {
+      "actor": "ALPHA_CLERK",
+      "table": "production_orders",
+      "select_own": "200 rows=3",
+      "select_other": "200 rows=0",
+      "update_other": "no-row"
+    },
+    {
+      "actor": "BETA_MANAGER",
+      "table": "production_orders",
+      "select_own": "200 rows=0",
+      "select_other": "200 rows=0",
+      "update_other": "rows=0"
+    },
+    {
+      "actor": "OUTSIDER",
+      "table": "production_orders",
+      "select_own": "200 rows=0",
+      "select_other": "200 rows=0",
+      "update_other": "no-row"
+    },
+    {
+      "actor": "anonymous",
+      "table": "production_orders",
+      "select_alpha": "200 rows=0",
+      "insert": "401"
+    },
+    {
+      "actor": "ALPHA_ADMIN",
+      "table": "commission_payments",
+      "select_own": "200 rows=1",
+      "select_other": "200 rows=0",
+      "update_other": "no-row"
+    },
+    {
+      "actor": "ALPHA_MANAGER",
+      "table": "commission_payments",
+      "select_own": "200 rows=1",
+      "select_other": "200 rows=0",
+      "update_other": "no-row"
+    },
+    {
+      "actor": "ALPHA_CLERK",
+      "table": "commission_payments",
+      "select_own": "200 rows=1",
+      "select_other": "200 rows=0",
+      "update_other": "no-row"
+    },
+    {
+      "actor": "BETA_MANAGER",
+      "table": "commission_payments",
+      "select_own": "200 rows=0",
+      "select_other": "200 rows=0",
+      "update_other": "rows=0"
+    },
+    {
+      "actor": "OUTSIDER",
+      "table": "commission_payments",
+      "select_own": "200 rows=0",
+      "select_other": "200 rows=0",
+      "update_other": "no-row"
+    },
+    {
+      "actor": "anonymous",
+      "table": "commission_payments",
+      "select_alpha": "200 rows=0",
+      "insert": "401"
+    },
+    {
+      "actor": "ALPHA_ADMIN",
+      "table": "cash_closures",
+      "select_own": "200 rows=3",
+      "select_other": "200 rows=3",
+      "update_other": "rows=1"
+    },
+    {
+      "actor": "ALPHA_MANAGER",
+      "table": "cash_closures",
+      "select_own": "200 rows=3",
+      "select_other": "200 rows=0",
+      "update_other": "rows=0"
+    },
+    {
+      "actor": "ALPHA_CLERK",
+      "table": "cash_closures",
+      "select_own": "200 rows=3",
+      "select_other": "200 rows=0",
+      "update_other": "rows=0"
+    },
+    {
+      "actor": "BETA_MANAGER",
+      "table": "cash_closures",
+      "select_own": "200 rows=3",
+      "select_other": "200 rows=0",
+      "update_other": "rows=0"
+    },
+    {
+      "actor": "OUTSIDER",
+      "table": "cash_closures",
+      "select_own": "200 rows=0",
+      "select_other": "200 rows=0",
+      "update_other": "rows=0"
+    },
+    {
+      "actor": "anonymous",
+      "table": "cash_closures",
+      "select_alpha": "200 rows=0",
+      "insert": "401"
+    },
+    {
+      "actor": "ALPHA_ADMIN",
+      "table": "fiscal_closings",
+      "select_own": "200 rows=3",
+      "select_other": "200 rows=0",
+      "update_other": "no-row"
+    },
+    {
+      "actor": "ALPHA_MANAGER",
+      "table": "fiscal_closings",
+      "select_own": "200 rows=3",
+      "select_other": "200 rows=0",
+      "update_other": "no-row"
+    },
+    {
+      "actor": "ALPHA_CLERK",
+      "table": "fiscal_closings",
+      "select_own": "200 rows=3",
+      "select_other": "200 rows=0",
+      "update_other": "no-row"
+    },
+    {
+      "actor": "BETA_MANAGER",
+      "table": "fiscal_closings",
+      "select_own": "200 rows=0",
+      "select_other": "200 rows=0",
+      "update_other": "rows=0"
+    },
+    {
+      "actor": "OUTSIDER",
+      "table": "fiscal_closings",
+      "select_own": "200 rows=0",
+      "select_other": "200 rows=0",
+      "update_other": "no-row"
+    },
+    {
+      "actor": "anonymous",
+      "table": "fiscal_closings",
+      "select_alpha": "200 rows=0",
+      "insert": "401"
+    },
+    {
+      "actor": "ALPHA_ADMIN",
+      "table": "kardex_entries",
+      "select_own": "200 rows=3",
+      "select_other": "200 rows=1",
+      "update_other": "rows=0"
+    },
+    {
+      "actor": "ALPHA_MANAGER",
+      "table": "kardex_entries",
+      "select_own": "200 rows=3",
+      "select_other": "200 rows=0",
+      "update_other": "rows=0"
+    },
+    {
+      "actor": "ALPHA_CLERK",
+      "table": "kardex_entries",
+      "select_own": "200 rows=3",
+      "select_other": "200 rows=0",
+      "update_other": "rows=0"
+    },
+    {
+      "actor": "BETA_MANAGER",
+      "table": "kardex_entries",
+      "select_own": "200 rows=1",
+      "select_other": "200 rows=0",
+      "update_other": "rows=0"
+    },
+    {
+      "actor": "OUTSIDER",
+      "table": "kardex_entries",
+      "select_own": "200 rows=0",
+      "select_other": "200 rows=0",
+      "update_other": "rows=0"
+    },
+    {
+      "actor": "anonymous",
+      "table": "kardex_entries",
+      "select_alpha": "200 rows=0",
+      "insert": "401"
+    }
+  ],
+  "escalation": [],
+  "idor": [
+    {
+      "name": "transaction",
+      "rows": 0
+    },
+    {
+      "name": "receipt",
+      "rows": 0
+    },
+    {
+      "name": "purchase_order",
+      "rows": 0
+    },
+    {
+      "name": "production_order",
+      "rows": 0
+    },
+    {
+      "name": "transfer (by design: BETA es destino)",
+      "rows": 1
+    },
+    {
+      "name": "transaction REST items",
+      "rows": 0
+    },
+    {
+      "name": "PO detail",
+      "status": 404
+    },
+    {
+      "name": "production detail",
+      "status": 404
+    }
+  ],
+  "escalation_policy_root_cause": "profiles_tenant_update: CASE WHEN current_setting(app.use_tenant_rls,true)='true' THEN ((id=auth.uid()) OR (is_admin() AND tenant...)) ELSE (id=auth.uid()) END — en AMBAS ramas el self-update no restringe columnas: cualquier usuario puede setear role/roles/plan/is_active/active_store_id propios. USE_TENANT_RLS no está activado (ELSE activo), y aun activado el THEN sigue permitiendo self-update sin exclusion de columnas. || prevent_fiscal_closing_edit: IF OLD.status='locked' AND current_setting(app.bypass_fiscal_lock,true) <> 'true' → GUC NULL ⇒ NULL<>'true' ⇒ NULL ⇒ IF no hace RAISE ⇒ lock NO-OP para UPDATE y DELETE. RLS fiscal_closings UPDATE por membresía permite al manager mutar períodos cerrados/bloqueados (reproducido: status locked→open)."
+}

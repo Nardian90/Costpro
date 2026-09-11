@@ -1,0 +1,256 @@
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - ESM syntax in a file loaded as CommonJS (vitest.config.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v4.1.10 /home/z/my-project/Costpro
+
+ ✓ src/__tests__/hooks/useStoreHealth.test.tsx (4 tests) 232ms
+ ✓ src/__tests__/integration/iteration-fiscal.test.ts (53 tests) 28ms
+ ✓ src/__tests__/integration/iteration-11-4.test.ts (62 tests) 11ms
+ ✓ src/__tests__/api/exchange-rates-manual.test.ts (8 tests) 15ms
+ ✓ src/__tests__/api/fc-invalidate.test.ts (5 tests) 10ms
+ ✓ src/__tests__/api/memberships-bulk.test.ts (9 tests) 16ms
+ ✓ src/__tests__/api/memberships-single-authz.test.ts (13 tests) 16ms
+ ✓ src/__tests__/api/received-services-authz.test.ts (10 tests) 14ms
+ ✓ src/__tests__/api/stores-backup.test.ts (11 tests) 300ms
+ ✓ src/__tests__/api/stores-bulk.test.ts (5 tests) 11ms
+ ✓ src/__tests__/components/StorefrontErrorBoundary.test.tsx (8 tests) 6ms
+ ✓ src/__tests__/components/c-cost-module.test.tsx (7 tests) 269ms
+stderr | src/__tests__/components/g1-component-tests.test.tsx > G1.1 — Tests de render componentes MULTI-TIENDA > StoreOnboardingWizard > renderiza sin crashear cuando está cerrado
+{"timestamp":"2026-09-11T00:15:08.193Z","level":"error","category":"DATABASE","event":"FETCH_USERS_FAILED","data":{"err":{}}}
+
+ ✓ src/__tests__/components/g1-component-tests.test.tsx (10 tests) 2739ms
+       ✓ renderiza sin crashear  357ms
+       ✓ renderiza sin crashear  2178ms
+ ✓ src/__tests__/components/g2-cost-functional.test.tsx (10 tests) 683ms
+ ✓ src/__tests__/components/g3-performance.test.tsx (4 tests) 847ms
+     ✓ StoresManagementView renderiza 15 tiendas en menos de 1500ms (sin virtualización)  584ms
+ ✓ src/__tests__/components/multi-tienda-views.test.tsx (7 tests | 2 skipped) 187ms
+ ✓ src/__tests__/components/p2-validation.test.tsx (9 tests) 531ms
+ ✓ src/__tests__/components/p3-unified.test.tsx (9 tests) 384ms
+ ✓ src/__tests__/components/pos-barcode-scanner.test.tsx (6 tests) 179ms
+stderr | src/__tests__/components/store-card.test.tsx > StoreCard > logo rendering > renders <img> when store.logo_url is set
+Received `true` for a non-boolean attribute `unoptimized`.
+
+If you want to write it to the DOM, pass a string instead: unoptimized="true" or unoptimized={value.toString()}.
+
+ ✓ src/__tests__/components/store-card.test.tsx (48 tests) 901ms
+ ✓ src/__tests__/components/stores-management.test.tsx (7 tests | 3 skipped) 219ms
+ ✓ src/__tests__/contracts/fc-contracts.test.ts (22 tests) 9ms
+ ✓ src/__tests__/contracts/store-contract.test.ts (7 tests) 5ms
+ ✓ src/__tests__/hooks/useBulkAssignMemberships.test.tsx (3 tests) 29ms
+ ✓ src/__tests__/hooks/useBulkStoreAction.test.tsx (3 tests) 25ms
+ ✓ src/__tests__/hooks/useMultiStoreDashboard.test.ts (10 tests) 511ms
+ ✓ src/__tests__/hooks/useStoreEdit.test.tsx (4 tests) 26ms
+ ✓ src/__tests__/hooks/useStoreInactivityMonitor.test.tsx (2 tests | 1 skipped) 3ms
+ ✓ src/__tests__/hooks/useStoreSwitcher.test.ts (9 tests) 15ms
+ ✓ src/__tests__/hooks/useUserPreferences.test.ts (19 tests) 897ms
+ ✓ src/__tests__/integration/audit-fixes.test.ts (22 tests) 8ms
+stderr | src/__tests__/integration/auth-fail-closed.test.ts > FIX-AUDIT-AUTH-1: auth.ts fail closed > retorna null cuando getUser falla (token inválido)
+[getServerSession] getUser error (fail closed): Invalid token
+[getServerSession] getSession fallback removed for security (SEC-024)
+
+stderr | src/__tests__/integration/auth-fail-closed.test.ts > FIX-AUDIT-AUTH-1: auth.ts fail closed > NO acepta un JWT fabricado con payload válido pero sin firma
+[getServerSession] getUser error (fail closed): Invalid signature
+[getServerSession] getSession fallback removed for security (SEC-024)
+
+stderr | src/__tests__/integration/auth-fail-closed.test.ts > FIX-AUDIT-AUTH-1: auth.ts fail closed > rechaza dev-token-bypass en producción
+[getServerSession] getUser error (fail closed): Invalid token
+[getServerSession] getSession fallback removed for security (SEC-024)
+
+stderr | src/__tests__/integration/auth-fail-closed.test.ts > FIX-AUDIT-AUTH-1: auth.ts fail closed > retorna null sin header Authorization
+[getServerSession] getSession fallback removed for security (SEC-024)
+
+ ✓ src/__tests__/integration/auth-fail-closed.test.ts (6 tests) 47ms
+ ↓ src/__tests__/integration/backup-schema-validation.test.ts (10 tests | 10 skipped)
+ ✓ src/__tests__/integration/commit-rollback-store-access.test.ts (4 tests) 13ms
+ ✓ src/__tests__/integration/concurrency.test.ts (5 tests) 10ms
+ ✓ src/__tests__/integration/db-integration.test.ts (9 tests) 5866ms
+       ✓ stores_archived_by_fkey constraint exists  1480ms
+       ✓ archived_by accepts NULL (no user assigned)  604ms
+       ✓ exists and defaults to false  479ms
+       ✓ can filter is_active=true AND is_archived=false (the GET /api/stores query)  887ms
+       ✓ stores have slugs (some may be legacy with underscores)  304ms
+       ✓ store 43a4dabc has products with is_active column (not deleted_at)  470ms
+       ✓ transactions table has total_amount column (not total)  952ms
+       ✓ admin user has active memberships in stores  393ms
+ ✓ src/__tests__/integration/exchange-rates-bulk-upload.test.ts (13 tests) 108ms
+ ✓ src/__tests__/integration/exchange-rates-template.test.ts (4 tests) 262ms
+ ✓ src/__tests__/integration/fc-automation.test.ts (27 tests) 7ms
+ ✓ src/__tests__/integration/fc-generator-service.test.ts (20 tests) 199ms
+ ✓ src/__tests__/integration/fc-rls-database.test.ts (58 tests | 1 skipped) 9ms
+ ✓ src/__tests__/integration/iteration-11-1.test.ts (54 tests) 24ms
+ ✓ src/__tests__/integration/iteration-11-2.test.ts (88 tests) 12ms
+ ✓ src/__tests__/integration/iteration-11-3.test.ts (63 tests) 11ms
+ ✓ src/__tests__/integration/iteration-11-5.test.ts (43 tests) 9ms
+ ✓ src/__tests__/integration/iteration-12.test.ts (68 tests) 17ms
+ ✓ src/__tests__/integration/iteration-13.test.ts (74 tests) 15ms
+ ✓ src/__tests__/integration/iteration-14-b8-modelo-c.test.ts (30 tests) 8ms
+ ✓ src/__tests__/integration/iteration-15-b10-reverse-authorization.test.ts (25 tests) 24ms
+ ✓ src/__tests__/integration/iteration-15-b10b-reverse-devolution.test.ts (20 tests) 6ms
+ ✓ src/__tests__/integration/iteration-16-b10b-obs1-historical-repair.test.ts (22 tests) 9ms
+ ✓ src/__tests__/integration/iteration-17-b10b-obs2-orphan-ledger.test.ts (16 tests) 23ms
+ ✓ src/__tests__/integration/iteration-18-b10b-obs2-repair-design.test.ts (24 tests) 34ms
+ ✓ src/__tests__/integration/iteration-19-b10b-obs2-post-repair-operational-integrity.test.ts (29 tests) 11ms
+ ✓ src/__tests__/integration/iteration-rls.test.ts (40 tests) 14ms
+ ✓ src/__tests__/integration/resolve-model.test.ts (24 tests) 9ms
+stdout | src/__tests__/integration/sprint1.integration.test.ts > SPRINT-1 INTEGRATION AUDIT > BacktestEngine produce métricas reales (no ceros fantasma)
+[AUDIT] Sharpe: 0.000
+[AUDIT] Sortino: -19.105
+[AUDIT] Calmar: -14.925
+[AUDIT] Profit Factor: 0.000
+[AUDIT] Recovery Factor: -1.000
+[AUDIT] Win Streak: 0
+[AUDIT] Loss Streak: 20
+[AUDIT] Total wins: 0 / Total bets: 60
+
+stdout | src/__tests__/integration/sprint1.integration.test.ts > SPRINT-1 INTEGRATION AUDIT > BacktestEngine incluye CAGR con IC 95%
+[AUDIT] CAGR: -90.70%
+[AUDIT] Total Return: -9.30%
+
+stdout | src/__tests__/integration/sprint1.integration.test.ts > SPRINT-1 INTEGRATION AUDIT > BacktestEngine incluye Kelly y Probability of Ruin
+[AUDIT] Kelly Safe: 0.00%
+[AUDIT] Kelly Edge: 0.00%
+[AUDIT] Probability of Ruin: 100.00%
+
+stdout | src/__tests__/integration/sprint1.integration.test.ts > SPRINT-1 INTEGRATION AUDIT > BacktestEngine incluye los 4 tests estadísticos
+[AUDIT] Is Random: true
+[AUDIT] Confidence: 14.7%
+[AUDIT] Summary: VEREDICTO: Los datos son consistentes con un proceso aleatorio uniforme (4/4 tests no rechazan H0, c...
+
+stdout | src/__tests__/integration/sprint1.integration.test.ts > SPRINT-1 INTEGRATION AUDIT > BacktestEngine incluye drift detection
+[AUDIT] Drift Detected: false
+[AUDIT] Drift Magnitude: 16.02
+
+stdout | src/__tests__/integration/sprint1.integration.test.ts > SPRINT-1 INTEGRATION AUDIT > BacktestEngine incluye volatility, downside deviation y expectancy
+[AUDIT] Volatility: 2099.72%
+[AUDIT] Downside Dev: 6901.63%
+[AUDIT] Expectancy: $-3.45
+
+ ✓ src/__tests__/integration/sprint1.integration.test.ts (8 tests) 86066ms
+     ✓ BacktestEngine produce métricas reales (no ceros fantasma)  8151ms
+     ✓ BacktestEngine incluye CAGR con IC 95%  11815ms
+     ✓ BacktestEngine incluye Kelly y Probability of Ruin  8240ms
+     ✓ BacktestEngine incluye los 4 tests estadísticos  41637ms
+     ✓ BacktestEngine incluye drift detection  8116ms
+     ✓ BacktestEngine incluye volatility, downside deviation y expectancy  8103ms
+stdout | src/__tests__/integration/sprint2.integration.test.ts > SPRINT-2 INTEGRATION AUDIT > EnsembleEngine se integra con AnalysisEngine y produce predicciones
+[AUDIT] Ensemble predictions: 5
+[AUDIT] Models used: 4
+[AUDIT] Top prediction score: 46.47
+
+stdout | src/__tests__/integration/sprint2.integration.test.ts > SPRINT-2 INTEGRATION AUDIT > los 4 modelos producen scores diferentes (no todas iguales)
+[AUDIT] Model performances:
+  - frequency: weight=25.0%, hitRate=1.43%, excluded=false
+  - markov: weight=25.0%, hitRate=1.43%, excluded=false
+  - positional: weight=25.0%, hitRate=0.71%, excluded=false
+  - sumrange: weight=25.0%, hitRate=1.43%, excluded=false
+
+stdout | src/__tests__/integration/sprint2.integration.test.ts > SPRINT-2 INTEGRATION AUDIT > RiskLayer + Ensemble + Backtest integration
+[AUDIT] Backtest ROI: -6.90%
+[AUDIT] Backtest Sharpe: -59.972
+[AUDIT] Risk recommendation:
+  - Bet size: $1
+  - Total exposure: $3
+  - Risk level: low
+  - Should stop: false
+  - Warnings: 1
+
+stdout | src/__tests__/integration/sprint2.integration.test.ts > SPRINT-2 INTEGRATION AUDIT > detecta régimen cuando hay cambio en los datos
+[AUDIT] Drift detected: false
+[AUDIT] Drift magnitude: 16.02
+
+stdout | src/__tests__/integration/sprint2.integration.test.ts > SPRINT-2 INTEGRATION AUDIT > funciona con datos sesgados (FrequencyModel debería tener edge)
+[AUDIT] Stats isRandom (biased data): false
+[AUDIT] Stats confidence: 0.0%
+
+stdout | src/__tests__/integration/sprint2.integration.test.ts > SPRINT-2 INTEGRATION AUDIT > RiskLayer respeta los 3 modos correctamente
+[AUDIT] defensive: betSize=$2, exposure=$6, risk=low
+[AUDIT] balanced: betSize=$6, exposure=$18, risk=low
+[AUDIT] aggressive: betSize=$12, exposure=$36, risk=medium
+
+ ✓ src/__tests__/integration/sprint2.integration.test.ts (8 tests) 19086ms
+     ✓ EnsembleEngine se integra con AnalysisEngine y produce predicciones  534ms
+     ✓ cada predicción tiene modelContributions válidas  598ms
+     ✓ los 4 modelos producen scores diferentes (no todas iguales)  458ms
+     ✓ RiskLayer + Ensemble + Backtest integration  8621ms
+     ✓ funciona con datos sesgados (FrequencyModel debería tener edge)  526ms
+     ✓ RiskLayer respeta los 3 modos correctamente  8344ms
+ ✓ src/__tests__/integration/sprint3.integration.test.ts (37 tests) 148ms
+ ✓ src/__tests__/integration/sprint4.integration.test.ts (33 tests | 5 skipped) 80ms
+ ✓ src/__tests__/integration/store-archive-restore-auth.test.ts (9 tests) 17ms
+ ✓ src/__tests__/integration/store-audit-health-reset-auth.test.ts (11 tests) 20ms
+ ✓ src/__tests__/integration/store-checkslug-healthbatch-ratelimit.test.ts (13 tests) 24ms
+ ✓ src/__tests__/integration/store-csrf-ratelimit-idempotency.test.ts (13 tests) 22ms
+ ✓ src/__tests__/integration/store-rls-database.test.ts (33 tests | 1 skipped) 10ms
+ ✓ src/__tests__/integration/store-rls-isolation.test.ts (33 tests) 35ms
+ ✓ src/__tests__/integration/telegram-catalog-export.test.ts (25 tests) 24ms
+ ✓ src/__tests__/integration/telegram-module.test.ts (29 tests) 49ms
+ ✓ src/__tests__/integration/telegram-multimedia.test.ts (19 tests) 72ms
+ ✓ src/__tests__/integration/telegram-renderer-parity.test.ts (22 tests) 40ms
+ ✓ src/__tests__/integration/telegram-security-e2e.test.ts (19 tests) 26ms
+stderr | src/__tests__/integration/whatsapp-module-mock.test.ts > WhatsApp Anti-Ban: handleInvitationBlock > first block → warning + 24h cooldown
+{"timestamp":"2026-08-25T03:00:00.000Z","level":"warn","category":"DATABASE","event":"ANTI_BAN_WARNING","data":{"consecutiveBlocks":1}}
+
+stderr | src/__tests__/integration/whatsapp-module-mock.test.ts > WhatsApp Anti-Ban: handleInvitationBlock > second block → danger + 48h cooldown
+{"timestamp":"2026-08-25T03:00:00.000Z","level":"warn","category":"DATABASE","event":"ANTI_BAN_DANGER","data":{"consecutiveBlocks":2}}
+
+stderr | src/__tests__/integration/whatsapp-module-mock.test.ts > WhatsApp Anti-Ban: handleInvitationBlock > third block → blocked + 7-day cooldown
+{"timestamp":"2026-08-25T03:00:00.000Z","level":"error","category":"DATABASE","event":"ANTI_BAN_LONG_PAUSE","data":{"consecutiveBlocks":3,"cooldownDays":7}}
+
+stdout | src/__tests__/integration/whatsapp-module-mock.test.ts > WhatsApp Anti-Ban: resetRiskIfStale > resets to safe after 7 days past cooldown
+{"timestamp":"2026-08-25T03:00:00.000Z","level":"info","category":"DATABASE","event":"ANTI_BAN_RESET","data":{"wasLevel":"blocked"}}
+
+ ✓ src/__tests__/integration/whatsapp-module-mock.test.ts (61 tests) 26ms
+ ✓ src/__tests__/integration/whatsapp-module.test.ts (37 tests) 32ms
+ ✓ src/__tests__/integration/whatsapp-realtime.test.ts (7 tests) 85ms
+ ✓ src/__tests__/integration/workers-commissions-transfers.test.ts (29 tests) 9ms
+stderr | src/__tests__/lib/backup-service.test.ts > backup-service > Warnings behavior > records warnings when a table fails to fetch
+{"timestamp":"2026-09-11T00:18:11.131Z","level":"warn","category":"DATABASE","event":"BACKUP_TABLE_FETCH_WARN","data":{"storeId":"s1","table":"products","severity":"error","message":"DB_ERROR: column products.store_id does not exist"}}
+
+ ✓ src/__tests__/lib/backup-service.test.ts (18 tests) 206ms
+ ✓ src/__tests__/lib/costeo-dinamico.test.ts (36 tests) 16ms
+ ✓ src/__tests__/lib/eltoque-scraper.test.ts (32 tests) 21ms
+ ✓ src/__tests__/lib/receipt-items-validation.test.ts (12 tests) 6ms
+ ✓ src/__tests__/lib/soluciones-cuba-scraper.test.ts (24 tests) 14ms
+ ✓ src/__tests__/services/ai-tools.test.ts (15 tests) 15ms
+stderr | src/__tests__/services/audit-user-service.test.ts > auditService > logInvoiceWithoutPrice does not throw on DB error
+[AuditService] Error logging invoice_without_price: { message: 'DB error' }
+
+ ✓ src/__tests__/services/audit-user-service.test.ts (16 tests) 13ms
+ ✓ src/__tests__/services/offline-storage.test.ts (19 tests) 11ms
+ ✓ src/__tests__/services/pick3-advisor.test.ts (7 tests) 5ms
+ ✓ src/__tests__/services/pick3-ensemble-engine.test.ts (10 tests) 4165ms
+       ✓ produce 4 performances (una por modelo)  519ms
+       ✓ los pesos normalizados suman ~1.0 (entre los no excluidos)  448ms
+       ✓ calcular hitRate y recentHitRate como números válidos  468ms
+       ✓ genera predicciones ensemble con modelContributions  467ms
+       ✓ ordena predicciones por score descendente  459ms
+       ✓ funciona en modo LAST2  492ms
+       ✓ incluye performances y predicciones  461ms
+       ✓ genera regimeAlert cuando un modelo domina  445ms
+stdout | src/__tests__/services/pick3-growth.test.ts > SPRINT-5: Growth Engine > ABTestingService > trackConversion no crashea
+{"timestamp":"2026-09-11T00:18:25.138Z","level":"info","category":"PICK3","event":"A/B conversion: paywall_cta | variant=value | event=view | user=user-123"}
+{"timestamp":"2026-09-11T00:18:25.139Z","level":"info","category":"PICK3","event":"A/B conversion: paywall_cta | variant=value | event=click_cta | user=user-123"}
+{"timestamp":"2026-09-11T00:18:25.139Z","level":"info","category":"PICK3","event":"A/B conversion: paywall_cta | variant=value | event=start_trial | user=user-123"}
+{"timestamp":"2026-09-11T00:18:25.139Z","level":"info","category":"PICK3","event":"A/B conversion: paywall_cta | variant=value | event=convert_paid | user=user-123"}
+
+ ✓ src/__tests__/services/pick3-growth.test.ts (38 tests | 1 skipped) 103ms
+ ✓ src/__tests__/services/pick3-quant-metrics.test.ts (34 tests) 9ms
+ ✓ src/__tests__/services/pick3-risk-layer.test.ts (30 tests) 7ms
+ ✓ src/__tests__/services/pick3-stat-tests.test.ts (28 tests) 27ms
+ ✓ src/__tests__/services/pick3-subscription.test.ts (34 tests) 8ms
+ ✓ src/__tests__/services/store-api-client.test.ts (19 tests) 16ms
+ ✓ src/__tests__/store/auth-ui-store.test.ts (14 tests) 7ms
+ ✓ src/__tests__/store/session-store.test.ts (5 tests) 4ms
+ ✓ src/__tests__/ui/fc-ui-phase3.test.ts (16 tests) 6ms
+ ✓ src/__tests__/unit/idempotency.test.ts (9 tests) 561ms
+ ✓ src/__tests__/validation/fc-schemas.test.ts (25 tests) 10ms
+ ✓ src/__tests__/validation/store-schemas.test.ts (13 tests) 10ms
+
+ Test Files  96 passed | 1 skipped (97)
+      Tests  2058 passed | 24 skipped (2082)
+   Start at  00:14:51
+   Duration  225.31s (transform 3.59s, setup 5.09s, import 7.85s, tests 126.98s, environment 65.32s)
+
+VITEST_EXIT=0

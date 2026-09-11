@@ -1,0 +1,211 @@
+{
+  "worker": "f61ed89a-0e4c-4a43-976b-28de9313c205",
+  "rule": {
+    "status": 201,
+    "body": {
+      "rule": {
+        "id": "5eda07a9-7ea3-4853-80c9-304925a2e074",
+        "store_id": "e1ede2fd-e7d3-4fc0-ba1f-476633c5591a",
+        "worker_id": "f61ed89a-0e4c-4a43-976b-28de9313c205",
+        "type": "percentage_sales",
+        "value_percent": 10,
+        "fixed_value": null,
+        "salary_amount": null,
+        "base_calculation": "total_sales",
+        "priority": 1,
+        "valid_from": "2026-01-01",
+        "valid_to": null,
+        "created_at": "2026-09-10T22:46:49.709787+00:00",
+        "updated_at": "2026-09-10T22:46:49.709787+00:00",
+        "created_by": "4c71ba55-d2a5-499e-a34e-ccf508b8df7f",
+        "tenant_id": null,
+        "min_price": null,
+        "max_price": null,
+        "product_commission_amount": null,
+        "product_commission_mode": null
+      }
+    }
+  },
+  "attribution": {
+    "status": 201,
+    "body": [
+      {
+        "id": "95ec683a-f6c4-4fb5-9e86-b91480ed12a7",
+        "store_id": "e1ede2fd-e7d3-4fc0-ba1f-476633c5591a",
+        "worker_id": "f61ed89a-0e4c-4a43-976b-28de9313c205",
+        "transaction_id": "1b800eb0-7701-4714-beed-8c730816b487",
+        "amount_total": 80,
+        "payment_cash": 80,
+        "payment_transfer": 0,
+        "sale_date": "2026-09-10",
+        "created_at": "2026-09-10T22:46:52.066869+00:00",
+        "updated_at": "2026-09-10T22:46:52.066869+00:00",
+        "created_by": null,
+        "tenant_id": null
+      }
+    ],
+    "sale": "1b800eb0-7701-4714-beed-8c730816b487"
+  },
+  "attribution_cross": {
+    "status": 201
+  },
+  "finding_cross_attribution": {
+    "status": 201,
+    "note": "RLS sales_transactions permite insertar referencia a transaction de otra tienda (FK opcional); monto es user-entered por diseño del módulo → P3 validación de integridad, no exposición de datos."
+  },
+  "calc": {
+    "status": 200,
+    "body": {
+      "store_id": "e1ede2fd-e7d3-4fc0-ba1f-476633c5591a",
+      "period": {
+        "from": "2026-09-01",
+        "to": "2026-09-10"
+      },
+      "calculations": [
+        {
+          "worker_id": "f61ed89a-0e4c-4a43-976b-28de9313c205",
+          "period": {
+            "from": "2026-09-01",
+            "to": "2026-09-10"
+          },
+          "sales": {
+            "cash": 320,
+            "transfer": 0,
+            "total": 320,
+            "base_used": 80
+          },
+          "rule_applied": {
+            "id": "dde8b225-b22f-47d3-9043-ca5df01c5bda",
+            "store_id": "e1ede2fd-e7d3-4fc0-ba1f-476633c5591a",
+            "worker_id": "f61ed89a-0e4c-4a43-976b-28de9313c205",
+            "type": "percentage_sales",
+            "value_percent": 10,
+            "fixed_value": null,
+            "salary_amount": null,
+            "base_calculation": "total_sales",
+            "priority": 1,
+            "valid_from": "2026-01-01",
+            "valid_to": null,
+            "created_at": "2026-09-10T22:46:00.86529+00:00",
+            "updated_at": "2026-09-10T22:46:00.86529+00:00",
+            "created_by": "4c71ba55-d2a5-499e-a34e-ccf508b8df7f",
+            "tenant_id": null,
+            "min_price": null,
+            "max_price": null,
+            "product_commission_amount": null,
+            "product_commission_mode": "per_sale",
+            "product_ids": [],
+            "product_configs": {}
+          },
+          "rule_applied_id": "dde8b225-b22f-47d3-9043-ca5df01c5bda",
+          "breakdown": {
+            "percentage_component": 0,
+            "fixed_component": 0,
+            "salary_component": 0
+          },
+          "commission_suggested": 8,
+          "calculation_explanation": "10% sobre 80.00 (subtotal no excluido) = 8.00",
+          "product_breakdown": [
+            {
+              "product_id": "15343379-56d8-4977-8e79-e94ae4e3add8",
+              "product_name": "E2E2 Producto A3",
+              "quantity": 1,
+              "unit_price": 80,
+              "line_total": 80,
+              "rule_id": "dde8b225-b22f-47d3-9043-ca5df01c5bda",
+              "rule_type": "percentage_sales",
+              "commission": 8,
+              "excluded_from_percentage": false
+            }
+          ],
+          "excluded_sales_total": 0,
+          "calculation_mode": "rules",
+          "worker_name": "E2E2-Trabajador ALPHA",
+          "worker_ci": "00000000001",
+          "worker_status": "active"
+        }
+      ],
+      "generated_at": "2026-09-10T22:46:55.982Z"
+    }
+  },
+  "serverCalc": 32,
+  "payment": {
+    "status": 201,
+    "body": {
+      "payment": {
+        "id": "909bac01-d72a-4ed4-876a-981544b18121",
+        "store_id": "e1ede2fd-e7d3-4fc0-ba1f-476633c5591a",
+        "worker_id": "f61ed89a-0e4c-4a43-976b-28de9313c205",
+        "period_start": "2026-09-01",
+        "period_end": "2026-09-10",
+        "calculated_amount": 32,
+        "final_amount": 32,
+        "manual_adjustment_reason": null,
+        "calculated_breakdown": {
+          "sales": {
+            "cash": 320,
+            "total": 320,
+            "transfer": 0,
+            "base_used": 320
+          },
+          "period": {
+            "to": "2026-09-10",
+            "from": "2026-09-01"
+          },
+          "breakdown": {
+            "fixed_component": 0,
+            "salary_component": 0,
+            "percentage_component": 32
+          },
+          "worker_id": "f61ed89a-0e4c-4a43-976b-28de9313c205",
+          "rule_applied": {
+            "id": "dde8b225-b22f-47d3-9043-ca5df01c5bda",
+            "type": "percentage_sales",
+            "priority": 1,
+            "store_id": "e1ede2fd-e7d3-4fc0-ba1f-476633c5591a",
+            "valid_to": null,
+            "max_price": null,
+            "min_price": null,
+            "tenant_id": null,
+            "worker_id": "f61ed89a-0e4c-4a43-976b-28de9313c205",
+            "created_at": "2026-09-10T22:46:00.86529+00:00",
+            "created_by": "4c71ba55-d2a5-499e-a34e-ccf508b8df7f",
+            "updated_at": "2026-09-10T22:46:00.86529+00:00",
+            "valid_from": "2026-01-01",
+            "fixed_value": null,
+            "salary_amount": null,
+            "value_percent": 10,
+            "base_calculation": "total_sales",
+            "product_commission_mode": null,
+            "product_commission_amount": null
+          },
+          "rule_applied_id": "dde8b225-b22f-47d3-9043-ca5df01c5bda",
+          "commission_suggested": 32,
+          "calculation_explanation": "10% sobre total (320.00) = 32.00"
+        },
+        "rule_applied_id": "dde8b225-b22f-47d3-9043-ca5df01c5bda",
+        "status": "paid",
+        "approved_by": null,
+        "approved_at": null,
+        "paid_by": null,
+        "paid_at": null,
+        "created_at": "2026-09-10T22:46:59.181491+00:00",
+        "updated_at": "2026-09-10T22:46:59.181491+00:00",
+        "created_by": "4c71ba55-d2a5-499e-a34e-ccf508b8df7f",
+        "tenant_id": null,
+        "payment_method": null,
+        "currency": "CUP",
+        "exchange_rate": 1,
+        "amount_cup": 32,
+        "due_date": "2026-09-17",
+        "payment_reference": null
+      }
+    }
+  },
+  "cross": {
+    "status": 400
+  },
+  "cross2": {
+    "status": 403
+  }
+}

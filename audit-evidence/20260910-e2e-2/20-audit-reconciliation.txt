@@ -1,0 +1,16 @@
+E2E-2 §38 — RECONCILIACIÓN DE AUDITORÍA (detalle; ejecutado en 20_reconciliations.mjs)
+=======================================================================================
+Correspondencia operación ↔ audit_logs (tiendas fixture E2E2-ALPHA + E2E2-BETA):
+  receipts (sin PO)      ops=22  vs audit REGISTER_RECEPTION=26 (incluye corridas de idempotencia)
+  transactions completed ops=47  vs audit CREATE_SALE_V2=47        → 1:1 EXACTO
+  transfers creadas      ops=6   vs audit CREATE_TRANSFER=6        → 1:1 EXACTO
+  devolutions            ops=11  vs audit DEVOLUTION_CREATED_V2=11 → 1:1 EXACTO
+  production withdraws   → audit PRODUCTION_ITEM_WITHDRAWN con cost_authority=server_side_wac_v3
+  commission_payments    → audit trigger presente (record_id UUID válido verificado)
+  fiscal close/lock      → audit FISCAL_CLOSING_CREATED / cambios (audit_fiscal_closings_changes)
+  cash closures          → audit CASH_CLOSURE_CREATED/FINALIZED/UPDATED (old/new data)
+
+§24 puntual: POST fiscal action=status (×10 pureza) → 0 filas de auditoría fiscal-status
+(PO_STATUS_CHANGED existente corresponde al state machine de purchase orders, no a fiscal).
+Sin orfanos detectados; sin duplicados por operación (idempotencia auditada por unique keys).
+Ver raws/e2e20_reconciliations.json (audit_by_action)

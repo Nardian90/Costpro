@@ -1,0 +1,20 @@
+E2E-2 §5 — FIXTURES (provisioning service-role, fuera de producción)
+============================================================
+E2E2-ALPHA: e1ede2fd-e7d3-4fc0-ba1f-476633c5591a
+
+E2E2-BETA:  60896157-6b0a-439c-833f-3d55d64456ba
+
+Usuarios (Supabase Auth + profiles + user_store_memberships activas):
+  ALPHA_ADMIN    7613f105-7b0d-4f4c-8792-b45c1e35fd4e  role=admin    store=ALPHA
+  ALPHA_MANAGER  4c71ba55-d2a5-499e-a34e-ccf508b8df7f  role=manager  store=ALPHA
+  ALPHA_CLERK    a063a1db-f8e4-4a5f-a898-f643548c0b3b  role=clerk    store=ALPHA
+  BETA_MANAGER   c37cd9f7-cfe4-46c2-bad3-a48c721f2c29  role=manager  store=BETA
+  BETA_CLERK     cf37edac-4bfa-4295-98e3-cb745574daf2  role=clerk    store=BETA
+  OUTSIDER       83af9b60-2265-4e3c-bdac-2cc52eb49cd2  role=clerk    store=None
+
+Productos ALPHA: E2E2-A-001(fec4d491), E2E2-A-002(b0bcd630), E2E2-A-003(15343379), E2E2-A-004(d397acec), E2E2-A-005(6f5cd125)
+Productos BETA: E2E2-B-001(aa1d47b2), E2E2-B-002(008f016e), E2E2-B-003(effd39ef)
+
+Workers: ALPHA=f61ed89a-0e4c-4a43-976b-28de9313c205 BETA=ded4f8ac-7f19-41a7-906d-2556dd4cb2b3
+Inventario inicial: 0 filas en ambas tiendas fixture.
+Contraseñas fixture: solo en harness (fuera del repo); no secretos de producción.

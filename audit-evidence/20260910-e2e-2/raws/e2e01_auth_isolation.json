@@ -1,0 +1,47 @@
+{
+  "logins": {
+    "ALPHA_ADMIN": {
+      "status": 200,
+      "has_token": true,
+      "uid": true
+    },
+    "ALPHA_MANAGER": {
+      "status": 200,
+      "has_token": true,
+      "uid": true
+    },
+    "ALPHA_CLERK": {
+      "status": 200,
+      "has_token": true,
+      "uid": true
+    },
+    "BETA_MANAGER": {
+      "status": 200,
+      "has_token": true,
+      "uid": true
+    },
+    "BETA_CLERK": {
+      "status": 200,
+      "has_token": true,
+      "uid": true
+    },
+    "OUTSIDER": {
+      "status": 200,
+      "has_token": true,
+      "uid": true
+    }
+  },
+  "api": {},
+  "anonymous": {
+    "stores": 401,
+    "products": 401,
+    "fiscal": 401
+  },
+  "cross_store": {
+    "x1": 403,
+    "x2": 403,
+    "x3": 403,
+    "x4": 405,
+    "x5": 403
+  }
+}

@@ -1,0 +1,15 @@
+E2E-2 §36-38 — RECONCILIACIONES (INVENTARIO + CONTABILIDAD + AUDITORÍA)
+============================================================
+PASS | §36 ALPHA: reconstrucción stock_movements == inventory == products (10 productos) | reconciliado 100%
+PASS | §36 BETA: reconstrucción stock_movements == inventory == products (5 productos) | reconciliado 100%
+PASS | §37.1: kardex balance = qty × unit_cost (10 productos, tolerancia redondeo 2dp) | coherente
+PASS | §37.2: sin ventas de producto físico con cost_at_sale <= 0 | n=0
+PASS | §37.3: devoluciones registradas con costo (muestra) | 5 filas de muestra
+PASS | §37.4: transfer registrada con costo de origen (muestra) | [{"origen_costo":"300.000000000000000000000","destino_wac":"300.0000000000000000000000000","sku":"E2E2-A-004"}]
+PASS | §38 receipts: ops=22 vs audit=26 (≥ y sin orfanos mayores) | ops=22 audit=26
+PASS | §38 transactions (ventas): ops=47 vs audit=47 (≥ y sin orfanos mayores) | ops=47 audit=47
+PASS | §38 transfers creadas: ops=6 vs audit=6 (≥ y sin orfanos mayores) | ops=6 audit=6
+PASS | §38 devolutions: ops=11 vs audit=11 (≥ y sin orfanos mayores) | ops=11 audit=11
+PASS | §38: sin auditoría de operaciones POST status fiscal (read-only; PO_STATUS_CHANGED es de OC, no fiscal) | fiscal_status_audit=0
+
+RESUMEN: 11 PASS / 0 FAIL de 11

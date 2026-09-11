@@ -1,0 +1,14 @@
+E2E-2 §9 — FLUJO E2E-02: CATÁLOGO
+============================================================
+PASS | A: bulk-import crea producto → 200 | HTTP 200 sku=E2E2-A-MTW3TMP9
+PASS | A: campos persistidos (cost 30 / price 70 / activo) | {"id":"1b52f2a9-720d-4f9d-8e72-33a4d4762ac8","sku":"E2E2-A-MTW3TMP9","price":"70","cost_price":"30","is_active":true}
+PASS | B: re-import mismo SKU → 1 solo producto (upsert) | HTTP 200 n=1 name=E2E2 Producto Importado v2
+PASS | C: import cross-store → denegado sin inserción | HTTP 403 inserted=0
+PASS | D: ALPHA actualiza producto propio (RLS) → 200 | HTTP 200 n=1
+PASS | E: BETA manipula producto de ALPHA → 0 filas, precio intacto | HTTP 200 rows=0 price=78
+PASS | F: BETA lee producto de ALPHA (RLS) → vacío | HTTP 200 rows=0
+PASS | G: BETA DELETE producto de ALPHA → sin efecto | rows=0 exists=1
+PASS | H: anonymous INSERT products → denegado | HTTP 401
+PASS | I: fixtures con SKU/UM/estado válidos | ["E2E2-A-001","E2E2-A-002","E2E2-A-003"]
+
+RESUMEN: 10 PASS / 0 FAIL de 10

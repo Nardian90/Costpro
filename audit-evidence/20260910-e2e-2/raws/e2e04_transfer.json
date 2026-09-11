@@ -1,0 +1,81 @@
+{
+  "create": {
+    "status": 200,
+    "body": {
+      "id": "c15caa66-79a3-4d46-8921-f42f59f1a3f0",
+      "transfer_id": "c15caa66-79a3-4d46-8921-f42f59f1a3f0",
+      "status": "PENDIENTE",
+      "transfer_number": "c15caa66"
+    }
+  },
+  "created_state": {
+    "tRow": {
+      "status": "PENDIENTE",
+      "total_cost": "1800.00",
+      "origin_store_id": "e1ede2fd-e7d3-4fc0-ba1f-476633c5591a",
+      "destination_store_id": "60896157-6b0a-439c-833f-3d55d64456ba"
+    },
+    "tItems": [
+      {
+        "quantity": "6.0000",
+        "unit_cost": "300.000000000000000000000",
+        "total": "1800.00"
+      }
+    ],
+    "reserv": {
+      "status": "ACTIVE",
+      "quantity": "6.00"
+    }
+  },
+  "attacks": {
+    "x1": 403,
+    "x2": 403,
+    "prodTransfers": 0,
+    "x4": 403,
+    "x5": 400,
+    "x5b": 403
+  },
+  "confirm": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "status": "success",
+      "transfer_id": "c15caa66-79a3-4d46-8921-f42f59f1a3f0"
+    }
+  },
+  "confirm_state": {
+    "before": {
+      "origin": {
+        "stock_current": "16.0000",
+        "cost_average": "300.000000000000000000000"
+      },
+      "dest": {
+        "stock_current": "0.0000",
+        "cost_average": "300.00000000000000000"
+      }
+    },
+    "after": {
+      "origin": {
+        "stock_current": "10.0000",
+        "cost_average": "300.000000000000000000000"
+      },
+      "dest": {
+        "stock_current": "6.0000",
+        "cost_average": "300.0000000000000000000000000"
+      }
+    },
+    "tStatus": "CONFIRMADA",
+    "kardexOut": 1,
+    "kardexIn": 1
+  },
+  "reconfirm": {
+    "status": 409,
+    "stock": "10.0000"
+  },
+  "insufficient": {
+    "status": 500,
+    "body": {
+      "error": "ERR_INSUFFICIENT_STOCK: producto E2E2 Producto A4, disponible 4.0000, solicitado 9999"
+    }
+  }
+}

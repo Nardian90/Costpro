@@ -1,0 +1,13 @@
+E2E-2 §31-32 §40 — CONSISTENCIA UI↔API↔DB + REFRESH + API DIRECT VS UI
+============================================================
+PASS | §32: GET productos (fresh) == DB (count y precios) | api=10 db=10
+PASS | §32: GET fiscal == POST fiscal status (mismo estado, sin mutación) | GET="locked" POST="locked"
+PASS | §32: GET transfers (fresh) == DB | api=6 db=6
+PASS | §32: GET sales/summary disponible para refresh UI | HTTP 200
+PASS | §40: recepción — OUTSIDER denegado en RPC directa (UI) y API sync | RPC=400 API=403
+PASS | §40: catálogo — insert directo (canal UI) cross-store → bloqueado por RLS | HTTP 403 rows=0
+PASS | §40: venta — API checkout y sync offline usan create_sale_v2 con costo server-side (DF-02) | verificado en e2e05_sale.json y sync/batch mapping (route.ts:135-160)
+PASS | §40: fiscal — manage GET y POST status permitidos / clerk denegado en ambos (contrato roles) | managerGET=200 clerkPOST=403
+PASS | §31: sin inconsistencias UI↔API↔DB mayores (notas P3 documentadas) | ["P3: commission_payments route devuelve 409 a AMBOS requests concurrentes aunque uno insertó (fila creada pero cliente ve conflicto) — visto en CC6."
+
+RESUMEN: 9 PASS / 0 FAIL de 9

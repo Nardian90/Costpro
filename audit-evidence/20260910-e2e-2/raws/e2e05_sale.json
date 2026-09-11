@@ -1,0 +1,81 @@
+{
+  "sale": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "status": "success",
+      "calculated_tax": 0,
+      "transaction_id": "84871736-8349-4158-a07a-7ff3207e714d",
+      "discount_amount": 0,
+      "calculated_total": 240,
+      "calculated_subtotal": 240
+    }
+  },
+  "sale_state": {
+    "pre": {
+      "stock_current": "23.0000",
+      "cost_average": "40.000000000000000000000000000000000",
+      "price": "80"
+    },
+    "post": {
+      "stock_current": "20.0000",
+      "cost_average": "40.000000000000000000000000000000000",
+      "price": "80"
+    },
+    "tx": {
+      "store_id": "e1ede2fd-e7d3-4fc0-ba1f-476633c5591a",
+      "seller_id": "a063a1db-f8e4-4a5f-a898-f643548c0b3b",
+      "status": "completed",
+      "total_amount": "240",
+      "payment_method": "cash"
+    },
+    "txItems": [
+      {
+        "product_id": "15343379-56d8-4977-8e79-e94ae4e3add8",
+        "quantity": "3.0000",
+        "price_at_sale": "80",
+        "cost_at_sale": "40.000000000000000000000000000000000"
+      }
+    ],
+    "kardexSale": {
+      "movement_type": "out",
+      "quantity": "3.00",
+      "unit_cost": "40.00"
+    }
+  },
+  "idem": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "status": "idempotent",
+      "transaction_id": "84871736-8349-4158-a07a-7ff3207e714d"
+    },
+    "stock": "20.0000",
+    "audit": [
+      2,
+      2
+    ]
+  },
+  "cross": {
+    "status": 403,
+    "body": {
+      "error": "No autorizado para vender en esta tienda."
+    }
+  },
+  "insufficient": {
+    "status": 400,
+    "body": {
+      "error": "ERR_PRODUCT_ZERO_WAC_NOT_DOCUMENTED: 008f016e-7f11-4e2f-be60-0cee9792d61d"
+    },
+    "before": {
+      "stock_current": "0.0000",
+      "cost_average": "0",
+      "price": "300"
+    },
+    "after": {
+      "stock_current": "0.0000",
+      "cost_average": "0",
+      "price": "300"
+    }
+  }
+}

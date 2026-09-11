@@ -1,0 +1,204 @@
+{
+  "ENERVIDA": {
+    "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+    "store_name": "ENERVIDA-VITALLCONS",
+    "tables": {
+      "products": {
+        "n": 125,
+        "hash": "ff52ceddf4117931cb5660494579c1f9f1dd6003cbceca0d24e0f1ade72e440b"
+      },
+      "inventory": {
+        "n": 106,
+        "hash": "ecfee4b8f1b202f717cca3e1e871dea36f2a7b810fb6e33bbda1504baef21c4a"
+      },
+      "kardex_entries": {
+        "n": 451,
+        "hash": "af70045e56583298e1f46109a6dde635ddc77a9c9e8c6ee02cd32e538f136133"
+      },
+      "transactions": {
+        "n": 308,
+        "hash": "efbb3a442350e1d3163fb8b5b51f3158041d2dc8c827db6484de5b62f5985bf5"
+      },
+      "receipts": {
+        "n": 4,
+        "hash": "bb640a25474cd7187527bcd44311820fa1fcd8e2b8048e78933bb6b416875010"
+      },
+      "devolutions": {
+        "n": 0,
+        "hash": null
+      },
+      "received_services": {
+        "n": 0,
+        "hash": null
+      },
+      "purchase_orders": {
+        "n": 0,
+        "hash": null
+      },
+      "production_orders": {
+        "n": 0,
+        "hash": null
+      },
+      "commission_payments": {
+        "n": 0,
+        "hash": null
+      },
+      "commission_rules": {
+        "n": 0,
+        "hash": null
+      },
+      "cash_closures": {
+        "n": 0,
+        "hash": null
+      },
+      "cash_movements": {
+        "n": 0,
+        "hash": null
+      },
+      "cash_sessions": {
+        "n": 0,
+        "hash": null
+      },
+      "payment_transactions": {
+        "n": 154,
+        "hash": "cc98347860db168fae1884cb33c4f64a8e5d421a4da435a59f11be05a34d849c"
+      },
+      "fiscal_closings": {
+        "n": 0,
+        "hash": null
+      },
+      "workers": {
+        "n": 0,
+        "hash": null
+      },
+      "stock_movements": {
+        "n": 451,
+        "hash": "aba2f238e9d01bf9bed9f73a70e74ad587faec6840553dac84125acf3c15b04f"
+      },
+      "inventory_adjustments": {
+        "n": 0,
+        "hash": null
+      },
+      "transaction_items": {
+        "n": 343,
+        "hash": "f5545b6754b10cf916cffa23c4175f98d59a41af77a6bf94da5b89b6262d3109"
+      },
+      "receipt_items": {
+        "n": 110,
+        "hash": "5bca1d7a9e9f34ebab2402aefed3e9c45c5d1eff57fe27ca47e5aa5543f7f8a1"
+      },
+      "transfer_items": {
+        "n": 0,
+        "hash": null
+      },
+      "devolution_items": {
+        "n": 0,
+        "hash": null
+      }
+    }
+  },
+  "PUERTO_PADRE": {
+    "store_id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+    "store_name": "Puerto Padre VITALLCONS",
+    "tables": {
+      "products": {
+        "n": 36,
+        "hash": "f75da266381ca4cf556797b31cf7959dba363a6c6efb842b91c3ad01677621d2"
+      },
+      "inventory": {
+        "n": 35,
+        "hash": "79366b87f788154b8627d6c13291f3b08a43481818fd0dda8cfa2cf439cedbda"
+      },
+      "kardex_entries": {
+        "n": 251,
+        "hash": "8eda0664a438eeb16af347466870910d2e7bbc1adc148f7f17e75acf928b6820"
+      },
+      "transactions": {
+        "n": 212,
+        "hash": "98fdb2aed9b5a5b4d831e3c544abe663ab7a96f220fbbe4f68a3e5dd20172874"
+      },
+      "receipts": {
+        "n": 2,
+        "hash": "56c0333270cec03897af798f79b2d17e877cf3ada01b62f4f3ac222b4902c0a7"
+      },
+      "devolutions": {
+        "n": 0,
+        "hash": null
+      },
+      "received_services": {
+        "n": 0,
+        "hash": null
+      },
+      "purchase_orders": {
+        "n": 0,
+        "hash": null
+      },
+      "production_orders": {
+        "n": 0,
+        "hash": null
+      },
+      "commission_payments": {
+        "n": 0,
+        "hash": null
+      },
+      "commission_rules": {
+        "n": 0,
+        "hash": null
+      },
+      "cash_closures": {
+        "n": 0,
+        "hash": null
+      },
+      "cash_movements": {
+        "n": 0,
+        "hash": null
+      },
+      "cash_sessions": {
+        "n": 0,
+        "hash": null
+      },
+      "payment_transactions": {
+        "n": 212,
+        "hash": "55083c3058f506cd4703da6702574cab77c42d0370becddf7c35c55a2f5a380c"
+      },
+      "fiscal_closings": {
+        "n": 0,
+        "hash": null
+      },
+      "workers": {
+        "n": 0,
+        "hash": null
+      },
+      "stock_movements": {
+        "n": 251,
+        "hash": "a9996a907fe8d670a4947ffae8295efc1b6fea8aa1ecac76ff010ddde169baa0"
+      },
+      "inventory_adjustments": {
+        "n": 0,
+        "hash": null
+      },
+      "transaction_items": {
+        "n": 212,
+        "hash": "d995656f28a81dde1598808bffb9bf90f0cfb2e867bf1dc9147d9a0545f32dd0"
+      },
+      "receipt_items": {
+        "n": 39,
+        "hash": "f9e44d9de71b7a7c5aa3cb5d98e276f36c3175fe0e416c3797e1b7fa3b188da4"
+      },
+      "transfer_items": {
+        "n": 0,
+        "hash": null
+      },
+      "devolution_items": {
+        "n": 0,
+        "hash": null
+      }
+    }
+  },
+  "GLOBAL": {
+    "audit_logs_count": 7622,
+    "audit_logs_hash": "3a9155e1a518159fc01ed838a731592dc65df0b9a5f4a578be298d219f8f225f",
+    "fiscal_closings_all_count": 37,
+    "stores_count": 48
+  }
+}

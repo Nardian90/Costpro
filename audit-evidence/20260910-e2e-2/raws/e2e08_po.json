@@ -1,0 +1,19 @@
+{
+  "create": {
+    "status": 201,
+    "body": {
+      "order_id": "0fb8dcca-67bf-42d4-b897-03bfd3959f25",
+      "po_number": "E2E2-PO-MTW3WTIY",
+      "total_amount": 600
+    }
+  },
+  "receive1": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "status": "partial",
+      "receipt_id": "3a57f7fa-d6d4-40db-a7dc-c89b58ac3f4b",
+      "items_received": 1
+    }
+  }
+}

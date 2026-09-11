@@ -1,0 +1,15 @@
+E2E-2 §22 — FLUJO E2E-11: CASH
+============================================================
+PASS | A: apertura turno (RLS usuario) → fila pendiente | HTTP 201 {"store_id":"e1ede2fd-e7d3-4fc0-ba1f-476633c5591a","status":"pendiente","opening_balance":"1000","declared_cash":"1000.00"}
+PASS | A2: 2º turno pendiente en misma tienda → rechazado (UNIQUE) | HTTP 409
+PASS | B: venta cash 150 en el turno → 200 | HTTP 200
+PASS | C: cierre de turno → 200 | HTTP 200 {"success":true,"status":"success","closure_id":"8a98fd5b-c006-4804-b8a4-4412755e6fe4","difference":150,"z_report_id":"a
+PASS | C: estado cerrado | {"status":"cerrado","system_expected_total":"1000","system_total":"0.00","difference":"150","declared_cash":"1150.00","opening_balance":"1000","session_reference":null}
+PASS | D: [FINDING EF2-11b P1] INVARIANTE VIOLADO — reproducido determinísticamente | esperado_real=1000 vs system_expected_total=1000 → sale cash 150 contada DOBLE (cash_sales + cash_payments ref_type='sale' sin excluir)
+PASS | D2: root cause: metadata RPC cash_sales=150 y cash_payments=150 (doble conteo) | {"v2_close":true,"cash_sales":150,"difference":150,"zelle_sales":0,"cash_payments":150,"declared_cash":1150,"transfer_sales":0,"opening_balance":1000,"cash_commissions":0,"declared_vouchers":0,"system_expected_total":1000}
+PASS | E: re-cierre → rechazado sin mutación | HTTP 409 {"error":"El cierre ya fue finalizado"}
+PASS | F: [FINDING EF2-11a P1] UPDATE post-cierre PROCEDIÓ (trigger no-op por GUC NULL) | prevent_cash_closure_edit: current_setting('app.bypass_closure_lock',true)=NULL → NULL<>'true'→NULL→no raise. UPDATE rows=1 declared 1150.00→1. Tampering AUDITADO (CASH_CLOSURE_UPDATED) pero lock inoperante.
+PASS | F2: auditoría registró el tampering (detectable, no silencioso) | audit old/new data presente
+PASS | G: ALPHA clerk cierra turno de BETA → denegado por autorización | HTTP 403 {"error":"No autorizado"}
+
+RESUMEN: 11 PASS / 0 FAIL de 11

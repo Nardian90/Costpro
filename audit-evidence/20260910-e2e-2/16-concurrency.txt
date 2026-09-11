@@ -1,0 +1,12 @@
+E2E-2 §28-29 — CONCURRENCIA + POR STORE
+============================================================
+PASS | CC1: 2 ventas simultáneas → 2 transacciones, stock -2 exacto (sin oversell ni lost update) | HTTP [200,200] Δstock=-2 txs=2
+PASS | CC2: 2 ventas simultáneas misma key → SOLO 1 venta efectiva | HTTP [200,200] Δstock=-1 (esperado -1)
+PASS | CC3: 2 recepciones simultáneas → stock +8 exacto (sin lost update) o error limpio sin mutación parcial | HTTP [200,200] Δstock=8 err=["37320732-3404-44d1-9333-1509088fb1f0","1402a713-e5a4-42e9-ba5b-12659e29879f"]
+PASS | CC4: transfers simultáneas → sin sobre-reserva ni corrupción (stock conservado tras cancelación) | HTTP [500,200] stock 44→44 canceladas=1/1
+PASS | CC5: 2 devoluciones simultáneas (cap 1) → sin doble devolución (+2) | HTTP [500,200] Δstock=1 ok=1
+PASS | CC6: 2 pagos comisión simultáneos mismo periodo → SOLO 1 persistido (invariante) | HTTP [409,409] rows=1 (nota P3: el ganador también respondió 409 si hubo reorden de inserción)
+PASS | CC7: 2 retiros simultáneos (2+2 de 4 presupuestado) → -4 sin corrupción de costo | HTTP [200,200] Δstock=-4 ok=2
+PASS | CC8 (§29): ALPHA||BETA simultáneos → cada venta afecta solo su tienda | ALPHA Δ=-1 BETA Δ=1
+
+RESUMEN: 8 PASS / 0 FAIL de 8

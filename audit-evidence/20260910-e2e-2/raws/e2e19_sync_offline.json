@@ -1,0 +1,8 @@
+{
+  "pwa": {
+    "manifest": true,
+    "sw": true,
+    "syncEngine": true
+  },
+  "cache_source_of_truth": "stock_movements/kardex = fuente canónica; inventory.quantity y products.stock_current = saldos mantenidos transaccionalmente por register_stock_movement/fn_recalc_wac."
+}

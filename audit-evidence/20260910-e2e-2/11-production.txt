@@ -1,0 +1,17 @@
+E2E-2 §20 — FLUJO E2E-09: PRODUCTION ORDERS (anti-spoofing F4-03)
+============================================================
+PASS | B: crear orden de producción (201) | HTTP 201 id=9a1c5746-27be-4faa-b15f-909174dbc995 {"id":"9a1c5746-27be-4faa-b15f-909174dbc995","store_id":"e1ede2fd-e7d3-4fc0-ba1f-476633c5591a","order_number":"OP-2026-00077","order_type":"production
+PASS | B: orden persistida en ALPHA (status draft) | {"store_id":"e1ede2fd-e7d3-4fc0-ba1f-476633c5591a","status":"draft","order_type":"production","budget_total":"900.00"}
+PASS | C: withdraw en draft → rechazado (máquina de estados) | HTTP 400 {"error":"status draft no permite withdraw"}
+PASS | D: withdraw 2 uds → 200 | PATCH=200 withdraw=200 {"success":true,"orderId":"9a1c5746-27be-4faa-b15f-909174dbc995","result":{"status":"success","order_id":"9a1c5746-27be-
+PASS | D: stock material -2 | 15.0000→13.0000
+PASS | D: costo server-side = WAC 150 (cliente envió 0.01) | {"movement_type":"adjustment","quantity":"2.00","unit_cost":"150.00","reference_description":"Salida para orden 9a1c5746-27be-4faa-b15f-909174dbc995"}
+PASS | D: audit con cost_authority server_side_wac_v3 | {"qty":2,"order_id":"9a1c5746-27be-4faa-b15f-909174dbc995","param_hash":"b0cf4bf2d7cba9c2d5342b2188f595c2","product_id":"b0bcd630-7132-4208-9134-9391bf1f8134","reference_id":null,"cost_authority":"ser
+PASS | E: misma key ×2 → sin doble retiro | stock 13.0000→13.0000 (wb=400)
+PASS | F: cerrar orden con output → 200 | HTTP 200 {"status":"closed","order_id":"9a1c5746-27be-4faa-b15f-909174dbc995","transaction_id":null}
+PASS | F: orden closed | {"status":"closed","output_product_id":"53bd2206-b1b8-4299-b939-77e8c4cad582","output_quantity":"2.00","output_unit_cost":"150.0000000000000000"}
+PASS | F: producto terminado recibe stock +2 | 0.0000→2.0000
+PASS | G: re-cierre → idempotente, SIN mutación (qty=2 intacta) | HTTP 200 body={"status":"closed","order_id":"9a1c5746-27be-4faa-b15f-909174dbc995","transaction_id":null} qty=2.00 (qty intacta = sin mutación)
+PASS | H: BETA retira de orden de ALPHA → denegado | HTTP 403 {"error":"No autorizado"}
+
+RESUMEN: 13 PASS / 0 FAIL de 13

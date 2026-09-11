@@ -1,0 +1,55 @@
+{
+  "status_missing": {
+    "status": 200,
+    "body": {
+      "store_id": "e1ede2fd-e7d3-4fc0-ba1f-476633c5591a",
+      "year": 2026,
+      "month": 2,
+      "status": "open",
+      "closing": null
+    },
+    "before": {
+      "fc": 0,
+      "audit": 6
+    },
+    "after": {
+      "fc": 0,
+      "audit": 6
+    }
+  },
+  "close": {
+    "status": 200,
+    "row": {
+      "status": "closed",
+      "closed_by": "4c71ba55-d2a5-499e-a34e-ccf508b8df7f"
+    },
+    "audit": {
+      "action": "FISCAL_CLOSING_CREATED",
+      "user_id": "4c71ba55-d2a5-499e-a34e-ccf508b8df7f"
+    }
+  },
+  "status_closed": {
+    "status": 200,
+    "closed": "closed",
+    "fc": [
+      1,
+      1
+    ]
+  },
+  "lock": {
+    "status": 200,
+    "row": {
+      "status": "locked"
+    }
+  },
+  "purity": {
+    "before": {
+      "fc": 0,
+      "audit": 0
+    },
+    "after": {
+      "fc": 0,
+      "audit": 0
+    }
+  }
+}

@@ -1,0 +1,15 @@
+E2E-2 §23 — FLUJO E2E-12: FISCAL PERIOD (status read-only en flujo E2E)
+============================================================
+PASS | A: POST status (MISSING) → 200 sin crear cierre | HTTP 200 Δfc=0 Δaudit=0
+PASS | B: close → cierre closed persistido | HTTP 200 {"status":"closed","closed_by":"4c71ba55-d2a5-499e-a34e-ccf508b8df7f"}
+PASS | B: auditoría de cierre generada | {"action":"FISCAL_CLOSING_CREATED","user_id":"4c71ba55-d2a5-499e-a34e-ccf508b8df7f"}
+PASS | C: POST status (closed) → lectura correcta sin mutación | HTTP 200
+PASS | D: close duplicado → 409 | HTTP 500 {"error":"ERR_PERIOD_LOCKED"}
+PASS | E0: lock por manager (no global admin) → 403 | HTTP 403
+PASS | E: lock (admin global) → locked | HTTP 200 {"status":"locked"}
+PASS | E2: lock duplicado → 409 | HTTP 500
+PASS | F: status ×10 → Δ fiscal_closings=0, Δ audit=0 (pureza) | Δfc=0 Δaudit=0
+PASS | G: acción inválida → 4xx sin crear cierre | HTTP 400 Δfc_m11=0 {"error":"Datos inválidos","key":"apiErrors.invalidData","details":{"_errors":[]
+PASS | H: BETA clerk status de ALPHA → denegado | HTTP 403
+
+RESUMEN: 11 PASS / 0 FAIL de 11

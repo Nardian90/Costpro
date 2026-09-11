@@ -1,0 +1,66 @@
+{
+  "create": {
+    "status": 201,
+    "body": {
+      "id": "9a1c5746-27be-4faa-b15f-909174dbc995",
+      "store_id": "e1ede2fd-e7d3-4fc0-ba1f-476633c5591a",
+      "order_number": "OP-2026-00077",
+      "order_type": "production",
+      "status": "draft",
+      "customer_name": "E2E2 Cliente Prod",
+      "customer_ci": null,
+      "customer_phone": null,
+      "customer_address": null,
+      "budget_total": 900,
+      "budget_currency": "CUP",
+      "advance_amount": 0,
+      "advance_method": null,
+      "advance_currency": "CUP",
+      "paid_amount": 0,
+      "payment_status": "unpaid",
+      "output_product_id": null,
+      "output_quantity": 0,
+      "order_date": "2026-09-10",
+      "start_date": null,
+      "completion_date": null,
+      "closed_at": null,
+      "description": "E2E2 orden MTW4484Y",
+      "notes": null,
+      "created_by": "4c71ba55-d2a5-499e-a34e-ccf508b8df7f",
+      "created_at": "2026-09-10T22:42:16.316127+00:00",
+      "updated_at": "2026-09-10T22:42:16.316127+00:00",
+      "tenant_id": null,
+      "transaction_id": null,
+      "paid_at": null,
+      "payment_method": null,
+      "reversed_at": null,
+      "reversed_by": null,
+      "reversal_reason": null,
+      "budget_exchange_rate": 1,
+      "advance_exchange_rate": 1,
+      "idempotency_key": "po-create-fa48b48e-fd98-40b0-bac9-d3c3fde63c18",
+      "output_total_cost": 0,
+      "output_unit_cost": 0
+    }
+  },
+  "withdraw": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "orderId": "9a1c5746-27be-4faa-b15f-909174dbc995",
+      "result": {
+        "status": "success",
+        "order_id": "9a1c5746-27be-4faa-b15f-909174dbc995",
+        "unit_cost_used": 150
+      }
+    }
+  },
+  "close": {
+    "status": 200,
+    "body": {
+      "status": "closed",
+      "order_id": "9a1c5746-27be-4faa-b15f-909174dbc995",
+      "transaction_id": null
+    }
+  }
+}

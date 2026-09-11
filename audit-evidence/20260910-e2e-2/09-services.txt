@@ -1,0 +1,19 @@
+E2E-2 §18 — FLUJO E2E-07: SERVICIOS
+============================================================
+CANÓNICO ACTUAL: V1 TypeScript (flag USE_V2_RECEIVED_SERVICES ausente). V2 RPC transaccional existe pero dormante.
+V1 distribute NO recalcula WAC (V2 sí). Documentado, no corregido durante el gate.
+
+PASS | A: POST /api/received-services → 201 + id | HTTP 201 id=6f2aa1f2-7b12-49f6-8cbd-1aab05f0e7b6
+PASS | A: servicio persistido en ALPHA con número y total | {"store_id":"e1ede2fd-e7d3-4fc0-ba1f-476633c5591a","service_number":"SRV-0001","total_amount":"500","status":"active","created_by":"4c71ba55-d2a5-499e-a34e-ccf508b8df7f"}
+PASS | A: service_audit_log "created" | [{"action":"created","user_id":"4c71ba55-d2a5-499e-a34e-ccf508b8df7f","created_at":"2026-09-10 22:27:52.216127+00"}]
+PASS | B: distribute → 200 | HTTP 200 {"success":true,"distributed_rows":0}
+PASS | B: service_cost_distributions generado (0 filas si no hay receipts vinculados — distribución sobre recepciones) | rows=0
+PASS | B: service_audit_log "recalculated" | [{"action":"created","user_id":"4c71ba55-d2a5-499e-a34e-ccf508b8df7f","created_at":"2026-09-10 22:27:52.216127+00"},{"action":"recalculated","user_id":"4c71ba55-d2a5-499e-a34e-ccf508b8df7f","created_at":"2026-09-10 22:28:04.105693+00"}]
+PASS | C: ALPHA manager crea servicio en BETA → denegado | HTTP 403
+PASS | C: ALPHA clerk lee servicios de BETA → denegado | HTTP 403
+PASS | D: [PROBE IDOR] ALPHA manager distribuye servicio de BETA | HTTP 200 → FINDING: ruta distribute V1 no valida membresía (F3-P0-02 no aplicada aquí)
+PASS | E: ALPHA manager anula servicio de BETA (PATCH) → denegado | HTTP 403
+
+RESUMEN: 10 PASS / 0 FAIL de 10
+
+IDOR PROBE resultado: VULNERABLE (ver raws e2e07_services.json)

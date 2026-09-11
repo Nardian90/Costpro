@@ -1,0 +1,53 @@
+{
+  "sale": {
+    "id": "6322c13e-8018-41d6-8965-3c85fc45c5a0",
+    "total_amount": 240
+  },
+  "d1": {
+    "status": 200,
+    "body": {
+      "status": "success",
+      "total_amount": 80,
+      "devolution_id": "d5ba664a-a85b-4b4f-be1c-09828746224a",
+      "financial_effect": "cash_out_and_refund",
+      "devolution_number": "NC-000007-2026"
+    }
+  },
+  "e": {
+    "status": 500,
+    "body": {
+      "error": "ERR_DEVOLUTION_CAP_EXCEEDED: producto 15343379-56d8-4977-8e79-e94ae4e3add8 vendido=3.0000 devuelto=1.00 solicitado=3 (tope acumulado, lock de venta adquirido)"
+    },
+    "stock": [
+      "18.0000",
+      "18.0000"
+    ]
+  },
+  "f": {
+    "r3": 200,
+    "r4": 500,
+    "stock": [
+      "18.0000",
+      "20.0000",
+      "20.0000"
+    ]
+  },
+  "h": {
+    "h1": {
+      "status": "success",
+      "total_amount": 80,
+      "devolution_id": "bf103a5b-566d-4736-b0a3-c4c47ff049fc",
+      "financial_effect": "cash_out_and_refund",
+      "devolution_number": "NC-000009-2026"
+    },
+    "h2": {
+      "status": "idempotent",
+      "devolution_id": "bf103a5b-566d-4736-b0a3-c4c47ff049fc"
+    },
+    "stock": [
+      19,
+      20
+    ]
+  },
+  "finding_p3": "EF2-06a: la ruta POST /api/devolutions genera p_idempotency_key NUEVA por request (dev-<uuid>) — el contrato idempotente de create_devolution_v2 no actúa a nivel API; el tope acumulado (DF-07) mitiga sobre-devoluciones pero un retry de red duplicaría una devolución dentro del tope. Clasificar P3 (mitigación existente)."
+}

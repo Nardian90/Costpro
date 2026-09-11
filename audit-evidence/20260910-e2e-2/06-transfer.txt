@@ -1,0 +1,27 @@
+E2E-2 §13-14 — FLUJO E2E-04: TRANSFERENCIA + CROSS-STORE ATTACK
+============================================================
+PASS | A: recepción previa A4 +8@300 | HTTP 200 stock=16.0000
+PASS | B: POST /api/transfers → transferencia creada PENDIENTE | HTTP 200 id=c15caa66-79a3-4d46-8921-f42f59f1a3f0
+PASS | B: unit_cost server-side = cost_average 300 (cliente envió 999) | unit_cost=300.000000000000000000000
+PASS | B: reserva ACTIVE creada | {"status":"ACTIVE","quantity":"6.00"}
+PASS | B: audit CREATE_TRANSFER +1 | audit 1→2
+PASS | C1: ALPHA_MANAGER crea transfer hacia BETA → denegado | HTTP 403 {"error":"Prohibido","key":"apiErrors.forbidden"}
+PASS | C2: destino forjado = tienda PROD → denegado | HTTP 403
+PASS | C3: PROD sin transfers creados (intocable) | transfers PROD=0
+PASS | C4: confirm por usuario sin acceso al destino → denegado | HTTP 403
+PASS | D: confirm (destino BETA_MANAGER) → 200 | HTTP 200 {"success":true,"status":"success","transfer_id":"c15caa66-79a3-4d46-8921-f42f59f1a3f0"}
+PASS | D: origen ALPHA stock -6 | 16.0000→10.0000
+PASS | D: destino BETA stock +6 | 0.0000→6.0000
+PASS | D: conservación total origen+destino | suma constante
+PASS | D: kardex transfer_out (origen) y transfer_in (destino) | out=1 in=1
+PASS | D: estado transfer CONFIRMADA | status=CONFIRMADA
+PASS | D: reserva consumida/liberada | [{"status":"CONSUMED"}]
+PASS | E: re-confirm → rechazado sin doble descuento | HTTP 409 stock=10.0000
+PASS | F: transfer con stock insuficiente → rechazado | HTTP 500 {"error":"ERR_INSUFFICIENT_STOCK: producto E2E2 Producto A4, disponible 4.0000, solicitado 9999"}
+
+RESUMEN: 18 PASS / 0 FAIL de 18
+
+NOTA C5 (contrato): el confirm lo ejecuta un miembro del DESTINO (BETA en flujo ALPHA→BETA).
+El rol clerk del destino puede confirmar por diseño (has_store_access_as). x5 (ALPHA clerk confirm
+transfer BETA→ALPHA como destino) = permitido por contrato de membresía; rol-ClERK no restringe confirm.
+x5b: BETA_CLERK confirma ALPHA→BETA (es destino) → permitido por contrato. transfer=c15caa66-79a3-4d46-8921-f42f59f1a3f0

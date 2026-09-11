@@ -1,0 +1,15 @@
+E2E-2 §33-35 — SYNC BATCH / OFFLINE-PWA / CACHE CONSISTENCY
+============================================================
+PASS | §34.1: batch vacío → 200 sin resultados ni 500 | HTTP 200 results=0
+PASS | §34.2: operación única reception → ok | HTTP 200 {"idempotencyKey":"f5f65a79-a7e8-4fa8-849b-5fa222ad81fd","status":"ok","serverId":"0ae99edc-cf55-4097-8288-a29ea51df959"}
+PASS | §34.3: batch multi-operación → resultados por op | HTTP 200 statuses=["ok","error"]
+PASS | §34.4: batch duplicado mismas keys → idempotente (mismos resultados, sin nueva recepción) | HTTP 200 statuses=["ok","ok"] receipts_sync1=1
+PASS | §34.5: entidad desconocida → error controlado (sin 500 del batch completo) | HTTP 200 statuses=["error"]
+PASS | §34.6: tienda no autorizada → 403 STORE_ACCESS_DENIED | HTTP 403 {"error":"Sin acceso a la tienda especificada","key":"apiErrors.storeAccessDenied","operationKey":"a
+PASS | §34.6b: sin receipt creado en BETA | receipts_attack=0
+PASS | §33: PWA presente (manifest + sw) y SyncEngine con cola Dexie | {"manifest":true,"sw":true,"syncEngine":true}
+PASS | §33: duplicate sync seguro (sync_log idempotente demostrado en §34.4 y EF2-03/C) | sync/batch registra por idempotency_key; reintentos offline no duplican (ver e2e03_reception.json)
+PASS | §35: cache products.stock_current == inventory.quantity (fuente: stock_movements) en ALPHA | todas consistentes
+PASS | §35: consistencia también en BETA | todas consistentes
+
+RESUMEN: 11 PASS / 0 FAIL de 11

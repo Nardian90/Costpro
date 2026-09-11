@@ -1,0 +1,16 @@
+E2E-2 §15-16 — FLUJO E2E-05: POS / VENTA (+ IDEMPOTENCIA)
+============================================================
+PASS | A: POST /api/pos/checkout → 200 + transaction_id | HTTP 200 tx=84871736-8349-4158-a07a-7ff3207e714d
+PASS | A: transacción persistida en tienda correcta, completed | {"store_id":"e1ede2fd-e7d3-4fc0-ba1f-476633c5591a","seller_id":"a063a1db-f8e4-4a5f-a898-f643548c0b3b","status":"completed","total_amount":"240","payment_method":"cash"}
+PASS | A: stock -3 | 23.0000→20.0000
+PASS | A: cost_at_sale = WAC server 40 (cliente envió 0.01) | cost_at_sale=40.000000000000000000000000000000000
+PASS | A: margen (price 80 - cost 40) = 40/unidad | price=80
+PASS | A: stock_movements venta -3 referida a la transacción | {"quantity_change":"-3.0000","unit_cost":"40.000000000000000000000000000000000","reference_doc":"Venta POS v2"}
+PASS | A: kardex out registrada | {"movement_type":"out","quantity":"3.00","unit_cost":"40.00"}
+PASS | A: audit CREATE_SALE_V2 +1 | audit 1→2
+PASS | B: reintento misma idempotency_key → 200 sin nueva venta | HTTP 200 resp={"success":true,"status":"idempotent","transaction_id":"84871736-8349-4158-a07a-7ff3207e714d"}
+PASS | B: stock sin segundo descuento | stock=20.0000
+PASS | C: ALPHA clerk vende en BETA → denegado | HTTP 403
+PASS | D: venta sin stock → rechazada sin mutación | HTTP 400 stock 0.0000→0.0000
+
+RESUMEN: 12 PASS / 0 FAIL de 12

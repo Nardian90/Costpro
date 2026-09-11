@@ -1,0 +1,19 @@
+E2E-2 §37 — RECONCILIACIÓN CONTABLE (detalle; ejecutado en 20_reconciliations.mjs)
+==================================================================================
+§37.1 kardex: balance_total_value coherente con balance_quantity × balance_unit_cost
+      (tolerancia por redondeo almacenado 2dp del unit_cost; coherencia a precisión
+      completa verificada). 10 productos fixture reconciliados. NOTA P3: divergencia
+      ≤ redondeo (e.g. 36 × 71.82 = 2585.52 vs 2585.45 — unit_cost real 71.818…).
+§37.2 ventas: 0 transacciones de producto físico con cost_at_sale <= 0 (n=0) —
+      todo COGS proviene del WAC server-side (DF-02 / create_sale_v2).
+§37.3 devoluciones: reingresos registrados con costo (kardex 'in' unit_cost = costo de salida).
+§37.4 transferencias: destino recibe costo de origen (origen_costo=300 == destino_wac=300).
+§37.5 comisiones: pago = 10% de venta atribuida calculado server-side (EF2-10: 8 = 10%×80);
+      anti-inflado: final ≠ server calc exige manual_adjustment_reason (400).
+§37.6 cash: cierre contabiliza system_expected_total con DOBLE conteo de ventas cash
+      (HALLAZGO EF2-11b P1 — see 13-cash.txt / 25-findings.txt).
+
+Método: SQL directo sobre kardex_entries/transaction_items/devolutions/transfer_items/
+commission_payments (fuente canónica del sistema; sin fórmulas duplicadas en el harness
+para los valores persistidos).
+Ver raws/e2e20_reconciliations.json

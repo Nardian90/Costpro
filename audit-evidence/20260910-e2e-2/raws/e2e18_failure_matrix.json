@@ -1,0 +1,122 @@
+{
+  "cases": [
+    {
+      "id": "F1",
+      "name": "register_reception UUID inválido",
+      "status": 401,
+      "mutated": false,
+      "err": {
+        "code": "PGRST301",
+        "details": null,
+        "hint": null,
+        "message": "Expected 3 parts in JWT; got 1"
+      }
+    },
+    {
+      "id": "F2",
+      "name": "checkout sin total_amount",
+      "status": 400,
+      "mutated": false,
+      "err": {
+        "error": "Invalid data",
+        "details": {
+          "_errors": [],
+          "total_amount": {
+            "_errors": [
+              "Invalid input: expected number, received undefined"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "F3",
+      "name": "venta de ALPHA clerk en BETA",
+      "status": 403,
+      "mutated": false,
+      "err": {
+        "error": "No autorizado para vender en esta tienda."
+      }
+    },
+    {
+      "id": "F4",
+      "name": "clerk ejecuta fiscal close",
+      "status": 403,
+      "mutated": false,
+      "err": {
+        "error": "Prohibido",
+        "key": "apiErrors.forbidden"
+      }
+    },
+    {
+      "id": "F5",
+      "name": "duplicate request",
+      "status": 200,
+      "mutated": false
+    },
+    {
+      "id": "F6",
+      "name": "token forjado en checkout",
+      "status": 401,
+      "mutated": false,
+      "err": {
+        "error": "No autorizado",
+        "message": "Se requiere sesión activa"
+      }
+    },
+    {
+      "id": "F7",
+      "name": "venta 999 uds sin stock",
+      "status": 409,
+      "mutated": false,
+      "err": {
+        "error": "ERR_INSUFFICIENT_STOCK: product fec4d491-d0a0-4123-8d19-c7716f8172c8, stock 36.0000, requested 999"
+      }
+    },
+    {
+      "id": "F8",
+      "name": "withdraw sobre orden draft (estado inválido)",
+      "status": 400,
+      "mutated": false,
+      "err": {
+        "error": "status draft no permite withdraw"
+      }
+    },
+    {
+      "id": "F9",
+      "name": "recepción sobre OC ya received",
+      "status": 400,
+      "mutated": false,
+      "err": {
+        "error": "OC en estado terminal, no se puede recibir"
+      }
+    },
+    {
+      "id": "F10",
+      "name": "close sobre periodo fiscal locked",
+      "status": 500,
+      "mutated": false,
+      "err": {
+        "error": "ERR_PERIOD_LOCKED"
+      }
+    },
+    {
+      "id": "F11",
+      "name": "transferencia origen=destino",
+      "status": 400,
+      "mutated": false,
+      "err": {
+        "error": "Origin y destino deben ser diferentes"
+      }
+    },
+    {
+      "id": "F12",
+      "name": "devolución con venta original inexistente",
+      "status": 500,
+      "mutated": false,
+      "err": {
+        "error": "ERR_CROSS_STORE: original_transaction_id does not belong to store_id"
+      }
+    }
+  ]
+}

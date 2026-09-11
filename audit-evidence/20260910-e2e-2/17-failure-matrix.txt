@@ -1,0 +1,19 @@
+E2E-2 §30 — FAILURE MATRIX
+============================================================
+PASS | F1: register_reception UUID inválido → HTTP 401 + FAIL sin mutación parcial | err={"code":"PGRST301","details":null,"hint":null,"message":"Expected 3 parts in JWT; got 1"}
+PASS | F2: checkout sin total_amount → HTTP 400 + FAIL sin mutación parcial | err={"error":"Invalid data","details":{"_errors":[],"total_amount":{"_errors":["Invalid input: expected number, re
+PASS | F3: venta de ALPHA clerk en BETA → HTTP 403 + FAIL sin mutación parcial | err={"error":"No autorizado para vender en esta tienda."}
+PASS | F4: clerk ejecuta fiscal close → HTTP 403 + FAIL sin mutación parcial | err={"error":"Prohibido","key":"apiErrors.forbidden"}
+PASS | F5: duplicado con misma idempotency_key → idempotente (200, misma tx, sin Δ) | HTTP [200,200] sameTx=true
+PASS | F6: token forjado en checkout → HTTP 401 + FAIL sin mutación parcial | err={"error":"No autorizado","message":"Se requiere sesión activa"}
+PASS | F7: venta 999 uds sin stock → HTTP 409 + FAIL sin mutación parcial | err={"error":"ERR_INSUFFICIENT_STOCK: product fec4d491-d0a0-4123-8d19-c7716f8172c8, stock 36.0000, requested 999"}
+PASS | F8: withdraw sobre orden draft (estado inválido) → HTTP 400 + FAIL sin mutación parcial | err={"error":"status draft no permite withdraw"}
+PASS | F9: recepción sobre OC ya received → HTTP 400 + FAIL sin mutación parcial | err={"error":"OC en estado terminal, no se puede recibir"}
+PASS | F10: close sobre periodo fiscal locked → HTTP 500 + FAIL sin mutación parcial | err={"error":"ERR_PERIOD_LOCKED"}
+PASS | F11: transferencia origen=destino → HTTP 400 + FAIL sin mutación parcial | err={"error":"Origin y destino deben ser diferentes"}
+PASS | F12: devolución con venta original inexistente → HTTP 500 + FAIL sin mutación parcial | err={"error":"ERR_CROSS_STORE: original_transaction_id does not belong to store_id"}
+
+RESUMEN: 12 PASS / 0 FAIL de 12
+
+NOTA: F10 (close sobre locked) responde 500 ERR_PERIOD_LOCKED en lugar de 409 —
+mapeo de errores de negocio a 500 documentado como P3 (EF2-03a familia).

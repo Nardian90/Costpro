@@ -1,0 +1,28 @@
+E2E-2 — BASELINE Y CONDICIONES DEL GATE (§1, §47)
+==================================================
+Baseline exigido: e90eb10a9ff6a814aeaa1cd717dfe27cd541f289
+Commit: fix(fiscal): restore read-only status action
+
+git fetch origin → HEAD == origin/main == e90eb10a9ff6a814aeaa1cd717dfe27cd541f289
+git status --short → (vacío) WORKTREE CLEAN
+git log -10: e90eb10a (HEAD -> main, origin/main, origin/HEAD) fix(fiscal): restore read-only status action
+             af23aa15 fix(fiscal): repair fiscal close RPC wiring and persistence
+             5c6239e0 fix(db): remediate fiscal closing audit uuid integrity
+             35f326ca fix(audit): remediate F4-03 production withdrawal
+             b94ca369 fix(audit): remediate F4-04 canonical WAC path
+
+CONDICIÓN §1: CUMPLIDA (HEAD == origin/main == e90eb10a, worktree clean)
+
+Servidor (§47):
+  PM2: 3/3 online (costpro 816MB RSS, telegram-cron-poller, whatsapp-cron-poller)
+  GET /          → 200
+  GET /api/health → 200 {"status":"ok","service":"costpro-enterprise",...}
+
+Entorno de prueba (§5):
+  Tiendas fixture: E2E2-ALPHA (e1ede2fd-e7d3-4fc0-ba1f-476633c5591a)
+                   E2E2-BETA  (60896157-6b0a-439c-833f-3d55d64456ba)
+  NINGUNA operación mutativa sobre tiendas productivas.
+  Harness: /home/z/my-project/e2e2-harness/ (fuera del repo, §52).
+  No se realizó ningún commit durante el gate (AUDIT ≠ REMEDIATION).
+
+Fecha del gate: 2026-09-10 (servidor UTC) — sesión E2E-2 REM

@@ -1,0 +1,49 @@
+E2E-2 §6-7 — CENSO DEL ESQUEMA REAL + MAPA DE FLUJOS
+=====================================================
+Fuentes: information_schema/pg_proc/pg_policies vía Supabase Management API (raws/tables_all.txt, rpcs_all.txt, columns_key.json)
+146 tablas, 484 RPCs en schema public. Políticas RLS verificadas en vivo por tabla.
+
+MAPA UI → endpoint/RPC → tablas → RLS → audit (canónico verificado por E2E):
+
+AUTH        Supabase Auth signInWithPassword → JWT → Next API valida Bearer vía auth.getUser
+            (src/lib/auth.ts; sin fallback cookie; FIX-SEC-024). Roles: profiles.role (global) +
+            user_store_memberships.role/status (por tienda). canManageStore: admin global O
+            membership [encargado|manager|admin] activa.
+STORES      POST /api/stores → RPC create_store_with_membership; soft_delete_store
+CATALOG     POST /api/catalog/bulk-import (upsert sku+store_id) | UI directa: REST products (RLS)
+INVENTORY   GET /api/inventory/products → RPC get_products_for_pos | adjust → RPC register_stock_movement
+RECEPTION   UI: RPC register_reception (JWT usuario; useReceptionState.ts:1003) — 8 validaciones B/C,
+            WAC canónico vía fn_recalc_wac (REM-F4-04) + register_stock_movement + audit REGISTER_RECEPTION
+            Offline: POST /api/sync/batch → register_reception + sync_log (idempotencia)
+            [RUTA ROTA] /api/receive-to-warehouse → 500 (EF2-01)
+TRANSFER    POST /api/transfers → RPC create_transfer (acceso ORIGEN+DESTINO server-side;
+            unit_cost server = cost_average; reserva ACTIVE) → confirm: POST /api/transfers/[id]/confirm
+            → RPC confirm_transfer (acceso DESTINO; stock+movimientos+kardex; CONFIRMADA)
+            Cross-store: denegado (403 / ERR_UNAUTHORIZED). cancel_transfer con liberación de reserva.
+SALE        POST /api/pos/checkout → RPC create_sale_v2 (idempotency_key; costo server DF-02;
+            payment_transactions ref_type='sale'; audit CREATE_SALE_V2)
+RETURN      POST /api/devolutions → create_devolution_v2 (service-role + canManageStore; DF-07 lock venta;
+            tope acumulado vendido-devuelto; idempotency_key única parcial idx; audit DEVOLUTION_CREATED_V2)
+SERVICES    POST/PATCH /api/received-services (V1 TS activo; flag USE_V2_RECEIVED_SERVICES off;
+            service_audit_log) | distribute: V1 sin membership check (HALLAZGO EF2-07a P1)
+PURCHASE    POST /api/purchase-orders → create_purchase_order (draft); PATCH [id] →
+            set_purchase_order_status (state machine); POST [id] → receive_against_po → register_reception
+            (receipt po_id vinculado; partial→received; terminal no re-recibe)
+PRODUCTION  POST /api/production-orders → create_production_order_v2 (draft) → PATCH in_progress →
+            POST [id]/withdraw → withdraw_production_item_v3 (costo 100% server WAC, cost_authority=
+            server_side_wac_v3, F4-03) → PATCH action=close → close_production_order_v2 (idempotente
+            already_closed; output a producto terminado)
+COMMISSIONS POST /api/commissions/rules (manager) | POST /api/commissions/calculate (motor server;
+            sales_transactions atribución) | POST /api/commissions/payments (recálculo server-side;
+            anti-inflado manual_adjustment_reason; UNIQUE worker/periodo → 409; audit trigger)
+CASH        Apertura: INSERT cash_closures (UI directa, RLS; status pendiente; UNIQUE turno pendiente/tienda)
+            Cierre: POST /api/cash-closures/close → RPC close_cash_shift (system totals, Z report,
+            audit CASH_CLOSURE_FINALIZED; immutability trigger v2_18_1) [HALLAZGOS EF2-11a/b]
+FISCAL      GET /api/fiscal-close (manage) | POST action=status|close|lock (status READ-ONLY post-NF-1;
+            close por manage; lock SOLO admin global; audit_fiscal_closings_changes)
+AUDIT       audit_logs: triggers audit_* (products, profiles, roles, fiscal, cash, commissions,
+            payment_transactions) + inserts server-side por RPC + log_transaction_changes
+SYNC        POST /api/sync/batch → dispatch por entity (sale/reception/adjustment/transfer) con
+            sync_log idempotente; FIX-SEC-H3 membership por operación; FIX-AUDIT-6 destino transfer
+RLS NOTAS   Políticas *_tenant con GUC app.use_tenant_rls (flag OFF → rama ELSE/legacy activa);
+            patterns PERMISSIVE OR-ed; transfers visibles a destino por diseño.

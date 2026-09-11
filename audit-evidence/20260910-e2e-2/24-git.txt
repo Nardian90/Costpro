@@ -1,0 +1,15 @@
+E2E-2 §52 — GIT: SEPARACIÓN AUDIT ≠ REMEDIATION
+=================================================
+Durante TODO el gate E2E-2 NO se realizó ningún commit de CÓDIGO.
+El harness de pruebas vive FUERA del repo (/home/z/my-project/e2e2-harness/).
+Ningún finding fue arreglado durante el gate (AUDIT ≠ REMEDIATION).
+
+Commit de documentación al cierre (convención de todos los gates previos):
+  Contenido: ÚNICAMENTE audit-evidence/20260910-e2e-2/ (este pack + raws + hashes)
+  Mensaje:   audit(e2e-2): multi-store end-to-end certification evidence
+  Sin cambios de código fuente, tests, SQL ni configuración.
+  Push fast-forward con PAT efímero proporcionado por el operador; sin force.
+
+Estado final tras el commit (verificado):
+  HEAD == origin/main == <hash del commit de documentación>
+  WORKTREE CLEAN

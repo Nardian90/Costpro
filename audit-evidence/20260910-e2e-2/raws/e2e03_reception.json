@@ -1,0 +1,123 @@
+{
+  "run": "MTW2YQYC",
+  "finding_receive_to_warehouse_500": {
+    "status": 500,
+    "body": {
+      "error": "function public.register_stock_movement(p_product_id => uuid, p_store_id => uuid, p_user_id => uuid, p_quantity => numeric, p_movement_type => unknown, p_reference_doc => unknown, p_unit_cost => numeric, p_reason => text, p_operation_date => timestamp with time zone, p_skip_access_check => boolean) does not exist"
+    }
+  },
+  "findings_p3": [
+    "EF2-03a: sync/batch serializa errores RPC como \"[object Object]\" (String(PostgrestError)) — se pierde el diagnóstico; ademas 23505 no se clasifica como conflict porque el check espera err.message de Error nativo.",
+    "EF2-03b: register_reception (RPC directa y ruta API) no deduplica sin idempotency_key; la deduplicacion contractual existe solo en la ruta offline sync/batch (sync_log). Documentar contrato."
+  ],
+  "A": {
+    "pre": {
+      "a1": {
+        "cost_average": "70.00000000000000000000000000000",
+        "stock_current": "30.0000"
+      },
+      "a2": {
+        "cost_average": "150.00000000000000000000000000000",
+        "stock_current": "14.0000"
+      },
+      "a3": {
+        "cost_average": "40.0000000000000000000000000",
+        "stock_current": "17.0000"
+      },
+      "audit": 7,
+      "receipts": 7
+    },
+    "post": {
+      "a1": {
+        "cost_average": "67.500000000000000000000000000000000",
+        "stock_current": "40.0000"
+      },
+      "a2": {
+        "cost_average": "150.000000000000000000000000000000000",
+        "stock_current": "19.0000"
+      },
+      "a3": {
+        "cost_average": "40.00000000000000000000000000000",
+        "stock_current": "25.0000"
+      },
+      "audit": 8,
+      "receipts": 8
+    },
+    "rpc": {
+      "status": 200,
+      "receipt": "f63f673a-8c98-414e-bd06-65b159b31a88"
+    }
+  },
+  "B": {
+    "pre": {
+      "cost_average": "67.500000000000000000000000000000000",
+      "stock_current": "40.0000"
+    },
+    "post": {
+      "cost_average": "70.0000000000000000000000000000000000000",
+      "stock_current": "45.0000"
+    },
+    "expWac": 70
+  },
+  "C": {
+    "s1": {
+      "results": [
+        {
+          "idempotencyKey": "2d9f6050-d3b8-4138-9ae9-edb597097fc6",
+          "status": "ok",
+          "serverId": "2f1639e4-3621-4080-95e6-69b5c6a348bf"
+        }
+      ]
+    },
+    "s2": {
+      "results": [
+        {
+          "idempotencyKey": "2d9f6050-d3b8-4138-9ae9-edb597097fc6",
+          "status": "ok",
+          "serverId": "2f1639e4-3621-4080-95e6-69b5c6a348bf",
+          "serverData": {
+            "id": "2f1639e4-3621-4080-95e6-69b5c6a348bf"
+          }
+        }
+      ]
+    },
+    "receipts": [
+      9,
+      10
+    ],
+    "qty": [
+      19,
+      21
+    ]
+  },
+  "C2": {
+    "s": [
+      200,
+      409
+    ],
+    "receipts": [
+      10,
+      11
+    ]
+  },
+  "D": {
+    "status": 400,
+    "receipts": [
+      11,
+      11
+    ],
+    "qty": [
+      26,
+      26
+    ]
+  },
+  "E": {
+    "x1": 400,
+    "x2": 400,
+    "x3": 403,
+    "betaInv": [
+      0,
+      0
+    ]
+  }
+}

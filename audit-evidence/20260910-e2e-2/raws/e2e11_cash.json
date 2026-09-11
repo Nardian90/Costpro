@@ -1,0 +1,63 @@
+{
+  "open": {
+    "status": 201,
+    "body": [
+      {
+        "id": "8a98fd5b-c006-4804-b8a4-4412755e6fe4",
+        "user_id": "4c71ba55-d2a5-499e-a34e-ccf508b8df7f",
+        "store_id": "e1ede2fd-e7d3-4fc0-ba1f-476633c5591a",
+        "session_reference": null,
+        "declared_cash": 1000,
+        "declared_vouchers": 0,
+        "system_total": 0,
+        "notes": "E2E2 apertura MTW4JC15",
+        "closed_at": "2026-09-10T22:53:56.645806+00:00",
+        "created_at": "2026-09-10T22:53:56.645806+00:00",
+        "declared_total": 1000,
+        "system_expected_total": 0,
+        "status": "pendiente",
+        "difference": 0,
+        "opening_balance": 1000,
+        "cash_movements_total": 0
+      }
+    ]
+  },
+  "open_dup": {
+    "status": 409
+  },
+  "close": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "status": "success",
+      "closure_id": "8a98fd5b-c006-4804-b8a4-4412755e6fe4",
+      "difference": 150,
+      "z_report_id": "a10b6771-ecb9-4c46-ba0c-5974570277be",
+      "z_report_number": "ZR-000004-2026",
+      "system_expected_total": 1000
+    }
+  },
+  "invariant": {
+    "opening": 1000,
+    "cash_sales": 150,
+    "cash_payments": 150,
+    "system_expected_total": "1000",
+    "difference": "150",
+    "declared": "1150.00"
+  },
+  "immutability": {
+    "attempt": {
+      "status": 200,
+      "rows": 1
+    },
+    "declared_after": 1,
+    "tampered": true
+  },
+  "cleanup": {
+    "close_beta": 200
+  },
+  "findings": [
+    "EF2-11a (P1): prevent_cash_closure_edit es no-op — current_setting('app.bypass_closure_lock',true) retorna NULL cuando el GUC no está seteado; NULL <> 'true' evalúa NULL y el IF nunca hace RAISE. Cualquier manager con UPDATE por RLS puede alterar cierres de caja cerrados vía PostgREST directo. El tampering queda auditado (trigger audit), pero la inmutabilidad v2_18_1 está inoperante.",
+    "EF2-11b (P1): close_cash_shift doble-cuenta las ventas POS en efectivo: v_cash_payments suma payment_transactions sin excluir ref_type='sale' (create_sale_v2 inserta el pago cash de la venta con ref_type='sale'). system_expected_total sub-reporta en el monto de las ventas cash → diferencia falsa (faltante imaginario) en cada turno con ventas POS cash. get_cash_report SÍ filtra ref_type IN (receipt, service) — el bug es solo del cierre."
+  ]
+}

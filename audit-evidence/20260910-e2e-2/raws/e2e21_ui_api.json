@@ -1,0 +1,7 @@
+{
+  "ui_consistency_notes": [
+    "P3: commission_payments route devuelve 409 a AMBOS requests concurrentes aunque uno insertó (fila creada pero cliente ve conflicto) — visto en CC6.",
+    "P3: sync/batch serializa errores como \"[object Object]\" — el UI offline no recibe diagnóstico (EF2-03a).",
+    "Sin casos de UI-éxito+DB-fallo ni DB-cambio+UI-stale detectados en los GET frescos (§32 PASS)."
+  ]
+}

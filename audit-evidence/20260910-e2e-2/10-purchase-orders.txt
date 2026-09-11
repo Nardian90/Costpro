@@ -1,0 +1,16 @@
+E2E-2 §19 — FLUJO E2E-08: PURCHASE ORDERS
+============================================================
+PASS | A: POST /api/purchase-orders → creada (201) | HTTP 201 id=0fb8dcca-67bf-42d4-b897-03bfd3959f25 {"order_id":"0fb8dcca-67bf-42d4-b897-03bfd3959f25","po_number":"E2E2-PO-MTW3WTIY","total_amount":600}
+PASS | A: estado inicial + items persistidos (5@80, 10@20) | status=draft items=[["5","80"],["10","20"]]
+PASS | B: PATCH status draft→sent | HTTP 200 {"success":true,"status":"sent","previous_status":"draft"}
+PASS | C: recepción parcial → 200 | HTTP 200 {"success":true,"status":"partial","receipt_id":"3a57f7fa-d6d4-40db-a7dc-c89b58ac3f4b","items_received":1}
+PASS | C: inventario A1 +3 | 50.0000→53.0000
+PASS | C: OC pasa a partial | status=partial
+PASS | C: receipt vinculado con po_id | {"id":"3a57f7fa-d6d4-40db-a7dc-c89b58ac3f4b","status":"active","total_cost":"240.0"}
+PASS | D: recepción final → OC received | HTTP 200 status=received
+PASS | D: A5 +10 y quantity_received=10 | stock 10.0000→20.0000, qr=10
+PASS | E: re-recepción sobre OC received → rechazada, sin receipt extra | HTTP 400 receipts 2→2
+PASS | F: BETA recibe OC de ALPHA → denegado | HTTP 403
+PASS | G: cancelación de OC y recepción bloqueada | cancel=200 receive=400
+
+RESUMEN: 12 PASS / 0 FAIL de 12

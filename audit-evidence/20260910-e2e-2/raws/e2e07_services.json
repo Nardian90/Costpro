@@ -1,0 +1,52 @@
+{
+  "canonical_path_doc": "USE_V2_RECEIVED_SERVICES NO definido en .env → V1 TypeScript activo (route.ts:20). V2 RPCs (create_received_service_v2, distribute_service_cost_v2, void_received_service_with_reversal) existen en DB y son transaccionales con recálculo WAC. V1: insert directo + service_audit_log; distribute V1 NO recalcula WAC.",
+  "create": {
+    "status": 201,
+    "body": {
+      "data": {
+        "id": "6f2aa1f2-7b12-49f6-8cbd-1aab05f0e7b6",
+        "store_id": "e1ede2fd-e7d3-4fc0-ba1f-476633c5591a",
+        "service_number": "SRV-0001",
+        "service_date": "2026-09-10",
+        "service_type_id": null,
+        "service_type_name": "Transporte",
+        "supplier": "E2E2 Servicio S.A.",
+        "reference_doc": null,
+        "currency": "CUP",
+        "exchange_rate": 1,
+        "total_amount": 500,
+        "observations": "E2E2 MTW3LQG9",
+        "status": "active",
+        "distribution_method": "amount",
+        "created_by": "4c71ba55-d2a5-499e-a34e-ccf508b8df7f",
+        "created_at": "2026-09-10T22:27:51.494869+00:00",
+        "updated_at": "2026-09-10T22:27:51.494869+00:00",
+        "payment_status": "unpaid",
+        "payment_method": null,
+        "paid_amount": 0,
+        "due_date": "2026-10-10",
+        "paid_at": null,
+        "payment_terms_days": 30
+      }
+    }
+  },
+  "distribute": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "distributed_rows": 0
+    }
+  },
+  "idor": {
+    "svcB": "ba60b742-fd09-41a4-bb58-c8d698585c87",
+    "alpha_distribute_beta": {
+      "status": 200,
+      "body": {
+        "success": true,
+        "distributed_rows": 0
+      }
+    },
+    "audit_before": 1
+  },
+  "idor_verdict": "VULNERABLE"
+}

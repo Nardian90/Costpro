@@ -1,0 +1,30 @@
+{
+  "stores": {
+    "ALPHA": {
+      "products_checked": 10,
+      "mismatches": []
+    },
+    "BETA": {
+      "products_checked": 5,
+      "mismatches": []
+    }
+  },
+  "audit_by_action": [
+    {
+      "action": "CREATE_SALE_V2",
+      "n": 47
+    },
+    {
+      "action": "CREATE_TRANSFER",
+      "n": 6
+    },
+    {
+      "action": "DEVOLUTION_CREATED_V2",
+      "n": 11
+    },
+    {
+      "action": "REGISTER_RECEPTION",
+      "n": 26
+    }
+  ]
+}

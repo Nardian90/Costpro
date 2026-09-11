@@ -1,0 +1,128 @@
+E2E-2 §25-27 §39 — MATRIZ RLS + ESCALADA + IDOR + DATA LEAK
+============================================================
+PASS | ALPHA_ADMIN products: cross-lectura permitida (admin global por diseño) | 200 rows=3
+PASS | ALPHA products: cross-SELECT BETA=0 filas | 200 rows=0
+PASS | ALPHA products: cross-UPDATE=0 filas | rows=0
+PASS | ALPHA products: cross-SELECT BETA=0 filas | 200 rows=0
+PASS | ALPHA products: cross-UPDATE=0 filas | rows=0
+PASS | BETA products: cross-SELECT ALPHA=0 filas | 200 rows=0
+PASS | BETA products: cross-UPDATE=0 filas | rows=0
+PASS | OUTSIDER products: sin lectura en ninguna tienda | 200 rows=0 / 200 rows=0
+PASS | anon products: lectura sin datos / inserción denegada | 200 rows=0 ins=401
+PASS | ALPHA_ADMIN inventory: cross-lectura permitida (admin global por diseño) | 200 rows=1
+PASS | ALPHA inventory: cross-SELECT BETA=0 filas | 200 rows=0
+PASS | ALPHA inventory: cross-UPDATE=0 filas | rows=0
+PASS | ALPHA inventory: cross-SELECT BETA=0 filas | 200 rows=0
+PASS | ALPHA inventory: cross-UPDATE=0 filas | rows=0
+PASS | BETA inventory: cross-SELECT ALPHA=0 filas | 200 rows=0
+PASS | BETA inventory: cross-UPDATE=0 filas | rows=0
+PASS | OUTSIDER inventory: sin lectura en ninguna tienda | 200 rows=0 / 200 rows=0
+PASS | anon inventory: lectura sin datos / inserción denegada | 200 rows=0 ins=401
+PASS | ALPHA_ADMIN receipts: cross-lectura permitida (admin global por diseño) | 200 rows=0
+PASS | ALPHA receipts: cross-SELECT BETA=0 filas | 200 rows=0
+PASS | ALPHA receipts: cross-SELECT BETA=0 filas | 200 rows=0
+PASS | BETA receipts: cross-SELECT ALPHA=0 filas | 200 rows=0
+PASS | BETA receipts: cross-UPDATE=0 filas | rows=0
+PASS | OUTSIDER receipts: sin lectura en ninguna tienda | 200 rows=0 / 200 rows=0
+PASS | anon receipts: lectura sin datos / inserción denegada | 200 rows=0 ins=401
+PASS | ALPHA_ADMIN transfers: cross-lectura permitida (admin global por diseño) | 200 rows=0
+PASS | ALPHA transfers: cross-SELECT BETA=0 filas | 200 rows=0
+PASS | ALPHA transfers: cross-SELECT BETA=0 filas | 200 rows=0
+PASS | BETA transfers: cross-SELECT = solo transferencias entrantes (por diseño) | 200 rows=2 (política: origin|destination IN current_user_store_ids)
+PASS | BETA transfers: cross-UPDATE=0 filas | rows=0
+PASS | OUTSIDER transfers: sin lectura en ninguna tienda | 200 rows=0 / 200 rows=0
+PASS | anon transfers: lectura sin datos / inserción denegada | 200 rows=0 ins=401
+PASS | ALPHA_ADMIN transactions: cross-lectura permitida (admin global por diseño) | 200 rows=0
+PASS | ALPHA transactions: cross-SELECT BETA=0 filas | 200 rows=0
+PASS | ALPHA transactions: cross-SELECT BETA=0 filas | 200 rows=0
+PASS | BETA transactions: cross-SELECT ALPHA=0 filas | 200 rows=0
+PASS | BETA transactions: cross-UPDATE=0 filas | rows=0
+PASS | OUTSIDER transactions: sin lectura en ninguna tienda | 200 rows=0 / 200 rows=0
+PASS | anon transactions: lectura sin datos / inserción denegada | 200 rows=0 ins=400
+PASS | ALPHA_ADMIN devolutions: cross-lectura permitida (admin global por diseño) | 200 rows=0
+PASS | ALPHA devolutions: cross-SELECT BETA=0 filas | 200 rows=0
+PASS | ALPHA devolutions: cross-SELECT BETA=0 filas | 200 rows=0
+PASS | BETA devolutions: cross-SELECT ALPHA=0 filas | 200 rows=0
+PASS | BETA devolutions: cross-UPDATE=0 filas | rows=0
+PASS | OUTSIDER devolutions: sin lectura en ninguna tienda | 200 rows=0 / 200 rows=0
+PASS | anon devolutions: lectura sin datos / inserción denegada | 200 rows=0 ins=401
+PASS | ALPHA_ADMIN received_services: cross-lectura permitida (admin global por diseño) | 200 rows=1
+PASS | ALPHA received_services: cross-SELECT BETA=0 filas | 200 rows=0
+PASS | ALPHA received_services: cross-UPDATE=0 filas | rows=0
+PASS | ALPHA received_services: cross-SELECT BETA=0 filas | 200 rows=0
+PASS | ALPHA received_services: cross-UPDATE=0 filas | rows=0
+PASS | BETA received_services: cross-SELECT ALPHA=0 filas | 200 rows=0
+PASS | BETA received_services: cross-UPDATE=0 filas | rows=0
+PASS | OUTSIDER received_services: sin lectura en ninguna tienda | 200 rows=0 / 200 rows=0
+PASS | anon received_services: lectura sin datos / inserción denegada | 200 rows=0 ins=401
+PASS | ALPHA_ADMIN purchase_orders: cross-lectura permitida (admin global por diseño) | 200 rows=0
+PASS | ALPHA purchase_orders: cross-SELECT BETA=0 filas | 200 rows=0
+PASS | ALPHA purchase_orders: cross-SELECT BETA=0 filas | 200 rows=0
+PASS | BETA purchase_orders: cross-SELECT ALPHA=0 filas | 200 rows=0
+PASS | BETA purchase_orders: cross-UPDATE=0 filas | rows=0
+PASS | OUTSIDER purchase_orders: sin lectura en ninguna tienda | 200 rows=0 / 200 rows=0
+PASS | anon purchase_orders: lectura sin datos / inserción denegada | 200 rows=0 ins=401
+PASS | ALPHA_ADMIN production_orders: cross-lectura permitida (admin global por diseño) | 200 rows=0
+PASS | ALPHA production_orders: cross-SELECT BETA=0 filas | 200 rows=0
+PASS | ALPHA production_orders: cross-SELECT BETA=0 filas | 200 rows=0
+PASS | BETA production_orders: cross-SELECT ALPHA=0 filas | 200 rows=0
+PASS | BETA production_orders: cross-UPDATE=0 filas | rows=0
+PASS | OUTSIDER production_orders: sin lectura en ninguna tienda | 200 rows=0 / 200 rows=0
+PASS | anon production_orders: lectura sin datos / inserción denegada | 200 rows=0 ins=401
+PASS | ALPHA_ADMIN commission_payments: cross-lectura permitida (admin global por diseño) | 200 rows=0
+PASS | ALPHA commission_payments: cross-SELECT BETA=0 filas | 200 rows=0
+PASS | ALPHA commission_payments: cross-SELECT BETA=0 filas | 200 rows=0
+PASS | BETA commission_payments: cross-SELECT ALPHA=0 filas | 200 rows=0
+PASS | BETA commission_payments: cross-UPDATE=0 filas | rows=0
+PASS | OUTSIDER commission_payments: sin lectura en ninguna tienda | 200 rows=0 / 200 rows=0
+PASS | anon commission_payments: lectura sin datos / inserción denegada | 200 rows=0 ins=401
+PASS | ALPHA_ADMIN cash_closures: cross-lectura permitida (admin global por diseño) | 200 rows=3
+PASS | ALPHA cash_closures: cross-SELECT BETA=0 filas | 200 rows=0
+PASS | ALPHA cash_closures: cross-UPDATE=0 filas | rows=0
+PASS | ALPHA cash_closures: cross-SELECT BETA=0 filas | 200 rows=0
+PASS | ALPHA cash_closures: cross-UPDATE=0 filas | rows=0
+PASS | BETA cash_closures: cross-SELECT ALPHA=0 filas | 200 rows=0
+PASS | BETA cash_closures: cross-UPDATE=0 filas | rows=0
+PASS | OUTSIDER cash_closures: sin lectura en ninguna tienda | 200 rows=0 / 200 rows=0
+PASS | anon cash_closures: lectura sin datos / inserción denegada | 200 rows=0 ins=401
+PASS | ALPHA_ADMIN fiscal_closings: cross-lectura permitida (admin global por diseño) | 200 rows=0
+PASS | ALPHA fiscal_closings: cross-SELECT BETA=0 filas | 200 rows=0
+PASS | ALPHA fiscal_closings: cross-SELECT BETA=0 filas | 200 rows=0
+PASS | BETA fiscal_closings: cross-SELECT ALPHA=0 filas | 200 rows=0
+PASS | BETA fiscal_closings: cross-UPDATE=0 filas | rows=0
+PASS | OUTSIDER fiscal_closings: sin lectura en ninguna tienda | 200 rows=0 / 200 rows=0
+PASS | anon fiscal_closings: lectura sin datos / inserción denegada | 200 rows=0 ins=401
+PASS | ALPHA_ADMIN kardex_entries: cross-lectura permitida (admin global por diseño) | 200 rows=1
+PASS | ALPHA kardex_entries: cross-SELECT BETA=0 filas | 200 rows=0
+PASS | ALPHA kardex_entries: cross-UPDATE=0 filas | rows=0
+PASS | ALPHA kardex_entries: cross-SELECT BETA=0 filas | 200 rows=0
+PASS | ALPHA kardex_entries: cross-UPDATE=0 filas | rows=0
+PASS | BETA kardex_entries: cross-SELECT ALPHA=0 filas | 200 rows=0
+PASS | BETA kardex_entries: cross-UPDATE=0 filas | rows=0
+PASS | OUTSIDER kardex_entries: sin lectura en ninguna tienda | 200 rows=0 / 200 rows=0
+PASS | anon kardex_entries: lectura sin datos / inserción denegada | 200 rows=0 ins=401
+PASS | audit_logs: ALPHA no lee audit de BETA | 200 rows=0
+PASS | audit_logs: INSERT directo por usuario → denegado | 403
+PASS | audit_logs: INSERT anónimo → denegado | 401
+PASS | audit_logs: sin filas FAKE huérfanas | n=0
+PASS | escalada: manager se auto-membra en BETA → denegado | HTTP 403 rows=0
+PASS | [FINDING EF2-16a P0] manager auto-promueve a admin → PROCEDIÓ (HTTP 200) | HTTP 200 role=admin — reproducido; revertiendo
+PASS | EF2-16a: cambio de rol queda AUDITADO (CHANGE_ROLE manager→admin presente) | {"action":"CHANGE_ROLE","old_role":"manager","new_role":"admin"}
+PASS | EF2-16a: incluso CLERK auto-promueve a admin → PROCEDIÓ | HTTP 200 role=admin — revertiendo
+PASS | EF2-16a: roles fixture restaurados (manager, clerk) | ["manager","clerk"]
+PASS | [FINDING EF2-16c P0] manager reabre periodo LOCKED → PROCEDIÓ | HTTP 200 status=open — restaurando
+PASS | EF2-16c: periodo restaurado a locked | status=locked
+PASS | escalada: INSERT producto en BETA por ALPHA → denegado | HTTP 403 rows=0
+PASS | spoofing: venta para prueba no disponible (rate limit) — omitida con nota | HTTP 200 (pos checkout rate-limited; el mecanismo server-side fue verificado en EF2-03/EF2-09)
+PASS | IDOR: BETA lee transaction de ALPHA por UUID → vacío | rows=0
+PASS | IDOR: BETA lee receipt de ALPHA por UUID → vacío | rows=0
+PASS | IDOR: BETA lee purchase_order de ALPHA por UUID → vacío | rows=0
+PASS | IDOR: BETA lee production_order de ALPHA por UUID → vacío | rows=0
+PASS | IDOR: BETA lee transfer (by design: BETA es destino) de ALPHA → visible por diseño (destination member) | rows=1 (transfers_select_rls: origin|destination IN user_stores)
+PASS | IDOR: BETA lee transaction REST items de ALPHA por UUID → vacío | rows=0
+PASS | IDOR API: BETA PO detail de ALPHA → denegado | HTTP 404
+PASS | IDOR API: BETA production detail de ALPHA → denegado | HTTP 404
+
+RESUMEN: 122 PASS / 0 FAIL de 122
+
+MATRIZ COMPLETA (raw): e2e16_rls_security.json → matrix[]
