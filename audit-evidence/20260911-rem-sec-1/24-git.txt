@@ -13,3 +13,12 @@ Sin commits intermedios de código. Sin .env (ignorado por disciplina del repo; 
 
 PUSH: fast-forward con token efímero del operador (no impreso, no almacenado, no
 persistido en git config; eliminado tras el uso). Verificación remota: HEAD == origin/main == <NEW_COMMIT>.
+
+
+─── SINCRONIZACIÓN FINAL (registro post-push) ─────────────────────────────
+PUSH: fast-forward 643f4802..6b8b6339 HEAD -> main (sin force)
+HEAD        = 6b8b63397d8d513ca8317361c4771c9aab419e56
+origin/main = 6b8b63397d8d513ca8317361c4771c9aab419e56
+WORKTREE    = CLEAN
+TOKEN: efímero, no impreso en outputs, no almacenado en archivos del repo,
+       no persistido en git config — RECOMENDACIÓN PERMANENTE: revocar.

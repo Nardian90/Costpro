@@ -12,3 +12,106 @@ siempre precedido de autorización server-side; 0 escaladas, 0 cross-store, 0 ID
 CONTABILIDAD: caja reconciliada (A/B/C/D), fiscal inmutable, inventario/WAC coherentes, auditoría 1:1.
 REGRESIÓN: Vitest/TSC/ESLint/Fiscal en paridad EXACTA; contract-test production = preexistente (documentado).
 ZERO-TOUCH: PRE == POST bit a bit (48 tablas, 2 tiendas productivas).
+
+
+════════════════════════════════════════════════════════════════════════
+COSTPRO — REM-SEC-1 FINAL VERDICT (§54)
+════════════════════════════════════════════════════════════════════════
+
+BASELINE:
+643f4802151ae340d9a3037fa42cffb0b0107081
+
+NEW COMMIT:
+6b8b63397d8d513ca8317361c4771c9aab419e56
+
+EF2-16a — PROFILE PRIVILEGE ESCALATION
+PRE:  clerk/manager PATCH propio role='admin' → HTTP 200, role mutado, is_admin()=true (reproducido)
+POST: self-update de columnas sensibles → HTTP 400 ERR_SELF_PRIVILEGED_FIELD; role intacto; variantes §12 todas DENIED
+RESULT: FIXED · REPRODUCED BEFORE · DENIED AFTER · ADMIN PATH PRESERVED (managed_update_user 200, user_audit_log OK)
+
+EF2-16c — LOCKED FISCAL REOPEN
+PRE:  manager PATCH locked→open → HTTP 200, status mutado (GUC NULL ⇒ trigger no-op)
+POST: LOCKED→open/closed DENIED (manager/clerk/admin-direct/cross/outsider/anon); GUC NULL/'false'→DENY, 'true'→bypass server-side; close/lock legítimos 200; status read-only pureza ×10 intacta
+RESULT: FIXED · REPRODUCED BEFORE · LOCKED IMMUTABLE AFTER · LEGITIMATE CLOSE/LOCK PRESERVED
+
+EF2-11a — CASH CLOSURE IMMUTABILITY
+PRE:  PATCH declared_cash=1 sobre cierre cerrado → HTTP 200 rows=1, tampering (GUC NULL no-op)
+POST: 5 vectores DENIED, valor intacto (750.00→750.00); abierto modificable por contrato; reopen_cash_shift funcional (sub-fix updated_at) con auditoría
+RESULT: FIXED · CLOSED CASH IMMUTABLE · OPEN CASH FUNCTIONAL · ADMIN PATH OK
+
+EF2-11b — CASH DOUBLE COUNT
+PRE:  apertura 1000 + venta cash 150 → system_expected_total=1000, difference=+150 (faltante falso; cash_payments=150)
+POST: A: 1150/0 · B: 400/0 · C: 450/0 · D: 1000/0 — cash_payments excluye ref_type='sale'; Z-report supplier-payments coherente
+RESULT: FIXED · NO DOUBLE COUNT · ACCOUNTING RECONCILIATION PASS
+
+EF2-07a — SERVICE DISTRIBUTE IDOR
+PRE:  ALPHA manager distribuye servicio BETA → HTTP 200 + service_audit_log escrito por atacante
+POST: ALPHA→ALPHA 200 · ALPHA→BETA 403 · BETA→ALPHA 403 · outsider 403 · clerk 403 · anonymous 401 · 0 mutaciones no autorizadas
+RESULT: FIXED · ALPHA→ALPHA PASS · ALPHA→BETA DENY · BETA→ALPHA DENY
+
+SECURITY:
+RLS:                 recheck 9/9 OK; EXECUTE directo de RPCs denegado a authenticated
+PRIVILEGE ESCALATION: 0 (self-promote DENY; admin path preservado)
+CROSS-STORE:          0 filas mutadas en todos los vectores cross
+IDOR:                 cerrado (distribute) — ownership server-side
+ANONYMOUS:            sin mutaciones (0 filas / 401)
+SPOOFING:             sin cambios que lo introduzcan; identity bridge solo server-side
+
+ACCOUNTING:
+CASH:     A/B/C/D reconciliados (difference=0)
+FISCAL:   inmutabilidad LOCKED + transiciones legítimas PASS
+INVENTORY: venta → Δcantidad exacta, balance_after == inventory.quantity
+WAC:      sin alteraciones (V1 no recalcula — documentado, sin cambios)
+AUDIT:    attempts no autorizados sin auditoría de mutación; legítimas 1:1
+
+CONCURRENCY:
+RESULT: 4 carreras (fiscal/cash/service/profile) PASS — authorization, atomicity, invariants
+
+IDEMPOTENCY:
+RESULT: cash re-close 409 sin doble Z; distribute ×2 idempotente; status ×10 pureza; lock duplicado sin mutación
+
+REGRESSION:
+Vitest: 2058 PASS / 0 FAIL / 24 SKIP (paridad exacta)
+TSC: 0 errors (exit 0)
+ESLint: 0 errors / 1291 warnings (paridad exacta)
+Fiscal: 53/53 (+158/158 integración ampliada)
+Build: exit 137 — INFRASTRUCTURE LIMITATION (global_oom kernel, next-build, host 4GB sin swap; igual que baseline)
+PM2: 3/3 online
+Health: / → 200 · /api/health → 200
+
+BUILD OOM: YES (INFRASTRUCTURE LIMITATION, documentado, sin ocultamiento)
+
+ZERO-TOUCH:
+ENERVIDA: 24/24 tablas bit a bit idénticas PRE==POST
+PUERTO PADRE: 24/24 tablas bit a bit idénticas PRE==POST
+
+SECRET SCAN:
+RESULT: 0 secretos en árbol commiteado (27-secret-scan.txt) · .env nunca trackeado
+
+EVIDENCE:
+DIRECTORY: audit-evidence/20260911-rem-sec-1/
+SHA256: SHA256SUMS.txt
+ALL OK: 81/81
+
+GIT:
+HEAD: 6b8b63397d8d513ca8317361c4771c9aab419e56
+ORIGIN/MAIN: 6b8b63397d8d513ca8317361c4771c9aab419e56
+WORKTREE: CLEAN
+PUSH: fast-forward (sin force) 643f4802..6b8b6339
+
+FINDINGS REMAINING:
+P0: 0 (en alcance)
+P1: 0 (en alcance)
+P2: 1 — EF2-01 (heredado, fuera de alcance)
+P3: 8+ heredados + OBS-SEC-1 (contract-test production/PO, preexistente en baseline, demostrado por stash)
+
+INHERITED: IF-06dR-1, IF-06dR-2 — intactos, sin impacto adicional demostrado
+
+FINAL VERDICT: CERTIFIED / ADMINISTRATIVELY CLOSED
+
+Fundamento (§50, §51): 5/5 findings FIXED+REPRODUCED BEFORE+RECERTIFIED · P0=0 · P1=0 reproducibles ·
+security PASS · accounting PASS · regression en paridad exacta (limitación infra aislada) · zero-touch PASS ·
+evidence completa (81/81, 0 secretos) · HEAD == origin/main · worktree clean.
+
+STOP CONDITION (§53): REM-SEC-1 TERMINA AQUÍ. No se ejecutan E2E-2 completo, FASE 7/8/9/11/12 ni
+remediaciones adicionales (P2 EF2-01, P3, OBS-SEC-1 production/PO) sin autorización explícita.
