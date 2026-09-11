@@ -11,5 +11,6 @@ Commit de documentación al cierre (convención de todos los gates previos):
   Push fast-forward con PAT efímero proporcionado por el operador; sin force.
 
 Estado final tras el commit (verificado):
-  HEAD == origin/main == <hash del commit de documentación>
+  HEAD == origin/main == 0719a09ba9f92731a459371f7d4b72d03938d363
+  (commit doc 1: evidencia; commit doc 2: registro de hash final — sin cambios de código)
   WORKTREE CLEAN
